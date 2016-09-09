@@ -1,0 +1,74 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
+
+relation Univ(int m).
+
+checkentail i<m & m<n |- m=i+1.
+expect Fail.
+
+//(1)
+checkentail i<m & m<n & Univ(m) |- m=i+1.
+expect Valid.
+
+checkentail i<m & m<n & Univ(m) |- m=i+2.
+expect Fail.
+
+
+checkentail 
+ i<n 
+ & m_110=m_105 
+ //& (((((0-xx)+1)<=i & 0<=i & i<m_105) | (i=m_105 & 0<=m_105))) 
+ //& (((((0-xx)+1)<=m_110 & 0<=m_110 & m_110<n) | (m_110=n & 0<=n)))
+ & Univ(m_110) 
+ & i<m_110 & m_110<=n
+|- m_110=i+1.
+expect Valid.
+
+checkentail 
+ i<n 
+ & m_110=m_105 
+ //& (((((0-xx)+1)<=i & 0<=i & i<m_105) | (i=m_105 & 0<=m_105))) 
+ //& (((((0-xx)+1)<=m_110 & 0<=m_110 & m_110<n) | (m_110=n & 0<=n)))
+ & Univ(m_110) 
+ & i<m_110 & m_110<=n
+|- m_110=i+2.
+expect Fail.
+
+
+
+/* ex8b -dre "filter_ante"
+
+
+(==tpdispatcher.ml#3792==)
+imply_timeout 2@42@41
+imply_timeout 2 inp1 : m_110=m_105 & i<n & 
+ (((((0-xx)+1)<=i & 0<=i & i<m_105) | (i=m_105 & 0<=m_105))) & 
+ (((((0-xx)+1)<=m_110 & 0<=m_110 & m_110<n) | (m_110=n & 0<=n)))
+imply_timeout 2 inp2 : m_110=i+1
+imply_timeout 2@42 EXIT:false
+
+checkentail i<m & m<n & Univ(m) |- m=i+2.
+expect Fail.
+
+(====)
+filter_ante@15
+filter_ante inp1 : Univ(m) & m<n & i<m
+filter_ante inp2 : m=i+1
+filter_ante@15 EXIT: Univ(m) & m<n & i<m
+
+X1:={[i,n]->[m]:i<m & m<=n & 0<=i};
+Inst:={[i,n]->[m]:m=i+1};
+Inst2:={[i,n]->[m]:m=i+2};
+domain(X1);
+domain(X1) subset domain(X1 intersection Inst);
+
+domain wraps an exists (m:...)
+
+*/
+

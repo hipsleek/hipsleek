@@ -1,0 +1,20 @@
+//Valid.Fail.Fail.Valid.Fail.Fail.
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+     or self::node<next = r> * r::lseg<n - 1, p>
+     inv n >= 0.
+
+lemma_safe  self::lseg<n, p> & n = a + b & a,b >=0 
+       ->  (exists r:self::lseg<a, r> * r::lseg<b, p>).
+
+/*
+# ex4a.slk
+
+Entailing lemma lem_11: Fail. (cex)(may) cause: UnionR[AndR[ exists(p_115:p=p_115) & 
+ (((1<=flted_5_110 & r_112!=null) | (p=r_112 & flted_5_110=0))) & 
+ exists(b_114:flted_5_110+1=b_114) & 0<=b & flted_5_110+1=b+a & 0<=a |-  0=a. LOC
+
+lemma requires case-spec 
+
+*/

@@ -1,0 +1,89 @@
+======================================================================================
+# ex3b.slk
+
+# how to instantiate?
+
+ ### conseq : arr::arrsegHO<i_81,m_82>@M&i_81=i & m_82=m&{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#2400:new_inst:Some((x_88,x))
+ es_heap:emp
+ ### matches :
+[ Type: Root
+ LHS: x::arrI<v>@M
+ RHS: x_86::arrI<v_87>@M
+ root_inst: None
+ lhs_rest: arr::arrsegHO<flted_21_56,m>@M
+ rhs_rest: emp
+ alias set: [x,x_86]rhs_inst: []rhs_infer: None]
+
+----- 
+
+!!! **sleek.ml#492:[../../../prelude.slk,ex3b-ho.slk]
+!!! **solver.ml#2400:new_inst:Some((x_88,x))
+Entail (1) : Fail.(must) cause:UnionR[ (i+arr)!=null & 
+ (((((0-arr)+1)<=(1+i) & (1+i)<=(m_82-2)) | (1+i=m_82-1 & 2<=(m_82+arr)))) & 
+ (i+1)<m_82 & 1+i=i_81 |-  i_81=i. LOCS:[0;1;21;22] (must-bug), (((((0-arr)+1)<=(1+i) & (1+i)<=(m-2)) | (1+i=m-1 & 2<=(m+arr)))) & 
+ x!=null & (i+1)<m & x=i+arr & 1+i=i_81 & m=m_82 |-  exists(m_90:exists(flted_16_91:i_81=i & m_82=m & flted_16_91=1+i_81 & 
+                                x=i_81+arr & (i_81+1)<m_82 & m_90=m_82 & 
+                                x!=null & 
+                                (((((0-arr)+1)<=flted_16_91 & 
+                                   flted_16_91<=(m_90-2)) | 
+                                  (flted_16_91=m_90-1 & 2<=(m_90+arr)))))). LOCS:[1;21;22;0] (must-bug)]
+
+---------------------------------------------------------e 
+
+Why did we not have x=i+self in inp2 below?
+
+(==astsimp.ml#2777==)
+choose_smallest@1
+choose_smallest inp1 : x=i+self & i+1=m & Rec(v)
+choose_smallest inp2 :[(x,0,[])]
+choose_smallest@1 EXIT:[(x, true)]
+
+
+# why did we have [] for the base case equation?
+
+(==astsimp.ml#2777==)
+choose_smallest@1
+choose_smallest inp1 : x=i+self & i+1=m & Rec(v)
+choose_smallest inp2 :[(x,0,[])]
+   // why isn't this (x,0,[x=i+self])? why []?
+choose_smallest@1 EXIT:[]
+
+(==astsimp.ml#2777==)
+choose_smallest@2
+choose_smallest inp1 : flted_16_16=1+i & x=i+self & (i+1)<m & m_17=m
+choose_smallest inp2 :[(self,1,[]),(x,0,[ x=i+self])]
+               // can did we use self here, which is later dropped?
+choose_smallest@2 EXIT:[(x, x=i+self)]
+
+# FIXED
+
+# why inconsistent roots?
+
+!!! **astsimp.ml#2753:inconsistent roots:[[],[(x, x=i+self)]]
+
+
+# why identical answers?
+
+ <1>emp&v=5 & arr=x-i & i<=(m-2)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  Fold ==>  SEARCH ==>  COND ==>  Match(arr,arr) ==>  SEARCH ==>  Match(x,x_85)]]
+
+<2>emp&v=5 & arr=x-i & i<=(m-2)&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  COND ==>  Fold ==>  SEARCH ==>  COND ==>  Match(arr,arr) ==>  SEARCH ==>  Match(x,x_235)]]
+
+=================================================================================
+# ex3b.slk
+
+# why do we have pushing to infer?
+
+ es_trace:  SEARCH ==>  Fold
+ es_infer_vars_rel: [Rec]
+!!! **context.ml#902:lhs_w_rhs_inst: m=m_82 & flted_21_56=i_81 & flted_21_56=1+i & v=5 & x=i+arr & (i+1)<m & 
+ x!=null & flted_21_56<m & i_81+1=m_82 & x_86=i_81+arr
+!!! **context.ml#903:rhs: x=x_86
+!!! **context.ml#904:r:false
+!!!:0: 0: **WARNING****context.ml#909:pushing to infer
+!!!
+=================================================================================
+=================================================================================

@@ -1,0 +1,77 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> .
+print residue.
+
+checkentail x::arrI<_>  |- y::arr_seg<0,2> & y=x .
+print residue.
+expect Valid.
+
+// checkentail x::arrI<_> |- x::arr_seg<1,n> .
+// print residue.
+
+
+// checkentail x::arrI<_>  |- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+
+// checkentail x::arr_seg<i,n> & i<n & y=x+i+1|- y::arrI<_>.
+// print residue.
+// expect Valid.
+
+// checkentail x::arrI<_> & y+2=x |- y::arr_seg<1,n>.
+// print residue.
+// expect Valid.
+
+/*
+# ex14c.slk
+
+Did we not use LHS /\ RHS |- x=y? where C= LHS & RHS?
+
+       C |- x=y
+  -------------------------------------match node
+      x::arr<v1> |- y::arr<v2>
+
+Can we prune out match of x,z and it is unlikely..
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- z::arrI<_> & z=x+1.
+print residue.
+expect Valid.
+
+
+(==context.ml#3810==)
+process_matches@1
+process_matches inp1 :lhs_h: x::arrI<Anon_13>@M * y::arrI<Anon_14>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: x::arrI<Anon_13>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: y::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: y::arrI<Anon_14>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: z::arrI<Anon_15>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@1 EXIT: Prio:-1
+ SEARCH =>[
+  Prio:1
+  Match =>;
+  Prio:1
+  Match =>
+  ]
+
+
+*/

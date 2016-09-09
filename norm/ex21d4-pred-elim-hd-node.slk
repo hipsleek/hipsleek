@@ -1,0 +1,22 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred h<> == self::node<a,b>
+  inv self!=null.
+
+pred g<> == self::h<>
+  inv self!=null.
+
+pred_reuse[*][*].
+print views.
+
+pred_unfold[*].
+print views.
+
+

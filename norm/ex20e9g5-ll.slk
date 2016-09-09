@@ -1,0 +1,45 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+pred_prim foo<p:node>.
+
+
+lemma_unsafe "compl" self::foo<p> * p::node<_,yy> -> self::node<_,q>*q::foo<yy>.
+
+infer [] x::foo<y> * y::node<_,ss> |- x::node<_,r>.
+print residue.
+
+/*
+# ex20e9g5.slk --dump-lemmas
+
+# need to add LHS signature to complex lemma
+
+[Lemma "compl":  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]==> (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head match:foo
+ body view:node
+ body pred_list:[foo]
+ coercion_univ_vars: []
+ materialized vars:  []
+ coercion_case: Complex
+ head:  self::foo<y>@M * y::node<Anon_11,ss>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists Anon_12,q: self::node<Anon_12,q>@M * q::foo<ss>@M&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists ss_28,Anon_11,y: self::foo<y>@M * y::node<Anon_11,ss_28>@M&ss_28=ss&
+{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[q](exists ss_24,
+   Anon_12: self::node<Anon_12,q>@M * q::foo<ss_24>@M&ss_24=ss&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: []
+ coercion_case: Complex
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM_UNSAFE
+ coercion_fold: None
+
+
+*/

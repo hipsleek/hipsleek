@@ -1,0 +1,108 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred QQ<sp,p> ==
+  self::char_star<0,p> & sp=self
+  or self::char_star<v,q>*q::QQ<sp,p> & v!=0
+  inv self!=null & sp!=null.
+
+ HeapPred U(char_star x,char_star y,char_star y).
+
+ lemma_unsafe self::QQ<sp,p> <- U(self,sp,q)*q::char_star<0,p>.
+ 
+ infer [U,@pure_field,@classic] U(self,sp,q)*q::char_star<0,p> 
+        |- self::char_star<0,p> & sp=self.
+
+ print residue.
+
+/*
+# ex16e1.slk
+
+ infer [U,@pure_field,@classic] U(self,sp,q)*q::char_star<0,p> 
+        |- self::char_star<0,p> & sp=self.
+
+# base-case unfold seems to have failed:
+
+!!! **solver.ml#12895:inst_vs:[]
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,sp,q) |#| q::char_star<flted_15_101,p>@M --> emp&self=q]
+
+ $  add HP_XX on the RHS; add pure guard flted_15_101=0
+
+  U(self,sp,q) |#| q::char_star<flted_15_101,p> & flted_15_101=0
+     --> HP_XX(self@NI,sp@NI,q@NI) & emp&self=q
+
+ (ii) strengthen match_res_compatible info (inst_vs)
+     for smarter base-case-unfold
+
+-----------------------
+
+(==solver.ml#12898==)
+do_unfold_hp_rel@4@3@2
+do_unfold_hp_rel inp1 :  U(self,sp,q) * q::char_star<flted_15_101,p>@M&flted_15_101=0&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_122; flted_16_123]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@leak,@pure_field]
+ es_evars: [p_122; flted_16_123]
+ es_rhs_eqset: [sp:self; p_122:p]
+ es_trace:  SEARCH ==>  BaseCaseUnfold
+ es_infer_vars_hp_rel: [U]
+do_unfold_hp_rel inp2 :U
+do_unfold_hp_rel inp3 :[self,sp,q]
+do_unfold_hp_rel inp4 : self::char_star<flted_16_123,p_122>@M
+do_unfold_hp_rel@4 EXIT: failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  self!=null |-  sp=self. LOCS:[15;16] (may-bug)
+    fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+  }
+[[ SEARCH ==>  BaseCaseUnfold ==>  Match(q,self)]]false
+
+
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+push_list(es_infer_hp_rel):[ U(self,sp,q) |#| q::char_star<flted_15_101,p>@M --> emp&self=q]
+
+Updated lemma store with unsafe repo::[lem_12]
+!!! **WARNING****solver.ml#9516:do_base_unfold_hp_rel (TBI)
+Entail (1) : Fail.(may) cause:UnionR[**solver.ml#8362:, self!=null |-  sp=self. LOCS:[17;18] (may-bug)]
+
+(==solver.ml#13693==)
+process_action#4@4@2
+process_action#4 inp1 : Unfold 1 =>
+   LHS: U(self,sp,q)
+   RHS: self::char_star<flted_16_123,p_122>@M
+process_action#4 inp2 :estate:  U(self,sp,q) * q::char_star<flted_15_101,p>@M&flted_15_101=0&
+{FLOW,(20,21)=__norm#E}[]
+ es_evars: [p_122; flted_16_123]
+ es_gen_impl_vars(E): []
+ es_infer_obj: [@leak,@pure_field]
+ es_evars: [p_122; flted_16_123]
+ es_rhs_eqset: [sp:self; p_122:p]
+ es_trace:  SEARCH
+ es_infer_vars_hp_rel: [U]
+ es_proof_traces: 
+   [U(self,self,q) * q::char_star<flted_15_101,p>@M&
+    flted_15_101=0:self::char_star<flted_16_123,p>@M&flted_16_123=0&
+    {FLOW,(20,21)=__norm#E}[]]
+process_action#4 inp3 :conseq: self::char_star<flted_16_123,p_122>@M&flted_16_123=0 & sp=self & p_122=p&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp4 :lhs_b: U(self,sp,q) * q::char_star<flted_15_101,p>@M&flted_15_101=0&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4 inp5 :rhs_b: self::char_star<flted_16_123,p_122>@M&flted_16_123=0 & sp=self & p_122=p&
+{FLOW,(20,21)=__norm#E}[]
+process_action#4@4 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  self!=null |-  sp=self. LOCS:[15;16] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  Unfold 1 ==>  Match(q,self)]]
+ CEX:false
+
+*/

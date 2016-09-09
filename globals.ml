@@ -5,6 +5,8 @@ open VarGen
 (* module Lb = Label_only *)
 (* circular with Lb *)
 
+let sleek_num_to_verify = ref (-1)
+let sleek_print_residue = ref true
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
@@ -47,11 +49,15 @@ let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
-let ptr_arith_flag = ref false
+let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
 type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
+
+let is_lemma_ahead m = match m with
+  | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
+  | _ -> false
 
 type lemma_origin =
   | LEM_USER          (* user-given lemma *)
@@ -91,6 +97,7 @@ let eq_ho_flow_kind k1 k2 =
   | _ -> false
 
 let ho_always_split = ref false
+let contra_ho_flag = ref true
 
 let gen_lemma_action_invalid = -1
 
@@ -247,12 +254,27 @@ let string_of_view_kind k = match k with
 
 let is_undef_typ t =
   match t with
-  |UNK |RelT _ |HpT |UtT _ -> true
+  | UNK | RelT _ | HpT | UtT _ -> true
   | _ -> false 
+
+
+let is_ptr_arith t =
+  match t with
+  | Named id -> true (* String.compare id "" != 0 *)
+  | Array _ -> true
+  | _ -> false
 
 let is_node_typ t =
   match t with
-  | Named id -> String.compare id "" != 0
+  | Named id -> true (* String.compare id "" != 0 *)
+  | _ -> false
+
+let is_possible_node_typ t =
+  match t with
+  | Named id -> true (* String.compare id "" != 0 *)
+  | TVar _ -> true
+   (* Unknown can also be a node *)
+  | UNK -> true
   | _ -> false
 
 let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
@@ -578,6 +600,8 @@ let pr_list f xs = pr_list_brk "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
 
+let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
@@ -607,6 +631,9 @@ let rec string_of_typ (x:typ) : string = match x with
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
 ;;
+
+let string_of_typed_ident (typ,id) =
+  "("^(string_of_typ typ)^","^id^")"
 
 let is_RelT x =
   match x with
@@ -765,7 +792,9 @@ let is_null name =
   name == null_name
 
 let is_null_type t  =
-  t == null_type
+  match t with
+  | Named "" -> true
+  | _ -> false
 
 let inline_field_expand = "_"
 
@@ -792,7 +821,7 @@ let eres_name = "eres"
 let self = "self"
 
 let constinfinity = "ZInfinity"
-let deep_split_disjuncts = ref false
+let deep_split_disjuncts = ref true (* false *)
 let check_integer_overflow = ref false
 
 let preprocess_disjunctive_consequence = ref false
@@ -894,6 +923,7 @@ let dis_base_case_unfold = ref false
 let enable_split_lemma_gen = ref false
 let enable_lemma_rhs_unfold = ref false
 let enable_lemma_lhs_unfold = ref false
+let enable_lemma_unk_unfold = ref true
 let allow_lemma_residue = ref false
 let allow_lemma_deep_unfold = ref true
 let allow_lemma_switch = ref true
@@ -905,7 +935,15 @@ let allow_lemma_fold = ref true
 (* unsound if false for lemma/bugs/app-t2c1.slk *)
 
 let allow_lemma_norm = ref false
+let show_push_list = ref (None:string option)
+let show_push_list_rgx = ref (None:Str.regexp option)
+
+let old_unsound_no_progress = ref false
 let old_norm_w_coerc = ref false
+let old_keep_all_matchres = ref false
+
+let old_do_match_infer_heap = ref true
+let old_incr_infer = ref false
 
 (* Enable exhaustive normalization using lemmas *)
 let allow_exhaustive_norm = ref true
@@ -914,6 +952,7 @@ let dis_show_diff = ref false
 
 (* sap has moved to VarGen; needed by debug.ml *)
 let fo_iheap = ref true
+let sa_part = ref false
 
 let prelude_is_mult = ref false
 
@@ -1016,7 +1055,7 @@ let pred_elim_dangling = ref true
 (* let sa_inlining = ref false *)
 
 let sa_sp_split_base = ref false
-let sa_pure_field = ref false
+(* let sa_pure_field = ref false *)
 
 let sa_pure = ref true
 
@@ -1065,7 +1104,9 @@ let sa_fix_bound = ref 2
 
 let norm_cont_analysis = ref true
 
-let en_norm_ctx = ref true
+let sep_pure_fields = ref false
+
+let en_norm_ctx = ref false (* true - not suitable for inference *)
 
 let en_trec_lin = ref false
 
@@ -1073,7 +1114,9 @@ let en_trec_lin = ref false
 let cyc_proof_syn = ref true
 (* let lemma_infer = ref false *)
 
+(* turn off printing during lemma proving? *)
 let lemma_ep = ref true
+let lemma_ep_verbose = ref false 
 
 let dis_sem = ref false
 
@@ -1272,18 +1315,61 @@ let assert_nonlinear = ref false
 let assert_unsound_false = ref false
 let assert_no_glob_vars = ref false
 
+let new_rm_htrue = ref true
+let new_infer_large_step = ref true
+let infer_back_ptr = ref true
+let old_infer_complex_lhs = ref false
+let old_coer_target = ref false
+let old_search_always = ref false (* false *)
+let old_lemma_unfold = ref false (* false *)
+let old_field_tag = ref false (* false *)
+let new_trace_classic = ref false (* false *)
+let old_pred_extn = ref false (* false *)
+let old_lemma_switch = ref false (* false *)
+let old_free_var_lhs = ref false (* false *)
+let old_tp_simplify = ref false (* false *)
+let old_univ_lemma = ref false (* false *)
+let old_compute_act = ref false (* false *)
+let new_heap_contra = ref true 
+let mkeqn_opt_flag = ref true (* false *)
+let old_view_equiv = ref false (* false *)
+  (* false here causes ex21u3e7.slk to go into a loop FIXED *)
+let cond_action_always = ref false
+let rev_priority = ref false
+
 let old_collect_false = ref false
+let old_collect_hprel = ref false
+let old_infer_hprel_classic = ref false
+let old_classic_rhs_emp = ref false
+let old_post_conv_impl = ref true (* affected by incr/ex14d.ss *)
+let old_post_impl_to_ex = ref true
+let old_keep_triv_relass = ref false
+let old_mater_coercion = ref false
+let old_infer_heap = ref false
+let old_fvars_as_impl_match = ref true
+let old_base_case_fold_hprel = ref false
+let old_base_case_unfold_hprel = ref false
+let warn_do_match_infer_heap = ref false
 let warn_nonempty_perm_vars = ref false
+let warn_trans_context = ref false
+let warn_post_free_vars = ref false
+let warn_fvars_rhs_match = ref false
 let warn_free_vars_conseq = ref false
 let old_infer_collect = ref false
+let old_infer_hp_collect = ref false
 let old_base_case_unfold = ref false
 let old_impl_gather = ref false
 let old_parse_fix = ref false
 let hrel_as_view_flag = ref false
+let init_para_flag = ref false
 let adhoc_flag_1 = ref false
 let adhoc_flag_2 = ref false
 let adhoc_flag_3 = ref false
+let adhoc_flag_4 = ref false
+let adhoc_flag_5 = ref false
+let adhoc_flag_6 = ref false
 let old_keep_absent = ref false
+let old_univ_vars = ref false
 let old_empty_to_conseq = ref true (* false *)
 let weaker_pre_flag = ref true
 
@@ -1329,10 +1415,12 @@ let wrap_exist = ref false
 
 let move_exist_to_LHS = ref false
 
+let push_exist_deep = ref false
+
 let max_renaming = ref false
 
 
-let anon_exist = ref true
+let anon_exist = ref false
 
 let simplify_pure = ref false
 
@@ -1518,13 +1606,47 @@ let infer_const = ref ""
 let tnt_verbosity = ref 1
 let tnt_infer_lex = ref true
 let tnt_add_post = ref true (* disabled with @term_wo_post or --dis-term-add-post *)
+let inc_add_post = ref false
 let tnt_abd_strategy = ref 0 (* by default: abd_templ *)
 let tnt_infer_nondet = ref true
 
 let nondet_int_proc_name = "__VERIFIER_nondet_int"
 let nondet_int_rel_name = "nondet_int__"
 
-let hip_sleek_keywords = ["res"]
+let hip_sleek_keywords = ["res"; "max"; "min"]
+
+let rec_field_id = "REC"
+
+type infer_extn = {
+  extn_pred: ident;
+  mutable extn_props: ident list;
+}
+
+let string_of_infer_extn extn = 
+  pr_pair idf (pr_list idf) (extn.extn_pred, extn.extn_props)
+
+let mk_infer_extn id props = {
+  extn_pred = id;
+  extn_props = props; }
+
+let add_avai_infer_extn_lst lst extn =
+  try
+    let pred, props = extn.extn_pred, extn.extn_props in
+    let pred_extn = List.find (fun extn -> eq_str extn.extn_pred pred) lst in
+    let () = pred_extn.extn_props <- (pred_extn.extn_props @ props) in
+    lst
+  with _ -> lst @ [extn]
+
+let rec merge_infer_extn_lsts lsts = 
+  match lsts with
+  | [] -> []
+  | l::ls ->
+    let merged_ls = merge_infer_extn_lsts ls in
+    List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l
+
+let expand_infer_extn_lst lst =
+  List.concat (List.map (fun extn -> 
+    List.map (fun prop -> (extn.extn_pred, prop)) extn.extn_props) lst)
 
 type infer_type =
   | INF_TERM (* For infer[@term] *)
@@ -1535,6 +1657,7 @@ type infer_type =
   | INF_SHAPE_PRE (* For infer[@shape_post] *)
   | INF_SHAPE_POST (* For infer[@shape_post] *)
   | INF_SHAPE_PRE_POST (* For infer[@shape_prepost] *)
+  | INF_PURE_FIELD (* For infer[@pure_field] *)
   | INF_ERROR (* For infer[@error] *)
   | INF_DE_EXC (* For infer[@dis_err] *)
   | INF_ERR_MUST (* For infer[@err_must] *)
@@ -1542,6 +1665,7 @@ type infer_type =
   | INF_ERR_MUST_ONLY (* For infer[@err_must_only] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
+  | INF_ANA_NI
   | INF_IMM (* For infer[@imm] *)
   | INF_FIELD_IMM (* For infer[@field_imm] *)
   | INF_ARR_AS_VAR (* For infer[@arrvar] *)
@@ -1553,6 +1677,14 @@ type infer_type =
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
+  | INF_EXTN of infer_extn list
+
+let eq_infer_type i1 i2 = 
+  match i1, i2 with
+  | INF_EXTN _, INF_EXTN _ -> true
+  | INF_EXTN _, _ -> false
+  | _, INF_EXTN _ -> false
+  | _, _ -> i1 == i2
 
 (* let int_to_inf_const x = *)
 (*   if x==0 then INF_TERM *)
@@ -1579,7 +1711,9 @@ let string_of_inf_const x =
   | INF_ERR_MUST_ONLY -> "@err_must_only"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
+  | INF_ANA_NI -> "@ana_ni"
   | INF_IMM -> "@imm"
+  | INF_PURE_FIELD -> "@pure_field"
   | INF_FIELD_IMM -> "@field_imm"
   | INF_ARR_AS_VAR -> "@arrvar"
   | INF_EFA -> "@efa"
@@ -1590,6 +1724,40 @@ let string_of_inf_const x =
   | INF_VER_POST -> "@ver_post"
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
+  | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
+
+let inf_const_of_string s =
+  match s with
+  | "@term" -> INF_TERM
+  | "@term_wo_post" -> INF_TERM_WO_POST
+  | "@post" -> INF_POST
+  | "@post_n" -> INF_POST
+  | "@pre" -> INF_PRE
+  | "@shape" -> INF_SHAPE
+  | "@shape_pre" -> INF_SHAPE_PRE
+  | "@shape_post" -> INF_SHAPE_POST
+  | "@shape_prepost" -> INF_SHAPE_PRE_POST 
+  | "@error" -> INF_ERROR
+  | "@dis_err" -> INF_DE_EXC
+  | "@err_must" -> INF_ERR_MUST
+  | "@pre_must" -> INF_PRE_MUST
+  | "@err_must_only" -> INF_ERR_MUST_ONLY
+  | "@err_may" -> INF_ERR_MAY
+  | "@size" -> INF_SIZE
+  | "@imm" -> INF_IMM
+  | "@pure_field" -> INF_PURE_FIELD
+  | "@field_imm" -> INF_FIELD_IMM
+  | "@arrvar" -> INF_ARR_AS_VAR
+  | "@efa" -> INF_EFA
+  | "@dfa" -> INF_DFA
+  | "@flow" -> INF_FLOW
+  | "@leak" -> INF_CLASSIC
+  | "@par" -> INF_PAR
+  | "@ver_post" -> INF_VER_POST
+  | "@imm_pre" -> INF_IMM_PRE
+  | "@imm_post" -> INF_IMM_POST
+  | _ -> failwith (s ^ " is not supported in command line.")
+  
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1667,44 +1835,60 @@ class inf_obj  =
       if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
     method set_init_arr s = 
-      let helper r c =
-        let reg = Str.regexp r in
-        try
-          begin
-            Str.search_forward reg s 0;
-            arr <- c::arr;
-            (* Trung: temporarily disable printing for svcomp15, undo it later *) 
-            (* print_endline_q ("infer option added :"^(string_of_inf_const c)); *)
-          end
-        with Not_found -> ()
-      in
       begin
-        helper "@term"          INF_TERM;
-        helper "@term_wo_post"  INF_TERM_WO_POST;
-        helper "@pre"           INF_PRE;
-        helper "@post"          INF_POST;
-        helper "@imm"           INF_IMM;
-        helper "@field_imm"     INF_FIELD_IMM;
-        helper "@arrvar"        INF_ARR_AS_VAR;
-        helper "@shape"         INF_SHAPE;
-        helper "@shape_pre"     INF_SHAPE_PRE;
-        helper "@shape_post"    INF_SHAPE_POST;
-        helper "@shape_prepost" INF_SHAPE_PRE_POST;
-        helper "@error"         INF_ERROR;
-        helper "@dis_err"       INF_DE_EXC;
-        helper "@err_may"       INF_ERR_MAY;
-        helper "@err_must"      INF_ERR_MUST;
-        helper "@err_must_only" INF_ERR_MUST_ONLY;
-        helper "@size"          INF_SIZE;
-        helper "@efa"           INF_EFA;
-        helper "@dfa"           INF_DFA;
-        helper "@flow"          INF_FLOW;
-        helper "@leak"          INF_CLASSIC;
-        helper "@par"           INF_PAR;
-        helper "@ver_post"      INF_VER_POST; (* @ato, @arr_to_var *)
-        helper "@imm_pre"       INF_IMM_PRE;
-        helper "@imm_post"      INF_IMM_POST;
-        (* let x = Array.fold_right (fun x r -> x || r) arr false in *)
+        let inf_cmds = Str.split (Str.regexp "@") s in
+        let inf_cmds = List.map (fun cmd -> "@" ^ cmd) inf_cmds in
+        (* let () = print_endline_q ("inf cmd: " ^ s) in                                    *)
+        (* let () = print_endline_q ("inf_cmds: " ^ (pr_list (fun cmd -> cmd) inf_cmds)) in *)
+        let inf_const_lst = List.fold_left (fun acc cmd ->
+            try acc @ [(inf_const_of_string cmd)]
+            with _ -> print_endline_q (cmd ^ " is not supported in command line."); acc
+          ) [] inf_cmds
+        in
+        let () = arr <- inf_const_lst @ arr in
+        let () = print_endline_q ("infer option added: " ^ (pr_list string_of_inf_const inf_const_lst)) in
+      
+      (* let helper i r c =                                                                                             *)
+      (*   let reg = Str.regexp r in                                                                                    *)
+      (*   try                                                                                                          *)
+      (*     begin                                                                                                      *)
+      (*       Str.search_forward reg s i; (* This search causes information lost, e.g. "@shape_prepost@post_n@term" *) *)
+      (*       arr <- c::arr;                                                                                           *)
+      (*       (* Trung: temporarily disable printing for svcomp15, undo it later *)                                    *)
+      (*       print_endline_q ("infer option added :"^(string_of_inf_const c));                                        *)
+      (*       i + (String.length (string_of_inf_const c))                                                              *)
+      (*     end                                                                                                        *)
+      (*   with Not_found -> i                                                                                          *)
+      (* in                                                                                                             *)
+      (* begin                                                                                                          *)
+      (*   let i = helper 0 "@term_wo_post"  INF_TERM_WO_POST in (* same prefix with @term *)                           *)
+      (*   let i = helper i "@pure_field"    INF_PURE_FIELD in                                                          *)
+      (*   let i = helper i "@field_imm"     INF_FIELD_IMM in                                                           *)
+      (*   let i = helper i "@arrvar"        INF_ARR_AS_VAR in                                                          *)
+      (*   let i = helper i "@shape_prepost" INF_SHAPE_PRE_POST in (* same prefix with @shape_pre *)                    *)
+      (*   let i = helper i "@shape_pre"     INF_SHAPE_PRE in                                                           *)
+      (*   let i = helper i "@shape_post"    INF_SHAPE_POST in                                                          *)
+      (*   let i = helper i "@shape"         INF_SHAPE in                                                               *)
+      (*   let i = helper i "@term"          INF_TERM in                                                                *)
+      (*   let i = helper i "@pre"           INF_PRE in                                                                 *)
+      (*   let i = helper i "@post"          INF_POST in                                                                *)
+      (*   let i = helper i "@imm"           INF_IMM in                                                                 *)
+      (*   let i = helper i "@error"         INF_ERROR in                                                               *)
+      (*   let i = helper i "@dis_err"       INF_DE_EXC in                                                              *)
+      (*   let i = helper i "@err_may"       INF_ERR_MAY in                                                             *)
+      (*   let i = helper i "@err_must_only" INF_ERR_MUST_ONLY in (* same prefix with @err_must *)                      *)
+      (*   let i = helper i "@err_must"      INF_ERR_MUST in                                                            *)
+      (*   let i = helper i "@size"          INF_SIZE in                                                                *)
+      (*   let i = helper i "@efa"           INF_EFA in                                                                 *)
+      (*   let i = helper i "@dfa"           INF_DFA in                                                                 *)
+      (*   let i = helper i "@flow"          INF_FLOW in                                                                *)
+      (*   let i = helper i "@leak"          INF_CLASSIC in                                                             *)
+      (*   let i = helper i "@classic"       INF_CLASSIC in                                                             *)
+      (*   let i = helper i "@par"           INF_PAR in                                                                 *)
+      (*   let i = helper i "@ver_post"      INF_VER_POST in (* @ato, @arr_to_var *)                                    *)
+      (*   let i = helper i "@imm_pre"       INF_IMM_PRE in                                                             *)
+      (*   let i = helper i "@imm_post"      INF_IMM_POST in                                                            *)
+      (*   (* let x = Array.fold_right (fun x r -> x || r) arr false in *)                                              *)
         if arr==[] then failwith  ("empty -infer option :"^s) 
       end
     method is_empty  = arr==[]
@@ -1732,6 +1916,7 @@ class inf_obj  =
     method is_field_imm = self # get INF_FIELD_IMM
     method is_arr_as_var  = self # get INF_ARR_AS_VAR
     method is_imm  = self # get INF_IMM
+    method is_pure_field  = self # get INF_PURE_FIELD (* || !sa_pure_field *)
     (* immutability inference *)
     method is_field = (self # get INF_FIELD_IMM)
     method is_shape  = self # get INF_SHAPE
@@ -1755,11 +1940,37 @@ class inf_obj  =
     method is_err_may  = not(self # get INF_DE_EXC) 
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
+    method is_ana_ni  = self # get INF_ANA_NI
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA
     method is_classic  = self # get INF_CLASSIC
     method is_par  = self # get INF_PAR
     method is_add_flow  = self # get INF_FLOW
+    method is_extn = 
+      List.exists (fun inf -> 
+        match inf with | INF_EXTN _ -> true | _ -> false) arr
+    method get_infer_extn_lst = 
+      try
+        let inf_extn = List.find (fun inf ->
+          match inf with | INF_EXTN _ -> true | _ -> false) arr in
+        match inf_extn with
+        | INF_EXTN lst -> lst
+        | _ -> []
+      with _ -> []
+    method add_infer_extn_lst pred props = 
+      let rec helper inf_obj_lst pred props =
+        let inf_extn = mk_infer_extn pred props in
+        match inf_obj_lst with
+        | [] -> [(INF_EXTN [inf_extn])]
+        | inf::infs ->
+          (begin match inf with
+          | INF_EXTN lst ->
+            let n_lst = add_avai_infer_extn_lst lst inf_extn in
+            (INF_EXTN n_lst)::infs
+          | _ -> inf::(helper infs pred props)
+          end)
+      in
+      arr <- (helper arr pred props)
     (* method get_arr  = arr *)
     method is_infer_type t  = self # get t
     method get_lst = arr
@@ -1771,7 +1982,10 @@ class inf_obj  =
       List.filter is_selected arr
     method set c  = if self#get c then () else arr <- c::arr
     method set_list l  = List.iter (fun c -> self # set c) l
-    method reset c  = arr <- List.filter (fun x-> not(c==x)) arr
+    method reset c  = arr <- List.filter (fun x -> not (eq_infer_type c x)) arr
+    method reset_list l  = arr <- List.filter (fun x-> List.for_all (fun c -> not (c=x)) l) arr
+    method reset_inf_shape = self # reset_list [INF_SHAPE_PRE_POST; INF_SHAPE_PRE; INF_SHAPE_POST; INF_SHAPE]
+    method reset_all = arr <- []
     (* method mk_or (o2:inf_obj) =  *)
     (*   let o1 = o2 # clone in *)
     (*   let l = self # get_lst in *)
@@ -1847,6 +2061,7 @@ class inf_obj_sub  =
                                   && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
     method is_imm_all  = super # is_imm || infer_const_obj # is_imm
+    method is_pure_field_all  = super # is_pure_field || infer_const_obj # is_pure_field
     (* method is__all  = super # is_ || infer_const_obj # is_ *)
     method is_ver_post_all  = super # is_ver_post || infer_const_obj # is_ver_post
     method is_par_all  = super # is_par || infer_const_obj # is_par
@@ -1870,6 +2085,7 @@ class inf_obj_sub  =
       let () = no # set_list arr in
       (* let () = print_endline ("Cloning :"^(no #string_of)) in *)
       no
+    method empty = arr <- []
   end;;
 
 let clone_sub_infer_const_obj_all () =
@@ -1885,6 +2101,10 @@ let clone_sub_infer_const_obj_sel () =
 let tnt_thres = ref 6
 let tnt_verbose = ref 1
 
+(* String Inference *)
+let new_pred_syn = ref true
+let pred_elim_node = ref false
+
 (* Template: Option for Template Inference *)
 let templ_term_inf = ref false
 let gen_templ_slk = ref false
@@ -1892,6 +2112,7 @@ let templ_piecewise = ref false
 
 (* Options for slicing *)
 let en_slc_ps = ref false
+let auto_eps_flag = ref true
 let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
 let dis_ps = ref false
 let dis_slc_ann = ref false
@@ -1917,8 +2138,10 @@ let do_infer_inv = ref false
 let do_test_inv = ref true (* false *)
 
 (** for classic frame rule of separation logic *)
-let opt_classic = ref false                (* option --classic is turned on or not? *)
-let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+(* let opt_classic = ref false                (\* option --classic is turned on or not? *\) *)
+(* replaced by check_is_classic () & infer_const_obj *)
+(* let do_classic_frame_rule = ref false      (\* use classic frame rule or not? *\) *)
+
 let dis_impl_var = ref false (* Disable implicit vars *)
 
 let show_unexpected_ents = ref true
@@ -1979,7 +2202,8 @@ let user_sat_timeout = ref false
 let imply_timeout_limit = ref 10.
 
 let dis_provers_timeout = ref false
-let sleek_timeout_limit = ref 0.
+let sleek_timeout_limit = ref 5.
+
 
 let dis_inv_baga () = 
   if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
@@ -2148,7 +2372,7 @@ let fresh_int () =
 (*   seq_number := !seq_number + 1; *)
 (*   !seq_number *)
 
-let string_compare s1 s2 =  String.compare s1 s2=0
+let string_eq s1 s2 =  String.compare s1 s2=0
 
 let fresh_ty_var_name (t:typ)(ln:int):string = 
   let ln = if ln<0 then 0 else ln in
@@ -2418,6 +2642,10 @@ let gen_field_ann t=
   | Named _ -> fresh_any_name field_rec_ann
   | _ -> fresh_any_name field_val_ann
 
+let gen_field_ann t =
+  if !old_field_tag then [gen_field_ann t]
+  else []
+
 let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
@@ -2471,5 +2699,41 @@ let prim_method_names = [ nondet_int_proc_name ]
 let is_prim_method pn = 
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
+let check_is_classic_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_CLASSIC in
+  if !new_trace_classic then print_endline ("Globals.check_is_classic: " ^ (string_of_bool r));
+  r
 
+let check_is_classic () = check_is_classic_local infer_const_obj
 
+let check_is_pure_field_local obj = 
+  let r = obj (* infer_const_obj *) # get INF_PURE_FIELD in
+  r
+
+let check_is_pure_field () = check_is_pure_field_local infer_const_obj
+
+type 'a regex_list = 
+  | REGEX_STAR
+  | REGEX_LIST of 'a list
+
+type regex_id_list = ident regex_list
+
+let string_of_regex_list pr m =
+  match m with
+  | REGEX_STAR -> "*"
+  | REGEX_LIST lst -> pr_list pr lst
+
+type regex_id_star_list = (ident * bool) regex_list
+
+let string_of_regex_star_list m = string_of_regex_list (fun (i,b) -> i^(if b then "*" else "")) m
+
+let string_of_regex_id_star_list =
+  string_of_regex_list (pr_pair idf string_of_bool)
+
+let build_sel_scc scc_lst get_name lst =
+  List.map 
+    (fun scc
+      -> List.map (fun c ->
+          List.find (fun v -> (get_name v)=c) lst
+        ) scc
+    ) scc_lst

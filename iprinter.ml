@@ -683,9 +683,9 @@ and  string_of_struc_formula c = match c with
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = string_of_struc_formula continuation in
     "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-  | F.EList b ->   List.fold_left  (fun a (l,c)-> 
+  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
       let l_s = (string_of_spec_label_def l) ^": " in
-      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
+      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
   (*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 
 
@@ -789,11 +789,9 @@ let rec string_of_exp = function
         ) in
         let newexp = (
           match idl with 
-            | ["val"] -> "__get_char_(" ^ base_str ^ ")"
             | _ -> "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
         ) in
         newexp
-        (*"__get_char_(" ^ base_str ^ ")" (*^ (concatenate_string_list idl "~~>")*)*)
   | Assign ({exp_assign_op = op;
     exp_assign_lhs = e1;
     exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
@@ -994,12 +992,33 @@ let string_of_barrier_decl b =
   "barrier: "^b.barrier_name^"<"^(string_of_int b.barrier_thc)^";"^(string_of_typed_var_list b.barrier_shared_vars) ^
   "\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
+let string_of_baga_list = 
+  let pr_exp = string_of_formula_exp in
+  pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) 
+
+let string_of_opt_baga = 
+  pr_opt (pr_list (pr_pair string_of_baga_list string_of_pure_formula))
+
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = 
   let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
+  let extn_str =
+    match v.view_derv_from with
+    | None -> ""
+    | Some regex_ids -> string_of_regex_id_star_list regex_ids
+  in
+  (* let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in *)
+  let pr_exp = string_of_formula_exp in
+  let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
   v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-  (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name       
-  ^" view_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
+  (string_of_struc_formula v.view_formula) 
+  ^ "\ninv " ^ (string_of_pure_formula v.view_invariant) 
+  ^ "\ninv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) 
+  ^ "\nview_data_name: " ^ v.view_data_name 
+  ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
+  ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
+  ^ "\nextends" ^ extn_str
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
@@ -1019,6 +1038,9 @@ let string_of_coerc_decl c =
   ^ "\t origin: " ^ (string_of_coerc_origin c.coercion_origin) ^ "\n"
   ^ "\t head: " ^ (string_of_formula c.coercion_head) ^ "\n"
   ^ "\t body:" ^ (string_of_formula c.coercion_body) ^ "\n"
+
+let string_of_coercion c = string_of_coerc_decl c
+
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
   | NoMod          -> (string_of_typ par.param_type) ^ " " ^ par.param_name
@@ -1227,6 +1249,8 @@ let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_
   (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
 ;;
 
+let string_of_pure_exp = string_of_formula_exp;;
+
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
@@ -1243,5 +1267,5 @@ Iast.print_coerc_decl_list := string_of_coerc_decl_list;;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;
-Ipure.print_id := string_of_id;
+Ipure.print_id := string_of_id
 

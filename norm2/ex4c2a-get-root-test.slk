@@ -1,0 +1,33 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b).
+infer[HP,@classic] b::cell<_>  |- HP(a,b).
+print residue.
+
+/*
+# norm/ex4b3.slk
+
+ infer[HP] b::cell<_>  |- HP(a,b).
+
+# Need to instiate b..
+
+!!! **context.ml#608:lhs_h: b::cell<Anon_11>@M
+!!! **context.ml#609:lhs_p: true
+!!! **context.ml#610:args:[a,b]
+!!! **context.ml#611:hp:HP
+!!! **context.ml#612:rhs_node: HP(a,b)
+!!! **context.ml#613:root:a
+!!! **context.ml#2947:process_matches (steps) :
+ ### LHS : b::cell<Anon_11>@M
+ ### RHS : HP(a,b)
+ ### matches :
+[ Type: Root
+ LHS: b::cell<Anon_11>@M
+ RHS: HP(a,b)
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [a]rhs_inst: []]
+
+*/

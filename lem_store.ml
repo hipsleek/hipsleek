@@ -1,6 +1,7 @@
 #include "xdebug.cppo"
 open Gen.Basic
 open Gen.BList
+open Cast
 
 let lem_pr = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
 let lem_pr_med = ref (fun (c:Cast.coercion_decl) -> "lem_store printer has not been initialized") 
@@ -19,13 +20,29 @@ class lemma_store =
 
     method add_left_coercion lem =
       let len = List.length lem in
-      if len>0 then num_left_lem <- num_left_lem + len;
+      if len>0 then 
+        begin
+        num_left_lem <- num_left_lem + len;
+        if !Globals.dump_lem_proc then 
+            begin
+              (* y_binfo_pp "XXXX add_LEFT_coercion"; *)
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       left_lem # push_list lem;
       num_left_lem_stk # push len
 
     method add_right_coercion lem =
       let len = List.length lem in
-      if len>0 then num_right_lem <- num_right_lem + len;
+      if len>0 then
+        begin
+          num_right_lem <- num_right_lem + len;
+          if !Globals.dump_lem_proc then 
+            begin
+              (* y_binfo_pp "XXXX add_RIGHT_coercion"; *)
+              y_binfo_hp (pr_list !lem_pr) lem;
+            end
+        end;
       right_lem # push_list lem;
       num_right_lem_stk # push len
 
@@ -65,8 +82,11 @@ class lemma_store =
       self # set_left_coercion left;
       self # set_right_coercion right
 
+    method get_complex_coercion =
+      List.filter (fun c -> c.coercion_case==Complex) left_lem # get_stk
+
     method get_left_coercion =
-      left_lem # get_stk
+      List.filter (fun c -> not(c.coercion_case==Complex)) left_lem # get_stk
 
     method get_right_coercion =
       right_lem # get_stk

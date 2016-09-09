@@ -1,0 +1,43 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+HeapPred P(char_star x).
+HeapPred H1(char_star x).
+
+infer [H1,P,@pure_field] H1(q) * s::char_star<v,q> & v!=0 |- P(q).
+print residue.
+/*  
+GOT:
+ <1>s::char_star<v,q>@M&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(q)&true --> P(q)&true]
+
+Expects:
+   H1(q) | s::char_star<v,q> --> P(q)
+*/
+
+
+infer [H1,P,@leak,@pure_field] H1(q) * s::char_star<v,q> & v=0 |- true.
+print residue.
+/* 
+
+GOT:
+ <1>emp&v=0&{FLOW,(20,21)=__norm#E}[]
+
+Expects:
+   H1(q) | s::char_star<v,q> --> emp 
+*/
+
+/*
+
+  P(s) -> s::chr<v,q>*H1(q)
+  H1(q) | s::chr<v,q> & v!=0 --> P(q) 
+  H1(q) | s::chr<v,q> & v=0 --> D(q)
+
+
+infer [H1,P,@leak] H1(q) * s::char_star<v,q> & v=0 |- emp.
+print residue.
+// fail
+
+*/

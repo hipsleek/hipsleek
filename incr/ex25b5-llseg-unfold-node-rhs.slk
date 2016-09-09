@@ -1,0 +1,36 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+infer [U1,@classic,@pure_field] x=null  |- U1(x).
+//infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
+//infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+print residue.
+expect Valid.
+
+
+/*
+# ex25b5.slk 
+
+infer [U1,@classic,@pure_field] x=null  |- U1(x).
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&x=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&x=null |#|3  --> U1(x)&true]
+[[ COND ==>  InferHeap]]
+
+
+
+*/

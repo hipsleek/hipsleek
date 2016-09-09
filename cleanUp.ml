@@ -56,7 +56,7 @@ let cleanUpFormulas_x (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.for
     let ante = x_add CF.subst elim ante in
     (*let conseq = subst fr t conseq in*)
     let svs = get_new_vars (CF.fv ante) (CF.fv conseq) in
-    CF.subst_all svs ante, CF.subst_all svs conseq 
+    x_add CF.subst_all svs ante, x_add CF.subst_all svs conseq 
 
 let cleanUpFormulas (ante:CF.formula) (conseq:CF.formula) : (CF.formula*CF.formula) = 
   let pr = !CF.print_formula in

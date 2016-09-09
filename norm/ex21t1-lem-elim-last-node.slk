@@ -1,0 +1,92 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+/*
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p 
+	or self::node<v, q> * q::lseg<p> & v!=0
+  inv true.
+*/
+/*
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+*/  
+
+pred app3a<> == self::node<0,null> 
+	or self::node<v, q> * q::app3a<> & q!=null & v!=0 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred UA(node x, int y).
+HeapPred UB(node x).
+HeapPred UC(node x, node y).
+HeapPred UD(node x, node y, int v).
+relation R(int v).
+
+/*
+lemma_infer [U,@pure_field] "L21t1"
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+lemma_infer [UA,@classic] "L21t1a"
+  self::app3a<> -> self::node<v,q>*UA(q,v).
+*/
+
+/*
+lemma_infer [U,R,@classic,@pure_field] "L21t1a"
+  self::app3a<> -> self::node<v,q>*U(q) & R(v).
+print residue.
+*/
+
+lemma_infer [UC,R,@classic,@pure_field] "L21t1c"
+  self::app3a<> -> UC(self, q) * q::node<v, null> & R(v).
+print residue.
+
+/*
+//not working
+lemma_infer [UD,@classic,@pure_field] "L21t1d"
+  self::app3a<> -> UD(self, q, v) * q::node<v, null>.
+print residue.
+*/
+
+shape_derive_view [UC].
+
+print views.
+
+/*
+lemma_infer [UB] "L21t1b"
+  self::app3a<> -> self::node<v,q>*UB(q).
+print residue.
+*/
+//shape_derive_view [UA].
+
+//pred_elim_hd_node [*].
+
+//print views.
+
+/*
+
+
+<1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&R(v_86)&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred rel: [RELDEFN R: ( flted_25_74=0) -->  R(flted_25_74); 
+                RELDEFN R: ( v_80!=0) -->  R(v_80); 
+                RELDEFN R: ( flted_25_74=0) -->  R(flted_25_74)]
+ inferred hprel: [U(q_87)&q_81!=null --> GP_88(q_87,q_81@NI)&true; 
+                  q_81::node<v_86,q_87>@M * GP_88(q_87,q_81@NI)&
+                   q_81!=null --> U(q_81)&true; 
+                  emp&flted_25_73=null --> U(flted_25_73)&true]
+[[ Match(self_L21t1a,self_L21t1a) ==>  COND ==>  (Lemma ==> L21t1a2 :(q_81,q_81)) ==> (left: L21t1a) ==>  Match(q_81,q_81) ==>  InferUnfold  ==> ||OR|| ==>  Match(self_L21t1a,self_L21t1a) ==>  UnmatchedRHSData]]
+
+*/

@@ -1,0 +1,44 @@
+data node2{
+     int val;
+     node2 next#REC;
+     node2 prev#REC;
+}.
+
+
+pred tree<> ==
+   emp & self=null
+or self::node2<_,p,q>*p::tree<>*q::tree<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+print views.
+
+pred ss<nnn> == extends [tree*] with size[REC]<nnn>.
+
+//pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+//shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+print views.
+
+/*
+# ex25a5.slk
+
+!!! **derive.ml#591:proc_view:(ll_ss,nnn)
+!!! **derive.ml#653:pure_lst to be added:[]
+!!! **derive.ml#654:= 0:[self]
+!!! **derive.ml#581:proc_data:(self,node,[Anon_12,p])
+!!! **derive.ml#581:proc_data:(p,node,[Anon_13,q])
+!!! **derive.ml#591:proc_view:(ll_ss,nnn_60)
+!!! **derive.ml#653:pure_lst to be added:[]
+!!! **derive.ml#654:= 0:[q,self]
+Exception processed: Not_found
+
+
+*/

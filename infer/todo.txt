@@ -103,6 +103,30 @@ hip works properly, as shown in ex6b.ss
 !!! **pi.ml#652:>>REL PRE :  P(m)
 !!! **pi.ml#653:>>PRE :  0<=m
 =========================================================================
+# infer/ex5.slk
+
+The above command is for post-cond pure inference.
+I wonder if we can test out pre-cond inference,
+and also top-down fix-point process here.
+
+!!! **fixcalc.ml#1043:Input of fixcalc: :Q:={[] -> [m,r] -> []: (r=0 && m=0 ||  (exists (r1: (exists (m1:m1=m-(1) && Q(m1,r1)))  && r=r1+2)) )
+};
+bottomupgen([Q], [2], SimHeur);
+!!! **fixcalc.ml#393:svls (orig):[[m:int,Q:RelT([]),r:int]]
+!!! **fixcalc.ml#394:svl1 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#395:svl2 (from parse_fix):[[r:int,m:int]]
+!!! **fixcalc.ml#1071:Result of fixcalc (parsed): :[ r=2*m & m>=0]
+!!! fixpoint2:[( Q(m,r), r=2*m & m>=0)]
+
+Would be good to give output similar to hip:
+!!! fixcalc file name: logs/fixcalc.inf
+!!! **pi.ml#619:bottom_up_fp0:[( Q(m,res), m>=0 & 2*m=res)]
+!!! **pi.ml#636:fixpoint:[( Q(m,res), m>=0 & 2*m=res, P(m), 0<=m)]
+!!! **pi.ml#650:>>REL POST :  Q(m,res)
+!!! **pi.ml#651:>>POST:  m>=0 & 2*m=res
+!!! **pi.ml#652:>>REL PRE :  P(m)
+!!! **pi.ml#653:>>PRE :  0<=m
+
 =========================================================================
 =========================================================================
 =========================================================================

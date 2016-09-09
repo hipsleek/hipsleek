@@ -1,0 +1,62 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+ //infer [@classic,@pure_field] U(x,q)*q::char_star<0,p>  |- x::WFG<p>.
+ //[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  Match(UNK) ==>  SEARCH ==>  Match(q,q)]]
+
+ infer [U,@classic,@pure_field] U(x,q)*q::char_star<0,p>  |- x::char_star<0,p>.
+ print residue.
+ expect Valid.
+
+ infer [U,@classic,@pure_field] U(x,q)*q::char_star<0,p>  |- x::char_star<v,qq> * qq::WFG<p> & v!=0.
+ print residue.
+ expect Valid.
+
+
+/*
+# ex16c5a.slk
+
+ infer [U,@classic,@pure_field] U(x,q)*q::char_star<0,p>  |- x::char_star<0,p>.
+# avoid complex relational assumption
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_158(flted_31_157@NI,q@NI)&true |#|3  --> emp&
+                  flted_31_157=0; 
+                 HP_159(p,q@NI)&true |#|3  --> emp&true; 
+                 HP_160(q,x@NI)&true |#|3  --> emp&true; 
+                 U(x,q) * q::char_star<flted_31_132,p>@M&
+                  flted_31_132=0 |#|3  --> x::char_star<flted_31_157,p>@M * 
+                                           HP_158(flted_31_157@NI,q@NI) * 
+                                           HP_159(p,q@NI) * HP_160(q,x@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold ]]
+
+-------
+
+
+
+*/

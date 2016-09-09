@@ -1,0 +1,49 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U1(char_star x).
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+  HeapPred U2a(char_star x,char_star y).
+  HeapPred U3(char_star x,char_star y,char_star z).
+
+ lemma_unsafe self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+
+
+//(3).
+
+ infer [U1,@pure_field] U1(self) //*q::char_star<0,p> 
+    |- self::char_star<v,q2>*q2::WFG<p> & v!=0.
+
+/*
+ infer [U,@pure_field] U(self,q)*q::char_star<0,p> 
+    |- self::char_star<v,q2>*q2::char_star<0,p> & v!=0.
+*/
+ print residue.
+ expect Valid.
+/*
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(self,q)&true |#| q::char_star<flted_41_150,p>@M&
+                   true --> U(self,q)&true]
+[[ SEARCH ==>  (Lemma <== lem_12(UNK)) ==>  InferUnfold  ==>  SEARCH ==>  Match(q,q_169)]]
+*/
+

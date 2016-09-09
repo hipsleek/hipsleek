@@ -1,0 +1,41 @@
+# P & Q | R
+# <-> P | R & not(Q)
+
+
+P & Q <- 
+
+ P | not(Q)
+ <- P & Q
+
+Q -> P <-> not(Q) | P
+
+P & Q & (Q | not(Q)
+
+
+P | R & not(Q)
+
+
+P & Q 
+= P & Q & (Q | not(Q))
+
+(A | B) & C = A & C | B & C
+(A & B) | C = (A | C).(B|C)
+        = A.(B|C) | C.(B|C)
+        = A.B | A&C  | C&B | C
+
+P & Q | R  vs    P | (R & not(Q)
+
+P Q R   P&Q|R    P|(R&not(Q))
+=====  
+0 0 0     0       0
+0 0 1     1       1
+0 1 0     0       0
+0 1 1     1       0
+1 0 0     0       1
+1 0 1     1       1
+1 1 0     1       1
+1 1 1     1       1
+
+
+P & Q1 \/ R & Q3
+P & Q2 \/ R & Q4

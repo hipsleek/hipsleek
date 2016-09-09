@@ -1,0 +1,1369 @@
+ex6b.ss (due to incomplete same_base computation)
+
+# can we automatically determine ghost parameter 
+  base=a-i, based on the values of the parameters a,i?
+
+# can base be monomorphic recursive?
+
+void init2(arrI a,int i)
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg_zero<i,m>;
+{
+Exception Failure("**context.ml#750:view matching..") Occurred!
+===============================================================
+# ex6a5.slk -dre "choose_c" -trace-log-num 1 (FIXED)
+
+checkentail x::arr_seg<i+1,n> & r=x+i & r=x1+1 
+ |-  [j] x1::arr_seg<j,n> & j=i+1.
+print residue.
+
+# to support view matching with arithmetic ..
+
+Entail 2: EXCast. Failure("**context.ml#750:view matching..")
+: no residue 
+
+===============================================================
+# ex6a5b.slk -dre "choose_c"  (FIXED)
+
+checkentail x::arrI<5> & x=a+1
+ |-  x2::arrI<j> & x2=a+1.
+
+# alias set is coming from the right
+  but does not work with ptr aritmetic
+  (compare ex6a5c.slk)
+
+(==context.ml#3471==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<flted_24_45>@M
+choose_context inp2 :RHS node: x2::arrI<j>@M
+choose_context inp3 :LHS pure: x=1+a & flted_24_45=5
+choose_context inp4 :RHS pure: x2=1+a
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+===============================================================
+# ex6a5d.slk -dre "choose_c" (FIXED)
+
+checkentail base::arr_seg<i,n> & a=base+i 
+ |-  base2::arr_seg<j,n> & a=base2+i.
+
+!!! **context.ml#742:rhs_ptr:base2
+!!! **context.ml#736:rhs(eq):[ n_58=n, a=i+base2]
+!!! **context.ml#737:sel_rhs: a=i+base2
+
+# alias set for base_ptr does not work.
+  Is there a notion that two base-ptrs share the same root?
+  This is so if we can prove that 
+     base1-base_2 >= 0
+  They share some ptr vars that can be shown to be equiv.
+
+(====)
+choose_context@2
+choose_context inp1 :LHS node: base::arr_seg<i,n>@M
+choose_context inp2 :RHS node: base2::arr_seg<j,n_73>@M
+choose_context inp3 :LHS pure: a=i+base
+choose_context inp4 :RHS pure: a=i+base2 & n_73=n
+choose_context inp5 :right aliase:[(n_73,n)]
+choose_context@2 EXIT:[]
+===============================================================
+# ex6a5d1.slk 
+
+# logging below is wrong
+
+ log(bigger)(>4s)(4):(20.,[(SAT:63<3:Z3,5.);
+ (SAT:69<4:Z3,5.);(SAT:83<6:Z3,5.);(SAT:99<8:Z3,5.)])
+Total verification time: 0.157231 second(s)
+	Time spent in main process: 0.118078 second(s)
+	Time spent in child processes: 0.039153 second(s)
+===============================================================
+# ex6d3a.ss 
+
+arr_seg_sorted<i,n,mi> == x::arrI<mi> & i=n-1 
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0;
+
+# funny error message
+
+Exception occurred: Failure("predicate arr_seg_sorted does not have the correct number of arguments[flted_10_24,m2] vs [\"\",\"\",\"\"]")
+Error3(s) detected at main 
+===============================================================
+# ex6d3b.slk (FIXED x->a)
+
+checkentail
+  a::arrI<i> * base::arr_seg_sorted<i+1,n,i+1>
+   & x=base+i & i>=0 & i<n-1 & mi<=m2
+  |- base::arr_seg_sorted<i,n,i>.
+
+# why isn't folding working properly..
+
+ ### LHS : a::arrI<i>@M * base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ ### RHS : base::arr_seg_sorted<i_136,n_137,i_138>@M
+ ### matches :
+[ Type: Root
+ LHS: base::arr_seg_sorted<flted_15_103,n,flted_15_102>@M
+ RHS: base::arr_seg_sorted<i_136,n_137,i_138>@M
+ root_inst: None
+ lhs_rest: a::arrI<i>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+===============================================================
+# ex6d3d.slk (FIXED)
+
+# to improve actual root computation : (DONE)
+
+# folding still not working for arr_seg2 example..
+
+pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
+  |- base::arr_seg2<i,n>.
+
+# why isn't non-empty folding working properly..
+  actual root not correctly captured?
+
+!!! **astsimp.ml#2708:lst(choose smallest in each branch):
+  [[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+!!! **astsimp.ml#2711:TODO: ensuresame root for all branches:
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2714:TODO: lst(fresh_name):
+  [(x, i+1=n & x=i+self)]
+!!! **astsimp.ml#2741:Actual roots..:
+  [(x, i+1=n & x=i+self)]
+
+!!! **astsimp.ml#2710:lst(choose smallest in each branch):[[(x, i+1=n & x=i+self)],[(x, x=i+self)]]
+(====)
+simplify(TP)@19
+simplify(TP) inp1 : ((i+1=n & x=i+self) | x=i+self)
+simplify(TP)@19 EXIT: ((i+1=n & x=i+self) | x=i+self)
+
+
+Possibly empty
+--------------
+ actual_root: 
+  Some((x, x=i+self))
+
+Non-empty
+---------
+actual_root: 
+  None
+
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+===============================================================
+# ex6d3d2.slk (see ex6d3e.slk for examples) (FIXED)
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+expect Valid.
+
+!!! **context.ml#671:view_root_rhs:None
+!!! **context.ml#692:same_base:[]
+   ---> include also rhs? if existential?
+!!! **context.ml#715:lhs_p: 0<=j & x=j+base
+!!! **context.ml#723:lhs_nodes(ptr_arith):[x]
+!!! **context.ml#736:rhs(eq):[ x2=i_77+base]
+!!! **context.ml#737:sel_rhs: x2=i_77+base
+!!! **context.ml#751:rhs_inst_eq:[ x2=i_77+base]
+!!! **context.ml#752:rhs_ptr:x2
+!!! **context.ml#803:estate:  x::arrI<Anon_13>@M&0<=j & x=j+base&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [i_77]
+ es_gen_impl_vars(E): [x2; Anon_14]
+ es_evars: [i_77]
+
+# same base? existential var?
+===============================================================
+# ex6d3f1.slk (FIXED by adding eqn' into same base)
+
+checkentail a::arrI<i>@M& x=i+base & a=x & i>=0
+ |-  base::arr_seg_sorted<i,m,i> . 
+
+# transitive same_base via eq
+
+!!! **context.ml#739:rhs(eq):[ n_105=m, mi_104=i_89, a=i_88+base, flted_6_106=1+i_88]
+!!! **context.ml#740:sel_rhs: flted_6_106=1+i_88 & a=i_88+base
+!!! **context.ml#754:rhs_inst_eq:[ flted_6_106=1+i_88 & a=i_88+base]
+!!! **context.ml#755:rhs_ptr:a
+!!! **context.ml#671:view_root_rhs:Some((x_107, base=x_107-flted_6_106))
+!!! **context.ml#694:same_base:[(x,base)]
+!!! **context.ml#695:same_base_rhs:[(a,base)]
+!!! **context.ml#718:lhs_p: x=base+i & a=x & 0<=i
+!!! **context.ml#726:lhs_nodes(ptr_arith):[a]
+===============================================================
+# ex6d3f3.sl --pcp (FIXED)
+
+pred arr_seg_sorted<i,n,mi> == x1::arrI<mi> & x1=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+
+   actual_root: 
+  Some((x1, true))
+
+# Need to do consistent renaming for each branch.
+
+!!! **astsimp.ml#2712:lst(choose smallest in each branch):[[(x1, i+1=n & x1=i+se
+lf)],[(x, x=i+self)]]
+!!! **astsimp.ml#2681:need to rename root var
+!!! **astsimp.ml#2715:TODO: ensure same root for all branches:[(x1, true)]
+!!! **astsimp.ml#2718:TODO: lst(fresh_name):[(x1, true)]
+===============================================================
+# ex6d3d4.slk -dre "choose_c" (FIXED with sorting)
+
+  checkentail_exact
+  y::arrI<_> * x::arrI<_> & x=base+j & y=x+1 & j>=0 //& i<n 
+  |- base::arr_seg2<i,n>.
+
+
+<1>x::arrI<Anon_14>@M&j=i-1 & base=(x-i)+1 & y=x+1 & n=i+1 & 1<=i&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(y,x_110)]]
+
+# Sort list of matched item, so that smaller ones come first
+  esp for folding.
+
+--------------------------
+(==context.ml#3523==)
+choose_context@1
+choose_context inp1 :LHS node: y::arrI<Anon_13>@M * x::arrI<Anon_14>@M
+choose_context inp2 :RHS node: base::arr_seg2<i,n>@M
+choose_context inp3 :LHS pure: 0<=j & y=1+x & x=j+base
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[ Type: Root
+ LHS: y::arrI<Anon_13>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(y)
+ lhs_rest: x::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arrI<Anon_14>@M
+ RHS: base::arr_seg2<i,n>@M
+ root_inst: Some(x)
+ lhs_rest: y::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [x,y,base]rhs_inst: []rhs_infer: None]
+===============================================================
+# ex6d3d5.slk
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+
+Can we infer base:arrI from above?
+===============================================================
+# ex7a.slk
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv BG([],i=n&i>=0) | BG([x], x=self+i & i<n & i>=0).
+
+!!! **astsimp.ml#2113:baga_over_formula: 
+ emp&(exists(x:i=x-self & self<=x & x!=null & x<(n+self)) 
+     | (i=n & 0<=n))
+
+!!! **WARNING****astsimp.ml#2470:extr_exists_vars TBI
+===============================================================
+# ex7a1.slk -dre "h_formula_2_mem" --trace-log-num 25
+
+# unsound false:
+  baga over inv: [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+  baga over inv (unfolded): [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+
+@25! **cast.ml#1703:look_up_view_baga: baga= :Some([([(xxx,y)], xxx=i+self & y=n+self & i<=n & 0<=i)])
+@25! **cast.ml#1706:from_svs:[self,i,n]
+@25! **cast.ml#1707:to_svs:[base,i,n]
+@25! **cast.ml#1716:baga (subst)= :[([(xxx,y)], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **excore.ml#622:Omega mk_star_disj:start 1 invocations
+@25! **excore.ml#626:Omega mk_star_disj:end 1 invocations
+@25! **WARNING****cpure.ml#5900:TODO: get_pure**cpure.ml#5900:
+@25!:0: 0: **tpdispatcher.ml#2119:SAT #41
+@25!:0: 0: **tpdispatcher.ml#2120: xxx=1 & xxx=i+base & y=n+base & i<=n & 0<=i
+@25! **cast.ml#1723:baga (filtered)= :[([xxx], xxx=i+base & y=n+base & i<=n & 0<=i)]
+@25! **cast.ml#1726:baga (hulled)= :[xxx]
+@25! **cvutil.ml#916:baga(view_node):[xxx]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@23
+h_formula_2_mem inp1 : xxx::arrI<Anon_11>@M * self::arr_seg<flted_7_13,n_14>@M
+h_formula_2_mem inp2 : flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@23 EXIT: [[xxx,self,self]]
+
+(==cvutil.ml#1740==)
+h_formula_2_mem@24
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@24 EXIT: [[xxx,xxx]]
+
+(==cvutil.ml#1354==)
+h_formula_2_mem@25
+h_formula_2_mem inp1 : base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+h_formula_2_mem inp2 : true
+
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@25 EXIT: [[xxx,xxx]]
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  false.
+expect Fail.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+===============================================================
+# ex7a1b.slk (FIXED)
+
+# why is there a false..
+
+  view_domains: 
+   view arr_seg<i:int,n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+      
+  view vars: i,n
+  cont vars: n
+  unstructured formula: 
+    (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+    || (* lbl: *){2}->hfalse&false&{FLOW,(1,26)=__flow#E}[]
+
+================================================================
+# ex7a1b.slk -dre "ef_unsat\|.*enum\|get_spec_baga\|is_sat_tp" 
+
+# need fresh existential is_sat_tp..
+
+
+(====)
+is_sat_tp@31@25@1
+is_sat_tp inp1 : y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i
+is_sat_tp@31 EXIT:false
+
+(====)
+imply_mix_formula#1@25@1
+imply_mix_formula#1 inp1 : ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i))
+imply_mix_formula#1 inp2 :Some( ((i=n & 0<=i) | 
+  (y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+   (1+i+self)!=null & 0<=i)))
+imply_mix_formula#1 inp3 : 0<=i & i<=n & y=self+n & xxx=self+i & xxx!=null
+imply_mix_formula#1 inp4 : []
+imply_mix_formula#1@25 EXIT:(false,Some(([ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i],[ i=n & 0<=i, y=n+self & (1+i)<=n & 0<=(1+i) & 1+i+self=i+self & (1+i+self)!=null & 
+ (1+i+self)!=null & 0<=i])))
+
+===============================================================
+# ex7a1c.slk (FIXED by not unfolding ptr view for dupl unfolding)
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  i<=n.
+
+-dre "ef_unsat\|.*enum\|get_spec_baga\|add_epure" 
+
+Entail 5: Fail.(may) cause:OrL[
+infinite unfolding,
+valid
+]
+
+Validate 5: Expecting(3)Valid BUT got : Fail_May
+
+===============================================================
+# ex7a1c.slk 
+
+# for merging @L + @A etc nodes..
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+(====)
+compatible_nodes@2
+compatible_nodes inp1 : base::arr_seg<i,n>@M
+compatible_nodes inp2 : base::arr_seg<j,m>@M
+compatible_nodes@2 EXIT:(false, base::arr_seg<i,n>@M,None,[])
+
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+!!! **immutable.ml#2634:* between overlapping heaps:( base::arr_seg<i,n>@M, base::arr_seg<j,m>@M)
+
+===============================================================
+# ex6d5.ss 
+
+# fail in post-cond proving..
+
+id: 64; caller: []; line: 45; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@flow,@ver_post]
+ checkentail x_2205::arrI<mi_2202>@M * 
+ base::arr_seg_sorted<flted_10_2204,n_2203,m2_2206>@M * a_2220::arrI<v'>@M&
+a!=null & Anon_12=Anon_14 & a_2220=a & v'<=v_2165 & v_2165=mi_2202 & 
+a_2164=x_2205 & flted_10_2204=1+flted_44_2145 & x_2205=flted_44_2145+base & 
+0<=flted_44_2145 & (flted_44_2145+1)<m_2144 & mi<=m2_2206 & mi_2202=mi & 
+n_2203=m_2144 & !(v_bool_48_2001') & m_2144=m & flted_44_2145=1+i & 
+(1+i)!=m & a=i+base & 0<=i & v'=v & m'=m & i'=i & base'=base & (1+i')!=m' & 
+v_bool_53_2000' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists i_121,m_122,
+flted_45_118: base::arr_seg_sorted<i_121,m_122,flted_45_118>@M&
+flted_45_118=min(v,mi) & i_121=i & m_122=m&{FLOW,(4,5)=__norm#E}[]). 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: base_case_unfold failed
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+
+===============================================================
+# ex7a2.slk
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# should be Valid
+
+ Entail (1) : Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+-pnum 3
+
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : yy::arrI<Anon_12>@M * yy::arrI<Anon_13>@M
+h_formula_2_mem inp2 : true
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: [[yy,yy]]
+
+-dre "xpure\|.*_mem" -pnum 2 --trace-log-num 145
+(==cvutil.ml#1758==)
+h_formula_2_mem@145@144
+h_formula_2_mem inp1 : base::arr_seg<flted_15_95,flted_15_94>@M * 
+ base::arr_seg<flted_15_93,flted_15_92>@M
+h_formula_2_mem inp2 : flted_15_95=0 & flted_15_94=1 & flted_15_93=0 & flted_15_92=1
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@145 EXIT: []
+
+===============================================================
+# ex6d3e --pnum 4
+
+# re-ordering caused failure..
+
+ x_2205::arrI<mi_2202>@M 
+ * a_2220::arrI<v'>@M
+
+!!! **sleekengine.ml#1383:inside run_infer_one_pass:4
+Entail (4) : Fail.(may) cause:base case unfold failed
+
+===============================================================
+# ex7a2d.slk --pcp --print-type (FIXED)
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+# why does adding self!=null caused view_data_name and actual_root information to be
+  lost?
+
+  view_data_name: 
+  type_of_self: 
+  None
+  actual_root: 
+
+===============================================================
+# ex7a3a.slk (FIXED)
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# Where is _!=null introduced?
+
+!!! **astsimp.ml#2443:inv:(_ != null) & ((n >= i) & (i >= 0))
+
+===============================================================
+# ex7a3c.slk
+
+# expect failure of invariant
+
+can we have expect Fail for baga inv..
+
+# Why the warnings below? (FIXED)
+
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+===============================================================
+# ex7a3a.slk (to improve)
+
+# -dre "compute_unfold_baga"
+
+# unfolded loses precision ..
+
+baga over inv: [([(_,( self+i, n-i))], i<=n & 0<=i)]
+  baga over inv (unfolded): [([], 0<=i & i<=n)]
+
+(==astsimp.ml#1973==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([], 0<=i & i<=n)])
+
+# tmp fix below which do not unfold for those with intervals.
+
+(==astsimp.ml#1974==)
+compute_unfold_baga@1
+compute_unfold_baga inp1 :Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+compute_unfold_baga inp2 : (* lbl: *){1}->emp&i=n & 0<=i&{FLOW,(1,26)=__flow#E}[]
+ or (* lbl: *){2}->(exists n_14,flted_7_13,xxx,
+    Anon_11: (* lbl: *){2}->xxx::arrI<Anon_11>@M * 
+                            self::arr_seg<flted_7_13,n_14>@M&
+    flted_7_13=1+i & xxx=i+self & 0<=i & n_14=n&{FLOW,(1,26)=__flow#E}[])
+ 
+compute_unfold_baga@1 EXIT:Some([([(_,( self+i, n-i))], i<=n & 0<=i)])
+
+===============================================================
+# ex9a.slk
+
+# need to use real intervals below to detect overlap..
+
+infer[] base::arr_seg<0,2> * base::arr_seg<1,2>  |- false.
+expect Valid.
+
+  # normalization
+  [(a,d1)],[(c,d2)] & c=a+d1 --> [(a,d1+d2)]
+  [(a,d)] & d<=0  --> []
+  [a] --> [(a,1)]
+
+  [a],[(c,d)] & c=a+1 --> [(a,d+1)]
+  [(c,d)],[a] & a=c+1 --> [(c,d+1)]
+
+  # false detection
+  [(a,d1)],[(b,d2)] &  b<a+d1 & a<b+d2 --> false
+    (a..a+d1 b..b+d2) // 
+  [(a,d1)],[(a,d2)] &  d1!=0 & d2!=0 --> false
+
+   # sorting..
+   a<c --> (a,d1) < (c,d2)
+   a>c --> (a,d1) > (c,d2)
+   a=c --> (a,d1) = (c,d2)
+
+  (* throws exception when duplicate detected during merge *)
+  let norm_baga (state:formula) (b:t list) = 
+    let () = y_binfo_pp x_tbi in
+    b
+  let rec merge_baga b1 b2 =
+
+===============================================================
+# ex6e.ss 
+
+# check and elim warnings below..
+
+ !!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+
+# print views checked..
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+===============================================================
+# ex6e3e.slk (FIXED)
+
+-dre ".*univ" --trace-log-num 2
+
+do_universal@2@1
+do_universal inp1 : xx::arr_seg<i,n>@M
+do_universal inp2 : emp&i<n&{FLOW,(20,21)=__norm#E}[]
+do_universal inp3 : xx::arr_seg<flted_12_100,n_99>@M&flted_12_100=1+i & n_99=n&
+{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#14218:f_univ_vars:[mmm_105]
+!!! **solver.ml#14232:lhs_guard_p: i<mmm_105 & mmm_105<=n
+
+# need to first prove guard existentially satisfiable.
+# after that add i<mmm_105 & mmm_105<=n & Univ(mmm_105) to LHS together with
+==============================================================
+# ex6e3f.slk (DONE:guard proven separately)
+
+!!! **solver.ml#14319:TBI:prove separately:lhs_guard_new: i<mmm_102 & mmm_102<=n
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+print residue.
+expect Fail.
+// isn't this unsound?
+===============================================================
+ex6e3f2.slk (FIXED)
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+2 .
+
+# explicit inst mm=m should go to RHS, not LHS..
+
+imply_timeout 2 inp1 : m<=n & i<m & mm=m & x!=null
+imply_timeout 2 inp2 : exists(mm:mm=i+2)
+===============================================================
+# slower + old-lemma-settings include --old-univ-lemma
+
+Total number of errors: 3 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 275.29 second
+	Time spent in main process: 153.89 second
+	Time spent in child processes: 121.40 second
+	Number of false contexts: 98
+===============================================================
+ex6e3f3.slk  (below is OK)
+
+# expl inst may go to LHS if Univ not present in LHS
+  since we may allowed it to strengthen formula on LHS?
+# alternative is to add Univ(m) on LHS?
+
+checkentail x::arrI<m> & i<m & m<=n |- [mm] x::arrI<mm> & mm=i+1 .
+expect Valid.
+// fails when mm=m move to RHS ..
+// unsound if Univ(m) is present to move to LHS..
+
+checkentail x::arrI<m> & m>3 |- [mm] x::arrI<mm> & mm=4.
+expect Valid.
+// fail but expect Valid when m=mm move to RHS?
+
+===============================================================
+# ex6e3f4.slk (FIXED)
+
+checkentail  i<m & m<=n & mm=m & Univ(m) |- mm=i+1 .
+
+ <1>emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+
+# can we add the instantiation m=i+1 after the proving?
+  so that its universal instantiation value can be fixed
+  by such proving. need to add mm=i+1 to LHS after proving
+  to support universal instantiation
+
+# the inst probably done at heap_empty_rhs, and could be signalled
+  by some univ_flag from @4 or @2.
+
+(====)
+imply_timeout 1@5@3@2@1
+imply_timeout 1 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 1 inp2 : exists(m:exists(mm:mm=i+1 & mm=m) & m<=n & i<m)
+imply_timeout 1@5 EXIT:true
+
+(==tpdispatcher.ml#3804==)
+imply_timeout 2@3@2@1
+imply_timeout 2 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 2 inp2 : mm=i+1
+imply_timeout 2@3 EXIT:true
+
+(==tpdispatcher.ml#3818==)
+imply_timeout 3@2@1
+imply_timeout 3 inp1 : Univ(m) & mm=m & m<=n & i<m
+imply_timeout 3 inp2 : mm=i+1
+imply_timeout 3 inp3 :timeout:10.
+imply_timeout 3 inp4 :2
+imply_timeout 3@2 EXIT:true
+
+@1! **solver.ml#9121:stk_estate # is_empty:true
+@1! **solver.ml#9122:estate:
+  emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#7980==)
+heap_entail_empty_rhs_heap#1@1
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ 
+heap_entail_empty_rhs_heap#1 inp2 :lhs-base-f: emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs-mix: mm=1+i
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@1 EXIT: [ emp&Univ(m) & mm=m & m<=n & i<m&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  ]
+===============================================================
+# ex6e3f6.slk
+
+# lemma and @L not working properly as hole is refilled
+  with original predicate.
+
+# why hole added by spatial_ctx_extract?
+
+(==context.ml#907==)
+spatial_ctx_extract@1
+spatial_ctx_extract inp1 :h_formula: xx::arr_seg<i,n>@M
+spatial_ctx_extract inp2 :imm:@L
+spatial_ctx_extract inp3 :aset:[xx]
+spatial_ctx_extract inp4 :rhs_node: xx::arr_seg<mm,n_98>@L
+spatial_ctx_extract@1 EXIT:list of match_res:
+[ Type: Root
+ LHS: xx::arr_seg<i,n>@M
+ RHS: xx::arr_seg<mm,n_98>@L
+ root_inst: None
+ lhs_rest: Hole[101]
+ rhs_rest: emp
+ alias set: [xx]rhs_inst: []rhs_infer: None]
+===============================================================
+# ex6e3f6.slk
+
+# LHS of entailment can be simplified by replacing them by other vars
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+
+Lemma "lem_13":  
+  self::arr_seg<i,n>@M&i<mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[]
+  ==> (exists mmm_48: self::arr_seg<i,mmm>@M 
+      * self::arr_seg<mmm_48,n>@M & mmm_48=mmm&{FLOW,(20,21)=__norm#E}[])
+
+#  why are there two new existential mmm_ vars on LHS.
+   can it be removed?
+
+<1>xx::arr_seg<i,mmm_105>@M * xx::arr_seg<mmm_111,n>@M&mm=i+1 & 
+      mmm_111=mmm_105 & 
+      i<mmm_105 & 
+      mmm_105<=n & 
+      Univ(mmm_105) & 
+      i<n & mm=mmm_111&{FLOW,(20,2)
+
+!!! **sleekengine.ml#609: [ xx::arr_seg<i,mmm_163>@M * xx::arr_seg<mmm_169,n>@M&
+mm=i+1 & mmm_169=mmm_163 & i<mmm_163 & mmm_163<=n & Univ(mmm_163) & i<n & 
+mm=mmm_169&{FLOW,(20,21)=__norm#E}[]
+  es_evars: [n_158]
+  es_gen_impl_vars(E): []
+  es_ivars: [mmm_163]
+  es_ante_evars: [mmm_169; n_158]
+  es_rhs_eqset: [n:n; n:n; n:n]
+  es_subst (from): [n_158]
+  es_subst (to): [n]
+  es_trace:  SEARCH ==>  (Lemma ==> lem_13(xx,xx)) ==>  COND ==>  Match(xx,xx)]
+===============================================================
+# rft (FIXED by replacing Hole n --> HEmp
+
+# Extra examples failing from holes in materialized vars 
+
+ lemmas/nlseg3.slk({E1#Valid}) 
+ lemmas/nlseg4e.slk({L2#Valid}) 
+ lemmas/nlseg4e1.slk({E1#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+ lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+ lemmas/dseg1.slk({L1#Valid}) 
+ fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail})
+ veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+Total number of errors: 5 in files:
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+===============================================================
+# ex6e3f9.slk -dre "process_act" (OK)
+
+infer[a] x::lseg<a, p>  |- x::node<_,p>.
+
+# why can't infer work here for list segment?
+
+!!! **WARNING****solver.ml#13958:TODO: schedule infer_empty_hp_rel?
+(==solver.ml#11466==)
+process_action#1@4@2
+process_action#1 inp1 : UnmatchedRHSData =>  x::node<Anon_12,q>@M
+process_action#1 inp2 :estate:
+  emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [Anon_12; q]
+ es_trace:  Unfold 0
+ es_infer_vars: [a]
+process_action#1 inp3 :conseq: x::node<Anon_12,q>@M&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: x::node<Anon_12,q>@M&{FLOW,(20,21)=__norm#E}[]
+process_action#1@4 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Unfold 0 ==>  UnmatchedRHSData]]
+e ex CEX:false
+============================
+(====)
+solver_detect_lhs_rhs_contra_all#1@10@9@8@7
+solver_detect_lhs_rhs_contra_all#1 inp1 : ex_formula : emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [a]
+solver_detect_lhs_rhs_contra_all#1 inp2 : (exists pp_52: x::node<Anon_14,pp_52>@M&pp_52=pp&{FLOW,(20,21)=__norm#E}[])
+solver_detect_lhs_rhs_contra_all#1 inp3 :EARLY CONTRA DETECTION
+solver_detect_lhs_rhs_contra_all#1@10 EXIT:(([],real_contra:true),[])
+
+
+===============================================================
+# ex6e3f9.slk --pnum 6
+
+infer[a] emp & x=pp & a=0  |- x::lseg<n,p> & n>1.
+
+# why was there an unfold? how did it infer?
+
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&a=0 & x=pp&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : x::lseg<n,p>@M&1<n&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:true
+!!! **solver.ml#12380:detect_heap_contra
+!!! **solver.ml#12381:lhs: emp&x=pp & a=0&{FLOW,(20,21)=__norm#E}[]
+!!! **solver.ml#12382:conseq: : (* lbl: *){1}->emp&x=p & n=0&{FLOW,(1,26)=__flow#E}[]
+!!! **solver.ml#12383:contra_if_false:true
+!!! **solver.ml#12409:detect_lhs_rhs_contr:false
+===============================================================
+# ex6e3g9.slk
+
+slk_simplify (exists mm: i<mm & mm<=n & mm=i+2).
+
+# why is mm_91 not removed?
+
+!!! **sleekengine.ml#1180:simplify:ante: emp&i<mm_91 & mm_91<=n & mm_91=2+i&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1181:simplify:heap: emp
+!!! **sleekengine.ml#1182:simplify:pure: i<mm_91 & mm_91<=n & mm_91=2+i
+!!! **sleekengine.ml#1184:Andreea: heap need to be normalized before xpure_heap_sym
+!!! **sleekengine.ml#1192:Andreea: gist need to detect true modulo variable renamingSimplify  (4): mm_91=i+2 & mm_91<=n
+===============================================================
+# ex6f1c.slk (FIXED)
+
+checkentail base::arr_seg<start,end> & start!=end & start+1>=end 
+   |- base::arr_seg<start,end-1>*r::arrI<m>&r=base+(end-1).
+print residue.
+
+Entail 1: EXCast. Failure("TYPE ERROR 1 : Found NUM but expecting int")
+: no residue 
+
+(==typeinfer.ml#625==)
+must_unify_expect@315@311@306@302@282@281
+must_unify_expect inp1 :NUM
+must_unify_expect inp2 :int
+must_unify_expect inp3 :[(end:98:NUM)(TVar__116:116:int)(base:96:arrI)(TVar__115:115:TVar[115])(r:109:arrI)(TVar__114:114:arrI)(TVar__112:112:NUM)(flted_19_105:108:NUM)(TVar__111:111:NUM)(m:110:int)(start_106:107:NUM)(Anon_full_perm:103:float)(start:97:NUM)(TVar__102:102:NUM)(TVar__101:101:int)(TVar__100:100:NUM)(TVar__99:99:NUM)]
+must_unify_expect@315 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
+Exception(gather_type_info_exp@311):Failure("TYPE ERROR 1 : Found NUM but expecting int")
+
+(====)
+gather_type_info_exp@311@306@302@282@281
+gather_type_info_exp inp1 :end-1
+gather_type_info_exp inp2 :[(base:96:arrI)(TVar__115:115:TVar[115])(r:109:arrI)(TVar__114:114:arrI)(end:98:NUM)(TVar__112:112:NUM)(flted_19_105:108:NUM)(TVar__111:111:NUM)(m:110:int)(start_106:107:NUM)(Anon_full_perm:103:float)(start:97:NUM)(TVar__102:102:NUM)(TVar__101:101:int)(TVar__100:100:NUM)(TVar__99:99:NUM)]
+gather_type_info_exp inp3 :int
+gather_type_info_exp@311 EXIT ExceptionFailure("TYPE ERROR 1 : Found NUM but expecting int")Occurred!
+Exception(gather_type_info_exp@306):Failure("TYPE ERROR 1 : Found NUM but expecting int")
+===============================================================
+# ex6f1d1.slk  (FIXED)
+
+Updated lemma store with unsafe repo::[lem_13]
+!!! **solver.ml#11064:TODO: schedule earlier univ instantiation
+!!! **solver.ml#11065:=========================================
+!!! **solver.ml#11066:univ_vs:[mm,m_124,m_118,m_118]
+!!! **solver.ml#11067:to_lhs: true
+!!! **solver.ml#11068:p_ante: mm=m_118
+!!! **solver.ml#11069:new_ante_p: m_124=m_118 & start<=m_118 & m_118<=end & Univ(m_118) & start<=end & 
+ end<=(1+start) & start!=end & mm=m_118
+!!! **solver.ml#11070:new_conseq_p: start_114=start
+!!! **solver.ml#11072:conseq_univ: mm+1=end
+!!! WARNING logtime exception (sleek-hec):0.00082
+!!! WARNING logtime exception (sleek-hec):0.014679
+Entail 1: EXCast. Failure("early univ inst proc here**solver.ml#11060:TBI")
+===============================================================
+# ex6f1d2.slk --pnum 2 (FIXED)
+
+# should we support univ inst of existential variable too?
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end & start<=end
+   |- base::arr_seg<start,end-1> 
+       .
+
+# why isn't field=mm below?
+
+!!! **solver.ml#11028:ext_subst:[(start_116,start),(flted_24_117,end)]
+!!! **solver.ml#11024:univ_vs:[m_128,m_122,m_122]
+!!! **solver.ml#11025:to_lhs: true
+!!! **solver.ml#11026:to_rhs: true
+!!! **solver.ml#11027:p_ante: true
+!!! **solver.ml#11028:ext_subst:[(start_116,start)]
+!!! **solver.ml#11028:ext_subst:[(start_116,start),(m_141,end)]
+!!! **solver.ml#11028:ext_subst:[(m_140,start),(flted_24_117,end)]
+
+--pnum 2 -dre "do_m\|move_impl" --trace-log-num 4
+
+@4! **solver.ml#10145:ex_subs:[(start_116,start),(flted_24_117,m_122)]
+@4! **solver.ml#10227:rho_0:[(start_116,start),(flted_24_117,m_122)]
+
+# Can we instantiate m_181+1=end (instead of mm+1=end)
+
+Entail 2: Valid. 
+Residue:
+<1>base::arr_seg<m_187,end>@M&m_187=m_181 & start<=m_181 & m_181<=end & 
+                               Univ(m_181) & start<=end & end<=(1+start) & 
+                               start!=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> lem_13_left(base,base)) ==>  COND ==>  Match(base,base)]]
+Validate 2: OK
+===============================================================
+# ex6f1d3.slk --pcp (FIXED by applying ivars_to_conseq subs)
+
+infer[] base::arr_seg<start,end> &  start!=end & start>=(end-1) 
+   |- (exists mm: base::arr_seg<start,mm> & mm=end-1).
+
+# need to support univ inst m_120+1=end for existential var m_115
+
+ <1>base::arr_seg<m_126,end>@M&m_126=m_120 & start<=m_120 & m_120<=end & 
+                               Univ(m_120) & end<=(start+1) & start!=end&{FLOW,(20,21)=__norm#E}[]
+
+(==solver.ml#10898==)
+subs_to_inst_vars@2
+subs_to_inst_vars inp1 :subs:[(start_114,start),(mm_115,m_120)]
+subs_to_inst_vars inp2 :ivars:[m_120]
+subs_to_inst_vars inp3 :impl:[]
+subs_to_inst_vars@2 EXIT:(([],[m_120],ivars_to_conseq:[(m_120,mm_115)]),other_subs:[(start_114,start)])
+===============================================================
+# ex6f1d4.slk
+
+lemma_safe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+# Failing in <-- direction with big timeouts.
+
+Entailing lemma lem_13: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (cex)(may) cause: UnionR[base case unfold failed,base case unfold failed]
+
+!!! log(small):(22.688382,3026)
+!!! log(big)(>0.5s)(27):(38.138126,[(sleek-hec,0.51152);(sleek-hec,2.117039);(sleek-hec,2.176022);(sleek-hec,1.997992);(sleek-hec,0.698678);(sleek-hec,0.703553);(sleek-hec,0.752598);(sleek-hec,1.921881);(sleek-hec,2.324819);(sleek-hec,0.97209);(sleek-hec,0.566322);(sleek-hec,2.047108);(sleek-hec,2.101213);(sleek-hec,0.537939);(sleek-hec,0.507525);(sleek-hec,2.164727);(sleek-hec,2.149721);(sleek-hec,0.746848);(sleek-hec,0.82261);(sleek-hec,0.780771);(sleek-hec,2.356478);(sleek-hec,2.40919);(sleek-hec,2.043739);(sleek-hec,2.386038);(sleek-hec,0.998967);(sleek-hec,0.648725);(sleek-hec,0.694013)])
+!!! 
+ log(bigger)(>4s)(10):(133.984808,[(sleek-hec:59<65:sleek,7.718411);(sleek-hec:58<65:sleek,7.778323);(sleek-hec:53<66:sleek,10.72429);(sleek-hec:67<92:sleek,5.716403);(sleek-hec:39<94:sleek,19.723777);(sleek-hec:121<129:sleek,9.746302);(sleek-hec:120<129:sleek,9.811396);(sleek-hec:115<130:sleek,12.847147);(sleek-hec:107<140:sleek,14.612539);(sleek-hec:33<151:sleek,35.30622)])
+===============================================================
+# ex6f1c4.slk --pnum 2
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
+  inv n>=i & i>=0.
+
+# ex6f1c4.slk (should be x=self+n-1)
+
+actual_root: 
+  Noneself preds: [arr_seg]
+
+# ex6f1c2.slk
+
+  actual_root: 
+  Some((x, x=i+self))self preds: [arr_seg]
+
+# why does pred vs pred give a FOLD?
+  why isn't it data vs pred?
+
+# this is diff from ex61c2.slk --pnum 8
+
+!!! **context.ml#3661:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<i_76,n_77>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Unfold 0 =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:1
+  Match =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:2
+  Fold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M
+  ]
+
+# ex6f1c2.slk
+
+ ### RHS Cand :[ base::arr_seg<flted_42_87,n_86>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Fold =>
+    LHS: y::arrI<Anon_22>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M;
+  Prio:1
+  Match =>
+    LHS: base::arr_seg<flted_40_59,n>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: base::arr_seg<flted_40_59,n>@M
+    RHS: base::arr_seg<flted_42_87,n_86>@M
+  ]
+===============================================================
+# ex6f1c4.slk --pnum 2
+
+# Why is folding not scheduled for rightwards arr_seg?
+
+(==context.ml#908==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[base]
+spatial_ctx_extract inp4 :rhs_node: base::arr_seg<i_110,n_111>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+
+(==context.ml#3586==)
+choose_context@1
+choose_context inp1 :LHS node: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+choose_context inp2 :RHS node: base::arr_seg<i_110,n_111>@M
+choose_context inp3 :LHS pure: y=1+x & 0<=i & x+1=n+base & flted_18_85+1=n
+choose_context inp4 :RHS pure: i_110=i & n_111=n
+choose_context inp5 :right alias:[(i_110,i),(n_111,n)]
+choose_context@1 EXIT:[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+
+(==context.ml#3599==)
+process_matches@3
+process_matches inp1 :lhs_h: x::arrI<Anon_16>@M * base::arr_seg<i,flted_18_85>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: base::arr_seg<i,flted_18_85>@M
+ RHS: base::arr_seg<i_110,n_111>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_16>@M
+ rhs_rest: emp
+ alias set: [base]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: base::arr_seg<i_110,n_111>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@3 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>;
+  Prio:1
+  Match =>
+  ]
+===============================================================
+# ex6f1c6.slk
+
+# why did right lemma trigger a base-case-fold? How did base-case-fold
+  succeeded?
+
+ <1>emp&0<=end & v<=end & end<=end & v=start+1&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_14_left_right(base,base)) ==>  COND ==>  Match(base,base) ==>  COND ==>  BaseCaseFold]]
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+Lemma "lem_14_left_right":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
+  <== (exists m_169,m: self::arr_seg<i,m>@M * self::arr_seg<m_169,n>@M
+   & m_169=m & i<=m & m<=n&{FLOW,(20,21)=__norm#E}[])
+
+# wrong body_norm ..
+
+ body_norm:  EBase 
+   (exists m_170,m_171,
+   m: self::arr_seg<i,m_171>@M * self::arr_seg<m_170,n>@M&
+   i<=m & m<=n & m_170=m_171 & i<=m_171 & m_171<=n&{FLOW,(20,21)=__norm#E}[])
+
+# compare with ex6f1c6a.slk
+
+lemma_unsafe self::arr_seg<i,n>  
+   <- self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+
+Lemma "lem_13":  self::arr_seg<i,n>@M&{FLOW,(20,21)=__norm#E}[]
+  <== (exists m_84,m_85: self::arr_seg<i,m_85>@M * self::arr_seg<m_84,n>@M
+   & i<=m_85 & m_85<=n & m_84=m_85&{FLOW,(20,21)=__norm#E}[])
+
+ body_norm:  EBase 
+   (exists m_86,m_87: self::arr_seg<i,m_87>@M * self::arr_seg<m_86,n>@M&
+   i<=m_87 & m_87<=n & m_86=m_87&{FLOW,(20,21)=__norm#E}[])
+
+# FIXED? ..
+
+ body_norm:  EBase 
+   (exists mmm_169,mmm: self::arr_seg<i,mmm>@M * self::arr_seg<mmm_169,n>@M&
+   mmm_169=mmm & i<=mmm & mmm<=n&{FLOW,(20,21)=__norm#E}[])
+
+===============================================================
+# ex6f1c6.slk  vs ex6f1c6a.slk
+
+# problem with base_case_fold?
+
+!!! **solver.ml#12788:process_action (steps) :
+ ### action :
+ BaseCaseFold =>
+   Type: Root
+   LHS: emp
+   RHS: base::arr_seg<mmm_212,end_188>@M
+   root_inst: None
+   lhs_rest: emp
+   rhs_rest: emp
+   alias set: []rhs_inst: []rhs_infer: None
+ ### estate :
+ ex_formula : emp&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:base::arr_seg<v,end>@M
+ ### conseq :
+ base::arr_seg<mmm_212,end_188>@M&
+end_188=end & mmm_212=end & v<=end & end<=end_188&{FLOW,(20,21)=__norm#E}[]
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>emp&end<=end & v=start+1 & 0<=end&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  (Lemma <== lem_14_left_right(base,base)) ==>  COND ==>  Match(base,base) ==>  COND ==>  BaseCaseFold]]
+
+!!! **solver.ml#12788:process_action (steps) :
+ ### action :
+ BaseCaseFold =>
+   Type: Root
+   LHS: emp
+   RHS: base::arr_seg<start_103,m_115>@M
+   root_inst: None
+   lhs_rest: emp
+   rhs_rest: emp
+   alias set: []rhs_inst: []rhs_infer: None
+ ### estate :
+ ex_formula : emp&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:base::arr_seg<v,end>@M
+ ### conseq : base::arr_seg<start_103,m_115>@M&start_103<=m_115 & m_115<=end & v=m_115&
+{FLOW,(20,21)=__norm#E}[]
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+===============================================================
+# ex6f1c6.slk  
+
+# missing start_187=start  after lemma application
+
+ ### estate : ex_formula : base::arr_seg<v,end>@M&v=start+1&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ ### conseq : base::arr_seg<start_187,end_188>@M&start_187=start & end_188=end&
+
+ ### conseq : base::arr_seg<start_187,mmm_213>@M * base::arr_seg<mmm_212,end_188>@M&
+end_188=end & mmm_212=mmm_213 & start_187<=mmm_213 & mmm_213<=end_188&
+{FLOW,(20,21)=__norm#E}[]
+
+# why did match succeed. What happen to start_113=start?
+
+!!! **solver.ml#12792:process_action (steps) :
+ ### action :
+ Match =>
+   Type: Root
+   LHS: base::arr_seg<v,mmm_119>@M
+   RHS: base::arr_seg<start_113,end_114>@M
+   root_inst: None
+   lhs_rest: base::arr_seg<mmm_125,end>@M
+   rhs_rest: emp
+   alias set: [base]rhs_inst: []rhs_infer: None
+ ### estate : ex_formula : base::arr_seg<v,mmm_119>@M * base::arr_seg<mmm_125,end>@M&mmm_125=mmm_119 & 
+
+# why compute_action is different below:
+
+# ex6f1c6.slk  
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<start_113,end_114>@M]
+ ### action :
+ COND =>[
+  Prio:0
+  Match =>
+    LHS: base::arr_seg<v,mmm_119>@M
+    RHS: base::arr_seg<start_113,end_114>@M;
+  Prio:0
+  Match =>
+    LHS: base::arr_seg<mmm_125,end>@M
+    RHS: base::arr_seg<start_113,end_114>@M
+  ]
+
+# ex6f1c6a.slk  
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<start_103,m_115>@M, base::arr_seg<m_114,end_104>@M]
+ ### action :
+ Match =>
+   LHS: base::arr_seg<v,end>@M
+   RHS: base::arr_seg<m_114,end_104>@M
+
+----------------------------------------
+# ex6f1c6.slk  (FIXED)
+
+# missing do_match substitution!
+
+do_match@17@16@15@14@13@12@1
+do_match inp1 : base::arr_seg<v,end>@M
+do_match inp2 : base::arr_seg<start_113,mmm_139>@M
+
+  es_subst (from): [start_113; mmm_139]
+  es_subst (to): [v; end]
+
+# what happen to the subst v=start_113
+
+@14! **solver.ml#8920:rhs_p : : end_114=end & 0<=end_114 & end<=end_114 & end_114=end & start_113=start
+===============================================================
+# ex6f1e1.slk
+
+ # fixed slicing of is_sat formula (add new flag?)
+
+===============================================================
+
+# ex6f1e.ss
+
+# why first lemma fail for base case of bubble_push
+
+/*
+lemma_unsafe self::arr_seg<i,n,S> & i<n <-> 
+  self::arr_seg<i,n-1,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
+*/
+  
+lemma_unsafe self::arr_seg<i,n,S> & i<n & b=n-1 <-> 
+  self::arr_seg<i,b,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
+
+===============================================================
+# ex6f1h.ss 
+
+  changing to more general the lemmas
+
+lemma_unsafe self::arr_seg<i,n,S> & i<=m & m<n 
+  <-> self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
+
+lemma_unsafe self::arr_sorted<i,n,S> & i<=m & m<n <-> 
+  self::arr_sorted<i,m,S1>*self::arr_sorted<m,n,S2> & S=union(S1,S2)
+  & forall(a: forall(b: a notin S1 | b notin S2 |  a<=b)).
+
+lemma_unsafe self::arr_seg<i,n,S> & (i>=n-1)
+      <-> self::arr_sorted<i,n,S>.
+
+---------------------------------
+verified though with some large formula problem..
+
+
+tarting MONA.../usr/local/bin/mona_inter
+[mona] Warning: imply --> false(formula too large  - not processed by mona)
+
+[mona] Warning: imply --> false(formula too large  - not processed by mona)
+
+[mona] Warning: imply --> false(formula too large  - not processed by mona)
+
+[mona] Warning: imply --> false(formula too large  - not processed by mona)
+
+===============================================================
+# ex6f1g4c.slk
+
+# inductive proof by hand failed..
+
+# -dre "spatial_\|choose_c" --trace-log-num 2 
+
+# can minimise to direct matches?
+
+(==context.ml#918==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arr_seg<flted_46_94,m>@M * x::arr_seg<m_95,n>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[x]
+spatial_ctx_extract inp4 :rhs_node: x::arr_seg<flted_49_129,n_128>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: x::arr_seg<flted_46_94,m>@M
+ RHS: x::arr_seg<flted_49_129,n_128>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<m_95,n>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arr_seg<m_95,n>@M
+ RHS: x::arr_seg<flted_49_129,n_128>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<flted_46_94,m>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None]
+
+# need to improve pairing and lemma trigger ..
+
+!!! **context.ml#3671:compute_action (steps) :
+ ### RHS Cand :[ x::arr_seg<flted_47_134,n_133>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  SEARCH =>[
+   Prio:1
+   COND =>[
+    Prio:1
+    Match =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M;
+    Prio:3
+    BaseCaseUnfold =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+    Prio:1
+    (Lemma 0<== lem_12) =>
+      LHS: x::arr_seg<flted_45_95,m>@M
+      RHS: x::arr_seg<flted_47_134,n_133>@M
+    ];
+   Prio:1
+   SEARCH =>[
+    Prio:1
+    COND =>[
+     Prio:1
+     Match =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M;
+     Prio:3
+     BaseCaseUnfold =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ];
+     Prio:1
+     (Lemma 0<== lem_12) =>
+       LHS: x::arr_seg<m_96,n>@M
+       RHS: x::arr_seg<flted_47_134,n_133>@M
+     ]
+    
+===============================================================
+# ex6f3a3.slk
+
+# Why isn't lemma triggered?
+
+lemma_safe self::arr_seg<i,n> & i<m & m<n ->
+  self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+checkentail
+ base::arr_seg<start,cur_pos> & start+1<cur_pos
+  |- x::arrI<_> & x=base+start+1.
+expect Valid.
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================

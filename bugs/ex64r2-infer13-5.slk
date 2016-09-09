@@ -1,0 +1,29 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node y).
+
+
+//infer [z,x,H1] H1(y)*x::node<z>   |- y::lseg<null> * x::lseg<z> .
+infer [z]  x::node<z>   |- x::lseg<z> .
+print residue.
+/*
+# ex64r2.slk
+
+# Why are we losing x=z?
+
+ <1>x::node<z>@M * HP_186(flted_35_185,y)&x!=null & flted_35_185=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_186(flted_35_185,y@NI)&true --> emp&flted_35_185=null; 
+                  H1(y)&
+                   true --> y::lseg<flted_35_185>@M * 
+                            HP_186(flted_35_185,y@NI)&
+                   true]
+[[ Fold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
+*/

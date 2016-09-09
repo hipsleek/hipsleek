@@ -1,0 +1,80 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_test<i,n> == i=n & i>=0
+     or self::arrI<_>*x::arr_test<i+1,n> & x=self+1 & i>=0
+     inv n>=i & i>=0.
+
+checkentail x::arrI<_> |- x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> & y=x |- y::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> & n=1 &  i=0 |- x::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> & y+i=x & i=0 |- y::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.
+
+
+checkentail x::arrI<5> & y=x  |- y::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> & x=y+i & i>0|- y::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+// //This will go infinitely since the matching is not quite right
+checkentail x::arrI<_> |- y::arr_seg<i,n> & y=x & i<n. //????? 
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> |- y::arr_seg<i,n> & i<n.
+print residue.
+expect Fail.
+
+checkentail a::arrI<_>  & a=c+1 & b=c |- b::arr_seg<1,2>.
+
+checkentail a::arrI<_>  |- (exists b:b::arr_seg<1,2> & a=b+1).
+print residue.
+expect Valid.
+
+checkentail a::arrI<_>  |- b::arr_seg<1,2> & a=b+1.
+print residue.
+expect Valid.
+
+
+checkentail a::arrI<_> & a=b+1|- b::arr_seg<1,2>.
+print residue.
+expect Valid.
+
+
+
+// checkentail x::arrI<_> |- x::arrI<_> * y::arr_seg<2,2> & x=y+1.
+// print residue.
+// expect Valid.
+
+
+// checkentail x::arrI<_> & x=y+1 |- y::arr_seg<1,2>.
+// print residue.
+// expect Valid.
+
+// checkentail emp |- y::arr_seg<2,2>.
+// print residue.
+// expect Valid.
+
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- x::arr_seg<i,n> & i<n.
+print residue.
+expect Valid.

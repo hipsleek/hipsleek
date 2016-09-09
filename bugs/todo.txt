@@ -1,3 +1,26 @@
+================================================================
+# bug5a-norm10-4.slk
+
+Why does ll has actual root?
+This isn't with ptr arithmetic.
+Can we fix it as None instead..
+
+ view ll{}[]<n:int>= 
+  view_domains: 
+   view ll<n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){1}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_12; 
+            q](* lbl: *){2}->(exists flted_6_14: (* lbl: *){2}->self::node<Anon_12,q>@M * 
+                                                                q::ll<flted_6_14>@M&
+            flted_6_14+1=n & 0<n&{FLOW,(1,26)=__flow#E}[])
+
+
+  actual_root: 
+  Some((self, true))
+================================================================
 # test3.slk # DONE 
 
 Inference has three basic problems in above file/
@@ -1879,6 +1902,840 @@ WARNING: _0:0_0:0:* between overlapping heaps: ( x::cellp( f2_310)<v_319>@M, x::
 
 # this is being investigated from --warn-nonempty-perm-vars
 ===================================================================
+Total number of errors: 1 in files:
+  infer/infer14.slk({E16#Valid}).
+===================================================================
+Total number of errors: 1 in files: (FIXED)
+  classic/classic1b.slk({E19#Fail},{E22#Fail},{E23#Fail},{E25#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' 
+===================================================================
+Total number of errors: 2 in files:
+  lemmas/nlseg4e.slk({L2#Valid})
+   lemmas/nlseg4e1.slk({E1#Valid},{E2#Valid},{E3#Valid}).
+===================================================================
+# ex55f.slk (FIXED with --old-do-match-infer-heap)
+
+# BUT --new-do-match-infer-heap UNSOUND
+
+infer [H1]  H1(y) |- y::node<a,null> .
+
+Residue:
+ <1>HP_27(flted_9_26)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&
+                   true |#|3  --> y::node<a_25,flted_9_26>@M * 
+                                  HP_27(flted_9_26)&
+                   true]
+ [[ COND ==>  InferHeap]]
+
+# EXPECTS
+    HP_27(flted_9_26)&true |#|3  --> emp&flted_9_26=null]
+===================================================================
+# ex55h.ss (FIXED on filtering cond for mater_list)
+
+
+void append(node x, node tx, node y, node ty)
+	requires x::ll_tail2<tx, n> * y::ll_tail2<ty, m>
+        ensures x::ll_tail2<ty, m+n> ;
+{
+	tx.next = y;
+}
+
+# Why bind failure?
+
+Exception Failure("bind failure exception") Occurred!
+
+==============================================================
+# ex55g1.slk (FIXED via ex55g3.slk)
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+	 "<==" implication: : Valid.
+
+Failed to prove lem_12:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+# Would case-spec solve this?
+
+==============================================================
+# ex55g1.slk (FIXED by adding existential es_evars)
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> 
+     self::lseg<a, r> * r::lseg<b, p>.
+
+# should r be implicit, and p free & existential?
+
+# why free var warning?
+
+!!! **lem_store.ml#27:XXXX add_LEFT_coercion
+!!! **lem_store.ml#28:[Lemma "lem_12_left":  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[] ==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ coercion_univ_vars: [a,b]
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&n=b+a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_67,p_68: self::lseg<n_67,p_68>@M&
+n=b+a & 0<=a & 0<=b & n_67=n & p_68=p&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   exists (Impl)[r](exists a_55,b_56,
+   p_57: self::lseg<a_55,r>@M * r::lseg<b_56,p_57>@M&
+   a_55=a & b_56=b & p_57=p&{FLOW,(20,21)=__norm#E}[])
+ coercion_univ_vars: [a,b]
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_SAFE
+ coercion_fold: None
+]
+
+!!! **WARNING****solver.ml#4230:FREE VAR IN HEAP RHS :[p_429]
+impl/expl vars:[]
+LHS:
+  r_359::lseg<b_358,p>@M&
+r_366=r_360 & Anon_365=Anon_361 & 0<=b_358 & 0<=(flted_5_362+1) & 
+n=b_358+flted_5_362+1 & 0<=b_356 & 0<=a_357 & n=b_356+a_357&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   (exists r_547,a_548,b_549,a_550,
+   b_551: r_359::lseg<a_548,r_547>@M * r_547::lseg<b_549,p_429>@M&
+   b_514=b_551+a_550 & 0<=a_550 & 0<=b_551 & b_514=b_549+a_548 & 0<=a_548 & 
+   0<=b_549&{FLOW,(20,21)=__norm#E}[])
+
+--warn-free-vars-conseq
+
+Total number of errors: 30 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/cell.ss test
+error at: parahip/ordered-locking.ss func
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+
+Total number of errors: 28 in files:
+ error at: vperm/ho_vperm_check.ss test1
+error at: vperm/ho_vperm_check.ss test3
+error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+
+===================================================================
+# ex55g3.slk (OK)
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 
+    <-> self::lseg<a, r> * r::lseg<b, p>.
+
+# case-spec below help with proving
+
+pred lseg<n, p> == 
+   case {
+      n=0 -> [] self = p ;
+      n!=0 -> [] self::node<next = r> * r::lseg<n - 1, p>;
+   }     inv n >= 0.
+
+===================================================================
+# ex55g4.slk --eci
+
+# How come case-spec inference not working?
+
+   view lseg<n:int,p:node>= 
+    EList
+      :EBase 
+         (* lbl: *){3}->emp&self=p & n=0&{FLOW,(1,26)=__flow#E}[]
+      || :EBase 
+            exists (Impl)[Anon_17; r](* lbl: *){4}->(exists p_20,
+            flted_5_19: (* lbl: *){4}->self::node<Anon_17,r>@M * 
+                                       r::lseg<flted_5_19,p_20>@M&
+            flted_5_19+1=n & p_20=p&{FLOW,(1,26)=__flow#E}[])
+
+===================================================================
+# rft sleek
+
+Bugs with some lemmas due to changes in context.ml
+
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+ lemmas/app-tail.slk({E1#Valid}) 
+ lemmas/ll_tail.slk(no result  for {E}) 
+ lemmas/nlseg4e.slk({L2#Valid}) 
+ lemmas/nlseg4e1.slk({E2#Valid},{E3#Valid},{E4#Fail},{E5#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+ lemmas/sll_tailL.slk({L2#Valid}) 
+ lemmas/dseg-new.slk({L3#Valid}) lemmas/dseg1.slk({L1#Valid}) 
+ lemmas/lseg_complex.slk({E3#Fail}).
+
+
+===================================================================
+--new-infer-heap
+
+ infer/infer1.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid},{E6#Valid},{E7#Valid}) 
+infer/infer2.slk({E5#Valid}) 
+ infer/infer5.slk({E4#Valid}) 
+ infer/infer6.slk({E1#Valid}) 
+ infer/infer7.slk({E10#Valid}) 
+ infer/infer8.slk({E1#Valid},{E10#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) infer/infer13.slk({E1#Valid},{E2#Valid},{E3#Valid},{E4#Valid},{E5#Valid}) infer/infer14.slk({E1#Valid},{E11#Valid},{E13#Valid},{E14#Valid},{E16#Valid},{E17#Valid},{E18#Valid},{E2#Valid},{E29#Valid},{E3#Valid}) 
+ infer/infer15.slk({E1#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
+===================================================================
+--old-infer-heap
+
+Total number of errors: 1 in files:
+  lemmas/dseg-new.slk({L2#Fail}).
+===================================================================
+ex55k-dseg-new-unsound.slk --lem-en-lhs-unfold --old-empty-to-conseq --dis-lem-gen
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+
+# why can we prove this without lem_generation?
+
+Entailing lemma 2: Valid.
+Valid Lemmas : [2:<==] added to lemma store.
+===================================================================
+--old-kepp-all-matchres
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 82.87 second
+	Time spent in main process: 49.09 second
+	Time spent in child processes: 33.77 second
+	Number of false contexts: 93
+
+Total verification time: 136.55 second
+	Time spent in main process: 86.62 second
+	Time spent in child processes: 49.93 second
+	Number of false contexts: 414
+
+
+--new-kepp-all-matchres
+Total verification time: 87.70 second
+	Time spent in main process: 47.10 second
+	Time spent in child processes: 40.59 second
+	Number of false contexts: 93
+
+Total verification time: 137.75 second
+	Time spent in main process: 87.44 second
+	Time spent in child processes: 50.31 second
+	Number of false contexts: 414
+
+===================================================================
+# ex55.slk --new-lemma-unfold (FIXED with a try-catch)
+
+ lemma self::ll_tail<t, n> <-> self::lseg<n-1, t> * t::node<_, null>.
+
+# Why did it cause problem below? 
+
+ERROR: at ex55-sleek9.slk_28:30_28:67
+Message: malfunction with float out exp: n-1
+Exception(linearize_heap(dup)):Failure("malfunction with float out exp: n-1")
+Exception(linearize_formula):Failure("malfunction with float out exp: n-1")
+Exception(trans_formula):Failure("malfunction with float out exp: n-1")
+Exception(manage_unsafe_lemmas):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma_helper):Failure("malfunction with float out exp: n-1")
+Exception(process_list_lemma):Failure("malfunction with float out exp: n-1")
+
+Exception processed: Failure("malfunction with float out exp: n-1")
+error at: 
+===================================================================
+# ex56.slk --en-para -perm fperm -tp redlog --old-norm-w-coerc --old-lemma-settings --new-lemma-unfold
+
+# unfolding affected normalization of some permissions lemma ..
+
+!!! **WARNING****solver.ml#9915:impl_inst and to_conseq not properly built
+!!! **cvutil.ml#893:h_formula_2_mem: [Begin] check fractional variable  perm_38_282 is full_perm
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+!!!:0: 0: **lemma.ml#230:ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(emp ; (emp ; ((self::cellp{}(f1)<v>[HeapNode1]) * (self::cellp{}(f2)<v>[HeapNode1])))) * ([] & true)( FLOW __norm)lemmas(to be proved and saved)
+
+!!!:0: 0: **lemma.ml#231:res_ldef:
+=>coerc split2
+	 head: (emp ; (emp ; (self::cellp{}(f)<v>[HeapNode1]))) * ([] & (f = f1+f2) & ((f1 > 0.) & (f2 > 0.)))( FLOW __norm)
+	 body:(EX v_192 v_191 . (emp ; (emp ; ((self::cell{}()<v_191,>@M[HeapNode1]) * (self::cell{}()<v_192,>@M[HeapNode1]))))*([] & (((v_192:int)) = ((v:int))) & (((v_191:int)) = ((v:int))))( FLOW __norm))lemmas(to be proved and saved)
+===================================================================
+#ex63d.slk --adhoc-3
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+Entailing lemma lem_11: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(must) cause: exception Failure("split_components: don't expect OR") in lemma proving
+===================================================================
+# ex62b.slk 
+
+infer [x] x::ll<n> |- x::node<_,b>.
+
+# performance problem with --en-ptr-arith
+  scheduling repeated unfolds ..
+
+[ Type: Root
+ LHS: x::node<Anon_47,q_48>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: q_48::ll<flted_7_46>@M
+ rhs_rest: emp
+ rhs_inst: [], 
+  Type: Root
+ LHS: q_48::ll<flted_7_46>@M
+ RHS: x::node<Anon_12,b>@M
+ root_inst: None
+ lhs_rest: x::node<Anon_47,q_48>@M
+ rhs_rest: emp
+ rhs_inst: []]
+
+
+===================================================================
+# ex62b.slk
+
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+expect Valid.
+
+# why x=x not eliminated earlier?
+
+!!! **context.ml#721:TODO: rename root:self
+!!! **context.ml#722:root_pf: flted_7_46=flted_7_46
+!!! **context.ml#727:rhs(to prove): x>=q_48
+!!! **context.ml#728:rhs_ptr=root:false
+!!! **WARNING****context.ml#712:TODO : check if share same base
+!!! **context.ml#713:lhs_p2: flted_7_46+1=n
+!!! **context.ml#714:rhs: x=x
+===================================================================
+# ex64.b.slk
+
+# problem with complex lemma
+
+Entailing lemma three: Fail. Details below:
+	 "==>" implication: : Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+	 "==>" implication: : Valid.
+
+The first bad revision is:
+changeset:   17436:78bf6a8733c9
+branch:      infer-str
+user:        chinwn@loris-laptop
+date:        Wed Oct 21 04:38:03 2015 +0800
+summary:     need to schedule complex lemma
+
+===================================================================
+# bugs/ex64c.slk
+
+// (9)
+infer [H1]  H1(y) |- (exists a: y::node<a,null> & a>0).
+print residue.
+expect Fail.
+// It seems like pure field is always inferred;
+// can we make it selective?
+
+HeapPred HP_69(node flted_19_67, int@NI a_68, node@NI y).
+Entail (2) : Valid. 
+ <1>HP_69(flted_19_67,a_68,y)&1<=a_68 & y!=null & flted_19_67=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_69(flted_19_67,a_68@NI,y@NI)&true --> emp&
+                   1<=a_68 & flted_19_67=null; 
+                  H1(y)&
+                   true --> y::node<a_68,flted_19_67>@M * 
+                            HP_69(flted_19_67,a_68@NI,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+===================================================================
+# ex64d1.slk (fixed with --new-free-var-lhs)
+
+Wrong
+=====
+Coercion_case: Simple
+ head_norm:  (exists n_43: self::ll_s<n_43>@M&n_43=n&{FLOW,(20,21)=__norm#E}[])
+
+Correct
+=======
+ head_norm:  (exists n: self::ll_s<n>@M&{FLOW,(20,21)=__norm#E}[])
+===================================================================
+# ex62c.slk --dis-mkeqn-opt
+
+# picking up p=p for inference; need to avoid that
+  in infer_lhs_comtra to avoid inferring p!=p
+
+infer [H1] H1(p)* x::node<1,p> |- x::node<2,x2>*x2::node<b,q> & q=null.
+print residue.
+
+
+Entail (1) : Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(p)&true --> htrue&p!=p]
+
+(==infer.ml#787==)
+infer_lhs_contra#1@3@2
+infer_lhs_contra#1 inp1 : flted_13_34=1 & x2=p & x2=p
+infer_lhs_contra#1 inp2 :[p]
+infer_lhs_contra#1 inp3 :M_infer_heap : x2::node<b,q>@M
+infer_lhs_contra#1@3 EXIT:Some( p!=p)
+
+===================================================================
+# ex64k1b.slk
+
+Is this unsound?
+
+# swap rhs <-> lhs
+
+lemma_safe "one" self::rlseg<p1>*p1::rlseg<p> <-> self::rlseg<p> & p!=null.
+
+!!! **iast.ml#3984:swap_lhs_rhs:rhs_pure:p != null
+!!! **astsimp.ml#4586:l_fnames:[self,p]
+!!! **astsimp.ml#4587:rhs_fnames:[self,p1,p]
+
+# Is this a correct way of handling universal guards?
+
+check_coercion_struc inp1 :Lemma "one_left_right":  self::rlseg<p>@M&{FLOW,(20,21)=__norm#E}[]<== (exists p1_53: self::rlseg<p1_53>@M * p1_53::rlseg<p>@M&p!=null&
+
+===================================================================
+# ex64m.slk --en-sep-pure-fields
+
+// (4)
+infer [H1]  H1(y) |- y::node<a,b> * b::ll<m>.
+print residue.
+
+# infer_unfold not working? (FIXED)
+
+# match not recorded..
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
+
+!!! **inferHP.ml#1459:root posn (H1):0
+!!! **solver.ml#12061:do_infer_heap:entry:rhs: y::node<a,b>@M
+!!! **inferHP.ml#243:Globals.infer_const_obj # is_pure_field :false
+!!! **inferHP.ml#244: es.CF.es_infer_obj # is_pure_field_all:false
+!!! **inferHP.ml#266:args12:[(b_42,@I)]
+!!! **inferHP.ml#267:niu_svl_ni_total:[]
+!!! **inferHP.ml#275:is_inf_pure_field:false
+===================================================================
+# bugs/ex64m1.slk (DONE)
+
+# Why is do_match not captured in trace and -dd-steps by infer_unfold?
+
+Entail (1) : Valid. 
+Residue:
+ <1>HP_47(flted_14_46,y)&flted_14_46=null & y!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_47(flted_14_46,y@NI)&true --> emp&flted_14_46=null; 
+                  H1(y)&
+                   true --> y::node<a_45,flted_14_46>@M * 
+                            HP_47(flted_14_46,y@NI)&
+                   true]
+[[ InferUnfold  ==>  InferHeap]]
+
+(==solver.ml#13577==)
+do_match@1
+do_match inp1 : y::node<a_41,b_42>@M
+do_match inp2 : y::node<a,b>@M
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H1(y) |#|  --> y::node<a_41,b_42>@M]
+ es_gen_impl_vars(E): [a; b; c; d]
+ es_gen_impl_vars: [a; b; c; d]
+ es_trace:  InferUnfold  ==>  InferHeap
+ es_infer_vars_hp_rel: [H1]
+do_match inp4 : b::node<c,d>@M&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+
+[[ InferUnfold  ==>  InferHeap ==>  UnmatchedRHSData]]
+ CEX:false
+===================================================================
+# ex64k8.slk (FIXED)
+
+# why old system  (in default) can prove below?
+
+!!! **solver.ml#13660:lhs contra?:None
+Entailing lemma three: Fail. (cex)(may) cause: OrL[
+residue is forbidden.(1),
+valid
+]
+
+lemma_safe "three"  
+   self::node<_,q>*q::rlseg<p> 
+    ->
+   self::rlseg<p1>* p1::node<_,p> 
+.
+
+# new complex lemma
+ body_norm:  EBase 
+   exists (Impl)[p1; 
+   Anon_12](exists p_40: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_lhs_sig: Some([node,rlseg])
+
+
+# old complex lemma (from default)
+!!! WARNING : changing lemma from <- to -> 
+ body_norm:  EBase 
+   exists (Impl)[p1](exists p_40,
+   Anon_12: self::rlseg<p1>@M * p1::node<Anon_12,p_40>@M&p_40=p&
+   {FLOW,(20,21)=__norm#E}[])
+ coercion_fold: None
+
+===================================================================
+# ex64k1d.slk
+
+@ unsound?
+
+# do not move p!=null to opposite site..
+  as this is unsound, esp for free expressions
+
+# swap rhs <-> lhs
+
+ self::rlseg<p> & p!=null
+  <- 
+    self::rlseg<p1>*p1::rlseg<p> 
+
+For:
+ x::lseg<n,p> & a,b>=0 <-- x::lseg<a,q> * q::lseg<b,p>
+we converted to:
+ x::lseg<n,p>  <-- x::lseg<a,q> * q::lseg<b,p> & n=a+b
+which seems OK as a weakening process..
+
+Why are the two different?
+If we do such weakening, we should give a warning as the
+new lemma is weaker than the declared one.
+===================================================================
+# ex64k9b.slk
+
+lemma_safe "one" 
+  self::node<_,q>*q::rlseg<p>
+  <->
+  self::rlseg<p1>*p1::node<_,p>
+.
+
+# Why so long, and why need breaking lemma?
+
+
+[[ Match(self_one_left_right,self_one_left_right) ==>  SEARCH ==>  (Lemma <== one_left_right(q_679,q_679)) ==>  Match(q_679,q_679) ==>  Fold ==>  Match(p1_680,p1_680) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Match(self_one_left_right,self_one_left_right) ==>  COND ==>  BaseCaseFold ==> ||OR|| ==>  Fold ==>  Match(self_one_left,self_one_left) ==>  SEARCH ==>  (Lemma ==> one_left(q_502,q_505)) ==> (Complex: one_left) ==>  SEARCH ==>  (Lemma <== one_left_right(q_502,q_505)) ==>  Match(q_502,q_505) ==>  Fold ==>  Match(p1_596,p1) ==> ||OR|| ==>  Fold ==>  Match(self_one_left,p1)]]
+===================================================================
+# ex64k9c.slk
+
+lemma_safe "one" 
+  self::rlseg<p1>*p1::node<_,p>
+  <->
+  self::node<_,q>*q::rlseg<p>
+
+// this lemma direction is not as good as the other (see ex64k9b)
+===================================================================
+# ex64o.slk
+
+# inferred false cumulatively!
+# to avoid with a shared object?
+
+# why is q_54 paired with x? How did we get q_54=x?
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_12,flted_11_43>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Match =>
+    LHS: x::node<Anon_53,q_54>@M
+    RHS: x::node<Anon_12,flted_11_43>@M;
+  Prio:2
+  Unfold 0 =>
+    LHS: q_54::ll<flted_7_52>@M
+    RHS: x::node<Anon_12,flted_11_43>@M
+  ]
+===================================================================
+# bugs/ex64q2a.slk -dre "verify_lemma"
+
+        let res = x_add Lemproving.verify_lemma 3 l2r r2l cprog name typ in 
+
+# Below still loses x_loc even though we have x_add:
+
+(====)
+verify_lemma#3@8@7@6@5
+verify_lemma#3 inp1 :[Lemma "lseg":  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]==> (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head match:lseg
+ body view:lseg
+ body pred_list:[lseg,lseg]
+ coercion_univ_vars: [a,b]
+ materialized vars:  [(self,full,[lseg])]
+ coercion_case: Simple
+ head:  self::lseg<n,p>@M&n=a & 0<=a & 0<=b&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists r: self::lseg<a,r>@M * r::lseg<b,p>@M&{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists n_135,p_136: self::lseg<n_135,p_136>@M&
+===================================================================
+# ex64r3.slk --dd-callers-all
+
+infer [zzz,H1] H1(y)*x::node<zzz>   |- y::lseg<null> * x::lseg<zzz> .
+
+# How come do_fold_w_ctx recursive here?
+
+[do_fold_w_ctx@11.,do_fold@10,do_base_fold,pm_aux@9,process_action,pm_aux@8,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,do_match,pm_aux@7,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,fold_op_1,do_fold_w_ctx@4,do_fold@3,do_full_fold,pm_aux@2,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,process_infer]
+===================================================================
+# ex64r6c.slk 
+
+infer [zzz,H1] x::node<zzz>*H1(y)   |- y::node<null> * x::lseg<zzz> .
+
+# Why is x::node<..> still there? if it is not a search?
+
+!!! **WARNING****context.ml#825:pushing to infer
+!!! **context.ml#3239:process_matches (steps) :
+ ### LHS : x::node<zzz>@M * H1(y)
+ ### RHS : y::node<flted_14_49>@M
+ ### matches :
+[ Type: Root
+ LHS: H1(y)
+ RHS: y::node<flted_14_49>@M
+ root_inst: None
+ lhs_rest: x::node<zzz>@M
+ rhs_rest: emp
+ alias set: [y]rhs_inst: []rhs_infer: None]
+===================================================================
+# ex64r7b.slk -dre "om_gist"
+
+# gist not working properly ..
+
+(====)
+om_gist@29@27@26@25@24@21@20@2
+om_gist inp1 : (z!=null | flted_13_52=null)
+om_gist inp2 : 0+1=a & q_43=z & z=null & y!=null & x!=null & y!=x
+om_gist@29 EXIT: (flted_13_52=null | z!=null)
+
+===================================================================
+# ex64s5.slk (OK)
+
+# what is first argument of Some(true) for?
+
+(==solver.ml#8957==)
+infer_pure_top_level@3@2@1
+infer_pure_top_level inp1 : true
+infer_pure_top_level@3 EXIT:[(Some( true),Some( yyyy=6),[  H(fld5)&fld5=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H(fld5) |#|  --> emp&fld5=null]
+ es_gen_impl_vars(E): []
+
+# Why is infer pure missing?
+
+infer[R,z,inf_p_40]
+R(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z & fld5=null.
+
+ inferred pure: [(z=null | (inf_p_40!=null & z!=null))]
+ inferred rel: [RELASS [R]: ( R(fld5)) -->  fld5=null]
+
+infer[H,z,inf_p_40]
+H(fld5) &
+q_34=z & inf_ann_39=@M & inf_p_40=null & inf_p_40!=x & x!=null
+|-x!=z & inf_p_40=z &fld5=null.
+
+ <1>H(fld5)&x!=null & fld5=null & z=q_34 & inf_ann_39=@M & inf_p_40=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(fld5)&true --> emp&fld5=null]
+===================================================================
+# ex64s5.slk 
+
+ dre "infer_pure_top" --trace-log-num 1 
+
+
+# logging lost when --dd-callers-all 
+===================================================================
+# ex64s7a.slk (FIXED)
+
+if true (* CP.remove_dups_svl rel_ids = rel_ids *) then
+
+ <1>q_66::ll<flted_7_64>@M * y::ll<m>@M&flted_7_64=n-1 & n<=1 & R1(n) & R1(m)&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R1]: ( R1(n) & R1(m)) -->  (n!=0 | 0>m); 
+                RELASS [R1]: ( R1(n)) -->  n<=1]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+
+# -pnum 4
+
+infer [R1,R2] x::ll<n> * y::ll<m> & R1(n) & R2(m) |- x::node<_,null>.
+
+Entail (5) : Fail.(may) cause:OrL[
+ x=null |-  x!=null. LOCS:[6;38] (must-bug),
+valid
+]
+
+(====)
+early_hp_contra_detection_add_to_list_context#1@7
+early_hp_contra_detection_add_to_list_context#1 inp1 : ex_formula : y::ll<m>@M&R1(n) & R1(m) & n=0 & x=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R1]
+early_hp_contra_detection_add_to_list_context#1 inp2 : x::node<Anon_16,flted_38_52>@M&flted_38_52=null&{FLOW,(20,21)=__norm#E}[]
+early_hp_contra_detection_add_to_list_context#1@7 EXIT:(real_c:false,false,None,?)
+
+# Why isn't contra detected?
+
+# -pnum 5
+
+infer [R1] x::ll<n> * y::ll<m> & R1(n) & R1(m) |- x::node<_,null>.
+
+ <1>q_67::ll<flted_7_65>@M * y::ll<m>@M&flted_7_65=n-1 & n<=1 & R1(n) & R2(m)&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R1,R2]: ( R1(n) & R2(m)) -->  (n!=0 | 0>m); 
+                RELASS [R1]: ( R1(n)) -->  n<=1]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+# Why use ( R1(n) & R2(m)) --> 
+===================================================================
+# ex64s7a.slk
+
+# -pnum 6
+
+infer [H,R1] H(n) * x::ll<n> * y::ll<m> & R1(m)
+  |- x::node<_,null>.
+
+# How about HeapPred?
+
+ inferred rel: [RELASS [R1]: ( R1(m)) -->  0>m]
+ inferred hprel: [H(n@NI)&true --> emp&n<=1]
+===================================================================
+# ex64u2.slk
+
+checkentail x::lseg<nnn, p> & nnn > 9 |- [n1,n2] x::lseg<n1, r1> * r1::lseg<n2, p> & n1 >= 9 & n2 >= 2.
+
+# simplify for Z3? large proof
+
+ log(bigger)(>4s)(3):(15.,[(simplify:171<9:Z3,5.);(simplify:272<17:Z3,5.);(simplify:371<25:Z3,5.)])
+===================================================================
+# sleek7.slk
+
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Unexpected result with : sleek7.slk (failed check(s): {E1#Valid},{E10#Valid},{E2#Valid},{E3#Valid},{E6#Valid},{E7#Valid},{E8#Valid}) 
+===================================================================
+  label-dll.slk(no result  for {E})
+ sleek7.slk({E10#Valid}) sleek8.slk({E16#Valid}) sleek8.slk({E16#Valid}) 
+ sleek9.slk({E3#Valid},{E4#Valid}) 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) lemmas/dseg1.slk({L1#Valid}) fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+odd-lseg.slk taking very long to compute..
+===================================================================
+3Dec
+
+Total number of errors: 6 in files:
+ 
+  lemmas/sll_tailL.slk({L1#Valid},{L2#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail},{L3#Valid}) 
+  lemmas/dseg1.slk({L1#Valid}) 
+
+  fracperm/split_simple.slk({E2#Fail},{E4#Fail},{E5#Fail}) 
+  veribsync/barrier-dynamic2.slk({E2#Fail}).
+
+===================================================================
+# ex64r3a.slk (FIXED on --new-heap-contra)
+
+infer [
+  H1
+  ] H1(y)*x::node<null>*z::node<null>  |- 
+    x::ll<n> 
+    .
+print residue.
+
+# why infer [H1] triggers failure in the above?
+===================================================================
+# ex64r3d.slk (FIXED)
+
+  --pnum 2 -dre "infer_\|early_hp_" --trace-log-num 2  
+   -show-push-list "es_infer" >1
+
+infer [@classic,H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+
+# GOT
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H1(y)&y=null --> emp&true]
+
+# expects:
+
+ inferred hprel: [H1(y) --> y=null]
+
+ above seems too weak to conclude false??
+
+FIXED inside:
+
+(==solver.ml#5669==)
+add_infer_hp_contr_to_list_context@6@2@1
+add_infer_hp_contr_to_list_context inp1 :[((H1, H1(yyy)),[yyy])]
+add_infer_hp_contr_to_list_context inp2 :[ yyy!=null]
+add_infer_hp_contr_to_list_context inp3 : [ hfalse&false&{FLOW,(20,21)=__norm
+===================================================================
+# ex63e1.slk
+
+# why loop for lemma? derived must not fire lemma..
+
+
+lemma_unsafe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+
+// 1
+// going into a loop here..
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 
 ===================================================================
 ===================================================================
 ===================================================================

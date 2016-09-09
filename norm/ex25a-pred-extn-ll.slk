@@ -1,0 +1,49 @@
+data node{
+  int val;
+  node next#REC;  
+}.
+
+pred ll<> ==
+   emp & self=null
+or self::node<_, p>*p::ll<>.
+
+pred lseg<p> ==
+  emp & self=p 
+  or self::node<_, q> * q::lseg<p>.
+
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+print views.
+
+//pred llN<nnn> == extends ll<> with size[REC]<nnn>.
+
+//pred lsegN<p,n> == extends lseg<p> with size[REC]<n>.
+
+shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+
+print views.
+
+data_mark_rec [*].
+
+/*
+# ex25a.slk
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+
+*/

@@ -1,0 +1,145 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
+  <- self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+*/
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<n & i<m<=n
+  -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+*/
+
+/*
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<n & i<m<=n & Univ(m)
+    //& i+1<n 
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> 
+    & i<n 
+    & i<m<=n & Univ(m)
+    & i+1<n 
+   |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+checkentail   i<n 
+    & i<m<=n & Univ(m)
+    & i+1<n |- m=i+1.
+expect Valid.
+
+checkentail   i<n 
+    & i<m<=n & Univ(m) |- m=i+1.
+expect Valid.
+*/
+
+
+checkentail  Univ(mmm) & mmm<=n 
+ & (exists(mmm: ((0<=mmm & ((0-xx)+1)<=mmm  
+    & mmm<n) | (mmm=n & 0<=n)))) 
+ & i<n & i<mmm & 
+ (1+i)<n |-  mmm=i+1.
+
+checkentail  Univ(mmm) & mmm<=n
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<=n & i<mmm
+  |-  mmm=i+1.
+expect Valid.
+
+checkentail  Univ(mmm) & mmm<=n
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm
+  |-  mmm=i+2.
+expect Valid.
+
+checkentail  Univ(mmm) & mmm<=n 
+ & ((0<=mmm & ((0-xx)+1)<=mmm  
+    & mmm<n) | (mmm=n & 0<=n)) 
+ & i<n & i<mmm & 
+ (1+i)<n |-  mmm=i+2.
+expect Valid.
+
+checkentail  Univ(mmm) & mmm<=n 
+ & ((0<=mmm & ((0-xx)+1)<=mmm  
+    & mmm<n) | (mmm=n & 0<=n)) 
+ & i<n & i<mmm & 
+ (1+i)<n |-  mmm=i+3.
+expect Fail.
+
+checkentail  Univ(mmm) & mmm<=n 
+ & ((0<=mmm & ((0-xx)+1)<=mmm  
+    & mmm<n) | (mmm=n & 0<=n)) 
+ & i<n & i<mmm & 
+ (1+i)<n |-  mmm=i.
+expect Fail.
+
+
+checkentail  Univ(mmm) & mmm<=n 
+ & ((0<=mmm & ((0-xx)+1)<=mmm  
+    & mmm<n) | (mmm=n & 0<=n)) 
+ & i<n & i<mmm & 
+ (1+i)<n & mmm=i+1 |-  mmm=i+2.
+expect Fail.
+
+
+// // Why n is collected as univ vars?
+// checkentail  Univ(mmm) & mmm<=n & i+1>0
+//  & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+//  & i+1<n & i<mmm
+//   |-  mmm=i+1.
+
+
+// checkentail  Univ(mmm) & mmm<=n 
+//  & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+//  & i<n & i<mmm
+//   |-  mmm=i+1.
+
+
+/*
+checkentail xx::arr_seg<i,n> //& i<n 
+  |- xx::arr_seg<i+1,n>.
+print residue.
+expect Fail.
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n |- xx::arr_seg<i+1,n>.
+
+print residue.
+expect Fail.
+
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n
+    |- xx::arr_seg<i+1,n>.
+
+
+
+
+*/

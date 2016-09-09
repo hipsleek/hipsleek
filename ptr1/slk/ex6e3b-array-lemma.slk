@@ -1,0 +1,41 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n 
+   -> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+// This one is not working since m is not properly instantiated
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m & m<=n & i+1<n|- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m & m<=n & m=i+1 |- xx::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+
+/*
+# ex6e3b.slk
+
+ ### RHS Cand :[ xx::arr_seg<flted_13_100,n_99>@M]
+ ### action :
+ COND =>[
+  Prio:0
+  Match =>
+    LHS: xx::arr_seg<i,m_105>@M
+    RHS: xx::arr_seg<flted_13_100,n_99>@M;
+  Prio:0
+  Match =>
+    LHS: xx::arr_seg<m_110,n>@M
+    RHS: xx::arr_seg<flted_13_100,n_99>@M
+  ]
+
+*/
+

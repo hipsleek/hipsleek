@@ -1,0 +1,66 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred zip2<y,z> ==
+   self=null & y=z
+or self::node<_,p>*y::node<_,q> * p::zip2<q,z>.
+
+pred ll<n> == self=null & n=0
+    or self::node<_,q>*q::ll<n-1>
+inv n>=0.
+
+pred lseg<p,n> == self=p & n=0
+    or self::node<_,q>*q::lseg<p,n-1>
+inv n>=0.
+
+
+//pred_split [zip2].
+//print views.
+//
+//relation R(int a,int b).
+
+lemma_test "L1" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1<=n2.
+
+lemma_safe "L2" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1=n2.
+
+
+/*
+checkentail (exists n2: y=z & n2=0  & 0<=n2 & self_L1=null)
+ |-   self_L1::zip2<y,z>@M.
+*/
+
+checkentail (exists n2_118: y::lseg<z,n2_118>@M&0<=n2_118 & self_L1=null)
+ |-   self_L1::zip2<y,z>@M.
+
+/*
+lemma_infer [@classic,R] self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & R(n1,n2).
+print residue.
+*/
+
+/*
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+lemma_test "L1" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1<=n2.
+
+# Why did this above proof fails?
+
+Entailing lemma L1: Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_L1::zip2<y_133,z_134>@M(must),
+valid
+]
+
+
+
+
+*/

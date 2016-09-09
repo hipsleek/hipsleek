@@ -1,0 +1,71 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app2<> == self::node<_,null> 
+	or self::node<_, q> * q::app2<> & q!=null
+  inv self!=null.
+
+//pred_elim_hd_node [ll].
+//no change
+
+//pred_elim_hd_node [lseg].
+//no change
+
+pred_elim_hd_node [app2].
+pred_reuse[*][*].
+print views.
+
+
+pred_elim_tl_node [app2].
+print views.
+
+
+
+pred_reuse [*][ll].
+
+checkentail x::app2<> |- x!=null.
+print residue.
+
+checkentail x::app2<> |- x::node<_,q>*q::ll<>.
+print residue.
+
+checkentail x::app2<> |- x::node<_,q>.
+print residue.
+
+checkentail x::node<_,q>*q::ll<> & q!=null |- x::app2<>.
+print residue.
+
+checkentail x::node<_,q>*q::node<_,null> |- x::app2<>.
+print residue.
+
+//print lemmas.
+print views.
+
+pred_reuse_subs [*].
+
+print views.
+
+/*
+# ex21a4.slk
+
+checkentail x::app2<> |- x::node<_,q>.
+print residue.
+
+Residue:
+ <1>q::DP_62<>@M&{FLOW,(20,21)=__norm#E}[]
+[[ Unfold 0 ==>  Match(x,x)]]
+
+# can we tidy with re-using pred in body by:
+  pred_subs_reuse [*]
+
+*/

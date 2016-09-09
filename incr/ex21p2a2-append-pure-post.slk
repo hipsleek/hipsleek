@@ -1,0 +1,74 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self=p
+  or self::node<_, q> * q::lseg<p>
+  inv true.
+
+pred P<p,x> == self=p & x=null 
+  or self::node<_, q> * q::P<p,_> & x!=null & x=self
+  inv x=null.
+
+/*
+lemma_test self::P<p,x> -> self::lseg<p>.
+
+relation R(node x,node y, node z).
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+*/
+
+lemma_unsafe self::P<p,x> -> self::lseg<p> & self=p & x=null.
+
+checkentail self::node<_, q> * q::P<p,x> & x!=null & x=self
+    |- self::lseg<p> & self=p & x=null.
+print residue.
+
+checkentail self=p & x=null
+    |- self::lseg<p> & self=p & x=null.
+print residue.
+
+checkentail self::node<_, q> * q::P<p,x> & x!=null & x=self
+    |- self::lseg<p> & self=p & x=null.
+print residue.
+
+
+/*
+# ex21p2a2.ss
+
+lemma_unsafe self::P<p,x> -> self::lseg<p> & self=p & x=null.
+
+checkentail self::node<_, q> * q::P<p,x> & x!=null & x=self
+    |- self::lseg<p> & self=p & x=null.
+
+# why is there false? Presence  of false
+  seems to indicate lack of progress?
+
+Entail 1: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&x=null & self=p&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+
+
+
+
+
+
+*/

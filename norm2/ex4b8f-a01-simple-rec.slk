@@ -1,0 +1,19 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b, cell c).
+
+infer[HP] HP(a,b,c) & c=z |- b::cell<_>. 
+print residue.
+
+
+/*
+# norm/ex4b8f.slk
+
+
+infer[HP] a::cell<_>*c::cell<_> |- HP(a,b,c).
+print residue.
+
+
+*/

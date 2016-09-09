@@ -1,0 +1,29 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+//(4)
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+// i=n
+
+/*
+# ex1e6c.slk
+
+checkentail y::arr<_> & y=x+2 |- [i,n] x::arr_seg<i,n>.
+
+# seems to match base-case instead..
+
+ <1>y::arr<Anon_12>@M&y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+
+# could we use set of solution? or match with node?
+
+*/
+

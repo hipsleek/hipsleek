@@ -1,0 +1,21 @@
+data node{
+	int val;
+        node prev;
+	node next;
+}.
+
+pred G1<y> == self::node<_,p,t> * t::G2<p,y>.
+
+pred G2<p,y> == self=y
+  or self::node<_,pp,tt> * qq::G2<pp,y>.
+
+
+//shape_elim_useless [G1,G2].
+
+/*
+
+Why infer cannot determine the p-parameter of G2?
+
+
+*/
+

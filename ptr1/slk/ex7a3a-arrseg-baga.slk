@@ -1,0 +1,55 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(self+i,n-i)], n>=i & i>=0).
+
+infer[] base::arr_seg<0,1> * base::arr_seg<0,1>  |- false.
+expect Valid.
+
+infer[] base::arr_seg<0,1>   |- base!=null.
+expect Valid.
+
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2>  |- false.
+expect Fail.
+
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2>  |- base!=null.
+expect Valid.
+
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2>  |- base+3!=null.
+expect Valid.
+
+infer[] base::arr_seg<1,1> * base::arr_seg<1,2>  |- base!=null.
+expect Fail.
+
+infer[] base::arr_seg<c,d> & c<d |- base+c!=null.
+expect Valid.
+
+infer[] base::arr_seg<c,d> & c!=d |- base+c!=null.
+expect Valid.
+
+infer[] base::arr_seg<c,d>  |- base+c!=null.
+expect Fail.
+
+/*
+# ex7a3a.slk
+
+# unfolded loses precision ..
+
+baga over inv: [([(_,( self+i, n-i))], i<=n & 0<=i)]
+  baga over inv (unfolded): [([], 0<=i & i<=n)]
+ 
+===========================================
+
+ infer[] base::arr_seg<0,1> * base::arr_seg<0,1> |- false.
+
+# Where is _!=null introduced?
+
+!!! **astsimp.ml#2443:inv:(_ != null) & ((n >= i) & (i >= 0))
+
+
+*/
+

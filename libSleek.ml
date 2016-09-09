@@ -58,7 +58,7 @@ let process_cmd_list cmds :bool=
       Error.report_error { Error.error_loc  = udp;
                            Error.error_text = "Data type " ^ udn ^ " is undefined (5)!" }
   in ();
-  convert_data_and_pred_to_cast ();
+  x_add_1 convert_data_and_pred_to_cast ();
   x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
   (*proc_one_lemma*)
   List.iter (fun c->  match c with
@@ -67,7 +67,8 @@ let process_cmd_list cmds :bool=
   x_tinfo_pp "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
+  let cviews = if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews 
+     else cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*proc_one_cmd*) 
   List.fold_left (fun a c-> match c with 

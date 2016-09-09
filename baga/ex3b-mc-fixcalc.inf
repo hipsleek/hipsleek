@@ -1,0 +1,5 @@
+P:={[n] -> [res] -> []: (n=res+10 && 91<=res 
+ ||  (exists (fc_1775: (exists (v_int_9_1772:P(v_int_9_1772,res) &&
+          P(fc_1775,v_int_9_1772)))  && fc_1775=11+n))  && n<=100)
+};
+bottomupgen([P], [2], SimHeur);

@@ -1,0 +1,95 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer_exact [H] H(p) & p=null |- emp.
+print residue.
+//expect_infer Valid R{emp}.
+// <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&p=null --> emp&true]
+expect Valid.
+
+infer_exact [H] H(p) |- emp.
+print residue.
+// <1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+expect Valid.
+
+infer_exact [H] H(p) |- true.
+print residue.
+//<1>emp&{FLOW,(20,21)=__norm#E}[]
+// inferred hprel: [H(p)&true |#|3  --> emp&true]
+expect Valid.
+
+infer_inexact [H] H(p) |- true.
+print residue.
+// <1>H(p)&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+
+infer_inexact [H] H(p) |- emp.
+print residue.
+// <1>H(p)&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+
+infer_inexact [H] H(p)*H(q) & q=null |- emp.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] H(p)*H(q) & q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] emp & q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] q=null |- true.
+print residue.
+//  <1>H(p) * H(q)&q=null&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] true |- true.
+print residue.
+//  <1>htrue&{FLOW,(20,21)=__norm#E}[]
+expect Valid.
+
+infer_inexact [H] htrue & q=null |- true.
+print residue.
+expect Valid.
+
+
+/*
+# ex10b6.slk
+
+ infer_exact [H] H(p) |- emp.
+
+# GOT below. Why did we not infer H(p) --> emp
+
+Entail (2) : Fail.(may) cause: H(p)&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+Residue:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: 
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+
+
+
+*/

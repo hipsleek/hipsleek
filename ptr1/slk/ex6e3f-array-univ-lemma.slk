@@ -1,0 +1,82 @@
+data arrI {
+  int val;
+}.
+
+relation Univ(int x).
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+lemma_unsafe self::arr_seg<i,n> & i<mmm & mmm<=n 
+   -> self::arr_seg<i,mmm>*self::arr_seg<mmm,n>.
+
+//(1)
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n> & i!=n |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n>  |- [mm] xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Fail.
+
+checkentail xx::arr_seg<i,n>  |- xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Fail.
+
+checkentail xx::arr_seg<i,n>  |- (exists xx: xx::arr_seg<mm,n> & mm=i+1).
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,n>  & i<n  |- xx::arr_seg<mm,n> & mm=i+1.
+print residue.
+expect Valid.
+
+
+checkentail xx::arr_seg<i,n>  & i<n  |- (exists mm: xx::arr_seg<mm,n> & mm=i+1).
+print residue.
+expect Valid.
+
+checkentail xx::arr_seg<i,n>  & i<n  |- (exists mm: xx::arr_seg<mm,n>@L & mm=i+1).
+print residue.
+expect Valid.
+
+/*
+//(5)
+checkentail xx::arr_seg<i,n> & i<n |- [mm]  xx::arr_seg<mm,n> & mm=i+2 & mm<=n.
+print residue.
+
+//(6)
+checkentail xx::arr_seg<i,n> & i<n & mm=i+2 |- xx::arr_seg<mm,n>.
+print residue.
+*/
+
+/*
+# ex6e3f.slk 
+
+//(4)
+checkentail xx::arr_seg<i,n> & i<n |- [mm] xx::arr_seg<mm,n> & mm=i+2.
+print residue.
+expect Fail.
+// isn't this unsound?
+
+
+
+
+
+-dre ".*univ" --trace-log-num 2
+
+
+
+*/
+

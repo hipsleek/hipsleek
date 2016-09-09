@@ -1,0 +1,114 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = null 
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+pred app3<> == self::node<_,null> 
+	or self::node<_, q> * q::app3<> & q!=null 
+  inv self!=null.
+
+HeapPred U(node x).
+HeapPred U2(node x,node y).
+HeapPred U3(node x,node y).
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+
+/*
+# ex21d5.slk
+
+lemma_infer_pred [U,classic]
+  self::app3<> -> self::node<_,q>*U(q).
+print residue.
+
+# error from new-pred-synthesis
+
+  [U(q_153)&q_147!=null |#|  --> GP_154(q_153,q_147); 
+   q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147)&
+    q_147!=null |#|  --> U(q_147) * q_153::Dangling<>@M; 
+   emp&flted_22_139=null |#|  --> U(flted_22_139)]
+!!! **syn.ml#440:>>>>> Step 2: Unfolding <<<<<
+ --error:  at:
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ U(q_163) ::= q_163::ll<>@M(20,21)]
+*************************************
+
+# printed only with --old-pred-synthesi
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ U(q_163) ::= q_163::ll<>@M(20,21)]
+*************************************
+
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [U(q_153)&q_147!=null --> GP_154(q_153,q_147@NI)&true; 
+                  q_147::node<Anon_152,q_153>@M * GP_154(q_153,q_147@NI)&
+                   q_147!=null --> U(q_147)&true; 
+                  emp&flted_22_139=null --> U(flted_22_139)&true]
+[[ Match(self_lem_19,self_lem_19) ==>  COND ==>  (Lemma ==> lem_191 :(q_147,q_147)) ==> (left: lem_19) ==>  Match(q_147,q_147) ==>  InferUnfold  ==> ||OR|| ==>  Match(self_lem_19,self_lem_19) ==>  UnmatchedRHSData]]
+
+
+
+# should print without --old-pred-synthesis
+
+lemma_infer_pred [U2,classic]
+  self::app3<> -> U2(self,q) * q::node<_,null>.
+
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ U2(self_lem_215,q_216) ::= self_lem_215::node<Anon_217,q_199>@M * U2(q_199,q_216)&q_199!=null
+ or emp&self_lem_215=q_216
+ (20,21)]
+*************************************
+
+*********************************************************
+*******relational definition********
+*********************************************************
+[ HP_431(q_424) |#| emp&flted_41_313!=null & flted_41_313=null
+                   or emp&flted_41_313=null
+                   or emp&flted_41_313=null
+                   or emp&flted_41_313!=null & flted_41_313=null
+                    ::= q_424::node<Anon_427,q_323>@M * HP_431(q_323)
+ or q_424::node<Anon_428,q_323>@M * HP_431(q_323)
+ or q_424::node<Anon_429,q_323>@M * HP_431(q_323)
+ or q_424::node<Anon_430,q_323>@M * HP_431(q_323)
+ or emp&q_424!=null
+ (20,21),
+ U3(self_lem_391,q_392) |#| q_392::node<Anon_315,flted_41_313>@M&
+                            flted_41_313=null
+                            or q_392::node<Anon_300,flted_41_298>@M&
+                               flted_41_298=null
+                             ::= self_lem_391::node<Anon_393,q_323>@M * HP_431(q_323)
+ or emp&self_lem_391=q_392
+ (20,21)]
+*************************************
+
+
+*/

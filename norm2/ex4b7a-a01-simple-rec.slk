@@ -1,0 +1,80 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b).
+
+infer[HP]   x::cell<_> * y::cell<_> |- HP(x,y).
+//& y!=null 
+print residue.
+
+/*
+# norm/ex4b6.slk
+
+Two diff outcomes:
+
+infer[HP] x::cell<_> * y::cell<_> & y!=null |- HP(x,y).
+
+ <1>x::cell<Anon_12>@M&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#| x::cell<Anon_12>@M&true --> GP_23(y,x@NI)&true; 
+                  y::cell<Anon_11>@M * GP_23(y,x@NI)&true --> HP(x,y)&true]
+[[ COND ==>  InferFold 0 ==>  InferHeap ==>  Match(y,y) ==>  UnmatchedRHSData]]
+
+Instead of:
+
+ [y::cell<Anon_14>@M * x::cell<Anon_13>@M --> HP(x,y)&true]
+
+# could you handle:
+
+ [y::cell<Anon_14>@M&true --> GP_30(y,x@NI)&true; 
+  x::cell<Anon_13>@M * GP_30(y,x@NI)&true --> HP(x,y)&true]
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<Anon_14>@M&true --> GP_30(y,x@NI)&true; 
+                  x::cell<Anon_13>@M * GP_30(y,x@NI)&true --> HP(x,y)&true]
+[[ COND ==>  InferFold 0 ==>  InferHeap ==>  Match(x,x) ==>  InferFold 0 ==>  InferHeap ==>  Match(y,y)]]
+
+
+=====================================
+
+infer[HP]
+y'::cell<value_21_1711>@M * x'::cell<v_int_30_1577'>@M
+//& v_bool_14_1536' 
+//& x'=x & y'=y 
+//& v_bool_14_1583' 
+//& 0<value_14_1691 
+//& y!=null 
+//& v_int_30_1577'+1=value_14_1691 
+//& value_30_1722=value_14_1691
+ |-  HP(x',y').
+print residue.
+
+# Why is this different from --esl?
+
+ <1>emp&y!=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<Anon_12>@M&y!=null --> GP_24(y,x@NI)&true; 
+                  x::cell<Anon_11>@M * GP_24(y,x@NI)&y!=null --> HP(x,y)&true]
+[[ COND ==>  InferFold 0 ==>  InferHeap ==>  Match(x,x) ==>  
+  InferFold 0 ==>  InferHeap ==>  Match(y,y)]]
+
+id: 57; caller: []; line: 14; classic: false; kind: PRE_REC; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ HP_1687,HP_1692]; c_heap: emp; others:  es_infer_obj: [@shape_pre] globals: [@dis_err]
+ checkentail (exists v_int_30_1577': y'::int_star<value_21_1711>@M * 
+                         x'::int_star<v_int_30_1577'>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1691 & 
+y!=null & v_int_30_1577'+1=value_14_1691 & value_30_1722=value_14_1691 & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}[])
+ |-  HP_1687(x',y')&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;1;0)unknown emp&
+  y'!=null |#| x'::int_star<v_int_30_1727>@M --> GP_1728(y',x'),
+ (1;1;0)unknown y'::int_star<value_21_1711>@M * GP_1728(y',x')&
+  y'!=null |#|  --> HP_1687(x',y')]
+ho_vars: nothing?
+res:  1[
+    x'::int_star<v_int_30_1727>@M&
+v_bool_14_1536' & x'=x & y'=y & v_bool_14_1583' & 0<value_14_1691 & 
+y!=null & v_int_30_1727+1=value_14_1691 & value_30_1722=value_14_1691&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+*/

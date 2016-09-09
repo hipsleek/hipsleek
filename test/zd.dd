@@ -6,7 +6,7 @@
 #,Trace
 fold_op
 #heap_entail_empty_rhs
-heap_entail_conjunct_lhs_struc
+heap_entail_conjunct_lhs_struc,Loop
 heap_entail_one_context_struc
 #heap_entail_struc
 #heap_entail_struc_init

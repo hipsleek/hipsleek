@@ -1,0 +1,61 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> * q::arr<v> & p1=self+o & q=p1+1 & o>=0
+or  q::arr<v> * p::arr<v>  & p=self+o+1 & q=p+1 & o>=0
+inv o>=0.
+// root=Some(self+o)
+// add this @ trans_view
+
+/*
+pred arr_seg<i:int,n:int> == emp & i>=n & n>=0
+  or self::arr_int<i,_> * self::arr_seg<i+1,n>
+  inv n>=0 & i>=0.
+// root=Some(self+i)
+*/
+
+checkentail x::arr<5> & x=(y:arr)+2 |- y::arr_int<2,v>.
+print residue.
+expect Valid.
+
+//Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
+
+
+/*
+# ex1c2.ss
+
+# current ptr failures..
+
+checkentail x::arr<5> * y::arr<4> & x=(y:arr)+2 & z=y+2 |- z::arr<v>.
+print residue.
+expect Valid.
+//Entail 3: Fail.(may) cause:do_unmatched_rhs : z::arr<v>@M(may)
+
+(==context.ml#3147==)
+choose_context@1
+choose_context inp1 :LHS node: x::arr<flted_19_63>@M * y::arr<flted_19_62>@M
+choose_context inp2 :RHS node: z::arr<v>@M
+choose_context inp3 :LHS pure: z=2+y & x=2+y & flted_19_62=4 & flted_19_63=5
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+
+checkentail x::arr<5> & x=(y:arr)+2 |- y::arr_int<2,v>.
+print residue.
+//Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
+expect Valid.
+
+
+(==context.ml#3147==)
+choose_context@3
+choose_context inp1 :LHS node: x::arr<flted_24_79>@M
+choose_context inp2 :RHS node: y::arr_int<flted_24_94,v>@M
+choose_context inp3 :LHS pure: x=2+y & flted_24_79=5
+choose_context inp4 :RHS pure: flted_24_94=2
+choose_context inp5 :right aliase:[]
+choose_context@3 EXIT:[]
+
+
+ */

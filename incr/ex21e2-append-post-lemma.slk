@@ -1,0 +1,57 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+  pred PP<p> == self::node<_,p>
+	or self::node<_, q> * q::PP<p> & q!=null 
+  inv true.
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+
+//lemma_infer [U,classic] self::PP<y> <- U(self,q)*q::node<_,y>.
+//print residue.
+
+lemma_infer_pred [U,classic] self::PP<y> -> U(self,q)*q::node<_,y>.
+print residue.
+
+
+/*
+
+# ex21e2.ss
+
+ inferred hprel: [
+
+ emp&self_lem_19=q_195 --> U(self_lem_19,q_195).
+
+ U(q_208,q_211)&q_208!=null |#| q_211::node<Anon_265,y>@M&
+        true --> GP_259(q_208,q_211,self_lem_19@NI).
+
+ self_lem_19::node<Anon_207,q_208>@M * 
+        GP_259(q_208,q_211,self_lem_19@NI)&
+        q_208!=null --> U(self_lem_19,q_211) .
+
+// merge
+P(x,y) <-- x::node<Anon_1630,q_1631>@M * P(q_1631,y) & q_1631!=null 
+        \/ x::node<Anon_1630,y>@M
+
+P(x,y) <-- x::node<_,q>@M * U(q,y)
+
+P(x,y) <-- U<_,q>*q::node<_,y>
+
+P(x,y) --> x::lseg<q> & x!=null
+
+*/

@@ -65,8 +65,8 @@ let common_arguments = [
    "Disable Simplify the entail state before printing the dprint state."); (* An Hoa *)
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
-  (* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
-  (* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+  ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
+  "Do unfolding of predicates with duplicated pointers."); (* An Hoa *)
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
@@ -142,12 +142,16 @@ let common_arguments = [
    "Simplify the pure part of the formulas");
   (* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
   (* "Use the combined coerce&match + history heuristic for lemma application"); *)
+  ("--push-exist-deep", Arg.Set Globals.push_exist_deep,
+   "Push exist as deep as possible");
   ("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
    "Move instantiation (containing existential vars) to the LHS at the end of the folding process");
   ("--max-renaming", Arg.Set Globals.max_renaming,
    "Always rename the bound variables");
-  ("--no-anon-exist", Arg.Clear Globals.anon_exist,
+  ("--dis-anon-exist", Arg.Clear Globals.anon_exist,
    "Disallow anonymous variables in the precondition to be existential");
+  ("--en-anon-exist", Arg.Set Globals.anon_exist,
+   "Allow anonymous variables in the precondition to be existential");
   ("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
    "Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Globals.elim_exists_flag,
@@ -200,8 +204,20 @@ let common_arguments = [
    "Turn on brief tracing");
   ("--dis-trace", Arg.Clear Debug.trace_on,
    "Turn off brief tracing");
-  ("-dd", Arg.Set Debug.devel_debug_on,
+  ("-dd", Arg.Unit (fun _ ->
+      Debug.devel_debug_on :=true;
+      Debug.devel_debug_steps :=true
+     ),
    "Turn on devel_debug on short and normal output");
+  ("-dd-steps", Arg.Set Debug.devel_debug_steps,
+   "Turn on tracing of entailment proving steps ");
+  ("-dd-esl", Arg.Int (fun n -> 
+       Globals.proof_logging_txt:=true; 
+       Globals.sleek_logging_txt:=true;
+       Debug.devel_debug_on:=false;
+       Debug.devel_debug_sleek_proof := n;
+     ),
+   "Turn on devel_debug for a particular sleek proof");
   ("-dd-short", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Short),
    "Turn on devel_debug only short output");
   ("-dd-long", Arg.Unit (fun () -> Debug.devel_debug_on := true; Globals.debug_level := Globals.Long),
@@ -230,7 +246,16 @@ let common_arguments = [
   ("--dd-calls-all", Arg.Unit
      (fun _ -> 
         Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
         Debug.dump_calls_all:=true;
+        Gen.debug_precise_trace:=true;
+     ),
+   "Dump all debugged calls");
+  ("--dd-callers-all", Arg.Unit
+     (fun _ -> 
+        Debug.dump_calls:=true;
+        Debug.dump_callers_flag:=true;
+        (* Debug.dump_calls_all:=true; *)
         Gen.debug_precise_trace:=true;
      ),
    "Dump all debugged calls");
@@ -274,21 +299,28 @@ let common_arguments = [
    "Enable trace all failure (and exception). Use make gbyte");
   ("--trace-exc", Arg.Set VarGen.trace_exc,
    "Enable trace of exceptions invoked by methods");
+  ("--trace-log", Arg.Set Gen.debug_trace_log,
+   "Enable trace of method logs during debugging");
+  ("--trace-log-num", Arg.Int (fun i ->
+       Gen.debug_trace_log_num:=i;
+       Gen.debug_trace_log :=true;
+     ),
+   "Enable trace of a specific method call for debugging");
   ("--trace-loop", Arg.Set VarGen.trace_loop,
-   "Enable trace of method header duriong debugging");
+   "Enable trace of method header during debugging");
   ("--trace-loop-all", Arg.Unit (fun _ ->
        VarGen.trace_loop_all :=true;
        VarGen.trace_loop :=true;
      ),
-   "Enable trace of method header duriong debugging (with details on arg)");
+   "Enable trace of method header during debugging (with details on arg)");
   (* Exception(fixcalc_of_pure_formula):Stack overflow *)
   (* Exception(compute_def@6):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint_aux@5):Failure("compute_def:Error in translating the input for fixcalc") *)
   (* Exception(compute_fixpoint#5@4):Failure("compute_def:Error in translating the input for fixcalc") *)
   ("--trace-all", Arg.Set Globals.trace_all,
-  "Trace all proof paths");
+   "Trace all proof paths");
   ("--log-cvcl", Arg.String Cvclite.set_log_file,
-  "Log all CVC Lite formula to specified log file");
+   "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
   ("--log-omega", Arg.Set Omega.log_all_flag,
@@ -304,9 +336,7 @@ let common_arguments = [
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
   ("--log-redlog", Arg.Set Redlog.is_log_all,
-   "Log all formulae sent to Reduce/Redlog in file al
-
-linput.rl");
+   "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--log-math", Arg.Set Mathematica.is_log_all,
    "Log all formulae sent to Mathematica in file allinput.math");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
@@ -314,19 +344,91 @@ linput.rl");
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--en-weaker-pre", Arg.Set Globals.weaker_pre_flag,"Enable Weaker Pre-Condition to be Inferred");
   ("--dis-weaker-pre", Arg.Clear Globals.weaker_pre_flag,"Disable Weaker Pre-Condition to be Inferred");
+  ("--warn-fvars-rhs-match", Arg.Set Globals.warn_fvars_rhs_match,"Enable Warning of Free Vars in RHS of Match");
+  ("--warn-post-free-vars", Arg.Set Globals.warn_post_free_vars,"Enable Warning of Free Vars in Post-Conditions");
+  ("--warn-trans-context", Arg.Set Globals.warn_trans_context,"Enable Warning of Non-empty Perm Vars");
   ("--warn-nonempty-perm-vars", Arg.Set Globals.warn_nonempty_perm_vars,"Enable Warning of Non-empty Perm Vars");
+  ("--warn-do-match-infer-heap", Arg.Set Globals.warn_do_match_infer_heap,"Enable Warning of do_match during infer_heap");
   (* WN : this excludes ann_vars and ho_vars, but include perm_vars *)
   ("--warn-free-vars-conseq", Arg.Set Globals.warn_free_vars_conseq,"Enable Warning of Non-empty free heap vars in conseq");
+  ("--new-infer-large-step", Arg.Set Globals.new_infer_large_step,"Enable new large step inference with simple LHS");
+  ("--new-tp-simplify", Arg.Clear Globals.old_tp_simplify,"Use om_simplify instead of TP.simplify_raw");
+  ("--en-mkeqn-opt", Arg.Set Globals.mkeqn_opt_flag,"Enable mkeqn optimization");
+  ("--dis-mkeqn-opt", Arg.Clear Globals.mkeqn_opt_flag,"Disable mkeqn optimization");
+  ("--old-univ-lemma", Arg.Set Globals.old_univ_lemma,"Use old univ lemma technique (bug with ex6e3e.slk)");  
+  ("--old-compute-act", Arg.Set Globals.old_compute_act,"Use old method of filtering actions");
+  ("--new-compute-act", Arg.Clear Globals.old_compute_act,"Use new (better) method of filtering actions");
+  ("--old-heap-contra", Arg.Clear Globals.new_heap_contra,"Do not use heap contra (bug with ex6e3f9.slk --pnum 4)");
+  ("--new-heap-contra", Arg.Set Globals.new_heap_contra,"Use heap contra for inference (bug with ex6e3f9.slk --pnum 4)");
+  ("--new-univ-lemma", Arg.Clear Globals.old_univ_lemma,"Use new univ lemma technique (bug with ex6e3e.slk)");
+  ("--old-tp-simplify", Arg.Set Globals.old_tp_simplify,"Use TP.simplify_raw (bug with ex25m5d.slk)");
+  ("--new-pred-extn", Arg.Clear Globals.old_pred_extn,"Use old pred extension");
+  ("--old-pred-extn", Arg.Set Globals.old_pred_extn,"Use new pred extension approach");
+  ("--old-lemma-switch", Arg.Set Globals.old_lemma_switch,"Use old lemma switching approach");
+  ("--new-lemma-switch", Arg.Clear Globals.old_lemma_switch,"Use new lemma switching approach");
+  ("--old-free-var-lhs", Arg.Set Globals.old_free_var_lhs,"Use free vars of LHS for fold lemma proving");
+  ("--new-free-var-lhs", Arg.Clear Globals.old_free_var_lhs,"Use guards/parameter as free vars of LHS in fold lemma proving");
+  ("--old-field-tag", Arg.Set Globals.old_field_tag,"Add old field tags VAL_i, REC_i to data fields");
+  ("--new-field-tag", Arg.Clear Globals.old_field_tag,"Do not old field tags VAL_i, REC_i to data fields");
+  ("--old-lemma-unfold", Arg.Set Globals.old_lemma_unfold,"Do not use lemma single unfold");
+  ("--new-lemma-unfold", Arg.Clear Globals.old_lemma_unfold,"Use lemma single unfold");
+  ("--new-trace-classic", Arg.Set Globals.new_trace_classic,"Trace classic ");
+  ("--old-trace-classic", Arg.Clear Globals.new_trace_classic,"No tracing for classic ");
+  ("--old-view-equiv", Arg.Set Globals.old_view_equiv,"Do not use view equivalence (pred reuse)");
+  ("--new-view-equiv", Arg.Clear Globals.old_view_equiv,"Use view equivalence (pred reuse)");
+  ("--old-search-always", Arg.Set Globals.old_search_always,"Allow search_action always..");
+  ("--new-search-always", Arg.Clear Globals.old_search_always,"Use smart search_action always..");
+  ("--en-cond-always", Arg.Set Globals.cond_action_always,"Allow cond_action always..");
+  ("--en-rev-priority", Arg.Set Globals.rev_priority,"Allow reverser priority for action ");
+  ("--old-coer-target", Arg.Set Globals.old_coer_target,"Allow coer_target check before applying lemma");
+  ("--old-infer-large-step", Arg.Clear Globals.new_infer_large_step,"Disble new large step inference with simple LHS");
+  ("--en-infer-back-ptr", Arg.Set Globals.infer_back_ptr,"Enable infer back pointer for infer_fold");
+("--dis-infer-back-ptr", Arg.Clear Globals.infer_back_ptr,"Disble infer back pointer for infer_fold");
+  ("--new-infer-complex-lhs", Arg.Clear Globals.old_infer_complex_lhs,"Disallow inference of complex LHS");
+  ("--old-infer-complex-lhs", Arg.Set Globals.old_infer_complex_lhs,"Allow inference of complex LHS");
+  ("--new-rm-htrue", Arg.Set Globals.new_rm_htrue,"Enable removal of htrue from ante");
+  ("--old-base-case-fold-hprel", Arg.Set Globals.old_base_case_fold_hprel,"Use old method of base_case_fold for inferring hprel");
+  ("--new-base-case-fold-hprel", Arg.Clear Globals.old_base_case_fold_hprel,"Use new  method of base_case_fold for inferring hprel");
+  ("--old-fvars-as-impl-match", Arg.Set Globals.old_fvars_as_impl_match,"Use old method where free var is treated as implicit vars");
+  ("--new-fvars-as-impl-match", Arg.Clear Globals.old_fvars_as_impl_match,"New method where free var are not treated as implicit vars");
+  ("--old-unsound-no-progress", Arg.Set Globals.old_unsound_no_progress,"Use old lemma proving without fold progress checking");
+  ("--new-unsound-no-progress", Arg.Clear Globals.old_unsound_no_progress,"Use new lemma proving with fold progress checking");
+  ("--old-infer-heap", Arg.Set Globals.old_infer_heap,"Use old method of scheduling Infer_Heap");
+  ("--new-infer-heap", Arg.Clear Globals.old_infer_heap,"Use new method of scheduling Infer_Heap");
+  ("--old-mater-coercion", Arg.Set Globals.old_mater_coercion,"Use Old Mater Coercion Selection");
+  ("--new-mater-coercion", Arg.Clear Globals.old_mater_coercion,"Use New Mater Coercion Selection");
+  ("--old-keep-triv-relass", Arg.Set Globals.old_keep_triv_relass,"Keep trivial relation assume (hp_rel and pure relation) during inference");
+  ("--new-keep-triv-relass", Arg.Clear Globals.old_keep_triv_relass,"Remove trivial relation assume during inference");
+  ("--old-post-impl-to-ex", Arg.Set Globals.old_post_impl_to_ex,"Convert impl to exist vars in post-condition");
+  ("--old-post-conv-impl", Arg.Set Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
+  ("--new-post-conv-impl", Arg.Clear Globals.old_post_conv_impl,"Convert exist vars in post-condition to implicit");
+  ("--old-classic-rhs-emp", Arg.Set Globals.old_classic_rhs_emp,"Use old handling of classic rhs emp");
+  ("--new-classic-rhs-emp", Arg.Clear Globals.old_classic_rhs_emp,"Use new handling of classic rhs emp");
+  ("--old-incr-infer", Arg.Set Globals.old_incr_infer,"Use old inference system");
+  ("--old-rm-htrue", Arg.Clear Globals.new_rm_htrue,"Disable removal of htrue from ante");
+  ("--old-keep-all-matchres", Arg.Set Globals.old_keep_all_matchres,"Keep all matchres including empty ones");
+  ("--new-keep-all-matchres", Arg.Clear Globals.old_keep_all_matchres,"Filter out matchres that are empty first");
+  ("--old-do-match-infer-heap", Arg.Set Globals.old_do_match_infer_heap,"Enable do match during infer_heap (seems wrong)");
+  ("--new-do-match-infer-heap", Arg.Clear Globals.old_do_match_infer_heap,"Disable do match during infer_heap (cleaner)");
+  ("--old-infer-hprel-classic", Arg.Set Globals.old_infer_hprel_classic,"Enable infer hp_rel handling of classic (seems redundant)");
+  ("--old-collect-hprel", Arg.Set Globals.old_collect_hprel,"Enable Old False which invokes infer_hp_rel without classic");
   ("--old-collect-false", Arg.Set Globals.old_collect_false,"Enable Old False Collection Method (to detect unsoundness)");
   ("--old-base-case-unfold", Arg.Set Globals.old_base_case_unfold,"Enable Old BaseCaseUnfold Method");
   ("--old-infer-collect", Arg.Set Globals.old_infer_collect,"Enable Old Infer Collect Method");
+  ("--old-infer-hp-collect", Arg.Set Globals.old_infer_hp_collect,"Enable Old Infer Collect Method for Shape");
   ("--old-impl-gather", Arg.Set Globals.old_impl_gather,"Enable Extra Impl Gather at CF.struc_formula_trans_heap_node");
   ("--old-parse-fix", Arg.Set Globals.old_parse_fix,"Enable Old Parser for FixCalc (to handle self/REC)");
   ("--en-hrel-as-view", Arg.Set Globals.hrel_as_view_flag,"Enable HRel as view");
   ("--dis-hrel-as-view", Arg.Clear Globals.hrel_as_view_flag,"Disable HRel as view");
+  ("--en-init-para", Arg.Set Globals.init_para_flag,"Enable init_para for infer relation ");
   ("--adhoc-1", Arg.Set Globals.adhoc_flag_1,"Enable Adhoc Flag 1");
   ("--adhoc-2", Arg.Set Globals.adhoc_flag_2,"Enable Adhoc Flag 2");
   ("--adhoc-3", Arg.Set Globals.adhoc_flag_3,"Enable Adhoc Flag 3");
+  ("--adhoc-4", Arg.Set Globals.adhoc_flag_4,"Enable Adhoc Flag 4");
+  ("--adhoc-5", Arg.Set Globals.adhoc_flag_5,"Enable Adhoc Flag 5");
+  ("--adhoc-6", Arg.Set Globals.adhoc_flag_6,"Enable Adhoc Flag 6");
+  ("--old-univ-vars", Arg.Set Globals.old_univ_vars,"Old method of using univ vars");
+  ("--new-univ-vars", Arg.Clear Globals.old_univ_vars,"New method of using univ vars");
   ("--old-keep-absent", Arg.Set Globals.old_keep_absent,"Keep absent nodes during expure - unsound");
   ("--old-empty-to-conseq", Arg.Set Globals.old_empty_to_conseq,"Keep to_conseq empty");
   ("--assert-unsound-false", Arg.Set Globals.assert_unsound_false, "Flag unsound false");
@@ -432,8 +534,8 @@ linput.rl");
          Globals.simpl_unfold2 := true;
          Globals.simpl_unfold3 := true;*)
        (*Globals.elim_exists_flag := false;
-         	Globals.simplify_imply := false;
-         	Globals.filtering_flag := false;*)
+         Globals.simplify_imply := false;
+         Globals.filtering_flag := false;*)
        Globals.ann_vp := false;),
    "enable support for quantifier elimination in PAinfinity ");
   ("--en-inf-qe-coq", Arg.Unit( fun _ ->
@@ -466,6 +568,7 @@ linput.rl");
        Globals.allow_inf_qe := true;
        Globals.allow_qe_fix := true;),
    "use the quantifier elimination procedure for inference ");
+  ("--dis-dsd", Arg.Clear Globals.deep_split_disjuncts,"disable deep splitting of disjunctions");
   ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--en-disj-conseq", Arg.Set Globals.preprocess_disjunctive_consequence,"enable handle disjunctive consequence");
   ("--ioc", Arg.Set Globals.check_integer_overflow,"Enable Integer Overflow Checker");
@@ -567,6 +670,10 @@ linput.rl");
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-infer", Arg.String (fun s ->
        Globals.infer_const_obj # set_init_arr s),"Infer constants e.g. @term@pre@post@imm@shape");  (* some processing to check @term,@post *)
+  ("--ana-ni",Arg.Unit (fun () -> 
+       Globals.ptr_arith_flag := true;
+       Globals.infer_const_obj # set INF_ANA_NI
+     ),"Enable analysis of @NI");
   ("-debug", Arg.String (fun s ->
        Debug.z_debug_file:=s; z_debug_flag:=true),
    "Read from a debug log file");
@@ -577,11 +684,18 @@ linput.rl");
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");
   ("-dre", Arg.String (fun s ->
-       let _ = print_endline ("!!!-dre "^s) in
+       (* let _ = print_endline ("!!!-dre "^s) in *)
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true;
        Debug.read_main ()
      ),
    "Shorthand for -debug-regexp");
+  ("-show-push-list", Arg.String (fun s ->
+       let _ = print_endline ("!!!-show-push-list "^s) in
+       let () = Globals.show_push_list:=Some s in
+       let () = if not(s="") then Globals.show_push_list_rgx := Some (Str.regexp s) in
+       ()
+     ),
+   "Show all push-list with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),
@@ -711,6 +825,13 @@ linput.rl");
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
+  (* String Inference *)
+  ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--ops", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
+  ("--new-pred-synthesis", Arg.Set Globals.new_pred_syn, "Enable new predicate synthesis");
+  ("--en-pred-elim-node", Arg.Set Globals.pred_elim_node, "Eliminate common nodes in derived predicates");
+  ("--dis-pred-elim-node", Arg.Clear Globals.pred_elim_node, "Disable common nodes elimination in derived predicates");
+
   (* Template *)
   ("--dis-norm", Arg.Set Globals.dis_norm, "Disable arithmetic normalization");
   ("-lp", Arg.Symbol ([ "z3"; "clp"; "glpk"; "lps"; "oz3"; "oclp"; "oglpk"; "olps" ], 
@@ -766,6 +887,8 @@ linput.rl");
    "maximum number of iteration on TNT algorithm");
 
   (* Slicing *)
+  ("--auto-eps", Arg.Set Globals.auto_eps_flag, "Enable automatic proof slicing for mona");
+  ("--dis-auto-eps", Arg.Clear Globals.auto_eps_flag, "Disable automatic proog slicing for mona");
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--dis-eps", Arg.Clear Globals.en_slc_ps, "Disable slicing with predicate specialization");
   ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
@@ -792,6 +915,8 @@ linput.rl");
 
   (* HO predicate *)
   ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
+  ("--en-contra-ho", Arg.Set Globals.contra_ho_flag, "Enable Contra HO Instantiation");
+  ("--dis-contra-ho", Arg.Clear Globals.contra_ho_flag, "Disable Contra HO Instantiation");
   ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");
 
   (* Proof Logging *)
@@ -876,6 +1001,11 @@ linput.rl");
    (* Arg.Clear Globals.opt_classic,  *)
    "Disable classical reasoning in separation logic");  
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
+  ("--old-lemma-settings", Arg.Unit (fun _ ->
+       Globals.old_norm_w_coerc := true;
+       Globals.old_univ_lemma := true;
+       Globals.old_search_always := true;
+     ), "Allow old lemma settings");
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
@@ -890,6 +1020,8 @@ linput.rl");
   ("--lem-dis-residue", Arg.Clear Globals.allow_lemma_residue, "Disallow residue for Lemma Proving");
   ("--lem-dis-lhs-unfold", Arg.Clear Globals.enable_lemma_lhs_unfold, "Disable LHS unfold for Lemma Proving");
   ("--lem-en-lhs-unfold", Arg.Set Globals.enable_lemma_lhs_unfold, "Enable LHS unfold for Lemma Proving");
+  ("--lem-dis-unk-unfold", Arg.Clear Globals.enable_lemma_unk_unfold, "Disable unknown heap unfold for Lemma Proving");
+  ("--lem-en-unk-unfold", Arg.Set Globals.enable_lemma_unk_unfold, "Enable unknown heap unfold for Lemma Proving");
   ("--ulhs", Arg.Set Globals.enable_lemma_lhs_unfold, "Shortcut for --lem-en-lhs-unfold");
   ("--urhs", Arg.Set Globals.enable_lemma_rhs_unfold, "Shortcut for --lem-en-rhs-unfold");
   ("--lem-en-rhs-unfold", Arg.Set Globals.enable_lemma_rhs_unfold, "Enable RHS unfold for Lemma Proving");
@@ -907,6 +1039,8 @@ linput.rl");
   ("--dis-cp-trace", Arg.Clear Globals.cond_path_trace, "Disable the tracing of conditional paths");
   (* WN: Please use longer meaningful variable names *)
   ("--sa-ep", Arg.Set VarGen.sap, "Print intermediate results of normalization");
+  ("--sa-en-part", Arg.Set Globals.sa_part, "enable partition parameters into rele groups");
+  ("--sa-dis-part", Arg.Clear Globals.sa_part, "disable partition parameters into rele groups");
   ("--sa-dp", Arg.Clear VarGen.sap, "disable Printing intermediate results of normalization");
   ("--sa-prefix-pred", Arg.Clear Globals.sa_prefix_emp, "disable pre-condition fixpoint as empty during shape analysis");
   ("--dis-infer-heap", Arg.Clear Globals.fo_iheap, "disable first-order infer_heap");
@@ -920,6 +1054,8 @@ linput.rl");
   ("--sa-gen-sleek-file", Arg.Set Globals.sa_gen_slk, "gen sleek file after split_base");
   ("--sa-en-cont", Arg.Set Globals.norm_cont_analysis, "enable cont analysis for views");
   ("--sa-dis-cont", Arg.Clear Globals.norm_cont_analysis, "disable cont analysis for views");
+  ("--en-sep-pure-fields", Arg.Set Globals.sep_pure_fields, "separate pure fields in unknown heap predicates");
+  ("--dis-sep-pure-fields", Arg.Clear Globals.sep_pure_fields, "combine pure fields in unknown heap predicates");
   ("--pred-dis-mod", Arg.Clear Globals.pred_syn_modular, "disable modular predicate synthesis (use old algo)");
   ("--pred-en-mod", Arg.Set Globals.pred_syn_modular, "using modular predicate synthesis");
   ("--en-syn-mode", Arg.Set Globals.syntatic_mode, "check two formulas are equivalent syntatically. default is semantic checking via sleek");
@@ -972,8 +1108,17 @@ linput.rl");
   (* ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers"); *)
   ("--pred-en-eup", Arg.Set Globals.pred_elim_unused_preds, "enable the elimination of unused hprel predicates");
   ("--pred-dis-eup", Arg.Clear Globals.pred_elim_unused_preds, "disable the elimination of unused hprel predicates");
-  ("--sa-en-pure-field", Arg.Set Globals.sa_pure_field, "enable the inference of pure field property");
-  ("--sa-dis-pure-field", Arg.Clear Globals.sa_pure_field, "disable the inference of pure field property");
+  ("--sa-en-pure-field", 
+   (*  Arg.Set Globals.sa_pure_field *)
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # set Globals.INF_PURE_FIELD
+     ), "enable the inference of pure field property");
+  ("--sa-dis-pure-field", 
+   Arg.Unit
+     ( fun _ -> 
+         Globals.infer_const_obj # reset Globals.INF_PURE_FIELD
+     ),"disable the inference of pure field property");
   ("--sa-ext", Arg.Set Globals.sa_ex, "enable the inference of shape and pure property (predicate level)");
   ("--sa-pure", Arg.Set Globals.sa_pure, "enable the inference of shape and pure property");
   ("--sa-dis-ext", Arg.Clear Globals.sa_ex, "disable the inference of shape and pure property");
@@ -1014,6 +1159,8 @@ linput.rl");
   (*("--etcsu1",Arg.Set Globals.simpl_unfold1,"keep only default branch when unsat-ing");*)
   ("--etcsu2",Arg.Set Globals.simpl_unfold2,"syntactically deal with equalities and disequalities between vars for sat");
   ("--etcsu3",Arg.Set Globals.simpl_unfold3,"syntactically deal with equalities and disequalities between vars for imply");
+  ("--pnum",Arg.Int (fun n ->
+       Globals.sleek_num_to_verify := n),"Specific sleek number to verify");
   ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
   ("--dis-implicit-var",Arg.Set Globals.dis_impl_var, "disable implicit existential");
   ("--en-implicit-var",Arg.Clear Globals.dis_impl_var, "enable implicit existential (default)");

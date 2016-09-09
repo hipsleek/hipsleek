@@ -1,0 +1,24 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+
+/*
+# ex25a5f.slk
+
+--inv-baga
+
+# Why is inv not simplified?
+
+  inv: (self=null | self!=null)
+  baga inv: [([], self=null),([self], true)]
+  baga over inv: [([], self=null),([self], true)]
+  baga over inv (unfolded): [([], self=null),([self], true)]
+  
+*/

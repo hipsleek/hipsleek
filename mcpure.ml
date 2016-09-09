@@ -2141,6 +2141,8 @@ type mix_formula =
   | MemoF of Mcpure_D.memo_pure
   | OnePF of Cpure.formula 
 
+let is_sat_raw = ref(fun (c:mix_formula) -> true)
+
 let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
 let print_mix_formula  = print_mix_f
 
@@ -2266,14 +2268,14 @@ let transform_mix_formula f_p_t f =
   | MemoF f -> MemoF (transform_memo_formula f_p_t f)
   | OnePF f -> OnePF (transform_formula f_p_t f)
 
-let memo_pure_push_exists qv f = match f with
+let mix_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
   | OnePF f -> OnePF (mkExists qv f None no_pos)
 
-let memo_pure_push_exists qv f =
-  Debug.no_2 "memo_pure_push_exists"
+let mix_push_exists qv f =
+  Debug.no_2 "mix_push_exists"
     !print_svl !print_mix_f !print_mix_f
-    memo_pure_push_exists qv f
+    mix_push_exists qv f
 
 let memo_pure_push_exists_lhs qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists_lhs qv f)
@@ -2558,7 +2560,8 @@ let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isC
 (*   in *)
 (*   helper [v] vv *)
 
-let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = find_closure v (ptr_equations_with_null f)
+let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = 
+  find_closure v (ptr_equations_with_null f)
 
 let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list = 
   Debug.no_2 "find_closure_mix_formula" 
@@ -2566,6 +2569,13 @@ let find_closure_mix_formula (v:spec_var) (f:mix_formula) : spec_var list =
     !print_mix_f
     !print_sv_l_f
     find_closure_mix_formula_x v f
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  find_all_closures (ptr_equations_with_null f)
+
+let find_all_closures_mix_formula (f: mix_formula) : (spec_var list) list = 
+  Debug.no_1 "find_all_closures_mix_formula" !print_mix_f (pr_list !print_sv_l_f)
+    find_all_closures_mix_formula f
 
 (*let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = *)
 (*  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in*)

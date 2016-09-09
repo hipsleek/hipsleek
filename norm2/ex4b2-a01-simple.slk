@@ -1,0 +1,22 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP] HP(x,b) |- x::cell<_>.
+print residue.
+
+/*
+# norm/ex4b.slk
+
+infer[HP] HP(x) |- x::cell<_>.
+
+# Don't generate HP_18(x@NI)...
+   should have emp residue.
+
+Starting Omega.../usr/local/bin/oc
+ <1>HP_18(x)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(x)&true --> x::cell<Anon_17>@M * HP_18(x@NI)&true]
+[[ InferUnfold  ==>  InferHeap]]
+
+*/

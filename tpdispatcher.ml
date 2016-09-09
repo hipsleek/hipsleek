@@ -388,7 +388,7 @@ let set_tp user_flag tp_str =
   (******we allow normalization/simplification that may not hold
          in the presence of floating point constraints*)
   (* let () = print_endline ("solver:" ^ tp_str) in *)
-  let () = print_endline_quiet ("!!! set_tp " ^ tp_str) in 
+  let () = x_binfo_pp (* print_endline_quiet *) ("set_tp " ^ tp_str) no_pos in 
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -489,7 +489,7 @@ let init_tp () =
                   let () = Omega.omegacalc := "./oc" in
                   ()
                 else ()) in
-      let () = print_endline_quiet ("!!! init_tp by default: ") in 
+      let () = x_binfo_pp ("init_tp by default: ") no_pos in 
       x_add_1 set_tp false !Smtsolver.smtsolver_name (* "z3" *)
       (* set_tp "parahip" *)
     end
@@ -1108,14 +1108,16 @@ let is_bool_eq_ctr ?(eq=true)  a1 a2 =
   | _ -> None
 
 let is_ptr_ctr a1 a2 =
-  match a1,a2 with
-  | Var(v,_),_ ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _,Var(v,_) ->
-    let t=type_of_spec_var v in
-    (is_otype t,is_ann_type t)
-  | _ -> (false,false)
+  if (Globals.infer_const_obj # is_ana_ni) then (false,false)
+  else
+    match a1,a2 with
+    | Var(v,_),_ ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _,Var(v,_) ->
+      let t=type_of_spec_var v in
+      (is_otype t,is_ann_type t)
+    | _ -> (false,false)
 
 let is_ptr_ctr a1 a2 =
   let pr = Cprinter.string_of_formula_exp in
@@ -1343,7 +1345,7 @@ let cnv_int_to_ptr f =
 
 (* this is to normalize result from simplify/hull/gist *)
 let norm_pure_result f =
-  let f = cnv_int_to_ptr f in
+  let f = x_add_1 cnv_int_to_ptr f in
   let f = if !Globals.allow_inf (*&& not(!Globals.allow_inf_qe_coq)*)
     then let f =  (*CP.arith_simplify 13*) (Infinity.convert_var_to_inf f) in
       let drop_inf_constr f =   
@@ -1824,7 +1826,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   (* Drop array formula *)
   (* let f = translate_array_relation f in *)
   (* let f = drop_array_formula f in *)
-
+  let _ = CP.filter_bag_constrain f f in
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
@@ -2104,7 +2106,6 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   (* TODO WN : can below remove duplicate constraints? *)
   (* let f = CP.elim_idents f in *)
   (* this reduces x>=x to true; x>x to false *)
-
   let sat_num = next_proof_no () in
   let sat_no = (string_of_int sat_num) in
   x_dinfo_zp (lazy ("SAT #" ^ sat_no)) no_pos;
@@ -2131,6 +2132,32 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
 let tp_is_sat f sat_no =
   Debug.no_1 "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
     (fun f -> tp_is_sat f sat_no) f
+
+let sel_related p_other p_bag =
+  if p_other==[] then p_bag
+  else
+    let v_lst = List.concat (List.map (CP.fv) p_bag) in
+    let nf = CP.find_rel_constraints_list p_other v_lst in
+    nf::p_bag
+
+let tp_conj_bag_sat f sat_no =
+  let cl = CP.split_conjunctions f in
+  let (sb,sp) = List.partition (CP.is_bag_constraint) cl in
+  if sb==[] then tp_is_sat f sat_no
+  else 
+    let sb =  sel_related sp sb in
+    let p1 (*bag*) = CP.join_conjunctions sb in
+    let p2 (*pure*) = CP.join_conjunctions sp in
+    (tp_is_sat p1 sat_no) && (tp_is_sat p2 sat_no) 
+
+let tp_is_sat (f:CP.formula) (old_sat_no :string) =
+  if !Globals.auto_eps_flag then
+    (* this is mainly for mono prover *)
+    let fl = CP.split_disjunctions_deep f in
+    let f_or a b = a || b in
+    List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
+    (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
+  else tp_is_sat f old_sat_no
 
 (* let tp_is_sat (f: CP.formula) (sat_no: string) do_cache = *)
 (*   let pr = Cprinter.string_of_pure_formula in *)
@@ -2331,7 +2358,7 @@ let om_pairwisecheck f =
 
 (* ZH: Take out the array part *)
 (* let om_pairwisecheck f = *)
-(*   (\* let () = x_binfo_pp "take out array part" no_pos in *\) *)
+(*   (\* let () = x_tinfo_pp "take out array part" no_pos in *\) *)
 (*   Trans_arr.split_and_combine (x_add_1 om_pairwisecheck) (fun f-> not (Trans_arr.contain_array f)) f *)
 (* ;; *)
 
@@ -2475,7 +2502,7 @@ let rec simplify_raw (f: CP.formula) =
   else
     let is_bag_cnt = is_bag_constraint f in
     if is_bag_cnt then
-      (* let () = Debug.info_hprint (add_str " xxxx bag: " (pr_id)) "bag" no_pos in *)
+      let () = y_tinfo_hp (add_str " xxxx bag: " (pr_id)) "bag" in
       let _,new_f = trans_dnf f in
       let disjs = list_of_disjs new_f in
       let disjs = List.map (fun disj -> 
@@ -2488,6 +2515,7 @@ let rec simplify_raw (f: CP.formula) =
         ) disjs in
       List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
     else
+      (* let () = y_tinfo_pp "xxx rel " in *)
       let rels = CP.get_RelForm f in
       let ids = List.concat (List.map get_rel_id_list rels) in
       let f_memo, subs, bvars = CP.memoise_rel_formula ids f in
@@ -2557,7 +2585,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
-let om_hull f =
+let oc_hull f =
   wrap_pre_post norm_pure_input norm_pure_result
     Omega.hull f
 
@@ -2581,14 +2609,14 @@ let hull (f : CP.formula) : CP.formula =
     | MonaH
     | OM ->
       if (is_bag_constraint f) then (Mona.hull f)
-      else (om_hull f)
+      else (oc_hull f)
     | OI ->
       if (is_bag_constraint f) then (Isabelle.hull f)
-      else (om_hull f)
+      else (oc_hull f)
     | SetMONA -> Mona.hull f
     | CM ->
       if is_bag_constraint f then Mona.hull f
-      else om_hull f
+      else oc_hull f
     | Z3 -> Smtsolver.hull f
     | Z3N -> Z3.hull f
     | Redlog -> Redlog.hull f
@@ -2600,7 +2628,7 @@ let hull (f : CP.formula) : CP.formula =
     | ZM ->
       if is_bag_constraint f then Mona.hull f
       else Smtsolver.hull f
-    | _ -> (om_hull f) in
+    | _ -> (oc_hull f) in
   let logger fr tt timeout = 
     let tp = (string_of_prover !pure_tp) in
     let () = add_proof_logging timeout !cache_status simpl_no simpl_num tp cmd tt 
@@ -2761,22 +2789,6 @@ let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula =
   let pf = Cprinter.string_of_pure_formula in
   Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
-(* syn gist to remove conj in f1 already in f2 *)
-let syn_gist f1 f2 =
-  let x1=split_conjunctions f1 in
-  let x2=split_conjunctions f2 in
-  let x3=List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in
-  join_conjunctions x3
-
-let om_gist f1 f2 =
-  let f1 = syn_gist f1 f2 in
-  wrap_pre_post (fun (a,b) -> (norm_pure_input a,norm_pure_input b)) norm_pure_result
-    (fun (f1,f2) -> Omega.gist f1 f2) (f1,f2)
-
-let om_gist f1 f2 =
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2 "om_gist" pr pr pr (fun _ _ -> om_gist f1 f2) f1 f2
-
 let should_output () = !print_proof && not !suppress_imply_out
 
 let suppress_imply_output () = suppress_imply_out := true
@@ -2927,8 +2939,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*let _ = print_endline ("After Drop ante: "^(Cprinter.string_of_pure_formula d_ante)^" conseq: "^(Cprinter.string_of_pure_formula d_conseq)) in*)
   (* let _ = print_endline ("tp_imply_no_cache ante (after drop): "^(Cprinter.string_of_pure_formula ante)) in *)
   (* let _ = print_endline ("tp_imply_no_cache conseq (after drop): "^(Cprinter.string_of_pure_formula conseq)) in *)
-  let ante = ante in
-  let conseq = conseq in 
+  (*let _ = CP.filter_bag_constrain ante conseq in*)
   (**************************************)
   let res,ante,conseq = x_add tp_imply_preprocess ante conseq in
   match res with | Some ret -> ret | None -> (*continue normally*)
@@ -3221,6 +3232,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
+  let _ = CP.filter_bag_constrain ante conseq in
   Debug.no_4(* _loop *) "tp_imply_no_cache" pr pr (fun s -> s) string_of_prover string_of_bool
     (fun _ _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no !pure_tp
 
@@ -3287,12 +3299,12 @@ let tp_imply ante conseq imp_no timeout process =
   (* let ante = CP.elim_idents ante in *)
   (* let conseq = CP.elim_idents conseq in *)
   let fn_imply a c = x_add_3 tp_imply_perm a c imp_no timeout process in
-  (* let () = x_binfo_hp (add_str "no-cache" string_of_bool) !Globals.no_cache_formula no_pos in *)
+  (* let () = x_tinfo_hp (add_str "no-cache" string_of_bool) !Globals.no_cache_formula no_pos in *)
   if !Globals.no_cache_formula then
     fn_imply ante conseq
   else
     begin
-      (* let () = x_binfo_pp "prior to imply_cache"  no_pos in *)
+      (* let () = x_tinfo_pp "prior to imply_cache"  no_pos in *)
       x_add_3 imply_cache fn_imply ante conseq
     end
 
@@ -3513,12 +3525,12 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
   else
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-    let res= sat_label_filter (fun c-> tp_is_sat c old_sat_no) f in
+    let res= sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in
     res
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
-  Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
+  Debug.no_1 "is_sat_tp"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
 
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =  
@@ -3646,6 +3658,100 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   final_res
 ;;
 
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
+  = let pf = Cprinter.string_of_pure_formula in
+  (*let () = print_string "dubios!!\n" in*)
+  Debug.no_2 "imply_timeout 1" pf pf (fun (b,_,_) -> string_of_bool b)
+    (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
+
+let univ_rhs_store = 
+object (self)
+  val super = new store (CP.mkTrue no_pos) !CP.print_formula
+  method set a =
+    if super # is_empty then super # set a
+    else
+      let old = super # get in
+      super # set (CP.mkAnd a old no_pos)
+      (* failwith (x_loc^"over-writing "^old) *)
+  method is_empty = super # is_empty
+  method get_rm = super # get_rm
+  method get = super # get
+  method reset = super # get_rm
+end
+
+(* this help remove univ_rhs at the end of method *)
+let wrap_remove_univ_rhs f x =
+  try
+    let r = f x in
+    let _ = univ_rhs_store # reset in
+    r
+  with e ->
+    let _ = univ_rhs_store # reset in
+    raise e
+
+let get_univs_from_ante ante =
+  let univ_vars = CP.get_RelForm_arg_list_with_name ante "Univ" in
+  if univ_vars==[] then []
+  else
+    (*Is it correct to make all the variables equal to m universal?*)
+    let () = y_dinfo_hp (add_str "get_univs_from_ante" (pr_list !CP.print_sv)) univ_vars in
+    let eqns' = MCP.ptr_equations_without_null (MCP.mix_of_pure ante) in
+    let emap = CP.EMapSV.build_eset eqns' in
+    let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars)@univ_vars in
+    univ_vars2
+
+
+let connected_rhs univ_vars rhs =
+  if univ_vars==[] then false
+  else
+    let vs= CP.fv rhs in
+    (CP.intersect_svl univ_vars vs)!=[]
+
+let connected_rhs univ_vars rhs =
+  Debug.no_2 "connected_rhs" (pr_list !CP.print_sv) !CP.print_formula string_of_bool connected_rhs univ_vars rhs
+;;
+
+let filter_inv ante =
+  let conjs = CP.split_conjunctions ante in
+  let conjs = List.filter (fun f -> not(CP.is_Or f)) conjs in
+  CP.join_conjunctions conjs
+
+let filter_inv ante =
+  let pr = !CP.print_formula in
+  Debug.no_1 "filter_inv" pr pr filter_inv ante
+
+let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+    let () = y_dinfo_pp "Processing univ instantiation" in
+    let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+    let () = y_dinfo_hp (add_str "ante0" !CP.print_formula) ante0 in
+    let () = y_dinfo_hp (add_str "conseq0" !CP.print_formula) conseq0 in
+    let prev_inst = univ_rhs_store # get in
+    let () = y_dinfo_hp (add_str "prev_inst" !CP.print_formula) prev_inst in
+    let ante0 = CP.drop_rel_formula ante0 in
+    let ante1 = filter_inv ante0 in
+    let () = y_dinfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
+    let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+    (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
+    let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
+    let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
+    let () = y_dinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
+    let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
+    let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
+    if b then
+      let () = univ_rhs_store # set conseq0 in r
+    else r
+
+
+let imply_timeout ante0 conseq0 imp_no timeout process =
+  let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in
+  let univ_vars = get_univs_from_ante ante0 in
+  let () = y_dinfo_hp (add_str "univ var" (pr_list !CP.print_sv)) univ_vars in
+  if (not b) && (connected_rhs univ_vars conseq0)
+  then imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process
+  else ans
+;;
+  
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
@@ -4375,13 +4481,48 @@ let check_diff xp0 xp1 =
   let pr1 = Cprinter.string_of_mix_formula in
   Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
 
+(* syn gist to remove conj in f1 already in f2 *)
+let syn_gist f1 f2 =
+  let x1 = split_conjunctions f1 in
+  let x2 = split_conjunctions f2 in
+  (* let x3 = List.filter (fun x -> not(List.exists (fun y -> equalFormula x y) x2)) x1 in *)
+  let x3 = Gen.BList.difference_eq equalFormula x1 x2 in
+  let x4 = Gen.BList.difference_eq equalFormula x2 x1 in
+  is_empty x4, join_conjunctions x3
+
+let norm_gist_result a b r = 
+  let r = norm_pure_result r in
+  (* To recover unexpected substition done by gist *)
+  let xa = split_conjunctions a in
+  let xr = split_conjunctions r in
+  let xr = List.map (fun x ->
+      if Gen.BList.mem_eq equalFormula x xa then x
+      else
+        try List.find (fun a -> imply_raw (mkAnd x b no_pos) a) xa
+        with _ -> x
+    ) xr in
+  join_conjunctions xr
+
+let om_gist f1 f2 =
+  (* let is_done, f1 = syn_gist f1 f2 in *)
+  (* if is_done then f1 *)
+  (* else *)
+    wrap_pre_post (fun (a, b) -> (norm_pure_input a, norm_pure_input b)) 
+      (norm_gist_result f1 f2) (fun (f1, f2) -> Omega.gist f1 f2) (f1, f2)
+
+let om_gist f1 f2 =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "om_gist" pr pr pr (fun _ _ -> om_gist f1 f2) f1 f2
 
 let () = 
   CP.simplify := simplify;
+  CP.oc_hull := oc_hull;
   Cast.imply_raw := imply_raw;
+  (* CF.is_unsat_raw  := is_unsat_raw; *)
   CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (imply_raw l) r);
   Excore.is_sat_raw := is_sat_raw;
-  Excore.simplify_raw := simplify_raw;
+  (* Excore.simplify_raw := simplify_raw; *) (* losing precision for ex25m5d.slk *)
+  Excore.simplify_raw := (fun x -> if !Globals.old_tp_simplify then simplify_raw x else om_simplify x);
   Excore.pairwisecheck := pairwisecheck;
   Cformula.simplify_omega := (x_add_1 simplify_omega);
   Cfout.simplify_raw := simplify_raw;

@@ -1226,7 +1226,7 @@ let send_cmd_with_answer str =
 let send_cmd_no_answer str =
   (* let () = (print_string ("\nsned_cmd_no_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
   let (todo_unk:string) = send_cmd_with_answer str in
-  let () = x_binfo_hp (add_str "no_answer" pr_id) todo_unk no_pos  in
+  let () = x_tinfo_hp (add_str "no_answer" pr_id) todo_unk no_pos  in
   ()
 
 let write_to_mona_predicates_file mona_filename =
@@ -1369,8 +1369,8 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
     | "Formula is too large" -> 
       begin
         if !log_all_flag == true then
-          output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not sent to mona)\n");
-        print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not sent to mona)\n");
+          output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large - not processed by mona)\n");
+        print_endline_quiet ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(formula too large  - not processed by mona)\n");
         is_sat_b;
       end
     | "" ->
@@ -1492,7 +1492,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let () = x_binfo_hp (add_str "mona_answ" pr_id) mona_answ no_pos  in
-    let res = check_answer file_content mona_answ is_sat_b in
+    let res = x_add check_answer file_content mona_answ is_sat_b in
     res
   in
   (* let res = Procutils.PrvComms.maybe_raise_timeout_num 2 fnc () !mona_timeout in  *)
@@ -1540,8 +1540,8 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
       let () = maybe_restart_mona () in
       (* let _  = print_endline "sending to mona prover.." in *)
       let answer = send_cmd_with_answer !cmd_to_send in
-      let () = x_binfo_hp (add_str "answer" pr_id) answer no_pos  in
-      check_answer content answer is_sat_b
+      let () = x_tinfo_hp (add_str "answer" pr_id) answer no_pos  in
+      x_add check_answer content answer is_sat_b
     end
   with
   |Procutils.PrvComms.Timeout ->
@@ -1570,9 +1570,11 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   incr test_number;
   (* let ante = CP.drop_varperm_formula ante in     *)
   (* let conseq = CP.drop_varperm_formula conseq in *)
+  let (ante,conseq) = Trans_arr.translate_array_imply ante conseq in
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  (*let tmp_form = Trans_arr.translate_array_one_formula_for_validity tmp_form in*)
   let tmp_form = x_add_1 CP.subs_const_var_formula tmp_form in
   let tmp_form = if true (* !Globals.non_linear_flag *) then x_add_1 CP.drop_nonlinear_formula_rev tmp_form else tmp_form in
   (* let vs = Hashtbl.create 10 in *)
@@ -1595,6 +1597,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
     (imply_ops pr_w pr_s ante conseq) imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  let f = Trans_arr.translate_array_one_formula f in
   let () = if not !is_mona_running then start () else () in
   let () = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then

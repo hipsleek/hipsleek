@@ -1,0 +1,27 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b, cell c).
+
+infer[HP] HP(a,b,c) & c=z |- z::cell<_>. 
+print residue.
+
+infer[HP] a::cell<_>*c::cell<_> & c=z |- HP(a,b,r) & z=r.
+print residue.
+
+/*
+# norm/ex4b8g.slk
+
+
+infer[HP] a::cell<_>*c::cell<_> & c=z |- HP(a,b,r) & z=r.
+print residue.
+
+# How to handle the above?
+
+!!! **inferHP.ml#1579:infer_fold(lhs): a::cell<Anon_12>@M
+!!! **inferHP.ml#1580:infer_fold(rhs): HP(a,b,r)
+!!! **inferHP.ml#1581:alias_set:[r]
+!!! **inferHP.ml#1582:rhs_matched:[]
+
+*/

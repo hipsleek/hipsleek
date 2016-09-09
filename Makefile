@@ -8,7 +8,7 @@ ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
 #CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
-CPPO_FLAGS = 
+CPPO_FLAGS =
 
 #CFLAGS1='-Wl,--rpath=/usr/lib-2.12'
 #CFLAGS2='-Wl,--dynamic-linker=/usr/lib-2.12/ld-linux.so.2'
@@ -41,21 +41,21 @@ INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/in
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
-#FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
+#FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2
 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
-SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE 
-SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
-#FLAGS = $(INCLUDES),-ccopt,-fopenmp 
-#GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp 
-#GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
+GFLAGS = $(INCLUDES),-g,-annot,-bin-annot,-ccopt,-fopenmp
+SCFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #-ccopt,-static,-ccopt,-fPIE
+SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-static,-ccopt,-fopenmp #,-ccopt,-pie #,-ccopt,-pic
+#FLAGS = $(INCLUDES),-ccopt,-fopenmp
+#GFLAGS = $(INCLUDES),-g,-ccopt,-fopenmp
+#GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
 OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)  $(CPPO_FLAGS)
-OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
- 
+OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+
 OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
@@ -66,7 +66,7 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: byte # decidez.vo 
+all: byte # decidez.vo
 # gui
 byte: sleek.byte hip.byte # decidez.vo
 
@@ -75,7 +75,7 @@ sh_proc: sh_proc.byte
 gbyte: sleek.gbyte hip.gbyte
 
 test: dtest.byte
- 
+
 # hsprinter.byte
 native: hip.native sleek.native
 static: ship.native ssleek.native
@@ -112,7 +112,7 @@ sleek.gbyte: xml parser.cmo
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte g-sleek
 
-sh_proc.byte: 
+sh_proc.byte:
 	@ocamlbuild -cflags -annot $(OBB_GFLAGS) sh_proc.byte
 	cp -u _build/sh_proc.byte sh_proc
 
@@ -149,13 +149,17 @@ ssleek.native: xml
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native s-sleek
 
-gsleek.byte: 
+gsleek.byte:
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
 
-gsleek.native: 
+gsleek.native:
 	@ocamlbuild $(OBG_FLAGS) gsleek.native
 	cp -u _build/gsleek.native gsleek
+
+fact.byte:
+	@ocamlbuild $(OBB_FLAGS) fact.byte
+	cp -u _build/fact.byte fact
 
 ghip.byte:
 	@ocamlbuild $(OBG_FLAGS) ghip.byte
@@ -167,7 +171,7 @@ ghip.native:
 
 # Clean up
 clean:
-	$(OCAMLBUILD) -quiet -clean 
+	$(OCAMLBUILD) -quiet -clean
 	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
 	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.depends
 #	rm -f iparser.mli iparser.ml iparser.output oc.out

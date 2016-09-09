@@ -1,0 +1,102 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node v).
+
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(xx,x).
+expect Fail.
+
+infer [@classic,@pure_field] U2(xx,a) |- (exists x: U2(xx,x)).
+expect Valid.
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(xx,a).
+expect Valid.
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(a,xx).
+expect Fail.
+
+infer [U2,@classic,@pure_field] U2(xx,a) |- U2(a,xx).
+expect Valid.
+
+//infer [@classic,@pure_field] U2(xx,a) & a=x |- U2(xx,x).
+//# valid
+
+//infer [@classic,@pure_field] U2(xx,_) |- (exists x: U2(xx,x)).
+//# valid
+
+//infer [] x::node<a,b>  |- x::node<i,j>.
+//infer [@classic,@pure_field] U2(xx,_) |- U2(xx,xx).
+//infer [@classic,@pure_field] U2(x,_) |- U2(x,y).
+print residue.
+
+
+/*
+# ex25b3a.slk 
+
+infer [@classic,@pure_field] U2(xx,a) |- U2(xx,x).
+
+# should x be free or implicit?
+
+INPUT 0: [@leak,@pure_field][] 
+ ### ante =  U2(xx,a)&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[x]U2(xx,x)&{FLOW,(20,21)=__norm#E}[]
+
+# How come x implicit is not propageted into
+  get-subs-eqn? (FIXED)
+
+INPUT 0: [@leak,@pure_field][] 
+ ### ante =  U2(xx,a)&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[x]U2(xx,x)&{FLOW,(20,21)=__norm#E}[]
+
+run_infer:
+ U2(xx,a)&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Impl)[x]U2(xx,x)&{FLOW,(20,21)=__norm#E}[]
+
+!!! **solver.ml#10275:HRel matching : U2(xx,a) to prove  U2(xx,x)
+!!! **solver.ml#10293:l_args(do match):[xx,a]
+!!! **solver.ml#10294:r_args(do match):[xx,x]
+
+(==solver.ml#10618==)
+subs_to_inst_vars@2@1
+subs_to_inst_vars inp1 :subs:[(x,a)]
+subs_to_inst_vars inp2 :ivars:[]
+subs_to_inst_vars inp3 :impl:[x]
+subs_to_inst_vars@2 EXIT:(([],[],ivars_to_conseq:[]),other_subs:[(x,a)])
+
+(====)
+get_eqns_free@3@1
+get_eqns_free inp1 :[(x,a)]
+get_eqns_free inp2 :evars:[]
+get_eqns_free inp3 :impl_inst:[x]
+get_eqns_free inp4 :expl_inst:[]
+get_eqns_free@3 EXIT:(to_lhs: x=a,to_rhs: true)subst:[]
+
+(==solver.ml#12370==)
+do_match@1
+do_match inp1 : U2(xx,a)
+do_match inp2 : U2(xx,x)
+do_match inp3 :  emp&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [x]
+ es_infer_obj: [@pure_field,@leak]
+ es_gen_impl_vars: [x]
+ es_trace:  Match(UNK)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ emp&x=a&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_heap: U2(xx,a)
+  es_infer_obj: [@pure_field,@leak]
+  es_trace:  Match(UNK)]
+
+
+*/

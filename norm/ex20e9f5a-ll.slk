@@ -1,0 +1,63 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y).
+
+//lemma_unsafe "compl" H(self,y) * y::node<_,ss> -> self::node<_,q>*H(q,ss).
+
+/*
+infer [H,H2,@classic]
+    H2(x,y1,_) * y1::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+*/
+
+infer [H,H3,@classic]
+    H3(x,y1)  |- [y] H(x,y) .
+print residue.
+
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- [y] H(x,y) * y::node<_,ss>.
+print residue.
+
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+
+
+infer [H,H3,@classic]
+    H3(x,y1)  |-  H(x,y) .
+print residue.
+
+infer [H,H2,@classic]
+    H2(x,y,_) * y::node<_,ss> |- H(x,y) * y::node<_,ss>.
+print residue.
+
+infer [H,H2,@classic]
+    H2(x,y,_) * y::node<_,ss> |- H(x,y1) * y1::node<_,ss>.
+print residue.
+
+/*
+# ex20e9f5a.slk
+
+infer [H,H3,@classic]
+    H3(x,y1)  |-  H(x,y) .
+print residue.
+
+<1>emp&y1=y&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H3(x,y@NI)&true --> H(x,y@NI)&true]
+
+# Why below fails to instantiate?
+
+infer [H,H3,@classic]
+    H3(x,y1) * y1::node<_,ss> |- [y] H(x,y) * y::node<_,ss>.
+print residue.
+
+
+*/

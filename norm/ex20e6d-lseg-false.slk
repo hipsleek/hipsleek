@@ -1,0 +1,63 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next#REC;	
+}.
+
+
+HeapPred P(node x,node@NI y).
+
+relation R(node x,node y).
+
+infer[P] P(x,y) & x=y |- false.
+print residue.
+
+
+infer[R] R(x,y) & x=y |- false.
+print residue.
+
+
+/*
+# ex20e6d.slk
+
+# should be y!=x inferred..
+
+(==infer.ml#785==)
+infer_lhs_contra#1@3@2
+infer_lhs_contra#1 inp1 : x=y
+infer_lhs_contra#1 inp2 :[y,x]
+infer_lhs_contra#1 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra#1@3 EXIT:Some( x!=y)
+
+(==solver.ml#12280==)
+infer_lhs_contra_estate#4@2
+infer_lhs_contra_estate#4 inp1 :estate:
+ ex_formula : P(x,y)&x=y&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [y; x]
+infer_lhs_contra_estate#4 inp2 :lhs_xpure: x=y
+infer_lhs_contra_estate#4 inp3 :EARLY CONTRA DETECTION
+infer_lhs_contra_estate#4@2 EXIT:(Some(( ex_formula : hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars: [y; x], x!=y)),[])
+
+!!! **solver.ml#5511:WARNING : Inferred pure not added: x!=x
+Entail (1) : Valid. 
+
+!!! **solver.ml#5511:WARNING : Inferred pure not added: x!=x
+Entail (1) : Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+[UNSOUNDNESS] WARNING : satisfiable state at 1 File "ex20e6d-lseg-false.slk",Line:17,Col:25 became hfalse
+
+Entail (2) : Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  x!=y]
+
+*/

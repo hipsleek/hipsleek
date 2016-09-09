@@ -1,0 +1,204 @@
+# ex21s1c.slk
+
+pred_split [zip2,zip,ll,lseg].
+//pred_split [lseg].
+//pred_split [zip2].
+pred_reuse [*][*].
+pred_reuse_subs [*].
+print views.
+
+# After this synthesis, can we add the lemma:
+   self::zip2<y> ->  HP_69(self) * HP_70(y)
+ that was proven. 
+
+ Better still, Could we perhaps test for:
+   self::zip2<y> <->  HP_69(self) * HP_70(y)
+ and then check which direction had been proven,
+ adding the relevant lemma into our lemma library?
+
+=========================================================
+# ex21s1d.slk (FIXED)
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+!!! process_pred_split:
+[zip2]
+
+# Unsuccessful split. Can you do a SCC on the
+  parameters, so that you known that to split by
+  self::zip2(y,p) --> H1(self) * H2(y,p)
+
+=========================================================
+# ex25a.slk (FIXED)
+
+# llN not maintained correctly in SCC and graph..
+
+SCC:[[ll];[size]]
+Graph:[(size,[size]);(ll,[ll]);(llN,[])]
+!!! **sleekengine.ml#3096:Printing Views
+:
+[ view llN<n:int>= 
+  EList
+    :EBase 
+       (* lbl: *){5}->emp&self=null & n=0&{FLOW,(1,26)=__flow#E}[]
+=========================================================
+# ex21s1f.slk -dre "Syn:"
+
+lemma_infer [P1,P2,@classic]
+  self::zip2<ys,zs> -> P1(self)*P2(zs,ys).
+
+# Having P2(zs,ys) parameters in wrong order seems to have led to:
+  Can we make it more robust. (compare with ex21s1e.slk)
+
+    , view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[p_82](* lbl: *){13}->(exists Anon_80: (* lbl: *){13}->
+       self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          exists (Impl)[p_82](* lbl: *){14}->(exists Anon_80: (* lbl: *){14}->
+          self::node<Anon_80,p_82>@M * p_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){15}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# this was triggered by:
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@8@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@8 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+(==syn.ml#79==)
+Syn:add_dangling_hprel@9@2@1
+Syn:add_dangling_hprel inp1 : fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2)
+Syn:add_dangling_hprel@9 EXIT:( fold HP_45(p_80) |#|  --> GP_82(p_80,self_lem_inf_zip2),false)
+
+=========================================================
+# ex21s1d.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+pred_split [zip2].
+
+# Below was scheduled. Duplicate or due to putting
+  root parmater y as 2nd parameter.
+  Can we check instantiatinng paramete and
+  try to make them root where possible.
+
+  Use HP_44(y,z) rather than HP_44(z,y)
+
+
+!!! **sleekengine.ml#2541:
+ Proven : self::zip2<y,z>@M&{FLOW,(1,26)=__flow#E}[] ->  
+     HP_44(z,y) * HP_45(self)&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#3096:
+
+=========================================================
+# ex21s1d4.slk
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,p>*y::node<_,q> * p::zip2<q,p>.
+
+lemma_test "L1" self::zip2<y,z>
+   <- self::ll<n1> * y::lseg<z,n2> & n1<=n2.
+
+# Why did this above proof fails?
+  A folding problem?
+
+Entailing lemma L1: Fail. (cex)(may) cause: OrL[
+do_unmatched_rhs : self_L1::zip2<y_133,z_134>@M(must),
+valid
+]
+
+chinwn@loris-60:~/hg/sleekex/norm$ 
+=========================================================
+# ex25a2.slk
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+# segmentation fault for size extension of mutual-rec views
+
+!!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
+!!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)
+chinwn@loris-60:~/hg/sleekex/norm$ 
+=========================================================
+# ex20d.ss
+
+# Why did P go from 2 --> 3 parameters?
+  What happen to "self" in the base-case?
+
+!!! **iast.ml#3915:Adding the view P into iprog.
+!!! **cast.ml#3877:Updating an available view decl (P[p,x_1677]) in cprog.
+!!! **syn.ml#677:XXX Scheduling pred_elim_useless
+!!! **norm.ml#164:USELESS Parameters eliminated:[]
+!!! **syn.ml#680:XXX Scheduling pred_reuse
+!!! **syn.ml#681:XXX derived_view names:[P]
+!!! **syn.ml#684:XXX existing view names:[memLoc,size,lseg,ll,P]
+!!! **syn.ml#686:XXX reuse found ...:[]
+!!! **syn.ml#687:XXX Scheduling pred_reuse_subs
+!!! **sa3.ml#3289:DERIVED VIEWS:
+
+[ view P<p:node,x_1677:node>= 
+  EList
+    :EBase 
+       (* lbl: *){291}->emp&x_1677=p&{FLOW,(1,28)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[val_45_1657; 
+          next_45_1658](* lbl: *){292}->(exists p_1679,
+          x_1680: (* lbl: *){292}->self::node<val_45_1657,next_45_1658>@M * 
+                                   next_45_1658::P<p_1679,x_1680>@M&
+          self!=p & p_1679=p & x_1680=x_1677&{FLOW,(1,28)=__flow#E}[])
+    ]
+!!! INFERRED SHAPE SPEC:
+ EInfer @pure_field,@leak[]
+   EBase 
+     exists (Impl)[x_1677]x::P<p,x_1677>@M&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]Stop z3... 102 invocations 
+Stop Omega... 73 invocations 
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================
+=========================================================

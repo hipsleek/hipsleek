@@ -1,0 +1,98 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+
+pred ll<> ==
+   emp & self=null
+or self::node<_,p>*p::ll<>.
+//or self::node<_,p>*p::node<_,q>*q::ll<>.
+
+pred ll1<> ==
+   emp & self=null
+or self::node<_,p>*p::ll2<>.
+
+pred ll2<> ==
+   emp & self=null
+or self::node<_,p>*p::ll1<>.
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+   inv k>=0.
+
+print views.
+
+//pred ss<nnn> == extends [ll*] with size[REC]<nnn>.
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+//pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+//shape_extends_view [*] with size.
+
+//shape_extends_view [ll] with size.
+
+print views.
+
+/*
+# ex25a4.slk
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+
+SCC:[[ll];[ll2;ll1];[size]]
+Graph:[(ll2,[ll1]);(size,[size]);(ll1,[ll2]);(ll,[ll]);(llN1,[])]
+!!! **derive.ml#681:view_scc_obj:[size,ll2,ll1,ll]
+!!! **derive.ml#683:view_name:llN1
+!!! **derive.ml#686:derv_extns:[]
+Exception processed: Failure("**derive.ml#689: no prop")
+error at: 
+
+
+---------------------------------------
+# check if mutual-rec
+
+pred llN1<nnn> == extends ll<> with size[REC]<nnn>.
+pred llN2<nnn> == extends ll2<> with size[REC]<nnn>.
+
+pred ss<nnn> == extends_rec [ll*] with size[REC]<nnn>.
+
+(==derive.ml#209==)
+extract_abs_formula_branch@1
+extract_abs_formula_branch inp1 :[ (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[], (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[])]
+extract_abs_formula_branch inp2 :ll
+extract_abs_formula_branch inp3 :llN1
+extract_abs_formula_branch inp4 :[nnn]
+
+extract_abs_formula_branch inp5 :[(node,1)]
+extract_abs_formula_branch inp6 :[self]
+extract_abs_formula_branch@1 EXIT:([( (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[],[]),( (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[]),[p_47])],[])
+
+!!! **astsimp.ml#2431:vs1a:[]
+!!! **astsimp.ml#2476:raw_base_case:Some( (* lbl: *){7}->emp&self=null & nnn=0&{FLOW,(1,26)=__flow#E}[])
+!!!**fixcalc.ml#644:Input of fixcalc: 
+>> llN1:={[self,nnn_63] -> [] -> []: (0=0 && self<=0 && nnn_63=0) ||  exists (Anon_46,p_47: (self>0 && ll2(p_47)) && nnn_63=0)
+>> };
+>> bottomupgen([llN1], [1], SimHeur);fixcalc: bad mutual recursion detected :"ll2"
+
+Exception processed: Failure("nth")
+error at: 
+SLEEK FAILURE (END)
+
+======================
+# segmentation fault for size extension of mutual-rec views
+
+!!! **cformula.ml#9454:ls_bases:[( (* lbl: *){5}->emp&self=null&{FLOW,(1,26)=__flow#E}[],[])]
+!!! **cformula.ml#9455:ls_inds:[( (exists p_47,Anon_46: self::node<Anon_46,p_47>@M * p_47::ll2<>@M&
+{FLOW,(1,26)=__flow#E}[]),?,?)]
+!!! **cformula.ml#9456:ls_inds:[(?,[],[(p_47,1)])]
+!!! **cformula.ml#9460:7a
+!!! **cformula.ml#9463:7bSegmentation fault (core dumped)
+
+!!! **hipUtil.ml#75:**astsimp.ml#545:replace:(llN2,[])
+!!! **hipUtil.ml#200:invoking build_scc splitSegmentation fault (core dumped)
+chinwn@loris-60:~/hg/sleekex/norm$ 
+
+*/

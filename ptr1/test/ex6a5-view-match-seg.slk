@@ -1,0 +1,81 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+/*
+checkentail x::arr_seg<i,n> 
+ |-  x::arr_seg<j,m>.
+print residue.
+*/
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) & r1=base_x2+i 
+ |-  base_x2::arr_seg<i,n> .
+print residue.
+expect Fail.
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) & r1=base_x2+i+1
+ |-  base_x2::arr_seg<i+1,n> .
+print residue.
+expect Valid.
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) & r2=base_x2+i+1
+ |-  base_x2::arr_seg<i+1,n> .
+print residue.
+expect Fail.
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) & r1=base_x2+i+1
+ |-  base_x2::arr_seg<i,n> .
+print residue.
+expect Fail.
+
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) & r1=base_x2+i+1
+ |-  base_x2::arr_seg<j,n> .
+print residue.
+expect Valid.
+
+checkentail base_x::arr_seg<i+1,n> & r1=base_x+(i+1) 
+ |-  [base_x2] base_x2::arr_seg<j,n> & r1=base_x2+i+1.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> 
+ |-  [x2] x2::arrI<j> & x=x2.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> 
+ |-  x2::arrI<j> & x=x2.
+print residue.
+expect Valid.
+
+checkentail x::arrI<5> 
+ |-  x2::arrI<j> & x!=x2.
+print residue.
+expect Fail.
+
+checkentail x::arrI<5> 
+ |-  (exists x3: x2::arrI<j> & x3=x2).
+print residue.
+expect Fail.
+
+/*
+# ex6a5.slk -dre "choose_c" -trace-log-num 1
+
+checkentail x::arr_seg<i+1,n> & r=x+i & r=x1+1 
+ |-  [j] x1::arr_seg<j,n> & j=i+1.
+print residue.
+
+# to support view matching with arithmetic ..
+
+Entail 2: EXCast. Failure("**context.ml#750:view matching..")
+: no residue 
+
+
+
+*/

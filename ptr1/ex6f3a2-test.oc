@@ -1,0 +1,12 @@
+K:={[i,n]:i+1<n};
+U:={[i,n]:i<n};
+K subset U;
+U:={[i,n]:exists(m:i<m & m<n)};
+K subset U;
+
+U:={[i,n]:exists(m1,m2:i<m1 & m1<m2 & m2<n)};
+K subset U;
+
+K:={[i,n]:i+2<n};
+U:={[i,n]:exists(m1,m2:i<m1 & m1<m2 & m2<n)};
+K subset U;

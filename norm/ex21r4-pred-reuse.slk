@@ -1,0 +1,53 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred lseg2a<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg2a<n-1,p> 
+  inv true.
+
+//pred lseg<n,p> == self::lseg111<n,p>.
+
+pred lseg3<p,n> == self = p & n=0
+	or self::node<_, q> * q::lseg3<p,n-1> 
+  inv true.
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+
+pred_reuse [*][*].
+
+checkentail x::lseg3<p,1> |- x::lseg2a<n,p>.
+print residue.
+
+/*
+# ex21r4.slk
+
+pred lseg3<p,n> == self = p & n=0
+	or self::node<_, q> * q::lseg3<p,n-1> 
+  inv true.
+
+
+pred lseg111<n,p> == self = p & n=0
+	or self::node<_, q> * q::lseg111<n-1,p> 
+  inv true.
+
+pred_reuse [*][*].
+
+# can handle limited parameter permutation; as long
+  as they are type consistent
+
+ Proven : self::lseg3<p,n>@M&{FLOW,(1,26)=__flow#E}[] <->  self::lseg111<n,p>@M&{FLOW,(1,26)=__flow#E}[]
+!!! **sleekengine.ml#2488:
+PRED REUSE FOUND:[(lseg111,lseg111),(lseg2a,lseg111),(lseg3,lseg111)]
+
+
+*/

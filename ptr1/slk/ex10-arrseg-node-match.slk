@@ -1,0 +1,37 @@
+data arrI {
+  int val;
+}.
+
+checkentail x::arrI<1> & y=x |- y::arrI<1>.
+expect Valid.
+
+checkentail x::arrI<1> |- y::arrI<1> & y=x.
+expect Valid.
+
+checkentail x::arrI<1> |- y::arrI<1>.
+print residue.
+expect Fail.
+
+
+checkentail x::arrI<1> |- y::arrI<1> & y=x+1.
+expect Fail.
+
+
+checkentail x::arrI<1> & y!=null |- y::arrI<1> & y=x.
+expect Fail.
+
+checkentail x::arrI<1> |- y::arrI<2> & y=x.
+expect Fail.
+
+
+checkentail x::arrI<1> * a::arrI<_> |- b::arrI<_> * y::arrI<1> & y=x & b=a.
+expect Valid.
+print residue.
+
+checkentail x::arrI<1> * a::arrI<_> |- b::arrI<_> * y::arrI<1> & y=x & b=x.
+expect Fail.
+print residue.
+
+checkentail x::arrI<1> * a::arrI<_> |- b::arrI<_> * y::arrI<1> & y=x & b=a & b!=y.
+expect Valid.
+print residue.

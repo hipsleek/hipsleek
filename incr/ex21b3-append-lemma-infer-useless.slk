@@ -1,0 +1,102 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self = null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred app2<y> == self::node<_,null> 
+	or self::node<_, q> * q::app2<y> & q!=null 
+  inv self!=null.
+
+  /*
+pred app4<y> == self::node<_,q>
+  case { 
+         q=null -> [] emp;
+         q!=null -> [] q::app4<y>;
+  }
+  inv self!=null.
+  */
+
+pred app3<y> == self=null
+        or self::node<_,null> 
+	or self::node<_, q> * q::app3<y> & q!=null 
+  inv true.
+
+HeapPred U(node x).
+HeapPred U2(node x, node y).
+
+lemma_infer_pred [U,classic]
+  self::app2<y> -> U(self).
+
+print residue.
+
+
+
+/*
+# ex21b3.slk
+
+# why is search incomplete?
+
+--old-search-always (chose a worse outcome)
+
+inferred hprel: [
+
+q_112::app2<y_113>@M& q_112!=null --> GP_115(q_112,self_lem_16@NI)&true; 
+
+self_lem_16::node<Anon_111,q_112>@M * 
+ GP_115(q_112,self_lem_16@NI)&q_112!=null --> U(self_lem_16)&
+                  true; 
+
+emp& flted_11_106=null --> GP_109(flted_11_106,self_lem_16@NI)&
+                  true; 
+
+self_lem_16::node<Anon_107,flted_11_106>@M * 
+     GP_109(flted_11_106,self_lem_16@NI)&
+     flted_11_106=null --> U(self_lem_16)&true]
+
+
+[[ InferFold  ==>  COND ==>  Match(self_lem_16,self_lem_16) ==>  SEARCH ==>  InferFold  ==>  COND ==>  Match(q_112,q_112) ==> ||OR|| ==>  InferFold  ==>  Match(self_lem_16,self_lem_16) ==>  UnmatchedRHSData]]
+
+
+--new-search-always
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+    or emp&{FLOW,(20,21)=__norm#E}[]
+    
+ inferred hprel: [
+   U(q_112)&q_112!=null --> GP_115(q_112,self_lem_16@NI)&true; 
+
+ self_lem_16::node<Anon_111,q_112>@M * 
+   GP_115(q_112,self_lem_16@NI)&
+   q_112!=null --> U(self_lem_16)&true; 
+
+ emp& flted_11_106=null --> GP_109(flted_11_106,self_lem_16@NI)&true; 
+
+ self_lem_16::node<Anon_107,flted_11_106>@M * 
+   GP_109(flted_11_106,self_lem_16@NI)&
+   flted_11_106=null --> U(self_lem_16)&true
+
+
+[[ InferFold  ==>  COND ==>  Match(self_lem_16,self_lem_16) ==>  COND ==>  (Lemma ==> lem_16(q_112,q_112)) ==> (left: lem_16) ==>  InferUnfold  ==> ||OR|| ==>  InferFold  ==>  Match(self_lem_16,self_lem_16) ==>  UnmatchedRHSData]]
+
+   GP_109(flted_11_106,self_lem_16@NI) <- flted_11_106=null
+   GP_109(flted_11_106,self_lem_16@NI) == flted_11_106=null
+
+   GP_115(q_112,self_lem_16@NI) <-- U(q_112)&q_112!=null
+   GP_115(q_112,self_lem_16@NI) == U(q_112)&q_112!=null
+
+
+ self_lem_16::node<Anon_111,q_112>@M * U(q_112) &
+   q_112!=null --> U(self_lem_16)&true; 
+
+ self_lem_16::node<Anon_107,flted_11_106>@M  & 
+  flted_11_106=null --> U(self_lem_16)&true
+
+*/

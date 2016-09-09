@@ -474,7 +474,7 @@ let most_common_nonlinear_vars nl =
 let get_model_z3 is_linear templ_unks vars assertions =
   let res = Smtsolver.get_model is_linear vars assertions in
   match res with
-  | Z3m.Unsat -> Unsat
+  | Z3m.Unsat _ -> Unsat
   | Z3m.Sat_or_Unk m ->
     match m with
     | [] -> Unknown
@@ -492,11 +492,18 @@ let get_model_lp solver is_linear templ_unks vars assertions =
   | Lp.Aborted -> Aborted
 
 let get_model solver is_linear templ_unks vars assertions =
-  match solver with
-  | Z3 -> get_model_z3 is_linear templ_unks vars assertions
-  | Clp -> get_model_lp Lp.Clp is_linear templ_unks vars assertions
-  | Glpk -> get_model_lp Lp.Glpk is_linear templ_unks vars assertions
-  | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
+  let all_vars_assertions = List.concat (List.map fv assertions) in
+  let irrel_templ_unks = List.filter (fun v -> 
+      not (Gen.BList.mem_eq eq_spec_var v all_vars_assertions)) templ_unks in
+  let model = match solver with
+    | Z3 -> get_model_z3 is_linear templ_unks vars assertions
+    | Clp -> get_model_lp Lp.Clp is_linear templ_unks vars assertions
+    | Glpk -> get_model_lp Lp.Glpk is_linear templ_unks vars assertions
+    | LPSolve -> get_model_lp Lp.LPSolve is_linear templ_unks vars assertions
+  in
+  match model with
+  | Sat m -> Sat (m @ (List.map (fun v -> (name_of_spec_var v, 0)) irrel_templ_unks))
+  | _ -> model
 
 let get_model solver is_linear templ_unks vars assertions =
   let pr1 = !print_svl in
@@ -511,7 +518,7 @@ let get_opt_model is_linear templ_unks vars assertions =
     (* Linearize constraints *)
     let res = Smtsolver.get_model true vars assertions in
     match res with
-    | Z3m.Unsat -> Unsat
+    | Z3m.Unsat _ -> Unsat
     | Z3m.Sat_or_Unk model -> if model = [] then Unknown else 
         let nl_var_list = List.concat (List.map nonlinear_var_list_formula assertions) in
         let subst_nl_vars = most_common_nonlinear_vars nl_var_list in

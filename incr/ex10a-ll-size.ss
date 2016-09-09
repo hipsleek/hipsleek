@@ -21,7 +21,7 @@ HeapPred H1(node a).
 
 
 int size_helper(node x)
-  infer[H]
+  infer[H,@classic]
   requires H(x)  ensures  emp;//H1(x);
 {
   if (x==null) 

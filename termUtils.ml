@@ -177,26 +177,40 @@ let strip_lexvar_list_failesc_ctx ctx =
   transform_list_failesc_context (idf, idf, strip_lexvar_es_lhs) ctx
 
 let rec strip_lexvar_post for_loop sf =
+  let rec_f = strip_lexvar_post for_loop in
   match sf with
-  | ECase ec -> ECase { ec with
-                        formula_case_branches = map_l_snd
-                            (strip_lexvar_post for_loop) ec.formula_case_branches }
-  | EBase eb -> EBase { eb with
-                        formula_struc_continuation = map_opt
-                            (strip_lexvar_post for_loop) eb.formula_struc_continuation }
+  | ECase ec -> ECase { ec with formula_case_branches = map_l_snd rec_f ec.formula_case_branches }
+  | EBase eb -> EBase { eb with formula_struc_continuation = map_opt rec_f eb.formula_struc_continuation }
   | EAssume af ->
     if for_loop then
       let f_post = mkBase_simp HEmp (MCP.mkMFalse no_pos) in
       EAssume { af with
-                formula_assume_simpl = f_post;
-                formula_assume_struc = mkEBase f_post None no_pos; }
+        formula_assume_simpl = f_post;
+        formula_assume_struc = mkEBase f_post None no_pos; }
     else
       EAssume { af with
-                formula_assume_simpl = snd (strip_lexvar_formula af.formula_assume_simpl);
-                formula_assume_struc = strip_lexvar_post for_loop af.formula_assume_struc }
-  | EInfer ei -> EInfer { ei with
-                          formula_inf_continuation = strip_lexvar_post for_loop ei.formula_inf_continuation }
-  | EList el -> mkEList_no_flatten (map_l_snd (strip_lexvar_post for_loop) el)
+        formula_assume_simpl = snd (strip_lexvar_formula af.formula_assume_simpl);
+        formula_assume_struc = strip_lexvar_assume_struc af.formula_assume_struc }
+  | EInfer ei -> EInfer { ei with formula_inf_continuation = rec_f ei.formula_inf_continuation }
+  | EList el -> mkEList_no_flatten (map_l_snd rec_f el)
+
+and strip_lexvar_assume_struc sf = 
+  let rec_f = strip_lexvar_assume_struc in
+  match sf with 
+  | ECase ec -> ECase { ec with formula_case_branches = map_l_snd rec_f ec.formula_case_branches }
+  | EBase eb ->
+    let base = eb.formula_struc_base in
+    let term_ann_base = collect_term_ann base in
+    let n_base = 
+      if List.exists CP.is_TermR term_ann_base (* has_unknown_post_lexvar *)
+      then snd (strip_lexvar_formula base) else base
+    in 
+    EBase { eb with
+      formula_struc_base = n_base;
+      formula_struc_continuation = map_opt rec_f eb.formula_struc_continuation }
+  | EAssume _ -> sf
+  | EInfer ei -> EInfer { ei with formula_inf_continuation = rec_f ei.formula_inf_continuation }
+  | EList el -> mkEList_no_flatten (map_l_snd rec_f el)
 
 (* let rec strip_lexvar_post sf =                                                               *)
 (*   match sf with                                                                              *)

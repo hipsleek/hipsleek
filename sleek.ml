@@ -90,13 +90,13 @@ module M = Lexer.Make(Token.Token)
 
   let proc_one_cmd c = 
     match c with
-  | UiDef uidef -> process_ui_def uidef
+    | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
     (* let pr_op () = process_entail_check_common iante iconseq in  *)
     (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
     | SatCheck f -> (process_sat_check f; ())
     | NonDetCheck (v, f) -> (process_nondet_check v f)
-    | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs
+    | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
@@ -113,9 +113,27 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
     | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
     | ShapeElim (view_names) -> process_shape_elim_useless view_names
+    | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
+    | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
+    | PredUnfold (qual,to_view_names) -> process_pred_unfold qual to_view_names
     | ShapeExtract (view_names) -> process_shape_extract view_names
     | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
     | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
+    | ShapeAddDangling ids -> process_shape_add_dangling ids
+    | ShapeUnfold ids -> process_shape_unfold ids
+    | ShapeParamDangling ids -> process_shape_param_dangling ids
+    | ShapeSimplify ids -> process_shape_simplify ids
+    | ShapeMerge ids -> process_shape_merge ids
+    | ShapeTransToView ids -> process_shape_trans_to_view ids
+    | ShapeDerivePre ids -> process_shape_derive_pre ids
+    | ShapeDerivePost ids -> process_shape_derive_post ids
+    | ShapeDeriveView ids -> process_shape_derive_view ids
+    | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
+    | ShapeNormalize ids -> process_shape_normalize ids
+    | DataMarkRec ids -> process_data_mark_rec ids 
+    | PredElimHead ids -> process_pred_elim_head ids
+    | PredElimTail ids -> process_pred_elim_tail ids
+    | PredUnifyDisj ids -> process_pred_unify_disj ids
     | PredSplit ids -> process_pred_split ids
     | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
@@ -149,11 +167,11 @@ module M = Lexer.Make(Token.Token)
     | Time (b,s,_) -> 
       if b then Gen.Profiling.push_time s 
       else Gen.Profiling.pop_time s
-    (* | LemmaDef ldef -> process_list_lemma ldef *)
+    | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
     | TemplSolv idl -> process_templ_solve idl
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ 
+    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
     | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
     | EmptyCmd -> () 
@@ -246,7 +264,10 @@ let parse_file (parse) (source_file : string) =
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
-    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
+    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ 
+    | ShapeReuse _ 
+    | ShapeReuseSubs _ 
+    | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
     | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
     | TemplSolv _ | TermInfer
     | Time _ | EmptyCmd | _ -> () 
@@ -262,7 +283,10 @@ let parse_file (parse) (source_file : string) =
   *)
   let proc_one_lemma c =
     match c with
-    | LemmaDef ldef -> process_list_lemma ldef
+    | LemmaDef ldef ->
+       let () = x_tinfo_pp "sleek : proc_one_lemma called" no_pos in
+       if I.is_lemma_decl_ahead ldef then x_add_1 process_list_lemma ldef
+       else ()
     | _             -> () in
   (* | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (\* An Hoa *\) *)
   (* | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | InferCmd _ | PrintCmd _ *)
@@ -351,20 +375,25 @@ let parse_file (parse) (source_file : string) =
       Error.report_error { Error.error_loc  = udp;
                            Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  convert_data_and_pred_to_cast ();
-  x_tinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
+  x_add_1 convert_data_and_pred_to_cast ();
+  x_dinfo_pp "sleek : after convert_data_and_pred_to_cast" no_pos;
   (* x_tinfo_pp "sleek : after proc one lemma" no_pos; *)
   (*identify universal variables*)
   List.iter proc_one_lemma cmds;
+  x_dinfo_pp "sleek : after proc_one_lemma" no_pos;
   let l2r = Lem_store.all_lemma # get_left_coercion in
   let r2l = Lem_store.all_lemma # get_right_coercion in
   let () = if (!Globals.print_core || !Globals.print_core_all) then
       print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (*-------------END lemma --------------------*)
+  y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews in
+  let cviews = 
+    if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews 
+    else cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
+  y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;
   Sleekengine.unexpected_cmd # reset (* := [] *);
   List.iter proc_one_cmd cmds
 
@@ -459,7 +488,11 @@ let main () =
       begin
         (* let () = print_endline "Prior to parse_file" in *)
         x_tinfo_pp "sleek : batch processing" no_pos;
-        let todo_unk = List.map (parse_file NF.list_parse) !Globals.source_files in ()
+        let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
+        (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
+        let all_files = slk_prelude_path::!Globals.source_files in
+        let () = x_winfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
+        let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
       end
   with
   | End_of_file ->
@@ -482,7 +515,9 @@ let sleek_prologue () =
   Globals.infer_const_obj # init
 
 let sleek_epilogue () =
-  if !Debug.dump_calls then Debug.dump_debug_calls ();
+  let cp = !cprog in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_derived_program cp) else () in
+  if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
     Lem_store.all_lemma # dump

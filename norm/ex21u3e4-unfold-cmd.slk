@@ -1,0 +1,90 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred U(node x).
+
+pred app4<> == 
+  self::node<_,null>
+  or self::node<_, q> * q::app4<> & q!=null 
+  inv self!=null.
+// no change
+
+pred tmp_app4<> ==
+  self::node<_, p> * p::dp<>
+  inv self!=null.
+// no change
+
+pred dp<> ==
+  self = null 
+  or self::tmp_app4<>
+  //or self::node<_, p> * p::dp<>
+  inv true.
+// unfold tmp_app4
+
+pred tmp_app4a<> ==
+  self::node<_, p> * p::dp1<>
+  inv self!=null.
+// no change
+  
+pred dp1<> ==
+  self = null 
+  or self::node<_, p> * p::dp1<>
+  inv true.
+
+print views.
+pred_reuse[*][*].
+pred_unfold [*].
+pred_reuse[*][*].
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+
+print views.
+
+/*
+# ex21u3e4.slk
+
+To support single non-recursive unfoldng
+where possible.
+
+!!! **cformula.ml#19929:TODO:add pure & qvars:([Anon_84,p_85], true)
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       (* lbl: *){7}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){8}->self::tmp_app4<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+    {FLOW,(1,26)=__flow#E}[], view dp<>= 
+  EList
+    :EBase 
+       emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          self::node<Anon_84,p_85>@M * p_85::dp<>@M&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# can keep labels?
+
+
+lemma_test "L1" self::app4<> <-> self::tmp_app4<>.
+// fails cos tmp_app4 not unfolded
+
+lemma_test "L2" self::app4<> <-> self::node<_, p> * p::dp<>.
+// fails because dp not normalized
+
+lemma_test "L3" self::app4<> <-> self::tmp_app4a<>.
+// fails cos tmp_app3 not unfolded
+
+lemma_test "L4" self::app4<> <-> self::node<_, p> * p::dp1<>.
+// valid
+
+
+
+*/

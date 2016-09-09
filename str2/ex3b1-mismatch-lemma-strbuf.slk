@@ -1,0 +1,85 @@
+pred_prim strbuf<hd,sl:int,length:int>
+  inv hd<=self & self<=hd+sl & sl<=length & self<hd+length.
+  //iroot cptr;
+
+pred_prim strbuf2<hd,sl:int,length:int>
+  inv hd<=self & self<=hd+sl & sl<=length & self<hd+length.
+  //iroot cptr;
+
+lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl & self2<hd+ln
+  -> self2::strbuf2<hd,sl,ln>.
+
+
+checkentail x::strbuf<hd,sl,ln> & hd<=x2 & x2<=hd+sl & x2<hd+ln
+  |- x2::strbuf<hd,sl,ln>.
+expect Fail.  //RHS should not be strbuf2
+
+/*
+-dre "process_match\|choose_\|process_one" --trace-log-num 2 > 1
+
+@2! **cpure.ml#15321:new_com:[(((SVArg hd_75,0),1),hd_87),(((SVArg sl_76,0),2),sl_88),(((SVArg ln_77,0),3),ln_89)]
+@2! **context.ml#1703:view |- view/data : x2::strbuf<hd_87,sl_88,ln_89>@M
+@2! **context.ml#1704:rhs_root:None
+@2! **context.ml#1705:view_root_lhs:None
+@2! **context.ml#1728:p1:x
+@2! **context.ml#1729:mem p1 aset:[x2]
+@2! **context.ml#1138:vars:[hd,sl,length]
+@2! **context.ml#1758:view_mater_match:[]
+@2! **context.ml#1526:l_vname:strbuf
+@2! **context.ml#1527:r_vname:strbuf
+@2! **context.ml#1528:l_vargs:[x,hd,sl,ln]
+@2! **context.ml#1529:r_aset:[x2]
+@2! **context.ml#1760:coerc_mater_match:[]
+@2! **context.ml#1916:l_xxx:[]
+
+!!! **lemma.ml#312:Updated lemma store with unsafe repo::[lem_12]
+left:
+ Lemma "lem_12":  self::strbuf<hd,sl,ln>@M&hd<=self2 & self2<=(sl+hd) & self2<(ln+hd)&
+{FLOW,(4,5)=__norm#E}[]==> self2::strbuf<hd,sl,ln>@M&{FLOW,(4,5)=__norm#E}[]
+ head match:strbuf
+ body view:
+ body pred_list:[strbuf]
+ coercion_univ_vars: [self2]
+ materialized vars:  []
+ coercion_case: Simple
+ head:  self::strbuf<hd,sl,ln>@M&hd<=self2 & self2<=(sl+hd) & self2<(ln+hd)&
+{FLOW,(4,5)=__norm#E}[]
+ body:  self2::strbuf<hd,sl,ln>@M&{FLOW,(4,5)=__norm#E}[]
+ head_norm:  (exists hd_47,sl_48,ln_49,self: self::strbuf<hd_47,sl_48,ln_49>@M&
+hd<=self2 & self2<=(sl+hd) & self2<(ln+hd) & hd_47=hd & sl_48=sl & ln_49=ln&
+{FLOW,(4,5)=__norm#E}[])
+ body_norm:  EBase 
+   (exists hd_35,sl_36,ln_37: self2::strbuf<hd_35,sl_36,ln_37>@M&
+   hd_35=hd & sl_36=sl & ln_37=ln&{FLOW,(4,5)=__norm#E}[])
+ coercion_univ_vars: [self2]
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_infer_vars: []
+ coercion_infer_obj: []
+ coercion_kind: LEM
+ coercion_fold: None
+ coercion_lhs_sig: None
+
+ ### LHS : x::strbuf<hd,sl,ln>@M
+ ### RHS : x2::strbuf<hd_87,sl_88,ln_89>@M
+ ### estate : ex_formula : x::strbuf<hd,sl,ln>@M&x2<(ln+hd) & x2<=(sl+hd) & hd<=x2&{FLOW,(4,5)=__norm#E}[]
+ es_heap:emp
+ ### matches :[]
+
+!!! **context.ml#3985:compute_action (steps) :
+ ### RHS Cand :[ x2::strbuf<hd_87,sl_88,ln_89>@M]
+ ### action :
+ SEARCH =>[
+  Prio:2
+  COND =>[
+   Prio:2
+   BaseCaseFold =>
+     LHS: emp
+     RHS: x2::strbuf<hd_87,sl_88,ln_89>@M;
+   Prio:5
+   UnmatchedRHSData =>  x2::strbuf<hd_87,sl_88,ln_89>@M
+   ]
+   ]
+
+
+*/

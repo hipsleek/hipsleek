@@ -109,7 +109,15 @@ struct
         res 
       else fnc arg
     with 
-    | Timeout -> with_timeout
+    | Timeout -> 
+      let no = Global_var.sleek_cnt_timeout_limit # dec_and_get in
+      let m = string_of_int no in
+      if no==0 then 
+        let m = string_of_int(Global_var.sleek_cnt_timeout_limit # get_orig) in
+        failwith ("sleek_cnt_timeout exceeded by "^m)
+      else 
+        let () = print_endline_quiet ("Timeout Count "^m) in
+        with_timeout
     | exc -> raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =

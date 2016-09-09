@@ -1,0 +1,92 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app4<> == self=null
+  or self::node<_,null> 
+	or self::node<_, q> * q::app4<> & q!=null 
+  inv true.
+
+pred app4a<> == 
+    [] self=null
+ or [] self::node<_,q> *
+         case {
+           q=null -> [] q=null;
+           q!=null -> [] q::app4a<>;
+         }
+inv true.
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5<>
+  inv true.
+
+pred U<> == self::app5<>
+  inv true.
+
+//lemma_test self::app4a<> <-> self::app5<>.
+
+//print views.
+
+/*
+# ex21u3c.slk
+
+# It seems app4 is unchanged. What we should do is
+
+
+[ view tmp_app4<>= 
+  EList
+    :EBase 
+       (* lbl: *){8}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[flted_12_37](* lbl: *){9}->(exists Anon_36: (* lbl: *){9}->
+          self::node<Anon_36,flted_12_37>@M * DP_38(flted_12_37)&
+          {FLOW,(1,26)=__flow#E}[])
+    , view DP_38<>= 
+  EList
+    :EBase 
+       (* lbl: *){18}->self::tmp_app4<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){19}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    , view app4<>= 
+  EList
+    :EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       || :EBase 
+             exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_12_16: (* lbl: *){2}->
+             self::node<Anon_12,flted_12_16>@M&flted_12_16=null&
+             {FLOW,(1,26)=__flow#E}[])
+       
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){3}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+    ]
+
+# Why do we still have U(q)? Should it not be a view?
+
+    , view app5<>= 
+  EList
+    :EBase 
+       (* lbl: *){4}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_14; 
+          q](* lbl: *){5}->self::node<Anon_14,q>@M * U(q)&
+          {FLOW,(1,26)=__flow#E}[]
+
+    , view U<>= 
+  EList
+    :EBase 
+       (* lbl: *){22}->self::app5<>@M&self!=null&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          (* lbl: *){23}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+
+*/

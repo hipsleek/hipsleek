@@ -1,0 +1,28 @@
+data arrI {
+  int val;
+}.
+
+checkentail
+  x::arrI<_> & x=(base:arrI)+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+print residue.
+expect Valid.
+
+/*
+# ex6d3d5.slk
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 
+  |- (exists i: x2::arrI<_> & x2=base+i).
+
+Can we infer base:arrI from above?
+
+
+*/

@@ -1,0 +1,57 @@
+data arrI {
+  int val;
+}.
+
+/*
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+*/
+
+pred arr_seg<i,n> == case{
+   i=n -> [] i=n & i>=0;
+   i!=n -> [] x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0;
+  }
+  inv n>=i & i>=0.
+
+
+infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<j,n>.
+print residue.
+expect Valid.
+
+infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+
+/* 
+# ex6d5b3 --pnum 2
+
+# Why full fold for above? What happen to emp?
+
+ <1>a::arrI<Anon_13>@M&base=a-i & bbb=a+1 & n=i+2 & 0<=i&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  COND ==>  Match(bbb,bbb) ==>  COND ==>  BaseCaseFold]]
+
+----------------------------------
+
+# ex6d5b3 --pnum 1
+
+infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<j,n>.
+
+# Search for matching with b too?
+
+ <1>bbb::arrI<Anon_12>@M * a::arrI<Anon_13>@M&j=n & 0<=j & 0<=i & 
+                                              bbb=1+base+i & a=i+base&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold]]
+
+<2>bbb::arrI<Anon_12>@M&i=j & base=a-j & bbb=a+1 & n=j+1 & 0<=j&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(a,x_74) ==>  Fold]]
+
+<3>emp&i=j & bbb=j+base+1 & a=j+base & n=j+2 & 0<=j&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  Match(a,x_74) ==>  Fold ==>  Match(bbb,x_87) ==>  COND ==>  BaseCaseFold]]
+
+
+*/
+

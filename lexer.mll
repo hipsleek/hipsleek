@@ -143,14 +143,32 @@ module Make (Token : SleekTokenS)
    ("relDefn", RELDEFN);
    ("shape_infer", SHAPE_INFER );
    ("shape_infer_proper", SHAPE_INFER_PROP );
-   ( "shape_post_obligation", SHAPE_POST_OBL);
+   ("shape_post_obligation", SHAPE_POST_OBL);
    ("shape_divide" , SHAPE_DIVIDE);
    ("shape_conquer" , SHAPE_CONQUER);
    ("shape_lfp" , SHAPE_LFP);
    ("shape_rec" , SHAPE_REC);
-   ( "shape_split_base", SHAPE_SPLIT_BASE);
-   ("shape_elim_useless", SHAPE_ELIM_USELESS );
-   ("shape_extract", SHAPE_EXTRACT );
+   ("shape_split_base", SHAPE_SPLIT_BASE);
+   ("pred_elim_hd_node", PRED_ELIM_HEAD);
+   ("pred_elim_tl_node", PRED_ELIM_TAIL);
+   ("pred_unify_disj", PRED_UNIFY_DISJ);
+   ("pred_elim_useless", PRED_ELIM_USELESS);
+   ("pred_reuse", PRED_REUSE);
+   ("pred_unfold", PRED_UNFOLD);
+   ("pred_reuse_subs", PRED_REUSE_SUBS);
+   ("shape_extract", SHAPE_EXTRACT);
+   ("shape_add_dangling", SHAPE_ADD_DANGLING);
+   ("shape_unfold", SHAPE_UNFOLD);
+   ("shape_param_dangling", SHAPE_PARAM_DANGLING);
+   ("shape_simplify", SHAPE_SIMPLIFY);
+   ("shape_merge", SHAPE_MERGE);
+   ("shape_trans_to_view", SHAPE_TRANS_TO_VIEW);
+   ("shape_derive_pre", SHAPE_DERIVE_PRE);
+   ("shape_derive_post", SHAPE_DERIVE_POST);
+   ("shape_derive_view", SHAPE_DERIVE_VIEW);
+   ("shape_extends_view", SHAPE_EXTN_VIEW);
+   ("shape_normalize", SHAPE_NORMALIZE);
+   ("data_mark_rec", DATA_MARK_REC);
    ("Declare_Dangling", SHAPE_DECL_DANG);
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);
    ("shape_strengthen_conseq", SHAPE_STRENGTHEN_CONSEQ );
@@ -178,6 +196,7 @@ module Make (Token : SleekTokenS)
    (* ("ex", EXISTS); *)
    ("exists", EXISTS);
    ("extends", EXTENDS);
+   (* ("extends_rec", EXTENDS_REC); *)
    ("expect_infer", EXPECT_INFER);
    ("false", FALSE);
    ("finalizes", FINALIZE);
@@ -398,6 +417,7 @@ rule tokenizer file_name = parse
   | "@xpre" { XPRE } (* WN : what is this? *)
   | "@post" { POST } (* to be changed *)
   | "@leak" { INFER_AT_CLASSIC }
+  | "@classic" { INFER_AT_CLASSIC }
   | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
@@ -405,6 +425,7 @@ rule tokenizer file_name = parse
   | "@post_n" { INFER_AT_POST }
   | "@ver_post" { INFER_AT_VER_POST }
   | "@imm_pre" { INFER_IMM_PRE }
+  | "@pure_field" { INFER_AT_PURE_FIELD }
   | "@imm_post" { INFER_IMM_POST }
   | "@imm" { INFER_AT_IMM }
   | "@field_imm" { INFER_AT_FIELD_IMM }
@@ -421,6 +442,7 @@ rule tokenizer file_name = parse
   | "@err_may" { INFER_AT_ERRMAY }
   | "@flow" { INFER_AT_FLOW }
   | "@size" { INFER_AT_SIZE }
+  | "@ana_ni" { INFER_ANA_NI }
   | "@efa" { INFER_AT_EFA }
   | "@dfa" { INFER_AT_DFA }
   | "termAssume" { TREL_ASSUME }

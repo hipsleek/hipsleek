@@ -64,7 +64,7 @@ let gen_lemma prog formula_rev_fnc manage_unsafe_lemmas_fnc es lem_type
     let (_,mix_rf0,_,_,_,_) = Cformula.split_components (Cformula.Base rhs_b0) in
     let r_emap0 = get_eqset (Mcpure.pure_of_mix mix_rf0) in
     let r_eqsetmap0 = CP.EMapSV.build_eset es.Cformula.es_rhs_eqset in
-    let lhs_b1, rhs_b1, _ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
+    let lhs_b1, rhs_b1, _,_ = Cfutil.smart_subst_new lhs_b0 rhs_b0 []
         l_emap0 r_emap0 r_eqsetmap0 [] ([lr;rr])
     in
     (*left*)
@@ -196,10 +196,10 @@ let gen_lemma_infer_x (prog) ass_stk hpdef_stk
     | _ -> report_error no_pos "LEMSYN.gen_lemma: not handle yet"
   in
   (*END*)
-  (* let vdef = x_add C.look_up_view_def_raw 43 prog.C.prog_view_decls vnode.Cformula.h_formula_view_name in *)
+  (* let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vnode.Cformula.h_formula_view_name in *)
   let vself = CP.SpecVar (CP.type_of_spec_var vnode1.Cformula.h_formula_view_node, self, Unprimed) in
   let ss0 = [(vnode1.Cformula.h_formula_view_node, vself)] in
-  let rhs,n_hp =  C.add_raw_hp_rel prog false false [(vself,I);(dnode1.Cformula.h_formula_data_node,NI)] no_pos in
+  let rhs,n_hp = x_add (C.add_raw_hp_rel  ~caller:x_loc) prog false false [(vself,I);(dnode1.Cformula.h_formula_data_node,NI)] no_pos in
   (*add ihpdecl*)
   let iprog = Iast.get_iprog () in
   let hpdclr = C.look_up_hp_def_raw prog.C.prog_hp_decls (CP.name_of_spec_var n_hp) in

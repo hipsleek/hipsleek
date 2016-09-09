@@ -1,0 +1,60 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred H(node x,node@NI y).
+HeapPred H2(node x,node@NI y,node@NI z).
+HeapPred H3(node x,node@NI y,node@NI z).
+
+lemma_unsafe H(self,y)*y::node<_,self> -> self::node<_,q>*H(q,self).
+
+infer [H,H2,@classic] H2(q1,y,_) * y::node<_,self> 
+    |- H(q1,self).
+print residue.
+
+infer [H,H2,@classic] q1::node<_,q>*H2(q,self,_) 
+    |- H(q1,self).
+print residue.
+
+infer [H,H2,H3,@classic] q1::node<_,q>*H2(q,self,_) 
+    |- q1::node<_,q2>*H3(q2,q1,self).
+print residue.
+
+infer [H,H2,H3,@classic] q1::node<_,q>*H2(q,self,_) 
+    |- q1::node<_,q2>*H3(q2,self,q1).
+print residue.
+
+infer [H2,H3,@classic] H2(q,self,r) 
+    |- H3(q,self,q1).
+print residue.
+
+infer [H2,H3,@classic] H2(q,self,r) 
+    |- H3(q,q1,self).
+print residue.
+
+
+/*
+# ex20e9f2.slk
+
+# two steps, if we schedule
+    H(self,y) --> self=y \/ self::node<_,q1>*H2(q1,y,self) 
+
+infer [H,@classic] y::node<_,self> & self=y |- self::node<_,q>*H(q,self).
+print residue.
+
+<1>emp&self=y & Anon_15=Anon_14 & q=self&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&self=q --> H(q,self@NI)&true]
+[[ Match(y,self) ==>  UnmatchedRHSData]]
+
+------------------
+
+infer [H,H2,@classic] self::node<_,q1>*H2(q1,y,self) * y::node<_,self> 
+    |- self::node<_,q>*H(q,self).
+
+ inferred hprel: [H2(q,y@NI,self@NI) * y::node<Anon_17,self>@M&
+                   true --> H(q,self@NI)&true]
+
+
+*/

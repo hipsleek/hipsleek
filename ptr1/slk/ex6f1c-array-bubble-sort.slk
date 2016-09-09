@@ -1,0 +1,45 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<=m & m<=n 
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+checkentail base::arr_seg<start,end> & start!=end & start+1>=end
+   |- base::arr_seg<start,end-1>*r::arrI<m> & r = base + (end - 1).
+//      &  r=base+x & x=end-1.
+//      &  r=base+(end-1).
+print residue.
+
+
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end |- end-start=1.
+print residue.
+
+
+/*
+
+ <1>base::arr_seg<m_226,end>@M&m_226=m_220 
+  & start<=m_220 & m_220<=end & 
+    Univ(m_220) & end<=(1+start) & start!=end&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+
+checkentail start!=end & start+1>=end & start<=end &
+   start<=m & m<=end & Univ(m) & m2=m |- m2=end-1.
+print residue.
+
+
+checkentail base::arr_seg<start,end> &
+    start!=end & start+1>=end 
+   |- base::arr_seg<start,end-1>.
+print residue.

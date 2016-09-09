@@ -1,0 +1,71 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self = p
+	or self::node<_, q> * q::lseg<p> 
+  inv true.
+
+pred PP<y> == self::node<_,null>
+	or self::node<_, q> * q::PP<y> & q!=null 
+inv true.
+
+pred PP0<> == self::node<_,null>
+	or self::node<_, q> * q::PP0<> & q!=null 
+inv true.
+
+
+pred PP2<> == 
+       [q] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+HeapPred P(node x, node y).
+HeapPred U(node x, node y).
+
+lemma_unsafe "L6" self::PP0<> <- self::ll<> & self!=null.
+// can we unfold again if there is a false?
+
+infer [@classic]   q::ll<> & self!=null
+  |-  case {
+        q=null -> [] emp;
+        q!=null -> [] q::PP0<>;
+     }.
+
+infer [@classic]   self::node<_,qq>*qq::ll<> & self!=null
+  |- [q] self::node<_,q>
+     case {
+        q=null -> [] emp;
+        q!=null -> [] q::PP0<>;
+     }.
+print residue.
+
+// fail
+
+lemma_safe "L7" self::PP2<> <-> self::ll<> & self!=null.
+
+/*
+# ex21a2c.ss
+
+lemma_safe "L7" self::PP2<> <-> self::ll<> & self!=null.
+
+# case-spec enabled more proving ..
+
+pred PP2<> == 
+       [q] self::node<_,q> 
+          case {q=null -> [] emp;
+              q!=null -> [] q::PP2<>;
+           } 
+inv self!=null.
+
+*/

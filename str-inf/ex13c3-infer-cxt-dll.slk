@@ -1,0 +1,37 @@
+data node2 {
+  node2 prev;
+  node2 next;
+}.
+
+HeapPred P(node2 x,node2@NI y).
+
+infer [P] p::node2<_,null> * s::node2<_,p> |- P(p,s).
+print residue.
+/*  
+# ex13c3.slk
+
+infer [P] p::node2<_,null> * s::node2<_,p> |- P(p,s).
+print residue.
+
+GOT:
+Starting Omega.../usr/local/bin/oc
+ <1>s::node2<Anon_13,p>@M&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [p::node2<Anon_12,flted_9_18>@M&
+                   flted_9_18=null --> P(p,s@NI)&true]
+
+# Why did we not obtain below. Do we need some flag?
+  p::node2<_,null> | s::node2<_,p> --> P(p,s)
+
+-------
+
+(FIXED)
+
+!! **WARNING****solver.ml#4226:FREE VAR IN HEAP RHS :[P,p,s]LHS:  p::node2<Anon_12,flted_9_18>@M * s::node2<Anon_13,p>@M&flted_9_18=null&
+{FLOW,(20,21)=__norm#E}[]
+RHS:
+ EBase 
+   P(p,s)&{FLOW,(20,21)=__norm#E}[]
+
+*/
+
+

@@ -1,0 +1,39 @@
+data node{
+     int val;
+     node next#REC;
+}.
+
+pred WFSeg<p,nnn> ==
+  self=p & nnn=0
+  or self::node<v,q>*q::WFSeg<p,nnn-1> & v!=0
+  inv nnn>=0.
+
+pred WSS<p,bbb> ==
+  self::WFSeg<q,bbb-1>*q::node<0,p> 
+  inv self!=null & bbb>=0. 
+
+/*
+# ex26a4.slk --pcp
+
+  baga inv: [([self], n=1),([self], 2<=n)]
+ 
+# how come inv-baga gives complex unsimplified outcome
+
+--inv-baga
+
+ inv: self!=null & ((2<=n | n=1))
+  baga inv: [([self], n=1),([self], 2<=n)]
+  baga over inv: [([self], n=1),([self], 2<=n)]
+  baga over inv (unfolded): [([self], n=1),([self], 2<=n)]
+  baga under inv: [([self], n=1),([self], 2<=n)]
+  xform: self!=null & 0<=n & self!=null & ((2<=n | n=1))
+
+-wo inv-baga
+
+  inv: self!=null & 0<=n
+  
+  baga over inv: [([], self!=null & 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n)]
+  
+  xform: self!=null & 1<=n
+*/

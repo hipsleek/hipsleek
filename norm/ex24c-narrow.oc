@@ -1,0 +1,29 @@
+Y1:={[a,b]:((a >= 3 && b >= 3) || (a >= 0 && 2 >= a && b >= a))};
+N1:={[a,b]:((a >= 3 && b >= 3) || (a >= 0 && b >= a))};
+N1 subset Y1;
+Y1 subset N1;
+
+# F4;
+
+Y2:={[a,b]:((a >= 4 && b >= 4) || (a >= 0 && 3 >= a && b >= a))};
+N2:={[a,b]:((a >= 4 && b >= 4) || (a >= 0 && b >= a))};
+N2 subset Y2;
+Y2 subset N2;
+
+N:={[a,b]:a >= 0 && b >= a};
+N subset N2;
+N subset N1;
+N1 subset N;
+N2 subset N;
+
+#N := narrow(Y1,Y2); // false
+N subset Y1;
+N subset Y2;
+
+Y1 subset Y2;
+Y2 subset Y1;
+
+
+# P & R1 || not(P) & R2
+# P & R1 || R2
+

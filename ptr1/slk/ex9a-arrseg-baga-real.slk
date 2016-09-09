@@ -1,0 +1,49 @@
+
+data arrI {
+  int val;
+}.
+
+/*
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(self+i,n-i)], n>=i & i>=0).
+*/
+
+pred two_seg<i> == 
+  or xxx::arrI<_>*y::arrI<_> & xxx=self+i & i>=0 & y=xxx+1
+  inv BG([(self+i,2)], i>=0).
+
+/*
+infer[] base::arr_seg<0,1> * base::arr_seg<1,2>  |- false.
+expect Fail.
+
+infer[] base::arr_seg<0,2> * base::arr_seg<1,2>  |- false.
+expect Valid.
+
+*/
+
+
+/*
+# ex9a.slk
+
+# need to use real intervals below to detect overlap..
+
+infer[] base::arr_seg<0,2> * base::arr_seg<1,2>  |- false.
+expect Valid.
+
+  [(a,d1)],[(c,d2)] & c=a+d1 --> [(a,d1+d2)]
+  [(a,d)] & d<=0  --> []
+  [a],[(c,d)] & c=a+1 --> [(a,d+1)]
+  [(c,d)],[a] & a=c+1 --> [(c,d+1)]
+  [(a,d1)],[(b,d2)] &  b<a+d1 & a<b+d2 --> false
+  (a..a+d1 b..b+d2) // 
+  [(a,d1)],[(a,d2)] &  d1>0 | d2 --> false
+
+ sorting..
+   a<c --> (a,d1) < (c,d2)
+   a>c --> (a,d1) > (c,d2)
+   a=c --> (a,d1) = (c,d2)
+
+
+*/
+

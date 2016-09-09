@@ -1,0 +1,43 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next;
+}.
+
+HeapPred H(node a).
+
+//(1)
+infer [@leak,H] H(p) & p=null |- true.
+print residue.
+/*
+# ex10b4.slk (1)
+
+ ### ante =  H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   htrue&{FLOW,(20,21)=__norm#E}[]
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(p)&p=null --> emp&true]
+
+# Why is the collection not printed?
+
+(==solver.ml#7655==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : H(p)&p=null&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel_empty_rhs#1 inp2 : true
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(true, es_formula: 
+ emp&p=null&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [H])
+
+# What are h1_old and h1? Why did it suddently
+becoming emp; just base on current estate?
+
+!!! **solver.ml#7662:h1: emp
+!!! **solver.ml#7663:h1_old: H(p)
+
+*/
+
+
+
