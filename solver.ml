@@ -5431,7 +5431,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
       else
       if !Globals.delay_proving_sat 
       then ctx
-      else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
+      else (let ctx = elim_unsat_ctx_x prog (ref 1) ctx in set_unsat_flag ctx true)
     in
     (* WN : this has been checked earlier! *)
     if isAnyFalseCtx ctx then
@@ -9356,7 +9356,7 @@ type: bool *
                          } in
             let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
             (* TODO-WN why are there two elim_unsat_ctx? *)
-            let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+            let res_ctx = elim_unsat_ctx_x prog (ref 1) res_ctx in
             x_dinfo_zp (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
             x_dinfo_zp (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
             (SuccCtx[res_ctx], prf)
@@ -9397,7 +9397,7 @@ type: bool *
                                      | Some s1,Some s2 -> (s1,s2)::a
                                      | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
               (* TODO-WN why is there another elim_unsat_ctx? *)
-              let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
+              let res_ctx = elim_unsat_ctx_x prog (ref 1) res_ctx in
               x_dinfo_zp (lazy ("heap_entail_empty_heap: formula is valid")) pos;
               x_dinfo_zp (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
               (SuccCtx[res_ctx], prf)

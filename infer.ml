@@ -2356,7 +2356,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
             infer_rel_stk # push_list_pr x_loc inf_rel_ls;
             Log.current_infer_rel_stk # push_list inf_rel_ls;
           end;
-        let () = estate.es_infer_rel # push_list_pr inf_rel_ls in
+        let () = estate.es_infer_rel # push_list inf_rel_ls in
         (* let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in *)
         if inf_rel_ls != [] then
           begin

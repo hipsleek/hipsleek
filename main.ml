@@ -1213,12 +1213,12 @@ let old_main () =
       print_string_quiet ("\nException occurred: " ^ (Printexc.to_string e));
       print_string_quiet ("\nError3(s) detected at main \n");
       (* print result for svcomp 2015 *)
-      begin
+      (* begin *)
         if !Globals.tnt_web_mode then
           print_web_mode ("\nError: " ^ (Printexc.to_string e))
         else if (!Globals.svcomp_compete_mode) then
           print_endline "UNKNOWN" (* UNKNOWN(5) *)
-      );
+      ;
       hip_epilogue ()
    end
 
