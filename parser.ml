@@ -1782,6 +1782,61 @@ rflow_form:
         F.rflow_base = (* F.subst_stub_flow n_flow *) form;
         F.rflow_session_kind = Some pk; }
     ]
+  |[ `ATT; (p,pk) = formula ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let form = (match p with
+          | Session.ProjectionSession s ->
+            Session.IProjection.mk_formula_heap_only ~flow:stub_flow
+                                             (Session.IProjection.trans_from_session s) loc
+          | Session.TPProjectionSession s ->
+            Session.ITPProjection.mk_formula_heap_only ~flow:stub_flow
+                                               (Session.ITPProjection.trans_from_session s) loc
+          | Session.ProtocolSession s ->
+            Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
+                                           (Session.IProtocol.trans_from_session s) loc) in
+      { F.rflow_kind = NEUTRAL;
+        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
+        F.rflow_session_kind = Some pk; }
+    ]
+  | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
+     { F.rflow_kind = un_option k NEUTRAL;
+       F.rflow_base = (* F.subst_stub_flow n_flow *) dc;
+       F.rflow_session_kind = None; }
+      (* match cc with                                                                                  *)
+      (* | F.Base f -> {                                                                                *)
+      (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
+      (*   F.rflow_base = cc; }                                                                         *)
+      (* | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow") *)
+  ]
+  ];
+
+rflow_form: 
+  [
+    [ `SAT; p = tpprojection_formula ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let form = Session.ITPProjection.mk_formula_heap_only ~flow:stub_flow
+          (Session.ITPProjection.trans_from_session p) loc
+      in
+      { F.rflow_kind = NEUTRAL;
+        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
+        F.rflow_session_kind = Some TPProjection; }
+    ]
+  |[ `ATP; p = protocol_formula ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let form = Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
+          (Session.IProtocol.trans_from_session p) loc in
+      { F.rflow_kind = NEUTRAL;
+        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
+        F.rflow_session_kind = Some Protocol; }
+    ]
+  |[ `MUT; p = projection_formula ->
+      let loc = (get_pos_camlp4 _loc 1) in
+      let form = Session.IProjection.mk_formula_heap_only ~flow:stub_flow
+          (Session.IProjection.trans_from_session p) loc in
+      { F.rflow_kind = NEUTRAL;
+        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
+        F.rflow_session_kind = Some Projection; }
+    ]
   | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
      { F.rflow_kind = un_option k NEUTRAL;
        F.rflow_base = (* F.subst_stub_flow n_flow *) dc;

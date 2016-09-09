@@ -411,6 +411,8 @@ rule tokenizer file_name = parse
   | "@S2" { SPLIT2Ann }
   | "@M" { MUT }
   | "@S" { SAT }
+  | "@T" { ATT }
+  | "@P" { ATP }
   (* | "@VAL" {VAL} *)
   | "@C" {PASS_COPY}
   | "@R" {PASS_REF}

@@ -13,6 +13,12 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 
+(* 
+use @P to parse protocol formulae
+    @S to parse two-party formulae
+    @M to parse multisession formulae
+ *)
+
 type transmission = TSend | TReceive
 
 let string_of_seq  = ";;"
@@ -102,6 +108,7 @@ module type Message_type = sig
   val print_struc_formula  : (struc_formula -> string) ref
   val print_h_formula  : (h_formula -> string) ref
   val print_ho_param_formula  : (ho_param_formula -> string) ref
+  val print_var  : (var -> string)
       
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only: ?flow:flow -> h_formula -> VarGen.loc -> formula
@@ -186,6 +193,7 @@ module IForm = struct
   let print_h_formula = F.print_h_formula
   let print_ho_param_formula = F.print_rflow_formula
   let print_struc_formula = F.print_struc_formula
+  let print_var = F.string_of_spec_var
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
@@ -317,7 +325,7 @@ module IForm = struct
 
   let update_temp_heap_name si hform =
     let pr = !print_h_formula in
-    Debug.no_1 "update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform
+    Debug.no_1 "Session.update_temp_heap_name" pr (pr_opt pr) (update_temp_heap_name si) hform
 
   let set_heap_node_var var node =
     F.HeapNode {node with F.h_formula_heap_node = var;}
@@ -484,6 +492,7 @@ module CForm = struct
   let print_h_formula = CF.print_h_formula
   let print_ho_param_formula = CF.print_rflow_formula
   let print_struc_formula = CF.print_struc_formula
+  let print_var = CF.string_of_spec_var
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -510,7 +519,7 @@ module CForm = struct
   let mk_rflow_formula_from_heap h ?sess_kind:(sess_kind=None) ?kind:(k=NEUTRAL) pos =
     let pr1 = !print_h_formula in
     let pr2 = !print_ho_param_formula in
-    Debug.no_1 "mk_rflow_formula_from_heap" pr1 pr2
+    Debug.no_1 "Session.mk_rflow_formula_from_heap" pr1 pr2
       (fun _ -> mk_rflow_formula_from_heap h ~sess_kind:sess_kind ~kind:k pos) h
 
   let mk_formula pure (ptr, name, ho, params, pos) sk nk =
@@ -765,7 +774,7 @@ module CForm = struct
       
   let append_tail disjunct tail =
     let pr1 = !print_h_formula in
-    Debug.no_2 "append_tail" pr1 pr1 pr1 append_tail disjunct tail
+    Debug.no_2 "Session.append_tail" pr1 pr1 pr1 append_tail disjunct tail
 
   (* Split a SOr predicate into disjuncts.
    * 2. get list of disjuncts from head
@@ -836,7 +845,7 @@ module Message_commons =
 
     let loop_through_rflow helper hform =
       let pr = !print_h_formula in
-      Debug.no_1 "loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform
+      Debug.no_1 "Session.loop_through_rflow" pr (pr_opt pr) (fun _ -> loop_through_rflow helper hform) hform
 
     let heap_node_transformer_basic ?flow:(include_flow=false) fnc hform =
       match get_heap_node hform with
@@ -905,7 +914,7 @@ module Message_commons =
     let set_heap_node_var_opt ?flow:(flow=false) var hform =
       let pr1 = get_node_id in
       let pr2 = !print_h_formula in
-      Debug.no_2 "set_heap_node_var_opt" pr1 pr2 (pr_opt pr2) (fun _ _ -> set_heap_node_var_opt ~flow:flow var hform) var hform
+      Debug.no_2 "Session.set_heap_node_var_opt" pr1 pr2 (pr_opt pr2) (fun _ _ -> set_heap_node_var_opt ~flow:flow var hform) var hform
 
     (* can't really use the heap_node_transformer_gen gen here cause it needs to collect info from the last non-sess node *)
     let set_heap_node_to_chan_node hform =
@@ -1012,6 +1021,7 @@ module Projection_base_formula =
     let string_of_session_base f =
       f.projection_base_formula_channel ^
       (string_of_transmission f.projection_base_formula_op) ^
+      (Msg.print_var f.projection_base_formula_message_var) ^ "#" ^
       "(" ^ (print_message f) ^ ")"
 
     let mk_base (transmission, channel, mv, pos) ?node:(node=None) formula = {
@@ -1041,7 +1051,7 @@ module Projection_base_formula =
     let trans_base base =
       let pr1 = string_of_session_base in
       let pr2 = !Msg.print_h_formula in
-      Debug.no_1 "trans_base" pr1 pr2 trans_base base
+      Debug.no_1 "Session.trans_base" pr1 pr2 trans_base base
 
     let get_base_pos base = base.projection_base_formula_pos
 
@@ -1066,7 +1076,7 @@ module Projection_base_formula =
     let trans_h_formula_to_session_base h_formula =
       let pr1 = !Msg.print_h_formula in
       let pr2 = string_of_session_base in
-      Debug.no_1 "trans_h_formula_to_session_base" pr1 pr2 trans_h_formula_to_session_base h_formula
+      Debug.no_1 "Session.trans_h_formula_to_session_base" pr1 pr2 trans_h_formula_to_session_base h_formula
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base =
       { msg with
@@ -1095,6 +1105,7 @@ module TPProjection_base_formula =
 
     let string_of_session_base f =
       (string_of_transmission f.tpprojection_base_formula_op) ^
+      (Msg.print_var f.tpprojection_base_formula_message_var) ^ "#" ^
       "(" ^ (print_message f) ^ ")"
 
     let mk_base (transmission, mv, pos) ?node:(node=None) formula = {
@@ -1126,7 +1137,7 @@ module TPProjection_base_formula =
     let trans_base base =
       let pr1 = string_of_session_base in
       let pr2 = !Msg.print_h_formula in
-      Debug.no_1 "trans_base" pr1 pr2 trans_base base
+      Debug.no_1 "Session.trans_base" pr1 pr2 trans_base base
 
     let get_base_pos base = base.tpprojection_base_formula_pos
 
@@ -1279,7 +1290,7 @@ module Make_Session (Base: Session_base) = struct
   let rec mk_base a b =
     let pr =  pr_none  in 
     let pr_out = string_of_session_base in
-    Debug.no_1 "mk_base" pr pr_out (mk_base_x a) b
+    Debug.no_1 "Session.mk_base" pr pr_out (mk_base_x a) b
 
   and mk_session_seq_formula session1 session2 ?node:(node=None) loc =
     let node =
@@ -1409,7 +1420,7 @@ module Make_Session (Base: Session_base) = struct
   let trans_from_session s =
     let pr = string_of_session in
     let pr2 = !Base.print_h_formula in
-    Debug.no_1 "trans_from_session" pr pr2 trans_from_session s
+    Debug.no_1 "Session.trans_from_session" pr pr2 trans_from_session s
 
 
   (* fnc is to be used on session_base formulas
@@ -1465,7 +1476,7 @@ module Make_Session (Base: Session_base) = struct
 
   let trans_session_formula fnc sf =
     let pr = string_of_session in
-    Debug.no_1 "trans_session_formula" pr pr (trans_session_formula fnc) sf
+    Debug.no_1 "Session.trans_session_formula" pr pr (trans_session_formula fnc) sf
 
   let get_pos s = match s with
     | SSeq s  -> s.session_seq_formula_pos
@@ -1510,7 +1521,7 @@ module Make_Session (Base: Session_base) = struct
   let mk_struc_formula_from_session_and_formula s form_orig =
     let pr1 = string_of_session in
     let pr2 = !Base.print_struc_formula in
-    Debug.no_2 "mk_struc_formula_from_session_and_formula" pr1 pr2 pr2 mk_struc_formula_from_session_and_formula s form_orig
+    Debug.no_2 "Session.mk_struc_formula_from_session_and_formula" pr1 pr2 pr2 mk_struc_formula_from_session_and_formula s form_orig
 
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
@@ -1556,7 +1567,7 @@ module Make_Session (Base: Session_base) = struct
   let trans_h_formula_to_session h_formula =
     let pr1 = !Base.print_h_formula in
     let pr2 = string_of_session in
-    Debug.no_1 "trans_h_formula_to_session" pr1 pr2 trans_h_formula_to_session h_formula
+    Debug.no_1 "Session.trans_h_formula_to_session" pr1 pr2 trans_h_formula_to_session h_formula
 
   (* Strip the STAR with original formula in view_decl. *)
   let get_original_h_formula h_formula =
@@ -1574,7 +1585,7 @@ module Make_Session (Base: Session_base) = struct
 
   let get_original_h_formula h_formula =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "get_original_h_formula" pr pr get_original_h_formula h_formula
+    Debug.no_1 "Session.get_original_h_formula" pr pr get_original_h_formula h_formula
 
   let get_message_var b = Base.get_message_var b
 
@@ -1585,7 +1596,7 @@ module Make_Session (Base: Session_base) = struct
 
   let replace_message_var b =
     let pr = Base.string_of_session_base in
-    Debug.no_1 "replace_message_var" pr pr replace_message_var b
+    Debug.no_1 "Session.replace_message_var" pr pr replace_message_var b
   
   let trans_formula_to_session formula =
     if (Base.is_base_formula formula)
@@ -1608,7 +1619,7 @@ module Make_Session (Base: Session_base) = struct
 
   let wrap_2ways_sess2base f_sess hform =
     let pr =  !Base.print_h_formula in
-    Debug.no_1 "wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
+    Debug.no_1 "Session.wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
 
   let wrap_2ways_sess2base_opt f_sess hform =
     let session_form = trans_h_formula_to_session hform in
@@ -1621,7 +1632,7 @@ module Make_Session (Base: Session_base) = struct
 
   let wrap_2ways_sess2base_opt f_sess hform =
     let pr =  !Base.print_h_formula in
-    Debug.no_1 "wrap_2ways_sess2base_opt" pr (pr_opt pr) (wrap_2ways_sess2base_opt f_sess) hform
+    Debug.no_1 "Session.wrap_2ways_sess2base_opt" pr (pr_opt pr) (wrap_2ways_sess2base_opt f_sess) hform
   
   let rename_message_pointer_heap hform =
     let fnc_node sf =
@@ -1637,7 +1648,7 @@ module Make_Session (Base: Session_base) = struct
 
   let rename_message_pointer_heap hform =
     let pr =  !Base.print_h_formula in
-    Debug.no_1 "rename_message_pointer_heap" pr (pr_opt pr) rename_message_pointer_heap hform
+    Debug.no_1 "Session.rename_message_pointer_heap" pr (pr_opt pr) rename_message_pointer_heap hform
   
   let rec extract_bases session =
     match session with
@@ -1710,7 +1721,7 @@ module Make_Session (Base: Session_base) = struct
                 : Base.ho_param_formula list =
     let pr1 = !Base.print_ho_param_formula in
     let pr2 = pr_list pr1 in
-    Debug.no_2 "split_sor" pr1 (pr_opt pr1) pr2 split_sor head tail
+    Debug.no_2 "Session.split_sor" pr1 (pr_opt pr1) pr2 split_sor head tail
 
   let split_disj (head: session) (tail: session option)
                  : session list =
@@ -1726,7 +1737,7 @@ module Make_Session (Base: Session_base) = struct
                  : session list =
     let pr1 = string_of_session in
     let pr2 = pr_list pr1 in
-    Debug.no_2 "split_disj" pr1 (pr_opt pr1) pr2 split_disj head tail
+    Debug.no_2 "Session.split_disj" pr1 (pr_opt pr1) pr2 split_disj head tail
 
   let norm_base_only_helper sf =
     match sf with
@@ -1739,7 +1750,7 @@ module Make_Session (Base: Session_base) = struct
 
   let norm_base_only (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "norm_base_only" pr (pr_opt pr) norm_base_only base
+    Debug.no_1 "Session.norm_base_only" pr (pr_opt pr) norm_base_only base
 
   let wrap_one_seq_heap hform =
     let fnc si = norm_base_only in
@@ -1764,7 +1775,7 @@ module Make_Session (Base: Session_base) = struct
 
   let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "norm_last_seq_node" pr (pr_opt pr) norm_last_seq_node base
+    Debug.no_1 "Session.norm_last_seq_node" pr (pr_opt pr) norm_last_seq_node base
 
   (* let update_temp_name_heap (base: Base.h_formula): Base.h_formula option = *)
   (*   Base.update_temp_heap_name base *)
@@ -1775,7 +1786,7 @@ module Make_Session (Base: Session_base) = struct
 
   let update_temp_name_heap (base: Base.h_formula): Base.h_formula option =
     let pr = !Base.print_h_formula in
-    Debug.no_1 "update_temp_name_heap" pr (pr_opt pr) (fun _ -> update_temp_name_heap (base: Base.h_formula)) base
+    Debug.no_1 "Session.update_temp_name_heap" pr (pr_opt pr) (fun _ -> update_temp_name_heap (base: Base.h_formula)) base
 
   let isSeqSor hform =
     let helper sf =
@@ -1883,7 +1894,7 @@ let is_projection si = let fct info = let sk = info.session_kind in
   Gen.map_opt_def false fct si
 
 let is_projection si =
-  Debug.no_1 "is_projection" (pr_opt string_of_view_session_info) string_of_bool is_projection si
+  Debug.no_1 "Session.is_projection" (pr_opt string_of_view_session_info) string_of_bool is_projection si
 
 (* -------------------------------------- *)
 (* rename the var which is used for describing the 
@@ -1910,7 +1921,7 @@ let irename_message_pointer formula =
 
 let irename_message_pointer formula =
   let pr = !F.print_formula in
-  Debug.no_1 "irename_message_pointer" pr pr irename_message_pointer formula
+  Debug.no_1 "Session.irename_message_pointer" pr pr irename_message_pointer formula
 
 let irename_message_pointer_struc formula =
   let renamed_struct = IMessage.transform_struc_formula irename_message_pointer_heap formula in
@@ -1924,7 +1935,7 @@ let irename_message_pointer_struc formula =
   
 let irename_message_pointer_struc formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "irename_message_pointer_struc" pr pr irename_message_pointer_struc formula
+  Debug.no_1 "Session.irename_message_pointer_struc" pr pr irename_message_pointer_struc formula
 
 (* -------------------------------------- *)
 (*** rename the first pointer of hform  ***)
@@ -1938,7 +1949,7 @@ let irename_all_session_pointer_struc ?to_var:(var=session_self) sformula =
 
 let irename_all_session_pointer_struc ?to_var:(var=session_self) formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "irename_all_session_pointer_struc" pr pr (irename_all_session_pointer_struc ~to_var:var) formula
+  Debug.no_1 "Session.irename_all_session_pointer_struc" pr pr (irename_all_session_pointer_struc ~to_var:var) formula
 
 let irename_first_session_pointer_struc ?to_var:(var=session_self) sformula =
   let renamed_struct = IMessage.transform_struc_formula  (irename_session_pointer_heap var) sformula in
@@ -1946,7 +1957,7 @@ let irename_first_session_pointer_struc ?to_var:(var=session_self) sformula =
 
 let irename_first_session_pointer_struc ?to_var:(var=session_self) formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "irename_first_session_pointer_struc" pr pr (irename_first_session_pointer_struc ~to_var:var) formula
+  Debug.no_1 "Session.irename_first_session_pointer_struc" pr pr (irename_first_session_pointer_struc ~to_var:var) formula
 
 (* ----------------------------------------------------------------------- *)
 (*** IMessage: rename the first pointer of hform with Chan pointer where possible  ***)
@@ -1959,7 +1970,7 @@ let irename_sess_ptr_2_chan_ptr_struc sformula =
 
 let irename_sess_ptr_2_chan_ptr_struc formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "irename_sess_ptr_2_chan_ptr_struc" pr pr (irename_sess_ptr_2_chan_ptr_struc) formula
+  Debug.no_1 "Session.irename_sess_ptr_2_chan_ptr_struc" pr pr (irename_sess_ptr_2_chan_ptr_struc) formula
 
 let irename_sess_ptr_2_chan_ptr formula =
   let renamedf = IMessage.transform_formula (irename_sess_ptr_2_chan_ptr_heap ~flow:true) formula in
@@ -1967,7 +1978,7 @@ let irename_sess_ptr_2_chan_ptr formula =
 
 let irename_sess_ptr_2_chan_ptr formula =
   let pr = !F.print_formula in
-  Debug.no_1 "irename_sess_ptr_2_chan_ptr" pr pr (irename_sess_ptr_2_chan_ptr) formula
+  Debug.no_1 "Session.irename_sess_ptr_2_chan_ptr" pr pr (irename_sess_ptr_2_chan_ptr) formula
 
 (* ----------------------------------------------------------------------- *)
 (*** CMessage: rename the first pointer of hform with Chan pointer where possible  ***)
@@ -1980,7 +1991,7 @@ let crename_sess_ptr_2_chan_ptr_struc sformula =
 
 let crename_sess_ptr_2_chan_ptr_struc formula =
   let pr = !CF.print_struc_formula in
-  Debug.no_1 "crename_sess_ptr_2_chan_ptr_struc" pr pr (crename_sess_ptr_2_chan_ptr_struc) formula
+  Debug.no_1 "Session.crename_sess_ptr_2_chan_ptr_struc" pr pr (crename_sess_ptr_2_chan_ptr_struc) formula
 
 let crename_sess_ptr_2_chan_ptr formula =
   let renamedf = CMessage.transform_formula (crename_sess_ptr_2_chan_ptr_heap ~flow:true) formula in
@@ -1988,7 +1999,7 @@ let crename_sess_ptr_2_chan_ptr formula =
 
 let crename_sess_ptr_2_chan_ptr formula =
   let pr = !CF.print_formula in
-  Debug.no_1 "crename_sess_ptr_2_chan_ptr" pr pr (crename_sess_ptr_2_chan_ptr) formula
+  Debug.no_1 "Session.crename_sess_ptr_2_chan_ptr" pr pr (crename_sess_ptr_2_chan_ptr) formula
 
 (* ------------------------------------------------------- *)
 (*** wrap sequence around single transmissions protocols ***)
@@ -2009,7 +2020,7 @@ let wrap_one_seq formula =
 
 let wrap_one_seq formula =
   let pr = !F.print_formula in
-  Debug.no_1 " wrap_one_seq" pr pr wrap_one_seq formula
+  Debug.no_1 "Session.wrap_one_seq" pr pr wrap_one_seq formula
 
 let wrap_one_seq_struc sformula = 
   let renamed_struct = IMessage.transform_struc_formula  wrap_one_seq_heap sformula in
@@ -2017,7 +2028,7 @@ let wrap_one_seq_struc sformula =
 
 let wrap_one_seq_struc formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "wrap_one_seq_struc" pr pr wrap_one_seq_struc formula
+  Debug.no_1 "Session.wrap_one_seq_struc" pr pr wrap_one_seq_struc formula
 
 (* --------------------------------------------------------------- *)
 (***         wrap sequence around final transmission nodes       ***)
@@ -2038,7 +2049,7 @@ let wrap_last_seq_node formula =
 
 let wrap_last_seq_node formula =
   let pr = !F.print_formula in
-  Debug.no_1 "wrap_last_seq_node" pr pr wrap_last_seq_node formula
+  Debug.no_1 "Session.wrap_last_seq_node" pr pr wrap_last_seq_node formula
 
 let wrap_last_seq_node_struc sformula = 
   let renamed_struct = IMessage.transform_struc_formula wrap_last_seq_node_heap sformula in
@@ -2046,7 +2057,7 @@ let wrap_last_seq_node_struc sformula =
 
 let wrap_last_seq_node_struc formula =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "wrap_last_seq_node_struc" pr pr wrap_last_seq_node_struc formula
+  Debug.no_1 "Session.wrap_last_seq_node_struc" pr pr wrap_last_seq_node_struc formula
 
 
 (* --------------------------------------------------------------- *)
@@ -2067,14 +2078,14 @@ let update_temp_name form =
 
 let update_temp_name form =
   let pr = !F.print_formula in
-  Debug.no_1 "update_temp_name" pr pr update_temp_name form
+  Debug.no_1 "Session.update_temp_name" pr pr update_temp_name form
 
 let update_temp_name_struc sform =
   IMessage.transform_struc_formula update_temp_name_heap sform
 
 let update_temp_name_struc sform =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "update_temp_name_struc" pr pr update_temp_name_struc sform
+  Debug.no_1 "Session.update_temp_name_struc" pr pr update_temp_name_struc sform
 
 (* --------------------------------------------------------------- *)
 (***         replace all sorts of flows to __norm flow            ***)
@@ -2094,14 +2105,14 @@ let reset_flow form =
 
 let reset_flow form =
   let pr = !F.print_formula in
-  Debug.no_1 "reset_flow" pr pr reset_flow form
+  Debug.no_1 "Session.reset_flow" pr pr reset_flow form
 
 let reset_flow_struc sform =
   IMessage.transform_struc_formula reset_flow_heap sform
 
 let reset_flow_struc sform =
   let pr = !F.print_struc_formula in
-  Debug.no_1 "reset_flow_struc" pr pr reset_flow_struc sform
+  Debug.no_1 "Session.reset_flow_struc" pr pr reset_flow_struc sform
     
 
 (* -------------------------------------- *)
@@ -2146,7 +2157,7 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
 let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   let pr1 = !CF.print_rflow_formula in
   let pr2 = pr_list pr1 in
-  Debug.no_1 "new_lhs" pr1 pr2 new_lhs lhs
+  Debug.no_1 "Session.new_lhs" pr1 pr2 new_lhs lhs
 
 (* need to check that it does not lead to unsoundness. Check that it filters out
    only those disjuncts which create unsound ctx with the new HO inst.
@@ -2205,7 +2216,7 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   let pr1 = pr_option !CF.print_entail_state in
   let pr2 (e,_) = (add_str "fail ctx" !CF.print_list_context) e in
   let pr3 = pr_opt  pr2 in
-  Debug.no_3 "check_for_ho_unsat" pr3 pr1 !CF.print_formula string_of_bool (fun _ _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) fail es conseq
+  Debug.no_3 "Session.check_for_ho_unsat" pr3 pr1 !CF.print_formula string_of_bool (fun _ _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) fail es conseq
 
 let is_node_kind hform kind = CTPProjection.is_node_kind hform kind
 let is_node_kind_rflow rflow kind = CTPProjection.is_node_kind_rflow rflow kind
@@ -2229,7 +2240,7 @@ let rebuild_SeqSor lnode rnode largs rargs =
 let rebuild_SeqSor lnode rnode largs rargs =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list (!CF.print_rflow_formula) in
-  Debug.no_4 "rebuild_SeqSor" pr1 pr1 pr2 pr2 (pr_triple pr2 pr2 pr_none) rebuild_SeqSor lnode rnode largs rargs
+  Debug.no_4 "Session.rebuild_SeqSor" pr1 pr1 pr2 pr2 (pr_triple pr2 pr2 pr_none) rebuild_SeqSor lnode rnode largs rargs
 
 (* add a try with block *)
 (* Pred<>;;tail  ------>  unfolded Pred<>;;tail  *)
@@ -2258,7 +2269,7 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list !CF.print_rflow_formula in
   let pr_out (a,b,c) = (pr_pair pr2 pr2) (a,b) in
-  Debug.no_2 "rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun ) lnode rnode 
+  Debug.no_2 "Session.rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun ) lnode rnode 
 
 let struc_norm ?wrap_seq:(seq=true) sf =
   let sf = if seq then 
