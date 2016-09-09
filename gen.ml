@@ -2661,7 +2661,10 @@ module GenRel
         let ds1 = DSet.singleton_dset e1 in
         let ds2 = DSet.singleton_dset e2 in
         let ds12 = DSet.star_disj_set ds1 ds2 in
-        let new_dpart = DSet.remove_dups_disj_set (DSet.merge_disj_set gen.gen_dpart ds12) in 
+        let ds = (DSet.merge_disj_set gen.gen_dpart ds12) in
+        let () = print_endline ("!!!! dset before: " ^ (DSet.string_of ds)) in
+        let new_dpart = DSet.remove_dups_disj_set ds in
+        let () = print_endline ("!!!! dset after: " ^ (DSet.string_of ds)) in
         {gen with gen_dpart = new_dpart}
 
     (* throw an exception if conflicting info exists: eg. (a=b & a!=b) *)
@@ -2685,7 +2688,7 @@ module GenRel
     let add_sub (gen: genrel) (e1:t) (e2:t) =
       if not(is_sub gen e2 e1) then 
         let gen = {gen with gen_poset = SubP.add gen.gen_poset e1 e2} in 
-        let () = print_endline ("gen:" ^ (string_of gen)) in
+        (* let () = print_endline ("gen:" ^ (string_of gen)) in *)
         gen
       else add_eq gen e1 e2 (* e1<:e2 & e2<:e1 ---> e1=e2 *)
 

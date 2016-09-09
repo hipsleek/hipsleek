@@ -88,9 +88,9 @@ let build_imm_genrel_of_formula f =
   let rec fold_fixpt irel  =
     let () = fixpt:= true in
     let fnc rel = fold_formula_arg f rel (nonef2,f_bf,nonef2) (idf2, idf2, idf2) GenImmSV.merge_list in
-    let () = y_binfo_hp (add_str "imm rel 0 " GenImmSV.string_of) irel in
+    (* let () = y_binfo_hp (add_str "imm rel 0 " GenImmSV.string_of) irel in *)
     let rel = fnc irel in
-    let () = y_binfo_hp (add_str "imm rel 1 " GenImmSV.string_of) rel in
+    (* let () = y_binfo_hp (add_str "imm rel 1 " GenImmSV.string_of) rel in *)
     (* TODOIMM: old rel shouldn't be added below. Why is it not working wothout rel *)
     if not(!fixpt) then fold_fixpt rel (* GenImmSV.merge_list [(fnc rel);rel] *)
     else rel
