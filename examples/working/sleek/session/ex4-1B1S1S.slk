@@ -28,40 +28,40 @@ expect Valid.
 pred_sess_proj pp1<> == ?0.
 pred_sess_proj pp2<> == ?0.
 //7
-checkentail x::Sess{@S pp1<>}<> |- x::Sess{@S pp2<>}<>.
+checkentail x::Sess{@M pp1<>}<> |- x::Sess{@M pp2<>}<>.
 expect Valid.
 
 pred_sess_proj pp5<> == ?0.
 pred_sess_proj pp6<> == ?emp & 0<=msg.
 //8
-checkentail x::Sess{@S  pp5<>}<> |- x::Sess{@S  pp6<>}<>.
+checkentail x::Sess{@M  pp5<>}<> |- x::Sess{@M  pp6<>}<>.
 expect Valid.
 print residue.
 
 //9
-checkentail x::Sess{@S pp6<>}<> |- x::Sess{@S pp5<>}<>.
+checkentail x::Sess{@M pp6<>}<> |- x::Sess{@M pp5<>}<>.
 expect Fail.
 
 pred_sess_proj pp7<> == !0.
 pred_sess_proj pp8<> == !emp & 0<=msg.
 //10
-checkentail x::Sess{@S pp7<>}<> |- x::Sess{@S pp8<>}<>.
+checkentail x::Sess{@M pp7<>}<> |- x::Sess{@M pp8<>}<>.
 expect Fail.
 
 //11
-checkentail x::Sess{@S pp8<>}<> |- x::Sess{@S pp7<>}<>.
+checkentail x::Sess{@M pp8<>}<> |- x::Sess{@M pp7<>}<>.
 expect Valid.
 
 pred_sess_proj pp17<> == !0;;?emp & 0<=msg.
 pred_sess_proj pp18<> == !emp & 0<=msg;;?0.
 //12
-checkentail x::Sess{@S pp17<>}<> |- x::Sess{@S pp18<>}<>.
+checkentail x::Sess{@M pp17<>}<> |- x::Sess{@M pp18<>}<>.
 expect Fail.
 
 //13
-checkentail x::Sess{@S pp18<>}<> |- x::Sess{@S pp17<>}<>.
+checkentail x::Sess{@M pp18<>}<> |- x::Sess{@M pp17<>}<>.
 expect Valid.
 
 //14
-checkentail x::Sess{@S aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@S aa!emp & 0<=msg;;aa?0}<>.
+checkentail x::Sess{@M aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@M aa!emp & 0<=msg;;aa?0}<>.
 expect Fail.

@@ -1,0 +1,16 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+
+
+pred_sess_proj GSb2<> == (!1) or (!0;;!1).
+
+
+// should this succeed?
+checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M & opt=0 |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<> * %L(opt).
+expect Valid.
+print residue.
+
+
+

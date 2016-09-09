@@ -1,15 +1,15 @@
 sleek_include 'hodef.slk'.
 
 //1
-checkentail x::Sess{@S aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@S aa!emp & 0<=msg;;aa?0}<>.
+checkentail x::Sess{@M aa!0;;aa?emp & 0<=msg}<> |- x::Sess{@M aa!emp & 0<=msg;;aa?0}<>.
 expect Fail.
 
 //2
-checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;aa!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg;;aa!0}<> .
+checkentail x::Sess{@M aa!emp & 0<=msg;;aa?0;;aa!0}<>|- x::Sess{@M aa!0;;aa?emp & 0<=msg;;aa!0}<> .
 expect Valid.
 
 //3
-checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;bb!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg}<> .
+checkentail x::Sess{@M aa!emp & 0<=msg;;aa?0;;bb!0}<>|- x::Sess{@M aa!0;;aa?emp & 0<=msg}<> .
 expect Fail.
 
 //4
@@ -28,25 +28,25 @@ checkentail_exact bb::S{ - emp&msg=0}<msg> |- emp.
 expect Fail.
 
 //7
-checkentail x::Sess{@S aa!emp & 0<=msg;;aa?0;;(bb!0)*(bb!1);;aa!0}<>|- x::Sess{@S aa!0;;aa?emp & 0<=msg;;(bb!0)*(bb!1);;aa!0}<> .
+checkentail x::Sess{@M aa!emp & 0<=msg;;aa?0;;(bb!0)*(bb!1);;aa!0}<>|- x::Sess{@M aa!0;;aa?emp & 0<=msg;;(bb!0)*(bb!1);;aa!0}<> .
 expect Valid.
 
 //8
-checkentail x::Sess{@S (bb!0)*(bb!1)}<>|- x::Sess{@S (bb!0)*(bb!1)}<> .
+checkentail x::Sess{@M (bb!0)*(bb!1)}<>|- x::Sess{@M (bb!0)*(bb!1)}<> .
 expect Valid.
 
 //9
-checkentail x::Sess{@S (bb!0)*(bb!1);;a!0}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0}<> .
+checkentail x::Sess{@M (bb!0)*(bb!1);;a!0}<>|- x::Sess{@M (bb!0)*(bb!1);;a!0}<> .
 expect Valid.
 
 //10
-checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
+checkentail x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<>|- x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
 expect Valid.
 
 //11
-checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1)}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
+checkentail x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1)}<>|- x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
 expect Valid.
 
 //12
-checkentail x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1);;aaa!0}<>|- x::Sess{@S (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
+checkentail x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!msg<=0)*(a!1);;aaa!0}<>|- x::Sess{@M (bb!0)*(bb!1);;a!0;;(a!0)*(a!1)}<> .
 expect Fail.

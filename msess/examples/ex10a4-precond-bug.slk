@@ -1,0 +1,43 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+pred_sess_proj GSb<> == (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>) or (!0).
+pred_sess_proj GSa<> == ?v#v::Addr<_>;;!v#v::DDate<_,_,_>.                    
+
+/*
+checkentail cb'::Chan{@S  ?v_2145# v_2145::Addr<Anon_2144> ;; !v_2149# v_2149::DDate<Anon_2146,Anon_2147,Anon_2148>}<> * 
+cs'::Chan{@S !v_2204# v_2204::Chan{@S ?v_2199# v_2199::Addr<Anon_2198> ;; !v_2203# v_2203::DDate<Anon_2200,Anon_2201,Anon_2202>}<> ;; ?v_2205# v_2205::Chan{emp}<> }<> &
+v_bool_67_2097' & opt'=1 & 0<v_int_64_2165 & cb'=cb & cs'=cs & 1<=id' 
+|-  cs'::Chan{@S !v_124#%L(v_124) ;; %R }<> * %L(cb').
+
+print residue.
+*/
+
+checkentail cb'::Chan{@S  ?v#v::Addr<_> ;; !v# v::DDate<_,_,_>}<> * 
+cs'::Chan{@S !v#v::Chan{@S ?v#v::Addr<_> ;; !v#v::DDate<_,_,_>}<> ;; ?v#v::Chan{emp}<> }<> &
+ cb'=cb & cs'=cs & 1<=id' 
+|-  cs'::Chan{@S !v#%L(v) ;; %R }<> * %L(cb').
+
+print residue.
+
+/*
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>emp&1<=id' & cs'=cs & cb'=cb&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L[v_98] --> v_98::Chan{ . (?v_100#( v_100::Addr<Anon_24>@M)) ;; ((!v_99#( v_99::DDate<Anon_25,Anon_26,Anon_27>@M)) ;; (emp))
+&
+{FLOW,(20,21)=__norm#E}}<>@M&
+           {FLOW,(20,21)=__norm#E};
+ 
+           R --> (?v_97#( v_97::Chan{ . emp}<>@M)) ;; (emp)
+&
+           {FLOW,(20,21)=__norm#E}]
+[[ SEARCH ==>  Match(cs',cs') ==>  SEARCH ==>  Match(cb',cb')]]
+
+
+
+*/

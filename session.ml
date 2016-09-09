@@ -1830,14 +1830,28 @@ module Make_Session (Base: Session_base) = struct
               let new_head = unfold_fun headl ptr in
               let new_head = trans_formula_to_session new_head in
               let new_lseq = append_tail new_head s_lhs.session_seq_formula_tail in
-              let new_lseq = norm3_sequence new_lseq in
+              let new_lseq = norm3_sequence new_lseq in              
               let new_lseq = trans_from_session new_lseq in
+              let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
+              let new_lseq = map_opt_def new_lseq idf (wrap_one_seq_heap new_lseq) in
               let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
 
               let new_rseq_ho_arg = Base.mk_rflow_formula_from_heap rnode ~sess_kind:(Some Base.base_type) no_pos in
               [new_lseq_ho_arg],[new_rseq_ho_arg],(get_prim_pred_id_by_kind Channel) 
             | _, _ -> def
           end
+        | SBase (Base _),  SSeq _ ->
+          (* try to add the base to a seq with emp tail *)
+          let new_lhs = append_tail sess_lhs SEmp in
+          let new_lhs = trans_from_session new_lhs in
+          let new_lhs_ho_arg = Base.mk_rflow_formula_from_heap new_lhs ~sess_kind:(Some Base.base_type) no_pos in
+          [new_lhs_ho_arg], r_ho_args, (get_prim_pred_id_by_kind Channel)
+        | SSeq _, SBase (Base _) ->
+          (* try to add the base to a seq with emp tail *)
+          let new_rhs = append_tail sess_rhs SEmp in
+          let new_rhs = trans_from_session new_rhs in
+          let new_rhs_ho_arg = Base.mk_rflow_formula_from_heap new_rhs ~sess_kind:(Some Base.base_type) no_pos in
+          l_ho_args, [new_rhs_ho_arg], (get_prim_pred_id_by_kind Channel)
         | _, _ -> def
       end           
     | _, _ -> def 
