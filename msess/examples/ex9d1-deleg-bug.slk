@@ -1,0 +1,7 @@
+/* hip_include 'msess/notes/session.ss' */
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+checkentail  c2'::Chan{@S !0}<> |- c2'::Chan{@S !v#%L(v);;%R}<>.
+print residue.

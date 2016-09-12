@@ -1831,7 +1831,8 @@ $output_file = "log";
         ["ex9b-sor.ss", 8, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "sor4", "SUCCESS", "sor5", "FAIL", "sor6", "SUCCESS","sor7", "FAIL","sor8", "SUCCESS"],
         ["ex9c-calls.ss", 7, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "loop1_sor1", "SUCCESS", "loop2_sor1", "FAIL", "loop3_sor1", "SUCCESS","loop4_sor1", "SUCCESS"],
         ["ex9d-deleg.ss", 5, "", "deleg1","SUCCESS","deleg2","SUCCESS","p1","SUCCESS","p2","SUCCESS","p2_fail","FAIL"],
-        ["ex10-1B1S1S.ss", 3, "", "buyer","SUCCESS","seller","SUCCESS","shipper","SUCCESS"]
+        ["ex10-1B1S1S.ss", 3, "", "buyer","SUCCESS","seller","SUCCESS","shipper","SUCCESS"],
+        ["ex10b-1B1S1S.ss", 3, "", "buyer","SUCCESS","seller","SUCCESS","shipper","SUCCESS"]
 
     ],
     # "lemmas"=>[

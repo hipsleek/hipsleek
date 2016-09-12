@@ -97,10 +97,3 @@ void shipper(Channel c)
   sendc(c, cd);
 }
 
-
-/*
-shipper
-pred_sess_proj GS<> == 
-  ?v#v>=1;;?v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;!v#v::Chan{emp}<>;
-
-*/

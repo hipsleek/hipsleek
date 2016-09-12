@@ -27,6 +27,10 @@ Addr get_addrs()
   requires true
   ensures res::Addr<_>;
 
+Channel duplicate_channel(Channel cs)
+  requires cs::Chan{@S %R}<>
+  ensures cs::Chan{@S %R}<> * res::Chan{@S %R}<>;
+
 // projection of G on B:
 /* pred_proj G@B<bs> == bs!int;;bs?msg:double;;(bs!1;;bs!Addr;;bs?Date or bs!0); */
 /* pred_sess_proj GB<> == !v#v>=1;;?v#v>0;;((!1;;!v#v::Addr<_>;;?v#v::DDate<_,_,_>) or !0); */
@@ -50,30 +54,25 @@ Addr get_addrs()
 /* pred G@S<a,b> == */
 /*   a?int;a!double;(a?1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0); */
 pred_sess_proj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0);
-pred_sess_proj GSb<> == (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>) or (!0);
+pred_sess_proj GSb<> == !v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>;
 
 
 void seller(ref Channel cb, ref Channel cs)
   requires cb::Chan{@S GSa<>}<> * cs::Chan{@S GSb<>}<>
-  ensures  cb'::Chan{emp}<> * cs'::Chan{emp}<>;
+  ensures  cb'::Chan{emp}<> * cs'::Chan{@S GSb<>}<>; //
 {
-  /* send(cs,2); */g
-  /* dprint; */
   int id = receive(cb);
-  /* dprint; */
   send(cb, get_price(id));
   int opt = receive(cb);
   /* dprint; */
   if(opt == 1){
-    send(cs, opt);
-    send(cs, id);
+    Channel new_cs;
+    new_cs = duplicate_channel(cs);
     dprint;
-    sendc(cs, cb);
-    cb = receivec(cs);
-  } else {
-    send(cs, opt);
-  }
-  dprint;
+    send(new_cs, id);
+    sendc(new_cs, cb);
+    cb = receivec(new_cs);
+  } 
 }
 
 /* // projection of G on H */
