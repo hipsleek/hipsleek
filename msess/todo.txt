@@ -605,7 +605,7 @@ Residue:
 =============================================
 =============================================
 
-allow args with values
+[SOLVED] allow args with values
 
 checkentail x::Chan{@S Fp<1,0.4>;;!1;;!2}<> |- x::Fp<1,0.4>.
 

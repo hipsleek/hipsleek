@@ -1380,12 +1380,12 @@ protocol_formula:
             (* let c = F.subst_stub_flow top_flow c in *)
             let mv = session_extract_msg_var msg_var loc in
             Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
-      | vh = view_header ->
-            let name = vh.Iast.view_name in
-            let ho_vars = vh.Iast.view_ho_vars in
-            let params = vh.Iast.view_vars in
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProtocol.SBase (Session.IProtocol.mk_session_predicate name ho_vars params loc)
+      | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
+        let name,_,_,_ = hid in
+        let ho_args = un_option opt1 [] in
+        let params,_ = List.split (fst hl) in
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProtocol.SBase (Session.IProtocol.mk_session_predicate name ho_args params loc)
     ]
 ];
 
@@ -1436,12 +1436,17 @@ projection_formula:
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
         Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, channel, mv, loc) c)
-      | vh = view_header ->
-        let name = vh.Iast.view_name in
-        let ho_vars = vh.Iast.view_ho_vars in
-        let params = vh.Iast.view_vars in
+      | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
+        let name,_,_,_ = hid in
+        let ho_args = un_option opt1 [] in
+        let params,_ = List.split (fst hl) in
         let loc = (get_pos_camlp4 _loc 1) in
-        Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_vars params loc)
+      (* | vh = view_header -> *)
+      (*   let name = vh.Iast.view_name in *)
+      (*   let ho_vars = vh.Iast.view_ho_vars in *)
+      (*   let params = vh.Iast.view_vars in *)
+      (*   let loc = (get_pos_camlp4 _loc 1) in *)
+        Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_args params loc)
       ]
     ];
 
@@ -1476,12 +1481,17 @@ tpprojection_formula:
       (* let c = F.subst_stub_flow top_flow c in *)
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, mv, loc) c)
-    | vh = view_header ->
-      let name = vh.Iast.view_name in
-      let ho_vars = vh.Iast.view_ho_vars in
-      let params = vh.Iast.view_vars in
-      let loc = (get_pos_camlp4 _loc 1) in
-            Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_vars params loc)
+    | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
+      let name,_,_,_ = hid in
+        let ho_args = un_option opt1 [] in
+        let params,_ = List.split (fst hl) in
+        let loc = (get_pos_camlp4 _loc 1) in
+    (* | vh = view_header -> *)
+    (*   let name = vh.Iast.view_name in *)
+    (*   let ho_vars = vh.Iast.view_ho_vars in *)
+    (*   let params = vh.Iast.view_vars in *)
+    (*   let loc = (get_pos_camlp4 _loc 1) in *)
+        Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args params loc)
     ]
 ];
 
