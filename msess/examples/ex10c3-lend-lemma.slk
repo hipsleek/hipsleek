@@ -1,0 +1,17 @@
+pred_prim Ff<id:int>. //full
+pred_prim Fp<id:int,p>. //partial
+pred_prim Fm<id:int>.   //minus
+
+lemma  self::Fp<id,a> * self::Fp<id,b> & a+b=1 -> self::Ff<id>.
+
+//1
+checkentail c::Fp<1,0.5> * c::Fp<1,0.5> |- c::Ff<id>.
+expect Valid.
+print residue.
+
+lemma  self::Fp<id,a> * self::Fp<id,b> & a+b=m -> self::Fp<id,m>.
+
+//2
+checkentail c::Fp<1,0.5> * c::Fp<1,0.4> |- c::Fp<id,0.9>.
+expect Valid.
+print residue.

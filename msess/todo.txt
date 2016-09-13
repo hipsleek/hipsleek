@@ -605,8 +605,28 @@ Residue:
 =============================================
 =============================================
 
+allow args with values
+
+checkentail x::Chan{@S Fp<1,0.4>;;!1;;!2}<> |- x::Fp<1,0.4>.
+
+Exception processed: Stream.Error("[opt_ann_cid_list] expected after LT (in [view_header])")
+error at: 
+SLEEK FAILURE (END)
+
 =============================================
 =============================================
+
+norm lemmas with session:
+
+lemma  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
+
+ERROR: at ex10c4-split-lemma.slk_7:21_7:33
+Message: **typeinfer.ml#1670:SESS_TEMP is neither 2 a data nor view name
+
+Exception processed: Failure("**typeinfer.ml#1670:SESS_TEMP is neither 2 a data nor view name")
+error at: 
+SLEEK FAILURE (END)
+
 
 =============================================
 =============================================

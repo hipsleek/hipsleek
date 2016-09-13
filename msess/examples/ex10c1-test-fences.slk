@@ -9,30 +9,35 @@ pred_sess_proj GSb1<> == !1.
 pred_prim Ff<id:int>. //full
 pred_prim Fp<id:int,p>. //partial
 pred_prim Fm<id:int>.   //minus
-                                           
+
+//1
 checkentail c::Ff<1> |- c::Ff<1>.
 expect Valid.
-                                                                                      
+
+//2
 checkentail c::Ff<2> |- c::Ff<1>.
 expect Fail.
 
-                                           
+//3                                           
 checkentail c::Fp<1,0.5> |- c::Fp<1,0.6>.
 expect Fail.
 
+//4
 checkentail c::Fp<1,0.5+0.5> |- c::Fp<1,1.0>.
 expect Valid.
 print residue.
 
-                                           
+/*                                           
 lemma_safe self::Fp<id,p1> * q::Fp<id,p2> & self=q & m=p1+p2 <-> self::Fp<id,m>.
 lemma self::Fp<id,m> & m=p1+p2 <-> self::Fp<id,p1> * self::Fp<id,p2>.
 lemma self::Fp<id,m> <-> (exists p1, p2: self:: Fp< id, p1> * self:: Fp< id, p2> & m=p1+p2).
-                                           
+*/
+//5
 checkentail c::Fp<1,0.5> * c::Fp<1,0.5> |- c::Fp<1,1.0>.
 expect Valid.
 print residue.
 
+//6
 checkentail c::Fp<1,1> |- c::Fp<1,0.5> * c::Fp<1,0.5>.
 expect Valid.
 print residue.
@@ -40,14 +45,17 @@ print residue.
 
 lemma  self::Fp<id,a> * self::Fp<id,b> & a+b=1 -> self::Ff<id>.
 
+//7
 checkentail c::Fp<1,0.5> * c::Fp<1,0.5> |- c::Ff<id>.
 expect Valid.
 print residue.
 
+//8
 checkentail c::Fp<1,0.6> * c::Fp<1,0.5> |- c::Ff<id>.
 expect Fail.
 print residue.
 
+//9
 checkentail c::Fp<1,0.3> * c::Fp<1,0.5> |- c::Ff<id>.
 expect Fail.
 print residue.
@@ -55,7 +63,14 @@ print residue.
 //lemma for 
 //lemma  self::Ff<id>@L <-> self::Fm<id>.
 lemma  self::Fm<id> <- self::Ff<id>@L.
-                                           
+
+//10
 checkentail c::Ff<1> |- c::Fm<1>.
+expect Valid.
+print residue.
+
+lemma  self::Fp<id,a> * self::Fp<id,b> & a+b=m -> self::Fp<id,m>.
+//5
+checkentail c::Fp<1,0.4> * c::Fp<1,0.5> |- c::Fp<1,0.9>.
 expect Valid.
 print residue.
