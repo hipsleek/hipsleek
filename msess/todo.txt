@@ -616,7 +616,7 @@ SLEEK FAILURE (END)
 =============================================
 =============================================
 
-norm lemmas with session:
+[SOLVED] norm lemmas with session:
 
 lemma  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
 
@@ -626,6 +626,29 @@ Message: **typeinfer.ml#1670:SESS_TEMP is neither 2 a data nor view name
 Exception processed: Failure("**typeinfer.ml#1670:SESS_TEMP is neither 2 a data nor view name")
 error at: 
 SLEEK FAILURE (END)
+
+
+=============================================
+=============================================
+unsafe use of List.hd!!!
+
+./sleek msess/examples/ex10c4.slk
+
+Exception(match_one_ho_arg_simple@307):Failure("hd")
+=============================================
+=============================================
+
+
+=============================================
+=============================================
+
+
+=============================================
+=============================================
+
+
+=============================================
+=============================================
 
 
 =============================================
