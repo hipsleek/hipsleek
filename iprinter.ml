@@ -1301,5 +1301,6 @@ Iast.print_coerc_decl_list := string_of_coerc_decl_list;;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_b_formula :=string_of_b_formula;
 Ipure.print_formula_exp := string_of_formula_exp;
+Ipure.print_exp := string_of_formula_exp;
 Ipure.print_id := string_of_id
 

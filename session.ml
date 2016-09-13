@@ -42,6 +42,7 @@ let sor_id:   string option ref = ref None
 let msg_id:   string option ref = ref None
 
 let set_prim_pred_id kind id =
+  (* let () = y_ninfo "setting Sess pred id" in *)
   match kind with
     | Sequence     -> seq_id := Some id
     | SOr          -> sor_id := Some id
@@ -109,7 +110,7 @@ module type Message_type = sig
   val print_h_formula  : (h_formula -> string) ref
   val print_ho_param_formula  : (ho_param_formula -> string) ref
   val print_var  : (var -> string)
-  val print_param: (param -> string)
+  val print_param: (param -> string) ref
       
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only: ?flow:flow -> h_formula -> VarGen.loc -> formula
@@ -195,7 +196,7 @@ module IForm = struct
   let print_ho_param_formula = F.print_rflow_formula
   let print_struc_formula = F.print_struc_formula
   let print_var = F.string_of_spec_var
-  let print_param = !IP.print_exp
+  let print_param = IP.print_exp
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
                (P.ConstAnn(Mutable)) false false false None params [] None pos) in
@@ -495,7 +496,7 @@ module CForm = struct
   let print_ho_param_formula = CF.print_rflow_formula
   let print_struc_formula = CF.print_struc_formula
   let print_var = CF.string_of_spec_var
-  let print_param = print_var
+  let print_param = ref print_var
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -1272,7 +1273,7 @@ module Make_Session (Base: Session_base) = struct
     " (" ^ string_of_one_session s.session_star_formula_star2 ^ ")"
 
   and string_of_session_predicate s =
-    s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list Base.print_param) s.session_predicate_params) ^ ">"
+    s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
 
   and string_of_session_hvar s =
     "%" ^ s.session_hvar_id

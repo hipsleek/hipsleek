@@ -125,11 +125,11 @@ include Ipure_D
 (*   | UnionRel of (relation * relation) *)
 
 
-let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
-let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
-let print_formula_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
-let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
-let print_exp = print_formula_exp
+let print_formula = ref (fun (c:formula) -> "ipure printer has not been initialized")
+let print_b_formula = ref (fun (c:b_formula) -> "ipure printer has not been initialized")
+let print_formula_exp = ref (fun (c:exp) -> "ipure printer has not been initialized")
+let print_id = ref (fun (c:(ident*primed)) -> "ipure printer has not been initialized")
+let print_exp = ref (fun (c:exp) -> "ipure printer has not been initialized")
 
 module Exp_Pure =
 struct 

@@ -2042,7 +2042,22 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       in
       (nv,[(nn,npf)])
   in
-  let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
+  let rec float_out_exps_formula (f:formula) : (formula * (((ident*primed)*Ipure.formula)list)) =
+    match f with
+    | Base b ->  let fh, fexps = float_out_exps b.formula_base_heap in
+      Base { b with formula_base_heap = fh; }, fexps
+    | Exists b ->  let fh, fexps = float_out_exps b.formula_exists_heap in
+      Exists { b with formula_exists_heap = fh; }, fexps
+    | Or b -> let f1, fexps1 = float_out_exps_formula b.formula_or_f1 in
+      let f2, fexps2 = float_out_exps_formula b.formula_or_f2 in
+      Or { b with
+        formula_or_f1 = f1;
+        formula_or_f2 = f2}, fexps1@fexps2 
+  and float_out_exps_rflow (f:rflow_formula) : (rflow_formula * (((ident*primed)*Ipure.formula)list)) =
+    let new_f,exps = float_out_exps_formula f.rflow_base in
+    {f with rflow_base = new_f}, exps
+  
+  and float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
     | Star b-> 
       let r11,r12 = float_out_exps b.h_formula_star_h1 in
       let r21,r22 = float_out_exps b.h_formula_star_h2 in
@@ -2107,10 +2122,13 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         | Ipure.Ann_Exp (e ,_,_) -> prep_one_arg (id, e)
         | _ ->  prep_one_arg_helper (id,c) in
       let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
-      let ho_na = List.map (fun ff -> { ff with 
-                                        rflow_base = float_out_exps_from_heap 3 lbl_getter annot_getter ff.rflow_base }) b.h_formula_heap_ho_arguments in
+      let ho_na = List.map (fun ff -> float_out_exps_rflow ff) b.h_formula_heap_ho_arguments in
+      let ho_na, fexps = List.split ho_na in
+      let fexps = List.flatten fexps in
+      (* let ho_na = List.map (fun ff -> { ff with  *)
+      (*                                   rflow_base = float_out_exps_from_heap 3 lbl_getter annot_getter ff.rflow_base }) b.h_formula_heap_ho_arguments in *)
       let () = x_dinfo_hp (add_str "ho_na" (pr_list !print_rflow_formula)) ho_na no_pos in
-      (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_ho_arguments = ho_na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
+      (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_ho_arguments = ho_na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls))@fexps)
     | HeapNode2 b ->
       (*LDK*)
       let perm = b.h_formula_heap2_perm in
@@ -2241,7 +2259,8 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         formula_or_f1 = float_out_exps_from_heap 6 lbl_getter annot_getter b.formula_or_f1 ;
         formula_or_f2 = float_out_exps_from_heap 7 lbl_getter annot_getter b.formula_or_f2 ;
         formula_or_pos = b.formula_or_pos })
-  in helper f
+  in
+  helper f
 
 and float_out_exps_from_heap_struc lbl_getter annot_getter (f:struc_formula):struc_formula = match f with
   | EAssume b ->    
