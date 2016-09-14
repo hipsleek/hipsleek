@@ -5,6 +5,14 @@ pred_prim Fp<id:int,p>. //partial
 pred_prim Fm<id:int>.   //minus
 
 
+
+lemma  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
+
+checkentail x::Chan{@S Fp<1,0.4>;;!1;;!2}<> |- x::Fp<1,0.5>.
+expect Valid.
+print residue.
+
+
 lemma  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
 
 checkentail x::Chan{@S Fp<1,0.4>;;!1;;!2}<> |- x::Fp<1,0.5>.

@@ -1,4 +1,3 @@
-
 #include "xdebug.cppo"
 
 open VarGen
@@ -14561,20 +14560,25 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
 (* lhs <==> rhs: instantiate any high-order variables in rhs
    Currently assume that only HVar is in the rhs
 *)
-and match_one_ho_arg_simple_x ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
+and match_one_ho_arg_simple_x prog estate lhs_f conseq ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
   (hvar * CF.formula) list =
-  let lhs = lhs.CF.rflow_base in
-  let rhs = rhs.CF.rflow_base in
-  let hvars = CF.extract_hvar_f rhs in
-  [List.hd hvars, lhs]
+  let args = ((lhs,rhs), HO_NONE) in
+  let res = match_one_ho_arg ~classic:true prog estate lhs_f conseq [] [] no_pos args in
+  let fail,_,_,map,_ = res in
+  map
+  (* (fail, map) *)
+  (* let lhs = lhs.CF.rflow_base in *)
+  (* let rhs = rhs.CF.rflow_base in *)
+  (* let hvars = CF.extract_hvar_f rhs in *)
+  (* [List.hd hvars, lhs] *)
 
-and match_one_ho_arg_simple ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
+and match_one_ho_arg_simple prog estate lhs_f conseq ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
   (hvar * CF.formula) list =
   let pr_rf = Cprinter.string_of_rflow_formula in 
   let pr1 = (pr_pair pr_rf pr_rf) in
   let pr_out = pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
-    match_one_ho_arg_simple_x (lhs,rhs)
+    (match_one_ho_arg_simple_x prog estate lhs_f conseq) (lhs,rhs)
 
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
@@ -14767,7 +14771,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let coer_rhs_new =
             if (ho_ps1=[]) then coer_rhs_new else
               let args = List.combine ho_ps1 ho_ps2 in
-              let maps = List.map match_one_ho_arg_simple args in
+              let maps = List.map (match_one_ho_arg_simple prog estate rest_of_lhs conseq) args in
               let maps = List.concat maps in
               let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
               coer_rhs_new
@@ -15025,7 +15029,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             let coer_rhs_new =
               if (ho_ps1=[]) then coer_rhs_new else
                 let args = List.combine ho_ps1 ho_ps2 in
-                let maps = List.map match_one_ho_arg_simple args in
+                let maps = List.map (match_one_ho_arg_simple prog estate f coer_rhs_new) args in
                 let maps = List.concat maps in
                 let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
                 coer_rhs_new
@@ -15588,7 +15592,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           let coer_rhs_new =
             if (ho_ps1=[]) then coer_rhs_new else
               let args = List.combine ho_ps1 ho_ps2 in
-              let maps = List.map match_one_ho_arg_simple args in
+              let maps = List.map (match_one_ho_arg_simple prog new_estate f conseq_extra) args in
               let maps = List.concat maps in
               let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
               coer_rhs_new
@@ -15920,7 +15924,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         let coer_rhs_new =
           if (ho_ps1=[]) then coer_rhs_new else
             let args = List.combine ho_ps1 ho_ps2 in
-            let maps = List.map match_one_ho_arg_simple args in
+            let maps = List.map (match_one_ho_arg_simple prog new_estate f coer_rhs_new) args in
             let maps = List.concat maps in
             let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
             coer_rhs_new
