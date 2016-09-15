@@ -6,7 +6,7 @@ pred_prim Fm<id:int>.   //minus
 
 
 
-lemma  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
+lemma_prop  self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
 
 /*
 checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,0.5>.

@@ -1,0 +1,93 @@
+
+recap basic example:
+=================
+(1) global view:
+G == A->B: \phi_1 ; C->B: \phi_2
+
+(2) local views:
+G@A(B) == !\phi_1
+G@B(A) == ?\phi_1
+G@C(B) == !\phi_2
+G@B(C) == ?\phi_2
+
+(3a) implementation ok
+t B(Channel c1, Channel c2)
+  requires c1::Chan{ !\phi1 }<> * c2::Chan{ !\phi2 }<> 
+  ensures c1::Chan{emp}<> * c2::Chan{emp}<> 
+{
+t1 x = receive (c1);
+t2 y = receive (c2);
+}
+
+(3b) implementation buggy
+t B(Channel c1, Channel c2)
+  requires c1::Chan{  !\phi1 }<> * c2::Chan{  !\phi2 }<> 
+  ensures c1::Chan{emp}<> * c2::Chan{emp}<> 
+{
+t2 y = receive (c2); //swapped the two program statements
+t1 x = receive (c1);
+}
+
+(4) solution - introduce fences
+============================
+types of fences:
+pred_prim F+<id,p>; //partial fences, where p is a fraction
+pred_prim F<id>;    //full fence (equivalent to F+<id,1>)
+
+(4a) global view:
+G == A->B: \phi_1 ; F<id>; C->B: \phi_2
+===>
+G == A->B: \phi_1 ; F+<id,1>; F<id>; C->B: \phi_2
+ 
+(4b) local views:
+G@A(B) == !\phi_1
+G@B(A) == ?\phi_1 ; F+<id,1>
+G@C(B) == !\phi_2
+G@B(C) == F<id> ; ?\phi_2
+
+(4c) implementation 
+t B(Channel c1, Channel c2)
+  requires c1::Chan{ ?\phi1 ; F+<id,1> }<> * c2::Chan{ F<id> ;  ?\phi2}<> 
+  ensures c1::Chan{emp}<> * c2::Chan{emp}<> 
+{
+// c1::Chan{ ?\phi1 ; F+<id,1> }<> * c2::Chan{ F<id> ;  ?\phi2}<> 
+t1 x = receive (c1);
+// c1::Chan{ F+<id,1> }<> * c2::Chan{ F<id> ;  ?\phi2}<> * \phi_1
+// norm-lem-1
+// c1::Chan{ emp }<> * c2::Chan{ F<id> ;  ?\phi2}<> * \phi_1 * F+<id,1> 
+// norm-lem-3
+// c1::Chan{ emp }<> * c2::Chan{ F<id> ;  ?\phi2}<> * \phi_1 * F<id> 
+t2 y = receive (c2); //verified using lem-4
+// // c1::Chan{ emp }<> * c2::Chan{ emp}<> * \phi_1 * F<id> * \phi_2 
+}
+
+where
+norm-lem-1 is
+lemma_norm "" self::Chan{ F+<id,p> ; %R}<> --> self::Chan{ %R}<> * F+<id,p>
+
+norm-lem-2 (not fired above) is 
+lemma_norm "" F+<id,p2> * F+<id,p2><> --> F+<id,p1+p2>
+
+norm-lem-3 is 
+lemma_norm "" F+<id,p> & p=1 --> F<id>
+
+lem-4 is
+lemma self::Chan{ F<id>; %R} * F<id> -> self::Chan{ %R} * F<id>
+
+
+(4d) Detailed entailment for #t2 y = receive (c2); # statement:
+
+checkentail c1::Chan{ emp }<> * c2::Chan{ F<id> ;  ?\phi2}<> * \phi_1 * F<id> |-  c2::Chan{ ?%L ; %R}
+// -------------- match(c2,c2) would fail, try to apply lem-4
+checkentail c1::Chan{ emp }<> * c2::Chan{ ?\phi2}<> * \phi_1 * F<id> |-  c2::Chan{ ?%L ; %R}
+// -------------- match(c2,c2) succeeds
+residue:
+c1::Chan{ emp }<> * c2::Chan{ emp }<>  * \phi_1 * F<id> & %L = \phi_2  & %R = emp.
+ 
+
+
+
+
+
+
+

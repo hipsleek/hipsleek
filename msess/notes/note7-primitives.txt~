@@ -1,0 +1,11 @@
+
+Dyn t receive (Channel c)
+  requires Chan<c, ms> * ms::Sess<c?L(msg);rest> 
+  ensures  Chan<c, ms> * ms::Sess<rest> * L(res);
+
+  requires Chan<c, ms> * ms::Sess<c?L1(msg);rest1 or c?L2(msg);rest2> 
+  ensures  Chan<c, ms> * ms::Sess<rest1> * L1(res)
+        or Chan<c, ms> * ms::Sess<rest2> * L2(res);
+
+  requires Chan<c, ms> * ms::Sess<c?L(msg)> 
+  ensures  Chan<c, ms> * L(res);

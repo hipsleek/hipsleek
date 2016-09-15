@@ -1,0 +1,45 @@
+
+Dyn t receive (Channel c)
+  requires Chan(c, ?L(msg);rest)
+  ensure   Chan(c, rest) * L(res);
+
+  requires Chan(c, (?L1(msg);R1 or (?L2(msg);R2));rest)
+  ensure   Chan(c, R1;rest) * L1(res) or Chan(c, R2;rest) * L2(res);
+
+
+/* dynamic specs? */
+void send (Channel c, Dyn t x)
+  requires Chan(c, !L(msg);rest) * L(msg) & msg=x
+  ensures  Chan(c, rest)
+
+  requires Chan(c, (?L1(msg);R1 or (?L2(msg);R2));rest)
+    { requires L1(msg) & msg=x
+      ensures  Chan(c, R1;rest);
+
+      requires L2(msg) & msg=x
+      ensures  Chan(c, R2;rest);
+    }
+
+
+
+
+checkentail Chan(c,!1;;!Addr;;?Date) & x=1 |- Chan(c, !L(msg);rest) * L(msg) & msg=x
+
+checkentail Chan(c,!1;;!Addr;;?Date) & x=1
+            L(msg) := msg=1
+            rest = emp
+            
+              |- Chan(c, !L(msg);rest) * L(msg) & msg=x
+
+
+
+Chan(c,!1;;!Addr;;?Date or !0) & x=1 |- Chan(c, (?L1(msg);R1 or (?L2(msg);R2));rest)
+
+Chan(c,!1;;!Addr;;?Date or !0) & x=1
+   & L1(msg)== msg=1  & R1 == !Addr;;?Date
+   & L2(msg)== msg=0  & R2 == emp
+   rest=emp
+   msg = x //?? how did we get this though
+   |- Chan(c, (?L1(msg);R1 or (?L2(msg);R2));rest)
+
+
