@@ -11542,7 +11542,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let match_ho_res_lst = 
             if not (node_kind="view" && l_ho_args!=[]) then
               (* If not high-order, do nothing *)
-              [(None, new_ante, new_conseq, new_exist_vars, [])]
+              [(None, new_ante, new_conseq, new_exist_vars, [],([],[]))]
             else                
               (* check if current node is seq with sor as head *)
               let l_ho_args_orig, r_ho_args_orig = l_ho_args, r_ho_args in
@@ -11577,13 +11577,19 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               in
 
               let () = y_ninfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
+
               let res = List.map match_one_ho_arg_helper args in
 
               (* create pairs of HO args results, given disjunctive HO contexts *)
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
+                (* TODO Andreea: need to merge entail_states!! *)
                 let new_maps = List.concat (List.map (fun (_, _, _, m, _) -> m) res) in
                 let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in
+                let new_subst = List.fold_left (fun (frsv,tosv) (_, _, _, _, es) ->
+                    map_opt_def (frsv,tosv)
+                      (fun x -> frsv@(fst (x.CF.es_subst)),tosv@(snd (x.CF.es_subst))) es)
+                    ([],[]) res in
                 if (failures != []) then
                   (* Failure case *)
                   let failure, _, _, _, _ = (List.hd failures) in
@@ -11595,7 +11601,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                         let ctx = CF.transform_context f_es ctx in
                         Some (FailCtx (fc,ctx,cex), prf) 
                       | _ -> failure in                  
-                  (failure, new_ante, new_conseq, new_exist_vars, new_maps)
+                  (failure, new_ante, new_conseq, new_exist_vars, new_maps, new_subst)
                 else
                   (* Update new mappings *)
                   (* TODO: Check consistency in mappings *)
@@ -11648,7 +11654,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                          normalize_combine_heap new_ante remained_node
                        | _ -> report_error no_pos "[solver.ml] do_match: expecting a ViewNode")
                   in 
-                  (None, new_ante, new_conseq, new_exist_vars, new_maps)
+                  (None, new_ante, new_conseq, new_exist_vars, new_maps, new_subst)
               in
               let post_ho_match_process res =
                 let prf = Cprinter.string_of_formula in
@@ -11666,7 +11672,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let pr3 = add_str "new_conseq" prf in
                 let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
                 let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar prf)) in
-                let pro = pr_penta pr1 pr2 pr3 pr4 pr5 in
+                let pr6 = pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var_list in
+                let pro = pr_hexa pr1 pr2 pr3 pr4 pr5 pr6 in
                 Debug.no_1 "post_ho_match_process" pri pro post_ho_match_process res
               in
               List.map post_ho_match_process res_lst  
@@ -11675,7 +11682,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (*********** Handle high-order argument: END **********)
           (* ================================================== *)
 
-          let post_do_match_processing (fail_res, new_ante, new_conseq, new_exist_vars, new_maps) =
+          let post_do_match_processing (fail_res, new_ante, new_conseq, new_exist_vars, new_maps, new_subst) =
             match fail_res with
             | Some fail -> fail (* finish do_match with a failure *)
             | None ->
@@ -11683,7 +11690,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               x_tinfo_hp (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
               x_tinfo_hp (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
               x_tinfo_hp (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
-
+              (* let new_subst = List.fold_left (fun (frsv,tosv) (x,y) -> frsv@x, tosv@y) ([],[]) new_subst in *)
               let new_es = { estate with 
                              es_formula = new_ante;
                              (* add the new vars to be explicitly instantiated *)
@@ -11698,6 +11705,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                              es_residue_pts = n_es_res;
                              es_success_pts = n_es_succ; 
                              es_rhs_eqset = subs_rhs_eqset;
+                             es_subst = (fst (estate.es_subst)) @ (fst new_subst), (snd (estate.es_subst)) @ (snd new_subst) ;
                              es_ho_vars_map = new_maps @ estate.es_ho_vars_map; } 
               in
               x_tinfo_hp (add_str "new_es" (Cprinter.string_of_entail_state)) new_es pos;
@@ -11721,14 +11729,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let res_es1 = Immutable.restore_tmp_ann_list_ctx res_es1 *)
               in (res_es1, prf1)
           in
-          let post_do_match_processing (fail_res, new_ante, new_conseq, new_exist_vars, new_maps) =
+          let post_do_match_processing (fail_res, new_ante, new_conseq, new_exist_vars, new_maps,new_subst) =
             let prf = Cprinter.string_of_formula in
             let pr2 = add_str "new_ante" prf in
             let pr3 = add_str "new_conseq" prf in
             let pr4 = add_str "new_exist_vars" Cprinter.string_of_spec_var_list in
             let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar prf)) in
             let pro (e,_) = Cprinter.string_of_list_context e in
-            Debug.no_4 "post_do_match_processing" pr2 pr3 pr4 pr5 pro (fun _ _ _ _ -> post_do_match_processing  (fail_res, new_ante, new_conseq, new_exist_vars, new_maps))  new_ante new_conseq new_exist_vars new_maps  in
+            Debug.no_4 "post_do_match_processing" pr2 pr3 pr4 pr5 pro (fun _ _ _ _ -> post_do_match_processing  (fail_res, new_ante, new_conseq, new_exist_vars, new_maps, new_subst))  new_ante new_conseq new_exist_vars new_maps  in
           let res = List.map post_do_match_processing match_ho_res_lst in
           (* below is creating a disj ctx *)
           let ctx,prf = List.split res in
@@ -14561,26 +14569,41 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
 (* lhs <==> rhs: instantiate any high-order variables in rhs
    Currently assume that only HVar is in the rhs
 *)
-and match_one_ho_arg_simple_x prog estate lhs_f conseq ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
-  (hvar * CF.formula) list =
+and match_one_ho_arg_simple_x prog estate lhs_f conseq ?evars:(evars=[]) ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
+  int * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
   let args = ((lhs,rhs), HO_NONE) in
-  let res = match_one_ho_arg ~classic:true prog estate lhs_f conseq [] [] no_pos args in
-  let fail,_,_,map,_ = res in
-  map
-  (* (fail, map) *)
-  (* let lhs = lhs.CF.rflow_base in *)
-  (* let rhs = rhs.CF.rflow_base in *)
-  (* let hvars = CF.extract_hvar_f rhs in *)
-  (* [List.hd hvars, lhs] *)
+  let estate = {estate with es_gen_expl_vars = estate.CF.es_gen_expl_vars @ evars;  es_subst = [],[];} in
+  let res = x_add_1 (fun x-> match_one_ho_arg ~classic:true prog estate lhs_f conseq [] [] no_pos x ) args in
+  let fail,_,_,map,es = res in
+  let fail = match fail with
+    | None -> 1 | Some _ -> 0 in
+  let subst = map_opt_def ([],[]) (fun x -> x.es_subst) es in
+  fail,(map,subst)
 
-and match_one_ho_arg_simple prog estate lhs_f conseq ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
-  (hvar * CF.formula) list =
+and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
+  int * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
   let pr_rf = Cprinter.string_of_rflow_formula in 
   let pr1 = (pr_pair pr_rf pr_rf) in
-  let pr_out = pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula) in
+  let pr_out = pr_pair (string_of_int) (pr_pair (pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) pr_none) in
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
-    (match_one_ho_arg_simple_x prog estate lhs_f conseq) (lhs,rhs)
+    (match_one_ho_arg_simple_x prog estate lhs_f conseq ~evars:evars) (lhs,rhs)
 
+and match_one_ho_arg_simple_helper prog estate
+    ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs
+  : CF.formula * int =
+  if (ho_ps1=[]) then coer_rhs,1 else
+    let args = List.combine ho_ps1 ho_ps2 in
+    let expl_vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap) to_vars in 
+    let res = List.map (x_add_1 (fun x-> match_one_ho_arg_simple prog estate lhs_f coer_rhs ~evars:expl_vars x)) args in
+    let ok,maps = List.split res in
+    let maps,subst = List.split maps in
+    let frsv,tosv = List.fold_left (fun (frsv,tosv) (x,y) -> frsv@x, tosv@y ) ([],[]) subst in
+    let maps = List.concat maps in
+    let fail = List.exists (fun x -> x=0) ok in
+    let ok = if fail then 0 else 1 in
+    let coer_rhs_new = CF.subst_hvar coer_rhs maps in
+    let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
+    coer_rhs_new, ok
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -14768,15 +14791,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let () = Gen.reset_int2 () in
 
           let ho_ps1 = CF.get_node_ho_args node in
+          let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
           let ho_ps2 = CF.get_node_ho_args lhs_heap in
-          let coer_rhs_new =
-            if (ho_ps1=[]) then coer_rhs_new else
-              let args = List.combine ho_ps1 ho_ps2 in
-              let maps = List.map (match_one_ho_arg_simple prog estate rest_of_lhs conseq) args in
-              let maps = List.concat maps in
-              let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
-              coer_rhs_new
-          in
+          let coer_rhs_new, ok = match_one_ho_arg_simple_helper prog estate
+              ho_ps1 ho_ps2 lhs_heap rest_of_lhs to_vars coer_rhs_new in
           (*let xpure_lhs = x_add xpure prog f in*)
           (*************************************************************************************************************************************************************************)
           (* delay the guard check *)
@@ -15026,15 +15044,12 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             in
 
             let ho_ps1 = CF.get_node_ho_args node in
+            let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
-            let coer_rhs_new =
-              if (ho_ps1=[]) then coer_rhs_new else
-                let args = List.combine ho_ps1 ho_ps2 in
-                let maps = List.map (match_one_ho_arg_simple prog estate f coer_rhs_new) args in
-                let maps = List.concat maps in
-                let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
-                coer_rhs_new
-            in
+            let () =  y_binfo_pp "HERE" in
+            let () = print_endline "here" in
+            let coer_rhs_new, ok =  match_one_ho_arg_simple_helper prog estate
+              ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
             (* Currently, I am trying to change in advance at the trans_one_coer *)
             (* Add origins to the body of the coercion which consists of *)
             (*   several star-conjunction nodes. If there are multiple nodes *)
@@ -15063,7 +15078,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
               (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
               let f1 = CF.formula_is_eq_flow coer_rhs_new !error_flow_int in
               let fst_res =
-                if f1 then 2 else 1
+                if (ok=1) then (if f1 then 2 else 1) else 0
               in
               (fst_res, new_f)
             else if !case_split then begin
@@ -15090,11 +15105,11 @@ Doing case splitting based on the guard.
                 let new_f = x_add_1 Cformula.translate_set_comp_rel new_f in
                 (* if (not(!lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
                 (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
-                (1, new_f)
+                (ok, new_f)
               | _ -> 
                 let () = print_string ("[Solver.ml] Warning: This case not yet handled properly \n") in
                 let new_f = normalize_replace f coer_rhs_new pos in
-                (1, new_f)
+                (ok, new_f)
             end else begin
               x_dinfo_pp "rewrite_coercion: guard is not satisfied, no splitting.\n" pos;
               (0, mkTrue (mkTrueFlow ()) no_pos)
@@ -15590,14 +15605,22 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           (*      fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},                                                      *)
           (*      CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), []) *)
         else
-          let coer_rhs_new =
-            if (ho_ps1=[]) then coer_rhs_new else
-              let args = List.combine ho_ps1 ho_ps2 in
-              let maps = List.map (match_one_ho_arg_simple prog new_estate f conseq_extra) args in
-              let maps = List.concat maps in
-              let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
-              coer_rhs_new
-          in
+          let coer_rhs_new, ok =
+            let ho_ps2  = CF.get_node_ho_args head_node_new in
+            match_one_ho_arg_simple_helper prog new_estate
+              ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
+          
+          (*   if (ho_ps1=[]) then coer_rhs_new,1 else *)
+          (*     let args = List.combine ho_ps1 ho_ps2 in *)
+          (*     let res = List.map (match_one_ho_arg_simple prog new_estate f conseq_extra) args in *)
+          (*     let ok,maps = List.split res in *)
+          (*     let maps,subst = List.split maps in *)
+          (*     let maps = List.concat maps in *)
+          (*     let fail = List.exists (fun x -> x=0) ok in *)
+          (*     let ok = if fail then 0 else 1 in *)
+          (*     let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in *)
+          (*     coer_rhs_new, ok *)
+          (* in *)
           (* let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in *)
 
           (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
@@ -15922,14 +15945,23 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         x_dinfo_zp (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
         (false, estate, h, p, vp, mkNormalFlow ()) (* false, return dummy h and p *)
       else
-        let coer_rhs_new =
-          if (ho_ps1=[]) then coer_rhs_new else
-            let args = List.combine ho_ps1 ho_ps2 in
-            let maps = List.map (match_one_ho_arg_simple prog new_estate f coer_rhs_new) args in
-            let maps = List.concat maps in
-            let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in
-            coer_rhs_new
-        in
+        let coer_rhs_new, ok =
+          (* let ho_ps2  = CF.get_node_ho_args head_node_new in *)
+          (* TOD below arguments need to be checked *)
+          match_one_ho_arg_simple_helper prog new_estate
+            ho_ps1 ho_ps2 (* lhs_heap *) new_es_heap f to_vars coer_rhs_new in
+        (* let coer_rhs_new,ok =           *)
+        (*   if (ho_ps1=[]) then coer_rhs_new,1 else *)
+        (*     let args = List.combine ho_ps1 ho_ps2 in *)
+        (*     let res = List.map (match_one_ho_arg_simple prog new_estate f coer_rhs_new) args in *)
+        (*     let ok,maps = List.split res in *)
+        (*     let maps,subst = List.split maps in *)
+        (*     let maps = List.concat maps in *)
+        (*     let fail = List.exists (fun x -> x=0) ok in *)
+        (*     let ok = if fail then 0 else 1 in *)
+        (*     let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in *)
+        (*     coer_rhs_new, ok *)
+        (* in *)
         (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
         (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
         (***********Handle high-order argument: END**********)

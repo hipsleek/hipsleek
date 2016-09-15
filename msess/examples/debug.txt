@@ -4,7 +4,7 @@
 #choose_context,Trace
 #match_one_ho_arg,Trace
 #do_match,Trace
-do_match,Trace
+#do_match,Trace
 #heap_entail_conjunct,Trace
 #process_one_match,Trace
 #update_fixpt,Trace
@@ -19,3 +19,5 @@ do_match,Trace
 #CF.rename_bound_vars
 #check_exp,Trace
 #solver_detect_lhs_rhs_contra_all,Trace
+heap_entail_non_empty_rhs_heap,Trace
+compute_actions
