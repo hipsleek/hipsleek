@@ -15219,6 +15219,12 @@ and norm_w_coerc_context_x prog ?left:(left = true) ctx =
 and norm_w_coerc_context prog ?left:(left = true) ctx =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "norm_w_coerc_context" pr pr (norm_w_coerc_context_x ~left:left prog) ctx
+
+and norm_w_coerc_formula prog ?left:(left = true) es formula =
+  let es = {es with es_formula = formula} in
+  let new_ctx = norm_w_coerc_context prog ~left:left (Ctx es) in
+  new_ctx, (CF.formula_of_context new_ctx)
+  
 (* -------------------- end norm lemma app -------------------- *)
 (* ------------------------------------------------------------ *)
     
