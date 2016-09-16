@@ -2251,7 +2251,7 @@ and get_node_name_x (h : h_formula) = match h with
   | DataNode ({h_formula_data_name = c}) -> c
   | HRel (hp, _, _) -> CP.name_of_spec_var hp
   | Hole i -> "Hole_"^(string_of_int i)
-  | HVar _ -> ""
+  | HVar _ | HEmp -> ""
   | _ ->
     let pr = !print_h_formula in 
     failwith ("get_node_name: invalid argument: " ^ (pr h))
@@ -15979,6 +15979,7 @@ and merge_partial_h_formula_x f =
 
 (**
  * An Hoa : Splitting a h_formula by breaking the separation conjunction.
+   DUPLICATE: see split_star_conjunctions
  **)
 and split_star_h f = match f with
   | Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2; } ->

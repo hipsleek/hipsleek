@@ -88,6 +88,9 @@ class lemma_store =
     method get_left_coercion =
       List.filter (fun c -> not(c.coercion_case==Complex)) left_lem # get_stk
 
+    method get_all_left_coercion =
+      left_lem # get_stk
+
     method get_right_coercion =
       right_lem # get_stk
 

@@ -228,6 +228,7 @@ module Make (Token : SleekTokenS)
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
    ( "rlemma",RLEMMA);
    ("lemma", LEMMA TLEM);
+   ("lemma_norm", LEMMA TLEM_NORM);
    ("lemma_prop", LEMMA TLEM_PROP);
    ("lemma_split", LEMMA TLEM_SPLIT);
    ("lemma_test", LEMMA TLEM_TEST);

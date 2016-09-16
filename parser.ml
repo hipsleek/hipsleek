@@ -91,6 +91,7 @@ let sv_of_id t =
 let convert_lem_kind (l: lemma_kind_t) =
     match l with
       | TLEM           -> LEM
+      | TLEM_NORM      -> LEM_NORM
       | TLEM_PROP      -> LEM_PROP
       | TLEM_SPLIT      -> LEM_SPLIT
       | TLEM_TEST      -> LEM_TEST

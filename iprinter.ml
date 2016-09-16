@@ -1146,6 +1146,7 @@ let rec string_of_barrier_decl_list l = match l with
 let string_of_lem_kind l =
   match l with
   | LEM          -> "lemmas(to be proved and saved)"
+  | LEM_NORM     -> "normalization lemma"           
   | LEM_PROP     -> "propagation lemmas"
   | LEM_SPLIT     -> "split lemmas"
   | LEM_TEST     -> "testing lemmas"

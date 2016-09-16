@@ -1,7 +1,7 @@
 #include "xdebug.cppo"
 open Camlp4.PreCast
 
-type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE
+type lemma_kind_t = TLEM_TEST | TLEM_PROP | TLEM_SPLIT | TLEM_TEST_NEW | TLEM | TLEM_UNSAFE | TLEM_INFER | TLEM_INFER_PRED | TLEM_SAFE | TLEM_NORM
 
 type sleek_token =
   | IDENTIFIER    of string
@@ -193,7 +193,7 @@ module Token = struct
     | INV_EXACT -> "inv_exact" | INV_SAT -> "inv_sat" | BG -> "BG"
     | LEMMA TLEM ->"lemma" | LEMMA TLEM_TEST ->"lemma_test" | LEMMA TLEM_TEST_NEW ->"lemma_test_new" | LEMMA TLEM_UNSAFE ->"lemma_unsafe" (* | LEMMA true -> "lemma_exact"  *)
     | LEMMA TLEM_SPLIT ->"lemma_split"
-    | LEMMA TLEM_PROP ->"lemma_prop"
+    | LEMMA TLEM_PROP ->"lemma_prop" | LEMMA TLEM_NORM ->"lemma_norm"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
     | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_SESS_PROT -> "pred_sess_prot" | PRED_SESS_PROJ -> "pred_sess_proj" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include"
     | SLEEK_INCLUDE -> "sleek_include"

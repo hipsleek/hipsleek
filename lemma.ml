@@ -896,7 +896,8 @@ let process_list_lemma_helper ldef_lst iprog cprog lem_infer_fnct =
   (* andreeac: to check if it should skip lemma proving *)
   let res = 
     match ldef_lst.Iast.coercion_list_kind with
-    | LEM            -> manage_lemmas ~force_pr:true lst iprog cprog 
+    | LEM            -> manage_lemmas ~force_pr:true lst iprog cprog
+    | LEM_NORM       -> (manage_unsafe_lemmas ~force_pr:false lst iprog cprog )
     | LEM_PROP       -> (manage_unsafe_lemmas ~force_pr:false lst iprog cprog )
     | LEM_SPLIT       -> (manage_unsafe_lemmas ~force_pr:false lst iprog cprog )
     | LEM_TEST       -> (manage_test_lemmas lst iprog cprog )

@@ -7624,6 +7624,8 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (* let () = x_add Log.add_sleek_logging ante conseq pos in *)
   (* let () = DD.info_zprint  (lazy  ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
+  let ctx0 = norm_w_coerc_context prog ctx0 in
+  let () = y_binfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
   let ls, prf = x_add (heap_entail_conjunct_helper ~caller:x_loc) 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
   let ls, prf = post_process_result ls prf in
   (* to convert failure -> normal with corr. error flows *)
@@ -15046,8 +15048,6 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             let ho_ps1 = CF.get_node_ho_args node in
             let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
-            let () =  y_binfo_pp "HERE" in
-            let () = print_endline "here" in
             let coer_rhs_new, ok =  match_one_ho_arg_simple_helper prog estate
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
             (* Currently, I am trying to change in advance at the trans_one_coer *)
@@ -15119,6 +15119,109 @@ Doing case splitting based on the guard.
     | _ -> (0, mkTrue (mkTrueFlow ()) no_pos)
 (*end	*)
 
+(* ------------------------------------------------------------ *)
+(* ----------------------- norm lemma app --------------------- *)
+
+and choose_coerc_candidates_for_norm prog ?left:(left = true) head_node =
+  let head_name = get_node_name 0 head_node in
+  let lemmas = if left then (Lem_store.all_lemma # get_all_left_coercion)
+    else (Lem_store.all_lemma # get_right_coercion) in
+  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+  (* only use norm lemmas for normalization *)
+  let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in
+  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+  let lemmas = look_up_coercion_def_raw lemmas head_name in
+  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+  lemmas
+
+(* and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) = *)
+and apply_one_norm_coerc_x prog coerc estate fnode frest =
+  let conseq = CF.mkTrue (CF.flow_formula_of_formula estate.es_formula) no_pos in
+  let resth2 = HEmp in
+  let lhs_b = CF.extr_lhs_b estate in
+  let rhs_b = CF.extr_rhs_b conseq in
+  let ln2 = HEmp in
+  do_coercion prog (Some coerc) estate conseq frest resth2 fnode lhs_b rhs_b ln2 false no_pos
+
+and apply_one_norm_coerc prog coerc estate fnode frest =
+  let prc = Cprinter.string_of_coercion in
+  let prh = Cprinter.string_of_h_formula in
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  Debug.no_3 "apply_one_norm_coerc" prc prh prh pr (fun _ _ _ -> apply_one_norm_coerc_x prog coerc estate fnode frest) coerc fnode frest 
+
+and apply_norm_coerc prog estate ?left:(left = true) fnode frest =
+  let coerc_candidates = choose_coerc_candidates_for_norm prog ~left:left fnode in
+  let () = y_binfo_hp (add_str "cands no:" string_of_int) (List.length  coerc_candidates) in
+  let res = List.map (fun coerc -> apply_one_norm_coerc prog coerc estate fnode frest) coerc_candidates in
+  res
+
+and extract_succ res_lst =
+  (* estate_opt_of_list_context   *)
+  let ctx =  try
+      let ctx_lst = (fst (List.find (fun (ctx,_) -> not(isFailCtx ctx)) res_lst)) in
+      match estate_opt_of_list_context ctx_lst with
+      | Some es -> Some (Ctx es)
+      | None -> None
+    with Not_found ->  None in
+  ctx
+
+(* 
+   (1) splits the h_formula into a list of nodes
+   (2) iterates through the list of nodes searching for a lemma to be fired  on one of the nodes
+   (3a) if a lemma is fired, start the whole norm process again with the updated context (the context is given by the lemma application)
+   (3b) if no lemma is applied and there are no more nodes to guide a possible lemma application, simply return
+*)
+and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
+  (* if there is any lemma being fired, recursively call helper with the new formula *)
+  let nodes = CF.split_star_conjunctions hform in
+  let nodes = Gen.wrap_indx nodes in
+  let nodes = Gen.set_pivot_list nodes in
+  let rec iter_nodes nodes =
+    match nodes with
+    | []   -> None
+    | ((pivot,head_h) as head)::tail_orig ->
+      let tail = Gen.unwrap_indx tail_orig in
+      let tail_h = CF.join_star_conjunctions tail in
+      let res = apply_norm_coerc prog es ~left:left head_h tail_h in
+      let ctx = extract_succ res in
+      let () = y_binfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
+      match ctx with
+      | Some ctx ->
+        (* if lemma is fired restart the norm process, 
+           otherwise keep on interating through nodes *)
+        Some (norm_w_coerc_context prog ctx)
+      | None -> 
+        (* ---------------------- iterate or stop ---------------------------- *)
+        if Gen.is_pivot pivot then ctx (* stop iterating *)
+        else iter_nodes (tail_orig@[head]) (* nothing changed - continue to iterate*)
+  in iter_nodes nodes
+
+(* these lemma normalization is triggered by just investigating
+   the formula in the estate.  *)
+and norm_w_coerc_entail_state prog ?left:(left = true) es =
+  let formula = es.es_formula in
+  let f_h = norm_w_coerc_h_formula prog ~left:left es in
+  let rec f_comb lst =
+    match lst with
+    | [] -> None
+    | (Some e) :: t -> Some e
+    | None :: t -> f_comb t                        
+  in
+  let ctx = CF.foldheap_formula f_h f_comb formula  in
+  match ctx with
+  | Some ctx -> ctx
+  | None -> Ctx es
+
+and norm_w_coerc_context_x prog ?left:(left = true) ctx =
+  let fnc = norm_w_coerc_entail_state ~left:left prog in
+  transform_context fnc ctx
+
+and norm_w_coerc_context prog ?left:(left = true) ctx =
+  let pr = Cprinter.string_of_context in
+  Debug.no_1 "norm_w_coerc_context" pr pr (norm_w_coerc_context_x ~left:left prog) ctx
+(* -------------------- end norm lemma app -------------------- *)
+(* ------------------------------------------------------------ *)
+    
 and apply_universal prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
@@ -17820,3 +17923,5 @@ let is_unsat_0 f =
   Debug.no_1 "is_xpure_unsat" !print_formula string_of_bool is_unsat_0 f
 
 let () = CF.is_xpure_unsat := is_unsat_0
+
+

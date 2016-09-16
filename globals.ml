@@ -53,7 +53,7 @@ let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
-type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM
+type lemma_kind = LEM_PROP| LEM_SPLIT | LEM_TEST | LEM_TEST_NEW | LEM | LEM_UNSAFE | LEM_SAFE | LEM_INFER | LEM_INFER_PRED | RLEM | LEM_NORM
 
 let is_lemma_ahead m = match m with
   | LEM_PROP| LEM_SPLIT | LEM | LEM_UNSAFE | LEM_SAFE -> true
@@ -2788,6 +2788,7 @@ let smt_return_must_on_error ()=
 let string_of_lemma_kind (l: lemma_kind) =
   match l with
   | LEM           -> "LEM"
+  | LEM_NORM      -> "LEM_NORM"
   | LEM_PROP      -> "LEM_PROP"
   | LEM_SPLIT      -> "LEM_SPLIT"
   | LEM_TEST      -> "LEM_TEST"

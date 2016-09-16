@@ -2510,3 +2510,24 @@ let cart_multi_list lst =
   | []     -> []
   | h ::[] -> list_of_lists h
   | hd::tl -> let hd = list_of_lists hd in  helper hd tl
+
+(* -------------------------------------------------- *)
+(* ---- tools for looping through a circular list ----*)
+      
+let wrap_indx lst = List.map (fun h -> (0,h)) lst
+
+let unwrap_indx lst = List.map (fun (_,h) -> h) lst
+
+let set_pivot (idx,h) = (1,h)
+
+(* sets a pivot on the last element of the input list *)
+let set_pivot_list lst = 
+  let lst = List.rev lst in
+  let lst = map_list_def lst (fun x -> (set_pivot (List.hd x))::(List.tl x)) lst in
+  let lst = List.rev lst in
+  lst
+    
+let is_pivot idx = (idx = 1)
+
+(* -- END tools for looping through a circular list --*)
+(* -------------------------------------------------- *)
