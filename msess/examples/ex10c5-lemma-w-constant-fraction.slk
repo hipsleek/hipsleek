@@ -8,22 +8,28 @@ pred_prim Fm<id:int>.   //minus
 //lemma_norm "ACC" self::Fp<id,a> * self::Fp<id,b> & a+b=m -> self::Fp<id,m>.
 lemma_norm "ACC" self::Fp<id,a> * self::Fp<id,b> -> self::Fp<id,a+b>.
 lemma_norm "REL" self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>.
-lemma_norm "FULL" self::Fp<id,p> & p=1.0 -> self::Ff<id>.
+lemma_norm "FULL" self::Fp<id,p> & p=1/1 -> self::Ff<id>.
 lemma "SYNC-CHECK" self::Chan{@S Ff<id> ;; %R}<> * self::Ff<id> -> self::Chan{@S %R}<> * self::Ff<id>.
 
-/*
-checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,0.5>.
-expect Valid.
-print residue.
- 
-checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<>.
+
+checkentail x::Chan{@S Fp<1,1/2>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,1/2>.
 expect Valid.
 print residue.
 
-checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,0.4>.
+
+checkentail x::Chan{@S Fp<1,1/2>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<>.
+expect Valid.
+print residue.
+
+
+checkentail x::Chan{@S Fp<1,1/2>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,1/3>.
 expect Fail.
 print residue.
 
+checkentail x=1/2 |- x=1/3.
+print residue.
+
+/*
 checkentail x::Chan{@S Fp<1,0.5>;;!1}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,0.5>.
 expect Fail.
 print residue.
@@ -31,6 +37,7 @@ print residue.
 checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1}<> * x::Fp<1,0.5>.
 expect Fail.
 print residue.
+
 
 checkentail x::Fp<1,0.5> * x::Fp<1,0.5> |- x::Fp<1,1.0>.
 expect Valid.
@@ -40,13 +47,10 @@ print residue.
 checkentail x::Chan{@S Fp<1,0.5>;;!1;;!2}<> * x::Chan{@S Fp<1,0.5>;;!1;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,1.0>.
 expect Valid.
 print residue.
-*/
 
-// lemma cannot fire for innermost one cause the ent is between seq |- seq, and not Chan |- Chan
-// should try and keep the channel until all nested args are verified
-// rebuild the chan node after each seq head is checked
+
 checkentail x::Chan{@S Fp<1,0.5>;;!1;;Fp<1,0.5>;;!2}<> |- x::Chan{@S !1;;!2}<> * x::Fp<1,1.0>.
 expect Valid.
 print residue.
-
+*/
 
