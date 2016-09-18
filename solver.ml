@@ -11580,6 +11580,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               let () = y_ninfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
 
+              (* each element of the list is the result of matching one HO,
+                 where a result = list disjunctive contexts *)
               let res = List.map match_one_ho_arg_helper args in
 
               (* create pairs of HO args results, given disjunctive HO contexts *)
@@ -15123,16 +15125,18 @@ Doing case splitting based on the guard.
 (* ----------------------- norm lemma app --------------------- *)
 
 and choose_coerc_candidates_for_norm prog ?left:(left = true) head_node =
-  let head_name = get_node_name 0 head_node in
-  let lemmas = if left then (Lem_store.all_lemma # get_all_left_coercion)
-    else (Lem_store.all_lemma # get_right_coercion) in
-  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-  (* only use norm lemmas for normalization *)
-  let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in
-  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-  let lemmas = look_up_coercion_def_raw lemmas head_name in
-  let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-  lemmas
+  try
+    let head_name = get_node_name 0 head_node in
+    let lemmas = if left then (Lem_store.all_lemma # get_all_left_coercion)
+      else (Lem_store.all_lemma # get_right_coercion) in
+    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+    (* only use norm lemmas for normalization *)
+    let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in
+    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+    let lemmas = look_up_coercion_def_raw lemmas head_name in
+    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+    lemmas
+  with _ -> []
 
 (* and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) = *)
 and apply_one_norm_coerc_x prog coerc estate fnode frest =
