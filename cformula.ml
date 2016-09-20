@@ -952,7 +952,10 @@ let rec contains_session h_form =
   | _ -> false
 
 and contains_session_rflow rflow_list =
-  List.exists (fun ho -> contains_session_formula ho.rflow_base) rflow_list
+  List.exists (fun ho ->
+      (map_opt_def false (fun x -> true) ho.rflow_session_kind)
+      ||
+      (contains_session_formula ho.rflow_base)) rflow_list
 
 and contains_session_formula formula =
   match formula with
@@ -3702,7 +3705,7 @@ and h_subst sst (f : h_formula) =
                h_formula_view_node = CP.subst_var_par sst x; 
                h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
                h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
-               h_formula_view_ho_arguments = if not(contains_session f) then ho_svs else List.map (rf_subst sst) ho_svs;
+               h_formula_view_ho_arguments = if not(contains_session f) then ho_svs else List.map (rf_subst sst) ho_svs; (* Andreea: previously the HO were ignored during the subst. I need subst for HO with session, but should I assume that subst for HO should be fired no matter what the HO represents? *)
                h_formula_view_annot_arg = CP.subst_annot_arg sst anns;
                h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
              }

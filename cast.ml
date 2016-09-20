@@ -2093,10 +2093,9 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
       if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
         (*all nodes having the same names*)
         (* ??? why using the node names *)
-        (* TODO andreeac : remove temporary *)
         (* if lhs_length=2 && rhs_length=1  then Normalize true *)
-        (* else *) if lhs_length=1 && rhs_length=2  then Normalize false
-        else if lhs_length=1 then Simple
+        (* else if lhs_length=1 && rhs_length=2  then Normalize false *)
+        (* else  *)if lhs_length=1 then Simple
         else Complex
       else if lhs_length=1 then Simple
       else Complex

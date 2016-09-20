@@ -1471,6 +1471,7 @@ tpprojection_formula:
   |
     [ peek_hvar; `PERCENT; `IDENTIFIER id ->
       let loc = (get_pos_camlp4 _loc 1) in
+      let () = print_endline ("HVAR:"^(string_of_loc loc)) in 
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
     | peek_tpprojection_send; `NOT; msg_var = OPT session_msg_var; c = session_message ->
       let loc = (get_pos_camlp4 _loc 1) in

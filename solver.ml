@@ -7625,7 +7625,7 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (* let () = DD.info_zprint  (lazy  ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
   let ctx0 = norm_w_coerc_context prog ctx0 in
-  let () = y_binfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
+  let () = y_tinfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
   let ls, prf = x_add (heap_entail_conjunct_helper ~caller:x_loc) 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
   let ls, prf = post_process_result ls prf in
   (* to convert failure -> normal with corr. error flows *)
@@ -10746,7 +10746,7 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
       | SuccCtx cl ->
         begin match cl with
           | [] ->
-            let () = y_binfo_pp "match_one_ho_arg" in
+            (* let () = y_ninfo_pp "match_one_ho_arg" in *)
             (None, None, None, [], Some estate )
           | c::_ -> 
             match c with
@@ -14586,19 +14586,24 @@ and match_one_ho_arg_simple_x prog estate lhs_f conseq ?evars:(evars=[]) ((lhs,r
 
 and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
   int * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
-  let pr_rf = Cprinter.string_of_rflow_formula in 
+  let pr_rf = Cprinter.string_of_rflow_formula in
+  let pr_svl = pr_list Cprinter.string_of_spec_var in
   let pr1 = (pr_pair pr_rf pr_rf) in
-  let pr_out = pr_pair (string_of_int) (pr_pair (pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) pr_none) in
+  let pr_out = pr_pair (add_str "ok" string_of_int)
+      (pr_pair
+         (add_str "maps" (pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)))
+         (add_str "subs" (pr_pair pr_svl pr_svl))) in
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
     (match_one_ho_arg_simple_x prog estate lhs_f conseq ~evars:evars) (lhs,rhs)
 
 and match_one_ho_arg_simple_helper prog estate
-    ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs
-  : CF.formula * int =
-  if (ho_ps1=[]) then coer_rhs,1 else
+    ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs 
+  : CF.formula * (CP.spec_var list * CP.spec_var list) * int =
+  if (ho_ps1=[]) then coer_rhs, ([],[]), 1 else
     let args = List.combine ho_ps1 ho_ps2 in
+    let conseq = CF.mkTrue (CF.flow_formula_of_formula estate.es_formula) no_pos in
     let expl_vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap) to_vars in 
-    let res = List.map (x_add_1 (fun x-> match_one_ho_arg_simple prog estate lhs_f coer_rhs ~evars:expl_vars x)) args in
+    let res = List.map (x_add_1 (fun x-> match_one_ho_arg_simple prog estate lhs_f conseq ~evars:expl_vars x)) args in
     let ok,maps = List.split res in
     let maps,subst = List.split maps in
     let frsv,tosv = List.fold_left (fun (frsv,tosv) (x,y) -> frsv@x, tosv@y ) ([],[]) subst in
@@ -14607,7 +14612,8 @@ and match_one_ho_arg_simple_helper prog estate
     let ok = if fail then 0 else 1 in
     let coer_rhs_new = CF.subst_hvar coer_rhs maps in
     let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
-    coer_rhs_new, ok
+    let lhs_f = CF.subst_avoid_capture frsv tosv lhs_f in
+    coer_rhs_new, (frsv,tosv), ok
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -14797,8 +14803,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let ho_ps1 = CF.get_node_ho_args node in
           let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
           let ho_ps2 = CF.get_node_ho_args lhs_heap in
-          let coer_rhs_new, ok = match_one_ho_arg_simple_helper prog estate
-              ho_ps1 ho_ps2 lhs_heap rest_of_lhs to_vars coer_rhs_new in
+          let coer_rhs_new, (frv,tov), ok = match_one_ho_arg_simple_helper prog estate
+              ho_ps1 ho_ps2 lhs_heap rest_of_lhs to_vars coer_rhs_new  in
+          let rest_of_lhs = x_add subst_avoid_capture frv tov rest_of_lhs in
+          let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
           (*let xpure_lhs = x_add xpure prog f in*)
           (*************************************************************************************************************************************************************************)
           (* delay the guard check *)
@@ -15050,8 +15058,11 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             let ho_ps1 = CF.get_node_ho_args node in
             let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
-            let coer_rhs_new, ok =  match_one_ho_arg_simple_helper prog estate
-              ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
+            let coer_rhs_new, (frv,tov),  ok =  match_one_ho_arg_simple_helper prog estate
+                ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
+
+            let rest_of_lhs = x_add subst_avoid_capture frv tov f in
+            let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
             (* Currently, I am trying to change in advance at the trans_one_coer *)
             (* Add origins to the body of the coercion which consists of *)
             (*   several star-conjunction nodes. If there are multiple nodes *)
@@ -15155,7 +15166,7 @@ and apply_one_norm_coerc prog coerc estate fnode frest =
 
 and apply_norm_coerc prog estate ?left:(left = true) fnode frest =
   let coerc_candidates = choose_coerc_candidates_for_norm prog ~left:left fnode in
-  let () = y_binfo_hp (add_str "cands no:" string_of_int) (List.length  coerc_candidates) in
+  let () = y_ninfo_hp (add_str "cands no:" string_of_int) (List.length  coerc_candidates) in
   let res = List.map (fun coerc -> apply_one_norm_coerc prog coerc estate fnode frest) coerc_candidates in
   res
 
@@ -15188,12 +15199,12 @@ and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
       let tail_h = CF.join_star_conjunctions tail in
       let res = apply_norm_coerc prog es ~left:left head_h tail_h in
       let ctx = extract_succ res in
-      let () = y_binfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
+      let () = y_ninfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
       match ctx with
       | Some ctx ->
         (* if lemma is fired restart the norm process, 
            otherwise keep on interating through nodes *)
-        Some (norm_w_coerc_context prog ctx)
+        Some (norm_w_coerc_context_x prog ctx)
       | None -> 
         (* ---------------------- iterate or stop ---------------------------- *)
         if Gen.is_pivot pivot then ctx (* stop iterating *)
@@ -15475,6 +15486,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
   let () = y_dinfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
   let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
+  let () = y_dinfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
   (************************************************************************)
   let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
   let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
@@ -15718,10 +15730,19 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           (*      fc_failure_pts = match (get_node_label anode) with | Some s-> [s] | _ -> [];},                                                      *)
           (*      CF.mk_failure_must "12" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), msg, Failure_Must msg) (mk_cex true), []) *)
         else
-          let coer_rhs_new, ok =
+          let () = y_ninfo_hp (add_str "coer_rhs_new(before ho match)" !CF.print_formula) coer_rhs_new in
+          let () = y_ninfo_hp (add_str "new_ctx(before ho match)" !CF.print_list_context) new_ctx in
+          let () = y_ninfo_hp (add_str "conseq_extra(before ho match)" !CF.print_formula) conseq_extra in
+          let () = y_ninfo_hp (add_str "head_node_new(before ho match)" !CF.print_h_formula) head_node_new in
+          let coer_rhs_new, (frv,tov), ok =
             let ho_ps2  = CF.get_node_ho_args head_node_new in
             match_one_ho_arg_simple_helper prog new_estate
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
+          let f = x_add subst_avoid_capture frv tov f in
+          let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
+          let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
+          let () = y_ninfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
+          let () = y_ninfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
           
           (*   if (ho_ps1=[]) then coer_rhs_new,1 else *)
           (*     let args = List.combine ho_ps1 ho_ps2 in *)
@@ -15739,7 +15760,12 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
           (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
           (***********Handle high-order argument: END**********)
-
+          if not(ok == 1) then
+            let () = x_dinfo_zp (lazy ("apply_left_coercion_complex: HO args don't match\n")) pos in
+            let msg = "failed left coercion application: HO args don't match" in
+            mk_fail_ctx estate anode msg
+          else
+            begin
           x_dinfo_zp (lazy ("apply_left_coercion_complex: check extra heap")) pos;
           x_dinfo_zp (lazy ("apply_left_coercion_complex: new_ctx after folding: "
                             ^ (Cprinter.string_of_spec_var p2) ^ "\n"
@@ -15808,6 +15834,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
              let t1,p1 = List.split (List.map (process_one []) res) in
              let t1 = fold_context_left 16 t1 in
              (t1,p1))
+          end 
   | _ -> 
     let msg = "failed left coercion application, can not match head node" in
     mk_fail_ctx estate anode msg
@@ -16058,7 +16085,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         x_dinfo_zp (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
         (false, estate, h, p, vp, mkNormalFlow ()) (* false, return dummy h and p *)
       else
-        let coer_rhs_new, ok =
+        let coer_rhs_new, (frv,tov), ok =
           (* let ho_ps2  = CF.get_node_ho_args head_node_new in *)
           (* TOD below arguments need to be checked *)
           match_one_ho_arg_simple_helper prog new_estate
