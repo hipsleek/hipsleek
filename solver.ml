@@ -11329,7 +11329,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           let to_lhs, to_rhs, ext_subst = x_add get_eqns_free other_subs new_exist_vars new_impl_vars (* impl_tvars *) fvars_rhs estate.es_gen_expl_vars pos in
           let ext_subst = ext_subst @ subst in
           (* let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in *)
-          let () =  Debug.ninfo_zprint  (lazy  ("to_lhs: " ^ (!CP.print_formula to_lhs))) no_pos in
+          let () = x_tinfo_hp (add_str "to_lhs: "  (!CP.print_formula )) to_lhs no_pos in
           (* let () =  x_tinfo_hp  (add_str  ("ext_subst: "  (pr_pair  ext_subst))) no_pos in *)
           (* Adding pure formula for relational args of view *)
           let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
