@@ -4912,7 +4912,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       let m_vars = List.filter (fun (m,vs,vs2) -> vs==[] (* no change *) || vs2!=[]) m_vars in
       let m_vars = List.map (fun (m,vs,vs2) -> {m with Cast.mater_target_view = vs2}) m_vars in
       let () = y_tinfo_hp pr_mater_vars m_vars in
-      let coer_case = Cast.case_of_coercion c_lhs c_rhs in
+      let coer_case = Cast.case_of_coercion ~ck:coer.I.coercion_kind c_lhs c_rhs in
       let lhs_sig = CFU.sig_of_lem_formula cprog coer_case c_lhs in
       let c_coer = { C.coercion_type = coer_type;
                      C.coercion_type_orig = None;

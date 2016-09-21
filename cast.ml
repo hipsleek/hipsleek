@@ -2034,7 +2034,7 @@ let exist_left_lemma_w_fl coers fl=
   Complex + Left == normalization
 *)
 (*TODO: re-implement with care*)
-let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
+let case_of_coercion_x ?ck:(ck=LEM) (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let h,_,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then 
@@ -2093,16 +2093,16 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
       if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
         (*all nodes having the same names*)
         (* ??? why using the node names *)
-        (* if lhs_length=2 && rhs_length=1  then Normalize true *)
-        (* else if lhs_length=1 && rhs_length=2  then Normalize false *)
-        (* else  *)if lhs_length=1 then Simple
+        if lhs_length=2 && rhs_length=1 && not(ck=LEM_NORM) then Normalize true
+        else if lhs_length=1 && rhs_length=2  && not(ck=LEM_NORM) then Normalize false
+        else if lhs_length=1 then Simple
         else Complex
       else if lhs_length=1 then Simple
       else Complex
 
-let case_of_coercion lhs rhs =
+let case_of_coercion ?ck:(ck=LEM) lhs rhs =
   let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
-  Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
+  Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 (fun _ _ -> case_of_coercion_x ~ck:ck lhs rhs) lhs rhs
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
   List.filter (fun p ->  p.coercion_head_view = c 
