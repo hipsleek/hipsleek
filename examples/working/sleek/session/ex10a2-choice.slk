@@ -10,7 +10,7 @@ pred_sess_proj GSb1<> == !1.
 checkentail cs::Chan{@S GSb<>}<>@M * 
 cb'::Chan{@S ?v#v::Addr<Anon_2154>;;!v#v::DDate<Anon_2156,Anon_2157,Anon_2158>}<>
 &
-v_bool_65_2097' & opt'=1 & 0<v_int_62_2175 & 1<=id' & cb'=cb & cs'=cs 
+v_bool_65_209g7' & opt'=1 & 0<v_int_62_2175 & 1<=id' & cb'=cb & cs'=cs 
                                            |-  cs'::Chan{@S !v#%L(v);;%R}<> * %L(opt').
 expect Valid.
 print residue.

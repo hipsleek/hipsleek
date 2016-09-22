@@ -1,0 +1,96 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+/* hip_include 'msess/notes/commprimitives.ss' */
+
+
+pred_prim Ff<id:int,bound:int>. //full
+pred_prim Fp<id:int,part:int>. //partial
+
+pred_prim Ff2<id:int,bound:int,var>. //full
+pred_prim Fp2<id:int,part:int,var>. //partial
+
+
+/* lemma_norm "ACC" self::Fp<id,a> * self::Fp<id,b> -> self::Fp<id,a+b>; */
+/* lemma_norm "FULL" self::Fp<id,p> & p=0 -> self::Ff<id>; */
+/* lemma_norm "REL" self::Chan{@S Fp<id,a>;;%R}<> -> self::Chan{@S %R}<> * self::Fp<id,a>; */
+/* lemma "SYNC-CHECK" self::Chan{@S Ff<id> ;; %R}<> * self::Ff<id> -> self::Chan{@S %R}<> * self::Ff<id>; */
+
+
+lemma_norm "ACC" self::Fp<id,aa> * self::Fp<id,bb> -> self::Fp<id,aa+bb>.
+  //lemma_norm "FULL" self::Fp<id,aaa> * self::Ff<id,aaa> -> self::Ff<id,aaa>.
+lemma_norm "REL2" self::Chan{@S Fp2<id,bbb,q>;;%R}<> -> self::Chan{@S %R}<> * q::Fp<id,bbb>.
+lemma_norm "SYNC-CHECK1" self::Chan{@S Ff2<id,bbb,ppp> ;; %R}<> * ppp::Fp<id,bbb> -> self::Chan{@S %R}<> * ppp::Ff<id,bbb>.
+lemma_norm "SYNC-CHECK2" self::Chan{@S Ff2<id,bbb,ppp> ;; %R}<> * ppp::Ff<id,bbb> -> self::Chan{@S %R}<> * ppp::Ff<id,bbb>.
+
+/*
+checkentail a::Chan{@S Fp2<22,2,qqq>;;?1}<> |- a::Chan{@S ?1}<> * qqq::Fp<22,2>.
+expect Valid.
+print residue.
+
+checkentail a::Chan{@S Fp2<22,2,qqq>;;?1}<> * qqq::Fp<22,2> |- a::Chan{@S ?1}<> * qqq::Fp<22,4>.
+expect Valid.
+print residue.
+
+
+checkentail a::Chan{@S Ff2<22,2,qqq>;;?1}<> * qqq::Ff<22,2> |- a::Chan{@S ?1}<> * qqq::Ff<22,2>.
+expect Valid.
+print residue.
+
+
+checkentail a::Chan{@S Ff2<22,2,qqq>;;?1}<> * qqq::Fp<22,2> |- a::Chan{@S ?1}<> * qqq::Ff<22,2>.
+expect Valid.
+print residue.
+
+
+checkentail d::Chan{@S ?1;;Fp2<flted_37_2334,flted_37_2333,qqq>}<> *
+            c::Chan{@S Ff2<flted_37_2332,flted_37_2331,qqq>;;?1}<> *
+            a::Chan{@S Fp2<flted_37_2336,flted_37_2335,qqq>}<>
+            & flted_37_2336=22 & flted_37_2335=2 & 
+            flted_37_2334=22 & flted_37_2333=2 & flted_37_2332=22 & flted_37_2331=4
+            |- true.
+expect Valid.
+print residue.
+
+
+
+checkentail d::Chan{@S ?1;;Fp2<22,2,qqq>}<> *
+            c::Chan{@S Ff2<22,4,qqq>;;?1}<> *
+            a::Chan{@S Fp2<22,2,qqq>}<>
+            |- true.
+expect Valid.
+print residue.
+*/
+/*
+Entail 6: Valid. 
+
+Validate 6: OK
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}
+??
+*/
+
+checkentail //d::Chan{@S ?1;;Fp2<22,2,qqq>}<> *
+            c::Chan{@S Ff2<22,4,qqq>;;?1}<> *
+            a::Chan{@S Fp2<22,2,qqq>}<>
+            |- true.
+expect Valid.
+print residue.
+
+/**
+es_trace: (Complex: SYNC-CHECK1) ==> (left: REL2) ==>  SEARCH ==>  COND ==>  Match(qqq,qqq) ==> (Complex: SYNC-CHECK2)
+
+lemma_norm "ACC" self::Fp<id,aa> * self::Fp<id,bb> -> self::Fp<id,aa+bb>.
+  //lemma_norm "FULL" self::Fp<id,aaa> * self::Ff<id,aaa> -> self::Ff<id,aaa>.
+lemma_norm "REL2" self::Chan{@S Fp2<id,bbb,q>;;%R}<> -> self::Chan{@S %R}<> * q::Fp<id,bbb>.
+lemma_norm "SYNC-CHECK1" self::Chan{@S Ff2<id,bbb,ppp> ;; %R}<> * ppp::Fp<id,bbb> -> self::Chan{@S %R}<> * ppp::Ff<id,bbb>.
+lemma_norm "SYNC-CHECK2" self::Chan{@S Ff2<id,bbb,ppp> ;; %R}<> * ppp::Ff<id,bbb> -> self::Chan{@S %R}<> * ppp::Ff<id,bbb>.
+
+
+*/
+
+/*
+checkentail qqq::Fp<flted_76_153,flted_76_152> & flted_76_152=2 & flted_76_153=22 & flted_75_154=4 & flted_75_155=22 |- qqq::Fp<flted_55_155,flted_75_154>.
+print residue.
+*/

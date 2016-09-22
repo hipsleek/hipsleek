@@ -1,6 +1,6 @@
 
 pred_prim Ff<id:int>. //full
-pred_prim Fp<id:int,p>. //partial
+wpred_prim Fp<id:int,p>. //partial
 pred_prim Fm<id:int>.   //minus
 
 
@@ -8,4 +8,4 @@ lemma  self::Fp<id,a> * q::Fp<id,b> & self =q & a+b=m -> self::Fp<id,m>.
 
 checkentail c::Fp<1,0.4> * c::Fp<1,0.5> |- c::Fp<1,0.9>.
 expect Valid.
-print residue.
+print residue.g

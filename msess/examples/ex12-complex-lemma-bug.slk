@@ -1,0 +1,13 @@
+data node {
+    int val;
+    node next;
+}.
+
+pred_prim F<val:int,nxt>.
+pred_prim Fnew<q>.
+
+lemma_norm "COM" self::F<v,q> * q::F<v,null> -> self::Fnew<q>.
+
+checkentail x::F<22,qq> * qq::F<aaaa,null> & aaaa=44 |- x::Fnew<qq>.
+print residue.
+
