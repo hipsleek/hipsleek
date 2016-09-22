@@ -659,6 +659,46 @@ print residue.
 
 =============================================
 =============================================
+../../sleek floats/ex10c4-split-lemma.slk -dre "norm_w_coerc\|apply_one_coerc\|do_match"
+
+when floats are used in non-space formulae, ent results are as expected
+-------------------------------------------------------------------------
+checkentail x::Fp<1,0.5> * x::Fp<1,0.5> |- x::Fp<1,1.0>.
+
+do_match@7
+do_match inp1 : x::Fp<flted_36_130,flted_9_200>@M
+do_match inp2 : x::Fp<flted_36_215,flted_36_214>@M
+do_match inp3 :  emp&
+flted_9_200=b_159+flted_36_129 & flted_36_127=FLOAT 0.5 & flted_36_128=1 & 
+flted_36_129=FLOAT 0.5 & flted_36_130=1 & id_161=flted_36_128 & 
+b_159=flted_36_127&{FLOW,(4,5)=__norm#E}
+ es_evars: [flted_36_214; flted_36_215]
+ es_gen_impl_vars(E): []
+ es_ante_evars: [flted_9_200]
+ es_subst (from,to): []:[]
+ es_trace: (Complex: ACC) ==>  SEARCH ==>  COND ==>  Match(x,x)
+do_match inp4 :rest rhs: emp&flted_36_215=1 & flted_36_214=FLOAT 1.&{FLOW,(4,5)=__norm#E}
+do_match inp5 :[]
+do_match@7 EXIT: MustErr Context: 
+   fe_kind: MUST
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  flted_9_200=FLOAT 0.5+FLOAT 0.5 |-  flted_9_200=FLOAT 1.. LOCS:[0;9;36] (must-bug)
+     fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+   }
+ [[(Complex: ACC) ==>  SEARCH ==>  COND ==>  Match(x,x)]]
+ CEX:false
+
+Entail 1: Fail.(must) cause:12
+
+Entail 1: Fail.(must) cause:12
+Validate 1: Expecting(3)Valid BUT got : Fail_Must
+
+-------------------------------------------------------------------------
+
+checkentail x = 0.5 + 0.5 |- x=1.0.
+
+Entail 2: Valid. 
 
 
 =============================================
