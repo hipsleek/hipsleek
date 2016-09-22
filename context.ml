@@ -12,6 +12,9 @@ module CF = Cformula
 module CFU = Cfutil
 module CP = Cpure
 
+
+let bypass_lemmas = [LEM_NORM]
+                    
 (* this is for ptr arithmetic to guide matching with each folding process *)
 let fold_matching_stk = new Gen.stack_pr "fold_matching" (pr_pair !CP.print_sv !CF.print_h_formula) (==)
 
@@ -1174,7 +1177,7 @@ and choose_full_mater_coercion_x estate l_vname l_vargs r_vname r_aset (c:coerci
   let () = x_tinfo_hp (add_str "head_view" pr_id) head_view no_pos in
   let () = x_tinfo_hp (add_str "body_view" pr_id) body_view no_pos in
   let () = x_ninfo_hp (add_str "lemma" Cprinter.string_of_coercion) c no_pos in
-  if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && head_view = l_vname) then None
+  if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && head_view = l_vname) || (Gen.BList.mem_eq (=) c.coercion_kind bypass_lemmas) then None
   else
     (* let args = (\* List.tl *\) (fv_simple_formula_coerc c.coercion_head) in (\* dropping the self parameter and fracvar *\) *)
     let name,args = CF.name_of_formula c.coercion_head in
