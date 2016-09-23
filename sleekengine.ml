@@ -209,7 +209,10 @@ let cprog = Cprog_sleek.cprog
 
 let _ =
   Lem_store.all_lemma # clear_right_coercion;
-  Lem_store.all_lemma # clear_left_coercion
+  Lem_store.all_lemma # clear_left_coercion;
+  Lem_store.norm_lemma # clear_right_coercion;
+  Lem_store.norm_lemma # clear_left_coercion
+
 
 let update_iprog ip=
   iprog = ip
@@ -251,7 +254,9 @@ let clear_cprog () =
   (*!cprog.Cast.prog_left_coercions <- [];*)
   (*!cprog.Cast.prog_right_coercions <- []*)
   Lem_store.all_lemma # clear_right_coercion;
-  Lem_store.all_lemma # clear_left_coercion
+  Lem_store.all_lemma # clear_left_coercion;
+  Lem_store.norm_lemma # clear_right_coercion;
+  Lem_store.norm_lemma # clear_left_coercion
 
 let clear_all () =
   Debug.clear_debug_log ();
@@ -569,7 +574,10 @@ let process_lemma ldef =
   let _ = if (!Globals.print_core || !Globals.print_core_all) then
       print_string ("\nleft:\n " ^ (Cprinter.string_of_coerc_decl_list l2r) ^"\n right:\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
   (* WN_all_lemma - should we remove the cprog updating *)
+  let l2r, l2r_norm = List.partition (fun c -> not (c.C.coercion_kind = LEM_NORM)) l2r in
+  let r2l, r2l_norm = List.partition (fun c -> not (c.C.coercion_kind = LEM_NORM)) r2l in
   let _ = Lem_store.all_lemma # add_coercion l2r r2l in
+  let _ = Lem_store.norm_lemma # add_coercion l2r_norm r2l_norm in
   (* let _ = Lem_store.all_lemma # add_right_coercion r2l in  *)
   (*!cprog.Cast.prog_left_coercions <- l2r @ !cprog.Cast.prog_left_coercions;*)
   (*!cprog.Cast.prog_right_coercions <- r2l @ !cprog.Cast.prog_right_coercions;*)
@@ -3111,7 +3119,7 @@ let process_print_command pcmd0 =
   (* type: (Globals.ident * bool) Globals.regex_list option *)
   | PCmd (pcmd,opt) ->
     if pcmd = "lemmas" then
-      Lem_store.all_lemma # dump
+      Lem_store.dump_all_stores ()
     else if pcmd = "residue" then
       let _ = Debug.ninfo_pprint "inside residue" no_pos in
       print_residue !CF.residues

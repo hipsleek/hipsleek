@@ -383,8 +383,8 @@ let hip_epilogue () =
   if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then 
-    Lem_store.all_lemma # dump
-  else ()
+    Lem_store.dump_all_stores ()
+      
 (* -------------------------------------------------------- *)
 (* Process primitives list in prelude.ss.                   *)
 let replace_with_user_include
@@ -731,7 +731,7 @@ let process_source_full source =
                                                              (String.concat " " (List.map (fun sv -> CP.name_of_spec_var sv) (v::args)))
                                                              ^")"
         | _ -> "" in
-      let lemma_list = List.map (fun cd ->
+      let lemma_list lems = List.map (fun cd ->
           let h1, p1, _,_, _, _ = CF.split_components 
               (CF.elim_exists cd.C.coercion_head) in
           let h2, p2,_, _, _, _ = CF.split_components 
@@ -746,8 +746,10 @@ let process_source_full source =
           var_list_string^", valid (imp "^"(and "^(convert_h_formula h1)^" "^
           (convert_cp_formula (Mcpure.pure_of_mix p1))^")"^" "^(convert_h_formula h2)
           ^").\n"
-        ) (Lem_store.all_lemma # get_left_coercion) in
-      let parameter_lemmas = String.concat "" lemma_list in
+        ) lems in
+      let norm_lemma_list = lemma_list (Lem_store.norm_lemma # get_left_coercion) in
+      let lemma_list = lemma_list (Lem_store.all_lemma # get_left_coercion) in
+      let parameter_lemmas = String.concat "" (lemma_list@norm_lemma_list) in
       Printf.fprintf oc "%s\n" (imports^moduletype^parameter_formula^
                                 parameter_valid^parameter_ptto^parameter_views^parameter_formulas^
                                 parameter_relations^parameter_axioms^parameter_lemmas^endmoduletype);

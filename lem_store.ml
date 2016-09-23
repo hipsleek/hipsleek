@@ -93,7 +93,7 @@ class lemma_store =
 
     method get_right_coercion =
       right_lem # get_stk
-
+    
     method any_coercion =
       num_left_lem>0 || num_right_lem>0
     method any_left_coercion =
@@ -150,12 +150,25 @@ class lemma_store =
       self # dump_right;
       print_endline_quiet ""
 
-
+    method dump_non_empty msg =
+      if self # any_coercion then
+        begin
+          print_endline_quiet ("\nLemma store dump ("^msg^")");
+          self # dump_left;
+          self # dump_right;
+          print_endline_quiet ""
+        end
 
   end;;
 
 let all_lemma = new lemma_store;;
 
+let norm_lemma = new lemma_store;;
+
+let dump_all_stores () =
+  all_lemma # dump;
+  norm_lemma # dump_non_empty "NORM"
+    
 (* module COERC = *)
 (* struct *)
 (*   type t = Iast.coercion_decl *)

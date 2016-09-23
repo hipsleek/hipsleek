@@ -1665,7 +1665,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          (* ) cprocs in *)
          (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
          (* let () = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
-         (* let () = List.iter proc_one_lemma cmds; *)
+          (* let () = List.iter proc_one_lemma cmds; *)
          let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
          let bdecls = List.map (x_add trans_bdecl prog) prog.I.prog_barrier_decls in
          let ut_vs = cuts @ C.ut_decls # get_stk in

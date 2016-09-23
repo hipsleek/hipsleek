@@ -11588,8 +11588,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let res_lst = Gen.cart_multi_list res in
               let post_ho_match_process res =
                 (* TODO Andreea: need to merge entail_states!! *)
+                let failures,res = List.partition (fun (r, _, _, _,_) -> r != None) res in
                 let new_maps = List.concat (List.map (fun (_, _, _, m, _) -> m) res) in
-                let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in
+                (* let failures = List.filter (fun (r, _, _, _,_) -> r != None) res in *)
                 let new_subst = List.fold_left (fun (frsv,tosv) (_, _, _, _, es) ->
                     map_opt_def (frsv,tosv)
                       (fun x -> frsv@(fst (x.CF.es_subst)),tosv@(snd (x.CF.es_subst))) es)
@@ -15138,11 +15139,11 @@ Doing case splitting based on the guard.
 and choose_coerc_candidates_for_norm prog ?left:(left = true) head_node =
   try
     let head_name = get_node_name 0 head_node in
-    let lemmas = if left then (Lem_store.all_lemma # get_all_left_coercion)
-      else (Lem_store.all_lemma # get_right_coercion) in
+    let lemmas = if left then (Lem_store.norm_lemma # get_all_left_coercion)
+      else (Lem_store.norm_lemma # get_right_coercion) in
     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
     (* only use norm lemmas for normalization *)
-    let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in
+    (* let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in *)
     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
     let lemmas = look_up_coercion_def_raw lemmas head_name in
     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
@@ -15204,7 +15205,7 @@ and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
       | Some ctx ->
         (* if lemma is fired restart the norm process, 
            otherwise keep on interating through nodes *)
-        Some (norm_w_coerc_context_x prog ctx)
+        Some (norm_w_coerc_context prog ctx)
       | None -> 
         (* ---------------------- iterate or stop ---------------------------- *)
         if Gen.is_pivot pivot then ctx (* stop iterating *)

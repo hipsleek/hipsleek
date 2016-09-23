@@ -303,11 +303,14 @@ let manage_lemmas_x(* _new *) ?(unfold_flag=true) ?(force_pr=false) ?(vdefs=[]) 
   let () = x_tinfo_pp "sleek : after process_one_repo" no_pos in
   let left  = List.concat (List.map (fun (a,_,_,_)-> a) lems) in
   let right = List.concat (List.map (fun (_,a,_,_)-> a) lems) in
+  let left,left_norm = List.partition (fun c -> not (c.C.coercion_kind = LEM_NORM)) left in
+  let right,right_norm = List.partition (fun c -> not (c.C.coercion_kind = LEM_NORM)) right in
   (* let vdefs = Cprinter.get_sorted_view_decls () in *)
   (* let ulst = Cast.get_unfold_set vdefs (\* set of unfoldable views *\) in *)
   (* let left = List.map (Cast.repl_unfold_lemma ulst) left in *)
   (* let right = List.map (Cast.repl_unfold_lemma ulst) right in *)
   let () = Lem_store.all_lemma # add_coercion left right in
+  let () = Lem_store.norm_lemma # add_coercion left_norm right_norm in
   if force_pr (*&& !Globals.dump_lem_proc *) then
     begin
       let lnames = (List.map (fun (_,_,_,n)-> n) lems) in

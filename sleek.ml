@@ -543,8 +543,7 @@ let sleek_epilogue () =
   if !VarGen.z_debug_flag (* dump_calls *) then Debug.dump_debug_calls ();
   (* ------------------ lemma dumping ------------------ *)
   if (!Globals.dump_lemmas) then
-    Lem_store.all_lemma # dump
-  else ()
+    Lem_store.dump_all_stores ()
 
 let sleek_proof_log_Z3 src_files =
   (* let () = Log.process_proof_logging src_files in   *)
