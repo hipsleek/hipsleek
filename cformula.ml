@@ -14435,6 +14435,9 @@ let fold_formula (e: formula) f (f_comb: 'b list -> 'b) : 'b =
   let f_arg = voidf2, voidf2, voidf2, (voidf2, voidf2, voidf2), voidf2 in
   snd (trans_formula e () n_f f_arg f_comb)
 
+let fold_rflow_formula (e: rflow_formula) f (f_comb: 'b list -> 'b) : 'b =
+  fold_formula e.rflow_base f f_comb
+
 (* let map_formula_args (e: formula) (arg:'a) (f:'a -> formula -> formula option) (f_args: 'a -> formula -> 'a) : formula = *)
 (*   let f1 ac e = push_opt_void_pair (f ac e) in *)
 (*   fst (trans_formula e arg f1 f_args voidf) *)

@@ -15774,6 +15774,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           x_dinfo_zp (lazy ("apply_left_coercion_complex: conseq_extra:\n"
                             ^ (Cprinter.string_of_formula conseq_extra))) pos;
 
+          let conseq_extra = Norm.linearize_rename_global_args conseq_extra in
           let check_res, check_prf = x_add heap_entail prog false new_ctx conseq_extra pos in
 
           let () = y_dinfo_hp (add_str "new_ctx" !CF.print_list_context) new_ctx in

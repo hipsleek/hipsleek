@@ -2125,3 +2125,58 @@ let find_rec_data iprog cprog ids =
   (* let () = y_tinfo_hp (add_str "cprog_data_decls" (pr_list Cprinter.string_of_data_decl)) cprog.Cast.prog_data_decls in *)
   ()
 
+
+(* 
+   (1) collect all args
+   (2) keep only free vars (args_lst)
+   (3) create corresponding new vars  (nargs_lst)
+   (4) substitute hform (nargs_lst/args_lst)
+   (5) add the equalities (nargs_lst, args_lst)
+ *)
+
+let linearize_rename_global_args form =
+  (* fold fun to collect args from h_formula *)
+  let rec f_h hform = match hform with
+    | CF.DataNode dn -> Some (dn.CF.h_formula_data_arguments)
+    | CF.ViewNode vn ->
+      let f_emp_f _ = [] in
+      let f_f = nonef, f_h, (nonef, nonef, nonef), (nonef, f_emp_f, f_emp_f, f_emp_f, f_emp_f) in
+      let ho_args = List.map (fun rf -> CF.fold_rflow_formula rf f_f List.concat) vn.CF.h_formula_view_ho_arguments in
+      let ho_args = List.flatten ho_args in
+      Some (ho_args @ vn.CF.h_formula_view_arguments)
+    | _ -> None
+  in
+
+  let helper hform form =
+    (* (1) collect all args *)
+    let args = fold_h_formula hform f_h List.concat in
+    (* (2) keep only free vars (args_lst) *)
+    let args = CP.PtrSV.intersect args (CF.fv form) in
+    (* (3) create corresponding new vars  (nargs_lst) *)
+    let new_args = List.map CP.fresh_spec_var args in
+    (* (4) substitute hform (nargs_lst/args_lst) *)
+    let new_hform = CF.subst_avoid_capture_h args new_args hform in
+    (* (5) add the equalities (nargs_lst, args_lst) to form*)
+    let subst = List.combine args new_args in
+    let eqs = List.map (fun (l,r) -> (CP.mkEqVar l r no_pos)) subst in
+    let eqs = CP.join_conjunctions eqs in
+    let new_form = CF.add_pure_formula_to_formula eqs form in
+    let new_form = CF.push_exists new_args new_form in
+    Some new_form
+  in
+
+  let f_f form =
+    match form with
+    | CF.Base fb   -> helper fb.CF.formula_base_heap form 
+    | CF.Exists fb -> helper fb.CF.formula_exists_heap form 
+    | _ -> None
+  in
+  let f_f = (nonef, f_f, somef, (somef,somef,somef,somef,somef)) in
+  let new_form = CF.transform_formula f_f form in
+  (* let args = CF.fold_h_formula form f_h List.concat in *)
+  (* let new_formula = transform_formula fncs form in *)
+  new_form
+    
+let linearize_rename_global_args form =
+  let pr = Cprinter.string_of_formula in 
+  Debug.no_1 "linearize_rename_global_args" pr pr linearize_rename_global_args form

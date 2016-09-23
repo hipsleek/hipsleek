@@ -3,8 +3,8 @@
 #process_action,Trace
 #choose_context,Trace
 #match_one_ho_arg,Trace
-#do_match,Trace
-#do_match,Trace
+do_match,Trace
+linearize_rename_global_args
 #heap_entail_conjunct,Trace
 #process_one_match,Trace
 #update_fixpt,Trace
@@ -19,5 +19,6 @@
 #CF.rename_bound_vars
 #check_exp,Trace
 #solver_detect_lhs_rhs_contra_all,Trace
-heap_entail_non_empty_rhs_heap,Trace
-compute_actions
+#heap_entail_non_empty_rhs_heap,Trace
+#compute_actions
+apply_left_coercion_complex,Trace
