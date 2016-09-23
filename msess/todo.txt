@@ -703,6 +703,22 @@ Entail 2: Valid.
 
 =============================================
 =============================================
+HO-args are not linearized 
+
+
+(==astsimp.ml#9053==)
+case_normalize_renamed_formula@148@147
+case_normalize_renamed_formula inp1 :view_decls:[SOr,Seq,R,S,Chan,Sess,Trans,Ff,Fp,Ff2,Fp2]
+case_normalize_renamed_formula inp2 :avail_vs:[]
+case_normalize_renamed_formula inp3 :expl:[]
+case_normalize_renamed_formula inp4 :ann_vs:[]
+case_normalize_renamed_formula inp5 :(EX  . ((Fp2{}<[id,bbb,q]>) ;; (%R)
+)*([] & true)( FLOW __norm))
+case_normalize_renamed_formula@148 EXIT:
+ ### f = (EX  . ((Fp2{}<[id,bbb,q]>) ;; (%R)
+)*([] & true)( FLOW __norm))
+ ### h = []
+ ### expl = []
 
 
 =============================================
