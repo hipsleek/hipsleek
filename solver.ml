@@ -14575,7 +14575,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
    Currently assume that only HVar is in the rhs
 *)
 and match_one_ho_arg_simple_x prog estate lhs_f conseq ?evars:(evars=[]) ((lhs,rhs) : CF.rflow_formula * CF.rflow_formula): 
-  int * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
+  (int * entail_state option) * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
   let args = ((lhs,rhs), HO_NONE) in
   let estate = {estate with es_gen_expl_vars = estate.CF.es_gen_expl_vars @ evars;  es_subst = [],[];} in
   let res = x_add_1 (fun x-> match_one_ho_arg ~classic:true prog estate lhs_f conseq [] [] no_pos x ) args in
@@ -14583,29 +14583,31 @@ and match_one_ho_arg_simple_x prog estate lhs_f conseq ?evars:(evars=[]) ((lhs,r
   let fail = match fail with
     | None -> 1 | Some _ -> 0 in
   let subst = map_opt_def ([],[]) (fun x -> x.es_subst) es in
-  fail,(map,subst)
+  (fail, es),(map,subst)
 
-and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula): 
-  int * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
+and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula ): 
+  (int * entail_state option) * (((hvar * CF.formula) list) * (CP.spec_var list * CP.spec_var list)) =
   let pr_rf = Cprinter.string_of_rflow_formula in
   let pr_svl = pr_list Cprinter.string_of_spec_var in
   let pr1 = (pr_pair pr_rf pr_rf) in
-  let pr_out = pr_pair (add_str "ok" string_of_int)
+  let pr_out = pr_pair (pr_pair (add_str "ok" string_of_int)
+                          (add_str "es" (pr_opt !CF.print_entail_state)))
       (pr_pair
          (add_str "maps" (pr_list (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)))
          (add_str "subs" (pr_pair pr_svl pr_svl))) in
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
     (match_one_ho_arg_simple_x prog estate lhs_f conseq ~evars:evars) (lhs,rhs)
-
+    
 and match_one_ho_arg_simple_helper prog estate
     ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs 
-  : CF.formula * (CP.spec_var list * CP.spec_var list) * int =
-  if (ho_ps1=[]) then coer_rhs, ([],[]), 1 else
+  : CF.formula * (CP.spec_var list * CP.spec_var list) * int * entail_state option list  =
+  if (ho_ps1=[]) then coer_rhs, ([],[]), 1, [] else
     let args = List.combine ho_ps1 ho_ps2 in
     let conseq = CF.mkTrue (CF.flow_formula_of_formula estate.es_formula) no_pos in
     let expl_vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap) to_vars in 
     let res = List.map (x_add_1 (fun x-> match_one_ho_arg_simple prog estate lhs_f conseq ~evars:expl_vars x)) args in
-    let ok,maps = List.split res in
+    let ok_es,maps = List.split res in
+    let ok,es = List.split ok_es in
     let maps,subst = List.split maps in
     let frsv,tosv = List.fold_left (fun (frsv,tosv) (x,y) -> frsv@x, tosv@y ) ([],[]) subst in
     let maps = List.concat maps in
@@ -14614,7 +14616,7 @@ and match_one_ho_arg_simple_helper prog estate
     let coer_rhs_new = CF.subst_hvar coer_rhs maps in
     let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
     let lhs_f = CF.subst_avoid_capture frsv tosv lhs_f in
-    coer_rhs_new, (frsv,tosv), ok
+    coer_rhs_new, (frsv,tosv), ok, es
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -14720,6 +14722,15 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
         CP.mkAnd g (mk_Univ_rel v) no_pos
       ) lhs_guard f_univ_vars in
     (*node -> current heap node | lhs_heap -> head of the coercion*)
+    let mk_fail_ctx msg estate = 
+      (CF.mkFailCtx_in(Basic_Reason ( { 
+           fc_message = msg;
+           fc_current_lhs = estate;
+           fc_prior_steps = estate.es_prior_steps;
+           fc_orig_conseq = estate.es_orig_conseq;
+           fc_current_conseq = CF.formula_of_heap HFalse pos; (* guard_conseq *)
+           fc_failure_pts = [];}, CF.mk_failure_may msg Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex true), Failure)
+    in
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
                   h_formula_view_name = c1;
@@ -14804,58 +14815,59 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let ho_ps1 = CF.get_node_ho_args node in
           let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
           let ho_ps2 = CF.get_node_ho_args lhs_heap in
-          let coer_rhs_new, (frv,tov), ok = match_one_ho_arg_simple_helper prog estate
+          let coer_rhs_new, (frv,tov), ok,_ = match_one_ho_arg_simple_helper prog estate
               ho_ps1 ho_ps2 lhs_heap rest_of_lhs to_vars coer_rhs_new  in
-          let rest_of_lhs = x_add subst_avoid_capture frv tov rest_of_lhs in
-          let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
-          (*let xpure_lhs = x_add xpure prog f in*)
-          (*************************************************************************************************************************************************************************)
-          (* delay the guard check *)
-          (* for now, just add it to the consequent *)
-          (*************************************************************************************************************************************************************************)
-          (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
-          (* let () = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
-          (* let () = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
-          let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
-          let () = y_dinfo_hp (add_str "rest_of_lhs" !CF.print_formula) rest_of_lhs in
-          let new_f = x_add_1 Cformula.translate_set_comp_rel new_f in
-          (* add the guard to the consequent  - however, the guard check is delayed *)
-          (* ?? *)
-          let () = y_dinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
-          let () = y_dinfo_hp (add_str "lhs_guard_new" !CP.print_formula) lhs_guard_new in
-          let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in
-          let () = y_dinfo_hp (add_str "guard_conseq" !CP.print_formula) guard_conseq in
-          let guard_flag = xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
-          if not(guard_flag) then 
-            let msg = "univ guard not satisfied" in
-            (CF.mkFailCtx_in(Basic_Reason ( { 
-                 fc_message = msg;
-                 fc_current_lhs = estate;
-                 fc_prior_steps = estate.es_prior_steps;
-                 fc_orig_conseq = estate.es_orig_conseq;
-                 fc_current_conseq = CF.formula_of_heap HFalse pos; (* guard_conseq *)
-                 fc_failure_pts = [];}, CF.mk_failure_may msg Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex true), Failure)
+          if not(ok == 1) then
+            let () = x_dinfo_zp (lazy ("apply_left_coercion_complex: HO args don't match\n")) pos in
+            let msg = "failed left coercion application: HO args don't match" in
+            mk_fail_ctx msg estate
           else
-            let formula_x,to_aux_conseq = 
-              (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
-              (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
-              (formula_of_pure_N lhs_guard_new pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
-            in 
-            (* let () = print_endline ("do_universal:"  *)
-            (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
-            (*                        ^ "\n ### formula = " ^ (Cprinter.string_of_formula formula) *)
-            (*                        ^ "\n ### to_aux_conseq = " ^ (Cprinter.string_of_pure_formula to_aux_conseq)) in *)
-            let new_conseq = conseq (* normalize 9 conseq formula_x pos *) in
-            let new_estate = {estate with (* the new universal vars to be instantiated *)
-                              es_ivars = f_univ_vars @ estate.es_ivars;
-                              es_formula = new_f;} in
-            let () = y_dinfo_hp (add_str "LHS" !CF.print_formula) new_f in
-            let () = y_dinfo_hp (add_str "conseq" !CF.print_formula) conseq in
-            let new_ctx = Ctx new_estate in
-            let res, prf = x_add heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
-            let () = y_dinfo_hp (add_str "new_conseq" !CF.print_formula) new_conseq in
-            (* let () = y_dinfo_hp (add_str "to_aux_conseq" !CP.print_formula) to_aux_conseq in *)
-            (res (* add_to_aux_conseq res to_aux_conseq pos *), prf)
+            begin
+              let rest_of_lhs = x_add subst_avoid_capture frv tov rest_of_lhs in
+              let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
+              (*let xpure_lhs = x_add xpure prog f in*)
+              (*************************************************************************************************************************************************************************)
+              (* delay the guard check *)
+              (* for now, just add it to the consequent *)
+              (*************************************************************************************************************************************************************************)
+              (* let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in *)
+              (* let () = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in *)
+              (* let () = print_string("WN DO_UNIV guard to conseq: " ^ (Cprinter.string_of_pure_formula lhs_guard_new (\* guard_to_check *\)) ^ "\n") in *)
+              let new_f = normalize_replace (* 8 *) coer_rhs_new rest_of_lhs pos in
+              let () = y_dinfo_hp (add_str "rest_of_lhs" !CF.print_formula) rest_of_lhs in
+              let new_f = x_add_1 Cformula.translate_set_comp_rel new_f in
+              (* add the guard to the consequent  - however, the guard check is delayed *)
+              (* ?? *)
+              let () = y_dinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
+              let () = y_dinfo_hp (add_str "lhs_guard_new" !CP.print_formula) lhs_guard_new in
+              let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in
+              let () = y_dinfo_hp (add_str "guard_conseq" !CP.print_formula) guard_conseq in
+              let guard_flag = xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
+              if not(guard_flag) then
+                let msg = "univ guard not satisfied" in 
+                mk_fail_ctx msg estate
+              else
+                let formula_x,to_aux_conseq = 
+                  (* if !allow_imm || (!Globals.allow_field_ann) then (mkTrue (mkTrueFlow ()) pos,lhs_guard_new) *)
+                  (* else (formula_of_pure_N lhs_guard_new pos, CP.mkTrue pos)  *)
+                  (formula_of_pure_N lhs_guard_new pos,lhs_guard_new) (* TODOIMM andreeac to check if this is enough for imm *)
+                in 
+                (* let () = print_endline ("do_universal:"  *)
+                (*                        ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq) *)
+                (*                        ^ "\n ### formula = " ^ (Cprinter.string_of_formula formula) *)
+                (*                        ^ "\n ### to_aux_conseq = " ^ (Cprinter.string_of_pure_formula to_aux_conseq)) in *)
+                let new_conseq = conseq (* normalize 9 conseq formula_x pos *) in
+                let new_estate = {estate with (* the new universal vars to be instantiated *)
+                                  es_ivars = f_univ_vars @ estate.es_ivars;
+                                  es_formula = new_f;} in
+                let () = y_dinfo_hp (add_str "LHS" !CF.print_formula) new_f in
+                let () = y_dinfo_hp (add_str "conseq" !CF.print_formula) conseq in
+                let new_ctx = Ctx new_estate in
+                let res, prf = x_add heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
+                let () = y_dinfo_hp (add_str "new_conseq" !CF.print_formula) new_conseq in
+                (* let () = y_dinfo_hp (add_str "to_aux_conseq" !CP.print_formula) to_aux_conseq in *)
+                (res (* add_to_aux_conseq res to_aux_conseq pos *), prf)
+            end
         end
     | _ -> let msg = "failed coercion application, found data but expected view" in
       (CF.mkFailCtx_in(Basic_Reason ( { 
@@ -14919,6 +14931,14 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
+  let mk_fail_ctx msg estate = 
+    (CF.mkFailCtx_in(Basic_Reason ( { 
+         fc_message = msg;
+         fc_current_lhs = estate;
+         fc_prior_steps = estate.es_prior_steps;
+         fc_orig_conseq = estate.es_orig_conseq;
+         fc_current_conseq = CF.formula_of_heap HFalse pos; (* guard_conseq *)
+         fc_failure_pts = [];}, CF.mk_failure_may msg Globals.sl_error, estate.es_trace)) ((convert_to_may_es estate), msg, Failure_May msg) (mk_cex true), Failure) in
   (*let () = print_string("coer_rhs : "^(Cprinter.string_of_formula coer_rhs)^"\n") in*)
   let coer_lhs,coer_rhs,lhs_heap,(i,f) = if(coer.coercion_case = Cast.Ramify) then
       let lhs_hf,lhs_p,lhs_vp,lhs_fl,lhs_t,lhs_a = split_components f in
@@ -15059,9 +15079,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
             let ho_ps1 = CF.get_node_ho_args node in
             let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
-            let coer_rhs_new, (frv,tov),  ok =  match_one_ho_arg_simple_helper prog estate
+            let coer_rhs_new, (frv,tov),  ok,_ =  match_one_ho_arg_simple_helper prog estate
                 ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
-
             let rest_of_lhs = x_add subst_avoid_capture frv tov f in
             let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
             (* Currently, I am trying to change in advance at the trans_one_coer *)
@@ -15735,28 +15754,15 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           let () = y_ninfo_hp (add_str "new_ctx(before ho match)" !CF.print_list_context) new_ctx in
           let () = y_ninfo_hp (add_str "conseq_extra(before ho match)" !CF.print_formula) conseq_extra in
           let () = y_ninfo_hp (add_str "head_node_new(before ho match)" !CF.print_h_formula) head_node_new in
-          let coer_rhs_new, (frv,tov), ok =
+          let coer_rhs_new, (frv,tov), ok,_ =
             let ho_ps2  = CF.get_node_ho_args head_node_new in
             match_one_ho_arg_simple_helper prog new_estate
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
           let f = x_add subst_avoid_capture frv tov f in
           let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
-          let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
+          let () = y_binfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
           let () = y_ninfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
-          let () = y_ninfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
-          
-          (*   if (ho_ps1=[]) then coer_rhs_new,1 else *)
-          (*     let args = List.combine ho_ps1 ho_ps2 in *)
-          (*     let res = List.map (match_one_ho_arg_simple prog new_estate f conseq_extra) args in *)
-          (*     let ok,maps = List.split res in *)
-          (*     let maps,subst = List.split maps in *)
-          (*     let maps = List.concat maps in *)
-          (*     let fail = List.exists (fun x -> x=0) ok in *)
-          (*     let ok = if fail then 0 else 1 in *)
-          (*     let coer_rhs_new = CF.subst_hvar coer_rhs_new maps in *)
-          (*     coer_rhs_new, ok *)
-          (* in *)
-          (* let () = print_endline_quiet ("coer_rhs_new = " ^ (Cprinter.string_of_formula coer_rhs_new)) in *)
+          let () = y_binfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
 
           (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
           (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
@@ -16087,7 +16093,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         x_dinfo_zp (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
         (false, estate, h, p, vp, mkNormalFlow ()) (* false, return dummy h and p *)
       else
-        let coer_rhs_new, (frv,tov), ok =
+        let coer_rhs_new, (frv,tov), ok,_ =
           (* let ho_ps2  = CF.get_node_ho_args head_node_new in *)
           (* TOD below arguments need to be checked *)
           match_one_ho_arg_simple_helper prog new_estate
