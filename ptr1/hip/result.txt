@@ -8,7 +8,7 @@ ex6d3-array-index-sorted.ss, 1.75
 ex6e-array-index-max.ss, 2.74
 ex6j1-binary-search-merge.ss, 31.72
 ex6l-selection-sort.ss, 11.26
-ex6l1-selection-sort.ss, failed
+ex6l1-selection-sort.ss, fail
 ex6l2-selection-sort.ss, 13.33
 ex6l3-selection-sort.ss, failed
 ex6l4-selection-sort.ss, 26.79
