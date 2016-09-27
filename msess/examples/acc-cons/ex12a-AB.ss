@@ -17,17 +17,17 @@ lemma_norm "CON"  self::Chan{@S Fc2<id,ppp1,qq> ;; %R}<> * qq::Fc<id,ppp2> -> se
 lemma_norm "REM"  self::Fc<_,aaa> & aaa=0 -> emp.
 
 
-/* pred_sess_prot G<A,B,C> == A->B:1;;C->B:1;  */
-/* pred_sess_prot G<A,B,C> == A->B:1;;F(id);;C->B:1; */
-/* pred_sess_prot G<A,B,C> == A->B:1;;Fp(id,1);;C->B:1;  */
+/* pred_sess_prot G<A,B,C> == A->B:1;;B->C:1;  */
+/* pred_sess_prot G<A,B,C> == A->B:1;;F(id);;B->C:1; */
+/* pred_sess_prot G<A,B,C> == A->B:1;;Fp(id,1);;B->C:1;  */
 
 pred_sess_proj GBA<> == ?1;
-pred_sess_proj GBC<> == ?1;
+pred_sess_proj GBC<> == !1;
 pred_sess_proj GAB<> == !1;
-pred_sess_proj GCB<> == !1;
+pred_sess_proj GCB<> == ?1;
 
 void B(Channel a, Channel c)
-  requires a::Chan{@S ?1;;Fa2<22,1.0,qqq>}<> * c::Chan{@S Fc2<22,1.0,qqq>;;?1}<>
+  requires a::Chan{@S ?1;;Fa2<22,1.0,qqq>}<> * c::Chan{@S Fc2<22,1.0,qqq>;;!1}<>
   /* requires a::Chan{@S ?1;;Fp<22,1>}<> * c::Chan{@S Fp<22,1>;;?1}<> */
   /* requires a::Chan{@S ?1}<> * c::Chan{@S ?1}<> */
   ensures  a::Chan{emp}<> * c::Chan{emp}<>;
@@ -35,5 +35,5 @@ void B(Channel a, Channel c)
   dprint;
   int x = receive(a); 
   dprint;
-  int y = receive(c);
+  send(c,1);
 }

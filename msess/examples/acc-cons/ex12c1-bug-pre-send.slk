@@ -1,0 +1,82 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+// sleek_include 'msess/notes/commprimitives.slk'. 
+
+
+pred_prim Fc<id:int,p:float>. //consumer
+pred_prim Fa<id:int,p:float>. //accumulator
+
+pred_prim Fc2<id:int,p:float,var>. //consumer
+pred_prim Fa2<id:int,p:float,var>. //accumulator
+
+lemma_norm "ACC"  self::Fa<id,aa> * self::Fa<id,bb> -> self::Fa<id,aa+bb>.
+lemma_norm "FULL" self::Fa<id,aaa> & aaa=1.0 -> self::Fc<id,1.0>.
+lemma_norm "REL"  self::Chan{@S Fa2<id,ppp,qq>;;%R}<> -> self::Chan{@S %R}<> * qq::Fa<id,ppp>.
+lemma_norm "CON"  self::Chan{@S Fc2<id,ppp1,qq> ;; %R}<> * qq::Fc<id,ppp2> -> self::Chan{@S %R}<> * qq::Fc<id,ppp2-ppp1>.
+lemma_norm "REM"  self::Fc<_,aaa> & aaa=0.0 -> emp.
+
+
+ checkentail qqq::Fc<flted_33_2531,flted_16_5466>@M * 
+ e::Chan{@S Fc2<flted_33_2529,flted_33_2528,qqq> ;; !2}<> *
+ d'::Chan{emp}<> * 
+ a'::Chan{emp}<> * 
+ c'::Chan{emp}<> &
+ppp2_5372=flted_14_5348 & flted_33_2531=flted_33_2535 & 
+flted_14_5348=1.0 & flted_13_5341=bb_4610+flted_33_2534 & 
+flted_33_2528=0.5 & flted_33_2529=22 & flted_33_2530=0.5 & 
+flted_33_2531=22 & flted_33_2532= 0.5 & flted_33_2533=22 & 
+flted_33_2534= 0.5 & flted_33_2535=22 & e'=e & c'=c & d'=d & a'=a & 
+x'=1 & z'=1 & id_4612=flted_33_2533 & bb_4610=flted_33_2532 & 
+flted_16_5466+flted_33_2530=ppp2_5372 & v_int_40_2280'=2
+|-  e'::Chan{@S !v#%L(v);;%R}<> * %L(v_int_40_2280').
+
+print residue.
+
+
+/*
+
+ <1>qqq::Fc<id_4612,flted_15_344>@M * 
+    d'::Chan{ . emp&{FLOW,(20,21)=__norm#E}}<>@M * 
+    a'::Chan{ . emp&{FLOW,(20,21)=__norm#E}}<>@M * 
+    c'::Chan{ . emp&{FLOW,(20,21)=__norm#E}}<>@M&v_int_40_2280'=2 & 
+                                                 bb_4610=bb_4610 & 
+                                                 id_4612=id_4612 & z'=1 & 
+                                                 x'=1 & a'=a & d'=d & c'=c & 
+                                                 e'=e & id_4612=22 & 
+                                                 id_4612=22 & 
+                                                 bb_4610=FLOAT 0.5 & 
+                                                 id_4612=22 & id_4612=22 & 
+                                                 ppp2_5372=FLOAT 1. & 
+                                                 id_4612=id_4612 & 
+                                                 ppp2_5372=ppp2_5372 & 
+                                                 id_4612=id_4612 & 
+                                                 flted_15_344+FLOAT 0.5=
+                                                 flted_15_344+FLOAT 0.5 & 
+                                                 FLOAT 0.5+flted_15_344+
+                                                 FLOAT 0.5=ppp2_5372&{FLOW,(20,21)=__norm#E}
+ ho_vars: [L[msg_178] --> emp&msg_178=2&{FLOW,(20,21)=__norm#E};
+ R --> emp&
+           {FLOW,(20,21)=__norm#E}]
+[[(Complex: CON) ==>  SEARCH ==>  Match(e,e')]]
+
+*/
+/*
+checkentail v_int_40_2280'=2 &  bb_4610=bb_4610 & 
+                                                 id_4612=id_4612 & z'=1 & 
+                                                 x'=1 & a'=a & d'=d & c'=c & 
+                                                 e'=e & id_4612=22 & 
+                                                 id_4612=22 & 
+                                                 bb_4610= 0.5 & 
+                                                 id_4612=22 & id_4612=22 & 
+                                                 ppp2_5372= 1.0 & 
+                                                 id_4612=id_4612 & 
+                                                 ppp2_5372=ppp2_5372 & 
+                                                 id_4612=id_4612 & 
+                                                 flted_15_344+ 0.5=
+                                                 flted_15_344+ 0.5 & 
+                                                  0.5+flted_15_344+
+                                                  0.5=ppp2_5372 |- flted_15_344=0.0.
+expect Valid.
+print residue.
+
+*/

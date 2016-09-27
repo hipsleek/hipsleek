@@ -13762,7 +13762,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_rhs_rest = rhs_rest;
 } -> 
       (* let () = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
-      let r1,r2 = x_add do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
+      let r1,r2 = x_add_1 (do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding) pos in
       (r1,Search r2)
     | Context.M_ramify_lemma {
         Context.match_res_lhs_node = lhs_node;
@@ -14010,7 +14010,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       let () = x_dinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
       let () = x_dinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
       let () = x_dinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
-      let r1,r2 = x_add do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
+      let r1,r2 = x_add_1 (do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding) pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in
@@ -14686,13 +14686,13 @@ and match_one_ho_arg_simple_helper prog estate
   bool - folding?
   pid - formula label?
 *)
-and do_universal prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
+and do_universal prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding ?allow_cycle:(allow_cycle=false) pos: (list_context * proof) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "do_universal"  Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula pr 
-    (fun _ _ _ -> do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos)
+    (fun _ _ _ -> do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding ~allow_cycle:allow_cycle pos)
     node rest_of_lhs conseq
 
-and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
+and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding ?allow_cycle:(allow_cycle=false) pos: (list_context * proof) =
   begin
     (* rename the bound vars *)
     let f_univ_vars = CP.fresh_spec_vars coer.coercion_univ_vars in
@@ -14762,7 +14762,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
       *)
       let apply_coer = (x_add coer_target prog coer anode (CF.formula_of_base rhs_b)
                           (CF.formula_of_base lhs_b) estate.es_rhs_eqset) in
-      if (not(apply_coer) || (is_cycle_coer coer origs))
+      if (not(apply_coer) || ((is_cycle_coer coer origs ) && not(allow_cycle)))
       then
         (* let s = (pr_list string_of_bool [f1;f3;f4;f5;f6]) in *)
         (x_dinfo_zp (lazy("[do_universal]: Coercion cannot be applied!"(* ^s *))) pos;
@@ -15176,7 +15176,7 @@ and apply_one_norm_coerc_x prog coerc estate fnode frest =
   let lhs_b = CF.extr_lhs_b estate in
   let rhs_b = CF.extr_rhs_b conseq in
   let ln2 = HEmp in
-  do_coercion prog (Some coerc) estate conseq frest resth2 fnode lhs_b rhs_b ln2 false no_pos
+  do_coercion prog (Some coerc) estate conseq frest resth2 fnode lhs_b rhs_b ln2 false ~allow_cycle:true no_pos
 
 and apply_one_norm_coerc prog coerc estate fnode frest =
   let prc = Cprinter.string_of_coercion in
@@ -15263,15 +15263,15 @@ and norm_w_coerc_formula prog ?left:(left = true) es formula =
 (* -------------------- end norm lemma app -------------------- *)
 (* ------------------------------------------------------------ *)
     
-and apply_universal prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
+and apply_universal prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding ?allow_cycle:(allow_cycle=false) pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
-    (fun _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos)
+    (fun _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding ~allow_cycle:allow_cycle pos)
     anode resth1 c2
 (* anode - chosen node, resth1 - rest of heap *)
 
 (*******************************************************************************************************************************************************************************************)
-and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
+and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding ?allow_cycle:(allow_cycle=false) pos =
   (*******************************************************************************************************************************************************************************************)
   let lhs_h,lhs_p,lhs_vp,lhs_t,lhs_fl,lhs_a = CF.extr_formula_base lhs_b in
   flush stdout;
@@ -15290,7 +15290,7 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
     let estate = CF.moving_ivars_to_evars estate anode in
     let () = x_dinfo_zp (lazy ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos in
     (*do_universal anode f coer*)
-    x_add do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
+    x_add_1 (do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding ~allow_cycle:allow_cycle) pos
   end
 
 
@@ -15318,18 +15318,18 @@ and find_coercions c1 c2 prog anode ln2 =
   let p2 (v,_) = pr_pair p p v in
   Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
-and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding ?allow_cycle:(allow_cycle=false) pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
   Debug.no_7 "do_coercion" pr_es pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base (pr_opt Cprinter.string_of_coercion) pr 
-    (fun _ _ _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) estate anode resth1 ln2 resth2 rhs_b c_opt
+    (fun _ _ _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding ~allow_cycle:allow_cycle pos) estate anode resth1 ln2 resth2 rhs_b c_opt
 
 (*
   - c_opt : coercion declaration
 *)
 
-and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding ?allow_cycle:(allow_cycle=false) pos : (CF.list_context * proof list) =
   let c1 = get_node_name 21 anode in
   let c2 = get_node_name 22 ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
@@ -15361,13 +15361,13 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     x_dinfo_zp (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
     (* universal coercions *)
     let univ_r = if (List.length univ_coers)>0 then
-        let univ_res_tmp = List.map (fun coer -> x_add apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
+        let univ_res_tmp = List.map (fun coer -> x_add_1 (apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding ~allow_cycle:allow_cycle) pos) univ_coers in
         let univ_res, univ_prf = List.split univ_res_tmp in
         Some (univ_res, univ_prf)
       else None in
     (* left coercions *)
     let left_r = if (List.length coers1)>0 then
-        let tmp1 = List.map  (fun coer -> x_add apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos) coers1 in
+        let tmp1 = List.map  (fun coer -> x_add_1 (apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding ~allow_cycle:allow_cycle) pos) coers1 in
         let left_res, left_prf = List.split tmp1 in
         let left_prf = List.concat left_prf in
         Some (left_res,left_prf)
@@ -15396,7 +15396,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 (*******************************************************************************************************************************************************************************************)
 (* apply_left_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
+and apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding ?allow_cycle:(allow_cycle=false) pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_5 "apply_left_coercion" 
     (add_str "estate" Cprinter.string_of_entail_state) 
@@ -15404,7 +15404,7 @@ and apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_f
     (add_str "resth1" Cprinter.string_of_h_formula) 
     (add_str "coer" Cprinter.string_of_coercion)
     (add_str "conseq" Cprinter.string_of_formula) pr
-    (fun _ _ _ _ _-> apply_left_coercion_a estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
+    (fun _ _ _ _ _-> apply_left_coercion_a estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding ~allow_cycle:allow_cycle pos)
     estate anode resth1 coer conseq
 (* anode - LHS matched node
    resth1 - LHS remainder
@@ -15419,7 +15419,7 @@ and apply_left_coercion estate coer prog conseq resth1 anode (*lhs_p lhs_t lhs_f
    pos 
    pid - ?id
 *)
-and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos=
+and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding ?allow_cycle:(allow_cycle=false) pos=
   (*left-coercion can be simple or complex*)
   (*let resth1 = if (coer.coercion_case = Cast.Ramify) then
     let () = print_string("anode = "^(Cprinter.string_of_h_formula anode)^"\n") in
@@ -15484,13 +15484,13 @@ and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is
     let () = x_dinfo_zp (lazy ("heap_entail_non_empty_rhs_heap: "
                                ^ "left_coercion: c1 = "
                                ^ c1 ^ "\n")) pos in
-    apply_left_coercion_complex  estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos
+    apply_left_coercion_complex  estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding ~allow_cycle:allow_cycle pos
 
 
 
 (*TOCHECK: use pickup node to pickup the self node*)
 (*LDK: COMPLEX lemmas are treated in a different way*)
-and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos =
+and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding ?allow_cycle:(allow_cycle=false) pos =
   (*simple lemmas with simple lhs with single node*)
   let lhs_h,lhs_p,lhs_vp,lhs_t,lhs_fl, lhs_a = CF.extr_formula_base lhs_b in
   let f = CF.mkBase resth1 lhs_p lhs_vp lhs_t lhs_fl lhs_a pos in
@@ -15624,7 +15624,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
       (* let apply_coer = (x_add coer_target prog coer node (CF.formula_of_base target_b (\* rhs_b *\)) (CF.formula_of_base lhs_b)) in *)
       let ho_ps1  = CF.get_node_ho_args anode in
       let ho_ps2  = CF.get_node_ho_args head_node in
-      if (is_cycle_coer coer origs)
+      if (is_cycle_coer coer origs && not(allow_cycle))
       then
         (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
         let () = x_dinfo_zp (lazy("[apply_left_coercion_complex_x]:failed left coercion application: in a cycle!"(* ^s *))) pos in
@@ -15847,7 +15847,7 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
     let msg = "failed left coercion application, can not match head node" in
     mk_fail_ctx estate anode msg
 
-and apply_left_coercion_complex estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos=
+and apply_left_coercion_complex estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding ?allow_cycle:(allow_cycle=false) pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_5 "apply_left_coercion_complex" 
     (add_str "anode" Cprinter.string_of_h_formula) 
@@ -15855,7 +15855,7 @@ and apply_left_coercion_complex estate coer prog conseq resth1 anode lhs_b rhs_b
     (add_str "coer" Cprinter.string_of_coercion)
     (add_str "lhs_b" !CF.print_formula)
     (add_str "rhs_b" !CF.print_formula) pr
-    (fun _ _ _ _ _ -> apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding pos) 
+    (fun _ _ _ _ _ -> apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs_b c1 is_folding ~allow_cycle:allow_cycle pos) 
     anode resth1 coer (CF.Base lhs_b) (CF.Base rhs_b)
 
 (*pickup a node named "name" from a list of nodes*)
