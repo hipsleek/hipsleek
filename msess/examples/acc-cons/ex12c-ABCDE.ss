@@ -14,7 +14,7 @@ lemma_norm "ACC"  self::Fa<id,aa> * self::Fa<id,bb> -> self::Fa<id,aa+bb>.
 lemma_norm "FULL" self::Fa<id,aaa> & aaa=1.0 -> self::Fc<id,1.0>.
 lemma_norm "REL"  self::Chan{@S Fa2<id,ppp,qq>;;%R}<> -> self::Chan{@S %R}<> * qq::Fa<id,ppp>.
 lemma_norm "CON"  self::Chan{@S Fc2<id,ppp1,qq> ;; %R}<> * qq::Fc<id,ppp2> -> self::Chan{@S %R}<> * qq::Fc<id,ppp2-ppp1>.
-lemma_norm "REM"  self::Fc<_,aaa> & aaa=0.0 -> emp.
+lemma_norm "REM"  self::Fc<id,aaa> & aaa=0.0 -> emp.
 
 /* pred_sess_prot G<A,B,C> == A->B:1 * D->B:1;;B->C:2 * B->E:2;  */
 /* pred_sess_prot G<A,B,C> == A->B:1 * D->B:1;;F(id);;B->C:1 * B->E:2;  */
@@ -38,7 +38,14 @@ lemma_norm "REM"  self::Fc<_,aaa> & aaa=0.0 -> emp.
   send(c,1);
   dprint;
   send(e,2);
+  dprint;
 }
+
+
+/*
+why was REM not applied?
+qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
+*/
 
 //should succeed
 /* void B_P(Channel a, Channel d, Channel c) */

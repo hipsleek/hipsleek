@@ -2093,6 +2093,9 @@ let case_of_coercion_x ?ck:(ck=LEM) (lhs:F.formula) (rhs:F.formula) : coercion_c
       if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
         (*all nodes having the same names*)
         (* ??? why using the node names *)
+        (* Why is Normalize true classified tgt with Simple & Complex? 
+           LEM_NORM only recognizes Simple and Complex. 
+        *)
         if lhs_length=2 && rhs_length=1 && not(ck=LEM_NORM) then Normalize true
         else if lhs_length=1 && rhs_length=2  && not(ck=LEM_NORM) then Normalize false
         else if lhs_length=1 then Simple

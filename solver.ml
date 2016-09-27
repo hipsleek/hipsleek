@@ -14910,11 +14910,11 @@ and is_original_match anode ln2 =
 (*******************************************************************************************************************************************************************************************)
 (* rewrite_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (int * formula) =
+and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken ?allow_cycle:(allow_cycle=false) pos : (int * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_int Cprinter.string_of_formula in
   Debug.no_4 "rewrite_coercion" Cprinter.string_of_h_formula  p1 Cprinter.string_of_coercion Cprinter.string_of_entail_state
-    p2 (fun _ _ _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f coer estate
+    p2 (fun _ _ _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ~allow_cycle:allow_cycle pos) node f coer estate
       (*
         the fst of res: int
         0: false
@@ -14922,7 +14922,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (
         2: true & __Error
       *)
 (*LDK: return the a new formula (new_f) after apply coercion into f*)
-and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (int * formula) =
+and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ?allow_cycle:(allow_cycle=false) pos : (int * formula) =
   (* This function also needs to add the name and the origin list
      of the source view to the origin list of the target view. It
      needs to check if the target view in coer_rhs belongs to the
@@ -15030,7 +15030,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
         let flag = if !allow_imm then false else not (apply_coer) in
         let () = y_dinfo_hp (add_str "flag" string_of_bool) flag in
         let () = y_dinfo_hp (add_str "apply_coer" string_of_bool) apply_coer in
-        if (flag || (is_cycle_coer coer origs))
+        if (flag || ((is_cycle_coer coer origs) && not(allow_cycle)))
         then
           let () = if not !Globals.web_compile_flag then y_winfo_pp ("Rewrite cannot be applied : "^("0")^"\n") in
           (x_dinfo_zp (lazy("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)))
@@ -15340,7 +15340,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
         let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
         if !perm=NoPerm || c.coercion_case<>(Normalize false) then
           if c.coercion_case<>(Normalize true)
-          then r else (([],[]),[])
+          then r else if c.coercion_kind = LEM_NORM then r else (([],[]),[]) (* TODOLEMMA Andreea: when the classification of lemma kind will be set to only Simple and Complex these checks will have to be removed *)
         else if ( (!perm=Dperm) && (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)))) || !use_split_match
         then (([],[]),[])
         else (
@@ -15351,7 +15351,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
       | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
   if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
-  || not(is_original_match anode ln2)
+  (* || not(is_original_match anode ln2) *)  (*TODO andreeac uncomment this line*)
   then
     let msg = "no lemma found in both LHS and RHS nodes (do coercion)" in
     (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must (* "no lemma found in both LHS and RHS nodes (do coercion)" *) msg
@@ -15439,7 +15439,7 @@ and apply_left_coercion_a estate coer prog conseq resth1 anode lhs_b rhs_b c1 is
     let f = mkBase resth1 lhs_p lhs_vp lhs_t lhs_fl lhs_a pos in
     let () = x_dinfo_zp (lazy ("apply_left_coercion: left_coercion:\ n### c1 = " ^ c1
                                ^ "\n ### anode = "^ (Cprinter.string_of_h_formula anode) ^ "\n")) pos in
-    let ok, new_lhs = x_add rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true pos in
+    let ok, new_lhs = x_add_1 (rewrite_coercion prog estate anode f coer lhs_b rhs_b rhs_b true ~allow_cycle:allow_cycle) pos in
     let () = x_dinfo_zp (lazy ( "apply_left_coercion: after rewrite_coercion"
                                 ^ "\n ### ok = "^ (string_of_int ok)
                                 ^ "\n ### new_lhs = "^ (Cprinter.string_of_formula new_lhs)
@@ -15760,9 +15760,9 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
           let f = x_add subst_avoid_capture frv tov f in
           let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
-          let () = y_binfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
+          let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
           let () = y_ninfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
-          let () = y_binfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
+          let () = y_ninfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
 
           (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
           (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
@@ -16798,7 +16798,7 @@ and apply_right_coercion_b estate coer prog (conseq:CF.formula) resth2 ln2 lhs_b
   let f = mkBase resth2 rhs_p rhs_vp rhs_t rhs_fl rhs_a pos in
   let () = x_dinfo_zp (lazy ("do_right_coercion : c2 = "  ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
-  let ok, new_rhs = x_add rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
+  let ok, new_rhs = x_add_1 (rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false) pos in
   if (is_coercible ln2)&& (ok>0)  then begin
     (* lhs_b <- rhs_b *)
     (*  _ |- ln2 *)

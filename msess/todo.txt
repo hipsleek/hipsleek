@@ -766,9 +766,19 @@ Exception occurred: Stream.Error("[projection_formula] expected after SEMICOLONS
 
 =============================================
 =============================================
+[SOLVED] by adding a LEM_NORM check in do_coercion
 
+../../../hip ex12c-ABCDE.ss -p B -tp oc --esl --print-type
 
-=============================================
+why was REM not applied? fence qqq should have been removed
+qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
+
+from sleek_log_ex12c-ABCDE_ss.txt:
+
+res:  1[
+    qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
+ppp2_10615:float=flted_16_10825:float &  .... ]
+============================================= 
 =============================================
 
 

@@ -80,3 +80,50 @@ expect Valid.
 print residue.
 
 */
+
+checkentail
+flted_16_10612+flted_33_2633=ppp2_10365 & 
+flted_16_10496+flted_33_2631=ppp2_10393 & bb_7196=flted_33_2635 & 
+
+flted_33_2637= 0.5  & flted_33_2635= 0.5 & 
+ flted_33_2633= 0.5 & 
+flted_33_2631= 0.5 & flted_13_10330=bb_7196+flted_33_2637 
+& flted_14_10337= 1.0 
+& ppp2_10393=flted_14_10337  
+& ppp2_10365=flted_16_10496 
+ |- flted_16_10612 =0.0.
+
+print residue.
+
+/**
+
+ qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M * 
+ d':Channel::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M * 
+ a':Channel::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M * 
+ c':Channel::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M * 
+ e':Channel::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M&
+z':int=1 & x':int=1 & a':Channel=a:Channel & d':Channel=d:Channel & 
+c':Channel=c:Channel & e':Channel=e:Channel & flted_33_2634:int=22 & 
+flted_33_2634:int=22 & 22=22 & FLOAT 1.=FLOAT 1. & FLOAT 0.5=FLOAT 0.5 & 
+flted_16_10612:float+FLOAT 0.5=flted_16_10612:float+FLOAT 0.5 & 
+flted_16_10612:float+FLOAT 0.5+FLOAT 0.5=FLOAT 1.
+
+*/
+
+checkentail
+flted_16_10612:float+flted_33_2633:float=ppp2_10365:float & 
+flted_16_10496:float+flted_33_2631:float=ppp2_10393:float & 
+bb_7196:float=flted_33_2635:float & id_7198:int=flted_33_2636:int & 
+a':Channel=a:Channel & d':Channel=d:Channel & c':Channel=c:Channel & 
+e':Channel=e:Channel & flted_33_2638:int=22 & 
+flted_33_2637:float= 0.5 & flted_33_2636:int=22 & 
+flted_33_2635:float= 0.5 & flted_33_2634:int=22 & 
+flted_33_2633:float= 0.5 & flted_33_2632:int=22 & 
+flted_33_2631:float= 0.5 & 
+flted_13_10330:float=bb_7196:float+flted_33_2637:float & 
+flted_14_10337:float= 1.0 & flted_33_2632:int=flted_33_2638:int & 
+ppp2_10393:float=flted_14_10337:float & 
+flted_33_2634:int=flted_33_2632:int & 
+ppp2_10365:float=flted_16_10496:float 
+ |- flted_16_10612=0.0.
+ print residue.
