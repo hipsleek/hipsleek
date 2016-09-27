@@ -12,7 +12,7 @@ arr_seg<i,n> == i=n & i>=0
 /*   inv n>i & i>=0; */
 
 arr_seg_max<i,n,maxv,pos> == x::arrI<maxv> & x=self+i & i=n-1 & i>=0 & i=pos //& cur<=max_value
-  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2,pos> & x=self+i & i>=0 & i<n-1 & pos>=i & pos<=n-1 & ((!(i=pos))|(maxv=cur)) & maxv=max(cur,maxv2)
+  or x::arrI<cur> * self::arr_seg_max<i+1,n,maxv2,pos> & x=self+i & i>=0 & i<n-1 & pos>=i & pos<=n-1 //& ((!(i=pos))|(maxv=cur)) & maxv=max(cur,maxv2)
   inv n>i & i>=0 & pos>=i & pos<=n-1;
 
 void split_arr(arrI base,int i,int m,int k)

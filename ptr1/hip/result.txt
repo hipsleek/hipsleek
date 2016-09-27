@@ -1,0 +1,22 @@
+ex6a-array-init.ss, 1.67
+ex6b-array-init.ss, 1.60
+ex6c-array-index-init.ss, 1.47
+ex6c1-array-index-init.ss, 1.72
+ex6d-array-index-copy.ss, 2.97
+ex6d2-array-index-copy.ss, 3.40
+ex6d3-array-index-sorted.ss, 1.75
+ex6e-array-index-max.ss, 2.74
+ex6j1-binary-search-merge.ss, 31.72
+ex6l-selection-sort.ss, 11.26
+ex6l1-selection-sort.ss, failed
+ex6l2-selection-sort.ss, 13.33
+ex6l3-selection-sort.ss, failed
+ex6l4-selection-sort.ss, 26.79
+ex6l5-selection-sort.ss, can't compiled
+ex6l6-selection-sort.ss, can't compiled
+ex6l7-selection-sort.ss, 46.35
+ex6m1-bubble-sort.ss, 5.13
+ex6n1-quicksort.ss, 76.07
+ex6n2-quicksort.ss, 16.49
+ex6n3-quicksort.ss, 25.34
+ex6n4-quicksort.ss, 25.31
