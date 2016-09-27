@@ -15637,6 +15637,23 @@ let is_no_heap_h_formula (e : h_formula) : bool =
   in
   fold_h_formula e f (List.for_all (fun x -> x))
 
+let get_array_end_point (e: h_formula) =
+  let f x =
+    match x with
+    | DataNode data -> Some [data.h_formula_data_node]
+    | _ -> None
+  in
+  fold_h_formula e f List.concat
+;;
+
+let get_array_end_point_formula (f:formula) =
+  match f with
+  | Base ({formula_base_heap = heap;
+           formula_base_pure = pure;} as fb) -> 
+     get_array_end_point heap
+  | _ -> []
+;;
+                
 (* let is_no_heap_struc_formula (e : struc_formula) : bool =  *)
 (*   let f_struc_f _ _ = None in *)
 (*   let f_f _ _ = None in *)

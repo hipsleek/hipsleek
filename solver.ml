@@ -13263,13 +13263,13 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                | Some v -> CP.name_of_spec_var v
                | _ -> "")
           in
-          let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l,0))) left_ls in
+          let left_acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l,0,None))) left_ls in
           (Context.Search_action left_acts)
         else if lem_type = 3 then
           let right_ls = Context.filter_norm_lemmas (Cast.look_up_coercion_with_target (Lem_store.all_lemma # get_left_coercion)
                                                        (Cfutil.get_data_view_name lhs_node) (Cfutil.get_data_view_name rhs_node))  in
           if (right_ls) = [] then Context.M_unfold (new_m_res, unfold_num) else
-            let acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l,0))) (right_ls) in
+            let acts = List.map (fun l -> (1, Context.M_lemma (new_m_res,Some l,0,None))) (right_ls) in
             (Context.Search_action acts)
         else Context.M_unfold (new_m_res, unfold_num)
       in
@@ -13544,7 +13544,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                       else estate
             end in
         let estate = new_estate in
-        let () = y_tinfo_hp (add_str "new_estate" pr_es) new_estate in
+        let () = y_binfo_hp (add_str "new_estate" pr_es) new_estate in
         match lhs_node with
         | HRel (hp,args,_) ->
           (* if CF.is_exists_hp_rel hp estate  then *)
@@ -13943,7 +13943,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-      },coerc_opt,do_infer) ->
+      },coerc_opt,do_infer,univ_inst_op) ->
       (* let () = print_string ("xxx do_coercion: M_lemma \n") in *)
       (* let () = match coerc_opt with *)
       (*   | None -> () *)
@@ -13977,7 +13977,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       let () = x_dinfo_hp (add_str  "rhs_b" Cprinter.string_of_formula_base ) rhs_b pos in
       let () = x_dinfo_hp (add_str  "conseq" Cprinter.string_of_formula) conseq pos in
       let () = x_dinfo_hp (add_str  "es_infer_vars_hp_rel" !CP.print_svl) estate.CF.es_infer_vars_hp_rel pos in
-      let r1,r2 = x_add do_coercion prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
+      let r1,r2 = x_add (do_coercion ~univ_var_inst:univ_inst_op) prog coerc_opt estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
       (r1,Search r2)
     | Context.Undefined_action mr ->
       let err_msg = "undefined action" in
@@ -14619,13 +14619,13 @@ and match_one_ho_arg_simple ((lhs, rhs) : CF.rflow_formula * CF.rflow_formula):
   bool - folding?
   pid - formula label?
 *)
-and do_universal prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
+and do_universal ?(univ_var_inst=None) prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "do_universal"  Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula pr 
-    (fun _ _ _ -> do_universal_x prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos)
+    (fun _ _ _ -> do_universal_x ~univ_var_inst:univ_var_inst prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos)
     node rest_of_lhs conseq
 
-and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
+and do_universal_x ?(univ_var_inst=None) prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b rhs_b conseq is_folding pos: (list_context * proof) =
   begin
     (* rename the bound vars *)
     let f_univ_vars = CP.fresh_spec_vars coer.coercion_univ_vars in
@@ -14633,9 +14633,9 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
       let () = print_string ("univ_vars: "   ^ (String.concat ", "   (List.map CP.name_of_spec_var  coer.coercion_univ_vars)) ^ "\n") in
     *)
     (*let () = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
-    let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
-    let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
-    let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
+    let tmp_rho_univ = List.combine coer.coercion_univ_vars f_univ_vars in
+    let coer_lhs = x_add CF.subst tmp_rho_univ coer.coercion_head in
+    let coer_rhs = x_add CF.subst tmp_rho_univ coer.coercion_body in
     let () = y_tinfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
@@ -14665,9 +14665,9 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
     let () = y_tinfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
     let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
-    let lhs_w_univ_rel = List.fold_left (fun g v ->
-        CP.mkAnd g (mk_Univ_rel v) no_pos
-      ) lhs_guard univ_vars2 in
+    (* let lhs_w_univ_rel = List.fold_left (fun g v -> *)
+    (*     CP.mkAnd g (mk_Univ_rel v) no_pos *)
+    (*   ) lhs_guard univ_vars2 in *)
     (*node -> current heap node | lhs_heap -> head of the coercion*)
     match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
@@ -14720,6 +14720,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
           (* the \rho substitution \rho (B) and  \rho(G) is performed *)
           (*subst perm variable when applicable*)
+          
+          
           let perms1,perms2 =
             if (Perm.allow_perm ()) then
               Perm.get_perm_var_lists perm1 perm2
@@ -14746,12 +14748,60 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let () = y_tinfo_hp (add_str "pure of coer_rhs" !CP.print_formula) pure_rhs in
           let () = y_tinfo_hp (add_str "pure_rhs_no_ex" !CP.print_formula) pure_rhs_no_ex in
           let univ_vars2 = if univ_vars2==[] then f_univ_vars else univ_vars2 in
-          let lhs_w_univ_rel = List.fold_left (fun g v ->
-              CP.mkAnd g (mk_Univ_rel v) no_pos
-          ) lhs_guard univ_vars2 in
+          (* let lhs_w_univ_rel = List.fold_left (fun g v -> *)
+          (*                          CP.mkAnd g (mk_Univ_rel v) no_pos *)
+          (*                        ) lhs_guard univ_vars2 in *)
+          
+          (* Add initantiation of Univ Var here*)
+          let univ_init =
+            match univ_var_inst with
+            | Some univ_var_inst_lst ->
+               List.filter
+                 (fun ((ov,_) as item) ->
+                   (List.exists (fun fv -> CP.eq_spec_var ov fv) coer.coercion_univ_vars))
+                 univ_var_inst_lst
+                 
+                 
+            | None -> []
+          in
+          let lhs_w_univ_rel =
+            match univ_init with
+            | (_::_ as pair_lst) when !Globals.array_c_program ->
+               let () = y_binfo_hp (add_str "tmp_rho_univ" (pr_list (pr_pair !CP.print_sv !CP.print_sv))) tmp_rho_univ in
+               List.fold_left (fun g (ov,ic) ->
+                   let inst_f = (CP.subst tmp_rho_univ ic) in
+                   let () = y_binfo_hp (add_str "inst_f" !CP.print_formula) inst_f in
+                   (CP.mkAnd g inst_f no_pos)
+                 ) lhs_guard pair_lst
+            | _ ->
+               List.fold_left (fun g v ->
+                   CP.mkAnd g (mk_Univ_rel v) no_pos
+                 ) lhs_guard univ_vars2
+          in
+          (* | univ::_ -> *)
+          (*    let array_end_list = CF.get_array_end_point_formula conseq in *)
+          (*    let pure_f = CP.mkAnd (CF.get_pure rest_of_lhs) lhs_guard no_pos in *)
+          (*    let univ_v = CP.mkVar univ no_pos in *)
+          (*    List.fold_left *)
+          (*      (fun r item -> *)
+          (*        match r with *)
+          (*        | None -> *)
+          (*           let init_f = CP.mkEqExp univ_v (CP.mkVar item no_pos) no_pos in *)
+          (*           let to_check_f = CP.mkAnd init_f pure_f no_pos in *)
+          (*           let () = y_binfo_hp (add_str "to_check_f" !CP.print_formula) to_check_f in *)
+          (*           if !CP.tp_is_sat to_check_f *)
+          (*           then Some init_f *)
+          (*           else None *)
+          (*        | Some i -> Some i) *)
+          (*      None *)
+          (*      array_end_list *)
+          (* | [] -> *)
+          (*    None *)
+          
+
           let coer_rhs_new1 = 
-             if !Globals.old_univ_lemma then coer_rhs_new1 
-             else
+            if !Globals.old_univ_lemma then coer_rhs_new1 
+            else
               let lhs_w_univ_rel = CP.subst_avoid_capture fr_vars to_vars lhs_w_univ_rel in
               let () = y_tinfo_hp (add_str "lhs_w_univ_rel" !CP.print_formula) lhs_w_univ_rel in
               CF.combine_star_pure ~rename_flag:false coer_rhs_new1 lhs_w_univ_rel in
@@ -15106,15 +15156,15 @@ Doing case splitting based on the guard.
     | _ -> (0, mkTrue (mkTrueFlow ()) no_pos)
 (*end	*)
 
-and apply_universal prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
+and apply_universal ?(univ_var_inst=None) prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
   Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
-    (fun _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos)
+    (fun _ _ _ -> apply_universal_a ~univ_var_inst:univ_var_inst prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos)
     anode resth1 c2
 (* anode - chosen node, resth1 - rest of heap *)
 
 (*******************************************************************************************************************************************************************************************)
-and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
+and apply_universal_a ?(univ_var_inst=None) prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_folding pos =
   (*******************************************************************************************************************************************************************************************)
   let lhs_h,lhs_p,lhs_vp,lhs_t,lhs_fl,lhs_a = CF.extr_formula_base lhs_b in
   flush stdout;
@@ -15133,7 +15183,7 @@ and apply_universal_a prog estate coer resth1 anode lhs_b rhs_b c1 c2 conseq is_
     let estate = CF.moving_ivars_to_evars estate anode in
     let () = x_dinfo_zp (lazy ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos in
     (*do_universal anode f coer*)
-    x_add do_universal prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
+    x_add (do_universal ~univ_var_inst:univ_var_inst) prog estate anode f coer anode lhs_b rhs_b conseq is_folding pos
   end
 
 
@@ -15161,18 +15211,18 @@ and find_coercions c1 c2 prog anode ln2 =
   let p2 (v,_) = pr_pair p p v in
   Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
-and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion ?(univ_var_inst=None) prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
   let pr_es = Cprinter.string_of_entail_state(* _short *) in
   Debug.no_7 "do_coercion" pr_es pr_h pr_h pr_h pr_h Cprinter.string_of_formula_base (pr_opt Cprinter.string_of_coercion) pr 
-    (fun _ _ _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) estate anode resth1 ln2 resth2 rhs_b c_opt
+    (fun _ _ _ _ _ _ _ -> do_coercion_x ~univ_var_inst:univ_var_inst prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) estate anode resth1 ln2 resth2 rhs_b c_opt
 
 (*
   - c_opt : coercion declaration
 *)
 
-and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
+and do_coercion_x ?(univ_var_inst=None) prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let c1 = x_add_1 get_node_name anode in
   let c2 = x_add_1 get_node_name ln2 in
   let ((coers1,coers2),univ_coers) = match c_opt with
@@ -15204,7 +15254,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     x_dinfo_zp (lazy ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n")) pos;
     (* universal coercions *)
     let univ_r = if (List.length univ_coers)>0 then
-        let univ_res_tmp = List.map (fun coer -> x_add apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
+        let univ_res_tmp = List.map (fun coer -> x_add (apply_universal ~univ_var_inst:univ_var_inst) prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
         let univ_res, univ_prf = List.split univ_res_tmp in
         Some (univ_res, univ_prf)
       else None in

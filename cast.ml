@@ -1823,6 +1823,32 @@ let add_epure pf lst =
 
 (* get specialized baga form *)
 
+let get_spec_baga_raw prog c args root=
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  let ba_oinv = vdef.view_baga_x_over_inv in
+  let ba_exists = vdef.view_inv_exists_vars in
+  match ba_oinv with
+  | None -> None
+  | Some bl ->
+     let ba_exists_fresh = CP.fresh_spec_vars ba_exists in
+     let from_svs = (self_param vdef) :: ba_exists@vdef.view_vars in
+     let to_svs = root :: ba_exists_fresh@args in
+     let () = x_tinfo_hp (add_str "from_svs" !CP.print_svl) from_svs no_pos in
+     let () = x_tinfo_hp (add_str "to_svs" !CP.print_svl) to_svs no_pos in
+     let baga_lst = (* match ba_oinv with *)
+       let sst = List.combine from_svs to_svs in
+       List.map (Excore.EPureI.subst_epure sst) bl in
+     let () = x_tinfo_hp (add_str "baga (subst)= " ( !print_ef_pure_disj)) baga_lst no_pos in
+     (
+       match baga_lst with
+       | [([(a,Some (baga_from,baga_to))],baga_f)] ->
+          let base_exp = CP.mkVar a no_pos in
+          Some ((CP.mkAdd base_exp baga_from no_pos),(CP.mkAdd base_exp baga_to no_pos))
+       | _ -> let () = x_tinfo_pp "get_spec_baga_raw: Not Implemented for complicated baga" no_pos in
+              None
+     )
+;;
+
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
   let () = x_tinfo_hp (add_str "c= " (pr_id)) c no_pos in
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in

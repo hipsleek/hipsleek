@@ -16,11 +16,11 @@ int main( ) {
     int j;
     for ( j = i-1 ; j >= 0 && r ; j--)
       /*@
-        requires a::arr_seg<0,j+1> * xx::arrI<_> & xx = a+i & i>=1
+        requires a::arr_seg<0,j+1> * xx::arrI<_> & xx = a+i & i>=1 & j<i & j>=0
         ensures a::arr_seg<0,j+1> * xx::arrI<_>;
       */
       {
-      if ( a[i] == a[j] ) {
+      if ( a[j] ==0 ) {
         r = 1;
       }
     }
