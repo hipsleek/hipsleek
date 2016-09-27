@@ -2734,7 +2734,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     | Some oa2 ->
                        if !perm=Dperm && !use_split_match && not !consume_all
                        then Some (1,Search_action (oa2::[(1,M_split_match m_res)]))
-                       else None
+                       else a2
                   in
                 let () = y_tinfo_hp (add_str "a2" (pr_option pr_act)) a2 in
                 let a3 = (
