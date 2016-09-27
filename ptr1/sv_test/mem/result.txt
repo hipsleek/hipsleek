@@ -1,0 +1,7 @@
+array01-alloca_true-valid-memsafety.c, 10.01
+array02-alloca_true-valid-memsafety.c, 9.88
+array03-alloca_true-valid-memsafety.c, 9.95
+count_down-alloca_true-valid-memsafety.c, 512.88
+cstrlen-alloca_true-valid-memsafety.c, 1.71
+add_last-alloca_true-valid-memsafety.c, 45.96
+simplify.c, 8.91
