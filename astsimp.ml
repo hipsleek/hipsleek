@@ -9130,7 +9130,13 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
     | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) 
     (* URGENT:TODO:WN:HVar *)
-    | IF.HVar (v,hvar_vs) -> (used_names, [], IF.HVar (v,hvar_vs), IP.mkTrue no_pos) 
+    | IF.HVar (v,hvar_vs) ->
+      (* let new_args =  List.map (fun e -> (IP.Var(e, no_pos),false)) hvar_vs (\* args *\) in *)
+      (* let heap_args = List.map (fun a -> (a, LO.unlabelled)) new_args in *)
+      (* let new_used_names, hvars, evars, link_f = match_exp used_names heap_args no_pos in *)
+      (* let hvars = List.flatten (List.map IP.afv hvars) in *)
+      (* (new_used_names, evars, IF.HVar (v,hvars), link_f)  *)
+      (used_names, [], IF.HVar (v,hvar_vs), IP.mkTrue no_pos)
   in 
 
   (* added to filter out global relation from implicit quantification *)

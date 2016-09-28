@@ -2118,7 +2118,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   x_dinfo_zp (lazy ("SAT #" ^ sat_no)) no_pos;
   x_dinfo_zp (lazy (!print_pure f)) no_pos;
   (* let tstart = Gen.Profiling.get_time () in		 *)
-  let fn_sat f = (tp_is_sat_perm f) sat_no in
+  let fn_sat f = (tp_is_sat_perm f) sat_no in (* TODO: why separate is_sat for perm? *)
   let cmd = PT_SAT f in
   let () = Log.last_proof_command # set cmd in
   let logger fr tt timeout = 
