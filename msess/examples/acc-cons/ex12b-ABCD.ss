@@ -3,11 +3,11 @@ hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
 
-pred_prim Fc<id:int,p>; //consumer
-pred_prim Fa<id:int,p>; //accumulator
+pred_prim Fc<id:int,p:float>; //consumer
+pred_prim Fa<id:int,p:float>; //accumulator
 
-pred_prim Fc2<id:int,p,var>; //consumer
-pred_prim Fa2<id:int,p,var>; //accumulator
+pred_prim Fc2<id:int,p:float,var>; //consumer
+pred_prim Fa2<id:int,p:float,var>; //accumulator
 
 
 lemma_norm "ACC"  self::Fa<id,aa> * self::Fa<id,bb> -> self::Fa<id,aa+bb>.

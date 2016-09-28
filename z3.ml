@@ -73,7 +73,7 @@ let rec compute f n b =
 let rec smt_of_typ t =
   match t with
   | Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
-  | Float -> "Int" (* Currently, do not support real arithmetic! *)
+  | Float -> "Real" (* Currently, do not support real arithmetic! *)
   | Tree_sh -> "Int"
   | Int -> "Int"
   | AnnT -> "Int"

@@ -781,6 +781,73 @@ ppp2_10615:float=flted_16_10825:float &  .... ]
 ============================================= 
 =============================================
 
+../../../hip ex12c-ABCDE.ss -p B_F2 -tp oc
+
+
+HVar is not linearized: (HVar L[v_int_82_2225'])
+
+
+
+!!! **WARNING****solver.ml#4438:FREE VAR IN HEAP RHS :[v_int_82_2225']
+impl/expl/evars vars:[]
+LHS:
+  d'::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M * 
+ a'::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M * 
+ c::Chan{ . (!msg_137#( emp&msg_137=1)) ;; (emp)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ e'::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M&
+ppp2_10687=flted_16_10897 & flted_75_2706=flted_75_2704 & 
+ppp2_10715=flted_14_10409 & flted_75_2704=flted_75_2710 & 
+flted_14_10409=FLOAT 1. & flted_13_10402=bb_7268+flted_75_2709 & 
+flted_75_2703=FLOAT 0.5 & flted_75_2704=22 & flted_75_2705=FLOAT 0.5 & 
+flted_75_2706=22 & flted_75_2707=FLOAT 0.5 & flted_75_2708=22 & 
+flted_75_2709=FLOAT 0.5 & flted_75_2710=22 & e'=e & c'=c & d'=d & a'=a & 
+x'=1 & z'=1 & id_7270=flted_75_2708 & bb_7268=flted_75_2707 & 
+flted_16_10897+flted_75_2703=ppp2_10715 & 
+flted_16_11013+flted_75_2705=ppp2_10687 & v_int_82_2225'=1&
+{FLOW,(4,5)=__norm#E}
+ es_gen_impl_vars(E): []
+RHS:
+ EBase 
+   exists (Impl)[v_106; R; 
+   L]c'::Chan{ . (!v_106#( HVar L[v_106])) ;; (%R)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+     (HVar L[v_int_82_2225'])&
+   {FLOW,(4,5)=__norm#E}
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}
+     EAssume 
+       c'::Chan{ . HVar R[]&{FLOW,(4,5)=__norm#E}}<>@M&{FLOW,(4,5)=__norm#E}
+       struct:EBase 
+                c'::Chan{ . HVar R[]&{FLOW,(4,5)=__norm#E}}<>@M&
+                {FLOW,(4,5)=__norm#E}
+
 
 =============================================
 =============================================
+
+../../../hip ex12c-ABCDE.ss  -tp oc
+
+too many norm attempts:
+
+Total verification time: 58.5503 second(s)
+	Time spent in main process: 51.570776 second(s)
+	Time spent in child processes: 6.979524 second(s)
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+=============================================
+=============================================
+
+
+

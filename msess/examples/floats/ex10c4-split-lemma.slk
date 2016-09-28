@@ -1,7 +1,7 @@
 sleek_include 'msess/notes/hodef.slk'.
 
 pred_prim Ff<id:int>. //full
-pred_prim Fp<id:int,p>. //partial
+pred_prim Fp<id:int,p:float>. //partial
 pred_prim Fm<id:int>.   //minus
 
 lemma_norm "ACC" self::Fp<id,a> * self::Fp<id,b> -> self::Fp<id,a+b>.
