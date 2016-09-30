@@ -826,6 +826,10 @@ RHS:
 =============================================
 =============================================
 
+
+too many norm attempts:
+
+
 ../../../hip ex12c-ABCDE.ss  -tp oc
 
 too many norm attempts:
@@ -833,6 +837,15 @@ too many norm attempts:
 Total verification time: 58.5503 second(s)
 	Time spent in main process: 51.570776 second(s)
 	Time spent in child processes: 6.979524 second(s)
+
+../../../hip ex12c-ABCDE.ss  -tp z3
+
+Total verification time: 44.123804 second(s)
+	Time spent in main process: 43.67408 second(s)
+	Time spent in child processes: 0.449724 second(s)
+	Z3 Prover Time: 0.011886 second(s)
+
+
 
 =============================================
 =============================================

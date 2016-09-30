@@ -1,7 +1,7 @@
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
-pred_sess_proj p1<> == !0 or !1;;p1<>;
+pred_sess_tpproj p1<> == !0 or !1;;p1<>;
 
 void loop4_sor1(Channel c, int id)
   requires  c::Chan{@S p1<>}<this>

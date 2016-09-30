@@ -67,7 +67,7 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-  | PRED | PRED_PRIM | PRED_SESS_PROT | PRED_SESS_PROJ | DPRINT | PRED_EXT
+  | PRED | PRED_PRIM | PRED_SESS_PROT | PRED_SESS_PROJ | PRED_SESS_TPPROJ | DPRINT | PRED_EXT
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE | SLEEK_INCLUDE
   (* | PRINT_VIEW *)
   (* | PRINT_VIEW_LONG *)
@@ -195,7 +195,7 @@ module Token = struct
     | LEMMA TLEM_SPLIT ->"lemma_split"
     | LEMMA TLEM_PROP ->"lemma_prop" | LEMMA TLEM_NORM ->"lemma_norm"
     | LEMMA TLEM_SAFE ->"lemma_safe" | LEMMA TLEM_INFER ->"lemma_infer" | LEMMA TLEM_INFER_PRED ->"lemma_infer_pred" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_SESS_PROT -> "pred_sess_prot" | PRED_SESS_PROJ -> "pred_sess_proj" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include"
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_SESS_PROT -> "pred_sess_prot" | PRED_SESS_PROJ -> "pred_sess_proj" | PRED_SESS_TPPROJ -> "pred_sess_tpproj" | PRED_EXT ->"pred_extn" | HIP_INCLUDE -> "hip_include"
     | SLEEK_INCLUDE -> "sleek_include"
     | DPRINT ->"dprint"
     | PRINT -> "print" 

@@ -20,12 +20,12 @@ lemma_norm "SYNC-CHECK" self::Chan{@S Ff2<id,ppp> ;; %R}<> * ppp::Ff<id> -> self
 /* pred_sess_prot G<A,B,C> == ((A->B:1;;Fp(id,1/2)) * (D->B:1;;Fp(id,1/2)));;F(id,1);;C->B:1;  */
 /* pred_sess_prot G<A,B,C> == ((A->B:1;;Fp2(id,1/2,qqq)) * (D->B:1;;Fp2(id,1/2,qqq)));;Ff(id,qqq);;C->B:1;  */
 
-pred_sess_proj GBA<> == ?1;
-pred_sess_proj GBC<> == ?1;
-pred_sess_proj GBD<> == ?1;
-pred_sess_proj GAB<> == !1;
-pred_sess_proj GCB<> == !1;
-pred_sess_proj GDB<> == !1;
+pred_sess_tpproj GBA<> == ?1;
+pred_sess_tpproj GBC<> == ?1;
+pred_sess_tpproj GBD<> == ?1;
+pred_sess_tpproj GAB<> == !1;
+pred_sess_tpproj GCB<> == !1;
+pred_sess_tpproj GDB<> == !1;
 
 void B(Channel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fp2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fp2<22,0.5,qqq>}<> * c::Chan{@S Ff2<22,qqq>;;?1}<>

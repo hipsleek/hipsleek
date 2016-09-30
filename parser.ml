@@ -1096,6 +1096,7 @@ non_empty_command:
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | `PRED_SESS_PROT; t = prot_view_decl -> PredDef t
       | `PRED_SESS_PROJ; t = proj_view_decl -> PredDef t
+      | `PRED_SESS_TPPROJ; t = tpproj_view_decl -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -1391,20 +1392,28 @@ protocol_formula:
 ];
 
 proj_view_decl:
-  [[ vh = view_header; `EQEQ; (f,pk) = formula
+  [[ vh = view_header; `EQEQ; f = projection_formula
      -> { vh with
-          view_session_info = Some (mk_view_session_info ~sk:pk ());
-          view_session_formula = Some f}
+          view_session_info = Some (mk_view_session_info ~sk:Projection ());
+          view_session_formula = Some (Session.ProjectionSession f)}
    ]];
 
-formula:
-    [[ peek_tpprojection; p = tpprojection_formula -> 
-       (Session.TPProjectionSession p, TPProjection)
-     | peek_protocol; p = protocol_formula -> 
-       (Session.ProtocolSession p, Protocol)
-     | p = projection_formula ->  
-       (Session.ProjectionSession p, Projection)
-     ]];
+tpproj_view_decl:
+  [[ vh = view_header; `EQEQ; f = tpprojection_formula
+     -> { vh with
+          view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
+          view_session_formula = Some (Session.TPProjectionSession f)}
+   ]];
+
+  
+(* formula: *)
+(*     [[ peek_tpprojection; p = tpprojection_formula ->  *)
+(*        (Session.TPProjectionSession p, TPProjection) *)
+(*      | peek_protocol; p = protocol_formula ->  *)
+(*        (Session.ProtocolSession p, Protocol) *)
+(*      | p = projection_formula ->   *)
+(*        (Session.ProjectionSession p, Projection) *)
+(*      ]]; *)
 
 projection_formula:
     [ "semicolon" RIGHTA
@@ -1471,7 +1480,6 @@ tpprojection_formula:
   |
     [ peek_hvar; `PERCENT; `IDENTIFIER id ->
       let loc = (get_pos_camlp4 _loc 1) in
-      let () = print_endline ("HVAR:"^(string_of_loc loc)) in 
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
     | peek_tpprojection_send; `NOT; msg_var = OPT session_msg_var; c = session_message ->
       let loc = (get_pos_camlp4 _loc 1) in
@@ -1775,52 +1783,6 @@ rflow_kind:
   [[ `MINUS -> INFLOW 
    | `PLUS -> OUTFLOW
   ]];
-
-rflow_form: 
-  [
-    [ `SAT; (p,pk) = formula ->
-      let loc = (get_pos_camlp4 _loc 1) in
-      let form = (match p with
-          | Session.ProjectionSession s ->
-            Session.IProjection.mk_formula_heap_only ~flow:stub_flow
-                                             (Session.IProjection.trans_from_session s) loc
-          | Session.TPProjectionSession s ->
-            Session.ITPProjection.mk_formula_heap_only ~flow:stub_flow
-                                               (Session.ITPProjection.trans_from_session s) loc
-          | Session.ProtocolSession s ->
-            Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
-                                           (Session.IProtocol.trans_from_session s) loc) in
-      { F.rflow_kind = NEUTRAL;
-        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
-        F.rflow_session_kind = Some pk; }
-    ]
-  |[ `ATT; (p,pk) = formula ->
-      let loc = (get_pos_camlp4 _loc 1) in
-      let form = (match p with
-          | Session.ProjectionSession s ->
-            Session.IProjection.mk_formula_heap_only ~flow:stub_flow
-                                             (Session.IProjection.trans_from_session s) loc
-          | Session.TPProjectionSession s ->
-            Session.ITPProjection.mk_formula_heap_only ~flow:stub_flow
-                                               (Session.ITPProjection.trans_from_session s) loc
-          | Session.ProtocolSession s ->
-            Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
-                                           (Session.IProtocol.trans_from_session s) loc) in
-      { F.rflow_kind = NEUTRAL;
-        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
-        F.rflow_session_kind = Some pk; }
-    ]
-  | [ k = OPT rflow_kind; dc = disjunctive_constr (* core_constr *) -> 
-     { F.rflow_kind = un_option k NEUTRAL;
-       F.rflow_base = (* F.subst_stub_flow n_flow *) dc;
-       F.rflow_session_kind = None; }
-      (* match cc with                                                                                  *)
-      (* | F.Base f -> {                                                                                *)
-      (*   F.rflow_kind = un_option k NEUTRAL;                                                          *)
-      (*   F.rflow_base = cc; }                                                                         *)
-      (* | _ -> report_error (get_pos_camlp4 _loc 2) ("Non-Base formula is disalowed in resource flow") *)
-  ]
-  ];
 
 rflow_form: 
   [
@@ -3799,6 +3761,7 @@ type_decl:
    | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | `PRED_SESS_PROT; v = prot_view_decl; `SEMICOLON    -> View v
    | `PRED_SESS_PROJ; v = proj_view_decl; `SEMICOLON    -> View v
+   | `PRED_SESS_TPPROJ; v = tpproj_view_decl; `SEMICOLON    -> View v
    | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];

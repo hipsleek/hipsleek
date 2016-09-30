@@ -33,12 +33,12 @@ lemma_norm "SYNC-CHECK2" self::Chan{@S Ff2<id,ppp> ;; %R}<> * ppp::Ff<id> -> sel
 
 
 
-pred_sess_proj GBA<> == ?1;
-pred_sess_proj GBC<> == ?1;
-pred_sess_proj GBD<> == ?1;
-pred_sess_proj GAB<> == !1;
-pred_sess_proj GCB<> == !1;
-pred_sess_proj GDB<> == !1;
+pred_sess_tpproj GBA<> == ?1;
+pred_sess_tpproj GBC<> == ?1;
+pred_sess_tpproj GBD<> == ?1;
+pred_sess_tpproj GAB<> == !1;
+pred_sess_tpproj GCB<> == !1;
+pred_sess_tpproj GDB<> == !1;
 
 void B(Changnel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fp2<22,2,qqq>}<> * d::Chan{@S ?1;;Fp2<22,2,qqq>}<> * c::Chan{@S Ff2<22,4,qqq>;;?1}<>

@@ -69,7 +69,7 @@ void loop2_sor1(Channel c, int id)
   loop2_sor1(c,id);
 }
 
-pred_sess_proj p1<> == (!0 or !1);;p1<>;
+pred_sess_tpproj p1<> == (!0 or !1);;p1<>;
 
 
 void loop4_sor1(Channel c, int id)

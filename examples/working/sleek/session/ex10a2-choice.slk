@@ -2,9 +2,9 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 
-pred_sess_proj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0).
-pred_sess_proj GSb<> == (!1) or (!0).
-pred_sess_proj GSb1<> == !1.
+pred_sess_tpproj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0).
+pred_sess_tpproj GSb<> == (!1) or (!0).
+pred_sess_tpproj GSb1<> == !1.
 
                                            
 checkentail cs::Chan{@S GSb<>}<>@M * 
@@ -52,7 +52,7 @@ expect Valid.
 print residue.
 
 
-pred_sess_proj GSb2<> == (!1) or (!0;;!1).
+pred_sess_tpproj GSb2<> == (!1) or (!0;;!1).
 
 checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<> * %L(opt).
 expect Valid.

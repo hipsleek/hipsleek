@@ -33,7 +33,7 @@ DDate get_date(Addr a, int prod_id)
 
 // projection of G on B:
 /* pred_proj G@B<bs> == bs!int;;bs?msg:double;;(bs!1;;bs!Addr;;bs?Date or bs!0); */
-pred_sess_proj GB<> == !v#v>=1;;?v#v>0;;((!1;;!v#v::Addr<_>;;?v#v::DDate<_,_,_>) or !0);
+pred_sess_tpproj GB<> == !v#v>=1;;?v#v>0;;((!1;;!v#v::Addr<_>;;?v#v::DDate<_,_,_>) or !0);
 
 void buyer(ref Channel c, int budget)
   requires  c::Chan{@S GB<>}<> 
@@ -54,8 +54,8 @@ void buyer(ref Channel c, int budget)
 /* // projection of G on S */
 /* pred G@S<a,b> == */
 /*   a?int;a!double;(a?1;b!int;b!(Chan(a,ms) * Sess(ms,a?Addr;a!Date)) \/ a?0); */
-pred_sess_proj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0);
-pred_sess_proj GSb<> == (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>) or (!0);
+pred_sess_tpproj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,_>) or ?0);
+pred_sess_tpproj GSb<> == (!1;;!v#v>=1;;!v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;?v#v::Chan{emp}<>) or (!0);
 
 
 void seller(ref Channel cb, ref Channel cs)
@@ -79,7 +79,7 @@ void seller(ref Channel cb, ref Channel cs)
 /* // projection of G on H */
 /* pred G@H<a> == */
 /*   a?int;a?(Chan(b,ms) * Sess(ms,b?Addr;b!Date));a!(Chan(b,ms) * Sess(ms,emp)); */
-pred_sess_proj GS<> == 
+pred_sess_tpproj GS<> == 
   ?v#v>=1;;?v#v::Chan{@S ?v#v::Addr<_>;;!v#v::DDate<_,_,_>}<>;;!v#v::Chan{emp}<>;
 
 
