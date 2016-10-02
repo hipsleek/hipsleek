@@ -850,6 +850,12 @@ Total verification time: 44.123804 second(s)
 =============================================
 =============================================
 
+Failing testcase:
+
+Unexpected result with : session/ex10a2-choice.slk (failed check(s): no result  for {E})
+
+Observed at commit 18828.
+
 =============================================
 =============================================
 
