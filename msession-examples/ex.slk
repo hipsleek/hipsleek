@@ -1,13 +1,19 @@
 sleek_include 'node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
+pred_prim Fc<id:int,p:float>. //consumer
+pred_prim Fa<id:int,p:float>. //accumulator
+
+pred_prim Fc2<id:int,p:float,var>. //consumer
+pred_prim Fa2<id:int,p:float,var>. //accumulator
+
 //pred_sess_prot ll<n,A,B> == A -> B : self = null & n = 0.
 
 //pred_sess_prot ll2<n,A,B> == ll<n,A,B>.
 
-//pred_sess_prot ll3<n> == A -> B : self = null & n = 0 ;; A -> B : self = null & n = 0. 
-//
-//pred_sess_prot ll4<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; E -> F : self = null. 
+pred_sess_prot ll3<n> == [B, A]:Fa2<22,0.5,qqq>. 
+
+//pred_sess_prot ll4<n> == A -> B : self = null;; C -> D : self = null ;; E -> F : self = null ;; G -> H : self = null. 
 //
 //pred_sess_prot ll5<n> == A -> B : self = null & n = 0 or C -> D : self = null ;; (A -> B : self = null). 
 //
@@ -19,9 +25,9 @@ sleek_include 'msess/notes/hodef.slk'.
 //
 //pred_sess_proj ll10<n,d> == d!self = null.
 //
-//pred_sess_proj ll11<n> == d?self = null.
+//pred_sess_proj ll11<n> == d?self = null ;; e?self = null ;; f?self = null ;; g?self = null.
 //
-pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
+//pred_sess_proj ll12<n> == (c!self = null & n = 0) or (d?self = null).
 //
 //pred_sess_proj ll13<n> == A?self::node<_,_> * x::node<_,_> or (C!self = null & self = null) * (E?self = null). 
 

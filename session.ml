@@ -1197,6 +1197,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq  of session_seq_formula
     | SOr   of session_or_formula
     | SStar of session_star_formula
+	| SFence of session_fence
     | SBase of session_base
     | SEmp
 
@@ -1226,6 +1227,12 @@ module Make_Session (Base: Session_base) = struct
     session_star_formula_pos:  loc;
   }
 
+  and session_fence = {
+    session_fence_role1: ident;
+    session_fence_role2: ident;
+    session_fence_pred: session_predicate;
+  }
+
   and session_predicate = {
     session_predicate_name: ident;
     session_predicate_ho_vars: (* (ho_flow_kind * ident * ho_split_kind) *) Base.ho_param_formula list;
@@ -1247,6 +1254,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> string_of_session_seq s
     | SOr s   -> string_of_session_or s
     | SStar s -> string_of_session_star s
+	| SFence f -> string_of_session_fence f
     | SBase s -> string_of_session_base s
     | SEmp    -> string_of_session_emp ()
 
@@ -1272,6 +1280,9 @@ module Make_Session (Base: Session_base) = struct
     "*" ^
     " (" ^ string_of_one_session s.session_star_formula_star2 ^ ")"
 
+  and string_of_session_fence f =
+	"Just a fence."
+
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
 
@@ -1283,6 +1294,8 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> s.session_seq_formula_heap_node
     | SOr s   -> s.session_sor_formula_heap_node
     | SStar s -> s.session_star_formula_heap_node
+(* TODO: review this *)
+    | SFence f -> None
     | SEmp    -> None
     | SBase s -> match s with
       | Base s -> Base.get_session_heap_node s
@@ -1335,8 +1348,24 @@ module Make_Session (Base: Session_base) = struct
       session_star_formula_pos   = loc;
     }
 
+  and mk_session_fence role1 role2 pred =
+    SFence {
+      session_fence_role1 = role1;
+      session_fence_role2 = role2;
+	  session_fence_pred = pred;
+    }
+
   and mk_session_predicate name ho_vars params ?node:(node=None) loc =
     Predicate {
+      session_predicate_name = name;
+      session_predicate_ho_vars = ho_vars;
+      session_predicate_params = params;
+      session_predicate_formula_heap_node = node;
+      session_predicate_pos = loc;
+    }
+
+  and mk_session_fence_predicate name ho_vars params ?node:(node=None) loc =
+    {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
       session_predicate_params = params;
@@ -1378,6 +1407,10 @@ module Make_Session (Base: Session_base) = struct
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)
 
+(* TODO: review this *)
+  and mk_fence () =
+    Base.mk_empty ()
+
   and mk_predicate_node hnode p =
     let ptr = Base.get_base_ptr session_def_id hnode in
     let name = p.session_predicate_name in
@@ -1414,6 +1447,7 @@ module Make_Session (Base: Session_base) = struct
         let arg1 = helper s.session_star_formula_star1 in
         let arg2 = helper s.session_star_formula_star2 in
         mk_star_node arg1 arg2 s.session_star_formula_heap_node s.session_star_formula_pos
+	| SFence f -> mk_fence ()
     | SBase s -> (match s with
         | Base b -> Base.trans_base b
         | Predicate p -> mk_predicate_node p.session_predicate_formula_heap_node p 
@@ -1473,6 +1507,8 @@ module Make_Session (Base: Session_base) = struct
         | SStar s ->
           SStar {s with session_star_formula_star1 = helper fnc s.session_star_formula_star1;
                         session_star_formula_star2 = helper fnc s.session_star_formula_star2; }
+(* TODO: review this *)
+        | SFence f -> sf
         | SBase sb -> SBase (trans_session_base_formula f_base sb)
         | SEmp -> sf
     in
@@ -1486,6 +1522,8 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> s.session_seq_formula_pos
     | SOr s   -> s.session_sor_formula_pos
     | SStar s -> s.session_star_formula_pos
+(* TODO: review this *)
+	| SFence f -> no_pos
     | SBase s -> (match s with
         | Base b -> Base.get_base_pos b
         | Predicate p -> p.session_predicate_pos
