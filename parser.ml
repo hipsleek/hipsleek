@@ -1891,6 +1891,7 @@ view_header_ext:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_session_formula = None;
+		  view_session_projections = None;
           view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;
