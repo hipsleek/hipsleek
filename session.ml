@@ -12,6 +12,7 @@ module IP = Ipure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
+module HT = Hashtbl
 
 (* 
 use @P to parse protocol formulae
@@ -996,6 +997,12 @@ module Protocol_base_formula =
 
     let get_message_var base = base.protocol_base_formula_message_var
 
+    let get_message base = base.protocol_base_formula_message
+
+	let get_sender base = base.protocol_base_formula_sender
+
+	let get_receiver base = base.protocol_base_formula_receiver
+
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
@@ -1060,6 +1067,12 @@ module Projection_base_formula =
     let get_base_pos base = base.projection_base_formula_pos
 
     let get_message_var base = base.projection_base_formula_message_var
+
+    let get_message base = base.projection_base_formula_message
+
+	let get_sender base = ""
+
+	let get_receiver base = ""
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
@@ -1147,6 +1160,12 @@ module TPProjection_base_formula =
 
     let get_message_var base = base.tpprojection_base_formula_message_var
 
+    let get_message base = base.tpprojection_base_formula_message
+
+	let get_sender base = ""
+
+	let get_receiver base = ""
+
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
@@ -1184,6 +1203,9 @@ sig
   val trans_base : base -> h_formula
   val get_base_pos : base -> VarGen.loc
   val get_message_var : base -> var
+  val get_message : base -> t
+  val get_sender : base -> ident
+  val get_receiver : base -> ident
   val trans_h_formula_to_session_base : h_formula -> base
   val subst_base: ((var * var) list) -> base -> base
 end;;
@@ -1281,7 +1303,8 @@ module Make_Session (Base: Session_base) = struct
     " (" ^ string_of_one_session s.session_star_formula_star2 ^ ")"
 
   and string_of_session_fence f =
-	"Just a fence."
+	"[" ^ f.session_fence_role1 ^ ", " ^ f.session_fence_role2 ^ "]: " ^
+    string_of_session_predicate f.session_fence_pred
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
@@ -1629,7 +1652,15 @@ module Make_Session (Base: Session_base) = struct
     let pr = !Base.print_h_formula in
     Debug.no_1 "Session.get_original_h_formula" pr pr get_original_h_formula h_formula
 
+  let get_base_pos b = Base.get_base_pos b
+
   let get_message_var b = Base.get_message_var b
+
+  let get_message b = Base.get_message b
+
+  let get_sender b = Base.get_sender b
+
+  let get_receiver b = Base.get_receiver b
 
   let replace_message_var b =
     let msg_var = Base.get_message_var b in
@@ -1943,6 +1974,79 @@ let get_tpprojection session =
   match session with
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"
+
+let make_tpp_send_receive_pair b =
+  let message = IProtocol.get_message b in
+  let message_var = IProtocol.get_message_var b in
+  let pos = IProtocol.get_base_pos b in
+  (ITPProjection.SBase (ITPProjection.mk_base (TSend, message_var, pos) message),
+   ITPProjection.SBase (ITPProjection.mk_base (TReceive, message_var, pos) message))
+
+let convert_predicate pred =
+  let name = pred.IProtocol.session_predicate_name in
+  let ho_vars = pred.IProtocol.session_predicate_ho_vars in
+  let params = pred.IProtocol.session_predicate_params in
+  let pos = pred.IProtocol.session_predicate_pos in
+  ITPProjection.mk_session_predicate name ho_vars params pos
+
+let combine_partial_proj (comb_fnc: ITPProjection.session ->
+         ITPProjection.session ->
+         ?node:ITPProjection_base.h_formula_heap option ->
+         VarGen.loc -> ITPProjection.session) hash1 hash2 =
+  let helper (role1, role2) tpproj1 =
+    try
+      let tpproj2 = HT.find hash2 (role1, role2) in
+	  (* TODO: whose pos do we use? *)
+	  let pos = ITPProjection.get_pos tpproj1 in
+	  let tpproj = comb_fnc tpproj1 tpproj2 ~node:None pos in
+	  let () = HT.replace hash2 (role1, role2) tpproj in
+	  ()
+    with Not_found ->
+	  let () = HT.add hash2 (role1, role2) tpproj1 in
+	  () in
+  let () = HT.iter helper hash1 in
+  hash2
+
+let print_proj hash =
+  let () = print_endline "" in
+  let print (role1, role2) tpproj =
+    print_endline (role1 ^ "(" ^ role2 ^ "): " ^ (ITPProjection.string_of_session tpproj)) in
+  HT.iter print hash
+
+let make_projection (session: IProtocol.session) = (* : ITPProjection.session list =*)
+  let rec helper s = match s with
+    | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
+        		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
+						   combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2
+    | IProtocol.SOr s   -> let hash1 = helper s.IProtocol.session_sor_formula_or1 in
+        		 		   let hash2 = helper s.IProtocol.session_sor_formula_or2 in
+						   combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2
+    | IProtocol.SStar s -> let hash1 = helper s.IProtocol.session_star_formula_star1 in
+        		 		   let hash2 = helper s.IProtocol.session_star_formula_star2 in
+						   (* This is definitely not correct, there should be no star in tpproj *)
+						   combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2
+	| IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
+							let role1 = f.IProtocol.session_fence_role1 in
+							let role2 = f.IProtocol.session_fence_role2 in
+							let pred = f.IProtocol.session_fence_pred in
+							let new_pred = ITPProjection.SBase (convert_predicate pred) in
+                            let hash = HT.create 10 in
+							let () = HT.add hash (role2, role1) new_pred in
+							hash
+    | IProtocol.SBase s -> (match s with
+        | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
+  							  let sender = IProtocol.get_sender b in
+  							  let receiver = IProtocol.get_receiver b in
+                    		  let hash = HT.create 10 in
+							  let () = HT.add hash (sender, receiver) snd_op in
+							  let () = HT.add hash (receiver, sender) rcv_op in
+							  hash
+        | IProtocol.Predicate p -> HT.create 10
+        | IProtocol.HVar h -> HT.create 10)
+    | IProtocol.SEmp    -> HT.create 10 in
+   let hash = helper session in
+   let () = print_proj hash in
+   ()
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
