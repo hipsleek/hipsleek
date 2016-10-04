@@ -1989,23 +1989,42 @@ let convert_predicate pred =
   let pos = pred.IProtocol.session_predicate_pos in
   ITPProjection.mk_session_predicate name ho_vars params pos
 
-let combine_partial_proj (comb_fnc: ITPProjection.session ->
-         ITPProjection.session ->
-         ?node:ITPProjection_base.h_formula_heap option ->
-         VarGen.loc -> ITPProjection.session) hash1 hash2 =
-  let helper (role1, role2) tpproj1 =
+let combine_partial_proj
+		(comb_fnc: ITPProjection.session ->
+		 ITPProjection.session ->
+		 ?node:ITPProjection_base.h_formula_heap option ->
+		 VarGen.loc -> ITPProjection.session)
+		 hash1 hash2 add_neutral_element =
+  let helper1 (role1, role2) tpproj1 =
+	try
+	  let _ = HT.find hash2 (role1, role2) in
+	  ()
+	with Not_found ->
+	  if (add_neutral_element = true)
+	  then
+		let pos = ITPProjection.get_pos tpproj1 in
+		let tpproj = comb_fnc tpproj1 ITPProjection.SEmp ~node:None pos in
+		HT.replace hash1 (role1, role2) tpproj
+	  else
+	    () in
+  let helper2 (role1, role2) tpproj2 =
     try
-      let tpproj2 = HT.find hash2 (role1, role2) in
+      let tpproj1 = HT.find hash1 (role1, role2) in
 	  (* TODO: whose pos do we use? *)
 	  let pos = ITPProjection.get_pos tpproj1 in
 	  let tpproj = comb_fnc tpproj1 tpproj2 ~node:None pos in
-	  let () = HT.replace hash2 (role1, role2) tpproj in
-	  ()
+	  HT.replace hash1 (role1, role2) tpproj
     with Not_found ->
-	  let () = HT.add hash2 (role1, role2) tpproj1 in
-	  () in
-  let () = HT.iter helper hash1 in
-  hash2
+	  if (add_neutral_element = true)
+      then
+	    let pos = ITPProjection.get_pos tpproj2 in
+		let tpproj = comb_fnc tpproj2 ITPProjection.SEmp ~node:None pos in
+		HT.add hash1 (role1, role2) tpproj
+	  else
+		HT.add hash1 (role1, role2) tpproj2 in
+  let () = HT.iter helper1 hash1 in
+  let () = HT.iter helper2 hash2 in
+  hash1
 
 let print_proj hash =
   let () = print_endline "" in
@@ -2017,14 +2036,14 @@ let make_projection (session: IProtocol.session) = (* : ITPProjection.session li
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
         		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
-						   combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2
+						   combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
     | IProtocol.SOr s   -> let hash1 = helper s.IProtocol.session_sor_formula_or1 in
         		 		   let hash2 = helper s.IProtocol.session_sor_formula_or2 in
-						   combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2
+						   combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
     | IProtocol.SStar s -> let hash1 = helper s.IProtocol.session_star_formula_star1 in
         		 		   let hash2 = helper s.IProtocol.session_star_formula_star2 in
 						   (* This is definitely not correct, there should be no star in tpproj *)
-						   combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2
+						   combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
 	| IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
 							let role1 = f.IProtocol.session_fence_role1 in
 							let role2 = f.IProtocol.session_fence_role2 in
