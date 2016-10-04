@@ -1,0 +1,7 @@
+sleek_include 'msess/notes/node.slk'.
+//sleek_include 'msess/notes/hodef.slk'.
+// sleek_include 'msess/notes/commprimitives.slk'. 
+
+
+checkentail  x::node<1,b> * y::node<_,_> & c=1 |- x::node<c,d> * %L(y).
+print residue. 
