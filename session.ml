@@ -2035,37 +2035,37 @@ let print_proj hash =
 let make_projection (session: IProtocol.session) = (* : ITPProjection.session list =*)
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
-        		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
-						   combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
+      let hash2 = helper s.IProtocol.session_seq_formula_tail in
+      combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
     | IProtocol.SOr s   -> let hash1 = helper s.IProtocol.session_sor_formula_or1 in
-        		 		   let hash2 = helper s.IProtocol.session_sor_formula_or2 in
-						   combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
+      let hash2 = helper s.IProtocol.session_sor_formula_or2 in
+      combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
     | IProtocol.SStar s -> let hash1 = helper s.IProtocol.session_star_formula_star1 in
-        		 		   let hash2 = helper s.IProtocol.session_star_formula_star2 in
-						   (* This is definitely not correct, there should be no star in tpproj *)
-						   combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
-	| IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
-							let role1 = f.IProtocol.session_fence_role1 in
-							let role2 = f.IProtocol.session_fence_role2 in
-							let pred = f.IProtocol.session_fence_pred in
-							let new_pred = ITPProjection.SBase (convert_predicate pred) in
-                            let hash = HT.create 10 in
-							let () = HT.add hash (role2, role1) new_pred in
-							hash
+      let hash2 = helper s.IProtocol.session_star_formula_star2 in
+      (* This is definitely not correct, there should be no star in tpproj *)
+      combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
+    | IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
+      let role1 = f.IProtocol.session_fence_role1 in
+      let role2 = f.IProtocol.session_fence_role2 in
+      let pred = f.IProtocol.session_fence_pred in
+      let new_pred = ITPProjection.SBase (convert_predicate pred) in
+      let hash = HT.create 10 in
+      let () = HT.add hash (role2, role1) new_pred in
+      hash
     | IProtocol.SBase s -> (match s with
         | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
-  							  let sender = IProtocol.get_sender b in
-  							  let receiver = IProtocol.get_receiver b in
-                    		  let hash = HT.create 10 in
-							  let () = HT.add hash (sender, receiver) snd_op in
-							  let () = HT.add hash (receiver, sender) rcv_op in
-							  hash
+  	  let sender = IProtocol.get_sender b in
+  	  let receiver = IProtocol.get_receiver b in
+          let hash = HT.create 10 in
+	  let () = HT.add hash (sender, receiver) snd_op in
+	  let () = HT.add hash (receiver, sender) rcv_op in
+	  hash
         | IProtocol.Predicate p -> HT.create 10
         | IProtocol.HVar h -> HT.create 10)
     | IProtocol.SEmp    -> HT.create 10 in
-   let hash = helper session in
-   let () = print_proj hash in
-   ()
+  let hash = helper session in
+  let () = print_proj hash in
+  ()
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
