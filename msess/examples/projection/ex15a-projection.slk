@@ -2,7 +2,7 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 sleek_include 'msess/notes/fences.slk'.
 
-
+/*
 pred_sess_prot G1<A,B,C> == A->B : emp ;; [A, B]:Fa2<22,0.5,qqq>.
 
 pred_sess_prot G2<A,B,C> == A->B : emp;; ((B->C : id#id >10 ;; C->B : price#price>0) or (B->D : id#id <=10 ;; D->B : price#price>0)) ;; B->A: price#price>0.
@@ -10,7 +10,35 @@ pred_sess_prot G2<A,B,C> == A->B : emp;; ((B->C : id#id >10 ;; C->B : price#pric
 pred_sess_prot G3<A,B,C,D,E> == (A->B:1 * D->B:1) ;; (B->C:2 * B->E:2).
 
 pred_sess_prot G4<A,B,C,D,E> == ((A->B:1 ;; [A, B]:Fa2<id,0.5,qqq>) * (D->B:1;;[D, B]:Fa2<id,0.5,qqq>)) ;; (([C,B]:Fc<id,0.5,qqq>;;B->C:1) * ([E,B]:Fc<id,0.5,qqq>;;B->E:2)).
+*/
 
 
+pred_sess_prot G3<A,B,C,D,E> == (A->B:1 * D->B:1) ;; (B->C:2 * B->E:2).
+
+/*
+C(B): ?msg#((emp) * ([] & msg = 2)( FLOW __stub))
+
+D(B): !msg#((emp) * ([] & msg = 1)( FLOW __stub))
+
+E(B): ?msg#((emp) * ([] & msg = 2)( FLOW __stub))
+
+A(B): !msg#((emp) * ([] & msg = 1)( FLOW __stub))
+
+B(E): !msg#((emp) * ([] & msg = 2)( FLOW __stub))
+
+B(A): ?msg#((emp) * ([] & msg = 1)( FLOW __stub))
+
+B(D): ?msg#((emp) * ([] & msg = 1)( FLOW __stub))
+
+B(C): !msg#((emp) * ([] & msg = 2)( FLOW __stub))
 
 
+sess_ann == Proj | peer | inact
+
+void B (Chan a, Chan c, Chan d, Chan e)
+  requires a::Chan{@ G3<A@p,B@P,_@i,_,_>}<> *  b::Chan{@ G3<_,B@P,C@p,_,_>}<> 
+  
+{
+}
+
+*/

@@ -174,6 +174,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_split : split_ann; 
                        h_formula_heap_imm : P.ann;
                        h_formula_heap_imm_param : P.ann option list;
+                       h_formula_heap_sess_anot : sess_ann list;
                        h_formula_heap_full : bool;
                        h_formula_heap_with_inv : bool;
                        h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)

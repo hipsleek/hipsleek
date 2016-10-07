@@ -306,6 +306,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_split : split_ann;
                         h_formula_view_imm : ann;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
+                        (* h_formula_view_sess_ann : sess_ann list; *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_ho_arguments : rflow_formula list;
