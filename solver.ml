@@ -12053,6 +12053,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
       h_formula_view_derv = get_view_derv ln2;
       h_formula_view_split = get_view_split ln2;
       h_formula_view_imm = get_view_imm ln2;
+	  h_formula_view_sess_ann = None;
       h_formula_view_original = original2;
       h_formula_view_unfold_num = unfold_num;
       h_formula_view_perm = perm; (*LDK*)

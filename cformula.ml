@@ -305,6 +305,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_derv : bool;
                         h_formula_view_split : split_ann;
                         h_formula_view_imm : ann;
+						h_formula_view_sess_ann : sess_ann list option;
                         (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
@@ -391,6 +392,7 @@ let mk_HRel_as_view n args loc =
     h_formula_view_pos = loc; (* 57 *)
     h_formula_view_label = None; (* 29*)
     h_formula_view_session_info = None;
+	h_formula_view_sess_ann = None;
 
     (* prim_view *)
     h_formula_view_split = SPLIT0; (*21*)
@@ -17135,6 +17137,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
       h_formula_view_derv = false;
       h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
+	  h_formula_view_sess_ann = None;
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_ho_arguments = [];
@@ -17227,6 +17230,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
       h_formula_view_derv = false;
       h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
+	  h_formula_view_sess_ann = None;
       h_formula_view_perm = None;
       h_formula_view_arguments = uargs;
       h_formula_view_ho_arguments = [] (* todo:HO *);
@@ -17301,6 +17305,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_derv = false;
       h_formula_view_split = SPLIT0;
       h_formula_view_imm = CP.ConstAnn(Mutable); 
+	  h_formula_view_sess_ann = None;
       h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
       h_formula_view_ho_arguments = []; (* TODO:HO *)
@@ -18348,6 +18353,7 @@ let mkViewNode view_node view_name view_args (* view_args_orig *) pos =
       h_formula_view_annot_arg = [];
       h_formula_view_args_orig = CP.initialize_positions_for_view_params (CP.sv_to_view_arg_list view_args);
       h_formula_view_imm = CP.ConstAnn Mutable;
+	  h_formula_view_sess_ann = None;
       h_formula_view_perm = None;
       h_formula_view_modes = [];
       h_formula_view_coercible = true;

@@ -185,6 +185,11 @@ let string_of_arg_kind i= match i with
 
 (* Session-specific data types. *)
 
+type sess_ann =
+  | AnnPrimaryPeer
+  | AnnSecondaryPeer
+  | AnnInactive
+
 type session_kind =
   | Protocol
   | Projection
@@ -293,6 +298,11 @@ let string_of_session_kind k = match k with
   | Protocol -> "Protocol"
   | Projection -> "Projection"
   | TPProjection -> "TPProjection"
+
+let string_of_sess_ann ann = match ann with
+  | AnnPrimaryPeer -> "AnnPrimaryPeer"
+  | AnnSecondaryPeer -> "AnnSecondaryPeer"
+  | AnnInactive -> "AnnInactive"
 
 let string_of_node_kind nk = match nk with
   | Sequence -> "Sequence"

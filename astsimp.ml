@@ -8031,6 +8031,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_split = split;
                      IF.h_formula_heap_imm = imm;
                      IF.h_formula_heap_imm_param = ann_param;
+					 IF.h_formula_heap_sess_ann = ann;
                      IF.h_formula_heap_perm = perm; (*LDK*)
                      IF.h_formula_heap_arguments = exps;
                      IF.h_formula_heap_ho_arguments = ho_exps;
@@ -8213,6 +8214,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_derv = dr;
                   CF.h_formula_view_split = split;
                   CF.h_formula_view_imm = Immutable.iformula_ann_to_cformula_ann_node_level imm;
+				  CF.h_formula_view_sess_ann = ann;
                   CF.h_formula_view_perm = permvar; (*LDK: TO CHECK*)
                   CF.h_formula_view_arguments = hvars;
                   CF.h_formula_view_ho_arguments = ho_args; (* TODO:HO *)
@@ -11748,6 +11750,7 @@ let plugin_inferred_iviews views iprog cprog=
           IF.h_formula_heap_split = SPLIT0;
           IF.h_formula_heap_imm = IP.ConstAnn(Mutable);
           IF.h_formula_heap_imm_param = [];
+		  IF.h_formula_heap_sess_ann = None;
           IF.h_formula_heap_full = false;
           IF.h_formula_heap_with_inv = false;
           IF.h_formula_heap_perm = None;
