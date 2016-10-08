@@ -2032,7 +2032,7 @@ let print_proj hash =
     print_endline (role1 ^ "(" ^ role2 ^ "): " ^ (ITPProjection.string_of_session tpproj)) in
   HT.iter print hash
 
-let make_projection (session: IProtocol.session) = (* : ITPProjection.session list =*)
+let make_projection (session: IProtocol.session) =
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
         		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
@@ -2065,7 +2065,31 @@ let make_projection (session: IProtocol.session) = (* : ITPProjection.session li
     | IProtocol.SEmp    -> HT.create 10 in
    let hash = helper session in
    let () = print_proj hash in
-   ()
+   hash
+
+let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_ann list =
+  match vars with
+	| [] -> []
+	| hd :: tl -> if (hd = role1)
+				  then
+					AnnPrimaryPeer :: (make_ann_list tl role1 role2)
+				  else
+					if (hd = role2)
+					then
+					  AnnSecondaryPeer :: (make_ann_list tl role1 role2)
+					else
+					  AnnInactive :: (make_ann_list tl role1 role2)
+
+let make_projection_nodes (session: IProtocol.session) (vars: ident list) =
+  let node_hash = HT.create 10 in
+  let proj_hash = make_projection session in
+  let helper (role1, role2) tpproj =
+	let ann_list = make_ann_list vars role1 role2 in
+	let heap_node = ITPProjection.trans_from_session tpproj in
+	let heap_node = F.set_sess_ann heap_node ann_list in
+	let () = print_endline (pr_list string_of_sess_ann ann_list) in
+	HT.add node_hash (role1, role2) heap_node in
+  HT.iter helper proj_hash
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with

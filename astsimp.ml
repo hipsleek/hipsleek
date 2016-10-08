@@ -2411,7 +2411,8 @@ and translate_session (view:I.view_decl) =
   | Some si -> (match (si.session_kind) with
                  | Some Protocol ->
                      let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
-					 let () = Session.make_projection (Session.get_protocol (get_session_formula view)) in
+					 let () = Session.make_projection_nodes (Session.get_protocol (get_session_formula view))
+														   view.view_vars in
                      helper view transf Session.get_protocol
                  | Some Projection ->
                      let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
