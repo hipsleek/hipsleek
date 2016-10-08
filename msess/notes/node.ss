@@ -1,0 +1,18 @@
+data node {
+    int val;
+    node next;
+}
+
+data DDate{
+     int year;
+     int month;
+     int day;
+}
+
+data Addr{
+     int code;
+}
+
+data Channel{
+  int info;
+}
