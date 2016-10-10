@@ -40,4 +40,4 @@ pred_sess_prot G2<A,B,C> == A->B : emp;; ((B->C : id#id >10 ;; C->B : price#pric
 
 //pred_sess_proj ll14<n,A> == emp or A?1.
 
-//checkentail ll::Sess{@S a?0}<> |- x=null.
+checkentail ll::Sess{@P G<A@prim,B,C@sec>}<> |- x=null.

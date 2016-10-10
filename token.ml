@@ -126,6 +126,8 @@ type sleek_token =
   | SEMICOLONSEMICOLON
   | QUERY
   | ARGOPTION of string
+  | PRIM
+  | SEC
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -281,6 +283,8 @@ module Token = struct
     (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | SEMICOLONSEMICOLON -> ";;"
+    | PRIM -> "@prim"
+    | SEC -> "@sec"
     | QUERY -> "?"
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)

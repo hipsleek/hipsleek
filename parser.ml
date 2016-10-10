@@ -1802,6 +1802,18 @@ rflow_kind:
    | `PLUS -> OUTFLOW
   ]];
 
+sess_ann:
+[
+  [ `IDENTIFIER var; `PRIM -> (var, AnnPrimaryPeer)
+  ] |
+  [ `IDENTIFIER var; `SEC -> (var, AnnSecondaryPeer)
+  ] |
+  [ `IDENTIFIER var -> (var, AnnInactive)
+  ]
+];
+
+sess_ann_list_opt: [[ t = LIST0 sess_ann SEP `COMMA -> t ]];
+
 rflow_form: 
   [
     [ `SAT; p = tpprojection_formula ->
@@ -1813,13 +1825,19 @@ rflow_form:
         F.rflow_base = (* F.subst_stub_flow n_flow *) form;
         F.rflow_session_kind = Some TPProjection; }
     ]
-  |[ `ATP; p = protocol_formula ->
+  |[ `ATP; `IDENTIFIER pred_name; `LT; params = sess_ann_list_opt; `GT ->
       let loc = (get_pos_camlp4 _loc 1) in
-      let form = Session.IProtocol.mk_formula_heap_only ~flow:stub_flow
-          (Session.IProtocol.trans_from_session p) loc in
+      let vars = List.map (fun x -> fst x) params in
+      let vars = List.map (fun x -> Session.IForm.id_to_param x loc) vars in
+      let ann = List.map (fun x -> snd x) params in
+      let ho_args = [] in
+      let pred = Session.IProtocol.SBase (Session.IProtocol.mk_session_predicate pred_name ho_args vars loc) in
+      let hform = Session.IProtocol.trans_from_session pred in
+      let hform = F.set_sess_ann hform ann in
+      let form = Session.IProtocol.mk_formula_heap_only ~flow:stub_flow hform loc in
       { F.rflow_kind = NEUTRAL;
-        F.rflow_base = (* F.subst_stub_flow n_flow *) form;
-        F.rflow_session_kind = Some Protocol; }
+    	F.rflow_base = form;
+    	F.rflow_session_kind = Some Protocol; }
     ]
   |[ `MUT; p = projection_formula ->
       let loc = (get_pos_camlp4 _loc 1) in
