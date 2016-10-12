@@ -42,6 +42,8 @@ open IastUtil
 module IVP = IvpermUtils
 module CVP = CvpermUtils
 
+module HT = Hashtbl
+
 type trans_exp_type =
   (C.exp * typ)
 
@@ -2396,6 +2398,23 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
   let pr2 = add_str "inv_pf" !CP.print_formula in
   Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
 
+and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.view_decl) =
+  let view_decl_hash = HT.create 10 in
+  let proj_hash = Session.make_projection session in
+  let helper (role1, role2) tpproj =
+	let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
+	let heap_node = Session.ITPProjection.trans_from_session tpproj in
+	let heap_node = F.set_sess_ann heap_node ann_list in
+	let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
+	let new_vdef = {vdef with
+					view_formula = form;
+					view_session_formula = Some (Session.TPProjectionSession tpproj);
+					view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
+					view_session_projections = None;} in
+	HT.add view_decl_hash (role1, role2) new_vdef in
+  let () = HT.iter helper proj_hash in
+  view_decl_hash
+
 and translate_session (view:I.view_decl) =
   let get_session_formula view =
     match view.I.view_session_formula with
@@ -2411,9 +2430,8 @@ and translate_session (view:I.view_decl) =
   | Some si -> (match (si.session_kind) with
                  | Some Protocol ->
                      let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
-					 let () = Session.make_projection_nodes (Session.get_protocol (get_session_formula view))
-														   view.view_vars in
-                     helper view transf Session.get_protocol
+					 let proj = make_projection_view_decls (Session.get_protocol (get_session_formula view)) view in
+                     {view with view_session_projections = Some proj}
                  | Some Projection ->
                      let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
                      helper view transf Session.get_projection

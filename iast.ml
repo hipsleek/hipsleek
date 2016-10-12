@@ -19,6 +19,7 @@ module Err = Error
 module CP = Cpure
 module LO = Label_only.LOne
 module VP = IvpermUtils
+module HT = Hashtbl
 
 (* moved to globals.ml *)
 (* type typed_ident = (typ * ident) *)
@@ -117,7 +118,7 @@ and view_decl =
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
     view_session_formula : Session.session_type option;
-	view_session_projections: Session.ITPProjection.session list option;
+	view_session_projections: (Session.proj_ident, view_decl) HT.t option;
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)

@@ -21,6 +21,7 @@ use @P to parse protocol formulae
  *)
 
 type transmission = TSend | TReceive
+type proj_ident = ident * ident
 
 let string_of_seq  = ";;"
 let unk_view_id = "SESS_TEMP"
@@ -1588,6 +1589,10 @@ module Make_Session (Base: Session_base) = struct
     let pr2 = !Base.print_struc_formula in
     Debug.no_2 "Session.mk_struc_formula_from_session_and_formula" pr1 pr2 pr2 mk_struc_formula_from_session_and_formula s form_orig
 
+  let mk_struc_formula_from_h_formula_and_formula hform form_orig pos =
+    let fct h = Some (Base.mk_star h hform pos) in
+    Base.transform_struc_formula fct form_orig
+
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
       let node_kind = Base.get_node_kind h_formula in
@@ -2079,17 +2084,6 @@ let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_an
 					  AnnSecondaryPeer :: (make_ann_list tl role1 role2)
 					else
 					  AnnInactive :: (make_ann_list tl role1 role2)
-
-let make_projection_nodes (session: IProtocol.session) (vars: ident list) =
-  let node_hash = HT.create 10 in
-  let proj_hash = make_projection session in
-  let helper (role1, role2) tpproj =
-	let ann_list = make_ann_list vars role1 role2 in
-	let heap_node = ITPProjection.trans_from_session tpproj in
-	let heap_node = F.set_sess_ann heap_node ann_list in
-	let () = print_endline (pr_list string_of_sess_ann ann_list) in
-	HT.add node_hash (role1, role2) heap_node in
-  HT.iter helper proj_hash
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
