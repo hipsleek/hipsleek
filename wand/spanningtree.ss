@@ -37,7 +37,8 @@ axiom true ==> spanning_tree(G,null,G).
 
 axiom lookup(G,x,1,_,_) ==> spanning_tree(G,x,G).
 
-axiom spanning_tree(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1) & lookup(G1,y,_,l,r).
+axiom spanning_tree(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1) 
+& (lookup(G1,y,_,l,r) | lookup(G1,y,_,null,r) | lookup(G1,y,_,l,null)).
 
 axiom lookup(G,x,v,l,r) & update(G,x,1,G1) & v != 1 &
 spanning_tree(G1,l,G2) & spanning_tree(G2,r,G3) ==> spanning_tree(G,x,G3) & lookup(G3,x,1,l,r).
