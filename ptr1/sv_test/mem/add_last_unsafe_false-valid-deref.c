@@ -8,9 +8,15 @@ int main() {
   int *arr = alloca(length);
   if (!arr) return 0;
   int *a = arr;
-  while (*a != *(arr + length - 1)) {
-    *a += *(arr + length - 1);
-    a++;
-  }
+  
+  while (*a != *(arr + length - 1))
+    /*@
+      requires a::arr_seg<0,length-k>
+      ensures a::arr_seg<0,length-k> * x::arrI<_>;
+    */
+    {
+      *a += *(arr + length - 1);
+      a++;
+    }
   return 0;
 }
