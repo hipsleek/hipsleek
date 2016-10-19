@@ -1,0 +1,24 @@
+relation B(int n).
+
+
+data arrI
+{
+  int value;
+  arrI next;
+}.
+
+
+relation Base(int n).
+relation Rec(int n).
+
+
+pred arrsegHO<i,m> ==
+   self::arrI<v,null> & i=m-1 // Rec(v) & i=m-1
+   or self::arrI<v,q> * q::arrsegHO<i+1,m> & i<m-1 & Rec(v) 
+ inv i<m.
+
+// 3
+infer [@classic,Rec
+ ] x::arrI<v,q> * q::arrsegHO<i+1,m> & v=5 & i<m-1 |- x::arrsegHO<i,m>.
+print residue.
+

@@ -1,0 +1,13 @@
+data arrI
+{
+  int value;
+}.
+
+pred arrseg<i,m> ==
+   x::arrI<v> & x=self+i & i=m-1
+   or x::arrI<v> * self::arrseg<i+1,m> & x = self+i & i<m-1
+   inv i<m.
+
+
+
+     

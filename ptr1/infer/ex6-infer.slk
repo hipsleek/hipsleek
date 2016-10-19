@@ -1,0 +1,21 @@
+data arrI
+{
+ int value;
+     }.
+
+pred arr_seg<i,n> == i=n & i>=0
+    or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+inv n>=i & i>=0.
+
+relation U(int u1,int u2, int i).
+
+
+infer [u1,u2] base::arr_seg<u1,u2>  |- a::arrI<_> & a=base+i.
+
+infer [U] base::arr_seg<u1,u2> & U(u1,u2,i)  |- a::arrI<_> & a=base+i.
+
+infer [u1,u2] base::arr_seg<u1,u2>  |- base::arr_seg<i,5>.
+print residue.
+
+infer [U] base::arr_seg<u1,u2> & U(u1,u2,i) & i<5  |- base::arr_seg<i,5>.
+print residue.
