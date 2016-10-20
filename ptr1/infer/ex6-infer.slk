@@ -9,6 +9,8 @@ inv n>=i & i>=0.
 
 relation U(int u1,int u2, int i).
 
+relation U2(int u1,int u2, int m,int n).
+
 
 infer [u1,u2] base::arr_seg<u1,u2>  |- a::arrI<_> & a=base+i.
 
@@ -19,3 +21,22 @@ print residue.
 
 infer [U] base::arr_seg<u1,u2> & U(u1,u2,i) & i<5  |- base::arr_seg<i,5>.
 print residue.
+
+
+infer [U2] base::arr_seg<u1,u2> & U2(u1,u2,m,n) & m<n  |- u1<=m & m<u2.
+print residue.
+
+infer [U2] U2(u1,u2,m,n) & m<n & u1<=u2  |- u1<=m & m<u2.
+print residue.
+
+infer [U2] U2(u1,u2,m,n) & 0<=u1 & m<n & u1<=u2  |- u1<=m & m<u2.
+print residue.
+
+infer [U2] base::arr_seg<u1,u2> & U2(u1,u2,m,n) & m<n |- U2(u1,u2,m+1,n).
+print residue.
+
+/*
+k1*m,k2*m f(arr,m)
+f(arr,m+1)
+
+*/
