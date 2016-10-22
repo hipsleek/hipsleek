@@ -1895,6 +1895,34 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) 
         pos qvars ~lem_unfold:lem_unfold already_unsat (uf:int) ) h 
 
+and find_projection vdef sess_ann =
+  try
+  let sess_ann = match sess_ann with
+           | Some ann -> ann
+           | None -> failwith "Session annotations expected." in
+  match vdef.view_session_projections with
+  | Some proj_hash -> let vars = List.map (fun x -> Session.CForm.get_param_id x) vdef.view_vars in
+                      let primary_role_index = ref 0 in
+                      let secondary_role_index = ref 0 in
+                      let helper index ann =
+                        if (ann = AnnPrimaryPeer)
+                        then
+                          primary_role_index := index
+                        else
+                          if (ann = AnnSecondaryPeer)
+                          then
+                            secondary_role_index := index in
+                      let () = List.iteri helper sess_ann in
+                      (*let () = print_endline ("anns: " ^ (pr_list string_of_sess_ann sess_ann)) in
+                      let () = print_endline ("indexes: " ^ (string_of_int !primary_role_index) ^ " " ^ (string_of_int !secondary_role_index)) in*)
+                      let primary_role = List.nth vars !primary_role_index in
+                      let secondary_role = List.nth vars !secondary_role_index in
+                      (*let () = print_endline ("roles: " ^ primary_role ^ " " ^ secondary_role) in*)
+                      let proj_vdef = HT.find proj_hash (primary_role, secondary_role) in
+                      proj_vdef
+  | None -> failwith "Session projections expected."
+  with Not_found -> failwith "Cannot find required projection."
+
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 
     fl (uf:int) ?(lem_unfold = false) pos : formula = 
   let pr1 = Cprinter.string_of_h_formula in
@@ -1926,9 +1954,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                h_formula_view_perm = perm;
                h_formula_view_arguments = vs;
                h_formula_view_annot_arg = anns;
+               h_formula_view_sess_ann = sess_ann;
               }) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
     let prog1 = fst prog in
     let vdef = x_add Cast.look_up_view_def pos prog1.prog_view_decls lhs_name in
+    let vdef = match vdef.view_session_info with
+               | None -> vdef
+               | Some si -> (match si.session_kind with
+                              | Some Protocol -> find_projection vdef sess_ann
+                              | _ -> vdef) in
     (*          let uf = old_uf+uf in
                 if CP.mem p aset then ( *)
     if (vdef.view_is_prim) then
