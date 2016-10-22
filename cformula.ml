@@ -20820,3 +20820,8 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+let set_sess_ann hform ann_list =
+  match hform with
+  | ViewNode node ->  ViewNode {node with h_formula_view_sess_ann = Some ann_list }
+  | _ -> hform
