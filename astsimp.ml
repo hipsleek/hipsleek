@@ -2417,6 +2417,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
 	let heap_node = Session.ITPProjection.trans_from_session tpproj in
 	let heap_node = F.set_sess_ann heap_node ann_list in
 	let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
+    let form = Session.norm_slk_struct form in
 	let new_vdef = {vdef with
 					view_formula = form;
 					view_session_formula = Some (Session.TPProjectionSession tpproj);
