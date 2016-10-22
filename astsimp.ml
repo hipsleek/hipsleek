@@ -2283,6 +2283,17 @@ and trans_view_kind vk= vk
 
 and trans_view_session_info si = si
 
+and trans_view_session_projections (prog : I.prog_decl) mutrec_vnames transed_views ann_typs iproj_hash =
+  match iproj_hash with
+  | None -> None
+  | Some hash -> let cproj_hash = HT.create 10 in
+                 let helper (role1, role2) ivdef =
+                   (* TODO tina: using the same params might not be correct *)
+                   let cvdef = trans_view prog mutrec_vnames transed_views ann_typs ivdef in
+                   HT.add cproj_hash (role1, role2) cvdef in
+                 let () = HT.iter helper hash in
+                 Some cproj_hash
+
 and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_f: MCP.mix_formula option) : MCP.mix_formula =
   let p1 = add_param_ann_constraints_to_pure h1 None in
   let p2 = add_param_ann_constraints_to_pure h2 None in
@@ -2616,6 +2627,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
       let view_session_info = trans_view_session_info vdef.I.view_session_info in
+      let view_session_projections = trans_view_session_projections prog mutrec_vnames transed_views ann_typs vdef.I.view_session_projections in
       let vn = vdef.I.view_name in
       let () = if is_view_PRIM view_kind then CF.view_prim_lst # push vn
       in
@@ -2857,6 +2869,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_session_info = view_session_info;
+        C.view_session_projections = view_session_projections;
         C.view_type_of_self = 
           (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in
