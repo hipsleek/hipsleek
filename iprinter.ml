@@ -667,12 +667,28 @@ and string_of_formula = function
     in rs^sa
 
 and string_of_session session_formula =
-  Gen.map_opt_def "\n"
-    (fun x ->  match x with
-                 | Session.ProtocolSession s -> "\nsession: " ^ Session.IProtocol.string_of_session s
-                 | Session.ProjectionSession s -> "\nsession: " ^ Session.IProjection.string_of_session s
-                 | Session.TPProjectionSession s -> "\nsession: " ^ Session.ITPProjection.string_of_session s)
+  Gen.map_opt_def ""
+    (fun x -> "\nsession: " ^ string_of_session_formula x)
     session_formula
+
+and string_of_session_formula session_formula =
+  match session_formula with
+    | Session.ProtocolSession s -> Session.IProtocol.string_of_session s
+    | Session.ProjectionSession s -> Session.IProjection.string_of_session s
+    | Session.TPProjectionSession s -> Session.ITPProjection.string_of_session s
+
+and string_of_session_projections session_projections =
+  Gen.map_opt_def ""
+    (fun x -> let str = ref "projections:\n" in
+              let helper (role1, role2) proj_vdef =
+                if (!Globals.print_compact_projection_formula)
+                then
+                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ (map_opt_def "" string_of_session_formula proj_vdef.view_session_formula))
+                else
+                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ string_of_struc_formula proj_vdef.view_formula ^ "\n") in
+              let () = HT.iter helper x in
+              !str)
+    session_projections
 
 and  string_of_struc_formula c = match c with 
   | F.ECase {
@@ -1053,6 +1069,7 @@ let string_of_view_decl v =
   ^ "\nextends" ^ extn_str
   ^ map_opt_def "" string_of_view_session_info v.view_session_info
   ^ (string_of_session v.view_session_formula)
+  ^ (string_of_session_projections v.view_session_projections)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
