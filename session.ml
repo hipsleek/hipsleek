@@ -138,6 +138,7 @@ module type Message_type = sig
   val map_rflow_formula_list_res_h: (formula -> formula) -> h_formula_heap -> h_formula
   val update_temp_heap_name: view_session_info -> h_formula -> h_formula option
   val set_heap_node_var: var -> h_formula_heap -> h_formula
+  val set_ann_list: h_formula -> sess_ann list -> h_formula
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -168,6 +169,7 @@ module type Message_type = sig
   val get_node_only: h_formula -> h_formula_heap
   val get_node_opt:  h_formula -> h_formula_heap option
   val get_heap_node_var: h_formula_heap -> var
+  val get_ann_list: h_formula -> sess_ann list option
       
   val get_h_formula_safe: formula -> h_formula option
   val get_h_formula_from_struc_formula_safe: struc_formula -> h_formula option
@@ -335,6 +337,9 @@ module IForm = struct
   let set_heap_node_var var node =
     F.HeapNode {node with F.h_formula_heap_node = var;}
 
+  let set_ann_list hform ann =
+    F.set_sess_ann hform ann
+
   let get_heap_node_var node =
     node.F.h_formula_heap_node
   
@@ -383,6 +388,11 @@ module IForm = struct
     | F.HVar (sv, svl) -> HVar
     | F.HEmp -> Emp
     | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
+
+  let get_ann_list h_form =
+    match h_form with
+    | F.HeapNode node -> node.F.h_formula_heap_sess_ann
+    | _ -> failwith (x_loc ^ ": F.HeapNode expected.")
                
   let rec get_session_kind h_formula =
     match h_formula with
@@ -595,6 +605,9 @@ module CForm = struct
   let set_heap_node_var var node =
     CF.ViewNode {node with CF.h_formula_view_node = var;}
 
+  let set_ann_list hform ann =
+    CF.set_sess_ann hform ann
+
   let get_heap_node_var node = node.CF.h_formula_view_node
 
   let subst_param  (sst: (var * var) list) p =
@@ -651,6 +664,11 @@ module CForm = struct
     | CF.HVar (sv, svl) -> HVar
     | CF.HEmp -> Emp
     | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
+
+  let get_ann_list h_formula =
+    match h_formula with
+    | CF.ViewNode node -> node.CF.h_formula_view_sess_ann
+    | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
   let rec get_session_kind h_formula = failwith x_tbi
 
@@ -1262,6 +1280,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_params: Base.param list;
     session_predicate_formula_heap_node: Base.h_formula_heap option;
     session_predicate_pos: loc;
+    session_predicate_anns: sess_ann list;
   }
 
   and session_hvar = {
@@ -1379,13 +1398,14 @@ module Make_Session (Base: Session_base) = struct
 	  session_fence_pred = pred;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) loc =
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?sess_ann:(anns=[]) loc =
     Predicate {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
       session_predicate_params = params;
       session_predicate_formula_heap_node = node;
       session_predicate_pos = loc;
+      session_predicate_anns = anns;
     }
 
   and mk_session_fence_predicate name ho_vars params ?node:(node=None) loc =
@@ -1395,6 +1415,8 @@ module Make_Session (Base: Session_base) = struct
       session_predicate_params = params;
       session_predicate_formula_heap_node = node;
       session_predicate_pos = loc;
+      (* TODO: anns in fences? *)
+      session_predicate_anns = [];
     }
 
   and mk_session_hvar id ls loc = HVar {
@@ -1441,8 +1463,10 @@ module Make_Session (Base: Session_base) = struct
     let args = [] in (* not using HO preds here *)
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
+    let anns = p.session_predicate_anns in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
+    let node = Base.set_ann_list node anns in
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)
 
@@ -1622,8 +1646,9 @@ module Make_Session (Base: Session_base) = struct
             SBase (mk_session_hvar id ls no_pos)
         | Predicate ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
+            let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
             (* let params = List.map (fun a -> Base.get_param_id a) params in *)
-            SBase (mk_session_predicate name [] params ~node:(Base.get_node_opt h_formula) pos)
+            SBase (mk_session_predicate name [] params ~node:(Base.get_node_opt h_formula) ~sess_ann:ann pos)
         | Emp ->
             SEmp
         | Session -> failwith (x_loc ^ ": Unexpected node kind.")
