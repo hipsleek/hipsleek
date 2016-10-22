@@ -1509,17 +1509,19 @@ tpprojection_formula:
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, mv, loc) c)
 	| `EMPTY -> Session.ITPProjection.SEmp
-    | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
+    | hid = heap_id; opt1 = OPT rflow_form_list; `LT; params = sess_ann_list_opt; `GT ->
       let name,_,_,_ = hid in
-        let ho_args = un_option opt1 [] in
-        let params,_ = List.split (fst hl) in
-        let loc = (get_pos_camlp4 _loc 1) in
+      let ho_args = un_option opt1 [] in
+      let loc = (get_pos_camlp4 _loc 1) in
+      let vars = List.map (fun x -> fst x) params in
+      let vars = List.map (fun x -> Session.IForm.id_to_param x loc) vars in
+      let ann = List.map (fun x -> snd x) params in
+      Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:ann loc)
     (* | vh = view_header -> *)
     (*   let name = vh.Iast.view_name in *)
     (*   let ho_vars = vh.Iast.view_ho_vars in *)
     (*   let params = vh.Iast.view_vars in *)
     (*   let loc = (get_pos_camlp4 _loc 1) in *)
-        Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args params loc)
     ]
 ];
 
@@ -1826,6 +1828,7 @@ rflow_form:
         F.rflow_session_kind = Some TPProjection; }
     ]
   |[ `ATP; `IDENTIFIER pred_name; `LT; params = sess_ann_list_opt; `GT ->
+      (* TODO tina: this is not needed anymore, should we nuke it? *)
       let loc = (get_pos_camlp4 _loc 1) in
       let vars = List.map (fun x -> fst x) params in
       let vars = List.map (fun x -> Session.IForm.id_to_param x loc) vars in
