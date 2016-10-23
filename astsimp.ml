@@ -2417,8 +2417,9 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
 	let heap_node = Session.ITPProjection.trans_from_session tpproj in
 	let heap_node = F.set_sess_ann heap_node ann_list in
 	let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
-    let form = Session.norm_slk_struct form in
+    let form = F.subst_stub_flow_struc top_flow form in
 	let new_vdef = {vdef with
+                    view_name = role1 ^ role2 ^ vdef.view_name;
 					view_formula = form;
 					view_session_formula = Some (Session.TPProjectionSession tpproj);
 					view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
@@ -2569,6 +2570,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             );
             not (is_deref_var)
           ) ffv in
+        let () = print_endline ("free vars: " ^ (pr_list Cprinter.string_of_spec_var ffv)) in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") 
         else allow_ex_vs
       in
@@ -10199,6 +10201,18 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
       let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
+      let normalized_proj =
+        match c.view_session_projections with
+          | Some proj -> let norm_proj = HT.create 10 in
+                         let helper (role1, role2) proj_vdef =
+                           let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) proj_vdef.Iast.view_vars ) in
+                           let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) proj_vdef.Iast.view_vars ) in
+                           let norm_form = case_normalize_struc_formula_view 8 prog h p proj_vdef.Iast.view_formula false false false [] in
+                           let new_vdef = {proj_vdef with view_formula = norm_form;} in
+                           HT.add norm_proj (role1, role2) new_vdef in
+                         let () = HT.iter helper proj in
+                         Some norm_proj
+          | None -> None in
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =
         (match inv_lock with
@@ -10207,7 +10221,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
            let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
            Some new_f)
       in
-      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock}) tmp_views in
+      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock; Iast.view_session_projections = normalized_proj}) tmp_views in
   (* let () = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in

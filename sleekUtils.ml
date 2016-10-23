@@ -14,6 +14,8 @@ open Exc.GTable
 open Perm
 open Label_only
 
+module HT = Hashtbl
+
 let process_selective_iview_decls is_all iprog iviews =
   let iviews = if is_all then iprog.I.prog_view_decls else iviews in
   let iviews = List.map Astsimp.translate_session iviews in
@@ -21,6 +23,18 @@ let process_selective_iview_decls is_all iprog iviews =
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
       let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
+      let normalized_proj =
+        match pdef.view_session_projections with
+          | Some proj -> let norm_proj = HT.create 10 in
+                         let helper (role1, role2) proj_vdef =
+                           let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) proj_vdef.Iast.view_vars ) in
+                           let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) proj_vdef.Iast.view_vars ) in
+                           let norm_form = Astsimp.case_normalize_struc_formula_view 11 iprog h p proj_vdef.Iast.view_formula false false false [] in
+                           let new_vdef = {proj_vdef with view_formula = norm_form;} in
+                           HT.add norm_proj (role1, role2) new_vdef in
+                         let () = HT.iter helper proj in
+                         Some norm_proj
+                 | None -> None in
       let inv_lock = pdef.I.view_inv_lock in
       let inv_lock = (
         match inv_lock with
@@ -29,7 +43,7 @@ let process_selective_iview_decls is_all iprog iviews =
           let new_f = Astsimp.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
           Some new_f
       ) in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
+      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock; Iast.view_session_projections = normalized_proj;} in
       new_pdef
     ) iviews in
   let () = y_tinfo_hp (add_str "view_decls" (pr_list Iprinter.string_of_view_decl)) iprog.I.prog_view_decls in
