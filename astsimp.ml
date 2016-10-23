@@ -2411,14 +2411,14 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
 
 and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.view_decl) =
   let view_decl_hash = HT.create 10 in
-  let () = x_binfo_pp "Andreea/Tina: is 10 enough for creating a hash for projection? would it be better to create hash with the exact size?" in
+  let () = y_binfo_pp "Andreea/Tina: is 10 enough for creating a hash for projection? would it be better to create hash with the exact size?" in
   let proj_hash = Session.make_projection session in
   let helper (role1, role2) tpproj =
 	let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
 	let heap_node = Session.ITPProjection.trans_from_session tpproj in
 	let heap_node = F.set_sess_ann heap_node ann_list in
  let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
- let () = x_binfo_pp "Andreea/Tina: could you trye with  Session.norm_case (avoids seq norm) instead? " in
+ let () = y_binfo_pp "Andreea/Tina: could you trye with  Session.norm_case (avoids seq norm) instead? " in
     let form = Session.norm_slk_struct form in
 	let new_vdef = {vdef with
 					view_formula = form;
