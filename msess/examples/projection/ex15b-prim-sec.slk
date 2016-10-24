@@ -1,0 +1,25 @@
+sleek_include 'node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+pred_sess_prot G1<A,B,C> == A->B : emp.
+pred_sess_prot G2<A,B,C> == A->B : emp.
+checkentail ll::Sess{@S G1<A@prim,B@sec,C>}<> |- ll::Sess{@S !emp}<>.
+print residue.
+expect Valid.
+
+pred_sess_prot G3<A,B,C> == A->B : 2.
+pred_sess_prot G4<A,B,C> == A->B : 1;; G3<A,B,C>.
+
+checkentail x::Chan{@S G4<A@prim,B@sec,C>}<> |- x::Chan{@S !1;;!2}<>.
+print residue.
+expect Valid.
+
+
+/*pred_sess_prot G5<A,B,C> == A->B : 1;; G5<A,B,C>.
+pred_sess_prot G6<A,B,C> == A->B : 1;; G6<A,B,C>.
+
+checkentail x::Chan{@S G5<A@prim,B@sec,C>}<> |- x::Chan{@S !1;;!2}<>.
+print residue.
+expect Valid.
+*/
