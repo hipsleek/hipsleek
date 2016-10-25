@@ -1692,6 +1692,8 @@ module Make_Session (Base: Session_base) = struct
 
   let get_receiver b = Base.get_receiver b
 
+  let get_param_id param = Base.get_param_id param
+
   let replace_message_var b =
     let msg_var = Base.get_message_var b in
     let new_var = Base.fresh_var msg_var in
@@ -1961,7 +1963,6 @@ module Make_Session (Base: Session_base) = struct
       end           
     | _, _ -> def 
 
-
 end;;
 
 (* =========== Protocol / Projection ========== *)
@@ -2017,7 +2018,8 @@ let convert_predicate pred =
   let ho_vars = pred.IProtocol.session_predicate_ho_vars in
   let params = pred.IProtocol.session_predicate_params in
   let pos = pred.IProtocol.session_predicate_pos in
-  ITPProjection.mk_session_predicate name ho_vars params pos
+  let anns = pred.IProtocol.session_predicate_anns in
+  ITPProjection.mk_session_predicate name ho_vars params ~sess_ann:anns pos
 
 let combine_partial_proj
 		(comb_fnc: ITPProjection.session ->
@@ -2062,6 +2064,33 @@ let print_proj hash =
     print_endline (role1 ^ "(" ^ role2 ^ "): " ^ (ITPProjection.string_of_session tpproj)) in
   HT.iter print hash
 
+let make_role_comb (roles : ident list) : (ident * ident) list =
+  let rec gen_for_one_role role role_list =
+    match role_list with
+      | [] -> []
+      | [hd] -> [(role, hd)]
+      | hd :: tl -> [(role, hd)] @ gen_for_one_role role tl in
+  let rec gen_for_all_roles role_list =
+    match role_list with
+      | [] -> []
+      | [hd] -> gen_for_one_role hd roles
+      | hd :: tl -> gen_for_one_role hd roles @ gen_for_all_roles tl in
+  let comb_list = gen_for_all_roles roles in
+  List.filter (fun x -> (fst x) != (snd x)) comb_list
+
+let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_ann list =
+  match vars with
+	| [] -> []
+	| hd :: tl -> if (hd = role1)
+				  then
+					AnnPrimaryPeer :: (make_ann_list tl role1 role2)
+				  else
+					if (hd = role2)
+					then
+					  AnnSecondaryPeer :: (make_ann_list tl role1 role2)
+					else
+					  AnnInactive :: (make_ann_list tl role1 role2)
+
 let make_projection (session: IProtocol.session) =
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
@@ -2090,25 +2119,22 @@ let make_projection (session: IProtocol.session) =
 							  let () = HT.add hash (sender, receiver) snd_op in
 							  let () = HT.add hash (receiver, sender) rcv_op in
 							  hash
-        | IProtocol.Predicate p -> HT.create 10
+        | IProtocol.Predicate p -> let hash = HT.create 10 in
+                                   let params = p.session_predicate_params in
+                                   let params = List.map (fun x -> IProtocol.get_param_id x) params in
+                                   let comb = make_role_comb params in
+                                   let helper (role1, role2) =
+                                     let ann = make_ann_list params role1 role2 in
+                                     let new_pred = {p with session_predicate_anns = ann;} in
+							         let new_pred = ITPProjection.SBase (convert_predicate new_pred) in
+                                     HT.add hash (role1, role2) new_pred in
+                                   let () = List.iter helper comb in
+                                   hash
         | IProtocol.HVar h -> HT.create 10)
     | IProtocol.SEmp    -> HT.create 10 in
    let hash = helper session in
    let () = print_proj hash in
    hash
-
-let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_ann list =
-  match vars with
-	| [] -> []
-	| hd :: tl -> if (hd = role1)
-				  then
-					AnnPrimaryPeer :: (make_ann_list tl role1 role2)
-				  else
-					if (hd = role2)
-					then
-					  AnnSecondaryPeer :: (make_ann_list tl role1 role2)
-					else
-					  AnnInactive :: (make_ann_list tl role1 role2)
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
@@ -2541,4 +2567,3 @@ let norm_slk_formula form =
 let norm_slk_formula form =
   let pr = !F.print_formula in
   Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form
-
