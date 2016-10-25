@@ -729,6 +729,10 @@ let pr_session_projection ?(lvl=(!glob_lvl)) vn =
   let pr_sess = Gen.map_opt_def def fct vn.h_formula_view_session_info in
   Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
+let pr_sess_ann ?(lvl=(!glob_lvl)) sess_ann =
+  let str = Gen.map_opt_def "" (pr_list string_of_sess_ann) sess_ann in
+  wrap_pr_1 lvl fmt_string str
+
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
 
 let pr_annot_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_annot_arg x)
@@ -1444,12 +1448,14 @@ let rec pr_h_formula h =
                h_formula_view_pruning_conditions = pcond;
                h_formula_view_unfold_num = ufn;
                h_formula_view_session_info = si;
+               h_formula_view_sess_ann = sess_ann;
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
     if (Session.is_projection si && !Globals.print_compact_projection_formula)
     then
       begin
-        pr_session_projection vn
+        pr_session_projection vn;
+        pr_sess_ann sess_ann;
       end
     else
       let ho_arg_str = if ho_svs==[] then ""
