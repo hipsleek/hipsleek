@@ -15,6 +15,16 @@ checkentail x::Chan{@S G4<A@prim,B@sec,C>}<> |- x::Chan{@S !1;;!2}<>.
 print residue.
 expect Valid.
 
+checkentail x::Chan{@S G4<C@prim,D@sec,E>}<> |- x::Chan{@S !1;;!2}<>.
+print residue.
+expect Valid.
+
+checkentail x::Chan{@S G4<A@prim,B,C@sec>}<> |- x::Chan{@S !1;;!2}<>.
+print residue.
+expect Fail.
+
+
+
 
 /*pred_sess_prot G5<A,B,C> == A->B : 1;; G5<A,B,C>.
 pred_sess_prot G6<A,B,C> == A->B : 1;; G6<A,B,C>.
