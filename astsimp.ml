@@ -2570,7 +2570,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             );
             not (is_deref_var)
           ) ffv in
-        let () = print_endline ("free vars: " ^ (pr_list Cprinter.string_of_spec_var ffv)) in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") 
         else allow_ex_vs
       in
