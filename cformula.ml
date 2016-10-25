@@ -20823,5 +20823,10 @@ let normalize_struc nb b =
 
 let set_sess_ann hform ann_list =
   match hform with
-  | ViewNode node ->  ViewNode {node with h_formula_view_sess_ann = Some ann_list }
+  | ViewNode node -> ViewNode {node with h_formula_view_sess_ann = Some ann_list }
   | _ -> hform
+
+let set_sess_ann hform ann_list =
+  let pr1 = !print_h_formula in
+  let pr2 = pr_list string_of_sess_ann in
+  Debug.no_2 "Cformula.set_sess_ann" pr1 pr2 pr1 set_sess_ann hform ann_list
