@@ -2411,7 +2411,7 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
 
 and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.view_decl) =
   let view_decl_hash = HT.create 10 in
-  let proj_hash = Session.make_projection session in
+  let proj_hash = Session.make_projection session vdef.view_vars in
   let helper (role1, role2) tpproj =
 	let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
 	let heap_node = Session.ITPProjection.trans_from_session tpproj in

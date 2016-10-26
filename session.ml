@@ -2091,7 +2091,7 @@ let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_an
 					else
 					  AnnInactive :: (make_ann_list tl role1 role2)
 
-let make_projection (session: IProtocol.session) =
+let make_projection (session: IProtocol.session) (vars: ident list) =
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
         		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
@@ -2133,6 +2133,15 @@ let make_projection (session: IProtocol.session) =
         | IProtocol.HVar h -> HT.create 10)
     | IProtocol.SEmp    -> HT.create 10 in
    let hash = helper session in
+   (* Add empty projections for pairs of nodes that do not interact. *)
+   let role_pairs = make_role_comb vars in
+   let add_empty_projection (role1, role2) =
+     try
+       let _ = HT.find hash (role1, role2) in
+       ()
+     with
+       Not_found -> HT.add hash (role1, role2) ITPProjection.SEmp in
+   let () = List.iter add_empty_projection role_pairs in
    let () = print_proj hash in
    hash
 
