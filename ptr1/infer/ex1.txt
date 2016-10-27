@@ -1,0 +1,141 @@
+If there is no recursive call(or loop):
+The bound can be trivially collected precisely.
+
+Case with recursive call:
+void init(int[] arr, int m, int n){
+   if(m<n){
+     arr[m] = 5;
+     init(arr,m+1,n);
+   }
+}
+
+start:
+   [k1*m+k2*n+k3, k4*m+k5*n+k6]
+
+constraints generated:
+for all m,n
+   m<n & m>=0 & n>=0 ->
+     k1*m+k2*n+k3<=m /\
+     k4*m+k5*n+k6>=m+1 /\
+     k1*m+k2*n+k3<=k1*(m+1)+k2*n+k3 /\
+     k4*(m+1)+k5*n+k6<=k4*m+k5*n+k6
+
+Simplify and normalize:
+for all m,n
+   m-n<=1 & -m<=0 & -n<=0 ->
+     (k1-1)*m+k2*n<=-k3 /\
+     (1-k4)*m-k5*n<=k6-1 /\
+     k3<=k1+k3 /\
+     k4+k6<=k6
+
+Now the goal is the reduce the universal quantified m,n,
+write the normalized form into:
+/    \         /  \
+|1 -1| / \     |-1|                / \
+|-1 0|.|m| <=  |0 | -> [1-k4,-k5]. |m| <= k6-1
+|0 -1| |n|     |0 |                |n|
+\    / \ /     \  /                \ /
+                    and           / \
+                        [k1-1,k2].|m| <= -k3
+                                  |n|
+                                  \ /
+                    and k1>=0 and k4<=0
+By Farkas' lemma,
+
+exists x: A.x <=b -> ((A.x <=b -> c.x<=d) <-> (exists l: l.A=c and l.b <=d))
+
+we have:
+exists l1: (l1=[l11,l12,l13])
+l1>=0 and
+   /    \                     /  \
+   |1 -1|                     |-1|
+l1.|-1 0| = [1-k4,-k5] and l1.|0 | <= k6-1
+   |0 -1|                     |0 |
+   \    /                     \  /
+and
+exists l2: (l2=[l21,l22,l23])
+l2>=0 and
+   /    \                     /  \
+   |1 -1|                     |-1|
+l2.|-1 0| = [k1-1,k2] and l2. |0 | <= -k3
+   |0 -1|                     |0 |
+   \    /                     \  /
+
+Written as constraints of k1-k6:
+
+l11>=0 l12>=0 l13>=0
+l11-l12 = 1-k4
+-l11-l13 = -k5
+-l11 <= k6-1
+
+l21>=0 l22>=0 l23>=0
+l21-l22 = k1-1
+-l21-l23 = k2
+-l21 <= -k3
+and k1>=0 and k4<=0
+
+Problem:
+Given the constraints of k1 - k6, what should be the target to minimize???
+One option can be:
+minimize: k1*m+k2*n+k3, k4*m+k5*n+k6.
+But this is still not linear, one way to approximate is to minimize:
+k4+k5+k6-k1-k2-k3, assuming k1-k6 are all non-negative.
+
+########## The corresponding linear programming input ######################
+# short example
+var k1;
+var k2;
+var k3;
+var k4;
+var k5;
+var k6;
+var l1;
+var l2;
+var l3;
+var m1;
+var m2;
+var m3;
+
+minimize obj: k6+k5+k4-k3-k2-k1;
+# minimize obj: k6;
+
+s.t. c1: l1>=0;
+s.t. c2: l2>=0;
+s.t. c3: l3>=0;
+s.t. c4: l1-l2 + k4=1;
+s.t. c5: k5-l1-l3 = 0;
+s.t. c6: k6-1>=-l1;
+
+s.t. c7: m1>=0;
+s.t. c8: m2>=0;
+s.t. c9: m3>=0;
+s.t. c10: m1-m2=k1-1;
+s.t. c11: k2+m1+m3=0;
+s.t. c12: m1>=k3;
+
+s.t. c13: k1>=0;
+s.t. c14: k2>=0;
+s.t. c15: k3>=0;
+s.t. c16: k4>=0;
+s.t. c17: k5>=0;
+s.t. c18: k6>=0;
+
+solve;
+display k1,k2,k3,k4,k5,k6,m1,m2,m3,l1,l2,l3;
+end;
+########### end of input #######################################################
+
+result:
+k1.val = 1
+k2.val = 0
+k3.val = 0
+k4.val = 0
+k5.val = 1
+k6.val = 0
+m1.val = 0
+m2.val = 0
+m3.val = 0
+l1.val = 1
+l2.val = 0
+l3.val = 0
+so the generated bound is [m,n] in this case.
