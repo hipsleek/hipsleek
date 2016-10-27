@@ -1,0 +1,29 @@
+template int f(int n).
+relation r1(int n).
+relation r2(int n).
+
+
+infer [f] n=0 |- f(n) >= 0.
+print residue.
+
+infer [r1] n=0 |- r1(n).
+print residue.
+
+
+infer [f] f(n-1) >= 0 |- f(n) >= 0.
+print residue.
+
+infer [r1] r1(n-1)  |- r1(n).
+print residue.
+
+template int f1(int x).
+template int f2(int x).
+
+infer [f1, f2]
+f1(x)<=0 & f2(x)<=0 |- x=0.
+print residue.
+
+
+infer [r1,r2]
+r1(x) & r2(x) |- x=0.
+print residue.
