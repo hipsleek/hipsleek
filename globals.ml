@@ -200,6 +200,7 @@ type node_kind =
   | Sequence
   | SOr
   | Star
+  | SExists
   (* base types *)
   | Send
   | Receive
@@ -308,6 +309,7 @@ let string_of_node_kind nk = match nk with
   | Sequence -> "Sequence"
   | SOr -> "SOr"
   | Star -> "Star"
+  | SExists -> "SExists"
   | Send -> "Send"
   | Receive -> "Receive"
   | Transmission -> "Transmission"

@@ -42,8 +42,9 @@ pred_prim Fa2<id:int,p:float,var>. //accumulator
 
 //checkentail ll::Sess{@S G<A@prim,B,C@sec>}<> |- x=null.
 
-pred_sess_prot G1<A,B,C> == A->B : emp.
-pred_sess_prot G2<A,B,C> == A->B : emp.
-checkentail ll::Sess{@S G1<A@prim,B@sec,C>}<> |- ll::Sess{@S !emp}<>.
+//pred_sess_prot G1<A,B,C> == exists cheap : A->B : emp ;; A->B : emp.
+pred_sess_prot G1<A,B,C> == A->B : emp ;; A->B : emp.
+//pred_sess_prot G2<A,B,C> == A->B : emp ;; A->B : emp.
+//checkentail ll::Sess{@S G1<A@prim,B@sec,C>}<> |- ll::Sess{@S !emp ;; !emp}<>.
 
 //checkentail ll::Sess{@S G1<A@prim,B@sec,C>}<> |- ll::Sess{@S G2<A@prim,B@sec,C>}<>.

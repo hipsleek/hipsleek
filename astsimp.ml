@@ -2417,7 +2417,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
 	let heap_node = Session.ITPProjection.trans_from_session tpproj in
 	let heap_node = F.set_sess_ann heap_node ann_list in
 	let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
-    let form = F.subst_stub_flow_struc top_flow form in
+    let form = F.subst_flow_of_struc_formula n_flow top_flow form in
 	let new_vdef = {vdef with
                     view_name = role1 ^ role2 ^ vdef.view_name;
 					view_formula = form;
@@ -2442,14 +2442,14 @@ and translate_session (view:I.view_decl) =
   match view.I.view_session_info with
   | Some si -> (match (si.session_kind) with
                  | Some Protocol ->
-                     let transf = Session.IProtocol.mk_struc_formula_from_session_and_formula in
+                     let transf = Session.IProtocol.mk_struc_formula_from_session_and_struc_formula in
 					 let proj = make_projection_view_decls (Session.get_protocol (get_session_formula view)) view in
                      {view with view_session_projections = Some proj}
                  | Some Projection ->
-                     let transf = Session.IProjection.mk_struc_formula_from_session_and_formula in
+                     let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
                      helper view transf Session.get_projection
                  | Some TPProjection ->
-                     let transf = Session.ITPProjection.mk_struc_formula_from_session_and_formula in
+                     let transf = Session.ITPProjection.mk_struc_formula_from_session_and_struc_formula in
                      helper view transf Session.get_tpprojection
                  | None -> view)
   | None -> view

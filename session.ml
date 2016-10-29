@@ -49,6 +49,7 @@ let set_prim_pred_id kind id =
     | Sequence     -> seq_id := Some id
     | SOr          -> sor_id := Some id
     | Star         -> ()
+    | SExists      -> ()     
     | Send         -> send_id := Some id
     | Receive      -> recv_id := Some id
     | Transmission -> trans_id := Some id
@@ -70,6 +71,7 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Sequence     -> get_prim_pred_id seq_id
   | SOr          -> get_prim_pred_id sor_id
   | Star         -> ""
+  | SExists      -> ""
   | Send         -> get_prim_pred_id send_id
   | Receive      -> get_prim_pred_id recv_id
   | Transmission -> get_prim_pred_id trans_id
@@ -121,6 +123,8 @@ module type Message_type = sig
   val mk_formula: pure_formula -> arg -> session_kind -> node_kind -> formula
   val mk_struc_formula: formula -> VarGen.loc -> struc_formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
+  val mk_star_formula: formula -> formula -> VarGen.loc -> formula
+  val mk_exists: (ident * primed) list -> h_formula -> VarGen.loc -> formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
   val mk_hvar: ident -> var list -> h_formula
@@ -133,6 +137,7 @@ module type Message_type = sig
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula: (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  (h_formula -> h_formula option)-> struc_formula -> struc_formula
+  val transform_struc_formula_formula:  (formula -> formula option)-> struc_formula -> struc_formula
   val map_one_rflow_formula: (formula -> formula) -> ho_param_formula -> ho_param_formula
   val map_rflow_formula_list: (formula -> formula) -> ho_param_formula list -> ho_param_formula list
   val map_rflow_formula_list_res_h: (formula -> formula) -> h_formula_heap -> h_formula
@@ -148,6 +153,7 @@ module type Message_type = sig
   val append_tail: h_formula -> h_formula -> h_formula
 
   val is_base_formula: formula -> bool
+  val is_exists_formula: formula -> bool
   val get_h_formula: formula -> h_formula
   val get_h_formula_safe: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
@@ -170,6 +176,8 @@ module type Message_type = sig
   val get_node_opt:  h_formula -> h_formula_heap option
   val get_heap_node_var: h_formula_heap -> var
   val get_ann_list: h_formula -> sess_ann list option
+  val get_exists_vars: formula -> (ident * primed) list
+  val get_formula_pos: formula -> VarGen.loc
       
   val get_h_formula_safe: formula -> h_formula option
   val get_h_formula_from_struc_formula_safe: struc_formula -> h_formula option
@@ -231,6 +239,12 @@ module IForm = struct
 
   let mk_star h1 h2 pos =
     F.mkStar h1 h2 pos
+
+  let mk_star_formula f1 f2 pos =
+    F.mkStar_formula f1 f2 pos
+
+  let mk_exists vars hform pos =
+    F.mkExists vars hform (IP.mkTrue pos) IvpermUtils.empty_vperm_sets F.n_flow [] pos
 
   let choose_ptr ?ptr:(str=session_def_id) () =
     (str,Unprimed)
@@ -298,6 +312,10 @@ module IForm = struct
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
     F.transform_struc_formula fcts struc_form
 
+  let transform_struc_formula_formula fct struc_form =
+    let fcts = (nonef,fct,somef,(somef,somef,somef,somef,somef)) in
+    F.transform_struc_formula fcts struc_form
+
   let map_one_rflow_formula fnc rflow_formula =
     F.map_one_rflow_formula fnc rflow_formula
 
@@ -325,7 +343,7 @@ module IForm = struct
         let new_heap_name = get_prim_pred_id_by_kind nk in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
-      | Star | HVar | Predicate | Emp ->  None
+      | Star | SExists | HVar | Predicate | Emp ->  None
       end
     | None -> None
         
@@ -360,11 +378,14 @@ module IForm = struct
       | F.Base f -> true
       | _ -> false
 
-  let get_h_formula formula =
+  let is_exists_formula formula =
     match formula with
-      | F.Base f -> f.F.formula_base_heap
-      | F.Exists f -> f.F.formula_exists_heap
-      | _ -> failwith (x_loc ^ ": Formula Base or Exists expected.")
+      | F.Exists f -> true
+      | _ -> false
+
+  let get_h_formula formula =
+    let h, p, vp, fl, a = F.split_components formula in
+    h
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.F.rflow_base in
@@ -393,6 +414,14 @@ module IForm = struct
     match h_form with
     | F.HeapNode node -> node.F.h_formula_heap_sess_ann
     | _ -> failwith (x_loc ^ ": F.HeapNode expected.")
+
+  let get_exists_vars formula =
+    match formula with
+      | F.Exists f -> f.F.formula_exists_qvars
+      | _ -> failwith (x_loc ^ ": F.Exists expected.")
+
+  let get_formula_pos formula =
+    F.pos_of_formula formula
                
   let rec get_session_kind h_formula =
     match h_formula with
@@ -549,6 +578,14 @@ module CForm = struct
   let mk_star h1 h2 pos =
     CF.mkStarH h1 h2 pos
 
+  let mk_star_formula f1 f2 pos =
+    CF.mkStar f1 f2 CF.Flow_combine pos
+
+  let mk_exists vars hform pos =
+    let vars = List.map (fun x -> CP.SpecVar (UNK, (fst x), (snd x))) vars in
+    let mix_formula = MCP.mix_of_pure (CP.mkTrue pos) in
+    CF.mkExists vars hform mix_formula CvpermUtils.empty_vperm_sets CF.TypeEmpty (CF.mkTrueFlow ()) [] pos
+
   let choose_ptr ?ptr:(str=session_def_id) () =
     CP.SpecVar(UNK,str,Unprimed)
 
@@ -579,6 +616,10 @@ module CForm = struct
 
   let transform_struc_formula fct struc_form =
     let fcts = (nonef,nonef,fct,(somef,somef,somef,somef,somef)) in
+    CF.transform_struc_formula fcts struc_form
+
+  let transform_struc_formula_formula fct struc_form =
+    let fcts = (nonef,fct,somef,(somef,somef,somef,somef,somef)) in
     CF.transform_struc_formula fcts struc_form
 
   let map_one_rflow_formula fnc rflow_formula =
@@ -670,6 +711,17 @@ module CForm = struct
     | CF.ViewNode node -> node.CF.h_formula_view_sess_ann
     | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
 
+  let get_exists_vars formula =
+    match formula with
+      | CF.Exists f -> List.map (fun x -> match x with 
+                                            | CP.SpecVar sv -> let _, id, primed = sv in
+                                          (id, primed))
+                       f.formula_exists_qvars
+      | _ -> failwith (x_loc ^ ": CF.Exists expected.")
+
+  let get_formula_pos formula =
+    CF.pos_of_formula formula
+
   let rec get_session_kind h_formula = failwith x_tbi
 
   let get_param_id param =
@@ -687,14 +739,16 @@ module CForm = struct
   let is_base_formula formula =
     match formula with
     | CF.Base f -> true
+    | _ -> false
+
+  let is_exists_formula formula =
+    match formula with
     | CF.Exists f -> true
     | _ -> false
 
   let get_h_formula formula =
-    match formula with
-      | CF.Base f -> f.CF.formula_base_heap
-      | CF.Exists f -> f.CF.formula_exists_heap
-      | _ -> failwith (x_loc ^ ": Formula Base or Exists expected.")
+    let h, p, vp, fl, t, a = CF.split_components formula in
+    h
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.CF.rflow_base in
@@ -1238,6 +1292,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq  of session_seq_formula
     | SOr   of session_or_formula
     | SStar of session_star_formula
+    | SExists of session_exists_formula
 	| SFence of session_fence
     | SBase of session_base
     | SEmp
@@ -1268,6 +1323,13 @@ module Make_Session (Base: Session_base) = struct
     session_star_formula_pos:  loc;
   }
 
+  and session_exists_formula = {
+    (* TODO tina: do we need a heap_node field? what is it used for? *)
+    session_exists_formula_vars: (ident * primed) list;
+    session_exists_formula_session: session;
+    session_exists_formula_pos: loc;
+  }
+
   and session_fence = {
     session_fence_role1: ident;
     session_fence_role2: ident;
@@ -1296,6 +1358,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> string_of_session_seq s
     | SOr s   -> string_of_session_or s
     | SStar s -> string_of_session_star s
+    | SExists s -> string_of_session_exists s
 	| SFence f -> string_of_session_fence f
     | SBase s -> string_of_session_base s
     | SEmp    -> string_of_session_emp ()
@@ -1322,6 +1385,10 @@ module Make_Session (Base: Session_base) = struct
     "*" ^
     " (" ^ string_of_one_session s.session_star_formula_star2 ^ ")"
 
+  and string_of_session_exists s =
+    "exists " ^ (pr_list (fun x -> fst x) s.session_exists_formula_vars) ^
+    ": " ^ string_of_one_session s.session_exists_formula_session
+
   and string_of_session_fence f =
 	"[" ^ f.session_fence_role1 ^ ", " ^ f.session_fence_role2 ^ "]: " ^
     string_of_session_predicate f.session_fence_pred
@@ -1338,6 +1405,7 @@ module Make_Session (Base: Session_base) = struct
     | SOr s   -> s.session_sor_formula_heap_node
     | SStar s -> s.session_star_formula_heap_node
 (* TODO: review this *)
+    | SExists s -> None
     | SFence f -> None
     | SEmp    -> None
     | SBase s -> match s with
@@ -1391,6 +1459,13 @@ module Make_Session (Base: Session_base) = struct
       session_star_formula_pos   = loc;
     }
 
+  and mk_session_exists_formula vars session loc =
+    SExists {
+      session_exists_formula_vars = vars;
+      session_exists_formula_session = session;
+      session_exists_formula_pos = loc;
+    }
+
   and mk_session_fence role1 role2 pred =
     SFence {
       session_fence_role1 = role1;
@@ -1408,6 +1483,7 @@ module Make_Session (Base: Session_base) = struct
       session_predicate_anns = anns;
     }
 
+  (* TODO tina: Why doesn't this use SFence constructor? *)
   and mk_session_fence_predicate name ho_vars params ?node:(node=None) loc =
     {
       session_predicate_name = name;
@@ -1453,6 +1529,17 @@ module Make_Session (Base: Session_base) = struct
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)
 
+  and mk_exists_node vars hform pos =
+    let form = Base.mk_exists vars hform pos in
+    let rflow_form = Base.mk_rflow_formula ~sess_kind:(Some Base.base_type) form in
+    (* ptr and name don't matter, they will be stripped off when returning the session heap formula *)
+    let ptr = Base.choose_ptr () in
+    let name = "exists" in
+    let args = [rflow_form] in
+    let params = [] in
+    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type SExists in
+    node
+
 (* TODO: review this *)
   and mk_fence () =
     Base.mk_empty ()
@@ -1495,6 +1582,10 @@ module Make_Session (Base: Session_base) = struct
         let arg1 = helper s.session_star_formula_star1 in
         let arg2 = helper s.session_star_formula_star2 in
         mk_star_node arg1 arg2 s.session_star_formula_heap_node s.session_star_formula_pos
+    | SExists s -> let vars = s.session_exists_formula_vars in
+                   let hform = helper s.session_exists_formula_session in
+                   let pos = s.session_exists_formula_pos in
+                   mk_exists_node vars hform pos
 	| SFence f -> mk_fence ()
     | SBase s -> (match s with
         | Base b -> Base.trans_base b
@@ -1555,6 +1646,8 @@ module Make_Session (Base: Session_base) = struct
         | SStar s ->
           SStar {s with session_star_formula_star1 = helper fnc s.session_star_formula_star1;
                         session_star_formula_star2 = helper fnc s.session_star_formula_star2; }
+        | SExists s ->
+          SExists {s with session_exists_formula_session = helper fnc s.session_exists_formula_session;}
 (* TODO: review this *)
         | SFence f -> sf
         | SBase sb -> SBase (trans_session_base_formula f_base sb)
@@ -1570,6 +1663,7 @@ module Make_Session (Base: Session_base) = struct
     | SSeq s  -> s.session_seq_formula_pos
     | SOr s   -> s.session_sor_formula_pos
     | SStar s -> s.session_star_formula_pos
+    | SExists s -> s.session_exists_formula_pos
 (* TODO: review this *)
 	| SFence f -> no_pos
     | SBase s -> (match s with
@@ -1601,21 +1695,53 @@ module Make_Session (Base: Session_base) = struct
     let params = [] in
     Base.mk_node (ptr, name, args, params, pos) Base.base_type Session
 
-  let mk_struc_formula_from_session_and_formula s form_orig =
-    let h_form = x_add_1 trans_from_session s in
-    let pos = get_pos s in
-    (* let h_form = mk_sess_h_formula h_form pos in *)
-    let fct h = Some (Base.mk_star h h_form pos) in
-    Base.transform_struc_formula(* _trans_heap_node *) fct form_orig
+  let strip_exists_heap_node (hform: Base.h_formula) : Base.formula =
+    let (ptr, name, args, params, pos) = Base.get_node hform in
+    Base.get_formula_from_ho_param_formula (List.nth args 0)
 
-  let mk_struc_formula_from_session_and_formula s form_orig =
+  (* Given two formulae, merge their heaps and combine
+   * into an Exist formula. *)
+  let merge_formulae_into_exists (f1: Base.formula) (f2: Base.formula)
+                                 (vars: (ident * primed) list) (pos: VarGen.loc)
+                                 : Base.formula =
+    let h1 = Base.get_h_formula f1 in
+    let h2 = Base.get_h_formula f2 in
+    let h = Base.mk_star h1 h2 pos in
+    Base.mk_exists vars h pos
+
+  let merge_formulae_into_base (f1: Base.formula) (f2: Base.formula)
+                               (pos: VarGen.loc) : Base.formula =
+    Base.mk_star_formula f1 f2 pos
+
+  let merge_formulae (h1: Base.h_formula) (f2: Base.formula)
+                     (pos: VarGen.loc) : Base.formula =
+    let nk = Base.get_node_kind h1 in
+             match nk with
+               | SExists -> let f1 = strip_exists_heap_node h1 in
+                            let vars = Base.get_exists_vars f1 in
+                            merge_formulae_into_exists f1 f2 vars pos
+               | _ -> let f1 = Base.mk_formula_heap_only h1 pos in
+                            merge_formulae_into_base f1 f2 pos
+
+  let mk_struc_formula_from_session_and_struc_formula (s: session) (sf: Base.struc_formula) =
+    let pos = get_pos s in
+    let h1 = x_add_1 trans_from_session s in
+    (* let h_form = mk_sess_h_formula h_form pos in *)
+    let f2 = Base.get_formula_from_struc_formula sf in
+    let merged_form = merge_formulae h1 f2 pos in
+    let fct h = Some merged_form in
+    Base.transform_struc_formula_formula fct sf
+
+  let mk_struc_formula_from_session_and_formula s sf =
     let pr1 = string_of_session in
     let pr2 = !Base.print_struc_formula in
-    Debug.no_2 "Session.mk_struc_formula_from_session_and_formula" pr1 pr2 pr2 mk_struc_formula_from_session_and_formula s form_orig
+    Debug.no_2 "Session.mk_struc_formula_from_session_and_struc_formula" pr1 pr2 pr2 mk_struc_formula_from_session_and_struc_formula s sf
 
-  let mk_struc_formula_from_h_formula_and_formula hform form_orig pos =
-    let fct h = Some (Base.mk_star h hform pos) in
-    Base.transform_struc_formula fct form_orig
+  let mk_struc_formula_from_h_formula_and_formula (h1: Base.h_formula) (sf: Base.struc_formula) pos =
+    let f2 = Base.get_formula_from_struc_formula sf in
+    let merged_form = merge_formulae h1 f2 pos in
+    let fct h = Some merged_form in
+    Base.transform_struc_formula_formula fct sf
 
   let trans_h_formula_to_session h_formula =
     let rec helper h_formula =
@@ -1639,6 +1765,11 @@ module Make_Session (Base: Session_base) = struct
             let h1 = List.nth star_formulae 0 in
             let h2 = List.nth star_formulae 1 in
             mk_session_star_formula (helper h1) (helper h2) pos
+        | SExists -> 
+            let (ptr, name, args, params, pos) = Base.get_node h_formula in
+            let hform = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in
+            let vars = Base.get_exists_vars (Base.get_formula_from_ho_param_formula (List.nth args 0)) in
+            mk_session_exists_formula vars (helper hform) pos
         | Send | Receive | Transmission ->
             SBase (Base (Base.trans_h_formula_to_session_base h_formula))
         | HVar ->
@@ -1704,13 +1835,13 @@ module Make_Session (Base: Session_base) = struct
     Debug.no_1 "Session.replace_message_var" pr pr replace_message_var b
   
   let trans_formula_to_session formula =
-    if (Base.is_base_formula formula)
+    if (Base.is_base_formula formula or Base.is_exists_formula formula)
     then
       let h_formula = Base.get_h_formula formula in
       let h_formula = get_original_h_formula h_formula in
       trans_h_formula_to_session h_formula
     else
-      failwith (x_loc ^ ": Formula Base expected.")
+      failwith (x_loc ^ ": Formula Or unexpected.")
 
   let trans_struc_formula_to_session struc_formula =
     let f = Base.get_formula_from_struc_formula struc_formula in
@@ -2111,6 +2242,14 @@ let make_projection (session: IProtocol.session) (vars: ident list) =
                             let hash = HT.create 10 in
 							let () = HT.add hash (role2, role1) new_pred in
 							hash
+    | IProtocol.SExists e -> let hash = helper e.IProtocol.session_exists_formula_session in
+                             let pos = e.IProtocol.session_exists_formula_pos in
+                             let add_exist (role1, role2) tpproj =
+                               let exist = ITPProjection.mk_session_exists_formula e.IProtocol.session_exists_formula_vars
+                                                         tpproj pos in
+                               HT.replace hash (role1, role2) exist in
+                             let () = HT.iter add_exist hash in
+                             hash
     | IProtocol.SBase s -> (match s with
         | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
   							  let sender = IProtocol.get_sender b in

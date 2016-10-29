@@ -1354,11 +1354,19 @@ prim_view_decl:
           view_inv_lock = li} ]];
 
 prot_view_decl:
-  [[ vh = view_header; `EQEQ; s = protocol_formula
+  [[ 
+    vh = view_header; `EQEQ; `EXISTS; vars = cid_list; `COLON; s = protocol_formula ->  
+      let loc = (get_pos_camlp4 _loc 1) in
+      let session_formula = Session.IProtocol.mk_session_exists_formula vars s loc in
+      { vh with
+           view_session_info = Some (mk_view_session_info ~sk:Protocol ());
+           view_session_formula = Some (Session.ProtocolSession session_formula)}
+          
+  | vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
                view_session_info = Some (mk_view_session_info ~sk:Protocol ());
                view_session_formula = Some (Session.ProtocolSession s)}
-   ]];
+  ]];
 
 session_msg_var:
     [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
