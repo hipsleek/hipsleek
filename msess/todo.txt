@@ -858,6 +858,34 @@ to add support for quantification in global prot ex17.ss
 
 =============================================
 =============================================
+../../hip ex17-careful-vs-regular-distributor.ss --esl
+
+Proving precondition in method send$Channel~int Failed.
+  (may) cause:  0<price' |-  price'=quot_3239. LOCS:[37;10] (may-bug)
+
+
+id: 226; caller: []; line: 38; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: [v_139,R,L]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail dc::Chan{ . (G{}<[B,S,Dc,Dr,budget]>) ;; (emp)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ dr::Chan{ . (G{}<[B,S,Dc,Dr,budget]>) ;; (emp)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ c'::Chan{ . (!price_3241#( emp&0<price_3241 & price_3241=quot_3239)) ;; ((((?msg_3242#( emp&msg_3242=1)) ;; ((?qty_3243#( emp&0<=qty_3243)) ;; (?addr_3245#( addr_3245::Addr<Anon_3244>@M)))) or (?msg_3246#( emp&msg_3246=0))) ;; (emp))
+&
+{FLOW,(4,5)=__norm#E}}<>@M&
+0<bound & bound'=bound & dr'=dr & dc'=dc & c'=c & 1<=id' & 0<price' & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  c'::Chan{ . (!v_139#( HVar L[v_139])) ;; (%R)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ (HVar L[price'])&
+{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  0<price' |-  price'=quot_3239. LOCS:[37;10] (may-bug)
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ SEARCH ==>  Match(c',c')]]false
 
 =============================================
 =============================================
