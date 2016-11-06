@@ -131,6 +131,8 @@ module type Message_type = sig
   val mk_seq_wrapper: ?sess_kind:session_kind option -> h_formula -> VarGen.loc -> session_kind -> h_formula
   val choose_ptr: ?ptr:string -> unit -> var (* node *)
   val id_to_param:  ident ->  VarGen.loc -> param
+  val const_to_param:  int ->  VarGen.loc -> param
+  val fconst_to_param:  float ->  VarGen.loc -> param
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
@@ -293,6 +295,10 @@ module IForm = struct
     | _ -> hform
 
   let id_to_param id pos = Ipure_D.Var((id,Unprimed), pos)
+
+  let const_to_param c pos = Ipure_D.IConst(c, pos)
+
+  let fconst_to_param c pos = Ipure_D.FConst(c, pos)
 
   let var_to_param sv pos = Ipure_D.Var(sv, pos)
 
@@ -602,6 +608,10 @@ module CForm = struct
   let mk_seq_wrapper ?sess_kind:(sess_kind=None) hform pos sk = hform
 
   let id_to_param id pos = CP.SpecVar(UNK,id,Unprimed)
+
+  let const_to_param c pos = failwith x_tbi
+
+  let fconst_to_param c pos = failwith x_tbi
 
   let var_to_param sv pos = sv
 

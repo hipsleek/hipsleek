@@ -1522,7 +1522,6 @@ tpprojection_formula:
       let ho_args = un_option opt1 [] in
       let loc = (get_pos_camlp4 _loc 1) in
       let vars = List.map (fun x -> fst x) params in
-      let vars = List.map (fun x -> Session.IForm.id_to_param x loc) vars in
       let ann = List.map (fun x -> snd x) params in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:ann loc)
     (* | vh = view_header -> *)
@@ -1814,11 +1813,20 @@ rflow_kind:
 
 sess_ann:
 [
-  [ `IDENTIFIER var; `PRIM -> (var, AnnPrimaryPeer)
+  [ `IDENTIFIER var; `PRIM -> let loc = (get_pos_camlp4 _loc 1) in
+                              (Session.IForm.id_to_param var loc, AnnPrimaryPeer)
   ] |
-  [ `IDENTIFIER var; `SEC -> (var, AnnSecondaryPeer)
+  [ `IDENTIFIER var; `SEC -> let loc = (get_pos_camlp4 _loc 1) in
+                             (Session.IForm.id_to_param var loc, AnnSecondaryPeer)
   ] |
-  [ `IDENTIFIER var -> (var, AnnInactive)
+  [ `IDENTIFIER var -> let loc = (get_pos_camlp4 _loc 1) in
+                       (Session.IForm.id_to_param var loc, AnnInactive)
+  ] |
+  [ `INT_LITER (i,_) -> let loc = (get_pos_camlp4 _loc 1) in
+                        (Session.IForm.const_to_param i loc, AnnInactive)
+  ] |
+  [ `FLOAT_LIT (f,_) -> let loc = (get_pos_camlp4 _loc 1) in
+                        (Session.IForm.fconst_to_param f loc, AnnInactive)
   ]
 ];
 
@@ -1834,21 +1842,6 @@ rflow_form:
       { F.rflow_kind = NEUTRAL;
         F.rflow_base = (* F.subst_stub_flow n_flow *) form;
         F.rflow_session_kind = Some TPProjection; }
-    ]
-  |[ `ATP; `IDENTIFIER pred_name; `LT; params = sess_ann_list_opt; `GT ->
-      (* TODO tina: this is not needed anymore, should we nuke it? *)
-      let loc = (get_pos_camlp4 _loc 1) in
-      let vars = List.map (fun x -> fst x) params in
-      let vars = List.map (fun x -> Session.IForm.id_to_param x loc) vars in
-      let ann = List.map (fun x -> snd x) params in
-      let ho_args = [] in
-      let pred = Session.IProtocol.SBase (Session.IProtocol.mk_session_predicate pred_name ho_args vars loc) in
-      let hform = Session.IProtocol.trans_from_session pred in
-      let hform = F.set_sess_ann hform ann in
-      let form = Session.IProtocol.mk_formula_heap_only ~flow:stub_flow hform loc in
-      { F.rflow_kind = NEUTRAL;
-    	F.rflow_base = form;
-    	F.rflow_session_kind = Some Protocol; }
     ]
   |[ `MUT; p = projection_formula ->
       let loc = (get_pos_camlp4 _loc 1) in
