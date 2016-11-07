@@ -2791,6 +2791,7 @@ infer_type:
    | `INFER_AT_PREMUST -> INF_PRE_MUST
    | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
+   | `INFER_AT_BOUND -> INF_ARR_BOUND
    ]];
 
 infer_id:

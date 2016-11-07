@@ -1202,7 +1202,7 @@ let allow_imm_norm = ref false
 
 let remove_abs = ref true
 let allow_array_inst = ref false
-
+let array_lp = ref false
 let imm_merge = ref true                (* true *) (*TODOIMM set default to false when merging to default branch *)
 
 let imm_weak = ref true
@@ -1681,6 +1681,7 @@ type infer_type =
   | INF_VER_POST (* For infer[@ver_post] for post-checking *)
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
+  | INF_ARR_BOUND (* For infer [@bound] for inferring array bounds *)
   | INF_EXTN of infer_extn list
 
 let eq_infer_type i1 i2 = 
@@ -1729,6 +1730,7 @@ let string_of_inf_const x =
   | INF_IMM_PRE -> "@imm_pre"
   | INF_IMM_POST -> "@imm_post"
   | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
+  | INF_ARR_BOUND -> "@bound"
 
 let inf_const_of_string s =
   match s with

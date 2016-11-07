@@ -1,0 +1,27 @@
+data arrI
+{
+ int value;
+     }.
+
+pred arr_seg<i,n> == i=n & i>=0
+    or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+inv n>=i & i>=0.
+
+relation U(int u1,int u2, int u3, int u4).
+relation U2(int u1,int u2).
+
+infer[U] a::arr_seg<u1,u2> & U(u1,u2,m,m+1) |- a::arr_seg<m,m+1>. 
+print residue.
+
+infer[U,@bound] a::arr_seg<u1,u2> & U(u1,u2,m,m+1) |- a::arr_seg<m,m+1>. 
+print residue.
+
+
+/*
+<1>emp&2<=(u2+a) & 1<=u2 & U(u1,u2,m,1+m) & u1=u2-1 & m=u2-1&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [U]: ( U(u1,u2,m,1+m)) -->  ((u2=m+1 & u1=m & 0<=m) | (0<=u2 & u1=u2)); 
+                RELASS [U]: ( U(u1,u2,m,1+m)) -->  (u2!=u1 | 0>u1)]
+*/
+
+
+

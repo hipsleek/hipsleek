@@ -463,6 +463,21 @@ let wrap_arr_as_var f a =
 let wrap_arr_as_var f a =
   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a
 
+let wrap_array_bound f a =
+  let () = x_tinfo_pp "Calling wrap_array_bound" no_pos in
+  let flag = !Globals.array_lp in
+  Globals.array_lp := true;
+  try
+    let res = f a in
+    Globals.array_lp := flag;
+    res
+  with _ as e ->
+    (Globals.array_lp := flag;
+     raise e)
+
+let wrap_array_bound f a =
+  Debug.no_1 "wrap_array_bound" pr_none pr_none (wrap_array_bound f) a
+
 let wrap_pre_post_process f_pre f_post f a =
   let a = f_pre a in
   let res = f a in

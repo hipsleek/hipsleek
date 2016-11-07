@@ -1,0 +1,9 @@
+template int f(int m).
+
+infer [f] m<0 |- f(m) <=0.
+
+infer [f] f(n-1)<=0 |- f(n) <=0.
+
+template_solve{f}.
+
+

@@ -3057,6 +3057,7 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       | None -> if List.mem INF_CLASSIC itype then Some true else None
     in
     let is_arr_as_var_flag = List.mem INF_ARR_AS_VAR itype in
+    let is_infer_array_bound = List.mem INF_ARR_BOUND itype in
     let old_dfa = !Globals.disable_failure_explaining in
     let _ = Globals.disable_failure_explaining := dfailure_anlysis in
     (* backup flag *)
@@ -3077,6 +3078,10 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
       else run_infer x in
     let run_infer x = 
       wrap_pure_field (opt_pure_field) run_infer x in
+    let run_infer x =
+      if is_infer_array_bound then wrap_array_bound run_infer x
+      else run_infer x
+    in
     let r =  try
         let (valid, rs, sel_hps),_ = run_infer iconseq0 in
         let res = print_entail_result sel_hps valid rs num_id (List.mem INF_ERR_MUST itype || List.mem INF_ERR_MUST_ONLY itype || List.mem INF_ERR_MAY itype) in
