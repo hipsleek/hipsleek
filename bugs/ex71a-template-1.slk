@@ -3,18 +3,22 @@ relation r1(int n).
 relation r2(int n).
 
 
+//(1)
 infer [f] n=0 |- f(n) >= 0.
 print residue.
 
+//(2)
 infer [r1] n=0 |- r1(n).
 print residue.
 
-
+//(3)
 infer [f] f(n-1) >= 0 |- f(n) >= 0.
 print residue.
 
+//(4)
 infer [r1] r1(n-1)  |- r1(n).
 print residue.
+// why not picking above?
 
 template int f1(int x).
 template int f2(int x).

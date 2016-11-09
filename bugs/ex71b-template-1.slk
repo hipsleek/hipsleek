@@ -1,0 +1,25 @@
+template int f(int n).
+relation r1(int n).
+relation r2(int n).
+
+//(4)
+infer [r1] r1(k) & k=n-1  |- r1(n).
+print residue.
+/*
+<1>emp&k+1=n & r1(k)&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN r1: ( r1(k) & k=n-1) -->  r1(n)]
+*/
+
+
+//(4)
+infer [r1] r1(n-1)  |- r1(n).
+print residue.
+// why not picking above?
+/*
+run_infer:
+ emp&r1(-1+n)&{FLOW,(4,5)=__norm#E}[] [r1] |-  EBase 
+   emp&r1(n)&{FLOW,(4,5)=__norm#E}[]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&r1(-1+n)&{FLOW,(4,5)=__norm#E}[]
+*/

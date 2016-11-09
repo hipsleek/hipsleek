@@ -7,6 +7,10 @@ pred arr_seg<i,n> == i=n & i>=0
     or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
 inv n>=i & i>=0.
 
+
+//lemma_sub self::arr_seg<i,n> <- self::arr_seg<a,b> & a<=i & b>=j.
+
+
 relation U(int u1,int u2, int u3, int u4).
 relation U2(int u1,int u2).
 
@@ -14,6 +18,14 @@ infer[U] a::arr_seg<u1,u2> & U(u1,u2,m,m+1) |- a::arr_seg<m,m+1>.
 print residue.
 
 infer[U,@bound] a::arr_seg<u1,u2> & U(u1,u2,m,m+1) |- a::arr_seg<m,m+1>. 
+print residue.
+
+
+infer[] a::arrI<u> |- a::arrI<j>@L.
+print residue.
+
+
+infer[] a::arrI<u> |- a::arrI<j>@M.
 print residue.
 
 
