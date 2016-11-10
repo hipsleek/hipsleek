@@ -431,6 +431,7 @@ let process_source_full source =
            let parameter_formulas = 
              "  Parameter star : formula -> formula -> formula.\n"^
              "  Parameter and : formula -> formula -> formula.\n"^
+	     "  Parameter or : formula -> formula -> formula.\n"^
              "  Parameter imp : formula -> formula -> formula.\n"^
              "  Parameter ext : (nat -> formula) -> formula.\n"^
              "  Parameter not : formula -> formula.\n"^
@@ -484,6 +485,8 @@ let process_source_full source =
                  | _ -> ""
              )
              | CP.And(f1,f2,_) -> "(and "^(convert_cp_formula f1) ^" "^
+                 (convert_cp_formula f2)^")"
+	     | CP.Or(f1,f2,_,_) -> "(or "^(convert_cp_formula f1) ^" "^
                  (convert_cp_formula f2)^")"
              | CP.Not(f,_,_) -> "(not "^(convert_cp_formula f)^")"
              | CP.Exists(_,f,_,_) -> convert_cp_formula f

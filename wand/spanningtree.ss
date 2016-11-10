@@ -7,9 +7,6 @@ data node{
 relation update(abstract G, node x, int d, abstract G1).
 relation lookup(abstract G, node x, int d, node l, node r).
 
-relation subset_reach(abstract G, node x, abstract G1).
-relation eq_notreach(abstract G, node x, abstract G1).
-
 relation span(abstract G1, node n, abstract G2).
 relation cut(abstract G1, node x, int flag, abstract G2).
 
@@ -31,21 +28,17 @@ rlemma "pttoupdate" x::node<v1,l,r> * (x::node<v,l,r> --@ (x::node<v,l,r> U* (l:
       & lookup(G,x,v,l,r) & update(G,x,v1,G1)
       -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
 
-rlemma "subgraphupdate_l" l::graph<G1> * (l::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
-      & subset_reach(G,l,G1) & eq_notreach(G,l,G1) & lookup(G,x,v,l,r) & lookup(G1,x,v1,l,r)
-      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
+rlemma "subgraphupdate_l" l::graph<G2> * (l::graph<G1> --@ (x::node<1,l,r> U* (l::graph<G1> U* r::graph<G1>))) 
+       & lookup(G1,l,0,l2,r2) -> x::node<1,l,r> U* (l::graph<G2> U* r::graph<G2>) & lookup(G1,l,0,l2,r2) 
+					& span(G1,l,G2); 
 
-rlemma "subgraphupdate_r" r::graph<G1> * (r::graph<G> --@ (x::node<v,l,r> U* (l::graph<G> U* r::graph<G>)))
-      & subset_reach(G,r,G1) & eq_notreach(G,r,G1) & lookup(G,x,v,l,r) & lookup(G1,x,v1,l,r)
-      -> x::node<v1,l,r> U* (l::graph<G1> U* r::graph<G1>);
+rlemma "subgraphupdate_r" r::graph<G2> * (r::graph<G1> --@ (x::node<1,l,r> U* (l::graph<G1> U* r::graph<G1>))) 
+       & lookup(G1,r,0,l2,r2) -> x::node<1,l,r> U* (l::graph<G2> U* r::graph<G2>) & lookup(G1,r,0,l2,r2) 
+					& span(G1,r,G2); 
 
 axiom lookup(G,x,0,_,_) ==> x != null.
 
 axiom true ==> span(G,null,G).
-
-axiom lookup(G,x,1,_,_) ==> span(G,x,G).
-
-axiom span(G,x,G1) & lookup(G,y,v,l,r) ==> subset_reach(G,x,G1) & eq_notreach(G,x,G1) & lookup(G1,y,_,l,r).
 
 axiom lookup(G,x,v,l,r) & update(G,x,1,G1) & v != 1 & (span(G1,l,G2) | cut(G1,x,0,G2)) 
 & (span(G2,r,G3) | cut(G2,x,1,G3)) ==> span(G,x,G3) & lookup(G3,x,1,l,r).
