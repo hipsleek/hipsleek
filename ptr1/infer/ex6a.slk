@@ -8,14 +8,110 @@ pred arr_seg<i,n> == i=n & i>=0
 inv n>=i & i>=0.
 
 
-lemma self::arr_seg<i,n> & i<=a & n>=b & a<=b -> self::arr_seg<a,b>.
-//lemma self::arr_seg<i,n> <- self::arr_seg<a,b>  & i<=a & n>=b & a<=b.
+//lemma self::arr_seg<i,n> & i<=a & n>=b & a<=b -> self::arr_seg<a,b>.
+lemma self::arr_seg<x,y> <- self::arr_seg<a,b>  & x>=a & y<=b & x<=y.
 
 relation U(int u1,int u2, int u3, int u4).
 relation U2(int u1,int u2).
 
-infer[] a::arr_seg<2,6> &k>=0  |- a::arr_seg<k,5>. 
+
+// Constant
+infer[] a::arr_seg<2,6> |- a::arr_seg<3,5>. 
 print residue.
 
-infer[k] a::arr_seg<2,6> & k>=0  |- a::arr_seg<k,5> & k<2. 
+infer[] a::arr_seg<2,6> & i>=0 & j>=0 & i>=2 & j<=6 & i<=j |- a::arr_seg<i,j>. 
 print residue.
+
+infer[] a::arr_seg<m,n> & i>=0 & j>=0 & i>=m & j<=n & i<=j |- a::arr_seg<i,j>. 
+print residue.
+
+infer[i] a::arr_seg<2,6>  |- a::arr_seg<i,5>. 
+print residue.
+
+// Residue:
+
+//  <1>a::arr_seg<flted_28_252,flted_28_253>@M&flted_28_253=6 & 
+//                                             flted_28_252=2 & i=5&{FLOW,(20,21)=__norm#E}[]
+//  inferred pure: [i=5]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  COND ==>  BaseCaseFold]]
+
+// <2>emp&exists(i_254:exists(flted_28_255:i_254<=flted_28_255 & 
+//                                         flted_28_255<=flted_28_253 & 
+//                                         flted_28_252<=i_254)) & 
+//        flted_28_253=6 & flted_28_252=2 & 2<=i & i<=5&{FLOW,(20,21)=__norm#E}[]
+// inferred pure: [i<=5; 2<=i]
+// [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+
+infer[i,j] a::arr_seg<2,6>  |- a::arr_seg<i,j>. 
+print residue.
+
+// Residue:
+
+//  <1>emp&flted_46_321=6 & flted_46_320=2 & j=6 & i=2&{FLOW,(20,21)=__norm#E}[]
+//  inferred pure: [i=2; j=6]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+// <2>emp&exists(i_322:exists(j_323:i_322<=j_323 & j_323<=flted_46_321 & 
+//                                  flted_46_320<=i_322)) & 
+//        flted_46_321=6 & flted_46_320=2 & 2<=i & i<=j & j<=6&{FLOW,(20,21)=__norm#E}[]
+// inferred pure: [j<=6; i<=j; 2<=i]
+// [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+
+infer[U] a::arr_seg<2,6> & U(i,j,2,6) |- a::arr_seg<i,j>. 
+print residue.
+
+// Residue:
+
+//  <1>emp&U(i,j,2,6) & flted_62_389=6 & flted_62_388=2 & j=6 & i=2&{FLOW,(20,21)=__norm#E}[]
+//  inferred rel: [RELASS [U]: ( U(i,j,2,6)) -->  j=6 & i=2]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+// <2>emp&exists(i_390:exists(j_391:i_390<=j_391 & j_391<=flted_62_389 & 
+//                                  flted_62_388<=i_390)) & 
+//        U(i,j,2,6) & flted_62_389=6 & flted_62_388=2 & 2<=i & i<=j & j<=6&{FLOW,(20,21)=__norm#E}[]
+// inferred rel: [RELASS [U]: ( U(i,j,2,6)) -->  2<=i & i<=j & j<=6]
+// [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+
+infer[i,j] a::arr_seg<2,n> |- a::arr_seg<i,j>. 
+print residue.
+// What happened to the Match? i==2 and j==n?
+
+// <1>a::arr_seg<flted_78_455,n>@M&flted_78_455=2 & i=j & 0<=j&{FLOW,(20,21)=__norm#E}[]
+//  inferred pure: [0<=j; i=j]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  COND ==>  BaseCaseFold]]
+
+// <2>emp&exists(i_456:exists(j_457:i_456<=j_457 & j_457<=n & 
+//                                  flted_78_455<=i_456)) & 
+//        flted_78_455=2 & i=2 & j=2&{FLOW,(20,21)=__norm#E}[]
+// inferred pure: [j=2; i=2]
+// [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+infer[U] a::arr_seg<2,n> & U(2,n,i,j)|- a::arr_seg<i,j>. 
+print residue.
+
+//  <1>emp&U(2,n,i,j) & flted_92_521=2&{FLOW,(20,21)=__norm#E}[]
+//  inferred rel: [RELASS [U]: ( U(2,n,i,j)) -->  0<=n & 
+//  (((i=2 & j=n) | ((n+1)<=j & n<=2) | ((1+j)<=n & n<=2) | (i!=2 & j=n & n<=2))); 
+//                 RELASS [U]: ( U(2,n,i,j)) -->  (3<=n | (n=j & i=j & 0<=j) | (n<=1 & 0<=n))]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+infer[U] a::arr_seg<m,n> & U(2,n,i,j)|- a::arr_seg<i,j>. 
+print residue.
+
+// Residue:
+
+//  <1>emp&U(2,n,i,j)&{FLOW,(20,21)=__norm#E}[]
+//  inferred rel: [RELASS [U]: ( U(2,n,i,j)) -->  ((j!=1 & n=0) | (j=1 & i!=0 & n=0) | (n<=1 & 0<=n & j=1 & i=0)); 
+//                 RELASS [U]: ( U(2,n,i,j)) -->  j=i & n=i & 0<=i]
+// [[ SEARCH ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
+// <2>emp&exists(i_602:exists(j_603:i_602<=j_603 & j_603<=n & m<=i_602)) & 
+//        U(2,n,i,j)&{FLOW,(20,21)=__norm#E}[]
+// inferred rel: [RELASS [U]: ( U(2,n,i,j)) -->  (((n-1)<=i & i<=j & j<=n & 0<=n) | (n=0 & i<=(0-2)) | 
+//   ((0-1)<=i & i<=j & 1<=j & n=0) | (n=0 & 0<=(1+i) & j<i)); 
+//                RELASS [U]: ( U(2,n,i,j)) -->  j=i & n=i & 0<=i]
+// [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
+
