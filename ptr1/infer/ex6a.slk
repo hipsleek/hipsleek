@@ -1,0 +1,21 @@
+data arrI
+{
+ int value;
+     }.
+
+pred arr_seg<i,n> == i=n & i>=0
+    or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+inv n>=i & i>=0.
+
+
+lemma self::arr_seg<i,n> & i<=a & n>=b & a<=b -> self::arr_seg<a,b>.
+//lemma self::arr_seg<i,n> <- self::arr_seg<a,b>  & i<=a & n>=b & a<=b.
+
+relation U(int u1,int u2, int u3, int u4).
+relation U2(int u1,int u2).
+
+infer[] a::arr_seg<2,6> &k>=0  |- a::arr_seg<k,5>. 
+print residue.
+
+infer[k] a::arr_seg<2,6> & k>=0  |- a::arr_seg<k,5> & k<2. 
+print residue.
