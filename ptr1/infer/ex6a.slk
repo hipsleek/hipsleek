@@ -75,7 +75,7 @@ print residue.
 // [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
 
 
-infer[i,j] a::arr_seg<2,n> |- a::arr_seg<i,j>. 
+infer[i,j,n] a::arr_seg<2,n> |- a::arr_seg<i,j>. 
 print residue.
 // What happened to the Match? i==2 and j==n?
 
@@ -98,7 +98,7 @@ print residue.
 //                 RELASS [U]: ( U(2,n,i,j)) -->  (3<=n | (n=j & i=j & 0<=j) | (n<=1 & 0<=n))]
 // [[ SEARCH ==>  SEARCH ==>  COND ==>  Match(a,a)]]
 
-infer[U] a::arr_seg<m,n> & U(2,n,i,j)|- a::arr_seg<i,j>. 
+infer[U] a::arr_seg<m,n> & U(m,n,i,j)|- a::arr_seg<i,j>. 
 print residue.
 
 // Residue:
@@ -115,3 +115,8 @@ print residue.
 //                RELASS [U]: ( U(2,n,i,j)) -->  j=i & n=i & 0<=i]
 // [[ SEARCH ==>  SEARCH ==>  (Lemma <== lem_14(a,a)) ==>  SEARCH ==>  COND ==>  Match(a,a)]]
 
+infer[i,j,n] a::arr_seg<2,n> |- a::arr_seg<i,j>.
+print residue.
+
+infer[U] a::arr_seg<m,n> & U(m,n,i,j)|- a::arr_seg<i,j>. 
+print residue.

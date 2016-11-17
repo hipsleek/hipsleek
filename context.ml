@@ -118,6 +118,39 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
+let rec action_list_with_lemma awtlst =
+  match awtlst with
+  | (_,h)::rest -> (action_with_lemma h) or (action_list_with_lemma rest)
+  | [] -> false
+
+and action_with_lemma act =
+  match act with
+  | M_lemma _ -> true
+  | Cond_action awlst
+  | Search_action awlst -> action_list_with_lemma awlst
+  | _ -> false
+;;
+
+let rec drop_match_in_search_or_cond_lst awtlst =
+    match awtlst with
+    | (w,h)::rest ->
+       (match h with
+        | M_match _ -> drop_match_in_search_or_cond_lst rest
+        | Search_action awlst -> (w,(Search_action (drop_match_in_search_or_cond_lst awlst)))::(drop_match_in_search_or_cond_lst rest)
+        | Cond_action awlst -> (w,(Cond_action (drop_match_in_search_or_cond_lst awlst)))::(drop_match_in_search_or_cond_lst rest)
+        | _ -> (w,h)::(drop_match_in_search_or_cond_lst rest)
+       )
+    | [] -> []
+             
+and drop_match_in_search_or_cond act =
+  match act with
+  | Cond_action awlst -> Cond_action (drop_match_in_search_or_cond_lst awlst)
+  | Search_action awlst -> Search_action (drop_match_in_search_or_cond_lst awlst)
+  | _ -> act
+;;
+  
+                                                 
+                
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
@@ -211,8 +244,8 @@ let flatten_search ((wt,_) as wa) =
 let get_rhs_rest_emp_flag act old_is_rhs_emp =
   match act with
   | M_match m
-  | M_split_match m
-  | M_fold m
+    | M_split_match m
+    | M_fold m
   | M_unfold  (m,_)
   | M_infer_fold  (_,m)
   | M_infer_unfold  (m,_,_)
@@ -4086,7 +4119,14 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       [aux xs x] in
   let r = if !Globals.old_compute_act then r else sel_simpler r in
   let () = x_tinfo_hp (add_str "weighted action"
-                         (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
+                               (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
+  let r =
+    if !Globals.lemma_subsume_match
+    then
+      eliminate_subsumed_match r
+    else
+      r
+  in
   match r with
   | [] -> M_Nothing_to_do "no nodes on RHS"
   | xs -> 
@@ -4115,6 +4155,11 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
 (* time for runfast hip --eps --imm - 42s *)
 (* Cond_action (r) *)
 (* time for runfast hip --eps --imm - 43s *)
+and eliminate_subsumed_match r =
+  if action_list_with_lemma r
+  then drop_match_in_search_or_cond_lst r
+  else r
+  
 
 and drop_low ys =
   let rec aux a ys = 

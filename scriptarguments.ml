@@ -920,7 +920,10 @@ let common_arguments = [
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
   ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
   ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
-
+  ("--lemma-subsume-match", Arg.Unit( fun _ ->
+                                      Globals.lemma_subsume_match:=true;
+                                      Globals.n_xpure := 0
+                                    ), "Enable dropping match when there is a lemma subsuming it");
   (* HO predicate *)
   ("--ho-always-split", Arg.Set Globals.ho_always_split, "Apply lemma_split when possible at par/thread");
   ("--dis-ho-always-split", Arg.Clear Globals.ho_always_split, "Disable selective apply of lemma_split");

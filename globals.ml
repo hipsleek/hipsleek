@@ -2138,7 +2138,7 @@ let delay_if_sat = ref false
 let delay_proving_sat = ref false
 let disable_assume_cmd_sat = ref false
 let disable_pre_sat = ref true
-
+let lemma_subsume_match = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 let do_test_inv = ref true (* false *)

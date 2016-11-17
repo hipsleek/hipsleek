@@ -478,6 +478,22 @@ let wrap_array_bound f a =
 let wrap_array_bound f a =
   Debug.no_1 "wrap_array_bound" pr_none pr_none (wrap_array_bound f) a
 
+let wrap_nxpure f a n=
+  let () = x_tinfo_pp ("Calling wrap_nxpure"^(string_of_int n)) no_pos in
+  let xpure = !Globals.n_xpure in
+  Globals.n_xpure := n;
+  try
+    let res = f a in
+    Globals.n_xpure := xpure;
+    res
+  with _ as e ->
+    (Globals.n_xpure := xpure;
+     raise e)
+
+let wrap_nxpure f a n=
+  Debug.no_2 "wrap_array_bound" pr_none pr_none pr_none (wrap_nxpure f) a n
+             
+             
 let wrap_pre_post_process f_pre f_post f a =
   let a = f_pre a in
   let res = f a in

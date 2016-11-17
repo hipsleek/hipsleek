@@ -1,0 +1,27 @@
+* simple1
+  - program
+  void simple1(int arr[],int m,int v){
+    arr[m] = v;
+    return;
+  }
+  - infer
+    infer[U] arr::arr_seg<i,j> & U(i,j,m)|- arr::arr_seg<m,m+1>.
+  - result
+    i<=m && j>=m+1 && i<=j
+* simple init
+  - program
+  void init(int arr[],int m,int n){
+  // requires arr::arr_seg<i,j> & U(i,j,m,n)
+     if(m<n){
+       // arr::arr_seg<i,j> & U(i,j,m,n) & m>n |- arr::arr_seg<m,m+1>
+       arr[m] = 5;
+       // arr::arr_seg<i,j> & U(i,j,m,n) |- arr::arr_seg<i',j'> & U(i',j',m+1,n)
+       init(arr,m+1,n);
+     }
+  }
+  - infer
+    U(i,j,m,n) & m<n  --> i<=m && j>=m+1 && i<=j
+    U(i,j,m,n) & m<n  --> i<=i' && j>=j' && U(i',j',m+1,n)
+
+    i=k1*m+k2*n+k3 && j=k4*m+k5*n+k6 & m<n --> i<=m && j>=m+1 && i<=j
+    i=k1*m+k2*n+k3 && j=k4*m+k5*n+k6 & m<n --> ex i',j': i<=i' && j>=j'&& i'=k1*(m+1)+k2*n+k3 && j'=k4*(m+1)+k5*n+k6
