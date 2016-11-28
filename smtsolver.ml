@@ -74,6 +74,25 @@ let rec generate_list n f =
 let rec compute f n b =
   if (n = 0) then b
   else f (compute f (n-1) b)
+;;
+
+let norm_func_type t =
+  let rec helper t=
+    match t with
+    | FuncT (t1,t2) -> (helper t1)@(helper t2)
+    | _ -> [t]
+  in
+  let rec split_func_t tlist args=
+    match tlist with
+    | [h] -> (args, h)
+    | h::tail ->
+       let (a,r) = split_func_t tail args in
+       (h::a,r)
+    | [] -> failwith "Norm_func_type: Invalid function type!"
+  in
+  split_func_t (helper t) []
+;;
+
 
 let rec smt_of_typ t =
   match t with
@@ -91,7 +110,10 @@ let rec smt_of_typ t =
   | List _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
-  | FuncT (t1, t2) -> "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2) 
+  | FuncT (t1, t2) ->
+  (* "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2)  *)
+     let (args,ret) = norm_func_type t in
+     "("^(List.fold_left (fun r item -> r^" "^(smt_of_typ item)) "" args)^") "^(smt_of_typ ret)                                                                                  
   (* TODO *)
   | RelT _ -> "Int"
   | UtT _ -> "Int"
@@ -905,7 +927,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
   let conseq_fv = CP.fv conseq in
   let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let res = to_smt_v2 pr_weak pr_strong ante conseq all_fv info in
-  (* let () = print_endline (" ### res = \n " ^ res) in *)
+  (* let )( = print_endline (" ### res = \n " ^ res) in *)
   res
 
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 

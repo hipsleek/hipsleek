@@ -262,6 +262,7 @@ let silent_pr silent str =
   else print_endline_quiet str  
 
 let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) =
+  (* let () = print_endline ("collect_and_solve_templ_assumes_common" in *)
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
@@ -269,9 +270,10 @@ let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) 
     res, templ_assumes, templ_unks
   | Sat model ->
     let () = 
-      if not silent then
-        (* let () = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in *)
-        (* let () = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in         *)
+      (* if not silent then *)
+      if true then
+        let () = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in
+        let () = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in
         let templ_decls = prog.C.prog_templ_decls in
         let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in
         silent_pr silent "**** TEMPLATE INFERENCE RESULT ****";

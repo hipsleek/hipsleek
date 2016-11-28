@@ -14,7 +14,8 @@ start:
 
 constraints generated:
 for all m,n
-   m<n & m>=0 & n>=0 ->
+    (add unknown in the LHS will make the constraints non-linear)
+     m<n & m>=0 & n>=0 ->
      k1*m+k2*n+k3<=m /\
      k4*m+k5*n+k6>=m+1 /\
      k1*m+k2*n+k3<=k1*(m+1)+k2*n+k3 /\
