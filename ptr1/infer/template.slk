@@ -6,4 +6,10 @@ infer [f] f(n-1)<=0 |- f(n) <=0.
 
 template_solve{f}.
 
+/*
+template int f1(int m,int n), f2(int m,int n)
+infer [f1,f2] m<n |- f1(m,n)<=m && f2(m,n)>=m+1.
+infer [f1,f2] m<n |- f1(m,n)<=f1(m+1,n) && f2(m,n)>=f2(m+1,n).
+template_solve{f1,f2}.
+*/
 

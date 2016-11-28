@@ -77,9 +77,23 @@ and k1>=0 and k4<=0
 Problem:
 Given the constraints of k1 - k6, what should be the target to minimize???
 One option can be:
-minimize: k1*m+k2*n+k3, k4*m+k5*n+k6.
+minimize: k4*m+k5*n+k6 - (k1*m+k2*n+k3) ==> (k4-k1)*m + (k5-k2)*n + (k6-k3)
 But this is still not linear, one way to approximate is to minimize:
-k4+k5+k6-k1-k2-k3, assuming k1-k6 are all non-negative.
+k4+k5+k6-(k1+k2+k3), assuming k1-k6 are all non-negative.
+
+Constraint.
+l11>=0 l12>=0 l13>=0
+l11-l12 = 1-k4
+-l11-l13 = -k5
+-l11 <= k6-1
+
+l21>=0 l22>=0 l23>=0
+l21-l22 = k1-1
+-l21-l23 = k2
+-l21 <= -k3
+and k1>=0 and k4<=0
+
+obj. k4+k5+k6-(k1+k2+k3)
 
 ########## The corresponding linear programming input ######################
 # short example
