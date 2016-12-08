@@ -2,16 +2,6 @@ sleek_include 'node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 
-pred_sess_proj ll1<n> == (c!self = null & n = 0) * (d?self = null).
 
-pred_sess_proj ll2<n> == (c!self = null & n = 0) or (d?self = null).
-
-pred_sess_proj p1<> == !1 or !0.
-
-pred_sess_proj p2<> == !1 or !0;;p2<>.
-
-pred_sess_proj p3<n> == !msg=n or !0;;p3<n>.
-
-pred_sess_proj p4<n> == !msg=n or !0;;p4<n>;;%V.
-
-checkentail x::node<_,_> |- (exists y: y::node<_,_>).
+checkentail x=a & a<=b |- a<=x & x<=b.
+expect Valid.

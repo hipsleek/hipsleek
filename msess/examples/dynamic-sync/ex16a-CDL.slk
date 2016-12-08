@@ -1,0 +1,9 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/fences.slk'.
+
+
+pred_sess_prot G1<A,B,C,D> == A->B:1 ;; C->D:2.
+
+
+

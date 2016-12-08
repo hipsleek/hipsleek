@@ -69,8 +69,8 @@ let refinement1 G map =
      let t2 = first_transmissions s2 in
      let peers_t1 = participants t1 in
      let peers_t2 = participants t2 in
-     if same_channel map (peers_t1 \union peers_t2) then s1;;((refinement1 s2 map);;t)
-     else s1 ;; F(fresh_id) ;; ((refinement1 s2 map);;t)
+     if same_channel map (peers_t1 \union peers_t2) then s1;;((refinement1 s2;;t map))
+     else s1 ;; F(fresh_id) ;; ((refinement1 s2;;t map))
 
 
 //instantiate sync instruments
@@ -118,13 +118,12 @@ let refinement2 G =
     in
      let t1 = last_transmissions s1 in
      let t2 = first_transmissions s2 in
-     let peers_t1 = participants t1 in
-     let peers_t2 = participants t2 in
-     foreach 
-     if (i) or (ii) then 
-     if same_channel map (peers_t1 \union peers_t2) then s1;;((refinement1 s2 map);;t)
-     else s1 ;; F(fresh_id) ;; ((refinement1 s2 map);;t)
-
+     let receivers_t1 = remove_duplicates(get_receivers t1) in
+     let receivers_t2 = remove_duplicates(get_receivers) t2 in
+     let senders_t2 = remove_duplicates(get_senders) t2 in
+     if count(receivers_t1)==1 && count(senders_t2)==1 && receivers_t1 == senders_t2 then fence
+     elseif count(receivers_t1)==1 && count(receivers_t2)==1 && receivers_t1 == receivers_t2 then fence
+     else CDL
 
 
  G<A,B,C,D> == A->B:1 ;; C->D:2
