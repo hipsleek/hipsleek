@@ -4644,7 +4644,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     (* let  coercion_rhs_type = (IF.type_of_formula coer.I.coercion_body) in *)
     if coercion_lhs_type == Complex then 
       if coer.I.coercion_type == I.Right then
-        let () = Debug.info_pprint "WARNING : changing lemma from <- to -> " no_pos in
+        let () = Debug.binfo_pprint "WARNING : changing lemma from <- to -> " no_pos in
         let new_coer = {coer with I.coercion_head = coer.I.coercion_body;
                                   I.coercion_body = coer.I.coercion_head;
                                   I.coercion_type_orig = Some coer.I.coercion_type; (* store origin coercion type *)
@@ -4666,12 +4666,16 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       else trans_one_coercion_x prog cprog coer
     else trans_one_coercion_x prog cprog coer
   in
-  if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
-    let () = y_tinfo_pp "inside lemma switching.." in
-    if !Globals.old_lemma_switch then old_switch coer
-    else swap_lhs_rhs coer
-  else
-    trans_one_coercion_x prog cprog coer
+  let switch () =
+    if !Globals.allow_lemma_switch && coer.I.coercion_infer_vars == [] then
+      let () = y_tinfo_pp "inside lemma switching.." in
+      if !Globals.old_lemma_switch then old_switch coer
+      else swap_lhs_rhs coer
+    else
+      trans_one_coercion_x prog cprog coer
+  in
+  let allow_switch = not(coer.I.coercion_kind = LEM_NORM) in
+  wrap_one_bool Globals.allow_lemma_switch allow_switch switch ()
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.coercion_decl) :

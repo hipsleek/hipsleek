@@ -44,60 +44,17 @@ hip_include 'msess/notes/commprimitives.ss'
 /* pred_sess_prot G1<A,B,C,D> == A->B:1 ;; C->D:2; */
 
 
-void A(Channel b)
-  requires b::Chan{@S !1}<>
+data cdl {int id;}
+
+pred_prim CDL<id: int>;
+
+pred_sess_prot G<A,B,C,D> == A->B:1;; CDL<22>;;C->D:2;
+
+
+void B(Channel b, cdl c)
+  requires b::Chan{@S ?1}<>
   ensures b::Chan{emp}<>;
 {
-  send(b,1);
-}
-
-
-void B(Channel a)
-  requires a::Chan{@S ?1}<>
-  ensures a::Chan{emp}<>;
-{
-  int x = receive(a);
-}
-
-void C(Channel d)
-  requires d::Chan{@S !2}<>
-  ensures d::Chan{emp}<>;
-{
-  send(d,2);
-}
-
-
-void D(Channel c)
-  requires c::Chan{@S ?2}<>
-  ensures c::Chan{emp}<>;
-{
-  int x = receive(c);
-}
-
-
-
-
-void main()
-{
-  /* CDL  */
-  Channel ab, cd, ab1, cd1;
-  assume ab::Chan{@S !1}<> * ab1::Chan{@S ?1}<>;
-  assume cd::Chan{@S !2}<> * cd1::Chan{@S ?2}<>;
-
-  par {}
-  {
-  case {ab} ab::Chan{@S !1}<> ->
-            dprint;
-            A(ab);
-  ||
-  case {ab1} ab1::Chan{@S ?1}<> ->
-            B(ab1);
-  ||
- case {cd} cd::Chan{@S !2}<> ->
-            C(cd);
-  ||
- case {cd1} cd1::Chan{@S ?2}<> ->
-            D(cd1);
-  }
+ int x = receive(b);
 }
 
