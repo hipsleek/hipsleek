@@ -11,6 +11,90 @@ This may be OK if x is related as x::<value,security>
 requires true
 ensures  x <s: res /\  y <s: res
 
+// 
+    {D o_{C} C'=C+V & C=f} e1 {D2}
+    {D o_{C} C'=C+V & C=f} e2 {D3}
+---------------------------------------------
+{D} if test(V) e1 else e2 {(D2\/D3) o_{C} C'=f}
+
+----------------------------------------------------
+
+      {D,C} e0 {D0}
+      V = var_tested(e0)
+      {D0,C+V} e1 {D1}
+      {D0,C+V} e2 {D2}
+ --------------------------------------- 
+   {D,C} if (e0) e1 else e2 {D1\/D2}
+
+           {D,C} e {D1} 
+ -----------------------------------------------
+  {D,C} v = e  {D1 o_{v} (v'=res & C<:v')}
+ 
+           {D,C} e {D1} 
+ ------------------------------------------
+  {D,C} v = e  {D1 o_{v} (v'=res & C<:v')}
+
+
+
+           {D,C} 5 {D & res=5} 
+ ------------------------------------------
+  {D,C} v = 5  {(ex res: D & res=5 o_{v} (v'=res & C<:v'))}
+  {D,C} v = 5  {D & v'=5 & C<:v'}
+
+
+
+     if (H=0) () else ()
+
+
+  max(x,y)
+   requires true,C
+   ensures  x<:res & y<:res 
+
+
+
+
+           {D,C} e {D1}
+ -------------------------------------
+  {D,C} log.f = e  {C<:f & log<:f}
+
+
+  maxMsg(log,x,y)
+   requires log<:L,C
+   ensures  x<:res & y<:res & C<:L;
+
+  maxMsg(log,x,y)
+   requires true,C
+   ensures  x<:res & y<:res & C<:L & log<:L;
+
+
+
+  update(ref v) 
+    requires true,C
+    ensures  C<:v' & v'=5;
+  {
+       v = 5
+  }
+
+
+  just5 () 
+    requires true,C
+    ensures  res=5;
+  {
+       ret 5
+  }
+
+   {D,C}
+    v = just5()
+   {(ex res: (D/\res=5) o_{v} v'=res & C<:v')}
+   {D & v'=5 & C<:v'}
+
+  {D,C} update(v) {D o_{v} v'=5 & C<:v'}
+
+
+
+  {D,C} mn(...)
+
+
  if F(x,y,z) then
   // Context' = Context + {x,y,z}
   v = ...
@@ -69,7 +153,7 @@ foo(ref Log v}
 {
   // Context'=Context
   v.low = 5
-  // L<:L & Context<:L & State = State+{L}
+  // L<:L & Context<:L & State' = State+{L}
 }
 
 
@@ -77,7 +161,7 @@ S(constant) = L
 
 
 6 class Log { String buffer[LOW]; ... }
-7 int maxWithMessage(Log log, i n t x, i n t y)
+7 int maxWithMessage(Log log, int x, int y)
 8   where { @x = @return
 9   , @y = @return
 10   , @log = LOW
