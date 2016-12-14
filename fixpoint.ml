@@ -400,7 +400,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let () = Debug.binfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let () = Debug.tinfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
   | [(_,rec_inv)] ->
@@ -453,7 +453,7 @@ let calculate_gfp fp_func input_fml pre_vars proc_spec
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let () = Debug.binfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let () = Debug.tinfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   match top_down_fp with
   | [(_,rec_inv)] ->
@@ -463,11 +463,11 @@ let calculate_gfp fp_func input_fml pre_vars proc_spec
     let quan_vars = CP.diff_svl (CP.fv fml) pre_rel_vars in
     (* let quan_vars = CP.diff_svl (CP.fv fml) (pre_rel_vars@(List.map (fun (_,x) -> x) args)) in *) (*TODOIMM remove this line*)
     let fml = CP.mkForall quan_vars fml None no_pos in
-    let () =  x_binfo_hp (add_str "to check" !CP.print_formula) to_check no_pos in
-    let () =  x_binfo_hp (add_str "rec_inv" !CP.print_formula) rec_inv no_pos in
-    let () =  x_binfo_hp (add_str "pre_rec_raw (fml) " !CP.print_formula) fml no_pos in
+    let () =  x_tinfo_hp (add_str "to check" !CP.print_formula) to_check no_pos in
+    let () =  x_tinfo_hp (add_str "rec_inv" !CP.print_formula) rec_inv no_pos in
+    let () =  x_tinfo_hp (add_str "pre_rec_raw (fml) " !CP.print_formula) fml no_pos in
     let pre_rec = x_add_1 TP.simplify fml in
-    let () = x_binfo_hp (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
+    let () = x_tinfo_hp (add_str "pre_rec" !CP.print_formula) pre_rec no_pos in
 
     (*NEW procedure: not add pre_inv at the begining*)
     let list_pre = [pre_rec;pure_oblg_to_check] in
@@ -591,7 +591,7 @@ let pre_rel_fixpoint pre_rel pre_fmls pre_invs fp_func reloblgs pre_vars proc_sp
     List.fold_left (fun p (_,_,rhs) -> CP.mkAnd p rhs no_pos) constTrue rel_oblg_to_check in
   let () = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
   let pr = Cprinter.string_of_pure_formula in
-  let () = Debug.binfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
+  let () = Debug.tinfo_hprint (add_str "pre_rel_df: " (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
   let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
   if checkpoint1 (* && false *) then [(constTrue,constTrue,pre_rel,constTrue)]
   else

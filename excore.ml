@@ -660,7 +660,7 @@ module EPURE =
     (* ([a,a,b]  --> a!=a & a!=b & a!=b & a>0 & a>0 & b>0 *)
     let baga_conv ?(neq_flag=false) baga : formula =
       let f = Elt.get_pure ~neq_flag:neq_flag baga in
-      let () = y_binfo_hp (add_str "baga_conv" !Cpure.print_formula) f in
+      let () = y_tinfo_hp (add_str "baga_conv" !Cpure.print_formula) f in
       f
       
                             

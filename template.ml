@@ -262,7 +262,7 @@ let silent_pr silent str =
   else print_endline_quiet str  
 
 let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) =
-  (* let () = print_endline ("collect_and_solve_templ_assumes_common" in *)
+  let () = print_endline ("collect_and_solve_templ_assumes_common") in
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 
@@ -283,7 +283,33 @@ let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) 
     in res, templ_assumes, templ_unks
   | _ -> 
     (* print_endline ("TEMPLATE INFERENCE: No result.") *) 
-    res, templ_assumes, templ_unks
+     res, templ_assumes, templ_unks
+
+let collect_and_solve_templ_assumes_prog_free silent (inf_templs: ident list) =
+  let () = print_endline ("collect_and_solve_templ_assumes_prog_free") in
+  let templ_assumes, templ_unks, res = solve_templ_assume () in
+  match res with
+  | Unsat -> 
+     let () = silent_pr silent ("TEMPLATE INFERENCE: Unsat.") in 
+     res, templ_assumes, templ_unks
+  | Sat model ->
+     let () = 
+       (* if not silent then *)
+       if true then
+         let () = print_endline ("MODEL: " ^ (pr_list (pr_pair pr_id string_of_int) model)) in
+         let () = print_endline ("TEMPL UNKS: " ^ (pr_list pr_spec_var templ_unks)) in
+         (* let templ_decls = prog.C.prog_templ_decls in *)
+         (* let res_templ_decls = subst_model_to_templ_decls inf_templs templ_unks templ_decls model in *)
+         (* silent_pr silent "**** TEMPLATE INFERENCE RESULT ****"; *)
+         (* silent_pr silent (pr_list (fun tdef ->  *)
+         (*                       (Cprinter.string_of_templ_decl tdef) ^ "\n") res_templ_decls) *)
+         ()
+       else () 
+     in res, templ_assumes, templ_unks
+  | _ -> 
+     (* print_endline ("TEMPLATE INFERENCE: No result.") *) 
+     res, templ_assumes, templ_unks
+
 
 let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
   let res, templ_assumes, _ = collect_and_solve_templ_assumes_common false prog inf_templs in
@@ -304,5 +330,8 @@ let collect_and_solve_templ_assumes prog (inf_templs: ident list) =
     else ()
   | _ -> ()
 
-
-
+let collect_and_solve_templ_assumes prog inf_templs =
+  let pr_empty = fun x->"SOMETHING" in
+  Debug.no_2 "collect_and_solve_templ_assumes" pr_empty pr_empty pr_empty 
+    collect_and_solve_templ_assumes prog inf_templs
+    

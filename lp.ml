@@ -3,6 +3,9 @@ open VarGen
 open Globals
 open Gen
 open Cpure
+open Glpk
+open Array
+ 
 
 module CP = Cpure
 
@@ -140,7 +143,7 @@ let norm_formula f =
 let option_of_lp = function
   | Clp -> "-solv -solution stdout"
   | LPSolve -> ""
-  | Glpk -> "--write-stdout"
+  | Glpk -> "--write lpstd"(* "--write-stdout" Glpsol throws an exception because of this... *)
 
 let cmd_of_lp = function
   | Clp -> "clp"
@@ -165,8 +168,23 @@ let search_forward keyword str pos =
   Str.search_backward (Str.regexp keyword) str pos
 
 exception Parse_error
+            
+let clp_process_output_test lp_output =
+  try
+    Scanf.sscanf lp_output "j %i %i" (fun m n -> print_endline ((string_of_int m)^" "^(string_of_int n)))
+  with _ ->
+    print_endline "test"
+  (* List.iter *)
+  (*   (fun item -> *)
+  (*     try *)
+  (*       Scanf.sscanf item "j = %i" (fun i -> print_endline (string_of_int i)) *)
+  (*     with _ -> *)
+  (*       ()) lp_output *)
+;;
+
 
 let clp_process_output lp_output =
+  (* let () = clp_process_output_test lp_output in *)
   let len = String.length lp_output in
   try
     let todo_unk = search_backward "ERROR" lp_output (len - 1) in
@@ -194,11 +212,13 @@ let clp_process_output lp_output =
         | _ -> Unknown
 
       with Not_found -> Unknown
+;;
+                        
 
 let glpk_process_output lp_output =
   let len = String.length lp_output in
   try
-    let p = search_backward "Optimal" lp_output (len - 1) in
+    let p = search_backward "OPTIMAL" lp_output (len - 1) in
     let lp_res = Str.string_after lp_output p in
     let out_ls = Str.split (Str.regexp "[\n]+") lp_res in
     match out_ls with
@@ -234,17 +254,66 @@ let run solver input =
   let lp_input = "logs/allinput.lp" in 
   let out_chn = open_out lp_input in
   Printf.fprintf out_chn "%s" input;
+  
   flush out_chn;
   close_out out_chn;
 
-  let lp_output = syscall (String.concat " " 
-                             [cmd_of_lp solver; lp_input; option_of_lp solver]) in
-  lp_output
-
+  let lp_output = syscall (String.concat " "
+                                         [cmd_of_lp solver; lp_input; option_of_lp solver]) in
+  let in_chn = open_in "lpstd" in
+  let lp_lst = ref [] in
+  let break = ref false in
+  let () =
+    while not !break do
+      try
+        let tmp = input_line in_chn in
+        let () = lp_lst := tmp::(!lp_lst) in
+        (* clp_process_output_test tmp *)
+        ()
+      with _ ->
+        break:=true
+    done
+  in
+  !lp_lst
+  (* let () = *)
+  (*   let lp = make_problem Maximize *)
+  (*                         [|10.; 6.; 4.|] *)
+  (*                         [| *)
+  (*                           [|1.; 1.; 1.|]; *)
+  (*                           [|10.; 4.; 5.|]; *)
+  (*                           [|2.; 2.; 6.|] *)
+  (*                         |] *)
+  (*                         [| -.infinity, 100.; -.infinity, 600.; -.infinity, 300. |] *)
+  (*                         [| 0., infinity; 0., infinity; 0., infinity|] in *)
+  (*   let () = scale_problem lp in *)
+  (*   let () = use_presolver lp true in *)
+  (*   let () = simplex lp in *)
+  (*   let prim = get_col_primals lp in *)
+    
+  (*   Printf.printf "Z: %g    x0: %g    x1: %g    x2: %g\n%!" (get_obj_val lp) prim.(0) prim.(1) prim.(2) *)
+  (* in *)
+    
+  (* let lp1 = read_cplex lp_input in *)
+  (* let () = write_cplex lp1 "std" in *)
+  (* let () = print_endline (get_obj_name lp1) in *)
+  
+  (* scale_problem lp1; *)
+  (* use_presolver lp1 true; *)
+  (* let primals = get_col_primals lp1 in *)
+  (* let () = Array.iter (fun item -> print_endline (string_of_float item)) primals in *)
+  (* simplex lp1; *)
+  (* Printf.printf "Z: %g" (get_obj_val lp1); *)
+  (* let () = print_endline ("obj"^(string_of_float (get_obj_val lp1))) in *)
+  (* let primals = get_col_primals lp1 in *)
+  (* let () = Array.iter (fun item -> print_endline (string_of_float item)) primals in *)
+  (* let () = print_endline lp_output in *)
+  
+;;
+  
 let gen_clp_input obj_vars assertions =
   let obj_stmt = match obj_vars with
     | [] -> ""
-    | _ -> "Minimize\n" ^ (String.concat " + " (List.map lp_of_spec_var obj_vars))
+    | _ -> "Minimize\n" ^ (String.concat " + " (List.map lp_of_spec_var obj_vars)) (* object  *)
   in
   let model_stmt = match assertions with
     | [] -> ""
@@ -279,20 +348,47 @@ let gen_lp_input solver obj_vars assertions =
 
 let get_model solver obj_vars assertions =
   let lp_inp = gen_lp_input solver obj_vars assertions in
-  let lp_out = run solver lp_inp in
-
+  let lp_out_lst = run solver lp_inp in
+  (* lp_out_lst is the string of the raw output of the glpk solver, it is a list of string, divided by line break *)
+  (* lp_out_lst will be processed to formatted data *)
   let () = 
     x_tinfo_pp ">>>>>>> get_model_lp <<<<<<<" no_pos;
     x_tinfo_hp (add_str "lp input:\n " idf) lp_inp no_pos;
-    x_tinfo_hp (add_str "lp output: " idf) lp_out no_pos 
+    (* x_tinfo_hp (add_str "lp output: " idf) lp_out no_pos  *)
   in
-
-  process_output solver lp_out
-
+  (* process_output solver lp_out *)
+  let primals =
+    List.fold_left
+      (fun r item->
+        try
+          (* let () = print_endline item in *)
+          Scanf.sscanf item "j %i %i" (fun m n -> [n]@r)
+       with _ ->
+         r
+      )
+      []
+      lp_out_lst 
+  in
+  (* let () = print_endline ((pr_list string_of_int) primals) in *)
+  let rec merge_model obj_vars primals =
+    match obj_vars,primals with
+    | (CP.SpecVar (_,oh,_))::otail, ph::ptail -> (oh,ph)::(merge_model otail ptail)
+    | [],_ -> []
+    | _,_ -> failwith "LP: no feasible result"
+  in
+  let model =
+    try
+      let model_data = merge_model obj_vars primals in
+      Sat model_data
+    with _ -> Unknown
+  in
+  model
+  
+                      
+  
 let get_model solver obj_vars assertions =
-  let pr1 = pr_list !print_formula in 
-  let pr2 = string_of_lp_res in
-  Debug.no_1 "lp_get_model" pr1 pr2
-    (fun _ -> get_model solver obj_vars assertions) assertions
-
-
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list !print_formula in
+  let pr3 = string_of_lp_res in
+  Debug.no_2 "lp_get_model" pr1 pr2 pr3
+    (fun _  _ -> get_model solver obj_vars assertions) obj_vars assertions

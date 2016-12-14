@@ -154,3 +154,203 @@ l1.val = 1
 l2.val = 0
 l3.val = 0
 so the generated bound is [m,n] in this case.
+
+
+
+From hip to sleek
+1.
+HIP program:
+
+void init2(arrI a,int m,int n)
+   infer[U]
+   requires a::arr_seg<i,j> & U(i,j,m,n)
+   ensures  a::arr_seg<i,j>;
+  {
+  if(m<n){
+    upd_arr(a,m,5);
+    init2(a,m+1,n);
+    }
+  }
+TODO:
+        1. How to handle i<j ?
+        Can we have U(i,j,m,n) --> i<j?
+        2. Solve in right before the inference happens.
+
+
+2.
+Collected sleek constraints:
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- a::arr_seg<m,m+1>
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- ex. i1, j1 : a::arr_seg<i1,j1> & U(m+1,n,i1,j1).
+infer[U] a::arr_seg<i,j> & m>n |- true.
+
+TODO:
+        1. Now the inference will give U(m,n,i,j) -->  ((n=j & m=i & 0<=i & i<j) | (0<=n & m=n)),
+        [RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2),
+         RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1)]
+           but I do not want it solved. It should be kept as U(u1,u2,m,n) & m<n -->  u1<=m & u2>=m+1.
+           And how to handle u1<=u2?
+        2. The recursive case not so correct.
+        [RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2),
+        RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1),
+        RELDEFN U: ( m=v_int_24_1929'-1 & 0<=u1_1990 & u1_1990<v_int_24_1929' & v_int_24_1929'<=n' & v_int_24_1929'<=u2_1991 & U(u1_1990,u2_1991,m,n')) -->  U(u1_1990,u2_1991,v_int_24_1929',n')]
+
+        This will be better...
+        (exists u1_2002,u2_2003: a'::arr_seg<u1_2002,u2_2003>@M&
+        v_bool_21_1930' & U(u1,u2,m,n) & m'<=(w-1) & m'<=(n'-1) & u<=m' &
+        ((0-a')+1)<=u & 0<=u & u2=w & m=m' & n=n' & u1=u & a=a' & u1<=u2 & 0<=u1 &
+        v_int_23_1929'=1+m' & u1_1990=u & u2_1991=w & u<=w & 0<=u &
+        u1_2002=u1_1990 & u2_2003=u2_1991&{FLOW,(4,5)=__norm#E}[])
+
+=========== The location that generates the recursive constraints =====================
+        check_exp inp1 : List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     a'::arr_seg<u,w>@M&
+v_bool_21_1930' & U(u1,u2,m,n) & m'<=(w-1) & m'<=(n'-1) & u<=m' &
+((0-a')+1)<=u & 0<=u & u2=w & m=m' & n=n' & u1=u & a=a' & u1<=u2 & 0<=u1 &
+v_int_23_1929'=1+m'&{FLOW,(4,5)=__norm#E}[]
+    es_gen_impl_vars(E): []
+    es_infer_rel: [RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1);
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2)]
+    es_subst (from,to): []:[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+
+    es_infer_vars_rel: [U]
+    es_infer_rel: [RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1);
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2)]
+    es_unsat_flag: false
+  Exc:None
+  ]
+check_exp inp2 :init2$arrI~int~int(a,v_int_23_1929,n) rec
+check_exp@61 EXIT: List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists u1_2002,u2_2003: a'::arr_seg<u1_2002,u2_2003>@M&
+v_bool_21_1930' & U(u1,u2,m,n) & m'<=(w-1) & m'<=(n'-1) & u<=m' &
+((0-a')+1)<=u & 0<=u & u2=w & m=m' & n=n' & u1=u & a=a' & u1<=u2 & 0<=u1 &
+v_int_23_1929'=1+m' & u1_1990=u & u2_1991=w & u<=w & 0<=u &
+u1_2002=u1_1990 & u2_2003=u2_1991&{FLOW,(4,5)=__norm#E}[])
+    es_gen_impl_vars(E): []
+    es_infer_rel: [RELDEFN U: ( m=v_int_23_1929'-1 & 0<=u1_1990 & u1_1990<v_int_23_1929' &
+ v_int_23_1929'<=n' & v_int_23_1929'<=u2_1991 & U(u1_1990,u2_1991,m,n')) -->  U(u1_1990,u2_1991,v_int_23_1929',n');
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1);
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2)]
+    es_subst (from,to): []:[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+
+    es_infer_vars_rel: [U]
+    es_infer_rel: [RELDEFN U: ( m=v_int_23_1929'-1 & 0<=u1_1990 & u1_1990<v_int_23_1929' &
+ v_int_23_1929'<=n' & v_int_23_1929'<=u2_1991 & U(u1_1990,u2_1991,m,n')) -->  U(u1_1990,u2_1991,v_int_23_1929',n');
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  ((u1<u2 & n<=m) | (u1<=m & m<u2) | u2=u1);
+                   RELASS [U]: ( U(u1,u2,m,n)) -->  (u1!=u2 | m>=n | 0>u2)]
+    es_unsat_flag: false
+  Exc:None
+  ]
+  ============================================================================================================
+
+3.
+        (using lemma)
+Pure constraints:
+U(m,n,i,j) |- i<j ??
+U(m,n,i,j) & m<n |- i<=m & j>=m+1.
+U(m,n,i,j) & m<n |- ex. i1,j1: i<=i1 & j>=j1 & U(m+1,n,i1,j1).
+
+4.
+Infer what is U:
+U(m,n,i,j) = i=f1(m,n) & j=f2(m,n)
+replace U with template, we have:
+i=f1(m,n) & j=f2(m,n) & m<n |- f1(m,n)<=m & f2(m,n)>=m+1.
+i=f1(m,n) & j=f2(m,n) & m<n |- ex.i1, j1: f1(m,n)<=f1(m+1,n) & f2(m,n)>=f2(m+1,n) & i1=f1(m+1,n) & j=f2(m+1,n)
+
+5.
+We do not need i,j,i1,j1 anymore, drop them:
+infer [f1,f2] m<n |- f1(m,n)<=m & f2(m,n)>=m+1.
+print residue.
+infer [f1,f2] m<n |- f1(m,n)<=f1(m+1,n) & f2(m,n)>=f2(m+1,n).
+print residue.
+
+
+The example of array initialization.
+void init2(arrI a,int m,int n)
+   infer[U]
+   requires a::arr_seg<i,j> & U(i,j,m,n)
+   ensures  a::arr_seg<i,j>;
+  {
+  if(m<n){
+    upd_arr(a,m,5);
+    init2(a,m+1,n);
+    }
+  }
+
+Expected inference process of pre-condition.
+Step 1:
+(1) infer[U] a::arr_seg<i,j> & U(i,j,m,n) & m<n |- a::arr_seg<m,m+1>
+(2) infer[U] a::arr_seg<i,j> & U(i,j,m,n) m<n |- ex. i1, j1 : a::arr_seg<i1,j1> & U(i1,j1,m+1,n).
+(3) infer[U] a::arr_seg<i,j> & m>n |- true. // not needed
+
+Step 2:
+From the assumption that i,j are bounds of an array segment and the constraints from the programs,
+we have:
+//U(i,j,m,n) & i<=j |- true.
+U(i,j,m,n) & m<n & i<=j |- i<=m & j>=m+1. (from (1))
+U(i,j,m,n) & m<n & i<=j |- ex. i1,j1. U(i1,j1,m+1,n) & i<=i1 & j1<=j. (from (2))
+
+
+infer[f1,f2]  i=f1(m,n) & j=f2(m,n) & m<n & i<=j  |- i<=m & j>=m+1
+infer[f1,f2]  i=f1(m,n) & j=f2(m,n) & m<n & i<=j  |-
+          (exists i1,j1:i1=f1(m+1,n) & j1=f2(m+1,n) &  & i<=i1 & j1<=j)
+
+
+U(i,j,m,n) is partially defined as:
+U(i,j,m,n) == i=f1(m,n) & j=f2(m,n), where f1(m,n) means k1*m+k2*n+k3. f2 similarly.
+
+Step 3.
+replace U with the definition and i,j,i1,j1 can be replaced by the combination of k and m,n,
+we have:
+
+infer [f1,f2] m<n |- f1(m,n)<=m & f2(m,n)>=m+1.
+print residue.
+infer [f1,f2] m<n |- f1(m,n)<=f1(m+1,n) & f2(m,n)>=f2(m+1,n).
+print residue.
+
+We can solve these by LP based method or z3.
+
+Problem:
+1. In step1 & 2, the checking of the recursive call assumes i==i1 and j==j1. But if we force them
+to be equal, with the assumption that i=k1*m+k2*n+k3, it will lead k1 to incorrect answer.
+I think i1, j1 need to be two existential quantified variables. They are just place-holders,
+which will be replaced by the template;
+
+2. i<=j should be a consequence of U. First, if i<=j is in the same side with U, the constraints
+are non-linear. The consequence will break into disjunctions. Second, if U is not necessarily leading
+to i<=j, then we can just make U to something that leads to i>j.
+
+
+
+First step, collecting sleek constraints:
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- a::arr_seg<m,m+1>
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- ex. i1, j1 : a::arr_seg<i1,j1> & U(m+1,n,i1,j1).
+infer[U] a::arr_seg<i,j> & m>n |- true.
+
+TODO:
+        1. How to handle i<j ?
+        Can we have U(i,j,m,n) --> i<j?
+        2. Solve in right before the inference happens.
+
+
+2.
+Collected sleek constraints:
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- a::arr_seg<m,m+1>
+infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- ex. i1, j1 : a::arr_seg<i1,j1> & U(m+1,n,i1,j1).
+infer[U] a::arr_seg<i,j> & m>n |- true.
+
+=======================================
+1. Transform the rel inference to template inference in infer_pure, where template inference happens
+2. replace U with i=f1() & j=f2(), construct a new estate
+3. Bind with each bound variable a template variable, how a template looks like? How to create template declare?

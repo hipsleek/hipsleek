@@ -2697,6 +2697,7 @@ module TraverseCH = Graph.Traverse.Dfs(CH)
 module W = struct
   type label = CH.E.label
   (* type edge = CH.E.edge *)
+  type edge = CH.E.t
   type t = int
   let weight x = 1
   let zero = 0

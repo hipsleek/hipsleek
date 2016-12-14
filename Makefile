@@ -6,6 +6,7 @@ OPREP = $(OCAML_TOPLEVEL_PATH)/..
 BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
+GLPKLIB = glpk/glpk
 OLIBS = $(OPREP)/$(GRLIB),
 #CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
 CPPO_FLAGS = 
@@ -19,24 +20,26 @@ ifdef OCAML_TOPLEVEL_PATH
  LIBELIB = $(OPREP)/$(ELIB)
  LIBGLIB = $(OPREP)/$(GRLIB)
  LIBIGRAPH = $(OPREP)/ocamlgraph
+ LIBGLPK = $(OPREP)/$(GLPKLIB)
 else
  INCLPRE = +site-lib
  LIBBATLIB = site-lib/$(BATLIB)
  LIBELIB = site-lib/$(ELIB)
  LIBGLIB = graph
  LIBIGRAPH = +ocamlgraph
+ LIBGLPK = site-lib/$(GLPKLIB)
 endif
 
 #  number of parallel jobs, 0 means unlimited.
 JOBS = 16
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
-LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBGLPK)
+LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBGLPK)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(INCLPRE)/glpk
 INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28

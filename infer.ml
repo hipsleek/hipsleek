@@ -1211,7 +1211,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
               then (None,None,[])
               else 
                 begin
-                  x_binfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
+                  x_tinfo_pp ">>>>>> infer_pure_m <<<<<<" pos;
                   DD.ninfo_pprint "Adding heap assumption?" pos;
                   DD.ninfo_hprint (add_str "unk_heaps" (pr_list !CF.print_h_formula)) unk_heaps pos;
                   DD.ninfo_hprint (add_str "lhs_xpure" (!CP.print_formula)) lhs_xpure pos;
@@ -1236,7 +1236,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     (* postpone until heap_entail_after_sat *)
                     if !Globals.old_infer_hp_collect then 
                       begin
-                        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] pos;
+                        x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) [hp_rel] pos;
                         rel_ass_stk # push_list ([hp_rel])
                       end;
                     (* let new_es = {estate with CF.es_infer_hp_rel = estate.CF.es_infer_hp_rel # push_list [hp_rel];} in *)
@@ -1509,7 +1509,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                         (* postpone until heap_entail_after_sat *)
                          if !Globals.old_infer_hp_collect then 
                            begin
-                             x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass pos;
+                             x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) heap_ass pos;
                              let () = Log.current_hprel_ass_stk # push_list heap_ass in
                              rel_ass_stk # push_list heap_ass
                            end;
@@ -1531,7 +1531,7 @@ let rec infer_pure_m_x unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig
                     else
                       let () = if !Globals.old_infer_collect then 
                           begin
-                            x_binfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos;
+                            x_tinfo_hp (add_str "RelInferred (rel_ass)" (pr_list print_lhs_rhs)) rel_ass pos;
                             infer_rel_stk # push_list_pr x_loc rel_ass;
                             Log.current_infer_rel_stk # push_list rel_ass;
                           end in
@@ -1750,22 +1750,150 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_rels lhs_xpure_orig lhs_x
   | None -> (nes,nc,nlst)
 ;;
 
+(* Translate pure formula to template formula *)
+let get_bound_vars_and_others rel =
+  match rel with
+  | RelForm (_,arglist,loc) ->
+     (match arglist with
+        (h1::(h2::rest)) ->
+        (h1::[h2],rest)
+      | _ ->
+         ([],[])
+     )
+  | _ -> failwith "get_bound_vars_and_others: Not valid input"
+;;
+
+let rec bound_vars_with_templ_vars bvars =
+  match bvars with
+  | h::rest ->
+     (h,(Globals.fresh_any_name "templ"))::(bound_vars_with_templ_vars rest)
+  | [] -> []
+;;
+
+let bound_vars_to_templ bvars templ_names templ_args=
+  let rec bound_vars_with_templ_vars bvars =
+    match bvars with
+    | h::rest ->
+       (h,(Globals.fresh_any_name "templ"))::(bound_vars_with_templ_vars rest)
+    | [] -> []
+  in
+  List.map (fun (bvar, t) -> CP.mkEqExp bvar (CP.mkTemplateExp t templ_args no_pos) no_pos) (bound_vars_with_templ_vars bvars) 
+;;
+
+let gen_templ_vars rel_name =
+  ((Globals.fresh_any_name "templ"), (Globals.fresh_any_name "templ"))
+;;
+
+
+(* Generated template name for unknown relations *)
+let rel_templs_transformer = ref ([]:(CP.spec_var*(string*string)) list)
+;;
+
+let trans_rel_to_templ rel =
+  match rel with
+  | RelForm (name,arglist,loc) ->
+     (
+       let (_,(t1,t2)) =
+         (
+           try
+             List.find (fun (n,_) -> CP.eq_spec_var name n) !rel_templs_transformer
+           with Not_found ->
+             let tname1 = Globals.fresh_any_name "templ" in
+             let tname2 = Globals.fresh_any_name "templ" in
+             let () = rel_templs_transformer := ((name,(tname1,tname2))::(!rel_templs_transformer)) in
+             (name,(tname1,tname2))
+         )
+       in
+       (match arglist with
+        | b1::(b2::others) ->
+           let t1 = CP.mkTemplateExp t1 others no_pos in
+           let f1 = CP.mkEqExp b1 t1 no_pos in
+           let t2 = CP.mkTemplateExp t2 others no_pos in
+           let f2 = CP.mkEqExp b2 t2 no_pos in
+           CP.mkAnd f1 f2 no_pos
+        | _ -> failwith "trans_rel_to_templ: Not valid input"
+       )  
+     )
+  | _ -> failwith "trans_rel_to_templ: Not valid input"
+;;
+
+let new_templ_vars () =
+  List.map (fun v -> CP.mk_spec_var v) (List.fold_left (fun r (_,(t1,t2)) -> t1::(t2::r)) [] !rel_templs_transformer)
+;;
+  
+let trans_estate_to_templ es=  
+  {es with CF.es_infer_vars_templ = new_templ_vars ()}
+;;
+                                  
+(* ************************************************************ *)
+  
+  
 let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
-  if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then 
+  
+  let () = x_binfo_hp (add_str "infer_pure_m: lhs_mix" !print_mix_formula) lhs_mix no_pos in
+  let (newf, rels) = CP.drop_rel_formula_and_return (MCP.pure_of_mix lhs_mix) in
+  let templ_of_rel =
+    match rels with
+    | h::tail ->
+       trans_rel_to_templ h
+    | [] -> CP.mkTrue no_pos
+  in
+  let new_lhs_mix = !CP.simplify (!CP.simplify (CP.mkAnd templ_of_rel newf no_pos)) in
+  let () = x_binfo_hp (add_str "infer_pure_m: new_lhs_mix" !CP.print_formula) new_lhs_mix no_pos in
+  let newes = trans_estate_to_templ estate in
+  let (estate, lhs_mix) =
+    if !Globals.array_templ
+    then (newes, MCP.mix_of_pure new_lhs_mix)
+    else (estate, lhs_mix)
+  in
+  
+  (* let () = x_binfo_hp (add_str "infer_pure_m: lhs_mix" !print_mix_formula) lhs_mix no_pos in *)
+  (* let () = x_binfo_hp (add_str "infer_pure_m: newf" !CP.print_formula) newf no_pos in *)
+  (* let () = x_binfo_hp (add_str "infer_pure_m: rels" (pr_list !CP.print_p_formula)) rels no_pos in *)
+  (* let (bvars, others) = *)
+  (*   match rels with *)
+  (*   | h::tail -> *)
+  (*      get_bound_vars_and_others h *)
+  (*   | [] -> ([],[]) *)
+  (* in *)
+  (* let () = x_binfo_hp (add_str "infer_pure_m: bvars" (pr_list !CP.print_exp)) bvars no_pos in *)
+  (* let () = x_binfo_hp (add_str "infer_pure_m: others" (pr_list !CP.print_exp)) others no_pos in *)
+  (* let bvars2templ = bound_vars_to_templ bvars others in *)
+  (* let newf_with_templ = List.fold_left (fun r t -> CP.mkAnd r t no_pos) newf bvars2templ in *)
+  
+  (* let templ = *)
+  (*   List.map (fun (_,t) -> CP.mkTemplateExp t others no_pos) bvars2templ *)
+  (* in *)
+  (* let () = *)
+  (*   (\* x_binfo_hp (add_str "infer_pure_m: bvars2templ" (pr_list !CP.print_formula)) bvars2templ no_pos *\) *)
+  (*   x_binfo_hp (add_str "infer_pure_m: newf_with_templ" !CP.print_formula) newf_with_templ no_pos *)
+  (* in *)
+  (* let () = x_binfo_hp (add_str "infer_pure_m: rhs_mix" !print_mix_formula) rhs_mix no_pos in *)
+  if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then
     (None,None,[])
-  else if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+  else
+    if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
     (* Disable template inference when phase numbers are being inferred *)
     (* let () = print_endline "COLLECT PURE" in *)
-    let es_opt = Template.collect_templ_assume_init estate lhs_mix(* _0 *) (MCP.pure_of_mix rhs_mix) pos in 
-    match es_opt with
-    | None -> (None, None, [])
-    | Some es -> (Some (es, mkTrue pos), None, [])
-  else
-    let () = x_tinfo_hp (add_str " lhs_mix 2a" !print_mix_formula)  lhs_mix no_pos in
-    (* let lhs_mix = if !Globals.en_slc_ps then lhs_mix else lhs_mix in *)
-    (* let () = Debug.info_hprint (add_str " lhs_mix 2b" !print_mix_formula)  lhs_mix no_pos in *)
-    let ivs = estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel in
-    (* let rhs_p = MCP.pure_of_mix rhs_mix in *)
+      let es_opt = x_add Template.collect_templ_assume_init estate lhs_mix(* _0 *) (MCP.pure_of_mix rhs_mix) pos in
+      let () = 
+        if !Globals.array_templ
+        then
+          let _ = Template.collect_and_solve_templ_assumes_prog_free false (List.map CP.name_of_spec_var estate.CF.es_infer_vars_templ) in
+          ()
+        else
+          ()
+      in
+    
+      match es_opt with
+      | None -> (None, None, [])
+      | Some es -> (Some (es, mkTrue pos), None, [])
+    else
+      let () = x_tinfo_hp (add_str " lhs_mix 2a" !print_mix_formula)  lhs_mix no_pos in
+      (* let lhs_mix = if !Globals.en_slc_ps then lhs_mix else lhs_mix in *)
+      (* let () = Debug.info_hprint (add_str " lhs_mix 2b" !print_mix_formula)  lhs_mix no_pos in *)
+      let ivs = estate.es_infer_vars_rel@estate.es_infer_vars_hp_rel in
+      (* let rhs_p = MCP.pure_of_mix rhs_mix in *)
     let lhs_p = MCP.pure_of_mix lhs_mix in
     (* TODO: For relational obligation *)
     (*    let cl = CP.filter_ante lhs_p rhs_p in*)
@@ -1865,7 +1993,7 @@ let infer_pure_top_level estate unk_heaps lhs_heap_xpure1
         ante1 ante0 m_lhs split_conseq pos
     else
       let pr = Cprinter.string_of_pure_formula in
-      let () = Debug.info_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
+      let () = Debug.tinfo_hprint (add_str "split-1" (pr_list pr)) split1 no_pos in
       let split_mix1 = List.map MCP.mix_of_pure split1 in
       let res = List.map (fun lhs_xp -> 
           (* TODO: lhs_wo_heap *)
@@ -2352,7 +2480,7 @@ let infer_collect_rel is_sat estate conseq_flow lhs_h_mix lhs_mix rhs_mix pos =
         (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         if !Globals.old_infer_collect then 
           begin
-            x_binfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
+            x_tinfo_hp (add_str "RelInferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             infer_rel_stk # push_list_pr x_loc inf_rel_ls;
             Log.current_infer_rel_stk # push_list inf_rel_ls;
           end;
@@ -4737,7 +4865,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
     let new_rels1 = Gen.BList.difference_eq Sautil.constr_cmp new_rels (rel_ass_stk # get_stk) in
     if !Globals.old_infer_hp_collect then 
       begin
-        x_binfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) new_rels1 no_pos;
+        x_tinfo_hp (add_str "HPRelInferred" (pr_list_ln Cprinter.string_of_hprel_short)) new_rels1 no_pos;
         let () = rel_ass_stk # push_list (new_rels1) in
         let () = Log.current_hprel_ass_stk # push_list (new_rels1) in
         ()

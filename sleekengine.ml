@@ -2932,6 +2932,11 @@ let process_entail_check (iante : meta_formula list) (iconseq : meta_formula) (e
 let process_templ_solve (idl: ident list) = 
   Template.collect_and_solve_templ_assumes !cprog idl
 
+let process_templ_solve (idl: ident list) =
+  let print_unit = fun () -> "()" in
+  Debug.no_1 "process_templ_solve" (pr_list (fun x->x)) print_unit process_templ_solve idl
+;;
+                                           
 (* Solving termination relation assumptions in Sleek *)  
 let process_term_infer () =
   begin
@@ -3037,9 +3042,11 @@ let process_infer itype (ivars: ident list) (iante0 : meta_formula) (iconseq0 : 
   let pn = sleek_proof_counter#inc_and_get in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=pn then 
+  if pnum>0 & pnum!=pn then
+    let () = x_tinfo_pp "inside process_infer branch 1" no_pos in
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
-  else 
+  else
+    let () = x_tinfo_pp "inside proces_infer branch 2" no_pos in
     let nn = "("^(string_of_int (pn))^") " in
     let is_tnt_flag = List.mem INF_TERM itype in
     let is_infer_imm_pre_flag = List.mem INF_IMM_PRE itype in
@@ -3155,11 +3162,11 @@ let process_print_command pcmd0 =
       let view_list =  get_sorted_view_decls () (* !cprog.prog_view_decls *) in
       let view_list = Cast.get_selected_views opt view_list in
       let lst = List.filter (fun v -> v.Cast.view_kind!=View_PRIM) view_list in
-      let () = y_binfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
+      let () = y_tinfo_hp (add_str "\n" pr_id) (HipUtil.view_scc_obj # string_of) in
       let pr (a,f) = if f then a^"*" else a in
       let opt_str = (match opt with None -> ""
                                  | Some lst -> string_of_regex_list pr lst) in
-      y_binfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
+      y_tinfo_hp (add_str ("Printing Views "^opt_str^"\n") (pr_list Cprinter.string_of_view_decl_short)) lst
     else if pcmd = "data" then
       let data_d_lst = !cprog.Cast.prog_data_decls in
       let () = List.iter (fun d ->
@@ -3205,7 +3212,7 @@ let process_print_command pcmd0 =
       let pr (a,f) = if f then a^"*" else a in
       let opt_str = (match opt with None -> ""
                                  | Some lst -> string_of_regex_list pr lst) in
-      let () = y_binfo_hp (add_str ("Printing data" ^ opt_str ^ "\n") (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
+      let () = y_tinfo_hp (add_str ("Printing data" ^ opt_str ^ "\n") (pr_list (pr_list Cprinter.string_of_data_decl))) sel_data_d in
       ()
     else
       print_string (x_loc^"unsupported print command: " ^ pcmd)

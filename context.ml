@@ -940,7 +940,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 else (d,(map_r r,None),None)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
-                let () =  y_binfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
+                let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
                 (* same base, but same start? *)
                 (* add the possible RHS inst *)
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
@@ -3834,7 +3834,7 @@ and recalibrate_wt (w,a) =
     match a with
     | Search_action l ->
        let l = List.map recalibrate_wt l in
-       let () = x_binfo_hp (add_str "recalibrate_wt, l"
+       let () = x_tinfo_hp (add_str "recalibrate_wt, l"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) l no_pos in
   
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in

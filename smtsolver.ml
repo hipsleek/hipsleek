@@ -172,8 +172,14 @@ let rec smt_of_exp a =
     List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.NegInfConst _ 
   | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
-  | CP.Template t -> smt_of_exp (CP.exp_of_template t)
+  | CP.Template t -> let s = smt_of_exp (CP.exp_of_template t) in
+                     (* let () = print_endline ("Template "^s) in *)
+                     s
 
+let smt_of_exp a=
+  Debug.no_1 "smt_of_exp" !Cpure.print_exp (fun x->x) smt_of_exp a
+;;
+                       
 let rec smt_of_b_formula b =
   let (pf,_) = b in
   match pf with
@@ -856,7 +862,8 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
   let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
+  let conseq_str = smt_of_formula pr_strong pr_weak conseq in (* Is it correct??? *)
+  (
     ";Variables declarations\n" ^ 
     smt_var_decls ^
     ";Relations declarations\n" ^ 

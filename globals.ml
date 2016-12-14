@@ -1203,6 +1203,7 @@ let allow_imm_norm = ref false
 let remove_abs = ref true
 let allow_array_inst = ref false
 let array_lp = ref false
+let array_templ = ref false                   
 let imm_merge = ref true                (* true *) (*TODOIMM set default to false when merging to default branch *)
 
 let imm_weak = ref true
@@ -2743,3 +2744,5 @@ let build_sel_scc scc_lst get_name lst =
           List.find (fun v -> (get_name v)=c) lst
         ) scc
     ) scc_lst
+;;
+  
