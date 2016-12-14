@@ -1,0 +1,9 @@
+template int f1(int x).
+template int f2(int x).
+
+infer [f1, f2]
+  f1(x)<=0 & f2(x)<=0 |- x=0.
+print residue.
+
+template_solve{f1, f2}.
+// Why this is calling the Farcas lemma while the other is not?

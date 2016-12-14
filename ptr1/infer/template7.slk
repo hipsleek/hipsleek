@@ -1,0 +1,32 @@
+template int templ_129(int m,int n).
+template int templ_130(int m,int n).
+
+infer [templ_129,templ_130] i=templ_129( m, n) & j=templ_130( m, n) & i<=j &  m<n & i<=j & 0<=i |- i<=m & j>=(m+1) & m<=m+1.
+template_solve{templ_129,templ_130}.
+
+
+// [ 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> m<=(m+1)
+// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> (m+1)<=j
+// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> i<=m
+// ]
+
+// [ i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> i<=m
+// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> (
+//   m+1)<=j
+// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> m<=(
+//   m+1)
+// ]
+
+
+// , i=templ_129( m, n) & j=templ_130( m, n) & m_131<=flted_17_132 & 
+//  flted_17_132<=j & i<=m_131 & m<n & i<=j & 0<=i --> (m+1)<=j
+// , i=templ_129( m, n) & j=templ_130( m, n) & m_131<=flted_17_132 & 
+//  flted_17_132<=j & i<=m_131 & m<n & i<=j & 0<=i --> m<=(m+1)
+// ]
+
+// infer[f1,f2]  i=f1(m,n) & j=f2(m,n) & m<n & i<=j  |-
+//        (exists i1,j1: i1=f1(m+1,n) & j1=f2(m+1,n) & i<=i1 & j1<=j).
+          
+// infer [f1,f2] m<n |- f1(m,n)<=f1(m+1,n) & f2(m,n)>=f2(m+1,n).
+// print residue.
+
