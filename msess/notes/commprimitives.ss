@@ -53,7 +53,19 @@ void sendd (Channel c, DDate x)
 DDate received (Channel c)
   requires c::Chan{@S ?v#%L(v);;%R}<>
   ensures  c::Chan{@S %R}<> * %L(res);
+
+/**
+   String
+*/
+void sends (Channel c, SString x)
+  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
+  ensures  c::Chan{@S %R}<>;
+
+SString receives (Channel c)
+  requires c::Chan{@S ?v#%L(v);;%R}<>
+  ensures  c::Chan{@S %R}<> * %L(res);
   
+
 /**
 
 ============================= 2 ============================

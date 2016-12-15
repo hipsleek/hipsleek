@@ -74,22 +74,29 @@ void await(cdl c)
 
 lemma_norm "RELCDL"  self::Chan{@S GA<id>;;%R}<> -> self::Chan{@S %R}<> * self::GA<id>.
 lemma_norm "CONCDL"  self::Chan{@S GC<id,ptr>;;%R}<> * ptr::GC<id,ptr> -> self::Chan{@S %R}<>. 
-                                                 /*
+                                                 
+
+
 void B(Channel b, cdl c)
   requires b::Chan{@S ?1;;GA<id>}<> * c::CDL{ b::GA<id>}<id> * c::CNT<1>
-  ensures b::Chan{emp}<>;
+  ensures b::Chan{emp}<> *  c::CNT<0>;
 {
  int x = receive(b);
  // b::Chan{@S GR<id>} * c::CDL{ b::GR<id>}<id>
  dprint;
+ //countDown(c);
  countDown(c);
+ dprint;
 }
-*/
+
+
+
 void C(Channel b, cdl c)
   requires b::Chan{@S GC<id,b>;;!2}<> * c::CDL{ b::GC<id,b>}<id> * c::CNT<0>
   ensures b::Chan{emp}<>;
 {
  await(c);
+ /* await(c); */
  // b::Chan{@S GR<id>} * c::CDL{ b::GR<id>}<id>
  dprint;
  send(b,2);

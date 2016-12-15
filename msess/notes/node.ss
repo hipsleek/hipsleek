@@ -16,3 +16,7 @@ data Addr{
 data Channel{
   int info;
 }
+
+data SString{
+  int info;
+}
