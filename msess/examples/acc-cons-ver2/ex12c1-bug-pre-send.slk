@@ -1,0 +1,18 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/fences.slk'.
+// sleek_include 'msess/notes/commprimitives.slk'. 
+
+
+
+checkentail a::Chan{@S Fp2<22,1,qqq>}<> * d::Chan{@S Fp2<22,1,qqq>}<> |- qqq::Fp<22,2>.
+expect Valid.
+print residue.
+
+checkentail a::Chan{@S Fp2<22,1,qqq>}<> * d::Chan{@S Fp2<22,1,qqq>}<> * e::Chan{@S Fm2<22,2,qqq,0.5>;;?1}<> |- qqq::Fm<22,2,0.5>.
+expect Valid.
+print residue.
+
+checkentail a::Chan{@S Fp2<22,1,qqq>}<> * d::Chan{@S Fp2<22,1,qqq>}<> * e::Chan{@S Fm2<22,2,qqq,0.5>;;?1}<> |- qqq::Fm<22,1,0.5>.
+expect Valid.
+print residue. 
