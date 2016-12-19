@@ -11,13 +11,13 @@ do so by using an exclusive channel
 /**
  int
 */
-void send (Channel c, int x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
+void send (Channel ccc, int xxx)
+  requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
+  ensures  ccc::Chan{@S %R}<>;
 
-int receive (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
+int receive (Channel ccc)
+  requires ccc::Chan{@S ?v#%L(v);;%R}<>
+  ensures  ccc::Chan{@S %R}<> * %L(res);
 
 
 /**

@@ -904,7 +904,7 @@ Exception occurred: Failure("**session.ml#474:: IPure.Var expected.")
 =============================================
 dynamic-sync/ex16d.ss
 
-why below is right?
+why below is right? (FIXED)
 
 ============
 RIGHT LEMMAS
@@ -918,6 +918,25 @@ ptr_2279: self::Chan{ . (GC{}<[id_2278,ptr_2279]>) ;; (%R)
 
 =============================================
 =============================================
+acc-cons-ver2/ex12b.ss
+
+!!! **WARNING****solver.ml#4472:FREE VAR IN HEAP RHS :[res]
+impl/expl/evars vars:[]
+LHS:  (exists flted_26_201,flted_26_202,flted_26_203,flted_26_204,flted_26_205,
+flted_26_206,
+flted_26_207: a::Chan{ . (?msg_198#( emp&msg_198=1)) ;; ((Fp2{}<[flted_26_207,flted_26_206,qqq]>) ;; (emp))
+&
+{FLOW,(4,5)=__norm#E}}<>@M * 
+              d::Chan{ . (?msg_199#( emp&msg_199=1)) ;; ((Fp2{}<[flted_26_205,flted_26_204,qqq]>) ;; (emp))
+&
+{FLOW,(4,5)=__norm#E}}<>@M * 
+              c::Chan{ . (Fm2{}<[flted_26_203,flted_26_202,qqq,flted_26_201]>) ;; ((!msg_200#( emp&msg_200=1)) ;; (emp))
+&
+{FLOW,(4,5)=__norm#E}}<>@M&
+MayLoop[] & flted_26_201=FLOAT 1. & flted_26_202=6 & flted_26_203=22 & 
+flted_26_204=3 & flted_26_205=22 & flted_26_206=3 & flted_26_207=22 & c'=c & 
+d'=d & a'=a&{FLOW,(4,5)=__norm#E})
+ es_gen_impl_vars(E): []
 
 =============================================
 =============================================

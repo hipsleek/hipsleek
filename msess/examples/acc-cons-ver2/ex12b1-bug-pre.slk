@@ -1,0 +1,13 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/fences.slk'.
+
+checkentail 
+d::Chan{@S ?v#v=1;; Fp2<flted_26_2951,flted_26_2950,qqq>}<>
+* c::Chan{@S  Fm2<flted_26_2949,flted_26_2948,qqq,flted_26_2947> ;; !msg_200#msg_200=1}<>
+* a::Chan{@S  Fp2<flted_26_2953,flted_26_2952,qqq>}<>
+& x=1 & flted_26_2947=1.0 & flted_26_2948=6 & flted_26_2949=22 & 
+flted_26_2950=3 & flted_26_2951=22 & flted_26_2952=3 & flted_26_2953=22 & 
+c'=c & d'=d & a'=a
+ |-  d::Chan{@S ?v_138#%L(v_138) ;; %R}<>.
+ print residue. 

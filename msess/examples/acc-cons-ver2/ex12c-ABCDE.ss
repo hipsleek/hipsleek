@@ -21,6 +21,8 @@ requires a::Chan{@S ?1;;Fp2<22,1,qqq>}<> * d::Chan{@S ?1;;Fp2<22,1,qqq>}<> * c::
   
   send(c,1);
   send(e,2);
+
+  dprint;
 }
 
 
@@ -56,6 +58,18 @@ requires a::Chan{@S ?1;;Fp2<22,1,qqq>}<> * d::Chan{@S ?1;;Fp2<22,1,qqq>}<> * c::
 {
   //swapped below two:
   int z = receive(d);
+  int x = receive(a);
+  send(c,1);
+  send(e,2);
+}
+
+
+//should fail
+  void B_F4(Channel a, Channel d, Channel c, Channel e)
+    requires a::Chan{@S ?1;;Fp2<22,1,qqq>}<> * d::Chan{@S ?1;;Fp2<22,1,qqq>}<> * c::Chan{@S Fm2<22,2,qqq,0.5>;;!1}<> * e::Chan{@S Fm2<22,2,qqq,0.5>;;!2}<>
+  ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<> * e::Chan{emp}<>;
+{
+  //int z = receive(d);
   int x = receive(a);
   send(c,1);
   send(e,2);
