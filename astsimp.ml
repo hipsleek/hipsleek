@@ -2413,22 +2413,22 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
   let view_decl_hash = HT.create 10 in
   let proj_hash = Session.make_projection session vdef.view_vars in
   let helper (role1, role2) tpproj =
-	let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
-	let heap_node = Session.ITPProjection.trans_from_session tpproj in
-	let heap_node = F.set_sess_ann heap_node ann_list in
-	let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
+    let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
+    let heap_node = Session.ITPProjection.trans_from_session tpproj in
+    let heap_node = F.set_sess_ann heap_node ann_list in
+    let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
     let form = F.subst_flow_of_struc_formula n_flow top_flow form in
-	let new_vdef = {vdef with
+    let new_vdef = {vdef with
                     view_name = role1 ^ role2 ^ vdef.view_name;
-					view_formula = form;
-					view_session_formula = Some (Session.TPProjectionSession tpproj);
-					view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
-					view_session_projections = None;} in
-	HT.add view_decl_hash (role1, role2) new_vdef in
+		    view_formula = form;
+		    view_session_formula = Some (Session.TPProjectionSession tpproj);
+		    view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
+		    view_session_projections = None;} in
+    HT.add view_decl_hash (role1, role2) new_vdef in
   let () = HT.iter helper proj_hash in
   view_decl_hash
 
-and translate_session (view:I.view_decl) =
+and translate_session_x (view:I.view_decl) =
   let get_session_formula view =
     match view.I.view_session_formula with
     | Some s -> s
@@ -2441,19 +2441,22 @@ and translate_session (view:I.view_decl) =
     {view with I.view_formula = F.subst_stub_flow_struc top_flow transf_session} in
   match view.I.view_session_info with
   | Some si -> (match (si.session_kind) with
-                 | Some Protocol ->
-                     let transf = Session.IProtocol.mk_struc_formula_from_session_and_struc_formula in
-					 let proj = make_projection_view_decls (Session.get_protocol (get_session_formula view)) view in
-                     {view with view_session_projections = Some proj}
-                 | Some Projection ->
-                     let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
-                     helper view transf Session.get_projection
-                 | Some TPProjection ->
-                     let transf = Session.ITPProjection.mk_struc_formula_from_session_and_struc_formula in
-                     helper view transf Session.get_tpprojection
-                 | None -> view)
+      | Some Protocol ->
+        let transf = Session.IProtocol.mk_struc_formula_from_session_and_struc_formula in
+	let proj = make_projection_view_decls (Session.get_protocol (get_session_formula view)) view in
+        {view with view_session_projections = Some proj}
+      | Some Projection ->
+        let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
+        helper view transf Session.get_projection
+      | Some TPProjection ->
+        let transf = Session.ITPProjection.mk_struc_formula_from_session_and_struc_formula in
+        helper view transf Session.get_tpprojection
+      | None -> view)
   | None -> view
 
+and translate_session (view:I.view_decl) =
+  let pr = Iprinter.string_of_view_decl in
+  Debug.no_1 "translate_session" pr pr translate_session_x view
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in

@@ -920,6 +920,7 @@ ptr_2279: self::Chan{ . (GC{}<[id_2278,ptr_2279]>) ;; (%R)
 =============================================
 acc-cons-ver2/ex12b.ss
 
+
 !!! **WARNING****solver.ml#4472:FREE VAR IN HEAP RHS :[res]
 impl/expl/evars vars:[]
 LHS:  (exists flted_26_201,flted_26_202,flted_26_203,flted_26_204,flted_26_205,
@@ -940,6 +941,28 @@ d'=d & a'=a&{FLOW,(4,5)=__norm#E})
 
 =============================================
 =============================================
+fences:
+
+lemma_norm "CON"  self::Chan{@S Fm2<id1,p1,qq,n1> ;; %R}<> * qq::Fm<id2,p2,n2> & id1=id2 & p1=p2 
+           -> self::Chan{@S %R}<> * qq::Fm<id2,p1,n1-n2>.
+
+//should succeed:
+x::Chan{@S Fm2<1,2,qq,0.2> ;; !1}<> * qq::Fm<1,2,0.5>
+x::Chan{@S Fm2<a1,a2,a3,a4> ;; !1}<> * qq::Fm<a5,a6,a7> & a1=1 & a2=2 & a3=qq & a4=0.2 & a5=1 & a6=2 & a7=0.5
+
+x::Chan{@S Fm2<a1,a2,a3,a4> ;; !1}<> |- x::Chan{@S Fm2<id1,p1,qq,n1> ;; %R}<>
+yes and
+%R = !1
+id1 = a1
+p1 = a2
+qq = a3
+n1 = a4
+
+ qq::Fm<a5,a6,a7> & a1=1 & a2=2 & a3=qq & a4=0.2 & a5=1 & a6=2 & a7=0.5 &
+id1 = a1 & p1 = a2 & qq = a3 & n1 = a4 |-  qq::Fm<id2,p2,n2> & id1=id2 & p1=p2 
+
+to make sure all preds are normalized! 
+
 
 =============================================
 =============================================

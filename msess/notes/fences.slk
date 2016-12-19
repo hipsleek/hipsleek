@@ -1,3 +1,4 @@
+/*
 pred_prim Fc<id:int,p:float>. //consumer
 pred_prim Fa<id:int,p:float>. //accumulator
 
@@ -10,6 +11,7 @@ lemma_norm "FULL" self::Fa<id,aaa> & aaa=1.0 -> self::Fc<id,1.0>.
 lemma_norm "REL"  self::Chan{@S Fa2<id,ppp,qq>;;%R}<> -> self::Chan{@S %R}<> * qq::Fa<id,ppp>.
 lemma_norm "CON"  self::Chan{@S Fc2<id,ppp1,qq> ;; %R}<> * qq::Fc<id,ppp2> & ppp2>=ppp1 -> self::Chan{@S %R}<> * qq::Fc<id,ppp2-ppp1>.
 lemma_norm "REM"  self::Fc<id,aaa> & aaa=0.0 -> emp.
+*/
 
 pred_prim Fp<id:int,p:int>. //accumulator
 pred_prim Fm<id:int,p:int,n:float>. //consumer
@@ -17,8 +19,8 @@ pred_prim Fm<id:int,p:int,n:float>. //consumer
 pred_prim Fp2<id:int,p:int,var>. //accumulator
 pred_prim Fm2<id:int,p:int,var,n:float>. //consumer
   
-lemma_norm "ACC"  self::Fp<id,aa> * self::Fp<id,bb> & aa>=0 & bb>=0-> self::Fp<id,aa+bb>.
+lemma_norm "ACC"  self::Fp<id1,aa> * self::Fp<id2,bb> & aa>=0 & bb>=0 & id1=id2-> self::Fp<id,aa+bb>.
 lemma_norm "REL"  self::Chan{@S Fp2<id,ppp,qq>;;%R}<> -> self::Chan{@S %R}<> * qq::Fp<id,ppp>.
-lemma_norm "CONi" self::Chan{@S Fm2<id,ppp1,qq,mm> ;; %R}<> * qq::Fp<id,ppp2> & ppp1=ppp2 & mm<=1.0 -> self::Chan{@S %R}<> * qq::Fm<id,ppp1,1.0-mm>.
-lemma_norm "CON"  self::Chan{@S Fm2<id,ppp1,qq,mm> ;; %R}<> * qq::Fm<id,ppp2,nn>  & ppp1=ppp2 & nn>=mm-> self::Chan{@S %R}<> * qq::Fm<id,ppp1,nn-mm>.
+lemma_norm "CONi" self::Chan{@S Fm2<id1,ppp1,qq,mm> ;; %R}<> * qq::Fp<id2,ppp2> & id1=id2 & ppp1=ppp2 & mm<=1.0 -> self::Chan{@S %R}<> * qq::Fm<id,ppp1,1.0-mm>.
+lemma_norm "CON"  self::Chan{@S Fm2<id1,ppp1,qq,mm> ;; %R}<> * qq::Fm<id2,ppp2,nn> & id1=id2 & ppp1=ppp2 & nn>=mm-> self::Chan{@S %R}<> * qq::Fm<id,ppp1,nn-mm>.
 lemma_norm "REM"  self::Fm<id,_,aaa> & aaa=0.0 -> emp.

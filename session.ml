@@ -41,6 +41,7 @@ let sess_id:  string option ref = ref None
 let send_id:  string option ref = ref None
 let recv_id:  string option ref = ref None
 let sor_id:   string option ref = ref None
+(* let pred_id:  string option ref = ref None *)
 let msg_id:   string option ref = ref None
 
 let set_prim_pred_id kind id =
@@ -54,7 +55,7 @@ let set_prim_pred_id kind id =
     | Receive      -> recv_id := Some id
     | Transmission -> trans_id := Some id
     | HVar         -> ()
-    | Predicate    -> ()
+    | Predicate    -> (* pred_id := Some id *) ()
     | Emp          -> ()
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
@@ -76,7 +77,7 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Receive      -> get_prim_pred_id recv_id
   | Transmission -> get_prim_pred_id trans_id
   | HVar         -> ""
-  | Predicate    -> ""
+  | Predicate    -> (* get_prim_pred_id pred_id *) ""
   | Emp          -> ""
   | Session      -> get_prim_pred_id sess_id
   | Channel      -> get_prim_pred_id chan_id
@@ -127,6 +128,7 @@ module type Message_type = sig
   val mk_exists: (ident * primed) list -> h_formula -> VarGen.loc -> formula
   val mk_or: formula -> formula -> VarGen.loc -> formula
   val mk_empty: unit -> h_formula
+  val mk_true: unit -> pure_formula
   val mk_hvar: ident -> var list -> h_formula
   val mk_seq_wrapper: ?sess_kind:session_kind option -> h_formula -> VarGen.loc -> session_kind -> h_formula
   val choose_ptr: ?ptr:string -> unit -> var (* node *)
@@ -157,6 +159,7 @@ module type Message_type = sig
   val is_base_formula: formula -> bool
   val is_exists_formula: formula -> bool
   val get_h_formula: formula -> h_formula
+  val get_pure_formula: formula -> pure_formula
   val get_h_formula_safe: formula -> h_formula
   val get_h_formula_from_ho_param_formula: ho_param_formula -> h_formula
   val get_formula_from_ho_param_formula: ho_param_formula -> formula
@@ -255,6 +258,8 @@ module IForm = struct
     F.mkOr f1 f2 pos
 
   let mk_empty () = F.HEmp
+
+  let mk_true () = IP.mkTrue no_pos
 
   let mk_hvar id ls = F.HVar(id, ls)
 
@@ -392,6 +397,10 @@ module IForm = struct
   let get_h_formula formula =
     let h, p, vp, fl, a = F.split_components formula in
     h
+
+  let get_pure_formula formula =
+    let _, p, _, _, _ = F.split_components formula in
+    p
 
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.F.rflow_base in
@@ -599,6 +608,8 @@ module CForm = struct
     CF.mkOr f1 f2 pos
 
   let mk_empty () = CF.HEmp
+                      
+  let mk_true () = CP.mkTrue no_pos
 
   let mk_hvar id ls =
     let id = CP.SpecVar(UNK, id, Unprimed) in
@@ -760,6 +771,10 @@ module CForm = struct
     let h, p, vp, fl, t, a = CF.split_components formula in
     h
 
+  let get_pure_formula formula =
+    let _, p, _, _, _, _ = CF.split_components formula in
+    (MCP.pure_of_mix p)
+  
   let get_h_formula_from_ho_param_formula rflow_formula =
     let f = rflow_formula.CF.rflow_base in
     get_h_formula f
@@ -1082,9 +1097,9 @@ module Protocol_base_formula =
 
     let get_message base = base.protocol_base_formula_message
 
-	let get_sender base = base.protocol_base_formula_sender
+    let get_sender base = base.protocol_base_formula_sender
 
-	let get_receiver base = base.protocol_base_formula_receiver
+    let get_receiver base = base.protocol_base_formula_receiver
 
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
@@ -1303,7 +1318,7 @@ module Make_Session (Base: Session_base) = struct
     | SOr   of session_or_formula
     | SStar of session_star_formula
     | SExists of session_exists_formula
-	| SFence of session_fence
+    | SFence of session_fence
     | SBase of session_base
     | SEmp
 
@@ -1351,6 +1366,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_ho_vars: (* (ho_flow_kind * ident * ho_split_kind) *) Base.ho_param_formula list;
     session_predicate_params: Base.param list;
     session_predicate_formula_heap_node: Base.h_formula_heap option;
+    session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
     session_predicate_anns: sess_ann list;
   }
@@ -1483,23 +1499,25 @@ module Make_Session (Base: Session_base) = struct
 	  session_fence_pred = pred;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?sess_ann:(anns=[]) loc =
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
     Predicate {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
       session_predicate_params = params;
       session_predicate_formula_heap_node = node;
+      session_predicate_pure = pure;
       session_predicate_pos = loc;
       session_predicate_anns = anns;
     }
 
   (* TODO tina: Why doesn't this use SFence constructor? *)
-  and mk_session_fence_predicate name ho_vars params ?node:(node=None) loc =
+  and mk_session_fence_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) loc =
     {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
       session_predicate_params = params;
       session_predicate_formula_heap_node = node;
+      session_predicate_pure = pure;
       session_predicate_pos = loc;
       (* TODO: anns in fences? *)
       session_predicate_anns = [];
@@ -1555,8 +1573,10 @@ module Make_Session (Base: Session_base) = struct
     Base.mk_empty ()
 
   and mk_predicate_node hnode p =
+    (* make the actual predicate node *)
     let ptr = Base.get_base_ptr session_def_id hnode in
     let name = p.session_predicate_name in
+    (* let name = get_prim_pred_id pred_id in *)
     let args = [] in (* not using HO preds here *)
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
@@ -1564,8 +1584,8 @@ module Make_Session (Base: Session_base) = struct
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
     let node = Base.set_ann_list node anns in
-    node
-    (* Base.mk_seq_wrapper node pos Base.base_type *)
+    (* make the Predicate node *)
+    node    
 
   and mk_hvar_node h =
     let id = h.session_hvar_id in
@@ -1580,28 +1600,28 @@ module Make_Session (Base: Session_base) = struct
   
   let trans_from_session s =
     let rec helper s = match s with
-    | SSeq s  ->
+      | SSeq s  ->
         let arg1 = helper s.session_seq_formula_head in
         let arg2 = helper s.session_seq_formula_tail in
         mk_seq_node arg1 arg2 s.session_seq_formula_heap_node s.session_seq_formula_pos
-    | SOr s   ->
+      | SOr s   ->
         let arg1 = helper s.session_sor_formula_or1 in
         let arg2 = helper s.session_sor_formula_or2 in
         mk_or_node arg1 arg2 s.session_sor_formula_heap_node s.session_sor_formula_pos
-    | SStar s ->
+      | SStar s ->
         let arg1 = helper s.session_star_formula_star1 in
         let arg2 = helper s.session_star_formula_star2 in
         mk_star_node arg1 arg2 s.session_star_formula_heap_node s.session_star_formula_pos
-    | SExists s -> let vars = s.session_exists_formula_vars in
-                   let hform = helper s.session_exists_formula_session in
-                   let pos = s.session_exists_formula_pos in
-                   mk_exists_node vars hform pos
-	| SFence f -> mk_fence ()
-    | SBase s -> (match s with
-        | Base b -> Base.trans_base b
-        | Predicate p -> mk_predicate_node p.session_predicate_formula_heap_node p 
-        | HVar h -> mk_hvar_node h)
-    | SEmp    -> Base.mk_empty () in
+      | SExists s -> let vars = s.session_exists_formula_vars in
+        let hform = helper s.session_exists_formula_session in
+        let pos = s.session_exists_formula_pos in
+        mk_exists_node vars hform pos
+      | SFence f -> mk_fence ()
+      | SBase s -> (match s with
+          | Base b -> Base.trans_base b
+          | Predicate p -> mk_predicate_node p.session_predicate_formula_heap_node p 
+          | HVar h -> mk_hvar_node h)
+      | SEmp    -> Base.mk_empty () in
     helper s
 
   let trans_from_session s =
@@ -1753,7 +1773,7 @@ module Make_Session (Base: Session_base) = struct
     let fct h = Some merged_form in
     Base.transform_struc_formula_formula fct sf
 
-  let trans_h_formula_to_session h_formula =
+  let trans_h_formula_to_session ?pure:(pure=(Base.mk_true ())) h_formula =
     let rec helper h_formula =
       let node_kind = Base.get_node_kind h_formula in
       match node_kind with
@@ -1789,7 +1809,7 @@ module Make_Session (Base: Session_base) = struct
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
             (* let params = List.map (fun a -> Base.get_param_id a) params in *)
-            SBase (mk_session_predicate name [] params ~node:(Base.get_node_opt h_formula) ~sess_ann:ann pos)
+            SBase (mk_session_predicate name [] params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann pos)
         | Emp ->
             SEmp
         | Session -> failwith (x_loc ^ ": Unexpected node kind.")
@@ -1800,10 +1820,10 @@ module Make_Session (Base: Session_base) = struct
         | Msg -> failwith (x_loc ^ ": Unexpected node kind.") in
     helper h_formula
 
-  let trans_h_formula_to_session h_formula =
+  let trans_h_formula_to_session ?pure:(pure=(Base.mk_true ())) h_formula =
     let pr1 = !Base.print_h_formula in
     let pr2 = string_of_session in
-    Debug.no_1 "Session.trans_h_formula_to_session" pr1 pr2 trans_h_formula_to_session h_formula
+    Debug.no_1 "Session.trans_h_formula_to_session" pr1 pr2 (fun _ -> trans_h_formula_to_session ~pure:pure h_formula) h_formula
 
   (* Strip the STAR with original formula in view_decl. *)
   let get_original_h_formula h_formula =
@@ -1848,8 +1868,9 @@ module Make_Session (Base: Session_base) = struct
     if (Base.is_base_formula formula or Base.is_exists_formula formula)
     then
       let h_formula = Base.get_h_formula formula in
+      let pure_formula = Base.get_pure_formula formula in
       let h_formula = get_original_h_formula h_formula in
-      trans_h_formula_to_session h_formula
+      trans_h_formula_to_session ~pure:pure_formula h_formula 
     else
       failwith (x_loc ^ ": Formula Or unexpected.")
 
@@ -2221,78 +2242,75 @@ let make_role_comb (roles : ident list) : (ident * ident) list =
 
 let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_ann list =
   match vars with
-	| [] -> []
-	| hd :: tl -> if (hd = role1)
-				  then
-					AnnPrimaryPeer :: (make_ann_list tl role1 role2)
-				  else
-					if (hd = role2)
-					then
-					  AnnSecondaryPeer :: (make_ann_list tl role1 role2)
-					else
-					  AnnInactive :: (make_ann_list tl role1 role2)
+  | [] -> []
+  | hd :: tl -> if (hd = role1) then
+      AnnPrimaryPeer :: (make_ann_list tl role1 role2)
+    else if (hd = role2) then
+      AnnSecondaryPeer :: (make_ann_list tl role1 role2)
+    else
+      AnnInactive :: (make_ann_list tl role1 role2)
 
 let make_projection (session: IProtocol.session) (vars: ident list) =
   let rec helper s = match s with
     | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
-        		 		   let hash2 = helper s.IProtocol.session_seq_formula_tail in
-						   combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
+      let hash2 = helper s.IProtocol.session_seq_formula_tail in
+      combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
     | IProtocol.SOr s   -> let hash1 = helper s.IProtocol.session_sor_formula_or1 in
-        		 		   let hash2 = helper s.IProtocol.session_sor_formula_or2 in
-						   combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
+      let hash2 = helper s.IProtocol.session_sor_formula_or2 in
+      combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
     | IProtocol.SStar s -> let hash1 = helper s.IProtocol.session_star_formula_star1 in
-        		 		   let hash2 = helper s.IProtocol.session_star_formula_star2 in
-						   (* This is definitely not correct, there should be no star in tpproj *)
-						   combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
-	| IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
-							let role1 = f.IProtocol.session_fence_role1 in
-							let role2 = f.IProtocol.session_fence_role2 in
-							let pred = f.IProtocol.session_fence_pred in
-							let new_pred = ITPProjection.SBase (convert_predicate pred) in
-                            let hash = HT.create 10 in
-							let () = HT.add hash (role2, role1) new_pred in
-							hash
+      let hash2 = helper s.IProtocol.session_star_formula_star2 in
+      (* This is definitely not correct, there should be no star in tpproj *)
+      combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
+    | IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
+      let role1 = f.IProtocol.session_fence_role1 in
+      let role2 = f.IProtocol.session_fence_role2 in
+      let pred = f.IProtocol.session_fence_pred in
+      let new_pred = ITPProjection.SBase (convert_predicate pred) in
+      let hash = HT.create 10 in
+      let () = HT.add hash (role2, role1) new_pred in
+      hash
     | IProtocol.SExists e -> let hash = helper e.IProtocol.session_exists_formula_session in
-                             let pos = e.IProtocol.session_exists_formula_pos in
-                             let add_exist (role1, role2) tpproj =
-                               let exist = ITPProjection.mk_session_exists_formula e.IProtocol.session_exists_formula_vars
-                                                         tpproj pos in
-                               HT.replace hash (role1, role2) exist in
-                             let () = HT.iter add_exist hash in
-                             hash
+      let pos = e.IProtocol.session_exists_formula_pos in
+      let add_exist (role1, role2) tpproj =
+        let exist = ITPProjection.mk_session_exists_formula e.IProtocol.session_exists_formula_vars
+            tpproj pos in
+        HT.replace hash (role1, role2) exist in
+      let () = HT.iter add_exist hash in
+      hash
     | IProtocol.SBase s -> (match s with
         | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
-  							  let sender = IProtocol.get_sender b in
-  							  let receiver = IProtocol.get_receiver b in
-                    		  let hash = HT.create 10 in
-							  let () = HT.add hash (sender, receiver) snd_op in
-							  let () = HT.add hash (receiver, sender) rcv_op in
-							  hash
+  	  let sender = IProtocol.get_sender b in
+  	  let receiver = IProtocol.get_receiver b in
+          let hash = HT.create 10 in
+	  let () = HT.add hash (sender, receiver) snd_op in
+	  let () = HT.add hash (receiver, sender) rcv_op in
+	  hash
         | IProtocol.Predicate p -> let hash = HT.create 10 in
-                                   let params = p.session_predicate_params in
-                                   let params = List.map (fun x -> IProtocol.get_param_id x) params in
-                                   let comb = make_role_comb params in
-                                   let helper (role1, role2) =
-                                     let ann = make_ann_list params role1 role2 in
-                                     let new_pred = {p with session_predicate_anns = ann;} in
-							         let new_pred = ITPProjection.SBase (convert_predicate new_pred) in
-                                     HT.add hash (role1, role2) new_pred in
-                                   let () = List.iter helper comb in
-                                   hash
+          let params = p.session_predicate_params in
+          let params = List.map (fun x -> IProtocol.get_param_id x) params in
+          let comb = make_role_comb params in
+          let helper (role1, role2) =
+            let ann = make_ann_list params role1 role2 in
+            let new_pred = {p with session_predicate_anns = ann;} in
+	    let new_pred = ITPProjection.SBase (convert_predicate new_pred) in
+            HT.add hash (role1, role2) new_pred in
+          let () = List.iter helper comb in
+          hash
         | IProtocol.HVar h -> HT.create 10)
     | IProtocol.SEmp    -> HT.create 10 in
-   let hash = helper session in
-   (* Add empty projections for pairs of nodes that do not interact. *)
-   let role_pairs = make_role_comb vars in
-   let add_empty_projection (role1, role2) =
-     try
-       let _ = HT.find hash (role1, role2) in
-       ()
-     with
-       Not_found -> HT.add hash (role1, role2) ITPProjection.SEmp in
-   let () = List.iter add_empty_projection role_pairs in
-   let () = print_proj hash in
-   hash
+  let hash = helper session in
+  (* Add empty projections for pairs of nodes that do not interact. *)
+  let role_pairs = make_role_comb vars in
+  let add_empty_projection (role1, role2) =
+    try
+      let _ = HT.find hash (role1, role2) in
+      ()
+    with
+      Not_found -> HT.add hash (role1, role2) ITPProjection.SEmp in
+  let () = List.iter add_empty_projection role_pairs in
+  let () = print_proj hash in
+  hash
 
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with

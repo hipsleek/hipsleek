@@ -1774,6 +1774,7 @@ node_type: [[ `IDENTIFIER anno ->
                  | "receive" -> Receive
                  | "sequence" -> Sequence
                  | "disjunction" -> SOr
+                 (* | "spred" -> Predicate *)
                  | "msg" -> Msg
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];

@@ -1724,6 +1724,32 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
     (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
 
+let add_pure_formula_to_formula (p:P.formula) (f0 : formula): formula =
+  let rec helper f0 =
+    match f0 with
+    | Base b -> Base {b with formula_base_pure = P.mkAnd p b.formula_base_pure no_pos}
+    | Exists e -> Exists {e with formula_exists_pure = P.mkAnd p e.formula_exists_pure no_pos}
+    | Or o ->
+      let o1 = helper o.formula_or_f1 in
+      let o2 = helper o.formula_or_f2 in
+      (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
+  in helper f0
+
+let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
+  let rec helper f0 =
+    match f0 with
+    | Base b ->
+      let h = mkStar b.formula_base_heap h_f b.formula_base_pos in
+      (Base {b with formula_base_heap =h})
+    | Exists e ->
+      let h = mkStar e.formula_exists_heap h_f e.formula_exists_pos in
+      (Exists {e with formula_exists_heap =h})
+    | Or o ->
+      let o1 = helper o.formula_or_f1 in
+      let o2 = helper o.formula_or_f2 in
+      (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
+  in helper f0
+
 let get_heap_nodes (f0:h_formula) =
   let rec helper f =match f with
     | Conj ({h_formula_conj_h1 = h1; 
@@ -2061,6 +2087,11 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         formula_or_f2 = f2}, fexps1@fexps2 
   and float_out_exps_rflow (f:rflow_formula) : (rflow_formula * (((ident*primed)*Ipure.formula)list)) =
     let new_f,exps = float_out_exps_formula f.rflow_base in
+    (* andreeac: to check whether this can stay in the rflow formula or if has to be float out in the main formula *)
+    let qvars,nexps = List.split exps in
+    let exps = List.map (fun a -> (a,Ipure.mkTrue no_pos)) qvars in
+    let conj = Ipure.conj_of_list nexps in
+    let new_f = add_pure_formula_to_formula conj new_f in 
     {f with rflow_base = new_f}, exps
   
   and float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
@@ -2834,33 +2865,6 @@ let float_out_thread_struc_formula lbl_getter annot_getter (f:struc_formula): st
   Debug.no_1 "float_out_thread_struc_formula"
     !print_struc_formula !print_struc_formula
     (fun _ -> float_out_thread_struc_formula_x lbl_getter annot_getter f) f 
-
-
-let add_pure_formula_to_formula (p:P.formula) (f0 : formula): formula =
-  let rec helper f0 =
-    match f0 with
-    | Base b -> Base {b with formula_base_pure = P.mkAnd p b.formula_base_pure no_pos}
-    | Exists e -> Exists {e with formula_exists_pure = P.mkAnd p e.formula_exists_pure no_pos}
-    | Or o ->
-      let o1 = helper o.formula_or_f1 in
-      let o2 = helper o.formula_or_f2 in
-      (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
-  in helper f0
-
-let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
-  let rec helper f0 =
-    match f0 with
-    | Base b ->
-      let h = mkStar b.formula_base_heap h_f b.formula_base_pos in
-      (Base {b with formula_base_heap =h})
-    | Exists e ->
-      let h = mkStar e.formula_exists_heap h_f e.formula_exists_pos in
-      (Exists {e with formula_exists_heap =h})
-    | Or o ->
-      let o1 = helper o.formula_or_f1 in
-      let o2 = helper o.formula_or_f2 in
-      (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
-  in helper f0
 
 (* merge f1 into f2 *)
 let mkStar_formula (f1 : formula) (f2 : formula) (pos : loc) = 
