@@ -3086,11 +3086,16 @@ let label_procs_prog prog keep =
 
 (* Use to remove to duplicated Obj/Class when translating many header files along with source program *)
 let rec remove_dup_obj (defs : data_decl list) : data_decl list=
+  (* let rec member a list = match list with *)
+  (*     [] -> false *)
+  (*   | head:: tail -> if (a.data_name = head.data_name) then true else *)
+  (*       member a tail *)
+  (* in  *)
   match defs with
   | [] -> []
   | head::tail ->
     if (List.mem head tail && (head.data_name = "Object" ||
-                               head.data_name = "String")) then
+                               head.data_name = "String")        ) then
       remove_dup_obj tail
     else head::remove_dup_obj tail
 
@@ -3349,8 +3354,14 @@ let add_bar_inits prog =
         proc_file = "";
         proc_loc = no_pos;
         proc_test_comps = None}) prog.prog_barrier_decls in
+  let new_data_decls = prog.prog_data_decls @ b_data_def in
+  let new_data_decls = remove_dup_obj new_data_decls in
+
+  let data_name_string_4_2 = String.concat ", " (List.map (fun p -> p.data_name) new_data_decls) in
+  let () = print_string ( "data_name_string: " ^ data_name_string_4_2 ^ "\n") in
+
   {prog with
-   prog_data_decls = prog.prog_data_decls@b_data_def;
+   prog_data_decls = new_data_decls;
    prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
 let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =

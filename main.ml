@@ -472,8 +472,8 @@ let process_source_full source =
   (* Append all primitives in list into one only *)
   (* let () = print_endline_quiet ("process_source_full: before  process_intermediate_prims ") in *)
   let iprims_list = process_intermediate_prims prims_list in
-  (* let () = print_endline_quiet ("process_source_full: after  process_intermediate_prims") in *)
   let iprims = Iast.append_iprims_list_head iprims_list in
+  let () = print_string ("process_source_full: after  process_intermediate_prims: " ^ (Iprinter.string_of_program iprims_list)) in
   let prim_names = 
     (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
     (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
@@ -493,6 +493,8 @@ let process_source_full source =
   (*       | None -> acc | Some pd -> acc @ [(id, pd)]) Iast.tnt_prim_proc_tbl [] in                     *)
   (* let tnt_prim_proc_decls = snd (List.split tnt_prim_proc_decls) in                                   *)
   (* let prog = { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ tnt_prim_proc_decls; } in *)
+    (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list prog.Iast.prog_data_decls) ^ "\n") in *)
+
   let prog, _ = Hashtbl.fold
     (fun id _ (prog, acc) ->
       if List.exists (fun p -> String.compare p id == 0) acc then (prog, acc)
@@ -501,8 +503,11 @@ let process_source_full source =
         (prog, acc @ [id]))
     Iast.tnt_prim_proc_tbl (prog, [])
   in
+  (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list prog.Iast.prog_data_decls) ^ "\n") in *)
   
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
+  let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in
+
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
   let tnl = List.sort String.compare tnl in
@@ -512,6 +517,9 @@ let process_source_full source =
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
   (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
+  let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in
+
+  (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in *)
 
   (* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
@@ -561,6 +569,8 @@ let process_source_full source =
   (* let () =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
   (* let () = I.set_iprog intermediate_prog in *)
   (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
+  (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in *)
+
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   let () = saved_cprog := cprog in
   (* let () = if !Globals.sa_pure then *)

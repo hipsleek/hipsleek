@@ -1455,8 +1455,11 @@ let mk_ret_type_into_data_decls (prog:I.prog_decl):(I.data_decl list)=
 
 (*HIP*)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
-  (*let () = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in*)
+  (* let () = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   (* print_string "trans_prog\n"; *)
+  let data_name_string_4 = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in
+  let () = print_string ( "data_name_string: " ^ data_name_string_4 ^ "\n") in 
+
   let () = (exlist # add_edge "Object" "") in
   let () = (exlist # add_edge "String" "Object") in
   let () = (exlist # add_edge raisable_class "Object") in
@@ -1464,11 +1467,16 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   (* let () = (exlist # add_edge error_flow "Object") in *)
   (* let () = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
+
   let prog4 = if (!Globals.perm = Globals.Dperm)
-    then I.add_bar_inits prog4 
+    then I.add_bar_inits prog4
     else prog4
   in
   (*let () = print_string (Iprinter.string_of_program prog4) in*)
+  (* let data_name_string_4_2 = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in *)
+  (* let () = print_string ( "data_name_string: " ^ data_name_string_4_2 ^ "\n") in *)
+  (* let () = print_string ( "data_name_string: " ^ (Iprinter.string_of_data_decl_list prog4.I.prog_data_decls) ^ "\n") in *)
+
   let prog4 = if not (!do_infer_inc) then prog4 else
       try
         let id_spec_from_file = Infer.get_spec_from_file prog4 in
@@ -1489,6 +1497,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   in
   (* Added by Zhuohong *)
   let prog4 = {prog4 with I.prog_data_decls = (mk_ret_type_into_data_decls prog4)@prog4.I.prog_data_decls; } in
+
   (*let () = print_endline ("@@prog4\n"^Iprinter.string_of_program prog4^"@@prog4\n") in*)
   (* ***************** *)
 
@@ -1551,12 +1560,24 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
       (set_mingled_name prog;
        let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
                       (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
-                      (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)(*@
-                                                                                         (List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
+                      (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)
+                      (* @(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
        (* prelude contains all basic prim *)
        let () = Iast.prim_sanity_check prog in
        let dups = Gen.BList.find_dups_eq (=) all_names in
        (* let () = I.find_empty_static_specs prog in *)
+       let proc_mingled_string = String.concat ", " (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) in
+       let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in 
+
+       let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in
+       let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in 
+
+
+       let view_name_string = String.concat ", " (List.map (fun p -> p.I.view_name) prog0.I.prog_view_decls) in
+       let () = print_string ( "view_name_string: " ^ view_name_string ^ "\n") in 
+
+       (* let all_names_string = String.concat ", " all_names in *)
+       (* let () = print_string ( "all_names_string: " ^ all_names_string ^ "\n") in  *)
        if not (Gen.is_empty dups) then
          (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
        else (
