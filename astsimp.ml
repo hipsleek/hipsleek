@@ -180,9 +180,9 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     | [] -> ()
   in
   (
-    (* let () = print_string ("\n primitives: "^prim_str^"\n") in *)
     helper prog.I.prog_data_decls;
     let all_prims = Buffer.contents prim_buffer in
+    (* let () = print_string ("\n primitives: "^ all_prims ^"\n") in *)
     let prog = 
       (try
          Parser.parse_hip_string "primitives" all_prims 
@@ -1458,7 +1458,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let () = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   (* print_string "trans_prog\n"; *)
   let data_name_string_4 = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in
-  let () = print_string ( "data_name_string: " ^ data_name_string_4 ^ "\n") in 
+  (* let () = print_string ( "data_name_string: " ^ data_name_string_4 ^ "\n") in  *)
 
   let () = (exlist # add_edge "Object" "") in
   let () = (exlist # add_edge "String" "Object") in
@@ -1564,17 +1564,17 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                       (* @(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
        (* prelude contains all basic prim *)
        let () = Iast.prim_sanity_check prog in
-       let dups = Gen.BList.find_dups_eq (=) all_names in
+       let dups = [] (* Gen.BList.find_dups_eq (=) all_names *) in
        (* let () = I.find_empty_static_specs prog in *)
        let proc_mingled_string = String.concat ", " (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) in
-       let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in 
+       (* let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in  *)
 
        let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in
-       let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in 
+       (* let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in  *)
 
 
        let view_name_string = String.concat ", " (List.map (fun p -> p.I.view_name) prog0.I.prog_view_decls) in
-       let () = print_string ( "view_name_string: " ^ view_name_string ^ "\n") in 
+       (* let () = print_string ( "view_name_string: " ^ view_name_string ^ "\n") in  *)
 
        (* let all_names_string = String.concat ", " all_names in *)
        (* let () = print_string ( "all_names_string: " ^ all_names_string ^ "\n") in  *)
@@ -5362,7 +5362,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_barrier_recv = (ct,vi.E.var_alpha);
                   C.exp_barrier_pos = pos; }), ct)
            else Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a barrier"; }
-         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a barrier"; }
+         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a barrier2222"; }
        with | Not_found ->Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
     | I.Binary {
         I.exp_binary_op = b_op;

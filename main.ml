@@ -431,7 +431,7 @@ let process_source_full source =
     | None -> ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
-  (*let () = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
+  (* let () = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in *)
   let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
@@ -473,7 +473,7 @@ let process_source_full source =
   (* let () = print_endline_quiet ("process_source_full: before  process_intermediate_prims ") in *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
-  let () = print_string ("process_source_full: after  process_intermediate_prims: " ^ (Iprinter.string_of_program iprims_list)) in
+  (* let () = print_string ("process_source_full: after  process_intermediate_prims: " ^ (Iprinter.string_of_program iprims)) in *)
   let prim_names = 
     (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
     (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
@@ -506,7 +506,7 @@ let process_source_full source =
   (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list prog.Iast.prog_data_decls) ^ "\n") in *)
   
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
-  let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in
+  (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in *)
 
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
@@ -517,7 +517,7 @@ let process_source_full source =
   (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
   (* let () = print_endline_quiet ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
-  let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in
+  (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in *)
 
   (* let () = print_string ( "prog data decls in main: " ^ (Iprinter.string_of_data_decl_list intermediate_prog.Iast.prog_data_decls) ^ "\n") in *)
 
