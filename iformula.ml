@@ -2088,10 +2088,10 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
   and float_out_exps_rflow (f:rflow_formula) : (rflow_formula * (((ident*primed)*Ipure.formula)list)) =
     let new_f,exps = float_out_exps_formula f.rflow_base in
     (* andreeac: to check whether this can stay in the rflow formula or if has to be float out in the main formula *)
-    let qvars,nexps = List.split exps in
-    let exps = List.map (fun a -> (a,Ipure.mkTrue no_pos)) qvars in
-    let conj = Ipure.conj_of_list nexps in
-    let new_f = add_pure_formula_to_formula conj new_f in 
+    (* let qvars,nexps = List.split exps in *)
+    (* let exps = List.map (fun a -> (a,Ipure.mkTrue no_pos)) qvars in *)
+    (* let conj = Ipure.conj_of_list nexps in *)
+    (* let new_f = add_pure_formula_to_formula conj new_f in  *)
     {f with rflow_base = new_f}, exps
   
   and float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with

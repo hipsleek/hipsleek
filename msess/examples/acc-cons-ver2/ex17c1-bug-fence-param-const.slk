@@ -4,7 +4,6 @@ sleek_include 'msess/notes/fences.slk'.
 
 pred_sess_prot G<A,B> ==  [B,A]:Fm2<22,333,qq,0.5>.
 
-/*
 checkentail x::Chan{@S Fm2<22,1,qq,0.5>}<> |- x::Chan{@S Fm2<22,1,qq,0.5>}<>.
 expect Valid.
 print residue.
@@ -12,14 +11,11 @@ print residue.
 checkentail x::Chan{@S Fm2<22,1,qq,0.5>}<> |- x::Chan{@S Fm2<22,2,qq,0.5>}<>.
 expect Fail.
 print residue.
-*/
 
 checkentail x::Chan{@S G<A@prim,B@sec>}<> |- x::Chan{@S Fm2<22,444,qq,0.5>}<>.
 expect Fail.
 print residue.
 
-/*
 checkentail x::Chan{@S G<A@prim,B@sec>}<> |- x::Chan{@S Fm2<22,333,qq,0.5>}<>.
 expect Valid.
 print residue.
-*/

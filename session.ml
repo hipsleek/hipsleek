@@ -1870,16 +1870,21 @@ module Make_Session (Base: Session_base) = struct
       let h_formula = Base.get_h_formula formula in
       let pure_formula = Base.get_pure_formula formula in
       let h_formula = get_original_h_formula h_formula in
-      trans_h_formula_to_session ~pure:pure_formula h_formula 
+      x_add_1 (trans_h_formula_to_session ~pure:pure_formula) h_formula 
     else
       failwith (x_loc ^ ": Formula Or unexpected.")
+
+  let trans_formula_to_session formula =
+    let pr1 =  !Base.print in
+    let pr2 =  string_of_session in
+    Debug.no_1 "trans_formula_to_session" pr1 pr2 trans_formula_to_session formula
 
   let trans_struc_formula_to_session struc_formula =
     let f = Base.get_formula_from_struc_formula struc_formula in
     trans_formula_to_session f
 
   let wrap_2ways_sess2base f_sess hform =
-    let session_form = trans_h_formula_to_session hform in
+    let session_form = x_add_1 trans_h_formula_to_session hform in
     let new_session_form = f_sess session_form in
     let new_hform = x_add_1 trans_from_session new_session_form in
     new_hform
@@ -1889,7 +1894,7 @@ module Make_Session (Base: Session_base) = struct
     Debug.no_1 "Session.wrap_2ways_sess2base" pr pr (wrap_2ways_sess2base f_sess) hform
 
   let wrap_2ways_sess2base_opt f_sess hform =
-    let session_form = trans_h_formula_to_session hform in
+    let session_form = x_add_1 trans_h_formula_to_session hform in
     let new_session_form = f_sess session_form in
     match new_session_form with
     | None -> None
@@ -1964,7 +1969,7 @@ module Make_Session (Base: Session_base) = struct
   *)
   let split_sor (head: Base.ho_param_formula) (tail:Base.ho_param_formula option)
     : Base.ho_param_formula list =
-    let head_session = trans_h_formula_to_session
+    let head_session = x_add_1 trans_h_formula_to_session
         (Base.get_h_formula_from_ho_param_formula head) in
     let disj_list = sor_disj_list head_session in
     let disj_list =
@@ -1972,7 +1977,7 @@ module Make_Session (Base: Session_base) = struct
         match tail with
         | None      -> SEmp (* disj_list *)
         | Some tail ->
-          let tail_session = trans_h_formula_to_session
+          let tail_session = x_add_1 trans_h_formula_to_session
               (Base.get_h_formula_from_ho_param_formula tail) in
           tail_session
       in
@@ -2075,7 +2080,7 @@ module Make_Session (Base: Session_base) = struct
     match si_lhs.node_kind, si_rhs.node_kind with
     | Some nk_lhs, Some nk_rhs ->
       begin
-        let sess_lhs, sess_rhs = trans_h_formula_to_session lnode, trans_h_formula_to_session rnode in
+        let sess_lhs, sess_rhs = x_add_1 trans_h_formula_to_session lnode, x_add_1 trans_h_formula_to_session rnode in
         match sess_lhs,sess_rhs with
         | SSeq s_lhs, SSeq s_rhs ->
           begin

@@ -1897,30 +1897,30 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
 
 and find_projection vdef sess_ann =
   try
-  let sess_ann = match sess_ann with
-           | Some ann -> ann
-           | None -> failwith "Session annotations expected." in
-  match vdef.view_session_projections with
-  | Some proj_hash -> let vars = List.map (fun x -> Session.CForm.get_param_id x) vdef.view_vars in
-                      let primary_role_index = ref 0 in
-                      let secondary_role_index = ref 0 in
-                      let helper index ann =
-                        if (ann = AnnPrimaryPeer)
-                        then
-                          primary_role_index := index
-                        else
-                          if (ann = AnnSecondaryPeer)
-                          then
-                            secondary_role_index := index in
-                      let () = List.iteri helper sess_ann in
-                      (*let () = print_endline ("anns: " ^ (pr_list string_of_sess_ann sess_ann)) in
-                      let () = print_endline ("indexes: " ^ (string_of_int !primary_role_index) ^ " " ^ (string_of_int !secondary_role_index)) in*)
-                      let primary_role = List.nth vars !primary_role_index in
-                      let secondary_role = List.nth vars !secondary_role_index in
-                      (*let () = print_endline ("roles: " ^ primary_role ^ " " ^ secondary_role) in*)
-                      let proj_vdef = HT.find proj_hash (primary_role, secondary_role) in
-                      proj_vdef
-  | None -> failwith "Session projections expected."
+    let sess_ann = match sess_ann with
+      | Some ann -> ann
+      | None -> failwith "Session annotations expected." in
+    match vdef.view_session_projections with
+    | Some proj_hash -> let vars = List.map (fun x -> Session.CForm.get_param_id x) vdef.view_vars in
+      let primary_role_index = ref 0 in
+      let secondary_role_index = ref 0 in
+      let helper index ann =
+        if (ann = AnnPrimaryPeer)
+        then
+          primary_role_index := index
+        else
+        if (ann = AnnSecondaryPeer)
+        then
+          secondary_role_index := index in
+      let () = List.iteri helper sess_ann in
+      (*let () = print_endline ("anns: " ^ (pr_list string_of_sess_ann sess_ann)) in
+        let () = print_endline ("indexes: " ^ (string_of_int !primary_role_index) ^ " " ^ (string_of_int !secondary_role_index)) in*)
+      let primary_role = List.nth vars !primary_role_index in
+      let secondary_role = List.nth vars !secondary_role_index in
+      (*let () = print_endline ("roles: " ^ primary_role ^ " " ^ secondary_role) in*)
+      let proj_vdef = HT.find proj_hash (primary_role, secondary_role) in
+      proj_vdef
+    | None -> failwith "Session projections expected."
   with Not_found -> failwith "Cannot find required projection."
 
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 

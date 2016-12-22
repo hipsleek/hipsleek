@@ -966,6 +966,44 @@ to make sure all preds are normalized!
 
 =============================================
 =============================================
+../../../hip ex17c-2B1S-manual-fence.ss -p Seller
+
+missing the value of float vars, after match_ho (flted_9_2789,flted_9_2788)
+
+
+dprint(simpl): ex17c-2B1S-manual-fence.ss:76: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+ Successful States:
+ [
+  Label: []
+  State:
+     qq_2792::Fp<flted_9_2789,flted_9_2788>@M * 
+ b2::Chan{ . (G{}<[B1,B2,S]>) ;; (emp)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ x1'::SString<a>@M * b1'::Chan{ . emp&{FLOW,(4,5)=__norm#E}}<>@M&
+b1'=b1 & b2'=b2 & x1'!=null&{FLOW,(4,5)=__norm#E}
+    es_gen_impl_vars(E): []
+    es_pure: 0<v_int_75_2222'
+    es_subst (from,to): []:[]
+    es_cond_path: [0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
+though it existed while unfolding:
+
+(====)
+unfold_baref@44@43
+unfold_baref inp1 :lhs heap::
+ G{}<[B1,B2,S]>
+[AnnSecondaryPeer,AnnInactive,AnnPrimaryPeer]
+unfold_baref@44 EXIT: (exists flted_9_2788,flted_9_2789,Anon_2790,v_2791,qq_2792,
+v_2793: (?v_2791#( v_2791::SString<Anon_2790>@M)) ;; ((Fp2{}<[flted_9_2789,flted_9_2788,qq_2792]>) ;; (!v_2793#( emp&0<v_2793)))
+&
+flted_9_2789=11 & flted_9_2788=1&{FLOW,(4,5)=__norm#E})
+
+
+
 
 =============================================
 =============================================
