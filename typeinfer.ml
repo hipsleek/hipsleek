@@ -526,6 +526,7 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.Var ((sv, sp), pos) ->
     let () = y_tinfo_pp "here1" in
     let (n_tl,n_typ) = x_add gather_type_info_var sv tlist et pos in
+    (* let () = print_string (Iprinter.stri tlist) in *)
     let () = y_tinfo_pp "here2" in
     (n_tl,n_typ)
   | IP.Level ((sv, sp), pos) ->
@@ -1251,11 +1252,15 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
   if (deref = 0) then (
     try (
       let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls c in
+      let () = x_dinfo_pp ("data decls: " ^ (Iprinter.string_of_data_decl ddef) ^ "\n" ) no_pos in
       let (n_tl,_) = x_add gather_type_info_var v tlist ((Named c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
+      let pr1 = pr_list (fun (ti,_,_,_) -> pr_pair string_of_typ pr_id ti) in
+      let () = x_dinfo_pp ("fields: " ^ (pr1 fields) ^ "\n") no_pos in
+      let () = x_dinfo_pp ("length: " ^ (string_of_int (List.length fields)) ^ "\n" ) no_pos in
       try
         (*fields may contain offset field and not-in-used*)
-        let () = x_tinfo_hp (add_str "ies(1)" pr_args) ies no_pos in
+        let () = x_dinfo_hp (add_str "ies(1)" pr_args) ies no_pos in
         (* let ies = add_last_diff ies fields ([]) in *)
         let () = x_tinfo_hp (add_str "ies(2)" pr_args) ies no_pos in
         let f tl arg ((ty,_),_,_,_)=
@@ -1297,7 +1302,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       with | Invalid_argument _ ->
         Err.report_error {
           Err.error_loc = pos;
-          Err.error_text = "number of arguments for data " ^ c
+          Err.error_text = "number of arguments for data ssssssssssssss" ^ c
                            ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
         }
     )
@@ -1555,8 +1560,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
                   IF.h_formula_heap_imm = ann; (* data/pred name *)
                   IF.h_formula_heap_imm_param = ann_param;
                   IF.h_formula_heap_pos = pos } ->
-    x_tinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
-    x_tinfo_hp (add_str "ies" (pr_list Iprinter.string_of_formula_exp)) ies no_pos;
+    x_dinfo_hp (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
+    x_dinfo_hp (add_str "ies" (pr_list Iprinter.string_of_formula_exp)) ies no_pos;
     let ft = cperm_typ () in
     let gather_type_info_ho_args hoa tlist =
       List.fold_left (fun tl a ->

@@ -2908,11 +2908,12 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     (*    let () = x_tinfo_hp (add_str "npf" Cprinter.string_of_mix_formula) npf no_pos in *)
     (* if !Globals.gen_baga_inv then *)
     (*   Excore.EPureI.unsat (Excore.EPureI.mk_epure (MCP.pure_of_mix npf)) *)
-    (* else  *)if !Globals.simpl_unfold2 then
+    (* else  *)
+    if !Globals.simpl_unfold2 then
       let r =
         let sat,npf = MCP.check_pointer_dis_sat npf in
         if  sat then
-          let () = Debug.ninfo_hprint (add_str "npf a" Cprinter.string_of_mix_formula) npf no_pos in
+          let () = x_binfo_pp ("npf a" ^ (Cprinter.string_of_mix_formula npf)) no_pos in
           not (TP.is_sat_mix_sub_no npf sat_subno true true)
         else true in
       (*let () = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true))
@@ -2920,13 +2921,13 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
         else () in*)
       r
     else
-      let () = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
+      let () = Debug.dinfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
       not (TP.is_sat_mix_sub_no npf sat_subno true true)
   in
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_binfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     (* let _ = unsat_count_syn := !unsat_count_syn + 1 in *)
     let p1 = (Mcpure.pure_of_mix p) in
     let is_shape1 = List.for_all (CP.is_node_typ) (CP.fv p1) in
@@ -2936,7 +2937,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
     let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
-    let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_binfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
     (* let p = MCP.translate_level_mix_formula p in *)
     (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
@@ -2950,18 +2951,20 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       (fun _ _ -> tp_syn_x h p) h p
   in
   let tp_sem fh fp =
-    let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_dinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     (* let _ = unsat_count_sem := !unsat_count_sem + 1 in *)
     let fp = MCP.translate_level_mix_formula fp in
     let fh, fp = Norm.imm_norm_h_formula prog fh fp unfold_for_abs_merge no_pos in
     let ph,_,_ = x_add xpure_heap 1 prog fh fp 1 in
     let npf = MCP.merge_mems fp ph true in
+    let () = x_dinfo_pp ("npf: " ^ (Cprinter.string_of_mix_formula npf)) no_pos in
     let res = tp_call_wrapper npf in
-    let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_dinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
   in
   (* TODOIMM : check if we have the segmented info for views at this point - if not, then it's not sound to merge here *)
   let f = Norm.imm_abs_norm_formula f prog (unfold_for_abs_merge prog (pos_of_formula f)) in
+  (* let () = x_binfo_pp ("f in solver.ml: " ^ (Cprinter.string_of_formula f) ^ "\n") no_pos in  *)
   match f with
   | Base ({ formula_base_heap = h;
             formula_base_pure = p;

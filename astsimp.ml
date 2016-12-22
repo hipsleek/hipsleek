@@ -1564,7 +1564,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
                       (* @(List.map (fun bdef -> bdef.I.barrier_name) prog0.I.prog_barrier_decls)*) in
        (* prelude contains all basic prim *)
        let () = Iast.prim_sanity_check prog in
-       let dups = [] (* Gen.BList.find_dups_eq (=) all_names *) in
+       let dups =  Gen.BList.find_dups_eq (=) all_names in
        (* let () = I.find_empty_static_specs prog in *)
        let proc_mingled_string = String.concat ", " (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) in
        (* let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in  *)
@@ -1881,7 +1881,7 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   let inv_pf = match ddef.I.data_pure_inv with
       Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
     | None -> None
-  in   
+  in
   let res = {
     C.data_name = ddef.I.data_name;
     C.data_pos = ddef.I.data_pos;
@@ -11050,11 +11050,11 @@ and check_barrier_wf prog bd =
 
   let one_ctx_entail c1 c2 = Debug.no_2(* _loop *) "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
 
-  let prep_t (fs,ts,fl) = 
+  let prep_t (fs,ts,fl) =
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
-    (*  print_string ("transition: "^t_str^"\n"); flush stdout;*)
+    x_binfo_pp ("transition: "^t_str^"\n") no_pos; (* flush stdout; *)
     let pres, posts = List.split (List.map (fun f-> match CF.split_struc_formula f with
-        | (p1,p2)::[] -> 
+        | (p1,p2)::[] ->
           (* if Solver1.unsat_base_nth "0" prog (ref 0) p1 then raise  (Err.Malformed_barrier (" unsat pre for transition "^t_str ))
              else if Solver1.unsat_base_nth "0" prog (ref 0) p2 then raise  (Err.Malformed_barrier (" unsat post for transition  "^t_str))
              else*) (*checks: each contain a barrier fs in pre and ts in post*)
@@ -11064,9 +11064,12 @@ and check_barrier_wf prog bd =
             let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
             (* WN_all_lemma *)
             let f = x_add Solver.normalize_formula_w_coers 8 prog empty_es f (Lem_store.all_lemma # get_left_coercion) (*prog.C.prog_left_coercions*) in
+            let () = x_binfo_pp ("f: " ^ (Cprinter.string_of_formula f) ^ "\n") no_pos in 
             Gen.Profiling.inc_counter "barrier_proofs";
-            if Solver.unsat_base_nth 3 prog (ref 0) f then (p1,p2)
-            else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
+            let res =  Solver.unsat_base_nth 3 prog (ref 0) f in
+            let () = x_binfo_pp ("res: " ^ (string_of_bool res) ^ "\n") no_pos in
+            if res then (p1,p2) 
+            else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correctxxxxx")
         | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
     (*the pre sum totals full barrier fs get residue F1*)
     let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in

@@ -3533,6 +3533,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
     let res= sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in
+    (* let () = print_string ("res: " ^ (string_of_bool res) ^ "\n") in *)
     res
 ;;
 
@@ -3995,7 +3996,8 @@ let sat_no = ref 1 ;;
 
 let incr_sat_no () =  sat_no := !sat_no +1  ;;
 
-let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
+let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
+  (* let () = print_string ("herrrrrrrrrrrrxxxxxxxxxxxx \n" ) in  *)
   let sat = is_sat 1 f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
   sat_subno := !sat_subno+1;
   sat
@@ -4026,7 +4028,9 @@ let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =
     let n_l = List.map (fun c-> (CP.fv c , c)) conj_list in
     snd (List.split (fix n_l)) in
   let  n_f_l = split_sub_f f in
-  List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c 1 f sat_subno false) true n_f_l 
+  List.fold_left (fun a f ->
+      (* let () = print_string ("f: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in  *)
+      if not a then a else is_sat_sub_no_c 1 f sat_subno false) true n_f_l
 
 let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -4082,7 +4086,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
   in
 
   (* SAT(A \/ B) = SAT(A) \/ SAT(B) *)
-
+  let () = print_endline "\n here \n" in
   List.fold_left (fun a f -> if a then a else check_sat f) false dnf_f
 
 let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
@@ -4401,8 +4405,12 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
 (*   res                                                                                                                       *)
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
-  | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
-  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no 61) f sat_subno
+  | MCP.MemoF f ->
+    (* let () = print_endline ("Memo xxxxxxxxxxxxxx") in *)
+    is_sat_memo_sub_no f sat_subno with_dupl with_inv
+  | MCP.OnePF f ->
+    (* let () = print_endline ("onepf xxxxxxxxxxxxx") in  *)
+    (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no 61) f sat_subno
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv =
   Debug.no_1 "is_sat_mix_sub_no"
