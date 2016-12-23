@@ -11090,7 +11090,7 @@ and check_barrier_wf prog bd =
       let fpre = one_entail tot_pre tot_pre_bar in
       let () = x_binfo_pp ("fpre: " ^ (Cprinter.string_of_list_context fpre)) no_pos in
       
-      if (* CF.isFailCtx fpre *) false then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
+      if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
       else (*the post sum totals full barrier ts get residue F2*)
         let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
         (* WN_all_lemma - is this overriding of lemmas? *)
@@ -11104,7 +11104,7 @@ and check_barrier_wf prog bd =
           let () = x_dinfo_zp (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
           let fpost = one_entail tot_post tot_post_bar in
           let () = x_binfo_pp ("fpost: " ^ (Cprinter.string_of_list_context fpost)) no_pos in
-          if (* CF.isFailCtx fpost *) false then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
+          if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
           else (*show F1 = F2*)
             let () = x_dinfo_zp (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
             let () = x_dinfo_zp (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in

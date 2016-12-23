@@ -8697,6 +8697,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
+  let () = x_binfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
   let rhs_p = if not(estate_orig.es_infer_rel # is_empty_recent) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in

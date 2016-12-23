@@ -2050,7 +2050,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     string_of_prover Cprinter.string_of_pure_formula (fun s -> s) string_of_bool
     (fun _ _ _ -> tp_is_sat_no_cache f sat_no) !pure_tp f sat_no
 
-let tp_is_sat_perm f sat_no = 
+let tp_is_sat_perm f sat_no =
+  let () = x_binfo_pp ("f: " ^ (Cprinter.string_of_pure_formula f)) no_pos in
   if !perm=Dperm then match CP.has_tscons f with
     | No_cons ->
       x_binfo_pp ("no_cons ") no_pos;
@@ -2059,10 +2060,13 @@ let tp_is_sat_perm f sat_no =
       x_binfo_pp ("no_split ") no_pos;
       true
     | Can_split ->
-      x_binfo_pp ("can split") no_pos;
+      (* x_binfo_pp ("can split") no_pos; *)
       let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
       let tp_wrap f = Debug.no_1 "tp_is_sat_perm_wrap" Cprinter.string_of_pure_formula (fun c-> "") tp_wrap f in
-      let ss_wrap (e,f) = if f=[] then true else Share_prover_w2.sleek_sat_wrapper (e,f) in
+      let ss_wrap (e,f) = if f=[] then true else
+          (* let () = x_binfo_pp ("share_prover_w2 called") no_pos in *)
+          Share_prover_w2.sleek_sat_wrapper (e,f)
+      in
       List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
 
