@@ -2052,9 +2052,14 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 
 let tp_is_sat_perm f sat_no = 
   if !perm=Dperm then match CP.has_tscons f with
-    | No_cons -> tp_is_sat_no_cache f sat_no
-    | No_split	-> true
+    | No_cons ->
+      x_binfo_pp ("no_cons ") no_pos;
+      tp_is_sat_no_cache f sat_no
+    | No_split	->
+      x_binfo_pp ("no_split ") no_pos;
+      true
     | Can_split ->
+      x_binfo_pp ("can split") no_pos;
       let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
       let tp_wrap f = Debug.no_1 "tp_is_sat_perm_wrap" Cprinter.string_of_pure_formula (fun c-> "") tp_wrap f in
       let ss_wrap (e,f) = if f=[] then true else Share_prover_w2.sleek_sat_wrapper (e,f) in
@@ -2133,6 +2138,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
      else
        (Timelog.log_wrapper "SAT" logger (sat_cache fn_sat)) f)
   in
+  x_binfo_pp ("res: " ^ (string_of_bool res)) no_pos;
   (* let tstop = Gen.Profiling.get_time () in *)
   res
 
