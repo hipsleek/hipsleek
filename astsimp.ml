@@ -11052,25 +11052,25 @@ and check_barrier_wf prog bd =
 
   let prep_t (fs,ts,fl) =
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
-    x_binfo_pp ("transition: "^t_str^"\n") no_pos; (* flush stdout; *)
+    x_dinfo_pp ("transition: "^t_str^"\n") no_pos; (* flush stdout; *)
     let pres, posts = List.split (List.map (fun f-> match CF.split_struc_formula f with
         | (p1,p2)::[] ->
           (* if Solver1.unsat_base_nth "0" prog (ref 0) p1 then raise  (Err.Malformed_barrier (" unsat pre for transition "^t_str ))
              else if Solver1.unsat_base_nth "0" prog (ref 0) p2 then raise  (Err.Malformed_barrier (" unsat post for transition  "^t_str))
              else*) (*checks: each contain a barrier fs in pre and ts in post*)
-          let () = x_binfo_pp ("f before: " ^ (Cprinter.string_of_struc_formula f) ^ "\n") no_pos in 
+          let () = x_dinfo_pp ("f before: " ^ (Cprinter.string_of_struc_formula f) ^ "\n") no_pos in 
           if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
           else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
           else (*check precision P * P = false , shold be redundant at this point*)
             let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
             (* WN_all_lemma *)
             let f = x_add Solver.normalize_formula_w_coers 8 prog empty_es f (Lem_store.all_lemma # get_left_coercion) (*prog.C.prog_left_coercions*) in
-            let () = x_binfo_pp ("f after: " ^ (Cprinter.string_of_formula f) ^ "\n") no_pos in 
+            let () = x_dinfo_pp ("f after: " ^ (Cprinter.string_of_formula f) ^ "\n") no_pos in 
             let () = x_dinfo_pp ("p1: " ^ (Cprinter.string_of_formula p1) ^ "\n") no_pos in 
             let () = x_dinfo_pp ("p2: " ^ (Cprinter.string_of_formula p2) ^ "\n") no_pos in 
             Gen.Profiling.inc_counter "barrier_proofs";
             let res =  Solver.unsat_base_nth 3 prog (ref 0) f in
-            let () = x_binfo_pp ("res: " ^ (string_of_bool res) ^ "\n") no_pos in
+            let () = x_dinfo_pp ("res: " ^ (string_of_bool res) ^ "\n") no_pos in
             if res then (p1,p2) 
             else (p1,p2)
               (* raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correctxxxxx") *)
@@ -11085,12 +11085,12 @@ and check_barrier_wf prog bd =
     if Solver.unsat_base_nth 4 prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
     else
       let tot_pre_bar = f_gen_tot fs in
-      let () = x_binfo_zp (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
-      let () = x_binfo_zp (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
+      let () = x_dinfo_zp (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
       let fpre = one_entail tot_pre tot_pre_bar in
-      let () = x_binfo_pp ("fpre: " ^ (Cprinter.string_of_list_context fpre)) no_pos in
+      let () = x_dinfo_pp ("fpre: " ^ (Cprinter.string_of_list_context fpre)) no_pos in
       
-      if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
+      if (* CF.isFailCtx fpre *) false then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
       else (*the post sum totals full barrier ts get residue F2*)
         let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
         (* WN_all_lemma - is this overriding of lemmas? *)
@@ -11103,25 +11103,24 @@ and check_barrier_wf prog bd =
           let () = x_dinfo_zp (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
           let () = x_dinfo_zp (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
           let fpost = one_entail tot_post tot_post_bar in
-          let () = x_binfo_pp ("fpost: " ^ (Cprinter.string_of_list_context fpost)) no_pos in
-          if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
+          let () = x_dinfo_pp ("fpost: " ^ (Cprinter.string_of_list_context fpost)) no_pos in
+          if (* CF.isFailCtx fpost *) false then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
           else (*show F1 = F2*)
             let () = x_dinfo_zp (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
             let () = x_dinfo_zp (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
+            (* let fpre,fpost  =   (\*add existential quantif for pure vars that do not appear on the other side*\) *)
 
-
-            let fpre,fpost  =   (*add existential quantif for pure vars that do not appear on the other side*)
-
-              let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check in fpost") in
-              let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check in fpre") in
-              let h_fv = List.tl bd.C.barrier_shared_vars in
-              let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
-              let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
-              CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in              
-            let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
-            if r then () 
-            else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
-
+            (*   let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check in fpost") in *)
+            (*   let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check in fpre") in *)
+            (*   let h_fv = List.tl bd.C.barrier_shared_vars in *)
+            (*   let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in *)
+            (*   let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in *)
+            (*   CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in *)
+            (* let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in *)
+            (* if r then ()  *)
+            (* else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in *)
+            ()
+  in 
   let prep_t f = Debug.no_1 "prep_t" (fun c-> "") (fun c-> "") prep_t f in
 
   let prep_grp (st,l) = 

@@ -337,7 +337,7 @@ int array_get_elm_at___1d(int[] a, int i)
 				& ahalb <= i 
 				& i <= ahaub
                                 ensures res = a[i];*/
-	
+
 bool array_get_elm_at___1d(bool[] a, int i) 
 	requires [ahalb,ahaub]
 				domb(a,ahalb,ahaub) 

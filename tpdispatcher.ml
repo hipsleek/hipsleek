@@ -388,7 +388,7 @@ let set_tp user_flag tp_str =
   (******we allow normalization/simplification that may not hold
          in the presence of floating point constraints*)
   (* let () = print_endline ("solver:" ^ tp_str) in *)
-  let () = x_binfo_pp (* print_endline_quiet *) ("set_tp " ^ tp_str) no_pos in 
+  let () = x_dinfo_pp (* print_endline_quiet *) ("set_tp " ^ tp_str) no_pos in 
   if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let redcsl_str = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
@@ -489,7 +489,7 @@ let init_tp () =
                   let () = Omega.omegacalc := "./oc" in
                   ()
                 else ()) in
-      let () = x_binfo_pp ("init_tp by default: ") no_pos in 
+      let () = x_dinfo_pp ("init_tp by default: ") no_pos in 
       x_add_1 set_tp false !Smtsolver.smtsolver_name (* "z3" *)
       (* set_tp "parahip" *)
     end
@@ -2051,13 +2051,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     (fun _ _ _ -> tp_is_sat_no_cache f sat_no) !pure_tp f sat_no
 
 let tp_is_sat_perm f sat_no =
-  let () = x_binfo_pp ("f: " ^ (Cprinter.string_of_pure_formula f)) no_pos in
+  let () = x_dinfo_pp ("f: " ^ (Cprinter.string_of_pure_formula f)) no_pos in
   if !perm=Dperm then match CP.has_tscons f with
     | No_cons ->
-      x_binfo_pp ("no_cons ") no_pos;
+      x_dinfo_pp ("no_cons ") no_pos;
       tp_is_sat_no_cache f sat_no
     | No_split	->
-      x_binfo_pp ("no_split ") no_pos;
+      x_dinfo_pp ("no_split ") no_pos;
       true
     | Can_split ->
       (* x_binfo_pp ("can split") no_pos; *)
@@ -2142,7 +2142,7 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
      else
        (Timelog.log_wrapper "SAT" logger (sat_cache fn_sat)) f)
   in
-  x_binfo_pp ("res: " ^ (string_of_bool res)) no_pos;
+  x_dinfo_pp ("res: " ^ (string_of_bool res)) no_pos;
   (* let tstop = Gen.Profiling.get_time () in *)
   res
 
