@@ -1037,6 +1037,9 @@ let use_split_match = ref false
 
 let consume_all = ref false
 
+let allow_unfold = ref true
+let allow_lem_norm = ref true
+
 let dis_base_case_unfold = ref false
 
 let enable_split_lemma_gen = ref false

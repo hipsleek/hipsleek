@@ -2077,6 +2077,8 @@ module Make_Session (Base: Session_base) = struct
   (* replace Pred<>;;tail -----with----> unfold(Pred<>);;tail and normalize the result *)
   (* --------------------------------------------------------------------------------- *)
   let rebuild_nodes def lnode rnode l_ho_args r_ho_args si_lhs si_rhs unfold_fun is_prime_fun =
+    if not (!Globals.allow_unfold) then def
+    else
     match si_lhs.node_kind, si_rhs.node_kind with
     | Some nk_lhs, Some nk_rhs ->
       begin
@@ -2126,7 +2128,7 @@ module Make_Session (Base: Session_base) = struct
           let new_rhs = trans_from_session new_rhs in
           let new_rhs_ho_arg = Base.mk_rflow_formula_from_heap new_rhs ~sess_kind:(Some Base.base_type) no_pos in
           l_ho_args, [new_rhs_ho_arg], (get_prim_pred_id_by_kind Channel)
-        | _, _ -> def
+        | _, _ ->  def
       end           
     | _, _ -> def 
 

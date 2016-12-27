@@ -1860,7 +1860,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       let resform = mkOr uf1 uf2 pos in
       resform,l1@l2
   in 
-  let new_f,ss0 = aux f v uf pos in
+  let new_f,ss0 = if (!Globals.allow_unfold) then aux f v uf pos else f,[] in
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
@@ -7658,7 +7658,9 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (* let () = x_add Log.add_sleek_logging ante conseq pos in *)
   (* let () = DD.info_zprint  (lazy  ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
-  let ctx0 = norm_w_coerc_context prog ctx0 in
+  (* disable unfolding during normalization using lemmas *)
+  (* disable nested lemma normalization *)
+  let ctx0 = x_add_1 (fun _ -> norm_w_coerc_context prog ctx0) () in
   let () = y_tinfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
   let ls, prf = x_add (heap_entail_conjunct_helper ~caller:x_loc) 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
   let ls, prf = post_process_result ls prf in
@@ -7703,7 +7705,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
     (*let conseq  = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula conseq else conseq in *)
     let ctx0 = Ctx{estate with es_formula = ante;} in
     (*x_dinfo_zp (lazy ("heap_entail_conjunct_helper:\nRamify:\n" ^ (Cprinter.string_of_formula ante0)^ "\nto:\n" ^ (Cprinter.string_of_formula ante))) pos;*)
-
+    (* Andreea: isn't below match redundant *)
     match ctx0 with
     | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
     | Ctx estate -> (
@@ -10825,7 +10827,8 @@ and match_one_ho_arg ?classic:(classic=true)  prog estate new_ante new_conseq ev
   let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
   let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
   let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
-  let pr2 (_, hor, pur, maps,es) = pr_quad pr4 pr3 pr5 pr6 (hor, pur, maps,es) in
+  let pr7 = map_opt_def "Matched" (fun _ -> "Fail" ) in
+  let pr2 = pr_penta pr7 pr4 pr3 pr5 pr6 in
   Debug.no_3 "match_one_ho_arg" pr1 pri2 pri3 pr2 (fun _ _ _ -> match_one_ho_arg_x  ~classic:classic prog estate new_ante new_conseq evars ivars pos ((lhs, rhs), k)) ((lhs, rhs), k) new_conseq estate
 
 (* split RHS dsjunctions: 
@@ -14646,7 +14649,7 @@ and match_one_ho_arg_simple_helper prog estate
     let maps,subst = List.split maps in
     let frsv,tosv = List.fold_left (fun (frsv,tosv) (x,y) -> frsv@x, tosv@y ) ([],[]) subst in
     let maps = List.concat maps in
-    let fail = List.exists (fun x -> x=0) ok in
+    let fail = List.exists (fun x -> x==0) ok in
     let ok = if fail then 0 else 1 in
     let coer_rhs_new = CF.subst_hvar coer_rhs maps in
     let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
@@ -15217,7 +15220,7 @@ and apply_one_norm_coerc prog coerc estate fnode frest =
   let prc = Cprinter.string_of_coercion in
   let prh = Cprinter.string_of_h_formula in
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "apply_one_norm_coerc" prc prh prh pr (fun _ _ _ -> apply_one_norm_coerc_x prog coerc estate fnode frest) coerc fnode frest 
+  Debug.no_3 "apply_one_norm_coerc" (add_str "coerc" prc) (add_str "fnode" prh) (add_str "frest" prh) pr (fun _ _ _ -> apply_one_norm_coerc_x prog coerc estate fnode frest) coerc fnode frest 
 
 and apply_norm_coerc prog estate ?left:(left = true) fnode frest =
   let coerc_candidates = choose_coerc_candidates_for_norm prog ~left:left fnode in
@@ -15252,14 +15255,14 @@ and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
     | ((pivot,head_h) as head)::tail_orig ->
       let tail = Gen.unwrap_indx tail_orig in
       let tail_h = CF.join_star_conjunctions tail in
-      let res = apply_norm_coerc prog es ~left:left head_h tail_h in
+      let res = Wrapper.wrap_one_bool Globals.allow_lem_norm false (apply_norm_coerc prog es ~left:left head_h) tail_h in
       let ctx = extract_succ res in
       let () = y_ninfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
       match ctx with
       | Some ctx ->
         (* if lemma is fired restart the norm process, 
            otherwise keep on interating through nodes *)
-        Some (norm_w_coerc_context prog ctx)
+        Some (x_add_1 (fun _ ->  norm_w_coerc_context prog ctx) () )
       | None -> 
         (* ---------------------- iterate or stop ---------------------------- *)
         if Gen.is_pivot pivot then ctx (* stop iterating *)
@@ -15286,13 +15289,21 @@ and norm_w_coerc_context_x prog ?left:(left = true) ctx =
   let fnc = norm_w_coerc_entail_state ~left:left prog in
   transform_context fnc ctx
 
-and norm_w_coerc_context prog ?left:(left = true) ctx =
+and norm_w_coerc_context_debug prog ?left:(left = true) ctx =
   let pr = Cprinter.string_of_context in
   Debug.no_1 "norm_w_coerc_context" pr pr (norm_w_coerc_context_x ~left:left prog) ctx
 
+and norm_w_coerc_context prog ?left:(left = true) ctx =
+  let f () = 
+    if (!Globals.allow_lem_norm) then
+      norm_w_coerc_context_debug prog ~left:left ctx
+    else ctx
+  in
+  Wrapper.wrap_one_bool Globals.allow_unfold false (fun _ -> f ()) ()
+
 and norm_w_coerc_formula prog ?left:(left = true) es formula =
   let es = {es with es_formula = formula} in
-  let new_ctx = norm_w_coerc_context prog ~left:left (Ctx es) in
+  let new_ctx = x_add_1 (fun _ ->  norm_w_coerc_context prog ~left:left (Ctx es)) () in
   new_ctx, (CF.formula_of_context new_ctx)
   
 (* -------------------- end norm lemma app -------------------- *)
