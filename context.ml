@@ -3976,6 +3976,11 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       let x = recalibrate_wt x in
       [aux xs x] in
   let r = if !Globals.old_compute_act then r else sel_simpler r in
+  let r = List.map (fun (w,a) -> match a with
+      | M_unfold _ -> if not(!Globals.allow_unfold) then (w,M_Nothing_to_do "Unfolding is not allowed")
+        else (w,a)
+      | _ -> (w,a)
+    ) r in
   let () = x_tinfo_hp (add_str "weighted action"
                          (pr_list_num_vert (string_of_action_wt_res_simpl))) r no_pos in
   match r with
