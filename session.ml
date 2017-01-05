@@ -2077,7 +2077,9 @@ module Make_Session (Base: Session_base) = struct
   (* replace Pred<>;;tail -----with----> unfold(Pred<>);;tail and normalize the result *)
   (* --------------------------------------------------------------------------------- *)
   let rebuild_nodes def lnode rnode l_ho_args r_ho_args si_lhs si_rhs unfold_fun is_prime_fun =
-    if not (!Globals.allow_unfold) then def
+    if not (!Globals.allow_unfold) then
+      let () = y_tinfo_pp "Session.rebuild_nodes: unfold is not allowed" in
+      def
     else
     match si_lhs.node_kind, si_rhs.node_kind with
     | Some nk_lhs, Some nk_rhs ->
@@ -2104,6 +2106,7 @@ module Make_Session (Base: Session_base) = struct
               else
                 let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
                 let new_head = unfold_fun headl ptr in
+                let pure = Base.get_pure_formula new_head in
                 let new_head = trans_formula_to_session new_head in
                 let new_lseq = append_tail new_head s_lhs.session_seq_formula_tail in
                 let new_lseq = norm3_sequence new_lseq in              
@@ -2111,9 +2114,8 @@ module Make_Session (Base: Session_base) = struct
                 let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
                 let new_lseq = map_opt_def new_lseq idf (wrap_one_seq_heap new_lseq) in
                 let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
-
                 let new_rseq_ho_arg = Base.mk_rflow_formula_from_heap rnode ~sess_kind:(Some Base.base_type) no_pos in
-                [new_lseq_ho_arg],[new_rseq_ho_arg],(get_prim_pred_id_by_kind Channel) 
+                [new_lseq_ho_arg],[new_rseq_ho_arg],(get_prim_pred_id_by_kind Channel), Some pure, None
             | _, _ -> def
           end
         | SBase (Base _),  SSeq _ ->
@@ -2121,16 +2123,49 @@ module Make_Session (Base: Session_base) = struct
           let new_lhs = append_tail sess_lhs SEmp in
           let new_lhs = trans_from_session new_lhs in
           let new_lhs_ho_arg = Base.mk_rflow_formula_from_heap new_lhs ~sess_kind:(Some Base.base_type) no_pos in
-          [new_lhs_ho_arg], r_ho_args, (get_prim_pred_id_by_kind Channel)
+          [new_lhs_ho_arg], r_ho_args, (get_prim_pred_id_by_kind Channel),None,None
         | SSeq _, SBase (Base _) ->
           (* try to add the base to a seq with emp tail *)
           let new_rhs = append_tail sess_rhs SEmp in
           let new_rhs = trans_from_session new_rhs in
           let new_rhs_ho_arg = Base.mk_rflow_formula_from_heap new_rhs ~sess_kind:(Some Base.base_type) no_pos in
-          l_ho_args, [new_rhs_ho_arg], (get_prim_pred_id_by_kind Channel)
+          l_ho_args, [new_rhs_ho_arg], (get_prim_pred_id_by_kind Channel),None,None
         | _, _ ->  def
       end           
-    | _, _ -> def 
+    | _, _ -> def
+
+    (* --------------------------------------------------------------------------------- *)
+  (* replace Pred<>;;tail -----with----> unfold(Pred<>);;tail and normalize the result *)
+  (* --------------------------------------------------------------------------------- *)
+  let rebuild_node def node unfold_fun is_prime_fun =
+    if not (!Globals.allow_unfold) then
+      let () = y_tinfo_pp "Session.rebuild_nodes: unfold is not allowed" in
+      def
+    else
+      let sess = try Some (x_add_1 trans_h_formula_to_session node)
+        with _ -> None in
+      match sess with
+      | Some (SSeq seq) ->
+        begin
+          match seq.session_seq_formula_head with
+          | SBase (Predicate pl) as sess_pl -> 
+            let headl = trans_from_session sess_pl in
+            if (is_prime_fun headl) then def
+            else
+              let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
+              let new_head = unfold_fun headl ptr in
+              let pure = Base.get_pure_formula new_head in
+              let new_head = trans_formula_to_session new_head in
+              let new_lseq = append_tail new_head seq.session_seq_formula_tail in
+              let new_lseq = norm3_sequence new_lseq in              
+              let new_lseq = trans_from_session new_lseq in
+              let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
+              let new_lseq = map_opt_def new_lseq idf (wrap_one_seq_heap new_lseq) in
+              let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
+              Some [new_lseq_ho_arg], Some pure
+          | _ -> def
+        end
+      | _ ->  def
 
 end;;
 
@@ -2678,7 +2713,7 @@ let rebuild_SeqSor lnode rnode largs rargs =
 (* add a try with block *)
 (* Pred<>;;tail  ------>  unfolded Pred<>;;tail  *)
 let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
-  let default_res = l_ho_args,r_ho_args,(CF.get_node_name_x lnode) in
+  let default_res = l_ho_args,r_ho_args,(CF.get_node_name_x lnode),None,None in
   let helper sil sir =
     match sil.session_kind with
     | Some Projection   -> (CProjection.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
@@ -2701,8 +2736,41 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
 let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list !CF.print_rflow_formula in
-  let pr_out (a,b,c) = (pr_pair pr2 pr2) (a,b) in
-  Debug.no_2 "Session.rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode 
+  let pr_out (a,b,c,d,e) = (pr_pair pr2 pr2) (a,b) in
+  Debug.no_2 "Session.rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode
+
+(* add a try with block *)
+(* Pred<>;;tail  ------>  unfolded Pred<>;;tail  *)
+let rebuild_node node unfold_fun is_prime_fun =
+  match node with
+  | CF.ViewNode vn ->
+    begin
+      let ho_args = vn.CF.h_formula_view_ho_arguments in
+      match ho_args with
+      | [] -> None
+      | h :: [] ->
+        (* assume only one HO param (may be nested HO though) for the current node *)
+        let node = CForm.get_h_formula_from_ho_param_formula h in
+        let default_res = None, None in
+        let ho_arg, pure = CTPProjection.rebuild_node default_res node unfold_fun is_prime_fun in
+        let res = 
+          match ho_arg with
+          | Some ho_arg ->
+            let node =  CF.ViewNode {vn with CF.h_formula_view_ho_arguments = ho_arg} in
+            let res = CF.formula_of_heap node vn.CF.h_formula_view_pos in
+            let res = map_opt_def res (fun x -> CF.add_pure_formula_to_formula x res) pure
+            in Some res
+          | None -> None
+        in res
+      | _ -> None
+    end
+  | _ -> None
+
+let rebuild_node node unfold_fun is_prime_fun =
+  let pr1 = !CF.print_h_formula in
+  let pr2 = pr_list !CF.print_rflow_formula in
+  let pr_out = Gen.pr_opt !CF.print_formula in
+  Debug.no_1 "Session.rebuild_node" pr1 pr_out (fun _ -> rebuild_node node unfold_fun is_prime_fun) node  
 
 let struc_norm ?wrap_seq:(seq=true) sf =
   let sf = if seq then 

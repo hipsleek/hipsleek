@@ -22,20 +22,15 @@ expect Valid.
 print residue.
 */
 
-pred_sess_prot G1<A,B> ==  [B,A]:Fp2<22,335,qq>.
-
-checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- x::Chan{@S Fp2<22,333,qq>}<>.
-expect Valid.
-print residue.
+pred_sess_prot G1<A,B> ==  [B,A]:Fp<22,333>.
 
 /*
-checkentail emp  |- x::Fp2<22,333,qq>.
+checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- x::Chan{@S Fp<22,333>}<>.
 expect Valid.
 print residue.
 */
 
-/*
-checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- qq::Fp<22,333>.
+checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- x::Fp<22,333>.
 expect Valid.
 print residue.
-*/
+

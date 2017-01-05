@@ -11589,13 +11589,13 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in *)
               let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos new_exist_vars false 0 in
               let is_prime_fun hform = Cast.is_resourceless_h_formula prog hform in
-              let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun is_prime_fun in
+              (* let l_ho_args, r_ho_args, l_node_name0,l_pure_opt,r_pure_opt = Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun is_prime_fun in *)
               
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
-              let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
+              let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name in
               
               let ante_for_ho_match = new_ante in
-              
+              (* let ante_for_ho_match = map_opt_def new_ante (fun x-> add_pure_formula_to_formula x new_ante) l_pure_opt in               *)
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
 
@@ -11659,13 +11659,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   let pure_rels, hp_rels = List.split inferred_rels in
                   (* TODO andreeac to renmae ante/conseq with teh freshly dicovered rel *)
                   let new_ante = CF.subst_hvar new_ante new_maps in
-                  (* why do we need to add the residue from checking HO args back to ante? *)
+                  (* let pure_from_unfold = map_opt MCP.mix_of_pure l_pure_opt in *)
+                  (* why do we need to add the residue from checking HO args back to ante? *)    
                   let new_ante = if not (!add_ho_residue_to_es) then new_ante
                     else
                       List.fold_left (fun ante pr ->
                           match pr with
                           | None -> ante
-                          | Some p -> CF.mkAnd_pure ante p pos) new_ante pure_residues in 
+                          | Some p -> CF.mkAnd_pure ante p pos) new_ante ((* pure_from_unfold:: *)pure_residues) in 
                   (* Update conseq and evars *)
                   let new_conseq = CF.subst_hvar new_conseq new_maps in
                   let qvars, new_conseq = CF.split_quantifiers new_conseq in

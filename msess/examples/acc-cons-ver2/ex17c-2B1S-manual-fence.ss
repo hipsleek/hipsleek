@@ -5,13 +5,21 @@ hip_include 'msess/notes/fences.ss'
 
 /************* GLOBAL VIEW: **************/
  
-pred_sess_prot G<B1,B2,S> == 
-  B1->S: v#v::SString<_>;;[B1,S]:Fp2<11,1,qq> ;;
+pred_sess_prot G<B1,B2,S> ==
+  B1->S: v#v::SString<_>;;[B1,S]:Fp<11,1> ;;
   ((S->B1: v#v>0) *
-   ([B2,S]:Fm2<11,1,qq,1.0> ;; S->B2: v#v>0) );;
+   ([B2,S]:Fm<11,1,1.0> ;; S->B2: v#v>0) );;
   B1->B2: v#v>=0;;
   ((B2->S:1;;B2->S:v#v::Addr<_>;;S->B2:v#v::DDate<_,_,_>) or (B2->S:0));
 
+
+ 
+/* pred_sess_prot G<B1,B2,S> ==  */
+/*   B1->S: v#v::SString<_>;; */
+/*   ((S->B1: v#v>0) * */
+/*    ( S->B2: v#v>0) );; */
+/*   B1->B2: v#v>=0;; */
+/*   ((B2->S:1;;B2->S:v#v::Addr<_>;;S->B2:v#v::DDate<_,_,_>) or (B2->S:0)); */
 
 SString getTitle()
   requires true
