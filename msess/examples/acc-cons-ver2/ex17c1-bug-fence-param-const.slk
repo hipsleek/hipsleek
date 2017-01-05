@@ -22,7 +22,7 @@ expect Valid.
 print residue.
 */
 
-pred_sess_prot G1<A,B> ==  [B,A]:Fp<22,333>.
+pred_sess_prot G1<A,B,qq> ==  [B,A]:Fp2<22,333,qq>.
 
 /*
 checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- x::Chan{@S Fp<22,333>}<>.
@@ -30,7 +30,54 @@ expect Valid.
 print residue.
 */
 
-checkentail x::Chan{@S G1<A@prim,B@sec>}<>  |- x::Fp<22,333>.
+checkentail x::Chan{@S G1<A@prim,B@sec,x>}<> |- x::Fp<22,333>.
 expect Valid.
 print residue.
+/*
+checkentail x::Chan{@S G1<A@prim,B@sec,x>}<> * y::Chan{@S Fm2<22,333,x,0.5>}<> |- x::Fm<22,333,0.5>.
+expect Valid.
+print residue.
+*/
+
+/*
+to check what happens to the evars:
+(==solver.ml#13109==)
+do_match@16@15
+do_match inp1 : y::Chan{ . emp&{FLOW,(20,21)=__norm#E}}<>@M
+do_match inp2 : y::Chan{ . emp&{FLOW,(20,21)=__norm#E}}<>@M
+do_match inp3 :  emp&
+flted_36_555+flted_42_442=FLOAT 1. & flted_42_440=333 & flted_42_441=22 & 
+flted_42_442=FLOAT 0.5 & flted_42_443=333 & flted_42_444=22 & 
+id2_523=flted_42_441 & ppp2_521=flted_42_440&{FLOW,(20,21)=__norm#E}
+ es_evars: [flted_42_599; flted_42_600; flted_42_601]
+ es_gen_impl_vars(E): []
+ es_heap: x::Fm<id_556,flted_42_443,flted_36_555>@M
+ es_ante_evars: [flted_36_555; id_556]
+ es_subst (from,to): []:[]
+ es_trace: (Complex: CONi) ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(y,y)
+do_match inp4 :rest rhs:
+ emp&id_556=22 & flted_42_443=333 & flted_36_555=FLOAT 0.5&
+{FLOW,(20,21)=__norm#E}
+do_match inp5 :[x]
+do_match@16 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  id_556=22. LOCS:[0;42] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[(Complex: CONi) ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  Match(y,y)]]
+ CEX:false
+
+*/
+
+checkentail y::Chan{@S Fm2<22,333,x,0.5>}<> * x::Fp<22,333> |- x::Fm<22,333,0.5> * y::Chan{emp}<>.
+expect Valid.
+print residue.
+
+/*
+checkentail x::Chan{@S G1<A@prim,B@sec,x>}<> * y::Chan{@S Fm<22,333,0.5>}<> |- x::Fm<22,333,0.5>.
+expect Valid.
+print residue.
+*/
 

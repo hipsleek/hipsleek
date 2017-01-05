@@ -2590,8 +2590,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   else
                   if (is_view_PRIM vl_kind) && not(Cast.is_resourceless_h_formula prog lhs_node) then
                     (* perhaps need to unfold HO args *)
-                    (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)])
-                  else
+                    (* (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)]) *)
+                    (base_case_prio,M_base_case_unfold m_res)
+                  else 
                     (base_case_prio,M_base_case_unfold m_res) in
                 let a1 =
                   (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
@@ -2661,9 +2662,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     let () = Debug.tinfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
                     (* ANDREEAC: to check if removing this check triggers unfolding *)
                     (* if not(vl_is_rec) && not(vl_is_prim) then *)
-                    if not(vl_is_rec) && not(vl_resourceless) then
+                    if not(vl_is_rec) && not(vl_is_prim) then
                       let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
                       Some (2,M_unfold (m_res,0))
+                    else if (vl_is_prim && not(vl_resourceless)) then
+                      (* Some (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)]) *)
+                      Some (base_case_prio,M_base_case_unfold m_res)
                     else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
                       let () = Debug.ninfo_hprint (add_str "fold vr_is_rec" string_of_bool) vr_is_rec no_pos in
                       Some (2,M_fold m_res) 

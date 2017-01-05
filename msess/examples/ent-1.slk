@@ -1,17 +1,27 @@
-sleek_include 'msess/notes/node.slk'.
-sleek_include 'msess/notes/hodef.slk'.
 
+sleek_include 'node.slk'.
+sleek_include 'hodef.slk'.
 
-pred_sess_proj p1<a> == a!1;;a?msg=0.
-pred_sess_proj p2<a> == a!1;;a?msg=0.
-pred_sess_proj p3<a> == a!0;;a?msg=1.
+pred_sess_proj p1<a> == a!1 ;; a?msg=0.
+pred_sess_proj p2<a> == a!1 ;; a?msg=0.
+pred_sess_proj p3<a> == a!0 ;; a?msg=1.
 
+/*
+checkentail x::Sess{@S p1<a>}<> |- x::Sess{@S p1<a>}<>.
+expect Valid.
+*/
 
-checkentail x::p1<a> |- x::p1<a>.
+checkentail x::Sess{@S p1<a>}<> |- x::Sess{@S p2<a>}<>.
 expect Valid.
 
-checkentail x::p1<a> |- x::p2<a>.
-expect Valid.
+/*
+checkentail x::Sess{@S p1<a>}<> |- x::Sess{@S p3<a>}<>.
+expect Fail.
+*/
+/*
+pred pp1<a> == a=5.
+pred pp2<a> == a=6.
 
-checkentail x::p1<a> |- x::p3<a>.
-expect Valid.
+checkentail x::pp1<c> |- x::pp2<c>.
+print entail.
+*/
