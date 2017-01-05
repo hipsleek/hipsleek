@@ -2515,6 +2515,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
             let vl_view_derv =  vl.h_formula_view_derv in
             let vr_view_derv = vr.h_formula_view_derv in
             let vr_view_split = vr.h_formula_view_split in
+            let vl_resourceless = Cast.is_resourceless_h_formula prog lhs_node in
+            let vr_resourceless = Cast.is_resourceless_h_formula prog rhs_node in
             let () = x_ninfo_hp (add_str "cyclic " pr_id) " 1" no_pos in
             let () = x_tinfo_hp (add_str "vl_name: " pr_id) vl_name no_pos in
             let () = x_tinfo_hp (add_str "vl_kind: " string_of_view_kind) vl_kind no_pos in
@@ -2583,15 +2585,20 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 [(0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_fold m_res);(base_case_prio,M_base_case_unfold m_res)])],-1 (*force a MATCH after each lemma or self-fold unfold/fold*)
               else
                 let base_case_prio = 3 in
-                  let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || (is_view_PRIM vl_kind)))  
-                  then (-1,M_Nothing_to_do "base_case_unfold not selected")
-                  else (base_case_prio,M_base_case_unfold m_res) in
+                let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || (Cast.is_resourceless_h_formula prog lhs_node) (* (is_view_PRIM vl_kind) *)))
+                  then (-1,M_Nothing_to_do "base_case_unfold not selected")                     
+                  else
+                  if (is_view_PRIM vl_kind) && not(Cast.is_resourceless_h_formula prog lhs_node) then
+                    (* perhaps need to unfold HO args *)
+                    (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)])
+                  else
+                    (base_case_prio,M_base_case_unfold m_res) in
                 let a1 =
                   (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
                   let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
                   let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && not(is_view_PRIM r_kind))*)
-                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && not(is_view_PRIM vr_kind)))
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL  && not(Cast.is_resourceless_h_formula prog lhs_node) ))
                   then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                   else a1 in
                 let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
@@ -2652,7 +2659,9 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                     let () = Debug.tinfo_hprint (add_str " vl_is_prim" string_of_bool) vl_is_prim no_pos in
                     let () = Debug.tinfo_hprint (add_str " vr_is_rec" string_of_bool) vr_is_rec no_pos in
                     let () = Debug.tinfo_hprint (add_str " vr_is_prim" string_of_bool) vr_is_prim no_pos in
-                    if not(vl_is_rec) && not(vl_is_prim) then
+                    (* ANDREEAC: to check if removing this check triggers unfolding *)
+                    (* if not(vl_is_rec) && not(vl_is_prim) then *)
+                    if not(vl_is_rec) && not(vl_resourceless) then
                       let () = Debug.tinfo_hprint (add_str "unfold vl_is_rec" string_of_bool) vl_is_rec no_pos in
                       Some (2,M_unfold (m_res,0))
                     else if not(vr_is_rec) && not(vl_is_prim) && not(vr_is_prim)  then
@@ -2732,7 +2741,8 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                                   (3,M_base_case_fold m_res)
                                   (* ;(1,M_cyclic_res) *)] in
                       (* TODO:WN Is infinite unfolding possible? *)
-                      let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in
+                      (* let acts2 = if vl_view_orig && vr_is_prim && not(vl_is_prim) then [(2,M_unfold (m_res,uf_i))] else [] in *)
+                      let acts2 = if vl_view_orig && vr_is_prim && not(vl_resourceless) then [(2,M_unfold (m_res,uf_i))] else [] in
                       let flag = !dis_base_case_unfold || vl_vdef.view_base_case==None in
                       let () = if flag then 
                           begin
@@ -3977,7 +3987,11 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       [aux xs x] in
   let r = if !Globals.old_compute_act then r else sel_simpler r in
   let r = List.map (fun (w,a) -> match a with
-      | M_unfold _ -> if not(!Globals.allow_unfold) then (w,M_Nothing_to_do "Unfolding is not allowed")
+      | M_unfold _
+      | M_fold _
+      | M_base_case_fold _
+      | M_base_case_unfold _ ->
+        if not(!Globals.allow_unfold) then (w,M_Nothing_to_do "Unfolding is not allowed")
         else (w,a)
       | _ -> (w,a)
     ) r in

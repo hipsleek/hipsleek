@@ -66,7 +66,9 @@ void loop4_sor1(Channel c, int id)
   requires  c::Chan{@S p1<>}<>
   ensures   c::Chan{emp}<>;
 {
+  dprint;
   if (id<0) send(c,1);
   else  send(c,0);
+  dprint;
   loop4_sor1(c,id);
 }

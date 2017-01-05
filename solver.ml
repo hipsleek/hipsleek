@@ -13639,19 +13639,35 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "ensuring finite unfold" *) err_msg estate conseq (get_node_label lhs_node) pos,
                                           CF.mk_failure_must "infinite unfolding" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
           else
-            let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
-            let ctx1 = build_context (Ctx estate) delta1 pos in
-            (* let ctx1 = elim_unsat_ctx_now prog (ref 1) ctx1 in *)
-            (* let ctx1 = set_unsat_flag ctx1 true in *)
-            let rec prune_helper c =
-              match c with
-              | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
-              | Ctx es -> Ctx ({es with es_formula = prune_preds prog false (*true*) es.es_formula})
+            let delta1 =
+              if is_view_primitive lhs_node then
+                let _, _, l_vp, l_fl, _, _ = CF.split_components estate.es_formula in
+                let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos estate.es_evars false 0 in
+                let is_prime_fun hform = Cast.is_resourceless_h_formula prog hform in
+                let delta1 = Session.rebuild_node lhs_node unfold_fun is_prime_fun in
+                delta1
+              else 
+                let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+                Some delta1
             in
-            (* TODO: prune_helper slows down the spaguetti benchmark *)
-            let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding (prune_helper ctx1) (*ctx1*) conseq None None None pos in
-            let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
-            (res_rs, prf)
+            match delta1 with
+            | Some delta1 ->
+              let ctx1 = build_context (Ctx estate) delta1 pos in
+              (* let ctx1 = elim_unsat_ctx_now prog (ref 1) ctx1 in *)
+              (* let ctx1 = set_unsat_flag ctx1 true in *)
+              let rec prune_helper c =
+                match c with
+                | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
+                | Ctx es -> Ctx ({es with es_formula = prune_preds prog false (*true*) es.es_formula})
+              in
+              (* TODO: prune_helper slows down the spaguetti benchmark *)
+              let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding (prune_helper ctx1) (*ctx1*) conseq None None None pos in
+              let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
+              (res_rs, prf)
+            | None ->
+              let err_msg = "arguments of prim predicate cannot be unfolded" in
+              (CF.mkFailCtx_in(Basic_Reason(mkFailContext err_msg estate conseq (get_node_label lhs_node) pos,
+                                            CF.mk_failure_must "no unfold definition" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
       end
     | Context.M_base_case_unfold {
         Context.match_res_lhs_node = lhs_node;
@@ -13688,7 +13704,22 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
               (* let new_es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos in *)
               {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos}
           in
-          let ans = do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
+          let ans =
+            if is_view_primitive lhs_node then
+              let _, _, l_vp, l_fl, _, _ = CF.split_components estate.es_formula in
+              let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos estate.es_evars false 0 in
+              let is_prime_fun hform = Cast.is_resourceless_h_formula prog hform in
+              let delta1 = Session.rebuild_node lhs_node unfold_fun is_prime_fun in
+              match delta1 with
+              | Some x ->
+                let ctx1 = build_context (Ctx estate) x pos in
+                (* TODO: prune_helper slows down the spaguetti benchmark *)
+                let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding ctx1 conseq None None None pos in
+                let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
+                Some (res_rs, prf)
+              | None -> None
+            else 
+              do_base_case_unfold_only prog estate.es_formula conseq estate lhs_node rhs_node is_folding pos rhs_b in
           (match ans with
            | None ->
              let err_msg = "base_case_unfold failed" in
@@ -13743,7 +13774,33 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         (*              in                                                                                                   *)
         (* moved into do_base_fold *)
         (* let (estate,iv) = Infer.remove_infer_vars_all estate (\* rt *\)in *)
-        let (cl,prf) = do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
+        let (cl,prf) =
+          if is_view_primitive rhs_node then
+            let _, _, l_vp, l_fl, _, _ = CF.split_components estate.es_formula in
+            let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos estate.es_evars false 0 in
+            let is_prime_fun hform = Cast.is_resourceless_h_formula prog hform in
+            let delta1 = Session.rebuild_node rhs_node unfold_fun is_prime_fun in
+            match delta1 with
+            | Some x ->
+              (* let ctx1 = build_context (Ctx estate) x pos in    *)           
+              (* let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding ctx1 conseq None None None pos in *)
+              (* let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in *)
+              let b = { formula_base_heap = rhs_rest;
+                        formula_base_pure = rhs_p;
+                        formula_base_vperm = rhs_vp;
+                        formula_base_type = rhs_t;
+                        formula_base_and = rhs_a; (*TO CHECK: ???*)
+                        formula_base_flow = rhs_fl;		
+                        formula_base_label = None;   
+                        formula_base_pos = pos } in
+              let tmp, tmp_prf = process_fold_result (ivars,ivars_rel) prog is_folding estate fold_rs p2 (perms@v2) b pos in
+              let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
+              Some (tmp, prf) 
+              (* Some (res_rs, prf) *)
+            | None ->
+              let err_msg =  "No base-case for folding prim pred"  in
+              (Errctx.mkFailCtx_must x_loc err_msg estate pos,NoAlias)
+          else do_base_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos 
         in (cl,prf)
     (* (Infer.restore_infer_vars iv cl,prf) *)
     | Context.M_seg_fold (m_res, fold_seg_type) ->
