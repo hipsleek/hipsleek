@@ -1,0 +1,17 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+/* hip_include 'msess/notes/commprimitives.ss' */
+sleek_include 'msess/notes/cdl.slk'.
+
+pred_sess_prot Gd<A,B,C,c> == ((A->B:1;;[B,A]:downd<c,10>) * (A->C:1;;[C,A]:downd<c,10>));;[C,B]:await<c,10>;;B->C:2.
+
+
+checkentail (exists flted_11_2960:
+             b::Chan{@S Gd<A,B@prim,C@sec,c>}<> *             
+             c::CNT<flted_11_2960,idd>&
+flted_11_2960+1=0 & idd=flted_63_2693 & flted_63_2693=10 & flted_63_2694=0 & 
+v_124=msg_2701 & x=1 & v_int_70_2389=2 )
+|-  b::Chan{@S !v#%L(v);;%R}<> * %L(v_int_70_2389).
+
+expect Valid.
+print residue. 
