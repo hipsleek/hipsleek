@@ -2588,18 +2588,18 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                 let a1 = if (!dis_base_case_unfold || not(!Globals.old_base_case_unfold) && (vl_kind==View_HREL || (Cast.is_resourceless_h_formula prog lhs_node) (* (is_view_PRIM vl_kind) *)))
                   then (-1,M_Nothing_to_do "base_case_unfold not selected")                     
                   else
-                  if (is_view_PRIM vl_kind) && not(Cast.is_resourceless_h_formula prog lhs_node) then
-                    (* perhaps need to unfold HO args *)
-                    (* (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)]) *)
-                    (base_case_prio,M_base_case_unfold m_res)
-                  else 
+                 (*  if (is_view_PRIM vl_kind) && not(Cast.is_resourceless_h_formula prog lhs_node) then *)
+                  (*   (\* perhaps need to unfold HO args *\) *)
+                  (*   (\* (0,Cond_action [(0,M_match m_res);(base_case_prio,M_base_case_unfold m_res)]) *\) *)
+                  (*   (base_case_prio,M_base_case_unfold m_res) *)
+                  (* else  *)
                     (base_case_prio,M_base_case_unfold m_res) in
                 let a1 =
                   (* treat the case where the lhs node is abs as if lhs=emp, thus try a base case fold *)
                   let ()= y_tinfo_hp (add_str "imm_subtype_flag" string_of_bool) imm_subtype_flag in
                   let ()= y_tinfo_hp (add_str "old_base_case_unfold" string_of_bool) !Globals.old_base_case_unfold in
                   (* if not(imm_subtype_flag) && (!Globals.old_base_case_unfold || (vr_kind!=View_HREL && not(is_view_PRIM r_kind))*)
-                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL  && not(Cast.is_resourceless_h_formula prog lhs_node) ))
+                  if (!Globals.old_base_case_unfold || (vr_kind!=View_HREL  && not(Cast.is_resourceless_h_formula prog rhs_node) ))
                   then (base_case_prio, Cond_action [(base_case_prio,M_base_case_fold m_res);a1])
                   else a1 in
                 let () = y_tinfo_hp (add_str "a1" pr_act) a1 in
@@ -2650,6 +2650,11 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   (*Do not fold/unfold LOCKs, only match*)
                   if (is_l_lock || is_r_lock) then Some a2 else 
                   if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2]) (* if !dis_base_case_unfold then a2 else (1, Cond_action [a1;a2]) *)
+                  else
+                  (* if (((is_view_PRIM vl_kind) && not(Cast.is_resourceless_h_formula prog lhs_node)) || ((is_view_PRIM vr_kind) && (Cast.is_resourceless_h_formula prog rhs_node))) then Some a1 *)
+                  if(is_view_PRIM vr_kind || is_view_PRIM vl_kind) then Some a1
+                    (* Andreea: this is a bit sketchy - better check anoher solution  *)
+                    (* Some (4, M_Nothing_to_do ("cannot match prim pred with different names"))  *)
                   else None
                 ) in
                 let () = y_tinfo_hp (add_str "a3" (pr_option pr_act)) a3 in
@@ -3965,6 +3970,13 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
         (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a)
   in
+  let recalibrate_wt (w,a) =
+    let pr = string_of_action_wt_res in
+    Debug.no_1 "recalibrate_wt" pr pr recalibrate_wt (w,a)
+  in
+  let is_nothing x = match x with
+    | M_Nothing_to_do _ -> true
+    | _ -> false in
   let is_complex x = match x with
     Search_action _ | Cond_action _ | Seq_action _ -> true
     | _ -> false in
@@ -3974,7 +3986,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     let f2 = is_complex x2 in
     if f1==f2 then
       if w1<w2 then p1 else p2
-    else if f1 then p2 else p1 in
+    else if f1 then (* if (is_nothing x2) then p1 else *) p2 else (* if (is_nothing x1) then p2 else  *)p1 in
   let choose x y = 
     let pr = string_of_action_wt_res in
     Debug.no_2 "choose_act_wt" pr pr pr choose x y in

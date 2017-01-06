@@ -1835,7 +1835,8 @@ $output_file = "log";
         # ["ex10b-1B1S1S.ss", 3, "", "buyer","SUCCESS","seller","SUCCESS","shipper","SUCCESS"],
         ["ex12a-AB.ss", 1, " -tp z3 ", "B","SUCCESS"],
         ["ex12b-ABCD.ss", 4, " -tp z3 ", "B","SUCCESS","B_F1","FAIL","B_F2","FAIL","B_F3","FAIL"],
-        ["ex12c-ABCDE.ss", 4, " -tp z3 ", "B","SUCCESS","B_F1","FAIL","B_F2","SUCCESS","B_F3","SUCCESS"]
+        ["ex12c-ABCDE.ss", 4, " -tp z3 ", "B","SUCCESS","B_F1","FAIL","B_F2","SUCCESS","B_F3","SUCCESS"],
+        ["ex17c-2B1S-manual-fence.ss", 4, " -tp z3 ", "Buyer1","SUCCESS","Buyer2","SUCCESS","Seller","SUCCESS","Buyer1_fail","FAIL"]
 
     ],
     # "lemmas"=>[
@@ -1863,6 +1864,7 @@ my $dis = '--dis-inv-baga';
               ["session/ex6b1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
               ["session/ex8-disj.slk", "", (), "Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Fail."],
               ["session/ex10a2-choice.slk", "", (), "Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
+              ["session/ex17c1-fences.slk", "", (), "Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
               ["typecheck-poly.slk","", (), "Valid.Failure.Valid"],
               ["cll-d.slk", "", (), "Valid."],
                       ["label-basic.slk", "--dis-eps", (), "Fail.Valid.Valid.Fail."],
