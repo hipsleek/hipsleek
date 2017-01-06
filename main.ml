@@ -547,7 +547,7 @@ let process_source_full source =
              let h2, p2, _, _, _ = CF.split_components 
                (CF.elim_exists cd.C.coercion_body) in
              let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
-               (String.length (CP.name_of_spec_var sv)) < 3)
+               (String.length (CP.name_of_spec_var sv)) < 3 || true)
                ((CF.h_fv h1)@(CF.h_fv h2)@(CP.fv (Mcpure.pure_of_mix p1))
                 @(CP.fv (Mcpure.pure_of_mix p2)))) in
              let var_list_string = String.concat " " (List.map 
