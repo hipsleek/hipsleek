@@ -323,6 +323,7 @@ and coercion_decl = {
   coercion_kind: lemma_kind;
   coercion_origin: lemma_origin;
   coercion_lhs_sig: F.formula_sig option;
+  coercion_prio : int;
 }
 
 and coercion_type = Iast.coercion_type

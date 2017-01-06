@@ -4979,6 +4979,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
                      C.coercion_kind = coer.I.coercion_kind;
                      C.coercion_origin = coer.I.coercion_origin;
                      C.coercion_lhs_sig = lhs_sig;
+                     C.coercion_prio = coer.I.coercion_prio;
                    } in
       let change_univ x = change_univ c_head_norm_rlem x in
       match coer_type with
@@ -9583,6 +9584,7 @@ and case_normalize_coerc_x prog (cd: Iast.coercion_decl):Iast.coercion_decl =
     Iast.coercion_head = nch;
     Iast.coercion_body = ncb;
     Iast.coercion_proof = cd.Iast.coercion_proof;
+    Iast.coercion_prio = cd.Iast.coercion_prio;
     I.coercion_kind = cd.I.coercion_kind;
     I.coercion_origin = cd.I.coercion_origin; }
 

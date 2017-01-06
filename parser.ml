@@ -3270,6 +3270,7 @@ coercion_decl:
         coercion_type_orig = None;
         coercion_kind = LEM_SAFE;
         coercion_origin = LEM_USER;
+        coercion_prio = def_coerc_prio;
       };
   ]];
 
@@ -3297,6 +3298,8 @@ infer_coercion_decl:
 (*         } *)
 (*     ]]; *)
 
+coerc_prio: [[ `AT; `INT_LITER (n,_) -> n ]];
+  
 coerc_decl_aux:
     [[
       `LEMMA TLEM_INFER; t = infer_coercion_decl -> 
@@ -3309,9 +3312,11 @@ coerc_decl_aux:
           coercion_list_kind  = LEM_INFER_PRED }
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
-      | `LEMMA kind;t = coercion_decl -> 
+        | `LEMMA kind; prio = OPT coerc_prio ; t = coercion_decl ->
             let k = convert_lem_kind kind in
-            let t = {t with coercion_kind = k;} in
+            let t = {t with coercion_kind = k;
+                            coercion_prio = un_option prio def_coerc_prio;
+                    } in
           { coercion_list_elems = [t];
             coercion_list_kind  = k }
       | `LEMMA kind; `OSQUARE; t = coercion_decl_list; `CSQUARE -> 
@@ -3765,20 +3770,28 @@ decl:
   | `RLEMMA ; c= coercion_decl; `DOT    -> let c =  {c with coercion_kind = RLEM} in
                                                  Coercion_list { coercion_list_elems = [c];
                                                                  coercion_list_kind = RLEM}
-  | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
+  | `LEMMA kind; prio = OPT coerc_prio ; c= coercion_decl; `SEMICOLON    -> 
         let k = convert_lem_kind kind in
         let c = {c with coercion_kind = k;} in
         Coercion_list
         { coercion_list_elems = [c];
-          coercion_list_kind  = k}
-  | `LEMMA kind; c= coercion_decl; `DOT    -> 
-        let k = convert_lem_kind kind in
-        let c = {c with coercion_kind = k;} in
+          coercion_list_kind  = k;
+          (* coercion_prio = un_option prio def_coerc_prio; *)
+        }
+  | `LEMMA kind; prio = OPT coerc_prio ; c= coercion_decl; `DOT    -> 
+    let k = convert_lem_kind kind in
+        let c = {c with coercion_kind = k; (* coercion_prio = un_option prio def_coerc_prio; *)} in
         Coercion_list
         { coercion_list_elems = [c];
           coercion_list_kind  = k}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `DOT    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
+      | `LEMMA kind(* lex *); prio = OPT coerc_prio ; c = coercion_decl_list; `SEMICOLON    ->
+        Coercion_list {c with (* coercion_exact = false *)
+                       coercion_list_kind = convert_lem_kind kind;
+                       coercion_list_elems = List.map (fun coerc -> {coerc with coercion_prio = un_option prio def_coerc_prio;} ) c.coercion_list_elems;
+                      }
+      | `LEMMA kind(* lex *); prio = OPT coerc_prio ; c = coercion_decl_list; `DOT    ->
+        Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind;
+                      coercion_list_elems = List.map (fun coerc -> {coerc with coercion_prio = un_option prio def_coerc_prio;} ) c.coercion_list_elems;}
   ]];
 
 dir_path: [[t = LIST1 file_name SEP `DIV ->

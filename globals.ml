@@ -1567,6 +1567,8 @@ let pre_residue_lvl = ref 0
 (* Lvl 1 - add all pre to residue *)
 (* Lvl -1 - never add any pre to residue *)
 
+let def_coerc_prio = 1
+
 let check_coercions = ref false
 let eager_coercions = ref true
 let dump_lemmas = ref false

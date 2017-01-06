@@ -290,6 +290,7 @@ and coercion_decl = { coercion_type : coercion_type;
                       coercion_type_orig: coercion_type option; (* store origin type before transforming *)
                       coercion_kind : lemma_kind;
                       coercion_origin : lemma_origin;
+                      coercion_prio : int;
                     }
 
 and coercion_decl_list = {
@@ -3366,7 +3367,7 @@ let add_bar_inits prog =
    prog_data_decls = prog.prog_data_decls@b_data_def; 
    prog_proc_decls = prog.prog_proc_decls@b_proc_def; }
 
-let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
+let mk_lemma lemma_name kind orig coer_type ihps ?prio:(prio=def_coerc_prio) ihead ibody =
   { coercion_type = coer_type;
     coercion_exact = false;
     coercion_infer_vars = ihps;
@@ -3380,6 +3381,7 @@ let mk_lemma lemma_name kind orig coer_type ihps ihead ibody =
     coercion_type_orig = None;
     coercion_kind = kind;
     coercion_origin = orig;
+    coercion_prio = prio;
   }
 
 let gen_normalize_lemma_comb ddef = 
@@ -3401,6 +3403,7 @@ let gen_normalize_lemma_comb ddef =
    coercion_type_orig = None;
    coercion_kind = LEM_SAFE; (*default. should improve*)
    coercion_origin = LEM_GEN;
+   coercion_prio = def_coerc_prio;
   }
 
 let gen_normalize_lemma_split ddef = 
@@ -3423,6 +3426,7 @@ let gen_normalize_lemma_split ddef =
    coercion_type_orig = None;
    coercion_kind = LEM_SAFE;
    coercion_origin = LEM_GEN;
+   coercion_prio = def_coerc_prio;
   }
 
 let add_normalize_lemmas prog4 = 

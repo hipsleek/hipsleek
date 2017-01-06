@@ -15321,6 +15321,7 @@ and apply_one_norm_coerc prog coerc estate fnode frest =
 
 and apply_norm_coerc prog estate ?left:(left = true) fnode frest =
   let coerc_candidates = choose_coerc_candidates_for_norm prog ~left:left fnode in
+  let coerc_candidates = List.sort (fun cdl1 cdl2 -> cdl1.Cast.coercion_prio - cdl2.Cast.coercion_prio ) coerc_candidates in
   let () = y_ninfo_hp (add_str "cands no:" string_of_int) (List.length  coerc_candidates) in
   let res = List.map (fun coerc -> apply_one_norm_coerc prog coerc estate fnode frest) coerc_candidates in
   res
