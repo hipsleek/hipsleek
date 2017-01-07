@@ -15356,15 +15356,19 @@ and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
       let res = Wrapper.wrap_one_bool Globals.allow_lem_norm false (apply_norm_coerc prog es ~left:left head_h) tail_h in
       let ctx = extract_succ res in
       let () = y_ninfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
+      let cont () =
+        (* ---------------------- iterate or stop ---------------------------- *)
+        if Gen.is_pivot pivot then None (* ctx *) (* stop iterating *)
+        else iter_nodes (tail_orig@[head]) (* nothing changed - continue to iterate*)
+      in
       match ctx with
       | Some ctx ->
-        (* if lemma is fired restart the norm process, 
+        (* if lemma is fired and CTX is not false restart the norm process, 
            otherwise keep on interating through nodes *)
-        Some (x_add_1 (fun _ ->  norm_w_coerc_context prog ctx) () )
-      | None -> 
-        (* ---------------------- iterate or stop ---------------------------- *)
-        if Gen.is_pivot pivot then ctx (* stop iterating *)
-        else iter_nodes (tail_orig@[head]) (* nothing changed - continue to iterate*)
+        if not(isAnyFalseCtx ctx) then
+          Some (x_add_1 (fun _ ->  norm_w_coerc_context prog ctx) () )
+        else cont ()
+      | None -> cont ()
   in iter_nodes nodes
 
 (* these lemma normalization is triggered by just investigating

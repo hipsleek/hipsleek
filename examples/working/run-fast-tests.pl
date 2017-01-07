@@ -1836,6 +1836,13 @@ $output_file = "log";
         ["ex12a-AB.ss", 1, " -tp z3 ", "B","SUCCESS"],
         ["ex12b-ABCD.ss", 4, " -tp z3 ", "B","SUCCESS","B_F1","FAIL","B_F2","FAIL","B_F3","FAIL"],
         ["ex12c-ABCDE.ss", 4, " -tp z3 ", "B","SUCCESS","B_F1","FAIL","B_F2","SUCCESS","B_F3","SUCCESS"],
+        ["ex12b-ABC-cdl.ss", 3, " -tp z3 ", "B1","SUCCESS","B2","FAIL","B3","FAIL"],
+        ["ex12c-ABC-virt-cdl.ss", 2, " -tp z3 ", "B_dyn","SUCCESS","B1","SUCCESS"],
+        ["ex12d-ABC-cdl-virt.ss", 2, " -tp z3 ", "B_dyn","SUCCESS","B1","SUCCESS"],
+        ["ex12e-ABC-cdl-virt-w-id.ss", 3, " -tp z3 ", "B_dyn","SUCCESS","B_virt","SUCCESS","B2","FAIL"],
+        ["ex13-ABCD-virt-cdl.ss", 3, " -tp z3 ", "B1","SUCCESS","B2","SUCCESS","B3","FAIL"],
+        ["ex14a-ABC-star-SS.ss", 4, " -tp z3 ", "A","SUCCESS","A1","SUCCESS","A2","FAIL","B","SUCCESS"],
+        ["ex14b-ABC-star-RS.ss", 2, " -tp z3 ", "B","SUCCESS","C","SUCCESS"],
         ["ex17c-2B1S-manual-fence.ss", 4, " -tp z3 ", "Buyer1","SUCCESS","Buyer2","SUCCESS","Seller","SUCCESS","Buyer1_fail","FAIL"]
 
     ],

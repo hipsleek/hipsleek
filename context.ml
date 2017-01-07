@@ -1127,7 +1127,7 @@ and view_mater_match prog c vs1 aset imm f anns =
   let pro4 = (add_str "match_type" string_of_match_type) in
   let pr = pr_list (pr_quad pro1 pro2 pro3 pro4) in
   Debug.no_4 "view_mater_match" (add_str "heap_f" Cprinter.string_of_h_formula)
-    (add_str "c" pr1) (add_str "vs1" pr2) 
+    (add_str "lhs node name" pr1) (add_str "vs1" pr2) 
     (add_str "aset" pr2) pr (fun _ _ _ _ -> view_mater_match_x prog c vs1 aset imm f anns) f c vs1 aset
 
 and view_mater_match_x prog c vs1 aset imm f anns =
@@ -1153,14 +1153,14 @@ and view_mater_match_x prog c vs1 aset imm f anns =
         let () = if false (* !Globals.adhoc_flag_6 *) then failwith (x_tbi^" add materialized holes?") in
         [(HEmp (* Hole hole_no *), f, [(f, hole_no)], WArg)]
       else [(HEmp, f, [], WArg)]
-    else []
-
-(* and view_mater_match prog c vs1 aset imm f = *)
-(*   let pr = fun v-> string_of_int (List.length v) in *)
-(*   let psv = Cprinter.string_of_spec_var in *)
-(*   let pr1 = pr_list psv in *)
-(*   let pr2 = pr_list  psv in   *)
-(*   Debug.no_2 "view_mater_match" pr1 pr2 pr (fun _ _ -> view_mater_match_x prog c vs1 aset imm f) vs1 aset *)
+    else
+      if (is_view_PRIM vdef.view_kind) && not(Cast.is_resourceless_h_formula prog f) then
+        if (List.exists (fun v -> CP.mem v aset) (CF.h_fv f)) then
+          let sv = List.find (fun v -> CP.mem v aset) (CF.h_fv f) in
+          (* dummy mater_property *)
+          [(HEmp, f, [], MaterializedArg ({ mater_var= sv; mater_full_flag=false; mater_target_view=[]},View_mater))]
+        else []
+      else []
 
 (* (mater_source * Cast.mater_property) option *)
 (* NOTE : l_vargs must have ALL parameters, including SELF *)
@@ -3247,13 +3247,15 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
          else
            let a1 = (match ms with
                | View_mater -> 
-                 let () = pr_debug "unfold for meterialised!\n" in  
-                 M_unfold (m_res,uf_i) (* uf_i to prevent infinite unfolding *)
+                 let () = pr_debug "unfold for meterialised!\n" in
+                 if (is_view_PRIM vdef.view_kind) then []
+                 else [(1,M_unfold (m_res,uf_i))] (* uf_i to prevent infinite unfolding *)
                | Coerc_mater s -> 
                  let () = pr_debug "selected lemma XX\n" in  
-                 M_lemma (m_res,Some s,0)) in
+                 [(1,M_lemma (m_res,Some s,0))]) in
            let l1 = if !dis_base_case_unfold then  [] else [(4,M_base_case_unfold m_res)] in
-           (-1, (mk_search_action ((1,a1)::l1)))
+           let prio = if (is_view_PRIM vdef.view_kind) then 1 else -1 in
+           (prio, (mk_search_action (a1@l1)))
        | HRel (h_name, args, _), ViewNode vl -> begin
            let () = y_tinfo_pp "HREL vs VIEW" in
            let h_name = Cpure.name_of_spec_var h_name in

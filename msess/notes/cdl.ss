@@ -7,14 +7,14 @@ pred_prim downv<c:CDL,n:int,id:int>; /* used by virt sync: n is used for the ini
 pred_prim await<c:CDL,id:int>;       /* used by both dyn and virt sync */
 
 void AWAIT(CDL c)
-  requires [idd] c::CNT<0,idd>
-  ensures  c::CNT<(-1),idd>;
-  requires [iddd] c::CNT<(-1),iddd>
-  ensures  c::CNT<(-1),iddd>;
+  requires c::CNT<0,id>
+  ensures  c::CNT<(-1),id>;
+  requires  c::CNT<(-1),id>
+  ensures  c::CNT<(-1),id>;
 
 void DOWN(CDL c)
-  requires c::CNT<n,idddd> & n>0
-  ensures  c::CNT<n-1,idddd>;
+  requires c::CNT<n,id> & n>0
+  ensures  c::CNT<n-1,id>;
 
 /* ******************* normalization lemmas ******************* */
 lemma_norm   "ACC"  self::CNT<n,id> * self::CNT<m,id> & m>=0 & n>=0-> self::CNT<m+n,id>.
