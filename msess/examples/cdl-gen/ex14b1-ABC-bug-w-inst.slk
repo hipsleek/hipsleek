@@ -1,0 +1,44 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+/* hip_include 'msess/notes/commprimitives.slk' */
+sleek_include 'msess/notes/cdl.slk'.
+
+/************* GLOBAL VIEW: **************/
+/*********  where ;; is ;{_RS}  ***********/
+/*****************************************/
+/* pred_sess_prot G<A,B,C> == (A->B:1 * A->C:1);;B->C:2;   */
+/* pred_sess_prot G<A,B,C> == (A->B:1 * A->C:1);;CDL(10);;B->C:2;   */
+/* pred_sess_prot Gd<A,B,C,c> == ((A->B:1;;[A,B]:downd<c,10>) * (A->C:1;;[A,C]:downd<c,10>));;[C,B]:await<c,10>;;B->C:2; */
+pred_sess_prot Gd<A,B,C,c> ==
+  ((A->B:1;;[A,B]:downv<c,1,20>) * (A->C:1;;[A,C]:downd<c,10>))
+  ;;[C,B]:await<c,10>
+  ;;[C,B]:await<c,20>
+  ;;B->C:2.
+
+         /*  
+  checkentail (exists d:
+  b::Chan{@S Gd<A,B@prim,C@sec,c>}<> *
+  c::CNT<flted_21_2613,flted_21_2612>@M * 
+  a::Chan{@S downv<c,x,flted_13_2622>}<>
+  & flted_21_2613=0 & flted_21_2612=10 & flted_13_2622=20 & 
+               x=1             )              
+               |- c::CNT<0,idd>.
+
+expect Valid.
+print residue.
+*/
+
+  checkentail x::node<a,b> |- x::node<c,d>.
+
+      /*      
+checkentail   b::Chan{@S downd<c,10>}<> |- c::CNT<1,10>.
+expect Valid.
+print residue.
+      
+      
+pred_sess_prot G1<A,B,c> == [B,A]:downd<c,10>;;A->B:1.
+
+checkentail   b::Chan{@S G1<A@prim,B@sec,c>}<> * a::Chan{emp}<> |- c::CNT<1,10>.
+expect Valid.
+print residue.
+*/
