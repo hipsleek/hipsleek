@@ -1,0 +1,184 @@
+
+!!!Full processing file "bugs/tree-trav.ss"
+Parsing file "bugs/tree-trav.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! SCall neqs:[]
+!!! SCall neqs:[]
+!!! neqs:[(v_node2_32_1257,x),(x,v_node2_33_1264),(v_node2_36_1271,x),(v_node2_43_1287,x),(x,v_node2_44_1294),(x,tl),(x,v_null_type_52_1307)]
+Checking procedure to_list$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,H2]requires H(x) * H2(tl)&true
+ ensures H2(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(x)&x!=null --> x::node2<val5,p1,p10> * HP_1345(p1) * HP_1346(p10)&
+true(3,4),
+ // PRE_REC
+(1;1;0)HP_1345(p1)&p1!=null --> H(p1)&
+true(3,4),
+ // PRE_REC
+(1;1;0)H2(tl)&true --> H2(tl)&
+true(3,4),
+ // PRE_REC
+(1;1;1;0)HP_1346(p10)&p10!=null --> H(p10)&
+true(3,4),
+ // PRE_REC
+(1;1;1;0)H2(p1)&p1!=null --> H2(p1)&
+true(3,4),
+ // BIND
+(1;1;1;0)H2(p10)&p10!=null --> p10::node2<val1,p6,p2> * HP_1465(p6) * 
+HP_1466(p2)&
+true(3,4),
+ // BIND
+(2;1;1;0)H2(p1)&p1!=null --> p1::node2<val2,p7,p3> * HP_1483(p7) * 
+HP_1484(p3)&
+true(3,4),
+ // BIND
+(1;2;1;0)H2(p10)&p10!=null --> p10::node2<val3,p8,p4> * HP_1546(p8) * 
+HP_1547(p4)&
+true(3,4),
+ // BIND
+(1;2;2;1;0)H2(tl)&tl!=null --> tl::node2<val4,p9,p5> * HP_1592(p9) * 
+HP_1593(p5)&
+true(3,4),
+ // POST
+(1;1;1;0)HP_1465(p6) * p10::node2<val1,p6,x> * x::node2<val5,p10,v5>&
+v5=null --> H2(x)&
+true(3,4),
+ // POST
+(2;1;1;0)HP_1346(p10) * HP_1483(p7) * p1::node2<val2,p7,x> * 
+x::node2<val5,p1,v1>&v1=null & p10=null --> H2(x)&
+true(3,4),
+ // POST
+(1;2;1;0)HP_1345(p1) * HP_1546(p8) * p10::node2<val3,p8,x> * 
+x::node2<val5,p10,v2>&v2=null & p1=null --> H2(x)&
+true(3,4),
+ // POST
+(1;2;2;1;0)HP_1345(p1) * HP_1346(p10) * HP_1592(p9) * 
+tl'::node2<val4,p9,x> * x::node2<val5,tl',v3>&v3=null & p10=null & 
+p1=null --> H2(x)&
+true(3,4),
+ // POST
+(2;2;2;1;0)x::node2<val5,tl,v4> * HP_1345(p1) * HP_1346(p10)&tl=null & 
+v4=null & p10=null & p1=null --> H2(x)&
+true(3,4),
+ // POST
+(2;2;2;1;0)H2(tl)&tl=null --> emp&
+true(3,4),
+ // POST
+(2;0)H(x)&x=null --> H2(x)&
+true(3,4)]
+
+Procedure to_list$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self=null | self!=null | self!=null | self!=null | 
+self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self!=null | self=null | self>0)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], true)])
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (1;1;1;0)p2_26_1344::H2<>&
+  p2_26_1344!=null --> p2_26_1344::node2<val_32_1462,p1_32_1463,p2_32_1464> * 
+  HP_1465(p1_32_1463) * HP_1466(p2_32_1464)(3,4)
+
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (2;1;1;0)p1_26_1343::H2<>&
+  p1_26_1343!=null --> p1_26_1343::node2<val_36_1480,p1_36_1481,p2_36_1482> * 
+  HP_1483(p1_36_1481) * HP_1484(p2_36_1482)(3,4)
+
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (1;2;1;0)p2_26_1344::H2<>&
+  p2_26_1344!=null --> p2_26_1344::node2<val_43_1543,p1_43_1544,p2_43_1545> * 
+  HP_1546(p1_43_1544) * HP_1547(p2_43_1545)(3,4)
+
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (1;2;2;1;0)tl::H2<>&
+  tl!=null --> tl::node2<val_49_1589,p1_49_1590,p2_49_1591> * 
+  HP_1592(p1_49_1590) * HP_1593(p2_49_1591)(3,4)
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node2<val,p1,p> * H(p1) * H(p)],
+ H2(tl1) ::=  [hfalse; emp&tl1!=null; emp&tl1=null; tl1::node2<val,p,v> * 
+p::node2<val1,p6,tl1> * HP_1465(p6)&v=null; tl1::node2<val,p1,v1> * 
+p1::node2<val2,p7,tl1> * HP_1483(p7)&v1=null; tl1::node2<val,p,v2> * 
+p::node2<val3,p8,tl1> * HP_1546(p8)&v2=null; tl1::node2<val,tl',v3> * 
+tl'::node2<val4,p9,tl1> * HP_1592(p9)&v3=null; tl1::node2<val,tl,v4>&
+v4=null & tl=null],
+ HP_1465(p12) ::=  [emp; p12::node2<val7,p13,p> * HP_1465(p13)&p!=null; p12::node2<val6,p11,p>&
+p!=null],
+ HP_1483(p15) ::=  [emp; p15::node2<val9,p16,p1> * HP_1483(p16)&p1!=null; 
+p15::node2<val8,p14,p1>&p1!=null],
+ HP_1546(p18) ::=  [emp; p18::node2<val11,p19,p> * HP_1546(p19)&p!=null; 
+p18::node2<val10,p17,p>&p!=null],
+ HP_1592(p21) ::=  [emp; p21::node2<val13,p22,tl> * HP_1592(p22)&tl!=null; 
+p21::node2<val12,p20,tl>&tl!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node2<val,p1,p> * H(p1) * H(p)
+ or emp&x1=null
+ (3,4),
+ H2(tl1) ::= 
+ emp&tl1!=null
+ or emp&tl1=null
+ or tl1::node2<val,p,v> * p::node2<val1,p6,tl1> * HP_1465(p6)&v=null
+ or tl1::node2<val,p1,v1> * p1::node2<val2,p7,tl1> * HP_1483(p7)&v1=null
+ or tl1::node2<val,p,v2> * p::node2<val3,p8,tl1> * HP_1546(p8)&v2=null
+ or tl1::node2<val,tl',v3> * tl'::node2<val4,p9,tl1> * HP_1592(p9)&v3=null
+ or tl1::node2<val,tl,v4>&v4=null & tl=null
+ (3,4),
+ HP_1465(p12) ::= 
+ p12::node2<val7,p13,p> * HP_1465(p13)&p!=null
+ or p12::node2<val6,p11,p>&p!=null
+ or emp
+ (3,4),
+ HP_1483(p15) ::= 
+ p15::node2<val9,p16,p1> * HP_1483(p16)&p1!=null
+ or p15::node2<val8,p14,p1>&p1!=null
+ or emp
+ (3,4),
+ HP_1546(p18) ::= 
+ p18::node2<val11,p19,p> * HP_1546(p19)&p!=null
+ or p18::node2<val10,p17,p>&p!=null
+ or emp
+ (3,4),
+ HP_1592(p21) ::= 
+ p21::node2<val13,p22,tl> * HP_1592(p22)&tl!=null
+ or p21::node2<val12,p20,tl>&tl!=null
+ or emp
+ (3,4)]
+*************************************
+Stop Omega... 61 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.64749,1657)
+Total verification time: 0.824636 second(s)
+	Time spent in main process: 0.795013 second(s)
+	Time spent in child processes: 0.029623 second(s)
+

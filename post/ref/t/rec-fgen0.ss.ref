@@ -1,0 +1,46 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/rec-fgen0.ss"
+Parsing file "t/rec-fgen0.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f$int~int] for f$int~int
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1344_1345: ( n=res & k<=res) -->  post_1344_1345(n,k,res,flow),
+RELDEFN post_1344_1346: ( n+1=k & res=k & post_1344_1345(k,k,k,flow)) -->  post_1344_1346(n,k,res,flow),
+RELDEFN post_1344_1346: ( res=k & (n+2)<=k & post_1344_1345(k,k,k,flow) & post_1344_1346(1+n,k,k,flow)) -->  post_1344_1346(n,k,res,flow)]
+*************************************
+
+Post Inference result:
+f$int~int
+ ECase case {
+        k<=n -> EBase emp&Term[31]&{FLOW,(4,5)=__norm#E}[]
+                        EAssume 
+                          emp&res=n & k<=n & res>=k & res=n&
+                          {FLOW,(4,5)=__norm#E}[]
+                           ;
+        n<k -> EBase emp&Term[31,k-n]&{FLOW,(4,5)=__norm#E}[]
+                       EAssume 
+                         emp&res=k & n<k & k>=(1+n) & k=res&
+                         {FLOW,(4,5)=__norm#E}[]
+                          
+        }
+
+Checking procedure f$int~int... 
+6 false contexts at: ( (14,12)  (15,7)  (15,20)  (15,18)  (15,16)  (15,14) )
+
+Total verification time: 0.620037 second(s)
+	Time spent in main process: 0.544033 second(s)
+	Time spent in child processes: 0.076004 second(s)
+

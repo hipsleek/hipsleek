@@ -1,0 +1,29 @@
+data cell{ int v; }.
+
+
+//checkentail_exact x::cell<1> |- x::cell<2>.
+//print residue.
+/*
+Entail 1: Fail.(must) cause: flted_4_13=1 |-  flted_4_13=2. LOCS:[4] (must-bug)
+
+Residue:
+ <1>emp&flted_4_13=1&{FLOW,(6,7)=__Error#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
+checkentail x::cell<1> * y::cell<2> |- x::cell<3>.
+print residue.
+
+checkentail x::cell<1> * y::cell<2> |- x::cell<3> * %P.
+print residue.
+
+checkentail x::cell<1> * y::cell<2> |- x::cell<1> * %P.
+print residue.
+
+/*
+
+ why did this succeed?
+
+ ho_vars: [P --> y::cell<flted_7_28>&flted_7_28=2 & flted_7_29=1&
+           {FLOW,(4,5)=__norm#E}[]]
+*/

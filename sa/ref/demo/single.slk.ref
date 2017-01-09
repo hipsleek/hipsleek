@@ -1,0 +1,39 @@
+Starting Omega...oc
+HP_4 is defined.
+HP_5 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=t & self!=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&t!=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=t & self!=null)])
+!!! formula1: emp&((self=x & self!=null) | (x!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&((self>0 & x=self) | (self!=x & self!=x & x>0))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,x], true),
+([self], x=self)])
+Entail (1) : Valid. 
+
+ <1>
+    emp&next!=null & next1=null&{FLOW,(3,4)=__norm}[]
+    or emp&next!=null & next1=null&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&next!=null & next1=null --> HP_4(next1,next@NI)&
+                   true(3,4); 
+                  emp&next!=null --> HP_5(next,t'@NI)&true(3,4); 
+                  emp&next1=null --> HP_4(next1,next@NI)&true(3,4); 
+                  next::node<val,next2> * HP_5(next2,t'@NI)&
+                   true --> HP_5(next,t'@NI)&true(3,4)]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(t_32',t_32') ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(t_32',t_32') ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 15 invocations 
+SAT Count   : 88
+SAT % Hit   : 72.72%
+IMPLY Count : 22
+IMPLY % Hit : 45.45%
+Time(cache overhead) : 0.007492 (seconds)
+
+!!! log(small):(0.504729,133)
+Total verification time: 0.104463 second(s)
+	Time spent in main process: 0.079644 second(s)
+	Time spent in child processes: 0.024819 second(s)
+

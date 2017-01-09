@@ -1,0 +1,18 @@
+post_1186:={[i] -> [res] -> []: ((res=0 && i<=0) || (( (exists (v_int_13_1216: (exists (fc_v_int_13_1229:( (exists (v_int_13_1209:(v_int_13_1209=i-(2) && post_1186(v_int_13_1209,fc_v_int_13_1229))))  && fc_v_int_13_1229=v_int_13_1216+1))) ))  &&  (exists (v_int_13_1225:( (exists (v_int_13_1223:post_1186(v_int_13_1223,v_int_13_1225)))  && res=v_int_13_1225+1))) ) && 1<=i))
+};
+bottomupgen([post_1186], [5], SimHeur);
+
+F0:={[]:0=1};
+F1:=post_1186(F0);F1;
+#(0 >= i && 0 = res)
+F2:=post_1186(F1);
+F2; PairwiseCheck F2;
+#((0 >= i && 0 = res) || ((i >= 1 && 2 >= i) && 1 = res))
+
+F3:=post_1186(F2);
+F3; 
+#{[i,res]:((0 >= i && 0 = res) || ((i >= 1 && 4 >= i) && (res >= 1 && 2 >= res)))};
+
+PairwiseCheck F3;
+#(((i >= 1 && 2 >= i) && 1 = res) || ((i >= 1 && 2 >= i) && 2 = res) || ((i >= 3 && 4 >= i) && 1 = res) || ((i >= 3 && 4 >= i) && 2 = res) || (0 >= i && 0 = res))
+

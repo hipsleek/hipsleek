@@ -1,0 +1,109 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>x::ll{}<n,,>&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 3: Fail.(must) cause:mismatched imm annotation for view ll
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>x::ll{}<n,@L,>&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 5: Fail.(must) cause:mismatched imm annotation for view ll
+
+Residue:
+ <1>emp&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>q::ll{}<n,@L,@L> * x::node<p@L,q>&q_98=q & a_97=p & 2<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_98) ==> ]]
+
+
+
+Entail 7: Valid. 
+
+Residue:
+ <1>emp&q_121=q & a_120=p & 2<n&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  Match(q,q_121) ==> ]]
+
+
+
+Entail 8: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_149,,>
+
+Residue:
+ <1>x::node<a@[],r> * r::ll{}<n,,>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>emp&q_169=r & a_168=a & a_174=b & q_175=r2&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(r,q_169) ==>  COND ==>  Match(r2,q_175) ==> ]]
+
+
+
+Entail 10: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_208,,>
+
+Residue:
+ <1>q_222::ll{}<flted_15_220,,>&flted_56_184=1+n & 2<n & flted_15_220+1=flted_56_184&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 11: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_252,,>
+
+Residue:
+ <1>x::node<a_265@[],q_267@A> * q_266::ll{}<flted_15_264,,>&flted_60_228=1+n & 2<n & flted_15_264+1=flted_60_228&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 12: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_297,,>
+
+Residue:
+ <1>x::node<a_310,q_311> * q_311::ll{}<flted_15_309,,>&flted_64_273=1+n & 2<n & flted_15_309+1=flted_64_273&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 13: Fail.(may) cause:do_unmatched_rhs : q::ll{}<n_341,,@L>
+
+Residue:
+ <1>x::node<a_354,q_355> * q_355::ll{}<flted_15_353,,>&flted_68_317=1+n & 2<n & flted_15_353+1=flted_68_317&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+

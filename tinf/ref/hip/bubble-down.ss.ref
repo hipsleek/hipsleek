@@ -1,0 +1,32 @@
+
+!!!Full processing file "hip/bubble-down.ss"
+Parsing file "hip/bubble-down.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure bubble$node... 
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/bubble-down.ss",Line:67,Col:18
+
+ERROR: at _0:0_0:0 
+Message: split_components: don't expect OR
+ 
+Procedure bubble$node FAIL.(2)
+
+Exception Failure("split_components: don't expect OR") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure bubble$node
+
+!!! proc.proc_name:bubble$node
+Checking procedure bubble$node... 
+Checking procedure bsort$node... 
+Procedure bsort$node SUCCESS.
+
+Checking procedure bsort$node... 
+Termination checking result: SUCCESS
+
+
+20 false contexts at: ( (67,10)  (67,18)  (63,19)  (63,12)  (62,12)  (61,12)  (60,15)  (58,19)  (58,12)  (56,25)  (56,14)  (55,20)  (55,14)  (54,19)  (54,14)  (53,16)  (53,23)  (53,10)  (49,10)  (49,17) )

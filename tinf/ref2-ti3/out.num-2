@@ -1,0 +1,59 @@
+
+!!!Full processing file "examples/num-2.ss"
+Parsing file "examples/num-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_7_1188+y'=1 & v_int_7_1187=y'+x' & !(v_bool_6_1128') & 
+0<x' & !(v_bool_6_1128') & x'=x & y'=y & 
+0<x' & fpost_1123(v_int_7_1187,v_int_7_1188) --> fpost_1123(x,y).
+
+ termAssume x'<=0 & y'=y & x'=x & v_bool_6_1128' & x'<=0 & 
+v_bool_6_1128' --> fpost_1123(x,y).
+
+ termAssume 0<x' & y'=y & x'=x & !(v_bool_6_1128') & 0<x' & 
+!(v_bool_6_1128') & v_int_7_1127'=y'+x' & v_int_7_1126'+
+y'=1 & fpre_0(x,y) --> fpre_0(v_int_7_1127',v_int_7_1126').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=0@B,[3] 1<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[30,1]
+ ensures emp & true; 
+  1<=x -> case {
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           y<=(0-
+           1) -> case {
+                  1<=x & x<=(0-
+                  y) -> requires emp & Term[30,2]
+ ensures emp & true; 
+                  1<=x & 1<=(x+
+                  y) -> requires emp & Loop[]
+ ensures false & false; 
+                  }
+           
+           }
+  
+  }
+Stop Omega... 40 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.051144,346)
+Total verification time: 0.441875 second(s)
+	Time spent in main process: 0.416815 second(s)
+	Time spent in child processes: 0.02506 second(s)
+

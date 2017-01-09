@@ -1,0 +1,68 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+//(5)
+//infer [H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+//print residue.
+
+infer [z] x::node<z>  |- x::lseg<z> .
+print residue.
+
+infer [H1] x::node<z> * H1(z)  |- x::lseg<z> .
+print residue.
+
+
+/*
+Entail (1) : Valid. 
+Residue:
+ <1>emp&x!=inf_p_93 & inf_p_93=null & q_87=z & (((z!=null & z<=inf_p_93) | (inf_p_93!=null & inf_p_93<z) | (inf_p_93=null & z=null)))&{FLOW,(4,5)=__norm#E}[]
+ inferred heap: [z::lseg{}<inf_p_93>]
+ inferred pure: [((z!=null & z<=inf_p_93) | (inf_p_93!=null & (1+
+                 inf_p_93)<=z) | (inf_p_93=null & z=null)); inf_p_93=null]
+
+Entail (2) : Valid. 
+inferred hprel: [H1(z)&true --> emp&z=null]
+[
+*/
+
+infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+HeapPred H3(node y,node@NI x).
+infer_exact [H3] x::node<z> * H3(z,x)  |- x::lseg<z> .
+print residue.
+
+/*
+# ex41a
+
+Expected answer:
+ H2(z,x) --> z::lseg<x> & z!=x
+Or:
+ H2(z,x) --> z::lseg<x> * U(x,z)
+ U(x,z) --> emo & z!=x &x!=null
+
+(1) spurious q_89 (normalize existential vars)
+(2) can we recover z!=x instead of (z<x | (x<z)
+
+<1>HP_94(x,z)&x!=null & q_89!=x & q_89=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(q_89,x)&true --> q_89::lseg<q_89> * HP_94(x,q_89@NI)&
+                   true; 
+                  HP_94(x,z@NI)&true --> emp&(z<x | (x<z & x!=null))]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+
+*/

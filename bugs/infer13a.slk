@@ -1,0 +1,27 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+
+
+//(5)
+//infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+//infer [x,z] x::node<z>   |- x::lseg<z> .
+infer [z@NI] x::node<z>   |- x::node<q>*q::lseg<z> .
+print residue.
+
+/*
+# infer13a.slk
+
+infer [z@NI] x::node<z>   |- x::node<q>*q::lseg<z> .
+
+Can we support @NI or non-instantiating selective variable?
+
+*/

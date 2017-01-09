@@ -1,0 +1,25 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&((self=null & n=0) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & n=0)])
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])Stop Omega... 22 invocations 
+SAT Count   : 58
+SAT % Hit   : 75.86%
+IMPLY Count : 6
+IMPLY % Hit : 16.66%
+Time(cache overhead) : 0.002947 (seconds)
+
+!!! log(small):(0.022469,83)
+Total verification time: 0.084457 second(s)
+	Time spent in main process: 0.059958 second(s)
+	Time spent in child processes: 0.024499 second(s)
+

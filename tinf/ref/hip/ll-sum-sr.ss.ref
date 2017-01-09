@@ -1,0 +1,15 @@
+
+!!!Full processing file "hip/ll-sum-sr.ss"
+Parsing file "hip/ll-sum-sr.ss" by default parser...
+WARNING : parsing problem f is neither a ranking function nor a relation nor a heap predicate
+
+ERROR: at _0:-1_0:-1 
+Message: with 2 convert bexpr  1
+ File "hip/ll-sum-sr.ss", line 7, characters 60-61
+ --error: Failure("with 2 convert bexpr  1")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("with 2 convert bexpr  1")
+Error3(s) detected at main 

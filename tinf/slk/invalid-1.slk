@@ -1,0 +1,19 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+ termAssume res=v_int_12_875' & v_int_12_916<0 & x'=v_int_12_916+1 & x=x' & 
+x<0 & fpost(v_int_12_874') --> fpost(x).
+
+ termAssume res=v_int_12_875' & v_int_12_905<0 & x'=v_int_12_905+1 & x=x' & 
+0<=x & fpost(v_int_12_874') --> fpost(x).
+
+ termAssume res=v_int_12_875' & 0<=v_int_12_903 & x'=v_int_12_903+1 & x=x' & 
+0<=x & fpost(v_int_12_874') --> fpost(x).
+
+ termAssume x<0 & x=x' & x'=v_int_12_874'+1 & 
+v_int_12_874'<0 & fpre(x) --> fpre(v_int_12_874').
+
+ termAssume x>=0 & x=x' & x'=v_int_12_874'+1 & 
+v_int_12_874'<0 & Term --> fpre(v_int_12_874').
+
+term_infer.

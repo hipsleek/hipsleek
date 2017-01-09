@@ -1,0 +1,48 @@
+
+!!!Full processing file "data/ll1.ss"
+Parsing file "data/ll1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=n_1256 & 0<=n1_1253 & n_1256=n1_1253 & !(v_bool_13_1200') & 
+x'!=null & !(v_bool_13_1200') & x'=x & x'!=null & n=1+n1_1253 & 
+v_int_14_1199'=n_1256+1 & res=v_int_14_1199' & v_1311=v_1251 & 
+p_1312=p_1252 & n1_1313=n_1256 & (((p_1252=1 & x'=2 & 1<=n_1256) | (x'=1 & 
+p_1252=null & n_1256=0))) & lengthpost_1192(n_1256) --> lengthpost_1192(n).
+
+ termAssume x=null & n=0 & x'=null & x'=x & v_bool_13_1200' & x'=null & 
+v_bool_13_1200' & v_int_13_1193'=0 & res=v_int_13_1193' & ((n=0 | 
+x=null)) --> lengthpost_1192(n).
+
+ termAssume n=1+n1_1253 & x'!=null & x'=x & !(v_bool_13_1200') & x'!=null & 
+!(v_bool_13_1200') & v_int_14_1198'=1 & v_node_14_1196'=p_1252 & 
+n_1256=n1_1253 & (((p_1252=1 & x'=2 & 1<=n1_1253) | (x'=1 & p_1252=null & 
+n1_1253=0))) & lengthpre_0(n) --> lengthpre_0(n_1256).
+
+
+Base/Rec Case Splitting:
+[	length: [[2] n=0@B,[3] 1<=n@R]
+]
+Termination Inference Result:
+length:  requires x::ll<n> & truecase {
+                          n=0 -> requires emp & Term[62,1]
+ ensures x::ll<n_1218> & 0<=n & 
+                          n_1218=n & res=n; 
+                          1<=n -> requires emp & Term[62,2,0+(1*
+                          n)]
+ ensures x::ll<n_1218> & 0<=n & n_1218=n & 
+                          res=n; 
+                          }
+
+0 false contexts at: ()

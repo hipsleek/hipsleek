@@ -1,0 +1,90 @@
+
+!!!Full processing file "hip/acycle-ll.ss"
+Parsing file "hip/acycle-ll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! generate unknown predicate for Pre synthesis of f_r_1199_while_17_3$node: :HP_1200
+!!! generate unknown predicate for Post synthesis of f_r_1199_while_17_3$node: :GP_1202
+Checking procedure f_r_1199_while_17_3$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1200,GP_1202]requires HP_1200(x)&true
+ ensures GP_1202(x,x')&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure f_r_1199_while_17_3$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure f_r_1199_while_17_3$node
+
+!!! proc.proc_name:f_r_1199_while_17_3$node
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,x')&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE
+(0)H(x)&true --> HP_1200(x)&
+true(3,4),
+ // POST
+(0)emp&true --> G(x,x')&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [HP_1200(x1)],
+ HP_1200(x2) ::=  [emp&x2=null; x2::node<val2,next2> * HP_1200(next2)],
+ G(x3,x4) ::=  [emp],
+ GP_1202(x7,x6) ::=  [GP_1306(x7,x5)&x6=null & x5=null],
+ GP_1306(x7,x5) ::=  [
+  x7::node<val,next> * GP_1306(next,x5)
+  or emp&x7=x5
+  ]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= HP_1200(x1)(3,4),
+ HP_1200(x2) ::= 
+ x2::node<val2,next2> * HP_1200(next2)
+ or emp&x2=null
+ (3,4),
+ G(x3,x4) ::= emp(3,4),
+ GP_1202(x7,x6) ::= GP_1306(x7,x5)&x6=null & x5=null(3,4),
+ GP_1306(x7,x5) ::= 
+ x7::node<val,next> * GP_1306(next,x5)
+ or emp&x7=x5
+ (3,4)]
+*************************************
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.031313,225)
+Total verification time: 0.308477 second(s)
+	Time spent in main process: 0.294771 second(s)
+	Time spent in child processes: 0.013706 second(s)
+

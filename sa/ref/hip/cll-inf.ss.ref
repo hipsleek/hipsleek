@@ -1,0 +1,173 @@
+
+!!!Full processing file "hip/cll-inf.ss"
+Parsing file "hip/cll-inf.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! neqs:[]
+Checking procedure count_rest$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2]requires H2(rest,h)&true
+ ensures H2(rest,h)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(rest,h)&rest!=h --> rest::node<val1,next1> * HP_1303(next1,h@NI) * 
+HP_1304(h,rest@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1303(next1,h@NI) * HP_1304(h,rest@NI)&rest!=h --> H2(next1,h)&
+true(3,4),
+ // POST
+(1;0)H2(h,h)&true --> H2(rest,h)&
+true(3,4),
+ // POST
+(2;0)rest::node<val1,next1> * H2(next1,h)&rest!=h --> H2(rest,h)&
+true(3,4)]
+
+Procedure count_rest$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], (h_1377<self | self<h_1377))])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&rest1!=self&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&rest1!=self&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], rest_1375!=self)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H2(next2,h1) ::=  [emp&next2=h1; next2::node<val,next> * H2(next,h1)&next2!=h1; 
+DP_1368(next2,h1) * DP_1369(h1,rest)&rest!=h1]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H2(next2,h1) ::= 
+ next2::node<val,next> * H2(next,h1)&next2!=h1
+ or DP_1368(next2,h1) * DP_1369(h1,rest)&rest!=h1
+ or emp&next2=h1
+ (3,4)]
+*************************************
+
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], (h_1377<self | self<h_1377))])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], (h_1377<self | self<h_1377))])
+Checking procedure count$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1]requires H1(x)&true
+ ensures H1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(x)&x!=null --> x::node<val2,next3> * HP_1541(next3)&
+true(3,4),
+ // PRE
+(2;0)x::node<val2,next3> * HP_1541(next3)&true --> next3::H2<x> * HP_1548(x)&
+true(3,4),
+ // POST
+(1;0)H1(x)&x=null --> H1(x)&
+true(3,4),
+ // POST
+(2;0)HP_1548(x)&x!=null --> H1(x)&
+true(3,4)]
+
+Procedure count$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self!=null)])
+Context of Verification Failure: 1 File "hip/cll-inf.ss",Line:30,Col:35
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at hip/cll-inf.ss_33:13_33:34 
+Message: split_components: don't expect OR
+ 
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[]
+*************************************
+
+Checking procedure insert$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1]requires H1(x)&true
+ ensures H1(x)&true{,(3,4)=__norm};
+Proving binding in method insert$node~int for spec  EAssume 
+   H1(x)&{FLOW,(3,4)=__norm}[]
+   , Line 17
+
+( []) bind: node  x'::node<val_19_1259',next_19_1260'> cannot be derived from context
+hip/cll-inf.ss_19:4_19:10
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MUST
+        fe_name: 
+        fe_locs: {
+                  fc_message: classical separation logic
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ SEARCH ==>  Match(x,x') ==> ]]
+ ]hip/cll-inf.ss_19:4_19:10
+
+Context of Verification Failure: 1 File "hip/cll-inf.ss",Line:17,Col:36
+Last Proving Location: 1 File "hip/cll-inf.ss",Line:19,Col:4
+
+Procedure insert$node~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure insert$node~int
+
+!!! proc.proc_name:insert$node~intStop Omega... 127 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.171719,715)
+Total verification time: 0.490717 second(s)
+	Time spent in main process: 0.445814 second(s)
+	Time spent in child processes: 0.044903 second(s)
+

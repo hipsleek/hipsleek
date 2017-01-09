@@ -1,0 +1,21 @@
+//hip_include '../prelude_aux.ss'
+//#option --ato
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+relation update_array_1d(int[] a,int[] a',int b,int c).
+
+
+infer [] update_array_1d(a,a',10,5) |-  a'[4]=a[4]. 
+print residue.
+
+infer [] update_array_1d(a,a',v,5) & v=a[4] |- a'[5]=a[4]. 
+print residue.
+
+infer [@arrvar] update_array_1d(a,a',v,5) & v=a[4] |- a'[5]=a[4]. 
+print residue.
+
+/*
+# ex11e.slk
+
+
+*/

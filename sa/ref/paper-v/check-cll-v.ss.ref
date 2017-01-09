@@ -1,0 +1,22 @@
+
+!!!Full processing file "paper-v/check-cll-v.ss"
+Parsing file "paper-v/check-cll-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=p | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p)])
+Checking procedure check_csll$node~node... 
+Procedure check_csll$node~node SUCCESS.
+Stop Omega... 9 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.058377,312)
+Total verification time: 0.33366 second(s)
+	Time spent in main process: 0.310218 second(s)
+	Time spent in child processes: 0.023442 second(s)
+

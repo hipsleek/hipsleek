@@ -1,0 +1,359 @@
+# ex1-null.ss: FIXED
+
+Why did we have:
+
+  Exception Failure("Proving precond failed") Occurred!
+
+when there was an earlier prove bind failure?
+Can we change to a "bind failure exception" rather than
+a  "pre-cond failure"?
+
+Checking procedure foo$... Proving binding in method foo$ for spec  EAssume 
+   emp&{FLOW,(4,5)=__norm#E}[]
+   , Line 0
+
+( [(,1 ); (,2 )]) bind: node  x_29'::cell<val_15_1342'>@L cannot be derived from context
+ex1-null.ss_15:9_15:14
+
+==========================================================
+# ex2-null-safe.ss --classic: FIXED (temp)
+
+We obtained a post-cond failure:
+
+Procedure foo$ FAIL.(2)
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+I wonder if we can change it to a:
+
+  "memory leak failure : residue forbiddne"
+
+Checking procedure foo$... 
+Post condition cannot be derived:
+  (must) cause:  x_1361::cell<v_int_14_1358>&v_int_14_1358=5 & 
+v_int_15_1342'=v_int_14_1358 & res=v_int_15_1342'&{FLOW,(4,5)=__norm#E}[]: residue is forbidden.(2)
+==========================================================
+# ex3-double-free.ss (FIXED)
+
+int foo()
+  requires true
+  ensures true;
+{
+  cell x;
+  x=new cell(5);
+  int r=x.val;
+  free(x);
+  free(x);
+  return r;
+}
+
+Why did we have a List.hd exception?
+Why not a Cell not found error?
+
+Exception Failure("hd") Occurred!
+==========================================================
+# bugs-ex3.slk (FIXED)
+
+checkentail emp |- x::cell<n>@L.
+print residue.
+
+Should below be a must error?
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : x::cell<n>@L
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+==========================================================
+# ex5-acyclic.ss (FIXED)
+
+Why is there such a message? I think norm should be assumed to
+be in throw list?
+
+WARNING: ex5-acyclic.ss_12:10_12:17:the result type __norm#E is not covered by the throw list[]
+
+==========================================================
+# ex2-leak.ss -dre "check_specs_infer"  (DONE)
+
+If @classic present, can we perform a "wrap_classic"
+for this check_specs_infer method?
+
+int foo()
+  infer [@classic]
+  requires true
+  ensures true;
+{
+  cell x;
+  x=new cell(5);
+  return x.val;
+}
+
+check_specs_infer@1
+check_specs_infer inp1 : EInfer @classic[]
+   EBase emp&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     emp&{FLOW,(4,5)=__norm#E}[]
+                     
+
+==========================================================
+# bugs-ex9a.ss (FIXED by Chanh)
+
+There is no Term nor MayLoop proven for 
+this length method. Can we omit this message?
+Can this message be highlighted when we have
+at least one Term/Loop proven.
+
+Termination checking result: SUCCESS
+
+Why isn't the same message printed for ex10-len-dll.ss?
+==========================================================
+# bug-ex10.ss: FIXED
+
+why is this going into a loop with Omega timeout?
+
+Checking procedure length$node~node...  Timeout after 10. secs
+[omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 74 invocations Stop Omega... 74 invocations Starting Omega.../usr/local/bin/oc
+==========================================================
+# ex16-ll-set.ss: FIXED
+
+Why am I getting this mona error in default branch?
+Was it expecting mona to be in curent directory for svcomp14?
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss -tp om
+WARNING : Command for starting the prover (mona) not found
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss -tp mona
+WARNING : Command for starting the prover (mona) not found
+pls2nus@loris-laptop:~/code/default/tut/ex1$ which mona
+pls2nus@loris-laptop:~/code/default/tut/ex1$ which mona_inter
+/usr/local/bin/mona_inter
+
+
+Is the default tp auto? Did it try Omega
+before mona? but which version of mona?
+
+ls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex16-ll-set.ss 
+
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},S1)")
+ Formula: exists(S1:exists(v:S=union({v},S1)))
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+==========================================================
+# ex17-ins-sort.ss (FIXED)
+
+Are they the same?
+
+chinwn@loris-7:~$ ls -l /usr/bin/mona
+-rwxr-xr-x 1 root root 460K Apr 23  2014 /usr/bin/mona
+chinwn@loris-7:~$ ls -l /usr/local/bin/mona*
+-rwxr-xr-x 1 root root 460K Sep  8 10:08 /usr/local/bin/mona_inter
+
+Also, init_tp is called by SLEEK but not HIP at the moment. Why?
+
+Which prover are we using? mona, z3 or oc?
+ init_tp not executed?
+
+It seems that pure_tp="om" by default in tpdispatcher.ml.
+However, when we use -tp om, there is an error message 
+
+pls2nus@loris-laptop:~/code/default/tut/ex1$ ../../hip ex17-ins-sort.ss -tp om
+WARNING : Command for starting the prover (mona) not found
+
+!!!Full processing file "ex17-ins-sort.ss"
+Parsing file "ex17-ins-sort.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+==========================================================
+# ex21-ins-sort-inf.ss --en-inf (* FIXED with --dsd *)
+
+lsortI<m> == self=null & m=\inf
+  or self::node<m,q>*q::lsortI<m2> & m<=m2 
+  inv true;
+
+node insert(node x, node y)
+  requires x::node<v,null> * y::lsortI<mm> 
+  ensures res::lsortI<r> & r=min(v,mm);
+
+
+Checking procedure insert$node~node... 
+Post condition cannot be derived:
+  (may) cause:  (((x=1 & null=2) | (x=1 & null=null & mm=\inf))) 
+      & v<=(\inf) |-  v=min(v,mm). LOCS:[23;17;21;0;13;12;19] (may-bug)
+
+ Is this lsortI xpure correct
+
+ xform: (0-(\inf))<(\inf) & (((self=null & \inf=m & 0<(m+(\inf))) | (true & 
+           self!=null)))
+==========================================================
+# sim4-tail.ss (FIXED)
+
+  __norm should always be allowed to escape.
+  Can we omit this message since __norm is allowable.
+
+  WARNING: sim4-while.ss_14:13_14:47:the result type __norm#E is not 
+  covered by the throw list[__Brk_top#E]
+
+==========================================================
+# ex26-bubble-lemma.ss (not urgent)
+
+Any idea why mona has "cycle-limit reached"?
+Can we increase it? Is it during SAT checking?
+
+Checking procedure bubble$node... 
+Mona is restarting ... cycle limit reached
+
+Mona is restarting ... cycle limit reached
+Procedure bubble$node SUCCESS.
+==========================================================
+# bugs-ex13.slk (not urgent)
+
+Could we have a warning to indicate that p::dll<self> is
+unreachable?
+==========================================================
+# bugs-ex31-match.slk (urgent): FIXED
+
+Why is explicit instantiation not working?
+
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
+
+Residue:
+ <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+//LOC
+line 253 of sleekcore.ml eliminates evars formulas
+let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+
+==========================================================
+# ex3-double-free.ss: FIXED
+
+Why is this called a bind-failure?
+I guess we should only call it a bind failure for
+field access x.field failure.
+
+For pre-condition, maybe just use "pre-cond failure
+or unmatched node failure?
+
+Procedure foo$ FAIL.(2)
+Exception Failure("bind failure exception") Occurred!
+
+==========================================================
+# bugs-ex34-ll-set.slk -tp mona (FIXED)
+
+pred llSet<S> # bugs-ex34-ll-set.slk -tp mona (not urgent)
+
+checkentail x::node<a,q>*q::node<b,null> |- x::llSet<S>.
+
+Why are the formulae duplicated?
+
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+
+== emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+Why did we get this error even when mona is being invoked?
+I dont think hip has this problem.
+
+!!! init_tp : Using Z3 by default
+Starting z3... 
+Omega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union({v},S1)")
+ Formula: exists(S1:exists(v:S=union({v},S1)))
+==========================================================
+# bugs-ex34-ll-set.slk -tp mona (not urgent)
+
+checkentail x::node<a,q>*q::node<b,null> |- x::llSet<S>.
+
+Why are the formulae duplicated?
+
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_16_43=null & v_54=a & q_55=q & v_59=b & q_60=flted_16_43 
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+& S=union({v_54},S1_56)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_55) ==>  COND ==>  BaseCaseFold ==> ]]
+==========================================================
+# bugs-ex37-ll-imm.slk (not urgent)
+
+  checkentail x::ll<n>@L & n>2 |- x::ll<m>@L & m>1.
+
+  duplicated formula m=n..
+
+  <1>x::ll{}<n>@L&2<n & m=n & m=n&{FLOW,(4,5)=__norm#E}[]
+==========================================================
+# ex2-leak.ss : FIXED
+
+We obtain:
+
+Procedure foo$ FAIL.(2)
+Exception Failure("bind failure exception") Occurred!
+
+EXPECT:
+  memory leak error.
+
+In contrast:
+  hig bugs-ex2-leak.ss --classic
+gave the correct error message:
+
+Exception Failure("memory leak failure.") Occurred!
+
+==========================================================
+# bugs-ex31b.slk
+
+checkentail x::pair<1,2> |- x::pair<a,b>.
+
+Why I am getting this?
+
+ <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+Two days ago, we have just:
+  <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+==========================================================
+# bugs-ex33-ll-size.slk
+
+Why explicit instantiation not working for predicate!
+Can trace why gen_expl_vars is empty?
+
+!!! elim ante_evars:[n]
+!!! elim gen_expl_vars:[]
+!!! elim evars:[]
+
+Entail 1: Valid. 
+Residue:
+ <1>emp&x=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+Good to trace with -dd gave:
+ es_gen_expl_vars: [n]
+ es_gen_impl_vars: [n]
+
+bugs-ex33-ll-size.slk --pcp
+
+The translation places explicit nnn as both explicit
+and implicit. I think this is incorrect.
+
+ ### ante =  emp&x=null&{FLOW,(4,5)=__norm#E}[]
+ ### conseq =  EBase exists (Expl)[nnn](Impl)[nnn](ex)[]x::ll{}<nnn>&
+       {FLOW,(4,5)=__norm#E}[]
+
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================
+==========================================================

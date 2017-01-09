@@ -1,0 +1,17 @@
+
+!!!Full processing file "hip/s2l-2.ss"
+Parsing file "hip/s2l-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure s2l$node... 
+Procedure s2l$node SUCCESS.
+
+Checking procedure s2l$node... 
+Termination checking result: 
+(18)->(18) (MayTerm ERR: not decreasing)  Term[94; s; n] ->  Term[94; s_1321; n_1320]
+
+
+0 false contexts at: ()

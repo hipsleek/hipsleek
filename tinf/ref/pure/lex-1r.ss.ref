@@ -1,0 +1,27 @@
+
+!!!Full processing file "pure/lex-1r.ss"
+Parsing file "pure/lex-1r.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure loop$int~int... 
+Procedure loop$int~int SUCCESS.
+
+Checking procedure loop$int~int... 
+Checking procedure loop$int~int... **** TEMPLATE ASSUMPTION(S) ****
+[ 0<x_1232 & y'=y & x_1232=x & 0<x_1232 & 0<y' & 0<y' & x'+
+  1=x_1232 --> (r( x, y))>(r( x', y'))
+, 0<x_1246 & y_1256=y & x_1246=x & 0<x_1246 & 0<y_1256 & 0<y_1256 & y'+
+  1=y_1256 --> (r( x, y))>(r( x', y'))
+]
+TEMPLATE INFERENCE: Unsat.
+Trying to infer lexicographic termination arguments ...
+**** LEXICOGRAPHIC RANK INFERENCE RESULT ****
+[[ -1+(0*x)+(1*y)],[ -1+(1*x)+(0*y)]]
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

@@ -1,0 +1,30 @@
+ 
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:IMPLY:complement {[size] : (((0 >= size) | (0 < size)))};
+ raw result:{[size]  : FALSE }
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 158<0; prover: OMEGA CALCULATOR; loc: array_simeple2_ss_6:8_6:12; kind: PRE
+ raw proof:SAT:{[aPRMD, a, v_int_6_1175PRMD] : (((aPRMD = a) & (v_int_6_1175PRMD = 5)))};
+ raw result:{[aPRMD,aPRMD,5]}
+ Sat:  a'=a & v_int_6_1175'=5
+ res: SAT
+ -------------------- 
+ id: 159<1; prover : CACHED ; loc: array_simeple2_ss_6:8_6:12; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & v_int_6_1175'=5
+ res: SAT
+ -------------------- 
+ id: 160<-1; prover : CACHED ; loc: array_simeple2_ss_6:8_6:14; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & ((!(5=5) | v_int_6_1177'=a_primed_5')) & v_int_6_1177'=a'[5] & 
+v_int_6_1176'=0 & v_int_6_1176'<v_int_6_1177'
+ res: exception thrown
+ -------------------- 
+ id: 161<2; prover : CACHED ; loc: array_simeple2_ss_6:2_11:3; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  a'=a & ((!(5=5) | 0<a_5)) & 0<(a[5])
+ res: exception thrown
+ --------------------

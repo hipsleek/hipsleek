@@ -1,0 +1,28 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{-%P}<>.
+pred_prim Thrd2{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+/*
+
+# ex60d --ann-vp
+
+
+
+checkentail t::Thrd{-x::cell<n>}<>
+   & n=5
+   |-  t::Thrd{ -%ZZZ}<> . // * %P.
+print residue.
+
+*/
+
+
+checkentail t::Thrd{-@full[x,y]}<>
+   * @full[t,x]&x=5
+   |-  t::Thrd{-%PPP*@full[x]}<> . // * %P.
+print residue.
+

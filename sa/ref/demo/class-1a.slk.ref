@@ -1,0 +1,20 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Fail.(must) cause:residue is forbidden.(1)
+
+ <1>H(a,b) * G(b)&a=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+Time(cache overhead) : 3.8e-05 (seconds)
+
+!!! log(small):(0.005047,2)
+Total verification time: 0.056065 second(s)
+	Time spent in main process: 0.039346 second(s)
+	Time spent in child processes: 0.016719 second(s)
+

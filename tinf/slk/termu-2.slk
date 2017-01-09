@@ -1,0 +1,42 @@
+UTPre@f fpre(int x, int y).
+UTPost@f fpost(int x, int y).
+
+UTPre@g gpre(int x).
+UTPost@g gpost(int x).
+
+infer [@term] x >= 0 & x' = x & fpre(x, y) |- gpre(x').
+//print residue.
+
+infer [@term] x < 0 & fpre(x, y) |- fpost(x, y).
+//print residue.
+
+infer [@term] x >= 0 & x' = x & fpre(x, y) & gpost(x') |- fpost(x, y).
+//print residue.
+
+infer [@term] x >= 0 & x' = x - 1 & y' = 0 & gpre(x) |- fpre(x', y').
+//print residue.
+
+infer [@term] x < 0 & gpre(x) |- gpost(x).
+//print residue.
+
+infer [@term] x >= 0 & x' = x - 1 & y' = 0 & gpre(x) & fpost(x', y') |- gpost(x).
+//print residue.
+
+term_infer.
+
+////////////////////////////////////////////////
+
+template int rg(int x).
+template int rf(int x, int y).
+
+infer[rg, rf] x >= 0 & x >= 0 & x' = x & Term[rf(x, y)] |- Term[rg(x')].
+
+infer[rg, rf] x >= 0 & x >= 0 & x' = x - 1 & y' = 0 & Term[rg(x)] |- Term[rf(x', y')].
+
+template_solve.
+
+infer[rg, rf] x >= 0 & x>= 0 & x' = x |- rf(x, y) > rg(x') & rf(x, y) >= 0.
+
+infer[rg, rf] x >= 0 & x >= 0 & x' = x - 1 & y' = 0 |- rg(x) > rf(x', y') & rg(x) >= 0.
+
+template_solve.

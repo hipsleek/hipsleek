@@ -1,0 +1,8 @@
+data arrI {
+  int val;
+}.
+
+checkentail x::arrI<1> |- y::arrI<1>.
+print residue.
+expect Fail.
+

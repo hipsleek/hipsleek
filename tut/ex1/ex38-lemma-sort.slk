@@ -1,0 +1,34 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+pred lsort<S> == emp & self=null & S={}
+  or self::node<v,q>*q::lsort<S1> & S=union({v},S1)
+          & forall (w:(w notin S1| v<=w))
+  inv true.
+
+lemma_safe "lsort2ll" self::lsort<S> -> self::llSet<S>.
+// valid?
+
+lemma_safe "ll2lsort"self::lsort<S> <- self::llSet<S>.
+// valid?
+
+//(1)
+checkentail x::lsort<S> |- x::llSet<S2>.
+// valid?
+print residue.
+
+//(2)
+checkentail x::lsort<S> & S!={} |- x::node<a,q> * q::llSet<S2>.
+// valid?
+print residue.
+
+//(3)
+checkentail x::llSet<S2> |- x::lsort<S2>.
+// valid?
+

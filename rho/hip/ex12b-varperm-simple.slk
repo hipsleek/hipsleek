@@ -1,0 +1,31 @@
+  
+checkentail x'=1 & y'=4 |- @value[x] & x'>0 .
+print residue.
+
+/*
+
+# ex12b.slk
+
+Residue:
+ <1>emp&@zero[[x]] & y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+
+This residue is for other processes.
+Is there a residue for the current process?
+
+
+  <1>emp&y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+
+  other threads
+  ==>   <1>emp&y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+
+
+ current thread
+  (y'=4 & x'=1) * @full[x] 
+  ==> @value[x] & y'=4 & x'=1
+  // can modify but final value 
+
+ final state:
+   (exists x'.  ...)
+
+
+*/

@@ -1,0 +1,86 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i,n-1> & x=self+(n-1) & i>=0 
+  inv n>=i & i>=0.
+
+pred arr_seg2<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg2<i+1,n> & x=self+i & i>=0 
+  inv n>=i & i>=0.
+
+pred arr_bnd<i,n,m> == i=n & i>=0
+  or x::arrI<v>*self::arr_bnd<i+1,n,m> & x=self+i & i>=0 & v<=m 
+  inv n>=i & i>=0.
+
+infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> * y::arrI<_>
+  & x=base+(n-1) & i>=0 & y=x+1 & n-1>=i
+  |- base::arr_seg<i,n+1>.
+expect Valid.
+
+//(2)
+infer[@classic] x::arrI<_> * base::arr_seg<i,n-1> 
+  & x=base+(n-1) &  y=x+1 //& n-1>=1 & i>=0 
+  |- base::arr_seg<i,n>.
+expect Valid.
+
+//(3)
+infer[@classic] x::arrI<_> * base::arr_seg2<i+1,n> 
+  & x=base+i &  i>=0 //& n-1>=1 & i>=0 
+  |- base::arr_seg2<i,n>.
+expect Valid.
+
+infer[@classic] x::arrI<_> & x=base+i & i>=0 
+  |- base::arr_seg<i,i+1>.
+expect Valid.
+
+infer[@classic] x::arrI<v> & x=base+i & i>=0 
+  |- base::arr_bnd<i,i+1,m>.
+expect Valid.
+print residue.
+
+/*
+# ex6f1c4.slk --pnum 2
+
+(====)
+extr_ptr_eqn@5@3@2
+extr_ptr_eqn inp1 : x=i+self & 0<=i
+extr_ptr_eqn@5 EXIT:([(x,self)],[ x=i+self])
+
+----------
+
+(====)
+extr_ptr_eqn@9@7@2
+extr_ptr_eqn inp1 : x=(self+n)-1 & 0<=i
+extr_ptr_eqn@9 EXIT:([],[ x=(self+n)-1])
+
+!!! **astsimp.ml#2699:lst(root):[(self,1,[]),(x,0,[])]
+
+
+# why does pred vs pred give a FOLD?
+  why isn't it data vs pred?
+
+!!! **context.ml#3661:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<i_76,n_77>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Unfold 0 =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:1
+  Match =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:2
+  Fold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M;
+  Prio:3
+  BaseCaseUnfold =>
+    LHS: base::arr_seg<i,flted_14_51>@M
+    RHS: base::arr_seg<i_76,n_77>@M
+  ]
+
+*/

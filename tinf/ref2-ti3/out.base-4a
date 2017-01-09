@@ -1,0 +1,38 @@
+
+!!!Full processing file "examples/base-4a.ss"
+Parsing file "examples/base-4a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_7_1164=1+x' & !(v_bool_6_1127') & 0<x' & 
+!(v_bool_6_1127') & x'=x & 0<x & 
+0<x' & fpost_1123(v_int_7_1164) --> fpost_1123(x).
+
+ termAssume 0<x' & 0<x & x'=x & !(v_bool_6_1127') & 0<x' & 
+!(v_bool_6_1127') & v_int_7_1126'=1+x' & fpre_0(x) --> fpre_0(v_int_7_1126').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] 1<=x@R]
+]
+Termination Inference Result:
+f:  requires emp & 0<xrequires emp & Loop[]
+ ensures false & false;
+Stop Omega... 5 invocations 
+1 false contexts at: ( (6,14) )
+
+!!! log(small):(0.025698,180)
+Total verification time: 0.282064 second(s)
+	Time spent in main process: 0.267229 second(s)
+	Time spent in child processes: 0.014835 second(s)
+

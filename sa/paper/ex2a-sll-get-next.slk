@@ -1,0 +1,103 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+
+infer [H] H(x) |- x::node<a,b>@L.
+//infer []  x::node<1,nil> |- x::node<a,b>@L.
+//print residue.
+
+
+print residue.
+
+/*
+# ex2a.slk
+
+# if lhs_rest already has hole, don't add it into lhs_rest anymore ..
+
+      let lhs_rest = 
+        if !Globals.adhoc_flag_3 then lhs_rest 
+        else List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
+                                    ) lhs_rest holes
+
+!!! **solver.ml#12930:lhs_rest: HP_20(b_19,x) * (Hole[21])
+!!! **solver.ml#12933:holes:[( x::node<a_18,b_19>@M,21)]
+!!! **solver.ml#12939:lhs_rest: HP_20(b_19,x) * (Hole[21]) * (Hole[21])
+!!! **solver.ml#12854:new_estate(M_match):  HP_20(b_19,x) * (Hole[21]) * (Hole[21])&{FLOW,(20,
+
+
+!!! **solver.ml#12933:holes:[( x::node<a_18,b_19>@M,21)]
+!!! **solver.ml#12939:lhs_rest: HP_20(b_19,x) * (Hole[21]) * (Hole[21])
+
+
+
+!!! **inferHP.ml#1344:  new_lhs: : x::node<a_18,b_19>@M
+(==inferHP.ml#2269==)
+INFER.update_es@1
+INFER.update_es inp1 : H(x)
+INFER.update_es inp2 : H(x)&{FLOW,(20,21)=__norm#E}[]
+INFER.update_es inp3 : x::node<a_18,b_19>@L
+INFER.update_es inp4 :emap[]
+INFER.update_es@1 EXIT:( HP_20(b_19,x) * (Hole[21]), x::node<a_18,b_19>@M)
+
+!!! **solver.ml#12854:new_estate(M_match):  HP_20(b_19,x) * (Hole[21]) * (Hole[21])&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H(x) |#|  --> x::node<a_18,b_19>@M * HP_20(b_19,x)]
+ es_gen_impl_vars(E): [a; b]
+ es_crt_holes: [x::node<a_18,b_19>@M:21]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap ==>  Match(x,x)
+ es_infer_vars_hp_rel: [H; HP_20]
+
+# too late (2 holes)
+
+(==solver.ml#12856==)
+do_match@2
+do_match inp1 : x::node<a_18,b_19>@M
+do_match inp2 : x::node<a,b>@L
+do_match inp3 :  HP_20(b_19,x) * (Hole[21]) * (Hole[21])&{FLOW,(20,21)=__norm#E}[]
+ es_infer_hp_rel: [unknown H(x) |#|  --> x::node<a_18,b_19>@M * HP_20(b_19,x)]
+ es_gen_impl_vars(E): [a; b]
+ es_crt_holes: [x::node<a_18,b_19>@M:21]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap ==>  Match(x,x)
+ es_infer_vars_hp_rel: [H; HP_20]
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@2 EXIT: [ HP_20(b_19,x) * (Hole[21]) * (Hole[21])&a=a_18 & b=b_19&
+{FLOW,(20,21)=__norm#E}[]
+  es_infer_hp_rel: [unknown H(x) |#|  --> x::node<a_18,b_19>@M * 
+                                          HP_20(b_19,x)]
+  es_gen_impl_vars(E): []
+  es_crt_holes: [x::node<a_18,b_19>@M:21]
+  es_subst (from,to): []:[]
+  es_trace:  SEARCH ==>  InferUnfold  ==>  InferHeap ==>  Match(x,x)
+  es_infer_vars_hp_rel: [H; HP_20]]
+
+# need to trace
+
+  process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+
+
+(==solver.ml#12856==)
+do_match@1
+do_match inp1 : x::node<flted_9_14,nil>@M
+do_match inp2 : x::node<a,b>@L
+do_match inp3 :  Hole[23]&flted_9_14=1&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [a; b]
+ es_crt_holes: [x::node<flted_9_14,nil>@M:23]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  Match(x,x)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ x::node<flted_9_14,nil>@M&flted_9_14=1 & a=flted_9_14 & b=nil&
+{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_crt_holes: [x::node<flted_9_14,nil>@M:23]
+  es_subst (from,to): []:[]
+  es_trace:  SEARCH ==>  Match(x,x)]
+
+
+*/
+

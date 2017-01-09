@@ -1,0 +1,48 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x>=0 & fpre(x) & y=3 |- Loop .
+print residue.
+
+infer [@term] x>=0 & fpre(x) |- MayLoop .
+print residue.
+
+//(3) does fpre and Term belongs to same mutual-recursive
+// can we distinguish?
+infer [@term] x>=0 & fpre(x) & x1=x-1 |- Term[x1].
+print residue.
+/*
+# partial.slk
+
+Why rhs Term arg not printed?
+
+infer [@term] x>=0 & fpre(x) & x1=x-1 |- Term[x1].
+
+Entail (3) : Valid. 
+
+ <1>emp&0<=x & x1+1=x & fpre_0(x)[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPre rel: [emp&0<=x & x1+1=x&{FLOW,(21,22)=__norm}[]: 
+                       fpre_0(x) --> Term]
+*/
+
+//(4)
+infer [@term] x>=0 & fpre(x) & x1=x-1 |- Term[].
+print residue.
+
+//(5)
+infer [@term] x>=0 & Loop |- fpre(x).
+print residue.
+
+//(6)
+infer [@term] x>=0 & MayLoop |- fpre(x).
+print residue.
+
+//(7)
+infer [@term] x>=0 & Term[x] |- fpre(x).
+print residue.
+
+
+//(7)
+infer [@term] x>=0 & Term[] |- fpre(x).
+print residue.
+

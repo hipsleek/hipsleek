@@ -1,0 +1,81 @@
+Starting Omega...oc
+GP_3 is defined.
+GP_4 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=x & self!=null) | (x!=null & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&((self>0 & x=self) | (self!=x & self!=x & x>0))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,x], true),
+([self], x=self)])
+!!!POST-OBLIGATION:
+ t_32'::G<next_29_57>&next_29_789!=null & 
+  next_29_57=next_29_789 --> t_32'::node<val_34_802,next_34_803> * 
+  GP_3(next_34_803,next_29_789) * GP_4(next_29_789,t_32')(3,4)
+
+*************************************************
+*******relational assumptions (obligation)********
+****************************************************
+[ emp&next_34_803=null & 
+  next_29_789!=null --> GP_3(next_34_803,next_29_789)(3,4),
+ emp&next_29_789!=null & t_32'=next_29_789 --> GP_4(next_29_789,t_32')(3,4),
+ emp&next_34_803=null --> GP_3(next_34_803,next_29_57)(3,4),
+ next_29_57::node<val_29_83,next_29_82> * 
+  GP_4(next_29_82,t_32') --> GP_4(next_29_57,t_32')(3,4)]
+*************************************
+
+
+*************************************************
+*******relational assumptions (pre-assumptions)********
+****************************************************
+[]
+*************************************
+
+!!! >>>>>> step 1: find dangling ptrs, link pre and post-preds dangling preds<<<<<<
+!!! >>>>>> step 2: split constraints based on pre and post-preds<<<<<<
+!!! *** NO SPLITTING DONE ***
+!!! >>>>>> step 3: apply transitive implication<<<<<<
+!!! >>>>>> step 3a: simplification <<<<<<
+!!! >>>>>> step 3b: do apply_transitive_imp <<<<<<
+!!! >>>>>> pre-predicates<<<<<<
+!!! >>>>>> step pre-4: remove unused predicates<<<<<<
+!!! >>>>>> pre-predicates: step pre-5: group & simpl impl<<<<<<
+!!! >>>>>> pre-predicates: step pre-7: remove redundant x!=null<<<<<<
+!!! >>>>>> pre-predicates: step pre-8: strengthen<<<<<<
+!!! >>>>>> step 6: generalization <<<<<<
+!!! >>>>>> post-predicates<<<<<<
+!!! >>>>>> step post-4: step remove unused predicates<<<<<<
+!!! >>>>>> post-predicates: step post-5: remove redundant x!=null : not implemented yet<<<<<<
+!!! >>>>>> post-predicates: step post-61: weaken<<<<<<
+!!!    synthesize: GP_3
+!!!   next_roots:[next_34_86]
+!!!   next_roots1:[next_34_86]
+!!!   next_roots:[next_34_86]
+!!!   next_roots1:[next_34_86]
+!!! GP_3(next_34_86,next_29_87) ::=  [GP_89(next_29_87)&next_34_86=null]
+!!! GP_89(next_29_87) ::=  [emp&next_29_87!=null; emp]
+!!! GP_88(next_34_86,next_29_87) ::=  [GP_88(next_34_86,next_29_87)]
+!!!    synthesize: GP_4
+!!! GP_4(next_29_92,t_93) ::=  [emp&next_29_92!=null & t_93=next_29_92; 
+next_29_92::node<val_29_83,next_29_82> * GP_4(next_29_82,t_93)]
+
+************************************************
+*******relational definition (obligation)********
+**************************************************
+[HP_RELDEFN GP_3:  GP_3(next_34_86,next_29_87) ::=  [GP_89(next_29_87)&next_34_86=null],
+HP_RELDEFN GP_89:  GP_89(next_29_87) ::=  [emp&next_29_87!=null; emp],
+HP_RELDEFN GP_88:  GP_88(next_34_86,next_29_87) ::=  [GP_89(next_29_87)],
+HP_RELDEFN GP_4:  GP_4(next_29_92,t_93) ::=  [emp&next_29_92!=null & t_93=next_29_92; 
+next_29_92::node<val_29_83,next_29_82> * GP_4(next_29_82,t_93)]]
+*************************************
+Stop Omega... 8 invocations 
+SAT Count   : 55
+SAT % Hit   : 67.27%
+IMPLY Count : 17
+IMPLY % Hit : 23.52%
+Time(cache overhead) : 0.003821 (seconds)
+
+!!! log(small):(0.504351,87)
+Total verification time: 0.097704 second(s)
+	Time spent in main process: 0.07539 second(s)
+	Time spent in child processes: 0.022314 second(s)
+

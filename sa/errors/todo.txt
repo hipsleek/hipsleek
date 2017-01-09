@@ -1,0 +1,446 @@
+/hip
+#ll-next.ss
+
+ --sa-ep:
+   print inferred spec
+
+expect:
+----------
+
+requires x::node<val,next>@M * HP_907(next) or emp&x=null
+ensures  x::node<val,res>@M * HP_907(res) or emp&x=null & res=null;
+
+=====================================================================
+
+ll-val
+ll-next
+ll-last
+ll-get-size
+ll-next
+ll-insert
+ll-append
+ll-delete
+tree-val
+tree-rem
+
+=====================================================================
+#alias.ss
+
+GOT
+
+ case {
+   (tmp!=null | tmp=null) ->
+     requires tmp::node<val,next>@M * HP_930(next) & true || emp & tmp=null
+     ensures HP_930(res) * x::node<val,res>@M & true || emp & x=null & res=null;;
+   }
+
+==============>
+/* EXPEXTED
+case x == null =>
+  ensures res = null;
+case x != null =>
+  requires x::node(val,next)
+  ensures x::node(val,next) & res=next;
+*/
+
+=====================================================================
+
+======================================================================
+#ll-next, ll-size, ll-last.c
+ll-last2
+
+
+case spec
+
+=====================================================================
+# sa/errors/ex2.slk --efa: FIXED
+
+checkentail x=null |- x::node<p>.
+print residue.
+
+why can't we have residue with error status?
+why can't we have the original state x=null in residue state?
+
+expecting residue of :
+  (x=null) & _Flow=MUST_ERRE
+
+checkentail true |- x::node<p>.
+print residue.
+/*
+# ex2.slk --efa
+
+# why did we get a must failure? shouldn't this be a may failure?
+
+
+expecting residue of :
+  true & _Flow=MAY_ERR
+
+=====================================================================
+# next.ss: DONE
+
+[ // BIND
+(0)H(x)&true --> x::node<next1> * HP_1196(next1)&
+true,
+ // BIND
+(0)H(x)&true --> emp&
+x=null,
+ // POST
+(0)x::node<res> * HP_1196(res)&true --> G(x,res)&
+true]
+
+=============
+GOT:
+
+[ H(x1) ::= hfalse&false,
+ G(x2,res1) ::= x2::node<res1>&res1=DP]
+
+**************
+EXPECTED:
+[ H(x1) ::= x::node<next1> * HP_1196(next1) \/ x=null,
+ G(x2,res1) ::= x2::node<res1>&res1=DP \/ true \mustF
+
+]
+
+
+
+=====================================================================
+# ex2.slk --efa --sa-error: FIXED
+
+//3
+checkentail true |- x::node<p>.
+print residue.
+// true & flow __MayError
+
+Got:
+Entail 3: Fail.(no cex)(may) cause:do_unmatched_rhs : x::node<p>
+
+why residue for (3) not printed nor given warning?
+=====================================================================
+# v-next.slk --sa-error
+
+# What is the diff between --efa and --sa-error?
+
+checkentail x=null or x::node<q> |- x::node<r>.
+print residue.
+
+Got:
+Entail 1: Fail.(cex)(must) cause:OrR[do_unmatched_rhs : x::node<r>,valid]
+ <1>emp&{FLOW,(1,25)=__flow}[]
+
+Why can't we get below yet?
+
+Expects:
+ x=null & __ERROR \/ q=r & x!=null & __NORM
+
+  D1 |- P -> R1
+  D2 |- P -> R2
+ --------------------
+  D1 \/ D2 |- P --> (R1\/R2)
+
+
+ Incorrect still!
+    emp&x=null&{FLOW,(5,6)=__Error}[]
+    or emp&{FLOW,(-1,0)=__false}[]
+
+=====================================================================
+# v-next3.slk --efa (FIXED)
+
+checkentail x=null |- x::node<r>.
+print residue.
+
+Why is this Valid? should it be a must failure like v.next.slk.
+Residue is correct though. 
+
+Entail 1: Valid. 
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+# v-next3.slk --efa
+
+checkentail x::node<q> |- x::node<r>.
+
+Missing x!=null
+
+Entail 2: Valid. 
+ <1>emp&r=q&{FLOW,(3,4)=__norm}[]
+=====================================================================
+# v-next5a.ss --efa (FIXED)
+
+  requires x=null
+  ensures x=null & flow __Error;
+
+Why is there a throwlist?
+Need to disable it.
+
+Changed to a warning but still inappropriate..
+
+WARNING: v-next5a.ss_20:10_20:31:the result type __Error is not covered by the throw list[]
+
+
+Last Proving Location: 1 File "v-next5a.ss",Line:5,Col:0
+
+ERROR: at v-next5a.ss_20:10_20:31 
+Message: the result type is not covered by the throw list
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("the result type is not covered by the throw list")
+Error3(s) detected at main 
+=====================================================================
+# v-next5b1.ss --esl
+
+This is wrong. How can x=null |- x!=null
+in the post-condition?
+
+--esl only contain a BIND and no post-condition proving!
+What is happening here?
+
+id: 0; caller: []; line: 28; classic: false; kind: BIND; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x=null & x'=x&{FLOW,(3,4)=__norm}[]
+ |-  x'::node<next_28_1203'>&{FLOW,(1,28)=__flow}[]. 
+res:  failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: do_unmatched_rhs : x'::node<next_28_1203'>
+                   fc_current_lhs_flow: {FLOW,(5,9)=__Error}}
+[[ COND ==>  UnmatchedRHSData ==> ]]true
+=====================================================================
+v-next7e.slk :FIXED
+
+ should be a may-error
+
+checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]  WRONG
+// should be MayError
+
+=====================================================================
+# v-next7d.slk: DONE
+
+to support requires and ensures
+
+=====================================================================
+# v-next7d2.slk: DONE
+
+to support case spec
+
+=====================================================================
+to fix: FIXED
+
+infer/infer15.slk(no result  for {E}) ann2.slk(no result  for {E}) lemmas/lemma-fold.slk(no result  for {E}).
+
+
+=====================================================================
+# v-next7c.slk: DONE
+
+to support requires and ensures
+
+
+=====================================================================
+# v-next7d.slk
+
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+     ensures x>=0 & flow __Error;.
+print residue.
+
+ <1>emp&0<=x & x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Why is there an [[empty]]?
+
+checkentail x=0 & flow __norm |- 
+     requires x=1
+     ensures x>=0& flow __Error;.
+print residue.
+
+ GOT:
+ Entail 2: Fail.(must) cause:empty states
+
+Can we display (for print residue):
+ Entail 2: Fail.(must) cause:empty states
+ Residue = { }
+
+
+checkentail x=0 & flow __norm |- x=1.
+print residue.
+// to return error state
+
+ <1>emp&x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+*/
+=====================================================================
+# v-next7d1.slk  (FIXED)
+
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+     ensures x=5 & flow __Error;.
+print residue.
+
+ Why do we get __norm and not __flow?
+
+Entail 1: Fail.(may) cause:may_err (__flow) LOCS: [1;0;3]
+
+ <1>emp&x=5 & x=0 & 0<=x&{FLOW,(3,4)=__norm}[]
+[[empty]]
+=====================================================================
+# v-next7d2c.slk: FIXED
+
+checkentail 
+   x>1 & flow __Error |-  x>0 & flow XXX.
+print residue.
+
+Why XXX not flagged as an error?
+
+INPUT: 
+ ### ante =  emp&1<x&{FLOW,(5,6)=__Error}[]
+ ### conseq =  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
+run_infer:
+ emp&1<x&{FLOW,(5,6)=__Error}[] [] |-  EBase hfalse&false&{FLOW,(0,0)=__false}[]
+
+=====================================================================
+# v-next7d2d.slk: FIXED
+
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires x>1 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+
+Can resolve exception below?
+
+ERROR: at _0:0_0:0 
+Message: union_context_left: folding empty context list 
+
+ 
+Entail 1: EXCast. Failure("union_context_left: folding empty context list \n")
+: no residue 
+
+=====================================================================
+# v-next7d2f.slk --esl
+
+//2
+checkentail 
+   x=11 & flow __norm |-  
+    case { x>0 -> requires true & flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+Why did we log (3) but not (2) above?
+
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(3); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x=22 & 0<x&{FLOW,(3,4)=__norm}[]
+ |-  emp&{FLOW,(3,4)=__norm}[]. 
+res:  1[
+   emp&0<x & x=22&{FLOW,(3,4)=__norm}[]
+   ]
+=====================================================================
+# v-next7d2h.slk --dfa FIXED
+
+checkentail  x>1 & flow __norm |-  x>2 & flow __MayError.
+
+What is --dfa? I guess when a proof fails,
+we just return { } and do not attempt to
+classify the error.
+
+Entail 1: Fail.
+Residue:
+[] 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: failed in entailing pure formula(s) in conseq
+                             fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[empty]]false
+
+Is this the same as::
+ Residue { }
+Why is there a [[empty]] false?
+=====================================================================
+# v-next7d2k.slk: FIXED
+
+To provide local control of @efa, @dfa
+
+
+infer [@dfa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+infer [@efa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+
+=====================================================================
+# v-next7d2h.slk --dfa: DONE
+
+Why the message seems different,
+and not just empty states?
+
+//(3)
+checkentail  x>1 & flow __norm |-  x>0 & flow __Error.
+print residue.
+
+Entail 3: Fail. 
+Residue:
+[] Error Context: length= 0 [] { }
+
+=====================================================================
+# v-next7d2m.slk: DONE
+
+infer [@dfa]  x>1 & flow __norm |-  x>0 & flow __Error.
+
+Can we make the message similar to that of @efa
+
+Entail (1) : Fail. 
+Residue:
+[] Error Context: length= 0 [] { }
+
+
+# v-next7d2m.slk
+
+infer [@efa]  x>1 & flow __norm |-  x>0 & flow __Error.
+
+Entail (2) : Fail.(must) cause:empty states
+Residue:
+ { }
+
+
+=====================================================================
+#next.ss
+
+*******relational definition (flow= (6,10))********
+*********************************************************
+[ H(x_1223) ::=  [emp&x_1223=null]]
+*************************************
+
+-------------------
+EXPECTED
+
+*********************************************************
+[ H(x_1223) ::=  [emp&x_1223=null]
+G(x) ::= x=null & flow= ERROR
+]
+*************************************
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================
+=====================================================================

@@ -1,0 +1,28 @@
+
+// dis_err > err_may > err_must
+
+infer [@dis_err,@err_may] x<0 |- x>5.
+print residue.
+// expect Fail
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */
+
+infer [@err_must,@err_may] x<0 |- x>5.
+print residue.
+// expect MayError
+
+
+infer [@err_must] x<0 |- x>5.
+print residue.
+// expect MustError
+

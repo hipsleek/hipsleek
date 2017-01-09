@@ -1,0 +1,27 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "ho/waits-pred.slk",Line:16,Col:10
+
+ERROR: at ho/waits-pred.slk_16:10_16:64
+Message: compute_view_fw_bw: data not found: WAITS
+
+!!! WARNING logtime exception:0.
+!!! WARNING logtime exception:0.
+Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+: no residue 
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&S1=S&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(g,g) ==> ]]
+
+
+
+!!! WARNING logtime exception:0.
+!!! WARNING logtime exception:0.004
+Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1}")
+: no residue 
+

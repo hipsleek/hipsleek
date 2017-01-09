@@ -1,0 +1,235 @@
+============================================================
+# ex2  (FIXED by Long)
+
+!!! **cfout.ml#423:important variables:[S1,S2,x,y,x',v_1519,q_1520,S_1541]
+!!! **cfout.ml#425:exists variables:
+ [S2_1536,S1_1535,S1_1521,y',v_bool_26_1478']
+
+!!! **cfout.ml#426:important variables:[S2,S1,v_1519,x',y',y,x,q_1520]
+!!! **cfout.ml#428:exists variables:
+ [S2_1536,S1_1535,S1_1521,v_bool_26_1478']
+
+
+dprint before: ex2-app-bags.ss:36: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:(exists S_1541: x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+ & S_1541=union(S1_1535,S2_1536) & S2_1536=S2 & S1_1535=S1_1521 
+ & S1=union(S1_1521,{v_1519}) & x'=x & y'=y & x!=null 
+& q_1520!=null & !(v_bool_26_1478')
+&{FLOW,(4,5)=__norm#E}[]
+ ]
+
+# Why isn't v_bool_26_1478 ' removed by simplifier?
+  it has been renamed as v_bool_26_1478_1542'
+
+# similarly for the following vars:
+  S2_1536,S1_1535,S1_1521
+
+dprint after: ex2-app-bags.ss:36: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+&y=y' & x=x' & !(v_bool_26_1478_1542') & x'!=null 
+& q_1520!=null & S_1541=union(S1_1535_1544,S2_1536_1545) 
+& S2_1536_1545=S2 & S1_1535_1544=S1_1521_1543 
+& S1=union(S1_1521_1543,{v_1519})&{FLOW,(4,5)=__norm#E}[]
+ ]
+
+ &{FLOW,(4,5)=__norm#E}[]
+
+EXPECTING
+=========
+existential should be eliminated where possible.
+ [S2_1536,S1_1535,S1_1521,y',v_bool_26_1478']
+(i) rename S1_1521 --> S1_1535
+(ii) rename S1_1536 --> S2
+(iii) elim   # & !(v_bool_26_1478') // to delete
+(iv) x!=null is redundant
+
+
+Successful States:
+[
+ Label: [(,1 ); (,2 )]
+ State:(exists S_1541: x'::node<v_1519,q_1520> * q_1520::ll{}<S_1541>
+ & S_1541=union(S1_1535,S2) 
+ & S1=union(S1_1535,{v_1519}) & x'=x & y'=y & x!=null 
+ & q_1520!=null 
+ &{FLOW,(4,5)=__norm#E}[]
+
+ ]
+===================================================================
+# ex3-app-new.ss (FIXED)
+
+Rename only if there is a clash 
+instead of renaming for every declaration..
+
+(==astsimp.ml#9305==)
+case_rename_var_decls@1398
+case_rename_var_decls inp1 :{local: node tmpZZZ,boolean fl_bb
+node tmpZZZ = member access xxx~~>next;
+boolean fl_bb = tmpZZZ != yyyy;
+(100, ):if (fl_bb) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}}
+case_rename_var_decls@1398 EXIT:({local: node tmpZZZ,boolean fl_bb
+node tmpZZZ_46 = member access xxx~~>next;
+boolean fl_bb_47 = tmpZZZ_46 != yyyy;
+(100, ):if (fl_bb_47) { 
+  (100, ):{dprint;
+(102, ):return };
+} else { 
+  (100, ):{(101, ):return }
+}},[])
+
+-------------------------------------
+
+!!! **cfout.ml#421:bind variables:[xxx',Anon_1507,q_1508,flted_7_1506]
+!!! **cfout.ml#426:important variables:[Anon_1507,fl_47',yyyy',yyyy,xxx',xxx,flted_7_1506,nnn,tmp_46',q_1508]
+!!! **cfout.ml#428:exists variables:[]
+
+# Why did we use fl_47 when the variable is fl_bb?
+# Why wasn't fl_47' kept since it is an important variable.
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1507,q_1508> * q_1508::ll{}<flted_7_1506>
+ & fl_47' & tmp_46'!=yyyy' & 0<nnn & yyyy'=yyyy 
+ & xxx'=xxx & flted_7_1506+1=nnn & tmp_46'=q_1508
+
+ ]
+
+dprint after: ex3-app-neq.ss:19: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1507,q_1508> * q_1508::ll{}<flted_7_1506>
+&yyyy=yyyy' & xxx=xxx' & nnn=1+flted_7_1506 & q_1508=tmp_46' 
+& fl_47' & 0<=flted_7_1506 & yyyy'!=tmp_46' 
+& tmp_46'!=yyyy'
+]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:xxx'::node<Anon_1507,q_1508> * q_1508::ll{}<flted_7_1506>
+ &xxx=xxx' & nnn=1+flted_7_1506 & 0<=flted_7_1506 
+ & yyyy!=q_1508
+ &{FLOW,(4,5)=__norm#E}[]
+===================================================================
+# ex2
+
+(==cpure.ml#9227==)
+elim_exists_with_fresh_vars@5131@5130@5129
+
+
+elim_exists_with_fresh_vars inp1 : 
+
+exists(v_bool_26_1478':!(v_bool_26_1478')) 
+ --> omega 
+
+exists(S1_1521:exists(S1_1535:exists(S2_1536:
+ S_1541=union(S1_1535,S2_1536) & S2_1536=S2) 
+ & S1_1535=S1_1521) & S1=union(S1_1521,{v_1519}))
+ --> use equality substitution if possible
+ --> after that use elim_exist_with_fresh_vars
+ 
+& x'=x & y'=y & x!=null & q_1520!=null
+
+elim_exists_with_fresh_vars@5131 EXIT:
+([v_bool_26_1542',S1_1543,S1_1544,S2_1545], 
+!(v_bool_26_1542') & S_1541=union(S1_1544,S2_1545) & S2_1545=S2 & 
+S1_1544=S1_1543 & S1=union(S1_1543,{v_1519}) & x'=x & y'=y & x!=null & 
+q_1520!=null)
+Push
+===================================================================
+../../hip cdl-ex1-fm.ss --ann-vp --dis-sdp > 1
+
+!!! **typechecker.ml#2010:Dprint:[S1,S2,x,y]
+!!! **cfout.ml#423:curr variables:[S1,S2,x,y]
+!!! **cfout.ml#425:heap variables:[x',v_1519,q_1520,S_1541]
+!!! **cfout.ml#430:important variables:[S2,S1,v_1519,x',y',y,x,q_1520]
+
+
+dprint(orig): cdl-ex1-fm.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_48_1804,flted_48_1805,v_int_45_1806,b_1807,v_int_45_1782: 
+   c_42'::LatchIn{ - (exists flted_48_47: h_39'::cell<flted_48_47>*U@full[h_39]&flted_48_47=1&{FLOW,(4,5)=__norm#E}[]}<> 
+  * c_42'::CNT{}<flted_48_1804>*U@full[h_39]@lend[c_42]
+  & 0<v_int_45_1782 & v_int_45_1782=2 & 0<v_int_45_1806 & v_int_45_1806=2 
+  & flted_48_1805=1 & 0<=b_1807 & 0<=1 
+  & v_int_45_1806=b_1807+1 & flted_48_1804=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint(simpl): cdl-ex1-fm.ss:49: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_48_1804,flted_48_1805,v_int_45_1806,b_1807,v_int_45_1782: 
+   c_42'::LatchIn{ - (exists flted_48_47: h_39'::cell<flted_48_47>*U@full[h_39]&flted_48_47=1& {FLOW,(4,5)=__norm#E}[]}<> 
+ * c_42'::CNT{}<flted_48_1804>*U@full[h_39]@lend[c_42]
+ & 0<v_int_45_1782 & v_int_45_1782=2 & 0<v_int_45_1806 & v_int_45_1806=2
+ & flted_48_1805=1 & 0<=b_1807 & 0<=1 
+ & v_int_45_1806=b_1807+1 & flted_48_1804=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Checking procedure main$... 
+!!! **typechecker.ml#2010:Dprint:[h_39,r_40,v_41,c_42]
+!!! **cfout.ml#423:curr variables:[h_39,r_40,v_41,c_42]
+!!! **cfout.ml#425:heap variables:[h_39',c_42',flted_48_1804]
+!!! **cfout.ml#430:important variables:[h_39',c_42']
+
+Can we print existential variables that are not heap variables?
+  e.g. flted_48_1805,v_int_45_180,b_1807,v_int_45_1782
+Why aren't they eliminated?
+
+How about heap var: h_39'::cell<flted_48_47>
+
+
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================

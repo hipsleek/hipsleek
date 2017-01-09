@@ -1,0 +1,41 @@
+
+!!!Full processing file "hip/ll_all2c.ss"
+Parsing file "hip/ll_all2c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=y | (self!=y & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (y<self | self<y)),
+([], self=y)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure append$node~node... 
+Post condition cannot be derived:
+  (may) cause: do_unmatched_rhs : q_1339::ll{}<flted_26_1343>
+
+Context of Verification Failure: 1 File "hip/ll_all2c.ss",Line:36,Col:8
+Last Proving Location: 1 File "hip/ll_all2c.ss",Line:42,Col:7
+
+ERROR: at hip/ll_all2c.ss_36:8_36:19 
+Message: Post condition cannot be derived.
+ 
+Procedure append$node~node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append$node~node
+
+!!! proc.proc_name:append$node~nodeStop Omega... 16 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.187321,608)
+Total verification time: 0.417833 second(s)
+	Time spent in main process: 0.38905 second(s)
+	Time spent in child processes: 0.028783 second(s)
+

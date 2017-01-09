@@ -1,0 +1,86 @@
+
+!!!Full processing file "demo/dll-append3.ss"
+Parsing file "demo/dll-append3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[]
+!!! neqs:[(l2,l1)]
+Checking procedure dll_append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1226,HP_1227,G]requires HP_1226(l1) * HP_1227(l2)&
+true
+ ensures G(l1,l2)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1226(l1)&true --> l1::node<next2,prev2> * HP_1232(next2) * 
+HP_1233(prev2)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1232(next2)&next2!=null --> HP_1226(next2)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1227(l2)&true --> HP_1227(l2)&
+true(3,4),
+ // BIND
+(2;0)HP_1227(l2)&true --> l2::node<next1,prev1> * HP_1291(next1) * 
+HP_1292(prev1)&
+true(3,4),
+ // POST
+(1;0)l1::node<next2,prev2> * G(next2,l2) * HP_1233(prev2)&
+next2!=null --> G(l1,l2)&
+true(3,4),
+ // POST
+(2;0)HP_1233(prev2) * HP_1232(next2) * l1::node<l2,prev2> * HP_1291(next1) * 
+l2::node<next1,l1>&next2=null --> G(l1,l2)&
+true(3,4)]
+
+Procedure dll_append$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1226(l) ::=  [l::node<next,DP> * HP_1232(next)&l!=null],
+ HP_1227(l1) ::=  [l1::node<DP2,DP1>],
+ G(l4,l3) ::=  [GP_1348(l4,l2) * l2::node<l3,DP> * l3::node<DP2,l2>],
+ GP_1348(l4,l2) ::=  [
+  l4::node<next,DP> * GP_1348(next,l2)&next!=null
+  or emp&l4=l2
+  ],
+ HP_1232(next3) ::=  [emp&next3=null; next3::node<next,DP> * HP_1232(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1226(l) ::= l::node<next,DP> * HP_1232(next)&l!=null(3,4),
+ HP_1227(l1) ::= l1::node<DP2,DP1>(3,4),
+ G(l4,l3) ::= GP_1348(l4,l2) * l2::node<l3,DP> * l3::node<DP2,l2>(3,4),
+ GP_1348(l4,l2) ::= 
+ l4::node<next,DP> * GP_1348(next,l2)&next!=null
+ or emp&l4=l2
+ (3,4),
+ H(l1,l2) ::= HP_1226(l1) * HP_1227(l2),
+ HP_1232(next3) ::= 
+ next3::node<next,DP> * HP_1232(next)
+ or emp&next3=null
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.056541,296)
+Total verification time: 0.331269 second(s)
+	Time spent in main process: 0.317037 second(s)
+	Time spent in child processes: 0.014232 second(s)
+

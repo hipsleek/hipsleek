@@ -1,0 +1,26 @@
+data cell{ int v; }.
+
+checkentail_exact x::cell<1>*y::cell<2> |- x::cell<_> * %P.
+print residue.
+
+checkentail_exact x::cell<1>*y::cell<2> & z = y & t = x |- x::cell<_> * %P.
+print residue.
+
+checkentail_exact x::cell<c>*y::cell<a> & a = b + 1 & b = 1 & c = 1 |- x::cell<_> * %P.
+print residue.
+
+/*
+# bug-3a-ho-vars.slk (debatable issue)
+
+Residue:
+ <1>emp&flted_4_15=2 & flted_4_16=1 & Anon_11=flted_4_16&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [P --> y::cell<flted_4_15>&flted_4_15=2 & flted_4_16=1 & 
+           Anon_11=flted_4_16&{FLOW,(4,5)=__norm#E}[]]
+
+For instantiation, I think we should pick mainly heap + related pure?
+Otherwise, I think we may pick up too much info?
+
+*/
+
+checkentail_exact x=1 & y=2 |- %P.
+print residue.

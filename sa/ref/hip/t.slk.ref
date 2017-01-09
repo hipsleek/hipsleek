@@ -1,0 +1,18 @@
+Starting Omega...oc
+H is defined.
+T is defined.
+H1 is defined.
+HP is defined.
+G is defined.
+HP_535 is defined.
+HP_537 is defined.
+V is defined.
+M is defined.
+
+!!!Final MTL: [[(f, w), (d, q), (s, t), (a, x), (V, M)]]
+Checkeq (1) : Valid.Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.053642 second(s)
+	Time spent in main process: 0.039622 second(s)
+	Time spent in child processes: 0.01402 second(s)
+

@@ -1,0 +1,23 @@
+Starting Omega...oc
+G1 is defined.
+G2 is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G1(l) ::= 
+ l::node<k,left,right> * G1(left) * G2(right)
+ or emp&l=null
+ (3,4),
+ G2(r) ::= 
+ r::node<k1,left,right> * G1(left) * G2(right)
+ or emp&r=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.060752 second(s)
+	Time spent in main process: 0.046656 second(s)
+	Time spent in child processes: 0.014096 second(s)
+

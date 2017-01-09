@@ -15,7 +15,7 @@ sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or
 
 node partition(ref node xs, int c)
 	requires xs::bnd<n, sm, bg> & sm <= c <= bg
-        ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
+        ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b; //'
 {
 	node tmp1;
 	int v; 
@@ -63,7 +63,7 @@ node append_bll(node x, node y)
 
 void qsort(ref node xs)
 	requires xs::bnd<n, sm, bg> & n>0 
-	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
+	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg; //'
 {
 	node tmp;
         int v;

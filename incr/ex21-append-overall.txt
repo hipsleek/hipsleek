@@ -1,0 +1,77 @@
+# ex21a.ss
+void append(node x, node y)
+  infer [P,@classic]
+  requires P(x,y)
+  ensures true ;
+[ P(x_1656,y_1657) ::= HP_1666(x_1656)(4,5),
+ HP_1666(x_1656) ::= x_1656::node<val_26_1658,next_26_1626>@M * HP_1666(next_26_1626)&
+ next_26_1626!=null
+ or x_1656::node<val_26_1658,next_26_1626>@M&next_26_1626=null
+ (4,5)]
+
+
+# ex21b.ss
+HeapPred P(node x, node@NI y).
+void append(node x, node y)
+  infer [P,@classic]
+  requires P(x,y)
+  ensures true 
+[ P(x_1656,y_1657) ::= HP_1666(x_1656)(4,5),
+ HP_1666(x_1656) ::= x_1656::node<val_24_1658,next_24_1626>@M * HP_1666(next_24_1626)&
+ next_24_1626!=null
+ or x_1656::node<val_24_1658,next_24_1626>@M&next_24_1626=null
+ (4,5)]
+
+
+# ex21f.ss
+void append(node x, node y)
+  requires x::ll<> & x!=null
+  ensures x::node<_,q>*q::lseg<y>;
+  requires x::node<_,q>*q::ll<> 
+  ensures  x::node<_,q2>*q2::lseg<y>;
+
+# ex21e.ss
+  infer [P,@classic]
+  requires x::ll<> & x!=null
+  ensures P(x,y) ;
+--old-pred-synthesis
+[ P(x_1660,y_1661) ::= x_1660::node<Anon_1662,y_1661>@M
+ or x_1660::node<Anon_1662,q_1631>@M * P(q_1631,y_1661)&
+    x_1660!=null & q_1631!=null
+ (4,5)]
+# can we get x::lseg<y> & (x!=null | x!=y) ??
+
+# ex21e5
+lemma_test self::PP<y> <-> self::node<_,q>*q::lseg<y>.
+
+# ex21p.ss
+ node append(node x, node y)
+  requires x::ll<>
+  ensures res::lseg<y> 
+    & (res=y & x=null | res=x & x!=null)
+  ;
+
+# ex21p1.ss --old-pred-synthesis
+node append(node x, node y)
+  infer [P,@classic]
+  requires P(x,y)
+  ensures true;
+*******relational definition********
+*********************************************************
+[ P(x_1664,y_1665) ::= x_1664::ll<>@M(4,5)]
+*************************************
+
+# ex21p2.ss
+  node append(node x, node y)
+  requires x::ll<>
+  ensures P(x,y,res);
+*******relational definition********
+*********************************************************
+[ P(x_1661,y_1662,res_1663) ::= emp&x_1661=null & y_1662=res_1663
+ or x_1661::node<Anon_1664,v_node_31_1659>@M * 
+    P(q_1647,y_1662,v_node_31_1659)&
+    x_1661!=null & res_1663!=null & x_1661=res_1663
+ (4,5)]
+
+# can transform to?
+    res::lseg<y> & (res=null & x=null | res=x & x!=null)

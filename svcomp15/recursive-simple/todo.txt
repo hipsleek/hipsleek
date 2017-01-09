@@ -1,0 +1,63 @@
+============================================
+Mutual recursion triggers infer shape:
+
+afterrec_2calls.c
+
+============================================
+Spec for fibonacci
+
+
+============================================
+#ex1-id2-b3.c: FIXED
+
+assert should fail, not ok
+
+
+Successful States:
+[
+ Label: []
+ State:or[htrue&result'=tmp' & input'<=3 & 0<=input' & tmp'=input' & input'=input&{FLOW,(4,5)=__norm#E}[]
+; 
+         htrue&result'=tmp' & 3<input' & tmp'=3 & input'=input&{FLOW,(4,5)=__norm#E}[]
+]
+ ]
+
+assert:fail/ex1-id2-b3.c:29: 1:  : ok
+
+
+============================================
+#fail/id2_b3_o2_false-unreach-call.c: should be FAIL
+
+
+
+============================================
+#fail/id_b3_o2_false-unreach-call.c: should be FAIL
+
+
+============================================
+#fail/id_o1000_false-unreach-call.c: should be FAIL
+
+
+
+============================================
+#fail/id_o100_false-unreach-call.c: should be FAIL
+
+
+============================================
+#fail/id_o10_false-unreach-call.c: should be FAIL
+
+
+============================================
+#fail/id_o200_false-unreach-call.c: should be FAIL
+
+
+============================================
+#fail/id_o20_false-unreach-call.c: should be FAIL
+
+
+============================================
+#fail/id_o3_false-unreach-call.c: should be FAIL
+
+============================================
+============================================
+============================================

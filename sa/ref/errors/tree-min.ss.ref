@@ -1,0 +1,39 @@
+
+!!!Full processing file "errors/tree-min.ss"
+Parsing file "errors/tree-min.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_13
+!!! generate unknown predicate for Post synthesis of : :GP_14
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_min$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_13,GP_14]requires HP_13(x)&true
+ ensures GP_14(x,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure get_min$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure get_min$node
+
+!!! proc.proc_name:get_min$nodeStop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.045185,273)
+Total verification time: 0.322614 second(s)
+	Time spent in main process: 0.308383 second(s)
+	Time spent in child processes: 0.014231 second(s)
+

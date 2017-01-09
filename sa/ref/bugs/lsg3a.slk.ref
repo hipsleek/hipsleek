@@ -1,0 +1,22 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>H(x)&{FLOW,(3,4)=__norm}[]
+ inferred heap: [x::node<inf_n_18>]
+[[ COND ==>  InferHeap ==>  Match(x,x) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 7
+SAT % Hit   : 57.14%
+IMPLY Count : 3
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.000272 (seconds)
+
+!!! log(small):(0.008494,13)
+Total verification time: 0.055993 second(s)
+	Time spent in main process: 0.041654 second(s)
+	Time spent in child processes: 0.014339 second(s)
+

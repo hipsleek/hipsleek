@@ -1,0 +1,69 @@
+
+!!!Full processing file "slk/mult1b3.ss"
+Parsing file "slk/mult1b3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f2$int~int... 
+Procedure f2$int~int SUCCESS.
+
+Checking procedure f2$int~int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_20_1147' & 0<=v_int_20_1272 & 0<=y' & 0<=y' & 
+0<=v_int_20_1272 & v_int_20_1272=y'+x' & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & x'=x & y'=y & 0<=x & 0<=y & 
+0<=x' & fpost3_0(v_int_20_1272,y') --> fpost3_0(x,y).
+
+ termAssume res=v_int_20_1147' & 0<=v_int_20_1232 & y'<0 & y'<0 & 
+0<=v_int_20_1232 & v_int_20_1232=y'+x' & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & x'=x & y'=y & 0<=x & y<0 & 
+0<=x' & fpost2_0(v_int_20_1232,y') --> fpost2_0(x,y).
+
+ termAssume res=v_int_20_1147' & v_int_20_1231<0 & v_int_20_1147'=0 & 
+v_int_20_1231<0 & v_int_20_1231=y'+x' & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & x'=x & y'=y & 0<=x & y<0 & 
+0<=x' & fpost1_0(v_int_20_1231,y') --> fpost2_0(x,y).
+
+ termAssume x'<0 & x<0 & y'=y & x'=x & v_bool_19_1148' & x'<0 & 
+v_bool_19_1148' & v_int_19_1145'=0 & res=v_int_19_1145' --> fpost1_0(x,y).
+
+ termAssume 0<=x' & 0<=y & 0<=x & y'=y & x'=x & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & v_int_20_1146'=y'+x' & 0<=v_int_20_1146' & 
+0<=y' & fpre_0(x,y) --> fpre_0(v_int_20_1146',y').
+
+ termAssume 0<=x' & y<0 & 0<=x & y'=y & x'=x & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & v_int_20_1146'=y'+x' & 0<=v_int_20_1146' & 
+y'<0 & fpre_0(x,y) --> fpre_0(v_int_20_1146',y').
+
+ termAssume 0<=x' & y<0 & 0<=x & y'=y & x'=x & !(v_bool_19_1148') & 0<=x' & 
+!(v_bool_19_1148') & v_int_20_1146'=y'+x' & 
+v_int_20_1146'<0 & fpre_0(x,y) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f2: [[4] x<=(0-1)@B,[5] 0<=x & 0<=y@R,[6] y<=(0-1) & 0<=x@R]
+]
+Termination Inference Result:
+f2:  case {
+  x<=(0-1) -> requires emp & Term[29]
+ ensures emp & x<0 & res=0; 
+  0<=x -> case {
+           y<0 -> requires emp & Term[29,2,0+(1*x)+(0*
+           y)]
+ ensures emp & 0<=x & y<0; 
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  }
+
+Termination checking result: SUCCESS
+
+
+5 false contexts at: ( (19,11)  (19,18)  (20,7)  (20,17)  (20,14) )

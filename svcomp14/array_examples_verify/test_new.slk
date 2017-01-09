@@ -1,0 +1,37 @@
+checkentail
+   a[5]=5
+   |- a[5]=5.
+print residue.
+
+checkentail
+   a[5]=5
+   |- a[5+0]=5.
+print residue.
+
+checkentail
+   a[i]=6 & a[a[i]]=8
+   |- a[6]=8.
+print residue.
+
+checkentail
+   a[i]=6 & a[a[i]+0]=8
+   |- a[6]=8.
+print residue.
+
+/*
+# test_new.slk
+
+z3 can handle but
+--ato cannot handle computed index?
+any other limitation?
+
+Entail 2: EXCast. Failure("replace_exp: Invalid index form a[5 + 0]")
+: no residue 
+
+Entail 3: EXCast. Failure("replace_exp: Invalid index form a[a[i]]")
+: no residue 
+
+Entail 4: EXCast. Failure("replace_exp: Invalid index form a[a[i] + 0]")
+: no residue 
+
+*/

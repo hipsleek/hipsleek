@@ -1,0 +1,12 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "hip/ex2a-latch.slk",Line:5,Col:10
+
+ERROR: at hip/ex2a-latch.slk_8:10_8:20
+Message: compute_view_fw_bw: data not found: CNT
+
+Entail 1: Fail.(may) cause:AndR[ 0<=(1+1) |-  0<n. LOCS:[9;15;17];  0<=(v_int_50_21+1) & v_int_50_21=1 |-  v_int_50_21=n. LOCS:[9;15;17] (may-bug).]
+
+

@@ -12,7 +12,6 @@ sortll<n> == self=null
  inv true; 
 */
 /*
-../../../hip check-sorted.c --sa-en-pure-field --pred-en-equiv
 
 */
 int check_sorted(struct node* x, int v)

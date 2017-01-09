@@ -1,0 +1,9 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>emp&x_1=1+x_2&{FLOW,(4,5)=__norm}[]
+
+Residue:
+ <1>emp&x_2+1=x_20&{FLOW,(4,8)=__MayError}[]
+
+

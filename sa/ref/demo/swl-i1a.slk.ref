@@ -1,0 +1,28 @@
+Starting Omega...oc
+HP_902 is defined.
+HP_903 is defined.
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Entail (1) : Valid. 
+
+ <1>(exists prev': emp&prev'=null&{FLOW,(3,4)=__norm})[]
+ inferred hprel: [HP_903(prev,cur@NI,sent@NI)&
+                   prev'=null --> HP_902(prev,prev'@NI,sent@NI)&true(3,4); 
+                  emp&prev'=null --> HP_903(prev',cur'@NI,sent1@NI)&true(3,4)]
+[[ Fold ==>  SEARCH ==>  Match(cur,cur') ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 4 invocations 
+SAT Count   : 26
+SAT % Hit   : 84.61%
+IMPLY Count : 5
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001065 (seconds)
+
+!!! log(small):(0.022572,39)
+Total verification time: 0.070903 second(s)
+	Time spent in main process: 0.054234 second(s)
+	Time spent in child processes: 0.016669 second(s)
+

@@ -1,0 +1,53 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/foo-fact1.ss"
+Parsing file "t/foo-fact1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1401: ( x=0 & res=1) -->  post_1401(x,res,flow),
+RELDEFN post_1401: ( res=2+v_int_31_1429 & v_int_31_1427+1=x & x!=0 & 
+post_1401(v_int_31_1427,v_int_31_1429,flow)) -->  post_1401(x,res,flow)]
+*************************************
+
+Post Inference result:
+fact$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&x>=0 & (2*x)+1=res&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_31_1315' & v_int_31_1315'=(2*v_int_31_1458)+1+1+1 & 
+x'=x & x'!=0 & !(v_bool_30_1316') & 0<1 & v_int_31_1458+1=x' & 
+v_int_31_1458>=0 & factpost_1432(v_int_31_1458) --> factpost_1432(x).
+
+ termAssume v_bool_30_1316' & x'=0 & x'=x & v_int_30_1305'=1 & 
+res=v_int_30_1305' --> factpost_1432(x).
+
+ termAssume x'=x & x'!=0 & !(v_bool_30_1316') & v_int_31_1314'=1+1 & 0<1 & 
+v_int_31_1311'+1=x' & factpre_0(x) --> factpre_0(v_int_31_1311').
+
+ termAssume 0<v_int_31_1307' & v_int_31_1307'=1 & x'=x & x'!=0 & 
+!(v_bool_30_1316') & factpre_0(x) --> MayLoop.
+
+
+Base/Rec Case Splitting:
+[	fact: [[3] x=0@B,[4] 1<=x@R,[5] x<=(0-1)@R]
+]
+Starting z3... 

@@ -1,0 +1,35 @@
+Starting Omega...oc
+H is defined.
+H_3 is defined.
+H_2 is defined.
+HP_44 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_44(n,prev,sent) |#| cur_909::node<val_0,prev_85>&
+  prev_85=prev_85 ::= HP_105(n,sent)(3,4),
+ H_2(next,prev1,sent1) ::= HP_105(next,sent1)(3,4),
+ H_3(cur,cur',sent2) ::= 
+ cur::node<val,prev2> * H_3(prev2,cur,sent2)&cur'!=null & cur'!=sent2 & 
+ cur=DP
+ or emp&cur=DP
+ (3,4),
+ HP_105(next,sent1) |#| emp&
+  n1_88=n1_88 ::= 
+ next::node<val1,n1> * HP_105(n1,sent1)&next!=sent1
+ or emp&next=sent1
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 9
+SAT % Hit   : 11.11%
+Time(cache overhead) : 0.000458 (seconds)
+
+!!! log(small):(0.006075,9)
+Total verification time: 0.070168 second(s)
+	Time spent in main process: 0.055713 second(s)
+	Time spent in child processes: 0.014455 second(s)
+

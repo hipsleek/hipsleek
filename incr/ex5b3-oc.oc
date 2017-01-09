@@ -1,0 +1,5 @@
+R1:={[p,res]:  res<=0 & p>0 | p<=0 & res>0};
+R2:={[p,res]:  res<=0 | p<=0 & res>0};
+
+R1 subset R2;
+R2 subset R1; # false

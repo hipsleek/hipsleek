@@ -1,0 +1,29 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [l!=0]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred rel: [RELASS [P]: ( P(l)) -->  l!=0]
+[[empty]]
+
+Stop Omega... 2 invocations 
+SAT Count   : 12
+SAT % Hit   : 58.33%
+IMPLY Count : 3
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.000584 (seconds)
+
+!!! log(small):(0.006696,17)
+Total verification time: 0.065231 second(s)
+	Time spent in main process: 0.050252 second(s)
+	Time spent in child processes: 0.014979 second(s)
+

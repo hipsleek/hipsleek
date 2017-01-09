@@ -1,0 +1,18 @@
+
+!!!Full processing file "hip/bubble-c-up.ss"
+Parsing file "hip/bubble-c-up.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "hip/bubble-c-up.ss",Line:9,Col:2
+
+ERROR: at _0:0_0:0 
+Message: HIP/SLEEK error, unhandled pattern
+ 
+!!! WARNING logtime exception:0.000329caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("HIP/SLEEK error, unhandled pattern")
+Error3(s) detected at main 

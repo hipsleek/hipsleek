@@ -1,0 +1,27 @@
+
+!!!Full processing file "hip/ll_all_13d.ss"
+Parsing file "hip/ll_all_13d.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure trav$node... 
+Procedure trav$node result FAIL.(1)
+
+!!! proc.proc_name:trav$nodeStop Omega... 11 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.051056,328)
+Total verification time: 0.324442 second(s)
+	Time spent in main process: 0.302994 second(s)
+	Time spent in child processes: 0.021448 second(s)
+

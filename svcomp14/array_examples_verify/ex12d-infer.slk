@@ -1,0 +1,33 @@
+// 6
+
+slk_simplify forall(i: i>0 | y=3).
+
+slk_simplify forall(i: i>0).
+
+slk_simplify forall(i: !(i=0) | y=3).
+
+
+slk_simplify forall(i: !(i=0) | a[i]>3).
+// a[0]>=4
+
+slk_simplify forall(i: !(0<i<3) | a[i]>3).
+// forall(i: !(0<i<3) | a[i]>3).
+
+
+slk_simplify forall(i: !(a[i]>0) | a[i]>3). 
+//forall (i
+
+
+slk_simplify forall(i: !(a_i>0) | a_i>3). 
+
+
+// i=0 --> a[i]>0
+// i=0 --> a[0]>0
+slk_simplify !(i=0) | a[i]>0.
+//  (1<=(a[i]) | i!=0)
+//   ==> (1<=(a[0]) | i!=0)
+
+
+slk_simplify (exists j: a[i]>0).
+
+slk_simplify (exists i: a[i]>0).

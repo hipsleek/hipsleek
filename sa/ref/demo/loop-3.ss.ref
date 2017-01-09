@@ -1,0 +1,54 @@
+
+!!!Full processing file "demo/loop-3.ss"
+Parsing file "demo/loop-3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure loop$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ P,G]requires P(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)P(x)&true --> x::node<next1> * HP_1216(next1)&
+true(3,4),
+ // PRE_REC
+(0)x::node<next1> * HP_1216(next1)&true --> P(x)&
+true(3,4),
+ // POST
+(0)G(x)&x!=null --> G(x)&
+true(3,4)]
+
+Procedure loop$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ P(x1) ::=  [x1::node<DP>],
+ G(x2) ::=  [emp&x2!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ P(x1) ::= x1::node<DP>(3,4),
+ G(x2) ::= emp&x2!=null(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.021766,187)
+Total verification time: 0.28149 second(s)
+	Time spent in main process: 0.268191 second(s)
+	Time spent in child processes: 0.013299 second(s)
+

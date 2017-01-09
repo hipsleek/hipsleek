@@ -1,0 +1,104 @@
+
+!!!Full processing file "examples/mutual-5b1.ss"
+Parsing file "examples/mutual-5b1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_10_1318=1+x' & 0<x' & 0<x & x'=x & !(v_bool_9_1147') & 
+0<x' & !(v_bool_9_1147') & v_int_10_1146'=v_int_10_1323+v_int_10_1322 & 
+res=v_int_10_1146' & fpost_1139(x') & gpost_1122(v_int_10_1318) --> fpost_1139(x).
+
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_9_1147' & x'<=0 & v_bool_9_1147' & 
+v_int_9_1141'=0 & res=v_int_9_1141' --> fpost_1138(x).
+
+ termAssume 0<v_int_19_1237 & 0<v_int_19_1237 & v_int_19_1237+2=x' & 0<x' & 
+x'=x & !(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & v_int_19_1201+1=x' & 
+0<v_int_19_1201 & 0<v_int_19_1201 & v_int_19_1131'=v_int_19_1250+
+v_int_19_1249 & 
+res=v_int_19_1131' & fpost_1139(v_int_19_1201) & fpost_1139(v_int_19_1237) --> gpost_1122(x).
+
+ termAssume v_int_19_1232<=0 & v_int_19_1232<=0 & v_int_19_1232+2=x' & 
+0<x' & x'=x & !(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & v_int_19_1201+
+1=x' & 0<v_int_19_1201 & 0<v_int_19_1201 & v_int_19_1131'=v_int_19_1248+
+v_int_19_1247 & 
+res=v_int_19_1131' & fpost_1139(v_int_19_1201) & fpost_1138(v_int_19_1232) --> gpost_1122(x).
+
+ termAssume v_int_19_1227<=0 & v_int_19_1227<=0 & v_int_19_1227+2=x' & 
+0<x' & x'=x & !(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & v_int_19_1198+
+1=x' & v_int_19_1198<=0 & v_int_19_1198<=0 & v_int_19_1131'=v_int_19_1246+
+v_int_19_1245 & 
+res=v_int_19_1131' & fpost_1138(v_int_19_1198) & fpost_1138(v_int_19_1227) --> gpost_1122(x).
+
+ termAssume x'<=0 & x'=x & v_bool_18_1132' & x'<=0 & v_bool_18_1132' & 
+v_int_18_1124'=0 & res=v_int_18_1124' --> gpost_1122(x).
+
+ termAssume !(v_bool_9_1147') & 0<x' & !(v_bool_9_1147') & x'=x & 0<x & 
+0<x' & v_int_10_1143'=1+x' & fpre_0(x) --> gpre_0(v_int_10_1143').
+
+ termAssume 0<x' & 0<x & x'=x & !(v_bool_9_1147') & 0<x' & 
+!(v_bool_9_1147') & fpre_0(x) --> fpre_0(x').
+
+ termAssume 0<v_int_19_1201 & 0<v_int_19_1201 & v_int_19_1201+1=x' & 
+!(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & x'=x & 0<x' & 
+v_int_19_1128'+2=x' & 
+0<v_int_19_1128' & gpre_0(x) --> fpre_0(v_int_19_1128').
+
+ termAssume 0<v_int_19_1201 & 0<v_int_19_1201 & v_int_19_1201+1=x' & 
+!(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & x'=x & 0<x' & 
+v_int_19_1128'+2=x' & v_int_19_1128'<=0 & gpre_0(x) --> Term.
+
+ termAssume v_int_19_1198<=0 & v_int_19_1198<=0 & v_int_19_1198+1=x' & 
+!(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & x'=x & 0<x' & 
+v_int_19_1128'+2=x' & v_int_19_1128'<=0 & gpre_0(x) --> Term.
+
+ termAssume 0<x' & x'=x & !(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & 
+v_int_19_1126'+1=x' & 
+0<v_int_19_1126' & gpre_0(x) --> fpre_0(v_int_19_1126').
+
+ termAssume 0<x' & x'=x & !(v_bool_18_1132') & 0<x' & !(v_bool_18_1132') & 
+v_int_19_1126'+1=x' & v_int_19_1126'<=0 & gpre_0(x) --> Term.
+
+
+Base/Rec Case Splitting:
+[	f: [[8] x<=0@B,[9] 1<=x@R]
+,	g: [[10] x<=0@B,[11] 1<=x@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[30,2]
+ ensures emp & true; 
+  2<=x -> requires emp & Loop[]
+ ensures false & false; 
+  x=1 -> requires emp & Term[30,3]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[30]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 65 invocations 
+8 false contexts at: ( (9,14)  (9,21)  (10,7)  (10,27)  (10,23)  (10,21)  (10,14)  (10,14) )
+
+!!! log(small):(0.094036,473)
+Total verification time: 0.565757 second(s)
+	Time spent in main process: 0.537783 second(s)
+	Time spent in child processes: 0.027974 second(s)
+

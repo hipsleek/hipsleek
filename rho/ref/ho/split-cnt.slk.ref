@@ -1,0 +1,85 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "ho/split-cnt.slk",Line:8,Col:10
+
+ERROR: at ho/split-cnt.slk_8:10_8:20
+Message: compute_view_fw_bw: data not found: CNT
+
+Entail 1: Valid. 
+
+Residue:
+ <1>c2::CNT{}<flted_17_39>&flted_17_39=0 & flted_17_40=0&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 2: Fail.(must) cause: flted_23_58=1 |-  flted_23_58=0. LOCS:[23] (must-bug)
+
+Residue:
+ <1>c2::CNT{}<flted_23_57>&flted_23_57=0 & flted_23_58=1&{FLOW,(6,7)=__Error#E}[]
+[[ COND ==>  Match(c1,c1) ==> ]]
+
+
+Starting Omega.../usr/local/bin/oc
+
+Entail 3: Valid. 
+
+Residue:
+ <1>c1::CNT{}<b_90> * c2::CNT{}<flted_29_75>&flted_29_75=0 & flted_29_76=1 & 0<=b_90 & 0<=1 & flted_29_76=b_90+1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 4: Valid. 
+
+Residue:
+ <1>c1::CNT{}<b_116> * c2::CNT{}<flted_35_101>&flted_35_101=0 & flted_35_102=2 & 0<=b_116 & 0<=1 & flted_35_102=b_116+1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 5: Fail.(may) cause:Nothing_to_do?to lemma_split: LHS:CNT and RHS: CNT
+
+Residue:
+ <1>c1::CNT{}<flted_41_128> * c2::CNT{}<flted_41_127>&flted_41_127=0 & flted_41_128=1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  NothingToDoto lemma_split: LHS:CNT and RHS: CNT ==> ]]
+
+
+
+Entail 6: Fail.(must) cause: flted_47_154=2 |-  flted_47_154=1. LOCS:[47] (must-bug)
+
+Residue:
+ <1>c2::CNT{}<flted_47_153>&flted_47_153=0 & flted_47_154=2&{FLOW,(6,7)=__Error#E}[]
+[[ COND ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 7: Valid. 
+
+Residue:
+ <1>c2::CNT{}<flted_53_171>&flted_53_171=0 & flted_53_172=1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(c1,c1) ==> ]]
+
+<2>c1::CNT{}<b_187> * c2::CNT{}<flted_53_171>&flted_53_171=0 & flted_53_172=1 & 0<=b_187 & 0<=1 & flted_53_172=b_187+1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 8: Fail.(must) cause:UnionR[ flted_59_199=0 |-  flted_59_199=1. LOCS:[59] (must-bug), flted_59_199=0 |-  1<=flted_59_199. LOCS:[59;1] (must-bug)]
+
+Residue:
+ <1>c2::CNT{}<flted_59_198>&flted_59_198=0 & flted_59_199=0&{FLOW,(6,7)=__Error#E}[]
+[[ SEARCH ==>  COND ==>  Match(c1,c1) ==> ]]
+
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>c1::CNT{}<b_241> * c2::CNT{}<flted_64_225>&flted_64_225=0 & flted_64_226=2 & 0<=b_241 & 0<=1 & flted_64_226=b_241+1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split(c1,c1)) ==>  Match(c1,c1) ==> ]]
+
+
+

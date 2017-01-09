@@ -1,0 +1,29 @@
+data node{int val; node next;}. 
+
+pred ll<n> == self=null & n=0 or
+     self::node<_, q> * q::ll<n-1> & n>0
+   inv n>=0.
+
+
+pred lle<> == self=null or
+     self::node<_, q> * q::lle<>
+   inv true.
+
+ /* Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid. */
+
+
+//3
+checkentail x::ll<n> * y::ll<n> & x=y |- x=null.
+print residue.
+expect Valid.
+
+/*
+# ex3c
+
+should succeed.
+
+fails with --field-imm
+
+
+*/
+

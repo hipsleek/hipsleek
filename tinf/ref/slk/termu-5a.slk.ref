@@ -1,0 +1,68 @@
+Starting Omega...oc
+Starting z3... 
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume y'+1=y & x'=y+x & 0<=x & fpost_0(x',y') --> fpost_0(x,y).
+
+ termAssume x<0 --> fpost_0(x,y).
+
+ termAssume y'+1=y & x'=y+x & 0<=x & fpre_0(x,y) --> fpre_0(x',y').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & Term[0,3,0+(0*x)+(1*
+           y)]
+ ensures emp & true; 
+           y<=(0-1) -> requires emp & Term[0,2,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  }
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_bool_11_878' & x'<0 & v_bool_11_878' & x=x' & y=y' & 
+x'<0 --> fpost_0(x,y).
+
+ termAssume 0<=x' & y=y' & x=x' & !(v_bool_11_878') & 0<=x' & 
+!(v_bool_11_878') & y'=1+v_int_12_919 & fpost_0(y'+
+x',v_int_12_876') --> fpost_0(x,y).
+
+ termAssume y'=1+v_int_12_876' & v_int_12_877'=x'+y' & !(v_bool_11_878') & 
+0<=x' & !(v_bool_11_878') & x=x' & y=y' & 
+0<=x' & fpre_0(x,y) --> fpre_0(v_int_12_877',v_int_12_876').
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> case {
+           0<=y -> requires emp & Term[0,3,0+(0*x)+(1*
+           y)]
+ ensures emp & true; 
+           y<=(0-1) -> requires emp & Term[0,2,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  }
+

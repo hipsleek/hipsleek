@@ -1,0 +1,9 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv BG([],i=n&i>=0) | BG([x], x=self+i & i<n & i>=0).
+

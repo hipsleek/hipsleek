@@ -1,0 +1,21 @@
+data node{
+int val;
+node next;
+}.
+
+relation update(bag(node) L, node x, int v, node p, bag(node) L1).
+relation lookup(bag(node) L, node x, int v, node p).
+
+relation mark(bag(node) L,node x,bag(node) L1).
+relation mark1(bag(node) L,node x,bag(node) L1).
+
+axiom lookup(L,x,1,p) ==> mark(L,x,L).
+axiom L = L1 ==> mark(L,null,L1).
+axiom lookup(L,x,v,p) & update(L,x,1,p,L1) & mark(L1,p,L2) ==> lookup(L2,x,1,p).
+
+pred ll<L> == self = null
+      or self::node<v,p> * p::ll<L> & lookup(L,self,v,p).
+
+checkentail  v_1004!=1 & update(L,x,1,p_1129,L1_1147) & x!=null & v_1128=1 & 
+mark(L,p_1129,L1_1126) & lookup(L,x,v_1004,p_1129)
+& L1_1147 = L |- lookup(L1_1127,x,v_1128,p_1129).

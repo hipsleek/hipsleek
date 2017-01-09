@@ -1,0 +1,37 @@
+//(1)
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires x>2 & flow __MayError
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+// {}
+
+//(2)
+checkentail 
+   x>1 & flow __MayError |-  x>2 & flow __Error.
+print residue.
+/*
+  why not Error?
+
+ <1>emp&1<x&{FLOW,(3,7)=__MayError}[]
+
+*/
+
+//(3)
+checkentail 
+   x>1 & flow __norm |-  x>2 & flow __MayError.
+print residue.
+
+/*
+
+ <1>emp&1<x&{FLOW,(3,7)=__MayError}[]
+
+*/
+
+
+//(4)
+checkentail 
+   x>1 & flow __norm |-  x>2 & flow __norm.
+print residue.

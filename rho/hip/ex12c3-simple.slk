@@ -1,0 +1,8 @@
+infer [@par]  @full[x,y] * @lend[v] |-  @full[x] * @lend[v].
+print residue.
+
+checkentail  @full[x,y] * @lend[v] |-  @full[x] * @lend[v].
+print residue.
+
+infer [@par]  @full[y] * @lend[v] * @zero[x] |-  @full[y] * @lend[v].
+print residue.

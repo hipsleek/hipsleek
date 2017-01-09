@@ -1,0 +1,21 @@
+Starting Omega...oc
+H is defined.
+HP_902 is defined.
+HP_903 is defined.
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(cur,prev,sent) ::= cur::node<val,next> * HP_102(next,sent) * HP_903(prev,cur,sent)(3,4),
+ HP_902(next1,prev1,sent1) ::= emp&next1=sent1(3,4),
+ G(cur2,next2,prev2,cur1,sent2) ::= cur2::node<val1,prev2> * HP_903(prev2,cur2,sent2)&cur2=cur1 & next2=sent2(3,4),
+ HP_102(next1,sent1) ::= emp&next1=sent1(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.069531 second(s)
+	Time spent in main process: 0.05549 second(s)
+	Time spent in child processes: 0.014041 second(s)
+

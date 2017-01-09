@@ -1,0 +1,22 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+Entail (1) : Fail.(may) cause: true |-  yyyy=x. LOCS:[0;12] (may-bug)
+
+ <1>emp&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 24 invocations 
+SAT Count   : 23
+SAT % Hit   : 91.3%
+IMPLY Count : 11
+IMPLY % Hit : 90.9%
+Time(cache overhead) : 0.000806 (seconds)
+
+!!! log(small):(0.025808,61)
+Total verification time: 0.066245 second(s)
+	Time spent in main process: 0.048665 second(s)
+	Time spent in child processes: 0.01758 second(s)
+

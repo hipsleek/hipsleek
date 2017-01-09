@@ -1,0 +1,24 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+
+checkentail x::arr<_> & x=y+i 
+   |- y::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+/*
+# ex1e4a
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_seg<i_59,n>@M(may)
+
+
+
+*/
+

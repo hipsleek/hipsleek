@@ -1,0 +1,61 @@
+
+!!!Full processing file "slk/fact2c2.ss"
+Parsing file "slk/fact2c2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<v_int_14_1274 & 1<=v_int_14_1282 & 0<v_int_14_1274 & 
+v_int_14_1274+1=x' & !(v_bool_13_1147') & x'!=0 & !(v_bool_13_1147') & 
+x'=x & 0<x & x'!=0 & v_int_14_1146'=v_int_14_1282+1 & 
+res=v_int_14_1146' & fpost_0(v_int_14_1274) --> fpost_0(x).
+
+ termAssume v_int_14_1269=0 & 1<=v_int_14_1281 & v_int_14_1269=0 & 
+v_int_14_1269+1=x' & !(v_bool_13_1147') & x'!=0 & !(v_bool_13_1147') & 
+x'=x & 0<x & x'!=0 & v_int_14_1146'=v_int_14_1281+1 & 
+res=v_int_14_1146' & fpost_0(v_int_14_1269) --> fpost_0(x).
+
+ termAssume v_int_14_1225<0 & 1<=v_int_14_1231 & v_int_14_1225<0 & 
+v_int_14_1225+1=x' & !(v_bool_13_1147') & x'!=0 & !(v_bool_13_1147') & 
+x'=x & x<0 & x'!=0 & v_int_14_1146'=v_int_14_1231+1 & 
+res=v_int_14_1146' & fpost_0(v_int_14_1225) --> fpost_0(x).
+
+ termAssume x'=0 & x=0 & x'=x & v_bool_13_1147' & x'=x' & v_bool_13_1147' & 
+v_int_13_1141'=1 & res=v_int_13_1141' --> fpost_0(x).
+
+ termAssume x'!=0 & 0<x & x'=x & !(v_bool_13_1147') & x'!=0 & 
+!(v_bool_13_1147') & v_int_14_1145'=1 & v_int_14_1143'+1=x' & 
+v_int_14_1143'=0 & Term --> fpre_0(v_int_14_1143').
+
+ termAssume x'!=0 & x<0 & x'=x & !(v_bool_13_1147') & x'!=0 & 
+!(v_bool_13_1147') & v_int_14_1145'=1 & v_int_14_1143'+1=x' & 
+v_int_14_1143'<0 & fpre_0(x) --> fpre_0(v_int_14_1143').
+
+
+Base/Rec Case Splitting:
+[	fact: [[3] x=0@B,[4] 1<=x@R,[5] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29,1]
+ ensures emp & x=0 & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  1<=x -> requires emp & Term[29,x]
+ ensures emp & 0<x & 1<=res; 
+  }
+
+Termination checking result: SUCCESS
+
+
+8 false contexts at: ( (13,12)  (13,19)  (14,7)  (14,25)  (14,21)  (14,16)  (14,14)  (14,14) )

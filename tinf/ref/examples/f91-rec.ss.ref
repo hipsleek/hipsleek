@@ -1,0 +1,30 @@
+
+!!!Full processing file "examples/f91-rec.ss"
+Parsing file "examples/f91-rec.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (1+pv_1167)<=pv_1168]
+!!! Mutual Rec Group:[f$int~int]
+!!! Phase Numbering:[(pv_1168,1);(pv_1167,0)]
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (1+pv_1170)<=pv_1171]
+!!! Mutual Rec Group:[f91$int]
+!!! Phase Numbering:[(pv_1171,1);(pv_1170,0)]
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+Checking procedure f91$int... 
+Termination checking result: SUCCESS
+
+
+12 false contexts at: ( (25,13)  (26,7)  (26,24)  (26,22)  (26,18)  (26,14)  (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )

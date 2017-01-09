@@ -1,0 +1,31 @@
+data cell{
+ int fst;
+}.
+
+relation R(int v,int w).
+//relation R(ann v,ann w).
+
+infer [R] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+/*
+# lend-2.slk --print-type 
+
+Need to introduce a new type "ann" for annotation?
+
+ERROR: at lend-2.slk_7:42_7:43 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(7,42),(7,43)} types AnnT and int are inconsistent")
+ gather_type_info_b_formula: relation R
+Starting z3... 
+
+Why is there an inferred "true"?
+
+Entail (1) : Valid. 
+ <1>q::celly<flted_7_16>@w&flted_7_16=2 & R(v,w) & a=f & Anon_11=flted_7_16 & v<=0 & w<=2&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(v,w)) -->  v<=0 & w<=2]
+[[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
+
+
+*/

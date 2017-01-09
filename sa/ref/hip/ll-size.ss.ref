@@ -1,0 +1,70 @@
+
+!!!Full processing file "hip/ll-size.ss"
+Parsing file "hip/ll-size.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: hip/ll-size.ss_19:10_19:17:the result type __norm is not covered by the throw list[]
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! neqs:[]
+Checking procedure size_helper$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,H1]requires H(x)&true
+ ensures H1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x)&x!=null --> x::node<val1,next1> * HP_1281(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1281(next1)&true --> H(next1)&
+true(3,4),
+ // POST
+(1;0)H(x)&x=null --> H1(x)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * H1(next1)&true --> H1(x)&
+true(3,4)]
+
+Procedure size_helper$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H(next2)],
+ H1(x2) ::=  [emp&x2=null; x2::node<val,next> * H1(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<val2,next2> * H(next2)
+ or emp&x1=null
+ (3,4),
+ H1(x2) ::= 
+ x2::node<val,next> * H1(next)
+ or emp&x2=null
+ (3,4)]
+*************************************
+Stop Omega... 9 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.052544,266)
+Total verification time: 0.333731 second(s)
+	Time spent in main process: 0.312407 second(s)
+	Time spent in child processes: 0.021324 second(s)
+

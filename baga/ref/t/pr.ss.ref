@@ -1,0 +1,22 @@
+
+!!!Full processing file "t/pr.ss"
+Parsing file "t/pr.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$node... 
+dprint: t/pr.ss:20: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_17_45: x::ll{}<flted_17_45>&x'=x & flted_17_45=6+4 & MayLoop[]&{FLOW,(4,5)=__norm})[]
+       es_ho_vars_map: []EXISTS(flted_17_45: x::ll<flted_17_45>&x'=x & flted_17_45=6+4 & MayLoop[])[]
+
+ ]
+
+Procedure foo$node SUCCESS.
+
+0 false contexts at: ()

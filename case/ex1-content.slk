@@ -1,0 +1,11 @@
+data node{
+  int val;
+  node next;
+}.
+
+pred PQ<> == 
+  [] self::node<v,p> 
+   case {
+     v=0 -> [] emp;
+     v!=0 -> [] p::PQ<>;
+  }.

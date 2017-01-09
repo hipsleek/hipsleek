@@ -1,0 +1,1855 @@
+# lend-1.slk --print-type (DONE)
+
+Can you change integer formula back to annotation
+formula at Omega.ml. See trans_bool method which
+converts b>=1 to b and b<=0 to !b for boolean.
+
+infer [v] p::pair<f,s>@v |- p::pair<a,b>.
+
+GOT: 
+Entail (1) : Valid. 
+ <1>emp&a:int=f:int & b:int=s:int & v:AnnT<=0&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v:AnnT<=0]
+[[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
+
+
+Expects:
+Entail (1) : Valid. 
+ <1>emp&v:AnnT<:@M&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v:AnnT<:@M]
+[[ SEARCH ==>  Match(p:pair,p:pair) ==> ]]
+=======================================================
+# lend-2.slk --print-type (DONE)
+
+Need to introduce a new type "ann" for annotation?
+
+ERROR: at lend-2.slk_7:42_7:43 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(7,42),(7,43)} types AnnT and int are inconsistent")
+ gather_type_info_b_formula: relation R
+Starting z3... 
+
+Why is there an inferred "true"?
+
+Entail (1) : Valid. 
+ <1>q::celly<flted_7_16>@w&flted_7_16=2 & R(v,w) & a=f & Anon_11=flted_7_16 & v<=0 & w<=2&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(v,w)) -->  v<=0 & w<=2]
+[[ COND ==>  SEARCH ==>  Match(p,p) ==>  SEARCH ==>  Match(q,q) ==> ]]
+
+=======================================================
+# lend-3.slk --print-type (IGNORE)
+
+Maybe @imm should be used only for HIP..
+
+infer [@imm] p::cell<f>@v * q::cell<2>@w & R(v,w) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+@imm should pick up all relations with @ann parameters
+for inference; where needed. 
+
+Priority to relations, and then variables.
+
+ error: Stream.Error("[infer_type] or [id_list] or CSQUARE expected after OSQUARE (in [id_list_w_itype])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+=======================================================
+# lend-3a.slk --pcp (DONE)
+
+//relation R(int v,int w).
+relation R(int v,
+   ann w).
+
+Why is the R relation not being printed
+by --pcp
+=======================================================
+# cell-3b.ss  (DONE)
+
+[RELASS [P1]: ( P1(a)) -->  a=@M,
+RELDEFN P2: ( b=@M) -->  P2(b)]
+
+ c::cell<v>@a & P1(a) |- c::cell<_>
+
+     P1(a) --> a<:M
+
+ c::cell<v>@a & a<:M |- c::cell<_>@b & P2(b)
+
+     b<:@M -> P2(b)
+
+*************************************
+Two problems:
+ (1) why numeric for fixcalc?
+ (2) Why false for PRE?
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( P2(b), b=0, P1(a), false)]
+*************************************
+
+!!!REL POST :  P2(b)
+!!!POST:  b=0
+!!!REL PRE :  P1(a)
+!!!PRE :  false
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( P2(b), b=0, P1(a), false)]
+
+=======================================================
+# cell-3c.ss (DONE)
+
+Why is there a check 1 fail?
+
+Checking procedure foo$cell... check 1 fail
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ true]
+Procedure foo$cell SUCCESS.
+Stop Omega... 18 invocations 
+0 false contexts at: ()
+
+c::cell<v>@a & P1(a) |- c::cell<w>@L
+
+=======================================================
+# cell-3c1.slk
+
+infer [P1,P2] 
+c::cell<v>@a & P1(a)  & a<:@L 
+        |- c::cell<w>@b & P2(b).
+print residue.
+
+                              
+Why false?
+Why a>2?
+
+
+Entail (2) : Valid. 
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
+[[empty]]
+=======================================================
+# cell-2.ss  (DONE)
+
+int foo(cell c)
+  infer [P1]
+  requires c::cell<v>@a & P1(a,b) 
+  ensures c::cell<v>@b & v=res;
+{
+  return c.fst;
+}
+
+GOT
+===
+[RELASS [P1]: ( P1(a,b)) -->  a<:@L]
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@L&a<:@L & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists v_1460: emp&v=res & v_1460=v&{FLOW,(4,5)=__norm#E}[]
+
+# Why b is free?
+# What happen to Cell in post
+
+!!!WARNING : uninterpreted free variables [b] in specification.
+Checking procedure foo$cell... check 1 fail
+=======================================================
+# ex4.slk
+
+Verification works but inference fails for ex4a.slk
+
+infer [@field_imm] p::pair<f,s@L> |- p::pair<a,b@M>.
+print residue.
+expect Fail.
+
+infer [@field_imm] p::pair<f,s@M> |- p::pair<a,b@L>.
+print residue.
+expect Valid.
+
+# ex4a.slk
+
+infer [@field_imm,a] p::pair<f,s@a> |- p::pair<a,b@L>.
+print residue.
+
+Need to fix type error
+
+ERROR: at ex4a-infer-field-imm.slk_6:47_6:48
+Message: UNIFICATION ERROR : at location {(Line:6,Col:47),(Line:6,Col:48)} types
+ int and AnnT are inconsistent
+
+=======================================================
+# ex4c4
+
+infer [@field_imm] p::cell<s@x> |- p::cell<b@L>.
+infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
+
+Why did the cell fails as expected 
+but not pair?
+
+(==solver.ml#7525==)
+heap_entail_empty_rhs_heap#1@2@1
+heap_entail_empty_rhs_heap#1 inp1 : p::cell<s@[@x]>&b=s&{FLOW,(4,5)=__norm#E}[]
+ // missing? es_heap: p::pair<Anon_12,s@A>
+ es_infer_obj: [@field_imm]
+ es_trace:  SEARCH ==>  Match(p,p) ==> 
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_empty_rhs_heap#1 inp2 : p::cell<s@[@x]>&b=s&{FLOW,(4,5)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 : x<:@L
+heap_entail_empty_rhs_heap#1 inp4 :false
+heap_entail_empty_rhs_heap#1@2 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x<:@L. LOCS:[0] (may-bug)
+   
+
+(==solver.ml#7525==)
+heap_entail_empty_rhs_heap#1@4@3
+heap_entail_empty_rhs_heap#1 inp1 : p::pair<Anon_28@A,s@[@x]>&Anon_13=Anon_12 & 
+b=s&{FLOW,(4,5)=__norm#E}[]
+ es_heap: p::pair<Anon_12,s@A>
+ es_infer_obj: [@field_imm]
+ es_trace:  SEARCH ==>  Match(p,p) ==> 
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_empty_rhs_heap#1 inp2 : p::pair<Anon_28@A,s@[@x]>&Anon_13=Anon_12 & b=s&{FLOW,(4,5)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 : x<:@L
+heap_entail_empty_rhs_heap#1 inp4 :false
+heap_entail_empty_rhs_heap#1@4 EXIT: [
+  p::pair<Anon_28@A,s@[@x]>&Anon_13=Anon_12 & b=s&{FLOW,(4,5)=__norm#E}[]
+  ]
+=======================================================
+#  ex4c5.slk -debug x.log (needed --etcsu1 & --en-imm-merge)
+
+infer [@field_imm] p::pair<_,s@x> |- p::pair<_,b@L>.
+
+Need to trace how unsound "false" appear below
+
+**solver.ml#8096:diff_flag:false
+@1! **solver.ml#8097:super_smart_xpure:false
+@1! **solver.ml#8103:xpure_lhs_h1(bef merge): false
+@1! **solver.ml#8107:xpure_lhs_h1: false
+@1! **solver.ml#8130:xpure_lhs_h1: false
+@1! **solver.ml#8131:xpure_lhs_h0_sym (wo pure): false
+@1! **solver.ml#8132:xpure_lhs_h1_sym (wo pure): false
+=======================================================
+# ex5.slk (OK after changing --etcsu1 and --en-imm-merge with --field-imm
+
+# Normalization is not working here..
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<a@A,2> |- false.
+
+(==astsimp.ml#7717==)
+normalize_field_ann_heap_node@5
+normalize_field_ann_heap_node inp1 : p::pair<f,s@A> * p::pair<a@A,flted_7_14>
+normalize_field_ann_heap_node@5 EXIT:( p::pair<f,s@A> * p::pair<a@A,flted_7_14>,?,?)
+=======================================================
+# Normalization is not working here..
+
+!!! **cformula.ml#15051:holes1:[]
+!!! **cformula.ml#15052:holes2:[]
+!!! **cformula.ml#15066:inside combine_param_ann
+(==astsimp.ml#7726==)
+combine_param_ann@1
+combine_param_ann inp1 :[@M,@A]
+combine_param_ann inp2 :[@A,@M]
+combine_param_ann@1 EXIT:[@M,@A]
+[Warning] False ctx
+=======================================================
+# ex5.slk
+
+infer [@field_imm] p::pair<f,s@A> * p::pair<_,2> |- false.
+
+# Why not return false at this point of heap merging?
+# maybe can avoid --etcsu1 if you had done this?
+  ("--etcsu1",Arg.Set Globals.simpl_memset,"use the old,complicated memset calculator");
+# We should avoid this old calculator since it is likely to be obsolete.
+# We should focus on improving the merging operation
+
+
+(==norm.ml#1054==)
+merge_alias_nodes_formula@1
+merge_alias_nodes_formula inp1 : p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&f
+lted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+merge_alias_nodes_formula@1 EXIT: p::pair<f,s@A> * p::pair<Anon_12,flted_16_15>&
+flted_16_15=2&
+{FLOW,(20,21)=__norm#E}[]
+
+infer [] ppp::pair<f,s>@A * ppp::pair<_,2>@I |- s=2.
+// fails
+// what happen to s=2? where is merge
+// when @field_imm is added, it succeeds.
+
+should do a merge rather than a removal 
+
+(==sleekengine.ml#1186==)
+remove_imm_from_formula@1
+remove_imm_from_formula inp1 : ppp::pair<f,s>@A * ppp::pair<Anon_15,flted_31_48>@I&flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
+remove_imm_from_formula@1 EXIT: (emp) * ppp::pair<Anon_15,flted_31_48>@I&ppp!=null & flted_31_48=2&
+{FLOW,(20,21)=__norm#E}[]
+=======================================================
+# ex5c.slk
+
+infer [] p::pair<f>@I & p::pair<2>@I |- false.
+
+unsound to use xpure_heap_mem_enum when there
+is /\ in the formula
+
+(====)
+h_formula_2_mem@3@2@1
+h_formula_2_mem inp1 : (p::pair<f>@I ; ((p::pair<flted_9_13>@I ; (emp))))
+h_formula_2_mem inp2 : flted_9_13=2
+h_formula_2_mem inp3 :[]
+h_formula_2_mem@3 EXIT: [[p]]
+
+(==cvutil.ml#1713==)
+xpure_heap_mem_enum#6@2@1
+xpure_heap_mem_enum#6 inp1 : (p::pair<f>@I ; ((p::pair<flted_9_13>@I ; (emp))))
+xpure_heap_mem_enum#6 inp2 : flted_9_13=2
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@2 EXIT: p=1 & p=2 #  [[p]]
+
+=======================================================
+When merging, may I suggest the following..
+
+  @A * v  --> v
+  @M * v  --> @M & v<:@A
+  @I * v  --> @I & v<:@A
+  @L * v  --> @L & v<:@A
+  v1 * v2 --> v3 & (v3=v2 & v1<:@A | v3=v1 & v2<:A)
+
+=======================================================
+# ex3d7.ss
+
+  infer [P1,P2]
+  requires c::cell<v>@a & P1(a)
+     ensures c::cell<v>@b & P2(a,b,v,res)  ;
+
+
+[RELASS [P1]: ( P1(a)) -->  a<:@L,
+RELDEFN P2: ( res=v & b_1458=a & a<:@L & P1(a)) -->  P2(a,b_1458,v,res)]
+
+I think it is sufficient to leave it as:
+!!! **pi.ml#658:PRE :  a<:@L
+
+But to later transform pre/post from:
+
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a<:@L & 
+       MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists v_1457,b_1458: c::cell<v_1457>@b_1458&v_1457=v & res=v & 
+           b_1458=a & a<:@L&{FLOW,(4,5)=__norm#E}[]
+
+To:
+
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@L & 
+       MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists v_1457,b_1458: res=v &{FLOW,(4,5)=__norm#E}[]
+
+
+!!! **pi.ml#611: P2(a,b_1458,v,res) = ( res=v & b_1458=a & a<:@L)Pi.infer_pure
+
+!!! **fixcalc.ml#1392:n_base:2
+!!! **pi.ml#625:bottom_up_fp:[( P2(a,v,b_1458,res), res=v & b_1458=a & a<:@L)]
+!!! **pi.ml#632:fixpoint:[( P2(a,v,b_1458,res), res=v & b_1458=a & a<:@L, P1(a), a<:@L)]
+!!! **pi.ml#655:REL POST :  P2(a,v,b_1458,res)
+!!! **pi.ml#656:POST:  res=v & b_1458=a & a<:@L
+!!! **pi.ml#657:REL PRE :  P1(a)
+!!! **pi.ml#658:PRE :  a=@L
+=======================================================
+# ex3d7.ss --reverify
+
+  infer [P1,P2]
+  requires c::cell<v>@a & P1(a)
+     ensures  c::cell<v>@b & P2(a,b,v,res)  ;
+
+The above failed, as follows:
+
+Post condition cannot be derived:
+  (must) cause:  @L=@L & @L<:b_1458 & @L=b_1458 |-  b_1458=@A. LOCS:[1;0] (must-bug)
+
+despite inferring:
+
+  requires c::cell<v>@a & a=@L
+  ensures c::cell<v>@b & res=v & a=@A  ;
+
+We need below, as highlighted in:
+
+  requires c::cell<v>@L
+  ensures c::cell<v>@A & res=v  ;
+=======================================================
+# ex3d7c.slk (DONE)
+
+checkentail x::cell<a>@L |- x::cell<b>@v & v=@A.
+print residue.
+
+Entail 2: Fail.(must) cause: @L=v |-  v=@A. LOCS:[0;9] (must-bug)
+
+Solution : either (i) substitute (ii) use explicit
+instantation (iii) post-process
+*/
+
+checkentail x::cell<a>@L |- (exists v: x::cell<b>@v & v=@A).
+print residue.
+/*
+Residue:
+ <1>x::cell<a>@L&b=a&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+=======================================================
+# ex3d7e.slk  (DONE)
+
+# remove double annotation as it seems redundant
+checkentail x::cell<a>@u & u=@L & v=@A  |- x::cell<b>@v & v=@A.
+Residue:
+ <1>x::cell<a>@[@u, @ann_f_r_23]&v=@A & u=@L & ann_f_r_23=v & u<:ann_f_r_23 & b=a&{FLOW,(20,21)=__norm#E}[]
+
+
+# support RHS sensitive instantiation for annotation
+
+checkentail x::cell<a>@u & u=@L  |- x::cell<b>@v & v=@A.
+Entail 6: Fail.(must) cause: @L<:v & @L=v |-  v=@A. LOCS:[0;32] (must-bug)
+
+instantiated: u=v which gave a wrong instantiation
+
+# soln : change to instantiate v=@A which is present on the RHS before
+proceeding to prove u<:v
+
+=======================================================
+# ex3d7g.slk (DONE)
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@A.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@A & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @L (DONE)
+
+//(2)
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+
+//(3)
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@L.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@L & b=a&{FLOW,(20,21)=__norm#E}[]
+// should normalize to @A
+
+//(4)
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & u=v & b=a&{FLOW,(20,21)=__norm#E}[]
+// inst to v=@L
+// better to instantiate to @L
+=======================================================
+# ex3d7i.slk  (DONE)
+//(2)
+
+checkentail x::cell<a>@u & u=@L |- x::cell<b>@v & v=@M.
+print residue.
+// <1>x::cell<a>@[@u, @v]&u=@L & v=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+// should fail
+
+fails for node lvl imm but goes through with --field-imm
+
+=======================================================
+to add examples in run-fast-test (DONE)
+
+=======================================================
+
+phases with field-imm broken
+
+=======================================================
+ex3d8a.slk
+
+checkentail x::cell<a>@u & u=@M |- (exists v: x::cell<b>@v & v<:@A).
+print residue.
+expect Valid.
+
+ <1>(exists v_21: x::cell<a>@[@M, @v_21]&u=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+
+  Can we have v_21<:A in the eventual instantiation?
+
+checkentail x::cell<a>@u & u=@M |- (exists v: x::cell<b>@v & v=@M).
+print residue.
+expect Valid.
+
+
+ <1>(exists v_33: x::cell<a>@[@M, @v_33]&u=@M & b=a&{FLOW,(20,21)=__norm#E}[]
+
+  Can we have v_33=@M in the instantiation?
+
+=======================================================
+# ex9d.slk (FIXED)
+
+checkentail x::cell<_>@u & u=@M  |- x::cell<_>@v .
+print residue.
+expect Valid.
+
+GOT
+Residue:
+ <1>x::cell<Anon_21>@[@M, @v]&u=@M & u<:v & Anon_22=Anon_21&{FLOW,(20,21)=__norm#E}[]
+
+It may be better to instantiate to v=@A in such scenario,
+and thus allow normalization.
+=======================================================
+# ex9d.slk
+
+checkentail x::cell<_>@u  |- x::cell<_>@v & v=@L.
+
+Entail 7: Valid. 
+Residue:
+ <1>x::cell<Anon_23>@u&v=@L & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+This is unsound, as we have not yet proven u<:v. I think
+after instantiation, we need to add u<:v to the RHS for it to
+be proven.
+=======================================================
+# ex9e.slk
+
+infer[R] x::cell<_>@u & u=@M  |- x::cell<_>@v & R(v).
+
+GOT:
+---
+Residue:
+ <1>x::cell<Anon_11>@[@M, @v]&u=@M & u<:v & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( true) -->  R(v)]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+infer[R] u=@M & u<:v  |- R(v).
+print residue.
+
+--------------------------------
+
+
+Residue:
+ <1>x::cell<Anon_23>@A&u=@M & u=v & Anon_24=Anon_23&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN R: ( v=@M) -->  R(v)]
+
+# I think it is better to instantiate u<:v rather than u=v
+
+We will later obtain:
+     u=@M & u<:v --> R(v)
+For strongest R(v), we would derive v=@M.
+For weakest R(v), we would later derive v=@A.
+
+=======================================================
+# ex8a1.slk  (DONE)
+
+# need to convert aaa<=bbb to aaa<:bbb during simplification
+
+ inferred rel: [RELDEFN P2: ( w_1454=res & vvv=res & aaa<:@L & aaa<=bbb & P1(aaa)) -->  P2(aaa,bbb,vvv,res,w_1454)]
+
+=======================================================
+# ex8c4.slk (minor)
+
+When is the 2nd enumeration done? Omega or sleek?
+
+infer [a] a<=4 |-  a<=0.
+Residue:
+ <1>emp&a<=4 & ((a<=0 | 5<=a))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(a<=0 | 5<=a)]
+
+infer [a] a<=3 |-  a<=0.
+ <1>emp&a<=3 & a!=1 & a!=2 & a!=3&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [a!=3; a!=2; a!=1]
+=======================================================
+# ex10a2.slk (OK)
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww.
+
+# I think we should inst @M<:ww rather than ww=@A
+
+Residue:
+ <1>c::cell<Anon_19>@M&ww=@A & Anon_20=Anon_19&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+=======================================================
+# ex10a3.slk  (OK)
+
+infer [P1] c::cell<_>@M |-  c::cell<_>@ww&P1(ww).
+
+GOT:
+
+ <1>c::cell<Anon_11>@[@M, @ww]&@M<:ww & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P1: ( true) -->  P1(ww)]
+
+# As relation can be pre or post, we may want to obtain:
+
+ inferred rel: [RELDEFN P1: @M<:ww -->  P1(ww)]
+
+ This would tell us that P1(ww) = ww=@M so that we can
+ have that as the strongest post-condition.
+
+ This at least tell us that ww is being used.
+ If we had just true --> P(ww), it could be that 
+ ww is unused.
+
+=======================================================
+ex10a3.slk [DONE}
+../../sleek ex10a3-ann-rel.slk -dre "subtype"
+
+in this case we do not need to prove @M<:ww. Maybe when we instantiate
+to lhs<:rhs instead of eq or rhs-aware inst,
+we do not need to add this obligation to rhs 
+
+(==solver.ml#9842==)
+subtype_ann_gen@1
+subtype_ann_gen inp1 :impl:[ww,Anon_12]
+subtype_ann_gen inp2 :evars:[]
+subtype_ann_gen inp3 :@M
+subtype_ann_gen inp4 :@ww
+subtype_ann_gen inp5 :lhs_f: c::cell<Anon_11>@[@M, @ww]&{FLOW,(20,21)=__norm#E}[]
+subtype_ann_gen inp6 :rhs_f: emp&P1(ww)&{FLOW,(20,21)=__norm#E}[]
+subtype_ann_gen@1 EXIT:(true,[ @M<:ww],[ @M<:ww],[])
+=======================================================
+../../hip ex8-node-inf-L-res.ss 
+
+
+[RELASS [P1]: ( P1(a)) -->  a<:@L,
+RELASS [P1]: ( P1(a)) -->  (a=@M | a=@A),
+RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,res,w_1456)]
+*************************************
+
+Expected algo:
+  (i) process pre first
+ (ii) use (i) to process post
+ (iii) use post fixpt to add info to pre
+
+!!! **pi.ml#637:reloblgs:[( P1(a), (a=@M | a=@A)),( P1(a), a<:@L)]
+!!! **pi.ml#638:WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M
+
+choose pre-obligation first:
+
+
+!!! **pi.ml#634:pre_rel_ids:[P1]
+!!! **pi.ml#635:post_rel_ids:[P2]
+!!! **pi.ml#636:pre_ref_df:[]
+!!! **pi.ml#637:post_ref_df:[( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a), P2(a,b_1455,v,res,w_1456))]
+!!! **pi.ml#638:WN: why is pre_rel_df empty? It should be P1(a) = a=@M
+
+    P2(a,b,v,w) ::= a=@M & @M<:b & v=res
+                ::= a=@M & @M=b & v=res
+
+
+RELDEFN P2: ( v=res & w_1456=5 & a<:@L & @M<:b_1455 & P1(a)) -->  P2(a,b_1455,v,res,w_1456)]
+RELDEFN P2: ( v=res & w_1456=5 & a=@M & @M<:b_1455 ) -->  P2(a,b_1455,v,res,w_1456)]
+
+=======================================================
+../../hip ex8-node-inf-L-res.ss  \\done
+
+!!! **pi.ml#776:>>REL POST :  P2(a,v,b_1456,res,w_1457)
+!!! **pi.ml#777:>>POST:  v=res & w_1457=5 & a<:@L & @M<:b_1456 & a=@M
+!!! **pi.ml#778:>>REL PRE :  P1(a,v)
+!!! **pi.ml#779:>>PRE :  a=@M
+
+post can be simplified to:
+!!! **pi.ml#777:>>POST:  v=res & w_1457=5 & @M<:b_1456 & a=@M
+=======================================================
+# ex8d1.ss
+
+ int x = c.fst;
+ return x;
+
+GOT:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a<:@L)]
+
+# I think can strengthen/simplify to:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@L)]
+
+!!! **pi.ml#776:>>REL POST :  P2(a,v,b_1450,res,w_1451)
+!!! **pi.ml#777:>>POST:  w_1451=res & v=res & a<:@L & a<:b_1450 & a<:@L
+!!! **pi.ml#778:>>REL PRE :  P1(a,v)
+!!! **pi.ml#779:>>PRE :  a<:@L
+
+Post can simplify to:
+!!! **pi.ml#777:>>POST:  w_1451=res & v=res & a<:@L & a<:b_1450 
+
+Derived spec:
+------------
+requires c::cell<v>@a & a<:@L
+ensures  c::cell<w>@b & w=res & v=res & a<:b 
+
+Improving spec: 
+---------------
+(i) use weakest pre:
+(ii) make strongest post:
+requires c::cell<v>@a & a=@L
+ensures  c::cell<w>@b & w=res & v=res & b=@L 
+(iii) drop @L in post
+requires c::cell<v>@a & a=@L
+ensures  v=res  
+=======================================================
+# ex8d2.ss \\done
+
+ int x = c.fst;
+ if (x>0) c.fst = 5;
+ return x;
+
+GOT
+---
+!!! **pi.ml#770:>>POST:  
+((a=@M & res=w_1457 & v=w_1457 & w_1457<=0 & b_1456=@M) 
+| (w_1457=5 & a=@M & v=res & b_1456=@M & 1<=res))
+
+Can normalize to:
+-----------------
+!!! **pi.ml#770:>>POST:  
+a=@M & b_1456=@M & ( res=w_1457 & v=w_1457 & w_1457<=0 ) 
+                    | (w_1457=5 & v=res & 1<=res)
+
+GOT:
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v<=0 & a<:@L)))]
+
+
+# I think can strengthen/simplify to:
+
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | a<:@L))]
+!!! **pi.ml#696:reloblgs:[( P1(a,v), a=@M]
+
+=======================================================
+
+# ex8e1.ss
+
+How was post_ref_df_new derived from post_ref_df?
+
+!!! **pi.ml#696:reloblgs:[( P1(a,v), (a=@M | (v=0 & a<:@L)))]
+
+!!! **pi.ml#702:post_ref_df:[( 
+res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & P1(a,v), 
+P2(a,b_1469,v,res,w_1470))]
+!!! **pi.ml#717:post_ref_df_new:[( 
+res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 
+& 1<=v & a<:@L & P1(a,v) & v_1517+1=v & @M<:a_1516, 
+P2(a,b_1469,v,res,w_1470))]
+=======================================================
+# ex8e2.ss
+
+# Fixcalc need not know @L
+
+!!! **pi.ml#738:sp:compute_fixpoint:[( res=0 & w_1463=0 & v=0 & a<:@L & a<:b_1462 & 1<=v_1495 & a<:@L & 
+P1(a,v_1495) & a<:a_1494, P2(a,b_1462,v,res,w_1463))]
+!!! **pi.ml#739: P2(a,b_1462,v,res,w_1463) = ( res=0 & w_1463=0 & v=0 & a<:@L & a<:b_1462 & 1<=v_1495 & a<:@L & 
+P1(a,v_1495) & a<:a_1494)
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occurred!
+
+=======================================================
+# ex8e3.ss
+
+{
+ int x = c.fst;
+ if (i!=0 && x>0) {
+   return 2+foo(c,i-1);
+ } else return 0;
+}
+
+# Fixcalc need not know @L
+
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("Trans_arr.extract_translate_scheme: @L To Be Implemented")Occurred!
+=======================================================
+          PRE         POST
+a<:@M     a=@M        a=@M 
+a<:@L     a=@L        a=@M
+a<:@A     a=@A        a=@A
+@M<:a     ?           ?
+@L<:a     ?           a=@A
+@A<:a     a=@A        a=@A
+
+=======================================================
+
+# ex8d1.ss (FIXED)
+
+ int x = c.fst;
+ return x;
+
+a<:@L should not be in pre anymore. Is it there because of the assumptions?
+
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a<:@L & a=@L & 
+       MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists b_1450,w_1451: c::cell<w_1451>@b_1450&res=v & w_1451=v & 
+           a=@L & b_1450=@A&{FLOW,(4,5)=__norm#E}[]
+
+=======================================================
+../../hip ex8e1-loop-write.ss -dre "norm_post_.*\|norm_reloblgs"
+
+should I plug in def of P1(a,v) for the def of P1(a_1516,v_1517) as well?
+
+!!! **pi.ml#678:reldefns:[
+( res=0 & w_1470=0 & v=0 & a<:@L & a<:b_1469 & P1(a,v), P2(a,b_1469,v,res,w_1470)),
+( 1<=v & a<:@L & P1(a,v) & v_1517+1=v & @M<:a_1516, P1(a_1516,v_1517)),
+( a<:@L & v<=(0-1) & P1(a,v) & v_1517+1=v & @M<:a_1516, P1(a_1516,v_1517)),
+( a=@M, P1(a,v))]
+
+!!! **pi.ml#679:reldefns_from_oblgs:[( a=@M, P1(a,v))]
+
+!!! **pi.ml#769:>>REL POST :  P2(a,v,b_1469,res,w_1470)
+!!! **pi.ml#770:>>POST:  res=0 & w_1470=0 & v=0 & a=@M & b_1469=@M
+!!! **pi.ml#771:>>REL PRE :  P1(a,v)
+!!! **pi.ml#772:>>PRE :  true ----------> should it be a=@M?
+
+=======================================================
+# ex8e1b.slk
+
+Perhaps HOLE has not been substituted?
+Can we print HOLE in the sleek logging?
+
+Residue:
+ <1>c::cell<v>@a&c'=c & P1(a,v) & fst_15_1443'=v & a<:@L&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELASS [P1]: ( P1(a,v)) -->  a<:@L]
+[[ SEARCH ==>  Match(c,c') ==> ]]
+=======================================================
+# ex8e4.ss (DONE at heap_entail_one_context_struc)
+
+# false post is not logged..
+
+!!!Number of sleek log entries 0
+!!!Logging logs/sleek_log_ex8e4-false-post_ss.txt
+
+# ex8e5.slk
+
+!!!Number of sleek log entries 0
+!!!Logging logs/sleek_log_ex8e5-false-lhs_slk.txt
+
+(==solver.ml#3648==)
+heap_entail_one_context_struc#4@4@3@2@1
+heap_entail_one_context_struc#4 inp1 :conseq: EBase emp&0<x&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context_struc#4 inp2 : hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_orig_ante: Some(hfalse&false&{FLOW,(4,5)=__norm#E}[])
+ es_infer_vars_rel: []
+heap_entail_one_context_struc#4 inp3 :is_folding:false
+heap_entail_one_context_struc#4 inp4 :has_post:true
+heap_entail_one_context_struc#4@4 EXIT: [
+  hfalse&false&{FLOW,(4,5)=__norm#E}[]
+  ]
+=======================================================
+# ex8e5a.slk (OK)
+
+checkentail x::cell<_>@a*x::cell<_>@b |- false.
+
+  unsound to be false/valid.
+
+Entail 1: Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+Validate 1: Expecting 3 Fail BUT got : Valid
+
+(==cvutil.ml#1720==)
+xpure_heap_mem_enum#6@2@1
+xpure_heap_mem_enum#6 inp1 : x::cell<Anon_11>@a * x::cell<Anon_12>@b
+xpure_heap_mem_enum#6 inp2 : true
+xpure_heap_mem_enum#6 inp3 :1
+xpure_heap_mem_enum#6@2 EXIT: false #  [[x,x]]
+
+%%%       xpure_heap_mem_enum@2.
+%%%        h_formula_2_mem
+%%%         build_eset_of_conj_formula
+%%%        is_sat_mem_formula
+
+=======================================================
+# i-ex7a.ss
+
+# missing   logs/fixcalc.inf
+
+int bsearch(int i, int j)
+  infer[P,Q]
+  requires P(i,j)
+  ensures Q(i,j,res);
+{
+  if (i>=j) return i;
+  int mid = (i+j)/2;
+  if (rand()) return bsearch(i,mid);
+  return bsearch(mid+1,j);
+}
+
+# Below is present in default but not in ann_2 branch. 
+
+!!! **fixcalc.ml#908:No of disjs:1
+!!! **fixcalc.ml#913:bottom up
+!!! fixcalc file name: logs/fixcalc.inf
+(==fixcalc.ml#1337==)
+compute_fixpoint_aux@5@4
+compute_fixpoint_aux inp1 :[( Q(i,j,res), ((i=res & j<=res) | 
+exists(mid_1490:exists(fc_mid_1493:Q(fc_mid_1493,j,res) & fc_mid_1493=1+
+mid_1490) & 0<=mid_1490 & mid_1490<j & (i+j)<=(1+(2*mid_1490)) & (2*
+mid_1490)<=(i+j)) | exists(mid':0<=mid' & mid'<j & (i+j)<=(1+(2*mid')) & (2*
+mid')<=(i+j) & Q(i,mid',res))),1)]
+compute_fixpoint_aux inp2 :[P,i,j]
+compute_fixpoint_aux@5 EXIT:[( Q(i,j,res), res>=i)]
+
+(==pi.ml#617==)
+compute_fixpoint#2@4
+compute_fixpoint#2 inp1 :[( 0<=mid_1490 & mid_1490<j & (j+i)<=(1+(2*mid_1490)) & (2*mid_1490)<=(j+i) & 
+Q(1+mid_1490,j,res), Q(i,j,res)),
+( i=res & j<=res, Q(i,j,res)),
+( 0<=mid' & mid'<j & (j+i)<=(1+(2*mid')) & (2*mid')<=(j+i) & Q(i,mid',res), Q(i,j,res))]
+compute_fixpoint#2 inp2 :[P,i,j]
+compute_fixpoint#2@4 EXIT:[( Q(i,j,res), res>=i)]
+
+!!! **pi.ml#619:bottom_up_fp0:[( Q(i,j,res), res>=i)]
+!!! **pi.ml#636:fixpoint:[( Q(i,j,res), res>=i, P(i,j), true)]
+!!! **pi.ml#650:>>REL POST :  Q(i,j,res)
+!!! **pi.ml#651:>>POST:  res>=i
+!!! **pi.ml#652:>>REL PRE :  P(i,j)
+!!! **pi.ml#653:>>PRE :  true
+======================================================
+# ex8e5b.slk  (FIXED)
+
+Why m=n and a=b not in residue.?
+
+checkentail x::cell<m>@a*x::cell<n>@b  |- x!=null.
+
+GOT
+===
+Residue:
+ <1>x::cell<m>@m_21&{FLOW,(20,21)=__norm#E}[]
+=======================================================
+# ex8e1f.ss 
+
+int foo(cell c)
+  infer [Q]
+  requires c::cell<v>@a & Q(a)
+  ensures c::cell<w>@b  ;
+
+(==fixcalc.ml#1337==)
+compute_fixpoint_aux@621@608
+compute_fixpoint_aux inp1 :[( Q:RelT([])(a:AnnT,pa:AnnT), (a:AnnT<=2 | (exists(a_1491:AnnT:a:AnnT<=a_1491:AnnT & 
+Q:RelT([])(a_1491:AnnT,pa:AnnT)) & a:AnnT<=2)),1)]
+compute_fixpoint_aux inp2 :[v:int,Q:RelT([]),a:AnnT,c:cell]
+compute_fixpoint_aux@621 EXIT:[( Q:RelT([])(a:AnnT,pa:AnnT), 2>=a:Unknown & RECa:Unknown>=a:Unknown)]
+
+# GOT below. Why did we not change to
+  Q(a) == a=@L
+
+[RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( Q(a) & a<:@L & a<:a_1491) -->  Q(a_1491)]
+
+
+!!! **pi.ml#742:pre_rel_fmls:[ Q(a)]
+!!! **pi.ml#743:pre_fmls:[ Q(a) & c=2, MayLoop[]]
+!!! **fixcalc.ml#907:rel_defs:[( Q(a,pa), (a<=2 | (exists(a_1491:a<=a_1491 & Q(a_1491,pa)) & a<=2)),1)]
+!!! **fixcalc.ml#908:No of disjs:1
+!!! **fixcalc.ml#916:top down
+!!! fixcalc file name: fixcalc.td
+
+(2 >= a && RECa >= a)
+
+
+!!! **pi.ml#677:post_rel_ids:[]
+!!! **pi.ml#678:reldefns:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))]
+!!! **pi.ml#679:reldefns_from_oblgs:[( a<:@L, Q(a))]
+!!! **pi.ml#680:initial reloblgs:[( Q(a), a<:@L)]
+!!! **pi.ml#681:reloblgs:[( Q(a), a<:@L)]
+!!! **pi.ml#682:lst_assume:[( Q(a), a<:@L)]
+!!! **pi.ml#683:pre_rel_fmls:[ Q(a)]
+!!! **pi.ml#684:pre_ref_df:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))]
+!!! **pi.ml#685:WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M
+!!! **pi.ml#686:pre_ref_df:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))
+
+=======================================================
+# ex8e3g.slk  (FIXED)
+
+  checkentail c::cell<v>@a |-  c::cell<_>@b & b<:@L.
+
+Residue:
+ <1>c::cell<v>@[@a, @b]&b<:@L & Anon_14=v&{FLOW,(20,21)=__norm#E}[]
+
+# should fail. I guess we need to add a<:b to be proven
+# in the RHS
+
+ checkentail b<:@L |- a<:b.  (FAIL)
+ -----------------------------------------------------------------
+  checkentail b<:@L |- b<:@L & a<:b.
+ -----------------------------------------------------------------
+  checkentail c::cell<v>@a & b<:@L |- c::cell<_>@b & b<:@L.
+ -----------------------------------------------------------------
+  checkentail c::cell<v>@a |-  c::cell<_>@b & b<:@L.
+=======================================================
+# ex8e2g.slk (OK)
+
+
+//(2)
+checkentail c::cell<v>@a & a<:@L |-  c::cell<_>@b &b<:@L.
+
+# expects Valid with b=@L inst
+
+GOT inst b<:@L. Can we change to b=@L
+
+Entail 2: Fail.(may) cause: b<:@L & a<:@L |-  a<:b. LOCS:[23;0] (may-bug)
+=======================================================
+# ex8e1e.ss
+
+int foo(cell c)
+  infer [Q]
+  requires c::cell<v>@L
+  ensures c::cell<w>@b & Q(b)  ;
+
+# ex8e1e.ss --trace-exc
+
+int foo(cell c)
+  infer [Q]
+  requires c::cell<v>@L
+  ensures c::cell<w>@b & Q(b)  ;
+
+# @L exception failure.
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+
+=======================================================
+# ex8e5g.slk
+
+checkentail c::cell<v>@a & @M<:a \\& b=@A 
+  |-  c::cell<_>@b & @L<:b.
+expect Valid. // why not inst b=@A rather than b=@L
+
+# expects Valid with b=@A inst
+
+GOT inst b=@L. 
+
+Entail 1: Fail.(may) cause: b=@L & @M<:a |-  a<:b. LOCS:[7;0] (may-bug)
+=======================================================
+# imm/inf/ex8e1f.ss -dre "parse_fix\|compute_" --print-type > 1
+
+int foo(cell c)
+  infer [Q]
+  requires c::cell<v>@a & Q(a)
+  ensures c::cell<w>@b  ;
+
+# Losing type info after top-down fix-calc 
+# need to restore it aftre calling fixcalc.td
+
+# Solution : use a global tlist_g that will be set with the type of
+free variables before fixcalc, and use that to guide the correct
+typing.
+
+# We may want to write a more general typed_invoke_of_fixcalc
+that would set/reste tlist_g prior to fixcalc and parse_fix.
+
+let tlist_g = ref []
+let set_tlist vs = tlist_g := vs
+let clear_tlist () = tlist_g := []
+let add_tlist vs = tlist_g := !tlist_g @ vs
+
+!!! **fixcalc.ml#907:rel_defs:[( Q:RelT([])(a:AnnT,pa:AnnT), (a:AnnT<=2 | (exists(a_1491:AnnT:a:AnnT<=a_1491:AnnT & 
+Q:RelT([])(a_1491:AnnT,pa:AnnT)) & a:AnnT<=2)),1)]
+!!! **fixcalc.ml#908:No of disjs:1
+!!! **fixcalc.ml#916:top down
+(==fixcalc.ml#196==)
+parse_fix@13@11@10
+parse_fix inp1 :
+2 >= a && RECa >= a
+
+parse_fix@13 EXIT:[ 2>=a:Unknown & RECa:Unknown>=a:Unknown]
+
+
+=======================================================
+
+to add wrapper for normalizing addition before sending 
+it to prover, and after receiving the  prover's answer
+
+eg:
+
+ex of input:  b=@A+c & c=@M ----> b=@M & c=@M
+ex of output: [c=b + @A ] & b=@M ---> c=@M & b=@M
+
+=====================================================
+#  imm/inf/ex8e1f.ss 
+
+  let post ls = (* Wrapper.wrap_with_int_to_imm *) (List.map (fold_pair1f Immutable.map_int_to_imm_pure_formula)) ls in
+ 
+Why did we get a stack underflow exception ?
+
+T]ERROR : top of empty stackException(trans_int_to_imm_exp):Gen.Stack_Error
+Exception(change_to_imm_rel_p_formula):Gen.Stack_Error
+Exception(transform_formula):Gen.Stack_Error
+Exception(compute_fixpoint_td):Gen.Stack_Error
+Exception(pre_calculate):Gen.Stack_Error
+Exception(pre_rel_fixpoint):Gen.Stack_Error
+Exception(update_with_td_fp):Gen.Stack_Error
+
+=======================================================
+# ex9e3f.slk (OK)
+
+slk_simplify x::cell<_>@a & a=@L.
+
+slk_simplify x::cell<_> * x::cell<2>.
+
+why did slk_simplify remove heap nodes?
+
+Simplify  (4): a=@L
+
+Simplify  (5): flted_36_44=2
+
+Simplify  (3): 1<=x & x<=2
+Simplify  (4): x::cell<Anon_15>@a&a=@L&{FLOW,(20,21)=__norm#E}[]
+Simplify  (5): hfalse&false&{FLOW,(0,0)=__false}[]
+Simplify  (6): x::cell<v>@M&v=2&{FLOW,(20,21)=__norm#E}[]
+Simplify  (7): x::cell<v>@M&v=2 & w=2&{FLOW,(20,21)=__norm#E}[]
+
+=======================================================
+# ex8e4f.slk (FIXED)
+
+//(1)
+slk_simplify x::cell<_> * y::cell<_>.
+
+//(2)
+slk_simplify x::cell<_> * x::cell<_>.
+
+//(3)
+slk_simplify x::cell<_> * y::cell<_> & x=y.
+
+//(4)
+slk_simplify x::cell<_> * y::cell<_> & x!=y.
+
+It seems like heap part is just ignored.
+We need to use better simplify procedure that works
+over heap formula.
+
+Simplify  (1): true
+
+Simplify  (2): true
+
+Simplify  (3): x=y
+
+Simplify  (4): y!=x
+=======================================================
+# ex8e6g.slk (FIXED)
+
+(==#0==)
+pick_bounds@10@7
+pick_bounds inp1 :[@M]
+pick_bounds@10 EXIT:(Some( b=@M),None)
+
+(==immutable.ml#455==)
+pick_wekeast_instatiation@7
+pick_wekeast_instatiation inp1 : c::cell<v>@[@a, @b]&@L<:a&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation inp2 : emp&@M<:b&{FLOW,(20,21)=__norm#E}[]
+pick_wekeast_instatiation@7 EXIT:(Some( true),None)
+
+=======================================================
+# ex8e4bf.slk (need to think more on below)
+
+# Is a=b sound?
+
+slk_simplify x::cell<a> * x::cell<b>@A. 
+Simplify  (1): x::cell<a>@M&b=a&{FLOW,(20,21)=__norm#E}[]
+
+# if v1=v2 unsound, should we choose a1 or a2?
+slk_simplify x::cell<v1>@a1 * x::cell<v2>@a2. 
+Simplify  (3): x::cell<v1>@imm_23&v2=v1 & a2+a1=imm_23&{FLOW,(20,21)=__norm#E}[]
+
+Better to have:
+Simplify  (3): x::cell<nv>@imm_23& choose(nv,v1,v2,a1,a2) 
+                 & a2+a1=imm_23&{FLOW,(20,21)=__norm#E}[]
+
+Use choose(new_v,v1,v2,a1,a2)
+ == a1<:@I & new_v=v1 | a2<:@I & new_v=v2 | 0<a1<1 & 0<a2<1 & new_v=v1=v2
+=======================================================
+#  imm/inf/ex8e1f.ss (OK)
+
+# should not be false below
+
+# need to make slk_heap_simplify into a procedure..
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:hfalse&false&{FLOW,(4,5)=__norm#E}[]
+       es_pure: a<:a_1491
+       es_cond_path: [1; 0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: [Q]
+       es_infer_rel: [RELASS [Q]: ( Q(a)) -->  a<:@L; 
+                      RELASS [Q]: ( Q(a)) -->  a<:@L; 
+                      RELDEFN Q: ( a_1491=@A) -->  Q(a_1491)]
+ Exc:None
+ ]
+
+Procedure foo$cell SUCCESS.
+
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( a_1491=@A) -->  Q(a_1491)]
+*************************************
+
+=======================================================
+# ex8d4.ss (OK - no lend in post)
+
+# using b=@A is too weak..
+
+[RELDEFN P: ( b_1452=@A) -->  P(b_1452)]
+
+GOT
+---
+!!! **pi.ml#802:new_specs2:[ EInfer [P]
+   EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@M&
+         {FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     (exists w_1451,b_1452: c::cell<w_1451>@b_1452&b_1452=@A&
+                     {FLOW,(4,5)=__norm#E}[]
+                     ]
+
+=======================================================
+# ex8d5.slk (FIXED)
+
+(used in ex8d4.ss verification)
+
+infer[P] c::cell<_>@M |- c::cell<_>@b & P(b).
+
+# this is too weak for post.
+
+ <1>c::cell<Anon_11>@M&b=@A & Anon_12=Anon_11&{FLOW,(20,21)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( b=@A) -->  P(b)]
+
+# We should try to impl inst a<:b and then
+obtain instead:
+
+    a=@M & a<:b --> P(b)
+=======================================================
+# ex8d6.ss (OK)
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [P]: ( P(a)) -->  a<:@L]
+*************************************
+
+!!! **pi.ml#677:post_rel_ids:[]
+!!! **pi.ml#678:reldefns:[( a<:@L, P(a))]
+!!! **pi.ml#679:reldefns_from_oblgs:[( a<:@L, P(a))]
+!!! **pi.ml#680:initial reloblgs:[( P(a), a<:@L)]
+!!! **pi.ml#681:reloblgs:[( P(a), a<:@L)]
+!!! **pi.ml#682:lst_assume:[( P(a), a<:@L)]
+!!! **pi.ml#683:pre_rel_fmls:[ P(a)]
+!!! **pi.ml#684:pre_ref_df:[( a<:@L, P(a))]
+
+Can we strengthen this pre to
+
+  P(x) == x=@L
+=======================================================
+# ex8d7.ss
+
+  requires c::cell<v>@a & a=@L
+     /* ensures c::cell<w>@b & P3(b,v,res,w)  ; */
+     ensures c::cell<w>@b & P(b);
+{
+ if (x>0) return c.fst;
+ return x;
+}
+
+# Got P(x) = x=@A
+# However, expects P(x) = x=@L;
+  as we expect post to be strengthened.
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN P: ( @L<:b_1468) -->  P(b_1468)]
+*************************************
+
+!!! **pi.ml#754:fixpoint:[( P(b_1468), @L<:b_1468, true, true)]
+!!! **pi.ml#775:>>REL POST :  P(b_1468)
+!!! **pi.ml#776:>>POST:  b_1468=@A
+
+   EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v>@a&a=@L&
+         {FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+               s5
+    EAssume 
+                     (exists w_1467,b_1468: c::cell<w_1467>@b_1468&b_1468=@A&
+                     {FLOW,(4,5)=__norm#E}[]
+                     ]
+=======================================================
+# ex8e1g.ss --trace-exc
+
+Why did we get format error?
+
+Exception(look_up_view_def_raw):Not_found
+!!! **fixcalc.ml#160:fixcalc trans error :: (@L+b_1507)<:b_1463Exception(fixcalc_of_pure_formula(really called)):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(fixcalc_of_pure_formula):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Exception occurred: Failure("compute_def:Error in translating the input for fixc
+
+=======================================================
+# ex8e1f.ss --trace-exc
+
+# How come Q(a) = a=@L never printed?
+  but in the end a=@L is added to pre-condition?
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( Q(a) & a<:@L & a<:a_1491) -->  Q(a_1491)]
+*************************************
+
+!!! **pi.ml#684:post_rel_ids:[]
+!!! **pi.ml#685:reldefns:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))]
+!!! **pi.ml#686:reldefns_from_oblgs:[( a<:@L, Q(a))]
+!!! **pi.ml#687:initial reloblgs:[( Q(a), a<:@L)]
+!!! **pi.ml#688:reloblgs:[( Q(a), a<:@L)]
+!!! **pi.ml#689:lst_assume:[( Q(a), a<:@L)]
+!!! **pi.ml#690:pre_rel_fmls:[ Q(a)]
+!!! **pi.ml#691:pre_ref_df:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))]
+!!! **pi.ml#692:WN: Need to form initial pre from reloblgs, namely P1(a) = a=@M
+!!! **pi.ml#693:pre_ref_df:[( Q(a) & a<:@L & a<:a_1491, Q(a_1491)),( a<:@L, Q(a))]
+!!! **pi.ml#694:post_ref_df:[]
+!!! **pi.ml#695:post_vars:[c]
+!!! **pi.ml#696:pre_vars:[v,Q,a,c]
+!!! **pi.ml#711:post_ref_df_new:[]
+!!! **pi.ml#721:pre_inv: Q(a)
+!!! **pi.ml#722:post_inv: true
+!!! **pi.ml#731:WN: need to process pre first
+!!! **pi.ml#732:sp:compute_fixpoint:[]
+!!! **pi.ml#733:
+!!! **pi.ml#738:bottom_up_fp0:[]
+!!! **pi.ml#749:pre_rel_fmls:[ Q(a)]
+!!! **pi.ml#750:pre_fmls:[ Q(a) & c=2, MayLoop[]]
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **tpdispatcher.ml#1132:conversion of int to imm is disabled
+!!! **fixcalc.ml#939:rel_defs:[( Q(a,pa), (a<=2 | (exists(a_1491:a<=a_1491 & Q(a_1491,pa)) & a<=2)),1)]
+!!! **fixcalc.ml#940:No of disjs:1
+!!! **fixcalc.ml#948:top down
+!!! **fixcalc.ml#966:Input of fixcalc: :Q:={[a] -> [pa] -> []: (a<=2 ||  (exists (a_1491:a<=a_1491 && Q(a_1491,pa)))  && a<=2)
+};
+TD:=topdown(Q, 1, SimHeur);
+TD;
+!!! **fixcalc.ml#370:svls (orig):[Q,pa,a]
+!!! **fixcalc.ml#371:svls (from parse_fix):[RECa,a]
+!!! **fixcalc.ml#994:Result of fixcalc (parsed): :[ 2>=a & RECa>=a]
+!!! fomega = gist {[Q,a] : (((0=0)))} given {[Q,a] : ((0=0))};
+
+!!! fomega = gist {[Q,a] : (((0=0)))} given {[Q,a] : ((0=0))};
+
+!!! **pi.ml#755:fixpoint:[( true, true, Q(a), true)]
+!!! **pi.ml#760:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#761:>>REL POST:  true
+!!! **pi.ml#762:>>POST:  true
+!!! **pi.ml#763:>>REL PRE :  Q(a)
+!!! **pi.ml#764:>>PRE :  true
+!!! **pi.ml#783:>>>>>>>>>>> (after postprocess): <<<<<<<<<
+!!! **pi.ml#784:>>REL POST :  true
+!!! **pi.ml#785:>>POST:  true
+!!! **pi.ml#786:>>REL PRE :  Q(a)
+!!! **pi.ml#787:>>PRE :  true
+!!! **pi.ml#813:new_specs1:[ EInfer [Q]
+=======================================================
+# ex8e3c.ss --trace-exc
+
+# fixcalc format error
+
+!! **fixcalc.ml#160:fixcalc trans error :: b_1519<:b_1465Exception(fixcalc_of_pure_formula(really called)):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(fixcalc_of_pure_formula):Globals.Illegal_Prover_Format("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+Exception(compute_def):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint_aux):Failure("compute_def:Error in translating the input for fixcalc")
+Exception(compute_fixpoint):Failure("compute_def:Error in translating the input for fixcalc")
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Exception occurred: Failure("compute_def:Error in translating the input for fixcalc")
+
+=======================================================
+# ex8e1f.ss
+
+Why is there so much duplication?
+
+ checkentail (exists v_int_19_1449': c::cell<v>@imm_1504&res=v_int_19_1449'+2 & 
+a=imm_1505+a_1491 & imm_1504=imm_1505+b_1511 & v_1492=v & a<:a_1491 & 
+a<:@L & c'=c & Q(a) & v!=1 & v_bool_17_1452' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists : c::cell<w_1460>@b_1459&{FLOW,(4,5)=__norm#E}[]. 
+pure rel_ass: [RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELDEFN Q: ( Q(a) & a<:@L & a<:a_1491) -->  Q(a_1491),
+RELASS [Q]: ( Q(a)) -->  a<:@L,
+RELASS [Q]: ( Q(a)) -->  a<:@L]
+ho_vars: nothing?
+res:  1[
+   c::cell<v>@[@imm_1504, @b_1459]&res=v_int_19_1527+2 & a=imm_1505+a_1491 & 
+     imm_1504=imm_1505+b_1511 & v_1492=v & a<:a_1491 & a<:@L & c'=c & Q(a) & 
+     v!=1 & v_bool_17_1452' & imm_1504<:b_1459 & w_1460=v&
+     {FLOW,(4,5)=__norm#E}[]
+   ]
+=======================================================
+# ex8e1f.ss
+
+Why @6 and @7 at the same level when they are caller/callee pair?
+
+%%%             combine_list_failesc_context_and_unsat_now@6.
+%%%             isAnyConstFalse
+%%%             merge_mems 
+%%%             isAnyConstFalse
+%%%             merge_mems 
+%%%             isAnyConstFalse
+%%%             isAnyConstFalse
+%%%             elim_unsat_es_now@7.
+%%%              unsat_base_nth
+
+(==cformula.ml#1724==)
+elim_unsat_es_now#2@7@6
+elim_unsat_es_now#2 inp1 : pr_entail_state_shortc::cell<v>@a&x'!=1 & x'=v & a<:@L & c'=c & Q(a) & v_bool_17_1452' & x'!=1 & v_bool_17_1452'&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars_rel: [Q]
+  es_infer_rel: [RELASS [Q]: ( Q(a)) -->  a<:@L]
+  es_cond_path: [0]
+  es_var_measures 3: MayLoop
+elim_unsat_es_now#2@7 EXIT: c::cell<v>@a&v_bool_17_1452' & x'!=1 & Q(a) & c'=c & a<:@L & x'=v&
+   {FLOW,(4,5)=__norm#E}[]
+
+
+(==typechecker.ml#2876==)
+ combine_list_failesc_context_and_unsat_now@6
+ combine_list_failesc_context_and_unsat_now inp1 : List of Failesc Context: [FEC(0, 0, 1  [])]
+
+why do we also have stk_rel_ass ?
+
+(==cformula.ml#11187==)
+add_infer_rel_to_estate@20@17
+add_infer_rel_to_estate inp1 :[RELASS [Q]: ( Q(a)) -->  a<:@L]
+add_infer_rel_to_estate@20 EXIT:[RELASS [Q]: ( Q(a)) -->  a<:@L,RELASS [Q]: ( Q(a)) -->  a<:@L]
+
+=======================================================
+# ex8e1g.ss
+
+c::cell<..>@L |- c::cell<..>@L (bind)
+c::cell<..>@L * c::cell<..>@b1 & Q(b1) (pre-cond proving)
+c::cell<..>@I & I=@L-@b1 & Q(b1) |- c::cell<..>@b & Q(b)  (post-cond)
+
+Thus far when proving the recursive post-cond, we got the
+following:
+
+ I=@L-@b1 & Q(b1) & I<:@b --> Q(b)
+
+which is equivalent to:
+
+[RELDEFN Q: ( Q(b_1507) & (b_1507+@L)<:b_1463) -->  Q(b_1463),
+
+The point here is what is permitted for
+ I=@L-b1
+where @b1 is the annotation in the post-condition.
+
+Now b1 can either be @A, @M and @L. 
+
+It cannot be @M since @L-@M is invalid. 
+
+It cannot be @L since @L is not allowed in
+post-condition.
+
+Hence, it can only be @A. Using this instantiation,
+we would now obtain:
+
+ I=@L-@b1 & b1=@A & Q(b1) & I<:@b --> Q(b)
+ I<:@b --> Q(b)
+
+ With this we only have:
+   @L<:b  --> Q(b)
+
+ Doing a post-condition processing, we get:
+  Q(b) = b=@A
+
+We can check if this idea applies to loop-write..
+=======================================================
+# ex8e1g.ss (FIXED at cpure.mkExists)
+
+# why exists(QQ:QQ(..))
+
+(==#0==)
+pure_mkExists@1014
+pure_mkExists inp1 :[imm_1499,QQ,a_1492]
+pure_mkExists inp2 : imm_1499=@L & a_1492=@L & c=c' & a=@L & x'=v & QQ(@A) & v!=1
+pure_mkExists@1014 EXIT: exists(a_1492:a_1492=@L) & exists(QQ:QQ(@A)) & 
+exists(imm_1499:imm_1499=@L) & c=c' & a=@L & x'=v & v!=1
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:c::cell<v>@L&exists(QQ:QQ(@A)) & c=c' & a=@L & x'=v & v!=1&
+         {FLOW,(4,5)=__norm#E}[]
+       es_pure: @L<:a_1492 & a_1492=@L
+       es_cond_path: [1; 0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: [QQ]
+ Exc:None
+
+=======================================================
+# ex8e1g.ss
+
+ GOT:
+===
+!!! **infer.ml#2139:RelInferred (simplified):[RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]push_list:[RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]
+
+!!! **infer.ml#2139:RelInferred (simplified):[RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]push_list:[RELDEFN Q: ( @L<:b_1463) -->  Q(b_1463)]
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELDEFN QQ: ( @L<:b_1463) -->  QQ(b_1463)]
+*************************************
+
+# Could we organize your simplification as a separate step
+so that we can later explore other alternative;
+and it is clearer that how some simplification has taken place?
+
+I am particularly worried that recursive call has disappeared;
+and would like to see when it disappeared.
+=======================================================
+# ex8e1k.ss (already handled)
+
+# below should be an error and not warning..
+
+ex!!!Full processing file "ex8e1g-loop-read-ann-post-only.ss"
+Parsing file "ex8e1g-loop-read-ann-post-only.ss" by default parser...
+WARNING : parsing problem QQ is neither a ranking function nor a relation nor a heap predicate
+
+=======================================================
+# ex1z.slk (from ann2.slk)
+
+Need to improve error messages..
+
+infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@M.
+
+GOT:
+===
+Entail (1) : Fail.(must) cause:mismatched imm annotation for data node
+
+# Can we generate this instead:
+     v=@M  |-  @I<:v & v<:@M
+
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+
+GOT:
+===
+Entail (1) : Fail.(must) cause:mismatched imm annotation for data node
+
+# Can we generate this instead:
+     true  |-  (ex v: v=@M & @I<:v & v<:@M)
+
+
+Default (branch):
+Entail (24) : Fail.(must) cause: 
+  true |-  ann_f_r_198=@M & @I<:ann_f_r_198. LOCS:[92;0] (RHS: contradiction)
+
+=======================================================
+# ex15c1.ss (FIXED)
+
+infer [P]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & P(a1,a2)
+  ensures c::cell<_> * d::cell<_>;
+
+# Why isn't a2=@A since d is not accessed?
+
+ EInfer []
+   EBase 
+     exists (Expl)[](Impl)[a1; Anon_11; a2; 
+     Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a2=@M & a1=@M & 
+     MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       (exists Anon_1210,Anon_1211: c::cell<Anon_1210>@M * 
+       d::cell<Anon_1211>@M&{FLOW,(4,5)=__norm#E}[]Stop Omega... 321 invocations
+=======================================================
+# ex15b1.ss
+
+Given below. 
+
+infer [@imm_pre]
+  requires c::cell<_> * d::cell<_>
+  ensures c::cell<_> * d::cell<_>;
+
+I think you should first form:
+
+infer [U]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & U(a1,a2)
+  ensures c::cell<_>@a3 * d::cell<_>@a4;
+
+And then try to obtain:
+
+  requires c::cell<_>@M * d::cell<_>@A
+  ensures c::cell<_>@a3 * d::cell<_>@a4;
+=======================================================
+# ex15b5.ss (FIXED)
+
+Given below. 
+
+infer [Q]
+  requires c::cell<_>@aaa & Q(aaa)
+  ensures c::cell<_>@bbb;
+
+# Why aren't we getting Q(aaa) == aaa=@A
+
+Since there is no requirement on pre-condition,
+we should make above assumption
+=======================================================
+# ex15b6.ss
+
+Given below. 
+
+  infer [Q]
+  requires c::cell<_>@a1 * d::cell<_>@a2 & Q(a1,a2)
+  ensures c::cell<_>@b1 * d::cell<_>@b2;
+{
+  int x = c.val;
+  return x;
+}
+
+GOT
+
+!!! **infer.ml#1367:RelInferred (rel_ass):[RELASS [Q]: ( Q(a1,a2)) -->  a1<:@L]
+!!! **typechecker.ml#834:WARNING : Spurious RelInferred (not collected):[RELASS [Q]: ( Q(a1,a2)) -->  a1<:@L]
+
+# Why is it spurious?
+
+# What happen to a2=@A? (FIXED)
+
+[ EInfer [Q]
+   EBase 
+     exists (Expl)[](Impl)[a1; Anon_11; a2; 
+     Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a1=@L&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists b1_1207,Anon_1208,b2_1209,
+         Anon_1210: c::cell<Anon_1208>@b1_1207 * d::cell<Anon_1210>@b2_1209&
+         {FLOW,(4,5)=__norm#E}[]]
+======================================================
+** working/imm_infer2.ss
+Expected @M, got @L
+
+data cell {
+ int fst;
+ int snd;
+}
+
+void recursive_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,_,_>
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_write(t.left);
+  t.node = t.node + 1;
+  if (t.right != null) recursive_write(t.right);
+ }
+
+=======================================================
+** working/imm_infer5.ss
+Inference not triggered. (FIXED)
+
+cell trick(cell y)
+    infer [@imm_pre]
+    requires y::cell<_,_>
+    ensures res::cell<_,_>;
+{
+    y = new cell(3, 4);
+    return y;
+}
+=======================================================
+** working/imm_infer3.ss
+Entailment failed (FIXED)
+int left_write(tree t)
+   infer [@imm_pre]
+   requires t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>
+   ensures t::tree<_,l,r> * l::tree<_,_,_> * r::tree<_,_,_>;
+{
+  t.left.node = t.left.node + 3;
+  return 0;
+}
+=======================================================
+# ex15c6.ss
+
+Post Inference result:
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[Anon_11; Anon_12](ex)[]c::cell<Anon_11>@L * (emp)&
+   MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists Anon_1205,Anon_1206,b1_1207,b2_1208: (emp) * (emp)&b2_1208=@A & 
+     b1_1207=@A&{FLOW,(4,5)=__norm#E}[]
+
+# Nice though d::cell<..> need not be removed from pre.
+# Can we use an option to control such removal.
+ We already have the --imm-remove-abs for this
+=======================================================
+# ex15b8.ss (FIXED)
+
+# need to make a2=@A explicit.
+
+Post Inference result:
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[a1; Anon_11; a2; 
+   Anon_12](ex)[]c::cell<Anon_11>@a1 * d::cell<Anon_12>@a2&a1=@M & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists b1_1213,Anon_1214,b2_1215,
+     Anon_1216: c::cell<Anon_1214>@b1_1213 * d::cell<Anon_1216>@b2_1215&
+     {FLOW,(4,5)=__norm#E}[]
+
+=======================================================
+# ex15c8.ss
+
+# Good. Maybe can apply an extra step to remove the
+  existential vars; after absent elimination. (FIXED)
+
+
+foo2$cell~cell
+ EBase 
+   exists (Expl)[](Impl)[a1; Anon_11; a2; 
+   Anon_12](ex)[]c::cell<Anon_11>@a1 * (emp)&a1=@M & a2=@A & MayLoop[]&
+   {FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     (exists Anon_1217,Anon_1218,b1_1219,
+     b2_1220: c::cell<Anon_1217>@b1_1219 * (emp)&b2_1220=@A & b1_1219=@M&
+     {FLOW,(4,5)=__norm#E}[]
+Stop Omega... 75 invocations 
+=======================================================
+# ex15c4.ss
+TO FIX the imm_unify
+
+!!! **immutable.ml#62:imm + pure:[( ann_1227=@M, true),( ann_1227<:@L, Anon_11<=0),( ann_1227=@A, true)]
+(====)
+split_imm_pure@18@17@16g
+split_imm_pure inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
+split_imm_pure@18 EXIT:( ann_1227=@M & ann_1227<:@L & ann_1227=@A, true)
+
+(====)
+imm_unify@17@16
+imm_unify inp1 : (ann_1227=@M | (ann_1227<:@L & Anon_11<=0) | ann_1227=@A)
+imm_unify@17 EXIT: ann_1227=@M & ann_1227<:@L & ann_1227=@A
+
+=======================================================
+# ex15c4.ss to add ann_1226, ann_1225 to the list of existential vars (FIXED)
+
+!!! **pi.ml#384:new_spec:
+ EInfer @imm_pre[P__1229]
+   EBase 
+     exists (Expl)[](Impl)[Anon_11; 
+     Anon_12](ex)[]c::cell<Anon_11>@ann_1227 * d::cell<Anon_12>@ann_1228&
+     P__1229(ann_1228,ann_1227)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         (exists Anon_1207,Anon_1208: c::cell<Anon_1207>@ann_1225 * 
+         d::cell<Anon_1208>@ann_1226&{FLOW,(4,5)=__norm#E}[]
+=======================================================
+# ex15c4. to check why is taking so long when [@imm_pre] versus [P]
+{ 1.480756 second(s) versus  0.833354 second(s) } (FIXED)
+This is due to global ann vars vs local
+=======================================================
+# ex8e1f.ss 
+!!! **pi.ml#733:pre_fmls:[ Q(a) & c=2, MayLoop[]]
+!!! PROBLEM with fix-point calculation
+ExceptionInvalid_argument("List.combine")Occurred!
+
+Error1(s) detected at main 
+Stop Omega... 128 invocations caught
+
+Exception occurred: Invalid_argument("List.combine")
+=======================================================
+** working/imm_infer2.ss
+Inference failed in both for post
+
+data tree {
+ int node;
+ tree left;
+ tree right;
+}
+
+void recursive_read_only(tree t)
+   infer [@imm_post]
+   requires t::tree<_,_,_>@L
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_read_only(t.left);
+  int c = t.node;
+  if (t.right != null) recursive_read_only(t.right);
+}
+
+void recursive_write(tree t)
+   infer [@imm_post]
+   requires t::tree<_,_,_>@M
+   ensures t::tree<_,_,_>;
+{
+  if (t.left != null) recursive_write(t.left);
+  t.node = t.node + 1;
+  if (t.right != null) recursive_write(t.right);
+ }
+
+=======================================================
+ex17a1.ss . 
+we should add pre automatically introduced annotations to the
+implicit set of spec vars. 
+
+
+Proving precondition in method foo$cell Failed.
+  (may) cause:  ann_1221<:@L & P__1222(ann_1221) |-  ann_1221<:ann_1239. LOCS:[1;12;0] (may-bug)
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex17a1-heavy.ss_19:13_19:19
+
+Procedure foo$cell FAIL.(2)
+
+....
+
+!!! **pi.ml#384:new_spec:
+ EInfer @imm_pre[P__1222]
+   EBase 
+     exists (Expl)[](Impl)[v](ex)[]c::cell<v>@ann_1221&P__1222(ann_1221)&
+     {FLOW,(4,5)=__norm#E}[]
+=======================================================
+ex17a2.ss
+
+we could prune disjuncts like the following:
+(@A=imm_1321 & imm_1321<:a2_1318 & imm_1321!=a2_1318)
+
+in other words:
+a=top & a<:b & a!=b 
+a=bot & b<:a & a!=b
+
+ii) takes super long:
+Total verification time: 2.598301 second(s)
+	Time spent in main process: 1.130108 second(s)
+	Time spent in child processes: 1.468193 second(s)
+
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+
+
+
+

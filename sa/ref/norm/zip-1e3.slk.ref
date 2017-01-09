@@ -1,0 +1,42 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Entailing lemma oneX: Fail. (no cex)(must) cause: OrL[ (exists m,n1: y::zipN{}<m>&n1<=m & n1=0 & self1=null&{FLOW,(5,6)=__Error})[],valid]
+
+Failed to inferred for oneX:<== ==> invalid lemma encountered.
+
+Entailing lemma oneZ: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+
+Entailing lemma one: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to inferred for one:<== ==> invalid lemma encountered.
+ <1>(exists m4,n7: y::zipN{}<m4>&R(n7,m4) & n7=0 & self3=null&{FLOW,(3,4)=__norm})[]
+ inferred rel: [RELASS [R]: ( R(n_381,m_382)) -->  (1>n_381 | 0>m_382)]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 27 invocations 
+SAT Count   : 1742
+SAT % Hit   : 91.44%
+IMPLY Count : 142
+IMPLY % Hit : 61.97%
+Time(cache overhead) : 0.184808 (seconds)
+
+!!! log(small):(2.623251,1979)
+Total verification time: 0.668966 second(s)
+	Time spent in main process: 0.629555 second(s)
+	Time spent in child processes: 0.039411 second(s)
+

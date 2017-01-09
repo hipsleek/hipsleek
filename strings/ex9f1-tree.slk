@@ -1,0 +1,19 @@
+data node {
+	int val#VAL;
+	node left#REC;
+        node right#REC;
+}.
+
+pred bt<> == self=null
+  or self::node<_,l,r> * l::bt<> * r::bt<>
+inv true.
+
+
+pred_extn size[R]<n> ==
+      n=0 // base case
+   or R::size<m> & n=1+m 
+   inv n>=0.
+
+
+pred btN<n:int> == extends bt<> with size[REC]<n> .
+

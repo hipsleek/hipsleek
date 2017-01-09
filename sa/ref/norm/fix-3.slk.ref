@@ -1,0 +1,19 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! fixpoint:[( true, true, P3(n_80,m_81,k_82), ((m_81=n_80 & k_82=n_80) | (n_80<=0 & k_82<=0 & 1<=m_81) | (k_82=n_80 & 
+n_80<m_81 & 1<=n_80) | (m_81<=0 & k_82<=0 & 1<=n_80) | (n_80<=0 & m_81<=0 & 
+1<=k_82) | (m_81=n_80 & 1<=n_80 & n_80<k_82) | (k_82=m_81 & 1<=m_81 & 
+m_81<n_80)))]
+Stop Omega... 5 invocations 
+SAT Count   : 1
+SAT % Hit   : 0.%
+IMPLY Count : 6
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.002132 (seconds)
+
+!!! log(small):(0.055362,10)
+Total verification time: 0.167876 second(s)
+	Time spent in main process: 0.065553 second(s)
+	Time spent in child processes: 0.102323 second(s)
+

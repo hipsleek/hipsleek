@@ -1,0 +1,25 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=last | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=last)])
+Entailing lemma two: Valid.
+
+Valid Lemmas : [two:==>] added to lemma store.
+Stop Omega... 16 invocations 
+SAT Count   : 132
+SAT % Hit   : 77.27%
+IMPLY Count : 14
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.007409 (seconds)
+
+!!! log(small):(0.085249,179)
+Total verification time: 0.103651 second(s)
+	Time spent in main process: 0.082025 second(s)
+	Time spent in child processes: 0.021626 second(s)
+

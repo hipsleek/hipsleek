@@ -1,0 +1,18 @@
+
+!!!Full processing file "demo/dll-app-bug3.ss"
+Parsing file "demo/dll-app-bug3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure dll_append$node~node... 
+Procedure dll_append$node~node SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.02617,176)
+Total verification time: 0.279853 second(s)
+	Time spent in main process: 0.266508 second(s)
+	Time spent in child processes: 0.013345 second(s)
+

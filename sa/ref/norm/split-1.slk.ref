@@ -1,0 +1,55 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])WARNING : the view body for zip contains unsat branch(es) :
+    (* lbl: *){2}->(exists y1,_,_,q,p: self::node<_,p> * y::node<_,q> * 
+p::zip{}<y1>&y1=y&{FLOW,(1,25)=__flow})[]
+
+Entail (1) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&true --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>
+    emp&y=null & x=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&x=null --> P1(x)&true(3,4); 
+                  emp&y=null --> P2(y)&true(3,4); 
+                  x::node<_,p> * p::zip<q>&true --> P1(x)&true(3,4); 
+                  y::node<_,q>&true --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [x::node<_,p> * P1(p)&true --> P1(x)&true(3,4); 
+                  y::node<_,q> * P2(q)&true --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 13 invocations 
+SAT Count   : 101
+SAT % Hit   : 83.16%
+IMPLY Count : 4
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.005296 (seconds)
+
+!!! log(small):(0.038473,130)
+Total verification time: 0.102309 second(s)
+	Time spent in main process: 0.075095 second(s)
+	Time spent in child processes: 0.027214 second(s)
+

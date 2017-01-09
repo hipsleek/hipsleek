@@ -32,7 +32,7 @@ void delete(struct node* x)
     x=null;
     delete(n);
     }*/
-  while (x)
+  while (x) //@ [delete_while]
     /*@
       infer[H1,G2]
   requires H1(x)

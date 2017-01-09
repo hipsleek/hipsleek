@@ -1,0 +1,21 @@
+Starting Omega...oc
+HL is defined.
+H1 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_8 is defined.
+G1 is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x,y) ::= emp&x=null(3,4),
+ G1(x1,y1,res) ::= emp&x1=res & res=null & x1=null(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055564 second(s)
+	Time spent in main process: 0.042021 second(s)
+	Time spent in child processes: 0.013543 second(s)
+

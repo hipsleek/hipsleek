@@ -23,6 +23,9 @@ checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_>.
 print residue.
 //(3) valid 
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl<_>.
+print residue.
+
+
 //(4) valid
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> & v=@@L+@(,(#,)).
 print residue.

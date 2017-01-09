@@ -1,0 +1,10 @@
+Starting Omega...oc
+HL is defined.
+H1 is defined.
+G1 is defined.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.052222 second(s)
+	Time spent in main process: 0.037561 second(s)
+	Time spent in child processes: 0.014661 second(s)
+

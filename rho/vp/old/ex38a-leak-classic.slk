@@ -1,0 +1,41 @@
+data cell {
+  int val;
+}.
+
+
+infer[@leak] x::cell<_> |- emp.
+print residue.
+expect Fail.
+
+infer[@leak] x::cell<_> |- x::cell<_>.
+print residue.
+expect Valid.
+
+infer[] x::cell<_> |- x::cell<_>.
+print residue.
+expect Valid.
+
+infer[] x::cell<_> |- emp.
+print residue.
+expect Valid.
+
+checkentail_exact x::cell<_> |- emp.
+print residue.
+expect Fail.
+
+checkentail_exact x::cell<_> |- x::cell<_>.
+print residue.
+expect Valid.
+
+checkentail x::cell<_> |- emp.
+print residue.
+expect Valid.
+
+checkentail x::cell<_> |- x::cell<_>.
+print residue.
+expect Valid.
+
+checkentail_inexact x::cell<_> |- emp.
+print residue.
+expect Valid.
+

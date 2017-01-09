@@ -1,0 +1,16 @@
+
+//(8)
+infer[x] x=0 |- x=y.
+print residue.
+
+/*
+# bugs-ex13c.slk
+
+infer[x] x=0 |- x=y.
+print residue.
+
+why did we infer x!=0 here?
+Expected it to fail.
+
+*/
+

@@ -1,0 +1,18 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>emp&flted_25_183=null & Anon_198=Anon_15 & r_199=y & Anon_204=Anon_16 & r_205=flted_25_183&{FLOW,(4,8)=__MayError}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(y,r_199) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+Residue:
+ <1>emp&Anon_246=Anon_19 & q_247=y & Anon_254=Anon_20 & r_255=x & exists(flted_9_262:exists(flted_12_253:flted_9_262+1=flted_12_253) & flted_9_262=0) & exists(p_261:r_255=p_261) & exists(self_252:r_255=self_252) & exists(flted_12_253:exists(n_245:flted_12_253+1=n_245) & 0+1=flted_12_253)&{FLOW,(4,8)=__MayError}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(y,q_247) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+Residue:
+ <1>emp&Anon_274=Anon_21 & q_275=x & exists(flted_12_281:exists(n_273:flted_12_281+1=n_273) & flted_12_281=0) & exists(self_280:q_275=self_280)&{FLOW,(4,8)=__MayError}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+

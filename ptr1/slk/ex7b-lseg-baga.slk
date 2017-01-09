@@ -1,0 +1,36 @@
+
+data node {
+  int val;
+  node next;
+}.
+
+/*
+pred lseg<p,n> == self=p & n=0
+  or self::node<_,q>*q::lseg<p,n-1> 
+  inv BG([],n=0) | BG([self], n>0).
+*/
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<_,q>*q::lseg<p,n-1> 
+  inv BG([],n=0) | BG([self,p], n>0).
+
+/*
+# ex7b.slk
+
+Given:
+  inv BG([],n=0) | BG([self,p], n>0).
+
+We obtain:
+  !!! **astsimp.ml#2113:baga_over_formula: 
+  emp&((p!=null & p<self & 1<=n) | n=0 | (self!=null & self<p & 1<=n))&
+
+# Seems same as:
+  n=0 | self!=p & self>0 & p>0 & n>0
+
+(==astsimp.ml#2111==)
+ef_conv_disj@9
+ef_conv_disj inp1 :[([], n=0),([self,p], 0<n)]
+ef_conv_disj@9 EXIT: ((p!=null & p<self & 1<=n) | n=0 | (self!=null & self<p & 1
+<=n))
+
+*/

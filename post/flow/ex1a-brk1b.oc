@@ -1,0 +1,27 @@
+Dis := {[x,x']:
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001) 
+      | (x=x' & 2001<=x') 
+      | (x=x' & x'<=0))};
+En:={[x,x']:
+   ((2000>=x & 2001=x') 
+   | (x'>=2001 & x'=x) 
+   | (0>=x' & x'=x))};
+
+Dis subset En;
+En subset Dis;
+
+# ex1a.oc
+
+PairWiseCheck Dis;
+#{[x,2001]: 1 <= x <= 2000} union{[x,2001]: 1998 <= x <= 2001} union {[x,x]: 2001 <= x} union  {[x,x]: x <= 0}
+
+Dis2 := {[x,x']:
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001))};
+
+PairWiseCheck Dis2;
+
+# {[x,2001]: 1 <= x <= 2001}
+
+# it seems that pairwisecheck has a bug..

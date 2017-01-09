@@ -1,0 +1,115 @@
+Starting Omega...oc
+P is defined.
+Q is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (5) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (6) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (7) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [forall(y:((y!=0 | x<=0)) & ((y!=0 | 0<=x)))]
+[[empty]]
+
+
+Entail (8) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (9) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+
+Entail (10) : Fail.(must) cause: mmm+1=0 |-  mmm!=null. LOCS:[61] (must-bug)
+
+ <1>P(x)&xx!=null & mmm+1=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail (11) : Valid. 
+
+ <1>P(x)&x!=null & mmm+1=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (12) : Valid. 
+
+ <1>P(xx)&x!=null & mmm+1=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail (13) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred rel: [RELASS [F]: ( F(n)) -->  1>n]
+[[empty]]
+
+
+Entail (14) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+Stop Omega... 12 invocations 
+SAT Count   : 132
+SAT % Hit   : 72.72%
+IMPLY Count : 25
+IMPLY % Hit : 56.%
+Time(cache overhead) : 0.010409 (seconds)
+
+!!! log(small):(0.034992,172)
+Total verification time: 0.122891 second(s)
+	Time spent in main process: 0.098381 second(s)
+	Time spent in child processes: 0.02451 second(s)
+

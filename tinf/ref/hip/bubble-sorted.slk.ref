@@ -1,0 +1,19 @@
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "hip/bubble-sorted.slk",Line:8,Col:2
+
+ERROR: at _0:0_0:0 
+Message: HIP/SLEEK error, unhandled pattern
+ Fail Trace?:[] 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: 
+                               ((xs=1 & (((lg1=sm1 & 0<=srt & srt<=1 & 1<=1) | (0<=srt & srt<=1 & 
+sm1<lg1 & 1<=1)))) | (xs=p & 1=0 & sm1=\inf & lg1+(\inf)=0 & srt=1)) |-  srt=1. LOCS:[0;1;7;27] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+[[empty]]false
+
+

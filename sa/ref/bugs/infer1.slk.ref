@@ -1,0 +1,47 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+Entail (1) : Fail.(may) cause:AndR[ true |-  0<a_37. LOCS:[0;12];  true |-  flted_12_36=null. LOCS:[0;12] (may-bug).]
+
+ <1>HP_38(flted)&{FLOW,(3,7)=__MayError}[]
+ inferred hprel: [H1(y)&true --> y::node<a,flted> * HP_38(flted)&true(3,4)]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_56(flted1)&flted1=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::node<a1,flted1> * HP_56(flted1)&true(3,4); 
+                  HP_56(flted1)&true --> emp&flted1=0(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>emp&1<=b & R(b) & flted2=null&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R]: ( R(b)) -->  1<=b]
+[[ SEARCH ==>  Match(y,y) ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_95(flted3)&flted3=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(y)&true --> y::node<a2,flted3> * HP_95(flted3)&true(3,4); 
+                  HP_95(flted3)&true --> emp&flted3=0(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 65 invocations 
+SAT Count   : 70
+SAT % Hit   : 77.14%
+IMPLY Count : 45
+IMPLY % Hit : 80.%
+Time(cache overhead) : 0.00343 (seconds)
+
+!!! log(small):(0.076244,189)
+Total verification time: 0.099596 second(s)
+	Time spent in main process: 0.075509 second(s)
+	Time spent in child processes: 0.024087 second(s)
+

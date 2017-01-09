@@ -1,0 +1,133 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+//infer [U1,@classic,@pure_field] U2(x,y)  |- U1(x).
+//infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+//infer [U2,@classic,@pure_field] x::node<_,null>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>  |- U1(x).
+//infer [U2,@classic,@pure_field] x::ll<>*y::node<1,_>  |- U1(x) * y::ll<>.
+//infer [U2,@classic,@pure_field] U1(x) |- x::ll<> .
+print residue.
+expect Valid.
+
+
+/*
+# ex25b4.slk 
+
+infer [U1,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# why did we infer emp --> U1(x) in infer_collect_hp_rel 
+  for a fold process? Should we aim for the strongest post,
+  and infer instead based in infer_fold idea.
+            U2(x,y)  <- U1(x).
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@2@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(x,y)
+infer_collect_hp_rel#1@2 EXIT:(true,2: es_formula: 
+ U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1]
+ es_infer_hp_rel: [emp |#|  --> U1(x)],3:abd heap: U1(x),4:Some( emp),5:None)
+
+(==solver.ml#11157==)
+process_action#1@1
+process_action#1 inp1 : InferFold =>
+   LHS: U2(x,y)
+   RHS: U1(x)
+process_action#1 inp2 :estate:
+  U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ 
+ es_infer_vars_hp_rel: [U1]
+process_action#1 inp3 :conseq: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferFold ]]
+ CEX:true
+
+-------------------
+
+infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# fold should be  U2(x,y) <- U1(x) ??
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,y@NI)&true |#|3  --> U1(x)&true]
+ [[ InferFold ]]
+
+--------------------------------
+infer [U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# expects:
+      U2(x,y) --> U1(x)
+
+Entail (1) : Fail.(may) cause:**solver.ml#13187:infer_collect_hp_rel
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+
+(==solver.ml#13182==)
+infer_collect_hp_rel#1@2@1
+infer_collect_hp_rel#1 inp1 :lhs: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp2 :rhs: U1(x)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp3 :es: U2(x,y)
+infer_collect_hp_rel#1@2 EXIT:(false,2: es_formula: 
+ U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U2],3:abd heap: U1(x),4:None,5:None)
+
+(==solver.ml#11157==)
+process_action#1@1
+process_action#1 inp1 : InferUnfold =>
+   LHS: U2(x,y)
+   RHS: U1(x)
+process_action#1 inp2 :estate:
+  U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_obj: [@pure_field,@leak]
+ 
+ es_infer_vars_hp_rel: [U2]
+process_action#1 inp3 :conseq: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: U2(x,y)&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: U1(x)&{FLOW,(20,21)=__norm#E}[]
+process_action#1@1 EXIT:
+ctx length:0 
+ Context: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: infer_heap_node
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold ]]
+ CEX:true
+
+*/

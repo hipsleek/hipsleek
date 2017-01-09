@@ -1,0 +1,56 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<> == self=null 
+	or self::node<_, q> * q::ll<> 
+  inv true.
+  
+HeapPred P(node x).
+HeapPred HP_1636(int x, node@NI y).
+HeapPred HP_1637(node x, node@NI y).
+
+// BIND
+relAssume
+P(x) & x!=null --> x::node<val_27_1634,next_27_1635>@M * 
+            HP_1636(val_27_1634,x) * HP_1637(next_27_1635,x).
+// PRE_REC
+relAssume
+HP_1637(next_27_1635,x)&true |#| x::node<val_27_1634,next_27_1635>@M&
+true --> P(next_27_1635).
+
+// POST
+relAssume
+(2;0)HP_1636(val_27_1634,x)&x'=x --> emp.
+
+// POST
+relAssume
+P(x)&x'=x & x'=null --> emp.
+
+
+print relAssumes.
+//shape_normalize [DP_58].
+
+shape_derive_view [*].
+//pred_reuse[*][*].
+//pred_reuse_subs[*].
+print views[P].
+//print relAssumes.
+
+/*
+# ex20d.slk
+
+  print views[P].
+
+# Can we print just P instead of all views
+
+  print views_trans[P].
+
+# Can we print just P and its dependencies ..
+
+*/

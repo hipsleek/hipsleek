@@ -1,0 +1,32 @@
+
+!!!Full processing file "inf/cell-2.ss"
+Parsing file "inf/cell-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+!!!WARNING : uninterpreted free variables [b] in specification.
+Checking procedure foo$cell... 
+Procedure foo$cell SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELASS [P1]: ( P1(a,b)) -->  a<:@L]
+*************************************
+
+Post Inference result:
+foo$cell
+ EBase exists (Expl)[](Impl)[a; v](ex)[]c::cell<v@a>&a<:@L & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists v_1360: c::cell<v_1360@b>&v=res & v_1360=v&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.334992 second(s)
+	Time spent in main process: 0.306871 second(s)
+	Time spent in child processes: 0.028121 second(s)
+

@@ -1,0 +1,43 @@
+
+!!!Full processing file "data/ll3.ss"
+Parsing file "data/ll3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=n_1226 & n_1226=n1_1223 & !(v_bool_13_1184') & x'!=null & 
+!(v_bool_13_1184') & x'=x & x'!=null & n=1+n1_1223 & 
+v_int_14_1183'=v_int_14_1256+1 & res=v_int_14_1183' & (((p_1222=1 & x'=2 & 
+1<=n1_1223) | (x'=1 & p_1222=null & 
+n1_1223=0))) & lengthpost_1176(n_1226) --> lengthpost_1176(n).
+
+ termAssume x'=null & x'=x & v_bool_13_1184' & x'=null & v_bool_13_1184' & 
+v_int_13_1177'=0 & res=v_int_13_1177' & (((x=1 & 1<=n) | (x=null & 
+n=0))) --> lengthpost_1176(n).
+
+ termAssume n=1+n1_1223 & x'!=null & x'=x & !(v_bool_13_1184') & x'!=null & 
+!(v_bool_13_1184') & v_int_14_1182'=1 & v_node_14_1180'=p_1222 & 
+n_1226=n1_1223 & x'=1 & lengthpre_0(n) --> lengthpre_0(n_1226).
+
+
+Base/Rec Case Splitting:
+[	length: [[2] n=0@ML,[3] 1<=n@R]
+]
+Termination Inference Result:
+length:  requires x::ll<n> & truecase {
+                          0<=n -> requires emp & MayLoop[]
+ ensures emp & 0<=n;
+                          
+                          }
+
+0 false contexts at: ()

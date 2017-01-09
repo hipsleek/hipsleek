@@ -1,0 +1,33 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & y=null)])
+Entailing lemma lem_13: Fail. (no cex)(must) cause: OrL[ emp&y=null & self1=null&{FLOW,(5,6)=__Error}[],valid]
+
+Failed to inferred for lem_13:==> ==> invalid lemma encountered.
+ <1>
+    emp&y=null & self1=null&{FLOW,(5,6)=__Error}[]
+    or (exists y1,p,y2: emp&((y=y1 & y2=y1 & 1<=y1 & 1<=p) | (y=y1 & y2=y1 & 
+       p<=(0-1) & 1<=y1))&{FLOW,(3,4)=__norm})[]
+    
+ inferred hprel: [self1::node<_,p> * p::G<y2>&true --> P1(self1)&true(3,4); 
+                  emp&true --> P2(y)&true(3,4); P2(y)&true --> emp&1<=y(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==> ]]
+
+Stop Omega... 20 invocations 
+SAT Count   : 71
+SAT % Hit   : 70.42%
+IMPLY Count : 14
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.004939 (seconds)
+
+!!! log(small):(0.068395,107)
+Total verification time: 0.103177 second(s)
+	Time spent in main process: 0.07031 second(s)
+	Time spent in child processes: 0.032867 second(s)
+

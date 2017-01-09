@@ -1,0 +1,138 @@
+data char_star {
+  int val;
+  char_star next;
+} //inv next+1
+.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ lemma_infer [U,@pure_field,
+    @classic] self::WFG<p> 
+                      <- U(self,q)*q::char_star<0,p>.
+ print residue.
+
+/*
+# ex16c.slk
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U(self_lem_12,q_151)&
+                   true |#| q_151::char_star<flted_29_150,p>@M&
+                   flted_29_150=0 --> emp&self_lem_12=q_151]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q_151,self_lem_12)]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [
+ HP_170(v_168@NI,q_165@NI,self_lem_12@NI)&true |#|3  --> emp& v_168!=0; 
+ HP_171(q_135,q_165@NI,self_lem_12@NI)&
+    true |#| q_165::char_star<flted_26_164,p>@M&
+    flted_26_164=0 --> U(q_135,q_165)&true; 
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M&
+   flted_26_164=0 --> self_lem_12::char_star<v_168,q_169>@M * 
+    HP_170(v_168@NI,q_165@NI,self_lem_12@NI) * 
+    HP_171(q_169,q_165@NI,self_lem_12@NI)&
+true]
+
+--------------------------------------------------
+predicate normalization from ex16c.slk
+
+ HP_170(v_168@NI,q_165@NI,self_lem_12@NI)&true |#|3  --> emp& v_168!=0; 
+ HP_170(v_168@NI,q_165@NI,self_lem_12@NI)  == emp& v_168!=0; 
+
+ HP_171(q_135,q_165@NI,self_lem_12@NI) 
+   |#| q_165::char_star<flted_26_164,p>@M flted_26_164=0 
+ --> U(q_135,q_165)&true; 
+ HP_171(q_135,q_165@NI,self_lem_12@NI) 
+   |#| q_165::char_star<flted_26_164,p>@M flted_26_164=0 
+ == U(q_135,q_165)&true; 
+
+
+ U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        HP_170(v_168@NI,q_165@NI,self_lem_12@NI) * 
+        HP_171(q_169,q_165@NI,self_lem_12@NI)&
+  // unfold HP170
+  U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0
+  // unfold HP_171
+  U(self_lem_12,q_165)& true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0
+  // drop guard
+  U(self_lem_12,q_165)
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0
+
+
+Base-case:
+=========
+ U(self_lem_12,q_151)& true |#| q_151::char_star<flted_29_150,p>@M&
+         flted_29_150=0 --> emp&self_lem_12=q_151]
+ // drop guard
+ U(self_lem_12,q_151) --> emp&self_lem_12=q_151]
+
+Combine Unfolds
+===============
+  U(self_lem_12,q_165)
+    --> self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0 \/ emp&self_lem_12=q_151]
+  // make_defn
+  U(self_lem_12,q_165)
+    == self_lem_12::char_star<v_168,q_169>@M * 
+        U(q_169,q_165@NI)& v_168!=0 \/ emp&self_lem_12=q_151]
+
+=============================================================
+
+-----simplify <1>
+ U(self_lem_12,q_151)&
+   true |#| q_151::char_star<flted_26_150,p>@M&true 
+   --> emp & self_lem_12=q_151]
+
+-----simplify <2>
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M&flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    HP_171(q_169,q_165@NI,self_lem_12@NI)& v_168!=0true]
+
+ U(self_lem_12,q_165)&
+   true |#| q_165::char_star<flted_26_164,p>@M& flted_26_164=0 
+   --> self_lem_12::char_star<v_168,q_169>@M * 
+    U(q_169,q_165) & v_168!=0true]
+
+== drop guard ==
+ U(self_lem_12,q_151)&
+   --> emp & self_lem_12=q_151]
+
+ U(self_lem_12,q_165)&
+  --> self_lem_12::char_star<v_168,q_169>@M * 
+     U(q_169,q_165) & v_168!=0true]
+
+   U(..) --> A & B
+ -------------------------
+  U(..)->A /\ U(..) -> B
+
+
+
+   U(..) --> A \/ B
+ -------------------------
+  U(..)->A \/ U(..) -> B
+*/

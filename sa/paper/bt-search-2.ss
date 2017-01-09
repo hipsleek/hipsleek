@@ -13,16 +13,18 @@ bst1<> == self = null
         or self::node2<_, p, q> * p::bst0<> * q::bst1<>
 	inv true;
 
+bst2<mi,ma> == self=null
+  or self::node2<v, l, r> * l::bst2<mi,v> * r::bst2<v,ma> & v>mi & v<=ma;
+
 HeapPred G1(node2 a).
 HeapPred H1(node2 a).
   HeapPred H1(node2 a, int b).
 
 //DFS
   bool search(node2 x, int a)
-  infer[H1,G1]
-//  requires H1(x)
-  requires H1(x, a)
-  ensures G1(x);
+  //infer[H1,G1]  requires H1(x, a)  ensures G1(x);
+  requires x::bst2<mi,ma> & a>mi & a<=ma & x!=null
+  ensures res;
   /* requires x::bst0<> */
   /* ensures x::bst0<> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1 */
 {

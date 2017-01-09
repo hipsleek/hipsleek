@@ -1,0 +1,322 @@
+# ex3a-ato-err.slk
+
+fixing log:
+1. tp_imply_no_cache
+
+
+Difference below seems to be due to starting Omega?
+
+
+
+Why does --ato trigger these pairwisecheck?
+
+(====)
+Omega.pairwisecheck@2@1
+Omega.pairwisecheck inp1 : f___hole_1
+Omega.pairwisecheck@2 EXIT: 1<=f___hole_1
+
+(==trans_arr.ml#2159==)
+om_pairwisecheck@1
+om_pairwisecheck inp1 : forall(i:(i!=3 | (a[i-1])<(a[i])))
+om_pairwisecheck@1 EXIT: forall(i:(i!=3 | (a[i-1])<(a[i])))
+
+!!! **sleekcore.ml#222:arrvar_flag:false
+Starting Omega.../usr/local/bin/oc
+
+without --ato
+Entail (1) : Valid. 
+Residue:
+ <1>emp&i=3 & forall(i:(i!=3 | (a[i-1])<(a[i])))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=3 | (1+(a[i-1]))<=(a[i])))]
+
+with --ato
+Entail (1) : Fail.(may) cause: i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
+Residue:
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  i=3 |-  (a[i-1])<(a[i]). LOCS:[1] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+===================================================================
+# ex11a0.ss (FIXED with --dis-type-err flag)
+
+Add a flag --ignore-type-err for this. Otherwise should fail
+by default.
+
+ERROR: at ex11a0-infer-pre-post-arr-get.ss_8:33_8:34
+Message: UNIFICATION ERROR : at location {(Line:8,Col:33),(Line:8,Col:34)} types int[] and int are inconsistent
+
+===================================================================
+# ex11a2.ss -tp z3 --smtinp (FIXED by Loc in error_inf)
+
+Why did we generate P twice?
+
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+
+Checking procedure foo$int[]... 
+!!! **wrapper.ml#271:Calling wrap_arr_as_var
+WARNING: _0:0_0:0:Z3 error message: 
+(error "line 304 column 25: invalid declaration, function 'P' (whith the given signature) already declared")
+>>> GENERATED SMT INPUT:
+
+;Variables declarations
+(declare-fun a_primed () (Array Int Int))
+(declare-fun a () (Array Int Int))
+(declare-fun v_int_11_1152_primed () Int)
+;Relations declarations
+(declare-fun P (Int) Bool)
+(declare-fun P (Int) Bool)
+;Axioms assertions
+;Antecedent
+(assert (= a_primed a))
+(assert (P (select a 5)))
+(assert (= v_int_11_1152_primed 5))
+;Negation of Consequence
+(assert (not false))
+(check-sat)
+===================================================================
+# ex11d.ss 
+
+int foo(ref int[] a)
+  infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+{
+  a[5]=10;
+  return a[4];
+}
+
+Correct RElDEFN:
+[RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 
+     -->  Q(a,a',res)]
+
+# However, it seems we cannot handle update_array_Id subsequently..
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Error1(s) detected at main 
+Stop Omega... 46 invocations caught
+
+===================================================================
+# ex11d6.ss 
+
+int foo(ref int[] a)
+  infer [P,Q//,update_array_1d
+    ] requires P(a) ensures Q(a,a',res);
+
+# without arrvar, without explicit update_arr.
+
+[RELDEFN Q: ( exists(v_int_11_1157':res=v_int_11_1157' & v_int_11_1157'=a'[4]) & P(a)) -->  Q(a,a',res)]
+
+We may need to distinguish unknown relation from interpreted relation
+like update_arr by adding such interpreted relation into system.
+===================================================================
+# ex11d5.ss 
+
+  infer [P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+
+# without arrvar, more exceptions.
+
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_ops
+!!! **omega.ml#561:WARNING: exception from Omega.is_sat_opsOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  a'[4]")
+
+!!! **infer.ml#2153:Rel Inferred::[RELDEFN Q: ( exists(v_int_14_1405':res=v_int_14_1405' & v_int_14_1405'=a'[4]) & 
+update_array_1d(a,a',10,5) & P(a)) -->  Q(a,a',res)]
+
+===================================================================
+# ex11d.ss 
+
+infer [@arrvar,P,Q,update_array_1d] requires P(a) ensures Q(a,a',res);
+
+# why is there exception despite @arrvar?
+
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+!!! **omega.ml#673:WARNING: exception from Omega.is_valid
+
+# need to fix fixcalc
+
+Correct RElDEFN:
+[RELDEFN Q: ( a'[4]=res & update_array_1d(a,a',10,5) & P(a)) 
+     -->  Q(a,a',res)]
+
+# However, it seems we cannot handle update_array_Id subsequently..
+
+ERROR: at _0:0_0:0
+Message: compute_def:Error in translating the input for fixcalc
+!!! PROBLEM with fix-point calculation
+ExceptionFailure("compute_def:Error in translating the input for fixcalc")Occurred!
+Error1(s) detected at main 
+Stop Omega... 46 invocations caught
+
+===================================================================
+example/working
+
+./run-fast-test.pl sleek (quite a few failures)
+
+Total number of errors: 78 in files:
+  sleek.slk(no result  for {E}) cll-d.slk(no result  for {E}) label-dll.slk(no result  for {E}) sleek1.slk(no result  for {E}) sleek10.slk(no result  for {E}) sleek2.slk(no result  for {E}) sleek3.slk(no result  for {E}) sleek4.slk(no result  for {E}) sleek6.slk(no result  for {E}) sleek7.slk(no result  for {E}) sleek8.slk(no result  for {E}) sleek8.slk(no result  for {E}) sleek9.slk(no result  for {E}) sleek12-lend.slk(no result  for {E}) sleek13-lend.slk(no result  for {E}) sleek13-lend.slk(no result  for {E}) sleek-err-exc-flow.slk(no result  for {E}) baga-test-eps.slk(no result  for {E}) baga-test.slk(no result  for {E}) baga-test-2.slk(no result  for {E}) baga-test-2.slk(no result  for {E}) infer/app-inv.slk(no result  for {E}) infer/app-inv2.slk(no result  for {E}) infer/infer1.slk(no result  for {E}) infer/infer2.slk(no result  for {E}) infer/infer4.slk(no resul
+
+===================================================================
+# array/sleek1.slk (OLD version)
+
+Expects (from default):
+
+Starting Omega...oc
+!!! **sleekengine.ml#1129:ivars:[]
+Entail 1: Fail.(may) cause: (((q=null & n=0) | (1<=n & q!=null))) & 1<n |-  3<(1+n). LOCS:[4;0;1;7;8] (may-bug)
+
+GOT. How come when we did not invoke --ato ??
+---
+error at: 
+SLEEK FAILURE (END)
+Stop Omega... 16 invocations 
+SAT Count   : 8
+SAT % Hit   : 100.%
+IMPLY Count : 4
+IMPLY % Hit : 50.%
+
+!!! **solver.ml#7150:avoid:false
+!!! **solver.ml#7151:slk no:1
+!!! **cvutil.ml#757:f:#DN# self::node<Anon_14,r>
+!!! **cvutil.ml#789:f:#VN# r::ll{}<flted_4_16>
+!!! **cvutil.ml#757:f:#DN# self::node<Anon_14,r>
+!!! **cvutil.ml#789:f:#VN# r::ll{}<flted_4_16>error at: 
+
+--dd-calls-all (failure due to translate_array_one_formula
+  from simplify)
+
+%%%     TP.simplify
+%%%      simplify##
+%%%       (inner most) simplify
+%%%        #1translate_array_one_formula
+%%%         translate_array_relation
+%%%         process_exists_array
+%%%         extend_env
+
+(==tpdispatcher.ml#1965==)
+#1translate_array_one_formula@169
+#1translate_array_one_formula inp1 : self=null & n=0
+#1translate_array_one_formula@169 EXIT ExceptionFailure("is_valid_forall_helper_exp: To Be Implemented")Occurred!
+error at: 
+
+Two questions:
+ (i) why was this translate array called when --ato not
+     activated?
+(ii) Can we finish the to be implemented?
+
+Later perform a /example/working/run-fast-test.pl sleek
+===================================================================
+# ex12.ss 
+
+[RELDEFN Q: ( update_array_1d(a_1252,a_1261,1+(a_1252[4]),4) & v_int_14_1233=(a[5])-1 & 
+1<=(a[5]) & Q(a_1261,a',res) & update_array_1d(a,a_1252,v_int_14_1233,5)) -->  Q(a,a',res),
+RELDEFN Q: ( a[4]=res & a'[4]=res & a'=a & a[5]=a'[5] & (a'[5])<=0) -->  Q(a,a',res)]
+
+I think the 2nd relation assumption contains extra ctr that need not be 
+there. It seems to have occurred at an earlier point, as the dprint 
+below showed.
+
+State:htrue&a[4]=tmp' & a'[4]=tmp' & a'=a & a[5]=a'[5] & (a'[5])<=0&
+         {FLOW,(4,5)=__norm#E}[]
+
+I think it is sufficient to have:
+
+  a'[4]=tmp' & a'=a  & a'[5]<=0&
+
+This is because a'=a --> a'[4]=a[4] & a[5]=a'[5]
+Do you really need to propagate such implicit ctr in
+an eager manner? Where is it being done?
+===================================================================
+# ex12b.ss 
+
+We currently used:
+  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res);
+
+We really need to use:
+  infer [@arrvar,Q] requires true ensures Q(a,a',res);
+
+We need to classify update_array_id as an interpreted
+relation, rather than an unknown relation. Perhaps, we can
+try some sleek examples first to make this work.
+===================================================================
+# ex12b1.slk
+
+What is the best way to handle known relation
+automatically?
+
+#1 Use a special function to identify update_rel.
+
+#2 When inferring, add them automatically into infer.
+
+#3 After that, check if certain RHS known relations are provable.
+   If so, they can be dropped. If not, we must keep them.
+
+====================================================================
+# ex23a2,ex32a (OK)
+
+[RELDEFN P1: ( v_int_16_1237=(a[5])-1 & 1<=(a[5]) & P1(a_1239,a') & 
+update_array_1d(a,a_1239,v_int_16_1237,5)) -->  P1(a,a'),
+RELDEFN P1: ( a'=a & (a[5])<=0) -->  P1(a,a')]
+
+!!! fixcalc file name: logs/fixcalc.inf
+Post Inference result:
+while_11_2$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&(((a[5])>=1 & 0=a'[5]) | (0>=(a'[5]) & a=a'))&
+           {FLOW,(4,5)=__norm#E}[]
+===================================================================
+# ex13a.ss 
+
+[RELDEFN Q: ( 1<=(a[5]) & Q(a_1230,a',res) & update_array_1d(a,a_1230,1+(a[5]),5)) -->  Q(a,a',res),
+RELDEFN Q: ( a'=a & res=a[5] & (a[5])<=0) -->  Q(a,a',res)]
+
+# below is wrong, as we should have at
+   least the condition a[5]<0 for base-case
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&!(res) & res=a[5] & a=a'&{FLOW,(4,5)=__norm#E}[]
+ 
+===================================================================
+# ex13b.ss 
+
+[RELDEFN Q: ( 1<=(a[5]) & Q(a_1230,a',res) & update_array_1d(a,a_1230,1+(a[5]),5)) -->  Q(a,a',res),
+RELDEFN Q: ( a'=a & res=a[5] & (a[5])<=0) -->  Q(a,a',res)]
+
+# What happen to a[5]<0 for the unchanged scenario?
+
+Post Inference result:
+foo$int[]
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [a]
+           emp&(((a[5])>=1 & 0=res) | (!(res) & res=a[5] & a=a'))&
+           {FLOW,(4,5)=__norm#E}[]
+
+ 
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================

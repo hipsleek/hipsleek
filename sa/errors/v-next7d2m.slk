@@ -1,0 +1,28 @@
+infer [@dfa]  x>1 & flow __norm |-  x>0 & flow __Error.
+print residue.
+/*
+# v-next7d2m.slk
+
+infer [@dfa]  x>1 & flow __norm |-  x>0 & flow __Error.
+
+Can we make the message similar to that of @efa
+
+Entail (1) : Fail. 
+Residue:
+[] Error Context: length= 0 [] { }
+
+*/
+
+
+infer [@efa]  x>1 & flow __norm |-  x>0 & flow __Error.
+print residue.
+
+/*
+# v-next7d2m.slk
+
+infer [@efa]  x>1 & flow __norm |-  x>0 & flow __Error.
+
+Entail (2) : Fail.(must) cause:empty states
+Residue:
+ { }
+*/

@@ -1,0 +1,38 @@
+data node {
+  node next;
+}.
+
+pred lseg<p> == 
+  self = p or
+  self::node<q> * q::lseg<p>.
+  
+//lemma_safe "lseg" self::lseg<p> * p::node<q> -> self::lseg<q>. 
+
+//lemma_safe "cir" self::lseg<p> * p::node<q> -> self::node<t> * t::lseg<q>.
+  
+//checkentail x::lseg<y> * y::node<x> |- x::node<p> * p::lseg<x>.
+//print residue.
+
+HeapPred H(node x, node y).
+
+lemma_infer 
+  [H
+  ,@classic
+  ] 
+  H(self, y) * y::node<self> -> self::node<p> * H(p, self).
+
+print residue.
+
+print relAssumes.
+
+/*
+[  unknown emp |#|  --> H(self_lem_11,self_lem_11); 
+   
+   unknown H(self_lem_11,y_146) |#| y_146::node<self_lem_11>@M --> emp&
+    self_lem_11=y_146; 
+   
+   unknown HP_153(p_152,y_146,self_lem_11) |#|  --> H(p_152,self_lem_11); 
+   
+   unknown H(self_lem_11,y_146) * y_146::node<self_lem_11>@M |#|  --> 
+    self_lem_11::node<p_152>@M * HP_153(p_152,y_146,self_lem_11)]
+*/

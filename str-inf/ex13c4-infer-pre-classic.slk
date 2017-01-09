@@ -1,0 +1,38 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+HeapPred P(char_star x).
+HeapPred H1(char_star x).
+
+
+infer [H1,@leak] H1(q) * s::char_star<v,q> & v=0 |- true.
+print residue.
+
+infer [H1,@leak] H1(q)  |- emp.
+print residue.
+/* 
+# ex13c4.slk
+
+infer [H1,@leak] H1(q)  |- emp.
+
+# Why isn't classic inference working?
+
+Entail (2) : Fail.(may) cause: H1(q)&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: 
+   fe_locs: {
+     fc_message: memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+
+
+*/
+

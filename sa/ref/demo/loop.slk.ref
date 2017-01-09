@@ -1,0 +1,17 @@
+Starting Omega...oc
+P is defined.
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ P(x) ::= x::cell<_>(3,4),
+ G(x1) ::= hfalse&false(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055357 second(s)
+	Time spent in main process: 0.041113 second(s)
+	Time spent in child processes: 0.014244 second(s)
+

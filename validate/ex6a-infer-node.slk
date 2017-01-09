@@ -1,0 +1,37 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+infer [x] true |- x::node<_,null>.
+print residue.
+expect_infer Valid I{x!=null}.
+expect_infer Valid I{x::node<_,q> & q=null}.
+expect_infer Valid I{x::node<_,q>}.
+expect_infer Fail I{x::node<_,q> & q!=null}.
+expect_infer Fail I{x::node<_,q> * q::node<_,_>}.
+expect_infer Valid I{x::node<_,q>}.
+//expect_infer Valid I{x::node<_,q> & q!=null}.
+expect_infer Valid IE{x::node<_,q> & q=null}.
+
+/*
+# ex6a.slk
+
+ inferred heap: [x::node<inf_Anon_50,inf_flted_10_51>@M]
+ inferred pure: [inf_flted_10_51=null]
+
+infer[..] --> (infer,residue)
+
+  expect_infer I{ei}.    infer |- ei
+  expect_infer IE{ei}.   infer |- ei  /\ ei |- infer
+  expect_infer IU{ei}.   ei |- infer
+
+  expect_infer R{ei}.    residue |- ei
+  expect_infer RE{ei}.   residue |- ei  /\ ei |- residue
+  expect_infer RU{ei}.   ei |- residue
+
+*/

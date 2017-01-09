@@ -32,6 +32,7 @@ infer [H,G]  requires H(x,y)  ensures  G(x,y,res);
       else 
         {
            assert false assume false;
+          //assume flow __Error;
           return x;
         }
     }

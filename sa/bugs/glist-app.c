@@ -5,11 +5,6 @@ struct GList {
   struct GList* next;
 };
 
-/*@
-dlseg<y> == self=y
-  or self::GList<_,_,n> * n::dlseg<y> & self!=null;
-*/
-
 struct GList*
 g_list_alloc()
 /*@
@@ -17,23 +12,12 @@ g_list_alloc()
   ensures res::GList<_,_,_>;
 */;
 
-struct GList*
-g_list_last (struct GList* list)
-/*@
-case {
-  list=null -> ensures res=null;
-  list!=null ->
-    requires list::dlseg<l> * l::GList<a,_,null>
-    ensures list::dlseg<res> * res::GList<a,_,null>;
-}
-*/;
-
 /*@
 HeapPred H_last(GList a).
 HeapPred G_last(GList a, GList b).
 */
 struct GList*
-g_list_last1 (struct GList* list)
+g_list_last (struct GList* list)
 {
   if (list != NULL) {
     while (list->next != NULL)

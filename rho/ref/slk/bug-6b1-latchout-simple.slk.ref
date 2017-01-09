@@ -1,0 +1,33 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "slk/bug-6b1-latchout-simple.slk",Line:4,Col:10
+
+ERROR: at slk/bug-6b1-latchout-simple.slk_4:10_4:31
+Message: compute_view_fw_bw: data not found: LatchOut
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp&y!=null&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [PPP --> y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&y!=null&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [QQQ --> y::cell<m>&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 3: Fail.(must) cause:matching of ho_args failed (do_unmatched_rhs : HVar PPP[])
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+

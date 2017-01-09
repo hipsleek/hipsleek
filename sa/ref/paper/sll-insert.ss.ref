@@ -1,0 +1,73 @@
+
+!!!Full processing file "paper/sll-insert.ss"
+Parsing file "paper/sll-insert.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(x,v_node_25_1211)]
+Checking procedure insert$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x)&true --> x::node<val1,next1> * HP_1239(next1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1239(next1)&next1!=null --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)HP_1239(next1) * v1::node<a',tmp1> * x::node<val1,v1>&next1=null & 
+tmp1=null --> G1(x)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * G1(next1)&next1!=null --> G1(x)&
+true(3,4)]
+
+Procedure insert$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [x1::node<val,next> * HP_1239(next)&x1!=null],
+ G1(x2) ::=  [x2::node<val,v> * v::node<a',tmp>&tmp=null; x2::node<val,v> * G1(v)&
+v!=null],
+ HP_1239(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1239(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= x1::node<val,next> * HP_1239(next)&x1!=null(3,4),
+ G1(x2) ::= 
+ x2::node<val,v> * G1(v)&v!=null
+ or x2::node<val,v> * v::node<a',tmp>&tmp=null
+ (3,4),
+ HP_1239(next2) ::= 
+ next2::node<val,next> * HP_1239(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.043575,283)
+Total verification time: 0.324701 second(s)
+	Time spent in main process: 0.308962 second(s)
+	Time spent in child processes: 0.015739 second(s)
+

@@ -196,7 +196,7 @@ node_star main(node l)
 .........
 
 *******************************************************
-#loop/w3a.c
+#loop/w3a.c: FIXED (from ret1.c)
 
 Last Proving Location: 1 File "w3a.c",Line:12,Col:6
 
@@ -205,8 +205,15 @@ Message: return type doesn't match
 
 
 *******************************************************
-#n1.c
+#w1.c
 
+int main(struct node* l)
+/*@
+ requires l::ll<>
+  ensures l=null;
+*/
+
+EXPECT: OK
 conditional stmt has not been transformed properly.
 
 the second dprint
@@ -237,7 +244,63 @@ Successful States:
 
  ]
 *******************************************************
+#switch-1.c: FIXED
+
+to Handle switch stmt
+
+ERROR: at switch-1.c_9:2_12:3
+Message: TRUNG TODO: Handle Cil.Switch later!
+ caught
+
+Exception occurred: Failure("TRUNG TODO: Handle Cil.Switch later!")
+
+
 *******************************************************
+#switch-1a.c:
+
+
+
+GOT:
+ERROR: at switch-1a.c_3:0_13:1
+Message: not all paths of foo contain a return
+
+
+int foo(int x)[]
+static
+
+(None,[]): EBase: [][](emp)*(x = 1)( FLOW __norm) {EAssume: 1,:(emp)*(res = 1)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{(71, ):if (x == 1) {
+  (71, ):(75, ):return 1;
+} else {
+  (71, ):(72, ):if (x == 2) {
+  (72, ):(73, ):return 0;
+} else {
+  ^^^^^^^^^^
+  (72, ):
+}
+}}
+}
+
+=========>
+EXPECTED:
+int foo(int x)[]
+static
+
+(None,[]): EBase: [][](emp)*(x = 1)( FLOW __norm) {EAssume: 1,:(emp)*(res = 1)( FLOW __norm)}
+dynamic EBase: [][](hfalse)*(false)( FLOW __false)
+{
+{(71, ):if (x == 1) {
+  (71, ):(75, ):return 1;
+} else {
+  (71, ):(72, ):if (x == 2) {
+  (72, ):(73, ):return 0;
+}
+}}
+}
+
+
 *******************************************************
 *******************************************************
 *******************************************************

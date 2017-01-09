@@ -1,0 +1,47 @@
+
+!!!Full processing file "demo/swl-h-v.ss"
+Parsing file "demo/swl-h-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=s | (self!=s & self=null) | (self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self=s | (self!=s & self=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], ((self=0 & s<=(0-1)) | (self=0 & 1<=s) | self=s))])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], true)])
+!!! formula1: emp&(self=s | (self!=s & self=null) | (self!=s & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self=s | (self!=s & self=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], ((self=0 & s<=(0-1)) | (self=0 & 1<=s) | self=s))])
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], sent=cur)])
+Checking procedure lscan$node~node~node... 
+!!! WARNING logtime exception:0.0069
+!!! WARNING logtime exception:0.007981
+!!! WARNING logtime exception:0.021115
+Procedure lscan$node~node~node FAIL.(2)
+
+Exception Failure("add_quantifiers: invalid argument") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure lscan$node~node~node
+
+!!! proc.proc_name:lscan$node~node~nodeStop Omega... 26 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.221415,801)
+Total verification time: 0.536475 second(s)
+	Time spent in main process: 0.495039 second(s)
+	Time spent in child processes: 0.041436 second(s)
+

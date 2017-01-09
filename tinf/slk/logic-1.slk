@@ -1,0 +1,13 @@
+template int f(int x).
+
+template int g(int x, int y).
+
+infer[f] x >= 0 & x' = x - 1 & Term[f(x)] |- Loop.
+print residue.
+
+template_solve{f}.
+
+infer[g] x >= 0 & y < 0 & x' = x + y & y' = y & Loop |- Term[g(x', y')].
+print residue.
+
+template_solve{g}.

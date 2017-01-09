@@ -1,0 +1,36 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (5) Fail
+/*
+infer [x] x::ll<n> |- x::node<_,null>.
+print residue.
+*/
+
+//infer [x] q::node<_,_> & x!=null |- q=null.
+//print residue.
+
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+expect Valid.
+
+
+/*
+# ex64o2.slk
+
+# inferred false cumulatively!
+# to avoid with a shared object?
+
+<1>emp&n=1&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [x!=null; x=null]
+[[ Unfold 0 ==>  COND ==>  Unfold 0 ==>  Match(x,x)]]
+
+
+
+*/

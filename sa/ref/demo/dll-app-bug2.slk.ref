@@ -1,0 +1,17 @@
+Starting Omega...oc
+G3 is defined.
+HP_4 is defined.
+HP_5 is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G3(l,l1) ::= l::node<l1,p> * l1::node<n3,l> * HP_5(p,l) * HP_4(n3,l)(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055367 second(s)
+	Time spent in main process: 0.041356 second(s)
+	Time spent in child processes: 0.014011 second(s)
+

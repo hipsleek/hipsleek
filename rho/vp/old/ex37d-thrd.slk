@@ -1,0 +1,20 @@
+
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail res::Thrd{+ @full[x] & x'=x+1}<>
+    |- res::Thrd{+ @full[x] & x'>=x+1}<>.
+print residue.
+
+/*
+# ex37d.slk
+
+ <1>res::Thrd{ + emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]}<>&x'=1+x&{FLOW,(4,5)=__norm#E}[]
+
+ Why emp not removed?
+
+ Why x'=1+x in residue state?
+
+
+*/

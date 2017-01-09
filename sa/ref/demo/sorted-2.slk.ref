@@ -1,0 +1,15 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+
+ERROR: at demo/sorted-2.slk_10:39_10:48 
+Message: number of arguments for data node does not match[]
+ 
+Entail (1) : Failure("number of arguments for data node does not match[]")
+: no residue 
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.054387 second(s)
+	Time spent in main process: 0.04028 second(s)
+	Time spent in child processes: 0.014107 second(s)
+

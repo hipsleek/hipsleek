@@ -1,0 +1,92 @@
+data node{
+     int val;
+     node next;
+}.
+
+pred zip2<y,p> ==
+   self=null & y=p
+or self::node<_,pp>*y::node<_,q> * pp::zip2<q,p>.
+
+HeapPred P1(node x).
+HeapPred P2(node x, node y).
+
+lemma_infer[P1,P2,@classic]
+        self::zip2<y,p> -> P1(self)*P2(y,p).
+
+print residue.
+
+//shape_derive_view[P2].
+
+shape_derive_view[P1,P2].
+
+print views.
+
+print views[*].
+
+print views[P1].
+
+print views [P1*].
+
+/*
+
+[ view zip2<y:node,p:node>= 
+  EList
+    :EBase 
+       (* lbl: *){1}->emp&self=null & y=p&{FLOW,(1,26)=__flow#E}[]
+    || :EBase 
+          exists (Impl)[Anon_12; Anon_13; pp; q](* lbl: *){2}->(exists q_19,
+          p_20: (* lbl: *){2}->self::node<Anon_12,pp>@M * 
+                               y::node<Anon_13,q>@M * pp::zip2<q_19,p_20>@M&
+          q_19=q & p_20=p&{FLOW,(1,26)=__flow#E}[])
+    , 
+  view P2<p:node>= 
+  EList
+    :EBase 
+       exists (Impl)[q_83](* lbl: *){15}->(exists p_91,
+       Anon_81: (* lbl: *){15}->self::node<Anon_81,q_83>@M * q_83::P2<p_91>@M&
+       p_91=p&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){16}->emp&self=p&{FLOW,(1,26)=__flow#E}[]
+    , 
+  view P1<>= 
+  EList
+    :EBase 
+       exists (Impl)[pp_82](* lbl: *){13}->(exists Anon_80: (* lbl: *){13}->
+       self::node<Anon_80,pp_82>@M * pp_82::P1<>@M&{FLOW,(1,26)=__flow#E}[])
+    || :EBase 
+          (* lbl: *){14}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+    ]
+
+# ex30a.slk (FIXED due to typo)
+
+lemma_infer[P1,P2,@classic]
+        self::zip2<y,p> -> P1(self)*P2(y,p).
+
+ inferred hprel: 
+                [ P1(p)&true --> emp&true; 
+
+                  P2(q_90,p)&true --> GP_95(q_90,p,y@NI)&true; 
+
+                  emp&true --> GP_91(p,self_lem_14@NI)&true; 
+
+                  y::node<Anon_89,q_90>@M * GP_95(q_90,p,y@NI)&
+                   true --> P2(y,p)&true; 
+
+
+                  emp&y=p --> P2(y,p)&true; 
+
+                  self_lem_14::node<Anon_88,p>@M * GP_91(p,self_lem_14@NI)&
+                   true --> P1(self_lem_14)&true; 
+
+                  emp&self_lem_14=null --> P1(self_lem_14)&true]
+
+# There seems to be a proble with P1
+  I think due to mismatched in number of parameters..
+
+========================
+ Performing Deriving Views
+========================
+
+!!! **syn.ml#687:Cannot transform the hprels of [P1] into view declarations.
+!!! **sleekengine.ml#3095:
+*/

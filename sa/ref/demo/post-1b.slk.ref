@@ -1,0 +1,19 @@
+Starting Omega...oc
+G is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x) ::= x::node<b,right>(3,4)]
+*************************************
+Stop Omega... 0 invocations IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 5.2e-05 (seconds)
+
+!!! log(small):(0.004668,2)
+Total verification time: 0.05598 second(s)
+	Time spent in main process: 0.041849 second(s)
+	Time spent in child processes: 0.014131 second(s)
+

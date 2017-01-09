@@ -1,0 +1,36 @@
+data node {
+     node next;
+}.
+
+pred lseg<p,n,m> == self=p & n=0 & m=0
+  or self::node<q> * q::lseg<p,n-1,m-1>
+  inv n>=0 & m>=0
+ .
+/* 
+# ex21.slk
+
+Inferred inv
+compute_invs_fixcalc@1
+compute_invs_fixcalc inp1 :
+lseg:={[self,NODp_46,n_47,m_48,idx_49] -> [] -> []:  exists (self,NODp: 0=0 && self=NODp && n_47=0 && m_48=0 && idx_49=0) ||  exists (self,NODp,NODp_16,flted_6_14,flted_6_15,NODq,idx_45: (self>0 && lseg(NODq,NODp_16,flted_6_15,flted_6_14,idx_45)) && flted_6_15+1=n_47 && flted_6_14+1=m_48 && NODp_16=NODp && idx_49=idx_45+1)
+};
+bottomupgen([lseg], [3], SimHeur);
+compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+
+But sleek goes into a LOOP? why?
+However, baga-sat website do not loop;
+so perhaps the latest code has not been committed.
+
+However, baga-sat version did not pick more precise
+inferred numeric inv.
+
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
+*/

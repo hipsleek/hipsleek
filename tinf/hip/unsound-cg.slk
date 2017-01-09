@@ -1,0 +1,36 @@
+data node2 {
+	int val;
+	int next;
+}.
+
+/*
+pred lls<n,k> == case {
+ n!=k -> [] self::node2<n-1,k>;
+ n=k -> [] self::node2<n-1,k-1>;}
+inv n>= .
+*/
+
+pred lls<n,k> == self::node2<n-1,k> & n!=k
+ or self::node2<n-1,k-1> & n=k.
+
+checkentail xs::node2<n2,k> & k=n2 |- xs::lls<rr,ss>.
+print residue.
+
+checkentail xs::node2<n2,k> & k<n2 |- xs::lls<rr,ss>.
+print residue. // wrong
+/*
+  <1>emp&k<n2 & k!=(n2+1) & rr=n2+1 & k=ss & rr!=ss
+*/
+
+checkentail xs::node2<n2,k> & k<n2 |- xs::lls<n2+1,k>.
+print residue.// wrong
+/*
+ <1>emp&k<n2 & k!=(n2+1)
+*/
+
+checkentail xs::node2<n2,k> & k<n2 & a=n2+1 & b=k |- xs::lls<a,b>.
+print residue.// right
+/*
+ <1>emp&k<n2 & a=1+n2 & b=k & a!=b
+*/
+

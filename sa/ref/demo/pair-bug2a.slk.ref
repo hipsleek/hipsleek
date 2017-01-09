@@ -1,0 +1,20 @@
+Starting Omega...oc
+G1 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>x::cell<a>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [y::cell<b>&true --> G1(x@NI,y)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 7
+SAT % Hit   : 71.42%
+Time(cache overhead) : 0.000288 (seconds)
+
+!!! log(small):(0.006844,9)
+Total verification time: 0.05567 second(s)
+	Time spent in main process: 0.04133 second(s)
+	Time spent in child processes: 0.01434 second(s)
+

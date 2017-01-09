@@ -1,0 +1,5 @@
+// must bug via predicates?
+
+// 6. VALID// should be must. following the idea of failure-as-exception: LHS and RHS have to have the same flow.
+checkentail x>3 |- x<=0 & flow __Error .
+print residue.

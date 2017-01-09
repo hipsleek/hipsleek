@@ -1,0 +1,23 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "hip/ex1-latch-simple.slk",Line:12,Col:10
+
+ERROR: at hip/ex1-latch-simple.slk_16:10_16:20
+Message: compute_view_fw_bw: data not found: CNT
+
+Entail 1: Fail.(may) cause:AndR[ 0<=(1+1) |-  0<n. LOCS:[17;27;28];  0<=(v_int_48_46+1) & v_int_48_46=1 |-  v_int_48_46=n. LOCS:[17;27;28] (may-bug).]
+
+unsupported print command: redisue
+Entail 2: Fail.(may) cause:AndR[ 0<=(1+1) |-  0<n. LOCS:[17;36;37];  0<=(flted_36_74+1) & flted_36_74=1 |-  flted_36_74=n. LOCS:[17;36;37] (may-bug).]
+
+Residue:
+ <1>c::LatchOut{ + (exists flted_35_72: x::cell<flted_35_72>&flted_35_72=10&
+{FLOW,(4,5)=__norm#E}[]}<>&flted_36_74=1 & flted_33_75=10&{FLOW,(4,8)=__MayError#E}[]
+ ho_vars: [P --> (exists flted_34_71: x::cell<flted_34_71>&flted_34_71=10&
+           {FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  SEARCH ==>  COND ==>  Match(c,c) ==>  SEARCH ==>  COND ==>  Match(c,c) ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+

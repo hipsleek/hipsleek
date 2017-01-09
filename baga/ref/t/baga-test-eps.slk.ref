@@ -1,0 +1,14 @@
+Starting Omega...oc
+Starting z3... 
+WARNING : the view body for l3a contains unsat branch(es) :
+    (* lbl: *){7}->(exists q,Anon_12: self::node<q> * q::node<Anon_12>&self=q&
+{FLOW,(1,26)=__flow})[]
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+[Warning] False ctx
+

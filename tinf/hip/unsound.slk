@@ -1,0 +1,35 @@
+data node {
+	int val;
+	node next;
+}.
+
+/*
+pred lls<n,k,sm> == case {
+    n=k -> [] self::node<sm,null> & k=1 & n=1
+        or self::node<sm,q>*q::lls<n-1,k-1,sm1> & sm<=sm1;
+    n!=k -> [] self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm;
+     }	inv self!=null & n>=k & k>=0 & n>0.
+*/
+
+pred lls<n,k,sm> == case {
+    n=k -> [] self::node<sm,null> & k=1 & n=1
+        or (exists q,sm1: self::node<sm,q>*q::lls<n-1,k-1,sm1> & sm<=sm1);
+    n!=k -> [] (exists r,v: self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm);
+     }	inv self!=null & n>=k & k>=0 & n>0.
+
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=sm2 & v2<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+/*
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+unsound!
+*/
+
+/*
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=sm2 & v2<=sm2
+   |- false.
+fail
+*/
+

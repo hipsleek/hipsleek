@@ -1,0 +1,27 @@
+
+!!!Full processing file "examples/sll.ss"
+Parsing file "examples/sll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure delete$node~int... 
+Procedure delete$node~int SUCCESS.
+
+Checking procedure get_tail$node... 
+Procedure get_tail$node SUCCESS.
+
+Checking procedure id$int... 
+Procedure id$int SUCCESS.
+
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS.
+
+Checking procedure insert2$node~node... 
+Procedure insert2$node~node SUCCESS.
+
+Checking procedure insertion_sort$node~node... 
+Procedure insertion_sort$node~node SUCCESS.
+
+0 false contexts at: ()

@@ -78,9 +78,9 @@ void insert(ref node2 t, int v)
         nmin>n -> ensures false;}
 {
 	node2 aux;
-	
+
 	if(t == null) {
-    t = new node2(v, null, null);	
+    t = new node2(v, null, null);
 		return;	
 	}
 	else {
@@ -89,7 +89,7 @@ void insert(ref node2 t, int v)
 			insert(aux, v);
 			t.left = aux;
 			return;	
-      
+
 		}
 		else {
 			if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree

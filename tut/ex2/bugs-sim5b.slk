@@ -1,0 +1,32 @@
+
+relation P(int n,int m).
+
+infer [n,mmm] n=0 |-  mmm=0.
+print residue.
+
+/*
+# bus-sim5b.slk -debug infer.log
+
+infer [n,m] n=0 |-  m=0.
+print residue.
+
+GOT:
+
+Residue:
+ <1>emp&n=0 & ((m=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(m=0 | n!=0)]
+
+Pre is OK, but maybe we can simplify the residue to n=0 & m=0?
+
+Place to perform simplification..
+
+elim_unsat_es_now#4@2
+elim_unsat_es_now#4 inp1 : emp&n=0 & ((mmm=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [n; mmm]
+  es_infer_pure: [(mmm=0 | n!=0)]
+elim_unsat_es_now#4@2 EXIT: emp&n=0 & ((mmm=0 | n!=0))&{FLOW,(4,5)=__norm#E}[]
+ es_ho_vars_map: []emp&n=0 & ((mmm=0 | n!=0))
+
+
+*/

@@ -1,0 +1,33 @@
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>2.
+print residue.
+// inferred pure: [n!=3; n!=2; n!=1]
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>3.
+print residue.
+// inferred pure: [n!=3; n!=2; n!=1]
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>4.
+print residue.
+// inferred pure: [(5<=n | n<=0)]
+
+/*
+
+(====)
+norm_disj_tree@16@15
+norm_disj_tree inp1 :[[ n<=0],[ 4<=n]]
+norm_disj_tree@16 EXIT:([],[([ n!=1, n!=2, n!=3],[])])
+
+(====)
+norm_disj_tree@76@75
+norm_disj_tree inp1 :[[ n<=0],[ 5<=n]]
+norm_disj_tree@76 EXIT:([],[([ 5<=n],[]),([ n<=0],[])])
+
+
+*/
+
+// (7) stronger RHS
+infer [n] n>0+4 & n>m  |- n>3+4.
+print residue.

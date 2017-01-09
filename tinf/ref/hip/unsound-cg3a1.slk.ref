@@ -1,0 +1,129 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[] 
+MaybeErr Context: 
+                   
+                    
+                     
+                      fe_kind: MUST
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: 
+                                  ((q=1 & xs=2 & 0<=k & k<=k & 1<=k) | (xs=1 & k=k & q=null & k=0 & k=0)) |-  xs=null. LOCS:[16;1;0;8] (must-bug)
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==> ]]
+                    FAIL_AND 
+                     
+                      fe_kind: MAY
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: AndR[ true |-  kk=0. LOCS:[8];  true |-  nn=0. LOCS:[8] (may-bug).]
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==> ]]
+                    
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message:  true |-  0<v_90. LOCS:[9] (must-bug)
+                               fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_91) ==> ]]
+                   
+                  FAIL_OR 
+                   
+                    fe_kind: Valid
+                    fe_name: 
+                    fe_locs: Failure_Valid
+[[empty]]
+                  true
+
+ <1>
+    emp&0<v&{FLOW,(21,22)=__norm}[]
+    or emp&0<v & nn2!=kk2&{FLOW,(21,22)=__norm}[]
+    
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_134) ==> ||OR|| ==>  Fold ==>  SEARCH ==>  Match(xs,xs) ==>  COND ==>  Match(q,q_130) ==> ]]
+
+Fail Trace?:[] 
+MaybeErr Context: 
+                   
+                    
+                     
+                      fe_kind: MUST
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: 
+                                  ((q1=1 & q2=2 & xs=3 & 0<=k & k<=k & 1<=k) | (q1=1 & xs=2 & k=k & q2=null & 
+k=0 & k=0)) |-  xs=null. LOCS:[23;1;0;8] (must-bug)
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==> ]]
+                    FAIL_AND 
+                     
+                      fe_kind: MAY
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: AndR[ true |-  kk=0. LOCS:[8];  true |-  nn=0. LOCS:[8] (may-bug).]
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==> ]]
+                    
+                   FAIL_UNION 
+                    
+                     
+                      fe_kind: MUST
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: 
+                                  ((q_178=1 & q2=2 & 0<=k & k<=k & 1<=k) | (q_178=1 & k=k & q2=null & k=0 & 
+k=0)) |-  q_178=null. LOCS:[23;1;0;9;8] (must-bug)
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==> ]]
+                    FAIL_AND 
+                     
+                      fe_kind: MAY
+                      fe_name: logical bug
+                      fe_locs: {
+                                fc_message: 
+                                 AndR[ true |-  flted_9_189=flted_9_188. LOCS:[0;8];  true |-  flted_9_188=0. LOCS:[0;8];  true |-  flted_9_189=0. LOCS:[0;8] (may-bug).]
+                                fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==> ]]
+                    
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message:  true |-  0<v_198. LOCS:[0;9] (must-bug)
+                               fc_current_lhs_flow: {FLOW,(3,4)=__Error}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_178) ==>  COND ==>  Match(q2,q_199) ==> ]]
+                   FAIL_UNION 
+                    
+                     fe_kind: MUST
+                     fe_name: logical bug
+                     fe_locs: {
+                               fc_message: 
+                                 n=k & nn=kk & (((q1=1 & q2=2 & xs=3 & 0<=k & k<=n & 1<=n) | (q1=1 & xs=2 & 
+n=k & q2=null & n=0 & k=0))) |-  n+1=flted_9_189 & k=flted_9_188 & flted_9_189!=flted_9_188 & flted_9_189+
+1=nn & flted_9_188+1=kk & nn=kk & 0<v_177 & nn_173=nn & kk_174=kk. LOCS:[23;1;0;8;10;9;24] (RHS: contradiction)
+                               fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_178) ==>  COND ==>  Match(q2,q_203) ==> ]]
+                   
+                  FAIL_OR 
+                   
+                    fe_kind: Valid
+                    fe_name: 
+                    fe_locs: Failure_Valid
+[[empty]]
+                  true
+
+ <1>
+    emp&0<v1 & 0<v2&{FLOW,(21,22)=__norm}[]
+    or emp&0<v1 & 0<v2 & nn2!=kk2&{FLOW,(21,22)=__norm}[]
+    
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_274) ==>  COND ==>  Match(q2,q_322) ==> ||OR|| ==>  Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_270) ==>  COND ==>  Match(q2,q_291) ==> ]]
+<2>
+   emp&0<v1 & 0<v2&{FLOW,(21,22)=__norm}[]
+   or emp&0<v1 & 0<v2 & nn2!=kk2 & (k+1)!=k&{FLOW,(21,22)=__norm}[]
+   
+[[ Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_274) ==>  COND ==>  Match(q2,q_326) ==> ||OR|| ==>  Fold ==>  SEARCH ==>  Match(xs,xs) ==>  Fold ==>  SEARCH ==>  Match(q1,q_270) ==>  COND ==>  Match(q2,q_291) ==> ]]
+
+

@@ -1,0 +1,83 @@
+
+!!!Full processing file "demo/app.ss"
+Parsing file "demo/app.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(c,y)]
+Checking procedure foo$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1231,HP_1232,G1]requires HP_1231(c) * HP_1232(y)&
+true
+ ensures G1(c,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1231(c)&true --> c::node<val1,next1> * HP_1237(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1237(next1)&next1!=null --> HP_1231(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1232(y)&true --> HP_1232(y)&
+true(3,4),
+ // POST
+(1;0)c::node<val1,next1> * G1(next1,y)&next1!=null --> G1(c,y)&
+true(3,4),
+ // POST
+(2;0)c::node<val1,y> * HP_1232(y) * HP_1237(next1)&next1=null --> G1(c,y)&
+true(3,4)]
+
+Procedure foo$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1231(c1) ::=  [c1::node<val,next> * HP_1237(next)&c1!=null],
+ HP_1232(y) ::=  [htrue],
+ G1(c3,y1) ::=  [GP_1319(c3,c2) * c2::node<val,y1>&y1=DP],
+ GP_1319(c3,c2) ::=  [
+  c3::node<val,next> * GP_1319(next,c2)&next!=null
+  or emp&c3=c2
+  ],
+ HP_1237(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1237(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1231(c1) ::= c1::node<val,next> * HP_1237(next)&c1!=null(3,4),
+ HP_1232(y) ::= NONE,
+ G1(c3,y1) ::= GP_1319(c3,c2) * c2::node<val,y1>&y1=DP(3,4),
+ GP_1319(c3,c2) ::= 
+ c3::node<val,next> * GP_1319(next,c2)&next!=null
+ or emp&c3=c2
+ (3,4),
+ H1(c,y) ::= HP_1231(c) * HP_1232(y),
+ HP_1237(next2) ::= 
+ next2::node<val,next> * HP_1237(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.038438,273)
+Total verification time: 0.319934 second(s)
+	Time spent in main process: 0.304301 second(s)
+	Time spent in child processes: 0.015633 second(s)
+

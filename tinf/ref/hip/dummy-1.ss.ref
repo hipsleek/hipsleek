@@ -1,0 +1,16 @@
+
+!!!Full processing file "hip/dummy-1.ss"
+Parsing file "hip/dummy-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure dummy$node... 
+Procedure dummy$node SUCCESS.
+
+Checking procedure dummy$node... 
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

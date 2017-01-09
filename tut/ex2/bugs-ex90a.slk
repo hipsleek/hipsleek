@@ -1,0 +1,16 @@
+
+//(66) Valid  infinity.slk
+checkentail v=-\inf & w!=-\inf |- v<w.
+
+/*
+# bugs-ex90a.slk --en-inf
+
+Current system gave:
+
+Entail 2: Fail.(may) cause: ((0-(\inf)=v & v<(\inf) & 1<=(w+(\inf))) | (0-(\inf)=v & (\inf)<=((0-w)-1))) |-  v<w. LOCS:[0;1;13] (may-bug)
+
+
+What is causing this?
+
+
+*/

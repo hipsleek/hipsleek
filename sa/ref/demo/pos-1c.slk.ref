@@ -1,0 +1,21 @@
+Starting Omega...oc
+H is defined.
+H_8 is defined.
+H_9 is defined.
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x) ::= 
+ x::node<val,next> * G(next)&0<val
+ or emp&x=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.05945 second(s)
+	Time spent in main process: 0.044575 second(s)
+	Time spent in child processes: 0.014875 second(s)
+

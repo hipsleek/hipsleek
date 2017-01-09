@@ -1,0 +1,51 @@
+
+!!!Full processing file "slk/ll-length-1.ss"
+Parsing file "slk/ll-length-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<=n_1250 & 0<=flted_7_1246 & n_1250=flted_7_1246 & 
+!(v_bool_15_1200') & x'!=null & !(v_bool_15_1200') & x'=x & x'!=null & 
+flted_7_1246+1=n & v_int_16_1199'=n_1250+1 & res=v_int_16_1199' & 
+p_1305=p_1247 & (((p_1247=1 & x'=2 & 1<=n_1250) | (x'=1 & p_1247=null & 
+n_1250=0))) & fpost_0(p_1247) --> fpost_0(x).
+
+ termAssume x=null & n=0 & x'=null & x'=x & v_bool_15_1200' & x'=null & 
+v_bool_15_1200' & v_int_15_1194'=0 & res=v_int_15_1194' & ((n=0 | 
+x=null)) --> fpost_0(x).
+
+ termAssume flted_7_1246+1=n & x'!=null & x'=x & !(v_bool_15_1200') & 
+x'!=null & !(v_bool_15_1200') & v_int_16_1198'=1 & v_node_16_1196'=p_1247 & 
+n_1250=flted_7_1246 & (((p_1247=1 & x'=2 & 1<=flted_7_1246) | (x'=1 & 
+p_1247=null & flted_7_1246=0))) & fpre_0(x) --> fpre_0(v_node_16_1196').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x & x<=2@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[0,1]
+ ensures emp & true; 
+  1<=x & 
+  x<=2 -> case {
+           x=1 -> requires emp & Term[62,2]
+ ensures emp & true; 
+           2<=x -> requires emp & Term[62,3]
+ ensures emp & true; 
+           }
+  
+  }
+
+0 false contexts at: ()

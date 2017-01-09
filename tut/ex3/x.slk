@@ -1,0 +1,7 @@
+checkentail x>=0 & x1=x+y & y1=y & x1<0 
+  |- x<0.
+
+checkentail x>=0 & x1=x+y & y1=y & (x1<0 | y1<0) 
+  |- (x<0 | y<0).
+
+                                    // not(x>=0 & y>=0)

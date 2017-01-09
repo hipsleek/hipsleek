@@ -1,0 +1,149 @@
+
+!!!Full processing file "demo/swl-4-addr-lbl2.ss"
+Parsing file "demo/swl-4-addr-lbl2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((
+ AndList( "S":M={} ; "n":self=g & self!=s) ) | 
+(
+ AndList( "":self!=null ; "S":exists(M1:M=union(M1,{self}))
+ ; "n":self!=g & self!=s) ))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&
+ AndList( "S":M={} ; "n":self=g & self!=s) &{FLOW,(1,28)=__flow}[]
+!!!  xxxx bag: :bagOmega Error Exp:Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  union(M1,{self})")
+ Formula: exists(M1:M=union(M1,{self}))
+
+!!! baga_over(unfolded):Some([([self], 
+ AndList( "S":exists(M1:M=union(M1,{self}))
+ ; "n":((g<self & s<self) | ((s+1)<=self & self<g) | (g<self & self<s) | 
+   (self<=(g-1) & self<=(s-1)))) ),
+([], 
+ AndList( "S":M={} ; "n":self=g & self!=s) )])
+Checking procedure lscan$node~node~node... 
+ store dump :Imply: ante: ((cur_1374=cur & prev_1373=prev & sent'=sent & n_55'=nxt_1364 & 
+next_21_1372=nxt_1364 & prev_1387=cur_1374 & cur_1386=n_55' & 
+cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & nxt_1364=2 & 
+M1=union(M1_1365,{cur_1374}) & M1_1388={} & 
+exists(M1_1425:M1_1365=union(M1_1425,{nxt_1364})) & M2={} & cur_1374!=a & 
+cur_1374!=b & g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & 
+b=null))) & b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & 
+(((g_1361<nxt_1364 & s_1362<nxt_1364) | ((s_1362+1)<=nxt_1364 & 
+nxt_1364<g_1361) | (g_1361<nxt_1364 & nxt_1364<s_1362) | (nxt_1364<=(g_1361-
+1) & nxt_1364<=(s_1362-1)))) & prev=b_1366 & prev!=a_1367) | (cur_1374=cur & 
+prev_1373=prev & sent'=sent & n_55'=nxt_1364 & next_21_1372=nxt_1364 & 
+prev_1387=cur_1374 & cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & 
+cur_1386!=sent' & !(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & 
+cur_1386=null & v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & 
+prev=2 & M1=union(M1_1365,{cur_1374}) & M1_1388={} & M1_1365={} & 
+exists(M1_1424:M2=union(M1_1424,{prev})) & cur_1374!=a & cur_1374!=b & 
+g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & b=null))) & 
+b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & nxt_1364=g_1361 & 
+nxt_1364!=s_1362 & (((b_1366<prev & a_1367<prev) | ((a_1367+1)<=prev & 
+prev<b_1366) | (b_1366<prev & prev<a_1367) | (prev<=(b_1366-1) & 
+prev<=(a_1367-1))))) | (cur_1374=cur & prev_1373=prev & sent'=sent & 
+n_55'=nxt_1364 & next_21_1372=nxt_1364 & prev_1387=cur_1374 & 
+cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & 
+M1=union(M1_1365,{cur_1374}) & M1_1388={} & M1_1365={} & M2={} & 
+cur_1374!=a & cur_1374!=b & g_1361=a & s_1362=b & cur!=a & (((a=null & 
+b=sent) | (a=sent & b=null))) & b_1366=b & a_1367=a & cur'=a_1390 & 
+cur'!=b_1389 & nxt_1364=g_1361 & nxt_1364!=s_1362 & prev=b_1366 & 
+prev!=a_1367) | (cur_1374=cur & prev_1373=prev & sent'=sent & 
+n_55'=nxt_1364 & next_21_1372=nxt_1364 & prev_1387=cur_1374 & 
+cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & nxt_1364=2 & 
+prev=3 & M1=union(M1_1365,{cur_1374}) & M1_1388={} & 
+exists(M1_1423:M1_1365=union(M1_1423,{nxt_1364})) & 
+exists(M1_1422:M2=union(M1_1422,{prev})) & cur_1374!=a & cur_1374!=b & 
+g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & b=null))) & 
+b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & (((g_1361<nxt_1364 & 
+s_1362<nxt_1364) | ((s_1362+1)<=nxt_1364 & nxt_1364<g_1361) | 
+(g_1361<nxt_1364 & nxt_1364<s_1362) | (nxt_1364<=(g_1361-1) & 
+nxt_1364<=(s_1362-1)))) & (((b_1366<prev & a_1367<prev) | ((a_1367+
+1)<=prev & prev<b_1366) | (b_1366<prev & prev<a_1367) | (prev<=(b_1366-1) & 
+prev<=(a_1367-1))))))
+	     conseq:  M1_1388={} & M2_1391={} & cur'!=a_1390 & (((a_1390=null & b_1389=sent') | 
+(a_1390=sent' & b_1389=null))) & b_1398=b_1389 & a_1399=a_1390 & 
+cur'=a_1390 & cur'!=b_1389 & prev'=b_1398 & prev'!=a_1399
+
+Mona is restarting ... mona aborted execution
+[mona] Warning: imply --> false(from mona failure - formula too complex --> Mona aborted)
+
+
+ store dump :Imply: ante: ((cur_1374=cur & prev_1373=prev & sent'=sent & n_55'=nxt_1364 & 
+next_21_1372=nxt_1364 & prev_1387=cur_1374 & cur_1386=n_55' & 
+cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & nxt_1364=2 & 
+M1=union(M1_1365,{cur_1374}) & M1_1388={} & 
+exists(M1_1442:M1_1365=union(M1_1442,{nxt_1364})) & M2={} & cur_1374!=a & 
+cur_1374!=b & g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & 
+b=null))) & b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & 
+(((g_1361<nxt_1364 & s_1362<nxt_1364) | ((s_1362+1)<=nxt_1364 & 
+nxt_1364<g_1361) | (g_1361<nxt_1364 & nxt_1364<s_1362) | (nxt_1364<=(g_1361-
+1) & nxt_1364<=(s_1362-1)))) & prev=b_1366 & prev!=a_1367) | (cur_1374=cur & 
+prev_1373=prev & sent'=sent & n_55'=nxt_1364 & next_21_1372=nxt_1364 & 
+prev_1387=cur_1374 & cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & 
+cur_1386!=sent' & !(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & 
+cur_1386=null & v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & 
+prev=2 & M1=union(M1_1365,{cur_1374}) & M1_1388={} & M1_1365={} & 
+exists(M1_1441:M2=union(M1_1441,{prev})) & cur_1374!=a & cur_1374!=b & 
+g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & b=null))) & 
+b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & nxt_1364=g_1361 & 
+nxt_1364!=s_1362 & (((b_1366<prev & a_1367<prev) | ((a_1367+1)<=prev & 
+prev<b_1366) | (b_1366<prev & prev<a_1367) | (prev<=(b_1366-1) & 
+prev<=(a_1367-1))))) | (cur_1374=cur & prev_1373=prev & sent'=sent & 
+n_55'=nxt_1364 & next_21_1372=nxt_1364 & prev_1387=cur_1374 & 
+cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & 
+M1=union(M1_1365,{cur_1374}) & M1_1388={} & M1_1365={} & M2={} & 
+cur_1374!=a & cur_1374!=b & g_1361=a & s_1362=b & cur!=a & (((a=null & 
+b=sent) | (a=sent & b=null))) & b_1366=b & a_1367=a & cur'=a_1390 & 
+cur'!=b_1389 & nxt_1364=g_1361 & nxt_1364!=s_1362 & prev=b_1366 & 
+prev!=a_1367) | (cur_1374=cur & prev_1373=prev & sent'=sent & 
+n_55'=nxt_1364 & next_21_1372=nxt_1364 & prev_1387=cur_1374 & 
+cur_1386=n_55' & cur_1386!=sent' & !(v_bool_25_1303') & cur_1386!=sent' & 
+!(v_bool_25_1303') & cur_1386=null & v_bool_29_1304' & cur_1386=null & 
+v_bool_29_1304' & cur'=prev_1387 & prev'=null & cur_1374=1 & nxt_1364=2 & 
+prev=3 & M1=union(M1_1365,{cur_1374}) & M1_1388={} & 
+exists(M1_1440:M1_1365=union(M1_1440,{nxt_1364})) & 
+exists(M1_1439:M2=union(M1_1439,{prev})) & cur_1374!=a & cur_1374!=b & 
+g_1361=a & s_1362=b & cur!=a & (((a=null & b=sent) | (a=sent & b=null))) & 
+b_1366=b & a_1367=a & cur'=a_1390 & cur'!=b_1389 & (((g_1361<nxt_1364 & 
+s_1362<nxt_1364) | ((s_1362+1)<=nxt_1364 & nxt_1364<g_1361) | 
+(g_1361<nxt_1364 & nxt_1364<s_1362) | (nxt_1364<=(g_1361-1) & 
+nxt_1364<=(s_1362-1)))) & (((b_1366<prev & a_1367<prev) | ((a_1367+
+1)<=prev & prev<b_1366) | (b_1366<prev & prev<a_1367) | (prev<=(b_1366-1) & 
+prev<=(a_1367-1))))))
+	     conseq:  prev'=1 & M1_1388={} & exists(M1_1438:M2_1391=union(M1_1438,{prev'})) & 
+cur'!=a_1390 & (((a_1390=null & b_1389=sent') | (a_1390=sent' & 
+b_1389=null))) & b_1398=b_1389 & a_1399=a_1390 & cur'=a_1390 & 
+cur'!=b_1389 & (((b_1398<prev' & a_1399<prev') | ((a_1399+1)<=prev' & 
+prev'<b_1398) | (b_1398<prev' & prev'<a_1399) | (prev'<=(b_1398-1) & 
+prev'<=(a_1399-1))))
+
+Mona is restarting ... mona aborted execution
+[mona] Warning: imply --> false(from mona failure - formula too complex --> Mona aborted)
+
+
+Mona is restarting ... cycle limit reached
+
+Procedure lscan$node~node~node result FAIL.(1)
+
+!!! proc.proc_name:lscan$node~node~nodeStop Omega... 26 invocations 
+0 false contexts at: ()
+
+!!! log(small):(3.983306,4192)
+!!! log(big)(>0.5s)(3):(5.662533,[(imply,2.319258);(imply,2.37809);(sleek-hec,0.965185)])
+Total verification time: 7.011931 second(s)
+	Time spent in main process: 2.214975 second(s)
+	Time spent in child processes: 4.796956 second(s)
+

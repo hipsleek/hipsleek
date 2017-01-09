@@ -1,0 +1,39 @@
+
+//1
+infer [@err_must] x<=0 |- x>0.
+print residue.
+expect Fail_Must.
+
+//Residue:
+// <1>emp&x<=0&{FLOW,(6,7)=__Error#E}[]
+
+
+//2
+infer [x,@err_must] true |- x>0.
+print residue.
+expect Valid.
+/*
+Entail (2) : Valid. 
+Residue:
+ <1>htrue&1<=x&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [1<=x]
+*/
+
+//3
+infer [x,@err_must_only] true |- x>0.
+print residue.
+
+/*
+#ex12-infer.slk
+
+// need to add new flag
+
+infer [x,@err_must_only] true |- x>0.
+print residue.
+expect Valid.
+
+Residue:
+ <1>htrue&x<=0&{FLOW,(4,5)=__Error#E}[]
+ inferred pure: [x<=0]
+
+*/

@@ -1,0 +1,17 @@
+
+!!!Full processing file "demo/rose-tree-inf1.ss"
+Parsing file "demo/rose-tree-inf1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "demo/rose-tree-inf1.ss",Line:18,Col:0
+
+ERROR: at demo/rose-tree-inf1.ss_22:16_22:43 
+Message: trans_exp :: case CallNRecv :: procedure call check_child$node~tree~tree has invalid argument types
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("trans_exp :: case CallNRecv :: procedure call check_child$node~tree~tree has invalid argument types")
+Error3(s) detected at main 

@@ -1,0 +1,25 @@
+  
+//(1)
+checkentail @full[x] * @full[x]  |- false.
+// expect @full[x]
+
+
+// # ex13a.slk (2)
+checkentail @full[x] * @full[x]  |- true.
+// expect @full[x]
+print residue.
+//<1>htrue*@full[x]&{FLOW,(4,5)=__norm#E}[]
+// should be false
+
+checkentail @full[x] * @lend[x]  |- true.
+// should not happen
+print residue.
+// should be false
+
+checkentail @full[x] or @lend[x]  |- @full[x].
+print residue.
+// expect fail
+
+checkentail @full[x] or @lend[x]  |- @lend[x].
+print residue.
+// expect valid

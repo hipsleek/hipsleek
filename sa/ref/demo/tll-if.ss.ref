@@ -1,0 +1,78 @@
+
+!!!Full processing file "demo/tll-if.ss"
+Parsing file "demo/tll-if.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure set_right$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+assert:demo/tll-if.ss:30: 6:  : ok
+
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<left1,right1> * HP_1253(left1) * HP_1254(right1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1254(right1)&right1!=null --> H(right1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1253(left1)&true --> H(left1)&
+true(3,4),
+ // POST
+(1;0)HP_1253(left1) * HP_1254(right1) * res::node<left1,right1>&
+right1=null --> G(x,res)&
+true(3,4),
+ // POST
+(2;0)G(left1,v1) * G(right1,v2) * res::node<v1,v2>&right1!=null --> G(x,res)&
+true(3,4)]
+
+Procedure set_right$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<DP,right2>&right2=null; x1::node<left2,right2> * H(left2) * 
+H(right2)&right2!=null],
+ G(x2,res1) ::=  [x2::node<left,right> * H(left)&right=null & x2=res1; x2::node<DP,right>&
+right=null & x2=res1; x2::node<left,right> * G(right3,right) * G(left3,left)&
+x2=res1 & right3!=null & right3=right & left3=left]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<left2,right2> * H(left2) * H(right2)&right2!=null
+ or x1::node<DP,right2>&right2=null
+ (3,4),
+ G(x2,res1) ::= 
+ x2::node<DP,right>&right=null & x2=res1
+ or x2::node<left,right> * G(right3,right) * G(left3,left)&x2=res1 & 
+    right3!=null & right3=right & left3=left
+ or x2::node<left,right> * H(left)&right=null & x2=res1
+ (3,4)]
+*************************************
+Stop Omega... 15 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.053404,353)
+Total verification time: 0.350691 second(s)
+	Time spent in main process: 0.332909 second(s)
+	Time spent in child processes: 0.017782 second(s)
+

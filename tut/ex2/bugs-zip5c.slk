@@ -1,0 +1,4 @@
+relation P(int n,int m).
+
+infer [P] n!=0 & P(n,m) |- n>0.
+print residue.

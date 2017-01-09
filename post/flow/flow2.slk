@@ -1,0 +1,65 @@
+
+relation P(int x).
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] x=0 & flow __norm
+    |- P(x) & flow __flow.
+print residue.
+
+relation_infer[][P].
+
+/*
+# flow2.slk
+
+relation_infer[P].
+
+Please see how termu-6.slk does it.
+
+For each infer, can we push it somewhere that
+can later be retrieved for fix-point?
+
+Can we support infer_fixcalc under sleek to
+invoked fixcalc directly?
+
+Just need to collect relational assumptions:
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: ( (x+1)<=0) -->  P(x)]
+
+After that collect a relational assumption with flow as follows:
+
+ x+1<=0 & 3<=flow<=4  \/ P(x1,flow) & x1+1=x --> P(x,flow)
+
+Fixcalc then give below but requires a separate
+flow parameter:
+
+ P(x,flow) == x+1<=0 & 3<=flow<=4
+           == x+1<=0 & flow __norm
+
+
+# flow2.slk
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&P(x1) & x1+1=x&{FLOW,(1,26)=__flow#E}[]
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+GOT:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=3) && flow<=4) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Expecting:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=4) && flow<=5) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Pick flow range from exclist. See below.
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+

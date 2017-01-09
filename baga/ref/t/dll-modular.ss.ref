@@ -1,0 +1,45 @@
+
+!!!Full processing file "t/dll-modular.ss"
+Parsing file "t/dll-modular.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure append$node2~node2... 
+Procedure append$node2~node2 SUCCESS.
+
+Checking procedure append1$node2~node2... 
+Procedure append1$node2~node2 SUCCESS.
+
+Checking procedure append2$node2~node2... 
+Procedure append2$node2~node2 SUCCESS.
+
+Checking procedure delete$node2~int... 
+Procedure delete$node2~int SUCCESS.
+
+Checking procedure delete1$node2~int... 
+Procedure delete1$node2~int SUCCESS.
+
+Checking procedure f1$node2... 
+Procedure f1$node2 SUCCESS.
+
+Checking procedure f2$node2... 
+Procedure f2$node2 SUCCESS.
+
+Checking procedure insert$node2~int... 
+Procedure insert$node2~int SUCCESS.
+
+Checking procedure test_del$node2... 
+Procedure test_del$node2 SUCCESS.
+
+Checking procedure test_del2$node2~node2... 
+Procedure test_del2$node2~node2 SUCCESS.
+
+Checking procedure test_fold$... 
+Procedure test_fold$ SUCCESS.
+
+Termination checking result: SUCCESS
+
+
+2 false contexts at: ( (32,3)  (32,10) )

@@ -1,0 +1,51 @@
+
+!!!Full processing file "demo/last-2.ss"
+Parsing file "demo/last-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=p & self!=null) | (self!=p & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&p!=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (p<self | self<p)),
+([], self=p & self!=null)])
+!!! formula1: emp&self!=null & ((p<=(0-1) | 1<=p))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((p=self & 1<=self) | (p=self & self<=(0-1)))),
+([p,self], (self<p | p<self))])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure last$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(res,x)&true{,(3,4)=__norm};
+
+assert:demo/last-2.ss:24: 1:  : ok
+
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure last$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure last$node
+
+!!! proc.proc_name:last$nodeStop Omega... 32 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.070872,377)
+Total verification time: 0.383769 second(s)
+	Time spent in main process: 0.324358 second(s)
+	Time spent in child processes: 0.059411 second(s)
+

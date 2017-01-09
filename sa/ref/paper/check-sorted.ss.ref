@@ -1,0 +1,46 @@
+
+!!!Full processing file "paper/check-sorted.ss"
+Parsing file "paper/check-sorted.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=null)])
+!!! neqs:[]
+Checking procedure check_sorted$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,v@NI)&true
+ ensures G(x,v@NI)&res{,(3,4)=__norm};
+
+Post condition cannot be derived:
+  (must) cause:  !(res) |-  res. LOCS:[28;19] (must-bug)
+
+Context of Verification Failure: 1 File "paper/check-sorted.ss",Line:19,Col:10
+Last Proving Location: 1 File "paper/check-sorted.ss",Line:28,Col:14
+
+ERROR: at paper/check-sorted.ss_19:10_19:22 
+Message: Post condition cannot be derived.
+ 
+Procedure check_sorted$node~int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure check_sorted$node~int
+
+!!! proc.proc_name:check_sorted$node~intStop Omega... 8 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.050251,278)
+Total verification time: 0.342223 second(s)
+	Time spent in main process: 0.325496 second(s)
+	Time spent in child processes: 0.016727 second(s)
+

@@ -1,0 +1,36 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_825 is defined.
+HP_826 is defined.
+G is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l) ::= 
+ l::node<n,p> * H1(n) * HP_826(p)
+ or emp&l=null
+ (3,4),
+ H2(l1) ::= emp(3,4),
+ G(l2) ::= 
+ l2::node<n1,p1> * G(n1) * HP_826(p1)
+ or emp&l2=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 23
+SAT % Hit   : 69.56%
+IMPLY Count : 9
+IMPLY % Hit : 55.55%
+Time(cache overhead) : 0.001414 (seconds)
+
+!!! log(small):(0.007463,32)
+Total verification time: 0.073063 second(s)
+	Time spent in main process: 0.058406 second(s)
+	Time spent in child processes: 0.014657 second(s)
+

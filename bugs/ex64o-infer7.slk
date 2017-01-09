@@ -1,0 +1,97 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (5) Fail
+infer [x] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//infer [x] q::node<_,_> & x!=null |- q=null.
+//print residue.
+
+//infer [n] x::ll<n> |- x::node<_,null>.
+//print residue.
+
+
+/*
+# ex64o.slk
+
+# inferred false cumulatively!
+# to avoid with a shared object?
+
+# why is q_54 paired with x? How did we get q_54=x?
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ x::node<Anon_12,flted_11_43>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Match =>
+    LHS: x::node<Anon_53,q_54>@M
+    RHS: x::node<Anon_12,flted_11_43>@M;
+  Prio:2
+  Unfold 0 =>
+    LHS: q_54::ll<flted_7_52>@M
+    RHS: x::node<Anon_12,flted_11_43>@M
+  ]
+
+   alias set: [q_54,x]rhs_inst: []rhs_infer: None
+
+<1>emp&n=1&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [x!=null; x=null]
+[[ Unfold 0 ==>  COND ==>  Unfold 0 ==>  Match(x,x)]]
+
+!!! **cformula.ml#9642:*** infer_acc add_pure: x=null
+!!! **cformula.ml#9660:previously inferred: x!=null
+!!! **cformula.ml#9661:false contra with: x=null
+Exception(infer_lhs_contra_estate):Failure("**infer.ml#837:TBI")
+Exception(infer_pure_m_1):Failure("**infer.ml#837:TBI")
+Exception(infer_pure_m_2):Failure("**infer.ml#837:TBI")
+Exception(infer_pure_top_level):Failure("**infer.ml#837:TBI")
+Exception(fold_fun_impt):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_empty_rhs_heap):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_helper):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_helper):Failure("**infer.ml#837:TBI")
+
+!!! WARNING logtime exception (sleek-hec):0.032Exception(heap_entail_conjunct):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_lhs):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_after_sat):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_after_sat):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_one_context):Failure("**infer.ml#837:TBI")
+Exception(pm_aux):Failure("**infer.ml#837:TBI")
+Exception(process_action):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_non_empty_rhs_heap):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_helper):Failure("**infer.ml#837:TBI")
+
+!!! WARNING logtime exception (sleek-hec):0.036Exception(heap_entail_conjunct):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_lhs):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_after_sat):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_one_context):Failure("**infer.ml#837:TBI")
+Exception(helper_inner):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_conjunct_lhs_struc):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_after_sat_struc):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_one_context_struc):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_struc):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_struc_init):Failure("**infer.ml#837:TBI")
+Exception(heap_entail_struc_init_bug_inv):Failure("**infer.ml#837:TBI")
+Exception(sleek_entail_check):Failure("**infer.ml#837:TBI")
+Exception(run_infer_one_pass):Failure("**infer.ml#837:TBI")
+
+
+
+!!! **cformula.ml#9653:false contra with: x!=null
+Exception(add_infer_pure_to_ctx):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(add_infer_pre):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(or_context_list):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(or_list_context):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(heap_entail_after_sat):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(heap_entail_one_context):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(pm_aux):Failure("**cformula.ml#11746:add_infer_pure_estate")
+Exception(process_action):Failure("**cformula.ml#11746:add_infer_pure_estate")
+
+*/

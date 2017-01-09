@@ -1,0 +1,83 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+
+infer [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+/*
+# ex41b
+
+1. x!=null already on LHS
+
+Expected answer:
+ H2(z,x)&true --> emp&x=z 
+
+Residue:
+ <1>x::node<z> * H2(z,x)&z!=null & x=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> emp&x=z & z!=null]
+[[ Fold ==> ]]
+
+<2>HP_61(x,z)&x!=null & q_56!=x & q_56=z&{FLOW,(4,5)=__norm#E}[]
+inferred hprel: [H2(q_56,x)&true --> q_56::lseg<q_56> * HP_61(x,q_56@NI)&true; 
+                 HP_61(x,z@NI)&true --> emp&(z<x | (x<z & x!=null))]
+
+=====================================================================
+
+ <1>x::node<z> * H2(z,x)&x=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> emp&x=z]
+[[ Fold ==> ]]
+
+<2>HP_61(x,z)&q_56!=x & q_56=z&{FLOW,(4,5)=__norm#E}[]
+inferred hprel: [H2(q_56,x)&true --> q_56::lseg<q_56> * HP_61(x,q_56@NI)&true; 
+                 HP_61(x,z@NI)&true --> emp&(z<x | (x<z & x!=null))]
+[[
+
+
+*/
+
+infer [H2] x::node<z> * H2(z,x) & x!=null  |-  x=z.
+print residue.
+
+
+HeapPred H3(node y,node@NI x).
+
+
+infer [H3] x::node<z> * H3(z,x)  |- 
+       (exists q: x::node<q> * q::lseg<z> & x!=z).
+print residue.
+
+/*
+
+@NI new
+ <1>H3(z,x)&z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H3(z,x@NI)&true --> emp&x!=z]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+New:
+ <1>HP_88(x,z)&z!=x&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> z::lseg<z> * HP_88(x,z@NI)&true; 
+                  HP_88(x,z@NI)&true --> emp&x!=z]
+
+Old
+ <1>HP_88(x,z)&z!=x & x!=null&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(z,x)&true --> z::lseg<z> * HP_88(x,z@NI)&true; 
+                  HP_88(x,z@NI)&true --> emp&x!=z]
+
+*/

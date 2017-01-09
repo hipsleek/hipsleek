@@ -1,0 +1,34 @@
+data node {
+	int val; 
+	node next; //#REC;	
+}.
+
+
+HeapPred P(node x).
+HeapPred HP_1553(node x,node y).
+
+infer[P,HP_1553
+  ,@classic
+  ] 
+
+HP_1553(next_77_1552,x) * x::node<val_77_1551,next_77_1552>
+ |-  P(next_77_1552).
+ 
+print residue.
+
+/*
+Entail (1) : Fail.(may) cause:**solver.ml#8412:
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: **solver.ml#8412:memory leak
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ InferUnfold  ==>  InferHeap]]
+ CEX:true
+
+*/

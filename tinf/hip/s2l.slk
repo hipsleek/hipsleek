@@ -1,0 +1,24 @@
+template int g(int x, int y).
+
+/*
+infer [g] true |- g(v, r1) > g(v-1, g(0, r1)).
+infer [g] true |- g(0, r1) >= r1.
+*/
+
+/* TODO: Optimize coefficient of x */
+infer [g] r = g(v, r1) & r2 = g(0, r1) & r' = g(v-1, r2) |- r > r'.
+infer [g] r = g(0, r1) |- r > r1.
+infer [g] v >= 0 & r1 >= 0 & r = g(v, r1) |- r >= 0.
+
+/*
+infer [g] 0<=v_957 & r=g( v_957, r1_959) & v_957<=0 & v_957<=0 & r1_959=r_973 |- r>r_973.
+infer [g] 0<=v_957 & r=g( v_957, r1_959) & 0<v_957 & 0<v_957 & v_957=v_int_23_998+1 & 
+  v_957=val_23_992 & v_int_24_1006=0 & v_1013=v_int_23_998 & 
+  v_1018=v_int_24_1006 & r1_1020=r1_959 & 0<=v_1018 & 
+  r1_1015=g( v_1018, r1_1020) & r1_1015=g( v_1018, r1_1020) & 0<=v_1013 & 
+  r_1008=g( v_1013, r1_1015) |- r>=r_1008.
+*/
+
+template_solve.
+
+

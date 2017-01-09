@@ -1,0 +1,35 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> ==
+  emp & i=n & n>=0
+  or x::arr<_> * self::arr_seg<i+1,n> & x=self+i & 0<=i<n
+  inv n>=i & i>=0.
+
+// problem with multiple folding..
+checkentail y::arr<_> * z::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail z::arr<_> * y::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> .
+print residue.
+expect Valid.
+
+checkentail z::arr<_> * y::arr<_> & z=x+3 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> & n=i+2.
+print residue.
+expect Valid.
+
+/*
+
+# ex1e6d2.slk
+
+checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n> .
+
+
+*/
+

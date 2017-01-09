@@ -1,0 +1,34 @@
+// 8
+infer [a,i]
+  true
+  |- a[i] > 10.
+print residue.
+// a[i]>=11
+
+
+infer [a]
+  i=8
+  |- a[i] > 10.
+print residue.
+// forall i. i=8 -> a[i]>=11
+// a[8]>=11
+
+infer [a]
+  true
+  |- a[i] > 10.
+print residue.
+// forall i. a[i]>=11
+
+
+infer [a]
+  0<i<5
+  |- a[i] > 10.
+print residue.
+// forall i. not(0<i<5) | a[i]>=11
+
+infer [y]
+  0<i<5 & y>i+3
+  |- y > 10.
+print residue.
+// forall i. not(0<i<5 & y>i+3) | y>10
+// inferred pure: [(y<=4 | 11<=y)]

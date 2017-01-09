@@ -1,0 +1,12 @@
+Starting Omega...oc
+Starting z3... 
+**** TEMPLATE ASSUMPTION(S) ****
+[ 0<=r1 & r=f( v, r1) --> 0<=r
+, r=f( v, r1) & 0<=r1 --> r1<r
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int rank(int x,int y) == rank_0+(rank_x*x)+(rank_y*y)
+, template int post(int x,int y) == post_0+(post_x*x)+(post_y*y)
+, template int f(int x,int y) == 1+(0*x)+(1*y)
+]
+

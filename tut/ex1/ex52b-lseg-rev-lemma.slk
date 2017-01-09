@@ -1,0 +1,56 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_, q> * q::lseg<n - 1, p>;
+ } inv n >= 0.
+
+pred lseg_rev<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::lseg_rev<n-1,q>*q::node<_,p>;
+ } inv n >= 0.
+
+lemma_safe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        -> self::lseg_rev<n,r> * r::node<_,p>.
+
+lemma_safe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        <- self::lseg_rev<n,r> * r::node<_,p>.
+
+//lemma_safe "lseg-lseg-rev" self::lseg<n,p> <-> self::lseg_rev<n,p>. 
+
+
+/*
+# ex52b-lseg-rev-lemma.slk
+
+Entailing lemma lseg-rev-transformation: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to prove lseg-rev-transformation:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+!!! WARNING : changing lemma from <- to -> Timeout when checking #simplify  Restarting Omega after ... 31 invocations Stop Omega... 31 invocations Starting Omega.../usr/local/bin/oc
+Timeout when checking #simplify  Restarting Omega after ... 32 invocations Stop Omega... 32 invocations Starting Omega.../usr/local/bin/oc
+Timeout when checking #simplify  Restarting Omega after ... 33 invocations Stop Omega... 33 invocations Starting Omega.../usr/local/bin/oc
+
+
+ntailing lemma lseg-rev-transformation: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to prove lseg-rev-transformation:<== in current context.
+Removing invalid lemma ---> lemma store restored.
+Stop z3... 58 invocations Stop Omega... 34 invocations 
+SAT Count   : 125
+SAT % Hit   : 63.2%
+IMPLY Count : 24
+
+
+*/
+
+//checkentail x::node<_,q>*q::lseg<n,p> |- x::lseg_rev<m,p>.
+
+//checkentail x::lseg<n,p> |- x::lseg_rev<m,p>.

@@ -1,0 +1,51 @@
+Starting Omega...oc
+HP is defined.
+
+!!! process_pred_split:
+
+!!! formula1: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null & y=null)])Starting z3... 
+
+!!! 
+ilemma_infs:
+ :=>coerc tmp_infer_37
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::HP{}<y>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((HRel HP_24((self:node))) * (HRel HP_25((y:node))))*(true)( FLOW __flow))
+
+Entailing lemma tmp_infer_37: Valid.
+
+!!! formula1: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null)])
+!!! formula1: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null)])
+!!! 
+Right. ilemma_infs:
+ :<=coerc tmp_safe_67
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::HP{}<y>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((self::HP_24{}<>@M[HeapNode1]) * (y::HP_25{}<>@M[HeapNode1]))*(true)( FLOW __flow))
+
+Entailing lemma tmp_safe_67: Valid.
+ pred_split (sem):HP([x,y]) :==  HP_24(x) * HP_25(y)
+
+[HP_RELDEFN HP:  HP(x,y) ::=  [HP_24(x) * HP_25(y)],
+HP_RELDEFN HP_24:  HP_24(x) ::=  [emp&x=null],
+HP_RELDEFN HP_25:  HP_25(y) ::=  [emp&y=null]]
+Stop Omega... 6 invocations 
+SAT Count   : 20
+SAT % Hit   : 85.%
+IMPLY Count : 11
+IMPLY % Hit : 72.72%
+Time(cache overhead) : 0.001081 (seconds)
+
+!!! log(small):(0.014676,43)
+Total verification time: 0.067196 second(s)
+	Time spent in main process: 0.052168 second(s)
+	Time spent in child processes: 0.015028 second(s)
+

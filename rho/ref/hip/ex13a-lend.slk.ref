@@ -1,0 +1,43 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+[Warning] False ctx
+
+Entail 1: Valid. 
+
+[Warning] False ctx
+
+Entail 2: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 4: Fail.(may) cause:(x,@lend) cannot satisfy (x,@full)
+
+Residue:
+ <1>
+    emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]
+    or emp*U@lend[x]&{FLOW,(1,26)=__flow#E}[]
+    
+[[||OR|| ==> ]]
+
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>
+    emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+    or emp*N@lend[x]&{FLOW,(4,5)=__norm#E}[]
+    
+[[||OR|| ==> ]]
+
+
+

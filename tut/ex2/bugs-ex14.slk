@@ -1,0 +1,18 @@
+data node{
+  int val;
+  node next;
+}.
+
+
+// (4)
+infer[xxx] xxx::node<_,_> |- xxx=null.
+print residue.
+// x=null GOT x!=1
+
+/*
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [x!=1]
+*/
+
+

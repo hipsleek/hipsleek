@@ -1,0 +1,86 @@
+
+!!!Full processing file "nov2013/sll-bubble.ss"
+Parsing file "nov2013/sll-bubble.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((sm=lg & n=1 & self!=null) | (sm<=lg & 2<=n & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=1 & self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((n=1 & lg=sm) | (sm<=lg & 2<=n)))])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure bubble$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(xs)&true
+ ensures G1(xs)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(xs)&true --> xs::node<val2,next2> * HP_1309(next2)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1309(next2)&next2!=null --> H1(next2)&
+true(3,4),
+ // BIND
+(2;0)G1(next2)&next2!=null --> next2::node<val1,next1> * HP_1348(next1)&
+true(3,4),
+ // POST
+(1;0)xs::node<val2,next2> * HP_1309(next2)&next2=null --> G1(xs)&
+true(3,4),
+ // POST
+(1;2;0)xs::node<val2,next2> * next2::node<val1,next1> * HP_1348(next1)&
+true --> G1(xs)&
+true(3,4)]
+
+Procedure bubble$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(xs1) ::=  [xs1::node<val,next> * HP_1309(next)&xs1!=null],
+ G1(xs2) ::=  [xs2::node<val,next>&next=null; xs2::node<val,next> * 
+next::node<val1,next1> * HP_1348(next1)],
+ HP_1309(next3) ::=  [emp&next3=null; next3::node<val,next> * HP_1309(next)],
+ HP_1348(next5) ::=  [emp&next5=null; next5::node<val3,next4> * HP_1348(next4)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(xs1) ::= xs1::node<val,next> * HP_1309(next)&xs1!=null(3,4),
+ G1(xs2) ::= 
+ xs2::node<val,next> * next::node<val1,next1> * HP_1348(next1)
+ or xs2::node<val,next>&next=null
+ (3,4),
+ HP_1309(next3) ::= 
+ next3::node<val,next> * HP_1309(next)
+ or emp&next3=null
+ (3,4),
+ HP_1348(next5) ::= 
+ next5::node<val3,next4> * HP_1348(next4)
+ or emp&next5=null
+ (3,4)]
+*************************************
+Stop Omega... 47 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.130972,602)
+Total verification time: 0.469424 second(s)
+	Time spent in main process: 0.435399 second(s)
+	Time spent in child processes: 0.034025 second(s)
+

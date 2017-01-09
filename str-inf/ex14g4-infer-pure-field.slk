@@ -1,0 +1,68 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+
+  //lemma_infer_pred [U] self::WFG<p> <- U(self,q)*q::char_star<0,p>.
+  //lemma_infer [U,@classic] self::WFG<p> <- self::WFSeg<q>*U(q,p).
+  // Failed to inferred for lem_12:<== (invalid lemma encountered)
+  //lemma_infer_pred [U,@classic] self::WFG<p> -> self::WFSeg<q>*U(q,p).
+  lemma_unsafe
+       self::WFG<p> -> (exists q: self::WFSeg<q>*U(q,p)).
+
+infer [U,@pure_field,@classic]
+ (exists v_126, q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0 )
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)). 
+   print residue.
+ 
+/*
+# ex14g3.slk --esl (Loc?
+
+infer [U,@pure_field,@classic]
+ (exists v_126, q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0 )
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)). 
+   print residue.
+
+# GOT
+
+Residue:
+ <1>emp&v_115!=0&{FLOW,(20,21)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(self_lem_12,self_lem_12) ==>  SEARCH ==>  (Lemma ==> lem_12(q_116,q_129)) ==> (left: lem_12) ==>  COND ==>  Match(q_116,q_129) ==>  COND ==>  InferHeap]]
+
+# DIFFERS from ex14g3.slk --esl
+
+id: 11; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ U]; c_heap: emp; others:  es_infer_obj: [] globals: [@pure_field,@leak]
+ checkentail (exists v_126,
+q_127: self_lem_12::char_star<v_126,q_127>@M * q_127::WFG<p>@M&v_126!=0&
+{FLOW,(20,21)=__norm#E}[])
+ |-  (exists q_109: self_lem_12::WFSeg<q_109>@M * U(q_109,p)&
+{FLOW,(20,21)=__norm#E}[]). 
+hprel_ass: [ q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)]
+ho_vars: nothing?
+res:  2[
+    emp&v_140!=0&{FLOW,(20,21)=__norm#E}[]
+   es_infer_hp_rel: [q_142::char_star<v_140,q_141>@M * q_141::WFG<p>@M |#|  --> U(q_142,p)];
+    emp&v_140!=0 & v_143=v_140 & q_144=q_141&{FLOW,(20,21)=__norm#E}[]
+   ]
+
+
+*/

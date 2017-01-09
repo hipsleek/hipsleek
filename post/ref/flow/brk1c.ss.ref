@@ -1,0 +1,36 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "flow/brk1c.ss"
+Parsing file "flow/brk1c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure while_5_2$int... 
+Procedure while_5_2$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1359: ( x'=x & 2001<=x) -->  post_1359(x,x',flow),
+RELDEFN post_1359: ( x<=2000 & 1001<=x & post_1359(1+x,x',flow)) -->  post_1359(x,x',flow),
+RELDEFN post_1359: ( x_1435+1=x & 1<=x & x<=1000 & post_1359(x_1435,x',flow)) -->  post_1359(x,x',flow),
+RELDEFN post_1359: ( x'=x & x<=0) -->  post_1359(x,x',flow)]
+*************************************
+
+Post Inference result:
+while_5_2$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&{FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure main$int... 
+Procedure main$int SUCCESS.
+
+2 false contexts at: ( (5,2)  (14,13) )
+
+Total verification time: 0.712043 second(s)
+	Time spent in main process: 0.508031 second(s)
+	Time spent in child processes: 0.204012 second(s)
+

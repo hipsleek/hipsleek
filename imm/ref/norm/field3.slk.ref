@@ -1,0 +1,16 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+Residue:
+ <1>x::node<w@A,Anon_13@A>&Anon_12=Anon_13 & v=w&{FLOW,(6,7)=__Error#E}[]
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>x::node<w,Anon_14>&Anon_14=Anon_15 & v=w&{FLOW,(4,5)=__norm#E}[]
+
+

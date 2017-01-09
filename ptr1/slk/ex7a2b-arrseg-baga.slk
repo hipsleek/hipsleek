@@ -1,0 +1,70 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+//  inv BG([(self+iii,n-iii+1)], n>=iii & iii>=0).
+  inv BG([(self+iii,n-iii)], n>=iii & iii>=0 & self!=null).
+
+/*
+checkentail  base::arr_seg<iii,n> |- base+iii!=null.
+print residue.
+expect Fail.
+*/
+
+checkentail  base::arr_seg<iii,n> & iii<n 
+  |- base+iii!=null.
+print residue.
+expect Valid.
+
+checkentail base!=null & i>=0 |- base+i!=null.
+expect Valid.
+
+checkentail base!=null  |- base+i!=null.
+expect Fail.
+
+checkentail  base::arr_seg<iii,n>  
+  |- base!=null.
+expect Valid.
+
+checkentail  base::arr_seg<iii,n>  
+  |- base+iii!=null.
+expect Valid.
+
+checkentail  base::arr_seg<iii,n>  
+  |- base+iii-1!=null.
+expect Fail.
+
+/*
+# ex7a2b.slk
+
+  inv BG([(self+i,n-i)], n>=i & i>=0).
+
+checkentail  base::arr_seg<iii,n> //& iii<n 
+  |- base+iii!=null.
+
+# where did _74 come from?
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@38@37
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<iii,n>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: true
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@38 EXIT: _74!=null & iii<=n & 0<=iii #  []
+
+checkentail  base::arr_seg<iii,n> & iii<n 
+
+# why did we have two diff root ptrs _80 and _81 ?
+
+(==cvutil.ml#1992==)
+xpure_heap_mem_enum#6@40@39
+xpure_heap_mem_enum#6 inp1 : base::arr_seg<iii,n>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: iii<n
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@40 EXIT: _81!=null & iii<=n & 0<=iii #  [[_80]]
+
+
+*/
+

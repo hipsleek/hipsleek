@@ -1,0 +1,45 @@
+(OK)              a.01-alloca_true-termination.c
+(flow)            a.09_assume-alloca_true-termination.c
+(OK)              a.10-alloca_true-termination.c
+                  add_last-alloca_true-termination.c
+(OK-but got ML)   array01-alloca_true-termination.c
+(OK-but got ML)   array02-alloca_true-termination.c
+(OC error)        array03-alloca_true-termination.c
+(flow)            b.03_assume-alloca_true-termination.c
+(flow)            b.09_assume-alloca_true-termination.c
+(OK)                  b.12-alloca_true-termination.c
+(OK)                  b.13-alloca_true-termination.c
+(OK)              b.14-alloca_true-termination.c
+(OK)              b.15-alloca_true-termination.c
+(OK)              b.16-alloca_true-termination.c
+(OK)              b.17-alloca_true-termination.c
+(OK)              b.18-alloca_true-termination.c
+(OK)              BradleyMannaSipma-2005CAV-Fig1-modified-alloca_unknown-termination.c
+(OK)              BradleyMannaSipma-2005ICALP-Fig1-alloca_unknown-termination.c
+(OK)              BrockschmidtCookFuhs-2013CAV-Fig1-alloca_true-termination.c
+(OK)              bubblesort-alloca_true-termination.c
+(flow)            c.01_assume-alloca_true-termination.c
+(OK)              c.01-no-inv-alloca_true-termination.c
+(OK)              c.02-alloca_true-termination.c
+(OK)              c.08-alloca_true-termination.c
+(OK-but got ML)   count_down-alloca_true-termination.c
+(OK)              diff-alloca_true-termination.c
+(OK)              easySum-alloca_true-termination.c
+(OC error)        ex1-alloca_true-termination.c
+                  ex2-alloca_true-termination.c
+(Timeout)        fermat-alloca_true-termination.c
+(OK)              gcd1-alloca_true-termination.c
+(OK)              genady-alloca_true-termination.c
+(OK-ML)           HarrisLalNoriRajamani-2010SAS-Fig1-alloca_true-termination.c
+(OK)              HarrisLalNoriRajamani-2010SAS-Fig2-alloca_unknown-termination.c
+(OK)              insertionsort-alloca_true-termination.c
+(OK)              java_BubbleSort-alloca_true-termination.c
+(OK)              java_Nested-alloca_true-termination.c
+(OK)              java_Sequence-alloca_true-termination.c
+(OK)              LarrazOliverasRodriguez-CarbonellRubio-2013FMCAD-Fig1-alloca_unknown-termination.c
+()                lis-alloca_true-termination.c
+(OC error)        mult_array-alloca_true-termination.c
+(OK)              NoriSharma-2013FSE-Fig7-alloca_true-termination.c
+                  selectionsort-alloca_true-termination.c
+(OK)              Urban-2013WST-Fig2-alloca_true-termination.c
+(OK)              Urban-2013WST-Fig2-modified1000-alloca_true-termination.c

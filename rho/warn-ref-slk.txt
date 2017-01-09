@@ -1,0 +1,284 @@
+ref/hip/ex11-split-cnt.slk.ref:ERROR: at hip/ex11-split-cnt.slk_11:10_11:20
+ref/hip/ex13a-lend.slk.ref:[Warning] False ctx
+ref/hip/ex13a-lend.slk.ref:[Warning] False ctx
+ref/hip/ex13b-lend.slk.ref: <1>x::cell<n>&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex13b-lend.slk.ref: <1>Hole[42]&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex13-lend.slk.ref:[Warning] False ctx
+ref/hip/ex14a-lend-node.slk.ref: <1>(Hole[67]) * p_66::ll{}<flted_5_64>&x!=null & flted_5_64+1=n&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex14-lend-node.slk.ref: <1>(Hole[37]) * y::cell<Anon_12>&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex14-lend-node.slk.ref: <1>(Hole[62]) * y::cell<Anon_18>&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex14-lend-node.slk.ref: <1>(Hole[74]) * y::cell<Anon_21>&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex14-lend-node.slk.ref: <1>Hole[102]*U@full[y_41,z_42]@lend[x_40]&Anon_11=v_int_6_1391 & z_42'=2 & y_41'=1 & v_int_6_1391=1&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex14-lend-node.slk.ref: <1>Hole[120]*U@full[y_41,z_42]@lend[x_40]&Anon_11=v_int_6_1391 & z_42'=2 & y_41'=1 & v_int_6_1391=1&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex1-latch-simple.slk.ref:ERROR: at hip/ex1-latch-simple.slk_16:10_16:20
+ref/hip/ex1-latch-simple.slk.ref:{FLOW,(4,5)=__norm#E}[]}<>&flted_36_74=1 & flted_33_75=10&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex2a-latch.slk.ref:ERROR: at hip/ex2a-latch.slk_8:10_8:20
+ref/hip/ex2b-latch.slk.ref:ERROR: at hip/ex2b-latch.slk_8:10_8:20
+ref/hip/ex2b-latch.slk.ref: <1>c_42'::LatchOut{ + x_21::cell<flted_26_68>&flted_26_68=10&{FLOW,(4,5)=__norm#E}[]}<>&x_21=x_41' & v_int_50_22=1 & v_int_48_1561=10 & flted_26_67=v_int_48_1561&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex4d1-bind.slk.ref: <1>x::cell<flted_4_16>&flted_4_16=1&{FLOW,(4,8)=__MayError#E}[]
+ref/hip/ex4d1-bind.slk.ref: <1>Hole[53]&flted_10_42=1&{FLOW,(4,8)=__MayError#E}[]
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/bag-of-pairs.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_1_2})")
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/bag-of-pairs.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/bag-of-pairs.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_a1_a2})")
+ref/ho/bag-of-pairs.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/bag-of-pairs.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+ref/ho/bag-of-pairs.slk.ref:[Warning] False ctx
+ref/ho/bag-of-pairs.slk.ref:[Warning] False ctx
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete-bags.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {5,6,1,2,3,4,1,2}")
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete-bags.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{1,2})")
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete-bags.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2}")
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.004001
+ref/ho/concrete-bags.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete-bags.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {3,4,1,2}")
+ref/ho/concrete-bags.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete-bags.slk.ref:Entail 6: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{1,2})")
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2,3}")
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {1,2,3}")
+ref/ho/concrete.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/concrete.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(C,D)")
+ref/ho/cyclic-check.slk.ref:ERROR: at ho/cyclic-check.slk_11:10_11:20
+ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/cyclic-check.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/cyclic-check.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/cyclic-check.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2}")
+ref/ho/latch2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch2.slk.ref: at:error at: 
+ref/ho/latch2.slk.ref:SLEEK FAILURE (END)
+ref/ho/latch4.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch4.slk.ref: at:error at: 
+ref/ho/latch4.slk.ref:SLEEK FAILURE (END)
+ref/ho/latch.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch.slk.ref: at:error at: 
+ref/ho/latch.slk.ref:SLEEK FAILURE (END)
+ref/ho/lemma-prop0a.slk.ref:ERROR: at ho/lemma-prop0a.slk_4:10_4:20
+ref/ho/lemma-prop0a.slk.ref:!!! WARNING logtime exception:0.error at: 
+ref/ho/lemma-prop0a.slk.ref:SLEEK FAILURE (END)
+ref/ho/lemma-prop0.slk.ref:ERROR: at ho/lemma-prop0.slk_4:10_4:20
+ref/ho/lemma-prop0.slk.ref:!!! WARNING logtime exception:0.error at: 
+ref/ho/lemma-prop0.slk.ref:SLEEK FAILURE (END)
+ref/ho/lemma-prop1.slk.ref:ERROR: at ho/lemma-prop1.slk_4:10_4:20
+ref/ho/lemma-prop1.slk.ref:!!! WARNING logtime exception:0.004error at: 
+ref/ho/lemma-prop1.slk.ref:SLEEK FAILURE (END)
+ref/ho/lemma-prop2.slk.ref:ERROR: at ho/lemma-prop2.slk_8:10_8:20
+ref/ho/lemma-prop2.slk.ref:!!! WARNING logtime exception:0.error at: 
+ref/ho/lemma-prop2.slk.ref:SLEEK FAILURE (END)
+ref/ho/lemma-prop.slk.ref:ERROR: at ho/lemma-prop.slk_4:10_4:20
+ref/ho/lemma-prop.slk.ref:!!! WARNING logtime exception:0.error at: 
+ref/ho/lemma-prop.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg2a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2a.slk.ref: at:error at: 
+ref/ho/msg2a.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg2b.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2b.slk.ref: at:error at: 
+ref/ho/msg2b.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2.slk.ref: at:error at: 
+ref/ho/msg2.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg3a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3a.slk.ref: at:error at: 
+ref/ho/msg3a.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg3b.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3b.slk.ref: at:error at: 
+ref/ho/msg3b.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg3c.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3c.slk.ref: at:error at: 
+ref/ho/msg3c.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg3-d1.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3-d1.slk.ref: at:error at: 
+ref/ho/msg3-d1.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg3.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3.slk.ref: at:error at: 
+ref/ho/msg3.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg5a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg5a.slk.ref: at:error at: 
+ref/ho/msg5a.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg5.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg5.slk.ref: at:error at: 
+ref/ho/msg5.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg-d2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg-d2.slk.ref: at:error at: 
+ref/ho/msg-d2.slk.ref:SLEEK FAILURE (END)
+ref/ho/msg.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg.slk.ref: at:error at: 
+ref/ho/msg.slk.ref:SLEEK FAILURE (END)
+ref/ho/parahip1.slk.ref:!!! WARNING logtime exception:0.004
+ref/ho/parahip1.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/parahip2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/parahip2.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(B,B)")
+ref/ho/parahip3.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/parahip3.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/split-cnt.slk.ref:ERROR: at ho/split-cnt.slk_8:10_8:20
+ref/ho/split-cnt.slk.ref: <1>c2::CNT{}<flted_23_57>&flted_23_57=0 & flted_23_58=1&{FLOW,(6,7)=__Error#E}[]
+ref/ho/split-cnt.slk.ref: <1>c2::CNT{}<flted_47_153>&flted_47_153=0 & flted_47_154=2&{FLOW,(6,7)=__Error#E}[]
+ref/ho/split-cnt.slk.ref: <1>c2::CNT{}<flted_59_198>&flted_59_198=0 & flted_59_199=0&{FLOW,(6,7)=__Error#E}[]
+ref/ho/test.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/test.slk.ref: at:error at: 
+ref/ho/test.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread2a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2a.slk.ref: at:error at: 
+ref/ho/thread2a.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2.slk.ref: at:error at: 
+ref/ho/thread2.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread3.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread3.slk.ref: at:error at: 
+ref/ho/thread3.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread-dead.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-dead.slk.ref: at:error at: 
+ref/ho/thread-dead.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread.slk.ref: error: Stream.Error("GT expected after [opt_data_h_args] (in [simple_heap_constr])")
+ref/ho/thread.slk.ref: at:error at: 
+ref/ho/thread.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread-split2.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split2.slk.ref: at:error at: 
+ref/ho/thread-split2.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread-split3a.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split3a.slk.ref: at:error at: 
+ref/ho/thread-split3a.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread-split3.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split3.slk.ref: at:error at: 
+ref/ho/thread-split3.slk.ref:SLEEK FAILURE (END)
+ref/ho/thread-split.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split.slk.ref: at:error at: 
+ref/ho/thread-split.slk.ref:SLEEK FAILURE (END)
+ref/ho/wait2.slk.ref:ERROR: at ho/wait2.slk_1:10_1:32
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/wait2.slk.ref: <1>emp&cyclic(B)&{FLOW,(4,8)=__MayError#E}[]
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 6: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 7: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 8: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c3})")
+ref/ho/wait2.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2.slk.ref:Entail 9: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  union(S1,{tup2_c1_c2})")
+ref/ho/wait2z.slk.ref:ERROR: at ho/wait2z.slk_7:10_7:32
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2z.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2z.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_2_1}")
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2z.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_2_1}")
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.004
+ref/ho/wait2z.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
+ref/ho/wait2z.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait2z.slk.ref:Entail 5: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_1_2,tup2_1_2}")
+ref/ho/wait3.slk.ref:ERROR: at ho/wait3.slk_8:10_8:20
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait3.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait3.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait3.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/wait3.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/wait3.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {}")
+ref/ho/wait.slk.ref:ERROR: at ho/wait.slk_1:10_1:32
+ref/ho/wait.slk.ref:!!! WARNING logtime exception:0.004
+ref/ho/wait.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {tup2_c1_c2,tup2_c2_c1}")
+ref/ho/waits-pred.slk.ref:ERROR: at ho/waits-pred.slk_16:10_16:64
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits-pred.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits-pred.slk.ref:!!! WARNING logtime exception:0.004
+ref/ho/waits-pred.slk.ref:Entail 3: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1}")
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits.slk.ref:Entail 1: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits.slk.ref:Entail 2: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+ref/ho/waits.slk.ref:!!! WARNING logtime exception:0.
+ref/ho/waits.slk.ref:Entail 4: EXCast. Globals.Illegal_Prover_Format("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here :  {c1,c2}")
+ref/slk/bug-3a-ho-vars.slk.ref: <1>y::cell<flted_3_17>&flted_3_17=2 & flted_3_18=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3a-ho-vars.slk.ref: <1>y::cell<flted_6_36>&t=x & z=y & flted_6_36=2 & flted_6_37=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3a-ho-vars.slk.ref: <1>y::cell<a>&c=1 & b=1 & a=1+b&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3a-ho-vars.slk.ref: <1>emp&y=2 & x=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3b-ho-vars.slk.ref: <1>x::cell<flted_4_15> * y::cell<flted_4_14>&flted_4_14=2 & flted_4_15=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3b-ho-vars.slk.ref: <1>x::cell<flted_10_42> * y::cell<flted_10_41>&flted_10_41=2 & flted_10_42=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3-ho-vars.slk.ref: <1>y::cell<flted_14_14>&flted_14_14=2 & flted_14_15=1&{FLOW,(6,7)=__Error#E}[]
+ref/slk/bug-3-ho-vars.slk.ref: <1>y::cell<flted_17_34>&flted_17_34=2 & flted_17_35=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-3-ho-vars.slk.ref: <1>y::cell<flted_20_54>&flted_20_54=2 & flted_20_55=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-4a-ho-null.slk.ref: <1>y::cell<Anon_11>&flted_4_17=2+3&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-4a-ho-null.slk.ref: <1>emp&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-4-ho-vars.slk.ref: <1>x::cell<flted_3_13>&flted_3_13=3&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-4-ho-vars.slk.ref: <1>x::cell<flted_37_22>&flted_37_22=2+3&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-4-ho-vars.slk.ref: <1>x::cell<flted_40_30>&flted_40_30=2+3&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-6a-covariant-latch.slk.ref:ERROR: at slk/bug-6a-covariant-latch.slk_6:10_6:25
+ref/slk/bug-6b1-latchout-simple.slk.ref:ERROR: at slk/bug-6b1-latchout-simple.slk_4:10_4:31
+ref/slk/bug-6b2-latchout-simple.slk.ref:ERROR: at slk/bug-6b2-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6b3-latchout-simple.slk.ref:ERROR: at slk/bug-6b3-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6b4-latchout-simple.slk.ref:ERROR: at slk/bug-6b4-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6b-latchout-simple.slk.ref:ERROR: at slk/bug-6b-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6c-latchout-simple.slk.ref:ERROR: at slk/bug-6c-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6c-latchout-simple.slk.ref: <1>x::cell<n> * y::cell<m>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-6d-latchout-simple.slk.ref:ERROR: at slk/bug-6d-latchout-simple.slk_6:10_6:31
+ref/slk/bug-6e3-latchin-simple.slk.ref:ERROR: at slk/bug-6e3-latchin-simple.slk_6:10_6:31
+ref/slk/bug-6e4-latchin-simple.slk.ref:ERROR: at slk/bug-6e4-latchin-simple.slk_4:10_4:30
+ref/slk/bug-6e5-latchin-simple.slk.ref:ERROR: at slk/bug-6e5-latchin-simple.slk_4:10_4:30
+ref/slk/bug-6e5-latchin-simple.slk.ref: <1>HVar PPP[]&5<m&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-6e7-latchin-simple.slk.ref:ERROR: at slk/bug-6e7-latchin-simple.slk_6:10_6:31
+ref/slk/bug-6e7-latchin-simple.slk.ref: <1>emp&5<n&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-6-latch.slk.ref:ERROR: at slk/bug-6-latch.slk_6:10_6:31
+ref/slk/bug-6-latch.slk.ref: <1>x::cell<m>&y!=null&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-6-latch.slk.ref: <1>x::cell<n> * c::LatchOut{ + y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&y!=null&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/bug-8a1-lemma-norm.slk.ref:ERROR: at slk/bug-8a1-lemma-norm.slk_4:10_4:20
+ref/slk/bug-8a2-lemma-norm.slk.ref:ERROR: at slk/bug-8a2-lemma-norm.slk_4:10_4:20
+ref/slk/bug-8a-lemma-norm.slk.ref:ERROR: at slk/bug-8a-lemma-norm.slk_4:10_4:20
+ref/slk/cnt.slk.ref:ERROR: at slk/cnt.slk_1:10_1:20
+ref/slk/cnt.slk.ref: <1>emp&flted_22_17=2&{FLOW,(6,7)=__Error#E}[]
+ref/slk/err.slk.ref:ERROR: at slk/err.slk_8:10_8:20
+ref/slk/ex-3-ho-vars.slk.ref: <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>x::cell<flted_6_20>&flted_6_20=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>x::cell<Anon_12> * y::cell<Anon_13>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>y::cell<flted_12_33>&flted_12_33=2 & flted_12_34=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>y::cell<flted_24_52>&flted_24_52=2 & flted_24_53=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>emp&flted_28_71=1&{FLOW,(6,7)=__Error#E}[]
+ref/slk/ex-3-ho-vars.slk.ref: <1>x::cell<flted_31_87> * y::cell<flted_31_86>&flted_31_86=2 & flted_31_87=1&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-4-ho-vars.slk.ref: <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-4-ho-vars.slk.ref: <1>y::cell<Anon_13>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-4-ho-vars.slk.ref: <1>HVar P[]&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-5-false.slk.ref:[Warning] False ctx
+ref/slk/ex-5-false.slk.ref:[Warning] False ctx
+ref/slk/ex-5-false.slk.ref: <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-6-ho-pred.slk.ref:ERROR: at slk/ex-6-ho-pred.slk_6:10_6:25
+ref/slk/ex-6-ho-pure.slk.ref: <1>y::cell<m>&0<m&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-6-ho-pure.slk.ref: <1>y::cell<m>&3<m&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-6-ho-pure.slk.ref: <1>HVar PPP[]&1<n&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-6-ho-pure.slk.ref: <1>HVar PPP[]&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ex-6-ho-split.slk.ref:ERROR: at slk/ex-6-ho-split.slk_6:10_6:31
+ref/slk/ex-6-latch.slk.ref:ERROR: at slk/ex-6-latch.slk_10:10_10:20
+ref/slk/ex-7-latchout.slk.ref:ERROR: at slk/ex-7-latchout.slk_4:10_4:31
+ref/slk/ex-8-lemma-norm.slk.ref:ERROR: at slk/ex-8-lemma-norm.slk_3:10_3:20
+ref/slk/ex-9-varperm.slk.ref:[Warning] False ctx
+ref/slk/ho_vars.slk.ref: <1>x::cell<v>&0<v&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ho_vars.slk.ref: <1>x::cell<Anon_11> * y::cell<Anon_12>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ho_vars.slk.ref: <1>x::cell<Anon_13>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/ho_vars.slk.ref: <1>x::cell<Anon_14> * y::cell<Anon_15>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/latch_old.slk.ref: error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/slk/latch_old.slk.ref: at:error at: 
+ref/slk/latch_old.slk.ref:SLEEK FAILURE (END)
+ref/slk/latch.slk.ref:ERROR: at slk/latch.slk_10:10_10:20
+ref/slk/latch.slk.ref: <1>x::cell<Anon_11>&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/latch.slk.ref: <1>HVar P[]&{FLOW,(4,8)=__MayError#E}[]
+ref/slk/lemma-prop.slk.ref:ERROR: at slk/lemma-prop.slk_4:10_4:20
+ref/slk/lemma-prop.slk.ref:!!! WARNING logtime exception:0.error at: 
+ref/slk/lemma-prop.slk.ref:SLEEK FAILURE (END)
+ref/vp/ex12a-bind-lend.slk.ref:[Warning] False ctx
+ref/vp/ex12b-lend.slk.ref:[Warning] False ctx
+ref/vp/vperm.slk.ref:[Warning] False ctx
+ref/vp/vperm.slk.ref:[Warning] False ctx

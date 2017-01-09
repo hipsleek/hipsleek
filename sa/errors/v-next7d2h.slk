@@ -1,0 +1,133 @@
+//(1)
+checkentail  x>1 & flow __norm |-  x>2 & flow __MayError.
+print residue.
+/*
+# v-next7d2h.slk --dfa
+
+checkentail  x>1 & flow __norm |-  x>2 & flow __MayError.
+
+What is --dfa? I guess when a proof fails,
+we just return { } and do not attempt to
+classify the error.
+
+Entail 1: Fail.
+Residue:
+[] 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: failed in entailing pure formula(s) in conseq
+                             fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[empty]]false
+
+Is this the same as::
+ Residue { }
+Why is there a [[empty]] false?
+
+infer [@efa]  x>1 & flow __norm |-  x>2 & flow __MayError.
+
+infer [@dfa]  x>1 & flow __norm |-  x>2 & flow __MayError.
+
+*/
+
+//(2)
+checkentail x>1 & flow __norm |-  x>2 & flow __norm.
+print residue.
+
+/*
+# v-next7d2h.slk --dfa
+
+checkentail x>1 & flow __norm |-  x>2 & flow __norm.
+
+Residue:
+[] 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: failed in entailing pure formula(s) in conseq
+                             fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[empty]]false
+
+
+Should this just be the same as::
+ Residue { }
+Why is there a [[empty]] false?
+
+
+*/
+
+
+//(3)
+checkentail  x>1 & flow __norm |-  x>0 & flow __Error.
+print residue.
+
+/*
+
+Should this be the same as::
+ Residue { }
+Why is the message difference for above?
+I guess internal result is different?
+
+Entail 3: Fail. 
+Residue:
+[] Error Context: length= 0 [] 
+
+
+*/
+
+//(4)
+checkentail  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+/*
+--dfa is supposed not to classify errors.
+as we can see below.
+It may be good to have just {} residue.
+
+--efa
+Entail 4: Fail.(must) cause: 1<x |-  x=0. LOCS:[74] (must-bug)
+Residue:
+ <1>emp&1<x&{FLOW,(5,6)=__Error}[]
+
+--dfa
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: failed in entailing pure formula(s) in conseq
+                             fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[empty]]false
+
+*/
+
+//(5)
+checkentail  x>1 & flow __norm |-  x=0 & flow __Error.
+print residue.
+/*
+
+In what sense is below a must-failure?
+
+Entail 5: Fail.(must) cause:empty states
+
+Residue:
+ { }
+*/
+
+
+//(6)
+checkentail  x>1 & flow __norm |-  x>=0 & flow __Error.
+print residue.
+/*
+
+In what sense is this a must-failure?
+
+Entail 6: Fail.(must) cause:empty states
+Residue:
+ { }
+
+
+
+
+*/

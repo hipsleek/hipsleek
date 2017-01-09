@@ -1,0 +1,27 @@
+Starting Omega...oc
+P is defined.
+Q is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x=null]
+[[empty]]
+
+Stop Omega... 7 invocations 
+SAT Count   : 38
+SAT % Hit   : 60.52%
+IMPLY Count : 9
+IMPLY % Hit : 22.22%
+Time(cache overhead) : 0.002606 (seconds)
+
+!!! log(small):(0.020581,55)
+Total verification time: 0.077375 second(s)
+	Time spent in main process: 0.056823 second(s)
+	Time spent in child processes: 0.020552 second(s)
+

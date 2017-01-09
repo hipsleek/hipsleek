@@ -1,0 +1,48 @@
+Starting Omega...oc
+H is defined.
+H1 is defined.
+G is defined.
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Entail (1) : Valid. 
+
+ <1>(exists flted,flted1: r::ll{}<flted1>&5<n & flted+1=n & flted1+1=flted&{FLOW,(3,4)=__norm})[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(q_59,q) ==> ]]
+
+
+Entail (2) : Valid. 
+
+
+Entail (3) : Valid. 
+
+
+Entail (4) : Valid. 
+
+ <1>emp&0<=y & 0<x&{FLOW,(3,4)=__norm}[]
+ inferred pure: [0<=y]
+[[empty]]
+
+
+Entail (5) : Valid. 
+
+ <1>HP_91(b)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<a,b> * HP_91(b)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 21 invocations 
+SAT Count   : 101
+SAT % Hit   : 66.33%
+IMPLY Count : 21
+IMPLY % Hit : 42.85%
+Time(cache overhead) : 0.00684 (seconds)
+
+!!! log(small):(0.075306,153)
+Total verification time: 0.109272 second(s)
+	Time spent in main process: 0.086318 second(s)
+	Time spent in child processes: 0.022954 second(s)
+

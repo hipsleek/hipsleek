@@ -1,0 +1,40 @@
+data Exp {
+  int val;
+}.
+
+relation post(int a,int b).
+
+infer [post] (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214' & res=v_int & flow __Exc)
+ |-  emp&post(x,res) & flow __flow. 
+print residue.
+
+/*
+infer [post] (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214' & v_int=res & flow __norm)
+ |-  emp&post(x,res) & flow __flow. 
+print residue.
+*/
+
+/*
+# sexc3i.slk --post-flow
+
+Can we add flow __Exc ?
+
+Got:
+Residue:
+ <1>v_Exp_12_1214'::Exp<v_14>&0<x & v_14=2 & eres=v_Exp_12_1214' & res=v_14&{FLOW,(22,23)=__Exc}[]
+ inferred rel: [RELDEFN post: ( res=2 & 1<=x) -->  post(x,res)]
+
+Expecting:
+ inferred rel: [RELDEFN post: 
+   (res=2 & 1<=x & 22<=flow<=23) -->  post(x,res,flow)]
+
+# sexc3i.slk --post-eres
+
+
+ Can we add: res=eres.val on the lhs
+ so that first entailment succeeds?
+
+
+*/

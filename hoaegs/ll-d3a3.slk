@@ -1,0 +1,31 @@
+
+relation dm(int[] a, int low, int high).
+
+axiom dm(a,low,high) & low<=l & h<=high ==> dm(a,l,h).
+//axiom dm(a,l+1,h) & dm(a,l,l+1)  ==> dm(a,l,h).
+//axiom dm(a,l,h-1) & dm(a,h-1,h) ==> dm(a,l,h).
+axiom l>=h ==> dm(a,l,h).
+axiom dm(a,l,k) & dm(a,k,h) ==> dm(a,l,h).
+
+/*
+infer [bbb,bbb2]
+ forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1) & dm(bbb,i+1,j)
+  & v=aaa[i]+1 
+  & bbb[i]=v & dm(bbb,i,i+1) 
+  //& bbb2=bbb
+  |- forall(k:!(i<=k<j)|bbb2[k]=aaa[k]+1) & dm(bbb,i,j)
+.
+
+infer [bbb]
+ forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1) & dm(bbb,i+1,j)
+  & v=aaa[i]+1 
+  //& bbb[i]=v & dm(bbb,i,i+1) 
+  |- forall(k:!(i<=k<j)|bbb[k]=aaa[k]+1) & dm(bbb,i,j)
+.
+*/
+
+checkentail forall(k:!(i+1<=k<j)|bbb[k]=aaa[k]+1) & dm(bbb,i+1,j)
+  & v=aaa[i]+1 
+  & bbb[i]=v & dm(bbb,i,i+1)  
+|- forall(k:!(i<=k<j)|bbb2[k]=aaa[k]+1) & dm(bbb,i,j).
+

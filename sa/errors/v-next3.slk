@@ -1,0 +1,42 @@
+data node {
+  node next;
+}.
+
+//checkentail x=null or x::node<q> |- x::node<r>.
+
+checkentail x=null |- x::node<r>.
+print residue.
+/*
+# v-next3.slk --efa
+
+Why is this Valid? should it be a must failure like v.next.slk.
+Residue is correct though. 
+
+Entail 2: Valid. 
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+--efa 
+(i) SuccCtx [x=null&{FLOW,(5,6)=__Error]
+// change many Fail --> Succ
+//
+
+--dfa
+(ii) FailCtx [x=null&{FLOW,(5,6)=__Error]
+
+
+*/
+
+
+checkentail x::node<q> |- x::node<r>.
+print residue.
+
+/*
+# v-next3.slk --efa
+
+Missing x!=null
+
+Entail 3: Valid. 
+ <1>emp&r=q&{FLOW,(3,4)=__norm}[]
+*/
+

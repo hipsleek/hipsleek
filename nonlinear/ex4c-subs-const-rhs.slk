@@ -1,0 +1,35 @@
+checkentail b>=1 & a=1 |- a*b>=1.
+print residue.
+
+
+/*
+# ex4c.slk
+
+Can we use eqmap of LHS for conseq but
+how far can we go?
+
+Fails for implication
+=====================
+!!! **cpure.ml#11034:emap[]
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
+# Why calling twice? xpure1 and xpure0?
+
+!!! **cpure.ml#11047:subs_const (neg): not((a=1 & 1<=b))
+(==omega.ml#632==)
+subs_const_var_formula@2
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
+!!! **cpure.ml#10812:DROP non-linear (BFE): (not((a=1 & 1<=b)) | 1<=(a*b))
+!!! **cpure.ml#10813:DROP non-linear (AFT): (not((a=1 & 1<=b)) | false)
+!!! **cpure.ml#11047:subs_const (neg): not((a=1 & 1<=b))
+(==omega.ml#632==)
+subs_const_var_formula@3
+subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
+subs_const_var_formula@3 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
+
+*/

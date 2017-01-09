@@ -1,0 +1,64 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! 
+Entailing lemma both2: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (no cex)(must) cause: OrL[ y::zip{}<>&self2=null&{FLOW,(5,6)=__Error}[],valid]
+
+Failed to proved for both2:<==> ==> invalid lemma encountered.
+
+Entailing lemma one: Valid.
+
+ Temp Lemma(s) proved as valid in current context.
+
+Entailing lemma lem_16: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+
+Entailing lemma lem_17: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to inferred for lem_17:<== ==> invalid lemma encountered.
+
+Entailing lemma lem_18: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to inferred for lem_18:<== ==> invalid lemma encountered.
+ <1>
+    (exists m4,n8: y::zipN{}<m4>&n8=0 & self5=null&{FLOW,(3,4)=__norm})[]
+    or (exists m5,n9: emp&n9=1+n13 & m5=0 & y=null&{FLOW,(3,7)=__MayError})[]
+    or (exists m5,n9: emp&n9=1+n14 & m5=1+m6&{FLOW,(3,4)=__norm})[]
+    
+[[ Fold ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  COND ==>  SEARCH ==>  Match(self_lem_18,self_lem_18) ==>  COND ==>  SEARCH ==>  Match(y,y_640) ==>  SEARCH ==>  (Lemma <== lem_18(p_636,p_643)) ==>  COND ==>  COND ==>  Match(p_636,p_643) ==>  COND ==>  Match(p_705,q_648) ==> ||OR|| ==>  Fold ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(self_lem_18,self_lem_18) ==>  SEARCH ==>  (Lemma <== lem_18(p_636,p_643)) ==>  COND ==>  Match(p_636,p_643) ==>  COND ==>  UnmatchedRHSData ==> ||OR|| ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+ <1>
+    (exists m4,n8: y::zipN{}<m4>&n8=0 & self5=null&{FLOW,(3,4)=__norm})[]
+    or (exists m5,n9: emp&n9=1+n13 & m5=0 & y=null&{FLOW,(3,7)=__MayError})[]
+    or (exists m5,n9: emp&n9=1+n14 & m5=1+m6&{FLOW,(3,4)=__norm})[]
+    
+[[ Fold ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  COND ==>  SEARCH ==>  Match(self_lem_18,self_lem_18) ==>  COND ==>  SEARCH ==>  Match(y,y_640) ==>  SEARCH ==>  (Lemma <== lem_18(p_636,p_643)) ==>  COND ==>  COND ==>  Match(p_636,p_643) ==>  COND ==>  Match(p_705,q_648) ==> ||OR|| ==>  Fold ==>  COND ==>  SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(self_lem_18,self_lem_18) ==>  SEARCH ==>  (Lemma <== lem_18(p_636,p_643)) ==>  COND ==>  Match(p_636,p_643) ==>  COND ==>  UnmatchedRHSData ==> ||OR|| ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 27 invocations 
+SAT Count   : 2889
+SAT % Hit   : 93.49%
+IMPLY Count : 205
+IMPLY % Hit : 62.92%
+Time(cache overhead) : 0.253038 (seconds)
+
+!!! log(small):(3.368661,3255)
+Total verification time: 0.863477 second(s)
+	Time spent in main process: 0.825414 second(s)
+	Time spent in child processes: 0.038063 second(s)
+

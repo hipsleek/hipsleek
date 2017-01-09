@@ -1,0 +1,31 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])WARNING : the view body for zip contains unsat branch(es) :
+    (* lbl: *){2}->(exists y1,_,_,q,p: self::node<_,p> * y::node<_,q> * 
+p::zip{}<y1>&y1=y&{FLOW,(1,25)=__flow})[]
+
+Entail 1: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  SEARCH ==>  (Lemma ==> lem_15(x,x)) ==> (left: lem_15) ==>  COND ==>  COND ==>  Match(x,x) ==>  COND ==>  Match(y,y) ==> ]]
+
+Stop Omega... 13 invocations 
+SAT Count   : 108
+SAT % Hit   : 86.11%
+IMPLY Count : 7
+IMPLY % Hit : 28.57%
+Time(cache overhead) : 0.007238 (seconds)
+
+!!! log(small):(0.040801,130)
+Total verification time: 0.095916 second(s)
+	Time spent in main process: 0.068389 second(s)
+	Time spent in child processes: 0.027527 second(s)
+

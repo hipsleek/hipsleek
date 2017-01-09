@@ -1,0 +1,38 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node y).
+//(5)
+infer [z,H1] H1(y)*x::node<z>  |- x::lseg<z> * y::lseg<null> .
+//infer [x,z] x::node<z>   |- x::lseg<z> .
+
+//infer [z] x::node<z>   |- x::node<q>*q::lseg<z> .
+print residue.
+
+/*
+# infer13.slk
+
+GOT
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&q=z & z=inf_z_54&{FLOW,(4,5)=__norm#E}[]
+ inferred heap: [z::lseg{}<inf_z_54>]
+ inferred pure: [z=inf_z_54]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==>  Match(z,q) ==> ]]
+
+Why did we infer z::lseg<inf_z_54>? where did inf_z_54 came from?
+
+
+*/

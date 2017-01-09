@@ -1,0 +1,113 @@
+relation PP(int x).
+UTPre@f fpreXXX(int x).
+UTPost@f fpostXXX(int x).
+
+infer [PP] false |- PP(x).
+print residue.
+/*
+--print-type
+
+PP:RelT([])
+INPUT 0: [][fpostXXX:void] 
+Could we not infer UtT(true) to indicate that it
+is a unknown temporal post-condition?
+
+We should later att to es-infer_vars_rel rather than es_infer_vars.
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+=============================================
+
+<1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+*/
+
+infer [fpostXXX] false |- fpostXXX(x).
+print residue.
+/*
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# [fpostXXX] should be in es_infer_vars_rel
+*/
+
+infer [@term] false |- fpostXXX(x).
+print residue.
+
+/*
+Need to pick up fpostXXX based on @term..
+
+                         es_infer_obj: [@term]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+*/
+
+/*
+
+
+# loop2.slk
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! formula: fpostXXX_0(x)[]
+!!! None
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+[Warning] False ctx
+
+!!! rhs: fpostXXX_0(x)[]
+!!! conseq: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! rhs1: EBase emp&fpostXXX_0(x)[]&{FLOW,(21,22)=__norm}[]
+!!! formula: fpostXXX_0(x)[]
+!!! None
+!!! pairs:[([],[ fpostXXX_0(x)[]])]
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+
+*/
+/*
+# loop2.slk
+
+Since we desire the strongest post,
+I think we need to pick
+
+  false --> PP(x)
+
+
+Could we change our entailment to accommodate this?
+
+*/
+
+//(4)
+infer [@term] x>0 & false |- fpostXXX(x).
+print residue.
+/*
+# loop2.slk --pcp
+
+Can we keep the input scenario somewhere, and perhaps
+obtain the following:
+   ( x>0 & false ) -->  fpostXXX_0(x:Unknown)[]]
+This would let us know that false was triggered under 
+a satisfiable scenario x>0
+
+INPUT: 
+ ### ante =  hfalse&false&{FLOW,(21,22)=__norm}[]
+ ### conseq =  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+
+run_infer:
+ hfalse&false&{FLOW,(21,22)=__norm}[] [] |-  EBase emp&fpostXXX_0(x:Unknown)[]&{FLOW,(21,22)=__norm}[]
+[Warning] False ctx
+*/
+
+
+//(5)
+infer [@term] x>0 & y=3 & false |- fpostXXX(x).
+print residue.

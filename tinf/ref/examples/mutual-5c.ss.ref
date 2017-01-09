@@ -1,0 +1,73 @@
+
+!!!Full processing file "examples/mutual-5c.ss"
+Parsing file "examples/mutual-5c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure g$int... 
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_9_1276=1+x' & 0<x' & 0<x & x'=x & !(v_bool_8_1145') & 
+0<x' & !(v_bool_8_1145') & 0<x' & v_int_9_1144'=v_int_9_1281+v_int_9_1280 & 
+res=v_int_9_1144' & fpost_1137(x') & gpost_1122(v_int_9_1276) --> fpost_1137(x).
+
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_8_1145' & x'<=0 & v_bool_8_1145' & 
+v_int_8_1139'=0 & res=v_int_8_1139' --> fpost_1136(x).
+
+ termAssume 0<v_int_18_1202 & 0<v_int_18_1202 & v_int_18_1202+1=x' & 0<x' & 
+x'=x & !(v_bool_17_1130') & 0<x' & !(v_bool_17_1130') & 0<x' & 
+v_int_18_1129'=v_int_18_1210+v_int_18_1209 & 
+res=v_int_18_1129' & fpost_1137(x') & fpost_1137(v_int_18_1202) --> gpost_1122(x).
+
+ termAssume v_int_18_1199<=0 & v_int_18_1199<=0 & v_int_18_1199+1=x' & 
+0<x' & x'=x & !(v_bool_17_1130') & 0<x' & !(v_bool_17_1130') & 0<x' & 
+v_int_18_1129'=v_int_18_1208+v_int_18_1207 & 
+res=v_int_18_1129' & fpost_1137(x') & fpost_1136(v_int_18_1199) --> gpost_1122(x).
+
+ termAssume x'<=0 & x'=x & v_bool_17_1130' & x'<=0 & v_bool_17_1130' & 
+v_int_17_1124'=0 & res=v_int_17_1124' --> gpost_1122(x).
+
+ termAssume 0<x' & !(v_bool_17_1130') & 0<x' & !(v_bool_17_1130') & x'=x & 
+0<x' & v_int_18_1126'+1=x' & 0<v_int_18_1126' & gpre_0(x) --> Loop.
+
+ termAssume 0<x' & !(v_bool_17_1130') & 0<x' & !(v_bool_17_1130') & x'=x & 
+0<x' & v_int_18_1126'+1=x' & v_int_18_1126'<=0 & gpre_0(x) --> Term.
+
+ termAssume 0<x' & x'=x & !(v_bool_17_1130') & 0<x' & 
+!(v_bool_17_1130') & gpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[	f: [[4] x<=0@B,[5] 1<=x@R]
+,	g: [[6] x<=0@B,[7] 1<=x@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[30,2]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[30]
+ ensures emp & x<=0; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+
+8 false contexts at: ( (8,14)  (8,21)  (9,7)  (9,27)  (9,23)  (9,21)  (9,14)  (9,14) )

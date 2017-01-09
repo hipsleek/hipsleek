@@ -1,0 +1,45 @@
+Starting Omega...oc
+ll is defined.
+rr is defined.
+
+!!!Final MTL: [[(flted_8_46, flted_8_54), (a, c)]]
+Checkeq (1) : Valid.
+!!!Final MTL: [[(flted_12_61, flted_12_69), (a, c), (x, x)]]
+Checkeq (2) : Valid.
+!!!Final MTL: [[(flted_16_76, flted_16_84), (a, c), (x, y)]]
+Checkeq (3) : Valid.
+!!!Final MTL: [[(Anon_15, Anon_18), (Anon_14, Anon_17), (y, x), (Anon_13, Anon_16), (a, c), (x, y)], [(Anon_15, Anon_16), (Anon_14, c), (y, y), (Anon_13, Anon_18), (a, Anon_17), (x, x)]]
+Checkeq (4) : Valid.
+!!!Final MTL: [[(Anon_21, Anon_22), (Anon_20, c), (y, y), (Anon_19, Anon_24), (a, Anon_23)]]
+Checkeq (5) : Valid.
+!!!Final MTL: [[(Anon_27, Anon_30), (Anon_26, c), (y, y), (Anon_25, Anon_29), (a, Anon_28), (x, x)], [(Anon_27, Anon_29), (Anon_26, Anon_28), (y, x), (Anon_25, Anon_30), (a, c), (x, y)]]
+Checkeq (6) : Valid.
+!!!Final MTL: [[(Anon_33, Anon_36), (Anon_32, c), (y, y), (Anon_31, Anon_35), (a, Anon_34), (x, x)], [(Anon_33, Anon_35), (Anon_32, Anon_34), (y, x), (Anon_31, Anon_36), (a, c), (x, y)]]
+Checkeq (7) : Valid.
+!!!Final MTL: [[(flted_36_132, flted_36_142), (a, c), (x, y)]]
+Checkeq (8) : Valid.
+Checkeq (9) : Fail.
+
+!!!Final MTL: [[(flted_51_169, flted_51_178), (a, c), (x, y)]]
+Checkeq (10) : Valid.
+!!!Final MTL: [[(flted_61_187, flted_61_197), (a, c), (x, y)]]
+Checkeq (11) : Valid.
+!!!Final MTL: [[(flted_71_208, flted_71_219), (a, flted_71_220)]]
+Checkeq (12) : Valid.
+!!!Final MTL: [[(flted_80_229, flted_80_239), (a, c)]]
+Checkeq (13) : Valid.
+Checkeq (14) : Fail.
+
+Checkeq (15) : Fail.
+
+Checkeq (16) : Fail.
+
+Checkeq (17) : Fail.
+
+Checkeq (18) : Fail.
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.079778 second(s)
+	Time spent in main process: 0.066021 second(s)
+	Time spent in child processes: 0.013757 second(s)
+

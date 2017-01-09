@@ -1,0 +1,39 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/tree-size1.ss"
+Parsing file "bugs/tree-size1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure size$node... 
+Procedure size$node SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1398: ( pre_1398(n) & 0<=n_1426 & n_1426<n) -->  pre_1398(n_1426),
+RELDEFN pre_1398: ( 0<=m_1435 & post_1399(m_1435,n_1426,v_int_17_1374',flow) & pre_1398(n) & 
+0<=n_1426 & n_1426=(n-n_1438)-1 & 0<=n_1438) -->  pre_1398(n_1438),
+RELDEFN post_1399: ( m_1381=0 & res=0 & n=0 & pre_1398(n)) -->  post_1399(m_1381,n,res,flow),
+RELDEFN post_1399: ( 0<=m_1449 & 0<=n_1438 & n_1426+1+n_1438=n & n_1438<n & m_1435=(m_1381-
+m_1449)-1 & v_int_17_1456=(res-v_int_17_1457)-1 & m_1449<m_1381 & 
+post_1399(m_1449,n_1438,v_int_17_1457,flow) & 
+post_1399(m_1435,n_1426,v_int_17_1456,flow) & pre_1398(n)) -->  post_1399(m_1381,n,res,flow)]
+*************************************
+
+Post Inference result:
+size$node
+ EBase exists (Expl)[](Impl)[n](ex)[]x::tree{}<n>&MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists m_1381: x::tree{}<m_1381>&0<=n & res>=0 & res=n & 
+           res=m_1381&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 1.260077 second(s)
+	Time spent in main process: 1.004062 second(s)
+	Time spent in child processes: 0.256015 second(s)
+

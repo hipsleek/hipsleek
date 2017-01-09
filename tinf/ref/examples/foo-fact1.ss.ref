@@ -1,0 +1,71 @@
+
+!!!Full processing file "examples/foo-fact1.ss"
+Parsing file "examples/foo-fact1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure foo$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume n'<=0 & n<=0 & n'=n & !(v_bool_8_1162') & n'<=0 & 
+!(v_bool_8_1162') & v_int_10_1161'+1=n' & 
+res=v_int_10_1161' --> foopost_1156(n).
+
+ termAssume 0<n' & 0<n & n'=n & v_bool_8_1162' & 0<n' & v_bool_8_1162' & 
+v_int_9_1159'=1+n' & res=v_int_9_1159' --> foopost_1155(n).
+
+
+Base/Rec Case Splitting:
+[	foo: [[1] n<=0@B,[2] 1<=n@B]
+]
+Termination Inference Result:
+foo:  case {
+  1<=n -> requires emp & Term[30,2]
+ ensures emp & 0<n & res=1+n; 
+  n<=0 -> requires emp & Term[30,1]
+ ensures emp & n<=0 & res+1=n; 
+  }
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Checking procedure fact$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_26_1267+1=x' & 0<1 & 1<=1 & !(v_bool_25_1131') & x'!=0 & 
+!(v_bool_25_1131') & x'=x & x'!=0 & v_int_26_1130'=v_int_26_1271+1+1 & 
+res=v_int_26_1130' & factpost_1122(v_int_26_1267) --> factpost_1122(x).
+
+ termAssume x'=0 & x'=x & v_bool_25_1131' & x'=x' & v_bool_25_1131' & 
+v_int_25_1124'=1 & res=v_int_25_1124' --> factpost_1122(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_25_1131') & x'!=0 & !(v_bool_25_1131') & 
+1<=1 & 0<1 & v_int_26_1129'=1+1 & v_int_26_1127'+
+1=x' & factpre_0(x) --> factpre_0(v_int_26_1127').
+
+
+Base/Rec Case Splitting:
+[	fact: [[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Term[31,2,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+6 false contexts at: ( (9,2)  (9,11)  (9,9)  (10,7)  (10,16)  (10,14) )

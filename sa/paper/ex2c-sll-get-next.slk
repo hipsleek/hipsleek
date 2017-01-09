@@ -1,0 +1,19 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+
+infer[H] H(xx) |- xx::node<a,b>//@L
+   .
+print residue.
+
+/*
+
+Starting Omega.../usr/local/bin/oc
+ <1>HP_22(b,x) * x::node<a,b>@M * x::node<a,b>@M&x'=x&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [H(x)&true --> x::node<a_20,b_21>@M * HP_22(b_21,x@NI)&true]
+[[ SEARCH ==>  InferUnfold  ==>  InferHeap ==>  Match(x,x')]]
+
+*/

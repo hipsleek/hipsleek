@@ -1,0 +1,34 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ls<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_,q>*q::ls<n-1,p>;
+} inv n >= 0.
+
+/*
+pred ls<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls<n-1,p> 
+  inv n>=0.
+*/
+
+pred clist<n> == self::node<_,q>*q::ls<n-1,self>
+  inv n>0.
+
+//lemma_safe self::clist<n> <- self::ls<n-1,q> * q::node<_,self>.
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+/*
+# bugs-ex21b-clist-lemma.slk
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+This is going into an infinite loop too.
+
+*/

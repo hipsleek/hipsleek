@@ -1,0 +1,79 @@
+
+!!!Full processing file "validate/sll-insertsort.ss"
+Parsing file "validate/sll-insertsort.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! neqs:[(x,xn_39),(x,v_node_39_1213)]
+Checking procedure insert$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x,v@NI)&true
+ ensures G1(x,v@NI)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(x,v@NI)&true --> x::node<val1,next1> * HP_1239(next1,v@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1239(next1,v@NI)&next1!=null & val1<v --> H1(next1,v@NI)&
+true(3,4),
+ // POST
+(1;0)x::node<val1,next1> * HP_1239(next1,v@NI)&v<=val1 --> G1(x,v@NI)&
+true(3,4),
+ // POST
+(1;2;0)x::node<val1,xn1>&val1<v --> G1(x,v@NI)&
+true(3,4),
+ // POST
+(1;2;0)G1(next1,v'@NI)&val1<v' --> emp&
+true(3,4),
+ // POST
+(2;2;0)x::node<val1,v1> * v1::node<v,tmp1> * HP_1239(next1,v@NI)&
+next1=null & val1<v & tmp1=null --> G1(x,v@NI)&
+true(3,4)]
+
+Procedure insert$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1,v2) ::=  [x1::node<val,next> * HP_1239(next,v2)&x1!=null],
+ G1(x2,v3) ::=  [x2::node<val,next> * HP_1239(next,v3)&v3<=val; x2::node<val,next>&val<v3; 
+x2::node<val,next> * next::node<v3,tmp>&val<v3 & tmp=null],
+ HP_1239(next2,v4) ::=  [emp&next2=null; next2::node<val,next> * HP_1239(next,v4)&val2<v4]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1,v2) ::= x1::node<val,next> * HP_1239(next,v2)&x1!=null(3,4),
+ G1(x2,v3) ::= 
+ x2::node<val,next>&val<v3
+ or x2::node<val,next> * next::node<v3,tmp>&val<v3 & tmp=null
+ or x2::node<val,next> * HP_1239(next,v3)&v3<=val
+ (3,4),
+ HP_1239(next2,v4) ::= 
+ next2::node<val,next> * HP_1239(next,v4)&val2<v4
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 35 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.082552,373)
+Total verification time: 0.390794 second(s)
+	Time spent in main process: 0.370381 second(s)
+	Time spent in child processes: 0.020413 second(s)
+

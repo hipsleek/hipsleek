@@ -1,0 +1,54 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(4)
+checkentail x::node<_,null> |- x::ll<n>.
+print residue.
+expect Valid.
+expect_infer Valid R{x!=null & n=1}.
+
+
+/*
+# ex4a.slk --print-extra
+
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+  es_heap(consumed):
+  x::node<Anon_13,flted_11_35>
+  ],true))Stop z3... 39 invocations Stop Omega... 16 invocations 
+
+Can printing be improved to:
+  es_heap(consumed): x::node<Anon_13,flted_11_35>
+------
+
+--pcp
+
+GOT:
+Expected Residue :  emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+
+Can we have:
+
+expect_infer: 
+ R{emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]}
+ ..
+
+# ex4a.slk
+
+# Need to check
+   current residue |- expected residue
+
+# It seems that consumed heap is missing
+
+!!! **sleekengine.ml#1599:expected residue: emp&x!=null & n=1&{FLOW,(20,21)=__norm#E}[]
+!!! **sleekengine.ml#1602:current residue:
+Some(( [
+  emp&0+1=n & q_45=flted_11_35 & Anon_44=Anon_13 & flted_11_35=null&{FLOW,(20,21)=__norm#E}[]
+
+
+*/

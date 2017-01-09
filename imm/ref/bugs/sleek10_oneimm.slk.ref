@@ -1,0 +1,13 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(may) cause:AndR[ x!=null & (((1<=n & x!=null) | (n=0 & x=null))) |-  0<m. LOCS:[1;0;8];  x!=null & (((1<=n & x!=null) | (n=0 & x=null))) |-  n=m. LOCS:[1;0;8] (may-bug).]
+
+Residue:
+ <1>x::ll{}<n,>&x!=null&{FLOW,(4,8)=__MayError#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+

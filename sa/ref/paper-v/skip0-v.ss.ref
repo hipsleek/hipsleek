@@ -1,0 +1,22 @@
+
+!!!Full processing file "paper-v/skip0-v.ss"
+Parsing file "paper-v/skip0-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=q | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=q)])
+Checking procedure skip0$node2~node2... 
+Procedure skip0$node2~node2 SUCCESS.
+Stop Omega... 7 invocations 
+4 false contexts at: ( (25,15)  (25,22)  (22,19)  (22,26) )
+
+!!! log(small):(0.13773,467)
+Total verification time: 0.396882 second(s)
+	Time spent in main process: 0.37792 second(s)
+	Time spent in child processes: 0.018962 second(s)
+

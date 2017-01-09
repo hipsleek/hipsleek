@@ -1,0 +1,46 @@
+Starting Omega...oc
+H1 is defined.
+G1 is defined.
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_51(Anon,p) * HP_52(Anon1,p) * HP_53(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<_,_,_> * HP_51(Anon,p@NI) * 
+                   HP_52(Anon1,p@NI) * HP_53(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_65(Anon3,p) * HP_66(Anon4,p) * HP_67(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<_,_,_> * HP_65(Anon3,p@NI) * 
+                   HP_66(Anon4,p@NI) * HP_67(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_79(Anon5,p) * HP_80(Anon6,p) * HP_81(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<_,_,_> * HP_79(Anon5,p@NI) * 
+                   HP_80(Anon6,p@NI) * HP_81(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 17
+SAT % Hit   : 76.47%
+IMPLY Count : 6
+IMPLY % Hit : 83.33%
+Time(cache overhead) : 0.000641 (seconds)
+
+!!! log(small):(0.016178,31)
+Total verification time: 0.066775 second(s)
+	Time spent in main process: 0.051979 second(s)
+	Time spent in child processes: 0.014796 second(s)
+

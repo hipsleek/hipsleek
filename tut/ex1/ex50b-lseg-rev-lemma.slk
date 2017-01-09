@@ -1,0 +1,27 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p> == self=p
+  or self::node<_,q>*q::lseg<p> inv true.
+
+pred lseg_rev<p> == self=p 
+  or self::lseg_rev<_,q>*q::node<_,p> inv true.
+
+lemma_safe "lseg-rev1" self::lseg<p> <-> self::lseg_rev<p>. 
+
+lemma_safe "lseg-rev2" self::node<_,q>*q::lseg<p> -> self::lseg_rev<p>. 
+
+lemma_safe "lseg-rev3" self::lseg_rev<q>*q::node<_,p> -> self::lseg<p>.
+
+
+// is below a good syntax for simultaneous lemma proving?
+
+lemma_safe "lseg-rev1" 
+   [self::lseg<p> <-> self::lseg_rev<p>;
+    self::node<_,q>*q::lseg<p> -> self::lseg_rev<p>; 
+    self::lseg_rev<q>*q::node<_,p> -> self::lseg<p>].
+
+// not urgent issue..
+

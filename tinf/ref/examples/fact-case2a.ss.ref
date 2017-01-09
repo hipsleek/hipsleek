@@ -1,0 +1,29 @@
+
+!!!Full processing file "examples/fact-case2a.ss"
+Parsing file "examples/fact-case2a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN post_1145: ( x=0 & res=1) -->  post_1145(x,res),
+RELDEFN post_1145: ( v_int_17_1180<=(0-2) & post_1145(v_int_17_1180,v_int_17_1184) & 
+x=v_int_17_1180+1 & v_int_17_1184=(res-v_int_17_1180)-1) -->  post_1145(x,res),
+RELDEFN post_1145: ( 0<=v_int_17_1180 & post_1145(v_int_17_1180,v_int_17_1184) & x=v_int_17_1180+
+1 & v_int_17_1184=(res-v_int_17_1180)-1) -->  post_1145(x,res)]
+*************************************
+
+Post Inference result:
+fact$int
+ requires emp & MayLoop[]
+ ensures emp & 0<=x & x<res;
+
+Checking procedure fact$int... 
+Checking procedure fact$int... 
+0 false contexts at: ()

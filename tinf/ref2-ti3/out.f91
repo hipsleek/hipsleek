@@ -1,0 +1,11 @@
+
+!!!Full processing file "examples/f91.ss"
+Parsing file "examples/f91.ss" by default parser...
+File "examples/f91.ss", line 10, characters 12-13
+ --error: Stream.Error("OBRACE or [spec] expected after [disjunctive_constr] (in [spec])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("OBRACE or [spec] expected after [disjunctive_constr] (in [spec])")
+Error3(s) detected at main 

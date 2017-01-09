@@ -1,0 +1,645 @@
+
+/hip# mutual-5b.ss (DONE)
+
+How come more spec is producing a worse result
+than requires true ensures true?
+
+# case {
+    x <= 0 -> requires Term ensures true;
+    x > 0 -> requires Loop ensures true;
+  }
+
+Termination Inference Result:
+g:  case {
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=0 -> requires emp & Term[30,2]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[30]
+ ensures emp & true; 
+  0<x -> requires emp & Loop[]
+ ensures emp & true; 
+  }
+===================================================
+# rec-f91a.ss (DONE)
+
+Poor result without post. Should the MayLoop conditions be
+combined if they have the same post?
+
+Termination Inference Result:
+f91:  case {
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & n<=(0-
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & 0<=(2+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & 0<=(1+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & 
+  0<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & 1<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & 90<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+===================================================
+# rec-f91b1.ss
+
+# rec-f91b?.ss 
+ (1) requires tidying up cases ..
+ (2) check why others can handle f91? Are they hard-wired?
+
+case {
+  n>=91 -> requires true ensures res=n;
+  n<91 -> requires true ensures res=91;
+}
+
+Post-cond seems to critical to support @term
+How come others can also handle it.
+Is it because they have  infer_post?
+Can we change the example to f92 instead?
+
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<91 -> requires emp & Term[29,3,90+(-1*n)]
+ ensures emp & res=91; 
+  }
+
+# rec-f91b2.ss
+
+ case {
+  n>91 -> requires true ensures res=n;
+  n<=91 -> requires true ensures res=91;
+ }
+
+Seems correct but maybe can combine
+the base-case conditions if the post is the same.
+This would then give us the same result as that
+from rec-f91b1.ss:
+
+case {
+  n>=91 -> requires true ensures res=n;
+  n<91 -> requires true ensures res=91;
+}
+
+Termination Inference Result:
+f91:  case {
+  91<n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=91 & n<=90 -> requires emp & Term[29,4,90+(-1*n)]
+ ensures emp & res=91; 
+  n<=91 & n=91 -> requires emp & Term[29,2]
+ ensures emp & res=91; 
+  }
+
+# rec-f91b3.ss (DONE)
+
+Poor result without post. Should the MayLoop conditions be
+combined if they have the same post?
+
+Termination Inference Result:
+f91:  case {
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & n<=(0-
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & n<=(0-2) & 0<=(2+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & n<=(0-1) & 0<=(1+
+  n) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & n<=0 & 
+  0<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & n<=89 & 1<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=90 & 90<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+===================================================
+# rec-fgen0.ss (DONE)
+
+infer[@term]
+case {
+  n>=k -> requires Term[] ensures res=n;
+  n<k -> requires Term[k-n] ensures res=k;
+}
+
+Why is this example inferring fpost even though we already
+specified Term in all the cases?
+Are we trying to overwrite the wisdom of programmer?
+
+Temporal Assumptions:
+ termAssume res=v_int_15_1139' & v_int_15_1139'=k' & n'<k' & n<k & k'=k & 
+n'=n & !(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & (1+n')<k' & 
+k'<=k' & fpost_1135(1+n',k') & fpost_1134(k',k') --> fpost_1135(n,k).
+
+ termAssume res=v_int_15_1139' & n'<k' & n<k & k'=k & n'=n & 
+!(v_bool_14_1140') & n'<k' & !(v_bool_14_1140') & v_int_15_1139'=1+n' & 
+k'<=v_int_15_1139' & fpost_1134(v_int_15_1138',k') & fpost_1134(v_int_15_1139',k') --> fpost_1135(n,k).
+
+ termAssume k'<=n' & k<=n & k'=k & n'=n & v_bool_14_1140' & k'<=n' & 
+v_bool_14_1140' & res=n' --> fpost_1134(n,k).
+===================================================
+# rec-fgen2.ss
+
+Two base cases can be combined if post are the same
+
+Termination Inference Result:
+f:  case {
+  k<n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=k & n<k -> requires emp & Term[29,4,0+(-1*n)+(1*
+  k)]
+ ensures emp & res=k; 
+  n<=k & n=k -> requires emp & Term[29,2]
+ ensures emp & res=k; 
+  }
+
+Using below, we can combine to obtain:
+
+f:  case {
+  k<n | n=k -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<=k & n<k -> requires emp & Term[29,4,0+(-1*n)+(1*
+  k)]
+ ensures emp & res=k; 
+  }
+
+# rec-fgen2.ss
+# fgen2.oc
+
+# Given k<n -> res=n
+# Given k=n -> res=k
+
+C1 :={[k,n,res]:k<n};
+B1 :={[k,n,res]:res=n};
+C2 :={[k,n,res]:n<=k & n=k};
+B2 :={[k,n,res]:res=k};
+C2; # k=n
+C1orC2:=PairWiseCheck (C1 union C2); # k<=n
+C1orC2; # k<n|k=n
+# Ans: k<n|k=n -> B1orB2
+#R1 := B1 intersection C1;
+#R2 := B2 intersection C2;
+#R1orR2 := gist PairWiseCheck (R1 union R2) given C1orC2;
+#R1orR2;
+
+# Choose
+B1orB2:=B1;
+# Provided:
+(C2 intersection B2) subset B1; 
+# true : use B1 in combined rhs
+# since B2 is stronger than B1, we can replace it by B1
+# this is a potential weakening
+# to ensure no info loss
+(C2 intersection B1) subset B2; 
+B1orB2; # res=n
+
+===================================================
+# rec-fgen3.ss (DONE)
+
+MayLoop cases can be combined if their post are identical.
+Can this example be solved by other tools without post-cond?
+
+Termination Inference Result:
+f:  case {
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & n<=(k-
+  6) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & n<=(k-5) & k<=(n+
+  5) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & n<=(k-4) & k<=(n+
+  4) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & n<=(k-3) & k<=(n+
+  3) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & n<=(k-2) & k<=(n+2) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<k & k<=(n+1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  k<=n -> requires emp & Term[29,1]
+ ensures emp & true; 
+  }
+===================================================
+# mutual-5b1.ss (DONE)
+# case {
+    x <= 0 -> requires Term ensures true;
+    x > 0 -> requires MayLoop ensures false;
+  }
+
+If @term is turned on, can we change MayLoop to
+become Loop if user declared false post that can be proven.
+This is a spec strengthening that we expect from infer @term.
+
+However, if user declare:
+  requires MayLoop ensures true;
+I wonder if we should still insert fpost(..),
+to help us determine if false can be detected.
+This may be a little challenging; since any failure
+would require us to revert to the original post.
+This also strengthens the spec at two points.
+
+Perhaps MayLoop should always be regarded as an
+unknown when @term is specified; so that we could
+re-analyse the spec for non-termination and also 
+termination?
+
+Currently, when we detect:
+  requires Loop ensures true;
+We insert fpost(..) to try determine false 
+or failure.
+
+>> Should be for false
+===================================================
+# mutual-5b2.ss (DONE)
+
+inserting requires true ensures true..
+
+Problems:
+ (i) why is there an @post?
+
+Observation: 
+  Verification automatically
+  inserted requires false ensures false;
+
+Problem : Please print a warning on incomplete
+ case-spec and the automatic insertion of unreachable 
+ requires false ensure false.
+
+Future Problem:
+  However, if [@term,@pre] are added; we must
+  use instead requires pre(..) & preT(..) ensures true & postT(..).
+
+static  EList :EInfer @post []
+          ECase case {
+                 x<=0 -> EList :EBase emp&Term[32]&{FLOW,(24,25)=__norm}[]
+                                        EAssume 
+                                          emp&{FLOW,(24,25)=__norm}[]
+                                          
+                 ;
+                 0<x & 
+                 x<=8 -> EList :EBase emp&{FLOW,(24,25)=__norm}[]
+                                        EBase emp&MayLoop[]&
+                                              {FLOW,(1,27)=__flow}[]
+                                                EAssume 
+                                                  emp&{FLOW,(24,25)=__norm}[]
+                                                  
+                 ;
+                 10<x -> EList :EBase emp&{FLOW,(24,25)=__norm}[]
+                                        EBase emp&MayLoop[]&
+                                              {FLOW,(1,27)=__flow}[]
+                                                EAssume 
+                                                  emp&{FLOW,(24,25)=__norm}[]
+                                                  
+                 ;
+                 9<=x & x<=10 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
+                 }
+===================================================
+# mutual-5b3.ss
+
+Problems:
+ (i) Can termination ranking cases be combined?
+
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[32]
+ ensures false & false; 
+  1<=x & x<=3 -> requires emp & Term[32,3,-1+(1*x)]
+ ensures emp & true; 
+  4<=x & x<=8 -> requires emp & Term[32,4,-5+(1*x)]
+ ensures emp & true; 
+  21<=x -> requires emp & Loop[]
+ ensures false & false; 
+  11<=x & x<=20 -> requires emp & MayLoop[]
+ ensures emp & true; 
+  9<=x & x<=10 -> requires false & false 
+  }
+===================================================
+# foo-fact2.ss (DONE)
+
+>> Note rec-fgen0.ss
+
+# critical bug must fix asap
+
+why isn't there an termination inference result here?
+I am expecting:
+
+ case {
+  n>0 -> requires Term[] ensures res=n+1;
+  n<=0 -> requires Term[] ensures res=n-1;
+ }
+
+why isn't there an termination inference result here?
+I am expecting:
+
+ case {
+  n>0 -> requires Term[] ensures res=n+1;
+  n<=0 -> requires Term[] ensures res=n-1;
+ }
+===================================================
+# foo-fact1.ss (DONE)
+
+This should work after you fix foo-fact2.ss
+It should print two term inference results.
+===================================================
+# tinf/examples/fact-2.ss --pcp
+
+  infer [@term,x,@post_n]
+  requires true
+  ensures //true
+  res >= 1
+  ;
+
+ static  EList :EInfer [x]
+
+How come @term,@post_n not captured? 
+===================================================
+# fact-case4.ss --pcp DONE
+
+ case {
+  //x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  //x<0 -> requires false ensures false;
+}
+
+For this example, it seems better to give a
+case-pattern warning as opposed to having a pre-cond failure.
+
+Can we check if missing case-pattern is unreachable?
+
+===================================================
+# fact-case3.ss --pcp (DONE)
+
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  //x<0 -> requires false ensures false;
+}
+
+DONE Can we print a warning that missing case pattern has been inserted
+Can we elim redundant EList?
+
+static  EList :ECase case {
+               x=0 -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&res=1&{FLOW,(24,25)=__norm}[]
+                                       
+               ;
+               0<x -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&1<=res&{FLOW,(24,25)=__norm}[]
+                                       
+               ;
+               x<=(0-1) -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
+               }
+===================================================
+# fact-case2.ss --pcp (DONE)
+
+why EList? Why missing ensures false?
+
+static  EList :ECase case {
+               x=0 -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&res=1&{FLOW,(24,25)=__norm}[]
+                                       
+               ;
+               0<x -> EList :EBase emp&MayLoop[]&{FLOW,(1,27)=__flow}[]
+                                     EAssume 
+                                       emp&1<=res&{FLOW,(24,25)=__norm}[]
+                                       
+               ;
+               x<0 -> EBase hfalse&false&{FLOW,(24,25)=__norm}[] 
+               }
+
+===================================================
+# loop2.slk
+
+infer [PP] false |- PP(x).
+print residue.
+
+Since we desire the strongest post,
+I think we need to pick
+
+  false --> PP(x)
+
+
+Could we change our entailment to accommodate this?
+===================================================
+#loop-4b.ss should also generate:
+  false --> fpost_1122(x
+  false --> fpre_0(v_int_11_1124')
+
+Below is correct for loop-4a.ss
+
+termAssume x'=x & fpost_1122(1+x') --> fpost_1122(x).
+
+ termAssume x'=x & v_int_11_1124'=1+
+x' & fpre_0(x) --> fpre_0(v_int_11_1124').
+
+ termAssume x'=x & fpre_0(x) --> Loop.
+
+===================================================
+# fact-case2.ss (DONE)
+
+ infer [@post_n]
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
+
+Why isn't post-inference working?
+I did  a --dd, it showed @post present but I cannot
+see the post-inference outcome.
+However, ref/out.fact-case2.ss mysteriously has post-inference
+outcome below but then non @post_n was issued.
+
+Post Inference result:
+fact$int
+ case {
+  x=0 -> requires emp & MayLoop[]
+ ensures emp & res=1 & x=0; 
+  0<x -> requires emp & MayLoop[]
+ ensures emp & 1<=res & 0<x; 
+  x<0 -> requires false & falserequires emp & MayLoop[]
+ ensures false & false;
+  
+  }
+
+Procedure fact$int SUCCESS.
+
+Termination checking result: SUCCESS
+
+===================================================
+# fact-case2a.ss (DONE)
+ infer [@post_n]
+ case {
+  x=0 -> ensures res=1;
+  x>0 -> ensures res>=1;
+  x<0 -> requires false ensures false;
+}
+
+Problems
+(1) why is there a failure for @post_n? (see fact-case2a.ss) (FIXED)
+(2) Why is there post-inference when we omit post_n
+    (see fact-case2.ss) (FIXED)
+
+Checking procedure fact$int... 
+Procedure fact$int FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure fact$int
+
+Post Inference result:
+fact$int
+ case {
+  x=0 -> requires emp & MayLoop[]
+ ensures emp & res=1 & x=0; 
+  0<x -> requires emp & MayLoop[]
+ ensures emp & 1<=res & 0<x; 
+  x<0 -> requires false & falserequires emp & MayLoop[]
+ ensures false & false;
+  
+  }
+===================================================
+# f91-rec3.ss
+
+(1) use only @post_n
+
+Why this combination not working?
+ Has the verify of @term been done concurrently 
+ with @post, as it will be complex if so.
+
+Below seems wrong. How to fix it?
+
+Post Inference result:
+f91$int
+ requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | (n=res & 
+91<=res));
+
+(1) use only @term
+
+Termination Inference Result:
+f91:  case {
+  91<=n -> requires emp & Term[29,1]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  n<=90 -> requires emp & MayLoop[]
+ ensures emp & ((res=91 & n<=90) | 
+  (n=res & 91<=res)); 
+  }
+===================================================
+# num-app.ss
+
+  infer [@term]
+  requires x>0 & y>=0 
+  ensures true ;
+
+case analysis here seems better than ll-app.ss. Why?
+
+append2:  requires emp & 0<x & 0<=y
+  case {
+     x=1 & 0<=y -> 
+       requires emp & Term[8,1]
+       ensures emp & true; 
+     2<=x & 0<=y -> 
+       requires emp & Term[8,2,-1+(1*x)+(0*y)]
+       ensures emp & true; 
+     }
+
+# ll-app.ss
+
+  infer [@term]
+  requires x::ll<n1> * y::ll<n2> & n1>0 
+       // & x!=null // & n1>0 //x!=null // & n1>0 & x != null
+  ensures x::ll<n1+n2> ;
+
+append2:  requires x::ll<n1> * y::ll<n2> & 0<n1
+  case {
+     // missing case n2<0 is false
+     // why did we have redundant base case analysis?
+     // isn't it already terminating with Term[x]
+     n1=1 & 1<=n2 -> 
+         requires emp & Term[7,1]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+     n2=0 & n1=1 -> 
+         requires emp & Term[7,2]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+     0<=n2 & 2<=n1 -> 
+         requires emp & Term[7,3,0+(1*n1)+(0*n2)]
+         ensures x::ll<flted_35_47> & flted_35_47=n2+n1; 
+  }
+===================================================
+# f91-rec3b.ss
+
+The post-condition generated here is unsound.
+It seems some base-case is missing..
+
+RELDEFN post_1319: ( n=res & 91<=res) -->  post_1319(n,res),
+RELDEFN post_1319: ( post_1319(v_int_21_1339,res) & n<=90 & post_1319(1+n,v_int_21_1339)) -->  post_1319(n,res)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( post_1319(n,res), n=res & 91<=res, true, true)]
+*************************************
+
+!!! REL POST :  post_1319(n,res)
+!!! POST:  n=res & 91<=res
+!!! REL PRE :  true
+!!! PRE :  true
+Post Inference result:
+f91$int
+ EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&n=res & 91<=res&{FLOW,(4,5)=__norm#E}[]
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================
+===================================================

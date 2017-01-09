@@ -1,0 +1,35 @@
+data cell {
+  cell val;
+}.
+
+HeapPred HP(cell a,cell@NI b).
+infer[HP,@classic] HP(x,y) |- x::cell<_>.
+print residue.
+
+/*
+# norm/ex4b3.slk
+
+ infer[HP,@classic] HP(x,y) |- x::cell<_>.
+
+# Why schedule base-case-unfold here..
+
+(==solver.ml#11313==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: HP(x,y)
+compute_actions inp3 :LHS pure: true
+compute_actions inp4 :RHS cand:[ x::cell<Anon_11>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[Anon_11]
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:2
+  BaseCaseUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M;
+  Prio:2
+  InferUnfold =>
+    LHS: HP(x,y)
+    RHS: x::cell<Anon_11>@M
+  ]
+
+*/

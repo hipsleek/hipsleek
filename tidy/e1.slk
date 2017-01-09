@@ -1,0 +1,85 @@
+data node{
+  int val;
+  node next;
+}.
+
+//(1)
+checkentail x::node<_,p_1234> |- true.
+print residue.
+
+//(2)
+checkentail x::node<_,p_1234> * y::node<_,p1> * z::node<_,p1_3> |- true.
+print residue.
+/*
+ name clash!
+  <1>x::node<p> * y::node<_,p1> * z::node<_,p1>&{FLOW,(21,22)=__norm}[]
+*/
+
+//(3)
+checkentail x::node<_,p_1234> * y::node<_,p_1> * z::node<_,p_3> |- true.
+print residue.
+// <1>x::node<p> * y::node<p2> * z::node<p3>&{FLOW,(21,22)=__norm}[]
+
+//(4)
+checkentail x::node<_,p> & p=q |- true.
+print residue.
+
+/*
+Got:
+ <1>x::node<_,q>&{FLOW,(21,22)=__norm}[]
+Do not drop var equality, unless it is known to be
+an intermediate var.
+
+Expect:
+ <1>x::node<_,q> & p=q&{FLOW,(21,22)=__norm}[]
+*/
+
+//(5)
+checkentail x::node<_,p> & p=null |- true.
+print residue.
+/*
+ why p became p4?
+ should reset with each entail
+ <1>x::node<p4>&p4=null&{FLOW,(21,22)=__norm}[]
+*/
+
+//(6)
+checkentail x::node<v,_> & v=2 |- true.
+print residue.
+// <1>x::node<v,_>&v=2&{FLOW,(21,22)=__norm}[]
+
+//(7)
+checkentail x::node<2,null>  |- true.
+print residue.
+/*
+  <1>x::node<flted1,flted>&flted=null & flted1=2&{FLOW,(21,22)=__norm}[]
+
+  Good to keep type info:
+  <1>x::node<flted_int,flted_node>&flted_node=null & flted_int=2&{FLOW,(21,22)=__norm}[]
+
+or better use (assuming flted_x is intermediate.
+  <1>x::node<2,null>&{FLOW,(21,22)=__norm}[]
+*/
+
+//(8)
+checkentail x::node<1+(v*w),z>  |- true.
+print residue.
+
+/*
+ <1>x::node<flted2,z>&flted2=(v*w)+1&{FLOW,(21,22)=__norm}[]
+
+Expect:
+ <1>x::node<(v*w)+1,z> &{FLOW,(21,22)=__norm}[]
+*/
+
+//(9)
+checkentail x::node<1,x_123> & x_123=y  |- true.
+print residue.
+
+//(10)
+checkentail x::node<1,y> & y=x'  |- true.
+print residue.
+
+//(11)
+checkentail x::node<1,y_0> & y_0=null & y_123=null |- y_0=null.
+print residue.

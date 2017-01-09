@@ -1,0 +1,30 @@
+data cell { int val; }.
+
+HeapPred HP_1894(cell x, cell y, cell z).
+HeapPred HP_1899(cell x, cell y, cell@NI z).
+HeapPred HP_1905(cell x, cell@NI y, cell@NI z).
+HeapPred GP_1950(cell x, cell y, cell@NI z).
+HeapPred GP_1951(cell x, cell@NI y, cell@NI z).
+
+relAssume HP_1894(c,x_ref,y_ref)&
+true --> y_ref::cell<value_15_1898> * HP_1899(c,x_ref,y_ref)&true.
+
+relAssume HP_1899(c,x_ref,y_ref)&true --> x_ref::cell<value_15_1904> * HP_1905(c,y_ref,x_ref)&true.
+
+relAssume HP_1905(c,y_ref,x_ref)&true --> c::cell<value_17_1931>&true.
+
+relAssume c'::cell<v_int_17_1949> * GP_1950(x_ref,y_ref',c')&true --> HP_1894(c',x_ref,y_ref').
+
+relAssume y_ref'::cell<v_int_16_1930> * GP_1951(y_ref',x_ref,c')&true --> GP_1950(x_ref,y_ref',c').
+
+relAssume emp&true |#| x_ref::cell<value_15_1904>&true --> GP_1951(y_ref',x_ref,c')&true.
+
+shape_unfold [HP_1899].
+print relAssumes.
+
+
+/*
+shape_derive_view [HP_1894].
+print relAssumes.
+print views.
+*/

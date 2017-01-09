@@ -1,0 +1,67 @@
+data cell{
+	int val;
+}.
+
+//1
+infer [b] x::cell<x1@b> |- x::cell<z@M>.
+print residue.
+// inferred pure: [b=@M]
+// OK
+
+//2
+infer [b] x::cell<x1@b> |- x::cell<z@L>.
+print residue.
+// inferred pure: [b<:@L]
+// OK
+
+//3
+infer [b] x::cell<x1@b> |- x::cell<z@A>.
+print residue.
+// inferred pure: []
+// OK
+
+//4
+infer [b] x::cell<x1@b> & b<:@M |- x::cell<z@M>.
+print residue.
+// inferred pure: []
+// OK
+
+//5
+infer [b] x::cell<x1@b> & b<:@L |- x::cell<z@M>.
+print residue.
+// inferred pure: [b=@M]
+// OK
+
+//6
+infer [b] x::cell<x1@b> & b<:@A |- x::cell<z@M>.
+print residue.
+// inferred pure: [b=@M]
+// OK
+
+//7 
+infer [b] x::cell<x1@b> & @L<:b |- x::cell<z@M>.
+print residue.
+// inferred pure: [!(@L<:b)]
+// OK - antecedent contradiction
+
+//8
+infer [b] x::cell<x1@b> & @A<:b |- x::cell<z@M>.
+print residue.
+// inferred pure: [b!=@A]
+// OK - antecedent contradiction
+
+//9
+infer [b] x::cell<x1@b> & @L<:b |- x::cell<z@L>.
+print residue.
+
+//10
+infer [b] x::cell<x1@b> & @A<:b |- x::cell<z@L>.
+print residue.
+
+//11
+infer [b] @L<:b |- b<:@L.
+print residue.
+
+//12 
+infer [b] @M<:b |- b<:@M.
+print residue.

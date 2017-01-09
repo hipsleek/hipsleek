@@ -1,0 +1,44 @@
+
+!!!Full processing file "demo/marktree-bug-1.ss"
+Parsing file "demo/marktree-bug-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (v=0 & self!=null) | (v=1 & self!=null) | (v=2 & 
+self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 0<=v & v<=2),
+([], self=null)])
+Checking procedure mark$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures EXISTS(_: G(x,Anon_15@NI)&true&
+{,(3,4)=__norm}[];
+
+assert/assume:demo/marktree-bug-1.ss:38: 1:  : failed
+
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x)&x!=null --> x::node<val1,left1,right1> * HP_1318(left1) * 
+HP_1319(right1)&
+true(3,4)]
+
+Procedure mark$node result FAIL.(1)
+
+!!! proc.proc_name:mark$nodeStop Omega... 34 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.060049,337)
+Total verification time: 0.364256 second(s)
+	Time spent in main process: 0.33435 second(s)
+	Time spent in child processes: 0.029906 second(s)
+

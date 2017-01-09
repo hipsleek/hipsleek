@@ -1,0 +1,45 @@
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+//lemma "split1" self::cellp(f)<v> & 0<f<=1 & f=f1+f2 & f1>0 & f2>0  -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+//(1)
+checkentail x::cellp(1.0)<v1> |-  x::cellp(0.5)<v1>.
+print residue. //valid & residue is correct after adding instatiating ivars
+
+//(2)
+//checkentail x::cellp(1/2)<v1> |-  x::cellp(3/4)<v1>.
+//print residue. //fail
+
+/*
+# ex31a.slk
+
+Why are there so many nested timer interrupt?
+
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+
+Why are there two similar outcomes?
+
+Residue:
+ <1>x::cellp{}( f2_84)<v_93>&v_93=v1 & perm_13_65=FLOAT 1. & Anon_full_perm=FLOAT 1. & FLOAT 0.<f2_84 & perm_13_65=f2_84+FLOAT 0.5 & FLOAT 0.<FLOAT 0.5&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==> (Match-->try split/combine) ==>  SEARCH ==>  (Lemma ==> split2(x,x)) ==>  Match(x,x) ==> ]]
+
+<2>x::cellp{}( f2_103)<v_112>&v_112=v1 & perm_13_65=FLOAT 1. & Anon_full_perm=FLOAT 1. & FLOAT 0.<f2_103 & perm_13_65=f2_103+FLOAT 0.5 & FLOAT 0.<FLOAT 0.5&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split2(x,x)) ==>  Match(x,x) ==> ]]
+
+*/

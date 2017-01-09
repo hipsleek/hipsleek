@@ -1,0 +1,85 @@
+data node{
+	int val;
+	node next;
+}.
+
+
+pred G3<y> == self=y
+  or self::node<_,tt> * tt::G3<y>.
+
+pred G4<y> == self=null
+  or self::node<_,tt> * tt::G4<y>.
+
+pred G3a<> == emp
+  or self::node<_,tt> * tt::G3a<>.
+
+pred G3b<> == self=null
+  or self::node<_,tt> * tt::G3b<>.
+
+//print views.
+
+lemma_safe self::G3<y> <-> self::G3a<>.
+
+lemma_safe self::G3<y> <- self::G3a<>.
+lemma_safe self::G3<y> <- self::G3b<>.
+lemma_safe self::G3<y> -> self::G3b<>.
+
+lemma_safe self::G4<y> -> self::G3b<>.
+
+/*
+# ex21u1c.slk --esl -dre "trans_one_coercion"
+
+ lemma_test self::G3<y> <-> self::G3a<>.
+
+# Why did this lemma succeeded? y is NOT useless?
+
+# Why is there exists y below?
+
+head_norm:  (exists y: self::G3<y>@M&{FLOW,(20,21)=__norm#E}[])
+ 
+trans_one_coercion@1
+trans_one_coercion inp1 :<=>coerc lem_14
+	 head: (EX  . (self::G3{}<y>[HeapNode1])*([] & true)( FLOW __norm))
+	 body:(EX  . (self::G3a{}<>[HeapNode1])*([] & true)( FLOW __norm))safe lemmas(added to store only if valid)
+
+trans_one_coercion@1 EXIT:[Lemma "lem_14_left":  self::G3<y>@M&{FLOW,(20,21)=__norm#E}[]==> self::G3a<>@M&{FLOW,(20,21)=__norm#E}[]
+ head match:G3
+ body view:G3a
+ body pred_list:[G3a]
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[G3a])]
+ coercion_case: Simple
+ head:  self::G3<y>@M&{FLOW,(20,21)=__norm#E}[]
+ body:  self::G3a<>@M&{FLOW,(20,21)=__norm#E}[]
+ head_norm:  (exists y: self::G3<y>@M&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   self::G3a<>@M&{FLOW,(20,21)=__norm#E}[]
+
+Entailing lemma lem_15: Valid.
+ Lemma infer proved succeeded in current context.
+
+# Why is LHS emp and not self=y?
+
+id: 0; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@leak]
+ checkentail emp&{FLOW,(20,21)=__norm#E}[]
+ |-  self_lem_14_left::G3a<>@M&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&{FLOW,(20,21)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   ]
+
+# Why is RHS an exist y?
+
+id: 11; caller: []; line: 0; classic: true; kind: Verify_Lemma; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@leak]
+ checkentail emp&{FLOW,(20,21)=__norm#E}[]
+ |-  (exists y: self_lem_14_left_right::G3<y>@M&{FLOW,(20,21)=__norm#E}[]). 
+ho_vars: nothing?
+res:  1[
+    emp&{FLOW,(20,21)=__norm#E}[]
+   es_evars: [y_93]
+   es_gen_impl_vars(E): []
+   ]
+
+*/
+

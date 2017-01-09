@@ -1,0 +1,19 @@
+data cell{
+ int fst;
+}.
+
+relation R(int v,int w).
+//relation R(ann v,ann w).
+
+infer [R,w] p::cell<f>@v * q::cell<2>@w & R(v) 
+  |- p::cell<a> * q::cell<_>@L.
+print residue.
+
+/*
+# lend-2a.slk --print-type 
+
+why isn't there a type mismatch message for R?
+
+gather_type_info_b_formula: relation R
+
+*/

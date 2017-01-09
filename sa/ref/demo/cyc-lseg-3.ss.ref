@@ -1,0 +1,57 @@
+
+!!!Full processing file "demo/cyc-lseg-3.ss"
+Parsing file "demo/cyc-lseg-3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: demo/cyc-lseg-3.ss_13:10_13:27:the result type __norm is not covered by the throw list[]
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x,res@NI)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE
+(0)H(x)&true --> x::ll<>&
+true(3,4),
+ // POST
+(0)x::ll<>&res=null --> G(x,res@NI)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::ll<>],
+ G(x2,res1) ::=  [x2::ll<>&res1=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::ll<>(3,4),
+ G(x2,res1) ::= x2::ll<>&res1=null(3,4)]
+*************************************
+Stop Omega... 4 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.047394,215)
+Total verification time: 0.31301 second(s)
+	Time spent in main process: 0.272767 second(s)
+	Time spent in child processes: 0.040243 second(s)
+

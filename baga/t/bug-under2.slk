@@ -1,0 +1,36 @@
+/* avl trees */
+
+/* representation of a node in an avl tree */
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1>
+ // inv_sat BG([],n>=0) 
+ // inv_sat BG([],self=null & n=0) |  BG([self],0<n)
+ // inv_sat BG([],self=null & n=0) 
+ inv_sat BG([self], true) 
+//inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<n & m>0)
+//inv_sat BG([],self=null & n=0 & m=0) | BG([self],0<m & n<=m<=2*n)
+  .
+/*
+# bug-under2.slk
+
+
+ ([self],true) |-  ([], self=null & n=0)  // B1
+                  \/ ([self],  n=1)  // B2
+                  \/ ([self],  n=m+1)* ([q]:true) // R
+
+ ([self],true) |-  ([], self=null & n=0)  // B1
+                  \/ ([self],  n=1)  // B2
+
+ ([self],true) |-  ([self],  n=m+1)* ([q]:true) // R
+
+d: 0; caller: []; line: 9; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+
+ checkentail emp&self=1 & 0<n&{FLOW,(1,26)=__flow}[]
+ |-  emp&((self=null & n=0) | (self>0 & 2<=n))&{FLOW,(1,26)=__flow}[]. 
+
+*/

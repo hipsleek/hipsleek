@@ -1,0 +1,80 @@
+
+!!!Full processing file "demo/foo1.ss"
+Parsing file "demo/foo1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure foo$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+dprint: demo/foo1.ss:24: ctx:  List of Failesc Context: [FEC(0, 0, 2  [(,0 ); (,1 )];  [(,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:(exists v3': G(next1) * x::node<val1,v3'>&next1!=null & v2'&{FLOW,(3,4)=__norm})[]
+       es_ho_vars_map: []EXISTS(v3': G(next) * x::node<val,v3'>&v2' & next!=null)[]
+;
+ Label: [(,1 ); (,2 )]
+ State:HP_1236(next1) * x::node<val1,next1>&next1=null & !(v2')&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []HP_1236(next) * x::node<val,next>&!(v2') & next=null
+
+ ]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x)&true --> x::node<val1,next1> * HP_1236(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1236(next1)&next1!=null --> H(next1)&
+true(3,4),
+ // POST
+(1;0)x::node<val1,v1>&true --> G(x)&
+true(3,4),
+ // POST
+(2;0)x::node<val1,next1> * HP_1236(next1)&next1=null --> G(x)&
+true(3,4)]
+
+Procedure foo$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [x1::node<val,next> * HP_1236(next)&x1!=null],
+ G(x2) ::=  [x2::node<val,v>],
+ HP_1236(next2) ::=  [emp&next2=null; next2::node<val,next> * HP_1236(next)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= x1::node<val,next> * HP_1236(next)&x1!=null(3,4),
+ G(x2) ::= x2::node<val,v>(3,4),
+ HP_1236(next2) ::= 
+ next2::node<val,next> * HP_1236(next)
+ or emp&next2=null
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.042709,276)
+Total verification time: 0.317872 second(s)
+	Time spent in main process: 0.30201 second(s)
+	Time spent in child processes: 0.015862 second(s)
+

@@ -1,0 +1,29 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
+   <-> self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+
+
+// This one requires the lemma NOT to be applied since it has been done before, it should stop after the match fails.
+checkentail xx::arr_seg<i,n>
+  |- xx::arr_seg<i+1,n>.
+print residue.
+expect Fail.
+
+
+// This one requires the lemma to be applied after the match fails
+checkentail_exact
+     x::arr_seg<i,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n & i!=n
+  |-  x2::arrI<_> * 
+     x::arr_seg<i+1,n> & x2=x+i & i>=0 
+    .
+print residue.

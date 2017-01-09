@@ -1,0 +1,26 @@
+data node {
+  node next;
+}.
+
+//(1)
+checkentail x=null & flow __norm |- x::node<q> & flow __norm.
+print residue.
+//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+//[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+checkentail x=null & flow __norm |- 
+  case { x=null -> []  ensures emp & flow __norm;
+         x!=null -> [] x::node<q> 
+                       ensures emp & flow __norm;
+ }. 
+print residue.
+
+/*
+# v-next7b.slk
+
+Can we support requires and ensures on RHS?
+
+
+*/
+

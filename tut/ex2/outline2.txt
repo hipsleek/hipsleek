@@ -1,0 +1,75 @@
+From Verification to Specification Inference
+============================================
+. Importance of Program Specification
+   -specification as documentation
+   - specification for safety
+   - verified specification
+
+. Challenge
+   - Inferring  specfification
+
+. Our Work:
+    (i)   disjunctive fixcalc [ASIAN06]
+    (ii)  pure bi-abduction [APLAS13]
+    (iii) second-order heap bi-abduction [CAV14]
+
+. Identity (sim1.ss)
+    id(n) =  
+       if n==0 then return 0
+       else return 1+id(n-1)
+
+. Identity (sim2.ss)
+    id(n) =  
+       assert n>=0
+       if n==0 then return 0
+       else return 1+id(n-1)
+
+    
+
+Recent Work : 
+    Bi-abduction 
+. Our proposal
+   - selective bi-abduction
+   . second-order bi-abduction
+. Pure Inference
+  . Weakest feasible
+  . Frame Inference (for post)
+. Unknown Pre/Post predicates
+. examples
+  - count down
+  - binary search?
+  - f91
+. Constraint abstraction
+  - abstract interpretation
+  - disjunctive fixpoint
+  - fixcalc
+  - set/bag properties?
+
+. exercise
+  - verify array access
+
+. fixcalc
+  - write constraint abstraction
+  - fixcalc
+  
+
+Shape Analysis
+==============
+. pre/post shape pred
+. complex shapes
+   - tll example
+. @NI annotation
+. motivating examples
+   - slldll
+   - tll
+   - circular list
+   - skip-list
+   - append
+      - sll
+      - dll
+      - aliased parameter
+. fixcalc in sleek
+. predicate normalization + splitting
+
+
+

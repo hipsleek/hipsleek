@@ -1,0 +1,95 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ //lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+
+//(1)
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+//(2)
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+/*
+infer [U] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+*/
+
+/*
+# ex16d1d.slk dre "infer_c" -show-push-list "es_infer_hp_rel"
+
+//(1)
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# Can omit v!=0 if @pure_field absent..
+
+push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M * GP_118(q2,self,p)&v!=0 |#|  --> U(self,p)]
+
+---------------------------------
+
+
+
+# to fix infer_collect for folding:
+
+  push_list(es_infer_hp_rel):[ self::char_star<v,q2>@M |#|  --> U(self,p)]
+
+# since p is global and q2 does not match it, we need to schedule:
+
+ self::char_star<v,q2>@M * HP(q2,p) & v!=null  
+         --> U(self,p)
+
+# Let us use a flag --en-infer-back-ptr to obtain:
+
+ self::char_star<v,q2>@M * HP(q2,p,self@NI) & v!=null  
+         --> U(self,p)
+
+(==solver.ml#13319==)
+infer_collect_hp_rel#1@4@3@2
+infer_collect_hp_rel#1 inp1 :lhs_node: self::char_star<v,q2>@M
+infer_collect_hp_rel#1 inp2 :rhs_node: U(self,p)
+infer_collect_hp_rel#1 inp3 :lhs:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp4 :rhs: U(self,p)&{FLOW,(20,21)=__norm#E}[]
+infer_collect_hp_rel#1 inp5 :es:
+ self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M&
+v!=0 & flted_29_106=0
+infer_collect_hp_rel#1@4 EXIT:(true,2: es_formula: 
+ emp&v!=0 & flted_29_106=0&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U]
+ es_infer_hp_rel: [self::char_star<v,q2>@M |#|  --> U(self,p)],3:abd heap: U(self,p),4:Some( self::char_star<v,q2>@M),5:None)
+
+
+
+
+*/

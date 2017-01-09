@@ -1,0 +1,53 @@
+data node {
+  node next;
+}.
+
+pred l6<q:node> == 
+  self=null or
+  self::node<r>*r::node<_> & r=q
+ inv BG([self,q],true) | BG([],self=null)
+.
+
+/*
+# baga/t/ex11b.slk (smt2014)
+
+Why does such a simple example fails?
+Why did we get 4 disjunct?
+
+pred l6<q:node> == 
+  self=null or
+  self::node<r>*r::node<_> & r=q
+ inv BG([self,q],true) | BG([],self=null)
+
+Is over-approx successful?
+
+Inv Check: Fail.(Under)
+
+--inv-baga
+
+form_body_inv_baga_enum@1
+form_body_inv_baga_enum inp1 :tree
+form_body_inv_baga_enum@1 EXIT: emp&((self=null & size=0) | (self=1 & size=1) | (self=1 & 2<=size) | 
+(self=1 & 3<=size))&{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv_baga@2
+form_body_inv_baga inp1 :tree
+form_body_inv_baga@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size) | 
+(self>0 & 3<=size))&{FLOW,(1,26)=__flow#E}[]
+
+
+without --inv-baga
+!!! baga_over_formula: emp&self!=q & self>0 & q>0&{FLOW,(1,26)=__flow#E}[]
+!!! ctx: es_formula: emp&q!=null & self!=null&{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv#1@1
+form_body_inv#1 inp1 :tree
+form_body_inv#1@1 EXIT: emp&((self=null & size=0) | (((size=1 | 2<=size)) & self!=null))&
+{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv#2@2
+form_body_inv#2 inp1 :tree
+form_body_inv#2@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size) | 
+(self>0 & 3<=size))&{FLOW,(1,26)=__flow#E}[]
+
+*/

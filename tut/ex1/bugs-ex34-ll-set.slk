@@ -1,0 +1,39 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred llSet<S> == emp & self=null & S={}
+  or self::node<v,q>*q::llSet<S1> & S=union({v},S1)
+  inv true.
+
+//(1)
+checkentail x=null |- x::llSet<S>.
+print residue.
+
+//(2)
+checkentail x::node<a,q>*q::node<b,null> 
+     |- x::llSet<S>.
+print residue.
+// n=3
+
+/*
+# bugs-ex34-ll-set.slk -tp mona (not urgent)
+
+checkentail x::node<a,q>*q::node<b,null> |- x::llSet<S>.
+
+Why are the formulae duplicated?
+
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_16_43=null & v_54=a & q_55=q & v_59=b & q_60=flted_16_43 
+& S1_61={} & S1_61={} 
+& S1_56=union({v_59},S1_61) & S1_56=union({v_59},S1_61) 
+& S=union({v_54},S1_56)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_55) ==>  COND ==>  BaseCaseFold ==> ]]
+
+*/

@@ -1,0 +1,161 @@
+# ex2.ss -p hoo --ana-ni (FIXED)
+
+int hoo(node x)
+  infer [@ana_ni]
+  requires x>1
+  ensures true;
+{
+  int y = x.val;
+  return y;
+}
+
+# relax bind_failure? change bind test to
+      ....  |- x>1
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+ Failed States:
+ [
+  Label: []
+  State:
+    fe_kind: MUST
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: do_unmatched_rhs : x'::node<val_19_1683',next_19_1684'>@L(must)
+        fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}
+      }
+    [[ UnmatchedRHSData]]
+  ]1 File "ex2-ptr.ss",Line:19,Col:10
+
+Context of Verification Failure: ex2-ptr.ss_17:10_17:14
+==========================================================================
+# ex2a.ss --ana-ni
+
+# Need to consider greatest fix-point compute..
+
+[RELASS [R]: ( R(x)) -->  2<=x]
+
+# Let us preserve x>=2
+!!! top_down_fp:[]
+!!! **pi.ml#754:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#755:>>REL POST:  true
+!!! **pi.ml#756:>>POST:  true
+!!! **pi.ml#757:>>REL PRE :  true
+!!! **pi.ml#758:>>PRE :  true
+!!! **immutable.ml#62:imm + pure:[( true, true)]
+!!! **immutable.ml#64:imm + pure:[( true, true)]
+!!! **immutable.ml#62:imm + pure:[( true, true)]
+!!! **immutable.ml#64:imm + pure:[( true, true)]
+!!! **pi.ml#806:new_specs1:
+[ EInfer @ana_ni[R]
+   EBase 
+     emp&R(x)&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&{FLOW,(4,5)=__norm#E}[]
+         struct:EBase 
+                  htrue&{FLOW,(4,5)=__norm#E}[]]
+==========================================================================
+# ex2c.ss --ana-ni
+
+  node y = x.next;
+  dprint;
+  y = y.next;
+
+# Need to add next_15_1687' into the heap-state; so that we 
+  have y'>1 at dprint.
+
+dprint(simpl): ex2c-ptr.ss:15: ctx:  
+     emp&1<x & x'=x&{FLOW,(4,5)=__norm#E}[]
+
+
+!!! **typechecker.ml#1968:vs_prim:[val_15_1686',next_15_1687']
+!!! **typechecker.ml#1969:vheap(0): y'::node<val_15_1686',next_15_1687'>@L&{FLOW,(1,28)=__flow#E}[]
+!!! **typechecker.ml#2015:need to use local version of infer_const_obj
+==========================================================================
+# ex2d.ss --ana-ni
+
+  node y;
+  dprint;
+  y = y.next;
+
+# Need to add y'>1 for each local var created;
+  expects y'>1 at dprint
+
+dprint(simpl): ex2c-ptr.ss:15: ctx:  
+     emp&MayLoop[] & 1<x & x'=x&{FLOW,(4,5)=__norm#E}[]
+ 
+==========================================================================
+#ex7.ss
+
+*************************************
+******pure relation assumption 1 *******
+*************************************
+[RELASS [R]: ( R(t)) -->  2<=t,
+RELDEFN Q: ( 2<=t' & R(t')) -->  Q(t'),
+RELDEFN P: ( 2<=v_node_23_1765') -->  P(v_node_23_1765'),
+RELASS [P]: ( P(l)) -->  l!=1,
+RELDEFN Q: ( 2<=p' & Q(p')) -->  Q(p'),
+RELDEFN P: ( 2<=v_node_34_1738') -->  P(v_node_34_1738'),
+RELDEFN R: ( 2<=v_tree_34_1744') -->  R(v_tree_34_1744')]
+*************************************
+***************************************
+** relation obligations after imm norm **
+*****************************************
+[RELASS [R]: ( R(t)) -->  2<=t,
+RELASS [P]: ( P(l)) -->  l!=1]
+*****************************************
+
+
+===>
+RELDEFN Q: ( 2<=t' & R(t')) -->  Q(t'),
+RELDEFN R: ( 2<=v_tree_34_1744') -->  R(v_tree_34_1744')
+RELDEFN Q: ( 2<=p' & Q(p')) -->  Q(p'),
+
+==>
+2<=t' -->  Q(t') ??? not correct
+
+caused by
+if (l.parent==p) and parent > 1 & l.parent=p
+ */
+
+==========================================================================
+#ex4a.ss
+
+Why this entailment generates assumptions but ex4a1 does not?
+
+
+id: 6; caller: []; line: 14; classic: false; kind: POST; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ R,P]; c_heap: emp; others:  es_infer_obj: [@ana_ni] globals: [@flow,@ver_post,@ana_ni]
+ checkentail (exists v_node_25_1690': emp&
+!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1690'>1 & 
+v_node_25_1690'!=y' & res=y' & MayLoop[]&{FLOW,(4,5)=__norm#E}[])
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&
+!(v_bool_25_1691') & P(y) & R(x) & y'=y & x'=x & 2<=x & v_node_25_1712>1 & 
+v_node_25_1712!=y' & res=y'&{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_infer_rel: [RELASS [R]: ( R(x)) -->  2<=x; 
+                  RELASS [R]: ( R(x)) -->  2<=x]
+   ]
+
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================

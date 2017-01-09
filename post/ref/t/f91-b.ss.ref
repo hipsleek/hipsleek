@@ -1,0 +1,83 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/f91-b.ss"
+Parsing file "t/f91-b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+ !!! @post is added into [f91$int] for f91$int
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1345: ( n=res & 91<=res) -->  post_1345(n,res,flow),
+RELDEFN post_1345: ( v_int_17_1327'=91 & v_int_17_1365=91 & res=91 & n<=90 & 
+post_1345(v_int_17_1365,v_int_17_1327',flow) & post_1345(1+
+n,v_int_17_1365,flow)) -->  post_1345(n,res,flow)]
+*************************************
+
+Post Inference result:
+f91$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           emp&(((res=91 & n<=90) | (n=res & 91<=res))) & (((90>=n & 
+           91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & res=n)))&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure f91$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume (((90>=v_int_17_1390 & 91=v_int_17_1392) | (v_int_17_1390>=89 & 
+91>=v_int_17_1390 & 91=v_int_17_1392) | (v_int_17_1392>=91 & 
+v_int_17_1392=v_int_17_1390))) & (((v_int_17_1392=91 & v_int_17_1390<=90) | 
+(v_int_17_1390=v_int_17_1392 & 91<=v_int_17_1392))) & v_int_17_1390=1+n' & 
+n'=n & n'<91 & !(v_bool_16_1328') & (((v_int_17_1327'=91 & 
+v_int_17_1392<=90) | (v_int_17_1392=v_int_17_1327' & 91<=v_int_17_1327'))) & 
+(((90>=v_int_17_1392 & 91=v_int_17_1327') | (v_int_17_1392>=89 & 
+91>=v_int_17_1392 & 91=v_int_17_1327') | (v_int_17_1327'>=91 & 
+v_int_17_1327'=v_int_17_1392))) & 
+res=v_int_17_1327' & f91post_1371(v_int_17_1390) & f91post_1371(v_int_17_1392) --> f91post_1371(n).
+
+ termAssume v_bool_16_1328' & 91<=n' & n'=n & res=n' --> f91post_1371(n).
+
+ termAssume (((90>=v_int_17_1390 & 91=v_int_17_1326') | (v_int_17_1390>=89 & 
+91>=v_int_17_1390 & 91=v_int_17_1326') | (v_int_17_1326'>=91 & 
+v_int_17_1326'=v_int_17_1390))) & (((v_int_17_1326'=91 & 
+v_int_17_1390<=90) | (v_int_17_1390=v_int_17_1326' & 91<=v_int_17_1326'))) & 
+v_int_17_1390=1+n' & n'=n & n'<91 & 
+!(v_bool_16_1328') & f91pre_0(n) --> f91pre_0(v_int_17_1326').
+
+ termAssume !(v_bool_16_1328') & n'<91 & n'=n & v_int_17_1324'=1+
+n' & f91pre_0(n) --> f91pre_0(v_int_17_1324').
+
+
+Base/Rec Case Splitting:
+[	f91: [[3] 91<=n@B,[4] n<=90@R]
+]
+Starting z3... 
+Termination Inference Result:
+f91:  requires true & truecase {
+                      91<=n -> requires emp & Term[31,1]
+     ensures emp & (((90>=n & 
+                      91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
+                      res=n))) & (((res=91 & n<=90) | (n=res & 91<=res))); 
+                      n<=90 -> requires emp & MayLoop[]
+     ensures emp & (((90>=n & 
+                      91=res) | (n>=89 & 91>=n & 91=res) | (res>=91 & 
+                      res=n))) & (((res=91 & n<=90) | (n=res & 91<=res))); 
+                      }
+
+0 false contexts at: ()
+
+Total verification time: 9.072566 second(s)
+	Time spent in main process: 4.208262 second(s)
+	Time spent in child processes: 4.864304 second(s)
+

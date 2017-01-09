@@ -1,0 +1,21 @@
+Starting Omega...oc
+GP_4 is defined.
+GP_5 is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ GP_4(next,next1) ::= emp&next=null(3,4),
+ GP_5(next3,t) ::= GP_65(next3,next2)&next2!=null & next2=t(3,4),
+ GP_65(next3,next2) ::= 
+ next3::node<val,next4> * GP_65(next4,next2)
+ or emp&next3=next2
+ (3,4)]
+*************************************
+Stop Omega... 2 invocations 
+!!! log(small):(0.000667999999999,2)
+Total verification time: 0.061834 second(s)
+	Time spent in main process: 0.046509 second(s)
+	Time spent in child processes: 0.015325 second(s)
+

@@ -1,0 +1,83 @@
+data cell{
+ int fst;
+}.
+
+
+infer [v] p::cell<f>@v |- p::cell<a>.
+print residue.
+
+infer [v] p::cell<f>@v |- p::cell<a>@L.
+print residue.
+
+
+infer [v] p::cell<f>@v |- p::cell<a>@I.
+print residue.
+
+
+infer [v] p::cell<f>@v |- p::cell<a>@A.
+print residue.
+
+/*
+# cell.slk 
+
+# 12772 (wrong -sl_default)
+
+Omega.simplify_ops@17@16@15
+Omega.simplify_ops inp1 : v:AnnT<:@I
+Omega.simplify_ops@17 EXIT: v:AnnT<=1
+
+Omega.simplify@16@15
+Omega.simplify inp1 : v:AnnT<:@I
+Omega.simplify@16 EXIT: v:AnnT<=1
+
+simplify_raw@15
+simplify_raw inp1 : v:AnnT<:@I
+simplify_raw@15 EXIT: v:AnnT<=1 (-->v<:@I) or in Omega.simplify
+
+-----
+
+Omega.simplify_ops@21@20@19
+Omega.simplify_ops inp1 : v:AnnT<=1 & v:AnnT<:@I
+Omega.simplify_ops@21 EXIT: v:AnnT<=1
+
+Omega.simplify@20@19
+Omega.simplify inp1 : v:AnnT<=1 & v:AnnT<:@I
+Omega.simplify@20 EXIT: v:AnnT<=1
+
+simplify_raw@19
+simplify_raw inp1 : v:AnnT<=1 & v:AnnT<:@I
+simplify_raw@19 EXIT: v:AnnT<=1 (--> v<:@I) or in Omega.simplify
+
+
+----------
+
+# 12772 (wrong -sl_default)
+
+Entail (1) : Valid. 
+ <1>emp&a=f & v<=1&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v<=1]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+
+# 12595 (correct - sl_term)
+
+Entail (1) : Valid. 
+ <1>emp&a=f & v<:@I&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v<:@I]
+[[ SEARCH ==>  Match ==> ]]
+
+# 12678 (conc-r; wrong -sl_resource)
+
+Entail (1) : Valid. 
+ <1>emp&a=f & v<=1&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v<=1]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+# 12713 (conc-r; wrong -sl_slicing)
+
+Entail (1) : Valid. 
+ <1>emp&a=f & v<=1&{FLOW,(21,22)=__norm}[]
+ inferred pure: [v<=1]
+[[ SEARCH ==>  Match(p,p) ==> ]]
+
+*/

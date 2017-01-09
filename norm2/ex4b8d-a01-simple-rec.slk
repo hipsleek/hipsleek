@@ -1,0 +1,54 @@
+data cell {
+  int val;
+}.
+
+HeapPred HP(cell a,cell b, cell c).
+
+infer[HP] HP(a,b,c) & c=z |- z::cell<_>. 
+print residue.
+
+/*
+# norm/ex4b8d.slk
+
+# Why HP_23 set to 0? (FIXED to None first)
+
+!!! **inferHP.ml#1490:roots:[(HP_23,Some(0)),(HP,Some(1))]
+
+!!! **context.ml#629:paset:[y_ref']
+!!! **context.ml#630:root_ptr:y_ref'
+!!! **context.ml#659:paset(b4 filter):[y_ref']
+!!! **context.ml#2935:process_matches (steps) :
+ ### LHS : x_ref::cell<value_8_1653>@M * y_ref'::cell<v_int_15_1679>@M
+ ### RHS : GP_24(x_ref,y_ref',c')
+ ### matches :
+[ Type: Root
+ LHS: y_ref'::cell<v_int_15_1679>@M
+ RHS: GP_24(x_ref,y_ref',c')
+ lhs_rest: x_ref::cell<value_8_1653>@M
+ rhs_rest: emp
+ rhs_inst: []]
+
+
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::cell<v_int_15_1679>@M&true --> GP_23(y,x@NI,c@NI)&true; 
+                  x::cell<value_8_1653>@M * GP_23(y,x@NI,c@NI)&
+                   true --> GP_22(x,y,c@NI)&true; 
+                  c::cell<v_int_16_1589'>@M * GP_22(x,y,c@NI)&
+                   true --> HP(c,x,y)&true]
+[[ InferFold 0 ==>  InferHeap ==>  Match(c,c) ==>  InferFold 0 ==>  InferHeap ==>  Match(x,x) ==>  InferFold 0 ==>  InferHeap ==>  Match(y,y)]]
+
+id: 18; caller: []; line: 8; classic: false; kind: PRE_REC; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ HP_1643,HP_1648,HP_1654]; c_heap: emp; others:  es_infer_obj: [@shape_pre] globals: [@dis_err]
+ checkentail (exists v_int_16_1589': x_ref::int_star<value_8_1653>@M * 
+                         y_ref'::int_star<v_int_15_1679>@M * 
+                         c'::int_star<v_int_16_1589'>@M&
+v_bool_8_1568' & c'=c & x_ref'=x_ref & y_ref'=y_ref & v_bool_8_1597' & 
+value_8_1647<value_8_1653 & v_int_15_1679=1+value_8_1647 & 
+value_15_1675=value_8_1647 & v_int_16_1589'=1+value_16_1680 & 
+value_16_1691=value_16_1680 & MayLoop[]&{FLOW,(4,5)=__norm#E}[])
+ |-  HP_1643(c',x_ref',y_ref')&{FLOW,(4,5)=__norm#E}[]. 
+hprel_ass: [ (1;1;0)unknown emp |#| x_ref::int_star<value_8_1653>@M --> GP_1700(y_ref',x_ref,c'),
+ (1;1;0)unknown y_ref'::int_star<v_int_15_1679>@M * GP_1700(y_ref',x_ref,c') |#|  --> GP_1699(x_ref,y_ref',c'),
+ (1;1;0)unknown c'::int_star<v_int_16_1698>@M * GP_1699(x_ref,y_ref',c') |#|  --> HP_1643(c',x_ref,y_ref')]
+
+
+*/

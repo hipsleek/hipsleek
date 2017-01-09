@@ -1,0 +1,38 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<>
+inv true.
+
+print views.
+
+/*
+# ex21u3b3.slk
+
+[ view app4<>= 
+  EList
+    :EList
+       :EBase 
+          (* lbl: *){1}->emp&self=null&{FLOW,(1,26)=__flow#E}[]
+       || :EBase 
+             exists (Impl)[Anon_12](* lbl: *){2}->(exists flted_12_16: (* lbl: *){2}->
+             self::node<Anon_12,flted_12_16>@M&flted_12_16=null&
+             {FLOW,(1,26)=__flow#E}[])
+       
+    || :EBase 
+          exists (Impl)[Anon_13; 
+          q](* lbl: *){3}->self::node<Anon_13,q>@M * q::app4<>@M&q!=null&
+          {FLOW,(1,26)=__flow#E}[]
+    ]
+
+--case-infer
+
+*/

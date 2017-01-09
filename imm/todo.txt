@@ -191,6 +191,129 @@ simpl does not consider all the cases. Need to check more on what's
 missing from the new, simplified h_formula_2_mem
 
 =============================================================
+ inf-imm/inf1_0.slk --- weird behavior below:
+simplify-syn@19@18
+simplify-syn inp1 : (v=@M | !(@L<:v))
+simplify-syn@19 EXIT: (v0=@M | !(@L<:v))
+
+norm_var_name@18
+norm_var_name inp1 : (v=@M | !(@L<:v))
+norm_var_name@18 EXIT: (v0=@M | !(@L<:v))
+
+
+=============================================================
+# default + ann_1
+
+Why are there timeouts?
+
+10s Timeout for bugs/clist1.ss
+10s Timeout for hip/imspd.ss
+^C10s Timeout for hip/schorr-waite-list.ss
+=============================================================
+# ex6a.ss
+
+From:
+
+  infer [@imm]
+  requires x::node<a1,_>*y::node<a2,_>
+  ensures x::node<_,_>*y::node<_,_> & res=a1+a2;
+
+Can we derive the spec (node-level):
+
+  requires x::node<a1,_>@L*y::node<a2,_>@L
+  requires res=a1+a2
+
+How come no immutability inferred?
+=============================================================
+# ex6b.ss
+
+From:
+
+  infer [@imm]
+  requires x::node<a1,n1>*y::node<a2,n2>
+  ensures x::node<a1,y>*y::node<_,_> ;
+
+Can we derive (node_level):
+ 
+  requires x::node<a1,n1>*y::node<_,_>@A
+  ensures x::node<a1,y> ;
+
+or field-level::
+ 
+  requires x::node<a1@L,_>*y::node<_,_>@A
+  ensures x::node<@A,y> ;
+=============================================================
+# ex6c.ss
+
+From:
+
+  infer [@imm]
+  requires x::node<a1,n1>*y::node<a2,n2>
+  ensures x::node<a1,n1>*y::node<_,_> & res=a1;
+
+Can we derive:
+ 
+  infer [@imm]
+  requires x::node<a1,n1>@L*y::node<a2,n2>@A
+  ensures  res=a1;
+=============================================================
+# ex7a.ss
+
+  infer [R]
+  requires x::node<a1,_>@z1*y::node<a2,_>@z2 & R(z1,z2)
+  ensures x::node<_,_>*y::node<_,_> & res=a1+a2;
+
+# latest ann_2
+
+Expects z1=@L and z2=@L be inferred, but got nothing:
+
+# ann_2 before merge with default:
+
+[RELASS [R]: ( R(z1,z2)) -->  z1<:@L,
+RELASS [R]: ( R(z1,z2)) -->  (z2<:@L | z1=@A),
+RELASS [R]: ( R(z1,z2)) -->  ((z2=@M & z1=@M) | z1=@A)]
+
+!!! top_down_fp:[( R(z1,z2,pz1,pz2), z2=@M & z1=@M)]
+
+=============================================================
+# ex6a.ss [FIXED]
+
+# need to fix this warning..
+
+Checking procedure join$node~node... 
+WARNING: _0:0_0:0:Z3 error message: (error "line 692 column 35: unknown function/constant P__1426")
+!!! **infer.ml#1312:f: P__1426(ann_1425,ann_1424)
+
+GOT
+===
+join$node~node
+ EBase 
+   exists (Expl)[](Impl)[ann_1424; ann_1425; a1; Anon_14; a2; 
+   Anon_15](ex)[]x::node<a1,Anon_14>@ann_1424 * y::node<a2,Anon_15>@ann_1425&
+   ann_1424=@L & ann_1425=@L & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+   EAssume 
+     emp&{FLOW,(4,5)=__norm#E}[]
+
+# What happen to res=a1+a2?
+
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
+=============================================================
 =============================================================
 =============================================================
 =============================================================

@@ -1,0 +1,32 @@
+
+relation P(int x).
+
+infer [P] x=3 & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] P(x) & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __flow
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] x<0 & flow __norm
+    |- P(x) & flow __flow.
+print residue.
+
+
+/*
+# flow1.slk
+
+How come not picking rel assume with flows when
+sleek is OK.
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x)) -->  P(x)]
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+
+*/
+
+

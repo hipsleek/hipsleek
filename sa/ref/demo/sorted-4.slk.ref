@@ -1,0 +1,31 @@
+Starting Omega...oc
+H is defined.
+G is defined.
+H_0 is defined.
+H_1 is defined.
+H_2 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x,v) ::= 
+ x::node<val,next> * H(next,val)&v<=val
+ or emp&x=null
+ (3,4),
+ H_0(val1,v1) ::= emp&v1<=val1(3,4),
+ H_1(next1,v2) ::= H(next1,val2)&v2<=val2(3,4)]
+*************************************
+Stop Omega... 1 invocations 
+SAT Count   : 5
+SAT % Hit   : 0.%
+IMPLY Count : 3
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.00053 (seconds)
+
+!!! log(small):(0.006476,9)
+Total verification time: 0.075648 second(s)
+	Time spent in main process: 0.058333 second(s)
+	Time spent in child processes: 0.017315 second(s)
+

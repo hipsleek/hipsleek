@@ -1,0 +1,33 @@
+
+infer [@dfa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+
+infer [@efa]  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+checkentail  x>1 & flow __norm |-  x=0 & flow __norm.
+print residue.
+
+
+/*
+--dfa is supposed not to classify errors.
+as we can see below.
+It may be good to have just {} residue.
+
+--efa
+Entail 4: Fail.(must) cause: 1<x |-  x=0. LOCS:[74] (must-bug)
+Residue:
+ <1>emp&1<x&{FLOW,(5,6)=__Error}[]
+
+--dfa
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: failed in entailing pure formula(s) in conseq
+                             fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[empty]]false
+
+*/
+

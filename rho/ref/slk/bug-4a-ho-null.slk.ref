@@ -1,0 +1,20 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(may) cause:do_unmatched_rhs : HVar Q[]
+
+Residue:
+ <1>y::cell<Anon_11>&flted_4_17=2+3&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+
+Entail 2: Fail.(may) cause: true |-  Anon_13=Anon_14. LOCS:[0;7] (may-bug)
+
+Residue:
+ <1>emp&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(y,y) ==> ]]
+
+
+

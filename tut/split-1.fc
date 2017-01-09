@@ -1,0 +1,24 @@
+post:={[x] -> [res] -> []: 
+  (((x=res && res<=0) 
+   || (x=res && 2223<=res)) 
+   || (( (exists (v_int:(v_int+1=x && post(v_int,res))))  && 1<=x) && x<=2222))
+};
+bottomupgen([post], [3], SimHeur);
+
+post:={[x] -> [res] -> []: 
+  (((x=res && res<=0 && x<=2222) 
+   || (x=res && 2223<=res && x<=2222)) 
+   || (( (exists (v_int:(v_int+1=x && post(v_int,res))))  && 1<=x) && x<=2222))
+};
+bottomupgen([post], [2], SimHeur);
+# ((x >= 1 && 0 = res) || (0 >= res && res = x))
+# missing x>=2222
+
+post:={[x] -> [res] -> []: 
+  (((x=res && res<=0 && x>2222) 
+   || (x=res && 2223<=res && x>2222)) 
+   || (( (exists (v_int:(v_int+1=x && post(v_int,res))))  && 1<=x) && x<=2222&& x>2222))
+};
+bottomupgen([post], [2], SimHeur);
+# (x >= 2223 && x = res)
+

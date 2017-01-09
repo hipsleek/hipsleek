@@ -1,0 +1,49 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "slk/ex-8-lemma-norm.slk",Line:3,Col:10
+
+ERROR: at slk/ex-8-lemma-norm.slk_3:10_3:20
+Message: compute_view_fw_bw: data not found: CNT
+
+CheckNorm (1) :  c1::CNT{}<flted_11_69> * c2::CNT{}<flted_11_68>&flted_11_69=1 & flted_11_68+
+1=0&{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (2) :  c1::CNT{}<Anon_11> * c2::CNT{}<flted_14_83>&flted_14_83+1=0&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (3) :  c1::CNT{}<a> * c2::CNT{}<flted_17_95>&flted_17_95+1=0 & 3<a&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (4) :  c1::CNT{}<a> * c2::CNT{}<flted_20_108>&flted_20_108+1=0 & 3<a&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (5) :  c2::CNT{}<flted_8_133>&flted_23_123=2 & flted_23_122=4 & c2=c2 & 
+flted_8_133=flted_23_122+flted_23_123&{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (6) :  c1::CNT{}<flted_26_142> * c2::CNT{}<flted_26_141>&flted_26_142=2 & 
+flted_26_141=4&{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (7) :  c2::CNT{}<flted_29_155> * c2::CNT{}<Anon_12>&flted_29_155=2&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (8) :  c2::CNT{}<flted_8_174>&10<(b+a) & 0<a & a<3 & c2=c2 & flted_8_174=b+a&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (9) :  c2::CNT{}<flted_6_192>&flted_35_181+1=0 & c2=c2 & flted_6_192+1=0&
+{FLOW,(4,5)=__norm#E}[]
+
+
+CheckNorm (10) :  c1::CNT{}<flted_6_207>&flted_38_196+1=0 & c1=c1 & flted_6_207+1=0&
+{FLOW,(4,5)=__norm#E}[]
+
+

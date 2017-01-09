@@ -1,0 +1,32 @@
+/*
+  Entailment for variable permissions
+*/
+
+//(13) why is the residue still full?
+checkentail @full[x3]*@value[x3]  |- @full[x3].
+print residue.
+// why isn't there a contracdicition on LHS
+
+/*
+checkentail @value[x3]  |- @full[x3].
+print residue.
+// residue empty
+
+checkentail @full[x3]  |- @value[x3].
+print residue.
+// residue full
+*/
+
+/*
+# ex32-vperm.slk
+
+Why isn't LHS false?
+checkentail @full[x3]*@value[x3]  |- @full[x3].
+print residue.
+// why isn't there a contracdicition on LHS
+   Moreover there is a residue
+
+Residue:
+ <1>htrue*@full[x3]&{FLOW,(4,5)=__norm#E}[]
+
+*/

@@ -1,0 +1,26 @@
+
+!!!Full processing file "examples/fact-case3.ss"
+Parsing file "examples/fact-case3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/fact-case3.ss_2:1_6:1:WARNING : case construct has missing scenario
+Found : : (x=0 | 0<x)
+Added : : x<=(0-1)
+
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+Termination checking result: SUCCESS
+
+Stop Omega... 1 invocations 
+8 false contexts at: ( (8,12)  (8,19)  (9,7)  (9,27)  (9,23)  (9,18)  (9,14)  (9,14) )
+
+!!! log(small):(0.045238,220)
+Total verification time: 0.362904 second(s)
+	Time spent in main process: 0.320966 second(s)
+	Time spent in child processes: 0.041938 second(s)
+

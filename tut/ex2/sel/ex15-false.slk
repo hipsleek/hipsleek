@@ -1,0 +1,18 @@
+data node{
+  int val;
+  node next;
+}.
+
+infer[n] true |- n>n.
+print residue.
+
+infer[x] true |- x::node<_,_>*x::node<_,_>.
+print residue.
+
+infer[n] n=0 |- n=y.
+print residue.
+
+infer[y] n=0 |- n=y.
+print residue.
+
+

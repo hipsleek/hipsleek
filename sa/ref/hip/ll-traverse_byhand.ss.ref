@@ -1,0 +1,11 @@
+
+!!!Full processing file "hip/ll-traverse_byhand.ss"
+Parsing file "hip/ll-traverse_byhand.ss" by default parser...
+File "hip/ll-traverse_byhand.ss", line 10, characters 1-8
+ --error: Stream.Error("IDENTIFIER _ then OPAREN expected after [typ] (in [proc_header])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("IDENTIFIER _ then OPAREN expected after [typ] (in [proc_header])")
+Error3(s) detected at main 

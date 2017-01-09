@@ -1,0 +1,10 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>x::dll{}<m>&
+ AndList( "":x=x' & t_31'=0 & v_int_22_859'=1 ; "n":0<m) &{FLOW,(4,5)=__norm}[]
+
+Residue:
+ <1>x::dll{}<m>&{FLOW,(4,5)=__norm}[]
+
+

@@ -1,0 +1,626 @@
+# ex-2.ss
+ (i) can we have a better pretty-printer?
+ (ii) can we do [@term,@post] now?
+ (iii) how come post(..) is being inferred
+       for one case but not another.
+
+
+infer [@term]
+  case {
+    x < 0 -> requires Term ensures true;
+    x >= 0 -> requires true ensures true;
+  }
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] 0<=x@R]
+]
+
+Termination Inference Result:
+f:  
+case {
+  x<=(0-1) -> 
+    requires emp & Term[29]
+    ensures emp & x<0; 
+  0<=x -> 
+    case {
+      0<=y -> 
+        requires emp & Loop[]
+        ensures false & false; 
+      y<=(0-1) -> 
+        requires emp & Term[29,2,0+(1*x)+(0*y)]
+        ensures emp & 0<=x; 
+ }
+}
+
+
+ infer [@term]
+ requires true
+ ensures true;
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=(0-1)@B,[3] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> 
+    requires emp & Term[29,1]
+    ensures emp & true; 
+  0<=x -> case {
+      0<=y -> 
+       requires emp & Loop[]
+       ensures false & false; 
+   y<=(0-1) -> requires emp & Term[29,2,0+(1*x)+(0* y)]
+            ensures emp & true; 
+           }
+  }
+=================================================================
+/*
+# ack.ss
+
+Why is below going into an infinite loop?
+Can we print some intermediate results?
+Can we have some upper bound cut-off?
+
+infer [@term]
+ requires true
+ ensures true;
+
+Base/Rec Case Splitting:
+[	Ack: [[4] m=0@B,[5] 1<=n & 1<=m@R,[6] n<=(0-1) & 1<=m@R,[7] m<=(0-1) & 1<=n@R,[8] n<=(0-1) & m<=(0-1)@R,[9] n=0 & 1<=m@R,[10] n=0 & m<=(0-1)@R]
+]
+====================================================================
+# ack3b.ss
+
+ infer [@term]
+ case {
+  m<0 -> requires Loop ensures false;
+  m>=0 -> 
+   case {
+    n<0 -> requires MayLoop ensures true;
+    n>=0 -> requires true ensures res>=0;
+   }
+  }
+
+Q : Can we not combine requires false ensures false?
+
+
+Base/Rec Case Splitting:
+[	Ack: [[7] m=0 & 0<=n@B,[8] m=0 & n<=(0-1)@B,[9] 1<=n & 1<=m@R,[10] n=0 & 1<=m@R,[11] n<=(0-1) & 1<=m@R]
+]
+Termination Inference Result:
+Ack:  case {
+  m<=(0-1) -> requires emp & Loop[]
+              ensures false & false; 
+  0<=m -> case {
+           n<0 -> case {
+                   // why did we not combine require false ensures false?
+                   m=0 & 0<=n -> 
+                     requires false & false
+                     ensures false & false; 
+                   1<=n &  1<=m -> 
+                     requires false & false
+                     ensures false & false; 
+                   n=0 & 1<=m -> 
+                     requires false & false
+                     ensures false & false; 
+                   m=0 & n<=(0-1) -> 
+                     requires emp & Term[3,2]
+                     ensures emp & true; 
+                   n<=(0-1) & 1<=m -> 
+                     requires emp & Loop[]
+                     ensures false & false; 
+                   }
+           
+           0<=n -> case {
+                 //can we combine the  cases?
+                    m=0 & 0<=n -> 
+                      requires emp & Term[3,1]
+                      ensures emp & 0<=res; 
+                    1<=n & 1<=m -> 
+                     requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*n)]
+                     ensures emp & 0<=res; 
+                    n=0 & 1<=m -> 
+                     requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*n)]
+                     ensures emp & 0<=res; 
+                    m=0 & n<=(0-1) -> 
+                      requires false & false
+                      ensures false & false; 
+                    n<=(0-1) &  1<=m -> 
+                      requires false & false
+                      ensures false & false; 
+                    }
+           
+           }
+
+====================================================================
+.# ack-4bv.ss
+
+infer [@term]
+  requires true
+  ensures res>=n+1;
+
+Can it be more precise to refine MayLoop?
+
+Ack:  case {
+  m=0 -> 
+   requires emp & Term[3,1]
+   ensures emp & (1+n)<=res; 
+  1<=m -> 
+   requires emp & MayLoop[]
+   ensures emp & (1+n)<=res; 
+  m<=(0-1) -> 
+   requires emp & Loop[]
+   ensures false & false; 
+  }
+====================================================================
+# ack-4b.ss
+
+infer [@term]
+ case {
+  m=0 -> requires Term[] ensures res>=n+1;
+  m>=1 -> 
+    case {
+    n>=0 ->  requires MayLoop //why lexi not working here Term[m,n] 
+             ensures res>=n+1;
+      n<0 ->  requires MayLoop ensures res>=n+1;
+    }
+  m<0 -> requires Loop ensures false;
+}
+
+# why isn't lexi ranking not inferred above?
+
+--infer-lex
+
+Ack:  case {
+  m=0 -> requires emp & Term[3]
+ ensures emp & (1+n)<=res; 
+  1<=m -> case {
+           0<=n -> case {
+                    m=0 -> requires false & false
+ ensures false & false; 
+                    n<=(0-1) & 
+                    1<=m -> requires false & false
+ ensures false & false; 
+                    1<=n & 1<=m -> requires emp & Term[3,2,-2+(1*m)+(0*n),-1+
+                    (1*m)+(0*n),-1+(1*m)+(1*n)]
+ ensures emp & (1+n)<=res; 
+                    n=0 & 1<=m -> requires emp & Term[3,2,-2+(1*m)+(0*n),-1+
+                    (1*m)+(0*n),-1+(1*m)+(1*n)]
+ ensures emp & (1+n)<=res; 
+                    }
+           
+           n<0 -> requires emp & Loop[]
+ ensures false & false; 
+           }
+  
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+
+Base/Rec Case Splitting:
+[	Ack: [[10] m=0@B,[11] n<=(0-1) & 1<=m@R,[12] 1<=n & 1<=m@R,[13] n=0 & 1<=m@R]
+]
+Termination Inference Result:
+Ack:  case {
+  m=0 -> requires emp & Term[3]
+ ensures emp & (1+n)<=res; 
+  1<=m -> case {
+           0<=n -> requires emp & MayLoop[]
+ ensures emp & (1+n)<=res; 
+           n<0 -> requires emp & MayLoop[]
+ ensures emp & (1+n)<=res; 
+           }
+  
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+====================================================================
+# ack-4.ss
+
+infer [@term]
+ requires true
+  ensures res>=1 | res>=n+1;
+
+Why a non-terminating loop here?
+
+--infer-lex
+
+Termination Inference Result:
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & (1<=res | (1+n)<=res); 
+  1<=n & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (1<=res | (1+n)<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (1<=res | (1+n)<=res); 
+  }
+Stop Omega... 33 invocations 
+0 false contexts at: ()
+
+TNT @ ITER 0
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & true; 
+  1<=n & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=(0-1) & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  m<=(0-1) & 1<=n -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=(0-1) & m<=(0-1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n=0 & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n=0 & m<=(0-1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+TNT @ ITER 0
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & true; 
+  1<=n & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n<=(0-1) & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  m<=(0-1) & 1<=n -> requires emp & Loop[]
+ ensures false & false; 
+  n<=(0-1) & m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n=0 & m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+TNT @ ITER 1
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & true; 
+  1<=n & 
+  1<=m -> case {
+           2<=n & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+           n<=1 -> requires emp & MayLoop[]
+ ensures emp & true; 
+           }
+  
+  n<=(0-1) & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  m<=(0-1) & 1<=n -> requires emp & Loop[]
+ ensures false & false; 
+  n<=(0-1) & m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  n=0 & m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & (1+n)<=res; 
+  1<=m -> requires emp & MayLoop[]
+ ensures emp & (1+n)<=res; 
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+====================================================================
+# ack-3.ss
+
+  infer [@term]
+  case {
+    m >= 0 & n >= 0 -> requires true ensures res >= 0;
+    !(m >= 0 & n >= 0) -> requires true ensures true;
+
+--infer-lex
+
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 1<=n -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  n=0 & 1<=m -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  ((n<=(0-1) & 1<=m) | m<=(0-
+  1)) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+This seems less precise now ..
+
+Termination Inference Result:
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 0<=n -> requires emp & MayLoop[]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  m<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  n<=(0-1) & 1<=m -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+
+Ack:  case {
+  m=0 & 0<=n -> requires emp & Term[3,2]
+ ensures emp & 0<=res; 
+  1<=m & 1<=n -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  n=0 & 1<=m -> requires emp & Term[3,3,0+(1*m)+(0*n),0+(1*m)+(1*
+  n)]
+ ensures emp & 0<=res; 
+  m=0 & n<=(0-1) -> requires emp & Term[3,1]
+ ensures emp & true; 
+  ((n<=(0-1) & 1<=m) | m<=(0-
+  1)) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+====================================================================
+# ack-2.ss
+
+  infer [@term]
+  requires true
+  ensures (!(m >= 0 & n >= 0) | res >= 0);
+
+--infer-lex
+
+Ack:  case {
+  m=0 -> requires emp & Term[3,1]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  1<=m & 1<=n -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> requires emp & Loop[]
+ ensures false & false; 
+  n=0 & 1<=m -> requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*
+  n)]
+ ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  }
+
+This seems to be going into a Loop..
+
+Ack:  case {
+  m=0 -> 
+   requires emp & Term[3,1]
+   ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  1<=m & 1<=n -> 
+   requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*n)]
+   ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  ((m<=(0-1) & n<=(0-1)) | (n<=(0-1) & 1<=m) | (m<=(0-1) & 
+  0<=n)) -> 
+    requires emp & Loop[]
+    ensures false & false; 
+  n=0 & 1<=m -> 
+    requires emp & Term[3,2,-1+(1*m)+(0*n),-2+(1*m)+(1*n)]
+    ensures emp & (!((0<=m & 0<=n)) | 0<=res); 
+  }
+====================================================================
+# sim-acc2.ss
+
+	if (m==0 || n==0) return 1;
+ 	else {
+		int m1=m-1;
+                int n1=n-1;
+                int r = Ack(m, n1);
+                return Ack(m-1, r+ranPos());
+ 	}
+
+GOT:
+Ack:  case {
+  ((m=0 & 1<=n) | (m=0 & n<=(0-1)) | 
+  n=0) -> requires emp & Term[5,1]
+     ensures emp & res=1; 
+  ((n<=(0-1) & 1<=m) | (n<=(0-1) & m<=(0-1)) | (1<=n & 
+  6<=m)) -> requires emp & MayLoop[]
+     ensures emp & res=1; 
+  m=5 & 1<=n -> requires emp & Term[5,6,-1+(0*m)+(1*
+  n)]
+     ensures emp & res=1; 
+  m=4 & 1<=n -> requires emp & Term[5,5,-1+(0*m)+(1*
+  n)]
+     ensures emp & res=1; 
+  m=3 & 1<=n -> requires emp & Term[5,4,-1+(0*m)+(1*
+  n)]
+     ensures emp & res=1; 
+  m=2 & 1<=n -> requires emp & Term[5,3,-1+(0*m)+(1*
+  n)]
+     ensures emp & res=1; 
+  m=1 & 1<=n -> requires emp & Term[5,2,-1+(0*m)+(1*
+  n)]
+     ensures emp & res=1; 
+  m<=(0-1) & 1<=n -> requires emp & Loop
+  { 24:23}[]
+     ensures false & false; 
+  }
+
+--infer-lex
+
+Ack:  case {
+  ((m=0 & 1<=n) | (m=0 & n<=(0-1)) | n=0) -> 
+     requires emp & Term[5,1]
+     ensures emp & res=1; 
+  1<=m & 1<=n -> 
+     requires emp & Term[5,2,0+(1*m)+(0*n),0+(0*m)+(1*n)]
+     ensures emp & res=1; 
+  ((m<=(0-1) & 1<=n) | (m<=(0-1) & n<=(0-1))) -> 
+     requires emp & Loop {24:23}[]
+     ensures false & false; 
+  n<=(0-1) & 1<=m -> 
+     requires emp & MayLoop[]
+     ensures emp & res=1; 
+  }
+
+Expect
+======
+ case {
+  m<0 & n<0 -> requires Loop ensures false;
+  m<0 & n=0 -> requires Term[] ensures res=1;
+  m<0 & n>0 -> requires Loop ensures false;
+  m=0 & n<0 -> requires Term[] ensures res=1;
+  m>0 & n<0 -> requires Loop ensures false;
+  m>=0 & n>=0 -> requires Term[m,n] ensures res=1;
+}
+
+====================================================================
+# sim-acc.ss
+
+	if (m==0 || n==0) return 1;
+ 	else {
+		int m1=m-1;
+                int n1=n-1;
+                int r = Ack(m, n1);
+                return Ack(m-1, r);
+ 	}
+
+GOT:
+
+
+Ack:  case {
+  ((m=0 & 1<=n) | (m=0 & n<=(0-1)) | n=0) -> 
+     requires emp & Term[3,1]
+     ensures emp & res=1; 
+  1<=m & 1<=n -> 
+     requires emp & Term[3,2,0+(1*m)+(1*n)]
+     ensures emp & res=1; 
+  ((m<=(0-1) & 1<=n) | (m<=(0-1) & n<=(0-1))) -> 
+     requires emp & Loop{ 24:23}[]
+     ensures false & false; 
+  n<=(0-1) & 1<=m -> 
+     requires emp & MayLoop[]
+     ensures emp & res=1; 
+  }
+
+--infer-lex
+
+Ack:  case {
+  ((m=0 & 1<=n) | (m=0 & n<=(0-1)) | n=0) -> 
+     requires emp & Term[3,1]
+     ensures emp & res=1; 
+  1<=m & 1<=n -> 
+     requires emp & Term[3,2,0+(1*m)+(1*n)]
+     ensures emp & res=1; 
+  ((m<=(0-1) & 1<=n) | (m<=(0-1) & n<=(0-1))) -> 
+     requires emp & Loop{ 24:23}[]
+     ensures false & false; 
+  n<=(0-1) & 1<=m -> 
+     requires emp & MayLoop[]
+     ensures emp & res=1; 
+  }
+
+Expecting:
+ case {
+  m<0 & n<0 -> requires Loop ensures false;
+  m<0 & n=0 -> requires Term[] ensures res=1;
+  m<0 & n>0 -> requires Loop ensures false;
+  m=0 & n<0 -> requires Term[] ensures res=1;
+  m>0 & n<0 -> requires Loop ensures false;
+  m>=0 & n>=0 -> requires Term[m+n] ensures res=1;
+}
+====================================================================
+# sim-acc.ss
+
+ termAssume 
+res=v_int_25_1318' & v_int_25_1318'=1 & v_int_25_1473+1=m & 
+m!=0 & !(v_boolean_18_1440) & m!=0 & n!=0 & !(v_boolean_18_1441) & n!=0 & 
+!(v_bool_18_1319') & !(v_boolean_18_1441) & !(v_boolean_18_1440) & 
+!(v_bool_18_1319') & m1_1471+1=m & n1_1472+1=n & 
+r_1474=1 & Ackpost_1406(m',n1_1472) & Ackpost_1406(v_int_25_1473,r_1474) 
+--> Ackpost_1406(m,n).
+
+Why wasn't information on m' captured in above relational assumption?
+Why aren't there two post in this dprint?
+
+ State:(exists v_int_24_1318': emp&r_30'=1 & n1_29'+1=n' & m1_28'+1=m' & !(v_bool_18_1319') & !(v_boolean_18_1440) & !(v_boolean_18_1441) & !(v_bool_18_1319') & n'!=0 & !(v_boolean_18_1441) & n'!=0 & m'!=0 & !(v_boolean_18_1440) & m'=m & n'=n & m'!=0 & v_int_24_1318'+1=m' & rr_31'=1 & Ackpost_1406(v_int_24_1318',r_30')[]&{FLOW,(4,5)=__norm#E})[]
+
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+====================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================

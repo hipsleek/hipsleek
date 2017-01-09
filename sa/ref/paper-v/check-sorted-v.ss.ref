@@ -1,0 +1,22 @@
+
+!!!Full processing file "paper-v/check-sorted-v.ss"
+Parsing file "paper-v/check-sorted-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_sorted$node~int... 
+Procedure check_sorted$node~int SUCCESS.
+Stop Omega... 7 invocations 
+3 false contexts at: ( (26,7)  (26,14)  (24,8) )
+
+!!! log(small):(0.055136,358)
+Total verification time: 0.345681 second(s)
+	Time spent in main process: 0.329367 second(s)
+	Time spent in child processes: 0.016314 second(s)
+

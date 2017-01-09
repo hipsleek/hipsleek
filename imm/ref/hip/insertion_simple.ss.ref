@@ -1,0 +1,27 @@
+
+!!!Full processing file "hip/insertion_simple.ss"
+Parsing file "hip/insertion_simple.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure insert$node~node... 
+Proving precondition in method insert$node~node Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/insertion_simple.ss",Line:25,Col:12
+
+Procedure insert$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure insert$node~node
+
+0 false contexts at: ()
+
+Total verification time: 0.467473 second(s)
+	Time spent in main process: 0.422803 second(s)
+	Time spent in child processes: 0.04467 second(s)
+

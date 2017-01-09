@@ -1,0 +1,11 @@
+
+!!!Full processing file "demo/dll-xisa-f.ss"
+Parsing file "demo/dll-xisa-f.ss" by default parser...
+File "demo/dll-xisa-f.ss", line 68, characters 8-12
+ --error: Stream.Error("CPAREN expected after [boolean_expression] (in [if_statement])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Stream.Error("CPAREN expected after [boolean_expression] (in [if_statement])")
+Error3(s) detected at main 

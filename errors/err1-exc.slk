@@ -1,0 +1,75 @@
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+
+//1. must failure. cause:22  n=1 |-  5<n (must-bug).
+checkentail n = 1 |- n > 5 .
+print residue.
+
+expect Fail_Must, __Error.
+
+
+//2. may failure. cause:or[base case unfold failed,22  n=m & 2<=m |-  3<m (may-bug).]
+checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
+print residue.
+
+//3. must failure. cause:15.1 x=null |-  x!=null
+checkentail x=null  |- x::node<_,_>.
+print residue.
+
+expect Fail_Must, __Error.
+
+//4. must failure. cause:22  x=1 |-  x=null (must-bug).
+checkentail x::node<_,_> |- x=null.
+print residue.
+
+expect Fail_Must, __Error.
+
+//5. may failure. cause:22  Anon_33=0 & x=null | x!=null & 1<=Anon_33 |-  x=null (may-bug).
+checkentail x::ll<_> |- x=null.
+print residue.
+
+
+//6. must failure. cause:22  x!=null |-  x=null (must-bug).
+checkentail x::ll<n> & n>0 |- x=null.
+print residue.
+expect Fail_Must, __Error.
+
+//7. may failure. cause:or[base case unfold failed,22  m=0 & n=0 & x=null | n=m & x!=null & 1<=m |-  3<m (may-bug).]
+checkentail x::ll<n> |- x::ll<m> & m>3.
+print residue.
+
+//8. must failure - cause:or[base case unfold failed,22  m=1 |-  3<m (must-bug).]
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+expect Fail_Must, __Error.
+
+//9. must failure - cause:or[base case unfold failed,22  n=m & 2<=m |-  m<2 (must-bug).]
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+
+expect Fail_Must, __Error.
+
+//10. valid
+checkentail n > 1 or n > 3 |- n > 1.
+print residue.
+
+
+//11. may failure. cause:22  2<=n |-  2<n (may-bug).
+checkentail n > 1 |- n > 2.
+print residue.
+
+//12. must failure. cause:22  n=1 |-  n<1 (must-bug).
+checkentail n = 1 |- n < 1.
+print residue.
+
+expect Fail_Must, __Error.
+
+
+

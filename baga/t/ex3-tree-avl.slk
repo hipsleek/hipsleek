@@ -1,0 +1,34 @@
+/* avl trees */
+
+/* representation of a node in an avl tree */
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+
+
+pred tree<size> == self = null & size = 0
+  or self::node<_, height, p, q> 
+     * p::tree<size1> * q::tree<size2> & size = 1+size1+size2 
+  /* inv size >= 0 & height >= 0 */
+  inv_exact BG([],self=null & size=0 ) | BG([self],size>0)
+  /* inv_sat BG([],self=null & size=0 & height=0) | BG([self],size>0 & height>0) */
+  .
+
+/*
+# baga/t/e3-tree-val.slk --inv-baga
+
+Why is there a disabling of baga inv
+despite precise inv?
+
+!!! Predicate tree has precise invariant
+
+!!! infered baga inv(tree):[([], self=null & size=0),
+([self], 1<=size)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+*/

@@ -1,0 +1,431 @@
+# ex8e4d.ss (FIXED)
+
+
+EEE<> == self::cell<_>;
+
+HHH<> == self::EEE<> 
+  or self::str<_,_> inv true;
+
+# Fixed with a better error message:
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:14,Col:9),(Line:14,Col:20)} types str and cell are inconsistent\")")
+Error3(s) detected at main 
+
+!!! **iast.ml#2168:XXX:view:HHH
+!!! **iast.ml#2169:XXX:a:[str,cell]
+!!! **iast.ml#2168:XXX:view:EEE
+!!! **iast.ml#2169:XXX:a:[cell]
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of str
+
+ERROR: at ex8e4d-conflict-type-err-pred.ss_14:9_14:20
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of str")
+
+!!! **main.ml#1177:WARNING : Logging not done on finalize
+Stop Omega... 0 invocations caught
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"Can not find flow of str\")")
+Error3(s) detected at main 
+
+======================================================================
+# ex3-ll.ss (FIXED)
+Warning: False precondition detected in procedure foo$
+ with context:   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# to add false context of pre-condition for hip
+  and later sleek.
+
+# Find location of this pre-cond warning and add it to
+    !Globals.false_ctx_line_list
+
+chin@loris-7:~/hg/sl_imm/fix$ grep "false contexts" ../*.ml
+../maingui.ml:    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+../main.ml:    print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+../main.ml:    print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+
+
+
+===================================================================
+# ex2-ll.slk (FIXED)
+
+Time(cache overhead) : 0.003673 (seconds)
+
+3 false contexts at: ( (24,41)  (20,39)  (15,30) )
+
+
+=======================================================================
+# ex8e4e.ss  (FIXED)
+
+HHH<> == self::cell<_>
+  or self::str<_,_> inv true;
+
+# Fixed with a better error message ..
+
+ERROR: at _0:0_0:0
+Message: type conflict between 'cell' and 'str'
+
+# why is this error message at an earlier point?
+
+!!!Full processing file "ex8e4e-conflict-type-err-pred.ss"
+Parsing file "ex8e4e-conflict-type-err-pred.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+
+Starting Omega.../usr/local/bin/oc
+!!! log(small):(0.060223,91)
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+===================================================================
+
+ERROR: at _0:0_0:0
+Message: type substitution error: cannot substitute 'cell' by 'str'
+
+!!! **main.ml#1177:WARNING : Logging not done on finalize
+Stop Omega... 0 invocations caught
+
+Exception occurred: Failure("type substitution error: cannot substitute 'cell' by 'str'")
+Error3(s) detected at main 
+=======================================================================
+# ex8e4b.ss (FIXED)
+
+EEE<> == emp inv true;
+HHH<> == self::EEE<> 
+  or self::str<_,_> inv true;
+
+Fixed with a warning and treating "" object as universal.
+
+WARNING: _0:0_0:0:self of EEE cannot have its type determined
+
+
+Starting Omega.../usr/local/bin/oc
+
+!!! **iast.ml#2150:XXX:0v.view_name:WAITS
+!!! **iast.ml#2150:XXX:0v.view_name:WAIT
+!!! **iast.ml#2150:XXX:0v.view_name:memLoc
+!!! **iast.ml#2168:XXX:view:HHH
+!!! **iast.ml#2169:XXX:a:[str]
+WARNING: _0:0_0:0:self of EEE cannot have its type determined
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of str
+
+ERROR: at ex8e4b-type-err-pred.ss_10:9_10:20
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of str")
+
+!!! **main.ml#1177:WARNING : Logging not done on finalize
+Stop Omega... 0 invocations caught
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"Can not find flow of str\")")
+Error3(s) detected at main 
+=======================================================================
+# ex52a.slk --print-type (FIXED by subs tlist a 2nd time on ante)
+
+# Why aren't the TVars unified?
+
+checkentail inf_p=null & x!=inf_p |- x!=null.
+
+# <1>emp&x:TVar[24]!=inf_p:TVar[20] & inf_p:TVar[20]=null&{FLOW,(20,21)=__norm#E}[]
+
+checkentail inf_p=null & x=inf_p |- x=null.
+
+=======================================================================
+# ex52b.slk --print-type
+
+# Why is x not Object type?
+
+ <1>emp&x:TVar[28]!=null & inf_p:TVar[28]=null & R:RelT([])(fld5:node) & 
+        z:TVar[28]=0 & fld5:node=null&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [z:TVar[28]=0]
+ inferred rel: [RELASS [R:RelT([])]: ( R:RelT([])(fld5:node)) -->  fld5:node=null]
+
+
+=======================================================================
+# ex10a1.ss (OK)
+
+ infer [PP]
+  requires s::WFS<p> 
+  ensures s::WFSeg<a>*a::str<0,b> & PP(s,p,s',b) ;
+
+Compare with # ex10a.ss verified spec:
+
+  requires s::WFS<p> 
+  ensures s::WFSeg<a>*a::str<0,p> & a=s';
+
+Compare also with inferred
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  PP(p,a_68,s',b_69)
+!!! **pi.ml#777:>>POST:  a_68!=null & a_68=s' & p=b_69
+
+Below seems OK:
+=================
+
+[RELDEFN PP: ( a!=null & PP(a,p,s',b)) -->  PP(a,p,s',b),
+RELDEFN PP: ( b=p & a=s' & s'!=null) -->  PP(a,p,s',b)]
+
+Fixcalc seems to produce correct result here..
+
+
+=======================================================================
+# ex10a2.ss
+
+  infer [PP]
+  requires s::WFS<p> 
+  ensures (exists a,b: s::WFSeg<a>*a::str<0,b> & PP(a,p,s',b)) ;
+
+Inferred:
+
+!!! **pi.ml#775:>>>>>>>>>>> (bef postprocess): <<<<<<<<<
+!!! **pi.ml#776:>>REL POST:  PP(p,a_68,s',b_69)
+!!! **pi.ml#777:>>POST:  a_68!=null & a_68=s' & p=b_69
+!!! **pi.ml#778:>>REL PRE :  true
+!!! **pi.ml#779:>>PRE :  true
+
+Can we tidy name printing to use a,b instead?
+=======================================================================
+# ex10a3.ss (OK - no inference printing)
+
+# why is there inference printing when we did not have any infer_command!
+
+=======================================================================
+# ex10a5.slk (FIXED by print suppresion)
+
+# Why is there a contradiction detected? Why is it printed?
+
+!!! **infer.ml#2001:>>>>>> infer_collect_rel <<<<<<
+!!! **infer.ml#2002:LHS and RHS Contradiction detected for:
+!!! **infer.ml#2003:lhs: s=a & v!=0 & q!=null & PPP(a_71,p,s',b_72) & flted_24_70=0 & 
+ flted_42_65=v & b=q & ((q!=null | a_71=q)) & a_71!=null & s!=null & a_71!=s
+!!! **infer.ml#2004:rhs: flted_42_65=0 & s=a
+!!! **infer.ml#2005:Skip collection of following RELDEFN:
+!!! **infer.ml#2006:rel defns:[ PPP(a,p,s',b)]infer_pure_m_x 3
+
+!!! **infer.ml#2210:RelInferred (simplified):[RELDEFN PPP: ( a!=null & PPP(a,p,s',b)) -->  PPP(a,p,s',b)]
+=======================================================================
+# ex10a6.ss (OK)
+
+  infer [PPP]
+  requires s::WFS<p> 
+  ensures s::WFSeg<a>*a::str<n,b> & PPP(a,p,s',b,n) ;
+
+
+Inferring "n" seems hard. Is there residue?
+
+[RELDEFN PPP: ( PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a!=null & a<a_1598) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a_1598!=null & PPP(a_1598,p,s',b_1599,n_1600) & b!=null & n!=0 & a_1598<a) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( a!=null & PPP(a,p,s',b,n)) -->  PPP(a,p,s',b,n),
+RELDEFN PPP: ( b=p & n=0 & a=s' & s'!=null) -->  PPP(a,p,s',b,n)]
+
+# @leak inference gave better results:
+
+!!! **pi.ml#777:>>POST:  a!=null & a=s' & p=b & 0=n
+
+=======================================================================
+# ex10a3.ss (FIXED - using stk var; shorter names)
+
+simplified --> 
+
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+                        s'::str<flted_40_1612,p_1608>@M&
+p=p_1608 & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+
+!!! **typechecker.ml#2145:Dprint:[x,p,s]
+dprint(orig): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M & flted_40_1612=0 & q_1591!=null 
+    & p_1608=p_1589 & q_1603=q_1591 & Anon_12=v_1590 & x'!=0 & x'=v 
+   & q=q_1591 & v=v_1590 & v_1590!=0 & p_1589=p 
+   & s_1607=s & v_bool_43_1521'&{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+ 
+dprint(simpl): ex10a3-verify-dangling.ss:46: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists flted_40_1612: 
+    s::str<v_1590,q_1591>@M * q_1603::WFSeg<s'>@M * 
+    s'::str<flted_40_1612,p_1608>@M
+    & flted_40_1612=0 & q_1591=q_1603 & v_1590=x' 
+    & p=p_1608 & q_1603!=null & x'!=0&
+{FLOW,(4,5)=__norm#E}[]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
+
+=======================================================================
+# ex10a6.ss (OK)
+
+dprint(simpl): ex10a6-dangling-infer-ptr-int.ss:48: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+ Successful States:
+ [
+  Label: [(,0 ); (,1 )]
+  State:
+     (exists n_1597,b_1596,
+a_1595: s::str<x',q>@M * q::WFSeg<a_1595>@M * a_1595::str<n_1597,b_1596>@M&
+PPP(a_1595,p,s',b_1596,n_1597) & q!=null & x'!=0&{FLOW,(4,5)=__norm#E}[]
+    es_infer_obj: [@leak]
+    es_cond_path: [1; 0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+    es_infer_vars_rel: [PPP]
+  Exc:None
+  ]
+=======================================================================
+# ex10a5.slk
+
+infer [PPP]
+ s::str<v,q>@M * q::WFSeg<aa>@M * 
+        aa::str<0,bb>@M & PPP(aa,p,s',bb)  & q!=null & v!=0  
+ |-  s::WFSeg<a>@M * a::str<0,b>@M & PPP(a,p,s',b). 
+print residue.
+
+INPUT 0: [][PPP] 
+ ### ante =  s::str<v,q>@M * q::WFSeg<aa>@M * aa::str<flted_24_70,bb>@M&
+flted_24_70=0 & PPP(aa,p,s',bb) & q!=null & v!=0&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; 
+   b](ex)[](exists flted_25_88: s::WFSeg<a>@M * a::str<flted_25_88,b>@M&
+   flted_25_88=0 & PPP(a,p,s',b)&{FLOW,(20,21)=__norm#E}[]
+
+Residue:
+ <1>emp&aa=a & q_96=q & v_95=v & v!=0 & q!=null & PPP(aa,p,s',bb) & 
+        flted_24_70=0 & b=bb&{FLOW,(20,21)=__norm#E}[]
+=======================================================================
+# bug6d.slk (FIXED by adding self to LHS inst)
+
+# why did match fail?
+=======================================================================
+base-case fold fix induced some errors here:
+
+Total number of errors: 2 in files:
+  sleek13-lend.slk({E1#Valid}) sleek13-lend.slk({E1#Valid}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+=======================================================================
+# ex32.ss (FIXED by returning (true,[],[]) if exception)
+
+Context of Verification Failure: ex32-swap-dec.ss_5:37_5:41
+
+ERROR: at _0:0_0:0
+Message: process_tables expecting relation but got: true
+Exception(simplify_post_helper):Failure("process_tables expecting relation but got: true")
+Exception(simplify_post):Failure("process_tables expecting relation but got: true")
+Exception(simplify_relation):Failure("process_tables expecting relation but got: true")
+
+=======================================================================
+# ex7a3.slk (from norm/norm7.slk) --field-imm -dre "compute_a\|process_a --trace-loop"
+
+# Why did this fold succeed when @A on LHS?
+
+(==solver.ml#10756==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: y::node<Anon_13@M,q@M>@M * q::ll<n>@M
+compute_actions inp3 :LHS pure: x=y
+compute_actions inp4 :RHS cand:[ x::ll<n_56>@M]
+compute_actions inp5 :RHS pure: n_56=n
+compute_actions inp6 :right alias:[n_56]
+compute_actions@1 EXIT: Fold =>
+   LHS: y::node<Anon_13@M,q@M>@M
+   RHS: x::ll<n_56>@M
+
+(==solver.ml#10773==)
+process_action#1@2 ENTRY :
+
+(==solver.ml#10773==)
+process_action#1@2
+process_action#1 inp1 : Fold =>
+   LHS: y::node<Anon_13@M,q@M>@M
+   RHS: x::ll<n_56>@M
+process_action#1 inp2 :estate:  y::node<Anon_13@M,q@M>@M * q::ll<n>@M&x=y&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [n_56]
+ 
+ es_proof_traces: 
+   [x::node<Anon_13,q>@M * q::ll<n>@M:x::ll<n_56>@M&n_56=n&
+    {FLOW,(20,21)=__norm#E}[]]
+process_action#1 inp3 :conseq: x::ll<n_56>@M&n_56=n&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp4 :lhs_b: y::node<Anon_13@M,q@M>@M * q::ll<n>@M&x=y&{FLOW,(20,21)=__norm#E}[]
+process_action#1 inp5 :rhs_b: x::ll<n_56>@M&n_56=n&{FLOW,(20,21)=__norm#E}[]
+process_action#1@2 EXIT:
+ctx length:1 
+ Context: [
+   emp&q_58=q & Anon_57=Anon_13 & x=y&{FLOW,(20,21)=__norm#E}[]
+  ]
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================
+=======================================================================

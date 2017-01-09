@@ -1,0 +1,34 @@
+relation fpre(int x).
+relation fpost(int x).
+
+//infer [fpre,fpost] x <= 0 & y<4  & fpre(x) |- fpost(x).
+//print residue.
+
+//infer [fpre,fpost] x <= 0 & y<4 & y>4 & fpre(x) |- fpost(x).
+//print residue.
+
+infer [fpre,fpost] x > 0 & x' = x - 1 & x' <= 0 & fpre(x) & fpost(x') 
+           |- fpost(x).
+//print residue.
+
+/*
+# 
+es_infer_rel: [
+
+RELDEFN fpost: ( x'=0 & x=1 & fpost(x') & fpre(x)) -->  fpost(x)]] 
+<1>emp&fpost(x') & fpre(x) & x'<=0 & x'+1=x & 0<x&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [
+
+RELDEFN fpost: ( x'=0 & x=1 & fpost(x') & fpre(x)) -->  fpost(x)]
+[[empty]]
+*/
+
+
+infer [fpre] x <= 0 & y<4  & fpre(x) |- Term.
+//print residue.
+
+infer [fpre] x <= 0 & y<4  & fpre(x) & fpre(y) |-y>0 & x<(-4) & Term.
+print residue.
+
+infer [fpre] x <= 0 & y<4  & fpre(x) |-x<(-4) & fpre(y)& Term.
+print residue.

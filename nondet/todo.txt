@@ -1,0 +1,282 @@
+# nondet/ex1a-loop.ss
+Adding true in post led to the following..
+
+Termination checking result: 
+(0) (ERR: unexpected unsound Loop at return)
+
+There is no sleek checking here.
+Can we convert this into a sleek proof!
+
+I guess "false" & Loop are two different things..
+==================================================================
+# nondet/ex1.ss
+
+# why is there an Loop{8:0} ??
+
+Instead of false in post, can we have Loop as
+its post-condition test?
+
+  MayLoop |- Loop
+
+  Loop    |- Loop
+
+id: 6; caller: []; line: 16; classic: false; kind: PRE_REC; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail i'::nondet{}<>&0<=i' & i_1436=i & 0<=i & 0<=i_1436 & v_bool_14_1402' & 
+Loop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Loop{ 8:0}[]&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   i'::nondet{}<>&0<=i' & i_1436=i & 0<=i & 0<=i_1436 & v_bool_14_1402'&{FLOW,(4,5)=__norm#E}[]
+   ]
+
+# why is Loop not present in LHS?
+ 
+id: 7; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail i'::nondet{}<> * (htrue)&i'<0 & v_bool_14_1402' & 0<=i_1436 & 0<=i & 
+i_1436=i&{FLOW,(4,5)=__norm#E}[]
+ |-  hfalse&false&{FLOW,(4,5)=__norm#E}[]. 
+==================================================================
+# nondet/ex2.ss
+
+void foo(int i) 
+  case {
+    i < 0 -> requires Term[] ensures true;
+    i >=0 -> requires Loop ensures true;
+  }
+{ 
+  if (i>=0) {
+    foo(i-1);
+  }
+}
+
+What are we really checking here?
+Are we checking the reachability of Loop?
+Can we convert it into an explicit sleek test
+at the post-condition?
+
+Termination checking result: 
+(0) (ERR: unexpected unsound Loop at return)
+==================================================================
+# nondet/ex12-nd-loop.slk
+
+Why did we ger inferred pre? and moreover with
+MayLoop scenario?
+
+Residue:
+ <1>emp&Loop[] & i<0&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i<=-1]
+<2>emp&MayLoop[] & 0<=i&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [0<=i]
+
+==================================================================
+# ex12b -debug z.log (FIXED)
+
+ below seems to be from 7664 (sa_logging, WN) 24May2013 4:27am
+
+infer[i] true |- case { 
+                     i<222 -> [] true;
+                     i>=222 -> [] true;
+                    }.
+
+Wrong code in solver.ml to fix
+                 if (d==[] && case_vs!=[]) then
+                   begin
+                     let () = x_binfo_pp "WARNING (WN) : inferring case wrongly " no_pos in
+                     (* WN : why do we add case LHS to infer_pure?? *)
+                     (* WN : why do we combine result as union? it should be OR *)
+                     (* place to add case LHS to infer_pure *)
+                     (* for each (c1,c2) from case_brs
+                        (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
+                        perform entail against each c2 combine result as union *)
+
+==================================================================
+# nondet/ex1d-loop.ss
+
+infer_assume[i'] will attempt to infer a
+pre-condition that can be assumed on i'
+to allow the verification to succeed.
+
+It should also print the inferred 
+local (non-deterministic) condition.
+
+void foo(int i) 
+  case {
+    i < 0 -> requires Term[] ensures true;
+    i >=0 -> requires Loop ensures true;
+  }
+{ 
+  if (i>=0) {
+    i = nondeterm();
+    //assume i'>=0;
+    infer_assume[i'];
+    foo(i);
+  }
+}
+
+==================================================================
+# nondet/ex1d-loop.ss
+
+  (* TODO : need to handle pure_branches in future ? *)
+  (* unfixed 13008 that was for rb.ss -p del *)
+  (* relation to infer need to be made explicit *)
+  if no_infer_rel estate (* && no_infer_hp_rel estate *) then (estate,lhs_mix,rhs_mix,None,[])
+  else
+
+(==solver.ml#3716==)
+infer_collect_rel@12@8
+infer_collect_rel inp1 : es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_cond_path: [1]
+ es_var_measures 1: Some(Term[34]{34})
+ es_infer_vars_rel: [3]
+infer_collect_rel inp2 :[3]
+infer_collect_rel inp3 : false
+infer_collect_rel inp4 : false
+infer_collect_rel inp5 : MayLoop[]
+infer_collect_rel@12 EXIT:( false,2: true,3:[RELDEFN 3: ( false) -->  MayLoop[]],4:None,5:[])
+
+==================================================================
+# nondet/ex1d-loop.ss
+
+Why cppo not working here...with "",0??
+
+(==#0==)
+is_inferred_pre_ctx@13@8
+is_inferred_pre_ctx inp1 : es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_cond_path: [1]
+ es_var_measures 1: Some(Term[34]{34})
+ es_infer_vars_rel: [3]
+ es_infer_rel: [RELDEFN 3: ( false) -->  MayLoop[]]
+is_inferred_pre_ctx@13 EXIT:true
+
+Why 3 added to infer_vars_rel?
+Why i' added from infer_vars to infer_vars_rel?
+
+xxx' added below..
+
+xxx' should not be a relation id!
+
+(==infer.ml#1888==)
+is_rel_in_vars@10@9
+is_rel_in_vars inp1 :[3,xxx']
+is_rel_in_vars inp2 : xxx'<0
+is_rel_in_vars@10 EXIT:false
+
+(==solver.ml#14797==)
+heap_entail_one_context_struc#2@30@29@28@27@26
+heap_entail_one_context_struc#2 inp1 : ECase case {
+        xxx'<0 -> EBase emp&Term[34]&{FLOW,(4,5)=__norm#E}[]
+                          EAssume 
+                            htrue&xxx'<0&{FLOW,(4,5)=__norm#E}[]
+                             ;
+        0<=xxx' -> EBase emp&Loop{call 8:0}[]&{FLOW,(4,5)=__norm#E}[]
+                           EAssume 
+                             htrue&0<=xxx'&{FLOW,(4,5)=__norm#E}[]
+                              
+        }
+heap_entail_one_context_struc#2 inp2 : es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ es_cond_path: [1]
+ es_var_measures 1: Some(Term[34]{34})
+ es_infer_vars: [xxx']
+ es_infer_vars_rel: [3]
+ es_infer_rel: [RELDEFN 3: ( false) -->  MayLoop[]]
+heap_entail_one_context_struc#2 inp3 :is_folding:false
+heap_entail_one_context_struc#2 inp4 :has_post:true
+heap_entail_one_context_struc#2@30 EXIT: 
+Good Context: length= 1 [es_formula: hfalse&false&{FLOW,(4,5)=__norm#E}[]
+                         es_cond_path: [1]
+                         es_var_measures 1: Some(Term[34]{34})
+                         es_infer_vars: [xxx']
+                         es_infer_vars_rel: [3; xxx']
+                         es_infer_rel: [RELDEFN 3: ( false) -->  MayLoop[]]] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN 3: ( false) -->  MayLoop[]]
+[[empty]]
+
+!!! **infer.ml#1852:ivs:[3]
+!!! **typechecker.ml#1438:WN : place to act on infer_assume
+!!! **typechecker.ml#1439: nfer_assume:[i']
+!!! **infer.ml#1852:ivs:[3,i']
+!!! **infer.ml#1852:ivs:[3,i']
+
+==================================================================
+../hip ex1d-local-infer-loop.ss -dre ".*infer" > 1
+
+Why do we need history for sa? It sounds rather
+imperative.
+
+  es_history : h_formula list; (* for sa *)
+  {es with es_history = es.es_history@[es.es_heap];
+  {es with es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap);
+  let old_history =  if (*is_data*) is_empty_heap hf then es.es_history else es.es_history@(get_hdnodes_hrel_hf hf) in
+
+No need for "emp" in es_history
+
+add_infer_vars_ctx@35@8
+add_infer_vars_ctx inp1 :[i']
+add_infer_vars_ctx inp2 : es_formula: 
+  htrue&v_bool_14_1401' & 0<=i_1435 & 0<=i & i_1435=i&{FLOW,(4,5)=__norm#E}[]
+ es_history: [emp; emp; emp; emp]
+ es_cond_path: [1; 0]
+ es_var_measures 1: Some(Loop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+add_infer_vars_ctx@35 EXIT: es_formula: 
+  htrue&v_bool_14_1401' & 0<=i_1435 & 0<=i & i_1435=i&{FLOW,(4,5)=__norm#E}[]
+ es_history: [emp; emp; emp; emp]
+ es_cond_path: [1; 0]
+ es_var_measures 1: Some(Loop[]{})
+ es_infer_vars: [i']
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+==================================================================
+#ex13.slk --print-type
+
+infer [PP] false |- PP(x).
+print residue.
+
+PP:RelT([])
+INPUT 0: [][fpostXXX:void] 
+Could we not infer UtT(true) to indicate that it
+is a unknown temporal post-condition?
+UtT(false) is unknown temporal pre-condition
+
+We should later add to es-infer_vars_rel rather than es_infer_vars.
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+=============================================
+
+<1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN PP: ( false) -->  PP(x)]
+[[empty]]
+*/
+
+infer [fpostXXX] false |- fpostXXX(x).
+print residue.
+/*
+                         es_infer_vars: [fpostXXX]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+# [fpostXXX] should be in es_infer_vars_rel
+*/
+
+infer [@term] false |- fpostXXX(x).
+print residue.
+
+/*
+Need to pick up fpostXXX based on @term..
+
+                         es_infer_obj: [@term]
+                         es_infer_vars_rel: []] <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

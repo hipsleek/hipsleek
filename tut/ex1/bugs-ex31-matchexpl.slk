@@ -1,0 +1,46 @@
+data pair {
+  int fst;
+  int snd;
+}.
+
+// (1) implicit instantiation
+checkentail x::pair<1,2> |- x::pair<a,b>.
+print residue.
+/*
+  <1>emp&flted_7_16=1 & flted_7_15=2 & a=flted_7_16 & b=flted_7_15&{FLOW,(4,5)=__norm#E}[]
+*/
+
+// (2) existential instantiation
+checkentail x::pair<1,2> |- (exists a,b: x::pair<a,b>).
+print residue.
+/*
+ <1>emp&flted_11_30=1 & flted_11_29=2&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/
+
+// (3) explicit instantiation
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
+
+// instantiate, then prove
+checkentail x::pair<1,2> |- x::pair<a,b> & a>5.
+
+// instantiate, then prove
+checkentail x::pair<1,2> |- x::pair<a,b> & a>0.
+
+// What is the residue?
+checkentail x::pair<1,2> * y::pair<3,4> |- x::pair<a,b> .
+print residue.
+
+// What is the residue?
+checkentail x::pair<1,2> * x::pair<3,4> |- x::pair<a,b> .
+print residue.
+
+// Will this hold?
+checkentail x::pair<1,2> * x::pair<3,4> |- false.
+
+// Will this hold?
+checkentail x::pair<1,2> * y::pair<1,2> |- x!=y.
+
+// Will this hold?
+checkentail x::pair<1,2> * y::pair<1,2> |- x=y.

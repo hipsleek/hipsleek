@@ -1,0 +1,31 @@
+data node {
+    int v;
+    node next;
+}.
+
+pred lls<n,k> == 
+    self=null & n=0 & k=0
+ or self::node<v,q> * q::lls<n-1,k> 
+ or self::node<v,q> * q::lls<n-1,k-1> & n=k & v>0
+ inv n>=k>=0.
+
+// below looks reasonable to me..
+
+checkentail xs::node<v,q> * q::lls<n,k> |- xs::lls<nn,kk>.
+print residue.
+
+checkentail xs::node<v,q> * q::lls<n,k> & v>0 |- xs::lls<nn,kk>.
+print residue.
+/*
+// should ave
+ <1>emp&xs!=null & 0<v & v=v_95 & q=q_96 & k<(n+1) & nn=n+1 & k=kk & kk<nn&{FLOW,(21,22)=__norm}[]
+
+*/
+
+checkentail xs::node<v,q1> * q1::node<v2,q2> * q2::lls<n,k> 
+  |- xs::lls<nn,kk>.
+print residue.
+
+checkentail xs::node<1,q1> * q1::node<2,q2> * q2::lls<n,k> 
+  |- xs::lls<nn,kk>.
+print residue.

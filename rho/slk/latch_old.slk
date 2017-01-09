@@ -1,0 +1,48 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{(-)P, (+)P}<x:cell>.
+
+pred_prim LatchOut{(+)P}<x:cell>.
+
+pred_prim CNT<n:int>.
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a<=0 & b<=0 -> self::CNT<a+b>.
+
+lemma "norm" self::LatchOut{%P}<y> * self::CNT<n> & n<0 -> %P.
+
+lemma "deadlock" self::CNT<a> * self::CNT<b> & a>0 & b<0 ->  emp & flow __Fail.
+
+// (1)
+checkentail c::CNT<2> |- c::CNT<2> * c::CNT<0>.
+print residue.
+
+// (2)
+checkentail c::CNT<2> |- c::CNT<1> * c::CNT<1>.
+print residue.
+
+// (3)
+checkentail c::CNT<a> * c::CNT<b> & a=-1 & b=-2 |- c::CNT<n> & n=-3.
+print residue.
+
+// (4)
+checkentail c::CNT<1> |- (exists n: c::CNT<n> & n>0).
+print residue.
+
+// (5)
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<(-1)> |- z::cell<10>.
+print residue.
+
+// (6) FAIL, since c::CMT<0> is resource-ambiguous
+checkentail c::LatchOut{z::cell<10>}<z> * c::CNT<0> |- z::cell<10>.
+print residue.
+
+// (7) VALID
+checkentail c::CNT<1> * c::CNT<(-1)> |- emp & flow __Fail.
+print residue.
+
+// (8) FAIL
+checkentail c::CNT<1> * c::CNT<(-1)> |- true.
+print residue.

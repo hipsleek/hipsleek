@@ -1,0 +1,85 @@
+
+!!!Full processing file "examples/mutual-5d.ss"
+Parsing file "examples/mutual-5d.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure g$int... 
+Procedure g$int SUCCESS.
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_13_1269=1+x' & 0<x' & 0<x & x'=x & !(v_bool_12_1145') & 
+0<x' & !(v_bool_12_1145') & v_int_13_1144'=v_int_13_1274+v_int_13_1273 & 
+res=v_int_13_1144' & fpost_1137(x') & gpost_1122(v_int_13_1269) --> fpost_1137(x).
+
+ termAssume x'<=0 & x<=0 & x'=x & v_bool_12_1145' & x'<=0 & 
+v_bool_12_1145' & v_int_12_1139'=0 & res=v_int_12_1139' --> fpost_1136(x).
+
+ termAssume res=v_int_24_1128' & 0<v_int_24_1201 & 0<v_int_24_1201 & 
+v_int_24_1201+1=x' & !(v_bool_22_1129') & !(v_bool_21_1130') & 0<x' & 
+!(v_bool_21_1130') & x'=x & 
+0<x' & fpost_1137(v_int_24_1201) --> gpost_1122(x).
+
+ termAssume res=v_int_24_1128' & v_int_24_1200<=0 & v_int_24_1200<=0 & 
+v_int_24_1200+1=x' & !(v_bool_22_1129') & !(v_bool_21_1130') & 0<x' & 
+!(v_bool_21_1130') & x'=x & 
+0<x' & fpost_1136(v_int_24_1200) --> gpost_1122(x).
+
+ termAssume res=v_int_23_1125' & 0<x' & v_bool_22_1129' & 
+!(v_bool_21_1130') & 0<x' & !(v_bool_21_1130') & x'=x & 
+0<x' & fpost_1137(x') --> gpost_1122(x).
+
+ termAssume x'<=0 & x'=x & v_bool_21_1130' & x'<=0 & v_bool_21_1130' & 
+v_int_21_1124'=0 & res=v_int_21_1124' --> gpost_1122(x).
+
+ termAssume 0<x' & x'=x & !(v_bool_21_1130') & 0<x' & !(v_bool_21_1130') & 
+!(v_bool_22_1129') & v_int_24_1127'+1=x' & 
+0<v_int_24_1127' & gpre_0(x) --> Loop.
+
+ termAssume 0<x' & x'=x & !(v_bool_21_1130') & 0<x' & !(v_bool_21_1130') & 
+!(v_bool_22_1129') & v_int_24_1127'+1=x' & 
+v_int_24_1127'<=0 & gpre_0(x) --> Term.
+
+ termAssume 0<x' & x'=x & !(v_bool_21_1130') & 0<x' & !(v_bool_21_1130') & 
+v_bool_22_1129' & gpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[	f: [[4] x<=0@B,[5] 1<=x@R]
+,	g: [[6] x<=0@B,[7] 1<=x@R,[8] 1<=x@R]
+]
+Termination Inference Result:
+g:  case {
+  x<=0 -> requires emp & Term[31,2]
+ ensures emp & true; 
+  2<=x -> requires emp & Loop[]
+ ensures false & false; 
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+f:  case {
+  x<=0 -> requires emp & Term[31]
+ ensures emp & true; 
+  1<=x -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 109 invocations 
+8 false contexts at: ( (12,14)  (12,21)  (13,7)  (13,27)  (13,23)  (13,21)  (13,14)  (13,14) )
+
+!!! log(small):(0.084368,453)
+Total verification time: 0.487429 second(s)
+	Time spent in main process: 0.44602 second(s)
+	Time spent in child processes: 0.041409 second(s)
+

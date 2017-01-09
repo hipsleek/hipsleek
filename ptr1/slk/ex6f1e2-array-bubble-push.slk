@@ -1,0 +1,24 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_seg<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2)
+  inv n>=i & i>=0.
+
+pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) & forall(a:a notin S2 | v<=a)
+  inv n>=i & i>=0.
+
+  /*
+lemma_unsafe self::arr_seg<i,n,S> & i<m & m<n 
+  <-> self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
+  */
+
+lemma_unsafe self::arr_seg<i,n,S> & i<n <-> 
+  self::arr_seg<i,n-1,S1>*r::arrI<m> & r=self+(n-1) & S=union(S1,{m}).
+
+checkentail base::arr_seg<start,end-1,S>*r::arrI<m> & r=base+(end-1)
+    |- base::arr_seg<start,end,S2>.
+print residue.
+

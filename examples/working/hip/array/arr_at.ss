@@ -1,4 +1,10 @@
-//relation dom(int[] a, int x, int y) == true.
+/**
+ * Test array access.
+ * 
+ * @author Vu An Hoa
+ */
+
+relation dom(int[] a, int x, int y) == true.
 
 int main()
 	requires true

@@ -1,0 +1,25 @@
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+//(2)
+checkentail 
+   x::cellp
+   (1/2)
+   <v1> |-  x::cellp(3 / 4)<v1>.
+print residue. //fail
+
+/*
+# ex31b.slk --en-para -perm fperm -tp redlog
+
+
+File "ex31b-split-fracperm.slk", line 10, characters 20-21
+ error: Stream.Error("[cexp] expected after OPAREN (in [perm])")
+ at:error at: 
+
+*/

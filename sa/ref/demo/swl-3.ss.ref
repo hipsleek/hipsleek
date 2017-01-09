@@ -1,0 +1,111 @@
+
+!!!Full processing file "demo/swl-3.ss"
+Parsing file "demo/swl-3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[(cur,prev)]
+!!! neqs:[(cur,prev)]
+Checking procedure lscan$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1237,HP_1238,G1,G2]requires HP_1237(cur,sentinel@NI) * 
+HP_1238(prev,sentinel@NI)&true
+ ensures G1(cur',sentinel@NI) * 
+G2(prev',sentinel@NI)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1237(cur,sentinel@NI)&true --> cur::node<val1,next1> * 
+HP_1243(next1,sentinel@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1238(prev,sentinel@NI) * cur'::node<val1,prev>&
+true --> HP_1237(cur',sentinel@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)emp&prev'=null --> HP_1238(prev',sentinel@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1243(cur',sentinel@NI)&cur'!=null & 
+cur'!=sentinel --> HP_1237(cur',sentinel@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1238(prev,sentinel@NI) * cur1::node<val1,prev>&
+true --> HP_1238(cur1,sentinel@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1243(cur',cur'@NI)&true --> G1(cur',sentinel@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1238(prev,sentinel@NI) * prev'::node<val1,prev>&
+true --> G2(prev',sentinel@NI)&
+true(3,4),
+ // POST
+(1;2;0)G1(cur',sentinel@NI) * HP_1243(next1,sentinel@NI)&next1=null & 
+next1!=sentinel --> G1(cur',sentinel@NI)&
+true(3,4),
+ // POST
+(1;2;0)G2(prev',sentinel@NI)&true --> G2(prev',sentinel@NI)&
+true(3,4),
+ // POST
+(2;2;0)G1(cur',sentinel@NI)&true --> G1(cur',sentinel@NI)&
+true(3,4)]
+
+Procedure lscan$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1237(cur2,sentinel1) ::=  [cur2::node<val,next> * HP_1243(next,sentinel1)&cur2!=sentinel1 & 
+cur2!=null],
+ HP_1238(prev',sentinel) ::=  [
+  emp&prev'!=sentinel & prev'=null
+  or prev'::node<val,next2> * HP_1243(next2,sentinel)&prev'!=sentinel
+  ],
+ G1(cur3,sentinel2) ::=  [emp&sentinel2=cur3; hfalse],
+ G2(prev1,sentinel3) ::=  [hfalse; prev1::node<val,prev> * prev::node<val,next3> * 
+HP_1243(next3,sentinel3)&prev!=sentinel3; prev1::node<val,prev>&
+prev!=sentinel3 & prev=null],
+ HP_1243(cur4,sentinel4) ::=  [emp&sentinel4=cur4; emp&cur4=null & cur4!=sentinel4; 
+cur4::node<val,next> * HP_1243(next,sentinel4)&cur4!=sentinel4]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1237(cur2,sentinel1) ::= cur2::node<val,next> * HP_1243(next,sentinel1)&cur2!=sentinel1 & cur2!=null(3,4),
+ HP_1238(prev',sentinel) ::= 
+ emp&prev'!=sentinel & prev'=null
+ or prev'::node<val,next2> * HP_1243(next2,sentinel)&prev'!=sentinel
+ (3,4),
+ G1(cur3,sentinel2) ::= emp&sentinel2=cur3(3,4),
+ G2(prev1,sentinel3) ::= 
+ prev1::node<val,prev> * prev::node<val,next3> * HP_1243(next3,sentinel3)&
+ prev!=sentinel3
+ or prev1::node<val,prev>&prev!=sentinel3 & prev=null
+ (3,4),
+ H1(cur,sentinel) ::= HP_1237(cur,sentinel),
+ H2(prev,sentinel) ::= HP_1238(prev,sentinel),
+ HP_1243(cur4,sentinel4) ::= 
+ emp&cur4=null & cur4!=sentinel4
+ or cur4::node<val,next> * HP_1243(next,sentinel4)&cur4!=sentinel4
+ or emp&sentinel4=cur4
+ (3,4)]
+*************************************
+Stop Omega... 7 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.083965,318)
+Total verification time: 0.409673 second(s)
+	Time spent in main process: 0.394871 second(s)
+	Time spent in child processes: 0.014802 second(s)
+

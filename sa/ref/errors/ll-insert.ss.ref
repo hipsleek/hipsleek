@@ -1,0 +1,122 @@
+
+!!!Full processing file "errors/ll-insert.ss"
+Parsing file "errors/ll-insert.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! SCall neqs:[]
+!!! neqs:[]
+Checking procedure f_r_1207_while_31_2$node~node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(tmp)&true
+ ensures G1(tmp_39,tmp_39')&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H1(tmp1)&tmp1!=null --> tmp1::node<val1,next1> * HP_1342(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1342(next1)&true --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)tmp1::node<val1,next1> * G1(next1,tmp1')&true --> G1(tmp1,tmp1')&
+true(3,4),
+ // POST
+(2;0)H1(tmp1)&tmp1=null & tmp1=null --> G1(tmp1,tmp1')&
+true(3,4),
+ // POST
+(2;0)H1(tmp1)&tmp1!=null --> G1(tmp1,tmp1')&
+true(3,4)]
+
+Procedure f_r_1207_while_31_2$node~node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(tmp2) ::=  [emp&tmp2=null; tmp2::node<val2,next2> * H1(next2); emp&tmp2=DP & 
+tmp2!=null],
+ G1(tmp3,tmp4) ::=  [emp&tmp3=null & tmp4=null; tmp3::node<val,next> * G1(next,tmp4); emp&
+tmp3!=null & tmp4=tmp3 & tmp3=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(tmp2) ::= 
+ tmp2::node<val2,next2> * H1(next2)
+ or emp&tmp2=DP & tmp2!=null
+ or emp&tmp2=null
+ (3,4),
+ G1(tmp3,tmp4) ::= 
+ tmp3::node<val,next> * G1(next,tmp4)
+ or emp&tmp3!=null & tmp4=tmp3 & tmp3=DP
+ or emp&tmp3=null & tmp4=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(1<=self | self<=(0-1) | self=null)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+!!! formula1: emp&(self!=null | (self!=null & tmp4=self) | (self=null & tmp4=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((self=tmp4 & 1<=tmp4) | (self=tmp4 & tmp4<=(0-1)) | (self=null & 
+tmp4=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], tmp_1468=self),
+([self], true)])
+Checking procedure insert$node~int~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(list)&true
+ ensures G(list,res)&true{,(3,4)=__norm};
+Proving binding in method insert$node~int~int for spec  EAssume 
+   G(list,res)&{FLOW,(3,4)=__norm}[]
+   , Line 15
+
+( [(,1 ); (,2 )]) bind: node  prev_38'::node<val_41_1222',next_41_1223'>@L cannot be derived from context
+errors/ll-insert.ss_41:18_41:32
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,1 ); (,2 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-insert.ss_41:18_41:32
+
+Context of Verification Failure: 1 File "errors/ll-insert.ss",Line:15,Col:13
+Last Proving Location: 1 File "errors/ll-insert.ss",Line:41,Col:18
+
+Procedure insert$node~int~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure insert$node~int~int
+
+!!! proc.proc_name:insert$node~int~intStop Omega... 31 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.110219,445)
+Total verification time: 0.462092 second(s)
+	Time spent in main process: 0.434201 second(s)
+	Time spent in child processes: 0.027891 second(s)
+

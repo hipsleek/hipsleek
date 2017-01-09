@@ -1,0 +1,68 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Fail.(must) cause:do_unmatched_rhs : x::node<q>
+
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail 2: Fail.(may) cause:do_unmatched_rhs : x::node<q>
+
+ <1>emp&x!=null&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail 3: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+Entail 4: Valid. 
+
+ <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 5: Fail.(must) cause: x!=null |-  x=null. LOCS:[28] (must-bug)
+
+ <1>emp&x!=null&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 6: Fail.(must) cause: x!=null |-  x=null. LOCS:[33] (must-bug)
+
+ <1>x::node<a>&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 7: Fail.(must) cause: x=null |-  x!=null. LOCS:[40] (must-bug)
+
+ <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 8: Valid. 
+
+ <1>emp&x!=null&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 9: Valid. 
+
+ <1>x::node<a>&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 24
+SAT % Hit   : 66.66%
+IMPLY Count : 11
+IMPLY % Hit : 45.45%
+Time(cache overhead) : 0.001235 (seconds)
+
+!!! log(small):(0.016067,45)
+Total verification time: 0.069092 second(s)
+	Time spent in main process: 0.05564 second(s)
+	Time spent in child processes: 0.013452 second(s)
+

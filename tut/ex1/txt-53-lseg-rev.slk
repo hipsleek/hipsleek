@@ -1,0 +1,76 @@
+data node {
+  int val;
+  node next;
+}.
+
+
+pred lseg_rev<n, p> ==
+ self = p & n = 0
+ or  self::lseg_rev<n-1,q>*q::node<_,p>
+ inv n >= 0.
+
+pred lseg<n, p> ==
+ self = p & n = 0
+ or  self::node<_,q>*q::lseg<n-1,p>
+ inv n >= 0.
+
+lemma_unsafe "lseg-rev-t"
+    self::lseg_rev<n,r> * r::node<_,p>
+    -> self::node<_,q>*q::lseg_rev<n,p>
+.
+
+Cyclic Proof
+=============
+x::lseg_rev<n,p> --> x::lseg<n,p>
+
+(1) Unfold both LHS & RHS
+x=p & n=0 \/ x::lseg_rev<n-1,q1>*q1::node<_,p> 
+  --> x=p & n=0 \/ x::node<_,q>*q::lseg<n-1,p> 
+
+(1a) Disj-Left
+x=p & n=0 
+  --> x=p & n=0 \/ x::node<_,q>*q::lseg<n-1,p> 
+  --> x=p & n=0 
+
+(1b) Disj-Right
+x::lseg_rev<n-1,q1>*q1::node<_,p> 
+  --> x=p & n=0 \/ x::node<_,q>*q::lseg<n-1,p> 
+  --> x::node<_,q>*q::lseg<n-1,p> 
+
+Cyclic Proof
+=============
+x::lseg_rev<n,q1>*q1::node<_,p> 
+   --> x::node<_,q>*q::lseg<n,p>
+
+(2) Unfold both LHS & RHS
+ x=q1 & n=0 * q1::node<_,p>
+ \/ x::lseg_rev<n,q2>*q2::node<_,q1>*q1::node<_,p> 
+ --> x::node<_,q>*q=p & n=0
+    \/ x::node<_,q> * q::lseg<n-1,q3>*q3::node<_,p>
+
+(2a) Disj-Left
+ x=q1 & n=0 * q1::node<_,p>
+ --> x::node<_,q>*q=p & n=0
+    \/ x::node<_,q> * q::lseg<n-1,q3>*q3::node<_,p>
+ --> x::node<_,q>*q=p & n=0
+ 
+(2b) Disj-Right
+ x::lseg_rev<n,q2>*q2::node<_,q1>*q1::node<_,p> 
+ --> x::node<_,q>*q=p & n=0
+    \/ x::node<_,q> * q::lseg<n-1,q3>*q3::node<_,p>
+ --> x::node<_,q> * q::lseg<n-1,q3>*q3::node<_,p>
+ 
+ x::node<_,q4>*q4::lseg<n-1,q1> *q1::node<_,p> 
+ --> x::node<_,q> * q::lseg<n-1,q3>*q3::node<_,p>
+
+Similarly for Cyclic Proof
+=============
+x::lseg<n,p> --> x::lseg_rev<n,p>
+
+Our system did not manage to prove this, as it cannot
+handle lemmas with complex LHS and RHS properly.
+An example is:
+
+
+x::lseg_rev<n,q1>*q1::node<_,p> 
+   --> x::node<_,q>*q::lseg<n,p>

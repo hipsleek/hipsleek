@@ -1,0 +1,23 @@
+Starting Omega...oc
+H1 is defined.
+G1 is defined.
+H2 is defined.
+H_1 is defined.
+H_2 is defined.
+H_3 is defined.
+H_4 is defined.
+H_5 is defined.
+G2 is defined.
+
+ERROR: at bugs/mcf-type-bug-1.slk_26:27_26:38 
+Message: UNIFICATION ERROR : at location {(26,27),(26,38)} types tree and node are inconsistent
+ 
+ERROR: at bugs/mcf-type-bug-1.slk_26:27_26:38 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(26,27),(26,38)} types tree and node are inconsistent")
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.054869 second(s)
+	Time spent in main process: 0.040603 second(s)
+	Time spent in child processes: 0.014266 second(s)
+

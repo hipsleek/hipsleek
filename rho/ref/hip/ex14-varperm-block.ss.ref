@@ -1,0 +1,43 @@
+
+!!!Full processing file "hip/ex14-varperm-block.ss"
+Parsing file "hip/ex14-varperm-block.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex14-varperm-block.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*N@full[v_35,x_33,y_34]&v_35'=5 & y_34'=40 & x_33'=4 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex14-varperm-block.ss:10: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*N@full[kk_36,v_35,x_33,y_34]&v_35'=kk_36'+v_1330 & v_1330=5 & y_34'=40 & x_33'=4 & kk_36'=1&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex14-varperm-block.ss:12: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:htrue*N@full[v_35,x_33,y_34]&v_35'=1+v_1330 & v_1330=5 & y_34'=40 & x_33'=4&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.396022 second(s)
+	Time spent in main process: 0.376022 second(s)
+	Time spent in child processes: 0.02 second(s)
+

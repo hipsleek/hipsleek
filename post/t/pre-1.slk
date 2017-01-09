@@ -1,0 +1,12 @@
+infer [y] x>y |- x>0.
+print residue.
+
+infer [x,y] x>y |- x>0.
+print residue.
+
+relation R(int x,int y).
+infer [R] x>y & R(x,y) |- x>0.
+print residue.
+
+infer [@pre_n] x>y  |- x>0.
+

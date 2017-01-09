@@ -1,0 +1,12 @@
+
+!!!Full processing file "t/cll-d.ss"
+Parsing file "t/cll-d.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure delete$node... 
+Procedure delete$node SUCCESS.
+
+3 false contexts at: ( (32,2)  (31,8)  (31,2) )

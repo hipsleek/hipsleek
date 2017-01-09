@@ -1,0 +1,140 @@
+
+!!!Full processing file "validate/tree-parent.ss"
+Parsing file "validate/tree-parent.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure trav$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(p@NI,x)&true
+ ensures G(p@NI,x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(p@NI,x)&true --> x::node<parent1,right1,left1> * 
+HP_1296(parent1,p@NI) * HP_1297(right1,p@NI) * HP_1298(left1,p@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1297(right1,p@NI)&right1!=null |#| x::node<parent1,right1,left1>&
+left1!=null --> H(x@NI,right1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1298(left1,p@NI)&left1!=null |#| x::node<parent1,right1,left1>&
+right1!=null --> H(x@NI,left1)&
+true(3,4),
+ // POST
+(1;1;0)x::node<p,right1,left1> * HP_1297(right1,p@NI) * 
+HP_1298(left1,p@NI) * HP_1296(p,p@NI)&left1=null & right1=null --> G(p@NI,x)&
+true(3,4),
+ // POST
+(1;1;0)x::node<parent1,right1,left1> * HP_1296(parent1,p@NI) * 
+HP_1297(right1,p@NI) * HP_1298(left1,p@NI)&parent1!=p & left1=null & 
+right1=null --> G(p@NI,x)&
+true(3,4),
+ // POST
+(2;1;0)HP_1296(parent1,p@NI) * HP_1297(right1,p@NI) * HP_1298(left1,p@NI) * 
+x::node<parent1,right1,left1>&left1!=null & right1=null --> G(p@NI,x)&
+true(3,4),
+ // POST
+(1;2;0)HP_1296(parent1,p@NI) * HP_1297(right1,p@NI) * HP_1298(left1,p@NI) * 
+x::node<parent1,right1,left1>&left1=null & right1!=null --> G(p@NI,x)&
+true(3,4),
+ // POST
+(2;2;0)HP_1296(parent1,p@NI) * x::node<parent1,right1,left1> * 
+G(x@NI,right1) * G(x@NI,left1)&left1!=null & right1!=null --> G(p@NI,x)&
+true(3,4)]
+
+Procedure trav$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(p1,x1) ::=  [x1::node<parent2,right2,DP4>&right2=null & parent2=p1|#|emp&
+left_23_1693!=null; x1::node<parent2,right2,DP4>&parent2=p1|#|emp&
+left_23_1295=null & right_23_1692!=null; x1::node<parent2,right2,DP4>&
+right2=null|#|emp&left_23_1295=null & right_23_1294=null & 
+parent_23_1691!=p_1726; x1::node<parent2,right2,DP4> * H(x1,right2)&
+right2!=null|#|emp&left_23_1295!=null; x1::node<parent2,right2,DP4>|#|emp&
+left_23_1295=null & right_23_1692!=null; x1::node<DP3,right2,left2>&
+left2=null & right2=null|#|emp&parent_23_1691!=p_1726; 
+x1::node<DP3,right2,left2>&left2=null|#|emp&left_23_1295=null & 
+right_23_1692!=null; x1::node<DP3,DP,left2> * H(x1,left2)&left2!=null|#|emp&
+right_23_1294!=null; x1::node<DP2,right2,left2> * H(x,left2)&left2!=null & 
+right2=null; x1::node<DP1,right2,left2> * H(x1,right2)&left2=null & 
+right2!=null|#|emp&left_23_1295!=null; x1::node<DP1,right2,left2> * 
+H(x1,right2) * H(x1,left2)&left2!=null & right2!=null|#|emp&
+right_23_1294!=null; x1::node<parent2,DP,left2>&left2=null & 
+parent2=p1|#|emp&right_23_1692!=null],
+ G(p2,x2) ::=  [x2::node<p2,right,left>&left=null & right=null; x2::node<DP3,right,left>&
+left=null & right=null & DP3!=p2; x2::node<parent,right,DP4>&parent=p2 & 
+right=null & DP4!=null; x2::node<DP2,right,DP4>&right=null & DP4!=null; 
+x2::node<parent,DP,left>&parent=p2 & left=null & DP!=null; 
+x2::node<DP1,DP,left>&left=null & DP!=null; x2::node<parent,right,left> * 
+G(x2,right) * G(x2,left)&parent=p2 & left!=null & right!=null; 
+x2::node<DP5,right,left> * G(x2,right) * G(x2,left)&left!=null & right!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(p1,x1) |#| 
+              emp&right_23_1692!=null
+              or emp&right_23_1294!=null
+              or emp&left_23_1295!=null
+              or emp&right_23_1294!=null
+              or emp&left_23_1295=null & right_23_1692!=null
+              or emp&parent_23_1691!=p_1726
+              or emp&left_23_1295=null & right_23_1692!=null
+              or emp&left_23_1295!=null
+              or emp&left_23_1295=null & right_23_1294=null & 
+                 parent_23_1691!=p_1726
+              or emp&left_23_1295=null & right_23_1692!=null
+              or emp&left_23_1693!=null
+               ::= 
+ x1::node<parent2,right2,DP4>&parent2=p1
+ or x1::node<parent2,right2,DP4>&right2=null
+ or x1::node<parent2,right2,DP4> * H(x1,right2)&right2!=null
+ or x1::node<parent2,right2,DP4>
+ or x1::node<DP3,right2,left2>&left2=null & right2=null
+ or x1::node<DP3,right2,left2>&left2=null
+ or x1::node<DP3,DP,left2> * H(x1,left2)&left2!=null
+ or x1::node<DP2,right2,left2> * H(x,left2)&left2!=null & right2=null
+ or x1::node<DP1,right2,left2> * H(x1,right2)&left2=null & right2!=null
+ or x1::node<DP1,right2,left2> * H(x1,right2) * H(x1,left2)&left2!=null & 
+    right2!=null
+ or x1::node<parent2,DP,left2>&left2=null & parent2=p1
+ or x1::node<parent2,right2,DP4>&right2=null & parent2=p1
+ (3,4),
+ G(p2,x2) ::= 
+ x2::node<DP3,right,left>&left=null & right=null & DP3!=p2
+ or x2::node<parent,right,DP4>&parent=p2 & right=null & DP4!=null
+ or x2::node<DP2,right,DP4>&right=null & DP4!=null
+ or x2::node<parent,DP,left>&parent=p2 & left=null & DP!=null
+ or x2::node<DP1,DP,left>&left=null & DP!=null
+ or x2::node<parent,right,left> * G(x2,right) * G(x2,left)&parent=p2 & 
+    left!=null & right!=null
+ or x2::node<DP5,right,left> * G(x2,right) * G(x2,left)&left!=null & 
+    right!=null
+ or x2::node<p2,right,left>&left=null & right=null
+ (3,4)]
+*************************************
+Stop Omega... 44 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.156745,860)
+Total verification time: 0.641522 second(s)
+	Time spent in main process: 0.618727 second(s)
+	Time spent in child processes: 0.022795 second(s)
+

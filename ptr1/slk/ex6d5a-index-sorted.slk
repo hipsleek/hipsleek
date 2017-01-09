@@ -1,0 +1,25 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg_sorted<i,n,mi> == x::arrI<mi> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg_sorted<i+1,n,m2> & x=self+i 
+       & i>=0 & i<n-1 & mi<=m2
+  inv n>i & i>=0.
+
+checkentail a::arrI<Anon_14>@M * x_2110::arrI<mi_2107>@M * 
+ base::arr_seg_sorted<flted_10_2109,n_2108,m2_2111>@M
+& v_bool_48_1964' & (1+i')!=m' & base'=base & i'=i & m'=m & v'=v 
+& flted_40_2050=1+i 
+& a=base+i & m_2049=m & !(v_bool_43_1965') & 
+n_2108=m_2049 & mi_2107=mi & mi<=m2_2111 & (flted_40_2050+1)<m_2049 & 
+0<=flted_40_2050 & x_2110=flted_40_2050+base & 
+flted_10_2109=1+flted_40_2050 & a_2069=x_2110 & v_2070=mi_2107 & k'=v_2070 & 
+v'<=k' 
+ |-  //a_2125::arrI<Anon_12>@M&a_2125=i'+base' & 
+     0<=i'.
+

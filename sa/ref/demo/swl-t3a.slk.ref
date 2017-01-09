@@ -1,0 +1,22 @@
+Starting Omega...oc
+HP_2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&prev=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&prev=null --> HP_2(prev,flted@NI,sent@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 3
+SAT % Hit   : 66.66%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.000124 (seconds)
+
+!!! log(small):(0.007892,6)
+Total verification time: 0.056665 second(s)
+	Time spent in main process: 0.041981 second(s)
+	Time spent in child processes: 0.014684 second(s)
+

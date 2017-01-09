@@ -1,0 +1,49 @@
+data pair {
+  int fst;
+  int snd;
+}.
+
+pred P<n> == 
+  (exists a,b: self::pair<a,b> & n=a)
+inv true.
+
+// explicit instantiation
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
+
+/*
+checkentail x::pair<1,2> |- [n] x::P<n>.
+print residue.
+*/
+/*
+# bugs-ex31-match.slk (urgent)
+
+Why is explicit instantiation not working
+for both node and predicate?
+
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b>.
+print residue.
+
+Residue:
+ <1>emp&flted_23_50=1 & flted_23_49=2&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+EXPECTING:
+
+ <1>emp&flted_23_50=1 & flted_23_49=2  & flted_23_50=a & flted_23_49=b  &{FLOW,(4,5)=__norm#E}[]
+
+
+checkentail x::pair<1,2> |- [n] x::P<n>.
+print residue.
+
+EXPECTING:
+
+ <1>emp&flted_23_50=1 & flted_23_49=2  & flted_23_50=n  &{FLOW,(4,5)=__norm#E}[]
+
+
+*/
+/*
+// explicit instantiation (prove, then instantiate)
+checkentail x::pair<1,2> |- [a,b] x::pair<a,b> & a>0.
+print residue.
+*/

@@ -1,0 +1,32 @@
+Starting Omega...oc
+H is defined.
+HP_903 is defined.
+HP_902 is defined.
+G is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>emp&f=null & prev=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [emp&f=null & prev=null --> HP_902(prev,f@NI,sent@NI)&
+                   true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>emp&next!=sent1 & f=null & next!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_903(prev1,cur@NI,sent1@NI) * cur::node<val,prev1>&
+                   f=null --> HP_902(cur,f@NI,sent1@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 9
+SAT % Hit   : 55.55%
+Time(cache overhead) : 0.000344 (seconds)
+
+!!! log(small):(0.010332,13)
+Total verification time: 0.062501 second(s)
+	Time spent in main process: 0.048568 second(s)
+	Time spent in child processes: 0.013933 second(s)
+

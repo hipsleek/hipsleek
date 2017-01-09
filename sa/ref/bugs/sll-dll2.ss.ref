@@ -1,0 +1,80 @@
+
+!!!Full processing file "bugs/sll-dll2.ss"
+Parsing file "bugs/sll-dll2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! neqs:[]
+Checking procedure paper_fix$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(c,p)&true
+ ensures G1(c,p)&true{,(3,4)=__norm};
+
+dprint: bugs/sll-dll2.ss:22: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:HP_1236(pp1,p) * HP_1237(nn1,p) * HP_1238(p,c)&c!=null & v1'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []HP_1236(pp,p) * HP_1237(nn,p) * HP_1238(p,c)&v' & c!=null
+
+ ]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H1(c,p)&c!=null --> HP_1236(pp1,p@NI) * HP_1238(p,c@NI) * 
+c::node<_,pp1,nn1> * HP_1237(nn1,p@NI)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1237(nn',p@NI)&c!=null --> H1(nn',c)&
+true(3,4),
+ // POST
+(1;0)c::node<_,p,nn1> * HP_1238(p,c@NI) * G1(nn1,c)&true --> G1(c,p)&
+true(3,4),
+ // POST
+(2;0)H1(c,p)&c=null --> G1(c,p)&
+true(3,4)]
+
+Procedure paper_fix$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(c1,p1) ::=  [emp&c1=null; c1::node<_,DP,nn> * HP_1308(nn) * HP_1238(p1,c1)],
+ G1(c2,p2) ::=  [emp&c2=null; c2::node<_,p2,nn> * HP_1238(p2,c2) * G1(nn,c2)],
+ HP_1308(nn2) ::=  [emp&nn2=null; nn2::node<_,DP,nn> * HP_1308(nn) * HP_1238(c,nn2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c1,p1) ::= 
+ c1::node<_,DP,nn> * HP_1308(nn) * HP_1238(p1,c1)
+ or emp&c1=null
+ (3,4),
+ G1(c2,p2) ::= 
+ c2::node<_,p2,nn> * HP_1238(p2,c2) * G1(nn,c2)
+ or emp&c2=null
+ (3,4),
+ HP_1308(nn2) ::= 
+ nn2::node<_,DP,nn> * HP_1308(nn) * HP_1238(c,nn2)
+ or emp&nn2=null
+ (3,4)]
+*************************************
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.034795,222)
+Total verification time: 0.318707 second(s)
+	Time spent in main process: 0.304967 second(s)
+	Time spent in child processes: 0.01374 second(s)
+

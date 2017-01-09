@@ -1,0 +1,55 @@
+Starting Omega...oc
+HP_7 is defined.
+HP_9 is defined.
+Starting z3... 
+
+!!!>>>>>> mismatch ptr x::node<_,_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr x::node<_,_> is not found (or inst) in the lhs <<<<<<
+Entail (1) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+
+ <1>HP_7(x,l2)&x!=null&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_51(Anon,x) * HP_52(Anon1,x)&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_7(x@NI,l2)&x!=null --> l2::node<_,_> * 
+                   HP_51(Anon,x@NI) * HP_52(Anon1,x@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_66(Anon2,x) * HP_67(Anon3,x) * HP_68(x,l2)&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_9(x,l2)&x!=null --> l2::node<_,_> * HP_66(Anon2,x@NI) * 
+                   HP_67(Anon3,x@NI) * HP_68(x,l2@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_82(Anon4,l2) * HP_83(Anon5,l2) * HP_84(l2,x)&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_9(x,l2)&x!=null --> x::node<_,_> * HP_82(Anon4,l2@NI) * 
+                   HP_83(Anon5,l2@NI) * HP_84(l2,x@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (5) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+Stop Omega... 1 invocations 
+SAT Count   : 26
+SAT % Hit   : 69.23%
+IMPLY Count : 10
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.001145 (seconds)
+
+!!! log(small):(0.014829,44)
+Total verification time: 0.072527 second(s)
+	Time spent in main process: 0.057298 second(s)
+	Time spent in child processes: 0.015229 second(s)
+

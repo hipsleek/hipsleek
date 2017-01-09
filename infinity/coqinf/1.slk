@@ -1,0 +1,4 @@
+//checkentail forall(x:exists(y: x+y =0)) |- true.
+checkentail true |- forall(x:exists(y: x + y = 0)).
+//checkentail forall(x:forall(y:forall(z: (x+y)+z) = x+(y+z))) |- true.
+checkentail true |- forall(x:forall(y:forall(z: (x+y)+z = x+(y+z)))).

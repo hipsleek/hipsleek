@@ -1,0 +1,63 @@
+!!! init_tp : Using Z3 by default
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Valid. 
+
+Residue:
+ <1>htrue&x=null & S={}&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_16_50=null & v_61=a & q_62=q & v_66=b & q_67=flted_16_50 & S1_68={} & S1_68={} & S1_63=union({v_66},S1_68) & S1_63=union({v_66},S1_68) & S=union({v_61},S1_63)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_62) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&flted_21_74=null & v_88=a & q_89=q & v_93=b & q_94=flted_21_74 & S1_95={} & S1_95={} & S1_90=union({v_93},S1_95) & S1_90=union({v_93},S1_95) & S=union({v_88},S1_90)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_89) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 4: Fail.(may) cause: S=union({a},{b},{}) |-  S={b}. LOCS:[6;7;0;27] (may-bug)
+
+Residue:
+ <1>emp&flted_26_101=null & v_115=a & q_116=q & v_120=b & q_121=flted_26_101 & S1_122={} & S1_122={} & S1_117=union({v_120},S1_122) & S1_117=union({v_120},S1_122) & S=union({v_115},S1_117)&{FLOW,(4,8)=__MayError#E}[]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  Fold ==>  SEARCH ==>  Match(q,q_116) ==>  COND ==>  BaseCaseFold ==> ]]
+
+
+
+Entail 5: Valid. 
+
+Residue:
+ <1>(exists S1_145: q::llSet{}<S1_145>&S=union({Anon_12},S1_145) & S!=({})&{FLOW,(4,5)=__norm#E})[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 6: Fail.(may) cause:OrL[do_unmatched_rhs : q1::node<Anon_14,q2>,valid]
+
+
+Entail 7: Fail.(may) cause:OrL[do_unmatched_rhs : q1::node<Anon_16,q2>,valid]
+
+
+Entail 8: Valid. 
+
+
+SAT Count   : 301
+SAT % Hit   : 82.05%
+IMPLY Count : 33
+IMPLY % Hit : 66.66%
+Time(cache overhead) : 0.029109 (seconds)
+
+!!! log(small):(0.42912,397)
+Total verification time: 0.261431 second(s)
+	Time spent in main process: 0.202104 second(s)
+	Time spent in child processes: 0.059327 second(s)
+

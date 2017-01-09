@@ -1,0 +1,43 @@
+
+!!!Full processing file "norm/zip_paper_eq-2.ss"
+Parsing file "norm/zip_paper_eq-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure zip$node~node... 
+assert:norm/zip_paper_eq-2.ss:27: 10:  : ok
+
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN P: ( P(m,n) & m=m_1420+1 & n=n_1419+1) -->  P(m_1420,n_1419),
+RELASS [P]: ( P(m,n)) -->  (m!=0 | 1>n),
+RELASS [P]: ( P(m,n)) -->  (n!=0 | 1>m)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( true, true, P(m,n), m=n)]
+*************************************
+
+!!!REL POST :  true
+!!!POST:  true
+!!!REL PRE :  P(m,n)
+!!!PRE :  m=n
+Procedure zip$node~node SUCCESS.
+Stop Omega... 27 invocations 
+1 false contexts at: ( (28,10) )
+
+!!! log(small):(0.617415,1411)
+Total verification time: 0.84774 second(s)
+	Time spent in main process: 0.793035 second(s)
+	Time spent in child processes: 0.054705 second(s)
+

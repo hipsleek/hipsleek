@@ -1,0 +1,61 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,y)], xxx=self+i & y=self+n & n>=i & i>=0).
+
+
+//heap_addresses : xxx...y-1
+
+checkentail base::arr_seg<i,n> & x=base+i & y=base+i+1 |- x!=y.
+expect Valid.
+
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  false.
+print residue.
+expect Fail.
+
+// i,n-1  j,m-1
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  n<=j | m<=i.
+print residue.
+expect Valid.
+
+/*
+
+  (x,y) => x<=y
+  (x,y) & x=y = []
+  (x,y) & x<y = {x,..,y-1}
+
+  {(x,Some(self,i,n-i))}
+
+# ex7a1.slk
+
+# unsound false:
+  baga over inv: [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+  baga over inv (unfolded): [([(x,y)], x=i+self & y=n+self & i<=n & 0<=i)]
+ 
+
+!!! **cast.ml#1704:look_up_view_baga: baga= :
+  Some([([(xxx,y)], xxx=i+self & y=n+self & i<=n & 0<=i)])
+!!! **cast.ml#1705:baga ex vars= :[xxx,y]
+
+!!! **cast.ml#1723:baga (filtered)= :[([xxx], xxx=j+base & y=m+base & j<=m & 0<=j)]
+!!! **cast.ml#1726:baga (hulled)= :[xxx]
+!!! **cvutil.ml#916:baga(view_node):[xxx]
+!!! **cvutil.ml#1355:h0: base::arr_seg<i,n>@M * base::arr_seg<j,m>@M
+!!! **cvutil.ml#1357:memset: [[xxx,xxx]]
+
+checkentail base::arr_seg<i,n> * base::arr_seg<j,m>
+   |-  false.
+expect Fail.
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+*/
+

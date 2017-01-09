@@ -1,0 +1,20 @@
+
+!!!Full processing file "errors/v-next5b.ss"
+Parsing file "errors/v-next5b.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: errors/v-next5b.ss_8:13_8:35:the result type __Error is not covered by the throw list[]
+
+Checking procedure get_next$node... 
+Procedure get_next$node SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.023514,178)
+Total verification time: 0.288483 second(s)
+	Time spent in main process: 0.266477 second(s)
+	Time spent in child processes: 0.022006 second(s)
+

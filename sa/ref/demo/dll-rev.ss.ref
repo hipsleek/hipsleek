@@ -1,0 +1,59 @@
+
+!!!Full processing file "demo/dll-rev.ss"
+Parsing file "demo/dll-rev.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!!WARNING : uninterpreted free variables [H3] in specification.
+Checking procedure reverse$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G1]requires H3(y,p@NI)&true
+ ensures G1(res)&
+true{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[H1,H2,G1] pre_post_vars:[G1,res,H3,y,p]
+Proving binding in method reverse$node~node for spec  EAssume 
+   G1(res)&{FLOW,(3,4)=__norm}[]
+   , Line 17
+
+( [(,0 ); (,1 )]) bind: node  y'::node<val_23_1202',prev_23_1203',next_23_1204'>@L cannot be derived from context
+demo/dll-rev.ss_23:16_23:22
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]demo/dll-rev.ss_23:16_23:22
+
+Context of Verification Failure: 1 File "demo/dll-rev.ss",Line:17,Col:13
+Last Proving Location: 1 File "demo/dll-rev.ss",Line:23,Col:16
+
+Procedure reverse$node~node FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure reverse$node~node
+
+!!! proc.proc_name:reverse$node~nodeStop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.020051,184)
+Total verification time: 0.288129 second(s)
+	Time spent in main process: 0.273352 second(s)
+	Time spent in child processes: 0.014777 second(s)
+

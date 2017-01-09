@@ -1,0 +1,108 @@
+ 
+id: 0; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 1; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 2; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 3; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 4; caller: []; line: 12; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail (exists a_1181: htrue&x'=x & update_array_1d(a_1181,a_36',1+x',5) & 
+v_int_12_1151'=5&{FLOW,(4,5)=__norm#E})[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & update_array_1d(a_1188,a_36',1+x',5) & v_int_12_1151'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 5; caller: []; line: 12; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & update_array_1d(a_1188,a_36',1+x',5) & v_int_12_1151'=5&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & update_array_1d(a_1188,a_36',1+x',5) & v_int_12_1151'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 6; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail (exists a_36': htrue&res=a_36'[5] & update_array_1d(a_1188,a_36',1+x',5) & 
+x'=x&{FLOW,(4,5)=__norm#E})[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&res=a_1190[5] & update_array_1d(a_1188,a_1190,1+x',5) & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 7; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&v_int_10_1148'=1 & x'=x & foopre_0(x)[31]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 8; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&v_int_10_1148'=1 & x'=x & foopre_0(x)[31]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&v_int_10_1148'=1 & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 9; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5 & foopre_0(x)[31]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 10; caller: []; line: 10; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5 & foopre_0(x)[31]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & v_int_10_1150'=1+x' & v_int_10_1149'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 11; caller: []; line: 12; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail (exists a_1205: htrue&x'=x & update_array_1d(a_1205,a_36',1+x',5) & 
+v_int_12_1151'=5 & foopre_0(x)[31]&{FLOW,(4,5)=__norm#E})[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & update_array_1d(a_1212,a_36',1+x',5) & v_int_12_1151'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 12; caller: []; line: 12; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail htrue&x'=x & update_array_1d(a_1212,a_36',1+x',5) & v_int_12_1151'=5 & 
+foopre_0(x)[31]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   htrue&x'=x & update_array_1d(a_1212,a_36',1+x',5) & v_int_12_1151'=5&{FLOW,(4,5)=__norm#E}[]
+   ]
+ 
+id: 13; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [@term ]; c_heap: emp
+ checkentail (exists a_36': htrue&res=a_36'[5] & update_array_1d(a_1212,a_36',1+x',5) & 
+x'=x&{FLOW,(4,5)=__norm#E})[]
+ |-  htrue&foopost_1191(x)[]&{FLOW,(4,5)=__norm#E}[]. 
+tntrel_ass: [@Return:  termAssume res=a_1214[5] & update_array_1d(a_1212,a_1214,1+x',5) & 
+x'=x --> foopost_1191(x).]
+res:  1[
+   htrue&res=a_1214[5] & update_array_1d(a_1212,a_1214,1+x',5) & x'=x&{FLOW,(4,5)=__norm#E}[]
+   ]

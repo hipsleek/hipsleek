@@ -1,0 +1,31 @@
+data cell{
+  int v;
+}.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+pred_prim CNT<n:int>
+inv n>=(-1).
+
+
+checkentail (exists v_int_50_1423': x_41'::cell<v_int_48_1561> * 
+c_42'::LatchIn{- (exists flted_26_67: x_41'::cell<flted_26_67>&flted_26_67>=10)}<> * 
+c_42'::LatchOut{+ (exists flted_26_68: x_41'::cell<flted_26_68>&flted_26_68>=10)}<> * 
+c_42'::CNT{}<v_int_50_1423'>&v_int_48_1561=10 & v_int_50_1423'=1)
+ |-  c_42'::LatchIn{- %P}<> * %P * 
+c_42'::CNT{}<n>&0<n. 
+
+
+/*
+# ex2a-latch.slk
+
+why non-base formula disallowed?
+
+Message: Non-Base formula is disalowed in resource flow
+File "ex2a-latch.slk", line 12, characters 78-79
+ error: Failure("Non-Base formula is disalowed in resource flow")
+ at:error at: 
+
+
+*/

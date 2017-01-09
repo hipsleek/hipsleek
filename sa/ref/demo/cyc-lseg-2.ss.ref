@@ -1,0 +1,72 @@
+
+!!!Full processing file "demo/cyc-lseg-2.ss"
+Parsing file "demo/cyc-lseg-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure trav$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(y)&true
+ ensures G(y,y'@NI)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(y)&y!=null --> y::node<next1> * HP_1232(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1232(next1)&true --> H(next1)&
+true(3,4),
+ // POST
+(1;0)y::node<next1> * G(next1,y'@NI)&true --> G(y,y'@NI)&
+true(3,4),
+ // POST
+(2;0)H(y)&y=null & y=null --> G(y,y'@NI)&
+true(3,4)]
+
+Procedure trav$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(y1) ::=  [emp&y1=null; y1::node<next2> * H(next2)],
+ G(y4,y3) ::=  [GP_1269(y4,y2)&y3=null & y2=null],
+ GP_1269(y4,y2) ::=  [
+  y4::node<next> * GP_1269(next,y2)
+  or emp&y4=y2
+  ]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(y1) ::= 
+ y1::node<next2> * H(next2)
+ or emp&y1=null
+ (3,4),
+ G(y4,y3) ::= GP_1269(y4,y2)&y3=null & y2=null(3,4),
+ GP_1269(y4,y2) ::= 
+ y4::node<next> * GP_1269(next,y2)
+ or emp&y4=y2
+ (3,4)]
+*************************************
+Stop Omega... 6 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.031882,240)
+Total verification time: 0.306215 second(s)
+	Time spent in main process: 0.290616 second(s)
+	Time spent in child processes: 0.015599 second(s)
+

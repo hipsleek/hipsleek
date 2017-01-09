@@ -1,0 +1,41 @@
+
+!!!Full processing file "slk/clist-length.ss"
+Parsing file "slk/clist-length.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 0<n_1289 & flted_15_1283+1=n_1289 & q_1301=self_1282 & 
+!(v_bool_28_1217') & x'!=null & !(v_bool_28_1217') & x'=x & x'!=null & 
+self_1282=x' & flted_15_1283+1=n & v_int_31_1216'=v_int_31_1417+1 & 
+res=v_int_31_1216' & (((q_1285=1 & x'=2 & 1<=flted_15_1283) | (x'=1 & 
+q_1285=self_1282 & flted_15_1283=0))) & fpost_0(n_1289) --> fpost_0(n).
+
+ termAssume flted_15_1283+1=n & self_1282=x' & x'!=null & x'=x & 
+!(v_bool_28_1217') & x'!=null & !(v_bool_28_1217') & v_int_31_1215'=1 & 
+v_node_31_1213'=q_1285 & q_1301=self_1282 & flted_15_1283+1=n_1289 & 
+(((q_1285=1 & x'=2 & 1<=flted_15_1283) | (x'=1 & q_1285=self_1282 & 
+flted_15_1283=0))) & fpre_0(n) --> fpre_0(n_1289).
+
+
+Base/Rec Case Splitting:
+[	length: [[2] 1<=n@R]
+]
+Termination Inference Result:
+length:  requires x::clist<n> & truecase {
+                             1<=n -> requires emp & Loop[]
+ ensures false & false;
+                             
+                             }
+
+2 false contexts at: ( (29,4)  (29,11) )

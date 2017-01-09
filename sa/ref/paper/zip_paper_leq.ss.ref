@@ -1,0 +1,84 @@
+
+!!!Full processing file "paper/zip_paper_leq.ss"
+Parsing file "paper/zip_paper_leq.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((r=null & self=null) | (self!=null & p!=null & r!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & r=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,r,self], true),
+([], r=null & self=null)])
+!!! neqs:[]
+Checking procedure zip$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,y)&true
+ ensures G(x,y,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,y)&x!=null --> x::node<val2,next2> * HP_1317(next2,y@NI) * 
+HP_1318(y,x@NI)&
+true(3,4),
+ // BIND
+(2;0)HP_1318(y,x@NI)&true --> y::node<val1,next1> * HP_1325(next1,x@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1317(next2,y@NI) * HP_1325(next1,x@NI)&true --> H(next2,next1)&
+true(3,4),
+ // POST
+(1;0)H(res,y)&res=null & res=null --> G(x,y,res)&
+true(3,4),
+ // POST
+(2;0)x::node<val2,next2> * G(next2,next1,n1) * y::node<val1,next1> * 
+res::node<v1,n1>&true --> G(x,y,res)&
+true(3,4)]
+
+Procedure zip$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,y1) ::=  [emp&x1=null; x1::node<val4,next4> * H(next4,next3) * y1::node<val3,next3>],
+ G(x2,y2,res1) ::=  [emp&res1=null & x2=null; x2::node<val,next> * G(next,next1,n) * 
+y2::node<val1,next1> * res1::node<v,n>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,y1) ::= 
+ x1::node<val4,next4> * H(next4,next3) * y1::node<val3,next3>
+ or emp&x1=null
+ (3,4),
+ G(x2,y2,res1) ::= 
+ x2::node<val,next> * G(next,next1,n) * y2::node<val1,next1> * 
+ res1::node<v,n>
+ or emp&res1=null & x2=null
+ (3,4)]
+*************************************
+Stop Omega... 49 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.12403,427)
+Total verification time: 0.437207 second(s)
+	Time spent in main process: 0.371214 second(s)
+	Time spent in child processes: 0.065993 second(s)
+

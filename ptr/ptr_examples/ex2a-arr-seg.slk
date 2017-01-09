@@ -1,0 +1,33 @@
+data arr {
+  int val;
+}.
+
+pred arr_seg<i:int,n:int> == emp & i=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0
+  inv n>=0 & i>=0.
+
+/*
+checkentail x::arr<5> * y::arr<4> & x=(y:arr)+1 |- y::arr_seg<0,n>.
+print residue.
+expect Valid.
+
+checkentail  y::arr<4> & x=(y:arr)+1 |- y::arr_seg<0,n>.
+print residue.
+expect Valid.
+*/
+
+checkentail  emp |- y::arr_seg<i,n>.
+print residue.
+expect Valid.
+// expects n<=i & n>=0 instantiation
+
+
+checkentail  emp |- [i] y::arr_seg<i,n> & i=0.
+print residue.
+expect Valid.
+// expects n<=i & n>=0 instantiation
+
+checkentail i=0 |- y::arr_seg<i,n> .
+print residue.
+expect Valid.
+// expects n<=i & n>=0 instantiation

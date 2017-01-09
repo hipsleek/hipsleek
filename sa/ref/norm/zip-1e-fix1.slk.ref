@@ -1,0 +1,9 @@
+Starting Omega...oc
+
+!!! fixpoint:[( P3(n,m), m=n & 0<=n, true, true)]
+Stop Omega... 4 invocations 
+!!! log(small):(0.001558,4)
+Total verification time: 0.081375 second(s)
+	Time spent in main process: 0.042339 second(s)
+	Time spent in child processes: 0.039036 second(s)
+

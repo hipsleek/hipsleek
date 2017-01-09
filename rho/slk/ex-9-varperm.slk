@@ -1,0 +1,37 @@
+//1
+checkentail true |- @zero[x, y].
+
+//2
+checkentail true |- @full[x] * @lend[y] * @zero[x, z].
+
+//3
+checkentail @full[x] |- true.
+print residue.
+
+//4
+checkentail @full[x] * @full[x] |- false.
+print residue.
+
+//5
+checkentail @full[x] |- @full[x].
+print residue.
+
+//6
+checkentail @full[x] |- @lend[x].
+print residue.
+
+//7
+infer [@par] @full[x] |- @lend[x].
+print residue.
+
+//8
+checkentail @full[x] |- @value[x].
+print residue.
+
+//9
+checkentail @full[x] |- @zero[x].
+print residue.
+
+//10
+checkentail @full[x] or @lend[x] |- @full[x].
+print residue.

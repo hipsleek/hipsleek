@@ -1,0 +1,27 @@
+data node {node next;}.
+
+//1
+infer [@dis_err] x'=x |- x'<=5.
+print residue.
+
+expect Fail.
+
+
+//2
+infer [@err_must] x'=x |- x'<=6.
+print residue.
+
+expect Fail_May.
+
+//3
+infer [] x'=x |- x'<=6.
+print residue.
+
+expect Fail_May.
+
+//4
+infer [@err_must] x'=x |- y::node<_> & x'<=6.
+print residue.
+
+expect Fail_May.
+

@@ -1,0 +1,20 @@
+template int f(int x, int y).
+template int post(int x, int y).
+template int rank(int x, int y).
+
+// inv
+infer [f, post, rank] r1 >= 0 & r = f(v, r1) |- r >= 0.
+
+// length's postcondition
+infer [f, post, rank] res = 0 & r = 0 |- post(res, r) >= 0.
+infer [f, post, rank] res = 1 + res1 & r = f(v, r1) & r1 >= 0 & post(res1, r1) >= 0 |- post(res, r) >= 0.
+infer [f, post, rank] r = f(v, r1) & r1 >= 0 |- r > r1.
+
+// double's rank
+infer [f, post, rank] i < res_length & post(res_length, r) >= 0 |- rank(r, i) >= 0.
+infer [f, post, rank] r1 = f(v, r) & i1 = i + 2 |- rank(r, i) > rank(r1, i1).
+
+template_solve.
+
+/* Note: Simplify constraints to have better results */
+

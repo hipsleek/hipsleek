@@ -1,0 +1,139 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0 & self!=null
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0 & self!=null.
+
+
+/*
+lemma_unsafe self::arr_seg<i,n> & i<m & m<=n
+  <- self::arr_seg<i,m>*self::arr_seg<m,n>.
+
+*/
+
+//lemma_unsafe self::arr_seg<i,n> & i<m<=n -> self::arr_seg<i,m>*self::arr_seg<m,n> .
+
+
+
+// These three cases are working correctly
+
+/*
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+*/
+
+
+checkentail xx::arr_seg<m,n> & i<m<=n & Univ(m) & i<n & i>=0 |- xx::arr_seg<i+1,n>.
+expect Valid.
+print residue.
+
+checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & i<n & i>=0 |-  m=i+1.
+expect Valid.
+
+checkentail 0<=m & m<n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
+
+checkentail 0<=n & m=n & i<m & m<=n & Univ(m) & i<n & i>=0 |- m=i+1.
+
+checkentail (((0<=m & ((0-xx)+1)<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m) & i<n & 0<=i |-  m=i+1.
+
+
+
+
+
+
+// checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n  & i<n & m=i+1|-  m=i+1.
+// expect Valid.
+
+// checkentail xx::arr_seg<m,n> & i<m<=n & m=i+1 & i<n |- xx::arr_seg<i+1,n>.
+// expect Valid.
+// print residue.
+
+
+// This one fails since m=i+1 will make the LHS stronger
+// checkentail (((0<=m & m<n))) & i<m & m<=n & Univ(m)
+// 	    |-  m=i+1.
+
+
+// checkentail (((0<=m & m<n) | (m=n & 0<=n))) & i<m & m<=n & Univ(m)
+// 	    |-  m=i+1.
+
+/*
+checkentail //xx::arr_seg<i,m> *
+   xx::arr_seg<m,n> & i<m<=n & Univ(m)
+   & i<n |- xx::arr_seg<i+2,n>.
+expect Fail.
+print residue.
+
+// Is it correct the instantiate n together?
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m) & i+2<n |- xx::arr_seg<i+2,n>.
+expect Fail.
+print residue.
+*/
+/*
+
+// i<n
+
+checkentail xx::arr_seg<i,m> * xx::arr_seg<m,n> & i<m<=n & Univ(m)
+   & i<n |- xx::arr_seg<i+2,n>.
+
+
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+4,n>.
+print residue.
+expect Fail.
+
+
+# ex93.slk
+
+!!! **lemma.ml#312:Updated lemma store with unsafe repo::[lem_13]
+left:
+ Lemma "lem_13":  self::arr_seg<i,n>@M&i<n & i<m & m<=n&{FLOW,(20,21)=__norm#E}[]==> (exists m_46: self::arr_seg<i,m>@M * self::arr_seg<m_46,n>@M&m_46=m&
+{FLOW,(20,21)=__norm#E}[])
+ head match:arr_seg
+ body view:arr_seg
+ body pred_list:[arr_seg,arr_seg]
+ coercion_univ_vars: [m]
+ materialized vars:  [(self,full,[arr_seg])]
+ coercion_case: Normalize false
+ head:  self::arr_seg<i,n>@M&i<n & i<m & m<=n&{FLOW,(20,21)=__norm#E}[]
+ body:  (exists m_46: self::arr_seg<i,m>@M * self::arr_seg<m_46,n>@M&m_46=m&
+{FLOW,(20,21)=__norm#E}[])
+ head_norm:  (exists i_75,n_76: self::arr_seg<i_75,n_76>@M&
+i<n & i<m & m<=n & i_75=i & n_76=n&{FLOW,(20,21)=__norm#E}[])
+ body_norm:  EBase 
+   (exists i_60,m_61,n_62,
+   
+# below fail but got Valid..
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+4,n>.
+print residue.
+expect Fail.
+
+======================================
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+1,n>.
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n |- xx::arr_seg<i+1,n>.
+
+print residue.
+expect Fail.
+
+
+
+checkentail xx::arr_seg<i,n> & i<n |- xx::arr_seg<i+2,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,m>*xx::arr_seg<m,n> & i<m<=n & i+1<n
+    |- xx::arr_seg<i+1,n>.
+
+*/

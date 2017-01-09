@@ -1,0 +1,28 @@
+
+!!!Full processing file "hip2/ll-getnext3.ss"
+Parsing file "hip2/ll-getnext3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_next$node... 
+dprint: hip2/ll-getnext3.ss:23: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:x::node<_,q>&MayLoop[]&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []x::node<_,q>&MayLoop[]
+
+ ]
+
+Procedure get_next$node SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.017265,170)
+Total verification time: 0.273453 second(s)
+	Time spent in main process: 0.260144 second(s)
+	Time spent in child processes: 0.013309 second(s)
+

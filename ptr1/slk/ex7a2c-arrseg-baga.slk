@@ -1,0 +1,50 @@
+
+data arrI {
+  int val;
+}.
+
+/*
+pred arr_seg<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv BG([(self+iii,n-iii)], n>=iii & iii>=0 & self!=null).
+*/
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+/*
+checkentail  base::arr_seg<iii,n>  
+  |- base+iii-1!=null.
+expect Fail.
+*/
+
+/*
+# ex7a2c.slk --pcp --print-type
+
+  inv BG([(self+i,n-i)], n>=i & i>=0).
+
+checkentail  base::arr_seg<iii,n> //& iii<n 
+  |- base+iii!=null.
+
+# why is base undefined?
+
+ERROR: at _0:0_0:0
+Message: base is undefined (7)
+
+Entail 1: Fail.(may) cause: base:void!=null & 0<=iii:NUM & iii:NUM<=n:NUM |-  (iii:NUM+base:Unknown)!=(1+null). LOCS:[9;12] (may-bug)
+
+# Why is actual root empty? type of self empty?
+
+  view_data_name: 
+  type_of_self: 
+  None
+  actual_root: 
+  None
+ 
+*/
+

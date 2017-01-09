@@ -1,0 +1,36 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10 & a=aprime
+ |-  aprime::arrI<_>@M .
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10 & a=aprime
+ |-  a::arrI<_>@M .
+print residue.
+expect Valid.
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10 //& a=aprime
+ |-  aprime::arrI<_>@M .
+print residue.
+expect Fail.
+
+
+/*
+# ex6a1.slk
+
+Why first proof fails? What happen to eqset?
+
+
+
+*/

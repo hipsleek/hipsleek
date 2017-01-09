@@ -1,0 +1,23 @@
+Starting Omega...oc
+SLSEG is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_27(n,e) * HP_28(s,e) * HP_29(e,lp) * lp::node2<n,s>&e!=lp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [SLSEG(l,e)&e!=l --> l::node2<n,s> * HP_27(n,e@NI) * 
+                   HP_28(s,e@NI) * HP_29(e,l@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 4
+SAT % Hit   : 25.%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000395 (seconds)
+
+!!! log(small):(0.008244,8)
+Total verification time: 0.057438 second(s)
+	Time spent in main process: 0.043385 second(s)
+	Time spent in child processes: 0.014053 second(s)
+

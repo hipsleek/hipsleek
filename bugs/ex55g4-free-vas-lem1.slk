@@ -1,0 +1,25 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, px> == self = px & n = 0
+         or self::node<next = r> * r::lseg<n - 1, px>
+         inv n >= 0.
+
+lemma_safe self::lseg<n, ppp> & n = a + b & a,b >=0 <-> 
+     self::lseg<a, r> * r::lseg<b, ppp>.
+
+/*
+# ex55g1.slk (FIXED - see ex55g3.slk)
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+	 "<==" implication: : Valid.
+
+Failed to prove lem_12:<==> in current context.
+Removing invalid lemma ---> lemma store restored.
+
+# Would case-spec solve this?
+
+*/

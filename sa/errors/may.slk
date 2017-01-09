@@ -1,0 +1,12 @@
+data node {
+  node next;
+}.
+
+checkentail x!=null & flow __norm |- x::node<q> & flow __norm.
+print residue.
+// <1>emp&x!=null&{FLOW,(3,7)=__MayError}[]  YES
+// [[ COND ==>  UnmatchedRHSData ==> ]]
+
+
+checkentail 0<=x |-  0<x.
+print residue.

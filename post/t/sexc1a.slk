@@ -1,0 +1,21 @@
+class Exp extends __Exc {
+  int val;
+}.
+
+checkentail (exists v_int: eres::Exp<v_int>
+//& 0<x 
+& v_int=2 & flow Exp)
+ |-  emp&res=2 & 0<x& flow Exp. 
+print residue.
+
+/*
+# sexc1a.slk
+
+Why sleek does not support class extension?
+
+File "sexc1a.slk", line 1, characters 0-5
+ error: Stream.Error("illegal begin of sprog")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+S
+*/

@@ -1,0 +1,42 @@
+/*
+  Example with simple CountDownLatch
+ */
+
+//CountDownLatch
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+pred_prim CNT<n:int>
+  inv n>=(-1).
+
+lemma "split" self::CNT<n> & a>=0 & b>=0 & n=a+b -> self::CNT<a> * self::CNT<b>.
+
+lemma "combine" self::CNT<a> * self::CNT<b> & a,b>=0 -> self::CNT<a+b>.
+
+//lemma "zero" self::CNT<a> -> self::CNT<a> * self::CNT<b> & b = 0;
+
+/********************************************/
+
+checkentail x::CNT<2> |- x::CNT<1>.
+print residue.
+
+checkentail x::CNT<1> |- x::CNT<1>.
+print residue.
+
+/*
+# ex11-split-cnt.slk
+
+Residue:
+ <1>emp&flted_25_96=1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  COND ==>  Match(x,x) ==> ]]
+
+<2>x::CNT{}<b_113>&flted_25_96=1 & 0<=b_113 & 0<=1 & flted_25_96=b_113+1&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  (Lemma ==> split(x,x)) ==>  Match(x,x) ==> ]]
+
+Above gives two answers. I wonder if we can
+force it to give just one answer, namely <2> which has
+a CNT? This could perhaps be triggered by @split on CNT's parameter?
+
+*/

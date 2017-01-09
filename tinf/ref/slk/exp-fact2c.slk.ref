@@ -1,0 +1,40 @@
+Starting Omega...oc
+Starting z3... 
+ <1>emp&x=0 & res=1 & Term[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x=0 & res=1&
+                        {FLOW,(21,22)=__norm}[]: [] -> fpost_0(x)]
+[[empty]]
+
+ <1>emp&x!=0 & x'+1=x & fpre_0(x)[]&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+ <1>emp&x!=0 & x'+1=x & res=r+1 & 1<=r & fpre_0(x)[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x!=0 & x'+1=x & res=r+1 & 1<=r&
+                        {FLOW,(21,22)=__norm}[]: [fpost_0()] -> fpost_0(x)]
+[[empty]]
+
+[Warning] False ctx
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 1<=r & res=r+1 & x'+1=x & x!=0 & fpost_0() --> fpost_0(x).
+
+ termAssume res=1 & x=0 --> fpost_0(x).
+
+
+Base/Rec Case Splitting:
+[	f: [[1] x=0@B,[2] 1<=x@R,[3] x<=(0-1)@R]
+]
+Termination Inference Result:
+f:  case {
+  x=0 -> requires emp & Term[0,1]
+ ensures emp & true; 
+  1<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+

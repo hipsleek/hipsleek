@@ -1,0 +1,19 @@
+
+!!!Full processing file "paper-v/bt-trav-v.ss"
+Parsing file "paper-v/bt-trav-v.ss" by default parser...
+WARNING : parsing problem TRAV is neither a ranking function nor a relation nor a heap predicate
+WARNING : parsing problem TRAV is neither a ranking function nor a relation nor a heap predicate
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Last Proving Location: 1 File "paper-v/bt-trav-v.ss",Line:15,Col:0
+
+ERROR: at paper-v/bt-trav-v.ss_19:12_19:22 
+Message: bst0 is neither 2 a data nor view name
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("bst0 is neither 2 a data nor view name")
+Error3(s) detected at main 

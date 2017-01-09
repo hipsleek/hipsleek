@@ -1,0 +1,21 @@
+
+!!!Full processing file "examples/sc-2.ss"
+Parsing file "examples/sc-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Termination checking result: SUCCESS
+
+Stop Omega... 0 invocations 
+4 false contexts at: ( (24,16)  (24,9)  (24,7)  (23,14) )
+
+!!! log(small):(0.028422,198)
+Total verification time: 0.33198 second(s)
+	Time spent in main process: 0.295954 second(s)
+	Time spent in child processes: 0.036026 second(s)
+

@@ -1,0 +1,6 @@
+// 6
+infer [a]
+   true
+   |- a[i]=0 .
+print residue.
+

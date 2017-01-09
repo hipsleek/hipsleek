@@ -1,0 +1,18 @@
+//CountDownLatch
+
+pred_prim WAIT<b:bag((object,object))>.
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" c1::CNT<a> * c2::CNT<b> * x::WAIT<S> 
+  & a>0 & b<0 & v notin S & v=tup2(c1,c2)
+ ->  c1::CNT<a> * c2::CNT<b> * x::WAIT<S1> & S1=union(S,{tup2(c1,c2)}) & a>0 & b<0.
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> & S={}.
+//output one state
+
+check_normalize x::WAIT<S> * c1::CNT<1> * c2::CNT<(-1)> * c3::CNT<(-1)> & S={}.
+//output one state since there are two normalization applications
+
+checkentail flted_18_20=1 & flted_18_19+1=0  & S={} |- false.
+expect Fail.

@@ -1,0 +1,18 @@
+Starting Omega...oc
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x) ::= 
+ x::node<_,yy> * yy::node<_,flted>&flted=null
+ or x::node<_,yy>
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.055986 second(s)
+	Time spent in main process: 0.041852 second(s)
+	Time spent in child processes: 0.014134 second(s)
+

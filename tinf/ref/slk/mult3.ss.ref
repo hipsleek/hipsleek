@@ -1,0 +1,51 @@
+
+!!!Full processing file "slk/mult3.ss"
+Parsing file "slk/mult3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure foo$int... 
+Procedure foo$int SUCCESS.
+
+Checking procedure foo$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_14_1131' & v_int_14_1205+x'=0 & !(v_bool_13_1132') & 
+0<=x' & !(v_bool_13_1132') & 0<=x' & !(v_bool_11_1133') & x'!=0 & 
+!(v_bool_11_1133') & x'=x & 
+x'!=0 & foopost_1122(v_int_14_1205) --> foopost_1122(x).
+
+ termAssume res=v_int_13_1128' & v_int_13_1204+x'=0 & v_bool_13_1132' & 
+x'<0 & v_bool_13_1132' & x'<0 & !(v_bool_11_1133') & x'!=0 & 
+!(v_bool_11_1133') & x'=x & 
+x'!=0 & foopost_1122(v_int_13_1204) --> foopost_1122(x).
+
+ termAssume x'=0 & x'=x & v_bool_11_1133' & x'=x' & v_bool_11_1133' & 
+v_int_11_1124'=0 & res=v_int_11_1124' --> foopost_1122(x).
+
+ termAssume x'!=0 & x'=x & !(v_bool_11_1133') & x'!=0 & !(v_bool_11_1133') & 
+0<=x' & !(v_bool_13_1132') & 0<=x' & !(v_bool_13_1132') & v_int_14_1130'+
+x'=0 & foopre_0(x) --> foopre_0(v_int_14_1130').
+
+ termAssume x'!=0 & x'=x & !(v_bool_11_1133') & x'!=0 & !(v_bool_11_1133') & 
+x'<0 & v_bool_13_1132' & x'<0 & v_bool_13_1132' & v_int_13_1127'+
+x'=0 & foopre_0(x) --> foopre_0(v_int_13_1127').
+
+
+Base/Rec Case Splitting:
+[	foo: [[3] x=0@B,[4] 1<=x@R,[5] x<=(0-1)@R]
+]
+Termination Inference Result:
+foo:  case {
+  x=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  (x<=(0-1) | 1<=x) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+0 false contexts at: ()

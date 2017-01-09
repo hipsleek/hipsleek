@@ -1,0 +1,26 @@
+/* singly linked lists */
+
+/* representation of a node */
+data node {
+	int val;
+	node next#REC;
+}.
+
+
+pred_extn size[R]<k> ==
+   k=0 // base case
+   or R::size<i> & k=1+i // recursive case
+  inv k>=0.
+
+/* view for a singly linked list */
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<>
+  .
+
+
+pred lln<n> == self = null & n = 0
+	or self::node<_, q> * q::lln<n-1>
+  inv n >= 0.
+
+
+pred llN<n> == extends lln<n> with size[REC]<n> .

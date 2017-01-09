@@ -1,0 +1,54 @@
+# R(i) --> i!=0 /\ not(i!=0) | R(i-1)
+# P(a, b) --> b!=0 | a<=0, 
+# P(a, b) & a=ar+1 & b=br+1 & 0<=ar & 0<=br --> P(ar, br),
+# P(a, b) & a=ar+1 & b=br+1 & 0<=ar & 0<=br --> P(ar, br),
+# P(a, b) -> forall(ar,br: a=ar+1 & b=br+1 & 0<=ar & 0<=br --> P(ar, br),
+# P(a, b) -> (0<=a-1 & 0<=b-1 --> P(a-1, b-1)),
+
+# P(a, b) --> (b!=0 | a<=0) /\ (not(0<=a-1 & 0<=b-1) | P(a-1, b-1))
+
+# R(i) & i=1+v_int_18_1500' & (v_int_18_1500'+1)!=0  -->  R(v_int_18_1500').
+
+# R(a,b)=true
+P0:={[a,b]:1=1};
+#R0;
+
+
+B:={[a,b]:b!=0 | a<=0};
+B;
+
+P1:=B;
+P1;
+# {[a,b]: (a <= 0) | b <= -1 | 1 <= b}
+P2:= B intersection {[a,b]: not (0<=a-1 & 0<=b-1) |
+(a-1 <= 0 |  b-1 <= -1 | 1 <= b-1)
+};
+PairWiseCheck P2;
+# {[a,b]: (a <= 0 |  (a <= 1 && 1 <= b) | (b<=-1) | 2 <= b) }
+
+
+P3:= B intersection {[a,b]: not (0<=a-1 & 0<=b-1) |
+(a-1 <= 0 | (a-1 <= 1 && 1 <= b-1) | (b-1<=-1) | 2 <= b-1) 
+};
+PairWiseCheck P3;
+
+#{[a,b]: (a <= 0 | b <= -1 | 3 <= b | a <= b, 2 && 1 <= b) }
+
+
+P4:= B intersection {[a,b]: not (0<=a-1 & 0<=b-1) |
+(a-1 <= 0 | b-1 <= -1 | 3 <= b-1 | a-1 <= b-1, 2 && 1 <= b-1)
+};
+PairWiseCheck P4;
+
+#{[a,b]: (a <= 0 | b <= -1 | 4 <= b | a <= b, 3 && 1 <= b) }
+#{[a,b]: (a <= 0 | b <= -1 |  a <= b && 1 <= b) }
+
+
+P5:= B intersection {[a,b]: not (0<=a-1 & 0<=b-1) |
+(a-1 <= 0 | b-1 <= -1 |  a-1 <= b-1 && 1 <= b-1)
+};
+Fix:=PairWiseCheck P5;
+Fix;
+
+Inv:={[a,b]:a>=0 & b>=0};
+PairWiseCheck (Fix intersection Inv);

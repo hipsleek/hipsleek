@@ -1,0 +1,54 @@
+data node {
+   node nxt;
+}.
+
+pred lseg<p> == self=p 
+  or (exists a: self::node<a> * a::lseg<p>)
+ inv true.
+
+lemma_safe "SPLIT" self::lseg<p> <- (exists u: self::lseg<u>*u::lseg<p>).
+
+lemma_safe "NON_EMPTY1" self::node<u1>* u1::lseg<p> 
+       <-> (exists last: self::lseg<last>*last::node<p>).
+
+
+checkentail x::node<u> * u::lseg<p> * p::node<_>|- x::lseg<v>*v::node<p>.
+//print residue.
+
+//checkentail x::node<u> * u::lseg<p> |- x::lseg<v>*v::node<p>.
+print residue.
+
+
+/*
+# bugs/ex64p1.slk -dd-steps
+
+ checkentail x::node<u> * u::lseg<p> * p::node<_>|- x::lseg<v>*v::node<p>.
+
+# LHS has x::[node,lseg,node]
+# Lemma has signature x::[node,lseg]
+
+Why isn't NON_EMPTY1] lemma triggered below?
+
+!!! **context.ml#3598:compute_action (steps) :
+ ### RHS Cand :[ self_SPLIT::lseg<p_58>@M]
+ ### action :
+ SEARCH =>[
+  Prio:1
+  COND =>[
+   Prio:1
+   Match =>
+     LHS: self_SPLIT::lseg<p>@M
+     RHS: self_SPLIT::lseg<p_58>@M;
+   Prio:3
+   BaseCaseUnfold =>
+     LHS: self_SPLIT::lseg<p>@M
+     RHS: self_SPLIT::lseg<p_58>@M
+   ];
+   Prio:1
+   (Lemma 0<== SPLIT) =>
+     LHS: self_SPLIT::lseg<p>@M
+     RHS: self_SPLIT::lseg<p_58>@M
+   ]
+
+
+*/

@@ -1,7 +1,7 @@
 /**
- Problem 2 in VSComp 2010: Inverting an Injection
- @author Vu An Hoa
- @date 24/06/2011
+ * Problem 2 in VSComp 2010: Inverting an Injection
+ * @author Vu An Hoa
+ * @date 24/06/2011
  **/
 
 relation dom(int[] a, int i, int j) == true.
@@ -38,9 +38,11 @@ void InvertHelper(int[] a, ref int[] b, int n, int i)
 	requires 	dom(a,0,n-1) & dom(b,0,n-1)
 			 	& Permute(a,0,n-1,0,n-1)
 				& IsLeftInverse(a,b,0,i-1)
+				& 0 <= i
 	ensures 	IsLeftInverse(a,b',0,n-1);
 {
 	if (i < n) {
+//		assert 0 <= a[i] <= n-1;
 		b[a[i]] = i;
 //		assert IsLeftInverse(a,b',0,i);
 		InvertHelper(a,b,n,i+1);

@@ -1,0 +1,62 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred WSS<p> ==
+  self::WFSeg<q>*q::char_star<0,p> 
+  inv self!=null.
+
+pred WFSeg<p> ==
+  self=p 
+  or self::char_star<v,q>*q::WFSeg<p> & v!=0
+  inv true.
+
+pred WFG<p> ==
+  self::char_star<0,p>
+  or self::char_star<v,q>*q::WFG<p> & v!=0
+  inv self!=null.
+
+  //lemma_safe self::WFG<p> -> self::WFSeg<q>*q::char_star<0,p>.
+  //lemma_safe self::WFG<p> <- self::WFSeg<q>*q::char_star<0,p>.
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+ //lemma_unsafe self::WFG<p> -> U(self,q)*q::char_star<0,p>.
+
+ infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+/*
+# ex16d1c.slk dre "process_one_m" 
+
+# is there a smarter base-case-fold scheduling?
+
+(==context.ml#2600==)
+process_one_match@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: self::char_star<v,q2>@M
+ RHS: U(self,p)
+ lhs_rest: q2::char_star<flted_29_106,p>@M
+ rhs_rest: emp
+process_one_match inp2 :lhs_h: self::char_star<v,q2>@M * q2::char_star<flted_29_106,p>@M
+process_one_match inp3 :lhs_p: v!=0 & flted_29_106=0
+process_one_match inp4 :rhs_node: U(self,p)
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@1 EXIT: Prio:1
+ SEARCH =>[
+  Prio:1
+  BaseCaseFold =>;
+  Prio:1
+  InferFold =>
+  ]
+
+
+
+
+*/

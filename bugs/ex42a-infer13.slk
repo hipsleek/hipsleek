@@ -1,0 +1,61 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+  
+HeapPred H1(node y).
+
+HeapPred H2(node y,node x).
+
+infer_exact [H2] x::node<z> * H2(z,x)  |- x::lseg<z> .
+print residue.
+
+/*
+# ex42a.slk
+
+WHy does this fail now?
+
+Entail (1) : Fail.(must) cause:UnionR[residue is forbidden.(1),residue is forbidden.(1)]
+
+Residue:
+ <1>x::node<z> * H2(z,x)&{FLOW,(4,5)=__norm#E}[]
+[[ Fold ==> ]]
+
+
+
+Entail (3) : Valid. 
+Residue:
+ <1>HP_96(x,z)&x!=null & q_91!=x & q_91=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H2(q_91,x)&true --> q_91::lseg<q_91> * HP_96(x,q_91@NI)&
+                   true; 
+                  HP_96(x,z@NI)&true --> emp&x!=z]
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  InferHeap ==> ]]
+*/
+
+
+HeapPred H3(node y,node@NI x).
+infer_exact [H3] x::node<z> * H3(z,x)  |- x::lseg<z> .
+print residue.
+
+/*
+# ex42a.slk
+
+How come we are not getting an lseg like below:
+ inferred hprel: [H2(q_91,x)&true --> q_91::lseg<q_91> * HP_96(x,q_91@NI)&
+                   true; 
+                  HP_96(x,z@NI)&true --> emp&x!=z]
+
+We do not instantiate x, but we ought to allow q_91 
+to be instantiated!
+
+Entail (4) : Valid. 
+
+Residue:
+ <1>H3(z,x)&x!=null & q_107!=x & q_107=z&{FLOW,(4,5)=__norm#E}[]
+ inferred hprel: [H3(z,x@NI)&true --> emp&x!=z]
+*/

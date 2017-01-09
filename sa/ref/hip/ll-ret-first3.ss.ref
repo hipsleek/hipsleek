@@ -1,0 +1,49 @@
+
+!!!Full processing file "hip/ll-ret-first3.ss"
+Parsing file "hip/ll-ret-first3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure front$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ F,G]requires F(x)&true
+ ensures emp&true{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[F,G] pre_post_vars:[F,x]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)F(x)&true --> x::node<val1,next1> * HP_1219(next1)&
+true(3,4)]
+
+Procedure front$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ F(x1) ::=  [x1::node<val,DP>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ F(x1) ::= x1::node<val,DP>(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.017754,177)
+Total verification time: 0.27828 second(s)
+	Time spent in main process: 0.264791 second(s)
+	Time spent in child processes: 0.013489 second(s)
+

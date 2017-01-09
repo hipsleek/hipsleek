@@ -1,0 +1,21 @@
+
+!!!Full processing file "slk/termu-5s.ss"
+Parsing file "slk/termu-5s.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (1+pv_1130)<=pv_1132]
+!!! Mutual Rec Group:[f$int~int]
+!!! Phase Numbering:[(pv_1132,1);(pv_1130,0)]
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+Checking procedure f$int~int... 
+Termination checking result: SUCCESS
+
+
+3 false contexts at: ( (10,13)  (11,9)  (11,7) )

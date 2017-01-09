@@ -1,0 +1,14 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Fail.(may) cause: true |-  Anon_11=Anon_12. LOCS:[0;5] (may-bug)
+
+Residue:
+ <1>x::cell<Anon_11@L>&@L<:w&{FLOW,(4,8)=__MayError#E}[]
+ inferred pure: [@L<:w]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

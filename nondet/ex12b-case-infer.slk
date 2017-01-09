@@ -1,0 +1,105 @@
+
+infer[i] true |- case { 
+                     i<222 -> [] true;
+                     i>=222 -> [] true;
+                    }.
+print residue.
+
+//(2)
+infer[i] true |- i<222 or i>=222.
+print residue.
+
+infer[i] true |- case { 
+                     i<222 -> [] i<200;
+                     i>=222 -> [] true;
+                    }.
+print residue.
+
+//(4)
+infer[i] true |- case { 
+                     i<222 -> [] i<200;
+                     i>=222 -> [] i>=300;
+                    }.
+print residue.
+
+//inferred pure: [(300<=i | i<=221); (i<=199 | 222<=i)]
+// simplifies to {[i]: i <= 199} union {[i]: 300 <= i}
+
+
+/*
+# ex12b -debug z.log
+
+infer[i] true |- case { 
+                     i<222 -> [] true;
+                     i>=222 -> [] true;
+                    }.
+
+Wrong code in solver.ml to fix
+ below seems to be from 7664 (sa_logging, WN) 24May2013 4:27am
+
+                 if (d==[] && case_vs!=[]) then
+                   begin
+                     let () = x_binfo_pp "WARNING (WN) : inferring case wrongly " no_pos in
+                     (* WN : why do we add case LHS to infer_pure?? *)
+                     (* WN : why do we combine result as union? it should be OR *)
+                     (* place to add case LHS to infer_pure *)
+                     (* for each (c1,c2) from case_brs
+                        (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
+                        perform entail against each c2 combine result as union *)
+
+
+Expect nothing to be inferred.
+Case-spec seems to work incorrectly with
+infer[i], and treated case like an "or"
+since it produced 2 states.
+
+Residue:
+ <1>htrue&0<=i&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=i]
+<2>htrue&i<0&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [i<=-1]
+
+
+==solver.ml#4301==)
+heap_entail_one_context#13@24@10@9@8@7@6@5@3@1
+heap_entail_one_context#13 inp1 : es_formula: htrue&i<222&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars: [i]
+ es_infer_vars_rel: []
+heap_entail_one_context#13 inp2 : htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@24 EXIT: 
+Good Context: length= 1 [es_formula: htrue&i<222&{FLOW,(4,5)=__norm#E}[]
+                         es_infer_vars: [i]
+                         es_infer_vars_rel: []] <1>htrue&i<222&{FLOW,(4,5)=__norm#E}[]
+[[empty]]
+
+
+(==cformula.ml#10915==)
+add_infer_pure_to_ctx@36@35@10@9@8@7@6@5@3@1
+add_infer_pure_to_ctx inp1 :[ i<222]
+add_infer_pure_to_ctx@36 EXIT:?
+
+(==solver.ml#3832==)
+heap_entail_conjunct_lhs_struc@10@9@8@7@6@5@3@1
+heap_entail_conjunct_lhs_struc inp1 :Ctx  es_formula: htrue&{FLOW,(4,5)=__norm#E}[]
+ es_infer_vars: [i]
+ es_infer_vars_rel: []
+heap_entail_conjunct_lhs_struc inp2 : ECase case {
+        222<=i -> EBase htrue&{FLOW,(4,5)=__norm#E}[] ;
+        i<222 -> EBase htrue&{FLOW,(4,5)=__norm#E}[] 
+        }
+heap_entail_conjunct_lhs_struc@10 EXIT: 
+Good Context: length= 2 [es_formula: htrue&222<=i&{FLOW,(4,5)=__norm#E}[]
+                         es_infer_vars: [i]
+                         es_infer_vars_rel: []
+                         es_infer_pure: [222<=i]; 
+es_formula: htrue&i<222&{FLOW,(4,5)=__norm#E}[]
+es_infer_vars: [i]
+es_infer_vars_rel: []
+es_infer_pure: [i<=221]] <1>htrue&222<=i&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [222<=i]
+[[empty]]
+
+<2>htrue&i<222&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [i<=221]
+[[empty]]
+*/

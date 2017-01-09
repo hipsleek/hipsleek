@@ -1,0 +1,92 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,node y).
+
+HeapPred U3(node x,node y,node z).
+
+//infer [U1,@classic,@pure_field] U1(x) |- x::node<_,q>*q::ll<>.
+
+infer [U2,@classic,@pure_field] U2(x,q)*q::node<0,p> |- x::node<0,p>.
+print residue.
+expect Valid.
+
+/*
+//guard examples
+# ex25a7.slk
+
+# First solution should have guarded form:
+            [U2(x,q)&true |#| q::node<0,_> --> emp&x=q]
+
+ <1>emp&x=q&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,q)&true |#|3  --> emp&x=q]
+[[ SEARCH ==>  Unfold 1 ==>  SEARCH ==>  Match(q,x)]]
+
+# Second solution has complex LHS and is not so useful ..
+  I think we should just schedule a simple unfold of the form:
+      U2(x,q) --> x::node<flted_17_56,p>@M * 
+                                 HP_57(flted_17_56@NI,q@NI) * 
+                                 HP_58(p,q@NI) * HP_59(q,x@NI)
+  and then let the proving fail..
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+inferred hprel: [HP_57(flted_17_56@NI,q@NI)&true |#|3  --> emp&flted_17_56=0; 
+                 HP_58(p,q@NI)&true |#|3  --> emp&true; 
+                 HP_59(q,x@NI)&true |#|3  --> emp&true; 
+                 U2(x,q) * q::node<flted_17_31,p>@M&
+                  true |#|3  --> x::node<flted_17_56,p>@M * 
+                                 HP_57(flted_17_56@NI,q@NI) * 
+                                 HP_58(p,q@NI) * HP_59(q,x@NI)&
+                  true]
+[[ SEARCH ==>  InferUnfold ]]
+
+infer [U3,@classic,@pure_field] U3(x,q,p)*q::node<0,p> |- x::node<0,p>.
+print residue.
+
+infer [U2,@pure_field] U2(x,q)* t::node<0,q> * q::node<0,p> |- x::node<0,p>.
+print residue.
+expect Valid.
+*/
+/*
+# ex15a6.slk -dd-steps
+
+infer [U1,@classic] U1(x) |- x=null.
+
+GOT below
+=========
+  U1(x) |#|  --> emp]
+
+# Why did we not get:
+
+  U1(x) |#|  --> x=null
+
+This should be for @pure_field and otherwise.
+
+(==solver.ml#8294==)
+infer_collect_hp_rel_empty_rhs#1@1
+infer_collect_hp_rel_empty_rhs#1 inp1 : es_formula: 
+ U1(x)&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1]
+infer_collect_hp_rel_empty_rhs#1 inp2 : x=null
+infer_collect_hp_rel_empty_rhs#1@1 EXIT:(Res:true,Sel HP:
+ es_formula: 
+ emp&{FLOW,(20,21)=__norm#E}[]
+ es_infer_vars_hp_rel: [U1],Inferred Relations:[ U1(x) |#|  --> emp])
+
+
+# How come no compute_match scheduled?
+  I would expect infer_heap to be scheduled..
+
+!!! **infer.ml#3949:>>>>>> infer_hp_rel <<<<<<
+!!! **infer.ml#3950:  lhs : U1(x)&{FLOW,(20,21)=__norm#E}[]
+!!! **infer.ml#3951:  classic :true
+Entail (1) : Fail.(may) cause: emp&{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.
+
+*/

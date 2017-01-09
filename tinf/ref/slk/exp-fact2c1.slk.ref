@@ -1,0 +1,28 @@
+Starting Omega...oc
+Starting z3... 
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'!=0 & x'+1=x & x!=0 & fpost_0() --> fpost_0().
+
+ termAssume x'=0 & x'+1=x & x!=0 & fpost_0() --> fpost_0().
+
+ termAssume x=0 --> fpost_0().
+
+ termAssume x'=0 & x'+1=x & x!=0 & fpre_0(x) --> fpre_0(x').
+
+ termAssume x'!=0 & x'+1=x & x!=0 & fpre_0(x) --> fpre_0(x').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] true@ML]
+]
+Termination Inference Result:
+f:  case {
+  true -> requires emp & MayLoop[]
+ ensures emp & true; 
+  }
+

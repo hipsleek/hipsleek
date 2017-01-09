@@ -1,0 +1,13 @@
+
+relation R(int x,int m).
+
+infer[R] @full[x] & x'=x0+1 |- @full[x] & R(x',x0).
+print residue.
+
+/* 
+# ex37d1
+
+what is diff between instantiation
+and relational assumption?
+
+*/

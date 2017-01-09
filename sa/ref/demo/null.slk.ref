@@ -1,0 +1,34 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&self!=null & ((2<=n | n=1))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n)])[Warning] False ctx
+
+Entail 1: Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+
+Entail 2: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+ <1>nil::node<_,z>&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Stop Omega... 15 invocations 
+SAT Count   : 62
+SAT % Hit   : 67.74%
+IMPLY Count : 16
+IMPLY % Hit : 25.%
+Time(cache overhead) : 0.004823 (seconds)
+
+!!! log(small):(0.031552,95)
+Total verification time: 0.100426 second(s)
+	Time spent in main process: 0.07246 second(s)
+	Time spent in child processes: 0.027966 second(s)
+

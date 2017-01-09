@@ -1,0 +1,118 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>x::node<p@L,q@L>&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 2: Fail.(may) cause: true |-  q=r. LOCS:[0;18] (may-bug)
+
+Residue:
+ <1>x::node<p,q>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 3: Fail.(may) cause:AndR[ true |-  p=a. LOCS:[0;22];  true |-  q=b. LOCS:[0;22] (may-bug).]
+
+Residue:
+ <1>x::node<p@L,q@L>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 4: Fail.(may) cause:AndR[ true |-  p=Anon_12. LOCS:[0;26];  true |-  q=Anon_13. LOCS:[0;26] (may-bug).]
+
+Residue:
+ <1>x::node<p@L,q@A>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 5: Fail.(may) cause:AndR[ true |-  p=Anon_14. LOCS:[0;30];  true |-  q=b. LOCS:[0;30] (may-bug).]
+
+Residue:
+ <1>x::node<p,q@L>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 6: Valid. 
+
+Residue:
+ <1>x::node<p_119@A,q@L>&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 7: Fail.(may) cause:AndR[ true |-  p=Anon_16. LOCS:[0;38];  true |-  q=b. LOCS:[0;38] (may-bug).]
+
+Residue:
+ <1>x::node<p,q>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 8: Fail.(may) cause:AndR[ true |-  p=Anon_17. LOCS:[0;42];  true |-  q=b. LOCS:[0;42] (may-bug).]
+
+Residue:
+ <1>x::node<p,q>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 9: Valid. 
+
+Residue:
+ <1>x::node<p_180@A,q@L>&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 10: Fail.(may) cause:AndR[ true |-  p=Anon_19. LOCS:[0;50];  true |-  q=b. LOCS:[0;50] (may-bug).]
+
+Residue:
+ <1>x::node<p@A,q@L>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 11: Fail.(may) cause:AndR[ true |-  p=a. LOCS:[0;54];  true |-  q=b. LOCS:[0;54] (may-bug).]
+
+Residue:
+ <1>x::node<p@L,q@L> * y::node<c,d>&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 12: Valid. 
+
+Residue:
+ <1>x::node<p@L,q@A>&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 13: Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+Residue:
+ <1>x::node<p@L,q@A>&{FLOW,(6,7)=__Error#E}[]
+
+
+Entail 14: Valid. 
+
+Residue:
+ <1>x::node<p_238@L,q_260@A>&q=q_239 & p=p_238&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 15: Valid. 
+
+Residue:
+ <1>x::node<p_267@L,q>&q=q_268 & p=p_267&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

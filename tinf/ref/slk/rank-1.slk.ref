@@ -1,0 +1,23 @@
+Starting Omega...oc
+Starting z3... 
+ <1>emp&0<=x & x'+1=x & Term[f( x)]&{FLOW,(21,22)=__norm}[]
+ inferred templ: [x'+1=x & 0<=x --> (f( x))>(f( x'))]
+[[empty]]
+
+**** TEMPLATE ASSUMPTION(S) ****
+[ x'+1=x & 0<=x --> (f( x))>(f( x'))
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int f(int x) == 0+(1*x)
+]
+**** TEMPLATE ASSUMPTION(S) ****
+[ y'=y & x'=y+x & y<0 & 0<=x --> (g( x, y))>(g( x', y'))
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int g(int x,int y) == 0+(1*x)+(0*y)
+]
+**** TEMPLATE ASSUMPTION(S) ****
+[ y'=y & x'=y+x & y<=0 & 0<=x --> (g( x, y))>(g( x', y'))
+]
+TEMPLATE INFERENCE: Unsat.
+

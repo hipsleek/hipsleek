@@ -1,0 +1,61 @@
+
+!!!Full processing file "hip2/ll-getnext.ss"
+Parsing file "hip2/ll-getnext.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure get_next$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,x,G]requires H(x)&true
+ ensures G(x,res)&true{,(3,4)=__norm};
+
+dprint: hip2/ll-getnext.ss:43: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:H(x) * x::node<inf2,inf1>&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []H(x) * x::node<inf,inf1>
+
+ ]
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: [ x::node<inf_val_42_1219,inf_next_42_1220>]
+!!!Inferred Pure: []
+*************************************
+*******relational assumptions ********
+*************************************
+[ // POST
+(0)H(x) * x::node<inf2,inf1>&true --> G(x,inf1)&
+true(3,4)]
+
+Procedure get_next$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp],
+ G(x2,inf3) ::=  [x2::node<inf,inf3>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= emp(3,4),
+ G(x2,inf3) ::= x2::node<inf,inf3>(3,4)]
+*************************************
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.024504,188)
+Total verification time: 0.283602 second(s)
+	Time spent in main process: 0.269836 second(s)
+	Time spent in child processes: 0.013766 second(s)
+

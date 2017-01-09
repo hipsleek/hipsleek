@@ -1,0 +1,236 @@
+int foo(ref int[] a)
+  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res);
+{
+  if (a[5]>0) {
+    a[5] = a[5]-1;
+    return foo(a); } 
+  else {
+    int tmp=a[5];
+    return tmp;
+  }
+}
+
+ (i=4 | i=5)  <==> 4<=i<=5
+
+update(..) --> i>=0
+
+Q(a,a',ind) = 
+     a[5]<=0 & ind<0
+  \/ a[5]>0   & ind=5
+
+Q(a,a',ind) = 
+     a[5]<=0 & ind<0
+  \/ a[5]>0   & 4<=ind<=5
+
+
+
+===================================================
+Q(a,a',res) = 
+   (a'=a & res=a[5] & (a[5])<=0) \/ 
+    (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res) & 
+    update(a,a_1231,v_int,5))
+
+Let us use (a->a1,D) to denote the range
+of unchanged locations forall(i:not(i in D)->a[i]=a1[i'])
+
+With this:
+   a=a1  <==> forall(i:a[i]=a1[i'])
+         <==> forall(i:not(i in {}) -> a[i]=a1[i'])
+         <==> (a->a1,{})
+   update(a,a1,v,i)
+         <==> a1[i]=v & forall(i:i!=v -> a[i]=a1[i'])
+         <==> a1[i]=v & forall(i:not(i in {v} -> a[i]=a1[i'])
+         <==> a1[i]=v & (a->a1,{v})
+          ==> (a->a1,{v})
+   (a->b,S1) & (b->c,S2)
+          ==> (a->c,S1+S2)
+
+  // S = set of change from a to a'
+
+  Q(a,a',S) where S is from a to a'
+
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & Q(a1,a',S1) & S=(a->a1,{5})+S1
+
+  Q(a,a',S) = (S={}) & (a[5])<=0) \/ 
+             1<=(a[5]) & Q(a1,a',S1) & S={5}+S1
+
+  Q(a,a',S) = (S={}) \/  Q(a1,a',S1) & S={5}+S1
+
+Fixpoint:
+=========
+  Q(a,a',S) = false
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) 
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & (S=(a1->a',S1) & (a1[5])<=0) 
+               & S1={} & S=(a->a1,{5})+S1
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & (S1=(a1->a',S1) & (a1[5])<=0) 
+               & S=(a->a1,{5})+S1
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & (S1=(a1->a',{}) & (a1[5])<=0) 
+               & S=(a->a1,{5})+S1
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & (S=(a->a',{5}) 
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
+               1<=(a[5]) & (S1=(a1->a',{}) & (a1[5])<=0) 
+               \/ (1<=(a1[5]) & (S1=(a1->a',{5})) & S=(a->a1,{5})+S1
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               \/ 1<=(a[5]) & (S1=(a1->a',{}) & (a1[5])<=0) & S=(a->a1,{5})+S1
+               \/ 1<=(a[5]) & (1<=(a1[5]) & S1=(a1->a',{5}) & S=(a->a1,{5})+S1
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               \/ 1<=(a[5]) & S=(a->a',{5})
+               \/ 1<=(a[5]) &  S=(a->a1,{5})+(a1->a',{5})
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               \/ 1<=(a[5]) & S=(a->a',{5})
+               \/ 1<=(a[5]) &  S=(a->a',{5})
+            = (S=(a->a',{}) & (a[5])<=0) \/ 
+               \/ 1<=(a[5]) & S=(a->a',{5})
+
+  Hence, fixpoint:
+  Q(a,a',S) = (S=(a->a',{}) & (a[5])<=0) \/ 
+               \/ 1<=(a[5]) & S=(a->a',{5})
+
+
+How is this related to finding the set of changed indexes with
+strong updates?
+
+Is this a fix-point of array segments?
+
+Instead of sets, can we use a single variable instead?
+
+What then is a set of strong updates? Is this
+the compliment of unchanged set? Some may just
+be read-only though.
+
+ set of unchanged points
+   forall(i: P(i) -> a[i]=a'[i])
+
+ set of possibly changed points
+   forall(i: not(P(i)) -> a[i]=a'[i])
+
+ constant indexes
+   P(i) = i=c1 \/ i=c2 \/ .. \/ i=cn
+
+ set of read-only
+   forall(i: P(i) /\ ..a[i].. )
+
+ set of updates
+   forall(i: P(i) /\ ..update(a1,a2,i).. )
+
+Initialization
+--------------
+  loop(a,i,c)
+  {
+    if i<=c {
+      a[i]=f(i);
+      loop(a,i+1,c)
+    }
+  }
+
+Can we infer:
+
+  requires true
+  ensures i<c & forall(k:a'[i]=a[i])
+     \/ i>=c &  forall(k:i<=k<=c -> a'[k]=f(k)) 
+        & forall(k:not(i<=k<=c) -> a'[k]=a[k])
+
+Another example:
+================
+  // how to write the first element?
+ 
+  loop(a,i,c)
+  {
+    if i<=c {
+      a[i]=a[i-1]+1;
+      loop(a,i+1,c)
+    }
+  }
+
+  requires true
+  ensures i<c & forall(k:a'[i]=a[i])
+     \/ i>=c &  forall(k:i<=k<=c -> a'[k]=k+a[i-1]) 
+        & forall(k:not(i<=k<=c) -> a'[k]=a[k])
+
+Another example:
+================
+
+  loop(a,i,c)
+  {
+    if i<=c {
+      a[i]=f(i);
+      loop(a,i+2,c)
+    }
+  }
+
+  requires true
+  ensures i<c & forall(k:a'[i]=a[i])
+     \/ i>=c 
+        & forall(k:i<=k<=c & (ex j. k=i+2k) -> a'[k]=f(k)) 
+        & forall(k:not(i<=k<=c & (ex j. k=i+2k)) -> a'[k]=a[k])
+
+Another example:
+================
+
+  loop(a,i,c,d)
+  {
+    if i<=c {
+      a[i]=a[d];
+      loop(a,i+1,c,d-1)
+    }
+  }
+
+  requires true
+  ensures i<c & forall(k:a'[i]=a[i])
+     \/ i>=c &  forall(k:i<=k<=c -> a'[k]=a[d-k+i]) 
+        & forall(k:not(i<=k<=c) -> a'[k]=a[k])
+
+======================================================
+The main idea is the following translation:
+
+Abstraction
+===========
+Q(a,a',res) =
+    (a'=a & res=a[5] & (a[5])<=0) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res) &
+     update(a,a_1231,v_int,5))
+
+Extended with set of indexes
+============================
+
+S set of index that maybe changed from a->a'
+
+Q(a,a',res,S) =
+    (a'=a & res=a[5] & (a[5])<=0 & S={}) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res,S1) &
+     update(a,a_1231,v_int,5)
+     & S#a->a'={5}#a->a_1231 U S1#a_1231->a')
+
+Q(a,a',res,S) =
+    (a'=a & res=a[5] & (a[5])<=0 & S={}) \/
+     (v_int=(a[5])-1 & 1<=(a[5]) & Q(a_1231,a',res,S1) &
+     update(a,a_1231,v_int,5) & S={5}
+
+Q(a,a',res,S) =
+    (a[5])<=0  S={}) \/ (1<=(a[5] & S={5})
+
+Fixpoint:
+========
+  Q_set(S) = (S={}) \/ Q_set(S1) & S={5} U S1)
+       = S={5}
+
+  Q(..,S) ==> Q_set(S)
+
+   Q(a,a',S) = S={} & (a[5])<=0) \/
+                1<=(a[5]) &  S={5}
+
+=============================================================
+Q(a,a',res,S,i) =
+    (a'=a & res=a[i] & (a[i])<=0 & S={}) \/
+     (v_int=(a[i])-1 & 1<=(a[i]) & Q(a_1231,a',res,S1,i) &
+     update(a,a_1231,v_int,i) 
+     & S#a->a'={5}#a->a_1231 U S1#a_1231->a')
+
+  Q_set(S,i) 
+     = (S={}) \/ Q_set(S1,i) & S={i} U S1)
+     = S={i}

@@ -1,0 +1,8 @@
+Starting Omega...oc
+Starting z3... 
+
+WARNING: t/avl.slk_12:26_12:61:view defn for avl has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & size=0 & height=0),
+([self], 0<size & 0<height)])
+
+

@@ -1,0 +1,30 @@
+
+infer [i] true |- i<0 or i>=0.
+print residue.
+
+
+
+infer[] true |- case { 
+                     i<0 -> [] true;
+                     i>=0 -> [] true;
+                    }.
+print residue.
+
+infer[] i<0 or i>=0 |- true.
+print residue.
+
+/*
+infer[i] true |- case { 
+                     i<0 -> [] true;
+                     i>=0 -> [] true;
+                    }.
+print residue.
+*/
+/*
+Residue:
+ <1>htrue&0<=i&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=i]
+<2>htrue&i<0&{FLOW,(4,5)=__norm#E}[]
+inferred pure: [i<=-1]
+
+*/

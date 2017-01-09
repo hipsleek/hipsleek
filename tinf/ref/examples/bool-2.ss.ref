@@ -1,0 +1,64 @@
+
+!!!Full processing file "examples/bool-2.ss"
+Parsing file "examples/bool-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int~boolean... 
+Procedure f$int~int~boolean SUCCESS.
+
+Checking procedure f$int~int~boolean... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume v_int_9_1211=y'+x' & !(z') & !(v_bool_6_1128') & 0<=x' & 
+!(v_bool_6_1128') & x'=x & y'=y & z'=z & 
+0<=x' & fpost_1124(v_int_9_1211,y',z') --> fpost_1124(x,y,z).
+
+ termAssume v_int_8_1210+y'=x' & z' & !(v_bool_6_1128') & 0<=x' & 
+!(v_bool_6_1128') & x'=x & y'=y & z'=z & 
+0<=x' & fpost_1124(v_int_8_1210,y',z') --> fpost_1124(x,y,z).
+
+ termAssume x'<0 & z'=z & y'=y & x'=x & v_bool_6_1128' & x'<0 & 
+v_bool_6_1128' --> fpost_1124(x,y,z).
+
+ termAssume 0<=x' & z'=z & y'=y & x'=x & !(v_bool_6_1128') & 0<=x' & 
+!(v_bool_6_1128') & !(z') & v_int_9_1127'=y'+
+x' & fpre_0(x,y,z) --> fpre_0(v_int_9_1127',y',z').
+
+ termAssume 0<=x' & z'=z & y'=y & x'=x & !(v_bool_6_1128') & 0<=x' & 
+!(v_bool_6_1128') & z' & v_int_8_1126'+
+y'=x' & fpre_0(x,y,z) --> fpre_0(v_int_8_1126',y',z').
+
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] !(z) & 0<=x@R,[5] 0<=x & z@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[30,1]
+ ensures emp & true; 
+  !(z) & 
+  0<=x -> case {
+           0<=y -> requires emp & Loop[]
+ ensures false & false; 
+           y<=(0-1) -> requires emp & Term[30,2,0+(1*x)+(0*
+           y)]
+ ensures emp & true; 
+           }
+  
+  0<=x & 
+  z -> case {
+        y<=0 -> requires emp & Loop[]
+ ensures false & false; 
+        1<=y -> requires emp & Term[30,3,0+(1*x)+(0*y)]
+ ensures emp & true; 
+        }
+  
+  }
+
+0 false contexts at: ()

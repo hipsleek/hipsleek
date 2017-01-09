@@ -1,0 +1,33 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "slk/cnt.slk",Line:1,Col:10
+
+ERROR: at slk/cnt.slk_1:10_1:20
+Message: compute_view_fw_bw: data not found: CNT
+
+Entail 1: Fail.(must) cause: 0<=(flted_22_17+1) & flted_22_17=2 |-  flted_22_17=1. LOCS:[2;22] (must-bug)
+
+Residue:
+ <1>emp&flted_22_17=2&{FLOW,(6,7)=__Error#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 2: Valid. 
+
+Residue:
+ <1>emp&flted_25_30=1&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+
+Entail 3: Valid. 
+
+Residue:
+ <1>emp&flted_28_43+1=0&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+

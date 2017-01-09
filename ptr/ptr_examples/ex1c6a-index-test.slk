@@ -1,0 +1,28 @@
+data arr {
+  int val;
+}.
+
+pred arr_int<o:int,v:int> ==
+    p1::arr<v> & p1=self+o & o>=0
+//  p1::arr<v> * q::arr<v> & p1=self+o & q=p1+1 & o>=0
+//or  q::arr<v> * p::arr<v>  & p=self+o+1 & q=p+1 & o>=0
+inv o>=0.
+// root=Some(self+o)
+// add this @ trans_view
+
+checkentail y::arr_int<2,5> & xxx=y:arr+2 
+     |- xxx::arr<v>.
+print residue.
+expect Valid. //k=2 
+
+checkentail y::arr_int<2,5> & xxx=y:arr+3 
+     |- xxx::arr<v>.
+print residue.
+expect Fail. //k=2 
+
+/*
+infer[i] y::arr_int<i,5> & xxx=y:arr+3 
+     |- xxx::arr<v>.
+print residue.
+expect Valid. //k=2 
+*/

@@ -1,0 +1,80 @@
+data node {
+  int val;
+  node prev;
+  node next;
+}.
+
+// use --lem-en-lhs-unfold
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+
+/*
+ex55k-dseg-new-unsound.slk --lem-en-lhs-unfold --old-empty-to-conseq --dis-lem-gen
+
+ self::dseg<lm,rm,last> |- self::rlseg<rm>
+
+
+ self=rm & lm=last  |- self::rlseg<rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> 
+     |- self::dseg<_,q,_> * q::node<_,_,rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> |- self::rlseg<q> * q::node<_,_,rm>
+
+ self::node<_,lm,p>*p::dseg<self,rm,last> |- self::rlseg<rm>
+
+
+pred dseg<lm, rm:node,last> == self=rm & lm=last
+  or self::node<_,lm, p> * p::dseg<self,rm,last>.
+
+pred rlseg<rm> == self:node=rm
+  or self::rlseg<q> * q::node<_,_,rm>.
+
+lemma_safe "2" self::rlseg<rm> <- exists lm,last: self::dseg<lm,rm,last>.
+
+# why can we prove this without lem_generation?
+
+Entailing lemma 2: Valid.
+Valid Lemmas : [2:<==] added to lemma store.
+
+======
+--lem-en-rhs-unfold
+
+!!! **lemproving.ml#152:coerc:infer_obj:[]
+Entailing lemma 2: Fail. (cex)(may) cause: UnionR[ self_2::node<Anon_137,lm_139,p_138>@M * p_138::dseg<self_2,rm,rm>@M&
+{FLOW,(20,21)=__norm#E}[]: possible memory leak failure : residue is forbidden.,UnionR[Nothing_to_do? Type: WArg
+ LHS: p_186::dseg<self_2,rm,rm>@M
+ RHS: q_121::node<Anon_122,Anon_123,rm_188>@M
+ lhs_rest: self_2::node<Anon_185,lm_187,p_186>@M
+ rhs_rest: emp,base case unfold failed]]
+
+Failed to prove 2:<== in current context.
+
+Entailing lemma 2: Fail. (no cex)(may) cause: Nothing_to_do? Type: WArg
+ LHS: p_120::dseg<self_2,rm,last_122>@M
+ RHS: self_2::rlseg<rm_123>@M
+ lhs_rest: self_2::node<Anon_119,lm_121,p_120>@M
+ rhs_rest: emp
+
+Failed to prove 2:<== in current context.
+Removing invalid lemma ---> lemma store restored.
+
+====
+pls2nus@loris-laptop:~/hg/sl_spare$ hg bisect -g
+The first bad revision is:
+changeset:   16688:ae47980f69f8
+branch:      fix-incr
+parent:      16687:88a142a54836
+parent:      16686:7e7fdef44ba0
+user:        chinwn@loris-laptop
+date:        Wed Sep 02 04:55:01 2015 +0800
+summary:     to fix ex14b3.slk with match of unknown predicates
+
+
+*/

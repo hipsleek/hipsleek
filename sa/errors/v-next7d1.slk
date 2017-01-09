@@ -1,0 +1,18 @@
+checkentail x=0 & flow __norm |- 
+     requires x>=0
+//     ensures x=5 & flow __Error;.
+      ensures x=5 & flow __MayError;.
+//    ensures x=5 & flow __norm;.
+print residue.
+/*
+# v-next7d2.slk
+
+ Why do we get __norm and not __flow?
+
+Entail 1: Fail.(may) cause:may_err (__MayError) LOCS: [1;0;4]
+
+Residue:
+ <1>emp&x=5 & x=0 & 0<=x&{FLOW,(3,7)=__MayError}[]
+
+*/
+

@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "demo/swl-i3c1.slk", line 24, characters 55-58
+ error: Stream.Error("DOT expected after [non_empty_command] (in [non_empty_command_dot])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.054708 second(s)
+	Time spent in main process: 0.040453 second(s)
+	Time spent in child processes: 0.014255 second(s)
+

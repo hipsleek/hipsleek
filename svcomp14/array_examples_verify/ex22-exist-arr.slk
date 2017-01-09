@@ -1,0 +1,44 @@
+slk_simplify
+res=x+1 & 
+exists(a_1189:exists(a_1187:forall(i:(!(i!=5) | a_1189[i]=a_1187[i]))) 
+& a_1189[5]=1+x)
+.
+/*
+Simplify  (1): x=res-1 & 
+exists(a_1189:exists(a_1187:forall(i:(i=5 | 
+a_1189[i]=a_1187[i]))) & a_1189[5]=x+1)
+
+
+*/
+
+slk_simplify
+res=x+1 & 
+exists(a: a=1+x)
+.
+
+slk_simplify
+res=x+1 & 
+exists(a: a[5]=1+x)
+.
+/*
+incorrect to have:
+
+Simplify  (3): x=(a[5])-1 & res=a[5]
+
+*/
+
+slk_simplify
+res=a[5] & 
+exists(a: a[5]=1+x)
+.
+
+slk_simplify
+true &
+exists(a: res=a[5] & a[5]=1+x)
+.
+/* 
+  res=1+x & exists(a: a[5]=1+x)
+
+slk_elim_arr_exists res=1+x & exists(a: a[5]=1+x)
+ ==> res=1+x
+*/

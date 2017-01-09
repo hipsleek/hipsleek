@@ -1,0 +1,143 @@
+
+!!!Full processing file "demo/swl-j1.ss"
+Parsing file "demo/swl-j1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=g | (self!=s & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (s<self | self<s)),
+([], self=g)])
+!!! SCall neqs:[(cur,prev)]
+!!! neqs:[(cur,prev)]
+Checking procedure lscan$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1266,HP_1267,G]requires HP_1266(cur,sent@NI) * 
+HP_1267(prev,sent@NI)&true
+ ensures G(cur,cur'@NI,prev,prev'@NI,sent@NI)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)HP_1266(cur,sent@NI)&true --> cur::node<val1,next1> * 
+HP_1272(next1,sent@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1267(prev,sent@NI) * cur'::node<val1,prev>&
+true --> HP_1266(cur',sent@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)emp&prev'=null --> HP_1267(prev',sent@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1272(cur',sent@NI)&cur'!=null & 
+cur'!=sent --> HP_1266(cur',sent@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1267(prev,sent@NI) * cur1::node<val1,prev>&
+true --> HP_1267(cur1,sent@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1267(prev,cur'@NI) * HP_1272(cur',cur'@NI) * cur::node<val1,prev>&
+true --> G(cur,cur'@NI,prev,prev'@NI,sent@NI)&
+true(3,4),
+ // POST
+(1;2;0)G(cur,cur'@NI,prev1,prev'@NI,sent@NI) * HP_1272(next1,sent@NI)&
+prev1=null & next1=null & 
+next1!=sent --> G(cur,cur'@NI,prev,prev'@NI,sent@NI)&
+true(3,4),
+ // POST
+(2;2;0)G(next1,cur'@NI,cur,prev'@NI,sent@NI)&cur!=null & next1!=null & 
+next1!=sent --> G(cur,cur'@NI,prev,prev'@NI,sent@NI)&
+true(3,4)]
+
+Procedure lscan$node~node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1266(cur2,sent1) ::=  [cur2::node<val,next> * HP_1272(next,sent1)&cur2!=sent1 & cur2!=null],
+ HP_1267(prev',sent) ::=  [
+  emp&prev'!=sent & prev'=null
+  or prev'::node<val,next2> * HP_1272(next2,sent)&prev'!=sent
+  ],
+ G(cur,cur',prev,prev',sent) ::=  [prev'::node<val,prev>&prev=null & prev!=cur' & sent=cur' & prev'=cur; 
+prev'::node<val,prev> * prev::node<val,next2> * HP_1272(next2,cur')&
+prev!=cur' & sent=cur' & prev'=cur],
+ HP_1272(cur3,sent2) ::=  [emp&sent2=cur3; emp&cur3=null & cur3!=sent2; cur3::node<val,next> * 
+HP_1272(next,sent2)&cur3!=sent2]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1266(cur2,sent1) ::= cur2::node<val,next> * HP_1272(next,sent1)&cur2!=sent1 & cur2!=null(3,4),
+ HP_1267(prev',sent) ::= 
+ emp&prev'!=sent & prev'=null
+ or prev'::node<val,next2> * HP_1272(next2,sent)&prev'!=sent
+ (3,4),
+ G(cur,cur',prev,prev',sent) ::= 
+ prev'::node<val,prev> * prev::node<val,next2> * HP_1272(next2,cur')&
+ prev!=cur' & sent=cur' & prev'=cur
+ or prev'::node<val,prev>&prev=null & prev!=cur' & sent=cur' & prev'=cur
+ (3,4),
+ H(cur,prev,sent) ::= HP_1266(cur,sent) * HP_1267(prev,sent),
+ HP_1272(cur3,sent2) ::= 
+ emp&cur3=null & cur3!=sent2
+ or cur3::node<val,next> * HP_1272(next,sent2)&cur3!=sent2
+ or emp&sent2=cur3
+ (3,4)]
+*************************************
+
+!!! formula1: emp&((self=null & self!=sent2) | (self!=sent2 & self!=null) | sent2=self)&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((self=null & self!=sent2) | sent2=self)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (sent_1583<self | self<sent_1583)),
+([], ((self=0 & sent_1583<=(0-1)) | (self=0 & 1<=sent_1583) | self=sent_1583))])
+!!! formula1: emp&((self!=sent & self=null) | (self!=sent & self!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & self!=sent&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (sent<self | self<sent)),
+([], self!=sent & self=null)])
+!!! formula1: emp&((prev!=curPRM & sent=curPRM & prevPRM=self & prevPRM!=null & 
+prev!=null) | (prev=null & prev!=curPRM & sent=curPRM & prevPRM=self & 
+prevPRM!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(((prev=0 & curPRM=sent & self=prevPRM & sent<=(0-1)) | (prev=0 & 
+curPRM=sent & self=prevPRM & 1<=sent))) & prevPRM>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([prevPRM], ((prev=0 & curPRM=sent & self=prevPRM & sent<=(0-1)) | (prev=0 & 
+curPRM=sent & self=prevPRM & 1<=sent))),
+([prev,prevPRM], ((curPRM=sent & self=prevPRM & sent<prev) | (curPRM=sent & self=prevPRM & 
+prev<sent)))])
+!!! formula1: emp&self!=null & self!=sent1&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], ((sent_1575<self & 1<=self) | (1<=self & self<sent_1575) | 
+(sent_1575<self & self<=(0-1)) | (self<=(sent_1575-1) & self<=(0-1))))])
+Checking procedure trav$node~node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x,prev,sent@NI)&true
+ ensures G1(x,prev,sent@NI)&
+true{,(3,4)=__norm};
+
+Procedure trav$node~node~node result FAIL.(1)
+
+!!! proc.proc_name:trav$node~node~nodeStop Omega... 43 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.175652,506)
+Total verification time: 0.576148 second(s)
+	Time spent in main process: 0.479115 second(s)
+	Time spent in child processes: 0.097033 second(s)
+

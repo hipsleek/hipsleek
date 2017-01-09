@@ -1,0 +1,32 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+relation P2(ann v1, ann v2,int v,int r, int s).
+
+
+infer [P1,P2] c::cell<x'>@a&P1(a) & a<:@L & v_int=5 
+ |-  c::cell<fst>@M.
+print residue.
+
+
+/********************
+# ex8c1.slk --esl
+
+We obtained:
+
+[RELASS [P1]: ( P1(a)) -->  a<:@L,
+RELASS [P1]: ( P1(a)) -->  (a=@M | a=@A),
+RELDEFN P2: ( v=res & w_1452=5 & a<:@L & P1(a)) -->  P2(a,b_1451,v,res,w_1452)]
+
+The @A disjunction is correct though redundant since it
+conflicted with a<:@L.
+
+Further conjunction of two relational assumptions will yield:
+     P1(a)) -->  a=@M,
+
+*/
+
+
+

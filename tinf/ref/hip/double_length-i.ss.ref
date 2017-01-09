@@ -1,0 +1,28 @@
+
+!!!Full processing file "hip/double_length-i.ss"
+Parsing file "hip/double_length-i.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure length$node... 
+Procedure length$node SUCCESS.
+
+Checking procedure length$node... 
+Checking procedure double$node~int... 
+Procedure double$node~int SUCCESS.
+
+Checking procedure double$node~int... 
+Checking procedure double$node~int... **** TEMPLATE ASSUMPTION(S) ****
+[ i'=i & n_1285=n & 0<=n_1285 & i'<n_1285 & i'<n_1285 & v_int_31_1183'=2+i' & 
+  n1_1360=n & n_1347=n1_1360+1 --> (f( n, i))>(f( n_1347, v_int_31_1183'))
+]
+**** TEMPLATE INFERENCE RESULT ****
+[ template int f(int x,int y) == 0+(1*x)+(-1*y)
+]
+
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

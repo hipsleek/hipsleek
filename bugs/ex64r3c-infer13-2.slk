@@ -1,0 +1,52 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+relation R(node y).
+
+
+infer [@classic,H1] 
+    H1(y) * z::node<null>  & x=null & y=null  |- x=null
+     .
+print residue.
+expect Valid.
+
+
+infer [@classic,H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+print residue.
+expect Valid.
+
+infer [@classic,R] 
+    y::node<null>  & x=null  & R(y)  |- x=null
+     .
+print residue.
+expect Valid.
+
+infer [H1] 
+    H1(y) * y::node<null>  & x=null  |- x=null
+     .
+print residue.
+expect Valid.
+
+infer [R] 
+    y::node<null>  & x=null  & R(y)  |- x=null
+     .
+print residue.
+expect Valid.
+
+/*
+# ex64r3c.slk --dd-callers-all
+
+
+# expects H(y) -> false to be inferred?
+
+*/

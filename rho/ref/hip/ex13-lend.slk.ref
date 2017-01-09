@@ -1,0 +1,83 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (2) : Fail.(may) cause:(x,@full) cannot satisfy (under Par) (x,@lend)
+
+Residue:
+ <1>emp*U@full[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (4) : Valid. 
+
+Residue:
+ <1>emp*N@lend[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (5) : Fail.(may) cause:(x,@lend) cannot satisfy (x,@full)
+
+Residue:
+ <1>emp*U@lend[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail (6) : Fail.(may) cause:(x,@zero) cannot satisfy (x,@lend)
+
+Residue:
+ <1>emp*U@zero[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail (7) : Fail.(may) cause:(x,@zero) cannot satisfy (x,@full)
+
+Residue:
+ <1>emp*U@zero[x]&{FLOW,(1,26)=__flow#E}[]
+
+
+Entail (8) : Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (9) : Valid. 
+
+Residue:
+ <1>emp*N@full[x,z]@lend[b,a]@zero[k,y]&0<y'&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 10: Valid. 
+
+Residue:
+ <1>emp*N@full[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 11: Valid. 
+
+Residue:
+ <1>emp*N@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail 12: Valid. 
+
+Residue:
+ <1>emp*N@full[y]@zero[x]&{FLOW,(4,5)=__norm#E}[]
+
+[Warning] False ctx
+
+Entail 13: Valid. 
+
+Residue:
+ <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+

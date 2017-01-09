@@ -1,0 +1,63 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim LatchIn{-%P@Split}<>.
+
+pred_prim LatchOut{+%P@Split}<>.
+
+// (4) [P --> y::cell<m>]
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>0}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>5}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
+         |- c::LatchIn{- x::cell<n> * %PPP & n > 1}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m > 3 & n > 0}<>
+         |- c::LatchIn{- x::cell<n> & n > 1}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n > 0}<>
+         |- c::LatchIn{- x::cell<n> * y::cell<5>  & n > 1}<>.
+print residue.
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & m>0 & n > 0}<>
+         |- c::LatchIn{- x::cell<n> * y::cell<m>  & m>1& n > 1}<>.
+print residue.
+
+
+/*
+
+# bug-6e3 --esl (LatchIN)
+
+- should be contravariant but is presently co-variant
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>0}<>.
+
+Entail 1: Valid. 
+// should fail
+
+Residue:
+ <1>c::LatchIn{ - y::cell<m>&{FLOW,(4,5)=__norm#E}[]}<>&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(c,c) ==> ]]
+
+
+checkentail c::LatchIn{- x::cell<n> * y::cell<m> & n>3}<>
+            |- c::LatchIn{- x::cell<n> & n>5}<>.
+
+// should succeed
+
+Entail 2: Fail.(must) cause:matching of ho_args failed
+
+Residue:
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+
+
+
+*/

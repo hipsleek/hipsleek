@@ -1,0 +1,22 @@
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+HP_2 is defined.
+G is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_2(a) ::= NONE,
+ G(x) ::= 
+ x::node<key,left,DP> * G(left)&left!=null
+ or x::node<key,left,DP>&left=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.059218 second(s)
+	Time spent in main process: 0.045238 second(s)
+	Time spent in child processes: 0.01398 second(s)
+

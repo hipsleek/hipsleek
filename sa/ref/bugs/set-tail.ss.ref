@@ -1,0 +1,53 @@
+
+!!!Full processing file "bugs/set-tail.ss"
+Parsing file "bugs/set-tail.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure set_tail$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(c,y)&true
+ ensures G1(c,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(c,y)&true --> c::node<val1,prev1,next1> * HP_1224(prev1,y@NI) * 
+HP_1225(next1,y@NI) * HP_1226(y,c@NI)&
+true(3,4),
+ // POST
+(0)c::node<val1,prev1,y> * HP_1224(prev1,y@NI) * HP_1226(y,c@NI)&
+true --> G1(c,y)&
+true(3,4)]
+
+Procedure set_tail$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(c1,y1) ::=  [c1::node<val,DP2,DP1>&y1=DP],
+ G1(c2,y2) ::=  [c2::node<val,DP2,y2>&y2=DP]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(c1,y1) ::= c1::node<val,DP2,DP1>&y1=DP(3,4),
+ G1(c2,y2) ::= c2::node<val,DP2,y2>&y2=DP(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.021223,181)
+Total verification time: 0.286591 second(s)
+	Time spent in main process: 0.272828 second(s)
+	Time spent in child processes: 0.013763 second(s)
+

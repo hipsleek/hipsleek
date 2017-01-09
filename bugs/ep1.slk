@@ -1,0 +1,3 @@
+checkentail i>3 |- i=3.
+print residue.
+expect Fail.

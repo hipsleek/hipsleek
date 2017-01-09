@@ -1,0 +1,49 @@
+// infer_unfold (data)
+infer [U2] U2(x,..) * D |- x::node<_,q>
+   U2(x,..) # guard --> x::node<_,q>*HP(q,...,x@NI)
+
+// infer_unfold (segmented pred)
+infer [U2] U2(x,..) * D |- x::lseg<q>
+   U2(x,..) # guard --> x::lseg<q>*HP(q,...,x@NI)
+
+// control by a flag --new-infer-large-step
+// infer_unfold (large step)
+infer [U2] U2(x,p) * D |- x::lseg<q>*q::lseg<p>
+   U2(x,..) # guard --> x::lseg<q>*q::lseg<p>
+
+---------
+# ex16c3d.slk
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<q> .
+print residue.
+expect Valid.
+
+# too complex
+<1>HP_138(q,q3)&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(q3,q) * q::char_star<flted_31_124,p>@M&
+                   true |#|3  --> q3::WFG<q>@M * HP_138(q,q3@NI)&true]
+
+# expects 
+   U2(q3,q) --> q3::WFG<q>
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::WFG<r> .
+   U2(q3,q) --> q3::WFG<q4> * HP3(q4,q,q3@NI)
+
+infer [U2] U2(q3,q)*q::char_star<0,p>  |- q3::node<_,r>
+   U2(q3,q) --> q3::node<_,q4> * HP3(q4,q,q3@NI)
+
+
+---------------------------------------------
+
+// infer_fold with inst (q not in LHS)
+infer [U2] U2(x,p) |- U3(x,q)
+   U2(x,q) -> U3(x,p) & q=p
+# need to add q=p on the LHS as an instantiation
+
+// infer_fold with match
+infer [U2] U2(x,p) |- U3(x,p)
+   U2(x,p) -> U3(x,p) 
+
+// infer_fold (FAIL?)
+infer [U2] U2(x,p) & q!=null |- U3(x,q)
+   FAIL (cannot instantiate q)

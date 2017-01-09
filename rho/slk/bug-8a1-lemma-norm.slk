@@ -1,0 +1,57 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb>.
+
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1=c2 & n > 0.
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1=c3 & c2=c3 & n > 0.
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & n > 0.
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1>=c2 & c2>=c1
+   & n > 0.
+// failure may be OK here.
+/* 
+  no simplification? did we use transitive closure?
+
+CheckNorm (4) :  c1::CNT{}<flted_16_97> * c2::CNT{}<flted_16_96> * x::cell<n>&flted_16_97+
+1=0 & flted_16_96=1 & c2<=c1 & c1<=c2 & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & n=0 & n > 0.
+/* 
+
+   no unsat check?
+CheckNorm (5) :  c1::CNT{}<flted_20_116> * c2::CNT{}<flted_20_115> * x::cell<n>&flted_20_116+
+1=0 & flted_20_115=1 & n=0 & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & exists(z:c1=z & c2=z) & n > 0.
+
+
+/*
+checkentail c1::CNT<flted_15_34> * c1::CNT<flted_15_33> * x::cell<n> &
+flted_15_34+1=0 & flted_15_33=1 & 0<n & c1=ddd_46 & flted_15_34=aaa_45 & 
+c1=ddd_46 & flted_15_33=bbb_47 |- ddd_46::CNT{}<aaa_45> * ddd_46::CNT{}<bbb_47>&bbb_47+1=0.
+*/
+
+// should not normalize since c1/c2 maybe distinct!
+
+/*
+# bug-8a1
+
+c1,c2 are equal, hence lemma should be triggered..
+
+CheckNorm (3) :  c1::CNT{}<flted_17_71> * c2::CNT{}<flted_17_70> * x::cell<n>&flted_17_71+
+1=0 & flted_17_70=1 & c1=c2 & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+
+*/

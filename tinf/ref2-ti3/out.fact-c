@@ -1,0 +1,61 @@
+
+!!!Full processing file "examples/fact-c.ss"
+Parsing file "examples/fact-c.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Procedure fact$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume 1<=v_int_9_1237 & v_int_9_1229!=0 & v_int_9_1229+1=x' & 
+!(v_bool_8_1141') & x'!=0 & !(v_bool_8_1141') & x'=x & x!=0 & x'!=0 & 
+v_int_9_1140'=v_int_9_1237+1 & 
+res=v_int_9_1140' & factpost_1133(v_int_9_1229) --> factpost_1133(x).
+
+ termAssume 1<=v_int_9_1236 & v_int_9_1224=0 & v_int_9_1224+1=x' & 
+!(v_bool_8_1141') & x'!=0 & !(v_bool_8_1141') & x'=x & x!=0 & x'!=0 & 
+v_int_9_1140'=v_int_9_1236+1 & 
+res=v_int_9_1140' & factpost_1132(v_int_9_1224) --> factpost_1133(x).
+
+ termAssume x'=0 & x=0 & x'=x & v_bool_8_1141' & x'=x' & v_bool_8_1141' & 
+v_int_8_1135'=1 & res=v_int_8_1135' --> factpost_1132(x).
+
+ termAssume x'!=0 & x!=0 & x'=x & !(v_bool_8_1141') & x'!=0 & 
+!(v_bool_8_1141') & v_int_9_1139'=1 & v_int_9_1137'+1=x' & 
+v_int_9_1137'!=0 & factpre_0(x) --> factpre_0(v_int_9_1137').
+
+ termAssume x'!=0 & x!=0 & x'=x & !(v_bool_8_1141') & x'!=0 & 
+!(v_bool_8_1141') & v_int_9_1139'=1 & v_int_9_1137'+1=x' & 
+v_int_9_1137'=0 & factpre_0(x) --> Term.
+
+
+Base/Rec Case Splitting:
+[	fact: [[3] x=0@B,[4] 1<=x@R,[5] x<=(0-1)@R]
+]
+Termination Inference Result:
+fact:  case {
+  x=0 -> requires emp & Term[29]
+ ensures emp & 1<=res; 
+  1<=x -> requires emp & Term[29,2,-1+(1*x)]
+ ensures emp & 1<=res; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 23 invocations 
+8 false contexts at: ( (8,12)  (8,19)  (9,7)  (9,27)  (9,23)  (9,18)  (9,14)  (9,14) )
+
+!!! log(small):(0.048018,261)
+Total verification time: 0.352509 second(s)
+	Time spent in main process: 0.331577 second(s)
+	Time spent in child processes: 0.020932 second(s)
+

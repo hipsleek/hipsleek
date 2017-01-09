@@ -1,0 +1,28 @@
+1. constant array index, non-recursive, recursive, loop;
+2. symbolic but bounded array index, non-recursive, recursive, loop;
+
+Notes:
+1.
+
+relation P(int[] a).
+relation Q(int[] a,int[] b,int r).
+
+int foo(ref int[] a)
+  infer [@arrvar,Q,update_array_1d] requires true ensures Q(a,a',res);
+{
+  int k=5;
+  if (a[5]>0) {
+    a[5] = a[k]-1;
+    return a[k]; }
+  else {
+    return a[k+1]+1;
+  }
+}
+
+Doesn't work, because of the index is of form k+1.
+
+ex5:  emp&((0>=(a'[5]) & a'[5]=a[5] & res=a'[3] & res=(a[3])+1 & 
+           forall(i:((!not(i=3) & !not(i=5)) | a[i]=a'[i]))) | ((a[5])>=1 & 
+           a[5]=(a'[5])+1 & a[3]=a'[3] & a[5]=res+1 & forall(i:((!not(i=3) & 
+           !not(i=5)) | a[i]=a'[i]))))&{FLOW,(4,5)=__norm#E}[]
+result can be more accurate, a[3]=a'[3] can be absorbed into the result.

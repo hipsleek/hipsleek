@@ -1,0 +1,38 @@
+relation Q(int a, int b).
+relation P(int a).
+
+infer [P,Q]   n=0 & m=0 & P(m) |-  Q(m,n).
+
+infer [P,Q]   m!=0 & m1=m-1 & P(m)  |-  P(m1).
+
+infer [P,Q]   m!=0 & m1=m-1 & r=r1+2 & P(m) & Q(m1,r1) |-  Q(m,r).
+print residue.
+
+relation_infer [P][Q].
+
+/*
+# ex6a.slk
+
+infer [P,Q]   n=0 & m=0 & P(m) |-  Q(m,n).
+infer [P,Q]   m!=0 & m1=m-1 & P(m)  |-  P(m1).
+infer [P,Q]   m!=0 & m1=m-1 & r=r1+2 & P(m) & Q(m1,r1) |-  Q(m,r).
+relation_infer [P][Q].
+
+pre-relation not handled by sleek
+
+!!! **fixcalc.ml#896:bottom up
+!!! fixcalc file name: logs/fixcalc.inffixcalc: bad mutual recursion detected :"P"
+error at: 
+SLEEK FAILURE (END)
+
+hip works properly, as shown in ex6b.ss
+
+!!! fixcalc file name: logs/fixcalc.inf
+!!! **pi.ml#619:bottom_up_fp0:[( Q(m,res), m>=0 & 2*m=res)]
+!!! **pi.ml#636:fixpoint:[( Q(m,res), m>=0 & 2*m=res, P(m), 0<=m)]
+!!! **pi.ml#650:>>REL POST :  Q(m,res)
+!!! **pi.ml#651:>>POST:  m>=0 & 2*m=res
+!!! **pi.ml#652:>>REL PRE :  P(m)
+!!! **pi.ml#653:>>PRE :  0<=m
+
+*/

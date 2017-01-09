@@ -1,0 +1,19 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+infer[y] x=0 & y=1 |- x=1.
+expect Valid.
+print residue.
+
+
+infer[y] x>0 & y=1 |- x>=3.
+expect Fail.
+print residue.
+
+infer[x] x>0 & y=1 |- x>=3.
+expect Valid.
+print residue.
+
+//infer[x,y] x=y |- false.
+//print residue.

@@ -1,0 +1,158 @@
+# svcomp14/recursive/fail/ex10-Fib02-true.c: FIXED
+
+Loc to investigate ..
+
+Why did we report a must-bug. Would this not be
+unsound for post-condition proving?
+
+Checking procedure main$... 
+Post condition cannot be derived:
+  (must) cause:  res=1 |-  res!=1. LOCS:[44;36] (must-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex10-Fib02-true.c",Line:44,Col:13
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+==================================================================
+# svcomp14/recursive/fail/ex10-Fib02-true.c
+
+relation fiba(int n, int f).
+
+  //axiom n=0 ==> fiba(n,1).
+  //axiom n=1 ==> fiba(n,1).
+axiom n<=0 ==> fiba(n,0).
+axiom 1<=n<=2 ==> fiba(n,1).
+axiom n>=2 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
+//axiom n>2 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
+
+Why fiba still fail? Do we need under-approx results?
+
+==================================================================
+# ex11a-Fib03-true.c
+
+Why z3 fail when we used:
+ axiom n>2 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
+
+instead of:
+ axiom n>=2 & fiba(n-1,f1) & fiba(n-2,f2) ==> fiba(n,f1+f2).
+
+Checking procedure fibonacci$int... 
+Post condition cannot be derived:
+  (may) cause:  fiba(v_int_35_1412,tmp_1423) & fiba(v_int_35_1421,tmp___1424) & n!=1 & 
+1<=n & v_int_35_1412+1=n & v_int_35_1421+2=n & res=tmp___1424+tmp_1423 |-  fiba(n,res). LOCS:[32;30;23;35;27] (may-bug)
+==================================================================
+# ex11-Fib03-true.c -tp z3
+
+This currently fails. Can under-approx of fixpoint
+help somehow? But what kind of query should we give?
+Probably need to write some proof obligation for 
+these scenarios to determine if problem is at
+  (i) imply
+  (ii) unsat or sat checking
+
+WE need to explore this alternative to make a
+comparison.
+
+http://rise4fun.com/Z3/tutorialcontent/fixedpoints
+==================================================================
+# svcomp14/recursive/fail/ex21-Fib02.c
+
+Are we able to parse external proc of C properly?
+
+globals.ml:let nondet_int_proc_name = "__VERIFIER_nondet_int"
+Binary file hip matches
+iast.ml:  [ Globals.nondet_int_proc_name; "__VERIFIER_error" ]
+parser.ml:(* int __VERIFIER_nondet_int() *)
+parser.ml:(* int __VERIFIER_error()      *)
+parser.ml:    else if String.compare id "__VERIFIER_error" == 0 then Some (
+parser.ml:      "int __VERIFIER_error()\n" ^
+==================================================================
+# svcomp14/recursive/fail/ex21a-Fib02-error.c
+
+I added the following into prelude.ss
+
+void throw_err()
+  requires true
+  ensures true & flow __Error;
+
+Why did I have a pre-cond failure?
+
+Checking procedure main$... 
+Proving precondition in method throw_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [50;47;48;-1;55]
+
+==================================================================
+#ex21b-fib02.ss
+
+--esl did not give any failure.
+It seems that __Error spec is not handled properly
+by hip.
+
+Can we rectify warning?
+WARNING: ex21b-fib02.ss_42:33_42:52:the result type __Error#E is not covered by the throw list[__norm#E]
+
+Checking procedure main$... 
+Proving precondition in method throw_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [47;44;45;52]
+==================================================================
+# ex22c-null-err.ss
+
+Expecting failure but why is main
+verified successfully? Unsound here.
+
+Why is dprint not printed?
+Please fix dprint first.
+
+Checking procedure null_err$... 
+Procedure null_err$ SUCCESS.
+
+Checking procedure main$... 
+Procedure main$ SUCCESS.
+Stop Omega... 39 invocations 
+==================================================================
+# ex22d-null-err.ss
+
+Expect success but why is there pre-cond failure?
+Same as ex22b example. Why dprint not printed?
+
+Checking procedure main$... 
+Proving precondition in method null_err$ Failed.
+  (must) cause: must_err (__Error#E) LOCS: [22;23]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "ex22d-null-err.ss",Line:23,Col:16
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

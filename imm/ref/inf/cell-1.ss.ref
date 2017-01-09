@@ -1,0 +1,16 @@
+
+!!!Full processing file "inf/cell-1.ss"
+Parsing file "inf/cell-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo$cell... 
+Procedure foo$cell SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.334128 second(s)
+	Time spent in main process: 0.309263 second(s)
+	Time spent in child processes: 0.024865 second(s)
+

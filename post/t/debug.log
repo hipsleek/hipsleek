@@ -1,0 +1,15 @@
+#compute_actions
+#cnv_ptr_to_int,Trace
+#infer_collect_rel,Trace
+#heap_entail_empty_rhs_heap,Trace
+#heap_entail_conjunct_lhs,Trace
+#trans_loop_proc,Trace
+check_post
+heap_entail_one_context_struc
+heap_entail_one_context_struc_nth
+heap_entail_struc_partial_context
+heap_entail_struc_list_partial_context_init
+heap_entail_prefix_init
+heap_entail_struc
+#filter_ante_wo_rel
+#filter_var,Trace

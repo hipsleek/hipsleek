@@ -1,0 +1,49 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+HeapPred H1(node y).
+
+
+infer [zzz,H1] H1(y)*x::node<zzz>   |- y::lseg<null> * x::lseg<zzz> .
+print residue.
+/*
+# ex64r3.slk --dd-callers-all
+
+infer [zzz,H1] H1(y)*x::node<zzz>   |- y::lseg<null> * x::lseg<zzz> .
+
+# How come do_fold_w_ctx recursive here?
+
+[do_fold_w_ctx@11.,do_fold@10,do_base_fold,pm_aux@9,process_action,pm_aux@8,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,do_match,pm_aux@7,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,fold_op_1,do_fold_w_ctx@4,do_fold@3,do_full_fold,pm_aux@2,process_action,heap_entail_non_empty_rhs_heap,heap_entail_conjunct_helper,heap_entail_conjunct,heap_entail_conjunct_lhs,heap_entail_after_sat,heap_entail_one_context,helper_inner,heap_entail_conjunct_lhs_struc,heap_entail_after_sat_struc,heap_entail_one_context_struc,heap_entail_struc,heap_entail_struc_init,heap_entail_struc_init_bug_inv,sleek_entail_check,run_infer_one_pass,process_infer]
+
+----------------------------------------
+
+# Why are we losing x=z?
+
+ <1>x::node<z>@M * HP_186(flted_35_185,y)&x!=null & flted_35_185=null&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP_186(flted_35_185,y@NI)&true --> emp&flted_35_185=null; 
+                  H1(y)&
+                   true --> y::lseg<flted_35_185>@M * 
+                            HP_186(flted_35_185,y@NI)&
+                   true]
+[[ Fold ==>  InferUnfold  ==>  InferHeap ==>  Match(y,y)]]
+
+# infer-str & default branch triggers FALSE
+
+Entail (1) : Valid. 
+Residue:
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [z=null]
+ inferred hprel: [HP_65(flted_14_64,y@NI)&true --> emp&
+                   y=flted_14_64 & flted_14_64=null & y!=flted_14_64; 
+                  H1(y)&
+                   true --> y::lseg<flted_14_64>@M * HP_65(flted_14_64,y@NI)&
+                   true]
+
+*/

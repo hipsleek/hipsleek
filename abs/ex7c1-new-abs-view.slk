@@ -1,0 +1,68 @@
+// Valid.Valid.Valid.Fail.Valid.Valid.
+
+data node{
+ int val;
+ node next;
+}.
+
+pred ll<n> == self=null & n=0 or
+  self::node<_,q>*q::ll<n-1> //& self!=p
+  inv n>=0.
+
+
+//2
+checkentail x::ll<nnn>@A & nnn>0 |- x!=null.
+print residue.
+expect Valid.
+
+
+
+/*
+# ex7c1.slk
+
+# Why 3 times?
+
+(==cvutil.ml#1263==)
+aux_xpure_for_view@16@15
+aux_xpure_for_view inp1 :ll
+aux_xpure_for_view inp2 :x
+aux_xpure_for_view inp3 :[nnn]
+aux_xpure_for_view@16 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0))
+
+(==cvutil.ml#1871==)
+xpure_heap_mem_enum#6@15
+xpure_heap_mem_enum#6 inp1 : x::ll<nnn>@A
+xpure_heap_mem_enum#6 inp2 :lhs_pure: 0<nnn
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@15 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0)) #  [[x]]
+
+(==cvutil.ml#1263==)
+aux_xpure_for_view@18@17
+aux_xpure_for_view inp1 :ll
+aux_xpure_for_view inp2 :x
+aux_xpure_for_view inp3 :[nnn]
+aux_xpure_for_view@18 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0))
+
+(==cvutil.ml#1871==)
+xpure_heap_mem_enum#6@17
+xpure_heap_mem_enum#6 inp1 : x::ll<nnn>@A
+xpure_heap_mem_enum#6 inp2 :lhs_pure: 0<nnn
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@17 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0)) #  [[x]]
+
+(==cvutil.ml#1263==)
+aux_xpure_for_view@20@19
+aux_xpure_for_view inp1 :ll
+aux_xpure_for_view inp2 :x
+aux_xpure_for_view inp3 :[nnn]
+aux_xpure_for_view@20 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0))
+
+(==cvutil.ml#1871==)
+xpure_heap_mem_enum#6@19
+xpure_heap_mem_enum#6 inp1 : x::ll<nnn>@A
+xpure_heap_mem_enum#6 inp2 :lhs_pure: 0<nnn
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@19 EXIT: ((1<=nnn & x!=null) | (x=null & nnn=0)) #  [[x]]
+
+
+*/

@@ -1,0 +1,78 @@
+
+!!!Full processing file "paper/check-sll-head-v.ss"
+Parsing file "paper/check-sll-head-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=h | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=h)])
+!!! neqs:[]
+Checking procedure foo$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,h)&true
+ ensures G(x,h)&res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ forall(h_23_1268:((1<=h | h_23_1268<=h)) & ((h<=1 | h_23_1268<=h)) & 
+((h<=h_23_1268 | 1<=h)) & ((h<=h_23_1268 | h<=1)))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,h)&x!=h --> HP_1270(h1,h@NI) * HP_1272(h,x@NI) * 
+x::node<h1,next1> * HP_1271(next1,h@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1271(next1,h@NI) * HP_1272(h,x@NI)&x!=h --> H(next1,h)&
+true(3,4),
+ // POST
+(1;0)H(h,h)&true --> G(x,h)&
+true(3,4),
+ // POST
+(2;0)G(next1,h) * HP_1270(h,h@NI) * x::node<h,next1>&x!=h --> G(x,h)&
+true(3,4)]
+
+Procedure foo$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x2,h2) ::=  [GP_1406(x2,x1)&x1=h2],
+ G(x3,h3) ::=  [emp&x3=h3; x3::node<h3,next> * G(next,h3)&x3!=h3],
+ GP_1406(x2,x1) ::=  [
+  x2::node<h4,next2> * GP_1406(next2,x1)&h4=x1 & x2!=x1
+  or emp&x2=x1
+  ]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x2,h2) ::= GP_1406(x2,x1)&x1=h2(3,4),
+ G(x3,h3) ::= 
+ x3::node<h3,next> * G(next,h3)&x3!=h3
+ or emp&x3=h3
+ (3,4),
+ GP_1406(x2,x1) ::= 
+ x2::node<h4,next2> * GP_1406(next2,x1)&h4=x1 & x2!=x1
+ or emp&x2=x1
+ (3,4)]
+*************************************
+Stop Omega... 18 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.071365,366)
+Total verification time: 0.384308 second(s)
+	Time spent in main process: 0.357841 second(s)
+	Time spent in child processes: 0.026467 second(s)
+

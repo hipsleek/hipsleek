@@ -1,0 +1,209 @@
+ref/hip/ex12c1a-varperm-simple.ss.ref: --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex12c1a-varperm-simple.ss.ref:Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex12c1a-varperm-simple.ss.ref:Error3(s) detected at main 
+ref/hip/ex12c2-varperm-simple.ss.ref: --error: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+ref/hip/ex12c2-varperm-simple.ss.ref:Exception occurred: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+ref/hip/ex12c2-varperm-simple.ss.ref:Error3(s) detected at main 
+ref/hip/ex12c-varperm-simple.ss.ref: --error: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+ref/hip/ex12c-varperm-simple.ss.ref:Exception occurred: Stream.Error("SEMICOLON expected after [expression_statement] (in [valid_declaration_statement])")
+ref/hip/ex12c-varperm-simple.ss.ref:Error3(s) detected at main 
+ref/hip/ex15d-lend-heap.ss.ref:ERROR: at hip/ex15d-lend-heap.ss_12:6_13:21
+ref/hip/ex15d-lend-heap.ss.ref:Exception Failure("Proving condition of a par's case failed.") Occurred!
+ref/hip/ex15d-lend-heap.ss.ref:Error(s) detected when checking procedure main$
+ref/hip/ex16-lend.ss.ref:ERROR: at hip/ex16-lend.ss_7:10_7:15
+ref/hip/ex16-lend.ss.ref:Exception Failure("x does not have @lend/@full permission to read (inside bind)") Occurred!
+ref/hip/ex16-lend.ss.ref:Error(s) detected when checking procedure f$cell
+ref/hip/ex2c-latch-wrong.ss.ref:Exception Failure("Proving precond failed") Occurred!
+ref/hip/ex2c-latch-wrong.ss.ref:Error(s) detected when checking procedure main$
+ref/hip/ex4b-latch-par-with-varperm.ss.ref: --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4b-latch-par-with-varperm.ss.ref:Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4b-latch-par-with-varperm.ss.ref:Error3(s) detected at main 
+ref/hip/ex4c1-latch-par-no-varperm.ss.ref: --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4c1-latch-par-no-varperm.ss.ref:Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4c1-latch-par-no-varperm.ss.ref:Error3(s) detected at main 
+ref/hip/ex4c2-latch-par-with-varperm.ss.ref: --error: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+ref/hip/ex4c2-latch-par-with-varperm.ss.ref:Exception occurred: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+ref/hip/ex4c2-latch-par-with-varperm.ss.ref:Error3(s) detected at main 
+ref/hip/ex4c-latch-par-with-varperm.ss.ref: --error: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+ref/hip/ex4c-latch-par-with-varperm.ss.ref:Exception occurred: Stream.Error("[pure_constr] expected after AND (in [and_pure_constr])")
+ref/hip/ex4c-latch-par-with-varperm.ss.ref:Error3(s) detected at main 
+ref/hip/ex4d1-bind.ss.ref:ERROR: at hip/ex4d1-bind.ss_23:2_25:17
+ref/hip/ex4d1-bind.ss.ref:Exception Failure("Proving condition of a par's case failed.") Occurred!
+ref/hip/ex4d1-bind.ss.ref:Error(s) detected when checking procedure main$
+ref/hip/ex4d-bind.ss.ref:ERROR: at hip/ex4d-bind.ss_22:2_24:11
+ref/hip/ex4d-bind.ss.ref:Exception Failure("Proving condition of a par's case failed.") Occurred!
+ref/hip/ex4d-bind.ss.ref:Error(s) detected when checking procedure main$
+ref/hip/ex4-latch-par.ss.ref: --error: Stream.Error("[vperm_var_list_opt] expected after PAR (in [par_statement])")
+ref/hip/ex4-latch-par.ss.ref:Exception occurred: Stream.Error("[vperm_var_list_opt] expected after PAR (in [par_statement])")
+ref/hip/ex4-latch-par.ss.ref:Error3(s) detected at main 
+ref/hip/ex4-par-simple.ss.ref: --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4-par-simple.ss.ref:Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex4-par-simple.ss.ref:Error3(s) detected at main 
+ref/hip/ex6-thread-var-perm.ss.ref: --error: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ref/hip/ex6-thread-var-perm.ss.ref:Exception occurred: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ref/hip/ex6-thread-var-perm.ss.ref:Error3(s) detected at main 
+ref/hip/ex7-race-error.ss.ref:!!!Full processing file "hip/ex7-race-error.ss"
+ref/hip/ex7-race-error.ss.ref:Parsing file "hip/ex7-race-error.ss" by default parser...
+ref/hip/ex7-race-error.ss.ref:File "hip/ex7-race-error.ss", line 47, characters 6-7
+ref/hip/ex7-race-error.ss.ref: --error: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex7-race-error.ss.ref:Exception occurred: Stream.Error("[opt_vpid_list] expected after OBRACE (in [vperm_var_list])")
+ref/hip/ex7-race-error.ss.ref:Error3(s) detected at main 
+ref/ho/deadpool.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/deadpool.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/deadpool.ss.ref:Error3(s) detected at main 
+ref/ho/fibonacci.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/fibonacci.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/fibonacci.ss.ref:Error3(s) detected at main 
+ref/ho/inst2.ss.ref:!!!WARNING : uninterpreted free variables [mmm] in specification.
+ref/ho/inst.ss.ref:!!!WARNING : uninterpreted free variables [m] in specification.
+ref/ho/latch2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch2.ss.ref:Error3(s) detected at main 
+ref/ho/latch-exp1.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch-exp1.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch-exp1.ss.ref:Error3(s) detected at main 
+ref/ho/latch-exp2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch-exp2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch-exp2.ss.ref:Error3(s) detected at main 
+ref/ho/latch.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/latch.ss.ref:Error3(s) detected at main 
+ref/ho/ll-bug.ss.ref:ERROR: at ho/ll-bug.ss_27:4_27:6
+ref/ho/ll-bug.ss.ref:Exception Failure("ol does not have @full permission to write.") Occurred!
+ref/ho/ll-bug.ss.ref:Error(s) detected when checking procedure clone$node~node
+ref/ho/lock-exp2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp2.ss.ref:Error3(s) detected at main 
+ref/ho/lock-exp3.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp3.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp3.ss.ref:Error3(s) detected at main 
+ref/ho/lock-exp4.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp4.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp4.ss.ref:Error3(s) detected at main 
+ref/ho/lock-exp.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/lock-exp.ss.ref:Error3(s) detected at main 
+ref/ho/mapreduce.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/mapreduce.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/mapreduce.ss.ref:Error3(s) detected at main 
+ref/ho/msg2a.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2a.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2a.ss.ref:Error3(s) detected at main 
+ref/ho/msg2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg2.ss.ref:Error3(s) detected at main 
+ref/ho/msg3a.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3a.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3a.ss.ref:Error3(s) detected at main 
+ref/ho/msg3b.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3b.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3b.ss.ref:Error3(s) detected at main 
+ref/ho/msg3-d1.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3-d1.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3-d1.ss.ref:Error3(s) detected at main 
+ref/ho/msg3.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg3.ss.ref:Error3(s) detected at main 
+ref/ho/msg4a.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4a.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4a.ss.ref:Error3(s) detected at main 
+ref/ho/msg4b.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4b.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4b.ss.ref:Error3(s) detected at main 
+ref/ho/msg4.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg4.ss.ref:Error3(s) detected at main 
+ref/ho/msg5.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg5.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg5.ss.ref:Error3(s) detected at main 
+ref/ho/msg-d2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg-d2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg-d2.ss.ref:Error3(s) detected at main 
+ref/ho/msg.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/msg.ss.ref:Error3(s) detected at main 
+ref/ho/multi-join1.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/multi-join1.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/multi-join1.ss.ref:Error3(s) detected at main 
+ref/ho/multi-join2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/multi-join2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/multi-join2.ss.ref:Error3(s) detected at main 
+ref/ho/parallel-mergesort.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/parallel-mergesort.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/parallel-mergesort.ss.ref:Error3(s) detected at main 
+ref/ho/parallel-quicksort.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/parallel-quicksort.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/parallel-quicksort.ss.ref:Error3(s) detected at main 
+ref/ho/poly-msg4b.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/poly-msg4b.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/poly-msg4b.ss.ref:Error3(s) detected at main 
+ref/ho/thrd-or.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thrd-or.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thrd-or.ss.ref:Error3(s) detected at main 
+ref/ho/thread2a.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2a.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2a.ss.ref:Error3(s) detected at main 
+ref/ho/thread2.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread2.ss.ref:Error3(s) detected at main 
+ref/ho/thread-dead.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-dead.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-dead.ss.ref:Error3(s) detected at main 
+ref/ho/threadpool.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/threadpool.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/threadpool.ss.ref:Error3(s) detected at main 
+ref/ho/thread-split.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread-split.ss.ref:Error3(s) detected at main 
+ref/ho/thread.ss.ref: --error: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread.ss.ref:Exception occurred: Stream.Error("[id_ann_list_opt] expected after OBRACE (in [opt_brace_vars])")
+ref/ho/thread.ss.ref:Error3(s) detected at main 
+ref/vp/ex11a-cdl.ss.ref:ERROR: at vp/ex11a-cdl.ss_60:10_60:15
+ref/vp/ex11a-cdl.ss.ref:Exception Failure("h_40 does not have @lend/@full permission to read (inside bind)") Occurred!
+ref/vp/ex11a-cdl.ss.ref:Error(s) detected when checking procedure main$
+ref/vp/ex11b1-err-perm-bind.ss.ref:ERROR: at vp/ex11b1-err-perm-bind.ss_13:10_13:15
+ref/vp/ex11b1-err-perm-bind.ss.ref:Exception Failure("h does not have @lend/@full permission to read (inside bind)") Occurred!
+ref/vp/ex11b1-err-perm-bind.ss.ref:Error(s) detected when checking procedure foo$cell
+ref/vp/ex11c-cell-read-heap.ss.ref:ERROR: at vp/ex11c-cell-read-heap.ss_14:11_14:12
+ref/vp/ex11c-cell-read-heap.ss.ref:Exception Failure("h does not have @lend/@full permission to read (var access)") Occurred!
+ref/vp/ex11c-cell-read-heap.ss.ref:Error(s) detected when checking procedure foo$cell
+ref/vp/ex11-cdl.ss.ref:ERROR: at vp/ex11-cdl.ss_64:10_64:15
+ref/vp/ex11-cdl.ss.ref:Exception Failure("h_43 does not have @lend/@full permission to read (inside bind)") Occurred!
+ref/vp/ex11-cdl.ss.ref:Error(s) detected when checking procedure main$
+ref/vp/ex12a-bind-lend-err.ss.ref:ERROR: at vp/ex12a-bind-lend-err.ss_13:9_13:10
+ref/vp/ex12a-bind-lend-err.ss.ref:Exception Failure("h does not have @full permission to write.") Occurred!
+ref/vp/ex12a-bind-lend-err.ss.ref:Error(s) detected when checking procedure foo$cell
+ref/vp/ex13a1-err-fork-thread.ss.ref:ERROR: at _0:0_0:0
+ref/vp/ex13a1-err-fork-thread.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/vp/ex13a1-err-fork-thread.ss.ref:Error(s) detected when checking procedure main$int
+ref/vp/ex13b-err-fork-thread.ss.ref:ERROR: at vp/ex13b-err-fork-thread.ss_13:8_13:9
+ref/vp/ex13b-err-fork-thread.ss.ref:Exception Failure("v_int_13_1348 does not have @full permission to write.") Occurred!
+ref/vp/ex13b-err-fork-thread.ss.ref:Error(s) detected when checking procedure foo$int
+ref/vp/ex13-fork-thread.ss.ref:ERROR: at vp/ex13-fork-thread.ss_13:8_13:9
+ref/vp/ex13-fork-thread.ss.ref:Exception Failure("v_int_13_1348 does not have @full permission to write.") Occurred!
+ref/vp/ex13-fork-thread.ss.ref:Error(s) detected when checking procedure foo$int
+ref/vp/ex14-err-fork-thread.ss.ref:Exception occurred: Failure("lexing: empty token")
+ref/vp/ex14-err-fork-thread.ss.ref:Error3(s) detected at main 
+ref/vp/ex37c-ho_task_decompose.ss.ref:ERROR: at _0:0_0:0
+ref/vp/ex37c-ho_task_decompose.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/vp/ex37c-ho_task_decompose.ss.ref:Error(s) detected when checking procedure main$
+ref/vp/ex37d-ho_task_decompose.ss.ref: --error: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ref/vp/ex37d-ho_task_decompose.ss.ref:Exception occurred: Stream.Error("[single_vperm_constr] expected after STAR (in [vperm_constr])")
+ref/vp/ex37d-ho_task_decompose.ss.ref:Error3(s) detected at main 
+ref/vp/ex37-task_decompose.ss.ref:ERROR: at vp/ex37-task_decompose.ss_12:2_12:3
+ref/vp/ex37-task_decompose.ss.ref:Exception Failure("i does not have @lend/@full permission to read (var access)") Occurred!
+ref/vp/ex37-task_decompose.ss.ref:Error(s) detected when checking procedure inc$int
+ref/vp/ex42-simple-csl.ss.ref: --error: Stream.Error("[simple_heap_constr] expected after STAR (in [heap_wr])")
+ref/vp/ex42-simple-csl.ss.ref:Exception occurred: Stream.Error("[simple_heap_constr] expected after STAR (in [heap_wr])")
+ref/vp/ex42-simple-csl.ss.ref:Error3(s) detected at main 
+ref/vp/prelude_thrd.ss.ref:!!!WARNING : uninterpreted free variables [Q] in specification.
+ref/web/cdl-ex4a-race.ss.ref:!!! WARNING: [ERR-RACE:web/cdl-ex4a-race.ss_54:2_67:3]
+ref/web/cdl-ex4a-race.ss.ref:ERROR: at _0:0_0:0
+ref/web/cdl-ex4a-race.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/web/cdl-ex4a-race.ss.ref:Error(s) detected when checking procedure main$
+ref/web/cdl-ex4-race.ss.ref:!!! WARNING: [ERR-RACE:web/cdl-ex4-race.ss_54:2_70:3]
+ref/web/cdl-ex5a-deadlock.ss.ref:!!! WARNING: [ERR-RACE:web/cdl-ex5a-deadlock.ss_54:2_64:3]
+ref/web/cdl-ex5a-deadlock.ss.ref:ERROR: at _0:0_0:0
+ref/web/cdl-ex5a-deadlock.ss.ref:Exception Failure("Post condition cannot be derived.") Occurred!
+ref/web/cdl-ex5a-deadlock.ss.ref:Error(s) detected when checking procedure main$
+ref/web/cdl-ex5-deadlock.ss.ref:!!! WARNING: [ERR-RACE:web/cdl-ex5-deadlock.ss_54:2_64:3]

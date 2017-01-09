@@ -1,0 +1,26 @@
+
+!!!Full processing file "paper-v/sll-append_paper-v.ss"
+Parsing file "paper-v/sll-append_paper-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=y | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=y)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure sll_append$node~node... 
+Procedure sll_append$node~node SUCCESS.
+Stop Omega... 11 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.142518,550)
+Total verification time: 0.362518 second(s)
+	Time spent in main process: 0.3419 second(s)
+	Time spent in child processes: 0.020618 second(s)
+

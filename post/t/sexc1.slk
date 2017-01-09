@@ -1,0 +1,20 @@
+data Exp {
+  int val;
+}.
+
+checkentail (exists v_int: eres::Exp<v_int>
+//& 0<x 
+& v_int=2 & flow Exp1)
+ |-  emp&res=2 & 0<x& flow Exp1. 
+print residue.
+
+/*
+# sexc1.slk
+
+Why is context false?
+
+If exception does not exist, should flag
+an error that exception is illegal.
+
+
+*/

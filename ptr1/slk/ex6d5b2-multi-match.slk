@@ -1,0 +1,128 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+infer [] a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<i+1,n>.
+print residue.
+expect Valid.
+/*
+# ex6d5b1 --pnum 2
+
+# why fail here?
+
+(==context.ml#3545==)
+choose_context@1
+choose_context inp1 :LHS node: a::arrI<Anon_12>@M
+choose_context inp2 :RHS node: base::arr_seg<flted_10_62,n>@M
+choose_context inp3 :LHS pure: 0<=i & bbb=1+base+i & a=i+base
+choose_context inp4 :RHS pure: flted_10_62=1+i
+choose_context inp5 :right alias:[]
+choose_context@1 EXIT:[]
+
+Entail (2) : Fail.(may) cause:do_unmatched_rhs : base::arr_seg<flted_15_104,n>@M(may)
+
+*/
+
+/*
+# ex6d5b.slk --pnum 3
+
+infer [] bbb::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & bbb=base+i+1 & i>=0 |- base::arr_seg<i+1,n>.
+
+(==context.ml#3545==)
+choose_context@5@3
+choose_context inp1 :LHS node: a::arrI<Anon_16>@M * b::arrI<Anon_17>@M
+choose_context inp2 :RHS node: base::arr_seg<flted_6_80,n_79>@M
+choose_context inp3 :LHS pure: a=i+base & b=1+base+i & 0<=i
+choose_context inp4 :RHS pure: flted_6_80=1+flted_21_69 
+  & b=flted_21_69+base & 0<=flted_21_69 & n_79=n
+choose_context inp5 :right alias:[(n_79,n)]
+choose_context@5 EXIT:[]
+
+# why did we have b in the RHS?
+
+# How can fold step give higher-priority to earlier matching?
+  For example b,b should be a stronger match than a,b..
+
+(==solver.ml#11406==)
+compute_actions@3
+compute_actions inp1 :EQ ptr:[(n_79,n)]
+compute_actions inp2 :LHS heap: a::arrI<Anon_16>@M * b::arrI<Anon_17>@M
+compute_actions inp3 :LHS pure: a=i+base & b=1+base+i & 0<=i
+compute_actions inp4 :RHS cand:[ b::arrI<Anon_72>@M, base::arr_seg<flted_6_80,n_79>@M]
+compute_actions inp5 :RHS pure: flted_6_80=1+flted_21_69 & b=flted_21_69+base & 0<=flted_21_69 & n_79=n
+compute_actions inp6 :right alias:[n_79,flted_6_80,n,flted_21_69,n,b,Anon_72]
+compute_actions@3 EXIT: COND =>[
+  Prio:1
+  Match =>
+    Type: Root
+    LHS: a::arrI<Anon_16>@M
+    RHS: b::arrI<Anon_72>@M
+    root_inst: None
+    lhs_rest: b::arrI<Anon_17>@M
+    rhs_rest: base::arr_seg<flted_6_80,n_79>@M
+    alias set: [a,b]rhs_inst: []rhs_infer: None;
+  Prio:1
+  Match =>
+    Type: Root
+    LHS: b::arrI<Anon_17>@M
+    RHS: b::arrI<Anon_72>@M
+    root_inst: None
+    lhs_rest: a::arrI<Anon_16>@M
+    rhs_rest: base::arr_seg<flted_6_80,n_79>@M
+    alias set: [a,b]rhs_inst: []rhs_infer: None
+  ]
+
+-----------------------------------
+
+# ex6d5b.slk 
+
+infer []  b::arrI<_> * a::arrI<_> 
+  & a=(base:arrI)+i & b=base+i+1 & i>=0 |- base::arr_seg<j,n>.
+
+# How come below only has one solution? However,
+  changing the order of LHS gives other results.
+
+Entail (2) : Valid. 
+Residue:
+ <1>b::arrI<Anon_14>@M * a::arrI<Anon_15>@M&j=n & 0<=j & 0<=i & b=1+base+i & 
+         a=i+base&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold]]
+
+infer [] a::arrI<_> * b::arrI<_>
+  & a=(base:arrI)+i & b=base+i+1 & i>=0 |- base::arr_seg<j,n>.
+
+Entail (1) : Valid. 
+Residue:
+
+ <1>a::arrI<Anon_12>@M * b::arrI<Anon_13>@M&j=n & 0<=j & 0<=i & b=1+base+i & 
+                                            a=i+base&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold]]
+<2>b::arrI<Anon_13>@M&i=j & base=a-j & b=a+1 & n=j+1 & 0<=j&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  COND ==>  Match(a,a) ==>  Fold]]
+<3>emp&i=j & b=j+base+1 & a=j+base & n=j+2 & 0<=j&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  Fold ==>  COND ==>  COND ==>  Match(a,a) ==>  Fold ==>  Match(b,b) ==>  COND ==>  BaseCaseFold]]
+
+# Do we need a search here?
+  Should we order a FOLD?
+
+!!! **context.ml#3620:compute_action (steps) :
+ ### RHS Cand :[ base::arr_seg<j,n>@M]
+ ### action :
+ COND =>[
+  Prio:1
+  Fold =>
+    LHS: a::arrI<Anon_12>@M
+    RHS: base::arr_seg<j,n>@M;
+  Prio:1
+  Fold =>
+    LHS: b::arrI<Anon_13>@M
+    RHS: base::arr_seg<j,n>@M
+  ]
+
+*/

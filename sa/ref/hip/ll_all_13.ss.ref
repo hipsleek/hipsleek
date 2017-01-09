@@ -1,0 +1,80 @@
+
+!!!Full processing file "hip/ll_all_13.ss"
+Parsing file "hip/ll_all_13.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! neqs:[]
+Checking procedure delete1$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ requires x::ls<>&true
+ ensures res::ls<>&true{,(3,4)=__norm};
+|| infer[ H1,G2]requires H1(x)&true
+ ensures G2(x,res)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H1(x)&x!=null --> x::node<val1,next1> * HP_1388(next1)&
+true(3,4),
+ // PRE_REC
+(2;2;0)HP_1388(next1)&true --> H1(next1)&
+true(3,4),
+ // POST
+(1;0)H1(res)&res=null & res=null --> G2(x,res)&
+true(3,4),
+ // POST
+(1;2;0)x::node<val1,res> * HP_1388(res)&true --> G2(x,res)&
+true(3,4),
+ // POST
+(2;2;0)x::node<val1,next1> * G2(next1,v1) * res::node<val1,v1>&
+true --> G2(x,res)&
+true(3,4)]
+
+Procedure delete1$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&x1=null; x1::node<val2,next2> * H1(next2)],
+ G2(x2,res1) ::=  [emp&res1=null & x2=null; x2::node<val,res1> * H1(res1); 
+x2::node<val,next> * G2(next,v1) * res1::node<val,v1>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= 
+ x1::node<val2,next2> * H1(next2)
+ or emp&x1=null
+ (3,4),
+ G2(x2,res1) ::= 
+ x2::node<val,res1> * H1(res1)
+ or x2::node<val,next> * G2(next,v1) * res1::node<val,v1>
+ or emp&res1=null & x2=null
+ (3,4)]
+*************************************
+Stop Omega... 17 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.175513,652)
+Total verification time: 0.470116 second(s)
+	Time spent in main process: 0.447127 second(s)
+	Time spent in child processes: 0.022989 second(s)
+

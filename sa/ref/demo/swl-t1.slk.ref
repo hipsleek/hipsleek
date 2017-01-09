@@ -1,0 +1,40 @@
+Starting Omega...oc
+H is defined.
+HP_903 is defined.
+HP_902 is defined.
+G is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(cur,prev,sent) ::= cur::node<val,next> * HP_315(next,sent) * HP_322(prev,sent)(3,4),
+ HP_902(next1,prev1,sent1) ::= HP_315(next1,sent1)(3,4),
+ HP_903(prev2,cur1,sent2) ::= 
+ prev2::node<val1,next2> * HP_315(next2,sent2)&prev2!=sent2
+ or emp&prev2!=sent2 & prev2=null
+ (3,4),
+ G(cur2,next,prev3,prev',sent3) ::= prev'::node<val2,prev4> * HP_322(prev3,sent3)&cur2=prev' & next=sent3(3,4),
+ HP_315(next1,sent1) ::= 
+ emp&next1=null & next1!=sent1
+ or next1::node<val1,next3> * HP_315(next3,sent1)&next1!=sent1
+ or emp&next1=sent1
+ (3,4),
+ HP_322(prev2,sent2) ::= 
+ prev2::node<val1,next2> * HP_315(next2,sent2)&prev2!=sent2
+ or emp&prev2!=sent2 & prev2=null
+ (3,4)]
+*************************************
+Stop Omega... 0 invocations 
+SAT Count   : 30
+SAT % Hit   : 33.33%
+IMPLY Count : 10
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.002201 (seconds)
+
+!!! log(small):(0.024071,53)
+Total verification time: 0.122403 second(s)
+	Time spent in main process: 0.108464 second(s)
+	Time spent in child processes: 0.013939 second(s)
+

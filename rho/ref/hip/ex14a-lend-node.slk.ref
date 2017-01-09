@@ -1,0 +1,21 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail 1: Fail.(may) cause:AndR[ true |-  Anon_65=Anon_13. LOCS:[0;8];  ((p_66=1 & 1<=flted_5_64) | (p_66=null & flted_5_64=0)) |-  p_66=Anon_14. LOCS:[5;0;1;4;8] (may-bug).]
+
+Residue:
+ <1>(Hole[67]) * p_66::ll{}<flted_5_64>&x!=null & flted_5_64+1=n&{FLOW,(4,8)=__MayError#E}[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail (2) : Fail.(must) cause:mismatched imm annotation @par for data node
+
+Residue:
+ <1>Hole[84]&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

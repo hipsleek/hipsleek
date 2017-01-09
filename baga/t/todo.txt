@@ -1,0 +1,768 @@
+==============================================
+# app1.slk
+
+inv_exact BG([],self=null & n=0) | BG([self],n>0)
+
+When inv_exact given, we should use it for both
+over_baga and under_baga.
+
+why did we have failure below?
+
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message: 
+  ((self=Cnull & n=0) | self!=Cnull) 
+  |-  ((self=Cnull & n=0) | (0<self & 0<n)). LOCS:[6;7;0;11] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,24)=__flow}}
+
+Starting Omega...oc
+Fatal error: exception Failure("view defn for ll does not entail supplied invariant
+Two problems
+  (1) why --esl not working (FIXED)
+  (2) seems that user_inv is true (FIXED)
+==============================================
+# sleek10.slk
+
+pred ll<n> == self = null & n = 0
+         or self::node<_,r> * r::ll<n - 1>
+.
+
+!! baga_over:None
+
+without invariant, we can use
+a default of "true" for baga_over too
+rather than None
+==============================================
+# baga1.slk
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([], self!=Cnull)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+However, I expect to get:
+    inv BG([self,k],true)
+==============================================
+# baga1.slk (FIXED)
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([], self!=Cnull)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+However, I expect to get:
+    inv BG([self,k],true)
+==============================================
+# baga2.slk (FIXED)
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+//inv self!=null
+inv BG([self,k],true)
+.
+
+Given
+!!! baga over inv(l5):[([self,k], true)]
+We derived:
+!!! baga_over(unfolded):Some([([self], true)])
+
+which is less accurate than the given baga.
+However, I expect to get:
+    inv BG([self,k],true)
+==============================================
+# baga1.slk
+
+pred l5<k> == 
+  self::node<q>*q::node<_> & k=q & self!=q
+inv self!=null
+//inv BG([self,k],true)
+
+Could Omega.simplify be improved to preserve disequality?
+
+!!! pure1 = : exists(q:k=q & self!=q)
+!!! pure2 = : (k<self | self<k)
+
+!!! baga_over(unfolded):Some([([k,self], (k<self | self<k))])
+
+# use Omega.gist to remove self!=k
+==============================================
+# infer4.slk
+
+infer [q] q=null |- q::ll<n> & n>0.
+print residue.
+expect Valid.
+
+GOT:
+ inferred pure: [q!=0]
+
+ should be q!=null 
+==============================================
+# infer5.slk  (FIXED)
+
+//(3)
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+print residue.
+// TODO : "b" part of the inferred?
+// --baga-xpure (1) why is inf_b_91=1 inferred?
+//         this seems to be due to baga enumeration
+// --dis-baga-xpure (2) why this fail?
+// --imm (3) why did it fail?
+
+ <1>emp&flted_22_60=1 & Anon_16=flted_22_60 & Anon_15=inf_Anon_90 & Anon_17=inf_Anon_94 & inf_b_91=1 & inf_flted_22_95=Cnull&{FLOW,(21,22)=__norm}[]
+ inferred heap: [y::node<inf_Anon_94,inf_flted_22_95>; 
+                 x::node<inf_Anon_90,inf_b_91>]
+ inferred pure: [inf_flted_22_95=Cnull; inf_b_91=1]
+
+Using xpure_heap_sym
+--------------------
+@8!infer5.slk:12: 33: >>>>>> infer_pure_m <<<<<<
+@8!infer5.slk:12: 33: Did not manage to infer a useful precondition
+@8!infer5.slk:12: 33: LHS : : x!=y & y!=Cnull & x!=Cnull & b!=Cnull & x!=b & y!=b
+@8!infer5.slk:12: 33: RHS : : inf_flted_12_104=Cnull & inf_b_112=b
+@8!infer5.slk:12: 33: LHS REL : :None
+@8!infer5.slk:12: 33: new_p_ass: : ((y=1 & inf_flted_12_104!=Cnull) | ((y+1)<=x & y=Cnull & 
+
+Using xpure_heap
+----------------
+
+
+==============================================
+# app-inv.slk --dis-baga-xpure  (FIXED)
+
+  inv: n>=0
+  
+  why did below fail for --dis-baga-xpure
+
+checkentail xxx::ll<nnnn> & nnnn<0 |- false.
+print residue.
+expect Valid.
+
+why below not triggered by --dis-baga-xpure
+(below from --baga-xpure)
+ id: 50<-1; prover: Z3; loc: app-inv_slk_7:5_7:34; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Sat:  nnnn<0 & (((xxx=Cnull & nnnn=0) | (xxx=1 & 1<=nnnn)))
+ res: UNSAT
+==============================================
+# examples/working/hip_baga/cll.ss  (FIXED)
+
+Message: view defn for hd does not entail supplied invariant
+
+With inv in cll:
+
+!!! xform': ((self=Cnull & n=0) | 
+(exists(r:exists(flted_18_22:exists(self_23:self_23=self & 
+(((1<=flted_18_22 & r!=Cnull & self_23!=r) | (self_23=r & 
+flted_18_22=0)))) & flted_18_22+1=n)) & self!=Cnull))
+
+With inv_exact in cll:
+!!! xform': ((self=Cnull & n=0) | (exists(flted_18_22:flted_18_22+1=n) & 
+exists(self_23:self_23=self) & self!=Cnull))
+
+==============================================
+# baga/ll-1.slk --elp (FIXED)
+
+lemma "V1" self::ll_s<n> -> self::ll<>.
+
+Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flted_5_58=0) | (r_60=1 & self_V1=2 & 
+1<=flted_5_58)) |-  self_V1=Cnull. LOCS:[5;4;0;1;8] (must-bug),valid]
+
+Failed to prove V1:==> in current context.
+==============================================
+# baga/ll-1.slk --elp  (FIXED)
+
+
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::node<_,q>* q::ll<>.
+
+why base-case-unfold caused a problem here..
+
+!!!:0: 0: do_base_case_unfold attempt : unsuccessful for :  r::ll_s<flted_34_48>
+!!! ctx0_lst match_: 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: separation entailment
+                   fe_locs: {
+                             fc_message: base_case_unfold failed
+                             fc_current_lhs_flow: {FLOW,(21,22)=__norm}}
+[[ SEARCH ==>  COND ==>  COND ==>  BaseCaseUnfold ==> ]]true
+
+Entail 1: Fail.(cex)(must) cause:base case unfold failed
+==============================================
+# baga/ll-1.slk --elp
+
+lemma_unsafe "V1" self::ll_s<n> -> self::ll<>.
+
+checkentail_exact self::node<_,r> * r::ll_s<n - 1>
+  |- self::node<_,q>* q::ll<>.
+
+Entailing lemma V1: Fail. (cex)(may) cause: OrR[ ((self_V1=1 & r_60=Cnull & flted_5_58=0) | (r_60=1 & self_V1=2 & 
+1<=flted_5_58)) |-  self_V1=Cnull. LOCS:[5;4;0;1;8] (must-bug),valid]
+
+Failed to prove V1:==> in current context.
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -g
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+
+12324 was OK
+=================================
+latest smt2014 code (at context.ml)  (FIXED)
+
+why is l_xxx empty?
+
+!!! l_xxx:[]
+!!! r:[([],?)]
+!!! **** sel_hp_rel **********************
+!!! hp_rel:[]
+!!! sel_hp_rel:[]
+!!! sel_post_hp_rel:[]
+!!! weighted action:[(1): Prio:-1COND =>[Prio:2BaseCaseFold =>
+                                      LHS: emp
+                                      RHS: q::ll<>;Prio:2UnmatchedRHSData =>  q::ll<>]]
+!!! sorted action:[(1): Prio:2COND =>[Prio:2BaseCaseFold =>
+                                     LHS: emp
+                                     RHS: q::ll<>;Prio:2UnmatchedRHSData =>  q::ll<>]]
+
+324 code
+--------
+!!! l:[(lhs_rest: emp,lhs_node: r::ll_s<flted_34_48>,holes:[],match_type: Root)]
+!!! r:[([ 
+  Type: Root
+  LHS: r::ll_s<flted_34_48>
+  RHS: q::ll<>
+ lhs_rest: emp
+ rhs_rest: emp],?)]
+!!! **** sel_hp_rel **********************
+!!! hp_rel:[]
+!!! sel_hp_rel:[]
+!!! sel_post_hp_rel:[]
+!!! VIEW vs VIEW
+
+!!! weighted action:[(1): Prio:1SEARCH =>[
+        Prio:1COND =>[Prio:3BaseCaseUnfold =>
+                                              LHS: r::ll_s<flted_34_48>
+                                              RHS: q::ll<>];
+        Prio:1(Lemma ==> V1) =>
+                                LHS: r::ll_s<flted_34_48>
+                                RHS: q::ll<>
+        ]]
+!!! sorted action:[(1): Prio:1SEARCH =>[
+        Prio:1(Lemma ==> V1) =>
+                                LHS: r::ll_s<flted_34_48>
+                                RHS: q::ll<>;
+        Prio:3COND =>[Prio:3BaseCaseUnfold =>
+                                              LHS: r::ll_s<flted_34_48>
+                                              RHS: q::ll<>]
+        ]]
+==============================================
+# cll-d.slk (FIXED)
+
+pred hd<n> == self = null & n = 0
+	or self::node<_, r> * r::cll<self, n-1>  
+	inv n >= 0.
+
+checkentail 
+  x1::node<_,r>& //extra stuff cause failure?
+ x'=null
+ & 0<n 
+ & flted+1=n 
+ & flted=0 
+ |-  (exists flted: x'::hd<flted>&flted+1=n ). 
+//expect Valid.
+
+Entail 1: Fail.(cex)(must) cause:do_unmatched_rhs : x'::hd<flted_85>
+
+@10! is_folding: :true
+@10! !Globals.do_classic_frame_rule:true
+@10! is_rhs_emp:false
+
+chinwn@loris-7:~/hg/sl_term$ hg bisect -b
+The first bad revision is:
+changeset:   12325:3a374f17c051
+branch:      smt2014
+user:        locle
+date:        Wed Jul 02 16:43:57 2014 +0800
+summary:     x
+
+            (* WN->Loc : this caused failure for cll-d.slk *)
+            (* let old_classic_flag = !do_classic_frame_rule in *)
+            (* let _ = do_classic_frame_rule := (is_empty_heap rhs_rest) in *)
+            let r = do_fold prog (Some (iv,ivr,vd)) estate conseq rhs_node rhs_rest rhs_b is_folding pos in
+            (* let _ = do_classic_frame_rule := old_classic_flag in *)
+            r
+
+==============================================
+# eps-ll-1.slk --eps --pcp
+
+lemma "V8" self::ll<> <- self::ll_s<n>.
+
+--eps folding lemma not properly specialized.
+
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+
+Solution : to invoke 
+--------------------
+prune_preds@10
+prune_preds inp1 :true
+prune_preds inp2 : x::ll<>&{FLOW,(21,22)=__norm}[]
+prune_preds@10 EXIT: x::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]
+
+Starting z3... 
+Starting Omega...oc
+
+Warning: ::0: 0: right hand side node is not specialized!
+
+
+Lemma "V8":  self::ll<>@ rem br[{3,4}]&{FLOW,(21,22)=__norm}[]<== (exists n_56: self::ll_s<n_56>@ rem br[{1,2}]&(([0<=n_56]))&
+{FLOW,(21,22)=__norm})[]
+ head match:ll
+ body view:ll_s
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[ll_s])]
+ coercion_case: Simple
+ head_norm:  self::ll<>&{FLOW,(21,22)=__norm}[]
+ body_norm:  EBase exists (Expl)[](Impl)[n](ex)[]self::ll_s<n>&{FLOW,(21,22)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+==============================================
+# pr2.slk
+
+checkentail x_1 = x_2+1  |- x_2 = x_1-1.
+
+>> simple soln : use an object mapping that can be reset
+
+--print-tidy
+run_infer:
+ emp&x=1+x1&{FLOW,(21,22)=__norm}[] [] 
+ |-  EBase emp&x+1=x1&{FLOW,(21,22)=__norm}[]
+
+--dis-print-tidy
+run_infer:
+ emp&x_1=1+x_2&{FLOW,(21,22)=__norm}[] [] 
+  |-  EBase emp&x_2+1=x_1&{FLOW,(21,22)=__norm}[]
+==============================================
+# baga/infer-under.slk (do not have over and under inv)
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>.
+
+// over inv     : true
+// under inv    : None
+// over body    : emp&((self=null & n=0) | self!=null)
+// under body   : emp&n=0 & self=null
+
+# baga/infer-under1.slk (have over inv)
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv n>=0.
+
+// over inv     : n>=0
+// under inv    : None
+// over body    : emp&((self=null & n=0) | (1<=n & self!=null))
+// under body   : emp&n=0 & self=null
+
+
+# baga/infer-under2.slk (have over inv and it is also exact inv)
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv BG([],self=null & n=0) | BG([self], n>0).
+
+// over inv     : [([], self=null & n=0),([self], 0<n)]
+// under inv    : None
+// over body    : emp&((self=null & n=0) | (((n=1 | 2<=n)) & self!=null))
+// under body   : emp&n=0 & self=null
+
+# baga/infer-under3.slk (have over inv and under inv but not exact)
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv n>=0
+     inv_sat BG([],self=null & n=0).
+
+// over inv     : n>=0
+// under inv    : self=null & n=0
+// over body    : emp&((self=null & n=0) | (1<=n & self!=null))
+// under body   : emp&((self=null & n=0) | (self>0 & n=1))
+
+# baga/infer-under4.slk (have over inv and under inv but not exact,
+                         error in this case)
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-1>
+     inv n>=0
+     inv_sat BG([self],n>0).
+
+// over inv     : n>=0
+// under inv    : self!=null & n>0
+// over body    : emp&((self=null & n=0) | (1<=n & self!=null))
+// under body   : emp&((self=null & n=0) | (self>0 & 2<=n))
+
+# baga/infer-under5.slk (have over inv and under inv but not exact,
+                         error in this case)
+
+pred ll<n> == self=null & n=0  --> self=null & n=0
+     or self::node<q> * q::ll<n-1> --> [q],n-1=1 --> [self],n=2
+     inv n>=0
+     inv_sat BG([self],n=1). (self=null & n=0) || ([self],n=2)
+
+// over inv     : n>=0
+// under inv    : self!=null & n=1
+// over body    : emp&((self=null & n=0) | (1<=n & self!=null))
+// under body   : emp&((self=null & n=0) | (self>0 & n=2))
+
+- Under body is constructed using under inv info so when we do
+not have under inv is under body correct ???
+
+- Under body can not be entailed by under inv
+ in baga/infer-under4.slk and baga/infer-under5.slk
+
+- Under inv have to entail under body ???
+
+- Use under body as under inv ???
+
+==============================================
+# ll-3.ss
+
+ll<n> == self=null & n=0
+  or self::node<q> * q::ll<n-1>
+   inv_sat BG([self],n>4)         // Not OK
+
+should a sound under approx.
+
+WARNING: t/ll-3.ss_5:9_5:24:view defn for ll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([self], 4<n)])
+
+Did we unfold 4 times which allowed it to succeed
+for ll-3e.ss but fails for ll-3.ss.
+
+# ll-3e.ss
+
+ inv_sat BG([self],n>=3)        // OK
+
+This works!
+==============================================
+# ex10-11-under.slk
+
+
+Can we distinguish something that is
+definitely UNSAT such as ([],false)  or  ([self],n=0)
+
+from over-approx such as ([self],n>=0)
+or unknown such as ([self],n>=10)
+
+?
+==============================================
+# err-10.slk
+
+pred ll<n> == self=null & n=0 
+   or self::node<_,q>*q::ll<n-1>
+inv_sat BG([],self=null & n<1) 
+   // reported invalid, but this can be proven cylicly..
+.
+
+([],self=null & n<1) <<= self::ll<n>
+
+([],self=null & n<1) <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+([],self=null & n<1 & n=0) \/ ([],self=null & n<1 & n!=0) 
+  <<= self=null & n=0
+       \/ self::node<_,q>*q::ll<n-q>
+
+split-lhs-\/
+
+([],self=null & n<1 & n=0)  <<= self=null & n=0
+([],self=null & n<1 & n=0)  <<= self=null & n=0 // valid
+
+([],self=null & n<1 & n!=0) <<= self::node<_,q>*q::ll<n-q> // empty
+
+==============================================
+# ex21.slk
+
+Inferred inv
+compute_invs_fixcalc@1
+compute_invs_fixcalc inp1 :
+lseg:={[self,NODp_46,n_47,m_48,idx_49] -> [] -> []:  exists (self,NODp: 0=0 && self=NODp && n_47=0 && m_48=0 && idx_49=0) ||  exists (self,NODp,NODp_16,flted_6_14,flted_6_15,NODq,idx_45: (self>0 && lseg(NODq,NODp_16,flted_6_15,flted_6_14,idx_45)) && flted_6_15+1=n_47 && flted_6_14+1=m_48 && NODp_16=NODp && idx_49=idx_45+1)
+};
+bottomupgen([lseg], [3], SimHeur);
+compute_invs_fixcalc@1 EXIT:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+
+But sleek goes into a LOOP? why?
+
+# x_formula later become imprecise?
+# why is idx still there?
+
+!!! invs:[ n_47>=0 & n_47=m_48 & n_47=idx_49]
+!!! view_x_formula: n>=0 & n=m & n=idx
+!!! precise? view_user_inv: 0<=n & 0<=m
+!!! view_x_formula: 0<=n & 0<=m
+!!! Predicate lseg has precise invariant
+
+==============================================
+# ex21b.slk: FIXED
+
+must detect false is not invariant
+need to do fixpoint checking for user-supplied inv
+
+!!! WARNING: User supplied is more precise: false
+!!! WARNING: TODO fixpt check
+
+==============================================
+# ex21c.slk : FIXED
+
+pred lseg<p,n,m> == self=p & n=0 & m=0
+  or self::node<q> * q::lseg<p,n-1,m-1>
+  inv n,m>=0
+ .
+
+supplied is less precise than fixcalc;
+therefore over-inv message is incorrect.
+
+!!! memo_pf_P: n>=0 & n=m & n=idx
+!!! Predicate lseg has over invariant
+==============================================
+# ex21b.slk: FIXED
+
+GOT
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], true)]
+
+EXPECTED
+!!! infered baga inv(lseg):[([], p=self & n=0 & m=0),
+([self], m=n & n>=1)]
+==============================================
+Total number of errors: 20 in files:
+
+ label-dll.slk({E3#Valid},{E4#Valid}): FIXED
+ lst-under1.slk({I2#Fail})
+ lst-under2.slk({I1#Fail})
+ ll-under1c.slk({I2#Fail})
+ ll-under1e.slk({I1#Fail},{I2#Fail})
+ ll-under1f.slk({I2#Fail})
+ baga-test-eps.slk({E10#Valid},{E6#Valid})
+ baga-test-2.slk({E10#Valid},{E6#Valid})
+ infer/infer7.slk({E6#Valid},{E7#Valid})
+ infer/infer8.slk({E12#Valid},{E14#Valid},{E18#Valid},{E19#Valid},{E22#Valid},{E23#Valid})
+ infer/infer9.slk({E7#Valid})
+ infer/infer10.slk({E1#Valid},{E2#Valid})
+ infer/infer13.slk({E5#Valid})
+ infer/infer14.slk({E20#Valid},{E21#Valid},{E24#Valid},{E5#Valid},{E8#Valid})
+ infer/infer15.slk({E2#Valid},{E3#Valid},{E4#Valid},{E6#Valid},{E7#Valid})
+ infer/infer16.slk({E5#Valid},{E6#Valid})
+ imm-field/sleek05.slk({E1#Valid})
+ inf-no-eps.slk(no result  for {E})
+ infinity.slk(no result  for {E})
+ inflem.slk({E1#Fail},{E2#Valid}).
+
+
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+==============================================
+# baga/t/ex11.slk (smt2014)
+
+Why did we get failure message and also a disabling
+of inv gen? Why did we not use the precise inv?
+
+!!! Predicate l6 has precise invariant
+
+!!! infered baga inv(l6):[([q,self], true),([q], self=null)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+Inv Check: Fail.(Over)
+==============================================
+# baga/t/ex3-tree-val.slk (smt2014)
+
+Why does such a simple example fails?
+Why did we get 4 disjunct?
+
+pred l6<q:node> == 
+  self=null or
+  self::node<r>*r::node<_> & r=q
+ inv BG([self,q],true) | BG([],self=null)
+
+Is over-approx successful?
+
+Inv Check: Fail.(Under)
+
+--inv-baga
+
+form_body_inv_baga_enum@1
+form_body_inv_baga_enum inp1 :tree
+form_body_inv_baga_enum@1 EXIT: emp&((self=null & size=0) | (self=1 & size=1) | (self=1 & 2<=size) | 
+(self=1 & 3<=size))&{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv_baga@2
+form_body_inv_baga inp1 :tree
+form_body_inv_baga@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size) | 
+(self>0 & 3<=size))&{FLOW,(1,26)=__flow#E}[]
+
+
+without --inv-baga
+!!! baga_over_formula: emp&self!=q & self>0 & q>0&{FLOW,(1,26)=__flow#E}[]
+!!! ctx: es_formula: emp&q!=null & self!=null&{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv#1@1
+form_body_inv#1 inp1 :tree
+form_body_inv#1@1 EXIT: emp&((self=null & size=0) | (((size=1 | 2<=size)) & self!=null))&
+{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv#2@2
+form_body_inv#2 inp1 :tree
+form_body_inv#2@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size) | 
+(self>0 & 3<
+==============================================
+# baga/t/ex4-ll3 -dre "form_body_inv" --inv-baga
+
+# Did we re-generate precise invariant?
+# Why is there a disabling of baga inv?
+# Is it OK to use self>0 rather than self!=null?
+
+!!! Predicate ll has precise invariant
+
+!!! infered baga inv(ll):[([], self=null & size=0),
+([self], 1<=size)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+
+form_body_inv_baga_enum@1
+form_body_inv_baga_enum inp1 :ll
+form_body_inv_baga_enum@1 EXIT: emp&((self=null & size=0) | (self=1 & size=1) | (self=1 & 2<=size))&
+{FLOW,(1,26)=__flow#E}[]
+
+form_body_inv_baga@2
+form_body_inv_baga inp1 :ll
+form_body_inv_baga@2 EXIT: emp&((self=null & size=0) | (self>0 & size=1) | (self>0 & 2<=size))&
+{FLOW,(1,26)=__flow#E}[]
+==============================================
+# baga/t/e3-tree-val.slk --inv-baga
+
+Why is there a disabling of baga inv
+despite precise inv?
+
+!!! Predicate tree has precise invariant
+
+!!! infered baga inv(tree):[([], self=null & size=0),
+([self], 1<=size)]
+
+!!! end gen baga
+Disabling baga inv gen ..
+
+==============================================
+helper_unfold@1
+helper_unfold inp1 :[ emp&((self=null & size=0) | (self!=null & 3<=size))&{FLOW,(1,26)=__flow#E}[]]
+helper_unfold inp2 :[]
+helper_unfold@1 EXIT:[]
+
+helper_unfold@1
+helper_unfold inp1 :[ (* lbl: *){1}->emp&self=null & size=0&{FLOW,(1,26)=__flow#E}[]]
+
+helper_unfold inp2 :[ (* lbl: *)
+{2}->(exists Anon_14,height,p,size1,q,size2: 
+(* lbl: *){2}->self::node<Anon_14,height,p,q> * p::tree{}<size1> * 
+q::tree{}<size2>&size=size2+1+size1&{FLOW,(1,26)=__flow#E}[]]
+
+helper_unfold@1 EXIT:
+[ (* lbl: *){2}->(exists Anon_14,height,p,size1,q,
+size2: (* lbl: *){2}->self::node<Anon_14,height,p,q> * (emp) * (emp)&
+size=size2+1+size1 & p=null & size1=0 & q=null & size2=0&
+{FLOW,(1,26)=__flow#E}[]]
+
+// unfold 1
+!!! pf base: self=null & size=0
+!!! pf base: self!=null & size=1
+!!! pf indu: self!=null & 3<=size
+!!! pf all: ((self=null & size=0) | (self!=null & size=1) | (self!=null & 3<=size))
+Inv Check: Fail.(Under)
+
+
+// unfold 3
+!!! pf base: self=null & size=0
+!!! pf base: self!=null & size=1
+!!! pf base: self!=null & size=3
+!!! pf base: self!=null & size=7
+!!! pf indu: self!=null & 3<=size
+!!! pf all: ((self=null & size=0) | (self!=null & size=1) | (self!=null & size=3) | 
+(self!=null & size=7) | (self!=null & 3<=size))
+Inv Check: Fail.(Under)
+
+// unfold 0
+!!! pf base: self=null & size=0
+!!! pf base: self=null & size=0
+!!! pf indu: self!=null & 3<=size
+!!! pf all: ((self=null & size=0) | (self!=null & 3<=size))
+
+
+check_under@2
+check_under inp1 :([self], 0<size)
+check_under inp2 :[ 
+(* lbl: *){1}->emp&self=null & size=0&{FLOW,(1,26)=__flow#E}[], (* lbl: *)
+{2}->(exists Anon_14,height,p,size1,q,
+size2: (* lbl: *){2}->self::node<Anon_14,height,p,q> * p::tree{}<size1> * 
+q::tree{}<size2>&size=size2+1+size1&{FLOW,(1,26)=__flow#E}[]]
+
+
+check_under@1
+check_under inp1 :([], self=null & size=0)
+check_under inp2 :
+[ emp&((self=null & size=0) 
+  | (self!=null & size=1) 
+  | (self!=null & 2<=size) 
+  | (self!=null & 3<=size))&{FLOW,(1,26)=__flow#E}[]]
+
+check_under inp3 :tree
+check_under@1 EXIT:true
+
+==============================================
+#bst.slk
+
+----------
+GOT
+infered baga inv(bst):[([], self=null & sm<=lg),([self], true)]
+
+---------
+EXPECTED
+:infered baga inv(bst):[([], self=null & sm<=lg),([self], sm<=lg)]
+
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+==============================================
+
+

@@ -1,0 +1,7 @@
+Starting Omega...oc
+Starting z3... 
+
+WARNING: t/bug-under2.slk_9:14_9:29:view defn for ll has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([self], true)])
+
+

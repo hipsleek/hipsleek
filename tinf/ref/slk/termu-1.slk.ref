@@ -1,0 +1,28 @@
+Starting Omega...oc
+Starting z3... 
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'+1=x & x!=0 & fpost_0(x') --> fpost_0(x).
+
+ termAssume x=0 --> fpost_0(x).
+
+ termAssume x'+1=x & x!=0 & fpre_0(x) --> fpre_0(x').
+
+
+Base/Rec Case Splitting:
+[	[[2] x=0@B,[3] 1<=x@R,[4] x<=(0-1)@R]
+]
+Termination Inference Result:
+:  case {
+  x=0 -> requires emp & Term[0,1]
+ ensures emp & true; 
+  1<=x -> requires emp & Term[0,2,-1+(1*x)]
+ ensures emp & true; 
+  x<=(0-1) -> requires emp & Loop[]
+ ensures false & false; 
+  }
+

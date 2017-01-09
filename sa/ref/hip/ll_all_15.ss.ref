@@ -1,0 +1,69 @@
+
+!!!Full processing file "hip/ll_all_15.ss"
+Parsing file "hip/ll_all_15.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure create_list$int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1Int,G1]requires H1Int(a@NI)&true
+ ensures G1(res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // PRE_REC
+(2;0)emp&a'+1=a & a!=0 --> H1Int(a'@NI)&
+true(3,4),
+ // POST
+(1;0)H1Int(a@NI)&res=null & a=0 --> G1(res)&
+true(3,4),
+ // POST
+(2;0)res::node<v1,tmp1> * G1(tmp1)&true --> G1(res)&
+true(3,4),
+ // POST
+(2;0)H1Int(a@NI)&a'+1=a & a!=0 --> emp&
+true(3,4)]
+
+Procedure create_list$int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1Int(a1) ::=  [emp&a'+1=a1 & a1!=0],
+ G1(res1) ::=  [emp&res1=null; res1::node<v,tmp> * G1(tmp)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1Int(a1) ::= emp&a'+1=a1 & a1!=0(3,4),
+ G1(res1) ::= 
+ res1::node<v,tmp> * G1(tmp)
+ or emp&res1=null
+ (3,4)]
+*************************************
+Stop Omega... 15 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.049678,271)
+Total verification time: 0.341964 second(s)
+	Time spent in main process: 0.312367 second(s)
+	Time spent in child processes: 0.029597 second(s)
+

@@ -1,0 +1,63 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! 
+Entailing lemma both2: Fail. Details below:
+	 "==>" implication: : Valid.
+	 "<==" implication: : Fail. (no cex)(must) cause: OrL[ y::zip{}<>&self2=null&{FLOW,(5,6)=__Error}[],valid]
+
+Failed to proved for both2:<==> ==> invalid lemma encountered.
+
+Entailing lemma one: Valid.
+
+ Temp Lemma(s) proved as valid in current context.
+
+Entailing lemma lem_16: Valid.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(self4) ::= 
+ self4::node<_,p8> * p8::zipNM<q4>
+ or self4::node<_,q3>
+ or emp&self4=null
+ (3,4)]
+*************************************
+
+!!! fixpoint:[]
+ <1>
+    emp&y=null & self5=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&self5=null --> H(self5)&true(3,4); 
+                  self5::node<_,p8> * p8::zipNM<q4>&true --> H(self5)&
+                   true(3,4); 
+                  y::node<_,q3>&true --> H(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 25 invocations 
+SAT Count   : 1292
+SAT % Hit   : 91.33%
+IMPLY Count : 51
+IMPLY % Hit : 47.05%
+Time(cache overhead) : 0.079095 (seconds)
+
+!!! log(small):(0.958025,1433)
+Total verification time: 0.363945 second(s)
+	Time spent in main process: 0.330395 second(s)
+	Time spent in child processes: 0.03355 second(s)
+

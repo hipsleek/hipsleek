@@ -1,0 +1,14 @@
+Starting Omega...oc
+
+ERROR: at demo/view-4.slk_19:5_19:15 
+Message: UNIFICATION ERROR : at location {(19,5),(19,15)} types node and cell are inconsistent
+ 
+ERROR: at demo/view-4.slk_19:5_19:15 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(19,5),(19,15)} types node and cell are inconsistent")
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.053369 second(s)
+	Time spent in main process: 0.039462 second(s)
+	Time spent in child processes: 0.013907 second(s)
+

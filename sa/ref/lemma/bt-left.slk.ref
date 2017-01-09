@@ -1,0 +1,28 @@
+Starting Omega...oc
+HP is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entailing lemma sthn: Fail. INCONSISTENCY : expected failure but success instead
+
+Failed to prove sthn:==> in current context.
+Removing invalid lemma ---> lemma store restored.
+Stop Omega... 8 invocations 
+SAT Count   : 277
+SAT % Hit   : 89.16%
+IMPLY Count : 7
+IMPLY % Hit : 57.14%
+Time(cache overhead) : 0.013715 (seconds)
+
+!!! log(small):(0.098987,299)
+Total verification time: 0.10635 second(s)
+	Time spent in main process: 0.088646 second(s)
+	Time spent in child processes: 0.017704 second(s)
+

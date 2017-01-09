@@ -1,0 +1,68 @@
+Starting Omega...oc
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x2=y+x & 0<=x & fpost_0(x2,y) --> fpost_0(x,y).
+
+ termAssume x1+y=x & 0<=x & fpost_0(x1,y) --> fpost_0(x,y).
+
+ termAssume x<0 --> fpost_0(x,y).
+
+ termAssume x2=y+x & 0<=x & fpre_0(x,y) --> fpre_0(x2,y).
+
+ termAssume x1+y=x & 0<=x & fpre_0(x,y) --> fpre_0(x1,y).
+
+Starting z3... 
+
+Base/Rec Case Splitting:
+[	f: [[3] x<=(0-1)@B,[4] 0<=x@R]
+]
+Termination Inference Result:
+f:  case {
+  x<=(0-1) -> requires emp & Term[0,1]
+ ensures emp & true; 
+  0<=x -> case {
+           y=0 -> requires emp & Loop[]
+ ensures false & false; 
+           y<=(0-
+           1) -> case {
+                  0<=x & x<=((0-y)-
+                  1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+                  0<=x & 0<=(x+
+                  y) -> case {
+                         y<=(0-1) & 0<=(x+(2*
+                         y)) -> case {
+                                 y<=(0-1) & 0<=(x+(3*
+                                 y)) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                 
+                                 x<=((0-(3*y))-1) & y<=(0-
+                                 1) -> requires emp & MayLoop[]
+ ensures emp & true;
+                                 
+                                 }
+                         
+                         x<=((0-(2*y))-1) & y<=(0-
+                         1) -> requires emp & MayLoop[]
+ ensures emp & true; 
+                         }
+                  
+                  }
+           
+           1<=y -> case {
+                    0<=x & 
+                    x<y -> requires emp & MayLoop[]
+ ensures emp & true; 
+                    y<=x & 
+                    0<=x -> requires emp & MayLoop[]
+ ensures emp & true; 
+                    }
+           
+           }
+  
+  }
+

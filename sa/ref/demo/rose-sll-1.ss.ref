@@ -1,0 +1,113 @@
+
+!!!Full processing file "demo/rose-sll-1.ss"
+Parsing file "demo/rose-sll-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_tree$tree... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G1,G2]requires H1(t)&true
+ ensures G1(t)&res{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[H1,H2,G1,G2] pre_post_vars:[G1,res,H1,t]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(t)&true --> t::tree<val1,children1> * HP_1325(children1)&
+true(3,4),
+ // PRE_REC
+(2;0)t::tree<val1,children1> * HP_1325(children1)&
+children1!=null --> H2(children1,t)&
+true(3,4),
+ // POST
+(1;0)t::tree<val1,children1> * HP_1325(children1)&children1=null --> G1(t)&
+true(3,4),
+ // POST
+(2;0)G2(children1,t)&t!=null & children1!=null --> G1(t)&
+true(3,4)]
+
+Procedure check_tree$tree SUCCESS.
+
+Checking procedure check_child$node~tree... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G2,G2]requires H2(l,par)&true
+ ensures G2(l,par)&
+res{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[H1,H2,G2,G2] pre_post_vars:[G2,res,H2,l,par]
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ forall(l:((l!=1 | parent_47_1405<=par)) & ((l!=1 | par<=parent_47_1405)))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(l,par)&l!=null --> HP_1406(child1,par@NI) * HP_1409(par,l@NI) * 
+l::node<child1,next1,parent1> * HP_1407(next1,par@NI) * 
+HP_1408(parent1,par@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1407(next1,par@NI) * HP_1409(par,l@NI) * HP_1408(par,par@NI)&
+true --> H2(next1,par)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1406(child1,par@NI)&true --> H1(child1)&
+true(3,4),
+ // POST
+(1;0)H2(l,par)&l=null --> G2(l,par)&
+true(3,4),
+ // POST
+(1;2;0)l::node<child1,next1,par> * G2(next1,par)&true --> G2(l,par)&
+true(3,4)]
+
+Procedure check_child$node~tree SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+Context of Verification Failure: 1 File "demo/rose-sll-1.ss",Line:44,Col:11
+Last Proving Location: 1 File "",Line:0,Col:0
+
+ERROR: at demo/rose-sll-1.ss_34:15_34:40 
+Message: split_components: don't expect OR
+ 
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[]
+*************************************
+Stop Omega... 35 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.112937,561)
+Total verification time: 0.465293 second(s)
+	Time spent in main process: 0.441551 second(s)
+	Time spent in child processes: 0.023742 second(s)
+

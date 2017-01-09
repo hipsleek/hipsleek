@@ -1,0 +1,46 @@
+
+!!!Full processing file "hip/ex2-latch-seq.ss"
+Parsing file "hip/ex2-latch-seq.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex2-latch-seq.ss:50: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_48_1411': x_38'::cell<v_int_46_1565> * c_39'::LatchIn{ - x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<v_int_48_1411'>*N@full[c_39,x_38]&v_int_46_1565=10 & v_int_48_1411'=1 & 0<v_int_48_1411'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+dprint: hip/ex2-latch-seq.ss:52: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_33_1577: c_39'::LatchOut{ + x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<flted_33_1577>*N@full[c_39,x_38]&0<=(n+1) & flted_33_1577+1=n & 0<=(v_int_48_1576+1) & x_38'!=null & Anon_11=v_int_46_1565 & n=v_int_48_1576 & 0<v_int_48_1576 & v_int_48_1576=1 & v_int_46_1565=10 & 0<n&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+dprint: hip/ex2-latch-seq.ss:54: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists flted_39_1591: c_39'::CNT{}<flted_39_1591> * x_38'::cell<Anon_11>*N@full[c_39,x_38]&exists(flted_38_48:0<=(flted_38_48+1)) & flted_39_1591+1=0 & 0<=(flted_33_1588+1) & 0<n & v_int_46_1565=10 & v_int_48_1576=1 & 0<v_int_48_1576 & n=v_int_48_1576 & Anon_11=v_int_46_1565 & x_38'!=null & 0<=(v_int_48_1576+1) & flted_33_1588+1=n & 0<=(n+1) & flted_33_1588=0&{FLOW,(4,5)=__norm#E}[]
+       es_ho_vars_map: [P --> x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]; 
+                        P --> x_38'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]]
+
+ ]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.520031 second(s)
+	Time spent in main process: 0.49203 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

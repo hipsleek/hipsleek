@@ -1,0 +1,50 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<> == self=null
+ or self::node<_,q>*q::ll<> .
+
+HeapPred U1(node x).
+HeapPred R1(node x).
+HeapPred U2(node x,int v).
+
+
+
+infer [U1,U2,@classic,@pure_field] U1(x) |- U2(x,y).
+//infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+print residue.
+expect Valid.
+
+
+/*
+# ex25b3.slk 
+
+infer [U1,U2,@classic,@pure_field] U1(x) |- U2(x,y).
+
+# However, below is not sound since it is really:
+            U1(x) --> U2(x,_)
+  Then U2(x,_) |- U2(x,y)
+  This should fail if y is global.
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U1(x)&true |#|3  --> U2(x,y@NI)&true]
+[[ InferFold ]]
+
+
+----------------------------------------
+
+infer [U1,U2,@classic,@pure_field] U2(x,y)  |- U1(x).
+
+# currently infer_heap shedules an UNFOLD
+
+Residue:
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [U2(x,y@NI)&true |#|3  --> U1(x)&true]
+[[ InferFold ]]
+
+
+*/

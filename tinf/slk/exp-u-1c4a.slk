@@ -1,0 +1,43 @@
+UTPre@f fpre(int x).
+UTPost@f fpost().
+
+infer [] x<0 & Term[] |- fpost().
+print residue.
+
+infer [@term] x<0 & Term[] |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 2
+
+ inferred UTPost rel: [emp&x<0&
+                        {FLOW,(21,22)=__norm}[]: [] -> TermR@f{0, true}()]
+should use:
+  x<0 & Term[] -> TermR@f{..}
+
+*/
+
+infer [] x<0 & Loop |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 3
+
+Got below but should fail!
+
+Entail (3) : Valid. 
+ <1>emp&Loop[] & x<0&{FLOW,(21,22)=__norm}[]
+[[empty]]
+*/
+
+infer [@term] x<0 & Loop |- fpost().
+print residue.
+/*
+# exp-u-1c4a.slk // 4
+
+Got below but should attempt to infer false on conseq
+
+ <1>emp&Loop[] & x<0&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x<0&
+                        {FLOW,(21,22)=__norm}[]: [] -> TermR@f{0, true}()]
+
+
+*/

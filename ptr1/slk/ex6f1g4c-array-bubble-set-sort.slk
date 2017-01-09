@@ -1,0 +1,187 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> ==
+ case {
+   i=n -> [] i=n & i>=0 ;
+   i!=n -> []  x::arrI<v>*self::arr_seg<i+1,n> & x=self+i & i>=0 ;
+ }  inv n>=i & i>=0.
+
+pred arr_I<i> ==
+     self::arrI<1>.
+
+/*
+pred arr_sorted<i,n,S> == i=n & i>=0 & S={}
+  or x::arrI<v>*self::arr_sorted<i+1,n,S2> & x=self+i & i>=0 & S=union({v},S2) & forall(a:a notin S2 | v<=a)
+  inv n>=i & i>=0.
+*/
+
+/*
+lemma_safe self::arr_seg<i,n,S> & i<=m & m<=n ->
+  self::arr_seg<i,m,S1>*self::arr_seg<m,n,S2> & S=union(S1,S2).
+*/
+
+// lemma_safe self::arr_seg<i,n> <-
+//   self::arr_seg<i,m>*self::arr_seg<m,n> & i<=m & m<=n.
+
+checkentail x::arr_seg<i,m> * x::arr_seg<m,n> & i<=m & m<=n |- x::arr_seg<i,n>.
+print residue.
+
+checkentail  i!=n |- x1::arr_seg<i,n>.
+print residue.
+
+//lemma_safe  self::arr_sorted<i,n,S> <- self::arr_seg<i,n,S> & (i>=n-1).
+
+//lemma_safe self::arr_seg<i,n,S> <- self::arr_sorted<i,n,S>.
+
+/*
+checkentail_exact x::arr_seg<i,m>*x::arr_seg<m,n> & i<=m & m<=n
+  |- x::arr_seg<i,n>.
+
+checkentail_exact x::arr_seg<m,n> & i<=m & m<=n & i=m & i>=0
+  |- x::arr_seg<i,n>.
+print residue.
+*/
+
+/*
+checkentail_exact x1::arrI<v>*x::arr_seg<i+1,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n & x1=x+i & i>=0
+  |- x::arr_seg<i,n>.
+print residue.
+*/
+
+/*
+checkentail_exact x1::arrI<v>*
+     x::arr_seg<i+1,m> *x::arr_seg<m,n> 
+                     & i<=m & m<=n & x1=x+i & i>=0 & i!=n
+  |- x2::arrI<_> * 
+     x::arr_seg<i+1,n> & x2=x+i .
+print residue.
+*/
+
+/*
+checkentail_exact //x1::arrI<v>*
+     x::arr_seg<i,m> *x::arr_seg<m,n> 
+                     & i<m & m<=n & x1=x+i & i>=0 & i!=n
+  |- //x2::arrI<_> * 
+     x::arr_seg<i,n> //& x2=x+i 
+    .
+print residue.
+
+
+// The correct version
+checkentail_exact x1::arrI<v> * x::arr_seg<i+1,m> * x::arr_seg<m,n>
+                     & i<=m & m<=n & x1 = x+i
+  |- x2::arrI<_> * x::arr_seg<i+1,n> & x2 = x+i.
+print residue.
+*/
+
+/*
+# ex6f1g4c.slk -de "spatial_c\|compute_a"
+
+# why this fails?
+
+
+(==solver.ml#11528==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[(n_126,n)]
+compute_actions inp2 :LHS heap: x::arr_seg<flted_55_94,m>@M * x::arr_seg<m_95,n>@M
+compute_actions inp3 :LHS pure: m_95=m & i!=n & 0<=i & x1=i+x & m<=n & i<=m & flted_55_94=1+i
+compute_actions inp4 :RHS cand:[ x::arr_seg<flted_58_127,n_126>@M]
+compute_actions inp5 :RHS pure: flted_58_127=1+i & n_126=n
+compute_actions inp6 :right alias:[n_126,flted_58_127]
+compute_actions@1 EXIT: COND =>[
+  Prio:1
+  SEARCH =>[
+   Prio:1
+   COND =>[
+    Prio:1
+    Match =>
+      Type: Root
+      LHS: x::arr_seg<flted_55_94,m>@M
+      RHS: x::arr_seg<flted_58_127,n_126>@M
+      root_inst: None
+      lhs_rest: x::arr_seg<m_95,n>@M
+      rhs_rest: emp
+      alias set: [x]rhs_inst: []rhs_infer: None;
+    Prio:3
+    BaseCaseUnfold =>
+      Type: Root
+      LHS: x::arr_seg<flted_55_94,m>@M
+      RHS: x::arr_seg<flted_58_127,n_126>@M
+      root_inst: None
+      lhs_rest: x::arr_seg<m_95,n>@M
+      rhs_rest: emp
+      alias set: [x]rhs_inst: []rhs_infer: None
+    ];
+    Prio:1
+    (Lemma 0<== lem_12) =>
+      Type: Root
+      LHS: x::arr_seg<flted_55_94,m>@M
+      RHS: x::arr_seg<flted_58_127,n_126>@M
+      root_inst: None
+      lhs_rest: x::arr_seg<m_95,n>@M
+      rhs_rest: emp
+      alias set: [x]rhs_inst: []rhs_infer: None
+    ];
+   Prio:1
+   SEARCH =>[
+    Prio:1
+    COND =>[
+     Prio:1
+     Match =>
+       Type: Root
+       LHS: x::arr_seg<m_95,n>@M
+       RHS: x::arr_seg<flted_58_127,n_126>@M
+       root_inst: None
+       lhs_rest: x::arr_seg<flted_55_94,m>@M
+       rhs_rest: emp
+       alias set: [x]rhs_inst: []rhs_infer: None;
+     Prio:3
+     BaseCaseUnfold =>
+       Type: Root
+       LHS: x::arr_seg<m_95,n>@M
+       RHS: x::arr_seg<flted_58_127,n_126>@M
+       root_inst: None
+       lhs_rest: x::arr_seg<flted_55_94,m>@M
+       rhs_rest: emp
+       alias set: [x]rhs_inst: []rhs_infer: None
+     ];
+     Prio:1
+     (Lemma 0<== lem_12) =>
+       Type: Root
+       LHS: x::arr_seg<m_95,n>@M
+       RHS: x::arr_seg<flted_58_127,n_126>@M
+       root_inst: None
+       lhs_rest: x::arr_seg<flted_55_94,m>@M
+       rhs_rest: emp
+       alias set: [x]rhs_inst: []rhs_infer: None
+     ]
+    ]
+
+# Need to improve. 2nd match is unnecessary..
+
+(==context.ml#918==)
+spatial_ctx_extract@2@1
+spatial_ctx_extract inp1 :h_formula: x::arr_seg<flted_55_94,m>@M * x::arr_seg<m_95,n>@M
+spatial_ctx_extract inp2 :imm:@M
+spatial_ctx_extract inp3 :aset:[x]
+spatial_ctx_extract inp4 :rhs_node: x::arr_seg<flted_58_127,n_126>@M
+spatial_ctx_extract@2 EXIT:list of match_res:
+[ Type: Root
+ LHS: x::arr_seg<flted_55_94,m>@M
+ RHS: x::arr_seg<flted_58_127,n_126>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<m_95,n>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: x::arr_seg<m_95,n>@M
+ RHS: x::arr_seg<flted_58_127,n_126>@M
+ root_inst: None
+ lhs_rest: x::arr_seg<flted_55_94,m>@M
+ rhs_rest: emp
+ alias set: [x]rhs_inst: []rhs_infer: None]
+
+
+*/

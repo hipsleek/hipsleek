@@ -1,0 +1,27 @@
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+#ex63d.slk --adhoc-3
+
+lemma_safe self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+Entailing lemma lem_11: Fail. Details below:
+         "==>" implication: : Valid.
+         "<==" implication: : Fail. (cex)(must) cause: exception Failure("split_components: don't expect OR") in lemma proving
+
+*/

@@ -1,0 +1,1 @@
+checkentail !(i>0) or (a>5)|-!(i>2) or (a>3).

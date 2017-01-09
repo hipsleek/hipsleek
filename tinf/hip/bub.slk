@@ -1,0 +1,66 @@
+data node {
+	int val;
+	node next;
+}.
+
+/*
+pred lls<n,k,sm> == self=null & n=0 & k=0 & sm=\inf
+  or self::node<sm, r> * r::lls<n-1,k-1,sm1> & n=k & sm<=sm1
+  or self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm
+	inv n>=k & k>=0.
+*/
+
+pred llw<n,k,sm> == case {
+    self=null -> [] n=0 & k=0 & sm=\inf;
+    self!=null -> case {
+        n=k -> [] self::node<sm, r> * r::llw<n-1,k-1,sm1> & n=k & sm<=sm1;
+        n!=k -> [] self::node<v, r> * r::llw<n-1,k,sm> & n>k & v<=sm;
+      };
+     }	inv n>=k & k>=0.
+
+pred lls<n,k,sm> == case {
+    n=k -> [] self=null & n=0  & sm=\inf 
+         or self::node<sm,r>*r::lls<n-1,k-1,sm1> & sm<=sm1;
+    n!=k -> [] self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm;
+     }	inv n>=k & k>=0.
+
+checkentail r_1543::lls<flted_27_1542,flted_27_1541,sm1_1544>@M * 
+xs'::node<sm_1540,r_1404> * r_1404::node<v_1403,r_1543>
+&n_1414=flted_27_1542+1 
+& k1_1435=flted_27_1541+1 & k1_1435=n_1414 & sm1_1436<=sm1_1544 & 
+sm1_1436=sm_1540 & n=flted_26_1402+1 & k<n & v_1403<=sm & k=k_1400 & 
+sm=sm_1401 & 0<n & xs=xs' & k!=n & r_1404!=null 
+//& !(v_bool_49_1177') 
+& r_1404!=null & !(v_bool_49_1177') 
+& flted_26_1402=n_1414 & k_1400=k_1415 & 
+sm_1401=sm_1416 & k_1415!=n_1414 & k_1400<=flted_26_1402 & 0<=k_1400 & 
+tmp_71' & k1_1435=1+k_1415 & sm1_1436<=sm_1416 & k_1415!=n_1414 & 
+k_1415<=n_1414 & 0<=k_1415 & sm_1540<v_1403 & !(v_bool_57_1175') & 
+sm_1540<v_1403 & !(v_bool_57_1175') & v_1403=val_62_1568 & 
+sm_1540=val_63_1580 
+//& flag_72' 
+& v_boolean_68_1176' 
+//& flag_72' 
+& res=v_boolean_68_1176'
+ |-  xs::lls<n,k1,sm1>@M & 
+     res 
+     //& k1=1+k & sm1<=sm
+    .
+
+checkentail r_1543::lls<flted_27_1542,flted_27_1541,sm1_1544>@M * 
+xs::node<sm_1540,r_1404> * r_1404::node<v_1403,r_1543>
+|- xs::lls<n,k1,s1>.
+
+checkentail xs::node<v,r> * r::lls<f,k,sm2> & v<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=sm2 & v2<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.
+
+checkentail xs::node<v,r1> * r1::node<v2,r> * 
+      r::lls<n1,k,sm2> & v<=v2 & v2<=sm2
+   |- xs::lls<n,k1,s1>.
+print residue.

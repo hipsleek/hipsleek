@@ -1,0 +1,18 @@
+
+!!!Full processing file "web/cdl-ex4-race.ss"
+Parsing file "web/cdl-ex4-race.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+!!! WARNING: [ERR-RACE:web/cdl-ex4-race.ss_54:2_70:3]
+
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 1.832112 second(s)
+	Time spent in main process: 1.736107 second(s)
+	Time spent in child processes: 0.096005 second(s)
+

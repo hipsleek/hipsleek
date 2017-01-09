@@ -1,0 +1,23 @@
+
+/* 21: Fail */
+checkentail
+  a[i]=5 & i=3 |- a[3]=5.
+
+checkentail
+  a[i]=5 & (i=3|i=2) |- a[3]=5.
+
+checkentail
+  a[i]=res & i=5 & a[i]=x
+  |- res = x & a[5] = x.
+
+checkentail
+  i=3 | i=2
+  |- i=5.
+
+checkentail
+  i>5 & a[i]=5
+  |- a[6]=5.
+
+checkentail
+  i=3
+  |- i=2 & i=5.

@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+open VarGen
 open Globals
 open Others
 open Gen
@@ -23,11 +25,12 @@ let check_sat_empty_rhs_with_uo_x es ante (conseq_p:CP.formula) matched_svl=
     | HEmp -> true
     | _ -> false (* to implement*)
   in
+  let is_sat = false in
   mk_cex is_sat
 
 let check_sat_empty_rhs_with_uo es ante (conseq_p:CP.formula) matched_set=
   let pr1 = !print_formula_base in
   let pr2 = !CP.print_formula in
   Debug.no_4 "check_sat_empty_rhs_with_uo" Cprinter.string_of_entail_state pr1 pr2 !CP.print_svl Cprinter.string_of_failure_cex
-      (fun _ _ _ _ -> check_sat_empty_rhs_with_uo_x es ante (conseq_p:CP.formula) matched_set)
-      es ante conseq_p matched_set
+    (fun _ _ _ _ -> check_sat_empty_rhs_with_uo_x es ante (conseq_p:CP.formula) matched_set)
+    es ante conseq_p matched_set

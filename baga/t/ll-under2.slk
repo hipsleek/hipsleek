@@ -1,0 +1,43 @@
+data node {
+     node next;
+}.
+
+pred ll<n> == self=null & n=0
+     or self::node<q> * q::ll<n-2>
+     //inv n>=0
+     //inv_sat BG([],self=null & n=0) | BG([self],n=2)
+     //inv_sat BG([],self=null & n=0) | BG([self],n=2|n=4)
+     inv_sat BG([],self=null & n=0) | BG([self],exists(y:n=2*y & y>0))
+     .
+
+checksat x::ll<n> & n=-1.
+// UNSAT.
+
+checksat x::ll<n> & n=0.
+// SAT.
+
+checksat x::ll<n> & n=3.
+// UNKNOWN.
+
+checksat x::ll<n> & n=4.
+// SAT.
+
+checksat x::ll<n> & n>6.
+// SAT.
+
+checksat x::ll<n> & n=2*k+1 & k>0.
+// SAT.
+
+
+checkentail x::ll<n> & n=-1 |- false.
+// VALID -> UNSAT.
+
+checkentail x::ll<n> & n=0 |- false.
+// FAIL -> SAT.
+
+checkentail x::ll<n> & n=3 |- false.
+// FAIL -> SAT.
+
+checkentail x::ll<n> & n=4 |- false.
+// FAIL -> SAT.
+

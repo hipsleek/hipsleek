@@ -1,0 +1,84 @@
+
+!!!Full processing file "paper/tree-2.ss"
+Parsing file "paper/tree-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure trav$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,p@NI)&true
+ ensures G(x,p@NI)&true{,(3,4)=__norm};
+
+assert:paper/tree-2.ss:29: 2:  : ok
+
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x,p@NI)&true --> x::node<parent1,left1,right1> * 
+HP_1290(parent1,p@NI) * HP_1291(left1,p@NI) * HP_1292(right1,p@NI)&
+true(3,4),
+ // Assert/Assume
+(0)HP_1290(parent1,p@NI)&true --> emp&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1292(right1,p@NI)&right1!=null |#| x::node<p,left1,right1>&
+true --> H(right1,x@NI)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1291(left1,p@NI)&true |#| x::node<p,left1,right1>&
+right1!=null --> H(left1,x@NI)&
+true(3,4),
+ // POST
+(1;0)x::node<p,left1,right1> * HP_1291(left1,p@NI) * HP_1292(right1,p@NI) * 
+HP_1290(p,p@NI)&right1=null --> G(x,p@NI)&
+true(3,4),
+ // POST
+(2;0)G(left1,x@NI) * x::node<p,left1,right1> * HP_1290(p,p@NI) * 
+G(right1,x@NI)&right1!=null --> G(x,p@NI)&
+true(3,4)]
+
+Procedure trav$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,p1) ::=  [x1::node<parent2,DP,right2>&right2=null & parent2=p1; 
+x1::node<parent2,left2,right2> * H(left2,x1) * H(right2,x1)&right2!=null & 
+parent2=p1],
+ G(x2,p2) ::=  [x2::node<p2,DP,right>&right=null; x2::node<p2,left,right> * G(left,x2) * 
+G(right,x2)&right!=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,p1) ::= 
+ x1::node<parent2,left2,right2> * H(left2,x1) * H(right2,x1)&right2!=null & 
+ parent2=p1
+ or x1::node<parent2,DP,right2>&right2=null & parent2=p1
+ (3,4),
+ G(x2,p2) ::= 
+ x2::node<p2,left,right> * G(left,x2) * G(right,x2)&right!=null
+ or x2::node<p2,DP,right>&right=null
+ (3,4)]
+*************************************
+Stop Omega... 30 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.077609,406)
+Total verification time: 0.401819 second(s)
+	Time spent in main process: 0.380808 second(s)
+	Time spent in child processes: 0.021011 second(s)
+

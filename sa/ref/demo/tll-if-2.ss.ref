@@ -1,0 +1,52 @@
+
+!!!Full processing file "demo/tll-if-2.ss"
+Parsing file "demo/tll-if-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure set_right$node... 
+assert:demo/tll-if-2.ss:32: 6:  : ok
+
+
+assert:demo/tll-if-2.ss:40: 4:  : ok
+
+
+assert:demo/tll-if-2.ss:43: 4:  : ok
+
+
+dprint: demo/tll-if-2.ss:45: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(,0 ); (,1 ); (,0 ); (,1 )];  [(,1 ); (,2 ); (,0 ); (,1 )];  [(,0 ); (,1 ); (,1 ); (,2 )];  [(,1 ); (,2 ); (,1 ); (,2 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 ); (,0 ); (,1 )]
+ State:x::node<_,flted1>&flted1=null & v1' & v4'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []x::node<_,flted>&v4' & v1' & flted=null
+;
+ Label: [(,1 ); (,2 ); (,0 ); (,1 )]
+ State:x::node<_,flted1>&flted1=null & v1' & !(v4')&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []x::node<_,flted>&!(v4') & v1' & flted=null
+;
+ Label: [(,0 ); (,1 ); (,1 ); (,2 )]
+ State:r1::tree{}<> * l1::tree{}<> * x::node<l1,r1>&!(v1') & r1!=null & l1!=null & v4'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []r::tree<> * l::tree<> * x::node<l,r>&v4' & l!=null & r!=null & !(v1')
+;
+ Label: [(,1 ); (,2 ); (,1 ); (,2 )]
+ State:r1::tree{}<> * l1::tree{}<> * x::node<l1,r1>&!(v1') & r1!=null & l1!=null & !(v4')&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []r::tree<> * l::tree<> * x::node<l,r>&!(v4') & l!=null & r!=null & !(v1')
+
+ ]
+
+Procedure set_right$node SUCCESS.
+Stop Omega... 12 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.208958,648)
+Total verification time: 0.424065 second(s)
+	Time spent in main process: 0.406947 second(s)
+	Time spent in child processes: 0.017118 second(s)
+

@@ -1,0 +1,29 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred app5<> == self=null
+        or self::node<_,q> * q::app5a<>
+  inv true.
+
+pred app5a<> == self=null 
+	or self::node<_, q> * q::app5<> 
+  inv true.
+
+pred_reuse [*][*].
+
+//lemma_test self::app5<> <-> self::app5a<>.
+
+/*
+# ex21a6c.slk
+
+# app5/app5a can now be made equiv?
+
+
+*/

@@ -1,0 +1,25 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<g>}<>.
+
+print residue.
+
+/*
+#ex41b.slk
+
+What happen to a? and g?
+Is below correct?
+
+checkentail x::Thrd{+ a::cell<1>*b::cell<2>}<> |- x::Thrd{+a::cell<g>}<>.
+
+ <1>x::Thrd{ + b::cell<flted_9_29>&2=flted_9_29&{FLOW,(4,5)=__norm#E}[]}<>
+    &flted_9_29=2 & flted_9_30=1 & b!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  Match(x,x) ==> ]]
+
+
+*/

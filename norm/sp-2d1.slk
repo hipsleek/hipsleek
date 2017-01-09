@@ -1,0 +1,39 @@
+data node{
+	int val;
+	node next;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a).
+
+infer [H2,H1] self::node<_,p>*y::node<_,q>*H2(p)*H1(q)
+ |- H1(self) * H2(y). 
+print residue.
+
+/*
+OK
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel: [// Sleek_Entail(2)
+self::node<Anon_13,p>@M * H2(p) --> H1(self); 
+// Sleek_Entail(2)
+y::node<Anon_14,q>@M * 
+H1(q) --> H2(y)]
+*/
+
+infer [H2] self::node<_,p>*y::node<_,q>*H2(p)*H2(q)
+ |- H2(self) * H2(y). 
+print residue.
+
+/*
+# sp-2d1.slk
+
+ <1>emp&{FLOW,(19,20)=__norm}[]
+ inferred hprel:
+
+[ self::node<Anon_11,p>@M * H2(p) --> H2(self) * HP_22(q); 
+  y::node<Anon_12,q>@M * H2(q) * HP_22(q) --> H2(y)]
+
+Why is there spurious HP_22?
+
+*/
+

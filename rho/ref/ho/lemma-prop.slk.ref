@@ -1,0 +1,12 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Last Proving Location: 1 File "ho/lemma-prop.slk",Line:3,Col:10
+
+ERROR: at ho/lemma-prop.slk_4:10_4:20
+Message: compute_view_fw_bw: data not found: CNT
+
+!!! WARNING logtime exception:0.error at: 
+SLEEK FAILURE (END)
+

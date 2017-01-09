@@ -549,7 +549,7 @@ class zraCilPrinterClass : cilPrinter = object (self)
       ++ self#pAttrs () fi.fattr
       ++ text ";"
 
-  method private pFunDecl () f =
+  method pFunDecl () f =
     H.add genvHtbl f.svar.vname f.svar;(* add function to global env *)
     H.clear lenvHtbl; (* new local environment *)
     (* add the arguments to the local environment *)

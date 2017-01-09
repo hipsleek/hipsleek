@@ -1,0 +1,18 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x <= 0 & fpre(x) |- fpost(x).
+//print residue.
+
+infer [@term] x > 0 & x' = x + 1 & fpre(x) & fpost(x') |- fpost(x).
+//print residue.
+
+infer [@term] x > 0 & x' = x + 1 & fpre(x) |- fpre(x').
+//print residue.
+
+//infer [@term] x > 0 & x' = x + 1 & fpre(x) |- MayLoop.
+//print residue.
+
+term_infer.
+
+

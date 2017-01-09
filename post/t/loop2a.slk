@@ -1,0 +1,17 @@
+relation PP(int x).
+
+infer [PP] x>0 |- PP(x).
+print residue.
+
+/*
+# loop2.slk
+
+Since we desire the strongest post,
+I think we need to pick
+
+  false --> PP(x)
+
+
+Could we change our entailment to accommodate this?
+
+*/

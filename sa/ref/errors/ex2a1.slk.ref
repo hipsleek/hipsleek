@@ -1,0 +1,100 @@
+Starting Omega...oc
+
+Entail 1: Valid. 
+
+Validate 1: OK
+
+Starting z3... 
+
+Entail 2: Valid. 
+
+Validate 2: OK
+
+[Warning] False ctx
+
+Entail 3: Valid. 
+
+Validate 3: OK
+
+
+Entail 4: Fail.(must) cause:empty states
+
+Validate 4: OK
+
+
+Entail 5: Fail.(must) cause:empty states
+
+Validate 5: OK
+
+
+Entail 6: Fail.(must) cause:empty states
+
+ 
+Validate 6: OK
+
+
+Entail 7: Fail.(must) cause:empty states
+
+Validate 7: OK
+
+
+Entail 8: Valid. 
+
+Validate 8: OK
+
+
+Entail 9: Valid. 
+
+ <1>emp&y=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+<2>emp&x=1&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Validate 9: OK
+
+
+Entail 10: Valid. 
+
+ <1>emp&x=1&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Validate 10: OK
+
+
+Entail 11: Valid. 
+
+ <1>emp&y=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Validate 11: OK
+
+
+Entail 12: Valid. 
+
+ <1>emp&y=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+
+Validate 12: OK
+
+
+Entail 13: Valid. 
+
+ <1>emp&y=0&{FLOW,(3,4)=__norm}[]
+[[empty]]
+<2>emp&x=1&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Validate 13: OK
+
+Stop Omega... 0 invocations 
+SAT Count   : 37
+SAT % Hit   : 81.08%
+IMPLY Count : 10
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.001774 (seconds)
+
+!!! log(small):(0.014103,63)
+Total verification time: 0.076691 second(s)
+	Time spent in main process: 0.063341 second(s)
+	Time spent in child processes: 0.01335 second(s)
+

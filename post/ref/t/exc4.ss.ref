@@ -1,0 +1,46 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/exc4.ss"
+Parsing file "t/exc4.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure loop$int... 
+dprint: t/exc4.ss:19: ctx:  List of Failesc Context: [FEC(0, 2, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: [(,1 ); (,2 )]
+  State:htrue&!(v_bool_12_1352') & x'<=0 & x'=x & v_int_17_1350'=1111+x' & res=v_int_17_1350'&{FLOW,(20,21)=__Return#E}[]
+;
+  Path: [(,0 ); (,1 )]
+  State:(exists v_int_13_1345': (htrue) * v_Exp_13_1346'::Exp<v_int_13_1345'>&v_bool_12_1352' & 0<x' & x'=x & v_int_13_1345'=888 & v_int_13_1345'=res & eres=v_Exp_13_1346'&{FLOW,(23,24)=Exp#E}[]
+
+  ]
+ ]
+
+Post condition cannot be derived:
+Empty list_partial_contex
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "t/exc4.ss",Line:17,Col:11
+
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+Procedure loop$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure loop$int
+
+1 false contexts at: ( (14,4) )
+
+Total verification time: 0.360021 second(s)
+	Time spent in main process: 0.33602 second(s)
+	Time spent in child processes: 0.024001 second(s)
+

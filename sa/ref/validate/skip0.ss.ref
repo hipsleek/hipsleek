@@ -1,0 +1,74 @@
+
+!!!Full processing file "validate/skip0.ss"
+Parsing file "validate/skip0.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=q | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=q)])
+Checking procedure skip0$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SLSEG,G]requires SLSEG(l,e@NI)&true
+ ensures G(l,e@NI)&
+res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (l!=0 | e<=0), (l!=0 | 0<=e), forall(s_24_1288:((1<=e | s_24_1288<=0)) & ((e<=1 | s_24_1288<=0)) & 
+((0<=s_24_1288 | 1<=e)) & ((0<=s_24_1288 | e<=1)))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;2;0)SLSEG(l,e@NI)&l!=null & l!=e --> l::node2<n1,s1> * HP_1289(n1,e@NI) * 
+HP_1290(s1,e@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;2;0)HP_1289(n1,e@NI)&true --> SLSEG(n1,e@NI)&
+true(3,4),
+ // POST
+(1;0)SLSEG(e,e@NI)&true --> G(l,e@NI)&
+true(3,4),
+ // POST
+(1;2;2;0)G(n1,e@NI) * HP_1290(s1,e@NI) * l::node2<n1,s1>&s1=null & 
+l!=e --> G(l,e@NI)&
+true(3,4)]
+
+Procedure skip0$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ SLSEG(l1,e1) ::=  [emp&l1=e1; l1::node2<n2,s2> * SLSEG(n2,e1)&s2=null & l1!=e1],
+ G(l2,e2) ::=  [emp&l2=e2; l2::node2<n,s> * G(n,e2)&l2!=e2 & s=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ SLSEG(l1,e1) ::= 
+ l1::node2<n2,s2> * SLSEG(n2,e1)&s2=null & l1!=e1
+ or emp&l1=e1
+ (3,4),
+ G(l2,e2) ::= 
+ l2::node2<n,s> * G(n,e2)&l2!=e2 & s=null
+ or emp&l2=e2
+ (3,4)]
+*************************************
+Stop Omega... 19 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.089412,350)
+Total verification time: 0.411148 second(s)
+	Time spent in main process: 0.378402 second(s)
+	Time spent in child processes: 0.032746 second(s)
+

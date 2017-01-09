@@ -1,0 +1,61 @@
+
+!!!Full processing file "demo/two.ss"
+Parsing file "demo/two.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure two$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H2,G2]requires H2(x,y)&true
+ ensures G2(x,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H2(x,y)&true --> x::node<val2,next2> * HP_1226(next2,y@NI) * 
+HP_1227(y,x@NI)&
+true(3,4),
+ // BIND
+(2;0)HP_1227(y,x@NI)&true --> y::node<val1,next1> * HP_1262(next1,x@NI)&
+true(3,4),
+ // POST
+(1;0)HP_1227(y,x@NI) * x::node<val2,next2> * HP_1226(next2,y@NI)&
+next2=null --> G2(x,y)&
+true(3,4),
+ // POST
+(2;0)HP_1226(next2,y@NI) * x::node<val2,next2> * HP_1262(next1,x@NI) * 
+y::node<val1,next1>&next2!=null --> G2(x,y)&
+true(3,4)]
+
+Procedure two$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+Context of Verification Failure: 1 File "demo/two.ss",Line:21,Col:10
+Last Proving Location: 1 File "demo/two.ss",Line:27,Col:15
+
+ERROR: at _0:0_0:0 
+Message: sau.pattern_matching_with_guard 1
+ 
+ --error:  at:(Program not linked with -g, cannot print stack backtrace)
+
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[]
+*************************************
+Stop Omega... 3 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.039572,264)
+Total verification time: 0.329391 second(s)
+	Time spent in main process: 0.303062 second(s)
+	Time spent in child processes: 0.026329 second(s)
+

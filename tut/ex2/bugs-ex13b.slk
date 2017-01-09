@@ -1,0 +1,22 @@
+
+//(8)
+infer[x] x=null|- x=y.
+print residue.
+// why x!=0? where is contradiction?
+
+//(8)
+infer[x] x=0 |- x=y.
+print residue.
+
+//(8)
+//infer[n] n=m+2 |- m>2.
+//print residue.
+
+
+//(8)
+//infer[n] n>m+2 |- m>2.
+//print residue.
+
+//(8)
+//infer[n] n<m+2 |- m>2.
+//print residue.

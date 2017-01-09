@@ -1,0 +1,19 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x) ::= emp&x=null(3,4)]
+*************************************
+Stop Omega... 0 invocations IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 2.9e-05 (seconds)
+
+!!! log(small):(0.004716,1)
+Total verification time: 0.054663 second(s)
+	Time spent in main process: 0.040397 second(s)
+	Time spent in child processes: 0.014266 second(s)
+

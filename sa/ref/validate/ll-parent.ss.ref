@@ -1,0 +1,72 @@
+
+!!!Full processing file "validate/ll-parent.ss"
+Parsing file "validate/ll-parent.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure trav$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(p@NI,x)&true
+ ensures G(p@NI,x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(p@NI,x)&true --> x::node<parent1,right1> * HP_1267(parent1,p@NI) * 
+HP_1268(right1,p@NI)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1268(right1,p@NI)&right1!=null |#| x::node<p,right1>&
+true --> H(x@NI,right1)&
+true(3,4),
+ // POST
+(1;0)x::node<p,right1> * G(x@NI,right1) * HP_1267(p,p@NI)&
+right1!=null --> G(p@NI,x)&
+true(3,4),
+ // POST
+(2;0)x::node<p,right1> * HP_1268(right1,p@NI) * HP_1267(p,p@NI)&
+right1=null --> G(p@NI,x)&
+true(3,4)]
+
+Procedure trav$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(p1,x1) ::=  [x1::node<parent,right>&right=null & parent=p1 & x1!=null; 
+x1::node<parent,right> * H(x1,right)&right!=null & parent=p1 & x1!=null],
+ G(p2,x2) ::=  [x2::node<p2,right> * G(x2,right)&right!=null; x2::node<p2,right>&
+right=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(p1,x1) ::= 
+ x1::node<parent,right> * H(x1,right)&right!=null & parent=p1 & x1!=null
+ or x1::node<parent,right>&right=null & parent=p1 & x1!=null
+ (3,4),
+ G(p2,x2) ::= 
+ x2::node<p2,right>&right=null
+ or x2::node<p2,right> * G(x2,right)&right!=null
+ (3,4)]
+*************************************
+Stop Omega... 12 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.047385,318)
+Total verification time: 0.347896 second(s)
+	Time spent in main process: 0.331328 second(s)
+	Time spent in child processes: 0.016568 second(s)
+

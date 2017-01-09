@@ -1,0 +1,103 @@
+
+!!!Full processing file "errors/ll-append.ss"
+Parsing file "errors/ll-append.ss" by default parser...
+
+!!! generate unknown predicate for Pre synthesis of : :HP_12
+!!! generate unknown predicate for Post synthesis of : :GP_13
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!!WARNING : uninterpreted free variables [y] in specification.
+!!! generate unknown predicate for Pre synthesis of f_r_1217_while_13_6$node: :HP_1218
+!!! generate unknown predicate for Post synthesis of f_r_1217_while_13_6$node: :GP_1220
+Checking procedure f_r_1217_while_13_6$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1218,GP_1220]requires HP_1218(x)&true
+ ensures GP_1220(x,x')&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure f_r_1217_while_13_6$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure f_r_1217_while_13_6$node
+
+!!! proc.proc_name:f_r_1217_while_13_6$node
+Checking procedure get_last$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_12,GP_13]requires HP_12(x)&true
+ ensures GP_13(x,res)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+
+Procedure get_last$node FAIL.(2)
+
+Exception Not_found Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure get_last$node
+
+!!! proc.proc_name:get_last$node
+Checking procedure append$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,y)&true
+ ensures G(x,y,res)&true{,(3,4)=__norm};
+Proving binding in method append$node~int for spec  EAssume 
+   G(x,y,res)&{FLOW,(3,4)=__norm}[]
+   , Line 24
+
+( [(,0 ); (,1 )]) bind: node  last_41'::node<val_30_1209',next_30_1210'> cannot be derived from context
+errors/ll-append.ss_30:6_30:15
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: [(,0 ); (,1 )]
+ State:
+        fe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+                  fc_message: infer_heap_node
+                  fc_current_lhs_flow: {FLOW,(3,4)=__norm}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+ ]errors/ll-append.ss_30:6_30:15
+
+Context of Verification Failure: 1 File "errors/ll-append.ss",Line:24,Col:13
+Last Proving Location: 1 File "errors/ll-append.ss",Line:30,Col:6
+
+Procedure append$node~int FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure append$node~int
+
+!!! proc.proc_name:append$node~intStop Omega... 5 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.056851,324)
+Total verification time: 0.34788 second(s)
+	Time spent in main process: 0.333554 second(s)
+	Time spent in child processes: 0.014326 second(s)
+

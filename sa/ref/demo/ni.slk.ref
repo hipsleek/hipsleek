@@ -1,0 +1,54 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_29(Anon,y) * HP_32(Anon1,x)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(x,y)&true --> x::node<_> * HP_29(Anon,y@NI) * 
+                   HP_30(y,x@NI)&true(3,4); 
+                  HP_30(y,x@NI)&true --> y::node<_> * HP_32(Anon1,x@NI)&
+                   true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+!!!>>>>>> mismatch ptr y::node<_> is not found (or inst) in the lhs <<<<<<
+Entail (2) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+
+ <1>H2(x,y)&{FLOW,(3,4)=__norm}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_57(Anon2,y) * HP_58(y,x)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(x,y)&true --> x::node<_> * HP_57(Anon2,y@NI) * 
+                   HP_58(y,x@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_66(Anon3,y)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(x,y@NI)&true --> x::node<_> * HP_66(Anon3,y@NI)&
+                   true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 29
+SAT % Hit   : 79.31%
+IMPLY Count : 23
+IMPLY % Hit : 86.95%
+Time(cache overhead) : 0.001393 (seconds)
+
+!!! log(small):(0.028578,62)
+Total verification time: 0.070999 second(s)
+	Time spent in main process: 0.056921 second(s)
+	Time spent in child processes: 0.014078 second(s)
+

@@ -1,0 +1,28 @@
+// 7(1)
+//infer [a] true  |- a[i]=a[i-1].
+//print residue.
+
+// 7(1)
+//infer [@arrvar,a] i=3  |- a[i]>3.
+//print residue.
+
+/*
+# Why no difference?
+
+--ato
+ <1>emp&i=3 & forall(i:(i!=3 | 3<(a[i])))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=3 | 4<=(a[i])))]
+
+without --ato
+ <1>emp&i=3 & forall(i:(i!=3 | 3<(a[i])))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [forall(i:(i!=3 | 4<=(a[i])))]
+
+*/
+
+// 7(1)
+infer [@arrvar,a] i=3  |- a[i]>a[i-1].
+print residue.
+
+// 7(1)
+infer [a] i=3  |- a[i]>a[i-1].
+print residue.

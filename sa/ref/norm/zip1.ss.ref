@@ -1,0 +1,40 @@
+
+!!!Full processing file "norm/zip1.ss"
+Parsing file "norm/zip1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! formula1: emp&((p=self & self=null) | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], p=self & self=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((p=r & r=null & self=null) | (self!=null & p!=null & r!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & r=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,r,self], true),
+([], p=r & r=null & self=null)])
+Checking procedure zip$node~node... 
+assert/assume:norm/zip1.ss:46: 10:  : failed
+
+
+assert:norm/zip1.ss:46: 10: : unreachable
+
+
+Procedure zip$node~node SUCCESS.
+Stop Omega... 60 invocations 
+3 false contexts at: ( (48,10)  (44,8)  (42,19) )
+
+!!! log(small):(0.751832,1658)
+Total verification time: 0.8214 second(s)
+	Time spent in main process: 0.74861 second(s)
+	Time spent in child processes: 0.07279 second(s)
+

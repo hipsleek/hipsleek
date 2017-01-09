@@ -1,0 +1,139 @@
+
+!!!Full processing file "paper/skip1.ss"
+Parsing file "paper/skip1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=q | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=q)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure skip0$node2~node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SLSEG]requires SLSEG(l,e)&true
+ ensures emp&res{,(3,4)=__norm};
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ (l!=0 | e<=0), (l!=0 | 0<=e), forall(l:forall(s_31_1326:((l!=1 | 1<=e | s_31_1326<=0)) & ((l!=1 | e<=1 | 
+s_31_1326<=0)) & ((l!=1 | 1<=e | 0<=s_31_1326)) & ((l!=1 | 0<=s_31_1326 | 
+e<=1))))]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;2;0)SLSEG(l,e)&l!=null & l!=e --> l::node2<val1,n1,s1> * 
+HP_1327(n1,e@NI) * HP_1328(s1,e@NI) * HP_1329(e,l@NI)&
+true(3,4),
+ // POST
+(1;0)SLSEG(e,e)&true --> emp&
+true(3,4),
+ // POST
+(2;2;0)HP_1329(e,l@NI)&l!=e --> emp&
+true(3,4),
+ // POST
+(2;2;0)HP_1328(s1,e@NI)&s1=null --> emp&
+true(3,4)]
+
+Procedure skip0$node2~node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ SLSEG(l1,e1) ::=  [emp&l1=e1; l1::node2<val2,DP,s2>&s2=null & l1!=e1]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ SLSEG(l1,e1) ::= 
+ l1::node2<val2,DP,s2>&s2=null & l1!=e1
+ or emp&l1=e1
+ (3,4)]
+*************************************
+
+!!! formula1: emp&((self!=e1 & self!=null) | self=e1)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((self>0 & ((e1<self | self<e1))) | self=e1)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=e_1422),
+([self], (e_1422<self | self<e_1422))])
+Checking procedure skip1$node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ SLL,G]requires SLL(l)&true
+ ensures G(l)&res{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)SLL(l)&l!=null --> l::node2<val3,n2,s3> * HP_1495(n2) * HP_1496(s3)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1496(s3)&true --> SLL(s3)&
+true(3,4),
+ // PRE
+(2;0)HP_1495(n2) * G(s3)&true --> n2::SLSEG<s3>&
+true(3,4),
+ // POST
+(1;0)SLL(l)&l=null --> G(l)&
+true(3,4),
+ // POST
+(2;0)l::node2<val3,n2,s3>&true --> G(l)&
+true(3,4)]
+
+Procedure skip1$node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ SLL(l2) ::=  [emp&l2=null; l2::node2<val4,n3,s4> * HP_1495(n3) * SLL(s4)],
+ G(l3) ::=  [emp&l3=null; l3::node2<val3,n2,s3>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ SLL(l2) ::= 
+ l2::node2<val4,n3,s4> * HP_1495(n3) * SLL(s4)
+ or emp&l2=null
+ (3,4),
+ G(l3) ::= 
+ l3::node2<val3,n2,s3>
+ or emp&l3=null
+ (3,4)]
+*************************************
+Stop Omega... 63 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.153887,658)
+Total verification time: 0.520427 second(s)
+	Time spent in main process: 0.460131 second(s)
+	Time spent in child processes: 0.060296 second(s)
+

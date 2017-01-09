@@ -1,0 +1,27 @@
+Starting Omega...oc
+H is defined.
+H1 is defined.
+H2 is defined.
+G1 is defined.
+HP_6 is defined.
+HP_7 is defined.
+HP_3 is defined.
+Group: (0,1)
+[ (0;1)H(x,y)&res=x & x=null & res=null --> G1(x,y,res)(3,4)]
+Group: (0,2)
+[ (0;2)H(x,y)&x!=null --> x::node<val_31_814,next_31_815> * 
+  HP_6(next_31_815,y) * HP_7(y,x)(3,4),
+ (0;2)HP_6(next_31_815,y) * 
+  HP_3(next_32_822,x) --> H(next_31_815,next_32_822)(3,4),
+ (0;2)y::node<val_32_83,next_32_84> * 
+  G1(next_31_815,next_32_822,v_node_34_853) * 
+  x::node<v_int_33_85,v_node_34_86>&val_31_814=val_33_832 & 
+  v_int_33_837=val_31_814+val_32_821 & res=x & val_32_83=val_32_821 & 
+  next_32_84=next_32_822 & v_int_33_85=v_int_33_837 & 
+  v_node_34_86=v_node_34_853 --> G1(x,y,res)(3,4)]
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.062527 second(s)
+	Time spent in main process: 0.047551 second(s)
+	Time spent in child processes: 0.014976 second(s)
+

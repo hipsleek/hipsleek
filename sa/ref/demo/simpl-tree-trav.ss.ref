@@ -1,0 +1,176 @@
+
+!!!Full processing file "demo/simpl-tree-trav.ss"
+Parsing file "demo/simpl-tree-trav.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[]
+!!! neqs:[(l2,l1)]
+Checking procedure append$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,Ga]requires H1(l1) * H2(l2)&true
+ ensures Ga(l1,l2)&
+true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;1;0)H2(l2)&l2!=null --> l2::node<next1,prev1> * HP_1321(next1) * 
+HP_1322(prev1)&
+true(3,4),
+ // BIND
+(2;0)H1(l1)&l1!=null --> l1::node<next2,prev2> * HP_1328(next2) * 
+HP_1329(prev2)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1328(next2)&true --> H1(next2)&
+true(3,4),
+ // PRE_REC
+(2;0)H2(l2)&true --> H2(l2)&
+true(3,4),
+ // POST
+(1;1;0)HP_1321(next1) * H1(l1) * l1'::node<next1,l1'>&l1'!=null & 
+l1=null --> Ga(l1,l1')&
+true(3,4),
+ // POST
+(2;1;0)H1(l1) * H2(l2)&l2=null & l1=null --> Ga(l1,l2)&
+true(3,4),
+ // POST
+(2;0)l1::node<next2,prev2> * Ga(next2,l2) * HP_1329(prev2)&
+true --> Ga(l1,l2)&
+true(3,4)]
+
+Procedure append$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(l) ::=  [emp&l=null; l::node<next3,DP> * H1(next3)],
+ H2(l1) ::=  [emp&l1=null; (htrue)/&\l1::node<DP2,DP1>; htrue; htrue&l1!=null],
+ Ga(l3,l2) ::=  [emp&l2!=null & l3=null; emp&l3=null & l2=null; l3::node<next,DP> * 
+Ga(next,l2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(l) ::= 
+ l::node<next3,DP> * H1(next3)
+ or emp&l=null
+ (3,4),
+ H2(l1) ::= emp(3,4),
+ Ga(l3,l2) ::= 
+ emp&l3=null & l2=null
+ or l3::node<next,DP> * Ga(next,l2)
+ or emp&l2!=null & l3=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&((self=null & l2=null) | self!=null | (l2!=null & self=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((self=null & l2=null) | (l2!=null & self=null))&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=0)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+Checking procedure flatten$node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x)&true
+ ensures G(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H(x)&x!=null --> x::node<next4,prev3> * HP_1526(next4) * HP_1527(prev3)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1526(next4)&true --> H(next4)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1527(prev3)&true --> H(prev3)&
+true(3,4),
+ // PRE
+(1;0)G(prev3)&true --> prev3::H1<>&
+true(3,4),
+ // PRE
+(1;0)G(next4)&true --> next4::H2<>&
+true(3,4),
+ // POST
+(1;1;0)next5::Ga<next4> * prev3::node<next5,x> * x::node<prev3,v2>&
+v2=null --> G(x)&
+true(3,4),
+ // POST
+(2;1;0)prev3::Ga<next4> * x::node<prev3,v3>&v3=null & prev3=null --> G(x)&
+true(3,4),
+ // POST
+(2;0)H(x)&x=null --> G(x)&
+true(3,4)]
+
+Procedure flatten$node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+!!! formula1: emp&(self!=null | self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (1;0)prev_38_1525::G<> --> prev_38_1525::H1<>(3,4)
+
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ (1;0)next_38_1524::G<> --> next_38_1524::H2<>(3,4)
+
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1) ::=  [emp&x1=null; x1::node<next12,prev8> * H(next12) * H(prev8)],
+ G(x2) ::=  [emp&x2=null; x2::node<prev3,v2> * prev3::node<next5,x2> * next5::Ga<next4>&
+v2=null; x2::node<prev3,v2> * prev3::Ga<next4>&prev3=null & v2=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1) ::= 
+ x1::node<next12,prev8> * H(next12) * H(prev8)
+ or emp&x1=null
+ (3,4),
+ G(x2) ::= 
+ x2::node<prev3,v2> * prev3::node<next5,x2> * next5::Ga<next4>&v2=null
+ or x2::node<prev3,v2> * prev3::Ga<next4>&prev3=null & v2=null
+ or emp&x2=null
+ (3,4)]
+*************************************
+Stop Omega... 41 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.380889,1343)
+Total verification time: 0.629072 second(s)
+	Time spent in main process: 0.571297 second(s)
+	Time spent in child processes: 0.057775 second(s)
+

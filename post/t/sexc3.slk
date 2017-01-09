@@ -1,0 +1,25 @@
+data Exp {
+  int val;
+}.
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214' & flow __Exc)
+ |-  emp&res=2 & 0<x . 
+print residue.
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214' & v_int=res & flow __norm)
+ |-  emp&res=2 & 0<x . 
+print residue.
+
+/*
+# sexc3.slk --post-eres
+
+ Can we add: res=eres.val on the lhs
+ so that first entailment succeeds?
+
+checkentail (exists v_int: v_Exp_12_1214'::Exp<v_int>&
+ 0<x &  v_int=2 & eres=v_Exp_12_1214')
+ |-  emp&res=2 & 0<x . 
+
+*/

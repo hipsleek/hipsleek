@@ -1,0 +1,64 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+
+  HeapPred U(char_star x,char_star y).
+  HeapPred U2(char_star x,char_star y).
+
+
+//(2)
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+
+infer [U] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+infer [U] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,r).
+ print residue.
+
+/*
+# ex16d1d2.slk dre "infer_c" -show-push-list ".*hp_"
+
+//(1)
+
+infer [U,@pure_field,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+# OK..
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_31(q2,self)&true; 
+                  q2::char_star<flted_13_18,p>@M * GP_31(q2,self)&
+                   flted_13_18=0 |#|3  --> GP_30(q2,self,p)&true; 
+                  self::char_star<v,q2>@M * GP_30(q2,self,p)&
+                   v!=0 |#|3  --> U(self,p)&true]
+[[ InferFold  ==>  Match(self,self) ==>  InferFold  ==>  Match(q2,q2) ==>  COND ==>  UnmatchedRHSData]]
+
+//(2)
+infer [U,@classic] 
+   self::char_star<v,q2>* q2::char_star<0,p> & v!=0  |-  U(self,p).
+ print residue.
+
+ <1>emp&v!=0&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [emp&true |#|3  --> GP_46(q2,self)&true; 
+                  q2::char_star<flted_18_33,p>@M * GP_46(q2,self)&
+                   true |#|3  --> GP_45(q2,self,p)&true; 
+                  self::char_star<v,q2>@M * GP_45(q2,self,p)&
+                   true |#|3  --> U(self,p)&true]
+[[ InferFold  ==>  Match(self,self) ==>  InferFold  ==>  Match(q2,q2) ==>  COND ==>  UnmatchedRHSData]]
+
+
+
+*/

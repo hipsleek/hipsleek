@@ -1,0 +1,32 @@
+data cell { int n; }.
+
+checkentail x::cell<_> * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+checkentail @full[x, y] |- @lend[x].
+print residue.
+
+infer [@par] x::cell<_> * y::cell<_> |- x::cell<_>@L.
+/* Expected: x::cell<_>@L * y::cell<_> */
+print residue.
+
+infer [@par] @full[x, y] |- @lend[x].
+print residue.
+
+checkentail x::cell<_>@L * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+infer [@par] x::cell<_>@L * y::cell<_> |- x::cell<_>@L.
+print residue.
+
+infer [@par] x::cell<_>@L * y::cell<_> |- x::cell<_>.
+print residue.
+
+infer [@par] 
+x_40'::cell<Anon_11>@L * @full[y_41,z_42] * @lend[x_40] & v_int_6_1391=1 & y_41'=1 & z_42'=2 & Anon_11=v_int_6_1391 |- x_40'::cell<Anon_13>@L.
+print residue.
+
+checkentail
+x_40'::cell<Anon_11>@L*@full[y_41,z_42]*@lend[x_40]&v_int_6_1391=1 & y_41'=1 & z_42'=2 & Anon_11=v_int_6_1391
+|- x_40'::cell<Anon_12>@L*@full[y_41]*@lend[x_40].
+print residue.

@@ -1,0 +1,28 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail 1: Valid. 
+
+ <1>(exists parent: b::dll{}<x,parent>&x!=null&{FLOW,(3,4)=__norm})[]
+[[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  COND ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+Stop Omega... 9 invocations 
+SAT Count   : 96
+SAT % Hit   : 81.25%
+IMPLY Count : 3
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.00395 (seconds)
+
+!!! log(small):(0.024092,108)
+Total verification time: 0.08507 second(s)
+	Time spent in main process: 0.065425 second(s)
+	Time spent in child processes: 0.019645 second(s)
+

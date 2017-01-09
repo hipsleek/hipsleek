@@ -1,0 +1,29 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred lls<n,k,sm> == self=null & n=0 & k=0 & sm=\inf
+  or self::node<sm, r> * r::lls<n-1,k-1,sm1> & n=k & sm<=sm1
+  or self::node<v, r> * r::lls<n-1,k,sm> & n>k & v<=sm
+	inv n>=k & k>=0.
+
+/*
+pred llw<n,k,sm> == case {
+    self=null -> [] n=0 & k=0 & sm=\inf;
+    self!=null -> case {
+        n=k -> [] self::node<sm, r> * r::llw<n-1,k-1,sm1> & n=k & sm<=sm1;
+        n!=k -> [] self::node<v, r> * r::llw<n-1,k,sm> & n>k & v<=sm;
+      };
+     }	inv n>=k & k>=0.
+*/
+
+pred llw<n,k,sm> == case {
+    n=k -> [] self=null & n=0  & sm=\inf 
+         or self::node<sm,r>*r::llw<n-1,k-1,sm1> & sm<=sm1;
+    n!=k -> [] self::node<v, r> * r::llw<n-1,k,sm> & n>k & v<=sm;
+     }	inv n>=k & k>=0.
+
+checkentail xs::node<v,r> * r::llw<f,k,sm2> & v<=sm2
+   |- xs::llw<f1,k+1,s1>.
+print residue.

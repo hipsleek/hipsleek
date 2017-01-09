@@ -1,0 +1,161 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+/* view for a singly linked list */
+
+pred ll<> == self = null
+	or self::node<_, q> * q::ll<> 
+  inv true.
+
+pred lseg<p> == self=p
+  or self::node<_, q> * q::lseg<p>
+  inv true.
+
+/*
+[ P(x_1661,y_1662,res_1663) ::= emp&x_1661=null & y_1662=res_1663
+ or x_1661::node<Anon_1664,v_node_31_1659>@M * 
+    P(q_1647,y_1662,v_node_31_1659)&
+    x_1661!=null & res_1663!=null & x_1661=res_1663
+ (4,5)]
+*/
+
+pred P<p,x> == self=p & x=null 
+  or self::node<_, q> * q::P<p,_> & x!=null & x=self
+  inv true.
+
+lemma_test self::P<p,x> -> self::lseg<p>.
+
+relation R(node x,node y, node z).
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+print residue.
+
+
+/*
+# ex21p2a.ss
+
+lemma_infer[R,@classic] self::P<p,x> -> self::lseg<p> & R(self,p,x).
+
+# need fix-point here.
+
+  self_lem_17=p & x=null
+       -->  R(self_lem_17,p,x); 
+
+  R(p,p,Anon_225) & x=self_lem_17 & self_lem_17!=null) 
+       -->  R(self_lem_17,p,x); 
+
+  q_224!=null & R(q_224,p,Anon_225) & x=self_lem_17 & self_lem_17!=null) -->  R(self_lem_17,p,x)
+
+
+
+[[ Fold ==>  Match(self_lem_17,self_lem_17) ==>  SEARCH ==>  (Lemma ==> lem_17(q_224,q_228)) ==> (left: lem_17) ==>  COND ==>  Match(q_224,q_228) ==> ||OR|| ==>  COND ==>  BaseCaseFold]]
+
+
+pred P<p,x> == self=p & x=null & self=p
+  or self::node<_, q> * q::P<p,x> & x!=null & x=self & res!=null
+  inv true.
+
+ERROR: at ex21p2a-append-pure-post.slk_29:15_29:39
+Message: res is not allowed in precondition
+
+Exception processed: Failure("res is not allowed in precondition")
+error at: 
+SLEEK FAILURE (END)
+
+  infer [P,@classic]
+  requires x::ll<>
+  ensures P(x,y,res);
+
+=========================
+[ // POST
+(2;0)res::node<Anon_1646,v_node_31_1659>@M * 
+     GP_1660(v_node_31_1659,y,res,x@NI)&x=res & res!=null --> P(x,y,res)&
+true,
+ // POST
+(2;0)P(q_1647,y,v_node_31_1659)&
+res!=null & x=res --> GP_1660(v_node_31_1659,y,res,x@NI)&
+true,
+ // POST
+(1;0)x::ll<>@M * GP_1658(y,res,x@NI)&y=res & x=null --> P(x,y,res)&
+true,
+ // POST
+(1;0)emp&x=null & y=res --> GP_1658(y,res,x@NI)&
+true]
+
+=======================================
+
+res::node<Anon_1646,v_node_31_1659>@M * 
+  GP_1660(v_node_31_1659,y,res,x@NI)&x=res & res!=null --> P(x,y,res).
+
+P(q_1647,y,v_node_31_1659)&
+res!=null & x=res --> GP_1660(v_node_31_1659,y,res,x@NI).
+
+
+x::ll<>@M * GP_1658(y,res,x@NI)&y=res & x=null 
+   --> P(x,y,res).
+ 
+emp&x=null & y=res --> GP_1658(y,res,x@NI).
+
+=========================================
+
+
+GP_1658(y,res,x@NI) <--  emp&x=null & y=res
+// defn
+GP_1658(y,res,x@NI) ==  emp&x=null & y=res
+
+
+GP_1660(v_node_31_1659,y,res,x@NI) <-
+  P(q_1647,y,v_node_31_1659)& res!=null & x=res 
+
+GP_1660(v_node_31_1659,y,res,x@NI) ==
+  P(q_1647,y,v_node_31_1659)& res!=null & x=res 
+
+P(x,y,res) <-
+  x::ll<>@M * GP_1658(y,res,x@NI)&y=res & x=null 
+// unfold GP
+P(x,y,res) <-
+  x::ll<>@M * x=null & y=res &y=res & x=null 
+// unfold ll
+P(x,y,res) <-
+  x=null & y=res &y=res & x=null 
+
+P(x,y,res) <-
+ res::node<Anon_1646,v_node_31_1659>@M * 
+  GP_1660(v_node_31_1659,y,res,x@NI)&x=res & res!=null
+// unfold GP
+P(x,y,res) <-
+ res::node<Anon_1646,v_node_31_1659>@M * 
+  P(q_1647,y,v_node_31_1659)& res!=null & x=res &x=res & res!=null
+
+  P <- B \/ C
+----------------
+P <- B /\ P <- C
+
+P(x,y,res) <-
+  x=null & y=res 
+  \/  res::node<Anon_1646,v_node_31_1659>@M * 
+       P(q_1647,y,v_node_31_1659)& res!=null & x=res 
+
+P(x,y,res) <->
+  x=null & y=res 
+  \/  res::node<Anon_1646,v_node_31_1659>@M * 
+       P(q_1647,y,v_node_31_1659)& x=res 
+
+  res::lseg<y> & (x=null or x=res) 
+
+
+lemma_infer [U,@classic] 
+  self::P<y,res> -> self::lseg<y> & R(self,y,res)
+
+lemma_safe
+  self::P<y,res> <-> self::lseg<y> & (x=null or x=res)
+
+
+*/

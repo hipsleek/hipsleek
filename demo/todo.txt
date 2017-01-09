@@ -1,0 +1,1555 @@
+# dll.ss
+
+Mona not working?
+
+../hip dll.ss -p insert -tp mona
+
+!!!Full processing file "dll.ss"
+Parsing file "dll.ss" by default parser...
+!!! processing primitives "["prelude.ss"]
+
+==========================================================================
+# dll.ss
+
+
+redlog giving timeouts?
+
+chinwn@loris-7:~/hg/sl_default/demo$ ../hip dll.ss -p insert -tp redlog
+
+!!!Full processing file "dll.ss"
+Parsing file "dll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Reduce... 
+Starting Omega.../usr/local/bin/oc
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+Nested Timer(stop)
+==========================================================================
+ ex3-app-twice.ss
+
+node appendthree$node~node~node(  node x,  node y,  node z)static  EBase exists (Expl)[](Impl)[nnn; mmm; kkk](ex)[]x::ll{}<nnn> * 
+       y::ll{}<mmm> * z::ll{}<kkk>&0<nnn&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume 
+                   (exists eee: x::ll{}<eee>&eee=kkk+nnn+mmm&
+                   {FLOW,(4,5)=__norm#E}[]
+
+
+Why are there nnn,mmm,kkk>=0 in post-checking?
+Above post did not have it
+
+id: 10; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail (exists eee_1535: x'::ll{}<eee_1535>&res=x' & 0<=mmm_1529 & 0<=nnn_1528 & 
+eee_1535=mmm_1529+nnn_1528 & 0<=eee_1534 & 0<=kkk & mmm_1529=kkk & 
+nnn_1528=eee_1534 & 0<=mmm_1522 & 0<=nnn_1521 & eee_1534=mmm_1522+nnn_1521 & 
+0<=nnn & 0<=mmm & mmm_1522=mmm & nnn_1521=nnn & x'=x & y'=y & z'=z & 0<nnn&
+{FLOW,(4,5)=__norm#E}[]
+ |-  (exists eee_1519: x::ll{}<eee_1519>&0<=nnn & 0<=mmm & 0<=kkk & eee_1519=kkk+
+nnn+mmm&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   emp&res=x' & 0<=mmm_1529 & 0<=nnn_1528 & eee_1536=mmm_1529+nnn_1528 & 0<=eee_1534 & 0<=kkk & mmm_1529=kkk & nnn_1528=eee_1534 & 0<=mmm_1522 & 0<=nnn_1521 & eee_1534=mmm_1522+nnn_1521 & 0<=nnn & 0<=mmm & mmm_1522=mmm & nnn_1521=nnn & x'=x & y'=y & z'=z & 0<nnn&{FLOW,(4,5)=__norm#E}[]
+   ]
+==========================================================================
+# ex3a
+
+node appendthree(node x, node y,node z)
+  requires x::ll<nn> * y::ll<mm> * z::ll<kk> & x!=null
+  ensures x::ll<ee>& ee=nn+mm+kk & nn>0;
+
+Why did post nn>0 fail?
+
+Procedure appendthree$node~node~node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+Error(s) detected when checking procedure appendthree$node~node~node
+Stop Omega... 122 invocations 
+0 false contexts at: ()
+
+==========================================================================
+# ex21
+
+incorrect to have false in post-state; do we
+need to turn on a flag? it is incorrect!
+Once assert/assume fail, the method should fail.
+
+!!! **typechecker.ml#2010:Dprint:[x]
+dprint(simpl): ex21-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Procedure foo$int SUCCESS.
+
+==========================================================================
+# ex21a (default)
+
+{
+  if (x>0) {
+    assert x'>=5 assume true;
+    dprint;
+    assert x'>=0;
+    assert x'<0;
+  }
+}
+
+incorrect to have false in post-state; do we
+need to turn on a flag? it is incorrect!
+Once assert/assume fail, the method should fail.
+
+assert/assume:ex21a-assert-assume.ss:6: 4:  : failed
+
+
+!!! **typechecker.ml#2010:Dprint:[x]
+dprint(simpl): ex21a-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+
+Procedure foo$int SUCCESS.
+
+==========================================================================
+# ex21d --dis-efa-exc (FIXED)
+
+How come we still have exception even though they
+are disabled. I expect FailCtx to be shown when
+residue is being printed; not exceptions.
+
+Entail 1: Fail.(must) cause: 0<x |-  x<0. LOCS:[1] (must-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Entail 2: Fail.(may) cause: 0<x |-  x<5. LOCS:[5] (may-bug)
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+
+Residue:
+ <1>emp&0<x&{FLOW,(4,5)=__norm#E}[]
+==========================================================================
+# ex21j --dis-efa-exc: DONE for pure implication
+
+Need to support @err_may and @err_must for
+local infer error as exception..
+==========================================================================
+# ex21j --efa-exc
+
+infer [@dis_err] x>0 |- x<0 .
+// failctx must_err
+print residue.
+
+Got: What does { } mean?
+I believe empty context is either
+undefined or false.
+
+Entail (1) : Fail.(must) cause: 0<x |-  x<0. LOCS:[2] (must-bug)
+Residue:
+ { }
+
+I would expect instead:
+
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  0<x |-  x<0. LOCS:[2] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+==========================================================================
+--efa-exc
+
+   bind --> efa-exc: errors/infer/ex1-exc-bind.ss
+   assert-assume --> efa-exc: errors/infer/ex2-exc-assert.ss
+
+   pre-cond --dis-efa-exc: errors/infer/ex3-exc-pred.ss
+   post --dis-efa-exc: : errors/infer/ex4-exc-post.ss
+
+==========================================================================
+# ex21a1.ss --efa-exc
+
+Context of Verification Failure: _0:0_0:0
+Last Proving Location: ex21a1-assert-assume.ss_6:4_6:28
+Procedure foo$int FAIL.(2)
+Exception Failure("Proving assert/assume failed") Occurred!
+
+Why isn't dprint working?
+I expect MayError exception to be printed.
+How come --efa not working?
+
+id: 0; caller: []; line: 6; classic: false; kind: Assert/Assume; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail htrue&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&5<=x'&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]false
+
+==========================================================================
+# ex21a2.slk
+
+# Can we log the @err_must etc below? (DONE)
+
+# Can we move exception to a lower-level?
+ 
+infer [@dis_err] x'=x |- x'<=5.
+print residue.
+  /*
+Residue:
+ 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:false
+  */
+
+infer [@err_must] x'=x |- x'<=6.
+print residue.
+
+  /*
+Entail (2) : Fail.(may) cause: true |-  x'<=5. LOCS:[5] (may-bug)
+  */
+
+# --esl
+
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@dis_err]
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=5&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=5. LOCS:[2] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]false
+ 
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(2); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must]
+ checkentail emp&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&x'<=6&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=6. LOCS:[17] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]false
+
+==========================================================================
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@err_must]
+
+
+local setting takes precedence over global setting
+   dis_err > err_may > err_must
+     dis_err & err_may --> dis_err
+     dis_err & err_must --> dis_err
+     err_may & err_must --> err_may
+
+==========================================================================
+
+Why did we have @err_must for global?
+
+--exc-efa
+id: 0; caller: []; line: 6; classic: false; kind: Assert/Assume; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@err_must]
+
+--dis-exc-efa
+others: [] globals: [@err_must]
+
+
+==========================================================================
+# ex21a1 --efa-exc -dre "heap_entail": FIXED
+
+Why @err_must still result in MaybeErr context
+and not __ErrorMay exception?
+
+(==solver.ml#14797==)
+heap_entail_one_context_struc#2@5@4@3@2@1
+heap_entail_one_context_struc#2 inp1 : EBase emp&5<=x'&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context_struc#2 inp2 : es_formula: htrue&x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_cond_path: [0]
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+heap_entail_one_context_struc#2 inp3 :is_folding:false
+heap_entail_one_context_struc#2 inp4 :has_post:false
+heap_entail_one_context_struc#2@5 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]
+CEX:false
+
+==========================================================================
+# ex21a5 --efa-exc -dre "heap_entail": DONE
+
+Checking procedure foo2$int... 
+assert/assume:ex21a5-assert-assume.ss:23: 4:  : failed
+
+Can we have failed (MAY ERROR)
+     or failed (MUST ERROR) 
+for assert wo assume.
+
+==========================================================================
+# ex21a6 :FIXED
+ --efa-exc -dre "heap_entail"
+
+# Why is there empty_context?
+
+
+Checking procedure foo2$cell... 
+( []) :ex21a6-bind.ss:9: 10: bind: node  x'::cell<val_9_1431'>@L cannot be deriv
+ed from context
+
+(Cause of Bind Failure):ex21a6-bind.ss:9: 10:  List of Failesc Context: [FEC(
+
+!! **typechecker.ml#2065:Dprint:[x_15,x]
+dprint:ex21a6-bind.ss:10 empty context
+
+Can we have failed (MAY ERROR)
+     or failed (MUST ERROR) 
+for assert wo assume.
+
+
+
+# ex21a6
+ --efa-exc -dre "heap_entail"
+
+Why below did not trigger an error exception?
+
+(==solver.ml#14798==)
+heap_entail_one_context_struc#2@5@4@3@2@1
+heap_entail_one_context_struc#2 inp1 : EBase x'::cell<val_9_1431'>@L&{FLOW,(1,28)=__flow#E}[]
+heap_entail_one_context_struc#2 inp2 : es_formula: htrue&x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_cond_path: [0]
+ es_infer_vars_rel: []
+heap_entail_one_context_struc#2 inp3 :is_folding:false
+heap_entail_one_context_struc#2 inp4 :has_post:true
+heap_entail_one_context_struc#2@5 EXIT: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: separation entailment
+                   fe_locs: {
+                             fc_message: do_unmatched_rhs : x'::cell<val_9_1431'>@L
+                             fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[ COND ==>  UnmatchedRHSData ==> ]]
+CEX:false
+
+Checking procedure foo2$int... 
+assert/assume:ex21a5-assert-assume.ss:23: 4:  : failed
+
+==========================================================================
+# ex21a8 --efa-exc -dre "heap_entail": FIXED
+
+--efa-exc triggers must-err exception for pre-condition checking
+# Why is there a verification failure 
+and empty context?
+
+Checking procedure foo2$cell... 
+!!! **typechecker.ml#2065:Dprint:[x]
+dprint:ex21a8-pre.ss:14 empty context
+Procedure foo2$cell result FAIL.(1)
+
+However, heap_entail seems fine:
+
+(==solver.ml#4304==)
+heap_entail_one_context#13@8@7@6@5@4@3@2@1
+heap_entail_one_context#13 inp1 : es_formula: htrue&x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [Anon_11]
+ es_cond_path: [0]
+ es_infer_vars_rel: []
+heap_entail_one_context#13 inp2 : x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@8 EXIT: [
+  htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+  ]
+
+--dis-efa-exc triggers pre-cond failure
+
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo2$cell... 
+Proving precondition in method pre_call$cell Failed.
+  (may) cause: do_unmatched_rhs : x'::cell<Anon_11>
+
+Context of Verification Failure: _0:0_0:0
+
+Last Proving Location: ex21a8-pre.ss_13:2_13:13
+
+Procedure foo2$cell FAIL.(2)
+
+--efa-may
+
+sleek triggers @err_may. 
+
+id: 0; caller: []; line: 13; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_may] globals: [@err_may]
+ checkentail htrue&x'=x&{FLOW,(4,5)=__norm#E}[]
+ |-  x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+   ]
+
+# However, we still get empty context error.
+
+!!! **typechecker.ml#2065:Dprint:[x]
+dprint:ex21a8-pre.ss:14 empty context
+Procedure foo2$cell result FAIL.(1)
+==========================================================================
+# ex21e2: FIXED
+
+//1
+infer [@err_must] x'=x |- y::node<_>.
+print residue.
+// GOT __Error but Expects __Error_May 
+
+/*
+Entail (1) : Fail.(must) cause:do_unmatched_rhs : y::node<Anon_11>
+
+Residue:
+ <1>emp&x'=x&{FLOW,(18,19)=__Error#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+infer [] x'=x |- y::node<_>.
+print residue.
+// expects MaybeErr Context
+
+infer [] y!=null |- y::node<_>.
+print residue.
+// GOT MaybeErr Context, but expects MustErrCtx
+
+//4
+infer [@err_may] x'=x |- y::node<_>.
+print residue.
+// expects __ErrorMay but got __Error
+
+//(5)
+infer [@err_may] y=null |- y::node<_>.
+print residue.
+// expects __ErrorMay but got __Error
+==========================================================================
+# ex21f2.slk: FIXED
+
+# 5 & 7 has problem above
+
+//5
+infer [@dis_err] x'=8 |- x'<=5.
+print residue.
+//expects MustErr Context but got MaybeErr Context
+
+//7
+infer [] x'=8 |- x'<=6.
+print residue.
+// expects MustErr Context but got MaybeErr Context
+==========================================================================
+# ex21f2.slk --esl (FIXED)
+
+Can we suppress sleek_dump during sleek_invocation?
+
+!!!dumping for sleek_dump(fail)
+!!!  
+ id: 2<0; prover: Z3; loc: _0:0_0:0; kind: Sleek_Entail(1)
+ raw proof:no proof raw result:no result
+ Imply: ante: x'=x
+             conseq:  x'<=5
+ res: false
+ --------------------
+!!!dumping for sleek_dump(fail)
+!!!  
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@dis_err] globals: []
+ checkentail emp&x'=x&{FLOW,(20,21)=__norm#E}[]
+ |-  emp&x'<=5&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  x'<=5. LOCS:[4] (may-bug)
+                   fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}}
+[[empty]]false
+==========================================================================
+# ex21a8: FIXED
+
+(==solver.ml#4318==)
+heap_entail_one_context#13@8@7@6@5@4@3@2@1
+heap_entail_one_context#13 inp1 : es_formula: htrue&x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [Anon_11]
+ es_cond_path: [0]
+ es_infer_vars_rel: []
+heap_entail_one_context#13 inp2 : x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@8 EXIT: [
+  htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+  ]
+
+(==norm.ml#1054==)
+heap_entail_after_sat@19@18@17@16@15@14@7@6@5@4@3@2@1
+heap_entail_after_sat inp1 : es_formula: htrue&x'=x&{FLOW,(4,11)=__MayError#E}[]
+ es_infer_obj: [@err_must]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_trace:  COND ==>  UnmatchedRHSData ==> 
+ es_infer_vars_rel: []
+heap_entail_after_sat inp2 : emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat@19 EXIT: []
+
+==========================================================================
+# ex21a51 --efa-exc -dre "heap_entail"
+
+# why is it a wrongq post-condition failure?
+     (may) cause:  true |-  5<=x'. LOCS:[2;6] (may-bug)
+
+# It should be:
+      x=x' & flow __MayError |- true & flow __norm.
+
+Or at least:
+      x=x' & flow __MayError |- false.
+
+I think the current failure here is from assert failure.
+
+==========================================================================
+# ex21a8.ss
+
+
+# can fix the warnings?
+
+WARNING: ex21a8-pre.ss_15:10_15:29:the result type __Error#E is not covered by t
+he throw list[__norm#E]
+
+WARNING: ex21a8-pre.ss_11:10_11:27:the result type __Exc#E is not covered by the
+ throw list[__norm#E]
+
+==========================================================================
+# ex21a8.ss  FIXED
+
+
+void pre_call3(cell x)
+  requires true
+  ensures true & flow __Error;
+
+int foo2(cell x)
+  requires true /*x=null*/
+  ensures true ;
+{
+  pre_call3(x);
+  dprint;
+  return 3;
+
+}
+
+# FIXED 
+
+Gave:
+ Procedure foo2$cell SUCCESS.
+
+This is incorrect. It should fail because
+
+  State:htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  |- true & flow __norm
+
+do not hold..
+
+# ../hip ex21a8-pre.ss -dre "check_post\|heap_entail_struc_list_partial_context_init" > 1
+
+
+(==solver.ml#2849==)
+heap_entail_after_sat@52@51@50@49@48@47@46
+heap_entail_after_sat inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_final_error: None
+heap_entail_after_sat inp2 : htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat@52 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+Below is incorrect..
+
+(==solver.ml#4320==)
+heap_entail_one_context#13@51@50@49@48@47@46
+heap_entail_one_context#13 inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_one_context#13 inp2 : htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context#13@51 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#3847==)
+heap_entail_conjunct_lhs_struc@50@49@48@47@46
+heap_entail_conjunct_lhs_struc inp1 :Ctx  es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_conjunct_lhs_struc inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_conjunct_lhs_struc@50 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#3754==)
+heap_entail_after_sat_struc#1@49@48@47@46
+heap_entail_after_sat_struc#1 inp1 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_after_sat_struc#1 inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_after_sat_struc#1@49 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==solver.ml#14815==)
+heap_entail_one_context_struc#111@48@47@46
+heap_entail_one_context_struc#111 inp1 :conseq: EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_one_context_struc#111 inp2 : es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ es_infer_vars_rel: []
+ es_unsat_flag: false
+ es_final_error: None
+heap_entail_one_context_struc#111 inp3 :is_folding:false
+heap_entail_one_context_struc#111 inp4 :has_post:false
+heap_entail_one_context_struc#111@48 EXIT: [
+  htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+  es_final_error: None
+  ]
+
+(==typechecker.ml#3029==)
+heap_entail_struc_list_partial_context_init@47@46
+heap_entail_struc_list_partial_context_init inp1 : List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_unsat_flag: false
+       es_final_error: None
+ Exc:None
+ ]
+heap_entail_struc_list_partial_context_init inp2 : EBase htrue&{FLOW,(4,5)=__norm#E}[]
+heap_entail_struc_list_partial_context_init@47 EXIT: List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_final_error: None
+ Exc:None
+ ]
+
+(==typechecker.ml#861==)
+check_post@46
+check_post inp1 : List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_unsat_flag: false
+       es_final_error: None
+ Exc:None
+ ]
+check_post inp2 :( htrue&{FLOW,(4,5)=__norm#E}[], EBase htrue&{FLOW,(4,5)=__norm#E}[])
+check_post@46 EXIT: List of Partial Context: [PC(0, 1)]
+Failed States:
+[]
+Successful States:
+[
+ Label: []
+ State:es_formula: htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+       es_final_error: None
+ Exc:None
+ ]
+
+==========================================================================
+# ex21e5a
+
+# ex21e6 and ex21e5 working but not ex21e5a
+
+infer[@err_must] x=1 & flow __norm |- x>0 & flow __Exc.
+print residue.
+expect Fail.
+
+Got Fail but residue is:
+
+Residue:
+ <1>emp&x=1&{FLOW,(4,5)=__norm#E}[]
+
+
+Partially fixed by using exec_old (from Sept14  439edea803e6 13050) 
+in heap_entail_after_sat
+
+    let exec_old () = 
+      begin
+        let pr = Cprinter.string_of_entail_state_short in
+        Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+        let es = (CF.add_to_estate_with_steps es ss) in
+        let tmp, prf = heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
+        (filter_set tmp, prf)
+      end in
+==========================================================================
+# ex21e7a (FIXED)
+
+infer[@err_must] x=1 & flow __norm |- x>4 & flow __Exc.
+print residue.
+expect Fail.
+
+# heap_entail_conjunct not working properly for this example
+  though for ex21e7b, it is OK.
+  should have __Error in flow
+
+(==solver.ml#7134==)
+heap_entail_conjunct_helper#3@11@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct_helper#3 inp1 : es_formula: emp&x=1&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_infer_vars_rel: []
+ es_final_error: None
+heap_entail_conjunct_helper#3 inp2 : emp&4<x&{FLOW,(22,23)=__Exc#E}[]
+heap_entail_conjunct_helper#3@11 EXIT: 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: undefined
+                  fe_locs: {
+                            fc_message: 
+                             1.1: conseq has an incompatible flow type: got __norm#E expecting error
+                            fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}}
+[[empty]]
+CEX:true
+
+
+(==solver.ml#5684==)
+heap_entail_conjunct#1@10@9@8@7@6@5@4@3@2@1
+heap_entail_conjunct#1 inp1 :false
+heap_entail_conjunct#1 inp2 : es_formula: emp&x=1&{FLOW,(4,5)=__norm#E}[]
+ es_infer_obj: [@err_must]
+ es_infer_vars_rel: []
+ es_final_error: None
+heap_entail_conjunct#1 inp3 : emp&4<x&{FLOW,(22,23)=__Exc#E}[]
+heap_entail_conjunct#1@10 EXIT: [
+  emp&x=1&{FLOW,(4,5)=__norm#E}[]
+  es_final_error: Some
+  ]
+
+==========================================================================
+# ./runfasttest sleek -flags "--efa-exc"
+
+Total number of errors: 3 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 75.44 second
+	Time spent in main process: 50.04 second
+	Time spent in child processes: 25.40 second
+	Number of false contexts: 0
+
+Total number of errors: 3 in files:
+  infer/infer13.slk({E5#Valid}) infer/infer16.slk({E5#Valid},{E6#Valid}) imm/norm/norm4.slk({E4#Fail},{E5#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+Total verification time: 75.12 second
+	Time spent in main process: 49.75 second
+	Time spent in child processes: 25.37 second
+	Number of false contexts: 0
+
+==========================================================================
+# ex21a51.ss --efa-exc: FIXED
+
+A failed (may) was detected, but how did it change to __Error
+when it should be __MayError?
+
+----
+
+Checking procedure foo$int... 
+assert/assume:ex21a51-assert-assume.ss:6: 4:  : failed (may)
+
+
+!!! **typechecker.ml#2071:Dprint:[x]
+dprint(simpl): ex21a51-assert-assume.ss:7: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: []
+  State:htrue&x'=x&{FLOW,(6,10)=__Error#E}[]
+
+==========================================================================
+# ex21e7d.slk
+
+At lower levels, it seem like these methods need to be
+changed to support __Error ad FailCtx
+
+with --temp-opt
+---------------
+(==solver.ml#10450==)
+union_context_left@17@11@10@9@8@7@6@5@4@3
+union_context_left inp1 :[ 
+[
+ x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_final_error: Some
+ ]
+, 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+]
+union_context_left@17 EXIT: 
+[
+ x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_final_error: Some;
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+
+without --temp-opt
+------------------
+(==solver.ml#10450==)
+union_context_left@4
+union_context_left inp1 :[ 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: logical bug
+                  fe_locs: {
+                            fc_message:  x!=null |-  x=null. LOCS:[8;3] (must-bug)
+                            fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+[[ Fold ==> ]]
+CEX:false
+, 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+]
+union_context_left@4 EXIT: 
+[
+ emp&flted_8_35=null & Anon_45=Anon_12 & r_46=flted_8_35&{FLOW,(20,21)=__norm#E}[]
+ es_final_error: None
+ ]
+
+------------------------
+
+(*context set union*)
+let list_context_union_x c1 c2 = 
+  let simplify x = (* context_list_simplify *) x in
+  match c1,c2 with
+  | FailCtx (t1, c1, cex1), FailCtx (t2, c2, cex2) -> (*FailCtx (Or_Reason (t1,t2))*)
+    if ((is_cont t1) && not(is_cont t2)) then FailCtx (t1,c1 ,cex1)
+    else if ((is_cont t2) && not(is_cont t1)) then FailCtx (t2, c2,cex2)
+    else if (is_cont t1) && (is_cont t2) then FailCtx (Or_Continuation (t1,t2), OCtx (c1,c2), cex_union cex1 cex2 )  
+    else FailCtx (Union_Reason (t1,t2), OCtx (c1,c2), cex_union cex1 cex2)  (* for UNION, we need to priorities MAY bug *)
+  (*FailCtx (And_Reason (t1,t2))   *)
+  | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
+  | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify_ctx_elim_false_dupl t1 t2)
+
+let list_context_union c1 c2 =
+  let pr = !print_list_context(* _short *) in
+  Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+    pr pr pr
+    list_context_union_x c1 c2
+
+let rec union_context_left_x c_l: list_context = (* match (List.length c_l) with *) match c_l with
+  | [] ->  (* Err.report_error {Err.error_loc = no_pos;   *)
+    (*    Err.error_text = "union_context_left: folding empty context list \n"} *)
+    (SuccCtx []: list_context)
+  | [a] -> a (* (List.hd c_l) *)
+  | a::rest -> (* List.fold_left list_context_union (List.hd c_l) (List.tl c_l) *)
+    List.fold_left list_context_union a rest
+
+and union_context_left c_l =
+  let pr = !print_list_context in
+  Debug.no_1 "union_context_left" (pr_list pr) pr union_context_left_x c_l
+
+(*should use union_context_left directly*)
+and fold_context_left_x c_l = union_context_left c_l 
+
+
+===============================================
+
+
+--temp-opt (source of problem?)
+(==solver.ml#7154==)
+heap_entail_conjunct_helper#3@81@80@79@78@77@34@33@32@31@30@29@28@27@26@25@24@23
+heap_entail_conjunct_helper#3 inp1 : es_formula: 
+  x::node<Anon_12,flted_8_35>&flted_8_35=null&{FLOW,(18,19)=__Error#E}[]
+ es_infer_obj: [@err_must]
+ es_gen_impl_vars: [m]
+ es_trace:  Fold ==> 
+ es_infer_vars_rel: []
+ es_proof_traces: [x::node<Anon_12,flted_8_35>&flted_8_35=null:x::ll{}<m>&
+                   1<m&{FLOW,(20,21)=__norm#E}[]]
+ es_final_error: None
+heap_entail_conjunct_helper#3 inp2 : emp&1<m&{FLOW,(20,21)=__norm#E}[]
+heap_entail_conjunct_helper#3@81 EXIT: 
+MustErr Context: 
+                  fe_kind: MUST
+                  fe_name: incompatible types
+                  fe_locs: {
+                            fc_message: 
+                             1.2: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+                            fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+
+
+Earlier conversion would allow better --esl logging.
+Can we keep the info from FailCtx into exception form
+and have that __Error printed.
+
+Sleek printing should be based on this outcome..
+
+    let res1 = 
+      (* WN : test below is needed for ex21a51.ss *)
+      (*      but fails for ex21e7d.slk *)
+      (* How was conversion to __Error done for ex21a51.ss without
+         this conversion? *) 
+      if false
+        (* CF.is_en_error_exc_ctx ctx0 *)
+        (* (!Globals.enable_error_as_exc || CF.is_en_error_exc_ctx ctx0) *)
+        (*           && not (CF.is_dis_error_exc_ctx ctx0) *)
+
+without --temp_opt (working)
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
+ checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
+ |-  x::ll{}<m>&1<m&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  1<m & 1+0=m. LOCS:[0;8;4] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(18,19)=__Error#E}}
+[[ Fold ==>  SEARCH ==>  Match(x,x) ==>  COND ==>  BaseCaseFold ==> ]]false
+ 
+--early conversion (problem)
+--with --temp_opt
+
+
+id: 2; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: []
+ checkentail x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(20,21)=__norm#E}[]
+ |-  x::ll{}<m>&1<m&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  2[
+   x::node<Anon_12,flted_8_39>&flted_8_39=null&{FLOW,(18,19)=__Error#E}[]
+   es_final_error: Some;
+   emp&0+1=m & r_50=flted_8_39 & Anon_49=Anon_12 & flted_8_39=null&{FLOW,(18,19)=__Error#E}[]
+   es_final_error: Some
+   ]
+==========================================================================
+# ex21a9b.ss --efa-exc 
+
+Message below is incorrect since error flow and
+__norm flow are incompatible!.
+
+Post condition cannot be derived:
+  (may) cause: (Proving precondition in method pre_call$cell(1 File "ex21a9b-multi-pre.ss",Line:14,Col:2) Failed ) do_unmatched_rhs : x'::cell<Anon_11>
+
+=================================
+# ex21a9.ss --efa-exc
+
+// where is incompatible flow message?
+
+Post condition cannot be derived:
+  (may) cause: (Proving precondition in method pre_call$cell(1 File "ex21a9-multi-pre.ss",Line:14,Col:2) Failed ) do_unmatched_rhs : x'::cell<Anon_11>
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+# ex21a52.slk
+
+3 different methods to accumulate error messages!
+
+!!!-dre build_and_failures\|add_error\|acc_err\|repl_msg
+
+(==solver.ml#8633==)
+build_and_failures#1@1
+build_and_failures#1 inp1 :([],[( x=0 & x'=x, 5<=x')],[])
+build_and_failures#1@1 EXIT: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)
+                   fc_current_lhs_flow: {FLOW,(6,10)=__Error#E}}
+[[empty]]false
+
+assert/assume:ex21a52-assert-assume.ss:6: 4:  : failed (must)
+
+
+(==solver.ml#2851==)
+acc_error_msg@2
+acc_error_msg inp1 :[ x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+acc_error_msg inp2 :Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.
+acc_error_msg@2 EXIT:[(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+
+(==solver.ml#7369==)
+repl_msg_final_error@3
+repl_msg_final_error inp1 :1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types
+repl_msg_final_error inp2 :[(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)]
+repl_msg_final_error@3 EXIT:(Proving assert/assume in method foo$int (1 File "ex21a52-assert-assume.ss",Line:6,Col:4) Failed.)  x'=0 |-  5<=x'. LOCS:[3;2;6] (must-bug)
+
+==========================================================================
+# ex21a10.ss
+
+This message seems wrong, --esl gave:
+What happen to the MUST error.
+
+ Try-Block:0::
+ [
+  Path: []
+  State:es_formula: htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+        es_must_error: Some(do_unmatched_rhs : x'::cell<Anon_11>; true)
+        es_final_error:[Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>]
+  ]
+ ]
+
+# isn't it a MayErr?
+
+id: 0; caller: []; line: 17; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@err_must]
+ checkentail htrue&x'=x & x'=null & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[do_unmatched_rhs : x'::cell<Anon_11>]
+   ]
+
+
+Proving precondition in method pre_call$cell Failed.
+  (may) cause: OrL[do_unmatched_rhs : x'::cell<Anon_11>,valid]
+
+# ex1a10 --efa-exc
+
+However, we got:
+
+Post condition cannot be derived:
+  (may) cause:  true |-  res. LOCS:[19;15] (may-bug)
+
+
+# --esl
+
+pre-condition proving seems wrong
+isn't there @err_may flag set/
+
+ checkentail htrue&x'=x & x'!=null & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'!=null&{FLOW,(4,5)=__norm#E}[]
+   ]
+
+Why post-cond has only message from one branch?
+===============================================
+
+Post condition cannot be derived:
+  (may) cause:  true |-  res. LOCS:[19;15] (may-bug)
+
+# For post-cond proving, I guess we should have flow inconsistency message
+added?
+ 
+id: 3; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@flow,@ver_post,@err_must]
+ checkentail htrue&x'=x & x'=null & MayLoop[]&{FLOW,(6,10)=__Error#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>]
+   ]
+ 
+id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@flow,@ver_post,@err_must]
+ checkentail (exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x & 
+res=v_boolean_19_1434' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   (htrue) * x'::cell<Anon_1472>&x'!=null & x'=x & res=v_boolean_19_1434'&
+     {FLOW,(4,11)=__MayError#E}[]
+   es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
+   ]
+
+==========================================================================
+# ex21a8.ss
+
+Wrapper not setting MayErr!!
+
+!!! **wrapper.ml#128:Calling wrap_err_pre
+
+id: 0; caller: []; line: 21; classic: false; kind: PRE; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [@err_must] globals: [@err_must]
+ checkentail emp&x=null & x'=x & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  x'::cell<Anon_11>&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   emp&x=null & x'=x&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[do_unmatched_rhs : x'::cell<Anon_11>]
+   ]
+==========================================================================
+# ex21a10.ss (WN :see below)
+
+Post condition cannot be derived:
+  (may) cause: OrL[AndR[1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>, true |-  res. LOCS:[0;15] (may-bug)], true |-  res. LOCS:[19;15] (may-bug)]
+Context of Verification Failure: _0:0_0:0
+Last Proving Location: ex21a10-case-spec.ss_19:2_19:16
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+Procedure foo2$cell FAIL.(2)
+Exception Failure("Post condition cannot be derived.") Occurred!
+Error(s) detected when checking procedure foo2$cell
+
+# --esl
+
+pre-condition proving seems wrong
+isn't there @err_may flag set/
+
+ checkentail htrue&x'=x & x'!=null & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  htrue&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'!=null&{FLOW,(4,5)=__norm#E}[]
+   ]
+
+Why post-cond has only message from one branch?
+===============================================
+# improve printing
+# has one branch of post-cond error been dropped?
+
+
+id: 3; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail htrue&x'=x & x'=null & MayLoop[]&{FLOW,(4,11)=__MayError#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   or[htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+      es_final_error:[Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>]; htrue&
+                                                                    x'=x & 
+                                                                    x'=null&
+                                                                   {FLOW,(4,11)=__MayError#E}[]
+                                                                    es_final_error:[ true |-  res. LOCS:[0;15] (may-bug); 
+                                                                    Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>]]
+   ]
+ 
+id: 5; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail (exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x & 
+res=v_boolean_19_1434' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   (htrue) * x'::cell<Anon_1472>&x'!=null & x'=x & res=v_boolean_19_1434'&
+     {FLOW,(4,11)=__MayError#E}[]
+   es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
+   ]
+==========================================================================
+# ex21a11 (OK) (WN: seems OK now)
+
+
+!!! **wrapper.ml#148:Calling wrap_err_pre
+Post condition cannot be derived:
+  (may) cause: AndR[1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a11-or.ss",Line:12,Col:15) Failed ;
+do_unmatched_rhs : x'::cell<Anon_11>, true |-  res. LOCS:[0;10] (may-bug)]
+OrL
+  (must) cause:  !(res) |-  res. LOCS:[15;10] (must-bug)
+Context of Verification Failure: _0:0_0:0
+Last Proving Location: ex21a11-or.ss_15:2_15:16
+ERROR: at _0:0_0:0
+Message: Post condition cannot be derived.
+
+How come another error below is not captured?
+Is it there? The printout does not seem complete.
+
+id: 9; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail htrue&res=v_boolean_15_1439' & x'!=null & !(v_boolean_15_1439') & x'=x & 
+!(v_bool_12_1437') & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&res=v_boolean_15_1439' & x'!=null & !(v_boolean_15_1439') & x'=x & 
+     !(v_bool_12_1437')&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[ !(res) |-  res. LOCS:[15;10] (must-bug)]
+   ]
+==========================================================================
+#ex22-lor.slk: FIXED
+
+GOT:
+Entail 1: Fail.(must) cause: n<0 |-  1<n. LOCS:[3] (must-bug)
+
+---------
+EXPECTED
+
+Entail 1: Fail.(may) cause:OrL[
+ n<0 |-  1<n. LOCS:[3] (must-bug),
+valid
+]
+
+
+==========================================================================
+  # ex21a12.ss: DONE
+
+void pre_call(cell x)
+  infer [@pre_must]
+  requires x::cell<_> 
+  ensures x::cell<3>;
+
+   this @pre_must tag indicates a pre-condition that must be
+   be satisfied. When tag is present, we must ensure
+   must failure if there is contradiction with the
+   pre-condition. This is we must use wrap_must_err for
+   such pre-condition. This may be for primitives with
+   must rather than may pre-conditions
+==========================================================================
+# ex22g9.ss --efa-exc : FIXED
+
+How come there is a 
+ true |-  res=3. LOCS:[0;11] (may-bug)
+
+This should not have arisen..
+
+Post condition cannot be derived:
+  (may) cause: AndR[
+1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex22g9-multi-pre.ss",Line:13,Col:2) Failed (may);
+ x'!=null |-  x'=null. LOCS:[9;10;13] (may-bug),
+ true |-  res=3. LOCS:[0;11] (may-bug)
+]
+
+-dd
+
+!!! **solver.ml#7561:new_ctx: 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  true |-  res=3. LOCS:[0;11] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}}
+[[empty]]
+CEX:false
+==========================================================================
+# ex22g13.slk: FIXED
+
+The 2nd message is unnecessary on flow conflicts..
+
+infer[@err_must] emp&x!=null & x'=x & flow __MayError
+ |-  emp&res=3& flow __norm. 
+
+MaybeErr Context: 
+                   
+                    fe_kind: MAY
+                    fe_name: undefined
+                    fe_locs: {
+                              fc_message: 
+                               1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+                  FAIL_AND 
+                   
+                    fe_kind: MAY
+                    fe_name: logical bug
+                    fe_locs: {
+                              fc_message:  true |-  res=3. LOCS:[0;3] (may-bug)
+                              fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}}
+[[empty]]
+==========================================================================
+# ex21a10.ss --efa-exc
+
+# Seems to be a wrong post-cond error
+
+Post condition cannot be derived:
+  (may) cause:  true |-  res. LOCS:[19;15] (may-bug)
+
+dprint(simpl): ex21a10-case-spec.ss:18: ctx:  List of Failesc Context: [FEC(0, 1, 1  [])]
+Escaped States:
+[
+ 
+ Try-Block:0::
+ [
+  Path: []
+  State:htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+        es_final_error:[Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must)]
+  ]
+ ]
+Successful States:
+[
+ Label: []
+ State:(exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x&
+         {FLOW,(4,5)=__norm#E}[]
+       es_cond_path: [0]
+       es_var_measures 1: Some(MayLoop[]{})
+       es_infer_vars_rel: []
+ Exc:Some
+ ]
+
+--esl
+
+# OK but not captured by post-cond failure message
+
+id: 3; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail htrue&x'=x & x'=null & MayLoop[]&{FLOW,(6,10)=__Error#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   htrue&x'=x & x'=null&{FLOW,(6,10)=__Error#E}[]
+   es_final_error:[1.2c: ante flow:__Error#E conseq flow: __norm#E are incompatible flow types;
+Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must); 
+                   Proving precondition in method pre_call$cell(1 File "ex21a10-case-spec.ss",Line:17,Col:2) Failed (may);
+do_unmatched_rhs : x'::cell<Anon_11>(must)]
+   ]
+
+# why is res=x'!=null not captured?
+ 
+id: 4; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp; others: [] globals: [@flow,@ver_post,@err_must]
+ checkentail (exists Anon_1470: (htrue) * x'::cell<Anon_1470>&x'!=null & x'=x & 
+res=v_boolean_19_1434' & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&res&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+   (htrue) * x'::cell<Anon_1472>&x'!=null & x'=x & res=v_boolean_19_1434'&
+     {FLOW,(4,11)=__MayError#E}[]
+   es_final_error:[ true |-  res. LOCS:[19;15] (may-bug)]
+   ]
+==========================================================================
+# ex21a10a.slk
+
+infer[@err_must] x!=null & x'=x & flow __MayError 
+  or x=null & x'=x & x'=null & !res & flow __norm 
+ |- res & flow __norm.
+print residue.
+
+# how come msg from only one branch.
+What about the other branch with mush Error. WHy is
+it not in the may failure message?
+
+Entail (2) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&x'=x & x!=null&{FLOW,(18,22)=__MayError#E}[]
+    or emp&!(res) & x'=null & x'=x & x=null&{FLOW,(18,19)=__Error#E}[]
+
+==========================================================================
+# ex21a10b.slk
+
+infer[@err_must] x>0 & flow __MayError 
+  or x<0 & r=0 & flow __norm 
+ |- r!=0 & flow __norm.
+
+GOT:
+
+Entail (1) : Fail.(may) cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types
+Residue:
+ <1>
+    emp&0<x&{FLOW,(4,8)=__MayError#E}[]
+    or emp&r=0 & x<0&{FLOW,(6,7)=__Error#E}[]
+
+Residue is correct but error message is wrong, expects:
+
+Entail (1) : Fail.(may) 
+  Or[cause:1.2b: ante flow:__MayError#E conseq flow: __norm#E are incompatible flow types,
+   r=0 |- r!=0 (must failure)
+  ]
+
+==========================================================================
+# ex23-infer1.slk -dre "simplify"
+
+Add a new option -dre-trace "..."
+that would add debug calls, and 
+also trace its callees. Only the
+call (and its callees) matching
+the regular expression will be tracked as
+below. Other calls are not tracked.
+The callees need not match the pattern.
+This will help show the callees
+of the debugged calls.
+
+%%%      simplify(TP)@1.
+%%%       elim_exists_with_simpl
+%%%        elim_exists
+%%%         eq_spec_var (4)
+%%%         get_subst_equation_formula
+==========================================================================
+# global2.ss
+
+How come n is not pass-by-value?
+
+void increase(int@R n_15, int@R k_14)[]
+static EBase: [][](htrue) * ([] & true)( FLOW __norm) {EAssume: 1,:(emp) * ([] & k_14' = k_14+n_15)( FLOW __norm)}
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false) 
+{
+{k_14 = k_14 + n_15}
+}
+
+void increase$int~int(  int n_15,  int k_14)
+@ref n_15, k_14
+static  EBase htrue&{FLOW,(4,5)=__norm#E}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                 EAssume ref [n_15;k_14]
+                   emp&k_14'=n_15+k_14&{FLOW,(4,5)=__norm#E}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{k_14 = {add___$int~int(k_14,n_15)}}
+
+{(5,0),(0,-1)}
+
+==========================================================================
+# demo/ex20a.ss
+
+# why did we push two similar specs for inference?
+# perhaps can make it clearer.
+
+ !!! @post is added into [f91$int] for f91$int
+push_pr(pi:256): EInfer @term,@post[post_1172]
+   EBase 
+     htrue&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&post_1172(n,res,flow)&{FLOW,(4,5)=__norm#E}[]
+push_pr(pi:377): EInfer @post[post_1172]
+   EBase 
+     htrue&{FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         htrue&post_1172(n,res,flow)&{FLOW,(4,5)=__norm#E}[]
+
+
+push_pr(pi:342): EInfer @term[]
+   EBase 
+     htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       htrue&((res>=91 & res=n) | (90>=n & 91=res))&{FLOW,(4,5)=__norm#E}[]
+
+# should we have replaced @term[] by [f91pre,f91post]?
+# this part may need to discuss with Chanh.
+
+push_pr(ti3:288): EInfer @term[]
+   EBase 
+     htrue&f91pre{0}(n)[30]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       htrue&(((res>=91 & res=n) | (90>=n & 91=res))) & f91post{1198}(n)[]&
+       {FLOW,(4,5)=__norm#E}[]
+
+
+==========================================================================
+# hip qsort.ss
+
+# Are these warnings spurious..
+
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[],[]]
+!!! **astsimp.ml#2740:inconsistent roots:[[]]
+
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+!!! **WARNING****cpure.ml#6007:is_eq_baga may be unsound
+
+
+# why so many calls to Over checking?
+
+Inv Check: Valid.(Over)
+
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+
+Inv Check: Valid.(Over)
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================
+==========================================================================

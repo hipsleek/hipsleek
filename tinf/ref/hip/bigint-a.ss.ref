@@ -1,0 +1,41 @@
+
+!!!Full processing file "hip/bigint-a.ss"
+Parsing file "hip/bigint-a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure add_one_digit$node~int... 
+Procedure add_one_digit$node~int SUCCESS.
+
+Checking procedure add_one_digit$node~int... 
+Post condition cannot be derived:
+  (must) cause: UnionR[ c<=9 & 0<=c & 0<((10*r1_1742)+p_1740) & 0<=p_1740 & p_1740<=9 & 
+0<=r1_1742 & 0<=r1_1742 & 10<=(v_int_25_1863+10) & v_int_25_1863+10=c+
+p_1740 & 0<((10*r1_1742)+p_1740) & 0<=p_1740 & p_1740<=9 & (((res=1 & 
+v_node_25_1864=2 & 1<=(f( r1_1742, 1))) | (res=1 & v_node_25_1864=null & 
+f( r1_1742, 1)=0))) |-  res=null. LOCS:[17;15;9;24;8;18;1;0;25;7] (must-bug), 0<=r1_1888 & 0<((10*r1_1888)+p_1740) & 0<=p_1740 & p_1740<=9 & c<=9 & 
+0<=c & x!=null & 10<=(c+p_1740) & p_1740<=9 & 0<=p_1740 & (((q_1741=1 & 
+v_node_25_1232'=2 & v_node_25_1864=3 & x=4 & 1<=(f( r1_1888, 1)) & 
+1<=r1_1888) | (v_node_25_1232'=1 & v_node_25_1864=2 & x=3 & 
+1<=(f( r1_1888, 1)) & q_1741=null & r1_1888=0) | (q_1741=1 & 
+v_node_25_1232'=2 & x=3 & v_node_25_1864=null & f( r1_1888, 1)=0 & 
+1<=r1_1888) | (v_node_25_1232'=1 & x=2 & v_node_25_1864=null & 
+f( r1_1888, 1)=0 & q_1741=null & r1_1888=0))) & 0<((10*r1_1888)+p_1740) & 
+0<=r1_1888 & p_1905+10=c+p_1740 & r1_1907=f( r1_1888, 1) |-  0<(p_1905+(10*r1_1907)). LOCS:[17;15;20;24;1;7;9;18;25;0;8] (must-bug)]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "hip/bigint-a.ss",Line:26,Col:21
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+ExceptionFailure("Post condition cannot be derived.")Occurred!
+
+Error1(s) detected at main 
+caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("Post condition cannot be derived.")
+Error3(s) detected at main 

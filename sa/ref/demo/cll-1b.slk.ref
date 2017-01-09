@@ -1,0 +1,28 @@
+Starting Omega...oc
+H is defined.
+HP_6 is defined.
+HP_7 is defined.
+Starting z3... 
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(rest,h) ::= 
+ rest::node<val,next> * H(next,h)&h!=rest
+ or emp&h=rest
+ (3,4),
+ HP_7(a,b) ::= NONE]
+*************************************
+Stop Omega... 1 invocations 
+SAT Count   : 5
+SAT % Hit   : 20.%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.000306 (seconds)
+
+!!! log(small):(0.006292,7)
+Total verification time: 0.064091 second(s)
+	Time spent in main process: 0.049497 second(s)
+	Time spent in child processes: 0.014594 second(s)
+

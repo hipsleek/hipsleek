@@ -1,0 +1,17 @@
+Starting Omega...oc
+Starting z3... 
+ <1>emp&x<0 & Term[]&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+ <1>emp&x<0 & Term[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x<0&{FLOW,(21,22)=__norm}[]: [] -> fpost_0()]
+[[empty]]
+
+ <1>emp&x<0 & Loop[]&{FLOW,(21,22)=__norm}[]
+[[empty]]
+
+ <1>emp&x<0 & Loop[]&{FLOW,(21,22)=__norm}[]
+ inferred UTPost rel: [emp&x<0&{FLOW,(21,22)=__norm}[]: [] -> fpost_0()]
+[[empty]]
+
+

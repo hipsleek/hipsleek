@@ -1,0 +1,51 @@
+//1
+checkentail 
+   x>1 & flow __Error |-  
+    case { x>0 -> requires x>1 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+/*
+ERROR: at _0:0_0:0 
+Message: union_context_left: folding empty context list 
+
+ 
+Entail 1: EXCast. Failure("union_context_left: folding empty context list \n")
+: no residue 
+*/
+
+//2
+checkentail 
+   x>1 & flow __norm |-  
+    case { x>0 -> requires x>1 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+//3
+checkentail 
+   x>1 & flow __norm |-  
+    case { x>0 -> requires x>2 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+
+//4
+checkentail 
+   x=-1 & flow __norm |-  
+    case { x>0 -> requires x>1 & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+/*
+Entail 4: Fail.(must) cause:must_err (__Error) LOCS: [40;0;43]
+
+Residue:
+ <1>emp&x=2 & x<=0 & x+1=0&{FLOW,(5,6)=__Error}[]
+*/

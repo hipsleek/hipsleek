@@ -1,0 +1,32 @@
+checkentail r = 0 |- @full[r].
+print residue.
+
+/*
+Residue:
+ <1>emp&r=0&{FLOW,(4,5)=__norm#E}[]
+expecting @zero[r] to be in residue
+*/
+
+
+checkentail @full[r,y] & r = 0 |- @full[r].
+print residue.
+
+/*
+expecting @full[y] to be in residue..
+
+Residue:
+ <1>emp&r=0 & @full[[r,y]]&{FLOW,(4,5)=__norm#E}[]
+*/
+
+
+
+checkentail @zero[r] & r = 0 |- @full[r].
+print residue.
+
+/*
+ should fail
+
+Residue:
+ <1>emp&r=0 & @zero[[r]]&{FLOW,(4,5)=__norm#E}[]
+
+*/

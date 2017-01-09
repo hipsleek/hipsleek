@@ -1,0 +1,26 @@
+Starting Omega...oc
+H1 is defined.
+HP_1 is defined.
+HP_2 is defined.
+HP_8 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_1(next,y) * x::node<val,next> * HP_36(next1,x) * y::node<_,next1>&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_2(y,x@NI)&true --> y::node<_,next1> * HP_36(next1,x@NI)&
+                   true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 16
+SAT % Hit   : 75.%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000501 (seconds)
+
+!!! log(small):(0.008889,20)
+Total verification time: 0.074194 second(s)
+	Time spent in main process: 0.060763 second(s)
+	Time spent in child processes: 0.013431 second(s)
+

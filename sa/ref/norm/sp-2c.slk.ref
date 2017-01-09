@@ -1,0 +1,42 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Entailing lemma lem_14: Valid.
+
+ Temp Lemma(s) inferred as valid in current context.
+ <1>
+    emp&y=null & self1=null&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [emp&self1=null --> P1(self1)&true(3,4); 
+                  emp&y=null --> P2(y)&true(3,4); 
+                  self1::node<_,p> * p::zip<q>&true --> P1(self1)&true(3,4); 
+                  y::node<_,q1>&true --> P2(y)&true(3,4)]
+[[ COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  COND ==>  InferHeap ==>  COND ==>  InferHeap ==> ]]
+
+
+Entail (1) : Fail.(may) cause:do_unmatched_rhs : x::zip{}<y_82>
+
+ <1>P1(x) * P2(y)&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 14 invocations 
+SAT Count   : 66
+SAT % Hit   : 74.24%
+IMPLY Count : 7
+IMPLY % Hit : 28.57%
+Time(cache overhead) : 0.004049 (seconds)
+
+!!! log(small):(0.035936,94)
+Total verification time: 0.097069 second(s)
+	Time spent in main process: 0.070664 second(s)
+	Time spent in child processes: 0.026405 second(s)
+

@@ -1,0 +1,29 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&y<x & 0<=y&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [0<=y]
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>emp&y<x & ((1<=x | x<=y))&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [(1<=x | x<=y)]
+
+
+Entail (3) : Valid. 
+
+Residue:
+ <1>emp&R(x,y) & y<x&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELASS [R]: ( R(x,y)) -->  (1<=x | x<=y)]
+
+
+Entail (4) : Fail.(may) cause: y<x |-  0<x. LOCS:[11] (may-bug)
+
+

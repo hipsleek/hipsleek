@@ -1,0 +1,39 @@
+Starting Omega...oc
+HP4 is defined.
+G2 is defined.
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]Starting z3... 
+
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], true)])
+Entail (1) : Valid. 
+
+ <1>
+    emp&{FLOW,(3,4)=__norm}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [HP4(x)&true --> G2(x)&true(3,4); 
+                  n::H1<> * x::node<n>&true --> G2(x)&true(3,4)]
+[[ COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  InferHeap ==> ]]
+
+Stop Omega... 9 invocations 
+SAT Count   : 53
+SAT % Hit   : 90.56%
+IMPLY Count : 1
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.001472 (seconds)
+
+!!! log(small):(0.013167,65)
+Total verification time: 0.070105 second(s)
+	Time spent in main process: 0.052399 second(s)
+	Time spent in child processes: 0.017706 second(s)
+

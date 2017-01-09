@@ -1,0 +1,4 @@
+template int f(int x, int y).
+
+slk_simplify (exists r1_985, r, r_1001: 0<=v_983 & r=f( v_983, r1_985) & v_983<=0 & v_983<=0 & r1_985=r_1001).
+print residue.

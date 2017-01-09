@@ -1,0 +1,44 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Fail.(must) cause: v=@A |-  v<:@L. LOCS:[6;0] (must-bug)
+
+Residue:
+ <1>x::node<Anon_11@[@v]>&v=@A&{FLOW,(6,7)=__Error#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 2: Fail.(must) cause: v=@A |-  v<:@L. LOCS:[10;0] (must-bug)
+
+Residue:
+ <1>x::node<Anon_13@[@v]>&v=@A&{FLOW,(6,7)=__Error#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 3: Fail.(must) cause: v=@A |-  v<:@L. LOCS:[14;0] (must-bug)
+
+Residue:
+ <1>x::node<Anon_15@[@v]>&v=@A&{FLOW,(6,7)=__Error#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 4: Fail.(must) cause:mismatched imm annotation for data node
+
+Residue:
+ <1>x::node<Anon_17@[@A]>&v=@A&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+
+Entail 5: Fail.(must) cause:mismatched imm annotation for data node
+
+Residue:
+ <1>x::node<Anon_19@[@A]>&v=@A&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+
+

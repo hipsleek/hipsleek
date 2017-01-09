@@ -1,0 +1,21 @@
+
+
+checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]  WRONG
+// should be MayError
+
+/*
+v-next7e.slk
+
+ should be a may-error
+
+checkentail -1<=x & x<=6 & flow __norm |- x>0 & flow __norm.
+print residue.
+// <1>emp&x<=6 & 0<=(x+1)&{FLOW,(5,6)=__Error}[]  WRONG
+// should be MayError
+
+*/
+
+checkentail x>=0 & flow __norm |- x>0 & flow __norm.
+print residue.

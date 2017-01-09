@@ -1,0 +1,41 @@
+Starting Omega...oc
+H1 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Last Proving Location: 1 File "bugs/infer8b.slk",Line:7,Col:4
+
+ERROR: at bugs/infer8b.slk_13:11_13:16 
+Message: number of arguments for heap relation H1 does not match
+ 
+Entail (1) : Failure("number of arguments for heap relation H1 does not match")
+: no residue 
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [m!=-1]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [m!=-1]
+[[empty]]
+
+Stop Omega... 9 invocations 
+SAT Count   : 47
+SAT % Hit   : 65.95%
+IMPLY Count : 11
+IMPLY % Hit : 18.18%
+Time(cache overhead) : 0.003262 (seconds)
+
+!!! log(small):(0.022669,68)
+Total verification time: 0.084104 second(s)
+	Time spent in main process: 0.062696 second(s)
+	Time spent in child processes: 0.021408 second(s)
+

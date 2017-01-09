@@ -1,0 +1,84 @@
+
+!!!Full processing file "demo/sll-dll-2.ss"
+Parsing file "demo/sll-dll-2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! SCall neqs:[(c,p)]
+!!! neqs:[(c,p)]
+Checking procedure paper_fix$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ HP_1260,HP_1261,G1]requires HP_1260(c) * HP_1261(p)&
+true
+ ensures G1(c,p)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)HP_1260(c)&c!=null --> c::node<val1,prev1,next1> * HP_1279(prev1) * 
+HP_1280(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1280(next1)&true --> HP_1260(next1)&
+true(3,4),
+ // PRE_REC
+(1;0)c'::node<val1,p,next1> * HP_1261(p)&true --> HP_1261(c')&
+true(3,4),
+ // POST
+(1;0)G1(next1,c)&c!=null --> G1(c,p)&
+true(3,4),
+ // POST
+(2;0)HP_1261(p) * HP_1260(c)&c=null --> G1(c,p)&
+true(3,4)]
+
+Procedure paper_fix$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ HP_1260(c1) ::=  [emp&c1=null; c1::node<val2,DP,next2> * HP_1260(next2)],
+ HP_1261(c') ::=  [
+  c'::node<val,p,next> * HP_1261(p)
+  or emp&c'=DP'
+  ],
+ G1(c,p) ::=  [HP_1261(p)&c=null]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP_1260(c1) ::= 
+ c1::node<val2,DP,next2> * HP_1260(next2)
+ or emp&c1=null
+ (3,4),
+ HP_1261(c') ::= 
+ c'::node<val,p,next> * HP_1261(p)
+ or emp&c'=DP'
+ (3,4),
+ G1(c,p) ::= HP_1261(p)&c=null(3,4),
+ H1(c,p) ::= HP_1260(c) * HP_1261(p)]
+*************************************
+Stop Omega... 10 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.049754,268)
+Total verification time: 0.37076 second(s)
+	Time spent in main process: 0.352655 second(s)
+	Time spent in child processes: 0.018105 second(s)
+

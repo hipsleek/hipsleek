@@ -10,13 +10,13 @@ ass [SLSEG,G][]:{
   HP_907(n_24_905,e) --> SLSEG(n_24_905,e);
  // POST (1;0)
   SLSEG(l,e)& e=l --> G(l,e);
- // POST
-  SLSEG(l,e) & e=l --> emp;
  // POST (1;2;2;0)
   HP_908(s_24_906,e) * l::node2<n_24_905,s_24_906>@M *G(n_24_905,e)&e!=l &
-    s_24_906=null --> G(l,e);
+    s_24_906=null --> G(l,e)
  // POST
-  HP_908(s_24_906,e) & s_24_906=null --> emp
+ // HP_908(s_24_906,e) & s_24_906=null --> emp
+ // POST
+ // SLSEG(l,e) & e=l --> emp;
  }
 
 hpdefs [SLSEG,G][]:{

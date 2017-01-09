@@ -1,0 +1,25 @@
+f91:={[n] -> [res] -> []: (n>100 && res=n-10) || exists (m,n1: n<=100 && n1=n+11 && f91(n1,m) && f91(m,res))};
+
+# Expected result:
+# {[n,res]:((n<=100 && res=91) || (n>=101 && n=res+10))};
+
+# Step-by-step procedure with two applications of the widening operator:
+F0:={[]: 0=1};
+F1:=f91(F0); F1;
+F2:=f91(F1); F2;
+F3:=f91(F2); F3; F3H:=selhull(F3,2,SimHeur);F3H;
+F4:=f91(F3H); F4; F4H:=selhull(F4,2,SimHeur);F4H;
+F3W:=widen(F3H,F4H,SimHeur);F3W; fixtestPost(f91,F3W);
+F5:=f91(F3W); F5; F5H:=selhull(F5,2,SimHeur);F5H;
+F4W:=widen(F3W,F5H,SimHeur);F4W; fixtestPost(f91,F4W);
+
+Fix1:=bottomup(f91,1,SimHeur);
+Fix2:=bottomup(f91,2,SimHeur);
+Fix3:=bottomup(f91,3,SimHeur);
+Fix1 subset F4W;
+Fix2 subset F4W;
+Fix3 subset F4W;
+F4W subset Fix3;
+#PairWiseCheck Fix3;
+Fix1;Fix2;Fix3;F4W;
+

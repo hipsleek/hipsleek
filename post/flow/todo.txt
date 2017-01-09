@@ -1,0 +1,305 @@
+=======================================================
+# flow2.slk (FIXED)
+
+Can we support infer_fixcalc under sleek to
+invoked fixcalc directly?
+
+Just need to collect relational assumptions:
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: ( (x+1)<=0) -->  P(x)]
+
+After that collect a relational assumption with flow as follows:
+
+ x+1<=0 & 3<=flow<=4  \/ P(x1,flow) & x1+1=x --> P(x,flow)
+
+Fixcalc then give below but requires a separate
+flow parameter:
+
+ P(x,flow) == x+1<=0 & 3<=flow<=4
+           == x+1<=0 & flow __norm
+=======================================================
+# flow3.slk (FIXED)
+
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+
+This is almost similar to flow2.slk, except we used __Exc instead
+of __norm.
+ <1>emp&x=0&{FLOW,(22,23)=__Exc#E}[]
+We got: !!! fixpoint2:[( P(x,flow), x>=0)]
+
+Why did we not have: [( P(x,flow), x>=0 & 22<=flow<=23)]
+
+!!! Input of fixcalc: 
+P:={[] -> [x,flow] -> []: (x=0 
+   ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )};
+bottomupgen([P], [2], SimHeur);
+!!! fixpoint2:[( P(x,flow), x>=0)]
+
+=======================================================
+# flow4.slk (FIXED)
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>emp&x1+1=x&{FLOW,(22,23)=__Exc#E}[]
+ inferred rel: [RELDEFN P(__Exc#E): ( true) -->  P(x)]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+Why did we have this? 
+!!! true
+!!! fixpoint2:[( P(x,flow), true)]
+
+From:
+ inferred rel: [RELDEFN P(__Exc#E): ( true) -->  P(x)]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+Why did we not form:
+  P(x,flow) = true & 22<=flow<=23 \/ x=0 & 4<=flow<=5
+Before passing to fixcalc?
+
+=======================================================
+# flow2.slk (FIXED)
+
+Entail (1) : Valid. 
+Residue:
+ <1>emp&P(x1) & x1+1=x&{FLOW,(1,26)=__flow#E}[]
+ inferred rel: [RELDEFN P(__flow#E): ( P(x1) & x1+1=x) -->  P(x)]
+Entail (2) : Valid. 
+Residue:
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+GOT:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=3) && flow<=4) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Expecting:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: (((x=0 && flow>=4) && flow<=5) ||  (exists (x1:(x=1+x1 && P(x1,flow)))) )
+
+Pick flow range from exclist. See below.
+ <1>emp&x=0&{FLOW,(4,5)=__norm#E}[]
+=======================================================
+# flow2.ss (OK)
+
+Got:
+*************************************
+***pure relation assumption (norm)***
+*************************************
+[RELDEFN post_1210: ( 0<=x_1227 & x=1+x_1227 & post_1210(x_1227,x')) -->  post_1210(x,x'),
+RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+*************************************
+
+Expecting: post_1210(__norm#): ( x=x' & x'<=0) -->  post_1210(x,x')]
+why wasn't this captured in the --esl log?
+
+id: 7; caller: []; line: 0; classic: false; kind: POST; hec_num: 1; evars: []; infer_vars: [ post_1210]; c_heap: emp
+ checkentail emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&
+{FLOW,(4,5)=__norm#E}[]
+ |-  emp&post_1210(x,x')&{FLOW,(1,30)=__flow#E}[]. 
+pure rel_ass: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+res:  1[
+   emp&x'<=0 & x'=x & !(v_bool_10_1193') & x'<=0 & !(v_bool_10_1193')&{FLOW,(4,5)=__norm#E}[]
+   es_infer_vars/rel/templ: [post_1210]
+   es_infer_rel: [RELDEFN post_1210: ( x=x' & x'<=0) -->  post_1210(x,x')]
+   ]
+=======================================================
+# flow5.slk
+
+infer [P,@flow] x=0 & flow __norm    |- P(x) & flow __flow.
+infer [P,@flow] x=0 & flow __Exc    |- P(x) & flow __flow.
+infer [P,@flow] x=0 & flow __flow    |- P(x) & flow __flow.
+
+GOT:
+
+ inferred rel: [RELDEFN P(__norm#E): ( x=0) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+ inferred rel: [RELDEFN P: ( x=0) -->  P(x)]
+
+For the third scenario, give a WARNING; as it is
+an impoosible scenario, give a WARNING..
+Reason is that LHS flow is either __norm or __Exc
+and should not be __flow
+=======================================================
+# flow5r.slk
+
+ infer [P,@flow] P(x1) & x1=x-1 & flow __norm |- P(x) & flow __flow.
+ infer [P,@flow] P(x1) & x1=x-1 & flow __Exc  |- P(x) & flow __flow.
+ infer [P,@flow] P(x1) & x1=x-1 & flow __flow  |- P(x) & flow __flow.
+
+GOT
+---
+ inferred rel: [RELDEFN P(__norm#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: ( P(x1) & x1+1=x) -->  P(x)]
+
+
+First scenario is normal one. We should provide the following answer
+instead:
+ inferred rel: [RELDEFN P: ( P(x1) & x1+1=x) -->  P(x)]
+
+Second scenario means that there is an exception after the recursive
+loop. We must therefore provide two relational assumptions,
+one for the exception and one for the loop; as follows:
+ inferred rel: [RELDEFN P(_Exc#E): ( x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P: (P(x1) & x1+1=x) -->  P(x)]
+Reason is that recursion has already been entered, and
+exception occurred after coming back from the recursion.
+
+Third scenario is impossible since LHS must not be __flow.
+We should print a warning message when this occurs; and 
+do not provide any relational assumptions.
+=======================================================
+# flow2.ss
+
+got:
+====
+[( post_1210(x,x',flow), 4<=flow & flow<=5 & (((x'=0 & 1<=x) | (x'=x & x<=0))), true, true)]
+*************************************
+!!! REL POST :  post_1210(x,x',flow)
+!!! POST:  4<=flow & flow<=5 & (((x'=0 & 1<=x) | (x'=x & x<=0)))
+!!! REL PRE :  true
+!!! PRE :  true
+
+BUT how come post_1210 not added to spec?
+
+Post Inference result:
+loop$int
+ requires emp & MayLoop[]
+     ensures emp & true;
+
+Expecting:
+
+loop$int
+ requires emp & MayLoop[]
+     ensures emp & (((x'=0 & 1<=x) | (x'=x & x<=0))) & flow __norm
+;
+
+=======================================================
+# brk1.ss
+
+The relational assumption:
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1345: ( x=x' & 2223<=x') -->  post_1345(x,x'),
+RELDEFN post_1345: ( x_1369<=2221 & 0<=x_1369 & x=1+x_1369 & post_1345(x_1369,x')) -->  post_1345(x,x'),
+RELDEFN post_1345: ( x=x' & x'<=0) -->  post_1345(x,x')]
+*************************************
+
+Fixcalc input:
+
+post_1345:={[x] -> [PRIx] -> []: (((x=PRIx && PRIx<=0) || (x=PRIx && 2223<=PRIx)) || (( (exists (x_1369:(x_1369+1=x && post_1345(x_1369,PRIx))))  && 1<=x) && x<=2222))
+};
+bottomupgen([post_1345], [2], SimHeur);
+
+The result: x'<=x
+
+When change fixcalc input to [3] -> result: ((x >= 1 && 0 = PRIx) || (PRIx >= 2223 && PRIx = x) || (0 >= PRIx && PRIx = x))
+but it is not correct.
+=======================================================
+# post/ex3-bug
+
+Post Inference result:
+loop$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&{FLOW,(1,30)=__flow#E}[]
+
+Why inferred spec not capturing below:
+
+!!! POST:  ((flow>=23 & 24>=flow & x>=1 & 0=x') | (flow>=23 & 24>=flow & 0>=x' & x'=x))
+=======================================================
+# post/flow/ex1
+
+It seems that dis-split-fixcalc is more precise
+than en-split fixcalc; while split-calc may be unsound.
+
+# see ex1a.oc
+
+With --dis-split-fixcalc:
+
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001) 
+      | (x=x' & 2001<=x') 
+      | (x=x' & x'<=0))&
+           {FLOW,(4,5)=__norm#E}[]
+
+
+--en-split-fixcalc:
+
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume ref [x]
+           htrue&
+   ((2000>=x & 2001=x') 
+   | (x'>=2001 & x'=x) 
+   | (0>=x' & x'=x))&
+ {FLOW,(4,5)=__norm#E}[]
+=======================================================
+# ex1a.oc
+
+PairWiseCheck Dis;
+#{[x,2001]: 1 <= x <= 2000} union{[x,2001]: 1998 <= x <= 2001} union {[x,x]: 2001 <= x} union  {[x,x]: x <= 0}
+
+Dis2 := {[x,x']:
+      ((x'=2001 & 1<=x & x<=2000) 
+      | (x'=2001 & 1998<=x & x<=2001))};
+
+PairWiseCheck Dis2;
+
+# {[x,2001]: 1 <= x <= 2001}
+
+# it seems that pairwisecheck has a bug..
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================
+=======================================================

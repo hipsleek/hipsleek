@@ -1,0 +1,40 @@
+/*
+
+  Description: fairly complicated inter-procedural passing 
+  of stack variables between concurrent threads
+
+ */
+data cell {
+  int val;
+}.
+
+checkentail x::cell<v> & v>=2 |- %P.
+print residue.
+/*
+ <1>emp&2<=v & x!=null&{FLOW,(4,5)=__norm#E}[]
+ ho_vars: [P --> x::cell<v>&2<=v&{FLOW,(4,5)=__norm#E}[]]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+
+infer [P] x::cell<v> & v>=2 |- %P.
+print residue.
+
+/*
+ x::cell<v>&2<=v&{FLOW,(4,5)=__norm#E}[] [P] |-  EBase HVar P[]&
+Entail (2) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+*/
+
+infer [Q] x::cell<v> & v>=2 |- %P.
+print residue.
+
+/*
+# ex38-hvar.slk
+
+infer_collect_hp_rel interfere with %P instantiation
+
+run_infer:
+ x::cell<v>&2<=v&{FLOW,(4,5)=__norm#E}[] [Q] |-  EBase exists (Expl)[](Impl)[P](ex)[]HVar P[]&{FLOW,(4,5)=__norm#E}[]
+
+Entail (3) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+*/

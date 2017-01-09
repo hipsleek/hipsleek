@@ -1,0 +1,33 @@
+/// x' is same as x for variables
+//(1)
+infer[] @full[x] |- @full[x].
+print residue.
+//(2)
+infer[] @frac(1/5)[x] |- @frac(1/3)[x].
+print residue.
+//(3)
+infer[] @frac(1/3)[x] |- @frac(1/1)[x].
+print residue.
+//(4)
+checkentail @frac(1/3)[x] |- @frac(1/2)[x].
+print residue.
+//(5)
+checkentail @frac(1/2)[x] |- @frac(1/3)[x].
+print residue.
+//(6)
+infer[] @frac( 1 / 2)[x] |- @frac(1/3)[x].
+print residue.
+//(7)
+infer[] @frac(1/1)[x] |- @full[x].
+print residue.
+//(8)
+infer[] @full[x] |- @frac(2/2)[x].
+print residue.
+
+
+// how about fraction?
+
+/*
+# ex38 --ann-vp
+
+*/

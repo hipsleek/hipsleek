@@ -1,0 +1,59 @@
+
+!!!Full processing file "examples/rec-f91b2.ss"
+Parsing file "examples/rec-f91b2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f91$int... 
+Procedure f91$int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_36_1142' & v_int_36_1142'=91 & n'<91 & n<=91 & n'=n & 
+!(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & v_int_36_1218=1+n' & 
+v_int_36_1218<=91 & v_int_36_1224=91 & 
+v_int_36_1224<=91 & f91post_1137(v_int_36_1218) & f91post_1137(v_int_36_1224) --> f91post_1137(n).
+
+ termAssume 91<=n' & n<=91 & n'=n & v_bool_35_1143' & 91<=n' & 
+v_bool_35_1143' & res=n' --> f91post_1137(n).
+
+ termAssume 91<=n' & 91<n & n'=n & v_bool_35_1143' & 91<=n' & 
+v_bool_35_1143' & res=n' --> f91post_1136(n).
+
+ termAssume v_int_36_1141'<=91 & v_int_36_1141'=91 & v_int_36_1218<=91 & 
+v_int_36_1218=1+n' & !(v_bool_35_1143') & n'<91 & !(v_bool_35_1143') & 
+n'=n & n<=91 & n'<91 & f91pre_0(n) --> f91pre_0(v_int_36_1141').
+
+ termAssume n'<91 & n<=91 & n'=n & !(v_bool_35_1143') & n'<91 & 
+!(v_bool_35_1143') & v_int_36_1140'=1+n' & 
+v_int_36_1140'<=91 & f91pre_0(n) --> f91pre_0(v_int_36_1140').
+
+
+Base/Rec Case Splitting:
+[	f91: [[3] n=91@B,[4] 92<=n@B,[5] n<=90@R]
+]
+Termination Inference Result:
+f91:  case {
+  92<=n -> requires emp & Term[29,2]
+ ensures emp & res=n; 
+  n=91 -> requires emp & Term[29,1]
+ ensures emp & res=91; 
+  n<=90 -> requires emp & Term[29,3,90+(-1*n)]
+ ensures emp & res=91; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 21 invocations 
+5 false contexts at: ( (36,7)  (36,24)  (36,22)  (36,18)  (36,14) )
+
+!!! log(small):(0.044084,265)
+Total verification time: 0.352351 second(s)
+	Time spent in main process: 0.334371 second(s)
+	Time spent in child processes: 0.01798 second(s)
+

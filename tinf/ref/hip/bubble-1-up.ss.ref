@@ -1,0 +1,9 @@
+
+!!!Full processing file "hip/bubble-1-up.ss"
+Parsing file "hip/bubble-1-up.ss" by default parser...
+
+!!! processing primitives "["prelude_inf.ss";"prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure bubble$node... 

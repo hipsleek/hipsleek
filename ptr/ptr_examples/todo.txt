@@ -1,0 +1,392 @@
+# ex1e.ss
+
+pred arr_int<i:int,v:int> ==
+    p::arr<v> & p=self+i & i>=0
+inv i>=0;
+
+arr_seg<i:int,n:int> == emp & i>=n & n>=0
+  or p::arr<_> * self::arr_seg<i+1,n> & p=self+i & i>=0
+  inv n>=0 & i>=0;
+
+# failure of folding without virtual links..
+
+# need to build some sleek test for this approach..
+
+!!!dumping for foo2$arr~int FAIL2
+!!!  
+id: 8; caller: []; line: 34; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: [Anon_11]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail a::arr_seg<i_1774,flted_30_1775>@M&
+v_bool_33_1739' & i'<10 & i_1774=i & i<=10 & flted_30_1775=10 & i'=i & 
+a'=a & v_int_34_1732'=5 & MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+ |-  (exists i_82: a'::arr_int<i_82,Anon_11>@M&i_82=i'&{FLOW,(4,5)=__norm#E}[]). 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: do_unmatched_rhs : p_1788::arr<v_1793>@M(may)
+    fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+  }
+[[ Fold ==>  UnmatchedRHSData]]falseStop z3... 100 invocations 
+
+=================================================================
+# ex1c2.slk
+
+# current ptr failures..
+
+checkentail x::arr<5> * y::arr<4> & x=(y:arr)+2 & z=y+2 |- z::arr<v>.
+print residue.
+expect Valid.
+//Entail 3: Fail.(may) cause:do_unmatched_rhs : z::arr<v>@M(may)
+
+(==context.ml#3147==)
+choose_context@1
+choose_context inp1 :LHS node: x::arr<flted_19_63>@M * y::arr<flted_19_62>@M
+choose_context inp2 :RHS node: z::arr<v>@M
+choose_context inp3 :LHS pure: z=2+y & x=2+y & flted_19_62=4 & flted_19_63=5
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right aliase:[]
+choose_context@1 EXIT:[]
+
+checkentail x::arr<5> & x=(y:arr)+2 |- y::arr_int<2,v>.
+print residue.
+//Entail 1: Fail.(may) cause:do_unmatched_rhs : y::arr_int<flted_14_76,v>@M(may)
+expect Valid.
+
+
+(==context.ml#3147==)
+choose_context@3
+choose_context inp1 :LHS node: x::arr<flted_24_79>@M
+choose_context inp2 :RHS node: y::arr_int<flted_24_94,v>@M
+choose_context inp3 :LHS pure: x=2+y & flted_24_79=5
+choose_context inp4 :RHS pure: flted_24_94=2
+choose_context inp5 :right aliase:[]
+choose_context@3 EXIT:[]
+
+=================================================================
+# ex1c4.ss (FIXED by ZH)
+
+ checkentail x::arr<5> & x=y+2 |- y::arr_int<2,v>.
+
+ERROR: at ex1c4-index-test.slk_20:24_20:29
+Message: UNIFICATION ERROR : at location {(Line:20,Col:24),(Line:20,Col:29)} types arr and int are inconsistent
+
+Entail 1: EXCast. Failure("UNIFICATION ERROR : at location {(Line:20,Col:24),(Line:20,Col:29)} types arr and int are inconsistent")
+: no residue 
+
+=================================================================
+Total number of errors: 37 in files:
+ error at: vperm/task_decompose.ss creator
+error at: parahip/ordered-locking.ss main
+error at: parahip/unordered-locking.ss main
+error at: veribsync/barrier-static-consistency.ss main
+error at: veribsync/barrier-static-consistency.ss main_fail
+error at: veribsync/barrier-static-consistency.ss participant
+error at: veribsync/barrier-static-consistency.ss participant1
+error at: veribsync/barrier-static-consistency.ss participant_fail
+error at: veribsync/barrier-dynamic-exp3.ss main
+error at: veribsync/barrier-dynamic-exp3.ss thread1
+error at: veribsync/barrier-dynamic-exp3.ss thread2
+error at: veribsync/barrier-dynamic-exp3.ss thread3
+error at: veribsync/barrier-dynamic-exp4.ss childthread1
+error at: veribsync/barrier-dynamic-exp4.ss childthread2
+error at: veribsync/barrier-dynamic-exp4.ss main
+error at: veribsync/barrier-dynamic-exp4.ss thread1
+error at: veribsync/barrier-dynamic-exp4.ss thread2
+error at: conchip/mapreduce.ss count_helper
+error at: conchip/mapreduce.ss countList
+error at: conchip/mapreduce.ss destroyList
+error at: conchip/mapreduce.ss main
+error at: conchip/mapreduce.ss mapper_helper
+error at: conchip/mapreduce.ss mapper
+error at: conchip/mapreduce.ss reducer1
+error at: conchip/mapreduce.ss reducer2
+error at: conchip/multi-join2.ss main
+error at: conchip/multi-join2.ss thread1
+error at: conchip/multi-join2.ss thread2
+error at: conchip/latch-exp2.ss main
+error at: conchip/latch-exp2.ss thread1
+error at: conchip/deadpool.ss destroyDeadPool
+error at: conchip/deadpool.ss forkHelper
+error at: conchip/deadpool.ss forkThreads
+error at: conchip/deadpool.ss joinHelper
+error at: conchip/deadpool.ss joinThreads
+error at: conchip/deadpool.ss main
+error at: conchip/deadpool.ss thread
+.
+=================================================================
+# ex1c6b.slk (OK)
+
+infer[i] y::arr_int<i,5> & xxx=y:arr+3 
+     |- xxx::arr<v>.
+
+# Inference does not work with array segments ..
+=================================================================
+# ex1c6c.slk (FIXED)
+
+infer[i] p=y:arr+i & xxx=y:arr+3 
+     |- p=xxx.
+
+# why is i undefined? 
+ERROR: at _0:0_0:0
+Message: i is undefined (7)
+Exception(get_spec_var_type_list):Failure("i is undefined (7)")
+=================================================================
+# ex9.ss (FIXED)
+
+# quite slow here..(is it in a loop?)
+
+!!! **context.ml#671:diff_ptrs:[x',y,q_1721,q_1743,q_1770,q_1802,q_1839,q_1881,q_1928,q_1980,q_2037,q_2099,q_2166,q_2238,q_2315,q_2397,q_2484,q_2576,q_2673,q_2775]
+
+--dis-ptr-arith
+
+!!! log(small):(2.342322,825)
+!!! 
+ log(bigger)(>4s)(2):(12.733772,[(pairwise:584<19:Z3,8.959019);(pairwise:727<30:Z3,3.774753)])
+Total verification time: 4.962621 second(s)
+	Time spent in main process: 0.945364 second(s)
+	Time spent in child processes: 4.017257 second(s)
+	Z3 Prover Time: 0.008265 second(s)
+
+=============================================================
+# ex9a.ss (FIXED)
+
+  infer [@ana_ni]//,R]
+  requires true
+ ensures true;
+
+   ..  |- x'::node<val',next'>@L
+
+   ..  |- x'::node<val',next'>@M
+
+
+Checking procedure zip$node~node... 
+!!! **typechecker.ml#564:inf_o_lst:[@ana_ni]
+Proving binding in method zip$node~node for spec  EAssume 
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   struct:EBase 
+            htrue&{FLOW,(4,5)=__norm#E}[], Line 23
+
+( [(,1 ); (,2 )]) bind: node  emp&r'>1&{FLOW,(1,28)=__flow#E}[] cannot be derived from context
+1 File "ex9a-zip.ss",Line:28,Col:4
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+ Failed States:
+ [
+  Label: [(,1 ); (,2 )]
+  State:
+    fe_kind: MAY
+    fe_name: logical bug
+    fe_locs: {
+        fc_message:  r'!=null |-  1<r'. LOCS:[27;0] (may-bug)
+        fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+=================================================================
+# ex1d1a.ss (FIXED)
+
+infer [o] y::arr_int<o,5> & x=y+2 |- x::arr<v>.
+print residue.
+expect Valid.
+
+Why is above not inferring o?
+
+ <1>emp&y=y & v=5 & x=y+2 & o=o & 0<=(1+y) & 0<=o&{FLOW,(20,21)=__norm#E}[]
+[[ Unfold 0 ==>  Match(p1_199,x)]]
+
+# match is not a definite match but a possible one ..
+
+!!! **context.ml#677:lhs_nodes:[p1_54]
+!!! **WARNING****context.ml#714:TODO : check if share same base
+!!! **context.ml#715:lhs_p2: flted_10_36=5 & x=2+y & v_53=flted_10_36 & y!=null & 0<=o & p1_54=o+y
+!!! **context.ml#716:rhs: p1_54=x
+
+# inv gist? Why 1+y>=0 & o=o??
+
+<1>emp&y=y & v=5 & o=2 & x=y+2 & 0<=(1+y)&{FLOW,(20,21)=__norm#E}[]
+ inferred pure: [((o=o & o<=-1) | o=2)]
+[[ Unfold 0 ==>  Match(p1_54,x)]]
+
+=================================================================
+Total number of errors: 3 in files:
+  infer/infer14.slk({E15#Fail}) 
+  infer/infer16.slk({E2#Valid},{E3#Valid},{E5#Valid},{E6#Valid}) 
+ lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+  infer/infer14.slk({E15#Fail}) 
+  infer/infer16.slk({E2#Valid},{E3#Valid},{E5#Valid},{E6#Valid}) 
+  lemmas/dseg-new.slk({L2#Fail}).
+!!! WARNING: for "no result" errors please check the script's options, provers' settings, etc.
+
+chinwn@loris-60:~/hg/sl_dup$ hg bisect -b
+The first bad revision is:
+changeset:   17501:c15c09216cca
+branch:      arr_infer
+user:        chinwn@loris-laptop
+date:        Tue Oct 27 08:24:08 2015 +0800
+summary:     to reduce ptr matching
+
+=================================================================
+# ex1e2 --trace-exc
+
+!!! **context.ml#741:TODO: rename root:x
+Entail 4: Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+
+Residue:
+
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: matching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ Unfold 0 ==>  COND ==>  NothingToDomatching data with deriv self-rec LHS node  Type: Root
+ LHS: x::arr_seg<flted_7_132,n_131>@M
+ RHS: z::arr<Anon_16>@M
+ root_inst: None
+ lhs_rest: x_133::arr<Anon_134>@M
+ rhs_rest: y::arr<Anon_15>@M
+ rhs_inst: []rhs_infer: None]]
+ CEX:false
+
+=================================================================
+# ex1e2a -dre "process_one_m" --trace-log-num 5
+
+checkentail x::arr_seg<i,n> & n-i>=3 & y=x+i & z=y+2
+   |- y::arr<_> * z::arr<_>.
+
+# why is this called infinite unfold?
+
+Entail 2: Fail.(must) cause:infinite unfolding
+
+=================================================================
+# ex1e6d.slk (FIXED)
+
+checkentail y::arr<_> & y=x+2 & i=2 |- [n] x::arr_seg<i,n>.
+
+# seems to use base-case fold. how about normal fold?
+
+ <1>y::arr<Anon_12>@M&i=2 & y=2+x & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ COND ==>  BaseCaseFold]]
+
+# could we use set of solution? or match with node?
+=================================================================
+# ex1e6d1.slk (FIXED)
+
+checkentail y::arr<_> * z::arr<_> & z=y+1 & y=x+2 & i=2
+   |- [n] x::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+# recursive folding appeared to have failed.
+  Can we order the matches?
+
+ <1>y::arr<Anon_13>@M * z::arr<Anon_14>@M&i=2 & y=2+x & z=1+y & 0<=n & i=n&{FLOW,(20,21)=__norm#E}[]
+[[ Fold]]
+=================================================================
+# bug1b.slk (FIXED)
+
+# explicit instantiation is unsound ..
+
+ Context: [ emp&flted_5_12=5 
+     & n=flted_5_12 & 6<n&{FLOW,(20,21)=__norm#E}[]
+
+# it should not lead to a contradiction like below
+(==solver.ml#7949==)
+move_expl_inst_estate@2
+move_expl_inst_estate inp1 :  emp&flted_5_12=5 & nnn=flted_5_12&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+move_expl_inst_estate inp2 : 6<nnn
+move_expl_inst_estate@2 EXIT:  emp&flted_5_12=5 & nnn=flted_5_12 & 6<nnn&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ es_heap: x::cell<flted_5_12>@M
+ es_gen_expl_vars: [nnn]
+ es_trace:  Match(x,x)
+ es_unsat_flag: false
+
+=================================================================
+# bug1b.slk
+
+# Why are there so many "nested timer(stop)"?
+
+Starting Omega.../usr/local/bin/oc
+Nested Timer(stop)
+Nested Timer(stop)
+
+# error with timer logging ..
+
+!!! log(small):(0.009245,17)
+!!! 
+ log(bigger)(>4s)(2):(10.,[(simplify:6<1:Z3,5.);(simplify:13<3:Z3,5.)])
+Total verification time: 0.05878 second(s)
+	Time spent in main process: 0.04459 second(s)
+	Time spent in child processes: 0.01419 second(s)
+
+=================================================================
+ex6a.ss (FIXED due to incomplete same_base computation)
+
+# pre-cond fail? even after unfold?
+
+ checkentail base::arr_seg<i_1732,m>@M&
+v_bool_35_1690' & i'<10 & i_1732=i & i<=m & 0<=i & m=10 & a=i+base & 
+base'=base & i'=i & a'=a & v_int_36_1682'=0 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  a'::arrI<Anon_12>@M&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: do_unmatched_rhs : a'::arrI<Anon_12>@M(may)
+    fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+  }
+[[ Unfold 0 ==>  UnmatchedRHSData]]falseStop z3... 92 invocations 
+
+checkentail base::arr_seg<i,m> 
+& a=i+base & 0<=i & i<10 & m=10
+
+=================================================================
+ex6a.ss 
+
+# can base be monomorphic recursive?
+
+void init2(arrI a,int i,arrI base)
+  requires base::arr_seg<i,m> & a=base+i & m=10 & 0<=i & i<=m
+  ensures  base::arr_seg0<i,m>;
+{
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================

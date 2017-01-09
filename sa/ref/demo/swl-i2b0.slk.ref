@@ -1,0 +1,31 @@
+Starting Omega...oc
+H_3 is defined.
+H_2 is defined.
+G is defined.
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+
+*************************************
+*******relational definition ********
+*************************************
+[ H_2(next,prev,sent) ::= HP_68(next,sent)(3,4),
+ HP_68(next,sent) ::= 
+ next::node<_,n> * HP_68(n,sent)&next!=sent
+ or emp&next=sent
+ (3,4)]
+*************************************
+Stop Omega... 4 invocations 
+SAT Count   : 25
+SAT % Hit   : 72.%
+IMPLY Count : 5
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.001026 (seconds)
+
+!!! log(small):(0.01023,34)
+Total verification time: 0.071977 second(s)
+	Time spent in main process: 0.054604 second(s)
+	Time spent in child processes: 0.017373 second(s)
+

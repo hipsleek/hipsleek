@@ -1,0 +1,36 @@
+data cell{
+ int fst;
+}.
+
+relation P1(ann v1).
+relation P2(ann v1).
+
+infer [P1] c::cell<v>@a & P1(a) |- c::cell<w>@L.
+print residue.
+
+/*
+# cell-3c.slk
+
+Entail (1) : Valid. 
+ <1>c::cell<v@a>&a<:@L & P1(a)&{FLOW,(21,22)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a<:@L]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+*/
+
+infer [P1,P2] 
+c::cell<v>@a & P1(a)  & a<:@L 
+        |- c::cell<w>@b & P2(b).
+print residue.
+
+                              
+/*
+# cell-3c1.slk
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(21,22)=__norm}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a>2]
+[[empty]]
+                               
+*/

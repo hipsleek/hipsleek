@@ -1,0 +1,62 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 2: Valid. 
+
+ <1>emp&v=@A&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 3: Valid. 
+
+
+Entail 4: Fail.(must) cause: v=@A |-  v<:@M. LOCS:[19] (must-bug)
+
+
+Entail 5: Fail.(must) cause: v=@M |-  v=@A. LOCS:[20] (must-bug)
+
+
+Entail 6: Valid. 
+
+
+Entail 7: Fail.(may) cause: v<:@A |-  v=@A. LOCS:[22] (may-bug)
+
+
+Entail 8: Valid. 
+
+
+Entail 9: Valid. 
+
+ <1>emp&v<:@A & @M<:v&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 10: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 11: Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 31
+SAT % Hit   : 51.61%
+IMPLY Count : 9
+IMPLY % Hit : 33.33%
+Time(cache overhead) : 0.001525 (seconds)
+
+!!! log(small):(0.024513,56)
+Total verification time: 0.075812 second(s)
+	Time spent in main process: 0.061542 second(s)
+	Time spent in child processes: 0.01427 second(s)
+

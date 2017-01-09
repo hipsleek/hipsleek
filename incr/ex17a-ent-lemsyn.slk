@@ -1,0 +1,23 @@
+
+data node {
+	int val;
+	node next;
+}.
+
+
+pred lseg_one<p> == self = p
+	or self::node<_, q> * q::lseg_one<p>
+  inv true.
+
+pred sll_two<> == self = null 
+	or self::node<_, q> * q::sll_two<>
+  inv true.
+
+
+checkentail (exists a_1655: a'::lseg_one<a_1655>@M&a_1655=null)
+ |-  a'::sll_two<>.
+
+
+HeapPred H(node a).
+lemma_infer_pred [H] self::lseg_one<q> * H(q) -> self::sll_two<>.
+print residue.

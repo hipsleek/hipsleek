@@ -1,0 +1,23 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Valid. 
+
+Residue:
+ <1>c::cell<v@[@a, @ann_f_r_26]>&a<:@L & P1(a) & ann_f_r_26=b & a<:ann_f_r_26&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P2: ( false) -->  P2(b)]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>c::cell<v@[@a, @ann_f_r_42]>&a<:@L & ann_f_r_42=b & a<:ann_f_r_42&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P2: ( false) -->  P2(b)]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+

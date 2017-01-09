@@ -1,0 +1,14 @@
+data node {node next; }.
+
+//1
+checkentail x=null & flow __Error |- x!=null.
+
+print residue.
+expect Fail.
+
+
+
+//2
+checkentail x=null & flow __Error 
+   or x=null |- x!=null.
+print residue.

@@ -10,7 +10,7 @@ pred_prim /* int */ ann<n:int,b:bool>;
 
 int read() 
   requires true
-  ensures  res::ann<i,b> & b;
+  ensures  res::ann<i,true>; // & b;
 
 int add(int x, int y) 
   requires x::ann<i,a>@L*y::ann<j,b>@L
@@ -20,7 +20,7 @@ int add(int x, int y)
 
 void sanitize(int x)
   requires x::ann<a,_>
-  ensures x::ann<a,b> & !b;
+  ensures x::ann<a,false>;// & !b;
 
 void print_int(int x)
   requires x::ann<_,b>@L & !b

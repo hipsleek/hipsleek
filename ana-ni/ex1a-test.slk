@@ -1,0 +1,90 @@
+data node {
+  int val;
+  node next;
+}
+
+bool foo(node x) 
+  requires true
+  ensures res=(x=null);
+{
+ return x==null;
+}
+
+relation R(node x,node y).
+
+/*
+infer [R] R(x,y) |- x!=null.
+print residue.
+
+infer [R] R(x,y) |- x=null.
+print residue.
+*/
+
+infer [R] R(x,y) |- x>1.
+print residue.
+
+/*
+# ex1.slk --ana-ni
+
+infer [R] R(x,y) |- x>1.
+
+(==omega.ml#1165==)
+infer_pure_m_1@5@4@3@2
+infer_pure_m_1 inp1 :estate :
+( ex_formula : emp&R(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R],[])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : R(x,y)
+infer_pure_m_1 inp4 :rhs xpure : 1<x
+infer_pure_m_1 inp5 :inf vars :[x,y]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,Some( x!=null),[])
+
+(==cvutil.ml#1357==)
+infer_collect_rel@1
+infer_collect_rel inp1 :  emp&R(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): []
+ 
+ es_infer_vars_rel: [R]
+infer_collect_rel inp2 :[R]
+infer_collect_rel inp3 :lhs_heap: true
+infer_collect_rel inp4 :lhs: R(x,y)
+infer_collect_rel inp5 :rhs: x!=null
+infer_collect_rel@1 EXIT:( R(x,y),2: x!=null,3:[],4:None,5:[])
+
+Starting Omega.../usr/local/bin/oc
+
+(==omega.ml#1165==)
+infer_pure_m_1@5@4@3@2
+infer_pure_m_1 inp1 :estate :
+( ex_formula : emp&R(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R],[])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : R(x,y)
+infer_pure_m_1 inp4 :rhs xpure : x!=null
+infer_pure_m_1 inp5 :inf vars :[x,y]
+infer_pure_m_1@5 EXIT:(new es,inf pure,rel_ass) :(None,Some( x!=null),[])
+
+(==infer.ml#1678==)
+infer_pure_m_1@4@3@2
+infer_pure_m_1 inp1 :estate :
+( ex_formula : emp&R(x,y)&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R],[])
+infer_pure_m_1 inp2 :lhs xpure : R(x,y)
+infer_pure_m_1 inp3 :lhs xpure0 : R(x,y)
+infer_pure_m_1 inp4 :rhs xpure : x!=null
+infer_pure_m_1 inp5 :inf vars :[]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( true),[( ex_formula : emp&R(x,y) & x!=null&{FLOW,(20,21)=__norm#E}[]
+ es_heap:emp
+ es_infer_vars_rel: [R],[RELASS [R]: ( R(x,y)) -->  x!=null])])
+
+=====================================================
+
+ERROR: at ex1-test.slk_14:22_14:23
+Message: TYPE ERROR 1 : Found int but expecting node
+
+Entail (3) : Failure("TYPE ERROR 1 : Found int but expecting node")
+: no residue 
+*/

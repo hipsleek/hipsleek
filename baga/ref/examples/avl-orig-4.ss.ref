@@ -1,0 +1,25 @@
+
+!!!Full processing file "examples/avl-orig-4.ss"
+Parsing file "examples/avl-orig-4.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: examples/avl-orig-4.ss_20:2_20:29:view defn for avl2 has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & h=0 & n=0),
+([self], 0<h & 0<n & h<=n)])
+
+
+WARNING: examples/avl-orig-4.ss_12:2_12:29:view defn for avl has incorrectly supplied invariant
+-- incorrect under-approx inv : Some([([], self=null & h=0 & n=0),
+([self], 0<h & 0<n)])
+
+
+Checking procedure height$node... 
+Procedure height$node SUCCESS.
+
+Checking procedure height2$node... 
+Procedure height2$node SUCCESS.
+
+0 false contexts at: ()

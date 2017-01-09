@@ -1,18 +1,29 @@
 /**
- Example: array sorting using insertion sort.
- **/
+ * Array sorting using insertion sort.
+ * 
+ * @author Vu An Hoa
+ */
 
-relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
+/**
+ * Array sorting using insertion sort.
+ * 
+ * @author Vu An Hoa
+ */
 
-relation idexptwopts(int[] a, int[] b, int i, int j) == forall(k : (k = i | k = j | a[k] = b[k])).
+relation idexc(int[] a, int[] b, int i, int j) == 
+	forall(k : (i<=k & k<=j | a[k] = b[k])).
 
-relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
+// relation idexptwopts(int[] a, int[] b, int i, int j) == 
+// 	forall(k : (k = i | k = j | a[k] = b[k])).
+
+relation sorted(int[] a, int i, int j) == 
+	(i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
 
 void insertelm(ref int[] a, int n)
 	requires [t] dom(a,0,t) & 0 <= n & n <= t & sorted(a,0,n-1)
 	case {
 		n <= 0 -> ensures a'=a & dom(a',0,t);
-		n > 0 -> ensures dom(a',0,t) & sorted(a',0,n) & idexc(a,a',0,n) & (a'[n] = a[n] | a'[n] = a[n-1]);
+		n > 0 -> ensures dom(a',0,t) & sorted(a',0,n) & idexc(a,a',0,n) & (a'[n] = a[n] | a'[n] = a[n-1]); //'
 	}
 {
 	if (n > 0) { 
@@ -35,3 +46,4 @@ void insertion_sort(ref int[] a, int n)
 		insertelm(a,n);
 	}
 }
+

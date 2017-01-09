@@ -1,0 +1,30 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Fail.(must) cause:must_err (__Error) LOCS: [3;0;5]
+
+ <1>emp&0<=x & x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+
+Entail 2: Fail.(must) cause:empty states
+
+ 
+
+Entail 3: Fail.(must) cause: x=0 |-  x=1. LOCS:[17] (must-bug)
+
+ <1>emp&x=0&{FLOW,(5,6)=__Error}[]
+[[empty]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 10
+SAT % Hit   : 70.%
+IMPLY Count : 5
+IMPLY % Hit : 60.%
+Time(cache overhead) : 0.000564 (seconds)
+
+!!! log(small):(0.007941,18)
+Total verification time: 0.057534 second(s)
+	Time spent in main process: 0.043889 second(s)
+	Time spent in child processes: 0.013645 second(s)
+

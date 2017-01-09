@@ -1,0 +1,52 @@
+
+!!!Full processing file "paper-v/set-tail-2-v.ss"
+Parsing file "paper-v/set-tail-2-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure set_tail$node~node... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,y@NI)&true
+ ensures G(x,y)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H(x,y@NI)&true --> x::node<prev1,next1> * HP_1221(prev1,y@NI) * 
+HP_1222(next1,y@NI)&
+true(3,4),
+ // POST
+(0)x::node<prev1,y> * HP_1221(prev1,y@NI)&true --> G(x,y)&
+true(3,4)]
+
+Procedure set_tail$node~node SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,y1) ::=  [x1::node<DP1,DP>],
+ G(x2,y2) ::=  [x2::node<DP1,y2>]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,y1) ::= x1::node<DP1,DP>(3,4),
+ G(x2,y2) ::= x2::node<DP1,y2>(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.02328,181)
+Total verification time: 0.281765 second(s)
+	Time spent in main process: 0.268407 second(s)
+	Time spent in child processes: 0.013358 second(s)
+

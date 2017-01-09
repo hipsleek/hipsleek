@@ -1,10 +1,14 @@
 /**
- Example: Array doubling
- **/
+ * Array doubling
+ * 
+ * @author Vu An Hoa
+ */
 
-relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
+relation idexc(int[] a, int[] b, int i, int j) == 
+	forall(k : (i<=k & k<=j | a[k] = b[k])).
 
-relation doubleof(int[] a, int[] b, int i, int j) == (i > j | forall(k : (k < i | k > j | a[k] = 2 * b[k]))).
+relation doubleof(int[] a, int[] b, int i, int j) == 
+	(i > j | forall(k : (k < i | k > j | a[k] = 2 * b[k]))).
 
 void doublearr(ref int[] a, int i, int j)
 	requires [k,t] dom(a,k,t) & k <= i & j <= t

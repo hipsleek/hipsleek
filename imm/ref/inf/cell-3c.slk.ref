@@ -1,0 +1,23 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+Starting Omega.../usr/local/bin/oc
+
+Entail (1) : Fail.(may) cause: true |-  v=w. LOCS:[0;8] (may-bug)
+
+Residue:
+ <1>c::cell<v@a>&P1(a) & a<:@L&{FLOW,(4,8)=__MayError#E}[]
+ inferred rel: [RELASS [P1]: ( P1(a)) -->  a<:@L]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+
+Entail (2) : Valid. 
+
+Residue:
+ <1>c::cell<v@[@a, @ann_f_r_41]>&a<:@L & P1(a) & ann_f_r_41=b & a<:ann_f_r_41&{FLOW,(4,5)=__norm#E}[]
+ inferred rel: [RELDEFN P2: ( false) -->  P2(b)]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+

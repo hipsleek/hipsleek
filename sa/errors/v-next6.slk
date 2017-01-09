@@ -1,0 +1,57 @@
+data node {
+  node next;
+}.
+
+//(1)
+checkentail x=null & flow __norm |- x=null & flow __norm.
+print residue.
+// <1>emp&x=null&{FLOW,(3,4)=__norm}[]
+// succeed with __norm
+
+//(2)
+checkentail x=null & flow __norm |- x!=null & flow __norm.
+print residue.
+//  <1>emp&x=null&{FLOW,(5,6)=__Error}[]
+// Fail with __Error
+
+//(3)
+checkentail x=null & flow __norm |- x=null & flow __Error.
+print residue.
+// Why? Entail 2: Fail.(must) cause:empty states
+// mis-match
+
+//(4)
+checkentail x=null & flow __Error |- x=null & flow __Error.
+print residue.
+// <1>emp&x=null&{FLOW,(5,6)=__Error}[] (with residue but not used)
+
+
+//(5)
+checkentail x=null & flow __Error |- x!=null & flow __Error.
+print residue.
+// Fail
+// <1>emp&x=null&{FLOW,(5,6)=__Fail}[] (no residue)
+
+
+// P1 & F1 |- P2 & F2
+
+
+/*
+
+
+  // complete pre
+  P1 & norm |- P2 & norm  --> error
+
+  P1 |- x::node(..)
+
+  // error pre/post
+  P1 & norm |- P2 & norm --> post
+
+  P1 |- case {
+          x=null -> ensures _Error
+          x!=null -> requires x::node<_> 
+                     ensures _norm
+      }
+
+
+*/

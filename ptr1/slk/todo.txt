@@ -1,0 +1,191 @@
+# ex13a.slk
+
+// can we scedule a base-case-fold after view match failure?
+// match and base-case-fold need to be both scheduled..
+
+checkentail x::arr_seg<2,n> & n>=2  |- x::arr_seg<2,2> .
+print residue.
+expect Valid.
+
+# ex13a.slk -dre "compute_action"
+
+# schedule a base-case-fold instead of base-case-unfold ..
+
+  COND =>[
+   Prio:1
+   Match =>
+     Type: Root
+     LHS: x::arr_seg<flted_13_47,n>@M
+     RHS: x::arr_seg<flted_13_67,flted_13_66>@M
+     root_inst: None
+     lhs_rest: emp
+     rhs_rest: emp
+     alias set: [x]rhs_inst: []rhs_infer: None;
+   Prio:3
+   BaseCaseUnfold =>
+     Type: Root
+     LHS: x::arr_seg<flted_13_47,n>@M
+     RHS: x::arr_seg<flted_13_67,flted_13_66>@M
+     root_inst: None
+     lhs_rest: emp
+     rhs_rest: emp
+     alias set: [x]rhs_inst: []rhs_infer: None
+   ]
+   ]
+
+//(16)
+checkentail x::arr_seg<1,n> & n>=2   |- x::arr_seg<2,2> * y1::arrI<_> & y1=x+1.
+print residue.
+expect Valid.
+
+=================================================================
+# ex14c.slk
+
+Did we not use LHS /\ RHS |- x=y? where C= LHS & RHS?
+
+       C |- x=y
+  -------------------------------------match node
+      x::arr<v1> |- y::arr<v2>
+
+Can we prune out match of x,z and it is unlikely..
+
+checkentail x::arrI<_> * y::arrI<_> & y=x+1 |- z::arrI<_> & z=x+1.
+print residue.
+expect Valid.
+
+
+(==context.ml#3810==)
+process_matches@1
+process_matches inp1 :lhs_h: x::arrI<Anon_13>@M * y::arrI<Anon_14>@M
+process_matches inp2 :matches:
+[ Type: Root
+ LHS: x::arrI<Anon_13>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: y::arrI<Anon_14>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None, Type: Root
+ LHS: y::arrI<Anon_14>@M
+ RHS: z::arrI<Anon_15>@M
+ root_inst: None
+ lhs_rest: x::arrI<Anon_13>@M
+ rhs_rest: emp
+ alias set: [y,x,z]rhs_inst: []rhs_infer: None]
+process_matches inp3 :rhs_node: z::arrI<Anon_15>@M
+process_matches inp4 :rhs_rest: emp
+process_matches@1 EXIT: Prio:-1
+ SEARCH =>[
+  Prio:1
+  Match =>;
+  Prio:1
+  Match =>
+  ]
+=================================================================
+# ex14b1.slk
+
+# wrong pairing as did not take LHS & RHS when doing a
+  fold where c has been instantiated.
+
+!!! **context.ml#3928:compute_action (steps) :
+ ### RHS Cand :[ x::arr_seg<i,n>@M]
+ ### action :
+ SEARCH =>[
+  Prio:1
+  Fold =>
+    LHS: x::arrI<Anon_13>@M
+    RHS: x::arr_seg<i,n>@M
+  ]
+=================================================================
+# ex14b2a.slk
+
+Residue:
+ <1>y::arrI<Anon_13>@M&i=n & 0<=i & y=x&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Fold]]
+
+# fold succeed on the base case only..
+
+# TODO : fix recursive appln op folding ..
+
+=================================================================
+# ex14b2d.slk
+
+infer [ii] x=y+ii |- y=x.
+
+# why is ii undefined?
+
+Last Proving Location: ex14b2c-arrseg-fold.slk_6:5_6:54
+
+ERROR: at _0:0_0:0
+Message: ii is undefined (7)
+
+(==typeinfer.ml#614==)
+unify_ptr_arithmetic@12@7@4@2
+unify_ptr_arithmetic inp1 :Unknown
+unify_ptr_arithmetic inp2 :Unknown
+unify_ptr_arithmetic inp3 :TVar[13]
+unify_ptr_arithmetic inp4 :[(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])]
+unify_ptr_arithmetic@12 EXIT:([(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])],Unknown)
+
+(==typeinfer.ml#851==)
+gather_type_info_exp@7@4@2
+gather_type_info_exp inp1 :y+ii
+gather_type_info_exp inp2 :[(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])]
+gather_type_info_exp inp3 :TVar[13]
+gather_type_info_exp@7 EXIT:[(ii:15:Unknown)(y:14:Unknown)(TVar__13:13:TVar[13])(x:12:TVar[12])(TVar__12:12:TVar[12])], Unknown
+
+=================================================================
+# Non-termination for sleek8.slk
+
+Checking sleek7.slk (runs with extra options:  --dis-lem-gen )
+Checking sleek8.slk (runs with extra options:  --dis-lem-gen )
+
+=================================================================
+# ex14c1.slk
+
+checkentail x::arrI<_>  |- y::arr_seg<0,1> & y=x . // fail cos y is not existential
+
+# why impl existential not helping here.
+  why we did not inst impl for ptr arithmetic?
+
+INPUT 0: [][] 
+ ### ante =  x::arrI<Anon_13>@M&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Impl)[y](exists flted_22_51,
+   flted_22_52: y::arr_seg<flted_22_52,flted_22_51>@M&
+   flted_22_52=0 & flted_22_51=1 & y=x&{FLOW,(20,21)=__norm#E}[])
+=================================================================
+# ex9b.slk
+
+# below fail but got Valid..
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+3,n>.
+print residue.
+expect Fail.
+
+
+checkentail xx::arr_seg<i,n> & i+1<n |- xx::arr_seg<i+4,n>.
+print residue.
+expect Fail.
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================
+=================================================================

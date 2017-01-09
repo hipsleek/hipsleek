@@ -1,0 +1,91 @@
+// 1
+slk_simplify x=1 | x=2.
+
+// 2
+slk_simplify x=1 & x>0.
+
+// 3
+slk_simplify a[i]=1 & a[i]>0.
+
+// 4
+infer [a]
+   true
+   |- emp& a[5]>0.
+print residue.
+
+// 5
+infer [a]
+   true
+   |- a[5]<0.
+print residue.
+
+
+// 6
+infer [a,i]
+   true
+   |- a[i]=0 & i=5.
+print residue.
+
+
+// 7
+infer [a]
+  true
+  |- a[i] + 5 > 3.
+print residue.
+
+// 8
+infer [a]
+  true
+  |- a[i] > 10.
+print residue.
+
+
+// 9
+infer [a]
+  true
+  |- a[3] + 6 > 6.
+print residue.
+
+// 10
+infer [a,i]
+  true
+  |- a[5]>i & i> 5.
+print residue.
+
+// 11
+infer [a,i]
+  i>5
+  |- a[5]>i & a[5]>6.
+print residue.
+
+// 12
+infer [a]
+  true
+  |- a[2+3]>5.
+print residue.
+
+// 13
+infer [a,i]
+  true
+  |- a[i+5]>0.
+print residue.
+
+// 14
+infer [a]
+  true
+  |- 6 + a[3] > 1.
+print residue.
+
+
+// 15
+infer [a]
+  true
+  |- 6 + (a[3]) > 1.
+print residue.
+
+// 16
+infer [a]
+  i=2
+  |- a[i] = 5.
+print residue.
+

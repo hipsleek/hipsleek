@@ -1,0 +1,51 @@
+
+!!!Full processing file "vp/ex37-task_decompose.ss"
+Parsing file "vp/ex37-task_decompose.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure inc$int... 
+( []) :vp/ex37-task_decompose.ss:12: 2: i does not have @lend/@full permission to read (var access)
+
+(Cause of ParCase Failure):vp/ex37-task_decompose.ss:12: 2:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: []
+ State:
+        fe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+                  fc_message: Mismatch non-zero variable permission in consequent [(i,@lend)]
+                  fc_current_lhs_flow: {FLOW,(1,28)=__flow#E}}
+[[empty]]
+ ]
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "vp/ex37-task_decompose.ss",Line:12,Col:2
+
+ERROR: at vp/ex37-task_decompose.ss_12:2_12:3
+Message: i does not have @lend/@full permission to read (var access)
+
+Procedure inc$int FAIL.(2)
+
+Exception Failure("i does not have @lend/@full permission to read (var access)") Occurred!
+
+Error(s) detected when checking procedure inc$int
+
+Checking procedure creator$int~int... 
+Procedure creator$int~int SUCCESS.
+
+Checking procedure joiner$int~int... 
+Procedure joiner$int~int SUCCESS.
+
+Checking procedure main$... 
+Procedure main$ SUCCESS.
+
+0 false contexts at: ()
+
+Total verification time: 0.468028 second(s)
+	Time spent in main process: 0.440027 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

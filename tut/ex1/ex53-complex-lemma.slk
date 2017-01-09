@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg_rev<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::lseg_rev<n-1,q>*q::node<_,p>;
+ } inv n >= 0.
+
+
+lemma_unsafe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        <- self::lseg_rev<n,r> * r::node<_,p>.
+
+
+
+checkentail x::lseg_rev<n,p> & n>0 |- x::node<_,q>.
+print residue.
+
+checkentail x::lseg_rev<n,p>  |- x::node<_,q>.
+print residue.
+
+//checkentail x=1 |- x>0.
+
+/*
+
+this works fine..
+
+*/

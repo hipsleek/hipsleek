@@ -1,0 +1,10 @@
+relation P(int x, int y).
+
+infer[n,m] n=0 & P(n,m) |- m=0.
+print residue.
+
+infer[n,m] n!=0 & P(n,m) |- m>0.
+print residue.
+
+infer[n,m] n!=0 & P(n,m) |- n>0.
+print residue.

@@ -1,0 +1,43 @@
+/*
+
+
+ (true)norm \/ (true)Err |- (true)norm --> fail
+
+ (true)norm \/ (true)Err |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)norm \/ (true)Err --> valid
+
+ (true)norm |- (true)Err --> fail
+
+ (true)norm |- (true)MayErr --> valid
+
+ (true)Err <--> (true)Err \/ (false)Err
+
+*/
+
+/*
+//1.
+checkentail true & flow __norm  or true & flow __Error  |- true & flow __norm.
+print residue.
+expect Fail.
+*/
+
+//2.
+checkentail true & flow __norm  or x=1 & flow __Error  |- 
+    true & flow __norm    or     x>2 & flow __Error
+   .
+print residue.
+expect Fail.
+
+
+/*
+//3.
+checkentail true & flow __norm   or x=1 & flow __Error  |- 
+   x>0 & flow __Error  or  true & flow __norm
+   .
+expect Valid.
+*/
+
+
+
+

@@ -1,0 +1,11 @@
+Starting Omega...oc
+
+ERROR: at demo/bug-swl-0b.slk_14:5_14:9 
+Message: ll is already defined.
+ SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.067992 second(s)
+	Time spent in main process: 0.053663 second(s)
+	Time spent in child processes: 0.014329 second(s)
+

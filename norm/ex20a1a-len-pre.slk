@@ -1,0 +1,20 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred P(node x).
+HeapPred HP_1572(int v, node x).
+HeapPred HP_1573(node x, node y).
+
+
+infer[P,HP_1572,HP_1572
+  ,@classic
+  ,@pure_field] 
+HP_1572(val_40_1570,x) * HP_1573(next_40_1571,x) * 
+ x::node<val_40_1570,next_40_1571>@M&
+!(v_bool_39_1556') & x'!=null & x'=x & v_int_40_1554'=1 & 
+v_node_40_1551'=next_40_1571 & MayLoop
+ |-  P(v_node_40_1551') & MayLoop.
+ 
+print residue.

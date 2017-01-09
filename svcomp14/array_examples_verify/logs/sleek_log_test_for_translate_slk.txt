@@ -1,0 +1,7 @@
+ 
+id: 0; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&a[5]=x&{FLOW,(4,5)=__norm#E}[]
+ |-  emp&a[5]=x&{FLOW,(4,5)=__norm#E}[]. 
+res:  1[
+   emp&a[5]=x&{FLOW,(4,5)=__norm#E}[]
+   ]

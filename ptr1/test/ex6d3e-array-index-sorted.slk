@@ -1,0 +1,83 @@
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+pred arr_seg2<i,n> == x::arrI<_> & x=self+i & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+/*
+checkentail
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
+  |- base::arr_seg2<i,n>.
+*/
+
+checkentail
+  x::arrI<i> * base::arr_seg<i+1,n> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<i> * base::arr_seg<i+1,n> & x=base+i //& i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Fail.
+
+checkentail
+  x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  emp //x::arrI<i> & x=base+i & i>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+checkentail
+  x::arrI<_> & x=base+j & j>=0 //& i<n 
+  |- base::arr_seg<i,n>.
+print residue.
+expect Valid.
+
+/*
+# ex6d3d.sl
+
+pred arr_seg2<i,n> == x::arrI<_> & i=n-1 & i>=0
+  or x::arrI<mi>*self::arr_seg2<i+1,n> & x=self+i 
+       & i>=0 & i<n-1 
+  inv n>i & i>=0.
+
+checkentail
+  a::arrI<i> * base::arr_seg2<i+1,n> & x=base+i & i>=0 & i<n-1 
+  |- base::arr_seg2<i,n>.
+
+# why isn't non-empty folding working properly..
+
+
+ actual_root: 
+  Some((x, i+1=n & x=i+self))
+
+
+Possibly empty
+--------------
+ actual_root: 
+  Some((x, x=i+self))
+
+Non-empty
+---------
+actual_root: 
+  None
+
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:false
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+*/

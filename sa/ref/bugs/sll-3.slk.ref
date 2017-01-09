@@ -1,0 +1,60 @@
+Starting Omega...oc
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_35(Anon,p) * HP_36(Anon1,p) * HP_37(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<_,_,_> * HP_35(Anon,p@NI) * 
+                   HP_36(Anon1,p@NI) * HP_37(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_47(x,p) * HP_48(x3,p) * HP_49(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<x0,x,x3> * HP_47(x,p@NI) * 
+                   HP_48(x3,p@NI) * HP_49(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_61(x1,p) * HP_62(x2,p) * HP_63(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<x3,x1,x2> * HP_61(x1,p@NI) * 
+                   HP_62(x2,p@NI) * HP_63(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (4) : Valid. 
+
+ <1>HP_78(x2,p) * HP_79(p1,p) * HP_80(p,c)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H1(c,p)&true --> c::node<x4,x2,p1> * HP_78(x2,p@NI) * 
+                   HP_79(p1,p@NI) * HP_80(p,c@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail 5: Valid. 
+
+ <1>H2(a,p) * H2(a,q)&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+
+Entail 6: Valid. 
+
+ <1>H2(a,p) * H2(a,q)&{FLOW,(3,4)=__norm}[]
+[[ SEARCH ==>  Match(c,c) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 32
+SAT % Hit   : 87.5%
+IMPLY Count : 8
+IMPLY % Hit : 87.5%
+Time(cache overhead) : 0.002847 (seconds)
+
+!!! log(small):(0.021655,52)
+Total verification time: 0.072198 second(s)
+	Time spent in main process: 0.058673 second(s)
+	Time spent in child processes: 0.013525 second(s)
+

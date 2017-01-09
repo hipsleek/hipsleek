@@ -1,0 +1,11 @@
+X :={[x,y]:
+!((exists(beta:exists(alpha:(2*alpha)<=y & y<=((2*alpha)+1) & alpha<=((2*
+beta)+3) & (8+(4*y)+(4*x)+(4*alpha)+(5*beta))<=0)) & 0<=y & (3+(5*y)+(4*
+x))<=0))};
+X;
+
+Y :={[x,y]:
+((exists(beta,alpha:(2*alpha)<=y & y<=((2*alpha)+1) & alpha<=((2*
+beta)+3) & (8+(4*y)+(4*x)+(4*alpha)+(5*beta))<=0)) & 0<=y & (3+(5*y)+(4*
+x))<=0)};
+Y;

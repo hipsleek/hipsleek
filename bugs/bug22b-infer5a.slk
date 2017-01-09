@@ -1,0 +1,28 @@
+data node {
+	int val; 
+}.
+
+infer [x] true   |- x::node<3>.
+print residue.
+/*
+# bug22b-infer5a.slk
+Expect : x::node<i1> & i1=3 
+
+Entail (1) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>htrue&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/
+
+
+infer [i1] x::node<i1>   |- x::node<3>.
+print residue.
+/*
+# bug22b.slk
+
+Entail (2) : Valid. 
+Residue:
+ <1>emp&i1=3&{FLOW,(4,5)=__norm#E}[]
+ inferred pure: [i1=3]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+*/

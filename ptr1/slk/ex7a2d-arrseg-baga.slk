@@ -1,0 +1,41 @@
+
+data arrI {
+  int val;
+}.
+
+/*
+pred arr_seg<iii,n> == iii=n & iii>=0 & (self:arrI)!=null
+  or xxx::arrI<_>*self::arr_seg<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+*/
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & self!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+/*
+# ex7a2d.slk --pcp --print-type
+
+pred arr_seg2<iii,n> == iii=n & iii>=0 & (self:arrI)!=null
+  or xxx::arrI<_>*self::arr_seg2<iii+1,n> & xxx=self+iii & iii>=0 & self!=null
+  inv n>=iii & iii>=0 & self!=null.
+
+# why does adding self!=null caused view_data_name and actual_root information to be
+  lost?
+
+  view_data_name: 
+  type_of_self: 
+  None
+  actual_root: 
+
+# why is the type of self not refined below. is it due to ptr arithmetic?
+
+(==typeinfer.ml#745==)
+gather_type_info_b_formula@33@17@1
+gather_type_info_b_formula inp1 :xxx = self+iii
+gather_type_info_b_formula inp2 :[(iii:31:NUM)(TVar__46:46:int)(flted_11_14:43:NUM)(TVar__45:45:NUM)(n:32:NUM)(n_15:44:NUM)(Anon_12:42:int)(xxx:41:arrI)(TVar__40:40:TVar[40])(TVar__39:39:TVar[39])(self:33:TVar[40])(TVar__38:38:TVar[40])(TVar__37:37:int)(TVar__36:36:NUM)(TVar__35:35:NUM)(TVar__34:34:NUM)(TVar__33:33:TVar[40])]
+gather_type_info_b_formula@33 EXIT:[(iii:31:NUM)(self:33:TVar[48])(TVar__48:48:TVar[48])(xxx:41:arrI)(TVar__47:47:arrI)(TVar__46:46:int)(flted_11_14:43:NUM)(TVar__45:45:NUM)(n:32:NUM)(n_15:44:NUM)(Anon_12:42:int)(TVar__40:40:arrI)(TVar__39:39:TVar[39])(TVar__38:38:TVar[48])(TVar__37:37:int)(TVar__36:36:NUM)(TVar__35:35:NUM)(TVar__34:34:NUM)(TVar__33:33:TVar[48])]
+
+ 
+*/
+

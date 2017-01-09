@@ -1,0 +1,55 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self=null | self>0)&{FLOW,(1,25)=__flow}[]
+Entail (1) : Valid. 
+
+ <1>HP_36(p)&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<p> * HP_36(p)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>y::node<p1> * HP_50(p1)&x!=y&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<p1> * HP_50(p1)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>H(x)&x=0&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> emp&x=0(3,4)]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::ll<>&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (5) : Valid. 
+
+ <1>emp&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::ll_one<>&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 29 invocations 
+SAT Count   : 121
+SAT % Hit   : 86.77%
+IMPLY Count : 36
+IMPLY % Hit : 55.55%
+Time(cache overhead) : 0.004859 (seconds)
+
+!!! log(small):(0.040053,199)
+Total verification time: 0.097552 second(s)
+	Time spent in main process: 0.076281 second(s)
+	Time spent in child processes: 0.021271 second(s)
+

@@ -1,0 +1,18 @@
+
+!!!Full processing file "bugs/set-tail2.ss"
+Parsing file "bugs/set-tail2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure set_tail$node~node... 
+Procedure set_tail$node~node SUCCESS.
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.022245,172)
+Total verification time: 0.275412 second(s)
+	Time spent in main process: 0.261861 second(s)
+	Time spent in child processes: 0.013551 second(s)
+

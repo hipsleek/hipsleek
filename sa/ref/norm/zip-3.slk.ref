@@ -1,0 +1,59 @@
+Starting Omega...oc
+zip is defined.
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! process_pred_split:
+
+!!! formula1: emp&((self=null & y=null & z=null) | (self!=null & y!=null & z!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&z=null & y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y,z], true),
+([], self=null & y=null & z=null)])
+!!! 
+ilemma_infs:
+ :=>coerc tmp_infer_83
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zip{}<y,z>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . (((HRel HP_49((self:node))) * (HRel HP_50((y:node)))) * (HRel HP_51((z:node))))*(true)( FLOW __flow))
+
+Entailing lemma tmp_infer_83: Valid.
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self>0 | self=null)&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! 
+Right. ilemma_infs:
+ :<=coerc tmp_safe_172
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zip{}<y,z>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . (((self::HP_49{}<>@M[HeapNode1]) * (y::HP_50{}<>@M[HeapNode1])) * (z::HP_51{}<>@M[HeapNode1]))*(true)( FLOW __flow))
+
+Entailing lemma tmp_safe_172: Fail. (no cex)(must) cause: OrL[ y::HP_50{}<> * z::HP_51{}<>&self1=null&{FLOW,(5,6)=__Error}[],valid]
+ can not pred_split (sem). add lemma: zip([x,y,z]) -->  HP_49(x) * HP_50(y) * HP_51(z)
+: no residue 
+Stop Omega... 159 invocations 
+SAT Count   : 2539
+SAT % Hit   : 97.32%
+IMPLY Count : 206
+IMPLY % Hit : 91.26%
+Time(cache overhead) : 0.179776 (seconds)
+
+!!! log(small):(2.523951,3202)
+Total verification time: 0.652791 second(s)
+	Time spent in main process: 0.582783 second(s)
+	Time spent in child processes: 0.070008 second(s)
+

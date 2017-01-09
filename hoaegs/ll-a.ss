@@ -24,7 +24,7 @@ relation zeros(int[] a, int i, int j) == (i > j
 void append(node x, node y)
 
   requires x::ll<m> * y::ll<n> & x!=null
-  ensures x::ll<m+n+1>;
+  ensures x::ll<m+n>;
 
 {
 	if (x.next == null) {

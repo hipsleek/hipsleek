@@ -1,0 +1,50 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+Starting z3... 
+
+!!! formula1: emp&(self=p | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=p)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail (1) : Fail.(may) cause: self=null |-  self=p. LOCS:[38;40] (may-bug)
+
+ <1>
+    emp&self=null&{FLOW,(3,7)=__MayError}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [P1(p)&true --> P1(p)&true(3,4)]
+[[ SEARCH ==>  Match(self,self) ==>  SEARCH ==>  (Lemma ==> lem_14(p1,q)) ==> (left: lem_14) ==>  COND ==>  Match(p1,q) ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (2) : Fail.(may) cause: self=null |-  self=p. LOCS:[46;48] (may-bug)
+
+ <1>
+    emp&self=null&{FLOW,(3,7)=__MayError}[]
+    or emp&{FLOW,(3,4)=__norm}[]
+    
+ inferred hprel: [P1(p)&true --> P1(p)&true(3,4)]
+[[ SEARCH ==>  Match(self,self) ==>  COND ==>  Match(p1,q) ==>  COND ==>  InferHeap ==> ||OR|| ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+
+Entail (3) : Fail.(may) cause: self=null |-  self=p. LOCS:[55;56] (may-bug)
+
+ <1>emp&self=null&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 35 invocations 
+SAT Count   : 271
+SAT % Hit   : 89.66%
+IMPLY Count : 54
+IMPLY % Hit : 74.07%
+Time(cache overhead) : 0.015283 (seconds)
+
+!!! log(small):(0.106402,382)
+Total verification time: 0.134227 second(s)
+	Time spent in main process: 0.107789 second(s)
+	Time spent in child processes: 0.026438 second(s)
+

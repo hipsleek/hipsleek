@@ -1,0 +1,39 @@
+
+!!!Full processing file "hip/ll-delete2.ss"
+Parsing file "hip/ll-delete2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+WARNING: hip/ll-delete2.ss_22:10_22:25:the result type __norm is not covered by the throw list[]
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure delete_list$node... 
+Post condition cannot be derived:
+  (must) cause:  x!=null |-  x=null. LOCS:[24;26;17;22] (must-bug)
+
+Context of Verification Failure: 1 File "hip/ll-delete2.ss",Line:22,Col:10
+Last Proving Location: 1 File "hip/ll-delete2.ss",Line:26,Col:7
+
+ERROR: at hip/ll-delete2.ss_22:10_22:25 
+Message: Post condition cannot be derived.
+ 
+Procedure delete_list$node FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure delete_list$node
+
+!!! proc.proc_name:delete_list$nodeStop Omega... 4 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.041048,311)
+Total verification time: 0.309052 second(s)
+	Time spent in main process: 0.294553 second(s)
+	Time spent in child processes: 0.014499 second(s)
+

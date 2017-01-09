@@ -1,0 +1,20 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1)
+checkentail x=null |- x::node<_,_>.
+// must-fail
+
+// (2)
+checkentail x::node<_,_> |- x=null.
+// must-fail
+
+// (3)
+checkentail true |- x::node<_,_>.
+// may-fail
+
+// (4)
+checkentail emp |- x::node<_,_>.
+// must-fail

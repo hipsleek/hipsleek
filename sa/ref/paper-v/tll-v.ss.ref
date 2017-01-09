@@ -1,0 +1,24 @@
+
+!!!Full processing file "paper-v/tll-v.ss"
+Parsing file "paper-v/tll-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&((self=ll & self!=null) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+Checking procedure set_right$node~node... 
+Procedure set_right$node~node SUCCESS.
+Stop Omega... 25 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.329933,612)
+Total verification time: 0.452851 second(s)
+	Time spent in main process: 0.432648 second(s)
+	Time spent in child processes: 0.020203 second(s)
+

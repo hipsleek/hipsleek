@@ -1,0 +1,17 @@
+
+!!!Full processing file "bugs/tail3.ss"
+Parsing file "bugs/tail3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+
+ERROR: at bugs/tail3.ss_16:5_16:26 
+Message: UNIFICATION ERROR : at location {(16,5),(16,26)} types WAITS and node are inconsistent
+ 
+ERROR: at bugs/tail3.ss_16:5_16:26 
+Message: gather_type_info_var : unexpected exception Failure("UNIFICATION ERROR : at location {(16,5),(16,26)} types WAITS and node are inconsistent")
+ Stop Omega... 0 invocations caught
+(Program not linked with -g, cannot print stack backtrace)
+
+Exception occurred: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(16,5),(16,26)} types WAITS and node are inconsistent\")")
+Error3(s) detected at main 

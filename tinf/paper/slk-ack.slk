@@ -1,0 +1,24 @@
+relation Ackpost(int m,int n).
+
+//!(v_boolean_14_1429) & m!=0 & n!=0 &
+//!(v_boolean_14_1430) & 
+//!(v_bool_14_1319') & !(v_boolean_14_1430) & !(v_boolean_14_1429) & !(v_bool_14_1319') & 
+
+infer [Ackpost] 
+res=v_int_19_1318' & v_int_19_1462+1=m
+& m!=0 &
+n!=0 &
+m1_1460+1=m & n1_1461+1=n & 
+Ackpost(m',n1_1461) &
+Ackpost(v_int_19_1462,r_30') & 
+m'=m  |-
+Ackpost(m,n).
+print residue.
+/*
+# slk-ack.slk
+
+ inferred rel: [RELDEFN Ackpost: ( Ackpost(v_int_19_1462,r_30') & n1_1461+1=n & v_int_19_1462+1=m & n!=0 & 
+m!=0 & Ackpost(m,n1_1461)) -->  Ackpost(m,n)]
+
+
+*/

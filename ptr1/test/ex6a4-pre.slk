@@ -1,0 +1,47 @@
+
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+  inv n>=i & i>=0.
+
+checkentail x::arrI<_> & x=(i:arrI)+2 & a=i+2 
+ |-  a::arrI<_> .
+print residue.
+expect Valid.
+
+checkentail x::arrI<_> & x=(base:arrI)+2  
+ |-  a::arrI<_> & a=base+2.
+print residue.
+expect Valid.
+expect_infer Valid R{x=a}.
+expect_infer Fail R{x!=a}.
+
+
+
+/*
+# ex6a4.slk -dre "choose_c" -trace-log-num 1
+
+Why first proof fails? What happen to eqset?
+
+!!! **cpure.ml#15619:get_ptr(e1): 2
+!!! **cpure.ml#15620:get_ptr(e2): i:NUM
+!!! **cpure.ml#15619:get_ptr(e1): 2
+!!! **cpure.ml#15620:get_ptr(e2): i:NUM
+(====)
+extr_ptr_eqn@3
+extr_ptr_eqn inp1 : 0<=i:NUM & a:arrI=2+i:NUM & x:arrI=2+i:NUM
+extr_ptr_eqn@3 EXIT:([],[ x:arrI=2+i:NUM, a:arrI=2+i:NUM])
+
+# same_base computation is incorrect..
+  need to be aggressive..
+xs
+@1! **context.ml#715:lhs_p: 0<=i & a=2+i & x=2+i
+@1! **context.ml#723:lhs_nodes:[x]
+@1! **context.ml#759:rhs: x=a
+@1! **context.ml#772:Not same base
+
+
+*/

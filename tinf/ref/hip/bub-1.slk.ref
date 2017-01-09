@@ -1,0 +1,22 @@
+Starting Omega...oc
+Starting z3... 
+Fail Trace?:[?] 
+Error Context: length= 1 [es_formula: xs::node<v,r> * r::llw{}<f,k,sm2>&v<=sm2&{FLOW,(3,4)=__Error}[]
+                          es_evars: [f1_170; s1_171; flted_28_172]
+                          es_gen_impl_vars: [r_179; sm1_180]
+                          es_rhs_eqset: [f1_170:f1; s1_171:s1]
+                          es_must_error: Some(UnionR[UnionR[ v<=sm2 & (((r=1 & xs=2 & 0<=k & k<=f & 1<=f) | (xs=1 & f=k & r=null & f=0 & 
+sm2=\inf))) |-  xs=null. LOCS:[27;1;0;22] (must-bug), v<=sm2 & (((r=1 & xs=2 & 0<=k & k<=f & 1<=f) | (xs=1 & f=k & r=null & f=0 & 
+sm2=\inf))) |-  1+k=1+f. LOCS:[27;1;0;22;23] (must-bug)], v_184<=sm2 & (((r=1 & xs=2 & 0<=k & k<=f & 1<=f) | (xs=1 & f=k & r=null & 
+f=0 & sm2=\inf))) |-  f+1=f1_170 & flted_28_172<f1_170 & v_184<=s1_171 & k=flted_28_172 & 
+sm2=s1_171 & f1_170!=flted_28_172 & flted_28_172=1+k & f1_170=f1 & s1_171=s1. LOCS:[27;1;0;22;24;28] (RHS: contradiction)]; true)
+                          es_trace:  Fold ==> 
+                          es_infer_vars_rel: []
+                          es_proof_traces: [xs::node<v,r> * r::llw<f,k,sm2>&
+                                            v<=sm2:xs::llw{}<f1,flted,s>&
+                                            flted=1+k&
+                                            {FLOW,(21,22)=__norm}[]]] <1>xs::node<v,r> * r::llw{}<f,k,sm2>&v<=sm2&{FLOW,(3,4)=__Error}[]
+[[ Fold ==> ]]
+
+
+

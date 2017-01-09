@@ -1,0 +1,65 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "bugs/mut-rec2.ss"
+Parsing file "bugs/mut-rec2.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure foo1$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[post_1344,pre_1342,post_1345,pre_1343] pre_post_vars:[post_1344,res,flow,pre_1342,n]
+
+Procedure foo1$int SUCCESS.
+
+Checking procedure foo2$int... 
+!!! WARNING : Inferable vars include some external variables!
+vars:[post_1344,pre_1342,post_1345,pre_1343] pre_post_vars:[post_1345,res,flow,pre_1343,n]
+
+Procedure foo2$int SUCCESS.
+
+!!! INFERRED SHAPE SPEC: EInfer @post,@pre[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+!!! INFERRED SHAPE SPEC: EInfer @post,@pre[]
+   EBase htrue&{FLOW,(4,5)=__norm#E}[]
+           EBase emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+                   EAssume 
+                     htrue&{FLOW,(4,5)=__norm#E}[]
+                     
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN pre_1343: ( pre_1342(n) & n=1+v_int_6_1320' & (v_int_6_1320'+1)!=0) -->  pre_1343(v_int_6_1320'),
+RELDEFN post_1344: ( n=0 & res=0 & pre_1342(n)) -->  post_1344(n,res,flow),
+RELDEFN post_1344: ( res=1+v_int_6_1372 & v_int_6_1369+1=n & n!=0 & 
+post_1345(v_int_6_1369,v_int_6_1372,flow) & pre_1342(n)) -->  post_1344(n,res,flow),
+RELDEFN pre_1342: ( pre_1343(n) & n=1+v_int_14_1305' & (v_int_14_1305'+1)!=0) -->  pre_1342(v_int_14_1305'),
+RELDEFN post_1345: ( n=0 & res=0 & pre_1343(n)) -->  post_1345(n,res,flow),
+RELDEFN post_1345: ( res=1+v_int_14_1401 & v_int_14_1398+1=n & n!=0 & 
+post_1344(v_int_14_1398,v_int_14_1401,flow) & pre_1343(n)) -->  post_1345(n,res,flow)]
+*************************************
+
+Post Inference result:
+foo1$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&n>=0 & n=res&{FLOW,(4,5)=__norm#E}[]
+           
+
+Post Inference result:
+foo2$int
+ EBase htrue&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           htrue&n>=0 & n=res&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 0.532032 second(s)
+	Time spent in main process: 0.440027 second(s)
+	Time spent in child processes: 0.092005 second(s)
+

@@ -1,0 +1,22 @@
+Starting Omega...oc
+H2 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>H2(q)&1<=q&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H2(q)&true --> emp&1<=q(3,4)]
+[[ SEARCH ==>  Match(r,r) ==> ]]
+
+Stop Omega... 14 invocations 
+SAT Count   : 13
+SAT % Hit   : 61.53%
+IMPLY Count : 5
+IMPLY % Hit : 40.%
+Time(cache overhead) : 0.000523 (seconds)
+
+!!! log(small):(0.017884,34)
+Total verification time: 0.062002 second(s)
+	Time spent in main process: 0.044766 second(s)
+	Time spent in child processes: 0.017236 second(s)
+

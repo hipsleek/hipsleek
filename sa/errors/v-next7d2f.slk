@@ -1,0 +1,55 @@
+//(1)
+checkentail x=0 & flow __norm |- 
+     requires x>-1  & flow __flow // default is __norm
+     ensures x=5 & flow __norm;.
+print residue.
+
+//(2)
+checkentail 
+   x=11 & flow __norm |-  
+    case { x>0 -> requires true & flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+//(3)
+checkentail 
+   x=22 & flow __norm |-  
+    case { x>0 -> requires true & flow __norm
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+//(4)
+checkentail 
+   x=33 & flow __norm |-  
+    case { x>0 -> requires x>-3& flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+/*
+# v-next7d2f.slk --esl
+
+//2
+checkentail 
+   x=11 & flow __norm |-  
+    case { x>0 -> requires true & flow __flow
+                  ensures x=5 & flow __norm;
+           x<=0 -> ensures x=2 & flow __Error;
+    }.
+print residue.
+
+Why did we log (3) but not (2) above?
+
+id: 1; caller: []; line: 0; classic: false; kind: Sleek_Entail(3); hec_num: 1; evars: []; infer_vars: [ ]; c_heap: emp
+ checkentail emp&x=22 & 0<x&{FLOW,(3,4)=__norm}[]
+ |-  emp&{FLOW,(3,4)=__norm}[]. 
+res:  1[
+   emp&0<x & x=22&{FLOW,(3,4)=__norm}[]
+   ]
+
+*/

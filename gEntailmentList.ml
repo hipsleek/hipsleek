@@ -1,3 +1,4 @@
+#include "xdebug.cppo"
 (**/**)
 open GUtil.SourceUtil
 open GProcList
@@ -5,7 +6,7 @@ open GProcList
 
 (**
    Entailment list view
- *)
+*)
 class entailment_list ?(model = new procedure_list_model ()) () =
   object (self)
     inherit procedure_list ~model () as super

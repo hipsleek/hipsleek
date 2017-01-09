@@ -1,0 +1,103 @@
+
+!!!Full processing file "hip/ll.ss"
+Parsing file "hip/ll.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS.
+
+Checking procedure append2$node~node... 
+Procedure append2$node~node SUCCESS.
+
+Checking procedure create_list$int... 
+Procedure create_list$int SUCCESS.
+
+Checking procedure delete$node~int... 
+Procedure delete$node~int SUCCESS.
+
+Checking procedure get_next$node... 
+Procedure get_next$node SUCCESS.
+
+Checking procedure get_next_next$node... 
+Procedure get_next_next$node SUCCESS.
+
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS.
+
+Checking procedure ret_first$node... 
+Procedure ret_first$node SUCCESS.
+
+Checking procedure reverse$node~node... 
+Procedure reverse$node~node SUCCESS.
+
+Checking procedure reverse10$node~node... 
+Procedure reverse10$node~node SUCCESS.
+
+Checking procedure reverse11$node~node... 
+Procedure reverse11$node~node SUCCESS.
+
+Checking procedure reverse12$node~node... 
+Procedure reverse12$node~node SUCCESS.
+
+Checking procedure reverse13$node~node... 
+Procedure reverse13$node~node SUCCESS.
+
+Checking procedure reverse14$node~node... 
+Procedure reverse14$node~node SUCCESS.
+
+Checking procedure reverse15$node~node... 
+Procedure reverse15$node~node SUCCESS.
+
+Checking procedure reverse16$node~node... 
+Procedure reverse16$node~node SUCCESS.
+
+Checking procedure reverse17$node~node... 
+Procedure reverse17$node~node SUCCESS.
+
+Checking procedure reverse2$node~node... 
+Procedure reverse2$node~node SUCCESS.
+
+Checking procedure reverse3$node~node... 
+Procedure reverse3$node~node SUCCESS.
+
+Checking procedure reverse4$node~node... 
+Procedure reverse4$node~node SUCCESS.
+
+Checking procedure reverse5$node~node... 
+Procedure reverse5$node~node SUCCESS.
+
+Checking procedure reverse6$node~node... 
+Procedure reverse6$node~node SUCCESS.
+
+Checking procedure reverse7$node~node... 
+Procedure reverse7$node~node SUCCESS.
+
+Checking procedure reverse8$node~node... 
+Procedure reverse8$node~node SUCCESS.
+
+Checking procedure reverse9$node~node... 
+Procedure reverse9$node~node SUCCESS.
+
+Checking procedure set_next$node~node... 
+Procedure set_next$node~node SUCCESS.
+
+Checking procedure set_null$node... 
+Procedure set_null$node SUCCESS.
+
+Checking procedure set_null2$node... 
+Procedure set_null2$node SUCCESS.
+Stop Omega... 7 invocations 
+2 false contexts at: ( (91,11)  (91,2) )
+
+!!! log(small):(4.029945,9964)
+Total verification time: 2.789978 second(s)
+	Time spent in main process: 2.76957 second(s)
+	Time spent in child processes: 0.020408 second(s)
+

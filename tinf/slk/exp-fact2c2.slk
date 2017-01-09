@@ -1,0 +1,34 @@
+UTPre@f fpre(int x).
+UTPost@f fpost(int x).
+
+infer [@term] x=0 & Term[] |- fpost(x).
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 
+  & x'!=0 
+  |- fpre(x').
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & x'=0 |- fpre(x').
+
+infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x') 
+ // & x'=0 
+|- fpost(x).
+
+//infer [@term] x!=0 & fpre(x) & x'=x-1 & fpost(x') & x'!=0 |- fpost(x).
+
+term_infer.
+
+/*
+# exp-fact2c1.slk
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpost(x') --> fpost(x).
+
+ termAssume x=0 --> fpost(x).
+
+ termAssume x'=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+ termAssume x'!=0 & x=x'+1 & x!=0 & fpre(x) --> fpre(x').
+
+
+*/

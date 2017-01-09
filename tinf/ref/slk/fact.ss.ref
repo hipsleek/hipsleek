@@ -1,0 +1,34 @@
+
+!!!Full processing file "slk/fact.ss"
+Parsing file "slk/fact.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure fact$int... 
+Post condition cannot be derived:
+  (must) cause:  1<=v_int_16_1189 & (v_int_16_1185+1)!=0 & res=(v_int_16_1185+1)*
+v_int_16_1189 |-  1<=res. LOCS:[4;15;16;7] (must-bug)
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+Last Proving Location: 1 File "slk/fact.ss",Line:16,Col:14
+
+ERROR: at _0:0_0:0 
+Message: Post condition cannot be derived.
+ 
+Procedure fact$int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure fact$int
+
+!!! proc.proc_name:fact$int
+Checking procedure fact$int... 
+
+!!! Termination Inference is not performed due to errors in verification process.
+
+
+
+0 false contexts at: ()

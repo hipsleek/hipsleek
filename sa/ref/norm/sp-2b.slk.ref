@@ -1,0 +1,102 @@
+Starting Omega...oc
+P1 is defined.
+P2 is defined.
+H1 is defined.
+H2 is defined.
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+Lemma store dump:
+
+===========
+LEFT LEMMAS
+===========
+[Lemma "lem_15":  self::zip{}<y>&{FLOW,(3,4)=__norm}[]==> P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ head match:zip
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[P1]); (y,full,[P2])]
+ coercion_case: Simple
+ head_norm:  (exists y1: self::zip{}<y1>&y1=y&{FLOW,(3,4)=__norm})[]
+ body_norm:  EBase P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+]
+
+============
+RIGHT LEMMAS
+============
+[Lemma "lem_14":  self::zip{}<y>&{FLOW,(3,4)=__norm}[]<== P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ head match:zip
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[P1]); (y,full,[P2])]
+ coercion_case: Simple
+ head_norm:  (exists y2: self::zip{}<y2>&y2=y&{FLOW,(3,4)=__norm})[]
+ body_norm:  EBase P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+]
+
+
+Lemma store dump:
+
+===========
+LEFT LEMMAS
+===========
+[Lemma "lem_15":  self::zip{}<y>&{FLOW,(3,4)=__norm}[]==> P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ head match:zip
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[P1]); (y,full,[P2])]
+ coercion_case: Simple
+ head_norm:  (exists y1: self::zip{}<y1>&y1=y&{FLOW,(3,4)=__norm})[]
+ body_norm:  EBase P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+]
+
+============
+RIGHT LEMMAS
+============
+[Lemma "lem_14":  self::zip{}<y>&{FLOW,(3,4)=__norm}[]<== P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ head match:zip
+ body view:
+ coercion_univ_vars: []
+ materialized vars:  [(self,full,[P1]); (y,full,[P2])]
+ coercion_case: Simple
+ head_norm:  (exists y2: self::zip{}<y2>&y2=y&{FLOW,(3,4)=__norm})[]
+ body_norm:  EBase P1(self) * P2(y)&{FLOW,(3,4)=__norm}[]
+ coercion_univ_vars: []
+ coercion_case: Simple
+ coercion_origin: user-given
+ coercion_kind: LEM_UNSAFE
+]
+
+
+Entail (1) : Fail.(may) cause:do_unmatched_rhs : x::zip{}<y_77>
+
+ <1>P1(x) * P2(y)&{FLOW,(3,7)=__MayError}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+
+Stop Omega... 14 invocations 
+SAT Count   : 38
+SAT % Hit   : 65.78%
+IMPLY Count : 7
+IMPLY % Hit : 28.57%
+Time(cache overhead) : 0.004299 (seconds)
+
+!!! log(small):(0.027911,60)
+Total verification time: 0.087977 second(s)
+	Time spent in main process: 0.062593 second(s)
+	Time spent in child processes: 0.025384 second(s)
+

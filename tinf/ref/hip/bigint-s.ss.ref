@@ -1,0 +1,16 @@
+
+!!!Full processing file "hip/bigint-s.ss"
+Parsing file "hip/bigint-s.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure karatsuba_mult$node~node... 
+Procedure karatsuba_mult$node~node SUCCESS.
+
+Checking procedure karatsuba_mult$node~node... 
+Termination checking result: SUCCESS
+
+
+0 false contexts at: ()

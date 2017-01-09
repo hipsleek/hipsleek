@@ -1,0 +1,33 @@
+Starting Omega...oc
+H1 is defined.
+G1 is defined.
+Starting z3... 
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true),
+([self], true)])
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(tmp') ::= 
+ tmp'::node<ptr> * H1(ptr)
+ or emp&tmp'=DP'
+ (3,4),
+ G1(ptr',ptr) ::= DP_32(ptr')&ptr=ptr'(3,4),
+ DP_32(ptr1) ::= 
+ ptr1::node<ptr2> * H1(ptr2)
+ or emp&ptr1=DP'
+ (3,4)]
+*************************************
+Stop Omega... 3 invocations 
+SAT Count   : 29
+SAT % Hit   : 86.2%
+Time(cache overhead) : 0.000758 (seconds)
+
+!!! log(small):(0.009583,35)
+Total verification time: 0.066175 second(s)
+	Time spent in main process: 0.051344 second(s)
+	Time spent in child processes: 0.014831 second(s)
+

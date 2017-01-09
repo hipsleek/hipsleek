@@ -1,0 +1,9 @@
+Starting Omega...oc
+Starting z3... 
+Residue:
+ <1>x::ll{}<flted_16_37>&flted_16_37=6+4&{FLOW,(4,5)=__norm}[]
+
+Residue:
+ <1>x::ll{}<y_234>&y_234=x_11 & x_11=6+4&{FLOW,(4,5)=__norm}[]
+
+

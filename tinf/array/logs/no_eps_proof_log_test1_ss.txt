@@ -1,0 +1,87 @@
+ 
+ id: 1<-1; prover: Z3; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<size
+	     conseq:  0<size
+ res: true
+ -------------------- 
+ id: 197<0; prover: Z3; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: a'=a
+	     conseq:  a=a'
+ res: true
+ -------------------- 
+ id: 198<0; prover: REDLOG (REDUCE LOGIC); loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Simplify:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ -------------------- 
+ id: 199<0; prover: Z3; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & v_int_29_1426'=3 & 
+at_greater(a,i,j,3,0) & dom(a,k,t) & a=a'
+	     conseq:  exists(ahaub_1453:exists(ahalb_1454:dom(a',ahalb_1454,ahaub_1453) & 
+ahalb_1454<=v_int_29_1426') & v_int_29_1426'<=ahaub_1453)
+ res: false
+ -------------------- 
+ id: 200<0; prover: REDLOG (REDUCE LOGIC); loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Simplify:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ -------------------- 
+ id: 201<0; prover : CACHED ; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & v_int_29_1426'=3 & 
+at_greater(a,i,j,3,0) & dom(a,k,t) & a=a'
+	     conseq:  exists(ahaub_1455:exists(ahalb_1456:dom(a',ahalb_1456,ahaub_1455) & 
+ahalb_1456<=v_int_29_1426') & v_int_29_1426'<=ahaub_1455)
+ res: false
+ -------------------- 
+ id: 202<0; prover: Z3; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res: SAT
+ -------------------- 
+ id: 203<0; prover: Z3; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & a=a' & dom(a,k,t) & 
+at_greater(a,i,j,3,0) & v_int_29_1426'=3 & 
+exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res: SAT
+ -------------------- 
+ id: 204<0; prover: Z3; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & a=a' & dom(a,k,t) & 
+at_greater(a,i,j,3,0) & v_int_29_1426'=3 & 
+!(exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub))
+ res: SAT
+ -------------------- 
+ id: 205<0; prover : CACHED ; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res: SAT
+ -------------------- 
+ id: 206<0; prover : CACHED ; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & a=a' & dom(a,k,t) & 
+at_greater(a,i,j,3,0) & v_int_29_1426'=3 & 
+exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub)
+ res: SAT
+ -------------------- 
+ id: 207<0; prover : CACHED ; loc: test1_ss_29:5_29:9; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  t=ahaub & k=ahalb & i'=i & j'=j & k<=i & j<=t & a=a' & dom(a,k,t) & 
+at_greater(a,i,j,3,0) & v_int_29_1426'=3 & 
+!(exists(ahaub:exists(ahalb:dom(a',ahalb,ahaub) & ahalb<=v_int_29_1426') & 
+v_int_29_1426'<=ahaub))
+ res: SAT
+ --------------------

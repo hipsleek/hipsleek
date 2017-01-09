@@ -1,0 +1,31 @@
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&((self=null & y=null) | (self!=null & y!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+!!! formula1: emp&((self=null & n=0) | (1<=n & self!=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&n=0 & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], 1<=n),
+([], self=null & n=0)])
+Entailing lemma one3: Fail. INCONSISTENCY : expected failure but success instead
+
+!!! fixpoint:[]
+: no residue 
+Stop Omega... 30 invocations 
+SAT Count   : 1066
+SAT % Hit   : 91.83%
+IMPLY Count : 130
+IMPLY % Hit : 66.92%
+Time(cache overhead) : 0.12913 (seconds)
+
+!!! log(small):(1.93336,1268)
+Total verification time: 0.479775 second(s)
+	Time spent in main process: 0.434852 second(s)
+	Time spent in child processes: 0.044923 second(s)
+

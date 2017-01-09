@@ -1,0 +1,58 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+HeapPred U(node x).
+HeapPred GP_153(node x,node@NI b).
+
+// from ex21d1.slk
+
+relAssume //(1)
+U(q_152)&q_146!=null |#| true --> GP_153(q_152,q_146).
+ 
+relAssume //(2)
+q_146::node<Anon_151,q_152>@M * GP_153(q_152,q_146)&
+    q_146!=null |#|  true --> U(q_146).
+
+relAssume //(3)
+emp&flted_22_138=null |#| true --> U(flted_22_138).
+
+
+print relAssumes. // To add hprel type
+
+//shape_add_dangling [U,GP_153].
+
+//print relAssumes.
+
+shape_simplify [U,GP_153].
+
+print relAssumes.
+
+//shape_unfold [U].
+//shape_unfold [GP_153].
+shape_unfold [U,GP_153].
+
+print relAssumes.
+
+shape_merge [U,GP_153].
+
+print relAssumes.
+
+shape_simplify [U,GP_153].
+
+print relAssumes.
+
+/*
+# ex20d.slk
+
+ [fold emp&flted_22_138=null
+        or (htrue) * flted_22_138::node<Anon_33,q_34>@M * U(q_152)&
+           q_34=q_152 & flted_22_138!=null
+         |#| htrue --> U(flted_22_138); 
+   fold U(q_152)&q_146!=null |#| htrue --> GP_153(q_152,q_146)]
+
+
+*/
+

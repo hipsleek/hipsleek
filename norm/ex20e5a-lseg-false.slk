@@ -1,0 +1,48 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next#REC;	
+}.
+
+HeapPred P(node x,node@NI y).
+HeapPred HP(node x,node@NI y,node@NI z).
+HeapPred K(int x,node y,node z).
+
+infer[P,HP
+  ,@classic
+  ] 
+ HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
+print residue.
+
+/*
+ <1>x::node<val_48_1600,n'>@M&x!=p&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [HP(n',p@NI,x@NI)&x!=p |#| x::node<val_48_1600,n'>@M&
+                   true --> P(n',p@NI)&true]
+[[ InferUnfold ]]
+*/
+
+
+infer[P,HP,K
+  //,@classic
+ ] K(v,p,x)*
+ HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
+print residue.
+/*
+# ex20e5a (with @classic)
+
+infer[P,HP,@classic] 
+ HP(n',p,x) * x::node<val_48_1600,n'> & x!=p |- P(n',p).
+
+# if @classic present, can we use:
+
+   P(n',p) <- HP(n',p,x) * x::node<val_48_1600,n'> & x!=p 
+
+*/
+
+
+infer[P,HP,K,@classic
+ ] K(v,p,x)  & MayLoop |- emp & MayLoop.
+print residue.

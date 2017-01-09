@@ -1,0 +1,18 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) residue must not contain v
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+print residue.
+
+/*
+
+INPUT 0: [][] 
+ ### ante =  y::node<Anon_12,Anon_13>@w&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[a; b](ex)[](exists v_20: y::node<a,b>@v_20&
+   {FLOW,(20,21)=__norm#E}[]
+
+*/

@@ -1,0 +1,23 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>H(b1)&1<=a1 & R1(a1)&{FLOW,(3,4)=__norm}[]
+ inferred pure: [true]
+ inferred rel: [RELASS [R1]: ( R1(a1)) -->  1<=a1]
+[[ SEARCH ==>  Match(x,x) ==> ]]
+
+Stop Omega... 15 invocations 
+SAT Count   : 13
+SAT % Hit   : 46.15%
+IMPLY Count : 9
+IMPLY % Hit : 55.55%
+Time(cache overhead) : 0.001028 (seconds)
+
+!!! log(small):(0.025509,38)
+Total verification time: 0.066372 second(s)
+	Time spent in main process: 0.049482 second(s)
+	Time spent in child processes: 0.01689 second(s)
+

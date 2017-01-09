@@ -1,0 +1,14 @@
+data cell{
+ int fst;
+ int snd;
+}.
+
+infer[v,w] x::cell<_@M,_@M> |- x::cell<_@M,_@A>.
+
+
+/*
+  normalization rules:
+  
+
+*/
+

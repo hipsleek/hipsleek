@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "demo/mcf-1.slk", line 44, characters 47-48
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.057985 second(s)
+	Time spent in main process: 0.043401 second(s)
+	Time spent in child processes: 0.014584 second(s)
+

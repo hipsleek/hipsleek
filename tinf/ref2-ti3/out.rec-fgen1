@@ -1,0 +1,66 @@
+
+!!!Full processing file "examples/rec-fgen1.ss"
+Parsing file "examples/rec-fgen1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int~int... 
+Procedure f$int~int SUCCESS.
+
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume res=v_int_14_1142' & v_int_14_1142'=k' & n'<k' & n<k & k'=k & 
+n'=n & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1246=1+
+n' & v_int_14_1246<k' & 
+k'<=k' & fpost_1138(v_int_14_1246,k') & fpost_1137(k',k') --> fpost_1138(n,k).
+
+ termAssume res=v_int_14_1142' & n'<k' & n<k & k'=k & n'=n & 
+!(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & v_int_14_1142'=1+n' & 
+k'<=v_int_14_1142' & fpost_1137(v_int_14_1141',k') & fpost_1137(v_int_14_1142',k') --> fpost_1138(n,k).
+
+ termAssume k'<=n' & k<=n & k'=k & n'=n & v_bool_13_1143' & k'<=n' & 
+v_bool_13_1143' & res=n' --> fpost_1137(n,k).
+
+ termAssume k'<=v_int_14_1141' & v_int_14_1141'=k' & v_int_14_1246<k' & 
+v_int_14_1246=1+n' & !(v_bool_13_1143') & n'<k' & !(v_bool_13_1143') & 
+n'=n & k'=k & n<k & n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+
+ termAssume k'<=v_int_14_1141' & v_int_14_1141'=1+n' & !(v_bool_13_1143') & 
+n'<k' & !(v_bool_13_1143') & n'=n & k'=k & n<k & 
+n'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1141',k').
+
+ termAssume n'<k' & n<k & k'=k & n'=n & !(v_bool_13_1143') & n'<k' & 
+!(v_bool_13_1143') & v_int_14_1140'=1+n' & 
+v_int_14_1140'<k' & fpre_0(n,k) --> fpre_0(v_int_14_1140',k').
+
+ termAssume n'<k' & n<k & k'=k & n'=n & !(v_bool_13_1143') & n'<k' & 
+!(v_bool_13_1143') & v_int_14_1140'=1+n' & 
+k'<=v_int_14_1140' & fpre_0(n,k) --> fpre_0(v_int_14_1140',k').
+
+
+Base/Rec Case Splitting:
+[	f: [[5] k<=n@B,[6] n<k@R]
+]
+Termination Inference Result:
+f:  case {
+  k<=n -> requires emp & Term[29,1]
+ ensures emp & res=n; 
+  n<k -> requires emp & Term[29,2,-1+(-1*n)+(1*k)]
+ ensures emp & res=k; 
+  }
+
+Termination checking result: SUCCESS
+
+Stop Omega... 16 invocations 
+6 false contexts at: ( (13,12)  (14,7)  (14,20)  (14,18)  (14,16)  (14,14) )
+
+!!! log(small):(0.046565,255)
+Total verification time: 0.385723 second(s)
+	Time spent in main process: 0.34166 second(s)
+	Time spent in child processes: 0.044063 second(s)
+

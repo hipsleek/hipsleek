@@ -1,0 +1,51 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+HeapPred H1(node y).
+
+
+// (30)
+// OK
+infer [y,b] b!=null |- y::node<a,b> * b::ll<m>.
+print residue.
+/*
+Inferred Heap:[ y::node<inf_422,inf_b_423>[Orig], b::ll<inf_428>[Orig][LHSCase]]
+Inferred Pure:[ a=inf_422 & m=inf_428 & inf_b_423=b]
+<1>true & inf_422=a & inf_428=m & b=inf_b_423 & inf_b_423!=null &
+{FLOW,(17,18)=__norm}
+
+
+Entail (30) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>emp&b!=null&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  COND ==>  UnmatchedRHSData ==> ]]
+
+*/
+
+
+infer [y] true |- y::node<a,b> * b::ll<m>.
+print residue.
+
+
+infer [y,a,b] true |- y::node<a,b>.
+print residue.
+
+
+
+infer [y] true |- y::node<_,null>.
+print residue.
+
+/*
+Why y node not inferred?
+
+Entail (4) : Fail.(may) cause:Cannot infer: infer_collect_hp_rel 3b
+Residue:
+ <1>htrue&{FLOW,(4,5)=__norm#E}[]
+[[ COND ==>  UnmatchedRHSData ==> ]]
+*/

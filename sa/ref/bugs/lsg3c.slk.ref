@@ -1,0 +1,64 @@
+Starting Omega...oc
+H is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+
+Entail (2) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+
+Entail (3) : Valid. 
+
+ <1>hfalse&false&{FLOW,(3,4)=__norm}[]
+ inferred pure: [x!=0]
+[[empty]]
+
+
+Entail (4) : Valid. 
+
+ <1>H(x) * x::node<inf>&{FLOW,(3,4)=__norm}[]
+ inferred heap: [x::node<inf_n_39>]
+[[ COND ==>  InferHeap ==>  Match(x,x) ==> ]]
+
+
+Entail (5) : Valid. 
+
+ <1>H(x) * x::node<inf1>&{FLOW,(3,4)=__norm}[]
+ inferred heap: [x::node<inf_n_47>]
+[[ COND ==>  InferHeap ==>  Match(x,x) ==> ]]
+
+
+Entail (6) : Valid. 
+
+ <1>HP_55(n) * x::node<n>&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&true --> x::node<n> * HP_55(n)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (7) : Valid. 
+
+ <1>HP_66(n1) * x::node<n1>&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [H(x)&x!=null --> x::node<n1> * HP_66(n1)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 3 invocations 
+SAT Count   : 34
+SAT % Hit   : 76.47%
+IMPLY Count : 13
+IMPLY % Hit : 69.23%
+Time(cache overhead) : 0.001411 (seconds)
+
+!!! log(small):(0.01597,60)
+Total verification time: 0.072049 second(s)
+	Time spent in main process: 0.057182 second(s)
+	Time spent in child processes: 0.014867 second(s)
+

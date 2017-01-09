@@ -1,0 +1,6 @@
+Starting Omega...oc
+File "slk/termu-2d1.slk", line 9, characters 0-5
+ error: Stream.Error("[cid_list_w_itype] expected after INFER (in [infer_cmd])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+

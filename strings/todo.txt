@@ -1,0 +1,877 @@
+==================================================================
+# bug2.ss
+
+# Is termination proving assumption too strong here?
+# lemma search creates choice! should not be more problem ..
+
+Termination checking result: 
+(55)->(55) (ERR: invalid transition)  Term[100; k-n] ->  MayLoop[]
+
+
+Checking procedure while2$STR~STR... 
+Procedure while2$STR~STR SUCCESS.
+
+
+Termination checking result: 
+(70)->(70) (ERR: invalid transition)  Term[101; k-n] ->  MayLoop[]
+==================================================================
+# ex3.c (FIXED)
+
+Currently translate char* to int*.
+Perhaps, we should use string type?
+
+ char *(cstrcat)(char *s1, const char *s2)
+ /*@ 
+     requires true
+     ensures true;
+ */
+ {
+     char *s = s1;
+     s++;
+     char x = *s2;
+     *s = x;
+     s++;
+     s2++;
+     return s1;
+ }
+
+===>
+
+int_star cstrcat$int_star~int_star(  int_star s1,  int_star s2)static  EBase 
+   htrue&{FLOW,(4,5)=__norm#E}[]
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       htrue&{FLOW,(4,5)=__norm#E}[]
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}[]
+{((int_star s;
+int x);
+{((((((s = s1;
+s = {((int v_int_27_1198;
+v_int_27_1198 = 1);
+__pointer_add__int_star__int__$int_star~int(s,v_int_27_1198))});
+x = bind s2 to (value_28_1199,offset_28_1200) [read] in 
+value_28_1199);
+bind s to (value_29_1201,offset_29_1202) [write] in 
+value_29_1201 = x);
+s = {((int v_int_30_1207;
+v_int_30_1207 = 1);
+__pointer_add__int_star__int__$int_star~int(s,v_int_30_1207))});
+s2 = {((int v_int_31_1212;
+v_int_31_1212 = 1);
+__pointer_add__int_star__int__$int_star~int(s2,v_int_31_1212))});
+ret# s1)})}
+
+{(20,1),(33,2)}
+
+==================================================================
+# bug4.ss -p while2 (FIXED)
+
+void while2(ref str s1,ref str s2)
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n,k> & Term[k-n]
+  ensures s1::WFSeg<k-n,pp>*pp::str<0,qq>*qq::BADS<> 
+  * s2'::str<0,qqq> * qqq::BADS<> & pp=s1'; //
+
+Why is there a performance bug when we used pp=s1'?
+
+Checking procedure while2$str~str... [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 249 invocations Stop Omega... 249 invocations [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 263 invocations Stop Omega... 263 invocations [omega.ml]Timeout when checking sat for 
+10. Restarting Omega after ... 274 invocations Stop Omega... 274 invocations 
+==================================================================
+# ex18a.ss (FIXED)
+
+  requires s::WFS<n,k> & Term[k-n]
+  ensures s::WFSeg<k-n,s'>*s'::str<0,q>*q::BADS<>;
+
+Inferred:
+!!! **pi.ml#775:>>POST:  n1_1372>=0 & m1_1371>=0 & m1_1371=m & n1_1372+n=k
+
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & P(m1_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+         {FLOW,(4,5)=__norm#E}[]]
+
+# Why did s::WFSEg<...> disappeared below?
+  What happen to P(...)??
+
+!!! **pi.ml#831:lst_assume (after norm and postprocess):[]
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,m1_1376,
+         n1_1377: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<m1_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
+
+../hip ex18a-infer-cstrcat-memsafe.ss -dre "elim_heap\|simplify_rel" --dd-calls-all > 1
+../hip ex18a-infer-cstrcat-memsafe.ss -debug dd.log > 1
+
+hg annotate fixpoint.ml -udn fixpoint.ml > 1
+
+
+locle 10295 Thu Dec 19 15:03:09 2013 +0800:   | CF.ViewNode v ->
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     let v_var = v.CF.h_formula_view_node in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:     else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:       if List.exists CP.is_null_const alias then CF.HEmp else
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:           && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1
+ locle 10295 Thu Dec 19 15:03:09 2013 +0800:         in if cond then CF.HEmp else h
+
+
+  | CF.ViewNode v ->
+    let v_var = v.CF.h_formula_view_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x v_var ref_vars && CP.is_unprimed v_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all v_var aset) @ [v_var] in
+      if List.exists CP.is_null_const alias then CF.HEmp else
+        let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                   && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                   && List.length (List.filter (fun x -> x = v_var) heap_vars) <= 1 in 
+        if cond then CF.HEmp else h
+  | CF.DataNode d ->
+    let d_var = d.CF.h_formula_data_node in
+    if Gen.BList.mem_eq CP.eq_spec_var_x d_var ref_vars && CP.is_unprimed d_var then CF.HEmp
+    else
+      let alias = (CP.EMapSV.find_equiv_all d_var aset) @ [d_var] in
+      let cond = (CP.intersect_x (CP.eq_spec_var_x) alias pre_vars = []) 
+                 && not (List.exists (fun x -> CP.is_res_spec_var x) alias)
+                 && List.length (List.filter (fun x -> x = d_var) heap_vars) <= 1
+      in if cond then CF.HEmp else h
+
+# why did elim_heap drop some heap nodes? (FIXED by removing it)
+
+(==mcpure.ml#2282==)
+elim_heap@2@1
+elim_heap inp1 : s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M
+elim_heap inp2 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+elim_heap inp3 :[n,k,m,s,s,n,k,m]
+elim_heap inp4 :[s,n1_1377,s_1373,s',flted_71_1374,q_1375,mmmm_1376]
+elim_heap@2 EXIT: s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M
+
+# why not replace the inferred post-condition?
+  (FIXED: problem is absent in ti_case branch )
+
+(==fixpoint.ml#148==)
+drop_rel_formula@29@28@27
+drop_rel_formula inp1 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+drop_rel_formula@29 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m
+
+(==fixpoint.ml#196==)
+simplify_post_helper@28@27
+simplify_post_helper inp1 : (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+n1_1377: s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+         q_1375::BADS<mmmm_1376>@M&
+flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m&
+{FLOW,(4,5)=__norm#E}[]
+simplify_post_helper inp2 :[P]
+simplify_post_helper@28 EXIT:( s::WFSeg<n1_1377,s_1373>@M * s'::str<flted_71_1374,q_1375>@M * 
+ q_1375::BADS<mmmm_1376>@M, flted_71_1374=0 & s_1373=s' & n<=k & 0<=m,[ true],[])
+
+==================================================================
+# ex18a.ss --esl
+
+
+Why did explore branch has an expensive pairwise?
+
+!!! log(small):(0.785025,541)
+!!! log(big)(>0.5s)(1):(2.152736,[(pairwise,2.152736)])
+Total verification time: 1.778222 second(s)
+	Time spent in main process: 0.452301 second(s)
+	Time spent in child processes: 1.325921 second(s)
+	Time for logging: 0.095004 second(s)
+
+# why was it named CACHED and not Omega?
+
+ id: 438<25; prover : CACHED ; TIME: 1.555878; loc: ex18a-infer-cstrcat-memsafe_ss_76:4_76:13; kind: POST
+ raw proof:PAIRWISE:pairwisecheck {[Anon_12, flted_27_1427, v_1428, n, k_1425, k, m_1426, m, v, flted_71_1369, flted_71_1457, n_1446, k_1447, m_1448, memo_rel_hole_1472, v_bool_74_1319PRMD, v_1461, n1_1372, q_1441, q, q_1429, q_1458, mmmm_1459, s_1445, q_1370, mmmm_1371, n1_1460, q_1462, sPRMD, s] : ((((((((((((((((((((Anon_12 = v_1461) & (flted_27_1427 = n_1446)) & (v_1428 = v_1461)) & (n + 1 = n_1446)) & (k_1425 = k_1447)) & (k = k_1447)) & (m_1426 = m_1448)) & (m = m_1448)) & (s = s_1445)) & (v = v_1461)) & (flted_71_1369 = 0)) & (flted_71_1457 = 0)) & (n_1446 <= k_1447)) & (0 <= m_1448)) & (memo_rel_hole_1472 > 0)) & (v_bool_74_1319PRMD > 0)) & (1 <= v_1461)) & (((((((((((((n1_1460 = 0) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (q_1370 > 0)) & (1 <= mmmm_1371)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (1 <= n1_1460)) & (q_1462 > 0)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((q_1458 = q_1370) & (mmmm_1459 = mmmm_1371)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (n1_1460 = 0)) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((q_1370 = 0) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (n1_1460 = 0)) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (1 <= n1_1460)) & (q_1462 > 0)) & (s_1445 > 0)) & (s_1445 < sPRMD)) | (((((((((((((n1_1460 = 0) & (n1_1372 = 1)) & (q_1462 = sPRMD)) & (q_1441 = sPRMD)) & (q = sPRMD)) & (q_1429 = sPRMD)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (sPRMD > 0)) & (sPRMD < s_1445)) | (((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1370 = 0)) & (q_1458 = 0)) & (mmmm_1371 = 0)) & (mmmm_1459 = 0)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (1 <= n1_1460)) & (q_1462 > 0)) | ((((((((((((n1_1372 = 1 + n1_1460) & (q_1441 = q_1462)) & (q = q_1462)) & (q_1429 = q_1462)) & (q_1458 = q_1370)) & (mmmm_1459 = mmmm_1371)) & (sPRMD > 0)) & (sPRMD < s_1445)) & (q_1370 > 0)) & (1 <= mmmm_1371)) & (1 <= n1_1460)) & (q_1462 > 0)))))))))) & (sPRMD != s)))};
+
+==================================================================
+# ex18a.ss -dre "drop_rel" 
+
+# ex18a.ss
+
+# Parameter re-arrangment for fixcalc.
+  Need to reverse it..
+
+!!! rels(b4)::[ PPP(mmmm_1371,n1_1372,n,k,m)]
+!!! pfs(b4)::[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+!!! rels(af)::[ PPP(n,k,m,mmmm_1371,n1_1372)]
+!!! pfs(af)::[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+(==fixcalc.ml#1501==)
+arrange_para_new@1
+arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+arrange_para_new inp2 :[n,k,m,s]
+arrange_para_new@1 EXIT:[( PPP(n,k,m,mmmm_1371,n1_1372),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+(==fixcalc.ml#1475==)
+arrange_para_new@1
+arrange_para_new inp1 :[( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+arrange_para_new inp2 :[n,k,m,s]
+arrange_para_new@1 EXIT:[( PPP(n,k,m,mmmm_1371,n1_1372),[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+# Why are the parameters wrongly ordered?
+
+!!! **fixcalc.ml#1409:input_pairs(b4): :
+     [( PPP(mmmm_1371,n1_1372,n,k,m),[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+!!! **fixcalc.ml#1420:input_pairs(af): :
+     [( PPP(n,k,m,mmmm_1371,n1_1372),[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(n_1446,k,m,mmmm_1371,n1_1460), n1_1372=0 & k=n & mmmm_1371=m & 0<=m])]
+
+!!! **fixpoint.ml#149:triples:[( P(n,k,m,mmmm_1371,n1_1372), n1_1372>=0 & mmmm_1371>=0 & mmmm_1371=m & n1_1372+n=k, true)]
+!!! **cpure.ml#10531:subs_rel_formula : : P(mmmm_1376,n1_1377,n,k,m)
+
+# can we use subst_inferred_rel instead?
+
+(==fixpoint.ml#149==)
+drop_rel_formula@28@27
+drop_rel_formula inp1 : flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 0<=m
+drop_rel_formula@28 EXIT: flted_71_1374=0 & true & s_1373=s' & n<=k & 0<=m
+
+(==fixpoint.ml#239==)
+drop_rel_formula@29@27
+drop_rel_formula inp1 : MayLoop[]
+drop_rel_formula@29 EXIT: MayLoop[]
+
+(==fixpoint.ml#239==)
+drop_rel_formula@30@27
+drop_rel_formula inp1 : true
+drop_rel_formula@30 EXIT: true
+
+(==pi.ml#833==)
+simplify_relation@27
+simplify_relation inp1 : EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & P(mmmm_1376,n1_1377,n,k,m) & s_1373=s' & n<=k & 
+         0<=m&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( P(n,k,m,mmmm_1371,n1_1372), n1_1372>=0 & mmmm_1371>=0 & mmmm_1371=m & n1_1372+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@27 EXIT:( EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[],[])
+
+!!! **pi.ml#835:new_specs2:
+[ EInfer [P]
+   EBase 
+     exists (Expl)[](Impl)[n; k; m](ex)[]s::WFS<n,k,m>@M&
+     {FLOW,(4,5)=__norm#E}[]
+     EBase 
+       emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+       EAssume 
+         ref [s]
+         (exists s_1373,flted_71_1374,q_1375,mmmm_1376,
+         n1_1377: s::WFSeg<n1_1377,s_1373>@M * 
+                  s'::str<flted_71_1374,q_1375>@M * q_1375::BADS<mmmm_1376>@M&
+         flted_71_1374=0 & s_1373=s' & n<=k & 0<=m&{FLOW,(4,5)=__norm#E}[]]
+
+==================================================================
+# ex18a <in ti_case branch)
+
+simplify_relation@30@29@28@27
+simplify_relation inp1 : EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s::WFSeg<n1,s_76>@M * s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & PPP(mmmm,n1,n,k,m) & s_76=s'&{FLOW,(4,5)=__norm#E}[]
+simplify_relation inp2 :Some([( PPP(n,k,m,mmmm,n1), n1>=0 & m=mmmm & n1+n=k, true)])
+simplify_relation inp3 :lst_assume:[]
+simplify_relation@30 EXIT:( EAssume 
+   ref [s]
+   (exists s_76,flted_71_75,q,mmmm,
+   n1: s'::str<flted_71_75,q>@M * q::BADS<mmmm>@M&
+   flted_71_75=0 & s_76=s' & n1>=0 & m=mmmm & n1+n=k&{FLOW,(4,5)=__norm#E}[],[ true])
+==================================================================
+# ex18a.ss -dre arrange_para\|re_order_\|.*para_of_pure
+
+(==fixcalc.ml#1224==)
+re_order_new@3@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1372, n, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@3 EXIT:[ n, k, m, mmmm_1371, n1_1372]
+
+(==fixcalc.ml#1251==)
+re_order_para@2@1
+re_order_para inp1 :[ PPP(mmmm_1371,n1_1372,n,k,m)]
+re_order_para inp2 :[[ PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371, n1_1372=0 & k=n & mmmm_1371=m & 0<=m]]
+re_order_para inp3 :[n,k,m,s]
+re_order_para@2 EXIT:([ PPP(n,k,m,mmmm_1371,n1_1372)],[[ 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m), n1_1372=0 & k=n & mmmm_1371=m & 0<=m]])
+
+# why PPP(...) not changed?
+
+(====)
+re_order_new@5@4@2@1
+re_order_new inp1 :[ mmmm_1371, n1_1460, n_1446, k, m]
+re_order_new inp2 :[false,false,true,true,true]
+re_order_new@5 EXIT:[ n_1446, k, m, mmmm_1371, n1_1460]
+
+(==fixcalc.ml#1232==)
+arrange_para_of_pure@4@2@1
+arrange_para_of_pure inp1 : PPP(mmmm_1371,n1_1460,n_1446,k,m) & 0<=n1_1460 & 0<=m & n_1446<=k & 
+ n=n_1446-1 & n1_1372=n1_1460+1 & 0<=mmmm_1371
+arrange_para_of_pure inp2 :PPP
+arrange_para_of_pure inp3 :[false,false,true,true,true]
+arrange_para_of_pure@4 EXIT: 0<=n1_1460 & 0<=m & n_1446<=k & n=n_1446-1 & n1_1372=n1_1460+1 & 
+ 0<=mmmm_1371 & PPP(mmmm_1371,n1_1460,n_1446,k,m)
+
+# no change in PPP(mmmm_1371,n1_1460,n_1446,k,m)
+==================================================================
+# hip string/ex18a-infer-cstrcat-memsafe.ss
+
+parser problem to be fixed by Toan/Muoi
+
+Parsing file "todo.txt" by default parser...
+File "todo.txt", line 1, characters 0-2
+ --error: Stream.Error("illegal begin of hip_with_option")
+ at:
+!!! **main.ml#1161:WARNING : Logging not done on finalizecaught
+
+Exception occurred: Stream.Error("illegal begin of hip_with_option")
+Error3(s) detected at main 
+
+[4]+  Done                    ../hip ex18a-infer-cstrcat-memsafe.ss e todo.txt
+==================================================================
+# ex19a1.ss (FIXED by Muoi)
+
+  how to handle pointer arithmetic?
+
+char_star plus_plus_char(char_star x)
+  requires x::char_star<_,q>@L & Term[]
+  ensures  res=q & q=x+1;
+
+Last Proving Location: ex19a-cstrcat-mv.ss_22:0_24:25
+
+ERROR: at ex19a-cstrcat-mv.ss_24:23_24:24
+Message: TYPE ERROR 1 : Found int but expecting char_star
+
+!!! **main.ml#1177:WARNING : Logging not done on finalize
+Stop Omega... 49 invocations caught
+
+Exception occurred: Failure("TYPE ERROR 1 : Found int but expecting char_star")
+Error3(s) detected at main 
+
+==================================================================
+# ex19b.s --pip (FIXED)
+
+# should use char_star instead of int_star
+# also instead of
+    s = (104, ):__pointer_add__int_star__int__(s, 1)}
+  need to generate
+    s = (104, ):__plus_plus_char(s)}
+
+int_star cstrcat(int_star s1)[]
+static EInfer [HP_14,GP_15] EBase: [][](HRel HP_14(s1)) * ([] & true)( FLOW __norm) {EAssume: 2,:(HRel GP_15(s1,res)) * ([] & true)( FLOW __norm)}
+dynamic EBase: [][](hfalse) * ([] & false)( FLOW __false) 
+{
+{local: int_star s
+int_star s
+{s = s1
+ while (true) 
+ 
+{
+{(99, ):if (member access s~~>value != 0) { 
+  (99, ):;
+} else { 
+  (99, ):(100, ):break 
+}
+s = (104, ):__pointer_add__int_star__int__(s, 1)}
+}
+(105, ):return s1}}
+}
+==================================================================
+# ex8d.slk
+
+void while1(ref str s)
+  requires s::WFS<> 
+  ensures s::WFSeg<s'>*s'::str<0,q>*q::BADS<>;
+{
+  int x=getChar(s);
+  if (x!=0) {
+    s = incStr(s);
+    while1(s);
+  }
+}
+
+Can shape infer handle this using
+ infer [P,Q]
+ requires P(s)
+ ensures Q(s,s');
+
+==================================================================
+# ex8b.ss --esl (explore2) (FIXED with subs hole prior to xpure)
+
+Got a TNT error for:
+
+  requires s1::str<_,q>*q::BADS<> * s2::WFS<n>@L & Term[n]
+  ensures s1::WFSeg<n,s1a>*s1a::str<0,ppp>*ppp::BADS<> & s1'=ppp;
+
+Termination checking result: 
+(83)->(95) (MayTerm ERR: not bounded)[n]
+
+However, there does not seem to be any logging of TNT-related
+sleek proofs. 
+==================================================================
+# ex5a.slk -dre "arith_simpl"
+
+checkentail b>=1 & aaa=1*2+3-1 |- aaa*b>=1.
+print residue.
+
+Need to change arithmetic simplify.
+Below was required for mona formual to eliminate
+- operator.
+
+arith_simplify LHS@1
+arith_simplify LHS inp1 : b>=1 & aaa=((1*2)+3)-1
+arith_simplify LHS@1 EXIT: 1<=b & aaa+1=2+3
+========================================================
+# ex5a.slk -dre "do_all"
+
+# do_all_eq and do_all3_eq are for more aggressive reduction
+ of constants for equalities. It could be further improved.
+
+(====)
+do_all_eq@2@1
+do_all_eq inp1 : aaa
+do_all_eq inp2 : ((1*2)+3)-1
+do_all_eq@2 EXIT:( aaa+1, 2+3)
+
+==================================================================
+# ex5a.slk (FIXED by Andreea)
+
+# must subs hole before calling xpure..
+
+@11! **solver.ml#8231:estate_orig:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+@11! **solver.ml#8232:curr_lhs_h0: Hole[45]
+@11! **solver.ml#8233:curr_lhs_h0: Hole[45]
+(==solver.ml#8248==)
+xpure_heap#9@12@11
+xpure_heap#9 inp1 : Hole[45]
+xpure_heap#9 inp2 : true
+xpure_heap#9 inp3 :1
+xpure_heap#9@12 EXIT:( true,[], [])#true
+
+(==solver.ml#7619==)
+heap_entail_empty_rhs_heap#1@11
+heap_entail_empty_rhs_heap#1 inp1 :es:
+  Hole[45]&{FLOW,(20,21)=__norm#E}[]
+ es_evars: [nnn_44]
+ es_rhs_eqset: [nnn:nnn; nnn:nnn]
+ es_crt_holes: [x::WFS<nnn>@L:45]
+ es_trace:  COND ==>  Match(x,x)
+heap_entail_empty_rhs_heap#1 inp2 :lhs: Hole[45]&{FLOW,(20,21)=__norm#E}[]
+heap_entail_empty_rhs_heap#1 inp3 :rhs: 0<=nnn & nnn=nnn
+heap_entail_empty_rhs_heap#1 inp4 :is_folding:false
+heap_entail_empty_rhs_heap#1@11 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: logical bug
+   fe_locs: {
+     fc_message:  true |-  0<=nnn. LOCS:[0;12] (may-bug)
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  Match(x,x)]]
+ CEX:false
+==================================================================
+# strings/ex8d6.slk --pcp
+
+printing problem .. (FIXED)
+
+  base case: 
+  v=0->v=0 & self!=nullview_complex_inv: None
+  prune branches: ,[]
+  prune conditions: 
+    {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+Expecting:
+
+  base case: {v=0->v=0 & self!=null}
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+# Why no direct unfolding?
+
+==================================================================
+# strings/ex8d6.slk --pcp (FIXED)
+           by requiring base cases to be emp or true
+
+# Not a valid base-case if primitive predicate present..
+
+pred H1<v> == self::str<v2,q>*q::H1<v2> & v!=0
+   or self::D<> & v=0
+  inv self!=null.
+
+  base case: {v=0->v=0 & self!=null}
+
+# base-case unfold should only be for emp base-cases ..
+
+(====)
+compute_base_case_part@2@1
+compute_base_case_part inp1 : (* lbl: *){2}->(exists v2_13,q,
+v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@2 EXIT:([],[ vvv!=0 & self!=null])
+
+(==omega.ml#1151==)
+compute_base_case_part@3@1
+compute_base_case_part inp1 : (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case_part@3 EXIT:([ vvv=0 & self!=null],[])
+
+(==cvutil.ml#1167==)
+compute_base_case@1
+compute_base_case inp1 :H1
+compute_base_case inp2 : (* lbl: *){2}->(exists v2_13,q,
+ v2: (* lbl: *){2}->self::str<v2,q>@M * q::H1<v2_13>@M&vvv!=0 & v2_13=v2&
+ {FLOW,(1,26)=__flow#E}[]
+ (* lbl: *){3}->self::D<>@M&vvv=0&{FLOW,(1,26)=__flow#E}[]
+compute_base_case inp3 :[self,vvv]
+compute_base_case@1 EXIT:Some( vvv=0)
+
+==================================================================
+# strings/ex8d6.slk --pcp (FIXED by Loc)
+
+checkentail q::H1<v> & v=0  |- q::D<>.
+print residue.
+
+# How can this be a must failure?
+# Should we force an unfolding, but will this go into a loop?>
+
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Residue:
+ MustErr Context: 
+   fe_kind: MUST
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ COND ==>  BaseCaseUnfold]]
+ CEX:true
+==================================================================
+# ex8e4.ss (FIXED)
+
+ERROR: at _0:0_0:0
+Message: Can not find flow of str
+
+ERROR: at ex8e3-verify-shape.ss_79:5_79:14
+Message: gather_type_info_var : unexpected exception Failure("Can not find flow of str")g
+
+# Why type error for below?
+
+D<> == true;
+// pred_prim D<> inv self!=null;
+
+# Why WAITS occur twice?
+
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2137:XXX:0v.view_name:WAIT
+!!! **iast.ml#2137:XXX:0v.view_name:memLoc
+!!! **iast.ml#2137:XXX:0v.view_name:WAITS
+!!! **iast.ml#2155:XXX:view:WAIT
+!!! **iast.ml#2156:XXX:a:[WAIT]
+!!! **iast.ml#2155:XXX:view:memLoc
+!!! **iast.ml#2156:XXX:a:[memLoc]
+
+==================================================================
+# strings/ex8e6.slk --pcp (FIXED)
+
+# Should we force an unfolding, but will this go into a loop?>
+
+(==context.ml#1731==)
+process_one_match_accfold@3@2@1
+process_one_match_accfold inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match_accfold inp2 :lhs_h: q::H1<v>@M
+process_one_match_accfold inp3 :lhs_p: v=0
+process_one_match_accfold inp4 :rhs_p: true
+process_one_match_accfold@3 EXIT:[]
+
+(==mcpure.ml#2282==)
+process_one_match@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: q::H1<v>@M
+ RHS: q::D<>@M
+ lhs_rest: emp
+ rhs_rest: emp
+process_one_match inp2 :lhs_h: q::H1<v>@M
+process_one_match inp3 :lhs_p: v=0
+process_one_match inp4 :rhs_node: q::D<>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@2 EXIT: Prio:1
+ COND =>[
+  Prio:3
+  BaseCaseUnfold =>
+  ]
+
+==================================================================
+# ex8e4.slk -dre "incr_fixpt_view" (FIXED)
+
+# bug with proc below..
+
+!!! **iast.ml#2142:XXX:0v.view_name:WAITS
+!!! **iast.ml#2160:XXX:view:WAIT
+!!! **iast.ml#2161:XXX:a:[WAIT]
+!!! **iast.ml#2160:XXX:view:memLoc
+!!! **iast.ml#2161:XXX:a:[memLoc]
+(==astsimp.ml#2575==)
+incr_fixpt_view@1
+incr_fixpt_view inp1 :[__Exc,__Error,__MayError,__Fail,int_ptr_ptr,int_ptr,lock,barrier,thrd,__RET,__ArrBoundErr,__DivByZeroErr,Object,String,str]
+incr_fixpt_view inp2 :[WAITS,WAIT,memLoc,DDD]
+incr_fixpt_view@1 EXIT:WAITS
+            p_86](ex)[](* lbl: *){11}->(exists n_87: (* lbl: *){11}->
+            self::node<Anon_85,p_86>@M * p_86::llN<n_87>@M&
+            self!=null & n=n_87+1 & 0<=n_87&{FLOW,(1,26)=__flow#E}[]
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], 1<=n & self!=null),([], self=null & n=0)]
+
+# Why true? Can we get n>=0 from baga inv computation?
+
+==================================================================
+# ex9e2.slk
+
+Given:
+
+pred llN<n:int> == extends ll<> with size[REC]<n> .
+pred ll_one_exN<n:int> == extends ll_one_ex<> with size[REC]<n> .
+
+# Where is llN? Where did beloe come from?
+
+llN: extend ll to size
+
+# It seems that only the last command is derived.
+
+ view ll_one_exN{}[]<n:int>= 
+  view_domains: (size,0,1)
+   view ll_one_exN<n:int>= 
+    EList
+      :EBase 
+         exists (Expl)[](Impl)[Anon_110; 
+         q_111](ex)[](* lbl: *){12}->(exists n_112: (* lbl: *){12}->self::node<Anon_110,q_111>@M * 
+                                                                    q_111::lln<n_112>@M&
+         n=n_112+1 & 0<=n_112&{FLOW,(1,26)=__flow#E}[]
+==================================================================
+# ex12c.ss
+
+# Why the use of ' var caused problem?
+
+checkentail x::str<w,q>*q::WFSeg<s2>*s2::str<0,p>
+            |- x::WFSeg<s2>*s2::str<0,p>.
+
+WARNING: _0:0_0:0:* between overlapping heaps: ( x::str<v,q>@M, yyy'::str<flted_12_36,p>@M)
+
+Entail 1: Valid. 
+
+Residue:
+
+ <1>hfalse&false&{FLOW,(20,21)=__norm#E}[]
+
+
+# Why wasn't false counted?
+
+0 false contexts at: ()
+==================================================================
+# ex12e.ss
+
+checkentail x::str<yyy,_> |- x::str<yyy,_> .
+
+# Why is yyy_19 implicit & existential???
+
+ x::str<yyy,Anon_12>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[Anon_13; 
+   yyy_19](ex)[](exists yyy_19: x::str<yyy_19,Anon_13>@M&yyy_19=yyy&
+   {FLOW,(20,21)=__norm#E}[]
+
+(==astsimp.ml#8591==)
+linearize_heap@4
+linearize_heap inp1 :[]
+linearize_heap inp2 :emp ; (emp ; (x::str{}<yyy,Anon_13>@M[HeapNode1]))
+linearize_heap@4 EXIT:[(Anon_13,)][(yyy_19,)]x::str{}<yyy_19,Anon_13>@M[HeapNode1]&&$yyy_19 = yyy
+
+(==astsimp.ml#7282==)
+linearize_formula@5
+linearize_formula inp1 :view_decls:[]
+linearize_formula inp2 :(x::str{}<yyy_19,Anon_13>@M[HeapNode1]) * ([] & yyy_19 = yyy)( FLOW __norm)
+linearize_formula inp3 :[(yyy:16:int)(TVar__23:23:int)(yyy_19:20:int)(TVar__22:22:int)(Anon_13:21:str)(x:15:str)(Anon_full_perm:18:float)(Anon_12:17:str)]
+linearize_formula@5 EXIT:( x::str<yyy_19,Anon_13>@M&yyy_19=yyy&{FLOW,(20,21)=__norm#E}[],
+ qvars::[])
+==================================================================
+# ex12d.ss (FIXED)
+
+# partially fixed primed vars
+
+# why is yy_17 not classified as EX, rather than IMPL
+
+run_infer:
+ x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[] [] |-  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+==================================================================
+# ex12a2.ss 
+
+Why isn't ss implicit?
+
+   exists (Expl)[](Impl)[p](ex)[]s::WFS<p>@M&{FLOW,(4,5)=__norm#E}[]
+   EBase 
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}[]
+     EAssume 
+       ref [s]
+       (exists p_62,flted_31_61,
+       ss: s::WFSeg<ss>@M * ss::str<flted_31_61,p_62>@M&
+       flted_31_61=0 & ss=s' & p_62=p&{FLOW,(4,5)=__norm#E}[]
+==================================================================
+# ex12d1.slk (FIXED)
+
+# why is yyy_17 not classified as EX, rather than IMPL
+
+INPUT 0: [][] 
+ ### ante =  x::str<yyy',aaa>@M&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+---
+
+(==sleekengine.ml#1291==)
+struc_formula_trans_heap_node@2
+struc_formula_trans_heap_node inp1 : EBase 
+   exists (Expl)[](Impl)[bbb](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&
+   yyy_17=yyy'&{FLOW,(20,21)=__norm#E}[]
+struc_formula_trans_heap_node@2 EXIT: EBase 
+   exists (Expl)[](Impl)[bbb; 
+   yyy_17](ex)[](exists yyy_17: x::str<yyy_17,bbb>@M&yyy_17=yyy'&
+   {FLOW,(20,21)=__norm#E}[]
+
+==================================================================
+# ex12c2.slk (FIXED)
+
+# Why is flted_13_43 marked implicit but hidden under exists?
+
+INPUT 0: [][] 
+ ### ante =  x::str<v,q>@M * q::WFSeg<yyy'>@M * yyy'::str<flted_12_31,p>@M&
+flted_12_31=0 & 0<v&{FLOW,(20,21)=__norm#E}[]
+ ### conseq =  EBase 
+   exists (Expl)[](Impl)[zz; flted_13_43](ex)[](exists p_44,
+   flted_13_43: x::WFSeg<zz>@M * zz::str<flted_13_43,p_44>@M&
+   flted_13_43=0 & zz=yyy' & p_44=p&{FLOW,(20,21)=__norm#E}[]
+==================================================================
+--old-impl-gather (issues)
+All test results were as expected.
+Total verification time: 51.04 second
+	Time spent in main process: 34.64 second
+	Time spent in child processes: 16.40 second
+	Number of false contexts: 90
+
+without
+-------
+Total number of errors: 2 in files:
+  classic/classic1a.slk({E15#Valid}) classic/classic1b.slk({E15#Valid}).
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+# ex3-string-simple.c
+
+# Why precondition in method __write_char$char_star~int failed?
+
+# prelude.ss
+void __write_char(char_star x, int v)
+  requires x::char_star<_,_>@L & Term[]
+  ensures x::char_star<v,_>;
+
+Checking procedure cstrcat$char_star~char_star... 
+Proving precondition in method __write_char$char_star~int Failed.
+  (may) cause: do_unmatched_rhs : s'::char_star<Anon_26,Anon_27>@L(may)
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================
+==================================================================

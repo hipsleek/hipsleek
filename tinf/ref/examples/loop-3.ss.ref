@@ -1,0 +1,37 @@
+
+!!!Full processing file "examples/loop-3.ss"
+Parsing file "examples/loop-3.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+Checking procedure f$int... 
+
+*****************************
+*** TERMINATION INFERENCE ***
+*****************************
+Temporal Assumptions:
+ termAssume x'<=0 & x'=x & v_bool_10_1126' & x'<=0 & 
+v_bool_10_1126' --> fpost_1122(x).
+
+ termAssume 0<x' & x'=x & !(v_bool_10_1126') & 0<x' & 
+!(v_bool_10_1126') & fpre_0(x) --> Loop.
+
+
+Base/Rec Case Splitting:
+[	f: [[2] x<=0@B]
+]
+Termination Inference Result:
+f:  case {
+  x<=0 -> requires emp & Term[31,1]
+ ensures emp & true; 
+  }
+
+Termination checking result: SUCCESS
+
+
+3 false contexts at: ( (13,4)  (13,10)  (13,6) )

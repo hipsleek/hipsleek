@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "bugs/sll-dll2b.slk", line 24, characters 10-12
+ error: Stream.Error("CONSTR or REL_GUARD expected after [meta_constr] (in [relassume_cmd])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.052429 second(s)
+	Time spent in main process: 0.037637 second(s)
+	Time spent in child processes: 0.014792 second(s)
+

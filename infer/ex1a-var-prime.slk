@@ -1,0 +1,51 @@
+infer [aaa,aaa'] true |- aaa=aaa'.
+print residue.
+
+/*
+# ex1a.slk --print-type --pcp
+
+It seems primed inferred var passed as 
+    SpecVar("aaa'",Unprimed)
+rather than  SpecVar("aaa",Primed)
+
+INPUT 0: [][aaa:TVar[13],aaa':void] 
+ ### ante =  htrue&{FLOW,(4,5)=__norm#E}[]
+ ### conseq =  EBase emp&aaa:TVar[13]=aaa#':TVar[13]&{FLOW,(4,5)=__norm#E}[]
+
+
+====================================================================
+
+
+infer [aaa,aaa'] true |- aaa=aaa'.
+print residue.
+
+(==infer.ml#1570==)
+infer_pure_m_1@4@3@2
+infer_pure_m_1 inp1 :estate :( pr_entail_state_shorthtrue&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [aaa; aaa'],[aaa,aaa'])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : true
+infer_pure_m_1 inp4 :rhs xpure : aaa=aaa'
+infer_pure_m_1 inp5 :inf vars :[aaa,aaa']
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,None,[])
+
+
+# above is wrong; the correct answer can be seen
+in ex1b.slk
+
+infer [bbb,bbbp] true |- bbb=bbbp.
+print residue.
+
+(==infer.ml#1570==)
+infer_pure_m_1@4@3@2
+infer_pure_m_1 inp1 :estate :( pr_entail_state_shorthtrue&{FLOW,(4,5)=__norm#E}[]
+  es_heap:emp
+  es_infer_vars: [bbb; bbbp],[bbb,bbbp])
+infer_pure_m_1 inp2 :lhs xpure : true
+infer_pure_m_1 inp3 :lhs xpure0 : true
+infer_pure_m_1 inp4 :rhs xpure : bbb=bbbp
+infer_pure_m_1 inp5 :inf vars :[bbb,bbbp]
+infer_pure_m_1@4 EXIT:(new es,inf pure,rel_ass) :(None,Some( bbbp=bbb),[])
+
+*/

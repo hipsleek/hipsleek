@@ -1,0 +1,39 @@
+Starting Omega...oc
+HP_6 is defined.
+HP_6e is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_39(Anon)&x!=v & v!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_6(n)&x!=n & n!=null --> n::node<_,_> * HP_39(Anon)&
+                   true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (2) : Valid. 
+
+ <1>HP_57(Anon2)&x!=v & v!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_6(n)&n!=null --> n::node<_,_> * HP_57(Anon2)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+
+Entail (3) : Valid. 
+
+ <1>HP_76(Anon4,x) * HP_77(x,v)&x!=v & v!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_6e(n,x)&x!=n & n!=null --> n::node<_,_> * 
+                   HP_76(Anon4,x@NI) * HP_77(x,n@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 13
+SAT % Hit   : 53.84%
+IMPLY Count : 6
+IMPLY % Hit : 66.66%
+Time(cache overhead) : 0.00118 (seconds)
+
+!!! log(small):(0.01919,25)
+Total verification time: 0.069232 second(s)
+	Time spent in main process: 0.055627 second(s)
+	Time spent in child processes: 0.013605 second(s)
+

@@ -1,0 +1,48 @@
+data char_star {
+  int val;
+  char_star next;
+}.
+
+pred seg<p> ==
+     self=p
+     or self::char_star<a,q>*q::seg<p> & a=0
+     or self::char_star<a,q>*q::seg<p> & a!=0
+ inv true.
+
+pred wseg<p> ==
+     self=p
+     or self::char_star<a,q>*q::wseg<p> & a!=0
+ inv true.
+
+lemma_safe "L1" self::wseg<p> -> self::seg<p>.
+
+lemma_unsafe "L2"
+  self::seg<p> <- self::seg<r>*r::char_star<_,p>.
+
+lemma_test "L3"
+    self::seg<pp>*pp::char_star<0,rr>
+           ->
+    self::wseg<q>*q::char_star<0,r>*r::seg<rr>
+.
+
+print residue.
+
+
+
+/*
+# ex17a.slk
+
+lemma_test self::wseg<q>*q::char_star<0,r>
+           ->
+    self::seg<pp>*pp::char_star<0,rr>.
+
+# no residue. is it cos lemma proving is not delayed?
+
+# can more general complex lemma be now handled?
+
+ Lemma infer proved succeeded in current context.
+: no residue 
+
+
+
+*/

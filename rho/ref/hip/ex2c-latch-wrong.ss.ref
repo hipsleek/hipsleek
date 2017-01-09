@@ -1,0 +1,38 @@
+
+!!!Full processing file "hip/ex2c-latch-wrong.ss"
+Parsing file "hip/ex2c-latch-wrong.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure main$... 
+dprint: hip/ex2c-latch-wrong.ss:51: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+
+Successful States:
+[
+ Label: []
+ State:(exists v_int_50_1412': x_38'::cell<v_int_48_1574> * c_39'::LatchIn{ - (exists flted_26_64: x_67::cell<flted_26_64>&flted_26_64=10&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::LatchOut{ + (exists flted_26_65: x_67::cell<flted_26_65>&flted_26_65=10&
+{FLOW,(4,5)=__norm#E}[]}<> * c_39'::CNT{}<v_int_50_1412'>*N@full[c_39,x_38]&v_int_48_1574=10 & v_int_50_1412'=1 & 0<v_int_50_1412'&{FLOW,(4,5)=__norm#E}[]
+
+ ]
+
+Proving precondition in method countDown$CDL Failed.
+Empty list_failesc_context
+
+Context of Verification Failure: 1 File "",Line:0,Col:0
+
+Last Proving Location: 1 File "hip/ex2c-latch-wrong.ss",Line:52,Col:2
+
+Procedure main$ FAIL.(2)
+
+Exception Failure("Proving precond failed") Occurred!
+
+Error(s) detected when checking procedure main$
+
+0 false contexts at: ()
+
+Total verification time: 0.488029 second(s)
+	Time spent in main process: 0.460028 second(s)
+	Time spent in child processes: 0.028001 second(s)
+

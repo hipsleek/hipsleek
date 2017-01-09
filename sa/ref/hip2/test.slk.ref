@@ -1,0 +1,23 @@
+Starting Omega...oc
+Starting z3... 
+
+Entail 1: Valid. 
+
+ <1>
+    emp&flted=2&{FLOW,(3,4)=__norm}[]
+    or emp&flted1=3&{FLOW,(3,4)=__norm}[]
+    
+[[ SEARCH ==>  Match(x,x) ==> ||OR|| ==>  SEARCH ==>  Match(x,x) ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 4
+SAT % Hit   : 0.%
+IMPLY Count : 2
+IMPLY % Hit : 0.%
+Time(cache overhead) : 0.000352 (seconds)
+
+!!! log(small):(0.009709,10)
+Total verification time: 0.057086 second(s)
+	Time spent in main process: 0.042388 second(s)
+	Time spent in child processes: 0.014698 second(s)
+

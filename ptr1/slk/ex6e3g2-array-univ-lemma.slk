@@ -1,0 +1,39 @@
+data node { int val ; node next }.
+//relation Univ(int x).
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+checkentail x::lseg<a, p> & Univ(a) & a<=10  |- x::node<_,p>.
+print residue.
+expect Fail.// not sure what Univ is supposed to do?
+
+infer[a] x::lseg<a, p> & a<=10  |- x::node<_,q>*q::node<_,p>.
+print residue.
+expect Valid.
+
+
+infer[] i<m & m<=p & Univ(m) |- m=i+1.
+print residue.
+
+infer[] i<m & m<=p & Univ(m) |- m=i+2.
+print residue.
+
+infer[m,i] i<m & m<=p |- m=i+1.
+print residue.
+
+infer[m,i] i<m & m<=p |- m=i+2.
+print residue.
+
+/*
+
+# what is the diff between univ(a) & infer(a)?
+
+checkentail x::lseg<a, p> & Univ(a) & a<=10  |- x::node<_,p>.
+
+  Univ(a) is some a that satisfies a<=10?
+
+
+*/
+

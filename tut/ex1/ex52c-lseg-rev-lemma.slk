@@ -1,0 +1,55 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_, q> * q::lseg<n - 1, p>;
+ } inv n >= 0.
+
+pred lseg_rev<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::lseg_rev<n-1,q>*q::node<_,p>;
+ } inv n >= 0.
+
+lemma_unsafe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        -> self::lseg_rev<n,r> * r::node<_,p>.
+
+lemma_unsafe "lseg-rev-transformation"
+    self::node<_,q>*q::lseg_rev<n,p>
+        <- self::lseg_rev<n,r> * r::node<_,p>.
+
+lemma_safe "lseg-lseg-rev" self::lseg<n,p> <-> self::lseg_rev<n,p>. 
+
+
+/*
+# ex52c-lseg-rev-lemma.slk
+
+!! WARNING : changing lemma from <- to -> Timeout when checking #simplify  Restarting Omega after ... 26 invocations Stop Omega... 26 invocations Starting Omega.../usr/local/bin/oc
+Timeout when checking #simplify  Restarting Omega after ... 27 invocations Stop Omega... 27 invocations Starting Omega.../usr/local/bin/oc
+Timeout when checking #simplify  Restarting Omega after ... 28 invocations Stop Omega... 28 invocations Starting Omega.../usr/local/bin/oc
+Timeout when checking #simplify  Restarting Omega after ... 29 invocations Stop Omega... 29 invocations Starting Omega.../usr/local/bin/oc
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  (exists r,Anon_15: self_lseg-lseg-rev_left::lseg_rev{}<n_210,r> * 
+r::node<Anon_15,p_211>&{FLOW,(4,5)=__norm#E})[]
+Timeout when checking #simplify  Restarting Omega after ... 30 invocations Stop Omega... 30 invocations Starting Omega.../usr/local/bin/oc
+ho_ps1 = []
+ho_ps2 = []
+coer_rhs_new =  (exists r,Anon_15: self_lseg-lseg-rev_left::lseg_rev{}<n_221,r> * 
+r::node<Anon_15,p_222>&{FLOW,(4,5)=__norm#E})[]
+
+coer_rhs_new =  (exists r,Anon_15: self_lseg-lseg-rev_left::lseg_rev{}<n_221,r> * 
+r::node<Anon_15,p_222>&{FLOW,(4,5)=__norm#E})[]
+Timeout when checking #simplify  Restarting Omega after ... 31 invocations Stop Omega... 31 invocations Starting Omega.../usr/local/bin/oc
+
+
+*/
+
+//checkentail x::node<_,q>*q::lseg<n,p> |- x::lseg_rev<m,p>.
+
+//checkentail x::lseg<n,p> |- x::lseg_rev<m,p>.

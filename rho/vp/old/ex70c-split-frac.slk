@@ -1,0 +1,28 @@
+data cell {
+  int val;
+}.
+
+pred_prim Thrd{+%Q@Split}<>.
+pred_prim dead<>.
+
+
+checkentail x::Thrd{+ @full[a,b]}<>  |- x::Thrd{+ @frac(1/3)[a,b]}<>.
+
+checkentail x::Thrd{+ @full[a,b]}<>  |- x::Thrd{+ @frac(1/3)[a',b']}<>.
+
+//checkentail @full[a,b] |- @full[a].
+print residue.
+expect Valid.
+/*
+why expecting a node?
+
+Entail 5: EXCast. Failure("Expect a node")
+Validate 5: Expecting ValidBUT got no residue
+
+why isn't trace working?
+*/
+
+
+//checkentail x=5 |- x>4.
+//print residue.
+//expect Valid.

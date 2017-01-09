@@ -1,0 +1,55 @@
+Starting Omega...oc
+zipNM is defined.
+Starting z3... 
+
+!!! formula1: emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & k=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], 0<=k)])
+!!! process_pred_split:
+
+!!! formula1: emp&((self=null & y=null & n=0 & m=0) | (self!=null & y!=null))&
+{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&m=0 & n=0 & y=null & self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self,y], true),
+([], self=null & y=null & n=0 & m=0)])
+!!! 
+ilemma_infs:
+ :=>coerc tmp_infer_95
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zipNM{}<y,n,m>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((HRel HP_56((self:node),(n:int))) * (HRel HP_57((y:node),(m:int))))*(true)( FLOW __flow))
+
+Entailing lemma tmp_infer_95: Valid.
+
+!!! formula1: emp&(self!=null | (n=0 & self=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null & n=0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], n=0 & self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | (m=0 & self=null))&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&(self>0 | (m=0 & self=null))&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], m=0 & self=null),
+([self], true)])
+!!! 
+Right. ilemma_infs:
+ :<=coerc tmp_safe_192
+	 kind: LEM_UNSAFE
+	 origin: generated
+	 head: (EX  . (self::zipNM{}<y,n,m>@M[HeapNode1])*(true)( FLOW __flow))
+	 body:(EX  . ((self::HP_56{}<n>@M[HeapNode1]) * (y::HP_57{}<m>@M[HeapNode1]))*(true)( FLOW __flow))
+
+Entailing lemma tmp_safe_192: Fail. (no cex)(must) cause: OrL[ y::HP_57{}<m>&self1=null & n=0&{FLOW,(5,6)=__Error}[],valid]
+ can not pred_split (sem). add lemma: zipNM([x,y,n,m]) -->  HP_56(x,n) * HP_57(y,m)
+: no residue 
+Stop Omega... 34 invocations 
+SAT Count   : 383
+SAT % Hit   : 83.28%
+IMPLY Count : 50
+IMPLY % Hit : 56.%
+Time(cache overhead) : 0.033825 (seconds)
+
+!!! log(small):(0.3316,492)
+Total verification time: 0.248983 second(s)
+	Time spent in main process: 0.205065 second(s)
+	Time spent in child processes: 0.043918 second(s)
+

@@ -1,0 +1,57 @@
+
+relation P(int x).
+
+infer [P,@flow] P(x1) & x1=x-1 & flow __norm
+    |- P(x) & flow __flow.
+print residue.
+
+infer [P,@flow] x=0 & flow __Exc
+    |- P(x) & flow __flow.
+print residue.
+
+relation_infer[][P].
+
+/*
+# flow3.slk
+
+ inferred rel: [RELDEFN P(__norm#E): ( P(x1) & x1+1=x) -->  P(x)]
+ inferred rel: [RELDEFN P(__Exc#E): ( x=0) -->  P(x)]
+
+Instead of:
+!!! Input of fixcalc: P:={[] -> [x,flow] -> []: 
+    (((x=0 && flow>=22) && flow<=23) || 
+    (( (exists (x1:(x=1+x1 && P(x1,flow))))  && 4<=flow) && flow<=5))
+
+When we detected a __Exc, we shall convert to:
+    (((x=0 && flow>=22) && flow<=23) || 
+      (( (exists (x1:(x=1+x1 && P(x1,flow))))))
+
+
+   base & _norm |- P(..) & _flow
+   RelDefn P(#norm) base --> P(..) 
+
+   base & _Exc |- P(..) & _flow
+   RelDefn P(#__Exc) base --> P(..) 
+
+   recursion & _norm |- P(..) & _flow
+   RelDefn P() recursion --> P(..) 
+
+   recursion & _Exc |- P(..) & _flow
+   RelDefn P(Exc) base--> P(..)
+           P() recursion --> P(..) 
+
+
+
+   base & _norm |- P(..) & _flow
+   RelDefn P(#norm) base --> P(..) __flow
+
+   base & norm --> P(..) & _flow
+
+
+
+
+
+
+*/
+
+

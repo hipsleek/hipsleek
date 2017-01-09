@@ -1,0 +1,56 @@
+
+!!!Full processing file "bugs/sll-dll1a.ss"
+Parsing file "bugs/sll-dll1a.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure paper_fix$node~node... 
+dprint: bugs/sll-dll1a.ss:22: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:q1::ll{}<> * c::node<_,p,q1>&c!=null & v1'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []q::ll<> * c::node<_,p,q>&v' & c!=null
+
+ ]
+
+dprint: bugs/sll-dll1a.ss:24: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:q1::ll{}<> * c::node<_,p,q1>&c!=null & v1'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []q::ll<> * c::node<_,p,q>&v' & c!=null
+
+ ]
+
+dprint: bugs/sll-dll1a.ss:26: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(,0 ); (,1 )])]
+
+Successful States:
+[
+ Label: [(,0 ); (,1 )]
+ State:c::node<_,p,q1> * q1::dll{}<c>&c!=null & v1'&{FLOW,(3,4)=__norm}[]
+       es_ho_vars_map: []c::node<_,p,q> * q::dll<c>&v' & c!=null
+
+ ]
+
+Procedure paper_fix$node~node SUCCESS.
+Stop Omega... 8 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.08472,395)
+Total verification time: 0.339392 second(s)
+	Time spent in main process: 0.322343 second(s)
+	Time spent in child processes: 0.017049 second(s)
+

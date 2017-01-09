@@ -1,0 +1,11 @@
+Starting Omega...oc
+File "norm/sp-5a.slk", line 31, characters 13-14
+ error: Stream.Error("EOF expected after [command_list] (in [sprog])")
+ at:(Program not linked with -g, cannot print stack backtrace)
+SLEEK FAILURE (END)
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.052331 second(s)
+	Time spent in main process: 0.038959 second(s)
+	Time spent in child processes: 0.013372 second(s)
+

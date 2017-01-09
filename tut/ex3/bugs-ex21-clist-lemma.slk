@@ -1,0 +1,38 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ls<n, p> ==
+ case {
+  n=0 -> [] emp & self = p & n = 0;
+  n!=0 -> [] self::node<_,q>*q::ls<n-1,p>;
+} inv n >= 0.
+
+/*
+pred ls<n,p> == emp & self=p & n=0
+  or self::node<_,q>*q::ls<n-1,p> 
+  inv n>=0.
+*/
+
+pred clist<n> == self::node<_,q>*q::ls<n-1,self>
+  inv n>0.
+
+//lemma_safe self::clist<n> <- self::ls<n-1,q> * q::node<_,self>.
+
+lemma_safe self::ls<n,q> * q::node<_,self>
+   -> self::node<_,q1>*q1::ls<n,self>.
+
+/*
+# bugs-ex21-clist-lemma.slk
+
+lemma_safe self::clist<n> <- self::ls<n-1,q> * q::node<_,self>.
+
+Entailing lemma lem_15: Fail. (no cex)(must) cause: OrL[ q_134::node<Anon_132,self_131>&flted_15_128+1=flted_21_133 & p_127=q_134 & 
+flted_21_133+1=n & self_131=self_lem_15 & Anon_136=Anon_129 & q_137=q_130&
+{FLOW,(6,7)=__Error#E}[],valid]
+
+I guess this is failing due to no progress with an auxiliary clist
+that is not self-recursive?
+
+*/

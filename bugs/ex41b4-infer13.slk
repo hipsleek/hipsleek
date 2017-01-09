@@ -1,0 +1,14 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+
+HeapPred H2(node y,node x).
+
+HeapPred H3(node y,node@NI x).
+
+infer [H2] H2(z,x) & x!=null & q=x |- q!=z.
+print residue.
+

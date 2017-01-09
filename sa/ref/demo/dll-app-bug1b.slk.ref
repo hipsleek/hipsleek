@@ -1,0 +1,25 @@
+Starting Omega...oc
+HP_7 is defined.
+HP_8 is defined.
+HP_9 is defined.
+Starting z3... 
+
+Entail (1) : Valid. 
+
+ <1>HP_31(Anon,l2) * HP_32(Anon1,l2) * HP_33(l2,x)&x!=null&{FLOW,(3,4)=__norm}[]
+ inferred hprel: [HP_7(x,l2)&x!=null --> x::node<_,_> * HP_31(Anon,l2@NI) * 
+                   HP_32(Anon1,l2@NI) * HP_33(l2,x@NI)&true(3,4)]
+[[ COND ==>  InferHeap ==> ]]
+
+Stop Omega... 0 invocations 
+SAT Count   : 4
+SAT % Hit   : 25.%
+IMPLY Count : 2
+IMPLY % Hit : 50.%
+Time(cache overhead) : 0.000247 (seconds)
+
+!!! log(small):(0.008156,8)
+Total verification time: 0.057024 second(s)
+	Time spent in main process: 0.042778 second(s)
+	Time spent in child processes: 0.014246 second(s)
+

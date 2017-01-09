@@ -1,0 +1,12 @@
+
+data cell { int val; }.
+
+checkentail x::cell<1> |- x::cell<_>@L.
+print residue.
+
+checkentail x::cell<1>@L |- x::cell<_>.
+print residue.
+
+checkentail x::cell<1>@L |- x::cell<_>@L.
+print residue.
+

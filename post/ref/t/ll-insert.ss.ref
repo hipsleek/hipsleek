@@ -1,0 +1,54 @@
+ERROR : /usr/bin/z3-4.3.2 cannot be found!!
+
+!!!Full processing file "t/ll-insert.ss"
+Parsing file "t/ll-insert.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega.../usr/local/bin/oc
+
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELDEFN post_1415: ( r_1396=2 & n=1) -->  post_1415(r_1396,n,a,flow),
+RELDEFN post_1415: ( r_1467+1=r_1396 & n_1446+1=n & 2<=r_1396 & 1<=n & 
+post_1415(r_1467,n_1446,a,flow)) -->  post_1415(r_1396,n,a,flow)]
+*************************************
+
+Post Inference result:
+insert$node~int
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&1<=n & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1396: x::ll{}<r_1396>&0<=n & r_1396>=2 & r_1396=n+1&
+           {FLOW,(4,5)=__norm#E}[]
+           
+
+Checking procedure insert2$node~int... 
+Procedure insert2$node~int SUCCESS.
+
+*************************************
+******pure relation assumption*******
+*************************************
+[RELASS [pre_1479]: ( pre_1479(n,a)) -->  n!=0,
+RELDEFN post_1480: ( r_1398=2 & n=1 & pre_1479(n,a)) -->  post_1480(r_1398,n,a,flow),
+RELDEFN post_1480: ( r_1398=1+n & 2<=n & pre_1479(n,a)) -->  post_1480(r_1398,n,a,flow)]
+*************************************
+
+Post Inference result:
+insert2$node~int
+ EBase exists (Expl)[](Impl)[n](ex)[]x::ll{}<n>&n!=0 & 1<=n & MayLoop[]&
+       {FLOW,(4,5)=__norm#E}[]
+         EAssume 
+           (exists r_1398: x::ll{}<r_1398>&0<=n & (((r_1398=1+n & 2<=n) | 
+           (r_1398=2 & n=1)))&{FLOW,(4,5)=__norm#E}[]
+           
+
+0 false contexts at: ()
+
+Total verification time: 1.332082 second(s)
+	Time spent in main process: 1.13207 second(s)
+	Time spent in child processes: 0.200012 second(s)
+

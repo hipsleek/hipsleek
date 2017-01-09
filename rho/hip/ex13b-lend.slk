@@ -1,0 +1,17 @@
+ data cell {
+  int val;
+}.
+
+//(1)
+checkentail x::cell<n>  |- x::cell<_>@L.
+// expect x::cell<n>
+print residue.
+
+//(2)
+infer [@par] x::cell<n>  |- x::cell<_>@L.
+// expect ERROR
+print residue.
+
+infer [@par] x::cell<n>@L  |- x::cell<_>@L.
+// expect x::cell<n>@L
+print residue.

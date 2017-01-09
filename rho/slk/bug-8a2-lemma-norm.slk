@@ -1,0 +1,43 @@
+//CountDownLatch
+data cell{ int v; }.
+
+pred_prim CNT<n:int>.
+
+//synchronization lemma
+lemma_prop "wait-for" ddd::CNT<aaa> * ddd::CNT<bbb> & bbb=(-1)  ->  ddd::CNT<bbb>.
+
+
+// # bug-8a2
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & c1>=c2 & c2>=c1
+   & n > 0.
+// failure may be OK here.
+/* 
+  no simplification? did we use transitive closure?
+
+CheckNorm (4) :  c1::CNT{}<flted_16_97> * c2::CNT{}<flted_16_96> * x::cell<n>&flted_16_97+
+1=0 & flted_16_96=1 & c2<=c1 & c1<=c2 & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & n=0 & n > 0.
+/* 
+
+   no unsat check?
+CheckNorm (5) :  c1::CNT{}<flted_20_116> * c2::CNT{}<flted_20_115> * x::cell<n>&flted_20_116+
+1=0 & flted_20_115=1 & n=0 & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+
+check_normalize  c1::CNT<(-1)> * c2::CNT<1> * x::cell<n> & exists(z:c1=z & c2=z) & n > 0.
+/*
+  cannot handle? maybe some simplifier could help
+
+CheckNorm (6) :  c1::CNT{}<flted_37_135> * c2::CNT{}<flted_37_134> * x::cell<n>&flted_37_135+
+1=0 & flted_37_134=1 & exists(z:c1=z & c2=z) & 0<n&{FLOW,(4,5)=__norm#E}[]
+
+
+*/
+
+

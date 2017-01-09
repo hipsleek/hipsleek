@@ -1,0 +1,39 @@
+data node2 {
+	int val;
+	int next;
+}.
+
+pred lls<n,k> == self::node2<n-1,k> & n!=k
+ or self::node2<n-1,k-1> & n=k.
+
+pred lls2<n,k> == self::node2<n,k> & n!=k
+ or self::node2<n-1,k-1> & n=k.
+
+// below looks reasonable to me..
+
+checkentail xs::node2<n2,k> & k=n2 |- xs::lls<rr,ss>.
+print residue.
+/*
+ <1>emp&k=n2 & k!=(n2+1) & rr=n2+1 & k=ss & rr!=ss&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+<2>emp&k=n2 & n2+1=n2+1 & k+1=n2+1 & rr=n2+1 & ss=k+1 & rr=ss&{FLOW,(21,22)=__norm}[]
+*/
+
+checkentail xs::node2<n2,k> & k!=n2 |- xs::lls<rr,ss>.
+print residue.
+/*
+Entail 2: Fail.(may) cause: k!=n2 |-  k!=(1+n2). LOCS:[22;13] (may-bug)
+*/
+
+checkentail xs::node2<n2,k> & k=n2 |- xs::lls2<rr,ss>.
+print residue.
+/*
+ <1>emp&k=n2 & n2+1=n2+1 & k+1=n2+1 & rr=n2+1 & ss=k+1 & rr=ss&{FLOW,(21,22)=__norm}[]
+*/
+
+checkentail xs::node2<n2,k> & k!=n2 |- xs::lls2<rr,ss>.
+print residue.
+/*
+ <1>emp&k!=n2 & k!=n2 & n2=rr & k=ss & rr!=ss&{FLOW,(21,22)=__norm}[]
+[[ SEARCH ==>  Fold ==>  Match ==> ]]
+*/

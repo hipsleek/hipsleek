@@ -1,0 +1,31 @@
+Starting Omega...oc
+H2 is defined.
+HP_6 is defined.
+G1 is defined.
+K is defined.
+Starting z3... 
+
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self!=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self>0&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Entail 1: Fail.(must) cause:base case unfold failed
+
+Stop Omega... 22 invocations 
+SAT Count   : 87
+SAT % Hit   : 79.31%
+IMPLY Count : 16
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.005141 (seconds)
+
+!!! log(small):(0.023582,124)
+Total verification time: 0.094895 second(s)
+	Time spent in main process: 0.071539 second(s)
+	Time spent in child processes: 0.023356 second(s)
+

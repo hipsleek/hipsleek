@@ -1,0 +1,22 @@
+!!! init_tp by default: 
+!!! Using z3
+Starting z3... 
+
+Entail 1: Valid. 
+
+
+Entail 2: Fail.(must) cause: Anon_11=1 |-  Anon_11=2. LOCS:[9;11] (must-bug)
+
+
+Entail 3: Fail.(must) cause: y_41'=1+1 |-  y_41'=3. LOCS:[15;18] (must-bug)
+
+
+Entail 4: Fail.(must) cause: z_42'=2+1 |-  z_42'=4. LOCS:[21;24] (must-bug)
+
+
+Entail 5: Fail.(must) cause: z_42'=2+1 |-  z_42'=4. LOCS:[27;30] (must-bug)
+
+
+Entail 6: Fail.(must) cause: z_42'=2+1 |-  z_42'=4. LOCS:[38;39;40;41] (must-bug)
+
+

@@ -1,0 +1,27 @@
+
+!!!Full processing file "examples/loop-1.ss"
+Parsing file "examples/loop-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure f$int... 
+Procedure f$int SUCCESS.
+
+
+!!! Termination Inference is not performed due to errors in verification process.
+
+
+
+Termination checking result: 
+(4) (ERR: unexpected unsound Loop at return)
+
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.060244,173)
+Total verification time: 0.311269 second(s)
+	Time spent in main process: 0.259867 second(s)
+	Time spent in child processes: 0.051402 second(s)
+

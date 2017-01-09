@@ -1,0 +1,133 @@
+
+!!!Full processing file "validate/rose-sll-1.ss"
+Parsing file "validate/rose-sll-1.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+Checking procedure check_tree$tree... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G1,G2]requires H1(t)&true
+ ensures G1(t)&res{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[H1,H2,G1,G2] pre_post_vars:[G1,res,H1,t]
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(0)H1(t)&true --> t::tree<val1,children1> * HP_1325(children1)&
+true(3,4),
+ // PRE_REC
+(2;0)HP_1325(children1)&children1!=null |#| t::tree<val1,children1>&
+true --> H2(children1,t@NI)&
+true(3,4),
+ // POST
+(1;0)t::tree<val1,children1> * HP_1325(children1)&children1=null --> G1(t)&
+true(3,4),
+ // POST
+(2;0)t::tree<val1,children1> * G2(children1,t)&children1!=null --> G1(t)&
+true(3,4)]
+
+Procedure check_tree$tree SUCCESS.
+
+Checking procedure check_child$node~tree... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,H2,G2,G2]requires H2(l,par@NI)&true
+ ensures G2(l,par)&
+res{,(3,4)=__norm};
+
+!!! WARNING : Inferable vars include some external variables!
+vars:[H1,H2,G2,G2] pre_post_vars:[G2,res,H2,l,par]
+
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!!Inferred Heap: []
+!!!Inferred Pure: [ parent_51_1410=par]
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H2(l,par@NI)&l!=null --> l::node<child1,next1,parent1> * 
+HP_1411(child1,par@NI) * HP_1412(next1,par@NI) * HP_1413(parent1,par@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1412(next1,par@NI)&true --> H2(next1,par@NI)&
+true(3,4),
+ // PRE_REC
+(1;2;0)HP_1411(child1,par@NI)&true --> H1(child1)&
+true(3,4),
+ // POST
+(1;0)H2(l,par@NI)&l=null --> G2(l,par)&
+true(3,4),
+ // POST
+(1;2;0)l::node<child1,next1,par> * G2(next1,par) * HP_1413(par,par@NI)&
+true --> G2(l,par)&
+true(3,4)]
+
+Procedure check_child$node~tree SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(t1) ::=  [t1::tree<val,children> * H2(children,t1)],
+ H2(l1,par1) ::=  [emp&l1=null; l1::node<child2,next2,parent2> * child2::tree<val,children> * 
+H2(next2,par1) * H2(children,child2)&parent2=par1],
+ G1(t2) ::=  [t2::tree<val,children> * G2(children,t2)],
+ G2(l2,par2) ::=  [emp&l2=null; l2::node<child,next,par2> * G2(next,par2)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(t1) ::= t1::tree<val,children> * H2(children,t1)(3,4),
+ H2(l1,par1) ::= 
+ l1::node<child2,next2,parent2> * child2::tree<val,children> * 
+ H2(next2,par1) * H2(children,child2)&parent2=par1
+ or emp&l1=null
+ (3,4),
+ G1(t2) ::= t2::tree<val,children> * G2(children,t2)(3,4),
+ G2(l2,par2) ::= 
+ l2::node<child,next,par2> * G2(next,par2)
+ or emp&l2=null
+ (3,4)]
+*************************************
+
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&(self!=null | self=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])
+!!! formula1: emp&self!=null&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true)])Stop Omega... 44 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.119761,647)
+Total verification time: 0.487297 second(s)
+	Time spent in main process: 0.459616 second(s)
+	Time spent in child processes: 0.027681 second(s)
+

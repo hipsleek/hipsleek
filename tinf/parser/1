@@ -1,0 +1,191 @@
+
+!!!Full processing file "test2f.ss"
+Parsing file "test2f.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+exists_return: unexpected
+
+data __Exc {
+;
+}
+data __Error {
+;
+}
+data __MayError {
+;
+}
+data __Fail {
+;
+}
+
+ view_prim WAITS{}[]<G:bag(tup2(Object,Object)),S:bag(Object),d:Object>= 
+  view_domains: view_prim WAITS<G:bag(tup2(Object,Object)),S:bag(Object),
+                d:Object>= 
+  EBase (* lbl: *){210}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: G,S,d
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){210}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAITS
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim WAIT{}[]<b:bag(tup2(Object,Object))>= 
+  view_domains: view_prim WAIT<b:bag(tup2(Object,Object))>= 
+  EBase (* lbl: *){211}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: b
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: true
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){211}->emp&{FLOW,(1,31)=__flow}[]
+  xform: true
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: WAIT
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+ view_prim memLoc{}[]<heap:boolean,size:int>= 
+  view_domains: view_prim memLoc<heap:boolean,size:int>= 
+  EBase (* lbl: *){212}->emp&{FLOW,(1,31)=__flow}[]
+  view vars: heap,size
+  ann vars (0 - not a posn): 
+  cont vars: 
+  inv: 0<size
+  baga over inv: [([], 0<size)]
+  baga over inv (unfolded): [([], 0<size)]
+  inv_lock: None
+  unstructured formula: (* lbl: *){212}->emp&{FLOW,(1,31)=__flow}[]
+  xform: 0<size
+  is_recursive?: false
+  is_primitive?: true
+  is_touching?: false
+  is_segmented?: false
+  is_tail_recursive?: false
+  residents: 
+  forward_ptrs: 
+  backward_ptrs: 
+  forward_fields: 
+  backward_fields: 
+  same_xpure?: YES
+  view_data_name: memLoc
+  self preds: []
+  materialized vars: []
+  addr vars: 
+  uni_vars: []
+  bag of addr: 
+  view_complex_inv: None
+  prune branches: ,[]
+  prune conditions: {
+[]}
+  prune baga conditions: 
+  prune invs:0:,[]
+
+void f_r_1271_while_12_2$int(  int a)
+@ref a
+ rec
+static  EBase emp&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume ref [a]
+                   emp&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+{(boolean v_bool_12_1279;
+(v_bool_12_1279 = {((int v_int_12_1275;
+v_int_12_1275 = 1);
+gt___$int~int(a,v_int_12_1275))};
+if (v_bool_12_1279) [{({(int v_int_12_1278;
+v_int_12_1278 = {{((int v_int_16_1276;
+v_int_16_1276 = a);
+(a = {((int v_int_16_1277;
+v_int_16_1277 = 1);
+minus___$int~int(a,v_int_16_1277))};
+v_int_16_1276))}})};
+{f_r_1271_while_12_2$int(a) rec})}]
+else []
+))}
+
+{(12,2),(17,3)}
+
+int test_int$int(  int a)
+static  EBase emp&{FLOW,(4,5)=__norm}[]
+         EBase emp&MayLoop[]&{FLOW,(4,5)=__norm}[]
+                 EAssume 
+                   emp&res=2&{FLOW,(4,5)=__norm}[]
+                   
+dynamic  EBase hfalse&false&{FLOW,(4,5)=__norm}[]
+try 
+{({f_r_1271_while_12_2$int(a)};
+(int v_int_18_1280;
+(v_int_18_1280 = 2;
+ret# v_int_18_1280)))}
+ catch (23,24)=ret_int ret_int:f_r_1268 ) 
+	(int v_int_11_1270;
+(v_int_11_1270 = bind f_r_1268 to (val_11_1269) [read] in 
+val_11_1269;
+ret# v_int_11_1270))
+
+{(8,0),(0,-1)}
+
+
+
+
+Checking procedure f_r_1271_while_12_2$int... 
+Procedure f_r_1271_while_12_2$int SUCCESS.
+
+Checking procedure test_int$int... 
+Procedure test_int$int SUCCESS.
+Stop Omega... 0 invocations 
+1 false contexts at: ( (11,0) )
+
+!!! log(small):(0.02254,211)
+Total verification time: 0.311766 second(s)
+	Time spent in main process: 0.298995 second(s)
+	Time spent in child processes: 0.012771 second(s)
+

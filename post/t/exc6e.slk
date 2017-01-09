@@ -1,0 +1,29 @@
+
+
+checkentail x=3 & flow __norm
+    |- x>0 & flow __norm.
+print residue.
+
+checkentail x=3 & flow __flow
+    |- x>0 & flow __norm.
+print residue.
+/*
+# exc6e.slk
+
+Not a must failure. Why is it empty states?
+
+Entail 2: Fail.(must) cause:empty states
+
+Residue:
+ { }
+*/
+
+
+checkentail x=3 & flow __flow
+    |- x>0 & flow __flow.
+print residue.
+
+
+checkentail x=3 & flow __norm
+    |- x>0 & flow __flow.
+print residue.

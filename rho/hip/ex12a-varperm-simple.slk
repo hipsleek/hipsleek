@@ -1,0 +1,142 @@
+  
+checkentail x'=1 & y'=4 |- @full[x] & x'>0 .
+print residue.
+
+/*
+
+# ex12a.slk
+
+Residue:
+ <1>emp&@zero[[x]] & y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+
+This residue is for other processes.
+Is there a residue for the current process?
+
+
+<1>emp&@zero[[x]] & y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+
+ other threads
+ ==>  <1>emp&@zero[[x]] & y'=4 & x'=1&{FLOW,(4,5)=__norm#E}[]
+ ==>  (exists x'. <1>emp&@zero[[x]] & y'=4 & x'=1)
+       // if no full/value,
+       // access everything but not zero[x]
+
+
+ current thread
+  (emp&@zero[[x]] & y'=4 & x'=1) * @full[x] 
+  ==> @full[x] & y'=4 & x'=1
+      // can only access and modify full[x]&value[y]
+      // and nothing else
+
+
+ unspecified
+ full[..] * value[..] * zero[..]
+ hip semantics
+ two scenarios:
+  (i)   full * zero empty
+        can accees everything but zero[..]
+  (ii)  some full/value present
+        can only accees full/value variables
+
+
+ full[x]*zero[x] ==> full[x]
+ full[x]*full[x] ==> error/false
+
+
+
+  // S1 = ..x'..y'..z'..a'..
+
+  //@full[y,z]*@lend[x]  & ..x'..y'..z'..a'..
+
+  ..S1.. |- @full[y,z]*@lend[x] -->  ..R1..@zero[y,z]*@full[x]
+
+
+  // ..R1.. * @full[y,z]*@lend[x]
+  // ==> @full[y,z]*@lend[x]
+
+  ( requires {@lend[x]@full[z]}
+        //@lend[x]@full[z] --> @lend[x]@zero[z]@full[y]
+        read x; write z
+        // (ex y' . y'=y)  ==> @full[z]*lend[x]
+  || requires {@full[y]*@lend[x]}   --> lend[x]@zero[y,z] * @full[y]*@lend[x]
+  || else   --> @lend[x]@zero[z]@full[y]
+        //@full[y]*@lend[x]@zero[z]
+        write y; read x 
+        // y'=y+3  ==> @full[y]*lend[x]
+  )
+
+  @zero[y,z]*@full[x] * (@full[y] * @full[z])
+
+
+  // @lend[_]
+  ( requires {}
+        skip
+  || requires {}   
+        skip;
+
+  )
+
+
+
+  par {x,y}
+  ( requires {x@L}
+        //@lend[x]@full[z] --> @lend[x]@zero[z]@full[y]
+        read x; write z
+        // (ex y' . y'=y)  ==> @full[z]*lend[x]
+  || requires {x}   --> ..
+  }
+
+  {x@L,y,z}
+
+
+  @value[x],@full[y],@lend[z]
+
+
+  ... |- @full[y] --> @zero[y]
+  ... |- @lend[y] --> ..
+  ... |- @value[y] --> ..
+  full[y] |- @full[y] --> @zero[y]
+
+  full[y] |- @lend[y] --> full[y]  // with residue
+
+  full[y] |- @lend[y] --> error    // tight (inside-par)
+
+
+  full[y] |- @value[y] --> full[y]
+  zero[y] |- @full[y] --> error
+  zero[y] |- @lend[y] --> error
+  zero[y] |- @value[y] --> error
+  lend[y] |- @lend[y] --> @lend[y]
+  lend[y] |- @full[y] --> error
+  lend[y] |- @value[y] --> @lend[y]
+
+
+  full[y]*full[y] =-> error
+  full[y]*zero[y] =-> full[y]
+
+  full[y]*lend[y] =-> lend[y] // needed for start of par
+
+  lend[y]*zero[y] =-> lend[y]
+  lend[y]*lend[y] =-> lend[y]
+  zero[y]*zero[y] =-> zero[y]
+
+
+// drop value & lend ..
+
+
+
+
+
+
+
+
+
+-----------------------------------------------
+
+  ( requires @value[x] * @value[_] ->
+        read x 
+  || else ->
+        write y )
+
+
+*/

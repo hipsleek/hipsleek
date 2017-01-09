@@ -1,0 +1,19 @@
+Starting Omega...oc
+H1 is defined.
+HP_4 is defined.
+G1 is defined.
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x,y) ::= x::cell<val1> * y::cell<val>(3,4),
+ HP_4(y1,x1) ::= y1::cell<val>(3,4),
+ G1(x2,y2) ::= x2::cell<val3> * y2::cell<val2>(3,4)]
+*************************************
+Stop Omega... 0 invocations 
+!!! log(small):(0.,0)
+Total verification time: 0.057646 second(s)
+	Time spent in main process: 0.044049 second(s)
+	Time spent in child processes: 0.013597 second(s)
+

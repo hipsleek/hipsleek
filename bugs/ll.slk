@@ -9,10 +9,10 @@ pred ll<> == self = null
 	or self::node<next = r> * r::ll<>
 	inv true.
 
-lemma "V1" self::ll_s<n> -> self::ll<>.
+lemma_safe "V1" self::ll_s<n> -> self::ll<>.
 // valid
 
-lemma "V2" self::ll_s<n> <- self::ll<>.
+lemma_safe "V2" self::ll_s<n> <- self::ll<>.
 // valid
 /*
 !!! orig body:(EX  . (self::ll<>@M[HeapNode1])*(true)( FLOW __flow))
@@ -20,30 +20,30 @@ lemma "V2" self::ll_s<n> <- self::ll<>.
 Entailing lemma V2: Fail. 
 */
 
-lemma "V3" self::ll_s<n> <-> self::ll<>.
+lemma_safe "V3" self::ll_s<n> <-> self::ll<>.
 // valid
 // valid
 /*
-Entailing lemma V3: Fail. Details below:
+Entailing lemma_safe V3: Fail. Details below:
 	 "->" implication: : Valid.
 	 "<-" implication: : Fail. 
 */
 
-lemma "V4" self::ll<> -> (exists n: self::ll_s<n>).
+lemma_safe "V4" self::ll<> -> (exists n: self::ll_s<n>).
 // valid
 
-lemma "V5" self::ll<> <- (exists n: self::ll_s<n>).
+lemma_safe "V5" self::ll<> <- (exists n: self::ll_s<n>).
 // valid
 
-lemma "V6" self::ll<> <-> (exists n: self::ll_s<n>).
+lemma_safe "V6" self::ll<> <-> (exists n: self::ll_s<n>).
 // valid (both sides!)
 
-lemma "F7" self::ll<> -> self::ll_s<n>.
+lemma_safe "F7" self::ll<> -> self::ll_s<n>.
 // valid
 
-lemma "V8" self::ll<> <- self::ll_s<n>.
+lemma_safe "V8" self::ll<> <- self::ll_s<n>.
 // valid
 
-lemma "F9" self::ll<> <-> self::ll_s<n>.
+lemma_safe "F9" self::ll<> <-> self::ll_s<n>.
 // valid (both ways)
 

@@ -1,0 +1,28 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == emp & self=null & n=0
+  or self::node<_,q>*q::ll<n-1>
+  inv n>=0.
+
+
+
+//(4) or use case-spec
+checkentail 1<=x<=2  |- case {x=1 -> [] x=1; x!=1 -> [] x=2;}.
+print residue.
+
+/*
+# bugs-ex35-ll-search.slk
+
+Why is parser not working for case-formula?
+
+File "bugs-ex35-ll-search.slk", line 12, characters 37-38
+ error: Stream.Error("[spec_list_only] expected after OSQUARE (in [spec_list_grp])")
+ at:SLEEK FAILURE (END)
+
+See also:
+ unsound/case-1.slk:checkentail b'=1 |- case {x>0 -> [] b'>0 & x>0 ; x<=0 -> 
+
+*/

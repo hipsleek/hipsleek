@@ -1,0 +1,11 @@
+P:={[n,i]: exists(mmm: mmm<=n & i+1>0
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm)};
+P;
+
+Q:={[n,i]: exists(mmm: mmm<=n & i+1>0
+ & ((0<=mmm & mmm<n) | (mmm=n & 0<=n))
+ & i+1<n & i<mmm & mmm=i+1)};
+Q;
+P subset Q;
+Q subset P;

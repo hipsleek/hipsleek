@@ -1,0 +1,67 @@
+
+!!!Full processing file "paper/bt-trav.ss"
+Parsing file "paper/bt-trav.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+Checking procedure trav$node2... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H1,G1]requires H1(x)&true
+ ensures G1(x)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(1;0)H1(x)&x!=null --> x::node2<val1,left1,right1> * HP_1235(left1) * 
+HP_1236(right1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1235(left1)&true --> H1(left1)&
+true(3,4),
+ // PRE_REC
+(1;0)HP_1236(right1)&true --> H1(right1)&
+true(3,4),
+ // POST
+(1;0)x::node2<val1,left1,right1> * G1(left1) * G1(right1)&true --> G1(x)&
+true(3,4),
+ // POST
+(2;0)H1(x)&x=null --> G1(x)&
+true(3,4)]
+
+Procedure trav$node2 SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H1(x1) ::=  [emp&x1=null; x1::node2<val2,left2,right2> * H1(left2) * H1(right2)],
+ G1(x2) ::=  [emp&x2=null; x2::node2<val,left,right> * G1(left) * G1(right)]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H1(x1) ::= 
+ x1::node2<val2,left2,right2> * H1(left2) * H1(right2)
+ or emp&x1=null
+ (3,4),
+ G1(x2) ::= 
+ x2::node2<val,left,right> * G1(left) * G1(right)
+ or emp&x2=null
+ (3,4)]
+*************************************
+Stop Omega... 2 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.036227,253)
+Total verification time: 0.308748 second(s)
+	Time spent in main process: 0.294066 second(s)
+	Time spent in child processes: 0.014682 second(s)
+

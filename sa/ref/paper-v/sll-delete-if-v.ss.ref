@@ -1,0 +1,45 @@
+
+!!!Full processing file "paper-v/sll-delete-if-v.ss"
+Parsing file "paper-v/sll-delete-if-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: hfalse&false&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([], self=null),
+([self], true)])
+!!! formula1: emp&((self=null & ((x=self | x!=self))) | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&((x=self | x!=self)) & self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null & ((x_596=self | x_596!=self)))])
+Checking procedure delete$node~int... 
+Post condition cannot be derived:
+  (must) cause: base case unfold failed
+
+Context of Verification Failure: 1 File "paper-v/sll-delete-if-v.ss",Line:33,Col:33
+Last Proving Location: 1 File "paper-v/sll-delete-if-v.ss",Line:48,Col:31
+
+ERROR: at paper-v/sll-delete-if-v.ss_33:33_33:50 
+Message: Post condition cannot be derived.
+ 
+Procedure delete$node~int FAIL.(2)
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+(Program not linked with -g, cannot print stack backtrace)
+
+Error(s) detected when checking procedure delete$node~int
+
+!!! proc.proc_name:delete$node~intStop Omega... 10 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.127642,523)
+Total verification time: 0.382246 second(s)
+	Time spent in main process: 0.363546 second(s)
+	Time spent in child processes: 0.0187 second(s)
+

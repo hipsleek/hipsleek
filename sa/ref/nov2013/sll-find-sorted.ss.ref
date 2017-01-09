@@ -1,0 +1,83 @@
+
+!!!Full processing file "nov2013/sll-find-sorted.ss"
+Parsing file "nov2013/sll-find-sorted.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & self!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], (1<=self | self<=(0-1))),
+([], self=null)])
+!!! neqs:[]
+Checking procedure find_sorted$node~int... 
+
+
+******************************
+   ******* SPECIFICATION ********
+******************************
+ infer[ H,G]requires H(x,v@NI)&true
+ ensures G(x,v@NI)&true{,(3,4)=__norm};
+
+*************************************
+*******relational assumptions ********
+*************************************
+[ // BIND
+(2;0)H(x,v@NI)&x!=null --> x::node<val1,next1> * HP_1268(next1,v@NI)&
+true(3,4),
+ // PRE_REC
+(2;2;2;0)HP_1268(next1,v@NI)&v<=val1 --> H(next1,v@NI)&
+true(3,4),
+ // POST
+(1;2;2;0)x::node<val1,next1> * HP_1268(next1,v@NI)&val1<v --> G(x,v@NI)&
+true(3,4),
+ // POST
+(2;2;2;0)x::node<val1,next1> * G(next1,v@NI)&v<=val1 --> G(x,v@NI)&
+true(3,4),
+ // POST
+(1;0)H(x,v@NI)&x=null --> G(x,v@NI)&
+true(3,4),
+ // POST
+(1;2;0)x::node<v,next1> * HP_1268(next1,v@NI)&true --> G(x,v@NI)&
+true(3,4)]
+
+Procedure find_sorted$node~int SUCCESS.
+
+!!! shape inference for flow:(3,4)
+*********************************************************
+*******relational definition (flow= (3,4))********
+*********************************************************
+[ H(x1,v1) ::=  [emp&x1=null; x1::node<val,next> * H(next,v1)&v1<=val],
+ G(x2,v2) ::=  [emp&x2=null; x2::node<val,next> * G(next,v2)&v2<=val; x2::node<v2,next>&
+next=null & v2<=val; x2::node<v2,next> * next::node<val,next> * 
+HP_1268(next,v2)&v2<=val],
+ HP_1268(next2,v3) ::=  [emp&next2=null & v3<=val; next2::node<val,next> * HP_1268(next,v3)&v3<=val]]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(x1,v1) ::= 
+ x1::node<val,next> * H(next,v1)&v1<=val
+ or emp&x1=null
+ (3,4),
+ G(x2,v2) ::= 
+ x2::node<val,next> * G(next,v2)&v2<=val
+ or x2::node<v2,next>&next=null & v2<=val
+ or x2::node<v2,next> * next::node<val,next> * HP_1268(next,v2)&v2<=val
+ or emp&x2=null
+ (3,4),
+ HP_1268(next2,v3) ::= 
+ next2::node<val,next> * HP_1268(next,v3)&v3<=val
+ or emp&next2=null & v3<=val
+ (3,4)]
+*************************************
+Stop Omega... 25 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.078648,348)
+Total verification time: 0.40007 second(s)
+	Time spent in main process: 0.381145 second(s)
+	Time spent in child processes: 0.018925 second(s)
+

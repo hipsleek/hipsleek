@@ -1,0 +1,3 @@
+Q:={[n,r] -> [PRIn,PRIr] -> []: (((PRIr=r && PRIn=n) && n+1<=0) || ( (exists (fc_r_1356:( (exists (fc_n_1355:(Q(fc_n_1355,fc_r_1356,PRIn,PRIr) && fc_n_1355=n-(1))))  && fc_r_1356=r+1)))  && 0<=n))
+};
+bottomupgen([Q], [2], SimHeur);

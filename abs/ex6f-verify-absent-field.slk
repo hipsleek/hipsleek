@@ -1,0 +1,44 @@
+data node {
+ int val;
+ node next;
+}.
+
+checkentail x::node<u,_>@A*y::node<v,_>@A & u=2 & v=3|- y!=x.
+expect Valid.
+print residue.
+// x!=null & y!=null & (2!=3 -> x!=y)
+
+checkentail x::node<2,_>@A*y::node<_,_>@A |- y!=x.
+expect Fail.
+print residue.
+// x!=null & y!=null 
+
+//(3)
+checkentail x::ll<2>@A*y::ll<3>@A |- y!=x.
+expect Valid.
+print residue.
+// (..) & (..) & 2!=3 -> x!=y
+
+/*
+# ex6f.slk
+
+checkentail x::ll<2>@A*y::ll<3>@A |- y!=x.
+expect Valid.
+print residue.
+// (..) & (..) & 2!=3 -> x!=y
+Is a ghost field a function value..
+If yes, then add disjointness conditions..
+
+  field=f(self)
+
+How do we determine if a field is a functional value of root?
+
+  min(..)
+  sum(self) = self.val+sum(self.next)
+  min(self) = min2(self.val,min(self.next)
+  first(self) = self.val
+
+
+  
+
+*/

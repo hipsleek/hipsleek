@@ -1,0 +1,63 @@
+Starting Omega...oc
+H is defined.
+HP_1 is defined.
+HP_2 is defined.
+G is defined.
+Starting z3... 
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], true)])
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ x::H<>&x!=null --> x::node<l,r> * HP_1(l) * HP_2(r)(3,4)
+
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+!!! formula1: emp&{FLOW,(1,25)=__flow}[]
+!!! formula1_under: emp&{FLOW,(1,25)=__flow}[]
+!!! baga_over(unfolded):Some([([], true)])
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ x::HP_2<>&x!=null --> x::node<l_70,r_71> * HP_72(l_70) * HP_73(r_71)(3,4)
+
+WARNING: _0:0_0:0:FAIL: Can not prove:
+ x::HP_1<>&x!=null --> x::node<l_74,r_75> * HP_76(l_74) * HP_77(r_75)(3,4)
+
+
+*************************************
+*******relational definition ********
+*************************************
+[ H(l) ::= 
+ HP_1(l)
+ or HP_2(l)
+ or l::node<l1,r> * H(l1) * H(r)
+ or emp&l=null
+ (3,4),
+ HP_1(l2) ::= 
+ HP_72(l2)
+ or HP_76(l2)
+ or emp
+ (3,4),
+ HP_2(r1) ::= 
+ HP_73(r1)
+ or HP_77(r1)
+ or emp
+ (3,4),
+ HP_72(l3) ::= emp(3,4),
+ HP_73(r2) ::= emp(3,4),
+ HP_76(l4) ::= emp(3,4),
+ HP_77(r3) ::= emp(3,4)]
+*************************************
+Stop Omega... 8 invocations 
+SAT Count   : 154
+SAT % Hit   : 94.8%
+IMPLY Count : 126
+IMPLY % Hit : 95.23%
+Time(cache overhead) : 0.011118 (seconds)
+
+!!! log(small):(0.12946,340)
+Total verification time: 0.119944 second(s)
+	Time spent in main process: 0.104639 second(s)
+	Time spent in child processes: 0.015305 second(s)
+

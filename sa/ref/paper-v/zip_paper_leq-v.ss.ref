@@ -1,0 +1,31 @@
+
+!!!Full processing file "paper-v/zip_paper_leq-v.ss"
+Parsing file "paper-v/zip_paper_leq-v.ss" by default parser...
+
+!!! processing primitives "["prelude.ss"]
+Starting Omega...oc
+Starting z3... 
+
+!!! formula1: emp&(self=null | (self!=null & p!=null))&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,self], true),
+([], self=null)])
+!!! formula1: emp&(self=null | self!=null)&{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([self], true),
+([], self=null)])
+!!! formula1: emp&((r=null & self=null) | (self!=null & p!=null & r!=null))&
+{FLOW,(1,28)=__flow}[]
+!!! formula1_under: emp&self=null & r=null&{FLOW,(1,28)=__flow}[]
+!!! baga_over(unfolded):Some([([p,r,self], true),
+([], r=null & self=null)])
+Checking procedure zip$node~node... 
+Procedure zip$node~node SUCCESS.
+Stop Omega... 47 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.274255,595)
+Total verification time: 0.481945 second(s)
+	Time spent in main process: 0.418897 second(s)
+	Time spent in child processes: 0.063048 second(s)
+
