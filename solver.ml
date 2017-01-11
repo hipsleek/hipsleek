@@ -8100,7 +8100,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                           Debug.ninfo_hprint (add_str "estate.es_heap match_" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
                           x_tinfo_hp (add_str "ctx0 match_" (Cprinter.string_of_context)) ctx0 no_pos;
                           let ctx_lst, prf = x_add (heap_entail_non_empty_rhs_heap ~caller:(x_loc^":"^caller)) prog is_folding ctx0 estate ante conseq b1 b2 rhs_h_matched_set pos in
-                          x_tinfo_hp (add_str "ctx0_lst match_" (Cprinter.string_of_list_context)) ctx_lst no_pos;
+                          x_binfo_hp (add_str "ctx0_lst match_" (Cprinter.string_of_list_context)) ctx_lst no_pos;
                           (ctx_lst, prf)
                         )
                     )
