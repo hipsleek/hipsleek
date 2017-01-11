@@ -1364,6 +1364,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   in
   (* to build a subs here *)
   let (h0,pf) = elim_absent_nodes (x_add aux_xpure_for_view prog (* memset *) {mem_formula_mset = []}) h0 which_xpure in
+  let () = y_binfo_hp (add_str "p0 " Cprinter.string_of_mix_formula) p0 in
   let pf = CP.join_conjunctions pf in
   (* let p0 = MCP.merge_mix_w_pure p0 pf in *)
   (* let () = x_dinfo_pp "TODO: Need to add pure collected into p0" no_pos in *)
