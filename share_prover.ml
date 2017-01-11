@@ -701,7 +701,7 @@ struct
       with Unsat_exception -> false
     else
       try
-        print_string "\nfhlafldf alfaf \n" ;
+        (* print_string "\nfhlafldf alfaf \n" ; *)
         (*decomposes the vars, returns the simplified syst to v*v=(v|1) and non-zero constraints*)
         let const_vars, subst_vars,l_eqs = fold_3_map (tree_v_solver eqs.eqs_ex) eqs.eqs_eql in
         let eqs = {eqs with eqs_eql = l_eqs; eqs_ve = subst_vars@eqs.eqs_ve; eqs_vc = const_vars@eqs.eqs_vc} in
@@ -709,7 +709,7 @@ struct
         let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] l_v l_c eqs in
         let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
         if l_eqs = []&&nz_cons=[] then true else
-          let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in
+          (* let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in *)
           call_sat nz_cons ((*conv_eq_s*) l_eqs)
       with Unsat_exception -> false
 
