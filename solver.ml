@@ -15927,7 +15927,7 @@ and normalize_base_perm prog f =
 
 and normalize_frac_heap prog h p vp =  (*used after adding back the consumed heap*)
   if !perm=NoPerm then (h, p)
-  else if !perm=Bperm then (h, p) (*TODO: this is not applicable to BPERM*)
+  else if Perm.allow_perm() then (h, p) (*TODO: this is not applicable to BPERM*)
   else 
     let f = normalize_base_perm prog (mkBase h p vp TypeTrue (mkTrueFlow ()) [] no_pos) in 
     match f with

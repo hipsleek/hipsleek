@@ -9,7 +9,7 @@ pred ll<n> == self = null & n = 0
 	inv n >= 0.
 
 //(1)
-checkentail x::node<_,q> |-  x::node(v)<_,q>.
+checkentail x::node<_,q>@M |-  x::node(@@L)<_,q>@M.
 print residue.
  //(1) valid v = full or v<full x(1-v) q (1-v) ll 
  //-> missing?
