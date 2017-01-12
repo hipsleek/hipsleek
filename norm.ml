@@ -2052,6 +2052,26 @@ let convert_tail_vdefs_to_linear prog =
 
 (************* end CONVERT TAIL-REC to LINEAR vdef ***************)
 
+let tree_share_norm_formula (f:CF.formula) : CF.formula =
+  let h, p, vp, fl, t, a = CF.split_components f in
+  let () = y_binfo_hp (add_str "f" Cprinter.string_of_formula) f in
+  let () = y_binfo_hp (add_str "h_formula" Cprinter.string_of_h_formula) h in
+  let () = y_binfo_hp (add_str "h_formula" Cprinter.string_of_mix_formula) p in
+  let h_list = CF.split_star_conjunctions h in
+  let rec combine list = match list with
+    | [] -> []
+    | [x] -> [x]
+    | a::(b::d as tail) ->
+      begin
+        match (a,b) with
+        | (CF.DataNode a1, CF.DataNode b1) -> if (a1.h_formula_data_node = b1.h_formula_data_node && a1.h_formula_data_name = b1.h_formula_data_name) then
+            a::(combine d) else a::(combine tail)
+        | (_,_) -> list
+      end
+  in
+  let final_h_f = CF.join_star_conjunctions (combine h_list) in
+  CF.mkBase final_h_f p vp t fl a no_pos 
+
 let imm_abs_norm_formula (f:CF.formula) prog unfold_fun : CF.formula  = 
   x_add Immutable.merge_alias_nodes_formula prog f [] (x_add Cvutil.xpure_heap_symbolic 13 prog) unfold_fun
 (* Cvutil.crop_h_formula f svl *)

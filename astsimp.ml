@@ -462,6 +462,7 @@ and convert_heap2_x prog (f0 : IF.formula) : IF.formula =
     let h = convert_heap2_heap prog h0
     in IF.Base { (f) with IF.formula_base_heap = h; }
   | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
+    x_binfo_hp (add_str "h0" (!IF.print_h_formula)) h0 no_pos;
     let h = convert_heap2_heap prog h0
     in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
@@ -7694,6 +7695,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
       let n_tl = x_add gather_type_info_pure prog f.IF.formula_pure tl in
       x_add gather_type_info_heap prog f.IF.formula_heap n_tl
     else tl in
+  let () = y_binfo_hp (add_str "f0" !IF.print_formula) f0 in
   let rec helper f0 tl =
     match f0 with
     | IF.Or b-> 
@@ -7722,6 +7724,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         (*     IF.formula_base_pure = np *)
         (* } in *)
         let (n_tl,ch, newvars) = x_add linearize_formula prog f0 n_tl in
+        let () = y_binfo_hp (add_str "ch" Cprinter.string_of_formula) ch in
+ 
         let n_tlist = (
           if sep_collect then
             if quantify then (
@@ -8275,6 +8279,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
         let tmp_h = CF.mkStarH lf1 lf2 pos in
         let tmp_type = CF.mkAndType type1 type2 in 
+        let () = y_binfo_hp (add_str "h_formula" Cprinter.string_of_h_formula) tmp_h in
+        let () = y_binfo_hp (add_str "tmp_type" Cprinter.string_of_t_formula) tmp_type in
         (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.StarMinus {IF.h_formula_starminus_h1 = f1;
                       IF.h_formula_starminus_h2 = f2;
@@ -8282,7 +8288,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let (lf1, type1, newvars1, n_tl) = linearize_heap f1 pos tl in
         let (lf2, type2, newvars2, n_tl) = linearize_heap f2 pos n_tl in
         let tmp_h = CF.mkStarMinusH lf1 lf2 Not_Aliased pos 1 in
-        let tmp_type = CF.mkAndType type1 type2 in 
+        let tmp_type = CF.mkAndType type1 type2 in
         (tmp_h, tmp_type, newvars1 @ newvars2, n_tl)
       | IF.Phase { IF.h_formula_phase_rd = f1;
                    IF.h_formula_phase_rw = f2;

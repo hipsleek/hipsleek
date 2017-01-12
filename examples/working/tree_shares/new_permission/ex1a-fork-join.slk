@@ -24,8 +24,6 @@ expect Valid.
 
 
 //(1)
-checkentail x::node(@@L)<_,q> * x::node(@@R)<_,q> |-  x::node<_,q>@M.
+checkentail x::node(@@L)<_,q>@L * x::node(@@R)<_,q>@L |-  x::node<_,q>@L.
 print residue.
- //(1) valid v = full or v<full x(1-v) q (1-v) ll 
- //-> missing?
 expect Valid.

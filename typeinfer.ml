@@ -524,10 +524,8 @@ and gather_type_info_exp_x prog a0 tlist et =
     let (n_tl,n_typ) = gather_type_info_exp_x prog e tlist t in
     (n_tl,n_typ)
   | IP.Var ((sv, sp), pos) ->
-    let () = y_tinfo_pp "here1" in
     let (n_tl,n_typ) = x_add gather_type_info_var sv tlist et pos in
     (* let () = print_string (Iprinter.stri tlist) in *)
-    let () = y_tinfo_pp "here2" in
     (n_tl,n_typ)
   | IP.Level ((sv, sp), pos) ->
     (*sv should be of lock_typ*)
