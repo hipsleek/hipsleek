@@ -2913,7 +2913,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       let r =
         let sat,npf = MCP.check_pointer_dis_sat npf in
         if  sat then
-          let () = x_binfo_pp ("npf a" ^ (Cprinter.string_of_mix_formula npf)) no_pos in
+          let () = x_dinfo_pp ("npf a" ^ (Cprinter.string_of_mix_formula npf)) no_pos in
           not (TP.is_sat_mix_sub_no npf sat_subno true true)
         else true in
       (*let () = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true))
@@ -2927,7 +2927,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
   let tp_syn_x h p =
-    let () = x_binfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_dinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     (* let _ = unsat_count_syn := !unsat_count_syn + 1 in *)
     let p1 = (Mcpure.pure_of_mix p) in
     let is_shape1 = List.for_all (CP.is_node_typ) (CP.fv p1) in
@@ -2937,7 +2937,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let d = Excore.EPureI.mk_star_disj t1 t2 in
     (* let d = Excore.EPureI.elim_unsat_disj d in *)
     let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
-    let () = x_binfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
+    let () = x_dinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
     (* let p = MCP.translate_level_mix_formula p in *)
     (* let ph,_,_ = x_add xpure_heap 1 prog h p 1 in *)
@@ -8697,7 +8697,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
 
 and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_matched_set pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-  let () = x_binfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
+  let () = x_tinfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
   let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) (prog.Cast.prog_rel_decls # get_stk) in
   (* Changed for merge.ss on 9/3/2013 *)
   let rhs_p = if not(estate_orig.es_infer_rel # is_empty_recent) then subst_rel_by_def_mix rel_w_defs rhs_p else rhs_p in
@@ -8706,7 +8706,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let pr_mf = Cprinter.string_of_mix_formula in
-  let () = x_binfo_hp (add_str "lhs_p(0)" pr_mf) lhs_p no_pos in
+  let () = x_dinfo_hp (add_str "lhs_p(0)" pr_mf) lhs_p no_pos in
   let lhs_vp = lhs.formula_base_vperm in
   (* Changed for merge.ss on 9/3/2013 *)
   let lhs_p = if not (estate_orig.es_infer_rel # is_empty_recent) then subst_rel_by_def_mix rel_w_defs lhs_p else lhs_p in
@@ -8779,11 +8779,11 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* let curr_lhs_h, new_lhs_p = x_add Mem.compact_nodes_with_same_name_in_h_formula curr_lhs_h [[]] in (\*andreeac TODO check more on this*\) *)
   (* let lhs_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) new_lhs_p no_pos) in (\* andreeac temp *\) *)
   x_tinfo_hp (add_str "curr_lhs_h" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_binfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
+  x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p lhs_vp in
   x_tinfo_hp (add_str "estate_orig" (Cprinter.string_of_entail_state)) estate_orig pos;
   x_tinfo_hp (add_str "curr_lhs_h0" (Cprinter.string_of_h_formula)) curr_lhs_h pos;
-  x_binfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
+  x_tinfo_hp (add_str "lhs_p" !Cast.print_mix_formula) lhs_p no_pos;
   let unk_heaps = x_add_1 CF.keep_hrel curr_lhs_h in
   (* Debug.info_hprint (add_str "curr_lhs_h" Cprinter.string_of_h_formula) curr_lhs_h no_pos; *)
   (* Debug.info_hprint (add_str "unk_heaps" (pr_list Cprinter.string_of_h_formula)) unk_heaps no_pos; *)
@@ -8800,7 +8800,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   let curr_lhs_h = Immutable.apply_subs_h_formula estate_orig.es_crt_holes curr_lhs_h in
   (* below merges and normalizes aliased nodes *)
   let curr_lhs_h, lhs_p = Norm.imm_norm_h_formula prog curr_lhs_h lhs_p unfold_for_abs_merge pos in
-  let () = y_binfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p in
+  let () = y_tinfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p in
   let (xpure_lhs_h1, yy, memset) as xp1a = 
     x_add xpure_heap 9 prog curr_lhs_h lhs_p 1 in
   let diff_num2 = Gen.seq_number2 # diff in
@@ -8855,8 +8855,8 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
       (* MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args) *)
     else lhs_p
   in
-  let () = y_binfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p  in
-  let () = y_binfo_hp (add_str "allow_perm " string_of_bool) (Perm.allow_perm()) in 
+  let () = y_tinfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p  in
+  let () = y_tinfo_hp (add_str "allow_perm " string_of_bool) (Perm.allow_perm()) in 
   let lhs_p2 = if Perm.allow_perm() then lhs_p else lhs_p2 in
   let stk_inf_pure = new Gen.stack_pr "stk_inf_pure" (!CP.print_formula) (==) in (* of xpure *)
   let stk_rel_ass = new Gen.stack_pr "stk-rel-ass" (add_str "(stk_rel_ass)" CP.string_of_infer_rel) (==) in (* of rel_ass *)
@@ -8864,10 +8864,10 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
   (* let () = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
   (* infer must NOT use baga_enum outcome *)
   let pr = Cprinter.string_of_mix_formula in
-  let () = x_binfo_hp (add_str "xpure_lhs_h1" pr) xpure_lhs_h1 no_pos in
-  let () = x_binfo_hp (add_str "xpure_lhs_h1_sym (wo pure)" pr) xpure_lhs_h1_sym no_pos in
-  let () = x_binfo_hp (add_str "NO RHS: lhs_p2 (wo heap)" pr) lhs_p2 no_pos in
-  let () = x_binfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
+  let () = x_tinfo_hp (add_str "xpure_lhs_h1" pr) xpure_lhs_h1 no_pos in
+  let () = x_tinfo_hp (add_str "xpure_lhs_h1_sym (wo pure)" pr) xpure_lhs_h1_sym no_pos in
+  let () = x_tinfo_hp (add_str "NO RHS: lhs_p2 (wo heap)" pr) lhs_p2 no_pos in
+  let () = x_tinfo_hp (add_str "conseq1:" !CF.print_formula) conseq no_pos in
   let conseq_flow = CF.flow_formula_of_formula conseq in
   let (estate,lhs_new,rhs_p,neg_lhs,rel_ass) = x_add Infer.infer_collect_rel
       (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig conseq_flow xpure_lhs_h1_sym lhs_p2 rhs_p pos in
@@ -9274,9 +9274,9 @@ type: bool *
            | _ -> report_error pos "pre_residue_lvl is not -1 or 0 or 1")
         in
         let to_add = MCP.mix_of_pure (CP.join_conjunctions (inf_p@to_add_rel_ass)) in
-        let () = y_binfo_hp (add_str "lhs_new " Cprinter.string_of_mix_formula) lhs_new in
+        let () = y_tinfo_hp (add_str "lhs_new " Cprinter.string_of_mix_formula) lhs_new in
         let lhs_p = MCP.merge_mems lhs_new to_add true in
-        let () = y_binfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p in 
+        let () = y_tinfo_hp (add_str "lhs_p " Cprinter.string_of_mix_formula) lhs_p in 
         let res_delta = mkBase lhs_h lhs_p lhs_vp lhs_t lhs_fl lhs_a no_pos in (* TODO: res_vp *)
         let res_delta = x_add_1 CF.simplify_pure_f_old res_delta in
         let estate = { estate with es_formula = res_delta; } in
