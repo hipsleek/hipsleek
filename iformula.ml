@@ -1862,21 +1862,21 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
   let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
     | Star b->
       let (h1,h2) = (b.h_formula_star_h1, b.h_formula_star_h2) in
-      let () = x_binfo_hp (add_str "h1" (!print_h_formula)) h1 no_pos in
-      let () = x_binfo_hp (add_str "h2" (!print_h_formula)) h2 no_pos in
+      let () = x_dinfo_hp (add_str "h1" (!print_h_formula)) h1 no_pos in
+      let () = x_dinfo_hp (add_str "h2" (!print_h_formula)) h2 no_pos in
       begin
         match (h1,h2) with
         | (HeapNode h11, HeapNode h22) ->
-          let () = x_binfo_pp "heap node, heap node"  no_pos in
+          let () = x_dinfo_pp "heap node, heap node"  no_pos in
           let compare = (h11.h_formula_heap_node = h22.h_formula_heap_node && h11.h_formula_heap_name = h22.h_formula_heap_name && Perm.allow_perm()) in
-          let () = x_binfo_hp (add_str "compare" (string_of_bool)) compare no_pos in
+          let () = x_dinfo_hp (add_str "compare" (string_of_bool)) compare no_pos in
           let perm1 = h11.h_formula_heap_perm in
           let perm2 = h22.h_formula_heap_perm in
           begin
             match (perm1, perm2) with
             | (Some (Ipure_D.Tsconst (tree1, loc1)), Some (Ipure_D.Tsconst (tree2, loc2))) ->
               let new_tree = Tree_shares.Ts.union tree1 tree2 in
-              let () = x_binfo_hp (add_str "new_tree" (Tree_shares.Ts.string_of_tree_share)) new_tree no_pos in
+              let () = x_dinfo_hp (add_str "new_tree" (Tree_shares.Ts.string_of_tree_share)) new_tree no_pos in
               let new_perm = Some (Ipure_D.Tsconst (new_tree, loc1)) in
               let new_f = HeapNode {h11 with h_formula_heap_perm = new_perm} in
               float_out_exps new_f
@@ -2044,7 +2044,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
   let rec helper (f:formula):formula = 
     match f with
     | Base b ->
-      let () = x_binfo_hp (add_str "formula_base_heap" (!print_h_formula)) b.formula_base_heap no_pos in
+      let () = x_dinfo_hp (add_str "formula_base_heap" (!print_h_formula)) b.formula_base_heap no_pos in
       let rh,rl = float_out_exps 2 b.formula_base_heap in
       if (List.length rl) == 0 then 
         Base { b with formula_base_heap = rh; }
@@ -2064,7 +2064,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_and = afs;
             formula_exists_pos = b.formula_base_pos })
     | Exists b ->
-      let () = x_binfo_pp "Exists xxxxxxxxx" no_pos in
+      let () = x_dinfo_pp "Exists xxxxxxxxx" no_pos in
       let rh,rl = float_out_exps 3 b.formula_exists_heap in
       if (List.length rl)== 0 then
         Exists { b with formula_exists_heap = rh; }
@@ -2084,7 +2084,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_and = afs;
             formula_exists_pos = b.formula_exists_pos })
     | Or b ->
-        let () = x_binfo_pp "Or xxxxxxxxx" no_pos in
+        let () = x_dinfo_pp "Or xxxxxxxxx" no_pos in
         Or ({
         formula_or_f1 = float_out_exps_from_heap 6 lbl_getter annot_getter b.formula_or_f1 ;
         formula_or_f2 = float_out_exps_from_heap 7 lbl_getter annot_getter b.formula_or_f2 ;
