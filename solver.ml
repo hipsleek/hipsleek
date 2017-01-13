@@ -12929,26 +12929,34 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let perm2 = node2.h_formula_data_perm in
           begin
             match (perm1, perm2, b) with
-            | (Some (Cpure.Tsconst (tree1, loc1)), Some (Cpure.Tsconst (tree2, loc2)), true) ->
-              let new_tree = Tree_shares.Ts.union tree1 tree2 in
-              let () = x_dinfo_hp (add_str "new_tree" (Tree_shares.Ts.string_of_tree_share)) new_tree no_pos in
-              let new_perm = Some (Cpure.Tsconst (new_tree, loc1)) in
+            | (Some (Cpure.Var (tree1, loc1)), Some (Cpure.Var (tree2, loc2)), true) ->
+              let new_tree = Cpure.fresh_spec_var tree1 in
+              let new_perm = Cpure.Var (new_tree, loc1) in
+              let tree_f1 = Cpure.mkAdd (Cpure.Var (tree1, loc1)) (Cpure.Var (tree1, loc1)) no_pos in
+              let new_tree_f = Cpure.mkEqExp new_perm tree_f1 no_pos in
               let new_spec_var = Cpure.mk_typed_spec_var typ1 ident1 in
               let argument1 = node1.h_formula_data_arguments in
               let argument2 = node2.h_formula_data_arguments in
-              if argument1 = [] then
-                lhs_b_base_heap, lhs_b_pure
+              let new_arguments = List.map Cpure.fresh_spec_var argument1 in
+              let new_b_pure = if argument1 = [] then
+                Mcpure.merge_mix_w_pure lhs_b_pure new_tree_f
               else
-                let new_arguments = List.map Cpure.fresh_spec_var argument1 in
                 let eq_arguments1 = List.map2 Cpure.mk_eq_vars new_arguments argument1 in
                 let eq_arguments2 = List.map2 Cpure.mk_eq_vars new_arguments argument2 in
                 let eq_arg_f1 = List.fold_left (fun a b -> Cpure.mkAnd a b no_pos) (Cpure.mkTrue no_pos) eq_arguments1 in
                 let eq_arg_f2 = List.fold_left (fun a b -> Cpure.mkAnd a b no_pos) (Cpure.mkTrue no_pos) eq_arguments2 in
                 let new_f = Cpure.mkAnd eq_arg_f1 eq_arg_f2 no_pos in
-                let new_node = DataNode {node1 with h_formula_data_node = new_spec_var;
-                                                    h_formula_data_perm = new_perm}
-                in
-                lhs_b_base_heap, lhs_b_pure
+                let new_f2 = Cpure.mkAnd new_f new_tree_f no_pos in
+                Mcpure.merge_mix_w_pure lhs_b_pure new_f2
+              in
+              let new_node = DataNode {node1 with h_formula_data_node = new_spec_var;
+                                                  h_formula_data_perm = Some new_perm;
+                                                  h_formula_data_arguments = new_arguments;
+                                      }
+              in
+              let () = x_binfo_hp (add_str "new_lhs_h_base_heap" (Cprinter.string_of_h_formula)) new_node pos in
+              let () = x_binfo_hp (add_str "new_lhs_h_pure" (Cprinter.string_of_mix_formula)) new_b_pure pos in
+              new_node, new_b_pure
             | _ -> lhs_b_base_heap, lhs_b_pure
           end
         | _ -> lhs_b_base_heap, lhs_b_pure
