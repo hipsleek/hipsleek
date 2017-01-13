@@ -1864,26 +1864,34 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       let (h1,h2) = (b.h_formula_star_h1, b.h_formula_star_h2) in
       let () = x_binfo_hp (add_str "h1" (!print_h_formula)) h1 no_pos in
       let () = x_binfo_hp (add_str "h2" (!print_h_formula)) h2 no_pos in
-      let () = match (h1,h2) with
+      begin
+        match (h1,h2) with
         | (HeapNode h11, HeapNode h22) ->
           let () = x_binfo_pp "heap node, heap node"  no_pos in
           let compare = (h11.h_formula_heap_node = h22.h_formula_heap_node && h11.h_formula_heap_name = h22.h_formula_heap_name && Perm.allow_perm()) in
           let () = x_binfo_hp (add_str "compare" (string_of_bool)) compare no_pos in
           let perm1 = h11.h_formula_heap_perm in
           let perm2 = h22.h_formula_heap_perm in
-          let () = match (perm1, perm2) with
+          begin
+            match (perm1, perm2) with
             | (Some (Ipure_D.Tsconst (tree1, loc1)), Some (Ipure_D.Tsconst (tree2, loc2))) ->
-              let new_tree = (Tree_shares.Ts.union tree1 tree2, loc1) in
-              ()
-            | _ -> ()
-          in
-          ()
-        | _ -> ()
-      in
-      let r11,r12 = float_out_exps b.h_formula_star_h1 in
-      let r21,r22 = float_out_exps b.h_formula_star_h2 in
-      (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
-       (r12@r22))
+              let new_tree = Tree_shares.Ts.union tree1 tree2 in
+              let () = x_binfo_hp (add_str "new_tree" (Tree_shares.Ts.string_of_tree_share)) new_tree no_pos in
+              let new_perm = Some (Ipure_D.Tsconst (new_tree, loc1)) in
+              let new_f = HeapNode {h11 with h_formula_heap_perm = new_perm} in
+              float_out_exps new_f
+              (* failwith "do not have unified permission now" *)
+            | _ ->  let r11,r12 = float_out_exps b.h_formula_star_h1 in
+              let r21,r22 = float_out_exps b.h_formula_star_h2 in
+              (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
+               (r12@r22))
+          end
+        | _ ->
+          let r11,r12 = float_out_exps b.h_formula_star_h1 in
+          let r21,r22 = float_out_exps b.h_formula_star_h2 in
+          (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
+           (r12@r22))
+      end
     | StarMinus b-> 
       let r11,r12 = float_out_exps b.h_formula_starminus_h1 in
       let r21,r22 = float_out_exps b.h_formula_starminus_h2 in

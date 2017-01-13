@@ -21,9 +21,15 @@ print residue.
 expect Valid.
 */
 
-
+/*
 
 //(1)
 checkentail x::node(@@L)<_,q>@L * x::node(@@R)<_,q>@L |-  x::node<_,q>@L.
+print residue.
+expect Valid.
+*/
+
+//(1)
+checkentail x::node<_,q>  |-  x::node<_,q>.
 print residue.
 expect Valid.
