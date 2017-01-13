@@ -174,7 +174,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_imm_param : P.ann option list;
                        h_formula_heap_full : bool;
                        h_formula_heap_with_inv : bool;
-                       h_formula_heapp_erm : iperm; (*LDK: optional fractional permission*)
+                       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
                        h_formula_heap_ho_arguments : rflow_formula list;
                        h_formula_heap_arguments : P.exp list;
                        h_formula_heap_pseudo_data : bool;
@@ -1872,7 +1872,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
           let perm1 = h11.h_formula_heap_perm in
           let perm2 = h22.h_formula_heap_perm in
           let () = match (perm1, perm2) with
-            | (Tsconst Ipure_D.Tsconst (tree1, loc1), Ipure_D.Tsconst (tree2, loc2)) ->
+            | (Some (Ipure_D.Tsconst (tree1, loc1)), Some (Ipure_D.Tsconst (tree2, loc2))) ->
               let new_tree = (Tree_shares.Ts.union tree1 tree2, loc1) in
               ()
             | _ -> ()
