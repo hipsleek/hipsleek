@@ -174,7 +174,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_imm_param : P.ann option list;
                        h_formula_heap_full : bool;
                        h_formula_heap_with_inv : bool;
-                       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
+                       h_formula_heapp_erm : iperm; (*LDK: optional fractional permission*)
                        h_formula_heap_ho_arguments : rflow_formula list;
                        h_formula_heap_arguments : P.exp list;
                        h_formula_heap_pseudo_data : bool;
@@ -1860,7 +1860,26 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       (nv,[(nn,npf)])
   in
   let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
-    | Star b-> 
+    | Star b->
+      let (h1,h2) = (b.h_formula_star_h1, b.h_formula_star_h2) in
+      let () = x_binfo_hp (add_str "h1" (!print_h_formula)) h1 no_pos in
+      let () = x_binfo_hp (add_str "h2" (!print_h_formula)) h2 no_pos in
+      let () = match (h1,h2) with
+        | (HeapNode h11, HeapNode h22) ->
+          let () = x_binfo_pp "heap node, heap node"  no_pos in
+          let compare = (h11.h_formula_heap_node = h22.h_formula_heap_node && h11.h_formula_heap_name = h22.h_formula_heap_name && Perm.allow_perm()) in
+          let () = x_binfo_hp (add_str "compare" (string_of_bool)) compare no_pos in
+          let perm1 = h11.h_formula_heap_perm in
+          let perm2 = h22.h_formula_heap_perm in
+          let () = match (perm1, perm2) with
+            | (Tsconst Ipure_D.Tsconst (tree1, loc1), Ipure_D.Tsconst (tree2, loc2)) ->
+              let new_tree = (Tree_shares.Ts.union tree1 tree2, loc1) in
+              ()
+            | _ -> ()
+          in
+          ()
+        | _ -> ()
+      in
       let r11,r12 = float_out_exps b.h_formula_star_h1 in
       let r21,r22 = float_out_exps b.h_formula_star_h2 in
       (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
@@ -2016,11 +2035,12 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
   in
   let rec helper (f:formula):formula = 
     match f with
-    | Base b -> 
+    | Base b ->
+      let () = x_binfo_hp (add_str "formula_base_heap" (!print_h_formula)) b.formula_base_heap no_pos in
       let rh,rl = float_out_exps 2 b.formula_base_heap in
       if (List.length rl) == 0 then 
         Base { b with formula_base_heap = rh; }
-      else 
+      else
         let r1,r2 = List.hd rl in
         let r1,r2 = List.fold_left (fun (a1,a2) (c1,c2) -> 
             ((c1::a1),(Ipure.mkAnd a2 c2 b.formula_base_pos))) ([r1],r2) (List.tl rl) in
@@ -2036,6 +2056,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_and = afs;
             formula_exists_pos = b.formula_base_pos })
     | Exists b ->
+      let () = x_binfo_pp "Exists xxxxxxxxx" no_pos in
       let rh,rl = float_out_exps 3 b.formula_exists_heap in
       if (List.length rl)== 0 then
         Exists { b with formula_exists_heap = rh; }
@@ -2054,7 +2075,9 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_flow = b.formula_exists_flow;
             formula_exists_and = afs;
             formula_exists_pos = b.formula_exists_pos })
-    | Or b -> Or ({
+    | Or b ->
+        let () = x_binfo_pp "Or xxxxxxxxx" no_pos in
+        Or ({
         formula_or_f1 = float_out_exps_from_heap 6 lbl_getter annot_getter b.formula_or_f1 ;
         formula_or_f2 = float_out_exps_from_heap 7 lbl_getter annot_getter b.formula_or_f2 ;
         formula_or_pos = b.formula_or_pos })
