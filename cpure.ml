@@ -105,7 +105,6 @@ let is_bag_tup2_typ sv = match sv with
 let is_rel_typ sv = match sv with
   | SpecVar (RelT _,_,_) -> true
   | _ -> false
-
 let is_hprel_typ sv = match sv with
   | SpecVar (HpT,_,_) -> true
   | _ -> false

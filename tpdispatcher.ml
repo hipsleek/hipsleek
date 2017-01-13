@@ -3588,10 +3588,12 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
            let res1 = x_add tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
            if res1 then res1
            else x_add tp_imply(*_debug*) ante conseq imp_no timeout process
-         else 
+         else
            x_add tp_imply(*_debug*) ante conseq imp_no timeout process 
        in
-       let () = x_dinfo_hp (add_str "res: " string_of_bool) res1 no_pos in
+       let () = x_tinfo_hp (add_str "ante: " Cprinter.string_of_pure_formula) ante no_pos in
+       let () = x_tinfo_hp (add_str "conseq: " Cprinter.string_of_pure_formula) conseq no_pos in
+       let () = x_tinfo_hp (add_str "res: " string_of_bool) res1 no_pos in
        let l1 = CP.get_pure_label ante in
        let l2 = CP.get_pure_label conseq in
        if res1 then (res1,(l1,l2)::res2,None)
