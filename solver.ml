@@ -12932,7 +12932,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
             | (Some (Cpure.Var (tree1, loc1)), Some (Cpure.Var (tree2, loc2)), true) ->
               let new_tree = Cpure.fresh_spec_var tree1 in
               let new_perm = Cpure.Var (new_tree, loc1) in
-              let tree_f1 = Cpure.mkAdd (Cpure.Var (tree1, loc1)) (Cpure.Var (tree1, loc1)) no_pos in
+              let tree_f1 = Cpure.mkAdd (Cpure.Var (tree1, loc1)) (Cpure.Var (tree2, loc2)) no_pos in
               let new_tree_f = Cpure.mkEqExp new_perm tree_f1 no_pos in
               let new_spec_var = Cpure.mk_typed_spec_var typ1 ident1 in
               let argument1 = node1.h_formula_data_arguments in
@@ -12965,7 +12965,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
   in
   let () = x_binfo_hp (add_str "lhs_h_base_heap" (Cprinter.string_of_h_formula)) lhs_b_base_heap pos in
   let () = x_binfo_hp (add_str "lhs_h_pure" (Cprinter.string_of_mix_formula)) lhs_b_pure pos in
-  
+  let lhs_b = {lhs_b with formula_base_heap = new_base_heap;
+                          formula_base_pure = new_pure}
+  in
    Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if (Context.is_steps_action a) then
     begin
