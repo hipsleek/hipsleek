@@ -30,6 +30,6 @@ expect Valid.
 */
 
 //(1)
-checkentail x::node<_,q>  |-  x::node<_,q>.
+checkentail x::node<_,q> |-  x::node<_,q>.
 print residue.
 expect Valid.

@@ -1,0 +1,16 @@
+data cl {int val;}.
+macro L == (#,) .
+macro R == (,#) .
+macro LL == ((#,),).
+
+ data node { int val ; node next }.
+
+/*
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n.
+*/
+
+checkentail x::node<_,q> |-  x::node<_,q>.
+print residue.
+expect Valid.

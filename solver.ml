@@ -12922,9 +12922,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let Cpure.SpecVar (typ1, ident1, _) = node1.h_formula_data_node in
           let Cpure.SpecVar (typ2, ident2, _) = node2.h_formula_data_node in
           let b = (typ1 = typ2 && ident1 = ident2 && node1.h_formula_data_name = node2.h_formula_data_name) in
-          let () = x_binfo_hp (add_str "node1" (Cprinter.string_of_h_formula)) star_h1 pos in
-          let () = x_binfo_hp (add_str "node2" (Cprinter.string_of_h_formula)) star_h2 pos in
-          let () = x_binfo_hp (add_str "b" (string_of_bool)) b pos in
+          let () = x_dinfo_hp (add_str "node1" (Cprinter.string_of_h_formula)) star_h1 pos in
+          let () = x_dinfo_hp (add_str "node2" (Cprinter.string_of_h_formula)) star_h2 pos in
+          let () = x_dinfo_hp (add_str "b" (string_of_bool)) b pos in
           let perm1 = node1.h_formula_data_perm in
           let perm2 = node2.h_formula_data_perm in
           begin
@@ -12968,6 +12968,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
   let lhs_b = {lhs_b with formula_base_heap = new_base_heap;
                           formula_base_pure = new_pure}
   in
+  let estate = {estate with es_formula = (Cformula.Base lhs_b)} in
    Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if (Context.is_steps_action a) then
     begin
