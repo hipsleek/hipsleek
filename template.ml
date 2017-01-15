@@ -46,6 +46,38 @@ let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formul
         ass_pos = pos; } in
   es
 
+let collect_templ_assume_rhs_simpl inf_templs ante cons pos =
+  let cons_fv = fv cons in
+  let ante = find_rel_constraints ante cons_fv in
+  (* let es = { es with CF.es_infer_templ_assume =  *)
+  (*                      es.CF.es_infer_templ_assume @ [(ante, cons)]; } in *)
+
+  (* let inf_templs = es.CF.es_infer_vars_templ in *)
+  let ante_no_templ, ante_unks = trans_formula_templ inf_templs ante in
+  let cons_no_templ, cons_unks = trans_formula_templ inf_templs cons in
+  let vars = diff ((fv ante) @ (fv cons)) (ante_unks @ cons_unks) in
+
+  let ante_no_templ, subst = find_eq_subst_formula vars ante_no_templ in
+  let cons_no_templ = apply_par_term subst cons_no_templ in
+
+  let true_f = mkPure (mkLte (mkIConst (-1) pos) (mkIConst 0 pos) pos) in
+  let ante_fl = true_f::(split_conjunctions ante_no_templ) in
+  let ante_tl = List.map (term_list_of_formula vars) ante_fl in
+
+  (* let () = print_endline ("collect_templ_assume_rhs: ante: " ^ (!print_formula ante)) in                *)
+  (* let () = print_endline ("collect_templ_assume_rhs: ante_tl: " ^ (pr_list print_term_list ante_tl)) in *)
+
+  let () = templ_assume_scc_stk # push 
+                                { ass_vars = vars;
+                                  ass_unks = ante_unks @ cons_unks;
+                                  ass_ante = ante;
+                                  ass_cons = cons;
+                                  ass_ante_tl = ante_tl;
+                                  ass_cons_no_templ = cons_no_templ;
+                                  ass_pos = pos; } in
+  ()
+;;
+
 let collect_templ_assume_rhs (es: CF.entail_state) (ante: formula) (cons: formula) pos = 
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
@@ -99,8 +131,13 @@ let collect_templ_assume_conj_rhs (es: CF.entail_state) (ante: formula) (cons: f
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
   Debug.no_3 "collect_templ_assume_conj_rhs" pr1 pr2 pr2 pr1
-    (fun _ _ _ -> collect_templ_assume_conj_rhs es ante cons pos) es ante cons
+             (fun _ _ _ -> collect_templ_assume_conj_rhs es ante cons pos) es ante cons
 
+let collect_templ_assume_conj_rhs_simpl inf_templs ante cons pos =
+  let cons_l = simplify_templ_conseq (not (has_template_formula ante)) cons in
+  List.iter (fun cons -> collect_templ_assume_rhs_simpl inf_templs ante cons pos) cons_l
+;;
+  
 let simplify_templ_ante (ante: formula) =
   let ante_l = split_disjunctions_deep ante in
   List.map (fun f -> snd (x_add_1 elim_exists_with_fresh_vars f)) ante_l
@@ -121,7 +158,13 @@ let collect_templ_assume_disj_lhs (es: CF.entail_state) (ante: formula) (cons: f
   let pr1 = !CF.print_entail_state in
   let pr2 = !print_formula in
   Debug.no_3 "collect_templ_assume_disj_lhs" pr1 pr2 pr2 pr1
-    (fun _ _ _ -> collect_templ_assume_disj_lhs es ante cons pos) es ante cons
+             (fun _ _ _ -> collect_templ_assume_disj_lhs es ante cons pos) es ante cons
+;;
+  
+let collect_templ_assume_disj_lhs_simpl inf_templs ante cons pos =
+  let ante_l = simplify_templ_ante ante in
+  List.iter (fun ante -> collect_templ_assume_conj_rhs_simpl inf_templs ante cons pos) ante_l
+;;
 
 let collect_templ_assume_init (es: CF.entail_state) (ante: formula) (cons: formula) pos =
   let inf_templs = es.CF.es_infer_vars_templ in
@@ -141,6 +184,9 @@ let collect_templ_assume_init (es: CF.entail_state) (ante: MCP.mix_formula) (con
   Debug.no_3 "collect_templ_assume_init" pr1 pr2 pr3 (pr_opt !CF.print_entail_state) 
     (fun _ _ _ -> collect_templ_assume_init es (MCP.pure_of_mix ante) cons pos) ante cons pos 
 
+let collect_templ_assume_init_simpl inf_templs (ante:formula) (cons:formula) pos =
+  collect_templ_assume_disj_lhs_simpl inf_templs ante cons pos
+    
 (*********************************************)
 (* GENERATE CONSTRAINTS OF TEMPLATE UNKNOWNS *)
 (*********************************************)
@@ -230,7 +276,8 @@ let solve_templ_assume _ =
   let () = templ_assume_scc_stk # reset in
   if templ_assumes = [] then [], [], Unknown
   else
-    let constrs, templ_unks = List.fold_left (fun (ac, au) ta ->
+    let constrs, templ_unks =
+      List.fold_left (fun (ac, au) ta ->
         let constr = gen_templ_constr ta in
         (ac @ constr), (au @ ta.ass_unks)) ([], []) templ_assumes in
     let templ_unks = Gen.BList.remove_dups_eq eq_spec_var templ_unks in

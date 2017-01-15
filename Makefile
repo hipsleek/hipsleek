@@ -34,7 +34,7 @@ endif
 JOBS = 16
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBGLPK)
+LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBGLPK)	
 LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(LIBGLPK)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib

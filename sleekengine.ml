@@ -1501,6 +1501,7 @@ let process_rel_assume cond_path (ilhs : meta_formula) (igurad_opt : meta_formul
       let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
       let lr = [new_rel_ass] in
       let () = x_binfo_hp (add_str "WARNING : Spurious RelInferred (not collected)" (pr_list CP.print_lhs_rhs)) lr no_pos in
+      let _ = CF.sleek_rel_pure_assumes # add new_rel_ass in
       let _ = Infer.infer_rel_stk # push_list_pr x_loc lr in
       ()
   in
@@ -1546,6 +1547,27 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
     let _ = Debug.info_hprint  (add_str "extn pred:\n"  (Cprinter.string_of_hp_rel_def_short )) exted_pred no_pos in
     let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
     ()
+
+let process_pure_trans_to_templ () =
+  let cur_pure_rel = CF.sleek_rel_pure_assumes # get in
+  if cur_pure_rel = []
+  then
+    x_binfo_pp "There are no pure rel assumptions" no_pos
+  else
+    let templs = List.map (fun (_,l,r) -> (CP.trans_pure_assume_to_templ l, CP.trans_pure_assume_to_templ r) ) cur_pure_rel in
+    let pr_templ (l,r) = (!CP.print_formula l) ^ "-->" ^ (!CP.print_formula r) in
+    x_binfo_hp (add_str "Transformed to templs " (pr_list pr_templ)) templs no_pos
+    
+let process_pure_rel_solve_with_templ inf_templs =
+  let inf_templs_str = List.map (fun templ -> match templ with | CP.SpecVar (_,ident,_)->ident ) inf_templs in
+  let cur_pure_rel = CF.sleek_rel_pure_assumes # get in
+  let () =
+    List.iter
+      (fun (_,ante,cons) -> Template.collect_templ_assume_init_simpl inf_templs ante cons no_pos)
+      cur_pure_rel
+  in
+  Template.collect_and_solve_templ_assumes_prog_free false inf_templs_str
+;;
 
 let process_decl_hpdang hp_names =
   let process hp_name=
@@ -1665,15 +1687,28 @@ let mem_id = Gen.BList.mem_eq eq_id
 
 (* let update_sleek_hprel_assumes upd_hprel_list =  *)
 (*   sleek_hprel_assumes # set upd_hprel_list       *)
+let string_of_pure_rel_assumption (_,lhs,rhs) =
+  (!CP.print_formula lhs)^"-->"^(!CP.print_formula rhs)
+;;
 
 let print_sleek_hprel_assumes () =
   (* can we have this at a better place? *)
   (* let () = sleek_hprel_assumes # set CF.add_infer_type_to_hprel (sleek_hprel_assumes # get) in *)
   let curr_hprel = (sleek_hprel_assumes # get) in
+  let curr_prel = CF.sleek_rel_pure_assumes # get in
   (* let curr_hprel = List.map CF.check_hprel curr_hprel in *)
   if (not !Globals.smt_compete_mode) then
-    x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
-      curr_hprel (* (sleek_hprel_assumes # get) *) no_pos
+    let () =
+      if curr_hprel = []
+      then x_binfo_pp "There are no heap relational assumptions" no_pos
+      else x_binfo_hp (add_str "Current list of heap relational assumptions" Cprinter.string_of_hprel_list_short) 
+                      curr_hprel (* (sleek_hprel_assumes # get) *) no_pos
+    in
+    if curr_prel = []
+    then x_binfo_pp "There are no pure relational assumptions" no_pos
+    else
+      x_binfo_hp (add_str "Current list of pure relational assumptions" (pr_list string_of_pure_rel_assumption) )
+                 curr_prel (* (sleek_hprel_assumes # get) *) no_pos
   else ()
 
 let process_sleek_hprel_assumes_others s ?(combined=false) (ids: regex_id_list) f_proc = 
@@ -2928,6 +2963,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
 let process_entail_check (iante : meta_formula list) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" (pr_list pr) pr (fun _ -> "?") process_entail_check_x iante iconseq etype
+
 
 let process_templ_solve (idl: ident list) = 
   Template.collect_and_solve_templ_assumes !cprog idl

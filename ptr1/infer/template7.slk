@@ -5,17 +5,8 @@ infer [templ_129,templ_130] i=templ_129( m, n) & j=templ_130( m, n) & i<=j &  m<
 template_solve{templ_129,templ_130}.
 
 
-// [ 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> m<=(m+1)
-// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> (m+1)<=j
-// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> i<=m
-// ]
 
-// [ i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> i<=m
-// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> (
-//   m+1)<=j
-// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> m<=(
-//   m+1)
-// ]
+
 
 
 // , i=templ_129( m, n) & j=templ_130( m, n) & m_131<=flted_17_132 & 

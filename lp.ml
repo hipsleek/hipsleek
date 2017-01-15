@@ -258,8 +258,8 @@ let run solver input =
   flush out_chn;
   close_out out_chn;
 
-  let lp_output = syscall (String.concat " "
-                                         [cmd_of_lp solver; lp_input; option_of_lp solver]) in
+  let lp_output = syscall (String.concat " " [cmd_of_lp solver; lp_input; option_of_lp solver]) in
+  let () = print_endline lp_output in
   let in_chn = open_in "lpstd" in
   let lp_lst = ref [] in
   let break = ref false in
@@ -275,6 +275,7 @@ let run solver input =
     done
   in
   !lp_lst
+   
   (* let () = *)
   (*   let lp = make_problem Maximize *)
   (*                         [|10.; 6.; 4.|] *)

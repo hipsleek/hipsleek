@@ -1785,46 +1785,16 @@ let gen_templ_vars rel_name =
 ;;
 
 
-(* Generated template name for unknown relations *)
-let rel_templs_transformer = ref ([]:(CP.spec_var*(string*string)) list)
-;;
-
-let trans_rel_to_templ rel =
-  match rel with
-  | RelForm (name,arglist,loc) ->
-     (
-       let (_,(t1,t2)) =
-         (
-           try
-             List.find (fun (n,_) -> CP.eq_spec_var name n) !rel_templs_transformer
-           with Not_found ->
-             let tname1 = Globals.fresh_any_name "templ" in
-             let tname2 = Globals.fresh_any_name "templ" in
-             let () = rel_templs_transformer := ((name,(tname1,tname2))::(!rel_templs_transformer)) in
-             (name,(tname1,tname2))
-         )
-       in
-       (match arglist with
-        | b1::(b2::others) ->
-           let t1 = CP.mkTemplateExp t1 others no_pos in
-           let f1 = CP.mkEqExp b1 t1 no_pos in
-           let t2 = CP.mkTemplateExp t2 others no_pos in
-           let f2 = CP.mkEqExp b2 t2 no_pos in
-           CP.mkAnd f1 f2 no_pos
-        | _ -> failwith "trans_rel_to_templ: Not valid input"
-       )  
-     )
-  | _ -> failwith "trans_rel_to_templ: Not valid input"
-;;
 
 let new_templ_vars () =
-  List.map (fun v -> CP.mk_spec_var v) (List.fold_left (fun r (_,(t1,t2)) -> t1::(t2::r)) [] !rel_templs_transformer)
+  List.map (fun v -> CP.mk_spec_var v) (List.fold_left (fun r (_,(t1,t2)) -> t1::(t2::r)) [] !CP.rel_templs_transformer)
 ;;
   
 let trans_estate_to_templ es=  
   {es with CF.es_infer_vars_templ = new_templ_vars ()}
 ;;
-                                  
+
+
 (* ************************************************************ *)
   
   
@@ -1835,16 +1805,17 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
   let templ_of_rel =
     match rels with
     | h::tail ->
-       trans_rel_to_templ h
+       CP.trans_rel_to_templ h
     | [] -> CP.mkTrue no_pos
   in
-  let new_lhs_mix = !CP.simplify (!CP.simplify (CP.mkAnd templ_of_rel newf no_pos)) in
+  let new_lhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (CP.mkAnd templ_of_rel newf no_pos))) in
+  let new_rhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (MCP.pure_of_mix rhs_mix))) in
   let () = x_binfo_hp (add_str "infer_pure_m: new_lhs_mix" !CP.print_formula) new_lhs_mix no_pos in
   let newes = trans_estate_to_templ estate in
-  let (estate, lhs_mix) =
+  let (estate, lhs_mix,rhs_mix) =
     if !Globals.array_templ
-    then (newes, MCP.mix_of_pure new_lhs_mix)
-    else (estate, lhs_mix)
+    then (newes, MCP.mix_of_pure new_lhs_mix,MCP.mix_of_pure new_rhs_mix)
+    else (estate, lhs_mix,rhs_mix)
   in
   
   (* let () = x_binfo_hp (add_str "infer_pure_m: lhs_mix" !print_mix_formula) lhs_mix no_pos in *)

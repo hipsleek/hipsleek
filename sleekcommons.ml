@@ -54,7 +54,9 @@ type command =
   | Slk_Hull of (meta_formula)
   | Slk_PairWise of (meta_formula)
   | RelAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula)
+  (* | RelPureAssume of (CF.cond_path_type * meta_formula * meta_formula option * meta_formula) *)
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
+  | TransToTempl
   | ShapeInfer of (ident list * ident list)
   | Validate of (validate_result * ident option * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
@@ -165,7 +167,9 @@ let string_of_command c = match c with
   | Slk_Hull _ -> "Slk_Hull"
   | Slk_PairWise _ -> "Slk_PairWise"
   | RelAssume _ -> "RelAssume"
+  (* | (\* RelPureAssume _ -> "RelPureAssume" *\) *)
   | RelDefn _ -> "RelDefn"
+  | TransToTempl -> "TransToTempl"
   | ShapeInfer _ -> "ShapeInfer"
   | Validate _ -> "Validate"
   | ShapeDivide _ -> "ShapeDivide"

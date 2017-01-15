@@ -181,7 +181,7 @@ TODO:
 Collected sleek constraints:
 infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- a::arr_seg<m,m+1>
 infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- ex. i1, j1 : a::arr_seg<i1,j1> & U(m+1,n,i1,j1).
-infer[U] a::arr_seg<i,j> & m>n |- true.
+infer[U] a::arr_seg<i,j> & m>n |- a::aseg<i,j>.
 
 TODO:
         1. Now the inference will give U(m,n,i,j) -->  ((n=j & m=i & 0<=i & i<j) | (0<=n & m=n)),

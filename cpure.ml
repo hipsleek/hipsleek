@@ -10867,6 +10867,16 @@ let get_rel_id_list (f:formula) = match f with
      (* | (VarPerm (_),_) -> failwith "VarPerm" *)
      | _ -> [])
   | _ -> []
+;;
+
+let get_rel_id_list (f:formula) =
+  let f_b bf =
+    match bf with
+    | (RelForm (id,_,_),_) -> Some [id]
+    | _ -> Some []
+  in
+  fold_formula f (nonef, f_b, nonef) List.concat
+;;
 
 let get_rel_id (f:formula)
   = let lst = get_rel_id_list f in
@@ -11499,6 +11509,51 @@ let drop_rel_formula_and_return f =
   drop_formula_and_return pr_weak pr_strong f
 ;;
 
+(* Generated template name for unknown relations *)
+let rel_templs_transformer = ref ([]:(spec_var*(string*string)) list)
+;;
+
+  
+let trans_rel_to_templ rel =
+  match rel with
+  | RelForm (name,arglist,loc) ->
+     (
+       let (_,(t1,t2)) =
+         (
+           try
+             List.find (fun (n,_) -> eq_spec_var name n) !rel_templs_transformer
+           with Not_found ->
+             let tname1 = Globals.fresh_any_name "templ" in
+             let tname2 = Globals.fresh_any_name "templ" in
+             let () = rel_templs_transformer := ((name,(tname1,tname2))::(!rel_templs_transformer)) in
+             (name,(tname1,tname2))
+         )
+       in
+       (match arglist with
+        | b1::(b2::others) ->
+           let t1 = mkTemplateExp t1 others no_pos in
+           let f1 = mkEqExp b1 t1 no_pos in
+           let t2 = mkTemplateExp t2 others no_pos in
+           let f2 = mkEqExp b2 t2 no_pos in
+           mkAnd f1 f2 no_pos
+        | _ -> failwith "trans_rel_to_templ: Not valid input"
+       )  
+     )
+  | _ -> failwith "trans_rel_to_templ: Not valid input"
+;;
+
+let trans_pure_assume_to_templ p1 =
+  let (newf, rels) = drop_rel_formula_and_return p1 in
+  let templ_of_rel =
+    match rels with
+    | h::tail ->
+       trans_rel_to_templ h
+    | [] -> mkTrue no_pos
+  in
+  remove_dupl_conj_pure (!simplify (!simplify (mkAnd templ_of_rel newf no_pos)))
+;;
+
+  
 let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in
   drop_formula pr_strong pr_weak f

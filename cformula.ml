@@ -5031,9 +5031,7 @@ type hprel = {
   hprel_proving_kind: Others.proving_kind;
   hprel_flow: nflow list;
   (* hprel_fold: bool; *)
-}
-
-
+  }
 (*seems to be finished inferred relations, used in the rel_def_stk structure*)
 (*although that stack seems more internal to the inference than anything else, *)
 (*the results are never picked from the stack, rather they are returned by the inference method*)
@@ -5082,8 +5080,11 @@ and infer_state = {
   is_flow: nflow;
   is_hp_equivs: (CP.spec_var*CP.spec_var) list;
   is_hp_defs: hp_rel_def list;
-}
-
+  }
+;;
+                    
+type prel = (CP.rel_cat * CP.formula * CP.formula);;
+  
 let print_hprel_def_short = ref (fun (c: hprel_def) -> "printer has not been initialized")
 
 let print_hprel_short = ref (fun (c: hprel) -> "printer has not been initialized")
@@ -20196,6 +20197,14 @@ let sleek_hprel_assumes =
     method add (e:hprel) = lst <- e::lst
   end
 
+let sleek_rel_pure_assumes =
+  object (self)
+    val mutable lst = []
+    method get = lst
+    method set nlst = lst <- nlst
+    method add (e:prel) = lst <- e::lst
+  end
+  
 (* let sleek_hprel_assumes = ref ([]: CF.hprel list) *)
 
 

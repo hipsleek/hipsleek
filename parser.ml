@@ -1031,6 +1031,7 @@ non_empty_command:
       | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
       | t= relassume_cmd     -> RelAssume t
+      (* | t = relpureassume_cmd -> RelPureAssume t *)
       | t=reldefn_cmd     -> RelDefn t
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
@@ -1060,6 +1061,7 @@ non_empty_command:
       | t=shape_sconseq_cmd     -> ShapeSConseq t
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t = shape_add_dangling_cmd -> ShapeAddDangling t
+      | trans_to_templ_cmd -> TransToTempl
       | t = shape_unfold_cmd -> ShapeUnfold t
       | t = shape_param_dangling_cmd -> ShapeParamDangling t
       | t = shape_simplify_cmd -> ShapeSimplify t
@@ -2508,6 +2510,13 @@ relassume_cmd:
            (un_option il2 [], l, Some guard,  r)
    ]];
 
+relpureassume_cmd:
+  [[ `RELASSUME; il2 = OPT cond_path; l=meta_constr; `CONSTR;r=meta_constr -> (un_option il2 [], l, None,  r)
+    | `RELASSUME; il2 = OPT cond_path; l=meta_constr; `REL_GUARD; guard = meta_constr; `CONSTR;r=meta_constr ->
+       (un_option il2 [], l, Some guard,  r)
+  ]];
+
+
 derv_pred:
 [[
    `IDENTIFIER vn;`OPAREN;sl= id_list_opt; `CPAREN -> (vn,sl)
@@ -2687,6 +2696,11 @@ selective_id_star_list_bracket:
 data_mark_rec_cmd:
   [[ `DATA_MARK_REC; `OSQUARE; il=shape_selective_id_star_list; `CSQUARE
      ->  il
+  ]];
+
+trans_to_templ_cmd:
+  [[
+      `TRANS_TO_TEMPL
   ]];
 
 shape_add_dangling_cmd:

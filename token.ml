@@ -25,7 +25,9 @@ type sleek_token =
   | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET 
   | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
-  | RELASSUME | RELDEFN 
+  | RELASSUME
+  | RELPUREASSUME
+  | RELDEFN 
   | SHAPE_INFER | SHAPE_INFER_PROP 
   | SHAPE_POST_OBL | SHAPE_DIVIDE | SHAPE_CONQUER |  SHAPE_LFP |  SHAPE_REC
   | SHAPE_SPLIT_BASE 
@@ -123,6 +125,8 @@ type sleek_token =
   | XPURE
   | PAR
   | ARGOPTION of string
+  | TRANS_TO_TEMPL
+                                             
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -150,7 +154,9 @@ module Token = struct
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | CHECK_NONDET -> "check_nondet"
     | CHECKSAT -> "checksat"
-    | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
+    | RELASSUME -> "relAssume"
+    | RELPUREASSUME -> "relPureAssume"
+    | RELDEFN -> "relDefn"    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
     | SHAPE_SPLIT_BASE -> "shape_split_base" 
     | SHAPE_EXTRACT -> "shape_extract"
     | SHAPE_DECL_DANG -> "Declare_Dangling" | SHAPE_DECL_UNKNOWN -> "Declare_Unknown"
@@ -277,6 +283,7 @@ module Token = struct
     (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
+    | TRANS_TO_TEMPL -> "Trans_to_templ"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 
