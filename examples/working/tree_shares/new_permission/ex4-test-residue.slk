@@ -1,0 +1,72 @@
+data cl {int val;}.
+data cl2 {int val;}.
+data cl3 {int val;}.
+
+macro LR == ((,#),) .
+macro RR == (,(,#)) .
+macro RL == (,(#,)) .
+macro L == (#,) .
+macro R == (,#) .
+
+checkentail x::cl<n> & n > 3 |- x::cl<m> & m > 2.
+//valid 
+checkentail x::cl<n> & n > 1 |- x::cl<m> & m > 2.
+//fail
+checkentail x::cl<_> |- x::cl<_>.
+//valid
+checkentail x::cl(@@LR)<_> |- x::cl<_>.
+//fail
+checkentail x::cl(@@LR)<_> |- x::cl(@@L)<_>.
+//fail
+checkentail x::cl(@@L)<_> |- x::cl(@@R)<_>.
+//fail
+checkentail x::cl<_> |- x::cl(@@R)<_>.
+print residue.
+//valid x(L)
+checkentail x::cl<_> |- x::cl(@@L)<_>.
+print residue.
+//valid x(R)
+
+checkentail x::cl(@@LR)<_> |- x::cl<_>.
+//fail
+
+checkentail x::cl(@@RR)<_> |- x::cl(@@LR)<_>.
+//fail
+
+checkentail x::cl(v)<_> |- x::cl(v)<_>.
+print residue.
+//valid empty
+
+checkentail x::cl(v1)<_> |- x::cl(v)<_>. 
+print residue.
+//valid v1=v or v1>v
+
+checkentail x::cl(@@R)<_> |- x::cl(@@RL)<_>.
+print residue.
+//valid x(R,R)
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl<_>.
+//valid empty
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_>.
+print residue.
+//valid v=full or v<full
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> & v=@@L+@@RL.
+print residue.
+//valid v=L+(R,L)
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> &  v=@@L+@@RL.
+//valid 
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> &  v=@@R+@@RL.
+//fail
+
+checkentail x::cl(v)<_> &v=@@L+@@LR |- x::cl(v)<_> & v=@@R+@@RL.
+//valid (contradiction)
+
+checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- 1>2.
+//fail
+
+checkentail x::cl(@@L)<_> * x::cl(@@LR)<_>|- 1>2.
+//valid 
