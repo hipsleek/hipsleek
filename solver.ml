@@ -12964,8 +12964,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
   (*     end *)
   (*   | _ -> lhs_b_base_heap, lhs_b_pure *)
   (* in *)
-  let () = x_binfo_hp (add_str "lhs_h_base_heap" (Cprinter.string_of_h_formula)) lhs_b_base_heap pos in
-  let () = x_binfo_hp (add_str "lhs_h_pure" (Cprinter.string_of_mix_formula)) lhs_b_pure pos in
+  let () = x_dinfo_hp (add_str "lhs_h_base_heap" (Cprinter.string_of_h_formula)) lhs_b_base_heap pos in
+  let () = x_dinfo_hp (add_str "lhs_h_pure" (Cprinter.string_of_mix_formula)) lhs_b_pure pos in
   (* let lhs_b = {lhs_b with formula_base_heap = new_base_heap; *)
   (*                         formula_base_pure = new_pure} *)
   (* in *)

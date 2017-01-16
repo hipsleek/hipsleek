@@ -12,24 +12,25 @@ pred ll<n> == self = null & n = 0
 */
 
 
-/*
-//(1)
-checkentail x::node<_,q>@M |-  x::node(@@LL)<_,q>@M.
-print residue.
- //(1) valid v = full or v<full x(1-v) q (1-v) ll 
- //-> missing?
-expect Valid.
-*/
-
-/*
 
 //(1)
-checkentail x::node(@@L)<_,q>@L * x::node(@@R)<_,q>@L |-  x::node<_,q>@L.
+checkentail x::node<_,q> |-  x::node(@@LL)<_,q>.
 print residue.
 expect Valid.
-*/
 
-//(1)
+//(2)
+checkentail x::node(@@L)<_,q> * x::node(@@R)<_,q> |-  x::node<_,q>.
+print residue.
+expect Valid.
+
+
+//(3)
 checkentail x::node<_,q> |-  x::node<_,q>.
+print residue.
+expect Valid.
+
+
+//(4)
+checkentail x::node(@@L)<_,q> |-  x::node(@@L)<_,q>.
 print residue.
 expect Valid.
