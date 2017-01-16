@@ -8,65 +8,115 @@ macro RL == (,(#,)) .
 macro L == (#,) .
 macro R == (,#) .
 
+
+//(1)
 checkentail x::cl<n> & n > 3 |- x::cl<m> & m > 2.
-//valid 
+print residue.
+expect Valid.
+
+//(2)
 checkentail x::cl<n> & n > 1 |- x::cl<m> & m > 2.
-//fail
+print residue.
+expect Fail.
+
+//(3)
 checkentail x::cl<_> |- x::cl<_>.
-//valid
+print residue.
+expect Valid.
+
+//(4)
 checkentail x::cl(@@LR)<_> |- x::cl<_>.
-//fail
+print residue.
+expect Fail.
+
+//(5)
 checkentail x::cl(@@LR)<_> |- x::cl(@@L)<_>.
-//fail
+print residue.
+expect Fail.
+
+//(6)
 checkentail x::cl(@@L)<_> |- x::cl(@@R)<_>.
-//fail
+print residue.
+expect Fail.
+
+//(7)
 checkentail x::cl<_> |- x::cl(@@R)<_>.
 print residue.
-//valid x(L)
+expect Valid.
+
+//(8)
 checkentail x::cl<_> |- x::cl(@@L)<_>.
 print residue.
-//valid x(R)
+expect Valid.
 
+//(9)
 checkentail x::cl(@@LR)<_> |- x::cl<_>.
-//fail
+print residue.
+expect Fail.
 
+//(10)
 checkentail x::cl(@@RR)<_> |- x::cl(@@LR)<_>.
-//fail
+print residue.
+expect Fail.
 
+//(11)
 checkentail x::cl(v)<_> |- x::cl(v)<_>.
 print residue.
-//valid empty
+expect Valid.
 
+//(12)
 checkentail x::cl(v1)<_> |- x::cl(v)<_>. 
 print residue.
+expect Valid.
 //valid v1=v or v1>v
 
+//(13)
 checkentail x::cl(@@R)<_> |- x::cl(@@RL)<_>.
 print residue.
+expect Valid.
 //valid x(R,R)
 
+//(14)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl<_>.
-//valid empty
+expect Valid.
 
+//(15)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_>.
 print residue.
+expect Valid.
 //valid v=full or v<full
 
+//(16)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> & v=@@L+@@RL.
 print residue.
+expect Valid.
 //valid v=L+(R,L)
 
+//(17)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> &  v=@@L+@@RL.
-//valid 
+print residue.
+expect Valid.
+//valid
 
+//(18)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- x::cl(v)<_> &  v=@@R+@@RL.
+print residue.
+expect Fail.
 //fail
 
+
+//(19)
 checkentail x::cl(v)<_> &v=@@L+@@LR |- x::cl(v)<_> & v=@@R+@@RL.
+print residue.
+expect Valid.
 //valid (contradiction)
 
+//(20)
 checkentail x::cl(@@L)<_> * x::cl(@@R)<_>|- 1>2.
-//fail
+print residue.
+expect Fail.
 
+//(21)
 checkentail x::cl(@@L)<_> * x::cl(@@LR)<_>|- 1>2.
-//valid 
+print residue.
+expect Fail.
