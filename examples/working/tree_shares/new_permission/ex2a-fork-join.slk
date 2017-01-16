@@ -10,12 +10,12 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
 	inv n.
 */
-
+/*
 checkentail x::node<_,q> |-  x::node<_,q>.
 print residue.
 expect Valid.
+*/
 
-
-checkentail x::node(@@L)<_,q> |-  x::node(@@L)<_,q>.
+checkentail x::node<_,q> |-  x::node(@@LL)<_,q>.
 print residue.
 expect Valid.
