@@ -6336,6 +6336,7 @@ and move_impl_inst_estate_x es (f:MCP.mix_formula) =
     (* let () = print_endline("cris: impl inst = " ^ (Cprinter.string_of_mix_formula f2)) in *)
     (* let () = print_endline("cris: f = " ^ (Cprinter.string_of_mix_formula f)) in *)
     (* Debug.info_hprint (add_str "move_impl(f2)" !print_mix_formula) f2 no_pos; *)
+    x_binfo_hp (add_str "f2:" !print_mix_formula) f2 no_pos;
     CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos , MCP.isConstMTrue f2 in
   {es with
    (* why isn't es_gen_expl_vars updated? *)
