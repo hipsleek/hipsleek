@@ -7720,6 +7720,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                       formula_exists_and = qa;
                       formula_exists_pos = pos} -> (
                 (* quantifiers on the RHS. Keep them for later processing *)
+                x_binfo_hp (add_str "qvars" (Cprinter.string_of_spec_var_list)) qvars no_pos;
                 let qvars_fo = List.filter (fun (CP.SpecVar (t,_,_)) ->
                     match t with
                     | RelT _ | HpT -> false
@@ -7727,6 +7728,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                   ) qvars in
                 Debug.ninfo_hprint (add_str "qvars " !CP.print_svl) qvars no_pos;
                 Debug.ninfo_hprint (add_str "qvars_fo " !CP.print_svl) qvars_fo no_pos;
+                x_binfo_hp (add_str "qvars_fo" (Cprinter.string_of_spec_var_list)) qvars_fo no_pos;
                 (* let ws = CP.fresh_spec_vars qvars in *)
                 let ws = CP.fresh_spec_vars qvars_fo in
                 (* let st = List.combine qvars ws in *)
@@ -13278,7 +13280,6 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
             | Some (p,_) ->
               let () = x_dinfo_hp (add_str "p:" !Cpure.print_formula) p pos in
               MCP.memoise_add_pure n_rhs_pure p in
-
           let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
           let n_lhs_node = set_node_perm lhs_node (Some (Cpure.Var (v_consumed,no_pos))) in
           x_dinfo_zp (lazy "do_match_split") pos;

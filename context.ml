@@ -2401,24 +2401,28 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                          CF.h_formula_thread_origins = dl_origins;
                          CF.h_formula_thread_derv = dl_derv;
                          CF.h_formula_thread_name = dl_name;
+                         CF.h_formula_thread_perm = dl_cperm;
                         }),
             ThreadNode ({CF.h_formula_thread_original = dr_orig;
                          CF.h_formula_thread_origins = dr_origins;
                          CF.h_formula_thread_derv = dr_derv;
                          CF.h_formula_thread_split = dr_split;
                          CF.h_formula_thread_name = dr_name;
+                         CF.h_formula_thread_perm = dr_cperm;
                         })
           (** ThreadNode is treated in a similar way to DataNode *)
-          | (DataNode ({CF.h_formula_data_original = dl_orig;
+          | DataNode ({CF.h_formula_data_original = dl_orig;
                         CF.h_formula_data_origins = dl_origins;
                         CF.h_formula_data_derv = dl_derv;
                         CF.h_formula_data_name = dl_name;
-                       }) (* as lhs_node *)),
+                        CF.h_formula_data_perm = dl_cperm;
+                       }) (* as lhs_node *),
             DataNode ({CF.h_formula_data_original = dr_orig;
                        CF.h_formula_data_origins = dr_origins;
                        CF.h_formula_data_derv = dr_derv;
                        CF.h_formula_data_split = dr_split;
                        CF.h_formula_data_name = dr_name;
+                       CF.h_formula_data_perm = dr_cperm;
                       }) -> 
             (**TO CHECK: follow view nodes *)
             let () = y_tinfo_pp "DATA vs DATA" in
@@ -2448,7 +2452,16 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                       [(wt,M_match m_res)]
                     else [(wt,M_Nothing_to_do ("no proper match (type error) found for: "^(string_of_match_res m_res)))]
                   in
+                  let b_cperm = match (dl_cperm, dr_cperm) with
+                    | (Some Cpure.Var (var1,loc1), Some Cpure.Var (var2,loc2)) ->
+                      let () = x_binfo_hp (add_str "var1:" Cprinter.string_of_spec_var) var1 no_pos in
+                      let () = x_binfo_hp (add_str "var2:" Cprinter.string_of_spec_var) var2 no_pos in
+                      Cpure.eq_spec_var var1 var2
+                    | _ -> false
+                  in
+                  let () = x_binfo_hp (add_str "b_cperm:" string_of_bool) b_cperm no_pos in 
                   let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
+                  
                   (*apply lemmas on data nodes*)
                   (* using || results in some repeated answers but still terminates *)
                   (*let dl_new_orig = if !ann_derv then not(dl_derv) else dl_orig in*)
