@@ -1873,8 +1873,8 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
           let perm1 = h11.h_formula_heap_perm in
           let perm2 = h22.h_formula_heap_perm in
           begin
-            match (perm1, perm2) with
-            | (Some (Ipure_D.Tsconst (tree1, loc1)), Some (Ipure_D.Tsconst (tree2, loc2))) ->
+            match (perm1, perm2, compare) with
+            | (Some (Ipure_D.Tsconst (tree1, loc1)), Some (Ipure_D.Tsconst (tree2, loc2)), true) ->
               let new_tree = Tree_shares.Ts.union tree1 tree2 in
               let () = x_dinfo_hp (add_str "new_tree" (Tree_shares.Ts.string_of_tree_share)) new_tree no_pos in
               let new_perm = Some (Ipure_D.Tsconst (new_tree, loc1)) in
@@ -1883,15 +1883,20 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
               (* failwith "do not have unified permission now" *)
             | _ ->  let r11,r12 = float_out_exps b.h_formula_star_h1 in
               let r21,r22 = float_out_exps b.h_formula_star_h2 in
-              (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
+              (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}),
                (r12@r22))
           end
         | _ ->
           let r11,r12 = float_out_exps b.h_formula_star_h1 in
           let r21,r22 = float_out_exps b.h_formula_star_h2 in
-          (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
+          (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}),
            (r12@r22))
       end
+      (* let r11,r12 = float_out_exps b.h_formula_star_h1 in *)
+      (* let r21,r22 = float_out_exps b.h_formula_star_h2 in *)
+      (* (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), *)
+      (*  (r12@r22)) *)
+
     | StarMinus b-> 
       let r11,r12 = float_out_exps b.h_formula_starminus_h1 in
       let r21,r22 = float_out_exps b.h_formula_starminus_h2 in

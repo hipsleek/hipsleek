@@ -37,6 +37,6 @@ expect Valid.
 */
 
 //(5)
-checkentail x::node(v)<_,q> |-  x::node(v)<_,q>.
+checkentail x::node(@@L)<_,q> * x::node(@@R)<_,q> |-  x::node<_,q>.
 print residue.
 expect Valid.
