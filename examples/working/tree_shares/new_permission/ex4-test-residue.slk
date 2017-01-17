@@ -2,11 +2,12 @@ data cl {int val;}.
 data cl2 {int val;}.
 data cl3 {int val;}.
 
-macro LR == ((,#),) .
-macro RR == (,(,#)) .
-macro RL == (,(#,)) .
 macro L == (#,) .
 macro R == (,#) .
+macro LL == ((#,),).
+macro LR == ((,#),).
+macro RL == (,(#,)).
+macro RR == (,(,#)).
 
 
 //(1)
