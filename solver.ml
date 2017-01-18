@@ -2632,12 +2632,25 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
       let fold_es = CF.overwrite_estate_with_steps fold_es ss in
       let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true fold_es.es_pure in
       let to_ante, to_conseq, new_evars = split_universal e_pure fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
+      let to_ante_list = CP.list_of_conjs to_ante in
+      let filter f = match f with
+        | CP.BForm ((CP.Eq (CP.Tsconst (b1,c1), CP.Add (CP.Tsconst (b2, c2), CP.Var (var1, c3), loc2),loc1),bf_anon),f_label) ->
+          let new_tree = Tree_shares.Ts.subtract b1 b2 in
+          CP.BForm ((CP.Eq (CP.Var (var1, c3), CP.Tsconst (new_tree, c1), loc1), bf_anon), f_label)
+        | _ -> f
+      in
+      let to_ante_list = List.map filter to_ante_list in
+      let to_ante = CP.join_conjunctions to_ante_list in
       let tmp_conseq = mkBase resth2 pure2 vp2 type2 flow2 a2 pos in
       let () = Debug.ninfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
       let new_conseq = normalize 6 tmp_conseq (formula_of_pure_N to_conseq pos) pos in
       let () = Debug.ninfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
       let new_ante = normalize 7 fold_es.es_formula (formula_of_pure_N to_ante pos) pos in
       let new_ante = filter_formula_memo new_ante false in
+      let () = x_ninfo_pp ("new_ante: " ^ (Cprinter.string_of_formula new_ante)) no_pos in
+      let () = x_ninfo_pp ("es_formula: " ^ (Cprinter.string_of_formula fold_es.es_formula)) no_pos in
+      let () = x_ninfo_pp ("formula_of_pure_Nf: " ^ (Cprinter.string_of_formula (formula_of_pure_N to_ante pos))) no_pos in
+      let () = x_ninfo_pp ("to_ante: " ^ (Cprinter.string_of_pure_formula to_ante)) no_pos in
       let new_consumed = fold_es.es_heap in
       let impl_vars = Gen.BList.intersect_eq CP.eq_spec_var vs2 (CP.fv to_ante) in
       let new_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars impl_vars in
@@ -7720,7 +7733,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                       formula_exists_and = qa;
                       formula_exists_pos = pos} -> (
                 (* quantifiers on the RHS. Keep them for later processing *)
-                x_binfo_hp (add_str "qvars" (Cprinter.string_of_spec_var_list)) qvars no_pos;
+                x_ninfo_hp (add_str "qvars" (Cprinter.string_of_spec_var_list)) qvars no_pos;
                 let qvars_fo = List.filter (fun (CP.SpecVar (t,_,_)) ->
                     match t with
                     | RelT _ | HpT -> false
@@ -7728,7 +7741,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                   ) qvars in
                 Debug.ninfo_hprint (add_str "qvars " !CP.print_svl) qvars no_pos;
                 Debug.ninfo_hprint (add_str "qvars_fo " !CP.print_svl) qvars_fo no_pos;
-                x_binfo_hp (add_str "qvars_fo" (Cprinter.string_of_spec_var_list)) qvars_fo no_pos;
+                x_ninfo_hp (add_str "qvars_fo" (Cprinter.string_of_spec_var_list)) qvars_fo no_pos;
                 (* let ws = CP.fresh_spec_vars qvars in *)
                 let ws = CP.fresh_spec_vars qvars_fo in
                 (* let st = List.combine qvars ws in *)

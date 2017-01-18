@@ -2454,12 +2454,12 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   in
                   let b_cperm = match (dl_cperm, dr_cperm) with
                     | (Some Cpure.Var (var1,loc1), Some Cpure.Var (var2,loc2)) ->
-                      let () = x_binfo_hp (add_str "var1:" Cprinter.string_of_spec_var) var1 no_pos in
-                      let () = x_binfo_hp (add_str "var2:" Cprinter.string_of_spec_var) var2 no_pos in
+                      let () = x_ninfo_hp (add_str "var1:" Cprinter.string_of_spec_var) var1 no_pos in
+                      let () = x_ninfo_hp (add_str "var2:" Cprinter.string_of_spec_var) var2 no_pos in
                       Cpure.eq_spec_var var1 var2
                     | _ -> false
                   in
-                  let () = x_binfo_hp (add_str "b_cperm:" string_of_bool) b_cperm no_pos in 
+                  let () = x_ninfo_hp (add_str "b_cperm:" string_of_bool) b_cperm no_pos in 
                   let l2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,M_split_match m_res)::l2 else l2 in
                   
                   (*apply lemmas on data nodes*)

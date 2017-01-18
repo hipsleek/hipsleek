@@ -3358,7 +3358,7 @@ let add_bar_inits prog =
   let new_data_decls = remove_dup_obj new_data_decls in
 
   let data_name_string_4_2 = String.concat ", " (List.map (fun p -> p.data_name) new_data_decls) in
-  let () = print_string ( "data_name_string: " ^ data_name_string_4_2 ^ "\n") in
+  (* let () = print_string ( "data_name_string: " ^ data_name_string_4_2 ^ "\n") in *)
 
   {prog with
    prog_data_decls = new_data_decls;

@@ -9,7 +9,7 @@ macro RR == (,(,#)).
 
 
 pred ll<n> == self = null & n = 0
-	or self::node<next = r> * r::ll<n - 1>
+	or self::node<_, r> * r::ll<n - 1>
 	inv n >= 0.
 
 /*
@@ -28,14 +28,25 @@ checkentail x::ll(v)<n> |- x::ll(v)<m>.
 print residue.
 expect Valid.
 
-//(5)
-checkentail x::ll(@@L)<n> |- x::ll(@@L)<m>.
+//(5) 
+checkentail x::ll<n> |- x::ll(@@L)<m>.
 print residue.
 expect Valid.
 */
+
 //(4)
-checkentail x::node<_,q> * q::ll<n> |- x::ll(@@L)<m>.
+checkentail x::node(@@L)<_,q> * q::ll(@@L)<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
 
+checkentail x::node<_,q> * q::ll<n> |- x::ll(@@LR)<m>.
+print residue.
+expect Valid.
+
+/*
+//(6)
+checkentail x::ll<m> & m>1 |- x::node<_,q> * q::ll<n>. 
+print residue.
+expect Valid.
+*/
 
