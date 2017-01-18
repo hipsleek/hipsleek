@@ -13247,6 +13247,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         let err_msg = "lhs has lower permissions than required or rhs is false" in
         (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "lhs has lower permissions than required or rhs is false" *)err_msg estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
       else
+      if (test_frac_subsume prog estate rhs_b.formula_base_pure r_perm l_perm) then
+        let err_msg = "lhs has to have strictly greater permission then rhs" in
+        (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "lhs has lower permissions than required or rhs is false" *)err_msg estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
+      else
         let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
         if not subsumes then
           let err_msg = "there is a mismatch in branches "  in
