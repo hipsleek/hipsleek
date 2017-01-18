@@ -4,16 +4,39 @@ data node{
 	node right;
 }.
 
+macro L == (#,) .
+macro R == (,#) .
+macro LL == ((#,),).
+macro LR == ((,#),).
+macro RL == (,(#,)).
+macro RR == (,(,#)).
+
 /* predicate for a tree */
 pred tree<> == self = null
 	or self::node<l,r> * l::tree<> * r::tree<>.
 
+//(1)
 checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
 print residue.
+expect Valid.
 
-
+//(2)
 checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
 print residue.
+expect Valid.
 
+//(3)
 checkentail x::tree<> & x!=null |- x::node<a,b>.
 print residue.
+expect Valid.
+
+//(4)
+checkentail x::tree<> & x!=null |- x::tree(@@LR)<>.
+print residue.
+expect Valid.
+
+//(5)
+checkentail x::tree(@@L)<> & x!=null |- x::tree(@@LR)<>.
+print residue.
+expect Valid.
+
