@@ -2632,15 +2632,19 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
       let fold_es = CF.overwrite_estate_with_steps fold_es ss in
       let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true fold_es.es_pure in
       let to_ante, to_conseq, new_evars = split_universal e_pure fold_es.es_evars fold_es.es_gen_expl_vars fold_es.es_gen_impl_vars vs2 pos in
-      let to_ante_list = CP.list_of_conjs to_ante in
-      let filter f = match f with
-        | CP.BForm ((CP.Eq (CP.Tsconst (b1,c1), CP.Add (CP.Tsconst (b2, c2), CP.Var (var1, c3), loc2),loc1),bf_anon),f_label) ->
-          let new_tree = Tree_shares.Ts.subtract b1 b2 in
-          CP.BForm ((CP.Eq (CP.Var (var1, c3), CP.Tsconst (new_tree, c1), loc1), bf_anon), f_label)
-        | _ -> f
+      let filter to_ante =
+        let to_ante_list = CP.list_of_conjs to_ante in
+        let aux_filter f =
+          match f with
+          | CP.BForm ((CP.Eq (CP.Tsconst (b1,c1), CP.Add (CP.Tsconst (b2, c2), CP.Var (var1, c3), loc2),loc1),bf_anon),f_label) ->
+            let new_tree = Tree_shares.Ts.subtract b1 b2 in
+            CP.BForm ((CP.Eq (CP.Var (var1, c3), CP.Tsconst (new_tree, c1), loc1), bf_anon), f_label)
+          | _ -> f
+        in
+        let to_ante_list = List.map aux_filter to_ante_list in
+        CP.join_conjunctions to_ante_list
       in
-      let to_ante_list = List.map filter to_ante_list in
-      let to_ante = CP.join_conjunctions to_ante_list in
+      let new_ante = filter to_ante in
       let tmp_conseq = mkBase resth2 pure2 vp2 type2 flow2 a2 pos in
       let () = Debug.ninfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
       let new_conseq = normalize 6 tmp_conseq (formula_of_pure_N to_conseq pos) pos in
@@ -2651,6 +2655,49 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
       let () = x_ninfo_pp ("es_formula: " ^ (Cprinter.string_of_formula fold_es.es_formula)) no_pos in
       let () = x_ninfo_pp ("formula_of_pure_Nf: " ^ (Cprinter.string_of_formula (formula_of_pure_N to_ante pos))) no_pos in
       let () = x_ninfo_pp ("to_ante: " ^ (Cprinter.string_of_pure_formula to_ante)) no_pos in
+      (* let heap_f = CF.heap_of new_ante in *)
+      let h1,p1,vp1, fl1, t1, a1 = CF.split_components new_ante in
+      let () = x_ninfo_pp ("h1: " ^ (Cprinter.string_of_h_formula h1)) no_pos in
+      let () = x_ninfo_pp ("p1: " ^ (Cprinter.string_of_mix_formula p1)) no_pos in
+      let new_p1 = match h1 with
+        | CF.DataNode data_node ->
+          let vperm = data_node.h_formula_data_perm in
+          begin
+            match vperm with
+            | Some (CP.Var (s_var ,_ )) ->
+              begin
+                match p1 with
+                | MCP.OnePF pure_f ->
+                  let pure_f_list = CP.list_of_conjs pure_f in
+                  let to_elim_exists_vars = List.fold_left (fun vars x ->
+                      match x with
+                      | CP.BForm ((CP.Eq (CP.Var (var, loc1), CP.Add (CP.Tsconst (b2, c2), CP.Var (s_var, _), _ ),_), bf_anon), f_label) ->
+                        var::vars
+                      | _ -> vars
+                    ) [] pure_f_list in
+                  (* let to_elim_exists_vars = List.flatten (List.map (fun x -> CP.fv x) pure_f_list) in *)
+                  (* let () = x_binfo_pp ("p1: " ^ (Cprinter.string_of_mix_formula p1)) no_pos in *)
+                  (* let rec rm_perm list_var perm_var curr_list = match list_var with *)
+                  (*   | [] -> curr_list *)
+                  (*   | h::t -> if h= perm_var then rm_perm t perm_var curr_list else rm_perm t perm_var (h::curr_list) *)
+                  (* in *)
+                  (* let to_elim_exists_vars = rm_perm to_elim_exists_vars s_var [] in *)
+                  let () = x_ninfo_pp ("vars: " ^ (Cprinter.string_of_spec_var_list to_elim_exists_vars)) no_pos in
+                  if to_elim_exists_vars = [] then p1 else
+                    let new_p1 = elim_exists_mix_formula to_elim_exists_vars p1 no_pos in
+                    begin
+                      match new_p1 with
+                      | MCP.OnePF pure_new_p1 -> MCP.OnePF (filter pure_new_p1)
+                      | _ -> new_p1
+                    end
+                | _ -> p1
+              end
+            | _ -> p1
+          end
+        | _ -> p1
+      in
+      let () = x_dinfo_pp ("new_p1: " ^ (Cprinter.string_of_mix_formula new_p1)) no_pos in
+      let new_ante = CF.mkBase h1 new_p1 vp1 t1 fl1 a1 no_pos in
       let new_consumed = fold_es.es_heap in
       let impl_vars = Gen.BList.intersect_eq CP.eq_spec_var vs2 (CP.fv to_ante) in
       let new_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars impl_vars in

@@ -39,13 +39,14 @@ checkentail x::node(@@L)<_,q> * q::ll(@@L)<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
 
-checkentail x::node<_,q> * q::ll<n> |- x::ll(@@LR)<m>.
-print residue.
-expect Valid.
-
 /*
 //(6)
 checkentail x::ll<m> & m>1 |- x::node<_,q> * q::ll<n>. 
+print residue.
+expect Valid.
+
+//(7)
+checkentail x::node<_,q> * q::ll<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
 */

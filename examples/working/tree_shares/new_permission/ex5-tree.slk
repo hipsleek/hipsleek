@@ -1,0 +1,19 @@
+/* representation of a node */
+data node{
+	node left;
+	node right;
+}.
+
+/* predicate for a tree */
+pred tree<> == self = null
+	or self::node<l,r> * l::tree<> * r::tree<>.
+
+checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
+print residue.
+
+
+checkentail x::node<null,b>*b::node<null,null> |- x::tree<> & x!=null.
+print residue.
+
+checkentail x::tree<> & x!=null |- x::node<a,b>.
+print residue.
