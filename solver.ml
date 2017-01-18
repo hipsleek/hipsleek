@@ -13261,18 +13261,23 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let rhs_node_name = if rhs_node = HEmp then "" else Cformula.get_node_name 1 rhs_node in
           let lhs_rest_name = if lhs_rest = HEmp then "" else Cformula.get_node_name 1 lhs_rest in
           let rhs_rest_name = if rhs_rest = HEmp then "" else Cformula.get_node_name 1 rhs_rest in
-          let () = x_dinfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in
-          let () = x_dinfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in
-          let () = x_dinfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in
-          let () = x_dinfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in
+          let () = x_ninfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in
+          let () = x_ninfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in
+          let () = x_ninfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in
+          let () = x_ninfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in
           let n_rhs_pure =
-            if (lhs_node_name = rhs_node_name && rhs_node_name = lhs_rest_name && lhs_rest_name = rhs_rest_name ) then
+            if (lhs_node_name = rhs_node_name && lhs_rest_name = rhs_rest_name ) then
               let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
               let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
-              MCP.memoise_add_pure rhs_b.formula_base_pure npure 
+              MCP.memoise_add_pure rhs_b.formula_base_pure npure
             else rhs_b.formula_base_pure
           in
-          let new_estate = {estate with 
+          (* let n_rhs_pure = *)
+          (*     let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in *)
+          (*     let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in *)
+          (*     MCP.memoise_add_pure rhs_b.formula_base_pure npure *)
+          (*  in *)
+          let new_estate = {estate with
                             es_formula = Base{lhs_b with formula_base_heap = n_lhs_h}; 
                             es_ante_evars = estate.es_ante_evars ;
                             es_ivars = v_rest::(if (List.exists (CP.eq_spec_var v_consumed) estate.es_gen_impl_vars) then estate.es_ivars else v_consumed::estate.es_ivars)} in
