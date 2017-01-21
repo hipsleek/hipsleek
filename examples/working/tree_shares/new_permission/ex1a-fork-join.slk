@@ -3,8 +3,8 @@ macro L == (#,) .
 macro R == (,#) .
 macro LL == ((#,),).
 macro LR == ((,#),).
-macro RL == (,(#,).
-macro RR == (,(,#).
+macro RL == (,(#,)).
+macro RR == (,(,#)).
 
  data node { int val ; node next }.
 
