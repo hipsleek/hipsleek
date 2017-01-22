@@ -103,10 +103,12 @@ struct
       CES.sat_nequations = List.map nz2Cnequation (eqs.eqs_nzv) }
    
    let eq_syst2Cimpl_equation_system (eqs : eq_syst) : CES.impl_equation_system =
+     let result = 
      {CES.impl_exvars = eqs.eqs_nzv;
       CES.impl_equalities = (List.map const_eq2Cequality (eqs.eqs_vc)) @ (List.map var_eq2Cequality (eqs.eqs_ve));
       CES.impl_equations = List.map eq2Cequation (eqs.eqs_eql);
       CES.impl_nequations = List.map nz2Cnequation (eqs.eqs_nzv) }
+     in result
    
    module CBF = CSE.Bool_formula(CSV)
    module CBS = CSE.BF_solver(CSV)(CBF)
