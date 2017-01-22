@@ -25,6 +25,29 @@ LOCK<x,y,z> == self::lock<>
   inv self!=null
   inv_lock x::intCell<x_val> * y::intCell(1/2)<y_val> * z::intCell(1/2)<z_val> & x_val=y_val+z_val;
 
+
+//valid
+void incrementor2(lock l,intCell x,intCell y, intCell z)
+requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & [waitlevel<l.mu # l notin LS]
+ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
+{
+ acquire(l);
+        x.val++;
+        z.val=1;
+        release(l);
+        }
+
+//valid
+void incrementor1(lock l,intCell x,intCell y, intCell z)
+requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & [waitlevel<l.mu # l notin LS]
+ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & LS'=LS; //'
+{
+ acquire(l);
+        x.val++;
+        y.val=1;
+        release(l);
+        }
+
 void main()
   requires LS={}
   ensures LS'={}; //'
@@ -42,24 +65,3 @@ void main()
   join(id);
 }
 
-//valid
-void incrementor1(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & [waitlevel<l.mu # l notin LS]
-  ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & LS'=LS; //'
-{
-  acquire(l);
-  x.val++;
-  y.val=1;
-  release(l);
-}
-
-//valid
-void incrementor2(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & [waitlevel<l.mu # l notin LS]
-  ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
-{
-  acquire(l);
-  x.val++;
-  z.val=1;
-  release(l);
-}
