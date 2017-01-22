@@ -82,10 +82,14 @@ struct
 *)
     
    let const_eq2Cequality (c : const_eq) : CES.equality =
-     match c with (var,csh) -> (CSE.Vobject var, CSE.Cobject (tshare_hs2coq csh))
+     match c with (var,csh) ->
+       let () = print_string ("CES.Vobject " ^ (SV.string_of var) ^ ";" ^ "CSE.Cobject " ^ (Tree_shares.Ts.string_of_tree_share csh) ^ "\n") in 
+       (CSE.Vobject var, CSE.Cobject (tshare_hs2coq csh))
 
    let var_eq2Cequality (e : var_eq) : CES.equality =
-     match e with (var1, var2) -> (CSE.Vobject var1, CSE.Vobject var2)
+     match e with (var1, var2) ->
+       let () = print_string ("CES.Vobject " ^ (SV.string_of var2) ^ ";" ^ "CSE.Vobject " ^ (SV.string_of var2) ^ "\n") in 
+       (CSE.Vobject var1, CSE.Vobject var2)
    
    let frac_perm2Ccoq_object (f : frac_perm) : CES.coq_object =
      match f with Vperm v -> CSE.Vobject v | Cperm c -> CSE.Cobject (tshare_hs2coq c)
@@ -95,6 +99,7 @@ struct
    
    (* ~(v + 0 = 0) *)
    let nz2Cnequation (v : t_var) : CES.nequation =
+     (* let () = print_string ("CSE.Vobject " (SV.string_of v)  ^ "\n") in *)
      (((CSE.Vobject v, CSE.Cobject (CSE.Share.Leaf false)), CSE.Cobject (CSE.Share.Leaf false)), ())
    
    let eq_syst2Csat_equation_system (eqs : eq_syst) : CES.sat_equation_system =
@@ -104,11 +109,19 @@ struct
    
    let eq_syst2Cimpl_equation_system (eqs : eq_syst) : CES.impl_equation_system =
      let result = 
-     {CES.impl_exvars = eqs.eqs_nzv;
+     {CES.impl_exvars = eqs.eqs_ex;
       CES.impl_equalities = (List.map const_eq2Cequality (eqs.eqs_vc)) @ (List.map var_eq2Cequality (eqs.eqs_ve));
       CES.impl_equations = List.map eq2Cequation (eqs.eqs_eql);
       CES.impl_nequations = List.map nz2Cnequation (eqs.eqs_nzv) }
-     in result
+     in
+     let impl_exvars = result.impl_exvars in
+     let impl_equalities = result.impl_equalities in
+     (* let () = print_string ("impl_exvars: " ^ (List.fold_left (fun x y -> x ^ " " ^ (SV.string_of y)) "" impl_exvars) ^ "\n") in *)
+     (* let impl_equlaities_str = List.fold_left (fun x y -> *)
+     (*     let (CSE.Vobject var1, CSE.Cobject var2) = y in *)
+     (*     x ^ " " ^ "(" ^ (SV.string_of var1) ^ "," ^ (Tree_shares.Ts.string_of_tree_share var2) ^ ")" ) "" impl_equalities in *)
+  
+     result
    
    module CBF = CSE.Bool_formula(CSV)
    module CBS = CSE.BF_solver(CSV)(CBF)
@@ -118,7 +131,11 @@ struct
      CSolver.coq_SATsolver (eq_syst2Csat_equation_system eqs)
    
    let imply (a_sys : eq_syst) (c_sys : eq_syst) : bool =
-     CSolver.coq_IMPLsolver (eq_syst2Cimpl_equation_system a_sys, eq_syst2Cimpl_equation_system c_sys)
+     let a_sys_res = eq_syst2Cimpl_equation_system a_sys in
+     let c_sys_res = eq_syst2Cimpl_equation_system c_sys in
+     let res = CSolver.coq_IMPLsolver (a_sys_res, c_sys_res) in
+     let () = print_string ("res: " ^ (string_of_bool res) ^ "\n") in
+     res
 
    let str_frac_perm perm = match perm with
      | Vperm x -> SV.string_of x
@@ -291,8 +308,12 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_eql = cle;} in
       let () = print_string (Solver.str_eq_syst ceqs) in
       Solver.imply aeqs ceqs
-    with | Solver.Unsat_exception -> not (Solver.is_sat aeqs)
-    with | Solver.Unsat_exception -> true
+    with | Solver.Unsat_exception ->
+      let () = print_string "second case \n" in
+      not (Solver.is_sat aeqs)
+  with | Solver.Unsat_exception ->
+    let () = print_string "third case \n" in
+    true
 
 let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
   let pr = pr_pair !CP.print_svl (pr_list (fun c-> !CP.print_b_formula (c,None))) in
