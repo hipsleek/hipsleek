@@ -9,7 +9,7 @@ macro LR == ((,#),).
 macro RL == (,(#,)).
 macro RR == (,(,#)).
 
-
+/*
 //(1)
 checkentail x::cl<n> & n > 3 |- x::cl<m> & m > 2.
 print residue.
@@ -24,12 +24,13 @@ expect Fail.
 checkentail x::cl<_> |- x::cl<_>.
 print residue.
 expect Valid.
-
+*/
 //(4)
-checkentail x::cl(@@LR)<_> |- x::cl<_>.
+checkentail x::cl(@@LR)<_> |- x::cl(@@L)<_>.
 print residue.
 expect Fail.
 
+/*
 //(5)
 checkentail x::cl(@@LR)<_> |- x::cl(@@L)<_>.
 print residue.
@@ -121,3 +122,5 @@ expect Fail.
 checkentail x::cl(@@L)<_> * x::cl(@@LR)<_>|- 1>2.
 print residue.
 expect Fail.
+
+*/

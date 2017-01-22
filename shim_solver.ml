@@ -54,7 +54,6 @@ struct
       | Vperm of t_var 
       | Cperm of const_sh
     type eq = frac_perm * frac_perm * frac_perm
-    
     type eq_syst = {
         eqs_ex : t_var list; 
         eqs_nzv : t_var list;
@@ -62,15 +61,15 @@ struct
         eqs_ve : var_eq list;
         eqs_eql : eq list;
    }
-   
+
    (* None of these are raised by the certified solver, but they are expected to be in the module *)
    exception Unsat_exception
    exception Unsat_conseq of bool
     
    module CSV : CSE.SV with type t = SV.t = Shim_SV(SV)
    module CES = CSE.Equation_system(CSV)(CSE.Share_Domain)
-   
-   let rec tshare_hs2coq (s : Tree_shares.Ts.stree) : CSE.Share.coq_ShareTree = 
+
+   let rec tshare_hs2coq (s : Tree_shares.Ts.stree) : CSE.Share.coq_ShareTree =
       match s with
        | Tree_shares.Ts.Leaf b -> CSE.Share.Leaf b
        | Tree_shares.Ts.Node(s1, s2) -> CSE.Share.Node(tshare_hs2coq s1,tshare_hs2coq s2)
@@ -117,7 +116,32 @@ struct
      CSolver.coq_SATsolver (eq_syst2Csat_equation_system eqs)
    
    let imply (a_sys : eq_syst) (c_sys : eq_syst) : bool =
-     CSolver.coq_IMPLsolver (eq_syst2Cimpl_equation_system a_sys, eq_syst2Cimpl_equation_system c_sys) 
+     CSolver.coq_IMPLsolver (eq_syst2Cimpl_equation_system a_sys, eq_syst2Cimpl_equation_system c_sys)
+
+   let str_frac_perm perm = match perm with
+     | Vperm x -> SV.string_of x
+     | Cperm y -> Tree_shares.Ts.string_of_tree_share y
+
+   let str_eq_syst (eq_syst:eq_syst) : string =
+     let eqs_ex = eq_syst.eqs_ex in
+     let eqs_nzv = eq_syst.eqs_nzv in
+     let eqs_vc = eq_syst.eqs_vc in
+     let eqs_ve = eq_syst.eqs_ve in
+     let eqs_eql = eq_syst.eqs_eql in
+     let eqs_ex_str = List.fold_left (fun x y -> x ^ " " ^ (SV.string_of y)) "" eqs_ex in
+     let eqs_nzv_str = List.fold_left (fun x y -> x ^ " " ^ (SV.string_of y)) "" eqs_nzv in
+     let eqs_vc_str = List.fold_left (fun x y -> x ^ " " ^ "(" ^ (SV.string_of (fst y)) ^ "," ^ (Tree_shares.Ts.string_of_tree_share (snd y)) ^ ")" ) "" eqs_vc in
+     let eqs_ve_str = List.fold_left (fun x y -> x ^ " " ^ "(" ^ (SV.string_of (fst y)) ^ "," ^ (SV.string_of (snd y)) ^ ")") "" eqs_ve in
+     let eqs_eql_str = List.fold_left (fun x y ->
+         let (a,b,c) = y in
+         x ^ " " ^ (str_frac_perm a) ^ " " ^ (str_frac_perm b) ^ " " ^ (str_frac_perm c)) "" eqs_eql in
+     "eqs_ex: " ^ eqs_ex_str ^ ";\n" ^
+     "eqs_nzv: "^ eqs_nzv_str ^ ";\n" ^
+     "eqs_vc: " ^ eqs_vc_str ^ ";\n" ^
+     "eqs_ve:" ^ eqs_ve_str ^ ";\n" ^
+     "eqs_eql: " ^ eqs_eql_str ^ "\n"
+
+  
 end
 
 (* concrete SV *)
@@ -253,6 +277,7 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
       Solver.eqs_vc = avc;
       Solver.eqs_ve = ave;
       Solver.eqs_eql = ale;} in
+    let () = print_string (Solver.str_eq_syst aeqs) in
     try
       let cve,cvc,cle = simpl conseq in
       let clv = fv_eq_syst (List.fold_left (fun a (v,_)-> v::a) (List.fold_left (fun a (v1,v2)-> v1::v2::a) [] cve) cvc) cle in
@@ -262,6 +287,7 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_vc = cvc;
         Solver.eqs_ve = cve;
         Solver.eqs_eql = cle;} in
+      let () = print_string (Solver.str_eq_syst ceqs) in
       Solver.imply aeqs ceqs
     with | Solver.Unsat_exception -> not (Solver.is_sat aeqs)
     with | Solver.Unsat_exception -> true
