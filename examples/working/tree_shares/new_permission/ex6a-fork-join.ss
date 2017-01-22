@@ -10,6 +10,9 @@ ensures  x'=x+1 & y'=y+1; //& @full[x,y];
  y++;
  }
 
+
+
+
 void f()
 requires true
 ensures true;
@@ -20,12 +23,13 @@ ensures true;
      id = fork(foo,i,j);
      //can not access i and j here
      join(id);
-     assert i'=1 & j'=1;
-     }
+    // assert i'=1 & j'=1;
+}
 
+/*
 void foo2(int x, ref int y)
-requires true //@value[x] & @full[y]
-ensures y'=y+1; // & @full[y]; //'
+requires true
+ensures y'=y+1;
 {
  x++;
  y++;
@@ -41,5 +45,6 @@ ensures true;
      id = fork(foo2,i,j);
      //can acces i but j
      join(id);
-     assert i'=0 & j'=1;
-     }
+//     assert i'=0 & j'=1;
+}
+*/
