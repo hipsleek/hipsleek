@@ -12,7 +12,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, r> * r::ll<n - 1>
 	inv n >= 0.
 
-/*
+
 //(1)
 checkentail x::ll<n> |- x::node<_,_>.
 print residue.
@@ -32,14 +32,14 @@ expect Valid.
 checkentail x::ll<n> |- x::ll(@@L)<m>.
 print residue.
 expect Valid.
-*/
+
 
 //(4)
 checkentail x::node(@@L)<_,q> * q::ll(@@L)<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
 
-/*
+
 //(6)
 checkentail x::ll<m> & m>1 |- x::node<_,q> * q::ll<n>. 
 print residue.
@@ -49,5 +49,5 @@ expect Valid.
 checkentail x::node<_,q> * q::ll<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
-*/
+
 
