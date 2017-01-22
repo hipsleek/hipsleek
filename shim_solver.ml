@@ -193,7 +193,7 @@ module Solver = Shim_solver(Sv)
 (* The following has just been copied straight from Cris's implementation,
    lines 431-550 of share_prove_w2.ml *)
 let tr_var v= CP.string_of_spec_var v
-let sv_eq = Share_prover.Sv.eq
+let sv_eq = Sv.eq
 
 let mkVperm v = Solver.Vperm (tr_var v)
 let mkCperm t = Solver.Cperm t
