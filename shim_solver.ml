@@ -83,12 +83,12 @@ struct
     
    let const_eq2Cequality (c : const_eq) : CES.equality =
      match c with (var,csh) ->
-       let () = print_string ("CES.Vobject " ^ (SV.string_of var) ^ ";" ^ "CSE.Cobject " ^ (Tree_shares.Ts.string_of_tree_share csh) ^ "\n") in 
+       (* let () = print_string ("CES.Vobject " ^ (SV.string_of var) ^ ";" ^ "CSE.Cobject " ^ (Tree_shares.Ts.string_of_tree_share csh) ^ "\n") in  *)
        (CSE.Vobject var, CSE.Cobject (tshare_hs2coq csh))
 
    let var_eq2Cequality (e : var_eq) : CES.equality =
      match e with (var1, var2) ->
-       let () = print_string ("CES.Vobject " ^ (SV.string_of var2) ^ ";" ^ "CSE.Vobject " ^ (SV.string_of var2) ^ "\n") in 
+       (* let () = print_string ("CES.Vobject " ^ (SV.string_of var2) ^ ";" ^ "CSE.Vobject " ^ (SV.string_of var2) ^ "\n") in  *)
        (CSE.Vobject var1, CSE.Vobject var2)
    
    let frac_perm2Ccoq_object (f : frac_perm) : CES.coq_object =
@@ -134,7 +134,7 @@ struct
      let a_sys_res = eq_syst2Cimpl_equation_system a_sys in
      let c_sys_res = eq_syst2Cimpl_equation_system c_sys in
      let res = CSolver.coq_IMPLsolver (a_sys_res, c_sys_res) in
-     let () = print_string ("res: " ^ (string_of_bool res) ^ "\n") in
+     (* let () = print_string ("res: " ^ (string_of_bool res) ^ "\n") in *)
      res
 
    let str_frac_perm perm = match perm with
@@ -296,7 +296,7 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
       Solver.eqs_vc = avc;
       Solver.eqs_ve = ave;
       Solver.eqs_eql = ale;} in
-    let () = print_string (Solver.str_eq_syst aeqs) in
+    (* let () = print_string (Solver.str_eq_syst aeqs) in *)
     try
       let cve,cvc,cle = simpl conseq in
       let clv = fv_eq_syst (List.fold_left (fun a (v,_)-> v::a) (List.fold_left (fun a (v1,v2)-> v1::v2::a) [] cve) cvc) cle in
@@ -306,13 +306,13 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_vc = cvc;
         Solver.eqs_ve = cve;
         Solver.eqs_eql = cle;} in
-      let () = print_string (Solver.str_eq_syst ceqs) in
+      (* let () = print_string (Solver.str_eq_syst ceqs) in *)
       Solver.imply aeqs ceqs
     with | Solver.Unsat_exception ->
-      let () = print_string "second case \n" in
+      (* let () = print_string "second case \n" in *)
       not (Solver.is_sat aeqs)
   with | Solver.Unsat_exception ->
-    let () = print_string "third case \n" in
+    (* let () = print_string "third case \n" in *)
     true
 
 let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
