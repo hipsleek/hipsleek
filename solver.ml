@@ -5481,8 +5481,92 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
-  (* let perm_normalize (es:CF.entail_state): CF.context = *)
-
+  let perm_normalize (es:CF.entail_state): CF.context =
+    let formula = es.es_formula in
+    let () = x_ninfo_pp ("formula: " ^ (Cprinter.string_of_formula formula)) no_pos in
+    let perm_normalize_base lhs_b_base_heap lhs_b_pure  =
+    (* let lhs_b_base_heap = base_formula.formula_base_heap in *)
+    (* let lhs_b_pure = base_formula.formula_base_pure in *)
+      match lhs_b_base_heap with
+      | Star lhs_b_base_heap_star ->
+        let star_h1 = lhs_b_base_heap_star.h_formula_star_h1 in
+        let star_h2 = lhs_b_base_heap_star.h_formula_star_h2 in
+        begin
+          match (star_h1, star_h2) with
+          | (DataNode node1, DataNode node2) ->
+            let Cpure.SpecVar (typ1, ident1, _) = node1.h_formula_data_node in
+            let Cpure.SpecVar (typ2, ident2, _) = node2.h_formula_data_node in
+            let b = (typ1 = typ2 && ident1 = ident2 && node1.h_formula_data_name = node2.h_formula_data_name) in
+            let () = x_dinfo_hp (add_str "node1" (Cprinter.string_of_h_formula)) star_h1 pos in
+            let () = x_dinfo_hp (add_str "node2" (Cprinter.string_of_h_formula)) star_h2 pos in
+            let () = x_dinfo_hp (add_str "b" (string_of_bool)) b pos in
+            let perm1 = node1.h_formula_data_perm in
+            let perm2 = node2.h_formula_data_perm in
+            begin
+              match (perm1, perm2, b) with
+              | (Some (Cpure.Var (tree1, loc1)), Some (Cpure.Var (tree2, loc2)), true) ->
+                let new_tree = Cpure.fresh_spec_var tree1 in
+                let new_perm = Cpure.Var (new_tree, loc1) in
+                let tree_f1 = Cpure.mkAdd (Cpure.Var (tree1, loc1)) (Cpure.Var (tree2, loc2)) no_pos in
+                let new_tree_f = Cpure.mkEqExp new_perm tree_f1 no_pos in
+                let new_spec_var = Cpure.mk_typed_spec_var typ1 ident1 in
+                let argument1 = node1.h_formula_data_arguments in
+                let argument2 = node2.h_formula_data_arguments in
+                let new_arguments = List.map Cpure.fresh_spec_var argument1 in
+                let new_b_pure = if argument1 = [] then
+                    Mcpure.merge_mix_w_pure lhs_b_pure new_tree_f
+                  else
+                    let eq_arguments1 = List.map2 Cpure.mk_eq_vars new_arguments argument1 in
+                    let eq_arguments2 = List.map2 Cpure.mk_eq_vars new_arguments argument2 in
+                    let eq_arg_f1 = List.fold_left (fun a b -> Cpure.mkAnd a b no_pos) (Cpure.mkTrue no_pos) eq_arguments1 in
+                    let eq_arg_f2 = List.fold_left (fun a b -> Cpure.mkAnd a b no_pos) (Cpure.mkTrue no_pos) eq_arguments2 in
+                    let new_f = Cpure.mkAnd eq_arg_f1 eq_arg_f2 no_pos in
+                    let new_f2 = Cpure.mkAnd new_f new_tree_f no_pos in
+                    Mcpure.merge_mix_w_pure lhs_b_pure new_f2
+                in
+                let new_node = DataNode {node1 with h_formula_data_node = new_spec_var;
+                                                    h_formula_data_perm = Some new_perm;
+                                                    h_formula_data_arguments = new_arguments;
+                                        }
+                in
+                let () = x_binfo_hp (add_str "new_lhs_h_base_heap" (Cprinter.string_of_h_formula)) new_node pos in
+                let () = x_binfo_hp (add_str "new_lhs_h_pure" (Cprinter.string_of_mix_formula)) new_b_pure pos in
+                new_node, new_b_pure
+              | _ -> lhs_b_base_heap, lhs_b_pure
+            end
+          | _ -> lhs_b_base_heap, lhs_b_pure
+        end
+      | _ -> lhs_b_base_heap, lhs_b_pure
+    in
+    let rec new_formula f = match f with
+      | CF.Base base ->
+          let h = base.formula_base_heap in
+          let p = base.formula_base_pure in
+          let new_h, new_p = perm_normalize_base h p in
+        CF.Base {base with formula_base_heap = new_h;
+                formula_base_pure = new_p}
+      | CF.Or formula_or -> let or_1 = formula_or.formula_or_f1 in
+        let or_2 = formula_or.formula_or_f2 in
+        CF.Or {formula_or with formula_or_f1 = (new_formula or_1);
+                               formula_or_f2 = (new_formula or_2)}
+      | CF.Exists exists ->
+        let h = exists.formula_exists_heap in
+        let p = exists.formula_exists_pure in
+        let new_h, new_p = perm_normalize_base h p in
+        CF.Exists {exists with formula_exists_heap = new_h;
+                  formula_exists_pure = new_p}
+    in
+    let new_f = new_formula formula in
+    Ctx {es with es_formula = new_f}
+  in
+  (*   let () = x_dinfo_hp (add_str "lhs_h_base_heap" (Cprinter.string_of_h_formula)) lhs_b_base_heap pos in *)
+  (*   let () = x_dinfo_hp (add_str "lhs_h_pure" (Cprinter.string_of_mix_formula)) lhs_b_pure pos in *)
+  (*   let new_base_f = {base_formula with formula_base_heap = new_base_heap; *)
+  (*                           formula_base_pure = new_pure} *)
+  (*   in *)
+  (*   new_base_f *)
+  (* in *)
+  let ctx = if Perm.allow_perm() then CF.transform_context perm_normalize ctx else ctx in
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in
