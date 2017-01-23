@@ -3016,6 +3016,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let fp = MCP.translate_level_mix_formula fp in
     let fh, fp = Norm.imm_norm_h_formula prog fh fp unfold_for_abs_merge no_pos in
     let ph,_,_ = x_add xpure_heap 1 prog fh fp 1 in
+    let () = x_dinfo_pp ("ph: " ^ (Cprinter.string_of_mix_formula ph)) no_pos in
     let npf = MCP.merge_mems fp ph true in
     let () = x_dinfo_pp ("npf: " ^ (Cprinter.string_of_mix_formula npf)) no_pos in
     let res = tp_call_wrapper npf in

@@ -22,6 +22,7 @@ void thread2(cell x, ref int z)
   z=x.val-1;
 }
 
+
 void main(cell x)
   requires x::cell<n>
   ensures x::cell<n>;
