@@ -24,7 +24,6 @@ void thread2(cell x, ref int z)
 
 void main(cell x)
   requires x::cell<n>
-//  ensures x::cell(@@L)<n> * x::cell(@@R)<n>;
   ensures x::cell<n>;
 {
   int y,z;

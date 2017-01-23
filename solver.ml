@@ -5477,7 +5477,6 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   (* let m = "***N**"^(string_of_int i) in *)
   (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
   let () =   x_dinfo_pp ("context: " ^ (Cprinter.string_of_context ctx)) no_pos in
-
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
@@ -5529,8 +5528,8 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
                                                     h_formula_data_arguments = new_arguments;
                                         }
                 in
-                let () = x_binfo_hp (add_str "new_lhs_h_base_heap" (Cprinter.string_of_h_formula)) new_node pos in
-                let () = x_binfo_hp (add_str "new_lhs_h_pure" (Cprinter.string_of_mix_formula)) new_b_pure pos in
+                let () = x_ninfo_hp (add_str "new_lhs_h_base_heap" (Cprinter.string_of_h_formula)) new_node pos in
+                let () = x_ninfo_hp (add_str "new_lhs_h_pure" (Cprinter.string_of_mix_formula)) new_b_pure pos in
                 new_node, new_b_pure
               | _ -> lhs_b_base_heap, lhs_b_pure
             end
@@ -5559,13 +5558,6 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     let new_f = new_formula formula in
     Ctx {es with es_formula = new_f}
   in
-  (*   let () = x_dinfo_hp (add_str "lhs_h_base_heap" (Cprinter.string_of_h_formula)) lhs_b_base_heap pos in *)
-  (*   let () = x_dinfo_hp (add_str "lhs_h_pure" (Cprinter.string_of_mix_formula)) lhs_b_pure pos in *)
-  (*   let new_base_f = {base_formula with formula_base_heap = new_base_heap; *)
-  (*                           formula_base_pure = new_pure} *)
-  (*   in *)
-  (*   new_base_f *)
-  (* in *)
   let ctx = if Perm.allow_perm() then CF.transform_context perm_normalize ctx else ctx in
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
