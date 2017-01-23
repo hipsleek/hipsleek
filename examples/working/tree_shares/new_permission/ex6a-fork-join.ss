@@ -1,50 +1,62 @@
+
+data cell {int val;}
+
+macro L == (#,)
+macro R == (,#)
+macro LL == ((#,),)
+macro LR == ((,#),)
+macro RL == (,(#,))
+macro RR == (,(,#))
+
 /*
-Simple examples of variable permissions
+void destroyCell(ref cell ce)
+  requires ce::cell(c,t,a)<_> & c=t+a
+  ensures ce'=null;//'
+
+// WRAPPER FUNCTION
+cell newCell(int bound,int value)
+  requires bound>0
+  ensures res::cell(bound,bound,0)<value>;
 */
 
-void foo(ref int x, ref int y)
-requires true //@full[x,y]
-ensures  x'=x+1 & y'=y+1; //& @full[x,y];
+void thread1(cell x, ref int y)
+  requires x::cell(@@L)<n>
+  ensures x::cell(@@L)<n> & y'= n+1;//'
 {
- x++;
- y++;
- }
-
-
-
-
-void f()
-requires true
-ensures true;
-{
- int id;
-     int i,j,k;
-     i=0;j=0;k=0;
-     id = fork(foo,i,j);
-     //can not access i and j here
-     join(id);
-    // assert i'=1 & j'=1;
+  y=x.val+1;
 }
 
 /*
-void foo2(int x, ref int y)
-requires true
-ensures y'=y+1;
+void thread2(cell x, ref int z)
+  requires x::cell<5>
+  ensures x::cell<5> & z'=4;//'
 {
- x++;
- y++;
- }
+  z=x.val-1;
+}
 
-void f2()
-requires true
-ensures true;
+void thread3(cell x, ref int t)
+  requires true
+  ensures t'=10;//'
 {
- int id;
-     int i,j,k;
-     i=0;j=0;k=0;
-     id = fork(foo2,i,j);
-     //can acces i but j
-     join(id);
-//     assert i'=0 & j'=1;
+  t=10;
 }
 */
+
+void main(cell x)
+  requires x::cell<n>
+  ensures x::cell<n>;
+{
+//  int y,z,t;
+  int y;
+//  x.val = 5;
+  int id1 = fork(thread1,x,y);
+// int id2 = fork(thread2,x,z);
+//  int id3 = fork(thread3,x,t);
+  join(id1);
+//  join(id2);
+//  join(id3);
+//  int tmp = x.val;
+ // assert(tmp'=5);
+ // destroyCell(x);
+//  assert(y'=6 & z'=4 & t'=10);
+}
