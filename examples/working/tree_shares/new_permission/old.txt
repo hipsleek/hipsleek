@@ -1,0 +1,321 @@
+
+!!!Full processing file "ex6a-fork-join.ss"
+Parsing file "ex6a-fork-join.ss" by default parser...
+
+
+!!! processing primitives "["prelude.ss"]
+
+Starting z3... 
+
+!!! **WARNING****astsimp.ml#9276:Post-condition has existentially quantified free vars, error position: /home/thanhtoantnt/hg/sleekex/prelude.ss_616:10_616:25:[(q,)]
+!!! **WARNING****astsimp.ml#9276:Post-condition has existentially quantified free vars, error position: /home/thanhtoantnt/hg/sleekex/prelude.ss_611:22_611:39:[(p,)]
+Starting Omega.../usr/local/bin/oc
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **typechecker.ml#3645:start check_proc:[x]
+
+Checking procedure main$cell...
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+(====)
+sleek_imply_wrapper@1
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T, Anon_full_1974+Anon_full_1975=perm_1979])
+sleek_imply_wrapper inp2 :([],[ perm_1979=Anon_full_perm])
+sleek_imply_wrapper@1 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@2
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_perm=T])
+sleek_imply_wrapper inp2 :([],[ Anon_full_1975=Anon_full_perm])
+sleek_imply_wrapper@2 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@3
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T, perm_11_1973=Anon_full_perm])
+sleek_imply_wrapper inp2 :([],[ perm_11_1973=(T,F)])
+sleek_imply_wrapper@3 EXIT:false
+
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@4
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T])
+sleek_imply_wrapper inp2 :([],[ Anon_full_perm=(T,F)])
+sleek_imply_wrapper@4 EXIT:false
+
+(====)
+sleek_imply_wrapper@5
+sleek_imply_wrapper inp1 :([],[ Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_perm=T, Anon_full_1974+Anon_full_1975=perm_1981])
+sleek_imply_wrapper inp2 :([],[ perm_1981=Anon_full_perm])
+sleek_imply_wrapper@5 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@6
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1981, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_perm=T])
+sleek_imply_wrapper inp2 :([],[ Anon_full_1975=Anon_full_perm])
+sleek_imply_wrapper@6 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@7
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T, Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1981])
+sleek_imply_wrapper inp2 :([],[ Anon_full_1975=Anon_full_perm])
+sleek_imply_wrapper@7 EXIT:true
+
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@8
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1981])
+sleek_imply_wrapper inp2 :([perm_1995],[ Anon_full_1975=(F,T)+perm_1995])
+sleek_imply_wrapper@8 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@9
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1981])
+sleek_imply_wrapper inp2 :([perm_1998],[ (F,T)=perm_1998+Anon_full_1975])
+sleek_imply_wrapper@9 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@10
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1981, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_1975=perm_19_1990])
+sleek_imply_wrapper inp2 :([],[ perm_19_1990=(F,T)])
+sleek_imply_wrapper@10 EXIT:true
+
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@11
+sleek_imply_wrapper inp1 :([],[ Anon_full_1974+Anon_full_1975=perm_1979, Anon_full_1975=(F,T), Anon_full_1974+Anon_full_1975=perm_1981])
+sleek_imply_wrapper inp2 :([],[ Anon_full_1975=(F,T)])
+sleek_imply_wrapper@11 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@12
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T, perm_12_103=(T,F)])
+sleek_imply_wrapper inp2 :([],[ perm_12_103=Anon_full_perm])
+sleek_imply_wrapper@12 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@13
+sleek_imply_wrapper inp1 :([],[ perm_12_103=(T,F), Anon_full_perm=T])
+sleek_imply_wrapper inp2 :([],[ perm_12_103=Anon_full_perm])
+sleek_imply_wrapper@13 EXIT:false
+
+(====)
+sleek_imply_wrapper@14
+sleek_imply_wrapper inp1 :([],[ Anon_full_perm=T, perm_20_95=(F,T)])
+sleek_imply_wrapper inp2 :([],[ perm_20_95=Anon_full_perm])
+sleek_imply_wrapper@14 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@15
+sleek_imply_wrapper inp1 :([],[ perm_20_95=(F,T), Anon_full_perm=T])
+sleek_imply_wrapper inp2 :([],[ perm_20_95=Anon_full_perm])
+sleek_imply_wrapper@15 EXIT:false
+
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+(====)
+sleek_imply_wrapper@16
+sleek_imply_wrapper inp1 :([],[ perm_12_103=(T,F), perm_20_95=(F,T), Anon_full_perm=T, perm_12_103+perm_20_95=perm_2008])
+sleek_imply_wrapper inp2 :([],[ perm_2008=Anon_full_perm])
+sleek_imply_wrapper@16 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@17
+sleek_imply_wrapper inp1 :([],[ perm_20_95=(F,T), Anon_full_perm=T, perm_12_103=(T,F), perm_12_103+perm_20_95=perm_2008])
+sleek_imply_wrapper inp2 :([],[ perm_12_103=Anon_full_perm])
+sleek_imply_wrapper@17 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+(====)
+sleek_imply_wrapper@18
+sleek_imply_wrapper inp1 :([],[ perm_12_103=(T,F), perm_20_95=(F,T), Anon_full_perm=T, perm_20_95+perm_12_103=perm_2013])
+sleek_imply_wrapper inp2 :([],[ perm_2013=Anon_full_perm])
+sleek_imply_wrapper@18 EXIT:true
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@19
+sleek_imply_wrapper inp1 :([],[ perm_12_103=(T,F), perm_20_95=(F,T), Anon_full_perm=T, perm_20_95+perm_12_103=perm_2013])
+sleek_imply_wrapper inp2 :([],[ perm_20_95=Anon_full_perm])
+sleek_imply_wrapper@19 EXIT:false
+
+Post condition cannot be derived:
+  (must) cause: UnionR[ perm_12_103=(T,F) & Anon_full_perm=T |-  perm_12_103=Anon_full_perm. LOCS:[20;12;0] (must-bug), Anon_full_perm=T & perm_20_95=(F,T) |-  perm_20_95=Anon_full_perm. LOCS:[12;20;0] (must-bug)]
+
+Context of Verification Failure: ex6a-fork-join.ss_28:10_28:20
+
+Last Proving Location: ex6a-fork-join.ss_34:2_34:11
+
+ERROR: at ex6a-fork-join.ss_28:10_28:20
+Message: Post condition cannot be derived.
+
+Procedure main$cell FAIL.(2)
+
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+
+
+Error(s) detected when checking procedure main$cell
+
+!!! **typechecker.ml#3645:start check_proc:[x,y]
+
+Checking procedure thread1$cell~int...
+
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+(====)
+sleek_imply_wrapper@20
+sleek_imply_wrapper inp1 :([],[ perm_11_2017=(T,F), Anon_full_perm=T, f_2016=perm_11_2017])
+sleek_imply_wrapper inp2 :([],[ perm_11_2017=Anon_full_perm])
+sleek_imply_wrapper@20 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@21
+sleek_imply_wrapper inp1 :([],[ f_2016=perm_11_2017, Anon_full_perm=T, perm_11_2017=(T,F)])
+sleek_imply_wrapper inp2 :([],[ perm_11_2017=Anon_full_perm])
+sleek_imply_wrapper@21 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@22
+sleek_imply_wrapper inp1 :([],[ f_2016=perm_11_2017, perm_11_2017=(T,F)])
+sleek_imply_wrapper inp2 :([perm_2032],[ perm_11_2017=(T,F)+perm_2032])
+sleek_imply_wrapper@22 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@23
+sleek_imply_wrapper inp1 :([],[ perm_11_2017=(T,F), f_2016=perm_11_2017, perm_11_2017=perm_12_2027])
+sleek_imply_wrapper inp2 :([],[ perm_12_2027=(T,F)])
+sleek_imply_wrapper@23 EXIT:true
+
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@24
+sleek_imply_wrapper inp1 :([],[ f_2016=perm_11_2017, perm_11_2017=(T,F)])
+sleek_imply_wrapper inp2 :([],[ perm_11_2017=(T,F)])
+sleek_imply_wrapper@24 EXIT:true
+
+Procedure thread1$cell~int SUCCESS.
+
+
+!!! **typechecker.ml#3645:start check_proc:[x,z]
+
+Checking procedure thread2$cell~int...
+
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+(====)
+sleek_imply_wrapper@25
+sleek_imply_wrapper inp1 :([],[ perm_19_2038=(F,T), Anon_full_perm=T, f_2037=perm_19_2038])
+sleek_imply_wrapper inp2 :([],[ perm_19_2038=Anon_full_perm])
+sleek_imply_wrapper@25 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@26
+sleek_imply_wrapper inp1 :([],[ f_2037=perm_19_2038, Anon_full_perm=T, perm_19_2038=(F,T)])
+sleek_imply_wrapper inp2 :([],[ perm_19_2038=Anon_full_perm])
+sleek_imply_wrapper@26 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@27
+sleek_imply_wrapper inp1 :([],[ f_2037=perm_19_2038, perm_19_2038=(F,T)])
+sleek_imply_wrapper inp2 :([perm_2053],[ perm_19_2038=(F,T)+perm_2053])
+sleek_imply_wrapper@27 EXIT:false
+
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+(====)
+sleek_imply_wrapper@28
+sleek_imply_wrapper inp1 :([],[ perm_19_2038=(F,T), f_2037=perm_19_2038, perm_19_2038=perm_20_2048])
+sleek_imply_wrapper inp2 :([],[ perm_20_2048=(F,T)])
+sleek_imply_wrapper@28 EXIT:true
+
+!!! **WARNING****solver.ml#10332:impl_inst and to_conseq not properly built
+!!! **WARNING****cvutil.ml#1214:Data Pure Inv (not tested) 
+!!! **WARNING****cvutil.ml#1869:Data Pure Inv (not tested)
+(====)
+sleek_imply_wrapper@29
+sleek_imply_wrapper inp1 :([],[ f_2037=perm_19_2038, perm_19_2038=(F,T)])
+sleek_imply_wrapper inp2 :([],[ perm_19_2038=(F,T)])
+sleek_imply_wrapper@29 EXIT:true
+
+Procedure thread2$cell~int SUCCESS.
+
+Stop z3... 142 invocations 
+Stop Omega... 100 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.491205,768)
+Total verification time: 1.071568 second(s)
+	Time spent in main process: 0.95102 second(s)
+	Time spent in child processes: 0.120548 second(s)
+	Z3 Prover Time: 0.000583 second(s)

@@ -4325,7 +4325,7 @@ and find_thread_delayed_resource es es_f id pos =
   es: old entail state
   new_es_f : new formula
   delayed_f: delayed lockset constraints
-  base : resource/post condition of the thread tid
+  base : resource/post conditon of the thread tid
   res2 : AND-conj if not(!Globals.allow_threads_as_resource)
 *)
 and delayed_lockset_checking prog es new_es_f delayed_f base res2 pos =
@@ -5476,9 +5476,13 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   Debug.vv_trace "heap_entail_one_context" ;
   (* let m = "***N**"^(string_of_int i) in *)
   (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
+  let () =   x_dinfo_pp ("context: " ^ (Cprinter.string_of_context ctx)) no_pos in
+
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
+  (* let perm_normalize (es:CF.entail_state): CF.context = *)
+
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in

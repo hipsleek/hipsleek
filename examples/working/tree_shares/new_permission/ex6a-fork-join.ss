@@ -9,7 +9,7 @@ macro RR == (,(,#))
 
 void thread1(cell x, ref int y)
   requires x::cell(@@L)<n>
-  ensures x::cell(@@L)<n> & y'= n+1;//'
+  ensures x::cell(@@L)<n> & y' = n+1;//'
 {
   y=x.val+1;
 }
@@ -17,14 +17,15 @@ void thread1(cell x, ref int y)
 
 void thread2(cell x, ref int z)
   requires x::cell(@@R)<n>
-  ensures x::cell(@@R)<n> & z'= n-1;//'
+  ensures x::cell(@@R)<n> & z' = n-1;//'
 {
   z=x.val-1;
 }
 
 void main(cell x)
   requires x::cell<n>
-  ensures x::cell(@@R)<n> * x::cell(@@L)<n>;
+//  ensures x::cell(@@L)<n> * x::cell(@@R)<n>;
+  ensures x::cell<n>;
 {
   int y,z;
   int id1 = fork(thread1,x,y);
