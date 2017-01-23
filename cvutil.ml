@@ -847,9 +847,11 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
                x_dinfo_zp (lazy ("h_formula_2_mem: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                let res,_,_ = CP.imply_disj_orig [f0] full_f (x_add TP.imply_one 24) imp_no in
                x_dinfo_zp (lazy ("h_formula_2_mem: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
-               if (res) then
+               let () = x_binfo_hp (add_str "p:" Cprinter.string_of_spec_var) p no_pos in
+               let ret = if (res) then
                  CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
-               else [])
+                 else []
+               in ret )
           | None ->
             let cond_empty = ((Immutable.isLend imm) && !Globals.baga_imm) || List.mem p evars || perm<> None in
             if cond_empty then CP.DisjSetSV.mkEmpty
@@ -1211,19 +1213,28 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
         MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null_dist
       else
         (*WITH PERMISSION*)
-        let () = x_winfo_pp "Data Pure Inv (not tested) " no_pos in
+        let () = x_binfo_pp "Data Pure Inv (not tested) " no_pos in
         (* let eq_i = CP.mkEqVarInt p i pos in *)
         (*TO CHECK: temporarily change from eq_i to non_null *)
         let eq_i = non_null in
         let eq_i = map_opt_def eq_i (fun f -> CP.mkAnd f eq_i no_pos) new_p_inv in
+        let () = x_binfo_hp (add_str "perm" Cprinter.string_of_cperm) perm no_pos in
         (*LDK: add fractional invariant 0<f<=1, if applicable*)
         (match perm with
          | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
          | Some f ->
+           let () = x_binfo_pp "some f " no_pos in
            let inv =
-             if CF.is_mem_mem_formula p memset then eq_i
-             else
-               non_null
+             (match new_p_inv with
+              | None -> non_null
+              | _ ->
+                let b = CF.is_mem_mem_formula p memset in
+                let () = x_binfo_hp (add_str "p: " Cprinter.string_of_spec_var) p no_pos in
+                let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+                let () = x_binfo_hp (add_str "b" string_of_bool) b no_pos in
+                if b then eq_i
+                else
+                  non_null)
            in
            MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv () f) no_pos)
         )
@@ -1374,12 +1385,13 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   let memset = x_add h_formula_2_mem h0 p0 [] prog in
   let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
   (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
-  let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
+  let () = x_binfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
   if (is_sat_mem_formula memset) then 
     let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
     let pure_of_memset = 
       if !Globals.old_keep_absent then pure_of_memset 
       else MCP.merge_mix_w_pure pure_of_memset pf in
+    let () = x_binfo_hp (add_str "pure_of_memset: " Cprinter.string_of_mix_formula) pure_of_memset no_pos in
     (pure_of_memset, memset)
   else
     (MCP.mkMFalse no_pos, memset)
