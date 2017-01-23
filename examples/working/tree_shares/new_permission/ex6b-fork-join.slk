@@ -1,0 +1,13 @@
+data cell {int val;}.
+
+macro L == (#,) .
+macro R == (,#) .
+macro LL == ((#,),).
+macro LR == ((,#),).
+macro RL == (,(#,)).
+macro RR == (,(,#)).
+
+//(5)
+checkentail x::cell(@@L)<n> * x::cell(@@R)<n> |-  x::cell<n> .
+print residue.
+expect Valid.

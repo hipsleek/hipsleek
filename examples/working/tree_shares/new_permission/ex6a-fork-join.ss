@@ -44,7 +44,7 @@ void thread3(cell x, ref int t)
 
 void main(cell x)
   requires x::cell<n>
-  ensures x::cell<n>;
+  ensures x::cell(@@R)<n> * x::cell(@@L)<n>;
 {
 //  int y,z,t;
   int y;
@@ -52,7 +52,7 @@ void main(cell x)
   int id1 = fork(thread1,x,y);
 // int id2 = fork(thread2,x,z);
 //  int id3 = fork(thread3,x,t);
-  join(id1);
+    join(id1);
 //  join(id2);
 //  join(id3);
 //  int tmp = x.val;
