@@ -10410,7 +10410,7 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
   begin
     (* to_ante & to_conseq not properly built below *)
     if (Perm.allow_perm ()) then
-      let () = x_winfo_pp "impl_inst and to_conseq not properly built" no_pos in
+      let () = x_ninfo_pp "impl_inst and to_conseq not properly built" no_pos in
       (match l_perm, r_perm with
        | Some f1, Some f2 ->
          let ls1 = Perm.get_cperm_var l_perm in
