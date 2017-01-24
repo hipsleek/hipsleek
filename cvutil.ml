@@ -1211,7 +1211,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
         MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null_dist
       else
         (*WITH PERMISSION*)
-        let () = x_winfo_pp "Data Pure Inv (not tested) " no_pos in
+        let () = x_ninfo_pp "Data Pure Inv (not tested) " no_pos in
         (* let eq_i = CP.mkEqVarInt p i pos in *)
         (*TO CHECK: temporarily change from eq_i to non_null *)
         let eq_i = non_null in
@@ -1866,7 +1866,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
            (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null_dist , [p])
          end
        | Some f ->
-         let () = x_winfo_pp "Data Pure Inv (not tested)" no_pos in
+         let () = x_ninfo_pp "Data Pure Inv (not tested)" no_pos in
          let non_zero = map_opt_def non_zero (fun f -> CP.mkAnd f non_zero no_pos) new_p_inv in
          let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
          (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
