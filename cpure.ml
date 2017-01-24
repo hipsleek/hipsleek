@@ -11553,6 +11553,12 @@ let trans_pure_assume_to_templ p1 =
   remove_dupl_conj_pure (!simplify (!simplify (mkAnd templ_of_rel newf no_pos)))
 ;;
 
+(* input: pure formula, rel name, variables that will be replaced by other arguments *)
+(* output: pure formula *)
+let trans_pure_assume_to_templ_new f rel_name dummy_var =
+  let replace_rel p =
+    match 
+  
   
 let strong_drop_rel_formula (f:formula) : formula =
   let (pr_weak,pr_strong) = drop_rel_formula_ops in

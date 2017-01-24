@@ -1,6 +1,9 @@
 template int f1(int m,int n).
 template int f2(int m,int n).
 
+
+// defn U(i,j,m,n) = i=f1(..) & j=f2(...)
+
 infer [f1,f2] i=f1(m,n) & j=f2(m,n) & m<n   |- i<=m & j>=m+1.
 print residue.
 

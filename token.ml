@@ -126,6 +126,7 @@ type sleek_token =
   | PAR
   | ARGOPTION of string
   | TRANS_TO_TEMPL
+  | SOLVE_WITH_TEMPL
                                              
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
@@ -284,6 +285,7 @@ module Token = struct
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
     | TRANS_TO_TEMPL -> "Trans_to_templ"
+    | SOLVE_WITH_TEMPL -> "Solve_with_templ"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

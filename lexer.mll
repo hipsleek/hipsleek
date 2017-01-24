@@ -169,7 +169,7 @@ module Make (Token : SleekTokenS)
    ("shape_extends_view", SHAPE_EXTN_VIEW);
    ("shape_normalize", SHAPE_NORMALIZE);
    ("trans_to_templ",TRANS_TO_TEMPL);
-   
+   ("solve_with_templ", SOLVE_WITH_TEMPL);
    ("data_mark_rec", DATA_MARK_REC);
    ("Declare_Dangling", SHAPE_DECL_DANG);
    ("Declare_Unknown", SHAPE_DECL_UNKNOWN);

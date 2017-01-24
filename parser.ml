@@ -1062,6 +1062,7 @@ non_empty_command:
       | t=shape_sante_cmd     -> ShapeSAnte t
       | t = shape_add_dangling_cmd -> ShapeAddDangling t
       | trans_to_templ_cmd -> TransToTempl
+      | t = solve_with_templ_cmd -> Solve_with_templ t
       | t = shape_unfold_cmd -> ShapeUnfold t
       | t = shape_param_dangling_cmd -> ShapeParamDangling t
       | t = shape_simplify_cmd -> ShapeSimplify t
@@ -2702,6 +2703,10 @@ trans_to_templ_cmd:
   [[
       `TRANS_TO_TEMPL
   ]];
+
+solve_with_templ_cmd:
+  [[ `SOLVE_WITH_TEMPL; il = OPT id_list_w_brace -> un_option il [] ]];
+  
 
 shape_add_dangling_cmd:
   [[ `SHAPE_ADD_DANGLING; `OSQUARE; il=shape_selective_id_list; `CSQUARE

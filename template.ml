@@ -186,7 +186,16 @@ let collect_templ_assume_init (es: CF.entail_state) (ante: MCP.mix_formula) (con
 
 let collect_templ_assume_init_simpl inf_templs (ante:formula) (cons:formula) pos =
   collect_templ_assume_disj_lhs_simpl inf_templs ante cons pos
-    
+
+let collect_templ_assume_init_simpl inf_templs ante cons pos =
+  let pr0 = !print_svl in
+  let pr1 = !print_formula in
+  let pr2 = !print_formula in
+  let pr3 = string_of_loc in
+  let pr = fun x -> "()" in
+  Debug.no_4 "collect_templ_assume_init_simpl" pr0 pr1 pr2 pr3 pr
+    (fun _ _ _ _-> collect_templ_assume_init_simpl inf_templs ante cons pos) inf_templs ante cons pos 
+                                      
 (*********************************************)
 (* GENERATE CONSTRAINTS OF TEMPLATE UNKNOWNS *)
 (*********************************************)
@@ -274,7 +283,10 @@ let gen_slk_file prog =
 let solve_templ_assume _ =
   let templ_assumes = List.rev (templ_assume_scc_stk # get_stk) in
   let () = templ_assume_scc_stk # reset in
-  if templ_assumes = [] then [], [], Unknown
+  if templ_assumes = []
+  then
+    let () = x_binfo_pp "There are no templ assumes" no_pos in
+    [], [], Unknown
   else
     let constrs, templ_unks =
       List.fold_left (fun (ac, au) ta ->
@@ -309,7 +321,7 @@ let silent_pr silent str =
   else print_endline_quiet str  
 
 let collect_and_solve_templ_assumes_common silent prog (inf_templs: ident list) =
-  let () = print_endline ("collect_and_solve_templ_assumes_common") in
+  (* let () = print_endline ("collect_and_solve_templ_assumes_common") in *)
   let templ_assumes, templ_unks, res = solve_templ_assume () in
   match res with
   | Unsat -> 

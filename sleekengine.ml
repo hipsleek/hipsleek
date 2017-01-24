@@ -1548,6 +1548,8 @@ let process_rel_defn cond_path (ilhs : meta_formula) (irhs: meta_formula) extn_i
     let _ =  sleek_hprel_defns := ! sleek_hprel_defns@[pr_new_rel_defn] in
     ()
 
+
+      
 let process_pure_trans_to_templ () =
   let cur_pure_rel = CF.sleek_rel_pure_assumes # get in
   if cur_pure_rel = []
@@ -1559,14 +1561,24 @@ let process_pure_trans_to_templ () =
     x_binfo_hp (add_str "Transformed to templs " (pr_list pr_templ)) templs no_pos
     
 let process_pure_rel_solve_with_templ inf_templs =
-  let inf_templs_str = List.map (fun templ -> match templ with | CP.SpecVar (_,ident,_)->ident ) inf_templs in
-  let cur_pure_rel = CF.sleek_rel_pure_assumes # get in
+  let inf_templs_sv = List.map (fun templ -> CP.mk_spec_var templ ) inf_templs in
+  let cur_pure_rel = List.map (fun (_,l,r) -> (CP.trans_pure_assume_to_templ l, CP.trans_pure_assume_to_templ r) ) (CF.sleek_rel_pure_assumes # get) in
+  let () =
+    if cur_pure_rel = []
+    then
+      x_binfo_pp "there are no cur_pur_rel" no_pos
+    else
+      ()
+  in
   let () =
     List.iter
-      (fun (_,ante,cons) -> Template.collect_templ_assume_init_simpl inf_templs ante cons no_pos)
+      (fun (ante,cons) -> Template.collect_templ_assume_init_simpl inf_templs_sv ante cons no_pos)
       cur_pure_rel
   in
-  Template.collect_and_solve_templ_assumes_prog_free false inf_templs_str
+  let _ =
+    Template.collect_and_solve_templ_assumes_prog_free false inf_templs
+  in
+  ()
 ;;
 
 let process_decl_hpdang hp_names =

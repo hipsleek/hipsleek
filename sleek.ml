@@ -99,6 +99,7 @@ module M = Lexer.Make(Token.Token)
     | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | TransToTempl -> process_pure_trans_to_templ ()
+    | Solve_with_templ inf_templs-> process_pure_rel_solve_with_templ inf_templs
     | Simplify f -> process_simplify f
     | Slk_Hull f -> process_hull f
     | Slk_PairWise f -> process_pairwise f
