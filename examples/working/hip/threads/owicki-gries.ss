@@ -35,7 +35,7 @@ ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
         x.val++;
         z.val=1;
         release(l);
-        }
+}
 
 //valid
 void incrementor1(lock l,intCell x,intCell y, intCell z)

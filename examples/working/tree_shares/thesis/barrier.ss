@@ -15,7 +15,7 @@ Barrier bn[2]<int state, cl x1, cl x2, cl y1, cl y2, cl i> == [(0,1,[
     ensures x2::cl<B>*y1::cl(@@R)<B>*y2::cl(@@R)<B>*         self::bn(@@R)<2,x1,x2,y1,y2,i>;]),
  (2,1,[
  requires x2::cl<A>*y1::cl(@@R)<A+1>*y2::cl(@@R)<A>*         self::bn(@@R)<2,x1,x2,y1,y2,i> 
-    ensures x1::cl(@@R)<A+1>*x2::cl(@@R)<>*y2::cl<D>*i::cl(@@L)<T>*self::bn(@@R)<1,x1,x2,y1,y2,i>;,
+    ensures x1::cl(@@R)<A+1> * x2::cl(@@R)<B>*y2::cl<D>*i::cl(@@L)<T>*self::bn(@@R)<1,x1,x2,y1,y2,i>;,
  requires x1::cl<B>*y1::cl(@@L)<B+1>*y2::cl(@@L)<B>*i::cl<B>*self::bn(@@L)<2,x1,x2,y1,y2,i> 
     ensures x1::cl(@@L)<A>*x2::cl(@@L)<B>*y1::cl<C>*i::cl(@@R)<T>*self::bn(@@L)<1,x1,x2,y1,y2,i>;]) ,
  (1,3,[
