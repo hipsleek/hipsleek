@@ -12,6 +12,10 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, r> * r::ll<n - 1>
 	inv n >= 0.
 
+macro L == (#,) .
+
+macro R == (,#) .
+macro LL == ((#,),).
 
 //(1)
 checkentail x::ll<n> |- x::node<_,_>.
@@ -28,14 +32,21 @@ checkentail x::ll(v)<n> |- x::ll(v)<m>.
 print residue.
 expect Valid.
 
-//(5) 
-checkentail x::ll<n> |- x::ll(@@L)<m>.
+
+//(3)
+checkentail x::ll(@@L)<n> |- x::ll(@@R)<m>.
+print residue.
+expect Fail.
+
+
+checkentail x::ll(@@L)<n> |- x::ll(@@LL)<m>.
+//(4)
+checkentail x::node(@@L)<_,q> * q::ll(@@L)<n> |- x::ll(@@LR)<m>.
 print residue.
 expect Valid.
 
-
-//(4)
-checkentail x::node(@@L)<_,q> * q::ll(@@L)<n> |- x::ll(@@LR)<m>.
+//checkentail x::node(@@L)<_,q>*q::ll(@@L)<n> |- x::ll(@@L)<m>.
+checkentail x::node<_,q>*q::ll<n> |- x::ll<m>.
 print residue.
 expect Valid.
 

@@ -99,7 +99,7 @@ class timelog =
       let c = hist_stk # len in
       let ls = List.rev (hist_stk # get_stk) in
       let bigger = List.rev (hist_big # get_stk) in
-      let (big,small) = List.partition (fun (_,x) -> x>=(!time_limit_large)) ls in
+      let (big,small) = List.partition (fun (_,x) -> true (* x>=(!time_limit_large) *)) ls in
       (* let (bigger,big) = List.partition (fun (_,x) -> x>=5.0) big in *)
       let s_big = string_of_int (List.length big) in
       let s_bigger = string_of_int (List.length bigger) in

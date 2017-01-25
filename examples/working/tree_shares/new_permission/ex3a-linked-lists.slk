@@ -1,0 +1,11 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//checkentail x::node(@@L)<_,q>*q::ll(@@L)<n> |- x::ll(@@L)<m>.
+checkentail x::node<_,q>*q::ll<n> |- x::ll<m>.
+print residue.
+expect Valid.
