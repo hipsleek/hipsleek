@@ -101,6 +101,19 @@ class timelog =
       let bigger = List.rev (hist_big # get_stk) in
       let (big,small) = List.partition (fun (_,x) -> true (* x>=(!time_limit_large) *)) ls in
       (* let (bigger,big) = List.partition (fun (_,x) -> x>=5.0) big in *)
+      let rec sum_log (str, num) list = match list with
+        | [] -> (str, num)
+        | h::t -> if str = (fst h) then sum_log (str, num +. (snd h)) t else sum_log (str, num) t
+      in
+      let rec aux list result = match list with
+        | [] -> result
+        | h::t ->
+          let (str_list, _) = List.split result in
+          if List.mem (fst h) str_list then aux t result
+          else let h = sum_log h t in
+            aux t (h::result)
+      in
+      let big = aux big [] in
       let s_big = string_of_int (List.length big) in
       let s_bigger = string_of_int (List.length bigger) in
       let b = List.fold_left (fun c (_,x1) -> c +. x1) 0. big in 
