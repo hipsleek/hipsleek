@@ -2138,9 +2138,9 @@ let tp_is_sat (f:CP.formula) (old_sat_no :string) =
   in
   let res = 
     (if !Globals.no_cache_formula then
-       Timelog.log_wrapper "SAT-nocache" logger fn_sat f
+       Timelog.log_wrapper "SLEEK-SAT-WRAPPER-nocache" logger fn_sat f
      else
-       (Timelog.log_wrapper "SAT" logger (sat_cache fn_sat)) f)
+       (Timelog.log_wrapper "SLEEK-SAT-WRAPPER" logger (sat_cache fn_sat)) f)
   in
   x_dinfo_pp ("res: " ^ (string_of_bool res)) no_pos;
   (* let tstop = Gen.Profiling.get_time () in *)
@@ -3360,7 +3360,7 @@ let tp_imply ante conseq old_imp_no timeout process =
         (match fr with Some b -> PR_BOOL b | None -> PR_exception) in
     (Others.last_tp_used # string_of,imp_no)
   in
-  let final_res = Timelog.log_wrapper "imply" logger fn () in
+  let final_res = Timelog.log_wrapper "sleek_imply_wrapper" logger fn () in
   (* let _= add_proof_logging !cache_status old_imp_no imp_no (string_of_prover !pure_tp) cmd (Timelog.logtime # get_last_time) (PR_BOOL (match final_res with | r -> r))  *)
   final_res
 ;;

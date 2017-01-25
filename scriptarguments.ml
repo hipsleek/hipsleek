@@ -725,6 +725,7 @@ let common_arguments = [
    "enable profiling statistics");
   ("--en-cstat", Arg.Set Gen.enable_counters, "enable counter statistics");
   ("--dis-time-stat", Arg.Clear Globals.enable_time_stats, "disable timing statistics from being printed");
+  ("--en-time-stat", Arg.Set Globals.enable_time_stats, "enable timing statistics from being printed");
   ("--dis-count-stat", Arg.Clear Globals.enable_count_stats, "disable counting statistics from being printed");
   ("--en-stat", (Arg.Tuple [Arg.Set Gen.profiling; Arg.Set Gen.enable_counters]),
    "enable all statistics");
