@@ -13398,16 +13398,17 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "there is a mismatch in branches "  *)err_msg estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches 2" sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
         else
           let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
-          let lhs_node_name = if lhs_node = HEmp then "" else Cformula.get_node_name 1 lhs_node in
-          let rhs_node_name = if rhs_node = HEmp then "" else Cformula.get_node_name 1 rhs_node in
-          let lhs_rest_name = if lhs_rest = HEmp then "" else Cformula.get_node_name 1 lhs_rest in
-          let rhs_rest_name = if rhs_rest = HEmp then "" else Cformula.get_node_name 1 rhs_rest in
-          let () = x_ninfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in
-          let () = x_ninfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in
-          let () = x_ninfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in
-          let () = x_ninfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in
+          (* let lhs_node_name = if lhs_node = HEmp then "" else Cformula.get_node_name 1 lhs_node in *)
+          (* let rhs_node_name = if rhs_node = HEmp then "" else Cformula.get_node_name 1 rhs_node in *)
+          (* let lhs_rest_name = if lhs_rest = HEmp then "" else Cformula.get_node_name 1 lhs_rest in *)
+          (* let rhs_rest_name = if rhs_rest = HEmp then "" else Cformula.get_node_name 1 rhs_rest in *)
+          (* let () = x_ninfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in *)
+          (* let () = x_ninfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in *)
+          (* let () = x_ninfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in *)
+          (* let () = x_ninfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in *)
           let n_rhs_pure =
-            if (lhs_node_name = rhs_node_name && lhs_rest_name = rhs_rest_name ) then
+            (* if (lhs_node_name = rhs_node_name && lhs_rest_name = rhs_rest_name ) then *)
+            if true then
               let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
               let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
               MCP.memoise_add_pure rhs_b.formula_base_pure npure
