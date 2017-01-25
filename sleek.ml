@@ -61,181 +61,100 @@ let prompt = ref "SLEEK> "
 let terminator = '.'
 module M = Lexer.Make(Token.Token)
 
-(*This is overriden by the below*)
-(* let parse_file (parse) (source_file : string) = *)
-(* 	(\* let () = print_endline "parse_file 1" in *\) *)
-(* 	try *)
-(* 		let cmds = parse source_file in  *)
-(* 		let todo_unk = (List.map (fun c -> ( *)
-(* 							match c with *)
-(* 								 | DataDef ddef -> process_data_def ddef *)
-(* 								 | PredDef pdef -> process_pred_def pdef *)
-(*				                 | RelDef rdef -> process_rel_def rdef *)
-(*								 | AxiomDef adef -> process_axiom_def adef (* An Hoa : Bug detected in MUTUALLY DEPENDENT relations! *) *)
-(* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-(* 								 | CaptureResidue lvar -> process_capture_residue lvar *)
-(* 								 | LemmaDef ldef -> process_lemma ldef *)
-(* 								 | PrintCmd pcmd ->  *)
-(*                                      let () = print_string " I am here \n" in (\*LDK*\) *)
-(*                                      process_print_command pcmd *)
-(* 								 | LetDef (lvar, lbody) -> put_var lvar lbody *)
-(*                  | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s *)
-(* 								 | EmptyCmd -> ())) cmds) in () *)
-(* 	with *)
-(* 	  | End_of_file -> *)
-(* 		  print_string ("\n") *)
-(*     | M.Loc.Exc_located (l,t)->  *)
-(*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
-(*       raise t) *)
 
-  let proc_one_cmd c = 
-    match c with
-    | UiDef uidef -> process_ui_def uidef
-    | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
-    (* let pr_op () = process_entail_check_common iante iconseq in  *)
-    (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
-    | SatCheck f -> (process_sat_check f; ())
-    | NonDetCheck (v, f) -> (process_nondet_check v f)
-    | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
-    | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
-    | TransToTempl -> process_pure_trans_to_templ ()
-    | Solve_with_templ inf_templs-> process_pure_rel_solve_with_templ inf_templs
-    | Simplify f -> process_simplify f
-    | Slk_Hull f -> process_hull f
-    | Slk_PairWise f -> process_pairwise f
-    | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
-    | Validate (id, opt_fl, lc) -> process_validate id opt_fl lc
-    | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
-    | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
-    | ShapeLFP ids -> process_shape_lfp ids
-    | ShapeRec ids -> process_shape_rec ids
-    | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
-    | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
-    | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
-    | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
-    | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
-    | ShapeElim (view_names) -> process_shape_elim_useless view_names
-    | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
-    | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
-    | PredUnfold (qual,to_view_names) -> process_pred_unfold qual to_view_names
-    | ShapeExtract (view_names) -> process_shape_extract view_names
-    | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
-    | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
-    | ShapeAddDangling ids -> process_shape_add_dangling ids
-    | ShapeUnfold ids -> process_shape_unfold ids
-    | ShapeParamDangling ids -> process_shape_param_dangling ids
-    | ShapeSimplify ids -> process_shape_simplify ids
-    | ShapeMerge ids -> process_shape_merge ids
-    | ShapeTransToView ids -> process_shape_trans_to_view ids
-    | ShapeDerivePre ids -> process_shape_derive_pre ids
-    | ShapeDerivePost ids -> process_shape_derive_post ids
-    | ShapeDeriveView ids -> process_shape_derive_view ids
-    | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
-    | ShapeNormalize ids -> process_shape_normalize ids
-    | DataMarkRec ids -> process_data_mark_rec ids 
-    | PredElimHead ids -> process_pred_elim_head ids
-    | PredElimTail ids -> process_pred_elim_tail ids
-    | PredUnifyDisj ids -> process_pred_unify_disj ids
-    | PredSplit ids -> process_pred_split ids
-    | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
-    | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
-    | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
-    | CheckNorm f -> process_check_norm f
-    | EqCheck (lv, if1, if2) ->
-      (* let () = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-      process_eq_check lv if1 if2
-    | InferCmd (itype, ivars, iante, iconseq, etype) -> 
-      (* None  -> look for presence of @leak
+let proc_one_cmd c = 
+  match c with
+  | UiDef uidef -> process_ui_def uidef
+  | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
+  (* let pr_op () = process_entail_check_common iante iconseq in  *)
+  (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
+  | SatCheck f -> (process_sat_check f; ())
+  | NonDetCheck (v, f) -> (process_nondet_check v f)
+  | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
+  | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
+  | Simplify f -> process_simplify f
+  | Slk_Hull f -> process_hull f
+  | Slk_PairWise f -> process_pairwise f
+  | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps
+  | Validate (id, opt_fl, lc) -> process_validate id opt_fl lc
+  | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps
+  | ShapeConquer (ids, paths) -> process_shape_conquer ids paths
+  | ShapeLFP ids -> process_shape_lfp ids
+  | ShapeRec ids -> process_shape_rec ids
+  | ShapePostObl (pre_hps, post_hps) -> process_shape_postObl pre_hps post_hps
+  | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps
+  | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps
+  | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names
+  | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names
+  | ShapeElim (view_names) -> process_shape_elim_useless view_names
+  | ShapeReuse (frm_view_names,to_view_names) -> process_shape_reuse frm_view_names to_view_names
+  | ShapeReuseSubs to_view_names -> process_shape_reuse_subs to_view_names
+  | PredUnfold (qual,to_view_names) -> process_pred_unfold qual to_view_names
+  | ShapeExtract (view_names) -> process_shape_extract view_names
+  | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps
+  | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps
+  | ShapeAddDangling ids -> process_shape_add_dangling ids
+  | ShapeUnfold ids -> process_shape_unfold ids
+  | ShapeParamDangling ids -> process_shape_param_dangling ids
+  | ShapeSimplify ids -> process_shape_simplify ids
+  | ShapeMerge ids -> process_shape_merge ids
+  | ShapeTransToView ids -> process_shape_trans_to_view ids
+  | ShapeDerivePre ids -> process_shape_derive_pre ids
+  | ShapeDerivePost ids -> process_shape_derive_post ids
+  | ShapeDeriveView ids -> process_shape_derive_view ids
+  | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
+  | ShapeNormalize ids -> process_shape_normalize ids
+  | DataMarkRec ids -> process_data_mark_rec ids 
+  | PredElimHead ids -> process_pred_elim_head ids
+  | PredElimTail ids -> process_pred_elim_tail ids
+  | PredUnifyDisj ids -> process_pred_unify_disj ids
+  | PredSplit ids -> process_pred_split ids
+  | PredNormSeg (pred_ids) -> process_norm_seg pred_ids
+  | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
+  | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
+  | CheckNorm f -> process_check_norm f
+  | EqCheck (lv, if1, if2) ->
+     (* let () = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
+     process_eq_check lv if1 if2
+  | InferCmd (itype, ivars, iante, iconseq, etype) -> 
+     (* None  -> look for presence of @leak
          Some true
          Some false
       *)
-      (* let () = print_endline "InferCmd2" in *)
-      let change_etype x f = 
-        if f then match x with 
-          | None -> Some f 
-          | _ -> x
-        else x in
-      let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
-      let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
-      let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
-      (process_infer itype ivars iante iconseq etype;())
-    | CaptureResidue lvar -> process_capture_residue lvar
-    | PrintCmd pcmd ->
-      let () = Debug.ninfo_pprint "at print" no_pos in
-      process_print_command pcmd
-    | CmpCmd ccmd -> process_cmp_command ccmd
-    | LetDef (lvar, lbody) -> put_var lvar lbody
-    | BarrierCheck bdef -> process_barrier_def bdef
-    | Time (b,s,_) -> 
-      if b then Gen.Profiling.push_time s 
-      else Gen.Profiling.pop_time s
-    | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
-    | TemplSolv idl -> process_templ_solve idl
-    | TermInfer -> process_term_infer ()
-    | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+     (* let () = print_endline "InferCmd2" in *)
+     let change_etype x f = 
+       if f then match x with 
+                 | None -> Some f 
+                 | _ -> x
+       else x in
+     let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
+     let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
+     let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+     (process_infer itype ivars iante iconseq etype;())
+  | CaptureResidue lvar -> process_capture_residue lvar
+  | PrintCmd pcmd ->
+     let () = Debug.ninfo_pprint "at print" no_pos in
+     process_print_command pcmd
+  | CmpCmd ccmd -> process_cmp_command ccmd
+  | LetDef (lvar, lbody) -> put_var lvar lbody
+  | BarrierCheck bdef -> process_barrier_def bdef
+  | Time (b,s,_) -> 
+     if b then Gen.Profiling.push_time s 
+     else Gen.Profiling.pop_time s
+  | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
+  | TemplSolv idl -> process_templ_solve idl
+  | TermInfer -> process_term_infer ()
+  | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
+  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
     | TemplDef _ | UtDef _ -> ()
-    | ExpectInfer (t, e) -> process_validate_infer t e
-    | EmptyCmd -> () 
+  | ExpectInfer (t, e) -> process_validate_infer t e
+  | EmptyCmd -> ()
+  (* Commands related to relation-template solving *)
+  | TransToTempl -> process_pure_trans_to_templ ()
+  | Solve_with_templ inf_templs-> process_pure_rel_solve_with_templ inf_templs
 
 (* TODO : This is a repetition of proc_one_cmd *)
 let proc_gen_cmd cmd = proc_one_cmd cmd
-  (* let () = print_endline "proc_gen_cmd" in *)
-  (* match cmd with *)
-  (* | DataDef ddef -> process_data_def ddef *)
-  (* | PredDef pdef -> process_pred_def_4_iast pdef *)
-  (* | BarrierCheck bdef -> (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) *)
-  (*                        ; process_barrier_def bdef) *)
-  (* | FuncDef fdef -> process_func_def fdef *)
-  (* | RelDef rdef -> process_rel_def rdef *)
-  (* | TemplDef tdef -> process_templ_def tdef *)
-  (* | UtDef utdef -> process_ut_def utdef *)
-  (* | HpDef hpdef -> process_hp_def hpdef *)
-  (* | AxiomDef adef -> process_axiom_def adef *)
-  (* | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype;()) *)
-  (* | SatCheck f -> (process_sat_check f;()) *)
-  (* | NonDetCheck (v,f) -> (process_nondet_check v f) *)
-  (* | RelAssume (id, ilhs, iguard, irhs) -> process_rel_assume id ilhs iguard irhs *)
-  (* | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info *)
-  (* | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps *)
-  (* | Validate (vr, opt_fl, lc) -> process_validate vr opt_fl lc *)
-  (* | ExpectInfer -> process_validate_infer () *)
-  (* | ShapeDivide (pre_hps, post_hps) -> process_shape_divide pre_hps post_hps *)
-  (* | ShapeConquer (ids, paths) -> process_shape_conquer ids paths *)
-  (* | ShapeLFP ids -> process_shape_lfp ids *)
-  (* | ShapeRec ids -> process_shape_rec ids *)
-  (* | ShapePostObl (pre_hps, post_shape_postObl pre_hps post_hps *)
-  (* | ShapeInferProp (pre_hps, post_hps) -> process_shape_infer_prop pre_hps post_hps *)
-  (* | ShapeSplitBase (pre_hps, post_hps) -> process_shape_split pre_hps post_hps *)
-  (* | ShapeDeclDang (hp_names) -> process_decl_hpdang hp_names *)
-  (* | ShapeDeclUnknown (hp_names) -> process_decl_hpunknown hp_names *)
-  (* | ShapeElim (view_names) -> process_shape_elim_useless view_names *)
-  (* | ShapeExtract (view_names) -> process_shape_extract view_names *)
-  (* | ShapeSConseq (pre_hps, post_hps) -> process_shape_sconseq pre_hps post_hps *)
-  (* | ShapeSAnte (pre_hps, post_hps) -> process_shape_sante pre_hps post_hps *)
-  (* | PredSplit (pred_ids) -> process_pred_split pred_ids *)
-  (* | PredNormSeg (pred_ids) -> process_norm_seg pred_ids *)
-  (* | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids *)
-  (* | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids *)
-  (* | CheckNorm f -> process_check_norm f *)
-  (* | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2 *)
-  (* | InferCmd (itype, ivars, iante, iconseq, etype) -> *)
-  (*   let () = print_endline "InferCmd" in *)
-  (*   let () = x_binfo_hp (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in *)
-  (*   (process_infer itype ivars iante iconseq etype; ()) *)
-  (* | CaptureResidue lvar -> process_capture_residue lvar *)
-  (* | LemmaDef ldef -> process_list_lemma ldef *)
-  (* | PrintCmd pcmd -> process_print_command pcmd *)
-  (* | Simplify f -> process_simplify f *)
-  (* | Slk_Hull f -> process_hull f *)
-  (* | Slk_PairWise f -> process_pairwise f *)
-  (* | CmpCmd pcmd -> process_cmp_command pcmd *)
-  (* | LetDef (lvar, lbody) -> put_var lvar lbody *)
-  (* | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s *)
-  (* | TemplSolv idl -> process_templ_solve idl *)
-  (* | TermInfer -> process_term_infer () *)
-  (* | TermAssume (iante, iconseq) -> process_term_assume iante iconseq *)
-  (* | EmptyCmd  -> () *)
 
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =

@@ -1581,6 +1581,20 @@ let process_pure_rel_solve_with_templ inf_templs =
   ()
 ;;
 
+
+let process_pure_rel_solve_with_defp puref rel_name=
+  let defp =
+    try
+      let reldef = !cprog.prog_rel_decls # find (fun rel -> rel.rel_name = rel_name) in
+      let results = [(CP.mk_spec_var reldef.rel_name,List.map (fun sv -> CP.mkVar sv no_pos) reldef.rel_vars,None,reldef.rel_formula,None)] in
+      CP.subs_rel_formula results puref 
+    with _ ->
+      failwith "No definition"
+  in
+  y_binfo_hp (add_str "process_pure_rel_solve_with_defp" !CP.print_formula) defp
+  
+;;
+      
 let process_decl_hpdang hp_names =
   let process hp_name=
     let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
@@ -1719,8 +1733,23 @@ let print_sleek_hprel_assumes () =
     if curr_prel = []
     then x_binfo_pp "There are no pure relational assumptions" no_pos
     else
-      x_binfo_hp (add_str "Current list of pure relational assumptions" (pr_list string_of_pure_rel_assumption) )
-                 curr_prel (* (sleek_hprel_assumes # get) *) no_pos
+      let () =
+        x_binfo_hp (add_str "Current list of pure relational assumptions" (pr_list string_of_pure_rel_assumption) ) curr_prel no_pos in
+      let () =
+        let () =
+          List.iter
+            (fun (_,l,r) ->
+              let () =
+                process_pure_rel_solve_with_defp l "U"
+              in 
+              process_pure_rel_solve_with_defp r "U"
+            )
+            curr_prel
+        in
+        y_binfo_hp (add_str "partial defs" (pr_list Cprinter.string_of_rel_decl)) (!cprog.prog_rel_decls # get_stk) 
+      in
+      ()
+               
   else ()
 
 let process_sleek_hprel_assumes_others s ?(combined=false) (ids: regex_id_list) f_proc = 

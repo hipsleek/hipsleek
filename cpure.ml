@@ -11371,19 +11371,20 @@ let subs_rel_formula_ops results  =
   let pr_weak b = match b with
     | RelForm (name,rel_args,p) -> 
       (try
-        let (_,args,pc,post,_) = List.find (fun (n,args,pc,post,_)->n=name) results in
-        let () = x_tinfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (formal para) : " (pr_list !print_exp)) args p in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (rel_args) : " (pr_list !print_exp)) rel_args p in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (reorder) : " (pr_option (pr_list string_of_bool))) pc p in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (post) : " !print_formula) post p in
+         let (_,args,pc,post,_) =
+           List.find (fun (n,args,pc,post,_)->(name_of_sv n)=(name_of_sv name)) results in
+        let () = x_binfo_hp (add_str "subs_rel_formula : " !print_p_formula) b p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (formal para) : " (pr_list !print_exp)) args p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (rel_args) : " (pr_list !print_exp)) rel_args p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (reorder) : " (pr_option (pr_list string_of_bool))) pc p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (post) : " !print_formula) post p in
         let new_rel_args = match pc with
           | None -> rel_args
           | Some bl -> re_order_new rel_args bl in
         let subs = List.combine (List.map get_var args) (List.map get_var new_rel_args) in
         let new_f = subst subs post in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (new post ) : " (!print_formula)) new_f p in
-        let () = x_tinfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (new post ) : " (!print_formula)) new_f p in
+        let () = x_binfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
         Some (new_f)
       with _ -> None)
     | _ -> None in
@@ -11513,6 +11514,10 @@ let drop_rel_formula_and_return f =
 let rel_templs_transformer = ref ([]:(spec_var*(string*string)) list)
 ;;
 
+
+  
+                
+
   
 let trans_rel_to_templ rel =
   match rel with
@@ -11553,11 +11558,7 @@ let trans_pure_assume_to_templ p1 =
   remove_dupl_conj_pure (!simplify (!simplify (mkAnd templ_of_rel newf no_pos)))
 ;;
 
-(* input: pure formula, rel name, variables that will be replaced by other arguments *)
-(* output: pure formula *)
-let trans_pure_assume_to_templ_new f rel_name dummy_var =
-  let replace_rel p =
-    match 
+
   
   
 let strong_drop_rel_formula (f:formula) : formula =

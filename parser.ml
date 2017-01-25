@@ -1032,7 +1032,7 @@ non_empty_command:
       | t= validate_cmd     -> Validate t
       | t= relassume_cmd     -> RelAssume t
       (* | t = relpureassume_cmd -> RelPureAssume t *)
-      | t=reldefn_cmd     -> RelDefn t
+      | t=reldefn_cmd     -> RelDefn t      
       | t=shapeinfer_cmd     -> ShapeInfer t
       | t=shapedivide_cmd     -> ShapeDivide t
       | t=shapeconquer_cmd     -> ShapeConquer t
@@ -2529,6 +2529,7 @@ reldefn_cmd:
            (un_option il2 [], l, MetaForm (F.mkTrue n_flow (get_pos_camlp4 _loc 1)) , [(orig_pred, extn, [extn_pos])])
    ]];
 
+
 decl_dang_cmd:
    [[ `SHAPE_DECL_DANG; `OSQUARE; il1=OPT id_list ;`CSQUARE -> un_option il1 []
    ]];
@@ -3126,10 +3127,10 @@ func_header:
 (************ An Hoa :: Relations ************)
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
 
-	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
+	                             { rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *) }
 	(* [4/10/2011] allow for declaration of relation without body; such relations are constant true and need to be axiomatized using axioms declarations. *)
-	| rh=rel_header -> rh
-  | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
+	  | rh=rel_header -> rh
+          | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];

@@ -2755,7 +2755,7 @@ let string_of_rel_decl reldecl =
   in
   let decl_kind = " relation " in
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
-  decl_kind ^ name ^ "(" ^ args ^ ").\n"
+  decl_kind ^ name ^ "(" ^ args ^ ")=="^(!CP.print_formula reldecl.rel_formula)^".\n"
 
 let string_of_ut_decl ut_decl =
   let name = ut_decl.Cast.ut_name in
