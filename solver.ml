@@ -13395,46 +13395,53 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           let err_msg = "there is a mismatch in branches "  in
           (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "there is a mismatch in branches "  *)err_msg estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches 2" sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
         else
-          let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
-          (* let lhs_node_name = if lhs_node = HEmp then "" else Cformula.get_node_name 1 lhs_node in *)
-          (* let rhs_node_name = if rhs_node = HEmp then "" else Cformula.get_node_name 1 rhs_node in *)
-          (* let lhs_rest_name = if lhs_rest = HEmp then "" else Cformula.get_node_name 1 lhs_rest in *)
-          (* let rhs_rest_name = if rhs_rest = HEmp then "" else Cformula.get_node_name 1 rhs_rest in *)
-          (* let () = x_ninfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in *)
-          (* let () = x_ninfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in *)
-          (* let () = x_ninfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in *)
-          (* let () = x_ninfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in *)
-          let n_rhs_pure =
-            (* if (lhs_node_name = rhs_node_name && lhs_rest_name = rhs_rest_name ) then *)
-            if true then
-              let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
-              let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
-              MCP.memoise_add_pure rhs_b.formula_base_pure npure
-            else rhs_b.formula_base_pure
-          in
-          (* let n_rhs_pure = *)
-          (*     let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in *)
-          (*     let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in *)
-          (*     MCP.memoise_add_pure rhs_b.formula_base_pure npure *)
-          (*  in *)
-          let new_estate = {estate with
-                            es_formula = Base{lhs_b with formula_base_heap = n_lhs_h}; 
-                            es_ante_evars = estate.es_ante_evars ;
-                            es_ivars = v_rest::(if (List.exists (CP.eq_spec_var v_consumed) estate.es_gen_impl_vars) then estate.es_ivars else v_consumed::estate.es_ivars)} in
-          (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
-            if it succeeds and the flag from to_be_proven is true then make current context false*)
-          let () = x_dinfo_hp (add_str "n_rhs_pure:" Cprinter.string_of_mix_formula) n_rhs_pure pos in
-          let rhs_p = match to_be_proven with
-            | None -> n_rhs_pure
-            | Some (p,_) ->
-              let () = x_dinfo_hp (add_str "p:" !Cpure.print_formula) p pos in
-              MCP.memoise_add_pure n_rhs_pure p in
-          let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-          let n_lhs_node = set_node_perm lhs_node (Some (Cpure.Var (v_consumed,no_pos))) in
-          x_dinfo_zp (lazy "do_match_split") pos;
-          x_tinfo_hp (add_str "new_estate(M_split_match)" (Cprinter.string_of_entail_state)) new_estate pos;
-          let res_es0, prf0 = x_add do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
-          (res_es0,prf0)			  
+          begin
+            try
+              let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
+              (* let lhs_node_name = if lhs_node = HEmp then "" else Cformula.get_node_name 1 lhs_node in *)
+              (* let rhs_node_name = if rhs_node = HEmp then "" else Cformula.get_node_name 1 rhs_node in *)
+              (* let lhs_rest_name = if lhs_rest = HEmp then "" else Cformula.get_node_name 1 lhs_rest in *)
+              (* let rhs_rest_name = if rhs_rest = HEmp then "" else Cformula.get_node_name 1 rhs_rest in *)
+              (* let () = x_ninfo_hp (add_str "lhs_node_name:" Cprinter.string_of_ident) lhs_node_name pos in *)
+              (* let () = x_ninfo_hp (add_str "rhs_node_name:" Cprinter.string_of_ident) rhs_node_name pos in *)
+              (* let () = x_ninfo_hp (add_str "lhs_rest_name:" Cprinter.string_of_ident) lhs_rest_name pos in *)
+              (* let () = x_ninfo_hp (add_str "rhs_rest_name:" Cprinter.string_of_ident) rhs_rest_name pos in *)
+              let n_rhs_pure =
+                (* if (lhs_node_name = rhs_node_name && lhs_rest_name = rhs_rest_name ) then *)
+                if true then
+                  let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
+                  let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
+                  MCP.memoise_add_pure rhs_b.formula_base_pure npure
+                else rhs_b.formula_base_pure
+              in
+              (* let n_rhs_pure = *)
+              (*     let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in *)
+              (*     let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in *)
+              (*     MCP.memoise_add_pure rhs_b.formula_base_pure npure *)
+              (*  in *)
+              let new_estate = {estate with
+                                es_formula = Base{lhs_b with formula_base_heap = n_lhs_h}; 
+                                es_ante_evars = estate.es_ante_evars ;
+                                es_ivars = v_rest::(if (List.exists (CP.eq_spec_var v_consumed) estate.es_gen_impl_vars) then estate.es_ivars else v_consumed::estate.es_ivars)} in
+              (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
+                if it succeeds and the flag from to_be_proven is true then make current context false*)
+              let () = x_dinfo_hp (add_str "n_rhs_pure:" Cprinter.string_of_mix_formula) n_rhs_pure pos in
+              let rhs_p = match to_be_proven with
+                | None -> n_rhs_pure
+                | Some (p,_) ->
+                  let () = x_dinfo_hp (add_str "p:" !Cpure.print_formula) p pos in
+                  MCP.memoise_add_pure n_rhs_pure p in
+              let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
+              let n_lhs_node = set_node_perm lhs_node (Some (Cpure.Var (v_consumed,no_pos))) in
+              x_dinfo_zp (lazy "do_match_split") pos;
+              x_tinfo_hp (add_str "new_estate(M_split_match)" (Cprinter.string_of_entail_state)) new_estate pos;
+              let res_es0, prf0 = x_add do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+              (res_es0,prf0)
+
+            with _ ->        let err_msg = "there is a mismatch in branches "  in
+          (CF.mkFailCtx_in (Basic_Reason (mkFailContext (* "there is a mismatch in branches "  *)err_msg estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches 2" sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), NoAlias)
+   
+          end
     | Context.M_fold {
         Context.match_res_lhs_node = lhs_node;
         Context.match_res_rhs_node = rhs_node;
