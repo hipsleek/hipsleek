@@ -89,7 +89,9 @@ struct
   let call_imply (a_ev:t_var list) a_nz_cons a_l_eqs (c_ev:t_var list) c_nz_cons c_l_eqs c_const_vars c_subst_vars  =
     let ante_eq_f = f_of_eqs a_l_eqs in
     let ante_nz_l = List.map (List.fold_left (fun a c-> CP.mkOr a (mkBfv c) None no_pos) (CP.mkTrue no_pos))  a_nz_cons in
-    if not (check_nz_sat ante_eq_f ante_nz_l) then true
+    if not (check_nz_sat ante_eq_f ante_nz_l) then
+      let () = print_string "#93 true w2 \n" in
+      true
     else
       let ante_tot = CP.mkExists (List.map to_sv a_ev) (List.fold_left (fun a c-> CP.mkAnd a c no_pos) ante_eq_f ante_nz_l) None no_pos in
       let conseq_tot =
@@ -202,6 +204,7 @@ struct
   (* output:  - prover_output 									- the running status of prover: true if running, otherwise false *)
   let get_answer (chn: in_channel) : (bool * bool)=
     let (output, running_state) = collect_output chn  in
+    let () = print_string ("output: " ^ output ^ "\n") in
     let
       validity_result = get_prover_result output;						   in
     (validity_result, running_state)
@@ -364,7 +367,8 @@ struct
               (Gen.Profiling.inc_counter ("pm_i") ;
                Gen.Profiling.do_1 "tm_i" (check_problem_through_file (cnf_to_string !tp (ante_f@conseq_f))) 0.)
             else check_problem_through_file (cnf_to_string !tp (ante_f@conseq_f)) 0.)
-    else true
+    else
+      let () = print_string "#371 true w2\n" in true
 
   let call_imply  (a_ev:t_var list) (a_nz_cons:nz_cons) (a_l_eqs:eq_syst)
       (c_ev:t_var list) (c_nz_cons:nz_cons) (c_l_eqs:eq_syst) (c_const_vars:(t_var*bool) list) (c_subst_vars:(t_var*t_var) list):bool  =
@@ -508,7 +512,9 @@ let sleek_sat_wrapper ((evs,f):CP.spec_var list * CP.p_formula list):bool =
       Solver.eqs_ve = ve;
       Solver.eqs_eql = le;} in
     Solver.is_sat eqs
-  with | Solver.Unsat_exception -> false
+  with | Solver.Unsat_exception ->
+    let () = print_string "#513 unsat exception w2\n" in
+    false
 
 
 let sleek_sat_wrapper (aevs,f) =
@@ -542,8 +548,12 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_ve = cve;
         Solver.eqs_eql = cle;} in
       Solver.imply aeqs ceqs
-    with | Solver.Unsat_exception -> not (Solver.is_sat aeqs)
-    with | Solver.Unsat_exception -> true
+    with | Solver.Unsat_exception ->
+      let () = print_string "#549 unsat exception w2\n" in
+      not (Solver.is_sat aeqs)
+  with | Solver.Unsat_exception ->
+    let () = print_string "#549 unsat exception w2\n" in
+    true
 
 let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
   let pr = pr_pair !CP.print_svl (pr_list (fun c-> !CP.print_b_formula (c,None))) in

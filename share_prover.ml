@@ -201,7 +201,9 @@ struct
     (*				print_string ("\n triv_subst3 conseq_vc: "^pr_list (pr_pair SV.string_of string_of_bool) t_vc);*)
 
     let t_vc,t_ve,t_eq_l = List.fold_left (fun (t_vc,t_ve,t_eq_l) (v , c)-> 
-        let t_vc = List.filter (fun (v1,c1)-> if SV.eq v v1 then if c<>c1 then raise Unsat_exception else false else true) t_vc in
+        let t_vc = List.filter (fun (v1,c1)-> if SV.eq v v1 then
+                                   if c<>c1 then raise Unsat_exception else false
+                                 else true) t_vc in
         let t_vc1,t_ve = List.fold_left (fun (a1,a2) (d1,d2)-> match SV.eq d1 v, SV.eq d2 v with 
             | false,false ->  a1,(d1,d2)::a2
             | true, false ->  (d2,c)::a1, a2
@@ -697,8 +699,12 @@ struct
   let is_sat (eqs : eq_syst): bool =
     if eqs.eqs_eql=[]&&eqs.eqs_nzv=[] then 
       try
-        check_const_incons (apl_substs eqs).eqs_vc; true
-      with Unsat_exception -> false
+        check_const_incons (apl_substs eqs).eqs_vc;
+        let () = print_string "#703 share_prover true" in
+        true
+      with Unsat_exception ->
+        let () = print_string "#702\n" in
+        false
     else
       try
         (* print_string "\nfhlafldf alfaf \n" ; *)
@@ -709,9 +715,12 @@ struct
         let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] l_v l_c eqs in
         let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
         if l_eqs = []&&nz_cons=[] then true else
-          (* let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in *)
+          let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in
           call_sat nz_cons ((*conv_eq_s*) l_eqs)
-      with Unsat_exception -> false
+      with
+        Unsat_exception ->
+        let () = print_string "#715 false unsat_exception\n" in
+        false
 
   let is_sat (eqs:eq_syst):bool = 
     (*print_string ("Big Sat: "^(string_of_eq_syst eqs)^"\n");*)
@@ -832,18 +841,24 @@ struct
           				let c_ev = List.map SV.conv c_ev in
           				let a_l_eqs = conv_eq_s a_l_eqs in
           				let c_l_eqs = conv_eq_s c_l_eqs in*)
-      if c_l_eqs=[] && c_const_vars=[] && c_subst_vars=[]&&c_nz_cons=[] then true
+      if c_l_eqs=[] && c_const_vars=[] && c_subst_vars=[]&&c_nz_cons=[] then
+        let () = print_string "#839 empty lists\n" in
+        true
       else call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
     with | Unsat_exception -> not (call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
 
 
   let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
-    if c_sys.eqs_eql=[]&&c_sys.eqs_ve=[]&&c_sys.eqs_vc=[]&&c_sys.eqs_nzv=[] then true
+    if c_sys.eqs_eql=[]&&c_sys.eqs_ve=[]&&c_sys.eqs_vc=[]&&c_sys.eqs_nzv=[] then
+      let () = print_string "#851 true share_prover\n" in
+      true
     else
       try
         to_formula_imply a_sys c_sys 
       with 
-      | Unsat_exception -> true
+      | Unsat_exception ->
+        let () = print_string "#854 unsat exception " in
+        true
       | Unsat_conseq b -> b
 
   let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
