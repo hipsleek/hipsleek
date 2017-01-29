@@ -700,10 +700,10 @@ struct
     if eqs.eqs_eql=[]&&eqs.eqs_nzv=[] then 
       try
         check_const_incons (apl_substs eqs).eqs_vc;
-        let () = print_string "#703 share_prover true" in
+        (* let () = print_string "#703 share_prover true" in *)
         true
       with Unsat_exception ->
-        let () = print_string "#702\n" in
+        (* let () = print_string "#702\n" in *)
         false
     else
       try
@@ -715,11 +715,11 @@ struct
         let const_vars, subst_vars,l_eqs = solve_trivial_eq_l [] l_v l_c eqs in
         let nz_cons = compute_nz_cons nzv dec_vars const_vars subst_vars in
         if l_eqs = []&&nz_cons=[] then true else
-          let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in
+          (* let () = print_string ("share_prover #712 xxxxxxxxxxxxxxxx\n") in *)
           call_sat nz_cons ((*conv_eq_s*) l_eqs)
       with
         Unsat_exception ->
-        let () = print_string "#715 false unsat_exception\n" in
+        (* let () = print_string "#715 false unsat_exception\n" in *)
         false
 
   let is_sat (eqs:eq_syst):bool = 
@@ -842,7 +842,7 @@ struct
           				let a_l_eqs = conv_eq_s a_l_eqs in
           				let c_l_eqs = conv_eq_s c_l_eqs in*)
       if c_l_eqs=[] && c_const_vars=[] && c_subst_vars=[]&&c_nz_cons=[] then
-        let () = print_string "#839 empty lists\n" in
+        (* let () = print_string "#839 empty lists\n" in *)
         true
       else call_imply a_ev a_nz_cons a_l_eqs c_ev c_nz_cons c_l_eqs c_const_vars c_subst_vars
     with | Unsat_exception -> not (call_sat a_nz_cons ((*conv_eq_s*) a_l_eqs))
@@ -850,14 +850,14 @@ struct
 
   let imply  (a_sys : eq_syst) (c_sys : eq_syst) : bool = 
     if c_sys.eqs_eql=[]&&c_sys.eqs_ve=[]&&c_sys.eqs_vc=[]&&c_sys.eqs_nzv=[] then
-      let () = print_string "#851 true share_prover\n" in
+      (* let () = print_string "#851 true share_prover\n" in *)
       true
     else
       try
         to_formula_imply a_sys c_sys 
       with 
       | Unsat_exception ->
-        let () = print_string "#854 unsat exception " in
+        (* let () = print_string "#854 unsat exception " in *)
         true
       | Unsat_conseq b -> b
 

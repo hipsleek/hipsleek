@@ -90,7 +90,7 @@ struct
     let ante_eq_f = f_of_eqs a_l_eqs in
     let ante_nz_l = List.map (List.fold_left (fun a c-> CP.mkOr a (mkBfv c) None no_pos) (CP.mkTrue no_pos))  a_nz_cons in
     if not (check_nz_sat ante_eq_f ante_nz_l) then
-      let () = print_string "#93 true w2 \n" in
+      (* let () = print_string "#93 true w2 \n" in *)
       true
     else
       let ante_tot = CP.mkExists (List.map to_sv a_ev) (List.fold_left (fun a c-> CP.mkAnd a c no_pos) ante_eq_f ante_nz_l) None no_pos in
@@ -167,13 +167,13 @@ struct
   let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 
   (*minisat*)
-  let minisat_path = "/usr/local/bin/minisat"
+  let minisat_path = "/usr/local/bin/minisat_inc"
   let minisat_name = "minisat"
   let minisat_arg = "-pre"
   let minisat_input_format = "cnf"   (* valid value is: cnf *)
   let number_clauses = ref 1
   let number_var = ref 0
-  let minisat_process = ref {    GlobProver.name = "minisat";
+  let minisat_process = ref {    GlobProver.name = "minisat_inc";
                                  GlobProver.pid = 0;
                                  GlobProver.inchannel = stdin;
                                  GlobProver.outchannel = stdout;
@@ -187,24 +187,29 @@ struct
   let rec collect_output (chn: in_channel)  : (string * bool) =
     try
       let line = input_line chn in
-      if line = "SATISFIABLE" then
+      (* let () = print_string ("#190 line: " ^ line ^ "\n") in *)
+      try
+        let _ = Str.search_forward (Str.regexp "SATISFIABLE") line 0 in
         (line, true)
-      else
+      with Not_found ->
         collect_output chn
     with
     | End_of_file ->  ("", false)
 
   let get_prover_result (output : string) :bool =
     let validity =
-      if (output="SATISFIABLE") then
+      (* let () = print_string ("#201 output: " ^ output ^ "\n") in *)
+      try
+        let _ = Str.search_forward (Str.regexp "SATISFIABLE") output 0 in
+      (* if (output="SATISFIABLE") then *)
         true
-      else
+      with Not_found ->
         false in
     validity
   (* output:  - prover_output 									- the running status of prover: true if running, otherwise false *)
   let get_answer (chn: in_channel) : (bool * bool)=
     let (output, running_state) = collect_output chn  in
-    let () = print_string ("output: " ^ output ^ "\n") in
+    (* let () = print_string ("output: " ^ output ^ "\n") in *)
     let
       validity_result = get_prover_result output;						   in
     (validity_result, running_state)
@@ -246,7 +251,7 @@ struct
     (* let () = print_endline "** In function minisat.check_problem" in *)
     let file_suffix = Random.int 1000000 in
     let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".cnf" in
-    (*let () = print_endline ("-- input: \n" ^ input) in*)
+    let () = print_endline ("-- input: \n" ^ input) in
     let out_stream = open_out infile in
     output_string out_stream input;
     close_out out_stream;
@@ -368,7 +373,8 @@ struct
                Gen.Profiling.do_1 "tm_i" (check_problem_through_file (cnf_to_string !tp (ante_f@conseq_f))) 0.)
             else check_problem_through_file (cnf_to_string !tp (ante_f@conseq_f)) 0.)
     else
-      let () = print_string "#371 true w2\n" in true
+      (* let () = print_string "#371 true w2\n" in *)
+      true
 
   let call_imply  (a_ev:t_var list) (a_nz_cons:nz_cons) (a_l_eqs:eq_syst)
       (c_ev:t_var list) (c_nz_cons:nz_cons) (c_l_eqs:eq_syst) (c_const_vars:(t_var*bool) list) (c_subst_vars:(t_var*t_var) list):bool  =
@@ -513,7 +519,7 @@ let sleek_sat_wrapper ((evs,f):CP.spec_var list * CP.p_formula list):bool =
       Solver.eqs_eql = le;} in
     Solver.is_sat eqs
   with | Solver.Unsat_exception ->
-    let () = print_string "#513 unsat exception w2\n" in
+    (* let () = print_string "#513 unsat exception w2\n" in *)
     false
 
 
@@ -549,10 +555,10 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_eql = cle;} in
       Solver.imply aeqs ceqs
     with | Solver.Unsat_exception ->
-      let () = print_string "#549 unsat exception w2\n" in
+      (* let () = print_string "#549 unsat exception w2\n" in *)
       not (Solver.is_sat aeqs)
   with | Solver.Unsat_exception ->
-    let () = print_string "#549 unsat exception w2\n" in
+    (* let () = print_string "#549 unsat exception w2\n" in *)
     true
 
 let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =

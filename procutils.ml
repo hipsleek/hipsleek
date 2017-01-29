@@ -16,7 +16,9 @@ let open_proc_full cmd args input output error toclose =
     Unix.dup2 error Unix.stderr; Unix.close error;
     if not cloexec then List.iter Unix.close toclose;
     begin try Unix.execvp cmd args
-      with _ -> exit 127
+      with _ ->
+        let () = print_string "exit 127\n" in
+        exit 127
     end
   | id -> id
 ;;
