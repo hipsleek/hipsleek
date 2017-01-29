@@ -201,8 +201,10 @@ struct
       (* let () = print_string ("#201 output: " ^ output ^ "\n") in *)
       try
         let _ = Str.search_forward (Str.regexp "SATISFIABLE") output 0 in
-      (* if (output="SATISFIABLE") then *)
-        true
+        try
+          let _ = Str.search_forward (Str.regexp "UNSATISFIABLE") output 0 in
+          false
+        with Not_found -> true
       with Not_found ->
         false in
     validity
