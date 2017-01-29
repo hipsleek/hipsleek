@@ -253,7 +253,7 @@ struct
     (* let () = print_endline "** In function minisat.check_problem" in *)
     let file_suffix = Random.int 1000000 in
     let infile = "/tmp/in" ^ (string_of_int file_suffix) ^ ".cnf" in
-    let () = print_endline ("-- input: \n" ^ input) in
+    (* let () = print_endline ("-- input: \n" ^ input) in *)
     let out_stream = open_out infile in
     output_string out_stream input;
     close_out out_stream;
