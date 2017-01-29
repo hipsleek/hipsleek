@@ -508,6 +508,7 @@ let fv_eq_syst acc l =
   List.fold_left (fun a (e1,e2,e3)-> a@(f e1)@(f e2)@(f e3)) acc l
 
 let sleek_sat_wrapper ((evs,f):CP.spec_var list * CP.p_formula list):bool =
+  (* let () = print_string "#511 sleek sat wrapper \n" in *)
   try
     let ve,vc,le = simpl f in
     let vc = (Perm.PERM_const.full_perm_name, Ts.top)::vc in

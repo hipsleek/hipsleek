@@ -124,8 +124,6 @@ let common_arguments = [
    "Disable use of Ptr Arithmetic (incl type checking).");
   ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
    "Enable using mult as prim.");
-  ("--en-old-share-solver", Arg.Clear Globals.old_share_solver,
-   "Enable old share solver.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -154,6 +152,8 @@ let common_arguments = [
    "Disallow anonymous variables in the precondition to be existential");
   ("--en-anon-exist", Arg.Set Globals.anon_exist,
    "Allow anonymous variables in the precondition to be existential");
+  ("--en-old-share-solver", Arg.Set Globals.old_share_solver,
+   "Enable old share solver.");
   ("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
    "Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Globals.elim_exists_flag,
