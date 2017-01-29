@@ -124,6 +124,8 @@ let common_arguments = [
    "Disable use of Ptr Arithmetic (incl type checking).");
   ("--dis-mult", Arg.Clear Globals.prelude_is_mult,
    "Enable using mult as prim.");
+  ("--en-old-share-solver", Arg.Clear Globals.old_share_solver,
+   "Enable old share solver.");
   ("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
    "Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
   ("--ahwytdi", Arg.Set Smtsolver.try_induction,
@@ -244,7 +246,7 @@ let common_arguments = [
         Gen.debug_precise_trace:=true;),
    "Dump summary of debugged calls");
   ("--dd-calls-all", Arg.Unit
-     (fun _ -> 
+     (fun _ ->
         Debug.dump_calls:=true;
         Debug.dump_callers_flag:=true;
         Debug.dump_calls_all:=true;

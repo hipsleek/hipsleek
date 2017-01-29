@@ -48,6 +48,7 @@ exception NOT_HANDLE_YET
 let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
+let old_share_solver = ref false
 
 let ptr_arith_flag = ref true (* false *)
 
