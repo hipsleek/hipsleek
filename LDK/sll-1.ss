@@ -39,7 +39,7 @@ sll<n, sm, lg> == self = null & n = 0 & sm <= lg
 
 
 /* insert an element in a sorted list
-- recursive 
+- recursive
 - coarse-grained
 
 - Remarks:
