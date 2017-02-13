@@ -1,0 +1,19 @@
+//HeapPred U(int i,int j).
+template int f1(int m, int n).
+template int f2(int m, int n).
+
+relation U(int i, int j,int m, int n) == i=f1(m,n) & j=f2(m,n).
+
+relAssume U(i,j,m,n) & m<n --> i<=m & j>=m+1.
+relAssume U(i,j,m,n) & m<n  --> (exists i1,j1:U(i1,j1,m+1,n) & i<=i1 & j>=j1).
+
+solve_rel {U}.
+
+
+
+
+//print relAssumes.
+
+// solve_with_defp {U}.
+//solve_with_templ {templ_28,templ_29}.
+

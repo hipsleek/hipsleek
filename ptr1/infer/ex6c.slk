@@ -1,0 +1,38 @@
+data arrI
+{
+ int value;
+     }.
+
+pred arr_seg<i,n> == i=n & i>=0
+    or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+inv n>=i & i>=0.
+
+
+//lemma self::arr_seg<i,n> & i<=a & n>=b & a<=b -> self::arr_seg<a,b>.
+lemma self::arr_seg<x,y> <- self::arr_seg<a,b>  & x>=a & y<=b & x<=y.
+
+relation U(int u1,int u2, int u3, int u4).
+relation U2(int u1,int u2).
+
+// infer[U] a::arr_seg<m,n> & U(m,n,i,j)|- a::arr_seg<i,j>. 
+// print residue.
+
+// infer[U] a::arr_seg<m,n> & U(m,n,i,j) & m<n|- a::arr_seg<i,j>. 
+// print residue.
+
+infer[U] a::arr_seg<i,j> & U(i,j,m,n) & m<n |- a::arr_seg<m,m+1>. 
+print residue.
+
+// infer[U] U(i,j,m,n) & m<n & i<=j & i>=0|- i<=m & j>=m+1. 
+// print residue.
+
+
+// infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- (exists i1,j1: a::arr_seg<i1,j1> & U(m+1,n,i1,j1)). 
+// print residue.
+
+// infer[k1,k2,k3,k4,k5,k6,m,n] a::arr_seg<i,j> & i=k1*m+k2*n+k3 & j=k4*m+k5*n+k6 & m<n |- a::arr_seg<m,m+1>. 
+// print residue.
+
+// recursive call
+// infer[U] a::arr_seg<i,j> & U(m,n,i,j) & m<n |- a::arr_seg<i1,j1> & U(m+1,n,i1,j1). 
+// print residue.

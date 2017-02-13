@@ -1,0 +1,18 @@
+//HeapPred U(int i,int j).
+relation U(int i, int j,int m, int n).
+
+//relation partial definition
+// paritial def U(i,j,m,n) = i=f1(m,n) & j=f2(m,n).
+
+relAssume
+U(i,j,m,n) & m<n  --> i<j.
+
+relAssume
+U(i,j,m,n) & m<n  --> (exists i1,j1:U(i1,j1,m+1,n)).
+
+print relAssumes.
+
+trans_to_templ.
+
+solve_with_templ {templ_28,templ_29}.
+

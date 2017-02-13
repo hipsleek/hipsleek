@@ -1,0 +1,4 @@
+relation f(int n).
+
+checkentail x>0 |- f(x).
+infer[f] x>0 |- f(x) & f(x+1).

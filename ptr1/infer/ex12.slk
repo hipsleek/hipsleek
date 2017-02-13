@@ -1,0 +1,13 @@
+//HeapPred U(int i,int j).
+relation U(int i, int j,int m, int n).
+
+relAssume
+U(i,j,m,n) & m<n  --> i<j.
+
+print relAssumes.
+
+trans_to_templ.
+// trans_to_templ [U][i,j]. i j have to come from the definition...
+
+solve_with_templ {templ_28,templ_29}.
+

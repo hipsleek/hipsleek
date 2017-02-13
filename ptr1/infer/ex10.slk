@@ -1,0 +1,123 @@
+data arrI
+{
+ int value;
+     }.
+
+pred arr_seg<i,n> == i=n & i>=0
+    or x::arrI<_>*self::arr_seg<i+1,n> & x=self+i & i>=0
+inv n>=i & i>=0.
+
+
+//lemma self::arr_seg<i,n> & i<=a & n>=b & a<=b -> self::arr_seg<a,b>.
+lemma self::arr_seg<x,y> <- self::arr_seg<a,b>  & x>=a & y<=b & x<=y.
+
+relation U(int u1,int u2, int u3, int u4).
+
+infer[U] a::arr_seg<i,j> & U(i,j,m,n) & m<n |- a::arr_seg<m,m+1>. 
+print residue.
+
+
+// Why the following generates different results?
+// [ i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> i<=m
+// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> (m+1)<=j
+// , i=templ_129( m, n) & j=templ_130( m, n) & i<=j & m<n & i<=j & 0<=i --> m<=(
+//   m+1)
+// ]
+
+// [ 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> m<=(m+1)
+// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> (m+1)<=j
+// , 0<=i & i<=j & m<n & j=templ_130( m, n) & i=templ_129( m, n) --> i<=m
+// ]
+
+
+// tl_get_model@1
+// tl_get_model inp1 :[templ_127_0,templ_127_1,templ_127_2,templ_128_0,templ_128_1,templ_128_2]
+// tl_get_model inp2 :[lambda_129_0,lambda_130_1,lambda_131_2,lambda_132_3,lambda_133_4,lambda_134_0,lambda_135_1,lambda_136_2,lambda_137_3,lambda_138_4,lambda_139_0,templ_128_0,templ_127_0,templ_128_1,templ_127_1,lambda_140_1,lambda_141_2,templ_128_2,lambda_142_3,templ_127_2,lambda_143_4]
+// tl_get_model inp3 :[
+
+//   lambda_129_0>=0, lambda_130_1>=0, lambda_131_2>=0, lambda_132_3>=0, lambda_133_4>=0,
+//   (-1*lambda_129_0)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_130_1)+(1*lambda_131_2)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_132_3)+(-1*templ_127_0*lambda_133_4)=1*templ_127_0,
+//   (((1*templ_127_1)+(-1*templ_128_1))*lambda_130_1)+(1*lambda_131_2)+(((1*templ_127_1)+(-1*templ_128_1))*lambda_132_3)+(-1*templ_127_1*lambda_133_4)=-1+(1*templ_127_1), (((1*templ_127_2)+(-1*templ_128_2))*lambda_130_1)+(-1*lambda_131_2)+(((1*templ_127_2)+(-1*templ_128_2))*lambda_132_3)+(-1*templ_127_2*lambda_133_4)=1*templ_127_2,
+//   lambda_134_0>=0, lambda_135_1>=0, lambda_136_2>=0, lambda_137_3>=0, lambda_138_4>=0,
+//   (-1*lambda_134_0)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_135_1)+(1*lambda_136_2)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_137_3)+(-1*templ_127_0*lambda_138_4)=1+(-1*templ_128_0),
+//   (((1*templ_127_1)+(-1*templ_128_1))*lambda_135_1)+(1*lambda_136_2)+(((1*templ_127_1)+(-1*templ_128_1))*lambda_137_3)+(-1*templ_127_1*lambda_138_4)=1+(-1*templ_128_1),
+  
+//   (((1*templ_127_2)+(-1*templ_128_2))*lambda_135_1)+(-1*lambda_136_2)+
+//  (((1*templ_127_2)+(-1*templ_128_2))*lambda_137_3)+
+//  (-1*templ_127_2*lambda_138_4)=-1*templ_128_2, lambda_139_0>=0, lambda_140_1>=0, lambda_141_2>=0, lambda_142_3>=0, lambda_143_4>=0, (-1*lambda_139_0)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_140_1)+
+//  (1*lambda_141_2)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_142_3)+
+//  (-1*templ_127_0*lambda_143_4)=-1, (((1*templ_127_1)+(-1*templ_128_1))*lambda_140_1)+(1*lambda_141_2)+
+//  (((1*templ_127_1)+(-1*templ_128_1))*lambda_142_3)+
+//  (-1*templ_127_1*lambda_143_4)=0, (((1*templ_127_2)+(-1*templ_128_2))*lambda_140_1)+(-1*lambda_141_2)+
+//  (((1*templ_127_2)+(-1*templ_128_2))*lambda_142_3)+
+//  (-1*templ_127_2*lambda_143_4)=0]
+// tl_get_model@1 EXIT:Sat[(templ_127_2,-4),(templ_127_1,-1),(templ_127_0,2),(templ_128_2,-2),(templ_128_1,0),(templ_128_0,1)]
+      
+// (====)
+// tl_get_model@1
+// tl_get_model inp1 :[templ_130_0,templ_130_m,templ_130_n,templ_129_0,templ_129_m,templ_129_n]
+// tl_get_model inp2 :[lambda_74_0,lambda_75_1,lambda_76_2,lambda_77_3,lambda_78_0,templ_129_0,templ_130_0,templ_129_m,templ_130_m,lambda_79_1,templ_129_n,lambda_80_2,lambda_81_3,templ_130_n]
+// tl_get_model inp3 :[ lambda_74_0>=0, lambda_75_1>=0, lambda_76_2>=0, lambda_77_3>=0, (-1*lambda_74_0)+(-1*templ_129_0*lambda_75_1)+
+//  (((1*templ_129_0)+(-1*templ_130_0))*lambda_76_2)+(1*lambda_77_3)=1*templ_129_0,
+//  (-1*templ_129_m*lambda_75_1)+(((1*templ_129_m)+(-1*templ_130_m))*lambda_76_2)+(1*lambda_77_3)=-1+(1*templ_129_m),
+//  (-1*templ_129_n*lambda_75_1)+(((1*templ_129_n)+(-1*templ_130_n))*lambda_76_2)+(-1*lambda_77_3)=1*templ_129_n,
+//  lambda_78_0>=0, lambda_79_1>=0, lambda_80_2>=0, lambda_81_3>=0,
+
+
+// (-1*lambda_78_0)+(-1*templ_129_0*lambda_79_1)+(((1*templ_129_0)+(-1*templ_130_0))*lambda_80_2)+(1*lambda_81_3)=1+
+//                                                                   (-1*
+//                                                                    templ_130_0), (-1*templ_129_m*lambda_79_1)+
+//  (((1*templ_129_m)+(-1*templ_130_m))*lambda_80_2)+(1*lambda_81_3)=1+
+//                                                                   (-1*
+//                                                                    templ_130_m), (-1*templ_129_n*lambda_79_1)+
+//  (((1*templ_129_n)+(-1*templ_130_n))*lambda_80_2)+(-1*lambda_81_3)=-1*
+//                                                                    templ_130_n]
+// tl_get_model@1 EXIT:Sat[(lambda_80_2,0),(lambda_76_2,0),(lambda_79_1,0),(lambda_75_1,0),(templ_130_m,1),(templ_130_n,0),(templ_129_n,0),(templ_130_0,1),(templ_129_m,1),(templ_129_0,0)]
+
+
+// gen_templ_constr_farkas@2
+// gen_templ_constr_farkas inp1 :[( -1),( -1*templ_129_0) + ( -1*templ_129_m)*m^1 + ( -1*templ_129_n)*n^1,( (1*templ_129_0)+(-1*templ_130_0)) + ( (1*templ_129_m)+(-1*templ_130_m))*m^1 + ( (1*templ_129_n)+(-1*templ_130_n))*n^1,( 1)*m^1 + ( -1)*n^1 + ( 1)]
+// gen_templ_constr_farkas inp2 :( 1+(-1*templ_130_m))*m^1 + ( 1+(-1*templ_130_0)) + ( -1*templ_130_n)*n^1
+// gen_templ_constr_farkas@2 EXIT:[ lambda_78_0>=0, lambda_79_1>=0, lambda_80_2>=0, lambda_81_3>=0, (-1*lambda_78_0)+(-1*templ_129_0*lambda_79_1)+
+//  (((1*templ_129_0)+(-1*templ_130_0))*lambda_80_2)+(1*lambda_81_3)=1+
+//                                                                   (-1*
+//                                                                    templ_130_0), (-1*templ_129_m*lambda_79_1)+
+//  (((1*templ_129_m)+(-1*templ_130_m))*lambda_80_2)+(1*lambda_81_3)=1+
+//                                                                   (-1*
+//                                                                    templ_130_m), (-1*templ_129_n*lambda_79_1)+
+//  (((1*templ_129_n)+(-1*templ_130_n))*lambda_80_2)+(-1*lambda_81_3)=-1*
+//                                                                    templ_130_n]
+
+
+// gen_templ_constr_farkas@3
+// gen_templ_constr_farkas inp1 :[( -1),( (1*templ_127_0)+(-1*templ_128_0)) + ( (1*templ_127_1)+(-1*templ_128_1))*m^1 + ( (1*templ_127_2)+(-1*templ_128_2))*n^1,( 1)*m^1 + ( -1)*n^1 + ( 1),( (1*templ_127_0)+(-1*templ_128_0)) + ( (1*templ_127_1)+(-1*templ_128_1))*m^1 + ( (1*templ_127_2)+(-1*templ_128_2))*n^1,( -1*templ_127_0) + ( -1*templ_127_1)*m^1 + ( -1*templ_127_2)*n^1]
+// gen_templ_constr_farkas inp2 :( -1)
+// gen_templ_constr_farkas@3 EXIT:[ lambda_139_0>=0, lambda_140_1>=0, lambda_141_2>=0, lambda_142_3>=0, lambda_143_4>=0, (-1*lambda_139_0)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_140_1)+
+//  (1*lambda_141_2)+(((1*templ_127_0)+(-1*templ_128_0))*lambda_142_3)+
+//  (-1*templ_127_0*lambda_143_4)=-1, (((1*templ_127_1)+(-1*templ_128_1))*lambda_140_1)+(1*lambda_141_2)+
+//  (((1*templ_127_1)+(-1*templ_128_1))*lambda_142_3)+
+//  (-1*templ_127_1*lambda_143_4)=0, (((1*templ_127_2)+(-1*templ_128_2))*lambda_140_1)+(-1*lambda_141_2)+
+//  (((1*templ_127_2)+(-1*templ_128_2))*lambda_142_3)+
+//  (-1*templ_127_2*lambda_143_4)=0]
+
+// [( -1),( -1*templ_129_0) + ( -1*templ_129_m)*m^1 + ( -1*templ_129_n)*n^1,( (1*templ_129_0)+(-1*templ_130_0)) + ( (1*templ_129_m)+(-1*templ_130_m))*m^1 + ( (1*templ_129_n)+(-1*templ_130_n))*n^1,( 1)*m^1 + ( -1)*n^1 + ( 1)]
+
+// [( -1),( (1*templ_127_0)+(-1*templ_128_0)) + ( (1*templ_127_1)+(-1*templ_128_1))*m^1 + ( (1*templ_127_2)+(-1*templ_128_2))*n^1,( 1)*m^1 + ( -1)*n^1 + ( 1),( (1*templ_127_0)+(-1*templ_128_0)) + ( (1*templ_127_1)+(-1*templ_128_1))*m^1 + ( (1*templ_127_2)+(-1*templ_128_2))*n^1,( -1*templ_127_0) + ( -1*templ_127_1)*m^1 + ( -1*templ_127_2)*n^1]
+
+
+// (====)
+// find_eq_subst_formula@2
+// find_eq_subst_formula inp1 : 0<=i & i<=j & m<n & j=templ_130_0+(templ_130_m*m)+(templ_130_n*n) & 
+//  i=templ_129_0+(templ_129_m*m)+(templ_129_n*n)
+// find_eq_subst_formula@2 EXIT:( 0<=(0-((-1*templ_129_0)+(-1*templ_129_m*m)+(-1*templ_129_n*n))) & (0-
+//  ((-1*templ_129_0)+(-1*templ_129_m*m)+(-1*templ_129_n*n)))<=(0-
+//  ((-1*templ_130_0)+(-1*templ_130_m*m)+(-1*templ_130_n*n))) & m<n,[(j, 0-((-1*templ_130_0)+(-1*templ_130_m*m)+(-1*templ_130_n*n))),(i, 0-((-1*templ_129_0)+(-1*templ_129_m*m)+(-1*templ_129_n*n)))])
+
+// (====)
+// find_eq_subst_formula@3
+// find_eq_subst_formula inp1 : i=templ_127_0+(templ_127_1*m)+(templ_127_2*n) & 
+//  j=templ_128_0+(templ_128_1*m)+(templ_128_2*n) & i<=j & m<n & i<=j & 0<=i
+// find_eq_subst_formula@3 EXIT:( (0-((-1*templ_127_0)+(-1*templ_127_1*m)+(-1*templ_127_2*n)))<=(0-((-1*templ_128_0)+(-1*templ_128_1*m)+(-1*templ_128_2*n)))
+// & m<n
+// & (0-((-1*templ_127_0)+(-1*templ_127_1*m)+(-1*templ_127_2*n)))<=(0-((-1*templ_128_0)+(-1*templ_128_1*m)+(-1*templ_128_2*n))) & 0<=(0-((-1*templ_127_0)+(-1*templ_127_1*m)+(-1*templ_127_2*n))),
+// [(i, 0-((-1*templ_127_0)+(-1*templ_127_1*m)+(-1*templ_127_2*n))),(j, 0-((-1*templ_128_0)+(-1*templ_128_1*m)+(-1*templ_128_2*n)))])

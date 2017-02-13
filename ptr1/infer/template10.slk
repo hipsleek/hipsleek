@@ -1,0 +1,25 @@
+template int f1(int m,int n).
+template int f2(int m,int n).
+
+infer [f1,f2] i=f1(m,n) & j=f2(m,n) & m<n  |- i<=m & j>=m+1.
+print residue.
+
+infer[f1,f2]  i=f1(m,n) & j=f2(m,n) & m<n |-
+          (exists i1,j1: i1=f1(m+1,n) & j1=f2(m+1,n) & i<=i1 & j1<=j).
+print residue.          
+// infer [f1,f2] m<n |- f1(m,n)<=f1(m+1,n) & f2(m,n)>=f2(m+1,n).
+// print residue.
+
+template_solve{f1,f2}.
+
+// [ m<n --> (m+1)<=(f2( m, n))
+// , m<n --> (f1( m, n))<=m
+// , m<n --> (f2( m+1, n))<=(f2( m, n))
+// , m<n --> (f1( m, n))<=(f1( m+1, n))
+// ]
+
+// [ i<=j & m<n & j=f2( m, n) & i=f1( m, n) --> (m+1)<=j
+// , i<=j & m<n & j=f2( m, n) & i=f1( m, n) --> i<=m
+// , i<=j & m<n & j=f2( m, n) & i=f1( m, n) --> (f2( m+1, n))<=j
+// , i<=j & m<n & j=f2( m, n) & i=f1( m, n) --> i<=(f1( m+1, n))
+// ]
