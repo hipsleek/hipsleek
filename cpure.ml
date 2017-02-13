@@ -11381,8 +11381,10 @@ let subs_rel_formula_ops results  =
         let new_rel_args = match pc with
           | None -> rel_args
           | Some bl -> re_order_new rel_args bl in
-        let subs = List.combine (List.map get_var args) (List.map get_var new_rel_args) in
-        let new_f = subst subs post in
+        (* let subs = List.combine (List.map get_var args) (List.map get_var new_rel_args) in *)
+        let subs = List.combine (List.map get_var args) new_rel_args in
+        let new_f = apply_par_term subs post in
+        
         let () = x_binfo_hp (add_str "subs_rel_formula (new post ) : " (!print_formula)) new_f p in
         let () = x_binfo_hp (add_str "subs_rel_formula (new_rel_args) : " (pr_list !print_exp)) new_rel_args p in
         Some (new_f)
@@ -15238,7 +15240,18 @@ let trans_formula_templ (i_templ_ids: spec_var list) (f: formula): formula * spe
   let pr1 = !print_svl in
   let pr2 = !print_formula in
   Debug.no_2 "trans_formula_templ" pr1 pr2 (pr_pair pr2 pr1)
-    trans_formula_templ i_templ_ids f
+             trans_formula_templ i_templ_ids f
+
+let collect_templ_var f =
+  let f_e e =
+    match e with
+    | Template t ->
+       Some [t.templ_id]
+    | _ -> None
+  in
+  fold_formula f (nonef,nonef,f_e) List.concat
+;;
+             
 
 
 (* imm utilities *)

@@ -1855,7 +1855,6 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
         else
           ()
       in
-    
       match es_opt with
       | None -> (None, None, [])
       | Some es -> (Some (es, mkTrue pos), None, [])

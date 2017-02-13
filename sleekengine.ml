@@ -1581,20 +1581,39 @@ let process_pure_rel_solve_with_templ inf_templs =
   ()
 ;;
 
-
-let process_pure_rel_solve_with_defp puref rel_name=
-  let defp =
-    try
-      let reldef = !cprog.prog_rel_decls # find (fun rel -> rel.rel_name = rel_name) in
-      let results = [(CP.mk_spec_var reldef.rel_name,List.map (fun sv -> CP.mkVar sv no_pos) reldef.rel_vars,None,reldef.rel_formula,None)] in
-      CP.subs_rel_formula results puref 
-    with _ ->
-      failwith "No definition"
-  in
-  y_binfo_hp (add_str "process_pure_rel_solve_with_defp" !CP.print_formula) defp
+let process_pure_rel_solve_with_defp rel_name_lst=
+  match rel_name_lst with
+  | [rel_name] ->
+     (
+       try
+         let reldef = !cprog.prog_rel_decls # find (fun rel -> rel.rel_name = rel_name) in
+         let results = [(CP.mk_spec_var reldef.rel_name,List.map (fun sv -> CP.mkVar sv no_pos) reldef.rel_vars,None,reldef.rel_formula,None)] in
+         (* let defp = CP.subs_rel_formula results puref in *)
+         (* let inf_templs = CP.collect_templ_var defp in *)
+         
+         (* let () = y_binfo_hp (add_str "process_pure_rel_solve_with_defp" !CP.print_formula) defp in *)
+         let assumes = List.map (fun (_,l,r) -> (CP.subs_rel_formula results l, CP.subs_rel_formula results r)) (CF.sleek_rel_pure_assumes # get) in
+         let inf_templs = List.concat (List.map (fun (l,r)-> (CP.collect_templ_var l)@(CP.collect_templ_var r)) assumes) in
+         let () = y_binfo_hp (add_str "inf_templs" !Cpure.print_svl) (inf_templs) in
+         let () =
+           (* let inf_templs_sv = List.map (fun templ -> CP.mk_spec_var templ ) inf_templs in *)
+           List.iter
+             (fun (ante,cons) -> Template.collect_templ_assume_init_simpl inf_templs ante cons no_pos)
+             assumes
+         in
+         let _ =
+           (* Template.collect_and_solve_templ_assumes_prog_free false (List.map CP.name_of_spec_var inf_templs) *)
+           Template.collect_and_solve_templ_assumes !cprog (List.map CP.name_of_spec_var inf_templs)                                               
+         in
+         ()
+       with _ ->
+            failwith "No definition"
+     )
+  | _ ->
+     failwith "No valid rel name lst"
   
 ;;
-      
+
 let process_decl_hpdang hp_names =
   let process hp_name=
     let hp_def = Cast.look_up_hp_def_raw !cprog.Cast.prog_hp_decls hp_name in
@@ -1740,9 +1759,9 @@ let print_sleek_hprel_assumes () =
           List.iter
             (fun (_,l,r) ->
               let () =
-                process_pure_rel_solve_with_defp l "U"
+                process_pure_rel_solve_with_defp ["U"]
               in 
-              process_pure_rel_solve_with_defp r "U"
+              process_pure_rel_solve_with_defp ["U"]
             )
             curr_prel
         in

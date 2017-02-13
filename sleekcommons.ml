@@ -58,6 +58,7 @@ type command =
   | RelDefn of (CF.cond_path_type * meta_formula * meta_formula * (((ident*ident list)*(ident*ident list*ident list) * int list) list))
   | TransToTempl
   | Solve_with_templ of (ident list)
+  | Solve_rel of (ident list)
   | ShapeInfer of (ident list * ident list)
   | Validate of (validate_result * ident option * ( (ident list * meta_formula * (meta_formula * meta_formula) list) list))
   | ShapeDivide of (ident list * ident list)
@@ -172,6 +173,7 @@ let string_of_command c = match c with
   | RelDefn _ -> "RelDefn"
   | TransToTempl -> "TransToTempl"
   | Solve_with_templ _-> "Solve_with_templ"
+  | Solve_rel _ -> "Solve_rel"
   | ShapeInfer _ -> "ShapeInfer"
   | Validate _ -> "Validate"
   | ShapeDivide _ -> "ShapeDivide"

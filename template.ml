@@ -110,6 +110,7 @@ let replace_eq_conseq (cons: formula): formula =
   Debug.no_1 "replace_eq_conseq" pr pr replace_eq_conseq cons
 
 let simplify_templ_conseq (should_simpl_no_templ: bool) (cons: formula) =
+  let cons = Cpure.elim_exists cons in
   let cons = replace_eq_conseq cons in
   let cons_l = split_conjunctions cons in
   let cons_l =

@@ -152,6 +152,7 @@ let proc_one_cmd c =
   (* Commands related to relation-template solving *)
   | TransToTempl -> process_pure_trans_to_templ ()
   | Solve_with_templ inf_templs-> process_pure_rel_solve_with_templ inf_templs
+  | Solve_rel rel_name_lst -> process_pure_rel_solve_with_defp rel_name_lst
 
 (* TODO : This is a repetition of proc_one_cmd *)
 let proc_gen_cmd cmd = proc_one_cmd cmd
