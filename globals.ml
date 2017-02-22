@@ -11,6 +11,10 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+let total_constants_shim = ref 0
+let total_bot_top_shim = ref 0
+let total_vars_shim = ref 0
+
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let trailer_num_list = ref []

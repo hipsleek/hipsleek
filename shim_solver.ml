@@ -126,11 +126,46 @@ struct
    module CBF = CSE.Bool_formula(CSV)
    module CBS = CSE.BF_solver(CSV)(CBF)
    module CSolver = CSE.Solver_with_partition(CSV)(CES)(CBF)(CBS)
+
+   let counting (eq_syst:eq_syst) =
+     let eqs_ex = eq_syst.eqs_ex in
+     let eqs_nzv = eq_syst.eqs_nzv in
+     let eqs_vc = eq_syst.eqs_vc in
+     let eqs_ve = eq_syst.eqs_ve in
+     let eqs_eql = eq_syst.eqs_eql in
+     let () = Globals.total_vars_shim := !Globals.total_vars_shim + (List.length eqs_ex) + (List.length eqs_nzv) + (List.length eqs_vc) + 2 *(List.length eqs_ve) in
+     let () = Globals.total_bot_top_shim := !Globals.total_bot_top_shim + 2 * (List.length eqs_nzv) in
+     let () = Globals.total_constants_shim := !Globals.total_constants_shim + 2 * (List.length eqs_nzv) + (List.length eqs_vc) in
+     let () = List.iter (fun (a,b) -> match b with
+         | Tree_shares.Ts.Leaf true -> Globals.total_bot_top_shim := !Globals.total_bot_top_shim + 1
+         | Tree_shares.Ts.Leaf false -> Globals.total_bot_top_shim := !Globals.total_bot_top_shim + 1
+         | _ -> ()
+       ) eqs_vc in
+     let count_one x = match x with
+       | Vperm var -> Globals.total_vars_shim := !Globals.total_vars_shim + 1
+       | Cperm perm ->
+         let () =  Globals.total_constants_shim := !Globals.total_constants_shim +  1 in
+         (match perm with
+         | Tree_shares.Ts.Leaf true -> Globals.total_bot_top_shim := !Globals.total_bot_top_shim + 1
+         | Tree_shares.Ts.Leaf false -> Globals.total_bot_top_shim := !Globals.total_bot_top_shim + 1
+         | _ -> ()
+         )
+     in
+     let () = List.iter (fun (a,b,c) ->
+       let () = count_one a in
+       let () = count_one b in
+       let () = count_one c in
+       ()
+     ) eqs_eql in
+     ()
    
-   let is_sat (eqs : eq_syst) : bool = 
+   let is_sat (eqs : eq_syst) : bool =
+     let () = counting eqs in
      CSolver.coq_SATsolver (eq_syst2Csat_equation_system eqs)
    
    let imply (a_sys : eq_syst) (c_sys : eq_syst) : bool =
+     let () = counting a_sys in
+     let () = counting c_sys in
      let a_sys_res = eq_syst2Cimpl_equation_system a_sys in
      let c_sys_res = eq_syst2Cimpl_equation_system c_sys in
      let res = CSolver.coq_IMPLsolver (a_sys_res, c_sys_res) in
@@ -160,7 +195,7 @@ struct
      "eqs_ve:" ^ eqs_ve_str ^ ";\n" ^
      "eqs_eql: " ^ eqs_eql_str ^ "\n"
 
-  
+
 end
 
 (* concrete SV *)

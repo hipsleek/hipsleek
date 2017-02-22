@@ -893,6 +893,13 @@ let process_source_full source =
                                                    ( string_of_int (c.VarGen.start_pos.Lexing.pos_cnum-c.VarGen.start_pos.Lexing.pos_bol))^") ") "" rev_false_ctx_line_list )^")\n")
   else ();
   Timelog.logtime # dump;
+  let () = if (!Globals.perm = Dperm) then
+      silenced_print  print_string ("\nTotal constants: " ^ (string_of_int !Globals.total_constants_shim)
+                                    ^ "\nTotal bot top: " ^ (string_of_int !Globals.total_bot_top_shim)
+                                    ^ "\nTotal vars: " ^ (string_of_int !Globals.total_vars_shim)
+                                    ^"\n")
+    else ()
+  in
   silenced_print print_string ("\nTotal verification time: " 
                                ^ (string_of_float t4) ^ " second(s)\n"
                                ^ "\tTime spent in main process: " 
