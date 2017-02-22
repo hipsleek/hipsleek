@@ -160,14 +160,9 @@ struct
      ()
    
    let is_sat (eqs : eq_syst) : bool =
-     let () = counting eqs in
-     let () = Globals.total_sat_solver := !Globals.total_sat_solver + 1 in
      CSolver.coq_SATsolver (eq_syst2Csat_equation_system eqs)
    
    let imply (a_sys : eq_syst) (c_sys : eq_syst) : bool =
-     let () = counting a_sys in
-     let () = counting c_sys in
-     let () = Globals.total_imply_solver := !Globals.total_imply_solver + 1 in
      let a_sys_res = eq_syst2Cimpl_equation_system a_sys in
      let c_sys_res = eq_syst2Cimpl_equation_system c_sys in
      let res = CSolver.coq_IMPLsolver (a_sys_res, c_sys_res) in
@@ -308,6 +303,7 @@ let sleek_sat_wrapper ((evs,f):CP.spec_var list * CP.p_formula list):bool =
       Solver.eqs_vc = vc;
       Solver.eqs_ve = ve;
       Solver.eqs_eql = le;} in
+    let () = Solver.counting eqs in
     Solver.is_sat eqs
   with | Solver.Unsat_exception -> false
 
@@ -344,6 +340,8 @@ let sleek_imply_wrapper (aevs,ante) (cevs,conseq) =
         Solver.eqs_ve = cve;
         Solver.eqs_eql = cle;} in
       (* let () = print_string (Solver.str_eq_syst ceqs) in *)
+      let () = Solver.counting aeqs in
+      let () = Solver.counting ceqs in
       Solver.imply aeqs ceqs
     with | Solver.Unsat_exception ->
       (* let () = print_string "second case \n" in *)

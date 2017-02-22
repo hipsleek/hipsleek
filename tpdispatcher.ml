@@ -2064,9 +2064,10 @@ let tp_is_sat_perm f sat_no =
       let tp_wrap f = if CP.isConstTrue f then true else tp_is_sat_no_cache f sat_no in
       let tp_wrap f = Debug.no_1 "tp_is_sat_perm_wrap" Cprinter.string_of_pure_formula (fun c-> "") tp_wrap f in
       let ss_wrap (e,f) = if f=[] then true else
+          let () = Globals.total_sat_solver := !Globals.total_sat_solver + 1 in
           (* let () = x_binfo_pp ("share_prover_w2 called") no_pos in *)
-          if !Globals.old_share_solver then Share_prover_w2.sleek_sat_wrapper (e,f) 
-          else Shim_solver.sleek_sat_wrapper (e,f)
+        if !Globals.old_share_solver then Share_prover_w2.sleek_sat_wrapper (e,f) 
+        else Shim_solver.sleek_sat_wrapper (e,f)
       in
       List.exists (fun f-> tp_wrap (CP.tpd_drop_perm f) && ss_wrap ([],CP.tpd_drop_nperm f)) (snd (CP.dnf_to_list f)) 
   else tp_is_sat_no_cache f sat_no
@@ -3273,8 +3274,9 @@ let tp_imply_perm ante conseq imp_no timeout process =
         let tp_wrap fa fc = if CP.isConstTrue fc then true else x_add tp_imply_no_cache fa fc imp_no timeout process in
         let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
         let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else
-          if !Globals.old_share_solver then  Share_prover_w2.sleek_imply_wrapper(ea,fa) (ec,fc) 
-          else Shim_solver.sleek_imply_wrapper (ea,fa) (ec,fc) in
+            let () = Globals.total_imply_solver := !Globals.total_imply_solver + 1 in
+            if !Globals.old_share_solver then  Share_prover_w2.sleek_imply_wrapper(ea,fa) (ec,fc) 
+            else Shim_solver.sleek_imply_wrapper (ea,fa) (ec,fc) in
         List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
   else x_add tp_imply_no_cache ante conseq imp_no timeout process
 
