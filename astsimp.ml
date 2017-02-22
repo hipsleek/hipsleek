@@ -1469,10 +1469,22 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   (* let () = (exlist # add_edge error_flow "Object") in *)
   (* let () = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
 
+  (* let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in *)
+  (* let () = print_string ( "data_name_string #1537: " ^ data_name_string ^ "\n") in *)
+  let prog4 = if (!Globals.perm = Globals.Dperm) then
+      let data_decls = prog4.I.prog_data_decls in
+      let new_data_decls = List.filter (fun x -> not(x.I.data_name = "barrier")) data_decls in
+      {prog4 with I.prog_data_decls = new_data_decls}
+    else prog4
+  in
   let prog4 = if (!Globals.perm = Globals.Dperm)
     then I.add_bar_inits prog4
     else prog4
   in
+
+  (* let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in *)
+  (* let () = print_string ( "data_name_string #1537: " ^ data_name_string ^ "\n") in *)
+
   (*let () = print_string (Iprinter.string_of_program prog4) in*)
   (* let data_name_string_4_2 = String.concat ", " (List.map (fun p -> p.I.data_name) prog4.I.prog_data_decls) in *)
   (* let () = print_string ( "data_name_string: " ^ data_name_string_4_2 ^ "\n") in *)
@@ -1533,6 +1545,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
   let prog0 = { prog1 with
                 I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
 
+  (* let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in *)
+  (* let () = print_string ( "data_name_string #1537: " ^ data_name_string ^ "\n") in *)
+
   (* let () = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in *)
   (* let () = I.find_empty_static_specs prog0 in *)
   let () = I.build_hierarchy prog0 in
@@ -1568,17 +1583,17 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
        let dups =  Gen.BList.find_dups_eq (=) all_names in
        (* let () = I.find_empty_static_specs prog in *)
        let proc_mingled_string = String.concat ", " (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) in
-       (* let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in  *)
+       (* let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in *)
 
        let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in
-       (* let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in  *)
+       let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in
 
 
        let view_name_string = String.concat ", " (List.map (fun p -> p.I.view_name) prog0.I.prog_view_decls) in
-       (* let () = print_string ( "view_name_string: " ^ view_name_string ^ "\n") in  *)
+       (* let () = print_string ( "view_name_string: " ^ view_name_string ^ "\n") in *)
 
        (* let all_names_string = String.concat ", " all_names in *)
-       (* let () = print_string ( "all_names_string: " ^ all_names_string ^ "\n") in  *)
+       (* let () = print_string ( "all_names_string: " ^ all_names_string ^ "\n") in *)
        if not (Gen.is_empty dups) then
          (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
        else (

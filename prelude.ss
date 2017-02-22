@@ -361,11 +361,11 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 data thrd{
 }
 
-/*
+
 data barrier{
-  int phase;
+ // int phase;
 }
-*/
+
 
 data lock{
 }
