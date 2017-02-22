@@ -1381,10 +1381,10 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
         (***generating spec for init***)
         CF.prepost_of_init lock_var lock_sort new_args post_start_label pos
     in
-    let () = x_binfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
+    let () = x_dinfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
     let prepost = x_add Cvutil.prune_pred_struc prog true prepost in (* specialise --eps *)
-    let () = x_binfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
-    let ctx = 
+    let () = x_dinfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
+    let ctx =
       if (mn_str=Globals.finalize_name) then
         (*try to combine fractional permission before finalize*)
         normalize_list_failesc_context_w_lemma prog ctx

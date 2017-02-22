@@ -1,49 +1,29 @@
-class lck extends Object {}
+/*
+An example of deadlock-free programs
+*/
 
-data cell{
-  int v;
-}
+//define lock invariant with name LOCK and empty list of args
+LOCK<> == self::lock<>
+inv self!=null
+inv_lock true; 
 
-macro L == (#,)
-macro R == (,#)
-macro LL == ((#,),)
-macro LR == ((,#),)
-macro RL == (,(#,))
-macro RR == (,(,#))
-
-//Lock: initial state
-pred_prim Lock{+%P@Split}<>;
-pred_prim Held{-%P@Split}<>;
-pred_prim Unheld<>;
-
-/*****************************************/
-lck create_lock() // with %P
-  requires emp
-  ensures res::Lock{+emp}<>;
-
-void acquire_lock(lck l)
-  requires l::Lock{+%P}(f)<>
-  ensures l::Lock{+%P}(f)<> * %P * l::Held{-%P}<>;
-
-void release_lock(lck l)
-  requires l::Held{-%P}<> * %P
-  ensures emp;
-
-void dispose_lock(lck l)
-  requires l::Lock{+%P}<>
-  ensures l::Unheld<> * %P;
-/*****************************************/
-
-void main() requires emp ensures emp;
+void func(lock l1)
+requires l1::LOCK<> 
+ensures l1::LOCK<>;
 {
-  lck x = create_lock();
+ acquire(l1);
+        release(l1);
+        }
 
-  acquire_lock(x);
-  release_lock(x);
-
-  acquire_lock(x);
-  release_lock(x);
-
-  dispose_lock(x);
-
-}
+void main()
+requires true
+ensures true; 
+{
+ lock l1 = new lock();
+      init[LOCK](l1); //initialize l1 with invariant LOCK
+      release(l1);
+      acquire(l1);
+      thrd id = fork(func,l1);
+      release(l1);
+      join(id);
+      }

@@ -4482,7 +4482,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
   if fv_s!=[]  then
     begin
       let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
-      let () = x_winfo_pp msg no_pos in
+      let () = x_dinfo_pp msg no_pos in
       let () = print_endline_quiet ((add_str "\nimpl/expl/evars vars" !CP.print_svl) impl_expl_vs) in
       (* let () = print_endline_quiet ((add_str "evars_rhs" !CP.print_svl) evars_rhs) in *)
       let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
