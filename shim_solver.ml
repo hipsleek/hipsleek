@@ -161,11 +161,13 @@ struct
    
    let is_sat (eqs : eq_syst) : bool =
      let () = counting eqs in
+     let () = Globals.total_sat_solver := !Globals.total_sat_solver + 1 in
      CSolver.coq_SATsolver (eq_syst2Csat_equation_system eqs)
    
    let imply (a_sys : eq_syst) (c_sys : eq_syst) : bool =
      let () = counting a_sys in
      let () = counting c_sys in
+     let () = Globals.total_imply_solver := !Globals.total_imply_solver + 1 in
      let a_sys_res = eq_syst2Cimpl_equation_system a_sys in
      let c_sys_res = eq_syst2Cimpl_equation_system c_sys in
      let res = CSolver.coq_IMPLsolver (a_sys_res, c_sys_res) in

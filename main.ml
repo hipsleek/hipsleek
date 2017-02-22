@@ -897,6 +897,8 @@ let process_source_full source =
       silenced_print  print_string ("\nTotal constants: " ^ (string_of_int !Globals.total_constants_shim)
                                     ^ "\nTotal bot top: " ^ (string_of_int !Globals.total_bot_top_shim)
                                     ^ "\nTotal vars: " ^ (string_of_int !Globals.total_vars_shim)
+                                    ^ "\nTotal imply: " ^ (string_of_int !Globals.total_imply_solver)
+                                    ^ "\nTotal sat: " ^ (string_of_int !Globals.total_sat_solver)
                                     ^"\n")
     else ()
   in

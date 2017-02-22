@@ -1585,8 +1585,8 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
        let proc_mingled_string = String.concat ", " (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) in
        (* let () = print_string ( "proc_mingled_string: " ^ proc_mingled_string ^ "\n") in *)
 
-       let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in
-       let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in
+       (* let data_name_string = String.concat ", " (List.map (fun p -> p.I.data_name) prog0.I.prog_data_decls) in *)
+       (* let () = print_string ( "data_name_string: " ^ data_name_string ^ "\n") in *)
 
 
        let view_name_string = String.concat ", " (List.map (fun p -> p.I.view_name) prog0.I.prog_view_decls) in

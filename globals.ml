@@ -14,6 +14,8 @@ let total_entailments = ref 0
 let total_constants_shim = ref 0
 let total_bot_top_shim = ref 0
 let total_vars_shim = ref 0
+let total_imply_solver = ref 0
+let total_sat_solver = ref 0
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
