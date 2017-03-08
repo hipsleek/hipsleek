@@ -16,6 +16,16 @@ let mkElem b s =
   Elem b s
 ;;
 
+let isEq s1 e1 pf =
+  (* pf |= s1 == e1 *)
+  true
+;;
+
+let isGt s1 e1 pf =
+  (* pf |= s1 > e1 *)
+  true
+;;
+
 let biabduction (plhs,seqLHS) (prhs,seqRHS) =
   let rec helper seqLHS seqRHS antiframe frame =
     match seqLHS, seqRHS with
