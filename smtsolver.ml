@@ -111,7 +111,9 @@ let rec smt_of_typ t =
   | Named _ -> "Int" (* objects and records are just pointers *)
   | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
   | FuncT (t1, t2) ->
-  (* "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2)  *)
+     (* "(" ^ (smt_of_typ t1) ^ ") " ^ (smt_of_typ t2)  *)
+     (*In smt2, the type of function appearing in declaration and quantified variables seem different*)
+     (*For example, f (Int Int) Bool in declaration but f (Int Int Bool) in quantified variables*)
      let (args,ret) = norm_func_type t in
      "("^(List.fold_left (fun r item -> r^" "^(smt_of_typ item)) "" args)^") "^(smt_of_typ ret)                                                                                  
   (* TODO *)
@@ -127,6 +129,41 @@ let rec smt_of_typ t =
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t
 
+
+
+(*In smt2, the type of function appearing in declaration and quantified variables seem different*)
+(*For example, f (Int Int) Bool in declaration but f (Int Int Bool) in quantified variables*)
+let rec smt_of_sort t =
+  match t with
+  | Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
+  | Float -> "Real" (* Currently, do not support real arithmetic! *)
+  | Tree_sh -> "Int"
+  | Int -> "Int"
+  | AnnT -> "Int"
+  | UNK ->  "Int" (* illegal_format "z3.smt_of_typ: unexpected UNKNOWN type" *)
+  | NUM -> "Int" (* Use default Int for NUM *)
+  | BagT _ -> "Int"
+  | Tup2 _ -> "Int" (*TODO: handle this*)
+  | TVar _ -> "Int"
+  | Void -> "Int"
+  | List _ -> illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+  | Named _ -> "Int" (* objects and records are just pointers *)
+  | Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
+  | FuncT (t1, t2) ->
+     let (args,ret) = norm_func_type t in
+     "("^(List.fold_left (fun r item -> r^" "^(smt_of_typ item)) "" args)^" "^(smt_of_typ ret)^")"
+  | RelT _ -> "Int"
+  | UtT _ -> "Int"
+  | HpT -> "Int"
+  | FORM -> "Int" (* is this correct? *)
+  (* | SLTyp *)
+  | INFInt 
+  | Pointer _ -> Error.report_no_pattern ()
+  | Bptyp -> "int-triple"               
+
+let smt_of_sort t =
+  Debug.no_1 "smt_of_sort" string_of_typ idf smt_of_sort t
+
 let smt_of_spec_var sv =
   (CP.name_of_spec_var sv) ^ (if CP.is_primed sv then "_primed" else "")
 
@@ -135,6 +172,12 @@ let smt_of_typed_spec_var sv =
     "(" ^ (smt_of_spec_var sv) ^ " " ^ (x_add_1 smt_of_typ (CP.type_of_spec_var sv)) ^ ")"
   with _ ->
     illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
+
+let smt_of_sorted_spec_var sv =
+  try
+    "(" ^ (smt_of_spec_var sv) ^ " " ^ (x_add_1 smt_of_sort (CP.type_of_spec_var sv)) ^ ")"
+  with _ ->
+    illegal_format ("z3.smt_of_sorted_spec_var: problem with type of"^(!print_ty_sv sv))                   
 
 let rec smt_of_exp a =
   let str = !Cpure.print_exp a in
@@ -374,11 +417,13 @@ let add_axiom h dir c =
     let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
     (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
     let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
-    let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
+    let smt_params = String.concat " " (List.map smt_of_sorted_spec_var params) in
     let op = match dir with 
       | IMPLIES -> "=>" 
       | IFF -> "=" in
     let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
+
+    (* the translation of smt_params may be buggy*)
     let cache_smt_input = (
       "(assert " ^ 
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^

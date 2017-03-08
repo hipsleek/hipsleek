@@ -1808,15 +1808,15 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
        CP.trans_rel_to_templ h
     | [] -> CP.mkTrue no_pos
   in
-  let new_lhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (CP.mkAnd templ_of_rel newf no_pos))) in
-  let new_rhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (MCP.pure_of_mix rhs_mix))) in
-  let () = x_binfo_hp (add_str "infer_pure_m: new_lhs_mix" !CP.print_formula) new_lhs_mix no_pos in
-  let newes = trans_estate_to_templ estate in
-  let (estate, lhs_mix,rhs_mix) =
-    if !Globals.array_templ
-    then (newes, MCP.mix_of_pure new_lhs_mix,MCP.mix_of_pure new_rhs_mix)
-    else (estate, lhs_mix,rhs_mix)
-  in
+  (* let new_lhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (CP.mkAnd templ_of_rel newf no_pos))) in *)
+  (* let new_rhs_mix = CP.remove_dupl_conj_pure (!CP.simplify (!CP.simplify (MCP.pure_of_mix rhs_mix))) in *)
+  
+  (* let newes = trans_estate_to_templ estate in *)
+  (* let (estate, lhs_mix,rhs_mix) = *)
+  (*   if !Globals.array_templ *)
+  (*   then (newes, MCP.mix_of_pure new_lhs_mix,MCP.mix_of_pure new_rhs_mix) *)
+  (*   else (estate, lhs_mix,rhs_mix) *)
+  (* in *)
   
   (* let () = x_binfo_hp (add_str "infer_pure_m: lhs_mix" !print_mix_formula) lhs_mix no_pos in *)
   (* let () = x_binfo_hp (add_str "infer_pure_m: newf" !CP.print_formula) newf no_pos in *)
@@ -1843,14 +1843,25 @@ let infer_pure_m unk_heaps estate  lhs_heap_xpure1 lhs_mix lhs_mix_0 lhs_wo_heap
   if no_infer_pure estate && no_infer_templ estate && unk_heaps==[] then
     (None,None,[])
   else
-    if not (no_infer_templ estate) && not (!Globals.phase_infer_ind) then
+    if (not (no_infer_templ estate) && not (!Globals.phase_infer_ind))||(!Globals.array_templ) then
     (* Disable template inference when phase numbers are being inferred *)
     (* let () = print_endline "COLLECT PURE" in *)
       let es_opt = x_add Template.collect_templ_assume_init estate lhs_mix(* _0 *) (MCP.pure_of_mix rhs_mix) pos in
       let () = 
         if !Globals.array_templ
         then
-          let _ = Template.collect_and_solve_templ_assumes_prog_free false (List.map CP.name_of_spec_var estate.CF.es_infer_vars_templ) in
+          let es_opt = x_add Template.collect_templ_assume_init estate lhs_mix(* _0 *) (MCP.pure_of_mix rhs_mix) pos in
+          let () =
+            let lhs_p = !CP.simplify (MCP.pure_of_mix lhs_mix) in
+            let rhs_p = !CP.simplify (MCP.pure_of_mix rhs_mix) in
+            let lrels = CP.get_rel_id_list lhs_p in
+            let rrels = CP.get_rel_id_list rhs_p in
+            let rel_ids = CP.remove_dups_svl (lrels@rrels) in
+            let new_rel_ass =  (CP.RelDefn (List.hd rel_ids, None), lhs_p, rhs_p)  in
+            let _ = CF.sleek_rel_pure_assumes # add new_rel_ass in
+          (* let _ = Template.collect_and_solve_templ_assumes_prog_free false (List.map CP.name_of_spec_var estate.CF.es_infer_vars_templ) in *)
+            ()
+          in
           ()
         else
           ()

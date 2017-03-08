@@ -1753,19 +1753,19 @@ let print_sleek_hprel_assumes () =
     then x_binfo_pp "There are no pure relational assumptions" no_pos
     else
       let () =
-        x_binfo_hp (add_str "Current list of pure relational assumptions" (pr_list string_of_pure_rel_assumption) ) curr_prel no_pos in
-      let () =
-        let () =
-          List.iter
-            (fun (_,l,r) ->
-              let () =
-                process_pure_rel_solve_with_defp ["U"]
-              in 
-              process_pure_rel_solve_with_defp ["U"]
-            )
-            curr_prel
-        in
-        y_binfo_hp (add_str "partial defs" (pr_list Cprinter.string_of_rel_decl)) (!cprog.prog_rel_decls # get_stk) 
+        x_binfo_hp (add_str "Current list of pure relational assumptions" (pr_list string_of_pure_rel_assumption) ) curr_prel no_pos
+      (* let () = *)
+      (*   let () = *)
+      (*     List.iter *)
+      (*       (fun (_,l,r) -> *)
+      (*         let () = *)
+      (*           process_pure_rel_solve_with_defp ["U"] *)
+      (*         in  *)
+      (*         process_pure_rel_solve_with_defp ["U"] *)
+      (*       ) *)
+      (*       curr_prel *)
+      (*   in *)
+      (*   y_binfo_hp (add_str "partial defs" (pr_list Cprinter.string_of_rel_decl)) (!cprog.prog_rel_decls # get_stk)  *)
       in
       ()
                

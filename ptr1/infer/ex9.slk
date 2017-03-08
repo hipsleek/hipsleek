@@ -14,8 +14,8 @@ lemma self::arr_seg<x,y> <- self::arr_seg<a,b>  & x>=a & y<=b & x<=y.
 relation U(int u1,int u2, int u3, int u4).
 relation U2(int u1,int u2).
 
-infer[U] a::arr_seg<m,n> & U(m,n,i,j)|- a::arr_seg<i,j>. 
-print residue.
+// infer[U] a::arr_seg<m,n> & U(m,n,i,j)|- a::arr_seg<i,j>. 
+// print residue.
 
 infer[U] a::arr_seg<m,n> & U(m,n,i,j) & m<n|- a::arr_seg<i,j>. 
 print residue.

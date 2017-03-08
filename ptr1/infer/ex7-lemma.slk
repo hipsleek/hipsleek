@@ -14,8 +14,6 @@ lemma_unsafe self::arr_seg<i,j> & i<=m & j>=n -> self::arr_seg<m,n>.
 
 relation U(int u1,int u2, int u3, int u4).
 
-
-
 checkentail a::arr_seg<u1,u2> & u1<=m & u2>=n |- a::arr_seg<m,n>.
 print residue.
 
