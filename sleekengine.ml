@@ -1391,7 +1391,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       let new_ante = CF.elim_exists ante in
       let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
       let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in
-      y_binfo_pp ("@arr_ba: "^(!CF.print_formula new_ante)^" |- "^(!CF.print_formula new_conseq))      
+      y_tinfo_pp ("@arr_ba: "^(!CF.print_formula new_ante)^" |- "^(!CF.print_formula new_conseq))      
     else ()
   in
   let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in

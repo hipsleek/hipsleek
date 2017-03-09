@@ -415,7 +415,7 @@ let main () =
         let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
         (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
         let all_files = slk_prelude_path::!Globals.source_files in
-        let () = x_winfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
+        let () = x_winfo_pp (((pr_list (fun x -> x)) all_files)^"\n") no_pos in
         let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
       end
   with

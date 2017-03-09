@@ -80,11 +80,24 @@ let rec flatten_heap_star_formula cf =
 let isAsegPred cf =
   match cf with
   | ViewNode f ->
-     String.equal f.h_formula_view_name  "Aseg"
+     String.equal f.h_formula_view_name "Aseg"
   | _ -> false
 ;;
 
-let pred_var_to_arrPred_exp sv =
+(* Assuming existential quantifiers can only be introduced by the parsing *)
+let build_eqmap pf evars eqmap=
+  let eqlst = find_eq_at_toplevel pf in
+  let helper (e1,e2) =
+    match e1,e2 with
+    | Var (sv1,_) , Var (sv2,_) ->
+       if evarsContains sv1 && evarsContains sv2
+       then [()]
+    | Var (sv,_), _ ->
+    | _, Var (sv,_) ->
+
+  
+
+let pred_var_to_arrPred_exp sv evars eqmap =
   Var (sv,no_pos)
 ;;
   
@@ -301,7 +314,7 @@ let cf_biabduction ante conseq =
   let conseq_seq = formula_to_arrPred conseq in
   let (antiframe,frame,prooftrace) = biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq) in
   let str_trace_pair (alst,clst) =
-    (str_seq alst)^" |= "^(str_seq clst)
+    "  "^(str_seq alst)^" |= "^(str_seq clst)
   in
   let str_trace trace =
     List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
@@ -311,6 +324,7 @@ let cf_biabduction ante conseq =
   print_endline ("# anti-frame: "^(str_seq antiframe));
   print_endline ("# frame: "^(str_seq frame));
   print_endline "############## ####### Proof Trace ###########  ################";
-  print_endline (str_trace prooftrace)
-             
+  print_endline (str_trace prooftrace);
+  ()
+  (* print_endline "############## ####### ########### ###########  ################"             *)
 ;;
