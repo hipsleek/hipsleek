@@ -1683,6 +1683,7 @@ type infer_type =
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
   | INF_ARR_BOUND (* For infer [@bound] for inferring array bounds *)
+  | INF_ARR_BIABDUCTION (* For infer [@arr_ba] for array biabduction inference *)
   | INF_EXTN of infer_extn list
 
 let eq_infer_type i1 i2 = 
@@ -1732,7 +1733,7 @@ let string_of_inf_const x =
   | INF_IMM_POST -> "@imm_post"
   | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
   | INF_ARR_BOUND -> "@bound"
-
+  | INF_ARR_BIABDUCTION -> "@arr_ba"
 let inf_const_of_string s =
   match s with
   | "@term" -> INF_TERM

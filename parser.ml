@@ -2815,6 +2815,7 @@ infer_type:
    | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
    | `INFER_AT_BOUND -> INF_ARR_BOUND
+   | `INFER_AT_ARRBA -> INF_ARR_BIABDUCTION
    ]];
 
 infer_id:

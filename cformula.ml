@@ -20645,3 +20645,10 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+let extract_formula_from_Ebase_struc_formula strucf =
+  match strucf with
+  | EBase sbf ->
+     elim_exists sbf.formula_struc_base
+  | _ -> failwith "extract_formula_from_Ebase_struc_formula: Not valid input"
+;;
