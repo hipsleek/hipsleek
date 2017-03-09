@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open VarGen
+
 (*
   Driver.
 
@@ -22,7 +23,8 @@ open Sleekengine
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-
+open Arr_biabduction
+       
 module H = Hashtbl
 module I = Iast
 module C = Cast
