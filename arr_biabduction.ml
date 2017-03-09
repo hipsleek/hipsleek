@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open Cpure
 open VarGen
 open Cformula
@@ -152,140 +154,144 @@ let formula_to_arrPred cf =
 ;;
   
 let biabduction (plhs,seqLHS) (prhs,seqRHS) =
-  let rec helper seqLHS seqRHS antiframe frame =
+  let rec helper seqLHS seqRHS antiframe frame prooftrace =
+    let prooftrace = (seqLHS,seqRHS)::prooftrace in
     match seqLHS, seqRHS with
     | h1::tail1, h2::tail2 ->
        (
          match h1, h2 with
          | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s2 e2 plhs
-              then helper seqLHS tail2 antiframe frame
+              then helper seqLHS tail2 antiframe frame prooftrace
               else                (* Neither sides are empty *)
                 if isEq s1 s2 plhs
                 then
                   if isGt e1 e2 plhs  (* e1>e2 *)
                   then
-                    helper ((mkAseg b1 e2 e1)::tail1) tail2 antiframe frame
+                    helper ((mkAseg b1 e2 e1)::tail1) tail2 antiframe frame prooftrace
                   else            (* e1<e2 *)
-                    helper tail1 ((mkAseg b1 e1 e2)::tail2) antiframe frame
+                    helper tail1 ((mkAseg b1 e1 e2)::tail2) antiframe frame prooftrace
                 else
                   if isGt s1 s2 plhs
-                  then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
-                  else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame                  
+                  then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
+                  else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace       
          | Aseg (b1, s1, e1), Elem (b2, s2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s1 s2 plhs
               then
-                helper ((mkAseg b1 (incOne s1) e1)::tail1) tail2 antiframe frame
+                helper ((mkAseg b1 (incOne s1) e1)::tail1) tail2 antiframe frame prooftrace
               else
                 if isGt s1 s2 plhs  (* s1>s2 *)
                 then
-                  helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
+                  helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
                 else            (* s1<s2 *)
-                  helper seqLHS ((mkGap b1 s1 s2)::seqRHS) antiframe frame
+                  helper seqLHS ((mkGap b1 s1 s2)::seqRHS) antiframe frame prooftrace
          | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s1 s2 plhs
               then
                 if isGt e1 e2 plhs  (* e1>e2 *)
-                then helper ((mkAseg b1 e2 e1)::tail1) tail2 antiframe ((mkAseg b1 s1 e2)::frame)
-                else helper tail1 ((mkGap b2 e1 e2)::tail2) antiframe ((mkAseg b1 s1 e1)::frame)
+                then helper ((mkAseg b1 e2 e1)::tail1) tail2 antiframe ((mkAseg b1 s1 e2)::frame) prooftrace
+                else helper tail1 ((mkGap b2 e1 e2)::tail2) antiframe ((mkAseg b1 s1 e1)::frame) prooftrace
               else
                 if isGt s1 s2 plhs  (* s1>s2 *)
-                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
-                else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame
+                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
+                else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame prooftrace
          | Elem (b1, s1), Elem (b2, s2) ->
             if isEq s1 s2 plhs
-            then helper tail1 tail2 antiframe frame
+            then helper tail1 tail2 antiframe frame prooftrace
             else
               if isGt s1 s2 plhs
-              then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
-              else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame
+              then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
+              else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace
          | Elem (b1, s1), Aseg (b2, s2, e2) ->
             if isEq s2 e2 plhs
-            then helper seqLHS tail2 antiframe frame
+            then helper seqLHS tail2 antiframe frame prooftrace
             else
               if isEq s1 s2 plhs
-              then helper tail1 ((mkAseg b2 (incOne s2) e2)::tail2) antiframe frame
+              then helper tail1 ((mkAseg b2 (incOne s2) e2)::tail2) antiframe frame prooftrace
               else
                 if isGt s1 s2 plhs
-                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
-                else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame                            
+                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
+                else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace               
          | Elem (b1, s1), Gap (b2, s2, e2) ->
             if isEq s2 e2 plhs
-            then helper seqLHS tail2 antiframe frame
+            then helper seqLHS tail2 antiframe frame prooftrace
             else
               if isEq s1 s2 plhs
-              then helper tail1 ((mkGap b2 (incOne s2) e2)::tail2) antiframe ((mkElem b1 s1)::frame)
+              then helper tail1 ((mkGap b2 (incOne s2) e2)::tail2) antiframe ((mkElem b1 s1)::frame) prooftrace
               else
                 if isGt s1 s2 plhs
-                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame
-                else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame (* Just make the gap bigger *)
+                then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
+                else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame prooftrace(* Just make the gap bigger *)
          | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s2 e2 plhs
-              then helper seqLHS tail2 antiframe frame
+              then helper seqLHS tail2 antiframe frame prooftrace
               else                (* Neither sides are empty *)
                 if isEq s1 s2 plhs
                 then
                   if isGt e1 e2 plhs  (* e1>e2 *)
                   then
-                    helper ((mkGap b1 e2 e1)::tail1) tail2 antiframe frame
+                    helper ((mkGap b1 e2 e1)::tail1) tail2 antiframe frame prooftrace
                   else            (* e1<e2 *)
-                    helper tail1 ((mkGap b1 e1 e2)::tail2) antiframe frame
+                    helper tail1 ((mkGap b1 e1 e2)::tail2) antiframe frame prooftrace
                 else
                   if isGt s1 s2 plhs
-                  then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame
-                  else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame                  
+                  then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame prooftrace
+                  else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame prooftrace       
          | Gap (b1, s1, e1), Elem (b2, s2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s1 s2 plhs
-              then helper ((mkGap b1 (incOne s1) e1)::tail1) tail2 ((mkElem b2 s2)::antiframe) frame
+              then helper ((mkGap b1 (incOne s1) e1)::tail1) tail2 ((mkElem b2 s2)::antiframe) frame prooftrace
               else
                 if isGt s1 s2 plhs
-                then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame (* Just make the gap bigger *)
-                else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame
+                then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame prooftrace(* Just make the gap bigger *)
+                else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace
          | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
             if isEq s1 e1 plhs
-            then helper tail1 seqRHS antiframe frame
+            then helper tail1 seqRHS antiframe frame prooftrace
             else
               if isEq s2 e2 plhs
-              then helper seqLHS tail2 antiframe frame
+              then helper seqLHS tail2 antiframe frame prooftrace
               else
                 if isEq s1 s2 plhs
                 then
                   if isGt e1 e2 plhs
-                  then helper ((mkGap b1 e2 e1)::tail1) tail2 ((mkAseg b2 s2 e2)::antiframe) frame
-                  else helper tail1 ((mkAseg b2 e1 e2)::tail2) ((mkAseg b2 s2 e1)::antiframe) frame
+                  then helper ((mkGap b1 e2 e1)::tail1) tail2 ((mkAseg b2 s2 e2)::antiframe) frame prooftrace
+                  else helper tail1 ((mkAseg b2 e1 e2)::tail2) ((mkAseg b2 s2 e1)::antiframe) frame prooftrace
                 else
                   if isGt s1 s2 plhs
-                  then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame
-                  else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame
+                  then helper ((mkGap b1 s2 e1)::tail1) seqRHS antiframe frame prooftrace
+                  else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame prooftrace
        )                              
     | h1::tail1, [] ->
-       (antiframe,seqLHS@frame)
+       (antiframe,seqLHS@frame,prooftrace)
     | [], h2::tail2 ->
-       (seqRHS@antiframe,frame)
+       (seqRHS@antiframe,frame,prooftrace)
     | [],[] ->
-       (antiframe, frame)
+       (antiframe, frame,prooftrace)
   in
-  helper seqLHS seqRHS [] []
+  helper seqLHS seqRHS [] [] []
 ;;
 
 let biabduction (plhs,seqLHS) (prhs,seqRHS) =
   let pr_input = str_pair !str_pformula str_seq in
-  Debug.no_2 "biabduction" pr_input pr_input (str_pair str_seq str_seq) biabduction (plhs,seqLHS) (prhs,seqRHS)
+  let pr_result (a,f,t) =
+    (str_pair str_seq str_seq) (a,f)
+  in
+  Debug.no_2 "biabduction" pr_input pr_input pr_result biabduction (plhs,seqLHS) (prhs,seqRHS)
 ;;
 
 let cf_biabduction ante conseq =
@@ -293,6 +299,18 @@ let cf_biabduction ante conseq =
   let rhs_p = get_pure conseq in
   let ante_seq = formula_to_arrPred ante in
   let conseq_seq = formula_to_arrPred conseq in
-  biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq)
-;;
+  let (antiframe,frame,prooftrace) = biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq) in
+  let str_trace_pair (alst,clst) =
+    (str_seq alst)^" |= "^(str_seq clst)
+  in
+  let str_trace trace =
+    List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
+  in
   
+  print_endline"############## Results of Bi-Abduction Inference ################";
+  print_endline ("# anti-frame: "^(str_seq antiframe));
+  print_endline ("# frame: "^(str_seq frame));
+  print_endline "############## ####### Proof Trace ###########  ################";
+  print_endline (str_trace prooftrace)
+             
+;;
