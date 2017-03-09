@@ -92,103 +92,8 @@ let isElemPred cf =
 ;;
 
 
-(* Assuming existential quantifiers can only be introduced by the parsing *)
-(* let build_eqmap pf evars= *)
-(*   let eqlst = find_eq_at_toplevel pf in *)
-(*   let helper (e1,e2) = *)
-(*     match e1,e2 with *)
-(*     | Var (sv1,_) , Var (sv2,_) -> *)
-(*        if evarsContains sv1 && evarsContains sv2 *)
-(*        then [(sv1,e2);(sv2,e1)] *)
-(*        else *)
-(*          if evarsContains sv1 *)
-(*          then [(sv1,e2)] *)
-(*          else [(sv2,e1)]                 *)
-(*     | Var (sv,_), e *)
-(*     | e, Var (sv,_) -> *)
-(*        if evarsContains sv *)
-(*        then [(sv,e2)] *)
-(*        else [] *)
-(*   in *)
-(*   List.fold_left (fun r ee -> (helper ee)@r) []  *)
-(* ;; *)
-
-(* let find_in_eqmap eqmap sv = *)
-(*   try *)
-(*     let (_,e) = List.find (fun (v,e) -> is_same_sv sv v) eqmap *)
-(*     in *)
-(*     Some e *)
-(*   with _ -> *)
-(*     None *)
-(* ;; *)
-
-(* let pred_var_to_arrPred_exp sv eqmap = *)
-(*   match find_in_eqmap eqmap sv with *)
-(*   | None -> *)
-(*      Var (sv,no_pos) *)
-(*   | Some (v,e) -> *)
-(*      e *)
-(* ;; *)
-  
-(* let getAsegBase cf eqmap = *)
-(*   match cf with *)
-(*   | ViewNode f -> *)
-(*      pred_var_to_arrPred_exp f.h_formula_view_node *)
-(*   | _ -> failwith "getAsegBase: Invalid input" *)
-(* ;; *)
-  
-(* let getAsegStart cf eqmap = *)
-(*   match cf with *)
-(*   | ViewNode f -> *)
-(*      pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0) *)
-(*   | _ -> failwith "getAsegStart: Invalid input" *)
-(* ;; *)
-
-(* let getAsegEnd cf eqmap = *)
-(*   match cf with *)
-(*   | ViewNode f -> *)
-(*      pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 1) *)
-(*   | _ -> failwith "getAsegEnd: Invalid input" *)
-(* ;; *)
-
-(* let getElemBase cf eqmap = *)
-(*   match cf with *)
-(*   | ViewNode f -> *)
-(*      pred_var_to_arrPred_exp f.h_formula_view_node *)
-(*   | _ -> failwith "getElemBase: Invalid input" *)
-(* ;; *)
-  
-(* let getElemStart cf eqmap = *)
-(*   match cf with *)
-(*   | ViewNode f -> *)
-(*      pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0) *)
-(*   | _ -> failwith "getElemStart: Invalid input" *)
-(* ;; *)
-
-
-(* let formula_to_arrPred cf = *)
-(*   let one_pred_to_arrPred cf= *)
-(*     if isAsegPred cf *)
-(*     then mkAseg (getAsegBase cf) (getAsegStart cf) (getAsegEnd cf) *)
-(*     else *)
-(*       if isElemPred cf *)
-(*       then mkElem (getElemBase cf) (getElemStart cf) *)
-(*       else failwith "one_pred_to_arrPred: Invalid input" *)
-(*   in *)
-(*   match cf with *)
-(*   | Base f -> *)
-(*      let pred_list = flatten_heap_star_formula f.formula_base_heap in *)
-(*      List.map one_pred_to_arrPred pred_list *)
-(*   | Or f-> failwith "TO BE IMPLEMENTED" *)
-(*   | Exists f -> *)
-(*      let pf = get_pure cf in *)
-(*      let evars = get_evars cf in *)
-(*      let eqmap = build_eqmap pf evars in *)
-     
-(* ;; *)
-
 class arrPredTransformer initcf = object(self)
-  val cf = initcf
+  val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)
       
   method find_in_eqmap sv =
@@ -277,7 +182,7 @@ class arrPredTransformer initcf = object(self)
        List.map one_pred_to_arrPred pred_list
     | Or f-> failwith "TO BE IMPLEMENTED"
     | Exists f ->
-       let pf = get_pure cf in
+       let pf = Mcpure.pure_of_mix f.formula_exists_pure in
        let evars = f.formula_exists_qvars in
        let () = eqmap <- build_eqmap pf evars in
        let pred_list = flatten_heap_star_formula f.formula_exists_heap in
