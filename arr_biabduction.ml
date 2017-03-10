@@ -336,12 +336,22 @@ let biabduction (plhs,seqLHS) (prhs,seqRHS) =
   Debug.no_2 "biabduction" pr_input pr_input pr_result biabduction (plhs,seqLHS) (prhs,seqRHS)
 ;;
 
+let rec clean_gap seq =
+  match seq with
+  | (Gap _)::tail ->
+     clean_gap tail
+  | h::tail ->
+     h::(clean_gap tail)
+  | [] -> []
+;;
+  
 let cf_biabduction ante conseq =
   let lhs_p = get_pure ante in
   let rhs_p = get_pure conseq in
   let ante_seq = (new arrPredTransformer ante)#formula_to_arrPred in
   let conseq_seq = (new arrPredTransformer conseq)#formula_to_arrPred in  
   let (antiframe,frame,prooftrace) = biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq) in
+  let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
   let str_trace_pair (alst,clst) =
     "  "^(str_seq alst)^" |= "^(str_seq clst)
   in
@@ -351,8 +361,8 @@ let cf_biabduction ante conseq =
   
   print_endline"############## Results of Bi-Abduction Inference ################";
   print_endline ("# pure: "^(!str_pformula lhs_p));
-  print_endline ("# anti-frame: "^(str_seq antiframe));
-  print_endline ("# frame: "^(str_seq frame));
+  print_endline ("# anti-frame: "^(str_seq cantiframe));
+  print_endline ("# frame: "^(str_seq cframe));
   print_endline "############## ####### Proof Trace ###########  ################";
   print_endline (str_trace prooftrace);
   ()

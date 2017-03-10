@@ -1,0 +1,18 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim Elem<start:int>.
+
+infer[@arr_ba] base::Elem<d+1> & d+1>0|- base::Elem<d+2>.
+
+infer[@arr_ba] base::Aseg<a,b> |- base::Aseg<a,b>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<d |- base::Aseg<a,b>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<d & d<e & e<f|- base::Aseg<e,f>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<e & e<f & f<c & c<d |- base::Aseg<e,f>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<e & e<b & b<f & f<c & c<d |- base::Aseg<e,f>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<e & e<b & b<f & f<c & c=g & c<d |- base::Aseg<e,f> * base::Elem<g>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<e & e<b & b<f & f<c & c=g & c<d |- base::Aseg<e,f> * base::Elem<g>.
