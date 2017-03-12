@@ -4,15 +4,26 @@ open Cpure
 open VarGen
 open Cformula
        
-type arrPred =
-  | Aseg of (exp * exp * exp)
-  | Gap of (exp * exp * exp)
-  | Elem of (exp * exp)
+type 'exp arrPred =
+  | Aseg of ('exp * 'exp * 'exp)
+  | Gap of ('exp * 'exp * 'exp)
+  | Elem of ('exp * 'exp)
+;;
+
+  
+let map_op_list (f:('a -> 'b)) (lst:('a option list)) =
+  List.fold_left
+    (fun r item ->
+      match item with
+      | Some a -> (f a)::r
+      | None -> r)
+    [] lst
 ;;
 
 let mkAseg b s e =
   Aseg (b,s,e)
 ;;
+
 
 let mkGap b s e =
   Gap (b,s,e)
@@ -34,6 +45,12 @@ let isGt s1 e1 pf =
   !tp_imply pf rhsf
 ;;
 
+let isGte s1 e1 pf =
+  (* pf |= s1 >= e1 *)
+  let rhsf = mkGteExp s1 e1 no_pos in
+  !tp_imply pf rhsf
+;;
+  
 let incOne e =
   Add (e,IConst (1,no_pos),no_pos)
 ;;
@@ -91,6 +108,9 @@ let isElemPred cf =
   | _ -> false
 ;;
 
+let isEmpty cf =
+  false
+;;
 
 class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
@@ -144,11 +164,14 @@ class arrPredTransformer initcf = object(self)
   method formula_to_arrPred =
     let one_pred_to_arrPred cf=
       if isAsegPred cf
-      then mkAseg (self#getAsegBase cf) (self#getAsegStart cf) (self#getAsegEnd cf)
+      then Some (mkAseg (self#getAsegBase cf) (self#getAsegStart cf) (self#getAsegEnd cf))
       else
         if isElemPred cf
-        then mkElem (self#getElemBase cf) (self#getElemStart cf)
-        else failwith "one_pred_to_arrPred: Invalid input"
+        then Some (mkElem (self#getElemBase cf) (self#getElemStart cf))
+        else
+          if isEmpty cf
+          then None
+          else failwith "one_pred_to_arrPred: Invalid input"
     in    
     let build_eqmap pf evars=
       let eqlst = find_eq_at_toplevel pf in
@@ -179,14 +202,14 @@ class arrPredTransformer initcf = object(self)
     match cf with
     | Base f ->
        let pred_list = flatten_heap_star_formula f.formula_base_heap in
-       List.map one_pred_to_arrPred pred_list
+       map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)       
     | Or f-> failwith "TO BE IMPLEMENTED"
     | Exists f ->
        let pf = Mcpure.pure_of_mix f.formula_exists_pure in
        let evars = f.formula_exists_qvars in
        let () = eqmap <- build_eqmap pf evars in
        let pred_list = flatten_heap_star_formula f.formula_exists_heap in
-       List.map one_pred_to_arrPred pred_list
+       map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
 end
 ;;
     
@@ -260,7 +283,7 @@ let biabduction (plhs,seqLHS) (prhs,seqRHS) =
               if isEq s1 s2 plhs
               then helper tail1 ((mkAseg b2 (incOne s2) e2)::tail2) antiframe frame prooftrace
               else
-                if isGt s1 s2 plhs
+                if isGte s1 s2 plhs
                 then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
                 else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace               
          | Elem (b1, s1), Gap (b2, s2, e2) ->
@@ -319,9 +342,23 @@ let biabduction (plhs,seqLHS) (prhs,seqRHS) =
                   else helper seqLHS ((mkGap b2 s1 e2)::tail2) antiframe frame prooftrace
        )                              
     | h1::tail1, [] ->
-       (antiframe,seqLHS@frame,prooftrace)
+       (
+         match h1 with
+           Aseg (b,s,e) 
+         | Gap (b,s,e) when isEq s e plhs ->
+            helper tail1 seqRHS antiframe frame prooftrace
+         | _ ->
+            (antiframe,seqLHS@frame,prooftrace)
+       )
     | [], h2::tail2 ->
-       (seqRHS@antiframe,frame,prooftrace)
+       (
+         match h2 with
+           Aseg (b,s,e)
+         | Gap (b,s,e) when isEq s e plhs->
+            helper seqLHS tail2 antiframe frame prooftrace
+         | _ ->
+            (seqRHS@antiframe,frame,prooftrace)            
+       )       
     | [],[] ->
        (antiframe, frame,prooftrace)
   in
@@ -344,6 +381,45 @@ let rec clean_gap seq =
      h::(clean_gap tail)
   | [] -> []
 ;;
+
+type 'a rect =
+  | Rect of (unit -> ('a * ('a rect)) option)
+;;
+  
+let enumerate_solution_seed vlst =
+  let length = List.length vlst in
+  let updateSeed seed seed_i = seed_i::seed in
+  let empty_seed = [] in
+  let do_biabduction seed =
+    ()
+  in
+  let rec innerk_orig level curi seed ((Rect k):('a rect)) () =
+    if level = length
+    then
+      Some (seed, Rect k)
+    else
+      if curi = 3
+      then k ()        
+      else
+        innerk_orig (level+1) 0 (updateSeed seed (curi+1)) (Rect (innerk_orig level (curi+1) seed (Rect k))) ()
+  in
+  let rec helper cur seed (Rect innerk) k () =
+    if cur = length
+    then
+      let _ = do_biabduction seed in
+      k ()
+    else
+      match innerk () with
+      | None ->
+         k ()
+      | Some (seed_i,Rect inner_i) ->
+         let newseed = updateSeed seed seed_i in
+         helper (cur+1) newseed (Rect (innerk_orig (cur+1) 0 empty_seed (Rect (fun ()->None)))) (helper cur seed (Rect inner_i) k) ()
+  in
+  
+  helper 0 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
+;;
+  
   
 let cf_biabduction ante conseq =
   let lhs_p = get_pure ante in
