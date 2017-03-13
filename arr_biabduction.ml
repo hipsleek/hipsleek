@@ -55,8 +55,9 @@ let incOne e =
   Add (e,IConst (1,no_pos),no_pos)
 ;;
 
-let isSat =
-  tp_is_sat
+let isSat f=
+(* Tpdispatcher.tp_is_sat f "111" *)
+  true
 ;;
 
 let str_exp = print_exp
@@ -442,6 +443,59 @@ let enumerate_solution_seed vlst do_biabduction =
   helper 1 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
 ;;
 
+(* map is the matrix of variables *)
+let topological_base_enumerate vlst map =
+  let rec degree_extract_zero queue degree =
+    match degree with
+    | (i,d)::tail ->
+       if d=0
+       then degree_extract_zero (i::queue) tail
+       else
+         let (queue_new,degree_new) = degree_extract_zero queue tail in
+         (queue_new,(i,d)::degree_new)
+    | [] ->
+       (queue,[])
+  in
+  let rec degree_minus_one degree target map =
+    List.map (fun (i,d) ->
+        if pointto target i
+        then (i,d-1)
+        else (i,d)
+      ) degree
+  in             
+  let rec helper queue degree seed =
+    match queue with
+    | h::tail ->
+       let (queue, degree) = degree_extract_zero queue (degree_minus_one degree h map) in
+       helper tail degree queue
+    | [] ->
+       if List.length degree = 0
+       then do_biabduction seed
+       else
+         failwith "Cycle found!"
+  in
+  let segment_map = build_segment_map () in (* 1->(a,b);2->(c,c+1)... *)
+  (* directly build a index matrix or edge table*)
+  let degree =
+    let degree_array = Array.make length 0 in
+    let () = List.iter
+               (fun item ->
+                 (List.iter
+                    (fun sub_item ->
+                      degree_array.(sub_item)<-degree_array.(sub_item)+1
+                    )
+                    sub_item)
+               ) segment_map
+    in
+    Array.fold_left
+      (fun (i,d) item ->
+        (i+1,(i,item)::d))
+      (0,[]) degree_array
+  in  
+  let (queue,degree) = degree_extract_zero [] degree in
+  helper queue degree []
+        
+  
 let generate_mapping explst =  
   Array.of_list explst
 ;;
@@ -524,14 +578,17 @@ let enumerate ante conseq =
   let () = print_endline (str_list !str_exp vlst) in
   let mapping = Array.of_list vlst in
   let do_biabduction seed =
-    let () = print_endline (str_list (str_list string_of_int) seed) in
+    let seed = List.rev seed in
+    (* let () = print_endline (str_list (str_list string_of_int) seed) in *)
     let seed_f = generate_seed_formula seed mapping in
-    let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in
-    if !isSat (mkAnd seed_f puref no_pos)
+    if isSat (mkAnd seed_f puref no_pos)
     then
+      let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in
+      let () = print_endline ("puref: "^(!str_pformula puref)) in
       print_endline "Sat"
     else
-      print_endline "Unsat"
+      ()
+      (* print_endline "Unsat" *)
   in
   let range =
     let rec range_gen i =
@@ -539,7 +596,7 @@ let enumerate ante conseq =
       then []
       else i::(range_gen (i-1))
     in
-    range_gen (List.length vlst)
+    range_gen ((List.length vlst)-1)
   in
   enumerate_solution_seed range do_biabduction
 ;;
