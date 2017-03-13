@@ -8,7 +8,7 @@ hip_include 'msess/notes/cdl.ss'
 /*****************************************/
 /* pred_sess_prot G<A,B,C> == (A->B:1 * A->C:1);;B->C:2;   */
 /* pred_sess_prot G<A,B,C> == (A->B:1 * A->C:1);;CDL(10);;B->C:2;   */
-pred_sess_prot Gd<A,B,C,c> == ((A->B:1;;[B,A]:downd<c,10>) * (A->C:1;;[C,A]:downd<c,10>));;[C,B]:await<c,10>;;B->C:2;
+pred_sess_prot Gd<A,B,C,c> == ((A->B:1;;[B,A]:downd<c,10>) * (A->C:1;;[C,A]:downd<c,10>;;[A,C]:downv<c,1,30>));;[C,B]:await<c,10>;;[B,C]:await<c,30>;;B->C:2;
 
 
 void A(Channel a, Channel b, CDL c)
@@ -69,3 +69,14 @@ void B(Channel a, Channel b, CDL c)
   dprint;
   send(b,2);
 }
+
+
+void C(Channel a, Channel b)
+  requires a::Chan{@S Gd<A@sec,B,C@prim,c>}<> * b::Chan{@S Gd<A,B@sec,C@prim,c>}<> 
+  ensures  a::Chan{emp}<> * b::Chan{emp}<>;
+{
+  int x = receive(a);
+  int y = receive(b);
+}
+
+

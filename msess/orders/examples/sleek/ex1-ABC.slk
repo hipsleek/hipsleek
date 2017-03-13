@@ -1,0 +1,42 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_prim event<peer,id:int>.
+pred_prim HB<peer1,id1:int,peer2,id2:int>.
+pred_prim CB<peer1,id1:int,peer2,id2:int>.
+pred_prim Assume{%P}<>.
+pred_prim Guard{%P}<>.
+pred_prim Peer{%P}<>.
+
+
+/* add explicit channel support: */
+/* pred_sess_prot G<A,B,C> == A->B:k(v#v=1) ;; C->B:k(2).  */
+
+pred_sess_prot G<A,B,C> == A->B:v#v=1 ;; C->B:2.
+
+checkentail x::Chan{@S !v#v=1}<> |- x::Chan{@S !1}<>.
+expect Valid.
+print residue.
+
+checkentail v>=1 |- v=1.
+expect Fail.
+print residue.
+
+checkentail v=1 |- v>=1.
+expect Valid.
+print residue.
+
+checkentail v>=1 |- v>=0.
+expect Valid.
+print residue.
+
+checkentail x::Chan{@S ?v#v>=1}<> |- x::Chan{@S ?1}<>.
+expect Fail.
+print residue.
+
+checkentail x::Chan{@S !v#v>=1}<> |- x::Chan{@S !1}<>.
+expect Valid.
+print residue.
+
+
+

@@ -1390,22 +1390,22 @@ protocol_formula:
     ]
     |
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
+        let loc = (get_pos_camlp4 _loc 1) in
+        Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
       | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
-            let loc = (get_pos_camlp4 _loc 1) in
-            (* let c = F.subst_stub_flow top_flow c in *)
-            let mv = session_extract_msg_var msg_var loc in
-            Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
-	  | peek_fence; `OSQUARE; `IDENTIFIER first; `COMMA; `IDENTIFIER second; `CSQUARE; `COLON;
-					hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
-        	let name,_,_,_ = hid in
-        	let ho_args = un_option opt1 [] in
-        	let params,_ = List.split (fst hl) in
-        	let loc = (get_pos_camlp4 _loc 1) in
-            let pred = Session.IProtocol.mk_session_fence_predicate name ho_args params loc in
-			Session.IProtocol.mk_session_fence first second pred
-	  | `EMPTY -> Session.IProtocol.SEmp
+        let loc = (get_pos_camlp4 _loc 1) in
+        (* let c = F.subst_stub_flow top_flow c in *)
+        let mv = session_extract_msg_var msg_var loc in
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
+      | peek_fence; `OSQUARE; `IDENTIFIER first; `COMMA; `IDENTIFIER second; `CSQUARE; `COLON;
+	hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
+        let name,_,_,_ = hid in
+        let ho_args = un_option opt1 [] in
+        let params,_ = List.split (fst hl) in
+        let loc = (get_pos_camlp4 _loc 1) in
+        let pred = Session.IProtocol.mk_session_fence_predicate name ho_args params loc in
+	Session.IProtocol.mk_session_fence first second pred
+      | `EMPTY -> Session.IProtocol.SEmp
       | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
         let name,_,_,_ = hid in
         let ho_args = un_option opt1 [] in
