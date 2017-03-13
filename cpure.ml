@@ -379,6 +379,7 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+                        
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
@@ -970,8 +971,19 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
-    (String.compare v1 v2 = 0) && (p1 = p2)
+     (String.compare v1 v2 = 0) && (p1 = p2)
+                                     
+let rec check_eq_exp e1 e2 =
+  match e1, e2 with
+  | IConst (i1,_), IConst (i2,_) -> i1=i2
+  | Var (v1,_), Var (v2,_) -> eq_spec_var v1 v2
+  | Add (ne11,ne12,_), Add (ne21,ne22,_) ->
+     ((check_eq_exp ne11 ne21) && (check_eq_exp ne12 ne22))||((check_eq_exp ne11 ne22) && (check_eq_exp ne12 ne21))
+  | _,_ -> false
+;;
 
+
+                                    
 let eq_ident_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -1083,6 +1095,9 @@ let eq_xpure_view xp1 xp2=
     (fun _ _ -> eq_xpure_view_x xp1 xp2) xp1 xp2
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
+
+let remove_dups_exp_lst elst = Gen.BList.remove_dups_eq check_eq_exp elst
+
 
 let remove_dups_svl_stable vl = Gen.BList.remove_dups_eq_stable eq_spec_var vl
 

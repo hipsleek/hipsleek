@@ -55,8 +55,8 @@ let incOne e =
   Add (e,IConst (1,no_pos),no_pos)
 ;;
 
-let isSat f =
-  true
+let isSat =
+  tp_is_sat
 ;;
 
 let str_exp = print_exp
@@ -166,14 +166,14 @@ class arrPredTransformer initcf = object(self)
     | _ -> failwith "getElemStart: Invalid input"
 
   method formula_to_arrPred =
-    let one_pred_to_arrPred cf=
-      if isAsegPred cf
-      then Some (mkAseg (self#getAsegBase cf) (self#getAsegStart cf) (self#getAsegEnd cf))
+    let one_pred_to_arrPred hf=
+      if isAsegPred hf
+      then Some (mkAseg (self#getAsegBase hf) (self#getAsegStart hf) (self#getAsegEnd hf))
       else
-        if isElemPred cf
-        then Some (mkElem (self#getElemBase cf) (self#getElemStart cf))
+        if isElemPred hf
+        then Some (mkElem (self#getElemBase hf) (self#getElemStart hf))
         else
-          if isEmpty cf
+          if isEmpty hf
           then None
           else failwith "one_pred_to_arrPred: Invalid input"
     in    
@@ -216,21 +216,21 @@ class arrPredTransformer initcf = object(self)
        map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
 
   method get_var_set =
-    let get_var_from_one_pred cf=
-      if isAsegPred cf
-      then [(self#getAsegStart cf);(self#getAsegEnd cf);incOne (self#getAsegEnd cf)]
+    let get_var_from_one_pred hf=
+      if isAsegPred hf
+      then [(self#getAsegStart hf);(self#getAsegEnd hf);incOne (self#getAsegEnd hf)]
       else
-        if isElemPred cf
-        then [(self#getElemStart cf);incOne (self#getElemStart cf)]
+        if isElemPred hf
+        then [(self#getElemStart hf);incOne (self#getElemStart hf)]
         else
-          if isEmpty cf
+          if isEmpty hf
           then []
           else failwith "get_var_from_one_pred: Invalid input"
     in
     match cf with
     | Base f ->
        let pred_list = flatten_heap_star_formula f.formula_base_heap in
-       List.concat (List.map get_var_from_one_pred pred_list)
+       (List.concat (List.map get_var_from_one_pred pred_list))
     | _ -> failwith "get_var_set: TO BE IMPLEMENTED"
    
 end
@@ -454,6 +454,14 @@ let generate_seed_formula seed mapping =
   let rec inner_helper var index seed mapping =
     let new_var = get_map mapping index in
     match seed with
+    | [h] ->
+       if h=0
+       then
+         mkEqExp var new_var no_pos
+       else
+         if h=1
+         then mkGtExp var new_var no_pos
+         else mkLtExp var new_var no_pos
     | h::tail ->
        let newf =
          if h=0
@@ -477,6 +485,34 @@ let generate_seed_formula seed mapping =
   in
   helper 0 seed mapping
 ;;
+(* seed: list of list *)
+let from_seed_to_map seed =
+  let length = List.length seed in
+  let map = object
+      val m = Array.make_matrix length length (-1)
+      method build_map =
+        let mk_inner_array start seed =
+          let array = Array.make length (-1) in
+          let () = List.iteri (fun i item -> array.(i+start)<-item) seed in
+          array
+        in
+        List.iteri
+          (fun i item ->
+            m.(i)<-(mk_inner_array i item))
+          seed
+
+      method get_map a b =
+        if a<b
+        then m.(a).(b)
+        else
+          if a>b
+          then m.(b).(a)
+          else 0
+    end
+  in
+  let () = map#build_map in
+  map
+;;
 
 let enumerate ante conseq =
   let lhs_p = get_pure ante in
@@ -484,13 +520,16 @@ let enumerate ante conseq =
   let puref = mkAnd lhs_p rhs_p no_pos in
   let anteTrans = new arrPredTransformer ante in
   let conseqTrans = new arrPredTransformer conseq in
-  let vlst = (anteTrans#get_var_set)@(conseqTrans#get_var_set) in
+  let vlst = remove_dups_exp_lst ((anteTrans#get_var_set)@(conseqTrans#get_var_set)) in
+  let () = print_endline (str_list !str_exp vlst) in
   let mapping = Array.of_list vlst in
   let do_biabduction seed =
+    let () = print_endline (str_list (str_list string_of_int) seed) in
     let seed_f = generate_seed_formula seed mapping in
-    if isSat (mkAnd seed_f puref no_pos)
+    let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in
+    if !isSat (mkAnd seed_f puref no_pos)
     then
-      ()
+      print_endline "Sat"
     else
       print_endline "Unsat"
   in
@@ -519,7 +558,6 @@ let cf_biabduction ante conseq =
   let str_trace trace =
     List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
   in
-  
   print_endline"############## Results of Bi-Abduction Inference ################";
   print_endline ("# pure: "^(!str_pformula lhs_p));
   print_endline ("# anti-frame: "^(str_seq cantiframe));
