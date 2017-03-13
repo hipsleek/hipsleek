@@ -12,12 +12,12 @@ type 'exp arrPred =
 
   
 let map_op_list (f:('a -> 'b)) (lst:('a option list)) =
-  List.fold_left
-    (fun r item ->
+  List.fold_right
+    (fun item r ->
       match item with
       | Some a -> (f a)::r
       | None -> r)
-    [] lst
+    lst []
 ;;
 
 let mkAseg b s e =
@@ -53,6 +53,10 @@ let isGte s1 e1 pf =
   
 let incOne e =
   Add (e,IConst (1,no_pos),no_pos)
+;;
+
+let isSat f =
+  true
 ;;
 
 let str_exp = print_exp
@@ -210,6 +214,25 @@ class arrPredTransformer initcf = object(self)
        let () = eqmap <- build_eqmap pf evars in
        let pred_list = flatten_heap_star_formula f.formula_exists_heap in
        map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
+
+  method get_var_set =
+    let get_var_from_one_pred cf=
+      if isAsegPred cf
+      then [(self#getAsegStart cf);(self#getAsegEnd cf);incOne (self#getAsegEnd cf)]
+      else
+        if isElemPred cf
+        then [(self#getElemStart cf);incOne (self#getElemStart cf)]
+        else
+          if isEmpty cf
+          then []
+          else failwith "get_var_from_one_pred: Invalid input"
+    in
+    match cf with
+    | Base f ->
+       let pred_list = flatten_heap_star_formula f.formula_base_heap in
+       List.concat (List.map get_var_from_one_pred pred_list)
+    | _ -> failwith "get_var_set: TO BE IMPLEMENTED"
+   
 end
 ;;
     
@@ -283,7 +306,7 @@ let biabduction (plhs,seqLHS) (prhs,seqRHS) =
               if isEq s1 s2 plhs
               then helper tail1 ((mkAseg b2 (incOne s2) e2)::tail2) antiframe frame prooftrace
               else
-                if isGte s1 s2 plhs
+                if isGt s1 s2 plhs
                 then helper ((mkGap b1 s2 s1)::seqLHS) seqRHS antiframe frame prooftrace
                 else helper seqLHS ((mkGap b2 s1 s2)::seqRHS) antiframe frame prooftrace               
          | Elem (b1, s1), Gap (b2, s2, e2) ->
@@ -386,13 +409,13 @@ type 'a rect =
   | Rect of (unit -> ('a * ('a rect)) option)
 ;;
   
-let enumerate_solution_seed vlst =
+let enumerate_solution_seed vlst do_biabduction =
   let length = List.length vlst in
   let updateSeed seed seed_i = seed_i::seed in
   let empty_seed = [] in
-  let do_biabduction seed =
-    ()
-  in
+  (* let do_biabduction seed = *)
+  (*   print_endline (str_list (str_list string_of_int) seed) *)
+  (* in *)
   let rec innerk_orig level curi seed ((Rect k):('a rect)) () =
     if level = length
     then
@@ -401,7 +424,7 @@ let enumerate_solution_seed vlst =
       if curi = 3
       then k ()        
       else
-        innerk_orig (level+1) 0 (updateSeed seed (curi+1)) (Rect (innerk_orig level (curi+1) seed (Rect k))) ()
+        innerk_orig (level+1) 0 (updateSeed seed curi) (Rect (innerk_orig level (curi+1) seed (Rect k))) ()
   in
   let rec helper cur seed (Rect innerk) k () =
     if cur = length
@@ -416,10 +439,72 @@ let enumerate_solution_seed vlst =
          let newseed = updateSeed seed seed_i in
          helper (cur+1) newseed (Rect (innerk_orig (cur+1) 0 empty_seed (Rect (fun ()->None)))) (helper cur seed (Rect inner_i) k) ()
   in
-  
-  helper 0 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
+  helper 1 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
 ;;
-  
+
+let generate_mapping explst =  
+  Array.of_list explst
+;;
+
+let get_map mapping index =
+  Array.get mapping index
+;;
+
+let generate_seed_formula seed mapping =
+  let rec inner_helper var index seed mapping =
+    let new_var = get_map mapping index in
+    match seed with
+    | h::tail ->
+       let newf =
+         if h=0
+         then
+           mkEqExp var new_var no_pos
+         else
+           if h=1
+           then mkGtExp var new_var no_pos
+           else mkLtExp var new_var no_pos
+       in
+       mkAnd newf (inner_helper var (index+1) tail mapping) no_pos
+    | [] -> failwith "generate_seed_formula: Invalid input"
+  in
+  let rec helper index seed mapping =
+    let var = get_map mapping index in
+    match seed with
+    | h::tail ->
+       let newf = inner_helper var (index+1) h mapping in
+       mkAnd newf (helper (index+1) tail mapping) no_pos
+    | [] -> Cpure.mkTrue no_pos
+  in
+  helper 0 seed mapping
+;;
+
+let enumerate ante conseq =
+  let lhs_p = get_pure ante in
+  let rhs_p = get_pure conseq in
+  let puref = mkAnd lhs_p rhs_p no_pos in
+  let anteTrans = new arrPredTransformer ante in
+  let conseqTrans = new arrPredTransformer conseq in
+  let vlst = (anteTrans#get_var_set)@(conseqTrans#get_var_set) in
+  let mapping = Array.of_list vlst in
+  let do_biabduction seed =
+    let seed_f = generate_seed_formula seed mapping in
+    if isSat (mkAnd seed_f puref no_pos)
+    then
+      ()
+    else
+      print_endline "Unsat"
+  in
+  let range =
+    let rec range_gen i =
+      if i<0
+      then []
+      else i::(range_gen (i-1))
+    in
+    range_gen (List.length vlst)
+  in
+  enumerate_solution_seed range do_biabduction
+;;
+             
   
 let cf_biabduction ante conseq =
   let lhs_p = get_pure ante in

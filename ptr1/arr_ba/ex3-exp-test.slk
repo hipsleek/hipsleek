@@ -18,3 +18,7 @@ infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<e & e<b & b<f & f<c & c=g &
 infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<e & e<f & f<d |- base::Aseg<e,f>.
 
 infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<e & e<f & f<d & d<g & g<h|- base::Aseg<e,f> * base::Aseg<g,h>.
+
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<e & e<f & f<d & d<g & g<h|- base::Aseg<e,f> * base::Aseg<g,h>.
+
+// infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & b<c & c<d & e<g+h & d<f & d=g+h|- base::Aseg<e,f>.

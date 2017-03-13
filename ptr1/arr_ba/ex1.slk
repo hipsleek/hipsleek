@@ -1,7 +1,7 @@
 pred_prim Aseg<start:int, end:int>.
 pred_prim Elem<start:int>.
 
-infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> * base::Elem<d> |- base::Aseg<a,b>.
+infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> * base::Elem<e> & a<b & b<c & c<d & d<e |- base::Aseg<a,b>.
 
 infer[@arr_ba] base::Aseg<a,b> & a<b & c<d & b<c |- base::Aseg<c,d>.
 
