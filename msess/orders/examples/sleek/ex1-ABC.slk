@@ -8,11 +8,13 @@ pred_prim Assume{%P}<>.
 pred_prim Guard{%P}<>.
 pred_prim Peer{%P}<>.
 
+/* Explicit channel support. At the moment parsing should work. */
+pred_sess_prot G1<A,B,C> == A->B:k(v#v=2) ;; C->B:k(2).
+pred_sess_prot G2<A,B,C> == A->B:r(v#v=5) ;; C->B:r(t#t=5).
+pred_sess_prot G3<A,B,C> == A->B:k(v#v::node<_,p> & p<0) ;; C->B:k(t#t>0& t<7). 
 
-/* add explicit channel support: */
-/* pred_sess_prot G<A,B,C> == A->B:k(v#v=1) ;; C->B:k(2).  */
-
-pred_sess_prot G<A,B,C> == A->B:v#v=1 ;; C->B:2.
+/* Supports also sending a message without specifying a channel. */
+pred_sess_prot G<A,B,C> == A->B:v#v=123 ;; C->B:123.
 
 checkentail x::Chan{@S !v#v=1}<> |- x::Chan{@S !1}<>.
 expect Valid.

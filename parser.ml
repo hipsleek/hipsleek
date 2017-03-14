@@ -706,6 +706,13 @@ let peek_dc =
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_protocol_base_chan =
+   SHGram.Entry.of_parser "peek_protocol_base_chan"
+       (fun strm ->
+           match Stream.npeek 6 strm with
+             | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_; COLON,_; _,_; OPAREN,_;] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_fence =
    SHGram.Entry.of_parser "peek_fence"
        (fun strm ->
@@ -1368,8 +1375,12 @@ prot_view_decl:
                view_session_formula = Some (Session.ProtocolSession s)}
   ]];
 
+(* e.g. v# *)
 session_msg_var:
     [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
+(* e.g. ch(<message>) *)
+session_channel:
+    [[ `IDENTIFIER channel -> channel ]];
 
 protocol_formula:
   [ "semicolon" RIGHTA
@@ -1392,6 +1403,12 @@ protocol_formula:
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
         let loc = (get_pos_camlp4 _loc 1) in
         Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
+      | peek_protocol_base_chan; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON;
+      sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
+        let loc = (get_pos_camlp4 _loc 1) in
+        (* let c = F.subst_stub_flow top_flow c in *)
+        let mv = session_extract_msg_var msg_var loc in
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
       | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
