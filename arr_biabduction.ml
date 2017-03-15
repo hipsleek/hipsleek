@@ -236,7 +236,56 @@ class arrPredTransformer initcf = object(self)
    
 end
 ;;
-    
+
+class biabduction_data (ante,conseq) =
+  let build_var_rel_map = () in
+  let build_segment_map vrmap =
+  in
+  object(self)
+    val lhsp = ante#get_pure
+    val rhsp = conseq#get_pure
+    val lhshp = ante#get_heap
+    val rhshp = conseq#get_heap
+    val var_lst = remove_dups_exp_lst ((ante#get_var_set)@(conseq_get_var_set))
+    val segment_lst = 
+    val var_num = 0
+    val segment_num = 0
+    val var_rel_map = Array.make_matrix var_num var_num (-1)
+    val segment_map = Array.make_matrix segment_num segment_num (-1)
+    method revised_var_rel_matrix_from_seed seed =
+      let new_var_rel_map = Array.copy var_rel_map in
+        let rec helper seed_head seed_tail =
+          match seed_tail with
+          | h::tail ->
+             let () = update_var_rel_matrix new_matrix lt h in
+             let () = update_var_rel_matrix new_matrix gt h in
+             helper (h::seed_head) tail
+          | [] -> new_matrix
+        in
+        helper [] seed
+
+    method build_var_rel_map =
+      
+
+    method build_segment_map =
+      let rec trans_helper slst smap index =
+          match slst with
+          | h::tail ->
+             let rec update_one curi index smap =
+               if curi<index
+               then smap.(index).(curi) <- 2-smap.(curi).(index)
+               else
+                 let () = smap.(index).(curi) <- compare_seg index curi in
+                 update_one (curi+1) index smap
+             in
+             let () = update_one 0 index smap in
+             trans_helper tail smap (index+1)
+          | [] -> ()
+        in
+        trans_helper segmentlst segment_map 0
+  end
+;;
+                
   
 (* let formula_to_arrPred cf = *)
 (*   Debug.no_1 "formula_to_arrPred" !str_cformula str_seq formula_to_arrPred cf *)
@@ -444,38 +493,36 @@ let enumerate_solution_seed vlst do_biabduction =
 ;;
 
 (* map is the matrix of variables *)
-let topological_base_enumerate vlst map =
-  let rec degree_extract_zero queue degree =
-    match degree with
-    | (i,d)::tail ->
-       if d=0
-       then degree_extract_zero (i::queue) tail
-       else
-         let (queue_new,degree_new) = degree_extract_zero queue tail in
-         (queue_new,(i,d)::degree_new)
-    | [] ->
-       (queue,[])
-  in
-  let rec degree_minus_one degree target map =
+let topological_base_enumerate badata =
+  let rec degree_minus_one degree target=
     List.map (fun (i,d) ->
-        if pointto target i
+        if badata#lt target i
         then (i,d-1)
         else (i,d)
       ) degree
-  in             
-  let rec helper queue degree seed =
-    match queue with
-    | h::tail ->
-       let (queue, degree) = degree_extract_zero queue (degree_minus_one degree h map) in
-       helper tail degree queue
-    | [] ->
-       if List.length degree = 0
-       then do_biabduction seed
-       else
-         failwith "Cycle found!"
   in
-  let segment_map = build_segment_map () in (* 1->(a,b);2->(c,c+1)... *)
-  (* directly build a index matrix or edge table*)
+  let rec pick_degree_zero_orig head tail ()=
+    match tail with
+    | ((i,d) as h)::t ->
+       if d=0
+       then
+         Some ((i,d), degree_minus_one (head@tail), pick_degree_zero_orig (head@[h]) t)
+       else
+         pick_degree_zero_orig (head@[h]) tail ()
+    | [] ->
+       None
+  in
+  let rec helper cur seed pick_degree_zero k () =
+    if cur = badata#segment_num
+    then
+      do_biabduction seed
+    else
+      match pick_degree_zero () with
+      | Some ((i,d),degree_i,pick_degree_zero_i) ->
+         helper (cur+1) (i::seed) (pick_degree_zero_orig [] degree_i) (helper cur seed pick_degree_zero_i k)
+      | None ->       
+         k ()
+  in
   let degree =
     let degree_array = Array.make length 0 in
     let () = List.iter
@@ -491,10 +538,9 @@ let topological_base_enumerate vlst map =
       (fun (i,d) item ->
         (i+1,(i,item)::d))
       (0,[]) degree_array
-  in  
-  let (queue,degree) = degree_extract_zero [] degree in
-  helper queue degree []
-        
+  in    
+  helper degree [] (pick_degree_zero_orig [] degree) (fun x -> ())  
+;;
   
 let generate_mapping explst =  
   Array.of_list explst
