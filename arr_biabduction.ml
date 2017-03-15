@@ -33,6 +33,10 @@ let mkElem b s =
   Elem (b,s)
 ;;
 
+let is_same_exp e1 e2 =
+  check_eq_exp e1 e2
+;;
+
 let isEq s1 e1 pf =
   (* pf |= s1 == e1 *)
   let rhsf = mkEqExp s1 e1 no_pos in
@@ -56,8 +60,8 @@ let incOne e =
 ;;
 
 let isSat f=
-(* Tpdispatcher.tp_is_sat f "111" *)
-  true
+  Tpdispatcher.tp_is_sat f "111"
+  
 ;;
 
 let str_exp = print_exp
@@ -219,7 +223,7 @@ class arrPredTransformer initcf = object(self)
   method get_var_set =
     let get_var_from_one_pred hf=
       if isAsegPred hf
-      then [(self#getAsegStart hf);(self#getAsegEnd hf);incOne (self#getAsegEnd hf)]
+      then [(self#getAsegStart hf);(self#getAsegEnd hf)]
       else
         if isElemPred hf
         then [(self#getElemStart hf);incOne (self#getElemStart hf)]
@@ -237,54 +241,54 @@ class arrPredTransformer initcf = object(self)
 end
 ;;
 
-class biabduction_data (ante,conseq) =
-  let build_var_rel_map = () in
-  let build_segment_map vrmap =
-  in
-  object(self)
-    val lhsp = ante#get_pure
-    val rhsp = conseq#get_pure
-    val lhshp = ante#get_heap
-    val rhshp = conseq#get_heap
-    val var_lst = remove_dups_exp_lst ((ante#get_var_set)@(conseq_get_var_set))
-    val segment_lst = 
-    val var_num = 0
-    val segment_num = 0
-    val var_rel_map = Array.make_matrix var_num var_num (-1)
-    val segment_map = Array.make_matrix segment_num segment_num (-1)
-    method revised_var_rel_matrix_from_seed seed =
-      let new_var_rel_map = Array.copy var_rel_map in
-        let rec helper seed_head seed_tail =
-          match seed_tail with
-          | h::tail ->
-             let () = update_var_rel_matrix new_matrix lt h in
-             let () = update_var_rel_matrix new_matrix gt h in
-             helper (h::seed_head) tail
-          | [] -> new_matrix
-        in
-        helper [] seed
+(* class biabduction_data (ante,conseq) = *)
+(*   let build_var_rel_map = () in *)
+(*   let build_segment_map vrmap = *)
+(*   in *)
+(*   object(self) *)
+(*     val lhsp = ante#get_pure *)
+(*     val rhsp = conseq#get_pure *)
+(*     val lhshp = ante#get_heap *)
+(*     val rhshp = conseq#get_heap *)
+(*     val var_lst = remove_dups_exp_lst ((ante#get_var_set)@(conseq_get_var_set)) *)
+(*     val segment_lst =  *)
+(*     val var_num = 0 *)
+(*     val segment_num = 0 *)
+(*     val var_rel_map = Array.make_matrix var_num var_num (-1) *)
+(*     val segment_map = Array.make_matrix segment_num segment_num (-1) *)
+(*     method revised_var_rel_matrix_from_seed seed = *)
+(*       let new_var_rel_map = Array.copy var_rel_map in *)
+(*         let rec helper seed_head seed_tail = *)
+(*           match seed_tail with *)
+(*           | h::tail -> *)
+(*              let () = update_var_rel_matrix new_matrix lt h in *)
+(*              let () = update_var_rel_matrix new_matrix gt h in *)
+(*              helper (h::seed_head) tail *)
+(*           | [] -> new_matrix *)
+(*         in *)
+(*         helper [] seed *)
 
-    method build_var_rel_map =
+(*     method build_var_rel_map = *)
       
 
-    method build_segment_map =
-      let rec trans_helper slst smap index =
-          match slst with
-          | h::tail ->
-             let rec update_one curi index smap =
-               if curi<index
-               then smap.(index).(curi) <- 2-smap.(curi).(index)
-               else
-                 let () = smap.(index).(curi) <- compare_seg index curi in
-                 update_one (curi+1) index smap
-             in
-             let () = update_one 0 index smap in
-             trans_helper tail smap (index+1)
-          | [] -> ()
-        in
-        trans_helper segmentlst segment_map 0
-  end
-;;
+(*     method build_segment_map = *)
+(*       let rec trans_helper slst smap index = *)
+(*           match slst with *)
+(*           | h::tail -> *)
+(*              let rec update_one curi index smap = *)
+(*                if curi<index *)
+(*                then smap.(index).(curi) <- 2-smap.(curi).(index) *)
+(*                else *)
+(*                  let () = smap.(index).(curi) <- compare_seg index curi in *)
+(*                  update_one (curi+1) index smap *)
+(*              in *)
+(*              let () = update_one 0 index smap in *)
+(*              trans_helper tail smap (index+1) *)
+(*           | [] -> () *)
+(*         in *)
+(*         trans_helper segmentlst segment_map 0 *)
+(*   end *)
+(* ;; *)
                 
   
 (* let formula_to_arrPred cf = *)
@@ -492,55 +496,55 @@ let enumerate_solution_seed vlst do_biabduction =
   helper 1 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
 ;;
 
-(* map is the matrix of variables *)
-let topological_base_enumerate badata =
-  let rec degree_minus_one degree target=
-    List.map (fun (i,d) ->
-        if badata#lt target i
-        then (i,d-1)
-        else (i,d)
-      ) degree
-  in
-  let rec pick_degree_zero_orig head tail ()=
-    match tail with
-    | ((i,d) as h)::t ->
-       if d=0
-       then
-         Some ((i,d), degree_minus_one (head@tail), pick_degree_zero_orig (head@[h]) t)
-       else
-         pick_degree_zero_orig (head@[h]) tail ()
-    | [] ->
-       None
-  in
-  let rec helper cur seed pick_degree_zero k () =
-    if cur = badata#segment_num
-    then
-      do_biabduction seed
-    else
-      match pick_degree_zero () with
-      | Some ((i,d),degree_i,pick_degree_zero_i) ->
-         helper (cur+1) (i::seed) (pick_degree_zero_orig [] degree_i) (helper cur seed pick_degree_zero_i k)
-      | None ->       
-         k ()
-  in
-  let degree =
-    let degree_array = Array.make length 0 in
-    let () = List.iter
-               (fun item ->
-                 (List.iter
-                    (fun sub_item ->
-                      degree_array.(sub_item)<-degree_array.(sub_item)+1
-                    )
-                    sub_item)
-               ) segment_map
-    in
-    Array.fold_left
-      (fun (i,d) item ->
-        (i+1,(i,item)::d))
-      (0,[]) degree_array
-  in    
-  helper degree [] (pick_degree_zero_orig [] degree) (fun x -> ())  
-;;
+(* (\* map is the matrix of variables *\) *)
+(* let topological_base_enumerate badata = *)
+(*   let rec degree_minus_one degree target= *)
+(*     List.map (fun (i,d) -> *)
+(*         if badata#lt target i *)
+(*         then (i,d-1) *)
+(*         else (i,d) *)
+(*       ) degree *)
+(*   in *)
+(*   let rec pick_degree_zero_orig head tail ()= *)
+(*     match tail with *)
+(*     | ((i,d) as h)::t -> *)
+(*        if d=0 *)
+(*        then *)
+(*          Some ((i,d), degree_minus_one (head@tail), pick_degree_zero_orig (head@[h]) t) *)
+(*        else *)
+(*          pick_degree_zero_orig (head@[h]) tail () *)
+(*     | [] -> *)
+(*        None *)
+(*   in *)
+(*   let rec helper cur seed pick_degree_zero k () = *)
+(*     if cur = badata#segment_num *)
+(*     then *)
+(*       do_biabduction seed *)
+(*     else *)
+(*       match pick_degree_zero () with *)
+(*       | Some ((i,d),degree_i,pick_degree_zero_i) -> *)
+(*          helper (cur+1) (i::seed) (pick_degree_zero_orig [] degree_i) (helper cur seed pick_degree_zero_i k) *)
+(*       | None ->        *)
+(*          k () *)
+(*   in *)
+(*   let degree = *)
+(*     let degree_array = Array.make length 0 in *)
+(*     let () = List.iter *)
+(*                (fun item -> *)
+(*                  (List.iter *)
+(*                     (fun sub_item -> *)
+(*                       degree_array.(sub_item)<-degree_array.(sub_item)+1 *)
+(*                     ) *)
+(*                     sub_item) *)
+(*                ) segment_map *)
+(*     in *)
+(*     Array.fold_left *)
+(*       (fun (i,d) item -> *)
+(*         (i+1,(i,item)::d)) *)
+(*       (0,[]) degree_array *)
+(*   in     *)
+(*   helper degree [] (pick_degree_zero_orig [] degree) (fun x -> ())   *)
+(* ;; *)
   
 let generate_mapping explst =  
   Array.of_list explst
@@ -614,27 +618,144 @@ let from_seed_to_map seed =
   map
 ;;
 
-let enumerate ante conseq =
+let enumerate_order vlst do_biabduction =
+  let length = List.length vlst in
+  let rec helper vlsthead vlsttail seed k ()  =
+    match vlsttail with
+    | h::tail ->
+       helper [] (vlsthead@tail) (h::seed) (helper (vlsthead@[h]) tail seed k) ()
+    | [] ->
+       if List.length seed = length
+       then 
+         k (do_biabduction seed)
+       else
+         k ()
+  in
+  helper [] vlst [] (fun x->()) ()
+;;
+
+let from_order_to_formula seed vmap =
+  let rec helper lastv seed f=
+    match seed with
+    | [h] ->
+       (mkAnd f (mkLtExp lastv (vmap#get_var h) no_pos) no_pos)       
+    | h::tail ->
+       let newv = vmap#get_var h in
+       helper newv tail (mkAnd (mkLtExp lastv newv no_pos) f no_pos)    
+    | [] ->
+       failwith "from_order_to_formula: Invalid input"
+  in
+  match seed with
+  | h1::((h2::t) as tail)->
+     (helper (vmap#get_var h1) tail (Cpure.mkTrue no_pos))
+  | _ ->
+     Cpure.mkTrue no_pos
+;;
+  
+let sort_seq sorted_var_lst seq =
+  let cmp_end_point e1 e2 =
+    let rec helper lst e1 e2 =
+      match lst with
+      | h::tail ->
+         if is_same_exp h e1
+         then -1
+         else
+           if is_same_exp h e2
+           then 1
+           else
+             helper tail e1 e2
+      | [] ->
+         failwith "cmp_end_point: Invalid input"
+    in
+    if (is_same_exp e1 e2)
+    then 0
+    else helper sorted_var_lst e1 e2
+  in
+  let cmp_two_pred p1 p2 =
+    match p1,p2 with
+    | Aseg (_,f1,t1), Aseg (_,f2,t2)
+      | Gap (_,f1,t1), Aseg (_,f2,t2)
+      | Aseg (_,f1,t1), Gap (_,f2,t2)
+      | Gap (_,f1,t1), Gap (_,f2,t2) ->
+       if (cmp_end_point f1 f2 = 0 && cmp_end_point t1 t2 = 0)
+       then 0
+       else
+         if (cmp_end_point f1 t2)=1 (* f1>t2 *)
+         then 1
+         else
+           if (cmp_end_point f2 t2)=1 (* f2>t1 *)
+           then -1
+           else failwith "sort_seq: Invalid input"
+                         
+    | Aseg (_,f1,t1), Elem (_,f2)
+      | Gap (_,f1,t1), Elem (_,f2) ->
+       if (cmp_end_point f1 f2)=1 (* f1>f2 *)
+       then 1
+       else
+         if (cmp_end_point f2 t1)=1 || (cmp_end_point f2 t1)=0 (* f2>=f1 *)
+         then -1
+         else failwith "sort_seq: Invalid input"
+    | _,_ -> failwith "cmp_two_pred: TO BE IMPLEMENTED"
+  in
+  List.sort cmp_two_pred seq
+;;
+
+
+
+
+let print_biabduction_result antiframe frame puref prooftrace=
+  let str_trace_pair (alst,clst) =
+    "  "^(str_seq alst)^" |= "^(str_seq clst)
+  in
+  let str_trace trace =
+    List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
+  in
+  print_endline"############## Results of Bi-Abduction Inference ################";
+  print_endline ("# pure: "^(!str_pformula puref));
+  print_endline ("# anti-frame: "^(str_seq antiframe));
+  print_endline ("# frame: "^(str_seq frame));
+  print_endline "############## ####### Proof Trace ###########  ################";
+  print_endline (str_trace prooftrace);
+  ()
+;;
+
+let enumerate ante conseq enumerate_method generate_seed_formula =
   let lhs_p = get_pure ante in
   let rhs_p = get_pure conseq in
   let puref = mkAnd lhs_p rhs_p no_pos in
   let anteTrans = new arrPredTransformer ante in
   let conseqTrans = new arrPredTransformer conseq in
+  let anteseq = anteTrans#formula_to_arrPred in
+  let conseqseq = conseqTrans#formula_to_arrPred in
   let vlst = remove_dups_exp_lst ((anteTrans#get_var_set)@(conseqTrans#get_var_set)) in
   let () = print_endline (str_list !str_exp vlst) in
-  let mapping = Array.of_list vlst in
+
+  let mapping =
+    object(self)
+      val m = Array.of_list vlst
+      method get_var index =
+        Array.get m index
+
+      method get_var_lst order =
+        List.map (fun index -> self#get_var index) order
+    end
+  in
   let do_biabduction seed =
-    let seed = List.rev seed in
-    (* let () = print_endline (str_list (str_list string_of_int) seed) in *)
+    (* let seed = List.rev seed in *)
+    (* let () = print_endline (str_list string_of_int seed) in *)
     let seed_f = generate_seed_formula seed mapping in
     if isSat (mkAnd seed_f puref no_pos)
     then
-      let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in
-      let () = print_endline ("puref: "^(!str_pformula puref)) in
-      print_endline "Sat"
+      let sorted_ante_seq = sort_seq (mapping#get_var_lst seed) (anteTrans#formula_to_arrPred) in
+      let sorted_conseq_seq = sort_seq (mapping#get_var_lst seed) (conseqTrans#formula_to_arrPred) in
+      let (antiframe,frame,prooftrace) = biabduction (seed_f,sorted_ante_seq) (rhs_p,sorted_conseq_seq) in
+      let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
+      print_biabduction_result cantiframe cframe seed_f prooftrace
+      (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
+      (* let () = print_endline ("puref: "^(!str_pformula puref)) in *)
+      (* print_endline "Sat" *)
     else
       ()
-      (* print_endline "Unsat" *)
   in
   let range =
     let rec range_gen i =
@@ -644,29 +765,30 @@ let enumerate ante conseq =
     in
     range_gen ((List.length vlst)-1)
   in
-  enumerate_solution_seed range do_biabduction
+  enumerate_method range do_biabduction
 ;;
-             
+  
+let enumerate_with_order ante conseq =
+  enumerate ante conseq enumerate_order from_order_to_formula
+;;
   
 let cf_biabduction ante conseq =
   let lhs_p = get_pure ante in
-  let rhs_p = get_pure conseq in
+  let rhs_p = get_pure conseq in 
   let ante_seq = (new arrPredTransformer ante)#formula_to_arrPred in
   let conseq_seq = (new arrPredTransformer conseq)#formula_to_arrPred in  
   let (antiframe,frame,prooftrace) = biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq) in
   let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
-  let str_trace_pair (alst,clst) =
-    "  "^(str_seq alst)^" |= "^(str_seq clst)
-  in
-  let str_trace trace =
-    List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
-  in
-  print_endline"############## Results of Bi-Abduction Inference ################";
-  print_endline ("# pure: "^(!str_pformula lhs_p));
-  print_endline ("# anti-frame: "^(str_seq cantiframe));
-  print_endline ("# frame: "^(str_seq cframe));
-  print_endline "############## ####### Proof Trace ###########  ################";
-  print_endline (str_trace prooftrace);
-  ()
-  (* print_endline "############## ####### ########### ###########  ################"             *)
+  print_biabduction_result cantiframe cframe lhs_p prooftrace
+  (* let str_trace trace = *)
+  (*   List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace *)
+  (* in *)
+  (* print_endline"############## Results of Bi-Abduction Inference ################"; *)
+  (* print_endline ("# pure: "^(!str_pformula lhs_p)); *)
+  (* print_endline ("# anti-frame: "^(str_seq cantiframe)); *)
+  (* print_endline ("# frame: "^(str_seq cframe)); *)
+  (* print_endline "############## ####### Proof Trace ###########  ################"; *)
+  (* print_endline (str_trace prooftrace); *)
+  (* () *)
+  (* (\* print_endline "############## ####### ########### ###########  ################"             *\) *)
 ;;

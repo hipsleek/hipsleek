@@ -7,7 +7,11 @@ infer[@arr_ba] base::Elem<a> & a<b |- base::Aseg<a,b>.
 
 infer[@arr_ba] base::Elem<a> & a<b & c<a & a<d |- base::Aseg<c,d>.
 
-infer[@arr_ba] base::Elem<a> & c<a & a<d |- base::Aseg<c,d>.
+infer[@arr_ba] base::Elem<a> |- base::Elem<b>.
 
-// The example shows that why we need >= or <= to introduce gap
-infer[@arr_ba] base::Elem<a> & a=d-1 & c<d |- base::Aseg<c,d>.  
+infer[@arr_ba] base::Aseg<a,b> & b<d |- base::Aseg<c,d>.
+
+//infer[@arr_ba] base::Elem<a> & c<a & a<d |- base::Aseg<c,d>.
+
+// // The example shows that why we need >= or <= to introduce gap
+// infer[@arr_ba] base::Elem<a> & a=d-1 & c<d |- base::Aseg<c,d>.  
