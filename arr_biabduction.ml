@@ -622,36 +622,64 @@ let from_seed_to_map seed =
 
 let enumerate_order vlst do_biabduction =
   let length = List.length vlst in
-  let rec inner_helper lst c eqlst k () =
+  (* let rec inner_helper lst c eqlst k () = *)
+  (*   match lst with *)
+  (*   | h1::(h2::tail) -> *)
+  (*      inner_helper (h2::tail) (fun l -> c l) ((h1,h2)::eqlst) (inner_helper (h2::tail) (fun l->c (h1::l)) eqlst k) () *)
+  (*   | _ -> *)
+  (*      k (do_biabduction (c lst,eqlst)) *)
+  (* in *)
+  let rec eq_inner_helper lst eqlst other_lst k do_something () =
+    (* let () = print_endline ("eq_inner_helper: "^(str_list string_of_int lst)^", "^(str_list string_of_int eqlst)^", "^(str_list string_of_int other_lst)) in *)
     match lst with
-    | h1::(h2::tail) ->
-       inner_helper (h2::tail) (fun l -> c l) ((h1,h2)::eqlst) (inner_helper (h2::tail) (fun l->c (h1::l)) eqlst k) ()
-    | _ ->
-       k (do_biabduction (c lst,eqlst))
-  in
-  let rec helper vlsthead vlsttail seed k ()  =
-    match vlsttail with
     | h::tail ->
-       helper [] (vlsthead@tail) (h::seed) (helper (vlsthead@[h]) tail seed k) ()
+       eq_inner_helper tail (h::eqlst) other_lst (eq_inner_helper tail eqlst (h::other_lst) k do_something) do_something ()
     | [] ->
-       if List.length seed = length
-       then 
-         (* k (do_biabduction seed)*)
-         k (inner_helper seed (fun l->l) [] (fun x->()) ())
-       else
-         k ()
+       do_something other_lst eqlst k
   in
-  helper [] vlst [] (fun x->()) ()
+  let rec eq_helper lst eqlst k do_something =
+    (* let () = print_endline ("eq_helper: "^(str_list string_of_int lst)^", "^(str_list (str_list string_of_int) eqlst)) in *)
+    match lst with
+    | h::tail ->
+       eq_inner_helper tail [h] [] k (fun other_lst sub_eqlst newk -> eq_helper other_lst (sub_eqlst::eqlst) newk do_something) ()
+    | [] ->
+       do_something eqlst k  
+  in
+  let sort_helper eqlst k =
+    (* let () = print_endline (str_list (str_list string_of_int) eqlst) in *)
+    let length = List.length eqlst in
+    let rec helper vlsthead vlsttail (seed,eqlst) k ()  =
+      match vlsttail with
+      | h::tail ->
+         helper [] (vlsthead@tail) (h::seed,eqlst) (helper (vlsthead@[h]) tail (seed, eqlst) k) ()
+      | [] ->
+         if List.length seed = length
+         then
+           k (do_biabduction (seed,eqlst))
+             (* k (inner_helper seed (fun l->l) [] (fun x->()) ()) *)
+         else
+           k ()
+    in
+    let vlst = List.map
+                 (fun lst ->
+                   match lst with
+                   | h::tail -> h
+                   | [] -> failwith "sort_helper: Invalid input"
+                 ) eqlst
+    in
+    helper [] vlst ([],eqlst) k ()
+  in
+  eq_helper vlst [] (fun x->()) sort_helper
 ;;
 
 let generate_eq_formula eqlst vmap=
   let rec helper eqlst f =
     match eqlst with
-    | (e1,e2)::tail ->
-       helper tail (mkAnd (mkEqExp (vmap#get_var e1) (vmap#get_var e2) no_pos) f no_pos)
-    | [] -> f
+    | e1::(e2::tail) ->
+       helper (e2::tail) (mkAnd (mkEqExp (vmap#get_var e1) (vmap#get_var e2) no_pos) f no_pos)
+    | _ -> f
   in
-  helper eqlst (Cpure.mkTrue no_pos)
+  List.fold_left (fun r item -> mkAnd (helper item (Cpure.mkTrue no_pos)) r no_pos) (Cpure.mkTrue no_pos) eqlst
 ;;  
 
 let from_order_to_formula seed vmap =
@@ -720,9 +748,6 @@ let sort_seq sorted_var_lst seq =
   List.sort cmp_two_pred seq
 ;;
 
-
-
-
 let print_biabduction_result antiframe frame puref prooftrace=
   let str_trace_pair (alst,clst) =
     "  "^(str_seq alst)^" |= "^(str_seq clst)
@@ -731,9 +756,9 @@ let print_biabduction_result antiframe frame puref prooftrace=
     List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
   in
   print_endline"############## Results of Bi-Abduction Inference ################";
-  print_endline ("# pure: "^(!str_pformula puref));
-  print_endline ("# anti-frame: "^(str_seq antiframe));
-  print_endline ("# frame: "^(str_seq frame));
+  print_endline ("|| pure: "^(!str_pformula puref));
+  print_endline ("|| anti-frame: "^(str_seq antiframe));
+  print_endline ("|| frame: "^(str_seq frame));
   print_endline "############## ####### Proof Trace ###########  ################";
   print_endline (str_trace prooftrace);
   ()
@@ -762,7 +787,7 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
       method get_order_formula seed =
         from_order_to_formula seed self
 
-      method get_eq_formula eqlst =
+      method get_eq_formula eqlst =        
         generate_eq_formula eqlst self
 
       method get_formula_from_order (seed, eqlst) =
@@ -774,7 +799,9 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
     (* let () = print_endline (str_list string_of_int seed) in *)
     (* let seed_f = generate_seed_formula seed mapping in *)
     (* let seed_eq = generate_eq_formula eqlst mapping in *)
+    (* let () = print_endline (str_list (str_list string_of_int) eqlst) in *)
     let seed_f = mapping#get_formula_from_order (seed,eqlst) in
+    (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
     if isSat (mkAnd seed_f puref no_pos)
     then
       let sorted_var_lst = mapping#get_var_lst seed in
@@ -784,11 +811,12 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
       let (antiframe,frame,prooftrace) = biabduction (seed_f,sorted_ante_seq) (rhs_p,sorted_conseq_seq) in
       let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
       print_biabduction_result cantiframe cframe seed_f prooftrace
-      (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
-      (* let () = print_endline ("puref: "^(!str_pformula puref)) in *)
-      (* print_endline "Sat" *)
+                               (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
+                               (* let () = print_endline ("puref: "^(!str_pformula puref)) in *)
+                               (* print_endline "Sat" *)
     else
       ()
+        
   in
   let range =
     let rec range_gen i =
@@ -813,15 +841,4 @@ let cf_biabduction ante conseq =
   let (antiframe,frame,prooftrace) = biabduction (lhs_p,ante_seq) (rhs_p,conseq_seq) in
   let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
   print_biabduction_result cantiframe cframe lhs_p prooftrace
-  (* let str_trace trace = *)
-  (*   List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace *)
-  (* in *)
-  (* print_endline"############## Results of Bi-Abduction Inference ################"; *)
-  (* print_endline ("# pure: "^(!str_pformula lhs_p)); *)
-  (* print_endline ("# anti-frame: "^(str_seq cantiframe)); *)
-  (* print_endline ("# frame: "^(str_seq cframe)); *)
-  (* print_endline "############## ####### Proof Trace ###########  ################"; *)
-  (* print_endline (str_trace prooftrace); *)
-  (* () *)
-  (* (\* print_endline "############## ####### ########### ###########  ################"             *\) *)
 ;;
