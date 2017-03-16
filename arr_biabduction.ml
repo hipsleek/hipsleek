@@ -554,6 +554,8 @@ let get_map mapping index =
   Array.get mapping index
 ;;
 
+
+             
 let generate_seed_formula seed mapping =
   let rec inner_helper var index seed mapping =
     let new_var = get_map mapping index in
@@ -620,6 +622,13 @@ let from_seed_to_map seed =
 
 let enumerate_order vlst do_biabduction =
   let length = List.length vlst in
+  let rec inner_helper lst c eqlst k () =
+    match lst with
+    | h1::(h2::tail) ->
+       inner_helper (h2::tail) (fun l -> c l) ((h1,h2)::eqlst) (inner_helper (h2::tail) (fun l->c (h1::l)) eqlst k) ()
+    | _ ->
+       k (do_biabduction (c lst,eqlst))
+  in
   let rec helper vlsthead vlsttail seed k ()  =
     match vlsttail with
     | h::tail ->
@@ -627,12 +636,23 @@ let enumerate_order vlst do_biabduction =
     | [] ->
        if List.length seed = length
        then 
-         k (do_biabduction seed)
+         (* k (do_biabduction seed)*)
+         k (inner_helper seed (fun l->l) [] (fun x->()) ())
        else
          k ()
   in
   helper [] vlst [] (fun x->()) ()
 ;;
+
+let generate_eq_formula eqlst vmap=
+  let rec helper eqlst f =
+    match eqlst with
+    | (e1,e2)::tail ->
+       helper tail (mkAnd (mkEqExp (vmap#get_var e1) (vmap#get_var e2) no_pos) f no_pos)
+    | [] -> f
+  in
+  helper eqlst (Cpure.mkTrue no_pos)
+;;  
 
 let from_order_to_formula seed vmap =
   let rec helper lastv seed f=
@@ -738,16 +758,29 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
 
       method get_var_lst order =
         List.map (fun index -> self#get_var index) order
+
+      method get_order_formula seed =
+        from_order_to_formula seed self
+
+      method get_eq_formula eqlst =
+        generate_eq_formula eqlst self
+
+      method get_formula_from_order (seed, eqlst) =
+        mkAnd (self#get_order_formula seed) (self#get_eq_formula eqlst) no_pos
     end
   in
-  let do_biabduction seed =
+  let do_biabduction (seed,eqlst) =
     (* let seed = List.rev seed in *)
     (* let () = print_endline (str_list string_of_int seed) in *)
-    let seed_f = generate_seed_formula seed mapping in
+    (* let seed_f = generate_seed_formula seed mapping in *)
+    (* let seed_eq = generate_eq_formula eqlst mapping in *)
+    let seed_f = mapping#get_formula_from_order (seed,eqlst) in
     if isSat (mkAnd seed_f puref no_pos)
     then
-      let sorted_ante_seq = sort_seq (mapping#get_var_lst seed) (anteTrans#formula_to_arrPred) in
-      let sorted_conseq_seq = sort_seq (mapping#get_var_lst seed) (conseqTrans#formula_to_arrPred) in
+      let sorted_var_lst = mapping#get_var_lst seed in
+      let () = print_endline (str_list !str_exp sorted_var_lst) in
+      let sorted_ante_seq = sort_seq sorted_var_lst (anteTrans#formula_to_arrPred) in
+      let sorted_conseq_seq = sort_seq sorted_var_lst (conseqTrans#formula_to_arrPred) in
       let (antiframe,frame,prooftrace) = biabduction (seed_f,sorted_ante_seq) (rhs_p,sorted_conseq_seq) in
       let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
       print_biabduction_result cantiframe cframe seed_f prooftrace
