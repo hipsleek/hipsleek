@@ -2815,6 +2815,7 @@ let norm_slk_formula form =
   let form = formula_norm form in
   form
 
+
 let norm_slk_formula form =
   let pr = !F.print_formula in
   Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form

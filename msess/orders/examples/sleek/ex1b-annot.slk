@@ -1,0 +1,22 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+/* orders */
+pred_prim Event@event<peer,id:int>.
+pred_prim HB@hb<peer1,id1:int,peer2,id2:int>.
+pred_prim CB@cb<peer1,id1:int,peer2,id2:int>.
+
+/* protocol lang related */
+pred_prim Assume@assume{%P}<>.
+pred_prim Guard@guard{%P}<>.
+pred_prim Peer@peer{%P}<>.
+
+/* Explicit channel support. At the moment parsing should work. */
+pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; C->B:k(2).
+
+checkentail c::Chan{@S G1<A,B,C,k>}<> |- emp.
+expect Valid.
+print_residue.
+
+
+
