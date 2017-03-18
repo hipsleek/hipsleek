@@ -795,11 +795,6 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
     end
   in
   let do_biabduction (seed,eqlst) =
-    (* let seed = List.rev seed in *)
-    (* let () = print_endline (str_list string_of_int seed) in *)
-    (* let seed_f = generate_seed_formula seed mapping in *)
-    (* let seed_eq = generate_eq_formula eqlst mapping in *)
-    (* let () = print_endline (str_list (str_list string_of_int) eqlst) in *)
     let seed_f = mapping#get_formula_from_order (seed,eqlst) in
     (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
     if isSat (mkAnd seed_f puref no_pos)
@@ -828,6 +823,181 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
   in
   enumerate_method range do_biabduction
 ;;
+
+type 'a seq =
+  | Seq of ('a * ('a seq))
+  | Star of (('a seq) list)
+  | Emp
+;;
+
+let mkSeq pred seq =
+  Seq (pred, seq)
+;;
+
+type vrelation =
+  | Gt
+  | Eq
+  | Lt
+  | Unk
+;;
+
+let po_biabduction ante conseq =
+  let checkSat vmap =
+    true
+  in
+  let relation e1 e2 =
+    Gt
+  in
+  let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
+    let split_case ante conseq vmap ba k e1 e2 =
+      let vmapgt = vmap#extend (Gt,e1,e2) in
+      let vmapeq = vmap#extend (Eq,e1,e2) in
+      let vmaplt = vmap#extend (Lt,e1,e2) in
+      helper ante conseq vmapgt ba (helper ante conseq vmapeq ba (helper ante conseq vmaplt ba k))
+    in
+    if checkSat vmap            (* An incremental checking procedure here *)
+    then
+      match ante, conseq with
+      | Seq (h1,tail1), Seq (h2,tail2) ->
+         (
+           match h1,h2 with
+           | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2 
+                | Gt -> helper (mkSeq (mkGap b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   (
+                     match relation e1 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k e1 e2
+                     | Gt -> helper (mkSeq (mkAseg b1 e2 e1) tail1) tail2 vmap ba k
+                     | Lt -> helper tail1 (mkSeq (mkAseg b2 e1 e2) tail2) vmap ba k
+                     | Eq -> helper tail1 tail2 vmap ba k
+                   )
+              )
+           | Aseg (b1, s1, e1), Elem (b2, s2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2
+                | Gt -> helper (mkSeq (mkGap b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   (
+                     match relation s1 e1 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k s1 e1 (* can be optimized with two cases only *)
+                     | Lt -> helper (mkSeq (mkAseg b1 (incOne s1) e1) tail1) tail2 vmap ba k
+                     | Eq -> helper tail1 conseq vmap ba k
+                     | Gt -> failwith "Aseg vs. Elem: Invalid input"
+                   )
+              )
+           | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Eq ->
+                   ( match relation e1 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k e1 e2                         
+                     | Gt -> helper (mkSeq (mkAseg b1 e2 e1) tail1) tail2 vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                     | Lt -> helper tail1 (mkSeq (mkGap b2 e1 e2) tail2) vmap (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k
+                     | Eq -> helper tail1 tail2 vmap ba k
+                   )               
+                | _ -> failwith "Aseg vs. Gap: TO BE IMPLEMENTED"
+              )
+           | Elem (b1, s1), Elem (b2, s2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2
+                | Gt -> helper (mkSeq (mkGap b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 s2) conseq) vmap ba k
+                | Eq -> helper tail1 tail2 vmap ba k
+              )
+           | Elem (b1, s1), Aseg (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2
+                | Gt -> helper (mkSeq (mkGap b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   ( match relation s2 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k s1 e2 (* can be optimized with two cases only *)
+                     | Lt -> helper tail1 (mkSeq (mkAseg b2 (incOne s2) e2) tail2) vmap ba k
+                     | Eq -> helper ante tail2 vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                   )
+              )
+           | Elem (b1, s1), Gap (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2
+                | Eq ->
+                   ( match relation s2 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k s2 e2 (* Is it possible that s2>e2? *)
+                     | Lt -> helper tail1 (mkSeq (mkGap b2 (incOne s2) e2) tail2) vmap (antiframe,(frame#add h1),prooftrace) k
+                     | Eq -> helper ante tail2 vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
+                   )                
+                | Gt -> helper (mkSeq (mkGap b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 e2) tail2) vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
+              )
+           | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2 
+                | Gt -> helper (mkSeq (mkGap b1 s2 e1) tail1) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 e2) tail2) vmap ba k
+                | Eq ->
+                   (
+                     match relation e1 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k e1 e2                         
+                     | Gt -> helper (mkSeq (mkGap b1 e2 e1) tail1) tail2 vmap ba k
+                     | Lt -> helper tail1 (mkSeq (mkGap b2 e1 e2) tail2) vmap ba k
+                     | Eq -> helper tail1 tail2 vmap ba k
+                   )
+              )
+           | Gap (b1, s1, e1), Elem (b2, s2) ->
+              ( match relation s1 s2 with
+                | Unk ->
+                   split_case ante conseq vmap ba k s1 s2
+                | Eq ->
+                   ( match relation s1 e1 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k s1 e1
+                     | Lt -> helper (mkSeq (mkGap b1 (incOne s1) e1) tail1) tail2 vmap ((antiframe#add h2),frame,prooftrace) k
+                     | Eq -> helper tail1 conseq vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                   )                
+                | Gt -> helper (mkSeq (mkGap b1 s2 e1) tail1) conseq vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
+                | Lt -> helper ante (mkSeq (mkGap b2 s1 s2) conseq) vmap ba k
+              )
+           | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
+              ( match relation s1 s2 with
+                | Eq ->
+                   ( match relation e1 e2 with
+                     | Unk ->
+                        split_case ante conseq vmap ba k e1 e2
+                     | Gt -> helper (mkSeq (mkGap b1 e2 e1) tail1) tail2 vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+                     | Lt -> helper tail1 (mkSeq (mkAseg b2 e1 e2) tail2) vmap (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k
+                     | Eq -> helper tail1 tail2 vmap ba k
+                   )
+                | _ -> failwith "Aseg vs. Gap: TO BE IMPLEMENTED"
+              )
+         )
+      | Star plst, _ ->
+         ( match plst with
+           | [] -> helper Emp conseq vmap ba k
+           | 
+      | Emp, _ -> ()
+      | _ , Emp -> ()      
+      | Seq _, Star _ -> failwith "Seq vs. Set: TO BE IMPLEMENTED"
+  in
+  helper ante conseq vmap (antiframe,frame,prooftrace) (fun x->())
+;;
+                         
   
 let enumerate_with_order ante conseq =
   enumerate ante conseq enumerate_order from_order_to_formula
