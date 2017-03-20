@@ -905,12 +905,15 @@ end
 
 module Module_Rel_Matrix = Map.Make(Pair_index);;
   
-let lazyVMap puref =
-  object(self)        
+class lazyVMap (puref,varlst,initmatrix) =
+  object(self)
     val mutable formula = puref
-    val rel_matrix = Module_Rel_Matrix.empty (* (int, int) -> int *)
-    val mutable var_to_index = []
-    val mutable index_counter = 0
+    (* val rel_matrix = Module_Rel_Matrix.empty (\* (int, int) -> int *\) *)
+    val rel_matrix = initmatrix (* Array.make_matrix (List.length varlst) 7 (\* all of them are 111 *\) *)
+    val var_to_index = varlst
+    method checkSat newf =
+      true
+
     (* What's the difference between val and method? *)
     (* val test= *)
     (*   fun a b -> 0 *)
@@ -919,18 +922,16 @@ let lazyVMap puref =
     method get_rel i1 i2 =
       if i1<=i2
       then
-        try
-          Module_Rel_Matrix.find (i1,i2) rel_matrix
-        with Not_found -> 0     (* Unk *)
+        rel_matrix.(i1).(i2)        
       else
-        lnot (self#get_rel i2 i1)
+        lnot (rel_matrix.(i2).(i1))
              
     (* exp -> int option *)
     method get_index e =
       try
         Some (snd (List.find (fun (item,index) -> is_same_exp item e) var_to_index))
       with Not_found ->
-        None
+        failwith "lazyVMap.get_index: Not_found"
     (* ;; Not Inside Object!  *)
 
     method compare_points s1 s2 =
@@ -940,27 +941,43 @@ let lazyVMap puref =
          Unk
       | Some i1, Some i2 -> decode_vrelation (self#get_rel i1 i2)
 
+    method update_matrix relcode e1 e2 =
+      let i,j =
+        match self#get_index e1, self#get_index e2 with
+        | Some n1, Some n2 -> n1, n2
+        | _ , _ -> failwith "update_matrix: index not found"
+      in
+      if i<=j
+      then rel_matrix.(i).(j) <- relcode
+      else rel_matrix.(j).(i) <- lnot relcode                         
+                                             
+    method private copy lst =
+      let newVmap = new lazyVMap (puref,var_to_index,rel_matrix) in
+      List.iter (fun (rel_code,e1,e2) -> newVmap#update_matrix rel_code e1 e2) lst;
+      newVmap        
+
     method extend (rel,e1,e2) =
       (* TO DO: Not correctly implemented *)
-      let extend_index e =
-        (* This will only be called when it is assured that the input exp is new *)
-        var_to_index <- ((e1,index_counter)::var_to_index);
-        index_counter <- index_counter+1;
-        index_counter-1
+      let get_formula rel e1 e2 =
+        match rel with
+        | Gt -> mkGtExp e1 e2 no_pos
+        | _ -> failwith "get_formula: TO BE IMPLEMENTED"
       in
-      let i1,i2 =
-        match self#get_index e1, self#get_index e2 with
-        | Some n1, Some n2 -> n1,n2
-        | Some n1, None ->
-           n1, extend_index e2
-        | None , Some n2 ->
-           extend_index e1, n2
-        | None , None ->
-           extend_index e1, extend_index e2
-      in
-      match rel with
-      | Unk -> failwith "lazyVMap.extend: Invalid input"
-      | _ -> Module_Rel_Matrix.add (i1,i2) (encode_vrelation rel)
+      let rel_code = encode_vrelation rel in
+      let orig_rel_code = encode_vrelation (self#compare_points e1 e2) in
+      let new_rel_code = rel_code land orig_rel_code in
+      if new_rel_code = orig_rel_code
+      then Some (self#copy [])                   (* not changed *)
+      else
+        if new_rel_code = 0
+        then
+          None
+        else
+          if self#checkSat (get_formula (decode_vrelation new_rel_code) e1 e2)
+          then
+            Some (self#copy [(new_rel_code,e1,e2)])
+          else
+            None
 
     (* For segments (Aseg, Gap or Elem), there are only Gt, Lt or Unk *)
     method add_segment_lt p1 p2 =
@@ -1039,10 +1056,6 @@ let lazyVMap puref =
   
   
 let po_biabduction ante conseq =
-  let checkSat vmap =
-    true
-  in
-  
   let rec bubble_push p vmap k =
     (* As long as some order is forced, empty segment will not be a problem *)
     let rec bubble_push_helper plst vmap k =
@@ -1107,7 +1120,7 @@ let po_biabduction ante conseq =
   in
   
   let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
-    if checkSat vmap            (* An incremental checking procedure here *)
+    if vmap#checkSat           (* An incremental checking procedure here *)
     then
       match ante, conseq with
       | Emp, _
@@ -1152,7 +1165,7 @@ let po_biabduction ante conseq =
                         k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
                         helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
                         ()
-                     | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k
+                     | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
                      | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k
                      | Gt -> failwith "Aseg vs. Elem: Invalid input"
                    )
@@ -1320,7 +1333,14 @@ let po_biabduction ante conseq =
       ()
   in
   ()
-  (* helper ante conseq vmap (antiframe,frame,prooftrace) (fun x->()) *)
+  (* helper ante conseq vmap (antiframe,frame,prooftrace) *)
+  (*        (fun lefta leftc newba newvmap -> *)
+  (*          match lefta, leftc with *)
+  (*          | Emp, Emp -> print *)
+  (*          | Emp, _ -> *)
+  (*          | _ , Emp -> *)
+  (*          | _ , _ -> failwith "po_biabduction: Invalid input" *)
+          
 ;;
          
 
