@@ -856,6 +856,13 @@ type vrelation =
   | Unk
 ;;
 
+let encode_vrelation i =
+  match i with
+  | 0 -> Lt
+  | 1 -> Eq
+  | 2 -> Gt
+  | _ -> failwith "encode_vrelation: Invalid input"
+
 (* let po_biabduction ante conseq = *)
 (*   let checkSat vmap = *)
 (*     true *)
@@ -990,6 +997,84 @@ type vrelation =
   (*   | [] -> k [] plain_newk *)
 (* in *)
 
+module Pair_index = struct
+  type t = (int*int)
+  let compare (t11,t12) (t21,t22) =
+    if t11<t21
+    then -1
+    else
+      if t11=t21
+      then
+        if t12<t22
+        then -1
+        else
+          if t12=t22
+          then 0
+          else 1
+      else
+        1
+end
+;;
+
+module Module_Rel_Matrix = Map.Make(Pair_index);;
+  
+let lazyVMap puref =
+
+  object(self)
+        
+    val mutable formula = puref
+    val rel_matrix = Module_Rel_Matrix.empty
+                       
+    method get_rel i1 i2 =
+      if i1<i2
+      then
+        try
+          Some (Module_Rel_Matrix.find (i1,i2) rel_matrix)
+        with Not_found -> None
+      else
+        if i1>i2
+        then
+          match self#get_rel i2 i1 with
+          | Some rel_num -> Some (2-rel_num)
+          | None -> None                      
+        else failwith "lazyVMap.get_rel: Invalid input"
+
+    method get_index e =
+      Some 0
+
+    method extend_index (rel,e1,e2) =
+      ()
+
+    method extend (rel,e1,e2) =
+      let i1,i2 =
+        match self#get_index e1, self#get_index e2 with
+        | Some n1, Some n2 -> n1,n2
+        | _, _ -> failwith "lazyVMap.extend: Invalid input"
+      in
+      match rel with
+      | Gt -> Module_Rel_Matrix.add (i1, i2) 2
+      | Eq -> Module_Rel_Matrix.add (i1, i2) 1
+      | Lt -> Module_Rel_Matrix.add (i1, i2) 0
+      | Unk -> failwith "lazyVMap.extend: Invalid input"
+
+    method add_segment_gt p1 p2 =
+      ()
+
+    method compare_segment p1 p2 =
+      Unk
+        
+    method compare_points s1 s2 =
+      match self#get_index s1, self#get_index s2 with
+      | None, _ 
+        | _, None ->
+         Unk
+      | Some i1, Some i2 ->
+         (match self#get_rel i1 i2 with
+          | Some r -> encode_vrelation r
+          | None -> Unk )    
+  end
+;;
+  
   
 let po_biabduction ante conseq =
   let checkSat vmap =
@@ -1049,15 +1134,6 @@ let po_biabduction ante conseq =
     | _ , _ -> failwith "compare: TO BE IMPLEMENTED"
   in
   let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
-    (* let split_case ante conseq vmap ba k e1 e2 = *)
-    (*   let vmapgt = vmap#extend (Gt,e1,e2) in *)
-    (*   let vmapeq = vmap#extend (Eq,e1,e2) in *)
-    (*   let vmaplt = vmap#extend (Lt,e1,e2) in *)
-    (*   helper ante conseq vmapgt ba *)
-    (*          (fun _ _ -> *)
-    (*            helper ante conseq vmapeq ba *)
-    (*                   (fun _ _ -> helper ante conseq vmaplt ba k)) *)
-    (* in *)
     if checkSat vmap            (* An incremental checking procedure here *)
     then
       match ante, conseq with
