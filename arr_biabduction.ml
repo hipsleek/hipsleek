@@ -851,17 +851,478 @@ let mkStar plst =
 
 type vrelation =
   | Gt
+  | Gte
   | Eq
   | Lt
+  | Lte
+  | Neq
   | Unk
 ;;
 
-let encode_vrelation i =
+(* < = > *)
+let decode_vrelation i =
   match i with
-  | 0 -> Lt
-  | 1 -> Eq
-  | 2 -> Gt
+  | 0
+    | 7 -> Unk                  (* 000, 111 *)
+  | 1 -> Gt                     (* 001 *)
+  | 2 -> Eq                     (* 010 *)
+  | 3 -> Gte                    (* 011 *)
+  | 4 -> Lt                     (* 100 *)
+  | 5 -> Neq                    (* 101 *)
+  | 6 -> Lte                    (* 110 *)
   | _ -> failwith "encode_vrelation: Invalid input"
+;;
+
+let encode_vrelation rel =
+  match rel with
+  | Gt -> 1
+  | Gte -> 3
+  | Eq -> 2
+  | Lt -> 4
+  | Lte -> 6
+  | Neq -> 5
+  | Unk -> 0
+;;
+  
+module Pair_index = struct
+  type t = (int*int)
+  let compare (t11,t12) (t21,t22) =
+    if t11<t21
+    then -1
+    else
+      if t11=t21
+      then
+        if t12<t22
+        then -1
+        else
+          if t12=t22
+          then 0
+          else 1
+      else
+        1
+end
+;;
+
+module Module_Rel_Matrix = Map.Make(Pair_index);;
+  
+let lazyVMap puref =
+  object(self)        
+    val mutable formula = puref
+    val rel_matrix = Module_Rel_Matrix.empty (* (int, int) -> int *)
+    val mutable var_to_index = []
+    val mutable index_counter = 0
+    (* What's the difference between val and method? *)
+    (* val test= *)
+    (*   fun a b -> 0 *)
+
+    (* int , int -> int *)
+    method get_rel i1 i2 =
+      if i1<=i2
+      then
+        try
+          Module_Rel_Matrix.find (i1,i2) rel_matrix
+        with Not_found -> 0     (* Unk *)
+      else
+        lnot (self#get_rel i2 i1)
+             
+    (* exp -> int option *)
+    method get_index e =
+      try
+        Some (snd (List.find (fun (item,index) -> is_same_exp item e) var_to_index))
+      with Not_found ->
+        None
+    (* ;; Not Inside Object!  *)
+
+    method compare_points s1 s2 =
+      match self#get_index s1, self#get_index s2 with
+      | None, _ 
+        | _, None ->
+         Unk
+      | Some i1, Some i2 -> decode_vrelation (self#get_rel i1 i2)
+
+    method extend (rel,e1,e2) =
+      (* TO DO: Not correctly implemented *)
+      let extend_index e =
+        (* This will only be called when it is assured that the input exp is new *)
+        var_to_index <- ((e1,index_counter)::var_to_index);
+        index_counter <- index_counter+1;
+        index_counter-1
+      in
+      let i1,i2 =
+        match self#get_index e1, self#get_index e2 with
+        | Some n1, Some n2 -> n1,n2
+        | Some n1, None ->
+           n1, extend_index e2
+        | None , Some n2 ->
+           extend_index e1, n2
+        | None , None ->
+           extend_index e1, extend_index e2
+      in
+      match rel with
+      | Unk -> failwith "lazyVMap.extend: Invalid input"
+      | _ -> Module_Rel_Matrix.add (i1,i2) (encode_vrelation rel)
+
+    (* For segments (Aseg, Gap or Elem), there are only Gt, Lt or Unk *)
+    method add_segment_lt p1 p2 =
+      match p1, p2 with
+      | Aseg (b1,s1,e1), Aseg (b2,s2,e2)
+        | Gap (b1,s1,e1), Gap (b2,s2,e2)
+        | Aseg (b1,s1,e1), Gap (b2,s2,e2)
+        | Gap (b1,s1,e1), Aseg (b2,s2,e2) ->        
+         self#extend (Lte,e1,s2)
+      | Aseg (b1,_,e1), Elem (b2,s2)
+        | Gap (b1,_,e1), Elem (b2,s2)
+        | Elem (b2,e1), Gap (b1,s2,_)
+        | Elem (b2,e1), Aseg (b1,s2,_) ->
+         self#extend (Lte,e1,s2)
+      | Elem (b1,s1), Elem (b2,s2) ->
+         self#extend (Lte,s1,s2)
+
+    method compare_segment p1 p2 =
+      match p1, p2 with
+      | Aseg (b1,s1,e1), Aseg (b2,s2,e2)
+        | Gap (b1,s1,e1), Gap (b2,s2,e2)
+        | Aseg (b1,s1,e1), Gap (b2,s2,e2)
+        | Gap (b1,s1,e1), Aseg (b2,s2,e2) ->         
+         ( match self#compare_points e1 s2 with
+           | Unk
+             | Gte
+             | Neq->
+              ( match self#compare_points e2 s1 with
+                | Unk
+                  | Gte
+                  | Neq -> Unk
+                | Gt -> Lt     (* A trick to force the order, but is it necessary to update the matrix? *)
+                | Lt
+                  | Lte
+                  | Eq-> Gt
+              )
+           | Lt
+             | Lte
+             | Eq -> Lt
+           | Gt -> Gt
+         )
+      | Aseg (b1,s1,e1), Elem (b2,s2)
+        | Gap (b1,s1,e1), Elem (b2,s2)
+        | Elem (b2,s2), Gap (b1,s1,e1)
+        | Elem (b2,s2), Aseg (b1,s1,e1) ->
+         ( match self#compare_points e1 s2 with
+           | Unk
+             | Gte
+             | Neq ->
+              ( match self#compare_points s1 s2 with
+                | Unk
+                  | Neq -> Unk
+                | Gt
+                  | Gte -> Gt      
+                | Lt
+                  | Lte -> Lt (* TO DO: need to force the relation *)
+                | Eq -> failwith" compare_segment: Overlapping exists"
+              )
+           | Lt
+             | Lte
+             | Eq-> Lt
+           | Gt -> Gt (* TO DO: need to force the relation *)           
+         )
+      | Elem (b1,s1), Elem (b2,s2) ->
+         ( match self#compare_points s1 s2 with
+           | Unk
+             | Neq-> Unk
+           | Gt
+             | Gte -> Gt
+           | Lt
+             | Lte -> Lt
+           | Eq -> failwith "compare_segment: Overlapping exists"
+         )
+  end
+;;
+  
+  
+let po_biabduction ante conseq =
+  let checkSat vmap =
+    true
+  in
+  
+  let rec bubble_push p vmap k =
+    (* As long as some order is forced, empty segment will not be a problem *)
+    let rec bubble_push_helper plst vmap k =
+      match plst with
+      | h::tail ->
+         bubble_push_helper tail
+                            vmap
+                            ( fun (x,newvmap) ->
+                              match x with
+                              | h1::tail ->
+                                 compare h h1 vmap
+                                         ( fun (x1,p1,p2) ->
+                                           match x1 with
+                                           | Unk ->
+                                              k ((h::(h1::tail)), newvmap#add_segment_lt p1 p2);
+                                              k ((h1::(h::tail)), newvmap#add_segment_lt p2 p1);
+                                              ()
+                                           | Gt -> k ((h1::(h::tail)), newvmap)
+                                           | Lt -> k ((h::(h1::tail)), newvmap)
+                                           | _ -> failwith "bubble_push_helper: Invalid input"
+                                         )
+                              | [] -> k ([h],vmap)
+                            )
+      | [] -> k ([],vmap)
+    in
+    match p with
+    | Star plst ->
+       bubble_push_helper plst vmap
+                          ( fun (x,newvmap) ->
+                            match x with
+                            | h::tail -> k ((mkSeq h (mkStar tail)),newvmap)
+                            | [] -> k (Emp,newvmap)
+                          )
+    | Seq (l,r) ->
+       bubble_push l vmap (fun (x,newvmap) -> k ((mkSeq x r),newvmap))
+    | Basic _
+      | Emp -> k (p,vmap)    
+                    
+  and compare h1 h2 vmap k =
+    match h1, h2 with
+    | Emp, _
+      | _ , Emp -> failwith "compare: Invalid Emp case"
+    | Basic p1, Basic p2 ->
+       k ((vmap#compare_segment p1 p2),p1,p2)
+    | Basic p, Seq (l,r) ->
+       compare h1 l vmap k
+    | Seq (l,r) , Basic p ->
+       compare l h2 vmap k
+    | Seq (l1,r1) , Seq (l2,r2) ->
+       compare l1 l2 vmap k
+    | Star plst , _ ->
+       bubble_push h1 vmap
+                   ( fun (x,newvmap)->
+                     compare x h2 newvmap k
+                   )
+    | _ , Star plst ->
+       bubble_push h2 vmap
+                   ( fun (x,newvmap)->
+                     compare h1 x newvmap k
+                   )
+    
+  in
+  
+  let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
+    if checkSat vmap            (* An incremental checking procedure here *)
+    then
+      match ante, conseq with
+      | Emp, _
+        | _ ,Emp -> k ante conseq ba vmap
+                      
+      | Basic h1, Basic h2 ->              
+         ( match h1, h2 with
+           | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   (
+                     match vmap#compare_points e1 e2 with
+                     | Unk | Lte | Gte | Neq->
+                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                        ()                     
+                     | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap ba k
+                     | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap ba k
+                     | Eq -> helper Emp Emp vmap ba k
+                   )
+              )
+           | Aseg (b1, s1, e1), Elem (b2, s2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   (
+                     match vmap#compare_points s1 e1 with
+                     | Unk | Lte | Gte | Neq ->
+                        k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
+                        helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
+                        ()
+                     | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k
+                     | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k
+                     | Gt -> failwith "Aseg vs. Elem: Invalid input"
+                   )
+              )
+           | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Eq ->
+                   ( match vmap#compare_points e1 e2 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                        ()                     
+                     | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                     | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k
+                     | Eq -> helper Emp Emp vmap ba k
+                   )
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap ba k
+              )
+           | Elem (b1, s1), Elem (b2, s2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+                | Eq -> helper Emp Emp vmap ba k
+              )
+           | Elem (b1, s1), Aseg (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+                | Eq ->
+                   ( match vmap#compare_points s2 e2 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
+                        ()
+                     | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap ba k
+                     | Eq -> helper ante Emp vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                   )
+              )
+           | Elem (b1, s1), Gap (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Eq ->
+                   ( match vmap#compare_points s2 e2 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
+                        ()
+                     | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap (antiframe,(frame#add h1),prooftrace) k
+                     | Eq -> helper ante Emp vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
+                   )
+                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+                | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
+              )
+           | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap ba k
+                | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap ba k
+                | Eq ->
+                   (
+                     match vmap#compare_points e1 e2 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                        ()                     
+                     | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap ba k
+                     | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap ba k
+                     | Eq -> helper Emp Emp vmap ba k
+                   )
+              )
+           | Gap (b1, s1, e1), Elem (b2, s2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()                   
+                | Eq ->
+                   ( match vmap#compare_points s1 e1 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante conseq (vmap#extend (Eq,s1,e1)) ba k;
+                        helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
+                        ()                          
+                     | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap ((antiframe#add h2),frame,prooftrace) k
+                     | Eq -> helper Emp conseq vmap ba k
+                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                   )
+                | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+              )
+           | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
+              ( match vmap#compare_points s1 s2 with
+                | Unk | Lte | Gte | Neq ->
+                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                   ()
+                | Eq ->
+                   ( match vmap#compare_points e1 e2 with
+                     | Unk | Lte | Gte | Neq ->
+                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                        ()                                             
+                     | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+                     | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k
+                     | Eq -> helper Emp Emp vmap ba k
+                   )
+                | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap ba k
+                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+              )
+         )
+           
+      | Seq (l1,r1), _ ->
+         (* TO DO: Less switching can be achieved *)
+         let newk lefta leftc newba newvmap =
+           match lefta, leftc with
+           | Emp, Emp -> helper r1 Emp newvmap newba k
+           | Emp, _ -> helper r1 leftc newvmap newba k
+           | _, Emp -> helper (mkSeq lefta r1) Emp newvmap newba k
+           | _, _ -> failwith "Seq vs. Seq: Invalid input"
+         in
+         helper l1 conseq vmap ba newk
+      | Star plst, _ -> bubble_push ante vmap (fun (sorted_ante,newvmap) -> helper sorted_ante conseq newvmap ba k)
+      | _ , Seq (l2,r2) ->
+         (* TO DO: Less switching can be achieved *)
+         let newk lefta leftc newba newvmap =
+           match lefta, leftc with
+           | Emp, Emp -> helper Emp r2 newvmap newba k
+           | Emp, _ -> helper Emp (mkSeq leftc r2) newvmap newba k
+           | _, Emp -> helper lefta r2 newvmap newba k
+           | _, _ -> failwith "Seq vs. Seq: Invalid input"
+         in
+         helper ante l2 vmap ba newk         
+      | _, Star plst -> bubble_push ante vmap (fun (sorted_conseq,newvmap) -> helper ante sorted_conseq newvmap ba k)
+    else
+      ()
+  in
+  ()
+  (* helper ante conseq vmap (antiframe,frame,prooftrace) (fun x->()) *)
+;;
+         
 
 (* let po_biabduction ante conseq = *)
 (*   let checkSat vmap = *)
@@ -997,413 +1458,7 @@ let encode_vrelation i =
   (*   | [] -> k [] plain_newk *)
 (* in *)
 
-module Pair_index = struct
-  type t = (int*int)
-  let compare (t11,t12) (t21,t22) =
-    if t11<t21
-    then -1
-    else
-      if t11=t21
-      then
-        if t12<t22
-        then -1
-        else
-          if t12=t22
-          then 0
-          else 1
-      else
-        1
-end
-;;
-
-module Module_Rel_Matrix = Map.Make(Pair_index);;
   
-let lazyVMap puref =
-
-  object(self)
-        
-    val mutable formula = puref
-    val rel_matrix = Module_Rel_Matrix.empty
-    val mutable var_to_index = []
-    val mutable index_counter = 0
-    (* What's the difference between val and method? *)
-    (* val test= *)
-    (*   fun a b -> 0 *)
-                       
-    method get_rel i1 i2 =
-      if i1<i2
-      then
-        try
-          Some (Module_Rel_Matrix.find (i1,i2) rel_matrix)
-        with Not_found -> None
-      else
-        if i1>i2
-        then
-          match self#get_rel i2 i1 with
-          | Some rel_num -> Some (2-rel_num)
-          | None -> None                      
-        else failwith "lazyVMap.get_rel: Invalid input"
-
-    method get_index e =
-      try
-        Some (snd (List.find (fun (item,index) -> is_same_exp item e) var_to_index))
-      with Not_found ->
-        None
-    (* ;; Not Inside Object!  *)
-
-    method extend_index e1 =
-      var_to_index <- ((e1,index_counter)::var_to_index);
-      index_counter <- index_counter+1;
-      index_counter-1
-
-    method extend (rel,e1,e2) =
-      let i1,i2 =
-        match self#get_index e1, self#get_index e2 with
-        | Some n1, Some n2 -> n1,n2
-        | Some n1, None ->
-           n1, self#extend_index e2
-        | None , Some n2 ->
-           self#extend_index e1, n2
-        | None , None ->
-           self#extend_index e1, self#extend_index e2
-      in
-      match rel with
-      | Gt -> Module_Rel_Matrix.add (i1, i2) 2
-      | Eq -> Module_Rel_Matrix.add (i1, i2) 1
-      | Lt -> Module_Rel_Matrix.add (i1, i2) 0
-      | Unk -> failwith "lazyVMap.extend: Invalid input"
-                        
-    method add_segment_gt p1 p2 =
-      match p1, p2 with
-      | Aseg (b1,s1,e1), Aseg (b2,s2,e2)
-        | Gap (b1,s1,e1), Gap (b2,s2,e2)
-        | Aseg (b1,s1,e1), Gap (b2,s2,e2)
-        | Gap (b1,s1,e1), Aseg (b2,s2,e2) ->        
-         self#extend (Lt,s2,e1)
-      | Aseg (b1,_,e1), Elem (b2,s2)
-        | Gap (b1,_,e1), Elem (b2,s2)
-        | Elem (b2,e1), Gap (b1,s2,_)
-        | Elem (b2,e1), Aseg (b1,s2,_) ->
-         self#extend (Lt,s2,e1)
-      | Elem (b1,s1), Elem (b2,s2) ->
-         self#extend (Lt,s1,s2)
-      
-    method compare_points s1 s2 =
-      match self#get_index s1, self#get_index s2 with
-      | None, _ 
-        | _, None ->
-         Unk
-      | Some i1, Some i2 ->
-         (match self#get_rel i1 i2 with
-          | Some r -> encode_vrelation r
-          | None -> Unk )
-
-    method compare_segment p1 p2 =
-      match p1, p2 with
-      | Aseg (b1,s1,e1), Aseg (b2,s2,e2)
-        | Gap (b1,s1,e1), Gap (b2,s2,e2)
-        | Aseg (b1,s1,e1), Gap (b2,s2,e2)
-        | Gap (b1,s1,e1), Aseg (b2,s2,e2) ->
-         (* TO DO: handle the case where e1 = s2 *)
-         ( match self#compare_points e1 s2 with
-           | Unk ->
-              ( match self#compare_points e2 s1 with
-                | Unk -> Unk
-                | Gt -> Lt      
-                | Lt -> Gt (* TO DO: need to force the relation *)
-                | _ -> failwith" compare_points: TO BE IMPLEMENTED"
-              )
-           | Lt -> Lt
-           | Gt -> Gt (* TO DO: need to force the relation *)
-           | _ -> failwith" compare_points: TO BE IMPLEMENTED"
-         )
-      | Aseg (b1,s1,e1), Elem (b2,s2)
-        | Gap (b1,s1,e1), Elem (b2,s2)
-        | Elem (b2,s2), Gap (b1,s1,e1)
-        | Elem (b2,s2), Aseg (b1,s1,e1) ->
-         ( match self#compare_points e1 s2 with
-           | Unk ->
-              ( match self#compare_points s1 s2 with
-                | Unk -> Unk
-                | Gt -> Gt      
-                | Lt -> Lt (* TO DO: need to force the relation *)
-                | _ -> failwith" compare_points: TO BE IMPLEMENTED"
-              )
-           | Lt -> Lt
-           | Gt -> Gt (* TO DO: need to force the relation *)
-           | _ -> failwith "compare_points: TO BE IMPLEMENTED"
-         )
-      | Elem (b1,s1), Elem (b2,s2) ->
-         ( match self#compare_points s1 s2 with
-           | Unk -> Unk
-           | Gt -> Gt
-           | Lt -> Lt
-           | _ -> failwith "compare_points: TO BE IMPLEMENTED"
-         )
-           
-  end
-;;
-  
-  
-let po_biabduction ante conseq =
-  let checkSat vmap =
-    true
-  in
-  
-  let rec bubble_push p vmap k =
-    (* TO DO: The sorting should assure that all empty segments are dropped *)
-    (* But it seems not necessary as long as some order is forced *)
-    let rec bubble_push_helper plst vmap k =
-      match plst with
-      | h::tail ->
-         bubble_push_helper tail
-                            vmap
-                            ( fun (x,newvmap) ->
-                              match x with
-                              | h1::tail ->
-                                 compare h h1 vmap
-                                         ( fun (x1,p1,p2) ->
-                                           match x1 with
-                                           | Unk ->
-                                              k ((h::(h1::tail)), newvmap#add_segment_gt p1 p2);
-                                              k ((h1::(h::tail)), newvmap#add_segment_gt p2 p1);
-                                              ()
-                                           | Gt -> k ((h1::(h::tail)), newvmap)
-                                           | _ -> failwith "bubble_push_helper: TO BE IMPLEMENTED"
-                                         )
-                              | [] -> k ([h],vmap)
-                            )
-      | [] -> k ([],vmap)
-    in
-    match p with
-    | Star plst ->
-       bubble_push_helper plst vmap
-                          ( fun (x,newvmap) ->
-                            match x with
-                            | h::tail -> k ((mkSeq h (mkStar tail)),newvmap)
-                            | [] -> failwith "bubble_push: Invalid input"
-                          )
-    | Seq (l,r) ->
-       bubble_push l vmap (fun (x,newvmap) -> k ((mkSeq x r),newvmap))
-    | Basic _ -> k (p,vmap)
-    | _ -> failwith "bubble_push: TO BE IMPLEMENTED"
-  and compare h1 h2 vmap k =
-    match h1, h2 with      
-    | Basic p1, Basic p2 ->
-       k ((vmap#compare_segment p1 p2),p1,p2)
-    | Basic p, Seq (l,r)
-      | Seq (l,r) , Basic p ->
-       compare h1 l vmap k
-    | Star plst , _ ->
-       bubble_push h1 vmap
-                   ( fun (x,newvmap)->
-                     compare x h2 newvmap k
-                   )
-    | _ , _ -> failwith "compare: TO BE IMPLEMENTED"
-  in
-  
-  let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
-    if checkSat vmap            (* An incremental checking procedure here *)
-    then
-      match ante, conseq with
-      | Basic h1, Basic h2 ->              
-         ( match h1, h2 with
-           | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-                | Eq ->
-                   (
-                     match vmap#compare_points e1 e2 with
-                     | Unk ->
-                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                        ()                     
-                     | Gt -> k (mkAsegBasic b1 e2 e1) Emp ba vmap
-                     | Lt -> k Emp (mkAsegBasic b2 e1 e2) ba vmap
-                     | Eq -> k Emp Emp ba vmap
-                   )
-              )
-           | Aseg (b1, s1, e1), Elem (b2, s2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-                | Eq ->
-                   (
-                     match vmap#compare_points s1 e1 with
-                     | Unk ->
-                        k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
-                        helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                        ()
-                     | Lt -> k (mkAsegBasic b1 (incOne s1) e1) Emp ba vmap
-                     | Eq -> k (mkAsegBasic b1 (incOne s1) e1) Emp ba vmap
-                     | Gt -> failwith "Aseg vs. Elem: Invalid input"
-                   )
-
-              )
-           | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Eq ->
-                   ( match vmap#compare_points e1 e2 with
-                     | Unk ->
-                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                        ()                     
-                     | Gt -> k (mkAsegBasic b1 e2 e1) Emp (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) vmap
-                     | Lt -> k Emp (mkGapBasic b2 e1 e2) (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) vmap
-                     | Eq -> k Emp Emp ba vmap
-                   )
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-              )
-           | Elem (b1, s1), Elem (b2, s2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-                | Eq -> helper Emp Emp vmap ba k
-              )
-           | Elem (b1, s1), Aseg (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-                | Eq ->
-                   ( match vmap#compare_points s2 e2 with
-                     | Unk ->
-                        helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                        ()
-                     | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap ba k
-                     | Eq -> helper ante Emp vmap ba k
-                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                   )
-              )
-           | Elem (b1, s1), Gap (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Eq ->
-                   ( match vmap#compare_points s2 e2 with
-                     | Unk ->                        
-                        helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                        ()
-                     | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap (antiframe,(frame#add h1),prooftrace) k
-                     | Eq -> helper ante Emp vmap ba k
-                     | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
-                   )
-                | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-                | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
-              )
-           | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()
-                | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap ba k
-                | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap ba k
-                | Eq ->
-                   (
-                     match vmap#compare_points e1 e2 with
-                     | Unk ->
-                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                        ()                     
-                     | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap ba k
-                     | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap ba k
-                     | Eq -> helper Emp Emp vmap ba k
-                   )
-              )
-           | Gap (b1, s1, e1), Elem (b2, s2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Unk ->
-                   helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                   helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                   ()                   
-                | Eq ->
-                   ( match vmap#compare_points s1 e1 with
-                     | Unk ->
-                        helper ante conseq (vmap#extend (Eq,s1,e1)) ba k;
-                        helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                        ()                          
-                     | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap ((antiframe#add h2),frame,prooftrace) k
-                     | Eq -> helper Emp conseq vmap ba k
-                     | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                   )
-                | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap ba k (* Just make the gap bigger instead of introducing one more gap *)
-                | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
-              )
-           | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
-              ( match vmap#compare_points s1 s2 with
-                | Eq ->
-                   ( match vmap#compare_points e1 e2 with
-                     | Unk ->
-                        helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                        helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                        ()                                             
-                     | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                     | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k
-                     | Eq -> helper Emp Emp vmap ba k
-                   )
-                | _ -> failwith "Aseg vs. Gap: TO BE IMPLEMENTED"
-              )
-         )
-      | Seq (l1,r1), Seq (l2,r2) ->
-         (* TO DO: Less switching can be achieved *)
-         let newk lefta leftc newba newvmap =
-           match lefta, leftc with
-           | Emp, Emp -> helper r1 r2 newvmap newba k
-           | Emp, Basic _ -> helper r1 (mkSeq leftc r2) newvmap newba k
-           | Basic _, Emp -> helper (mkSeq lefta r1) r2 newvmap newba k
-           (* | Basic _, Basic _-> helper (mkSeq lefta r1) (mkSeq leftc r2) vmap newba k *)
-           | _, _ -> failwith "Seq vs. Seq: Invalid input"
-         in
-         helper l1 l2 vmap ba newk
-      | Emp, Emp -> k ante conseq ba vmap
-      | Star plst, _ -> bubble_push ante vmap (fun (sorted_ante,newvmap) -> helper sorted_ante conseq newvmap ba k)
-      | Seq _, Star plst -> bubble_push ante vmap (fun (sorted_conseq,newvmap) -> helper ante sorted_conseq newvmap ba k)
-      | _, _ -> failwith "TO BE IMPLEMENTED"
-    else
-      failwith "TO BE IMPLEMENTED"
-  in
-  ()
-  (* helper ante conseq vmap (antiframe,frame,prooftrace) (fun x->()) *)
-;;
-         
-        
            (* | Aseg (b1, s1, e1), Elem (b2, s2) -> *)
          (*      ( match relation s1 s2 with *)
          (*        | Unk -> *)
