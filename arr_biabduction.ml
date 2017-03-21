@@ -1041,6 +1041,22 @@ class ['a] frame init  = object
     plst
 end
 ;;
+
+
+type proof_trace =
+  | Match
+  | Split
+  | Sorting
+  | Attemp
+;;
+
+let global_prooftrace = Stack.create ()
+;;
+
+let push_prooftrace (trace:proof_trace) =
+  Stack.push trace global_prooftrace
+;;
+  
   
 let po_biabduction ante conseq =
   
@@ -1127,6 +1143,7 @@ let po_biabduction ante conseq =
                    )
     
   in
+  let 
   
   let rec helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)
