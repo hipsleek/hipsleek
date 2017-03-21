@@ -716,11 +716,11 @@ let print_biabduction_result antiframe frame puref prooftrace=
   let str_trace trace =
     List.fold_left (fun r pair -> (str_trace_pair pair)^"\n"^r) "" trace
   in
-  print_endline"############## Results of Bi-Abduction Inference ################";
+  print_endline "############## Results of Bi-Abduction Inference ################";
   print_endline ("|| pure: "^(!str_pformula puref));
   print_endline ("|| anti-frame: "^(str_seq antiframe));
   print_endline ("|| frame: "^(str_seq frame));
-  print_endline "############## ####### Proof Trace ###########  ################";
+  print_endline "############## ####### Proof Trace ###########  #################";
   print_endline (str_trace prooftrace);
   ()
 ;;
@@ -797,6 +797,16 @@ type vrelation =
   | False
 ;;
 
+let str_vrel vr =
+  match vr with
+  | Gt -> "GT"
+  | Gte -> "GTE"
+  | Eq -> "EQ"
+  | Lt -> "LT"
+  | Lte -> "LTE"
+  | Neq -> "NEQ"
+  | Unk -> "UNK"
+  | False -> "FALSE"
 (* < = > *)
 let decode_vrelation i =
   match i with
@@ -808,11 +818,11 @@ let decode_vrelation i =
   | 4 -> Lt                     (* 100 *)
   | 5 -> Neq                    (* 101 *)
   | 6 -> Lte                    (* 110 *)
-  | _ -> failwith ("encode_vrelation: Invalid input "^(string_of_int i))
+  | _ -> failwith ("decode_vrelation: Invalid input "^(string_of_int i))
 ;;
 
 let get_negate i =
-  777 land (lnot i)
+  7 land (lnot i)               (* 111 & i *)
 ;;
   
 let encode_vrelation rel =
@@ -870,7 +880,11 @@ class lazyVMap (puref,varlst,initmatrix) =
         then
           rel_matrix.(i1).(i2)        
         else
-          get_negate (rel_matrix.(i2).(i1))
+          let r = rel_matrix.(i2).(i1) in
+          if r = 7 || r = 0 || r=2 (* 111 = Unk 000 = FALSE 010=EQ TO DO: Not correct...*)
+          then r
+          else
+            get_negate r
 
     (* exp -> int option *)
     method get_index e =
@@ -880,30 +894,45 @@ class lazyVMap (puref,varlst,initmatrix) =
         failwith "lazyVMap.get_index: Not_found. It is possible that there is something wrong in get_var_set"
     (* ;; Not Inside Object!  *)
 
-    method compare_points s1 s2 =
-      let () = print_endline ("lazyVMap.compare_points: "^(!str_exp s1)^" "^(!str_exp s2)) in
-      decode_vrelation (self#get_rel (self#get_index s1) (self#get_index s2))
+    method compare_points s1 s2 =      
+      let c = decode_vrelation (self#get_rel (self#get_index s1) (self#get_index s2)) in
+      (* let () = print_endline ("lazyVMap.compare_points: "^(!str_exp s1)^" "^(!str_exp s2)^" "^(str_vrel c)) in *)
+      c
+
+    method get_matrix =
+      rel_matrix
 
     method update_matrix relcode e1 e2 =
       let i,j = self#get_index e1, self#get_index e2  in      
       if i<=j
-      then rel_matrix.(i).(j) <- relcode
-      else rel_matrix.(j).(i) <- get_negate relcode
+      then (self#get_matrix).(i).(j) <- relcode
+      else (self#get_matrix).(j).(i) <- get_negate relcode
                                              
-    method private copy lst puref =
-      let newVmap = new lazyVMap (puref,var_to_index,rel_matrix) in
+    method copy lst puref =
+      let newMatrix = Array.copy rel_matrix in
+      let () = Array.iteri (fun index item -> newMatrix.(index) <- Array.copy rel_matrix.(index)) newMatrix in
+      let newVmap = new lazyVMap (puref,var_to_index,newMatrix) in
       List.iter (fun (rel_code,e1,e2) -> newVmap#update_matrix rel_code e1 e2) lst;
       newVmap        
 
+    method get_puref =
+      puref
+        
     method extend (rel,e1,e2) =
+      (* let () = print_endline ("lazyVMap.extend: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel rel)) in *)
       let get_formula rel e1 e2 =
         match rel with
         | Gt -> mkGtExp e1 e2 no_pos
+        | Lt -> mkLtExp e1 e2 no_pos
+        | Eq -> mkEqExp e1 e2 no_pos
+        | Lte -> mkLteExp e1 e2 no_pos
+        | Gte -> mkGteExp e1 e2 no_pos
         | _ -> failwith "get_formula: TO BE IMPLEMENTED"
       in
       let rel_code = encode_vrelation rel in
       let orig_rel_code = encode_vrelation (self#compare_points e1 e2) in
       let new_rel_code = rel_code land orig_rel_code in
+      (* let () = print_endline ("orig_rel_code: "^(string_of_int orig_rel_code)^" rel_code:"^(string_of_int rel_code)) in *)
       if new_rel_code = orig_rel_code
       then Some (self#copy [] puref)                   (* not changed *)
       else
@@ -1018,7 +1047,7 @@ let po_biabduction ante conseq =
   (* Ensuring vmap is satisfiable? *)
   let rec bubble_push p vmap k =
     (* As long as some order is forced, empty segment will not be a problem. Actuall it will... *)
-    let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in
+    (* let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in *)
     let rec bubble_push_helper plst vmap k =
       match plst with
       | h::tail ->
@@ -1049,16 +1078,22 @@ let po_biabduction ante conseq =
     in
     match p with
     | Star plst ->
-       bubble_push_helper plst vmap
-                          ( fun (x,newvmap_op) ->
-                            match newvmap_op with
-                            | Some newvmap ->
-                               ( match x with
-                                 | h::tail -> k ((mkSeq h (mkStar tail)),newvmap_op)
-                                 | [] -> k (Emp,newvmap_op)
+       (
+         match plst with
+         | [] -> k (Emp, Some vmap)
+         | _ ->
+            bubble_push_helper plst vmap
+                               ( fun (x,newvmap_op) ->
+                                 match newvmap_op with
+                                 | Some newvmap ->
+                                    ( match x with
+                                      | [h] -> k (h,newvmap_op)
+                                      | h::tail -> k ((mkSeq h (mkStar tail)),newvmap_op)
+                                      | [] -> k (Emp,newvmap_op)
+                                    )
+                                 | None -> ()
                                )
-                            | None -> ()
-                          )
+       )
     | Seq (l,r) ->
        bubble_push l vmap (fun (x,newvmap_op) -> k ((mkSeq x r),newvmap_op))
     | Basic _
@@ -1094,7 +1129,7 @@ let po_biabduction ante conseq =
   in
   
   let rec helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
-    let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in
+    (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)
     
     match vmap_op with
     | Some vmap->
@@ -1109,24 +1144,22 @@ let po_biabduction ante conseq =
             ( match h1, h2 with
               | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
+                   | Unk | Gte | Neq ->
                       helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+                      (* helper ante conseq (vmap#extend (Eq,s1,s2)) ba k; *)
+                      helper ante conseq (vmap#extend (Lte,s1,s2)) ba k;
                       ()
                    | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+                   | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
                    | Eq ->
                       (
                         match vmap#compare_points e1 e2 with
-                        | Unk | Lte | Gte | Neq->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        | Unk | Neq->
+                           helper ante conseq (vmap#extend (Gte,e1,e2)) ba k;                           
                            helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
                            ()                     
-                        | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
-                        | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
-                        | Eq -> helper Emp Emp vmap_op ba k
+                        | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
+                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
                         | False -> failwith "helper: false relation detected"
                       )
                    | False -> failwith "helper: false relation detected"
@@ -1162,14 +1195,13 @@ let po_biabduction ante conseq =
                       ()
                    | Eq ->
                       ( match vmap#compare_points e1 e2 with
-                        | Unk | Lte | Gte | Neq ->
+                        | Unk | Neq ->
                            helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                           (* helper ante conseq (vmap#extend (Eq,e1,e2)) ba k; *)
+                           helper ante conseq (vmap#extend (Lte,e1,e2)) ba k;
                            ()                     
-                        | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
-                        | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k
-                        | Eq -> helper Emp Emp vmap_op ba k
+                        | Gt | Gte |Eq-> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                        | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
                         | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
@@ -1287,14 +1319,15 @@ let po_biabduction ante conseq =
                       ()
                    | Eq ->
                       ( match vmap#compare_points e1 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                        | Unk | Neq ->
+                           (* let () = print_endline ("Before in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
+                           let vmap_op2 = vmap#extend (Gte,e1,e2) in
+                           (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
+                           helper ante conseq (vmap_op2) ba k;                                                    
                            helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
                            ()                                             
-                        | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                        | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k
-                        | Eq -> helper Emp Emp vmap_op ba k
+                        | Gt | Eq | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
                         | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap_op ba k
@@ -1324,9 +1357,10 @@ let po_biabduction ante conseq =
               | _, _ -> failwith "Seq vs. Seq: Invalid input"
             in
             helper ante l2 vmap_op ba newk         
-         | _, Star plst -> bubble_push ante vmap (fun (sorted_conseq,newvmap) -> helper ante sorted_conseq newvmap ba k)
+         | _, Star plst -> bubble_push conseq vmap (fun (sorted_conseq,newvmap) -> helper ante sorted_conseq newvmap ba k)
        )
     | None ->
+       let () = print_endline "UNSAT" in
        ()
   in
   
@@ -1351,17 +1385,23 @@ let po_biabduction ante conseq =
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
   let vmap_op = Some (new lazyVMap (puref,varlst,init_matrix)) in
-  let () = print_endline "here" in
+  
   helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap_op (antiframe,frame,[])
-         (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap ->
-           let newantiframe, newframe =
-             match lefta, leftc with
-             | Emp, Emp -> newantiframe, newframe
-             | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe
-             | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta)
-             | _ , _ -> failwith "po_biabduction: Invalid input"
-           in           
-           print_biabduction_result newantiframe#get_lst newframe#get_lst (Cpure.mkTrue no_pos) newprooftrace)
+         (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap_op ->
+           match newvmap_op with
+           | Some newvmap ->
+              let newantiframe, newframe =
+                match lefta, leftc with
+                | Emp, Emp -> newantiframe, newframe
+                | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe
+                | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta)
+                | _ , _ -> failwith "po_biabduction: Invalid input"
+              in           
+           (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
+              print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []
+           | None -> ()
+         )
+
 ;;
          
 
