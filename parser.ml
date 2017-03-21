@@ -1793,6 +1793,12 @@ node_type: [[ `IDENTIFIER anno ->
                  | "disjunction" -> SOr
                  (* | "spred" -> Predicate *)
                  | "msg" -> Msg
+		 | "event" -> Event
+		 | "hb" -> HB
+		 | "cb" -> CB
+		 | "assumed" -> Assume
+		 | "guard" -> Guard
+		 | "peer" -> Peer
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];
 

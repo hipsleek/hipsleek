@@ -215,6 +215,14 @@ type node_kind =
   | Channel
   (* message container *)
   | Msg
+  (* orders *)
+  | Event
+  | HB
+  | CB
+  (* protocol lang related *)
+  | Assume
+  | Guard
+  | Peer
 
 type view_session_info =
   {
@@ -319,6 +327,12 @@ let string_of_node_kind nk = match nk with
   | Session -> "Session"
   | Channel -> "Channel"
   | Msg -> "Msg"
+  | Event -> "Event"
+  | HB -> "HB"
+  | CB -> "CB"
+  | Assume -> "Assume"
+  | Guard -> "Guard"
+  | Peer -> "Peer"
 
 let string_of_view_session_info (si:view_session_info) =
   let sk = match si.session_kind with

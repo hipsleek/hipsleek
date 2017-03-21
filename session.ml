@@ -43,6 +43,12 @@ let recv_id:  string option ref = ref None
 let sor_id:   string option ref = ref None
 (* let pred_id:  string option ref = ref None *)
 let msg_id:   string option ref = ref None
+let event_id: string option ref = ref None
+let hb_id: string option ref = ref None
+let cb_id: string option ref = ref None
+let assume_id: string option ref = ref None
+let guard_id: string option ref = ref None
+let peer_id: string option ref = ref None
 
 let set_prim_pred_id kind id =
   (* let () = y_ninfo "setting Sess pred id" in *)
@@ -60,6 +66,12 @@ let set_prim_pred_id kind id =
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
     | Msg          -> msg_id := Some id
+    | Event	   -> event_id := Some id
+    | HB 	   -> hb_id := Some id
+    | CB	   -> cb_id := Some id
+    | Assume	   -> assume_id := Some id
+    | Guard	   -> guard_id := Some id
+    | Peer	   -> peer_id := Some id
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with
@@ -82,6 +94,12 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Session      -> get_prim_pred_id sess_id
   | Channel      -> get_prim_pred_id chan_id
   | Msg          -> get_prim_pred_id msg_id
+  | Event        -> get_prim_pred_id event_id 
+  | HB           -> get_prim_pred_id hb_id
+  | CB           -> get_prim_pred_id cb_id
+  | Assume       -> get_prim_pred_id assume_id
+  | Guard        -> get_prim_pred_id guard_id
+  | Peer	 -> get_prim_pred_id peer_id
 
 let get_session_kind_of_transmission t =
   match t with
@@ -350,7 +368,9 @@ module IForm = struct
     match si.node_kind with
     | Some nk -> begin match nk with
       | Sequence | SOr | Send | Receive | Transmission
-      | Session | Channel | Msg ->
+      | Session | Channel | Msg 
+      | Event | HB | CB 
+      | Assume | Guard | Peer ->
         let new_heap_name = get_prim_pred_id_by_kind nk in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
@@ -1817,7 +1837,14 @@ module Make_Session (Base: Session_base) = struct
             (* let h = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in *)
             (* helper h *)
         | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
-        | Msg -> failwith (x_loc ^ ": Unexpected node kind.") in
+        | Msg -> failwith (x_loc ^ ": Unexpected node kind.") 
+	| Event
+	| HB
+	| CB
+	| Assume
+	| Guard
+	| Peer -> failwith (x_loc ^ ": TODO")
+	in
     helper h_formula
 
   let trans_h_formula_to_session ?pure:(pure=(Base.mk_true ())) h_formula =
