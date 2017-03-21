@@ -121,6 +121,8 @@ let isEmpty cf =
   false
 ;;
 
+
+(* definition of seq-star  *)
 type 'a seq =
   | Basic of ('a arrPred)
   | Seq of (('a seq) * ('a seq))
@@ -139,6 +141,23 @@ let flatten_seq h =
   helper h (fun x->x)
 ;;
 
+let rec str_seq_star h inner_str =
+  match h with
+  | Basic p -> inner_str p  
+  | Seq (l,r) -> "["^(str_seq_star l inner_str)^";"^(str_seq_star r inner_str)^"]"                  
+  | Star plst -> "("^(str_seq_star_lst plst inner_str)^")"
+  | Emp -> "Emp"
+and str_seq_star_lst hlst inner_str =
+  match hlst with
+  | [h] -> str_seq_star h inner_str
+  | h::tail -> (str_seq_star h inner_str)^"*"^(str_seq_star_lst tail inner_str)
+  | [] -> ""
+;;
+
+let str_seq_star_arr h =
+  str_seq_star h str_arrPred
+;;
+  
 let mkAsegBasic b s e =
   Basic (Aseg (b,s,e))
 ;;
@@ -160,6 +179,8 @@ let mkStar plst =
 let mkBasic p =
   Basic p
 ;;
+
+(* ********** End of definition of seq-star **********  *)
 
 class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
@@ -452,7 +473,9 @@ let rec clean_gap seq =
 type 'a rect =
   | Rect of (unit -> ('a * ('a rect)) option)
 ;;
-  
+
+
+(* A very simple enumeration, not practical *)
 let enumerate_solution_seed vlst do_biabduction =
   let length = List.length vlst in
   let updateSeed seed seed_i = seed_i::seed in
@@ -485,56 +508,6 @@ let enumerate_solution_seed vlst do_biabduction =
   in
   helper 1 empty_seed (Rect (innerk_orig 1 0 empty_seed (Rect (fun ()->None)))) (fun x->x) ()
 ;;
-
-(* (\* map is the matrix of variables *\) *)
-(* let topological_base_enumerate badata = *)
-(*   let rec degree_minus_one degree target= *)
-(*     List.map (fun (i,d) -> *)
-(*         if badata#lt target i *)
-(*         then (i,d-1) *)
-(*         else (i,d) *)
-(*       ) degree *)
-(*   in *)
-(*   let rec pick_degree_zero_orig head tail ()= *)
-(*     match tail with *)
-(*     | ((i,d) as h)::t -> *)
-(*        if d=0 *)
-(*        then *)
-(*          Some ((i,d), degree_minus_one (head@tail), pick_degree_zero_orig (head@[h]) t) *)
-(*        else *)
-(*          pick_degree_zero_orig (head@[h]) tail () *)
-(*     | [] -> *)
-(*        None *)
-(*   in *)
-(*   let rec helper cur seed pick_degree_zero k () = *)
-(*     if cur = badata#segment_num *)
-(*     then *)
-(*       do_biabduction seed *)
-(*     else *)
-(*       match pick_degree_zero () with *)
-(*       | Some ((i,d),degree_i,pick_degree_zero_i) -> *)
-(*          helper (cur+1) (i::seed) (pick_degree_zero_orig [] degree_i) (helper cur seed pick_degree_zero_i k) *)
-(*       | None ->        *)
-(*          k () *)
-(*   in *)
-(*   let degree = *)
-(*     let degree_array = Array.make length 0 in *)
-(*     let () = List.iter *)
-(*                (fun item -> *)
-(*                  (List.iter *)
-(*                     (fun sub_item -> *)
-(*                       degree_array.(sub_item)<-degree_array.(sub_item)+1 *)
-(*                     ) *)
-(*                     sub_item) *)
-(*                ) segment_map *)
-(*     in *)
-(*     Array.fold_left *)
-(*       (fun (i,d) item -> *)
-(*         (i+1,(i,item)::d)) *)
-(*       (0,[]) degree_array *)
-(*   in     *)
-(*   helper degree [] (pick_degree_zero_orig [] degree) (fun x -> ())   *)
-(* ;; *)
   
 let generate_mapping explst =  
   Array.of_list explst
@@ -543,8 +516,6 @@ let generate_mapping explst =
 let get_map mapping index =
   Array.get mapping index
 ;;
-
-
              
 let generate_seed_formula seed mapping =
   let rec inner_helper var index seed mapping =
@@ -814,7 +785,7 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
   enumerate_method range do_biabduction
 ;;
 
-
+(* Lazy enumeration *)
 type vrelation =
   | Gt
   | Gte
@@ -823,22 +794,27 @@ type vrelation =
   | Lte
   | Neq
   | Unk
+  | False
 ;;
 
 (* < = > *)
 let decode_vrelation i =
   match i with
-  | 0
-    | 7 -> Unk                  (* 000, 111 *)
+  | 0 -> False
+  | 7 -> Unk                  (* 111 *)
   | 1 -> Gt                     (* 001 *)
   | 2 -> Eq                     (* 010 *)
   | 3 -> Gte                    (* 011 *)
   | 4 -> Lt                     (* 100 *)
   | 5 -> Neq                    (* 101 *)
   | 6 -> Lte                    (* 110 *)
-  | _ -> failwith "encode_vrelation: Invalid input"
+  | _ -> failwith ("encode_vrelation: Invalid input "^(string_of_int i))
 ;;
 
+let get_negate i =
+  777 land (lnot i)
+;;
+  
 let encode_vrelation rel =
   match rel with
   | Gt -> 1
@@ -847,7 +823,8 @@ let encode_vrelation rel =
   | Lt -> 4
   | Lte -> 6
   | Neq -> 5
-  | Unk -> 0
+  | Unk -> 7
+  | False -> 0
 ;;
   
 module Pair_index = struct
@@ -878,7 +855,7 @@ class lazyVMap (puref,varlst,initmatrix) =
     val rel_matrix = initmatrix (* Array.make_matrix (List.length varlst) 7 (\* all of them are 111 *\) *)
     val var_to_index = varlst
     method checkSat newf =
-      true
+      isSat (mkAnd puref newf no_pos)
 
     (* What's the difference between val and method? *)
     (* val test= *)
@@ -886,44 +863,39 @@ class lazyVMap (puref,varlst,initmatrix) =
 
     (* int , int -> int *)
     method get_rel i1 i2 =
-      if i1<=i2
-      then
-        rel_matrix.(i1).(i2)        
+      if i1=i2
+      then 2                    (* 010 *)
       else
-        lnot (rel_matrix.(i2).(i1))
-             
+        if i1<i2
+        then
+          rel_matrix.(i1).(i2)        
+        else
+          get_negate (rel_matrix.(i2).(i1))
+
     (* exp -> int option *)
     method get_index e =
       try
-        Some (snd (List.find (fun (item,index) -> is_same_exp item e) var_to_index))
+        snd (List.find (fun (item,index) -> is_same_exp item e) var_to_index)
       with Not_found ->
-        failwith "lazyVMap.get_index: Not_found"
+        failwith "lazyVMap.get_index: Not_found. It is possible that there is something wrong in get_var_set"
     (* ;; Not Inside Object!  *)
 
     method compare_points s1 s2 =
-      match self#get_index s1, self#get_index s2 with
-      | None, _ 
-        | _, None ->
-         Unk
-      | Some i1, Some i2 -> decode_vrelation (self#get_rel i1 i2)
+      let () = print_endline ("lazyVMap.compare_points: "^(!str_exp s1)^" "^(!str_exp s2)) in
+      decode_vrelation (self#get_rel (self#get_index s1) (self#get_index s2))
 
     method update_matrix relcode e1 e2 =
-      let i,j =
-        match self#get_index e1, self#get_index e2 with
-        | Some n1, Some n2 -> n1, n2
-        | _ , _ -> failwith "update_matrix: index not found"
-      in
+      let i,j = self#get_index e1, self#get_index e2  in      
       if i<=j
       then rel_matrix.(i).(j) <- relcode
-      else rel_matrix.(j).(i) <- lnot relcode                         
+      else rel_matrix.(j).(i) <- get_negate relcode
                                              
-    method private copy lst =
+    method private copy lst puref =
       let newVmap = new lazyVMap (puref,var_to_index,rel_matrix) in
       List.iter (fun (rel_code,e1,e2) -> newVmap#update_matrix rel_code e1 e2) lst;
       newVmap        
 
     method extend (rel,e1,e2) =
-      (* TO DO: Not correctly implemented *)
       let get_formula rel e1 e2 =
         match rel with
         | Gt -> mkGtExp e1 e2 no_pos
@@ -933,15 +905,16 @@ class lazyVMap (puref,varlst,initmatrix) =
       let orig_rel_code = encode_vrelation (self#compare_points e1 e2) in
       let new_rel_code = rel_code land orig_rel_code in
       if new_rel_code = orig_rel_code
-      then Some (self#copy [])                   (* not changed *)
+      then Some (self#copy [] puref)                   (* not changed *)
       else
         if new_rel_code = 0
         then
           None
         else
-          if self#checkSat (get_formula (decode_vrelation new_rel_code) e1 e2)
+          let rel_f = get_formula (decode_vrelation new_rel_code) e1 e2 in
+          if self#checkSat rel_f
           then
-            Some (self#copy [(new_rel_code,e1,e2)])
+            Some (self#copy [(new_rel_code,e1,e2)] (mkAnd rel_f puref no_pos))
           else
             None
 
@@ -979,11 +952,13 @@ class lazyVMap (puref,varlst,initmatrix) =
                 | Lt
                   | Lte
                   | Eq-> Gt
+                | False -> failwith "helper: false relation detected"
               )
            | Lt
              | Lte
              | Eq -> Lt
            | Gt -> Gt
+           | False -> failwith "helper: false relation detected"
          )
       | Aseg (b1,s1,e1), Elem (b2,s2)
         | Gap (b1,s1,e1), Elem (b2,s2)
@@ -1001,11 +976,13 @@ class lazyVMap (puref,varlst,initmatrix) =
                 | Lt
                   | Lte -> Lt (* TO DO: need to force the relation *)
                 | Eq -> failwith" compare_segment: Overlapping exists"
+                | False -> failwith "helper: false relation detected"
               )
            | Lt
              | Lte
              | Eq-> Lt
-           | Gt -> Gt (* TO DO: need to force the relation *)           
+           | Gt -> Gt (* TO DO: need to force the relation *)
+           | False -> failwith "helper: false relation detected"
          )
       | Elem (b1,s1), Elem (b2,s2) ->
          ( match self#compare_points s1 s2 with
@@ -1016,6 +993,7 @@ class lazyVMap (puref,varlst,initmatrix) =
            | Lt
              | Lte -> Lt
            | Eq -> failwith "compare_segment: Overlapping exists"
+           | False -> failwith "helper: false relation detected"
          )
   end
 ;;
@@ -1040,6 +1018,7 @@ let po_biabduction ante conseq =
   (* Ensuring vmap is satisfiable? *)
   let rec bubble_push p vmap k =
     (* As long as some order is forced, empty segment will not be a problem. Actuall it will... *)
+    let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in
     let rec bubble_push_helper plst vmap k =
       match plst with
       | h::tail ->
@@ -1115,6 +1094,8 @@ let po_biabduction ante conseq =
   in
   
   let rec helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
+    let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in
+    
     match vmap_op with
     | Some vmap->
        
@@ -1146,7 +1127,9 @@ let po_biabduction ante conseq =
                         | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
                         | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
                         | Eq -> helper Emp Emp vmap_op ba k
+                        | False -> failwith "helper: false relation detected"
                       )
+                   | False -> failwith "helper: false relation detected"
                  )
               | Aseg (b1, s1, e1), Elem (b2, s2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1166,7 +1149,9 @@ let po_biabduction ante conseq =
                         | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
                         | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k
                         | Gt -> failwith "Aseg vs. Elem: Invalid input"
+                        | False -> failwith "helper: false relation detected"
                       )
+                   | False -> failwith "helper: false relation detected"
                  )
               | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1185,9 +1170,11 @@ let po_biabduction ante conseq =
                         | Gt -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
                         | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k
                         | Eq -> helper Emp Emp vmap_op ba k
+                        | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
                    | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
+                   | False -> failwith "helper: false relation detected"
                  )
               | Elem (b1, s1), Elem (b2, s2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1199,6 +1186,7 @@ let po_biabduction ante conseq =
                    | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
                    | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
                    | Eq -> helper Emp Emp vmap_op ba k
+                   | False -> failwith "helper: false relation detected"
                  )
               | Elem (b1, s1), Aseg (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1218,7 +1206,9 @@ let po_biabduction ante conseq =
                         | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap_op ba k
                         | Eq -> helper ante Emp vmap_op ba k
                         | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                        | False -> failwith "helper: false relation detected"
                       )
+                   | False -> failwith "helper: false relation detected"
                  )
               | Elem (b1, s1), Gap (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1236,9 +1226,11 @@ let po_biabduction ante conseq =
                         | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap_op (antiframe,(frame#add h1),prooftrace) k
                         | Eq -> helper ante Emp vmap_op ba k
                         | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
+                        | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
                    | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
+                   | False -> failwith "helper: false relation detected"
                  )
               | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1260,7 +1252,9 @@ let po_biabduction ante conseq =
                         | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op ba k
                         | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op ba k
                         | Eq -> helper Emp Emp vmap_op ba k
+                        | False -> failwith "helper: false relation detected"
                       )
+                   | False -> failwith "helper: false relation detected"
                  )
               | Gap (b1, s1, e1), Elem (b2, s2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1278,9 +1272,11 @@ let po_biabduction ante conseq =
                         | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap_op ((antiframe#add h2),frame,prooftrace) k
                         | Eq -> helper Emp conseq vmap_op ba k
                         | Gt -> failwith "Elem vs. Aseg: Invalid input"
+                        | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
                    | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+                   | False -> failwith "helper: false relation detected"
                  )
               | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
                  ( match vmap#compare_points s1 s2 with
@@ -1299,9 +1295,11 @@ let po_biabduction ante conseq =
                         | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
                         | Lt -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k
                         | Eq -> helper Emp Emp vmap_op ba k
+                        | False -> failwith "helper: false relation detected"
                       )
                    | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap_op ba k
                    | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+                   | False -> failwith "helper: false relation detected"
                  )
             )
               
@@ -1353,6 +1351,7 @@ let po_biabduction ante conseq =
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
   let vmap_op = Some (new lazyVMap (puref,varlst,init_matrix)) in
+  let () = print_endline "here" in
   helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap_op (antiframe,frame,[])
          (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap ->
            let newantiframe, newframe =
@@ -1668,6 +1667,58 @@ let po_biabduction ante conseq =
 (* let formula_to_arrPred cf = *)
 (*   Debug.no_1 "formula_to_arrPred" !str_cformula str_seq formula_to_arrPred cf *)
 (* ;; *)
+
+
+(* (\* map is the matrix of variables *\) *)
+(* let topological_base_enumerate badata = *)
+(*   let rec degree_minus_one degree target= *)
+(*     List.map (fun (i,d) -> *)
+(*         if badata#lt target i *)
+(*         then (i,d-1) *)
+(*         else (i,d) *)
+(*       ) degree *)
+(*   in *)
+(*   let rec pick_degree_zero_orig head tail ()= *)
+(*     match tail with *)
+(*     | ((i,d) as h)::t -> *)
+(*        if d=0 *)
+(*        then *)
+(*          Some ((i,d), degree_minus_one (head@tail), pick_degree_zero_orig (head@[h]) t) *)
+(*        else *)
+(*          pick_degree_zero_orig (head@[h]) tail () *)
+(*     | [] -> *)
+(*        None *)
+(*   in *)
+(*   let rec helper cur seed pick_degree_zero k () = *)
+(*     if cur = badata#segment_num *)
+(*     then *)
+(*       do_biabduction seed *)
+(*     else *)
+(*       match pick_degree_zero () with *)
+(*       | Some ((i,d),degree_i,pick_degree_zero_i) -> *)
+(*          helper (cur+1) (i::seed) (pick_degree_zero_orig [] degree_i) (helper cur seed pick_degree_zero_i k) *)
+(*       | None ->        *)
+(*          k () *)
+(*   in *)
+(*   let degree = *)
+(*     let degree_array = Array.make length 0 in *)
+(*     let () = List.iter *)
+(*                (fun item -> *)
+(*                  (List.iter *)
+(*                     (fun sub_item -> *)
+(*                       degree_array.(sub_item)<-degree_array.(sub_item)+1 *)
+(*                     ) *)
+(*                     sub_item) *)
+(*                ) segment_map *)
+(*     in *)
+(*     Array.fold_left *)
+(*       (fun (i,d) item -> *)
+(*         (i+1,(i,item)::d)) *)
+(*       (0,[]) degree_array *)
+(*   in     *)
+(*   helper degree [] (pick_degree_zero_orig [] degree) (fun x -> ())   *)
+(* ;; *)
+  
              
 let enumerate_with_order ante conseq =
   enumerate ante conseq enumerate_order from_order_to_formula
