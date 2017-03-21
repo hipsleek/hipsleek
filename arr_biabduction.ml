@@ -1141,11 +1141,213 @@ let po_biabduction ante conseq =
                      | Some newvmap -> compare h1 x newvmap k
                      | None -> ()
                    )
-    
   in
-  let 
   
-  let rec helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
+  let rec match_helper h1 h2 vmap_op ((antiframe,frame,prooftrace) as ba) k =
+    match h1, h2 with
+    | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Gte | Neq ->
+            match_helper h1 h2 (vmap#extend (Gt,s1,s2)) ba k;
+            (* helper ante conseq (vmap#extend (Eq,s1,s2)) ba k; *)
+            match_helper h1 h2 (vmap#extend (Lte,s1,s2)) ba k;
+            ()
+         | Gt ->
+            match_helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba
+                         (fun lefta leftc newba newvmap ->
+                           match lefta, leftc with
+                           | Emp, Emp -> helper Emp r2 newvmap newba k
+                           | Emp, _ -> helper Emp (mkSeq leftc r2) newvmap newba k
+                           | _, Emp -> helper lefta r2 newvmap newba k
+                           | _, _ -> failwith "Seq vs. Seq: Invalid input"
+
+                           
+         | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | Eq ->
+            (
+              match vmap#compare_points e1 e2 with
+              | Unk | Neq->
+                 helper ante conseq (vmap#extend (Gte,e1,e2)) ba k;                           
+                 helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                 ()                     
+              | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
+              | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
+              | False -> failwith "helper: false relation detected"
+            )
+         | False -> failwith "helper: false relation detected"
+       )
+    | Aseg (b1, s1, e1), Elem (b2, s2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
+         | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | Eq ->
+            (
+              match vmap#compare_points s1 e1 with
+              | Unk | Lte | Gte | Neq ->
+                 k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
+                 helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
+                 ()
+              | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
+              | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k
+              | Gt -> failwith "Aseg vs. Elem: Invalid input"
+              | False -> failwith "helper: false relation detected"
+            )
+         | False -> failwith "helper: false relation detected"
+       )
+    | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Eq ->
+            ( match vmap#compare_points e1 e2 with
+              | Unk | Neq ->
+                 helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                 (* helper ante conseq (vmap#extend (Eq,e1,e2)) ba k; *)
+                 helper ante conseq (vmap#extend (Lte,e1,e2)) ba k;
+                 ()                     
+              | Gt | Gte |Eq-> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+              | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
+              | False -> failwith "helper: false relation detected"
+            )
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
+         | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
+         | False -> failwith "helper: false relation detected"
+       )
+    | Elem (b1, s1), Elem (b2, s2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
+         | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | Eq -> helper Emp Emp vmap_op ba k
+         | False -> failwith "helper: false relation detected"
+       )
+    | Elem (b1, s1), Aseg (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
+         | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | Eq ->
+            ( match vmap#compare_points s2 e2 with
+              | Unk | Lte | Gte | Neq ->
+                 helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
+                 helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
+                 ()
+              | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap_op ba k
+              | Eq -> helper ante Emp vmap_op ba k
+              | Gt -> failwith "Elem vs. Aseg: Invalid input"
+              | False -> failwith "helper: false relation detected"
+            )
+         | False -> failwith "helper: false relation detected"
+       )
+    | Elem (b1, s1), Gap (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Eq ->
+            ( match vmap#compare_points s2 e2 with
+              | Unk | Lte | Gte | Neq ->
+                 helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
+                 helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
+                 ()
+              | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap_op (antiframe,(frame#add h1),prooftrace) k
+              | Eq -> helper ante Emp vmap_op ba k
+              | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
+              | False -> failwith "helper: false relation detected"
+            )
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
+         | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
+         | False -> failwith "helper: false relation detected"
+       )
+    | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k
+         | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
+         | Eq ->
+            (
+              match vmap#compare_points e1 e2 with
+              | Unk | Lte | Gte | Neq ->
+                 helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
+                 helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
+                 helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                 ()                     
+              | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op ba k
+              | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op ba k
+              | Eq -> helper Emp Emp vmap_op ba k
+              | False -> failwith "helper: false relation detected"
+            )
+         | False -> failwith "helper: false relation detected"
+       )
+    | Gap (b1, s1, e1), Elem (b2, s2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()                   
+         | Eq ->
+            ( match vmap#compare_points s1 e1 with
+              | Unk | Lte | Gte | Neq ->
+                 helper ante conseq (vmap#extend (Eq,s1,e1)) ba k;
+                 helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
+                 ()                          
+              | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap_op ((antiframe#add h2),frame,prooftrace) k
+              | Eq -> helper Emp conseq vmap_op ba k
+              | Gt -> failwith "Elem vs. Aseg: Invalid input"
+              | False -> failwith "helper: false relation detected"
+            )
+         | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
+         | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | False -> failwith "helper: false relation detected"
+       )
+    | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
+       ( match vmap#compare_points s1 s2 with
+         | Unk | Lte | Gte | Neq ->
+            helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
+            helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
+            ()
+         | Eq ->
+            ( match vmap#compare_points e1 e2 with
+              | Unk | Neq ->
+                 (* let () = print_endline ("Before in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
+                 let vmap_op2 = vmap#extend (Gte,e1,e2) in
+                 (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
+                 helper ante conseq (vmap_op2) ba k;                                                    
+                 helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
+                 ()                                             
+              | Gt | Eq | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+              | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
+              | False -> failwith "helper: false relation detected"
+            )
+         | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap_op ba k
+         | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
+         | False -> failwith "helper: false relation detected"
+       )
+
+  and helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)
     
     match vmap_op with
@@ -1158,200 +1360,7 @@ let po_biabduction ante conseq =
          | Basic h1, Basic h2 ->
             let prooftrace = ([h1],[h2])::prooftrace in
             let ba = (antiframe,frame,prooftrace) in
-            ( match h1, h2 with
-              | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      (* helper ante conseq (vmap#extend (Eq,s1,s2)) ba k; *)
-                      helper ante conseq (vmap#extend (Lte,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points e1 e2 with
-                        | Unk | Neq->
-                           helper ante conseq (vmap#extend (Gte,e1,e2)) ba k;                           
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                     
-                        | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
-                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Aseg (b1, s1, e1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points s1 e1 with
-                        | Unk | Lte | Gte | Neq ->
-                           k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
-                           helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                           ()
-                        | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
-                        | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k
-                        | Gt -> failwith "Aseg vs. Elem: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points e1 e2 with
-                        | Unk | Neq ->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           (* helper ante conseq (vmap#extend (Eq,e1,e2)) ba k; *)
-                           helper ante conseq (vmap#extend (Lte,e1,e2)) ba k;
-                           ()                     
-                        | Gt | Gte |Eq-> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
-                        | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq -> helper Emp Emp vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      ( match vmap#compare_points s2 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                           ()
-                        | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap_op ba k
-                        | Eq -> helper ante Emp vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points s2 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                           ()
-                        | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap_op (antiframe,(frame#add h1),prooftrace) k
-                        | Eq -> helper ante Emp vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points e1 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                     
-                        | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op ba k
-                        | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op ba k
-                        | Eq -> helper Emp Emp vmap_op ba k
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()                   
-                   | Eq ->
-                      ( match vmap#compare_points s1 e1 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante conseq (vmap#extend (Eq,s1,e1)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                           ()                          
-                        | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap_op ((antiframe#add h2),frame,prooftrace) k
-                        | Eq -> helper Emp conseq vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points e1 e2 with
-                        | Unk | Neq ->
-                           (* let () = print_endline ("Before in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
-                           let vmap_op2 = vmap#extend (Gte,e1,e2) in
-                           (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
-                           helper ante conseq (vmap_op2) ba k;                                                    
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                                             
-                        | Gt | Eq | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-            )
+            
               
          | Seq (l1,r1), _ ->
             (* TO DO: Less switching can be achieved *)
