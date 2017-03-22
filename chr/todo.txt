@@ -1,0 +1,39 @@
+Is it possible to print just the conclusions?
+
+Example 1:
+-------
+for the query and answer below
+?- hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)).
+hb(event(X, 1), event(Z, 3)),
+hb(event(Y, 2), event(Z, 3)),
+hb(event(X, 1), event(Y, 2)).
+
+transform answer (or modify the propagation rules) to print only:
+hb(event(X, 1), event(Z, 3)),
+
+
+Example 2:
+-------
+?- hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)), hb(event(Z,3),event(T,a)).
+hb(event(X, 1), event(T, a)),
+hb(event(Y, 2), event(T, a)),
+hb(event(X, 1), event(T, a)),
+hb(event(Z, 3), event(T, a)),
+hb(event(X, 1), event(Z, 3)),
+hb(event(Y, 2), event(Z, 3)),
+hb(event(X, 1), event(Y, 2)).
+
+print only (also removes duplicates):
+hb(event(X, 1), event(T, a)),
+hb(event(Y, 2), event(T, a)),
+hb(event(X, 1), event(Z, 3)),
+
+=============================================================
+=============================================================
+
+how to call chr as a single command (source + goal)
+
+swipl -s source_file.pl -t ??
+
+=============================================================
+=============================================================
