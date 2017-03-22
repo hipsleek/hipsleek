@@ -168,12 +168,32 @@ let mkGapBasic b s e =
 ;;
   
 
-let mkSeq pred seq =
-  Seq (pred, seq)
+let mkSeq seq1 seq2 =
+  match seq1, seq2 with
+  | Emp, _ -> seq2
+  | _, Emp -> seq1
+  | _, _ -> Seq (seq1,seq2)
 ;;
 
 let mkStar plst =
-  Star plst
+  let rec helper plst k =
+    match plst with
+    | h::tail ->
+       helper tail
+              (fun newplst ->
+                match h, newplst with
+                | Emp, _ -> k newplst
+                | Star plst1, _ ->
+                   helper plst1
+                          (fun newplst1 ->
+                            k (newplst1@newplst))
+                | _, _ -> k (h::newplst))
+    | [] -> k []
+  in
+  match helper plst (fun x->x) with
+  | [] -> Emp
+  | [h] -> h
+  | newlst -> Star newlst
 ;;
 
 let mkBasic p =
@@ -821,7 +841,18 @@ let decode_vrelation i =
   | _ -> failwith ("decode_vrelation: Invalid input "^(string_of_int i))
 ;;
 
-let get_negate i =
+let get_opposite_rel i =
+  match i with
+  | 0 -> 0                  (* 000 -> 000 *)
+  | 7 -> 7                  (* 111 -> 111 *)
+  | 1 -> 4                  (* 001 -> 110*)
+  | 2 -> 5                  (* 010 -> 101*)
+  | 3 -> 6                  (* 011 -> 110*)
+  | 4 -> 1                  (* 100 -> 001*)
+  | 5 -> 2                  (* 101 -> 010*)
+  | 6 -> 3                  (* 110 -> 011*)
+  | _ -> failwith ("decode_vrelation: Invalid input "^(string_of_int i))
+
   7 land (lnot i)               (* 111 & i *)
 ;;
   
@@ -880,12 +911,8 @@ class lazyVMap (puref,varlst,initmatrix) =
         then
           rel_matrix.(i1).(i2)        
         else
-          let r = rel_matrix.(i2).(i1) in
-          if r = 7 || r = 0 || r=2 (* 111 = Unk 000 = FALSE 010=EQ TO DO: Not correct...*)
-          then r
-          else
-            get_negate r
-
+          get_opposite_rel rel_matrix.(i2).(i1)
+          
     (* exp -> int option *)
     method get_index e =
       try
@@ -906,7 +933,7 @@ class lazyVMap (puref,varlst,initmatrix) =
       let i,j = self#get_index e1, self#get_index e2  in      
       if i<=j
       then (self#get_matrix).(i).(j) <- relcode
-      else (self#get_matrix).(j).(i) <- get_negate relcode
+      else (self#get_matrix).(j).(i) <- get_opposite_rel relcode
                                              
     method copy lst puref =
       let newMatrix = Array.copy rel_matrix in
@@ -1064,76 +1091,78 @@ let push_prooftrace (trace:proof_trace) =
   
   
 let po_biabduction ante conseq =
-  
-  let rec bubble_push p vmap k =  
-    let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in
-    let rec bubble_push_helper plst vmap k =
-      (* return a list, with the min at the head, and the min will only be Basic *)
-      match plst with
-      | h::tail ->
-         bubble_push_helper tail vmap
-                            ( fun (x,restlst,newvmap) ->
-                              match restlst with
-                              | h1::tail1 ->
-                                 (* TO DO: not enough cases here, need to handle empty cases. Only when overlapping exists, consider empty segment? *)
-                                 compare h h1 vmap
-                                         (fun (min, restlst, newvmap2) ->
-                                           k (min,(restlst@tail1),newvmap2))
-                              | [] -> bubble_push h newvmap
-                                                  (fun (x,rest,newvmap2) ->
-                                                    k (x,rest@restlst,newvmap2))
-                            )
-      | [] -> k (Emp,[],vmap)
-    in
-    match p with
-    | Star plst ->
-       (
-         match plst with
-         | [] -> k (Emp,[],vmap)
-         | _ ->
-            bubble_push_helper plst vmap k
-       )
-    | Seq (l,r) ->
-       bubble_push l vmap
-                   (fun (x,xlst,newvmap) ->
-                     k (x,r::xlst,newvmap))
-    | Basic _ | Emp -> k (p, [], vmap)
+  let lazy_sort p vmap k =
+    let rec bubble_push p vmap k =  
+      let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in
+      let rec bubble_push_helper plst vmap k =
+        (* return a list, with the min at the head, and the min will only be Basic *)
+        match plst with
+        | h::tail ->
+           bubble_push_helper tail vmap
+                              ( fun (x,restlst,newvmap) ->
+                                match restlst with
+                                | h1::tail1 ->
+                                   (* TO DO: not enough cases here, need to handle empty cases. Only when overlapping exists, consider empty segment? *)
+                                   compare h h1 vmap
+                                           (fun (min, restlst, newvmap2) ->
+                                             k (min,(restlst@tail1),newvmap2))
+                                | [] -> bubble_push h newvmap
+                                                    (fun (x,rest,newvmap2) ->
+                                                      k (x,rest@restlst,newvmap2))
+                              )
+        | [] -> k (Emp,[],vmap)
+      in
+      match p with
+      | Star plst ->
+         (
+           match plst with
+           | [] -> k (Emp,[],vmap)
+           | _ ->
+              bubble_push_helper plst vmap k
+         )
+      | Seq (l,r) ->
+         bubble_push l vmap
+                     (fun (x,xlst,newvmap) ->
+                       k (x,r::xlst,newvmap))
+      | Basic _ | Emp -> k (p, [], vmap)
 
-  and compare h1 h2 vmap k =
-    match h1, h2 with
-    | Emp, _
-      | _ , Emp -> failwith "compare: Invalid Emp case"
-    | Basic p1, Basic p2 ->
-       ( match vmap#compare_segment p1 p2 with
-         | Unk ->
-            vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
-            vmap#add_segment_lt p1 p2 (fun newvmap -> k (h2,[h1],newvmap));
-            ()
-         | Gt -> k (h2,[h1],vmap)
-         | Lt -> k (h1,[h2],vmap)
-         | _ -> failwith "compare: Invalid output from compare_segment"
-       )
-    | Seq (l,r) , _ ->
-       compare l h2 vmap
-               ( fun (min,restlst,newvmap) ->
-                 k (min,(r::restlst),newvmap))
-    | Star plst , _ ->
-       bubble_push h1 vmap
-                   ( fun (x,rest,newvmap)->
-                     compare x h2 newvmap
-                             ( fun (min,restlst,newvmap2) ->
-                               k (min,(rest@restlst),newvmap2)))
-    | Basic _ , Seq (l,r) ->
-       compare h1 l vmap
-               ( fun (min,restlst,newvmap) ->
-                 k (min,(r::restlst),newvmap))
-    | Basic _ , Star plst ->
-       bubble_push h2 vmap
-                   ( fun (x,rest,newvmap)->
-                     compare h1 x newvmap
-                             ( fun (min,restlst,newvmap2) ->
-                               k (min,(rest@restlst),newvmap2)))
-  in  
+    and compare h1 h2 vmap k =
+      match h1, h2 with
+      | Emp, _
+        | _ , Emp -> failwith "compare: Invalid Emp case"
+      | Basic p1, Basic p2 ->
+         ( match vmap#compare_segment p1 p2 with
+           | Unk ->
+              vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
+              vmap#add_segment_lt p1 p2 (fun newvmap -> k (h2,[h1],newvmap));
+              ()
+           | Gt -> k (h2,[h1],vmap)
+           | Lt -> k (h1,[h2],vmap)
+           | _ -> failwith "compare: Invalid output from compare_segment"
+         )
+      | Seq (l,r) , _ ->
+         compare l h2 vmap
+                 ( fun (min,restlst,newvmap) ->
+                   k (min,r::restlst,newvmap))
+      | Star plst , _ ->
+         bubble_push h1 vmap
+                     ( fun (x,rest,newvmap) ->
+                       compare x h2 newvmap
+                               ( fun (min,restlst,newvmap2) ->
+                                 k (min,rest@restlst,newvmap2)))
+      | Basic _ , Seq (l,r) ->
+         compare h1 l vmap
+                 ( fun (min,restlst,newvmap) ->
+                   k (min,r::restlst,newvmap))
+      | Basic _ , Star plst ->
+         bubble_push h2 vmap
+                     ( fun (x,rest,newvmap) ->
+                       compare h1 x newvmap
+                               ( fun (min,restlst,newvmap2) ->
+                                 k (min,rest@restlst,newvmap2)))
+    in
+    bubble_push p vmap (fun (min,restlst,newvmap) -> k (min,mkStar restlst,newvmap))
+  in
   let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
     let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in
     
@@ -1150,9 +1179,13 @@ let po_biabduction ante conseq =
          | Unk | Gte | Neq ->
             vmap#extend_f (Gt,s1,s2) force_rel;
             vmap#extend_f (Lte,s1,s2) force_rel;
-            ()                 
-         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
-         | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+            ()                          
+         | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap ba
+                        (fun lefta leftc newba newvmap ->
+                          helper (mkSeq lefta ante) leftc newvmap newba k)
+         | Lt | Lte -> helper ante (mkGapBasic b2 s1 s2) vmap ba
+                              (fun lefta leftc newba newvmap ->
+                                helper lefta (mkSeq leftc conseq) newvmap newba k)
          | False -> failwith "helper: false relation detected"
          | Eq -> failwith "align: Invalid Eq relation"              
        in
@@ -1297,67 +1330,29 @@ let po_biabduction ante conseq =
        )
          
     | Seq (l,r), _ ->
-       bubble_push l vmap
-                   (fun (x,xlst,newvmap) ->
-                     let lrest =
-                       match xlst with
-                       | [] -> r
-                       | [h] -> mkSeq h r
-                       | _ -> mkSeq (mkStar xlst) r
-                     in
+       lazy_sort l vmap
+                   (fun (x,rest,newvmap) ->
                      helper x conseq newvmap ba
                             (fun lefta leftc newba newvmap2 ->
-                              match lefta, leftc with
-                              | Emp, _ -> helper lrest leftc newvmap2 newba k
-                              | _, Emp -> helper (mkSeq lefta lrest) Emp newvmap2 newba k
-                              | _, _ -> failwith "Seq vs. _: Invalid input"))
+                              helper (mkSeq lefta (mkSeq rest r)) leftc newvmap2 newba k))
     | Star plst, _ ->
-       bubble_push ante vmap
-                   (fun (min_ante,xlst,newvmap) ->
-                     let lrest =
-                       match xlst with
-                       | [] -> Emp
-                       | [h] -> h
-                       | _ -> mkStar xlst
-                     in
-                     helper min_ante conseq newvmap ba
+       lazy_sort ante vmap
+                   (fun (x,rest,newvmap) ->
+                     helper x conseq newvmap ba
                             (fun lefta leftc newba newvmap2 ->
-                              match lefta, leftc, lrest with
-                              | Emp, _, _ -> helper lrest leftc newvmap2 newba k
-                              | _, Emp, Emp -> helper lefta Emp newvmap2 newba k
-                              | _, Emp, _ -> helper (mkSeq lefta lrest) Emp newvmap2 newba k
-                              | _, _, _ -> failwith "Star vs. _: Invalid input"))
+                              helper (mkSeq lefta rest) leftc newvmap2 newba k))
     | Basic _, Seq (l,r) ->
-       bubble_push l vmap
-                   (fun (x,xlst,newvmap) ->
-                     let rrest =
-                       match xlst with
-                       | [] -> r
-                       | [h] -> mkSeq h r
-                       | _ -> mkSeq (mkStar xlst) r
-                     in
+       lazy_sort l vmap
+                   (fun (x,rest,newvmap) ->
                      helper ante x newvmap ba
                             (fun lefta leftc newba newvmap2 ->
-                              match lefta, leftc with
-                              | _, Emp -> helper lefta rrest newvmap2 newba k
-                              | Emp, _ -> helper Emp (mkSeq leftc rrest) newvmap2 newba k
-                              | _, _ -> failwith "Basic vs. Seq: Invalid input"))
+                              helper lefta (mkSeq leftc (mkSeq rest r)) newvmap2 newba k))
     | Basic _, Star plst ->
-       bubble_push conseq vmap
-                   (fun (min_conseq,xlst,newvmap) ->
-                     let rrest =
-                       match xlst with
-                       | [] -> Emp
-                       | [h] -> h
-                       | _ -> mkStar xlst
-                     in
-                     helper ante min_conseq newvmap ba
+       lazy_sort conseq vmap
+                   (fun (x,rest,newvmap) ->
+                     helper x conseq newvmap ba
                             (fun lefta leftc newba newvmap2 ->
-                              match lefta, leftc, rrest with
-                              | _, Emp, _ -> helper lefta rrest newvmap2 newba k
-                              | Emp, _, Emp -> helper Emp leftc newvmap2 newba k
-                              | Emp, _, _ -> helper Emp (mkSeq leftc rrest) newvmap2 newba k
-                              | _, _, _ -> failwith "Basic vs. Star: Invalid input"))                   
+                              helper lefta (mkSeq leftc rest) newvmap2 newba k))
   in
   
   let anteTrans = new arrPredTransformer ante in
@@ -1394,8 +1389,6 @@ let po_biabduction ante conseq =
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
            print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []
          )
-
-
 ;;
          
 
