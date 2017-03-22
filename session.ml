@@ -1188,9 +1188,9 @@ module Projection_base_formula =
 
     let get_message base = base.projection_base_formula_message
 
-	let get_sender base = ""
+    let get_sender base = ""
 
-	let get_receiver base = ""
+    let get_receiver base = ""
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
@@ -1338,7 +1338,6 @@ module Make_Session (Base: Session_base) = struct
     | SOr   of session_or_formula
     | SStar of session_star_formula
     | SExists of session_exists_formula
-    | SFence of session_fence
     | SBase of session_base
     | SEmp
 
@@ -1375,11 +1374,11 @@ module Make_Session (Base: Session_base) = struct
     session_exists_formula_pos: loc;
   }
 
-  and session_fence = {
-    session_fence_role1: ident;
-    session_fence_role2: ident;
-    session_fence_pred: session_predicate;
-  }
+  (* and session_fence = { *)
+  (*   session_fence_role1: ident; *)
+  (*   session_fence_role2: ident; *)
+  (*   session_fence_pred: session_predicate; *)
+  (* } *)
 
   and session_predicate = {
     session_predicate_name: ident;
@@ -1405,7 +1404,6 @@ module Make_Session (Base: Session_base) = struct
     | SOr s   -> string_of_session_or s
     | SStar s -> string_of_session_star s
     | SExists s -> string_of_session_exists s
-	| SFence f -> string_of_session_fence f
     | SBase s -> string_of_session_base s
     | SEmp    -> string_of_session_emp ()
 
@@ -1435,9 +1433,9 @@ module Make_Session (Base: Session_base) = struct
     "exists " ^ (pr_list (fun x -> fst x) s.session_exists_formula_vars) ^
     ": " ^ string_of_one_session s.session_exists_formula_session
 
-  and string_of_session_fence f =
-	"[" ^ f.session_fence_role1 ^ ", " ^ f.session_fence_role2 ^ "]: " ^
-    string_of_session_predicate f.session_fence_pred
+  (* and string_of_session_fence f = *)
+  (*       "[" ^ f.session_fence_role1 ^ ", " ^ f.session_fence_role2 ^ "]: " ^ *)
+  (*   string_of_session_predicate f.session_fence_pred *)
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
@@ -1452,7 +1450,6 @@ module Make_Session (Base: Session_base) = struct
     | SStar s -> s.session_star_formula_heap_node
 (* TODO: review this *)
     | SExists s -> None
-    | SFence f -> None
     | SEmp    -> None
     | SBase s -> match s with
       | Base s -> Base.get_session_heap_node s
@@ -1512,12 +1509,12 @@ module Make_Session (Base: Session_base) = struct
       session_exists_formula_pos = loc;
     }
 
-  and mk_session_fence role1 role2 pred =
-    SFence {
-      session_fence_role1 = role1;
-      session_fence_role2 = role2;
-	  session_fence_pred = pred;
-    }
+  (* and mk_session_fence role1 role2 pred = *)
+  (*   SFence { *)
+  (*     session_fence_role1 = role1; *)
+  (*     session_fence_role2 = role2; *)
+  (*         session_fence_pred = pred; *)
+  (*   } *)
 
   and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
     Predicate {
@@ -1531,17 +1528,17 @@ module Make_Session (Base: Session_base) = struct
     }
 
   (* TODO tina: Why doesn't this use SFence constructor? *)
-  and mk_session_fence_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) loc =
-    {
-      session_predicate_name = name;
-      session_predicate_ho_vars = ho_vars;
-      session_predicate_params = params;
-      session_predicate_formula_heap_node = node;
-      session_predicate_pure = pure;
-      session_predicate_pos = loc;
-      (* TODO: anns in fences? *)
-      session_predicate_anns = [];
-    }
+  (* and mk_session_fence_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) loc = *)
+  (*   { *)
+  (*     session_predicate_name = name; *)
+  (*     session_predicate_ho_vars = ho_vars; *)
+  (*     session_predicate_params = params; *)
+  (*     session_predicate_formula_heap_node = node; *)
+  (*     session_predicate_pure = pure; *)
+  (*     session_predicate_pos = loc; *)
+  (*     (\* TODO: anns in fences? *\) *)
+  (*     session_predicate_anns = []; *)
+  (*   } *)
 
   and mk_session_hvar id ls loc = HVar {
       session_hvar_id = id;
@@ -1589,8 +1586,8 @@ module Make_Session (Base: Session_base) = struct
     node
 
 (* TODO: review this *)
-  and mk_fence () =
-    Base.mk_empty ()
+  (* and mk_fence () = *)
+  (*   Base.mk_empty () *)
 
   and mk_predicate_node hnode p =
     (* make the actual predicate node *)
@@ -1636,7 +1633,6 @@ module Make_Session (Base: Session_base) = struct
         let hform = helper s.session_exists_formula_session in
         let pos = s.session_exists_formula_pos in
         mk_exists_node vars hform pos
-      | SFence f -> mk_fence ()
       | SBase s -> (match s with
           | Base b -> Base.trans_base b
           | Predicate p -> mk_predicate_node p.session_predicate_formula_heap_node p 
@@ -1699,7 +1695,6 @@ module Make_Session (Base: Session_base) = struct
         | SExists s ->
           SExists {s with session_exists_formula_session = helper fnc s.session_exists_formula_session;}
 (* TODO: review this *)
-        | SFence f -> sf
         | SBase sb -> SBase (trans_session_base_formula f_base sb)
         | SEmp -> sf
     in
@@ -1715,7 +1710,6 @@ module Make_Session (Base: Session_base) = struct
     | SStar s -> s.session_star_formula_pos
     | SExists s -> s.session_exists_formula_pos
 (* TODO: review this *)
-	| SFence f -> no_pos
     | SBase s -> (match s with
         | Base b -> Base.get_base_pos b
         | Predicate p -> p.session_predicate_pos
@@ -2331,14 +2325,14 @@ let make_projection (session: IProtocol.session) (vars: ident list) =
       let hash2 = helper s.IProtocol.session_star_formula_star2 in
       (* This is definitely not correct, there should be no star in tpproj *)
       combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
-    | IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *) 
-      let role1 = f.IProtocol.session_fence_role1 in
-      let role2 = f.IProtocol.session_fence_role2 in
-      let pred = f.IProtocol.session_fence_pred in
-      let new_pred = ITPProjection.SBase (convert_predicate pred) in
-      let hash = HT.create 10 in
-      let () = HT.add hash (role2, role1) new_pred in
-      hash
+    (* | IProtocol.SFence f -> (\* Establish convention that second party is the "problematic" one. *\)  *)
+    (*   let role1 = f.IProtocol.session_fence_role1 in *)
+    (*   let role2 = f.IProtocol.session_fence_role2 in *)
+    (*   let pred = f.IProtocol.session_fence_pred in *)
+    (*   let new_pred = ITPProjection.SBase (convert_predicate pred) in *)
+    (*   let hash = HT.create 10 in *)
+    (*   let () = HT.add hash (role2, role1) new_pred in *)
+    (*   hash *)
     | IProtocol.SExists e -> let hash = helper e.IProtocol.session_exists_formula_session in
       let pos = e.IProtocol.session_exists_formula_pos in
       let add_exist (role1, role2) tpproj =
