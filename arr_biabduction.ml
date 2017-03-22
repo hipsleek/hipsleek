@@ -947,21 +947,26 @@ class lazyVMap (puref,varlst,initmatrix) =
           else
             None
 
+    method extend_f (rel,e1,e2) k =
+      match self#extend (rel,e1,e2) with
+      | Some newvmap -> k newvmap
+      | None -> ()
+
     (* For segments (Aseg, Gap or Elem), there are only Gt, Lt or Unk *)
-    method add_segment_lt p1 p2 =
+    method add_segment_lt p1 p2 k =
       match p1, p2 with
       | Aseg (b1,s1,e1), Aseg (b2,s2,e2)
         | Gap (b1,s1,e1), Gap (b2,s2,e2)
         | Aseg (b1,s1,e1), Gap (b2,s2,e2)
         | Gap (b1,s1,e1), Aseg (b2,s2,e2) ->        
-         self#extend (Lte,e1,s2)
+         self#extend_f (Lte,e1,s2) k
       | Aseg (b1,_,e1), Elem (b2,s2)
         | Gap (b1,_,e1), Elem (b2,s2)
         | Elem (b2,e1), Gap (b1,s2,_)
         | Elem (b2,e1), Aseg (b1,s2,_) ->
-         self#extend (Lte,e1,s2)
+         self#extend_f (Lte,e1,s2) k
       | Elem (b1,s1), Elem (b2,s2) ->
-         self#extend (Lte,s1,s2)
+         self#extend_f (Lte,s1,s2) k
 
     method compare_segment p1 p2 =
       match p1, p2 with
@@ -1060,364 +1065,321 @@ let push_prooftrace (trace:proof_trace) =
   
 let po_biabduction ante conseq =
   
-  (* Ensuring vmap is satisfiable? *)
-  let rec bubble_push p vmap k =
-    (* As long as some order is forced, empty segment will not be a problem. Actuall it will... *)
+  let rec bubble_push p vmap k =  
     (* let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in *)
     let rec bubble_push_helper plst vmap k =
+      (* return a list, with the min at the head, and the min will only be Basic *)
       match plst with
       | h::tail ->
-         bubble_push_helper tail
-                            vmap
-                            ( fun (x,newvmap_op) ->
-                              match newvmap_op with
-                              | Some newvmap ->
-                                 ( match x with
-                                   | h1::tail ->
-                                      (* TO DO: not enough cases here *)
-                                      compare h h1 vmap
-                                              ( fun (x1,p1,p2) ->
-                                                match x1 with
-                                                | Unk ->
-                                                   k ((h::(h1::tail)), newvmap#add_segment_lt p1 p2);
-                                                   k ((h1::(h::tail)), newvmap#add_segment_lt p2 p1);
-                                                   ()
-                                                | Gt -> k ((h1::(h::tail)), newvmap_op)
-                                                | Lt -> k ((h::(h1::tail)), newvmap_op)
-                                                | _ -> failwith "bubble_push_helper: Invalid input"
-                                              )
-                                   | [] -> k ([h],newvmap_op)
-                                 )
-                              | None -> () (* TO DO: just stop here if not sat? *)
+         bubble_push_helper tail vmap
+                            ( fun (xlst,newvmap) ->
+                              match xlst with
+                              | h1::tail1 ->
+                                 (* TO DO: not enough cases here, need to handle empty cases. Only when overlapping exists, consider empty segment? *)
+                                 compare h h1 vmap
+                                         ( fun (min, restlst, newvmap2) ->
+                                           k (min::(restlst@tail1),newvmap2))
+                              | [] -> bubble_push h newvmap
+                                                  (fun (x,rest,newvmap2) ->
+                                                    k ([x;rest],newvmap2))                                 
                             )
-      | [] -> k ([],Some vmap)
+      | [] -> k ([],vmap)
     in
     match p with
     | Star plst ->
        (
          match plst with
-         | [] -> k (Emp, Some vmap)
+         | [] -> k (Emp, Emp, vmap)
          | _ ->
             bubble_push_helper plst vmap
-                               ( fun (x,newvmap_op) ->
-                                 match newvmap_op with
-                                 | Some newvmap ->
-                                    ( match x with
-                                      | [h] -> k (h,newvmap_op)
-                                      | h::tail -> k ((mkSeq h (mkStar tail)),newvmap_op)
-                                      | [] -> k (Emp,newvmap_op)
-                                    )
-                                 | None -> ()
+                               ( fun (xlst,newvmap) ->
+                                 match xlst with
+                                 | [h] -> k (h,Emp,newvmap)
+                                 | h::tail -> k (h,Star tail,newvmap)
+                                 | [] -> k (Emp,Emp,newvmap)
                                )
        )
     | Seq (l,r) ->
-       bubble_push l vmap (fun (x,newvmap_op) -> k ((mkSeq x r),newvmap_op))
+       bubble_push l vmap
+                   (fun (x,rest,newvmap) ->
+                     match rest with
+                     | Emp -> k (x,r,newvmap)
+                     | _ -> k (x,mkSeq rest r,newvmap))
     | Basic _
-      | Emp -> k (p, Some vmap)    
-                    
+      | Emp -> k (p, Emp, vmap)
+                 
   and compare h1 h2 vmap k =
     match h1, h2 with
     | Emp, _
       | _ , Emp -> failwith "compare: Invalid Emp case"
     | Basic p1, Basic p2 ->
-       k ((vmap#compare_segment p1 p2),p1,p2)
-    | Basic p, Seq (l,r) ->
-       compare h1 l vmap k
-    | Seq (l,r) , Basic p ->
-       compare l h2 vmap k
-    | Seq (l1,r1) , Seq (l2,r2) ->
-       compare l1 l2 vmap k
+       ( match vmap#compare_segment p1 p2 with
+         | Unk ->
+            vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
+            vmap#add_segment_lt p1 p2 (fun newvmap -> k (h2,[h1],newvmap));
+            ()
+         | Gt -> k (h2,[h1],vmap)
+         | Lt -> k (h1,[h2],vmap)
+         | _ -> failwith "compare: Invalid output from compare_segment"
+       )
+    | Seq (l,r) , _ ->
+       compare l h2 vmap
+               ( fun (min,restlst,newvmap) ->
+                 k (min,(r::restlst),newvmap))
     | Star plst , _ ->
        bubble_push h1 vmap
-                   ( fun (x,newvmap_op)->
-                     match newvmap_op with
-                     | Some newvmap -> compare x h2 newvmap k
-                     | None -> ()
-                   )
-    | _ , Star plst ->
+                   ( fun (x,rest,newvmap)->
+                     compare x h2 newvmap
+                             ( fun (min,restlst,newvmap2) ->
+                               k (min,(rest::restlst),newvmap2)))
+    | Basic _ , Seq (l,r) ->
+       compare h1 l vmap
+               ( fun (min,restlst,newvmap) ->
+                 k (min,(r::restlst),newvmap))
+    | Basic _ , Star plst ->
        bubble_push h2 vmap
-                   ( fun (x,newvmap_op)->
-                     match newvmap_op with                       
-                     | Some newvmap -> compare h1 x newvmap k
-                     | None -> ()
-                   )
-    
-  in
-  let 
-  
-  let rec helper ante conseq vmap_op ((antiframe,frame,prooftrace) as ba) k =
+                   ( fun (x,rest,newvmap)->
+                     compare h1 x newvmap
+                             ( fun (min,restlst,newvmap2) ->
+                               k (min,(rest::restlst),newvmap2)))
+  in  
+  let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)
     
-    match vmap_op with
-    | Some vmap->
+    match ante, conseq with
+    | Emp, _
+      | _ ,Emp -> k ante conseq ba vmap
+                    
+    | Basic h1, Basic h2 ->       
+       let force_rel newvmap =
+         helper ante conseq newvmap ba k
+       in
+       let align rel b1 b2 s1 s2 =
+         match rel with
+         | Unk | Gte | Neq ->
+            vmap#extend_f (Gt,s1,s2) force_rel;
+            vmap#extend_f (Lte,s1,s2) force_rel;
+            ()                 
+         | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap ba k
+         | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap ba k
+         | False -> failwith "helper: false relation detected"
+         | Eq -> failwith "align: Invalid Eq relation"              
+       in
        
-       ( match ante, conseq with
-         | Emp, _
-           | _ ,Emp -> k ante conseq ba vmap_op
-                         
-         | Basic h1, Basic h2 ->
-            let prooftrace = ([h1],[h2])::prooftrace in
-            let ba = (antiframe,frame,prooftrace) in
-            ( match h1, h2 with
-              | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      (* helper ante conseq (vmap#extend (Eq,s1,s2)) ba k; *)
-                      helper ante conseq (vmap#extend (Lte,s1,s2)) ba k;
+       ( match h1, h2 with
+         | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 (
+                   match vmap#compare_points e1 e2 with
+                   | Unk | Neq->
+                      vmap#extend_f (Gt,e1,e2) force_rel;
+                      vmap#extend_f (Lte,e1,e2) force_rel;
+                      ()                      
+                   | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap ba k
+                   | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap ba k
+                   | False -> failwith "helper: false relation detected"
+                 )
+              | others -> align others b1 b2 s1 s2
+            )
+
+         | Aseg (b1, s1, e1), Elem (b2, s2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 (
+                   match vmap#compare_points s1 e1 with
+                   | Unk | Lte ->
+                      vmap#extend_f (Eq,s1,e1) force_rel;
+                      vmap#extend_f (Lt,s1,e1) force_rel;
+                      ()                        
+                   | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
+                   | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap ba k
+                   | Gt | Gte | Neq -> failwith "Aseg vs. Elem: Invalid input. The relation should be more specific"
+                   | False -> failwith "helper: false relation detected"
+                 )              
+              | others -> align others b1 b2 s1 s2
+            )
+
+         | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 ( match vmap#compare_points e1 e2 with
+                   | Unk | Neq ->
+                      vmap#extend_f (Gt,e1,e2) force_rel;
+                      vmap#extend_f (Lte,e1,e2) force_rel;                      
                       ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt | Lte -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points e1 e2 with
-                        | Unk | Neq->
-                           helper ante conseq (vmap#extend (Gte,e1,e2)) ba k;                           
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                     
-                        | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap_op ba k
-                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op ba k
-                        | False -> failwith "helper: false relation detected"
-                      )
+                   | Eq-> helper Emp Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                   | Gt | Gte -> helper (mkAsegBasic b1 e2 e1) Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                   | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
                    | False -> failwith "helper: false relation detected"
                  )
-              | Aseg (b1, s1, e1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points s1 e1 with
-                        | Unk | Lte | Gte | Neq ->
-                           k Emp conseq ba (vmap#extend (Eq,s1,e1));                        
-                           helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                           ()
-                        | Lt -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
-                        | Eq -> helper (mkAsegBasic b1 (incOne s1) e1) Emp vmap_op ba k
-                        | Gt -> failwith "Aseg vs. Elem: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points e1 e2 with
-                        | Unk | Neq ->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           (* helper ante conseq (vmap#extend (Eq,e1,e2)) ba k; *)
-                           helper ante conseq (vmap#extend (Lte,e1,e2)) ba k;
-                           ()                     
-                        | Gt | Gte |Eq-> helper (mkAsegBasic b1 e2 e1) Emp vmap_op (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
-                        | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap_op (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq -> helper Emp Emp vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | Eq ->
-                      ( match vmap#compare_points s2 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                           ()
-                        | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap_op ba k
-                        | Eq -> helper ante Emp vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Elem (b1, s1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points s2 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante Emp (vmap#extend (Eq,s2,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s2,e2)) ba k;
-                           ()
-                        | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap_op (antiframe,(frame#add h1),prooftrace) k
-                        | Eq -> helper ante Emp vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: TO BE IMPLEMENTED"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkSeq (mkGapBasic b1 s2 s1) ante) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k
-                   | Lt -> helper ante (mkGapBasic b2 s1 e2) vmap_op ba k
-                   | Eq ->
-                      (
-                        match vmap#compare_points e1 e2 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante conseq (vmap#extend (Gt,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Eq,e1,e2)) ba k;
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                     
-                        | Gt -> helper (mkGapBasic b1 e2 e1) Emp vmap_op ba k
-                        | Lt -> helper Emp (mkGapBasic b2 e1 e2) vmap_op ba k
-                        | Eq -> helper Emp Emp vmap_op ba k
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Elem (b2, s2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()                   
-                   | Eq ->
-                      ( match vmap#compare_points s1 e1 with
-                        | Unk | Lte | Gte | Neq ->
-                           helper ante conseq (vmap#extend (Eq,s1,e1)) ba k;
-                           helper ante conseq (vmap#extend (Lt,s1,e1)) ba k;
-                           ()                          
-                        | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap_op ((antiframe#add h2),frame,prooftrace) k
-                        | Eq -> helper Emp conseq vmap_op ba k
-                        | Gt -> failwith "Elem vs. Aseg: Invalid input"
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkGapBasic b1 s2 e1) conseq vmap_op ba k (* Just make the gap bigger instead of introducing one more gap *)
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
-                 ( match vmap#compare_points s1 s2 with
-                   | Unk | Lte | Gte | Neq ->
-                      helper ante conseq (vmap#extend (Gt,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Eq,s1,s2)) ba k;
-                      helper ante conseq (vmap#extend (Lt,s1,s2)) ba k;
-                      ()
-                   | Eq ->
-                      ( match vmap#compare_points e1 e2 with
-                        | Unk | Neq ->
-                           (* let () = print_endline ("Before in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
-                           let vmap_op2 = vmap#extend (Gte,e1,e2) in
-                           (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
-                           helper ante conseq (vmap_op2) ba k;                                                    
-                           helper ante conseq (vmap#extend (Lt,e1,e2)) ba k;
-                           ()                                             
-                        | Gt | Eq | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap_op (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                        | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap_op (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
-                        | False -> failwith "helper: false relation detected"
-                      )
-                   | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap_op ba k
-                   | Lt -> helper ante (mkSeq (mkGapBasic b2 s1 s2) conseq) vmap_op ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
+              | others -> align others b1 b2 s1 s2
             )
               
-         | Seq (l1,r1), _ ->
-            (* TO DO: Less switching can be achieved *)
-            let newk lefta leftc newba newvmap =
-              match lefta, leftc with
-              | Emp, Emp -> helper r1 Emp newvmap newba k
-              | Emp, _ -> helper r1 leftc newvmap newba k
-              | _, Emp -> helper (mkSeq lefta r1) Emp newvmap newba k
-              | _, _ -> failwith "Seq vs. Seq: Invalid input"
-            in
-            helper l1 conseq vmap_op ba newk
-         | Star plst, _ -> bubble_push ante vmap (fun (sorted_ante,newvmap) -> helper sorted_ante conseq newvmap ba k)
-         | _ , Seq (l2,r2) ->
-            (* TO DO: Less switching can be achieved *)
-            let newk lefta leftc newba newvmap =
-              match lefta, leftc with
-              | Emp, Emp -> helper Emp r2 newvmap newba k
-              | Emp, _ -> helper Emp (mkSeq leftc r2) newvmap newba k
-              | _, Emp -> helper lefta r2 newvmap newba k
-              | _, _ -> failwith "Seq vs. Seq: Invalid input"
-            in
-            helper ante l2 vmap_op ba newk         
-         | _, Star plst -> bubble_push conseq vmap (fun (sorted_conseq,newvmap) -> helper ante sorted_conseq newvmap ba k)
-       )
-    | None ->
-       let () = print_endline "UNSAT" in
-       ()
-  in
-  
-  let anteTrans = new arrPredTransformer ante in
-  let conseqTrans = new arrPredTransformer conseq in
-  let varlst = snd
-                 (
-                   List.fold_left
-                     (fun (index,r) item ->
-                       (index+1,(item,index)::r))
-                     (0,[])
-                     (remove_dups_exp_lst ((anteTrans#get_var_set)@(conseqTrans#get_var_set)))
+         | Elem (b1, s1), Elem (b2, s2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq -> helper Emp Emp vmap ba k
+              | others -> align others b1 b2 s1 s2
+            )
+
+         | Elem (b1, s1), Aseg (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 ( match vmap#compare_points s2 e2 with
+                   | Unk | Lte  ->
+                      vmap#extend_f (Eq,s2,e2) force_rel;
+                      vmap#extend_f (Lt,s2,e2) force_rel;
+                      ()                      
+                   | Lt -> helper Emp (mkAsegBasic b2 (incOne s2) e2) vmap ba k
+                   | Eq -> helper ante Emp vmap ba k
+                   | Gt | Gte | Neq -> failwith "Elem vs. Aseg: Invalid input. The relation should be more specific"
+                   | False -> failwith "helper: false relation detected"
                  )
+              | others -> align others b1 b2 s1 s2
+            )
+
+         | Elem (b1, s1), Gap (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 ( match vmap#compare_points s2 e2 with
+                   | Unk | Lte ->
+                      vmap#extend_f (Eq,s2,e2) force_rel;
+                      vmap#extend_f (Lt,s2,e2) force_rel;
+                      ()                      
+                   | Lt -> helper Emp (mkGapBasic b2 (incOne s2) e2) vmap (antiframe,(frame#add h1),prooftrace) k
+                   | Eq -> helper ante Emp vmap ba k
+                   | Gt | Gte | Neq -> failwith "Elem vs. Gap: Invalid input. The relation should be more specific"              
+                   | False -> failwith "helper: false relation detected"
+                 )                 
+              | others -> align others b1 b2 s1 s2
+            )
+            
+         | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 (
+                   match vmap#compare_points e1 e2 with
+                   | Unk | Neq ->
+                      vmap#extend_f (Gt,e1,e2) force_rel;
+                      vmap#extend_f (Lt,e1,e2) force_rel;
+                      ()
+                   | Eq -> helper Emp Emp vmap ba k
+                   | Gt | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap ba k
+                   | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap ba k                   
+                   | False -> failwith "helper: false relation detected"
+                 )
+              | others -> align others b1 b2 s1 s2
+            )
+              
+         | Gap (b1, s1, e1), Elem (b2, s2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 ( match vmap#compare_points s1 e1 with
+                   | Unk | Lte ->
+                      vmap#extend_f (Eq,s1,e1) force_rel;
+                      vmap#extend_f (Lt,s1,e1) force_rel;
+                      ()                      
+                   | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap ((antiframe#add h2),frame,prooftrace) k
+                   | Eq -> helper Emp conseq vmap ba k
+                   | Gt | Gte | Neq -> failwith "Elem vs. Aseg: Invalid input. The relation should be more specific"              
+                   | False -> failwith "helper: false relation detected"
+                 )                 
+              | others -> align others b1 b2 s1 s2
+            )
+
+         | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
+            ( match vmap#compare_points s1 s2 with
+              | Eq ->
+                 ( match vmap#compare_points e1 e2 with
+                   | Unk | Neq ->                      
+                      (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
+                      vmap#extend_f (Gt,e1,e2) force_rel;
+                      vmap#extend_f (Lte,e1,e2) force_rel;
+                      ()
+                   | Eq-> helper Emp Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+                   | Gt | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
+                   | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
+                   | False -> failwith "helper: false relation detected"
+                 )
+              | others -> align others b1 b2 s1 s2
+            )            
+       )
+         
+    | Seq (l,r), _ ->
+       bubble_push l vmap
+                   (fun (x,rest,newvmap) ->
+                     helper x conseq newvmap ba
+                            (fun lefta leftc newba newvmap2 ->
+                              match lefta, leftc with
+                              | Emp, _ -> helper r leftc newvmap2 newba k
+                              | _, Emp -> helper (mkSeq lefta r) Emp newvmap2 newba k
+                              | _, _ -> failwith "Seq vs. Seq: Invalid input"))                       
+    | Star plst, _ ->
+       bubble_push ante vmap
+                   (fun (min_ante,rest,newvmap) ->
+                     helper min_ante conseq newvmap ba
+                            (fun lefta leftc newba newvmap2 ->
+                              match lefta, leftc with
+                              | Emp, _ -> helper rest leftc newvmap2 newba k
+                              | _, Emp -> helper (mkSeq lefta rest) Emp newvmap2 newba k
+                              | _, _ -> failwith "Seq vs. Seq: Invalid input"))                                                
+    | Basic _, Seq (l,r) ->
+       bubble_push l vmap
+                   (fun (x,rest,newvmap) ->
+                     helper ante x newvmap ba
+                            (fun lefta leftc newba newvmap2 ->
+                              match lefta, leftc with
+                              | _, Emp -> helper lefta r newvmap2 newba k
+                              | Emp, _ -> helper Emp (mkSeq leftc r) newvmap2 newba k
+                              | _, _ -> failwith "Seq vs. Seq: Invalid input"))
+    | Basic _, Star plst ->
+       bubble_push conseq vmap
+                   (fun (min_conseq,rest,newvmap) ->
+                     helper ante min_conseq newvmap ba
+                            (fun lefta leftc newba newvmap2 ->
+                              match lefta, leftc with
+                              | _, Emp -> helper lefta rest newvmap2 newba k
+                              | Emp, _ -> helper Emp (mkSeq leftc rest) newvmap2 newba k
+                              | _, _ -> failwith "Seq vs. Seq: Invalid input"))
   in
+  ()
+  (* let anteTrans = new arrPredTransformer ante in *)
+  (* let conseqTrans = new arrPredTransformer conseq in *)
+  (* let varlst = snd *)
+  (*                ( *)
+  (*                  List.fold_left *)
+  (*                    (fun (index,r) item -> *)
+  (*                      (index+1,(item,index)::r)) *)
+  (*                    (0,[]) *)
+  (*                    (remove_dups_exp_lst ((anteTrans#get_var_set)@(conseqTrans#get_var_set))) *)
+  (*                ) *)
+  (* in *)
 
-  let antiframe = new frame [] in
-  let frame = new frame [] in
+  (* let antiframe = new frame [] in *)
+  (* let frame = new frame [] in *)
 
-  let lhs_p = get_pure ante in
-  let rhs_p = get_pure conseq in
-  let puref = mkAnd lhs_p rhs_p no_pos in
+  (* let lhs_p = get_pure ante in *)
+  (* let rhs_p = get_pure conseq in *)
+  (* let puref = mkAnd lhs_p rhs_p no_pos in *)
   
-  let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
-  let vmap_op = Some (new lazyVMap (puref,varlst,init_matrix)) in
+  (* let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in *)
+  (* let vmap = Some (new lazyVMap (puref,varlst,init_matrix)) in *)
   
-  helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap_op (antiframe,frame,[])
-         (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap_op ->
-           match newvmap_op with
-           | Some newvmap ->
-              let newantiframe, newframe =
-                match lefta, leftc with
-                | Emp, Emp -> newantiframe, newframe
-                | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe
-                | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta)
-                | _ , _ -> failwith "po_biabduction: Invalid input"
-              in           
-           (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
-              print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []
-           | None -> ()
-         )
+  (* helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap (antiframe,frame,[]) *)
+  (*        (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap -> *)
+  (*          match newvmap with *)
+  (*          | Some newvmap -> *)
+  (*             let newantiframe, newframe = *)
+  (*               match lefta, leftc with *)
+  (*               | Emp, Emp -> newantiframe, newframe *)
+  (*               | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe *)
+  (*               | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta) *)
+  (*               | _ , _ -> failwith "po_biabduction: Invalid input" *)
+  (*             in            *)
+  (*          (\* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *\) *)
+  (*             print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref [] *)
+  (*          | None -> () *)
+  (*        ) *)
 
 ;;
          
