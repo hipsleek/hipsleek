@@ -856,13 +856,14 @@ let print_biabduction_result antiframe frame puref prooftrace=
 ;;
 
 let enumerate ante conseq enumerate_method generate_seed_formula =
-  let lhs_p = get_pure ante in
-  let rhs_p = get_pure conseq in
-  let puref = mkAnd lhs_p rhs_p  in
+  
   let anteTrans = new arrPredTransformer ante in
   let conseqTrans = new arrPredTransformer conseq in
   let anteseq = anteTrans#formula_to_arrPred in
   let conseqseq = conseqTrans#formula_to_arrPred in
+  let lhs_p = anteTrans#get_pure in
+  let rhs_p = conseqTrans#get_pure in
+  let puref = mkAnd lhs_p rhs_p in
   let vlst = remove_dups_exp_lst ((anteTrans#get_var_set)@(conseqTrans#get_var_set)) in
   let () = print_endline (str_list !str_exp vlst) in
 
@@ -1551,8 +1552,8 @@ let po_biabduction ante conseq =
   let antiframe = new frame [] in
   let frame = new frame [] in
 
-  let lhs_p = get_pure ante in
-  let rhs_p = get_pure conseq in
+  let lhs_p = anteTrans#get_pure in
+  let rhs_p = conseqTrans#get_pure in
   let puref = mkAnd lhs_p rhs_p  in
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
