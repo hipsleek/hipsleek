@@ -181,7 +181,7 @@ let flatten_seq h =
          | Gap _ -> k []
          | _ -> k [p]
        )
-    | Seq (l,r) -> helper l (fun llst -> helper r (fun rlst -> llst@rlst))
+    | Seq (l,r) -> helper l (fun llst -> helper r (fun rlst -> k (llst@rlst)))
     | Star plst -> k (List.concat (List.map (fun x -> helper x (fun a->a)) plst))
     | Emp -> failwith "flatten_seq: Invalid input"
   in
@@ -262,7 +262,6 @@ class arrPredTransformer initcf = object(self)
       Some e1
     with _ ->
       None
-
 
   method generate_pure =    
     let generate_disjoint_formula_with_two_pred p1 p2 =
@@ -610,9 +609,6 @@ let enumerate_solution_seed vlst do_biabduction =
   let length = List.length vlst in
   let updateSeed seed seed_i = seed_i::seed in
   let empty_seed = [] in
-  (* let do_biabduction seed = *)
-  (*   print_endline (str_list (str_list string_of_int) seed) *)
-  (* in *)
   let rec innerk_orig level curi seed ((Rect k):('a rect)) () =
     if level = length
     then
@@ -713,13 +709,6 @@ let from_seed_to_map seed =
 
 let enumerate_order vlst do_biabduction =
   let length = List.length vlst in
-  (* let rec inner_helper lst c eqlst k () = *)
-  (*   match lst with *)
-  (*   | h1::(h2::tail) -> *)
-  (*      inner_helper (h2::tail) (fun l -> c l) ((h1,h2)::eqlst) (inner_helper (h2::tail) (fun l->c (h1::l)) eqlst k) () *)
-  (*   | _ -> *)
-  (*      k (do_biabduction (c lst,eqlst)) *)
-  (* in *)
   let rec eq_inner_helper lst eqlst other_lst k do_something () =
     (* let () = print_endline ("eq_inner_helper: "^(str_list string_of_int lst)^", "^(str_list string_of_int eqlst)^", "^(str_list string_of_int other_lst)) in *)
     match lst with
@@ -889,7 +878,7 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
   let do_biabduction (seed,eqlst) =
     let seed_f = mapping#get_formula_from_order (seed,eqlst) in
     (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
-    if isSat (mkAnd seed_f puref )
+    if isSat (mkAnd seed_f puref)
     then
       let sorted_var_lst = mapping#get_var_lst seed in
       let () = print_endline (str_list !str_exp sorted_var_lst) in
@@ -1296,7 +1285,7 @@ let po_biabduction ante conseq =
       | Basic _ | Emp -> k (p, [], vmap)
 
     and compare h1 h2 vmap k =
-      let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in
+      (* let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in *)
       match h1, h2 with
       | Emp, _
         | _ , Emp -> failwith "compare: Invalid Emp case"
@@ -1305,7 +1294,7 @@ let po_biabduction ante conseq =
            | Unk ->
               push_prooftrace (DecideSeg (p1,p2,!prooftrace_depth));
               vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
-              vmap#add_segment_lt p1 p2 (fun newvmap -> k (h2,[h1],newvmap));
+              vmap#add_segment_lt p2 p1 (fun newvmap -> k (h2,[h1],newvmap));
               ()
            | Gt -> k (h2,[h1],vmap)
            | Lt -> k (h1,[h2],vmap)
@@ -1344,7 +1333,8 @@ let po_biabduction ante conseq =
                     
     | Basic h1, Basic h2 ->
 
-       let () = push_prooftrace (Match (h1,h2,!prooftrace_depth)) in
+       pop_prooftrace ();
+       push_prooftrace (Match (h1,h2,!prooftrace_depth));
        
        let force_rel newvmap =
          helper ante conseq newvmap ba k
@@ -1352,12 +1342,13 @@ let po_biabduction ante conseq =
        let align rel b1 b2 s1 s2 =
          (* let () = print_endline ("align: "^(!str_exp s1)^" "^(!str_exp s2)) in *)
          match rel with
-         | Unk | Gte | Neq ->
+         | Unk | Neq ->
             push_prooftrace (DecidePoints (s1,s2,!prooftrace_depth));
             vmap#extend_f (Gt,s1,s2) force_rel;
             vmap#extend_f (Lte,s1,s2) force_rel;
             ()                          
-         | Gt -> helper (mkGapBasic b1 s2 s1) conseq vmap ba
+         | Gt | Gte ->     
+            helper (mkGapBasic b1 s2 s1) conseq vmap ba
                         (fun lefta leftc newba newvmap ->
                           helper (mkSeq lefta ante) leftc newvmap newba k)
          | Lt | Lte -> helper ante (mkGapBasic b2 s1 s2) vmap ba
@@ -1368,6 +1359,23 @@ let po_biabduction ante conseq =
        in
        
        ( match h1, h2 with
+         
+         (* | Aseg (_, s, e), _  | Gap (_, s, e), _ *)
+         (*      when (match vmap#compare_points s e with *)
+         (*            | Eq -> true *)
+         (*            | _ -> false *)
+         (*           ) *)
+         (*   -> *)
+         (*    helper Emp conseq vmap ba k *)
+                   
+         (* | _, Aseg (_, s, e) | _, Gap (_, s, e) *)
+         (*      when (match vmap#compare_points s e with *)
+         (*            | Eq -> true *)
+         (*            | _ -> false *)
+         (*           ) *)
+         (*   -> *)
+         (*    helper ante Emp vmap ba k *)
+                               
          | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
             ( match vmap#compare_points s1 s2 with
               | Eq ->
@@ -1377,8 +1385,9 @@ let po_biabduction ante conseq =
                       push_prooftrace (DecidePoints (e1,e2,!prooftrace_depth));
                       vmap#extend_f (Gt,e1,e2) force_rel;
                       vmap#extend_f (Lte,e1,e2) force_rel;
-                      ()                      
-                   | Gt | Gte | Eq -> helper (mkAsegBasic b1 e2 e1) Emp vmap ba k
+                      ()
+                   | Eq -> helper Emp Emp vmap ba k
+                   | Gt | Gte -> helper (mkAsegBasic b1 e2 e1) Emp vmap ba k
                    | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap ba k
                    | False -> failwith "helper: false relation detected"
                  )
@@ -1411,7 +1420,7 @@ let po_biabduction ante conseq =
                       vmap#extend_f (Gt,e1,e2) force_rel;
                       vmap#extend_f (Lte,e1,e2) force_rel;                      
                       ()
-                   | Eq-> helper Emp Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
+                   | Eq -> helper Emp Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
                    | Gt | Gte -> helper (mkAsegBasic b1 e2 e1) Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
                    | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
                    | False -> failwith "helper: false relation detected"
