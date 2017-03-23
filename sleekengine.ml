@@ -1068,7 +1068,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
   | MetaForm mf -> 
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
     (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
-    let wf = x_add Astsimp.case_normalize_formula iprog h mf in
+    let wf = x_add Astsimp.case_normalize_formula iprog h mf in    
     let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -1395,6 +1395,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
       let _ =
         if !Globals.array_lazy_enum
         then
+          let () = Arr_biabduction.check_formula_to_arrPred new_ante new_conseq in
           Arr_biabduction.po_biabduction_interface new_ante new_conseq
         else
           Arr_biabduction.enumerate_with_order new_ante new_conseq

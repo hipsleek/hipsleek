@@ -20,6 +20,9 @@ let mkAnd f1 f2 = Cpure.mkAnd f1 f2 no_pos
 
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
+
+let simplify = Tpdispatcher.simplify_omega
+;;
   
 let rec mkAndlst lst =
   match lst with
@@ -253,7 +256,8 @@ class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)
   val mutable aseglst = None
-  val mutable puref = None
+  val mutable orig_puref = None
+  val mutable puref = None      (* Extend with disjointness *)
                   
   method find_in_eqmap sv =
     try
@@ -301,7 +305,7 @@ class arrPredTransformer initcf = object(self)
     in
 
     let lst = self#formula_to_arrPred in
-    puref <- Some (mkAndlst ((Cformula.get_pure cf)
+    puref <- Some (mkAndlst ((self#get_orig_pure)
                              ::((generate_disjoint_formula lst [])
                                 @(generate_segment_formula lst []))));
     ()
@@ -349,6 +353,25 @@ class arrPredTransformer initcf = object(self)
        self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
     | _ -> failwith "getElemStart: Invalid input"
 
+  method get_orig_pure =
+    let normalize_puref pf =
+      let f_e _ e =
+        match e with
+        | Var (sv,_) ->
+           Some (self#pred_var_to_arrPred_exp sv,([],true))
+        | _ -> None
+      in
+      let vf2 = Globals.voidf2 in
+      let f_comb c = ([],true) in
+      let npf,_ = Cpure.trans_formula pf () (Globals.nonef2,Globals.nonef2,f_e) (vf2,vf2,vf2) f_comb in
+      npf
+    in
+    match orig_puref with
+    | None -> 
+       orig_puref <- Some (simplify (normalize_puref (Cformula.get_pure cf)));
+       self#get_orig_pure
+    | Some f -> f
+
 
   method generate_arrPred_lst =
     let one_pred_to_arrPred hf=
@@ -361,7 +384,7 @@ class arrPredTransformer initcf = object(self)
           if isEmpty hf
           then None
           else failwith "one_pred_to_arrPred: Invalid input"
-    in    
+    in
     let build_eqmap pf evars=
       let eqlst = find_eq_at_toplevel pf in
       let evarsContains evars sv =
@@ -413,24 +436,39 @@ class arrPredTransformer initcf = object(self)
   method formula_to_seq =    
     mkStar (List.map mkBasic (self#formula_to_arrPred))
            
+  (* method get_var_set = *)
+  (*   let get_var_from_one_pred hf= *)
+  (*     if isAsegPred hf *)
+  (*     then [(self#getAsegStart hf);(self#getAsegEnd hf)] *)
+  (*     else *)
+  (*       if isElemPred hf *)
+  (*       then [(self#getElemStart hf);incOne (self#getElemStart hf)] *)
+  (*       else *)
+  (*         if isEmpty hf *)
+  (*         then [] *)
+  (*         else failwith "get_var_from_one_pred: Invalid input" *)
+  (*   in *)
+  (*   match cf with *)
+  (*   | Base f -> *)
+  (*      let pred_list = flatten_heap_star_formula f.formula_base_heap in *)
+  (*      (List.concat (List.map get_var_from_one_pred pred_list)) *)
+  (*   | _ -> failwith "get_var_set: TO BE IMPLEMENTED" *)
+
   method get_var_set =
-    let get_var_from_one_pred hf=
-      if isAsegPred hf
-      then [(self#getAsegStart hf);(self#getAsegEnd hf)]
-      else
-        if isElemPred hf
-        then [(self#getElemStart hf);incOne (self#getElemStart hf)]
-        else
-          if isEmpty hf
-          then []
-          else failwith "get_var_from_one_pred: Invalid input"
-    in
-    match cf with
-    | Base f ->
-       let pred_list = flatten_heap_star_formula f.formula_base_heap in
-       (List.concat (List.map get_var_from_one_pred pred_list))
-    | _ -> failwith "get_var_set: TO BE IMPLEMENTED"
-   
+    let lst = self#formula_to_arrPred in
+    remove_dups_exp_lst
+      (
+        List.concat
+          (List.map
+             (fun item ->
+               match item with
+               | Aseg (_,s,e) | Gap (_,s,e) -> [s;e]
+               | Elem (_,s) -> [s])
+             lst
+          )
+      )
+       
+                    
 end
 ;;
 
@@ -1133,7 +1171,7 @@ class lazyVMap (puref,varlst,initmatrix) =
           let rel_f = get_formula (decode_vrelation new_rel_code) e1 e2 in
           if self#checkSat rel_f
           then
-            Some (self#copy [(new_rel_code,e1,e2)] (mkAnd rel_f puref ))
+            Some (self#copy [(new_rel_code,e1,e2)] (simplify (mkAnd rel_f puref)))
           else
             None
 
@@ -1961,3 +1999,11 @@ let cf_biabduction ante conseq =
   let (cantiframe,cframe) = (clean_gap antiframe,clean_gap frame) in
   print_biabduction_result cantiframe cframe lhs_p prooftrace
 ;;
+
+let check_formula_to_arrPred ante conseq =
+  let anteTrans = new arrPredTransformer ante in
+  let conseqTrans = new arrPredTransformer conseq in
+  print_endline (str_seq (anteTrans#formula_to_arrPred));
+  print_endline (str_seq (conseqTrans#formula_to_arrPred));
+  ()
+;;  
