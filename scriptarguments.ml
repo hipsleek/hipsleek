@@ -482,6 +482,8 @@ let common_arguments = [
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--array-lp", Arg.Set Globals.array_lp,"infer array bounds");
   ("--array-templ", Arg.Set Globals.array_templ,"infer array bounds using template");
+  ("--lazy-enum", Arg.Set Globals.array_lazy_enum,"array biabduction with lazy enumeration");
+  ("--simp-enum", Arg.Clear Globals.array_lazy_enum,"array biabduction with simple enumeration");
   ("--en-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--dis-remove-abs", Arg.Clear Globals.remove_abs,"disable removing @A nodes from formula (incl nodes with all fields ann with @A)");
   ("--en-imm-merge", Arg.Set Globals.imm_merge,"try to merge aliased nodes");

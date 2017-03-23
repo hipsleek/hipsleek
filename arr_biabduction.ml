@@ -10,7 +10,46 @@ type 'exp arrPred =
   | Elem of ('exp * 'exp)
 ;;
 
+
+(* Utility on formula and exp *)
+let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
+;;
+
+let mkAnd f1 f2 = Cpure.mkAnd f1 f2 no_pos
+;;
+
+let mkTrue () = Cpure.mkTrue no_pos
+;;
   
+let rec mkAndlst lst =
+  match lst with
+  | [h] -> h
+  | h::tail -> mkAnd h (mkAndlst tail)
+  | [] -> mkTrue ()
+;;
+
+let mkGt e1 e2 =
+  Cpure.mkGtExp e1 e2 no_pos
+;;
+
+let mkLt e1 e2 =
+  Cpure.mkLtExp e1 e2 no_pos
+;;
+
+let mkLte e1 e2 =
+  Cpure.mkLteExp e1 e2 no_pos
+;;
+
+let mkGte e1 e2 =
+  Cpure.mkGteExp e1 e2 no_pos
+;;
+
+let mkEq e1 e2 =
+  Cpure.mkEqExp e1 e2 no_pos
+;;
+  
+
+(* end of Utility on formula and exp  *)
 let map_op_list (f:('a -> 'b)) (lst:('a option list)) =
   List.fold_right
     (fun item r ->
@@ -39,19 +78,19 @@ let is_same_exp e1 e2 =
 
 let isEq s1 e1 pf =
   (* pf |= s1 == e1 *)
-  let rhsf = mkEqExp s1 e1 no_pos in
+  let rhsf = mkEq s1 e1 in
   !tp_imply pf rhsf
 ;;
 
 let isGt s1 e1 pf =
   (* pf |= s1 > e1 *)
-  let rhsf = mkGtExp s1 e1 no_pos in
+  let rhsf = mkGt s1 e1 in
   !tp_imply pf rhsf
 ;;
 
 let isGte s1 e1 pf =
   (* pf |= s1 >= e1 *)
-  let rhsf = mkGteExp s1 e1 no_pos in
+  let rhsf = mkGte s1 e1 in
   !tp_imply pf rhsf
 ;;
   
@@ -213,7 +252,9 @@ let mkBasic p =
 class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)
-      
+  val mutable aseglst = None
+  val mutable puref = None
+                  
   method find_in_eqmap sv =
     try
       let (_,e1) = List.find (fun (v,e) -> (compare_sv sv v)=0) eqmap
@@ -221,6 +262,56 @@ class arrPredTransformer initcf = object(self)
       Some e1
     with _ ->
       None
+
+
+  method generate_pure =    
+    let generate_disjoint_formula_with_two_pred p1 p2 =
+      match p1, p2 with
+      | Aseg (_,s1,e1), Aseg (_,s2,e2) ->
+         mkOr (mkOr (mkGte s2 e1) (mkGte s1 e2)) (mkOr (mkEq s1 e1) (mkEq s2 e2))
+      | Aseg (_,s1,e1), Elem (_,s2) ->
+         mkOr (mkOr (mkGte s2 e1) (mkGt s1 s2)) (mkEq s1 e1)
+      | Elem (_,s1), Aseg (_,s2,e2)  ->
+         mkOr (mkOr (mkGte s1 e2) (mkGte s2 s1)) (mkEq s2 e2)
+      | Elem (_,s1), Elem (_,s2) ->
+         mkOr (mkGt s2 s1) (mkGt s1 s1)
+      | _, _ -> mkTrue ()
+    in
+    let rec generate_disjoint_formula lst flst =
+      match lst with
+      | h::tail ->
+         generate_disjoint_formula tail
+                                   (List.map (fun item -> generate_disjoint_formula_with_two_pred h item) tail)
+      | [] -> flst
+    in
+    let rec generate_segment_formula lst flst =
+      List.fold_left
+        (fun r item ->
+          match item with
+          | Some f -> f::r
+          | None -> r
+        )
+        []         
+        (List.map
+           (fun item ->
+             match item with
+             | Aseg (_,s,e) -> Some (mkLte s e)
+             | _ -> None)
+           lst
+        )
+    in
+
+    let lst = self#formula_to_arrPred in
+    puref <- Some (mkAndlst ((Cformula.get_pure cf)
+                             ::((generate_disjoint_formula lst [])
+                                @(generate_segment_formula lst []))));
+    ()
+
+  method get_pure =
+    match puref with
+    | Some f -> f
+    | None -> self#generate_pure;
+              self#get_pure
           
   method pred_var_to_arrPred_exp sv =
     match (self#find_in_eqmap sv) with
@@ -259,7 +350,8 @@ class arrPredTransformer initcf = object(self)
        self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
     | _ -> failwith "getElemStart: Invalid input"
 
-  method formula_to_arrPred =
+
+  method generate_arrPred_lst =
     let one_pred_to_arrPred hf=
       if isAsegPred hf
       then Some (mkAseg (self#getAsegBase hf) (self#getAsegStart hf) (self#getAsegEnd hf))
@@ -297,19 +389,29 @@ class arrPredTransformer initcf = object(self)
       in
       List.fold_left (fun r ee -> (helper ee)@r) [] eqlst
     in
-    match cf with
-    | Base f ->
-       let pred_list = flatten_heap_star_formula f.formula_base_heap in
-       map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)       
-    | Or f-> failwith "TO BE IMPLEMENTED"
-    | Exists f ->
-       let pf = Mcpure.pure_of_mix f.formula_exists_pure in
-       let evars = f.formula_exists_qvars in
-       let () = eqmap <- build_eqmap pf evars in
-       let pred_list = flatten_heap_star_formula f.formula_exists_heap in
-       map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
+    let aPrelst =
+      match cf with
+      | Base f ->
+         let pred_list = flatten_heap_star_formula f.formula_base_heap in
+         map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)       
+      | Or f-> failwith "TO BE IMPLEMENTED"
+      | Exists f ->
+         let pf = Mcpure.pure_of_mix f.formula_exists_pure in
+         let evars = f.formula_exists_qvars in
+         let () = eqmap <- build_eqmap pf evars in
+         let pred_list = flatten_heap_star_formula f.formula_exists_heap in
+         map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
+    in
+    aseglst <- Some aPrelst
 
-  method formula_to_seq =
+  method formula_to_arrPred =
+    match aseglst with
+    | Some lst -> lst
+    | None ->
+       self#generate_arrPred_lst;
+       self#formula_to_arrPred
+              
+  method formula_to_seq =    
     mkStar (List.map mkBasic (self#formula_to_arrPred))
            
   method get_var_set =
@@ -552,22 +654,22 @@ let generate_seed_formula seed mapping =
     | [h] ->
        if h=0
        then
-         mkEqExp var new_var no_pos
+         mkEq var new_var
        else
          if h=1
-         then mkGtExp var new_var no_pos
-         else mkLtExp var new_var no_pos
+         then mkGt var new_var
+         else mkLt var new_var
     | h::tail ->
        let newf =
          if h=0
          then
-           mkEqExp var new_var no_pos
+           mkEq var new_var
          else
            if h=1
-           then mkGtExp var new_var no_pos
-           else mkLtExp var new_var no_pos
+           then mkGt var new_var
+           else mkLt var new_var 
        in
-       mkAnd newf (inner_helper var (index+1) tail mapping) no_pos
+       mkAnd newf (inner_helper var (index+1) tail mapping)
     | [] -> failwith "generate_seed_formula: Invalid input"
   in
   let rec helper index seed mapping =
@@ -575,8 +677,8 @@ let generate_seed_formula seed mapping =
     match seed with
     | h::tail ->
        let newf = inner_helper var (index+1) h mapping in
-       mkAnd newf (helper (index+1) tail mapping) no_pos
-    | [] -> Cpure.mkTrue no_pos
+       mkAnd newf (helper (index+1) tail mapping)
+    | [] -> mkTrue ()
   in
   helper 0 seed mapping
 ;;
@@ -665,28 +767,28 @@ let generate_eq_formula eqlst vmap=
   let rec helper eqlst f =
     match eqlst with
     | e1::(e2::tail) ->
-       helper (e2::tail) (mkAnd (mkEqExp (vmap#get_var e1) (vmap#get_var e2) no_pos) f no_pos)
+       helper (e2::tail) (mkAnd (mkEq (vmap#get_var e1) (vmap#get_var e2)) f)
     | _ -> f
   in
-  List.fold_left (fun r item -> mkAnd (helper item (Cpure.mkTrue no_pos)) r no_pos) (Cpure.mkTrue no_pos) eqlst
+  List.fold_left (fun r item -> mkAnd (helper item (mkTrue ())) r) (mkTrue ()) eqlst
 ;;  
 
 let from_order_to_formula seed vmap =
   let rec helper lastv seed f=
     match seed with
     | [h] ->
-       (mkAnd f (mkLtExp lastv (vmap#get_var h) no_pos) no_pos)       
+       (mkAnd f (mkLt lastv (vmap#get_var h) ) )       
     | h::tail ->
        let newv = vmap#get_var h in
-       helper newv tail (mkAnd (mkLtExp lastv newv no_pos) f no_pos)    
+       helper newv tail (mkAnd (mkLt lastv newv) f )    
     | [] ->
        failwith "from_order_to_formula: Invalid input"
   in
   match seed with
   | h1::((h2::t) as tail)->
-     (helper (vmap#get_var h1) tail (Cpure.mkTrue no_pos))
+     (helper (vmap#get_var h1) tail (mkTrue ()))
   | _ ->
-     Cpure.mkTrue no_pos
+     mkTrue ()
 ;;
   
 let sort_seq sorted_var_lst seq =
@@ -756,7 +858,7 @@ let print_biabduction_result antiframe frame puref prooftrace=
 let enumerate ante conseq enumerate_method generate_seed_formula =
   let lhs_p = get_pure ante in
   let rhs_p = get_pure conseq in
-  let puref = mkAnd lhs_p rhs_p no_pos in
+  let puref = mkAnd lhs_p rhs_p  in
   let anteTrans = new arrPredTransformer ante in
   let conseqTrans = new arrPredTransformer conseq in
   let anteseq = anteTrans#formula_to_arrPred in
@@ -780,13 +882,13 @@ let enumerate ante conseq enumerate_method generate_seed_formula =
         generate_eq_formula eqlst self
 
       method get_formula_from_order (seed, eqlst) =
-        mkAnd (self#get_order_formula seed) (self#get_eq_formula eqlst) no_pos
+        mkAnd (self#get_order_formula seed) (self#get_eq_formula eqlst)
     end
   in
   let do_biabduction (seed,eqlst) =
     let seed_f = mapping#get_formula_from_order (seed,eqlst) in
     (* let () = print_endline ("seed_f: "^(!str_pformula seed_f)) in *)
-    if isSat (mkAnd seed_f puref no_pos)
+    if isSat (mkAnd seed_f puref )
     then
       let sorted_var_lst = mapping#get_var_lst seed in
       let () = print_endline (str_list !str_exp sorted_var_lst) in
@@ -967,7 +1069,7 @@ class lazyVMap (puref,varlst,initmatrix) =
     val rel_matrix = initmatrix (* Array.make_matrix (List.length varlst) 7 (\* all of them are 111 *\) *)
     val var_to_index = varlst
     method checkSat newf =
-      isSat (mkAnd puref newf no_pos)
+      isSat (mkAnd puref newf )
 
     (* What's the difference between val and method? *)
     (* val test= *)
@@ -1020,11 +1122,11 @@ class lazyVMap (puref,varlst,initmatrix) =
       (* let () = print_endline ("lazyVMap.extend: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel rel)) in *)
       let get_formula rel e1 e2 =
         match rel with
-        | Gt -> mkGtExp e1 e2 no_pos
-        | Lt -> mkLtExp e1 e2 no_pos
-        | Eq -> mkEqExp e1 e2 no_pos
-        | Lte -> mkLteExp e1 e2 no_pos
-        | Gte -> mkGteExp e1 e2 no_pos
+        | Gt -> mkGt e1 e2 
+        | Lt -> mkLt e1 e2 
+        | Eq -> mkEq e1 e2 
+        | Lte -> mkLte e1 e2 
+        | Gte -> mkGte e1 e2 
         | _ -> failwith "get_formula: TO BE IMPLEMENTED"
       in
       let rel_code = encode_vrelation rel in
@@ -1041,7 +1143,7 @@ class lazyVMap (puref,varlst,initmatrix) =
           let rel_f = get_formula (decode_vrelation new_rel_code) e1 e2 in
           if self#checkSat rel_f
           then
-            Some (self#copy [(new_rel_code,e1,e2)] (mkAnd rel_f puref no_pos))
+            Some (self#copy [(new_rel_code,e1,e2)] (mkAnd rel_f puref ))
           else
             None
 
@@ -1155,8 +1257,6 @@ end
 let po_biabduction ante conseq =
   
   let lazy_sort p vmap k =
-
-    
     
     let rec bubble_push p vmap k =  
       (* let () = print_endline ("bubble_push "^(str_seq_star_arr p)) in *)
@@ -1235,7 +1335,7 @@ let po_biabduction ante conseq =
   in
   let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)    
-    (* let () = push_prooftrace (Entry (ante,conseq,!prooftrace_depth)) in *)
+    let () = push_prooftrace (Entry (ante,conseq,!prooftrace_depth)) in
       
     match ante, conseq with
     | Emp, _
@@ -1405,7 +1505,7 @@ let po_biabduction ante conseq =
                    | False -> failwith "helper: false relation detected"
                  )
               | others -> align others b1 b2 s1 s2
-            )            
+            )
        )
          
     | Seq (l,r), _ ->
@@ -1453,7 +1553,7 @@ let po_biabduction ante conseq =
 
   let lhs_p = get_pure ante in
   let rhs_p = get_pure conseq in
-  let puref = mkAnd lhs_p rhs_p no_pos in
+  let puref = mkAnd lhs_p rhs_p  in
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
   let vmap = new lazyVMap (puref,varlst,init_matrix) in
@@ -1470,10 +1570,16 @@ let po_biabduction ante conseq =
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *)
            push_prooftrace (Reach (newantiframe#get_lst, newframe#get_lst,newvmap#get_puref,!prooftrace_depth));
-           prooftrace_depth := !prooftrace_depth - 1 ;
-           print_endline (print_prooftrace ());
+           (* prooftrace_depth := !prooftrace_depth - 1 ; *)
+           (* print_endline (print_prooftrace ()); *)
            ()
          )
+;;
+
+let po_biabduction_interface ante conseq =
+  let () = po_biabduction ante conseq in
+  print_endline (print_prooftrace ());
+  ()
 ;;
          
 
