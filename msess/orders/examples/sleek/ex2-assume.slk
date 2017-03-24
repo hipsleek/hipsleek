@@ -1,0 +1,15 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+/* orders */
+pred_prim event<peer,id:int>.
+pred_prim HB<peer1,id1:int,peer2,id2:int>.
+pred_prim CB<peer1,id1:int,peer2,id2:int>.
+
+/* protocol lang related */
+pred_prim Assume{%P}<>.
+pred_prim Guard{%P}<>.
+pred_prim Peer{%P}<>.
+
+/* Explicit channel support. At the moment parsing should work. */
+pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;;Assume{x=1}<>;; C->B:k(2).
