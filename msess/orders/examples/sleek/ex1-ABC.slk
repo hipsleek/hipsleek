@@ -1,20 +1,10 @@
 sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
-/* orders */
-pred_prim event<peer,id:int>.
-pred_prim HB<peer1,id1:int,peer2,id2:int>.
-pred_prim CB<peer1,id1:int,peer2,id2:int>.
-
-/* protocol lang related */
-pred_prim Assume{%P}<>.
-pred_prim Guard{%P}<>.
-pred_prim Peer{%P}<>.
-
 /* Explicit channel support. At the moment parsing should work. */
 pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; C->B:k(2).
 pred_sess_prot G2<A,B,C,r> == A->B:r(v#v=5) ;; C->B:r(t#t=5).
-pred_sess_prot G3<A,B,C,k> == A->B:k(v#v::node<_,p> & p<0) ;; C->B:k(t#t>0& t<7).  
+pred_sess_prot G3<A,B,C,k> == A->B:k(v#v::node<p,_> & p<0) ;; C->B:k(t#t>0& t<7).  
 
 /* Supports also sending a message without specifying a channel. */
 pred_sess_prot G<A,B,C> == A->B:v#v=123 ;; C->B:123.
