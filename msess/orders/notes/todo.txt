@@ -1,10 +1,22 @@
-to allow channel parsing as below:
+[DONE] to allow channel parsing as below:
 
 pred_sess_prot G<A,B,C> == A->B:k(v#v=1) ;; C->B:k(2).
 
 =====================================
 =====================================
+ ex2.slk 
+../../../../sleek ex2-assume.slk --pip
+pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;;Assume{x=1}<>;; C->B:k(2).
 
+to check why assumes loses its its HO formula:
+.........
+session: (A -> B : (emp) * ([] & v = 2)( FLOW __stub)) ;; ((Assume{}<[]>) ;; (C -> B : (emp) * ([] & m
+sg = 2)( FLOW __stub)))
+
+
+to fix printer for session_predicate which ignores the ho params:
+and string_of_session_predicate s =
+    s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
 
 =====================================
 =====================================
