@@ -35,5 +35,8 @@ how to call chr as a single command (source + goal)
 
 swipl -s source_file.pl -t ??
 
+[DONE] I've created a bash script called run_pl.sh 
+Usage:	 ./run_pl.sh <prolog script name> <goals file name> 
+Example: ./run_pl.sh session_chr_prelude.pl /tmp/test
 =============================================================
 =============================================================
