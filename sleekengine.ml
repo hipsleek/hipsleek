@@ -1385,30 +1385,25 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         sp
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
-  let () =
-    if List.mem INF_ARR_BIABDUCTION itype                
-    then
-      let new_ante = CF.elim_exists ante in
-      let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
+  
+  if List.mem INF_ARR_BIABDUCTION itype                
+  then
+    let new_ante = CF.elim_exists ante in
+    let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
       (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
-      let _ =
-        if !Globals.array_lazy_enum
-        then
-          let () = Arr_biabduction.check_formula_to_arrPred new_ante new_conseq in
-          Arr_biabduction.po_biabduction_interface new_ante new_conseq
-        else
-          Arr_biabduction.enumerate_with_order new_ante new_conseq
-      in
-      
-      (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
-      (* let _ = Arr_biabduction.enumerate_solution_seed [1;2;3;4;5] in *)
-      y_binfo_pp ("@arr_ba: "^(!CF.print_formula new_ante)^" |- "^(!CF.print_formula new_conseq))      
-    else ()
-  in
-  let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
-  (* CF.residues := Some (rs, res); *)
-  ((res, rs,v_hp_rel), (ante,conseq))
+    let rs = Arr_biabduction.po_biabduction_interface new_ante new_conseq in
+    ((true,rs,[]),(ante,conseq))
+    (* if !Globals.array_lazy_enum *)
+    (* then *)
+    (*   let () = Arr_biabduction.check_formula_to_arrPred new_ante new_conseq in *)
+    (*   Arr_biabduction.po_biabduction_interface new_ante new_conseq *)
+    (* else *)
+    (*   Arr_biabduction.enumerate_with_order new_ante new_conseq *)
+  else
+    let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
+    (* CF.residues := Some (rs, res); *)
+    ((res, rs,v_hp_rel), (ante,conseq))
 
 let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in

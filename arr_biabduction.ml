@@ -262,8 +262,8 @@ let  global_get_new_var () =
   vcount := !vcount + 1;
   newv
 ;;
-  
-let arrPred_to_cformula seq =
+
+let arrPred_to_h_formula seq =
   let bind_exp_to_var exp =
     match exp with
     | Var (sv,_) -> (sv,[],[])                 
@@ -271,7 +271,7 @@ let arrPred_to_cformula seq =
        let newv = global_get_new_var () in
        (newv,[mkEq (mkVar newv no_pos) exp],[newv])
   in
-  let one_arrPred_to_cformula p =
+  let one_arrPred_to_h_formula p =
     match p with
     | Aseg (b,s,e) ->
        let (news,sf_lst,svlst) = bind_exp_to_var s in
@@ -286,16 +286,22 @@ let arrPred_to_cformula seq =
        (mkViewNode (Cpure.exp_to_spec_var b) "Elem" [news]  no_pos, sf_lst,svlst)
   in
   let construct_h_formula plst =
-    match (List.map (fun item -> one_arrPred_to_cformula item) plst) with
+    match (List.map (fun item -> one_arrPred_to_h_formula item) plst) with
     | h::tail -> List.fold_left (fun (h,p,v) (itemh,itemp,itemv) -> (mkStarH itemh h no_pos, itemp@p,itemv@v)) h tail
     | [] -> (HEmp,[],[])
   in
-  let construct_exists hf pf svlst =
-    Cformula.mkExists svlst hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
-  in
-  let (newhf, pflst, svlst ) = construct_h_formula seq in
-  construct_exists newhf (Mcpure.mix_of_pure (mkAndlst pflst)) svlst
+  construct_h_formula seq
 ;;
+
+let construct_exists hf pf svlst =
+  Cformula.mkExists svlst hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+;;
+
+let construct_base hf pf =
+  Cformula.mkBase hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+;;
+  
+
   
 class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
@@ -1096,6 +1102,35 @@ let push_prooftrace trace =
   global_prooftrace := trace::(!global_prooftrace)
 ;;
 
+let push_answer (antiframe,frame,puref) =
+  (* let h_antiframe,h_frame = arrPred_to_cformula antiframe, arrPred_to_cformula frame in   *)
+  global_answer_stack := (antiframe,frame,puref)::(!global_answer_stack)
+;;
+
+let construct_context_lst () =  
+  let construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref) =
+    let es = Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+    let state_f = construct_base h_frame (Mcpure.mix_of_pure (mkAndlst (plst_antiframe@plst_frame))) in  
+    {es with
+      es_formula = state_f;
+      
+      es_infer_heap = [h_antiframe];
+      (* es_evars = svl_antiframe@svl_frame; *)
+    }
+  in
+  List.map
+    ( fun (antiframe,frame,puref) ->
+      let (h_antiframe,plst_antiframe,svl_antiframe) = arrPred_to_h_formula antiframe in
+      let (h_frame,plst_frame,svl_frame) = arrPred_to_h_formula frame in
+      Ctx (construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref)))
+    !global_answer_stack
+;;
+
+(* let construct_succ_ctx answerlst = *)
+(*   SuccCtx (List.map construct_context !global_answer_stack) *)
+(* ;; *)
+  
+
 let pop_prooftrace () =
   match !global_prooftrace with
   | [] -> ()
@@ -1112,10 +1147,10 @@ let str_one_prooftrace trace =
     let indent = print_indent depth "   " in
     indent^("anti-frame: "^(str_seq antiframe))^"\n"
     ^indent^("frame: "^(str_seq frame))^"\n"
-    ^indent^("pure: "^(!str_pformula puref))^"\n"
-    ^indent^("anti-frame: "^(!str_cformula (arrPred_to_cformula antiframe)))^"\n"
-    ^indent^("frame: "^(!str_cformula (arrPred_to_cformula frame)))^"\n"
     ^indent^("pure: "^(!str_pformula puref))
+    (* ^indent^("anti-frame: "^(!str_cformula (arrPred_to_cformula antiframe)))^"\n" *)
+    (* ^indent^("frame: "^(!str_cformula (arrPred_to_cformula frame)))^"\n" *)
+    (* ^indent^("pure: "^(!str_pformula puref)) *)
   in
   match trace with
   | Entry (ante,conseq,depth) -> print_indent depth ("[Entry] " ^ (str_seq_star_arr ante) ^ " |= " ^ (str_seq_star_arr conseq))
@@ -1668,7 +1703,9 @@ let po_biabduction ante conseq =
            in
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *)
-           push_prooftrace (Reach (newantiframe#get_lst, newframe#get_lst,newvmap#get_puref,!prooftrace_depth));
+           let antiframelst,framelst,puref = newantiframe#get_lst, newframe#get_lst,newvmap#get_puref in
+           push_prooftrace (Reach (antiframelst,framelst,puref,!prooftrace_depth));
+           push_answer (antiframelst,framelst,puref);
            (* prooftrace_depth := !prooftrace_depth - 1 ; *)
            (* print_endline (print_prooftrace ()); *)
            ()
@@ -1676,9 +1713,11 @@ let po_biabduction ante conseq =
 ;;
 
 let po_biabduction_interface ante conseq =
+  global_prooftrace := [];
+  global_answer_stack := [];
   let () = po_biabduction ante conseq in
   print_endline (print_prooftrace ());
-  ()
+  (SuccCtx (construct_context_lst ()))
 ;;
          
 
