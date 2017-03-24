@@ -1438,7 +1438,11 @@ module Make_Session (Base: Session_base) = struct
   (*   string_of_session_predicate f.session_fence_pred *)
 
   and string_of_session_predicate s =
-    s.session_predicate_name ^ "{}" ^ "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
+    s.session_predicate_name ^ 
+	"{" ^ 
+	((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ 
+	"}" ^ 
+	"<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
 
   and string_of_session_hvar s =
     "%" ^ s.session_hvar_id
