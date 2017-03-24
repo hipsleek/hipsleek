@@ -53,6 +53,8 @@ let mkEq e1 e2 =
   
 
 (* end of Utility on formula and exp  *)
+
+  
 let map_op_list (f:('a -> 'b)) (lst:('a option list)) =
   List.fold_right
     (fun item r ->
@@ -252,6 +254,49 @@ let mkBasic p =
 
 (* ********** End of definition of seq-star **********  *)
 
+(* Transform arr pred to cformula *)
+
+let vcount = ref 0;;  
+let  global_get_new_var () =
+  let newv = mk_spec_var ("tarr_"^(string_of_int !vcount)) in
+  vcount := !vcount + 1;
+  newv
+;;
+  
+let arrPred_to_cformula seq =
+  let bind_exp_to_var exp =
+    match exp with
+    | Var (sv,_) -> (sv,[],[])                 
+    | _ ->
+       let newv = global_get_new_var () in
+       (newv,[mkEq (mkVar newv no_pos) exp],[newv])
+  in
+  let one_arrPred_to_cformula p =
+    match p with
+    | Aseg (b,s,e) ->
+       let (news,sf_lst,svlst) = bind_exp_to_var s in
+       let (newe,se_lst,evlst) = bind_exp_to_var e in
+       (mkViewNode (Cpure.exp_to_spec_var b) "Aseg" [news;newe]  no_pos, sf_lst@se_lst,svlst@evlst)
+    | Gap (b,s,e) ->
+       let (news,sf_lst,svlst) = bind_exp_to_var s in
+       let (newe,se_lst,evlst) = bind_exp_to_var e in
+       (mkViewNode (Cpure.exp_to_spec_var b) "Gap" [news;newe]  no_pos, sf_lst@se_lst,svlst@evlst)
+    | Elem (b,s) ->
+       let (news,sf_lst,svlst) = bind_exp_to_var s in     
+       (mkViewNode (Cpure.exp_to_spec_var b) "Elem" [news]  no_pos, sf_lst,svlst)
+  in
+  let construct_h_formula plst =
+    match (List.map (fun item -> one_arrPred_to_cformula item) plst) with
+    | h::tail -> List.fold_left (fun (h,p,v) (itemh,itemp,itemv) -> (mkStarH itemh h no_pos, itemp@p,itemv@v)) h tail
+    | [] -> (HEmp,[],[])
+  in
+  let construct_exists hf pf svlst =
+    Cformula.mkExists svlst hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+  in
+  let (newhf, pflst, svlst ) = construct_h_formula seq in
+  construct_exists newhf (Mcpure.mix_of_pure (mkAndlst pflst)) svlst
+;;
+  
 class arrPredTransformer initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)
@@ -267,7 +312,7 @@ class arrPredTransformer initcf = object(self)
     with _ ->
       None
 
-  method generate_pure =    
+  method generate_pure =
     let generate_disjoint_formula_with_two_pred p1 p2 =
       match p1, p2 with
       | Aseg (_,s1,e1), Aseg (_,s2,e2) ->
@@ -1041,6 +1086,9 @@ type 'a proof_trace =
 let global_prooftrace = ref []
 ;;
 
+let global_answer_stack = ref []
+;;
+
 let prooftrace_depth = ref 0
 ;;
 
@@ -1064,6 +1112,9 @@ let str_one_prooftrace trace =
     let indent = print_indent depth "   " in
     indent^("anti-frame: "^(str_seq antiframe))^"\n"
     ^indent^("frame: "^(str_seq frame))^"\n"
+    ^indent^("pure: "^(!str_pformula puref))^"\n"
+    ^indent^("anti-frame: "^(!str_cformula (arrPred_to_cformula antiframe)))^"\n"
+    ^indent^("frame: "^(!str_cformula (arrPred_to_cformula frame)))^"\n"
     ^indent^("pure: "^(!str_pformula puref))
   in
   match trace with
