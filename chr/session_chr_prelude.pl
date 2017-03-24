@@ -15,10 +15,10 @@ e.g.  cb(event(A,a), event(B2,a))
   
 
 %% SAMPLE QUERIES
-?- hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)).
-hb(event(X, 1), event(Z, 3)),
-hb(event(Y, 2), event(Z, 3)),
-hb(event(X, 1), event(Y, 2)).
+% ?- hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)).
+% hb(event(X, 1), event(Z, 3)),
+% hb(event(Y, 2), event(Z, 3)),
+% hb(event(X, 1), event(Y, 2)).
 
 ?- hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)), hb(event(Z,3),event(T,a)).
 hb(event(X, 1), event(T, a)),
