@@ -1,0 +1,38 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim Elem<start:int>.
+
+// infer[@arr_ba] base::Aseg<a,b> |- base::Aseg<c,d>.
+
+// infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & c<d |- base::Aseg<c,d>.
+
+// infer[@arr_ba] base::Aseg<a,b> * base::Aseg<c,d> & a<b & c<d |- base::Aseg<e,f>.
+
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<2,a>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<2,7>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<1,5>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Elem<1>.
+print residue.
+
+
+
+// infer[a,b] base::Aseg<a,1> |- a<b.
+// print residue.
+
+// infer[] base::Aseg<1,5> |- emp.
+// print residue.
+// infer {(base::Aseg<2,6>,..)}
+
+// infer[@arr_ba] base::Aseg<a,b> |- base::Aseg<a,6>.
+// infer[@arr_ba] base::Aseg<a,b> |- base::Aseg<a,c>.
+// {..}
+// print residue.
+
+// infer [a] x>a |- x>0.
+// print residue.

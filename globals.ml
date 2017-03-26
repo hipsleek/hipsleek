@@ -1205,6 +1205,7 @@ let allow_array_inst = ref false
 let array_lp = ref false
 let array_templ = ref false
 let array_lazy_enum = ref true
+let array_ba_trace = ref false                          
 let imm_merge = ref true                (* true *) (*TODOIMM set default to false when merging to default branch *)
 
 let imm_weak = ref true

@@ -104,10 +104,13 @@ let incOne e =
 ;;
 
 let isSat f=
-  Tpdispatcher.tp_is_sat f "111"
-  
+  Tpdispatcher.tp_is_sat f "111"  
 ;;
 
+let imply f1 f2 =
+  !tp_imply f1 f2
+;;
+  
 let str_exp = print_exp
 ;;
 
@@ -300,6 +303,20 @@ let construct_exists hf pf svlst =
 let construct_base hf pf =
   Cformula.mkBase hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
+
+let get_inferred_pure orig_pf new_pflst =
+  let rec helper new_pflst lst =
+    match new_pflst with
+    | h::tail ->
+       if imply orig_pf h
+       then helper tail lst
+       else helper tail (h::lst)
+    | [] -> lst
+  in
+  mkAndlst (helper new_pflst [])
+;;
+                              
+
   
 
   
@@ -1102,27 +1119,28 @@ let push_prooftrace trace =
   global_prooftrace := trace::(!global_prooftrace)
 ;;
 
-let push_answer (antiframe,frame,puref) =
+let push_answer (antiframe,frame,puref,newflst) =
   (* let h_antiframe,h_frame = arrPred_to_cformula antiframe, arrPred_to_cformula frame in   *)
-  global_answer_stack := (antiframe,frame,puref)::(!global_answer_stack)
+  global_answer_stack := (antiframe,frame,puref,get_inferred_pure puref newflst)::(!global_answer_stack)
 ;;
 
 let construct_context_lst () =  
-  let construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref) =
+  let construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref,inferred_puref) =
     let es = Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-    let state_f = construct_base h_frame (Mcpure.mix_of_pure (mkAndlst (plst_antiframe@plst_frame))) in  
+    let state_f = construct_base h_frame (Mcpure.mix_of_pure (simplify (mkAndlst (puref::(plst_antiframe@plst_frame))))) in  
     {es with
-      es_formula = state_f;
-      
+      es_formula = state_f;      
       es_infer_heap = [h_antiframe];
+      es_infer_pure = [inferred_puref];
       (* es_evars = svl_antiframe@svl_frame; *)
     }
   in
   List.map
-    ( fun (antiframe,frame,puref) ->
+    ( fun (antiframe,frame,orig_puref,inferred_puref) ->
+      let puref = simplify (mkAnd orig_puref inferred_puref) in
       let (h_antiframe,plst_antiframe,svl_antiframe) = arrPred_to_h_formula antiframe in
       let (h_frame,plst_frame,svl_frame) = arrPred_to_h_formula frame in
-      Ctx (construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref)))
+      Ctx (construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref,inferred_puref)))
     !global_answer_stack
 ;;
 
@@ -1176,16 +1194,21 @@ let print_prooftrace () =
 (* ************ end of proof trace ************ *)  
   
 
-class lazyVMap (puref,varlst,initmatrix) =
+class lazyVMap (puref,varlst,initmatrix,newflst) =
   object(self)
-    val mutable formula = puref
+    val formula = puref
     (* val rel_matrix = Module_Rel_Matrix.empty (\* (int, int) -> int *\) *)
     val rel_matrix = initmatrix (* Array.make_matrix (List.length varlst) 7 (\* all of them are 111 *\) *)
     val var_to_index = varlst
+    
+    val new_f_lst = newflst
+
     method checkSat newf =
-      isSat (mkAnd puref newf )
+      let f = mkAndlst ([newf;puref]@new_f_lst) in
+      isSat f
 
     (* What's the difference between val and method? *)
+    (* val is private... *)
     (* val test= *)
     (*   fun a b -> 0 *)
 
@@ -1199,7 +1222,13 @@ class lazyVMap (puref,varlst,initmatrix) =
           rel_matrix.(i1).(i2)        
         else
           get_opposite_rel rel_matrix.(i2).(i1)
-          
+
+    method get_new_f_lst =
+      new_f_lst
+
+    method get_orig_f =
+      formula
+        
     (* exp -> int option *)
     method get_index e =
       try
@@ -1222,15 +1251,15 @@ class lazyVMap (puref,varlst,initmatrix) =
       then (self#get_matrix).(i).(j) <- relcode
       else (self#get_matrix).(j).(i) <- get_opposite_rel relcode
                                              
-    method copy lst puref =
+    method copy rellst newflst=
       let newMatrix = Array.copy rel_matrix in
-      let () = Array.iteri (fun index item -> newMatrix.(index) <- Array.copy rel_matrix.(index)) newMatrix in
-      let newVmap = new lazyVMap (puref,var_to_index,newMatrix) in
-      List.iter (fun (rel_code,e1,e2) -> newVmap#update_matrix rel_code e1 e2) lst;
+      let () = Array.iteri (fun index item -> newMatrix.(index) <- Array.copy rel_matrix.(index)) newMatrix in (* Because it is a 2d array *)
+      let newVmap = new lazyVMap (puref,var_to_index,newMatrix,newflst) in
+      List.iter (fun (rel_code,e1,e2) -> newVmap#update_matrix rel_code e1 e2) rellst;
       newVmap        
 
     method get_puref =
-      puref
+      mkAndlst (formula::new_f_lst)
         
     method extend (rel,e1,e2) =
       (* let () = print_endline ("lazyVMap.extend: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel rel)) in *)
@@ -1248,7 +1277,7 @@ class lazyVMap (puref,varlst,initmatrix) =
       let new_rel_code = rel_code land orig_rel_code in
       (* let () = print_endline ("orig_rel_code: "^(string_of_int orig_rel_code)^" rel_code:"^(string_of_int rel_code)) in *)
       if new_rel_code = orig_rel_code
-      then Some (self#copy [] puref)                   (* not changed *)
+      then Some (self#copy [] new_f_lst)                   (* not changed *)
       else
         if new_rel_code = 0
         then
@@ -1257,7 +1286,7 @@ class lazyVMap (puref,varlst,initmatrix) =
           let rel_f = get_formula (decode_vrelation new_rel_code) e1 e2 in
           if self#checkSat rel_f
           then
-            Some (self#copy [(new_rel_code,e1,e2)] (simplify (mkAnd rel_f puref)))
+            Some (self#copy [(new_rel_code,e1,e2)] (rel_f::new_f_lst))
           else
             None
 
@@ -1379,23 +1408,23 @@ let po_biabduction ante conseq =
         match plst with
         | h::tail ->
            bubble_push_helper tail vmap
-                              ( fun (x,restlst,newvmap) ->
+                              ( fun (min,restlst,newvmap) ->
                                 match restlst with
                                 | h1::tail1 ->
                                    (* TO DO: not enough cases here, need to handle empty cases. Only when overlapping exists, consider empty segment? *)
-                                   compare h h1 vmap
-                                           (fun (min, restlst, newvmap2) ->
-                                             k (min,(restlst@tail1),newvmap2))
+                                   compare h min newvmap
+                                           (fun (new_min, new_restlst, newvmap2) ->
+                                             k (new_min,(restlst@new_restlst),newvmap2))
                                 | [] ->
-                                   ( match x with
+                                   ( match min with
                                      | Emp ->
                                         bubble_push h newvmap
-                                                    (fun (x,rest,newvmap2) ->
-                                                      k (x,rest@restlst,newvmap2))
-                                     | h1 ->
-                                        compare h h1 vmap
-                                                (fun (min, restlst, newvmap2) ->
-                                                  k (min,restlst,newvmap2))
+                                                    (fun (new_min,new_restlst,newvmap2) ->
+                                                      k (new_min,new_restlst,newvmap2))
+                                     | _ ->
+                                        compare h min vmap
+                                                (fun (new_min,new_restlst,newvmap2) ->
+                                                  k (new_min,new_restlst,newvmap2))
                                    )
                               )
         | [] -> k (Emp,[],vmap)
@@ -1409,7 +1438,7 @@ let po_biabduction ante conseq =
       | Basic _ | Emp -> k (p, [], vmap)
 
     and compare h1 h2 vmap k =
-      (* let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in *)
+      let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in
       match h1, h2 with
       | Emp, _
         | _ , Emp -> failwith "compare: Invalid Emp case"
@@ -1483,22 +1512,6 @@ let po_biabduction ante conseq =
        in
        
        ( match h1, h2 with
-         
-         (* | Aseg (_, s, e), _  | Gap (_, s, e), _ *)
-         (*      when (match vmap#compare_points s e with *)
-         (*            | Eq -> true *)
-         (*            | _ -> false *)
-         (*           ) *)
-         (*   -> *)
-         (*    helper Emp conseq vmap ba k *)
-                   
-         (* | _, Aseg (_, s, e) | _, Gap (_, s, e) *)
-         (*      when (match vmap#compare_points s e with *)
-         (*            | Eq -> true *)
-         (*            | _ -> false *)
-         (*           ) *)
-         (*   -> *)
-         (*    helper ante Emp vmap ba k *)
                                
          | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
             ( match vmap#compare_points s1 s2 with
@@ -1690,7 +1703,7 @@ let po_biabduction ante conseq =
   let puref = mkAnd lhs_p rhs_p  in
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
-  let vmap = new lazyVMap (puref,varlst,init_matrix) in
+  let vmap = new lazyVMap (puref,varlst,init_matrix,[]) in
   
   helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap (antiframe,frame,[])
          (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap ->
@@ -1703,9 +1716,9 @@ let po_biabduction ante conseq =
            in
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *)
-           let antiframelst,framelst,puref = newantiframe#get_lst, newframe#get_lst,newvmap#get_puref in
+           let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst, newframe#get_lst,newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in
            push_prooftrace (Reach (antiframelst,framelst,puref,!prooftrace_depth));
-           push_answer (antiframelst,framelst,puref);
+           push_answer (antiframelst,framelst,orig_puref,newflst);
            (* prooftrace_depth := !prooftrace_depth - 1 ; *)
            (* print_endline (print_prooftrace ()); *)
            ()
@@ -1716,7 +1729,13 @@ let po_biabduction_interface ante conseq =
   global_prooftrace := [];
   global_answer_stack := [];
   let () = po_biabduction ante conseq in
-  print_endline (print_prooftrace ());
+  let () =
+    if !Globals.array_ba_trace
+    then
+      print_endline (print_prooftrace ())
+    else
+      ()
+  in
   (SuccCtx (construct_context_lst ()))
 ;;
          
