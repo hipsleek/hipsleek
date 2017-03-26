@@ -1378,6 +1378,31 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
            | Eq -> failwith "compare_segment: Overlapping exists"
            | False -> failwith "helper: false relation detected"
          )
+
+    method is_empty_segment h =
+      match h with
+      | Elem _ -> Some false
+      | Aseg (_,s,e) ->
+         (
+           match self#compare_points s e with
+           | Unk | Lte -> None
+           | Eq -> Some true
+           | Lt -> Some false
+           | _ -> failwith "is_empty_segment: Invalid input"
+         )
+      | Gap _ -> failwith "is_empty_segment: Gap is not expected as input"
+                   
+    method add_segment_empty h (k:lazyVMap->unit) =
+      match h with
+      | Aseg (_,s,e) ->
+         self#extend_f (Eq,s,e) k
+      | _ -> failwith "add_segment_empty: Invalid input"
+                      
+    method add_segment_non_empty h k =
+      match h with
+      | Aseg (_,s,e) ->
+         self#extend_f (Lt,s,e) k
+      | _ -> failwith "add_segment_non_empty: Invalid input"
   end
 ;;
 
@@ -1406,7 +1431,7 @@ let po_biabduction ante conseq =
       let rec bubble_push_helper plst vmap k =
         (* return a list, with the min at the head, and the min will only be Basic *)
         match plst with
-        | h::tail ->
+        | h::tail ->           
            bubble_push_helper tail vmap
                               ( fun (min,restlst,newvmap) ->
                                 match restlst with
@@ -1426,7 +1451,7 @@ let po_biabduction ante conseq =
                                                 (fun (new_min,new_restlst,newvmap2) ->
                                                   k (new_min,new_restlst,newvmap2))
                                    )
-                              )
+                              )        
         | [] -> k (Emp,[],vmap)
       in
       match p with
@@ -1443,15 +1468,31 @@ let po_biabduction ante conseq =
       | Emp, _
         | _ , Emp -> failwith "compare: Invalid Emp case"
       | Basic p1, Basic p2 ->
-         ( match vmap#compare_segment p1 p2 with
-           | Unk ->
-              push_prooftrace (DecideSeg (p1,p2,!prooftrace_depth));
-              vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
-              vmap#add_segment_lt p2 p1 (fun newvmap -> k (h2,[h1],newvmap));
+         ( match vmap#is_empty_segment p1,vmap#is_empty_segment p2 with
+           | Some b1,Some b2 ->
+              ( match b1,b2 with
+                | true,_ -> k (h2,[],vmap)
+                | _,true -> k (h1,[],vmap)
+                | false,false ->
+                   ( match vmap#compare_segment p1 p2 with
+                     | Unk ->
+                        push_prooftrace (DecideSeg (p1,p2,!prooftrace_depth));
+                        vmap#add_segment_lt p1 p2 (fun newvmap -> k (h1,[h2],newvmap));
+                        vmap#add_segment_lt p2 p1 (fun newvmap -> k (h2,[h1],newvmap));
+                        ()
+                     | Gt -> k (h2,[h1],vmap)
+                     | Lt -> k (h1,[h2],vmap)
+                     | _ -> failwith "compare: Invalid output from compare_segment"
+                   )
+              )
+           | None,_ ->
+              vmap#add_segment_empty p1 (fun (newvmap:lazyVMap) -> k (h2,[],newvmap));
+              vmap#add_segment_non_empty p1 (fun (newvmap:lazyVMap) -> compare h1 h2 newvmap k);
               ()
-           | Gt -> k (h2,[h1],vmap)
-           | Lt -> k (h1,[h2],vmap)
-           | _ -> failwith "compare: Invalid output from compare_segment"
+           | _,None ->
+              vmap#add_segment_empty p2 (fun (newvmap:lazyVMap) -> k (h1,[],newvmap));
+              vmap#add_segment_non_empty p2 (fun (newvmap:lazyVMap) -> compare h1 h2 newvmap k);
+              ()
          )
       | Seq (l,r) , _ ->
          compare l h2 vmap
