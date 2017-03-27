@@ -1,0 +1,35 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim Elem<start:int>.
+
+
+infer[@arr_ba]  base::Elem<1> |- base::Aseg<1,2>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,2> |- base::Elem<1>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,2> |- base::Elem<3>.
+print residue.
+
+infer[@arr_ba]  base::Elem<3> |- base::Aseg<1,2>.
+print residue.
+
+infer[@arr_ba]  base::Elem<3> |- base::Aseg<1,2> * base::Elem<3>.
+print residue.
+
+infer[@arr_ba]  base::Elem<10> |- base::Aseg<1,20>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,20> |- base::Elem<10>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,20>|- base::Elem<10> * base::Elem<18>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,20> * base::Elem<18>|- base::Elem<10> * base::Elem<18>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,20> * base::Elem<22>|- base::Elem<10> * base::Elem<18>.
+print residue.
+
+

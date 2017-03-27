@@ -1,0 +1,33 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim Elem<start:int>.
+
+
+infer[@arr_ba]  base::Aseg<1,5> |- base::Aseg<1,5> * base::Aseg<5,10>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,5> |-  base::Aseg<5,10> * base::Aseg<1,5> .
+print residue.
+
+infer[@arr_ba]   base::Aseg<1,5> |- base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5>.
+print residue.
+
+infer[@arr_ba]   base::Aseg<0,1> |- base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5>.
+print residue.
+
+infer[@arr_ba]   base::Aseg<20,25> |- base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<20,33> |- base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5>.
+print residue.
+
+infer[@arr_ba] base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5> |- base::Aseg<150,160>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<5,10> * base::Aseg<1,6>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<5,10> * base::Aseg<2,10>.
+print residue.
+
+infer[@arr_ba] base::Aseg<1,5> |- emp. 
+print residue.
