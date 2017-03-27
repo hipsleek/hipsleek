@@ -28,3 +28,6 @@ print residue.
 
 infer[@arr_ba] base::Aseg<5,10> * base::Aseg<2,10> |- base::Aseg<1,5>.
 print residue.
+
+infer[@arr_ba] emp |- base::Aseg<1,5>.
+print residue.
