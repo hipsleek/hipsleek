@@ -1237,10 +1237,26 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
         failwith "lazyVMap.get_index: Not_found. It is possible that there is something wrong in get_var_set"
     (* ;; Not Inside Object!  *)
 
-    method compare_points s1 s2 =      
-      let c = decode_vrelation (self#get_rel (self#get_index s1) (self#get_index s2)) in
-      (* let () = print_endline ("lazyVMap.compare_points: "^(!str_exp s1)^" "^(!str_exp s2)^" "^(str_vrel c)) in *)
-      c
+    
+    method compare_points s1 s2 =
+      let compare_constant c1 c2 =
+        match c1,c2 with
+        | IConst (n1,_),IConst (n2,_) ->
+           if n1=n2
+           then Eq
+           else
+             if n1<n2
+             then Lt
+             else Gt
+        | _ -> Unk
+      in
+      match compare_constant s1 s2 with
+      | Unk ->
+         let c = decode_vrelation (self#get_rel (self#get_index s1) (self#get_index s2)) in
+         (* let () = print_endline ("lazyVMap.compare_points: "^(!str_exp s1)^" "^(!str_exp s2)^" "^(str_vrel c)) in *)
+         c
+      | rel -> rel
+                 
 
     method get_matrix =
       rel_matrix
@@ -1326,12 +1342,12 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
          ( match self#compare_points e1 s2 with
            | Unk
              | Gte
-             | Neq->
+             | Neq | Gt ->
               ( match self#compare_points e2 s1 with
                 | Unk
                   | Gte
-                  | Neq -> Unk
-                | Gt -> Lt     (* A trick to force the order, but is it necessary to update the matrix? *)
+                  | Neq | Gt-> Unk
+                (* | Gt -> Lt     (\* A trick to force the order, but is it necessary to update the matrix? *\) *)
                 | Lt
                   | Lte
                   | Eq-> Gt
@@ -1340,7 +1356,7 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
            | Lt
              | Lte
              | Eq -> Lt
-           | Gt -> Gt
+           (* | Gt -> Gt *)
            | False -> failwith "helper: false relation detected"
          )
       | Aseg (b1,s1,e1), Elem (b2,s2)
@@ -1348,23 +1364,20 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
         | Elem (b2,s2), Gap (b1,s1,e1)
         | Elem (b2,s2), Aseg (b1,s1,e1) ->
          ( match self#compare_points e1 s2 with
-           | Unk
-             | Gte
-             | Neq ->
+           | Unk | Gte | Neq ->
               ( match self#compare_points s1 s2 with
-                | Unk
-                  | Neq -> Unk
+                | Unk | Neq | Lte -> Unk
                 | Gt
-                  | Gte -> Gt      
-                | Lt
-                  | Lte -> Lt (* TO DO: need to force the relation *)
-                | Eq -> failwith" compare_segment: Overlapping exists"
+                  | Gte -> Unk  
+                | Lt -> Lt
+                  (* | Lte -> Lt (\* TO DO: need to force the relation *\) *)
+                | Eq -> Unk (* failwith" compare_segment: Overlapping exists" *)
                 | False -> failwith "helper: false relation detected"
               )
            | Lt
              | Lte
              | Eq-> Lt
-           | Gt -> Gt (* TO DO: need to force the relation *)
+           | Gt -> Unk (* TO DO: need to force the relation *)
            | False -> failwith "helper: false relation detected"
          )
       | Elem (b1,s1), Elem (b2,s2) ->
@@ -1463,7 +1476,7 @@ let po_biabduction ante conseq =
       | Basic _ | Emp -> k (p, [], vmap)
 
     and compare h1 h2 vmap k =
-      let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in
+      (* let () = print_endline ("compare "^(str_seq_star_arr h1)^" "^(str_seq_star_arr h2)) in *)
       match h1, h2 with
       | Emp, _
         | _ , Emp -> failwith "compare: Invalid Emp case"
