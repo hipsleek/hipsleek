@@ -1521,7 +1521,120 @@ let po_biabduction ante conseq =
   let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)    
     let () = push_prooftrace (Entry (ante,conseq,!prooftrace_depth)) in
-      
+    let align p1 p2 vmap k =
+      match p1, p2 with
+      | Aseg (b1,s1,e1),Aseg (b2,s2,e2) ->
+         vmap#extend_f (Gt,s1,s2)
+                       (fun newvmap ->
+                         k [(mkGap b1 s2 s1);p1] [p2] newvmap);
+         vmap#extend_f (Lte,s1,s2)
+                       (fun newvmap ->
+                         k [p1] [(mkGap b2 s1 s2);p2] newvmap);
+         ()
+      | Aseg (b1,s1,e1),Elem (b2,s2) ->
+         vmap#extend_f (Gt,s1,s2)
+                       (fun newvmap ->
+                         k [(mkGap b1 s2 s1);p1] [p2] newvmap);
+         vmap#extend_f (Lte,s1,s2)
+                       (fun newvmap ->
+                         k [p1] [(mkGap b2 s1 s2);p2] newvmap);
+         ()
+      | Elem (b1,s1),Aseg (b2,s2,e2) ->
+         vmap#extend_f (Gte,s1,s2)
+                       (fun newvmap ->
+                         k [(mkGap b1 s2 s1);p1] [p2] newvmap);
+         vmap#extend_f (Lt,s1,s2)
+                       (fun newvmap ->
+                         k [p1] [(mkGap b2 s1 s2);p2] newvmap);
+         ()
+      | Elem (b1,s1),Elem (b2,s2) ->
+         vmap#extend_f (Gte,s1,s2)
+                       (fun newvmap ->
+                         k [(mkGap b1 s2 s1);p1] [p2] newvmap);
+         vmap#extend_f (Lt,s1,s2)
+                       (fun newvmap ->
+                         k [p1] [(mkGap b2 s1 s2);p2] newvmap);
+         ()
+      | _,_ -> failwith "align: Invalid input"
+    in
+    
+    let rec reduce lplst rplst vmap ba k =
+      match lplst, rplst with
+      | [h],[] -> k (mkBasic h) Emp ba vmap
+      | [],[h] -> k Emp (mkBasic h) ba vmap
+      | [],[] -> k Emp Emp ba vmap
+      | h1::tail1, h2::tail2 ->
+         let (antiframe,frame,pt) = ba in         
+         ( match h1,h2 with
+           | Aseg (b1,s1,e1),Gap (b2,s2,e2) ->
+              vmap#extend_f (Lt,e1,e2)
+                            (fun newvmap ->
+                              reduce [mkAseg b1 e2 e1] tail2 newvmap (antiframe,frame#add (mkAseg b1 s1 e2),pt) k);
+              vmap#extend_f (Gte,e1,e2)
+                            (fun newvmap ->
+                              reduce [] tail2 newvmap (antiframe,frame#add (mkAseg b1 s1 e1),pt) k);
+              ()
+           | Gap (b1,s1,e1),Aseg (b2,s2,e2) ->
+              vmap#extend_f (Lt,e1,e2)
+                            (fun newvmap ->
+                              reduce tail1 [mkAseg b1 e1 e2] newvmap (antiframe#add (mkAseg b2 s2 e1),frame,pt) k);
+              vmap#extend_f (Gte,e1,e2)
+                            (fun newvmap ->
+                              reduce tail1 [] newvmap (antiframe#add (mkAseg b2 s2 e2),frame,pt) k);
+              ()
+           | Elem (b1,s1),Gap (b2,s2,e2) ->
+              vmap#extend_f (Lt,s2,e2)
+                            (fun newvmap ->
+                              reduce [] tail2 newvmap ba k);
+              vmap#extend_f (Eq,s2,e2)
+                            (fun newvmap ->
+                              reduce lplst tail2 newvmap ba k);
+              ()
+           | Gap (b1,s1,e1),Elem (b2,s2) ->
+              vmap#extend_f (Lt,s1,e1)
+                            (fun newvmap ->
+                              reduce tail1 [] newvmap ba k);
+              vmap#extend_f (Eq,s1,e1)
+                            (fun newvmap ->
+                              reduce tail1 rplst newvmap ba k);
+              ()
+           | Elem (b1,s1),Aseg (b2,s2,e2) ->
+              vmap#extend_f (Lt,s2,e2)
+                            (fun newvmap ->
+                              reduce [] [mkAseg b2 (incOne s2) e2] newvmap ba k);
+              vmap#extend_f (Eq,s2,e2)
+                            (fun newvmap ->
+                              reduce lplst tail2 newvmap ba k);
+              ()
+           | Aseg (b1,s1,e1),Elem (b2,s2) ->
+              vmap#extend_f (Lt,s1,e1)
+                            (fun newvmap ->
+                              reduce [mkAseg b1 (incOne s1) e1] [] newvmap ba k);
+              vmap#extend_f (Eq,s1,e1)
+                            (fun newvmap ->
+                              reduce tail1 rplst newvmap ba k);
+              ()
+           | Elem (b1,s1),Elem (b2,s2) ->
+              reduce tail1 tail2 vmap ba k
+           | Aseg (b1,s1,e1),Aseg (b2,s2,e2) ->
+              vmap#extend_f (Lt,e1,e2)
+                            (fun newvmap ->
+                              reduce [mkAseg b1 e2 e1] [] newvmap ba k);
+              vmap#extend_f (Gte,e1,e2)
+                            (fun newvmap ->
+                              reduce [] [mkAseg b2 e2 e1] newvmap ba k);
+              ()
+           | Gap _, Gap _ -> failwith "reduce: Gap vs. Gap"
+         )
+      | _,_ -> failwith "reduce: Invalid input"
+    in
+    
+    let match_p p1 p2 vmap ba k =
+      align p1 p2 vmap
+            (fun lplst rplst newvmap ->
+              reduce lplst rplst newvmap ba k)
+    in
+          
     match ante, conseq with
     | Basic (Aseg (b,s,e)),_ | Basic(Gap (b,s,e)),_
          when
@@ -1540,185 +1653,9 @@ let po_biabduction ante conseq =
     | Emp, _ | _ ,Emp -> k ante conseq ba vmap
                     
     | Basic h1, Basic h2 ->
-
        pop_prooftrace ();
        push_prooftrace (Match (h1,h2,!prooftrace_depth));
-       
-       let force_rel newvmap =
-         helper ante conseq newvmap ba k
-       in
-       let align rel b1 b2 s1 s2 case =
-         (* let () = print_endline ("align: "^(!str_exp s1)^" "^(!str_exp s2)) in *)
-         match rel with
-         | Unk | Neq ->
-            push_prooftrace (DecidePoints (s1,s2,!prooftrace_depth));
-            if case = 1
-            then
-              ( vmap#extend_f (Gt,s1,s2) force_rel;
-                vmap#extend_f (Lte,s1,s2) force_rel;
-                ()
-              )
-            else
-              ( vmap#extend_f (Gte,s1,s2) force_rel;
-                vmap#extend_f (Lt,s1,s2) force_rel;
-                ()
-              )
-         | Gt | Gte ->     
-            helper (mkGapBasic b1 s2 s1) conseq vmap ba
-                        (fun lefta leftc newba newvmap ->
-                          helper (mkSeq lefta ante) leftc newvmap newba k)
-         | Lt | Lte -> helper ante (mkGapBasic b2 s1 s2) vmap ba
-                              (fun lefta leftc newba newvmap ->
-                                helper lefta (mkSeq leftc conseq) newvmap newba k)
-         | False -> failwith "helper: false relation detected"
-         | Eq -> failwith "align: Invalid Eq relation"              
-       in
-       
-       ( match h1, h2 with
-                               
-         | Aseg (b1, s1, e1), Aseg (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 (
-                   match vmap#compare_points e1 e2 with
-                   | Unk | Neq->
-                      push_prooftrace (DecidePoints (e1,e2,!prooftrace_depth));
-                      vmap#extend_f (Gt,e1,e2) force_rel;
-                      vmap#extend_f (Lte,e1,e2) force_rel;
-                      ()
-                   | Eq -> helper Emp Emp vmap ba k
-                   | Gt | Gte -> helper (mkAsegBasic b1 e2 e1) Emp vmap ba k
-                   | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap ba k
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | others -> align others b1 b2 s1 s2 1
-            )
-
-         | Aseg (b1, s1, e1), Elem (b2, s2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 (
-                   match vmap#compare_points s1 e1 with
-                   | Unk | Lte ->
-                      vmap#extend_f (Eq,s1,e1) force_rel;
-                      vmap#extend_f (Lt,s1,e1) force_rel;
-                      ()                        
-                   | Lt -> helper (mkAsegBasic b1 (incOne s2) e1) Emp vmap ba k (* TO DO: Is it ok to increase s1? Or it may be better to increase s2. *)
-                   | Eq -> helper (mkAsegBasic b1 (incOne s2) e1) Emp vmap ba k
-                   | Gt | Gte | Neq -> failwith "Aseg vs. Elem: Invalid input. The relation should be more specific"
-                   | False -> failwith "helper: false relation detected"
-                 )              
-              | others -> align others b1 b2 s1 s2 1
-            )
-
-         | Aseg (b1, s1, e1), Gap (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 ( match vmap#compare_points e1 e2 with
-                   | Unk | Neq ->
-                      push_prooftrace (DecidePoints (e1,e2,!prooftrace_depth));
-                      (* e1<=e2 or e1>e2 *)
-                      vmap#extend_f (Gt,e1,e2) force_rel;
-                      vmap#extend_f (Lte,e1,e2) force_rel;                      
-                      ()
-                   | Eq -> helper Emp Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
-                   | Gt | Gte -> helper (mkAsegBasic b1 e2 e1) Emp vmap (antiframe,frame#add (mkAseg b1 s1 e2),prooftrace) k
-                   | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap (antiframe,frame#add (mkAseg b1 s1 e1),prooftrace) k                        
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | others -> align others b1 b2 s1 s2 1
-            )
-              
-         | Elem (b1, s1), Elem (b2, s2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq -> helper Emp Emp vmap ba k
-              | others -> align others b1 b2 s1 s2 1
-            )
-
-         | Elem (b1, s1), Aseg (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 ( match vmap#compare_points s2 e2 with
-                   | Unk | Lte  ->
-                      vmap#extend_f (Eq,s2,e2) force_rel;
-                      vmap#extend_f (Lt,s2,e2) force_rel;
-                      ()                      
-                   | Lt -> helper Emp (mkAsegBasic b2 (incOne s1) e2) vmap ba k
-                   | Eq -> helper ante Emp vmap ba k
-                   | Gt | Gte | Neq -> failwith "Elem vs. Aseg: Invalid input. The relation should be more specific"
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | others -> align others b1 b2 s1 s2 0
-            )
-
-         | Elem (b1, s1), Gap (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 ( match vmap#compare_points s2 e2 with
-                   | Unk | Lte ->
-                      vmap#extend_f (Eq,s2,e2) force_rel;
-                      vmap#extend_f (Lt,s2,e2) force_rel;
-                      ()                      
-                   | Lt -> helper Emp (mkGapBasic b2 (incOne s1) e2) vmap (antiframe,(frame#add h1),prooftrace) k
-                   | Eq -> helper ante Emp vmap ba k
-                   | Gt | Gte | Neq -> failwith "Elem vs. Gap: Invalid input. The relation should be more specific"              
-                   | False -> failwith "helper: false relation detected"
-                 )                 
-              | others -> align others b1 b2 s1 s2 0
-            )
-            
-         | Gap (b1, s1, e1), Gap (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 (
-                   match vmap#compare_points e1 e2 with
-                   | Unk | Neq ->
-                      vmap#extend_f (Gt,e1,e2) force_rel;
-                      vmap#extend_f (Lt,e1,e2) force_rel;
-                      ()
-                   | Eq -> helper Emp Emp vmap ba k
-                   | Gt | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap ba k
-                   | Lt | Lte -> helper Emp (mkGapBasic b2 e1 e2) vmap ba k                   
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | others -> align others b1 b2 s1 s2 1
-            )
-              
-         | Gap (b1, s1, e1), Elem (b2, s2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 ( match vmap#compare_points s1 e1 with
-                   | Unk | Lte ->
-                      vmap#extend_f (Eq,s1,e1) force_rel;
-                      vmap#extend_f (Lt,s1,e1) force_rel;
-                      ()                      
-                   | Lt -> helper (mkGapBasic b1 (incOne s1) e1) Emp vmap ((antiframe#add h2),frame,prooftrace) k
-                   | Eq -> helper Emp conseq vmap ba k
-                   | Gt | Gte | Neq -> failwith "Elem vs. Aseg: Invalid input. The relation should be more specific"              
-                   | False -> failwith "helper: false relation detected"
-                 )                 
-              | others -> align others b1 b2 s1 s2 1
-            )
-
-         | Gap (b1, s1, e1), Aseg (b2, s2, e2) ->
-            ( match vmap#compare_points s1 s2 with
-              | Eq ->
-                 ( match vmap#compare_points e1 e2 with
-                   | Unk | Neq ->
-                      push_prooftrace (DecidePoints (e1,e2,!prooftrace_depth));
-                      (* let () = print_endline ("After in vmap: "^(!str_exp e1)^" "^(!str_exp e2)^" "^(str_vrel (vmap#compare_points e1 e2))) in *)
-                      (*  *)
-                      vmap#extend_f (Gte,e1,e2) force_rel;
-                      vmap#extend_f (Lt,e1,e2) force_rel;
-                      ()
-                   | Eq-> helper Emp Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                   | Gt | Gte -> helper (mkGapBasic b1 e2 e1) Emp vmap (antiframe#add (mkAseg b1 s2 e2),frame,prooftrace) k
-                   | Lt | Lte -> helper Emp (mkAsegBasic b2 e1 e2) vmap (antiframe#add (mkAseg b1 s2 e1),frame,prooftrace) k                        
-                   | False -> failwith "helper: false relation detected"
-                 )
-              | others -> align others b1 b2 s1 s2 1
-            )
-       )
+       match_p h1 h2 vmap ba k
          
     | Seq (l,r), _ ->
        lazy_sort l vmap
