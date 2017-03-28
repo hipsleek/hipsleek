@@ -1417,8 +1417,21 @@ class ['a] frame init  = object
   method add_lst lst =
     new frame (lst@plst)
 
-  method get_lst =
-    plst
+  method get_lst (vmap:lazyVMap)=
+    let newplst = List.fold_left
+                    (fun r item ->
+                      match item with
+                      | Aseg (_,s,e) ->
+                         ( match vmap#compare_points s e with
+                           | Eq -> r
+                           | _ -> item::r
+                         )
+                      | _ -> item::r
+                    )
+                    [] plst
+    in
+    newplst
+
 end
 ;;
 
@@ -1559,6 +1572,7 @@ let po_biabduction ante conseq =
     in
     
     let rec reduce lplst rplst vmap ba k =
+      (* let () = print_endline ("reduce "^(str_seq lplst)^" "^(str_seq rplst)) in *)
       match lplst, rplst with
       | [h],[] -> k (mkBasic h) Emp ba vmap
       | [],[h] -> k Emp (mkBasic h) ba vmap
@@ -1567,12 +1581,12 @@ let po_biabduction ante conseq =
          let (antiframe,frame,pt) = ba in         
          ( match h1,h2 with
            | Aseg (b1,s1,e1),Gap (b2,s2,e2) ->
-              vmap#extend_f (Lt,e1,e2)
-                            (fun newvmap ->
-                              reduce [mkAseg b1 e2 e1] tail2 newvmap (antiframe,frame#add (mkAseg b1 s1 e2),pt) k);
-              vmap#extend_f (Gte,e1,e2)
+              vmap#extend_f (Lte,e1,e2)
                             (fun newvmap ->
                               reduce [] tail2 newvmap (antiframe,frame#add (mkAseg b1 s1 e1),pt) k);
+              vmap#extend_f (Gt,e1,e2)
+                            (fun newvmap ->
+                              reduce [mkAseg b1 e2 e1] tail2 newvmap (antiframe,frame#add (mkAseg b1 s1 e2),pt) k);
               ()
            | Gap (b1,s1,e1),Aseg (b2,s2,e2) ->
               vmap#extend_f (Lt,e1,e2)
@@ -1585,7 +1599,7 @@ let po_biabduction ante conseq =
            | Elem (b1,s1),Gap (b2,s2,e2) ->
               vmap#extend_f (Lt,s2,e2)
                             (fun newvmap ->
-                              reduce [] tail2 newvmap ba k);
+                              reduce [] tail2 newvmap (antiframe,frame#add h1,pt) k);
               vmap#extend_f (Eq,s2,e2)
                             (fun newvmap ->
                               reduce lplst tail2 newvmap ba k);
@@ -1593,7 +1607,7 @@ let po_biabduction ante conseq =
            | Gap (b1,s1,e1),Elem (b2,s2) ->
               vmap#extend_f (Lt,s1,e1)
                             (fun newvmap ->
-                              reduce tail1 [] newvmap ba k);
+                              reduce tail1 [] newvmap (antiframe#add h2,frame,pt) k);
               vmap#extend_f (Eq,s1,e1)
                             (fun newvmap ->
                               reduce tail1 rplst newvmap ba k);
@@ -1619,10 +1633,10 @@ let po_biabduction ante conseq =
            | Aseg (b1,s1,e1),Aseg (b2,s2,e2) ->
               vmap#extend_f (Lt,e1,e2)
                             (fun newvmap ->
-                              reduce [mkAseg b1 e2 e1] [] newvmap ba k);
+                              reduce [] [mkAseg b2 e1 e2] newvmap ba k);
               vmap#extend_f (Gte,e1,e2)
                             (fun newvmap ->
-                              reduce [] [mkAseg b2 e2 e1] newvmap ba k);
+                              reduce [mkAseg b1 e2 e1] [] newvmap ba k);
               ()
            | Gap _, Gap _ -> failwith "reduce: Gap vs. Gap"
          )
@@ -1719,7 +1733,7 @@ let po_biabduction ante conseq =
            in
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
            (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *)
-           let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst, newframe#get_lst,newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in
+           let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst newvmap, newframe#get_lst newvmap,newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in
            push_prooftrace (Reach (antiframelst,framelst,puref,!prooftrace_depth));
            push_answer (antiframelst,framelst,orig_puref,newflst);
            (* prooftrace_depth := !prooftrace_depth - 1 ; *)
