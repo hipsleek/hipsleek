@@ -43,6 +43,9 @@ cb(event(X, 2), event(Y, 2)).
 
 ?- hb(event(X,1),event(Y,2)), hb(event(Y,4),event(Z,3)).
 
+?- hb(event(X,1),event(Y,2)),hb(event(Y,2),event(Z,3)),guard(hb(event(X,1),event(Z,3))).
+found.
+
 */
 
 :- module(orders, [event/2,hb/2,cb/2,guard/1,pair/2,found/0]).
