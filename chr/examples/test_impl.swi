@@ -1,0 +1,39 @@
+
+eq(and(hb(event(X,1),event(Z,2)),hb(event(Z,2),event(Y,3))),and(and(hb(event(X,1),event(Z,2)),hb(event(Z,2),event(Y,3))), hb(event(X,1),event(Y,3)))).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%sanity check for event eq
+eq(event(X,1),event(Z,3)). 
+eq(event(X,1),event(X,1)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%sanity check for hb eq
+eq(hb(event(X,1),event(Z,3)),hb(event(X,1),event(Z,3))).
+eq(hb(event(X,1),event(Z,3)),hb(event(X,1),event(Z,4))).
+
+eq(hb(event(X,1),event(Z,3)),and(hb(event(X,1),event(Z,3)),hb(event(X,1),event(Z,3)))).
+eq(hb(event(X,1),event(Z,3)),and(hb(event(X,1),event(Z,3)),hb(event(X,1),event(Z,4)))).
+
+eq(and(hb(event(X,1),event(Z,2)),hb(event(Z,2),event(Y,4))),and(hb(event(X,1),event(Y,4)),and(hb(event(X,1),event(Z,2)),hb(event(Z,2),event(Y,4))))).
+
+
+
+%imp(and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3))),hb(event(X,1),event(Z,5))).
+
+
+
+
+% contains(hb(event(X,1),event(Z,3)),and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)))).
+
+%and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3))).
+
+%contains(hb(event(Y,2),event(Z,3)), [hb(event(Y,2),event(Z,3))]).
+
+%contains(1,[2,4,1]).
+
+%contains(hb(event(X,1),event(Y,2)), [hb(event(Y,2),event(Z,3))]).
+% imp(and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3))),hb(event(X,1),event(Z,3))).
+% and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3))).
+%imp(and(hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3))),hb(event(X,1),event(Z,3))).
+%imp(hb(event(X,1),event(Z,3)),hb(event(X,1),event(Z,5))).
+% hb(event(X,1),event(Y,2)), hb(event(Y,2),event(Z,3)), hb(event(Z,3),event(T,a)), hb(event(Z,5),event(T,b)). 
