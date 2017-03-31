@@ -18594,7 +18594,7 @@ let elim_prm e =
     | CP.ListLength _
     | CP.ListAppend _
     | CP.ListReverse _ -> None
-    | CP.Level _ | CP.BExpr _ -> report_error no_pos "CF.elim_prm: not handle yet"
+    | CP.Level _ -> report_error no_pos "CF.elim_prm: not handle yet"
   in
   let rec f_h_f e = match e with
     | Star s -> None
