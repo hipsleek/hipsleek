@@ -1520,7 +1520,7 @@ module Make_Session (Base: Session_base) = struct
   (*         session_fence_pred = pred; *)
   (*   } *)
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
+  and mk_session_predicate_x name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
     Predicate {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
@@ -1531,6 +1531,10 @@ module Make_Session (Base: Session_base) = struct
       session_predicate_anns = anns;
     }
 
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
+    Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns loc) ho_vars
+
+  
   (* TODO tina: Why doesn't this use SFence constructor? *)
   (* and mk_session_fence_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) loc = *)
   (*   { *)
@@ -1593,7 +1597,7 @@ module Make_Session (Base: Session_base) = struct
   (* and mk_fence () = *)
   (*   Base.mk_empty () *)
 
-  and mk_predicate_node hnode p =
+  and mk_predicate_node_x hnode p =
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr session_def_id hnode in
     let name = p.session_predicate_name in
@@ -1606,8 +1610,11 @@ module Make_Session (Base: Session_base) = struct
     let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
-    node    
+    node
 
+  and mk_predicate_node hnode p =
+    Debug.no_1 "mk_predicate_node" string_of_session_predicate !Base.print_h_formula (fun _ -> mk_predicate_node_x hnode p) p
+      
   and mk_hvar_node h =
     let id = h.session_hvar_id in
     let ls = h.session_hvar_list in
@@ -1823,6 +1830,12 @@ module Make_Session (Base: Session_base) = struct
         | HVar ->
             let (id, ls) = Base.get_hvar h_formula in
             SBase (mk_session_hvar id ls no_pos)
+	| Event
+	| HB
+	| CB
+	| Assume
+	| Guard
+	| Peer 
         | Predicate ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
@@ -1836,12 +1849,12 @@ module Make_Session (Base: Session_base) = struct
             (* helper h *)
         | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
         | Msg -> failwith (x_loc ^ ": Unexpected node kind.") 
-	| Event
-	| HB
-	| CB
-	| Assume
-	| Guard
-	| Peer -> failwith (x_loc ^ ": TODO")
+	(* | Event *)
+	(* | HB *)
+	(* | CB *)
+	(* | Assume *)
+	(* | Guard *)
+	(* | Peer -> failwith (x_loc ^ ": TODO") *)
 	in
     helper h_formula
 
@@ -2050,7 +2063,7 @@ module Make_Session (Base: Session_base) = struct
     Debug.no_1 "Session.norm_base_only" pr (pr_opt pr) norm_base_only base
 
   let wrap_one_seq_heap hform =
-    let fnc si = norm_base_only in
+    let fnc si = x_add_1 norm_base_only in
     Base.heap_node_transformer_gen ~include_msg:true fnc hform
 
   let norm_last_seq_node (base: Base.h_formula): Base.h_formula option =
@@ -2058,7 +2071,7 @@ module Make_Session (Base: Session_base) = struct
       match sf with
       | SSeq seq ->
         begin
-          match norm_base_only_helper seq.session_seq_formula_tail with
+          match (x_add_1 norm_base_only_helper seq.session_seq_formula_tail) with
           | None      ->  None
           | Some tail ->  Some (SSeq {seq with session_seq_formula_tail = tail})
         end
@@ -2329,7 +2342,7 @@ let make_projection (session: IProtocol.session) (vars: ident list) =
       let hash2 = helper s.IProtocol.session_star_formula_star2 in
       (* This is definitely not correct, there should be no star in tpproj *)
       combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
-    (* | IProtocol.SFence f -> (\* Establish convention that second party is the "problematic" one. *\)  *)
+    (* | IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *)  *)
     (*   let role1 = f.IProtocol.session_fence_role1 in *)
     (*   let role2 = f.IProtocol.session_fence_role2 in *)
     (*   let pred = f.IProtocol.session_fence_pred in *)
@@ -2642,7 +2655,7 @@ let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list =
   | None -> [lhs]
 
 (* let new_lhs (lhs: CF.rflow_formula): CF.rflow_formula list = *)
-(*   (\* norm result *\) *)
+(*   (* norm result *) *)
 (*   let res = new_lhs lhs in   *)
 (*   let res = List.map (fun x -> CMessage.map_one_rflow_formula crename_sess_ptr_2_chan_ptr x) res in *)
 (*   res *)

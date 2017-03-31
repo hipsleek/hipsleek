@@ -21,6 +21,16 @@ and string_of_session_predicate s =
 =====================================
 =====================================
 
+../../../../sleek ex2-assume.slk -dre "Session.trans_from_session"
+
+to add debug location  + fix the below 
+
+(====)
+Session.trans_from_session@1
+Session.trans_from_session inp1 :(!msg#((emp) * ([] & msg = 1)( FLOW __stub))) ;; (Assume{[. (emp) * (
+[] & x = 1)( FLOW __norm)]}<[]>)                                                                     
+
+Session.trans_from_session@1 EXIT:(!msg#((emp) * ([] & msg = 1))) ;; (Assume{[]}<[]>)
 
 =====================================
 =====================================

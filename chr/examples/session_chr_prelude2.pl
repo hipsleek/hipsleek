@@ -60,9 +60,9 @@ found.
 
 % and(X,Y) <=> X,Y.
 
-check  @ guard(hb(event(A1,L1),event(B1,E1))), hb(event(A2,L2),event(B2,E2)) <=> A1=A2,B1=B2,L1=L2,E1=E2 |  found.
+% check  @ guard(hb(event(A1,L1),event(B1,E1))), hb(event(A2,L2),event(B2,E2)) <=> A1=A2,B1=B2,L1=L2,E1=E2 |  found.
 hbhb   @ hb(event(A,L1),event(B,L2)), hb(event(B,L2),event(C,L4)) ==> hb(event(A,L1),event(C,L4)).
 cbhb   @ cb(event(A,L1),event(B,L1)), hb(event(B,L1),event(C,L4)) ==> hb(event(A,L1),event(C,L4)).
-fhb    @ hb(event(A,L1),event(B,L2)), found <=> found.
-fcb    @ cb(event(A,L1),event(B,L1)), found <=> found.
+% fhb    @ hb(event(A,L1),event(B,L2)), found <=> found.
+% fcb    @ cb(event(A,L1),event(B,L1)), found <=> found.
 
