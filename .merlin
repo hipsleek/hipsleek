@@ -2,4 +2,6 @@ S .
 
 B _build/
 
+PKG camlp4
+
 FLG -debug locate,/tmp/merlin-debug

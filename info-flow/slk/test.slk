@@ -1,0 +1,3 @@
+checkentail x <: y & y <: z |- x <: z.
+
+checkentail F = {x <: y, y <: z} |-{x <: z} subset F.
