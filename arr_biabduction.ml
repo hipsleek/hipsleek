@@ -1531,7 +1531,7 @@ let po_biabduction ante conseq =
     in
     bubble_push p vmap (fun (min,restlst,newvmap) -> k (min,mkStar restlst,newvmap))
   in
-  let rec helper ante conseq vmap ((antiframe,frame,prooftrace) as ba) k =
+  let rec helper ante conseq vmap ba k =
     (* let () = print_endline ((str_seq_star_arr ante)^" |= "^(str_seq_star_arr conseq)) in *)    
     let () = push_prooftrace (Entry (ante,conseq,!prooftrace_depth)) in
     let align p1 p2 vmap k =
@@ -1574,9 +1574,9 @@ let po_biabduction ante conseq =
     let rec reduce lplst rplst vmap ba k =
       (* let () = print_endline ("reduce "^(str_seq lplst)^" "^(str_seq rplst)) in *)
       match lplst, rplst with
-      | [h],[] -> k (mkBasic h) Emp ba vmap
-      | [],[h] -> k Emp (mkBasic h) ba vmap
-      | [],[] -> k Emp Emp ba vmap
+      | [h],[] -> k (mkBasic h) Emp vmap ba
+      | [],[h] -> k Emp (mkBasic h) vmap ba
+      | [],[] -> k Emp Emp vmap ba
       | h1::tail1, h2::tail2 ->
          let (antiframe,frame,pt) = ba in         
          ( match h1,h2 with
@@ -1648,54 +1648,44 @@ let po_biabduction ante conseq =
             (fun lplst rplst newvmap ->
               reduce lplst rplst newvmap ba k)
     in
-          
-    match ante, conseq with
-    | Basic (Aseg (b,s,e)),_ | Basic(Gap (b,s,e)),_
-         when
-           ( match vmap#compare_points s e with
-             | Eq -> true
-             | _ -> false
-           ) ->
-       helper Emp conseq vmap ba k
-    | _, Basic (Aseg (b,s,e)) | _,Basic (Gap (b,s,e))
-         when
-           ( match vmap#compare_points s e with
-             | Eq -> true
-             | _ -> false
-           ) ->
-       helper ante Emp vmap ba k
-    | Emp, _ | _ ,Emp -> k ante conseq ba vmap
+    let (antiframe,frame,pt) = ba in
+    match ante, conseq with    
+    | Emp, Emp -> k Emp Emp vmap ba
+    | Emp, _ -> helper Emp Emp vmap (antiframe#add_lst (flatten_seq conseq),frame,pt) k
+    | _ , Emp -> helper Emp Emp vmap (antiframe,frame#add_lst (flatten_seq ante),pt) k
                     
     | Basic h1, Basic h2 ->
        pop_prooftrace ();
        push_prooftrace (Match (h1,h2,!prooftrace_depth));
-       match_p h1 h2 vmap ba k
+       match_p h1 h2 vmap ba
+               ( fun lefta leftc newvmap newba ->
+                 helper lefta leftc newvmap newba k)
          
     | Seq (l,r), _ ->
        lazy_sort l vmap
                    (fun (x,rest,newvmap) ->
                      helper x conseq newvmap ba
-                            (fun lefta leftc newba newvmap2 ->
+                            (fun lefta leftc newvmap2 newba->
                               helper (mkSeq lefta (mkSeq rest r)) leftc newvmap2 newba k))
     | Star plst, _ ->
        let () = push_prooftrace (Sort (ante,0,!prooftrace_depth)) in
        lazy_sort ante vmap
                    (fun (x,rest,newvmap) ->
                      helper x conseq newvmap ba
-                            (fun lefta leftc newba newvmap2 ->
+                            (fun lefta leftc newvmap2 newba->
                               helper (mkSeq lefta rest) leftc newvmap2 newba k))
     | Basic _, Seq (l,r) ->       
        lazy_sort l vmap
                    (fun (x,rest,newvmap) ->
                      helper ante x newvmap ba
-                            (fun lefta leftc newba newvmap2 ->
+                            (fun lefta leftc newvmap2 newba->
                               helper lefta (mkSeq leftc (mkSeq rest r)) newvmap2 newba k))
     | Basic _, Star plst ->
        let () = push_prooftrace (Sort (conseq,1,!prooftrace_depth)) in
        lazy_sort conseq vmap
                    (fun (x,rest,newvmap) ->
                      helper ante x newvmap ba
-                            (fun lefta leftc newba newvmap2 ->
+                            (fun lefta leftc newvmap2 newba ->
                               helper lefta (mkSeq leftc rest) newvmap2 newba k))
   in
   
@@ -1721,25 +1711,40 @@ let po_biabduction ante conseq =
   
   let init_matrix = Array.make_matrix (List.length varlst) (List.length varlst) 7 in
   let vmap = new lazyVMap (puref,varlst,init_matrix,[]) in
-  
+
   helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap (antiframe,frame,[])
-         (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap ->
-           let newantiframe, newframe =
-             match lefta, leftc with
-             | (Emp|Basic (Gap _)), (Emp|Basic (Gap _)) -> newantiframe, newframe
-             | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe
-             | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta)
-             | _ , _ -> failwith "po_biabduction: Invalid input"
-           in
-           (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *)
-           (* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *)
-           let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst newvmap, newframe#get_lst newvmap,newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in
-           push_prooftrace (Reach (antiframelst,framelst,puref,!prooftrace_depth));
-           push_answer (antiframelst,framelst,orig_puref,newflst);
-           (* prooftrace_depth := !prooftrace_depth - 1 ; *)
-           (* print_endline (print_prooftrace ()); *)
+         (fun a c newba newvmap ->
+           match a,c with
+           | Emp,Emp ->
+              let bapure = simplify (mkOr (mkNot (newvmap#get_puref)) rhs_p) in
+              
+                                     
+           | _,_ -> failwith "Invalid base case"
+           (* let (newantiframe,newframe,_) = newba in *)
+           (* let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst newvmap,newframe#get_lst newvmap,simplify newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in *)
+         (* push_answer (antiframelst,framelst,orig_puref,newflst); *)
            ()
          )
+  
+  
+  (* helper (anteTrans#formula_to_seq) (conseqTrans#formula_to_seq) vmap (antiframe,frame,[]) *)
+  (*        (fun lefta leftc (newantiframe,newframe,newprooftrace) newvmap -> *)
+  (*          let newantiframe, newframe = *)
+  (*            match lefta, leftc with *)
+  (*            | (Emp|Basic (Gap _)), (Emp|Basic (Gap _)) -> newantiframe, newframe *)
+  (*            | Emp, _ -> newantiframe#add_lst (flatten_seq leftc), newframe *)
+  (*            | _ , Emp -> newantiframe, newframe#add_lst (flatten_seq lefta) *)
+  (*            | _ , _ -> failwith "po_biabduction: Invalid input" *)
+  (*          in *)
+  (*          (\* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref newprooftrace *\) *)
+  (*          (\* print_biabduction_result newantiframe#get_lst newframe#get_lst newvmap#get_puref []; *\) *)
+  (*          let antiframelst,framelst,puref,orig_puref,newflst = newantiframe#get_lst newvmap, newframe#get_lst newvmap,newvmap#get_puref,newvmap#get_orig_f,newvmap#get_new_f_lst in *)
+  (*          push_prooftrace (Reach (antiframelst,framelst,puref,!prooftrace_depth)); *)
+  (*          push_answer (antiframelst,framelst,orig_puref,newflst); *)
+  (*          (\* prooftrace_depth := !prooftrace_depth - 1 ; *\) *)
+  (*          (\* print_endline (print_prooftrace ()); *\) *)
+  (*          () *)
+  (*        ) *)
 ;;
 
 let po_biabduction_interface ante conseq =
@@ -2133,3 +2138,5 @@ let check_formula_to_arrPred ante conseq =
   print_endline (str_seq (conseqTrans#formula_to_arrPred));
   ()
 ;;  
+
+
