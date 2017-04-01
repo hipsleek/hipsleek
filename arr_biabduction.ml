@@ -18,6 +18,9 @@ let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
 let mkAnd f1 f2 = Cpure.mkAnd f1 f2 no_pos
 ;;
 
+let mkNot f = Cpure.mkNot f None no_pos
+;;
+  
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
 
