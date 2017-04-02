@@ -138,6 +138,12 @@ let str_arrPred apred =
      (* "Elem("^(!str_exp b)^","^(!str_exp s)^")" *)
      "Elem("^("_")^","^(!str_exp s)^")"
 ;;
+
+let is_empty_apred p apred =
+  match apred with
+  | Aseg (b,s,e) | Gap (b,s,e) -> p s e
+  | Elem _ -> false
+;;
   
 let str_list =
   Gen.Basic.pr_list
@@ -1409,6 +1415,7 @@ class lazyVMap (puref,varlst,initmatrix,newflst) =
       | _ -> failwith "add_segment_non_empty: Invalid input"
   end
 ;;
+
 
   
   

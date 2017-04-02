@@ -5,6 +5,9 @@ pred_prim Elem<start:int>.
 infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<1,5>.
 print residue.
 
+infer[@arr_ba] base::Aseg<1,1> |- base::Aseg<2,3>.
+print residue.
+
 infer[@arr_ba] base::Aseg<1,5> |- base::Aseg<2,7>.
 print residue.
 
@@ -17,6 +20,6 @@ print residue.
 infer[@arr_ba] base::Aseg<10,20> |- base::Aseg<0,10>.
 print residue.
 
-infer[@arr_ba] base::Aseg<10,20> |- base::Aseg<0,10>.
+infer[@arr_ba] base::Aseg<10,20> |- base::Aseg<0,15>.
 print residue.
 
