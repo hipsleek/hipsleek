@@ -64,7 +64,7 @@ pred nequal(var2 p, q) = p ~= q;
   Determine which variables need to be first order.
   Put those into var_map.
 *)
-let rec compute_fo_formula (f0 : formula) var_map : unit = 
+let rec compute_fo_formula (f0 : formula) var_map : unit =
   let bforms = b_formulas_list f0 in
   compute_fo_b_formula bforms var_map
 
@@ -88,7 +88,7 @@ and b_formulas_list (f0 : formula) : b_formula list = match f0 with
 (*
   returns true if new FO vars are added to var_map
 *)
-and compute_fo_b_formula (bf0 : b_formula list) var_map : unit = 
+and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
   let current_bforms = ref bf0 in
   let next_bforms = ref [] in
   let cont = ref true in
@@ -139,7 +139,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
                						  else
                							() (* this formula doesn't add anything new *)
                							  (* next_bforms := bf :: !next_bforms *)
-               					  else 
+               					  else
                					  *)
             if is_bag e1 || is_bag e2 then
               let r1 = compute_fo_exp e1 SO var_map in
@@ -171,7 +171,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
           | ListNotIn _
           | ListAllN _
           | ListPerm _ -> failwith ("Lists are not supported in Mona")
-          | ImmRel _ 
+          | ImmRel _
           | RelForm _ -> failwith ("Relations are not supported in Mona")
           | LexVar _ -> failwith ("LexVar are not supported in Mona")
           | XPure _ -> Error.report_no_pattern()
@@ -184,7 +184,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
     done
   done
 
-and is_fo (sv : spec_var) var_map : bool = 
+and is_fo (sv : spec_var) var_map : bool =
   try
     let msv = mona_of_spec_var sv in
     let vo = H.find var_map msv in
@@ -200,7 +200,7 @@ and is_fo (sv : spec_var) var_map : bool =
 	  let vo = H.find var_map unprimed_name in
 		vo = FO
 	with
-	  | Not_found -> 
+	  | Not_found ->
 		  try
 			let vo = H.find var_map primed_name in
 			  vo = FO
@@ -219,7 +219,7 @@ and compute_fo_var (sv : spec_var) order var_map : bool =
     if vo = order then false (* no change *)
     else failwith ("compute_fo_var: order-mismatch for " ^ msv)
   with
-  | Not_found -> 
+  | Not_found ->
     let unprimed_name = name_of_spec_var sv in
     let primed_name = unprimed_name ^ Oclexer.primed_str in
     H.add var_map unprimed_name order;
@@ -243,13 +243,13 @@ and to_fo (svs : spec_var list) var_map : bool =
   e0 is a bag, so terms inside e0 must be FO, unless e0 itself is a SO var.
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
-  | Null _ 
+  | Null _
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Bptriple _ -> failwith ("[setmona.ml]: ERROR in constraints (Bptriple should not appear here)")
   | Tup2 _ -> failwith ("[setmona.ml]: ERROR in constraints (Tup2 should not appear here)")
-  | NegInfConst _ 
+  | NegInfConst _
   | InfConst _ -> failwith ("[setmona.ml]: ERROR in constraints (infconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Level _ -> failwith "[setmona.ml]: level should not appear here"
@@ -298,14 +298,15 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListLength _
   | ListAppend _
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
-  | Func _ -> failwith ("Functions are not supported in Mona") 
-  | ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
-  | Template t -> 
+  | Func _ -> failwith ("Functions are not supported in Mona")
+  | ArrayAt _ -> failwith ("Arrays are not supported in Mona")
+  | Template t ->
     let e = exp_of_template t in
     compute_fo_exp e order var_map
+  | BExpr f -> x_fail "TODO"
 
-(* 
-   Transformations: 
+(*
+   Transformations:
    a1 < a2 + a3 ==> ex f . a1 < f & f = a2 + a3
    a1 = a2 + a3 + a4 ==> ex f . f = a2 + a3 & a1 = f + a4
 *)
@@ -368,8 +369,8 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
   | BagSub _
   | BagMin _
   | BagMax _ -> BForm (bf0,lbl)
-  | Eq (e1, e2, pos) -> 
-    if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
+  | Eq (e1, e2, pos) ->
+    if ((is_var_num e1 || is_null e1) && is_normalized_term e2) ||
        ((is_var_num e2 || is_null e2) && is_normalized_term e1)
     then (BForm (bf0,lbl))
     else helper2 mkEq e1 e2 pos
@@ -405,7 +406,7 @@ and split_add_subtract (e0 : exp) : (exp list * exp list) = match e0 with
     let a1, s1 = split_add_subtract e1 in
     let a2, s2 = split_add_subtract e2 in
     (a1 @ a2, s1 @ s2)
-  | Subtract (e1, e2, _) -> 
+  | Subtract (e1, e2, _) ->
     let a1, s1 = split_add_subtract e1 in
     let a2, s2 = split_add_subtract e2 in
     (a1 @ s2, s1 @ a2)
@@ -415,7 +416,7 @@ and split_add_subtract (e0 : exp) : (exp list * exp list) = match e0 with
        if i = 1 then ([e2], [])
        else if i = -1 then ([], [e2])
        else failwith ("split_add_subtract: Mult with unsupported coefficent: " ^ (string_of_int i))
-     | _ -> 
+     | _ ->
        (match e2 with
         | IConst(i, _) ->
           if i = 1 then ([e1], [])
@@ -427,18 +428,18 @@ and split_add_subtract (e0 : exp) : (exp list * exp list) = match e0 with
   | _ -> ([e0], [])
 
 
-(* 
+(*
    flatten nested Add.
    Return value:
    first component: new expression
    second component: (optional) formula linking new expression and old one
    last component: existential variables introduced during the process
 *)
-and flatten_list (es0 : exp list) : (exp * formula * spec_var list) = 
+and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 (*
   let helper e =
 	if is_var_num e || is_null e then (e, mkTrue no_pos, [])
-	else 
+	else
 	  let fn = fresh_name () in
 	  let pos = pos_of_exp e in
 	  let sv = SpecVar (Prim Int, fn, Unprimed) in
@@ -452,7 +453,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
   | [e] -> (e, mkTrue no_pos, [])
   | e1 :: e2 :: rest -> begin
       if is_zero_int e1 then flatten_list (e2 :: rest)
-      else if is_zero_int e2 then flatten_list (e1 :: rest)  
+      else if is_zero_int e2 then flatten_list (e1 :: rest)
       else
         let pos = pos_of_exp e1 in
         let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
@@ -476,10 +477,10 @@ and mona_of_spec_var sv = match sv with
   | SpecVar (_, v, p) -> v ^ (if is_primed sv then Oclexer.primed_str else "")
 
 and mona_of_exp order e0 = match e0 with
-  | Null _ -> 
-    if order = FO then "0" 
+  | Null _ ->
+    if order = FO then "0"
     else "empty"
-  | Var (v, _) -> 
+  | Var (v, _) ->
    (*
 		if order = FO && not (is_fo_ref v) then
 		let () = print_var_map !var_map_ref in
@@ -555,7 +556,7 @@ and mona_of_b_formula bf0 =
       if not (is_var_num e1 || is_var_num e2) then
         failwith ("mona_of_b_formula: Eq: normalize failed to transform, still left with non vars ")
       else if not (is_var_num e1) then mona_of_p_formula (Eq (e2, e1, pos))
-      else 
+      else
         begin
           if is_fo_exp e1 || is_fo_exp e2 then
             let e1str = mona_of_exp FO e1 in
@@ -584,7 +585,7 @@ and mona_of_b_formula bf0 =
     | Lte (e1, e2, _) -> mona_of_bin_op " <= " "lessEq" e1 e2
     | Gt (e1, e2, _) -> mona_of_bin_op " > " "greater" e1 e2
     | Gte (e1, e2, _) -> mona_of_bin_op " >= " "greaterEq" e1 e2
-    | EqMin (e1, e2, e3, _) -> 
+    | EqMin (e1, e2, e3, _) ->
       if is_fo_exp e1 || is_fo_exp e2 || is_fo_exp e3 then
         let e1str = mona_of_exp FO e1 in
         let e2str = mona_of_exp FO e2 in
@@ -638,7 +639,7 @@ and print_var_map var_map =
 and mona_of_formula f0 = mona_of_formula_helper f0
 
 and mona_of_formula_helper f0 = match f0 with
-  | BForm (bf,_) -> mona_of_b_formula bf 
+  | BForm (bf,_) -> mona_of_b_formula bf
   | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _) ->
     let tmp1 = mona_of_formula_helper f1 in
@@ -670,7 +671,7 @@ let mona = "mona"
 
 let mona_command = mona ^ " " ^ !infilename ^ " > " ^ !resultfilename
 
-let run_mona (input : string) : unit = 
+let run_mona (input : string) : unit =
   let chn = open_out !infilename in
   if !log_all_flag then
     (output_string log_all "\n#setmona:\n"; output_string log_all input; flush log_all);
@@ -706,7 +707,7 @@ and compute_vars_helper (vsn : ident list) : (ident list * ident list) = match v
         if vo = FO then (vs :: fovars, sovars)
         else (fovars, vs :: sovars)
       with
-      | Not_found -> 
+      | Not_found ->
         (fovars, vs :: sovars)
     end
   | [] -> ([], [])
@@ -715,7 +716,7 @@ let imply (ante : formula) (conseq : formula) : bool =
   (*
 	let ante1 = elim_exists ante0 in
 	let conseq = elim_exists conseq0 in
-	let ante = 
+	let ante =
 	if isConstFalse conseq0 then ante1
 	else filter_var ante1 (fv conseq)
 	in
@@ -751,16 +752,16 @@ let imply (ante : formula) (conseq : formula) : bool =
     try
       let line = input_line fd  in
       match line with
-      | "Formula is valid" -> 	
-        if !log_all_flag = true then 
+      | "Formula is valid" ->
+        if !log_all_flag = true then
           (output_string log_all (" [mona.ml]: --> SUCCESS\n"); flush log_all);
         quit := true;
         result := true
-      | "ANALYSIS" -> automaton_completed := true 		   
+      | "ANALYSIS" -> automaton_completed := true
       | "Execution aborted" -> failwith ("Error in MONA input file.")
       | _ -> ()
     with
-    | End_of_file -> 
+    | End_of_file ->
       if !automaton_completed = false then begin
         output_string log_all ("\nERROR... Mona is out of memory\n");
         (*failwith "[mona.ml] : out of memory";*)
@@ -775,21 +776,21 @@ let imply (ante : formula) (conseq : formula) : bool =
   done;
   !result
 
-let is_sat (f : formula) : bool = 
+let is_sat (f : formula) : bool =
   if !log_all_flag == true then
     output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
   let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None))) in
   match tmp_form with
-  | true -> 
-    begin 
-      if !log_all_flag == true then 
-        output_string log_all "[mona.ml]: is_sat --> false\n"; 					
-      false; 
+  | true ->
+    begin
+      if !log_all_flag == true then
+        output_string log_all "[mona.ml]: is_sat --> false\n";
+      false;
     end
-  | false -> 
-    begin 
-      if !log_all_flag == true then 
-        output_string log_all "[mona.ml]: is_sat --> true\n"; 
-      true; 
+  | false ->
+    begin
+      if !log_all_flag == true then
+        output_string log_all "[mona.ml]: is_sat --> true\n";
+      true;
     end
