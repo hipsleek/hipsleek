@@ -3278,7 +3278,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         let il = List.map (fun c-> helper new_arg c) i in
         let (il, rl) = List.split il in
         (ArrayAt (a,il,l), f_comb rl)
-      | BExpr f -> x_fail "TODO"
+      | BExpr f -> (BExpr f, f_comb [])
   in helper arg e
 
 let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
