@@ -749,7 +749,7 @@ and mkHeapNode_x ?sess_info:(si=None) ?sess_ann:(ann=None) c id ho deref dr spli
              h_formula_heap_split = split;
              h_formula_heap_imm = i;
              h_formula_heap_imm_param = hl_i;
-			 h_formula_heap_sess_ann = ann;
+             h_formula_heap_sess_ann = ann;
              h_formula_heap_full = f;
              h_formula_heap_with_inv = inv;
              h_formula_heap_pseudo_data = pd;

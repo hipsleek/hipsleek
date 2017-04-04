@@ -20,7 +20,7 @@ and string_of_session_predicate s =
 
 =====================================
 =====================================
-
+[DONE]
 ../../../../sleek ex2-assume.slk -dre "Session.trans_from_session"
 
 to add debug location  + fix the below 

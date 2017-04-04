@@ -2415,7 +2415,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
   let proj_hash = Session.make_projection session vdef.view_vars in
   let helper (role1, role2) tpproj =
     let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
-    let heap_node = Session.ITPProjection.trans_from_session tpproj in
+    let heap_node = x_add_1 Session.ITPProjection.trans_from_session tpproj in
     let heap_node = F.set_sess_ann heap_node ann_list in
     let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
     let form = F.subst_flow_of_struc_formula n_flow top_flow form in

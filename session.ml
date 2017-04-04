@@ -368,8 +368,8 @@ module IForm = struct
     match si.node_kind with
     | Some nk -> begin match nk with
       | Sequence | SOr | Send | Receive | Transmission
-      | Session | Channel | Msg 
-      | Event | HB | CB 
+      | Session | Channel | Msg
+      | Event | HB | CB
       | Assume | Guard | Peer ->
         let new_heap_name = get_prim_pred_id_by_kind nk in
         let updated_node  = F.set_heap_name hform new_heap_name in
@@ -1439,9 +1439,7 @@ module Make_Session (Base: Session_base) = struct
 
   and string_of_session_predicate s =
     s.session_predicate_name ^ 
-	"{" ^ 
-	((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ 
-	"}" ^ 
+	"{" ^ ((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ "}" ^ 
 	"<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
 
   and string_of_session_hvar s =
@@ -1602,7 +1600,7 @@ module Make_Session (Base: Session_base) = struct
     let ptr = Base.get_base_ptr session_def_id hnode in
     let name = p.session_predicate_name in
     (* let name = get_prim_pred_id pred_id in *)
-    let args = [] in (* not using HO preds here *)
+    let args = p.session_predicate_ho_vars in
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
     let anns = p.session_predicate_anns in
@@ -1646,7 +1644,7 @@ module Make_Session (Base: Session_base) = struct
         mk_exists_node vars hform pos
       | SBase s -> (match s with
           | Base b -> Base.trans_base b
-          | Predicate p -> mk_predicate_node p.session_predicate_formula_heap_node p 
+          | Predicate p -> x_add_1 mk_predicate_node p.session_predicate_formula_heap_node p 
           | HVar h -> mk_hvar_node h)
       | SEmp    -> Base.mk_empty () in
     helper s
@@ -1840,7 +1838,7 @@ module Make_Session (Base: Session_base) = struct
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
             (* let params = List.map (fun a -> Base.get_param_id a) params in *)
-            SBase (mk_session_predicate name [] params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann pos)
+            SBase (mk_session_predicate name args params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann pos)
         | Emp ->
             SEmp
         | Session -> failwith (x_loc ^ ": Unexpected node kind.")
@@ -1849,12 +1847,6 @@ module Make_Session (Base: Session_base) = struct
             (* helper h *)
         | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
         | Msg -> failwith (x_loc ^ ": Unexpected node kind.") 
-	(* | Event *)
-	(* | HB *)
-	(* | CB *)
-	(* | Assume *)
-	(* | Guard *)
-	(* | Peer -> failwith (x_loc ^ ": TODO") *)
 	in
     helper h_formula
 
@@ -2128,18 +2120,18 @@ module Make_Session (Base: Session_base) = struct
           begin
             match s_lhs.session_seq_formula_head, s_rhs.session_seq_formula_head with
             | SBase (Predicate p_lhs) as sess_lhs, SBase (Predicate p_rhs) as sess_rhs -> (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
-              (* let head_lhs = trans_from_session sess_lhs in *)
+              (* let head_lhs = x_add_1 trans_from_session sess_lhs in *)
               (* let ptr = Base.get_base_ptr session_def_id p_lhs.session_predicate_formula_heap_node in *)
               (* let new_head = unfold_fun head_lhs ptr in *)
               (* let new_head = trans_formula_to_session new_head in *)
               (* let new_lseq = append_tail new_head s_lhs.session_seq_formula_tail in *)
               (* let new_lseq = norm3_sequence new_lseq in *)
-              (* let new_lseq = trans_from_session new_lseq in *)
+              (* let new_lseq = x_add_1 trans_from_session new_lseq in *)
               (* let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in *)
               def
               (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
             | SBase (Predicate pl) as sess_lhs, _ -> (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
-              let headl = trans_from_session sess_lhs in
+              let headl = x_add_1 trans_from_session sess_lhs in
               if (is_prime_fun headl) then def
               else
                 let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
@@ -2148,7 +2140,7 @@ module Make_Session (Base: Session_base) = struct
                 let new_head = trans_formula_to_session new_head in
                 let new_lseq = append_tail new_head s_lhs.session_seq_formula_tail in
                 let new_lseq = norm3_sequence new_lseq in              
-                let new_lseq = trans_from_session new_lseq in
+                let new_lseq = x_add_1 trans_from_session new_lseq in
                 let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
                 let new_lseq = map_opt_def new_lseq idf (wrap_one_seq_heap new_lseq) in
                 let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
@@ -2159,13 +2151,13 @@ module Make_Session (Base: Session_base) = struct
         | SBase (Base _),  SSeq _ ->
           (* try to add the base to a seq with emp tail *)
           let new_lhs = append_tail sess_lhs SEmp in
-          let new_lhs = trans_from_session new_lhs in
+          let new_lhs = x_add_1 trans_from_session new_lhs in
           let new_lhs_ho_arg = Base.mk_rflow_formula_from_heap new_lhs ~sess_kind:(Some Base.base_type) no_pos in
           [new_lhs_ho_arg], r_ho_args, (get_prim_pred_id_by_kind Channel),None,None
         | SSeq _, SBase (Base _) ->
           (* try to add the base to a seq with emp tail *)
           let new_rhs = append_tail sess_rhs SEmp in
-          let new_rhs = trans_from_session new_rhs in
+          let new_rhs = x_add_1 trans_from_session new_rhs in
           let new_rhs_ho_arg = Base.mk_rflow_formula_from_heap new_rhs ~sess_kind:(Some Base.base_type) no_pos in
           l_ho_args, [new_rhs_ho_arg], (get_prim_pred_id_by_kind Channel),None,None
         | _, _ ->  def
@@ -2187,7 +2179,7 @@ module Make_Session (Base: Session_base) = struct
         begin
           match seq.session_seq_formula_head with
           | SBase (Predicate pl) as sess_pl -> 
-            let headl = trans_from_session sess_pl in
+            let headl = x_add_1 trans_from_session sess_pl in
             if (is_prime_fun headl) then def
             else
               let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
@@ -2196,7 +2188,7 @@ module Make_Session (Base: Session_base) = struct
               let new_head = trans_formula_to_session new_head in
               let new_lseq = append_tail new_head seq.session_seq_formula_tail in
               let new_lseq = norm3_sequence new_lseq in              
-              let new_lseq = trans_from_session new_lseq in
+              let new_lseq = x_add_1 trans_from_session new_lseq in
               let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
               let new_lseq = map_opt_def new_lseq idf (wrap_one_seq_heap new_lseq) in
               let new_lseq_ho_arg = Base.mk_rflow_formula_from_heap new_lseq ~sess_kind:(Some Base.base_type) no_pos in
@@ -2822,11 +2814,15 @@ let struc_norm ?wrap_seq:(seq=true) sf =
 
 let formula_norm form =
   let form = wrap_one_seq form in
-  let form = wrap_last_seq_node form in
+  let form = x_add_1 wrap_last_seq_node form in
   let form = x_add_1 irename_message_pointer form in
   let form = reset_flow form in
   let form = irename_sess_ptr_2_chan_ptr form in
   form
+
+let formula_norm form = 
+  let pr = !F.print_formula in
+  Debug.no_1 "Session.formula_norm" pr pr formula_norm form  
 
 let norm_case vb =  
   let vb = struc_norm ~wrap_seq:false vb in
