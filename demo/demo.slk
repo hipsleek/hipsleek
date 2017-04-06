@@ -22,6 +22,12 @@ print residue.
 infer[x] x::ll<n> |- x::node<_,p> .
 print residue.
 
+infer[x] x::ll<n> |- x::node<_,null> .
+print residue.
+
+infer[n] x::ll<n> |- x::node<_,null> .
+print residue.
+
 checkentail x::ll<3> |- x::node<_,q>.
 print residue.
 

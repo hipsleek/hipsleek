@@ -1,5 +1,15 @@
 checkentail x <: y & y <: z |- x <: z.
+print residue.
 
 checkentail F = {1, 2} |-{1} subset F.
+print residue.
 
 checkentail F = {x <: y, y <: z} |-{x <: z} subset F.
+print residue.
+/*
+
+D |-  Set1 \subset Set2
+
+D & /\ Set2 |=  /\ Set1
+
+*/
