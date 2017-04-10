@@ -10762,11 +10762,11 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
     in
     (* adding xpure of lhs to the HO es  *)
     let ante_xpure,_,_ = x_add xpure 16 prog new_ante in
-    let () = y_binfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in      
+    let () = y_tinfo_hp (add_str "adding xpure of ante to es of ho check" Cprinter.string_of_mix_formula) ante_xpure in      
     let f_ctx = normalize_es_combine_mix_formula ante_xpure true pos f_es in
     let pr = Cprinter.string_of_formula in
-    let () = x_binfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
-    let () = x_binfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
+    let () = x_tinfo_hp (add_str "new_ho_lhs" pr) f_es.es_formula no_pos in
+    let () = x_tinfo_hp (add_str "new_ho_rhs" pr) f_rhs no_pos in
     (* let f_ctx = x_add elim_unsat_es_now 13 prog (ref 1) f_es in *)
     let res_ctx, res_prf =
       Wrapper.wrap_classic x_loc (Some classic) (* exact *)
@@ -11589,7 +11589,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in *)
               let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos new_exist_vars false 0 in
               let is_prime_fun hform = Cast.is_resourceless_h_formula prog ~ho_check:false hform in
-              let l_ho_args, r_ho_args, l_node_name0,l_pure_opt,r_pure_opt = Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun is_prime_fun in
+              let l_ho_args, r_ho_args, l_node_name0,l_pure_opt,r_pure_opt = x_add Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun is_prime_fun in
               
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
               let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name0 in
@@ -11614,7 +11614,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate new_conseq pos
               in
 
-              let () = y_ninfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
+              let () = y_binfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
 
               (* each element of the list is the result of matching one HO,
                  where a result = list disjunctive contexts *)
@@ -11862,7 +11862,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
      caller a estate conseq (Base lhs_b) (Base rhs_b)
   *)
   (*check cyclic*)
-  let is_cycle,estate = if !Globals.cyc_proof_syn && Context.need_check_cyclic actions then
+  let is_cycle,estate = if !Globals.cyc_proof_syn && x_add_1 Context.need_check_cyclic actions then
       let l_emap = Infer.get_eqset (MCP.pure_of_mix lhs_p) in
       let r_emap = CP.EMapSV.mkEmpty in
       let r_eqsetmap = CP.EMapSV.build_eset estate.CF.es_rhs_eqset in
@@ -13722,7 +13722,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                 let unfold_fun hform ptr =
                   let _, _, l_vp, l_fl, _, _ = CF.split_components estate.es_formula in
                   unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos estate.es_evars false 0 in
-                let is_prime_fun hform = Cast.is_resourceless_h_formula ~ho_check:false prog hform in
+                let is_prime_fun hform = Cast.is_resourceless_h_formula prog ~ho_check:false hform in
                 let delta1 = Session.rebuild_node lhs_node unfold_fun is_prime_fun in
                 match delta1 with
                 | Some x ->
@@ -13803,7 +13803,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
               let unfold_fun hform ptr =
                 let _, _, l_vp, l_fl, _, _ = CF.split_components estate.es_formula in 
                 unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos estate.es_evars false 0 in
-              let is_prime_fun hform = Cast.is_resourceless_h_formula ~ho_check:false prog hform in
+              let is_prime_fun hform = Cast.is_resourceless_h_formula prog ~ho_check:false hform in
               let delta1 = Session.rebuild_node rhs_node unfold_fun is_prime_fun in
               match delta1 with
               | Some x_conseq ->

@@ -134,6 +134,7 @@ module type Message_type = sig
   val print_ho_param_formula  : (ho_param_formula -> string) ref
   val print_var  : (var -> string)
   val print_param: (param -> string) ref
+  val print_pure_formula: (pure_formula -> string) ref
       
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only: ?flow:flow -> h_formula -> VarGen.loc -> formula
@@ -231,6 +232,7 @@ module IForm = struct
   let print_ho_param_formula = F.print_rflow_formula
   let print_struc_formula = F.print_struc_formula
   let print_var = F.string_of_spec_var
+  let print_pure_formula = F.print_pure_formula
   let print_param = IP.print_exp
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = (F.mkHeapNode ptr name ho 0 false (*dr*) SPLIT0
@@ -572,6 +574,7 @@ module CForm = struct
   let print_ho_param_formula = CF.print_rflow_formula
   let print_struc_formula = CF.print_struc_formula
   let print_var = CF.string_of_spec_var
+  let print_pure_formula = CF.print_pure_f
   let print_param = ref print_var
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
@@ -2132,8 +2135,8 @@ module Make_Session (Base: Session_base) = struct
               (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
             | SBase (Predicate pl) as sess_lhs, _ -> (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
               let headl = x_add_1 trans_from_session sess_lhs in
-              if (is_prime_fun headl) then
-                def
+              if (is_prime_fun headl) then 
+	        def
               else
                 let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
                 let new_head = unfold_fun headl ptr in
@@ -2165,7 +2168,15 @@ module Make_Session (Base: Session_base) = struct
       end           
     | _, _ -> def
 
-    (* --------------------------------------------------------------------------------- *)
+
+  let rebuild_nodes def lnode rnode l_ho_args r_ho_args si_lhs si_rhs unfold_fun is_prime_fun =
+    let pr_node = !Base.print_h_formula in
+    let pr_ho_args = pr_list !Base.print_ho_param_formula in
+    let pr_def (a,b,c,d,e) = (pr_pair pr_ho_args pr_ho_args) (a,b) in
+    Debug.no_5 "Session.rebuild_nodes_x" pr_def pr_node pr_node pr_ho_args pr_ho_args pr_def (fun _ _ _ _ _ -> 
+				rebuild_nodes def lnode rnode l_ho_args r_ho_args si_lhs si_rhs unfold_fun is_prime_fun) def lnode rnode l_ho_args r_ho_args
+
+  (* --------------------------------------------------------------------------------- *)
   (* replace Pred<>;;tail -----with----> unfold(Pred<>);;tail and normalize the result *)
   (* --------------------------------------------------------------------------------- *)
   let rebuild_node def node unfold_fun is_prime_fun =
@@ -2181,7 +2192,8 @@ module Make_Session (Base: Session_base) = struct
           match seq.session_seq_formula_head with
           | SBase (Predicate pl) as sess_pl -> 
             let headl = x_add_1 trans_from_session sess_pl in
-            if (is_prime_fun headl) then def
+            if (is_prime_fun headl) then
+	      def
             else
               let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
               let new_head = unfold_fun headl ptr in
@@ -2198,10 +2210,12 @@ module Make_Session (Base: Session_base) = struct
         end
       | _ ->  def
 
-  let rebuild_node def node unfold_fun is_prime_fun =
-    let pr = !Base.print_h_formula in
-    let pr_out = pr_pair (pr_opt (pr_list !Base.print_ho_param_formula)) pr_none  in
-    Debug.no_1 "rebuild_node" pr pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
+  let rebuild_node def node unfold_fun is_prime_fun = 
+    let pr_in = !Base.print_h_formula in
+    let pr1 = !Base.print_ho_param_formula in
+    let pr2 = !Base.print_pure_formula in 
+    let pr_out = pr_pair (pr_opt (pr_list pr1)) (pr_opt pr2) in
+    Debug.no_1 "Session.rebuild_node_x" pr_in pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
 
 end;;
 
@@ -2752,9 +2766,9 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
   let default_res = l_ho_args,r_ho_args,(CF.get_node_name_x lnode),None,None in
   let helper sil sir =
     match sil.session_kind with
-    | Some Projection   -> (CProjection.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
-    | Some TPProjection -> (CTPProjection.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
-    | Some Protocol     -> (CProtocol.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
+    | Some Projection   -> (x_add CProjection.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
+    | Some TPProjection -> (x_add CTPProjection.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
+    | Some Protocol     -> (x_add CProtocol.rebuild_nodes default_res lnode rnode l_ho_args r_ho_args sil sir unfold_fun is_prime_fun)
     | None -> default_res in
   try
     match lnode, rnode with
@@ -2773,7 +2787,7 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list !CF.print_rflow_formula in
   let pr_out (a,b,c,d,e) = (pr_pair pr2 pr2) (a,b) in
-  Debug.no_4 "Session.rebuild_nodes" pr1 pr1 (add_str "lhs_ho" pr2) (add_str "rhs_ho" pr2) pr_out (fun _ _ _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode l_ho_args r_ho_args
+  Debug.no_2 "Session.rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode
 
 (* add a try with block *)
 (* Pred<>;;tail  ------>  unfolded Pred<>;;tail  *)

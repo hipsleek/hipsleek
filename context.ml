@@ -3613,7 +3613,6 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
   (*   match_res_rhs_rest = rhs_rest; }) in  *)
   (*   (* WN : why do we need to have a fold following a base-case fold?*) *)
   (*   (* changing to no_match found *) *)
-  (*   (*(-1, Search_action [r])*) *)
   (*   (* let r1 = (2, M_fold { *) *)
   (*   (*     match_res_lhs_node = HTrue;  *) *)
   (*   (*     match_res_lhs_rest = lhs_h;  *) *)
@@ -3716,7 +3715,7 @@ and recalibrate_wt (w,a) =
     let is_match_lemma = is_match_lemma_combination a in
     match a with
     | Search_action l ->
-      let l = List.map recalibrate_wt l in
+      let l = x_add_1 List.map recalibrate_wt l in
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
       let h = (List.hd sl) in
       
@@ -3734,7 +3733,7 @@ and recalibrate_wt (w,a) =
       (* let l = drop_unmatched_action l in *)
       if l==[] then (9,M_Nothing_to_do "Cond_action []")
       else
-        let l = List.map recalibrate_wt l in
+        let l = x_add_1 List.map recalibrate_wt l in
         let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Cond_action l)
@@ -3742,7 +3741,7 @@ and recalibrate_wt (w,a) =
       if l==[] then (9,M_Nothing_to_do "Seq_action []")
       (* (0,Seq_action l) *)
       else
-        let l = List.map recalibrate_wt l in
+        let l = x_add_1 List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) 
@@ -3772,7 +3771,7 @@ and sort_wt_x (ys: action_wt list) : action_wt list =
     | Seq_action l
     | Cond_action l ->
       List.exists uncertain l  in
-  let ls = List.map recalibrate_wt ys in
+  let ls = x_add_1 List.map recalibrate_wt ys in
   let () = y_tinfo_hp (add_str "ls, after recalibrate weight: " (pr_list string_of_action_wt_res_simpl)) ls in
   let comp (w1,_) (w2,_) = if w1<w2 then -1 else if w1>w2 then 1 else 0 in
   let comp_rev (w1,_) (w2,_) = if w1<w2 then 1 else if w1>w2 then -1 else 0 in
@@ -3869,7 +3868,7 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
   (* below is duplicated *)
   let rec recalibrate_wt (w,a) = match a with
     | Search_action l ->
-      let l = List.map recalibrate_wt l in
+      let l = x_add_1 List.map recalibrate_wt l in
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
       let h = (List.hd sl) in
       let rw = (fst h) in
@@ -3887,7 +3886,7 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
           )
         in rs1
     | Cond_action l (* TOCHECK : is recalibrate correct? *) ->
-      let l = List.map recalibrate_wt l in
+      let l = x_add_1 List.map recalibrate_wt l in
       (  match l with
          | [] -> (w,a)
          | [act] -> act
@@ -3896,11 +3895,11 @@ and sort_wt_new_x (ys: action_wt list) : action_wt list =
            (rw,Cond_action l)
       )
     | Seq_action l ->
-      let l = List.map recalibrate_wt l in
+      let l = x_add_1 List.map recalibrate_wt l in
       let rw = List.fold_left (fun a (w,_)-> if (a<=w) then a else w) (fst (List.hd l)) (List.tl l) in
       (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a) in
-  let ls = List.map recalibrate_wt ys in
+  let ls = x_add_1 List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (group_equal_actions sl [] (-1) [])
 
@@ -3948,7 +3947,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     let pick a b = if a<b then a else b in
     match a with
     | Search_action l ->
-      let l = List.map recalibrate_wt l in
+      let l = x_add_1 List.map recalibrate_wt l in
       let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
       let h = (List.hd sl) in
       let rw = (fst h) in
@@ -3959,7 +3958,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       (* let l = drop_unmatched_action l in *)
       if l==[] then (9,M_Nothing_to_do "Cond_action []")
       else
-        let l = List.map recalibrate_wt l in
+        let l = x_add_1 List.map recalibrate_wt l in
         let l = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Cond_action l)
@@ -3967,7 +3966,7 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
       if l==[] then (9,M_Nothing_to_do "Seq_action []")
       (* (0,Seq_action l) *)
       else
-        let l = List.map recalibrate_wt l in
+        let l = x_add_1 List.map recalibrate_wt l in
         let rw = List.fold_left (fun a (w,_)-> pick a w) (fst (List.hd l)) (List.tl l) in
         (rw,Seq_action l)
     | _ -> if (w == -1) then (0,a) else (w,a)
@@ -3996,12 +3995,12 @@ and compute_actions_x prog estate es lhs_h lhs_p rhs_p posib_r_alias
     let rec aux r ans = match r with
       [] -> ans 
       | x::xs -> 
-        let x = recalibrate_wt x in
+        let x = x_add_1 recalibrate_wt x in
         aux xs (choose x ans) in
     match r with
     | [] -> []
     | x::xs -> 
-      let x = recalibrate_wt x in
+      let x = x_add_1 recalibrate_wt x in
       [aux xs x] in
   let r = if !Globals.old_compute_act then r else sel_simpler r in
   let r = List.map (fun (w,a) -> match a with
