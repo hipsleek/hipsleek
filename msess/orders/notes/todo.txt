@@ -34,6 +34,58 @@ Session.trans_from_session@1 EXIT:(!msg#((emp) * ([] & msg = 1))) ;; (Assume{[]}
 
 =====================================
 =====================================
+../../../../sleek ex2a-guard.slk -dre "norm_w_co\|apply_one_norm\|apply_left_coer\|match_one_ho"
+
+!!! **solver.ml#15910:Andreea: add ho var info to new_ctx
+
+**************************************************************
+************** P_185 is discovered below as x=2: *************
+**************************************************************
+(==solver.ml#14743==)
+match_one_ho_arg_simple@20@19@18@17@16@15@14@13@12@11@10@9@8@7
+match_one_ho_arg_simple inp1 :( . (Guard{[ . emp&x=2]}<[]>) ;; ((!msg_172#( emp&msg_172=1)) ;; (emp))
+&
+{FLOW,(20,21)=__norm#E}, . (Guard{[ . HVar P_185[]]}<[]>) ;; (%R_184)
+&{FLOW,(20,21)=__norm#E})
+match_one_ho_arg_simple@20 EXIT:((ok:1,es:
+Some(  emp&x=2&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): []
+ es_ho_vars_map: [P_185 --> emp&x=2&{FLOW,(20,21)=__norm#E}; 
+                  R_184 --> (!msg_172#( emp&msg_172=1)) ;; (emp)
+&
+                  {FLOW,(20,21)=__norm#E}]
+ es_heap: (Guard{[ . emp&x=2]}<[]>) ;; ((!msg_172#( emp&msg_172=1)) ;; (emp))
+ * 
+          c::Chan{ . (Guard{[ . emp&x=2]}<[]>) ;; ((!msg_172#( emp&msg_172=1)) ;; (emp))
+&
+{FLOW,(20,21)=__norm#E}}<>@M
+ es_gen_expl_vars: [self_183; R_184; P_185]
+ es_subst (from,to): []:[]
+ es_trace: (Complex: lem_13) ==>  SEARCH ==>  COND ==>  Match(c,c))),(maps:[(P_185[], emp&x=2&{FLOW,(20,21)=__norm#E}),(R_184[], (!msg_172#( emp&msg_172=1)) ;; (emp)
+&{FLOW,(20,21)=__norm#E})],subs:([],[])))
+
+**************************************************************
+********** trying to P_185 but its info was lost: ************
+**************************************************************
+(==solver.ml#15934==)
+heap_entail@37@19@18@17@16@15@14@13@12@11@10@9@8@7
+heap_entail inp1 : [ emp&x=2&{FLOW,(20,21)=__norm#E}
+  es_gen_impl_vars(E): [msg_180]
+  es_heap: c::Chan{ . (Guard{[ . emp&x=2]}<[]>) ;; ((!msg_172#( emp&msg_172=1)) ;; (emp))
+&
+{FLOW,(20,21)=__norm#E}}<>@M
+  es_subst (from,to): []:[]
+  es_trace: (Complex: lem_13)]
+heap_entail inp2 : HVar P_185[]&{FLOW,(1,26)=__flow#E}
+heap_entail@37 EXIT: MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: separation entailment
+   fe_locs: {
+     fc_message: do_unmatched_rhs : HVar P_185[]
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[(Complex: lem_13) ==>  SEARCH ==>  UnmatchedRHSData]]
+ CEX:false
 
 
 =====================================

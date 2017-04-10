@@ -4,7 +4,18 @@ sleek_include 'msess/notes/hodef.slk'.
 /* Explicit channel support. At the moment parsing should work. */
 pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; C->B:k(2).
 
+lemma_norm self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * %P.
+
+
 checkentail c::Chan{@S Assume{x=2}<>;;!1}<> |- c::Chan{@S !1}<>.
+expect Valid.                                                                    
+print residue.
+
+checkentail c::Chan{@S Assume{x=2}<>;;Assume{y=5}<>;;!1}<> |- c::Chan{@S !1}<>.
+expect Valid.                                                                    
+print residue.
+
+checkentail c::Chan{@S Assume{x=2}<>;;Assume{y=5}<>;;!1}<> |- c::Chan{@S !1}<> & x>0.
 expect Valid.                                                                    
 print residue.
 

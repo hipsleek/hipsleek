@@ -15902,10 +15902,12 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           let () = y_ninfo_hp (add_str "new_ctx(before ho match)" !CF.print_list_context) new_ctx in
           let () = y_ninfo_hp (add_str "conseq_extra(before ho match)" !CF.print_formula) conseq_extra in
           let () = y_ninfo_hp (add_str "head_node_new(before ho match)" !CF.print_h_formula) head_node_new in
-          let coer_rhs_new, (frv,tov), ok,_ =
+          let coer_rhs_new, (frv,tov), ok, es_opt =
             let ho_ps2  = CF.get_node_ho_args head_node_new in
             match_one_ho_arg_simple_helper prog new_estate
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
+          (* add entail info to new_ctx *)
+          let () = y_binfo_pp "Andreea: add ho_var info from res_opt to new_ctx" in
           let f = x_add subst_avoid_capture frv tov f in
           let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
           let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
