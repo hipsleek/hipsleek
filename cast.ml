@@ -4033,14 +4033,14 @@ let categorize_view (prog: prog_decl) : prog_decl =
    - prim_pred
    - ho_args = [] 
 *)
-let is_resourceless_h_formula_x prog (h: F.h_formula) =
+let is_resourceless_h_formula_x prog ?ho_check:(ho_check=true) (h: F.h_formula) =
   let rec helper h =
     match h with
     | F.HEmp -> true
     | F.HFalse -> true
     | F.ViewNode v ->
       let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
-      (vdef.view_is_prim && v.h_formula_view_ho_arguments=[])
+      (vdef.view_is_prim && (not(ho_check) || v.h_formula_view_ho_arguments=[]))
     | F.DataNode _
     | F.ThreadNode _ -> false
     | F.Star ({h_formula_star_h1 = h1;
@@ -4059,10 +4059,10 @@ let is_resourceless_h_formula_x prog (h: F.h_formula) =
     | _ -> false
   in helper h
 
-let is_resourceless_h_formula prog (h: F.h_formula) =
+let is_resourceless_h_formula prog ?ho_check:(ho_check=true)  (h: F.h_formula) =
   Debug.no_1 "is_resourceless_h_formula"
     !print_h_formula string_of_bool
-    (fun _ -> is_resourceless_h_formula_x prog h) h
+    (fun _ -> is_resourceless_h_formula_x ~ho_check:ho_check prog h) h
 
 let get_ret_vars_exp exp =
   let f e = 

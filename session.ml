@@ -2132,7 +2132,8 @@ module Make_Session (Base: Session_base) = struct
               (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
             | SBase (Predicate pl) as sess_lhs, _ -> (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
               let headl = x_add_1 trans_from_session sess_lhs in
-              if (is_prime_fun headl) then def
+              if (is_prime_fun headl) then
+                def
               else
                 let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
                 let new_head = unfold_fun headl ptr in
@@ -2196,6 +2197,11 @@ module Make_Session (Base: Session_base) = struct
           | _ -> def
         end
       | _ ->  def
+
+  let rebuild_node def node unfold_fun is_prime_fun =
+    let pr = !Base.print_h_formula in
+    let pr_out = pr_pair (pr_opt (pr_list !Base.print_ho_param_formula)) pr_none  in
+    Debug.no_1 "rebuild_node" pr pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
 
 end;;
 
@@ -2767,7 +2773,7 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list !CF.print_rflow_formula in
   let pr_out (a,b,c,d,e) = (pr_pair pr2 pr2) (a,b) in
-  Debug.no_2 "Session.rebuild_nodes" pr1 pr1 pr_out (fun _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode
+  Debug.no_4 "Session.rebuild_nodes" pr1 pr1 (add_str "lhs_ho" pr2) (add_str "rhs_ho" pr2) pr_out (fun _ _ _ _ -> rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun) lnode rnode l_ho_args r_ho_args
 
 (* add a try with block *)
 (* Pred<>;;tail  ------>  unfolded Pred<>;;tail  *)
