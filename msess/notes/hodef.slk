@@ -9,8 +9,8 @@ pred_prim SOr@disjunction{%P}<>.
 
 /* orders */
 pred_prim Event@event<peer,id:int>.
-pred_prim HB@hb<peer1,id1:int,peer2,id2:int>.
-pred_prim CB@cb<peer1,id1:int,peer2,id2:int>.
+pred_prim HB@hb{%P, %P}<>.
+pred_prim CB@cb{%P, %P}<>.
 
 /* protocol lang related */
 pred_prim Assume@assumed{%P}<>. 

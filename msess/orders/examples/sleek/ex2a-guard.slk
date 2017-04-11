@@ -22,3 +22,7 @@ print residue.
 checkentail c::Chan{@S Assume{x=2}<>;;Guard{x=2}<>;;!1}<> |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
+
+checkentail c::Chan{@S Assume{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<>;;!1}<> |- c::Chan{@S !1}<>.
+expect Valid.                                                                    
+print residue.
