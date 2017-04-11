@@ -14733,10 +14733,10 @@ and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rh
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
     (match_one_ho_arg_simple_x prog estate lhs_f conseq ~evars:evars) (lhs,rhs)
     
-and match_one_ho_arg_simple_helper prog estate
+and match_one_ho_arg_simple_helper prog estate ?conseq_extra:(conseq_extra=None)
     ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs 
-  : CF.formula * (CP.spec_var list * CP.spec_var list) * int * entail_state option list  =
-  if (ho_ps1=[]) then coer_rhs, ([],[]), 1, [] else
+  : CF.formula * (CP.spec_var list * CP.spec_var list) * int * entail_state option list * CF.formula option =
+  if (ho_ps1=[]) then coer_rhs, ([],[]), 1, [], None else
     let args = List.combine ho_ps1 ho_ps2 in
     let conseq = CF.mkTrue (CF.flow_formula_of_formula estate.es_formula) no_pos in
     let expl_vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap) to_vars in 
@@ -14749,9 +14749,10 @@ and match_one_ho_arg_simple_helper prog estate
     let fail = List.exists (fun x -> x==0) ok in
     let ok = if fail then 0 else 1 in
     let coer_rhs_new = CF.subst_hvar coer_rhs maps in
+    let conseq_new = map_opt (fun conseq -> CF.subst_hvar conseq maps) conseq_extra in
     let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
     let lhs_f = CF.subst_avoid_capture frsv tosv lhs_f in
-    coer_rhs_new, (frsv,tosv), ok, es
+    coer_rhs_new, (frsv,tosv), ok, es, conseq_new
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -14950,7 +14951,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
           let ho_ps1 = CF.get_node_ho_args node in
           let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
           let ho_ps2 = CF.get_node_ho_args lhs_heap in
-          let coer_rhs_new, (frv,tov), ok,_ = match_one_ho_arg_simple_helper prog estate
+          let coer_rhs_new, (frv,tov), ok,_,_ = match_one_ho_arg_simple_helper prog estate
               ho_ps1 ho_ps2 lhs_heap rest_of_lhs to_vars coer_rhs_new  in
           if not(ok == 1) then
             let () = x_dinfo_zp (lazy ("apply_left_coercion_complex: HO args don't match\n")) pos in
@@ -15214,7 +15215,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ?allo
             let ho_ps1 = CF.get_node_ho_args node in
             let lhs_heap = x_add subst_avoid_capture_h fr_vars to_vars lhs_heap in
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
-            let coer_rhs_new, (frv,tov),  ok,_ =  match_one_ho_arg_simple_helper prog estate
+            let coer_rhs_new, (frv,tov),  ok,_,_ =  match_one_ho_arg_simple_helper prog estate
                 ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
             let rest_of_lhs = x_add subst_avoid_capture frv tov f in
             let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
@@ -15902,12 +15903,12 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
           let () = y_ninfo_hp (add_str "new_ctx(before ho match)" !CF.print_list_context) new_ctx in
           let () = y_ninfo_hp (add_str "conseq_extra(before ho match)" !CF.print_formula) conseq_extra in
           let () = y_ninfo_hp (add_str "head_node_new(before ho match)" !CF.print_h_formula) head_node_new in
-          let coer_rhs_new, (frv,tov), ok, es_opt =
+          let coer_rhs_new, (frv,tov), ok, es_opt, conseq_extra_opt =
             let ho_ps2  = CF.get_node_ho_args head_node_new in
-            match_one_ho_arg_simple_helper prog new_estate
+            match_one_ho_arg_simple_helper prog new_estate ~conseq_extra:(Some conseq_extra)
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
-          (* add entail info to new_ctx *)
-          let () = y_binfo_pp "Andreea: add ho_var info from res_opt to new_ctx" in
+          (* add map ho_var info to conseq_extra *)
+          let conseq_extra = map_opt_def conseq_extra idf conseq_extra_opt in  
           let f = x_add subst_avoid_capture frv tov f in
           let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
           let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
@@ -16243,7 +16244,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         x_dinfo_zp (lazy ("normalize_w_coers: ho_args mismatched between lhs node and coer_lhs node")) no_pos;
         (false, estate, h, p, vp, mkNormalFlow ()) (* false, return dummy h and p *)
       else
-        let coer_rhs_new, (frv,tov), ok,_ =
+        let coer_rhs_new, (frv,tov), ok,_,_ =
           (* let ho_ps2  = CF.get_node_ho_args head_node_new in *)
           (* TOD below arguments need to be checked *)
           match_one_ho_arg_simple_helper prog new_estate
