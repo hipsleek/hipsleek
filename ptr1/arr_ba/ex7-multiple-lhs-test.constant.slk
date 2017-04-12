@@ -11,8 +11,8 @@ print residue.
 // infer[@arr_ba] base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5> |- base::Aseg<1,5>.
 // print residue.
 
-infer[@arr_ba] base::Aseg<a,b>  * base::Aseg<c,d> * base::Aseg<e,f> * base::Aseg<g,h> * base::Aseg<i,j> * base::Aseg<k,l> |- base::Aseg<m,n>.
-print residue.
+// infer[@arr_ba] base::Aseg<a,b>  * base::Aseg<c,d> * base::Aseg<e,f> * base::Aseg<g,h> * base::Aseg<i,j> * base::Aseg<k,l> |- base::Aseg<m,n>.
+// print residue.
 
 // infer[@arr_ba] base::Aseg<5,10>  * base::Aseg<20,30> * base::Aseg<30,32> * base::Aseg<35,100> * base::Aseg<100,132> * base::Aseg<1,5> |- base::Aseg<0,1>.
 // print residue.

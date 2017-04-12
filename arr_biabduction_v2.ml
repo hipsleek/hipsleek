@@ -163,7 +163,6 @@ let biabduction ante conseq lhs_p rhs_p =
   in
   
   let rec helper ante conseq extend_pf k =
-
     (* let () = print_endline ((str_arrf ante)^" |= "^(str_arrf conseq)^" "^(str_list !str_pformula extend_pf)) in *)
     let align ante conseq b1 s1 b2 s2 extend_pf k =
       let p1 = mkGt s1 s2 in

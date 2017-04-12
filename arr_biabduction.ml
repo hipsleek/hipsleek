@@ -12,6 +12,9 @@ type 'exp arrPred =
 
 
 (* Utility on formula and exp *)
+type puref = Cpure.formula
+;;
+  
 let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
 ;;
 
@@ -32,6 +35,10 @@ let rec mkAndlst lst =
   | [h] -> h
   | h::tail -> mkAnd h (mkAndlst tail)
   | [] -> mkTrue ()
+;;
+
+let mkImply af cf =
+  mkOr (mkNot af) cf
 ;;
 
 let mkGt e1 e2 =
@@ -137,6 +144,13 @@ let str_arrPred apred =
   | Elem (b,s) ->
      (* "Elem("^(!str_exp b)^","^(!str_exp s)^")" *)
      "Elem("^("_")^","^(!str_exp s)^")"
+;;
+
+let rec str_arrPred_star_lst lst =
+  match lst with
+  | [] -> "EMP"
+  | [h] -> str_arrPred h
+  | h::tail -> (str_arrPred h)^"*"^(str_arrPred_star_lst tail)
 ;;
 
 let is_empty_apred p apred =
@@ -271,7 +285,79 @@ let mkBasic p =
 ;;
 
 (* ********** End of definition of seq-star **********  *)
+(* ********** definition of array formula ************  *)
+type 'a array_formula =
+  | ABase of (puref * 'a) (* pure /\ heap *)
+  | ADisj of ('a array_formula * 'a array_formula)
+  | AConj of ('a array_formula * 'a array_formula)
+  | ATrue                       (* emp /\ true *)
+  | AFalse                      (* false *)
+;;
 
+let str_array_formula print f =
+  match f with
+  | ATrue -> "emp/\\true"
+  | AFalse -> "false"
+  | ABase (pf,h) -> (!str_pformula pf)^"/\\"^(print h)
+  | _ -> failwith "str_array_formula: TO BE IMPLEMENTED"
+
+let is_false_array_formula f =
+  match f with
+  | AFalse -> true
+  | _ -> false
+;;
+
+let is_true_array_formula f =
+  match f with
+  | ATrue -> true
+  | _ -> false
+;;
+
+let mkABase pf hf =
+  ABase (pf,hf)
+;;
+
+let mkAFalse () =
+  AFalse
+;;
+
+let mkATrue () =
+  ATrue
+;;
+  
+let mkADisj f1 f2 =
+  if is_false_array_formula f1 then
+    f2
+  else
+    if is_false_array_formula f2 then
+      f1
+    else
+      ADisj (f1,f2)
+;;
+
+let mkAConj f1 f2 =
+  if is_true_array_formula f1 then
+    f2
+  else
+    if is_true_array_formula f2 then
+      f1
+    else
+      match f1,f2 with
+      | ABase (p1,h1),ABase (p2,h2) ->
+         mkABase (mkAnd p1 p2) (h1@h2)
+      | _,_ -> failwith "mkAConj: TO BE IMPLEMENTED"                        
+;;
+
+(* type ba_result = array_formula * array_formula *)
+(* ;; *)
+  
+let disj_ba_result (antiframe1,frame1) (antiframe2,frame2) =
+  ((mkAConj antiframe1 antiframe2),(mkADisj frame1 frame2))
+;;
+  
+
+(* ********** End of definition of array formula ************  *)
+  
 (* Transform arr pred to cformula *)
 
 let vcount = ref 0;;  
