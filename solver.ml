@@ -11618,6 +11618,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               (* each element of the list is the result of matching one HO,
                  where a result = list disjunctive contexts *)
+              let () = y_binfo "Andreea: set classic to classic flag from view" in
               let res = List.map match_one_ho_arg_helper args in
 
               (* create pairs of HO args results, given disjunctive HO contexts *)

@@ -13,6 +13,6 @@ pred_prim HB@hb{%P, %P}<>.
 pred_prim CB@cb{%P, %P}<>.
 
 /* protocol lang related */
-pred_prim Assume@assumed{%P}<>. 
-pred_prim Guard@guard{%P}<>.
+pred_prim Assume@assumed{%P}<p>. 
+pred_prim Guard@guard{%P}<p>.
 pred_prim Peer@peer{%P}<>.

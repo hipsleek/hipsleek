@@ -34,6 +34,7 @@ Session.trans_from_session@1 EXIT:(!msg#((emp) * ([] & msg = 1))) ;; (Assume{[]}
 
 =====================================
 =====================================
+[DONE]
 ../../../../sleek ex2a-guard.slk -dre "norm_w_co\|apply_one_norm\|apply_left_coer\|match_one_ho"
 
 !!! **solver.ml#15910:Andreea: add ho var info to new_ctx
@@ -91,6 +92,19 @@ heap_entail@37 EXIT: MaybeErr Context:
 =====================================
 =====================================
 
+../../../../sleek ex3a-dis-classic.slk 
+
+pred_prim Orders@nonclassic{%P}<>.
+
+add support for nonclassic reasoning
+when matching the HO args:
+
+checkentail orders::Orders{ x::node<_,_> }<>
+            |-
+            orders::Orders{ emp }<>.
+expect Valid.                                                                    
+print residue.
+
 
 =====================================
 =====================================
@@ -100,3 +114,5 @@ heap_entail@37 EXIT: MaybeErr Context:
 =====================================
 
 
+=====================================
+=====================================

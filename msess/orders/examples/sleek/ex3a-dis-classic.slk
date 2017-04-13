@@ -1,0 +1,10 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_prim Orders@nonclassic{%P}<>.
+
+checkentail orders::Orders{ orders::HB{@S Event<b, 2>, @S Event<c,3>}<> }<>
+            |-
+            orders::Orders{ emp }<>.
+expect Valid.                                                                    
+print residue.

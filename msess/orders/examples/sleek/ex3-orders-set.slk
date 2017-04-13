@@ -5,23 +5,39 @@ pred_prim Orders{%P}<>.
 /* Explicit channel support. At the moment parsing should work. */
 pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; C->B:k(2).
 
-lemma_norm self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * orders::Orders{%P}<>.
-lemma_norm self::Chan{@S Guard{%P}<>;;%R}<> * orders::Orders{ %P }<> -> self::Chan{@S %R}<>.
+lemma_norm self::Chan{@S Assume{%P}<v>;;%R}<> -> self::Chan{@S %R}<> * v::Orders{%P}<>.
+lemma_norm self::Chan{@S Guard{%P}<v>;;%R}<> * v::Orders{ %P }<> -> self::Chan{@S %R}<>.
 lemma_norm self::Orders{ %P1 }<> * self::Orders{ %P2 }<> -> self::Orders{ %P1 * %P2 }<>.  
 
 /*
 checkentail c1::Chan{@S Guard{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<>;;!1}<> * orders::Orders{ orders::HB{@S Event<b, 2>, @S Event<c,3>}<> * orders::HB{@S Event<c, 3>, @S Event<c,4>}<> }<> |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
-print residue.
+print residue.*/
 
+/*
 checkentail orders::Orders{ orders::HB{@S Event<b, 2>, @S Event<c,3>}<> }<> * orders::Orders{orders::HB{@S Event<c, 3>, @S Event<c,4>}<> }<> |- orders::Orders{orders::HB{@S Event<b, 2>, @S Event<c,3>}<> * orders::HB{@S Event<b, 3>, @S Event<c,4>}<>}<>.
 expect Valid.                                                                    
 print residue.
 */
 
-checkentail c::Chan{@S Assume{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<>;;!1}<> |- c::Chan{@S !1}<>.
+/*
+checkentail orders::Orders{ orders::HB{@S Event<b, 2>, @S Event<c,3>}<> }<>
+            *
+            orders::Orders{ orders::HB{@S Event<c, 3>, @S Event<c,4>}<> }<>
+
+            |-
+            orders::Orders{ emp }<>.
 expect Valid.                                                                    
 print residue.
+*/
+
+
+checkentail c::Chan{@S Assume{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<orders>;;!1}<> *
+c2::Chan{@S Assume{@S HB{@S Event<b2, 2>, @S Event<c2,4>}<> }<orders>;;!1}<>
+|- c::Chan{@S !1}<>.
+expect Valid.                                                                    
+print residue.
+
 
 /*
 checkentail c::Chan{@S Guard{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<>;;!1}<> * c::HB{@S Event<b, 5>, @S Event<c,4>}<> |- c::Chan{@S !1}<>.
