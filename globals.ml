@@ -1010,6 +1010,9 @@ let session_def_id = "this"     (* "self" *)
 let session_msg_id = "msg"
 let session_msg = (session_msg_id, Unprimed)
 
+let session_orders_id = "orders"
+let session_orders = (session_orders_id, Unprimed)
+
 let session_msg_id_aux = "ms"
 
 let session_seq_id = "this"
@@ -1020,7 +1023,7 @@ let session_chan_id = session_def_id (* "chan" *)
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
 
-let dedicated_session_ids = [session_msg_id; session_seq_id; session_chan_id]
+let dedicated_session_ids = [session_msg_id; session_seq_id; session_chan_id; session_orders_id]
 let dedicated_ids = [self; null_name] @ dedicated_session_ids
 
 (*precluded files*)
