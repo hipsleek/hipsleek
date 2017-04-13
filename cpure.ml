@@ -14467,6 +14467,39 @@ and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
     !print_svl
     find_closure_pure_formula_x v f
 
+and expand_constraint_sets' ante conseq =
+  let bag_to_and exp =
+    match exp with
+    | Bag (exps, loc) ->
+        if List.for_all (function BExpr _ -> true | _ -> false) exps
+        then
+          let formulas =  List.map (function BExpr f -> f | _ -> x_fail "impossible") exps in
+          List.fold_left (fun acc elem -> And (acc, elem, loc)) (List.hd formulas) (List.tl formulas)
+        else x_fail "Not a bag of formulas"
+    | _ -> x_fail "Not a bag"
+  in
+  match conseq with
+  | BForm (
+      ((BagSub ((Bag (_, loc1) as b1), (Bag (_, loc2) as b2), loc)), _),
+      _
+    ) ->
+      let f1 = bag_to_and b1 in
+      let f2 = bag_to_and b2 in
+      (And (ante, f2, loc), f1)
+  | _ -> x_fail "TODO"
+
+and expand_constraint_sets ante conseq =
+  Debug.no_2
+    "expand_constraint_sets"
+    !print_formula
+    !print_formula
+    (pr_pair !print_formula !print_formula)
+    expand_constraint_sets'
+    ante
+    conseq
+
+
+
 (*s2*)
 let prune_irr_neq_b_form b irr_svl =
   let (pf,c) = b in

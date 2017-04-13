@@ -2931,6 +2931,10 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
         (* let conseq = CP.drop_svl_pure conseq [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
         (* let conseq = CP.drop_locklevel_pure conseq in *)
         (ante,conseq)
+    in
+    let ante, conseq = if !constraint_sets_expansion
+      then CP.expand_constraint_sets ante conseq
+      else (ante, conseq)
     in (None, ante, conseq)
 
 
