@@ -71,6 +71,8 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
+let constraint_sets_expansion = ref false
+
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 
