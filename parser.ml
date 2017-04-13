@@ -1793,12 +1793,12 @@ node_type: [[ `IDENTIFIER anno ->
                  | "disjunction" -> SOr
                  (* | "spred" -> Predicate *)
                  | "msg" -> Msg
-		 | "event" -> Event
-		 | "hb" -> HB
-		 | "cb" -> CB
-		 | "assumed" -> Assume
-		 | "guard" -> Guard
-		 | "peer" -> Peer
+		 | "event" -> Predicate (mk_sess_order_kind Event)
+		 | "hb" -> Predicate (mk_sess_order_kind HB)
+		 | "cb" -> Predicate (mk_sess_order_kind CB)
+		 | "assumed" -> Predicate (mk_sess_assert_kind Assume)
+		 | "guard" -> Predicate (mk_sess_assert_kind Guard)
+		 | "peer" -> Predicate (mk_sess_assert_kind Peer)
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];
 

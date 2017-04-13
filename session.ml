@@ -61,17 +61,21 @@ let set_prim_pred_id kind id =
     | Receive      -> recv_id := Some id
     | Transmission -> trans_id := Some id
     | HVar         -> ()
-    | Predicate    -> (* pred_id := Some id *) ()
+    | Predicate sess_order_kind  -> 
+        begin
+            match sess_order_kind with  
+            | Order Event   -> event_id := Some id
+            | Order HB      -> hb_id := Some id
+            | Order CB      -> cb_id := Some id
+            | Assert Assume  -> assume_id := Some id
+            | Assert Guard   -> guard_id := Some id
+            | Assert Peer    -> peer_id := Some id
+            | _ -> ()
+        end
     | Emp          -> ()
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
     | Msg          -> msg_id := Some id
-    | Event	   -> event_id := Some id
-    | HB 	   -> hb_id := Some id
-    | CB	   -> cb_id := Some id
-    | Assume	   -> assume_id := Some id
-    | Guard	   -> guard_id := Some id
-    | Peer	   -> peer_id := Some id
 
 let get_prim_pred_id pred_ref =
   match !pred_ref with
@@ -89,17 +93,47 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Receive      -> get_prim_pred_id recv_id
   | Transmission -> get_prim_pred_id trans_id
   | HVar         -> ""
-  | Predicate    -> (* get_prim_pred_id pred_id *) ""
+  | Predicate sess_order_kind  -> 
+        begin
+            match sess_order_kind with  
+            | Order Event   -> get_prim_pred_id event_id
+            | Order HB      -> get_prim_pred_id hb_id
+            | Order CB      -> get_prim_pred_id cb_id
+            | Assert Assume  -> get_prim_pred_id assume_id
+            | Assert Guard   -> get_prim_pred_id guard_id
+            | Assert Peer    -> get_prim_pred_id peer_id
+            | _ -> ""
+        end
   | Emp          -> ""
   | Session      -> get_prim_pred_id sess_id
   | Channel      -> get_prim_pred_id chan_id
   | Msg          -> get_prim_pred_id msg_id
-  | Event        -> get_prim_pred_id event_id 
-  | HB           -> get_prim_pred_id hb_id
-  | CB           -> get_prim_pred_id cb_id
-  | Assume       -> get_prim_pred_id assume_id
-  | Guard        -> get_prim_pred_id guard_id
-  | Peer	 -> get_prim_pred_id peer_id
+
+let exists_pred_kind name = match name with
+    | Some n -> n
+    | None -> ""
+
+let get_pred_kind name = 
+    if name = (exists_pred_kind !event_id)
+    then
+       mk_sess_order_kind Event
+    else if name = (exists_pred_kind !hb_id)
+    then
+        mk_sess_order_kind HB
+    else if name = (exists_pred_kind !cb_id)
+    then
+        mk_sess_order_kind CB
+    else if name = (exists_pred_kind !assume_id)
+    then
+        mk_sess_assert_kind Assume
+    else if name = (exists_pred_kind !guard_id)
+    then
+       mk_sess_assert_kind Guard
+    else if name = (exists_pred_kind !peer_id)
+    then
+       mk_sess_assert_kind Peer
+    else
+       NO_KIND
 
 let get_session_kind_of_transmission t =
   match t with
@@ -370,13 +404,11 @@ module IForm = struct
     match si.node_kind with
     | Some nk -> begin match nk with
       | Sequence | SOr | Send | Receive | Transmission
-      | Session | Channel | Msg
-      | Event | HB | CB
-      | Assume | Guard | Peer ->
+      | Session | Channel | Msg ->
         let new_heap_name = get_prim_pred_id_by_kind nk in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
-      | Star | SExists | HVar | Predicate | Emp ->  None
+      | Star | SExists | HVar | Predicate _ | Emp ->  None
       end
     | None -> None
         
@@ -1391,6 +1423,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
     session_predicate_anns: sess_ann list;
+    session_predicate_kind: session_predicate_kind;
   }
 
   and session_hvar = {
@@ -1521,19 +1554,29 @@ module Make_Session (Base: Session_base) = struct
   (*         session_fence_pred = pred; *)
   (*   } *)
 
-  and mk_session_predicate_x name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
+
+  and mk_session_predicate_x name ho_vars params 
+    ?node:(node=None) 
+    ?pure:(pure=(Base.mk_true ())) 
+    ?sess_ann:(anns=[]) 
+    ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+    let sess_pred_kind = match sess_pred_kind with
+        | NO_KIND -> get_pred_kind name   
+        | _ -> sess_pred_kind 
+    in
     Predicate {
       session_predicate_name = name;
       session_predicate_ho_vars = ho_vars;
       session_predicate_params = params;
       session_predicate_formula_heap_node = node;
       session_predicate_pure = pure;
-      session_predicate_pos = loc;
+      session_predicate_pos = loc; 
       session_predicate_anns = anns;
+      session_predicate_kind = sess_pred_kind;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) loc =
-    Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns loc) ho_vars
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+    Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~sess_pred_kind:sess_pred_kind loc) ho_vars
 
   
   (* TODO tina: Why doesn't this use SFence constructor? *)
@@ -1597,7 +1640,7 @@ module Make_Session (Base: Session_base) = struct
 (* TODO: review this *)
   (* and mk_fence () = *)
   (*   Base.mk_empty () *)
-
+ 
   and mk_predicate_node_x hnode p =
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr session_def_id hnode in
@@ -1607,8 +1650,9 @@ module Make_Session (Base: Session_base) = struct
     let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
     let anns = p.session_predicate_anns in
+    let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
-    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type Predicate in
+    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
     node
@@ -1831,17 +1875,11 @@ module Make_Session (Base: Session_base) = struct
         | HVar ->
             let (id, ls) = Base.get_hvar h_formula in
             SBase (mk_session_hvar id ls no_pos)
-	| Event
-	| HB
-	| CB
-	| Assume
-	| Guard
-	| Peer 
-        | Predicate ->
+        | Predicate sess_pred_order_kind ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
             let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
             (* let params = List.map (fun a -> Base.get_param_id a) params in *)
-            SBase (mk_session_predicate name args params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann pos)
+            SBase (mk_session_predicate name args params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann ~sess_pred_kind:sess_pred_order_kind pos)
         | Emp ->
             SEmp
         | Session -> failwith (x_loc ^ ": Unexpected node kind.")
@@ -2046,9 +2084,16 @@ module Make_Session (Base: Session_base) = struct
 
   let norm_base_only_helper sf =
     match sf with
-    | SBase (Base _)
-    | SBase (Predicate _) -> Some (mk_session_seq_formula sf SEmp (get_pos sf))
-    | _        -> None
+    | SBase (Base _) -> Some (mk_session_seq_formula sf SEmp (get_pos sf))
+    | SBase (Predicate spf) -> 
+        begin 
+            match spf.session_predicate_kind with
+            | Order HB
+            | Order CB
+            | Order Event -> None 
+            | _ -> Some (mk_session_seq_formula sf SEmp (get_pos sf))
+        end
+    | _ -> None
   
   let norm_base_only (base: Base.h_formula): Base.h_formula option =
     wrap_2ways_sess2base_opt norm_base_only_helper base
@@ -2273,7 +2318,8 @@ let convert_predicate pred =
   let params = pred.IProtocol.session_predicate_params in
   let pos = pred.IProtocol.session_predicate_pos in
   let anns = pred.IProtocol.session_predicate_anns in
-  ITPProjection.mk_session_predicate name ho_vars params ~sess_ann:anns pos
+  let session_predicate_kind = pred.IProtocol.session_predicate_kind in
+  ITPProjection.mk_session_predicate name ho_vars params ~sess_ann:anns ~sess_pred_kind:session_predicate_kind pos
 
 let combine_partial_proj
 		(comb_fnc: ITPProjection.session ->
@@ -2533,7 +2579,7 @@ let wrap_one_seq_heap hform =
   IMessage.heap_transformer fnc hform
 
 let wrap_one_seq formula = 
-  let renamed_formula = IMessage.transform_formula  wrap_one_seq_heap formula in
+  let renamed_formula = IMessage.transform_formula wrap_one_seq_heap formula in
   renamed_formula
 
 let wrap_one_seq formula =
@@ -2833,7 +2879,7 @@ let struc_norm ?wrap_seq:(seq=true) sf =
   sf
 
 let formula_norm form =
-  let form = wrap_one_seq form in
+  let form = x_add_1 wrap_one_seq form in
   let form = x_add_1 wrap_last_seq_node form in
   let form = x_add_1 irename_message_pointer form in
   let form = reset_flow form in

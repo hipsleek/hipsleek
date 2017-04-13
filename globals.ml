@@ -207,7 +207,7 @@ type node_kind =
   | Transmission
   (* non-spec base types *)
   | HVar
-  | Predicate
+  | Predicate of session_predicate_kind
   (* empty *)
   | Emp
   (* extra abstractions *)
@@ -215,11 +215,20 @@ type node_kind =
   | Channel
   (* message container *)
   | Msg
-  (* orders *)
+
+and session_predicate_kind = 
+  | Order of orders_predicate_kind 
+  | Assert of assertions_predicate_kind 
+  | NO_KIND (* no predicate kind *)
+
+(* orders *)
+and orders_predicate_kind =
   | Event
   | HB
   | CB
-  (* protocol lang related *)
+
+(* protocol lang related *)
+and assertions_predicate_kind =
   | Assume
   | Guard
   | Peer
@@ -235,6 +244,12 @@ let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : v
     session_kind = sk;
     node_kind = nk;
   }
+
+let mk_sess_order_kind kind = Order kind
+
+let mk_sess_assert_kind kind = Assert kind
+
+let mk_sess_pred_kind order_kind = Predicate order_kind
 
 type view_kind =
   | View_PRIM
@@ -313,6 +328,21 @@ let string_of_sess_ann ann = match ann with
   | AnnSecondaryPeer -> "AnnSecondaryPeer"
   | AnnInactive -> "AnnInactive"
 
+let string_of_orders_predicate_kind nk = match nk with
+  | Event -> "Event"
+  | HB    -> "HB"
+  | CB    -> "CB"
+
+let string_of_assertions_predicate_kind nk = match nk with
+  | Assume -> "Assume"
+  | Guard  -> "Guard"
+  | Peer   -> "Peer"
+
+let string_of_session_predicate_kind pk = match pk with
+  | Order kind  -> "Order " ^ (string_of_orders_predicate_kind kind)
+  | Assert kind -> "Assert " ^ (string_of_assertions_predicate_kind kind)
+  | _           -> "No_Kind"
+
 let string_of_node_kind nk = match nk with
   | Sequence -> "Sequence"
   | SOr -> "SOr"
@@ -322,17 +352,11 @@ let string_of_node_kind nk = match nk with
   | Receive -> "Receive"
   | Transmission -> "Transmission"
   | HVar -> "HVar"
-  | Predicate -> "Predicate"
+  | Predicate kind -> "Predicate(" ^ (string_of_session_predicate_kind kind) ^ ")"
   | Emp -> "Emp"
   | Session -> "Session"
   | Channel -> "Channel"
   | Msg -> "Msg"
-  | Event -> "Event"
-  | HB -> "HB"
-  | CB -> "CB"
-  | Assume -> "Assume"
-  | Guard -> "Guard"
-  | Peer -> "Peer"
 
 let string_of_view_session_info (si:view_session_info) =
   let sk = match si.session_kind with
