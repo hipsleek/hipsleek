@@ -1793,7 +1793,7 @@ node_type: [[ `IDENTIFIER anno ->
                  | "disjunction" -> SOr
                  (* | "spred" -> Predicate *)
                  | "msg" -> Msg
-		 | "event" -> Predicate (mk_sess_order_kind Event)
+                 | "event" -> Predicate (mk_sess_order_kind Event)
 		 | "hb" -> Predicate (mk_sess_order_kind HB)
 		 | "cb" -> Predicate (mk_sess_order_kind CB)
 		 | "assumed" -> Predicate (mk_sess_assert_kind Assume)
@@ -1802,16 +1802,21 @@ node_type: [[ `IDENTIFIER anno ->
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
 ]];
 
+at_non_classic: [[ `AT; `IDENTIFIER "nonclassic" -> false ]];
+
 view_header:
-  [[ `IDENTIFIER vn; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
+    [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
      let () = view_names # push vn in
      let inst_vars = get_inst_vars l in 
      let mvs = get_mater_vars l in
      let cids, anns = List.split l in
      let modes = get_modes anns in
      let pos = get_pos_camlp4 _loc 1 in
-     Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos
-   | `IDENTIFIER vn; `AT; nk = node_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
+     let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
+     {vh with 
+        view_classic = Gen.map_opt_def true (fun x -> x) non_classic
+     }
+   | `IDENTIFIER vn; non_classic = OPT at_non_classic; `AT; nk = node_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
      let () = view_names # push vn in
      let () = Session.set_prim_pred_id nk vn in
      let inst_vars = get_inst_vars l in 
@@ -1821,7 +1826,10 @@ view_header:
      let pos = get_pos_camlp4 _loc 1 in
      let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
      let kind = mk_view_session_info ~nk:nk () in
-     {vh with view_session_info = Some kind}
+     {vh with 
+        view_session_info = Some kind;
+        view_classic = Gen.map_opt_def true (fun x -> x) non_classic
+     }
    ]];
 
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
@@ -1950,7 +1958,8 @@ view_header_ext:
           view_baga_over_inv = None;
           view_baga_under_inv = None;
           view_mem = None;
-		  view_materialized_vars = get_mater_vars l;
+	  view_materialized_vars = get_mater_vars l;
+          view_classic = true;
           try_case_inference = false;
 			}]];
 

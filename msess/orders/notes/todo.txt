@@ -91,7 +91,7 @@ heap_entail@37 EXIT: MaybeErr Context:
 
 =====================================
 =====================================
-
+[DONE]
 ../../../../sleek ex3a-dis-classic.slk 
 
 pred_prim Orders@nonclassic{%P}<>.

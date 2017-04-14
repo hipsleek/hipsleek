@@ -10813,7 +10813,7 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
         end
     end
 
-and match_one_ho_arg ?classic:(classic=true)  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+and match_one_ho_arg ?classic:(classic=false)  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
    (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   let pr_rflow = Cprinter.string_of_rflow_formula in
@@ -11618,8 +11618,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               (* each element of the list is the result of matching one HO,
                  where a result = list disjunctive contexts *)
-              let () = y_binfo "Andreea: set classic to classic flag from view" in
-              let res = List.map match_one_ho_arg_helper args in
+              let non_classic = l_vdef.view_classic in
+              let res = List.map (match_one_ho_arg_helper ~classic:non_classic) args in
 
               (* create pairs of HO args results, given disjunctive HO contexts *)
               let res_lst = Gen.cart_multi_list res in

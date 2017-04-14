@@ -101,6 +101,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_baga_under_inv = None;
                            I.view_mem = None;
                            I.view_materialized_vars = [];
+                           I.view_classic = true;
                            I.try_case_inference = false; }
           in
           ((vname,tis), n_iview)::acc

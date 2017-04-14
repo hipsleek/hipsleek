@@ -8,3 +8,7 @@ checkentail orders::Orders{ orders::HB{@S Event<b, 2>, @S Event<c,3>}<> }<>
             orders::Orders{ emp }<>.
 expect Valid.                                                                    
 print residue.
+
+checkentail c::Chan{@S !1;;!2}<> |- c::Chan{@S !1}<>.
+expect Fail.                                                                    
+print residue.

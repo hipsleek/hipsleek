@@ -123,7 +123,8 @@ and view_decl =
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)
     try_case_inference: bool;
-    view_materialized_vars: ident list; }
+    view_materialized_vars: ident list;
+    view_classic : bool;(* When true performs classic resoning for HO args *) }
 
 and func_decl = { func_name : ident; 
                   func_typed_vars : (typ * ident) list;}
@@ -677,8 +678,8 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_baga_under_inv = None;
           view_mem = None;
 	  view_materialized_vars = [];
+          view_classic = true;
           try_case_inference = false;
-
 			}
 
 let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
@@ -727,6 +728,7 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
     view_baga_under_inv = None;
     view_mem = None;
     view_materialized_vars = mvs;
+    view_classic = true;
     try_case_inference = false;
   }
 

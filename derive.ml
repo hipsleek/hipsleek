@@ -1139,6 +1139,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_baga_under_inv = None;
           Iast.view_mem = None;
 	  Iast.view_materialized_vars = iview_dclr.Iast.view_materialized_vars;
+          Iast.view_classic = true;
           Iast.try_case_inference = false;
   }
   in

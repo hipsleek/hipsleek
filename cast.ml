@@ -180,7 +180,8 @@ and view_decl = {
   view_prune_conditions: (P.b_formula * (formula_label list)) list;
   view_prune_conditions_baga: ba_prun_cond list;
   view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-  view_ef_pure_disj : Excore.ef_pure_disj option
+  view_ef_pure_disj : Excore.ef_pure_disj option;
+  view_classic : bool (* When true performs classic resoning for HO args *)
 }
 
 (* An Hoa : relation *)
@@ -854,6 +855,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_prune_invariants = [];
     view_raw_base_case= None;
     view_ef_pure_disj = None;
+    view_classic = true;
   }
 
 let mk_view_prim v_name v_args v_inv ?inst_params:(ip=[]) pos =
@@ -921,6 +923,7 @@ let mk_view_prim v_name v_args v_inv ?inst_params:(ip=[]) pos =
     view_prune_invariants = [];
     view_raw_base_case= None;
     view_ef_pure_disj = None;
+    view_classic = true;
   }
 
 (** An Hoa [22/08/2011] Extract data field information **)

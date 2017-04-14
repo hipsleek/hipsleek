@@ -256,6 +256,7 @@ let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ide
                          I.view_baga_under_inv = None;
                          I.view_mem = None;
                          I.view_materialized_vars = [];
+                         I.view_classic = true;
                          I.try_case_inference = false; }
         in
         (proc_id,vname, n_iview)::acc
@@ -375,6 +376,7 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_session_info = None;
     I.view_inv_lock = map_opt rev_trans_formula v.C.view_inv_lock;
     I.view_pt_by_self = v.C.view_pt_by_self;
+    I.view_classic = v.C.view_classic;
     I.try_case_inference = false; (* TODO *)
     I.view_materialized_vars = List.map (fun mv -> CP.name_of_spec_var mv.C.mater_var) v.C.view_materialized_vars; }
 
