@@ -108,7 +108,28 @@ print residue.
 
 =====================================
 =====================================
+[DONE - in-place replace of HO var] 
+../../../../sleek ex3b-join-lemma-w-ho.slk
 
+check lemma-application and HO vars renaming
+P2 should be known below:
+----------------
+lemma_norm self::Orders{ %P1 }<> * self::Orders{ %P2 }<> -> self::Orders{ %P1 * %P2 }<>.
+----------------
+Validate 1: OK
+
+Residue:
+
+ <1>orders::Orders{ . (HVar P2[]) * 
+   orders::HB{ . Event{[]}<[b1,flted_15_168]>
+[AnnInactive,AnnInactive]&
+{FLOW,(20,21)=__norm#E}, . Event{[]}<[c1,flted_15_167]>
+[AnnInactive,AnnInactive]&
+{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}}<>@M&flted_15_167=4 & 
+                                                                    flted_15_168=2&{FLOW,(20,21)=__nor
+m#E}                                                                                                 
+[[(Complex: lem_12)]]
 
 =====================================
 =====================================

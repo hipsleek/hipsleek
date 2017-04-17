@@ -14734,7 +14734,7 @@ and match_one_ho_arg_simple prog estate lhs_f conseq ?evars:(evars=[]) ((lhs, rh
   Debug.no_1 "match_one_ho_arg_simple" pr1 pr_out
     (match_one_ho_arg_simple_x prog estate lhs_f conseq ~evars:evars) (lhs,rhs)
     
-and match_one_ho_arg_simple_helper prog estate ?conseq_extra:(conseq_extra=None)
+and match_one_ho_arg_simple_helper_x prog estate ?conseq_extra:(conseq_extra=None)
     ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs 
   : CF.formula * (CP.spec_var list * CP.spec_var list) * int * entail_state option list * CF.formula option =
   if (ho_ps1=[]) then coer_rhs, ([],[]), 1, [], None else
@@ -14754,6 +14754,19 @@ and match_one_ho_arg_simple_helper prog estate ?conseq_extra:(conseq_extra=None)
     let coer_rhs_new = CF.subst_avoid_capture frsv tosv coer_rhs_new in
     let lhs_f = CF.subst_avoid_capture frsv tosv lhs_f in
     coer_rhs_new, (frsv,tosv), ok, es, conseq_new
+
+and match_one_ho_arg_simple_helper prog estate ?conseq_extra:(conseq_extra=None)
+    ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs 
+  : CF.formula * (CP.spec_var list * CP.spec_var list) * int * entail_state option list * CF.formula option =
+  let pr_out = pr_penta
+      (add_str "coer_rhs_new" Cprinter.string_of_formula)
+      (add_str "subs" (pr_pair pr_svl pr_svl))
+      (add_str "ok" string_of_int)
+      (add_str "es" (pr_list (pr_opt !CF.print_entail_state)))
+      (add_str "conseq_new" (pr_opt Cprinter.string_of_formula)) in
+  Debug.no_1 "match_one_ho_arg_simple_helper" !CF.print_entail_state pr_out
+    (fun _ -> match_one_ho_arg_simple_helper_x prog estate ~conseq_extra:conseq_extra
+    ho_ps1 ho_ps2 lhs_heap lhs_f to_vars coer_rhs) estate
 
 (*2014-02-24: replaced by Perm.get_perm_var_lists *)
 (* and do_universal_perms (perm1:cperm) (perm2:cperm) = *)
@@ -15110,8 +15123,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ?allo
                     h_formula_data_perm = perm2;
                     h_formula_data_arguments = ps2}) when c1=c2 ->
          (* apply the substitution *) 
-         let coer_rhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
-         let coer_lhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_lhs in 
+         let coer_rhs_new = subst_avoid_capture ~incl_ho:true (p2 :: ps2) (p1 :: ps1) coer_rhs in
+         let coer_lhs_new = subst_avoid_capture ~incl_ho:true (p2 :: ps2) (p1 :: ps1) coer_lhs in 
          let f_new = mkBase lhs_hf lhs_p lhs_vp lhs_t lhs_fl lhs_a pos in
          coer_lhs_new,coer_rhs_new,lhs_heap,(1,f_new)
        | _ ->
@@ -15185,7 +15198,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ?allo
             let to_vars = perms1@(p1 :: ps1)in
             let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
             (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture fr_vars to_vars f))) lhs_branches in*)
-            let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+            let coer_rhs_new1 = subst_avoid_capture ~incl_ho:true fr_vars to_vars coer_rhs in
             let coer_rhs_new1 =
               if (Perm.allow_perm ()) then
                 match perm1,perm2 with
@@ -15218,7 +15231,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken ?allo
             let ho_ps2 = CF.get_node_ho_args lhs_heap in
             let coer_rhs_new, (frv,tov),  ok,_,_ =  match_one_ho_arg_simple_helper prog estate
                 ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
-            let rest_of_lhs = x_add subst_avoid_capture frv tov f in
+            let rest_of_lhs = x_add (fun frv tov f -> subst_avoid_capture ~incl_ho:true frv tov f) frv tov f in
             let lhs_guard_new = CP.subst_avoid_capture frv tov lhs_guard_new in
             (* Currently, I am trying to change in advance at the trans_one_coer *)
             (* Add origins to the body of the coercion which consists of *)
@@ -15652,11 +15665,11 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
   let lhs_fv = List.filter (fun sv -> not (CP.is_hp_typ sv)) (CF.fv coer_lhs) in
   let fresh_lhs_fv = CP.fresh_spec_vars lhs_fv in
   let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
-  let () = y_dinfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
-  let coer_lhs = x_add CF.subst tmp_rho coer_lhs in
-  let () = y_dinfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
-  let coer_rhs = x_add CF.subst tmp_rho coer_rhs in
-  let () = y_dinfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
+  let () = y_tinfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
+  let coer_lhs = x_add (fun tmp_rho coer_lhs -> CF.subst ~incl_ho:true tmp_rho coer_lhs) tmp_rho coer_lhs in
+  let () = y_tinfo_hp (add_str "coer_lhs" !CF.print_formula) coer_lhs in
+  let coer_rhs = x_add (fun tmp_rho coer_rhs -> CF.subst ~incl_ho:true tmp_rho coer_rhs) tmp_rho coer_rhs in
+  let () = y_tinfo_hp (add_str "coer_rhs" !CF.print_formula) coer_rhs in
   (************************************************************************)
   let lhs_heap, lhs_guard, lhs_vperm, lhs_flow, _, lhs_a = split_components coer_lhs in
   let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
@@ -15910,11 +15923,11 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
               ho_ps1 ho_ps2 lhs_heap f to_vars coer_rhs_new in
           (* add map ho_var info to conseq_extra *)
           let conseq_extra = map_opt_def conseq_extra idf conseq_extra_opt in  
-          let f = x_add subst_avoid_capture frv tov f in
-          let conseq_extra = CF.subst_avoid_capture frv tov conseq_extra in
-          let () = y_ninfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
-          let () = y_ninfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
-          let () = y_ninfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
+          let f = x_add (fun frv tov f -> subst_avoid_capture ~incl_ho:true frv tov f) frv tov f in
+          let conseq_extra = CF.subst_avoid_capture ~incl_ho:true frv tov conseq_extra in
+          let () = y_tinfo_hp (add_str "conseq_extra(after renaming)" !CF.print_formula) conseq_extra in
+          let () = y_tinfo_hp (add_str "coer_rhs_new" !CF.print_formula) coer_rhs_new in
+          let () = y_tinfo_hp (add_str "new_ctx(after renaming)" !CF.print_list_context) new_ctx in
 
           (* let qvars,new_conseq = CF.split_quantifiers new_conseq in *)
           (* let new_exist_vars = Gen.BList.remove_dups_eq CP.eq_spec_var (new_exist_vars@qvars) in *)
@@ -15957,7 +15970,9 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
               let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
               let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
               let new_ante = x_add_1 Cformula.translate_set_comp_rel new_ante in
-              let new_es = {new_estate with es_formula=new_ante; es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace); es_heap = HEmp} in
+              (* in-place replace of freshly discovered instantiated HO vars *)
+              let new_ante = CF.subst_hvar new_ante es.es_ho_vars_map  in
+              let new_es = {new_estate with es_formula=new_ante; es_trace=(("(Complex: " ^ coer.coercion_name ^ ")")::old_trace); es_heap = HEmp } in
               let new_ctx = (Ctx new_es) in
 
               x_dinfo_zp (lazy ("apply_left_coercion_complex: process_one: resume entail check")) pos;

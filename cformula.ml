@@ -3350,23 +3350,23 @@ and get_formula_pos (f : formula) = match f with
 
 (* substitution *)
 
-and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+and subst_avoid_capture ?incl_ho:(incl_ho=false) (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   Debug.no_3 "subst_avoid_capture" 
     (add_str "from vars:" !print_svl) 
     (add_str "to vars:" !print_svl)
     !print_formula 
     !print_formula
-    (fun _ _ _ -> subst_avoid_capture_x fr t f) fr t f
+    (fun _ _ _ -> subst_avoid_capture_x ~incl_ho:incl_ho fr t f) fr t f
 
-and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+and subst_avoid_capture_x ?incl_ho:(incl_ho=false) (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
   (*--- 09.05.2000 *)
   (*let () = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
   (*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
-  let f1 = subst_one_by_one st1 f in
-  let f2 = subst_one_by_one st2 f1 in
+  let f1 = subst_one_by_one ~incl_ho:incl_ho st1 f in
+  let f2 = subst_one_by_one ~incl_ho:incl_ho st2 f1 in
   f2
 
 (*subst in pure formula only*)
@@ -3389,16 +3389,16 @@ and subst_avoid_capture_pure_x (fr : CP.spec_var list) (t : CP.spec_var list) (f
   let f2 = subst_one_by_one_pure st2 f1 in
   f2
 
-and subst_avoid_capture_h (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
+and subst_avoid_capture_h ?incl_ho:(incl_ho=false) (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
   Debug.no_3 "subst_avoid_capture_h" !print_svl !print_svl !print_h_formula !print_h_formula
-    (fun _ _ _ -> subst_avoid_capture_h_x fr t f) fr t f
+    (fun _ _ _ -> subst_avoid_capture_h_x ~incl_ho:incl_ho fr t f) fr t f
 
-and subst_avoid_capture_h_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
+and subst_avoid_capture_h_x ?incl_ho:(incl_ho=false) (fr : CP.spec_var list) (t : CP.spec_var list) (f : h_formula) : h_formula =
   let fresh_fr = CP.fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
-  let f1 = subst_one_by_one_h st1 f in
-  let f2 = subst_one_by_one_h st2 f1 in
+  let f1 = subst_one_by_one_h ~incl_ho:incl_ho st1 f in
+  let f2 = subst_one_by_one_h ~incl_ho:incl_ho st2 f1 in
   f2
 
 and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
@@ -3523,7 +3523,7 @@ and one_formula_subst sst (f : one_formula) =
   let df = f.formula_delayed in
   let ndf = MCP.m_apply_par sst df in
   let base = formula_of_one_formula f in
-  let rs = x_add subst sst base in
+  let rs = x_add_1 (fun base -> subst sst base) base in
   let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
   let tid = CP.subst_var_par sst f.formula_thread in
   let one_f = (one_formula_of_formula rs tid ndf) in
@@ -3532,18 +3532,18 @@ and one_formula_subst sst (f : one_formula) =
 
 (** An Hoa : replace the function subst above by substituting f in parallel **)
 
-and subst sst (f : formula) = 
+and subst ?incl_ho:(incl_ho=false) sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst" pr1 pr2 pr2 subst_x sst f 
+  Debug.no_2 "subst" pr1 pr2 pr2 (fun _ _ -> subst_x ~incl_ho:incl_ho sst f ) sst f
 
-and subst_x sst (f : formula) =
+and subst_x ?incl_ho:(incl_ho=false) sst (f : formula) =
   let rec helper f =
     match f with
     | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
       Or ({ formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos })
     | Base b -> Base ({ b with 
-                        formula_base_heap = h_subst sst b.formula_base_heap;
+                        formula_base_heap = h_subst ~incl_ho:incl_ho sst b.formula_base_heap;
                         formula_base_pure = MCP.regroup_memo_group (MCP.m_apply_par sst b.formula_base_pure);
                         (* formula_base_vperm = CVP.subst_par sst b.formula_base_vperm; *)
                         formula_base_and = (List.map (fun f -> one_formula_subst sst f) b.formula_base_and);})
@@ -3564,7 +3564,7 @@ and subst_x sst (f : formula) =
       if sst = [] then f
       else Exists ({
           formula_exists_qvars = qsv;
-          formula_exists_heap =  h_subst sst qh;
+          formula_exists_heap =  h_subst ~incl_ho:incl_ho sst qh;
           formula_exists_vperm = (* CVP.subst_par sst *) vp;
           formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par sst qp);
           formula_exists_type = tconstr;
@@ -3647,45 +3647,46 @@ and vn_subst sst vn=
 and rf_subst sst (f: rflow_formula) = 
   { f with rflow_base = subst sst f.rflow_base; }
 
-and h_subst sst (f : h_formula) = 
+and h_subst ?incl_ho:(incl_ho=false) sst (f : h_formula) =
+  let rec helper f = 
   match f with
   | Star ({h_formula_star_h1 = f1; 
            h_formula_star_h2 = f2; 
            h_formula_star_pos = pos}) -> 
-    Star ({h_formula_star_h1 = h_subst sst f1; 
-           h_formula_star_h2 = h_subst sst f2; 
+    Star ({h_formula_star_h1 = helper f1; 
+           h_formula_star_h2 = helper f2; 
            h_formula_star_pos = pos})
   | StarMinus ({h_formula_starminus_h1 = f1; 
                 h_formula_starminus_h2 = f2; 
                 h_formula_starminus_aliasing = al;
                 h_formula_starminus_pos = pos}) -> 
-    StarMinus ({h_formula_starminus_h1 = h_subst sst f1; 
-                h_formula_starminus_h2 = h_subst sst f2; 
+    StarMinus ({h_formula_starminus_h1 = helper f1; 
+                h_formula_starminus_h2 = helper f2; 
                 h_formula_starminus_aliasing =  al;
                 h_formula_starminus_pos = pos})		
   | Phase ({h_formula_phase_rd = f1; 
             h_formula_phase_rw = f2; 
             h_formula_phase_pos = pos}) -> 
-    Phase ({h_formula_phase_rd = h_subst sst f1; 
-            h_formula_phase_rw = h_subst sst f2; 
+    Phase ({h_formula_phase_rd = helper f1; 
+            h_formula_phase_rw = helper f2; 
             h_formula_phase_pos = pos})
   | Conj ({h_formula_conj_h1 = f1; 
            h_formula_conj_h2 = f2; 
            h_formula_conj_pos = pos}) -> 
-    Conj ({h_formula_conj_h1 = h_subst sst f1; 
-           h_formula_conj_h2 = h_subst sst f2; 
+    Conj ({h_formula_conj_h1 = helper f1; 
+           h_formula_conj_h2 = helper f2; 
            h_formula_conj_pos = pos})
   | ConjStar ({h_formula_conjstar_h1 = f1; 
                h_formula_conjstar_h2 = f2; 
                h_formula_conjstar_pos = pos}) -> 
-    ConjStar ({h_formula_conjstar_h1 = h_subst sst f1; 
-               h_formula_conjstar_h2 = h_subst sst f2; 
+    ConjStar ({h_formula_conjstar_h1 = helper f1; 
+               h_formula_conjstar_h2 = helper f2; 
                h_formula_conjstar_pos = pos})
   | ConjConj ({h_formula_conjconj_h1 = f1; 
                h_formula_conjconj_h2 = f2; 
                h_formula_conjconj_pos = pos}) -> 
-    ConjConj ({h_formula_conjconj_h1 = h_subst sst f1; 
-               h_formula_conjconj_h2 = h_subst sst f2; 
+    ConjConj ({h_formula_conjconj_h1 = helper f1; 
+               h_formula_conjconj_h2 = helper f2; 
                h_formula_conjconj_pos = pos})				
   | ViewNode ({h_formula_view_node = x; 
                h_formula_view_name = c; 
@@ -3708,7 +3709,8 @@ and h_subst sst (f : h_formula) =
                h_formula_view_node = CP.subst_var_par sst x; 
                h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
                h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
-               h_formula_view_ho_arguments = if not(contains_session f) then ho_svs else List.map (rf_subst sst) ho_svs; (* Andreea: previously the HO were ignored during the subst. I need subst for HO with session, but should I assume that subst for HO should be fired no matter what the HO represents? *)
+               h_formula_view_ho_arguments = if not(contains_session f) && not(incl_ho)
+                 then ho_svs else List.map (rf_subst sst) ho_svs; (* Andreea: previously the HO were ignored during the subst. I need subst for HO with session, but should I assume that subst for HO should be fired no matter what the HO represents? *)
                h_formula_view_annot_arg = CP.subst_annot_arg sst anns;
                h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
              }
@@ -3776,19 +3778,20 @@ and h_subst sst (f : h_formula) =
   | HFalse -> f
   | HEmp -> f
   | Hole _ | FrmHole _ -> f
+  in helper f
 (** An Hoa : End of heap formula substitution **) 
 
 (* and subst_var_par sst v = try *)
 (* 			List.assoc v sst *)
 (* 	with Not_found -> v *)
 
-and subst_one_by_one sst (f : formula) = 
+and subst_one_by_one ?incl_ho:(incl_ho=false) sst (f : formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 subst_one_by_one_x sst f 
+  Debug.no_2 "subst_one_by_one" pr1 pr2 pr2 (fun _ _ -> subst_one_by_one_x ~incl_ho:incl_ho sst f) sst f
 
-and subst_one_by_one_x sst (f : formula) = match sst with
-  | s :: rest -> subst_one_by_one_x rest (apply_one s f)
+and subst_one_by_one_x ?incl_ho:(incl_ho=false) sst (f : formula) = match sst with
+  | s :: rest -> subst_one_by_one_x ~incl_ho:incl_ho rest (apply_one s f)
   | [] -> f
 
 and subst_one_by_one_pure sst (f : formula) = 
@@ -3800,13 +3803,13 @@ and subst_one_by_one_pure_x sst (f : formula) = match sst with
   | s :: rest -> subst_one_by_one_pure_x rest (apply_one_pure s f)
   | [] -> f
 
-and subst_one_by_one_h sst (f : h_formula) = 
+and subst_one_by_one_h ?incl_ho:(incl_ho=false) sst (f : h_formula) = 
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_h_formula in
-  Debug.no_2 "subst_one_by_one_h" pr1 pr2 pr2 subst_one_by_one_h_x sst f 
+  Debug.no_2 "subst_one_by_one_h" pr1 pr2 pr2 (fun _ _ -> subst_one_by_one_h_x ~incl_ho:incl_ho sst f) sst f 
 
-and subst_one_by_one_h_x sst (f : h_formula) = match sst with
-  | s :: rest -> subst_one_by_one_h_x rest (h_apply_one s f)
+and subst_one_by_one_h_x ?incl_ho:(incl_ho=false) sst (f : h_formula) = match sst with
+  | s :: rest -> subst_one_by_one_h_x ~incl_ho:incl_ho rest (h_apply_one ~incl_ho:incl_ho s f)
   | [] -> f
 
 and subst_one_by_one_var sst (v : CP.spec_var) =
@@ -3827,9 +3830,11 @@ and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_
   let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
-and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
+and apply_one ?incl_ho:(incl_ho=false) ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) =
+  let rec helper s f = 
+  match f with
   | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
-    Or ({ formula_or_f1 = apply_one s f1; formula_or_f2 =  apply_one s f2; formula_or_pos = pos })
+    Or ({ formula_or_f1 = helper s f1; formula_or_f2 =  helper s f2; formula_or_pos = pos })
   | Base ({
       formula_base_heap = h;
       formula_base_vperm = vp;
@@ -3840,7 +3845,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
       formula_base_label = lbl;
       formula_base_pos = pos }) ->
     Base ({
-        formula_base_heap = h_apply_one s h;
+        formula_base_heap = h_apply_one ~incl_ho:incl_ho s h;
         (* WN:subs_pre *)
         formula_base_vperm = 
           if !pre_subst_flag then vp 
@@ -3868,10 +3873,10 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
       let qvars, base_f = split_quantifiers f in
       let new_qvar = CP.fresh_spec_var t in
       let new_qvars = List.filter (fun c -> not (CP.eq_spec_var t c)) qsv in
-      add_quantifiers (new_qvar::new_qvars) (apply_one s (apply_one (t,new_qvar) base_f))
+      add_quantifiers (new_qvar::new_qvars) (helper s (helper (t,new_qvar) base_f))
     else Exists ({
         formula_exists_qvars = qsv;
-        formula_exists_heap =  h_apply_one s qh;
+        formula_exists_heap =  h_apply_one ~incl_ho:incl_ho s qh;
         formula_exists_vperm = 
           (if !pre_subst_flag then vp 
            else CVP.subst_one s vp);
@@ -3881,6 +3886,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_flow = fl;
         formula_exists_label = lbl;
         formula_exists_pos = pos })
+  in helper s f
 
 (*Only substitute pure formula*)
 and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
@@ -3926,7 +3932,9 @@ and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = 
         formula_exists_label = lbl;
         formula_exists_pos = pos })
 
-and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
+and h_apply_one ?incl_ho:(incl_ho=false) ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) =
+  let rec helper ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) =
+  match f with
   | Star ({h_formula_star_h1 = f1; 
            h_formula_star_h2 = f2; 
            h_formula_star_pos = pos}) -> 
@@ -3987,7 +3995,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                      (* WN:subs_pre *)
                      h_formula_view_ho_arguments =
                        (* why special case for HO? *)
-                       if !pre_subst_flag && not(contains_session f) then ho_svs
+                       if !pre_subst_flag && not(contains_session f) && not(incl_ho) then ho_svs
                        else List.map (trans_rflow_formula (apply_one s)) ho_svs;
                      h_formula_view_arguments = List.map (subst_var s) svs;
                      h_formula_view_annot_arg = apply_one_annot_arg s annot_args;
@@ -4036,7 +4044,8 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ | FrmHole _ -> f    
+  | Hole _ | FrmHole _ -> f
+  in helper s f
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
