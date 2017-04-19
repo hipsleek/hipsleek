@@ -14468,6 +14468,64 @@ and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
     find_closure_pure_formula_x v f
 
 and expand_constraint_sets' ante conseq =
+  let rec expand_formula = function
+    | BForm ((p_f, bf_ann_opt), lbl_opt) as f -> expand_p_formula f p_f
+    | And (f1, f2, loc) ->
+        let (ef1_ante, ef1_conseq) = expand_formula f1 in
+        let (ef2_ante, ef2_conseq) = expand_formula f2 in
+        let new_ante = match ef1_ante, ef2_ante with
+          | Some f, None | None, Some f -> Some f
+          | Some f1, Some f2 -> Some (And (f1, f2, loc))
+          | None, None -> None in
+        let new_conseq = And (ef1_conseq, ef2_conseq, loc) in
+        (new_ante, new_conseq)
+    | AndList formulas_and_labels ->
+        let formulas = List.map snd formulas_and_labels in
+        let expanded_formulas = List.map expand_formula formulas in
+        let expanded_ante_opts = List.map fst expanded_formulas in
+        let expanded_conseqs = List.map snd expanded_formulas in
+        let new_ante =
+          List.fold_left
+            (fun acc f_opt ->
+              match acc, f_opt with
+                | None, _ -> f_opt
+                | _, None -> acc
+                | Some f_acc, Some f -> Some (And (f_acc, f, pos_of_formula f_acc))
+            )
+            None
+            expanded_ante_opts in
+        let new_conseq =
+          List.fold_left
+            (fun acc f -> And (acc, f, pos_of_formula acc))
+            (List.hd expanded_conseqs)
+            (List.tl expanded_conseqs) in
+        (new_ante, new_conseq)
+    | _ -> x_fail "Not supported yet"
+    (*| Or (f1, f2, lbl_opt, loc) -> ()
+    | Not (f, lbl_opt, loc) -> ()
+    | Forall (var, f, lbl_opt, loc) -> ()
+    | Exists (var, f, lbl_opt, loc) -> ()*)
+  and expand_p_formula parent_f = function
+    | BagSub (e1, e2, loc) ->
+        let additional_ante = expand_exp e2 in
+        let additional_conseq = expand_exp e1 in
+        (Some additional_ante, additional_conseq)
+    | pf -> (None, parent_f)
+  and expand_exp = function
+    | Bag (exps, _) ->
+        let formulas = List.map expand_exp exps in
+        List.fold_left
+          (fun acc elem ->
+            let end_pos = (pos_of_formula elem).end_pos in
+            let new_loc = { (pos_of_formula elem) with end_pos } in
+            And (acc, elem, new_loc)
+          )
+          (List.hd formulas)
+          (List.tl formulas)
+    | BExpr f -> f
+    | exp -> x_fail (!print_exp exp ^ "is not a BExpr/Bag")
+  in
+  (*print_endline (show_formula ante);
   let bag_to_and exp =
     match exp with
     | Bag (exps, loc) ->
@@ -14486,7 +14544,11 @@ and expand_constraint_sets' ante conseq =
       let f1 = bag_to_and b1 in
       let f2 = bag_to_and b2 in
       (And (ante, f2, loc), f1)
-  | _ -> x_fail "TODO"
+  | _ -> x_fail "TODO"*)
+  let (additional_ante_opt, new_conseq) = expand_formula conseq in
+  match additional_ante_opt with
+  | Some f -> (And (ante, f, pos_of_formula ante), new_conseq)
+  | None -> (ante, new_conseq)
 
 and expand_constraint_sets ante conseq =
   Debug.no_2
