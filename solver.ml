@@ -11614,7 +11614,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate new_conseq pos
               in
 
-              let () = y_binfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
+              let () = y_tinfo_hp (add_str "args:" (pr_list (pr_pair (pr_pair !CF.print_rflow_formula !CF.print_rflow_formula) pr_none))) args in
 
               (* each element of the list is the result of matching one HO,
                  where a result = list disjunctive contexts *)
