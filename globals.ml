@@ -2723,7 +2723,7 @@ let norm_file_name str =
 (* let wrap_lbl_dis_aggr f a = *)
 (*   wrap_two_bools label_aggressive_sat label_aggressive_imply false f a *)
 
-let chr_label = ["chr"]
+let chr_label = "chr"
 
 let proof_no = ref 0
 

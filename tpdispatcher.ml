@@ -1562,8 +1562,18 @@ let build_branches_sat br lbs =
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
-  let test f1 = 
-    if no_andl f1 then  fct f1 
+  let sat_label_filter_chr lbl arg =
+    if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then
+      fct arg
+    else let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct arg in  chr_res in
+  let test ?lbl:(lbl = LO.unlabelled) f1 = 
+    if no_andl f1 then
+      sat_label_filter_chr lbl f1
+      (* if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then *)
+      (*   fct f1 *)
+      (* else *)
+      (*   let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct f1 in (\* to change to CHR  *\)  *)
+      (*   chr_res *)
     else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
   let rec helper_x f = match f with 
     | AndList b -> 
@@ -1592,7 +1602,7 @@ let sat_label_filter fct f =
       (* let fs = if fs2==[] then fs else fs2 in *)
       let fs = sat_branches in
       let () = Debug.ninfo_hprint (add_str "label,fs" (pr_list (pr_pair (pr_list pr_id) pr)))  fs no_pos in
-      let res = List.exists (fun (_,f) -> (test f)=false) fs in
+      let res = List.exists (fun (lbl,f) -> (test ~lbl:lbl f)=false) fs in
       not(res)
     | Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
     | _ -> test f 
@@ -1628,9 +1638,14 @@ let imply_label_filter ante conseq =
         let fs_ante = List.fold_left (fun a (lbl,c)-> mkAnd a c no_pos) (mkTrue no_pos) lst in
         (*(andl_to_and fr1, andl_to_and c)*)
         (lbl,fs_ante,fconseq)) bc
-  | AndList ba, _ -> [(LO.unlabelled,andl_to_and ante,conseq)] (* TODO Andreea: to set the right label *)
+  | AndList ba, _ ->
+    (* TODO Andreea: how should we settle the label in this case? *)
+    (* let lbl = List.fold_left (fun a (lbl,_) -> if 0 == LO.compare lbl (LO.unlabelled) then a else lbl ) LO.unlabelled ba in *)
+    (* let res = List.map (fun (lante,ante) -> (lbl, ante,conseq)) ba in *)
+    (* res  *)
+    [(LO.unlabelled,andl_to_and ante,conseq)]
   (*if (List.for_all (fun (_,c)-> no_andl c) ba)&& no_andl conseq then () else print_string s;*)
-  | _ , AndList bc -> List.map (fun (_,c)-> (LO.unlabelled,ante,c)) bc 
+  | _ , AndList bc ->  List.map (fun (lbl,c)-> (lbl,ante,c)) bc 
   | _ -> [(LO.unlabelled,ante,conseq)]
 (*if (no_andl ante && no_andl conseq) then [ante,conseq]
   	      else 
@@ -2013,7 +2028,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no
-    | CHR -> true (* TODO elena: will be updated  *)
+    | CHR ->  failwith (x_loc ^ "TODO elena: will be updated") 
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res
@@ -3548,7 +3563,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
   Debug.no_1 "is_sat_tp"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
 
-let imply_timeout_helper acpairs process ante_inner conseq_inner imp_no timeout =  
+let imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout =  
   (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
   (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
   (* let acpairs = x_add imply_label_filter ante conseq in *)
@@ -3598,24 +3613,28 @@ let imply_timeout_helper acpairs process ante_inner conseq_inner imp_no timeout 
   in
   List.fold_left fold_fun (true,[],None) pairs;;
 
-let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =
-  let pairs = x_add imply_label_filter ante conseq in
-  let acpairs, chrs = List.partition (fun (a,b,c) ->  0 != LO.compare a (LO.singleton "chr")) pairs in
+let imply_filter_chr pairs ante conseq process ante_inner conseq_inner imp_no timeout  =
+  let acpairs, chrs = List.partition (fun (a,b,c) ->
+      0 != LO.compare a (LO.singleton Globals.chr_label)) pairs in
   if (List.length chrs == 0) then
     let acpairs = List.map (fun (a,b,c) -> (b,c)) pairs in
-    imply_timeout_helper acpairs process ante_inner conseq_inner imp_no timeout
+    imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout
   else
     let acpairs = Wrapper.wrap_lbl_dis_aggr (imply_label_filter ante) conseq in
-    let acpairs, chrs = List.partition (fun (a,b,c) ->  0 != LO.compare a (LO.singleton "chr")) acpairs in
-    (* let unlbl,_  = List.partition (fun (a,b,c) ->  0 == LO.compare a (LO.unlabelled)) acpairs in *)
+    let acpairs, chrs = List.partition (fun (a,b,c) ->
+        0 != LO.compare a (LO.singleton Globals.chr_label)) acpairs in
     let acpairs = List.map (fun (a,b,c) -> (b,c)) acpairs in
     let chrs    = List.map (fun (a,b,c) -> (b,c)) chrs in
-    let () = y_binfo_hp (add_str "chr" string_of_int) (List.length chrs) in
-    let fnc = imply_timeout_helper chrs process ante_inner conseq_inner imp_no in
+    let fnc = imply_timeout_helper_x chrs process ante_inner conseq_inner imp_no in
     let chr_res,_,_ = Wrapper.wrap_one_bool pure_tp CHR fnc timeout in (* to change to CHR  *)
-    let res, x,y = imply_timeout_helper acpairs process ante_inner conseq_inner imp_no timeout in
+    let res, x,y = imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout in
     (res && chr_res, x, y)
-      
+
+let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =
+  (* TODO Andreea: below is inefficient since it calls imply_label_filter twice. 
+     to create a separate check_chr function  *)
+  let pairs = x_add imply_label_filter ante conseq in
+  imply_filter_chr pairs ante conseq process ante_inner conseq_inner imp_no timeout 
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
