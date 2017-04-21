@@ -7,7 +7,7 @@ checkentail  v=4 & ["chr": A=v]
 expect Valid.                                                                    
 print residue.
 
-checkentail  emp & ["chr": A=v] 
+checkentail  v=5 & ["chr": A=v] 
 |-  emp & ["chr": A=4].
 expect Fail.                                                                    
 print residue.

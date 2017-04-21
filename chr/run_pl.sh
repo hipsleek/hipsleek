@@ -9,4 +9,4 @@ fi
 PL_FILE=$1
 PL_FILE="${PL_FILE%.*}"
 
-echo -en "[$PL_FILE]." $(cat $2) | prolog
+echo -en "[$PL_FILE]." $(cat $2) | prolog -q

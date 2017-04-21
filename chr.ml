@@ -9,8 +9,18 @@ let set_prover_type () = Others.last_tp_used # set Others.CHR
 let log_chr_formula = ref false
 let chr_log = ref stdout
 
+let set_log_file () : unit =
+  log_chr_formula := true;
+  chr_log := open_log_out "allinput.chr"
+
+let log_text_to_chr_file (str : string) : unit =
+  if !log_chr_formula then
+    begin
+      output_string !chr_log str
+    end
+
 let rec chr_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+  | CP.SpecVar (_, v, p) -> (String.capitalize v) ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 let rec chr_of_exp exp = match exp with
   | CP.Null _ -> "0"
@@ -44,25 +54,23 @@ and chr_of_formula f = match f with
     end
   | _ -> ""
 
-let set_log_file () : unit =
-  log_chr_formula := true;
-  chr_log := open_log_out "allinput.chr"
 
-let log_text_to_chr_file (str : string) : unit =
-  if !log_chr_formula then
-    begin
-      output_string !chr_log str
-    end
-
-
-(*all formulae that shall be sent to CHR process have to be transformed in CHR input language *)
+(* all formulae that shall be sent to CHR process have to be transformed in CHR input language *)
 let prepare_formula_for_chr (f : CP.formula) : string =
   chr_of_formula f 
 
-(*
-is_sat (f : CPure.formula) : bool =
-  let chr_form = prepare_formula_for_chr f in
-  let () = (log_text_to_chr_file ("%%% Res: TODO \n\n"); flush !chr_log)
-  
-*)
-
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let () = set_prover_type () in
+  let ante_chr = prepare_formula_for_chr ante in
+  let conseq_chr = prepare_formula_for_chr conseq in
+  let () = set_log_file () in
+  let () = (log_text_to_chr_file (ante_chr ^ ", not(" ^ conseq_chr ^  ").\n"); flush !chr_log) in
+  (* TODO elena: replace the relative path for the script *)
+  let cmd = "../../../../chr/run_simple_pl.sh" in
+  let args = [| cmd; "logs/allinput.chr" |] in
+  let inchn, outchn, errchn, npid = Procutils.open_process_full cmd args in
+  let result = input_line inchn in
+  if result = "false." then
+    true
+  else 
+    false

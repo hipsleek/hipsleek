@@ -2028,7 +2028,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no
-    | CHR ->  failwith (x_loc ^ "TODO elena: will be updated") 
+    | CHR ->  true 
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res
@@ -3168,9 +3168,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       | SPASS -> Spass.imply ante conseq timeout
       | MINISAT -> Minisat.imply ante conseq timeout
       | LOG -> find_bool_proof_res imp_no 
-      | CHR ->
-        let () = y_binfo_pp "CHR imply" in
-        failwith (x_loc ^ "TODO elena: will be updated") 
+      | CHR -> Chr.imply ante conseq imp_no
     ) in
 
     if not !tp_batch_mode then stop_prover ();
