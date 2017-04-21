@@ -2941,7 +2941,7 @@ and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =
     (*   (MCP.pure_of_mix pf) no_pos in *)
     (* let () = DD.info_hprint (add_str "n_pf" !CP.print_formula) *)
     (*   (MCP.pure_of_mix n_pf) no_pos in *)
-    let is_ok = TP.is_sat_mix_sub_no n_pf sat_subno true true in
+    let is_ok = x_add_1 TP.is_sat_mix_sub_no n_pf sat_subno true true in
     if is_ok then ([f],[]) else ([(mkFalseLbl (CF.mkTrueFlow ()) lbl no_pos)],[f])
   | Or ({formula_or_f1 = f1;
          formula_or_f2 = f2;
@@ -2965,7 +2965,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
         let sat,npf = MCP.check_pointer_dis_sat npf in
         if  sat then
           let () = Debug.ninfo_hprint (add_str "npf a" Cprinter.string_of_mix_formula) npf no_pos in
-          not (TP.is_sat_mix_sub_no npf sat_subno true true)
+          not (x_add_1 TP.is_sat_mix_sub_no npf sat_subno true true)
         else true in
       (*let () = if r<>(not (TP.is_sat_mix_sub_no npf sat_subno true true))
         then print_string ("diff: "^(Cprinter.string_of_mix_formula  npf)^"\n")
@@ -2973,7 +2973,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       r
     else
       let () = Debug.ninfo_hprint (add_str "npf b" Cprinter.string_of_mix_formula) npf no_pos in
-      not (TP.is_sat_mix_sub_no npf sat_subno true true)
+      not (x_add_1 TP.is_sat_mix_sub_no npf sat_subno true true)
   in
   (* TODO-EXPURE : need to invoke EPureI.UNSAT for --inv-baga *)
   let views = prog.Cast.prog_view_decls in
@@ -10813,7 +10813,7 @@ and match_one_ho_arg_x ?classic:(classic=true) prog estate new_ante new_conseq e
         end
     end
 
-and match_one_ho_arg ?classic:(classic=false)  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
+and match_one_ho_arg ?classic:(classic=true)  prog estate new_ante new_conseq evars ivars pos (((lhs, rhs), k) : (CF.rflow_formula * CF.rflow_formula) * ho_split_kind):
   (((CF.list_context * Prooftracer.proof) option) * (CF.formula option) * 
    (MCP.mix_formula option) * ((CF.hvar * CF.formula) list) * (entail_state option)) =
   let pr_rflow = Cprinter.string_of_rflow_formula in

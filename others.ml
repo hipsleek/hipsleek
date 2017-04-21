@@ -169,6 +169,7 @@ type tp_type =
   | SPASS
   | MINISAT
   | LOG (* Using previous results instead of invoking the actual provers *)
+  | CHR
 
 let string_of_prover prover = match prover with
   | OmegaCalc -> "OMEGA CALCULATOR"
@@ -197,6 +198,7 @@ let string_of_prover prover = match prover with
   | SPASS -> "SPASS"
   | MINISAT -> "MINISAT"
   | LOG -> "LOG"
+  | CHR -> "CHR"
 
 let string_of_ato () =
   if !Globals.array_translate then "(ato)"
@@ -229,6 +231,7 @@ let string_of_prover_code prover = match prover with
   | SPASS -> "24"
   | MINISAT -> "25"
   | LOG -> "26"
+  | CHR -> "27"
 
 let last_tp_used = new VarGen.store LOG string_of_prover
 

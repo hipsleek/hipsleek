@@ -323,6 +323,7 @@ let common_arguments = [
    "Log all CVC Lite formula to specified log file");
   (* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
   ("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
+  ("--log-chr", Arg.Unit Chr.set_log_file,    "Log all formulae sent to CHR in file allinput.chr");
   ("--log-omega", Arg.Set Omega.log_all_flag,
    "Log all formulae sent to Omega Calculator in file allinput.oc");
   ("--log-z3", Arg.Set Smtsolver.log_all_flag,
@@ -653,7 +654,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "z3n"; "z3-4.3.1"; "zm"; "om";
-                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"], (set_tp) (* Tpdispatcher.set_tp *)),
+                       "oi"; "set"; "cm"; "OCRed"; "redlog"; "rm"; "prm"; "spass";"parahip"; "math"; "minisat" ;"auto";"log"; "dp"; "chr"], (set_tp) (* Tpdispatcher.set_tp *)),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm"; "bperm"; "none"], Perm.set_perm),

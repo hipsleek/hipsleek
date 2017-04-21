@@ -525,6 +525,7 @@ let string_of_tp tp = match tp with
   | SPASS -> "spass"
   | MINISAT -> "minisat"
   | LOG -> "log"
+  | CHR -> "chr"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -553,6 +554,7 @@ let name_of_tp tp = match tp with
   | SPASS -> "SPASS"
   | MINISAT -> "MINISAT"
   | LOG -> "LOG"
+  | CHR -> "CHR"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -568,6 +570,7 @@ let log_file_of_tp tp = match tp with
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
   | SPASS -> "allinput.spass"
+  | CHR -> "allinput.chr"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !pure_tp
@@ -2009,6 +2012,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no
+    | CHR -> true (* TODO elena: will be updated  *)
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res
@@ -3148,6 +3152,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       | SPASS -> Spass.imply ante conseq timeout
       | MINISAT -> Minisat.imply ante conseq timeout
       | LOG -> find_bool_proof_res imp_no 
+      | CHR -> true (* TODO elena: will be updated  *)
     ) in
 
     if not !tp_batch_mode then stop_prover ();
@@ -3171,7 +3176,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (*   else ante in *)
   let ante = x_add_1 cnv_ptr_to_int ante in
   let conseq = cnv_ptr_to_int_weak conseq in
-  let flag = tp_imply_no_cache ante conseq imp_no timeout process in
+  let flag = x_add_1 tp_imply_no_cache ante conseq imp_no timeout process in
   if !Globals.allow_inf && !Globals.allow_inf_qe
   then
     (* the following is not complete as it does not expand the conseq quantifiers over PAInf *)
@@ -3192,7 +3197,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     (*   conj_of_list  *)
     (*    (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in *)
     let expand_quantifier = Infinity.elim_forall_exists in
-    tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
+    x_add_1 tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
     (*let f = mkAnd ante (mkNot_dumb conseq None no_pos) no_pos in
       let f = mkForall (fv f) f None no_pos in*)
@@ -3220,7 +3225,7 @@ let add_imm_inv_wrap f ante conseq =
   Wrapper.wrap_one_bool Globals.aggressive_imm_simpl !Globals.allow_imm_inv f ante
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
-  add_imm_inv_wrap (fun ante -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
+  add_imm_inv_wrap (fun ante -> x_add_1 tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
   
 
 (* let tp_imply_no_cache ante conseq imp_no timeout process = *)
@@ -3249,21 +3254,21 @@ let tp_imply_perm ante conseq imp_no timeout process =
     let r_cons = CP.has_tscons conseq in 
     let l_cons = CP.has_tscons ante in
     if r_cons = No_cons then
-      if l_cons = No_cons then  x_add tp_imply_no_cache ante conseq imp_no timeout process
-      else x_add tp_imply_no_cache (tpd_drop_all_perm ante) conseq imp_no timeout process
+      if l_cons = No_cons then  x_add_1 tp_imply_no_cache ante conseq imp_no timeout process
+      else x_add_1 tp_imply_no_cache (tpd_drop_all_perm ante) conseq imp_no timeout process
     else match join_res l_cons r_cons with
-      | No_cons -> x_add tp_imply_no_cache ante conseq imp_no timeout process
+      | No_cons -> x_add_1 tp_imply_no_cache ante conseq imp_no timeout process
       | No_split -> false
       | Can_split -> 
         let ante_lex, antes= CP.dnf_to_list ante in
         let conseq_lex, conseqs= CP.dnf_to_list conseq in
         let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
         let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
-        let tp_wrap fa fc = if CP.isConstTrue fc then true else x_add tp_imply_no_cache fa fc imp_no timeout process in
+        let tp_wrap fa fc = if CP.isConstTrue fc then true else x_add_1 tp_imply_no_cache fa fc imp_no timeout process in
         let tp_wrap fa fc = Debug.no_2(* _loop *) "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
         let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w2.sleek_imply_wrapper (ea,fa) (ec,fc) in
         List.for_all( fun (npa,pa) -> List.exists (fun (npc,pc) -> tp_wrap npa npc && ss_wrap pa pc ) conseqs) antes
-  else x_add tp_imply_no_cache ante conseq imp_no timeout process
+  else x_add_1 tp_imply_no_cache ante conseq imp_no timeout process
 
 let tp_imply_perm ante conseq imp_no timeout process =  
   let pr =  Cprinter.string_of_pure_formula in
@@ -3983,7 +3988,7 @@ let is_sat f sat_no do_cache =
     | None -> false
   else  begin
     disj_cnt f None "sat";
-    Gen.Profiling.do_1 "is_sat" (is_sat f) sat_no
+    Gen.Profiling.do_1 "is_sat" (x_add_1 is_sat f) sat_no
   end
 ;;
 
@@ -3996,7 +4001,7 @@ let sat_no = ref 1 ;;
 let incr_sat_no () =  sat_no := !sat_no +1  ;;
 
 let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
-  let sat = is_sat 1 f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
+  let sat = x_add_1 is_sat 1 f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
   sat_subno := !sat_subno+1;
   sat
 ;;
@@ -4026,7 +4031,7 @@ let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =
     let n_l = List.map (fun c-> (CP.fv c , c)) conj_list in
     snd (List.split (fix n_l)) in
   let  n_f_l = split_sub_f f in
-  List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c 1 f sat_subno false) true n_f_l 
+  List.fold_left (fun a f -> if not a then a else x_add_1 is_sat_sub_no_c 1 f sat_subno false) true n_f_l 
 
 let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
   let overlap (nlv1, lv1) (nlv2, lv2) =
@@ -4078,7 +4083,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
     let n_f_l = split_sub_f f in
     List.fold_left (fun a f ->
         if not a then a
-        else is_sat_sub_no_c 2 (CP.join_conjunctions (f::(pick_rel_constraints f n_f_l))) sat_subno false) true n_f_l
+        else x_add_1 is_sat_sub_no_c 2 (CP.join_conjunctions (f::(pick_rel_constraints f n_f_l))) sat_subno false) true n_f_l
   in
 
   (* SAT(A \/ B) = SAT(A) \/ SAT(B) *)
@@ -4094,7 +4099,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   if !is_sat_slicing then is_sat_sub_no_slicing f sat_subno
   (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
-  else is_sat_sub_no_c 3 f sat_subno false
+  else x_add_1 is_sat_sub_no_c 3 f sat_subno false
 
 let is_sat_sub_no i (f : CP.formula) sat_subno : bool =
   Debug.no_2_num i "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
@@ -4103,7 +4108,7 @@ let is_sat_sub_no i (f : CP.formula) sat_subno : bool =
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   if !f_2_slice || !dis_slicing then
     let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-    (is_sat_sub_no 1 (CP.join_conjunctions f_lst) sat_subno)
+    (x_add_1 is_sat_sub_no 1 (CP.join_conjunctions f_lst) sat_subno)
   else if (MCP.isConstMFalse (MemoF f)) then false
   else
     (* let f = if !do_slicing                            *)
@@ -4111,7 +4116,7 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
     (* 	then List.filter (fun c -> c.memo_group_unsat) f *)
     (* 	else f in                                        *)
     let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-    not (List.exists (fun f -> not (is_sat_sub_no 2 f sat_subno)) f_lst)
+    not (List.exists (fun f -> not (x_add_1 is_sat_sub_no 2 f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_orig"
@@ -4123,7 +4128,7 @@ let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bo
   if (not (is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv)) then (* One slice is UNSAT *) false
   else (* Improve completeness of SAT checking *)
     let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
-    not (List.exists (fun f -> not (is_sat_sub_no 3 f sat_subno)) f_l)
+    not (List.exists (fun f -> not (x_add_1 is_sat_sub_no 3 f sat_subno)) f_l)
 
 let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_slicing"
@@ -4153,7 +4158,7 @@ and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl wit
             (MCP.is_ineq_linking_memo_group img) && 
             (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
         let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-        is_sat_sub_no 4 f sat_subno
+        x_add_1 is_sat_sub_no 4 f sat_subno
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
@@ -4168,7 +4173,7 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl wit
           (MCP.is_ineq_linking_memo_group img) && 
           (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
       let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-      is_sat_sub_no 5 f sat_subno
+      x_add_1 is_sat_sub_no 5 f sat_subno
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
@@ -4294,7 +4299,7 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
     (* MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno) *)
     (* else if !do_slicing && !infer_lvar_slicing then *)
   else if (not !dis_slc_ann) && !infer_lvar_slicing then
-    MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no 5 f sat_subno)
+    MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> x_add_1 is_sat_sub_no 5 f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
@@ -4402,7 +4407,7 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
-  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else is_sat_sub_no 61) f sat_subno
+  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing_orig else x_add_1 is_sat_sub_no 61) f sat_subno
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv =
   Debug.no_1 "is_sat_mix_sub_no"
@@ -4413,7 +4418,7 @@ let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv =
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in
   let () = Gen.Profiling.push_time prof_lbl in
-  let sat = is_sat_sub_no_c 4 f sat_subno do_cache in
+  let sat = x_add_1 is_sat_sub_no_c 4 f sat_subno do_cache in
   let () = Gen.Profiling.pop_time prof_lbl in
   sat
 
@@ -4462,7 +4467,7 @@ let change_prover prover =
 
 
 let is_sat_raw (f: MCP.mix_formula) =
-  is_sat_mix_sub_no f (ref 9) true true
+  x_add_1 is_sat_mix_sub_no f (ref 9) true true
 
 let imply_raw ante conseq =
   let (res,_,_) = x_add mix_imply (MCP.mix_of_pure ante) (MCP.mix_of_pure conseq) "999" in
