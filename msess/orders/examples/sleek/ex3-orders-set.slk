@@ -32,7 +32,7 @@ print residue.
 */
 
 
-checkentail c::Chan{@S Assume{@S HB{@S Event<b, 2>, @S Event<c,4>}<> }<orders>;;!1}<> *
+checkentail c::Chan{@S Assume{@S HB{@S Event<b1, 2>, @S Event<c1,4>}<> }<orders>;;!1}<> *
 c2::Chan{@S Assume{@S HB{@S Event<b2, 2>, @S Event<c2,4>}<> }<orders>;;!1}<>
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    

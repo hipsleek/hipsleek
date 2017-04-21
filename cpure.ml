@@ -9601,10 +9601,11 @@ let rec remove_redundant_helper ls rs=
             remove_redundant_helper fs rs
           else remove_redundant_helper fs rs@[f]
         | BForm ((Lte(IConst (0,_), IConst (0,_), _), _) ,_) -> remove_redundant_helper fs rs
+        | AndList lst -> remove_redundant_helper fs rs@[AndList (map_l_snd remove_redundant lst )]
         | _ -> remove_redundant_helper fs rs@[f]
       )
 
-let remove_redundant (f:formula):formula =
+and remove_redundant (f:formula):formula =
   let l_conj = split_conjunctions f in
   let prun_l = remove_redundant_helper l_conj [] in
   join_conjunctions prun_l
