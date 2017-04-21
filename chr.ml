@@ -3,6 +3,9 @@
 module CP = Cpure
 open GlobProver
 
+
+let set_prover_type () = Others.last_tp_used # set Others.CHR
+    
 let log_chr_formula = ref false
 let chr_log = ref stdout
 

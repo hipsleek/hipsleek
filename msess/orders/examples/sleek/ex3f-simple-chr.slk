@@ -1,0 +1,14 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+checkentail  v=4 & ["chr": A=v] 
+|-  emp & ["chr": A=4].
+expect Valid.                                                                    
+print residue.
+
+checkentail  emp & ["chr": A=v] 
+|-  emp & ["chr": A=4].
+expect Fail.                                                                    
+print residue.
+

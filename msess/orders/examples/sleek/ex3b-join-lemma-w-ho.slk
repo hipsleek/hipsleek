@@ -1,0 +1,19 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_prim Orders{%P}<>.
+/* Explicit channel support. At the moment parsing should work. */
+pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; C->B:k(2).
+
+/*
+lemma_norm self::Chan{@S Assume{%P}<v>;;%R}<> -> self::Chan{@S %R}<> * v::Orders{%P}<>.
+lemma_norm self::Chan{@S Guard{%P}<v>;;%R}<> * v::Orders{ %P }<> -> self::Chan{@S %R}<>.
+*/
+lemma_norm self::Orders{ %P1 }<> * self::Orders{ %P2 }<> -> self::Orders{ %P1 * %P2 }<>.  
+
+
+checkentail orders::Orders{ orders::HB{@S Event<b1, 2>, @S Event<c1,4>}<> }<> *
+orders::Orders{ orders::HB{@S Event<b2, 2>, @S Event<c2,4>}<> }<>
+|- emp.
+expect Valid.                                                                    
+print residue.

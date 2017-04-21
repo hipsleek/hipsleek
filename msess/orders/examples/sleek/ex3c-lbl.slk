@@ -1,0 +1,20 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_prim CHR@nonclassic{%P}<>.
+relation Ev(int n,int m).
+relation HBr(int n1,int m1,int n2,int m2).
+relation CBr(int n1,int m1,int n2,int m2).
+
+lemma_norm self::Chan{@S Assume{%P}<v>;;%R}<> -> self::Chan{@S %R}<> * v::CHR{%P}<>.
+lemma_norm self::Chan{@S Guard{%P}<v>;;%R}<> * v::CHR{ %P }<> -> self::Chan{@S %R}<> * v::CHR{ %P }<>. 
+lemma_norm self::CHR{ %P1 }<> * self::CHR{ %P2 }<> -> self::CHR{ %P1 * %P2 }<>.  
+
+
+
+checkentail c::Chan{@S Assume{@S HB{@S Event<b1, 2>, @S Event<c1,4>}<> }<orders>;;!1}<> *
+           c2::Chan{@S Assume{@S HB{@S Event<b2, 2>, @S Event<c2,4>}<> }<orders>;;!1}<> *
+        order::CHR{ orders::HB{@S Event<b1, 2>, @S Event<c1,5>}<>}<>
+|- c::Chan{@S !1}<>.
+expect Valid.                                                                    
+print residue.
