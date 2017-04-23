@@ -3537,8 +3537,16 @@ typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 
 typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
 
+rel_kind: [[ `AT; `IDENTIFIER anno ->
+                (match anno with
+                 | "event" -> (mk_rel_order_kind Event)
+		 | "hb" -> (mk_rel_order_kind HB)
+		 | "cb" -> (mk_rel_order_kind CB)
+                 | _ -> report_error (get_pos_camlp4 _loc 1) "not a relation kind")
+]];
+
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; rkind = OPT rel_kind; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists
@@ -3547,7 +3555,8 @@ rel_header:[[
 		report_error (get_pos_camlp4 _loc 1)
 		  ("variables in view header are not allowed to be primed")
 	  else
-		let modes = get_modes anns in *)
+       let modes = get_modes anns in *)
+    let () = Session.set_rels_id id rkind in
     let () = rel_names # push id in
 		  { rel_name = id;
 			rel_typed_vars = tl;

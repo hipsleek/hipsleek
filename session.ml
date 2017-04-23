@@ -50,6 +50,20 @@ let assume_id: string option ref = ref None
 let guard_id: string option ref = ref None
 let peer_id: string option ref = ref None
 
+let event_rel_id: string option ref = ref None
+let hb_rel_id: string option ref = ref None
+let cb_rel_id: string option ref = ref None
+
+let set_rels_id id kind =
+  match kind with
+  | None -> ()
+  | Some kind ->
+    match kind with
+    | Orders Event -> event_rel_id := Some id
+    | Orders CB -> cb_rel_id := Some id
+    | Orders HB -> hb_rel_id := Some id
+    | _ -> ()
+
 let set_prim_pred_id kind id =
   (* let () = y_ninfo "setting Sess pred id" in *)
   match kind with

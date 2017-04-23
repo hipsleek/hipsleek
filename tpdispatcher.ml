@@ -1562,6 +1562,7 @@ let build_branches_sat br lbs =
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
+  (* TODO Andreea: thsi might not be enough. To check SAT, chr might also need the unlabelled formulas *)
   let sat_label_filter_chr lbl arg =
     if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then
       fct arg
@@ -1569,11 +1570,6 @@ let sat_label_filter fct f =
   let test ?lbl:(lbl = LO.unlabelled) f1 = 
     if no_andl f1 then
       sat_label_filter_chr lbl f1
-      (* if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then *)
-      (*   fct f1 *)
-      (* else *)
-      (*   let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct f1 in (\* to change to CHR  *\)  *)
-      (*   chr_res *)
     else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
   let rec helper_x f = match f with 
     | AndList b -> 

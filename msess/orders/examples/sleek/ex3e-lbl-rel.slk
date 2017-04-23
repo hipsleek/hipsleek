@@ -2,9 +2,11 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 pred_prim CHR@nonclassic{%P}<>.
+
 relation Ev(int n,int m).
 relation HBr(int n1,int m1,int n2,int m2).
 relation CBr(int n1,int m1,int n2,int m2).
+
 
 lemma_norm "A+" self::Chan{@S Assume{%P}<v>;;%R}<> -> self::Chan{@S %R}<> * %P.
 lemma_norm "G-" self::Chan{@S Guard{%P}<v>;;%R}<> *  %P -> self::Chan{@S %R}<> * %P.
