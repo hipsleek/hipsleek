@@ -3,24 +3,24 @@ sleek_include 'msess/notes/hodef.slk'.
 
 pred_prim CHR@nonclassic{%P}<>.
 
-relation Ev(int n,int m).
-relation HBr(int n1,int m1,int n2,int m2).
-relation CBr(int n1,int m1,int n2,int m2).
+relation ev(int n,int m).
+relation hb(int n1,int m1,int n2,int m2).
+relation cb(int n1,int m1,int n2,int m2).
 
 
 lemma_norm "A+" self::Chan{@S Assume{%P}<v>;;%R}<> -> self::Chan{@S %R}<> * %P.
 lemma_norm "G-" self::Chan{@S Guard{%P}<v>;;%R}<> *  %P -> self::Chan{@S %R}<> * %P.
 
-checkentail c::Chan{@S Guard{emp & ["chr": HBr(b1, 2, c1,4)] }<orders>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": HBr(b2, 3, c2,5)] }<orders>;;!1}<>
-           & ["chr": HBr(b1, 2, c1,4) ] 
+checkentail c::Chan{@S Guard{emp & ["chr": hb(b1, 2, c1,4)] }<orders>;;!1}<> *
+           c2::Chan{@S Assume{emp & ["chr": hb(b2, 3, c2,5)] }<orders>;;!1}<>
+           & ["chr": hb(b1, 2, c1,4) ] 
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
-checkentail c::Chan{@S Guard{emp & ["chr": HBr(b1, 2, c1,4)] }<orders>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": HBr(b2, 3, c2,5)] }<orders>;;!1}<>
-           & v=4 & ["chr": HBr(b1, 2, c1,v) ] 
+checkentail c::Chan{@S Guard{emp & ["chr": hb(b1, 2, c1,4)] }<orders>;;!1}<> *
+           c2::Chan{@S Assume{emp & ["chr": hb(b2, 3, c2,5)] }<orders>;;!1}<>
+           & v=4 & ["chr": hb(b1, 2, c1,v) ] 
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.

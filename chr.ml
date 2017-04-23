@@ -75,7 +75,8 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
-  
+
+(* valid(A |- C)  ~~> sat( not(A |- C) ) ~~> sat( A/\not(C) ) *)
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
   let ante_chr = prepare_formula_for_chr ante in
@@ -88,11 +89,24 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   (* TODO elena: modify the script such that it expects the command instead of a file *)
   (* let args = [| cmd; (ante_chr ^ ", not(" ^ conseq_chr ^  ").\n") |] in *)
   let inchn, outchn, errchn, npid = Procutils.open_process_full cmd args in
-  let result = input_line inchn in
-  if result = "false." then
-    true
-  else 
-    false
+  let () = try
+      let error = input_line errchn in
+      y_binfo_pp ("\n############\n CHR error: "^error^"\n############\n")
+    with _ -> () in
+  let result =
+    try  
+      let result = input_line inchn in
+      let () = y_binfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
+      if result = "false." then
+        true
+      else 
+        false
+    with _ ->
+      let () = y_binfo_pp ("\n############ NO CHR result ############\n") in
+      false  in
+  result
+            
+
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
