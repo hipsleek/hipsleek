@@ -60,7 +60,11 @@ let mkGte e1 e2 =
 let mkEq e1 e2 =
   Cpure.mkEqExp e1 e2 no_pos
 ;;
-  
+
+let mkNeq e1 e2 =
+  Cpure.mkNeqExp e1 e2 no_pos
+;;
+
 
 (* end of Utility on formula and exp  *)
 
@@ -453,7 +457,7 @@ class arrPredTransformer initcf = object(self)
       match lst with
       | h::tail ->
          generate_disjoint_formula tail
-                                   (List.map (fun item -> generate_disjoint_formula_with_two_pred h item) tail)
+                                   ((List.map (fun item -> generate_disjoint_formula_with_two_pred h item) tail)@flst)
       | [] -> flst
     in
     let rec generate_segment_formula lst flst =
