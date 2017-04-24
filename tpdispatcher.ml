@@ -2024,7 +2024,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no
-    | CHR ->  true 
+    | CHR -> Chr.is_sat f sat_no
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res

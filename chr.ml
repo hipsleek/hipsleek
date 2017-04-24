@@ -15,6 +15,8 @@ let _invalid = false
 let _sat = true
 let _unsat = false
 
+type sat = SAT | UNSAT | UNK
+
 (* this file is only needed until until we resolve the interactive chr *)
 let infilename () = !tmp_files_path ^ "input.chr." ^ (string_of_int (Unix.getpid ()))
 let chr_cmd = "orderchr"
@@ -69,7 +71,7 @@ and chr_of_formula f = match f with
     end
   | CP.And (p1, p2, _) -> "" ^ (chr_of_formula p1) ^ "," ^ (chr_of_formula p2) ^ ""
   | CP.Or (p1, p2,_, _) -> "(" ^ (chr_of_formula p1) ^ ";" ^ (chr_of_formula p2) ^ ")"
-  | CP.Not (p,_, _) -> "(snot (" ^ (chr_of_formula p) ^ "))"
+  | CP.Not (p,_, _) -> "(snot(" ^ (chr_of_formula p) ^ "))"
   | _ -> ""
 
 
@@ -80,12 +82,8 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
-(* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
-let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  let () = set_prover_type () in
-  let ante_chr = prepare_formula_for_chr ante in
-  let conseq_chr = prepare_formula_for_chr conseq in
-  let query = (ante_chr ^ ", snot((" ^ conseq_chr ^  ")).\n") in
+
+let send_query (query : string) : sat =
   let () = log_text_to_chr_file query in
   let infilename = output_to_chr_file query in
   (* TODO elena: replace the relative path for the script *)
@@ -103,17 +101,42 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
       let result = input_line inchn in
       let () = y_ninfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
       match result with
-      | "false" -> _valid
-      | "true"  -> _invalid
-      | _       -> let () = y_winfo_pp ("WARNING (CHR) : "^result) in _invalid
+      | "false" -> UNSAT
+      | "true"  -> SAT
+      | _       -> let () = y_winfo_pp ("WARNING (CHR) : "^result) in SAT
     with _ ->
       let () = y_binfo_pp ("\n############ NO CHR result ############\n") in
-      false  in
-  result
-
-
-
+      SAT  in
+   result
+     
+(* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let () = set_prover_type () in
+  let ante_chr = prepare_formula_for_chr ante in
+  let conseq_chr = prepare_formula_for_chr conseq in
+  let query = (ante_chr ^ ", snot((" ^ conseq_chr ^  ")).\n") in
+  let result = send_query query in
+  match result with
+  | SAT   -> _invalid
+  | UNSAT -> _valid
+  | UNK   -> _invalid
+    
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_2 "CHR.imply" pr pr string_of_bool (fun _ _ -> imply ante conseq imp_no) ante conseq
   
+(* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
+let is_sat (form : CP.formula) (sat_no : string) : bool =
+  let () = set_prover_type () in
+  let formula_chr = prepare_formula_for_chr form in
+  let query = formula_chr ^ ".\n" in
+  let result = send_query query in
+  match result with
+  | SAT   -> _sat
+  | UNSAT -> _unsat
+  | UNK   -> _sat
+    
+let is_sat (form : CP.formula) (sat_no : string) : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "CHR.is_sat" pr string_of_bool (fun _ -> is_sat form sat_no) form
+    
