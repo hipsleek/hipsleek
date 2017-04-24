@@ -1408,12 +1408,12 @@ protocol_formula:
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc, Globals.def_suid) c)
       | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc) c)
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc, Globals.def_suid) c)
       (* | peek_fence; `OSQUARE; `IDENTIFIER first; `COMMA; `IDENTIFIER second; `CSQUARE; `COLON; *)
       (*   hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT -> *)
       (*   let name,_,_,_ = hid in *)

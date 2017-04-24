@@ -243,6 +243,10 @@ type view_session_info =
     node_kind: node_kind option;
   }
 
+type suid = int
+
+let def_suid = 0
+
 let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : view_session_info =
   {
     session_kind = sk;
