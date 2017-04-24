@@ -16,8 +16,7 @@ let _sat = true
 let _unsat = false
 
 (* this file is only needed until until we resolve the interactive chr *)
-let infilename () =
-  !tmp_files_path ^ "input.chr." ^ (string_of_int (Unix.getpid ()))
+let infilename () = !tmp_files_path ^ "input.chr." ^ (string_of_int (Unix.getpid ()))
 let chr_cmd = "orderchr"
   
 let set_log_file () : unit =
@@ -70,7 +69,7 @@ and chr_of_formula f = match f with
     end
   | CP.And (p1, p2, _) -> "" ^ (chr_of_formula p1) ^ "," ^ (chr_of_formula p2) ^ ""
   | CP.Or (p1, p2,_, _) -> "(" ^ (chr_of_formula p1) ^ ";" ^ (chr_of_formula p2) ^ ")"
-  | CP.Not (p,_, _) -> "(not (" ^ (chr_of_formula p) ^ "))"
+  | CP.Not (p,_, _) -> "(snot (" ^ (chr_of_formula p) ^ "))"
   | _ -> ""
 
 
@@ -86,7 +85,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
   let ante_chr = prepare_formula_for_chr ante in
   let conseq_chr = prepare_formula_for_chr conseq in
-  let query = (ante_chr ^ ", not(" ^ conseq_chr ^  ").\n") in
+  let query = (ante_chr ^ ", snot((" ^ conseq_chr ^  ")).\n") in
   let () = log_text_to_chr_file query in
   let infilename = output_to_chr_file query in
   (* TODO elena: replace the relative path for the script *)

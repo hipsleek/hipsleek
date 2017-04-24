@@ -1,9 +1,9 @@
 #!/usr/bin/env swipl
-:- module(orders, [event/2,hb/4,cb/4]).
+:- module(orders, [event/2,hb/4,cb/4,snot/1]).
 :- use_module(library(chr)).
 
 :- initialization main.
-:- chr_constraint event/2,hb/4,cb/4.
+:- chr_constraint event/2,hb/4,cb/4,snot/1.
 
 
 % disable singleton warning
@@ -32,7 +32,9 @@
 %%%% RULES
 %%%%%%%%%%
 
-% dual   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1).
+dual   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1).
+dual   @ snot(A;B) ==> snot(A),snot(B).
+dual   @ snot((A,B)) ==> snot(A);snot(B).
 % false when contradiction is detected : (a <_HB b && b <_HB a)
 asym   @ hb(A,L1,B,L2), hb(B,L2,A,L1) ==> false.
 % HB transitivity 
@@ -51,7 +53,8 @@ read_goals(Stream,[]):-
 read_goals(Stream,[X|L]):-
         \+ at_end_of_stream(Stream),
         read(Stream,Gl),
-        Gl.
+        % writeln(Gl),
+        once((Gl)).
 
 checkff :-
         current_prolog_flag(argv, [File]),
