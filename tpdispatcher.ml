@@ -1559,25 +1559,32 @@ let build_branches_sat br lbs =
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
-  let test f1 = 
-    if no_andl f1 then  fct f1 
+  let test f1 =
+    
+    if no_andl f1 then fct f1 
     else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
-  let rec helper_x f = match f with 
-    | AndList b -> 
+  let rec helper_x f =
+  
+    match f with      
+    | AndList b ->
+       
       let lbls = Label_Pure.get_labels b in
       (* Andreea : this is to pick equality from all branches *)
+      
       let (comp,fil) = 
         if !Globals.label_aggressive_sat
         then (LO.is_fully_compatible_sat,fun fs -> fs)
         else (LO.is_part_compatible_sat,
               List.filter (fun (l,_)-> not(LO.is_common l)) ) 
       in
+      
       let b = 
         if !Globals.label_aggressive_sat
         then extract_eset_of_lbl_lst b []
         (* extract_eq_clauses_lbl_lst b *)
         else b 
       in
+      
       let sat_lbls = build_labels_sat (fun x y -> comp y x) lbls in
       let sat_branches = build_branches_sat b sat_lbls in
       (* let fs = List.map (fun l ->  *)
@@ -2079,7 +2086,8 @@ let find_cache ht fstring fstring_prover =
   with Not_found ->
      Hashtbl.find ht (fstring_prover) (* provers-specific answer *)
 
-let sat_cache is_sat (f:CP.formula) : bool  = 
+let sat_cache is_sat (f:CP.formula) : bool  =
+  
   let () = Gen.Profiling.push_time_always "cache overhead" in
   let sf = norm_var_name f in
   let prover = string_of_prover !pure_tp  in
@@ -2088,11 +2096,12 @@ let sat_cache is_sat (f:CP.formula) : bool  =
   let () = cache_sat_count := !cache_sat_count+1 in
   let () = cache_status := true in
   let () = Gen.Profiling.pop_time_always "cache overhead" in
+  
   let res =
     try
       find_cache !sat_cache fstring fstring_with_prover
     with Not_found ->
-      let () = cache_status := false in
+      let () = cache_status := false in      
       let r = is_sat f in
       let prover_str = if r then fstring_with_prover else fstring in
       (* cache only sound outcomes : unless we add prover name to it *)
@@ -2158,10 +2167,13 @@ let tp_conj_bag_sat f sat_no =
     (tp_is_sat p1 sat_no) && (tp_is_sat p2 sat_no) 
 
 let tp_is_sat (f:CP.formula) (old_sat_no :string) =
+  
   if !Globals.auto_eps_flag then
     (* this is mainly for mono prover *)
+    
     let fl = CP.split_disjunctions_deep f in
     let f_or a b = a || b in
+    
     List.fold_left (fun k f ->  k || (tp_conj_bag_sat f old_sat_no)) false fl
     (* List.fold_left (fun k f -> f_or k (tp_conj_bag_sat f old_sat_no)) false fl *)
   else tp_is_sat f old_sat_no
@@ -3532,9 +3544,10 @@ let simpl_pair rid (ante, conseq) =
 
 let is_sat (f : CP.formula) (old_sat_no : string): bool =
   let f = elim_exists f in
-  if (CP.isConstTrue f) then true 
+  if (CP.isConstTrue f) then true
   else if (CP.isConstFalse f) then false
   else
+    
     let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
     let res = x_add sat_label_filter (fun c-> x_add tp_is_sat c old_sat_no) f in

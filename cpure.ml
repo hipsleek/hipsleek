@@ -12892,10 +12892,11 @@ deep_split_disjuncts@4
 deep_split_disjuncts inp1 : x=null & r=v & ((x=null & m=\inf(ZInfinity)) | x!=null)
 deep_split_disjuncts@4 EXIT out :[ x=null & r=v & x=null & m=\inf(ZInfinity), x=null & r=v & x!=null]
 *)
-let deep_split_disjuncts (f:formula) : (bool * formula list) =
+let deep_split_disjuncts (f:formula) : (bool * formula list) =  
   let disj_inside_andlist = ref false in
   let rec helper f =
-    let f_f f = 
+    let f_f f =
+      let () = print_endline "deep_split_disjuncts" in 
       (match f with
        | Or(l,r,_,p) -> 
          let l2= helper l in
@@ -12921,8 +12922,13 @@ let deep_split_disjuncts (f:formula) : (bool * formula list) =
     let f_bf bf = Some [] in
     let f_e e = Some [] in
     fold_formula f (f_f,f_bf,f_e) List.concat
-  in let res = helper f 
-  in (!disj_inside_andlist || List.length res>1, res)
+  in
+  let res =
+    if !Globals.deep_split_disjuncts
+    then helper f
+    else [f]           
+  in
+  (!disj_inside_andlist || List.length res>1, res)
 
 (* let deep_split_disjuncts (f:formula) : formula list = *)
 
