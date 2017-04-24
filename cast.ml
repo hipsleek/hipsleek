@@ -324,7 +324,7 @@ and coercion_decl = {
   coercion_kind: lemma_kind;
   coercion_origin: lemma_origin;
   coercion_lhs_sig: F.formula_sig option;
-  coercion_prio : int;
+  coercion_prio : int;          (* used for norm lemmas which allows the user to assign a priority among lemma candidates *)
 }
 
 and coercion_type = Iast.coercion_type
