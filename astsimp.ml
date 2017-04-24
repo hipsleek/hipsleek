@@ -2429,7 +2429,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
   let () = HT.iter helper proj_hash in
   view_decl_hash
 
-and translate_session_x (view:I.view_decl) =
+and session_to_iform_x (view:I.view_decl) =
   let get_session_formula view =
     match view.I.view_session_formula with
     | Some s -> s
@@ -2443,9 +2443,10 @@ and translate_session_x (view:I.view_decl) =
   match view.I.view_session_info with
   | Some si -> (match (si.session_kind) with
       | Some Protocol ->
-        let transf = Session.IProtocol.mk_struc_formula_from_session_and_struc_formula in
-	let proj = make_projection_view_decls (Session.get_protocol (get_session_formula view)) view in
-        {view with view_session_projections = Some proj}
+        let prot = Session.get_protocol (get_session_formula view) in
+        let prot = Session.annotate_suid prot in
+	let proj = make_projection_view_decls prot view in
+        {view with view_session_projections = Some proj; I.view_session_formula = Some (ProtocolSession prot) }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
         helper view transf Session.get_projection
@@ -2455,9 +2456,9 @@ and translate_session_x (view:I.view_decl) =
       | None -> view)
   | None -> view
 
-and translate_session (view:I.view_decl) =
+and session_to_iform (view:I.view_decl) =
   let pr = Iprinter.string_of_view_decl in
-  Debug.no_1 "translate_session" pr pr translate_session_x view
+  Debug.no_1 "session_to_iform" pr pr session_to_iform_x view
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -10202,7 +10203,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
 
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let () = print_endline "starting translation" in
-  let iviews = List.map translate_session prog.I.prog_view_decls in
+  let iviews = List.map session_to_iform prog.I.prog_view_decls in
   let tmp_views = (* order_views *) (* prog.I.prog_view_decls *) iviews in
   x_tinfo_hp (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
   (* let () = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)

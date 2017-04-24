@@ -1,9 +1,9 @@
 #!/usr/bin/env swipl
-:- module(orders, [event/2,hb/4,cb/4,snot/1]).
+:- module(orders, [ev/2,hb/4,cb/4,snot/1]).
 :- use_module(library(chr)).
 
 :- initialization main.
-:- chr_constraint event/2,hb/4,cb/4,snot/1.
+:- chr_constraint ev/2,hb/4,cb/4,snot/1.
 
 
 % disable singleton warning
@@ -11,13 +11,13 @@
 
 
 % %% HOW TO USE
-% Events are pairs of role x label:
-% e.g.  event(A,1), event(B2,a)
+% Evs are pairs of role x label:
+% e.g.  ev(A,1), ev(B2,a)
 
-% Happens-before relations are tuples of (event x event):
+% Happens-before relations are tuples of (ev x ev):
 % e.g.  hb(A,1,B2,a)
 
-% Communicates-before relations are pairs of (event x event):
+% Communicates-before relations are pairs of (ev x ev):
 % e.g.  cb(A,a,B2,a)
 
 %% SAMPLE QUERIES
@@ -31,14 +31,17 @@
 %%%%%%%%%%
 %%%% RULES
 %%%%%%%%%%
-%negation rules for hb and event
-neg1   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1).
+%negation rules for hb and ev
+neg0   @ snot(hb(A,L,A,L)) <=> true. %;(B=A,L2=L1).
+neg1   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1). %;(B=A,L2=L1).
 neg2   @ snot(A;B) ==> snot(A),snot(B).
 neg3   @ snot((A,B)) ==> snot(A);snot(B).
+% neg4   @ snot(A) ==> \+(A).
 
-asy1   @ event(A,L1), snot(event(A,L1))  ==> false.
+asy1   @ ev(A,L1), snot(ev(A,L1))  ==> false.
 % false when contradiction is detected : (a <_HB b && b <_HB a)
 asy2   @ hb(A,L1,B,L2), hb(B,L2,A,L1) ==> false.
+asy2   @ hb(A,L1,A,L1)  ==> false.
 % HB transitivity 
 hbhb   @ hb(A,L1,B,L2), hb(B,L2,C,L4) ==> hb(A,L1,C,L4).
 % CB transitivity 

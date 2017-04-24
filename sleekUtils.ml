@@ -18,7 +18,7 @@ module HT = Hashtbl
 
 let process_selective_iview_decls is_all iprog iviews =
   let iviews = if is_all then iprog.I.prog_view_decls else iviews in
-  let iviews = List.map Astsimp.translate_session iviews in
+  let iviews = List.map Astsimp.session_to_iform iviews in
   let tmp_views = List.map (fun pdef ->
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in

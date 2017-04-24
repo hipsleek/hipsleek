@@ -1140,7 +1140,9 @@ module Protocol_base_formula =
     let print_message f = !Msg.print f.protocol_base_formula_message
 
     let string_of_session_base f =
-      f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
+      let suid = f.protocol_base_formula_uid in
+      let suid = if suid == 0 then "" else "@"^ (string_of_int suid) ^ ":"  in
+      suid ^ f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
 
     let mk_base (sender, receiver, mv, pos, suid) ?node:(node=None) formula = {
       protocol_base_formula_sender    = sender;
@@ -2321,6 +2323,21 @@ let get_tpprojection session =
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"
 
+(* -------------------------------------- *)
+(* Protocol annotation with unique id *)
+let annotate_suid (prot: IProtocol.session): IProtocol.session  =
+  let suid = ref 0 in
+  let fnc base = let () = suid := !suid + 1 in
+    Some {base with IProtocol_base.protocol_base_formula_uid = !suid} in
+  let prot = IProtocol.trans_session_formula (nonef,(nonef,fnc)) prot in
+  prot
+
+let annotate_suid (prot: IProtocol.session): IProtocol.session  =
+  let pr = IProtocol.string_of_session in
+  Debug.no_1 "annotate_suid" pr pr annotate_suid prot
+    
+(* -------------------------------------- *)
+
 let make_tpp_send_receive_pair b =
   let message = IProtocol.get_message b in
   let message_var = IProtocol.get_message_var b in
@@ -2798,19 +2815,12 @@ let check_for_ho_unsat detect_contra conseq match_ho_res =
   let pr3 = pr_opt  pr2 in
   Debug.no_3 "Session.check_for_ho_unsat" pr3 pr1 !CF.print_formula string_of_bool (fun _ _ _ -> check_for_ho_unsat detect_contra conseq match_ho_res) fail es conseq
 
+(* -------------------------------------- *)
+    
 let is_node_kind hform kind = CTPProjection.is_node_kind hform kind
 let is_node_kind_rflow rflow kind = CTPProjection.is_node_kind_rflow rflow kind
 
-
 (* -------------------------------------- *)
-(* Protocol annotation with unique id *)
-let annotate_suid (prot: CProtocol.session): CProtocol.session  =
-  let suid = ref 0 in
-  let fnc base = let () = suid := !suid + 1 in
-    Some {base with CProtocol_base.protocol_base_formula_uid = !suid} in
-  let prot = CProtocol.trans_session_formula (nonef,(nonef,fnc)) prot in
-  prot
-
 (* TODO: reimplement this in a simpler manner *)
 (* create a SEQ given lnode and rnode *)
 let rebuild_SeqSor lnode rnode largs rargs =
