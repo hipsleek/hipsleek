@@ -76,7 +76,7 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
-(* valid(A |- C)  ~~> sat( not(A |- C) ) ~~> sat( A/\not(C) ) *)
+(* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
   let ante_chr = prepare_formula_for_chr ante in
