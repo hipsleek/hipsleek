@@ -1,9 +1,12 @@
 #include "xdebug.cppo"
+open Gen
+    
 let tmp_files_path = ref ""
 
 (*path for the temporary files used by the prover. If you change this path here it is 
   mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
-let set_tmp_files_path () = 	
+let set_tmp_files_path () =
+  let () = y_binfo_pp "HERREEE" in
   begin
     (try
        ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
@@ -21,7 +24,10 @@ let set_tmp_files_path () =
        ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
      with
        Unix.Unix_error (_, _, _) -> (););
-    tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
+    let () = y_binfo_pp "HERREEE2" in
+    let () = tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") in
+    let () = y_binfo_hp (add_str "tmp_files_path" pr_id) !tmp_files_path in
+    ()
   end
 
 (*type of process used for communicating with the prover*)
