@@ -2,7 +2,7 @@
 :- module(orders, [event/2,hb/4,cb/4,snot/1]).
 :- use_module(library(chr)).
 
-:- initialization main.
+% :- initialization main.
 :- chr_constraint event/2,hb/4,cb/4,snot/1.
 
 
@@ -31,10 +31,12 @@
 %%%%%%%%%%
 %%%% RULES
 %%%%%%%%%%
+%negation rules for hb and event
+neg   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1).
+neg   @ snot(A;B) ==> snot(A),snot(B).
+neg   @ snot((A,B)) ==> snot(A);snot(B).
 
-dual   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1).
-dual   @ snot(A;B) ==> snot(A),snot(B).
-dual   @ snot((A,B)) ==> snot(A);snot(B).
+asym   @ event(A,L1), snot(event(A,L1))  ==> false.
 % false when contradiction is detected : (a <_HB b && b <_HB a)
 asym   @ hb(A,L1,B,L2), hb(B,L2,A,L1) ==> false.
 % HB transitivity 
