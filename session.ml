@@ -1192,6 +1192,7 @@ module Protocol_base_formula =
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
 
     let eq_role = Msg.eq_var
+    let eq_chan = Msg.eq_var
 
   end;;
 

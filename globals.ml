@@ -247,6 +247,8 @@ type suid = int
 
 let def_suid = 0
 
+let eq_suid id1 id2 = (id1 == id2)
+
 let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : view_session_info =
   {
     session_kind = sk;
