@@ -162,7 +162,7 @@ struct
   let string_of = string_of_suid
 end;;
 
-
+(* ------------------------------------------------ *)
 module type SMap_type =
 sig
 
@@ -224,6 +224,7 @@ struct
 
 end;;
 
+(* ------------------------------------------------ *)
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
 
@@ -231,25 +232,53 @@ module RMap = SMap(IRole)(Events) ;;
 module CMap = SMap(IChan)(Trans) ;;
 module ConstrMap = SMap(UID)(Orders) ;;
 
-(* type border = { *)
-(*   rmap : ..; *)
-(*   cmap : .. ; *)
-(* } *)
-(* border =  RMap X CMap *)  
+(* ------------------------------------------------ *)
+type summary = {
+  bborder : RMap.emap * CMap.emap;
+  fborder : RMap.emap * CMap.emap;
+  assumptions: ConstrMap.emap;
+  guards     : ConstrMap.emap;
+}
 
-(* let collect prot = prot ;; *)
+let mk_empty_summary () =
+  let rmap     = RMap.mkEmpty () in
+  let cmap     = CMap.mkEmpty () in
+  let assum    = ConstrMap.mkEmpty () in
+  let guards   = ConstrMap.mkEmpty () in
+  {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
 
 (* ------------------------------------------------ *)
-(* collects order assumptions and proof obligations *)
-let collect prot =
+(* ----- merging functions for prot constructs ---- *)
+  
+let merge_all_seq seq1 seq2 : summary = seq1
+
+let merge_all_sor sor1 sor2 : summary = sor1
+
+let merge_all_star star1 star2 : summary = star1 
+
+(* ------------------------------------------------ *)
+(* Collects order assumptions and proof obligations.*)
+(* The retuned result is a summary of the form:     *)
+(* BackBorder x FrontBorder x Assumptions x Guards  *)
+(*                                                  *)
+(* where                                            *)
+(*                                                  *)
+(* Border: RMap x CMap                              *)
+(* Assumptions : ConstrMap                          *)
+(* Guards : ConstrMap                               *)
+(* RMap :      role -> event                        *)
+(* CMap :      chan -> transm                       *)
+(* ConstrMap : uid  -> order                        *)
+
+let rec collect prot =
   match prot with
-  (* | SProt.SSeq  seq  -> f1 (collect seq.SProt.session_seq_formula_head) *)
-  (*                    (collect seq.SProt.session_seq_formula_tail) *)
-  (* | SProt.SStar star -> f2 (collect seq.SProt.session_star_formula_star1) *)
-  (*                    (collect seq.SProt.session_star_formula_star2) *)
-  (* | SProt.SOr   sor  -> f3 (collect seq.SProt.session_sor_formula_sor1) *)
-  (*                    (collect seq.SProt.session_sor_formula_sor2) *)
-  (* | SProt.SExists se -> collect se.SProt.session_exists_formula_session *)
+  | SProt.SSeq  seq  -> merge_all_seq (collect seq.SProt.session_seq_formula_head)
+                     (collect seq.SProt.session_seq_formula_tail)
+  | SProt.SStar star -> merge_all_star (collect star.SProt.session_star_formula_star1)
+                     (collect star.SProt.session_star_formula_star2)
+  | SProt.SOr   sor  -> merge_all_sor (collect sor.SProt.session_sor_formula_or1)
+                     (collect sor.SProt.session_sor_formula_or2)
+  | SProt.SExists se -> collect se.SProt.session_exists_formula_session
   | SProt.SBase (Base tr) ->
     let sender   = tr.SBProt.protocol_base_formula_sender in
     let receiver = tr.SBProt.protocol_base_formula_receiver in
@@ -264,12 +293,9 @@ let collect prot =
     let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
     let assum    = ConstrMap.init [(suid,Orders.Transm trans)] in
     let guards   = ConstrMap.mkEmpty () in
-    ((rmap,cmap),(rmap,cmap),assum,guards)
+    {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
   | SProt.SEmp 
-  | _ ->
-    let rmap     = RMap.mkEmpty () in
-    let cmap     = CMap.mkEmpty () in
-    let assum    = ConstrMap.mkEmpty () in
-    let guards   = ConstrMap.mkEmpty () in
-    ((rmap,cmap),(rmap,cmap),assum,guards)
+  | _ -> mk_empty_summary ()
+   
+
 
