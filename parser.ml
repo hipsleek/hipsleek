@@ -1380,7 +1380,7 @@ session_msg_var:
     [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
 (* e.g. ch(<message>) *)
 session_channel:
-    [[ `IDENTIFIER channel -> channel ]];
+    [[ channel = cid -> channel ]];
 
 protocol_formula:
   [ "semicolon" RIGHTA
@@ -1403,17 +1403,17 @@ protocol_formula:
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
         let loc = (get_pos_camlp4 _loc 1) in
         Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
-      | peek_protocol_base_chan; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON;
+      | peek_protocol_base_chan; first = cid; `LEFTARROW; second = cid; `COLON;
       sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc, Globals.def_suid) c)
-      | peek_protocol_base; `IDENTIFIER first; `LEFTARROW; `IDENTIFIER second; `COLON; msg_var = OPT session_msg_var; c = session_message ->
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, Globals.def_suid) c)
+      | peek_protocol_base; first = cid; `LEFTARROW; second = cid; `COLON; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, mv, loc, Globals.def_suid) c)
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, None, mv, loc, Globals.def_suid) c)
       (* | peek_fence; `OSQUARE; `IDENTIFIER first; `COMMA; `IDENTIFIER second; `CSQUARE; `COLON; *)
       (*   hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT -> *)
       (*   let name,_,_,_ = hid in *)

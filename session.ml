@@ -1124,10 +1124,13 @@ module Protocol_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = ident * ident * var * VarGen.loc * suid
+    type role = Msg.var
+    type chan = Msg.var
+    type a = role * role * chan option * var * VarGen.loc * suid
     type base = {
-      protocol_base_formula_sender      : ident;
-      protocol_base_formula_receiver    : ident;
+      protocol_base_formula_sender      : role;
+      protocol_base_formula_receiver    : role;
+      protocol_base_formula_chan        : chan option;
       protocol_base_formula_message     : t;
       protocol_base_formula_message_var : var;
       protocol_base_formula_heap_node   : h_formula_heap option;
@@ -1139,14 +1142,24 @@ module Protocol_base_formula =
 
     let print_message f = !Msg.print f.protocol_base_formula_message
 
+    let string_of_role = Msg.print_var
+    let string_of_chan = Msg.print_var
+
     let string_of_session_base f =
+      let pr = string_of_role in
       let suid = f.protocol_base_formula_uid in
       let suid = if suid == 0 then "" else "@"^ (string_of_int suid) ^ ":"  in
-      suid ^ f.protocol_base_formula_sender ^ " -> " ^ f.protocol_base_formula_receiver ^ " : " ^ (print_message f)
+      let chan =
+        match f.protocol_base_formula_chan with
+        | None -> ""
+        | Some c -> string_of_chan c
+      in
+      suid ^ (pr f.protocol_base_formula_sender) ^ " -> " ^ (pr f.protocol_base_formula_receiver) ^ " : "^ chan ^ "("^ (print_message f) ^ ")"
 
-    let mk_base (sender, receiver, mv, pos, suid) ?node:(node=None) formula = {
+    let mk_base (sender, receiver, chan, mv, pos, suid) ?node:(node=None) formula = {
       protocol_base_formula_sender    = sender;
       protocol_base_formula_receiver  = receiver;
+      protocol_base_formula_chan      = chan;
       protocol_base_formula_message   = formula;
       protocol_base_formula_message_var = mv;
       protocol_base_formula_heap_node = node;
@@ -1161,7 +1174,7 @@ module Protocol_base_formula =
       let name = get_prim_pred_id trans_id in
       let args = [Msg.mk_rflow_formula ~sess_kind:(Some base_type) base.protocol_base_formula_message] in
       let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
-      let params = List.map (fun a -> Msg.id_to_param a base.protocol_base_formula_pos) params in
+      let params = List.map (fun a -> Msg.var_to_param a base.protocol_base_formula_pos) params in
       Msg.mk_node (ptr, name, args, params, base.protocol_base_formula_pos) base_type Transmission
 
     let get_base_pos base = base.protocol_base_formula_pos
@@ -1177,6 +1190,8 @@ module Protocol_base_formula =
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
+
+    let eq_role = Msg.eq_var
 
   end;;
 
@@ -1240,10 +1255,6 @@ module Projection_base_formula =
     let get_message_var base = base.projection_base_formula_message_var
 
     let get_message base = base.projection_base_formula_message
-
-    let get_sender base = ""
-
-    let get_receiver base = ""
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
@@ -1333,10 +1344,6 @@ module TPProjection_base_formula =
 
     let get_message base = base.tpprojection_base_formula_message
 
-	let get_sender base = ""
-
-	let get_receiver base = ""
-
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, args, params, pos) = Msg.get_node h_formula in
       let f = Msg.get_formula_from_ho_param_formula (List.nth args 0) in
@@ -1375,8 +1382,6 @@ sig
   val get_base_pos : base -> VarGen.loc
   val get_message_var : base -> var
   val get_message : base -> t
-  val get_sender : base -> ident
-  val get_receiver : base -> ident
   val trans_h_formula_to_session_base : h_formula -> base
   val subst_base: ((var * var) list) -> base -> base
 end;;
@@ -1938,10 +1943,6 @@ module Make_Session (Base: Session_base) = struct
 
   let get_message b = Base.get_message b
 
-  let get_sender b = Base.get_sender b
-
-  let get_receiver b = Base.get_receiver b
-
   let get_param_id param = Base.get_param_id param
 
   let replace_message_var b =
@@ -2361,6 +2362,8 @@ let combine_partial_proj
 		 VarGen.loc -> ITPProjection.session)
 		 hash1 hash2 add_neutral_element =
   let helper1 (role1, role2) tpproj1 =
+    (* let role1,_ = role1 in *)
+    (* let role2,_ = role2 in *)
 	try
 	  let _ = HT.find hash2 (role1, role2) in
 	  ()
@@ -2451,8 +2454,8 @@ let make_projection (session: IProtocol.session) (vars: ident list) =
       hash
     | IProtocol.SBase s -> (match s with
         | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
-  	  let sender = IProtocol.get_sender b in
-  	  let receiver = IProtocol.get_receiver b in
+  	  let sender,_ = IProtocol_base.get_sender b in
+  	  let receiver,_ = IProtocol_base.get_receiver b in
           let hash = HT.create 10 in
 	  let () = HT.add hash (sender, receiver) snd_op in
 	  let () = HT.add hash (receiver, sender) rcv_op in
