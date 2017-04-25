@@ -1369,7 +1369,7 @@ module TPProjection_base_formula =
 
 module type Session_base =
 sig
-  include (* Message_type *) Msg_common_type
+  include Msg_common_type
   type t
   type a
   type base
