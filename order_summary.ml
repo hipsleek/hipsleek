@@ -54,7 +54,7 @@ struct
     (eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
 
   let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ (string_of_suid e.uid)
-    
+
 end;;
 
 module BTrans =
@@ -73,7 +73,7 @@ struct
        
   let string_of (e:t) : string =
     (SBProt.string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (SBProt.string_of_role e.receiver)
-    
+
 end;;
 
 (* ------------------------------ *)
@@ -83,7 +83,6 @@ module type BOUNDARY_ELEMENT_TYPE =
 sig
   (* include BOUNDARY_BASE_ELEMENT_TYPE *)
   type t
-  type t1
   type base
   val bot :       unit -> t
   val is_bot :    t -> bool
@@ -95,6 +94,7 @@ sig
   val merge_seq  : t -> t -> t
   val merge_sor  : t -> t -> t
   val merge_star : t -> t -> t
+  val add_elem   : t ->t -> t
 end;;
 
 module BOUNDARY_ELEMENT =
@@ -102,7 +102,6 @@ module BOUNDARY_ELEMENT =
   struct
     type base = Base.t
     type t = base eform
-    type t1 = base bform
     let bot () = BOT
     let is_bot x =
       match x with
@@ -120,6 +119,7 @@ module BOUNDARY_ELEMENT =
     let merge_sor (f1:t) (f2:t) : t  = mk_or f1 f2
     let merge_star (f1:t) (f2:t) : t = if (is_bot f1) then f2
       else if (is_bot f2) then f1 else mk_star f1 f2
+    let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
 (* order relations - to be collected after analyzing the protocol *)
@@ -136,7 +136,6 @@ struct
                | Or of assrt * assrt
                | Impl of event * assrt
   type t = assrt
-  type t1 = orders
   type base = orders
   let bot () = failwith x_tbi
   let is_bot x = failwith x_tbi
@@ -148,7 +147,27 @@ struct
   let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
   let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
   let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-        
+  let mk_hbe e1 e2 = Order (HBe (e1,e2))
+  let mk_hbt e1 e2 = Order (HBt (e1,e2))
+end;;
+
+module Orders_list  =
+struct
+  type t = Orders.t list
+  type base = Orders.t
+
+  let bot () = failwith x_tbi
+  let is_bot x = failwith x_tbi
+  let eq e1 e2 = failwith x_tbi
+  let string_of e1 = failwith x_tbi
+  let mk_base (base: base) : t = failwith x_tbi
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+  let mkSingleton (e:base) : t = [e]
+  let add_elem (old_e:t) (new_e:t) :t  = old_e@new_e    
 end;;
 
 (* ------------------------------------------------ *)
@@ -193,6 +212,7 @@ sig
   type emap
   type epart
   type elist
+  type klist
 
   val eq: key -> key -> bool
 
@@ -209,6 +229,7 @@ sig
     
   val add : emap-> key -> elem -> emap
   val find : emap -> key -> elem
+  val get_keys : emap -> klist
 
   val update_elem    : emap -> key -> elem -> emap
   val add_elem_dupl  : emap -> key -> elem -> emap
@@ -228,14 +249,15 @@ struct
   type elem = Elem.t
   type emap = (key * elem) list
   type epart = (elem list) list
-  type elist = (elem list) 
+  type elist = (elem list)
+  type klist = (key list) 
 
   let eq = Key.eq 
   let string_of_elem = Elem.string_of
   let string_of_key  = Key.string_of 
 
   let string_of (e: emap) : string =    
-    "emap["^ (pr_lst "\n" (pr_pair string_of_key string_of_elem) e) ^"]"
+    "["^ (pr_lst "\n" (pr_pair string_of_key string_of_elem) e) ^"]"
     
   let mkEmpty () : emap = []
   let is_empty (m:emap) = match m with | [] -> true | _ -> false
@@ -252,8 +274,23 @@ struct
   (* find element with key k in s *)
   let find (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
 
+  let remove_duplicate_keys (keys:klist) : klist =
+    let keys = List.fold_left (fun acc key ->
+        if List.exists (eq key) acc then acc
+        else (key::acc)) [] keys in
+    keys
+
+  (* each key is returned only once *)
+  let get_keys (s : emap) : klist =
+    let all_keys = List.map fst s in
+    remove_duplicate_keys all_keys
+
+  (* each key is returned only once *)
+  let union_keys (e1:klist) (e2:klist) : klist =
+    remove_duplicate_keys e1@e2
+
   let update_elem (e1:emap) (k:key) (el:elem) : emap =
-    List.map (fun (k0,e0) -> if Key.eq k0 k then (k0,el) else (k0,e0)) e1
+    List.map (fun (k0,e0) -> if Key.eq k0 k then (k0, Elem.add_elem e0 el) else (k0,e0)) e1
 
   (* allow key duplicates *)
   let add_elem_dupl (e1:emap) (k:key) (el:elem) : emap =
@@ -265,13 +302,21 @@ struct
     update_f e1 k el
 
   (* this merge allows duplicates *)
-  let union (e1:emap) (e2:emap) :emap =
+  let union_dupl (e1:emap) (e2:emap) : emap =
     e1 @ e2
 
+  (* this merge assumes e1 and e2 have no key duplicates *)
+  let union (e1:emap) (e2:emap) : emap =
+    List.fold_left (fun acc (key,elem) -> update_elem acc key elem) e1 e2
+
+  (* this merge assumes e1 and e2 have no key duplicates *)
+  let flatten (e0:emap list) : emap =    
+    List.fold_left (fun acc e1 -> union acc e1) (mkEmpty ()) e0
+  
   type op = SEQ | SOR | STAR
 
   (* generic merge emap function *)
-  let merge_op op (e1:emap) (e2:emap) :emap =
+  let merge_op op (e1:emap) (e2:emap) : emap =
     let merge_elem op =
       match op with
       | SEQ  -> Elem.merge_seq
@@ -291,12 +336,13 @@ struct
 end;;
 
 (* ------------------------------------------------ *)
+module OL = Orders_list 
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
 
 module RMap = SMap(IRole)(Events) ;;
 module CMap = SMap(IChan)(Trans) ;;
-module ConstrMap = SMap(UID)(Orders) ;;
+module ConstrMap = SMap(UID)(OL) ;;
 
 (* ------------------------------------------------ *)
 (* ------------- summary related stuff ------------ *)
@@ -320,9 +366,73 @@ let init_summary bborder fborder assum guards =
 (* ------------------------------------------------ *)
 (* ----- merging functions for prot constructs ---- *)
 
-let merge_set (fborder:RMap.emap * CMap.emap) (bborder:RMap.emap * CMap.emap) : ConstrMap.emap * ConstrMap.emap =
-  
-  (ConstrMap.mkEmpty (), ConstrMap.mkEmpty ())
+module type ORDERS_TYPE =
+sig
+  type t
+  val mk_hb : t -> t -> Orders.assrt
+  val get_uid : t -> suid
+end;;
+
+module Orders_hbe =
+struct
+  type t = event
+  let mk_hb = Orders.mk_hbe
+  let get_uid (e:t) = e.uid
+end;;
+
+module Orders_hbt =
+struct
+  type t = transmission
+  let mk_hb = Orders.mk_hbt
+  let get_uid (e:t) = e.uid
+end;;
+
+
+module Merger
+    (Ord  : ORDERS_TYPE) =
+struct
+  type t = Ord.t eform
+
+  let rec merge (e1:t) (e2:t) : ConstrMap.emap =
+    match e1,e2 with
+    | FBase (BBase e1) , FBase (BBase e2) ->
+      let elem = OL.mkSingleton (Ord.mk_hb e1 e2) in (* hbe hbi  *)
+      let key  = Ord.get_uid e2 in
+      ConstrMap.init [(key, elem)]
+    | FBase (BStar (s1,s2)) , _ ->
+      let new_e1 = merge (FBase s1) e2 in
+      let new_e2 = merge (FBase s2) e2 in
+      ConstrMap.union new_e1 new_e2       (* TODO: upgrade to no duplicates *)
+    | _, FBase (BStar (s1,s2)) ->
+      let new_e1 = merge e1 (FBase s1) in
+      let new_e2 = merge e1 (FBase s2) in
+      ConstrMap.union new_e1 new_e2       (* TODO: upgrade to no duplicates *)
+    | BOr (s1,s2) , _ ->
+      let new_e1 = merge s1 e2 in
+      let new_e2 = merge s2 e2 in
+      ConstrMap.union new_e1 new_e2       (* TODO: upgrade to no duplicates *)
+    | _, BOr (s1,s2) ->
+      let new_e1 = merge e1 s1 in
+      let new_e2 = merge e1 s2 in
+      ConstrMap.union new_e1 new_e2       (* TODO: upgrade to no duplicates *)
+    | BOT, _
+    | _, BOT -> ConstrMap.mkEmpty ()
+end;;
+
+module RMerger = Merger(Orders_hbe)
+module CMerger = Merger(Orders_hbt)
+
+let merge_set (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : ConstrMap.emap * ConstrMap.emap =
+  let rmap1, cmap1 = b1 in
+  let rmap2, cmap2 = b2 in
+  let keys = RMap.union_keys (RMap.get_keys rmap1) (RMap.get_keys rmap2) in
+  let assumpt = List.map (fun key -> RMerger.merge (RMap.find rmap1 key) (RMap.find rmap2 key) )  keys in
+  let assumpt = ConstrMap.flatten assumpt in
+  let keys = CMap.union_keys (CMap.get_keys cmap1) (CMap.get_keys cmap2) in
+  let guards = List.map (fun key -> CMerger.merge (CMap.find cmap1 key) (CMap.find cmap2 key) )  keys in
+  let guards = ConstrMap.flatten guards in
+  (* flatten guards and assumptions  *)
+  (assumpt, guards)
 
 (* generic border merge *)
 let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
@@ -350,8 +460,8 @@ let merge_all_seq (seq1:summary) (seq2:summary) : summary =
   let bborder0 = merge_seq_border seq1.bborder seq2.bborder in
   let fborder0 = merge_seq_border seq2.fborder seq1.fborder in
   let assum3, guards3 = merge_set seq1.fborder seq2.bborder in
-  let assume0 = ConstrMap.union (ConstrMap.union seq1.assumptions seq2.assumptions) assum3 in
-  let guards0 = ConstrMap.union (ConstrMap.union seq1.guards seq2.guards) guards3 in
+  let assume0 = ConstrMap.flatten [seq1.assumptions; seq2.assumptions; assum3] in
+  let guards0 = ConstrMap.flatten [seq1.guards; seq2.guards; guards3] in
   init_summary bborder0 fborder0 assume0 guards0
 
 let merge_all_sor (sor1:summary) (sor2:summary) : summary =
@@ -396,19 +506,31 @@ let rec collect prot =
     let sender   = tr.SBProt.protocol_base_formula_sender in
     let receiver = tr.SBProt.protocol_base_formula_receiver in
     let suid     = tr.SBProt.protocol_base_formula_uid in
-    let chan     = map_opt_def (failwith "expecting a specified channel" )
-        idf tr.SBProt.protocol_base_formula_chan in
+    let fail str = failwith str in
+    let chan     =
+      match tr.SBProt.protocol_base_formula_chan with
+      | None -> let () = y_binfo_pp "chan is none"  in failwith "expecting a specified channel"
+      | Some chan -> chan in
+      (* map_opt_def (fail "expecting a specified channel" ) *)
+      (*   idf tr.SBProt.protocol_base_formula_chan in *)
     let event1   = BEvent.make (sender,suid) in
     let event2   = BEvent.make (receiver,suid) in
     let trans    = BTrans.make (sender,receiver,chan,suid) in
     (* INIT MAPS  *)
     let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
     let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
-    let assum    = ConstrMap.init [(suid,Orders.Transm trans)] in
+    let assum    = ConstrMap.init [(suid,OL.mkSingleton (Orders.Transm trans))] in
     let guards   = ConstrMap.mkEmpty () in
     {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
   | SProt.SEmp 
   | _ -> mk_empty_summary ()
-   
+
+let collect prot = 
+  let res = collect prot in
+  (res.assumptions, res.guards)
+
+let collect prot =
+  let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
+  Debug.no_1 "OS.collect" pr_none pr_out collect prot
 
 

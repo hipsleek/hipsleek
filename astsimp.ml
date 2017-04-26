@@ -2445,7 +2445,8 @@ and session_to_iform_x (view:I.view_decl) =
       | Some Protocol ->
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
-        let _ = Order_summary.collect prot in
+        let assump,guards = Order_summary.collect prot in
+        let () = y_binfo_hp (add_str "assumpt size:" string_of_int) (List.length assump) in
 	let proj = make_projection_view_decls prot view in
         {view with view_session_projections = Some proj; I.view_session_formula = Some (ProtocolSession prot) }
       | Some Projection ->
