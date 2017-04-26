@@ -53,7 +53,7 @@ struct
   let eq (e1:t) (e2:t) : bool =
     (eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
 
-  let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ (string_of_suid e.uid)
+  let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ "^" ^(string_of_suid e.uid)
 
 end;;
 
@@ -108,7 +108,11 @@ module BOUNDARY_ELEMENT =
       | BOT -> true
       | _   -> false
     let eq e1 e2  = failwith x_tbi
-    let string_of e = failwith x_tbi
+    let rec string_of e = match e with
+      | BOT -> "BOT"
+      | FBase (BBase bs) -> Base.string_of bs
+      | FBase (BStar (bs1,bs2)) -> (string_of (FBase bs1)) ^ "*" ^ (string_of (FBase bs2))
+      | BOr (bs1,bs2) -> (string_of bs1) ^ "*" ^ (string_of bs2)
     let mk_base (base: base) : t = FBase (BBase base)
     let mk_or   (or1:t) (or2:t) : t = BOr (or1,or2)
     let mk_star (star1:t) (star2:t) : t =
@@ -140,7 +144,19 @@ struct
   let bot () = failwith x_tbi
   let is_bot x = failwith x_tbi
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = failwith x_tbi
+  let string_of e1 =
+    let rec helper e1 = 
+      match e1 with
+      | Event e  -> BEvent.string_of e
+      | NEvent e -> "not("^ (BEvent.string_of e) ^ ")"
+      | Transm t -> BTrans.string_of t
+      | Order (HBe (e1,e2)) -> (BEvent.string_of e1) ^ " <_HB " ^ (BEvent.string_of e2)
+      | Order (HBt (e1,e2)) -> (BTrans.string_of e1) ^ " <_HB " ^ (BTrans.string_of e2)
+      | Order (CBe (e1,e2)) -> (BEvent.string_of e1) ^ " <_CB " ^ (BEvent.string_of e2)
+      | And (a1,a2) -> (helper a1) ^ "&&" ^ (helper a2)
+      | Or  (a1,a2) -> (helper a1) ^ "||" ^ (helper a2)
+      | Impl (e,a) -> (BEvent.string_of e) ^ "=>" ^ (helper a)
+    in helper e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -156,10 +172,10 @@ struct
   type t = Orders.t list
   type base = Orders.t
 
-  let bot () = failwith x_tbi
-  let is_bot x = failwith x_tbi
+  let bot () = []
+  let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = failwith x_tbi
+  let string_of e1 = (pr_list (Orders.string_of)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -287,7 +303,7 @@ struct
 
   (* each key is returned only once *)
   let union_keys (e1:klist) (e2:klist) : klist =
-    remove_duplicate_keys e1@e2
+    remove_duplicate_keys (e1@e2)
 
   let update_elem (e1:emap) (k:key) (el:elem) : emap =
     List.map (fun (k0,e0) -> if Key.eq k0 k then (k0, Elem.add_elem e0 el) else (k0,e0)) e1
@@ -298,20 +314,29 @@ struct
     
   (* if key exists in emap, then replace its corresponding element *)
   let add_elem (e1:emap) (k:key) (el:elem) : emap =
-    let update_f =  if (Elem.is_bot (find e1 k)) then add_elem_dupl  else update_elem in
+    let update_f =  if (Elem.is_bot (find e1 k)) then add_elem_dupl else update_elem in
     update_f e1 k el
 
   (* this merge allows duplicates *)
   let union_dupl (e1:emap) (e2:emap) : emap =
     e1 @ e2
 
+  (* TODO Andreea : debug below add/update_elem?*)
   (* this merge assumes e1 and e2 have no key duplicates *)
   let union (e1:emap) (e2:emap) : emap =
-    List.fold_left (fun acc (key,elem) -> update_elem acc key elem) e1 e2
+    List.fold_left (fun acc (key,elem) -> add_elem acc key elem) e1 e2
 
+  let union (e1:emap) (e2:emap) : emap =
+    let pr = string_of in
+    Debug.no_2 "union" pr pr pr union e1 e2 
+      
   (* this merge assumes e1 and e2 have no key duplicates *)
   let flatten (e0:emap list) : emap =    
     List.fold_left (fun acc e1 -> union acc e1) (mkEmpty ()) e0
+
+  let flatten (e0:emap list) : emap =
+    let pr = string_of in
+    Debug.no_1 "flatten" (pr_list pr) pr flatten e0
   
   type op = SEQ | SOR | STAR
 
@@ -362,6 +387,9 @@ let mk_empty_summary () =
 
 let init_summary bborder fborder assum guards = 
   {bborder = bborder ; fborder = fborder ; assumptions = assum ; guards = guards}
+
+let string_of_border = pr_pair (add_str "RMap:" RMap.string_of) (add_str "CMap:" CMap.string_of)
+  
   
 (* ------------------------------------------------ *)
 (* ----- merging functions for prot constructs ---- *)
@@ -426,11 +454,12 @@ let merge_set (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : ConstrMap.
   let rmap1, cmap1 = b1 in
   let rmap2, cmap2 = b2 in
   let keys = RMap.union_keys (RMap.get_keys rmap1) (RMap.get_keys rmap2) in
+  let () = y_ninfo_hp (add_str "keys" (pr_list IRole.string_of)) keys in
   let assumpt = List.map (fun key -> RMerger.merge (RMap.find rmap1 key) (RMap.find rmap2 key) )  keys in
-  let assumpt = ConstrMap.flatten assumpt in
+  let assumpt = x_add_1 ConstrMap.flatten assumpt in
   let keys = CMap.union_keys (CMap.get_keys cmap1) (CMap.get_keys cmap2) in
   let guards = List.map (fun key -> CMerger.merge (CMap.find cmap1 key) (CMap.find cmap2 key) )  keys in
-  let guards = ConstrMap.flatten guards in
+  let guards = x_add_1 ConstrMap.flatten guards in
   (* flatten guards and assumptions  *)
   (assumpt, guards)
 
@@ -442,6 +471,11 @@ let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
   let rmap0 = rmap_merge rmap1 rmap2 in 
   let cmap0 = cmap_merge cmap1 cmap2 in
   (rmap0,cmap0)
+
+let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
+    rmap_merge cmap_merge : RMap.emap * CMap.emap =
+  let pr = string_of_border in
+  Debug.no_2 "merge_border" pr pr pr (fun _ _ -> merge_border b1 b2 rmap_merge cmap_merge) b1 b2
 
 (* [;] in paper *)
 let merge_seq_border (seq1:RMap.emap * CMap.emap) (seq2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
@@ -460,8 +494,8 @@ let merge_all_seq (seq1:summary) (seq2:summary) : summary =
   let bborder0 = merge_seq_border seq1.bborder seq2.bborder in
   let fborder0 = merge_seq_border seq2.fborder seq1.fborder in
   let assum3, guards3 = merge_set seq1.fborder seq2.bborder in
-  let assume0 = ConstrMap.flatten [seq1.assumptions; seq2.assumptions; assum3] in
-  let guards0 = ConstrMap.flatten [seq1.guards; seq2.guards; guards3] in
+  let assume0 = x_add_1 ConstrMap.flatten [seq1.assumptions; seq2.assumptions; assum3] in
+  let guards0 = x_add_1 ConstrMap.flatten [seq1.guards; seq2.guards; guards3] in
   init_summary bborder0 fborder0 assume0 guards0
 
 let merge_all_sor (sor1:summary) (sor2:summary) : summary =
