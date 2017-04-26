@@ -1,0 +1,16 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; B->C:k(2).
+
+/*
+Assumptions:
+B1 <_HB B2
+A-1->B
+B-2->C
+
+Guards:
+1 <_HB 2
+
+
+*/
