@@ -880,6 +880,8 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let constraint_sets_expansion = ref false
+
 let split_fixcalc = ref false (* present split is unsound *)
 
 let ptr_to_int_exact = ref false

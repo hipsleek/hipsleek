@@ -71,8 +71,6 @@ let decr_priority = ref false
 let set_priority = ref false
 let prio_list = ref []
 
-let constraint_sets_expansion = ref false
-
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 
@@ -1840,6 +1838,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   (* let f = translate_array_relation f in *)
   (* let f = drop_array_formula f in *)
   let _ = CP.filter_bag_constrain f f in
+  let f, _ = if !Globals.constraint_sets_expansion
+    then CP.expand_constraint_sets f (CP.mkTrue no_pos)
+    else (f, f) in
   let f = CP.concretize_bag_pure f in
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
@@ -2930,10 +2931,10 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
         (* let ante = CP.drop_locklevel_pure ante in *)
         (* let conseq = CP.drop_svl_pure conseq [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
         (* let conseq = CP.drop_locklevel_pure conseq in *)
-        (ante,conseq)
-    in
-    let ante, conseq = if !constraint_sets_expansion
-      then CP.expand_constraint_sets ante conseq
+        (ante,conseq) in
+    let (ante, conseq) =
+      if !Globals.constraint_sets_expansion then
+        CP.expand_constraint_sets ante conseq
       else (ante, conseq)
     in (None, ante, conseq)
 
