@@ -83,12 +83,18 @@ module type BOUNDARY_ELEMENT_TYPE =
 sig
   (* include BOUNDARY_BASE_ELEMENT_TYPE *)
   type t
+  type t1
   type base
-  val bot :       t
+  val bot :       unit -> t
   val is_bot :    t -> bool
   val string_of : t -> string
   val eq :        t -> t -> bool
-  val mk_base :   base -> t    
+  val mk_base :   base -> t
+  val mk_or :     t -> t -> t
+  val mk_star :   t -> t -> t
+  val merge_seq  : t -> t -> t
+  val merge_sor  : t -> t -> t
+  val merge_star : t -> t -> t
 end;;
 
 module BOUNDARY_ELEMENT =
@@ -96,14 +102,24 @@ module BOUNDARY_ELEMENT =
   struct
     type base = Base.t
     type t = base eform
-    let bot = BOT
+    type t1 = base bform
+    let bot () = BOT
     let is_bot x =
       match x with
       | BOT -> true
       | _   -> false
-    let eq = failwith x_tbi
-    let string_of = failwith x_tbi
+    let eq e1 e2  = failwith x_tbi
+    let string_of e = failwith x_tbi
     let mk_base (base: base) : t = FBase (BBase base)
+    let mk_or   (or1:t) (or2:t) : t = BOr (or1,or2)
+    let mk_star (star1:t) (star2:t) : t =
+      match star1, star2 with
+      | FBase f1, FBase f2 ->  FBase (BStar (f1,f2))
+      | _, _ -> failwith "BStar only between base elements"
+    let merge_seq (f1:t) (f2:t) : t  = if (is_bot f1) then f2 else f1
+    let merge_sor (f1:t) (f2:t) : t  = mk_or f1 f2
+    let merge_star (f1:t) (f2:t) : t = if (is_bot f1) then f2
+      else if (is_bot f2) then f1 else mk_star f1 f2
   end;;
 
 (* order relations - to be collected after analyzing the protocol *)
@@ -120,13 +136,19 @@ struct
                | Or of assrt * assrt
                | Impl of event * assrt
   type t = assrt
+  type t1 = orders
   type base = orders
-  let bot = failwith x_tbi
+  let bot () = failwith x_tbi
   let is_bot x = failwith x_tbi
-  let eq = failwith x_tbi
-  let string_of = failwith x_tbi
+  let eq e1 e2 = failwith x_tbi
+  let string_of e1 = failwith x_tbi
   let mk_base (base: base) : t = failwith x_tbi
-
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+        
 end;;
 
 (* ------------------------------------------------ *)
@@ -188,6 +210,14 @@ sig
   val add : emap-> key -> elem -> emap
   val find : emap -> key -> elem
 
+  val update_elem    : emap -> key -> elem -> emap
+  val add_elem_dupl  : emap -> key -> elem -> emap
+  val add_elem       : emap -> key -> elem -> emap
+  
+  val union      : emap -> emap -> emap
+  val merge_seq  : emap -> emap -> emap
+  val merge_sor  : emap -> emap -> emap
+  val merge_star : emap -> emap -> emap 
 end;;
 
 module SMap
@@ -220,7 +250,43 @@ struct
       _ -> d
 
   (* find element with key k in s *)
-  let find (s : emap) (k: key) : elem  = find_aux s k Elem.bot
+  let find (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
+
+  let update_elem (e1:emap) (k:key) (el:elem) : emap =
+    List.map (fun (k0,e0) -> if Key.eq k0 k then (k0,el) else (k0,e0)) e1
+
+  (* allow key duplicates *)
+  let add_elem_dupl (e1:emap) (k:key) (el:elem) : emap =
+    (k,el)::e1
+    
+  (* if key exists in emap, then replace its corresponding element *)
+  let add_elem (e1:emap) (k:key) (el:elem) : emap =
+    let update_f =  if (Elem.is_bot (find e1 k)) then add_elem_dupl  else update_elem in
+    update_f e1 k el
+
+  (* this merge allows duplicates *)
+  let union (e1:emap) (e2:emap) :emap =
+    e1 @ e2
+
+  type op = SEQ | SOR | STAR
+
+  (* generic merge emap function *)
+  let merge_op op (e1:emap) (e2:emap) :emap =
+    let merge_elem op =
+      match op with
+      | SEQ  -> Elem.merge_seq
+      | SOR  -> Elem.merge_sor
+      | STAR -> Elem.merge_star in
+    List.fold_left (fun map (key,elem) ->
+        let elem1 = find e1 key in (* \bot or some element *)
+        let elem1 = (merge_elem op) elem1 elem in
+        add_elem e1 key elem1) e1 e2 
+    
+  let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2
+      
+  let merge_sor  (e1:emap) (e2:emap) :emap = merge_op SOR e1 e2
+      
+  let merge_star (e1:emap) (e2:emap) :emap = merge_op STAR e1 e2
 
 end;;
 
@@ -233,6 +299,7 @@ module CMap = SMap(IChan)(Trans) ;;
 module ConstrMap = SMap(UID)(Orders) ;;
 
 (* ------------------------------------------------ *)
+(* ------------- summary related stuff ------------ *)
 type summary = {
   bborder : RMap.emap * CMap.emap;
   fborder : RMap.emap * CMap.emap;
@@ -247,14 +314,60 @@ let mk_empty_summary () =
   let guards   = ConstrMap.mkEmpty () in
   {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
 
+let init_summary bborder fborder assum guards = 
+  {bborder = bborder ; fborder = fborder ; assumptions = assum ; guards = guards}
+  
 (* ------------------------------------------------ *)
 (* ----- merging functions for prot constructs ---- *)
+
+let merge_set (fborder:RMap.emap * CMap.emap) (bborder:RMap.emap * CMap.emap) : ConstrMap.emap * ConstrMap.emap =
   
-let merge_all_seq seq1 seq2 : summary = seq1
+  (ConstrMap.mkEmpty (), ConstrMap.mkEmpty ())
 
-let merge_all_sor sor1 sor2 : summary = sor1
+(* generic border merge *)
+let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
+    rmap_merge cmap_merge : RMap.emap * CMap.emap =
+  let rmap1, cmap1 = b1 in
+  let rmap2, cmap2 = b2 in
+  let rmap0 = rmap_merge rmap1 rmap2 in 
+  let cmap0 = cmap_merge cmap1 cmap2 in
+  (rmap0,cmap0)
 
-let merge_all_star star1 star2 : summary = star1 
+(* [;] in paper *)
+let merge_seq_border (seq1:RMap.emap * CMap.emap) (seq2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
+  merge_border seq1 seq2 RMap.merge_seq CMap.merge_seq
+
+(* [\/] in paper *)
+let merge_sor_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
+  merge_border b1 b2 RMap.merge_sor CMap.merge_sor
+
+(* [*] in paper *)
+let merge_star_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
+  merge_border b1 b2 RMap.merge_star CMap.merge_star
+  
+(* f1 in paper *)
+let merge_all_seq (seq1:summary) (seq2:summary) : summary =
+  let bborder0 = merge_seq_border seq1.bborder seq2.bborder in
+  let fborder0 = merge_seq_border seq2.fborder seq1.fborder in
+  let assum3, guards3 = merge_set seq1.fborder seq2.bborder in
+  let assume0 = ConstrMap.union (ConstrMap.union seq1.assumptions seq2.assumptions) assum3 in
+  let guards0 = ConstrMap.union (ConstrMap.union seq1.guards seq2.guards) guards3 in
+  init_summary bborder0 fborder0 assume0 guards0
+
+let merge_all_sor (sor1:summary) (sor2:summary) : summary =
+  let bborder0 = merge_sor_border sor1.bborder sor2.bborder in
+  let fborder0 = merge_sor_border sor2.fborder sor1.fborder in
+  let assume0 = ConstrMap.union sor1.assumptions sor2.assumptions in
+  let guards0 = ConstrMap.union sor1.guards sor2.guards in
+  init_summary bborder0 fborder0 assume0 guards0
+
+let merge_all_star (star1:summary) (star2:summary) : summary =
+  let bborder0 = merge_star_border star1.bborder star2.bborder in
+  let fborder0 = merge_star_border star2.fborder star1.fborder in
+  let assume0 = ConstrMap.union star1.assumptions star2.assumptions in
+  let guards0 = ConstrMap.union star1.guards star2.guards in
+  init_summary bborder0 fborder0 assume0 guards0
+
 
 (* ------------------------------------------------ *)
 (* Collects order assumptions and proof obligations.*)
