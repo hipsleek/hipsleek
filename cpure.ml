@@ -14513,12 +14513,12 @@ and expand_constraint_sets' ante conseq =
           match additional_ante with
             | BExpr f -> f
             | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | exp -> x_fail ("ante: Don't know what to do with " ^ show_exp exp) in
+            | exp -> x_fail ("ante: Don't know what to do with " ^ !print_exp exp) in
         let additional_conseq' =
           match additional_conseq with
             | BExpr f -> f
             | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | exp -> x_fail ("conseq: Don't know what to do with " ^ show_exp exp) in
+            | exp -> x_fail ("conseq: Don't know what to do with " ^ !print_exp exp) in
         (Some additional_ante', additional_conseq')
     | Eq (e1, e2, loc) ->
         (* Assume form `var = exp` *)
