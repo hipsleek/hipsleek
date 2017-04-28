@@ -19,12 +19,18 @@ let out_chan = ref stdout
 let in_chan = ref stdin
 let err_chan = ref stdin
 
-type sat = SAT | UNSAT | UNK
-
 let chr_cmd = "orderchr"
 
 let halt = "halt."
-  
+
+type sat = SAT | UNSAT | UNK
+
+let string_of_sat sat = 
+  match sat with
+  | SAT -> "SAT"
+  | UNSAT -> "UNSAT"
+  | UNK -> "UNKNOWN"
+
 let set_log_file () : unit =
   log_chr_formula := true;
   chr_log := open_log_out chr_log_file
@@ -49,8 +55,7 @@ and chr_of_b_formula b =
   match pf with
   | CP.BConst (c, _) -> string_of_bool c
   | CP.BVar (sv, _) ->
-    let () = y_binfo_pp "Andreea: why is a BVar translated to sv > 0 ?" in
-    (chr_of_spec_var sv) (* ^ " > 0"  *)
+    (chr_of_spec_var sv)
   | CP.Eq (a1, a2, _) -> (chr_of_exp a1) ^ "=" ^ (chr_of_exp a2)
   | CP.Neq (a1, a2, _) -> (chr_of_exp a1) ^ "\\=" ^ (chr_of_exp a2)
   | CP.RelForm (r, args, l) -> 
@@ -70,7 +75,6 @@ and chr_of_formula f = match f with
   | CP.Or (p1, p2,_, _) -> "(" ^ (chr_of_formula p1) ^ ";" ^ (chr_of_formula p2) ^ ")"
   | CP.Not (p,_, _) -> "(snot(" ^ (chr_of_formula p) ^ "))"
   | _ -> ""
-
 
 (* all formulae that shall be sent to CHR process have to be transformed in CHR input language *)
 let prepare_formula_for_chr (f : CP.formula) : string =
@@ -96,13 +100,16 @@ let send_query (query : string) : sat =
       SAT  in
    result
 
+let send_query (query : string) : sat =
+  Debug.no_1 "CHR.send_query" pr_string string_of_sat (fun _ -> send_query query) query
+
 (* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
   let ante_chr = prepare_formula_for_chr ante in
   let conseq_chr = prepare_formula_for_chr conseq in
   let query = (ante_chr ^ ", snot((" ^ conseq_chr ^  ")).\n") in
-  let result = send_query query in
+  let result = x_add_1 send_query query in
   match result with
   | SAT   -> _invalid
   | UNSAT -> _valid
@@ -117,7 +124,7 @@ let is_sat (form : CP.formula) (sat_no : string) : bool =
   let () = set_prover_type () in
   let formula_chr = prepare_formula_for_chr form in
   let query = formula_chr ^ ".\n" in
-  let result = send_query query in
+  let result = x_add_1 send_query query in
   match result with
   | SAT   -> _sat
   | UNSAT -> _unsat
@@ -134,7 +141,6 @@ let start () =
   in_chan := inchn;
   out_chan := outchn;
   err_chan := errchn
-
 
 let stop () = 
   output_string !out_chan halt

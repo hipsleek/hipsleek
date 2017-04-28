@@ -659,6 +659,7 @@ let stop_prover () =
             if !Omega.is_omega_running then Omega.stop ();)
   | SPASS -> Spass.stop();
   | MINISAT -> Minisat.stop ();
+  | CHR -> Chr.stop();
   | _ -> Omega.stop();;
 
 let stop_prover () =
