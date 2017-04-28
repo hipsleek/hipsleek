@@ -24,9 +24,6 @@ let set_tmp_files_path () =
        ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
      with
        Unix.Unix_error (_, _, _) -> (););
-    let () = y_binfo_pp "HERREEE2" in
-    let () = tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") in
-    let () = y_binfo_hp (add_str "tmp_files_path" pr_id) !tmp_files_path in
     ()
   end
 

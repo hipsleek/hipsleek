@@ -1,8 +1,8 @@
-#!/usr/bin/env swipl
+#!/usr/bin/swipl -q
 :- module(orders, [ev/2,hb/4,cb/4,snot/1]).
 :- use_module(library(chr)).
 
-:- initialization main.
+:- initialization start.
 :- chr_constraint ev/2,hb/4,cb/4,snot/1.
 
 
@@ -52,24 +52,14 @@ cbhb   @ cb(A,L1,B,L1), hb(B,L1,C,L4) ==> hb(A,L1,C,L4).
 %%%%%%%%%%
 writeln(T) :- write(T), nl.
 
-% read query from file, and detect end of file
-read_goals(Stream,[]):-
-        at_end_of_stream(Stream).
-read_goals(Stream,[X|L]):-
-        \+ at_end_of_stream(Stream),
-        read(Stream,Gl),
-        % writeln(Gl),
-        once((Gl)).
-
 checkff :-
-        current_prolog_flag(argv, [File]),
-        catch(open(File,read,Str), E,
+        catch(read(user_input, Gl), E,
               ( print_message(error, E),
                 halt
               ) ),
-        read_goals(Str,Gl),
-        close(Str).
+        (once((Gl)) -> writeln(true); writeln(false)).
 
-main :-
-        ((checkff,writeln(true)) ; (\+(checkff),writeln(false))),
-        halt.
+start :-
+    repeat,
+    checkff,
+    fail.

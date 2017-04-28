@@ -578,6 +578,8 @@ let get_current_tp_name () = name_of_tp !pure_tp
 let omega_count = ref 0
 
 let start_prover () =
+  let () = print_endline ("Chr flag: " ^ (string_of_bool !Globals.chr_flag)) in
+  if !Globals.chr_flag then Chr.start();
   match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | OCRed | RM -> Redlog.start ();
@@ -608,12 +610,14 @@ let start_prover () =
   | SPASS -> Spass.start();
   | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
+  | CHR -> Chr.start()
   | _ -> Omega.start_prover()
 
 let start_prover () =
   Gen.Profiling.do_1 "TP.start_prover" start_prover ()
 
 let stop_prover () =
+  if !Globals.chr_flag then Chr.stop();
   match !pure_tp with
   | OmegaCalc -> (
       Omega.stop ();

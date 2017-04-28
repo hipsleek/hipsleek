@@ -15,11 +15,15 @@ let _invalid = false
 let _sat = true
 let _unsat = false
 
+let out_chan = ref stdout
+let in_chan = ref stdin
+let err_chan = ref stdin
+
 type sat = SAT | UNSAT | UNK
 
-(* this file is only needed until until we resolve the interactive chr *)
-let infilename () = !tmp_files_path ^ "input.chr." ^ (string_of_int (Unix.getpid ()))
 let chr_cmd = "orderchr"
+
+let halt = "halt."
   
 let set_log_file () : unit =
   log_chr_formula := true;
@@ -30,13 +34,6 @@ let log_text_to_chr_file (str : string) : unit =
     begin
       output_string !chr_log str
     end
-
-let output_to_chr_file str =
-  let infilename = infilename () in
-  let chr_infile = open_out infilename in
-  let () = output_string chr_infile str in
-  let () = flush chr_infile in
-  infilename
 
 let rec chr_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> (String.capitalize v) ^ (if CP.is_primed sv then Oclexer.primed_str else "")
@@ -82,23 +79,13 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
-
+(* send a query to CHR and receive result -> true/false/unknown *)
 let send_query (query : string) : sat =
-  let () = log_text_to_chr_file query in
-  let infilename = output_to_chr_file query in
-  (* TODO elena: replace the relative path for the script *)
-  (* let cmd = "../../../../chr/run_simple_pl.sh" in *)
-  let args = [| chr_cmd; infilename |] in
-  (* TODO elena: modify the script such that it expects the command instead of a file *)
-  (* let args = [| cmd; (ante_chr ^ ", not(" ^ conseq_chr ^  ").\n") |] in *)
-  let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in
-  let () = try
-      let error = input_line errchn in
-      y_binfo_pp ("\n############\n CHR error: "^error^"\n############\n")
-    with _ -> () in
+  let () = output_string !out_chan query in
+  let () = flush !out_chan in
   let result =
     try  
-      let result = input_line inchn in
+      let result = input_line !in_chan in
       let () = y_ninfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
       match result with
       | "false" -> UNSAT
@@ -108,7 +95,7 @@ let send_query (query : string) : sat =
       let () = y_binfo_pp ("\n############ NO CHR result ############\n") in
       SAT  in
    result
-     
+
 (* valid(A |- C)  ~~> unsat( not(A |- C) ) ~~> unsat( A/\not(C) ) *)
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
@@ -140,3 +127,15 @@ let is_sat (form : CP.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "CHR.is_sat" pr string_of_bool (fun _ -> is_sat form sat_no) form
     
+let start () =
+  print_string_quiet "Starting CHR... \n"; flush stdout;
+  let args = [| chr_cmd |] in
+  let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in
+  in_chan := inchn;
+  out_chan := outchn;
+  err_chan := errchn
+
+
+let stop () = 
+  output_string !out_chan halt
+
