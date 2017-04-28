@@ -2738,7 +2738,6 @@ let norm_file_name str =
 (*   wrap_two_bools label_aggressive_sat label_aggressive_imply false f a *)
 
 let chr_label = "chr"
-let chr_flag = ref false 
 
 let proof_no = ref 0
 

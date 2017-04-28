@@ -470,6 +470,10 @@ let set_tp user_flag tp_str =
     (pure_tp := MINISAT; prover_str := "z3"::!prover_str;)
   else if tp_str = "log" then
     (pure_tp := LOG; prover_str := "log"::!prover_str)
+  else if tp_str = "chr" then
+    (pure_tp := CHR; prover_str := "orderchr"::!prover_str)
+  else if tp_str = "cz" then
+    (pure_tp := CZ; prover_str := "orderchr"::!prover_str; prover_str := "z3"::!prover_str;)
   else
     ();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
@@ -526,6 +530,7 @@ let string_of_tp tp = match tp with
   | MINISAT -> "minisat"
   | LOG -> "log"
   | CHR -> "chr"
+  | CZ -> "cz"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -555,6 +560,7 @@ let name_of_tp tp = match tp with
   | MINISAT -> "MINISAT"
   | LOG -> "LOG"
   | CHR -> "CHR"
+  | CZ -> "CHR and Z3"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -578,8 +584,6 @@ let get_current_tp_name () = name_of_tp !pure_tp
 let omega_count = ref 0
 
 let start_prover () =
-  let () = print_endline ("Chr flag: " ^ (string_of_bool !Globals.chr_flag)) in
-  if !Globals.chr_flag then Chr.start();
   match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | OCRed | RM -> Redlog.start ();
@@ -611,13 +615,16 @@ let start_prover () =
   | LOG -> file_to_proof_log !Globals.source_files
   | MINISAT -> Minisat.start ()
   | CHR -> Chr.start()
+  | CZ -> (
+      Chr.start();
+      Z3.start();
+    )
   | _ -> Omega.start_prover()
 
 let start_prover () =
   Gen.Profiling.do_1 "TP.start_prover" start_prover ()
 
 let stop_prover () =
-  if !Globals.chr_flag then Chr.stop();
   match !pure_tp with
   | OmegaCalc -> (
       Omega.stop ();
@@ -660,6 +667,10 @@ let stop_prover () =
   | SPASS -> Spass.stop();
   | MINISAT -> Minisat.stop ();
   | CHR -> Chr.stop();
+  | CZ -> (
+      Chr.stop();
+      Z3.stop();
+    )
   | _ -> Omega.stop();;
 
 let stop_prover () =
@@ -2030,6 +2041,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | MINISAT -> Minisat.is_sat f sat_no
     | LOG -> find_bool_proof_res sat_no
     | CHR -> Chr.is_sat f sat_no
+    | CZ -> z3_is_sat f
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res
@@ -3170,6 +3182,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       | MINISAT -> Minisat.imply ante conseq timeout
       | LOG -> find_bool_proof_res imp_no 
       | CHR -> Chr.imply ante conseq imp_no
+      | CZ -> z3_imply ante conseq
     ) in
 
     if not !tp_batch_mode then stop_prover ();
