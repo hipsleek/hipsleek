@@ -567,4 +567,14 @@ let collect prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
   Debug.no_1 "OS.collect" pr_none pr_out collect prot
 
+let insert_orders prot =
+  let amap,gmap = collect prot in
+  let () = y_binfo_hp (pr_pair (add_str "Assumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
+  (* 
+     prot <- add assumptions + guards
+ *)
+  prot
 
+let insert_orders prot =
+  let pr = Session.IProtocol.string_of_session in
+  Debug.no_1 "OS.insert_orders" pr pr insert_orders prot
