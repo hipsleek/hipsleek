@@ -6,6 +6,28 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
+module type GORDERS_TYPE = 
+sig
+  type role
+  type chan
+  
+  type event
+  type transmission
+
+  val string_of_role : 't -> string
+  val string_of_chan : 't -> string
+  val string_of_event : event -> string
+  val string_of_transmission : transmission -> string
+
+  type orders
+  type assrt
+
+  val string_of_assrt : assrt -> string 
+
+  val mk_hbe : event ->  event -> assrt
+  val mk_hbt : transmission -> transmission -> assrt
+end;;
+
 module type VAR_TYPE =
 sig
   type t
