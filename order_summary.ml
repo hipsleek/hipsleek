@@ -10,26 +10,18 @@ module CP = Cpure
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
 
-type role = SBProt.role
-type chan = SBProt.chan
+type role = Orders.role
+type chan = Orders.chan
               
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
 and  'a eform = BOT | FBase of 'a bform | BOr of ('a eform) * ('a eform)
 
 (* boundary base element *)
-and event = {
-  role : role;
-  uid  : suid;
-}
+type event = Orders.event
 
 (* boundary base element *)
-and transmission = {
-  sender   : role;
-  receiver : role;
-  channel  : chan;
-  uid      : suid;
-}
+and transmission = Orders.transmission
 
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
@@ -46,9 +38,9 @@ end;;
 module BEvent =
 struct
   type t = event
-  type a = role * suid
+  type a = role * suid * chan
            
-  let make ((role,uid) : a) : t = {role = role; uid = uid}
+  let make ((role,uid,chan) : a) : t = {role = role; uid = uid; channel = chan }
                                          
   let eq (e1:t) (e2:t) : bool =
     (eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
@@ -126,56 +118,15 @@ module BOUNDARY_ELEMENT =
     let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
-(* order relations - to be collected after analyzing the protocol *)
-module Orders =
-struct
-  type orders  = HBe of event * event
-               | HBt of transmission * transmission
-               | CBe of event * event
-  type assrt   = Event of event
-               | NEvent of event
-               | Transm of transmission
-               | Order of orders
-               | And of assrt * assrt
-               | Or of assrt * assrt
-               | Impl of event * assrt
-  type t = assrt
-  type base = orders
-  let bot () = failwith x_tbi
-  let is_bot x = failwith x_tbi
-  let eq e1 e2 = failwith x_tbi
-  let string_of e1 =
-    let rec helper e1 = 
-      match e1 with
-      | Event e  -> BEvent.string_of e
-      | NEvent e -> "not("^ (BEvent.string_of e) ^ ")"
-      | Transm t -> BTrans.string_of t
-      | Order (HBe (e1,e2)) -> (BEvent.string_of e1) ^ " <_HB " ^ (BEvent.string_of e2)
-      | Order (HBt (e1,e2)) -> (BTrans.string_of e1) ^ " <_HB " ^ (BTrans.string_of e2)
-      | Order (CBe (e1,e2)) -> (BEvent.string_of e1) ^ " <_CB " ^ (BEvent.string_of e2)
-      | And (a1,a2) -> (helper a1) ^ "&&" ^ (helper a2)
-      | Or  (a1,a2) -> (helper a1) ^ "||" ^ (helper a2)
-      | Impl (e,a) -> (BEvent.string_of e) ^ "=>" ^ (helper a)
-    in helper e1
-  let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
-  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-  let mk_hbe e1 e2 = Order (HBe (e1,e2))
-  let mk_hbt e1 e2 = Order (HBt (e1,e2))
-end;;
-
 module Orders_list  =
 struct
-  type t = Orders.t list
-  type base = Orders.t
+  type t = Orders.assrt list
+  type base = Orders.assrt
 
   let bot () = []
   let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = (pr_list (Orders.string_of)) e1
+  let string_of e1 = (pr_list (Orders.string_of_assrt)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -547,8 +498,8 @@ let rec collect prot =
       | Some chan -> chan in
       (* map_opt_def (fail "expecting a specified channel" ) *)
       (*   idf tr.SBProt.protocol_base_formula_chan in *)
-    let event1   = BEvent.make (sender,suid) in
-    let event2   = BEvent.make (receiver,suid) in
+    let event1   = BEvent.make (sender,suid,chan) in
+    let event2   = BEvent.make (receiver,suid,chan) in
     let trans    = BTrans.make (sender,receiver,chan,suid) in
     (* INIT MAPS  *)
     let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in

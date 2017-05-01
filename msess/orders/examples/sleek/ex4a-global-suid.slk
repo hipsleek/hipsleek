@@ -2,16 +2,19 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 pred_sess_prot G1<A,B,C,k> == A->B:k(v#v=2) ;; B->C:k(2).
-pred_sess_prot G2<A,B,C,k> == A->B:k(v#v=2) ;; Assume{emp}<> ;;B->C:k(2).
+pred_sess_prot G2<A,B,C,k> ==
+               A->B:k(v#v=2) ;; Assume{  ev(A,2) & ev(B,2) & cb(A,2,B,2)}<> ;;
+               B->C:k(2) ;; Assume{ hb(B,2,B,1) & ev(B,1) & ev(C,1) & cb(B,1,C,1)}<> ;;
+                            Guard{ hb(A,2,B,1) & hb(B,2,C,1)}<>.
 
 /*
 Assumptions:
-B1 <_HB B2
-A-1->B
-B-2->C
+B2 <_HB B1
+A-2->B
+B-1->C
 
 Guards:
-1 <_HB 2
+2 <_HB 1
 
 
 */

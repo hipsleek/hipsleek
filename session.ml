@@ -1402,6 +1402,7 @@ module Make_Session (Base: Session_base) = struct
 
   and session_base =
     | Base of t
+    (* | Orders of kind * order *)
     | Predicate of session_predicate
     | HVar of session_hvar
 
@@ -1447,6 +1448,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
     session_predicate_anns: sess_ann list;
+    (* session_predicate_orders: assert list;  *)
     session_predicate_kind: session_predicate_kind;
   }
 
