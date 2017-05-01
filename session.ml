@@ -5,6 +5,7 @@ open Globals
 open Gen.Basic
 open Printf
 open Gen.BList
+open Orders
 
 module F = Iformula
 module P = Ipure_D
@@ -1448,7 +1449,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
     session_predicate_anns: sess_ann list;
-    (* session_predicate_orders: assert list;  *)
+    (* session_predicate_orders: asert list;  *)
     session_predicate_kind: session_predicate_kind;
   }
 
@@ -2311,6 +2312,21 @@ module CTPProjection = Make_Session(CTPProjection_base);;
 type session_type = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
                   | TPProjectionSession of ITPProjection.session
+
+module IVar =
+struct
+  type t = IForm.var
+  let string_of = IForm.print_var
+end;;
+
+module CVar =
+struct
+  type t = CForm.var
+  let string_of = CForm.print_var
+end;;
+
+module IOrders = GOrders(IVar)
+module COrders = GOrders(CVar)
 
 let get_protocol session =
   match session with

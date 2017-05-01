@@ -10,18 +10,18 @@ module CP = Cpure
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
 
-type role = Orders.role
-type chan = Orders.chan
+type role = Session.IOrders.role
+type chan = Session.IOrders.chan
               
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
 and  'a eform = BOT | FBase of 'a bform | BOr of ('a eform) * ('a eform)
 
 (* boundary base element *)
-type event = Orders.event
+type event = Session.IOrders.event
 
 (* boundary base element *)
-and transmission = Orders.transmission
+and transmission = Session.IOrders.transmission
 
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
@@ -120,13 +120,13 @@ module BOUNDARY_ELEMENT =
 
 module Orders_list  =
 struct
-  type t = Orders.assrt list
-  type base = Orders.assrt
+  type t = Session.IOrders.assrt list
+  type base = Session.IOrders.assrt
 
   let bot () = []
   let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = (pr_list (Orders.string_of_assrt)) e1
+  let string_of e1 = (pr_list (Session.IOrders.string_of_assrt)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -348,21 +348,21 @@ let string_of_border = pr_pair (add_str "RMap:" RMap.string_of) (add_str "CMap:"
 module type ORDERS_TYPE =
 sig
   type t
-  val mk_hb : t -> t -> Orders.assrt
+  val mk_hb : t -> t -> Session.IOrders.assrt
   val get_uid : t -> suid
 end;;
 
 module Orders_hbe =
 struct
   type t = event
-  let mk_hb = Orders.mk_hbe
+  let mk_hb = Session.IOrders.mk_hbe
   let get_uid (e:t) = e.uid
 end;;
 
 module Orders_hbt =
 struct
   type t = transmission
-  let mk_hb = Orders.mk_hbt
+  let mk_hb = Session.IOrders.mk_hbt
   let get_uid (e:t) = e.uid
 end;;
 
@@ -504,7 +504,7 @@ let rec collect prot =
     (* INIT MAPS  *)
     let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
     let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
-    let assum    = ConstrMap.init [(suid,OL.mkSingleton (Orders.Transm trans))] in
+    let assum    = ConstrMap.init [(suid,OL.mkSingleton (Session.IOrders.Transm trans))] in
     let guards   = ConstrMap.mkEmpty () in
     {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
   | SProt.SEmp 
