@@ -1390,7 +1390,9 @@ end;;
 
 (* ============== session type ================ *)
 (* ============================================ *)
-module Make_Session (Base: Session_base) = struct
+module Make_Session (Base: Session_base)
+    (Orders :GORDERS_TYPE)
+= struct
   type t = Base.base
 
   type session =
@@ -1449,7 +1451,7 @@ module Make_Session (Base: Session_base) = struct
     session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
     session_predicate_anns: sess_ann list;
-    (* session_predicate_orders: asert list;  *)
+    session_predicate_orders: Orders.assrt list;
     session_predicate_kind: session_predicate_kind;
   }
 
@@ -1501,9 +1503,14 @@ module Make_Session (Base: Session_base) = struct
   (*   string_of_session_predicate f.session_fence_pred *)
 
   and string_of_session_predicate s =
-    s.session_predicate_name ^ 
-	"{" ^ ((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ "}" ^ 
-	"<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
+    match s.session_predicate_orders with
+    | [] ->
+      s.session_predicate_name ^ 
+      "{" ^ ((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ "}" ^ 
+      "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
+    | orders ->
+      s.session_predicate_name ^
+      "{" ^ ((pr_list Orders.string_of ) orders) ^ "}"  
 
   and string_of_session_hvar s =
     "%" ^ s.session_hvar_id
@@ -1585,7 +1592,8 @@ module Make_Session (Base: Session_base) = struct
   and mk_session_predicate_x name ho_vars params 
     ?node:(node=None) 
     ?pure:(pure=(Base.mk_true ())) 
-    ?sess_ann:(anns=[]) 
+    ?sess_ann:(anns=[])
+    ?orders:(orders=[]) 
     ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
     let sess_pred_kind = match sess_pred_kind with
         | NO_KIND -> get_pred_kind name   
@@ -1599,11 +1607,12 @@ module Make_Session (Base: Session_base) = struct
       session_predicate_pure = pure;
       session_predicate_pos = loc; 
       session_predicate_anns = anns;
+      session_predicate_orders = orders;
       session_predicate_kind = sess_pred_kind;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
-    Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~sess_pred_kind:sess_pred_kind loc) ho_vars
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?orders:(orders=[]) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+    Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:sess_pred_kind loc) ho_vars
 
   
   (* TODO tina: Why doesn't this use SFence constructor? *)
@@ -1667,7 +1676,7 @@ module Make_Session (Base: Session_base) = struct
 (* TODO: review this *)
   (* and mk_fence () = *)
   (*   Base.mk_empty () *)
- 
+  (* Andreea TODO: shoudl we transform orders -> pure ? *)
   and mk_predicate_node_x hnode p =
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr session_def_id hnode in
@@ -2293,26 +2302,6 @@ end;;
 module IMessage = Message_commons(IForm);;
 module CMessage = Message_commons(CForm);;
 
-module IProtocol_base = Protocol_base_formula(IMessage) ;;
-module CProtocol_base = Protocol_base_formula(CMessage) ;;
-module IProjection_base = Projection_base_formula(IMessage) ;;
-module CProjection_base = Projection_base_formula(CMessage) ;;
-module ITPProjection_base = TPProjection_base_formula(IMessage);;
-module CTPProjection_base = TPProjection_base_formula(CMessage);;
-
-module IProtocol = Make_Session(IProtocol_base);;
-module CProtocol = Make_Session(CProtocol_base);;
-
-module IProjection = Make_Session(IProjection_base);;
-module CProjection = Make_Session(CProjection_base);;
-
-module ITPProjection = Make_Session(ITPProjection_base);;
-module CTPProjection = Make_Session(CTPProjection_base);;
-
-type session_type = ProtocolSession of IProtocol.session
-                  | ProjectionSession of IProjection.session
-                  | TPProjectionSession of ITPProjection.session
-
 module IVar =
 struct
   type t = IForm.var
@@ -2327,6 +2316,27 @@ end;;
 
 module IOrders = GOrders(IVar)
 module COrders = GOrders(CVar)
+
+module IProtocol_base = Protocol_base_formula(IMessage) ;;
+module CProtocol_base = Protocol_base_formula(CMessage) ;;
+module IProjection_base = Projection_base_formula(IMessage) ;;
+module CProjection_base = Projection_base_formula(CMessage) ;;
+module ITPProjection_base = TPProjection_base_formula(IMessage);;
+module CTPProjection_base = TPProjection_base_formula(CMessage);;
+
+module IProtocol = Make_Session(IProtocol_base)(IOrders);;
+module CProtocol = Make_Session(CProtocol_base)(COrders);;
+
+module IProjection = Make_Session(IProjection_base)(IOrders);;
+module CProjection = Make_Session(CProjection_base)(COrders);;
+
+module ITPProjection = Make_Session(ITPProjection_base)(IOrders);;
+module CTPProjection = Make_Session(CTPProjection_base)(COrders);;
+
+type session_type = ProtocolSession of IProtocol.session
+                  | ProjectionSession of IProjection.session
+                  | TPProjectionSession of ITPProjection.session
+
 
 let get_protocol session =
   match session with
@@ -2371,6 +2381,7 @@ let convert_predicate pred =
   let params = pred.IProtocol.session_predicate_params in
   let pos = pred.IProtocol.session_predicate_pos in
   let anns = pred.IProtocol.session_predicate_anns in
+  let orders = pred.IProtocol.session_predicate_orders in
   let session_predicate_kind = pred.IProtocol.session_predicate_kind in
   ITPProjection.mk_session_predicate name ho_vars params ~sess_ann:anns ~sess_pred_kind:session_predicate_kind pos
 

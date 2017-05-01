@@ -14,15 +14,15 @@ sig
   type event
   type transmission
 
-  val string_of_role : 't -> string
-  val string_of_chan : 't -> string
+  val string_of_role : role -> string
+  val string_of_chan : chan -> string
   val string_of_event : event -> string
   val string_of_transmission : transmission -> string
 
   type orders
   type assrt
 
-  val string_of_assrt : assrt -> string 
+  val string_of : assrt -> string 
 
   val mk_hbe : event ->  event -> assrt
   val mk_hbt : transmission -> transmission -> assrt
@@ -98,7 +98,7 @@ struct
     impl_assrt :  assrt;
   }
 
-  let string_of_assrt e1 =
+  let string_of e1 =
     let rec helper e1 = 
       match e1 with
       | Event e  -> string_of_event e

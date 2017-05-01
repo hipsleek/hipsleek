@@ -126,7 +126,7 @@ struct
   let bot () = []
   let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = (pr_list (Session.IOrders.string_of_assrt)) e1
+  let string_of e1 = (pr_list (Session.IOrders.string_of)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
