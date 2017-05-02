@@ -107,8 +107,8 @@ struct
       | Order (HBe e) -> (string_of_event e.hbe_event1) ^ " <_HB " ^ (string_of_event e.hbe_event2)
       | Order (HBt t) -> (string_of_transmission t.hbt_transmission1) ^ " <_HB " ^ (string_of_transmission t.hbt_transmission2)
       | Order (CBe e) -> (string_of_event e.cbe_event1) ^ " <_CB " ^ (string_of_event e.cbe_event2)
-      | And a -> (helper a.and_assrt1) ^ "&&" ^ (helper a.and_assrt2)
-      | Or  a -> (helper a.or_assrt1) ^ "||" ^ (helper a.or_assrt2)
+      | And a -> (helper a.and_assrt1) ^ "&" ^ (helper a.and_assrt2)
+      | Or  a -> (helper a.or_assrt1) ^ " or " ^ (helper a.or_assrt2)
       | Impl a -> (string_of_event a.impl_event) ^ "=>" ^ (helper a.impl_assrt)
     in helper e1
 

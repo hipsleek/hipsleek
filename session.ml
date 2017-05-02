@@ -1187,6 +1187,8 @@ module Protocol_base_formula =
     let get_sender base = base.protocol_base_formula_sender
 
     let get_receiver base = base.protocol_base_formula_receiver
+    
+    let get_uid base = base.protocol_base_formula_uid
 
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
@@ -1594,7 +1596,8 @@ module Make_Session (Base: Session_base)
     ?pure:(pure=(Base.mk_true ())) 
     ?sess_ann:(anns=[])
     ?orders:(orders=[]) 
-    ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+    ?sess_pred_kind:(sess_pred_kind=NO_KIND)
+    loc =
     let sess_pred_kind = match sess_pred_kind with
         | NO_KIND -> get_pred_kind name   
         | _ -> sess_pred_kind 

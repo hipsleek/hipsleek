@@ -518,14 +518,40 @@ let collect prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
   Debug.no_1 "OS.collect" pr_none pr_out collect prot
 
+(* ------------------------------------------------------------ *)
+(* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders prot =
   let amap,gmap = collect prot in
   let () = y_binfo_hp (pr_pair (add_str "Assumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
-  (* 
-     prot <- add assumptions + guards
- *)
+  let insert sf = match sf with
+    | SProt.SBase sb -> 
+      begin 
+        match sb with 
+        | SProt.Base t -> 
+            let uid = SBProt.get_uid t in 
+            let loc = SBProt.get_base_pos t in
+            let assume_list = ConstrMap.find amap uid in
+            let guard_list = ConstrMap.find gmap uid in
+            (* creates a sequance with order assumptions and guards *)
+            let create_sequance order_list name sess_pred_kind prot_session = match order_list with
+              | [] -> prot_session
+              | _ -> 
+                  let pred = SProt.SBase (SProt.mk_session_predicate name [] [] ~orders:order_list ~sess_pred_kind:(Assert sess_pred_kind) loc) in
+                  let sequance = SProt.mk_session_seq_formula prot_session pred loc in
+                  sequance
+            in
+            (* inserts order assumptions *)
+            let seq = create_sequance assume_list "Assume" Assume sf in
+            (* inserts order guards *)
+            let seq = create_sequance guard_list "Guard" Guard seq in
+            Some seq
+        | _ -> None
+      end
+    | _ -> None in
+  let fnc = (insert, (nonef, nonef)) in 
+  let prot = x_add_1 SProt.trans_session_formula fnc prot in
   prot
 
 let insert_orders prot =
-  let pr = Session.IProtocol.string_of_session in
+  let pr = SProt.string_of_session in
   Debug.no_1 "OS.insert_orders" pr pr insert_orders prot
