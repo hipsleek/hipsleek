@@ -9,19 +9,20 @@ open Gen.BList
 module CP = Cpure
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
+module SIOrd = Session.IOrders
 
-type role = Session.IOrders.role
-type chan = Session.IOrders.chan
+type role = SIOrd.role
+type chan = SIOrd.chan
               
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
 and  'a eform = BOT | FBase of 'a bform | BOr of ('a eform) * ('a eform)
 
 (* boundary base element *)
-type event = Session.IOrders.event
+type event = SIOrd.event
 
 (* boundary base element *)
-and transmission = Session.IOrders.transmission
+and transmission = SIOrd.transmission
 
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
@@ -120,13 +121,13 @@ module BOUNDARY_ELEMENT =
 
 module Orders_list  =
 struct
-  type t = Session.IOrders.assrt list
-  type base = Session.IOrders.assrt
+  type t = SIOrd.assrt list
+  type base = SIOrd.assrt
 
   let bot () = []
   let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = (pr_list (Session.IOrders.string_of)) e1
+  let string_of e1 = (pr_list (SIOrd.string_of)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -348,21 +349,21 @@ let string_of_border = pr_pair (add_str "RMap:" RMap.string_of) (add_str "CMap:"
 module type ORDERS_TYPE =
 sig
   type t
-  val mk_hb : t -> t -> Session.IOrders.assrt
+  val mk_hb : t -> t -> SIOrd.assrt
   val get_uid : t -> suid
 end;;
 
 module Orders_hbe =
 struct
   type t = event
-  let mk_hb = Session.IOrders.mk_hbe
+  let mk_hb = SIOrd.mk_hbe
   let get_uid (e:t) = e.uid
 end;;
 
 module Orders_hbt =
 struct
   type t = transmission
-  let mk_hb = Session.IOrders.mk_hbt
+  let mk_hb = SIOrd.mk_hbt
   let get_uid (e:t) = e.uid
 end;;
 
@@ -504,7 +505,7 @@ let rec collect prot =
     (* INIT MAPS  *)
     let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
     let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
-    let assum    = ConstrMap.init [(suid,OL.mkSingleton (Session.IOrders.Transm trans))] in
+    let assum    = ConstrMap.init [(suid,OL.mkSingleton (SIOrd.Transm trans))] in
     let guards   = ConstrMap.mkEmpty () in
     {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
   | SProt.SEmp 
@@ -518,11 +519,58 @@ let collect prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
   Debug.no_1 "OS.collect" pr_none pr_out collect prot
 
-(* ------------------------------------------------------------ *)
+(* Normalize order assumptions and guards *)
+(* Assume - normalizing transmission: S->R => (S) & (R) & (S <_CB R) *)
+(* Guard - normalizing HB of transmission: A->B <_HB B->C => (A <_HB B) & (B <_HB C) *)
+(* Everything else remains the same *)
+let rec mk_order_normalization_x list = match list with
+  | [] -> SIOrd.NoAssrt
+  | head::tail ->
+      let res = match head with
+      | SIOrd.Transm t -> 
+          let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
+          let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
+          let and_seq = SIOrd.mk_and event_sender event_receiver in
+          let create_cbe ev1 ev2 = match ev1, ev2 with
+            | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_cbe e1 e2
+            | _,_ -> NoAssrt in
+          let cbe = create_cbe event_sender event_receiver in
+          let and_seq = SIOrd.mk_and and_seq cbe in
+          and_seq
+      | SIOrd.Order SIOrd.HBe hbe -> head 
+      | SIOrd.Order SIOrd.CBe cbe -> head 
+      | SIOrd.Order SIOrd.HBt hbt -> 
+          let trans1 = hbt.hbt_transmission1 in
+          let trans2 = hbt.hbt_transmission2 in
+          let norm_trans (t:SIOrd.transmission) =
+            let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
+            let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
+            let create_hbe ev1 ev2 = match ev1, ev2 with
+              | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
+              | _,_ -> SIOrd.NoAssrt in
+            let hbe = create_hbe event_sender event_receiver in 
+            hbe in
+          let norm_trans1 = norm_trans trans1 in
+          let norm_trans2 = norm_trans trans2 in
+          let hbt  = SIOrd.mk_and norm_trans1 norm_trans2 in
+          hbt
+      | _ -> SIOrd.NoAssrt in
+      match res with 
+      | SIOrd.NoAssrt -> mk_order_normalization_x tail
+      | _ -> match tail with
+        | [] -> res
+        | _ ->  SIOrd.mk_and res (mk_order_normalization_x tail)
+
+
+let rec mk_order_normalization list = 
+  let pr = SIOrd.string_of in 
+  Debug.no_1 "OS.mk_order_normalization" (pr_list pr) pr mk_order_normalization_x list
+
+(* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders prot =
   let amap,gmap = collect prot in
-  let () = y_binfo_hp (pr_pair (add_str "Assumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
+  let () = y_binfo_hp (pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
   let insert sf = match sf with
     | SProt.SBase sb -> 
       begin 
@@ -536,13 +584,14 @@ let insert_orders prot =
             let create_sequance order_list name sess_pred_kind prot_session = match order_list with
               | [] -> prot_session
               | _ -> 
-                  let pred = SProt.SBase (SProt.mk_session_predicate name [] [] ~orders:order_list ~sess_pred_kind:(Assert sess_pred_kind) loc) in
+                  let order_norm = x_add_1 mk_order_normalization order_list in
+                  let pred = SProt.SBase (SProt.mk_session_predicate name [] [] ~orders:order_norm ~sess_pred_kind:(Assert sess_pred_kind) loc) in
                   let sequance = SProt.mk_session_seq_formula prot_session pred loc in
                   sequance
             in
             (* inserts order assumptions *)
             let seq = create_sequance assume_list "Assume" Assume sf in
-            (* inserts order guards *)
+            (* then, inserts order guards *)
             let seq = create_sequance guard_list "Guard" Guard seq in
             Some seq
         | _ -> None
@@ -555,3 +604,5 @@ let insert_orders prot =
 let insert_orders prot =
   let pr = SProt.string_of_session in
   Debug.no_1 "OS.insert_orders" pr pr insert_orders prot
+  
+
