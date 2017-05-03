@@ -36,7 +36,8 @@ sig
   val mk_transmission : role -> role -> suid -> chan -> transmission
   val mk_assrt_transmission : role -> role -> suid -> chan -> assrt
 
-  val get_NoAssrt : assrt
+  val is_assrt : assrt -> bool
+  val mk_empty : unit -> assrt
 end;;
 
 module type VAR_TYPE =
@@ -137,6 +138,10 @@ struct
   let mk_transmission (sender:role) (receiver:role) (id:suid) (chan:chan) : transmission = {sender = sender; receiver = receiver; uid = id; channel = chan}
   let mk_assrt_transmission (sender:role) (receiver:role) (id:suid) (chan:chan) : assrt = Transm {sender = sender; receiver = receiver; uid = id; channel = chan}
   
-  let get_NoAssrt = NoAssrt
+  let is_assrt a = match a with
+    | NoAssrt -> false
+    | _ -> true
+
+  let mk_empty () = NoAssrt
 end ;;
 

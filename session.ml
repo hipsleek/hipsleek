@@ -1505,8 +1505,12 @@ module Make_Session (Base: Session_base)
   (*   string_of_session_predicate f.session_fence_pred *)
 
   and string_of_session_predicate s =
-    match s.session_predicate_orders with
-    | orders ->
+    let orders = s.session_predicate_orders in
+    if not (Orders.is_assrt orders) then
+         s.session_predicate_name ^ 
+         "{" ^ ((pr_list !Base.print_ho_param_formula) s.session_predicate_ho_vars) ^ "}" ^ 
+         "<" ^ ((pr_list !Base.print_param) s.session_predicate_params) ^ ">"
+    else
       s.session_predicate_name ^
       "{" ^ ( Orders.string_of orders) ^ "}"  
 
@@ -1585,13 +1589,11 @@ module Make_Session (Base: Session_base)
   (*     session_fence_role2 = role2; *)
   (*         session_fence_pred = pred; *)
   (*   } *)
-
-
   and mk_session_predicate_x name ho_vars params 
     ?node:(node=None) 
     ?pure:(pure=(Base.mk_true ())) 
     ?sess_ann:(anns=[])
-    ?orders:(orders=Orders.get_NoAssrt) 
+    ?orders:(orders=Orders.mk_empty()) 
     ?sess_pred_kind:(sess_pred_kind=NO_KIND)
     loc =
     let sess_pred_kind = match sess_pred_kind with
@@ -1610,7 +1612,7 @@ module Make_Session (Base: Session_base)
       session_predicate_kind = sess_pred_kind;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?orders:(orders=Orders.get_NoAssrt) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?orders:(orders=Orders.mk_empty()) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
     Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:sess_pred_kind loc) ho_vars
 
   
