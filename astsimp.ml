@@ -2422,7 +2422,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
     let new_vdef = {vdef with
                     view_name = role1 ^ role2 ^ vdef.view_name;
 		    view_formula = form;
-		    view_session_formula = Some (Session.TPProjectionSession tpproj);
+		    view_session = Some (Session.TPProjectionSession tpproj);
 		    view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
 		    view_session_projections = None;} in
     HT.add view_decl_hash (role1, role2) new_vdef in
@@ -2431,7 +2431,7 @@ and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.
 
 and session_to_iform_x (view:I.view_decl) =
   let get_session_formula view =
-    match view.I.view_session_formula with
+    match view.I.view_session with
     | Some s -> s
     | None -> failwith "view_session_formula not set"
   in
@@ -2446,8 +2446,9 @@ and session_to_iform_x (view:I.view_decl) =
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
         let prot = x_add_1 Order_summary.insert_orders prot in
+        let prj_per_party = Session_projection.mk_projection_per_party prot in
 	let proj = make_projection_view_decls prot view in
-        {view with view_session_projections = Some proj; I.view_session_formula = Some (ProtocolSession prot) }
+        {view with view_session_projections = Some proj; I.view_session = Some (ProtocolSession prot) }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
         helper view transf Session.get_projection

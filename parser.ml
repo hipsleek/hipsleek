@@ -1367,12 +1367,12 @@ prot_view_decl:
       let session_formula = Session.IProtocol.mk_session_exists_formula vars s loc in
       { vh with
            view_session_info = Some (mk_view_session_info ~sk:Protocol ());
-           view_session_formula = Some (Session.ProtocolSession session_formula)}
+           view_session = Some (Session.ProtocolSession session_formula)}
           
   | vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
                view_session_info = Some (mk_view_session_info ~sk:Protocol ());
-               view_session_formula = Some (Session.ProtocolSession s)}
+               view_session = Some (Session.ProtocolSession s)}
   ]];
 
 (* e.g. v# *)
@@ -1436,14 +1436,14 @@ proj_view_decl:
   [[ vh = view_header; `EQEQ; f = projection_formula
      -> { vh with
           view_session_info = Some (mk_view_session_info ~sk:Projection ());
-          view_session_formula = Some (Session.ProjectionSession f)}
+          view_session = Some (Session.ProjectionSession f)}
    ]];
 
 tpproj_view_decl:
   [[ vh = view_header; `EQEQ; f = tpprojection_formula
      -> { vh with
           view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
-          view_session_formula = Some (Session.TPProjectionSession f)}
+          view_session = Some (Session.TPProjectionSession f)}
    ]];
 
   
@@ -1944,8 +1944,8 @@ view_header_ext:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          view_session_formula = None;
-		  view_session_projections = None;
+          view_session = None;
+	  view_session_projections = None;
           view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;

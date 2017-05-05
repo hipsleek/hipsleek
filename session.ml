@@ -1182,6 +1182,8 @@ module Protocol_base_formula =
 
     let get_message_var base = base.protocol_base_formula_message_var
 
+    let get_chan base = base.protocol_base_formula_chan
+
     let get_message base = base.protocol_base_formula_message
 
     let get_sender base = base.protocol_base_formula_sender
@@ -1407,7 +1409,6 @@ module Make_Session (Base: Session_base)
 
   and session_base =
     | Base of t
-    (* | Orders of kind * order *)
     | Predicate of session_predicate
     | HVar of session_hvar
 
@@ -2328,13 +2329,15 @@ module CTPProjection_base = TPProjection_base_formula(CMessage);;
 module IProtocol = Make_Session(IProtocol_base)(IOrders);;
 module CProtocol = Make_Session(CProtocol_base)(COrders);;
 
+(* per party  *)
 module IProjection = Make_Session(IProjection_base)(IOrders);;
 module CProjection = Make_Session(CProjection_base)(COrders);;
 
+(* per channel *)
 module ITPProjection = Make_Session(ITPProjection_base)(IOrders);;
 module CTPProjection = Make_Session(CTPProjection_base)(COrders);;
 
-type session_type = ProtocolSession of IProtocol.session
+type session_formula = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
                   | TPProjectionSession of ITPProjection.session
 

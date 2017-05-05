@@ -683,7 +683,7 @@ and string_of_session_projections session_projections =
               let helper (role1, role2) proj_vdef =
                 if (!Globals.print_compact_projection_formula)
                 then
-                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ (map_opt_def "" string_of_session_formula proj_vdef.view_session_formula))
+                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ (map_opt_def "" string_of_session_formula proj_vdef.view_session))
                 else
                   str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ string_of_struc_formula proj_vdef.view_formula ^ "\n") in
               let () = HT.iter helper x in
@@ -1068,7 +1068,7 @@ let string_of_view_decl v =
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str
   ^ map_opt_def "" string_of_view_session_info v.view_session_info
-  ^ (string_of_session v.view_session_formula)
+  ^ (string_of_session v.view_session)
   ^ (string_of_session_projections v.view_session_projections)
 ;;
 

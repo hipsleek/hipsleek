@@ -117,8 +117,9 @@ and view_decl =
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
-    view_session_formula : Session.session_type option;
-	view_session_projections: (Session.proj_ident, view_decl) HT.t option;
+    view_session : Session.session_formula option;
+    (* elena: remove the below line after the projection works *)
+    view_session_projections: (Session.proj_ident, view_decl) HT.t option;
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)
@@ -661,8 +662,8 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_typed_vars = [];
           view_pt_by_self  = [];
           view_formula = f;
-          view_session_formula = None;
-		  view_session_projections = None;
+          view_session = None;
+	  view_session_projections = None;
           view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;
@@ -711,8 +712,8 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
     view_typed_vars = cids_t;
     view_pt_by_self  = [];
     view_formula = F.mkETrue top_flow (pos);
-    view_session_formula = None;
-	view_session_projections = None;
+    view_session = None;
+    view_session_projections = None;
     view_session_info = None;
     view_inv_lock = None;
     view_is_prim = false;
