@@ -29,6 +29,8 @@ sig
   val mk_cbe : event -> event -> assrt 
 
   val mk_and : assrt -> assrt -> assrt 
+  val mk_or : assrt -> assrt -> assrt 
+  val mk_order : orders -> assrt
 
   val mk_event : role -> suid -> chan -> event
   val mk_assrt_event : role -> suid -> chan -> assrt
@@ -84,6 +86,7 @@ struct
               | And of and_type
               | Or of or_type
               | Impl of impl_type
+              | Bot
               | NoAssrt
 
   and hbe_type = {
@@ -123,6 +126,7 @@ struct
       | And a -> (helper a.and_assrt1) ^ " & " ^ (helper a.and_assrt2)
       | Or  a -> (helper a.or_assrt1) ^ " or " ^ (helper a.or_assrt2)
       | Impl a -> (string_of_event a.impl_event) ^ "=>" ^ (helper a.impl_assrt)
+      | Bot -> "Bot"
       | NoAssrt -> ""
     in helper e1
 
@@ -131,6 +135,8 @@ struct
   let mk_cbe e1 e2 = Order (CBe {cbe_event1 = e1; cbe_event2 = e2})
 
   let mk_and assrt1 assrt2 = And {and_assrt1 = assrt1; and_assrt2 = assrt2}
+  let mk_or assrt1 assrt2 = Or {or_assrt1 = assrt1; or_assrt2 = assrt2}
+  let mk_order order = Order order
   
   let mk_event (r:role) (id:suid) (chan:chan) : event = {role = r; uid = id; channel = chan}
   let mk_assrt_event (r:role) (id:suid) (chan:chan) : assrt = Event (mk_event r id chan)
