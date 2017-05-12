@@ -34,7 +34,7 @@
 %negation rules for hb and ev
 neg0   @ snot(hb(A,L,A,L)) <=> true. %;(B=A,L2=L1).
 neg1   @ snot(hb(A,L1,B,L2)) ==> hb(B,L2,A,L1). %;(B=A,L2=L1).
-neg2   @ snot(A;B) ==> snot(A),snot(B).
+neg2   @ snot((A;B)) ==> snot(A),snot(B).
 neg3   @ snot((A,B)) ==> snot(A);snot(B).
 % neg4   @ snot(A) ==> \+(A).
 

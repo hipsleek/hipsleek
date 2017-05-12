@@ -15,9 +15,9 @@ pred_prim Peer@peer{%P}<>;
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
-relation ev(int n,int m);
-relation hb(int n1,int m1,int n2,int m2);
-relation cb(int n1,int m1,int n2,int m2);
+relation ev(int n,int m).
+relation hb(int n1,int m1,int n2,int m2).
+relation cb(int n1,int m1,int n2,int m2).
 
 /* apply A+ before G- */
 lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * %P;

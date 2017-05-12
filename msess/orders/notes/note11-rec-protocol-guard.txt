@@ -1,0 +1,189 @@
+BackBorder x FrontBorder x Assumptions x Guards
+G(A,B,C,c,d) =
+{(A:A#iA;B:B#iB;C:C#iC, c:#ic;d:#id),
+ (A:A#iA;B:B#iB;C:C#iC, c:@ic:S->R:c;d:@id:S->R:d),
+ {S^#ic <_CB R^#ic,S^#id <_CB R^#id},
+ {}
+}
+
+G(A{i#A},B{i#B},C{i#C},c{#ic},d{#id}) =
+ A-i#1->B:c;
+ B-i#2->C:d;
+ A-i#3->C:c;
+ G(A{i#3},B{i#2},C{i#3},c,d,i#3(A,C),i#2(B,C))
+
+Assumptions
+----------
+#ic@S <_CB #ic@R
+#id@S <_CB #id@R
+A^(#iA) <_HB A^(i#1)
+B^(#iB) <_HB B^(i#1)
+C^(#iC) <_HB C^(i#2)
+B^(i#1) <_HB B^(i#2)
+A^(i#1) <_CB B^(i#1)
+B^(i#2) <_CB C^(i#2)
+A^(i#3) <_CB C^(i#3)
+
+Guards:
+-------------
+#ic@S <_HB A^(i#1)
+#ic@R <_HB B^(i#1)rn
+#id@S <_HB B^(i#2)
+#id@R <_HB C^(i#2)
+#1@S  <_HB #3@S
+#1@R  <_HB #3@R
+
+
+Try derive weakest pre-conditions on A{i#A},B{i#B},C{i#C},c{#ic},d{#id}
+such that above guards hold.
+
+infer [A{i#A},B{i#B},C{i#C},c{#ic},d{#id}]
+  #ic@S <_CB #ic@R
+#id@S <_CB #id@R
+A^(#iA) <_HB A^(i#1)
+B^(#iB) <_HB B^(i#1)
+C^(#iC) <_HB C^(i#2)
+B^(i#1) <_HB B^(i#2)
+A^(i#1) <_CB B^(i#1)
+B^(i#2) <_CB C^(i#2)
+A^(i#3) <_CB C^(i#3)
+ |-  #ic@S <_HB A^(i#1)
+#ic@R <_HB B^(i#1)rn
+#id@S <_HB B^(i#2)
+#id@R <_HB C^(i#2)
+#1@S  <_HB #3@S
+#1@R  <_HB #3@R.
+
+Simpler example
+---------------
+G(A{i#A},B{i#B},c{#ic}) =
+ A-i#1->B:c;
+ G(A{i#3},B{i#2},c{#i})
+
+Assume
+------
+#ic@S <_CB #ic@R
+A^{i#A} <_HB A^{i#1}
+B^{i#B} <_HB B^{i#1}
+A^{i#1} <_CB B^{i#1}
+
+Guard
+-----
+ic^{S} <_HB A^{i#1}
+ic^{R} <_HB B^{i#1}
+
+infer [A{i#A},B{i#B},c{#ic}]
+ #ic@S <_CB #ic@R &
+ A^{i#A} <_HB A^{i#1} &
+ B^{i#B} <_HB B^{i#1} &
+ A^{i#1} <_CB B^{i#1} &
+|- 
+ ic^{S} <_HB A^{i#1} & 
+ ic^{R} <_HB B^{i#1}.
+
+
+===============================================================
+
+G(A{i#A},B{i#B},C{i#C},c{#ic},d{#id}) =
+ A-i#1->B:c;
+ B-i#2->C:d;
+ A-i#3->C:c;
+ G(A{i#3},B{i#2},C{i#3},c,d,i#3(A,C),i#2(B,C))
+
+Assumptions
+----------
+#ic@S <_CB #ic@R
+#id@S <_CB #id@R
+A^(#iA) <_HB A^(i#1)
+B^(#iB) <_HB B^(i#1)
+C^(#iC) <_HB C^(i#2)
+B^(i#1) <_HB B^(i#2)
+A^(i#1) <_CB B^(i#1)
+B^(i#2) <_CB C^(i#2)
+A^(i#3) <_CB C^(i#3)
+
+Guards:
+-------------
+#ic@S <_HB A^(i#1)
+#ic@R <_HB B^(i#1)rn
+#id@S <_HB B^(i#2)
+#id@R <_HB C^(i#2)
+#1@S  <_HB #3@S
+#1@R  <_HB #3@R
+
+
+Try derive weakest pre-conditions on A{i#A},B{i#B},C{i#C},c{#ic},d{#id}
+such that above guards hold.
+
+infer [A{i#A},B{i#B},C{i#C},c{#ic},d{#id}]
+  #ic@S <_CB #ic@R
+#id@S <_CB #id@R
+A^(#iA) <_HB A^(i#1)
+B^(#iB) <_HB B^(i#1)
+C^(#iC) <_HB C^(i#2)
+B^(i#1) <_HB B^(i#2)
+A^(i#1) <_CB B^(i#1)
+B^(i#2) <_CB C^(i#2)
+A^(i#3) <_CB C^(i#3)
+ |-  #ic@S <_HB A^(i#1)
+#ic@R <_HB B^(i#1)rn
+#id@S <_HB B^(i#2)
+#id@R <_HB C^(i#2)
+#1@S  <_HB #3@S
+#1@R  <_HB #3@R.
+
+Simpler example
+---------------
+G(A{i#A},B{i#B},c{#ic}) =
+ A-i#1->B:c;
+ G(A{i#1},B{i#1},c{i#1}(S=A^{i#1},R=B^{i#1})
+
+Assume
+------
+#ic@S <_CB #ic@R
+A^{i#A} <_HB A^{i#1}
+B^{i#B} <_HB B^{i#1}
+A^{i#1} <_CB B^{i#1}
+
+Guard
+-----
+ic^{S} <_HB A^{i#1}
+ic^{R} <_HB B^{i#1}
+
+infer [A{i#A},B{i#B},c{#ic}]
+ #ic@S <_CB #ic@R &
+ A^{i#A} <_HB A^{i#1} &
+ B^{i#B} <_HB B^{i#1} &
+ A^{i#1} <_CB B^{i#1} &
+|- 
+ ic^{S} <_HB A^{i#1} & 
+ ic^{R} <_HB B^{i#1}.
+
+Pre cond :
+ ic^{S} <_HB A^{i#A}
+ ic^{R} <_HB B^{i#B}
+
+Inductively to prove:
+ i#1^{S} <_HB A^{i#1}
+ i#1^{R} <_HB B^{i#1}
+
+ A^{i#1} <_HB A^{i#1}
+ B^{i#1} <_HB B^{i#1}
+
+
+==========================================
+G(A{i#A},B{i#B},c{#ic}) =
+ A-i#1->B:c;
+ G(B{i#1},A{i#1},c{i#1}(S=A^{i#1},R=B^{i#1})
+
+Pre cond :
+ ic^{S} <_HB A^{i#A}
+ ic^{R} <_HB B^{i#B}
+
+
+Inductively to prove:
+ i#1^{S} <_HB B^{i#1}
+ i#1^{R} <_HB A^{i#1}
+
+ A^{i#1} <_HB B^{i#1} // provable
+ B^{i#1} <_HB A^{i#1} // cyclic?
