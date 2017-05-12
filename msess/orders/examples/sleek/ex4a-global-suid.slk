@@ -2,7 +2,7 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 pred_sess_prot G1<A,B,C,k> == A->B:k(1) ;; B->C:k(2).
-pred_sess_prot G2<A,B,C,k> == A->B:k1(1) ;; B->C:k2(2).
+pred_sess_prot G2<A:role,B:role,C:role,k1:chan,k2:chan> == A->B:k1(1) ;; B->C:k2(2).
 
 /*
 pred_sess_prot G2<A,B,C,k> ==

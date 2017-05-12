@@ -208,7 +208,7 @@ let mk_projection_per_party prot role =
   let pr1 = SProt.string_of_session in
   let pr2 = Session.IMessage.print_var in
   let pr_out = SProj.string_of_session in
-  Debug.no_2 "Sess_prj.mk_projection_per_party" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_party prot role) prot role
+  Debug.no_2 "SP.mk_projection_per_party" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_party prot role) prot role
 
 (* Collects projections into the Map *)
 let save_prj_into_map map prj_elem role =
@@ -218,7 +218,7 @@ let save_prj_into_map map prj_elem role =
 
 let save_prj_into_map map prj_elem role =
   let pr = PrjMap.string_of in
-  Debug.no_1 "Sess_prj.save_prj_into_map" pr pr (fun _ -> save_prj_into_map map prj_elem role) map
+  Debug.no_1 "SP.save_prj_into_map" pr pr (fun _ -> save_prj_into_map map prj_elem role) map
 
 
 

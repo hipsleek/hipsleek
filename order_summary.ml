@@ -13,6 +13,7 @@ module SIOrd = Session.IOrders
 
 type role = SIOrd.role
 type chan = SIOrd.chan
+type suid = SIOrd.suid
               
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
@@ -44,9 +45,9 @@ struct
   let make ((role,uid,chan) : a) : t = {role = role; uid = uid; channel = chan }
                                          
   let eq (e1:t) (e2:t) : bool =
-    (eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
+    (SBProt.eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
 
-  let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ "^" ^(string_of_suid e.uid)
+  let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ "^" ^(SBProt.string_of_suid e.uid)
 
 end;;
 
@@ -59,13 +60,18 @@ struct
     {sender = sender; receiver = receiver; channel = chan; uid = uid}
     
   let eq (t1:t) (t2:t) : bool =
-    (eq_suid t1.uid t2.uid)
+    (SBProt.eq_suid t1.uid t2.uid)
     && (SBProt.eq_role t1.sender t2.sender)
     && (SBProt.eq_role t1.receiver t2.receiver)
     && (SBProt.eq_chan t1.channel t2.channel)
        
   let string_of (e:t) : string =
-    (SBProt.string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (SBProt.string_of_role e.receiver)
+    (SBProt.string_of_role e.sender) ^ "-" ^ (SBProt.string_of_suid e.uid) ^ "->" ^ (SBProt.string_of_role e.receiver)
+
+  let get_sender (trans:t)   =  trans.sender
+  let get_receiver (trans:t) =  trans.receiver
+  let get_suid (trans:t)     =  trans.uid
+  let get_chan (trans:t)     =  trans.channel
 
 end;;
 
@@ -167,8 +173,8 @@ end;;
 module UID =
 struct
   type t = suid
-  let eq = eq_suid
-  let string_of = string_of_suid
+  let eq = SBProt.eq_suid
+  let string_of = SBProt.string_of_suid
 end;;
 
 (* ------------------------------------------------ *)
@@ -511,13 +517,59 @@ let rec collect prot =
   | SProt.SEmp 
   | _ -> mk_empty_summary ()
 
-let collect prot = 
+
+(* creates a default summary wrt the view's parameters *)
+let mk_def_summary roles channs =
+  let roles  = List.map snd roles in
+  let channs = List.map snd channs in
+  let def_chan = SBProt.mk_chan (fresh_any_name "dummy") in
+  let rmap =  List.map (fun role ->
+      let fresh_suid = fresh_any_name role in
+      let suid  = SBProt.mk_suid fresh_suid in
+      let role  = SBProt.mk_role role in 
+      let event = BEvent.make (role,suid,def_chan) in
+      (role, Events.mk_base event)) roles in
+  let cmap_int =  List.map (fun chan ->
+      let fresh_suid = fresh_any_name chan in
+      let suid     = SBProt.mk_suid fresh_suid in
+      let sender   = SBProt.mk_role (fresh_any_name "S") in
+      let receiver = SBProt.mk_role (fresh_any_name "R") in
+      let chan     = SBProt.mk_chan chan in
+      let trans    = BTrans.make (sender,receiver,chan,suid) in
+      (chan, (* Trans.mk_base *) trans)) channs in
+  let cmap = List.map (fun (c,t) -> (c, Trans.mk_base t)) cmap_int in 
+  let assumes = List.map (fun (_,trans) ->
+      let sender   = BTrans.get_sender trans in
+      let receiver = BTrans.get_receiver trans in
+      let suid     = BTrans.get_suid trans in
+      let chan     = BTrans.get_chan trans in
+      let ev1 = SIOrd.mk_event sender suid chan in
+      let ev2 = SIOrd.mk_event receiver suid chan in
+      let cb  = SIOrd.mk_cbe ev1 ev2 in
+      (suid,OL.mkSingleton cb)) cmap_int in
+  let rmap = RMap.init rmap in
+  let cmap = CMap.init cmap in
+  let assumes = ConstrMap.init assumes in
+  let guards  = ConstrMap.mkEmpty () in
+  let summary =  init_summary (rmap,cmap) (rmap,cmap) assumes guards in
+  summary
+
+let collect view prot =
+  (* retrieves the  role params, and chan params*)
+  let params = view.Iast.view_typed_vars in
+  let roles, rest = List.partition (fun (t1,_) -> cmp_typ t1 role_typ) params in
+  let channs, rest = List.partition (fun (t1,_) -> cmp_typ t1 chan_typ) params in
+  (* creates def summary *)
+  let def_sum = mk_def_summary roles channs in
+  (* collects protocol's summary *)
   let res = collect prot in
+  (* merge def summ w prot's summ *)
+  let res = merge_all_seq def_sum res in 
   (res.assumptions, res.guards)
 
-let collect prot =
+let collect view prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
-  Debug.no_1 "OS.collect" pr_none pr_out collect prot
+  Debug.no_1 "OS.collect" pr_none pr_out (collect view) prot
 
 (* Normalize order assumptions and guards *)
 (* Assume - normalizing transmission: S->R => (S) & (R) & (S <_CB R) *)
@@ -526,40 +578,40 @@ let collect prot =
 let rec mk_order_normalization_x list = match list with
   | [] -> SIOrd.NoAssrt
   | head::tail ->
-      let res = match head with
+    let res = match head with
       | SIOrd.Transm t -> 
-          let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
-          let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
-          let and_seq = SIOrd.mk_and event_sender event_receiver in
-          let create_cbe ev1 ev2 = match ev1, ev2 with
-            | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_cbe e1 e2
-            | _,_ -> NoAssrt in
-          let cbe = create_cbe event_sender event_receiver in
-          let and_seq = SIOrd.mk_and and_seq cbe in
-          and_seq
+        let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
+        let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
+        let and_seq = SIOrd.mk_and event_sender event_receiver in
+        let create_cbe ev1 ev2 = match ev1, ev2 with
+          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_cbe e1 e2
+          | _,_ -> NoAssrt in
+        let cbe = create_cbe event_sender event_receiver in
+        let and_seq = SIOrd.mk_and and_seq cbe in
+        and_seq
       | SIOrd.Order SIOrd.HBe hbe -> head 
       | SIOrd.Order SIOrd.CBe cbe -> head 
       | SIOrd.Order SIOrd.HBt hbt -> 
-          let trans1 = hbt.hbt_transmission1 in
-          let trans2 = hbt.hbt_transmission2 in
-          let norm_trans (t:SIOrd.transmission) =
-            let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
-            let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
-            let create_hbe ev1 ev2 = match ev1, ev2 with
-              | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
-              | _,_ -> SIOrd.NoAssrt in
-            let hbe = create_hbe event_sender event_receiver in 
-            hbe in
-          let norm_trans1 = norm_trans trans1 in
-          let norm_trans2 = norm_trans trans2 in
-          let hbt  = SIOrd.mk_and norm_trans1 norm_trans2 in
-          hbt
+        let trans1 = hbt.hbt_transmission1 in
+        let trans2 = hbt.hbt_transmission2 in
+        (* let norm_trans (t:SIOrd.transmission) = *)
+        let event1_sender = SIOrd.mk_assrt_event trans1.sender trans1.uid trans1.channel in
+        let event1_receiver = SIOrd.mk_assrt_event trans1.receiver trans1.uid trans1.channel in
+        let event2_sender = SIOrd.mk_assrt_event trans2.sender trans2.uid trans2.channel in
+        let event2_receiver = SIOrd.mk_assrt_event trans2.receiver trans2.uid trans2.channel in
+        let create_hbe ev1 ev2 = match ev1, ev2 with
+          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
+          | _,_ -> SIOrd.NoAssrt in
+        let hbe1 = create_hbe event1_sender event2_sender in
+        let hbe2 = create_hbe event1_receiver event2_receiver in 
+        let hbt  = SIOrd.mk_and hbe1 hbe2 in
+        hbt
       | _ -> SIOrd.NoAssrt in
-      match res with 
-      | SIOrd.NoAssrt -> mk_order_normalization_x tail
-      | _ -> match tail with
-        | [] -> res
-        | _ ->  SIOrd.mk_and res (mk_order_normalization_x tail)
+    match res with 
+    | SIOrd.NoAssrt -> mk_order_normalization_x tail
+    | _ -> match tail with
+      | [] -> res
+      | _ ->  SIOrd.mk_and res (mk_order_normalization_x tail)
 
 
 let rec mk_order_normalization list = 
@@ -568,8 +620,8 @@ let rec mk_order_normalization list =
 
 (* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
-let insert_orders prot =
-  let amap,gmap = collect prot in
+let insert_orders view prot =
+  let amap,gmap = collect view prot in
   let () = y_binfo_hp (pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
   let insert sf = match sf with
     | SProt.SBase sb -> 
@@ -601,8 +653,8 @@ let insert_orders prot =
   let prot = x_add_1 SProt.trans_session_formula fnc prot in
   prot
 
-let insert_orders prot =
+let insert_orders view prot =
   let pr = SProt.string_of_session in
-  Debug.no_1 "OS.insert_orders" pr pr insert_orders prot
+  Debug.no_1 "OS.insert_orders" pr pr (insert_orders view) prot
   
 

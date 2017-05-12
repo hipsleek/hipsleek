@@ -6,10 +6,18 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
+module type VAR_TYPE =
+sig
+  type t
+  val string_of : t -> string
+end;;
+
+
 module type GORDERS_TYPE = 
 sig
   type role
   type chan
+  type suid
   
   type event
   type transmission
@@ -42,12 +50,6 @@ sig
   val mk_empty : unit -> assrt
 end;;
 
-module type VAR_TYPE =
-sig
-  type t
-  val string_of : t -> string
-end;;
-
 (* generic orders, where role and chan are polymorphic *)
 module GOrders
     (Var : VAR_TYPE) =
@@ -55,6 +57,7 @@ struct
   (* boundary base element *)
   type role = Var.t
   type chan = Var.t
+  type suid = Var.t
                                 
   type event = {
     role   : role;
@@ -72,6 +75,7 @@ struct
   
   let string_of_role = Var.string_of
   let string_of_chan = Var.string_of
+  let string_of_suid = Var.string_of
   let string_of_event e = (string_of_role e.role) ^ "," ^(string_of_suid e.uid)
   let string_of_transmission e = (string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (string_of_role e.receiver)
 

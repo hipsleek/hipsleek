@@ -1127,6 +1127,7 @@ module Protocol_base_formula =
     type t = Msg.formula
     type role = Msg.var
     type chan = Msg.var
+    type suid = Msg.var
     type a = role * role * chan option * var * VarGen.loc * suid
     type base = {
       protocol_base_formula_sender      : role;
@@ -1143,20 +1144,30 @@ module Protocol_base_formula =
 
     let print_message f = !Msg.print f.protocol_base_formula_message
 
+    let def_suid = Msg.mk_var def_suid_name 
+    let eq_suid = Msg.eq_var
+    let mk_suid name = Msg.mk_var name
+    let mk_chan name = Msg.mk_var name
+    let mk_role name = Msg.mk_var name
+
+    let eq_role = Msg.eq_var
+    let eq_chan = Msg.eq_var
+
     let string_of_role = Msg.print_var
     let string_of_chan = Msg.print_var
+    let string_of_suid = Msg.print_var
 
     let string_of_session_base f =
       let pr = string_of_role in
       let suid = f.protocol_base_formula_uid in
-      let suid = if suid == 0 then "" else "@"^ (string_of_int suid) ^ ":"  in
+      let suid = if eq_suid suid def_suid  then "" else "@"^ (string_of_suid suid) ^ ":"  in
       let chan =
         match f.protocol_base_formula_chan with
         | None -> ""
         | Some c -> string_of_chan c
       in
       suid ^ (pr f.protocol_base_formula_sender) ^ " -> " ^ (pr f.protocol_base_formula_receiver) ^ " : "^ chan ^ "("^ (print_message f) ^ ")"
-
+    
     let mk_base (sender, receiver, chan, mv, pos, suid) ?node:(node=None) formula = {
       protocol_base_formula_sender    = sender;
       protocol_base_formula_receiver  = receiver;
@@ -1195,9 +1206,6 @@ module Protocol_base_formula =
     let trans_h_formula_to_session_base h_formula = failwith x_tbi
 
     let subst_base (sst: (Msg.var * Msg.var) list) (msg: base): base = msg
-
-    let eq_role = Msg.eq_var
-    let eq_chan = Msg.eq_var
 
   end;;
 
@@ -2360,9 +2368,11 @@ let get_tpprojection session =
 (* -------------------------------------- *)
 (* Protocol annotation with unique id *)
 let annotate_suid (prot: IProtocol.session): IProtocol.session  =
-  let suid = ref 0 in
-  let fnc base = let () = suid := !suid + 1 in
-    Some {base with IProtocol_base.protocol_base_formula_uid = !suid} in
+  let fnc base =
+    let suid = fresh_any_name def_suid_name in
+    let suid = IProtocol_base.mk_suid suid in
+    (* let () = suid := !suid + 1 in *)
+    Some {base with IProtocol_base.protocol_base_formula_uid = suid} in
   let prot = IProtocol.trans_session_formula (nonef,(nonef,fnc)) prot in
   prot
 

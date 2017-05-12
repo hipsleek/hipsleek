@@ -2445,7 +2445,7 @@ and session_to_iform_x (view:I.view_decl) =
       | Some Protocol ->
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
-        let prot = x_add_1 Order_summary.insert_orders prot in
+        let prot = x_add_1 Order_summary.insert_orders view prot in
         let vars_list = view.I.view_vars in
         (* makes projections per party and save them into the map *)
         let rec create_prj_map vars map = match vars with

@@ -1070,6 +1070,7 @@ let string_of_view_decl v =
   ^ map_opt_def "" string_of_view_session_info v.view_session_info
   ^ (string_of_session v.view_session)
   ^ (string_of_session_projections v.view_session_projections)
+  ^ "\nview_typed_vars" ^ ((pr_list (pr_pair string_of_typ pr_id)) v.view_typed_vars)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")

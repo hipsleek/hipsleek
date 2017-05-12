@@ -243,13 +243,13 @@ type view_session_info =
     node_kind: node_kind option;
   }
 
-type suid = int
+(* type suid = int *)
 
-let def_suid = 0
+let def_suid_name = "id"
 
-let eq_suid id1 id2 = (id1 == id2)
+(* let eq_suid id1 id2 = (id1 == id2) *)
 
-let string_of_suid = string_of_int
+(* let string_of_suid = string_of_int *)
 
 let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : view_session_info =
   {
@@ -331,6 +331,9 @@ type typ =
 (*     | _, _ -> false *)
 
 type typed_ident = (typ * ident)
+
+let role_typ = Named "role"
+let chan_typ = Named "chan"
 
 let string_of_session_kind k = match k with
   | Protocol -> "Protocol"
