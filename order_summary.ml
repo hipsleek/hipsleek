@@ -97,10 +97,10 @@ struct
     {sender = sender; receiver = receiver; channel = chan; uid = uid}
     
   let eq (t1:t) (t2:t) : bool =
-    (SBProt.eq_suid t1.uid t2.uid)
-    && (SBProt.eq_role t1.sender t2.sender)
-    && (SBProt.eq_role t1.receiver t2.receiver)
-    && (SBProt.eq_chan t1.channel t2.channel)
+    (UID.eq t1.uid t2.uid)
+    && (IRole.eq t1.sender t2.sender)
+    && (IRole.eq t1.receiver t2.receiver)
+    && (IChan.eq t1.channel t2.channel)
        
   let string_of (e:t) : string =
     (IRole.string_of e.sender) ^ "-" ^ (UID.string_of e.uid) ^ "->" ^ (IRole.string_of e.receiver)
@@ -631,7 +631,8 @@ let test_dag assume guard def_suids =
   let pre_events = List.filter (fun ev -> UID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
   let pre_events = BEvent.remove_duplicates pre_events in
   let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
-  
+
+  (* construct the DAG of assumptions *)
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
@@ -641,7 +642,12 @@ let test_dag assume guard def_suids =
     ) lst in
   let lst = List.flatten lst in 
   let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
-  y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl
+  let () = y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl in
+
+  (* generate all possible Qs, such that A & Q |- G *)
+  (* assume the arrow of the guard is never from the def_suids related events*)
+  (* let candidates = List.map (fun g -> ) guards in *)
+  ()
 
 let collect view prot =
   (* retrieves the  role params, and chan params*)
