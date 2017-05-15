@@ -346,17 +346,17 @@ end;;
 (*   end *)
 
 (* ====================  DAG  =========================== *)
-module type DAG_TYPE =
-sig
-  type vertex 
-  type arrow_kind
-  type t
+(* module type DAG_TYPE = *)
+(* sig *)
+(*   type vertex  *)
+(*   type arrow_kind *)
+(*   type t *)
 
-  val create: unit -> t
-end
+(*   val create: unit -> t *)
+(* end *)
 
 (* Orders DAG *)
-module Make_DAG (Orders: GORDERS_TYPE) (Key: DAG_KEY_TYPE): DAG_TYPE =
+module Make_DAG (Orders: GORDERS_TYPE) (Key: DAG_KEY_TYPE)(* : DAG_TYPE  *)=
 struct
   module Key = Key(Orders)
   (* vertex == Key.t == Orders.event *)

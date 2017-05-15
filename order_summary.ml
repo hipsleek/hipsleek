@@ -204,6 +204,7 @@ sig
   val add : emap-> key -> elem -> emap
   val find : emap -> key -> elem
   val get_keys : emap -> klist
+  val get_data : emap -> elist
 
   val update_elem    : emap -> key -> elem -> emap
   val add_elem_dupl  : emap -> key -> elem -> emap
@@ -261,6 +262,8 @@ struct
     let all_keys = List.map fst s in
     remove_duplicate_keys all_keys
 
+  let get_data (emap:emap) : elist = List.map snd emap
+  
   (* each key is returned only once *)
   let union_keys (e1:klist) (e2:klist) : klist =
     remove_duplicate_keys (e1@e2)
@@ -312,13 +315,11 @@ struct
         let elem1 = (merge_elem op) elem1 elem in
         add_elem e1 key elem1) e1 e2 
     
-  let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2
-      
+  let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2 
   let merge_sor  (e1:emap) (e2:emap) :emap = merge_op SOR e1 e2
-      
   let merge_star (e1:emap) (e2:emap) :emap = merge_op STAR e1 e2
 
-  let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map 
+  let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map
 
 end;;
 
@@ -616,12 +617,18 @@ let collect view prot =
   let amap = res.assumptions in
   let gmap = res.guards in
   (* normalize assumptions and guards *)
-  let assume_norm = ConstrMap.map_data (fun assrt ->
-    x_add_1 mk_order_normalization assrt
-  ) amap in
-  let guard_norm = ConstrMap.map_data (fun assrt ->
-    x_add_1 mk_order_normalization assrt
-  ) gmap in
+  let assume_norm = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) amap in
+  let guard_norm  = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) gmap in
+  let lst = List.flatten (ConstrMap.get_data assume_norm) in
+  let lst = List.map (fun assrt ->
+      match assrt with
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+      | _ -> []
+    ) lst in
+  let lst = List.flatten lst in 
+  let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
+  let ()  = y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl in
   (assume_norm, guard_norm)
 
 let collect view prot =

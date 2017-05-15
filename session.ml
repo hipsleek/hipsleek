@@ -3007,6 +3007,4 @@ let norm_slk_formula form =
 
 
 module ORD    = GOrders(IVar) ;;
-(* module OEvent = Event(ORD) ;; *)
-(* (\* module OArrow = Arrow(ORD) ;; *\) *)
 module ODAG   = Make_DAG(ORD)(Event) ;;
