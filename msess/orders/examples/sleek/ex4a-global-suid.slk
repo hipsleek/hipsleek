@@ -1,8 +1,9 @@
 sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
-pred_sess_prot G1<A,B,C,k> == A->B:k(1) ;; B->C:k(2).
-pred_sess_prot G2<A:role,B:role,C:role,k1:chan,k2:chan> == A->B:k1(1) ;; B->C:k2(2).
+//pred_sess_prot G1<A:role,B:role,C:role,k:chan> == A->B:k(1) ;; B->C:k(2).
+//pred_sess_prot G2<A:role,B:role,C:role,k1:chan,k2:chan> == A->B:k1(1) ;; B->C:k2(2).
+pred_sess_prot G3<A:role,B:role,C:role,c:chan,d:chan> == A->B:c(1) ;; B->C:d(2) ;; A->C:d(3).
 
 /*
 pred_sess_prot G2<A,B,C,k> ==
@@ -11,13 +12,42 @@ pred_sess_prot G2<A,B,C,k> ==
                             Guard{ hb(A,2,B,1) & hb(B,2,C,1)}<>.
 */
 /*
+G1:
+
 Assumptions:
-B2 <_HB B1
-A-2->B
-B-1->C
+S^k  <_CB R^k
+A^IA <_HB A^1
+B^IB <_HB B^1
+C^IC <_HB C^2
+B^1  <_HB B^2
+A^1  <_CB B^1
+B^2  <_CB C^2
 
 Guards:
-2 <_HB 1
+
+
+
+G3:
+Assumptions:
+S^d <_CB R^d
+S^c <_CB R^c
+A^1 <_CB B^1
+B^2 <_CB C^2
+A^3 <_CB C^3
+A^IA <_HB A^1 (is it safe to add it as HB ? what if it's a chan S/R that needs to be proved?)
+B^IB <_HB B^1
+B^1  <_HB B^2
+C^IC <_HB C^2
+C^2  <_HB C^3
+
+Guards:
+S^ic <_HB A^1
+R^ic <_HB B^1
+S^id <_HB B^2
+R^id <_HB C^2
+A^1  <_HB A^3
+B^1  <_HB C^3
+
 
 
 */

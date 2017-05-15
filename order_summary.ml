@@ -25,6 +25,40 @@ type event = SIOrd.event
 (* boundary base element *)
 and transmission = SIOrd.transmission
 
+(* ------------------------------------------------ *)
+(* singnature of the keys for the backtier/frontier *)
+module type KEY_EQ_TYPE =
+sig
+  type t
+  val eq : t -> t -> bool
+  val string_of : t -> string   
+end;;
+
+(* key for RMap *)
+module IRole =
+struct
+  type t = role
+  let eq = SIOrd.eq_role
+  let string_of = SIOrd.string_of_role
+end;;
+
+(* key for CMap *)
+module IChan =
+struct
+  type t = chan
+  let eq = SIOrd.eq_chan
+  let string_of = SIOrd.string_of_chan
+end;;
+
+(* key for ConstrMap *)
+module UID =
+struct
+  type t = suid
+  let eq = SIOrd.eq_suid
+  let string_of = SIOrd.string_of_suid
+  let contains (lst:t list) (suid:t) = List.exists (eq suid) lst
+end;;
+
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
 module type BOUNDARY_BASE_ELEMENT_TYPE =
@@ -44,11 +78,14 @@ struct
            
   let make ((role,uid,chan) : a) : t = {role = role; uid = uid; channel = chan }
                                          
-  let eq (e1:t) (e2:t) : bool =
-    (SBProt.eq_suid e1.uid e2.uid) && (SBProt.eq_role e1.role e2.role)
+  let eq (e1:t) (e2:t) : bool   = SIOrd.eq_event e1 e2
 
-  let string_of (e:t) : string = (SBProt.string_of_role e.role) ^ "^" ^(SBProt.string_of_suid e.uid)
+  let string_of (ev:t) : string = SIOrd.string_of_event ev
 
+  let contains (lst: t list) (ev:t)   = List.exists (eq ev) lst
+      
+  let remove_duplicates (lst: t list) = List.fold_left (fun acc ev ->
+      if contains acc ev then acc else ev::acc) [] lst 
 end;;
 
 module BTrans =
@@ -66,7 +103,7 @@ struct
     && (SBProt.eq_chan t1.channel t2.channel)
        
   let string_of (e:t) : string =
-    (SBProt.string_of_role e.sender) ^ "-" ^ (SBProt.string_of_suid e.uid) ^ "->" ^ (SBProt.string_of_role e.receiver)
+    (IRole.string_of e.sender) ^ "-" ^ (UID.string_of e.uid) ^ "->" ^ (IRole.string_of e.receiver)
 
   let get_sender (trans:t)   =  trans.sender
   let get_receiver (trans:t) =  trans.receiver
@@ -144,38 +181,6 @@ struct
   let add_elem (old_e:t) (new_e:t) :t  = old_e@new_e    
 end;;
 
-(* ------------------------------------------------ *)
-(* singnature of the keys for the backtier/frontier *)
-module type KEY_EQ_TYPE =
-sig
-  type t
-  val eq : t -> t -> bool
-  val string_of : t -> string   
-end;;
-
-(* key for RMap *)
-module IRole =
-struct
-  type t = role
-  let eq = SBProt.eq_role
-  let string_of = SBProt.string_of_role
-end;;
-
-(* key for CMap *)
-module IChan =
-struct
-  type t = chan
-  let eq = SBProt.eq_chan
-  let string_of = SBProt.string_of_chan
-end;;
-
-(* key for CMap *)
-module UID =
-struct
-  type t = suid
-  let eq = SBProt.eq_suid
-  let string_of = SBProt.string_of_suid
-end;;
 
 (* ------------------------------------------------ *)
 module type SMap_type =
@@ -577,7 +582,11 @@ let mk_def_summary roles channs =
       let suid  = SBProt.mk_suid fresh_suid in
       let role  = SBProt.mk_role role in 
       let event = BEvent.make (role,suid,def_chan) in
-      (role, Events.mk_base event)) roles in
+      (suid,(role, Events.mk_base event))) roles in
+
+  (* collect the freshly introduced suids *)
+  let suids1,rmap = List.split rmap in
+  
   let cmap_int =  List.map (fun chan ->
       let fresh_suid = fresh_any_name chan in
       let suid     = SBProt.mk_suid fresh_suid in
@@ -585,8 +594,12 @@ let mk_def_summary roles channs =
       let receiver = SBProt.mk_role (fresh_any_name "R") in
       let chan     = SBProt.mk_chan chan in
       let trans    = BTrans.make (sender,receiver,chan,suid) in
-      (chan, (* Trans.mk_base *) trans)) channs in
-  let cmap = List.map (fun (c,t) -> (c, Trans.mk_base t)) cmap_int in 
+      (suid,(chan, trans))) channs in
+  
+  (* collect the freshly introduced suids *)
+  let suids2,cmap_int = List.split cmap_int in
+  let cmap = List.map (fun (c,t) -> (c, Trans.mk_base t)) cmap_int in
+  
   let assumes = List.map (fun (_,trans) ->
       let sender   = BTrans.get_sender trans in
       let receiver = BTrans.get_receiver trans in
@@ -601,7 +614,34 @@ let mk_def_summary roles channs =
   let assumes = ConstrMap.init assumes in
   let guards  = ConstrMap.mkEmpty () in
   let summary =  init_summary (rmap,cmap) (rmap,cmap) assumes guards in
-  summary
+  summary, (suids1 @ suids2)
+
+let test_dag assume guard def_suids =
+  (* collect the events related to the precondition / default summary *)
+  let alldata1 = ConstrMap.get_data assume in
+  let alldata2 = ConstrMap.get_data guard  in
+  let alldata  = List.flatten (alldata1 @ alldata2) in
+  let pre_events = List.map (fun assrt ->
+      match assrt with
+      | SIOrd.Order (SIOrd.HBe hbe) -> [hbe.SIOrd.hbe_event1;hbe.SIOrd.hbe_event2]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [cbe.SIOrd.cbe_event1;cbe.SIOrd.cbe_event2]
+      | _ -> []
+    ) alldata in
+  let pre_events = List.flatten pre_events in
+  let pre_events = List.filter (fun ev -> UID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
+  let pre_events = BEvent.remove_duplicates pre_events in
+  let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
+  
+  let lst = List.flatten (ConstrMap.get_data assume) in
+  let lst = List.map (fun assrt ->
+      match assrt with
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+      | _ -> []
+    ) lst in
+  let lst = List.flatten lst in 
+  let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
+  y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl
 
 let collect view prot =
   (* retrieves the  role params, and chan params*)
@@ -609,7 +649,7 @@ let collect view prot =
   let roles, rest = List.partition (fun (t1,_) -> cmp_typ t1 role_typ) params in
   let channs, rest = List.partition (fun (t1,_) -> cmp_typ t1 chan_typ) params in
   (* creates def summary *)
-  let def_sum = mk_def_summary roles channs in
+  let def_sum,def_suids = mk_def_summary roles channs in
   (* collects protocol's summary *)
   let res = collect prot in
   (* merge def summ w prot's summ *)
@@ -619,16 +659,7 @@ let collect view prot =
   (* normalize assumptions and guards *)
   let assume_norm = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) amap in
   let guard_norm  = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) gmap in
-  let lst = List.flatten (ConstrMap.get_data assume_norm) in
-  let lst = List.map (fun assrt ->
-      match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
-      | _ -> []
-    ) lst in
-  let lst = List.flatten lst in 
-  let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
-  let ()  = y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl in
+  let () = test_dag assume_norm guard_norm def_suids in
   (assume_norm, guard_norm)
 
 let collect view prot =
