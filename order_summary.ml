@@ -213,6 +213,8 @@ sig
   val merge_seq  : emap -> emap -> emap
   val merge_sor  : emap -> emap -> emap
   val merge_star : emap -> emap -> emap 
+  val map_data   : (elem -> elem) -> emap -> emap
+
 end;;
 
 module SMap
@@ -315,6 +317,8 @@ struct
   let merge_sor  (e1:emap) (e2:emap) :emap = merge_op SOR e1 e2
       
   let merge_star (e1:emap) (e2:emap) :emap = merge_op STAR e1 e2
+
+  let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map 
 
 end;;
 
@@ -470,6 +474,50 @@ let merge_all_star (star1:summary) (star2:summary) : summary =
   let guards0 = ConstrMap.union star1.guards star2.guards in
   init_summary bborder0 fborder0 assume0 guards0
 
+(* Normalize order assumptions and guards *)
+(* Assume - normalizing transmission: S->R => (S) & (R) & (S <_CB R) *)
+(* Guard - normalizing HB of transmission: A->B <_HB B->C => (A <_HB B) & (B <_HB C) *)
+(* Everything else remains the same *)
+let mk_order_normalization_x list =
+    let helper assrt = match assrt with
+      | SIOrd.Transm t -> 
+        let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
+        let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
+        let create_cbe ev1 ev2 = match ev1, ev2 with
+          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_cbe e1 e2
+          | _,_ -> NoAssrt in
+        let cbe = create_cbe event_sender event_receiver in
+        [event_sender; event_receiver; cbe]
+      | SIOrd.Order SIOrd.HBe _ 
+      | SIOrd.Order SIOrd.CBe _ -> [assrt]
+      | SIOrd.Order SIOrd.HBt hbt -> 
+        let trans1 = hbt.hbt_transmission1 in
+        let trans2 = hbt.hbt_transmission2 in
+        let event1_sender = SIOrd.mk_assrt_event trans1.sender trans1.uid trans1.channel in
+        let event1_receiver = SIOrd.mk_assrt_event trans1.receiver trans1.uid trans1.channel in
+        let event2_sender = SIOrd.mk_assrt_event trans2.sender trans2.uid trans2.channel in
+        let event2_receiver = SIOrd.mk_assrt_event trans2.receiver trans2.uid trans2.channel in
+        let create_hbe ev1 ev2 = match ev1, ev2 with
+          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
+          | _,_ -> SIOrd.NoAssrt in
+        let hbe1 = create_hbe event1_sender event2_sender in
+        let hbe2 = create_hbe event1_receiver event2_receiver in 
+        [hbe1; hbe2]
+      | _ -> []
+     in
+     let res = List.fold_left (fun acc assrt -> acc@(helper assrt)) [] list in
+     res
+
+let mk_order_normalization list = 
+  let pr = pr_list SIOrd.string_of in 
+  Debug.no_1 "OS.mk_order_normalization" pr pr mk_order_normalization_x list
+
+let mk_and_list lst = 
+  List.fold_left (fun acc assrt -> SIOrd.mk_and acc assrt) SIOrd.Bot lst 
+
+let mk_and_list lst = 
+  let pr = SIOrd.string_of in
+  Debug.no_1 "OS.mk_and_list" (pr_list pr) pr mk_and_list lst
 
 (* ------------------------------------------------ *)
 (* Collects order assumptions and proof obligations.*)
@@ -565,64 +613,26 @@ let collect view prot =
   let res = collect prot in
   (* merge def summ w prot's summ *)
   let res = merge_all_seq def_sum res in 
-  (res.assumptions, res.guards)
+  let amap = res.assumptions in
+  let gmap = res.guards in
+  (* normalize assumptions and guards *)
+  let assume_norm = ConstrMap.map_data (fun assrt ->
+    x_add_1 mk_order_normalization assrt
+  ) amap in
+  let guard_norm = ConstrMap.map_data (fun assrt ->
+    x_add_1 mk_order_normalization assrt
+  ) gmap in
+  (assume_norm, guard_norm)
 
 let collect view prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
   Debug.no_1 "OS.collect" pr_none pr_out (collect view) prot
 
-(* Normalize order assumptions and guards *)
-(* Assume - normalizing transmission: S->R => (S) & (R) & (S <_CB R) *)
-(* Guard - normalizing HB of transmission: A->B <_HB B->C => (A <_HB B) & (B <_HB C) *)
-(* Everything else remains the same *)
-let rec mk_order_normalization_x list = match list with
-  | [] -> SIOrd.NoAssrt
-  | head::tail ->
-    let res = match head with
-      | SIOrd.Transm t -> 
-        let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
-        let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
-        let and_seq = SIOrd.mk_and event_sender event_receiver in
-        let create_cbe ev1 ev2 = match ev1, ev2 with
-          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_cbe e1 e2
-          | _,_ -> NoAssrt in
-        let cbe = create_cbe event_sender event_receiver in
-        let and_seq = SIOrd.mk_and and_seq cbe in
-        and_seq
-      | SIOrd.Order SIOrd.HBe hbe -> head 
-      | SIOrd.Order SIOrd.CBe cbe -> head 
-      | SIOrd.Order SIOrd.HBt hbt -> 
-        let trans1 = hbt.hbt_transmission1 in
-        let trans2 = hbt.hbt_transmission2 in
-        (* let norm_trans (t:SIOrd.transmission) = *)
-        let event1_sender = SIOrd.mk_assrt_event trans1.sender trans1.uid trans1.channel in
-        let event1_receiver = SIOrd.mk_assrt_event trans1.receiver trans1.uid trans1.channel in
-        let event2_sender = SIOrd.mk_assrt_event trans2.sender trans2.uid trans2.channel in
-        let event2_receiver = SIOrd.mk_assrt_event trans2.receiver trans2.uid trans2.channel in
-        let create_hbe ev1 ev2 = match ev1, ev2 with
-          | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
-          | _,_ -> SIOrd.NoAssrt in
-        let hbe1 = create_hbe event1_sender event2_sender in
-        let hbe2 = create_hbe event1_receiver event2_receiver in 
-        let hbt  = SIOrd.mk_and hbe1 hbe2 in
-        hbt
-      | _ -> SIOrd.NoAssrt in
-    match res with 
-    | SIOrd.NoAssrt -> mk_order_normalization_x tail
-    | _ -> match tail with
-      | [] -> res
-      | _ ->  SIOrd.mk_and res (mk_order_normalization_x tail)
-
-
-let rec mk_order_normalization list = 
-  let pr = SIOrd.string_of in 
-  Debug.no_1 "OS.mk_order_normalization" (pr_list pr) pr mk_order_normalization_x list
 
 (* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders view prot =
   let amap,gmap = collect view prot in
-  let () = y_binfo_hp (pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) ) (amap,gmap) in
   let insert sf = match sf with
     | SProt.SBase sb -> 
       begin 
@@ -630,21 +640,21 @@ let insert_orders view prot =
         | SProt.Base t -> 
             let uid = SBProt.get_uid t in 
             let loc = SBProt.get_base_pos t in
-            let assume_list = ConstrMap.find amap uid in
-            let guard_list = ConstrMap.find gmap uid in
-            (* creates a sequance with order assumptions and guards *)
-            let create_sequance order_list name sess_pred_kind prot_session = match order_list with
+            let assume = ConstrMap.find amap uid in
+            let guard = ConstrMap.find gmap uid in
+            (* creates a sequence with order assumptions and guards *)
+            let create_sequence orders name sess_pred_kind prot_session = match orders with
               | [] -> prot_session
               | _ -> 
-                  let order_norm = x_add_1 mk_order_normalization order_list in
+                  let order_norm  = mk_and_list orders in
                   let pred = SProt.SBase (SProt.mk_session_predicate name [] [] ~orders:order_norm ~sess_pred_kind:(Assert sess_pred_kind) loc) in
-                  let sequance = SProt.mk_session_seq_formula prot_session pred loc in
-                  sequance
+                  let sequence = SProt.mk_session_seq_formula prot_session pred loc in
+                  sequence
             in
             (* inserts order assumptions *)
-            let seq = create_sequance assume_list "Assume" Assume sf in
+            let seq = create_sequence assume "Assume" Assume sf in
             (* then, inserts order guards *)
-            let seq = create_sequance guard_list "Guard" Guard seq in
+            let seq = create_sequence guard "Guard" Guard seq in
             Some seq
         | _ -> None
       end
