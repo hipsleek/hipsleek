@@ -138,6 +138,7 @@ add support for relations in Session
 
 =====================================
 =====================================
+[DONE]
 make chr work interactively
 
 =====================================

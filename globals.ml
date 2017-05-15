@@ -301,7 +301,7 @@ type typ =
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
 
-(* let eq_type t1 t2 = match *)
+(* let eq_typegen t1 t2 = match *)
 (*     | FORM, FORM  *)
 (*     | UNK, UNK *)
 (*   | AnnT *)

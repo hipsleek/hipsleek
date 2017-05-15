@@ -564,7 +564,8 @@ let collect view prot =
   (* collects protocol's summary *)
   let res = collect prot in
   (* merge def summ w prot's summ *)
-  let res = merge_all_seq def_sum res in 
+  let res = merge_all_seq def_sum res in
+  (* norm *)
   (res.assumptions, res.guards)
 
 let collect view prot =

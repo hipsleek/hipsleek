@@ -2316,12 +2316,14 @@ module IVar =
 struct
   type t = IForm.var
   let string_of = IForm.print_var
+  let eq = IForm.eq_var
 end;;
 
 module CVar =
 struct
   type t = CForm.var
   let string_of = CForm.print_var
+  let eq = CForm.eq_var
 end;;
 
 module IOrders = GOrders(IVar)
@@ -3002,3 +3004,9 @@ let norm_slk_formula form =
 let norm_slk_formula form =
   let pr = !F.print_formula in
   Debug.no_1 "Session.norm_slk_formula" pr pr norm_slk_formula form
+
+
+module ORD    = GOrders(IVar) ;;
+(* module OEvent = Event(ORD) ;; *)
+(* (\* module OArrow = Arrow(ORD) ;; *\) *)
+module ODAG   = Make_DAG(ORD)(Event) ;;
