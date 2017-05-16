@@ -147,6 +147,20 @@ add ex3e to run-fast-test
 
 =====================================
 =====================================
+[DONE]
+merge border looses A related info:
+-----------------------------------
+(==order_summary.ml#455==)
+merge_border@3@2@1
+merge_border inp1 :(
+RMap::[(B,B^id_55),(C,C^id_55)],
+CMap::[(d,B-id_55->C)])
+merge_border inp2 :(
+RMap::[(A,A^id_54),(C,C^id_54)],
+CMap::[(d,A-id_54->C)])
+merge_border@3 EXIT:(
+RMap::[(B,B^id_55),(C,C^id_55)],
+CMap::[(d,B-id_55->C)])
 
 =====================================
 =====================================

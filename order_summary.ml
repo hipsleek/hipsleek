@@ -239,7 +239,7 @@ struct
   let string_of_key  = Key.string_of 
 
   let string_of (e: emap) : string =    
-    "["^ (pr_lst "\n" (pr_pair string_of_key string_of_elem) e) ^"]"
+    "["^ (pr_lst "," (pr_pair string_of_key string_of_elem) e) ^"]"
     
   let mkEmpty () : emap = []
   let is_empty (m:emap) = match m with | [] -> true | _ -> false
@@ -316,9 +316,9 @@ struct
       | SOR  -> Elem.merge_sor
       | STAR -> Elem.merge_star in
     List.fold_left (fun map (key,elem) ->
-        let elem1 = find e1 key in (* \bot or some element *)
+        let elem1 = find map key in (* \bot or some element *)
         let elem1 = (merge_elem op) elem1 elem in
-        add_elem e1 key elem1) e1 e2 
+        add_elem map key elem1) e1 e2 
     
   let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2 
   let merge_sor  (e1:emap) (e2:emap) :emap = merge_op SOR e1 e2
@@ -356,7 +356,7 @@ let mk_empty_summary () =
 let init_summary bborder fborder assum guards = 
   {bborder = bborder ; fborder = fborder ; assumptions = assum ; guards = guards}
 
-let string_of_border = pr_pair (add_str "RMap:" RMap.string_of) (add_str "CMap:" CMap.string_of)
+let string_of_border = pr_pair (add_str "\nRMap:" RMap.string_of) (add_str "\nCMap:" CMap.string_of)
   
   
 (* ------------------------------------------------ *)
@@ -431,6 +431,11 @@ let merge_set (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : ConstrMap.
   (* flatten guards and assumptions  *)
   (assumpt, guards)
 
+let merge_set (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : ConstrMap.emap * ConstrMap.emap =
+  let pr = string_of_border in
+  let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
+  Debug.no_2 "OS.merge_set" pr pr pr_out merge_set b1 b2
+
 (* generic border merge *)
 let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
     rmap_merge cmap_merge : RMap.emap * CMap.emap =
@@ -447,15 +452,15 @@ let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
 
 (* [;] in paper *)
 let merge_seq_border (seq1:RMap.emap * CMap.emap) (seq2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
-  merge_border seq1 seq2 RMap.merge_seq CMap.merge_seq
+  x_add merge_border seq1 seq2 RMap.merge_seq CMap.merge_seq
 
 (* [\/] in paper *)
 let merge_sor_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
-  merge_border b1 b2 RMap.merge_sor CMap.merge_sor
+  x_add merge_border b1 b2 RMap.merge_sor CMap.merge_sor
 
 (* [*] in paper *)
 let merge_star_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
-  merge_border b1 b2 RMap.merge_star CMap.merge_star
+  x_add merge_border b1 b2 RMap.merge_star CMap.merge_star
   
 (* f1 in paper *)
 let merge_all_seq (seq1:summary) (seq2:summary) : summary =
