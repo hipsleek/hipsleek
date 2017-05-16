@@ -56,7 +56,7 @@ struct
   type t = suid
   let eq = SIOrd.eq_suid
   let string_of = SIOrd.string_of_suid
-  let contains (lst:t list) (suid:t) = List.exists (eq suid) lst
+  let contains (lst:t list) (suid:t) = SIOrd.contains_suid lst suid
 end;;
 
 (* ------------------------------ *)
@@ -82,7 +82,7 @@ struct
 
   let string_of (ev:t) : string = SIOrd.string_of_event ev
 
-  let contains (lst: t list) (ev:t)   = List.exists (eq ev) lst
+  let contains (lst: t list) (ev:t)   = SIOrd.contains_event lst ev
       
   let remove_duplicates (lst: t list) = List.fold_left (fun acc ev ->
       if contains acc ev then acc else ev::acc) [] lst 
@@ -643,6 +643,8 @@ let test_dag assume guard def_suids =
   let lst = List.flatten lst in 
   let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
   let () = y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl in
+  let tbl = Session.ODAG.norm_weak tbl pre_events in
+  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG.string_of) tbl in
 
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)

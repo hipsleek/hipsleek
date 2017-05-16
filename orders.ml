@@ -60,6 +60,9 @@ sig
   val eq_chan  : chan  -> chan  -> bool
   val eq_suid  : suid  -> suid  -> bool
   val eq_event : event -> event -> bool
+
+  val contains_suid  : suid list -> suid -> bool 
+  val contains_event : event list -> event -> bool 
 end;;
 
 (* generic orders, where role and chan are polymorphic *)
@@ -171,6 +174,9 @@ struct
   let eq_suid s1 s2  = Var.eq s1 s2
   let eq_event e1 e2 = (eq_role e1.role e2.role) && (eq_role e1.uid e2.uid)
 
+  let contains_suid lst suid = List.exists (eq_suid suid) lst
+  let contains_event lst ev  = List.exists (eq_event ev)  lst
+
   let is_cb assrt =
     match assrt with
     | Order (CBe _) -> true
@@ -228,6 +234,7 @@ struct
   module Key = Key(Orders)
   (* vertex == Key.t == Orders.event *)
   type vertex     = Orders.event
+  type key        = vertex
   type arrow_kind = HB | CB
   type elem       = {arrow: arrow_kind ; vertex: vertex}
   type data       = elem list
@@ -258,6 +265,7 @@ struct
   
   (* QUERIES *)
   let find tbl vertex = M.find vertex tbl
+  let find_safe tbl vertex = try M.find vertex tbl with Not_found -> []
   let mem tbl vertex  = M.mem vertex tbl
   let data_mem lst data = List.exists (eq_elem data) lst
   let exists tbl key data =
@@ -265,18 +273,33 @@ struct
       let edata = find tbl key in
       data_mem edata data
     with Not_found -> false
-  
+
   (* MAKERS *)
   let create ()   = M.empty
   let mk_empty_data () : data = []
   let mk_vertex e = e
   let mk_elem a v = {arrow = a; vertex = v}
 
+  (* MISC *)
+  let filter tbl (fnc: key->data->bool) = M.filter fnc tbl
+  let fold tbl fnc acc = M.fold fnc tbl acc
+  let fold_data fnc acc data = List.fold_left fnc acc data
+  let map fnc tbl = M.map fnc tbl
+  let map_data fnc data = List.map fnc data
+  let is_weak arrow   = match arrow with |CB -> true | _ -> false
+  let is_strong arrow = not(is_weak arrow)
+  let get_weak data   = List.filter (fun el -> is_weak el.arrow) data
+  let get_strong data = List.filter (fun el -> is_strong el.arrow) data
+  let get_successors tbl elem = find_safe tbl elem.vertex
+  let get_weak_successors tbl elem =  get_weak (get_successors tbl elem)
+  let get_strong_successors tbl elem =  get_strong (get_successors tbl elem)
+
   (* UPDATES *)
   let add_vertex tbl key data = M.add key data tbl
   let update_data tbl key data =
-    let existing_data = try (find tbl key) 
-      with Not_found -> mk_empty_data () in
+    let existing_data = find_safe tbl key in
+      (* try (find tbl key)  *)
+      (* with Not_found -> mk_empty_data () in *)
     add_vertex tbl key (data::existing_data)
   let connect tbl arrow vertex1 vertex2 =
     let tbl = if mem tbl vertex2 then tbl
@@ -284,9 +307,24 @@ struct
     let new_data = mk_elem arrow (mk_vertex vertex2) in
     update_data tbl vertex1 new_data
   let connect_list tbl xs = 
-      List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
-
-  let has_path tbl v1 v2 =
+    List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
+  (* remove the weak arrows, by replacing them with the stronger connection:
+     ex: A <_CB B & B <_HB C ~~> A <_HB C  *)
+  let norm_weak tbl special_elem = (* failwith x_tbi *)
+    (* ('a -> 'b ) -> 'a t -> 'b *)
+    let tbl = map (fun data ->
+        let data =  fold_data (fun acc elem ->
+            if (is_weak elem.arrow) then
+              if (Orders.contains_event special_elem elem.vertex) then elem::acc
+              else (get_strong_successors tbl elem)@acc
+            else elem::acc
+          ) [] data in
+        data
+      ) tbl in
+    tbl
+      
+  (* ADVANCED QUERIES *)
+    let has_path tbl v1 v2 =
     try
       let rec helper key =
         let data = find tbl key in
@@ -294,5 +332,6 @@ struct
         else List.exists (fun el -> helper el.vertex) data in
       helper v1
     with Not_found -> false
+
   
 end;;
