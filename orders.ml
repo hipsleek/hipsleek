@@ -235,9 +235,11 @@ struct
   (* vertex == Key.t == Orders.event *)
   type vertex     = Orders.event
   type key        = vertex
-  type arrow_kind = HB | CB
+  type arrow_kind = HB | CB | Backward
   type elem       = {arrow: arrow_kind ; vertex: vertex}
-  type data       = elem list
+  type elist      = elem list
+  type data       = {predecessors: elist; successors: elist}
+  type edge       = {tail: vertex; kind: arrow_kind; head: vertex}
 
   module M = Map.Make(Key)
   type t   = data M.t
@@ -247,9 +249,11 @@ struct
     match arrow_kind with
     | HB -> "-->"
     | CB -> "->>"
+    | Backward -> "<-"
   let string_of_vertex = Orders.string_of_event
-  let string_of_elem e = (string_of_arrow_kind e.arrow) ^ (string_of_vertex e.vertex)
-  let string_of_data   = pr_list string_of_elem
+  let string_of_elem (e:elem): string = (string_of_arrow_kind e.arrow) ^ (string_of_vertex e.vertex)
+  let string_of_elist  = pr_list string_of_elem
+  let string_of_data d = pr_pair (add_str "Predecessors" string_of_elist) (add_str "Successors" string_of_elist) (d.predecessors,d.successors)
   let string_of tbl    = M.fold (fun key data acc ->
       (Key.string_of key) ^ ":" ^ (string_of_data data)
       ^ "\n" ^ acc
@@ -258,54 +262,88 @@ struct
   (* EQUALITIES *)
   let eq_arrow (a1: arrow_kind) (a2: arrow_kind) =
     match a1,a2 with
-    | HB,HB | CB,CB -> true | _,_ -> false
+    | HB,HB | CB,CB | Backward,Backward -> true | _,_ -> false
   let eq_vertex (v1: vertex) (v2: vertex) = Key.eq v1 v2
   let eq_elem (e1:elem) (e2:elem) =
     (eq_arrow e1.arrow e2.arrow) && (eq_vertex e1.vertex e2.vertex)
+
+    (* MAKERS *)
+  let create ()   = M.empty
+  let mk_empty_data () : data = {successors = []; predecessors = [] }
+  let mk_vertex e = e
+  let mk_elem a v = {arrow = a; vertex = v}
+  let mk_edge tail arrow head = {tail = tail; kind = arrow; head = head}
+
   
   (* QUERIES *)
   let find tbl vertex = M.find vertex tbl
-  let find_safe tbl vertex = try M.find vertex tbl with Not_found -> []
+  let find_safe tbl vertex = try M.find vertex tbl with Not_found -> mk_empty_data ()
   let mem tbl vertex  = M.mem vertex tbl
-  let data_mem lst data = List.exists (eq_elem data) lst
-  let exists tbl key data =
+  let elist_mem lst elem = List.exists (eq_elem elem) lst
+  (* let data_mem lst data = List.exists (eq_elem data.successors) lst *)
+  let exists_elist elist elem=  elist_mem elist elem
+  let exists_successor tbl key elem =
     try
-      let edata = find tbl key in
-      data_mem edata data
+      let data = find tbl key in
+      elist_mem data.successors elem
     with Not_found -> false
 
-  (* MAKERS *)
-  let create ()   = M.empty
-  let mk_empty_data () : data = []
-  let mk_vertex e = e
-  let mk_elem a v = {arrow = a; vertex = v}
+  let exists_predecessors tbl key elem =
+    try
+      let data = find tbl key in
+      elist_mem data.predecessors elem
+    with Not_found -> false
 
   (* MISC *)
   let filter tbl (fnc: key->data->bool) = M.filter fnc tbl
-  let fold tbl fnc acc = M.fold fnc tbl acc
-  let fold_data fnc acc data = List.fold_left fnc acc data
+  let fold fnc acc tbl = M.fold fnc tbl acc
+  let fold_elist fnc acc elist = List.fold_left fnc acc elist
   let map fnc tbl = M.map fnc tbl
-  let map_data fnc data = List.map fnc data
+  let map_elist fnc elist = List.map fnc elist
   let is_weak arrow   = match arrow with |CB -> true | _ -> false
-  let is_strong arrow = not(is_weak arrow)
-  let get_weak data   = List.filter (fun el -> is_weak el.arrow) data
-  let get_strong data = List.filter (fun el -> is_strong el.arrow) data
-  let get_successors tbl elem = find_safe tbl elem.vertex
-  let get_weak_successors tbl elem =  get_weak (get_successors tbl elem)
-  let get_strong_successors tbl elem =  get_strong (get_successors tbl elem)
+  let is_strong arrow = match arrow with |HB -> true | _ -> false
+  let get_weak (elist:elist) :elist   = List.filter (fun el -> is_weak el.arrow) elist
+  let get_strong (elist:elist) :elist = List.filter (fun el -> is_strong el.arrow) elist
+  let get_successors tbl vertex   = let data = find_safe tbl vertex in data.successors
+  let get_predecessors tbl vertex = let data = find_safe tbl vertex in data.predecessors
+  let get_weak_successors tbl vertex   =  get_weak (get_successors tbl vertex)
+  let get_strong_successors tbl vertex =  get_strong (get_successors tbl vertex)
+  let set_successors  succ data = {data with successors = succ}
+  let set_predecessors pred data = {data with predecessors = pred}
+  let add_successors   new_succ data = set_successors (new_succ::data.successors) data
+  let add_predecessors new_pred data = set_predecessors (new_pred::data.predecessors) data
 
+  
   (* UPDATES *)
   let add_vertex tbl key data = M.add key data tbl
-  let update_data tbl key data =
+  let update_successors tbl key data =
     let existing_data = find_safe tbl key in
       (* try (find tbl key)  *)
       (* with Not_found -> mk_empty_data () in *)
-    add_vertex tbl key (data::existing_data)
+    add_vertex tbl key (add_successors data existing_data)
+  let update_predecessors tbl key data =
+    let existing_data = find_safe tbl key in
+    (* try (find tbl key)  *)
+    (* with Not_found -> mk_empty_data () in *)
+    add_vertex tbl key (add_predecessors data existing_data)
+  let set_successors_tbl   tbl key succ =
+    let data = find_safe tbl key in
+    add_vertex tbl key (set_successors succ data)
+  let set_predecessors_tbl tbl key pred =
+    let data = find_safe tbl key in
+    add_vertex tbl key (set_predecessors pred data)
+
+  (* Connects 2 vertices as follows:
+     vertex1 : succ1, pred1 ; vertex2:  succ2, pred2
+    ===>
+     vertex1 : vertex2::succ1, pred1 ;  vertex2:  succ2, vertex1::pred2 ;
+  *)
   let connect tbl arrow vertex1 vertex2 =
-    let tbl = if mem tbl vertex2 then tbl
-      else add_vertex tbl vertex2 (mk_empty_data ()) in
-    let new_data = mk_elem arrow (mk_vertex vertex2) in
-    update_data tbl vertex1 new_data
+    let new_pred = mk_elem Backward (mk_vertex vertex1) in
+    let tbl      = update_predecessors tbl vertex2 new_pred in
+    let new_succ = mk_elem arrow (mk_vertex vertex2) in
+    update_successors tbl vertex1 new_succ
+      
   let connect_list tbl xs = 
     List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
   (* remove the weak arrows, by replacing them with the stronger connection:
@@ -313,25 +351,63 @@ struct
   let norm_weak tbl special_elem = (* failwith x_tbi *)
     (* ('a -> 'b ) -> 'a t -> 'b *)
     let tbl = map (fun data ->
-        let data =  fold_data (fun acc elem ->
+        let data_succ =  fold_elist (fun acc elem ->
             if (is_weak elem.arrow) then
               if (Orders.contains_event special_elem elem.vertex) then elem::acc
-              else (get_strong_successors tbl elem)@acc
+              else
+                
+                (get_strong_successors tbl elem.vertex)@acc
             else elem::acc
-          ) [] data in
-        data
+          ) [] data.successors in
+        set_successors data_succ data
       ) tbl in
+    tbl
+
+  let remove_edge tbl (edge:edge) =
+    let head_pred = get_predecessors tbl edge.head in
+    let head_pred = List.filter (fun pred -> not (eq_elem (mk_elem Backward edge.tail) pred)) head_pred in
+    let tbl = set_predecessors_tbl tbl edge.head head_pred in
+    let tail_succ = get_successors tbl edge.tail in
+    let tail_succ = List.filter (fun succ -> not (eq_elem (mk_elem edge.kind edge.head) succ)) tail_succ in
+    let tbl = set_successors_tbl tbl edge.tail tail_succ in
+    tbl
+
+  let remove_edge_list tbl (edges: edge list) =
+    List.fold_left (fun acc_tbl edge -> remove_edge acc_tbl edge) tbl edges
+
+  let add_edge tbl (edge:edge) = connect tbl edge.kind edge.tail edge.head
+
+  let add_edge_list tbl (edges: edge list) =
+    List.fold_left (fun acc_tbl edge -> add_edge acc_tbl edge) tbl edges
+      
+  let norm_weak tbl special_elem = (* failwith x_tbi *)
+    (* ('a -> 'b ) -> 'a t -> 'b *)
+    let rem,add = fold (fun key data (rem,add) ->
+        let rem,add = fold_elist (fun (rem,add) elem ->
+            if (is_weak elem.arrow) then
+              if (Orders.contains_event special_elem elem.vertex) then rem,add
+              else
+                let rem = (mk_edge key elem.arrow elem.vertex)::rem in
+                let add = (map_elist (fun el -> mk_edge key el.arrow el.vertex) (get_strong_successors tbl elem.vertex))@add in
+                rem,add
+            else rem,add
+          )  (rem,add) data.successors in
+        rem,add
+      ) ([],[]) tbl in
+    
+    let tbl = remove_edge_list tbl rem in
+    let tbl = add_edge_list tbl add in
     tbl
       
   (* ADVANCED QUERIES *)
-    let has_path tbl v1 v2 =
-    try
-      let rec helper key =
-        let data = find tbl key in
-        if (data_mem data (mk_elem HB v2)) then true
-        else List.exists (fun el -> helper el.vertex) data in
-      helper v1
-    with Not_found -> false
+    (* let has_path tbl v1 v2 = *)
+    (* try *)
+    (*   let rec helper key = *)
+    (*     let data = find tbl key in *)
+    (*     if (data_mem data (mk_elem HB v2)) then true *)
+    (*     else List.exists (fun el -> helper el.vertex) data in *)
+    (*   helper v1 *)
+    (* with Not_found -> false *)
 
   
 end;;

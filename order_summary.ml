@@ -539,37 +539,41 @@ let mk_and_list lst =
 (* CMap :      chan -> transm                       *)
 (* ConstrMap : uid  -> order                        *)
 
-let rec collect prot =
-  match prot with
-  | SProt.SSeq  seq  -> merge_all_seq (collect seq.SProt.session_seq_formula_head)
-                     (collect seq.SProt.session_seq_formula_tail)
-  | SProt.SStar star -> merge_all_star (collect star.SProt.session_star_formula_star1)
-                     (collect star.SProt.session_star_formula_star2)
-  | SProt.SOr   sor  -> merge_all_sor (collect sor.SProt.session_sor_formula_or1)
-                     (collect sor.SProt.session_sor_formula_or2)
-  | SProt.SExists se -> collect se.SProt.session_exists_formula_session
-  | SProt.SBase (Base tr) ->
-    let sender   = tr.SBProt.protocol_base_formula_sender in
-    let receiver = tr.SBProt.protocol_base_formula_receiver in
-    let suid     = tr.SBProt.protocol_base_formula_uid in
-    let fail str = failwith str in
-    let chan     =
-      match tr.SBProt.protocol_base_formula_chan with
-      | None -> let () = y_binfo_pp "chan is none"  in failwith "expecting a specified channel"
-      | Some chan -> chan in
-      (* map_opt_def (fail "expecting a specified channel" ) *)
-      (*   idf tr.SBProt.protocol_base_formula_chan in *)
-    let event1   = BEvent.make (sender,suid,chan) in
-    let event2   = BEvent.make (receiver,suid,chan) in
-    let trans    = BTrans.make (sender,receiver,chan,suid) in
-    (* INIT MAPS  *)
-    let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
-    let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
-    let assum    = ConstrMap.init [(suid,OL.mkSingleton (SIOrd.Transm trans))] in
-    let guards   = ConstrMap.mkEmpty () in
-    {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
-  | SProt.SEmp 
-  | _ -> mk_empty_summary ()
+let derive_summ prot =
+  let rec helper prot = 
+    match prot with
+    | SProt.SSeq  seq  -> merge_all_seq (helper seq.SProt.session_seq_formula_head)
+                            (helper seq.SProt.session_seq_formula_tail)
+    | SProt.SStar star -> merge_all_star (helper star.SProt.session_star_formula_star1)
+                            (helper star.SProt.session_star_formula_star2)
+    | SProt.SOr   sor  -> merge_all_sor (helper sor.SProt.session_sor_formula_or1)
+                            (helper sor.SProt.session_sor_formula_or2)
+    | SProt.SExists se -> helper se.SProt.session_exists_formula_session
+    | SProt.SBase (Base tr) ->
+      let sender   = tr.SBProt.protocol_base_formula_sender in
+      let receiver = tr.SBProt.protocol_base_formula_receiver in
+      let suid     = tr.SBProt.protocol_base_formula_uid in
+      let fail str = failwith str in
+      let chan     =
+        match tr.SBProt.protocol_base_formula_chan with
+        | None -> let () = y_binfo_pp "chan is none"  in failwith "expecting a specified channel"
+        | Some chan -> chan in
+      let event1   = BEvent.make (sender,suid,chan) in
+      let event2   = BEvent.make (receiver,suid,chan) in
+      let trans    = BTrans.make (sender,receiver,chan,suid) in
+      (* INIT MAPS  *)
+      let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
+      let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
+      let assum    = ConstrMap.init [(suid,OL.mkSingleton (SIOrd.Transm trans))] in
+      let guards   = ConstrMap.mkEmpty () in
+      {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
+    | SProt.SEmp 
+    | _ -> mk_empty_summary ()
+  in helper prot 
+
+let derive_summ prot =
+  let pr_out summ = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) (summ.assumptions,summ.guards) in
+  Debug.no_1 "OS.derive_summ" pr_none pr_out derive_summ prot
 
 
 (* creates a default summary wrt the view's parameters *)
@@ -659,16 +663,16 @@ let collect view prot =
   (* creates def summary *)
   let def_sum,def_suids = mk_def_summary roles channs in
   (* collects protocol's summary *)
-  let res = collect prot in
+  let res = derive_summ prot in
   (* merge def summ w prot's summ *)
   let res = merge_all_seq def_sum res in
-  let amap = res.assumptions in
-  let gmap = res.guards in
+  let assume = res.assumptions in
+  let guard  = res.guards in
   (* normalize assumptions and guards *)
-  let assume_norm = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) amap in
-  let guard_norm  = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) gmap in
-  let () = test_dag assume_norm guard_norm def_suids in
-  (assume_norm, guard_norm)
+  let assume = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) assume in
+  let guard  = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) guard  in
+  let () = test_dag assume guard def_suids in
+  (assume, guard)
 
 let collect view prot =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
