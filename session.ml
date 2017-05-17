@@ -1628,7 +1628,7 @@ module Make_Session (Base: Session_base)
   and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?orders:(orders=Orders.mk_empty()) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
     Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:sess_pred_kind loc) ho_vars
 
-  and update_session_predicate ?name ?ho_vars ?params ?node 
+  and update_session_predicate_x ?name ?ho_vars ?params ?node 
     ?pure ?sess_ann ?orders ?sess_pred_kind ?loc pred =
     let name           = match name           with | Some n -> n | None -> pred.session_predicate_name in
     let ho_vars        = match ho_vars        with | Some n -> n | None -> pred.session_predicate_ho_vars in
@@ -1650,15 +1650,23 @@ module Make_Session (Base: Session_base)
       session_predicate_orders = orders;
       session_predicate_kind = sess_pred_kind;
     }
- (* TODO elena: check debug function 
+  
   and update_session_predicate ?name ?ho_vars ?params ?node 
     ?pure ?sess_ann ?orders ?sess_pred_kind ?loc pred =
+      let name           = match name           with | Some n -> n | None -> pred.session_predicate_name in
+      let ho_vars        = match ho_vars        with | Some n -> n | None -> pred.session_predicate_ho_vars in
+      let params         = match params         with | Some n -> n | None -> pred.session_predicate_params in
+      let node           = match node           with | Some n -> n | None -> pred.session_predicate_formula_heap_node in
+      let pure           = match pure           with | Some n -> n | None -> pred.session_predicate_pure in
+      let sess_ann       = match sess_ann       with | Some n -> n | None -> pred.session_predicate_anns in
+      let orders         = match orders         with | Some n -> n | None -> pred.session_predicate_orders in
+      let sess_pred_kind = match sess_pred_kind with | Some n -> n | None -> pred.session_predicate_kind in
+      let loc            = match loc            with | Some n -> n | None -> pred.session_predicate_pos in
       let pr_in = string_of_session_predicate in
       let pr_out = string_of_session_base in
-      Debug.no_1 "update_session_predicate" pr_in pr_out (fun _ -> update_session_predicate_x ~name:name ~ho_vars:ho_vars ?params:params ?node:node
-                                                      ?pure:pure ?sess_ann:sess_ann ?orders:orders ?sess_pred_kind:sess_pred_kind ?loc:loc pred) pred 
- *)
-
+      Debug.no_1 "update_session_predicate" pr_in pr_out (fun _ -> update_session_predicate_x ~name:name ~ho_vars:ho_vars ~params:params ~node:node
+                                                      ~pure:pure ~sess_ann:sess_ann ~orders:orders ~sess_pred_kind:sess_pred_kind ~loc:loc pred) pred 
+  
   (* TODO tina: Why doesn't this use SFence constructor? *)
   (* and mk_session_fence_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) loc = *)
   (*   { *)
@@ -2338,17 +2346,23 @@ module Make_Session (Base: Session_base)
     let pr_out = pr_pair (pr_opt (pr_list pr1)) (pr_opt pr2) in
     Debug.no_1 "Session.rebuild_node_x" pr_in pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
 
-  let remove_inner_emps sess =
+  let remove_emps sess =
     let fixpt = ref true in
     let fnc sess =
       match sess with
-      | SSeq s -> if is_emp s.session_seq_formula_head then
-          let () = fixpt := false in
-          Some s.session_seq_formula_tail else None
+      | SSeq s -> 
+          if is_emp s.session_seq_formula_head then
+            let () = fixpt := false in
+            Some s.session_seq_formula_tail 
+          else 
+            if is_emp s.session_seq_formula_tail then
+              let () = fixpt := false in
+              Some s.session_seq_formula_head
+            else None
       | _      -> None in
     let rec helper sess =
       let sess =  trans_session_formula (fnc, (somef,somef)) sess in
-      if not (!fixpt)  then helper sess else sess
+      if not (!fixpt) then let () = fixpt := true in helper sess else sess
     in helper sess
 
 end;;

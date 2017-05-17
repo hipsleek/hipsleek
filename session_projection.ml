@@ -293,6 +293,7 @@ let mk_projection_per_party prot role =
   let norm_sess = norm_assrt session in
   (* removes assertions and guards that contain orders with only one Bot *)
   let norm_sess = norm_sess_pred norm_sess in
+  let norm_sess = SProj.remove_emps norm_sess in
   norm_sess
 
 let mk_projection_per_party prot role =
