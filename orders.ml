@@ -297,15 +297,19 @@ struct
   let map fnc tbl = M.map fnc tbl
   let map_elist fnc elist = List.map fnc elist
       
+  let get_keys tbl : vertex list = List.map fst (M.bindings tbl) 
   let get_weak (elist:elist) :elist   = filter_elist (fun el -> is_weak el.arrow) elist
   let get_strong (elist:elist) :elist = filter_elist (fun el -> is_strong el.arrow) elist
   let get_successors tbl vertex   = let data = find_safe tbl vertex in data.successors
   let get_predecessors tbl vertex = let data = find_safe tbl vertex in data.predecessors
   let get_weak_successors tbl vertex   = get_weak (get_successors tbl vertex)
   let get_strong_successors tbl vertex = get_strong (get_successors tbl vertex)
-  let get_all_successors tbl vertex    = failwith x_tbi
-  let get_all_predecessors tbl vertex  = failwith x_tbi
-
+  let rec get_all_successors tbl vertex =
+    let successors = get_successors tbl vertex in
+    List.fold_left (fun acc v -> acc@(get_all_successors tbl v.vertex)) successors successors
+  let rec get_all_predecessors tbl vertex = 
+    let predecessors = get_predecessors tbl vertex in
+    List.fold_left (fun acc v -> acc@(get_all_predecessors tbl v.vertex)) predecessors predecessors  
   
   (* UPDATES *)
   let set_successors  succ data  = {data with successors = succ}

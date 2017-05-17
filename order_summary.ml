@@ -655,6 +655,11 @@ let test_dag assume guard def_suids =
   let tbl = Session.ODAG.norm_weak tbl pre_events in
   let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG.string_of) tbl in
 
+  let keys = Session.ODAG.get_keys tbl in
+  let () = List.iter (fun ev -> 
+    let all_pred = Session.ODAG.get_all_predecessors tbl ev in
+    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair BEvent.string_of Session.ODAG.string_of_elist)) (ev, all_pred)) keys in
+
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)
   (* let candidates = List.map (fun g -> ) guards in *)
