@@ -44,7 +44,7 @@ let str_arrF (e,p,h) =
 let arrPred_to_asegPred arrPred_lst_lst =
   let helper_heap_translation_one h =
     match h with
-    | Arr_biabduction.Aseg (b,f,t) -> AsegNE (f,t)
+    | Arr_biabduction.Aseg (b,f,t) -> Aseg (f,t)
     | _ -> failwith "Invalid input"
   in
   List.map
@@ -78,7 +78,7 @@ let array_entailment lhs rhs =
     in
     aux_helper_pure lhs_p rhs []
   in
-  let rhs_aseg_to_AsegNE_and_align lhsf rhs =
+  let aseg_to_AsegNE rhs =
     let rec helper_Aseg_to_AsegNE (rhs_e,rhs_p,rhs_h) =
       match rhs_h with
       | h::tail ->
@@ -88,8 +88,23 @@ let array_entailment lhs rhs =
            | AsegNE _ ->
               [(rhs_e,rhs_p, rhs_h)]
            | Emp -> helper_Aseg_to_AsegNE (rhs_e,rhs_p,tail))
-      | [] -> []
+      | [] -> [(rhs_e,rhs_p,[])]
     in
+    (List.fold_left
+       (fun r item ->
+         (helper_Aseg_to_AsegNE item)@r) [] rhs)
+  in
+  let remove_emp rhs =
+    let rec helper_remove_emp r (rhs_e,rhs_p,rhs_h) =
+      match rhs_h with
+      | [] -> r
+      | Emp::tail ->
+         helper_remove_emp r (rhs_e,rhs_p,tail)
+      | _ -> (rhs_e,rhs_p,rhs_h)::r
+    in
+    List.fold_left helper_remove_emp [] rhs
+  in
+  let rhs_align lhsf rhs = 
     let align_head_address rhs =
       List.map
         (fun (rhs_e,rhs_p,rhs_h) ->
@@ -100,10 +115,7 @@ let array_entailment lhs rhs =
              else (rhs_e,rhs_p,rhs_h)
           | _ -> failwith "align_head_address: Invalid input") rhs
     in
-    align_head_address
-      (List.fold_left
-         (fun r item ->
-           (helper_Aseg_to_AsegNE item)@r) [] rhs)
+    align_head_address rhs
   in
   let exists_existential_var rhs =
     let rec helper_exists_existential_var head tail =
@@ -120,6 +132,7 @@ let array_entailment lhs rhs =
     helper_exists_existential_var [] rhs
   in
   let rec helper ((lhs_e,lhs_p,lhs_h) as lhs) rhs =
+    let rhs = aseg_to_AsegNE rhs in
     let () = print_endline ((str_arrF lhs)^"|-"^(str_list str_arrF rhs)) in
     let helper_match lhs rhs mlst =
       let split_rhs mj rhs =
@@ -138,7 +151,7 @@ let array_entailment lhs rhs =
            ( match lhs_h, rhs_h with
              | (AsegNE (t,m))::lhtail,(AsegNE (ti,mi))::rhtail ->
                 let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in
-                let newrhs = h::(split_rhs mi (head@tail)) in
+                let newrhs = split_rhs mi (head@tail1) in
                 let newf = helper newlhs newrhs in
                 visit (h::head) tail1 (newf::flst)
              | _ -> failwith "visit: Invalid input")
@@ -146,6 +159,7 @@ let array_entailment lhs rhs =
       in
       visit [] rhs []
     in
+    
     match lhs_h with
     | [] -> helper_pure lhs_p rhs
     | h::tail ->
@@ -160,7 +174,8 @@ let array_entailment lhs rhs =
                 (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs)
                 (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs)
          | AsegNE (t,m) ->
-            let norm_rhs = rhs_aseg_to_AsegNE_and_align t rhs in
+            let non_emp_rhs = remove_emp rhs in
+            let norm_rhs = rhs_align t non_emp_rhs in
             ( match (exists_existential_var norm_rhs) with
               | Some ((n_rhs_e,n_rhs_p, n_rhs_h),rest) ->
                  ( match n_rhs_h with
@@ -184,10 +199,8 @@ let array_entailment lhs rhs =
                      (fun (mlst,srhs) item ->
                        match item with
                        | (e,p,(AsegNE (ti,mi))::taili) ->
-                          if is_same_exp mi m
-                          then (mi::mlst, item::srhs)
-                          else
-                            (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
+                          
+                          (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
                        | _ -> failwith "AsegNE cannot match")
                      ([],[]) norm_rhs
                  in

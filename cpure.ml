@@ -12896,7 +12896,7 @@ let deep_split_disjuncts (f:formula) : (bool * formula list) =
   let disj_inside_andlist = ref false in
   let rec helper f =
     let f_f f =
-      let () = print_endline "deep_split_disjuncts" in 
+      (* let () = print_endline "deep_split_disjuncts" in  *)
       (match f with
        | Or(l,r,_,p) -> 
          let l2= helper l in
