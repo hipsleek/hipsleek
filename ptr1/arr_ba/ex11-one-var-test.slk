@@ -7,11 +7,11 @@ print residue.
 infer[@arr_ba]  base::Elem<6> |- base::Aseg<a,10>.
 print residue.
 
-// infer[@arr_ba]  base::Elem<1> |- base::Aseg<a,3>.
-// print residue.
+infer[@arr_ba]  base::Aseg<a,10> |- base::Elem<6>.
+print residue.
 
-// infer[@arr_ba]  base::Elem<1> |- base::Elem<a>.
-// print residue.
+infer[@arr_ba]  base::Aseg<a,10> |- base::Aseg<2,6>.
+print residue.
 
 // infer[@arr_ba]  base::Elem<a> |- base::Elem<1>.
 // print residue.

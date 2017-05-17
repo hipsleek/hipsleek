@@ -1392,6 +1392,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
+    let _ = Arr_entailment.array_entailment in
     let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in
     (* let rs = Arr_biabduction.po_biabduction_interface new_ante new_conseq in *)
     

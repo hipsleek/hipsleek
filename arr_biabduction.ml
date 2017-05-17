@@ -14,6 +14,10 @@ type 'exp arrPred =
 (* Utility on formula and exp *)
 type puref = Cpure.formula
 ;;
+
+let mkVar sv =
+  Cpure.Var (sv,no_pos)
+;;
   
 let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
 ;;
@@ -21,11 +25,32 @@ let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
 let mkAnd f1 f2 = Cpure.mkAnd f1 f2 no_pos
 ;;
 
+let mkExists svlst f =
+  List.fold_left
+    (fun r item ->
+      Cpure.Exists (item,r,None,no_pos))
+    f []
+;;
+
 let mkNot f = Cpure.mkNot f None no_pos
 ;;
+
   
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
+
+let mkMin elst =
+  match elst with
+  | [h1;h2] ->
+     Cpure.Min (h1,h2, no_pos)
+  | [h] ->
+     h
+  | h1::h2::tail ->
+     List.fold_left
+       (fun r item ->
+         Cpure.Min (item,r,no_pos))
+       (Cpure.Min (h1,h2,no_pos)) tail
+  | [] -> failwith "mkMin: empty list as input"
 
 let simplify = Tpdispatcher.simplify_omega
 ;;
@@ -34,6 +59,13 @@ let rec mkAndlst lst =
   match lst with
   | [h] -> h
   | h::tail -> mkAnd h (mkAndlst tail)
+  | [] -> mkTrue ()
+;;
+
+let rec mkOrlst lst =
+  match lst with
+  | [h] -> h
+  | h::tail -> mkOr h (mkOrlst tail)
   | [] -> mkTrue ()
 ;;
 
@@ -93,6 +125,12 @@ let mkElem b s =
 
 let is_same_exp e1 e2 =
   check_eq_exp e1 e2
+;;
+
+let exp_to_var e =
+  match Cpure.get_exp_var e with
+  | None -> failwith "input is not a variable"
+  | Some v -> v
 ;;
 
 let isEq s1 e1 pf =
@@ -377,7 +415,7 @@ let arrPred_to_h_formula seq =
     | Var (sv,_) -> (sv,[],[])                 
     | _ ->
        let newv = global_get_new_var () in
-       (newv,[mkEq (mkVar newv no_pos) exp],[newv])
+       (newv,[mkEq (mkVar newv) exp],[newv])
   in
   let one_arrPred_to_h_formula p =
     match p with

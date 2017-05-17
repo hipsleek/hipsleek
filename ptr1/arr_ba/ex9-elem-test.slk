@@ -2,20 +2,20 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim Elem<start:int>.
 
 
-infer[@arr_ba]  base::Elem<1> |- base::Elem<1>.
+infer[@arr_ba]  base::Elem<a> |- base::Elem<b>.
 print residue.
 
-infer[@arr_ba]  base::Elem<1> |- base::Elem<2>.
-print residue.
+// infer[@arr_ba]  base::Elem<1> |- base::Elem<2>.
+// print residue.
 
-infer[@arr_ba]  base::Elem<2> |- base::Elem<1>.
-print residue.
+// infer[@arr_ba]  base::Elem<2> |- base::Elem<1>.
+// print residue.
 
-infer[@arr_ba]  base::Elem<2> * base::Elem<1> |- base::Elem<1>.
-print residue.
+// infer[@arr_ba]  base::Elem<2> * base::Elem<1> |- base::Elem<1>.
+// print residue.
 
-infer[@arr_ba]  base::Elem<2> |- base::Elem<1> * base::Elem<2>.
-print residue.
+// infer[@arr_ba]  base::Elem<2> |- base::Elem<1> * base::Elem<2>.
+// print residue.
 
 
 // infer[@arr_ba]  base::Elem<2> * base::Elem<2> |- base::Elem<1>.
