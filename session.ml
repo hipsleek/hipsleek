@@ -1526,6 +1526,10 @@ module Make_Session (Base: Session_base)
   and string_of_session_hvar s =
     "%" ^ s.session_hvar_id
 
+  let is_emp sess = match sess with
+    | SEmp -> true
+    | _    -> false
+
   let get_session_heap_node s =
     match s with
     | SSeq s  -> s.session_seq_formula_heap_node
@@ -2333,6 +2337,19 @@ module Make_Session (Base: Session_base)
     let pr2 = !Base.print_pure_formula in 
     let pr_out = pr_pair (pr_opt (pr_list pr1)) (pr_opt pr2) in
     Debug.no_1 "Session.rebuild_node_x" pr_in pr_out (fun _ -> rebuild_node def node unfold_fun is_prime_fun) node
+
+  let remove_inner_emps sess =
+    let fixpt = ref true in
+    let fnc sess =
+      match sess with
+      | SSeq s -> if is_emp s.session_seq_formula_head then
+          let () = fixpt := false in
+          Some s.session_seq_formula_tail else None
+      | _      -> None in
+    let rec helper sess =
+      let sess =  trans_session_formula (fnc, (somef,somef)) sess in
+      if not (!fixpt)  then helper sess else sess
+    in helper sess
 
 end;;
 
