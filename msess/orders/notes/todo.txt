@@ -165,6 +165,25 @@ CMap::[(d,B-id_55->C)])
 
 =====================================
 =====================================
+../../../../sleek ex5a.....slk --sess
+
+CHR fails for the chr example (which is ok since
+Q is not defined), but the problem is that it
+stops execution and doesn't check the
+non-chr example. 
+
+=====================================
+=====================================
+../../../../sleek ex5a.....slk
+running this example without the --sess
+argument leads to a loop.
+
+
+=====================================
+=====================================
+
+=====================================
+=====================================
 
 =====================================
 =====================================
