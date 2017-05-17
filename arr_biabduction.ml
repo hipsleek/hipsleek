@@ -469,6 +469,7 @@ class arrPredTransformer initcf = object(self)
   val mutable aseglst = None
   val mutable orig_puref = None
   val mutable puref = None      (* Extend with disjointness *)
+  val mutable general_formula = None
                   
   method find_in_eqmap sv =
     try
@@ -622,20 +623,48 @@ class arrPredTransformer initcf = object(self)
       in
       List.fold_left (fun r ee -> (helper ee)@r) [] eqlst
     in
-    let aPrelst =
-      match cf with
-      | Base f ->
-         let pred_list = flatten_heap_star_formula f.formula_base_heap in
-         map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)       
-      | Or f-> failwith "TO BE IMPLEMENTED"
-      | Exists f ->
-         let pf = Mcpure.pure_of_mix f.formula_exists_pure in
-         let evars = f.formula_exists_qvars in
-         let () = eqmap <- build_eqmap pf evars in
-         let pred_list = flatten_heap_star_formula f.formula_exists_heap in
-         map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)
+    let general_f =
+      let rec get_general_f cf =
+        match cf with
+        | Base f ->
+           let pred_list = flatten_heap_star_formula f.formula_base_heap in
+           [[],[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
+        | Or f->
+           (get_general_f f.formula_or_f1)@(get_general_f f.formula_or_f2)
+        | Exists f ->
+           let pf = Mcpure.pure_of_mix f.formula_exists_pure in
+           let evars = f.formula_exists_qvars in
+           let () = eqmap <- build_eqmap pf evars in
+           let pred_list = flatten_heap_star_formula f.formula_exists_heap in
+           [evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
+      in
+      get_general_f cf
     in
+    let aPrelst =
+      match general_f with
+      | [(_,_,h)] -> h
+      | _ -> failwith "aPrelst: Not constructed yet"
+      (* match cf with *)
+      (* | Base f -> *)
+      (*    let pred_list = flatten_heap_star_formula f.formula_base_heap in *)
+      (*    map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)        *)
+      (* | Or f-> failwith "TO BE IMPLEMENTED" *)
+      (* | Exists f -> *)
+      (*    let pf = Mcpure.pure_of_mix f.formula_exists_pure in *)
+      (*    let evars = f.formula_exists_qvars in *)
+      (*    let () = eqmap <- build_eqmap pf evars in *)
+      (*    let pred_list = flatten_heap_star_formula f.formula_exists_heap in *)
+      (*    map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list) *)
+    in
+    general_formula <- Some general_f;
     aseglst <- Some aPrelst
+
+  method formula_to_general_formula =
+    match general_formula with
+    | Some f -> f
+    | None ->
+       self#generate_arrPred_lst;
+       self#formula_to_general_formula
 
   method formula_to_arrPred =
     match aseglst with
@@ -660,7 +689,6 @@ class arrPredTransformer initcf = object(self)
              lst
           )
       )
-       
                     
 end
 ;;
@@ -2271,3 +2299,4 @@ let check_formula_to_arrPred ante conseq =
   print_endline (str_seq (conseqTrans#formula_to_arrPred));
   ()
 ;;  
+

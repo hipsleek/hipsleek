@@ -1,0 +1,9 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim Elem<start:int>.
+
+
+infer[@arr_ba]  base::Aseg<1,2> |- base::Aseg<1,2>.
+print residue.
+
+
+

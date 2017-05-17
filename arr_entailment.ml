@@ -8,6 +8,7 @@ type asegPred =
   | Emp
 ;;
 
+  
 (* Not sure whether this is necessary *)
 let mkAsegNE f t = AsegNE (f,t);;
 let mkAseg f t = Aseg (f,t);;    
@@ -19,7 +20,44 @@ type arrF =
 ;;
 
 (* This may increase readability *)
-let mkArrF e p h = (e,p,h);;  
+let mkArrF e p h = (e,p,h);;
+
+let str_asegPred aseg =
+  match aseg with
+  | Aseg (s,e) ->
+     (* "Aseg("^(!str_exp b)^","^(!str_exp s)^","^(!str_exp e)^")" *)
+     "Aseg("^(!str_exp s)^","^(!str_exp e)^")"
+  | AsegNE (s,e)->
+     (* "Gap("^(!str_exp b)^","^(!str_exp s)^","^(!str_exp e)^")" *)
+     "AsegNE("^(!str_exp s)^","^(!str_exp e)^")"
+  | Emp ->
+     (* "Elem("^(!str_exp b)^","^(!str_exp s)^")" *)
+     "EMP"
+;;
+  
+let str_arrF (e,p,h) =
+  (str_list !str_pformula p)^":"^(str_list str_asegPred h)
+;;
+
+  
+(* Translation from data structure in arr_biabduction.ml *)
+let arrPred_to_asegPred arrPred_lst_lst =
+  let helper_heap_translation_one h =
+    match h with
+    | Arr_biabduction.Aseg (b,f,t) -> AsegNE (f,t)
+    | _ -> failwith "Invalid input"
+  in
+  List.map
+    (fun (e,plst,hlst) ->
+      (e,plst,List.map helper_heap_translation_one hlst)) arrPred_lst_lst
+;;
+
+(* Translation from cformula *)
+let cformula_to_arrF cf =
+  let trans = new arrPredTransformer cf in
+  arrPred_to_asegPred (trans#formula_to_general_formula)
+;;
+
   
 (* lhs: arrF *)
 (* rhs: arrF list *)
@@ -82,13 +120,15 @@ let array_entailment lhs rhs =
     helper_exists_existential_var [] rhs
   in
   let rec helper ((lhs_e,lhs_p,lhs_h) as lhs) rhs =
+    let () = print_endline ((str_arrF lhs)^"|-"^(str_list str_arrF rhs)) in
     let helper_match lhs rhs mlst =
       let split_rhs mj rhs =
         List.map
           (fun item ->
             match item with
             | (e,p,(AsegNE (t,m))::tail) ->
-               (e,p,[mkAsegNE t mj; mkAsegNE mj m]@tail)
+            (* (e,p,[mkAsegNE t mj; mkAsegNE mj m]@tail) *)
+               (e,p,[mkAseg mj m]@tail)
             | _ -> failwith "split_rhs: Invalid input")
           rhs
       in
@@ -97,7 +137,7 @@ let array_entailment lhs rhs =
         | ((rhs_e,rhs_p,rhs_h) as h)::tail1 ->
            ( match lhs_h, rhs_h with
              | (AsegNE (t,m))::lhtail,(AsegNE (ti,mi))::rhtail ->
-                let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAsegNE t mi; mkAsegNE mi m]@lhtail) in
+                let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in
                 let newrhs = h::(split_rhs mi (head@tail)) in
                 let newf = helper newlhs newrhs in
                 visit (h::head) tail1 (newf::flst)
@@ -113,9 +153,12 @@ let array_entailment lhs rhs =
          match h with
          | Emp -> helper (mkArrF lhs_e lhs_p tail) rhs
          | Aseg (f,t) ->
-            mkAnd
-              (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs)
-              (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs)
+            if is_same_exp f t
+            then helper (mkArrF lhs_e lhs_p tail) rhs
+            else
+              mkAnd
+                (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs)
+                (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs)
          | AsegNE (t,m) ->
             let norm_rhs = rhs_aseg_to_AsegNE_and_align t rhs in
             ( match (exists_existential_var norm_rhs) with
@@ -141,14 +184,28 @@ let array_entailment lhs rhs =
                      (fun (mlst,srhs) item ->
                        match item with
                        | (e,p,(AsegNE (ti,mi))::taili) ->
-                          (mi::mlst, (mkArrF e p ((mkAsegNE ti m)::((mkAsegNE m mi)::taili)))::srhs)
+                          if is_same_exp mi m
+                          then (mi::mlst, item::srhs)
+                          else
+                            (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
                        | _ -> failwith "AsegNE cannot match")
                      ([],[]) norm_rhs
                  in
-                 let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) lhs_h) split_rhs in
+                 let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in
                  mkAndlst (f_lhs_min::(helper_match lhs norm_rhs all_m)) ))
   in
   helper lhs rhs
+;;
+
+let array_entailment_and_print lhs rhs =  
+  let ante =
+    match cformula_to_arrF lhs with
+    | [ante] -> ante
+    | _ -> failwith "array_entailment_and_print: Invalid LHS"
+  in
+  let conseq = cformula_to_arrF rhs in    
+  let f = array_entailment ante conseq in
+  print_endline (!str_pformula f)
 ;;
   
        (* let non_emp_rhs_h = List.fold_left *)
