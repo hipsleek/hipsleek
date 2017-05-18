@@ -1,6 +1,15 @@
 pred_prim Aseg<start:int, end:int>.
 pred_prim Elem<start:int>.
 
+// checkentail (a>b) | (a<b)  |- a=b.
+// print residue.
+
+// checkentail (a>b)|a=b  |- (a=b) | (a<b) | a>b.
+// print residue.
+
+// checkentail  base::Aseg<1,2> & a>b  |- base::Aseg<1,2>.
+// print residue.
+
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,2>.
 print residue.

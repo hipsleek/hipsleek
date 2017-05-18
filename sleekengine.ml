@@ -1388,15 +1388,17 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   
   if List.mem INF_ARR_BIABDUCTION itype                
   then
-    let new_ante = CF.elim_exists ante in
+    let new_ante = ante in
     let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
-    let _ = Arr_entailment.array_entailment_and_print new_ante new_conseq in
-    let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in
-    (* let rs = Arr_biabduction.po_biabduction_interface new_ante new_conseq in *)
+    let (res,rs,v_hp_rel) = Arr_entailment.array_entailment_and_print new_ante new_conseq in
+    ((res,rs,v_hp_rel),(ante,conseq))
+    (* The following line is for inference *)
+    (* let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in *)
     
-    ((true,rs,[]),(ante,conseq))
+    
+    (* ((true,rs,[]),(ante,conseq)) *)
     (* if !Globals.array_lazy_enum *)
     (* then *)
     (*   let () = Arr_biabduction.check_formula_to_arrPred new_ante new_conseq in *)

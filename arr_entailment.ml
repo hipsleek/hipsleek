@@ -150,7 +150,8 @@ let array_entailment lhs rhs =
         | ((rhs_e,rhs_p,rhs_h) as h)::tail1 ->
            ( match lhs_h, rhs_h with
              | (AsegNE (t,m))::lhtail,(AsegNE (ti,mi))::rhtail ->
-                let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in
+                (* let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in *)
+                let newlhs = mkArrF lhs_e ((mkMin_raw mi mlst)::lhs_p) ([mkAseg mi m]@lhtail) in
                 let newrhs = split_rhs mi (head@tail1) in
                 let newf = helper newlhs newrhs in
                 visit (h::head) tail1 (newf::flst)
@@ -204,7 +205,8 @@ let array_entailment lhs rhs =
                        | _ -> failwith "AsegNE cannot match")
                      ([],[]) norm_rhs
                  in
-                 let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in
+                 (* let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in *)
+                 let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs in
                  mkAndlst (f_lhs_min::(helper_match lhs norm_rhs all_m)) ))
   in
   helper lhs rhs
@@ -218,8 +220,12 @@ let array_entailment_and_print lhs rhs =
   in
   let conseq = cformula_to_arrF rhs in    
   let f = array_entailment ante conseq in
-  print_endline (!str_pformula f)
+  let () = print_endline (!str_pformula f) in
+  if (isSat (mkNot f))
+  then (false,mkEmptyFailCtx (),[])
+  else (true,mkEmptySuccCtx (),[])
 ;;
+
   
        (* let non_emp_rhs_h = List.fold_left *)
     (*                          (fun r item -> *)

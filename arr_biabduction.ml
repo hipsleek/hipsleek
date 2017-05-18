@@ -39,18 +39,7 @@ let mkNot f = Cpure.mkNot f None no_pos
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
 
-let mkMin elst =
-  match elst with
-  | [h1;h2] ->
-     Cpure.Min (h1,h2, no_pos)
-  | [h] ->
-     h
-  | h1::h2::tail ->
-     List.fold_left
-       (fun r item ->
-         Cpure.Min (item,r,no_pos))
-       (Cpure.Min (h1,h2,no_pos)) tail
-  | [] -> failwith "mkMin: empty list as input"
+      
 
 let simplify = Tpdispatcher.simplify_omega
 ;;
@@ -69,6 +58,7 @@ let rec mkOrlst lst =
   | [] -> mkTrue ()
 ;;
 
+  
 let mkImply af cf =
   mkOr (mkNot af) cf
 ;;
@@ -97,6 +87,30 @@ let mkNeq e1 e2 =
   Cpure.mkNeqExp e1 e2 no_pos
 ;;
 
+let mkMin elst =
+  match elst with
+  | [h1;h2] ->
+     Cpure.Min (h1,h2, no_pos)
+  | [h] ->
+     h
+  | h1::h2::tail ->
+     List.fold_left
+       (fun r item ->
+         Cpure.Min (item,r,no_pos))
+       (Cpure.Min (h1,h2,no_pos)) tail
+  | [] -> failwith "mkMin: empty list as input"
+
+let mkMin_raw m elst =
+  mkAnd
+    (mkOrlst
+       (List.fold_left
+          (fun r item ->
+            (mkEq m item)::r) [] elst))
+    (mkAndlst
+       (List.fold_left
+          (fun r item ->
+            (mkLte m item)::r) [] elst))
+;;
 
 (* end of Utility on formula and exp  *)
 
@@ -1296,6 +1310,18 @@ let construct_context_lst () =
       Ctx (construct_context_helper (h_antiframe,plst_antiframe,svl_antiframe,h_frame,plst_frame,svl_frame,puref,inferred_puref)))
     !global_answer_stack
 ;;
+
+let mkEmptySuccCtx () =
+  SuccCtx [Ctx (Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos)]
+;;
+
+let mkEmptyFailCtx () =
+  let empty_es = (Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos) in
+  mkFailCtx_simple "fail to prove" empty_es (Cformula.mkTrue_nf no_pos)  (mk_cex true) no_pos
+;;
+  
+
+  
 
 (* let construct_succ_ctx answerlst = *)
 (*   SuccCtx (List.map construct_context !global_answer_stack) *)
