@@ -3543,7 +3543,11 @@ rel_kind: [[ `AT; `IDENTIFIER anno ->
                 (match anno with
                  | "event" -> (mk_rel_order_kind Event)
 		 | "hb" -> (mk_rel_order_kind HB)
-		 | "cb" -> (mk_rel_order_kind CB)
+                 | "cb" -> (mk_rel_order_kind CB)
+                 | "sevent" -> (mk_rel_sorder_kind Event)
+                 | "shb" -> (mk_rel_sorder_kind HB)
+                 | "scb" -> (mk_rel_sorder_kind CB)
+
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a relation kind")
 ]];
 
