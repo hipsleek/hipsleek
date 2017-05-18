@@ -6,7 +6,6 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
-module CP = Cpure
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
 module SIOrd = Session.IOrders
@@ -650,10 +649,46 @@ let test_dag assume guard def_suids =
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 
-  let tbl = Session.ODAG.connect_list (Session.ODAG.create ()) lst in
-  let () = y_binfo_hp (add_str "DAG:" Session.ODAG.string_of) tbl in
-  let tbl = Session.ODAG.norm_weak tbl pre_events in
-  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG.string_of) tbl in
+  let tbl = Session.ODAG1.connect_list (Session.ODAG1.create ()) lst in
+  let () = y_binfo_hp (add_str "DAG:" Session.ODAG1.string_of) tbl in
+  let tbl = Session.ODAG1.norm_weak tbl pre_events in
+  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG1.string_of) tbl in
+
+  (* generate all possible Qs, such that A & Q |- G *)
+  (* assume the arrow of the guard is never from the def_suids related events*)
+  (* let candidates = List.map (fun g -> ) guards in *)
+  ()
+
+let test_dag3 assume guard def_suids =
+  (* collect the events related to the precondition / default summary *)
+  let alldata1 = ConstrMap.get_data assume in
+  let alldata2 = ConstrMap.get_data guard  in
+  let alldata  = List.flatten (alldata1 @ alldata2) in
+  let pre_events = List.map (fun assrt ->
+      match assrt with
+      | SIOrd.Order (SIOrd.HBe hbe) -> [hbe.SIOrd.hbe_event1;hbe.SIOrd.hbe_event2]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [cbe.SIOrd.cbe_event1;cbe.SIOrd.cbe_event2]
+      | _ -> []
+    ) alldata in
+  let pre_events = List.flatten pre_events in
+  let pre_events = List.filter (fun ev -> UID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
+  let pre_events = BEvent.remove_duplicates pre_events in
+  let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
+
+  (* construct the DAG of assumptions *)
+  let lst = List.flatten (ConstrMap.get_data assume) in
+  let lst = List.map (fun assrt ->
+      match assrt with
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG0.HB, (hbe.SIOrd.hbe_event1.role,hbe.SIOrd.hbe_event2.role))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG0.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
+      | _ -> []
+    ) lst in
+  let lst = List.flatten lst in 
+  let tbl = Session.ODAG0.connect_list (Session.ODAG0.create ()) lst in
+  let () = y_binfo_hp (add_str "DAG:" Session.ODAG0.string_of) tbl in
+  let pre_events = List.map (fun ev -> ev.SIOrd.role) pre_events in
+  let tbl = Session.ODAG0.norm_weak tbl pre_events in
+  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG0.string_of) tbl in
 
   let keys = Session.ODAG.get_keys tbl in
   let () = List.iter (fun ev -> 

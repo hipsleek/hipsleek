@@ -3071,4 +3071,9 @@ let norm_slk_formula form =
 
 
 module ORD    = GOrders(IVar) ;;
-module ODAG   = Make_DAG(ORD)(Event) ;;
+(* module ODAG   = Make_DAG(ORD)(Event) ;; *)
+
+module Vert   = VVertex(IVar) ;;
+module EVert  = EVertex(IVar) ;;
+module ODAG0  = Make_DAG0(Vert) ;;
+module ODAG1  = Make_DAG0(EVert) ;;
