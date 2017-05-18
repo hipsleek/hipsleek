@@ -228,8 +228,9 @@ and orders_kind =
   | CB
 
 and relation_kind = 
-  | Orders of orders_kind 
-  | NO_RKIND (* no relation kind *)
+  | Orders of orders_kind       (* sleek order relations *)
+  | Sleek  of orders_kind       (* sleek order relations *)
+  | NO_RKIND                    (* no relation kind *)
 
 (* protocol lang related *)
 and assertions_predicate_kind =
@@ -260,6 +261,7 @@ let mk_view_session_info ?(sk:session_kind option) ?(nk:node_kind option) () : v
 let mk_sess_order_kind kind = Order kind
 
 let mk_rel_order_kind kind = Orders kind
+let mk_rel_sorder_kind kind = Sleek kind
 
 let mk_sess_assert_kind kind = Assert kind
 

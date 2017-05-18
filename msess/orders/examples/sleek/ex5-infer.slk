@@ -1,7 +1,7 @@
 sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
-relation Q(int a,int b,int c,int d).
+relation Q(int a,int b).
 relation Z(int a,int b).
 
 /*
@@ -9,7 +9,7 @@ infer [Q]  emp & ["chr": cb(A,2,B,2) & cb(A,1,B,1) & ev(B,2) & ev(B,1) &
        Q(B,2,B,1)] |- emp & ["chr": hb(A,2,B,1)].
 print residue.
 */
-
+/*
 infer [Q]  emp & ["chr": cb(A,2,B,2) & cb(A,1,B,1) & ev(B,2) & ev(B,1) &
       hb(B,2,B,1)] or
       emp & ["chr": cb(A,2,B,2) & cb(A,1,B,1) & ev(B,2) & ev(B,1) &
@@ -18,9 +18,29 @@ infer [Q]  emp & ["chr": cb(A,2,B,2) & cb(A,1,B,1) & ev(B,2) & ev(B,1) &
 print residue.
 
 infer [Q]  emp & ["chr": cb(A,2,B,2) & cb(A,1,B,1) & ev(B,2) & ev(B,1) &
-      (hb(B,1,B,2)|hb(B,1,B,2))]
+      (hb(B,1,B,2) | hb(B,22,B,1)) ]
       |- emp & ["chr": hb(A,2,B,1)].
 print residue.
+*/
 
-infer [Z] a<10 & Z(a,b) |- 0<a & a<b.
+infer [B1,B2]  emp & ["chr": hb(A1,B1)]
+        |- emp & ["chr": hb(A1,B1)].
+print residue.
+
+infer [B1,B2]  emp & ["chr": cb(A2,B2) & hb(B2,B1)]
+        |- emp & ["chr": hb(A2,B1)].
+print residue.
+
+infer [B1,B2]  emp & ["chr": cb(A2,B2) & hb(B2,B1)]
+        |- emp & ["chr": hb(A2,B3)].
+print residue.
+
+infer [B1,B2]  emp & ["chr": cb(A2,B2) & cb(A1,B1) & ev(B2) & ev(B1)]
+        |- emp & ["chr": hb(A2,B1)].
+print residue.
+
+infer [Z] a<10 & Z(a,c) |- 0<a & a<c.
+print residue.
+
+infer [a,c] a<10 |- 0<a & a<c.
 print residue.

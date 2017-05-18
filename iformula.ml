@@ -52,6 +52,7 @@ and struc_infer_formula =
     formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : (ident * primed) list;
     formula_inf_continuation : struc_formula;
+    formula_inf_orders : formula list;
     formula_inf_pos : loc
   }
 
@@ -2959,6 +2960,7 @@ let mkEInfer xpost transpec pos = EInfer {
     formula_inf_transpec = transpec;
     formula_inf_vars = [];
     formula_inf_continuation = EList [];
+    formula_inf_orders = [];
     formula_inf_pos = pos}
 
 let merge_cmd einfer spec = match einfer with

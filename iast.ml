@@ -1614,6 +1614,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
         F.formula_inf_transpec = None;
         F.formula_inf_vars = pre_hps@post_hps;
         F.formula_inf_continuation = ipre;
+        F.formula_inf_orders = [];
         F.formula_inf_pos = pos;
       }, hp_pre_decls@hp_post_decls, pre_tis)
 

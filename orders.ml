@@ -11,8 +11,7 @@ sig
   type t
   val string_of : t -> string
   val eq : t -> t -> bool
-end;;
-
+end;; 
 
 module type GORDERS_TYPE = 
 sig
@@ -217,6 +216,42 @@ struct
   let string_of e   = Orders.string_of_event e 
   let compare e1 e2 = String.compare (string_of e1) (string_of e2)
 end;;
+
+ 
+(* ==================== VERTEX =========================== *)
+module type VERTEX_TYPE =
+  (* functor (Param : VAR_TYPE) -> *)
+sig
+  type t 
+
+  val eq: t ->  t -> bool
+  val compare: t ->  t -> int
+  val string_of: t -> string
+  val contains:  t list -> t -> bool
+end;;
+
+module EVertex  (* : VERTEX_TYPE *) =
+  functor (Var : VAR_TYPE) ->
+struct
+  module Orders = GOrders(Var)
+  type t = Orders.event
+
+  let eq e1 e2       = Orders.eq_event e1 e2
+  let string_of e    = Orders.string_of_event e
+  let compare e1 e2  = String.compare (string_of e1) (string_of e2)
+  let contains lst e = Orders.contains_event lst e
+end;;
+
+module VVertex  (* : VERTEX_TYPE *) =
+  functor (Param : VAR_TYPE) ->
+struct
+  type t = Param.t
+
+  let eq e1 e2       = Param.eq e1 e2
+  let string_of e    = Param.string_of e 
+  let compare e1 e2  = String.compare (string_of e1) (string_of e2)
+  let contains lst e = List.exists (eq e) lst 
+end;;
  
 (* ====================  DAG  =========================== *)
 (* module type DAG_TYPE = *)
@@ -228,12 +263,11 @@ end;;
 (*   val create: unit -> t *)
 (* end *)
 
-(* Orders DAG *)
-module Make_DAG (Orders: GORDERS_TYPE) (Key: DAG_KEY_TYPE)(* : DAG_TYPE  *)=
+module Make_DAG0 (Vertex: VERTEX_TYPE) (* : DAG_TYPE  *)=
 struct
-  module Key = Key(Orders)
+  module Key = Vertex
   (* vertex == Key.t == Orders.event *)
-  type vertex     = Orders.event
+  type vertex     = Vertex.t
   type key        = vertex
   type arrow_kind = HB | CB | Backward
   type elem       = {arrow: arrow_kind ; vertex: vertex}
@@ -250,7 +284,7 @@ struct
     | HB -> "-->"
     | CB -> "->>"
     | Backward -> "<-"
-  let string_of_vertex = Orders.string_of_event
+  let string_of_vertex = Vertex.string_of
   let string_of_elem (e:elem): string = (string_of_arrow_kind e.arrow) ^ (string_of_vertex e.vertex)
   let string_of_elist  = pr_list string_of_elem
   let string_of_data d = pr_pair (add_str "Predecessors" string_of_elist)
@@ -369,7 +403,7 @@ struct
     (* mark for removing the weak(CB) edge with tail "key" and head in "elem"
        add all HB edges which would result from applying CB-HB once*)
     let handle_weak rem add key elem =
-      if (Orders.contains_event special_elem elem.vertex) then rem,add
+      if (Vertex.contains special_elem elem.vertex) then rem,add
       else
         let rem = (mk_edge key elem.arrow elem.vertex)::rem in
         let strong_successors = (get_strong_successors tbl elem.vertex) in

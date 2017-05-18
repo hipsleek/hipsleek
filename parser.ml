@@ -3543,7 +3543,11 @@ rel_kind: [[ `AT; `IDENTIFIER anno ->
                 (match anno with
                  | "event" -> (mk_rel_order_kind Event)
 		 | "hb" -> (mk_rel_order_kind HB)
-		 | "cb" -> (mk_rel_order_kind CB)
+                 | "cb" -> (mk_rel_order_kind CB)
+                 | "sevent" -> (mk_rel_sorder_kind Event)
+                 | "shb" -> (mk_rel_sorder_kind HB)
+                 | "scb" -> (mk_rel_sorder_kind CB)
+
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a relation kind")
 ]];
 
@@ -3988,6 +3992,7 @@ spec:
        F.formula_inf_transpec = transpec;
        F.formula_inf_vars = ivl_t;
        F.formula_inf_continuation = s;
+       F.formula_inf_orders = [];
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
      }
     | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->

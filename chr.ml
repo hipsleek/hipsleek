@@ -54,9 +54,8 @@ and chr_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> string_of_bool c
-  | CP.BVar (sv, _) ->
-    (chr_of_spec_var sv)
-  | CP.Eq (a1, a2, _) -> (chr_of_exp a1) ^ "=" ^ (chr_of_exp a2)
+  | CP.BVar (sv, _)  -> (chr_of_spec_var sv)
+  | CP.Eq (a1, a2, _)  -> (chr_of_exp a1) ^ "=" ^ (chr_of_exp a2)
   | CP.Neq (a1, a2, _) -> (chr_of_exp a1) ^ "\\=" ^ (chr_of_exp a2)
   | CP.RelForm (r, args, l) -> 
     (* assumes the relations are already declared (maybe in prelude?) *)
