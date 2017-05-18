@@ -107,7 +107,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let () = set_prover_type () in
   let ante_chr = prepare_formula_for_chr ante in
   let conseq_chr = prepare_formula_for_chr conseq in
-  let query = (ante_chr ^ ", snot((" ^ conseq_chr ^  ")).\n") in
+  let query = (ante_chr ^ ",snot((" ^ conseq_chr ^  ")).\n") in
   let result = x_add_1 send_query query in
   match result with
   | SAT   -> _invalid
