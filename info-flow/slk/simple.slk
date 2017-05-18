@@ -1,0 +1,25 @@
+relation L(int x).
+relation H(int x).
+relation R(int x) == !(L(x)) | (H(x)). // x <: L -> x <: H
+
+checkentail R(x) & L(x) |- H(x) & L(y).
+print residue.
+
+/*
+data sec{int x}.
+//pred sec<x : int> == x >=0.
+ann
+
+x <: y. // AnnT
+
+lemma_unsafe self::sec<0> -> self::sec<1>.
+
+checkentail x::sec<0> |- x::sec<1>.
+print residue.
+*/
+/*
+relation ax(int x) = x<=L -> x<=H.
+relation LHrelation(AnnT x) == (!(x <: L) or x <: H).
+
+
+*/

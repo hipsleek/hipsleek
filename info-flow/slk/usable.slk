@@ -1,0 +1,7 @@
+pred sec<t> == t = 0
+            or t = 1.
+
+lemma_unsafe self::sec<0> -> self::sec<1>.
+
+checkentail x::sec<0> |- x::sec<1>.
+print residue.
