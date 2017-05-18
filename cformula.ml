@@ -117,6 +117,7 @@ and struc_infer_formula =
     formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : Cpure.spec_var list;
     formula_inf_continuation : struc_formula;
+    formula_inf_orders : formula list;
     (* TODO : can we change this to struc_formula instead *)
     (* formula_inf_continuation : struc_formula; *)
     formula_inf_pos : loc
@@ -16958,6 +16959,7 @@ let rec add_inf_cmd_struc is_primitive f =
         formula_inf_xpost = None;
         formula_inf_transpec = None;
         formula_inf_vars = [];
+        formula_inf_orders = [];
         formula_inf_continuation = f;
         formula_inf_pos = pos_of_struc_formula f }
 
@@ -16982,6 +16984,7 @@ let rec set_inf_obj_struc itype f =
       formula_inf_transpec = None;
       formula_inf_vars = [];
       formula_inf_continuation = f;
+      formula_inf_orders = [];
       formula_inf_pos = pos_of_struc_formula f }
 
 let set_inf_obj_struc itype f =

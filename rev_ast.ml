@@ -306,6 +306,7 @@ and rev_trans_struc_infer_formula (i: CF.struc_infer_formula): IF.struc_infer_fo
     IF.formula_inf_transpec = i.CF.formula_inf_transpec;
     IF.formula_inf_vars = List.map rev_trans_spec_var_primed i.CF.formula_inf_vars;
     IF.formula_inf_continuation = rev_trans_struc_formula i.CF.formula_inf_continuation;
+    IF.formula_inf_orders = List.map rev_trans_formula i.CF.formula_inf_orders;
     IF.formula_inf_pos = i.CF.formula_inf_pos; }
 
 and rev_trans_struc_assume_formula (a: CF.assume_formula): IF.assume_formula =

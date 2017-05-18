@@ -645,8 +645,8 @@ let test_dag assume guard def_suids =
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG1.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG1.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 

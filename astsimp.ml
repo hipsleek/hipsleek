@@ -7578,6 +7578,10 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
               List.iter (fun iv -> b.IF.formula_inf_obj # 
                                      add_infer_extn_lst (CP.name_of_spec_var iv) ["size"]) hpt_inf_vars
           in
+          let n_tl,no = List.fold_left (fun (n_tl,acc) form ->
+              let n_tl,no = x_add trans_formula prog quantify fvars false form n_tl false in
+              n_tl,no::acc
+            ) (n_tl,[]) b.IF.formula_inf_orders  in
           (n_tl, CF.EInfer {
               (* CF.formula_inf_tnt = b.IF.formula_inf_tnt; *)
               CF.formula_inf_obj = b.IF.formula_inf_obj;
@@ -7586,6 +7590,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
               CF.formula_inf_transpec = b.IF.formula_inf_transpec;
               CF.formula_inf_vars = new_ivs;
               CF.formula_inf_continuation = ct;
+              CF.formula_inf_orders = no;
               CF.formula_inf_pos = pos})
       in
       wrap_one_bool Globals.allow_noann (Imminfer.should_infer_imm prog
