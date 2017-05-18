@@ -975,7 +975,7 @@ end;;
 module type Msg_common_type =
 sig
   include Message_type
-  val get_base_ptr: ident -> h_formula_heap option -> var
+  val get_base_ptr: var -> h_formula_heap option -> var
   val heap_transformer: (view_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
   val loop_through_rflow: (h_formula -> h_formula option) -> h_formula -> h_formula option
   val heap_node_transformer:  ?flow:bool -> (view_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
@@ -990,7 +990,7 @@ module Message_commons =
 
     let get_base_ptr def_id node =
       match node with
-      | None -> Msg.choose_ptr ~ptr:def_id ()
+      | None -> def_id
       | Some node -> Msg.get_heap_node_var node
 
     let loop_through_rflow helper hform =
@@ -1182,7 +1182,7 @@ module Protocol_base_formula =
     let get_session_heap_node s = s.protocol_base_formula_heap_node
 
     let trans_base base =
-      let ptr = Msg.get_base_ptr session_msg_id base.protocol_base_formula_heap_node in
+      let ptr = Msg.get_base_ptr (Msg.mk_var session_msg_id) base.protocol_base_formula_heap_node in
       let name = get_prim_pred_id trans_id in
       let args = [Msg.mk_rflow_formula ~sess_kind:(Some base_type) base.protocol_base_formula_message] in
       let params = [base.protocol_base_formula_sender; base.protocol_base_formula_receiver] in
@@ -1215,10 +1215,11 @@ module Projection_base_formula =
   struct
     include Msg
     type t = Msg.formula
-    type a = transmission * ident * var * VarGen.loc
+    type chan = Msg.var
+    type a = transmission * chan * var * VarGen.loc
     type base = {
       projection_base_formula_op          : transmission;
-      projection_base_formula_channel     : ident;
+      projection_base_formula_channel     : chan;
       projection_base_formula_message     : t;
       projection_base_formula_message_var : var;
       projection_base_formula_heap_node   : h_formula_heap option;
@@ -1229,8 +1230,10 @@ module Projection_base_formula =
 
     let print_message f = !Msg.print f.projection_base_formula_message
 
+    let string_of_chan = Msg.print_var
+
     let string_of_session_base f =
-      f.projection_base_formula_channel ^
+      (string_of_chan f.projection_base_formula_channel) ^
       (string_of_transmission f.projection_base_formula_op) ^
       (Msg.print_var f.projection_base_formula_message_var) ^ "#" ^
       "(" ^ (print_message f) ^ ")"
@@ -1272,7 +1275,7 @@ module Projection_base_formula =
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in
-      let channel = Msg.get_node_id ptr in
+      let channel = ptr in
       let f = Msg.get_formula_from_ho_param_formula (List.nth hoargs 0) in
       let transmission = match (Msg.get_node_kind h_formula) with
         | Send -> TSend
@@ -1333,7 +1336,7 @@ module TPProjection_base_formula =
     
     (* TODO: include the node info *)
     let trans_base base =
-      let ptr = Msg.get_base_ptr session_chan_id base.tpprojection_base_formula_heap_node in (* Msg.choose_ptr ~ptr:session_chan_id () in *)
+      let ptr = Msg.get_base_ptr (Msg.mk_var session_chan_id) base.tpprojection_base_formula_heap_node in (* Msg.choose_ptr ~ptr:session_chan_id () in *)
       let tkind = get_session_kind_of_transmission base.tpprojection_base_formula_op in
       let name = get_prim_pred_id_by_kind tkind in
       let args = match base.tpprojection_base_formula_op with
@@ -1688,7 +1691,7 @@ module Make_Session (Base: Session_base)
 
   and mk_seq_node h1 h2 hnode pos  =
     (* match hnode with *)
-    let ptr = Base.get_base_ptr session_seq_id hnode in
+    let ptr = Base.get_base_ptr (Base.mk_var session_seq_id) hnode in
     (* let ptr = Base.choose_ptr () in *) (* decide which name should be given here *)
     let name = get_prim_pred_id seq_id in
     (*let h2 = Base.mk_seq_wrapper h2 pos Base.base_type in *)
@@ -1706,7 +1709,7 @@ module Make_Session (Base: Session_base)
     let or_node = Base.mk_or f1 f2 pos in
     let rflow_form = (Base.mk_rflow_formula ~sess_kind:(Some Base.base_type) or_node) in
     (* let ptr = Base.choose_ptr () in *)
-    let ptr = Base.get_base_ptr session_def_id hnode in
+    let ptr = Base.get_base_ptr (Base.mk_var session_def_id) hnode in
     let name = get_prim_pred_id sor_id in
     let args = [rflow_form] in
     let params = [] in
@@ -1731,7 +1734,7 @@ module Make_Session (Base: Session_base)
   (* Andreea TODO: shoudl we transform orders -> pure ? *)
   and mk_predicate_node_x hnode p =
     (* make the actual predicate node *)
-    let ptr = Base.get_base_ptr session_def_id hnode in
+    let ptr = Base.get_base_ptr (Base.mk_var session_def_id) hnode in
     let name = p.session_predicate_name in
     (* let name = get_prim_pred_id pred_id in *)
     let args = p.session_predicate_ho_vars in
@@ -2267,7 +2270,7 @@ module Make_Session (Base: Session_base)
               if (is_prime_fun headl) then 
 	        def
               else
-                let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
+                let ptr = Base.get_base_ptr (Base.mk_var session_def_id) pl.session_predicate_formula_heap_node in
                 let new_head = unfold_fun headl ptr in
                 let pure = Base.get_pure_formula new_head in
                 let new_head = trans_formula_to_session new_head in
@@ -2324,7 +2327,7 @@ module Make_Session (Base: Session_base)
             if (is_prime_fun headl) then
 	      def
             else
-              let ptr = Base.get_base_ptr session_def_id pl.session_predicate_formula_heap_node in
+              let ptr = Base.get_base_ptr (Base.mk_var session_def_id) pl.session_predicate_formula_heap_node in
               let new_head = unfold_fun headl ptr in
               let pure = Base.get_pure_formula new_head in
               let new_head = trans_formula_to_session new_head in

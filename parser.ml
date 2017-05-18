@@ -1483,12 +1483,12 @@ projection_formula:
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TSend, channel, mv, loc) c)
+        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TSend, (channel, Unprimed), mv, loc) c)
       | peek_projection_receive; `IDENTIFIER channel; `QUERY; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, channel, mv, loc) c)
+        Session.IProjection.SBase (Session.IProjection.mk_base (Session.TReceive, (channel, Unprimed), mv, loc) c)
 	  | `EMPTY -> Session.IProjection.SEmp
       | hid = heap_id; opt1 = OPT rflow_form_list; `LT; hl= opt_data_h_args; `GT ->
         let name,_,_,_ = hid in
