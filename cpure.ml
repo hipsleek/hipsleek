@@ -14527,11 +14527,11 @@ and expand_constraint_sets' ante conseq =
         let f1 =
           match expanded_e1 with
             | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | _ -> x_fail ("e1: Unsupported form" ^ show_exp expanded_e1) in
+            | _ -> x_fail ("e1: Unsupported form" ^ !print_exp expanded_e1) in
         let f2 =
           match expanded_e2 with
             | BExpr f -> f
-            | _ -> x_fail ("e2: Unsupported form" ^ show_exp expanded_e2) in
+            | _ -> x_fail ("e2: Unsupported form" ^ !print_exp expanded_e2) in
         let eq_to_or1 = And (f1, f2, pos_of_formula f1) in
         let eq_to_or2 = And (mkNot_s f1, mkNot_s f2, pos_of_formula f1)
         in
