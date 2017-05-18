@@ -1333,13 +1333,17 @@ let pop_prooftrace () =
   | [] -> ()
   | h::tail -> global_prooftrace := tail
 ;;
-  
-let str_one_prooftrace trace =
-  let rec print_indent depth str =
+
+let rec print_indent depth str =
     if depth = 0
     then "   "^str
     else "   "^(print_indent (depth-1) str)
-  in
+;;
+
+
+  
+let str_one_prooftrace trace =
+  
   let print_biabduction antiframe frame puref depth =
     let indent = print_indent depth "   " in
     indent^("anti-frame: "^(str_seq antiframe))^"\n"
