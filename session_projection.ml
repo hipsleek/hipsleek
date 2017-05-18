@@ -251,10 +251,10 @@ let mk_projection_per_party prot role =
             let heap_node = SBProt.get_session_heap_node base in
             (* creates session_formula based on transmission role *) 
             if (SBProt.eq_role sender role) then 
-              let session_formula = create_session Session.TSend chan_ident msg_var pos heap_node msg in
+              let session_formula = create_session Session.TSend chan msg_var pos heap_node msg in
               session_formula
             else if (SBProt.eq_role receiver role) then
-              let session_formula = create_session Session.TReceive chan_ident msg_var pos heap_node msg in
+              let session_formula = create_session Session.TReceive chan msg_var pos heap_node msg in
               session_formula
             else
               SProj.SEmp
