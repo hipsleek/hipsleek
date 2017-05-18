@@ -4,11 +4,23 @@ print residue.
 checkentail F = {1, 2} |-{1} subset F.
 print residue.*/
 
-//checkentail F = {x <: y, y <: z} |- {x <: z} subset F.
-//print residue.
+checkentail G = {x <: y, y <: z} |- {x <: z} subset G.
+print residue.
+
 
 checkentail true |- {x <: z} subset {x <: y, y <: z}.
 print residue.
+
+
+checkentail F = {x <: y, x<:z} |- {y <: z} subset F.
+print residue.
+
+/*
+!!! WARNING logtime exception (SAT):0.004
+!!! WARNING logtime exception (sleek-hec):0.004
+Entail 2: EXCast. Failure("**cpure.ml#14503:Not supported yet")
+: no residue 
+*/
 
 /*
 
