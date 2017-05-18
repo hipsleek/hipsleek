@@ -243,9 +243,9 @@ let mk_projection_per_party prot role =
             let msg_var = SBProt.get_message_var base in
             let msg = SBProt.get_message base in
             let chan =  SBProt.get_chan base in
-            let chan_ident = match chan with
-              | Some ch -> SBProt.string_of_chan ch
-              | None -> "" in
+            let chan = match chan with
+              | Some ch -> ch
+              | None -> session_msg in
             let sender = SBProt.get_sender base in
             let receiver = SBProt.get_receiver base in
             let heap_node = SBProt.get_session_heap_node base in
