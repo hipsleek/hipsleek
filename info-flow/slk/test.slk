@@ -1,3 +1,4 @@
+
 /*checkentail x <: y & y <: z |- x <: z.
 print residue.
 
@@ -14,6 +15,20 @@ print residue.
 
 checkentail F = {x <: y, x<:z} |- {y <: z} subset F.
 print residue.
+
+
+checkentail x <: y & y <: z |- x <: z.
+print residue.
+
+
+checkentail G = {x <= y, y <= z} |- {x <= z} subset G.
+print residue.
+
+/*
+checkentail G = {1,2} |- {1} subset G.
+print residue.
+*/
+
 
 /*
 !!! WARNING logtime exception (SAT):0.004
