@@ -14500,7 +14500,10 @@ and expand_constraint_sets' ante conseq =
             (List.hd expanded_conseqs)
             (List.tl expanded_conseqs) in
         (new_ante, new_conseq)
-    | _ -> x_fail "Not supported yet"
+    | Not (f, lbl_opt, loc) ->
+        let (e_ante, e_conseq) = expand_formula f in
+        (e_ante, Not (e_conseq, lbl_opt, loc))
+    | f -> x_fail ("Not supported yet: " ^ !print_formula f)
     (*| Or (f1, f2, lbl_opt, loc) -> ()
     | Not (f, lbl_opt, loc) -> ()
     | Forall (var, f, lbl_opt, loc) -> ()
