@@ -1,0 +1,38 @@
+
+checkentail GG = {x <= y, y <= z} |- {x <= z} subset GG.
+print residue.
+
+
+checkentail GG = {x=0, x <= y, y <= z} |- {x <= z} subset GG.
+print residue.
+
+
+checkentail GG = {x=0, x <= y, y <= z} |- GG={}.
+print residue.
+
+checkentail GG = {x=0& x <= y, y <= z} |- x>=0.
+print residue.
+
+checkentail GG = union({x <= y, y <= z},G2) & G2={x<=zz} |- G2 subset GG.
+print residue.
+
+/*
+checkentail G = {1,2} |- {1} subset G.
+print residue.
+*/
+
+
+/*
+!!! WARNING logtime exception (SAT):0.004
+!!! WARNING logtime exception (sleek-hec):0.004
+Entail 2: EXCast. Failure("**cpure.ml#14503:Not supported yet")
+: no residue 
+*/
+
+/*
+
+D |-  Set1 \subset Set2
+
+D & /\ Set2 |=  /\ Set1
+
+*/
