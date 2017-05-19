@@ -1,9 +1,9 @@
 #!/usr/bin/swipl -q
-:- module(orders, [ev/1,hb/2,cb/2,snot/1,test/0]).
+:- module(orders, [ev/1,hb/2,cb/2,snot/1]).
 :- use_module(library(chr)).
 
-:- initialization start.
-:- chr_constraint ev/1,hb/2,cb/2,snot/1,test/0.
+%:- initialization start.
+:- chr_constraint ev/1,hb/2,cb/2,snot/1.
 
 
 % disable singleton warning
@@ -39,8 +39,7 @@ neg4   @ ev(A),snot(ev(A))  <=> false.
 neg6   @ hb(A,B),snot(hb(A,B)) <=> false.
 sym1   @ hb(A,B)\hb(A,B) <=> true .
 asy2   @ hb(A,B),hb(B,A) ==> A=B.
-% asy3   @ hb(A,A) <=> snot(hb(A,A)) | false.
-asy4   @ hb(A,A) <=>  true.
+% asy4   @ hb(A,A) <=>  true.
 % HB transitivity 
 hbhb   @ hb(A,B), hb(B,C) ==> A\=B,B\=C | hb(A,C).
 % % CB transitivity 
