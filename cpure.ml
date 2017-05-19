@@ -14468,6 +14468,7 @@ and find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
     find_closure_pure_formula_x v f
 
 and expand_constraint_sets' ante conseq =
+  let is_bexpr = function BExpr _ -> true | _ -> false in
   let rec expand_formula = function
     | BForm ((p_f, bf_ann_opt), lbl_opt) as f -> expand_p_formula f p_f
     | And (f1, f2, loc) ->
@@ -14537,7 +14538,7 @@ and expand_constraint_sets' ante conseq =
         begin match exps with
           | [] -> exp
           | _ :: _ ->
-        if List.for_all (function BExpr _ -> true | _ -> false) exps then
+              if List.for_all is_bexpr exps then
           let formulas = List.map (function BExpr f -> f | _ -> x_fail "impossible") exps in
           let formula =
         List.fold_left
@@ -14552,6 +14553,26 @@ and expand_constraint_sets' ante conseq =
         else
           exp
         end
+    | BagUnion (exps, _) as exp ->
+        let expanded_exps = List.map expand_exp exps in
+        begin match expanded_exps with
+          | [] -> exp
+          | _ :: _ ->
+              if List.for_all is_bexpr expanded_exps then
+                let formulas = List.map (function BExpr f -> f | _ -> x_fail "impossible") expanded_exps in
+                let formula =
+                  List.fold_left
+                    (fun acc elem ->
+                      let end_pos = (pos_of_formula elem).end_pos in
+                      let new_loc = { (pos_of_formula elem) with end_pos } in
+                      And (acc, elem, new_loc)
+                    )
+                    (List.hd formulas)
+                    (List.tl formulas)
+                in BExpr formula
+              else
+                exp
+          end
     | exp -> exp
   in
   let (additional_ante_opt, expanded_ante) = expand_formula ante in
