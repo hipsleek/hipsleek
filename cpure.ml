@@ -14554,26 +14554,6 @@ and expand_constraint_sets' ante conseq =
         end
     | exp -> exp
   in
-  (*print_endline (show_formula ante);
-  let bag_to_and exp =
-    match exp with
-    | Bag (exps, loc) ->
-        if List.for_all (function BExpr _ -> true | _ -> false) exps
-        then
-          let formulas =  List.map (function BExpr f -> f | _ -> x_fail "impossible") exps in
-          List.fold_left (fun acc elem -> And (acc, elem, loc)) (List.hd formulas) (List.tl formulas)
-        else x_fail "Not a bag of formulas"
-    | _ -> x_fail "Not a bag"
-  in
-  match conseq with
-  | BForm (
-      ((BagSub ((Bag (_, loc1) as b1), (Bag (_, loc2) as b2), loc)), _),
-      _
-    ) ->
-      let f1 = bag_to_and b1 in
-      let f2 = bag_to_and b2 in
-      (And (ante, f2, loc), f1)
-  | _ -> x_fail "TODO"*)
   let (additional_ante_opt, expanded_ante) = expand_formula ante in
   let new_ante = match additional_ante_opt with
     | Some f -> And (expanded_ante, f, pos_of_formula expanded_ante)
