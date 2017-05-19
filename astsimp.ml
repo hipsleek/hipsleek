@@ -2459,7 +2459,7 @@ and session_to_iform_x (view:I.view_decl) =
         let prj_map = create_prj_map vars_list (Session_projection.PrjMap.mkEmpty()) in
         (* TODO elena: use prj_map *)
         let proj = make_projection_view_decls prot view in
-        {view with view_session_projections = Some proj; I.view_session = Some (ProtocolSession prot) }
+        {view with (* view_session_projections = Some proj; *) I.view_session = Some (ProtocolSession prot) }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
         helper view transf Session.get_projection

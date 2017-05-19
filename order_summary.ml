@@ -6,9 +6,11 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
-module SProt  = Session.IProtocol
-module SBProt = Session.IProtocol_base
-module SIOrd = Session.IOrders
+module S = Session
+module SProt  = S.IProtocol
+module SBProt = S.IProtocol_base
+module SIOrd = S.IOrders
+module SCOrd = S.COrders
 
 type role = SIOrd.role
 type chan = SIOrd.chan
@@ -50,13 +52,16 @@ struct
 end;;
 
 (* key for ConstrMap *)
-module UID =
+module UID (Ord: Orders.GORDERS_TYPE) =
 struct
-  type t = suid
-  let eq = SIOrd.eq_suid
-  let string_of = SIOrd.string_of_suid
-  let contains (lst:t list) (suid:t) = SIOrd.contains_suid lst suid
+  type t = Ord.suid
+  let eq = Ord.eq_suid
+  let string_of = Ord.string_of_suid
+  let contains (lst:t list) (suid:t) = Ord.contains_suid lst suid
 end;;
+
+module IUID = UID(SIOrd)
+module CUID = UID(SCOrd)
 
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
@@ -91,6 +96,7 @@ module BTrans =
 struct
   type t = transmission
   type a = role * role * chan * suid
+  module UID = IUID
            
   let make ((sender,receiver,chan,uid) :a) : t =
     {sender = sender; receiver = receiver; channel = chan; uid = uid}
@@ -161,15 +167,15 @@ module BOUNDARY_ELEMENT =
     let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
-module Orders_list  =
+module Orders_list (Ord: Orders.GORDERS_TYPE) =
 struct
-  type t = SIOrd.assrt list
-  type base = SIOrd.assrt
+  type t = Ord.assrt list
+  type base = Ord.assrt
 
   let bot () = []
   let is_bot x = List.length x == 0
   let eq e1 e2 = failwith x_tbi
-  let string_of e1 = (pr_list (SIOrd.string_of)) e1
+  let string_of e1 = (pr_list (Ord.string_of)) e1
   let mk_base (base: base) : t = failwith x_tbi
   let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
@@ -328,13 +334,15 @@ struct
 end;;
 
 (* ------------------------------------------------ *)
-module OL = Orders_list 
+module IOL = Orders_list(SIOrd)
+module COL = Orders_list(SCOrd)
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
 
 module RMap = SMap(IRole)(Events) ;;
 module CMap = SMap(IChan)(Trans) ;;
-module ConstrMap = SMap(UID)(OL) ;;
+module ConstrMap = SMap(IUID)(IOL) ;;
+module CConstrMap = SMap(CUID)(COL) ;;
 
 (* ------------------------------------------------ *)
 (* ------------- summary related stuff ------------ *)
@@ -391,7 +399,7 @@ struct
   let rec merge (e1:t) (e2:t) : ConstrMap.emap =
     match e1,e2 with
     | FBase (BBase e1) , FBase (BBase e2) ->
-      let elem = OL.mkSingleton (Ord.mk_hb e1 e2) in (* hbe hbi  *)
+      let elem = IOL.mkSingleton (Ord.mk_hb e1 e2) in (* hbe hbi  *)
       let key  = Ord.get_uid e2 in
       ConstrMap.init [(key, elem)]
     | FBase (BStar (s1,s2)) , _ ->
@@ -568,7 +576,7 @@ let derive_summ prot =
       (* INIT MAPS  *)
       let rmap     = RMap.init [(sender, Events.mk_base event1) ; (receiver, Events.mk_base event2)] in
       let cmap     = CMap.init [(chan, Trans.mk_base trans)] in
-      let assum    = ConstrMap.init [(suid,OL.mkSingleton (SIOrd.Transm trans))] in
+      let assum    = ConstrMap.init [(suid,IOL.mkSingleton (SIOrd.Transm trans))] in
       let guards   = ConstrMap.mkEmpty () in
       {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
     | SProt.SEmp 
@@ -616,7 +624,7 @@ let mk_def_summary roles channs =
       let ev1 = SIOrd.mk_event sender suid chan in
       let ev2 = SIOrd.mk_event receiver suid chan in
       let cb  = SIOrd.mk_cbe ev1 ev2 in
-      (suid,OL.mkSingleton cb)) cmap_int in
+      (suid,IOL.mkSingleton cb)) cmap_int in
   let rmap = RMap.init rmap in
   let cmap = CMap.init cmap in
   let assumes = ConstrMap.init assumes in
@@ -636,7 +644,7 @@ let test_dag assume guard def_suids =
       | _ -> []
     ) alldata in
   let pre_events = List.flatten pre_events in
-  let pre_events = List.filter (fun ev -> UID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
+  let pre_events = List.filter (fun ev -> IUID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
   let pre_events = BEvent.remove_duplicates pre_events in
   let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
 
@@ -644,15 +652,15 @@ let test_dag assume guard def_suids =
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG1.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG1.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_event.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_event.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 
-  let tbl = Session.ODAG1.connect_list (Session.ODAG1.create ()) lst in
-  let () = y_binfo_hp (add_str "DAG:" Session.ODAG1.string_of) tbl in
-  let tbl = Session.ODAG1.norm_weak tbl pre_events in
-  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG1.string_of) tbl in
+  let tbl = S.DAG_event.connect_list (S.DAG_event.create ()) lst in
+  let () = y_binfo_hp (add_str "DAG:" S.DAG_event.string_of) tbl in
+  let tbl = S.DAG_event.norm_weak tbl pre_events in
+  let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_event.string_of) tbl in
 
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)
@@ -671,7 +679,7 @@ let test_dag3 assume guard def_suids =
       | _ -> []
     ) alldata in
   let pre_events = List.flatten pre_events in
-  let pre_events = List.filter (fun ev -> UID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
+  let pre_events = List.filter (fun ev -> IUID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
   let pre_events = BEvent.remove_duplicates pre_events in
   let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
 
@@ -679,21 +687,61 @@ let test_dag3 assume guard def_suids =
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(Session.ODAG0.HB, (hbe.SIOrd.hbe_event1.role,hbe.SIOrd.hbe_event2.role))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(Session.ODAG0.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_ivar.HB, (hbe.SIOrd.hbe_event1.role,hbe.SIOrd.hbe_event2.role))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_ivar.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 
-  let tbl = Session.ODAG0.connect_list (Session.ODAG0.create ()) lst in
-  let () = y_binfo_hp (add_str "DAG:" Session.ODAG0.string_of) tbl in
+  let tbl = S.DAG_ivar.connect_list (S.DAG_ivar.create ()) lst in
+  let () = y_binfo_hp (add_str "DAG:" S.DAG_ivar.string_of) tbl in
   let pre_events = List.map (fun ev -> ev.SIOrd.role) pre_events in
-  let tbl = Session.ODAG0.norm_weak tbl pre_events in
-  let () = y_binfo_hp (add_str "DAG(normed):" Session.ODAG0.string_of) tbl in
+  let tbl = S.DAG_ivar.norm_weak tbl pre_events in
+  let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_ivar.string_of) tbl in
 
-  let keys = Session.ODAG0.get_keys tbl in
+  let keys = S.DAG_ivar.get_keys tbl in
   let () = List.iter (fun ev -> 
-    let all_pred = Session.ODAG0.get_all_predecessors tbl ev in
-    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair Session.ODAG0.string_of_vertex Session.ODAG0.string_of_elist)) (ev, all_pred)) keys in
+    let all_pred = S.DAG_ivar.get_all_predecessors tbl ev in
+    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.IVert.string_of S.DAG_ivar.string_of_elist)) (ev, all_pred)) keys in
+
+  (* generate all possible Qs, such that A & Q |- G *)
+  (* assume the arrow of the guard is never from the def_suids related events*)
+  (* let candidates = List.map (fun g -> ) guards in *)
+  ()
+
+let test_dag4 assume guard inf_vars =
+  (* collect the events related to the precondition / default summary *)
+  (* let alldata1 = CConstrMap.get_data assume in *)
+  (* let alldata2 = CConstrMap.get_data guard  in *)
+  (* let alldata  = List.flatten (alldata1 @ alldata2) in *)
+  (* let pre_events = List.map (fun assrt -> *)
+  (*     match assrt with *)
+  (*     | SCOrd.Order (SCOrd.HBe hbe) -> [hbe.SCOrd.hbe_event1;hbe.SCOrd.hbe_event2] *)
+  (*     | SCOrd.Order (SCOrd.CBe cbe) -> [cbe.SCOrd.cbe_event1;cbe.SCOrd.cbe_event2] *)
+  (*     | _ -> [] *)
+  (*   ) alldata in *)
+  (* let pre_events = List.flatten pre_events in *)
+  (* let pre_events = List.filter (fun ev -> CUID.contains def_suids (SCOrd.get_suid ev) ) pre_events in *)
+  (* (\* let pre_events = BEvent.remove_duplicates pre_events in *\) *)
+  (* let () = y_binfo_hp (add_str "Pre Events: " (pr_list SCOrd.string_of_event)) pre_events in *)
+
+  (* construct the DAG of assumptions *)
+  let lst = List.flatten (CConstrMap.get_data assume) in
+  let lst = List.map (fun assrt ->
+      match assrt with
+      | SCOrd.Order (SCOrd.HBe hbe) -> [(S.DAG_cvar.HB, (hbe.SCOrd.hbe_event1.role,hbe.SCOrd.hbe_event2.role))]
+      | SCOrd.Order (SCOrd.CBe cbe) -> [(S.DAG_cvar.CB, (cbe.SCOrd.cbe_event1.role,cbe.SCOrd.cbe_event2.role))]
+      | _ -> []
+    ) lst in
+  let lst = List.flatten lst in
+  let tbl = S.DAG_cvar.connect_list (S.DAG_cvar.create ()) lst in
+  let () = y_binfo_hp (add_str "DAG:" S.DAG_cvar.string_of) tbl in
+  let tbl = S.DAG_cvar.norm_weak tbl inf_vars in
+  let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_cvar.string_of) tbl in
+
+  let keys = S.DAG_cvar.get_keys tbl in
+  let () = List.iter (fun ev ->
+    let all_pred = S.DAG_cvar.get_all_predecessors tbl ev in
+    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.CVert.string_of S.DAG_cvar.string_of_elist)) (ev, all_pred)) keys in
 
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)

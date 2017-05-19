@@ -22,7 +22,7 @@ sig
   type event
   type transmission
 
-  val string_of_role : suid -> string
+  val string_of_suid : suid -> string
   val string_of_role : role -> string
   val string_of_chan : chan -> string
   val string_of_event : event -> string
@@ -263,7 +263,7 @@ end;;
 (*   val create: unit -> t *)
 (* end *)
 
-module Make_DAG0 (Vertex: VERTEX_TYPE) (* : DAG_TYPE  *)=
+module Make_DAG (Vertex: VERTEX_TYPE) (* : DAG_TYPE  *)=
 struct
   module Key = Vertex
   (* vertex == Key.t == Orders.event *)

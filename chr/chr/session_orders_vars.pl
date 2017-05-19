@@ -1,9 +1,9 @@
 #!/usr/bin/swipl -q
-:- module(orders, [ev/1,hb/2,cb/2,snot/1,test/0]).
+:- module(orders, [ev/1,hb/2,cb/2,snot/1]).
 :- use_module(library(chr)).
 
 :- initialization start.
-:- chr_constraint ev/1,hb/2,cb/2,snot/1,test/0.
+:- chr_constraint ev/1,hb/2,cb/2,snot/1.
 
 
 % disable singleton warning
@@ -32,18 +32,17 @@
 %%%% RULES
 %%%%%%%%%%
 %negation rules for hb and ev
-% neg0   @ snot(hb(A,A)) <=> true. %;(B=A,L2=L1).
-% neg1   @ snot(hb(A,B)) ==> A\=B | hb(B,A). %;(B=A,L2=L1).
 neg2   @ snot(A;B) <=> snot(A),snot(B).
 neg3   @ snot((A,B)) <=> snot(A);snot(B).
-neg4   @ ev(A) \ snot(ev(A))  <=> false.
-asy0   @ hb(A,B) \ snot(hb(A,B)) <=> false.
-sym1   @ hb(A,B) \ hb(A,B) <=> true .
-asy2   @ hb(A,B), hb(B,A) ==> A=B.
-asy3   @ hb(A,A)  <=> true.
+neg4   @ ev(A),snot(ev(A))  <=> false.
+% neg5   @ hb(A,A),snot(hb(A,A)) <=> false.
+neg6   @ hb(A,B),snot(hb(A,B)) <=> false.
+sym1   @ hb(A,B)\hb(A,B) <=> true .
+asy2   @ hb(A,B),hb(B,A) ==> A=B.
+% asy4   @ hb(A,A) <=>  true.
 % HB transitivity 
-hbhb   @ hb(A,B), hb(B,C) ==> hb(A,C).
-% CB transitivity 
+hbhb   @ hb(A,B), hb(B,C) ==> A\=B,B\=C | hb(A,C).
+% % CB transitivity 
 cbhb   @ cb(A,B), hb(B,C) ==> B\=C | hb(A,C).
 % cbhb   @ cb(A,L1,B,L1), hb(B,L1,C,L4) ==>  hb(A,L1,C,L4).
 
