@@ -61,13 +61,18 @@ struct
 end;;
 
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
-module TPrjMap = OS.SMap(OS.IChan)(TProjection_map)
+module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
 
-let create_session transmission chan msg_var pos heap_node msg =
-  (* makes projection base *)
+(* creates session projection base for party *)
+let create_session_base_prj transmission chan msg_var pos heap_node msg =
   let base = SBProj.mk_base (transmission, chan, msg_var, pos) ~node:heap_node msg in
-  (* makes projection session *) 
   let session_formula = SProj.SBase (SProj.Base base) in
+  session_formula
+
+(* creates session projection base for channel *)
+let create_session_base_tprj transmission msg_var pos heap_node msg =
+  let base = SBTProj.mk_base (transmission, msg_var, pos) ~node:heap_node msg in
+  let session_formula = STProj.SBase (STProj.Base base) in
   session_formula
 
 (* Makes projection per party for assumptions *)
@@ -211,6 +216,7 @@ let norm_sess_pred prj=
   Debug.no_1 "SP.norm_sess_pred" pr pr norm_sess_pred prj
 
 (* Projection per party *)
+(* global spec -> per party spec *)
 let mk_projection_per_party prot role =
   let rec deconstruct_prot prot = match prot with
     | SProt.SSeq seq -> 
@@ -251,10 +257,10 @@ let mk_projection_per_party prot role =
             let heap_node = SBProt.get_session_heap_node base in
             (* creates session_formula based on transmission role *) 
             if (SBProt.eq_role sender role) then 
-              let session_formula = create_session Session.TSend chan msg_var pos heap_node msg in
+              let session_formula = create_session_base_prj Session.TSend chan msg_var pos heap_node msg in
               session_formula
             else if (SBProt.eq_role receiver role) then
-              let session_formula = create_session Session.TReceive chan msg_var pos heap_node msg in
+              let session_formula = create_session_base_prj Session.TReceive chan msg_var pos heap_node msg in
               session_formula
             else
               SProj.SEmp
@@ -298,20 +304,145 @@ let mk_projection_per_party prot role =
 
 let mk_projection_per_party prot role =
   let pr1 = SProt.string_of_session in
-  let pr2 = Session.IMessage.print_var in
+  let pr2 = Iformula.string_of_spec_var in
   let pr_out = SProj.string_of_session in
   Debug.no_2 "SP.mk_projection_per_party" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_party prot role) prot role
 
-(* Collects projections into the Map *)
-let save_prj_into_map map prj_elem role =
+(* Projection per channel *)
+(* per party spec -> per channel spec *)
+let mk_projection_per_channel prj chan =
+  let rec prj_per_chan prj chan = match prj with
+  | SProj.SSeq seq -> 
+      let head = seq.session_seq_formula_head in
+      let tail = seq.session_seq_formula_tail in
+      let pos = seq.session_seq_formula_pos in
+      let session_head = prj_per_chan head chan in
+      let session_tail = prj_per_chan tail chan in
+      STProj.mk_session_seq_formula session_head session_tail pos
+  | SProj.SOr sor ->
+      let session1 = sor.session_sor_formula_or1 in
+      let session2 = sor.session_sor_formula_or2 in
+      let pos = sor.session_sor_formula_pos in
+      let sess_prj1 = prj_per_chan session1 chan in
+      let sess_prj2 = prj_per_chan session2 chan in
+      STProj.mk_session_or_formula sess_prj1 sess_prj2 pos
+  | SProj.SStar star ->
+      let session1 = star.session_star_formula_star1 in 
+      let session2 = star.session_star_formula_star2 in 
+      let has_sess_chan session chan = 
+        begin match session with
+        |SProj.SBase sb ->
+          begin match sb with
+          | SProj.Base base ->
+              let ch = SBProj.get_channel base in
+              if (chan = ch) then true
+              else false
+          | _ -> false
+          end
+        | _ -> false
+        end in
+      (*TODO elena: test this part *)
+      if (has_sess_chan session1 chan) then prj_per_chan session1 chan
+      else STProj.SEmp; 
+      if (has_sess_chan session2 chan) then prj_per_chan session2 chan
+      else STProj.SEmp
+  | SProj.SBase sb -> 
+      begin match sb with
+      | SProj.Base base ->
+          (* gets information nedeed for projection *)
+          let transmission = SBProj.get_base_transmission base in
+          let ch = SBProj.get_channel base in
+          let msg = SBProj.get_message base in
+          let msg_var = SBProj.get_message_var base in
+          let heap_node = SBProj.get_session_heap_node base in
+          let pos = SBProj.get_base_pos base in
+          begin match transmission with
+          | Session.TSend
+          | Session.TReceive ->
+              if ch = chan then
+                create_session_base_tprj transmission msg_var pos heap_node msg
+              else
+                STProj.SEmp
+          end
+      | SProj.Predicate pred ->
+          (* gets information nedeed for projection *)
+          let name = pred.session_predicate_name in
+          let ho_vars = pred.session_predicate_ho_vars in
+          let pred_params = pred.session_predicate_params in
+          let pred_pos = pred.session_predicate_pos in
+          let pred_orders = pred.session_predicate_orders in
+          let pred_kind = pred.session_predicate_kind in
+          STProj.SEmp (*TODO elena: to be implemented *)
+      | _ -> STProj.SEmp
+      end
+  | _ -> STProj.SEmp
+  in
+  let session = prj_per_chan prj chan in
+  session
+
+let mk_projection_per_channel prj chan =
+  let pr1 = SProj.string_of_session in
+  let pr2 = Iformula.string_of_spec_var in
+  let pr_out = STProj.string_of_session in
+  Debug.no_2 "SP.mk_projection_per_channel" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_channel prj chan) prj chan
+
+(* Collects projections per party into the Map *)
+let save_party_prj_into_map map prj_elem role =
   match PrjMap.is_empty map with
     | true -> PrjMap.init [(role, prj_elem)]
     | false -> PrjMap.add_elem_dupl map role prj_elem
 
-(* let save_prj_into_map map prj_elem role = *)
-(*   let pr = PrjMap.string_of in *)
-(*   Debug.no_1 "SP.save_prj_into_map" pr pr (fun _ -> save_prj_into_map map prj_elem role) map *)
+let save_party_prj_into_map map prj_elem role =
+  let pr = PrjMap.string_of in
+  Debug.no_1 "SP.save_party_prj_into_map" pr pr (fun _ -> save_party_prj_into_map map prj_elem role) map
 
+(* Collects projections per channel into the Map *)
+let save_chan_prj_into_map map prj_elem pair =
+  match TPrjMap.is_empty map with
+    | true -> TPrjMap.init [(pair, prj_elem)]
+    | false -> TPrjMap.add_elem_dupl map pair prj_elem
 
+let save_chan_prj_into_map map prj_elem pair =
+  let pr = TPrjMap.string_of in
+  Debug.no_1 "SP.save_chan_prj_into_map" pr pr (fun _ -> save_chan_prj_into_map map prj_elem pair) map
 
+(* per party *)
+let rec create_map_of_prj prot vars map = match vars with
+| [] -> map
+| (typ, var)::tail ->
+  if cmp_typ typ role_typ then
+    let role = Session.IMessage.mk_var var in
+    let prj_per_party = mk_projection_per_party prot role in
+    let map = save_party_prj_into_map map prj_per_party role in
+    create_map_of_prj prot tail map
+  else
+    create_map_of_prj prot tail map
+
+(* per channel *)
+let create_map_of_tprj prj_map vars =
+  let rec mk_prj_per_channel prj role vars map = begin match vars with
+  | [] -> map
+  | (typ, var)::vars_tail ->
+    if cmp_typ typ chan_typ then
+          let chan = Session.IMessage.mk_var var in
+          let prj_per_chan = mk_projection_per_channel prj chan in
+          let map = save_chan_prj_into_map map prj_per_chan (chan, role) in
+          mk_prj_per_channel prj role vars_tail map
+        else
+          mk_prj_per_channel prj role vars_tail map
+  end in
+  (*TODO elena: create a function fold_left *)
+  List.fold_left (fun acc (role, prj) -> mk_prj_per_channel prj role vars acc) (TPrjMap.mkEmpty()) prj_map
+      
+(* Applies projection per party, then per channel.
+ * Returns a map of projections *)
+let mk_projection prot vars =
+  let prj_map = create_map_of_prj prot vars (PrjMap.mkEmpty()) in
+  let prj_map = create_map_of_tprj prj_map vars in
+  prj_map
+
+let mk_projection prot vars =
+  let pr = SProt.string_of_session in
+  let pr_out = TPrjMap.string_of in
+  Debug.no_1 "SP.mk_projection_x" pr pr_out (fun _ -> mk_projection prot vars) prot
 

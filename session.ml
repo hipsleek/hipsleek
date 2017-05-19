@@ -1273,11 +1273,15 @@ module Projection_base_formula =
       let pr2 = !Msg.print_h_formula in
       Debug.no_1 "Session.trans_base" pr1 pr2 trans_base base
 
-    let get_base_pos base = base.projection_base_formula_pos
+    let get_base_transmission base = base.projection_base_formula_op
 
-    let get_message_var base = base.projection_base_formula_message_var
+    let get_channel base = base.projection_base_formula_channel
 
     let get_message base = base.projection_base_formula_message
+    
+    let get_message_var base = base.projection_base_formula_message_var
+    
+    let get_base_pos base = base.projection_base_formula_pos
 
     let trans_h_formula_to_session_base h_formula =
       let (ptr, name, hoargs, params, pos) = Msg.get_node h_formula in

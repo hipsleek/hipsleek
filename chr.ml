@@ -89,7 +89,7 @@ let send_query (query : string) : sat =
   let result =
     try  
       let result = input_line !in_chan in
-      let () = y_ninfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
+      let () = y_binfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
       match result with
       | "false" -> UNSAT
       | "true"  -> SAT
@@ -134,7 +134,7 @@ let is_sat (form : CP.formula) (sat_no : string) : bool =
   Debug.no_1 "CHR.is_sat" pr string_of_bool (fun _ -> is_sat form sat_no) form
     
 let start () =
-  print_string_quiet "Starting CHR... \n"; flush stdout;
+  print_string_quiet "\nStarting CHR... \n"; flush stdout;
   let args = [| chr_cmd |] in
   let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in
   in_chan := inchn;

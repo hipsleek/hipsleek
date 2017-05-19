@@ -2446,17 +2446,9 @@ and session_to_iform_x (view:I.view_decl) =
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
         let prot = x_add_1 Order_summary.insert_orders view prot in
-        let vars_list = view.I.view_vars in
-        (* makes projections per party and save them into the map *)
-        let rec create_prj_map vars map = match vars with
-        | [] -> map
-        | head::tail ->
-          begin
-            let prj_per_party = Session_projection.mk_projection_per_party prot (Session.IMessage.mk_var head) in
-            let map = Session_projection.save_prj_into_map map prj_per_party (Session.IMessage.mk_var head) in
-            create_prj_map tail map
-          end in
-        let prj_map = create_prj_map vars_list (Session_projection.PrjMap.mkEmpty()) in
+        (* makes projection *)
+        let vars_list = view.I.view_typed_vars in
+        let prj_map = Session_projection.mk_projection prot vars_list in
         (* TODO elena: use prj_map *)
         let proj = make_projection_view_decls prot view in
         {view with (* view_session_projections = Some proj; *) I.view_session = Some (ProtocolSession prot) }

@@ -51,6 +51,14 @@ struct
   let string_of = SIOrd.string_of_chan
 end;;
 
+(* key for per channel projection map *)
+module IChanRole =
+struct
+  type t = IChan.t * IRole.t
+  let eq (c1, r1) (c2, r2) = (IChan.eq c1 c2) && (IRole.eq r1 r2)  
+  let string_of = pr_pair IChan.string_of IRole.string_of
+end;;
+
 (* key for ConstrMap *)
 module UID (Ord: Orders.GORDERS_TYPE) =
 struct
