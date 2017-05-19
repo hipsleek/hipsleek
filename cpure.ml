@@ -14504,44 +14504,39 @@ and expand_constraint_sets' ante conseq =
         let (e_ante, e_conseq) = expand_formula f in
         (e_ante, Not (e_conseq, lbl_opt, loc))
     | f -> x_fail ("Not supported yet: " ^ !print_formula f)
-    (*| Or (f1, f2, lbl_opt, loc) -> ()
-    | Not (f, lbl_opt, loc) -> ()
+    (*
     | Forall (var, f, lbl_opt, loc) -> ()
     | Exists (var, f, lbl_opt, loc) -> ()*)
   and expand_p_formula parent_f = function
     | BagSub (e1, e2, loc) ->
         let additional_ante = expand_exp e2 in
         let additional_conseq = expand_exp e1 in
-        let additional_ante' =
-          match additional_ante with
-            | BExpr f -> f
-            | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | exp -> x_fail ("ante: Don't know what to do with " ^ !print_exp exp) in
-        let additional_conseq' =
-          match additional_conseq with
-            | BExpr f -> f
-            | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | exp -> x_fail ("conseq: Don't know what to do with " ^ !print_exp exp) in
-        (Some additional_ante', additional_conseq')
+        begin match additional_ante, additional_conseq with
+          | BExpr f1, BExpr f2 -> (Some f1, f2)
+          | BExpr f, Var (v, loc) -> (Some f, mk_bform (BVar (v, loc)))
+          | Var (v, loc), BExpr f -> (Some (mk_bform (BVar (v, loc))), f)
+          | Var (v1, loc1), Var (v2, loc2) -> (Some (mk_bform (BVar (v1, loc1))), mk_bform (BVar (v2, loc2)))
+          | _, _ -> (None, parent_f)
+        end
     | Eq (e1, e2, loc) ->
         (* Assume form `var = exp` *)
         let expanded_e1 = expand_exp e1 in
         let expanded_e2 = expand_exp e2 in
-        let f1 =
-          match expanded_e1 with
-            | Var (v, loc) -> mk_bform (BVar (v, loc))
-            | _ -> x_fail ("e1: Unsupported form" ^ !print_exp expanded_e1) in
-        let f2 =
-          match expanded_e2 with
-            | BExpr f -> f
-            | _ -> x_fail ("e2: Unsupported form" ^ !print_exp expanded_e2) in
-        let eq_to_or1 = And (f1, f2, pos_of_formula f1) in
-        let eq_to_or2 = And (mkNot_s f1, mkNot_s f2, pos_of_formula f1)
+        begin match expanded_e1, expanded_e2 with
+          | Var (v, loc), BExpr f ->
+              let f1 = mk_bform (BVar (v, loc)) in
+              let eq_to_or1 = And (f1, f, pos_of_formula f1) in
+              let eq_to_or2 = And (mkNot_s f1, mkNot_s f, pos_of_formula f1)
         in
         (None, Or (eq_to_or1, eq_to_or2, None, pos_of_formula f1))
+          | _, _ -> (None, parent_f)
+        end
     | pf -> (None, parent_f)
   and expand_exp = function
     | Bag (exps, _) as exp ->
+        begin match exps with
+          | [] -> exp
+          | _ :: _ ->
         if List.for_all (function BExpr _ -> true | _ -> false) exps then
           let formulas = List.map (function BExpr f -> f | _ -> x_fail "impossible") exps in
           let formula =
@@ -14556,6 +14551,7 @@ and expand_constraint_sets' ante conseq =
           in BExpr formula
         else
           exp
+        end
     | exp -> exp
   in
   (*print_endline (show_formula ante);
