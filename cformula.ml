@@ -11939,6 +11939,13 @@ let add_infer_pure_to_estate cp es =
     }
   else failwith (x_loc^"add_infer_pure_estate")
 
+let add_infer_pure_to_estate cp es =
+  let pr = pr_list !CP.print_formula in
+  let pr2 es = pr es.es_infer_pure in
+  Debug.no_1 "add_infer_pure_to_estate" pr pr2 
+    (fun _ -> add_infer_pure_to_estate cp es) cp
+
+
 let add_infer_rel_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
@@ -11954,7 +11961,7 @@ let add_infer_rel_to_ctx cp ctx =
 let add_infer_pure_to_ctx cp ctx =
   let rec helper ctx =
     match ctx with
-    | Ctx es -> Ctx (add_infer_pure_to_estate cp es)
+    | Ctx es -> Ctx (x_add add_infer_pure_to_estate cp es)
     | OCtx (ctx1, ctx2) -> OCtx (helper ctx1, helper ctx2)
   in helper ctx
 

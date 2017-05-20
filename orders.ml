@@ -219,7 +219,7 @@ end;;
 
  
 (* ==================== VERTEX =========================== *)
-module type VERTEX_TYPE =
+module type VERTEX_ELEM_TYPE =
   (* functor (Param : VAR_TYPE) -> *)
 sig
   type t 
@@ -227,8 +227,8 @@ sig
   val eq: t ->  t -> bool
   val compare: t ->  t -> int
   val string_of: t -> string
-  val contains:  t list -> t -> bool
 end;;
+
 
 module EVertex  (* : VERTEX_TYPE *) =
   functor (Var : VAR_TYPE) ->
@@ -252,20 +252,50 @@ struct
   let compare e1 e2  = String.compare (string_of e1) (string_of e2)
   let contains lst e = List.exists (eq e) lst 
 end;;
+
+module type VERTEX_TYPE =
+ functor (Elem: VERTEX_ELEM_TYPE) ->
+sig
+  type t = Elem.t
+
+  val eq: t ->  t -> bool
+  val compare: t ->  t -> int
+  val string_of: t -> string
+  val string_of_list: t list -> string
+  val contains:  t list -> t -> bool
+  val unique  :  t list -> t list
+  val union   :  t list -> t list -> t list
+  val intersect: t list -> t list -> t list
+  val is_empty : t list -> bool
+  val mk_singleton: t   -> t list
+end;;
+
+module Vertex  : VERTEX_TYPE =
+  functor (Elem: VERTEX_ELEM_TYPE) ->
+struct
+  type t = Elem.t
+
+  let eq = Elem.eq
+  let string_of = Elem.string_of
+  let string_of_list = pr_list string_of
+  let compare   = Elem.compare
+  let contains lst el = List.exists (eq el) lst
+  let unique   lst    = List.fold_left (fun acc elem ->
+      if (contains acc elem) then acc
+      else elem::acc ) [] lst
+  (* set union - no dupl *)
+  let union l1 l2  = unique (l1@l2)
+  (* set intersection - no dupl *)
+  let intersect l1 l2 = unique (List.filter (contains l2) l1)
+  let is_empty  lst   = List.length lst == 0
+  let mk_singleton el = [el]
+end;;
  
 (* ====================  DAG  =========================== *)
-(* module type DAG_TYPE = *)
-(* sig *)
-(*   type vertex  *)
-(*   type arrow_kind *)
-(*   type t *)
-
-(*   val create: unit -> t *)
-(* end *)
-
-module Make_DAG (Vertex: VERTEX_TYPE) (* : DAG_TYPE  *)=
+module Make_DAG (Elem: VERTEX_ELEM_TYPE) (* : DAG_TYPE  *)=
 struct
-  module Key = Vertex
+  module Vertex = Vertex(Elem)
+  module Key    = Vertex
   (* vertex == Key.t == Orders.event *)
   type vertex     = Vertex.t
   type key        = vertex
@@ -284,11 +314,12 @@ struct
     | HB -> "-->"
     | CB -> "->>"
     | Backward -> "<-"
-  let string_of_vertex = Vertex.string_of
-  let string_of_elem (e:elem): string = (string_of_arrow_kind e.arrow) ^ (string_of_vertex e.vertex)
+  let string_of_elem (e:elem): string = (string_of_arrow_kind e.arrow) ^ (Vertex.string_of e.vertex)
   let string_of_elist  = pr_list string_of_elem
   let string_of_data d = pr_pair (add_str "Predecessors" string_of_elist)
       (add_str "Successors" string_of_elist) (d.predecessors,d.successors)
+  let string_of_edge e = (Vertex.string_of e.tail) ^ (string_of_arrow_kind e.kind) ^ (Vertex.string_of e.head)
+  let string_of_edge_list = pr_list string_of_edge
   let string_of tbl    = M.fold (fun key data acc ->
       (Key.string_of key) ^ ":" ^ (string_of_data data) ^ "\n" ^ acc ) tbl ""
 
@@ -296,9 +327,8 @@ struct
   let eq_arrow (a1: arrow_kind) (a2: arrow_kind) =
     match a1,a2 with
     | HB,HB | CB,CB | Backward,Backward -> true | _,_ -> false
-  let eq_vertex (v1: vertex) (v2: vertex) = Key.eq v1 v2
   let eq_elem (e1:elem) (e2:elem) =
-    (eq_arrow e1.arrow e2.arrow) && (eq_vertex e1.vertex e2.vertex)
+    (eq_arrow e1.arrow e2.arrow) && (Vertex.eq e1.vertex e2.vertex)
 
     (* MAKERS *)
   let create ()        = M.empty
@@ -330,8 +360,14 @@ struct
   let fold_elist fnc acc elist = List.fold_left fnc acc elist
   let map fnc tbl = M.map fnc tbl
   let map_elist fnc elist = List.map fnc elist
-      
-  let get_keys tbl : vertex list = List.map fst (M.bindings tbl) 
+  let get_keys tbl : vertex list = List.map fst (M.bindings tbl)
+  let get_vertex data : vertex = data.vertex
+
+
+  (* EDGE OPERATIONS *)
+  let get_head edge = edge.head
+  let get_tail edge = edge.tail
+  
   let get_weak (elist:elist) :elist   = filter_elist (fun el -> is_weak el.arrow) elist
   let get_strong (elist:elist) :elist = filter_elist (fun el -> is_strong el.arrow) elist
   let get_successors tbl vertex   = let data = find_safe tbl vertex in data.successors
@@ -344,28 +380,34 @@ struct
   let rec get_all_predecessors tbl vertex = 
     let predecessors = get_predecessors tbl vertex in
     List.fold_left (fun acc v -> acc@(get_all_predecessors tbl v.vertex)) predecessors predecessors  
-  
+  let get_all_vertex_successors tbl vertex   = List.map get_vertex (get_all_successors tbl vertex)
+  let get_all_vertex_predecessors tbl vertex = List.map get_vertex (get_all_predecessors tbl vertex)
+      
   (* UPDATES *)
   let set_successors  succ data  = {data with successors = succ}
   let set_predecessors pred data = {data with predecessors = pred}
   let add_successors   succ data = {data with successors = succ::data.successors}
   let add_predecessors pred data = {data with predecessors = pred::data.predecessors}
  
-  let add_vertex tbl key data = M.add key data tbl
+  let add_vertex tbl key =
+    let data = find_safe tbl key in
+    M.add key data tbl
+  let add_vertex_list tbl (lst:vertex list) = List.fold_left (fun acc key -> add_vertex acc key ) tbl lst
+  let add_key tbl key data = M.add key data tbl
   (* overwrites existing successors/predecessors *)
   let set_successors_tbl   tbl key succ =
     let data = find_safe tbl key in
-    add_vertex tbl key (set_successors succ data)
+    add_key tbl key (set_successors succ data)
   let set_predecessors_tbl tbl key pred =
     let data = find_safe tbl key in
-    add_vertex tbl key (set_predecessors pred data)
+    add_key tbl key (set_predecessors pred data)
   (* adds on top of the existing successors/predecessors *)
   let add_successors_tbl tbl key succ =
     let data = find_safe tbl key in
-    add_vertex tbl key (add_successors succ data)
+    add_key tbl key (add_successors succ data)
   let add_predecessors_tbl tbl key pred =
     let data = find_safe tbl key in
-    add_vertex tbl key (add_predecessors pred data)
+    add_key tbl key (add_predecessors pred data)
 
   (* Connects 2 vertices as follows:
      vertex1 : succ1, pred1  >>and<< vertex2:  succ2, pred2     ===TO===>
@@ -378,6 +420,10 @@ struct
       
   let connect_list tbl xs = 
     List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
+
+  let connect_edge_list tbl xs =
+    let xs = List.map (fun edge -> (edge.kind,(edge.tail,edge.head))) xs in
+    connect_list tbl xs
 
   (* removes an edge from tbl, updating its head predecessors, and its tail successors *)
   let remove_edge tbl (edge:edge) =

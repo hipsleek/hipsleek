@@ -89,7 +89,7 @@ let send_query (query : string) : sat =
   let result =
     try  
       let result = input_line !in_chan in
-      let () = y_binfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
+      let () = y_tinfo_pp ("\n############\n CHR result: "^result^"\n############\n") in
       match result with
       | "false" -> UNSAT
       | "true"  -> SAT

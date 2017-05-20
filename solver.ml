@@ -39,6 +39,7 @@ exception False_from_explicit_inst of string;;
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
+module OS = Order_summary
 (* module ME = Musterr *)
 
 (* let check_is_classic = Wrapper.check_is_classic *)
@@ -9004,6 +9005,10 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let () = y_tinfo_hp (add_str "es_evars" Cprinter.string_of_spec_var_list) estate.es_evars  in
         let () = x_tinfo_hp (add_str "split_ante1 " Cprinter.string_of_mix_formula) split_ante1 no_pos in
         let () = x_tinfo_hp (add_str "split_ante1_sym " Cprinter.string_of_mix_formula) split_ante1_sym no_pos in
+        (* ========= ANDREEA - testing orders infer ================ *)
+        let inf_orders = OS.infer_orders estate rhs_p in
+        (* ========= end ANDREEA - testing orders infer ============ *)
+
         let flag1=(tmp3_sym==tmp0_sym) in
         let () = y_tinfo_hp (add_str "heap_entail_build (flag1)" string_of_bool) flag1 in
         let (split_ante0_sym, _) as xx = 
@@ -9305,7 +9310,7 @@ type: bool *
         let inf_p = stk_inf_pure # get_stk in
         let inf_relass = stk_rel_ass # get_stk_and_reset in
         (* let inf_heap_ass = stk_rel_ass # get_stk in *)
-        let estate = add_infer_pure_to_estate inf_p estate in
+        let estate = x_add add_infer_pure_to_estate inf_p estate in
         let () = y_tinfo_pp "to add univ inst" in
         let () = y_tinfo_hp (add_str "inf_pure" (pr_list !CP.print_formula)) inf_p in
         let () = y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in

@@ -11,6 +11,8 @@ module SProt  = S.IProtocol
 module SBProt = S.IProtocol_base
 module SIOrd = S.IOrders
 module SCOrd = S.COrders
+module CF = Cformula
+module CP = Cpure
 
 type role = SIOrd.role
 type chan = SIOrd.chan
@@ -817,5 +819,83 @@ let insert_orders view prot =
 let insert_orders view prot =
   let pr = SProt.string_of_session in
   Debug.no_1 "OS.insert_orders" pr pr (insert_orders view) prot
-  
 
+let is_hb_rel str = String.compare str (map_opt_def "" (fun x -> x) !S.shb_rel_id) == 0 
+let is_cb_rel str = String.compare str (map_opt_def "" (fun x -> x) !S.scb_rel_id) == 0
+                    
+let infer_orders estate guard =
+  let inf_vars = estate.CF.es_infer_vars in
+  let rec get_order_rel_from_pure_formula mix_formula =
+    let pure = Mcpure.pure_of_mix mix_formula in
+    match pure with
+    | CP.AndList bf ->
+      let chr  = CP.Label_Pure.filter_label (CP.LO.singleton Globals.chr_label) bf in
+      let chr  = List.fold_left (fun a (_,f) -> CP.mkAnd a f no_pos) (CP.mkTrue no_pos) bf in
+      let rec helper chr_formula =
+        match chr_formula with
+        | CP.BForm ((p_form,_),_) ->
+          begin
+            match p_form with
+            | CP.RelForm (sv,exp,_) ->
+              if is_hb_rel (CP.name_of_spec_var sv) then
+                let vars = List.map CP.get_var exp in
+                let edge = S.DAG_cvar.mk_edge (List.nth vars 0) S.DAG_cvar.HB (List.nth vars 1) in
+                [edge]
+              else if is_cb_rel (CP.name_of_spec_var sv) then
+                let vars = List.map CP.get_var exp in
+                let edge = S.DAG_cvar.mk_edge (List.nth vars 0) S.DAG_cvar.CB (List.nth vars 1) in
+                [edge]
+              else []
+            | _ -> failwith x_tbi
+          end
+        | CP.And (f1,f2,_) -> (helper f1) @ (helper f2)
+        | _ -> failwith x_tbi
+      in
+      let assrt = helper chr in
+      (* let assrt = List.flatten assrt in *)
+      assrt
+    |_ -> failwith x_tbi
+  in
+  let rec get_order_rel_from_formula formula =
+    match formula with
+    | CF.Base fb -> get_order_rel_from_pure_formula fb.formula_base_pure
+    | _ -> failwith x_tbi
+  in
+  let edges = get_order_rel_from_formula estate.CF.es_formula in
+  let tbl = S.DAG_cvar.connect_edge_list (S.DAG_cvar.create ()) edges in
+  let tbl = S.DAG_cvar.add_vertex_list tbl inf_vars in
+  let guards = get_order_rel_from_pure_formula guard in
+  let infer_hb guard_hb =
+    let tail = S.DAG_cvar.get_tail guard_hb in
+    let succ = S.DAG_cvar.get_all_vertex_successors tbl tail in
+    let succ = S.DAG_cvar.Vertex.union succ (S.DAG_cvar.Vertex.mk_singleton tail) in
+    let head = S.DAG_cvar.get_head guard_hb in
+    let pred = S.DAG_cvar.get_all_vertex_predecessors tbl head in
+    let pred = S.DAG_cvar.Vertex.union pred (S.DAG_cvar.Vertex.mk_singleton head) in
+    let intersect = S.DAG_cvar.Vertex.intersect succ pred in
+    let ()  = y_binfo_hp (add_str "succ" S.DAG_cvar.Vertex.string_of_list) succ in
+    let ()  = y_binfo_hp (add_str "pred" S.DAG_cvar.Vertex.string_of_list) pred in
+    let ()  = y_binfo_hp (add_str "intersect" S.DAG_cvar.Vertex.string_of_list) intersect in
+
+    if not(S.DAG_cvar.Vertex.is_empty intersect) then []
+    else
+      let succ_inf = S.DAG_cvar.Vertex.intersect succ inf_vars in
+      let pred_inf = S.DAG_cvar.Vertex.intersect pred inf_vars in
+      (* succ_inf X pred_inf *)
+      let inferred_hbs =  List.fold_left (fun acc head ->
+          List.fold_left (fun acc tail -> (S.DAG_cvar.mk_edge tail S.DAG_cvar.HB head)::acc) acc succ_inf
+        ) [] pred_inf in      
+      inferred_hbs
+  in
+  let inferred_hbs  = List.fold_left (fun acc hb -> (infer_hb hb)@acc) [] guards in
+  let ()  = y_binfo_hp (add_str "DAG" S.DAG_cvar.string_of) tbl in
+  let ()  = y_binfo_hp (add_str "edges" S.DAG_cvar.string_of_edge_list) edges in
+  let ()  = y_binfo_hp (add_str "guards" S.DAG_cvar.string_of_edge_list) guards in
+  let ()  = y_binfo_hp (add_str "inferred" S.DAG_cvar.string_of_edge_list) inferred_hbs in
+
+  ()
+
+
+
+
+  
