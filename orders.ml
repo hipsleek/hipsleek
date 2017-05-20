@@ -219,7 +219,7 @@ end;;
 
  
 (* ==================== VERTEX =========================== *)
-module type VERTEX_ELEM_TYPE =
+module type ELEM_TYPE =
   (* functor (Param : VAR_TYPE) -> *)
 sig
   type t 
@@ -253,8 +253,8 @@ struct
   let contains lst e = List.exists (eq e) lst 
 end;;
 
-module type VERTEX_TYPE =
- functor (Elem: VERTEX_ELEM_TYPE) ->
+module type LIST_TYPE =
+ functor (Elem: ELEM_TYPE) ->
 sig
   type t = Elem.t
 
@@ -270,8 +270,9 @@ sig
   val mk_singleton: t   -> t list
 end;;
 
-module Vertex  : VERTEX_TYPE =
-  functor (Elem: VERTEX_ELEM_TYPE) ->
+
+module DList  : LIST_TYPE =
+  functor (Elem: ELEM_TYPE) ->
 struct
   type t = Elem.t
 
@@ -290,52 +291,77 @@ struct
   let is_empty  lst   = List.length lst == 0
   let mk_singleton el = [el]
 end;;
- 
-(* ====================  DAG  =========================== *)
-module Make_DAG (Elem: VERTEX_ELEM_TYPE) (* : DAG_TYPE  *)=
+
+(* ====================  EDGE  =========================== *)
+module Edge (Vertex: LIST_TYPE) (Elem: ELEM_TYPE) =
 struct
   module Vertex = Vertex(Elem)
-  module Key    = Vertex
-  (* vertex == Key.t == Orders.event *)
-  type vertex     = Vertex.t
-  type key        = vertex
-  type arrow_kind = HB | CB | Backward
-  type elem       = {arrow: arrow_kind ; vertex: vertex}
-  type elist      = elem list
-  type data       = {predecessors: elist; successors: elist}
-  type edge       = {tail: vertex; kind: arrow_kind; head: vertex}
+  type t = {tail: Vertex.t; kind: arrow_kind; head: Vertex.t}
+  and arrow_kind = HB | CB | Backward
 
-  module M = Map.Make(Key)
-  type t   = data M.t
-
-  (* PRINTERS *)
   let string_of_arrow_kind arrow_kind =
     match arrow_kind with
     | HB -> "-->"
     | CB -> "->>"
     | Backward -> "<-"
+  let string_of e =  (Vertex.string_of e.tail) ^ (string_of_arrow_kind e.kind) ^ (Vertex.string_of e.head)
+  let mk_edge t a h    = {tail = t; kind = a; head = h}
+  let eq_arrow (a1: arrow_kind) (a2: arrow_kind) =
+    match a1,a2 with
+    | HB,HB | CB,CB | Backward,Backward -> true | _,_ -> false
+  let eq e1 e2 = (Vertex.eq e1.tail e2.tail) && (Vertex.eq e1.head e2.head) && (eq_arrow e1.kind e2.kind)
+  let compare e1 e2 = failwith x_tbi
+
+  let get_head edge = edge.head
+  let get_tail edge = edge.tail
+  let get_kind edge = edge.kind
+
+end;;
+
+(* ====================  DAG  =========================== *)
+module Make_DAG (Elem: ELEM_TYPE) (* : DAG_TYPE  *)=
+struct
+  module Vertex    = DList(Elem)
+  module Key       = Vertex
+  module Edge      = Edge(DList)(Elem)
+  module Edge_list = DList(Edge)
+  (* vertex == Key.t == Orders.event *)
+  type vertex     = Vertex.t
+  type key        = vertex
+  type arrow_kind = Edge.arrow_kind (* HB | CB | Backward *)
+  type elem       = {arrow: arrow_kind ; vertex: vertex}
+  type elist      = elem list
+  type data       = {predecessors: elist; successors: elist}
+  type edge       = Edge.t (* {tail: vertex; kind: arrow_kind; head: vertex} *)
+
+  module M = Map.Make(Key)
+  type t   = data M.t
+
+  (* PRINTERS *)
+  let string_of_arrow_kind arrow_kind = Edge.string_of_arrow_kind arrow_kind
+    (* match arrow_kind with *)
+    (* | HB -> "-->" *)
+    (* | CB -> "->>" *)
+    (* | Backward -> "<-" *)
   let string_of_elem (e:elem): string = (string_of_arrow_kind e.arrow) ^ (Vertex.string_of e.vertex)
   let string_of_elist  = pr_list string_of_elem
   let string_of_data d = pr_pair (add_str "Predecessors" string_of_elist)
       (add_str "Successors" string_of_elist) (d.predecessors,d.successors)
-  let string_of_edge e = (Vertex.string_of e.tail) ^ (string_of_arrow_kind e.kind) ^ (Vertex.string_of e.head)
-  let string_of_edge_list = pr_list string_of_edge
+  (* let string_of_edge e = (Vertex.string_of e.tail) ^ (string_of_arrow_kind e.kind) ^ (Vertex.string_of e.head) *)
+  (* let string_of_edge_list = pr_list string_of_edge *)
   let string_of tbl    = M.fold (fun key data acc ->
       (Key.string_of key) ^ ":" ^ (string_of_data data) ^ "\n" ^ acc ) tbl ""
 
   (* EQUALITIES *)
-  let eq_arrow (a1: arrow_kind) (a2: arrow_kind) =
-    match a1,a2 with
-    | HB,HB | CB,CB | Backward,Backward -> true | _,_ -> false
   let eq_elem (e1:elem) (e2:elem) =
-    (eq_arrow e1.arrow e2.arrow) && (Vertex.eq e1.vertex e2.vertex)
+    (Edge.eq_arrow e1.arrow e2.arrow) && (Vertex.eq e1.vertex e2.vertex)
 
     (* MAKERS *)
   let create ()        = M.empty
   let mk_empty_data () = {successors = []; predecessors = [] }
   let mk_vertex e      = e
   let mk_elem a v      = {arrow = a; vertex = v}
-  let mk_edge t a h    = {tail = t; kind = a; head = h}
+  (* let mk_edge t a h    = {tail = t; kind = a; head = h} *)
 
   
   (* QUERIES *)
@@ -350,8 +376,8 @@ struct
   let exists_predecessor tbl key elem =
       let data = find tbl key in
       elist_mem data.predecessors elem
-  let is_weak arrow   = match arrow with |CB -> true | _ -> false
-  let is_strong arrow = match arrow with |HB -> true | _ -> false
+  let is_weak arrow   = match arrow with |Edge.CB -> true | _ -> false
+  let is_strong arrow = match arrow with |Edge.HB -> true | _ -> false
 
   (* MISC *)
   let filter tbl (fnc: key->data->bool) = M.filter fnc tbl
@@ -365,9 +391,6 @@ struct
 
 
   (* EDGE OPERATIONS *)
-  let get_head edge = edge.head
-  let get_tail edge = edge.tail
-  
   let get_weak (elist:elist) :elist   = filter_elist (fun el -> is_weak el.arrow) elist
   let get_strong (elist:elist) :elist = filter_elist (fun el -> is_strong el.arrow) elist
   let get_successors tbl vertex   = let data = find_safe tbl vertex in data.successors
@@ -422,23 +445,23 @@ struct
     List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
 
   let connect_edge_list tbl xs =
-    let xs = List.map (fun edge -> (edge.kind,(edge.tail,edge.head))) xs in
+    let xs = List.map (fun edge -> (Edge.get_kind edge,(Edge.get_tail edge,Edge.get_head edge))) xs in
     connect_list tbl xs
 
   (* removes an edge from tbl, updating its head predecessors, and its tail successors *)
   let remove_edge tbl (edge:edge) =
-    let head_pred = get_predecessors tbl edge.head in
-    let head_pred = filter_elist (fun pred -> not (eq_elem (mk_elem Backward edge.tail) pred)) head_pred in
-    let tbl = set_predecessors_tbl tbl edge.head head_pred in
-    let tail_succ = get_successors tbl edge.tail in
-    let tail_succ = filter_elist (fun succ -> not (eq_elem (mk_elem edge.kind edge.head) succ)) tail_succ in
-    let tbl = set_successors_tbl tbl edge.tail tail_succ in
+    let head_pred = get_predecessors tbl (Edge.get_head edge) in
+    let head_pred = filter_elist (fun pred -> not (eq_elem (mk_elem Edge.Backward (Edge.get_tail edge)) pred)) head_pred in
+    let tbl = set_predecessors_tbl tbl (Edge.get_head edge) head_pred in
+    let tail_succ = get_successors tbl (Edge.get_tail edge) in
+    let tail_succ = filter_elist (fun succ -> not (eq_elem (mk_elem (Edge.get_kind edge) (Edge.get_head edge)) succ)) tail_succ in
+    let tbl = set_successors_tbl tbl (Edge.get_tail edge) tail_succ in
     tbl
 
   let remove_edge_list tbl (edges: edge list) =
     List.fold_left (fun acc_tbl edge -> remove_edge acc_tbl edge) tbl edges
 
-  let add_edge tbl (edge:edge) = connect tbl edge.kind edge.tail edge.head
+  let add_edge tbl (edge:edge) = connect tbl (Edge.get_kind edge) (Edge.get_tail edge) (Edge.get_head edge)
 
   let add_edge_list tbl (edges: edge list) =
     List.fold_left (fun acc_tbl edge -> add_edge acc_tbl edge) tbl edges
@@ -451,9 +474,9 @@ struct
     let handle_weak rem add key elem =
       if (Vertex.contains special_elem elem.vertex) then rem,add
       else
-        let rem = (mk_edge key elem.arrow elem.vertex)::rem in
+        let rem = (Edge.mk_edge key elem.arrow elem.vertex)::rem in
         let strong_successors = (get_strong_successors tbl elem.vertex) in
-        let to_add = map_elist (fun el -> mk_edge key el.arrow el.vertex) strong_successors in
+        let to_add = map_elist (fun el -> Edge.mk_edge key el.arrow el.vertex) strong_successors in
         let add = to_add@add in
         rem,add in
     let check_for_weak_edge rem add key elem =
@@ -465,16 +488,36 @@ struct
     let tbl = remove_edge_list tbl rem in
     let tbl = add_edge_list tbl add in
     tbl
-      
-  (* ADVANCED QUERIES *)
-    (* let has_path tbl v1 v2 = *)
-    (* try *)
-    (*   let rec helper key = *)
-    (*     let data = find tbl key in *)
-    (*     if (data_mem data (mk_elem HB v2)) then true *)
-    (*     else List.exists (fun el -> helper el.vertex) data in *)
-    (*   helper v1 *)
-    (* with Not_found -> false *)
 
-  
+  let infer_missing_hb inf_vertexes tbl guard_hb =
+    let tail = Edge.get_tail guard_hb in
+    let succ = get_all_vertex_successors tbl tail in
+    let succ = Vertex.union succ (Vertex.mk_singleton tail) in
+    let head = Edge.get_head guard_hb in
+    let pred = get_all_vertex_predecessors tbl head in
+    let pred = Vertex.union pred (Vertex.mk_singleton head) in
+    let intersect = Vertex.intersect succ pred in
+    if not(Vertex.is_empty intersect) then []
+    else
+      let succ_inf = Vertex.intersect succ inf_vertexes in
+      let pred_inf = Vertex.intersect pred inf_vertexes in
+      (* succ_inf X pred_inf *)
+      let inferred_hbs =  List.fold_left (fun acc head ->
+          List.fold_left (fun acc tail -> (Edge.mk_edge tail Edge.HB head)::acc) acc succ_inf
+        ) [] pred_inf in      
+      inferred_hbs
+
+  let create_dag_and_infer inf_vertexes assume guards_hb =
+    (* create dag with assume *)
+    let tbl = connect_edge_list (create ()) assume in
+    (* add the special vertexes to the dag if not already in *)
+    let tbl = add_vertex_list tbl inf_vertexes in
+    (* infer missing edges such that the guards hold *)
+    let inf_hbs = List.fold_left (fun acc hb -> (infer_missing_hb inf_vertexes tbl hb)@acc) [] guards_hb in
+    let ()  = y_binfo_hp (add_str "DAG" string_of) tbl in
+    let ()  = y_binfo_hp (add_str "edges" Edge_list.string_of_list) assume in
+    let ()  = y_binfo_hp (add_str "guards" Edge_list.string_of_list) guards_hb in
+    let ()  = y_binfo_hp (add_str "inferred" Edge_list.string_of_list) inf_hbs in
+    inf_hbs
+
 end;;

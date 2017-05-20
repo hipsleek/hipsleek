@@ -662,8 +662,8 @@ let test_dag assume guard def_suids =
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_event.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_event.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_event.Edge.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_event.Edge.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 
@@ -697,8 +697,8 @@ let test_dag3 assume guard def_suids =
   let lst = List.flatten (ConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_ivar.HB, (hbe.SIOrd.hbe_event1.role,hbe.SIOrd.hbe_event2.role))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_ivar.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
+      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_ivar.Edge.HB, (hbe.SIOrd.hbe_event1.role,hbe.SIOrd.hbe_event2.role))]
+      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_ivar.Edge.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in 
@@ -711,7 +711,7 @@ let test_dag3 assume guard def_suids =
   let keys = S.DAG_ivar.get_keys tbl in
   let () = List.iter (fun ev -> 
     let all_pred = S.DAG_ivar.get_all_predecessors tbl ev in
-    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.IVert.string_of S.DAG_ivar.string_of_elist)) (ev, all_pred)) keys in
+    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.DAG_ivar.Vertex.string_of S.DAG_ivar.string_of_elist)) (ev, all_pred)) keys in
 
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)
@@ -738,8 +738,8 @@ let test_dag4 assume guard inf_vars =
   let lst = List.flatten (CConstrMap.get_data assume) in
   let lst = List.map (fun assrt ->
       match assrt with
-      | SCOrd.Order (SCOrd.HBe hbe) -> [(S.DAG_cvar.HB, (hbe.SCOrd.hbe_event1.role,hbe.SCOrd.hbe_event2.role))]
-      | SCOrd.Order (SCOrd.CBe cbe) -> [(S.DAG_cvar.CB, (cbe.SCOrd.cbe_event1.role,cbe.SCOrd.cbe_event2.role))]
+      | SCOrd.Order (SCOrd.HBe hbe) -> [(S.DAG_cvar.Edge.HB, (hbe.SCOrd.hbe_event1.role,hbe.SCOrd.hbe_event2.role))]
+      | SCOrd.Order (SCOrd.CBe cbe) -> [(S.DAG_cvar.Edge.CB, (cbe.SCOrd.cbe_event1.role,cbe.SCOrd.cbe_event2.role))]
       | _ -> []
     ) lst in
   let lst = List.flatten lst in
@@ -751,7 +751,7 @@ let test_dag4 assume guard inf_vars =
   let keys = S.DAG_cvar.get_keys tbl in
   let () = List.iter (fun ev ->
     let all_pred = S.DAG_cvar.get_all_predecessors tbl ev in
-    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.CVert.string_of S.DAG_cvar.string_of_elist)) (ev, all_pred)) keys in
+    y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.DAG_cvar.Vertex.string_of S.DAG_cvar.string_of_elist)) (ev, all_pred)) keys in
 
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)
@@ -820,9 +820,6 @@ let insert_orders view prot =
   let pr = SProt.string_of_session in
   Debug.no_1 "OS.insert_orders" pr pr (insert_orders view) prot
 
-let is_hb_rel str = String.compare str (map_opt_def "" (fun x -> x) !S.shb_rel_id) == 0 
-let is_cb_rel str = String.compare str (map_opt_def "" (fun x -> x) !S.scb_rel_id) == 0
-                    
 let infer_orders estate guard =
   let inf_vars = estate.CF.es_infer_vars in
   let rec get_order_rel_from_pure_formula mix_formula =
@@ -837,13 +834,15 @@ let infer_orders estate guard =
           begin
             match p_form with
             | CP.RelForm (sv,exp,_) ->
-              if is_hb_rel (CP.name_of_spec_var sv) then
+              if S.is_shb_rel (CP.name_of_spec_var sv) then
                 let vars = List.map CP.get_var exp in
-                let edge = S.DAG_cvar.mk_edge (List.nth vars 0) S.DAG_cvar.HB (List.nth vars 1) in
+                (* assumes HB rel has 2 arguments *)
+                let edge = S.DAG_cvar.Edge.mk_edge (List.nth vars 0) S.DAG_cvar.Edge.HB (List.nth vars 1) in
                 [edge]
-              else if is_cb_rel (CP.name_of_spec_var sv) then
+              else if S.is_scb_rel (CP.name_of_spec_var sv) then
                 let vars = List.map CP.get_var exp in
-                let edge = S.DAG_cvar.mk_edge (List.nth vars 0) S.DAG_cvar.CB (List.nth vars 1) in
+                (* assumes CB rel has 2 arguments *)
+                let edge = S.DAG_cvar.Edge.mk_edge (List.nth vars 0) S.DAG_cvar.Edge.CB (List.nth vars 1) in
                 [edge]
               else []
             | _ -> failwith x_tbi
@@ -862,40 +861,14 @@ let infer_orders estate guard =
     | _ -> failwith x_tbi
   in
   let edges = get_order_rel_from_formula estate.CF.es_formula in
-  let tbl = S.DAG_cvar.connect_edge_list (S.DAG_cvar.create ()) edges in
-  let tbl = S.DAG_cvar.add_vertex_list tbl inf_vars in
   let guards = get_order_rel_from_pure_formula guard in
-  let infer_hb guard_hb =
-    let tail = S.DAG_cvar.get_tail guard_hb in
-    let succ = S.DAG_cvar.get_all_vertex_successors tbl tail in
-    let succ = S.DAG_cvar.Vertex.union succ (S.DAG_cvar.Vertex.mk_singleton tail) in
-    let head = S.DAG_cvar.get_head guard_hb in
-    let pred = S.DAG_cvar.get_all_vertex_predecessors tbl head in
-    let pred = S.DAG_cvar.Vertex.union pred (S.DAG_cvar.Vertex.mk_singleton head) in
-    let intersect = S.DAG_cvar.Vertex.intersect succ pred in
-    let ()  = y_binfo_hp (add_str "succ" S.DAG_cvar.Vertex.string_of_list) succ in
-    let ()  = y_binfo_hp (add_str "pred" S.DAG_cvar.Vertex.string_of_list) pred in
-    let ()  = y_binfo_hp (add_str "intersect" S.DAG_cvar.Vertex.string_of_list) intersect in
-
-    if not(S.DAG_cvar.Vertex.is_empty intersect) then []
-    else
-      let succ_inf = S.DAG_cvar.Vertex.intersect succ inf_vars in
-      let pred_inf = S.DAG_cvar.Vertex.intersect pred inf_vars in
-      (* succ_inf X pred_inf *)
-      let inferred_hbs =  List.fold_left (fun acc head ->
-          List.fold_left (fun acc tail -> (S.DAG_cvar.mk_edge tail S.DAG_cvar.HB head)::acc) acc succ_inf
-        ) [] pred_inf in      
-      inferred_hbs
-  in
-  let inferred_hbs  = List.fold_left (fun acc hb -> (infer_hb hb)@acc) [] guards in
-  let ()  = y_binfo_hp (add_str "DAG" S.DAG_cvar.string_of) tbl in
-  let ()  = y_binfo_hp (add_str "edges" S.DAG_cvar.string_of_edge_list) edges in
-  let ()  = y_binfo_hp (add_str "guards" S.DAG_cvar.string_of_edge_list) guards in
-  let ()  = y_binfo_hp (add_str "inferred" S.DAG_cvar.string_of_edge_list) inferred_hbs in
-
+  (* let tbl = S.DAG_cvar.connect_edge_list (S.DAG_cvar.create ()) edges in *)
+  (* let tbl = S.DAG_cvar.add_vertex_list tbl inf_vars in *)
+  let inferred_hbs = S.DAG_cvar.create_dag_and_infer inf_vars edges guards in
+    (* List.fold_left (fun acc hb -> (S.DAG_cvar.infer_missing_hb inf_vars tbl hb)@acc) [] guards in *)
   ()
 
 
 
 
-  
+

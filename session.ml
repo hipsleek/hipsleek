@@ -166,6 +166,10 @@ let rec string_of_param_list l = match l with
   | h::[]     -> h
   | h::t      -> h ^ ", " ^ (string_of_param_list t)
 
+let is_shb_rel str = String.compare str (map_opt_def "" (fun x -> x) !shb_rel_id) == 0 
+let is_scb_rel str = String.compare str (map_opt_def "" (fun x -> x) !scb_rel_id) == 0
+
+
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig
@@ -3091,6 +3095,3 @@ module DAG_ivar    = Make_DAG(IVert_elem) ;;
 module DAG_cvar    = Make_DAG(CVert_elem) ;;
 module DAG_event  = Make_DAG(EVert_elem) ;;
 
-module EVert  = DAG_event.Vertex ;;
-module IVert  = DAG_ivar.Vertex ;;
-module CVert  = DAG_cvar.Vertex ;;
