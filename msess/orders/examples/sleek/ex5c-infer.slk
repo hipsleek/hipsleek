@@ -6,3 +6,45 @@ infer [B1,B2]  emp & ["chr": hb(A2,B2)]
         |- emp & ["chr": hb(A2,B1)].
 expect Valid.
 print residue.
+
+//2
+infer [B1]  emp & ["chr": hb(A2,B2)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Fail.
+print residue.
+
+//3
+infer [B1,B2]  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.
+
+//4
+infer [B2]  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Fail.
+print residue.
+
+//5
+infer [B1,B2]  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": cb(A2,B1)].
+expect Fail.
+print residue.
+
+//6
+infer [B1,B2]  emp & ["chr": cb(A2,B2) & hb(B2,B1)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.
+
+//7
+infer [B1,B2]  emp & ["chr": cb(A2,B2) & hb(B2,B3)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.
+
+//8
+infer [B1,B3]  emp & ["chr": cb(A2,B2) & hb(B2,B3)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.

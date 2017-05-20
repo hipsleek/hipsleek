@@ -2231,13 +2231,16 @@ let om_simplify f =
 (* let om_simplify f= *)
 (*   Trans_arr.split_and_combine om_simplify (x_add_1 Trans_arr.can_be_simplify) f *)
 (* ;; *)
-
+    
 let om_simplify f =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "simplify_omega" pr pr om_simplify f
 
 let simplify_omega (f:CP.formula): CP.formula =
-  if is_bag_constraint f then f
+  (* Andreea TODO: below avoids simplification for AndList.
+     Should extend this to also work for labels
+  *)
+  if is_bag_constraint f || not(CP.no_andl f) then f
   else
     let neqs = CP.get_neqs_ptrs_form f in
     let simp_f = om_simplify f in
@@ -2577,6 +2580,9 @@ let simplify_raw_w_rel (f: CP.formula) =
       ) disjs in
     List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else simplify f
+
+let simplify_raw f =
+  if CP.no_andl f then simplify_raw f else f
 
 let simplify_raw f =
   let pr = !CP.print_formula in
