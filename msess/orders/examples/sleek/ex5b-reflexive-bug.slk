@@ -1,0 +1,12 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+relation Q(int a,int b).
+relation Z(int a,int b).
+
+//4
+checkentail  emp & ["chr": hb(A,A) ]
+        |- emp & ["chr": hb(A,A)].
+expect Valid.
+print residue.
+

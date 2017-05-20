@@ -11941,9 +11941,10 @@ let add_infer_pure_to_estate cp es =
 
 let add_infer_pure_to_estate cp es =
   let pr = pr_list !CP.print_formula in
-  let pr2 es = pr es.es_infer_pure in
-  Debug.no_1 "add_infer_pure_to_estate" pr pr2 
-    (fun _ -> add_infer_pure_to_estate cp es) cp
+  (* let pr2 es = pr es.es_infer_pure in *)
+  let pr2 = !print_entail_state in
+  Debug.no_2 "add_infer_pure_to_estate" pr pr2 pr2 
+    (fun _ _ -> add_infer_pure_to_estate cp es) cp es
 
 
 let add_infer_rel_to_ctx cp ctx =

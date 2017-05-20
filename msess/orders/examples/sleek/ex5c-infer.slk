@@ -1,0 +1,8 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+//1
+infer [B1,B2]  emp & ["chr": hb(A2,B2)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.

@@ -316,6 +316,11 @@ struct
   let get_tail edge = edge.tail
   let get_kind edge = edge.kind
 
+  let is_hb arrow =  match arrow with HB -> true | _ -> false
+  let is_cb arrow =  match arrow with CB -> true | _ -> false
+  let is_hb_edge edge =  is_hb (get_kind edge)
+  let is_cb_edge edge =  is_cb (get_kind edge)
+
 end;;
 
 (* ====================  DAG  =========================== *)
@@ -512,6 +517,7 @@ struct
     let tbl = connect_edge_list (create ()) assume in
     (* add the special vertexes to the dag if not already in *)
     let tbl = add_vertex_list tbl inf_vertexes in
+    let tbl = norm_weak tbl inf_vertexes in
     (* infer missing edges such that the guards hold *)
     let inf_hbs = List.fold_left (fun acc hb -> (infer_missing_hb inf_vertexes tbl hb)@acc) [] guards_hb in
     let ()  = y_binfo_hp (add_str "DAG" string_of) tbl in

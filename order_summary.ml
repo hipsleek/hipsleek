@@ -822,7 +822,8 @@ let insert_orders view prot =
 
 let infer_orders estate guard =
   let inf_vars = estate.CF.es_infer_vars in
-  let rec get_order_rel_from_pure_formula mix_formula =
+  (* extracts orderings from mix formula  *)
+  let rec get_order_from_pure_formula mix_formula =
     let pure = Mcpure.pure_of_mix mix_formula in
     match pure with
     | CP.AndList bf ->
@@ -853,22 +854,34 @@ let infer_orders estate guard =
       let assrt = helper chr in
       (* let assrt = List.flatten assrt in *)
       assrt
-    |_ -> failwith x_tbi
+    |_ -> []
   in
-  let rec get_order_rel_from_formula formula =
+  let rec get_order_from_formula formula =
     match formula with
-    | CF.Base fb -> get_order_rel_from_pure_formula fb.formula_base_pure
+    | CF.Base fb -> get_order_from_pure_formula fb.formula_base_pure
     | _ -> failwith x_tbi
   in
-  let edges = get_order_rel_from_formula estate.CF.es_formula in
-  let guards = get_order_rel_from_pure_formula guard in
-  (* let tbl = S.DAG_cvar.connect_edge_list (S.DAG_cvar.create ()) edges in *)
-  (* let tbl = S.DAG_cvar.add_vertex_list tbl inf_vars in *)
+  let edges = get_order_from_formula estate.CF.es_formula in
+  let guards = get_order_from_pure_formula guard in
   let inferred_hbs = S.DAG_cvar.create_dag_and_infer inf_vars edges guards in
-    (* List.fold_left (fun acc hb -> (S.DAG_cvar.infer_missing_hb inf_vars tbl hb)@acc) [] guards in *)
-  ()
+  let edge_to_rel edge =
+    let arg1 = S.DAG_cvar.Edge.get_tail edge in
+    let arg2 = S.DAG_cvar.Edge.get_head edge in
+    (* redundant edge kind check ? since we can only infer hb rels*)
+    if (S.DAG_cvar.Edge.is_hb_edge edge) then
+      match !S.shb_rel_id with
+      | Some id ->
+        let rel = CP.mkRel_sv id in
+        let rel = CP.mkRel rel (List.map (fun x -> CP.mkVar x no_pos) [arg1;arg2]) no_pos in [rel]
+      | None -> []
+    else []
+  in List.flatten (List.map edge_to_rel inferred_hbs)
 
-
+let infer_orders estate guard =
+  let pr1 = !CF.print_entail_state in
+  let pr2 = !Mcpure.print_mix_formula in
+  let prout = pr_list !CP.print_formula in
+  Debug.no_2 "OS.infer_orders" pr1 pr2 prout infer_orders estate guard
 
 
 
