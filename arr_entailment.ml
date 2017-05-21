@@ -11,7 +11,13 @@ type asegPred =
   
 (* Not sure whether this is necessary *)
 let mkAsegNE f t = AsegNE (f,t);;
-let mkAseg f t = Aseg (f,t);;    
+let mkAseg f t = Aseg (f,t);;
+let aseg_to_asegne aseg =
+  match aseg with
+  | Aseg (f,t) -> AsegNE (f, decOne t)
+  | _ -> failwith "aseg_to_asegne: Invalid input"
+;;
+  
 
 (* Formula *)
 type arrF =
@@ -36,7 +42,7 @@ let str_asegPred aseg =
 ;;
   
 let str_arrF (e,p,h) =
-  (str_list !str_pformula p)^":"^(str_list str_asegPred h)
+  (* (str_list !str_pformula p)^":"^ *)(str_list str_asegPred h)
 ;;
 
 let str_disj_arrF flst =
@@ -83,9 +89,10 @@ let generic_get_permutation lst =
        (k::lst)::(List.map (fun item -> h::item) (insert k tail))
     | [] -> [[k]]
   in
-  let rec helper lst =    
+  let rec helper lst =
+    let () = print_endline ("call helper here " ^ (str_list str_asegPred lst)) in
     match lst with
-    | [] -> []
+    | [] -> [[]]
     | h::tail -> List.flatten (List.map (insert h) (helper tail))
   in
   let r = helper lst in
@@ -98,7 +105,7 @@ let get_permutation arrPredlst =
   let rec helper head lst flst =
     match lst with
     | (Aseg (t,m))::tail ->
-       (helper head tail ((mkEq t m)::flst))@(helper ((mkAsegNE t m)::head) tail ((mkLt t m)::flst))
+       (helper head tail ((mkEq t m)::flst))@(helper ((aseg_to_asegne (Aseg (t,m)))::head) tail ((mkLt t m)::flst))
     | h::tail -> helper (h::lst) tail flst
     | [] ->
        List.map (fun item -> ((get_sorted_puref item)::flst,item)) (generic_get_permutation head)
@@ -167,7 +174,7 @@ let array_entailment lhs rhs =
       | h::tail ->
          ( match h with
            | Aseg (f,t) ->
-              (mkArrF rhs_e ((mkLt f t)::rhs_p) ((mkAsegNE f t)::tail))::(helper_Aseg_to_AsegNE (rhs_e,(mkEq f t)::rhs_p, tail))
+              (mkArrF rhs_e ((mkLt f t)::rhs_p) ((aseg_to_asegne h)::tail))::(helper_Aseg_to_AsegNE (rhs_e,(mkEq f t)::rhs_p, tail))
            | AsegNE _ ->
               [(rhs_e,rhs_p, rhs_h)]
            | Emp -> helper_Aseg_to_AsegNE (rhs_e,rhs_p,tail))
@@ -226,7 +233,7 @@ let array_entailment lhs rhs =
                if is_same_exp m mj
                then (e,p,tail)
                else
-                 (e,p,[mkAseg mj m]@tail)
+                 (e,p,[mkAseg (incOne mj) m]@tail)
             | _ -> failwith "split_rhs: Invalid input")
           rhs
       in
@@ -236,8 +243,8 @@ let array_entailment lhs rhs =
            ( match lhs_h, rhs_h with
              | (AsegNE (t,m))::lhtail,(AsegNE (ti,mi))::rhtail ->
                 (* let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in *)
-                let newlhs = mkArrF lhs_e ((mkMin_raw mi mlst)::lhs_p) ([mkAseg mi m]@lhtail) in
-                let newrhs = split_rhs mi (head@tail) in
+                let newlhs = mkArrF lhs_e ((mkMin_raw mi mlst)::lhs_p) ([mkAseg (incOne mi) m]@lhtail) in
+                let newrhs = split_rhs mi (head@tail1) in
                 let newf = helper newlhs newrhs indent in
                 visit (h::head) tail1 (newf::flst)
              | _ -> failwith "visit: Invalid input")
@@ -260,14 +267,14 @@ let array_entailment lhs rhs =
            match h with
            | Emp -> print_and_return (helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)) indent
            | Aseg (f,t) ->
-              (* if is_same_exp f t *)
-              (* then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1) *)
-              (* else *)
-              print_and_return
-                (mkAnd
-                   (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
-                   (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs (indent+1)))
-                indent
+              if is_same_exp f t
+              then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)
+              else
+                print_and_return
+                  (mkAnd
+                     (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
+                     (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((aseg_to_asegne h)::tail)) rhs (indent+1)))
+                  indent
            | AsegNE (t,m) ->
               let non_emp_rhs = remove_emp rhs in
               let norm_rhs = rhs_align t non_emp_rhs in
@@ -294,7 +301,7 @@ let array_entailment lhs rhs =
                        (fun (mlst,srhs) item ->
                          match item with
                          | (e,p,(AsegNE (ti,mi))::taili) ->
-                            (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
+                            (mi::mlst, (mkArrF e p ((mkAseg (incOne m) mi)::taili))::srhs)
                          | _ -> failwith "AsegNE cannot match")
                        ([],[]) norm_rhs
                    in

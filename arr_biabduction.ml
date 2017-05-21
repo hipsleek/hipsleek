@@ -170,6 +170,14 @@ let incOne e =
      Add (e,IConst (1,no_pos),no_pos)
 ;;
 
+let decOne e =
+  match e with
+  | IConst (c,p) -> IConst (c-1,p)
+  | _ ->
+     Subtract (e,IConst (1,no_pos),no_pos)
+;;
+
+  
 let isSat f=
   Tpdispatcher.tp_is_sat f "111"  
 ;;
