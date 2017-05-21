@@ -9125,7 +9125,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                     (None,None,[],[],false) res
               in
               (* ========= ANDREEA - testing orders infer ================ *)
-              let inf_orders = OS.infer_orders estate rhs_p in
+              let inf_orders = OS.infer_orders_estate estate rhs_p in
               let ip2 =
                 if (List.length inf_orders > 0) then                  
                   (* let () = stk_inf_pure # push_list_loc x_loc inf_orders in *)

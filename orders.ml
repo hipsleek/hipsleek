@@ -267,6 +267,7 @@ sig
   val union   :  t list -> t list -> t list
   val intersect: t list -> t list -> t list
   val is_empty : t list -> bool
+  val mk_empty : unit -> t list
   val mk_singleton: t   -> t list
 end;;
 
@@ -289,6 +290,7 @@ struct
   (* set intersection - no dupl *)
   let intersect l1 l2 = unique (List.filter (contains l2) l1)
   let is_empty  lst   = List.length lst == 0
+  let mk_empty () = []
   let mk_singleton el = [el]
 end;;
 
@@ -519,11 +521,11 @@ struct
     let tbl = add_vertex_list tbl inf_vertexes in
     let tbl = norm_weak tbl inf_vertexes in
     (* infer missing edges such that the guards hold *)
-    let inf_hbs = List.fold_left (fun acc hb -> (infer_missing_hb inf_vertexes tbl hb)@acc) [] guards_hb in
+    let inf_hbs = List.fold_left (fun acc hb -> [(hb,infer_missing_hb inf_vertexes tbl hb)]@acc) [] guards_hb in
     let ()  = y_binfo_hp (add_str "DAG" string_of) tbl in
-    let ()  = y_binfo_hp (add_str "edges" Edge_list.string_of_list) assume in
+    let ()  = y_ninfo_hp (add_str "edges" Edge_list.string_of_list) assume in
     let ()  = y_binfo_hp (add_str "guards" Edge_list.string_of_list) guards_hb in
-    let ()  = y_binfo_hp (add_str "inferred" Edge_list.string_of_list) inf_hbs in
+    let ()  = y_ninfo_hp (add_str "inferred" (pr_pair Edge.string_of Edge_list.string_of_list)) inf_hbs in
     inf_hbs
 
 end;;

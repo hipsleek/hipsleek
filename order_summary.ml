@@ -99,7 +99,11 @@ struct
   let contains (lst: t list) (ev:t)   = SIOrd.contains_event lst ev
       
   let remove_duplicates (lst: t list) = List.fold_left (fun acc ev ->
-      if contains acc ev then acc else ev::acc) [] lst 
+      if contains acc ev then acc else ev::acc) [] lst
+
+  let get_role (e:t) : role = e.role
+  let get_uid  (e:t) : suid = e.uid
+
 end;;
 
 module BTrans =
@@ -195,6 +199,24 @@ struct
   let mkSingleton (e:base) : t = [e]
   let add_elem (old_e:t) (new_e:t) :t  = old_e@new_e    
 end;;
+
+module Event_element =
+struct
+  include BEvent
+  type base = BEvent.t
+
+  let bot () = failwith x_tbi 
+  let is_bot x = failwith x_tbi
+  let mk_base (base: base) : t = failwith x_tbi
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+  let mkSingleton (e:base) : t = failwith x_tbi
+  let add_elem (old_e:t) (new_e:t) :t  = failwith x_tbi
+end;;
+
 
 
 (* ------------------------------------------------ *)
@@ -349,10 +371,11 @@ module COL = Orders_list(SCOrd)
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
 
-module RMap = SMap(IRole)(Events) ;;
-module CMap = SMap(IChan)(Trans) ;;
-module ConstrMap = SMap(IUID)(IOL) ;;
+module RMap       = SMap(IRole)(Events) ;;
+module CMap       = SMap(IChan)(Trans) ;;
+module ConstrMap  = SMap(IUID)(IOL) ;;
 module CConstrMap = SMap(CUID)(COL) ;;
+module VarEvent   = SMap(S.IVar)(Event_element) ;;
 
 (* ------------------------------------------------ *)
 (* ------------- summary related stuff ------------ *)
@@ -506,7 +529,7 @@ let merge_all_star (star1:summary) (star2:summary) : summary =
 (* Assume - normalizing transmission: S->R => (S) & (R) & (S <_CB R) *)
 (* Guard - normalizing HB of transmission: A->B <_HB B->C => (A <_HB B) & (B <_HB C) *)
 (* Everything else remains the same *)
-let mk_order_normalization_x list =
+let order_normalization_x list =
     let helper assrt = match assrt with
       | SIOrd.Transm t -> 
         let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
@@ -536,9 +559,9 @@ let mk_order_normalization_x list =
      let res = List.fold_left (fun acc assrt -> acc@(helper assrt)) [] list in
      res
 
-let mk_order_normalization list = 
+let order_normalization list = 
   let pr = pr_list SIOrd.string_of in 
-  Debug.no_1 "OS.mk_order_normalization" pr pr mk_order_normalization_x list
+  Debug.no_1 "OS.order_normalization" pr pr order_normalization_x list
 
 let mk_and_list lst = 
   List.fold_left (fun acc assrt -> SIOrd.mk_and acc assrt) SIOrd.Bot lst 
@@ -642,36 +665,107 @@ let mk_def_summary roles channs =
   let summary =  init_summary (rmap,cmap) (rmap,cmap) assumes guards in
   summary, (suids1 @ suids2)
 
-let test_dag assume guard def_suids =
+let cedge_to_rel edge =
+  let arg1 = S.DAG_cvar.Edge.get_tail edge in
+  let arg2 = S.DAG_cvar.Edge.get_head edge in
+  (* redundant edge kind check ? since we can only infer hb rels*)
+  if (S.DAG_cvar.Edge.is_hb_edge edge) then
+    match !S.shb_rel_id with
+    | Some id ->
+      let rel = CP.mkRel_sv id in
+      let rel = CP.mkRel rel (List.map (fun x -> CP.mkVar x no_pos) [arg1;arg2]) no_pos in [rel]
+    | None -> []
+  else []
+
+let iedge_to_rel edge =
+  let arg1 = S.DAG_ievent.Edge.get_tail edge in
+  let arg2 = S.DAG_ievent.Edge.get_head edge in
+  (* redundant edge kind check ? since we can only infer hb rels*)
+  (* let mk_fresh_var =  *)
+  if (S.DAG_ievent.Edge.is_hb_edge edge) then
+    match !S.shb_rel_id with
+    | Some id ->
+      let ids = List.map (fun ev -> (IRole.string_of (BEvent.get_role ev)) ^ (IUID.string_of (BEvent.get_uid ev))) [arg1;arg2] in
+      let rel = Ipure.RelForm (id, (List.map (fun x -> Ipure.Var ((S.IForm.mk_var x),no_pos)) ids), no_pos) in
+      let rel = Ipure.BForm ((rel,None) ,None) in
+      [rel]
+    | None -> []
+  else []
+
+
+let test_dag assume guard def_suids fnc_i2c =
   (* collect the events related to the precondition / default summary *)
-  let alldata1 = ConstrMap.get_data assume in
-  let alldata2 = ConstrMap.get_data guard  in
-  let alldata  = List.flatten (alldata1 @ alldata2) in
-  let pre_events = List.map (fun assrt ->
-      match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [hbe.SIOrd.hbe_event1;hbe.SIOrd.hbe_event2]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [cbe.SIOrd.cbe_event1;cbe.SIOrd.cbe_event2]
-      | _ -> []
-    ) alldata in
-  let pre_events = List.flatten pre_events in
-  let pre_events = List.filter (fun ev -> IUID.contains def_suids (SIOrd.get_suid ev) ) pre_events in
-  let pre_events = BEvent.remove_duplicates pre_events in
-  let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in
+  let helper map = 
+    let alldata1 = ConstrMap.get_data map in
+    (* let alldata2 = ConstrMap.get_data guard  in *)  
+    let alldata  = List.flatten (alldata1 (* @ alldata2 *)) in
+    let edges = List.map (fun assrt ->
+        match assrt with
+        | SIOrd.Order (SIOrd.HBe hbe) ->
+          [(S.DAG_ievent.Edge.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
+        | SIOrd.Order (SIOrd.CBe cbe) ->
+          [(S.DAG_ievent.Edge.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
+        | _ -> []
+      ) alldata in
+    let edges = List.flatten edges in
+    let edges = List.map (fun (k,(t,h)) -> S.DAG_ievent.Edge.mk_edge t k h) edges in
+    let edges = S.DAG_ievent.Edge_list.unique edges in
+    edges
+  in
+  let assume_edges = helper assume in
+  let guards_edges = helper guard in
+  let all_edges = assume_edges @ guards_edges in
+  let pre_vertexes = List.fold_left (fun acc edge ->
+      let helper acc vertex =
+        if (IUID.contains def_suids (SIOrd.get_suid vertex)) then vertex::acc
+        else acc in
+      let acc = helper acc (S.DAG_ievent.Edge.get_head edge) in
+      let acc = helper acc (S.DAG_ievent.Edge.get_tail edge) in
+      acc
+    ) (S.DAG_ievent.Vertex.mk_empty ()) all_edges in
+  let inf_hbs = S.DAG_ievent.create_dag_and_infer pre_vertexes assume_edges guards_edges in
+  (* for each pair ([inf], guard) check if at least one inf & assume -> guard *)
+  let assume = List.map iedge_to_rel assume_edges in
+  let assume = List.map fnc_i2c (List.flatten assume) in
+  let ante = CP.join_conjunctions assume in
+  let inf  = List.filter (fun (hb,inf) ->
+      let inf = List.map iedge_to_rel inf in
+      let inf = List.map fnc_i2c (List.flatten inf) in
+      let inf = CP.join_disjunctions inf in
+      let ante = CP.mkAnd ante inf no_pos in
+      let ante = CP.mkAndList [(CP.LO.singleton Globals.chr_label,ante)] in
+      let guard = iedge_to_rel hb in
+      let guard = List.map fnc_i2c guard in
+      let guard = CP.join_conjunctions guard in
+      let guard = CP.mkAndList [(CP.LO.singleton Globals.chr_label,guard)] in
+      !CP.tp_imply ante guard
+    ) inf_hbs in
+  let pr (hb,inf) = ((pr_list S.DAG_ievent.Edge.string_of) inf) ^ " || to prove || "^ (S.DAG_ievent.Edge.string_of hb) in
+  let () = y_binfo_hp (add_str "Inferred rel\n============\n" (pr_lst "\n" pr)) inf in
+  (* introduces a fresh var for each event *)
+  (* let events = BEvent.remove_duplicates events in *)
+  (* let events_map = List.fold_left (fun acc ev -> *)
+  (*     let str       = (IRole.string_of (BEvent.get_role ev)) ^ (IUID.string_of (BEvent.get_uid ev)) in *)
+  (*     let fresh_var = S.IForm.mk_var str in *)
+  (*     VarEvent.add_elem acc fresh_var ev) (VarEvent.mkEmpty ()) events in *)
+  (* let pre_events = List.filter (fun ev -> IUID.contains def_suids (SIOrd.get_suid ev) ) assume_events in *)
+  (* (\* let pre_events = BEvent.remove_duplicates pre_events in *\) *)
+  (* let () = y_binfo_hp (add_str "Pre Events: " (pr_list SIOrd.string_of_event)) pre_events in *)
 
-  (* construct the DAG of assumptions *)
-  let lst = List.flatten (ConstrMap.get_data assume) in
-  let lst = List.map (fun assrt ->
-      match assrt with
-      | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_event.Edge.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))]
-      | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_event.Edge.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))]
-      | _ -> []
-    ) lst in
-  let lst = List.flatten lst in 
-  let tbl = S.DAG_event.connect_list (S.DAG_event.create ()) lst in
-  let () = y_binfo_hp (add_str "DAG:" S.DAG_event.string_of) tbl in
-  let tbl = S.DAG_event.norm_weak tbl pre_events in
-  let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_event.string_of) tbl in
-
+  (* (\* construct the DAG of assumptions *\) *)
+  (* let lst = List.flatten (ConstrMap.get_data assume) in *)
+  (* let lst = List.map (fun assrt -> *)
+  (*     match assrt with *)
+  (*     | SIOrd.Order (SIOrd.HBe hbe) -> [(S.DAG_ievent.Edge.HB, (hbe.SIOrd.hbe_event1,hbe.SIOrd.hbe_event2))] *)
+  (*     | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_ievent.Edge.CB, (cbe.SIOrd.cbe_event1,cbe.SIOrd.cbe_event2))] *)
+  (*     | _ -> [] *)
+  (*   ) lst in *)
+  (* let lst = List.flatten lst in  *)
+  (* let tbl = S.DAG_ievent.connect_list (S.DAG_ievent.create ()) lst in *)
+  (* let () = y_binfo_hp (add_str "DAG:" S.DAG_ievent.string_of) tbl in *)
+  (* let tbl = S.DAG_ievent.norm_weak tbl pre_events in *)
+  (* let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_ievent.string_of) tbl in *)
+  (* let inf_hbs = S.DAG_ievent.infer_missing_hb pre_events tbl  *)
   (* generate all possible Qs, such that A & Q |- G *)
   (* assume the arrow of the guard is never from the def_suids related events*)
   (* let candidates = List.map (fun g -> ) guards in *)
@@ -758,7 +852,7 @@ let test_dag4 assume guard inf_vars =
   (* let candidates = List.map (fun g -> ) guards in *)
   ()
 
-let collect view prot =
+let collect view prot fnc_i2c =
   (* retrieves the  role params, and chan params*)
   let params = view.Iast.view_typed_vars in
   let roles, rest = List.partition (fun (t1,_) -> cmp_typ t1 role_typ) params in
@@ -772,20 +866,20 @@ let collect view prot =
   let assume = res.assumptions in
   let guard  = res.guards in
   (* normalize assumptions and guards *)
-  let assume = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) assume in
-  let guard  = ConstrMap.map_data (fun assrt ->  mk_order_normalization assrt) guard  in
-  let () = test_dag assume guard def_suids in
+  let assume = ConstrMap.map_data (fun assrt ->  order_normalization assrt) assume in
+  let guard  = ConstrMap.map_data (fun assrt ->  order_normalization assrt) guard  in
+  let () = test_dag assume guard def_suids fnc_i2c in
   (assume, guard)
 
-let collect view prot =
+let collect view prot fnc_i2c =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
-  Debug.no_1 "OS.collect" pr_none pr_out (collect view) prot
+  Debug.no_1 "OS.collect" pr_none pr_out (fun _ -> collect view prot fnc_i2c) prot
 
 
 (* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
-let insert_orders view prot =
-  let amap,gmap = collect view prot in
+let insert_orders view prot fnc_i2c =
+  let amap,gmap = collect view prot fnc_i2c in
   let insert sf = match sf with
     | SProt.SBase sb -> 
       begin 
@@ -794,7 +888,7 @@ let insert_orders view prot =
             let uid = SBProt.get_uid t in 
             let loc = SBProt.get_base_pos t in
             let assume = ConstrMap.find amap uid in
-            let guard = ConstrMap.find gmap uid in
+            let guard  = ConstrMap.find gmap uid in
             (* creates a sequence with order assumptions and guards *)
             let create_sequence orders name sess_pred_kind prot_session = match orders with
               | [] -> prot_session
@@ -816,12 +910,12 @@ let insert_orders view prot =
   let prot = x_add_1 SProt.trans_session_formula fnc prot in
   prot
 
-let insert_orders view prot =
+let insert_orders view prot fnc_i2c =
   let pr = SProt.string_of_session in
-  Debug.no_1 "OS.insert_orders" pr pr (insert_orders view) prot
+  Debug.no_1 "OS.insert_orders" pr pr (fun _ -> insert_orders view prot fnc_i2c) prot
 
-let infer_orders estate guard =
-  let inf_vars = estate.CF.es_infer_vars in
+let infer_orders_formula assume guard inf_vars =
+  (* let inf_vars = estate.CF.es_infer_vars in *)
   (* extracts orderings from mix formula  *)
   let rec get_order_from_pure_formula mix_formula =
     let pure = Mcpure.pure_of_mix mix_formula in
@@ -861,27 +955,20 @@ let infer_orders estate guard =
     | CF.Base fb -> get_order_from_pure_formula fb.formula_base_pure
     | _ -> failwith x_tbi
   in
-  let edges = get_order_from_formula estate.CF.es_formula in
+  let edges = get_order_from_formula assume in
   let guards = get_order_from_pure_formula guard in
   let inferred_hbs = S.DAG_cvar.create_dag_and_infer inf_vars edges guards in
-  let edge_to_rel edge =
-    let arg1 = S.DAG_cvar.Edge.get_tail edge in
-    let arg2 = S.DAG_cvar.Edge.get_head edge in
-    (* redundant edge kind check ? since we can only infer hb rels*)
-    if (S.DAG_cvar.Edge.is_hb_edge edge) then
-      match !S.shb_rel_id with
-      | Some id ->
-        let rel = CP.mkRel_sv id in
-        let rel = CP.mkRel rel (List.map (fun x -> CP.mkVar x no_pos) [arg1;arg2]) no_pos in [rel]
-      | None -> []
-    else []
-  in List.flatten (List.map edge_to_rel inferred_hbs)
+  let _,inferred_hbs = List.split inferred_hbs in
+  List.flatten (List.map cedge_to_rel (List.flatten inferred_hbs))
 
-let infer_orders estate guard =
+let infer_orders_estate estate guard =
+  infer_orders_formula estate.CF.es_formula guard estate.CF.es_infer_vars
+  
+let infer_orders_estate estate guard =
   let pr1 = !CF.print_entail_state in
   let pr2 = !Mcpure.print_mix_formula in
   let prout = pr_list !CP.print_formula in
-  Debug.no_2 "OS.infer_orders" pr1 pr2 prout infer_orders estate guard
+  Debug.no_2 "OS.infer_orders_estate" pr1 pr2 prout infer_orders_estate estate guard
 
 
 

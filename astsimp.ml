@@ -2445,7 +2445,8 @@ and session_to_iform_x (view:I.view_decl) =
       | Some Protocol ->
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
-        let prot = x_add_1 Order_summary.insert_orders view prot in
+        (* let (n_tl,_) = gather_type_info_ *)
+        let prot = x_add_1 Order_summary.insert_orders view prot (fun p -> trans_pure_formula p []) in
         (* makes projection *)
         let vars_list = view.I.view_typed_vars in
         let prj_map = Session_projection.mk_projection prot vars_list in

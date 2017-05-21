@@ -2451,6 +2451,9 @@ let annotate_suid (prot: IProtocol.session): IProtocol.session  =
   let fnc base =
     let suid = fresh_any_name def_suid_name in
     let suid = IProtocol_base.mk_suid suid in
+    let suid = if IProtocol_base.eq_suid
+        base.IProtocol_base.protocol_base_formula_uid
+        IProtocol_base.def_suid then suid else  base.IProtocol_base.protocol_base_formula_uid in
     (* let () = suid := !suid + 1 in *)
     Some {base with IProtocol_base.protocol_base_formula_uid = suid} in
   let prot = IProtocol.trans_session_formula (nonef,(nonef,fnc)) prot in
@@ -3093,5 +3096,5 @@ module CVert_elem  = VVertex(CVar) ;;
 
 module DAG_ivar    = Make_DAG(IVert_elem) ;;
 module DAG_cvar    = Make_DAG(CVert_elem) ;;
-module DAG_event  = Make_DAG(EVert_elem) ;;
+module DAG_ievent  = Make_DAG(EVert_elem) ;;
 
