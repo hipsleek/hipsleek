@@ -31,4 +31,3 @@ print residue.
 
 infer[@arr_ba]  base::Aseg<a,b>   |- base::Aseg<a,2>.
 print residue.
-

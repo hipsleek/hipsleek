@@ -55,7 +55,8 @@ let print_and_return f indent =
   (* let () = print_endline (print_indent indent ("==> "^(!str_pformula f ))) in *)
   f                         
 ;;
-
+  
+(* input: heap formulas (with AsegNE only), output: a pure formula with sorted information  *)
 let get_sorted_puref arrPredlst =
   let rec helper lst lastm flst =
     match lst with
@@ -63,7 +64,7 @@ let get_sorted_puref arrPredlst =
     | h::tail ->
        ( match h with
          | AsegNE (t,m) ->
-            helper tail m ((mkLt m lastm)::flst)
+            helper tail m ((mkLt lastm m)::flst)
          | _ -> failwith "get_sorted_puref: Invalid input" )
   in
   match arrPredlst with
@@ -80,30 +81,43 @@ let generic_get_permutation lst =
     match lst with
     | h::tail ->
        (k::lst)::(List.map (fun item -> h::item) (insert k tail))
-    | [[k]]
+    | [] -> [[k]]
   in
-  let rec helper lst =
+  let rec helper lst =    
     match lst with
     | [] -> []
-    | h::tail -> insert h (helper tail)
+    | h::tail -> List.flatten (List.map (insert h) (helper tail))
   in
-  helper lst
+  let r = helper lst in
+  if List.length r = 0
+  then failwith "empty list 2"
+  else r
 ;;
 
 let get_permutation arrPredlst =
   let rec helper head lst flst =
     match lst with
     | (Aseg (t,m))::tail ->
-       (helper lst tail ((mkEq t m)::flst))@(helper (mkAsegNE (t,m)) tail ((mkLt t m)::flst))
+       (helper head tail ((mkEq t m)::flst))@(helper ((mkAsegNE t m)::head) tail ((mkLt t m)::flst))
+    | h::tail -> helper (h::lst) tail flst
     | [] ->
-       List.map (fun item -> ((get_sorted_puref item)@flst,item)) (generic_get_permutation head)
+       List.map (fun item -> ((get_sorted_puref item)::flst,item)) (generic_get_permutation head)
   in
-  helper [] arrPredlst []
+  let r = helper [] arrPredlst [] in
+  if List.length r = 0
+  then failwith "empty list 1"
+  else r
 ;;
   
 (* What about the pure formulas?  *)
 let expand_disj_with_permutation disj =
-  List.concat (List.map (fun item -> get_permutation item) disj)
+  let r =List.concat
+           (List.map
+              (fun (e,p,h) ->
+                List.map (fun (np,nh) -> (e,np@p,nh)) (get_permutation h)) disj) in
+  if List.length r = 0
+  then failwith "empty list"
+  else r
 ;;
   
       
@@ -127,7 +141,7 @@ let cformula_to_arrF cf =
 
   
   
-(* lhs: arrF *)
+(* lhs: arrF list *)
 (* rhs: arrF list *)
 let array_entailment lhs rhs =
   let helper_pure lhs_p rhs indent =
@@ -280,7 +294,6 @@ let array_entailment lhs rhs =
                        (fun (mlst,srhs) item ->
                          match item with
                          | (e,p,(AsegNE (ti,mi))::taili) ->
-                            
                             (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
                          | _ -> failwith "AsegNE cannot match")
                        ([],[]) norm_rhs
@@ -289,13 +302,18 @@ let array_entailment lhs rhs =
                    let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs (indent+1) in
                    print_and_return (mkAndlst (f_lhs_min::(helper_match lhs norm_rhs (m::all_m) (indent+1)))) indent )) 
   in
-  helper lhs rhs 0
+  let lhs = expand_disj_with_permutation lhs in
+  let rhs = expand_disj_with_permutation rhs in
+  mkAndlst
+    (List.map
+       (fun item ->
+         helper item rhs 0) lhs)
 ;;
 
 let array_entailment_and_print lhs rhs =  
   let ante =
     match cformula_to_arrF lhs with
-    | [ante] -> ante
+    | [ante] -> [ante]
     | _ -> failwith "array_entailment_and_print: Invalid LHS"
   in
   let conseq = cformula_to_arrF rhs in    

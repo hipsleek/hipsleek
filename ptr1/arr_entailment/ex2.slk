@@ -11,5 +11,5 @@ pred_prim Elem<start:int>.
 // print residue.
 
 
-infer[@arr_ba]  base::Aseg<1,5>  |- base::Aseg<1,3> * base::Aseg<3,5>.
+infer[@arr_ba]  base::Aseg<1,5>  |- base::Aseg<1,3> * base::Aseg<3,10>.
 print residue.
