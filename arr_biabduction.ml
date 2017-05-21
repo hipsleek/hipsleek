@@ -39,6 +39,9 @@ let mkNot f = Cpure.mkNot f None no_pos
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
 
+let mkFalse () = Cpure.mkFalse no_pos
+;;
+  
       
 
 let simplify = Tpdispatcher.simplify_omega
@@ -55,7 +58,7 @@ let rec mkOrlst lst =
   match lst with
   | [h] -> h
   | h::tail -> mkOr h (mkOrlst tail)
-  | [] -> mkTrue ()
+  | [] -> mkFalse ()
 ;;
 
   
@@ -100,16 +103,11 @@ let mkMin elst =
        (Cpure.Min (h1,h2,no_pos)) tail
   | [] -> failwith "mkMin: empty list as input"
 
-let mkMin_raw m elst =
-  mkAnd
-    (mkOrlst
-       (List.fold_left
-          (fun r item ->
-            (mkEq m item)::r) [] elst))
-    (mkAndlst
-       (List.fold_left
-          (fun r item ->
-            (mkLte m item)::r) [] elst))
+let mkMin_raw m elst =  
+  (mkAndlst
+     (List.fold_left
+        (fun r item ->
+          (mkLte m item)::r) [] elst))
 ;;
 
 (* end of Utility on formula and exp  *)

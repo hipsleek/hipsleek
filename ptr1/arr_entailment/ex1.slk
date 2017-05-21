@@ -16,3 +16,19 @@ print residue.
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,b>.
 print residue.
+
+infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,b>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,2>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<a,2>  |- base::Aseg<a,2>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<a,b> & b=2  |- base::Aseg<a,2>.
+print residue.
+
+infer[@arr_ba]  base::Aseg<a,b>   |- base::Aseg<a,2>.
+print residue.
+
