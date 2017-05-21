@@ -713,6 +713,13 @@ let peek_dc =
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_; COLON,_; _,_; OPAREN,_;] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_protocol_base_chan_suid =
+   SHGram.Entry.of_parser "peek_protocol_base_chan_suid"
+       (fun strm ->
+           match Stream.npeek 8 strm with
+             | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_;AT,_; _,_; COLON,_; _,_; OPAREN,_;] -> ()
+             | _ -> raise Stream.Failure)
+
  let peek_fence =
    SHGram.Entry.of_parser "peek_fence"
        (fun strm ->
@@ -1377,11 +1384,13 @@ prot_view_decl:
 
 (* e.g. v# *)
 session_msg_var:
-    [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
+  [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
 (* e.g. ch(<message>) *)
 session_channel:
-    [[ channel = cid -> channel ]];
-
+  [[ channel = cid -> channel ]];
+session_suid:
+  [[ `AT ; suid = integer_literal -> suid]];
+  
 protocol_formula:
   [ "semicolon" RIGHTA
     [
@@ -1403,12 +1412,20 @@ protocol_formula:
       [ peek_hvar; `PERCENT; `IDENTIFIER id ->
         let loc = (get_pos_camlp4 _loc 1) in
         Session.IProtocol.SBase (Session.IProtocol.mk_session_hvar id [] loc)
-      | peek_protocol_base_chan; first = cid; `LEFTARROW; second = cid; `COLON;
-      sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
+      | peek_protocol_base_chan_suid; first = cid; `LEFTARROW; second = cid;
+        suid = session_suid;
+        `COLON; sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
-        let suid = Session.IProtocol_base.def_suid in 
+        let suid = (def_suid_name^(string_of_int suid),Unprimed) in
+        Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, suid) c)
+      | peek_protocol_base_chan; first = cid; `LEFTARROW; second = cid;        
+        `COLON; sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
+        let loc = (get_pos_camlp4 _loc 1) in
+        (* let c = F.subst_stub_flow top_flow c in *)
+        let mv = session_extract_msg_var msg_var loc in
+        let suid = Session.IProtocol_base.def_suid  in
         Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, suid) c)
       | peek_protocol_base; first = cid; `LEFTARROW; second = cid; `COLON; msg_var = OPT session_msg_var; c = session_message ->
         let loc = (get_pos_camlp4 _loc 1) in

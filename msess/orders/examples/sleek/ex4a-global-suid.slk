@@ -3,7 +3,7 @@ sleek_include 'msess/notes/hodef.slk'.
 
 //pred_sess_prot G1<A:role,B:role,C:role,k:chan> == A->B:k(1) ;; B->C:k(2).
 //pred_sess_prot G2<A:role,B:role,C:role,k1:chan,k2:chan> == A->B:k1(1) ;; B->C:k2(2).
-pred_sess_prot G3<A:role,B:role,C:role,c:chan,d:chan> == A->B:c(1) ;; B->C:d(2) ;; A->C:d(3).
+pred_sess_prot G3<A:role,B:role,C:role,c:chan,d:chan> == A->B@1:c(1) ;; B->C@2:d(2) ;; A->C@3:c(3).
 
 /*
 pred_sess_prot G2<A,B,C,k> ==
@@ -50,5 +50,18 @@ A^1  <_HB A^3
 B^1  <_HB C^3
 
 
+
+(hb(CC_65,Cid2)),(hb(Bid1,Bid2)),(hb(Aid1,Aid3)),(hb(Cid2,Cid3)),(hb(BB_64,Bid1)),(hb(AA_63,Aid1)),(hb(S_67c_66,AA_63));(hb(CC_65,Cid2)),(hb(Bid1,Bid2)),(hb(Aid1,Aid3)),(hb(Cid2,Cid3)),(hb(BB_64,Bid1)),(hb(AA_63,Aid1)),(hb(R_68c_66,AA_63)),snot((hb(S_67c_66,Aid1))).
+
+((cb(S_65c_64,R_66c_64)),(cb(S_68d_67,R_69d_67)),(hb(BB_62,Bid1)),(hb(AA_61,Aid1)),(cb(Aid1,Bid1)),(hb(S_65c_64,AA_61)));((cb(S_65c_64,R_66c_64)),(cb(S_68d_67,R_69d_67)),(hb(BB_62,Bid1)),(hb(AA_61,Aid1)),(cb(Aid1,Bid1)),(hb(R_66c_64,AA_61)))),snot((hb(S_65c_64,Aid1))).
+
+
+(hb(B1,B2)),(cb(B2,C2)),(hb(C2,C3)),(cb(A3,C3)),(hb(B64,B1)),(hb(A63,A1)),(cb(A1,B1)),(hb(Sc,A63)) .
+
+(hb(B1,B2)),(hb(B2,C3)),(hb(C2,C3)),(cb(A3,C3)),(hb(A63,A1)),(hb(A1,B2)),(hb(Sc,A63)) .
+
+(hb(B1,B2)),(hb(B2,C3)),(hb(C2,C3)),(hb(A63,A1)),(hb(A1,B2)),(hb(Sc,A63)) .
+
+(hb(B1,B2)),(hb(B2,C3)),(hb(A63,A1)),(hb(A1,B2)),(hb(Sc,A63)) .
 
 */

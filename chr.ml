@@ -71,7 +71,7 @@ and chr_of_formula f = match f with
       | Some f -> chr_of_formula f
     end
   | CP.And (p1, p2, _) -> "" ^ (chr_of_formula p1) ^ "," ^ (chr_of_formula p2) ^ ""
-  | CP.Or (p1, p2,_, _) -> "(" ^ (chr_of_formula p1) ^ ";" ^ (chr_of_formula p2) ^ ")"
+  | CP.Or (p1, p2,_, _) -> "((" ^ (chr_of_formula p1) ^ ");(" ^ (chr_of_formula p2) ^ "))"
   | CP.Not (p,_, _) -> "(snot(" ^ (chr_of_formula p) ^ "))"
   | _ -> ""
 

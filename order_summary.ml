@@ -682,14 +682,16 @@ let iedge_to_rel edge =
   let arg2 = S.DAG_ievent.Edge.get_head edge in
   (* redundant edge kind check ? since we can only infer hb rels*)
   (* let mk_fresh_var =  *)
-  if (S.DAG_ievent.Edge.is_hb_edge edge) then
-    match !S.shb_rel_id with
+  let helper id edge =
+    match id with
     | Some id ->
       let ids = List.map (fun ev -> (IRole.string_of (BEvent.get_role ev)) ^ (IUID.string_of (BEvent.get_uid ev))) [arg1;arg2] in
       let rel = Ipure.RelForm (id, (List.map (fun x -> Ipure.Var ((S.IForm.mk_var x),no_pos)) ids), no_pos) in
       let rel = Ipure.BForm ((rel,None) ,None) in
       [rel]
-    | None -> []
+    | None -> [] in
+  if (S.DAG_ievent.Edge.is_hb_edge edge) then helper !S.shb_rel_id edge
+  else  if (S.DAG_ievent.Edge.is_cb_edge edge) then helper !S.scb_rel_id edge
   else []
 
 

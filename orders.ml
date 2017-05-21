@@ -525,7 +525,13 @@ struct
     let ()  = y_binfo_hp (add_str "DAG" string_of) tbl in
     let ()  = y_ninfo_hp (add_str "edges" Edge_list.string_of_list) assume in
     let ()  = y_binfo_hp (add_str "guards" Edge_list.string_of_list) guards_hb in
-    let ()  = y_ninfo_hp (add_str "inferred" (pr_pair Edge.string_of Edge_list.string_of_list)) inf_hbs in
+    let ()  = y_binfo_hp (add_str "inferred" (pr_list (pr_pair Edge.string_of Edge_list.string_of_list))) inf_hbs in
     inf_hbs
+
+  let create_dag_and_infer inf_vertexes assume guards_hb =
+    let pr1 = Vertex.string_of_list in
+    let pr2 = Edge_list.string_of_list  in
+    let pr_out = pr_lst "\n" (pr_pair Edge.string_of Edge_list.string_of_list) in
+    Debug.no_3 "create_dag_and_infer" pr1 pr2 pr2 pr_out create_dag_and_infer inf_vertexes assume guards_hb
 
 end;;
