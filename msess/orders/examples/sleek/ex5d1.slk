@@ -27,3 +27,8 @@ checkentail  hb(B2,B3) & hb(B3,B2)
              |- B2=B3.
 expect Valid.
 print residue.
+
+checkentail  emp & ["chr": hb (B2,B3) & hb (B3,B2)]
+             |- emp & ["chr": B2=B3].
+expect Valid.
+print residue.

@@ -1,9 +1,9 @@
 #!/usr/bin/swipl -q
-:- module(orders, [ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2]).
+:- module(orders, [ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2,id/1]).
 :- use_module(library(chr)).
 
 :- initialization start.
-:- chr_constraint ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2.
+:- chr_constraint ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2,id/1.
 
 
 % disable singleton warning
@@ -33,13 +33,24 @@
 %%%%%%%%%%
 %negation rules for hb and ev
 neg2    @ snot(A;B) <=> snot(A),snot(B).
+neg10   @ snot(snot(A)) <=> id(A).
 neg3    @ snot((A,B)) <=> snot(A);snot(B).
 neg4    @ ev(A),snot(ev(A))  <=> false.
 neg5    @ hb(A,B),snot(hb(A,B)) <=> false.
 neg6    @ hbp(A,B),snot(hbp(A,B)) <=> false.
 neg7    @ snot(snot_eq(A,B)) <=> A=B.
 neg8    @ snot_eq(A,A) <=> false.
-neg9    @ snot(A=B)  <=> snot_eq(A,B),snot_eq(B,A). 
+neg9    @ snot(A=B)  <=> snot_eq(A,B),snot_eq(B,A).
+% neg11   @ snot_eq(B,A) ==> not(snot_eq(A,B)) | snot_eq(A,B).
+
+id1     @ id(hb(A,B))  <=> hb(A,B).
+id2     @ id(hbp(A,B)) <=> hbp(A,B).
+id3     @ id(cb(A,B))  <=> cb(A,B).
+id4     @ id(ev(A))    <=> ev(A).
+id5     @ id(snot(A))  <=> snot(A).
+id6     @ id(snot_eq(A)) <=> snot_eq(A).
+% id7     @ id(A=B)       <=> A=B.
+id7     @ id(A=B)       <=> true.
 
 % neg5   @ hb(A,A),snot(hb(A,A)) <=> false.
 dup1    @ hb(A,B)\hb(A,B) <=> true .
