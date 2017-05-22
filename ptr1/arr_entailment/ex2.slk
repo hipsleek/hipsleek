@@ -1,5 +1,5 @@
 pred_prim Aseg<start:int, end:int>.
-pred_prim Elem<start:int>.
+pred_prim AsegNE<start:int, end:int>.
 
 // checkentail (a>b) | (a<b)  |- a=b.
 // print residue.
@@ -11,43 +11,23 @@ pred_prim Elem<start:int>.
 // print residue.
 
 
-// infer[@arr_ba]  base::Aseg<1,5>  |- base::Aseg<1,3> * base::Aseg<3,5>.
-// print residue.
-
-infer[@arr_ba]  base::Aseg<a,b>  |- base::Aseg<a,c> * base::Aseg<c,b>.
+infer[@arr_ba]  base::Aseg<1,5>  |- base::Aseg<1,3> * base::Aseg<3,5>.
 print residue.
+expect Valid.
 
-// [] |- {[AsegNE( a, c-1),AsegNE( c, b-1)] \/ [AsegNE( c, b-1),AsegNE( a, c-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( c, b-1)] \/ []}
-//    [AsegNE( a, b-1)] |- {[AsegNE( a, c-1),AsegNE( c, b-1)] \/ [AsegNE( c, b-1),AsegNE( a, c-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( c, b-1)] \/ []}
-//       [] |- {[Aseg( (b-1)+1, c-1),AsegNE( c, b-1)] \/ [Aseg( (b-1)+1, b-1),AsegNE( a, c-1)] \/ [Aseg( (b-1)+1, c-1)] \/ [Aseg( (b-1)+1, b-1)]}
-//          [] |- {[] \/ [AsegNE( (b-1)+1, (b-1)-1)] \/ [] \/ [AsegNE( (b-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (b-1)+1, (b-1)-1),AsegNE( a, c-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( (b-1)+1, (c-1)-1),AsegNE( c, b-1)]}
-//       [Aseg( (c-1)+1, b-1)] |- {[Aseg( (c-1)+1, b-1)] \/ [Aseg( (c-1)+1, c-1)] \/ [Aseg( (c-1)+1, b-1),AsegNE( a, c-1)] \/ [Aseg( (c-1)+1, c-1),AsegNE( c, b-1)]}
-//          [Aseg( (c-1)+1, b-1)] |- {[AsegNE( c, b-1)] \/ [AsegNE( (c-1)+1, (c-1)-1),AsegNE( c, b-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (c-1)+1, (b-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (c-1)+1, (c-1)-1)] \/ [] \/ [AsegNE( (c-1)+1, (b-1)-1)]}
-//             [AsegNE( (c-1)+1, (b-1)-1)] |- {[AsegNE( c, b-1)] \/ [AsegNE( (c-1)+1, (c-1)-1),AsegNE( c, b-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (c-1)+1, (b-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (c-1)+1, (c-1)-1)] \/ [] \/ [AsegNE( (c-1)+1, (b-1)-1)]}
-//                [] |- {[Aseg( ((b-1)-1)+1, b-1)] \/ [Aseg( ((b-1)-1)+1, (c-1)-1),AsegNE( c, b-1)] \/ [Aseg( ((b-1)-1)+1, c-1)] \/ [Aseg( ((b-1)-1)+1, (b-1)-1),AsegNE( a, c-1)] \/ [Aseg( ((b-1)-1)+1, (c-1)-1)] \/ [Aseg( ((b-1)-1)+1, (b-1)-1)]}
-//                   [] |- {[] \/ [AsegNE( ((b-1)-1)+1, ((b-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, ((c-1)-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( ((b-1)-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (c-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( ((b-1)-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (b-1)-1)]}
-//                [Aseg( (b-1)+1, (b-1)-1)] |- {[Aseg( (b-1)+1, (b-1)-1)] \/ [Aseg( (b-1)+1, (c-1)-1)] \/ [Aseg( (b-1)+1, (b-1)-1),AsegNE( a, c-1)] \/ [Aseg( (b-1)+1, c-1)] \/ [Aseg( (b-1)+1, (c-1)-1),AsegNE( c, b-1)] \/ [Aseg( (b-1)+1, b-1)]}
-//                   [Aseg( (b-1)+1, (b-1)-1)] |- {[] \/ [AsegNE( (b-1)+1, (b-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( (b-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1)]}
-//                      [AsegNE( (b-1)+1, ((b-1)-1)-1)] |- {[] \/ [AsegNE( (b-1)+1, (b-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( (b-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1)]}
-//                         [] |- {[Aseg( (((b-1)-1)-1)+1, (b-1)-1)] \/ [Aseg( (((b-1)-1)-1)+1, b-1)] \/ [Aseg( (((b-1)-1)-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [Aseg( (((b-1)-1)-1)+1, (c-1)-1)] \/ [Aseg( (((b-1)-1)-1)+1, c-1)] \/ [Aseg( (((b-1)-1)-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [Aseg( (((b-1)-1)-1)+1, ((c-1)-1)-1)] \/ [Aseg( (((b-1)-1)-1)+1, ((b-1)-1)-1)]}
-//                            [] |- {[] \/ [AsegNE( (((b-1)-1)-1)+1, (((b-1)-1)-1)-1)] \/ [] \/ [AsegNE( (((b-1)-1)-1)+1, (((c-1)-1)-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (((b-1)-1)-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (((b-1)-1)-1)+1, (c-1)-1)] \/ [] \/ [AsegNE( (((b-1)-1)-1)+1, ((c-1)-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( (((b-1)-1)-1)+1, (((c-1)-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( (((b-1)-1)-1)+1, (b-1)-1)] \/ [] \/ [AsegNE( (((b-1)-1)-1)+1, ((b-1)-1)-1)]}
-//                         [Aseg( ((b-1)-1)+1, ((b-1)-1)-1)] |- {[Aseg( ((b-1)-1)+1, ((b-1)-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((c-1)-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [Aseg( ((b-1)-1)+1, c-1)] \/ [Aseg( ((b-1)-1)+1, (c-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [Aseg( ((b-1)-1)+1, b-1)] \/ [Aseg( ((b-1)-1)+1, (b-1)-1)]}
-//                            [Aseg( ((b-1)-1)+1, ((b-1)-1)-1)] |- {[] \/ [AsegNE( ((b-1)-1)+1, ((b-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (b-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( ((b-1)-1)+1, (((c-1)-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( ((b-1)-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (((c-1)-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (((b-1)-1)-1)-1)]}
-//                               [AsegNE( ((b-1)-1)+1, (((b-1)-1)-1)-1)] |- {[] \/ [AsegNE( ((b-1)-1)+1, ((b-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (b-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( ((b-1)-1)+1, (((c-1)-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( ((b-1)-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (((c-1)-1)-1)-1)] \/ [] \/ [AsegNE( ((b-1)-1)+1, (((b-1)-1)-1)-1)]}
-//                                  [] |- {[Aseg( ((((b-1)-1)-1)-1)+1, ((b-1)-1)-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (b-1)-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, b-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (((c-1)-1)-1)-1),AsegNE( c, b-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, ((c-1)-1)-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (c-1)-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, c-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (((c-1)-1)-1)-1)] \/ [Aseg( ((((b-1)-1)-1)-1)+1, (((b-1)-1)-1)-1)]}
-//                                     [] |- {[] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((((b-1)-1)-1)-1)-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((((c-1)-1)-1)-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((((b-1)-1)-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, (c-1)-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, (((c-1)-1)-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((((c-1)-1)-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, (b-1)-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, ((b-1)-1)-1)] \/ [] \/ [AsegNE( ((((b-1)-1)-1)-1)+1, (((b-1)-1)-1)-1)]}
+// infer[@arr_ba]  base::Aseg<1,5>  |- base::Aseg<1,3> * base::Aseg<3,6>.
+// print residue.
+// expect Fail.
 
+// infer[@arr_ba]  base::Aseg<1,3> * base::Aseg<3,5>  |- base::Aseg<1,3> * base::Aseg<3,5>.
+// print residue.
+// expect Valid.
 
-// [AsegNE( (b-1)+1, ((b-1)-1)-1)] |- {[] \/ [AsegNE( (b-1)+1, (b-1)-1)] \/ [AsegNE( c, b-1)] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [] \/ [AsegNE( (b-1)+1, (c-1)-1)] \/ [AsegNE( a, c-1)] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (b-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( (b-1)+1, ((b-1)-1)-1)]}
+// infer[@arr_ba]  base::Aseg<a,b> & a<b & a<c & c<b |- base::Aseg<a,c> * base::Aseg<c,b>.
+// print residue.
+// expect Valid.
 
-// [Aseg( ((b-1)-1)+1, ((b-1)-1)-1)] |- {[Aseg( ((b-1)-1)+1, ((b-1)-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((c-1)-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [Aseg( ((b-1)-1)+1, c-1)] \/ [Aseg( ((b-1)-1)+1, (c-1)-1)] \/ [Aseg( ((b-1)-1)+1, ((c-1)-1)-1),AsegNE( c, b-1)] \/ [Aseg( ((b-1)-1)+1, b-1)] \/ [Aseg( ((b-1)-1)+1, (b-1)-1)]}
-
-
-[AsegNE( (c-1)+1, ((b-1)-1)-1)] |- {[AsegNE( a, c-1)] \/ [AsegNE( (c-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (c-1)+1, ((c-1)-1)-1)] \/ [] \/ [AsegNE( (c-1)+1, ((b-1)-1)-1)]}
-
-[Aseg( (c-1)+1, ((b-1)-1)-1)] |- {[Aseg( (c-1)+1, ((b-1)-1)-1)] \/ [Aseg( (c-1)+1, ((c-1)-1)-1)] \/ [Aseg( (c-1)+1, ((b-1)-1)-1),AsegNE( a, c-1)]}
-[Aseg( (c-1)+1, ((b-1)-1)-1)] |- {[AsegNE( a, c-1)] \/ [AsegNE( (c-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)] \/ [] \/ [AsegNE( (c-1)+1, (((c-1)-1)-1)-1)] \/ [] \/ [AsegNE( (c-1)+1, (((b-1)-1)-1)-1)]}
-
-
-[Aseg( (c-1)+1, (((b-1)-1)-1)-1)] |- {[Aseg( (c-1)+1, (((b-1)-1)-1)-1)] \/ [Aseg( (c-1)+1, (((c-1)-1)-1)-1)] \/ [Aseg( (c-1)+1, (((b-1)-1)-1)-1),AsegNE( a, c-1)]}
+// infer[@arr_ba]  base::Aseg<a,b> & a<b & a<c & c<b |- base::Aseg<a,c> * base::Aseg<d,b>.
+// print residue.
+// expect Fail.
 

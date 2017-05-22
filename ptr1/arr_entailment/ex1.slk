@@ -13,21 +13,28 @@ pred_prim Elem<start:int>.
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,2>.
 print residue.
+expect Valid.
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,b>.
 print residue.
+expect Fail.
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,b>.
 print residue.
+expect Fail.
 
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,2>.
 print residue.
+expect Fail.
 
 infer[@arr_ba]  base::Aseg<a,2>  |- base::Aseg<a,2>.
 print residue.
+expect Valid.
 
 infer[@arr_ba]  base::Aseg<a,b> & b=2  |- base::Aseg<a,2>.
 print residue.
+expect Valid.
 
 infer[@arr_ba]  base::Aseg<a,b>   |- base::Aseg<a,2>.
 print residue.
+expect Fail.

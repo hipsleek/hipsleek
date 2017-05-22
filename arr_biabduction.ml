@@ -185,6 +185,10 @@ let isSat f=
 let imply f1 f2 =
   !tp_imply f1 f2
 ;;
+
+let isValid f =
+  not (isSat (mkNot f))
+;;
   
 let str_exp = print_exp
 ;;

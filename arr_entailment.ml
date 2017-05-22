@@ -42,7 +42,7 @@ let str_asegPred aseg =
 ;;
   
 let str_arrF (e,p,h) =
-  (* (str_list !str_pformula p)^":"^ *)(str_list str_asegPred h)
+  (str_list !str_pformula p)^":"^(str_list str_asegPred h)
 ;;
 
 let str_disj_arrF flst =
@@ -58,7 +58,13 @@ let str_disj_arrF flst =
 ;;
 
 let print_and_return f indent =
-  (* let () = print_endline (print_indent indent ("==> "^(!str_pformula f ))) in *)
+  let () =
+    if not (isValid f)
+    then
+      print_endline (print_indent indent ("==> "^(!str_pformula f )))
+    else
+      ()
+  in
   f                         
 ;;
   
@@ -70,7 +76,7 @@ let get_sorted_puref arrPredlst =
     | h::tail ->
        ( match h with
          | AsegNE (t,m) ->
-            helper tail m ((mkLt lastm m)::flst)
+            helper tail m ((mkLte lastm t)::flst)
          | _ -> failwith "get_sorted_puref: Invalid input" )
   in
   match arrPredlst with
@@ -78,7 +84,7 @@ let get_sorted_puref arrPredlst =
   | h::tail ->
      ( match h with
        | AsegNE (t,m) ->
-          helper tail t []
+          helper tail m []
        | _ -> failwith "get_sorted_puref: Invalid input" )
 ;;
 
@@ -105,8 +111,8 @@ let get_permutation arrPredlst =
   let rec helper head lst flst =
     match lst with
     | (Aseg (t,m))::tail ->
-       (helper head tail ((mkEq t m)::flst))@(helper ((aseg_to_asegne (Aseg (t,m)))::head) tail ((mkLt t m)::flst))
-    | h::tail -> helper (h::lst) tail flst
+       (helper head tail ((mkEq t m)::flst))@(helper ((Aseg (t,m))::head) tail ((mkLt t m)::flst))
+    | h::tail -> helper (h::head) tail flst
     | [] ->
        List.map (fun item -> ((get_sorted_puref item)::flst,item)) (generic_get_permutation head)
   in
@@ -132,7 +138,7 @@ let expand_disj_with_permutation disj =
 let arrPred_to_asegPred arrPred_lst_lst =
   let helper_heap_translation_one h =
     match h with
-    | Arr_biabduction.Aseg (b,f,t) -> Aseg (f,t)
+    | Arr_biabduction.Aseg (b,f,t) -> AsegNE (f,t)
     | _ -> failwith "Invalid input"
   in
   List.map
@@ -203,6 +209,7 @@ let array_entailment lhs rhs =
              if not (is_same_exp f lhsf)
              then (rhs_e,(mkEq f lhsf)::rhs_p,(mkAsegNE lhsf t)::tail)
              else (rhs_e,rhs_p,rhs_h)
+          | [] -> (rhs_e,rhs_p,rhs_h)
           | _ -> failwith "align_head_address: Invalid input") rhs
     in
     align_head_address rhs
@@ -216,11 +223,31 @@ let array_entailment lhs rhs =
               if false          (* TO BE IMPLEMENTED *)
               then Some (disj,head@rest)
               else helper_exists_existential_var (disj::head) rest
+           | (Aseg (t,m))::tail1 ->
+              if false          (* TO BE IMPLEMENTED *)
+              then Some (disj,head@rest)
+              else helper_exists_existential_var (disj::head) rest
+           | [] -> None
            | _ -> failwith "exists_existential_var: Invalid input")
       | [] -> None
     in
     helper_exists_existential_var [] rhs
   in
+  let exists_aseg rhs =
+    let rec helper_exists_aseg head tail =
+      match tail with
+      | ((rhs_e,rhs_p,rhs_h) as disj)::rest ->         
+         (match rhs_h with
+          | (Aseg (t,m))::tail1 ->
+             Some (disj,head@rest)
+          | _ ->
+             helper_exists_aseg (disj::head) rest)
+      | [] -> None
+    in
+    helper_exists_aseg [] rhs
+  in
+
+  
   let rec helper ((lhs_e,lhs_p,lhs_h) as lhs) rhs indent =    
     let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in                              
     let helper_match lhs rhs mlst indent =
@@ -233,7 +260,7 @@ let array_entailment lhs rhs =
                if is_same_exp m mj
                then (e,p,tail)
                else
-                 (e,p,[mkAseg (incOne mj) m]@tail)
+                 (e,p,[mkAseg mj m]@tail)
             | _ -> failwith "split_rhs: Invalid input")
           rhs
       in
@@ -243,8 +270,8 @@ let array_entailment lhs rhs =
            ( match lhs_h, rhs_h with
              | (AsegNE (t,m))::lhtail,(AsegNE (ti,mi))::rhtail ->
                 (* let newlhs = mkArrF lhs_e ((mkEq mi (mkMin mlst))::lhs_p) ([mkAseg mi m]@lhtail) in *)
-                let newlhs = mkArrF lhs_e ((mkMin_raw mi mlst)::lhs_p) ([mkAseg (incOne mi) m]@lhtail) in
-                let newrhs = split_rhs mi (head@tail1) in
+                let newlhs = mkArrF lhs_e ((mkMin_raw mi mlst)::lhs_p) ([mkAseg mi m]@lhtail) in
+                let newrhs = (split_rhs mi head)@[(mkArrF rhs_e rhs_p rhtail)]@(split_rhs mi tail1) in
                 let newf = helper newlhs newrhs indent in
                 visit (h::head) tail1 (newf::flst)
              | _ -> failwith "visit: Invalid input")
@@ -253,64 +280,84 @@ let array_entailment lhs rhs =
       visit [] rhs []
     in
 
-    if (List.exists
-          (fun (_,_,h) ->
-            match h with
-            | (Aseg _)::tail -> true
-            | _ -> false) rhs)
-    then print_and_return (helper lhs (aseg_to_AsegNE rhs) (indent+1)) indent
-    else
-      match lhs_h with
-      | [] -> helper_pure lhs_p rhs indent
-      | h::tail ->
-         (
-           match h with
-           | Emp -> print_and_return (helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)) indent
-           | Aseg (f,t) ->
-              if is_same_exp f t
-              then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)
-              else
-                print_and_return
-                  (mkAnd
-                     (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
-                     (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((aseg_to_asegne h)::tail)) rhs (indent+1)))
-                  indent
-           | AsegNE (t,m) ->
-              let non_emp_rhs = remove_emp rhs in
-              let norm_rhs = rhs_align t non_emp_rhs in
-              ( match (exists_existential_var norm_rhs) with
-                | Some ((n_rhs_e,n_rhs_p, n_rhs_h),rest) ->
-                   ( match n_rhs_h with
-                     | (AsegNE (nt,nm))::ntail ->
-                        let mc = mkVar (global_get_new_var ()) in
-                        mkOr
-                          (helper (mkArrF n_rhs_e
-                                          ([mkLte t mc;mkLte mc m]@lhs_p)
-                                          ([mkAsegNE t mc;mkAseg mc m]@tail))
-                                  ((mkArrF n_rhs_e
-                                           ([mkEq nm mc;mkLte nm m;]@n_rhs_p)
-                                           ((mkAsegNE nt mc)::ntail))::rest) (indent+1))
-                          (helper lhs
-                                  ((mkArrF n_rhs_e
-                                           ((mkLt m nm)::n_rhs_p)
-                                           (([mkAsegNE nt m;mkAsegNE m nm]@ntail)))::rest) (indent+1))
-                     | _ -> failwith "Invalid output from rhs_aseg_to_AsegNE_and_align" )
-                | None ->
-                   let (all_m, split_rhs) =
-                     List.fold_left
-                       (fun (mlst,srhs) item ->
-                         match item with
-                         | (e,p,(AsegNE (ti,mi))::taili) ->
-                            (mi::mlst, (mkArrF e p ((mkAseg (incOne m) mi)::taili))::srhs)
-                         | _ -> failwith "AsegNE cannot match")
-                       ([],[]) norm_rhs
-                   in
-                   (* let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in *)
-                   let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs (indent+1) in
-                   print_and_return (mkAndlst (f_lhs_min::(helper_match lhs norm_rhs (m::all_m) (indent+1)))) indent )) 
+    (* if (List.exists *)
+    (*       (fun (_,_,h) -> *)
+    (*         match h with *)
+    (*         | (Aseg _)::tail -> true *)
+    (*         | _ -> false) rhs) *)
+    (* then print_and_return (helper lhs (aseg_to_AsegNE rhs) (indent+1)) indent *)
+    (* else *)
+    let norm_rhs = rhs in            
+            ( match (exists_existential_var norm_rhs) with
+              | Some ((n_rhs_e,n_rhs_p, n_rhs_h),rest) ->
+                 failwith "TO BE IMPLEMENTED: remove existential quantifiers"
+                 (* ( match n_rhs_h with *)
+                 (*   | (AsegNE (nt,nm))::ntail -> *)
+                 (*      let mc = mkVar (global_get_new_var ()) in *)
+                 (*      mkOr *)
+                 (*        (helper (mkArrF n_rhs_e *)
+                 (*                        ([mkLte t mc;mkLte mc m]@lhs_p) *)
+                 (*                        ([mkAsegNE t mc;mkAseg mc m]@tail)) *)
+                 (*                ((mkArrF n_rhs_e *)
+                 (*                         ([mkEq nm mc;mkLte nm m;]@n_rhs_p) *)
+                 (*                         ((mkAsegNE nt mc)::ntail))::rest) (indent+1)) *)
+                 (*        (helper lhs *)
+                 (*                ((mkArrF n_rhs_e *)
+                 (*                         ((mkLt m nm)::n_rhs_p) *)
+                 (*                         (([mkAsegNE nt m;mkAsegNE m nm]@ntail)))::rest) (indent+1)) *)
+                 (*   | _ -> failwith "Invalid output from rhs_aseg_to_AsegNE_and_align" ) *)
+              | None ->
+                 ( match exists_aseg norm_rhs with
+                   | Some ((n_rhs_e,n_rhs_p, (Aseg (nt,nm))::n_rhs_tail),rest) ->
+                      mkAnd
+                        (helper (mkArrF lhs_e
+                                        ((mkLt nt nm)::lhs_p)
+                                        lhs_h)
+                                ((mkArrF n_rhs_e
+                                         n_rhs_p
+                                         (((mkAsegNE nt nm)::n_rhs_tail)))::rest) (indent+1))
+                        (helper (mkArrF lhs_e
+                                        ((mkEq nt nm)::lhs_p)
+                                        lhs_h)
+                                ((mkArrF n_rhs_e
+                                         n_rhs_p
+                                         (n_rhs_tail))::rest) (indent+1))
+                   | None ->
+                      ( match lhs_h with
+                        | [] -> helper_pure lhs_p rhs indent
+                        | h::tail ->
+                           (
+                             match h with
+                             | Emp -> print_and_return (helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)) indent
+                             | Aseg (f,t) ->
+                                if is_same_exp f t
+                                then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)
+                                else
+                                  print_and_return
+                                    (mkAnd
+                                       (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
+                                       (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs (indent+1)))
+                                    indent
+                             | AsegNE (t,m) ->
+                                let norm_rhs = rhs_align t (remove_emp norm_rhs) in
+                                let (all_m, split_rhs) =
+                                  List.fold_left
+                                    (fun (mlst,srhs) item ->
+                                      match item with
+                                      | (e,p,(AsegNE (ti,mi))::taili) ->
+                                         (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
+                                      | _ -> failwith "AsegNE cannot match")
+                                    ([],[]) norm_rhs
+                                in
+                                (* let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in *)
+                                let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs (indent+1) in
+                                print_and_return (mkAndlst (f_lhs_min::(helper_match lhs norm_rhs (m::all_m) (indent+1)))) indent))
+                   | _ ->
+                      failwith "Invalid output from exists_aseg"))
   in
   let lhs = expand_disj_with_permutation lhs in
   let rhs = expand_disj_with_permutation rhs in
+  let () = print_endline (str_disj_arrF lhs) in
   mkAndlst
     (List.map
        (fun item ->
@@ -323,6 +370,7 @@ let array_entailment_and_print lhs rhs =
     | [ante] -> [ante]
     | _ -> failwith "array_entailment_and_print: Invalid LHS"
   in
+  
   let conseq = cformula_to_arrF rhs in    
   let f = array_entailment ante conseq in
   (* let () = print_endline (!str_pformula f) in *)
