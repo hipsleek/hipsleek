@@ -18,3 +18,19 @@ lemma_unsafe self::L<> -> self::H<>.
 
 checkentail x::L<> * x::L<> |- x::H<> * x::L<>.
 print residue.
+
+// L=0 & H=1
+checkentail x<=0 |- x<=1.
+
+pred_prim security<h:int>. 
+
+checkentail res::security<r> & r<=0 |- r<=1.
+
+checkentail res::security<r> & r<=0 |- r<=0.
+
+//5
+checkentail res::security<r> & r<=0 & r<=1 |- r<=0.
+
+checkentail res::security<r> & r<=0 & r<=1 |- r<=1.
+
+checkentail res::security<r> & (r<=0 | r<=1) |- r<=0.
