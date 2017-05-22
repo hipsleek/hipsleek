@@ -1,7 +1,20 @@
-pred sec<t> == t = 0
-            or t = 1.
+/*data sec {
+  int t;
+}.
 
-lemma_unsafe self::sec<0> -> self::sec<1>.
+pred sec1<t> == self::sec<0>
+             or self::sec<1>.
 
-checkentail x::sec<0> |- x::sec<1>.
+lemma_unsafe self::sec1<0> -> self::sec1<1>.
+
+checkentail x::sec1<0> * y::sec1<0> |- y::sec1<0>.
+print residue.
+*/
+
+pred_prim L<>.
+pred_prim H<>.
+
+lemma_unsafe self::L<> -> self::H<>.
+
+checkentail x::L<> * x::L<> |- x::H<> * x::L<>.
 print residue.
