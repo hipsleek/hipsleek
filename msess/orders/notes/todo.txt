@@ -181,9 +181,15 @@ argument leads to a loop.
 
 =====================================
 =====================================
+[DONE]
 to fix eqExp_list_f
 eqExp_list_f => eqExp_set_f
 eqExp_list_f => eqExp_pairwise_f 
+
+=====================================
+=====================================
+add check for CHR relations in tpdispatcher.ml
+
 =====================================
 =====================================
 
