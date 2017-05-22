@@ -7,6 +7,14 @@ infer [B1,B2]  emp & ["chr": hb(A2,B2)]
 expect Valid.
 print residue.
 
+//1
+checkentail  emp & ["chr": hb(A2,B2)]
+        |- emp & ["chr": hb(A2,B2)].
+expect Valid.
+print residue.
+
+//2
+
 //2
 infer [B1]  emp & ["chr": hb(A2,B2)]
         |- emp & ["chr": hb(A2,B1)].
@@ -44,7 +52,7 @@ expect Valid.
 print residue.
 
 //8
-infer [B1,B3]  emp & ["chr": cb(A2,B2) & hb(B2,B3)]
+infer [B1,B3]  emp & ["chr": cb(A2,B2) & hb(B2,B3) & B2!=B3]
         |- emp & ["chr": hb(A2,B1)].
 expect Valid.
 print residue.
