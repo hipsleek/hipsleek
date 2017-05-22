@@ -365,11 +365,11 @@ let array_entailment lhs rhs =
 ;;
 
 let array_entailment_and_print lhs rhs =  
-  let ante =
-    match cformula_to_arrF lhs with
-    | [ante] -> [ante]
-    | _ -> failwith "array_entailment_and_print: Invalid LHS"
-  in
+  let ante = cformula_to_arrF lhs in
+    (* match cformula_to_arrF lhs with *)
+  (*   | [ante] -> [ante] *)
+  (*   | _ -> failwith "array_entailment_and_print: Invalid LHS" *)
+  (* in *)
   
   let conseq = cformula_to_arrF rhs in    
   let f = array_entailment ante conseq in

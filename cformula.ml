@@ -20655,3 +20655,23 @@ let extract_formula_from_Ebase_struc_formula strucf =
      elim_exists sbf.formula_struc_base
   | _ -> failwith "extract_formula_from_Ebase_struc_formula: Not valid input"
 ;;
+
+let rec extract_cformula_from_struc_formula strucf =
+  match strucf with
+  | EBase sbf ->
+     elim_exists sbf.formula_struc_base
+  | EList lst ->
+     let flst =       
+         (List.map
+            (fun (_,sf) -> extract_cformula_from_struc_formula sf)
+            lst)
+     in
+     ( match flst with
+       | [] -> mkFalse (mkTrueFlow ()) no_pos
+       | h::tail ->
+          List.fold_left
+            (fun r item ->
+              Or {formula_or_f1 = item; formula_or_f2 = r; formula_or_pos = no_pos}) h tail)
+  | _ -> failwith "extract_cformula_from_struc_formula: Invalid input"
+;;
+  

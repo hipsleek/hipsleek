@@ -1390,7 +1390,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   then
     let () = y_tinfo_pp "array entailment" in
     let new_ante = ante in
-    let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in
+    (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
+    (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
+    let new_conseq = CF.extract_cformula_from_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
     let (res,rs,v_hp_rel) = Arr_entailment.array_entailment_and_print new_ante new_conseq in

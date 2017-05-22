@@ -243,7 +243,8 @@ let rec flatten_heap_star_formula cf =
      (flatten_heap_star_formula f.h_formula_star_h1)@(flatten_heap_star_formula f.h_formula_star_h2)
   | ViewNode _ -> [cf]
   | HEmp -> []
-  | _ -> failwith "flatten_heap_star_formula: Invalid input"
+  | Phase f -> (flatten_heap_star_formula f.h_formula_phase_rd)@(flatten_heap_star_formula f.h_formula_phase_rw)
+  | _ -> failwith ("flatten_heap_star_formula: Invalid input "^(!Cformula.print_h_formula cf))
 ;;
 
 let isAsegPred cf =
@@ -668,7 +669,7 @@ class arrPredTransformer initcf = object(self)
     in
     let aPrelst =
       match general_f with
-      | [(_,_,h)] -> h
+      | (_,_,h)::_ -> h
       | _ -> failwith "aPrelst: Not constructed yet"
       (* match cf with *)
       (* | Base f -> *)
