@@ -18,6 +18,9 @@ module SBTProj = Session.ITPProjection_base
 type role = SIOrd.role
 type chan = SIOrd.chan
 
+(* ====== Projection Maps ====== *)
+(* ============================= *)
+
 module Projection_map = 
 struct
   type t = SProj.session 
@@ -63,6 +66,9 @@ end;;
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
 module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
 
+(* ====== Helpful functions ====== *)
+(* =============================== *)
+
 (* creates session projection base for party *)
 let create_session_base_prj transmission chan msg_var pos heap_node msg =
   let base = SBProj.mk_base (transmission, chan, msg_var, pos) ~node:heap_node msg in
@@ -76,43 +82,78 @@ let create_session_base_tprj transmission msg_var pos heap_node msg =
   session_formula
 
 (* Makes projection per party for assumptions *)
-let rec mk_prj_assume pred_orders role =
+let rec mk_prj_assume_on_role pred_orders role =
   match pred_orders with
    | SIOrd.And and_type -> 
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
-       let prj1 = mk_prj_assume and_head role in
-       let prj2 = mk_prj_assume and_tail role in
+       let prj1 = mk_prj_assume_on_role and_head role in
+       let prj2 = mk_prj_assume_on_role and_tail role in
        SIOrd.mk_and prj1 prj2 
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
-       let prj1 = mk_prj_assume or_head role in
-       let prj2 = mk_prj_assume or_tail role in
+       let prj1 = mk_prj_assume_on_role or_head role in
+       let prj2 = mk_prj_assume_on_role or_tail role in
        SIOrd.mk_or prj1 prj2
    | SIOrd.Event e ->
        if SBProt.eq_role role e.role then
          SIOrd.Event e
        else
          SIOrd.Bot
-   | SIOrd.Order order -> SIOrd.Bot
    | _ -> SIOrd.Bot
+
+(* Makes projection per channel for assumptions
+ * Returns a pair of SIOrd.assrt: 
+   * (orders for Assume, orders for Guard) *)
+let rec mk_prj_assume_on_chan pred_orders chan =
+  match pred_orders with
+   | SIOrd.And and_type ->
+        let and_head = and_type.and_assrt1 in
+        let and_tail = and_type.and_assrt2 in
+        let prj_assume1, prj_guard1 = mk_prj_assume_on_chan and_head chan in
+        let prj_assume2, prj_guard2 = mk_prj_assume_on_chan and_tail chan in
+       (SIOrd.mk_and prj_assume1 prj_assume2, SIOrd.mk_and prj_guard1 prj_guard2) 
+   | SIOrd.Or or_type ->
+       let or_head = or_type.or_assrt1 in
+       let or_tail = or_type.or_assrt2 in
+       let prj_assume1, prj_guard1 = mk_prj_assume_on_chan or_head chan in
+       let prj_assume2, prj_guard2 = mk_prj_assume_on_chan or_tail chan in
+       (SIOrd.mk_or prj_assume1 prj_assume2, SIOrd.mk_or prj_guard1 prj_guard2)
+   | SIOrd.Event e ->
+       if SBProj.eq_chan chan e.channel then
+         (SIOrd.Event e, SIOrd.Bot)
+       else
+         (SIOrd.Bot, SIOrd.Event e)
+   | SIOrd.Order order ->
+       begin match order with
+       | SIOrd.HBe hbe ->
+           let hbe_chan = hbe.hbe_event2.channel in
+           if (SBProj.eq_chan chan hbe_chan) then
+             (SIOrd.mk_order (SIOrd.HBe hbe), SIOrd.Bot)
+           else
+             (SIOrd.Bot, SIOrd.Bot)
+       | _ -> (SIOrd.Bot, SIOrd.Bot)
+       end
+   | _ -> (SIOrd.Bot, SIOrd.Bot)
+
    
 (* Makes projection per party for proof obligations *)
-(* Returns a pair of SIOrd.assrt *)
-let rec mk_prj_guard pred_orders role =
+(* Returns a pair of SIOrd.assrt: 
+  * (orders for Assume, orders for Guard) *)
+let rec mk_prj_guard_on_role pred_orders role =
   match pred_orders with
    | SIOrd.And and_type -> 
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
-       let (prj_assume1, prj_guard1) = mk_prj_guard and_head role in
-       let (prj_assume2, prj_guard2) = mk_prj_guard and_tail role in
+       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role and_head role in
+       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role and_tail role in
        (SIOrd.mk_and prj_assume1 prj_assume2, SIOrd.mk_and prj_guard1 prj_guard2)
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
-       let (prj_assume1, prj_guard1) = mk_prj_guard or_head role in
-       let (prj_assume2, prj_guard2) = mk_prj_guard or_tail role in
+       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role or_head role in
+       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role or_tail role in
        (SIOrd.mk_or prj_assume1 prj_assume2, SIOrd.mk_or prj_guard1 prj_guard2)
    | SIOrd.Event e -> (SIOrd.Bot, SIOrd.Bot)
    | SIOrd.Order order ->
@@ -127,6 +168,35 @@ let rec mk_prj_guard pred_orders role =
       | _ -> (SIOrd.Bot, SIOrd.Bot)
      end
    | _ -> (SIOrd.Bot, SIOrd.Bot)
+
+
+(* Makes projection per channel for proof obligations *)
+let rec mk_prj_guard_on_chan pred_orders chan =
+  match pred_orders with
+   | SIOrd.And and_type -> 
+       let and_head = and_type.and_assrt1 in
+       let and_tail = and_type.and_assrt2 in
+       let prj1 = mk_prj_guard_on_chan and_head chan in
+       let prj2 = mk_prj_guard_on_chan and_tail chan in
+       SIOrd.mk_and prj1 prj2 
+   | SIOrd.Or or_type ->
+       let or_head = or_type.or_assrt1 in
+       let or_tail = or_type.or_assrt2 in
+       let prj1 = mk_prj_guard_on_chan or_head chan in
+       let prj2 = mk_prj_guard_on_chan or_tail chan in
+       SIOrd.mk_or prj1 prj2
+   | SIOrd.Order order ->
+       begin match order with
+       | SIOrd.HBe hbe ->
+           let hbe_chan = hbe.hbe_event2.channel in
+           if (SBProj.eq_chan chan hbe_chan) then
+             SIOrd.mk_order (SIOrd.HBe hbe)
+           else
+             SIOrd.Bot
+       | _ -> SIOrd.Bot
+       end
+   | _ -> SIOrd.Bot
+
 
 (* Removes Bot assrt from session predicate orders *)
 (* Examples: 
@@ -215,6 +285,23 @@ let norm_sess_pred prj=
   let pr = SProj.string_of_session in
   Debug.no_1 "SP.norm_sess_pred" pr pr norm_sess_pred prj
 
+let norm_proj (session:SProj.session) : SProj.session = 
+  (* removes assrt Bot *)
+  let norm_sess = norm_assrt session in
+  (* removes assertions and guards that contain orders with only one Bot *)
+  let norm_sess = norm_sess_pred norm_sess in
+  let norm_sess = SProj.remove_emps norm_sess in
+  norm_sess
+
+(* TODO elena: to be implemented *)
+let norm_tproj (session:STProj.session) : STProj.session =
+  let norm_sess = STProj.remove_emps session in
+  norm_sess
+
+
+(* ====== Projection per party / channel ====== *)
+(* ============================================ *)
+
 (* Projection per party *)
 (* global spec -> per party spec *)
 let mk_projection_per_party prot role =
@@ -266,12 +353,15 @@ let mk_projection_per_party prot role =
               SProj.SEmp
           | SProt.Predicate sp ->
             (* gets information nedeed for projection *)
-            let pred_name = sp.session_predicate_name in
-            let pred_ho_vars = sp.session_predicate_ho_vars in
-            let pred_params = sp.session_predicate_params in
-            let pred_pos = sp.session_predicate_pos in
-            let pred_orders = sp.session_predicate_orders in
-            let pred_kind = sp.session_predicate_kind in
+            let pred_name      = sp.session_predicate_name in
+            let pred_ho_vars   = sp.session_predicate_ho_vars in
+            let pred_params    = sp.session_predicate_params in
+            let pred_heap_node = sp.session_predicate_formula_heap_node in
+            let pred_pure      = sp.session_predicate_pure in
+            let pred_anns      = sp.session_predicate_anns in
+            let pred_pos       = sp.session_predicate_pos in
+            let pred_orders    = sp.session_predicate_orders in
+            let pred_kind      = sp.session_predicate_kind in
             (* makes projection per Predicate kind *)
             (* only Assert Assume and Assert Guard are taken into consideration *)
             begin match pred_kind with
@@ -279,12 +369,18 @@ let mk_projection_per_party prot role =
               begin
                 match a with
                 | Assume ->
-                    let assrt = mk_prj_assume pred_orders role in
-                    SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params ~orders:assrt ~sess_pred_kind:pred_kind pred_pos)
+                    let assrt = mk_prj_assume_on_role pred_orders role in
+                    SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt ~sess_pred_kind:pred_kind pred_pos)
                 | Guard -> 
-                    let (assrt_assume, assrt_guard) = mk_prj_guard pred_orders role in
-                    let pred_assume = SProj.SBase (SProj.mk_session_predicate "Assume" pred_ho_vars pred_params ~orders:assrt_assume ~sess_pred_kind:(Assert Assume) pred_pos) in
-                    let pred_guard = SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params ~orders:assrt_guard ~sess_pred_kind:pred_kind pred_pos) in
+                    let (assrt_assume, assrt_guard) = mk_prj_guard_on_role pred_orders role in
+                    let pred_assume = SProj.SBase (SProj.mk_session_predicate "Assume" pred_ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt_assume ~sess_pred_kind:(Assert Assume) pred_pos) in
+                    let pred_guard = SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt_guard ~sess_pred_kind:pred_kind pred_pos) in
                     SProj.mk_session_seq_formula pred_assume pred_guard pred_pos
                 | _ -> SProj.SEmp
               end
@@ -295,18 +391,14 @@ let mk_projection_per_party prot role =
     | _ -> SProj.SEmp
   in
   let session = deconstruct_prot prot in
-  (* removes assrt Bot *)
-  let norm_sess = norm_assrt session in
-  (* removes assertions and guards that contain orders with only one Bot *)
-  let norm_sess = norm_sess_pred norm_sess in
-  let norm_sess = SProj.remove_emps norm_sess in
-  norm_sess
+  norm_proj session
 
 let mk_projection_per_party prot role =
   let pr1 = SProt.string_of_session in
   let pr2 = Iformula.string_of_spec_var in
   let pr_out = SProj.string_of_session in
   Debug.no_2 "SP.mk_projection_per_party" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_party prot role) prot role
+
 
 (* Projection per channel *)
 (* per party spec -> per channel spec *)
@@ -359,32 +451,62 @@ let mk_projection_per_channel prj chan =
           begin match transmission with
           | Session.TSend
           | Session.TReceive ->
-              if ch = chan then
+              if SBProj.eq_chan ch chan then
                 create_session_base_tprj transmission msg_var pos heap_node msg
               else
                 STProj.SEmp
           end
       | SProj.Predicate pred ->
           (* gets information nedeed for projection *)
-          let name = pred.session_predicate_name in
-          let ho_vars = pred.session_predicate_ho_vars in
-          let pred_params = pred.session_predicate_params in
-          let pred_pos = pred.session_predicate_pos in
-          let pred_orders = pred.session_predicate_orders in
-          let pred_kind = pred.session_predicate_kind in
-          STProj.SEmp (*TODO elena: to be implemented *)
+          let name           = pred.session_predicate_name in
+          let ho_vars        = pred.session_predicate_ho_vars in
+          let pred_params    = pred.session_predicate_params in
+          let pred_heap_node = pred.session_predicate_formula_heap_node in
+          let pred_pure      = pred.session_predicate_pure in
+          let pred_anns      = pred.session_predicate_anns in  
+          let pred_pos       = pred.session_predicate_pos in
+          let pred_orders    = pred.session_predicate_orders in
+          let pred_kind      = pred.session_predicate_kind in
+          begin match pred_kind with
+            | Assert a -> 
+              begin
+                match a with
+                | Assume ->
+                    let (assrt_assume, assrt_guard) = mk_prj_assume_on_chan pred_orders chan in
+                    let pred_assume = STProj.mk_session_predicate name ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt_assume ~sess_pred_kind:pred_kind pred_pos in
+                    let pred_guard = STProj.mk_session_predicate "Guard" ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt_guard ~sess_pred_kind:(Assert Guard) pred_pos in
+                    STProj.mk_session_seq_formula (STProj.SBase pred_assume) (STProj.SBase pred_guard) pred_pos
+                | Guard ->
+                    let assrt = mk_prj_guard_on_chan pred_orders chan in
+                    let guard_pred = STProj.mk_session_predicate name ho_vars pred_params
+                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
+                                ~orders:assrt ~sess_pred_kind:(Assert Guard) pred_pos in
+                    STProj.SBase guard_pred
+                | _ -> STProj.SEmp
+              end
+            | _ -> STProj.SEmp
+          end
       | _ -> STProj.SEmp
       end
   | _ -> STProj.SEmp
   in
   let session = prj_per_chan prj chan in
-  session
+  norm_tproj session
+
+
+(* ====== Helpful functions used to collect projection result ====== *)
+(* ================================================================= *)
 
 let mk_projection_per_channel prj chan =
   let pr1 = SProj.string_of_session in
   let pr2 = Iformula.string_of_spec_var in
   let pr_out = STProj.string_of_session in
   Debug.no_2 "SP.mk_projection_per_channel" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_channel prj chan) prj chan
+
 
 (* Collects projections per party into the Map *)
 let save_party_prj_into_map map prj_elem role =
@@ -408,7 +530,6 @@ let save_chan_prj_into_map map prj_elem pair =
 
 (* per party *)
 let rec create_map_of_prj prot vars map = match vars with
-| [] -> map
 | (typ, var)::tail ->
   if cmp_typ typ role_typ then
     let role = Session.IMessage.mk_var var in
@@ -417,11 +538,11 @@ let rec create_map_of_prj prot vars map = match vars with
     create_map_of_prj prot tail map
   else
     create_map_of_prj prot tail map
+| [] -> map
 
 (* per channel *)
 let create_map_of_tprj prj_map vars =
   let rec mk_prj_per_channel prj role vars map = begin match vars with
-  | [] -> map
   | (typ, var)::vars_tail ->
     if cmp_typ typ chan_typ then
           let chan = Session.IMessage.mk_var var in
@@ -430,8 +551,8 @@ let create_map_of_tprj prj_map vars =
           mk_prj_per_channel prj role vars_tail map
         else
           mk_prj_per_channel prj role vars_tail map
+  | [] -> map
   end in
-  (*TODO elena: create a function fold_left *)
   List.fold_left (fun acc (role, prj) -> mk_prj_per_channel prj role vars acc) (TPrjMap.mkEmpty()) prj_map
       
 (* Applies projection per party, then per channel.

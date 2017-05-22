@@ -138,8 +138,8 @@ struct
       | Event e  -> "(" ^ string_of_event e ^ ")"
       | NEvent e -> "not("^ (string_of_event e) ^ ")"
       | Transm t -> string_of_transmission t
-      | Order (HBe e) -> "(" ^ (string_of_event e.hbe_event1) ^ " <_HB " ^ (string_of_event e.hbe_event2) ^ ")"
-      | Order (HBt t) -> "(" ^(string_of_transmission t.hbt_transmission1) ^ " <_HB " ^ (string_of_transmission t.hbt_transmission2) ^ ")"
+      | Order (HBe e) -> "(" ^ (string_of_event e.hbe_event1) ^ " <_HBe " ^ (string_of_event e.hbe_event2) ^ ")"
+      | Order (HBt t) -> "(" ^ (string_of_transmission t.hbt_transmission1) ^ " <_HBt " ^ (string_of_transmission t.hbt_transmission2) ^ ")"
       | Order (CBe e) -> "(" ^ (string_of_event e.cbe_event1) ^ " <_CB " ^ (string_of_event e.cbe_event2) ^ ")"
       | And a -> (helper a.and_assrt1) ^ " & " ^ (helper a.and_assrt2)
       | Or  a -> (helper a.or_assrt1) ^ " or " ^ (helper a.or_assrt2)

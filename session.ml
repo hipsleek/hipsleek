@@ -1241,6 +1241,8 @@ module Projection_base_formula =
     }
 
     let base_type = Projection
+    
+    let eq_chan = Msg.eq_var
 
     let print_message f = !Msg.print f.projection_base_formula_message
 
