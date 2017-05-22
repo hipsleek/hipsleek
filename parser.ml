@@ -3563,6 +3563,7 @@ rel_kind: [[ `AT; `IDENTIFIER anno ->
                  | "cb" -> (mk_rel_order_kind CB)
                  | "sevent" -> (mk_rel_sorder_kind Event)
                  | "shb" -> (mk_rel_sorder_kind HB)
+                 | "shbp" -> (mk_rel_sorder_kind HBP)
                  | "scb" -> (mk_rel_sorder_kind CB)
 
                  | _ -> report_error (get_pos_camlp4 _loc 1) "not a relation kind")

@@ -299,18 +299,19 @@ module Edge (Vertex: LIST_TYPE) (Elem: ELEM_TYPE) =
 struct
   module Vertex = Vertex(Elem)
   type t = {tail: Vertex.t; kind: arrow_kind; head: Vertex.t}
-  and arrow_kind = HB | CB | Backward
+  and arrow_kind = HB | HBP | CB | Backward
 
   let string_of_arrow_kind arrow_kind =
     match arrow_kind with
-    | HB -> "-->"
+    | HB  -> "-->"
+    | HBP -> "-->"
     | CB -> "->>"
     | Backward -> "<-"
   let string_of e =  (Vertex.string_of e.tail) ^ (string_of_arrow_kind e.kind) ^ (Vertex.string_of e.head)
   let mk_edge t a h    = {tail = t; kind = a; head = h}
   let eq_arrow (a1: arrow_kind) (a2: arrow_kind) =
     match a1,a2 with
-    | HB,HB | CB,CB | Backward,Backward -> true | _,_ -> false
+    | HB,HB | HBP,HBP | CB,CB | Backward,Backward -> true | _,_ -> false
   let eq e1 e2 = (Vertex.eq e1.tail e2.tail) && (Vertex.eq e1.head e2.head) && (eq_arrow e1.kind e2.kind)
   let compare e1 e2 = failwith x_tbi
 
@@ -318,7 +319,7 @@ struct
   let get_tail edge = edge.tail
   let get_kind edge = edge.kind
 
-  let is_hb arrow =  match arrow with HB -> true | _ -> false
+  let is_hb arrow =  match arrow with HB | HBP -> true | _ -> false
   let is_cb arrow =  match arrow with CB -> true | _ -> false
   let is_hb_edge edge =  is_hb (get_kind edge)
   let is_cb_edge edge =  is_cb (get_kind edge)

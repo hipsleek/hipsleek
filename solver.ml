@@ -9125,17 +9125,17 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                     (None,None,[],[],false) res
               in
               (* ========= ANDREEA - testing orders infer ================ *)
-              let inf_orders = OS.infer_orders_estate estate rhs_p in
-              let ip2 =
-                if (List.length inf_orders > 0) then                  
-                  (* let () = stk_inf_pure # push_list_loc x_loc inf_orders in *)
-                  let inf_orders = List.map (fun f -> (CP.LO.singleton Globals.chr_label,f)) inf_orders in
-                  let inf_orders = CP.mkAndList inf_orders in
-                  match ip2 with
-                  | None -> Some inf_orders
-                  | Some ip2 -> Some (CP.mkAnd ip2 inf_orders pos)
-                else ip2
-              in
+              (* let inf_orders = OS.infer_orders_estate estate rhs_p in *)
+              (* let ip2 = *)
+              (*   if (List.length inf_orders > 0) then                   *)
+              (*     (\* let () = stk_inf_pure # push_list_loc x_loc inf_orders in *\) *)
+              (*     let inf_orders = List.map (fun f -> (CP.LO.singleton Globals.chr_label,f)) inf_orders in *)
+              (*     let inf_orders = CP.mkAndList inf_orders in *)
+              (*     match ip2 with *)
+              (*     | None -> Some inf_orders *)
+              (*     | Some ip2 -> Some (CP.mkAnd ip2 inf_orders pos) *)
+              (*   else ip2 *)
+              (* in *)
               (* ========= end ANDREEA - testing orders infer ============ *)
               begin
                 match ip1 with

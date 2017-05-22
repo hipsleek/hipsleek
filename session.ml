@@ -53,9 +53,11 @@ let peer_id: string option ref = ref None
 
 let event_rel_id: string option ref = ref None
 let hb_rel_id: string option ref = ref None
+let hbp_rel_id: string option ref = ref None
 let cb_rel_id: string option ref = ref None
 let sevent_rel_id: string option ref = ref None
 let shb_rel_id: string option ref = ref None
+let shbp_rel_id: string option ref = ref None
 let scb_rel_id: string option ref = ref None
 
 let set_rels_id id kind =
@@ -66,9 +68,11 @@ let set_rels_id id kind =
     | Orders Event -> event_rel_id := Some id
     | Orders CB    -> cb_rel_id := Some id
     | Orders HB    -> hb_rel_id := Some id
+    | Orders HBP    -> hbp_rel_id := Some id
     | Sleek Event -> sevent_rel_id := Some id
     | Sleek CB    -> scb_rel_id := Some id
     | Sleek HB    -> shb_rel_id := Some id
+    | Sleek HBP   -> shbp_rel_id := Some id
     | _ -> ()
 
 let set_prim_pred_id kind id =

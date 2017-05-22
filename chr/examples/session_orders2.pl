@@ -1,9 +1,9 @@
 #!/usr/bin/swipl -q
-:- module(orders, [ev/1,hb/2,cb/2,snot/1,snot_eq/2]).
+:- module(orders, [ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2]).
 :- use_module(library(chr)).
 
 %:- initialization start.
-:- chr_constraint ev/1,hb/2,cb/2,snot/1,snot_eq/2.
+:- chr_constraint ev/1,hb/2,hbp/2,cb/2,snot/1,snot_eq/2.
 
 
 % disable singleton warning
@@ -36,6 +36,8 @@ neg2   @ snot(A;B) <=> snot(A),snot(B).
 neg3   @ snot((A,B)) <=> snot(A);snot(B).
 neg4   @ ev(A),snot(ev(A))  <=> false.
 neg5   @ hb(A,B),snot(hb(A,B)) <=> false.
+neg5   @ hbp(A,B),snot(hbp(A,B)) <=> false.
+neg5   @ snot(snot_eq(A,B)) <=> A=B.
 neg6   @ snot_eq(A,A) <=> false.
 % neg5   @ hb(A,A),snot(hb(A,A)) <=> false.
 sym1   @ hb(A,B)\hb(A,B) <=> true .

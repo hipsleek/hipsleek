@@ -226,6 +226,7 @@ and orders_kind =
   | Event
   | HB
   | CB
+  | HBP
 
 and relation_kind = 
   | Orders of orders_kind       (* sleek order relations *)
@@ -350,6 +351,7 @@ let string_of_sess_ann ann = match ann with
 let string_of_orders_kind nk = match nk with
   | Event -> "Event"
   | HB    -> "HB"
+  | HBP   -> "HBP"
   | CB    -> "CB"
 
 let string_of_assertions_predicate_kind nk = match nk with

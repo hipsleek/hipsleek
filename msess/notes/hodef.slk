@@ -25,7 +25,9 @@ relation ocb@cb(int n1,int m1,int n2,int m2).
 /* sleek relations */
 relation ev@sevent(int n).
 relation hb@shb(int n1,int n2).
+relation hbp@shbp(int n1,int n2).
 relation cb@scb(int n1,int n2).
+relation snot_eq(int a,int b).
 
 
 /* apply A+ before G- */

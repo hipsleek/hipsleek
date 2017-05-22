@@ -1,0 +1,98 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+//1
+checkentail  emp & ["chr": hb(A2,B2)]
+        |- emp & ["chr": hb(A2,B2)].
+expect Valid.
+print residue.
+
+//2
+checkentail  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": hb(A2,B2)].
+expect Fail.
+print residue.
+
+//3
+checkentail  emp & ["chr": cb(A2,B2) & hb(B2,B1)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Fail.
+print residue.
+
+//4
+checkentail  emp & ["chr": cb(A2,B2) & hbp(B2,B1)]
+        |- emp & ["chr": hb(A2,B1)].
+expect Valid.
+print residue.
+
+//5
+checkentail  emp & ["chr": cb(A2,B2) & hbp(B2,B1)]
+        |- emp & ["chr": hbp(A2,B1)].
+expect Valid.
+print residue.
+
+//6
+checkentail  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": snot_eq(A2,B2)].
+expect Valid.
+print residue.
+
+//7
+checkentail  emp & ["chr": cb(A2,B2)]
+        |- emp & ["chr": A2=B2].
+expect Fail.
+print residue.
+
+//8
+checkentail  emp & ["chr": cb(A2,B2) & hb(B2,B1)]
+        |- emp & ["chr": hbp(A2,B1)].
+expect Fail.
+print residue.
+
+//9
+checkentail  emp & ["chr": cb(A2,B2) & hb(B2,B1) & snot_eq(B2,B1)]
+        |- emp & ["chr": hbp(A2,B1)].
+expect Valid.
+print residue.
+
+//10
+checkentail  emp & ["chr": hb(B2,B1) & snot_eq(B2,B1)]
+        |- emp & ["chr": hbp(B2,B1)].
+expect Valid.
+print residue.
+
+//11
+checkentail  emp & ["chr": hb(B2,B1) ]
+        |- emp & ["chr": hbp(B2,B1)].
+expect Fail.
+print residue.
+
+//12
+checkentail  emp & ["chr": hbp(B2,B1) ]
+        |- emp & ["chr": hb(B2,B1)].
+expect Valid.
+print residue.
+
+//13
+checkentail  emp & ["chr": hbp(B2,B2) ]
+        |- false.
+expect Valid.
+print residue.
+
+//14
+checkentail  emp & ["chr": hb(B2,B2) ]
+        |- false.
+expect Fail.
+print residue.
+
+//15
+checkentail  emp & ["chr": hb(B2,B3) & hb(B3,B2)]
+        |- B2=B3.
+expect Valid.
+print residue.
+
+//16
+checkentail  emp & ["chr": hbp(B2,B3) & hb(B3,B2)]
+             |- false.
+expect Valid.
+print residue.
