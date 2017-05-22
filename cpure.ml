@@ -3907,7 +3907,7 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | (Div(e11, e12, _), Div(e21, e22, _)) -> (helper e11 e21) && (helper e12 e22)
     | (Bag(e1, _), Bag(e2, _))
     | (BagUnion(e1, _), BagUnion(e2, _))
-    | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_list_f eq e1 e2)
+    | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_set_f eq e1 e2)
     | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (helper e1 e3) && (helper e2 e4)
     | (List (l1, _), List (l2, _))
     | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (helper a b)) l1 l2 
@@ -3921,12 +3921,26 @@ and eqExp_f_x (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
     | _ -> false
   in helper e1 e2
 
-and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
-  let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
+(* only for set equality - imprecises for bags *)
+and eqExp_set_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
+  let rec eq_exp_set_helper (e1 : exp list) (e2 : exp list) = match e1 with
     | [] -> true
-    | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) && (eq_exp_list_helper t e2)
+    | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) && (eq_exp_set_helper t e2)
   in
-  (eq_exp_list_helper e1 e2) && (eq_exp_list_helper e2 e1)
+  (eq_exp_set_helper e1 e2) && (eq_exp_set_helper e2 e1)
+
+and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
+  if (List.length e1) <> (List.length e2) then false
+  else
+    let rec eq_exp_list_helper (l : (exp * exp) list) =
+      match l with
+      | (h1, h2)::tail ->
+          if eqExp_f eq h1 h2 then eq_exp_list_helper tail
+          else false
+      | [] -> true
+    in
+    let zip = List.combine e1 e2 in
+    eq_exp_list_helper zip
 
 and remove_dupl_conj_eq (cnjlist:formula list):formula list = Gen.BList.remove_dups_eq equalFormula cnjlist
 

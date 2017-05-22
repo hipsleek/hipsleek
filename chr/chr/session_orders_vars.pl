@@ -39,6 +39,8 @@ neg5    @ hb(A,B),snot(hb(A,B)) <=> false.
 neg6    @ hbp(A,B),snot(hbp(A,B)) <=> false.
 neg7    @ snot(snot_eq(A,B)) <=> A=B.
 neg8    @ snot_eq(A,A) <=> false.
+neg9    @ snot(A=B)  <=> snot_eq(A,B),snot_eq(B,A). 
+
 % neg5   @ hb(A,A),snot(hb(A,A)) <=> false.
 dup1    @ hb(A,B)\hb(A,B) <=> true .
 antisym @ hb(A,B),hb(B,A) <=> A=B.
