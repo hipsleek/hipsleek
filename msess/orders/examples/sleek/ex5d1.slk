@@ -15,8 +15,15 @@ checkentail  emp & ["chr": hbp(B2,B3) & hb(B3,B2)]
 expect Valid.
 print residue.
 */
+/*
 //15
 checkentail  emp & ["chr": hb(B2,B3) & hb(B3,B2)]
              |- emp & ["chr": B2=B3].
+expect Valid.
+print residue.
+*/
+
+checkentail  hb(B2,B3) & hb(B3,B2)
+             |- B2=B3.
 expect Valid.
 print residue.

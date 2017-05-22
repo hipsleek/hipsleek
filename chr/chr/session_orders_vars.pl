@@ -32,20 +32,19 @@
 %%%% RULES
 %%%%%%%%%%
 %negation rules for hb and ev
-neg2   @ snot(A;B) <=> snot(A),snot(B).
-neg3   @ snot((A,B)) <=> snot(A);snot(B).
-neg4   @ ev(A),snot(ev(A))  <=> false.
-neg5   @ hb(A,B),snot(hb(A,B)) <=> false.
-neg5   @ hbp(A,B),snot(hbp(A,B)) <=> false.
-neg5   @ snot(snot_eq(A,B)) <=> A=B.
-neg6   @ snot_eq(A,A) <=> false.
+neg2    @ snot(A;B) <=> snot(A),snot(B).
+neg3    @ snot((A,B)) <=> snot(A);snot(B).
+neg4    @ ev(A),snot(ev(A))  <=> false.
+neg5    @ hb(A,B),snot(hb(A,B)) <=> false.
+neg6    @ hbp(A,B),snot(hbp(A,B)) <=> false.
+neg7    @ snot(snot_eq(A,B)) <=> A=B.
+neg8    @ snot_eq(A,A) <=> false.
 % neg5   @ hb(A,A),snot(hb(A,A)) <=> false.
-% neg6   @ hb(A,B),snot(hb(A,B)) <=> false.
-sym1   @ hb(A,B)\hb(A,B) <=> true .
-asy2   @ hb(A,B),hb(B,A)   <=> A=B.
-asy3   @ hbp(A,B),hbp(B,A) <=> false.
-asy4   @ hbp(A,A) <=> false.
-asy5   @ cb(A,B) ==>  snot_eq(A,B).
+dup1    @ hb(A,B)\hb(A,B) <=> true .
+antisym @ hb(A,B),hb(B,A) <=> A=B.
+%asy3   @ hbp(A,B),hbp(B,A) <=> false.
+asy4    @ hbp(A,A) <=> false.
+irefl   @ cb(A,B) ==>  snot_eq(A,B).
 % HB transitivity 
 % hbhb   @ hb(A,B), hb(B,C) ==> A\=B,B\=C | hb(A,C).
 hbhb   @ hb(A,B), hb(B,C) ==>  hb(A,C).
