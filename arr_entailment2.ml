@@ -24,6 +24,10 @@ type arrF =
 (* This may increase readability *)
 let mkArrF e p h = (e,p,h);;
 
+let contains_evar elst v =
+  List.exists (fun item -> is_same_exp item v) elst
+;;
+
 let str_asegPred aseg =
   match aseg with
   | Aseg (s,e) ->
@@ -179,22 +183,6 @@ let array_entailment lhs rhs =
     let f = aux_helper_pure lhs_p rhs [] in
     print_and_return f indent
   in
-  (* let aseg_to_AsegNE rhs = *)
-  (*   let rec helper_Aseg_to_AsegNE (rhs_e,rhs_p,rhs_h) = *)
-  (*     match rhs_h with *)
-  (*     | h::tail -> *)
-  (*        ( match h with *)
-  (*          | Aseg (f,t) -> *)
-  (*             (mkArrF rhs_e ((mkLt f t)::rhs_p) ((aseg_to_asegne h)::tail))::(helper_Aseg_to_AsegNE (rhs_e,(mkEq f t)::rhs_p, tail)) *)
-  (*          | AsegNE _ -> *)
-  (*             [(rhs_e,rhs_p, rhs_h)] *)
-  (*          | Emp -> helper_Aseg_to_AsegNE (rhs_e,rhs_p,tail)) *)
-  (*     | [] -> [(rhs_e,rhs_p,[])] *)
-  (*   in *)
-  (*   (List.fold_left *)
-  (*      (fun r item -> *)
-  (*        (helper_Aseg_to_AsegNE item)@r) [] rhs) *)
-  (* in *)
   let remove_emp rhs =
     let rec helper_remove_emp r (rhs_e,rhs_p,rhs_h) =
       match rhs_h with
@@ -223,24 +211,40 @@ let array_entailment lhs rhs =
     in
     align_head_address rhs
   in
-  let exists_existential_var rhs =
-    let rec helper_exists_existential_var head tail =
+  
+  let exists_asegne_with_existential_var rhs lhs_m =
+    let rec helper_exists_asegne_with_existential_var head tail =
       match tail with
       | ((rhs_e,rhs_p,rhs_h) as disj)::rest ->         
          ( match rhs_h with
            | (AsegNE (t,m))::tail1 ->
-              if false          (* TO BE IMPLEMENTED *)
-              then Some (disj,head@rest)
-              else helper_exists_existential_var (disj::head) rest
+              if contains_evar rhs_e m
+              then
+                let mc = mkVar (global_get_new_var ()) in
+                let rhs1 = head@[mkArrF rhs_e ([mkLte m lhs_m;mkEq mc m]@rhs_p) ((mkAsegNE t mc)::tail1)]@rest in
+                let rhs2 = head@[mkArrF rhs_e ((mkLt lhs_m m)::rhs_p) ([mkAsegNE t lhs_m;mkAseg lhs_m m]@tail1)]@rest in
+                Some (mc, rhs1, rhs2)
+              else helper_exists_asegne_with_existential_var (disj::head) rest           
+           | _ -> helper_exists_asegne_with_existential_var (disj::head) rest)
+      | [] -> None
+    in
+    helper_exists_asegne_with_existential_var [] rhs
+  in
+  
+  let exists_aseg_with_existential_var rhs =
+    let rec helper_exists_aseg_with_existential_var head tail =
+      match tail with
+      | ((rhs_e,rhs_p,rhs_h) as disj)::rest ->         
+         ( match rhs_h with           
            | (Aseg (t,m))::tail1 ->
-              if false          (* TO BE IMPLEMENTED *)
-              then Some (disj,head@rest)
-              else helper_exists_existential_var (disj::head) rest
-           | _ -> None)
+              if (contains_evar rhs_e t)||(contains_evar rhs_e m)
+              then Some ((head@[mkArrF rhs_e ((mkEq t m)::rhs_p) tail1]@rest), (head@[mkArrF rhs_e ((mkLt t m)::rhs_p) ((mkAsegNE t m)::tail1)]@rest))
+              else helper_exists_aseg_with_existential_var (disj::head) rest
+           | _ -> helper_exists_aseg_with_existential_var (disj::head) rest)           
            (* | _ -> failwith "exists_existential_var: Invalid input") *)
       | [] -> None
     in
-    helper_exists_existential_var [] rhs
+    helper_exists_aseg_with_existential_var [] rhs
   in
   let exists_aseg rhs =
     let rec helper_exists_aseg head tail =
@@ -248,9 +252,8 @@ let array_entailment lhs rhs =
       | ((rhs_e,rhs_p,rhs_h) as disj)::rest ->         
          (match rhs_h with
           | (Aseg (t,m))::tail1 ->
-             Some (disj,head@rest)
-          | _ ->
-             helper_exists_aseg (disj::head) rest)
+             Some (((mkEq t m),head@[mkArrF rhs_e rhs_p tail1]@rest),((mkLt t m),head@[mkArrF rhs_e rhs_p ((mkAsegNE t m)::tail1)]@rest))
+          | _ -> helper_exists_aseg (disj::head) rest)
       | [] -> None
     in
     helper_exists_aseg [] rhs
@@ -300,87 +303,55 @@ let array_entailment lhs rhs =
       visit [] rhs []
     in
 
-    (* if (List.exists *)
-    (*       (fun (_,_,h) -> *)
-    (*         match h with *)
-    (*         | (Aseg _)::tail -> true *)
-    (*         | _ -> false) rhs) *)
-    (* then print_and_return (helper lhs (aseg_to_AsegNE rhs) (indent+1)) indent *)
-    (* else *)
-    let norm_rhs = rhs in            
-    ( match (exists_existential_var norm_rhs) with
-      | Some ((n_rhs_e,n_rhs_p, n_rhs_h),rest) ->
-         failwith "TO BE IMPLEMENTED: remove existential quantifiers"
-      (* ( match n_rhs_h with *)
-      (*   | (AsegNE (nt,nm))::ntail -> *)
-      (*      let mc = mkVar (global_get_new_var ()) in *)
-      (*      mkOr *)
-      (*        (helper (mkArrF n_rhs_e *)
-      (*                        ([mkLte t mc;mkLte mc m]@lhs_p) *)
-      (*                        ([mkAsegNE t mc;mkAseg mc m]@tail)) *)
-      (*                ((mkArrF n_rhs_e *)
-      (*                         ([mkEq nm mc;mkLte nm m;]@n_rhs_p) *)
-      (*                         ((mkAsegNE nt mc)::ntail))::rest) (indent+1)) *)
-      (*        (helper lhs *)
-      (*                ((mkArrF n_rhs_e *)
-      (*                         ((mkLt m nm)::n_rhs_p) *)
-      (*                         (([mkAsegNE nt m;mkAsegNE m nm]@ntail)))::rest) (indent+1)) *)
-      (*   | _ -> failwith "Invalid output from rhs_aseg_to_AsegNE_and_align" ) *)
-      | None ->
-         ( match exists_aseg norm_rhs with
-           | Some ((n_rhs_e,n_rhs_p, (Aseg (nt,nm))::n_rhs_tail),rest) ->
-              mkAnd
-                (helper (mkArrF lhs_e
-                                ((mkLt nt nm)::lhs_p)
-                                lhs_h)
-                        ((mkArrF n_rhs_e
-                                 n_rhs_p
-                                 (((mkAsegNE nt nm)::n_rhs_tail)))::rest) (indent+1))
-                (helper (mkArrF lhs_e
-                                ((mkEq nt nm)::lhs_p)
-                                lhs_h)
-                        ((mkArrF n_rhs_e
-                                 n_rhs_p
-                                 (n_rhs_tail))::rest) (indent+1))
-           | None ->
-              ( match lhs_h with
-                | [] -> helper_pure lhs_p rhs indent
-                | h::tail ->
-                   (
-                     match h with
-                     | Emp -> print_and_return (helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)) indent
-                     | Aseg (f,t) ->
-                        if is_same_exp f t
-                        then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)
-                        else
-                          print_and_return
-                            (mkAnd
-                               (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
-                               (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs (indent+1)))
-                            indent
-                     | AsegNE (t,m) ->
-                        let norm_rhs = rhs_align t (remove_emp norm_rhs) in
-                        let (all_m, split_rhs) =
-                          List.fold_left
-                            (fun (mlst,srhs) item ->
-                              match item with
-                              | (e,p,(AsegNE (ti,mi))::taili) ->
-                                 (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
-                              | _ -> failwith "AsegNE cannot match")
-                            ([],[]) norm_rhs
-                        in
-                        (* let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in *)
-                        let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs (indent+1) in
-                        print_and_return (mkAndlst (f_lhs_min::(helper_match lhs norm_rhs (m::all_m) (indent+1)))) indent
-                     | Pointsto (t,v) ->
-                        let norm_rhs = rhs_align t (remove_emp norm_rhs) in
-                        let exposed_pointsto_rhs = expose_points_to t v norm_rhs in
-                        helper (mkArrF lhs_e lhs_p tail) exposed_pointsto_rhs (indent+1)
-                   )                
-              )
-           
-           | _ ->
-              failwith "Invalid output from exists_aseg"))
+    let norm_rhs = rhs in
+    (match (exists_aseg_with_existential_var norm_rhs) with
+     | Some (rhs1,rhs2) ->
+        mkOr (helper lhs rhs1 (indent+1)) (helper lhs rhs2 (indent+1))
+     | None ->
+        ( match (exists_aseg norm_rhs) with
+          | Some ((p1,rhs1),(p2,rhs2)) ->
+             mkAnd (helper (lhs_e,p1::lhs_p,lhs_h) rhs1 (indent+1)) (helper (lhs_e,(p2::lhs_p),lhs_h) rhs2 (indent+1))
+          | None ->
+             ( match lhs_h with
+               | [] -> helper_pure lhs_p rhs indent
+               | h::tail ->
+                  (
+                    match h with                    
+                    | Aseg (f,t) ->
+                       if is_same_exp f t
+                       then helper (mkArrF lhs_e lhs_p tail) rhs (indent+1)
+                       else
+                         print_and_return
+                           (mkAnd
+                              (helper (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs (indent+1))
+                              (helper (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs (indent+1)))
+                           indent
+                    | Pointsto (t,v) ->
+                       let norm_rhs = rhs_align t (remove_emp norm_rhs) in
+                       let exposed_pointsto_rhs = expose_points_to t v norm_rhs in
+                       helper (mkArrF lhs_e lhs_p tail) exposed_pointsto_rhs (indent+1)
+                    | AsegNE (t,m) ->
+                       ( match (exists_asegne_with_existential_var norm_rhs m) with
+                         | Some (mc,rhs1,rhs2) ->                            
+                            mkOr (helper (mkArrF lhs_e
+                                                 ([mkLt t mc;mkLte mc m]@lhs_p)
+                                                 ([mkAsegNE t mc;mkAseg mc m]@tail)) rhs1 (indent+1))
+                                 (helper lhs rhs2 (indent+1))
+                         | None ->
+                            let norm_rhs = rhs_align t (remove_emp norm_rhs) in
+                            let (all_m, split_rhs) =
+                              List.fold_left
+                                (fun (mlst,srhs) item ->
+                                  match item with
+                                  | (e,p,(AsegNE (ti,mi))::taili) ->
+                                     (mi::mlst, (mkArrF e p ((mkAseg m mi)::taili))::srhs)
+                                  | _ -> failwith "AsegNE cannot match")
+                                ([],[]) norm_rhs
+                            in
+                            (* let f_lhs_min = helper (mkArrF lhs_e (mkEq m (mkMin (m::all_m))::lhs_p) tail) split_rhs in *)
+                            let f_lhs_min = helper (mkArrF lhs_e ((mkMin_raw m (m::all_m))::lhs_p) tail) split_rhs (indent+1) in
+                            print_and_return (mkAndlst (f_lhs_min::(helper_match lhs norm_rhs (m::all_m) (indent+1)))) indent)
+                    | _ -> failwith "Invalid input when exposing LHS"))))
   in
   let lhs = expand_disj_with_permutation lhs in
   let rhs = expand_disj_with_permutation rhs in
@@ -390,6 +361,7 @@ let array_entailment lhs rhs =
        (fun item ->
          helper item rhs 0) lhs)
 ;;
+
 
 let array_entailment_and_print lhs rhs =  
   let ante = cformula_to_arrF lhs in
@@ -423,4 +395,43 @@ let array_entailment_and_print lhs rhs =
     (*    let (lhs_p,_) = lhs in *)
                (*    mkImply (mkAnd lhs_p) (mkOrLst processedlst) *)
 
-       
+(* If written like this, this k is actually not a continuation *)
+(* let rec pass_remove_aseg rhs k = *)
+(*   match rhs with *)
+(*   | ((rhs_e,rhs_p,rhs_h) as disj)::rhs_tail -> *)
+(*      ( match rhs_h with *)
+(*        | h::tail -> *)
+(*           match h with *)
+(*           | AsegNE _ -> *)
+(*              pass_remove_aseg rhs_tail (fun x -> k (disj::x) (fun x1 -> x1)) *)
+(*           | Aseg (t,m) -> *)
+(*              (\* mkAnd (callcc pass... ) (callcc pass...) *\) *)
+(*              pass_remove_aseg ((mkArrF rhs_e (mkEq t m) tail)::rhs_tail) *)
+(*                               (fun x -> *)
+(*                                 k x ( fun x1 -> *)
+(*                                       k x1 ( fun x2 -> mkAnd x1 x2 ))) *)
+(*           | _ -> failwith "TO BE IMPLEMENTED") *)
+(*   | _ -> failwith "TO BE IMPLEMENTED" *)
+(* ;; *)
+          
+                                
+(* let rec pass_remove_aseg rhs k = *)
+(*   match rhs with *)
+(*   | ((rhs_e,rhs_p,rhs_h) as disj)::rhs_tail -> *)
+(*      ( match rhs_h with *)
+(*        | h::tail -> *)
+(*           match h with *)
+(*           | AsegNE _ -> *)
+(*              pass_remove_aseg rhs_tail (fun x -> k (disj::x) (fun x1 -> x1)) *)
+(*           | Aseg (t,m) -> *)
+(*              (\* mkAnd (callcc pass... ) (callcc pass...) *\) *)
+(*              pass_remove_aseg ((mkArrF rhs_e (mkEq t m) tail)::rhs_tail) *)
+(*                               (fun x -> *)
+(*                                 k x ( fun x1 -> *)
+(*                                       k x1 ( fun x2 -> mkAnd x1 x2 ))) *)
+(*           | _ -> failwith "TO BE IMPLEMENTED") *)
+(*   | _ -> failwith "TO BE IMPLEMENTED" *)
+(* ;; *)
+          
+                                
+  
