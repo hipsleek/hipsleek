@@ -2388,6 +2388,91 @@ module Make_Session (Base: Session_base)
       if not (!fixpt) then let () = fixpt := true in helper sess else sess
     in helper sess
 
+  (* Removes Bot assrt from session predicate orders *)
+  (* Examples: 
+    * Bot & (A,id_55) & Bot -> (A,id_55)
+    * Bot & Bot & Bot & Bot -> Bot *)
+  let norm_assrt prj =   
+    let norm prj = match prj with
+    | SBase sb ->  
+      begin          
+        match sb with
+        | Predicate p -> 
+          (* gets predicate info *)
+          let orders = p.session_predicate_orders in
+          let pred_kind = p.session_predicate_kind in
+          (* removes Bot elem from assumptions and guards orders *)
+          begin match pred_kind with
+          | Assert Assume
+          | Assert Guard ->
+            let fixpt = ref true in 
+            let rec norm_order assrt =
+              if Orders.is_and assrt then (
+                let assrt1, assrt2 = Orders.get_and_value assrt in
+                if Orders.is_bot assrt1 then
+                  let () = fixpt := false in
+                  norm_order assrt2
+                else if Orders.is_bot assrt2 then
+                  let () = fixpt := false in
+                  norm_order assrt1
+                else 
+                  Orders.mk_and (norm_order assrt1) (norm_order assrt2))
+              else if Orders.is_or assrt then
+                let assrt1, assrt2 = Orders.get_or_value assrt in
+                Orders.mk_or (norm_order assrt1) (norm_order assrt2)
+              else assrt in
+            let rec helper norm =
+              let norm = norm_order norm in
+              if not(!fixpt) then let () = fixpt := true in helper norm
+              else norm in
+            let norm = helper orders in
+            (* updates the predicate with normalized orders *)
+            let pred = update_session_predicate ~orders:norm p in 
+            let sbase = SBase pred in
+            Some sbase
+          | _ -> None
+          end
+        | _ -> None             
+      end                       
+    | _ -> None                 
+    in                          
+    let fnc = (norm, (nonef, nonef)) in
+    let res = trans_session_formula fnc prj in
+    res
+
+  let norm_assrt prj =   
+    let pr = string_of_session in 
+    Debug.no_1 "norm_assrt" pr pr norm_assrt prj
+
+  (* Removes assumptions and guards that have orders only with Bot *)
+  (* Example: Assume{Bot} -> emp *)
+  let remove_assrt_bot sess =
+    let norm sess = match sess with
+    | SBase sb ->
+      begin match sb with
+      | Predicate p ->
+          let assrt = p.session_predicate_orders in
+          let pred_kind = p.session_predicate_kind in
+          begin match pred_kind with
+          | Assert Assume
+          | Assert Guard ->
+              if Orders.is_bot assrt then Some SEmp
+              else None
+          | _ -> None
+          end
+      | _ -> None
+      end
+  | _ -> None
+  in
+  let fnc = (norm, (nonef, nonef)) in
+  let res = trans_session_formula fnc sess in
+  res
+
+  let remove_assrt_bot prj=
+    let pr = string_of_session in
+    Debug.no_1 "remove_assrt_bot" pr pr remove_assrt_bot prj
+
+
 end;;
 
 (* =========== Protocol / Projection ========== *)

@@ -1578,7 +1578,7 @@ let build_branches_sat br lbs =
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
-  (* TODO Andreea: thsi might not be enough. To check SAT, chr might also need the unlabelled formulas *)
+  (* TODO Andreea: this might not be enough. To check SAT, chr might also need the unlabelled formulas *)
   let sat_label_filter_chr lbl arg =
     if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then
       fct arg

@@ -50,10 +50,15 @@ sig
   val is_assrt : assrt -> bool
   val mk_empty : unit -> assrt
 
-  val is_cb : assrt -> bool
-  val is_hb : assrt -> bool
+  val is_cb  : assrt -> bool
+  val is_hb  : assrt -> bool
+  val is_and  : assrt -> bool
+  val is_or  : assrt -> bool
+  val is_bot : assrt -> bool
   val get_events_unsafe : assrt -> event * event
   val get_suid : event -> suid
+  val get_and_value : assrt -> assrt * assrt
+  val get_or_value  : assrt -> assrt * assrt
 
   val eq_role  : role  -> role  -> bool
   val eq_chan  : chan  -> chan  -> bool
@@ -186,6 +191,21 @@ struct
     | Order (HBe _) -> true
     | _             -> false
 
+  let is_and assrt =
+    match assrt with
+    | And _ -> true
+    | _ -> false
+
+  let is_or assrt =
+    match assrt with
+    | Or _ -> true
+    | _ -> false
+
+  let is_bot assrt =
+    match assrt with
+    | Bot -> true
+    | _ -> false
+
   let get_events_unsafe assrt =
     match assrt with
     | Order (HBe hbe) -> hbe.hbe_event1, hbe.hbe_event2
@@ -193,7 +213,18 @@ struct
     | _ -> failwith "Expecting a HB or CB relation"
 
   let get_suid ev = ev.uid
-  
+
+  let get_and_value assrt =
+    match assrt with
+    | And typ -> typ.and_assrt1, typ.and_assrt2 
+    | _ -> failwith x_tbi
+
+  let get_or_value assrt =
+    match assrt with
+    | Or typ -> typ.or_assrt1, typ.or_assrt2 
+    | _ -> failwith x_tbi
+
+
 end ;;
   
 (* ==================== KEY =========================== *)

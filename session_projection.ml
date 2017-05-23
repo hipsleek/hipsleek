@@ -37,7 +37,7 @@ struct
   let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
   let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
   let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) :t = failwith x_tbi
   let mkSingleton (e:base) : t = failwith x_tbi
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
@@ -136,8 +136,7 @@ let rec mk_prj_assume_on_chan pred_orders chan =
        | _ -> (SIOrd.Bot, SIOrd.Bot)
        end
    | _ -> (SIOrd.Bot, SIOrd.Bot)
-
-   
+ 
 (* Makes projection per party for proof obligations *)
 (* Returns a pair of SIOrd.assrt: 
   * (orders for Assume, orders for Guard) *)
@@ -169,7 +168,6 @@ let rec mk_prj_guard_on_role pred_orders role =
      end
    | _ -> (SIOrd.Bot, SIOrd.Bot)
 
-
 (* Makes projection per channel for proof obligations *)
 let rec mk_prj_guard_on_chan pred_orders chan =
   match pred_orders with
@@ -197,105 +195,20 @@ let rec mk_prj_guard_on_chan pred_orders chan =
        end
    | _ -> SIOrd.Bot
 
-
-(* Removes Bot assrt from session predicate orders *)
-(* Examples: 
-  * Bot & (A,id_55) & Bot -> (A,id_55)
-  * Bot & Bot & Bot & Bot -> Bot *)
-let norm_assrt prj =   
-  let norm prj = match prj with
-  | SProj.SBase sb ->  
-    begin          
-      match sb with
-      | SProj.Predicate p -> 
-        (* gets predicate info *)
-        let orders = p.session_predicate_orders in
-        let pred_kind = p.session_predicate_kind in
-        (* removes Bot elem from assumptions and guards orders *)
-        begin match pred_kind with
-        | Assert Assume
-        | Assert Guard ->
-          let fixpt = ref true in 
-          let rec norm_order assrt = begin match assrt with
-            | SIOrd.And typ ->
-              let assrt1 = typ.and_assrt1 in
-              let assrt2 = typ.and_assrt2 in 
-              begin match assrt1, assrt2 with
-              | SIOrd.Bot, a 
-              | a, SIOrd.Bot -> 
-                  let () = fixpt := false in
-                  norm_order a
-              | a1, a2 -> SIOrd.mk_and (norm_order a1) (norm_order a2) 
-              end
-            | SIOrd.Or typ ->
-              let assrt1 = typ.or_assrt1 in
-              let assrt2 = typ.or_assrt2 in
-              SIOrd.mk_or (norm_order assrt1) (norm_order assrt2)
-            | _ -> assrt end in
-          let rec helper norm =
-            let norm = norm_order norm in
-            if not(!fixpt) then let () = fixpt := true in helper norm
-            else norm in
-          let norm = helper orders in
-          (* updates the predicate with normalized orders *)
-          let pred = SProj.update_session_predicate ~orders:norm p in 
-          let sbase = SProj.SBase pred in
-          Some sbase
-        | _ -> None
-        end
-      | _ -> None             
-     end                       
-   | _ -> None                 
-   in                          
-   let fnc = (norm, (nonef, nonef)) in
-   let res = SProj.trans_session_formula fnc prj in
-   res
-
-let norm_assrt prj =   
-  let pr = SProj.string_of_session in 
-  Debug.no_1 "SP.norm_assrt" pr pr norm_assrt prj
-
-(* Removes assumptions and guards that have orders only with Bot *)
-(* Example: Assume{Bot} -> emp *)
-let norm_sess_pred prj =
-  let norm prj = match prj with
-  | SProj.SBase sb ->
-      begin match sb with
-      | SProj.Predicate p ->
-          let assrt = p.session_predicate_orders in
-          let pred_kind = p.session_predicate_kind in
-          begin match pred_kind with
-          | Assert Assume
-          | Assert Guard ->
-            begin match assrt with
-            | SIOrd.Bot -> Some SProj.SEmp
-            | _ -> None
-            end
-          | _ -> None
-          end
-      | _ -> None
-      end
-  | _ -> None
-  in
-  let fnc = (norm, (nonef, nonef)) in
-  let res = SProj.trans_session_formula fnc prj in
-  res
-
-let norm_sess_pred prj=
-  let pr = SProj.string_of_session in
-  Debug.no_1 "SP.norm_sess_pred" pr pr norm_sess_pred prj
-
 let norm_proj (session:SProj.session) : SProj.session = 
   (* removes assrt Bot *)
-  let norm_sess = norm_assrt session in
+  let norm_sess = SProj.norm_assrt session in
   (* removes assertions and guards that contain orders with only one Bot *)
-  let norm_sess = norm_sess_pred norm_sess in
+  let norm_sess = SProj.remove_assrt_bot norm_sess in
   let norm_sess = SProj.remove_emps norm_sess in
   norm_sess
 
-(* TODO elena: to be implemented *)
 let norm_tproj (session:STProj.session) : STProj.session =
-  let norm_sess = STProj.remove_emps session in
+  (* removes assrt Bot *)
+  let norm_sess = STProj.norm_assrt session in
+  (* removes assertions and guards that contain orders with only one Bot *)
+  let norm_sess = STProj.remove_assrt_bot norm_sess in
+  let norm_sess = STProj.remove_emps norm_sess in
   norm_sess
 
 
