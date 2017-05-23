@@ -1,5 +1,5 @@
 #include "xdebug.cppo"
-open Arr_biabduction
+open Arr_biabduction_extend
 
 (* Heap term for arrays *)
 type asegPred =
@@ -14,7 +14,8 @@ let mkAsegNE f t = AsegNE (f,t);;
 let mkAseg f t = Aseg (f,t);;
 let aseg_to_asegne aseg =
   match aseg with
-  | Aseg (f,t) -> AsegNE (f, decOne t)
+  | Aseg (f,t) -> AsegNE (f, t)
+  | AsegNE (f,t) -> Aseg (f, t)                         
   | _ -> failwith "aseg_to_asegne: Invalid input"
 ;;
   
@@ -58,13 +59,13 @@ let str_disj_arrF flst =
 ;;
 
 let print_and_return f indent =
-  let () =
-    if not (isValid f)
-    then
-      print_endline (print_indent indent ("==> "^(!str_pformula f )))
-    else
-      ()
-  in
+  (* let () = *)
+  (*   if not (isValid f) *)
+  (*   then *)
+  (*     print_endline (print_indent indent ("==> "^(!str_pformula f ))) *)
+  (*   else *)
+  (*     () *)
+  (* in *)
   f                         
 ;;
   
@@ -138,8 +139,9 @@ let expand_disj_with_permutation disj =
 let arrPred_to_asegPred arrPred_lst_lst =
   let helper_heap_translation_one h =
     match h with
-    | Arr_biabduction.Aseg (b,f,t) -> AsegNE (f,t)
-    | _ -> failwith "Invalid input"
+    | Arr_biabduction_extend.Aseg (b,f,t) -> Aseg (f,t)
+    | Arr_biabduction_extend.AsegNE (b,f,t) -> AsegNE (f,t)
+    | _ -> failwith "arrPred_to_asegPred: Invalid input"
   in
   List.map
     (fun (e,plst,hlst) ->
@@ -249,7 +251,7 @@ let array_entailment lhs rhs =
 
   
   let rec helper ((lhs_e,lhs_p,lhs_h) as lhs) rhs indent =    
-    let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in                              
+    let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in
     let helper_match lhs rhs mlst indent =
       let split_rhs mj rhs =
         List.map

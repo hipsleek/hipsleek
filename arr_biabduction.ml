@@ -255,6 +255,15 @@ let isAsegPred cf =
   | _ -> false
 ;;
 
+let isAsegNEPred cf =
+  match cf with
+  | ViewNode f ->
+  (* String.equal f.h_formula_view_name "Aseg" *)
+     f.h_formula_view_name = "AsegNE"
+  | _ -> false
+;;
+
+  
 let isElemPred cf =
   match cf with
   | ViewNode f ->
