@@ -217,12 +217,12 @@ struct
   let get_and_value assrt =
     match assrt with
     | And typ -> typ.and_assrt1, typ.and_assrt2 
-    | _ -> failwith x_tbi
+    | _ -> failwith "Expecting an And order relation"
 
   let get_or_value assrt =
     match assrt with
     | Or typ -> typ.or_assrt1, typ.or_assrt2 
-    | _ -> failwith x_tbi
+    | _ -> failwith "Expecting an Or order relation"
 
 
 end ;;
