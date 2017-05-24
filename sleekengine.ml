@@ -1395,7 +1395,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     let new_conseq = CF.extract_cformula_from_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)    
-    let (res,rs,v_hp_rel) = Arr_entailment2.array_entailment_and_print new_ante new_conseq in
+    let (res,rs,v_hp_rel) = Arr_entailment4.array_entailment_and_print new_ante new_conseq in
     ((res,rs,v_hp_rel),(ante,conseq))
     (* The following line is for inference *)
     (* let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in *)

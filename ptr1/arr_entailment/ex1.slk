@@ -2,36 +2,32 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-// checkentail (a>b) | (a<b)  |- a=b.
-// print residue.
-
-// checkentail (a>b)|a=b  |- (a=b) | (a<b) | a>b.
-// print residue.
-
-// checkentail  base::Aseg<1,2> & a>b  |- base::Aseg<1,2>.
-// print residue.
-
-
+// 1
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,2>.
 print residue.
 expect Valid.
 
+// 2
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<1,2>.
 print residue.
 expect Valid.
 
+// 3
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<1,3>.
 print residue.
 expect Fail.
 
+// 4
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<5,2>.
 print residue.
 expect Fail.
 
+// 5
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<5,3>.
 print residue.
 expect Fail.
 
+// 6
 infer[@arr_ba]  base::Elem<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
@@ -72,6 +68,7 @@ infer[@arr_ba]  base::AsegNE<a,b>   |- exists c: base::AsegNE<a,c>.
 print residue.
 expect Valid.
 
+//16
 infer[@arr_ba]  base::AsegNE<a,b>    |- exists c1,c2: base::AsegNE<a,c1> * base::AsegNE<c2,b>.
 print residue.
 expect Fail.
@@ -80,27 +77,38 @@ expect Fail.
 // -------------------------------
 // ex V. (A |- B) --> ex V. F
 
-
+//17
 infer[@arr_ba]  base::AsegNE<a,b> & a+1<b |- exists c1,c2: base::AsegNE<a,c1> * base::AsegNE<c2,b>.
 print residue.
 expect Valid.
 
+//18
 infer[@arr_ba]  base::AsegNE<1,2>  |- exists v: base::Elem<1,v>.
 print residue.
 expect Valid.
 
+//19
 infer[@arr_ba]  base::AsegNE<1,2>  |- base::Elem<1,v>.
 print residue.
 expect Fail.
 
+//20
 infer[@arr_ba]  base::Elem<1,v>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
+// 21
 infer[@arr_ba]  base::Elem<1,v>  |- base::Elem<1,3>.
 print residue.
 expect Fail.
 
+// 22
 infer[@arr_ba]  base::AsegNE<1,2>  |- exists v: base::Elem<1,v> & v>0.
 print residue.
 expect Fail.
+
+ 
+
+
+
+

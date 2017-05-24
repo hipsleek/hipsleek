@@ -75,7 +75,7 @@ let get_sorted_puref arrPredlst =
     | h::tail ->
        ( match h with
          | AsegNE (t,m) ->
-            helper tail m ((mkLte lastm t)::flst)
+            helper tail m ((mkLt lastm t)::flst)
          | Pointsto (t,v) ->
             helper tail (incOne t) ((mkLte lastm t)::flst)
          | _ -> failwith "get_sorted_puref: Invalid input" )
