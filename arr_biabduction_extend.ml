@@ -19,6 +19,13 @@ type puref = Cpure.formula
 let mkVar sv =
   Cpure.Var (sv,no_pos)
 ;;
+
+let get_var_lst = Cpure.var_list_exp ;;
+
+let exp_contains_var exp v =
+  List.exists (fun item -> eq_spec_var item v) (get_var_lst exp)
+;;
+                                                            
   
 let mkOr f1 f2 = Cpure.mkOr f1 f2 None no_pos
 ;;

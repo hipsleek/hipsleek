@@ -1,6 +1,9 @@
 #include "xdebug.cppo"
 open Arr_biabduction_extend
 
+(* arr_entailment.ml cannot properly handle Pointsto *)
+
+       
 (* Heap term for arrays *)
 type asegPred =
   | Aseg of (Cpure.exp * Cpure.exp)
