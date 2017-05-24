@@ -30,7 +30,7 @@ let mkExists svlst f =
   List.fold_left
     (fun r item ->
       Cpure.Exists (item,r,None,no_pos))
-    f []
+    f svlst
 ;;
 
 let mkNot f = Cpure.mkNot f None no_pos
@@ -649,7 +649,7 @@ class arrPredTransformer initcf = object(self)
     in
     match orig_puref with
     | None -> 
-       orig_puref <- Some (simplify (normalize_puref (Cformula.get_pure cf)));
+       orig_puref <- Some (simplify (normalize_puref (Cformula.get_pure_ignore_exists cf)));
        self#get_orig_pure
     | Some f -> f
 
