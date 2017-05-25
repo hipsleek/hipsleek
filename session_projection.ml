@@ -213,14 +213,50 @@ let norm_tproj (session:STProj.session) : STProj.session =
   let norm_sess = STProj.remove_emps norm_sess in
   norm_sess
 
-(* Check if a session uses a given channel *)
+(* Checks if the orders of a session predicate use a given channel *)
+let rec orders_use_chan_x orders chan = match orders with
+  | SIOrd.Event ev
+  | SIOrd.NEvent ev ->
+      let ch = ev.channel in
+      SBProj.eq_chan chan ch
+  | SIOrd.And typ ->
+      let assrt1 = typ.and_assrt1 in
+      let assrt2 = typ.and_assrt2 in
+      (orders_use_chan_x assrt1 chan) || (orders_use_chan_x assrt2 chan)
+  | SIOrd.Or typ ->
+      let assrt1 = typ.or_assrt1 in
+      let assrt2 = typ.or_assrt2 in
+      (orders_use_chan_x assrt1 chan) || (orders_use_chan_x assrt2 chan)
+  | SIOrd.Order order ->
+    begin match order with
+      | SIOrd.HBe typ ->
+          let ch1 = typ.hbe_event1.channel in
+          let ch2 = typ.hbe_event2.channel in
+          (SBProj.eq_chan chan ch1) || (SBProj.eq_chan chan ch2)
+      | SIOrd.CBe typ ->
+          let ch1 = typ.cbe_event1.channel in
+          let ch2 = typ.cbe_event2.channel in
+          (SBProj.eq_chan chan ch1) || (SBProj.eq_chan chan ch2)
+      | _ -> false
+    end
+  | _ -> false
+
+let rec orders_use_chan orders chan =
+  let pr1 = SIOrd.string_of in
+  let pr2 = SBProj.string_of_chan in
+  let pr_out = string_of_bool in
+  Debug.no_2 "SP.orders_use_chan" pr1 pr2 pr_out (fun _ _ -> orders_use_chan_x orders chan) orders chan 
+
+(* Checks if a session uses a given channel *)
 let rec sess_uses_chan_x session chan = match session with
   | SProj.SBase sb ->
     begin match sb with
     | SProj.Base base ->
         let ch = SBProj.get_channel base in
         SBProj.eq_chan chan ch
-(*  | SProj.Predicate sp -> (* elena: should be implemented *) *)
+    | SProj.Predicate pred ->
+        let orders = pred.session_predicate_orders in
+        orders_use_chan orders chan
     | _ -> false
     end
   | SProj.SSeq seq ->
