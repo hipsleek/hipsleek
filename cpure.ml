@@ -14504,7 +14504,7 @@ and expand_constraint_sets' ante conseq =
     | Not (f, lbl_opt, loc) ->
         let (e_ante, e_conseq) = expand_formula f in
         (e_ante, Not (e_conseq, lbl_opt, loc))
-    | f -> x_fail ("Not supported yet: " ^ !print_formula f)
+    | f -> (None, f) (* x_fail ("Not supported yet: " ^ !print_formula f) *)
     (*
     | Forall (var, f, lbl_opt, loc) -> ()
     | Exists (var, f, lbl_opt, loc) -> ()*)
