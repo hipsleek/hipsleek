@@ -54,7 +54,7 @@ int afun4(int p)
 
 int afun5(int p)
   requires p::security<P> & P <= 0
-  requires res::security<R> & R <= 1;
+  ensures res::security<R> & R <= 1;
 {
   return p;
 }
@@ -84,7 +84,7 @@ bool afun9(int p)
   requires p::security<P> & P <= 1 
   ensures res::security<R> & R <= 0;
 {
-  return p < 1
+  return p < 1;
 }
 
 bool afun10(int p)
@@ -144,7 +144,7 @@ int assignment2 (int p, int q)
   return y;
 }
 
-func assignment3 (int p, int q)
+int assignment3 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
@@ -157,7 +157,10 @@ int ifthen1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = if (q == 0) { q };
+  int x = 0;
+  if (q == 0) { 
+    x = q;
+  }
   return x;
 }
 
@@ -165,7 +168,10 @@ int ifthen2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = if (p == 0) { q };
+  int x = 0;
+  if (p == 0) { 
+    x = q;
+  }
   return x;
 }
 
@@ -173,7 +179,13 @@ int ifthenelse1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = if (q == 0) { q } else { 1 };
+  int x = 0;
+  if (q == 0) { 
+    x = q;
+  }
+  else {
+    x = 1;
+  }
   return x;
 }
 
@@ -181,7 +193,13 @@ int ifthenelse2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = if (p == 0) { q } else { 1 };
+  int x = 0;
+  if (p == 0) { 
+    x = q;
+  }
+  else {
+    x = 1;
+  }
   return x;
 }
 
@@ -189,7 +207,13 @@ int ifthenelse3 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = if (q == 0) { q } else { p };
+  int x = 0;
+  if (q == 0) { 
+    x = q;
+  }
+  else {
+    x = p;
+  }
   return x;
 }
 
@@ -199,8 +223,12 @@ int seriesif (int p, int q)
 {
   int x = 0;
   int y = 0;
-  x = if (p == 0) { 1 };
-  y = if (x == 0) { 1 };
+  if (p == 0) { 
+    x = 1; 
+  }
+  if (x == 0) {
+    y = 1; 
+  }
   return y;
 }
 
@@ -210,10 +238,14 @@ int nestedif1 (int p, int q)
 {
   int x = 0;
   int y = 0;
-  x = if (q == 0) { 
-    if (p == 0) {1}
-  };
-  y = if (x == 0) { 1 };
+  if (q == 0) { 
+    if (p == 0) {
+      x = 1;
+    }
+  }
+  if (x == 0) { 
+    y = 1;
+  }
   return y;
 }
 
@@ -223,10 +255,14 @@ int nestedif2 (int p, int q)
 {
   int x = 0;
   int y = 0;
-  x = if (q == 0) {
-    if (0 == 0) { 1 }
-  };
-  y = if (x == 0) { 1 };
+  if (q == 0) { 
+    if (0 == 0) {
+      x = 1;
+    }
+  }
+  if (x == 0) { 
+    y = 1;
+  }
   return y;
 }
 
@@ -236,25 +272,32 @@ int nestedif3 (int p, int q)
 {
   int x = 0;
   int y = 0;
-  x = if (q == 0) { 
-    if (0 == 0) { 1 } else { p }
-  };
-  y = if (x == 0) { 1 };
+  if (q == 0) { 
+    if (0 == 0) {
+      x = 1;
+    }
+    else {
+      x = p;
+    }
+  }
+  if (x == 0) { 
+    y = 1;
+  }
   return y;
 }
 
-int new1 (int p, int q)
+X new1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  return new X;
+  return new X();
 }
 
 int mutation1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
+  X x = new X();
   x.f1 = 1;
   return x.f1;
 }
@@ -263,7 +306,7 @@ int mutation2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
+  X x = new X();
   x.f1 = p;
   return x.f1;
 }
@@ -272,20 +315,26 @@ int aliasing1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
+  X x = new X();
   X y = x;
-  int t = if (p) { 1 };
+  int t = 0;
+  if (p != 0) {
+    t = 1;
+  }
   x.f1 = t;
   return x.f1;
 }
 
-func aliasing2 (int p, int q)
+int aliasing2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
+  X x = new X();
   X y = x;
-  int t = if (p) { 1 };
+  int t = 0;
+  if (p != 0) {
+    t = 1;
+  }
   x.f1 = t;
   return y.f1;
 }
@@ -294,8 +343,11 @@ int aliasing3 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
-  int t = if (p) { 1 };
+  X x = new X();
+  int t = 0;
+  if (p != 0) {
+    t = 1;
+  }
   x.f1 = t;
   X y = x;
   return y.f1;
@@ -305,7 +357,7 @@ int aliasing4 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
+  X x = new X();
   X y = x;
   y.f1 = p;
   return y.f1;
@@ -316,10 +368,13 @@ int aliasing5 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X;
-  X z = new X;
+  X x = new X();
+  X z = new X();
   z.f1 = 0;
-  int t = if (p) { 1 };
+  int t = 0;
+  if (p != 0) {
+    t = 1;
+  }
   x.f1 = t;
   X y = x;
   return z.f1;
@@ -330,6 +385,12 @@ int test (int p)
   requires p::security<P> & P <= 1
   ensures res::security<R> & R <= 0;
 {
-  int x = if (p) {1} {2};
+  int x = 0;
+  if (p != 0) {
+    x = 1;
+  }
+  else {
+    x = 2;
+  }
   return x;
 }
