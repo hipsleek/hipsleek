@@ -1779,9 +1779,6 @@ module Make_Session (Base: Session_base)
     node
     (* Base.mk_seq_wrapper node pos Base.base_type *)
 
-  (* let is_session_node hform = *)
-    
-  
   let trans_from_session s =
     let rec helper s = match s with
       | SSeq s  ->
@@ -2554,156 +2551,41 @@ let annotate_suid (prot: IProtocol.session): IProtocol.session  =
   let pr = IProtocol.string_of_session in
   Debug.no_1 "annotate_suid" pr pr annotate_suid prot
     
-(* -------------------------------------- *)
+(* ====== Helpful functions used for projection ====== *)
 
-let make_tpp_send_receive_pair b =
-  let message = IProtocol.get_message b in
-  let message_var = IProtocol.get_message_var b in
-  let pos = IProtocol.get_base_pos b in
-  (ITPProjection.SBase (ITPProjection.mk_base (TSend, message_var, pos) message),
-   ITPProjection.SBase (ITPProjection.mk_base (TReceive, message_var, pos) message))
+(* Convert from session predicate IProtocol to session IProjection *)
+let convert_pred_from_prot_to_proj (sess_base:IProtocol.session_base) : IProjection.session =
+  match sess_base with
+  | Predicate pred ->
+    let name = pred.session_predicate_name in
+    let ho_vars = pred.session_predicate_ho_vars in
+    let params = pred.session_predicate_params in
+    let node = pred.session_predicate_formula_heap_node in
+    let pure = pred.session_predicate_pure in
+    let pos = pred.session_predicate_pos in
+    let anns = pred.session_predicate_anns in
+    let orders = pred.session_predicate_orders in
+    let session_predicate_kind = pred.session_predicate_kind in
+    SBase (IProjection.mk_session_predicate name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:session_predicate_kind pos)
+  | _ -> SEmp 
 
-let convert_predicate pred =
-  let name = pred.IProtocol.session_predicate_name in
-  let ho_vars = pred.IProtocol.session_predicate_ho_vars in
-  let params = pred.IProtocol.session_predicate_params in
-  let pos = pred.IProtocol.session_predicate_pos in
-  let anns = pred.IProtocol.session_predicate_anns in
-  let orders = pred.IProtocol.session_predicate_orders in
-  let session_predicate_kind = pred.IProtocol.session_predicate_kind in
-  ITPProjection.mk_session_predicate name ho_vars params ~sess_ann:anns ~sess_pred_kind:session_predicate_kind pos
+(* Convert from session predicate IProjection to session ITPProjection *)
+let convert_pred_from_prot_to_tproj (sess_base:IProjection.session_base) : ITPProjection.session =
+  match sess_base with
+  | Predicate pred ->
+    let name = pred.session_predicate_name in
+    let ho_vars = pred.session_predicate_ho_vars in
+    let params = pred.session_predicate_params in
+    let node = pred.session_predicate_formula_heap_node in
+    let pure = pred.session_predicate_pure in
+    let pos = pred.session_predicate_pos in
+    let anns = pred.session_predicate_anns in
+    let orders = pred.session_predicate_orders in
+    let session_predicate_kind = pred.session_predicate_kind in
+    SBase (ITPProjection.mk_session_predicate name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:session_predicate_kind pos)
+  | _ -> SEmp
 
-let combine_partial_proj
-		(comb_fnc: ITPProjection.session ->
-		 ITPProjection.session ->
-		 ?node:ITPProjection_base.h_formula_heap option ->
-		 VarGen.loc -> ITPProjection.session)
-		 hash1 hash2 add_neutral_element =
-  let helper1 (role1, role2) tpproj1 =
-    (* let role1,_ = role1 in *)
-    (* let role2,_ = role2 in *)
-	try
-	  let _ = HT.find hash2 (role1, role2) in
-	  ()
-	with Not_found ->
-	  if (add_neutral_element = true)
-	  then
-		let pos = ITPProjection.get_pos tpproj1 in
-		let tpproj = comb_fnc tpproj1 ITPProjection.SEmp ~node:None pos in
-		HT.replace hash1 (role1, role2) tpproj
-	  else
-	    () in
-  let helper2 (role1, role2) tpproj2 =
-    try
-      let tpproj1 = HT.find hash1 (role1, role2) in
-	  (* TODO: whose pos do we use? *)
-	  let pos = ITPProjection.get_pos tpproj1 in
-	  let tpproj = comb_fnc tpproj1 tpproj2 ~node:None pos in
-	  HT.replace hash1 (role1, role2) tpproj
-    with Not_found ->
-	  if (add_neutral_element = true)
-      then
-	    let pos = ITPProjection.get_pos tpproj2 in
-		let tpproj = comb_fnc tpproj2 ITPProjection.SEmp ~node:None pos in
-		HT.add hash1 (role1, role2) tpproj
-	  else
-		HT.add hash1 (role1, role2) tpproj2 in
-  let () = HT.iter helper1 hash1 in
-  let () = HT.iter helper2 hash2 in
-  hash1
-
-let print_proj hash =
-  let () = print_endline "" in
-  let print (role1, role2) tpproj =
-    print_endline (role1 ^ "(" ^ role2 ^ "): " ^ (ITPProjection.string_of_session tpproj)) in
-  HT.iter print hash
-
-let make_role_comb (roles : ident list) : (ident * ident) list =
-  let rec gen_for_one_role role role_list =
-    match role_list with
-      | [] -> []
-      | [hd] -> [(role, hd)]
-      | hd :: tl -> [(role, hd)] @ gen_for_one_role role tl in
-  let rec gen_for_all_roles role_list =
-    match role_list with
-      | [] -> []
-      | [hd] -> gen_for_one_role hd roles
-      | hd :: tl -> gen_for_one_role hd roles @ gen_for_all_roles tl in
-  let comb_list = gen_for_all_roles roles in
-  List.filter (fun x -> (fst x) != (snd x)) comb_list
-
-let rec make_ann_list (vars: ident list) (role1: ident) (role2: ident) : sess_ann list =
-  match vars with
-  | [] -> []
-  | hd :: tl -> if (hd = role1) then
-      AnnPrimaryPeer :: (make_ann_list tl role1 role2)
-    else if (hd = role2) then
-      AnnSecondaryPeer :: (make_ann_list tl role1 role2)
-    else
-      AnnInactive :: (make_ann_list tl role1 role2)
-
-let make_projection (session: IProtocol.session) (vars: ident list) =
-  let rec helper s = match s with
-    | IProtocol.SSeq s  -> let hash1 = helper s.IProtocol.session_seq_formula_head in
-      let hash2 = helper s.IProtocol.session_seq_formula_tail in
-      combine_partial_proj ITPProjection.mk_session_seq_formula hash1 hash2 false
-    | IProtocol.SOr s   -> let hash1 = helper s.IProtocol.session_sor_formula_or1 in
-      let hash2 = helper s.IProtocol.session_sor_formula_or2 in
-      combine_partial_proj ITPProjection.mk_session_or_formula hash1 hash2 true
-    | IProtocol.SStar s -> let hash1 = helper s.IProtocol.session_star_formula_star1 in
-      let hash2 = helper s.IProtocol.session_star_formula_star2 in
-      (* This is definitely not correct, there should be no star in tpproj *)
-      combine_partial_proj ITPProjection.mk_session_star_formula hash1 hash2 false
-    (* | IProtocol.SFence f -> (* Establish convention that second party is the "problematic" one. *)  *)
-    (*   let role1 = f.IProtocol.session_fence_role1 in *)
-    (*   let role2 = f.IProtocol.session_fence_role2 in *)
-    (*   let pred = f.IProtocol.session_fence_pred in *)
-    (*   let new_pred = ITPProjection.SBase (convert_predicate pred) in *)
-    (*   let hash = HT.create 10 in *)
-    (*   let () = HT.add hash (role2, role1) new_pred in *)
-    (*   hash *)
-    | IProtocol.SExists e -> let hash = helper e.IProtocol.session_exists_formula_session in
-      let pos = e.IProtocol.session_exists_formula_pos in
-      let add_exist (role1, role2) tpproj =
-        let exist = ITPProjection.mk_session_exists_formula e.IProtocol.session_exists_formula_vars
-            tpproj pos in
-        HT.replace hash (role1, role2) exist in
-      let () = HT.iter add_exist hash in
-      hash
-    | IProtocol.SBase s -> (match s with
-        | IProtocol.Base b -> let (snd_op, rcv_op) = make_tpp_send_receive_pair b in
-  	  let sender,_ = IProtocol_base.get_sender b in
-  	  let receiver,_ = IProtocol_base.get_receiver b in
-          let hash = HT.create 10 in
-	  let () = HT.add hash (sender, receiver) snd_op in
-	  let () = HT.add hash (receiver, sender) rcv_op in
-	  hash
-        | IProtocol.Predicate p -> let hash = HT.create 10 in
-          let params = p.session_predicate_params in
-          let params = List.map (fun x -> IProtocol.get_param_id x) params in
-          let comb = make_role_comb params in
-          let helper (role1, role2) =
-            let ann = make_ann_list params role1 role2 in
-            let new_pred = {p with session_predicate_anns = ann;} in
-	    let new_pred = ITPProjection.SBase (convert_predicate new_pred) in
-            HT.add hash (role1, role2) new_pred in
-          let () = List.iter helper comb in
-          hash
-        | IProtocol.HVar h -> HT.create 10)
-    | IProtocol.SEmp    -> HT.create 10 in
-  let hash = helper session in
-  (* Add empty projections for pairs of nodes that do not interact. *)
-  let role_pairs = make_role_comb vars in
-  let add_empty_projection (role1, role2) =
-    try
-      let _ = HT.find hash (role1, role2) in
-      ()
-    with
-      Not_found -> HT.add hash (role1, role2) ITPProjection.SEmp in
-  let () = List.iter add_empty_projection role_pairs in
-  let () = print_proj hash in
-  hash
-
+(* elena: review this *)
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
                           | Some Projection -> true 

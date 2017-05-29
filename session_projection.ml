@@ -213,72 +213,6 @@ let norm_tproj (session:STProj.session) : STProj.session =
   let norm_sess = STProj.remove_emps norm_sess in
   norm_sess
 
-(* Checks if the orders of a session predicate use a given channel *)
-let rec orders_use_chan_x orders chan = match orders with
-  | SIOrd.Event ev
-  | SIOrd.NEvent ev ->
-      let ch = ev.channel in
-      SBProj.eq_chan chan ch
-  | SIOrd.And typ ->
-      let assrt1 = typ.and_assrt1 in
-      let assrt2 = typ.and_assrt2 in
-      (orders_use_chan_x assrt1 chan) || (orders_use_chan_x assrt2 chan)
-  | SIOrd.Or typ ->
-      let assrt1 = typ.or_assrt1 in
-      let assrt2 = typ.or_assrt2 in
-      (orders_use_chan_x assrt1 chan) || (orders_use_chan_x assrt2 chan)
-  | SIOrd.Order order ->
-    begin match order with
-      | SIOrd.HBe typ ->
-          let ch1 = typ.hbe_event1.channel in
-          let ch2 = typ.hbe_event2.channel in
-          (SBProj.eq_chan chan ch1) || (SBProj.eq_chan chan ch2)
-      | SIOrd.CBe typ ->
-          let ch1 = typ.cbe_event1.channel in
-          let ch2 = typ.cbe_event2.channel in
-          (SBProj.eq_chan chan ch1) || (SBProj.eq_chan chan ch2)
-      | _ -> false
-    end
-  | _ -> false
-
-let rec orders_use_chan orders chan =
-  let pr1 = SIOrd.string_of in
-  let pr2 = SBProj.string_of_chan in
-  let pr_out = string_of_bool in
-  Debug.no_2 "SP.orders_use_chan" pr1 pr2 pr_out (fun _ _ -> orders_use_chan_x orders chan) orders chan 
-
-(* Checks if a session uses a given channel *)
-let rec sess_uses_chan_x session chan = match session with
-  | SProj.SBase sb ->
-    begin match sb with
-    | SProj.Base base ->
-        let ch = SBProj.get_channel base in
-        SBProj.eq_chan chan ch
-    | SProj.Predicate pred ->
-        let orders = pred.session_predicate_orders in
-        orders_use_chan orders chan
-    | _ -> false
-    end
-  | SProj.SSeq seq ->
-      let sess1 = seq.session_seq_formula_head in
-      let sess2 = seq.session_seq_formula_tail in
-      (sess_uses_chan_x sess1 chan) || (sess_uses_chan_x sess2 chan) 
-  | SProj.SStar star ->  
-      let sess1 = star.session_star_formula_star1 in 
-      let sess2 = star.session_star_formula_star2 in 
-      (sess_uses_chan_x sess1 chan) || (sess_uses_chan_x sess2 chan) 
-  | SProj.SOr sor ->
-      let sess1 = sor.session_sor_formula_or1 in
-      let sess2 = sor.session_sor_formula_or2 in
-      (sess_uses_chan_x sess1 chan) || (sess_uses_chan_x sess2 chan) 
-  | _ -> false
-
-let rec sess_uses_chan session chan =
-  let pr1  = SProj.string_of_session in
-  let pr2 = SBProj.string_of_chan in
-  let pr_out = string_of_bool in
-  Debug.no_2 "SP.sess_uses_chan" pr1 pr2 pr_out (fun _ _ -> sess_uses_chan_x session chan ) session chan
-
 (* ====== Projection per party / channel ====== *)
 (* ============================================ *)
 
@@ -287,23 +221,23 @@ let rec sess_uses_chan session chan =
 let mk_projection_per_party prot role =
   let rec deconstruct_prot prot = match prot with
     | SProt.SSeq seq -> 
-        let head = seq.session_seq_formula_head in
-        let tail = seq.session_seq_formula_tail in
-        let pos = seq.session_seq_formula_pos in
-        let session_head = deconstruct_prot head in
-        let session_tail = deconstruct_prot tail in
-        SProj.mk_session_seq_formula session_head session_tail pos
+        let head      = seq.session_seq_formula_head in
+        let tail      = seq.session_seq_formula_tail in
+        let pos       = seq.session_seq_formula_pos in
+        let sess_prj1 = deconstruct_prot head in
+        let sess_prj2 = deconstruct_prot tail in
+        SProj.mk_session_seq_formula sess_prj1 sess_prj2 pos
     | SProt.SOr sor ->
-        let session1 = sor.session_sor_formula_or1 in
-        let session2 = sor.session_sor_formula_or2 in
-        let pos = sor.session_sor_formula_pos in
+        let session1  = sor.session_sor_formula_or1 in
+        let session2  = sor.session_sor_formula_or2 in
+        let pos       = sor.session_sor_formula_pos in
         let sess_prj1 = deconstruct_prot session1 in
         let sess_prj2 = deconstruct_prot session2 in
         SProj.mk_session_or_formula sess_prj1 sess_prj2 pos
     | SProt.SStar star ->
-        let session1 = star.session_star_formula_star1 in 
-        let session2 = star.session_star_formula_star2 in 
-        let pos = star.session_star_formula_pos in
+        let session1  = star.session_star_formula_star1 in 
+        let session2  = star.session_star_formula_star2 in 
+        let pos       = star.session_star_formula_pos in
         let sess_prj1 = deconstruct_prot session1 in
         let sess_prj2 = deconstruct_prot session2 in
         SProj.mk_session_star_formula sess_prj1 sess_prj2 pos
@@ -333,15 +267,9 @@ let mk_projection_per_party prot role =
               SProj.SEmp
           | SProt.Predicate sp ->
             (* gets information nedeed for projection *)
-            let pred_name      = sp.session_predicate_name in
-            let pred_ho_vars   = sp.session_predicate_ho_vars in
-            let pred_params    = sp.session_predicate_params in
-            let pred_heap_node = sp.session_predicate_formula_heap_node in
-            let pred_pure      = sp.session_predicate_pure in
-            let pred_anns      = sp.session_predicate_anns in
-            let pred_pos       = sp.session_predicate_pos in
-            let pred_orders    = sp.session_predicate_orders in
-            let pred_kind      = sp.session_predicate_kind in
+            let pred_pos    = sp.session_predicate_pos in
+            let pred_orders = sp.session_predicate_orders in
+            let pred_kind   = sp.session_predicate_kind in
             (* makes projection per Predicate kind *)
             (* only Assert Assume and Assert Guard are taken into consideration *)
             begin match pred_kind with
@@ -350,18 +278,16 @@ let mk_projection_per_party prot role =
                 match a with
                 | Assume ->
                     let assrt = mk_prj_assume_on_role pred_orders role in
-                    SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt ~sess_pred_kind:pred_kind pred_pos)
+                    let prot = SProt.update_session_predicate ~orders:assrt sp in
+                    let proj = Session.convert_pred_from_prot_to_proj prot in
+                    proj
                 | Guard -> 
                     let (assrt_assume, assrt_guard) = mk_prj_guard_on_role pred_orders role in
-                    let pred_assume = SProj.SBase (SProj.mk_session_predicate "Assume" pred_ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt_assume ~sess_pred_kind:(Assert Assume) pred_pos) in
-                    let pred_guard = SProj.SBase (SProj.mk_session_predicate pred_name pred_ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt_guard ~sess_pred_kind:pred_kind pred_pos) in
-                    SProj.mk_session_seq_formula pred_assume pred_guard pred_pos
+                    let prot_assume = SProt.update_session_predicate ~orders:assrt_assume sp in
+                    let proj_assume = Session.convert_pred_from_prot_to_proj prot_assume in
+                    let prot_guard = SProt.update_session_predicate ~orders:assrt_guard sp in
+                    let proj_guard = Session.convert_pred_from_prot_to_proj prot_assume in
+                    SProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | _ -> SProj.SEmp
               end
             | _ -> SProj.SEmp 
@@ -385,28 +311,26 @@ let mk_projection_per_party prot role =
 let mk_projection_per_channel prj chan =
   let rec prj_per_chan prj chan = match prj with
   | SProj.SSeq seq -> 
-      let head = seq.session_seq_formula_head in
-      let tail = seq.session_seq_formula_tail in
-      let pos = seq.session_seq_formula_pos in
-      let session_head = prj_per_chan head chan in
-      let session_tail = prj_per_chan tail chan in
-      STProj.mk_session_seq_formula session_head session_tail pos
+      let head      = seq.session_seq_formula_head in
+      let tail      = seq.session_seq_formula_tail in
+      let pos       = seq.session_seq_formula_pos in
+      let sess_prj1 = prj_per_chan head chan in
+      let sess_prj2 = prj_per_chan tail chan in
+      STProj.mk_session_seq_formula sess_prj1 sess_prj2 pos
   | SProj.SOr sor ->
-      let session1 = sor.session_sor_formula_or1 in
-      let session2 = sor.session_sor_formula_or2 in
-      let pos = sor.session_sor_formula_pos in
+      let session1  = sor.session_sor_formula_or1 in
+      let session2  = sor.session_sor_formula_or2 in
+      let pos       = sor.session_sor_formula_pos in
       let sess_prj1 = prj_per_chan session1 chan in
       let sess_prj2 = prj_per_chan session2 chan in
       STProj.mk_session_or_formula sess_prj1 sess_prj2 pos
   | SProj.SStar star ->
-      let session1 = star.session_star_formula_star1 in 
-      let session2 = star.session_star_formula_star2 in 
-      if (sess_uses_chan session1 chan) then 
-        prj_per_chan session1 chan
-      else STProj.SEmp; 
-      if (sess_uses_chan session2 chan) then
-        prj_per_chan session2 chan
-      else STProj.SEmp
+      let session1  = star.session_star_formula_star1 in 
+      let session2  = star.session_star_formula_star2 in 
+      let pos       = star.session_star_formula_pos in
+      let sess_prj1 = prj_per_chan session1 chan in
+      let sess_prj2 = prj_per_chan session2 chan in
+      STProj.mk_session_star_formula sess_prj1 sess_prj2 pos
   | SProj.SBase sb -> 
       begin match sb with
       | SProj.Base base ->
@@ -426,34 +350,25 @@ let mk_projection_per_channel prj chan =
           end
       | SProj.Predicate pred ->
           (* gets information nedeed for projection *)
-          let name           = pred.session_predicate_name in
-          let ho_vars        = pred.session_predicate_ho_vars in
-          let pred_params    = pred.session_predicate_params in
-          let pred_heap_node = pred.session_predicate_formula_heap_node in
-          let pred_pure      = pred.session_predicate_pure in
-          let pred_anns      = pred.session_predicate_anns in  
-          let pred_pos       = pred.session_predicate_pos in
-          let pred_orders    = pred.session_predicate_orders in
-          let pred_kind      = pred.session_predicate_kind in
+          let pred_pos    = pred.session_predicate_pos in
+          let pred_orders = pred.session_predicate_orders in
+          let pred_kind   = pred.session_predicate_kind in
           begin match pred_kind with
             | Assert a -> 
               begin
                 match a with
                 | Assume ->
                     let (assrt_assume, assrt_guard) = mk_prj_assume_on_chan pred_orders chan in
-                    let pred_assume = STProj.mk_session_predicate name ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt_assume ~sess_pred_kind:pred_kind pred_pos in
-                    let pred_guard = STProj.mk_session_predicate "Guard" ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt_guard ~sess_pred_kind:(Assert Guard) pred_pos in
-                    STProj.mk_session_seq_formula (STProj.SBase pred_assume) (STProj.SBase pred_guard) pred_pos
+                    let prot_assume = SProj.update_session_predicate ~orders:assrt_assume pred in
+                    let proj_assume = Session.convert_pred_from_prot_to_tproj prot_assume in
+                    let prot_guard = SProj.update_session_predicate ~orders:assrt_guard pred in
+                    let proj_guard = Session.convert_pred_from_prot_to_tproj prot_guard in
+                    STProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | Guard ->
                     let assrt = mk_prj_guard_on_chan pred_orders chan in
-                    let guard_pred = STProj.mk_session_predicate name ho_vars pred_params
-                                ~node:pred_heap_node ~pure:pred_pure ~sess_ann:pred_anns
-                                ~orders:assrt ~sess_pred_kind:(Assert Guard) pred_pos in
-                    STProj.SBase guard_pred
+                    let prot = SProj.update_session_predicate ~orders:assrt pred in
+                    let proj = Session.convert_pred_from_prot_to_tproj prot in
+                    proj
                 | _ -> STProj.SEmp
               end
             | _ -> STProj.SEmp

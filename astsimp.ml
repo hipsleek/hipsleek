@@ -2410,25 +2410,6 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
   let pr2 = add_str "inv_pf" !CP.print_formula in
   Debug.no_2 "compute_fixpt" pr1 pr2 pr2 (fun _ _ -> compute_fixpt_x mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf) vn inv_pf
 
-and make_projection_view_decls (session: Session.IProtocol.session) (vdef: Iast.view_decl) =
-  let view_decl_hash = HT.create 10 in
-  let proj_hash = Session.make_projection session vdef.view_vars in
-  let helper (role1, role2) tpproj =
-    let ann_list = Session.make_ann_list vdef.view_vars role1 role2 in
-    let heap_node = x_add_1 Session.ITPProjection.trans_from_session tpproj in
-    let heap_node = F.set_sess_ann heap_node ann_list in
-    let form = Session.ITPProjection.mk_struc_formula_from_h_formula_and_formula heap_node vdef.view_formula (Session.ITPProjection.get_pos tpproj) in
-    let form = F.subst_flow_of_struc_formula n_flow top_flow form in
-    let new_vdef = {vdef with
-                    view_name = role1 ^ role2 ^ vdef.view_name;
-		    view_formula = form;
-		    view_session = Some (Session.TPProjectionSession tpproj);
-		    view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
-		    view_session_projections = None;} in
-    HT.add view_decl_hash (role1, role2) new_vdef in
-  let () = HT.iter helper proj_hash in
-  view_decl_hash
-
 and session_to_iform_x (view:I.view_decl) =
   let get_session_formula view =
     match view.I.view_session with
@@ -2451,7 +2432,6 @@ and session_to_iform_x (view:I.view_decl) =
         let vars_list = view.I.view_typed_vars in
         let prj_map = Session_projection.mk_projection prot vars_list in
         (* TODO elena: use prj_map *)
-        let proj = make_projection_view_decls prot view in
         {view with (* view_session_projections = Some proj; *) I.view_session = Some (ProtocolSession prot) }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
