@@ -1,6 +1,11 @@
 hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
+/*
+prot G = A->B:0.
+A: c!0;;
+B: c?0;;
+/*
 
 void buyer1(Channel c, int id)
   requires  c::Chan{@S !0}<>
