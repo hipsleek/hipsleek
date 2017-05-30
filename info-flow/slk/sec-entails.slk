@@ -119,31 +119,31 @@ checkentail p::security<tempx174> * q::security<tempx175> * res::security<tempx1
 print residue.
 
 // Entailment 28
-checkentail p::security<tempx179> * q::security<tempx180> * x::security<tempx181> * x.f1::security<tempx182> * res::security<tempx183> & tempx179<=1 & tempx180<=0 & tempx181<=0 & tempx182<=0 & tempx183<=0 |- res::security<tempx184> & tempx184<=0.
+checkentail p::security<tempx179> * q::security<tempx180> * x::security<tempx181> * x_f1::security<tempx182> * res::security<tempx183> & tempx179<=1 & tempx180<=0 & tempx181<=0 & tempx182<=0 & tempx183<=0 |- res::security<tempx184> & tempx184<=0.
 print residue.
 
 // Entailment 29
-checkentail p::security<tempx186> * q::security<tempx187> * x::security<tempx188> * x.f1::security<tempx189> * res::security<tempx190> & tempx186<=1 & tempx187<=0 & tempx188<=0 & tempx189<=1 & tempx190<=1 |- res::security<tempx191> & tempx191<=0.
+checkentail p::security<tempx186> * q::security<tempx187> * x::security<tempx188> * x_f1::security<tempx189> * res::security<tempx190> & tempx186<=1 & tempx187<=0 & tempx188<=0 & tempx189<=1 & tempx190<=1 |- res::security<tempx191> & tempx191<=0.
 print residue.
 
 // Entailment 30
-checkentail p::security<tempx196> * q::security<tempx197> * x::security<tempx198> * y::security<tempx199> * t::security<tempx200> * x.f1::security<tempx201> * res::security<tempx202> & tempx196<=1 & tempx197<=0 & tempx198<=0 & tempx199<=0 & tempx200<=1 & tempx201<=1 & tempx202<=1 |- res::security<tempx203> & tempx203<=0.
+checkentail p::security<tempx196> * q::security<tempx197> * x::security<tempx198> * y::security<tempx199> * t::security<tempx200> * x_f1::security<tempx201> * res::security<tempx202> & tempx196<=1 & tempx197<=0 & tempx198<=0 & tempx199<=0 & tempx200<=1 & tempx201<=1 & tempx202<=1 |- res::security<tempx203> & tempx203<=0.
 print residue.
 
 // Entailment 31
-checkentail p::security<tempx208> * q::security<tempx209> * x::security<tempx210> * y::security<tempx211> * t::security<tempx212> * x.f1::security<tempx213> * res::security<tempx214> & tempx208<=1 & tempx209<=0 & tempx210<=0 & tempx211<=0 & tempx212<=1 & tempx213<=1 & tempx214<=1 |- res::security<tempx215> & tempx215<=0.
+checkentail p::security<tempx208> * q::security<tempx209> * x::security<tempx210> * y::security<tempx211> * t::security<tempx212> * x_f1::security<tempx213> * res::security<tempx214> & tempx208<=1 & tempx209<=0 & tempx210<=0 & tempx211<=0 & tempx212<=1 & tempx213<=1 & tempx214<=1 |- res::security<tempx215> & tempx215<=0.
 print residue.
 
 // Entailment 32
-checkentail p::security<tempx221> * q::security<tempx222> * x::security<tempx223> * t::security<tempx224> * x.f1::security<tempx225> * y::security<tempx226> * res::security<tempx227> & tempx221<=1 & tempx222<=0 & tempx223<=0 & tempx224<=1 & tempx225<=1 & tempx226<=0 & tempx227<=1 |- res::security<tempx228> & tempx228<=0.
+checkentail p::security<tempx221> * q::security<tempx222> * x::security<tempx223> * t::security<tempx224> * x_f1::security<tempx225> * y::security<tempx226> * res::security<tempx227> & tempx221<=1 & tempx222<=0 & tempx223<=0 & tempx224<=1 & tempx225<=1 & tempx226<=0 & tempx227<=1 |- res::security<tempx228> & tempx228<=0.
 print residue.
 
 // Entailment 33
-checkentail p::security<tempx231> * q::security<tempx232> * x::security<tempx233> * y::security<tempx234> * y.f1::security<tempx235> * res::security<tempx236> & tempx231<=1 & tempx232<=0 & tempx233<=0 & tempx234<=0 & tempx235<=1 & tempx236<=0 |- res::security<tempx237> & tempx237<=0.
+checkentail p::security<tempx231> * q::security<tempx232> * x::security<tempx233> * y::security<tempx234> * y_f1::security<tempx235> * res::security<tempx236> & tempx231<=1 & tempx232<=0 & tempx233<=0 & tempx234<=0 & tempx235<=1 & tempx236<=0 |- res::security<tempx237> & tempx237<=0.
 print residue.
 
 // Entailment 34
-checkentail p::security<tempx244> * q::security<tempx245> * x::security<tempx246> * z::security<tempx247> * z.f1::security<tempx248> * t::security<tempx249> * x.f1::security<tempx250> * y::security<tempx251> * res::security<tempx252> & tempx244<=1 & tempx245<=0 & tempx246<=0 & tempx247<=0 & tempx248<=0 & tempx249<=1 & tempx250<=1 & tempx251<=0 & tempx252<=0 |- res::security<tempx253> & tempx253<=0.
+checkentail p::security<tempx244> * q::security<tempx245> * x::security<tempx246> * z::security<tempx247> * z_f1::security<tempx248> * t::security<tempx249> * x_f1::security<tempx250> * y::security<tempx251> * res::security<tempx252> & tempx244<=1 & tempx245<=0 & tempx246<=0 & tempx247<=0 & tempx248<=0 & tempx249<=1 & tempx250<=1 & tempx251<=0 & tempx252<=0 |- res::security<tempx253> & tempx253<=0.
 print residue.
 
 // Entailment 35
