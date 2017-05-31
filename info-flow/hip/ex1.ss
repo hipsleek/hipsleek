@@ -24,6 +24,7 @@ int f(int h, int l)
   return l;
 }
 
+
 int afun1()
   requires true
   ensures res::security<R> & R <= 0;
@@ -39,8 +40,8 @@ int afun2()
 }
 
 int afun3(int p)
-  requires true
-  ensures res::security<R> & R <= 0;
+  requires p::security<R>
+  ensures res::security<R> & res=p; // & R <= 0;
 {
   return p;
 }

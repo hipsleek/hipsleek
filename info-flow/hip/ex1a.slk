@@ -1,0 +1,38 @@
+pred_prim security<i : int> inv 0<=i & i <=1.
+
+pred data_X<f1 : int,f2:int> ==
+    self::X<f1,f2> * f1::security<_>*f2::security<i> & i<=0
+  inv self!=null.
+// self::X<f1,sf1,f2,sf2>
+pred data_X_poly<f1 : int,f2:int,sec_f1:int,sec_f2:int> ==
+    self::X<f1,f2> * f1::security<sec_f1>*f2::security<sec_f2>
+  inv self!=null.
+
+data X {
+  int f1;
+  //int sec_f1;
+  int f2; //@L
+  //int sec_f2;
+}.
+
+checkentail x::security<R> |- x::security<R2> & R2 <=1.
+expect Valid.
+
+checkentail x::security<R> |- x::security<R2> & R2 <=0.
+expect Fail.
+
+checkentail x::security<R> & R<=1 |- x::security<R2> & R2 <=0.
+expect Fail.
+
+
+checkentail x::security<R> & R<=0 |- x::security<R2> & R2 <=1.
+expect Valid.
+
+
+/*
+int constant(int i)
+  requires true
+  ensures res::security<R> & res=i & R<=0;
+
+
+*/
