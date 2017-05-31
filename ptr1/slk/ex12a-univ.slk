@@ -20,9 +20,8 @@ checkentail 1<V<=K & Univ(V) |- V=2. // succeed
 checkentail 1<V<K & Univ(V) |- V=3. // fail
 */
 //checkentail 1<V<=K & Univ(V) |- V=3. // fail
-checkentail 1<V<=K & Univ(V) |- V<K. // fail
-  checkentail 1<V<K & Univ(V) |- V<=4 . // valid
-  checkentail 1<V<K & Univ(V) |- V=2  . // valid
+checkentail 1<V<K & Univ(V) |- V<=4 . // valid
+checkentail 1<V<K & Univ(V) |- V=2  . // valid
 print residue.
 
 
@@ -34,3 +33,21 @@ print residue.
 
 
 */
+
+checkentail 1<V<=K & Univ(V) |- V<K. // fail
+print residue.
+
+checkentail 1<V<=K & Univ(V) |- V=2. // fail
+print residue.
+
+checkentail 1<V<=K & Univ(V) |- V=3. // fail
+print residue.
+
+
+// (ex x. x>0)  |- x=5
+
+// x>0 & Univ(x) |- x=5
+
+// ex x: (x>0 |- x=5)
+
+// x>0 & Univ(x) |- x=0
