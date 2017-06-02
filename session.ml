@@ -2385,6 +2385,32 @@ module Make_Session (Base: Session_base)
       if not (!fixpt) then let () = fixpt := true in helper sess else sess
     in helper sess
 
+  (* Removes Bot assrt from orders *)
+  (* Examples: Bot & (A,id_55) & Bot -> (A,id_55) *)
+  let norm_orders orders =
+    let fixpt = ref true in 
+    let rec norm_order assrt =
+      if Orders.is_and assrt then (
+        let assrt1, assrt2 = Orders.get_and_value assrt in
+        if Orders.is_bot assrt1 then
+          let () = fixpt := false in
+          norm_order assrt2
+        else if Orders.is_bot assrt2 then
+          let () = fixpt := false in
+          norm_order assrt1
+        else 
+          Orders.mk_and (norm_order assrt1) (norm_order assrt2))
+      else if Orders.is_or assrt then
+        let assrt1, assrt2 = Orders.get_or_value assrt in
+        Orders.mk_or (norm_order assrt1) (norm_order assrt2)
+      else assrt in
+    let rec helper norm =
+      let norm = norm_order norm in
+      if not(!fixpt) then let () = fixpt := true in helper norm
+      else norm in
+    let norm = helper orders in
+    norm
+
   (* Removes Bot assrt from session predicate orders *)
   (* Examples: 
     * Bot & (A,id_55) & Bot -> (A,id_55)
@@ -2402,28 +2428,8 @@ module Make_Session (Base: Session_base)
           begin match pred_kind with
           | Assert Assume
           | Assert Guard ->
-            let fixpt = ref true in 
-            let rec norm_order assrt =
-              if Orders.is_and assrt then (
-                let assrt1, assrt2 = Orders.get_and_value assrt in
-                if Orders.is_bot assrt1 then
-                  let () = fixpt := false in
-                  norm_order assrt2
-                else if Orders.is_bot assrt2 then
-                  let () = fixpt := false in
-                  norm_order assrt1
-                else 
-                  Orders.mk_and (norm_order assrt1) (norm_order assrt2))
-              else if Orders.is_or assrt then
-                let assrt1, assrt2 = Orders.get_or_value assrt in
-                Orders.mk_or (norm_order assrt1) (norm_order assrt2)
-              else assrt in
-            let rec helper norm =
-              let norm = norm_order norm in
-              if not(!fixpt) then let () = fixpt := true in helper norm
-              else norm in
-            let norm = helper orders in
-            (* updates the predicate with normalized orders *)
+            let norm = norm_orders orders in
+            (* updates the predicate with the normalized orders *)
             let pred = update_session_predicate ~orders:norm p in 
             let sbase = SBase pred in
             Some sbase

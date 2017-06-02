@@ -213,6 +213,16 @@ let norm_tproj (session:STProj.session) : STProj.session =
   let norm_sess = STProj.remove_emps norm_sess in
   norm_sess
 
+let rec remove_bot_from_list_x lst new_lst = match lst with
+  | [] -> new_lst
+  | head :: tail ->
+      let h = SProt.norm_orders head in
+      remove_bot_from_list_x tail (new_lst @ [h])
+
+let rec remove_bot_from_list lst new_lst =
+  let pr = pr_list SIOrd.string_of in
+  Debug.no_1 "SP.remove_bot_from_list" pr pr (fun _ -> remove_bot_from_list_x lst new_lst) lst
+
 (* ====== Projection per party / channel ====== *)
 (* ============================================ *)
 
@@ -386,6 +396,72 @@ let mk_projection_per_channel prj chan =
   let pr_out = STProj.string_of_session in
   Debug.no_2 "SP.mk_projection_per_channel" pr1 pr2 pr_out (fun _ _ -> mk_projection_per_channel prj chan) prj chan
 
+(* Global projection: global spec -> shared spec *)
+(* Collects assumptions from the global protocol *)
+(* Returns a list of assumptions orders          *)
+let mk_projection_shared_spec prot lst =
+  let rec deconstruct_prot prot lst = match prot with
+    | SProt.SSeq seq -> 
+        let head      = seq.session_seq_formula_head in
+        let tail      = seq.session_seq_formula_tail in
+        let sess_prj1 = deconstruct_prot head lst in
+        let sess_prj2 = deconstruct_prot tail lst in
+        lst @ sess_prj1 @ sess_prj2
+    | SProt.SOr sor ->
+        let session1  = sor.session_sor_formula_or1 in
+        let session2  = sor.session_sor_formula_or2 in
+        let sess_prj1 = deconstruct_prot session1 lst in
+        let sess_prj2 = deconstruct_prot session2 lst in
+        lst @ sess_prj1 @ sess_prj2
+    | SProt.SStar star ->
+        let session1  = star.session_star_formula_star1 in 
+        let session2  = star.session_star_formula_star2 in 
+        let sess_prj1 = deconstruct_prot session1 lst in
+        let sess_prj2 = deconstruct_prot session2 lst in
+        lst @ sess_prj1 @ sess_prj2
+    | SProt.SBase sb ->
+        begin match sb with
+        | SProt.Predicate pred ->
+            let pred_orders = pred.session_predicate_orders in
+            let pred_kind   = pred.session_predicate_kind in
+            (* makes projection per Predicate kind *)
+            (* only Assert Assume is checked *)
+            begin match pred_kind with
+            | Assert a -> 
+              begin match a with
+              | Assume ->
+                  let rec order_prj pred_orders = begin match pred_orders with
+                  | SIOrd.And typ ->
+                      let assrt1 = typ.and_assrt1 in
+                      let assrt2 = typ.and_assrt2 in
+                      SIOrd.mk_and (order_prj assrt1) (order_prj assrt2)
+                  | SIOrd.Or typ ->
+                      let assrt1 = typ.or_assrt1 in
+                      let assrt2 = typ.or_assrt2 in
+                      SIOrd.mk_or (order_prj assrt1) (order_prj assrt2)
+                  | SIOrd.Order order ->
+                      begin match order with
+                      | SIOrd.HBe _
+                      | SIOrd.CBe _ -> SIOrd.Order order
+                      | _ -> SIOrd.Bot
+                      end
+                  | _ -> SIOrd.Bot
+                  end in
+                  [order_prj pred_orders]
+              | _ -> [] 
+              end
+            | _ -> []
+            end
+        | _ -> []
+        end
+    | _ -> lst in
+  let res = deconstruct_prot prot [] in
+  remove_bot_from_list res []
+   
+let mk_projection_shared_spec prot lst =
+  let pr1 = SProt.string_of_session in
+  let pr2 = pr_list SIOrd.string_of in
+  Debug.no_1 "SP.mk_projection_shared_spec" pr1 pr2 (fun _ -> mk_projection_shared_spec prot lst) prot
 
 (* ====== Helpful functions used to collect projection result ====== *)
 (* ================================================================= *)

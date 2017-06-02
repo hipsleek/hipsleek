@@ -2431,6 +2431,7 @@ and session_to_iform_x (view:I.view_decl) =
         (* makes projection *)
         let vars_list = view.I.view_typed_vars in
         let prj_map = Session_projection.mk_projection prot vars_list in
+        let assrt_prj_lst = Session_projection.mk_projection_shared_spec prot [] in
         (* TODO elena: use prj_map *)
         {view with (* view_session_projections = Some proj; *) I.view_session = Some (ProtocolSession prot) }
       | Some Projection ->
