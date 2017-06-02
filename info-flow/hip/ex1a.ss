@@ -79,7 +79,10 @@ int afun7(int p)
 
 bool eqv(int a, int b)
   requires a::security<A> & b::security<B>
-  ensures res::security<R> & R = max(A, B);
+  case {
+    a = b -> ensures res::security<R> & res & R = max(A, B);
+    a != b -> ensures res::security<R> & !res & R = max(A, B);
+  }
 
 bool lt(int a, int b)
   requires a::security<A> * b::security<B>
