@@ -5,7 +5,7 @@ int const_int(int i)
   requires true
   ensures res::security<R> & res=i & R<=0;
 
-int const_bool(bool b)
+bool const_bool(bool b)
   requires true
   ensures res::security<R> & res=b & R<=0;
 
