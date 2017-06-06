@@ -34,3 +34,27 @@ checkentail res::security<r> & r<=0 & r<=1 |- r<=0.
 checkentail res::security<r> & r<=0 & r<=1 |- r<=1.
 
 checkentail res::security<r> & (r<=0 | r<=1) |- r<=0.
+
+checkentail x::security<r> & x=y |- (x::security<_>@L & y::security<_>@L).
+print residue.
+// above requires sleek --imm
+
+
+data cell {
+ int x;
+}.
+
+checkentail x::security<r> & x=y |- (x::security<_>@L * y::security<_>@L).
+print residue.
+expect Fail.
+// this should fail but succeeded with --imm
+
+checkentail x::security<r> & x=y |- (x::security<_> * y::security<_>).
+print residue.
+expect Fail.
+// OK
+
+checkentail x::cell<r> & x=y |- (x::cell<_>@L * y::cell<_>@L).
+print residue.
+expect Fail.
+// this should fail but succeeded with --imm
