@@ -854,9 +854,8 @@ let test_dag4 assume guard inf_vars =
   (* let candidates = List.map (fun g -> ) guards in *)
   ()
 
-let collect view prot fnc_i2c =
+let collect view prot fnc_i2c params =
   (* retrieves the  role params, and chan params*)
-  let params = view.Iast.view_typed_vars in
   let roles, rest = List.partition (fun (t1,_) -> cmp_typ t1 role_typ) params in
   let channs, rest = List.partition (fun (t1,_) -> cmp_typ t1 chan_typ) params in
   (* creates def summary *)
@@ -873,15 +872,15 @@ let collect view prot fnc_i2c =
   let () = test_dag assume guard def_suids fnc_i2c in
   (assume, guard)
 
-let collect view prot fnc_i2c =
+let collect view prot fnc_i2c params =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
-  Debug.no_1 "OS.collect" pr_none pr_out (fun _ -> collect view prot fnc_i2c) prot
+  Debug.no_1 "OS.collect" pr_none pr_out (fun _ -> collect view prot fnc_i2c params) prot
 
 
 (* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
-let insert_orders view prot fnc_i2c =
-  let amap,gmap = collect view prot fnc_i2c in
+let insert_orders view prot params fnc_i2c =
+  let amap,gmap = collect view prot fnc_i2c params in
   let insert sf = match sf with
     | SProt.SBase sb -> 
       begin 
@@ -912,9 +911,9 @@ let insert_orders view prot fnc_i2c =
   let prot = x_add_1 SProt.trans_session_formula fnc prot in
   prot
 
-let insert_orders view prot fnc_i2c =
+let insert_orders view prot params fnc_i2c =
   let pr = SProt.string_of_session in
-  Debug.no_1 "OS.insert_orders" pr pr (fun _ -> insert_orders view prot fnc_i2c) prot
+  Debug.no_1 "OS.insert_orders" pr pr (fun _ -> insert_orders view prot params fnc_i2c) prot
 
 let infer_orders_formula assume guard inf_vars =
   (* let inf_vars = estate.CF.es_infer_vars in *)

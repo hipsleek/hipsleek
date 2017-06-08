@@ -2413,7 +2413,7 @@ and compute_fixpt mutrec_vnames vn view_sv_vars n_un_str transed_views inv_pf =
 and session_to_iform_x (view:I.view_decl) =
   let get_session_formula view =
     match view.I.view_session with
-    | Some s -> s
+    | Some s -> s.session
     | None -> failwith "view_session_formula not set"
   in
   let helper view transf getter =
@@ -2426,14 +2426,13 @@ and session_to_iform_x (view:I.view_decl) =
       | Some Protocol ->
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
-        (* let (n_tl,_) = gather_type_info_ *)
-        let prot = x_add_1 Order_summary.insert_orders view prot (fun p -> trans_pure_formula p []) in
+        let params = view.Iast.view_typed_vars in
+        let prot = x_add_1 Order_summary.insert_orders view prot params (fun p -> trans_pure_formula p []) in
         (* makes projection *)
         let vars_list = view.I.view_typed_vars in
-        let prj_map = Session_projection.mk_projection prot vars_list in
-        let assrt_prj_lst = Session_projection.mk_projection_shared_spec prot [] in
-        (* TODO elena: use prj_map *)
-        {view with (* view_session_projections = Some proj; *) I.view_session = Some (ProtocolSession prot) }
+        let prj_map, tprj_map, assrt_prj_list = Session_projection.mk_projection prot vars_list in
+        let sess_prj = Iast.mk_session_projection ~prj:prj_map ~tprj:tprj_map ~orders:assrt_prj_list (ProtocolSession prot) in
+        {view with view_session = sess_prj }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
         helper view transf Session.get_projection
@@ -2621,7 +2620,6 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let xpure_flag = false (* x_add TP.check_diff memo_pf_N memo_pf_P *) in
       let view_kind = trans_view_kind vdef.I.view_kind in
       let view_session_info = trans_view_session_info vdef.I.view_session_info in
-      let view_session_projections = trans_view_session_projections prog mutrec_vnames transed_views ann_typs vdef.I.view_session_projections in
       let vn = vdef.I.view_name in
       let () = if is_view_PRIM view_kind then CF.view_prim_lst # push vn
       in
@@ -2863,7 +2861,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_session_info = view_session_info;
-        C.view_session_projections = view_session_projections;
+        C.view_session = None; 
         C.view_type_of_self = 
           (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in
@@ -10204,6 +10202,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
       let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
+(*elena: check it out
       let normalized_proj =
         match c.view_session_projections with
           | Some proj -> let norm_proj = HT.create 10 in
@@ -10216,6 +10215,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
                          let () = HT.iter helper proj in
                          Some norm_proj
           | None -> None in
+*)
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =
         (match inv_lock with
@@ -10224,7 +10224,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
            let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
            Some new_f)
       in
-      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock; Iast.view_session_projections = normalized_proj}) tmp_views in
+      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock; (* Iast.view_session_projections = normalized_proj *)}) tmp_views in
   (* let () = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in

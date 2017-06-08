@@ -1896,13 +1896,14 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (fun _ -> unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var) 
         pos qvars ~lem_unfold:lem_unfold already_unsat (uf:int) ) h 
 
+(* TODO elena: check this function
 and find_projection vdef sess_ann =
   try
     let sess_ann = match sess_ann with
       | Some ann -> ann
       | None -> failwith "Session annotations expected." in
-    match vdef.view_session_projections with
-    | Some proj_hash -> let vars = List.map (fun x -> Session.CForm.get_param_id x) vdef.view_vars in
+    match vdef.view_session with
+    | Some proj -> let vars = List.map (fun x -> Session.CForm.get_param_id x) vdef.view_vars in
       let primary_role_index = ref 0 in
       let secondary_role_index = ref 0 in
       let helper index ann =
@@ -1919,10 +1920,11 @@ and find_projection vdef sess_ann =
       let primary_role = List.nth vars !primary_role_index in
       let secondary_role = List.nth vars !secondary_role_index in
       (*let () = print_endline ("roles: " ^ primary_role ^ " " ^ secondary_role) in*)
-      let proj_vdef = HT.find proj_hash (primary_role, secondary_role) in
+      let proj_vdef = HT.find proj_hash.session (primary_role, secondary_role) in
       proj_vdef
     | None -> failwith "Session projections expected."
   with Not_found -> failwith "Cannot find required projection."
+*)
 
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 
     fl (uf:int) ?(lem_unfold = false) pos : formula = 
@@ -1962,7 +1964,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
     let vdef = match vdef.view_session_info with
                | None -> vdef
                | Some si -> (match si.session_kind with
-                              | Some Protocol -> find_projection vdef sess_ann
+                              | Some Protocol -> vdef (* elena: find_projection vdef sess_ann*)
                               | _ -> vdef) in
     (*          let uf = old_uf+uf in
                 if CP.mem p aset then ( *)

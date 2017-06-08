@@ -98,6 +98,14 @@ and barrier_decl = {
 (*   | View_SPEC *)
 (*   | View_DERV *)
 
+
+and session_projection = {
+  session        : Session.session_formula;
+  per_party_proj : Session_projection.PrjMap.emap option;
+  per_chan_proj  : Session_projection.TPrjMap.emap option;
+  shared_orders  : Session.COrders.assrt list option;
+}
+
 and view_decl = {
   view_name : ident;
 
@@ -136,7 +144,7 @@ and view_decl = {
   view_backward_fields: (data_decl * ident) list;
   view_kind : view_kind;
   view_session_info : view_session_info option;
-  view_session_projections: (Session.proj_ident, view_decl) HT.t option;
+  view_session : session_projection option;
   view_prop_extns:  P.spec_var list; (*for extn views*)
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
@@ -817,7 +825,7 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_backward_fields= [];
     view_kind = View_HREL;
     view_session_info = None;
-    view_session_projections = None;
+    view_session = None;
     view_prop_extns=  [];
     view_parent_name= None;
     view_domains= [];
@@ -888,7 +896,7 @@ let mk_view_prim v_name v_args v_inv ?inst_params:(ip=[]) pos =
     view_backward_fields = [];
     view_kind = View_PRIM;
     view_session_info = None;
-    view_session_projections = None;
+    view_session = None;
     view_prop_extns =  [];
     view_parent_name = None;
     view_domains = [];

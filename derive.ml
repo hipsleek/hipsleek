@@ -1125,7 +1125,6 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
           Iast.view_pt_by_self  = [];
           Iast.view_formula = Iformula.mkETrue top_flow no_pos;
           Iast.view_session = None;
-	  Iast.view_session_projections = None;
           Iast.view_session_info = None;
           Iast.view_inv_lock = None;
           Iast.view_is_prim = false;

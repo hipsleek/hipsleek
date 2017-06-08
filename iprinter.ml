@@ -474,6 +474,7 @@ let string_of_iperm perm =
   if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
 ;;
 
+(*TODO elena: check this *)
 let string_of_session_projection hn =
   let node = F.HeapNode hn in
   let def = "" in
@@ -666,29 +667,28 @@ and string_of_formula = function
             ^ ")"
     in rs^sa
 
-and string_of_session session_formula =
-  Gen.map_opt_def ""
-    (fun x -> "\nsession: " ^ string_of_session_formula x)
-    session_formula
-
 and string_of_session_formula session_formula =
   match session_formula with
     | Session.ProtocolSession s -> Session.IProtocol.string_of_session s
     | Session.ProjectionSession s -> Session.IProjection.string_of_session s
     | Session.TPProjectionSession s -> Session.ITPProjection.string_of_session s
 
-and string_of_session_projections session_projections =
-  Gen.map_opt_def ""
-    (fun x -> let str = ref "projections:\n" in
-              let helper (role1, role2) proj_vdef =
-                if (!Globals.print_compact_projection_formula)
-                then
-                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ (map_opt_def "" string_of_session_formula proj_vdef.view_session))
-                else
-                  str := !str ^ ("(" ^ role1 ^ "," ^ role2 ^ "): " ^ string_of_struc_formula proj_vdef.view_formula ^ "\n") in
-              let () = HT.iter helper x in
-              !str)
-    session_projections
+and string_of_session session_projection =
+  let string_of_session_projection_helper session_projection =
+    let pr_sess = string_of_session_formula in
+    let pr_pty = Session_projection.PrjMap.string_of in
+    let pr_chan = Session_projection.TPrjMap.string_of in
+    let pr_assrt = pr_list Session.IOrders.string_of in 
+    "{ " ^ 
+    "Session: " ^ (pr_sess session_projection.session) ^ "\n" ^
+    "Proj per party: " ^ (pr_pty session_projection.per_party_proj) ^ "\n" ^
+    "Proj per chan: " ^ (pr_chan session_projection.per_chan_proj) ^ "\n" ^
+    "Shared orders: " ^ (pr_assrt session_projection.shared_orders) ^
+    " }"
+  in
+  Gen.map_opt_def "" 
+    (fun x -> string_of_session_projection_helper x)
+    session_projection
 
 and  string_of_struc_formula c = match c with 
   | F.ECase {
@@ -1068,8 +1068,7 @@ let string_of_view_decl v =
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str
   ^ map_opt_def "" string_of_view_session_info v.view_session_info
-  ^ (string_of_session v.view_session)
-  ^ (string_of_session_projections v.view_session_projections)
+  ^ "\nview_session: " ^ (string_of_session v.view_session)
   ^ "\nview_typed_vars" ^ ((pr_list (pr_pair string_of_typ pr_id)) v.view_typed_vars)
 ;;
 

@@ -381,12 +381,12 @@ let string_of_node_kind nk = match nk with
 
 let string_of_view_session_info (si:view_session_info) =
   let sk = match si.session_kind with
-             | Some sk -> string_of_session_kind sk
+             | Some sk -> "session_kind: " ^ string_of_session_kind sk ^ " "
              | None -> "" in
   let nk = match si.node_kind with
-             | Some nk -> string_of_node_kind nk
+             | Some nk -> "node_kind: " ^ string_of_node_kind nk
              | None -> "" in
-  "\nsession kind: " ^ sk ^ "\n" ^ "node kind: " ^ nk
+  "\n" ^ sk ^ "" ^ nk
 
 (* let string_of_node_session_info (si:node_session_info) = *)
 (*   let sk = string_of_session_kind si.session_kind in *)

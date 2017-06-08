@@ -4374,15 +4374,6 @@ let pr_bool b = fmt_string (string_of_bool b)
 
 let pr_session_info si = fmt_string (map_opt_def "" string_of_view_session_info si)
 
-let string_of_session_projections session_projections =
-  Gen.map_opt_def ""
-    (fun x ->
-       HT.fold (fun (role1, role2) proj_vdef a ->
-           a ^ (("(" ^ role1 ^ "," ^ role2 ^ "): " ^ (string_of_struc_formula proj_vdef.view_formula)) ^ "\n")) x "")
-    session_projections
-
-let pr_session_projections sp = fmt_string (string_of_session_projections sp)
-
 let pr_list_id b = fmt_string (pr_list pr_id b)
 
 (* pretty printing for invariants of a view *)
@@ -4453,7 +4444,6 @@ let pr_view_decl v =
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
   pr_add_str_cut ~emp_test:(fun x -> false) "session info: "  pr_session_info v.view_session_info;
-  pr_add_str_cut ~emp_test:Gen.is_None "session projections:"  pr_session_projections v.view_session_projections;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)

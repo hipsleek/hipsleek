@@ -23,6 +23,7 @@ let process_selective_iview_decls is_all iprog iviews =
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
       let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
+(* TODO elena: check this
       let normalized_proj =
         match pdef.view_session_projections with
           | Some proj -> let norm_proj = HT.create 10 in
@@ -35,6 +36,7 @@ let process_selective_iview_decls is_all iprog iviews =
                          let () = HT.iter helper proj in
                          Some norm_proj
                  | None -> None in
+*)
       let inv_lock = pdef.I.view_inv_lock in
       let inv_lock = (
         match inv_lock with
@@ -43,7 +45,7 @@ let process_selective_iview_decls is_all iprog iviews =
           let new_f = Astsimp.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
           Some new_f
       ) in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock; Iast.view_session_projections = normalized_proj;} in
+      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock; (* TODO elena: Iast.view_session_projections = normalized_proj; *)} in
       new_pdef
     ) iviews in
   let () = y_tinfo_hp (add_str "view_decls" (pr_list Iprinter.string_of_view_decl)) iprog.I.prog_view_decls in

@@ -508,14 +508,15 @@ let create_map_of_tprj prj_map vars =
   List.fold_left (fun acc (role, prj) -> mk_prj_per_channel prj role vars acc) (TPrjMap.mkEmpty()) prj_map
       
 (* Applies projection per party, then per channel.
- * Returns a map of projections *)
+ * Returns a pair of projections *)
 let mk_projection prot vars =
   let prj_map = create_map_of_prj prot vars (PrjMap.mkEmpty()) in
-  let prj_map = create_map_of_tprj prj_map vars in
-  prj_map
+  let tprj_map = create_map_of_tprj prj_map vars in
+  let assrt_prj_list = mk_projection_shared_spec prot [] in
+  (prj_map, tprj_map, assrt_prj_list)
 
 let mk_projection prot vars =
   let pr = SProt.string_of_session in
-  let pr_out = TPrjMap.string_of in
+  let pr_out = pr_triple PrjMap.string_of TPrjMap.string_of (pr_list SIOrd.string_of) in
   Debug.no_1 "SP.mk_projection_x" pr pr_out (fun _ -> mk_projection prot vars) prot
 

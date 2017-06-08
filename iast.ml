@@ -82,6 +82,13 @@ and data_decl = {
 
 and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
+and session_projection = {
+  session        : Session.session_formula;
+  per_party_proj : Session_projection.PrjMap.emap;
+  per_chan_proj  : Session_projection.TPrjMap.emap;
+  shared_orders  : Session.IOrders.assrt list;
+}
+
 and view_decl = 
   { 
     view_name : ident; 
@@ -117,9 +124,7 @@ and view_decl =
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
-    view_session : Session.session_formula option;
-    (* elena: remove the below line after the projection works *)
-    view_session_projections: (Session.proj_ident, view_decl) HT.t option;
+    view_session : session_projection option;
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)
@@ -640,6 +645,17 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
+let mk_session_projection
+  ?(prj=Session_projection.PrjMap.mkEmpty())
+  ?(tprj=Session_projection.TPrjMap.mkEmpty())
+  ?(orders=[]) 
+  sess = Some {
+  session        = sess;
+  per_party_proj = prj;
+  per_chan_proj  = tprj;
+  shared_orders  = orders;
+}
+
 (* let mk_iview_decl name dname vars f pos = *)
 (* type: Globals.ident -> *)
 (*   Globals.ident -> *)
@@ -663,7 +679,6 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_pt_by_self  = [];
           view_formula = f;
           view_session = None;
-	  view_session_projections = None;
           view_session_info = None;
           view_inv_lock = None;
           view_is_prim = false;
@@ -713,7 +728,6 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
     view_pt_by_self  = [];
     view_formula = F.mkETrue top_flow (pos);
     view_session = None;
-    view_session_projections = None;
     view_session_info = None;
     view_inv_lock = None;
     view_is_prim = false;
