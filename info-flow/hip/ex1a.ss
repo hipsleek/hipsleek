@@ -1,4 +1,43 @@
-pred_prim security<i : int>;
+pred_prim security<i : int>
+  inv 0 <= i & i <= 1;
+
+int const_int(int i)
+  requires true
+  ensures res::security<R> & res=i & R<=0;
+
+bool const_bool(bool b)
+  requires true
+  ensures res::security<R> & res=b & R<=0;
+
+bool eqv(int a, int b)
+  requires a::security<A>@L * b::security<B>@L
+  case {
+    a = b -> ensures res::security<R> & res & R = max(A, B);
+    a != b -> ensures res::security<R> & !res & R = max(A, B);
+  }
+
+bool lt(int a, int b)
+  requires a::security<A>@L * b::security<B>@L
+  case {
+    a < b -> ensures res::security<R> & res & R = max(A, B);
+    a >= b -> ensures res::security<R> & !res & R = max(A, B);
+  }
+
+int plus(int a, int b)
+  requires a::security<A>@L * b::security<B>@L
+  ensures res::security<R> & res = a + b & R = max(A, B);
+
+int minus(int a, int b)
+  requires a::security<A>@L * b::security<B>@L
+  ensures res::security<R> & res = a - b & R = max(A, B);
+
+int if_then_else(bool b, int i, int j)
+  requires b::security<B>@L * i::security<I>@L * j::security<J>@L
+  case {
+    b -> ensures res::security<R> & res = i & R = max(max(B, I), J);
+    !b -> ensures res::security<R> & res = j & R = max(max(B, I), J);
+  }
+
 
 data X {
   int f1;
@@ -14,32 +53,22 @@ int f(int h, int l)
   requires h::security<H> * l::security<L> & H <= 1 & L <= 0
   ensures res::security<R> & R <= 0;
 {
-  if (h == 1) {
-    l = 2;
-  }
-  else {
-    l = 1;
-  }
-
+  l = if_then_else(eqv(h, const_int(1)), const_int(2), const_int(1));
   return l;
 }
-
-int constant(int i)
-  requires true
-  ensures res::security<R> & res=i & R<=0;
 
 int afun1()
   requires true
   ensures res::security<R> & R <= 0;
 {
-  return constant(1);
+  return const_int(1);
 }
 
 int afun2()
   requires true
   ensures res::security<R> & R <= 1;
 {
-  return constant(1);
+  return const_int(1);
 }
 
 int afun3(int p)
@@ -77,43 +106,32 @@ int afun7(int p)
   return p;
 }
 
-bool eqv(int a, int b)
-  requires a::security<A> & b::security<B>
-  case {
-    a = b -> ensures res::security<R> & res & R = max(A, B);
-    a != b -> ensures res::security<R> & !res & R = max(A, B);
-  }
-
-bool lt(int a, int b)
-  requires a::security<A> * b::security<B>
-  ensures res::security<R> & R = max(A, B);
-
 bool afun8(int p)
   requires p::security<P> & P <= 1
   ensures res::security<R> & R <= 0;
 {
-  return eqv(p, constant(1));
+  return eqv(p, const_int(1));
 }
 
 bool afun9(int p)
   requires p::security<P> & P <= 1
   ensures res::security<R> & R <= 0;
 {
-  return lt(p, constant(1));
+  return lt(p, const_int(1));
 }
 
 bool afun10(int p)
   requires p::security<P> & P <= 0
   ensures res::security<R> & R <= 0;
 {
-  return eqv(p, constant(1));
+  return eqv(p, const_int(1));
 }
 
 int ignore_param (int p)
   requires p::security<P> & P <= 1
   ensures res::security<R> & R <= 0;
 {
-  int x = constant(1);
+  int x = const_int(1);
   return x;
 }
 
@@ -172,10 +190,7 @@ int ifthen1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  if (q == 0) {
-    x = q;
-  }
+  int x = if_then_else(eqv(q, const_int(0)), q, const_int(0));
   return x;
 }
 
@@ -183,10 +198,7 @@ int ifthen2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  if (p == 0) {
-    x = q;
-  }
+  int x = if_then_else(eqv(p, const_int(0)), q, const_int(0));
   return x;
 }
 
@@ -194,13 +206,8 @@ int ifthenelse1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  if (q == 0) {
-    x = q;
-  }
-  else {
-    x = 1;
-  }
+  int x = const_int(0);
+  x = if_then_else(eqv(q, const_int(0)), q, const_int(1));
   return x;
 }
 
@@ -208,13 +215,8 @@ int ifthenelse2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  if (p == 0) {
-    x = q;
-  }
-  else {
-    x = 1;
-  }
+  int x = const_int(0);
+  x = if_then_else(eqv(p, const_int(0)), q, const_int(1));
   return x;
 }
 
@@ -222,13 +224,8 @@ int ifthenelse3 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  if (q == 0) {
-    x = q;
-  }
-  else {
-    x = p;
-  }
+  int x = const_int(0);
+  x = if_then_else(eqv(q, const_int(0)), q, p);
   return x;
 }
 
@@ -236,14 +233,10 @@ int seriesif (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  int y = 0;
-  if (p == 0) {
-    x = 1;
-  }
-  if (x == 0) {
-    y = 1;
-  }
+  int x = const_int(0);
+  int y = const_int(0);
+  x = if_then_else(eqv(p, const_int(0)), const_int(1), const_int(0));
+  y = if_then_else(eqv(x, const_int(0)), const_int(1), const_int(0));
   return y;
 }
 
@@ -251,16 +244,10 @@ int nestedif1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  int y = 0;
-  if (q == 0) {
-    if (p == 0) {
-      x = 1;
-    }
-  }
-  if (x == 0) {
-    y = 1;
-  }
+  int x = const_int(0);
+  int y = const_int(0);
+  x = if_then_else(eqv(q, const_int(0)), if_then_else(eqv(p, const_int(0)), const_int(1), const_int(0)), const_int(0));
+  y = if_then_else(eqv(x, const_int(0)), const_int(1), const_int(0));
   return y;
 }
 
@@ -268,16 +255,10 @@ int nestedif2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  int y = 0;
-  if (q == 0) {
-    if (0 == 0) {
-      x = 1;
-    }
-  }
-  if (x == 0) {
-    y = 1;
-  }
+  int x = const_int(0);
+  int y = const_int(0);
+  x = if_then_else(eqv(q, const_int(0)), if_then_else(eqv(const_int(0), const_int(0)), const_int(1), const_int(0)), const_int(0));
+  y = if_then_else(eqv(x, const_int(0)), const_int(1), const_int(0));
   return y;
 }
 
@@ -285,19 +266,10 @@ int nestedif3 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  int x = 0;
-  int y = 0;
-  if (q == 0) {
-    if (0 == 0) {
-      x = 1;
-    }
-    else {
-      x = p;
-    }
-  }
-  if (x == 0) {
-    y = 1;
-  }
+  int x = const_int(0);
+  int y = const_int(0);
+  x = if_then_else(eqv(q, const_int(0)), if_then_else(eqv(const_int(0), const_int(0)), const_int(1), p), const_int(0));
+  y = if_then_else(eqv(x, const_int(0)), const_int(1), const_int(0));
   return y;
 }
 
