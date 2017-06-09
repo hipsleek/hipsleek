@@ -10,29 +10,29 @@ bool const_bool(bool b)
   ensures res::security<R> & res=b & R<=0;
 
 bool eqv(int a, int b)
-  requires a::security<A>@L * b::security<B>@L
+  requires a::security<A>@L & b::security<B>@L
   case {
     a = b -> ensures res::security<R> & res & R = max(A, B);
     a != b -> ensures res::security<R> & !res & R = max(A, B);
   }
 
 bool lt(int a, int b)
-  requires a::security<A>@L * b::security<B>@L
+  requires a::security<A>@L & b::security<B>@L
   case {
     a < b -> ensures res::security<R> & res & R = max(A, B);
     a >= b -> ensures res::security<R> & !res & R = max(A, B);
   }
 
 int plus(int a, int b)
-  requires a::security<A>@L * b::security<B>@L
+  requires a::security<A>@L & b::security<B>@L
   ensures res::security<R> & res = a + b & R = max(A, B);
 
 int minus(int a, int b)
-  requires a::security<A>@L * b::security<B>@L
+  requires a::security<A>@L & b::security<B>@L
   ensures res::security<R> & res = a - b & R = max(A, B);
 
 int if_then_else(bool b, int i, int j)
-  requires b::security<B>@L * i::security<I>@L * j::security<J>@L
+  requires b::security<B>@L * i::security<I>@L & j::security<J>@L
   case {
     b -> ensures res::security<R> & res = i & R = max(max(B, I), J);
     !b -> ensures res::security<R> & res = j & R = max(max(B, I), J);
@@ -53,7 +53,8 @@ int f(int h, int l)
   requires h::security<H> * l::security<L> & H <= 1 & L <= 0
   ensures res::security<R> & R <= 0;
 {
-  l = if_then_else(eqv(h, const_int(1)), const_int(2), const_int(1));
+  bool k = eqv(h, const_int(1));
+  l = if_then_else(k , const_int(2), const_int(1));
   return l;
 }
 
