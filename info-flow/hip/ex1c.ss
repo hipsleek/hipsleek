@@ -43,7 +43,7 @@ int f(int h, int l)
   ensures res::security<R> & R <= 0;
 {
   bool k = eqv(h, const_int(1));
-  l = if_then_else(k , const_int(2), const_int(1));
+  int j = if_then_else(k , const_int(2), const_int(1));
   dprint;
-  return l;
+  return j;
 }
