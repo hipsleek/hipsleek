@@ -1,5 +1,8 @@
 global int context = 0;
 
+pred_prim security<i : int>
+  inv 0 <= i & i <= 1;
+
 int const_int(int i)
   requires true
   ensures res::security<R> & res=i & R<=0;
