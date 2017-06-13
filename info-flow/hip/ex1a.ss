@@ -293,15 +293,15 @@ X new1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  return new X();
+  return toXsec(new X());
 }
 
 int mutation1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X();
-  x.f1 = 1;
+  X x = toXsec(new X());
+  x.f1 = const_int(1);
   return x.f1;
 }
 
@@ -309,7 +309,7 @@ int mutation2 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X();
+  X x = toXsec(new X());
   x.f1 = p;
   return x.f1;
 }
@@ -318,12 +318,9 @@ int aliasing1 (int p, int q)
   requires p::security<P> * q::security<Q> & P <= 1 & Q <= 0
   ensures res::security<R> & R <= 0;
 {
-  X x = new X();
+  X x = toXsec(new X());
   X y = x;
-  int t = 0;
-  if (p != 0) {
-    t = 1;
-  }
+  int t = if_then_else(not(eqv(p, const_int(0))), const_int(1), const_int(0));
   x.f1 = t;
   return x.f1;
 }
