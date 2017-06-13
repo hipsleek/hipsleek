@@ -31,6 +31,10 @@ bool const_bool(bool b)
   requires true
   ensures res::security<R> & res=b & R<=0;
 
+bool not(bool b)
+  requires b::security<B>
+  ensures res::security<B> & res = !b;
+
 bool eqv(int a, int b)
   requires a::security<A>@L & b::security<B>@L
   case {
