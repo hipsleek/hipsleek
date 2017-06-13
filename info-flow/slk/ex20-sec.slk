@@ -1,0 +1,13 @@
+
+pred_prim security<h:int>. 
+
+
+checkentail x::security<0> * y::security<0> & x=y
+ |- true.
+print residue.
+expect Valid.
+
+checkentail x::security<0> * y::security<0> & x=y
+ |- false.
+print residue.
+expect Fail.

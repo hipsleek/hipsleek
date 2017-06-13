@@ -58,3 +58,7 @@ checkentail x::cell<r> & x=y |- (x::cell<_>@L * y::cell<_>@L).
 print residue.
 expect Fail.
 // this should fail but succeeded with --imm
+
+
+checkentail x::security<0> * x::security<0> |- false.
+print residue.
