@@ -1,5 +1,27 @@
+data X {
+  int f1;
+  int f2;
+}
+
+data Y {
+  int s1;
+  int s2;
+}
+
 pred_prim security<i : int>
   inv 0 <= i & i <= 1;
+
+pred Xsec<XS, F1, F2> == self::X<f1, f2> * f1::security<F1> * f2::security<F2> * self::security<XS>;
+
+pred Ysec<YS, F1, F2> == self::Y<s1, s2> * s1::security<S1> * s2::security<S2> * self::security<YS>;
+
+X toXsec(X x)
+  requires true
+  ensures res::Xsec<Xs, F1, F2> & Xs <= 0 & F1 <= 1 & F2 <= 2;
+
+Y toYsec(Y y)
+  requires true
+  ensures res::Ysec<YS, F1, F2> & YS <= 0 & F1 <= 1 & F2 <= 2;
 
 int const_int(int i)
   requires true
@@ -37,17 +59,6 @@ int if_then_else(bool b, int i, int j)
     b -> ensures res::security<R> & res = i & R = max(max(B, I), J);
     !b -> ensures res::security<R> & res = j & R = max(max(B, I), J);
   }
-
-
-data X {
-  int f1;
-  int f2;
-}
-
-data Y {
-  int s1;
-  int s2;
-}
 
 int f(int h, int l)
   requires h::security<H> * l::security<L> & H <= 1 & L <= 0
