@@ -1,6 +1,12 @@
 pred_prim security<i : int>
   inv 0 <= i & i <= 1;
 
+data boolobj {
+  bool val;
+};
+// b::boolobj<r> * b::security<l>
+
+
 int const_int(int i)
   requires true
   ensures res::security<R> & res=i & R<=0;
@@ -34,8 +40,8 @@ int minus(int a, int b)
 int if_then_else(bool b, int i, int j)
   requires b::security<B>@L * i::security<I>@L & j::security<J>@L
   case {
-    b -> ensures res::security<R> & res = i & R = max(max(context, B), max(I, J));
-    !b -> ensures res::security<R> & res = j & R = max(max(context, B), max(I, J));
+    b -> ensures res = i & R = max(max(context, B), max(I, J));
+    !b -> ensures res = j & R = max(max(context, B), max(I, J));
   }
 
 global int context = 0;
@@ -49,7 +55,7 @@ int f(int h, int l)
   int j = if_then_else(k , const_int(2), const_int(1));
   //dprint;
   context = 0;
-  //dprint;
-  assert j::security<J> & J <= 0;
+  dprint;
+  assert j'::security<J> & J <= 0;
   return j;
 }
