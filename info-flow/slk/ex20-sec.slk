@@ -11,3 +11,10 @@ checkentail x::security<0> * y::security<0> & x=y
  |- false.
 print residue.
 expect Fail.
+
+lemma_unsafe "combine" self::security<a> * self::security<b> -> self::security<c> . //& c<=a & c<=b.
+ 
+checkentail x::security<0> * y::security<1> & x=y
+ |- x::security<n>.
+print residue.
+expect Valid.
