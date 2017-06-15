@@ -1712,7 +1712,7 @@ struct
     let anns = p.session_predicate_anns in
     let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
-    let node = Base.mk_node (ptr, name, ho_param_formula, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
+    let node = Base.mk_node (ptr, name, (*ho_param_formula*) args, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
     node
