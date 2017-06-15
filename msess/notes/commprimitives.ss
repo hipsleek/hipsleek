@@ -20,6 +20,7 @@ int receive (Channel ccc)
   ensures  ccc::Chan{@S %R}<> * %L(res);
 
 
+
 /**
  Channel
 */

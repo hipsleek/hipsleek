@@ -10890,6 +10890,24 @@ and match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq p
     | _  -> ctx_disjuncts in
   ctx_disjuncts
 
+and match_ho_arg_lhs_disj_debug ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
+  let pr_rflow = Cprinter.string_of_rflow_formula in
+  let pr1 = pr_pair (pr_pair
+                       (add_str "lhs: " pr_rflow)
+                       (add_str "rhs: " pr_rflow)) string_of_ho_split_kind in
+  (* ====== output helper printers: ====== *)
+  let pr3 = pr_option (add_str "pure residue" !MCP.print_mix_formula) in
+  let pr4 = pr_option (add_str "residue" Cprinter.string_of_formula) in
+  let pr5 = pr_list (add_str "map" (pr_pair Cprinter.string_of_hvar Cprinter.string_of_formula)) in
+  let pr6 = pr_option (add_str "estate" !CF.print_entail_state) in
+  let pr7 (e,_) = (add_str "fail ctx" Cprinter.string_of_list_context) e in
+  let pr7 = pr_opt pr7 in
+  let pr2 = pr_penta pr7 pr4 pr3 pr5 pr6 in
+  let pr2 = pr_list pr2 in
+  Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_x
+                                                 ((lhs, rhs), k) ho_match_helper prog estate conseq pos ) ((lhs, rhs), k)
+
+
 and match_ho_arg_lhs_disj_preprocess ((lhs, rhs), k) ho_match_helper prog estate conseq pos =
   let f_pre f_es =
     (* set conseq_for_unsat_check to current conseq if not already set *)
@@ -10911,7 +10929,7 @@ and match_ho_arg_lhs_disj_preprocess ((lhs, rhs), k) ho_match_helper prog estate
       in (a,b,c,d,es)
     in List.map helper res
   in
-  let fnc estate = match_ho_arg_lhs_disj_x ((lhs, rhs), k) ho_match_helper prog estate conseq pos in
+  let fnc estate = match_ho_arg_lhs_disj_debug ((lhs, rhs), k) ho_match_helper prog estate conseq pos in
   let res = Wrapper.wrap_pre_post_process_gen f_pre f_post fnc estate in
   res
 
@@ -10929,7 +10947,7 @@ and match_ho_arg_lhs_disj ((lhs, rhs), k) ho_match_helper prog estate conseq pos
   let pr7 = pr_opt pr7 in
   let pr2 = pr_penta pr7 pr4 pr3 pr5 pr6 in
   let pr2 = pr_list pr2 in
-  Debug.no_1 "match_ho_arg_lhs_disj" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_preprocess
+  Debug.no_1 "match_ho_arg_lhs_disj_preprocess" pr1 pr2 (fun _ -> match_ho_arg_lhs_disj_preprocess
                                                  ((lhs, rhs), k) ho_match_helper prog estate conseq pos ) ((lhs, rhs), k)
 
 

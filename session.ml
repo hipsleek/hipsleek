@@ -779,6 +779,9 @@ module CForm = struct
     let h, p, vp, fl, t, a = CF.split_components formula in
     h
 
+  let get_h_formula formula =
+    Debug.no_1 "get_h_formula" !print !print_h_formula get_h_formula formula
+  
   let get_pure_formula formula =
     let _, p, _, _, _, _ = CF.split_components formula in
     (MCP.pure_of_mix p)
@@ -2914,24 +2917,26 @@ let rebuild_node node unfold_fun is_prime_fun =
   match node with
   | CF.ViewNode vn ->
     begin
-      let ho_args = vn.CF.h_formula_view_ho_arguments in
-      match ho_args with
-      | [] -> None
-      | h :: [] ->
-        (* assume only one HO param (may be nested HO though) for the current node *)
-        let node = CForm.get_h_formula_from_ho_param_formula h in
-        let default_res = None, None in
-        let ho_arg, pure = CTPProjection.rebuild_node default_res node unfold_fun is_prime_fun in
-        let res = 
-          match ho_arg with
-          | Some ho_arg ->
-            let node =  CF.ViewNode {vn with CF.h_formula_view_ho_arguments = ho_arg} in
-            let res = CF.formula_of_heap node vn.CF.h_formula_view_pos in
-            let res = map_opt_def res (fun x -> CF.add_pure_formula_to_formula x res) pure
-            in Some res
-          | None -> None
-        in res
-      | _ -> None
+      try
+        let ho_args = vn.CF.h_formula_view_ho_arguments in
+        match ho_args with
+        | [] -> None
+        | h :: [] ->
+          (* assume only one HO param (may be nested HO though) for the current node *)
+          let node = CForm.get_h_formula_from_ho_param_formula h in
+          let default_res = None, None in
+          let ho_arg, pure = CTPProjection.rebuild_node default_res node unfold_fun is_prime_fun in
+          let res = 
+            match ho_arg with
+            | Some ho_arg ->
+              let node =  CF.ViewNode {vn with CF.h_formula_view_ho_arguments = ho_arg} in
+              let res = CF.formula_of_heap node vn.CF.h_formula_view_pos in
+              let res = map_opt_def res (fun x -> CF.add_pure_formula_to_formula x res) pure
+              in Some res
+            | None -> None
+          in res
+        | _ -> None
+      with _ -> None
     end
   | _ -> None
 

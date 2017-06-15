@@ -14,7 +14,7 @@ pr C1#k: !(int) ;; ?(v#v=x)
 pr C1#l: ((!(v#v=1 & x=val) ;; ?(1)) or (!0))
 */
 void C1(Channel k, Channel l, int val)
-   requires [x]  k::Chan{@S !v#v>0;;?v#v=x}<> * l::Chan{@S ((!v#(v=1 & x=val) ;; ?1) or (?0))}<>
+   requires [x]  k::Chan{@S !v#v>0;;?v#v=x}<> * l::Chan{@S ((!v#(v=1 & x=val) ;; ?1) or (?v#(v=0 & x!=val) ))}<>
    ensures       k::Chan{emp}<> * l::Chan{emp}<>; 
   
 {
