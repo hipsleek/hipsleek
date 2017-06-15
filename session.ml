@@ -2466,25 +2466,17 @@ module CProtocol = Make_Session(Protocol_base_formula)(CForm);;
 (* module CProtocol = Make_Session(CProtocol_base)(\* (COrders) *\);; *)
 
 (* per party  *)
-module IProjection = Make_Session(Projection_base_formula)(IForm)(* (IOrders) *);;
-module CProjection = Make_Session(Projection_base_formula)(CForm)(* (COrders) *);;
+module IProjection = Make_Session(Projection_base_formula)(IForm);;
+module CProjection = Make_Session(Projection_base_formula)(CForm);;
 (* module IProjection = Make_Session(IProjection_base)(\* (IOrders) *\);; *)
 (* module CProjection = Make_Session(CProjection_base)(\* (COrders) *\);; *)
 
 
 (* per channel *)
-module ITPProjection = Make_Session(TPProjection_base_formula)(IForm)(* (IOrders) *);;
-module CTPProjection = Make_Session(TPProjection_base_formula)(CForm)(* (COrders) *);;
+module ITPProjection = Make_Session(TPProjection_base_formula)(IForm);;
+module CTPProjection = Make_Session(TPProjection_base_formula)(CForm);;
 (* module ITPProjection = Make_Session(ITPProjection_base)(\* (IOrders) *\);; *)
 (* module CTPProjection = Make_Session(CTPProjection_base)(\* (COrders) *\);; *)
-
-(* module IProtocol_base = IProtocol.Base;; *)
-(* module CProtocol_base = Protocol_base_formula(CMessage) ;; *)
-(* module IProjection_base = Projection_base_formula(IMessage) ;; *)
-(* module CProjection_base = Projection_base_formula(CMessage) ;; *)
-(* module ITPProjection_base = TPProjection_base_formula(IMessage);; *)
-(* module CTPProjection_base = TPProjection_base_formula(CMessage);; *)
-
 
 
 type session_formula = ProtocolSession of IProtocol.session
