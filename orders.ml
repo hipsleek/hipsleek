@@ -18,27 +18,93 @@ sig
   type t
   val string_of : t -> string
   val eq : t -> t -> bool
-end;; 
+end;;
 
-module type GORDERS_TYPE = 
-sig
-  type role
-  type chan
-  type suid
+module Var (Form: SC.Message_type) =
+struct
+  type t = Form.var
+  let string_of = Form.print_var
+  let eq = Form.eq_var
+end
+
+module GOrders_Base  (Var: VAR_TYPE) =
+struct
+  (* type role *)
+  (* type chan *)
+  (* type suid *)
+
+  type role = Var.t
+  type chan = Var.t
+  type suid = Var.t
+
   
-  type event
-  type transmission
+  (* type event *)
+  (* type transmission *)
 
-  type formula
+  type event = {
+    role   : role;
+    uid    : suid;
+    channel: chan;
+  }
+
+  (* boundary base element *)
+  and transmission = {
+    sender   : role;
+    receiver : role;
+    uid      : suid;
+    channel  : chan;
+  }
+  
+  type orders  = HBe of hbe_type
+               | HBt of hbt_type
+               | CBe of cbe_type
+  and assrt   = Event of event
+              | NEvent of event
+              | Transm of transmission
+              | Order of orders
+              | And of and_type
+              | Or of or_type
+              | Impl of impl_type
+              | Bot
+              | NoAssrt
+
+  and hbe_type = {
+    hbe_event1 : event;
+    hbe_event2 : event;
+  }
+  and hbt_type = {
+    hbt_transmission1 : transmission;
+    hbt_transmission2 : transmission;
+  }
+  and cbe_type = {
+    cbe_event1 : event;
+    cbe_event2 : event;
+  }
+  and and_type = {
+    and_assrt1 :  assrt;
+    and_assrt2 :  assrt;
+  }
+  and or_type = {
+    or_assrt1 :  assrt;
+    or_assrt2 :  assrt;
+  }
+  and impl_type = {
+    impl_event :  event;
+    impl_assrt :  assrt;
+  }
+  
+end;;
+
+module type GORDERS_TYPE =
+  functor (Var: VAR_TYPE) ->
+sig
+  include (module type of GOrders_Base(Var))
 
   val string_of_suid : suid -> string
   val string_of_role : role -> string
   val string_of_chan : chan -> string
   val string_of_event : event -> string
   val string_of_transmission : transmission -> string
-
-  type orders
-  type assrt
 
   val string_of : assrt -> string 
 
@@ -77,79 +143,20 @@ sig
   val contains_suid  : suid list -> suid -> bool 
   val contains_event : event list -> event -> bool 
 
-  val trans_orders_to_pure_formula : assrt -> VarGen.loc -> formula list 
-
 end;;
 
 (* generic orders, where role and chan are polymorphic *)
 module GOrders
-    (Form : SC.Message_type) =
+    (Var : VAR_TYPE) =
 struct
-  (* boundary base element *)
-  type role = Form.var
-  type chan = Form.var
-  type suid = Form.var
+  module GB = GOrders_Base(Var)
+  include GB
 
-  type formula = Form.pure_formula
-                                
-  type event = {
-    role   : role;
-    uid    : suid;
-    channel: chan;
-  }
-
-  (* boundary base element *)
-  and transmission = {
-    sender   : role;
-    receiver : role;
-    uid      : suid;
-    channel  : chan;
-  }
-  
-  let string_of_role = Form.print_var
-  let string_of_chan = Form.print_var
-  let string_of_suid = Form.print_var
+  let string_of_role = Var.string_of
+  let string_of_chan = Var.string_of
+  let string_of_suid = Var.string_of
   let string_of_event e = (string_of_role e.role) ^ "^" ^(string_of_suid e.uid)
   let string_of_transmission e = (string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (string_of_role e.receiver)
-
-  (* order relations - to be collected after analyzing the protocol *)
-  type orders  = HBe of hbe_type
-               | HBt of hbt_type
-               | CBe of cbe_type
-  and assrt   = Event of event
-              | NEvent of event
-              | Transm of transmission
-              | Order of orders
-              | And of and_type
-              | Or of or_type
-              | Impl of impl_type
-              | Bot
-              | NoAssrt
-
-  and hbe_type = {
-    hbe_event1 : event;
-    hbe_event2 : event;
-  }
-  and hbt_type = {
-    hbt_transmission1 : transmission;
-    hbt_transmission2 : transmission;
-  }
-  and cbe_type = {
-    cbe_event1 : event;
-    cbe_event2 : event;
-  }
-  and and_type = {
-    and_assrt1 :  assrt;
-    and_assrt2 :  assrt;
-  }
-  and or_type = {
-    or_assrt1 :  assrt;
-    or_assrt2 :  assrt;
-  }
-  and impl_type = {
-    impl_event :  event;
-    impl_assrt :  assrt;
-  }
 
   let string_of e1 =
     let rec helper e1 = 
@@ -187,9 +194,9 @@ struct
 
   let mk_empty () = NoAssrt
 
-  let eq_role r1 r2  = Form.eq_var r1 r2
-  let eq_chan c1 c2  = Form.eq_var c1 c2
-  let eq_suid s1 s2  = Form.eq_var s1 s2
+  let eq_role r1 r2  = Var.eq r1 r2
+  let eq_chan c1 c2  = Var.eq c1 c2
+  let eq_suid s1 s2  = Var.eq s1 s2
   let eq_event e1 e2 = (eq_role e1.role e2.role) && (eq_role e1.uid e2.uid)
 
   let contains_suid lst suid = List.exists (eq_suid suid) lst
@@ -226,7 +233,7 @@ struct
     | Order (CBe cbe) -> cbe.cbe_event1, cbe.cbe_event2
     | _ -> failwith "Expecting a HB or CB relation"
 
-  let get_suid ev = ev.uid
+  let get_suid (ev:event) = ev.uid
 
   let get_and_value assrt =
     match assrt with
@@ -238,43 +245,112 @@ struct
     | Or typ -> typ.or_assrt1, typ.or_assrt2 
     | _ -> failwith "Expecting an Or order relation"
 
-  (* Transform from assrt orders -> pure formula *)
-  let rec trans_orders_to_pure_formula (orders:assrt) pos = match orders with
-    | And and_type -> 
-         let and_head = and_type.and_assrt1 in
-         let and_tail = and_type.and_assrt2 in
+  (* (\* Transform from assrt orders -> pure formula *\) *)
+  (* let rec trans_orders_to_pure_formula (orders:assrt) pos = match orders with *)
+  (*   | And and_type ->  *)
+  (*        let and_head = and_type.and_assrt1 in *)
+  (*        let and_tail = and_type.and_assrt2 in *)
+  (*        let form1 = trans_orders_to_pure_formula and_head pos in *)
+  (*        let form2 = trans_orders_to_pure_formula and_tail pos in *)
+  (*        let res = Form.join_conjunctions ([]@form1@form2) in *)
+  (*        [res] *)
+  (*    | Or or_type -> failwith "Disjunctions not allowed"  *)
+  (*    | Event e -> *)
+  (*        begin match !event_rel_id with  *)
+  (*        | Some rel_id -> *)
+  (*            let role = e.role in *)
+  (*            let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in *)
+  (*            [p_form] *)
+  (*        | None -> [] *)
+  (*        end *)
+  (*    | Order order -> *)
+  (*      begin *)
+  (*       match order with *)
+  (*       | HBe hbe ->  *)
+  (*           begin match !hbp_rel_id with *)
+  (*           | Some rel_id -> *)
+  (*               let hbe_role1 = hbe.hbe_event1.role in *)
+  (*               let hbe_role2 = hbe.hbe_event2.role in *)
+  (*               let var1 = (hbe_role1, pos) in *)
+  (*               let var2 = (hbe_role2, pos) in *)
+  (*               let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in *)
+  (*               [p_form] *)
+  (*           | None -> [] *)
+  (*           end *)
+  (*       | CBe cbe -> *)
+  (*           begin match (!cb_rel_id) with *)
+  (*           | Some rel_id -> *)
+  (*               let cbe_role1 = cbe.cbe_event1.role in *)
+  (*               let cbe_role2 = cbe.cbe_event2.role in *)
+  (*               let var1 = (cbe_role1, pos) in *)
+  (*               let var2 = (cbe_role2, pos) in *)
+  (*               let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in *)
+  (*               [p_form] *)
+  (*           | None ->  [] *)
+  (*           end *)
+  (*       | _ -> [] *)
+  (*      end *)
+  (*    | _ -> [] *)
+
+end ;;
+
+(* module type TRANS_ORDERS_TYPE = *)
+(* sig *)
+(*   include GORDERS_TYPE *)
+(*   include SC.Message_type *)
+
+(*   val trans_orders_to_pure_formula : assrt -> VarGen.loc -> pure_formula list *)
+(* end *)
+
+module Orders2Core (* (Orders: GORDERS_TYPE) *) (Form: SC.Message_type) =
+struct
+  (* module Var = Var(Form) *)
+  module Ord = GOrders(Var(Form))
+  (* module Ord = GOrders ( struct *)
+  (*     type t = Form.var *)
+  (*     let string_of = Form.print_var *)
+  (*     let eq = Form.eq_var *)
+  (*   end ) *)
+  (* include Ord *)
+  (* include Form *)
+    (* Transform from assrt orders -> pure formula *)
+  let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos = (* failwith x_tbi *)
+    match orders with
+    | Ord.And and_type ->
+         let and_head = and_type.Ord.and_assrt1 in
+         let and_tail = and_type.Ord.and_assrt2 in
          let form1 = trans_orders_to_pure_formula and_head pos in
          let form2 = trans_orders_to_pure_formula and_tail pos in
          let res = Form.join_conjunctions ([]@form1@form2) in
          [res]
-     | Or or_type -> failwith "Disjunctions not allowed" 
-     | Event e ->
-         begin match !event_rel_id with 
+     | Ord.Or or_type -> failwith "Disjunctions not allowed"
+     | Ord.Event e ->
+         begin match !event_rel_id with
          | Some rel_id ->
              let role = e.role in
              let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in
              [p_form]
          | None -> []
          end
-     | Order order ->
+     | Ord.Order order ->
        begin
         match order with
-        | HBe hbe -> 
+        | Ord.HBe hbe ->
             begin match !hbp_rel_id with
             | Some rel_id ->
-                let hbe_role1 = hbe.hbe_event1.role in
-                let hbe_role2 = hbe.hbe_event2.role in
+                let hbe_role1 = hbe.Ord.hbe_event1.role in
+                let hbe_role2 = hbe.Ord.hbe_event2.role in
                 let var1 = (hbe_role1, pos) in
                 let var2 = (hbe_role2, pos) in
                 let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
                 [p_form]
             | None -> []
             end
-        | CBe cbe ->
+        | Ord.CBe cbe ->
             begin match (!cb_rel_id) with
             | Some rel_id ->
-                let cbe_role1 = cbe.cbe_event1.role in
-                let cbe_role2 = cbe.cbe_event2.role in
+                let cbe_role1 = cbe.Ord.cbe_event1.role in
+                let cbe_role2 = cbe.Ord.cbe_event2.role in
                 let var1 = (cbe_role1, pos) in
                 let var2 = (cbe_role2, pos) in
                 let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
@@ -285,13 +361,14 @@ struct
        end
      | _ -> []
 
- end ;;
+end
   
 (* ==================== KEY =========================== *)
 module type DAG_KEY_TYPE =
-  functor (Orders : GORDERS_TYPE) ->
+(* functor (Orders : GORDERS_TYPE) -> *)
+  functor (Var : VAR_TYPE) ->
 sig
-  type t = Orders.event
+  type t = GOrders(Var).event
 
   val eq: t ->  t -> bool
   val compare: t ->  t -> int
@@ -299,12 +376,15 @@ sig
 end;;
 
 module Event  : DAG_KEY_TYPE =
-  functor (Orders: GORDERS_TYPE) ->
+  functor (Var : VAR_TYPE) ->
+  (* functor (Orders: GORDERS_TYPE) -> *)
 struct
+  (* type t = Orders.event *)
+  module Orders = GOrders(Var)
   type t = Orders.event
 
   let eq e1 e2      = Orders.eq_event e1 e2
-  let string_of e   = Orders.string_of_event e 
+  let string_of e   = Orders.string_of_event e
   let compare e1 e2 = String.compare (string_of e1) (string_of e2)
 end;;
 
@@ -322,7 +402,7 @@ end;;
 
 
 module EVertex  (* : VERTEX_TYPE *) =
-  functor (Var : SC.Message_type) ->
+  functor (Var : VAR_TYPE) ->
 struct
   module Orders = GOrders(Var)
   type t = Orders.event
@@ -334,12 +414,12 @@ struct
 end;;
 
 module VVertex  (* : VERTEX_TYPE *) =
-  functor (Param : SC.Message_type) ->
+  functor (Param : VAR_TYPE) ->
 struct
-  type t = Param.var
+  type t = Param.t
 
-  let eq e1 e2       = Param.eq_var e1 e2
-  let string_of e    = Param.print_var e 
+  let eq e1 e2       = Param.eq e1 e2
+  let string_of e    = Param.string_of e 
   let compare e1 e2  = String.compare (string_of e1) (string_of e2)
   let contains lst e = List.exists (eq e) lst 
 end;;
@@ -380,8 +460,8 @@ struct
   let union l1 l2  = unique (l1@l2)
   (* set intersection - no dupl *)
   let intersect l1 l2 = unique (List.filter (contains l2) l1)
-  let is_empty  lst   = List.length lst == 0
-  let mk_empty () = []
+  let is_empty  (lst: t list) = List.length lst == 0
+  let mk_empty (): t list = []
   let mk_singleton el = [el]
 end;;
 

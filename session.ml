@@ -914,8 +914,12 @@ module CForm = struct
 end;;
 
 module type Msg_common_type =
+  functor (Msg: SC.Message_type) ->
 sig
-  include SC.Message_type
+  (* include SC.Message_type *)
+  (* open Msg *)
+  include (module type of Msg)
+  (* include Msg *)
   val get_base_ptr: var -> h_formula_heap option -> var
   val heap_transformer: (view_session_info -> h_formula -> h_formula option) -> h_formula -> h_formula option
   val loop_through_rflow: (h_formula -> h_formula option) -> h_formula -> h_formula option
@@ -1062,13 +1066,16 @@ module Message_commons =
 
 (* inst for iformula & cformula *)
 module Protocol_base_formula =
-  functor  (Msg: Msg_common_type) ->
-  struct
+  (* functor  (Msg: Msg_common_type) -> *)
+  functor  (Form: SC.Message_type) ->
+struct
+    module Msg = Message_commons(Form)
     include Msg
     type t = Msg.formula
     type role = Msg.var
     type chan = Msg.var
     type suid = Msg.var
+    (* type var  = Msg.var *)
     type a = role * role * chan option * var * VarGen.loc * suid
     type base = {
       protocol_base_formula_sender      : role;
@@ -1076,7 +1083,7 @@ module Protocol_base_formula =
       protocol_base_formula_chan        : chan option;
       protocol_base_formula_message     : t;
       protocol_base_formula_message_var : var;
-      protocol_base_formula_heap_node   : h_formula_heap option;
+      protocol_base_formula_heap_node   : Msg.h_formula_heap option;
       protocol_base_formula_pos         : VarGen.loc;
       protocol_base_formula_uid         : suid;
     }
@@ -1152,8 +1159,10 @@ module Protocol_base_formula =
 
 (* inst for iformula & cformula *)
 module Projection_base_formula =
-  functor  (Msg: Msg_common_type) ->
-  struct
+  (* functor  (Msg: Msg_common_type) -> *)
+  functor  (Form: SC.Message_type) ->
+struct
+    module Msg = Message_commons(Form)
     include Msg
     type t = Msg.formula
     type chan = Msg.var
@@ -1249,8 +1258,10 @@ module Projection_base_formula =
   end;;
 
 module TPProjection_base_formula =
-  functor  (Msg: Msg_common_type) ->
-  struct
+  (* functor  (Msg: Msg_common_type) -> *)
+  functor  (Form: SC.Message_type) ->
+struct
+    module Msg = Message_commons(Form)
     include Msg
     type t = Msg.formula
     type a = transmission * var * VarGen.loc
@@ -1331,8 +1342,12 @@ module TPProjection_base_formula =
   end;;
 
 module type Session_base =
+(* functor (Msg: Msg_common_type) -> *)
+  functor (Msg: SC.Message_type) ->
 sig
-  include Msg_common_type
+  (* include Msg *)
+  include (module type of Message_commons(Msg))
+  (* include Msg_common_type *)
   type t
   type a
   type base
@@ -1352,9 +1367,12 @@ end;;
 
 (* ============== session type ================ *)
 (* ============================================ *)
-module Make_Session (Base: Session_base)
-    (Orders: Ords.GORDERS_TYPE)
-= struct
+module Make_Session (Base: Session_base) (Form: SC.Message_type) =
+struct
+  (* module Msg  = Message_commons(Form) *)
+  module Base = Base(Form)
+  module O2C  = Ords.Orders2Core(Form)
+  module Orders = O2C.Ord
   type t = Base.base
 
   type session =
@@ -1682,7 +1700,7 @@ module Make_Session (Base: Session_base)
     (* transform orders to pure formula *)
     let orders = p.session_predicate_orders in
     let pos = p.session_predicate_pos in
-    let pure_form_lst = Orders.trans_orders_to_pure_formula orders pos in
+    let pure_form_lst = O2C.trans_orders_to_pure_formula orders pos in
     let pure_form = Base.join_conjunctions pure_form_lst in
     let args =  p.session_predicate_ho_vars in 
     (* transform pure formula to ho_param_formula *)
@@ -2318,6 +2336,7 @@ module Make_Session (Base: Session_base)
 
   (* Removes Bot assrt from orders *)
   (* Examples: Bot & (A,id_55) & Bot -> (A,id_55) *)
+  (* Elena/Andreea: can we move this to oreders.ml ? *)
   let norm_orders orders =
     let fixpt = ref true in 
     let rec norm_order assrt =
@@ -2415,40 +2434,58 @@ end;;
 module IMessage = Message_commons(IForm);;
 module CMessage = Message_commons(CForm);;
 
-module IVar =
-struct
-  type t = IForm.var
-  let string_of = IForm.print_var
-  let eq = IForm.eq_var
-end;;
+(* module IVar = *)
+(* struct *)
+(*   type t = IForm.var *)
+(*   let string_of = IForm.print_var *)
+(*   let eq = IForm.eq_var *)
+(* end;; *)
 
-module CVar =
-struct
-  type t = CForm.var
-  let string_of = CForm.print_var
-  let eq = CForm.eq_var
-end;;
+(* module CVar = *)
+(* struct *)
+(*   type t = CForm.var *)
+(*   let string_of = CForm.print_var *)
+(*   let eq = CForm.eq_var *)
+(* end;; *)
 
-module IOrders = Ords.GOrders(IForm)
-module COrders = Ords.GOrders(CForm)
+(* module IVar = Ords.Var(IForm) *)
+(* module CVar = Ords.Var(CForm) *)
+module IOrders = Ords.GOrders(Ords.Var(IForm)) ;;
+module COrders = Ords.GOrders(Ords.Var(CForm)) ;;
 
-module IProtocol_base = Protocol_base_formula(IMessage) ;;
-module CProtocol_base = Protocol_base_formula(CMessage) ;;
-module IProjection_base = Projection_base_formula(IMessage) ;;
-module CProjection_base = Projection_base_formula(CMessage) ;;
-module ITPProjection_base = TPProjection_base_formula(IMessage);;
-module CTPProjection_base = TPProjection_base_formula(CMessage);;
+module IProtocol_base = Protocol_base_formula(IForm) ;;
+module CProtocol_base = Protocol_base_formula(CForm) ;;
+module IProjection_base = Projection_base_formula(IForm) ;;
+module CProjection_base = Projection_base_formula(CForm) ;;
+module ITPProjection_base = TPProjection_base_formula(IForm);;
+module CTPProjection_base = TPProjection_base_formula(CForm);;
 
-module IProtocol = Make_Session(IProtocol_base)(IOrders);;
-module CProtocol = Make_Session(CProtocol_base)(COrders);;
+module IProtocol = Make_Session(Protocol_base_formula)(IForm);;
+module CProtocol = Make_Session(Protocol_base_formula)(CForm);;
+(* module IProtocol = Make_Session(IProtocol_base)(\* (IOrders) *\);; *)
+(* module CProtocol = Make_Session(CProtocol_base)(\* (COrders) *\);; *)
 
 (* per party  *)
-module IProjection = Make_Session(IProjection_base)(IOrders);;
-module CProjection = Make_Session(CProjection_base)(COrders);;
+module IProjection = Make_Session(Projection_base_formula)(IForm)(* (IOrders) *);;
+module CProjection = Make_Session(Projection_base_formula)(CForm)(* (COrders) *);;
+(* module IProjection = Make_Session(IProjection_base)(\* (IOrders) *\);; *)
+(* module CProjection = Make_Session(CProjection_base)(\* (COrders) *\);; *)
+
 
 (* per channel *)
-module ITPProjection = Make_Session(ITPProjection_base)(IOrders);;
-module CTPProjection = Make_Session(CTPProjection_base)(COrders);;
+module ITPProjection = Make_Session(TPProjection_base_formula)(IForm)(* (IOrders) *);;
+module CTPProjection = Make_Session(TPProjection_base_formula)(CForm)(* (COrders) *);;
+(* module ITPProjection = Make_Session(ITPProjection_base)(\* (IOrders) *\);; *)
+(* module CTPProjection = Make_Session(CTPProjection_base)(\* (COrders) *\);; *)
+
+(* module IProtocol_base = IProtocol.Base;; *)
+(* module CProtocol_base = Protocol_base_formula(CMessage) ;; *)
+(* module IProjection_base = Projection_base_formula(IMessage) ;; *)
+(* module CProjection_base = Projection_base_formula(CMessage) ;; *)
+(* module ITPProjection_base = TPProjection_base_formula(IMessage);; *)
+(* module CTPProjection_base = TPProjection_base_formula(CMessage);; *)
+
+
 
 type session_formula = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
@@ -3000,9 +3037,9 @@ let norm_slk_formula form =
 
 
 
-module EVert_elem  = Ords.EVertex(IForm) ;;
-module IVert_elem  = Ords.VVertex(IForm) ;;
-module CVert_elem  = Ords.VVertex(CForm) ;;
+module EVert_elem  = Ords.EVertex(Ords.Var(IForm)) ;;
+module IVert_elem  = Ords.VVertex(Ords.Var(IForm)) ;;
+module CVert_elem  = Ords.VVertex(Ords.Var(CForm)) ;;
 
 module DAG_ivar    = Ords.Make_DAG(IVert_elem) ;;
 module DAG_cvar    = Ords.Make_DAG(CVert_elem) ;;

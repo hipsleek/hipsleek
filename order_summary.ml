@@ -62,16 +62,22 @@ struct
 end;;
 
 (* key for ConstrMap *)
-module UID (Ord: Orders.GORDERS_TYPE) =
+module UID (Var: Orders.VAR_TYPE) =
 struct
+  module Ord = Orders.GOrders(Var)
   type t = Ord.suid
   let eq = Ord.eq_suid
   let string_of = Ord.string_of_suid
   let contains (lst:t list) (suid:t) = Ord.contains_suid lst suid
 end;;
 
-module IUID = UID(SIOrd)
-module CUID = UID(SCOrd)
+(* module IUID = UID(SIOrd) *)
+(* module CUID = UID(SCOrd) *)
+(* module IUID = UID(S.IVar) *)
+(* module CUID = UID(S.CVar) *)
+module IUID = UID(Orders.Var(S.IForm))
+module CUID = UID(Orders.Var(S.CForm))
+
 
 (* ------------------------------ *)
 (* --- boundary base elements --- *)
@@ -181,8 +187,9 @@ module BOUNDARY_ELEMENT =
     let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
-module Orders_list (Ord: Orders.GORDERS_TYPE) =
+module Orders_list (Var: Orders.VAR_TYPE) (* (Ord: Orders.GORDERS_TYPE)  *) =
 struct
+  module Ord = Orders.GOrders(Var)
   type t = Ord.assrt list
   type base = Ord.assrt
 
@@ -368,8 +375,11 @@ struct
 end;;
 
 (* ------------------------------------------------ *)
-module IOL = Orders_list(SIOrd)
-module COL = Orders_list(SCOrd)
+(* module IOL = Orders_list(SIOrd) *)
+(* module COL = Orders_list(SCOrd) *)
+module IOL = Orders_list(Orders.Var(S.IForm))
+module COL = Orders_list(Orders.Var(S.CForm))
+
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
 
@@ -377,7 +387,7 @@ module RMap       = SMap(IRole)(Events) ;;
 module CMap       = SMap(IChan)(Trans) ;;
 module ConstrMap  = SMap(IUID)(IOL) ;;
 module CConstrMap = SMap(CUID)(COL) ;;
-module VarEvent   = SMap(S.IVar)(Event_element) ;;
+module VarEvent   = SMap(Orders.Var(S.IForm))(Event_element) ;;
 
 (* ------------------------------------------------ *)
 (* ------------- summary related stuff ------------ *)
@@ -719,7 +729,7 @@ let test_dag assume guard def_suids fnc_i2c =
   let assume_edges = helper assume in
   let guards_edges = helper guard in
   let all_edges = assume_edges @ guards_edges in
-  let pre_vertexes = List.fold_left (fun acc edge ->
+  let pre_vertexes = List.fold_left (fun acc edge -> 
       let helper acc vertex =
         if (IUID.contains def_suids (SIOrd.get_suid vertex)) then vertex::acc
         else acc in
