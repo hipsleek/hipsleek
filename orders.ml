@@ -30,6 +30,8 @@ sig
   type event
   type transmission
 
+  type formula
+
   val string_of_suid : suid -> string
   val string_of_role : role -> string
   val string_of_chan : chan -> string
@@ -75,6 +77,9 @@ sig
 
   val contains_suid  : suid list -> suid -> bool 
   val contains_event : event list -> event -> bool 
+
+
+  val trans_orders_to_pure_formula : assrt -> VarGen.loc -> formula list 
 end;;
 
 (* generic orders, where role and chan are polymorphic *)
@@ -82,9 +87,11 @@ module GOrders
     (Form : SC.Message_type) =
 struct
   (* boundary base element *)
-  type role = Var.t
-  type chan = Var.t
-  type suid = Var.t
+  type role = Form.var
+  type chan = Form.var
+  type suid = Form.var
+
+  type formula = Form.pure_formula
                                 
   type event = {
     role   : role;
@@ -100,9 +107,9 @@ struct
     channel  : chan;
   }
   
-  let string_of_role = Var.string_of
-  let string_of_chan = Var.string_of
-  let string_of_suid = Var.string_of
+  let string_of_role = Form.print_var
+  let string_of_chan = Form.print_var
+  let string_of_suid = Form.print_var
   let string_of_event e = (string_of_role e.role) ^ "^" ^(string_of_suid e.uid)
   let string_of_transmission e = (string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (string_of_role e.receiver)
 
@@ -181,9 +188,9 @@ struct
 
   let mk_empty () = NoAssrt
 
-  let eq_role r1 r2  = Var.eq r1 r2
-  let eq_chan c1 c2  = Var.eq c1 c2
-  let eq_suid s1 s2  = Var.eq s1 s2
+  let eq_role r1 r2  = Form.eq_var r1 r2
+  let eq_chan c1 c2  = Form.eq_var c1 c2
+  let eq_suid s1 s2  = Form.eq_var s1 s2
   let eq_event e1 e2 = (eq_role e1.role e2.role) && (eq_role e1.uid e2.uid)
 
   let contains_suid lst suid = List.exists (eq_suid suid) lst
@@ -231,6 +238,53 @@ struct
     match assrt with
     | Or typ -> typ.or_assrt1, typ.or_assrt2 
     | _ -> failwith "Expecting an Or order relation"
+
+  (* Transform from assrt orders -> pure formula *)
+  let rec trans_orders_to_pure_formula (orders:assrt) pos = match orders with
+    | And and_type -> 
+         let and_head = and_type.and_assrt1 in
+         let and_tail = and_type.and_assrt2 in
+         let form1 = trans_orders_to_pure_formula and_head pos in
+         let form2 = trans_orders_to_pure_formula and_tail pos in
+         let res = Form.join_conjunctions ([]@form1@form2) in
+         [res]
+     | Or or_type -> failwith "Disjunctions not allowed" 
+     | Event e ->
+         begin match !event_rel_id with 
+         | Some rel_id ->
+             let role = e.role in
+             let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in
+             [p_form]
+         | None -> []
+         end
+     | Order order ->
+       begin
+        match order with
+        | HBe hbe -> 
+            begin match !hbp_rel_id with
+            | Some rel_id ->
+                let hbe_role1 = hbe.hbe_event1.role in
+                let hbe_role2 = hbe.hbe_event2.role in
+                let var1 = (hbe_role1, pos) in
+                let var2 = (hbe_role2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
+                [p_form]
+            | None -> []
+            end
+        | CBe cbe ->
+            begin match (!cb_rel_id) with
+            | Some rel_id ->
+                let cbe_role1 = cbe.cbe_event1.role in
+                let cbe_role2 = cbe.cbe_event2.role in
+                let var1 = (cbe_role1, pos) in
+                let var2 = (cbe_role2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
+                [p_form]
+            | None ->  []
+            end
+        | _ -> []
+       end
+     | _ -> []
 
 
 end ;;

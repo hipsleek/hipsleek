@@ -363,6 +363,8 @@ struct
 
   let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map
 
+  let map_data_ext (fnc: elem->'a) (map: emap) : (key * 'a) list  = List.map (fun (k,elem) -> (k, fnc elem)) map
+
 end;;
 
 (* ------------------------------------------------ *)

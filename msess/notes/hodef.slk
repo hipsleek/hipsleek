@@ -21,6 +21,7 @@ pred_prim Peer@peer{%P}<>.
 /* need to sync this rel definitions with chr_orders_prelude */
 relation oev@event(int n,int m).
 relation ohb@hb(int n1,int m1,int n2,int m2).
+relation ohbp@hbp(int n1,int m1,int n2,int m2).
 relation ocb@cb(int n1,int m1,int n2,int m2).
 /* sleek relations */
 relation ev@sevent(int n).

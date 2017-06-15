@@ -286,6 +286,14 @@ module IForm = struct
     | F.Star node -> mk_seq_wrapper_node hform pos sk
     | _ -> hform
 
+  let mk_exp_rel id args pos =
+    let exp_var = List.fold_left (fun acc elem -> acc@[Ipure_D.Var elem]) [] args in
+    let p_form = Ipure_D.RelForm (id, exp_var, pos) in
+    let b_form = (p_form, None) in
+    Ipure_D.BForm (b_form, None)
+  
+  let join_conjunctions lst = Ipure.join_conjunctions lst
+
   let id_to_param id pos = Ipure_D.Var((id,Unprimed), pos)
 
   let const_to_param c pos = Ipure_D.IConst(c, pos)
@@ -541,6 +549,11 @@ module CForm = struct
   let print_var = CF.string_of_spec_var
   let print_pure_formula = CF.print_pure_f
   let print_param = ref print_var
+
+  let fresh_var (v:var): var = CP.fresh_spec_var v
+  let eq_var = CP.eq_spec_var
+  let mk_var id = CP.mk_spec_var id 
+
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in
     match h with
@@ -605,6 +618,15 @@ module CForm = struct
     CF.HVar(id, ls)
 
   let mk_seq_wrapper ?sess_kind:(sess_kind=None) hform pos sk = hform
+
+  let mk_exp_rel id args pos =
+    let sv = mk_var id in  
+    let exp_var = List.fold_left (fun acc elem -> acc@[CP.Var elem]) [] args in
+    let p_form = CP.RelForm (sv, exp_var, pos) in
+    let b_form = (p_form, None) in
+    CP.BForm (b_form, None)
+
+  let join_conjunctions lst = CP.join_conjunctions lst
 
   let id_to_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
@@ -671,12 +693,6 @@ module CForm = struct
   let subst_formula (sst: (var * var) list) f =
     let fromsv, tosv = List.split sst in
     CF.subst_avoid_capture fromsv tosv f
-
-  let fresh_var (v:var): var = CP.fresh_spec_var v
-
-  let eq_var = CP.eq_spec_var
-
-  let mk_var id = CP.mk_spec_var id 
 
   let get_node h_formula =
     match h_formula with
@@ -1657,12 +1673,15 @@ module Make_Session (Base: Session_base)
   (*   Base.mk_empty () *)
   (* Andreea TODO: shoudl we transform orders -> pure ? *)
   and mk_predicate_node_x hnode p =
+    let orders = p.session_predicate_orders in
+    let pos = p.session_predicate_pos in
+    let pure_form = Orders.trans_orders_to_pure_formula orders pos in
+(* elena TODO elena TODO*)
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr (Base.mk_var session_def_id) hnode in
     let name = p.session_predicate_name in
     (* let name = get_prim_pred_id pred_id in *)
     let args = p.session_predicate_ho_vars in
-    let pos = p.session_predicate_pos in
     let params = p.session_predicate_params in
     let anns = p.session_predicate_anns in
     let session_predicate_kind = p.session_predicate_kind in

@@ -3559,6 +3559,7 @@ rel_kind: [[ `AT; `IDENTIFIER anno ->
                 (match anno with
                  | "event" -> (mk_rel_order_kind Event)
 		 | "hb" -> (mk_rel_order_kind HB)
+		 | "hbp" -> (mk_rel_order_kind HBP)
                  | "cb" -> (mk_rel_order_kind CB)
                  | "sevent" -> (mk_rel_sorder_kind Event)
                  | "shb" -> (mk_rel_sorder_kind HB)

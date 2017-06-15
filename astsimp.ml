@@ -2431,7 +2431,8 @@ and session_to_iform_x (view:I.view_decl) =
         (* makes projection *)
         let vars_list = view.I.view_typed_vars in
         let prj_map, tprj_map, assrt_prj_list = Session_projection.mk_projection prot vars_list in
-        let sess_prj = Iast.mk_session_projection ~prj:prj_map ~tprj:tprj_map ~orders:assrt_prj_list (ProtocolSession prot) in
+        let h_prj_map, h_tprj_map = Session_projection.convert_prj_maps prj_map tprj_map in
+        let sess_prj = I.mk_session_projection ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot) in
         {view with view_session = sess_prj }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
