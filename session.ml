@@ -1682,11 +1682,13 @@ module Make_Session (Base: Session_base)
     (* transform orders to pure formula *)
     let orders = p.session_predicate_orders in
     let pos = p.session_predicate_pos in
+    let args =  p.session_predicate_ho_vars in 
+(* TODO elena: review this
     let pure_form_lst = Orders.trans_orders_to_pure_formula orders pos in
     let pure_form = Base.join_conjunctions pure_form_lst in
-    let args =  p.session_predicate_ho_vars in 
     (* transform pure formula to ho_param_formula *)
     let ho_param_formula = Base.map_rflow_formula_list (fun elem -> Base.add_pure_to_formula pure_form elem ) args in
+*)
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr (Base.mk_var session_def_id) hnode in
     let name = p.session_predicate_name in
@@ -1694,7 +1696,7 @@ module Make_Session (Base: Session_base)
     let anns = p.session_predicate_anns in
     let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
-    let node = Base.mk_node (ptr, name, ho_param_formula, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
+    let node = Base.mk_node (ptr, name, (*ho_param_formula*) args, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
     node

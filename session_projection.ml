@@ -5,7 +5,6 @@ open Globals
 open Gen.Basic
 open Printf
 open Gen.BList
-include Ipure_D (*elena*)
 
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
@@ -553,15 +552,6 @@ let mk_projection prot vars =
 let convert_prj_maps prj_map tprj_map =
   let hprj_map = PrjMap.map_data_ext (fun elem ->
     let pos = SProj.get_pos elem in
-    let elem = match elem with
-      | SProj.SBase sb -> 
-          begin match sb with
-        | SProj.Predicate pred ->
-            let orders = pred.session_predicate_orders in
-            elem
-        | _ -> elem
-        end
-      | _ -> elem in
     let h_form = SProj.trans_from_session elem in
     let form = SProj.mk_formula_heap_only h_form pos in
     Session.IMessage.mk_struc_formula form pos 
@@ -569,14 +559,6 @@ let convert_prj_maps prj_map tprj_map =
   in
   let htprj_map = TPrjMap.map_data_ext (fun elem ->
     let pos = STProj.get_pos elem in
-    let elem = match elem with
-      | STProj.SBase sb -> begin match sb with
-        | STProj.Predicate pred ->
-            let orders = pred.session_predicate_orders in
-            elem
-        | _ -> elem
-        end
-      | _ -> elem in
     let h_form = STProj.trans_from_session elem in
     let form = STProj.mk_formula_heap_only h_form pos in
     Session.IMessage.mk_struc_formula form pos
