@@ -32,6 +32,10 @@ boolobj lt(intobj a, intobj b)
     v1 >= v2 -> ensures res::boolobj<false, R> & R = max(context, max(A, B));
   }
 
+boolobj not(boolobj b)
+  requires b::boolobj<vb, B>
+  ensures res::boolobj<v, R> & v = !vb & R = max(context, B);
+
 intobj plus(intobj a, intobj b)
   requires a::intobj<v1, A>@L & b::intobj<v2, B>@L
   ensures res::intobj<v, R> & v = v1 + v2 & R = max(context, max(A, B));
