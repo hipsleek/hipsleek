@@ -50,6 +50,7 @@ module type Message_type = sig
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
 
+  val add_pure_to_formula: pure_formula -> formula -> formula
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
   val transform_formula: (h_formula -> h_formula option)-> formula -> formula
   val transform_struc_formula:  (h_formula -> h_formula option)-> struc_formula -> struc_formula

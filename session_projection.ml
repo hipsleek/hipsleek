@@ -5,6 +5,7 @@ open Globals
 open Gen.Basic
 open Printf
 open Gen.BList
+include Ipure_D (*elena*)
 
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
@@ -63,8 +64,32 @@ struct
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
+module HProjection_map =
+struct
+  type t = Iformula.struc_formula
+  type base = Iformula.struc_formula
+
+  let bot () = failwith x_tbi 
+  let is_bot x = failwith x_tbi
+  let eq e1 e2 = failwith x_tbi
+  let string_of f = !Iformula.print_struc_formula f 
+  let mk_base (base: base) : t = failwith x_tbi
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+  let mkSingleton (e:base) : t = failwith x_tbi
+  let add_elem (old_e:t) (new_e:t) : t  = new_e
+end;;
+
+
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
 module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
+
+(* used to save projection as h_formula *)
+module HPrjMap = OS.SMap(OS.IRole)(HProjection_map)
+module HTPrjMap = OS.SMap(OS.IChanRole)(HProjection_map)
 
 (* ====== Helpful functions ====== *)
 (* =============================== *)
@@ -519,4 +544,50 @@ let mk_projection prot vars =
   let pr = SProt.string_of_session in
   let pr_out = pr_triple PrjMap.string_of TPrjMap.string_of (pr_list SIOrd.string_of) in
   Debug.no_1 "SP.mk_projection_x" pr pr_out (fun _ -> mk_projection prot vars) prot
+
+
+(* ====== Transform session to h_formula ====== *)
+(* ============================================ *)
+
+(* Converts session projections to h_form and saves the result in new maps *)
+let convert_prj_maps prj_map tprj_map =
+  let hprj_map = PrjMap.map_data_ext (fun elem ->
+    let pos = SProj.get_pos elem in
+    let elem = match elem with
+      | SProj.SBase sb -> 
+          begin match sb with
+        | SProj.Predicate pred ->
+            let orders = pred.session_predicate_orders in
+            elem
+        | _ -> elem
+        end
+      | _ -> elem in
+    let h_form = SProj.trans_from_session elem in
+    let form = SProj.mk_formula_heap_only h_form pos in
+    Session.IMessage.mk_struc_formula form pos 
+   ) prj_map
+  in
+  let htprj_map = TPrjMap.map_data_ext (fun elem ->
+    let pos = STProj.get_pos elem in
+    let elem = match elem with
+      | STProj.SBase sb -> begin match sb with
+        | STProj.Predicate pred ->
+            let orders = pred.session_predicate_orders in
+            elem
+        | _ -> elem
+        end
+      | _ -> elem in
+    let h_form = STProj.trans_from_session elem in
+    let form = STProj.mk_formula_heap_only h_form pos in
+    Session.IMessage.mk_struc_formula form pos
+    ) tprj_map
+  in
+  (HPrjMap.init hprj_map, HTPrjMap.init htprj_map)
+
+let convert_prj_maps prj_map tprj_map =
+  let pr1 = PrjMap.string_of in
+  let pr2 = TPrjMap.string_of in
+  let pr_out = pr_pair HPrjMap.string_of HTPrjMap.string_of in
+  Debug.no_2 "SP.convert_prj_maps" pr1 pr2 pr_out (fun _ _ -> convert_prj_maps prj_map tprj_map) prj_map tprj_map
+
 

@@ -8,7 +8,6 @@ open Gen.BList
 
 module SC = Sesscommons
 
-(*elena*)
 let event_rel_id: string option ref = ref None
 let hb_rel_id: string option ref = ref None
 let hbp_rel_id: string option ref = ref None
@@ -78,8 +77,8 @@ sig
   val contains_suid  : suid list -> suid -> bool 
   val contains_event : event list -> event -> bool 
 
-
   val trans_orders_to_pure_formula : assrt -> VarGen.loc -> formula list 
+
 end;;
 
 (* generic orders, where role and chan are polymorphic *)
@@ -286,8 +285,7 @@ struct
        end
      | _ -> []
 
-
-end ;;
+ end ;;
   
 (* ==================== KEY =========================== *)
 module type DAG_KEY_TYPE =

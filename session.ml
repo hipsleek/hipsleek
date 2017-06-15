@@ -294,6 +294,8 @@ module IForm = struct
   
   let join_conjunctions lst = Ipure.join_conjunctions lst
 
+  let add_pure_to_formula pure formula = F.add_pure_formula_to_formula pure formula
+  
   let id_to_param id pos = Ipure_D.Var((id,Unprimed), pos)
 
   let const_to_param c pos = Ipure_D.IConst(c, pos)
@@ -627,6 +629,8 @@ module CForm = struct
     CP.BForm (b_form, None)
 
   let join_conjunctions lst = CP.join_conjunctions lst
+
+  let add_pure_to_formula pure formula = CF.add_pure_formula_to_formula pure formula
 
   let id_to_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
@@ -1671,22 +1675,23 @@ module Make_Session (Base: Session_base)
 (* TODO: review this *)
   (* and mk_fence () = *)
   (*   Base.mk_empty () *)
-  (* Andreea TODO: shoudl we transform orders -> pure ? *)
   and mk_predicate_node_x hnode p =
+    (* transform orders to pure formula *)
     let orders = p.session_predicate_orders in
     let pos = p.session_predicate_pos in
-    let pure_form = Orders.trans_orders_to_pure_formula orders pos in
-(* elena TODO elena TODO*)
+    let pure_form_lst = Orders.trans_orders_to_pure_formula orders pos in
+    let pure_form = Base.join_conjunctions pure_form_lst in
+    let args =  p.session_predicate_ho_vars in 
+    (* transform pure formula to ho_param_formula *)
+    let ho_param_formula = Base.map_rflow_formula_list (fun elem -> Base.add_pure_to_formula pure_form elem ) args in
     (* make the actual predicate node *)
     let ptr = Base.get_base_ptr (Base.mk_var session_def_id) hnode in
     let name = p.session_predicate_name in
-    (* let name = get_prim_pred_id pred_id in *)
-    let args = p.session_predicate_ho_vars in
     let params = p.session_predicate_params in
     let anns = p.session_predicate_anns in
     let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
-    let node = Base.mk_node (ptr, name, args, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
+    let node = Base.mk_node (ptr, name, ho_param_formula, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
     node
