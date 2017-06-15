@@ -6,6 +6,14 @@ open Gen.Basic
 open Printf
 open Gen.BList
 
+module SC = Sesscommons
+
+(*elena*)
+let event_rel_id: string option ref = ref None
+let hb_rel_id: string option ref = ref None
+let hbp_rel_id: string option ref = ref None
+let cb_rel_id: string option ref = ref None
+
 module type VAR_TYPE =
 sig
   type t
@@ -71,7 +79,7 @@ end;;
 
 (* generic orders, where role and chan are polymorphic *)
 module GOrders
-    (Var : VAR_TYPE) =
+    (Form : SC.Message_type) =
 struct
   (* boundary base element *)
   type role = Var.t
@@ -262,7 +270,7 @@ end;;
 
 
 module EVertex  (* : VERTEX_TYPE *) =
-  functor (Var : VAR_TYPE) ->
+  functor (Var : SC.Message_type) ->
 struct
   module Orders = GOrders(Var)
   type t = Orders.event
@@ -274,12 +282,12 @@ struct
 end;;
 
 module VVertex  (* : VERTEX_TYPE *) =
-  functor (Param : VAR_TYPE) ->
+  functor (Param : SC.Message_type) ->
 struct
-  type t = Param.t
+  type t = Param.var
 
-  let eq e1 e2       = Param.eq e1 e2
-  let string_of e    = Param.string_of e 
+  let eq e1 e2       = Param.eq_var e1 e2
+  let string_of e    = Param.print_var e 
   let compare e1 e2  = String.compare (string_of e1) (string_of e2)
   let contains lst e = List.exists (eq e) lst 
 end;;
