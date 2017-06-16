@@ -143,6 +143,7 @@ sig
   val contains_suid  : suid list -> suid -> bool 
   val contains_event : event list -> event -> bool 
 
+  val norm_orders : assrt -> assrt
 end;;
 
 (* generic orders, where role and chan are polymorphic *)
@@ -245,75 +246,39 @@ struct
     | Or typ -> typ.or_assrt1, typ.or_assrt2 
     | _ -> failwith "Expecting an Or order relation"
 
-  (* (\* Transform from assrt orders -> pure formula *\) *)
-  (* let rec trans_orders_to_pure_formula (orders:assrt) pos = match orders with *)
-  (*   | And and_type ->  *)
-  (*        let and_head = and_type.and_assrt1 in *)
-  (*        let and_tail = and_type.and_assrt2 in *)
-  (*        let form1 = trans_orders_to_pure_formula and_head pos in *)
-  (*        let form2 = trans_orders_to_pure_formula and_tail pos in *)
-  (*        let res = Form.join_conjunctions ([]@form1@form2) in *)
-  (*        [res] *)
-  (*    | Or or_type -> failwith "Disjunctions not allowed"  *)
-  (*    | Event e -> *)
-  (*        begin match !event_rel_id with  *)
-  (*        | Some rel_id -> *)
-  (*            let role = e.role in *)
-  (*            let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in *)
-  (*            [p_form] *)
-  (*        | None -> [] *)
-  (*        end *)
-  (*    | Order order -> *)
-  (*      begin *)
-  (*       match order with *)
-  (*       | HBe hbe ->  *)
-  (*           begin match !hbp_rel_id with *)
-  (*           | Some rel_id -> *)
-  (*               let hbe_role1 = hbe.hbe_event1.role in *)
-  (*               let hbe_role2 = hbe.hbe_event2.role in *)
-  (*               let var1 = (hbe_role1, pos) in *)
-  (*               let var2 = (hbe_role2, pos) in *)
-  (*               let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in *)
-  (*               [p_form] *)
-  (*           | None -> [] *)
-  (*           end *)
-  (*       | CBe cbe -> *)
-  (*           begin match (!cb_rel_id) with *)
-  (*           | Some rel_id -> *)
-  (*               let cbe_role1 = cbe.cbe_event1.role in *)
-  (*               let cbe_role2 = cbe.cbe_event2.role in *)
-  (*               let var1 = (cbe_role1, pos) in *)
-  (*               let var2 = (cbe_role2, pos) in *)
-  (*               let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in *)
-  (*               [p_form] *)
-  (*           | None ->  [] *)
-  (*           end *)
-  (*       | _ -> [] *)
-  (*      end *)
-  (*    | _ -> [] *)
+  (* Removes Bot assrt from orders *)
+  (* Example: Bot & (A,id_55) & Bot -> (A,id_55) *)
+  let norm_orders orders =
+    let fixpt = ref true in 
+    let rec norm_order assrt =
+      if is_and assrt then (
+        let assrt1, assrt2 = get_and_value assrt in
+        if is_bot assrt1 then
+          let () = fixpt := false in
+          norm_order assrt2
+        else if is_bot assrt2 then
+          let () = fixpt := false in
+          norm_order assrt1
+        else 
+          mk_and (norm_order assrt1) (norm_order assrt2))
+      else if is_or assrt then
+        let assrt1, assrt2 = get_or_value assrt in
+        mk_or (norm_order assrt1) (norm_order assrt2)
+      else assrt in
+    let rec helper norm =
+      let norm = norm_order norm in
+      if not(!fixpt) then let () = fixpt := true in helper norm
+      else norm in
+    let norm = helper orders in
+    norm
 
 end ;;
 
-(* module type TRANS_ORDERS_TYPE = *)
-(* sig *)
-(*   include GORDERS_TYPE *)
-(*   include SC.Message_type *)
-
-(*   val trans_orders_to_pure_formula : assrt -> VarGen.loc -> pure_formula list *)
-(* end *)
-
-module Orders2Core (* (Orders: GORDERS_TYPE) *) (Form: SC.Message_type) =
+module Orders2Core (Form: SC.Message_type) =
 struct
-  (* module Var = Var(Form) *)
   module Ord = GOrders(Var(Form))
-  (* module Ord = GOrders ( struct *)
-  (*     type t = Form.var *)
-  (*     let string_of = Form.print_var *)
-  (*     let eq = Form.eq_var *)
-  (*   end ) *)
-  (* include Ord *)
-  (* include Form *)
-    (* Transform from assrt orders -> pure formula *)
+  
+  (* Transform from assrt orders -> pure formula *)
   let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos = (* failwith x_tbi *)
     match orders with
     | Ord.And and_type ->

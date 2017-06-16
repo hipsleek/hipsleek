@@ -240,7 +240,7 @@ let norm_tproj (session:STProj.session) : STProj.session =
 let rec remove_bot_from_list_x lst new_lst = match lst with
   | [] -> new_lst
   | head :: tail ->
-      let h = SProt.norm_orders head in
+      let h = SIOrd.norm_orders head in
       remove_bot_from_list_x tail (new_lst @ [h])
 
 let rec remove_bot_from_list lst new_lst =

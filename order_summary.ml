@@ -13,6 +13,7 @@ module SIOrd = S.IOrders
 module SCOrd = S.COrders
 module CF = Cformula
 module CP = Cpure
+module IF = Iformula
 
 type role = SIOrd.role
 type chan = SIOrd.chan
@@ -907,7 +908,8 @@ let insert_orders view prot params fnc_i2c =
               | [] -> prot_session
               | _ -> 
                   let order_norm  = mk_and_list orders in
-                  let pred = SProt.SBase (SProt.mk_session_predicate name [] [] ~orders:order_norm ~sess_pred_kind:(Assert sess_pred_kind) loc) in
+                  let rflow = SBProt.mk_rflow_formula_from_heap IF.HEmp loc in
+                  let pred = SProt.SBase (SProt.mk_session_predicate name [rflow] [] ~orders:order_norm ~sess_pred_kind:(Assert sess_pred_kind) loc) in
                   let sequence = SProt.mk_session_seq_formula prot_session pred loc in
                   sequence
             in

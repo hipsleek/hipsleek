@@ -1697,12 +1697,12 @@ struct
   (* and mk_fence () = *)
   (*   Base.mk_empty () *)
   and mk_predicate_node_x hnode p =
-    (* transform orders to pure formula *)
     let orders = p.session_predicate_orders in
     let pos = p.session_predicate_pos in
+    let args = p.session_predicate_ho_vars in 
+    (* transform orders to pure formula *)
     let pure_form_lst = O2C.trans_orders_to_pure_formula orders pos in
     let pure_form = Base.join_conjunctions pure_form_lst in
-    let args =  p.session_predicate_ho_vars in 
     (* transform pure formula to ho_param_formula *)
     let ho_param_formula = Base.map_rflow_formula_list (fun elem -> Base.add_pure_to_formula pure_form elem ) args in
     (* make the actual predicate node *)
@@ -1712,7 +1712,7 @@ struct
     let anns = p.session_predicate_anns in
     let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
-    let node = Base.mk_node (ptr, name, (*ho_param_formula*) args, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
+    let node = Base.mk_node (ptr, name, ho_param_formula, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
     let node = Base.set_ann_list node anns in
     (* make the Predicate node *)
     node
@@ -2334,33 +2334,6 @@ struct
       if not (!fixpt) then let () = fixpt := true in helper sess else sess
     in helper sess
 
-  (* Removes Bot assrt from orders *)
-  (* Examples: Bot & (A,id_55) & Bot -> (A,id_55) *)
-  (* Elena/Andreea: can we move this to oreders.ml ? *)
-  let norm_orders orders =
-    let fixpt = ref true in 
-    let rec norm_order assrt =
-      if Orders.is_and assrt then (
-        let assrt1, assrt2 = Orders.get_and_value assrt in
-        if Orders.is_bot assrt1 then
-          let () = fixpt := false in
-          norm_order assrt2
-        else if Orders.is_bot assrt2 then
-          let () = fixpt := false in
-          norm_order assrt1
-        else 
-          Orders.mk_and (norm_order assrt1) (norm_order assrt2))
-      else if Orders.is_or assrt then
-        let assrt1, assrt2 = Orders.get_or_value assrt in
-        Orders.mk_or (norm_order assrt1) (norm_order assrt2)
-      else assrt in
-    let rec helper norm =
-      let norm = norm_order norm in
-      if not(!fixpt) then let () = fixpt := true in helper norm
-      else norm in
-    let norm = helper orders in
-    norm
-
   (* Removes Bot assrt from session predicate orders *)
   (* Examples: 
     * Bot & (A,id_55) & Bot -> (A,id_55)
@@ -2378,7 +2351,7 @@ struct
           begin match pred_kind with
           | Assert Assume
           | Assert Guard ->
-            let norm = norm_orders orders in
+            let norm = Orders.norm_orders orders in
             (* updates the predicate with the normalized orders *)
             let pred = update_session_predicate ~orders:norm p in 
             let sbase = SBase pred in
