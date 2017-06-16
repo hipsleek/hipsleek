@@ -14,6 +14,7 @@ module SCOrd = S.COrders
 module CF = Cformula
 module CP = Cpure
 module IF = Iformula
+module SC = Sesscommons
 
 type role = SIOrd.role
 type chan = SIOrd.chan
@@ -683,7 +684,7 @@ let cedge_to_rel edge =
   let arg2 = S.DAG_cvar.Edge.get_head edge in
   (* redundant edge kind check ? since we can only infer hb rels*)
   if (S.DAG_cvar.Edge.is_hb_edge edge) then
-    match !S.shb_rel_id with
+    match !SC.shb_rel_id with
     | Some id ->
       let rel = CP.mkRel_sv id in
       let rel = CP.mkRel rel (List.map (fun x -> CP.mkVar x no_pos) [arg1;arg2]) no_pos in [rel]
@@ -703,8 +704,8 @@ let iedge_to_rel edge =
       let rel = Ipure.BForm ((rel,None) ,None) in
       [rel]
     | None -> [] in
-  if (S.DAG_ievent.Edge.is_hb_edge edge) then helper !S.shb_rel_id edge
-  else  if (S.DAG_ievent.Edge.is_cb_edge edge) then helper !S.scb_rel_id edge
+  if (S.DAG_ievent.Edge.is_hb_edge edge) then helper !SC.shb_rel_id edge
+  else  if (S.DAG_ievent.Edge.is_cb_edge edge) then helper !SC.scb_rel_id edge
   else []
 
 

@@ -676,8 +676,8 @@ and string_of_session_formula session_formula =
 and string_of_session session_projection =
   let string_of_session_projection_helper session_projection =
     let pr_sess = string_of_session_formula in
-    let pr_pty = Session_projection.HPrjMap.string_of in
-    let pr_chan = Session_projection.HTPrjMap.string_of in
+    let pr_pty = Session_projection.FPrjMap.string_of in
+    let pr_chan = Session_projection.FTPrjMap.string_of in
     let pr_assrt = pr_list Session.IOrders.string_of in 
     "{ " ^ 
     "Session: " ^ (pr_sess session_projection.session) ^ "\n" ^

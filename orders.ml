@@ -8,11 +8,6 @@ open Gen.BList
 
 module SC = Sesscommons
 
-let event_rel_id: string option ref = ref None
-let hb_rel_id: string option ref = ref None
-let hbp_rel_id: string option ref = ref None
-let cb_rel_id: string option ref = ref None
-
 module type VAR_TYPE =
 sig
   type t
@@ -290,7 +285,7 @@ struct
          [res]
      | Ord.Or or_type -> failwith "Disjunctions not allowed"
      | Ord.Event e ->
-         begin match !event_rel_id with
+         begin match !SC.event_rel_id with
          | Some rel_id ->
              let role = e.role in
              let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in
@@ -301,7 +296,7 @@ struct
        begin
         match order with
         | Ord.HBe hbe ->
-            begin match !hbp_rel_id with
+            begin match !SC.hbp_rel_id with
             | Some rel_id ->
                 let hbe_role1 = hbe.Ord.hbe_event1.role in
                 let hbe_role2 = hbe.Ord.hbe_event2.role in
@@ -312,7 +307,7 @@ struct
             | None -> []
             end
         | Ord.CBe cbe ->
-            begin match (!cb_rel_id) with
+            begin match (!SC.cb_rel_id) with
             | Some rel_id ->
                 let cbe_role1 = cbe.Ord.cbe_event1.role in
                 let cbe_role2 = cbe.Ord.cbe_event2.role in

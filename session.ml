@@ -51,28 +51,19 @@ let assume_id: string option ref = ref None
 let guard_id: string option ref = ref None
 let peer_id: string option ref = ref None
 
-let event_rel_id: string option ref = ref None
-let hb_rel_id: string option ref = ref None
-let hbp_rel_id: string option ref = ref None
-let cb_rel_id: string option ref = ref None
-let sevent_rel_id: string option ref = ref None
-let shb_rel_id: string option ref = ref None
-let shbp_rel_id: string option ref = ref None
-let scb_rel_id: string option ref = ref None
-
 let set_rels_id id kind =
   match kind with
   | None -> ()
   | Some kind ->
     match kind with
-    | Orders Event -> event_rel_id := Some id; Ords.event_rel_id := Some id
-    | Orders CB    -> cb_rel_id := Some id; Ords.cb_rel_id := Some id
-    | Orders HB    -> hb_rel_id := Some id; Ords.hb_rel_id := Some id
-    | Orders HBP    -> hbp_rel_id := Some id; Ords.hbp_rel_id := Some id 
-    | Sleek Event -> sevent_rel_id := Some id
-    | Sleek CB    -> scb_rel_id := Some id
-    | Sleek HB    -> shb_rel_id := Some id
-    | Sleek HBP   -> shbp_rel_id := Some id
+    | Orders Event -> SC.event_rel_id := Some id
+    | Orders CB    -> SC.cb_rel_id := Some id
+    | Orders HB    -> SC.hb_rel_id := Some id
+    | Orders HBP    -> SC.hbp_rel_id := Some id
+    | Sleek Event -> SC.sevent_rel_id := Some id
+    | Sleek CB    -> SC.scb_rel_id := Some id
+    | Sleek HB    -> SC.shb_rel_id := Some id
+    | Sleek HBP   -> SC.shbp_rel_id := Some id
     | _ -> ()
 
 let set_prim_pred_id kind id =
@@ -170,8 +161,8 @@ let rec string_of_param_list l = match l with
   | h::[]     -> h
   | h::t      -> h ^ ", " ^ (string_of_param_list t)
 
-let is_shb_rel str = String.compare str (map_opt_def "" (fun x -> x) !shb_rel_id) == 0 
-let is_scb_rel str = String.compare str (map_opt_def "" (fun x -> x) !scb_rel_id) == 0
+let is_shb_rel str = String.compare str (map_opt_def "" (fun x -> x) !SC.shb_rel_id) == 0 
+let is_scb_rel str = String.compare str (map_opt_def "" (fun x -> x) !SC.scb_rel_id) == 0
 
 (* ======= base formula for session type ====== *)
 (* ============================================ *)

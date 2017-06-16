@@ -63,7 +63,7 @@ struct
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
-module HProjection_map =
+module FProjection_map =
 struct
   type t = Iformula.struc_formula
   type base = Iformula.struc_formula
@@ -86,9 +86,9 @@ end;;
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
 module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
 
-(* used to save projection as h_formula *)
-module HPrjMap = OS.SMap(OS.IRole)(HProjection_map)
-module HTPrjMap = OS.SMap(OS.IChanRole)(HProjection_map)
+(* used to save projection as formula *)
+module FPrjMap = OS.SMap(OS.IRole)(FProjection_map)
+module FTPrjMap = OS.SMap(OS.IChanRole)(FProjection_map)
 
 (* ====== Helpful functions ====== *)
 (* =============================== *)
@@ -545,10 +545,10 @@ let mk_projection prot vars =
   Debug.no_1 "SP.mk_projection_x" pr pr_out (fun _ -> mk_projection prot vars) prot
 
 
-(* ====== Transform session to h_formula ====== *)
+(* ====== Transform session to formula ====== *)
 (* ============================================ *)
 
-(* Converts session projections to h_form and saves the result in new maps *)
+(* Converts session projections to formula *)
 let convert_prj_maps prj_map tprj_map =
   let hprj_map = PrjMap.map_data_ext (fun elem ->
     let pos = SProj.get_pos elem in
@@ -564,12 +564,12 @@ let convert_prj_maps prj_map tprj_map =
     Session.IMessage.mk_struc_formula form pos
     ) tprj_map
   in
-  (HPrjMap.init hprj_map, HTPrjMap.init htprj_map)
+  (FPrjMap.init hprj_map, FTPrjMap.init htprj_map)
 
 let convert_prj_maps prj_map tprj_map =
   let pr1 = PrjMap.string_of in
   let pr2 = TPrjMap.string_of in
-  let pr_out = pr_pair HPrjMap.string_of HTPrjMap.string_of in
+  let pr_out = pr_pair FPrjMap.string_of FTPrjMap.string_of in
   Debug.no_2 "SP.convert_prj_maps" pr1 pr2 pr_out (fun _ _ -> convert_prj_maps prj_map tprj_map) prj_map tprj_map
 
 

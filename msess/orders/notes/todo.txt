@@ -192,6 +192,7 @@ add check for CHR relations in tpdispatcher.ml
 
 =====================================
 =====================================
+[DONE]
 bring rel id's to commons
 
 =====================================

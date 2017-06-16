@@ -2,6 +2,15 @@
 open VarGen
 open Globals
 
+let event_rel_id: string option ref = ref None
+let hb_rel_id: string option ref = ref None
+let hbp_rel_id: string option ref = ref None
+let cb_rel_id: string option ref = ref None
+let sevent_rel_id: string option ref = ref None
+let shb_rel_id: string option ref = ref None
+let shbp_rel_id: string option ref = ref None
+let scb_rel_id: string option ref = ref None
+
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
 module type Message_type = sig
