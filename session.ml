@@ -11,7 +11,6 @@ module IP = Ipure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
-module HT = Hashtbl
 module Ords = Orders
 module SC = Sesscommons
 

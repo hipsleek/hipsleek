@@ -19,7 +19,6 @@ module Err = Error
 module CP = Cpure
 module LO = Label_only.LOne
 module VP = IvpermUtils
-module HT = Hashtbl
 
 (* moved to globals.ml *)
 (* type typed_ident = (typ * ident) *)

@@ -44,9 +44,6 @@ open IastUtil
 module IVP = IvpermUtils
 module CVP = CvpermUtils
 
-(* elena: check if it is needed anymore *)
-module HT = Hashtbl
-
 type trans_exp_type =
   (C.exp * typ)
 

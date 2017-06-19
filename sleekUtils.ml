@@ -15,7 +15,6 @@ open Perm
 open Label_only
 
 module SP = Session_projection
-module HT = Hashtbl
 
 let process_selective_iview_decls is_all iprog iviews =
   let iviews = if is_all then iprog.I.prog_view_decls else iviews in

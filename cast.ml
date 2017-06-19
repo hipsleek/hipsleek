@@ -20,7 +20,6 @@ module MP = Mcpure
 module Err = Error
 module LO = Label_only.LOne
 module CVP = CvpermUtils
-module HT = Hashtbl
 
 open Cformula
 
