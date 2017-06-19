@@ -38,11 +38,13 @@ module Chk = Checks
 (* module PRED = Predicate *)
 module LO = Label_only.LOne
 module LP = CP.Label_Pure
+module SP = Session_projection
 open IastUtil
 
 module IVP = IvpermUtils
 module CVP = CvpermUtils
 
+(* elena: check if it is needed anymore *)
 module HT = Hashtbl
 
 type trans_exp_type =
@@ -2284,17 +2286,6 @@ and trans_view_kind vk= vk
 
 and trans_view_session_info si = si
 
-and trans_view_session_projections (prog : I.prog_decl) mutrec_vnames transed_views ann_typs iproj_hash =
-  match iproj_hash with
-  | None -> None
-  | Some hash -> let cproj_hash = HT.create 10 in
-                 let helper (role1, role2) ivdef =
-                   (* TODO tina: using the same params might not be correct *)
-                   let cvdef = trans_view prog mutrec_vnames transed_views ann_typs ivdef in
-                   HT.add cproj_hash (role1, role2) cvdef in
-                 let () = HT.iter helper hash in
-                 Some cproj_hash
-
 and create_mix_formula_with_ann_constr (h1: CF.h_formula) (h2: CF.h_formula) (p_f: MCP.mix_formula option) : MCP.mix_formula =
   let p1 = add_param_ann_constraints_to_pure h1 None in
   let p2 = add_param_ann_constraints_to_pure h2 None in
@@ -2430,9 +2421,9 @@ and session_to_iform_x (view:I.view_decl) =
         let prot = x_add_1 Order_summary.insert_orders view prot params (fun p -> trans_pure_formula p []) in
         (* makes projection *)
         let vars_list = view.I.view_typed_vars in
-        let prj_map, tprj_map, assrt_prj_list = Session_projection.mk_projection prot vars_list in
-        let h_prj_map, h_tprj_map = Session_projection.convert_prj_maps prj_map tprj_map in
-        let sess_prj = I.mk_session_projection ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot) in
+        let prj_map, tprj_map, assrt_prj_list = SP.mk_projection prot vars_list in
+        let h_prj_map, h_tprj_map = SP.convert_prj_maps prj_map tprj_map in
+        let sess_prj = Some (I.mk_session_formulae ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot)) in
         {view with view_session = sess_prj }
       | Some Projection ->
         let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
@@ -10197,26 +10188,28 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let iviews = List.map session_to_iform prog.I.prog_view_decls in
   let tmp_views = (* order_views *) (* prog.I.prog_view_decls *) iviews in
   x_tinfo_hp (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
-  (* let () = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-      let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false 
-          false (*allow_post_vars*) false [] in
-(*elena: check it out
-      let normalized_proj =
-        match c.view_session_projections with
-          | Some proj -> let norm_proj = HT.create 10 in
-                         let helper (role1, role2) proj_vdef =
-                           let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) proj_vdef.Iast.view_vars ) in
-                           let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) proj_vdef.Iast.view_vars ) in
-                           let norm_form = case_normalize_struc_formula_view 8 prog h p proj_vdef.Iast.view_formula false false false [] in
-                           let new_vdef = {proj_vdef with view_formula = norm_form;} in
-                           HT.add norm_proj (role1, role2) new_vdef in
-                         let () = HT.iter helper proj in
-                         Some norm_proj
-          | None -> None in
-*)
+      let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false false (*allow_post_vars*) false [] in
+      let norm_session_formulae = match c.view_session with
+        | Some sess_form ->
+            let prj_map = sess_form.per_party_proj in
+            let tprj_map = sess_form.per_chan_proj in
+            let norm_prj = List.fold_left (fun acc (k, struct_form) ->
+              (*TODO elena: is it correct to get view_vars from c ?*)
+              let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+              let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+              let norm_form = case_normalize_struc_formula_view 8 prog h p struct_form false false false [] in
+              SP.FPrjMap.add_elem_dupl acc k norm_form) (SP.FPrjMap.mkEmpty()) prj_map in
+            let norm_tprj = List.fold_left (fun acc (k, struct_form) ->
+              let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+              let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+              let norm_form = case_normalize_struc_formula_view 8 prog h p struct_form false false false [] in
+              SP.FTPrjMap.add_elem_dupl acc k norm_form) (SP.FTPrjMap.mkEmpty()) tprj_map in
+            let sess_formulae = Iast.mk_session_formulae ~prj:norm_prj ~tprj:norm_tprj ~orders:sess_form.shared_orders sess_form.session in
+            Some sess_formulae
+        | None -> None in 
       let inv_lock = c.Iast.view_inv_lock in
       let inv_lock =
         (match inv_lock with
@@ -10225,8 +10218,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
            let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
            Some new_f)
       in
-      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock; (* Iast.view_session_projections = normalized_proj *)}) tmp_views in
-  (* let () = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
+      { c with Iast.view_formula =  wf; Iast.view_inv_lock = inv_lock; Iast.view_session = norm_session_formulae}) tmp_views in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in

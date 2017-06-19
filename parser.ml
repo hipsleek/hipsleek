@@ -1374,12 +1374,12 @@ prot_view_decl:
       let session_formula = Session.IProtocol.mk_session_exists_formula vars s loc in
       { vh with
            view_session_info = Some (mk_view_session_info ~sk:Protocol ());
-           view_session = Iast.mk_session_projection (Session.ProtocolSession session_formula)}
+           view_session = Some (Iast.mk_session_formulae (Session.ProtocolSession session_formula))}
           
   | vh = view_header; `EQEQ; s = protocol_formula
           -> { vh with
                view_session_info = Some (mk_view_session_info ~sk:Protocol ());
-               view_session = Iast.mk_session_projection (Session.ProtocolSession s)}
+               view_session = Some (Iast.mk_session_formulae (Session.ProtocolSession s))}
   ]];
 
 (* e.g. v# *)
@@ -1455,14 +1455,14 @@ proj_view_decl:
   [[ vh = view_header; `EQEQ; f = projection_formula
      -> { vh with
           view_session_info = Some (mk_view_session_info ~sk:Projection ());
-          view_session = Iast.mk_session_projection (Session.ProjectionSession f)}
+          view_session = Some (Iast.mk_session_formulae (Session.ProjectionSession f))}
    ]];
 
 tpproj_view_decl:
   [[ vh = view_header; `EQEQ; f = tpprojection_formula
      -> { vh with
           view_session_info = Some (mk_view_session_info ~sk:TPProjection ());
-          view_session = Iast.mk_session_projection (Session.TPProjectionSession f)}
+          view_session = Some (Iast.mk_session_formulae (Session.TPProjectionSession f))}
    ]];
 
   

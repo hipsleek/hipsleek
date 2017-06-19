@@ -82,7 +82,7 @@ and data_decl = {
 
 and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
-and session_projection = {
+and session_formulae = {
   session        : Session.session_formula;
   per_party_proj : Session_projection.FPrjMap.emap;
   per_chan_proj  : Session_projection.FTPrjMap.emap;
@@ -124,7 +124,7 @@ and view_decl =
     view_mem : F.mem_formula option; 
     (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
     view_formula : Iformula.struc_formula;
-    view_session : session_projection option;
+    view_session : session_formulae option;
     view_inv_lock : F.formula option;
     mutable view_pt_by_self : ident list; (* list of views pointed by self *)
     (* view_targets : ident list;  *)(* list of views pointed within declaration *)
@@ -645,16 +645,17 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
-let mk_session_projection
+let mk_session_formulae
   ?(prj=Session_projection.FPrjMap.mkEmpty())
   ?(tprj=Session_projection.FTPrjMap.mkEmpty())
   ?(orders=[]) 
-  sess = Some {
-  session        = sess;
-  per_party_proj = prj;
-  per_chan_proj  = tprj;
-  shared_orders  = orders;
-}
+  sess =
+  {
+    session        = sess;
+    per_party_proj = prj;
+    per_chan_proj  = tprj;
+    shared_orders  = orders;
+  }
 
 (* let mk_iview_decl name dname vars f pos = *)
 (* type: Globals.ident -> *)

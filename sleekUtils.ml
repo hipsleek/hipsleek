@@ -14,6 +14,7 @@ open Exc.GTable
 open Perm
 open Label_only
 
+module SP = Session_projection
 module HT = Hashtbl
 
 let process_selective_iview_decls is_all iprog iviews =
@@ -23,20 +24,24 @@ let process_selective_iview_decls is_all iprog iviews =
       let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
       let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
       let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
-(* TODO elena: check this
-      let normalized_proj =
-        match pdef.view_session_projections with
-          | Some proj -> let norm_proj = HT.create 10 in
-                         let helper (role1, role2) proj_vdef =
-                           let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) proj_vdef.Iast.view_vars ) in
-                           let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) proj_vdef.Iast.view_vars ) in
-                           let norm_form = Astsimp.case_normalize_struc_formula_view 11 iprog h p proj_vdef.Iast.view_formula false false false [] in
-                           let new_vdef = {proj_vdef with view_formula = norm_form;} in
-                           HT.add norm_proj (role1, role2) new_vdef in
-                         let () = HT.iter helper proj in
-                         Some norm_proj
-                 | None -> None in
-*)
+  let norm_session_formulae = match pdef.view_session with
+        | Some sess_form ->
+            let prj_map = sess_form.per_party_proj in
+            let tprj_map = sess_form.per_chan_proj in
+            let norm_prj = List.fold_left (fun acc (k, struct_form) ->
+              (*TODO elena: is it correct to get view_vars from pdef ?*)
+              let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+              let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+              let norm_form = Astsimp.case_normalize_struc_formula_view 8 iprog h p struct_form false false false [] in
+              SP.FPrjMap.add_elem_dupl acc k norm_form) (SP.FPrjMap.mkEmpty()) prj_map in
+            let norm_tprj = List.fold_left (fun acc (k, struct_form) ->
+              let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+              let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+              let norm_form = Astsimp.case_normalize_struc_formula_view 8 iprog h p struct_form false false false [] in
+              SP.FTPrjMap.add_elem_dupl acc k norm_form) (SP.FTPrjMap.mkEmpty()) tprj_map in
+            let sess_formulae = Iast.mk_session_formulae ~prj:norm_prj ~tprj:norm_tprj ~orders:sess_form.shared_orders sess_form.session in
+            Some sess_formulae
+        | None -> None in
       let inv_lock = pdef.I.view_inv_lock in
       let inv_lock = (
         match inv_lock with
@@ -45,7 +50,7 @@ let process_selective_iview_decls is_all iprog iviews =
           let new_f = Astsimp.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
           Some new_f
       ) in
-      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock; (* TODO elena: Iast.view_session_projections = normalized_proj; *)} in
+      let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock; Iast.view_session = norm_session_formulae;} in
       new_pdef
     ) iviews in
   let () = y_tinfo_hp (add_str "view_decls" (pr_list Iprinter.string_of_view_decl)) iprog.I.prog_view_decls in
