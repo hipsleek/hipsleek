@@ -2892,20 +2892,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
         print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
     in
-
-    (* let ctx = if (!Globals.allow_locklevel) then *)
-    (*       (\*to maintain the information of locklevels on varables *)
-    (*         whose scopes are within scope of this procedure only. *)
-    (*         For example, for any pass-by-value or local variables, *)
-    (*         at the end of the procedure, it will become existential *)
-    (*         variables. Exist vars, however, will be renamed sometimes. *)
-    (*         However, elim_exists is not aware of constraints on locklevels, *)
-    (*         we have to maintain these constraints by translating before *)
-    (*         elim_exists *)
-    (*       *\) *)
-    (*       trans_level_list_partial_context ctx *)
-    (*     else ctx *)
-    (* in *)
     (* WN : is code below redundant?  *)
     let fn_state=
       if (false (* !Globals.disable_failure_explaining *)) then
@@ -3174,13 +3160,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                                                    (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
             in
             (r1,r2,r3)
-          else
-            let todo_unk = x_add (* Sa2.infer_shapes_new *) Sa3.infer_shapes iprog prog (* proc.proc_name *)"" hprels
-                scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq
-                                                (fun ((hp1,_),_) ((hp2, _),_) ->
-                                                   (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true flow_int
-            in
-            ([],[], [])
+          else ([],[], [])
         else
           let r = Sa3.infer_shapes iprog prog proc.proc_name (* "" *) hprels
             scc_sel_hps0 scc_sel_post_hps (Gen.BList.remove_dups_eq
@@ -3271,55 +3251,6 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
       scc_inferred_hps
     *)
     let scc_procs_names = (Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 ==0) (List.map (fun proc -> proc.proc_name) scc_procs)) in
-    let new_scc_procs =
-      if !Globals.pred_trans_view then
-        let nprog, is_print_inferred_spec =
-          if not !Globals.new_pred_syn then (* --old-pred-synthesis *)
-            match scc_procs with
-            | [] -> prog,false
-            | [p] -> if (* (!Globals.sae || !Globals.reverify_all_flag || !Globals.reverify_flag || p.Cast.proc_is_invoked || pure_infer) && *)  p.Cast.proc_sel_hps != [] then
-                let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
-                    scc_inferred_hps
-                in
-                let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-                (* let () = List.iter (fun proc -> *)
-                (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
-                (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
-                (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
-                (*     () *)
-                (* ) new_scc_procs in *)
-                nprog,true
-              else prog,false
-            | _ -> let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
-              let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-              (* let () = List.iter (fun proc -> *)
-              (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
-              (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
-              (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
-              (*     () *)
-              (* ) new_scc_procs in *)
-              nprog,true
-          else
-            if is_empty scc_sel_hps || is_empty scc_hprel_ass then prog, false
-            else
-              let () = Norm.find_rec_data iprog prog REGEX_STAR in
-              let extn_pred_lsts = Syn.extn_pred_scc iprog prog scc_procs_names in
-              let prog = SynUtils.trans_hrel_to_view_spec_scc prog scc_procs_names in
-              let prog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
-              prog, true
-        in
-        let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-        (* let () = cprog_obj # check_prog_only x_loc nprog in *)
-        let () = List.iter (fun proc ->
-            if is_print_inferred_spec then
-              let () = x_binfo_hp (add_str "INFERRED SHAPE SPEC"
-                  (Cprinter.string_of_struc_formula)) (proc.proc_stk_of_static_specs#top) (*proc.proc_static_specs*)  no_pos in
-              ()
-            else ()
-          ) new_scc_procs in
-        new_scc_procs
-      else scc_procs
-    in
     (**************regression check _ gen_regression file******************)
     (*to revise the check for scc*)
     let proc = List.hd scc_procs in
