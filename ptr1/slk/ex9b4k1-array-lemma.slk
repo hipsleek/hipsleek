@@ -19,24 +19,24 @@ Starting Omega.../usr/local/bin/oc
 
 */
 
-checkentail 0<=i & (i=n | i<n) & Univ(i) |- i!=n.
-expect Fail.
-print residue.
+// checkentail 0<=i & (i=n | i<n) & Univ(i) |- i!=n.
+// expect Fail.
+// print residue.
 
-checkentail 0<=i & i<=n & Univ(i) |- i!=n.
-expect Fail.
-print residue.
+// checkentail 0<=i & i<=n & Univ(i) |- i!=n.
+// expect Fail.
+// print residue.
 
 checkentail 0<=i & i<=n & Univ(i) & Univ(n) |- i!=n.
 expect Valid.
 print residue.
 
-checkentail 0<=i & (i=n | i<n) & Univ(i) & Univ(n) |- i!=n.
-expect Valid.
-print residue.
+// checkentail 0<=i & (i=n | i<n) & Univ(i) & Univ(n) |- i!=n.
+// expect Valid.
+// print residue.
 
-//should we trigger a contradiction?
+// //should we trigger a contradiction?
 
-checkentail  Univ(i) & Univ(n) |- false.
-expect Fail.
-print residue.
+// checkentail  Univ(i) & Univ(n) |- false.
+// expect Fail.
+// print residue.

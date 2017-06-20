@@ -711,9 +711,9 @@ class arrPredTransformer initcf = object(self)
         | Or f->
            (get_general_f f.formula_or_f1)@(get_general_f f.formula_or_f2)
         | Exists f ->
-           let pf = Mcpure.pure_of_mix f.formula_exists_pure in
-           let evars = f.formula_exists_qvars in
-           let () = eqmap <- build_eqmap pf evars in
+           let pf = Mcpure.pure_of_mix f.formula_exists_pure in           
+           let () = eqmap <- build_eqmap pf f.formula_exists_qvars in
+           let evars = List.filter (fun v -> List.for_all (fun (nv,_)-> not (compare_sv nv v=0)) eqmap) f.formula_exists_qvars in
            let pred_list = flatten_heap_star_formula f.formula_exists_heap in
            [List.map mkVar evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
       in

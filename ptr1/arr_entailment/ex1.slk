@@ -3,10 +3,11 @@ pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
 // 1
-infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,2>.
+infer[@arr_ba]  base::AsegNE<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
+/*
 // 2
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<1,2>.
 print residue.
@@ -147,7 +148,7 @@ infer[@arr_ba]  base::AsegNE<1,2> *  base::Elem<2,v> |- exists a,b: base::AsegNE
 print residue.
 expect Valid.
 
- 
+*/ 
 
 
 
