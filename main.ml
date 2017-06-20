@@ -61,7 +61,7 @@ let parse_file_full file_name (primitive: bool) =
         let cil_prog = Cilparser.parse_hip file_name in
         cil_prog
       else if parser_to_use = "cil-i" then
-        let cil_prog = Cilparser.parse_prep file_name in
+        let cil_prog = Cilparser.parse_preprocessed_file file_name in
         let stdlib_procs = Parser.create_tnt_stdlib_proc () in
         { cil_prog with Iast.prog_proc_decls = cil_prog.Iast.prog_proc_decls @ stdlib_procs; }
       else if parser_to_use = "ints" then
