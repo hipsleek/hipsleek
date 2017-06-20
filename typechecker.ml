@@ -100,22 +100,6 @@ let pre_ctr = new Gen.counter 0
 let post_ctr = new Gen.counter 0
 let prepost_ctr = new Gen.counter 0
 
-(* WN : moved so solver.ml so that sleek can use *)
-(* (\*Merging fractional heap nodes when possible using normalization lemmas*\) *)
-(* let normalize_list_failesc_context_w_lemma prog lctx = *)
-(*   if not (Perm.allow_perm ()) then lctx *)
-(*   else *)
-(*     (\*TO CHECK merging nodes*\) *)
-(*     let fct (es:CF.entail_state) = *)
-(*       let es = CF.clear_entailment_vars es in *)
-(*       (\*create a tmp estate for normalizing*\) *)
-(*       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in *)
-(*       CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog tmp_es es.CF.es_formula prog.prog_left_coercions} *)
-(*     in *)
-(*     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in *)
-(*     res *)
-
-
 (* this checks for read permission *)
 (*
    TODO:WN: is @Lend safe for bind, can v be updated and
