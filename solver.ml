@@ -64,52 +64,6 @@ let vv_ref = ref 9999
    a folding step on its LHS term
 *)
 let lemma_soundness = Cast.lemma_soundness
-  (* object (self) *)
-  (*  val mutable lemma = None *)
-  (*  val mutable lhs = None *)
-  (*  val mutable progress = false *)
-  (*  method logging s = *)
-  (*    let () = print_endline ("\nXXXX Lemma Soundness["^s^"]") in *)
-  (*    () *)
-  (*  method start_lemma_proving loc (coer:Cast.coercion_decl) (yy:string) = *)
-  (*    self # logging ("Start Lemma Proving "^loc); *)
-  (*    let h_v = coer.Cast.coercion_head_view in *)
-  (*    let b_v = coer.Cast.coercion_body_view in *)
-  (*    let ty = coer.Cast.coercion_type in *)
-  (*    let () = y_tinfo_hp (add_str "(hd,body)" (pr_pair pr_id pr_id)) (h_v,b_v) in *)
-  (*    let () = y_tinfo_hp (add_str "coer_type" (Cprinter.string_of_coercion_type)) ty in *)
-  (*    if  ty == Iast.Right then *)
-  (*      begin *)
-  (*        lemma <- Some coer; *)
-  (*        lhs <- Some h_v *)
-  (*      end *)
-  (*    else *)
-  (*      begin *)
-  (*        lemma <- None; *)
-  (*        lhs <- None *)
-  (*      end *)
-  (*  method start_disjunct loc =  *)
-  (*    (\* triggerred by LHS disjunct *\) *)
-  (*    self # logging ("Start Disjunct"^loc); *)
-  (*    progress <- false *)
-  (*  method make_progress (c1:string) =  *)
-  (*    (\* an folding to trigger progress *\) *)
-  (*    self # logging "Make Progress"; *)
-  (*    match lhs with *)
-  (*    | None -> () *)
-  (*    | Some c2 -> if c1==c2 then progress <- true; *)
-  (*  method safe_to_apply coer = *)
-  (*    let flag = match lemma with *)
-  (*    | None -> true *)
-  (*    | Some c2 -> progress || not(coer==c2) in *)
-  (*    if not(flag) then  *)
-  (*      self # logging "Not Safe for Lemma"; *)
-  (*    flag *)
-  (*  method end_lemma_proving loc =  *)
-  (*    self # logging ("End Lemma Proving "^loc); *)
-  (*    lemma <- None; *)
-  (*    lhs <- None; *)
-  (* end;; *)
 
 let wrapper_lemma_soundness = Cast.wrapper_lemma_soundness
 
@@ -336,16 +290,6 @@ let no_diff = ref false (* if true, then xpure_symbolic will drop the disequalit
 let no_check_outer_vars = ref false
 
 (*----------------*)
-
-
-
-
-
-
-
-
-
-
 
 let rec pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
   let rec diff_one sv svars = match svars with

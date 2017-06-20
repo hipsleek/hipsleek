@@ -534,9 +534,6 @@ and exp = (* expressions keep their types *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-  (* standard expressions *)
-  (* | ArrayAt of exp_arrayat (* An Hoa *) *)
-  (* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -549,12 +546,6 @@ and exp = (* expressions keep their types *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
-        (*
-	  | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc)
-        (* v.f --> (type of f, v, (f, position of f in field list), pos *)
-	  | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc)
-        (* field assignment is flattened to form x.f = y only *)
-        *)
   | ICall of exp_icall
   | IConst of exp_iconst
   (*| ArrayAlloc of exp_aalloc *) (* An Hoa *)
@@ -4501,4 +4492,3 @@ let is_segmented_view vd =
 (*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
 (*   let () = y_tinfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
 (*   r *)
-
