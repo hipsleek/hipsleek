@@ -1219,24 +1219,13 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   | Cil.TComp (comp, _) ->
     let ty = Globals.Named comp.Cil.cname in
     ((ty, name), pos, true, (gen_field_ann ty) (* IA.F_NO_ANN *))                     (* struct ~~> inline data *)
-  | Cil.TPtr (ty, _) ->
-    let _ = DB.ninfo_hprint (add_str "ftyp" string_of_cil_typ) ftyp no_pos in
-    let _ = DB.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
-    let new_ty = (
-      (* Loc: why do we ignore the outest pointer? *)
-      if (is_cil_struct_pointer ftyp) then
-        translate_typ ty pos    (* pointer goes down 1 level *)
-      else
-        translate_typ ftyp pos
-    ) in
-    ((new_ty, name), pos, false, (gen_field_ann new_ty) (* IA.F_NO_ANN *))
   | _ ->
     let ty = translate_typ ftyp pos in
     ((ty, name), pos, false, (gen_field_ann ty) (* IA.F_NO_ANN *))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
-  let name = comp.Cil.cname ^ "_star" in
+  let name = comp.Cil.cname in
   let _ = DB.ninfo_hprint (add_str "name" pr_id) name no_pos in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = IA.mkDataDecl name fields "Object" [] false [] in
@@ -2511,7 +2500,13 @@ let parse_preprocessed_file filename =
     print_endline_quiet "";
   );
   (* finally, translate cil to iast *)
-  translate_file cil
+  let prog = translate_file cil in
+  (* let () = print_endline ("------------------------") in *)
+  (* let () = print_endline ("--> translated program: ") in *)
+  (* let () = print_endline ("------------------------") in *)
+  (* let () = print_endline (Iprinter.string_of_program prog) in *)
+  prog
+
 
 
 let process_one_file (cil: Cil.file) : unit =
@@ -2524,10 +2519,10 @@ let process_one_file (cil: Cil.file) : unit =
     )
   );
   let prog = translate_file cil in
-  let () = print_endline_quiet ("------------------------") in
-  let () = print_endline_quiet ("--> translated program: ") in
-  let () = print_endline_quiet ("------------------------") in
-  let () = print_endline_quiet (Iprinter.string_of_program prog) in
+  (* let () = print_endline ("------------------------") in *)
+  (* let () = print_endline ("--> translated program: ") in *)
+  (* let () = print_endline ("------------------------") in *)
+  (* let () = print_endline (Iprinter.string_of_program prog) in *)
   ()
 
 let parse_hip (filename: string) : IA.prog_decl =
