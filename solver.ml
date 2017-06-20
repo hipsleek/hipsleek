@@ -10755,16 +10755,6 @@ and do_fold_w_ctx ?(root_inst=None) fold_ctx prog estate conseq rhs_node vd rhs_
     (fun _ _ _ -> do_fold_w_ctx_x ~root_inst:root_inst fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos)
     fold_ctx (* estate  *)(conseq, rhs_node, vd ,rhs_rest,rhs_b) is_folding
 
-(* Debug.loop_3(\* _no *\)  "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr *)
-(*     (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos)  *)
-(*     fold_ctx rhs_node vd *)
-(*
-  ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
-  resth2 = rhs_h - ln2
-  ctx0?
-  is_folding?
-*)
-
 (*LDK:
   ln2: node to fold
 
@@ -10996,28 +10986,6 @@ and do_base_fold_hp_rel_x prog estate pos hp vs
                       } in
     let rhs_node1 = CF.mkViewNode (List.hd vs) (CP.name_of_spec_var hp) (List.tl vs) pos in
     x_add do_fold prog (Some (iv,ivr,vdecl_w_def)) estate conseq rhs_node1 rhs_rest rhs_b is_folding pos
-(* let vd = Some ([],[],vdecl_w_def) in *)
-(* let rhs_p = MCP.pure_of_mix (rhs_b.CF.formula_base_pure) in *)
-(* let fold_ctx = Ctx { estate with *)
-(*     (\* without unsat_flag reset: *)
-(*        error at: imm/kara-tight.ss karatsuba_mult *)
-(*     *\) *)
-(*     es_unsat_flag  = false; *)
-(*     es_ivars  = []; *)
-(*     es_pp_subst = []; *)
-(*     es_arith_subst = []; *)
-(*     es_cont = []; *)
-(*     es_crt_holes = []; *)
-(*     es_hole_stk = []; *)
-(*     es_aux_xpure_1 = MCP.mkMTrue pos; *)
-(*     es_subst = ([], []); *)
-(*     es_aux_conseq = rhs_p; *)
-(*     es_must_error = None; *)
-(* } in *)
-(* do_fold_w_ctx fold_ctx prog estate conseq rhs_node1 vd rhs_rest rhs_b is_folding pos *)
-(* let msg = "do_base_fold_hp_rel (TBI)"^((pr_pair !CP.print_sv !CP.print_svl) (hp,vs)) in *)
-(* (Errctx.mkFailCtx_may x_loc msg estate pos,Unknown) *)
-(* failwith "TBI" *)
 
 and do_base_fold_hp_rel prog estate pos hp vs conseq rhs_node rhs_rest rhs_b is_folding iv ivr=
   let pr1 x = Cprinter.string_of_list_context_short (fst x) in
