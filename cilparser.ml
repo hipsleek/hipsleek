@@ -473,8 +473,7 @@ let rec remove_goto_with_if_stmts goto label stmts =
       then ([],stmt::stmts)
       else
         let (stmts1, stmts2) = get_stmts stmts in
-        (stmt::stmts1, stmts2)
-  in
+        (stmt::stmts1, stmts2)  in
   match stmts with
   | [] -> []
   | stmt::stmts ->
@@ -493,12 +492,22 @@ let rec remove_goto_with_if_stmts goto label stmts =
               (Cil.If (false_exp, new_b1, b2, p), stmts2)
             else
               (skind, stmts)
-          | _ -> (Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p), stmts) )
-      | Cil.Switch (exp, blk, stmts1, p) -> (Cil.Switch (exp, remove_goto_with_if_block goto label blk, stmts1, p), stmts)
-      | Cil.Block blk -> (Cil.Block (remove_goto_with_if_block goto label blk), stmts)
-      | Cil.Loop (blk, sf, p, stmt1, stmt2) -> (Cil.Loop (remove_goto_with_if_block goto label blk, sf, p, stmt1, stmt2), stmts)
-      | Cil.TryFinally (blk1, blk2, p) -> (Cil.TryFinally (remove_goto_with_if_block goto label blk1, remove_goto_with_if_block goto label blk2, p), stmts)
-      | Cil.TryExcept (blk1, ies, blk2, p) -> (Cil.TryExcept (remove_goto_with_if_block goto label blk1, ies, remove_goto_with_if_block goto label blk2, p), stmts)
+          | _ -> Cil.If (e, remove_goto_with_if_block goto label b1,
+                         remove_goto_with_if_block goto label b2, p), stmts )
+      | Cil.Switch (exp, blk, stmts1, p) ->
+        Cil.Switch (exp, remove_goto_with_if_block goto label blk,
+                    stmts1, p), stmts
+      | Cil.Block blk ->
+        Cil.Block (remove_goto_with_if_block goto label blk), stmts
+      | Cil.Loop (blk, sf, p, stmt1, stmt2) ->
+        Cil.Loop (remove_goto_with_if_block goto label blk,
+                  sf, p, stmt1, stmt2), stmts
+      | Cil.TryFinally (blk1, blk2, p) ->
+        Cil.TryFinally (remove_goto_with_if_block goto label blk1,
+                        remove_goto_with_if_block goto label blk2, p), stmts
+      | Cil.TryExcept (blk1, ies, blk2, p) ->
+        Cil.TryExcept (remove_goto_with_if_block goto label blk1,
+                       ies, remove_goto_with_if_block goto label blk2, p), stmts
       | _ -> (skind, stmts)
     in
     {stmt with Cil.skind = new_skind}::(remove_goto_with_if_stmts goto label new_stmts)
@@ -547,12 +556,21 @@ let rec remove_goto_with_while_stmts goto label stmts =
     else
       let skind = stmt.Cil.skind in
       let new_skind = match skind with
-        | Cil.If (e, b1, b2, p) -> Cil.If (e, remove_goto_with_if_block goto label b1, remove_goto_with_if_block goto label b2, p)
-        | Cil.Switch (exp, blk, stmts1, p) -> Cil.Switch (exp, remove_goto_with_if_block goto label blk, stmts1, p)
-        | Cil.Block blk -> Cil.Block (remove_goto_with_if_block goto label blk)
-        | Cil.Loop (blk, sf, p, stmt1, stmt2) -> Cil.Loop (remove_goto_with_if_block goto label blk, sf, p, stmt1, stmt2)
-        | Cil.TryFinally (blk1, blk2, p) -> Cil.TryFinally (remove_goto_with_if_block goto label blk1, remove_goto_with_if_block goto label blk2, p)
-        | Cil.TryExcept (blk1, ies, blk2, p) -> Cil.TryExcept (remove_goto_with_if_block goto label blk1, ies, remove_goto_with_if_block goto label blk2, p)
+        | Cil.If (e, b1, b2, p) ->
+          Cil.If (e, remove_goto_with_if_block goto label b1,
+                  remove_goto_with_if_block goto label b2, p)
+        | Cil.Switch (exp, blk, stmts1, p) ->
+          Cil.Switch (exp, remove_goto_with_if_block goto label blk, stmts1, p)
+        | Cil.Block blk ->
+          Cil.Block (remove_goto_with_if_block goto label blk)
+        | Cil.Loop (blk, sf, p, stmt1, stmt2) ->
+          Cil.Loop (remove_goto_with_if_block goto label blk, sf, p, stmt1, stmt2)
+        | Cil.TryFinally (blk1, blk2, p) ->
+          Cil.TryFinally (remove_goto_with_if_block goto label blk1,
+                          remove_goto_with_if_block goto label blk2, p)
+        | Cil.TryExcept (blk1, ies, blk2, p) ->
+          Cil.TryExcept (remove_goto_with_if_block goto label blk1, ies,
+                         remove_goto_with_if_block goto label blk2, p)
         | _ -> skind
       in
       {stmt with Cil.skind = new_skind}::(remove_goto_with_while_stmts goto label stmts)
@@ -1059,7 +1077,7 @@ and gather_addrof_exp (e: Cil.exp) : unit =
                 let addr_dname = (
                   match addr_dtyp with
                   | Globals.Named s -> s
-                  | _ -> report_error pos "gather_addrof_exp: unexpected type!"
+                  | _ -> error "gather_addrof_exp: unexpected type!"
                 ) in
                 let addr_vname = str_addr ^ lv_str in
                 let addr_vdecl = (
@@ -1138,13 +1156,13 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
       let arrayty = translate_typ ty pos in
       Globals.Array (arrayty, 1)
     | Cil.TFun _ ->
-      report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
+      error "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
     | Cil.TNamed _ ->                                          (* typedef type *)
       let ty = get_core_cil_typ t in
       translate_typ ty pos
     | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
-    | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
-    | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
+    | Cil.TEnum _ -> error "TRUNG TODO: handle TEnum later!"
+    | Cil.TBuiltin_va_list _ -> error "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
 
@@ -1191,7 +1209,7 @@ and translate_var_decl (vinfo: Cil.varinfo) : IA.exp =
         )
         else IA.mkVarDecl new_ty [(name, None, pos)] pos
       )
-    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
+    | _ -> error ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
   ) in
   newexp
 
@@ -1200,12 +1218,12 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : IA.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i, _, _) -> IA.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
-  | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
-  (*| Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"*)
+  | Cil.CStr s -> error "TRUNG TODO: Handle Cil.CStr later!"
+  | Cil.CWStr _ -> error "TRUNG TODO: Handle Cil.CWStr later!"
+  (*| Cil.CChr _ -> error "TRUNG TODO: Handle Cil.CChr later!"*)
   | Cil.CChr c -> IA.mkIntLit (Char.code c) pos
   | Cil.CReal (f, _, _) -> IA.mkFloatLit f pos
-  | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
+  | Cil.CEnum _ -> error "TRUNG TODO: Handle Cil.CEnum later!"
 
 
 (* translate a field of a struct                       *)
@@ -1235,7 +1253,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
 and translate_unary_operator (op : Cil.unop) pos : IA.uni_op =
   match op with
   | Cil.Neg -> IA.OpUMinus
-  | Cil.BNot -> report_error pos "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
+  | Cil.BNot -> error "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
   | Cil.LNot -> IA.OpNot
 
 
@@ -1250,17 +1268,17 @@ and translate_binary_operator (op : Cil.binop) pos : IA.bin_op =
   | Cil.Mult -> IA.OpMult
   | Cil.Div -> IA.OpDiv
   | Cil.Mod -> IA.OpMod
-  | Cil.Shiftlt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftlf operator!"
-  | Cil.Shiftrt -> report_error pos "Error!!! Iast doesn't support Cil.Shiftrt operator!"
+  | Cil.Shiftlt -> error "Error!!! Iast doesn't support Cil.Shiftlf operator!"
+  | Cil.Shiftrt -> error "Error!!! Iast doesn't support Cil.Shiftrt operator!"
   | Cil.Lt -> IA.OpLt
   | Cil.Gt -> IA.OpGt
   | Cil.Le -> IA.OpLte
   | Cil.Ge -> IA.OpGte
   | Cil.Eq -> IA.OpEq
   | Cil.Ne -> IA.OpNeq
-  | Cil.BAnd -> report_error pos "Error!!! Iast doesn't support Cil.BAnd operator!"
-  | Cil.BXor -> report_error pos "Error!!! Iast doesn't support Cil.BXor operator!"
-  | Cil.BOr -> report_error pos "Error!!! Iast doesn't support Cil.BOr operator!"
+  | Cil.BAnd -> error "Error!!! Iast doesn't support Cil.BAnd operator!"
+  | Cil.BXor -> error "Error!!! Iast doesn't support Cil.BXor operator!"
+  | Cil.BOr -> error "Error!!! Iast doesn't support Cil.BOr operator!"
   | Cil.LAnd -> IA.OpLogicalAnd
   | Cil.LOr -> IA.OpLogicalOr
 
@@ -1367,10 +1385,10 @@ and translate_exp_x (e: Cil.exp) : IA.exp =
     IA.mkIntLit (String.length s) pos
   | Cil.AlignOf (_, l) ->
     let pos = translate_location l in
-    report_error pos "TRUNG TODO: Handle Cil.AlignOf later!"
+    error "TRUNG TODO: Handle Cil.AlignOf later!"
   | Cil.AlignOfE (_, l) ->
     let pos = translate_location l in
-    report_error pos "TRUNG TODO: Handle Cil.AlignOfE later!"
+    error "TRUNG TODO: Handle Cil.AlignOfE later!"
   | Cil.UnOp (op, exp, ty, l) -> (
       let pos = translate_location l in
       let o = translate_unary_operator op pos in
@@ -1442,7 +1460,7 @@ and translate_exp_x (e: Cil.exp) : IA.exp =
         | Globals.Int, Globals.Named ityp_name ->
           input_exp
         | _ ->
-          report_error pos ("translate_exp: couldn't cast type 2: "
+          error ("translate_exp: couldn't cast type 2: "
                             ^ (Globals.string_of_typ input_typ)
                             ^ " to " ^ (Globals.string_of_typ output_typ))
       )
@@ -1458,7 +1476,7 @@ and translate_exp_x (e: Cil.exp) : IA.exp =
             let addr_vname = Hashtbl.find tbl_addrof_info lv_str in
             IA.mkVar addr_vname pos
           with Not_found ->
-            report_error pos ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
+            error ("translate_exp: addr var of '" ^ lv_str ^ "' is not found.")
         )
     )
   | Cil.StartOf (lv, l) ->
@@ -1609,7 +1627,7 @@ and translate_instr (instr: Cil.instr) : IA.exp =
       let fname = match exp with
         | Cil.Const (Cil.CStr s, _) -> s
         | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
-        | _ -> report_error pos "translate_intstr: invalid callee's name!" in
+        | _ -> error "translate_intstr: invalid callee's name!" in
       let args = List.map (fun x -> translate_exp x) exps in
       let _ = DB.ninfo_hprint (add_str "args" (pr_list !IA.print_exp)) (args) no_pos in
       let _ =
@@ -1656,7 +1674,7 @@ and translate_stmt (s: Cil.stmt) : IA.exp =
     newexp
   | Cil.Goto (sref, l) ->
     let pos = translate_location l in
-    report_error pos "translate_stmt: handle GOTO later!"
+    error "translate_stmt: handle GOTO later!"
   | Cil.Break l ->
     let pos = translate_location l in
     let newexp = IA.mkBreak IA.NoJumpLabel None pos in
@@ -1735,9 +1753,9 @@ and translate_stmt (s: Cil.stmt) : IA.exp =
           match ec with
           | Some ec -> let cond = IA.mkBinary IA.OpEq e ec None pos in
             IA.mkCond cond es (translate tl) None pos
-          | None -> report_error pos "Error: Default!"
+          | None -> error "Error: Default!"
         )
-      | _ -> report_error pos "Error: Empty list!"
+      | _ -> error "Error: Empty list!"
     in
     let e_list = List.flatten (List.map (fun s ->
         List.map (fun lbl ->
@@ -1751,7 +1769,7 @@ and translate_stmt (s: Cil.stmt) : IA.exp =
           ) s.Cil.labels
       ) stmt_list) in
     translate e_list
-  (* report_error pos "TRUNG TODO: Handle Cil.Switch later!" *)
+  (* error "TRUNG TODO: Handle Cil.Switch later!" *)
   | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
     let p = translate_location l in
     let cond = IA.mkBoolLit true p in
@@ -2149,18 +2167,18 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : IA.exp =
         List.iter (fun x ->
             let off, init2 = x in
             let fname = match off with
-              | Cil.NoOffset -> report_error pos "translate_init: handle Cil.NoOffset later!"
+              | Cil.NoOffset -> error "translate_init: handle Cil.NoOffset later!"
               | Cil.Field ((f, _), Cil.NoOffset, _) -> f.Cil.fname
-              | Cil.Field ((f, _), (Cil.Field _), _) -> report_error pos "translate_init: handle Cil.Field later!"
-              | Cil.Field ((f, _), (Cil.Index _), _) -> report_error pos "translate_init: handle Cil.Index later!"
-              | Cil.Index _ -> report_error pos "translate_init: handle Cil.Index later!" in
+              | Cil.Field ((f, _), (Cil.Field _), _) -> error "translate_init: handle Cil.Field later!"
+              | Cil.Field ((f, _), (Cil.Index _), _) -> error "translate_init: handle Cil.Index later!"
+              | Cil.Index _ -> error "translate_init: handle Cil.Index later!" in
             let fexp = translate_init init2 lopt in
             Hashtbl.add tbl_fields_init fname fexp;
           ) offset_init_list;
         (* init all fields of *)
         let data_decl = (
           try Hashtbl.find tbl_data_decl newtyp
-          with Not_found -> report_error pos ("translate_init: couldn't find typ - " ^ newtyp_name)
+          with Not_found -> error ("translate_init: couldn't find typ - " ^ newtyp_name)
         ) in
         let init_params = List.fold_left (
             fun params field ->
@@ -2173,14 +2191,14 @@ and translate_init (init: Cil.init) (lopt: Cil.location option) : IA.exp =
                     | Globals.Bool -> IA.mkBoolLit true pos
                     | Globals.Float -> IA.mkFloatLit 0. pos
                     | Globals.Named _ -> IA.mkNull pos
-                    | _ -> report_error pos ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
+                    | _ -> error ("Unexpected typ 3: " ^ (Globals.string_of_typ ftyp))
                   )
               ) in
               params @ [finit]
           ) [] data_decl.IA.data_fields in
         let init_exp = IA.mkNew newtyp_name init_params pos in
         init_exp
-      | _ -> report_error pos ("translate_init: handle other type later - "
+      | _ -> error ("translate_init: handle other type later - "
                                ^ (Globals.string_of_typ newtyp))
     )
 
@@ -2229,7 +2247,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : IA.proc_
          (translate_typ ty1 pos)
        | _ -> (translate_typ ty pos)
       )
-    | _ -> report_error pos "Error!!! Invalid type! Have to be TFun only."
+    | _ -> error "Error!!! Invalid type! Have to be TFun only."
   ) in
   let funargs = (
     let ftyp = fheader.Cil.vtype in
@@ -2264,7 +2282,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : IA.proc_
         ) in
         List.map translate_one_param params
       )
-    | _ -> report_error pos "Invalid function header!"
+    | _ -> error "Invalid function header!"
   ) in
   let funbody = (
     match fundec.Cil.sbody.Cil.bstmts with
