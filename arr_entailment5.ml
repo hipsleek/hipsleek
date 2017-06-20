@@ -70,6 +70,7 @@ let str_disj_arrF flst =
 ;;
 
 let print_and_return f indent =
+  let f = simplify f in
   let () =
     if true(* not (isValid f) *)
     then
@@ -88,7 +89,7 @@ let get_sorted_puref arrPredlst =
     | h::tail ->
        ( match h with
          | AsegNE (t,m) ->
-            helper tail m ((mkLt lastm t)::flst)
+            helper tail m ([mkLte lastm t;mkLt t m]@flst)
          | Pointsto (t,v) ->
             helper tail (incOne t) ((mkLte lastm t)::flst)
          | _ -> failwith "get_sorted_puref: Invalid input" )
@@ -103,6 +104,42 @@ let get_sorted_puref arrPredlst =
           helper tail (incOne t) []
        | _ -> failwith "get_sorted_puref: Invalid input" )
 ;;
+
+(* input: heap formulas, output: a pure formula with sorted information  *)  
+let get_sorted_puref_general arrPredlst =
+  let rec helper lst lastm flst =
+    match lst with
+    | [] -> mkAndlst flst
+    | h::tail ->
+       ( match h with
+         | AsegNE (t,m) ->
+            helper tail m ([mkLte lastm t;mkLt t m]@flst)
+         | Pointsto (t,v) ->
+            helper tail (incOne t) ((mkLte lastm t)::flst)
+         | Aseg (t,m) ->
+            mkOr
+              (helper tail lastm ((mkEq t m)::flst))
+              (helper tail m ([mkLte lastm t;mkLt t m]@flst))
+         | _ -> failwith "get_sorted_puref: Invalid input" )
+  in
+
+  let rec helper_entry arrPredlst flst =
+    match arrPredlst with
+    | [] -> mkAndlst flst
+    | h::tail ->
+       ( match h with
+         | AsegNE (t,m) ->
+            helper tail m [mkLt t m]
+         | Pointsto (t,v) ->
+            helper tail (incOne t) []
+         | Aseg (t,m) ->
+            mkOr
+              (helper_entry tail ((mkEq t m)::flst))
+              (helper tail m ((mkLt t m)::flst))
+         | _ -> failwith "get_sorted_puref: Invalid input" )
+  in
+  helper_entry arrPredlst []
+;;  
 
 let generic_get_permutation lst =
   let rec insert k lst =
@@ -298,55 +335,90 @@ let array_entailment lhs rhs =
     let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in
     match rhs with
     | [(rhs_e,rhs_p,rhs_h)] ->
-       (match rhs_h with
-        | (Aseg (rt,rm))::rtail ->
-           print_and_return
-             (mkAnd
-                (helper_qf (mkArrF lhs_e ([mkEq rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p rtail)] vset (indent+1))
-                (helper_qf (mkArrF lhs_e ([mkLt rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p ((mkAsegNE rt rm)::rtail))] vset (indent+1)))
-             indent
-        | _ ->
-           (
-             match lhs_h with
-             | [] ->       
-                helper_pure lhs_p rhs indent
-             | h::tail ->
-                ( match h with
-                  | Aseg (f,t) ->
-                     print_and_return
-                       (mkAnd
-                          (helper_qf (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs vset (indent+1))
-                          (helper_qf (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs vset (indent+1)))
-                       indent
-                  | Pointsto (t,v) ->
-                     let exposed_pointsto_rhs = expose_points_to t v rhs in
-                     helper_qf (mkArrF lhs_e lhs_p tail) exposed_pointsto_rhs vset (indent+1)
-                  | AsegNE (t,m) ->
-                     ( match rhs with
-                       | [rhs_one] ->
-                          ( let (rhs_e,rhs_p,rhs_h) = rhs_one in
-                            ( match rhs_h with
-                              | rh::rtail ->
-                                 ( match rh with
-                                   | Pointsto (t,v) ->
-                                      helper_qf (mkArrF lhs_e lhs_p ((unfold_AsegNE t m)@tail)) rhs vset (indent+1)
-                                   | AsegNE (rt,rm) ->
-                                      print_and_return
-                                        (mkAnd
-                                           (helper_qf (mkArrF lhs_e ([mkLte m rm]@lhs_p) tail) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1))
-                                           (helper_qf (mkArrF lhs_e ([mkLt rm m]@lhs_p) ((mkAsegNE rm m)::tail)) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) rtail)] vset (indent+1)))
-                                        indent        
-                                   | _ -> failwith "helper_qf: Invalid RHS")
-                              | [] -> print_and_return (mkNot (mkAndlst lhs_p)) indent
-                          ))
-                       | _ -> failwith "TO BE IMPLEMENTED: disjunctions in RHS"
-                     )
-                  | _ -> failwith "helper_qf: Invalid LHS"
-                )
-           )
-       )
+       ( match lhs_h, rhs_h with
+         | (Aseg (f,t))::ltail,_ ->
+            print_and_return
+                   (mkAnd
+                      (helper_qf (mkArrF lhs_e ((mkGte f t)::lhs_p) ltail) rhs vset (indent+1))
+                      (helper_qf (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::ltail)) rhs vset (indent+1)))
+                   indent
+         | _, (Aseg (rt,rm))::rtail ->
+            print_and_return
+              (mkAnd
+                 (helper_qf (mkArrF lhs_e ([mkGte rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p rtail)] vset (indent+1))
+                 (helper_qf (mkArrF lhs_e ([mkLt rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p ((mkAsegNE rt rm)::rtail))] vset (indent+1)))
+              indent
+         | lh::ltail, rh::rtail ->
+            ( match lh, rh with
+              | Aseg (f,t), _ ->
+                 failwith "helper_qf: Invalid case"
+              | _, Aseg (rt,rm) ->
+                 failwith "helper_qf: Invalid case"
+              | Pointsto (t,v), _ ->
+                 let exposed_pointsto_rhs = expose_points_to t v rhs in
+                 helper_qf (mkArrF lhs_e lhs_p ltail) exposed_pointsto_rhs vset (indent+1)
+              | AsegNE (t,m), Pointsto (rt,rv) ->
+                 helper_qf (mkArrF lhs_e lhs_p ((unfold_AsegNE t m)@ltail)) rhs vset (indent+1)
+              | AsegNE (t,m), AsegNE (rt,rm) ->
+                 print_and_return
+                   (mkAnd
+                      (helper_qf (mkArrF lhs_e ([mkLte m rm]@lhs_p) ltail) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1))
+                      (helper_qf (mkArrF lhs_e ([mkLt rm m]@lhs_p) ((mkAsegNE rm m)::ltail)) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) rtail)] vset (indent+1)))
+                   indent
+              | _,_ -> failwith "helper_qf: Invalid case"
+            )            
+         | [], _ ->
+            helper_pure lhs_p rhs indent
+         | _, [] -> 
+            print_and_return (mkNot (mkAndlst lhs_p)) indent )
+       (* (match rhs_h with *)
+       (*  | (Aseg (rt,rm))::rtail -> *)
+       (*     print_and_return *)
+       (*       (mkAnd *)
+       (*          (helper_qf (mkArrF lhs_e ([mkEq rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p rtail)] vset (indent+1)) *)
+       (*          (helper_qf (mkArrF lhs_e ([mkLt rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p ((mkAsegNE rt rm)::rtail))] vset (indent+1))) *)
+       (*       indent *)
+       (*  | _ -> *)
+       (*     ( *)
+       (*       match lhs_h with *)
+       (*       | [] ->        *)
+       (*          helper_pure lhs_p rhs indent *)
+       (*       | h::tail -> *)
+       (*          ( match h with *)
+       (*            | Aseg (f,t) -> *)
+       (*               print_and_return *)
+       (*                 (mkAnd *)
+       (*                    (helper_qf (mkArrF lhs_e ((mkEq f t)::lhs_p) tail) rhs vset (indent+1)) *)
+       (*                    (helper_qf (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::tail)) rhs vset (indent+1))) *)
+       (*                 indent *)
+       (*            | Pointsto (t,v) -> *)
+       (*               let exposed_pointsto_rhs = expose_points_to t v rhs in *)
+       (*               helper_qf (mkArrF lhs_e lhs_p tail) exposed_pointsto_rhs vset (indent+1) *)
+       (*            | AsegNE (t,m) -> *)
+       (*               ( match rhs with *)
+       (*                 | [rhs_one] -> *)
+       (*                    ( let (rhs_e,rhs_p,rhs_h) = rhs_one in *)
+       (*                      ( match rhs_h with *)
+       (*                        | rh::rtail -> *)
+       (*                           ( match rh with *)
+       (*                             | Pointsto (t,v) -> *)
+       (*                                helper_qf (mkArrF lhs_e lhs_p ((unfold_AsegNE t m)@tail)) rhs vset (indent+1) *)
+       (*                             | AsegNE (rt,rm) -> *)
+       (*                                print_and_return *)
+       (*                                  (mkAnd *)
+       (*                                     (helper_qf (mkArrF lhs_e ([mkLte m rm]@lhs_p) tail) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1)) *)
+       (*                                     (helper_qf (mkArrF lhs_e ([mkLt rm m]@lhs_p) ((mkAsegNE rm m)::tail)) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) rtail)] vset (indent+1))) *)
+       (*                                  indent         *)
+       (*                             | _ -> failwith "helper_qf: Invalid RHS") *)
+       (*                        | [] -> print_and_return (mkNot (mkAndlst lhs_p)) indent *)
+       (*                    )) *)
+       (*                 | _ -> failwith "TO BE IMPLEMENTED: disjunctions in RHS" *)
+       (*               ) *)
+       (*            | _ -> failwith "helper_qf: Invalid LHS" *)
+       (*          ) *)
+       (*     ) *)
+       (* ) *)
     | _ -> failwith "TO BE IMPLEMENTED: disjunctions in RHS"
-       
   in
 
   let helper_unwrap_exists lhs rhs indent=
@@ -360,7 +432,7 @@ let array_entailment lhs rhs =
     let sorted flst =
       match flst with
       | [(e,p,h)] ->
-         [(e,(get_sorted_puref h)::p,h)]
+         [(e,(get_sorted_puref_general h)::p,h)]
       | _ -> failwith "helper_sorted: TO BE IMPLEMENTED"
     in
     (sorted lhs, sorted rhs)
@@ -385,8 +457,9 @@ let array_entailment_and_print lhs rhs =
   let conseq = cformula_to_arrF rhs in    
   let f = array_entailment ante conseq in
   let () = print_endline (!str_pformula f) in
-  if (isSat (mkNot f))
-  then (false,mkEmptyFailCtx (),[])
-  else (true,mkEmptySuccCtx (),[])
+  mkCtxWithPure (simplify f)
+  (* if (isSat (mkNot f)) *)
+  (* then (false,mkEmptyFailCtx (),[]) *)
+  (* else (true,mkEmptySuccCtx (),[]) *)
 ;;  
   

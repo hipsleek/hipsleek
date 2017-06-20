@@ -7,44 +7,62 @@ infer[@arr_ba]  base::AsegNE<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
-/*
+
 // 2
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<1,2>.
 print residue.
 expect Valid.
+
 
 // 3
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<1,3>.
 print residue.
 expect Fail.
 
+
 // 4
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<5,2>.
 print residue.
 expect Fail.
+
 
 // 5
 infer[@arr_ba]  base::Elem<1,2>  |- base::Elem<5,3>.
 print residue.
 expect Fail.
 
+
 // 6
 infer[@arr_ba]  base::Elem<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
+// 7
 infer[@arr_ba]  base::Elem<1,2> * base::Elem<2,2>  |- base::AsegNE<1,3>.
 print residue.
 expect Valid.
 
-infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,b>.
+// 8
+infer[@arr_ba]  base::AsegNE<1,2>  |- base::AsegNE<a,b>.
 print residue.
 expect Fail.
 
+// 9
+infer[@arr_ba]  base::AsegNE<1,2>  |- base::AsegNE<1,b>.
+print residue.
+expect Fail.
+
+// 10
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,b>.
 print residue.
 expect Fail.
 
+// 11
+infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,b>.
+print residue.
+expect Fail.
+
+/*
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<a,2>.
 print residue.
 expect Fail.

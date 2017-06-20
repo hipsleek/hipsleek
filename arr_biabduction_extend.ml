@@ -1384,6 +1384,18 @@ let mkEmptyFailCtx () =
   let empty_es = (Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos) in
   mkFailCtx_simple "fail to prove" empty_es (Cformula.mkTrue_nf no_pos)  (mk_cex true) no_pos
 ;;
+
+let mkCtxWithPure ip =
+  let es = Cformula.empty_es (Cformula.mkTrueFlow ()) Label_only.Lab2_List.unlabelled VarGen.no_pos in
+  SuccCtx
+    [Ctx
+       {
+         es with
+         (* es_formula = fp;     *)
+         es_infer_pure = [ip];
+       }
+    ]
+;;
   
 
   
