@@ -1289,6 +1289,9 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 let array_verbose = ref false
 ;;
 
+let array_proof_search = ref false
+;;
+
 (* end of array entailment *)
                            
 let allow_lsmu_infer = ref false

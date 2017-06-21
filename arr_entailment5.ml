@@ -83,7 +83,7 @@ let print_and_return f indent =
     else
       ()
   in
-  sf                         
+  f                         
 ;;
 
 (* input: heap formulas (with AsegNE only), output: a pure formula with sorted information  *)
@@ -348,11 +348,19 @@ let array_entailment lhs rhs =
                       (helper_qf (mkArrF lhs_e ((mkLt f t)::lhs_p) ((mkAsegNE f t)::ltail)) rhs vset (indent+1)))
                    indent
          | _, (Aseg (rt,rm))::rtail ->
-            print_and_return
-              (mkAnd
-                 (helper_qf (mkArrF lhs_e ([mkGte rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p rtail)] vset (indent+1))
-                 (helper_qf (mkArrF lhs_e ([mkLt rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p ((mkAsegNE rt rm)::rtail))] vset (indent+1)))
-              indent
+            if not( !Globals.array_proof_search && (List.exists (fun v -> (exp_contains_var rt v) || (exp_contains_var rm v)) vset))
+            then
+              print_and_return
+                (mkAnd
+                   (helper_qf (mkArrF lhs_e ([mkGte rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p rtail)] vset (indent+1))
+                   (helper_qf (mkArrF lhs_e ([mkLt rt rm]@lhs_p) lhs_h) [(mkArrF rhs_e rhs_p ((mkAsegNE rt rm)::rtail))] vset (indent+1)))
+                indent
+            else
+              print_and_return
+                (mkOr
+                   (helper_qf (mkArrF lhs_e lhs_p lhs_h) [(mkArrF rhs_e ([mkGte rt rm]@rhs_p) rtail)] vset (indent+1))
+                   (helper_qf (mkArrF lhs_e lhs_p lhs_h) [(mkArrF rhs_e ([mkLt rt rm]@rhs_p) ((mkAsegNE rt rm)::rtail))] vset (indent+1)))
+                indent
          | lh::ltail, rh::rtail ->
             ( match lh, rh with
               | Aseg (f,t), _ ->
@@ -360,8 +368,6 @@ let array_entailment lhs rhs =
               | _, Aseg (rt,rm) ->
                  failwith "helper_qf: Invalid case"
               | Pointsto (t,v), AsegNE (rt,rm) ->
-                 (* let exposed_pointsto_rhs = expose_points_to t v rhs in *)
-                 (* helper_qf (mkArrF lhs_e lhs_p ltail) exposed_pointsto_rhs vset (indent+1) *)
                  let (newvar,newpreds) = unfold_AsegNE rt rm in
                  mkExists [newvar] (helper_qf lhs [(mkArrF rhs_e rhs_p (newpreds@rtail))] (newvar::vset) (indent+1))
               | Pointsto (t,v), Pointsto (rt,rv) ->
@@ -370,11 +376,19 @@ let array_entailment lhs rhs =
                  let (newvar,newpreds) = unfold_AsegNE t m in
                  helper_qf (mkArrF lhs_e lhs_p (newpreds@ltail)) rhs (newvar::vset) (indent+1)
               | AsegNE (t,m), AsegNE (rt,rm) ->
-                 print_and_return
-                   (mkAnd
-                      (helper_qf (mkArrF lhs_e ([mkLte m rm]@lhs_p) ltail) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1))
-                      (helper_qf (mkArrF lhs_e ([mkLt rm m]@lhs_p) ((mkAsegNE rm m)::ltail)) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) rtail)] vset (indent+1)))
-                   indent
+                 if not(!Globals.array_proof_search && (List.exists (fun v -> (exp_contains_var rt v) || (exp_contains_var rm v)) vset))
+                 then
+                   print_and_return
+                     (mkAnd
+                        (helper_qf (mkArrF lhs_e ([mkLte m rm]@lhs_p) ltail) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1))
+                        (helper_qf (mkArrF lhs_e ([mkLt rm m]@lhs_p) ((mkAsegNE rm m)::ltail)) [(mkArrF rhs_e ([mkEq rt t]@rhs_p) rtail)] vset (indent+1)))
+                     indent
+                 else
+                   print_and_return
+                     (mkOr
+                        (helper_qf (mkArrF lhs_e lhs_p ltail) [(mkArrF rhs_e ([mkLte m rm;mkEq rt t]@rhs_p) ((mkAseg m rm)::rtail))] vset (indent+1))
+                        (helper_qf (mkArrF lhs_e lhs_p ((mkAsegNE rm m)::ltail)) [(mkArrF rhs_e ([mkLt rm m;mkEq rt t]@rhs_p) rtail)] vset (indent+1)))
+                     indent
               | _,_ -> failwith "helper_qf: Invalid case"
             )            
          | [], _ ->

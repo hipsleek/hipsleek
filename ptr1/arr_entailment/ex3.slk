@@ -1,34 +1,8 @@
 pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
 
-// infer[@arr_ba]  base::Aseg<1,5>  |- (base::Aseg<1,3> * base::Aseg<3,5>)  or base::Aseg<1,2>.
-// print residue.
-// expect Valid.
 
-// infer[@arr_ba]  base::Aseg<1,5> or base::Aseg<1,2>  |- base::Aseg<1,2>.
-// print residue.
-// expect Fail.
-
-// infer[@arr_ba]  base::Aseg<1,5> or base::Aseg<1,2>  |- base::Aseg<1,2> or (base::Aseg<1,3> * base::Aseg<3,5>).
-// print residue.
-// expect Valid.
-
-// infer[@arr_ba]  base::Aseg<1,5> or base::Aseg<1,3>  |- base::Aseg<1,2> or (base::Aseg<1,3> * base::Aseg<3,5>).
-// print residue.
-// expect Fail.
-
-// infer[@arr_ba]  base::Aseg<1,5> or base::Aseg<1,3>  |- (base::Aseg<1,2> * base::Aseg<2,3>) or (base::Aseg<1,3> * base::Aseg<3,5>).
-// print residue.
-// expect Valid.
-
-// infer[@arr_ba]  base::AsegNE<1,5> |- (base::AsegNE<1,2> * base::AsegNE<2,3>) or (base::AsegNE<1,3> * base::AsegNE<3,5>).
-// print residue.
-// expect Valid.
-
-infer[@arr_ba]  base::AsegNE<1,3>* base::AsegNE<3,5> |- (base::AsegNE<1,2> * base::AsegNE<2,3>) or (base::AsegNE<1,3> * base::AsegNE<3,5>).
+infer[@arr_ba]  base::AsegNE<1,10>  |- exists c: base::AsegNE<1,c>* base::AsegNE<8,10>.
 print residue.
 expect Valid.
-
-// infer[@arr_ba]  base::AsegNE<2,5> |- (base::AsegNE<1,2> * base::AsegNE<2,3>) or (base::AsegNE<1,3> * base::AsegNE<3,5>).
-// print residue.
-// expect Fail.
