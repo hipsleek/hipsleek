@@ -16,6 +16,12 @@ type 'exp arrPred =
 type puref = Cpure.formula
 ;;
 
+let get_fv_pure = Cpure.fv
+;;
+
+  
+  
+
 let mkVar sv =
   Cpure.Var (sv,no_pos)
 ;;
@@ -40,6 +46,13 @@ let mkExists svlst f =
     f svlst
 ;;
 
+let mkForall svlst f =
+  List.fold_left
+    (fun r item ->
+      Cpure.Forall (item,r,None,no_pos))
+    f svlst
+;;
+
 let mkNot f = Cpure.mkNot f None no_pos
 ;;
 
@@ -53,6 +66,9 @@ let mkFalse () = Cpure.mkFalse no_pos
       
 
 let simplify = Tpdispatcher.simplify_omega
+;;
+
+let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 ;;
   
 let rec mkAndlst lst =
@@ -149,6 +165,10 @@ let mkElem b s v =
 
 let is_same_exp e1 e2 =
   check_eq_exp e1 e2
+;;
+
+let is_same_sv sv1 sv2 =
+  compare_sv sv1 sv2 = 0
 ;;
 
 let exp_to_var e =
@@ -541,7 +561,7 @@ class arrPredTransformer initcf = object(self)
       | Elem (_,s1,_), Aseg (_,s2,e2)  ->
          mkOr (mkOr (mkGte s1 e2) (mkGte s2 s1)) (mkEq s2 e2)
       | Elem (_,s1,_), Elem (_,s2,_) ->
-         mkOr (mkGt s2 s1) (mkGt s1 s1)
+         mkOr (mkGt s2 s1) (mkGt s1 s2)
       | _, _ -> mkTrue ()
     in
     let rec generate_disjoint_formula lst flst =
@@ -715,7 +735,7 @@ class arrPredTransformer initcf = object(self)
            let () = eqmap <- build_eqmap pf f.formula_exists_qvars in
            let evars = List.filter (fun v -> List.for_all (fun (nv,_)-> not (compare_sv nv v=0)) eqmap) f.formula_exists_qvars in
            let pred_list = flatten_heap_star_formula f.formula_exists_heap in
-           [List.map mkVar evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
+           [evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
       in
       get_general_f cf
     in

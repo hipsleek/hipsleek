@@ -1285,6 +1285,12 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
    Currently, conservativly do not allow such simplification
 *)
 
+(* For array entailment *)
+let array_verbose = ref false
+;;
+
+(* end of array entailment *)
+                           
 let allow_lsmu_infer = ref false
 let infer_false_imply_unknown = ref true (* to support strongest post infer *)
 

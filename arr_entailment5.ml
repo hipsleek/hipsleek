@@ -13,7 +13,6 @@ type asegPred =
   | Emp
 ;;
 
-  
 (* Not sure whether this is necessary *)
 let mkAsegNE f t = AsegNE (f,t);;
 let mkAseg f t = Aseg (f,t);;
@@ -28,8 +27,9 @@ type arrF =
 (* This may increase readability *)
 let mkArrF e p h = (e,p,h);;
 
-let unfold_AsegNE t m =  
-  [mkPointsto t (mkVar (global_get_new_var ()));mkAseg (incOne t) m]
+let unfold_AsegNE t m =
+  let newvar = global_get_new_var () in
+  (newvar,[mkPointsto t (mkVar newvar);mkAseg (incOne t) m])
 ;;
 
 let contains_evar elst v =
@@ -54,7 +54,7 @@ let str_asegPred aseg =
   
 let str_arrF (e,p,h) =
   (* (str_list !str_pformula p)^":"^(str_list str_asegPred h) *)
-  (str_list !str_exp e)^(str_list !str_pformula p)^":"^(str_list str_asegPred h)
+  (str_list !str_exp (List.map mkVar e))^(str_list !str_pformula p)^":"^(str_list str_asegPred h)
 ;;
 
 let str_disj_arrF flst =
@@ -70,17 +70,22 @@ let str_disj_arrF flst =
 ;;
 
 let print_and_return f indent =
-  let f = simplify f in
+  let sf = pairwisecheck (simplify f) in
   let () =
     if true(* not (isValid f) *)
     then
-      print_endline (print_indent indent ("==> "^(!str_pformula f )))
+      let () =
+        if !Globals.array_verbose (* --verbose-arr *)
+        then print_endline (print_indent indent ("=o> "^(!str_pformula f )))
+        else ()
+      in
+      print_endline (print_indent indent ("==> "^(!str_pformula sf )))
     else
       ()
   in
-  f                         
+  sf                         
 ;;
-  
+
 (* input: heap formulas (with AsegNE only), output: a pure formula with sorted information  *)
 let get_sorted_puref arrPredlst =
   let rec helper lst lastm flst =
@@ -222,7 +227,7 @@ let array_entailment lhs rhs =
                  | AsegNE _ | Aseg _ | Pointsto _-> true
                  | Emp -> false) rhs_h)
          then aux_helper_pure lhs_p tail plst
-         else aux_helper_pure lhs_p tail ((mkExists (List.map exp_to_var rhs_e) (mkAndlst rhs_p))::plst)
+         else aux_helper_pure lhs_p tail ((mkAndlst rhs_p)::plst)
       | [] ->       
          mkImply (mkAndlst lhs_p) (mkOrlst plst)
     in
@@ -354,11 +359,16 @@ let array_entailment lhs rhs =
                  failwith "helper_qf: Invalid case"
               | _, Aseg (rt,rm) ->
                  failwith "helper_qf: Invalid case"
-              | Pointsto (t,v), _ ->
-                 let exposed_pointsto_rhs = expose_points_to t v rhs in
-                 helper_qf (mkArrF lhs_e lhs_p ltail) exposed_pointsto_rhs vset (indent+1)
+              | Pointsto (t,v), AsegNE (rt,rm) ->
+                 (* let exposed_pointsto_rhs = expose_points_to t v rhs in *)
+                 (* helper_qf (mkArrF lhs_e lhs_p ltail) exposed_pointsto_rhs vset (indent+1) *)
+                 let (newvar,newpreds) = unfold_AsegNE rt rm in
+                 mkExists [newvar] (helper_qf lhs [(mkArrF rhs_e rhs_p (newpreds@rtail))] (newvar::vset) (indent+1))
+              | Pointsto (t,v), Pointsto (rt,rv) ->
+                 helper_qf (mkArrF lhs_e lhs_p ltail) [(mkArrF rhs_e ([mkEq t rt; mkEq v rv]@rhs_p) rtail)] vset (indent+1)
               | AsegNE (t,m), Pointsto (rt,rv) ->
-                 helper_qf (mkArrF lhs_e lhs_p ((unfold_AsegNE t m)@ltail)) rhs vset (indent+1)
+                 let (newvar,newpreds) = unfold_AsegNE t m in
+                 helper_qf (mkArrF lhs_e lhs_p (newpreds@ltail)) rhs (newvar::vset) (indent+1)
               | AsegNE (t,m), AsegNE (rt,rm) ->
                  print_and_return
                    (mkAnd
@@ -421,10 +431,14 @@ let array_entailment lhs rhs =
     | _ -> failwith "TO BE IMPLEMENTED: disjunctions in RHS"
   in
 
-  let helper_unwrap_exists lhs rhs indent=
+  let helper_unwrap_exists ((_,lhs_p,_) as lhs) rhs indent=
     match rhs with
     | [(rhs_e,rhs_p,rhs_h)] ->
-       helper_qf lhs rhs rhs_e indent
+       let f = (mkExists rhs_e (helper_qf lhs rhs rhs_e indent)) in
+       let old_vars = get_fv_pure (mkAndlst lhs_p) in
+       let new_vars = get_fv_pure f in
+       let vars = List.filter (fun v -> not (List.exists (fun nv -> is_same_sv nv v) old_vars)) new_vars in
+       print_and_return  (mkForall vars f) indent
     | _ -> failwith "helper_unwrap_exists: TO BE IMPLEMENTED"
   in
 
