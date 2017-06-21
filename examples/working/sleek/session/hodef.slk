@@ -1,19 +1,19 @@
 pred_prim Trans@trans{%P}<sender,receiver>.
-pred_prim Sess@session{%P}<>.
-/* pred_prim Chan@channel<sess:Sess>. */
-pred_prim Chan@channel{%P}<>.
-pred_prim S@send{-%P}<a>.
-pred_prim R@receive{+%P}<a>.
-pred_prim Seq@sequence{%P,%P}<>.
-pred_prim SOr@disjunction{%P}<>.
-/* pred_prim Msg@msg<a>. */
+pred_prim Sess{%P}<>. //session
+/* pred_prim Chan<sess:Sess>. //channel */
+pred_prim Chan{%P}<>. //channel
+pred_prim S{-%P}<a>. //send
+pred_prim R{+%P}<a>. //receive
+pred_prim Seq{%P,%P}<>. //sequence
+pred_prim SOr{%P}<>. //disjunction
+/* pred_prim Msg<a>. //msg */
 
 /* orders */
-pred_prim Event@event<peer,id:int>.
-pred_prim HB@hb{%P, %P}<>.
-pred_prim CB@cb{%P, %P}<>.
+pred_prim Event<peer,id:int>. //event
+pred_prim HB{%P, %P}<>. //hb
+pred_prim CB{%P, %P}<>. //cb
 
 /* protocol lang related */
-pred_prim Assume@assumed{%P}<>. 
-pred_prim Guard@guard{%P}<>.
-pred_prim Peer@peer{%P}<>.
+pred_prim Assume{%P}<>. //assumed
+pred_prim Guard{%P}<>. //guard
+pred_prim Peer{%P}<>. //peer

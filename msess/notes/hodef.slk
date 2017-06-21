@@ -1,33 +1,33 @@
-pred_prim Trans@trans{%P}<sender,receiver>.
-pred_prim Sess@session{%P}<>.
-pred_prim Chan@channel{%P}<>.
-pred_prim S@send{-%P}<a@IP>. //send
-pred_prim R@receive{+%P}<a@IP>.
-pred_prim Seq@sequence{%P,%P}<>.
-pred_prim SOr@disjunction{%P}<>.
-/*pred_prim Pred@spred{%P}<>.*/
+pred_prim Trans{%P}<sender,receiver>. //trans
+pred_prim Sess{%P}<>. //session
+pred_prim Chan{%P}<>. //channel
+pred_prim S{-%P}<a@IP>. //send
+pred_prim R{+%P}<a@IP>. //receive
+pred_prim Seq{%P,%P}<>. //sequence
+pred_prim SOr{%P}<>. //disjunction
+/*pred_prim Pred{%P}<>. //spred */
 
 /* orders */
-pred_prim Event@event<peer,id:int>.
-pred_prim HB@hb{%P, %P}<>.
-pred_prim CB@cb{%P, %P}<>.
+pred_prim Event<peer,id:int>. //event
+pred_prim HB{%P, %P}<>. //hb
+pred_prim CB{%P, %P}<>. //cb
 
 /* protocol lang related */
-pred_prim Assume@assumed{%P}<>. 
-pred_prim Guard@guard{%P}<>.
-pred_prim Peer@peer{%P}<>.
+pred_prim Assume{%P}<>. //assumed
+pred_prim Guard{%P}<>. //guard
+pred_prim Peer{%P}<>. //peer
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
-relation oev@event(int n,int m).
-relation ohb@hb(int n1,int m1,int n2,int m2).
-relation ohbp@hbp(int n1,int m1,int n2,int m2).
-relation ocb@cb(int n1,int m1,int n2,int m2).
+relation oev(int n,int m). //event
+relation ohb(int n1,int m1,int n2,int m2). //hb
+relation ohbp(int n1,int m1,int n2,int m2). //hbp
+relation ocb(int n1,int m1,int n2,int m2). //cb
 /* sleek relations */
-relation ev@sevent(int n).
-relation hb@shb(int n1,int n2).
-relation hbp@shbp(int n1,int n2).
-relation cb@scb(int n1,int n2).
+relation ev(int n). //sevent
+relation hb(int n1,int n2). //shb
+relation hbp(int n1,int n2). //shbp
+relation cb(int n1,int n2). //scb
 relation snot_eq(int a,int b).
 
 

@@ -197,6 +197,7 @@ bring rel id's to commons
 
 =====================================
 =====================================
+[DONE]
 clear the annotations (for pred & rel) eg. @send
 
 =====================================

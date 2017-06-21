@@ -252,7 +252,6 @@ let rec split_members mbrs = match mbrs with
   
 let rec remove_spec_qualifier (_, pre, post) = (pre, post)
   
-
 let label_struc_list (lgrp:(Lbl.spec_label_def*F.struc_formula) list list) : (Lbl.spec_label_def*F.struc_formula) list = 
   List.concat lgrp
 
@@ -1060,6 +1059,37 @@ let opt_spec_list = SHGram.Entry.mk "opt_spec_list"
 let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
+(* ====== Getters for hodef nodes kind ====== *)
+let get_pred_node_kind id loc = match id with
+   | "Trans"  -> Some Transmission
+   | "Sess"   -> Some Session
+   | "Chan"   -> Some Channel
+   | "S"      -> Some Send
+   | "R"      -> Some Receive
+   | "Seq"    -> Some Sequence
+   | "SOr"    -> Some SOr
+   (* | "spred" -> Predicate *)
+   | "Event"  -> Some (Predicate (mk_sess_order_kind Event))
+   | "HB"     -> Some (Predicate (mk_sess_order_kind HB))
+   | "CB"     -> Some (Predicate (mk_sess_order_kind CB))
+   | "Assume" -> Some (Predicate (mk_sess_assert_kind Assume))
+   | "Guard"  -> Some (Predicate (mk_sess_assert_kind Guard))
+   | "Peer"   -> Some (Predicate (mk_sess_assert_kind Peer))
+   | _        -> None
+
+let get_rel_node_kind id loc = match id with
+   | "oev"  -> Some (mk_rel_order_kind Event)
+   | "ohb"  -> Some (mk_rel_order_kind HB)
+   | "ohbp" -> Some (mk_rel_order_kind HBP)
+   | "ocb"  -> Some (mk_rel_order_kind CB)
+   | "ev"   -> Some (mk_rel_sorder_kind Event)
+   | "hb"   -> Some (mk_rel_sorder_kind HB)
+   | "hbp"  -> Some (mk_rel_sorder_kind HBP)
+   | "cb"   -> Some (mk_rel_sorder_kind CB)
+   | _ -> None
+
+(* ------ End of 'Getters for hodef nodes kind' ------ *)
+
 EXTEND SHGram
   GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
@@ -1801,30 +1831,17 @@ branch: [[ `STRING (_,id);`COLON ->
     if !Globals.remove_label_flag then  LO.unlabelled
     else LO.singleton id ]];
 
-node_type: [[ `IDENTIFIER anno ->
-                (match anno with
-                 | "trans" -> Transmission
-                 | "session" -> Session
-                 | "channel" -> Channel
-                 | "send" -> Send
-                 | "receive" -> Receive
-                 | "sequence" -> Sequence
-                 | "disjunction" -> SOr
-                 (* | "spred" -> Predicate *)
-                 | "msg" -> Msg
-                 | "event" -> Predicate (mk_sess_order_kind Event)
-		 | "hb" -> Predicate (mk_sess_order_kind HB)
-		 | "cb" -> Predicate (mk_sess_order_kind CB)
-		 | "assumed" -> Predicate (mk_sess_assert_kind Assume)
-		 | "guard" -> Predicate (mk_sess_assert_kind Guard)
-		 | "peer" -> Predicate (mk_sess_assert_kind Peer)
-                 | _ -> report_error (get_pos_camlp4 _loc 1) "not a session kind")
-]];
-
 at_non_classic: [[ `AT; `IDENTIFIER "nonclassic" -> false ]];
 
 view_header:
     [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
+     let nkind = get_pred_node_kind vn _loc in
+     let sess_info = match nkind with
+     | Some nk ->
+         let () = Session.set_prim_pred_id nk vn in
+         let si = mk_view_session_info ~nk:nk () in
+         Some si
+     | None -> None in
      let () = view_names # push vn in
      let inst_vars = get_inst_vars l in 
      let mvs = get_mater_vars l in
@@ -1833,23 +1850,10 @@ view_header:
      let pos = get_pos_camlp4 _loc 1 in
      let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
      {vh with 
+        view_session_info = sess_info;
         view_classic = Gen.map_opt_def true (fun x -> x) non_classic
-     }
-   | `IDENTIFIER vn; non_classic = OPT at_non_classic; `AT; nk = node_type ; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-     let () = view_names # push vn in
-     let () = Session.set_prim_pred_id nk vn in
-     let inst_vars = get_inst_vars l in 
-     let mvs = get_mater_vars l in
-     let cids, anns = List.split l in
-     let modes = get_modes anns in
-     let pos = get_pos_camlp4 _loc 1 in
-     let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
-     let kind = mk_view_session_info ~nk:nk () in
-     {vh with 
-        view_session_info = Some kind;
-        view_classic = Gen.map_opt_def true (fun x -> x) non_classic
-     }
-   ]];
+     } 
+]];
 
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
@@ -3555,22 +3559,8 @@ typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 
 typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
 
-rel_kind: [[ `AT; `IDENTIFIER anno ->
-                (match anno with
-                 | "event" -> (mk_rel_order_kind Event)
-		 | "hb" -> (mk_rel_order_kind HB)
-		 | "hbp" -> (mk_rel_order_kind HBP)
-                 | "cb" -> (mk_rel_order_kind CB)
-                 | "sevent" -> (mk_rel_sorder_kind Event)
-                 | "shb" -> (mk_rel_sorder_kind HB)
-                 | "shbp" -> (mk_rel_sorder_kind HBP)
-                 | "scb" -> (mk_rel_sorder_kind CB)
-
-                 | _ -> report_error (get_pos_camlp4 _loc 1) "not a relation kind")
-]];
-
 rel_header:[[
-`REL; `IDENTIFIER id; rkind = OPT rel_kind; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists
@@ -3580,12 +3570,15 @@ rel_header:[[
 		  ("variables in view header are not allowed to be primed")
 	  else
        let modes = get_modes anns in *)
-    let () = Session.set_rels_id id rkind in
+    let rkind = get_rel_node_kind id _loc in
+    let () = match rkind with
+    | Some _ -> Session.set_rels_id id rkind
+    | None   -> () in
     let () = rel_names # push id in
-		  { rel_name = id;
-			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
-			}
+    { rel_name = id;
+      rel_typed_vars = tl;
+      rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+    }
 ]];
 
 rel_header_view:[[
