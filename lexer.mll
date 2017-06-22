@@ -322,8 +322,6 @@ module Make (Token : SleekTokenS)
    (flow, FLOW flow);
    ("par", PAR);
    (";;", SEMICOLONSEMICOLON);
-   ("@prim", PRIM);
-   ("@sec", SEC);
    ("?", QUERY);
    (* ("skip", SKIP) *)
   ]
@@ -523,8 +521,6 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | ";;" { SEMICOLONSEMICOLON }
-  | "@prim" { PRIM }
-  | "@sec" { SEC }
   | "?" { QUERY }
   | '*' { STAR }
   | "<:" { SUBANN }
