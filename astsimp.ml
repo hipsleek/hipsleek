@@ -2414,11 +2414,10 @@ and session_to_iform_x (view:I.view_decl) =
       | Some Protocol ->
         let prot = Session.get_protocol (get_session_formula view) in
         let prot = Session.annotate_suid prot in
-        let params = view.Iast.view_typed_vars in
+        let params = view.I.view_typed_vars in
         let prot = x_add_1 Order_summary.insert_orders view prot params (fun p -> trans_pure_formula p []) in
         (* makes projection *)
-        let vars_list = view.I.view_typed_vars in
-        let prj_map, tprj_map, assrt_prj_list = SP.mk_projection prot vars_list in
+        let prj_map, tprj_map, assrt_prj_list = SP.mk_projection prot params in
         let h_prj_map, h_tprj_map = SP.convert_prj_maps prj_map tprj_map in
         let sess_prj = Some (I.mk_session_formulae ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot)) in
         {view with view_session = sess_prj }

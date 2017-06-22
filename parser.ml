@@ -83,25 +83,6 @@ type file_offset =
     byte_num: int;
   }
 
-(* used to identify the projection type *)
-(* e.g. projection per party / per channel *)
-type peer =
-  | PEER
-  | CHAN
-  | NO_PEER
-
-let get_peer typ pos = match typ with
-  | "peer" -> PEER
-  | "chan" -> CHAN
-  | _      -> 
-      let message = "Wrong peer: "^typ^". Expected: peer | chan." in
-      report_error pos message
-
-let string_of_peer typ = match typ with
-  | PEER -> "peer"
-  | CHAN -> "chan"
-  | _ -> "no_peer"
-
 let sv_of_id t =
   if String.contains t '\'' then (* Remove the primed in the identifier *)
     (Str.global_replace (Str.regexp "[']") "" t, Primed) 
@@ -1887,15 +1868,14 @@ rflow_kind:
   ]];
 
 proj_elem:
-  [[ `AT; `IDENTIFIER id -> let loc = (get_pos_camlp4 _loc 1) in
-                            get_peer id loc 
+  [[ `AT; `IDENTIFIER id -> get_peer id
   ]];
 
 sess_ann:
 [
   [ `IDENTIFIER var; proj_id = OPT proj_elem -> let loc = (get_pos_camlp4 _loc 1) in
                                                 let id = un_option proj_id NO_PEER in
-                                                (Session.IForm.id_to_param var loc, AnnInactive)
+                                                (Session.IForm.id_to_param var loc, AnnPeer (var, id))
   ] |
   [ `INT_LITER (i,_) -> let loc = (get_pos_camlp4 _loc 1) in
                         (Session.IForm.const_to_param i loc, AnnInactive)

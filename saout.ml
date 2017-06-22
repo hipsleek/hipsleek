@@ -73,7 +73,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_data_name = data_name;
                            I.view_type_of_self = None;
                            I.view_vars = vars;
-                               I.view_inst_vars = [](* inst_vars *);
+                           I.view_inst_vars = [](* inst_vars *);
                            I.view_ho_vars = []; (* TODO:HO *)
                            (* I.view_imm_map = fst (List.fold_left (fun (r,n) _ -> (r@[(IP.ConstAnn Mutable, n)], n+1)) ([],0) vars); this serves as a bridge between the data field imm and the view param *)
                            I.view_imm_map = imm_map;
@@ -387,7 +387,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             CF.h_formula_view_derv = false;
             CF.h_formula_view_split = SPLIT0;
             CF.h_formula_view_imm = CP.ConstAnn(Mutable);
-			CF.h_formula_view_sess_ann = None;
+	    CF.h_formula_view_sess_ann = None;
             CF.h_formula_view_perm = None;
             CF.h_formula_view_arguments = tl;
             CF.h_formula_view_ho_arguments = []; (* TODO:HO *)

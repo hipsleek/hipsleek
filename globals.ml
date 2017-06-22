@@ -185,9 +185,20 @@ let string_of_arg_kind i= match i with
 
 (* Session-specific data types. *)
 
+(* used to identify the projection type *)
+(* e.g. projection per party / per channel *)
+type peer =
+  | PEER
+  | CHAN
+  | NO_PEER
+
+let get_peer typ = match typ with
+  | "peer" -> PEER
+  | "chan" -> CHAN
+  | _      -> failwith ("Wrong peer: "^typ^". Expected: peer | chan.")
+
 type sess_ann =
-  | AnnPrimaryPeer
-  | AnnSecondaryPeer
+  | AnnPeer of ident * peer 
   | AnnInactive
 
 type session_kind =
@@ -343,9 +354,13 @@ let string_of_session_kind k = match k with
   | Projection -> "Projection"
   | TPProjection -> "TPProjection"
 
+let string_of_peer typ = match typ with
+  | PEER -> "peer"
+  | CHAN -> "chan"
+  | _    -> "no_peer"
+
 let string_of_sess_ann ann = match ann with
-  | AnnPrimaryPeer -> "AnnPrimaryPeer"
-  | AnnSecondaryPeer -> "AnnSecondaryPeer"
+  | AnnPeer (s, p) -> "AnnPeer (" ^ s ^ ", " ^ (string_of_peer p) ^ ")"
   | AnnInactive -> "AnnInactive"
 
 let string_of_orders_kind nk = match nk with
