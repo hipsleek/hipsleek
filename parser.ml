@@ -83,6 +83,25 @@ type file_offset =
     byte_num: int;
   }
 
+(* used to identify the projection type *)
+(* e.g. projection per party / per channel *)
+type peer =
+  | PEER
+  | CHAN
+  | NO_PEER
+
+let get_peer typ pos = match typ with
+  | "peer" -> PEER
+  | "chan" -> CHAN
+  | _      -> 
+      let message = "Wrong peer: "^typ^". Expected: peer | chan." in
+      report_error pos message
+
+let string_of_peer typ = match typ with
+  | PEER -> "peer"
+  | CHAN -> "chan"
+  | _ -> "no_peer"
+
 let sv_of_id t =
   if String.contains t '\'' then (* Remove the primed in the identifier *)
     (Str.global_replace (Str.regexp "[']") "" t, Primed) 
@@ -1060,7 +1079,7 @@ let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 (* ====== Getters for hodef nodes kind ====== *)
-let get_pred_node_kind id loc = match id with
+let get_pred_node_kind id = match id with
    | "Trans"  -> Some Transmission
    | "Sess"   -> Some Session
    | "Chan"   -> Some Channel
@@ -1077,7 +1096,7 @@ let get_pred_node_kind id loc = match id with
    | "Peer"   -> Some (Predicate (mk_sess_assert_kind Peer))
    | _        -> None
 
-let get_rel_node_kind id loc = match id with
+let get_rel_node_kind id = match id with
    | "oev"  -> Some (mk_rel_order_kind Event)
    | "ohb"  -> Some (mk_rel_order_kind HB)
    | "ohbp" -> Some (mk_rel_order_kind HBP)
@@ -1833,9 +1852,10 @@ branch: [[ `STRING (_,id);`COLON ->
 
 at_non_classic: [[ `AT; `IDENTIFIER "nonclassic" -> false ]];
 
+(* e.g. G<A:role,B:role,k:chan> *)
 view_header:
-    [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l= opt_ann_cid_list; `GT ->
-     let nkind = get_pred_node_kind vn _loc in
+    [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l = opt_ann_cid_list; `GT ->
+     let nkind = get_pred_node_kind vn in
      let sess_info = match nkind with
      | Some nk ->
          let () = Session.set_prim_pred_id nk vn in
@@ -1866,16 +1886,16 @@ rflow_kind:
    | `PLUS -> OUTFLOW
   ]];
 
+proj_elem:
+  [[ `AT; `IDENTIFIER id -> let loc = (get_pos_camlp4 _loc 1) in
+                            get_peer id loc 
+  ]];
+
 sess_ann:
 [
-  [ `IDENTIFIER var; `PRIM -> let loc = (get_pos_camlp4 _loc 1) in
-                              (Session.IForm.id_to_param var loc, AnnPrimaryPeer)
-  ] |
-  [ `IDENTIFIER var; `SEC -> let loc = (get_pos_camlp4 _loc 1) in
-                             (Session.IForm.id_to_param var loc, AnnSecondaryPeer)
-  ] |
-  [ `IDENTIFIER var -> let loc = (get_pos_camlp4 _loc 1) in
-                       (Session.IForm.id_to_param var loc, AnnInactive)
+  [ `IDENTIFIER var; proj_id = OPT proj_elem -> let loc = (get_pos_camlp4 _loc 1) in
+                                                let id = un_option proj_id NO_PEER in
+                                                (Session.IForm.id_to_param var loc, AnnInactive)
   ] |
   [ `INT_LITER (i,_) -> let loc = (get_pos_camlp4 _loc 1) in
                         (Session.IForm.const_to_param i loc, AnnInactive)
@@ -2038,7 +2058,7 @@ opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(
 cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
   
 (* annotated cid list *)
-  opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
+opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
 
 opt_cid_list_bracket: [[`OPAREN; l= opt_cid_list; `CPAREN -> l ]];
   
@@ -2047,7 +2067,7 @@ c_typ:
  ]];
 
 cid_typ:
-  [[ `IDENTIFIER id ; t=OPT c_typ ->
+  [[ `IDENTIFIER id ; t = OPT c_typ ->
       let ut = un_option t UNK in
       let _ =
         (* WN : code below uses side-effects and may also result in relational name clashes *)
@@ -2065,7 +2085,6 @@ cid_typ:
    ]];
 
 ann_cid:[[ ob= opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
-
 
 opt_ann_list: [[t=LIST0 ann -> t]];
 
@@ -2392,7 +2411,7 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm;
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm; 
          (* `LT; hl= opt_general_h_args; `GT;*)
          hl = non_thread_args1;
          annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
@@ -3570,7 +3589,7 @@ rel_header:[[
 		  ("variables in view header are not allowed to be primed")
 	  else
        let modes = get_modes anns in *)
-    let rkind = get_rel_node_kind id _loc in
+    let rkind = get_rel_node_kind id in
     let () = match rkind with
     | Some _ -> Session.set_rels_id id rkind
     | None   -> () in
