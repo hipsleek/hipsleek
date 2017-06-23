@@ -19,9 +19,10 @@ type puref = Cpure.formula
 let get_fv_pure = Cpure.fv
 ;;
 
+let mkSV = Cpure.mk_spec_var
+;;
   
   
-
 let mkVar sv =
   Cpure.Var (sv,no_pos)
 ;;
@@ -62,7 +63,13 @@ let mkTrue () = Cpure.mkTrue no_pos
 
 let mkFalse () = Cpure.mkFalse no_pos
 ;;
-  
+
+let mkViewNode ptr viewname args =
+  Cformula.mkViewNode ptr viewname args no_pos
+;;
+
+let mkStarH h1 h2 =
+  Cformula.mkStarH h1 h2 no_pos
       
 
 let simplify = Tpdispatcher.simplify_omega
@@ -493,19 +500,19 @@ let arrPred_to_h_formula seq =
     | Aseg (b,s,e) ->
        let (news,sf_lst,svlst) = bind_exp_to_var s in
        let (newe,se_lst,evlst) = bind_exp_to_var e in
-       (mkViewNode (Cpure.exp_to_spec_var b) "Aseg" [news;newe]  no_pos, sf_lst@se_lst,svlst@evlst)
+       (mkViewNode (Cpure.exp_to_spec_var b) "Aseg" [news;newe], sf_lst@se_lst,svlst@evlst)
     | Gap (b,s,e) ->
        let (news,sf_lst,svlst) = bind_exp_to_var s in
        let (newe,se_lst,evlst) = bind_exp_to_var e in
-       (mkViewNode (Cpure.exp_to_spec_var b) "Gap" [news;newe]  no_pos, sf_lst@se_lst,svlst@evlst)
+       (mkViewNode (Cpure.exp_to_spec_var b) "Gap" [news;newe], sf_lst@se_lst,svlst@evlst)
     | Elem (b,s,v) ->
        let (news,sf_lst,svlst) = bind_exp_to_var s in     
-       (mkViewNode (Cpure.exp_to_spec_var b) "Elem" [news]  no_pos, sf_lst,svlst)
+       (mkViewNode (Cpure.exp_to_spec_var b) "Elem" [news], sf_lst,svlst)
     | _ -> failwith "arrPred_to_h_formula: TO BE IMPLEMENTED"
   in
   let construct_h_formula plst =
     match (List.map (fun item -> one_arrPred_to_h_formula item) plst) with
-    | h::tail -> List.fold_left (fun (h,p,v) (itemh,itemp,itemv) -> (mkStarH itemh h no_pos, itemp@p,itemv@v)) h tail
+    | h::tail -> List.fold_left (fun (h,p,v) (itemh,itemp,itemv) -> (mkStarH itemh h, itemp@p,itemv@v)) h tail
     | [] -> (HEmp,[],[])
   in
   construct_h_formula seq
@@ -1396,6 +1403,11 @@ end
 (*     !global_answer_stack *)
 (* ;; *)
 
+
+let mkEmptyes () =
+  empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos
+;;
+  
 let mkEmptySuccCtx () =
   SuccCtx [Ctx (Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos)]
 ;;
@@ -1416,9 +1428,19 @@ let mkCtxWithPure ip =
        }
     ]
 ;;
+
+let mkCtxWithFrame framep frameh =
+  let state_f = construct_base frameh (Mcpure.mix_of_pure framep) in
+  let es = mkEmptyes () in
+  let new_es =
+    {es with
+      es_formula = state_f;
+    }
+  in
+  SuccCtx [Ctx new_es]
+;;  
   
 
-  
 
 (* (\* let construct_succ_ctx answerlst = *\) *)
 (* (\*   SuccCtx (List.map construct_context !global_answer_stack) *\) *)
