@@ -1589,6 +1589,7 @@ tpprojection_formula:
       let loc = (get_pos_camlp4 _loc 1) in
       let vars = List.map (fun x -> fst x) params in
       let ann = List.map (fun x -> snd x) params in
+      (* vars and ann lists have an one-to-one mapping relation *)
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:ann loc)
     (* | vh = view_header -> *)
     (*   let name = vh.Iast.view_name in *)
@@ -1875,7 +1876,7 @@ sess_ann:
 [
   [ `IDENTIFIER var; proj_id = OPT proj_elem -> let loc = (get_pos_camlp4 _loc 1) in
                                                 let id = un_option proj_id NO_PEER in
-                                                (Session.IForm.id_to_param var loc, AnnPeer (var, id))
+                                                (Session.IForm.id_to_param var loc, AnnPeer id)
   ] |
   [ `INT_LITER (i,_) -> let loc = (get_pos_camlp4 _loc 1) in
                         (Session.IForm.const_to_param i loc, AnnInactive)

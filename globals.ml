@@ -198,7 +198,7 @@ let get_peer typ = match typ with
   | _      -> failwith ("Wrong peer: "^typ^". Expected: peer | chan.")
 
 type sess_ann =
-  | AnnPeer of ident * peer 
+  | AnnPeer of peer 
   | AnnInactive
 
 type session_kind =
@@ -360,7 +360,7 @@ let string_of_peer typ = match typ with
   | _    -> "no_peer"
 
 let string_of_sess_ann ann = match ann with
-  | AnnPeer (s, p) -> "AnnPeer (" ^ s ^ ", " ^ (string_of_peer p) ^ ")"
+  | AnnPeer p -> "AnnPeer " ^ (string_of_peer p)
   | AnnInactive -> "AnnInactive"
 
 let string_of_orders_kind nk = match nk with
