@@ -1,0 +1,64 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+infer[@arr_ba]  base::Elem<x,v> & v=4  |- v>2.
+print residue.
+expect Valid.
+/*
+frame   [][ true, v=4]:[ x ->  v] |- [][ 3<=v]:[]
+Frame:  v=4/\[ x ->  v]
+
+!!! **sleekengine.ml#1399: [ base::Elem<x,v>@M&v=4&{FLOW,(1,26)=__flow#E}[]
+  es_gen_impl_vars(E): []
+  es_subst (from,to): []:[]
+  ]   [][ true, v=4]:[ x ->  v] |- {[][ true, 3<=v]:[]}
+   ==>  v!=4
+   ==>  v!=4
+ !(v=4)
+
+why did we not generate weakest pre-condition:
+  forall(v:not(v=4)| v>2)
+
+For frame inferred, it should be:
+    v=4 & x ->  v
+
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [v!=4]
+
+
+*/
+
+infer[@arr_ba]  base::Elem<x,v> & v=4  |- base::Elem<x,v> & v>2.
+print residue.
+expect Valid.
+// should use \forall v:
+// (!(v=4) | 3<=v)
+
+
+infer[@arr_ba]  base::Elem<x,4>  |- base::Elem<x,v> & v>2.
+print residue.
+expect Valid.
+// forall(v:(!(true) | (4=v & 3<=v)))
+// should be an implicit existential, namely:
+// exists(v:(!(true) | (4=v & 3<=v)))
+
+
+infer[@arr_ba]  base::Elem<x,4>  |- (exists v: base::Elem<x,v> & v>2).
+print residue.
+expect Valid.
+// forall(v:(!(true) | (4=v & 3<=v)))
+// should be an implicit existential
+
+
+//infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<8,10>.
+print residue.
+expect Valid.
+//Frame:  10>=10 & 10<=10 & 1<10 & 1<8 & 1<10/\[AsegNE( 1, 8)]
+//<1>emp&{FLOW,(1,26)=__flow#E}[]
+// inferred pure: [false]
+
+/*
+Starting Omega.../usr/local/bin/oc
+*/

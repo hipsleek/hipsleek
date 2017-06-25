@@ -1,0 +1,12 @@
+/*
+# ex3.slk
+
+Last Proving Location: ex3.slk_3:10_3:35
+
+ERROR: at _0:0_0:0
+Message: yy is undefined (7)
+
+Entail (7) : Failure("helper_with_frame: TO BE IMPLEMENTED")
+: no residue 
+Validate 7: Expecting1 ValidBUT got no residue
+*/

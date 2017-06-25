@@ -1,0 +1,39 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+
+
+infer[//@arr_ba
+]  base::Elem<x,4>  |- base::Elem<x,v> & v>2.
+print residue.
+expect Valid.
+// forall(v:(!(true) | (4=v & 3<=v)))
+// should be an implicit existential, namely:
+// exists(v:(!(true) | (4=v & 3<=v)))
+/*
+Starting Omega.../usr/local/bin/oc
+ <1>emp&v=4&{FLOW,(4,5)=__norm#E}[]
+[[ SEARCH ==>  Match(base,base)]]
+
+-pcp
+run_infer:
+ (exists flted_9_26: base::Elem<x,flted_9_26>@M&flted_9_26=4&
+{FLOW,(4,5)=__norm#E}[]) [] |-  EBase 
+   exists (Impl)[v](exists x_32: base::Elem<x_32,v>@M&2<v & x_32=x&
+   {FLOW,(4,5)=__norm#E}[])
+
+-pcp @arr_ba
+
+Starting Omega.../usr/local/bin/oc
+frame   [][ true, true]:[ x ->  4] |- [][ 3<=v]:[ x ->  v]
+frame      [][ false, true, true]:[] |- [][ 3<=v]:[]
+frame      [][ true, true, true]:[] |- [][ true, 4=v, 3<=v]:[]
+
+
+
+
+*/
+
+

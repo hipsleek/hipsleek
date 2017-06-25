@@ -10,14 +10,23 @@ pred_prim Elem<start:int,value:int>.
 infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<8,10>.
 print residue.
 expect Valid.
+//Frame:  10>=10 & 10<=10 & 1<10 & 1<8 & 1<10/\[AsegNE( 1, 8)]
+//<1>emp&{FLOW,(1,26)=__flow#E}[]
+// inferred pure: [false]
 
 infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<1,10>.
 print residue.
 expect Valid.
+//Frame:  10>=10 & 10<=10 & 1<10/\[]
+//<1>emp&{FLOW,(1,26)=__flow#E}[]
+//inferred pure: [true]
+
 
 infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<1,8>.
 print residue.
 expect Valid.
+//Frame:  8<10 & 1<10/\[AsegNE( 8, 10)]
+
 
 infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<1,3> * base::AsegNE<5,8>.
 print residue.
@@ -26,3 +35,26 @@ expect Valid.
 infer[@arr_ba]  base::AsegNE<1,10>  |- base::AsegNE<3,5>.
 print residue.
 expect Valid.
+//Frame:  8<10 & 3<8 & 3<5 & 3<10 & 1<10/\[AsegNE( 3, 5),AsegNE( 8, 10)]
+
+
+infer[@arr_ba]  base::AsegNE<x,y+3>  |- base::AsegNE<x,y>.
+print residue.
+expect Valid.
+//Frame:  y<(3+y) & x<(3+y)/\[AsegNE( y, 3+y)]
+//inferred pure: [y<=(x-3)]
+
+infer[@arr_ba]  base::AsegNE<x,yy+3>  |- (exists n: base::AsegNE<x,n>).
+print residue.
+expect Valid.
+
+/*
+Last Proving Location: ex3.slk_3:10_3:35
+
+ERROR: at _0:0_0:0
+Message: yy is undefined (7)
+
+Entail (7) : Failure("helper_with_frame: TO BE IMPLEMENTED")
+: no residue 
+Validate 7: Expecting1 ValidBUT got no residue
+*/
