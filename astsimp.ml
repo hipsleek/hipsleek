@@ -44,6 +44,10 @@ open IastUtil
 module IVP = IvpermUtils
 module CVP = CvpermUtils
 
+module S = Session
+module SIOrd = S.IOrders
+module SCOrd = S.COrders
+
 type trans_exp_type =
   (C.exp * typ)
 
@@ -2412,8 +2416,8 @@ and session_to_iform_x (view:I.view_decl) =
   match view.I.view_session_info with
   | Some si -> (match (si.session_kind) with
       | Some Protocol ->
-        let prot = Session.get_protocol (get_session_formula view) in
-        let prot = Session.annotate_suid prot in
+        let prot = S.get_iprotocol (get_session_formula view) in
+        let prot = S.annotate_suid prot in
         let params = view.I.view_typed_vars in
         let prot = x_add_1 Order_summary.insert_orders view prot params (fun p -> trans_pure_formula p []) in
         (* makes projection *)
@@ -2422,11 +2426,11 @@ and session_to_iform_x (view:I.view_decl) =
         let sess_prj = Some (I.mk_session_formulae ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot)) in
         {view with view_session = sess_prj }
       | Some Projection ->
-        let transf = Session.IProjection.mk_struc_formula_from_session_and_struc_formula in
-        helper view transf Session.get_projection
+        let transf = S.IProjection.mk_struc_formula_from_session_and_struc_formula in
+        helper view transf S.get_iprojection
       | Some TPProjection ->
-        let transf = Session.ITPProjection.mk_struc_formula_from_session_and_struc_formula in
-        helper view transf Session.get_tpprojection
+        let transf = S.ITPProjection.mk_struc_formula_from_session_and_struc_formula in
+        helper view transf S.get_itpprojection
       | None -> view)
   | None -> view
 
@@ -2434,9 +2438,68 @@ and session_to_iform (view:I.view_decl) =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "session_to_iform" pr pr session_to_iform_x view
 
+(* Converts session_formulae type from Iformula to Cformula *)
+and trans_I2C_session_formulae_x (f : IF.struc_formula -> CF.struc_formula) tlist (form : I.session_formulae option) : (C.session_formulae option) =
+  match form with
+  | None -> None
+  | Some sess_form ->
+  let sess = sess_form.session in
+  let i2c_proj = List.fold_left (fun acc (k, v) -> 
+    let c_struc = (f v) in
+    let pos = CF.pos_of_struc_formula c_struc in
+    let key = trans_var k tlist pos in 
+    SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.per_party_proj) in
+  let i2c_tproj = List.fold_left (fun acc ((kc, kr), v) -> 
+    let c_struc = (f v) in
+    let pos = CF.pos_of_struc_formula c_struc in
+    let key_chan = trans_var kc tlist pos in 
+    let key_role = trans_var kr tlist pos in 
+    let key = (key_chan, key_role) in
+    SP.CTPrjMap.add_elem_dupl acc key c_struc) (SP.CTPrjMap.mkEmpty()) (sess_form.per_chan_proj) in
+  let orders = List.fold_left ( fun acc elem ->
+    let rec i2c_trans elem = match elem with
+    | SIOrd.And typ ->
+        let assrt1 = i2c_trans typ.and_assrt1 in
+        let assrt2 = i2c_trans typ.and_assrt2 in
+        SCOrd.mk_and assrt1 assrt2 
+    | SIOrd.Or typ ->
+        let assrt1 = i2c_trans typ.or_assrt1 in
+        let assrt2 = i2c_trans typ.or_assrt2 in
+        SCOrd.mk_or assrt1 assrt2
+    | SIOrd.Order typ ->
+        let i2c_event (ev:SIOrd.event) : SCOrd.event =
+          let id, _ = ev.role in
+          let role  = S.CForm.mk_var id in
+          let id, _ = ev.uid in
+          let uid   = S.CForm.mk_var id in
+          let id, _ = ev.channel in
+          let chan  = S.CForm.mk_var id in
+          SCOrd.mk_event role uid chan in
+        begin match typ with
+        | SIOrd.HBe typ ->
+            let ord1 = typ.hbe_event1 in
+            let ord2 = typ.hbe_event2 in
+            SCOrd.mk_hbe (i2c_event ord1) (i2c_event ord2)
+        | SIOrd.CBe typ -> 
+            let ord1 = typ.cbe_event1 in
+            let ord2 = typ.cbe_event2 in
+            SCOrd.mk_cbe (i2c_event ord1) (i2c_event ord2)
+        | _ -> SCOrd.Bot
+        end
+    | _ -> SCOrd.Bot in
+    acc @ [i2c_trans elem]
+    ) [] (sess_form.shared_orders) in
+  Some (C.mk_session_formulae ~prj:i2c_proj ~tprj:i2c_tproj ~orders:orders None) 
+
+and trans_I2C_session_formulae (f : IF.struc_formula -> CF.struc_formula) tlist (sess_form : I.session_formulae option) : (C.session_formulae option) =
+  let pr = Iprinter.string_of_session in 
+  let pr_out = Cprinter.string_of_session in
+  Debug.no_1 "trans_I2C_session_formulae" pr pr_out (fun _ -> trans_I2C_session_formulae_x (f) tlist sess_form) sess_form
+
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
+  let free_vars = dedicated_ids @ vdef.I.view_vars in
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       if not(!Globals.adhoc_flag_1) then ""
@@ -2453,8 +2516,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       else (Named data_name,tlist) in
     let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true (dedicated_ids @ vdef.I.view_vars) vdef.I.view_formula (orig_tl) false
-        true (*check_pre*) in
+    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
     let data_name = match self_ty with
       | Named s -> s
@@ -2469,10 +2531,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (match inv_lock with
        | None -> (n_tl, None)
        | Some f ->
-         let (n_tl_tmp,new_f) = x_add trans_formula prog true (dedicated_ids @ vdef.I.view_vars) true f (ann_typs@n_tl) false in
+         let (n_tl_tmp,new_f) = x_add trans_formula prog true free_vars true f (ann_typs@n_tl) false in
          (*find existential variables*)
          let fvars = CF.fv new_f in
-         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (dedicated_ids @ vdef.I.view_vars))) fvars in
+         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) free_vars)) fvars in
          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
          (* let () = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
          (* let () = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *)
@@ -2833,6 +2895,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let lst_heap_ptrs = List.filter (fun (sv,f) -> not(CP.isConstTrue f)) lst_heap_ptrs in
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
+      
+      (* sent as argument for trans_I2C_session_formulae function *)
+      let i2c_struct_formula struc_formula =
+        let (_, c_struc_formula) = trans_I2C_struc_formula 8 prog false true free_vars struc_formula n_tl false true in
+        c_struc_formula in
+      (* transform session_formulae from I (input formula) to C (core formula) *)
+      let sess_formulae = trans_I2C_session_formulae (i2c_struct_formula) n_tl vdef.I.view_session in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -2849,7 +2918,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_backward_fields = [];
         C.view_kind = view_kind;
         C.view_session_info = view_session_info;
-        C.view_session = None; 
+        C.view_session = sess_formulae; 
         C.view_type_of_self = 
           (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in 
            let r = vdef.I.view_type_of_self in
@@ -9263,7 +9332,7 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula): IF.form
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let ann_vars = IF.collect_annot_vars f in
   (* rename session msg var *)
-  let f = Session.norm_slk_formula f in
+  let f = S.norm_slk_formula f in
   
   let f,_,_ = x_add case_normalize_renamed_formula prog h [] f ann_vars in
   (* let () = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -9346,7 +9415,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   (* let () = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
 
   (* rename session msg var *)
-  let nf = Session.norm_slk_struct nf in
+  let nf = S.norm_slk_struct nf in
 
   (* let () = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
@@ -9491,7 +9560,7 @@ and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF
   let nf = IF.float_out_exps_from_heap_struc (I.lbl_getter prog) (I.annot_args_getter prog) nf  in 
   let nf = IF.float_out_struc_min_max nf in
 
-  let nf = Session.norm_case nf in
+  let nf = S.norm_case nf in
   
   let nf = IF.rename_bound_var_struc_formula nf in
 
@@ -10197,12 +10266,12 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
               let norm_form = case_normalize_struc_formula_view 8 prog h p struct_form false false false [] in
-              SP.FPrjMap.add_elem_dupl acc k norm_form) (SP.FPrjMap.mkEmpty()) prj_map in
+              SP.IPrjMap.add_elem_dupl acc k norm_form) (SP.IPrjMap.mkEmpty()) prj_map in
             let norm_tprj = List.fold_left (fun acc (k, struct_form) ->
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
               let norm_form = case_normalize_struc_formula_view 8 prog h p struct_form false false false [] in
-              SP.FTPrjMap.add_elem_dupl acc k norm_form) (SP.FTPrjMap.mkEmpty()) tprj_map in
+              SP.ITPrjMap.add_elem_dupl acc k norm_form) (SP.ITPrjMap.mkEmpty()) tprj_map in
             let sess_formulae = Iast.mk_session_formulae ~prj:norm_prj ~tprj:norm_tprj ~orders:sess_form.shared_orders sess_form.session in
             Some sess_formulae
         | None -> None in 
