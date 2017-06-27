@@ -667,28 +667,28 @@ and string_of_formula = function
             ^ ")"
     in rs^sa
 
-and string_of_session_formula session_formula =
+and string_of_session_iformula (session_formula:Session.session_iformula) =
   match session_formula with
     | Session.ProtocolSession s -> Session.IProtocol.string_of_session s
     | Session.ProjectionSession s -> Session.IProjection.string_of_session s
     | Session.TPProjectionSession s -> Session.ITPProjection.string_of_session s
 
-and string_of_session session_projection =
-  let string_of_session_projection_helper session_projection =
-    let pr_sess = string_of_session_formula in
-    let pr_pty = Session_projection.FPrjMap.string_of in
-    let pr_chan = Session_projection.FTPrjMap.string_of in
+and string_of_session session_formulae =
+  let string_of_session_projection_helper session_formulae =
+    let pr_sess = string_of_session_iformula in
+    let pr_pty = Session_projection.IPrjMap.string_of in
+    let pr_chan = Session_projection.ITPrjMap.string_of in
     let pr_assrt = pr_list Session.IOrders.string_of in 
     "{ " ^ 
-    "Session: " ^ (pr_sess session_projection.session) ^ "\n" ^
-    "Proj per party: " ^ (pr_pty session_projection.per_party_proj) ^ "\n" ^
-    "Proj per chan: " ^ (pr_chan session_projection.per_chan_proj) ^ "\n" ^
-    "Shared orders: " ^ (pr_assrt session_projection.shared_orders) ^
+    "Session: " ^ (pr_sess session_formulae.session) ^ "\n" ^
+    "Proj per party: " ^ (pr_pty session_formulae.per_party_proj) ^ "\n" ^
+    "Proj per chan: " ^ (pr_chan session_formulae.per_chan_proj) ^ "\n" ^
+    "Shared orders: " ^ (pr_assrt session_formulae.shared_orders) ^
     " }"
   in
   Gen.map_opt_def "" 
     (fun x -> string_of_session_projection_helper x)
-    session_projection
+    session_formulae
 
 and  string_of_struc_formula c = match c with 
   | F.ECase {

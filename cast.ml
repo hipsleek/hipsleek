@@ -98,11 +98,11 @@ and barrier_decl = {
 (*   | View_DERV *)
 
 
-and session_projection = {
-  session        : Session.session_formula;
-  per_party_proj : Session_projection.PrjMap.emap option;
-  per_chan_proj  : Session_projection.TPrjMap.emap option;
-  shared_orders  : Session.COrders.assrt list option;
+and session_formulae = {
+  session        : Session.session_cformula option;
+  per_party_proj : Session_projection.CPrjMap.emap;
+  per_chan_proj  : Session_projection.CTPrjMap.emap;
+  shared_orders  : Session.COrders.assrt list;
 }
 
 and view_decl = {
@@ -143,7 +143,7 @@ and view_decl = {
   view_backward_fields: (data_decl * ident) list;
   view_kind : view_kind;
   view_session_info : view_session_info option;
-  view_session : session_projection option;
+  view_session : session_formulae option;
   view_prop_extns:  P.spec_var list; (*for extn views*)
   view_parent_name: ident option; (*for view_spec*)
   (*a map of shape <-> pure properties*)
@@ -775,10 +775,8 @@ let print_ef_pure_disj = ref (fun (c:Excore.ef_pure_disj) -> "cpure printer has 
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 let print_mater_prop_list = ref (fun (c:mater_property list) -> "cast printer has not been initialized")
-
 (*single node -> simple (true), otherwise -> complex (false*)
 (* let is_simple_formula x = true *)
-
 
 let slk_of_view_decl = ref (fun (c:view_decl) -> "cast printer has not been initialized")
 let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been initialized")
@@ -786,6 +784,17 @@ let slk_of_data_decl = ref (fun (c:data_decl) -> "cast printer has not been init
 (* imply function has not been initialized yet *)
 let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 
+let mk_session_formulae
+  ?(prj=Session_projection.CPrjMap.mkEmpty())
+  ?(tprj=Session_projection.CTPrjMap.mkEmpty())
+  ?(orders=[]) 
+  sess =
+  {
+    session        = sess;
+    per_party_proj = prj;
+    per_chan_proj  = tprj;
+    shared_orders  = orders;
+  }
 
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let mix_true = MP.mkMTrue pos in

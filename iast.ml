@@ -82,9 +82,9 @@ and data_decl = {
 and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
 and session_formulae = {
-  session        : Session.session_formula;
-  per_party_proj : Session_projection.FPrjMap.emap;
-  per_chan_proj  : Session_projection.FTPrjMap.emap;
+  session        : Session.session_iformula;
+  per_party_proj : Session_projection.IPrjMap.emap;
+  per_chan_proj  : Session_projection.ITPrjMap.emap;
   shared_orders  : Session.IOrders.assrt list;
 }
 
@@ -645,8 +645,8 @@ let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
 let mk_session_formulae
-  ?(prj=Session_projection.FPrjMap.mkEmpty())
-  ?(tprj=Session_projection.FTPrjMap.mkEmpty())
+  ?(prj=Session_projection.IPrjMap.mkEmpty())
+  ?(tprj=Session_projection.ITPrjMap.mkEmpty())
   ?(orders=[]) 
   sess =
   {

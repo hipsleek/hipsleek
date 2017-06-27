@@ -729,6 +729,31 @@ let pr_session_projection ?(lvl=(!glob_lvl)) vn =
   let pr_sess = Gen.map_opt_def def fct vn.h_formula_view_session_info in
   Wrapper.wrap_one_bool print_flow_flag false pr_sess ()
 
+let string_of_session_cformula (session_formula:Session.session_cformula) =
+  match session_formula with
+    | Session.ProtocolSession s -> Session.CProtocol.string_of_session s
+    | Session.ProjectionSession s -> Session.CProjection.string_of_session s
+    | Session.TPProjectionSession s -> Session.CTPProjection.string_of_session s
+
+let string_of_session session_formulae =
+  let string_of_session_projection_helper session_formulae =
+    let pr_sess = match session_formulae.session with
+    | Some v -> string_of_session_cformula v
+    | None -> "None" in
+    let pr_pty = Session_projection.CPrjMap.string_of in
+    let pr_chan = Session_projection.CTPrjMap.string_of in
+    let pr_assrt = pr_list Session.COrders.string_of in 
+    "{ " ^ 
+    "Session: " ^ pr_sess ^ "\n" ^
+    "Proj per party: " ^ (pr_pty session_formulae.per_party_proj) ^ "\n" ^
+    "Proj per chan: " ^ (pr_chan session_formulae.per_chan_proj) ^ "\n" ^
+    "Shared orders: " ^ (pr_assrt session_formulae.shared_orders) ^
+    " }"
+  in
+  Gen.map_opt_def "" 
+    (fun x -> string_of_session_projection_helper x)
+    session_formulae
+
 let pr_sess_ann ?(lvl=(!glob_lvl)) sess_ann =
   let str = Gen.map_opt_def "" (pr_list string_of_sess_ann) sess_ann in
   wrap_pr_1 lvl fmt_string str

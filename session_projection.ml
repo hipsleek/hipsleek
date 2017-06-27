@@ -63,7 +63,7 @@ struct
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
-module FProjection_map =
+module IProjection_map =
 struct
   type t = Iformula.struc_formula
   type base = Iformula.struc_formula
@@ -82,13 +82,36 @@ struct
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
+module CProjection_map =
+struct
+  type t = Cformula.struc_formula
+  type base = Cformula.struc_formula
+
+  let bot () = failwith x_tbi 
+  let is_bot x = failwith x_tbi
+  let eq e1 e2 = failwith x_tbi
+  let string_of f = !Cformula.print_struc_formula f 
+  let mk_base (base: base) : t = failwith x_tbi
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
+  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
+  let mkSingleton (e:base) : t = failwith x_tbi
+  let add_elem (old_e:t) (new_e:t) : t  = new_e
+end;;
+
 
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
 module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
 
-(* used to save projection as formula *)
-module FPrjMap = OS.SMap(OS.IRole)(FProjection_map)
-module FTPrjMap = OS.SMap(OS.IChanRole)(FProjection_map)
+(* used to save projection as iformula *)
+module IPrjMap = OS.SMap(OS.IRole)(IProjection_map)
+module ITPrjMap = OS.SMap(OS.IChanRole)(IProjection_map)
+
+(* used to save projection as cformula *)
+module CPrjMap = OS.SMap(OS.CRole)(CProjection_map)
+module CTPrjMap = OS.SMap(OS.CChanRole)(CProjection_map)
 
 (* ====== Helpful functions ====== *)
 (* =============================== *)
@@ -546,7 +569,7 @@ let mk_projection prot vars =
 
 
 (* ====== Transform session to formula ====== *)
-(* ============================================ *)
+(* ========================================== *)
 
 (* Converts session projections to formula *)
 let convert_prj_maps prj_map tprj_map =
@@ -564,12 +587,12 @@ let convert_prj_maps prj_map tprj_map =
     Session.IMessage.mk_struc_formula form pos
     ) tprj_map
   in
-  (FPrjMap.init hprj_map, FTPrjMap.init htprj_map)
+  (IPrjMap.init hprj_map, ITPrjMap.init htprj_map)
 
 let convert_prj_maps prj_map tprj_map =
   let pr1 = PrjMap.string_of in
   let pr2 = TPrjMap.string_of in
-  let pr_out = pr_pair FPrjMap.string_of FTPrjMap.string_of in
+  let pr_out = pr_pair IPrjMap.string_of ITPrjMap.string_of in
   Debug.no_2 "SP.convert_prj_maps" pr1 pr2 pr_out (fun _ _ -> convert_prj_maps prj_map tprj_map) prj_map tprj_map
 
 

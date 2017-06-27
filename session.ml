@@ -2441,23 +2441,26 @@ module CTPProjection = Make_Session(TPProjection_base_formula)(CForm);;
 (* module ITPProjection = Make_Session(ITPProjection_base)(\* (IOrders) *\);; *)
 (* module CTPProjection = Make_Session(CTPProjection_base)(\* (COrders) *\);; *)
 
-
-type session_formula = ProtocolSession of IProtocol.session
+type session_iformula = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session
                   | TPProjectionSession of ITPProjection.session
 
+type session_cformula = ProtocolSession of CProtocol.session
+                  | ProjectionSession of CProjection.session
+                  | TPProjectionSession of CTPProjection.session
 
-let get_protocol session =
+(* ------ Getters for session_iformula ------ *)
+let get_iprotocol (session:session_iformula) =
   match session with
   | ProtocolSession s -> s
   | _ -> failwith "not a protocol formula"
 
-let get_projection session =
+let get_iprojection (session:session_iformula) =
   match session with
   | ProjectionSession s -> s
   | _ -> failwith "not a projection formula"
 
-let get_tpprojection session =
+let get_itpprojection (session:session_iformula) =
   match session with
   | TPProjectionSession s -> s
   | _ -> failwith "not a two-party projection formula"

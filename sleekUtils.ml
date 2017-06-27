@@ -32,12 +32,12 @@ let process_selective_iview_decls is_all iprog iviews =
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
               let norm_form = Astsimp.case_normalize_struc_formula_view 8 iprog h p struct_form false false false [] in
-              SP.FPrjMap.add_elem_dupl acc k norm_form) (SP.FPrjMap.mkEmpty()) prj_map in
+              SP.IPrjMap.add_elem_dupl acc k norm_form) (SP.IPrjMap.mkEmpty()) prj_map in
             let norm_tprj = List.fold_left (fun acc (k, struct_form) ->
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
               let norm_form = Astsimp.case_normalize_struc_formula_view 8 iprog h p struct_form false false false [] in
-              SP.FTPrjMap.add_elem_dupl acc k norm_form) (SP.FTPrjMap.mkEmpty()) tprj_map in
+              SP.ITPrjMap.add_elem_dupl acc k norm_form) (SP.ITPrjMap.mkEmpty()) tprj_map in
             let sess_formulae = Iast.mk_session_formulae ~prj:norm_prj ~tprj:norm_tprj ~orders:sess_form.shared_orders sess_form.session in
             Some sess_formulae
         | None -> None in

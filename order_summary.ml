@@ -16,9 +16,13 @@ module CP = Cpure
 module IF = Iformula
 module SC = Sesscommons
 
-type role = SIOrd.role
-type chan = SIOrd.chan
-type suid = SIOrd.suid
+type irole = SIOrd.role
+type ichan = SIOrd.chan
+type isuid = SIOrd.suid
+
+type crole = SCOrd.role
+type cchan = SCOrd.chan
+type csuid = SCOrd.suid
               
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
@@ -39,10 +43,11 @@ sig
   val string_of : t -> string   
 end;;
 
+(* ------ keys used for Iformula ------*)
 (* key for RMap *)
 module IRole =
 struct
-  type t = role
+  type t = irole
   let eq = SIOrd.eq_role
   let string_of = SIOrd.string_of_role
 end;;
@@ -50,7 +55,7 @@ end;;
 (* key for CMap *)
 module IChan =
 struct
-  type t = chan
+  type t = ichan
   let eq = SIOrd.eq_chan
   let string_of = SIOrd.string_of_chan
 end;;
@@ -61,6 +66,31 @@ struct
   type t = IChan.t * IRole.t
   let eq (c1, r1) (c2, r2) = (IChan.eq c1 c2) && (IRole.eq r1 r2)  
   let string_of = pr_pair IChan.string_of IRole.string_of
+end;;
+
+(* ------ keys used for Cformula ------*)
+(* key for RMap *)
+module CRole =
+struct
+  type t = crole
+  let eq = SCOrd.eq_role
+  let string_of = SCOrd.string_of_role
+end;;
+
+(* key for CMap *)
+module CChan =
+struct
+  type t = cchan
+  let eq = SCOrd.eq_chan
+  let string_of = SCOrd.string_of_chan
+end;;
+
+(* key for per channel projection map *)
+module CChanRole =
+struct
+  type t = CChan.t * CRole.t
+  let eq (c1, r1) (c2, r2) = (CChan.eq c1 c2) && (CRole.eq r1 r2)  
+  let string_of = pr_pair CChan.string_of CRole.string_of
 end;;
 
 (* key for ConstrMap *)
@@ -96,7 +126,7 @@ end;;
 module BEvent =
 struct
   type t = event
-  type a = role * suid * chan
+  type a = irole * isuid * ichan
            
   let make ((role,uid,chan) : a) : t = {role = role; uid = uid; channel = chan }
                                          
@@ -109,15 +139,15 @@ struct
   let remove_duplicates (lst: t list) = List.fold_left (fun acc ev ->
       if contains acc ev then acc else ev::acc) [] lst
 
-  let get_role (e:t) : role = e.role
-  let get_uid  (e:t) : suid = e.uid
+  let get_role (e:t) : irole = e.role
+  let get_uid  (e:t) : isuid = e.uid
 
 end;;
 
 module BTrans =
 struct
   type t = transmission
-  type a = role * role * chan * suid
+  type a = irole * irole * ichan * isuid
   module UID = IUID
            
   let make ((sender,receiver,chan,uid) :a) : t =
@@ -420,7 +450,7 @@ module type ORDERS_TYPE =
 sig
   type t
   val mk_hb : t -> t -> SIOrd.assrt
-  val get_uid : t -> suid
+  val get_uid : t -> isuid
 end;;
 
 module Orders_hbe =
