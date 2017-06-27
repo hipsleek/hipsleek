@@ -231,6 +231,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       (tl, Some (Named n2))
     | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (tl, Some (Named n1))
+    | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
+    | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
     | t1, t2  -> (
         let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in

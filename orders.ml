@@ -288,7 +288,8 @@ struct
          begin match !SC.event_rel_id with
          | Some rel_id ->
              let role = e.role in
-             let p_form = Form.mk_exp_rel rel_id [(role, pos)] pos in
+             let suid = e.uid in
+             let p_form = Form.mk_exp_rel rel_id [(role, pos); (suid, pos)] pos in
              [p_form]
          | None -> []
          end
@@ -300,9 +301,13 @@ struct
             | Some rel_id ->
                 let hbe_role1 = hbe.Ord.hbe_event1.role in
                 let hbe_role2 = hbe.Ord.hbe_event2.role in
+                let hbe_suid1 = hbe.Ord.hbe_event1.uid in
+                let hbe_suid2 = hbe.Ord.hbe_event2.uid in
                 let var1 = (hbe_role1, pos) in
-                let var2 = (hbe_role2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
+                let var2 = (hbe_suid1, pos) in
+                let var3 = (hbe_role2, pos) in
+                let var4 = (hbe_suid2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
                 [p_form]
             | None -> []
             end
@@ -311,9 +316,13 @@ struct
             | Some rel_id ->
                 let cbe_role1 = cbe.Ord.cbe_event1.role in
                 let cbe_role2 = cbe.Ord.cbe_event2.role in
+                let cbe_suid1 = cbe.Ord.cbe_event1.uid in
+                let cbe_suid2 = cbe.Ord.cbe_event2.uid in
                 let var1 = (cbe_role1, pos) in
-                let var2 = (cbe_role2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [var1; var2] pos in
+                let var2 = (cbe_suid1, pos) in
+                let var3 = (cbe_role2, pos) in
+                let var4 = (cbe_suid2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
                 [p_form]
             | None ->  []
             end
