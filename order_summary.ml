@@ -283,7 +283,8 @@ sig
   val init : (key * elem) list -> emap
     
   val add : emap-> key -> elem -> emap
-  val find : emap -> key -> elem
+  val find: emap -> key -> elem
+  val find_unsafe: emap -> key -> elem
   val get_keys : emap -> klist
   val get_data : emap -> elist
 
@@ -331,6 +332,8 @@ struct
 
   (* find element with key k in s *)
   let find (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
+
+  let find_unsafe (s : emap) (k: key) : elem  = snd(List.find (fun (k0,_) -> eq k0 k) s)
 
   let remove_duplicate_keys (keys:klist) : klist =
     let keys = List.fold_left (fun acc key ->
