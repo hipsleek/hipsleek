@@ -1397,6 +1397,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
     let rs_frame = Arr_entailment5.array_entailment_with_frame_and_print new_ante new_conseq in
     let () = y_binfo_pp (Cprinter.string_of_list_context rs_frame) in
+    (* let _ = Arr_entailment_with_frame.mkArrF in *)
+    let () = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in
     let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in
     ((true,rs,[]),(ante,conseq))
     (* The following line is for inference *)
