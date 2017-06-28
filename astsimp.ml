@@ -2448,14 +2448,14 @@ and trans_I2C_session_formulae_x (f : IF.struc_formula -> CF.struc_formula) tlis
     let c_struc = (f v) in
     let pos = CF.pos_of_struc_formula c_struc in
     let key = trans_var k tlist pos in 
-    SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.per_party_proj) in
+    SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.proj_per_party) in
   let i2c_tproj = List.fold_left (fun acc ((kc, kr), v) -> 
     let c_struc = (f v) in
     let pos = CF.pos_of_struc_formula c_struc in
     let key_chan = trans_var kc tlist pos in 
     let key_role = trans_var kr tlist pos in 
     let key = (key_chan, key_role) in
-    SP.CTPrjMap.add_elem_dupl acc key c_struc) (SP.CTPrjMap.mkEmpty()) (sess_form.per_chan_proj) in
+    SP.CTPrjMap.add_elem_dupl acc key c_struc) (SP.CTPrjMap.mkEmpty()) (sess_form.proj_per_chan) in
   let orders = List.fold_left ( fun acc elem ->
     let rec i2c_trans elem = match elem with
     | SIOrd.And typ ->
@@ -10259,10 +10259,9 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
       let wf = case_normalize_struc_formula_view 8 prog h p c.Iast.view_formula false false (*allow_post_vars*) false [] in
       let norm_session_formulae = match c.view_session with
         | Some sess_form ->
-            let prj_map = sess_form.per_party_proj in
-            let tprj_map = sess_form.per_chan_proj in
+            let prj_map = sess_form.proj_per_party in
+            let tprj_map = sess_form.proj_per_chan in
             let norm_prj = List.fold_left (fun acc (k, struct_form) ->
-              (*TODO elena: is it correct to get view_vars from c ?*)
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
               let norm_form = case_normalize_struc_formula_view 8 prog h p struct_form false false false [] in

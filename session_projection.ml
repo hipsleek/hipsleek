@@ -102,6 +102,7 @@ struct
 end;;
 
 
+(* used to save projection as session *)
 module PrjMap = OS.SMap(OS.IRole)(Projection_map)
 module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
 
@@ -513,33 +514,13 @@ let mk_projection_shared_spec prot lst =
 (* ====== Helpful functions used to collect projection result ====== *)
 (* ================================================================= *)
 
-(* Collects projections per party into the Map *)
-let save_party_prj_into_map map prj_elem role =
-  match PrjMap.is_empty map with
-    | true -> PrjMap.init [(role, prj_elem)]
-    | false -> PrjMap.add_elem_dupl map role prj_elem
-
-let save_party_prj_into_map map prj_elem role =
-  let pr = PrjMap.string_of in
-  Debug.no_1 "SP.save_party_prj_into_map" pr pr (fun _ -> save_party_prj_into_map map prj_elem role) map
-
-(* Collects projections per channel into the Map *)
-let save_chan_prj_into_map map prj_elem pair =
-  match TPrjMap.is_empty map with
-    | true -> TPrjMap.init [(pair, prj_elem)]
-    | false -> TPrjMap.add_elem_dupl map pair prj_elem
-
-let save_chan_prj_into_map map prj_elem pair =
-  let pr = TPrjMap.string_of in
-  Debug.no_1 "SP.save_chan_prj_into_map" pr pr (fun _ -> save_chan_prj_into_map map prj_elem pair) map
-
 (* per party *)
 let rec create_map_of_prj prot vars map =
   List.fold_left (fun acc (typ, var) ->
     if cmp_typ typ role_typ then
       let role = Session.IMessage.mk_var var in
       let prj_per_party = mk_projection_per_party prot role in
-      save_party_prj_into_map acc prj_per_party role
+      PrjMap.add_elem_dupl acc role prj_per_party
     else acc) map vars
 
 (* per channel *)
@@ -549,7 +530,7 @@ let create_map_of_tprj prj_map vars =
       if cmp_typ typ chan_typ then
         let chan = Session.IMessage.mk_var var in
         let prj_per_chan = mk_projection_per_channel prj chan in
-        save_chan_prj_into_map acc prj_per_chan (chan, role)
+        TPrjMap.add_elem_dupl acc (chan, role) prj_per_chan
       else
         acc) map vars in
   List.fold_left (fun acc (role, prj) -> mk_prj_per_channel prj role vars acc) (TPrjMap.mkEmpty()) prj_map

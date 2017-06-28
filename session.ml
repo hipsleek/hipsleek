@@ -2517,7 +2517,6 @@ let convert_pred_from_prot_to_tproj (sess_base:IProjection.session_base) : ITPPr
     SBase (ITPProjection.mk_session_predicate name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:session_predicate_kind pos)
   | _ -> SEmp
 
-(* elena: review this *)
 let is_projection si = let fct info = let sk = info.session_kind in
                          (match sk with
                           | Some Projection -> true 

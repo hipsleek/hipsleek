@@ -1086,7 +1086,7 @@ let get_rel_node_kind id = match id with
    | "hb"   -> Some (mk_rel_sorder_kind HB)
    | "hbp"  -> Some (mk_rel_sorder_kind HBP)
    | "cb"   -> Some (mk_rel_sorder_kind CB)
-   | _ -> None
+   | _      -> None
 
 (* ------ End of 'Getters for hodef nodes kind' ------ *)
 

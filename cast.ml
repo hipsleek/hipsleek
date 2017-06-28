@@ -100,8 +100,8 @@ and barrier_decl = {
 
 and session_formulae = {
   session        : Session.session_cformula option;
-  per_party_proj : Session_projection.CPrjMap.emap;
-  per_chan_proj  : Session_projection.CTPrjMap.emap;
+  proj_per_party : Session_projection.CPrjMap.emap;
+  proj_per_chan  : Session_projection.CTPrjMap.emap;
   shared_orders  : Session.COrders.assrt list;
 }
 
@@ -791,8 +791,8 @@ let mk_session_formulae
   sess =
   {
     session        = sess;
-    per_party_proj = prj;
-    per_chan_proj  = tprj;
+    proj_per_party = prj;
+    proj_per_chan  = tprj;
     shared_orders  = orders;
   }
 

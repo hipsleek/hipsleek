@@ -25,10 +25,9 @@ let process_selective_iview_decls is_all iprog iviews =
       let wf = Astsimp.case_normalize_struc_formula_view 11 iprog h p pdef.Iast.view_formula false false false [] in
   let norm_session_formulae = match pdef.view_session with
         | Some sess_form ->
-            let prj_map = sess_form.per_party_proj in
-            let tprj_map = sess_form.per_chan_proj in
+            let prj_map = sess_form.proj_per_party in
+            let tprj_map = sess_form.proj_per_chan in
             let norm_prj = List.fold_left (fun acc (k, struct_form) ->
-              (*TODO elena: is it correct to get view_vars from pdef ?*)
               let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
               let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
               let norm_form = Astsimp.case_normalize_struc_formula_view 8 iprog h p struct_form false false false [] in

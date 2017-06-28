@@ -83,8 +83,8 @@ and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
 and session_formulae = {
   session        : Session.session_iformula;
-  per_party_proj : Session_projection.IPrjMap.emap;
-  per_chan_proj  : Session_projection.ITPrjMap.emap;
+  proj_per_party : Session_projection.IPrjMap.emap;
+  proj_per_chan  : Session_projection.ITPrjMap.emap;
   shared_orders  : Session.IOrders.assrt list;
 }
 
@@ -651,8 +651,8 @@ let mk_session_formulae
   sess =
   {
     session        = sess;
-    per_party_proj = prj;
-    per_chan_proj  = tprj;
+    proj_per_party = prj;
+    proj_per_chan  = tprj;
     shared_orders  = orders;
   }
 

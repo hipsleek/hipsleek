@@ -745,8 +745,8 @@ let string_of_session session_formulae =
     let pr_assrt = pr_list Session.COrders.string_of in 
     "{ " ^ 
     "Session: " ^ pr_sess ^ "\n" ^
-    "Proj per party: " ^ (pr_pty session_formulae.per_party_proj) ^ "\n" ^
-    "Proj per chan: " ^ (pr_chan session_formulae.per_chan_proj) ^ "\n" ^
+    "Proj per party: " ^ (pr_pty session_formulae.proj_per_party) ^ "\n" ^
+    "Proj per chan: " ^ (pr_chan session_formulae.proj_per_chan) ^ "\n" ^
     "Shared orders: " ^ (pr_assrt session_formulae.shared_orders) ^
     " }"
   in

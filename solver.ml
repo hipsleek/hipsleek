@@ -1905,7 +1905,7 @@ and find_projection_x vdef sess_ann vars =
       | None -> failwith "Session annotations expected." in
     match vdef.view_session with
     | Some sess_form ->
-        let proj_emap = sess_form.per_chan_proj in
+        let proj_emap = sess_form.proj_per_chan in
         let pair_lst = List.fold_left2 (fun acc ann var -> match ann with
         | AnnPeer peer ->
             begin match peer with

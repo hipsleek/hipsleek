@@ -1,4 +1,4 @@
-pred_prim Trans@trans{%P}<sender,receiver>.
+pred_prim Trans{%P}<sender,receiver>. //trans
 pred_prim Sess{%P}<>. //session
 /* pred_prim Chan<sess:Sess>. //channel */
 pred_prim Chan{%P}<>. //channel
