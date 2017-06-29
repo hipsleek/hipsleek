@@ -348,7 +348,7 @@ let mk_projection_per_party prot role =
                     proj
                 | Guard -> 
                     let (assrt_assume, assrt_guard) = mk_prj_guard_on_role pred_orders role in
-                    let prot_assume = SProt.update_session_predicate ~orders:assrt_assume sp in
+                    let prot_assume = SProt.update_session_predicate ~name:"Assume" ~orders:assrt_assume ~sess_pred_kind:(Assert Assume) sp in
                     let proj_assume = x_add_1 Session.convert_pred_from_prot_to_proj prot_assume in
                     let prot_guard = SProt.update_session_predicate ~orders:assrt_guard sp in
                     let proj_guard = x_add_1 Session.convert_pred_from_prot_to_proj prot_guard in
@@ -426,7 +426,7 @@ let mk_projection_per_channel prj chan =
                     let (assrt_assume, assrt_guard) = mk_prj_assume_on_chan pred_orders chan in
                     let prot_assume = SProj.update_session_predicate ~orders:assrt_assume pred in
                     let proj_assume = Session.convert_pred_from_prot_to_tproj prot_assume in
-                    let prot_guard = SProj.update_session_predicate ~orders:assrt_guard pred in
+                    let prot_guard = SProj.update_session_predicate ~name:"Guard" ~orders:assrt_guard ~sess_pred_kind:(Assert Guard) pred in
                     let proj_guard = Session.convert_pred_from_prot_to_tproj prot_guard in
                     STProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | Guard ->
