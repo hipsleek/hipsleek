@@ -2501,6 +2501,11 @@ let convert_pred_from_prot_to_proj (sess_base:IProtocol.session_base) : IProject
     SBase (IProjection.mk_session_predicate name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:session_predicate_kind pos)
   | _ -> SEmp 
 
+let convert_pred_from_prot_to_proj (sess_base:IProtocol.session_base) : IProjection.session =
+  let pr = IProtocol.string_of_session_base in
+  let pr_out = IProjection.string_of_session in
+  Debug.no_1 "convert_pred_from_prot_to_proj" pr pr_out convert_pred_from_prot_to_proj sess_base
+
 (* Convert from session predicate IProjection to session ITPProjection *)
 let convert_pred_from_prot_to_tproj (sess_base:IProjection.session_base) : ITPProjection.session =
   match sess_base with

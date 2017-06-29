@@ -188,19 +188,19 @@ let rec mk_prj_assume_on_chan pred_orders chan =
 (* Makes projection per party for proof obligations *)
 (* Returns a pair of SIOrd.assrt: 
   * (orders for Assume, orders for Guard) *)
-let rec mk_prj_guard_on_role pred_orders role =
+let rec mk_prj_guard_on_role_x pred_orders role =
   match pred_orders with
    | SIOrd.And and_type -> 
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
-       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role and_head role in
-       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role and_tail role in
+       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role_x and_head role in
+       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role_x and_tail role in
        (SIOrd.mk_and prj_assume1 prj_assume2, SIOrd.mk_and prj_guard1 prj_guard2)
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
-       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role or_head role in
-       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role or_tail role in
+       let (prj_assume1, prj_guard1) = mk_prj_guard_on_role_x or_head role in
+       let (prj_assume2, prj_guard2) = mk_prj_guard_on_role_x or_tail role in
        (SIOrd.mk_or prj_assume1 prj_assume2, SIOrd.mk_or prj_guard1 prj_guard2)
    | SIOrd.Event e -> (SIOrd.Bot, SIOrd.Bot)
    | SIOrd.Order order ->
@@ -215,6 +215,13 @@ let rec mk_prj_guard_on_role pred_orders role =
       | _ -> (SIOrd.Bot, SIOrd.Bot)
      end
    | _ -> (SIOrd.Bot, SIOrd.Bot)
+
+let rec mk_prj_guard_on_role pred_orders role =
+  let pr1 = SIOrd.string_of in
+  let pr2 = Iformula.string_of_spec_var in 
+  let pr_out = pr_pair pr1 pr1 in 
+  Debug.no_2 "mk_prj_guard_on_role" pr1 pr2 pr_out (fun _ _ -> mk_prj_guard_on_role_x pred_orders role) pred_orders role
+  
 
 (* Makes projection per channel for proof obligations *)
 let rec mk_prj_guard_on_chan pred_orders chan =
@@ -337,14 +344,14 @@ let mk_projection_per_party prot role =
                 | Assume ->
                     let assrt = mk_prj_assume_on_role pred_orders role in
                     let prot = SProt.update_session_predicate ~orders:assrt sp in
-                    let proj = Session.convert_pred_from_prot_to_proj prot in
+                    let proj = x_add_1 Session.convert_pred_from_prot_to_proj prot in
                     proj
                 | Guard -> 
                     let (assrt_assume, assrt_guard) = mk_prj_guard_on_role pred_orders role in
                     let prot_assume = SProt.update_session_predicate ~orders:assrt_assume sp in
-                    let proj_assume = Session.convert_pred_from_prot_to_proj prot_assume in
+                    let proj_assume = x_add_1 Session.convert_pred_from_prot_to_proj prot_assume in
                     let prot_guard = SProt.update_session_predicate ~orders:assrt_guard sp in
-                    let proj_guard = Session.convert_pred_from_prot_to_proj prot_assume in
+                    let proj_guard = x_add_1 Session.convert_pred_from_prot_to_proj prot_guard in
                     SProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | _ -> SProj.SEmp
               end
