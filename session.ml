@@ -35,6 +35,7 @@ let string_of_transmission t =
 
 (* prim predicates *)
 let chan_id:  string option ref = ref None
+let common_id:  string option ref = ref None
 let seq_id :  string option ref = ref None
 let trans_id: string option ref = ref None
 let sess_id:  string option ref = ref None
@@ -90,6 +91,7 @@ let set_prim_pred_id kind id =
     | Emp          -> ()
     | Session      -> sess_id := Some id
     | Channel      -> chan_id := Some id
+    | Common       -> common_id := Some id 
     | Msg          -> msg_id := Some id
 
 let get_prim_pred_id pred_ref =
@@ -122,6 +124,7 @@ let get_prim_pred_id_by_kind kind = match kind with
   | Emp          -> ""
   | Session      -> get_prim_pred_id sess_id
   | Channel      -> get_prim_pred_id chan_id
+  | Common       -> get_prim_pred_id common_id
   | Msg          -> get_prim_pred_id msg_id
 
 let exists_pred_kind name = match name with
@@ -337,7 +340,7 @@ module IForm = struct
     match si.node_kind with
     | Some nk -> begin match nk with
       | Sequence | SOr | Send | Receive | Transmission
-      | Session | Channel | Msg ->
+      | Session | Channel | Common | Msg ->
         let new_heap_name = get_prim_pred_id_by_kind nk in
         let updated_node  = F.set_heap_name hform new_heap_name in
         Some updated_node
@@ -1934,6 +1937,7 @@ struct
             (* let h = Base.get_h_formula_from_ho_param_formula (List.nth args 0) in *)
             (* helper h *)
         | Channel -> failwith (x_loc ^ ": Unexpected node kind.")
+        | Common -> failwith (x_loc ^ ": Unexpected node kind.")
         | Msg -> failwith (x_loc ^ ": Unexpected node kind.") 
 	in
     helper h_formula

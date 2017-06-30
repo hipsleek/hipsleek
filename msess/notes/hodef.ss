@@ -1,6 +1,7 @@
 pred_prim Trans{%P}<sender,receiver>; //trans
 pred_prim Sess{%P}<>; //session
 pred_prim Chan{%P}<>; //channel
+pred_prim Common{%P}<>;
 pred_prim S{-%P}<a@IP>; //send
 pred_prim R{+%P}<a@IP>; //receive
 pred_prim Seq{%P,%P}<>; //sequence

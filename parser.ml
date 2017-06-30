@@ -1064,6 +1064,7 @@ let get_pred_node_kind id = match id with
    | "Trans"  -> Some Transmission
    | "Sess"   -> Some Session
    | "Chan"   -> Some Channel
+   | "Common" -> Some Common
    | "S"      -> Some Send
    | "R"      -> Some Receive
    | "Seq"    -> Some Sequence
@@ -1550,6 +1551,8 @@ projection_formula:
         Session.IProjection.SBase (Session.IProjection.mk_session_predicate name ho_args params loc)
       ]
     ];
+ 
+shared_orders: [[ `AT; `IDENTIFIER id -> if id = "all" then AnnAll else AnnNone ]];
 
 tpprojection_formula:
   [ "semicolon" RIGHTA
@@ -1568,7 +1571,7 @@ tpprojection_formula:
     | [ `OPAREN; p = tpprojection_formula; `CPAREN ->
             p
     ]
-  |
+    |
     [ peek_hvar; `PERCENT; `IDENTIFIER id ->
       let loc = (get_pos_camlp4 _loc 1) in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_hvar id [] loc)
@@ -1583,7 +1586,7 @@ tpprojection_formula:
       let mv = session_extract_msg_var msg_var loc in
       Session.ITPProjection.SBase (Session.ITPProjection.mk_base (Session.TReceive, mv, loc) c)
 	| `EMPTY -> Session.ITPProjection.SEmp
-    | hid = heap_id; opt1 = OPT rflow_form_list; `LT; params = sess_ann_list_opt; `GT ->
+    | hid = heap_id; orders = OPT shared_orders; opt1 = OPT rflow_form_list; `LT; params = sess_ann_list_opt; `GT ->
       let name,_,_,_ = hid in
       let ho_args = un_option opt1 [] in
       let loc = (get_pos_camlp4 _loc 1) in
@@ -1869,9 +1872,7 @@ rflow_kind:
    | `PLUS -> OUTFLOW
   ]];
 
-proj_elem:
-  [[ `AT; `IDENTIFIER id -> get_peer id
-  ]];
+proj_elem: [[ `AT; `IDENTIFIER id -> get_peer id]];
 
 sess_ann:
 [
