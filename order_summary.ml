@@ -927,6 +927,8 @@ let collect view prot fnc_i2c params =
 (* ------------------------------------------------------------------------ *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders view prot params fnc_i2c =
+  if not (!Globals.sess_refinement) then prot
+  else 
   let amap,gmap = collect view prot fnc_i2c params in
   let insert sf = match sf with
     | SProt.SBase sb -> 
