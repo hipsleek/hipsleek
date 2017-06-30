@@ -353,7 +353,7 @@ module IForm = struct
   let set_heap_node_var var node =
     F.HeapNode {node with F.h_formula_heap_node = var;}
 
-  let set_ann_list hform ann =
+  let set_anns hform ann =
     F.set_sess_ann hform ann
 
   let get_heap_node_var node =
@@ -412,7 +412,7 @@ module IForm = struct
     | F.HEmp -> Emp
     | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
-  let get_ann_list h_form =
+  let get_anns h_form =
     match h_form with
     | F.HeapNode node -> node.F.h_formula_heap_sess_ann
     | _ -> failwith (x_loc ^ ": F.HeapNode expected.")
@@ -671,7 +671,7 @@ module CForm = struct
   let set_heap_node_var var node =
     CF.ViewNode {node with CF.h_formula_view_node = var;}
 
-  let set_ann_list hform ann =
+  let set_anns hform ann =
     CF.set_sess_ann hform ann
 
   let get_heap_node_var node = node.CF.h_formula_view_node
@@ -725,7 +725,7 @@ module CForm = struct
     | CF.HEmp -> Emp
     | _ -> failwith (x_loc ^ ": Not a valid heap formula for session.")
 
-  let get_ann_list h_formula =
+  let get_anns h_formula =
     match h_formula with
     | CF.ViewNode node -> node.CF.h_formula_view_sess_ann
     | _ -> failwith (x_loc ^ ": CF.ViewNode expected.")
@@ -1419,7 +1419,7 @@ struct
     session_predicate_formula_heap_node: Base.h_formula_heap option;
     session_predicate_pure: Base.pure_formula;
     session_predicate_pos: loc;
-    session_predicate_anns: sess_ann list;
+    session_predicate_anns: sess_ann;
     session_predicate_orders: Orders.assrt;
     session_predicate_kind: session_predicate_kind;
   }
@@ -1563,7 +1563,7 @@ struct
   and mk_session_predicate_x name ho_vars params 
     ?node:(node=None) 
     ?pure:(pure=(Base.mk_true ())) 
-    ?sess_ann:(anns=[])
+    ?sess_ann:(anns=(mk_sess_anns [AnnInactive] AnnNone))
     ?orders:(orders=Orders.mk_empty()) 
     ?sess_pred_kind:(sess_pred_kind=NO_KIND)
     loc =
@@ -1583,7 +1583,7 @@ struct
       session_predicate_kind = sess_pred_kind;
     }
 
-  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=[]) ?orders:(orders=Orders.mk_empty()) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
+  and mk_session_predicate name ho_vars params ?node:(node=None) ?pure:(pure=(Base.mk_true ())) ?sess_ann:(anns=(mk_sess_anns [AnnInactive] AnnNone)) ?orders:(orders=Orders.mk_empty()) ?sess_pred_kind:(sess_pred_kind=NO_KIND) loc =
     Debug.no_1 "mk_session_predicate" (pr_list !Base.print_ho_param_formula) string_of_session_base (fun _ -> mk_session_predicate_x name ho_vars params ~node:node ~pure:pure ~sess_ann:anns ~orders:orders ~sess_pred_kind:sess_pred_kind loc) ho_vars
 
   and update_session_predicate_x ?name ?ho_vars ?params ?node 
@@ -1703,7 +1703,7 @@ struct
     let session_predicate_kind = p.session_predicate_kind in
     (* let params = (\* List.map *\) (\* (fun a -> Base.id_to_param a pos) *\) params in *)
     let node = Base.mk_node (ptr, name, ho_param_formula, params, pos) Base.base_type (mk_sess_pred_kind session_predicate_kind) in
-    let node = Base.set_ann_list node anns in
+    let node = Base.set_anns node anns in
     (* make the Predicate node *)
     node
 
@@ -1924,7 +1924,7 @@ struct
             SBase (mk_session_hvar id ls no_pos)
         | Predicate sess_pred_order_kind ->
             let (ptr, name, args, params, pos) = Base.get_node h_formula in
-            let ann = map_opt_def [] idf (Base.get_ann_list h_formula) in
+            let ann = un_option (Base.get_anns h_formula) (mk_sess_anns [AnnInactive] AnnNone) in
             (* let params = List.map (fun a -> Base.get_param_id a) params in *)
             SBase (mk_session_predicate name args params ~node:(Base.get_node_opt h_formula) ~pure:pure ~sess_ann:ann ~sess_pred_kind:sess_pred_order_kind pos)
         | Emp ->

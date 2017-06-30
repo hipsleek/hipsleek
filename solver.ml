@@ -1913,7 +1913,7 @@ and find_projection_x vdef sess_ann vars =
             | CHAN -> acc@[(ann, var)]
             | _    -> acc
             end
-        | _ -> acc) [] sess_ann vars in
+        | _ -> acc) [] sess_ann.peers vars in
         let key = match pair_lst with
         | (ann1, peer1)::[(ann2, peer2)] -> begin match ann1, ann2 with
           | AnnPeer CHAN, AnnPeer PEER -> (peer1, peer2)
@@ -1928,7 +1928,7 @@ and find_projection_x vdef sess_ann vars =
   with _ -> let () = x_winfo_pp "Cannot find required projection." no_pos in None
 
 and find_projection vdef sess_ann vars =
-  let pr1 = pr_opt (pr_list string_of_sess_ann) in
+  let pr1 = pr_opt string_of_sess_ann in
   let pr2 = pr_list string_of_spec_var in
   let pr_out = pr_opt Session_projection.CTPrjMap.string_of_elem in
   Debug.no_2 "find_projection" pr1 pr2 pr_out (fun _ _ -> find_projection_x vdef sess_ann vars) sess_ann vars 

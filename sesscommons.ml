@@ -69,7 +69,7 @@ module type Message_type = sig
   val map_rflow_formula_list_res_h: (formula -> formula) -> h_formula_heap -> h_formula
   val update_temp_heap_name: view_session_info -> h_formula -> h_formula option
   val set_heap_node_var: var -> h_formula_heap -> h_formula
-  val set_ann_list: h_formula -> sess_ann list -> h_formula
+  val set_anns: h_formula -> sess_ann -> h_formula
   val subst_param:   (var * var) list -> param -> param
   val subst_var:     (var * var) list -> var -> var
   val subst_formula: (var * var) list -> formula -> formula
@@ -103,7 +103,7 @@ module type Message_type = sig
   val get_node_only: h_formula -> h_formula_heap
   val get_node_opt:  h_formula -> h_formula_heap option
   val get_heap_node_var: h_formula_heap -> var
-  val get_ann_list: h_formula -> sess_ann list option
+  val get_anns: h_formula -> sess_ann option
   val get_exists_vars: formula -> (ident * primed) list
   val get_formula_pos: formula -> VarGen.loc
       

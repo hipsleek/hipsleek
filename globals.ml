@@ -197,9 +197,23 @@ let get_peer typ = match typ with
   | "chan" -> CHAN
   | _      -> failwith ("Wrong peer: "^typ^". Expected: peer | chan.")
 
-type sess_ann =
+type sess_ann_peer =
   | AnnPeer of peer 
   | AnnInactive
+
+type sess_ann_all = 
+  | AnnAll
+  | AnnNone
+
+type sess_ann =
+  { peers : (sess_ann_peer list);
+    all   : sess_ann_all;
+  } 
+
+let mk_sess_anns ann_peer ann_all =
+  { peers = ann_peer;
+    all   = ann_all;
+  }
 
 type session_kind =
   | Protocol
@@ -349,6 +363,16 @@ type typed_ident = (typ * ident)
 let role_typ = Named "role"
 let chan_typ = Named "chan"
 
+(* ------ Helpful print functions ------ *)
+(* ------------------------------------- *)
+let pr_lst s f xs = String.concat s (List.map f xs)
+let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
+let pr_list f xs = pr_list_brk "[" "]" f xs
+let pr_list_angle f xs = pr_list_brk "<" ">" f xs
+let pr_list_round f xs = pr_list_brk "(" ")" f xs
+let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+(* ------------------------------------- *)
+
 let string_of_session_kind k = match k with
   | Protocol -> "Protocol"
   | Projection -> "Projection"
@@ -359,9 +383,21 @@ let string_of_peer typ = match typ with
   | CHAN -> "chan"
   | _    -> "no_peer"
 
-let string_of_sess_ann ann = match ann with
-  | AnnPeer p -> "AnnPeer " ^ (string_of_peer p)
+let string_of_ann_peer typ = match typ with
+  | AnnPeer typ -> "AnnPeer " ^ (string_of_peer typ)  
   | AnnInactive -> "AnnInactive"
+
+let string_of_ann_all typ = match typ with 
+  | AnnAll  -> "AnnAll"
+  | AnnNone -> "AnnNone"
+
+let string_of_sess_ann ann =
+  let peers = ann.peers in
+  let all = ann.all in
+  "(" ^ 
+  "Peers annotations: " ^ (pr_list string_of_ann_peer peers) ^ "\n" ^
+  "All annotations: " ^ (string_of_ann_all all) ^
+  ")"
 
 let string_of_orders_kind nk = match nk with
   | Event -> "Event"
@@ -767,15 +803,6 @@ let add_to_z3_proof_log_list (f: string) =
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
-let pr_lst s f xs = String.concat s (List.map f xs)
-
-let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
-let pr_list f xs = pr_list_brk "[" "]" f xs
-let pr_list_angle f xs = pr_list_brk "<" ">" f xs
-let pr_list_round f xs = pr_list_brk "(" ")" f xs
-
-let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
-
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
@@ -1055,6 +1082,8 @@ let session_seq_id = "this"
 let session_seq = (session_seq_id, Unprimed)
 
 let session_chan_id = session_def_id (* "chan" *)
+
+let sess_refinement = ref true
 
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true

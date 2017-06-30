@@ -755,7 +755,7 @@ let string_of_session session_formulae =
     session_formulae
 
 let pr_sess_ann ?(lvl=(!glob_lvl)) sess_ann =
-  let str = Gen.map_opt_def "" (pr_list string_of_sess_ann) sess_ann in
+  let str = Gen.map_opt_def "" (string_of_sess_ann) sess_ann in
   wrap_pr_1 lvl fmt_string str
 
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)

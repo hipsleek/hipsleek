@@ -1588,9 +1588,10 @@ tpprojection_formula:
       let ho_args = un_option opt1 [] in
       let loc = (get_pos_camlp4 _loc 1) in
       let vars = List.map (fun x -> fst x) params in
-      let ann = List.map (fun x -> snd x) params in
+      let ann = List.map (fun x -> (snd x)) params in
+      let anns = mk_sess_anns ann (un_option orders AnnNone) in
       (* vars and ann lists have an one-to-one mapping relation *)
-      Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:ann loc)
+      Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:anns loc)
     (* | vh = view_header -> *)
     (*   let name = vh.Iast.view_name in *)
     (*   let ho_vars = vh.Iast.view_ho_vars in *)

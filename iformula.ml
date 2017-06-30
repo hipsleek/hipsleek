@@ -175,7 +175,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
                        h_formula_heap_split : split_ann; 
                        h_formula_heap_imm : P.ann;
                        h_formula_heap_imm_param : P.ann option list;
-		       h_formula_heap_sess_ann: sess_ann list option;
+		       h_formula_heap_sess_ann: sess_ann option;
                        h_formula_heap_full : bool;
                        h_formula_heap_with_inv : bool;
                        h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -1530,7 +1530,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_split = split;
                h_formula_heap_imm = imm;
                h_formula_heap_imm_param = imm_p;
-			   h_formula_heap_sess_ann = ann;
+	       h_formula_heap_sess_ann = ann;
                h_formula_heap_full = full;
                h_formula_heap_with_inv = winv;
                h_formula_heap_perm = perm; (*LDK*)
@@ -1553,7 +1553,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
                h_formula_heap_split = split;
                h_formula_heap_imm = imm;
                h_formula_heap_imm_param = imm_p;
-			   h_formula_heap_sess_ann = ann;
+	       h_formula_heap_sess_ann = ann;
                h_formula_heap_full = full;
                h_formula_heap_with_inv = winv;
                h_formula_heap_perm = perm1 ; (*LDK*)
@@ -1875,7 +1875,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_split = split;
                  h_formula_heap_imm = imm;
                  h_formula_heap_imm_param = imm_p; 
-				 h_formula_heap_sess_ann = ann;
+		 h_formula_heap_sess_ann = ann;
                  h_formula_heap_full = full;
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm; (*LDK*)
@@ -1897,7 +1897,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
                  h_formula_heap_split = split;
                  h_formula_heap_imm = imm;
                  h_formula_heap_imm_param = imm_p; 
-				 h_formula_heap_sess_ann = ann;
+		 h_formula_heap_sess_ann = ann;
                  h_formula_heap_full = full;
                  h_formula_heap_with_inv = winv;
                  h_formula_heap_perm = perm1 ; (*LDK*)
@@ -3399,7 +3399,7 @@ let set_heap_name hform name =
   | HeapNode node ->  HeapNode {node with h_formula_heap_name = name }
   | _ -> hform
 
-let set_sess_ann hform ann_list =
+let set_sess_ann hform anns =
   match hform with
-  | HeapNode node ->  HeapNode {node with h_formula_heap_sess_ann = Some ann_list }
+  | HeapNode node ->  HeapNode {node with h_formula_heap_sess_ann = Some anns }
   | _ -> hform
