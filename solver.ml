@@ -1899,39 +1899,57 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
 (* Finds the projection for a key deduced from the sess_ann and vars lists *)
 (* The key is a pair of vars (chan, party) that had been annotated with peer and chan, respectively *)
 and find_projection_x vdef sess_ann vars =
+  match vdef.view_session with
+  | Some sess_form ->
+      let proj_emap = sess_form.proj_per_chan in
+      let pair_lst = List.fold_left2 (fun acc ann var -> match ann with
+      | AnnPeer peer ->
+          begin match peer with
+          | PEER -> acc@[(ann, var)]
+          | CHAN -> acc@[(ann, var)]
+          | _    -> acc
+          end
+      | _ -> acc) [] sess_ann vars in
+      let key = match pair_lst with
+      | (ann1, peer1)::[(ann2, peer2)] -> begin match ann1, ann2 with
+        | AnnPeer CHAN, AnnPeer PEER -> (peer1, peer2)
+        | AnnPeer PEER, AnnPeer CHAN -> (peer2, peer1)
+        | _ -> failwith "Unexpected behavior."
+        end
+      | _ -> failwith "Too many vars annotated with @peer or @chan." in
+      let proj = Session_projection.CTPrjMap.find_unsafe proj_emap key in
+      proj
+  | None -> failwith "Session formulae expected."
+
+and find_projection vdef sess_ann vars =
+  let pr1 = pr_list string_of_ann_peer in
+  let pr2 = pr_list string_of_spec_var in
+  let pr_out = Session_projection.CTPrjMap.string_of_elem in
+  Debug.no_2 "find_projection" pr1 pr2 pr_out (fun _ _ -> find_projection_x vdef sess_ann vars) sess_ann vars 
+
+and find_formula_x vdef sess_ann =
   try
     let sess_ann = match sess_ann with
       | Some ann -> ann
-      | None -> failwith "Session annotations expected." in
-    match vdef.view_session with
-    | Some sess_form ->
-        let proj_emap = sess_form.proj_per_chan in
-        let pair_lst = List.fold_left2 (fun acc ann var -> match ann with
-        | AnnPeer peer ->
-            begin match peer with
-            | PEER -> acc@[(ann, var)]
-            | CHAN -> acc@[(ann, var)]
-            | _    -> acc
-            end
-        | _ -> acc) [] sess_ann.peers vars in
-        let key = match pair_lst with
-        | (ann1, peer1)::[(ann2, peer2)] -> begin match ann1, ann2 with
-          | AnnPeer CHAN, AnnPeer PEER -> (peer1, peer2)
-          | AnnPeer PEER, AnnPeer CHAN -> (peer2, peer1)
-          | _ -> failwith "Unexpected behavior."
-          end
-        | _ -> failwith "Too many vars annotated with @peer or @chan." in
-        let proj = Session_projection.CTPrjMap.find_unsafe proj_emap key in
-        Some proj
-    | None -> failwith "Session formulae expected."
+      | None -> failwith "Session annotations expected." in 
+    let ann_all = sess_ann.all in
+    match ann_all with
+    | AnnNone -> (* there exists peer annotations *)
+        let ann_peers = sess_ann.peers in 
+        let proj = find_projection vdef ann_peers vdef.view_vars in
+        Some (snd (base_formula_of_struc_formula proj))
+    | AnnAll -> (* just @all annotation *)
+        let view_session = vdef.view_session in
+        match view_session with
+        | Some vs -> vs.shared_orders
+        | None -> None
   (* any of the above exceptions will be caught here *)
-  with _ -> let () = x_winfo_pp "Cannot find required projection." no_pos in None
+  with _ -> let () = x_winfo_pp "Cannot find required formula." no_pos in None
 
-and find_projection vdef sess_ann vars =
-  let pr1 = pr_opt string_of_sess_ann in
-  let pr2 = pr_list string_of_spec_var in
-  let pr_out = pr_opt Session_projection.CTPrjMap.string_of_elem in
-  Debug.no_2 "find_projection" pr1 pr2 pr_out (fun _ _ -> find_projection_x vdef sess_ann vars) sess_ann vars 
+and find_formula vdef sess_ann =
+  let pr = pr_opt string_of_sess_ann in
+  let pr_out = pr_opt !Cast.print_formula in 
+  Debug.no_1 "find_formula" pr pr_out (fun _ -> find_formula_x vdef sess_ann) sess_ann 
 
 and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var) 
     fl (uf:int) ?(lem_unfold = false) pos : formula = 
@@ -1967,10 +1985,10 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
               }) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
     let prog1 = fst prog in
     let vdef = x_add Cast.look_up_view_def pos prog1.prog_view_decls lhs_name in
-    let struc_form = match vdef.view_session_info with
+    let cformula = match vdef.view_session_info with
                | None -> None
                | Some si -> (match si.session_kind with
-                              | Some Protocol -> find_projection vdef sess_ann vdef.view_vars
+                              | Some Protocol -> find_formula vdef sess_ann
                               | _ -> None ) in
     (*          let uf = old_uf+uf in
                 if CP.mem p aset then ( *)
@@ -1989,10 +2007,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let forms = match brs with 
           | None ->
             begin 
-              match struc_form with
-               | Some sf -> 
-                   snd (base_formula_of_struc_formula sf)
-               |  None ->   
+              match cformula with
+               | Some sf -> sf 
+               | None ->   
                   let f = formula_of_unstruc_view_f vdef in
                   let () = y_tinfo_hp (add_str "form_unstr_view" !CF.print_formula) f in
                   f
