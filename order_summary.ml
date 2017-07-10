@@ -910,7 +910,7 @@ let collect view prot fnc_i2c params =
   (* collects protocol's summary *)
   let res = derive_summ prot in
   (* merge def summ w prot's summ *)
-  let res = merge_all_seq def_sum res in
+(*   let res = merge_all_seq def_sum res in *)
   let assume = res.assumptions in
   let guard  = res.guards in
   (* normalize assumptions and guards *)

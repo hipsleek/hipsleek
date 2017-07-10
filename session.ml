@@ -219,6 +219,9 @@ module IForm = struct
     let h = mk_node (ptr, name, ho, params, pos) sk nk in
     F.mkBase(* _wo_flow *) h pure IvpermUtils.empty_vperm_sets F.n_flow [] pos
 
+  let mk_formula_of_pure_1 pure pos =
+    F.formula_of_pure_1 pure pos
+
   let mk_struc_formula formula pos =
     F.mkEBase [] [] [] formula None pos
 
@@ -582,6 +585,9 @@ module CForm = struct
     let h = mk_node (ptr, name, ho, params, pos) sk nk in
     let mix_formula = MCP.OnePF pure in
     CF.mkBase_simp h mix_formula
+
+  let mk_formula_of_pure_1 pure pos =
+    CF.formula_of_pure_formula pure pos
 
   let mk_struc_formula formula pos =
     CF.mkEBase formula None pos
@@ -1364,8 +1370,8 @@ module Make_Session (Base: Session_base) (Form: SC.Message_type) =
 struct
   (* module Msg  = Message_commons(Form) *)
   module Base = Base(Form)
-  module O2C  = Ords.Orders2Core(Form)
-  module Orders = O2C.Ord
+  module O2F  = Ords.Orders2Form(Form)
+  module Orders = O2F.Ord
   type t = Base.base
 
   type session =
@@ -1694,7 +1700,7 @@ struct
     let pos = p.session_predicate_pos in
     let args = p.session_predicate_ho_vars in 
     (* transform orders to pure formula *)
-    let pure_form_lst = O2C.trans_orders_to_pure_formula orders pos in
+    let pure_form_lst = O2F.trans_orders_to_pure_formula orders pos in
     let pure_form = Base.join_conjunctions pure_form_lst in
     (* transform pure formula to ho_param_formula *)
     let ho_param_formula = Base.map_rflow_formula_list (fun elem -> Base.add_pure_to_formula pure_form elem ) args in
@@ -2419,6 +2425,9 @@ module CMessage = Message_commons(CForm);;
 (* module CVar = Ords.Var(CForm) *)
 module IOrders = Ords.GOrders(Ords.Var(IForm)) ;;
 module COrders = Ords.GOrders(Ords.Var(CForm)) ;;
+
+module O2C  = Ords.Orders2Form(CForm)
+module O2I  = Ords.Orders2Form(IForm)
 
 module IProtocol_base = Protocol_base_formula(IForm) ;;
 module CProtocol_base = Protocol_base_formula(CForm) ;;

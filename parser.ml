@@ -1593,7 +1593,7 @@ tpprojection_formula:
       let vars = List.map (fun x -> fst x) params in
       let ann = List.map (fun x -> (snd x)) params in
       let anns = mk_sess_anns ann (un_option orders AnnNone) in
-      (* vars and ann lists have an one-to-one mapping relation *)
+      (* vars and ann.peers lists have an one-to-one mapping relation *)
       Session.ITPProjection.SBase (Session.ITPProjection.mk_session_predicate name ho_args vars ~sess_ann:anns loc)
     (* | vh = view_header -> *)
     (*   let name = vh.Iast.view_name in *)

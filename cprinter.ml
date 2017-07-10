@@ -742,12 +742,14 @@ let string_of_session session_formulae =
     | None -> "None" in
     let pr_pty = Session_projection.CPrjMap.string_of in
     let pr_chan = Session_projection.CTPrjMap.string_of in
-    let pr_assrt = pr_list Session.COrders.string_of in 
+    let pr_orders = match session_formulae.shared_orders with
+    | Some orders -> !Cformula.print_formula orders
+    | None -> "None" in
     "{ " ^ 
     "Session: " ^ pr_sess ^ "\n" ^
     "Proj per party: " ^ (pr_pty session_formulae.proj_per_party) ^ "\n" ^
     "Proj per chan: " ^ (pr_chan session_formulae.proj_per_chan) ^ "\n" ^
-    "Shared orders: " ^ (pr_assrt session_formulae.shared_orders) ^
+    "Shared orders: " ^ pr_orders ^
     " }"
   in
   Gen.map_opt_def "" 

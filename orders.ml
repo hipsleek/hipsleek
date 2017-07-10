@@ -269,7 +269,7 @@ struct
 
 end ;;
 
-module Orders2Core (Form: SC.Message_type) =
+module Orders2Form (Form: SC.Message_type) =
 struct
   module Ord = GOrders(Var(Form))
   
@@ -281,7 +281,7 @@ struct
          let and_tail = and_type.Ord.and_assrt2 in
          let form1 = trans_orders_to_pure_formula and_head pos in
          let form2 = trans_orders_to_pure_formula and_tail pos in
-         let res = Form.join_conjunctions ([]@form1@form2) in
+         let res = Form.join_conjunctions (form1@form2) in
          [res]
      | Ord.Or or_type -> failwith "Disjunctions not allowed"
      | Ord.Event e ->
@@ -329,6 +329,14 @@ struct
         | _ -> []
        end
      | _ -> []
+
+  let trans_orders_to_formula (orders:Ord.assrt list) pos =
+    let orders_p_formula = List.fold_left (fun acc elem ->
+      let f = trans_orders_to_pure_formula elem pos in
+      acc@f) [] orders in 
+    let pure_formula = Form.join_conjunctions orders_p_formula in
+    let formula = Form.mk_formula_of_pure_1 pure_formula pos in 
+    formula
 
 end
   

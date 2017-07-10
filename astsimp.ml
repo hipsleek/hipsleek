@@ -2423,7 +2423,8 @@ and session_to_iform_x (view:I.view_decl) =
         (* makes projection *)
         let prj_map, tprj_map, assrt_prj_list = SP.mk_projection prot params in
         let h_prj_map, h_tprj_map = SP.convert_prj_maps prj_map tprj_map in
-        let sess_prj = Some (I.mk_session_formulae ~prj:h_prj_map ~tprj:h_tprj_map ~orders:assrt_prj_list (ProtocolSession prot)) in
+        let iformula = S.O2I.trans_orders_to_formula assrt_prj_list no_pos in 
+        let sess_prj = Some (I.mk_session_formulae ~prj:h_prj_map ~tprj:h_tprj_map ~orders:(Some iformula) (ProtocolSession prot)) in
         {view with view_session = sess_prj }
       | Some Projection ->
         let transf = S.IProjection.mk_struc_formula_from_session_and_struc_formula in
@@ -2439,62 +2440,36 @@ and session_to_iform (view:I.view_decl) =
   Debug.no_1 "session_to_iform" pr pr session_to_iform_x view
 
 (* Converts session_formulae type from Iformula to Cformula *)
-and trans_I2C_session_formulae_x (f : IF.struc_formula -> CF.struc_formula) tlist (form : I.session_formulae option) : (C.session_formulae option) =
+and trans_I2C_session_formulae_x prog free_vars tlist (form : I.session_formulae option) : (C.session_formulae option) =
   match form with
   | None -> None
   | Some sess_form ->
   let sess = sess_form.session in
   let i2c_proj = List.fold_left (fun acc (k, v) -> 
-    let c_struc = (f v) in
+    let (_, c_struc) = trans_I2C_struc_formula 8 prog false true free_vars v tlist false true in
     let pos = CF.pos_of_struc_formula c_struc in
     let key = trans_var k tlist pos in 
     SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.proj_per_party) in
   let i2c_tproj = List.fold_left (fun acc ((kc, kr), v) -> 
-    let c_struc = (f v) in
+    let (_, c_struc) = trans_I2C_struc_formula 8 prog false true free_vars v tlist false true in
     let pos = CF.pos_of_struc_formula c_struc in
     let key_chan = trans_var kc tlist pos in 
     let key_role = trans_var kr tlist pos in 
     let key = (key_chan, key_role) in
     SP.CTPrjMap.add_elem_dupl acc key c_struc) (SP.CTPrjMap.mkEmpty()) (sess_form.proj_per_chan) in
-  let orders = List.fold_left ( fun acc elem ->
-    let rec i2c_trans elem = match elem with
-    | SIOrd.And typ ->
-        let assrt1 = i2c_trans typ.and_assrt1 in
-        let assrt2 = i2c_trans typ.and_assrt2 in
-        SCOrd.mk_and assrt1 assrt2 
-    | SIOrd.Or typ ->
-        let assrt1 = i2c_trans typ.or_assrt1 in
-        let assrt2 = i2c_trans typ.or_assrt2 in
-        SCOrd.mk_or assrt1 assrt2
-    | SIOrd.Order typ ->
-        let i2c_event (ev:SIOrd.event) : SCOrd.event =
-          let id, _ = ev.role in
-          let role  = S.CForm.mk_var id in
-          let id, _ = ev.uid in
-          let uid   = S.CForm.mk_var id in
-          let id, _ = ev.channel in
-          let chan  = S.CForm.mk_var id in
-          SCOrd.mk_event role uid chan in
-        begin match typ with
-        | SIOrd.HBe typ ->
-            let ord1 = typ.hbe_event1 in
-            let ord2 = typ.hbe_event2 in
-            SCOrd.mk_hbe (i2c_event ord1) (i2c_event ord2)
-        | SIOrd.CBe typ -> 
-            let ord1 = typ.cbe_event1 in
-            let ord2 = typ.cbe_event2 in
-            SCOrd.mk_cbe (i2c_event ord1) (i2c_event ord2)
-        | _ -> SCOrd.Bot
-        end
-    | _ -> SCOrd.Bot in
-    acc @ [i2c_trans elem]
-    ) [] (sess_form.shared_orders) in
+  let shared_orders = sess_form.shared_orders in
+  let orders = match shared_orders with
+  | Some iformula -> 
+      let tlist = x_add gather_type_info_formula prog iformula tlist true in
+      let (_, orders) = trans_formula prog false free_vars true iformula tlist false in
+      Some orders
+  | None -> None in
   Some (C.mk_session_formulae ~prj:i2c_proj ~tprj:i2c_tproj ~orders:orders None) 
 
-and trans_I2C_session_formulae (f : IF.struc_formula -> CF.struc_formula) tlist (sess_form : I.session_formulae option) : (C.session_formulae option) =
+and trans_I2C_session_formulae prog free_vars tlist (sess_form : I.session_formulae option) : (C.session_formulae option) =
   let pr = Iprinter.string_of_session in 
   let pr_out = Cprinter.string_of_session in
-  Debug.no_1 "trans_I2C_session_formulae" pr pr_out (fun _ -> trans_I2C_session_formulae_x (f) tlist sess_form) sess_form
+  Debug.no_1 "trans_I2C_session_formulae" pr pr_out (fun _ -> trans_I2C_session_formulae_x prog free_vars tlist sess_form) sess_form
 
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
   let view_formula1 = vdef.I.view_formula in
@@ -2896,12 +2871,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let () = y_tinfo_hp (add_str "lst_uns" (pr_list !CF.print_formula)) lst_uns in *)
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       
-      (* sent as argument for trans_I2C_session_formulae function *)
-      let i2c_struct_formula struc_formula =
-        let (_, c_struc_formula) = trans_I2C_struc_formula 8 prog false true free_vars struc_formula n_tl false true in
-        c_struc_formula in
       (* transform session_formulae from I (input formula) to C (core formula) *)
-      let sess_formulae = trans_I2C_session_formulae (i2c_struct_formula) n_tl vdef.I.view_session in
+      let sess_formulae = trans_I2C_session_formulae prog free_vars n_tl vdef.I.view_session in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;

@@ -1090,7 +1090,7 @@ let sess_refinement = ref true
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
 
-let dedicated_session_ids = [session_msg_id; session_seq_id; session_chan_id; session_orders_id]
+let dedicated_session_ids = [session_msg_id; session_seq_id; session_chan_id]
 let dedicated_ids = [self; null_name] @ dedicated_session_ids
 
 (*precluded files*)

@@ -85,7 +85,7 @@ and session_formulae = {
   session        : Session.session_iformula;
   proj_per_party : Session_projection.IPrjMap.emap;
   proj_per_chan  : Session_projection.ITPrjMap.emap;
-  shared_orders  : Session.IOrders.assrt list;
+  shared_orders  : Iformula.formula option;
 }
 
 and view_decl = 
@@ -647,7 +647,7 @@ let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been 
 let mk_session_formulae
   ?(prj=Session_projection.IPrjMap.mkEmpty())
   ?(tprj=Session_projection.ITPrjMap.mkEmpty())
-  ?(orders=[]) 
+  ?(orders=None) 
   sess =
   {
     session        = sess;

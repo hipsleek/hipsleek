@@ -41,6 +41,7 @@ module type Message_type = sig
   val mk_rflow_formula: ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> formula -> ho_param_formula
   val mk_rflow_formula_from_heap:  h_formula -> ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> VarGen.loc -> ho_param_formula
   val mk_formula: pure_formula -> arg -> session_kind -> node_kind -> formula
+  val mk_formula_of_pure_1: pure_formula -> VarGen.loc -> formula
   val mk_struc_formula: formula -> VarGen.loc -> struc_formula
   val mk_star: h_formula -> h_formula -> VarGen.loc -> h_formula
   val mk_star_formula: formula -> formula -> VarGen.loc -> formula

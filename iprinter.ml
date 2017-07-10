@@ -678,12 +678,12 @@ and string_of_session session_formulae =
     let pr_sess = string_of_session_iformula in
     let pr_pty = Session_projection.IPrjMap.string_of in
     let pr_chan = Session_projection.ITPrjMap.string_of in
-    let pr_assrt = pr_list Session.IOrders.string_of in 
+    let pr_orders = pr_opt !Iformula.print_formula in 
     "{ " ^ 
     "Session: " ^ (pr_sess session_formulae.session) ^ "\n" ^
     "Proj per party: " ^ (pr_pty session_formulae.proj_per_party) ^ "\n" ^
     "Proj per chan: " ^ (pr_chan session_formulae.proj_per_chan) ^ "\n" ^
-    "Shared orders: " ^ (pr_assrt session_formulae.shared_orders) ^
+    "Shared orders: " ^ (pr_orders session_formulae.shared_orders) ^
     " }"
   in
   Gen.map_opt_def "" 

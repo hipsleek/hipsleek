@@ -102,7 +102,7 @@ and session_formulae = {
   session        : Session.session_cformula option;
   proj_per_party : Session_projection.CPrjMap.emap;
   proj_per_chan  : Session_projection.CTPrjMap.emap;
-  shared_orders  : Session.COrders.assrt list;
+  shared_orders  : Cformula.formula option;
 }
 
 and view_decl = {
@@ -787,7 +787,7 @@ let imply_raw = ref (fun (ante: P.formula) (conseq: P.formula) -> false)
 let mk_session_formulae
   ?(prj=Session_projection.CPrjMap.mkEmpty())
   ?(tprj=Session_projection.CTPrjMap.mkEmpty())
-  ?(orders=[]) 
+  ?(orders=None) 
   sess =
   {
     session        = sess;
