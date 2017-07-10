@@ -2952,6 +2952,7 @@ let rebuild_node node unfold_fun is_prime_fun =
     end
   | _ -> None
 
+(* should this also be fired for orders? Its initial intent was to be fired for seq *)
 let rebuild_node node unfold_fun is_prime_fun =
   let pr1 = !CF.print_h_formula in
   let pr2 = pr_list !CF.print_rflow_formula in

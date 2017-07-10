@@ -1842,7 +1842,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
         formula_base_pos = pos}) ->  
       let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-      (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) 
+      (x_add normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) 
 
     | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
       let rf,l = x_add_1 rename_bound_vars_with_subst f in
@@ -1852,7 +1852,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       (*let () = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
       let uf = unfold_baref prog h p vp a fl v pos qvars ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-      (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*)
+      (x_add normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*)
     | Or ({formula_or_f1 = f1;
            formula_or_f2 = f2;
            formula_or_pos = pos}) ->
@@ -16624,7 +16624,7 @@ and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl lis
     (fun _ _ -> fn coers) f coers
 
 and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_formula = 
-  let n_form f = normalize_formula_w_coers 4 prog estate f coers in
+  let n_form f = x_add normalize_formula_w_coers 4 prog estate f coers in
   let rec helper f = match f with 
     | EList b-> EList (map_l_snd helper b)
     | ECase b-> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}
@@ -17244,7 +17244,7 @@ and normalize_entail_state_w_lemma_x prog (es:CF.entail_state) =
   (* create a tmp estate for normalizing *)
   let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
   let left_co = Lem_store.all_lemma # get_left_coercion in
-  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula 
+  CF.Ctx {es with CF.es_formula = x_add normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula 
                       left_co (* prog.prog_left_coercions *)}
 
 and normalize_entail_state_w_lemma prog (es:CF.entail_state) =

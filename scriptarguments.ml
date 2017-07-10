@@ -1010,6 +1010,8 @@ let common_arguments = [
   ("--old-norm-w-coerc", Arg.Set Globals.old_norm_w_coerc, "Allow old normalize formula with coercions (may loop)");
   ("--lem-en-norm", Arg.Set Globals.allow_lemma_norm, "Allow case-normalize for lemma");
   ("--lem-dis-norm", Arg.Clear Globals.allow_lemma_norm, "Disallow case-normalize for lemma");
+  ("--lem-en-norm-sm", Arg.Set Globals.allow_lem_norm, "Allow smart lemma norm");
+  ("--lem-dis-norm-sm", Arg.Clear Globals.allow_lem_norm, "Disallow smart lemma norm");
   ("--lem-en-fold", Arg.Set Globals.allow_lemma_fold, "Allow do_fold with right lemma");
   ("--en-rd-lemma", Arg.Set Globals.allow_rd_lemma, "Enable rd-lemma");
   ("--lem-dis-fold", Arg.Clear Globals.allow_lemma_fold, "Disable do_fold with right lemma");
