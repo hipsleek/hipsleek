@@ -14,6 +14,7 @@ module SProj = Session.IProjection
 module SBProj = Session.IProjection_base
 module STProj = Session.ITPProjection
 module SBTProj = Session.ITPProjection_base
+module SC = Sesscommons
 
 type role = SIOrd.role
 type chan = SIOrd.chan
@@ -32,13 +33,6 @@ struct
     | _ -> false
   let eq e1 e2 = failwith x_tbi
   let string_of f = SProj.string_of_session f
-  let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
-  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-  let mkSingleton (e:base) : t = failwith x_tbi
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
@@ -53,13 +47,6 @@ struct
     | _ -> false
   let eq e1 e2 = failwith x_tbi
   let string_of f = STProj.string_of_session f
-  let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
-  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-  let mkSingleton (e:base) : t = failwith x_tbi
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
@@ -91,28 +78,21 @@ struct
   let is_bot x = failwith x_tbi
   let eq e1 e2 = failwith x_tbi
   let string_of f = !Cformula.print_struc_formula f 
-  let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
-  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-  let mkSingleton (e:base) : t = failwith x_tbi
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
 
 (* used to save projection as session *)
-module PrjMap = OS.SMap(OS.IRole)(Projection_map)
-module TPrjMap = OS.SMap(OS.IChanRole)(TProjection_map)
+module PrjMap = SC.GSMap(OS.IRole)(Projection_map)
+module TPrjMap = SC.GSMap(OS.IChanRole)(TProjection_map)
 
 (* used to save projection as iformula *)
-module IPrjMap = OS.SMap(OS.IRole)(IProjection_map)
-module ITPrjMap = OS.SMap(OS.IChanRole)(IProjection_map)
+module IPrjMap = SC.GSMap(OS.IRole)(IProjection_map)
+module ITPrjMap = SC.GSMap(OS.IChanRole)(IProjection_map)
 
 (* used to save projection as cformula *)
-module CPrjMap = OS.SMap(OS.CRole)(CProjection_map)
-module CTPrjMap = OS.SMap(OS.CChanRole)(CProjection_map)
+module CPrjMap = SC.GSMap(OS.CRole)(CProjection_map)
+module CTPrjMap = SC.GSMap(OS.CChanRole)(CProjection_map)
 
 (* ====== Helpful functions ====== *)
 (* =============================== *)

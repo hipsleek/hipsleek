@@ -1341,7 +1341,6 @@ struct
   end;;
 
 module type Session_base =
-(* functor (Msg: Msg_common_type) -> *)
   functor (Msg: SC.Message_type) ->
 sig
   (* include Msg *)

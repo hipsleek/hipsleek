@@ -32,6 +32,7 @@ void A(Channel k1, Channel k2)
  requires k1::Chan{@S G<A@peer,B,C,k1@chan,k2>}<> * k1::Common{@S G@all<A,B,C,k1,k2>}<>
  ensures  k1::Chan{emp}<>;
 {
+ //assert k1::Common{emp}<>;
  send(k1,1);
  dprint;
  /* assert oev(A,id_23); */
