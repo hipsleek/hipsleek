@@ -482,6 +482,7 @@ let common_arguments = [
   ("--allow-array-inst", Arg.Set Globals.allow_array_inst,"Allow instantiation of existential arrays");
   ("--array-lp", Arg.Set Globals.array_lp,"infer array bounds");
   ("--array-templ", Arg.Set Globals.array_templ,"infer array bounds using template");
+  ("--arr-pre", Arg.Set Globals.array_pre,"infer pre-condition");
   ("--lazy-enum", Arg.Set Globals.array_lazy_enum,"array biabduction with lazy enumeration");
   ("--simp-enum", Arg.Clear Globals.array_lazy_enum,"array biabduction with simple enumeration");
   ("--print-ba-trace", Arg.Set Globals.array_ba_trace,"print proof trace for array biabduction");

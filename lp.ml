@@ -3,7 +3,7 @@ open VarGen
 open Globals
 open Gen
 open Cpure
-open Glpk
+(* open Glpk *)
 open Array
  
 

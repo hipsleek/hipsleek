@@ -1395,12 +1395,20 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     let new_conseq = CF.extract_cformula_from_struc_formula conseq in
       (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
     (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
-    let rs_frame = Arr_entailment5.array_entailment_with_frame_and_print new_ante new_conseq in
-    let () = y_binfo_pp (Cprinter.string_of_list_context rs_frame) in
+    (* let rs_frame = Arr_entailment5.array_entailment_with_frame_and_print new_ante new_conseq in *)
+    (* let () = y_binfo_pp (Cprinter.string_of_list_context rs_frame) in *)
     (* let _ = Arr_entailment_with_frame.mkArrF in *)
-    let () = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in
-    let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in
-    ((true,rs,[]),(ante,conseq))
+    (* let _ = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in *)
+    (* let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in *)
+    (* ((true,rs,[]),(ante,conseq)) *)    
+    let full_rs =
+      if !Globals.array_pre
+      then
+        Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
+      else
+        Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
+    in
+    (full_rs,(ante,conseq))
     (* The following line is for inference *)
     (* let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in *)
     (* ((true,rs,[]),(ante,conseq)) *)
