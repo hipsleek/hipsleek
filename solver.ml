@@ -1917,7 +1917,7 @@ and find_projection_x vdef sess_ann vars =
         | _ -> failwith "Unexpected behavior."
         end
       | _ -> failwith "Too many vars annotated with @peer or @chan." in
-      let proj = Session_projection.CTPrjMap.find_unsafe proj_emap key in
+      let proj = Session_projection.CTPrjMap.find proj_emap key in
       proj
   | None -> failwith "Session formulae expected."
 

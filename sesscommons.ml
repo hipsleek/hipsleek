@@ -118,8 +118,6 @@ end;;
 module type ELEMENT_TYPE =
 sig
   type t
-  val bot       : unit -> t
-  val is_bot    : t -> bool
   val string_of : t -> string
   val eq        : t -> t -> bool
   val add_elem  : t ->t -> t
@@ -132,6 +130,8 @@ sig
   include ELEMENT_TYPE
 
   type base
+  val bot       : unit -> t
+  val is_bot    : t -> bool
   val mk_base    : base -> t
   val mk_or      : t -> t -> t
   val mk_star    : t -> t -> t
@@ -216,10 +216,7 @@ struct
     with
       _ -> d
 
-  (* find element with key k in s *)
-  let find (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
-
-  let find_unsafe (s : emap) (k: key) : elem  = snd(List.find (fun (k0,_) -> eq k0 k) s)
+  let find (s : emap) (k: key) : elem  = snd(List.find (fun (k0,_) -> eq k0 k) s)
 
   let remove_duplicate_keys (keys:klist) : klist =
     let keys = List.fold_left (fun acc key ->
@@ -247,8 +244,10 @@ struct
     
   (* if key exists in emap, then replace its corresponding element *)
   let add_elem (e1:emap) (k:key) (el:elem) : emap =
-    let update_f =  if (Elem.is_bot (find e1 k)) then add_elem_dupl else update_elem in
-    update_f e1 k el
+    try 
+      let _ = find e1 k in (* only checks if the key exists in map *)
+      update_elem e1 k el
+    with Not_found -> add_elem_dupl e1 k el
 
   let map_data_ext (fnc: elem->'a) (map: emap) : (key * 'a) list  = List.map (fun (k,elem) -> (k, fnc elem)) map
 end;;
@@ -313,6 +312,10 @@ struct
   let merge_star (e1:emap) (e2:emap) :emap = merge_op STAR e1 e2
 
   let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map
+  
+  (* find element with key k in s *)
+  let find_safe (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
+
 
 end;;
 
