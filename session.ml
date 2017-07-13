@@ -377,6 +377,11 @@ module IForm = struct
 
   let mk_var id = (id, Unprimed)
 
+  let join_vars var1 var2 =
+    let id1, _ = var1 in
+    let id2, _ = var2 in
+    (id1 ^ "_" ^ id2, Unprimed)
+
   let is_base_formula formula =
     match formula with
       | F.Base f -> true
@@ -551,6 +556,10 @@ module CForm = struct
   let fresh_var (v:var): var = CP.fresh_spec_var v
   let eq_var = CP.eq_spec_var
   let mk_var id = CP.mk_spec_var id 
+
+  let join_vars var1 var2 = match var1, var2 with
+    | CP.SpecVar (t1, id1, prmd), CP.SpecVar (_, id2, _) ->
+        CP.SpecVar (t1, id1 ^ "_" ^ id2, prmd) (* keeps the primed argument from the first var *)
 
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in

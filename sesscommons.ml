@@ -77,6 +77,7 @@ module type Message_type = sig
   val fresh_var: var -> var
   val eq_var: var -> var -> bool
   val mk_var: ident -> var
+  val join_vars: var -> var -> var
   val append_tail: h_formula -> h_formula -> h_formula
   val join_conjunctions: pure_formula list -> pure_formula
 

@@ -274,7 +274,8 @@ struct
   module Ord = GOrders(Var(Form))
   
   (* Transform from assrt orders -> pure formula *)
-  let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos = (* failwith x_tbi *)
+  (* Orders relations are transformed to Sleek relations *)
+  let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos =
     match orders with
     | Ord.And and_type ->
          let and_head = and_type.Ord.and_assrt1 in
@@ -289,7 +290,8 @@ struct
          | Some rel_id ->
              let role = e.role in
              let suid = e.uid in
-             let p_form = Form.mk_exp_rel rel_id [(role, pos); (suid, pos)] pos in
+             let var = Form.join_vars role suid in 
+             let p_form = Form.mk_exp_rel rel_id [(var, pos)] pos in
              [p_form]
          | None -> []
          end
@@ -303,11 +305,11 @@ struct
                 let hbe_role2 = hbe.Ord.hbe_event2.role in
                 let hbe_suid1 = hbe.Ord.hbe_event1.uid in
                 let hbe_suid2 = hbe.Ord.hbe_event2.uid in
-                let var1 = (hbe_role1, pos) in
-                let var2 = (hbe_suid1, pos) in
-                let var3 = (hbe_role2, pos) in
-                let var4 = (hbe_suid2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
+                let var1 = Form.join_vars hbe_role1 hbe_suid1 in
+                let var2 = Form.join_vars hbe_role2 hbe_suid2 in
+                let pair1 = (var1, pos) in
+                let pair2 = (var2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [pair1; pair2] pos in
                 [p_form]
             | None -> []
             end
@@ -318,17 +320,22 @@ struct
                 let cbe_role2 = cbe.Ord.cbe_event2.role in
                 let cbe_suid1 = cbe.Ord.cbe_event1.uid in
                 let cbe_suid2 = cbe.Ord.cbe_event2.uid in
-                let var1 = (cbe_role1, pos) in
-                let var2 = (cbe_suid1, pos) in
-                let var3 = (cbe_role2, pos) in
-                let var4 = (cbe_suid2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
+                let var1 = Form.join_vars cbe_role1 cbe_suid1 in
+                let var2 = Form.join_vars cbe_role2 cbe_suid2 in
+                let pair1 = (var1, pos) in
+                let pair2 = (var2, pos) in
+                let p_form = Form.mk_exp_rel rel_id [pair1; pair2] pos in
                 [p_form]
             | None ->  []
             end
         | _ -> []
        end
      | _ -> []
+
+  let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos =
+    let pr = Ord.string_of in
+    let pr_out = pr_list !Form.print_pure_formula in 
+    Debug.no_1 "O2F.trans_orders_to_pure_formula" pr pr_out (fun _ -> trans_orders_to_pure_formula orders pos) orders
 
   let trans_orders_to_formula (orders:Ord.assrt list) pos =
     let orders_p_formula = List.fold_left (fun acc elem ->
