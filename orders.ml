@@ -286,7 +286,7 @@ struct
          [res]
      | Ord.Or or_type -> failwith "Disjunctions not allowed"
      | Ord.Event e ->
-         begin match !SC.event_rel_id with
+         begin match !SC.sevent_rel_id with
          | Some rel_id ->
              let role = e.role in
              let suid = e.uid in
@@ -299,7 +299,7 @@ struct
        begin
         match order with
         | Ord.HBe hbe ->
-            begin match !SC.hbp_rel_id with
+            begin match !SC.shbp_rel_id with
             | Some rel_id ->
                 let hbe_role1 = hbe.Ord.hbe_event1.role in
                 let hbe_role2 = hbe.Ord.hbe_event2.role in
@@ -314,7 +314,7 @@ struct
             | None -> []
             end
         | Ord.CBe cbe ->
-            begin match (!SC.cb_rel_id) with
+            begin match (!SC.scb_rel_id) with
             | Some rel_id ->
                 let cbe_role1 = cbe.Ord.cbe_event1.role in
                 let cbe_role2 = cbe.Ord.cbe_event2.role in
