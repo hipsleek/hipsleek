@@ -27,7 +27,7 @@ Guards:     [f#1cmap ; b#2cmap]: k#1 <_HB k#2 == A^1 <_HB B^2 /\ B^1 <_HB C^2
 
 
 /* lemma_norm self::Common{@S Assume{%P}<>}<> -> %P. */
-
+/*
 void A(Channel k1, Channel k2)
  requires k1::Chan{@S G<A@peer,B,C,k1@chan,k2>}<> * k1::Common{@S G@all<A,B,C,k1,k2>}<>
  ensures  k1::Chan{emp}<>;
@@ -35,7 +35,6 @@ void A(Channel k1, Channel k2)
  //assert k1::Common{emp}<>;
  send(k1,1);
  dprint;
- /* assert oev(A,id_23); */
  // assert  ohbp(B,id_22,B,id_21) & ocb(B,id_21,C,id_21) & ocb(A,id_22,B,id_22);
 }
 
@@ -66,3 +65,4 @@ void C(Channel k1, Channel k2)
  int x = receive(k2);
  dprint;
 }
+*/

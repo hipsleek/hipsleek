@@ -25,12 +25,7 @@ type chan = SIOrd.chan
 module Projection_map = 
 struct
   type t = SProj.session 
-  type base = SProj.t
 
-  let bot () = SProj.SEmp
-  let is_bot x = match x with
-    | SProj.SEmp -> true
-    | _ -> false
   let eq e1 e2 = failwith x_tbi
   let string_of f = SProj.string_of_session f
   let add_elem (old_e:t) (new_e:t) : t  = new_e
@@ -39,12 +34,7 @@ end;;
 module TProjection_map =
 struct
   type t = STProj.session
-  type base = STProj.t
 
-  let bot () = STProj.SEmp
-  let is_bot x = match x with
-    | STProj.SEmp -> true
-    | _ -> false
   let eq e1 e2 = failwith x_tbi
   let string_of f = STProj.string_of_session f
   let add_elem (old_e:t) (new_e:t) : t  = new_e
@@ -53,29 +43,16 @@ end;;
 module IProjection_map =
 struct
   type t = Iformula.struc_formula
-  type base = Iformula.struc_formula
 
-  let bot () = failwith x_tbi 
-  let is_bot x = failwith x_tbi
   let eq e1 e2 = failwith x_tbi
   let string_of f = !Iformula.print_struc_formula f 
-  let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
-  let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
-  let merge_star (f1:t) (f2:t) : t = failwith x_tbi
-  let mkSingleton (e:base) : t = failwith x_tbi
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
 module CProjection_map =
 struct
   type t = Cformula.struc_formula
-  type base = Cformula.struc_formula
 
-  let bot () = failwith x_tbi 
-  let is_bot x = failwith x_tbi
   let eq e1 e2 = failwith x_tbi
   let string_of f = !Cformula.print_struc_formula f 
   let add_elem (old_e:t) (new_e:t) : t  = new_e

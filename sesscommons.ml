@@ -177,7 +177,6 @@ sig
     
   val add : emap-> key -> elem -> emap
   val find: emap -> key -> elem
-  val find_unsafe: emap -> key -> elem
   val get_keys : emap -> klist
   val get_data : emap -> elist
 

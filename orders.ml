@@ -332,7 +332,7 @@ struct
        end
      | _ -> []
 
-  let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos =
+  let trans_orders_to_pure_formula (orders:Ord.assrt) pos =
     let pr = Ord.string_of in
     let pr_out = pr_list !Form.print_pure_formula in 
     Debug.no_1 "O2F.trans_orders_to_pure_formula" pr pr_out (fun _ -> trans_orders_to_pure_formula orders pos) orders

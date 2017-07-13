@@ -192,7 +192,7 @@ module BOUNDARY_ELEMENT =
     let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
-module Orders_list (Var: Orders.VAR_TYPE) (* (Ord: Orders.GORDERS_TYPE)  *) =
+module Orders_list (Var: Orders.VAR_TYPE) =
 struct
   module Ord = Orders.GOrders(Var)
   type t = Ord.assrt list
@@ -330,10 +330,10 @@ let merge_set (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : ConstrMap.
   let rmap2, cmap2 = b2 in
   let keys = RMap.union_keys (RMap.get_keys rmap1) (RMap.get_keys rmap2) in
   let () = y_ninfo_hp (add_str "keys" (pr_list IRole.string_of)) keys in
-  let assumpt = List.map (fun key -> RMerger.merge (RMap.find rmap1 key) (RMap.find rmap2 key) )  keys in
+  let assumpt = List.map (fun key -> RMerger.merge (RMap.find_safe rmap1 key) (RMap.find_safe rmap2 key) )  keys in
   let assumpt = x_add_1 ConstrMap.flatten assumpt in
   let keys = CMap.union_keys (CMap.get_keys cmap1) (CMap.get_keys cmap2) in
-  let guards = List.map (fun key -> CMerger.merge (CMap.find cmap1 key) (CMap.find cmap2 key) )  keys in
+  let guards = List.map (fun key -> CMerger.merge (CMap.find_safe cmap1 key) (CMap.find_safe cmap2 key) )  keys in
   let guards = x_add_1 ConstrMap.flatten guards in
   (* flatten guards and assumptions  *)
   (assumpt, guards)
@@ -757,8 +757,8 @@ let insert_orders view prot params fnc_i2c =
         | SProt.Base t -> 
             let uid = SBProt.get_uid t in 
             let loc = SBProt.get_base_pos t in
-            let assume = ConstrMap.find amap uid in
-            let guard  = ConstrMap.find gmap uid in
+            let assume = ConstrMap.find_safe amap uid in
+            let guard  = ConstrMap.find_safe gmap uid in
             (* creates a sequence with order assumptions and guards *)
             let create_sequence orders name sess_pred_kind prot_session = match orders with
               | [] -> prot_session
