@@ -605,7 +605,6 @@ let array_entailment_biabduction lhs rhs =
   let () = print_endline (str_frameFormula f) in
   f
 ;;
-  
                                 
 
             
