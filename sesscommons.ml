@@ -263,7 +263,7 @@ sig
   val merge_sor  : emap -> emap -> emap
   val merge_star : emap -> emap -> emap 
   val map_data   : (elem -> elem) -> emap -> emap
-
+  val find_safe  : emap -> key -> elem
 end;;
 
 module SMap
@@ -293,6 +293,9 @@ struct
     let pr = string_of in
     Debug.no_1 "flatten" (pr_list pr) pr flatten e0
   
+  (* find element with key k in s *)
+  let find_safe (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
+
   type op = SEQ | SOR | STAR
 
   (* generic merge emap function *)
@@ -303,7 +306,7 @@ struct
       | SOR  -> Elem.merge_sor
       | STAR -> Elem.merge_star in
     List.fold_left (fun map (key,elem) ->
-        let elem1 = find map key in (* \bot or some element *)
+        let elem1 = find_safe map key in (* \bot or some element *)
         let elem1 = (merge_elem op) elem1 elem in
         add_elem map key elem1) e1 e2 
     
@@ -313,10 +316,6 @@ struct
 
   let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map
   
-  (* find element with key k in s *)
-  let find_safe (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
-
-
-end;;
+  end;;
 
 
