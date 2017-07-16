@@ -1400,7 +1400,8 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     (* let _ = Arr_entailment_with_frame.mkArrF in *)
     (* let _ = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in *)
     (* let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in *)
-    (* ((true,rs,[]),(ante,conseq)) *)    
+    (* ((true,rs,[]),(ante,conseq)) *)
+    let _ = Arr_entailment_with_bi_abduction.array_entailment_biabduction new_ante new_conseq in
     let full_rs =
       if !Globals.array_pre
       then

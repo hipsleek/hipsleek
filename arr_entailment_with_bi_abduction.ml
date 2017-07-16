@@ -91,6 +91,10 @@ type biabFormula =
   | BNot of biabFormula
 ;;
 
+let mkBBaseNeg plst =
+  BBaseNeg plst
+;;
+
 let rec str_biabFormula f =  
   match f with
   | FBase (plst,hlst) ->     
@@ -173,7 +177,7 @@ let array_entailment_biabduction lhs rhs =
   in
 
   let print_and_return f indent =
-    let () = print_endline (print_indent indent ("=>"^(str_frameFormula f))) in
+    (* let () = print_endline (print_indent indent ("=>"^(str_frameFormula f))) in *)
     f
   in
 
@@ -217,7 +221,7 @@ let array_entailment_biabduction lhs rhs =
     let () = print_endline ("bi_abduction: "^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
-      print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent
+      print_and_return (BExists (vset, (mkBBaseNeg lhs_p))) indent
     else
       match lhs_h, rhs_h with
       | (Aseg_p (la,lb))::ltail, _ ->
@@ -230,15 +234,15 @@ let array_entailment_biabduction lhs rhs =
          let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset frame antiframe (indent+1) in
          print_and_return (BOr [f1;f2]) indent
       | [], [] ->
-         print_and_return (BExists (vset, BBaseImply (lhs_p,rhs_p,List.rev frame,List.rev antiframe)))
+         print_and_return (BExists (vset, BBaseImply (lhs_p,rhs_p,List.rev frame,List.rev antiframe))) indent
                           
       | [], _ ->
-         let f = helper [] [] vset frame (rhs_h@antiframe) (indent+1) in
-         print_and_return f
+         let f = helper lhs (rhs_p,[]) vset frame (rhs_h@antiframe) (indent+1) in
+         print_and_return f indent
 
-      | [], _ ->
-         let f = helper [] [] vset (lhs_h@frame) antiframe (indent+1) in
-         print_and_return f
+      | _, [] ->
+         let f = helper (lhs_p,[]) rhs vset (lhs_h@frame) antiframe (indent+1) in
+         print_and_return f indent
                           
       | lh::ltail, rh::rtail ->
          ( match lh, rh with
@@ -278,14 +282,11 @@ let array_entailment_biabduction lhs rhs =
                 failwith "AsegNE v.s Gap: Not aligned"
 
            | Pointsto_p (ls,lv), Gap_p (ra,rb) ->
-              if is_same_sv la ra
+              if is_same_sv ls ra
               then
-                let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in            
-                let f1 = helper ((mkLtSv lb rb)::lhs_p, ltail) (rhs_p, rtail) vsetprime (lh::frame) antiframe (indent+1) in
-                let f2 = helper ((mkGteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime ((mkAsegNE_p la rb)::frame) antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2])) indent
+                failwith "TO BE IMPLEMENTED"                         
               else
-                failwith "AsegNE v.s Gap: Not aligned"                         
+                failwith "TO BE IMPLEMENTED"
 
            | Gap_p (la,lb), AsegNE_p (ra,rb)->
               if is_same_sv la ra
@@ -293,7 +294,7 @@ let array_entailment_biabduction lhs rhs =
                 let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in            
                 let f1 = helper ((mkGtSv lb rb)::lhs_p, ltail) (rhs_p, rtail) vsetprime frame ((mkAsegNE_p la rb)::antiframe) (indent+1) in
                 let f2 = helper ((mkLteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime frame ((mkAsegNE_p la lb)::antiframe) (indent+1) in
-                print_and_return (FExists (uset, FAnd [f1;f2])) indent
+                print_and_return (BExists (uset, BAnd [f1;f2])) indent
               else
                 failwith "AsegNE v.s Gap: Not aligned"                         
 
@@ -313,33 +314,35 @@ let array_entailment_biabduction lhs rhs =
                 print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent
 
            | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
-              if is_same_sv ls ra
-              then
-                let fresh_c = global_get_new_var () in
-                let fresh_u = global_get_new_var () in
-                print_and_return (helper lhs
-                                         ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@ltail))
-                                         ([fresh_c;fresh_u]@vset) k (indent+1)) indent
-              else
-                let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] vset in
-                let f1 = helper ((mkEqSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p ls rb)::rtail) vsetprime frame antiframe (indent+1) in
-                let f2 = helper ((mkLtSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkGap_p ls ra)::rhs_h) vsetprime frame antiframe (indent+1) in
-                let f3 = helper ((mkGtSv ls ra)::lhs_p, (mkGap_p ra ls)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent
+              failwith "TO BE IMPLEMENTED"
+              (* if is_same_sv ls ra *)
+              (* then *)
+              (*   let fresh_c = global_get_new_var () in *)
+              (*   let fresh_u = global_get_new_var () in *)
+              (*   print_and_return (helper lhs *)
+              (*                            ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@ltail)) *)
+              (*                            ([fresh_c;fresh_u]@vset) k (indent+1)) indent *)
+              (* else *)
+              (*   let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] vset in *)
+              (*   let f1 = helper ((mkEqSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p ls rb)::rtail) vsetprime frame antiframe (indent+1) in *)
+              (*   let f2 = helper ((mkLtSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkGap_p ls ra)::rhs_h) vsetprime frame antiframe (indent+1) in *)
+              (*   let f3 = helper ((mkGtSv ls ra)::lhs_p, (mkGap_p ra ls)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in *)
+              (*   print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent *)
 
            | _, Gap_p _ ->
-              print_and_return (helper lhs (rhs_p,rtail) vset k (indent+1)) indent
+              failwith "TO BE IMPLEMENTED"
+              (* print_and_return (helper lhs (rhs_p,rtail) vset k (indent+1)) indent *)
                                
            | Gap_p _,_ -> failwith "Gap_p in LHS"
          )
   in
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
-    FForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] 0)
+    BForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] [] 0)
   in
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
   let f = helper_entry (aPredF_to_asegF (transAnte#formula_to_general_formula)) (aPredF_to_asegF (transConseq#formula_to_general_formula)) in
-  let () = print_endline (str_frameFormula f) in
+  (* let () = print_endline (str_frameFormula f) in *)
   f
 ;;
   
@@ -639,6 +642,9 @@ let array_entailment_classical_infer_interface lhs rhs =
   let f = frameFormula_to_pure (array_entailment_classical lhs rhs) in
   (true,mkCtxWithPure (simplify f),[])
 ;;
+
+
+  
   
 let array_entailment_frame_interface lhs rhs =
   let f = array_entailment_frame lhs rhs in
