@@ -141,8 +141,35 @@ let mkMin_raw m elst =
           (mkLte m item)::r) [] elst))
 ;;
 
+let mkEqSv a b =
+  mkEq (mkVar a) (mkVar b)
+;;
+
+let mkNeqSv a b =
+  mkNeq (mkVar a) (mkVar b)
+;;  
+
+let mkLtSv a b =
+  mkLt (mkVar a) (mkVar b)
+;;
+
+let mkLteSv a b =
+  mkLte (mkVar a) (mkVar b)
+;;
+
+let mkGtSv a b =
+  mkGt (mkVar a) (mkVar b)
+;;  
+
+let mkGteSv a b =
+  mkGte (mkVar a) (mkVar b)
+;;
+  
+
 (* end of Utility on formula and exp  *)
 
+
+  
   
 let map_op_list (f:('a -> 'b)) (lst:('a option list)) =
   List.fold_right
