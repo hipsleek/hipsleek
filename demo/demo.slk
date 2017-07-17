@@ -13,13 +13,16 @@ print residue.
 checkentail x=null |- x::ll<n>.
 print residue.
 
+checkentail x=null |- x::ll<n> & n>0.
+print residue.
+
 checkentail x::node<_,null> |- x::ll<n>.
 print residue.
 
 checkentail x::ll<n> |- x::node<_,p> .
 print residue.
 
-infer[x] x::ll<n> |- x::node<_,p> .
+infer[n] x::ll<n> |- x::node<_,p> .
 print residue.
 
 infer[x] x::ll<n> |- x::node<_,null> .
