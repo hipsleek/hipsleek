@@ -185,7 +185,7 @@ let rec str_frameFormula f =
 let rec str_biabFormula f =  
   match f with
   | BBaseNeg plst ->
-     "{Not "^(str_list !str_pformula plst)^"}"
+     "{NOT "^(str_list !str_pformula plst)^"}"
   | BBaseImply (lplst, rplst, frame, antiframe) ->
      "{"^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^"}"
   | BExists (vset, nf) ->
