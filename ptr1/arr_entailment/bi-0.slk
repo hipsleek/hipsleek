@@ -56,6 +56,7 @@ expect Valid.
 
 
 
+
 /*
 // 2
 infer[@arr_ba]  base::Aseg<1,2>  |- base::Aseg<1,2>.
