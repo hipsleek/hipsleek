@@ -2816,6 +2816,7 @@ infer_type:
    | `INFER_AT_FLOW -> INF_FLOW
    | `INFER_AT_BOUND -> INF_ARR_BOUND
    | `INFER_AT_ARRBA -> INF_ARR_BIABDUCTION
+   | `INFER_AT_EN -> INF_ARR_ENTAILMENT
    ]];
 
 infer_id:

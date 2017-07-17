@@ -140,8 +140,14 @@ let array_entailment_classical lhs rhs =
     (uset,vsetprime)
   in
 
-  let print_and_return f indent =
-    let () = print_endline (print_indent indent ("=>"^(str_frameFormula f))) in
+  let print_and_return f indent =    
+    let () =
+      if !Globals.array_verbose
+      then
+        print_endline (print_indent indent ("=>"^(str_frameFormula f)))
+      else
+        ()
+    in
     f
   in
 
@@ -182,7 +188,13 @@ let array_entailment_classical lhs rhs =
   in
     
   let rec helper ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset k indent =
-    let () = print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |"^(str_list !str_sv vset)^"- "^(str_asegplusF rhs)))) in
+    let () =
+      if !Globals.array_verbose
+      then
+        print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |"^(str_list !str_sv vset)^"- "^(str_asegplusF rhs))))
+      else
+        ()
+    in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
       print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent
@@ -270,7 +282,7 @@ let array_entailment_classical lhs rhs =
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
   let f = helper_entry (aPredF_to_asegF (transAnte#formula_to_general_formula)) (aPredF_to_asegF (transConseq#formula_to_general_formula)) in
-  let () = print_endline (str_frameFormula f) in
+  (* let () = print_endline (str_frameFormula f) in *)
   f
 ;;
   
@@ -701,14 +713,15 @@ let print_and_return f indent =
     then
       let () =
         if !Globals.array_verbose (* --verbose-arr *)
-        then print_endline (print_indent indent ("=o> "^(!str_pformula f )))
+        then print_endline (print_indent indent ("=o> "^(!str_pformula sf )))
         else ()
       in
-      print_endline (print_indent indent ("==> "^(!str_pformula sf )))
+      ()
+      (* print_endline (print_indent indent ("==> "^(!str_pformula sf ))) *)
     else
       ()
   in
-  f                         
+  sf                         
 ;;
 
 (* input: heap formulas (with AsegNE only), output: a pure formula with sorted information  *)
@@ -861,7 +874,14 @@ let array_entailment lhs rhs =
   in
 
   let rec helper_qf ((lhs_e,lhs_p,lhs_h) as lhs) rhs vset indent =
-    let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in
+    let () =
+      if !Globals.array_verbose
+      then 
+        print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs)))
+      else
+        ()
+    in
+    
     match rhs with
     | [(rhs_e,rhs_p,rhs_h)] ->
        ( match lhs_h, rhs_h with

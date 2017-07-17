@@ -122,10 +122,11 @@ let print_and_return f indent =
     then
       let () =
         if !Globals.array_verbose (* --verbose-arr *)
-        then print_endline (print_indent indent ("=o> "^(!str_pformula f )))
+        then print_endline (print_indent indent ("=o> "^(!str_pformula sf )))
         else ()
       in
-      print_endline (print_indent indent ("==> "^(!str_pformula sf )))
+      ()
+      (* print_endline (print_indent indent ("==> "^(!str_pformula sf ))) *)
     else
       ()
   in
@@ -282,7 +283,13 @@ let array_entailment lhs rhs =
   in
 
   let rec helper_qf ((lhs_e,lhs_p,lhs_h) as lhs) rhs vset indent =
-    let () = print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs))) in
+    let () =
+      if !Globals.array_verbose
+      then
+        print_endline (print_indent indent ((str_arrF lhs)^" |- "^(str_disj_arrF rhs)))
+      else
+        ()
+    in
     match rhs with
     | [(rhs_e,rhs_p,rhs_h)] ->
        ( match lhs_h, rhs_h with

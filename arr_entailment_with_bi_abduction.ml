@@ -95,6 +95,19 @@ let mkBBaseNeg plst =
   BBaseNeg plst
 ;;
 
+let mkBBaseImply lplst rplst frame antiframe =
+  BBaseImply (lplst, rplst, frame, antiframe) 
+;;
+
+let mkBAnd flst =
+  BAnd (List.fold_left
+          (fun r item ->
+            match item with
+            | BAnd flst1 -> flst1@r
+            | _ -> item::r )
+          [] flst)
+;;
+  
 let rec str_biabFormula f =  
   match f with
   | FBase (plst,hlst) ->     
@@ -169,6 +182,29 @@ let rec str_frameFormula f =
      "not("^(str_frameFormula nf)^")"
 ;;
 
+let rec str_biabFormula f =  
+  match f with
+  | BBaseNeg plst ->
+     "{Not "^(str_list !str_pformula plst)^"}"
+  | BBaseImply (lplst, rplst, frame, antiframe) ->
+     "{"^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^"}"
+  | BExists (vset, nf) ->
+     if List.length vset = 0
+     then str_biabFormula nf
+     else "Exists "^(str_list !str_sv vset)^": "^(str_biabFormula nf)
+  | BForall (vset, nf) ->
+     if List.length vset = 0
+     then str_biabFormula nf
+     else "Forall "^(str_list !str_sv vset)^": "^(str_biabFormula nf)
+  | BAnd flst ->
+     str_list_delimeter str_biabFormula flst "/\\" ""
+  | BOr flst ->
+     str_list_delimeter str_biabFormula flst "\\/" ""  
+  | BNot nf ->
+     "not("^(str_biabFormula nf)^")"
+;;
+  
+
 let array_entailment_biabduction lhs rhs =
   let mkUsetandVsetprime set vset =
     let uset = List.filter (fun item -> List.exists (fun item1 -> is_same_sv item item1) set)  vset in
@@ -177,7 +213,7 @@ let array_entailment_biabduction lhs rhs =
   in
 
   let print_and_return f indent =
-    (* let () = print_endline (print_indent indent ("=>"^(str_frameFormula f))) in *)
+    let () = print_endline (print_indent indent ("=>"^(str_biabFormula f))) in
     f
   in
 
@@ -218,7 +254,7 @@ let array_entailment_biabduction lhs rhs =
   in
   
   let rec helper ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset frame antiframe indent =
-    let () = print_endline ("bi_abduction: "^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
+    let () = print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
       print_and_return (BExists (vset, (mkBBaseNeg lhs_p))) indent
@@ -228,7 +264,7 @@ let array_entailment_biabduction lhs rhs =
          let (uset,vsetprime) = mkUsetandVsetprime [la;lb] vset in            
          let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime frame antiframe (indent+1) in
          let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime frame antiframe (indent+1) in
-         print_and_return (BExists (uset,BAnd [f1;f2])) indent
+         print_and_return (BExists (uset,mkBAnd [f1;f2])) indent
       | _ ,(Aseg_p (a,b))::rtail ->
          let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset frame antiframe (indent+1) in
          let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset frame antiframe (indent+1) in
@@ -255,7 +291,7 @@ let array_entailment_biabduction lhs rhs =
               let f1 = helper ((mkEqSv ls rs)::lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vsetprime frame antiframe (indent+1) in
               let f2 = helper ((mkLtSv ls rs)::lhs_p, ltail) rhs vsetprime (lh::frame) antiframe (indent+1) in
               let f3 = helper ((mkGtSv ls rs)::lhs_p, lhs_h) (rhs_p,rtail) vsetprime frame (rh::antiframe) (indent+1) in
-              print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent
+              print_and_return (BExists (uset, mkBAnd [f1;f2;f3])) indent
 
            | AsegNE_p (la,lb), AsegNE_p (ra,rb) ->              
               if is_same_sv la ra
@@ -263,13 +299,13 @@ let array_entailment_biabduction lhs rhs =
                 let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in
                 let f1 = helper ((mkGtSv rb lb)::lhs_p,ltail) (rhs_p, (mkAsegNE_p lb rb)::rtail) vsetprime frame antiframe (indent+1) in
                 let f2 = helper ((mkLteSv rb lb)::lhs_p,(mkAseg_p rb lb)::ltail) (rhs_p, rtail) vsetprime frame antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2])) indent
+                print_and_return (BExists (uset, mkBAnd [f1;f2])) indent
               else
                 let (uset,vsetprime) = mkUsetandVsetprime [la;ra] vset in
                 let f1 = helper ((mkEqSv la ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p la rb)::rtail) vsetprime frame antiframe (indent+1) in
                 let f2 = helper ((mkLtSv la ra)::lhs_p, lhs_h) (rhs_p, (mkGap_p la ra)::rhs_h) vsetprime frame antiframe (indent+1) in
                 let f3 = helper ((mkGtSv la ra)::lhs_p, (mkGap_p ra la)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent
+                print_and_return (BExists (uset, mkBAnd [f1;f2;f3])) indent
                                  
            | AsegNE_p (la,lb), Gap_p (ra,rb) ->
               if is_same_sv la ra
@@ -277,7 +313,7 @@ let array_entailment_biabduction lhs rhs =
                 let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in            
                 let f1 = helper ((mkLtSv lb rb)::lhs_p, ltail) (rhs_p, rtail) vsetprime (lh::frame) antiframe (indent+1) in
                 let f2 = helper ((mkGteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime ((mkAsegNE_p la rb)::frame) antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2])) indent
+                print_and_return (BExists (uset, mkBAnd [f1;f2])) indent
               else
                 failwith "AsegNE v.s Gap: Not aligned"
 
@@ -294,7 +330,7 @@ let array_entailment_biabduction lhs rhs =
                 let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in            
                 let f1 = helper ((mkGtSv lb rb)::lhs_p, ltail) (rhs_p, rtail) vsetprime frame ((mkAsegNE_p la rb)::antiframe) (indent+1) in
                 let f2 = helper ((mkLteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime frame ((mkAsegNE_p la lb)::antiframe) (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2])) indent
+                print_and_return (BExists (uset, mkBAnd [f1;f2])) indent
               else
                 failwith "AsegNE v.s Gap: Not aligned"                         
 
@@ -311,7 +347,7 @@ let array_entailment_biabduction lhs rhs =
                 let f1 = helper ((mkEqSv la rs)::lhs_p, lhs_h) (rhs_p, (mkPointsto_p la rv)::rtail) vsetprime frame antiframe (indent+1) in
                 let f2 = helper ((mkLtSv la rs)::lhs_p, lhs_h) (rhs_p, (mkGap_p la rs)::rhs_h) vsetprime frame antiframe (indent+1) in
                 let f3 = helper ((mkGtSv la rs)::lhs_p, (mkGap_p rs la)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in
-                print_and_return (BExists (uset, BAnd [f1;f2;f3])) indent
+                print_and_return (BExists (uset, mkBAnd [f1;f2;f3])) indent
 
            | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
               failwith "TO BE IMPLEMENTED"
@@ -643,6 +679,11 @@ let array_entailment_classical_infer_interface lhs rhs =
   (true,mkCtxWithPure (simplify f),[])
 ;;
 
+let array_entailment_biabduction_interface lhs rhs =
+  let f = array_entailment_biabduction lhs rhs in
+  (true, mkEmptySuccCtx (),[])
+;;
+
 
   
   
@@ -657,7 +698,7 @@ let array_entailment_frame_interface lhs rhs =
 ;;
 
 
-let array_entailment_biabduction lhs rhs =
+let array_entailment_biabduction_old lhs rhs =
   let mkUsetandVsetprime set vset =
     let uset = List.filter (fun item -> List.exists (fun item1 -> is_same_sv item item1) set)  vset in
     let vsetprime = List.filter (fun item -> not (List.exists (fun item1 -> is_same_sv item item1) uset)) vset in
@@ -706,7 +747,7 @@ let array_entailment_biabduction lhs rhs =
   in
   
   let rec helper ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset k indent =
-    let () = print_endline ("bi_abduction: "^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
+    let () = print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
       print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent

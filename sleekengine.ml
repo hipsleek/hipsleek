@@ -1386,7 +1386,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     ) ivars in
   (* let ante,conseq = Cfutil.normalize_ex_quans_conseq !cprog ante conseq in *)
   
-  if List.mem INF_ARR_BIABDUCTION itype                
+  if List.mem INF_ARR_ENTAILMENT itype                
   then
     let () = y_tinfo_pp "array entailment" in
     let new_ante = ante in
@@ -1401,7 +1401,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     (* let _ = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in *)
     (* let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in *)
     (* ((true,rs,[]),(ante,conseq)) *)
-    let _ = Arr_entailment_with_bi_abduction.array_entailment_biabduction new_ante new_conseq in
+    (* let _ = Arr_entailment_with_bi_abduction.array_entailment_biabduction new_ante new_conseq in *)
     let full_rs =
       if !Globals.array_pre
       then
@@ -1420,10 +1420,18 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     (* else *)
     (*   Arr_biabduction.enumerate_with_order new_ante new_conseq *)
   else
-    let () = y_tinfo_pp "not array entailment" in
-    let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
-    (* CF.residues := Some (rs, res); *)
-    ((res, rs,v_hp_rel), (ante,conseq))
+    if List.mem INF_ARR_BIABDUCTION itype
+    then
+      let new_ante = ante in
+      let new_conseq = CF.extract_cformula_from_struc_formula conseq in
+      let full_rs = Arr_entailment_with_bi_abduction.array_entailment_biabduction_interface new_ante new_conseq in
+      (full_rs,(ante,conseq))
+    else
+      
+      let () = y_tinfo_pp "not array entailment" in
+      let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
+      (* CF.residues := Some (rs, res); *)
+      ((res, rs,v_hp_rel), (ante,conseq))
 
 let run_infer_one_pass itype ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
