@@ -167,7 +167,7 @@ struct
       | Or  a -> (helper a.or_assrt1) ^ " or " ^ (helper a.or_assrt2)
       | Impl a -> (string_of_event a.impl_event) ^ "=>" ^ (helper a.impl_assrt)
       | Bot -> "Bot"
-      | NoAssrt -> ""
+      | NoAssrt -> "NoAssrt"
     in helper e1
 
   let mk_hbe e1 e2 = Order (HBe {hbe_event1 = e1; hbe_event2 = e2})
@@ -273,77 +273,80 @@ module Orders2Form (Form: SC.Message_type) =
 struct
   module Ord = GOrders(Var(Form))
   
-  (* Transform from assrt orders -> pure formula *)
-  (* Orders relations are transformed to Sleek relations *)
+  (* Transform assrt orders -> pure formula *)
   let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos =
     match orders with
     | Ord.And and_type ->
-         let and_head = and_type.Ord.and_assrt1 in
-         let and_tail = and_type.Ord.and_assrt2 in
-         let form1 = trans_orders_to_pure_formula and_head pos in
-         let form2 = trans_orders_to_pure_formula and_tail pos in
-         let res = Form.join_conjunctions (form1@form2) in
-         [res]
-     | Ord.Or or_type -> failwith "Disjunctions not allowed"
-     | Ord.Event e ->
-         begin match !SC.sevent_rel_id with
-         | Some rel_id ->
-             let role = e.role in
-             let suid = e.uid in
-             let var = Form.join_vars role suid in 
-             let p_form = Form.mk_exp_rel rel_id [(var, pos)] pos in
-             [p_form]
-         | None -> []
-         end
-     | Ord.Order order ->
-       begin
-        match order with
-        | Ord.HBe hbe ->
-            begin match !SC.shbp_rel_id with
-            | Some rel_id ->
-                let hbe_role1 = hbe.Ord.hbe_event1.role in
-                let hbe_role2 = hbe.Ord.hbe_event2.role in
-                let hbe_suid1 = hbe.Ord.hbe_event1.uid in
-                let hbe_suid2 = hbe.Ord.hbe_event2.uid in
-                let var1 = Form.join_vars hbe_role1 hbe_suid1 in
-                let var2 = Form.join_vars hbe_role2 hbe_suid2 in
-                let pair1 = (var1, pos) in
-                let pair2 = (var2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [pair1; pair2] pos in
-                [p_form]
-            | None -> []
-            end
-        | Ord.CBe cbe ->
-            begin match (!SC.scb_rel_id) with
-            | Some rel_id ->
-                let cbe_role1 = cbe.Ord.cbe_event1.role in
-                let cbe_role2 = cbe.Ord.cbe_event2.role in
-                let cbe_suid1 = cbe.Ord.cbe_event1.uid in
-                let cbe_suid2 = cbe.Ord.cbe_event2.uid in
-                let var1 = Form.join_vars cbe_role1 cbe_suid1 in
-                let var2 = Form.join_vars cbe_role2 cbe_suid2 in
-                let pair1 = (var1, pos) in
-                let pair2 = (var2, pos) in
-                let p_form = Form.mk_exp_rel rel_id [pair1; pair2] pos in
-                [p_form]
-            | None ->  []
-            end
-        | _ -> []
-       end
-     | _ -> []
+        let and_head = and_type.Ord.and_assrt1 in
+        let and_tail = and_type.Ord.and_assrt2 in
+        let form1 = x_add trans_orders_to_pure_formula and_head pos in
+        let form2 = x_add trans_orders_to_pure_formula and_tail pos in
+        let form_res = Form.join_conjunctions (form1@form2) in
+        [form_res]
+    | Ord.Or or_type -> failwith "Disjunctions not allowed"
+    | Ord.Event e ->
+        begin match !SC.event_rel_id with
+        | Some rel_id ->
+            let role = e.role in
+            let suid = e.uid in
+            let p_form = Form.mk_exp_rel rel_id [(role, pos); (suid, pos)] pos in
+            [p_form]
+        | None -> []
+        end
+    | Ord.Order order ->
+      begin
+       match order with
+       | Ord.HBe hbe ->
+           begin match !SC.hbp_rel_id with
+           | Some rel_id ->
+               let hbe_role1 = hbe.Ord.hbe_event1.role in
+               let hbe_role2 = hbe.Ord.hbe_event2.role in
+               let hbe_suid1 = hbe.Ord.hbe_event1.uid in
+               let hbe_suid2 = hbe.Ord.hbe_event2.uid in
+               let var1 = (hbe_role1, pos) in
+               let var2 = (hbe_suid1, pos) in
+               let var3 = (hbe_role2, pos) in
+               let var4 = (hbe_suid2, pos) in
+               let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
+               [p_form]
+           | None -> []
+           end
+       | Ord.CBe cbe ->
+           begin match (!SC.cb_rel_id) with
+           | Some rel_id ->
+               let cbe_role1 = cbe.Ord.cbe_event1.role in
+               let cbe_role2 = cbe.Ord.cbe_event2.role in
+               let cbe_suid1 = cbe.Ord.cbe_event1.uid in
+               let cbe_suid2 = cbe.Ord.cbe_event2.uid in
+               let var1 = (cbe_role1, pos) in
+               let var2 = (cbe_suid1, pos) in
+               let var3 = (cbe_role2, pos) in
+               let var4 = (cbe_suid2, pos) in
+               let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
+               [p_form]
+           | None -> []
+           end
+       | _ -> []
+      end
+    | _ -> []
 
   let trans_orders_to_pure_formula (orders:Ord.assrt) pos =
     let pr = Ord.string_of in
-    let pr_out = pr_list !Form.print_pure_formula in 
+    let pr_out = pr_list !Form.print_pure_formula in
     Debug.no_1 "O2F.trans_orders_to_pure_formula" pr pr_out (fun _ -> trans_orders_to_pure_formula orders pos) orders
 
   let trans_orders_to_formula (orders:Ord.assrt list) pos =
     let orders_p_formula = List.fold_left (fun acc elem ->
-      let f = trans_orders_to_pure_formula elem pos in
+      let f = x_add trans_orders_to_pure_formula elem pos in
       acc@f) [] orders in 
     let pure_formula = Form.join_conjunctions orders_p_formula in
     let formula = Form.mk_formula_of_pure_1 pure_formula pos in 
     formula
+  
+  let trans_orders_to_formula (orders:Ord.assrt list) pos =
+    let pr = pr_list Ord.string_of in
+    let pr_out = !Form.print in
+    Debug.no_1 "O2F.trans_orders_to_formula" pr pr_out (fun _ -> trans_orders_to_formula orders pos) orders
 
 end
   

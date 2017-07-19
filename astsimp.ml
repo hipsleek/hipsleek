@@ -48,6 +48,8 @@ module S = Session
 module SIOrd = S.IOrders
 module SCOrd = S.COrders
 
+module OR = Orders_relation
+
 type trans_exp_type =
   (C.exp * typ)
 

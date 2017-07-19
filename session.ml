@@ -1708,7 +1708,7 @@ struct
     let pos = p.session_predicate_pos in
     let args = p.session_predicate_ho_vars in 
     (* transform orders to pure formula *)
-    let pure_form_lst = O2F.trans_orders_to_pure_formula orders pos in
+    let pure_form_lst = x_add O2F.trans_orders_to_pure_formula orders pos in
     let pure_form = Base.join_conjunctions pure_form_lst in
     (* transform pure formula to ho_param_formula *)
     let ho_param_formula = Base.map_rflow_formula_list (fun elem -> Base.add_pure_to_formula pure_form elem ) args in
