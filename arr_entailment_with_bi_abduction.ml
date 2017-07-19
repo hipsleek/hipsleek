@@ -176,9 +176,16 @@ let array_entailment_biabduction lhs rhs =
          let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime frame antiframe (indent+1) in
          print_and_return (mkBExists (uset,mkBAnd [f1;f2])) indent
       | _ ,(Aseg_p (a,b))::rtail ->
-         let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset frame antiframe (indent+1) in
-         let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset frame antiframe (indent+1) in
-         print_and_return (BOr [f1;f2]) indent
+         if false
+         then
+           let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset frame antiframe (indent+1) in
+           let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset frame antiframe (indent+1) in
+           print_and_return (BOr [f1;f2]) indent
+         else
+           let (uset,vsetprime) = mkUsetandVsetprime [a;b] vset in            
+           let f1 = helper ((mkEqSv a b)::lhs_p,lhs_h) (rhs_p,rtail) vsetprime frame antiframe (indent+1) in
+           let f2 = helper ((mkLtSv a b)::lhs_p,lhs_h) (rhs_p,(mkAsegNE_p a b)::rtail) vsetprime frame antiframe (indent+1) in
+           print_and_return (mkBExists (uset,mkBAnd [f1;f2])) indent
       | [], [] ->
          print_and_return (mkBExists (vset, BBaseImply (lhs_p,rhs_p,List.rev frame,List.rev antiframe))) indent
                           
