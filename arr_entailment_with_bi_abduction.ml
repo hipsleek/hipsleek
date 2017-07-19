@@ -1,6 +1,7 @@
 #include "xdebug.cppo"
 open Arr_biabduction_extend
 open Arr_entailment_with_frame
+open Format
 (* This version early check pure formula in LHS *)
 (* This version handle existential in a wrapping manner *)
 (* Bi-Abduction *)
@@ -37,27 +38,50 @@ let rec str_biabFormula f =
      "not("^(str_biabFormula nf)^")"
 ;;
 
+let print_indent_list lst indent =
+  List.fold_left
+    (fun r item ->
+      r^"\n"^(print_indent indent item))
+    "" lst
+;;
+      
+
 let rec str_pre_condition f =
-  let rec helper f =
-  match f with
-  | BBaseNeg plst ->
-     "{NOT "^(str_list !str_pformula plst)^"}"
-  | BBaseImply (lplst, rplst, frame, antiframe) ->
-     "{"^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^"}"
-  | BExists (vset, nf) ->
-     if List.length vset = 0
-     then str_biabFormula nf
-     else "Exists "^(str_list !str_sv vset)^": "^(str_biabFormula nf)
-  | BForall (vset, nf) ->
-     if List.length vset = 0
-     then str_biabFormula nf
-     else "Forall "^(str_list !str_sv vset)^": "^(str_biabFormula nf)
-  | BAnd flst ->
-     str_list_delimeter str_biabFormula flst "/\\" ""
-  | BOr flst ->
-     str_list_delimeter str_biabFormula flst "\\/" ""  
-  | BNot nf ->
-     "not("^(str_biabFormula nf)^")"
+  let rec helper f indent =
+    (* let () = print_endline (string_of_int indent) in *)
+    match f with
+    | BBaseNeg plst ->       
+       print_indent indent ("{ NOT "^(str_list !str_pformula plst)^" }")
+    | BBaseImply (lplst, rplst, frame, antiframe) ->
+       print_indent indent ("{ "^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^" }")
+    | BExists (vset, nf) ->
+       if List.length vset = 0
+       then helper nf indent
+       else
+         (print_indent indent (("Exists "^(str_list !str_sv vset)^": ")^"\n"
+                               ^(helper nf (indent+1))))
+    | BForall (vset, nf) ->
+       if List.length vset = 0
+       then helper nf indent
+       else
+         (print_indent indent (("Forall "^(str_list !str_sv vset)^": ")^"\n"
+                               ^(helper nf (indent+1))))
+    | BAnd flst ->
+       (print_indent indent ("AND"))
+       ^(print_indent_list (List.map (fun f -> helper f (indent+1)) flst) 0)
+    | BOr flst ->
+       (print_indent indent ("OR"))
+       ^(print_indent_list (List.map (fun f -> helper f (indent+1)) flst) 0)
+       (* let s = (List.fold_left (fun r item -> item^" @, "^r) "" (List.map (fun f -> helper f 0) flst)) in *)
+       (* let () = print_endline s in        *)
+       (* sprintf ("@[<v>%s @, @[<v> "^^(Scanf.format_from_string s "" )^^" @]@]") "OR" *)
+       (* (print_indent indent (("OR \n") *)
+       (*                       ^(print_indent_list (List.map (fun f -> helper f (indent+1)) flst) 1))) *)
+
+    | BNot nf ->
+       failwith "str_pre_condition: TO BE IMPLEMENTED"
+  in
+  helper f 0
 ;;
   
 let mkBBaseNeg plst =
@@ -203,13 +227,6 @@ let array_entailment_biabduction lhs rhs =
               else
                 failwith "AsegNE v.s Gap: Not aligned"
 
-           | Pointsto_p (ls,lv), Gap_p (ra,rb) ->
-              if is_same_sv ls ra
-              then
-                failwith "TO BE IMPLEMENTED"                         
-              else
-                failwith "TO BE IMPLEMENTED"
-
            | Gap_p (la,lb), AsegNE_p (ra,rb)->
               if is_same_sv la ra
               then
@@ -218,7 +235,23 @@ let array_entailment_biabduction lhs rhs =
                 let f2 = helper ((mkLteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime frame ((mkAsegNE_p la lb)::antiframe) (indent+1) in
                 print_and_return (mkBExists (uset, mkBAnd [f1;f2])) indent
               else
-                failwith "AsegNE v.s Gap: Not aligned"                         
+                failwith "AsegNE v.s Gap: Not aligned"                                                  
+
+           | Pointsto_p (ls,lv), Gap_p (ra,rb) ->
+              if is_same_sv ls ra
+              then
+                let f = helper (lhs_p,ltail) (rhs_p,rtail) vset (lh::frame) antiframe (indent+1) in
+                print_and_return f indent
+              else
+                failwith "Pointsto_p v.s Gap: Not aligned"
+
+           | Gap_p (la,lb), Pointsto_p (rs,rv) ->
+              if is_same_sv la rs
+              then
+                let f = helper (lhs_p,ltail) (rhs_p,rtail) vset frame (rh::antiframe) (indent+1) in
+                print_and_return f indent
+              else
+                failwith "Gap v.s Pointsto_p: Not aligned"
 
            | AsegNE_p (la,lb), Pointsto_p (rs,rv) ->
               if is_same_sv la rs
@@ -236,26 +269,23 @@ let array_entailment_biabduction lhs rhs =
                 print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent
 
            | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
-              failwith "TO BE IMPLEMENTED"
-              (* if is_same_sv ls ra *)
-              (* then *)
-              (*   let fresh_c = global_get_new_var () in *)
-              (*   let fresh_u = global_get_new_var () in *)
-              (*   print_and_return (helper lhs *)
-              (*                            ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@ltail)) *)
-              (*                            ([fresh_c;fresh_u]@vset) k (indent+1)) indent *)
-              (* else *)
-              (*   let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] vset in *)
-              (*   let f1 = helper ((mkEqSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p ls rb)::rtail) vsetprime frame antiframe (indent+1) in *)
-              (*   let f2 = helper ((mkLtSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkGap_p ls ra)::rhs_h) vsetprime frame antiframe (indent+1) in *)
-              (*   let f3 = helper ((mkGtSv ls ra)::lhs_p, (mkGap_p ra ls)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in *)
-              (*   print_and_return (mkBExists (uset, BAnd [f1;f2;f3])) indent *)
+              if is_same_sv ls ra
+              then
+                let fresh_c = global_get_new_var () in
+                let fresh_u = global_get_new_var () in
+                print_and_return (helper lhs
+                                         ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@rtail))
+                                         ([fresh_c;fresh_u]@vset) frame antiframe (indent+1))
+                                 indent
+              else
+                let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] vset in
+                let f1 = helper ((mkEqSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p ls rb)::rtail) vsetprime frame antiframe (indent+1) in
+                let f2 = helper ((mkLtSv ls ra)::lhs_p, lhs_h) (rhs_p, (mkGap_p ls ra)::rhs_h) vsetprime frame antiframe (indent+1) in
+                let f3 = helper ((mkGtSv ls ra)::lhs_p, (mkGap_p ra ls)::lhs_h) (rhs_p, rhs_h) vsetprime frame antiframe (indent+1) in
+                print_and_return (mkBExists (uset, BAnd [f1;f2;f3])) indent
 
-           | _, Gap_p _ ->
-              failwith "TO BE IMPLEMENTED"
-              (* print_and_return (helper lhs (rhs_p,rtail) vset k (indent+1)) indent *)
-                               
-           | Gap_p _,_ -> failwith "Gap_p in LHS"
+           | Gap_p _, Gap_p _ ->
+              failwith "Gap_p vs Gap_p: Invalid case"
          )
   in
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
@@ -270,5 +300,7 @@ let array_entailment_biabduction lhs rhs =
 
 let array_entailment_biabduction_interface lhs rhs =
   let f = array_entailment_biabduction lhs rhs in
+  let () = print_endline ("=========== formatted pre-condition ==============") in
+  let () = print_endline (str_pre_condition f) in
   (true, mkEmptySuccCtx (),[])
 ;;
