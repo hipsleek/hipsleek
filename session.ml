@@ -377,10 +377,12 @@ module IForm = struct
 
   let mk_var id = (id, Unprimed)
 
-  let join_vars var1 var2 =
+  let join_vars var1 var2 separator =
     let id1, _ = var1 in
     let id2, _ = var2 in
-    (id1 ^ "_" ^ id2, Unprimed)
+    (id1 ^ separator ^ id2, Unprimed)
+  
+  let divide_vars var separator = failwith x_tbi
 
   let is_base_formula formula =
     match formula with
@@ -557,9 +559,17 @@ module CForm = struct
   let eq_var = CP.eq_spec_var
   let mk_var id = CP.mk_spec_var id 
 
-  let join_vars var1 var2 = match var1, var2 with
+  let join_vars var1 var2 separator = match var1, var2 with
     | CP.SpecVar (t1, id1, prmd), CP.SpecVar (_, id2, _) ->
-        CP.SpecVar (t1, id1 ^ "_" ^ id2, prmd) (* keeps the primed argument from the first var *)
+        CP.SpecVar (t1, id1 ^ separator ^ id2, prmd) (* keeps the primed argument from the first var *)
+
+  let divide_vars var separator = match var with
+    | CP.SpecVar (t, id, prmd) ->
+        let vars = Str.split (Str.regexp separator) id in
+        match vars with
+        | id1::id2::[] ->
+          (CP.SpecVar (t, id1, prmd), CP.SpecVar (t, id2, prmd))
+        | _ -> failwith "The var cannot be divided"
 
   let mk_node (ptr, name, ho, params, pos) sk nk =
     let h = CF.mkViewNode ptr name params pos in

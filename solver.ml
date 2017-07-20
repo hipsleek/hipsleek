@@ -5499,6 +5499,17 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
+  let ctx = CF.transform_context (fun es ->
+        let trans_b_form bform =  
+          let p_form, ant = bform in
+          let p_form = Orders_relation.trans_ord_rels_to_sleek_rels p_form in
+          match p_form with
+          | Some p -> Some (p, ant)
+          | None -> None
+        in  
+       let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
+       CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+  ) ctx in
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in
