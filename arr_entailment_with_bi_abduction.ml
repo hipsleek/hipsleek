@@ -38,28 +38,28 @@ let rec str_biabFormula f =
      "not("^(str_biabFormula nf)^")"
 ;;
 
-let print_indent_list lst indent =
-  List.fold_left
-    (fun r item ->
-      r^"\n"^(print_indent indent item))
-    "" lst
-;;
+(* let print_indent_list lst indent = *)
+(*   List.fold_left *)
+(*     (fun r item -> *)
+(*       r^"\n"^(print_indent indent item)) *)
+(*     "" lst *)
+(* ;; *)
       
 
 let rec str_pre_condition f =
+  
   let rec helper f indent =
-    (* let () = print_endline (string_of_int indent) in *)
     match f with
     | BBaseNeg plst ->       
-       print_indent indent ("{ NOT "^(str_list !str_pformula plst)^" }")
+       print_indent indent ("{ NOT "^(str_list !str_pformula plst)^" }")      
     | BBaseImply (lplst, rplst, frame, antiframe) ->
        print_indent indent ("{ "^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^" }")
     | BExists (vset, nf) ->
-       if List.length vset = 0
-       then helper nf indent
-       else
-         (print_indent indent (("Exists "^(str_list !str_sv vset)^": ")^"\n"
-                               ^(helper nf (indent+1))))
+       (* if List.length vset = 0 *)
+       (* then helper nf indent *)
+       (* else *)
+       (print_indent indent ("Exists "^(str_list !str_sv vset)^": "))^"\n"
+       ^(helper nf (indent+1))
     | BForall (vset, nf) ->
        if List.length vset = 0
        then helper nf indent
@@ -68,10 +68,10 @@ let rec str_pre_condition f =
                                ^(helper nf (indent+1))))
     | BAnd flst ->
        (print_indent indent ("AND"))
-       ^(print_indent_list (List.map (fun f -> helper f (indent+1)) flst) 0)
+       ^(List.fold_left (fun r item -> r^"\n"^item) "" (List.map (fun item -> helper item (indent+1)) flst))
     | BOr flst ->
        (print_indent indent ("OR"))
-       ^(print_indent_list (List.map (fun f -> helper f (indent+1)) flst) 0)
+       ^(List.fold_left (fun r item -> r^"\n"^item) "" (List.map (fun item -> helper item (indent+1)) flst))
        (* let s = (List.fold_left (fun r item -> item^" @, "^r) "" (List.map (fun f -> helper f 0) flst)) in *)
        (* let () = print_endline s in        *)
        (* sprintf ("@[<v>%s @, @[<v> "^^(Scanf.format_from_string s "" )^^" @]@]") "OR" *)
@@ -108,7 +108,7 @@ let mkBExists (vset,f) =
   else BExists (vset,f)
 ;;
 
-let mkForall (vset,f) =
+let mkBForall (vset,f) =
   if List.length vset = 0
   then f
   else BForall (vset,f)
@@ -185,7 +185,8 @@ let array_entailment_biabduction lhs rhs =
            let (uset,vsetprime) = mkUsetandVsetprime [a;b] vset in            
            let f1 = helper ((mkEqSv a b)::lhs_p,lhs_h) (rhs_p,rtail) vsetprime frame antiframe (indent+1) in
            let f2 = helper ((mkLtSv a b)::lhs_p,lhs_h) (rhs_p,(mkAsegNE_p a b)::rtail) vsetprime frame antiframe (indent+1) in
-           print_and_return (mkBExists (uset,mkBAnd [f1;f2])) indent
+           let f3 = helper ((mkGtSv a b)::lhs_p,lhs_h) rhs vsetprime frame antiframe (indent+1) in
+           print_and_return (mkBExists (uset,mkBAnd [f1;f2;f3])) indent
       | [], [] ->
          print_and_return (mkBExists (vset, BBaseImply (lhs_p,rhs_p,List.rev frame,List.rev antiframe))) indent
                           
@@ -204,11 +205,15 @@ let array_entailment_biabduction lhs rhs =
               failwith "Aseg_p: Invalid cases"
                                
            | Pointsto_p (ls,lv),Pointsto_p (rs,rv) ->
-              let (uset,vsetprime) = mkUsetandVsetprime [ls;rs] vset in            
-              let f1 = helper ((mkEqSv ls rs)::lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vsetprime frame antiframe (indent+1) in
-              let f2 = helper ((mkLtSv ls rs)::lhs_p, ltail) rhs vsetprime (lh::frame) antiframe (indent+1) in
-              let f3 = helper ((mkGtSv ls rs)::lhs_p, lhs_h) (rhs_p,rtail) vsetprime frame (rh::antiframe) (indent+1) in
-              print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent
+              if is_same_sv ls rs
+              then
+                print_and_return (helper (lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vset frame antiframe (indent+1)) indent
+              else
+                let (uset,vsetprime) = mkUsetandVsetprime [ls;rs] vset in            
+                let f1 = helper ((mkEqSv ls rs)::lhs_p, ltail) (rhs_p, (mkPointsto_p ls rv)::rtail) vsetprime frame antiframe (indent+1) in
+                let f2 = helper ((mkLtSv ls rs)::lhs_p, ltail) rhs vsetprime (lh::frame) antiframe (indent+1) in
+                let f3 = helper ((mkGtSv ls rs)::lhs_p, lhs_h) (rhs_p,rtail) vsetprime frame (rh::antiframe) (indent+1) in
+                print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent
 
            | AsegNE_p (la,lb), AsegNE_p (ra,rb) ->              
               if is_same_sv la ra
@@ -267,7 +272,7 @@ let array_entailment_biabduction lhs rhs =
                 let fresh_u = global_get_new_var () in
                 let f = helper ((mkEq (mkVar fresh_c) (incOne (mkVar la)))::lhs_p,([mkPointsto_p la fresh_u; mkAseg_p fresh_c lb]@ltail))
                                rhs vset frame antiframe (indent+1) in
-                print_and_return (BForall ([fresh_c;fresh_u],f)) indent
+                print_and_return (mkBForall ([fresh_c;fresh_u],f)) indent
               else
                 let (uset,vsetprime) = mkUsetandVsetprime [la;rs] vset in
                 let f1 = helper ((mkEqSv la rs)::lhs_p, lhs_h) (rhs_p, (mkPointsto_p la rv)::rtail) vsetprime frame antiframe (indent+1) in
@@ -296,7 +301,7 @@ let array_entailment_biabduction lhs rhs =
          )
   in
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
-    BForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] [] 0)
+    mkBForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] [] 0)
   in
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
