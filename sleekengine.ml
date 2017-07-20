@@ -1393,15 +1393,10 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
     (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
     let new_conseq = CF.extract_cformula_from_struc_formula conseq in
-      (* let _ = Arr_biabduction.cf_biabduction new_ante new_conseq in *)
-    (* let _ = Arr_biabduction.enumerate_with_order new_ante new_conseq in *)
+    
     (* let rs_frame = Arr_entailment5.array_entailment_with_frame_and_print new_ante new_conseq in *)
     (* let () = y_binfo_pp (Cprinter.string_of_list_context rs_frame) in *)
-    (* let _ = Arr_entailment_with_frame.mkArrF in *)
-    (* let _ = Arr_entailment_with_frame.array_entailment_frame new_ante new_conseq in *)
-    (* let rs = Arr_entailment5.array_entailment_and_print new_ante new_conseq in *)
-    (* ((true,rs,[]),(ante,conseq)) *)
-    (* let _ = Arr_entailment_with_bi_abduction.array_entailment_biabduction new_ante new_conseq in *)
+    (* let _ = Arr_entailment_with_bi_abduction_norm.array_entailment_biabduction_norm new_ante new_conseq in  *)   
     let full_rs =
       if !Globals.array_pre
       then
@@ -1424,7 +1419,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     then
       let new_ante = ante in
       let new_conseq = CF.extract_cformula_from_struc_formula conseq in
-      let full_rs = Arr_entailment_with_bi_abduction.array_entailment_biabduction_interface new_ante new_conseq in
+      let full_rs = Arr_entailment_with_bi_abduction_norm.array_entailment_biabduction_interface new_ante new_conseq in
       (full_rs,(ante,conseq))
     else
       

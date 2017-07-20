@@ -54,6 +54,15 @@ infer[@arr_ba]  base::Elem<a,b>  |- base::Elem<c,d> .
 print residue.
 expect Valid.
 
+// 9
+infer[@arr_ba]  base::Elem<a,b>  |- base::Elem<c,d>.
+print residue.
+expect Valid.
+
+infer[@arr_ba]  base::Aseg<a,b>  |- base::AsegNE<c,d>.
+print residue.
+expect Valid.
+
 /*
 // 10
 infer[@arr_ba]  base::Elem<a,b> & a>c |- base::Elem<c,b> & a=c.
