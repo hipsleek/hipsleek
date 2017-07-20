@@ -61,7 +61,13 @@ let mkNot f = Cpure.mkNot f None no_pos
 let mkTrue () = Cpure.mkTrue no_pos
 ;;
 
+let isTrue = Cpure.is_True
+;;
+  
 let mkFalse () = Cpure.mkFalse no_pos
+;;
+
+let isFalse = Cpure.is_False
 ;;
 
 let mkViewNode ptr viewname args =
