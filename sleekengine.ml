@@ -1419,10 +1419,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
     then
       let new_ante = ante in
       let new_conseq = CF.extract_cformula_from_struc_formula conseq in
-      let full_rs = Arr_entailment_with_bi_abduction_norm.array_entailment_biabduction_interface new_ante new_conseq in
+      let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
       (full_rs,(ante,conseq))
-    else
-      
+    else      
       let () = y_tinfo_pp "not array entailment" in
       let (res, rs,v_hp_rel) = x_add Sleekcore.sleek_entail_check 8 itype vars !cprog [] ante conseq in
       (* CF.residues := Some (rs, res); *)
