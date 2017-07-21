@@ -29,7 +29,7 @@ let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
             else if id = cb_rel_id then un_option !SC.scb_rel_id ""
             else ""
           in
-          if sid != "" then (* check for order relation *)
+          if not(String.compare sid "" == 0) then (* check for order relation *)
             let rec get_vars vars = begin match vars with
               | role::suid::t -> begin match role, suid with
                 | CP.Var (role, pos), CP.Var (suid, _) ->
@@ -69,7 +69,7 @@ let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
             else if id = cb_rel_id then un_option !SC.cb_rel_id ""
             else ""
           in
-          if oid != "" then (* check for sleek relation *)
+          if not(String.compare oid "" = 0) then (* check for sleek relation *)
             let res = List.fold_left (fun acc var -> match var with
               | CP.Var  (var, pos) ->
                 let (role, id) = S.CForm.divide_vars var vars_separator in

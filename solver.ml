@@ -5462,7 +5462,7 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
     let conseq_new = conseq in
     x_add heap_entail prog is_folding cl_new conseq_new pos
 
-and heap_entail p is_folding cl conseq pos : (list_context * proof) =
+and heap_entail_main p is_folding cl conseq pos : (list_context * proof) =
   let pr = Cprinter.string_of_list_context in
   let pr_r (r, _) = pr r in
   let pr_f = Cprinter.string_of_formula in
@@ -5482,6 +5482,35 @@ and heap_entail_x (prog : prog_decl) (is_folding : bool) (cl : list_context) (co
       ((fold_context_left 4 tmp2), prf)
     else (x_add heap_entail_one_context 4 prog is_folding (List.hd cl) conseq None None None pos)
 
+(* Wrapper for heap_entail *)
+and heap_entail p is_folding cl conseq pos : (list_context * proof) =
+  let trans_b_form bform =  
+    let p_form, ant = bform in
+    let p_form = Orders_relation.trans_ord_rels_to_sleek_rels p_form in
+    match p_form with
+    | Some p -> Some (p, ant)
+    | None -> None
+    in  
+  let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in      
+  let cl = CF.transform_list_context ((fun es ->
+        CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+  ), (fun c->c)) cl in
+  let conseq = CF.transform_formula (nonef,nonef,nonef,f_p_t) conseq in
+  let res, proof = heap_entail_main p is_folding cl conseq pos in
+  let list_context = CF.transform_list_context ((fun es ->
+        let trans_b_form bform =  
+          let p_form, ant = bform in
+          let p_form = Orders_relation.trans_sleek_rels_to_order_rels p_form in
+          match p_form with
+          | Some p -> Some (p, ant)
+          | None -> None
+        in
+        let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
+        CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+  ), (fun c->c)) res in
+  (list_context, proof)
+
+
 (*conseq should be a struc_formula in order to have some thread id*)
 and heap_entail_one_context i prog is_folding ctx conseq (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos =
   let pr1 = Cprinter.string_of_context in
@@ -5499,6 +5528,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
+(*
   let ctx = CF.transform_context (fun es ->
         let trans_b_form bform =  
           let p_form, ant = bform in
@@ -5510,6 +5540,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
        let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
        CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
   ) ctx in
+*)
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in
