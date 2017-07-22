@@ -1,0 +1,9 @@
+1. bi-*.slk are for bi-abduction, ex*.slk for classical entailment
+2. en1.slk for classical entailment, 22 test cases, all OK
+
+3. bi-0.slk contains some very simple test cases for bi-abduction, bi1.slk with Or and And
+
+4. bi-2.slk contains unfolding in RHS
+5. bi-3.slk contains unfolding in LHS
+
+TODO: check these cases, think about how to extract antiframe/frame.
