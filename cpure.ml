@@ -58,6 +58,11 @@ let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
   if (t1=t2)&&(pr1=pr2) then compare id1 id2
   else -1
 
+let is_same_sv sv1 sv2 =
+  compare_sv sv1 sv2 = 0
+;;
+          
+
 let is_hole_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n.[0] = '#'
 
@@ -12577,6 +12582,33 @@ let apply_subs_sv s t =
     nt
   with _ -> t
 
+
+let subs_var_with_exp sve f =
+  let search_subs sve sv =
+    try
+      Some
+        (
+          let (_,e) = List.find (fun (nsv,ne) -> is_same_sv nsv sv) sve in
+          e
+        )
+    with Not_found ->
+      None
+  in
+  let f_e _ e =
+    match e with
+    | Var (sv,_) ->
+       ( match search_subs sve sv with
+         | Some exp -> Some (exp,([],true))
+         | None -> Some (e,([],true)))
+    | _ -> None
+  in
+  let vf2 = Globals.voidf2 in
+  let f_comb c = ([],true) in
+  let nf,_ = trans_formula f () (Globals.nonef2,Globals.nonef2,f_e) (vf2,vf2,vf2) f_comb in
+  nf
+;;
+
+           
 let rec norm_subs subs =
   match subs with
   | [] -> []

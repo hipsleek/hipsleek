@@ -207,8 +207,8 @@ let is_same_exp e1 e2 =
   check_eq_exp e1 e2
 ;;
 
-let is_same_sv sv1 sv2 =
-  compare_sv sv1 sv2 = 0
+let is_same_sv =
+  Cpure.is_same_sv
 ;;
 
 let exp_to_var e =
@@ -518,7 +518,7 @@ let mkBasic p =
 
 let vcount = ref 0;;  
 let  global_get_new_var () =
-  let newv = mk_spec_var ("tarr_"^(string_of_int !vcount)) in
+  let newv = mk_spec_var ("_t"^(string_of_int !vcount)) in
   vcount := !vcount + 1;
   newv
 ;;

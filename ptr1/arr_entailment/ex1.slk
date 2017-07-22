@@ -121,6 +121,8 @@ expect Fail.
 // -------------------------------
 // ex V. (A |- B) --> ex V. F
 
+
+
 // 21
 infer[@arr_en]  base::AsegNE<a,b> & a=1 & b=2  |- base::AsegNE<a,c>.
 print residue.
@@ -131,3 +133,42 @@ infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=2  |- base::AsegNE<1,c>.
 print residue.
 expect Fail.
 
+// 23
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<8,10>.
+print residue.
+expect Valid.
+
+// 24
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<8,11>.
+print residue.
+expect Fail.
+
+// 25
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<3,c> * base::AsegNE<8,11>.
+print residue.
+expect Fail.
+
+// 26
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<c,10>.
+print residue.
+expect Valid.
+
+// 27
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<c,11>.
+print residue.
+expect Fail.
+
+// 28
+infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<c+2,10>.
+print residue.
+expect Fail.
+
+// 29
+infer[@arr_en]  base::AsegNE<a,a+2>  |- exists u: base::Elem<a,u> * base::Elem<a+1,u>.
+print residue.
+expect Fail.
+
+// 30
+infer[@arr_en]  base::AsegNE<a,a+2>  |- exists u1,u2: base::Elem<a,u1> * base::Elem<a+1,u2>.
+print residue.
+expect Valid.
