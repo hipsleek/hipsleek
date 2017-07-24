@@ -28,11 +28,11 @@ let str_list_delimeter str lst d emp =
 let str_asegPredplus aseg =
   match aseg with
   | Aseg_p (s,e) ->
-     "Aseg("^(!str_sv s)^","^(!str_sv e)^")"
+     "Aseg<"^(!str_sv s)^","^(!str_sv e)^">"
   | AsegNE_p (s,e) ->
-     "AsegNE("^(!str_sv s)^","^(!str_sv e)^")"
+     "AsegNE<"^(!str_sv s)^","^(!str_sv e)^">"
   | Gap_p (s,e)->
-     "Gap("^("_")^","^(!str_sv s)^","^(!str_sv e)^")"
+     "Gap<"^("_")^","^(!str_sv s)^","^(!str_sv e)^">"
   | Pointsto_p (s,v) ->
      (!str_sv s)^" -> "^(!str_sv v)
 ;;

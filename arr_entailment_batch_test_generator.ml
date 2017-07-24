@@ -7,30 +7,25 @@ let memory_map_to_asegPredplus dpointto daseg map =
   let rec trans_helper map =
     match map with
     | (f,t)::tail ->
+       let to_asegNE_or_aseg f t =
+         let fvar = global_get_new_var_public () in
+         let tvar = global_get_new_var_public () in
+         let binding = [mkEq (mkVar fvar) (mkConst f);mkEq (mkVar tvar) (mkConst t)] in
+         let (newaseglst,newbindings) = trans_helper tail in
+         if f=t
+         then
+           ((mkAseg_p fvar tvar)::newaseglst,binding@newbindings)
+         else
+           ((mkAsegNE_p fvar tvar)::newaseglst,binding@newbindings)
+       in
        if f=t-1
        then
          if dpointto ()
          then failwith "to Pointsto_p: TO BE IMPLEMENTED"
          else
-           let fvar = global_get_new_var () in
-           let tvar = global_get_new_var () in
-           let binding = [mkEq (mkVar fvar) (mkConst f);mkEq (mkVar tvar) (mkConst t)] in
-           let (newaseglst,newbindings) = trans_helper tail in
-           if f=t && daseg ()
-           then
-             ((mkAseg_p fvar tvar)::newaseglst,binding@newbindings)
-           else
-             ((mkAsegNE_p fvar tvar)::newaseglst,binding@newbindings)
+           to_asegNE_or_aseg f t
        else
-         let fvar = global_get_new_var () in
-         let tvar = global_get_new_var () in
-         let binding = [mkEq (mkVar fvar) (mkConst f);mkEq (mkVar tvar) (mkConst t)] in
-         let (newaseglst,newbindings) = trans_helper tail in
-         if f=t && daseg ()
-         then
-           ((mkAseg_p fvar tvar)::newaseglst,binding@newbindings)
-         else
-           ((mkAsegNE_p fvar tvar)::newaseglst,binding@newbindings)
+         to_asegNE_or_aseg f t
     | [] -> ([],[])
   in
   trans_helper map
@@ -62,7 +57,7 @@ let chopping map =
     if s = e
     then List.rev output
     else      
-      let new_end = get_random s e in
+      let new_end = get_random (s+1) e in
       let () = print_endline (str_pair string_of_int string_of_int (s,new_end)) in
       chopping_helper new_end e ((s,new_end)::output)
   in
@@ -105,7 +100,7 @@ let generator_random_valid_entailment_lst num =
 
 let generate_formatted_entailment_str lhs rhs =
   let generate_formula_str (hflst,pflst) =
-    let hfstr = str_list_delimeter_raw str_asegPredplus hflst "*" "emp" in
+    let hfstr = str_list_delimeter_raw (fun item -> "base::"^(str_asegPredplus item)) hflst "*" "emp" in
     let pfstr = str_list_delimeter_raw !str_pformula pflst "&" "true" in
     hfstr^"&"^pfstr
   in

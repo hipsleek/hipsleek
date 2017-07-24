@@ -521,7 +521,14 @@ let mkBasic p =
   
 (* Transform arr pred to cformula *)
 
-let vcount = ref 0;;  
+let vcount = ref 0;;
+  
+let  global_get_new_var_public () =
+  let newv = mk_spec_var ("t"^(string_of_int !vcount)) in
+  vcount := !vcount + 1;
+  newv
+;;
+  
 let  global_get_new_var () =
   let newv = mk_spec_var ("_t"^(string_of_int !vcount)) in
   vcount := !vcount + 1;
