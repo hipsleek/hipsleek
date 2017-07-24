@@ -172,3 +172,29 @@ expect Fail.
 infer[@arr_en]  base::AsegNE<a,a+2>  |- exists u1,u2: base::Elem<a,u1> * base::Elem<a+1,u2>.
 print residue.
 expect Valid.
+
+// Related to existential
+// 31
+infer[@arr_en]  base::AsegNE<1,2> |- exists b: base::Aseg<1,b>.
+print residue.
+expect Valid.
+
+// 32
+infer[@arr_en]  base::AsegNE<1,2> |- exists b: base::Aseg<1,b> & b>2.
+print residue.
+expect Fail.
+
+// 33
+infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<3,y>.
+print residue.
+expect Fail.
+
+// 34
+infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b,y: base::Aseg<1,b> * base::Elem<3,y>.
+print residue.
+expect Valid.
+
+// 35
+infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<c,x>.
+print residue.
+expect Fail.

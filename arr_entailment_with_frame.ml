@@ -11,14 +11,18 @@ type asegPredplus =
   | Gap_p of (Cpure.spec_var * Cpure.spec_var)
 ;;
 
-let str_list_delimeter str lst d emp=
+let str_list_delimeter_raw str lst d emp =
     let helper lst =
       match lst with
       | [] -> emp
       | [h] -> str h
       | h::tail -> List.fold_left (fun r item -> r^d^(str item)) (str h) tail
     in
-    "["^helper lst^"]"
+    helper lst
+;;
+  
+let str_list_delimeter str lst d emp =
+  "["^(str_list_delimeter_raw str lst d emp)^"]"
 ;;
   
 let str_asegPredplus aseg =

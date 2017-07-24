@@ -27,6 +27,11 @@ let mkVar sv =
   Cpure.Var (sv,no_pos)
 ;;
 
+let mkConst i =
+  Cpure.IConst (i,no_pos)
+;;
+
+  
 let get_var_lst = Cpure.var_list_exp ;;
 
 let exp_contains_var exp v =

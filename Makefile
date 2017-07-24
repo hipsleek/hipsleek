@@ -172,6 +172,10 @@ ghip.native:
 	@ocamlbuild $(OBG_FLAGS) ghip.native
 	cp -u _build/ghip.native ghip
 
+arr_test.byte:
+	@ocamlbuild $(OBB_FLAGS) arr_entailment_batch_test_generator.byte
+	cp -u _build/arr_entailment_batch_test_generator.byte arr_test
+
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
