@@ -530,7 +530,7 @@ let  global_get_new_var_public () =
 ;;
   
 let  global_get_new_var () =
-  let newv = mk_spec_var ("_t"^(string_of_int !vcount)) in
+  let newv = mk_spec_var ("t_t"^(string_of_int !vcount)) in
   vcount := !vcount + 1;
   newv
 ;;
