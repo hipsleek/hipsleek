@@ -37,7 +37,12 @@ expect Valid.
 infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=10 & c=1 & d=5 |- base::AsegNE<c,d>.
 print residue.
 expect Valid.
-       
+
+// 8
+infer[@arr_ba]  base::Elem<a,b> & a<c |- base::Elem<c,d> .
+print residue.
+expect Valid.
+
 
 
 
