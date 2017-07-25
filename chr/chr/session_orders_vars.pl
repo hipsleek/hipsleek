@@ -78,10 +78,10 @@ writeln(T) :- write(T), nl.
 
 checkff :-
         catch(read(user_input, Gl), E,
-              ( print_message(error, E),
+              ( writeln("CHR_INPUT_ERROR"),
                 halt
               ) ),
-        (once((Gl)) -> writeln(true); writeln(false)).
+        catch((once((Gl)) -> writeln(true); writeln(false)), E, writeln("CHR_EXEC_GOAL_ERROR")).
 
 start :-
     repeat,

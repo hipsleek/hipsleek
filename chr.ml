@@ -53,25 +53,42 @@ let rec chr_of_exp exp = match exp with
 and chr_of_b_formula b =
   let (pf,_) = b in
   match pf with
-  | CP.BConst (c, _) -> string_of_bool c
-  | CP.BVar (sv, _)  -> (chr_of_spec_var sv)
-  | CP.Eq (a1, a2, _)  -> (chr_of_exp a1) ^ "=" ^ (chr_of_exp a2)
-  | CP.Neq (a1, a2, _) -> (chr_of_exp a1) ^ "\\=" ^ (chr_of_exp a2)
-  | CP.RelForm (r, args, l) -> 
+  | CP.BConst (c, _)        -> "(" ^ string_of_bool c ^ ")"
+  | CP.BVar (sv, _)         -> "(" ^ (chr_of_spec_var sv) ^ ")"
+  | CP.Eq (a1, a2, _)       -> "(" ^ (chr_of_exp a1) ^ "=" ^ (chr_of_exp a2) ^ ")"
+  | CP.Neq (a1, a2, _)      -> "(" ^ (chr_of_exp a1) ^ "\\=" ^ (chr_of_exp a2) ^ ")"
+  | CP.RelForm (r, args, l) -> "(" ^ 
     (* assumes the relations are already declared (maybe in prelude?) *)
-    (Cprinter.string_of_spec_var r) ^ "(" ^ (String.concat "," (List.map chr_of_exp args)) ^ ")"
-    (* Cprinter.string_of_b_formula b *)
-  | _ -> ""
+    (Cprinter.string_of_spec_var r) ^ 
+    "(" ^ (String.concat "," (List.map chr_of_exp args)) ^ ")" ^
+                               ")"
+  | _                       -> ""
 
 and chr_of_formula f = match f with
   | CP.BForm (b,_) -> 
     begin
       match (fst CP.drop_lexvar_ops) (fst b) with
-      | None -> "(" ^ (chr_of_b_formula b) ^ ")"
+      | None -> (chr_of_b_formula b)
       | Some f -> chr_of_formula f
     end
-  | CP.And (p1, p2, _) -> "" ^ (chr_of_formula p1) ^ "," ^ (chr_of_formula p2) ^ ""
-  | CP.Or (p1, p2,_, _) -> "((" ^ (chr_of_formula p1) ^ ");(" ^ (chr_of_formula p2) ^ "))"
+  | CP.And (p1, p2, _) -> 
+      let f1 = chr_of_formula p1 in 
+      let f2 = chr_of_formula p2 in 
+      let comp1 = not(String.compare f1 "" == 0) in
+      let comp2 = not(String.compare f2 "" == 0) in
+      if comp1 && comp2 then f1 ^ "," ^ f2
+      else if comp1 then f1
+      else if comp2 then f2
+      else ""
+  | CP.Or (p1, p2,_, _) -> 
+      let f1 = chr_of_formula p1 in 
+      let f2 = chr_of_formula p2 in 
+      let comp1 = not(String.compare f1 "" == 0) in
+      let comp2 = not(String.compare f2 "" == 0) in
+      if comp1 && comp2 then f1 ^ ";" ^ f2
+      else if comp1 then f1
+      else if comp2 then f2
+      else ""
   | CP.Not (p,_, _) -> "(snot(" ^ (chr_of_formula p) ^ "))"
   | _ -> ""
 
@@ -93,6 +110,9 @@ let send_query (query : string) : sat =
       match result with
       | "false" -> UNSAT
       | "true"  -> SAT
+      (* used to show the possible errors returned by CHR prover *)
+      | "CHR_INPUT_ERROR"
+      | "CHR_EXEC_GOAL_ERROR"
       | _       -> let () = y_winfo_pp ("WARNING (CHR) : "^result) in SAT
     with _ ->
       let () = y_binfo_pp ("\n############ NO CHR result ############\n") in
@@ -142,5 +162,6 @@ let start () =
   err_chan := errchn
 
 let stop () = 
+  print_string_quiet "\nStop CHR... \n"; flush stdout;
   output_string !out_chan halt
 
