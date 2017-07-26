@@ -423,72 +423,101 @@ let pure_antiframe (Antiframe (eset,clst,base)) =
   | NormBaseNeg _ -> mkTrue ()
 ;;
   
-type norm_antiframe =
-  | NormAntiframe of (Cpure.spec_var list * Cpure.spec_var list * Cpure.spec_var list * Cpure.formula * asegPredplus list)
-;;
+(* let extract_antiframe (NormOr lst) = *)
+(*   let neg_to_pure (Antiframe (eset,clst,base)) = *)
+(*     match base with *)
+(*     | NormBaseNeg (base_uset,base_eset,pflst) -> *)
+(*        simplify_p *)
+(*          (mkExists eset *)
+(*                    (mkAndlst *)
+(*                       (clst@ *)
+(*                          [(mkForall base_uset *)
+(*                                     (mkExists base_eset *)
+(*                                               (mkNot *)
+(*                                                  (mkAndlst pflst))))]))) *)
+(*     | _ -> failwith "neg_to_pure: Invalid input" *)
+(*   in *)
 
-(* let str_norm_antiframe (NormAntiframe (oeset,uset,ieset,pf,hflst)) = *)
-(*   let inners = (!str_pformula pf)^(str_asegPredplus_lst hflst) in *)
-(*   if List.length uset = 0 *)
-(*   then *)
-(*     let eset = oeset@ieset in     *)
-(*     if List.length eset = 0 *)
-(*     then inners *)
-(*     else "Exists "^(str_list !str_sv eset)^": "^inners *)
-(*   else *)
-(*     let new_inners = *)
-(*       if List.length ieset = 0 *)
-(*       then "Forall "^(str_list !str_sv eset)^": "^inners *)
+(*   let after_remove_uv (Antiframe (eset,clst,base)) = *)
+(*     match base with *)
+(*     | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) -> *)
+(*        (eset@ieset,simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))),antiframe) *)
+(*     | NormBaseNeg _ -> failwith "after_remove_uv: Invalid input" *)
+(*   in *)
+
+(*   let remove_uv ((Antiframe (eset,clst,base)) as af) = *)
+(*     match base with *)
+(*     | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) -> *)
+(*        let p = pure_antiframe af in *)
+(*        (isSat p) && (true) (\* More conditions are needed!!! *\) *)
+(*     | NormBaseNeg _ -> true *)
+(*   in *)
   
-let extract_antiframe (NormOr lst) =
-  let neg_to_pure (Antiframe (eset,clst,base)) =
-    match base with
-    | NormBaseNeg (base_uset,base_eset,pflst) ->
-       simplify_p
-         (mkExists eset
-                   (mkAndlst
-                      (clst@
-                         [(mkForall base_uset
-                                    (mkExists base_eset
-                                              (mkNot
-                                                 (mkAndlst pflst))))])))
-    | _ -> failwith "neg_to_pure: Invalid input"
-  in
+(*   (\* return a pair of list *\) *)
+(*   let extract_antiframe_helper lst = *)
+(*     let (imply,neg) = List.partition *)
+(*                         (fun (_,_,base) -> *)
+(*                           match base with *)
+(*                           | NormBaseImply _ -> true *)
+(*                           | _ -> false ) *)
+(*                         lst *)
+(*     in *)
+(*     (List.map *)
+(*        (fun (eset,clst,base) -> mkAntiframe eset clst base) *)
+(*        imply, *)
+(*      List.map (fun (eset,clst,base) -> mkAntiframe eset clst base) neg) *)
+(*   in *)
+  
+(*   let (imply,neg) = extract_antiframe_helper lst in *)
+(*   let imply_norm = List.map after_remove_uv (List.filter remove_uv imply) in *)
+(*   (imply_norm,simplify (mkOrlst (List.map (fun item -> neg_to_pure item) neg))) *)
+(* ;; *)
 
-  let after_remove_uv (Antiframe (eset,clst,base)) =
-    match base with
-    | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
-       (eset@ieset,simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))),antiframe)
-    | NormBaseNeg _ -> failwith "after_remove_uv: Invalid input"
-  in
 
-  let remove_uv ((Antiframe (eset,clst,base)) as af) =
-    match base with
-    | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
-       let p = pure_antiframe af in
-       (isSat p) && (true) (* More conditions are needed!!! *)
-    | NormBaseNeg _ -> true
+(* norm: normalized pre-condition, in the form of (Exists V0:forall V1:Exists V2: f*)
+let extract_anti_frame_and_frame norm =
+  let neg_to_pure eset clst base base_uset base_eset pflst =
+    (mkExists eset
+              (mkAndlst
+                 (clst@
+                    [(mkForall base_uset
+                               (mkExists base_eset
+                                         (mkNot
+                                            (mkAndlst pflst))))])))
   in
   
   (* return a pair of list *)
-  let extract_antiframe_helper lst =
-    let (imply,neg) = List.partition
-                        (fun (_,_,base) ->
-                          match base with
-                          | NormBaseImply _ -> true
-                          | _ -> false )
-                        lst
-    in
-    (List.map
-       (fun (eset,clst,base) -> mkAntiframe eset clst base)
-       imply,
-     List.map (fun (eset,clst,base) -> mkAntiframe eset clst base) neg)
+  let extract_helper lst =
+    let (imply,neg) =
+      List.fold_left
+        (fun (ir,nr) (eset,clst,base) ->
+          match base with
+          | NormBaseNeg (iuset,ieset,pf)-> (ir,mkOr (neg_to_pure eset clst base iuset ieset pf) nr)
+          | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
+             let inner_pure =
+               simplify
+                 (mkForall
+                    iuset
+                    (mkExists
+                       ieset
+                       (mkImply (mkAndlst lhs_p) (mkAndlst rhs_p))))
+             in
+             if isSat inner_pure && true (* More conditions are needed!!! *)
+             then
+               let norm_af =(eset@ieset,simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))),antiframe) in
+               let norm_f = ([],mkTrue (),frame) in (* TO BE IMPLEMENTED *)
+               ((norm_af,norm_f)::ir,nr)
+             else
+               (ir,nr))
+        ([],mkTrue ()) lst
+    in      
+    (imply, simplify_p neg)
   in
-  
-  let (imply,neg) = extract_antiframe_helper lst in
-  let imply_norm = List.map after_remove_uv (List.filter remove_uv imply) in
-  (imply_norm,simplify (mkOrlst (List.map (fun item -> neg_to_pure item) neg)))
+  match norm with
+  | NormOr lst ->
+     extract_helper lst
 ;;
+  
 
 
 (* From asegPlus to h_formula *)
@@ -512,17 +541,27 @@ let arrPredPlus_to_h_formula hflst =
   construct_h_formula hflst
 ;;
 
-let construct_context_lst aflst =
-  let construct_helper (eset,pf,hlst) =
+let construct_context_lst aflst neg =
+  let construct_helper_imply ((aeset,apf,ahlst),(feset,fpf,phlst)) =
     let es = mkEmptyes () in
-    let h_antiframe = arrPredPlus_to_h_formula hlst in
+    let h_antiframe = arrPredPlus_to_h_formula ahlst in
+    let h_frame = arrPredPlus_to_h_formula phlst in
+    let state = construct_base h_frame fpf in
     mkCtx
       {es with
+        es_formula = state ;
         es_infer_heap = [h_antiframe];
+        es_infer_pure = [apf];
+      }
+  in
+  let construct_helper_neg pf =
+    let es = mkEmptyes () in
+    mkCtx
+      {es with
         es_infer_pure = [pf];
       }
   in
-  List.map construct_helper aflst
+  (construct_helper_neg neg)::(List.map construct_helper_imply aflst)
 ;;
 
 
@@ -536,15 +575,8 @@ let array_entailment_biabduction_interface lhs rhs =
   let simp_norm = simplify_norm_pre_condition norm in
   let () = print_endline_verbose (str_norm_pre_condition simp_norm) in
   let () = print_endline_verbose ("=========== extracted anti-frame ==============") in
-  let (implylst,neg) = extract_antiframe simp_norm in
-  let () = List.iter
-             (fun item ->
-               print_endline_verbose (str_antiframe_norm item)
-               (* print_endline_verbose (!str_pformula (pure_antiframe item)) *)
-             )
-             implylst in
-  let () = print_endline_verbose (!str_pformula neg) in
-  (true, mkSuccCtx (construct_context_lst implylst), [])
+  let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
+  (true, mkSuccCtx (construct_context_lst implylst neg), [])
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
 

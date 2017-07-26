@@ -61,6 +61,35 @@ let mkPointsto_p t v =
   Pointsto_p (t,v)
 ;;
 
+let is_same_asegPredplus a1 a2 =
+  match a1, a2 with
+  | Aseg_p (s1,e1), Aseg_p (s2,e2)
+    | AsegNE_p (s1,e1), AsegNE_p (s2,e2)
+    | Pointsto_p (s1,e1), Pointsto_p (s2,e2)
+    | Gap_p (s1,e1), Gap_p (s2,e2) ->
+     (is_same_sv s1 s2) && (is_same_sv e1 e2)
+  | _, _ -> false
+;;
+
+let compare_list l1 l2 cmp =
+  let rec compare_helper l1 l2 =
+    match l1, l2 with
+    | h1::tail1, h2::tail2 ->
+       (cmp h1 h2)&&(compare_helper tail1 tail2)
+    | [],h2::tail2 -> false
+    | h1::tail1,[] -> false
+    | [],[] -> true
+  in
+  compare_helper l1 l2
+;;
+
+let compare_asegPredplus_lst l1 l2 =
+  compare_list l1 l2 is_same_asegPredplus
+;;
+
+      
+  
+
 let aPredF_to_asegF aPredF =
   let aPred_to_aseg h =
     match h with

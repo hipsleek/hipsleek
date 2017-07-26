@@ -2,10 +2,13 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
+
 // 1
 infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b>.
 print residue.
 expect Valid.
+
+
 
 // 2
 infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b> & a=3.
@@ -42,7 +45,6 @@ expect Valid.
 infer[@arr_ba]  base::Elem<a,b> & a<c |- base::Elem<c,d> .
 print residue.
 expect Valid.
-
 
 
 
@@ -98,7 +100,6 @@ print residue.
 expect Valid.
 
 */
-
 
 
 

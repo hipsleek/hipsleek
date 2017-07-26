@@ -580,7 +580,7 @@ let construct_exists hf pf svlst =
 ;;
 
 let construct_base hf pf =
-  Cformula.mkBase hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+  Cformula.mkBase hf (Mcpure.mix_of_pure pf) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
 
 
@@ -1745,7 +1745,7 @@ let mkCtxWithPure ip =
 ;;
 
 let mkCtxWithFrame framep frameh =
-  let state_f = construct_base frameh (Mcpure.mix_of_pure framep) in
+  let state_f = construct_base frameh framep in
   let es = mkEmptyes () in
   let new_es =
     {es with
