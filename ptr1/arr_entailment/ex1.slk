@@ -208,3 +208,13 @@ expect Fail.
 infer[@arr_en]  base::AsegNE<1,2> & a>3 |- exists c: base::AsegNE<1,c> & a=5.
 print residue.
 expect Fail.
+
+// 38
+infer[@arr_en]  base::AsegNE<x,y> |- base::Aseg<x,y-1> * base::Elem<y-1,_>.
+print residue.
+expect Valid.
+
+// 39
+infer[@arr_en]  base::AsegNE<x,y> |- exists u: base::Aseg<x,y-1> * base::Elem<y-1,u>.
+print residue.
+expect Valid.

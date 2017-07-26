@@ -20657,13 +20657,19 @@ let extract_formula_from_Ebase_struc_formula strucf =
 ;;
 
 let rec extract_cformula_from_struc_formula strucf =
+  let is_anon_var (SpecVar (_,name,_)) =
+    if String.length name < 5
+    then false
+    else
+      (String.compare (String.sub name 0 5) "Anon_") = 0
+  in
   match strucf with
   | EBase sbf ->
      let () = y_binfo_pp (!print_svl sbf.formula_struc_explicit_inst) in
      let () = y_binfo_pp (!print_svl sbf.formula_struc_implicit_inst) in
      let () = y_binfo_pp (!print_svl sbf.formula_struc_exists) in
      let new_base =
-       let underscore = List.filter 
+       let underscore = List.filter is_anon_var sbf.formula_struc_implicit_inst in
        ( match (sbf.formula_struc_base) with
          | Base ({  
                     formula_base_heap = bh;
@@ -20674,11 +20680,11 @@ let rec extract_cformula_from_struc_formula strucf =
                     formula_base_flow = bf; 
                     formula_base_label = bl;
                     formula_base_pos = bloc; }) ->
-            if List.length sbf.formula_struc_implicit_inst = 0
+            if List.length underscore = 0
             then sbf.formula_struc_base
             else
               ( Exists ({
-                           formula_exists_qvars = sbf.formula_struc_implicit_inst;
+                           formula_exists_qvars = underscore;
                            formula_exists_heap = bh;
                            formula_exists_vperm = vp;
                            formula_exists_pure = pf;
@@ -20701,7 +20707,7 @@ let rec extract_cformula_from_struc_formula strucf =
                    }) ->
              Exists
                ({
-                   formula_exists_qvars = sbf.formula_struc_implicit_inst@eset;
+                   formula_exists_qvars = underscore@eset;
                    formula_exists_heap = bh;
                    formula_exists_vperm = vp;
                    formula_exists_pure = pf;
