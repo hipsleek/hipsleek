@@ -440,21 +440,21 @@ let extract_antiframe (NormOr lst) =
   let neg_to_pure (Antiframe (eset,clst,base)) =
     match base with
     | NormBaseNeg (base_uset,base_eset,pflst) ->
-       simplify
+       simplify_p
          (mkExists eset
                    (mkAndlst
                       (clst@
                          [(mkForall base_uset
-                                   (mkExists base_eset
-                                             (mkNot
-                                                (mkAndlst pflst))))])))
+                                    (mkExists base_eset
+                                              (mkNot
+                                                 (mkAndlst pflst))))])))
     | _ -> failwith "neg_to_pure: Invalid input"
   in
 
   let after_remove_uv (Antiframe (eset,clst,base)) =
     match base with
     | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
-       (eset@ieset,simplify (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))),antiframe)
+       (eset@ieset,simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))),antiframe)
     | NormBaseNeg _ -> failwith "after_remove_uv: Invalid input"
   in
 
@@ -486,7 +486,41 @@ let extract_antiframe (NormOr lst) =
   (imply_norm,simplify (mkOrlst (List.map (fun item -> neg_to_pure item) neg)))
 ;;
 
-  
+
+(* From asegPlus to h_formula *)
+let arrPredPlus_to_h_formula hflst =  
+  let one_arrPredPlus_to_h_formula p =
+    let basePtr = mkSV "base" in
+    match p with
+    | AsegNE_p (s,e) ->
+       mkViewNode basePtr "AsegNE" [s;e]
+    | Aseg_p (s,e) ->
+       mkViewNode basePtr "Aseg" [s;e]
+    | Pointsto_p (s,v) ->
+       mkViewNode basePtr "Elem" [s;v]
+    | _ -> failwith "arrPredPlus_to_h_formula: TO BE IMPLEMENTED"
+  in
+  let construct_h_formula plst =
+    match (List.map one_arrPredPlus_to_h_formula plst) with
+    | h::tail -> List.fold_left (fun r itemh -> mkStarH itemh h) h tail
+    | [] -> HEmp
+  in
+  construct_h_formula hflst
+;;
+
+let construct_context_lst aflst =
+  let construct_helper (eset,pf,hlst) =
+    let es = mkEmptyes () in
+    let h_antiframe = arrPredPlus_to_h_formula hlst in
+    mkCtx
+      {es with
+        es_infer_heap = [h_antiframe];
+        es_infer_pure = [pf];
+      }
+  in
+  List.map construct_helper aflst
+;;
+
 
 let array_entailment_biabduction_interface lhs rhs =
   let (f,norm) = array_entailment_biabduction_norm lhs rhs in
@@ -506,6 +540,7 @@ let array_entailment_biabduction_interface lhs rhs =
              )
              implylst in
   let () = print_endline (!str_pformula neg) in
-  (true, mkEmptySuccCtx (),[])
+  (true, mkSuccCtx (construct_context_lst implylst), [])
+(* (true, mkEmptySuccCtx (),[]) *)
 ;;
 

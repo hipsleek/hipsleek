@@ -88,6 +88,9 @@ let simplify = Tpdispatcher.simplify_omega
 
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 ;;
+
+let simplify_p f = pairwisecheck (simplify f)
+;;
   
 let rec mkAndlst lst =
   match lst with
@@ -573,6 +576,7 @@ let construct_exists hf pf svlst =
 let construct_base hf pf =
   Cformula.mkBase hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
+
 
 let get_inferred_pure orig_pf new_pflst =
   let rec helper new_pflst lst =
@@ -1703,6 +1707,14 @@ end
 
 let mkEmptyes () =
   empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos
+;;
+
+let mkCtx es =
+  Ctx es
+;;
+
+let mkSuccCtx ctxlst =
+  SuccCtx ctxlst
 ;;
   
 let mkEmptySuccCtx () =
