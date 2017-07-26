@@ -19,6 +19,8 @@ module CP = Cpure
 module MCP = Mcpure
 module NM = Auxnorm
 
+module SC = Sesscommons
+
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
 
@@ -1575,6 +1577,49 @@ let build_branches_sat br lbs =
   let pr2 = pr_list (pr_pair LO.string_of pr1) in
   let pr3 = pr_list (pr_pair LO.string_of !print_formula) in
   Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
+
+let rec filter_chr_dependencies_x f = 
+  let conj_list = CP.split_conjunctions f in
+  (* get sleek rel ids *)
+  let ev_rel_id = un_option !SC.sevent_rel_id "" in
+  let hbp_rel_id = un_option !SC.shbp_rel_id "" in
+  let cb_rel_id = un_option !SC.scb_rel_id "" in        
+  (* split farmulae in two: CHR formulae and other formulae *)
+  let (chr_prover_rels, some_prover_rels) = List.fold_left (fun (acc1, acc2) f ->
+    match f with
+    | CP.BForm (b_formula, _) ->
+        let p_formula, _ = b_formula in
+        begin match p_formula with
+        | CP.RelForm (spec_var, vars, loc) ->
+            begin match spec_var with
+            | CP.SpecVar (_, rel_id, _) ->
+                if String.compare rel_id ev_rel_id == 0 ||
+                   String.compare rel_id hbp_rel_id == 0 ||
+                   String.compare rel_id cb_rel_id == 0 then
+                     (acc1@[f], acc2)
+                else (acc1, acc2@[f])
+            end
+        | _ -> (acc1, acc2@[f])
+        end
+    | _ -> (acc1, acc2)
+  ) ([], []) conj_list (* ([CHR order relations], [others]) *)
+  in
+  let chr_free_vars = List.fold_left (fun acc f ->
+    let fvs = CP.fv f in (* hbp, cb and event are also free vars *)
+    acc@fvs
+  ) [] chr_prover_rels in
+  (* gets the formulae related to CHR from the second list *)
+  List.fold_left (fun (acc1, acc2) f ->
+    let free_vars = CP.fv f in
+    let exists_fv = List.exists (fun fv -> List.mem fv chr_free_vars) free_vars in
+    if exists_fv then (acc1@[f], acc2)
+    else (acc1, acc2@[f])
+  ) (chr_prover_rels, []) some_prover_rels
+
+let filter_chr_dependencies f = 
+  let pr = !CP.print_formula in
+  let pr_out = pr_pair (pr_list pr) (pr_list pr) in
+  Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
