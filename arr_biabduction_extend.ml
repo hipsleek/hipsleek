@@ -269,7 +269,13 @@ let imply f1 f2 =
 let isValid f =
   not (isSat (mkNot f))
 ;;
-  
+
+let print_endline_verbose str =
+  if !Globals.array_verbose
+  then print_endline str
+  else ()
+;;
+      
 let str_exp = print_exp
 ;;
 

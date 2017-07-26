@@ -148,7 +148,9 @@ let array_entailment_biabduction_norm lhs rhs =
   in
 
   let print_and_return f indent =
-    let () = print_endline (print_indent indent ("=>"^(str_biabFormula f))) in
+    let () =
+      print_endline_verbose (print_indent indent ("=>"^(str_biabFormula f)))
+    in
     f
   in
 
@@ -189,7 +191,9 @@ let array_entailment_biabduction_norm lhs rhs =
   in
 
   let rec helper orig_lhs_p ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset uqset frame antiframe indent =
-    let () = print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
+    let () =
+      print_endline_verbose (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs))))      
+    in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
       let norm = mkNormOr_base (mkNormBaseNeg uqset vset orig_lhs_p) in
@@ -524,22 +528,22 @@ let construct_context_lst aflst =
 
 let array_entailment_biabduction_interface lhs rhs =
   let (f,norm) = array_entailment_biabduction_norm lhs rhs in
-  let () = print_endline ("=========== formatted pre-condition ==============") in
-  let () = print_endline (str_pre_condition f) in
-  let () = print_endline ("=========== Normalized pre-condition ==============") in
-  let () = print_endline (str_norm_pre_condition norm) in
-  let () = print_endline ("=========== Simplified Normalized pre-condition ==============") in
+  let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
+  let () = print_endline_verbose (str_pre_condition f) in
+  let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
+  let () = print_endline_verbose (str_norm_pre_condition norm) in
+  let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in
   let simp_norm = simplify_norm_pre_condition norm in
-  let () = print_endline (str_norm_pre_condition simp_norm) in
-  let () = print_endline ("=========== extracted anti-frame ==============") in
+  let () = print_endline_verbose (str_norm_pre_condition simp_norm) in
+  let () = print_endline_verbose ("=========== extracted anti-frame ==============") in
   let (implylst,neg) = extract_antiframe simp_norm in
   let () = List.iter
              (fun item ->
-               print_endline (str_antiframe_norm item)
-               (* print_endline (!str_pformula (pure_antiframe item)) *)
+               print_endline_verbose (str_antiframe_norm item)
+               (* print_endline_verbose (!str_pformula (pure_antiframe item)) *)
              )
              implylst in
-  let () = print_endline (!str_pformula neg) in
+  let () = print_endline_verbose (!str_pformula neg) in
   (true, mkSuccCtx (construct_context_lst implylst), [])
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
