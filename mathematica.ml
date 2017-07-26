@@ -401,6 +401,7 @@ and math_of_b_formula b : string =
   | CP.ListPerm _
   | CP.ImmRel _
   | CP.RelForm _ -> failwith ("math_of_b_formula: cannot handle bag, list, rel, perm formula")
+  | CP.Security _ -> failwith "TODO"
 
 and math_of_formula pr_w pr_s f0 : string =
   let rec formula_to_string f0 = (

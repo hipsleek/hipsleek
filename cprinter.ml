@@ -1038,12 +1038,14 @@ and pr_b_formula (e:P.b_formula) =
   | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
   | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
   | P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "(");
-    match args with
+    begin match args with
     | [] -> fmt_string ")"
     | arg_first::arg_rest ->
       let () = pr_formula_exp arg_first in
       let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in
       fmt_string ")" (* An Hoa *)
+    end
+  | P.Security _ -> failwith "TODO"
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) =
@@ -5324,6 +5326,7 @@ and html_of_pure_b_formula f = match f with
   | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
   | P.ImmRel (r, args, l) -> "ImmRel (to be implemented)"
 (* (html_of_imm_ann r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")" *)
+  | P.Security _ -> failwith "TODO"
 
 and html_of_pure_formula f =
   match f with

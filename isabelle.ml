@@ -237,6 +237,7 @@ and isabelle_of_b_formula b =
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
   | CP.ImmRel _
   | CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
+  | CP.Security _ -> failwith "TODO"
 
 (* pretty printing for formulas *)
 and isabelle_of_formula f =

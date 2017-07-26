@@ -1069,6 +1069,7 @@ and mona_of_b_formula_x b f vs =
     (* | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona") *)
     | CP.ImmRel _ -> failwith ("Imm Relations are not supported in Mona")
     | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *)
+    | CP.Security _ -> failwith "TODO"
   in
   ret
 
@@ -1174,6 +1175,7 @@ and print_b_formula b f vs = match b with
   (* | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona") *)
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
   | CP.XPure _ -> failwith ("XPure are not supported in Mona")
+  | CP.Security _ -> failwith "TODO"
 
 let rec get_answer acc chn : string =
   try

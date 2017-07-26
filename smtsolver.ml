@@ -223,6 +223,7 @@ and smt_of_b_formula b =
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
+  | CP.Security _ -> failwith "TODO"
 
 and smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in

@@ -649,7 +649,7 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
   | CP.BagMin _
   | CP.BagMax _
   (* | CP.VarPerm _ *)
-  | CP.RelForm _ -> false
+  | CP.RelForm _ | CP.Security _ -> false
 
 (*
 Check if the formula contains any assignment to \inf
@@ -1052,7 +1052,7 @@ and sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: boo
        | CP.BagMin _
        | CP.BagMax _
        (* | CP.VarPerm _ *)
-       | CP.RelForm _ -> p_f,tbf
+       | CP.RelForm _  | CP.Security _ -> p_f,tbf
       ) in (p_f_conv,bf_ann),(tbf,bf_ann)
 
 (*
