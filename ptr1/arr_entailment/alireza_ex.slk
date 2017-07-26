@@ -1,0 +1,86 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+// 1
+infer[@arr_en]  base::Aseg<x,y>  |- exists a: base::Aseg<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+// 2
+infer[@arr_en]  base::Aseg<x,y>  |- exists a: base::Aseg<x,a> * base::AsegNE<a,y>.
+print residue.
+expect Fail.
+
+// 3
+infer[@arr_en]  base::AsegNE<x,y>  |- exists a: base::Aseg<x, a> * base::AsegNE<a,y>.
+print residue.
+expect Valid.
+
+// 4
+infer[@arr_en]  base::AsegNE<x,y>  |- exists a: base::AsegNE<x, a> * base::AsegNE<a,y>.
+print residue.
+expect Fail.
+
+// 5
+infer[@arr_en]  base::AsegNE<x,y>  |- exists a: base::AsegNE<x, a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+// 6
+infer[@arr_en] base::AsegNE<x,y> & y-x > 1 |- exists a: base::AsegNE<x, a> * base::AsegNE<a, y>.
+print residue.
+expect Valid.
+
+// 7
+infer[@arr_en] base::AsegNE<x,y> & y-x > 1 |- exists a,x': base::AsegNE<x, a> * base::AsegNE<a, x'> * base::AsegNE<x', y>.
+print residue.
+expect Fail.
+
+// 8
+infer[@arr_en] base::AsegNE<x,y> & y-x > 2 |- exists a,x': base::AsegNE<x, a> * base::AsegNE<a, x'> * base::AsegNE<x', y>.
+print residue.
+expect Valid.
+
+// 9
+infer[@arr_en] base::AsegNE<x,y> |- exists x: base::Aseg<x, a> * base::Elem<a, _>.
+print residue.
+expect Fail.
+
+
+// 10
+infer[@arr_en] base::AsegNE<x,y> & a = y - 1 |- base::Aseg<x, a> * base::Elem<a, _>.
+print residue.
+expect Fail.
+
+// 11
+infer[@arr_en]  base::Aseg<x,y1> * base::Aseg<y1, z> |- base::Aseg<x,z>.
+print residue.
+expect Valid.
+
+// 12
+infer[@arr_en]  base::Aseg<x,y1> * base::AsegNE<y1, z> |- base::Aseg<x,z>.
+print residue.
+expect Valid.
+
+// 13
+infer[@arr_en]  base::AsegNE<x,y1> * base::AsegNE<y1, z> |- base::Aseg<x,z>.
+print residue.
+expect Valid.
+
+// 14
+infer[@arr_en]  base::AsegNE<x, z> |- base::Aseg<x, z>.
+print residue.
+expect Valid.
+
+// 15
+infer[@arr_en]  base::Aseg<x,z> |- base::AsegNE<x,z>.
+print residue.
+expect Fail.
+
+// 16
+infer[@arr_en]  base::Aseg<x,z> & x<z |- base::AsegNE<x,z>.
+print residue.
+expect Valid.
+
