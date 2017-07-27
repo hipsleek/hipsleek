@@ -2,74 +2,74 @@ sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 //1
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & ["chr": hbp(b12, c14) ] 
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & hbp(b12, c14)  
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 //2
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & v=c14 & ["chr": hbp(b12, v) ] 
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & v=c14 & hbp(b12, v)
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 //3
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & v=c15 & ["chr": hbp(b12,v) ] 
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & v=c15 & hbp(b12,v)
 |- c::Chan{@S !1}<>.
 expect Fail.                                                                    
 print residue.
 
 //4
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & ["chr": hbp(b12,c04) & hbp(c04,c14)]
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & hbp(b12,c04) & hbp(c04,c14)
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 //5
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & ["chr": hbp(b12,c05) & hbp(c04,c14)]
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & hbp(b12,c05) & hbp(c04,c14)
 |- c::Chan{@S !1}<>.
 expect Fail.                                                                    
 print residue.
 
 //6
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & ["chr": cb(b12,c02) & hbp(c02,c14)]
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & cb(b12,c02) & hbp(c02,c14)
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 //7
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(b23, c25)] }<>;;!1}<>
-           & ["chr": cb(b12,c02) & hbp(c02,c13) & hbp(c13,c14)]
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>
+           & cb(b12,c02) & hbp(c02,c13) & hbp(c13,c14)
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 //8 needs to trigger assume first
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
-           c2::Chan{@S Assume{emp & ["chr": hbp(c02, c13)] }<>;;!1}<>
-           & ["chr": cb(b12,c02) & hbp(c13,c14)]
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
+           c2::Chan{@S Assume{emp & hbp(c02, c13)}<>;;!1}<>
+           & cb(b12,c02) & hbp(c13,c14)
 |- c::Chan{@S !1}<>.
 expect Valid.                                                                    
 print residue.
 
 
 //9 
-checkentail c::Chan{@S Guard{emp & ["chr": hbp(b12, c14)] }<>;;!1}<> *
+checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
            c2::Chan{@S !1}<>
-           & ["chr": cb(b12,c02) & hbp(c13,c14)]
+           & cb(b12,c02) & hbp(c13,c14)
 |- c::Chan{@S !1}<>.
 expect Fail.                                                                    
 print residue.

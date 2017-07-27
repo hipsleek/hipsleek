@@ -97,7 +97,7 @@ let prepare_formula_for_chr (f : CP.formula) : string =
   chr_of_formula f
 
 let prepare_formula_for_chr (f : CP.formula) : string =
-  Debug.no_1 "prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
+  Debug.no_1 "CHR.prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
 (* send a query to CHR and receive result -> true/false/unknown *)
 let send_query (query : string) : sat =
