@@ -117,7 +117,7 @@ let frameFormula_to_pure f =
   let rec helper f =
     match f with
     | FBase (plst,hlst) ->
-       mkAndlst plst       
+       mkAndlst plst
     | FExists (vset, nf) ->
        if List.length vset = 0
        then helper nf
@@ -129,7 +129,7 @@ let frameFormula_to_pure f =
     | FAnd flst ->
        mkAndlst (List.map helper flst)
     | FOr flst ->
-       mkOrlst (List.map helper flst)       
+       mkOrlst (List.map helper flst)
     | FNot nf ->
        mkNot (helper nf)
   in
@@ -303,7 +303,7 @@ let array_entailment_classical lhs rhs =
             let fresh_c = global_get_new_var () in
             let fresh_u = global_get_new_var () in
             print_and_return (helper lhs
-                                     ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@ltail))
+                                     ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@rtail))
                                      ([fresh_c;fresh_u]@vset) k (indent+1)) indent
          | _, Gap_p _ -> failwith "Gap_p"
          | Gap_p _,_ -> failwith "Gap_p"

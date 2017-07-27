@@ -228,3 +228,13 @@ expect Valid.
 infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::AsegNE<a,y>.
 print residue.
 expect Fail.
+
+// 42
+infer[@arr_en] base::Elem<t114,t115>*base::AsegNE<t116,t117>*base::AsegNE<t118,t119>& t114=7 & t116=8 & t117=12 & t118=12 & t119=15 & t120=7 & t121=15 |- base::AsegNE<t120,t121>&true.
+print residue.
+expect Valid.
+
+// 43
+infer[@arr_en] base::Elem<a,t>*base::AsegNE<b,c> & a=7 & b=8 & c=12  |- base::AsegNE<a,c>.
+print residue.
+expect Valid.
