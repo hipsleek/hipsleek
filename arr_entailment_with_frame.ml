@@ -220,7 +220,7 @@ let array_entailment_classical lhs rhs =
     helper_entry arrPredlst []
   in
     
-  let rec helper ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset k indent =
+  let rec helper ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset indent =
     let () =
       if !Globals.array_verbose
       then
@@ -235,31 +235,31 @@ let array_entailment_classical lhs rhs =
       match lhs_h, rhs_h with
       | (Aseg_p (la,lb))::ltail, _ ->
          let (uset,vsetprime) = mkUsetandVsetprime [la;lb] vset in            
-         let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime k (indent+1) in
-         let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime k (indent+1) in
+         let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime (indent+1) in
+         let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime (indent+1) in
          print_and_return (FExists (uset,FAnd [f1;f2])) indent
                           
       | _ ,(Aseg_p (a,b))::rtail ->
-         let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset k (indent+1) in
-         let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset k (indent+1) in
+         let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset (indent+1) in
+         let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset (indent+1) in
          print_and_return (FOr [f1;f2]) indent
                           
       | lh::ltail, rh::rtail ->
        ( match lh, rh with
          | Aseg_p (la,lb), _ ->
             let (uset,vsetprime) = mkUsetandVsetprime [la;lb] vset in            
-            let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime k (indent+1) in
-            let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime k (indent+1) in
+            let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime (indent+1) in
+            let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime (indent+1) in
             print_and_return (FExists (uset,FAnd [f1;f2])) indent
                     
          | _, Aseg_p (ra,rb) ->
-            let f1 = helper lhs ((mkEqSv ra rb)::rhs_p,rtail) vset k (indent+1) in
-            let f2 = helper lhs ((mkLtSv ra rb)::rhs_p,(mkAsegNE_p ra rb)::rtail) vset k (indent+1) in
+            let f1 = helper lhs ((mkEqSv ra rb)::rhs_p,rtail) vset (indent+1) in
+            let f2 = helper lhs ((mkLtSv ra rb)::rhs_p,(mkAsegNE_p ra rb)::rtail) vset (indent+1) in
             print_and_return (FOr [f1;f2]) indent
                 
          | Pointsto_p (ls,lv),Pointsto_p (rs,rv) ->
             let (uset,vsetprime) = mkUsetandVsetprime [ls;rs] vset in            
-            let f1 = helper ((mkEqSv ls rs)::lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vsetprime k (indent+1) in
+            let f1 = helper ((mkEqSv ls rs)::lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vsetprime (indent+1) in
             let f2 = FExists (vsetprime, mkFBase ([mkNot (mkAndlst ((mkNeqSv ls rs)::lhs_p))],[])) in
             print_and_return (FExists (uset, FAnd [f1;f2])) indent
 
@@ -268,12 +268,12 @@ let array_entailment_classical lhs rhs =
             if is_same_sv la ra
             then
               let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in
-              let f1 = helper ((mkGtSv rb lb)::lhs_p,ltail) (rhs_p, (mkAsegNE_p lb rb)::rtail) vsetprime k (indent+1) in
-              let f2 = helper ((mkLteSv rb lb)::lhs_p,(mkAseg_p rb lb)::ltail) (rhs_p, rtail) vsetprime k (indent+1) in
+              let f1 = helper ((mkGtSv rb lb)::lhs_p,ltail) (rhs_p, (mkAsegNE_p lb rb)::rtail) vsetprime (indent+1) in
+              let f2 = helper ((mkLteSv rb lb)::lhs_p,(mkAseg_p rb lb)::ltail) (rhs_p, rtail) vsetprime (indent+1) in
               print_and_return (FExists (uset, FAnd [f1;f2])) indent
             else
               let (uset,vsetprime) = mkUsetandVsetprime [la;ra] vset in
-              let f1 = helper ((mkEqSv la ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p la rb)::rtail) vsetprime k (indent+1) in
+              let f1 = helper ((mkEqSv la ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p la rb)::rtail) vsetprime (indent+1) in
               let f2 = FExists (vsetprime, mkFBase ([mkNot (mkAndlst ((mkNeqSv la ra)::lhs_p))],[])) in
               print_and_return (FExists (uset, FAnd [f1;f2;(FExists (vsetprime, (mkFBase ([(mkNot (mkAndlst ((mkGtSv la ra)::lhs_p)))],[])))) ])) indent
                       
@@ -292,7 +292,7 @@ let array_entailment_classical lhs rhs =
             let fresh_c = global_get_new_var () in
             let fresh_u = global_get_new_var () in
             let f = helper ((mkEq (mkVar fresh_c) (incOne (mkVar la)))::lhs_p,([mkPointsto_p la fresh_u; mkAseg_p fresh_c lb]@ltail))
-                           rhs vsetprime k (indent+1) in
+                           rhs vsetprime (indent+1) in
             print_and_return (FExists (uset,(FForall ([fresh_c;fresh_u],f)))) indent
 
          | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
@@ -300,20 +300,19 @@ let array_entailment_classical lhs rhs =
             let fresh_u = global_get_new_var () in
             print_and_return (helper lhs
                                      ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@rtail))
-                                     ([fresh_c;fresh_u]@vset) k (indent+1)) indent
+                                     ([fresh_c;fresh_u]@vset) (indent+1)) indent
          | _, Gap_p _ -> failwith "Gap_p"
          | Gap_p _,_ -> failwith "Gap_p"
        )
-      | [],[] -> print_and_return (FExists (vset, FOr [FNot (mkFBase (lhs_p,List.rev (lhs_h@k)));mkFBase (rhs_p,[])])) indent
+      | [],[] -> print_and_return (FExists (vset, FOr [FNot (mkFBase (lhs_p,[]));mkFBase (rhs_p,[])])) indent
+                                  
       | _, []
-         (*  *)
-                          
       | [], _ ->
          print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent
 
   in
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
-    FForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] 0)
+    FForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e 0)
   in
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
