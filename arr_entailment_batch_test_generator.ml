@@ -74,14 +74,14 @@ let chopping map =
     then List.rev output
     else      
       let new_end = get_random (s+1) e in
-      let () = print_endline (str_pair string_of_int string_of_int (s,new_end)) in
+      (* let () = print_endline (str_pair string_of_int string_of_int (s,new_end)) in *)
       chopping_helper new_end e ((s,new_end)::output)
   in
   List.concat
     (List.map
        (fun (f,t) ->
-         let () = print_endline "***" in
-         let () = print_endline (str_pair string_of_int string_of_int (f,t)) in
+         (* let () = print_endline "***" in *)
+         (* let () = print_endline (str_pair string_of_int string_of_int (f,t)) in *)
          chopping_helper f t []) map)
 ;;
   
@@ -133,15 +133,29 @@ let generate_formatted_entailment_str lhs rhs =
 ;;
 
 let test_aseg num =
-  generator_random_valid_entailment_lst num
+  let header = "pred_prim Aseg<start:int, end:int>.\npred_prim AsegNE<start:int, end:int>.\npred_prim Elem<start:int,value:int>."
+  in
+  let (entailments,_) =
+    List.fold_left
+      (fun (r,i) (lhs,rhs) ->
+        (r^"\n"^(("// "^(string_of_int i))^"\n"^generate_formatted_entailment_str lhs rhs)^"\nprint residue.\nexpect Valid.\n"),i+1)
+      ("",1) (generator_random_valid_entailment_lst num)
+  in
+  header^entailments
 ;;
 
-let _ = List.iter
-          (fun (lhs,rhs) ->
-            let () = print_endline (generate_formatted_entailment_str lhs rhs) in
-            let () = print_endline "print residue." in
-            let () = print_endline "expect Valid.\n" in
-            ()
-          )
-          (generator_random_valid_entailment_lst 10)
+let generate_test_file name num =
+  let file = open_out name in
+  let test_cases = test_aseg num in
+  output_string file test_cases
 ;;
+
+let () =
+  let name = Sys.argv.(1) in
+  let num = Sys.argv.(2) in
+  generate_test_file name (int_of_string num)
+;;
+                     
+
+  
+

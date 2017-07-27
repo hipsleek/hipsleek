@@ -8,8 +8,6 @@ infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b>.
 print residue.
 expect Valid.
 
-
-
 // 2
 infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b> & a=3.
 print residue.
@@ -32,7 +30,7 @@ expect Valid.
 // This one may be tricky...
 
 // 6
-infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=10 & c=3 & d=5|- base::AsegNE<c,d>.
+infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=10 & c=3 & d=5 |- base::AsegNE<c,d>.
 print residue.
 expect Valid.
 
@@ -43,6 +41,11 @@ expect Valid.
 
 // 8
 infer[@arr_ba]  base::Elem<a,b> & a<c |- base::Elem<c,d> .
+print residue.
+expect Valid.
+
+// 9
+infer[@arr_ba]  base::AsegNE<x,2> & a<c |- base::AsegNE<x,a> & a>1.
 print residue.
 expect Valid.
 
