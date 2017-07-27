@@ -89,6 +89,7 @@ and p_formula =
   (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
   | ImmRel of (p_formula * imm_ann * loc)
+  | Security of sec_formula * loc
 
 and term_ann =
   | Term    (* definite termination *)
@@ -169,6 +170,15 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | ConstRel of bool
   | BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
+
+and sec_label =
+  | Hi
+  | Lo
+  | Lub of sec_label * sec_label
+  | SecVar of spec_var
+
+and sec_formula =
+  | VarBound of spec_var * sec_label
 
 (* let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized") *)
 (* let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized") *)

@@ -230,6 +230,7 @@ and pfv (pf: p_formula)=
   | LexVar (_, args1, args2, _) ->
     let args_fv = List.concat (List.map afv (args1@args2)) in
     Gen.BList.remove_dups_eq (=) args_fv
+  | Security _ -> x_fail "TODO"
 
 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
@@ -341,6 +342,8 @@ and mkXPure id cl pos =
   }
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
+
+and mkSecurity a1 a2 pos = Security (VarBound (a1, a2), pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
@@ -596,9 +599,10 @@ and pos_of_pf pf=
     | EqMax (_,_,_,p) | EqMin (_,_,_,p)
     | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)
     | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-    | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) -> p
+    | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) | Security (_, p) -> p
     (* | VarPerm (_,_,p) -> p *)
     | XPure xp ->  xp.xpure_view_pos
+
   end
 
 and pos_of_exp (e : exp) = match e with
@@ -829,6 +833,7 @@ and p_apply_one ((fr, t) as p) pf =
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
     LexVar (t_ann, args1,args2,pos)
+  | Security _ -> x_fail "TODO"
 
 and subst_exp sst (e: exp) : exp =
   match sst with
@@ -969,6 +974,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
     let vs = List.concat (List.map look_for_anonymous_exp (args)) in
     vs
   | ImmRel (r, _, _) -> look_for_anonymous_b_formula (r,il)
+  | Security _ -> x_fail "TODO"
 
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -1044,6 +1050,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ImmRel (r, _, _) -> find_lexp_p_formula r ls
   | LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
+  | Security _ -> x_fail "TODO"
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -1194,6 +1201,7 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | ListPerm (exp1, exp2,_)  -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | RelForm _
   | ImmRel  _ -> false
+  | Security _ -> x_fail "TODO"
 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with
   | Null _
@@ -1728,6 +1736,7 @@ and float_out_pure_min_max (p : formula) : formula =
       let nargse = List.map fst nargs in
       let t = BForm ((RelForm (r, nargse, l), il), lbl) in
       t
+    | Security _ -> x_fail "TODO"
 
   in
   match p with
@@ -2215,6 +2224,7 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                       let nes1 = List.map (transform_exp f_exp) es1 in
                       let nes2 = List.map (transform_exp f_exp) es2 in
                       LexVar (t,nes1,nes2,l)
+                    | Security _ -> x_fail "TODO"
                   in helper pf) in
       (npf,il)
     )

@@ -56,7 +56,7 @@ SLFLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-static,-ccopt,-fop
 OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)  $(CPPO_FLAGS)
 OBB_NGFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
 
-OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
+OBB_FLAGS = -tag 'debug' -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) $(CPPO_FLAGS)
 
 #static - incl C libs
@@ -120,6 +120,9 @@ hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte b-hip
+
+hip.depends: xml
+	@ocamlbuild $(OBB_FLAGS) main.ml.depends
 
 sleek.byte: xml
 	@ocamlbuild $(OBB_FLAGS) sleek.byte

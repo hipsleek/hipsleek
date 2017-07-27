@@ -36,7 +36,7 @@ let tbl_datadef : (string, string list) Hashtbl.t = Hashtbl.create 1
 
 let smt_cmds = ref ([] : command list)
 
-let smt_ent_cmds = ref ([]: 
+let smt_ent_cmds = ref ([]:
                           (meta_formula list * meta_formula * entail_type * Cformula.formula * Cformula.struc_formula * bool) list)
 
 let find_typ spl name =
@@ -115,6 +115,7 @@ let rec process_p_formula pre_fix_var pf =
     "(" ^ id ^ ")"
   | Ipure.ImmRel _ ->
     ";immrel"
+  | Ipure.Security _ -> x_fail "TODO"
 
 let rec process_pure_formula pre_fix_var pf =
   let recf = process_pure_formula pre_fix_var in
@@ -332,7 +333,7 @@ let process_entail (iante, iconseq, etype) iprog cprog =
   let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
   "\n" ^ s0 ^ "\n" ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
-let process_entail_new cprog iprog start_pred_abs_num 
+let process_entail_new cprog iprog start_pred_abs_num
     (iantes, iconseq, etype, cante, cconseq, res) header data_decl =
   let iante = List.hd iantes in
   let spl1 = match iante with
@@ -369,7 +370,7 @@ let process_entail_new cprog iprog start_pred_abs_num
   (* let s0 = List.fold_left (fun s0 (id,sv_info) -> *)
   (*     s0 ^ "(declare-fun " ^ id ^ " () " ^ (string_of_typ sv_info.Typeinfer.sv_info_kind) ^ ")\n" *)
   (* ) "" spl in *)
-  let status = "(set-info :status " ^ (if res then "unsat" else "sat") ^ ")\n" in 
+  let status = "(set-info :status " ^ (if res then "unsat" else "sat") ^ ")\n" in
   let s0 = List.fold_left (fun s0 (CP.SpecVar (t,id,p)) ->
       s0 ^ "(declare-fun " ^ (string_of_sv (id,p)) ^ " () " ^ (smt_string_of_typ t) ^ ")\n"
     ) "" all_svl in
@@ -385,7 +386,7 @@ let process_entail_new cprog iprog start_pred_abs_num
       let s2,_ = process_iconseq iconseq iprog all_view_names n1 in
       s2
   in
-  header ^ status ^ "\n" ^ data_decl ^ "\n" ^ 
+  header ^ status ^ "\n" ^ data_decl ^ "\n" ^
   s0 ^ "\n" ^ s_pred_abs  ^ "\n"  ^ s1 ^ "\n" ^ s2 ^ "\n(check-sat)"
 
 let process_cmd cmd iprog cprog=
@@ -417,14 +418,14 @@ let trans_smt slk_fname iprog cprog cmds =
       | _ -> false
     ) cmds in
   let ent_cmds = !smt_ent_cmds in
-  let logic_header = 
-    "(set-logic QF_S)\n" ^ 
+  let logic_header =
+    "(set-logic QF_S)\n" ^
     "(set-info :source |" ^
     "  Sleek solver\n" ^
-    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^  
-    "|)\n\n" ^ 
+    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^
+    "|)\n\n" ^
     "(set-info :smt-lib-version 2.0)\n" ^
-    "(set-info :category \"crafted\")\n" 
+    "(set-info :category \"crafted\")\n"
   in
   (*declaration*)
   let decl_s0 = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog cprog)) "" other_cmds in

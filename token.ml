@@ -123,6 +123,8 @@ type sleek_token =
   | XPURE
   | PAR
   | ARGOPTION of string
+
+  | HI_SEC | LO_SEC | LUB_SEC
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -276,6 +278,9 @@ module Token = struct
     (* | "#>" { TCPAREN } (\*Open and close paren for thread heap*\) *) (* replaced by `HASH;`GT*)
     | PAR -> "par"
     | ARGOPTION arg -> "##OPTION "^arg
+    | HI_SEC  -> "@Hi"
+    | LO_SEC -> "@Lo"
+    | LUB_SEC -> "@lub"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

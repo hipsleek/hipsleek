@@ -8613,6 +8613,8 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_remaining_branches = brs;
                            CP.xpure_view_pos = pos
                           }
+               | IP.Security _ -> x_fail "TODO"
+
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
