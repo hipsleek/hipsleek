@@ -1,3 +1,4 @@
+//  --verbose-arr
 pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
@@ -12,11 +13,11 @@ expect Valid.
 infer[@arr_ba]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b> & a=3.
 print residue.
 expect Valid.
-
 // 3
 infer[@arr_ba]  base::Elem<a,b>  |- base::Elem<c,d> .
 print residue.
 expect Valid.
+
 
 // 4
 infer[@arr_ba]  base::Elem<a,b> & a=c |- base::Elem<c,d> .
