@@ -52,3 +52,18 @@ is incompleter in general
 
 
 */
+
+// implicit instantiation
+infer[]  base::AsegNE<x,2> |- base::AsegNE<x,a> & a>1.
+print residue.
+expect Valid.
+
+// explicit instantiation
+infer[]  base::AsegNE<x,2> |- [a] base::AsegNE<x,a> & a>1.
+print residue.
+expect Valid.
+
+// existential without instantiation
+infer[]  base::AsegNE<x,2> |- (exists a: base::AsegNE<x,a> & a>1).
+print residue.
+expect Valid.
