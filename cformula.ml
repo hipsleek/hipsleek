@@ -20665,9 +20665,9 @@ let rec extract_cformula_from_struc_formula strucf =
   in
   match strucf with
   | EBase sbf ->
-     let () = y_binfo_pp (!print_svl sbf.formula_struc_explicit_inst) in
-     let () = y_binfo_pp (!print_svl sbf.formula_struc_implicit_inst) in
-     let () = y_binfo_pp (!print_svl sbf.formula_struc_exists) in
+     (* let () = y_binfo_pp (!print_svl sbf.formula_struc_explicit_inst) in *)
+     (* let () = y_binfo_pp (!print_svl sbf.formula_struc_implicit_inst) in *)
+     (* let () = y_binfo_pp (!print_svl sbf.formula_struc_exists) in *)
      let new_base =
        let underscore = List.filter is_anon_var sbf.formula_struc_implicit_inst in
        ( match (sbf.formula_struc_base) with
