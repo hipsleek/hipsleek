@@ -206,3 +206,5 @@ why do we need 2 relations for HB, CB and Event?
 
 =====================================
 =====================================
+update examples/working/sleek/session/ex3e-lbl-rel.slk
+to remove labels

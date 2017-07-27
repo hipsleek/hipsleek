@@ -33,6 +33,6 @@ k1::Common{ . emp&{FLOW,(20,21)=__norm#E}}<>@M&v_int_25_2209'=2 &
 */
 
 checkentail k1::Chan{@S  Guard{hbp(B__id_23,B__id_21)}<> }<>@M &
-hbp(B__id_22,B__id_21) & hbp(y,x) & x=B__id_22 & o=5 & y=B__id_23 & d=10
+hbp(B__id_22,B__id_21) & hbp(B__id_23,B__id_22) 
  |-  k1::Chan{emp}<>@M.
-
+print residue.

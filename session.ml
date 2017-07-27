@@ -3039,3 +3039,20 @@ module DAG_ivar    = Ords.Make_DAG(IVert_elem) ;;
 module DAG_cvar    = Ords.Make_DAG(CVert_elem) ;;
 module DAG_ievent  = Ords.Make_DAG(EVert_elem) ;;
 
+let is_rel_sleek_orders rel_sv =
+  let ev_rel_id = un_option !SC.sevent_rel_id "" in
+  let hbp_rel_id = un_option !SC.shbp_rel_id "" in
+  let cb_rel_id = un_option !SC.scb_rel_id "" in
+  let rel_id = CP.name_of_spec_var rel_sv in
+  String.compare rel_id ev_rel_id == 0 ||
+  String.compare rel_id hbp_rel_id == 0 ||
+  String.compare rel_id cb_rel_id == 0
+
+let is_rel_orders rel_sv =
+  let ev_rel_id  = un_option !SC.event_rel_id "" in
+  let hbp_rel_id = un_option !SC.hbp_rel_id "" in
+  let cb_rel_id  = un_option !SC.cb_rel_id "" in
+  let rel_id = CP.name_of_spec_var rel_sv in
+  String.compare rel_id ev_rel_id == 0 ||
+  String.compare rel_id hbp_rel_id == 0 ||
+  String.compare rel_id cb_rel_id == 0
