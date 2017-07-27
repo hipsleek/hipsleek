@@ -1390,13 +1390,9 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   then
     let () = y_tinfo_pp "array entailment" in
     let new_ante = ante in
-    (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
-    (* let new_conseq = CF.extract_formula_from_Ebase_struc_formula conseq in *)
     let new_conseq = CF.extract_cformula_from_struc_formula conseq in
-    
-    (* let rs_frame = Arr_entailment5.array_entailment_with_frame_and_print new_ante new_conseq in *)
-    (* let () = y_binfo_pp (Cprinter.string_of_list_context rs_frame) in *)
-    (* let _ = Arr_entailment_with_bi_abduction_norm.array_entailment_biabduction_norm new_ante new_conseq in  *)   
+    let () = y_tinfo_pp (!CF.print_struc_formula conseq) in
+    let () = y_tinfo_pp (!CF.print_formula new_conseq) in
     let full_rs =
       if !Globals.array_pre
       then
@@ -1405,15 +1401,6 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
         Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
     in
     (full_rs,(ante,conseq))
-    (* The following line is for inference *)
-    (* let rs = Arr_biabduction_v3.biabduction_inferface new_ante new_conseq in *)
-    (* ((true,rs,[]),(ante,conseq)) *)
-    (* if !Globals.array_lazy_enum *)
-    (* then *)
-    (*   let () = Arr_biabduction.check_formula_to_arrPred new_ante new_conseq in *)
-    (*   Arr_biabduction.po_biabduction_interface new_ante new_conseq *)
-    (* else *)
-    (*   Arr_biabduction.enumerate_with_order new_ante new_conseq *)
   else
     if List.mem INF_ARR_BIABDUCTION itype
     then

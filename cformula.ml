@@ -20657,9 +20657,72 @@ let extract_formula_from_Ebase_struc_formula strucf =
 ;;
 
 let rec extract_cformula_from_struc_formula strucf =
+  let is_anon_var (SpecVar (_,name,_)) =
+    if String.length name < 5
+    then false
+    else
+      (String.compare (String.sub name 0 5) "Anon_") = 0
+  in
   match strucf with
   | EBase sbf ->
-     elim_exists sbf.formula_struc_base
+     let () = y_tinfo_pp (!print_svl sbf.formula_struc_explicit_inst) in
+     let () = y_tinfo_pp (!print_svl sbf.formula_struc_implicit_inst) in
+     let () = y_tinfo_pp (!print_svl sbf.formula_struc_exists) in
+     let new_base =
+       let underscore = List.filter is_anon_var sbf.formula_struc_implicit_inst in
+       let expl = sbf.formula_struc_explicit_inst in
+       let new_eset = underscore@expl in
+       ( match (sbf.formula_struc_base) with
+         | Base ({  
+                    formula_base_heap = bh;
+                    formula_base_vperm = vp;
+                    formula_base_pure = pf;
+                    formula_base_type = bt;
+                    formula_base_and = ba;
+                    formula_base_flow = bf; 
+                    formula_base_label = bl;
+                    formula_base_pos = bloc; }) ->
+            if List.length new_eset = 0
+            then sbf.formula_struc_base
+            else
+              ( Exists ({
+                           formula_exists_qvars = new_eset;
+                           formula_exists_heap = bh;
+                           formula_exists_vperm = vp;
+                           formula_exists_pure = pf;
+                           formula_exists_type = bt;
+                           formula_exists_and = ba;
+                           formula_exists_flow = bf; 
+                           formula_exists_label = bl;
+                           formula_exists_pos = bloc;
+                       }))
+         |  Exists ({
+                       formula_exists_qvars = eset;
+                       formula_exists_heap = bh;
+                       formula_exists_vperm = vp;
+                       formula_exists_pure = pf;
+                       formula_exists_type = bt;
+                       formula_exists_and = ba;
+                       formula_exists_flow = bf; 
+                       formula_exists_label = bl;
+                       formula_exists_pos = bloc
+                   }) ->
+             Exists
+               ({
+                   formula_exists_qvars = new_eset@eset;
+                   formula_exists_heap = bh;
+                   formula_exists_vperm = vp;
+                   formula_exists_pure = pf;
+                   formula_exists_type = bt;
+                   formula_exists_and = ba;
+                   formula_exists_flow = bf; 
+                   formula_exists_label = bl;
+                   formula_exists_pos = bloc
+               })
+         | _ -> failwith "TO BE IMPLEMENTED"
+       )
+     in         
+     elim_exists new_base
   | EList lst ->
      let flst =       
          (List.map
@@ -20674,4 +20737,5 @@ let rec extract_cformula_from_struc_formula strucf =
               Or {formula_or_f1 = item; formula_or_f2 = r; formula_or_pos = no_pos}) h tail)
   | _ -> failwith "extract_cformula_from_struc_formula: Invalid input"
 ;;
+  
   

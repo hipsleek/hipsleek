@@ -1,0 +1,81 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+// 1
+infer[@arr_en]  base::AsegNE<x,y> & a=y-1  
+    |- base::Aseg<x,a> * base::Elem<a,_>.
+print residue.
+expect Valid.
+
+
+infer[@arr_en]  base::AsegNE<x,y> //& a=y-1  
+    |- (exists a: base::AsegNE<x,a> * base::AsegNE<a,y>).
+print residue.
+expect Fail.
+
+infer[@arr_en]  base::AsegNE<x,y> //& a=y-1  
+    |- (exists a: base::Aseg<x,a> * base::AsegNE<a,y>).
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> //& a=y-1  
+    |- (exists a: base::AsegNE<x,a> * base::Aseg<a,y>).
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> & x<a<=y 
+    |- base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> & x<=a<y 
+    |- base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Fail.
+
+infer[@arr_en]  base::Aseg<x,y> & x<=a<=y 
+    |- base::Aseg<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> 
+    |- (exists a: base::Aseg<x,a> * base::Aseg<a,y>).
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::Aseg<x,y> 
+    |- (exists a: base::Aseg<x,a> * base::Aseg<a,y>).
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> & y-x>1 
+    |- (exists a: base::AsegNE<x,a> * base::AsegNE<a,y>).
+print residue.
+expect Valid.
+
+infer[@arr_en]  base::AsegNE<x,y> //& y-x>1 
+    |- (exists a: base::AsegNE<x,a> * base::AsegNE<a,y>).
+print residue.
+expect Fail.
+
+infer[@arr_en]  base::AsegNE<x,y> & y-x>1 
+    |- (exists a,b: base::AsegNE<x,a> * base::AsegNE<a,b> * base::AsegNE<b,y>).
+print residue.
+expect Fail.
+
+infer[@arr_en]  base::AsegNE<x,y> & y-x>2
+    |- (exists a,b: base::AsegNE<x,a> * base::AsegNE<a,b> * base::AsegNE<b,y>).
+print residue.
+expect Valid.

@@ -88,6 +88,9 @@ let simplify = Tpdispatcher.simplify_omega
 
 let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 ;;
+
+let simplify_p f = pairwisecheck (simplify f)
+;;
   
 let rec mkAndlst lst =
   match lst with
@@ -266,7 +269,13 @@ let imply f1 f2 =
 let isValid f =
   not (isSat (mkNot f))
 ;;
-  
+
+let print_endline_verbose str =
+  if !Globals.array_verbose
+  then print_endline str
+  else ()
+;;
+      
 let str_exp = print_exp
 ;;
 
@@ -567,12 +576,13 @@ let arrPred_to_h_formula seq =
 ;;
 
 let construct_exists hf pf svlst =
-  Cformula.mkExists svlst hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+  Cformula.mkExists svlst hf (Mcpure.mix_of_pure pf) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
 
 let construct_base hf pf =
-  Cformula.mkBase hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+  Cformula.mkBase hf (Mcpure.mix_of_pure pf) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
+
 
 let get_inferred_pure orig_pf new_pflst =
   let rec helper new_pflst lst =
@@ -1704,6 +1714,14 @@ end
 let mkEmptyes () =
   empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos
 ;;
+
+let mkCtx es =
+  Ctx es
+;;
+
+let mkSuccCtx ctxlst =
+  SuccCtx ctxlst
+;;
   
 let mkEmptySuccCtx () =
   SuccCtx [Ctx (Cformula.empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos)]
@@ -1727,7 +1745,7 @@ let mkCtxWithPure ip =
 ;;
 
 let mkCtxWithFrame framep frameh =
-  let state_f = construct_base frameh (Mcpure.mix_of_pure framep) in
+  let state_f = construct_base frameh framep in
   let es = mkEmptyes () in
   let new_es =
     {es with

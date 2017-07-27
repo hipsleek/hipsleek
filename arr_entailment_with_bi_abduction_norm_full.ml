@@ -139,8 +139,6 @@ let simplify_norm_pre_condition norm =
   (simplify_pure_in_norm_pre_condition norm)
   (* merge_false_in_norm_pre_condition  *)
 ;;
-  
-       
 
 let array_entailment_biabduction_norm lhs rhs =
   let mkUsetandVsetprime set vset =
@@ -150,7 +148,9 @@ let array_entailment_biabduction_norm lhs rhs =
   in
 
   let print_and_return f indent =
-    let () = print_endline (print_indent indent ("=>"^(str_biabFormula f))) in
+    let () =
+      print_endline_verbose (print_indent indent ("=>"^(str_biabFormula f)))
+    in
     f
   in
 
@@ -191,7 +191,9 @@ let array_entailment_biabduction_norm lhs rhs =
   in
 
   let rec helper orig_lhs_p ((lhs_p,lhs_h) as lhs) ((rhs_p,rhs_h) as rhs) vset uqset frame antiframe indent =
-    let () = print_endline (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs)))) in
+    let () =
+      print_endline_verbose (""^(print_indent indent ((str_asegplusF lhs)^" |- "^(str_asegplusF rhs))))      
+    in
     if not(isSat (mkAndlst (lhs_p@rhs_p)))
     then
       let norm = mkNormOr_base (mkNormBaseNeg uqset vset orig_lhs_p) in
@@ -371,6 +373,8 @@ let array_entailment_biabduction_norm lhs rhs =
               failwith "Gap_p vs Gap_p: Invalid case"
          )
   in
+
+  
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
     let orig_lhs_p = (get_sorted_puref_general lhs_h)::lhs_p in
     let orig_rhs_p = (get_sorted_puref_general rhs_h)::rhs_p in
@@ -382,14 +386,126 @@ let array_entailment_biabduction_norm lhs rhs =
   helper_entry (aPredF_to_asegF (transAnte#formula_to_general_formula)) (aPredF_to_asegF (transConseq#formula_to_general_formula))
 ;;
 
+
+(* norm: normalized pre-condition, in the form of (Exists V0:forall V1:Exists V2: f*)
+let extract_anti_frame_and_frame norm =
+  let neg_to_pure eset clst base base_uset base_eset pflst =
+    (mkExists eset
+              (mkAndlst
+                 (clst@
+                    [(mkForall base_uset
+                               (mkExists base_eset
+                                         (mkNot
+                                            (mkAndlst pflst))))])))
+  in
+  
+  (* return a pair of list *)
+  let extract_helper lst =
+    let (imply,neg) =
+      List.fold_left
+        (fun (ir,nr) (eset,clst,base) ->
+          match base with
+          | NormBaseNeg (iuset,ieset,pf)-> (ir,mkOr (neg_to_pure eset clst base iuset ieset pf) nr)
+          | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
+             let inner_pure =
+               simplify
+                 (mkForall
+                    iuset
+                    (mkExists
+                       ieset
+                       (mkImply (mkAndlst lhs_p) (mkAndlst rhs_p))))
+             in
+             if isSat inner_pure && true (* More conditions are needed!!! *)
+             then
+               let anti_frame_pure = simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))) in
+               let norm_af =(eset@ieset,anti_frame_pure,antiframe) in
+               let frame_pure = simplify_p (mkAndlst (anti_frame_pure::(lhs_p@rhs_p))) in
+               let norm_f = (eset@ieset,frame_pure,frame) in (* TO BE IMPLEMENTED *)
+               ((norm_af,norm_f)::ir,nr)
+             else
+               (ir,nr))
+        ([],mkFalse ()) lst
+    in      
+    (imply, simplify_p neg)
+  in
+  match norm with
+  | NormOr lst ->
+     extract_helper lst
+;;
+
+(* let merge_result implylst = *)
+(*   let merge_helper ((taeset,tapf,tahf),(tfeset,tfpf,tfhf)) lst = *)
+(*     List.fold_left *)
+(*       (fun ((aeset,apf,ahf),(feset,fpf,fhf)) -> *)
+        
+(*     List.filter *)
+(*       (fun ((aeset,apf,ahf),(feset,fpf,fhf)) -> *)
+(*         (compare_asegPredplus_lst ahf tahf) && (compare_asegPredplus_lst fhf tfhf)) *)
+      
+
+(* From asegPlus to h_formula *)
+let arrPredPlus_to_h_formula hflst =  
+  let one_arrPredPlus_to_h_formula p =
+    let basePtr = mkSV "base" in
+    match p with
+    | AsegNE_p (s,e) ->
+       mkViewNode basePtr "AsegNE" [s;e]
+    | Aseg_p (s,e) ->
+       mkViewNode basePtr "Aseg" [s;e]
+    | Pointsto_p (s,v) ->
+       mkViewNode basePtr "Elem" [s;v]
+    | _ -> failwith "arrPredPlus_to_h_formula: TO BE IMPLEMENTED"
+  in
+  let construct_h_formula plst =
+    match (List.map one_arrPredPlus_to_h_formula plst) with
+    | h::tail -> List.fold_left (fun r itemh -> mkStarH itemh h) h tail
+    | [] -> HEmp
+  in
+  construct_h_formula hflst
+;;
+
+let construct_context_lst aflst neg =
+  let construct_helper_imply ((aeset,apf,ahlst),(feset,fpf,phlst)) =
+    let es = mkEmptyes () in
+    let h_antiframe = arrPredPlus_to_h_formula ahlst in
+    let h_frame = arrPredPlus_to_h_formula phlst in
+    let state =
+      if List.length feset = 0
+      then
+        construct_base h_frame fpf
+      else
+        construct_exists h_frame fpf feset
+    in
+    mkCtx
+      {es with
+        es_formula = state ;
+        es_infer_heap = [h_antiframe];
+        es_infer_pure = [apf];
+      }
+  in
+  let construct_helper_neg pf =
+    let es = mkEmptyes () in
+    mkCtx
+      {es with
+        es_infer_pure = [pf];
+      }
+  in
+  (construct_helper_neg neg)::(List.map construct_helper_imply aflst)
+;;
+
+
 let array_entailment_biabduction_interface lhs rhs =
   let (f,norm) = array_entailment_biabduction_norm lhs rhs in
-  let () = print_endline ("=========== formatted pre-condition ==============") in
-  let () = print_endline (str_pre_condition f) in
-  let () = print_endline ("=========== Normalized pre-condition ==============") in
-  let () = print_endline (str_norm_pre_condition norm) in
-  let () = print_endline ("=========== Simplified Normalized pre-condition ==============") in
+  let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
+  let () = print_endline_verbose (str_pre_condition f) in
+  let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
+  let () = print_endline_verbose (str_norm_pre_condition norm) in
+  let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in
   let simp_norm = simplify_norm_pre_condition norm in
-  let () = print_endline (str_norm_pre_condition simp_norm) in
-  (true, mkEmptySuccCtx (),[])
+  let () = print_endline_verbose (str_norm_pre_condition simp_norm) in
+  let () = print_endline_verbose ("=========== extracted anti-frame ==============") in
+  let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
+  (true, mkSuccCtx (construct_context_lst implylst neg), [])
+(* (true, mkEmptySuccCtx (),[]) *)
 ;;
+

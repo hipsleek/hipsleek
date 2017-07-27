@@ -198,3 +198,43 @@ expect Valid.
 infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<c,x>.
 print residue.
 expect Fail.
+
+// 36
+infer[@arr_en]  base::AsegNE<a,a+2> |- exists u,c: base::Elem<a,u> * base::Elem<a+1,u>.
+print residue.
+expect Fail.
+
+// 37
+infer[@arr_en]  base::AsegNE<1,2> & a>3 |- exists c: base::AsegNE<1,c> & a=5.
+print residue.
+expect Fail.
+
+// 38
+infer[@arr_en]  base::AsegNE<x,y> |- base::Aseg<x,y-1> * base::Elem<y-1,_>.
+print residue.
+expect Valid.
+
+// 39
+infer[@arr_en]  base::AsegNE<x,y> |- exists u: base::Aseg<x,y-1> * base::Elem<y-1,u>.
+print residue.
+expect Valid.
+
+// 40
+infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+// 41
+infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::AsegNE<a,y>.
+print residue.
+expect Fail.
+
+// 42
+infer[@arr_en] base::Elem<t114,t115>*base::AsegNE<t116,t117>*base::AsegNE<t118,t119>& t114=7 & t116=8 & t117=12 & t118=12 & t119=15 & t120=7 & t121=15 |- base::AsegNE<t120,t121>&true.
+print residue.
+expect Valid.
+
+// 43
+infer[@arr_en] base::Elem<a,t>*base::AsegNE<b,c> & a=7 & b=8 & c=12  |- base::AsegNE<a,c>.
+print residue.
+expect Valid.
