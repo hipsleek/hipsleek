@@ -27,10 +27,10 @@ void B(Channel k1, Channel k2)
 }
 
 void C(Channel k1, Channel k2)
- requires k2::Chan{@S G<A,B,C@peer,k1,k2@chan>}<> * k2::Common{@S G@all<A,B,C,k1,k2>}<>
- ensures  k2::Chan{emp}<>;
+ requires k1::Chan{@S G<A,B,C@peer,k1@chan,k2>}<> * k2::Chan{@S G<A,B,C@peer,k1,k2@chan>}<> * k2::Common{@S G@all<A,B,C,k1,k2>}<>
+ ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
 {
  int x = receive(k2);
- send(k1,4);
+ send(k1,3);
  dprint;
 }
