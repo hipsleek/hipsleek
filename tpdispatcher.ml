@@ -1580,7 +1580,7 @@ let build_branches_sat br lbs =
 
 let rec filter_chr_dependencies_x f = 
   let conj_list = CP.split_conjunctions f in
-  (* get sleek rel ids *)
+  (* get sleek rels id *)
   let ev_rel_id = un_option !SC.sevent_rel_id "" in
   let hbp_rel_id = un_option !SC.shbp_rel_id "" in
   let cb_rel_id = un_option !SC.scb_rel_id "" in        
@@ -1609,16 +1609,19 @@ let rec filter_chr_dependencies_x f =
     acc@fvs
   ) [] chr_prover_rels in
   (* gets the formulae related to CHR from the second list *)
-  List.fold_left (fun (acc1, acc2) f ->
+  let (chr_form_list, other_formulae) = List.fold_left (fun (acc1, acc2) f ->
     let free_vars = CP.fv f in
     let exists_fv = List.exists (fun fv -> List.mem fv chr_free_vars) free_vars in
     if exists_fv then (acc1@[f], acc2)
     else (acc1, acc2@[f])
-  ) (chr_prover_rels, []) some_prover_rels
+  ) (chr_prover_rels, []) some_prover_rels in
+  let chr_formula = CP.join_conjunctions chr_form_list in
+  let residue_formula = CP.join_conjunctions other_formulae in
+  (chr_formula, residue_formula)
 
 let filter_chr_dependencies f = 
   let pr = !CP.print_formula in
-  let pr_out = pr_pair (pr_list pr) (pr_list pr) in
+  let pr_out = pr_pair pr pr in
   Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
 
 let sat_label_filter fct f =
