@@ -1,0 +1,36 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+
+infer[@arr_ba]  base::AsegNE<x,y> & a<y |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+
+/*
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [y<=a]  // leads to conflict..
+<2>base::AsegNE<a,y>@M&x<a & a<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]    
+inferred pure: [((x<=(a-1) & x<=(y-1)) | y<=x)]
+// can we have simpler infer pure, say x<a
+
+*/
+
+
+infer[@arr_ba]  base::AsegNE<x,y> & x<a<y |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+
+

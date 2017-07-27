@@ -57,13 +57,22 @@ is incompleter in general
 infer[]  base::AsegNE<x,2> |- base::AsegNE<x,a> & a>1.
 print residue.
 expect Valid.
+// <1>emp&a=2&{FLOW,(4,5)=__norm#E}[]
 
 // explicit instantiation
 infer[]  base::AsegNE<x,2> |- [a] base::AsegNE<x,a> & a>1.
 print residue.
 expect Valid.
+// <1>emp&a=2&{FLOW,(4,5)=__norm#E}[]
+
 
 // existential without instantiation
 infer[]  base::AsegNE<x,2> |- (exists a: base::AsegNE<x,a> & a>1).
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(4,5)=__norm#E}[]
+
+// existential without instantiation
+infer[]  base::AsegNE<x,2> |- base::AsegNE<x,_>.
 print residue.
 expect Valid.

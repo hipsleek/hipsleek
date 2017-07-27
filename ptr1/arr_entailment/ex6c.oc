@@ -1,0 +1,3 @@
+P1:={[x,a,y]: x<y & a<y};
+P2:={[x,a,y]: ((x<=(a-1) & x<=(y-1)) | y<=x)};
+gist P2 given P1;
