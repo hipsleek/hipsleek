@@ -1087,6 +1087,8 @@ let session_chan_id = session_def_id (* "chan" *)
 
 let sess_refinement = ref true
 
+let ord2sleek = ref true
+
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
 

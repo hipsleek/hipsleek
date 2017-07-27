@@ -1580,28 +1580,19 @@ let build_branches_sat br lbs =
 
 let rec filter_chr_dependencies_x f = 
   let conj_list = CP.split_conjunctions f in
-  (* get sleek rels id *)
-  let ev_rel_id = un_option !SC.sevent_rel_id "" in
-  let hbp_rel_id = un_option !SC.shbp_rel_id "" in
-  let cb_rel_id = un_option !SC.scb_rel_id "" in        
   (* split farmulae in two: CHR formulae and other formulae *)
   let (chr_prover_rels, some_prover_rels) = List.fold_left (fun (acc1, acc2) f ->
     match f with
     | CP.BForm (b_formula, _) ->
         let p_formula, _ = b_formula in
         begin match p_formula with
-        | CP.RelForm (spec_var, vars, loc) ->
-            begin match spec_var with
-            | CP.SpecVar (_, rel_id, _) ->
-                if String.compare rel_id ev_rel_id == 0 ||
-                   String.compare rel_id hbp_rel_id == 0 ||
-                   String.compare rel_id cb_rel_id == 0 then
-                     (acc1@[f], acc2)
-                else (acc1, acc2@[f])
-            end
+          | CP.RelForm (spec_var, vars, loc) ->
+            if (Session.is_rel_sleek_orders spec_var) then
+              (acc1@[f], acc2)
+            else (acc1, acc2@[f])
         | _ -> (acc1, acc2@[f])
         end
-    | _ -> (acc1, acc2)
+    | _ -> (acc1, acc2@[f])
   ) ([], []) conj_list (* ([CHR order relations], [others]) *)
   in
   let chr_free_vars = List.fold_left (fun acc f ->
