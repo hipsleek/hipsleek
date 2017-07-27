@@ -1,0 +1,54 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+
+infer[@arr_en]  base::AsegNE<x,y> //& y-x>1 
+    |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+/*
+[a] means existential that is to be explicitly instantiated..
+I would expect the residue to then contain:
+   x<a<=y
+
+ <1> x<a<=y emp&{FLOW,(1,26)=__flow#E}[]
+
+*/
+
+infer[@arr_en]  base::AsegNE<x,y> //& y-x>1 
+    |- base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+/*
+
+a used in the RHS but not present in the LHS denotes
+implicit variables.
+
+!!! **sleekengine.ml#1395: EBase 
+   exists (Impl)[a](exists x_44,a_45,
+   y_46: base::AsegNE<x_44,a>@M * base::Aseg<a_45,y_46>@M&
+   x_44=x & a_45=a & y_46=y&{FLOW,(4,5)=__norm#E}[])
+
+Implicit inst is more tricky since
+instantiation happen earlier. If it can get below,
+it si good. If not, it is fine since implicit
+is incompleter in general
+
+   x<a<=y
+
+
+*/
