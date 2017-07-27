@@ -1631,6 +1631,7 @@ let sat_label_filter fct f =
     if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then
       fct arg
     else let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct arg in  chr_res in
+  let (chr_formula, residue_formula) = filter_chr_dependencies f in
   let test ?lbl:(lbl = LO.unlabelled) f1 = 
     if no_andl f1 then
       sat_label_filter_chr lbl f1

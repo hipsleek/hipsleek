@@ -1,0 +1,38 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+/*
+checkentail k2::Chan{@S Guard{ev(B__id_23)}<> ;; (!msg_53#(msg_53=2)) ;; Assume{ev(B__id_22)}<> ;; Guard{ev(B__id_21)}<>
+}<> * k1::Common{emp}<> * 
+ k1'::Chan{@S Assume{ev(B__id_23)}<> ;; Guard{ev(B__id_22)}<> ;; (?msg_54#( msg_54=3)) ;; Assume{ev(B__id_21)}<> ;; Assume{hbp(A__id_23,C__id_21)}<> ;; Guard{hbp(B__id_23,B__id_21)}<> 
+}<>&
+x'=1 & v_136=msg_55 & hbp(C__id_22,C__id_21) & hbp(B__id_22,B__id_21) & 
+cb(C__id_21,B__id_21) & hbp(B__id_23,B__id_22) & cb(B__id_22,C__id_22) & 
+cb(A__id_23,B__id_23) & k2'=k2 & k1'=k1 & v_int_25_2209'=2 
+ |-  k2'::Chan{@S !v#%L(v);;%R}<> * %L(v_int_25_2209') .
+ print residue.
+*/
+/*
+k1::Common{ . emp&{FLOW,(20,21)=__norm#E}}<>@M&v_int_25_2209'=2 & 
+                                     k1'=k1 & k2'=k2 & 
+                                     v_136=msg_55 & x'=1 & 
+                                     v_129=msg_103 & 
+                     fix this!!!     ev(B__id_23) & 
+                                     oev(B,id_23) & 
+                                     ocb(A,id_23,B,id_23) & 
+                                     ocb(B,id_22,C,id_22) & 
+                                     ohbp(B,id_23,B,id_22) & 
+                                     ocb(C,id_21,B,id_21) & 
+                                     ohbp(B,id_22,B,id_21) & 
+                                     ohbp(C,id_22,C,id_21)&{FLOW,(20,21)=__norm#E}
+*/
+/*
+ checkentail x'=1 & v_136=msg_55 & hbp(C__id_22,C__id_21) & hbp(B__id_22,B__id_21) & 
+  cb(C__id_21,B__id_21) & hbp(B__id_23,B__id_22) & cb(B__id_22,C__id_22) & 
+   cb(A__id_23,B__id_23) & k2'=k2 & k1'=k1 & v_int_25_2209'=2
+   |- false.
+*/
+
+checkentail k1::Chan{@S  Guard{hbp(B__id_23,B__id_21)}<> }<>@M &
+hbp(B__id_22,B__id_21) & hbp(y,x) & x=B__id_22 & o=5 & y=B__id_23 & d=10
+ |-  k1::Chan{emp}<>@M.
+
