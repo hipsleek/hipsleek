@@ -238,16 +238,12 @@ let array_entailment_classical lhs rhs =
          let f1 = helper ((mkEqSv la lb)::lhs_p,ltail) rhs vsetprime k (indent+1) in
          let f2 = helper ((mkLtSv la lb)::lhs_p,(mkAsegNE_p la lb)::ltail) rhs vsetprime k (indent+1) in
          print_and_return (FExists (uset,FAnd [f1;f2])) indent
+                          
       | _ ,(Aseg_p (a,b))::rtail ->
          let f1 = helper lhs ((mkEqSv a b)::rhs_p,rtail) vset k (indent+1) in
          let f2 = helper lhs ((mkLtSv a b)::rhs_p,(mkAsegNE_p a b)::rtail) vset k (indent+1) in
          print_and_return (FOr [f1;f2]) indent
-      | _, [] ->
-         print_and_return (FExists (vset, FOr [FNot (mkFBase (lhs_p,List.rev (lhs_h@k)));mkFBase (rhs_p,[])])) indent
                           
-      | [], _ ->
-         print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent
-      
       | lh::ltail, rh::rtail ->
        ( match lh, rh with
          | Aseg_p (la,lb), _ ->
@@ -308,6 +304,13 @@ let array_entailment_classical lhs rhs =
          | _, Gap_p _ -> failwith "Gap_p"
          | Gap_p _,_ -> failwith "Gap_p"
        )
+      | [],[] -> print_and_return (FExists (vset, FOr [FNot (mkFBase (lhs_p,List.rev (lhs_h@k)));mkFBase (rhs_p,[])])) indent
+      | _, []
+         (*  *)
+                          
+      | [], _ ->
+         print_and_return (FExists (vset, (FNot (mkFBase (lhs_p,[]))))) indent
+
   in
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
     FForall (lhs_e,helper ((get_sorted_puref_general lhs_h)::lhs_p,lhs_h) ((get_sorted_puref_general rhs_h)::rhs_p,rhs_h) rhs_e [] 0)

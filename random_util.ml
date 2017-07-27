@@ -2,8 +2,7 @@ open Random
 
 let get_random f t =
   if f>t
-  then failwith "get_random: Invalid input"
-  else f+(int (t-f+1))
+  then failwith ("get_random: Invalid input "^(string_of_int f)^" "^(string_of_int t))  else f+(int (t-f+1))
 ;;
 
 let yes_or_no () =
