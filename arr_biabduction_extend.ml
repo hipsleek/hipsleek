@@ -576,7 +576,7 @@ let arrPred_to_h_formula seq =
 ;;
 
 let construct_exists hf pf svlst =
-  Cformula.mkExists svlst hf pf CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
+  Cformula.mkExists svlst hf (Mcpure.mix_of_pure pf) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
 
 let construct_base hf pf =

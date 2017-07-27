@@ -218,3 +218,13 @@ expect Valid.
 infer[@arr_en]  base::AsegNE<x,y> |- exists u: base::Aseg<x,y-1> * base::Elem<y-1,u>.
 print residue.
 expect Valid.
+
+// 40
+infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+
+// 41
+infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::AsegNE<a,y>.
+print residue.
+expect Fail.
