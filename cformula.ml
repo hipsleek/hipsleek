@@ -20850,3 +20850,25 @@ let set_sess_ann hform anns =
   let pr1 = !print_h_formula in
   let pr2 = string_of_sess_ann in
   Debug.no_2 "Cformula.set_sess_ann" pr1 pr2 pr1 set_sess_ann hform anns
+
+let get_rel_id_list f0 =
+  let rec helper f =
+    match f with
+    | Base form   -> CP.get_rel_id_list (MCP.pure_of_mix form.formula_base_pure)
+    | Exists form -> CP.get_rel_id_list (MCP.pure_of_mix form.formula_exists_pure)      
+    | Or ({formula_or_f1 = of1;
+           formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
+  in
+  helper f0
+
+let get_rel_id_list_from_context ctx =
+  let rec helper ctx = 
+    match ctx with
+    | Ctx es           -> get_rel_id_list es.es_formula
+    | OCtx (ctx1,ctx2) -> (helper ctx1)@(helper ctx2)
+  in helper ctx
+
+let get_rel_id_list_from_list_context cl =
+  match cl with
+  | FailCtx _  -> []
+  | SuccCtx cl -> List.fold_left (fun acc ctx -> acc@(get_rel_id_list_from_context ctx)) [] cl 

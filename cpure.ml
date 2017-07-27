@@ -3109,7 +3109,13 @@ and split_conjunctions f =
   Debug.no_1 "split_conjunctions" pr pr_out split_conjunctions_x f 
 
 
-and join_conjunctions fl = conj_of_list fl no_pos
+and join_conjunctions_x fl = conj_of_list fl no_pos
+
+and join_conjunctions fl =  
+  let pr_out = !print_formula in
+  let pr     = pr_list pr_out in
+  Debug.no_1 "join_conjunctions" pr pr_out join_conjunctions_x fl
+
 
 (******************)
 (* 
