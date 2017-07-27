@@ -602,11 +602,11 @@ let test_dag assume guard def_suids fnc_i2c =
       let inf = List.map fnc_i2c (List.flatten inf) in
       let inf = CP.join_disjunctions inf in
       let ante = CP.mkAnd ante inf no_pos in
-      let ante = CP.mkAndList [(CP.LO.singleton Globals.chr_label,ante)] in
+      (* let ante = CP.mkAndList [(CP.LO.singleton Globals.chr_label,ante)] in *)
       let guard = iedge_to_rel hb in
       let guard = List.map fnc_i2c guard in
       let guard = CP.join_conjunctions guard in
-      let guard = CP.mkAndList [(CP.LO.singleton Globals.chr_label,guard)] in
+      (* let guard = CP.mkAndList [(CP.LO.singleton Globals.chr_label,guard)] in *)
       !CP.tp_imply ante guard
     ) inf_hbs in
   let pr (hb,inf) = ((pr_list S.DAG_ievent.Edge.string_of) inf) ^ " || to prove || "^ (S.DAG_ievent.Edge.string_of hb) in
@@ -792,7 +792,7 @@ let infer_orders_formula assume guard inf_vars =
     let pure = Mcpure.pure_of_mix mix_formula in
     match pure with
     | CP.AndList bf ->
-      let chr  = CP.Label_Pure.filter_label (CP.LO.singleton Globals.chr_label) bf in
+      (* let chr  = CP.Label_Pure.filter_label (CP.LO.singleton Globals.chr_label) bf in *)
       let chr  = List.fold_left (fun a (_,f) -> CP.mkAnd a f no_pos) (CP.mkTrue no_pos) bf in
       let rec helper chr_formula =
         match chr_formula with

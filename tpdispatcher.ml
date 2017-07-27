@@ -1607,25 +1607,28 @@ let rec filter_chr_dependencies_x f =
     else (acc1, acc2@[f])
   ) (chr_prover_rels, []) some_prover_rels in
   let chr_formula = CP.join_conjunctions chr_form_list in
+  let chr = (List.length chr_form_list) > 0 in
   let residue_formula = CP.join_conjunctions other_formulae in
-  (chr_formula, residue_formula)
+  (* let () = y *)
+  (chr, chr_formula, residue_formula)
 
 let filter_chr_dependencies f = 
   let pr = !CP.print_formula in
-  let pr_out = pr_pair pr pr in
+  let pr_bool = (add_str "contains CHR rels" string_of_bool) in
+  let pr_out = pr_triple pr_bool pr pr in
   Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
   (* TODO Andreea: this might not be enough. To check SAT, chr might also need the unlabelled formulas *)
-  let sat_label_filter_chr lbl arg =
-    if (0 != LO.compare lbl (LO.singleton Globals.chr_label)) then
-      fct arg
-    else let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct arg in  chr_res in
-  let (chr_formula, residue_formula) = filter_chr_dependencies f in
   let test ?lbl:(lbl = LO.unlabelled) f1 = 
     if no_andl f1 then
-      sat_label_filter_chr lbl f1
+      let (chr, chr_formula, residue_formula) = filter_chr_dependencies f1 in
+      if chr then 
+        let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct chr_formula in 
+        let res = fct residue_formula in
+        res && chr_res
+      else fct residue_formula 
     else report_error no_pos ("unexpected imbricated AndList in tpdispatcher sat: "^(pr f)) in
   let rec helper_x f = match f with 
     | AndList b -> 
@@ -3436,6 +3439,16 @@ let tp_imply ante conseq old_imp_no timeout process =
   final_res
 ;;
 
+let tp_imply ante conseq old_imp_no timeout process =	
+  let (chr1, chr_ante, residue_ante) = filter_chr_dependencies ante in
+  let (chr2, chr_conseq, residue_conseq) = filter_chr_dependencies conseq in
+  let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
+  if chr1 || chr2 then 
+    let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct (chr_ante, chr_conseq) in
+    let res = fct (residue_ante, residue_conseq) in
+    chr_res && res
+  else fct (residue_ante, residue_conseq)
+  
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = (last_prover())^": "^(string_of_bool x) in
@@ -3671,28 +3684,10 @@ let imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeou
   in
   List.fold_left fold_fun (true,[],None) pairs;;
 
-let imply_filter_chr pairs ante conseq process ante_inner conseq_inner imp_no timeout  =
-  let acpairs, chrs = List.partition (fun (a,b,c) ->
-      0 != LO.compare a (LO.singleton Globals.chr_label)) pairs in
-  if (List.length chrs == 0) then
-    let acpairs = List.map (fun (a,b,c) -> (b,c)) pairs in
-    imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout
-  else
-    let acpairs = Wrapper.wrap_lbl_dis_aggr (imply_label_filter ante) conseq in
-    let acpairs, chrs = List.partition (fun (a,b,c) ->
-        0 != LO.compare a (LO.singleton Globals.chr_label)) acpairs in
-    let acpairs = List.map (fun (a,b,c) -> (b,c)) acpairs in
-    let chrs    = List.map (fun (a,b,c) -> (b,c)) chrs in
-    let fnc = imply_timeout_helper_x chrs process ante_inner conseq_inner imp_no in
-    let chr_res,_,_ = Wrapper.wrap_one_bool pure_tp CHR fnc timeout in (* to change to CHR  *)
-    let res, x,y = imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout in
-    (res && chr_res, x, y)
-
 let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no timeout =
-  (* TODO Andreea: below is inefficient since it calls imply_label_filter twice. 
-     to create a separate check_chr function  *)
   let pairs = x_add imply_label_filter ante conseq in
-  imply_filter_chr pairs ante conseq process ante_inner conseq_inner imp_no timeout 
+  let acpairs = List.map (fun (a,b,c) -> (b,c)) pairs in
+  imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
   : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
