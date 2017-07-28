@@ -1,0 +1,164 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+//(1)
+infer[@arr_ba]  base::AsegNE<x,y> & a<y |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+
+/*
+
+ y>a & base::AsegNE<x,y> & a<y |- base::AsegNE<x,a> --> 
+                                  not(x<y & a<y)|x<a * base::AsegNE<a,y>
+ y<=a ...                      |- .. --> not(false)
+------------------------------------------------
+ base::AsegNE<x,y> & a<y |- base::AsegNE<x,a>.
+
+ infer[@arr_ba]  base::AsegNE<x,y> & a<y |- base::AsegNE<x,a>.
+
+On the LHS, we have:
+
+  LHS_pure = x<y & a<y
+
+For each solution, we have two parts:
+  (i) case-pure
+ (ii) pre-4-entailment
+
+Inferred pure is:
+  gist case-pure & pre-4-entailment give LHS_pure
+
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [y<=a]  
+ // We should get:    <1> false
+ // with inferred pure [y<=a].
+
+  case-pure = y<=a
+  pre-4-entailment = true
+
+  gist y<=a & true given LHS
+  returns false (so just choose y<=a)
+
+<2>base::AsegNE<a,y>@M&x<a & a<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [((x<=(a-1) & x<=(y-1)) | y<=x)]
+// can we have simpler infer pure, say x<a
+P1:={[x,a,y]: x<y & a<y};
+P2:={[x,a,y]: ((x<=(a-1) & x<=(y-1)) | y<=x)};
+gist P2 given P1;
+#{[x,a,y]: x < a}
+// {[x,a,y]: y <= x} union {[x,a,y]: x < a}
+
+LHS = x<y & a<y
+pre: (y <= x) | (x < a)
+  case-pure = y>a
+  pre-4-entailment = y<=x | x<a
+
+  gist (y>a) & (y<=x | x>a) given LHS  
+
+
+*/
+
+
+//(2)
+infer[@arr_ba]  base::AsegNE<x,y> & x<a<y |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+
+/*
+ <1>emp&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [y<=a]
+ // should result in false here..
+
+<2>base::AsegNE<a,y>@M&x<a & a<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [true]
+*/
+
+
+//(3)
+infer[@arr_ba]  base::AsegNE<x,y> & y>=a |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+/*
+
+ // can we avoid unfolding in the last step ..
+
+ a=y & y>=a & emp & y>=a |- x<a & emp --> 
+ a<y & y>=a & base::Aseg+<a,y> & y>=a |- x<a & emp --> 
+ --------------------------------------------------------------
+ y>=a & base::Aseg<a,y> & y>=a |- x<a & emp --> 
+ --------------------------------------------------------------
+ y>=a & base::AsegNE<x,y> & y>=a |- base::AsegNE<x,a> --> 
+ y<a ...                      |- .. --> not(false)
+ ---------------------------------------------------
+  base::AsegNE<x,y> & y>=a |- base::AsegNE<x,a>.
+
+infer[@arr_ba]  base::AsegNE<x,y> & y>=a |- base::AsegNE<x,a>.
+
+Got:
+
+ <1>htrue&false&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [y<a]
+<2>base::AsegNE<a,y>@M&x<a & a<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [x<a & a<y]
+// should be a<y?
+<3>emp&a=y & x<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [y<=a]
+// should be a=y?
+
+
+
+*/
+
+//(4)
+infer[@arr_ba]  base::AsegNE<x,y> & y>=a |- emp.
+print residue.
+expect Valid.
+
+/*
+
+// Any reason why we have "false?"
+Residue:
+
+ <1>htrue&false&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [false]
+<2>base::AsegNE<x,y>@M&x<y & a<=y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [true]
+
+*/
+
+//(5)
+infer[@arr_ba]  base::Aseg<x,y> & y>=a |- emp.
+print residue.
+expect Valid.
+
+/*
+Maybe can avoid unfolding if there is an emp
+in the RHS?
+
+ <1>htrue&false&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [false]
+<2>base::AsegNE<x,y>@M&a<=y & x<y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [x<y]
+<3>emp&x=y & a<=y&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [y=x]
+
+*/
+
