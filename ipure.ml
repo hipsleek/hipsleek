@@ -230,7 +230,15 @@ and pfv (pf: p_formula)=
   | LexVar (_, args1, args2, _) ->
     let args_fv = List.concat (List.map afv (args1@args2)) in
     Gen.BList.remove_dups_eq (=) args_fv
-  | Security _ -> x_fail "TODO"
+  | Security (sec_formula, _) -> sec_formula_fv sec_formula
+
+and sec_label_fv = function
+  | Hi | Lo -> []
+  | Lub (l1, l2) -> Gen.BList.remove_dups_eq (=) (sec_label_fv l1 @ sec_label_fv l2)
+  | SecVar var -> [var]
+
+and sec_formula_fv = function
+  | VarBound (var, lbl) -> Gen.BList.remove_dups_eq (=) (var :: sec_label_fv lbl)
 
 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =

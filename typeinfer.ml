@@ -963,7 +963,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
       | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist
     )
-  | IP.Security _ -> x_fail "TODO"
+  | IP.Security (sec_formula, pos) -> tlist (* TODO: this may be wrong, need to check; at the very least, this is probably unsound *)
 
 and gather_type_info_term_ann prog tann tlist =
   match tann with

@@ -2156,7 +2156,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.ImmRel (helper_p_formula an, cond, pos)
     | Ipure.RelForm (id, el, pos) ->
       Ipure.RelForm (id, List.map (fun e -> helper_exp e) el, pos) (* TODO *)
-    | Ipure.Security _ -> x_fail "TODO"
+    | Ipure.Security _ -> p
   )
   and helper_exp (e : Ipure.exp) : Ipure.exp = (
     match e with

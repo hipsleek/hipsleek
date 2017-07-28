@@ -4571,7 +4571,7 @@ and b_apply_subs sst bf =
 and sec_label_apply_subs sst lbl =
   match lbl with
     | Hi | Lo -> lbl
-    | Lub (l1, l2) -> Lub (sec_label_apply_subs l1, sec_label_apply_subs l2)
+    | Lub (l1, l2) -> Lub (sec_label_apply_subs sst l1, sec_label_apply_subs sst l2)
     | SecVar var -> SecVar (subs_one sst var)
 
 and b_apply_subs_x sst bf =
