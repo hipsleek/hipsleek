@@ -1,0 +1,10 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+checkentail 
+k1::Chan{@S Assume{ emp & oev(C,id_21)}<> ;; Assume{ emp & ohbp(B,id_22,B,id_21)}<> ;; Guard{ emp & ohbp(A,id_22,C,id_21)}<>}<>@M * 
+ w::WAIT{ emp&oev(C,id_21),  w::NOTIFY{ emp}<>@M}<>@M &
+v_131=msg_49 & ohbp(B,id_22,B,id_21) & ocb(C,id_21,B,id_21) & 
+ocb(A,id_22,B,id_22) 
+ |-  w::WAIT{ %P, %R}<>@M * %P.
+print residue.

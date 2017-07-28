@@ -20,3 +20,12 @@ data Channel{
 data SString{
   int info;
 }
+
+data cond{
+  int id;
+}
+
+data event{
+  int id;
+}
+

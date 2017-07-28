@@ -70,10 +70,19 @@ SString receives (Channel c)
 /**
 
 ============================= 2 ============================
-Send/Receive where the means for transmission are FIFO queues:
-each role has an associated queue
-
+Explicit Synchronization Mechanisms
 */
 
+void notifyAll(cond w)
+  requires w::NOTIFY{ w::Guard{ %P }<>}<> * %P
+  ensures  w::NOTIFY{ %P}<> ;
+
+void wait(cond w)
+  requires w::WAIT{ %P, %R }<> * %P
+  ensures  false ;
+  /* requires w::WAIT{ %P, %R }<>  */
+  /* ensures  w::WAIT{ %P, emp}<> * %R ; */
 
 
+/* lemma_norm self::SNOT{%P}<> * %P -> false. */
+/* lemma_norm !(%P) <- self::SNOT{%P}<> */

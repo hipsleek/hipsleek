@@ -18,6 +18,10 @@ pred_prim Assume{%P}<>; //assumed
 pred_prim Guard{%P}<>; //guard
 pred_prim Peer{%P}<>; //peer
 
+/* explicit sync */
+pred_prim NOTIFY{%P}<>;
+pred_prim WAIT{%P,%P}<>;
+
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
 relation oev(int n,int m). //event
