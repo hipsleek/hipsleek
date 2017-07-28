@@ -4031,7 +4031,7 @@ and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option) (del
     (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
     (fun cs cl _ _ -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cs cl i1 hp
 
-and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
+and heap_entail_one_context_struc_xx (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   x_dinfo_zp (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
   (* let m = "***heap_entail_one_context_struc** " in *)
   (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
@@ -4132,6 +4132,73 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let result = if !Globals.en_norm_ctx then Norm.merge_contexts result else result in
     let () = Debug.ninfo_hprint (add_str "result" Cprinter.string_of_list_context) result no_pos in
     (result, prf)
+
+(* transform from and to orders relations *)
+and heap_entail_one_context_struc_wrapper
+  (prog : prog_decl) (is_folding : bool)
+    has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid :
+  (list_context * proof) =
+  let f_pre (ctx,conseq) =
+    if not(!ord2sleek) then (ctx,conseq)
+    else
+      (* transforms from orders rels to sleek rels *)
+      let trans_b_form bform =
+        let p_form, ant = bform in
+        let p_form = x_add_1 Orders_relation.trans_ord_rels_to_sleek_rels p_form in
+        match p_form with
+        | Some p -> Some (p, ant)
+        | None -> None
+      in
+      let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
+      let ctx = CF.transform_context (fun es ->
+          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+        ) ctx in
+      let conseq = CF.transform_struc_formula (nonef,nonef,nonef,f_p_t) conseq in
+      (ctx,conseq)
+  in
+  let f_post (res,proof) =
+    if not(!ord2sleek) then (res,proof)
+    else
+      (* transforms from sleek rels to orders rels *)
+      let list_context = CF.transform_list_context ((fun es ->
+          let trans_b_form bform =
+            let p_form, ant = bform in
+            let p_form = x_add_1 Orders_relation.trans_sleek_rels_to_order_rels p_form in
+            match p_form with
+            | Some p -> Some (p, ant)
+            | None -> None
+          in
+          let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
+          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+        ), (fun c->c)) res in
+      (list_context, proof)
+  in
+  let fct (ctx,conseq) =
+    heap_entail_one_context_struc_xx
+    (prog : prog_decl) (is_folding : bool)
+    has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid in
+  Wrapper.wrap_pre_post_process f_pre f_post fct (ctx,conseq)
+
+and heap_entail_one_context_struc_wrapper_enable_ord2sleek (prog : prog_decl) (is_folding : bool)
+    has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid :
+  (list_context * proof) =
+  let rels = (CF.get_rel_id_list_from_context ctx)@(CF.get_rel_id_list_from_struc conseq) in
+  let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
+  let () = y_binfo_hp (add_str "contains_ords" string_of_bool) contains_ords in
+  let fct = heap_entail_one_context_struc_wrapper
+    (prog : prog_decl) (is_folding : bool)
+    has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos in
+  Wrapper.wrap_one_bool ord2sleek contains_ords fct pid
+
+and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
+  heap_entail_one_context_struc_wrapper_enable_ord2sleek (prog : prog_decl) (is_folding : bool)
+    has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid
+
 
 and need_unfold_rhs prog vn=
   let rec look_up_view vn0=

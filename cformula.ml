@@ -20861,6 +20861,18 @@ let get_rel_id_list f0 =
   in
   helper f0
 
+let get_rel_id_list_from_struc f0 =
+  let rec helper sf  =
+    match sf with
+    | EList el -> List.concat (List.map (fun (_, sf) -> helper sf) el)
+    | ECase ec -> List.concat (List.map (fun (_, sf) -> helper sf) ec.formula_case_branches)
+    | EBase eb -> (get_rel_id_list eb.formula_struc_base) @
+                  (map_opt_def [] (fun x -> helper x) eb.formula_struc_continuation) 
+    | EAssume ae -> get_rel_id_list ae.formula_assume_simpl
+    | EInfer ei  -> helper ei.formula_inf_continuation
+  in helper f0
+
+
 let get_rel_id_list_from_context ctx =
   let rec helper ctx = 
     match ctx with
