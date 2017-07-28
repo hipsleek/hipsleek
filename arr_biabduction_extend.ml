@@ -93,7 +93,7 @@ let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 let simplify_p f = pairwisecheck (simplify f)
 ;;
 
-let get_gist = Tpdispatcher.om_gist
+let get_gist = Omega.gist
 ;;
   
 let rec mkAndlst lst =

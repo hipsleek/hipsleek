@@ -398,51 +398,79 @@ let extract_anti_frame_and_frame norm =
                                          (mkNot
                                             (mkAndlst pflst))))])))
   in
-  
-  (* return a pair of list *)
+
   let extract_helper lst =
+    
+    let rec merge_result imply_lst_after_removed_uv =
+      let merge_helper (eset,lhs_p,rhs_p,afpure,antiframe,frame) lst =
+        let (to_merge,rest)=
+          List.partition
+            (fun ((neset,_,_,_,nantiframe,nframe) as item) ->
+              (compare_sv_lst eset neset) && (compare_asegPredplus_lst frame nframe) && (compare_asegPredplus_lst antiframe nantiframe))
+            lst
+        in
+        ((fun (eset,lhs_p,rhs_p,pure,antiframe,frame) ->
+          (eset,lhs_p,rhs_p,simplify_p pure,antiframe,frame))
+           (List.fold_left
+              (fun (reset,rlhs_p,rrhs_p,rpure,rantiframe,rframe) (neset,nlhs_p,nrhs_p,npure,nantiframe,nframe) ->
+                (reset,rlhs_p,rrhs_p,mkOr rpure npure,rantiframe,rframe))
+              (eset,lhs_p,rhs_p,afpure,antiframe,frame) to_merge),
+         rest)
+      in
+      match imply_lst_after_removed_uv with
+      | h::tail ->
+         let (newh,rest) = merge_helper h tail in
+         newh::(merge_result rest)
+      | [] -> []
+    in
+    
+    let remove_uv eset clst (iuset,ieset,lhs_p,rhs_p,frame,antiframe) =
+      let inner_pure =
+        (mkForall
+           iuset
+           (mkExists
+              ieset
+              (mkImply (mkAndlst lhs_p) (mkAndlst rhs_p))))
+      in
+      if isSat inner_pure && true
+      then
+        let anti_frame_pure =
+          let f = get_gist (mkExists iuset (mkAndlst (clst@rhs_p))) (mkAndlst lhs_p) in
+          f
+        in
+        Some (eset@ieset,lhs_p,rhs_p,anti_frame_pure,frame,antiframe)
+      else
+        None
+    in
+        
+    let norm_imply_to_antiframe_frame (eset,lhs_p,rhs_p,afpure,frame,antiframe) =
+      let norm_af = (eset,afpure,antiframe) in
+      let frame_pure = simplify_p (mkAndlst (afpure::lhs_p)) in
+      let norm_f = (eset,frame_pure,frame) in
+      (norm_af,norm_f)
+    in
+    
     let (imply,neg) =
       List.fold_left
         (fun (ir,nr) (eset,clst,base) ->
           match base with
-          | NormBaseNeg (iuset,ieset,pf)-> (ir,mkOr (neg_to_pure eset clst base iuset ieset pf) nr)
+          | NormBaseNeg (iuset,ieset,pf)-> (ir,(mkOr (neg_to_pure eset clst base iuset ieset pf) nr))
           | NormBaseImply (iuset,ieset,lhs_p,rhs_p,frame,antiframe) ->
-             let inner_pure =
-               simplify
-                 (mkForall
-                    iuset
-                    (mkExists
-                       ieset
-                       (mkImply (mkAndlst lhs_p) (mkAndlst rhs_p))))
-             in
-             if isSat inner_pure && true (* More conditions are needed!!! *)
-             then
-               let anti_frame_pure =
-                 (* get_gist (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))) (mkAndlst lhs_p) in *)
-                 get_gist (mkExists iuset (mkAndlst (clst@rhs_p))) (mkAndlst lhs_p) in
-               let norm_af =(eset@ieset,anti_frame_pure,antiframe) in
-               let frame_pure = simplify_p (mkAndlst (anti_frame_pure::(lhs_p@rhs_p))) in
-               let norm_f = (eset@ieset,frame_pure,frame) in (* TO BE IMPLEMENTED *)
-               ((norm_af,norm_f)::ir,nr)
-             else
-               (ir,nr))
+             ( match remove_uv eset clst (iuset,ieset,lhs_p,rhs_p,frame,antiframe) with
+               | Some norm_imply ->
+                  (norm_imply::ir,nr)
+               | None -> (ir,nr)
+             )
+        )
         ([],mkFalse ()) lst
-    in      
-    (imply, simplify_p neg)
+    in
+    (List.map norm_imply_to_antiframe_frame (merge_result imply),simplify_p neg)
   in
   match norm with
   | NormOr lst ->
      extract_helper lst
 ;;
 
-(* let merge_result implylst = *)
-(*   let merge_helper ((taeset,tapf,tahf),(tfeset,tfpf,tfhf)) lst = *)
-(*     List.fold_left *)
-(*       (fun ((aeset,apf,ahf),(feset,fpf,fhf)) -> *)
-        
-(*     List.filter *)
-(*       (fun ((aeset,apf,ahf),(feset,fpf,fhf)) -> *)
-(*         (compare_asegPredplus_lst ahf tahf) && (compare_asegPredplus_lst fhf tfhf)) *)
       
 
 (* From asegPlus to h_formula *)

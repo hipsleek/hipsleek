@@ -87,6 +87,9 @@ let compare_asegPredplus_lst l1 l2 =
   compare_list l1 l2 is_same_asegPredplus
 ;;
 
+let compare_sv_lst svlst1 svlst2 =
+  compare_list svlst2 svlst2 is_same_sv
+;;
       
   
 
