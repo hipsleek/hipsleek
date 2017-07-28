@@ -1,7 +1,14 @@
 P1:={[x,a,y]: x<y & a<y};
 P2:={[x,a,y]: ((x<=(a-1) & x<=(y-1)) | y<=x)};
-gist P2 given P1;
-
+P2a:={[x,a,y]: (not(x<y & a<y & a<y) | x<a)};
+P3:={[x,a,y]: not(y<=a & a<y)};
+P2;gist P2 given P1;
+#{[x,a,y]: x < a}
+P2a;
+#{[x,a,y]: y <= x} union {[x,a,y]: x < a}
+gist P2a given P1;
+P1case:={[x,a,y]:y<=a};
+P2case:={[x,a,y]:y>a};
 P1:={[x,a,y,c]: a<y};
 P2:={[x,a,y,c]: (a<y & x<y & c>0)|a>=y};
 gist P2 given P1;
@@ -9,3 +16,11 @@ gist P2 given P1;
 P1:={[a,b,c,d]:a=1 & b=10 & c=3 & d=5};
 P2:={[a,b,c,d]:a<c};
 gist P2 given P1;
+#{[x,a,y]: x < a}
+P2 subset P2a;P2a subset P2;
+P3;
+P3;gist P3 given P1;
+P2b:=P2case intersection P2a;
+P2b;
+gist P2b given P1;
+gist P1case given P1;
