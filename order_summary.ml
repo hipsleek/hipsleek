@@ -552,7 +552,8 @@ let iedge_to_rel edge =
   let helper id edge =
     match id with
     | Some id ->
-      let ids = List.map (fun ev -> (IRole.string_of (BEvent.get_role ev)) ^ (IUID.string_of (BEvent.get_uid ev))) [arg1;arg2] in
+      
+      let ids = List.map (fun ev -> (IRole.string_of (BEvent.get_role ev)) ^ orders_vars_separator ^(IUID.string_of (BEvent.get_uid ev))) [arg1;arg2] in
       let rel = Ipure.RelForm (id, (List.map (fun x -> Ipure.Var ((S.IForm.mk_var x),no_pos)) ids), no_pos) in
       let rel = Ipure.BForm ((rel,None) ,None) in
       [rel]
@@ -736,7 +737,7 @@ let collect view prot fnc_i2c params =
   (* normalize assumptions and guards *)
   let assume = ConstrMap.map_data (fun assrt ->  order_normalization assrt) assume in
   let guard  = ConstrMap.map_data (fun assrt ->  order_normalization assrt) guard  in
-  let () = test_dag assume guard def_suids fnc_i2c in
+  (* let () = test_dag assume guard def_suids fnc_i2c in *)
   (assume, guard)
 
 let collect view prot fnc_i2c params =

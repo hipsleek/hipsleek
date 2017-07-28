@@ -35,6 +35,7 @@ void C(Channel k1, cond w)
  send(k1,3);
  dprint;
  wait(w);
+ assert w::SAFE<true>;
  dprint;
 }
 

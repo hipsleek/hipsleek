@@ -10,8 +10,6 @@ module S = Session
 module CP = Cpure
 module SC = Sesscommons
 
-let vars_separator = "__"
-
 (* Transforms Order relations to Sleek relations
  * Example: ocb(A,id_1,B,id_2) -> cb(A__id_1,B__id_2) *)
 let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
@@ -33,7 +31,7 @@ let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
             let rec get_vars vars = begin match vars with
               | role::suid::t -> begin match role, suid with
                 | CP.Var (role, pos), CP.Var (suid, _) ->
-                    let joined_vars = S.CForm.join_vars role suid vars_separator in
+                    let joined_vars = S.CForm.join_vars role suid orders_vars_separator in
                     (CP.Var (joined_vars, pos))::(get_vars t)
                 | _ -> []
                 end
@@ -72,7 +70,7 @@ let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
           if not(String.compare oid "" = 0) then (* check for sleek relation *)
             let res = List.fold_left (fun acc var -> match var with
               | CP.Var  (var, pos) ->
-                let (role, id) = S.CForm.divide_vars var vars_separator in
+                let (role, id) = S.CForm.divide_vars var orders_vars_separator in
                 acc@[CP.Var (role, pos); CP.Var (id, pos)]
               | _ -> acc
             ) [] vars in
