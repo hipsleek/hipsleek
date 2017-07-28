@@ -710,6 +710,12 @@ let smart_string_of_spec_var x =
       else string_of_spec_var x
     else string_of_spec_var x
 
+let rec string_of_sec_label = function
+  | CP.Hi -> "Hi"
+  | CP.Lo -> "Lo"
+  | CP.Lub (l1, l2) -> string_of_sec_label l1 ^ " |_| " ^ string_of_sec_label l2
+  | CP.SecVar var -> string_of_spec_var var
+
 let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
 
 let pr_view_arg ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_view_arg x)
@@ -1045,7 +1051,15 @@ and pr_b_formula (e:P.b_formula) =
       let todo_unk = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in
       fmt_string ")" (* An Hoa *)
     end
-  | P.Security _ -> failwith "TODO"
+  | P.Security (f, pos) ->
+      begin match f with
+        | P.VarBound (var, lbl) ->
+            let v = string_of_spec_var var in
+            let l = string_of_sec_label lbl in
+            pr_op fmt_string v "<^" l
+      end
+
+and pr_sec_label lbl = fmt_string (string_of_sec_label lbl)
 
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) =

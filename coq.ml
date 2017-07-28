@@ -198,8 +198,8 @@ and coq_of_b_formula b =
   | CP.ImmRel _ -> illegal_format "coq_of_exp : ImmRel cannot be handled"
   | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
                      (* | CP.VarPerm _ -> *)
-                     illegal_format "coq_of_exp : VarPerm cannot be handled"
-  | CP.Security _ -> failwith "TODO"
+                     (* illegal_format "coq_of_exp : VarPerm cannot be handled" *)
+  | CP.Security _ -> illegal_format "coq_of_exp: Security cannot be handled"
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =

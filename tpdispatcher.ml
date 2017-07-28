@@ -776,10 +776,10 @@ and is_array_b_formula (pf,_) = match pf with
   | CP.ListAllN _
   | CP.ListPerm _
   | CP.ImmRel _
+  | CP.Security _
     -> Some false
   | CP.RelForm _ -> Some true
 (* | CP.VarPerm _ -> Some false *)
-  | CP.Security _ -> failwith "TODO"
 
 and is_array_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in

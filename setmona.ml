@@ -175,7 +175,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
           | RelForm _ -> failwith ("Relations are not supported in Mona")
           | LexVar _ -> failwith ("LexVar are not supported in Mona")
           | XPure _ -> Error.report_no_pattern()
-          | Security _ -> failwith "TODO"
+          | Security _ -> failwith "Security formulas not supported in Mona"
 
         end (* end of bf :: rest case *)
       | [] ->
@@ -389,7 +389,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
   | LexVar _ -> failwith ("LexVar are not supported in Mona")
   | RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
   | XPure _ -> Error.report_no_pattern()
-  | Security _ -> failwith "TODO"
+  | Security _ -> failwith "Security formulas not supported in Mona"
 
 (*
   return value:

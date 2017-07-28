@@ -217,7 +217,7 @@ and smt_of_b_formula b =
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
-  | CP.Security _ -> failwith "TODO"
+  | CP.Security _ -> illegal_format "z3.smt_of_b_formula: Security should not appear here.\n"
 
 and smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(z3)" !CP.print_formula) f no_pos in

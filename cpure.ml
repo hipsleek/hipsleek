@@ -1570,7 +1570,15 @@ and bfv (bf : b_formula) =
   (* | VarPerm (t,ls,_) -> ls *)
   | LexVar l_info ->
     List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
-  | Security _ -> []
+  | Security (sec_formula, _) ->
+      begin match sec_formula with
+        | VarBound (var, lbl) -> remove_dups_svl (var :: sec_label_fv lbl)
+      end
+
+and sec_label_fv = function
+  | Hi | Lo -> []
+  | Lub (l1, l2) -> remove_dups_svl (sec_label_fv l1 @ sec_label_fv l2)
+  | SecVar var -> [var]
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -4560,6 +4568,12 @@ and b_apply_subs sst bf =
   Debug.no_1 "b_apply_subs" pr
     pr (fun _ -> b_apply_subs_x sst bf) bf
 
+and sec_label_apply_subs sst lbl =
+  match lbl with
+    | Hi | Lo -> lbl
+    | Lub (l1, l2) -> Lub (sec_label_apply_subs l1, sec_label_apply_subs l2)
+    | SecVar var -> SecVar (subs_one sst var)
+
 and b_apply_subs_x sst bf =
   let (pf,sl) = bf in
   let npf = let rec helper pf =
@@ -4603,7 +4617,12 @@ and b_apply_subs_x sst bf =
                          lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
                          lex_exp = e_apply_subs_list sst t_info.lex_exp;
                          lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-              | Security _ -> pf
+              | Security (sec_formula, pos) ->
+                  let sub_formula = match sec_formula with
+                    | VarBound (var, lbl) -> VarBound (subs_one sst var, sec_label_apply_subs sst lbl)
+                  in
+                  Security (sub_formula, pos)
+
     in helper pf
   in
   (* Slicing: Add the inferred linking variables into sl field *)
