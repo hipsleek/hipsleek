@@ -1,3 +1,11 @@
 P1:={[x,a,y]: x<y & a<y};
 P2:={[x,a,y]: ((x<=(a-1) & x<=(y-1)) | y<=x)};
 gist P2 given P1;
+
+P1:={[x,a,y,c]: a<y};
+P2:={[x,a,y,c]: (a<y & x<y & c>0)|a>=y};
+gist P2 given P1;
+
+P1:={[a,b,c,d]:a=1 & b=10 & c=3 & d=5};
+P2:={[a,b,c,d]:a<c};
+gist P2 given P1;

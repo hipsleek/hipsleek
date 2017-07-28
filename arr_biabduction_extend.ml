@@ -83,6 +83,7 @@ let mkStarH h1 h2 =
   Cformula.mkStarH h1 h2 no_pos
       
 
+(* Simplification related *)
 let simplify = Tpdispatcher.simplify_omega
 ;;
 
@@ -90,6 +91,9 @@ let pairwisecheck = Tpdispatcher.tp_pairwisecheck
 ;;
 
 let simplify_p f = pairwisecheck (simplify f)
+;;
+
+let get_gist = Tpdispatcher.om_gist
 ;;
   
 let rec mkAndlst lst =

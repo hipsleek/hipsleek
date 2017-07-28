@@ -417,7 +417,9 @@ let extract_anti_frame_and_frame norm =
              in
              if isSat inner_pure && true (* More conditions are needed!!! *)
              then
-               let anti_frame_pure = simplify_p (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))) in
+               let anti_frame_pure =
+                 (* get_gist (mkExists iuset (mkImply (mkAndlst lhs_p) (mkAndlst (clst@rhs_p)))) (mkAndlst lhs_p) in *)
+                 get_gist (mkExists iuset (mkAndlst (clst@rhs_p))) (mkAndlst lhs_p) in
                let norm_af =(eset@ieset,anti_frame_pure,antiframe) in
                let frame_pure = simplify_p (mkAndlst (anti_frame_pure::(lhs_p@rhs_p))) in
                let norm_f = (eset@ieset,frame_pure,frame) in (* TO BE IMPLEMENTED *)
