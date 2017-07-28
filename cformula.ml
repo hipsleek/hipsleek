@@ -452,6 +452,7 @@ let mkFalseLbl (flowt: flow_formula) lbl pos =
       formula_base_label = lbl;
       formula_base_pos = pos })
 
+
 let dummy_lbl n = None 
 (* Some (-n,"")  *)
 
@@ -470,6 +471,19 @@ let mkEFalse flowt pos = EBase({
 
 let mkTrueFlow () =
   {formula_flow_interval = !top_flow_int; formula_flow_link = None;}
+
+let mkFalsePureTrueHeap () =
+  Base ({
+           formula_base_heap = HTrue;
+           formula_base_vperm = CVP.empty_vperm_sets; 
+           formula_base_pure = MCP.mkMFalse no_pos; 
+           formula_base_type = TypeFalse;
+           formula_base_and = [];
+           formula_base_flow =  mkTrueFlow () (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
+           formula_base_label = (dummy_lbl 1);
+           formula_base_pos = no_pos })
+;;  
+    
 
 let mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 (* let mkFalseFlow () = mkTrueFlow () *)

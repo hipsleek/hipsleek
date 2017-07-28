@@ -583,6 +583,10 @@ let construct_base hf pf =
   Cformula.mkBase hf (Mcpure.mix_of_pure pf) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] no_pos
 ;;
 
+let construct_false () =
+  mkFalsePureTrueHeap ()
+;;
+
 
 let get_inferred_pure orig_pf new_pflst =
   let rec helper new_pflst lst =

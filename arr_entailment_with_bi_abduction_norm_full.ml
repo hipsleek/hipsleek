@@ -487,6 +487,7 @@ let construct_context_lst aflst neg =
     let es = mkEmptyes () in
     mkCtx
       {es with
+        es_formula = construct_false ();
         es_infer_pure = [pf];
       }
   in

@@ -263,8 +263,7 @@ let array_entailment_classical lhs rhs =
             let f2 = FExists (vsetprime, mkFBase ([mkNot (mkAndlst ((mkNeqSv ls rs)::lhs_p))],[])) in
             print_and_return (FExists (uset, FAnd [f1;f2])) indent
 
-         | AsegNE_p (la,lb), AsegNE_p (ra,rb) ->
-            (* let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in             *)
+         | AsegNE_p (la,lb), AsegNE_p (ra,rb) -> 
             if is_same_sv la ra
             then
               let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in
@@ -276,16 +275,6 @@ let array_entailment_classical lhs rhs =
               let f1 = helper ((mkEqSv la ra)::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p la rb)::rtail) vsetprime (indent+1) in
               let f2 = FExists (vsetprime, mkFBase ([mkNot (mkAndlst ((mkNeqSv la ra)::lhs_p))],[])) in
               print_and_return (FExists (uset, FAnd [f1;f2;(FExists (vsetprime, (mkFBase ([(mkNot (mkAndlst ((mkGtSv la ra)::lhs_p)))],[])))) ])) indent
-                      
-         (* | AsegNE_p (la,lb), Gap_p (ra,rb) ->   *)
-         (* if is_same_sv la ra *)
-         (* then *)
-         (*   let (uset,vsetprime) = mkUsetandVsetprime [lb;rb] vset in             *)
-         (*   let f1 = helper ((mkLtSv lb rb)::lhs_p, ltail) (rhs_p, rtail) vsetprime (lh::k) (indent+1) in *)
-         (*   let f2 = helper ((mkGteSv lb rb)::lhs_p, (Aseg_p (rb,lb))::ltail) (rhs_p, rtail) vsetprime ((mkAsegNE_p la rb)::k) (indent+1) in *)
-         (*   print_and_return (FExists (uset, FAnd [f1;f2])) indent *)
-         (* else *)
-         (*   failwith "AsegNE v.s Gap: Not aligned" *)
 
          | AsegNE_p (la,lb), Pointsto_p (rs,rv) ->
             let (uset,vsetprime) = mkUsetandVsetprime [la] vset in
