@@ -1,0 +1,61 @@
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+// 1
+infer[@arr_en] base::Elem<t132,t133>& t132=4 |- emp&true.
+print residue.
+expect Fail.
+
+// 2
+infer[@arr_en] base::AsegNE<t126,t127>*base::AsegNE<t128,t129>& t126=8 & t127=9 & t128=9 & t129=10 & t130=8 & t131=9 |- base::AsegNE<t130,t131>&true.
+print residue.
+expect Fail.
+
+// 3
+infer[@arr_en] base::AsegNE<t110,t111>*base::AsegNE<t112,t113>*base::Elem<t114,t115>*base::Elem<t116,t117>& t110=2 & t111=4 & t112=4 & t113=6 & t114=6 & t116=14 & t118=2 & t119=4 & 
+ t120=4 & t122=5 & t124=14 & t125=15 |- exists t121,t123: base::AsegNE<t118,t119>*base::Elem<t120,t121>*base::Elem<t122,t123>*base::AsegNE<t124,t125>&true.
+print residue.
+expect Fail.
+
+// 4
+infer[@arr_en] base::AsegNE<t96,t97>*base::AsegNE<t98,t99>*base::AsegNE<t100,t101>*base::AsegNE<t102,t103>& t96=12 & t97=14 & t98=14 & t99=16 & t100=17 & t101=18 & t102=19 & t103=20 & 
+ t104=12 & t105=15 & t106=15 & t108=17 & t109=18 |- exists t107: base::AsegNE<t104,t105>*base::Elem<t106,t107>*base::AsegNE<t108,t109>&true.
+print residue.
+expect Fail.
+
+// 5
+infer[@arr_en] base::AsegNE<t80,t81>*base::AsegNE<t82,t83>*base::AsegNE<t84,t85>*base::Elem<t86,t87>*base::AsegNE<t88,t89>*base::AsegNE<t90,t91>& t80=13 & t81=15 & t82=15 & t83=16 & t84=16 & t85=21 & t86=21 & t88=22 & 
+ t89=23 & t90=24 & t91=25 & t92=13 & t93=14 & t94=14 & t95=23 |- base::AsegNE<t92,t93>*base::AsegNE<t94,t95>&true.
+print residue.
+expect Fail.
+
+// 6
+infer[@arr_en] base::AsegNE<t76,t77>& t76=28 & t77=30 & t78=28 |- exists t79: base::Elem<t78,t79>&true.
+print residue.
+expect Fail.
+
+// 7
+infer[@arr_en] base::AsegNE<t48,t49>*base::AsegNE<t50,t51>*base::AsegNE<t52,t53>*base::AsegNE<t54,t55>*base::AsegNE<t56,t57>*base::Elem<t58,t59>*base::AsegNE<t60,t61>*base::AsegNE<t62,t63>& t48=5 & t49=12 & t50=12 & t51=24 & t52=24 & t53=25 & t54=25 & t55=26 & 
+ t56=26 & t57=27 & t58=27 & t60=31 & t61=34 & t62=34 & t63=35 & t64=5 & 
+ t65=24 & t66=25 & t67=26 & t68=26 & t69=28 & t70=31 & t71=33 & t72=33 & 
+ t73=34 & t74=34 & t75=35 |- base::AsegNE<t64,t65>*base::AsegNE<t66,t67>*base::AsegNE<t68,t69>*base::AsegNE<t70,t71>*base::AsegNE<t72,t73>*base::AsegNE<t74,t75>&true.
+print residue.
+expect Fail.
+
+// 8
+infer[@arr_en] base::AsegNE<t28,t29>*base::AsegNE<t30,t31>*base::Elem<t32,t33>*base::AsegNE<t34,t35>& t28=17 & t29=37 & t30=37 & t31=38 & t32=38 & t34=39 & t35=40 & t36=17 & 
+ t38=18 & t40=20 & t41=37 & t42=37 & t43=38 & t44=38 & t45=39 & t46=39 |- exists t37,t39,t47: base::Elem<t36,t37>*base::Elem<t38,t39>*base::AsegNE<t40,t41>*base::AsegNE<t42,t43>*base::AsegNE<t44,t45>*base::Elem<t46,t47>&true.
+print residue.
+expect Fail.
+
+// 9
+infer[@arr_en] base::AsegNE<t10,t11>*base::AsegNE<t12,t13>*base::AsegNE<t14,t15>*base::Elem<t16,t17>& t10=20 & t11=32 & t12=32 & t13=33 & t14=42 & t15=44 & t16=44 & t18=20 & 
+ t19=27 & t20=27 & t21=32 & t22=32 & t23=33 & t24=42 & t25=43 & t26=43 & 
+ t27=44 |- base::AsegNE<t18,t19>*base::AsegNE<t20,t21>*base::AsegNE<t22,t23>*base::AsegNE<t24,t25>*base::AsegNE<t26,t27>&true.
+print residue.
+expect Fail.
+
+// 10
+infer[@arr_en] base::AsegNE<t0,t1>*base::Elem<t2,t3>*base::AsegNE<t4,t5>& t0=44 & t1=45 & t2=45 & t4=48 & t5=50 & t6=44 & t7=46 & t8=48 |- exists t9: base::AsegNE<t6,t7>*base::Elem<t8,t9>&true.
+print residue.
+expect Fail.
