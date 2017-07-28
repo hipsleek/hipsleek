@@ -107,8 +107,8 @@ let chopping map =
   List.concat
     (List.map
        (fun (f,t) ->
-         let () = print_endline "***" in
-         let () = print_endline (str_pair string_of_int string_of_int (f,t)) in
+         (* let () = print_endline "***" in *)
+         (* let () = print_endline (str_pair string_of_int string_of_int (f,t)) in *)
          chopping_helper f t []) map)
 ;;
   
