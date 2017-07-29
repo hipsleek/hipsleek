@@ -8,3 +8,10 @@ v_131=msg_49 & ohbp(B,id_22,B,id_21) & ocb(C,id_21,B,id_21) &
 ocb(A,id_22,B,id_22) 
  |-  w::WAIT{ %P, %R}<>@M * %P.
 print residue.
+
+
+checkentail !(ev(A)) |- !(ev(A)).
+print residue.
+
+checkentail !(oev(A,i1)) |- !(oev(A,i1)).
+print residue.

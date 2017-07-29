@@ -4151,8 +4151,18 @@ and heap_entail_one_context_struc_wrapper
         | None -> None
       in
       let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
+      let rec f_h hform =  match hform with
+        | CF.ViewNode vn ->
+          (* transform HO args *)
+          Some (CF.ViewNode {vn with  CF.h_formula_view_ho_arguments =
+                                       List.map (fun rf ->
+                                            {rf with CF.rflow_base =
+                                                   CF.transform_formula (nonef,nonef,f_h,f_p_t)    rf.CF.rflow_base }
+                                          ) vn.CF.h_formula_view_ho_arguments })
+        | _ -> None
+      in
       let ctx = CF.transform_context (fun es ->
-          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
+          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,f_h,f_p_t) es.CF.es_formula }
         ) ctx in
       let conseq = CF.transform_struc_formula (nonef,nonef,nonef,f_p_t) conseq in
       (ctx,conseq)
@@ -4187,7 +4197,6 @@ and heap_entail_one_context_struc_wrapper_enable_ord2sleek (prog : prog_decl) (i
   (list_context * proof) =
   let rels = (CF.get_rel_id_list_from_context ctx)@(CF.get_rel_id_list_from_struc conseq) in
   let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
-  let () = y_binfo_hp (add_str "contains_ords" string_of_bool) contains_ords in
   let fct = heap_entail_one_context_struc_wrapper
     (prog : prog_decl) (is_folding : bool)
     has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)

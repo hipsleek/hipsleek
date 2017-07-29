@@ -10751,7 +10751,16 @@ let get_rel_id (f:formula)
   | id::_ -> Some id
 
 let get_rel_id (f:formula) =
-  Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f 
+  Debug.no_1 "get_rel_id" !print_formula (pr_opt !print_sv) get_rel_id f
+
+let get_rels_from_formula (form: formula) =
+  let fct_bf bform =
+    let pf,ann = bform in
+    match pf with
+    | RelForm(id,_,_) -> Some [id]
+    | _ -> None
+  in
+  fold_formula form (nonef,fct_bf,(fun _ -> Some [])) (fun lst -> List.concat lst)
 
 (* let mk_varperm_p typ ls pos =     *)
 (*   if (ls==[]) then (mkTrue_p pos) *)
