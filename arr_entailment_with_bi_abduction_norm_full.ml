@@ -55,8 +55,6 @@ let mkNormOr lst =
 let mkNormOr_base base =
   mkNormOr [([],[],base)]
 ;;
-  
-
 
 let rec str_norm_pre_condition  =
   function
@@ -73,7 +71,6 @@ let rec str_norm_pre_condition  =
       "\n"
       ""
 ;;
-
 
 (* ex U. f1/\f2 *)
 let combine_norm nlst clst eset=
@@ -521,7 +518,15 @@ let construct_context_lst aflst neg =
         es_infer_pure = [pf];
       }
   in
-  (construct_helper_neg neg)::(List.map construct_helper_imply aflst)
+  let imply_ctx = List.map construct_helper_imply aflst in
+  let neg_ctx = construct_helper_neg neg in
+  if List.length imply_ctx > 0 && isFalse neg
+  then imply_ctx
+  else
+    if List.length imply_ctx > 0
+    then neg_ctx::imply_ctx
+    else
+      [neg_ctx]
 ;;
 
 
