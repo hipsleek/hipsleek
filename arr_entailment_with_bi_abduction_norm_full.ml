@@ -197,6 +197,20 @@ let array_entailment_biabduction_norm lhs rhs =
       (print_and_return (mkBExists (vset, (mkBBaseNeg lhs_p))) indent,norm)
     else
       match lhs_h, rhs_h with
+      | [], [] ->
+         let frame = List.rev frame in
+         let antiframe = List.rev antiframe in
+         let norm = mkNormOr_base (mkNormBaseImply uqset vset orig_lhs_p rhs_p frame antiframe) in
+         (print_and_return (mkBExists (vset, BBaseImply (lhs_p,rhs_p,frame,antiframe))) indent,norm)
+           
+      | [], _ ->
+         let (f,norm) = helper orig_lhs_p lhs (rhs_p,[]) vset uqset frame (rhs_h@antiframe) (indent+1) in
+         (print_and_return f indent,norm)
+
+      | _, [] ->
+         let (f,norm) = helper orig_lhs_p (lhs_p,[]) rhs vset uqset (lhs_h@frame) antiframe (indent+1) in
+         (print_and_return f indent,norm)
+           
       | (Aseg_p (la,lb))::ltail, _ ->
          let (uset,vsetprime) = mkUsetandVsetprime [la;lb] vset in
          let case1 = mkEqSv la lb in
@@ -221,20 +235,6 @@ let array_entailment_biabduction_norm lhs rhs =
            let (f2,norm2) = helper orig_lhs_p (case2::lhs_p,lhs_h) (rhs_p,(mkAsegNE_p a b)::rtail) vsetprime uqset frame antiframe (indent+1) in
            let (f3,norm3) = helper orig_lhs_p (case3::lhs_p,lhs_h) rhs vsetprime uqset frame antiframe (indent+1) in
            (print_and_return (mkBExists (uset,mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
-             
-      | [], [] ->
-         let frame = List.rev frame in
-         let antiframe = List.rev antiframe in
-         let norm = mkNormOr_base (mkNormBaseImply uqset vset orig_lhs_p rhs_p frame antiframe) in
-         (print_and_return (mkBExists (vset, BBaseImply (lhs_p,rhs_p,frame,antiframe))) indent,norm)
-           
-      | [], _ ->
-         let (f,norm) = helper orig_lhs_p lhs (rhs_p,[]) vset uqset frame (rhs_h@antiframe) (indent+1) in
-         (print_and_return f indent,norm)
-
-      | _, [] ->
-         let (f,norm) = helper orig_lhs_p (lhs_p,[]) rhs vset uqset (lhs_h@frame) antiframe (indent+1) in
-         (print_and_return f indent,norm)
            
       | lh::ltail, rh::rtail ->
          ( match lh, rh with
