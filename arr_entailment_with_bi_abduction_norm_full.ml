@@ -536,10 +536,10 @@ let array_entailment_biabduction_interface lhs rhs =
   let () = print_endline_verbose (str_pre_condition f) in
   let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
   let () = print_endline_verbose (str_norm_pre_condition norm) in
-  let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in
+  (* let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in *)
   let simp_norm = simplify_norm_pre_condition norm in
-  let () = print_endline_verbose (str_norm_pre_condition simp_norm) in
-  let () = print_endline_verbose ("=========== extracted anti-frame ==============") in
+  (* let () = print_endline_verbose (str_norm_pre_condition simp_norm) in *)
+  (* let () = print_endline_verbose ("=========== extracted anti-frame ==============") in *)
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   (true, mkSuccCtx (construct_context_lst implylst neg), [])
 (* (true, mkEmptySuccCtx (),[]) *)
