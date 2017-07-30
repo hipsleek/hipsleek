@@ -52,17 +52,20 @@ let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
   let pr_out = pr_opt !CP.print_p_formula in
   Debug.no_1 "trans_ord_rels_to_sleek_rels" pr pr_out trans_ord_rels_to_sleek_rels p_formula
 
-let trans_ord_rels_to_sleek_rels_in_formula (formula: CP.formula) =
+let trans_rels_in_formula (fct: CP.p_formula -> CP.p_formula option) (formula: CP.formula) =
   if not(!ord2sleek) then formula
   else
     let trans_b_form bform =
       let p_form, ant = bform in
-      let p_form = x_add_1 trans_ord_rels_to_sleek_rels p_form in
+      let p_form = x_add_1 fct p_form in
       match p_form with
       | Some p -> Some (p, ant)
       | None -> None
     in
     CP.transform_formula (nonef,nonef,nonef,trans_b_form,somef) formula
+
+let trans_ord_rels_to_sleek_rels_in_formula (formula: CP.formula) =
+  trans_rels_in_formula trans_ord_rels_to_sleek_rels formula
 
 (* Transforms Sleek relations to Order relations
  * Example: cb(A__id_1,B__id_2) -> ocb(A,id_1,B,id_2) *)
@@ -100,13 +103,5 @@ let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
   Debug.no_1 "trans_sleek_rels_to_order_rels" pr pr_out trans_sleek_rels_to_order_rels p_formula
 
 let trans_sleek_rels_to_order_rels_in_formula (formula:CP.formula) =
-  if not(!ord2sleek) then formula
-  else
-    let trans_b_form bform =
-      let p_form, ant = bform in
-      let p_form = x_add_1 trans_sleek_rels_to_order_rels p_form in
-      match p_form with
-      | Some p -> Some (p, ant)
-      | None -> None
-    in
-    CP.transform_formula (nonef,nonef,nonef,trans_b_form,somef) formula
+   trans_rels_in_formula trans_sleek_rels_to_order_rels formula
+
