@@ -8,11 +8,12 @@ open Gen.BList
 
 module S = Session 
 module CP = Cpure
+module CF = Cformula
 module SC = Sesscommons
 
 (* Transforms Order relations to Sleek relations
  * Example: ocb(A,id_1,B,id_2) -> cb(A__id_1,B__id_2) *)
-let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
+let trans_ord2sleek_rels (p_formula:CP.p_formula) =
   match p_formula with
   | CP.RelForm (spec_var, vars, loc) ->
       begin match spec_var with
@@ -47,29 +48,28 @@ let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
       end
   | _ -> None
 
-let trans_ord_rels_to_sleek_rels (p_formula:CP.p_formula) =
+let trans_ord2sleek_rels (p_formula:CP.p_formula) =
   let pr = !CP.print_p_formula in
   let pr_out = pr_opt !CP.print_p_formula in
-  Debug.no_1 "trans_ord_rels_to_sleek_rels" pr pr_out trans_ord_rels_to_sleek_rels p_formula
+  Debug.no_1 "trans_ord2sleek_rels" pr pr_out trans_ord2sleek_rels p_formula
+
+let trans_pure_fct fct =
+  let trans_b_form bform =
+    let p_form, ant = bform in
+    let p_form = x_add_1 fct p_form in
+    match p_form with
+    | Some p -> Some (p, ant)
+    | None -> None
+  in
+  (nonef,nonef,nonef,trans_b_form,somef)
 
 let trans_rels_in_formula (fct: CP.p_formula -> CP.p_formula option) (formula: CP.formula) =
   if not(!ord2sleek) then formula
-  else
-    let trans_b_form bform =
-      let p_form, ant = bform in
-      let p_form = x_add_1 fct p_form in
-      match p_form with
-      | Some p -> Some (p, ant)
-      | None -> None
-    in
-    CP.transform_formula (nonef,nonef,nonef,trans_b_form,somef) formula
-
-let trans_ord_rels_to_sleek_rels_in_formula (formula: CP.formula) =
-  trans_rels_in_formula trans_ord_rels_to_sleek_rels formula
+  else  CP.transform_formula (trans_pure_fct fct) formula
 
 (* Transforms Sleek relations to Order relations
  * Example: cb(A__id_1,B__id_2) -> ocb(A,id_1,B,id_2) *)
-let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
+let trans_sleek2ord_rels (p_formula:CP.p_formula) =
   match p_formula with
   | CP.RelForm (spec_var, vars, loc) ->
       begin match spec_var with
@@ -97,11 +97,67 @@ let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
       end
   | _ -> None
 
-let trans_sleek_rels_to_order_rels (p_formula:CP.p_formula) =
+let trans_sleek2ord_rels (p_formula:CP.p_formula) =
   let pr = !CP.print_p_formula in
   let pr_out = pr_opt !CP.print_p_formula in
-  Debug.no_1 "trans_sleek_rels_to_order_rels" pr pr_out trans_sleek_rels_to_order_rels p_formula
+  Debug.no_1 "trans_sleek2ord_rels" pr pr_out trans_sleek2ord_rels p_formula
 
-let trans_sleek_rels_to_order_rels_in_formula (formula:CP.formula) =
-   trans_rels_in_formula trans_sleek_rels_to_order_rels formula
+let trans_ord2sleek_rels_in_pure_formula (formula: CP.formula) =
+  trans_rels_in_formula trans_ord2sleek_rels formula
 
+let trans_sleek2ord_rels_in_pure_formula (formula:CP.formula) =
+  trans_rels_in_formula trans_sleek2ord_rels
+
+
+let trans_h_formula_fct fct  =
+  let f_p_t = trans_pure_fct fct in
+  let rec f_h hform =  match hform with
+    | CF.ViewNode vn ->
+      (* transform HO args *)
+      Some (CF.ViewNode {vn with  CF.h_formula_view_ho_arguments =
+                                    List.map
+                                      (fun rf ->
+                                         {rf with CF.rflow_base = CF.transform_formula (nonef,nonef,f_h, f_p_t) rf.CF.rflow_base }
+                                      ) vn.CF.h_formula_view_ho_arguments })
+    | _ -> None
+  in
+  f_h
+    
+let trans_formula_fct fct  =
+  let f_p_t = trans_pure_fct fct in
+  let f_h   = trans_h_formula_fct fct in
+  (nonef,nonef,f_h,f_p_t)
+
+let trans_ord2sleek_rels_in_formula (formula:CF.formula) =
+  CF.transform_formula (trans_formula_fct trans_ord2sleek_rels) formula 
+
+let trans_sleek2ord_rels_in_formula (formula:CF.formula) =
+  CF.transform_formula (trans_formula_fct trans_sleek2ord_rels) formula 
+
+let trans_ord2sleek_rels_in_struc_formula struc =
+  CF.transform_struc_formula (trans_formula_fct trans_ord2sleek_rels) struc
+
+let trans_sleek2ord_rels_in_struc_formula struc =
+  CF.transform_struc_formula (trans_formula_fct trans_sleek2ord_rels) struc
+
+let trans_ord2sleek_rels_in_es es =
+  {es with CF.es_formula = trans_ord2sleek_rels_in_formula es.CF.es_formula }
+
+let trans_sleek2ord_rels_in_es es =
+  {es with CF.es_formula = trans_sleek2ord_rels_in_formula es.CF.es_formula }
+
+let trans_ord2sleek_rels_in_context ctx =
+  CF.transform_context (fun es ->
+      CF.Ctx (trans_ord2sleek_rels_in_es es)
+    ) ctx
+
+
+let trans_ord2sleek_rels_in_list_context lc =
+  CF.transform_list_context ((fun es ->
+      CF.Ctx (trans_ord2sleek_rels_in_es es)
+    ), (fun c->c)) lc
+
+let trans_sleek2ord_rels_in_list_context lc =
+  CF.transform_list_context ((fun es ->
+      CF.Ctx (trans_sleek2ord_rels_in_es es)
+    ), (fun c->c)) lc

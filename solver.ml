@@ -4142,46 +4142,15 @@ and heap_entail_one_context_struc_wrapper
   let f_pre (ctx,conseq) =
     if not(!ord2sleek) then (ctx,conseq)
     else
-      (* transforms from orders rels to sleek rels *)
-      let trans_b_form bform =
-        let p_form, ant = bform in
-        let p_form = x_add_1 Orders_relation.trans_ord_rels_to_sleek_rels p_form in
-        match p_form with
-        | Some p -> Some (p, ant)
-        | None -> None
-      in
-      let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
-      let rec f_h hform =  match hform with
-        | CF.ViewNode vn ->
-          (* transform HO args *)
-          Some (CF.ViewNode {vn with  CF.h_formula_view_ho_arguments =
-                                       List.map (fun rf ->
-                                            {rf with CF.rflow_base =
-                                                   CF.transform_formula (nonef,nonef,f_h,f_p_t)    rf.CF.rflow_base }
-                                          ) vn.CF.h_formula_view_ho_arguments })
-        | _ -> None
-      in
-      let ctx = CF.transform_context (fun es ->
-          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,f_h,f_p_t) es.CF.es_formula }
-        ) ctx in
-      let conseq = CF.transform_struc_formula (nonef,nonef,nonef,f_p_t) conseq in
+      let ctx = Orders_relation.trans_ord2sleek_rels_in_context ctx in 
+      let conseq = Orders_relation.trans_ord2sleek_rels_in_struc_formula conseq in 
       (ctx,conseq)
   in
   let f_post (res,proof) =
     if not(!ord2sleek) then (res,proof)
     else
       (* transforms from sleek rels to orders rels *)
-      let list_context = CF.transform_list_context ((fun es ->
-          let trans_b_form bform =
-            let p_form, ant = bform in
-            let p_form = x_add_1 Orders_relation.trans_sleek_rels_to_order_rels p_form in
-            match p_form with
-            | Some p -> Some (p, ant)
-            | None -> None
-          in
-          let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
-          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
-        ), (fun c->c)) res in
+      let list_context = Orders_relation.trans_sleek2ord_rels_in_list_context res in
       (list_context, proof)
   in
   let fct (ctx,conseq) =
@@ -5563,36 +5532,15 @@ and heap_entail_wrapper p is_folding cl conseq pos : (list_context * proof) =
   let f_pre (cl,conseq) =
     if not(!ord2sleek) then (cl,conseq)
     else
-      (* transforms from orders rels to sleek rels *)
-      let trans_b_form bform =  
-        let p_form, ant = bform in
-        let p_form = Orders_relation.trans_ord_rels_to_sleek_rels p_form in
-        match p_form with
-        | Some p -> Some (p, ant)
-        | None -> None
-      in  
-      let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in      
-      let cl = CF.transform_list_context ((fun es ->
-          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
-        ), (fun c->c)) cl in
-      let conseq = CF.transform_formula (nonef,nonef,nonef,f_p_t) conseq in
+      let cl = Orders_relation.trans_ord2sleek_rels_in_list_context cl in
+      let conseq = Orders_relation.trans_ord2sleek_rels_in_formula conseq in
       (cl,conseq)
   in
   let f_post (res,proof) =
     if not(!ord2sleek) then (res,proof)
     else
       (* transforms from sleek rels to orders rels *)
-      let list_context = CF.transform_list_context ((fun es ->
-          let trans_b_form bform =  
-            let p_form, ant = bform in
-            let p_form = Orders_relation.trans_sleek_rels_to_order_rels p_form in
-            match p_form with
-            | Some p -> Some (p, ant)
-            | None -> None
-          in
-          let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
-          CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
-        ), (fun c->c)) res in
+      let list_context = Orders_relation.trans_sleek2ord_rels_in_list_context res in
       (list_context, proof)
   in
   let fct (cl,conseq) = heap_entail_main p is_folding cl conseq pos in
@@ -5624,19 +5572,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
   let ctx = CF.transform_context (fun es ->
       CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }) ctx
   in
-(*
-  let ctx = CF.transform_context (fun es ->
-        let trans_b_form bform =  
-          let p_form, ant = bform in
-          let p_form = Orders_relation.trans_ord_rels_to_sleek_rels p_form in
-          match p_form with
-          | Some p -> Some (p, ant)
-          | None -> None
-        in  
-       let f_p_t = (nonef, nonef, nonef, trans_b_form, somef) in
-       CF.Ctx{es with CF.es_formula = CF.transform_formula (nonef,nonef,nonef,f_p_t) es.CF.es_formula }
-  ) ctx in
-*)
+
   (* WN : this false has been already tested in heap_entail_one_context_struc and is thus redundant here *)
   if (isAnyFalseCtx ctx)  then (* check this first so that false => false is true (with false residual) *)
     let r = SuccCtx [ctx] in

@@ -1618,20 +1618,20 @@ let filter_chr_dependencies f =
   let pr_out = pr_triple pr_bool pr pr in
   Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
 
-let sat_preprocess_ord2sleek pform =
-  let form =  Orders_relation.trans_ord_rels_to_sleek_rels_in_formula pform in
+let preprocess_ord2sleek pform =
+  let form =  Orders_relation.trans_ord2sleek_rels_in_pure_formula pform in
   filter_chr_dependencies form
 
-let sat_wrapper_enable_ord2sleek f =
+let wrapper_enable_ord2sleek f =
   let rels = CP.get_rels_from_formula f in
   let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
-  Wrapper.wrap_one_bool ord2sleek contains_ords sat_preprocess_ord2sleek f
+  Wrapper.wrap_one_bool ord2sleek contains_ords preprocess_ord2sleek f
 
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
   let test ?lbl:(lbl = LO.unlabelled) f1 = 
     if no_andl f1 then
-      let (chr, chr_formula, residue_formula) = sat_wrapper_enable_ord2sleek f1 in
+      let (chr, chr_formula, residue_formula) = wrapper_enable_ord2sleek f1 in
       if chr then 
         let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct chr_formula in 
         let res = fct residue_formula in
@@ -3448,8 +3448,8 @@ let tp_imply ante conseq old_imp_no timeout process =
 ;;
 
 let tp_imply ante conseq old_imp_no timeout process =	
-  let (chr1, chr_ante, residue_ante) = filter_chr_dependencies ante in
-  let (chr2, chr_conseq, residue_conseq) = filter_chr_dependencies conseq in
+  let (chr1, chr_ante, residue_ante) = wrapper_enable_ord2sleek ante in
+  let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek conseq in
   let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
   if chr1 || chr2 then 
     let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct (chr_ante, chr_conseq) in
