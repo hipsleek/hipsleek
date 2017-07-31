@@ -634,6 +634,11 @@ let rename_spec_var (sv: spec_var) new_name =
   match sv with
   | SpecVar (t, _, p) -> SpecVar (t, new_name, p)
 
+let rename_spec_var (sv: spec_var) new_name = 
+  let pr1 = !print_sv in
+  let pr2 = pr_id in
+  Debug.no_2 "rename_spec_var" pr1 pr2 pr1 rename_spec_var sv new_name
+
 let flted_rgx = Str.regexp "flted_[1-9][0-9]*_[1-9][0-9]*" 
 
 let check_is_field x =

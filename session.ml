@@ -287,6 +287,12 @@ module IForm = struct
     let p_form = Ipure_D.RelForm (id, exp_var, pos) in
     let b_form = (p_form, None) in
     Ipure_D.BForm (b_form, None)
+    
+  let mk_exp_rel id args pos =
+    let pr1 = pr_id in
+    let pr2 = pr_list (pr_pair print_var pr_none) in
+    let pr_out = !print_pure_formula in
+    Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args
   
   let join_conjunctions lst = Ipure.join_conjunctions lst
 
@@ -646,6 +652,12 @@ module CForm = struct
     let b_form = (p_form, None) in
     CP.BForm (b_form, None)
 
+  let mk_exp_rel id args pos =
+    let pr1 = pr_id in
+    let pr2 = pr_list (pr_pair print_var pr_none) in
+    let pr_out = !print_pure_formula in
+    Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args
+  
   let join_conjunctions lst = CP.join_conjunctions lst
 
   let add_pure_to_formula pure formula = CF.add_pure_formula_to_formula pure formula

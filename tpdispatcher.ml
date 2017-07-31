@@ -4603,7 +4603,7 @@ let norm_gist_result a b r =
   let xr = List.map (fun x ->
       if Gen.BList.mem_eq equalFormula x xa then x
       else
-        try List.find (fun a -> imply_raw (mkAnd x b no_pos) a) xa
+        try List.find (fun a -> x_add imply_raw (mkAnd x b no_pos) a) xa
         with _ -> x
     ) xr in
   join_conjunctions xr
@@ -4624,7 +4624,7 @@ let () =
   CP.oc_hull := oc_hull;
   Cast.imply_raw := imply_raw;
   (* CF.is_unsat_raw  := is_unsat_raw; *)
-  CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (imply_raw l) r);
+  CP.tp_imply := (fun l r -> Wrapper.wrap_dis_non_linear (x_add imply_raw l) r);
   Excore.is_sat_raw := is_sat_raw;
   (* Excore.simplify_raw := simplify_raw; *) (* losing precision for ex25m5d.slk *)
   Excore.simplify_raw := (fun x -> if !Globals.old_tp_simplify then simplify_raw x else om_simplify x);
