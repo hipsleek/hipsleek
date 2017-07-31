@@ -3054,17 +3054,24 @@ module DAG_ievent  = Ords.Make_DAG(EVert_elem) ;;
 let is_rel_sleek_orders rel_sv =
   let ev_rel_id = un_option !SC.sevent_rel_id "" in
   let hbp_rel_id = un_option !SC.shbp_rel_id "" in
+  let hb_rel_id = un_option !SC.shb_rel_id "" in
   let cb_rel_id = un_option !SC.scb_rel_id "" in
   let rel_id = CP.name_of_spec_var rel_sv in
-  String.compare rel_id ev_rel_id == 0 ||
-  String.compare rel_id hbp_rel_id == 0 ||
-  String.compare rel_id cb_rel_id == 0
+  let eq_rel rel1 rel2 = (String.compare rel1 rel2 == 0) in
+  (eq_rel rel_id ev_rel_id)  ||
+  (eq_rel rel_id hbp_rel_id) ||
+  (eq_rel rel_id hb_rel_id)  ||
+  (eq_rel rel_id cb_rel_id)
 
 let is_rel_orders rel_sv =
   let ev_rel_id  = un_option !SC.event_rel_id "" in
   let hbp_rel_id = un_option !SC.hbp_rel_id "" in
+  let hb_rel_id = un_option !SC.hb_rel_id "" in
   let cb_rel_id  = un_option !SC.cb_rel_id "" in
   let rel_id = CP.name_of_spec_var rel_sv in
-  String.compare rel_id ev_rel_id == 0 ||
-  String.compare rel_id hbp_rel_id == 0 ||
-  String.compare rel_id cb_rel_id == 0
+  let eq_rel rel1 rel2 = (String.compare rel1 rel2 == 0) in
+  (eq_rel rel_id ev_rel_id)  ||
+  (eq_rel rel_id hbp_rel_id) ||
+  (eq_rel rel_id hb_rel_id)  ||
+  (eq_rel rel_id cb_rel_id)  
+  

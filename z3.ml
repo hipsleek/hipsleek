@@ -1160,7 +1160,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
     flush stdout;
     failwith s
 
-let is_sat f sat_no = Debug.no_2(* _loop *) "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2(* _loop *) "Z3.is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**

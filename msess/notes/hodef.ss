@@ -21,6 +21,7 @@ pred_prim Peer{%P}<>; //peer
 /* explicit sync */
 pred_prim NOTIFY{%P}<>;
 pred_prim WAIT{%P,%P}<>;
+pred_prim SAFE<b: bool>;
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */

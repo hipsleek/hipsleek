@@ -1089,6 +1089,8 @@ let sess_refinement = ref true
 
 let ord2sleek = ref true
 
+let orders_vars_separator = "__"
+
 let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
 

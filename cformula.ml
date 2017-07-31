@@ -20853,13 +20853,26 @@ let set_sess_ann hform anns =
 
 let get_rel_id_list f0 =
   let rec helper f =
+    (* Andreea: we should also check the HO args of heap nodes *)
     match f with
-    | Base form   -> CP.get_rel_id_list (MCP.pure_of_mix form.formula_base_pure)
-    | Exists form -> CP.get_rel_id_list (MCP.pure_of_mix form.formula_exists_pure)      
+    | Base form   -> CP.get_rels_from_formula (MCP.pure_of_mix form.formula_base_pure)
+    | Exists form -> CP.get_rels_from_formula (MCP.pure_of_mix form.formula_exists_pure)      
     | Or ({formula_or_f1 = of1;
            formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
   in
   helper f0
+
+let get_rel_id_list_from_struc f0 =
+  let rec helper sf  =
+    match sf with
+    | EList el -> List.concat (List.map (fun (_, sf) -> helper sf) el)
+    | ECase ec -> List.concat (List.map (fun (_, sf) -> helper sf) ec.formula_case_branches)
+    | EBase eb -> (get_rel_id_list eb.formula_struc_base) @
+                  (map_opt_def [] (fun x -> helper x) eb.formula_struc_continuation) 
+    | EAssume ae -> get_rel_id_list ae.formula_assume_simpl
+    | EInfer ei  -> helper ei.formula_inf_continuation
+  in helper f0
+
 
 let get_rel_id_list_from_context ctx =
   let rec helper ctx = 

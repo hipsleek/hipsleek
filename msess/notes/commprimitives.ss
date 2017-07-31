@@ -79,10 +79,9 @@ void notifyAll(cond w)
 
 void wait(cond w)
   requires w::WAIT{ %P, %R }<> * %P
-  ensures  false ;
-  /* requires w::WAIT{ %P, %R }<>  */
-  /* ensures  w::WAIT{ %P, emp}<> * %R ; */
+  ensures  w::SAFE<false>;
+  requires w::WAIT{ %P, %R }<>
+  ensures  w::WAIT{ %P, emp}<> * %R *  w::SAFE<true>;
 
-
-/* lemma_norm self::SNOT{%P}<> * %P -> false. */
-/* lemma_norm !(%P) <- self::SNOT{%P}<> */
+/* lemma_norm self::SNOT{%P}<> * %P <- false. */
+/* lemma_norm !(%P) <- self::SNOT{%P}<>       */

@@ -1618,12 +1618,20 @@ let filter_chr_dependencies f =
   let pr_out = pr_triple pr_bool pr pr in
   Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
 
+let preprocess_ord2sleek pform =
+  let form =  Orders_relation.trans_ord2sleek_rels_in_pure_formula pform in
+  filter_chr_dependencies form
+
+let wrapper_enable_ord2sleek f =
+  let rels = CP.get_rels_from_formula f in
+  let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
+  Wrapper.wrap_one_bool ord2sleek contains_ords preprocess_ord2sleek f
+
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
-  (* TODO Andreea: this might not be enough. To check SAT, chr might also need the unlabelled formulas *)
   let test ?lbl:(lbl = LO.unlabelled) f1 = 
     if no_andl f1 then
-      let (chr, chr_formula, residue_formula) = filter_chr_dependencies f1 in
+      let (chr, chr_formula, residue_formula) = wrapper_enable_ord2sleek f1 in
       if chr then 
         let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct chr_formula in 
         let res = fct residue_formula in
@@ -3440,8 +3448,8 @@ let tp_imply ante conseq old_imp_no timeout process =
 ;;
 
 let tp_imply ante conseq old_imp_no timeout process =	
-  let (chr1, chr_ante, residue_ante) = filter_chr_dependencies ante in
-  let (chr2, chr_conseq, residue_conseq) = filter_chr_dependencies conseq in
+  let (chr1, chr_ante, residue_ante) = wrapper_enable_ord2sleek ante in
+  let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek conseq in
   let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
   if chr1 || chr2 then 
     let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct (chr_ante, chr_conseq) in
@@ -3632,7 +3640,6 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
   Debug.no_1 "is_sat_tp"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
-
 
 let imply_timeout_helper_x acpairs process ante_inner conseq_inner imp_no timeout =  
   (* let ante0 = CP.infer_level_pure ante in *) (*add l.mu>0*) (*MERGE CHECK*)
