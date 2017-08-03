@@ -15,8 +15,6 @@ pred_prim strbuf<hd,sl:int,length:int>
   inv 0<hd<=self // hd is non-null root ptr
    & self<=hd+sl // can self point at most "0" position
    & 0<=sl<length // string length should exclude 0
-   // & forall i in 0..length-1. *(hd+i)!=0
-   // & *(hd+len)=0
   ;
 
 lemma self::strbuf<hd,sl,ln> & hd<=self2 & self2<=hd+sl 

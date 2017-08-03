@@ -1,0 +1,62 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+//(1)
+infer[@arr_en]  base::AsegNE<x,y>  |- (exists q: base::AsegNE<x,q> * base::Elem<q,_>).
+print residue.
+expect Fail.
+
+//(2)
+infer[@arr_en]  base::AsegNE<x,y>  |- (exists q: base::Aseg<x,q> * base::Elem<q,_>).
+print residue.
+expect Valid.
+
+
+//(3)
+infer[@arr_en]  base::AsegNE<x,y>  |- [q] base::Aseg<x,q> * base::Elem<q,_>.
+print residue.
+expect Valid.
+// should instantiate q..
+
+
+//(4)
+infer[@arr_en]  base::AsegNE<x,y>  |- (exists q: base::Aseg<x,q> * base::Elem<q,_> & q=y-1).
+print residue.
+expect Valid.
+// should instantiate q..
+
+//(5)
+infer[@arr_en]  base::AsegNE<x,y>  |- (exists q: base::Aseg<x,q> * base::Elem<q,_> & q=y).
+print residue.
+expect Fail.
+// should instantiate q..
+
+
+//(6)
+infer[@arr_ba]  base::AsegNE<x,y>  |- (exists q: base::Aseg<x,q> * base::Elem<q,_> & q=y-1).
+print residue.
+expect Valid.
+/* can simplify..
+Residue:
+ <1>htrue&false&{FLOW,(1,26)=__flow#E}[]
+ inferred pure: [y<=x]
+<2>base::Aseg<t_t16,y>@M&y=t_t16 & x<=(t_t16-2)&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [y=t_t16 & x<=(t_t16-2)]
+<3>base::Aseg<y,y>@M&x=y-1&{FLOW,(1,26)=__flow#E}[]
+inferred heap: [emp]
+inferred pure: [y=q_123+1 & q_123<t_t14]
+*/
+
