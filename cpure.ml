@@ -215,6 +215,7 @@ type formula =
   | Not of (formula * (formula_label option) * loc)
   | Forall of (spec_var * formula * (formula_label option) * loc)
   | Exists of (spec_var * formula * (formula_label option) * loc)
+  | SecurityForm of sec_label * formula * loc
 
 and bf_annot = (bool * int * (exp list))
 (* (is_linking, label, list of linking expressions in b_formula) *)
@@ -915,6 +916,7 @@ let rec contains_exists (f:formula) : bool =  match f with
   | Forall (_ ,f1,_,_) -> (contains_exists f1)
   | AndList l -> exists_l_snd contains_exists l
   | Exists _ -> true
+  | SecurityForm (_, f, _) -> contains_exists f
 
 let get_var_opt (e:exp) =
   match e with
@@ -1454,6 +1456,7 @@ and fv_helper (f : formula) : spec_var list = match f with
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
   | AndList l -> fold_l_snd fv_helper l
+  | SecurityForm (_, f, _) -> fv_helper f
 
 and combine_pvars p1 p2 helper = (helper p1) @ (helper p2)
 
@@ -1465,6 +1468,7 @@ and all_vars_helper (f : formula) : spec_var list = match f with
   | Forall (qid, qf, _,_)
   | Exists (qid, qf, _,_) -> qid::(all_vars_helper qf)
   | AndList l -> fold_l_snd all_vars_helper l
+  | SecurityForm (_, f, _) -> all_vars_helper f
 
 and all_vars (f : formula) : spec_var list =
   let tmp = all_vars_helper f in
@@ -1805,6 +1809,7 @@ and include_specific_val (f: formula): bool = match f with
   | Forall (_,f,_,_) -> include_specific_val f
   | Exists (_,f,_,_) -> include_specific_val f
   | AndList l -> exists_l_snd include_specific_val l
+  | SecurityForm (_, f, _) -> include_specific_val f
 
 and include_specific_val_bf (bf: b_formula): bool =
   let (pf,_) = bf in
@@ -1854,6 +1859,7 @@ and get_num_int_list (f : formula) : int list = match f with
   | Forall (_,f,_,_) -> get_num_int_list f
   | Exists (_,f,_,_) -> get_num_int_list f
   | AndList l -> List.fold_left (fun acc (_,f) -> acc@(get_num_int_list f)) [] l
+  | SecurityForm (_, f, _) -> get_num_int_list f
 
 and is_var_num (e : exp) : bool =
   match e with
@@ -1924,6 +1930,7 @@ and remove_ptr_equations f is_or = match f with
   | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p)
   | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_ptr_equations f is_or, pos)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
   x_add pure_ptr_equations_aux true f
@@ -2156,7 +2163,7 @@ and is_float_bformula b =
 and is_float_formula_x f0 =
   let rec helper f0=  match f0 with
     | BForm (b,_) -> is_float_bformula b
-    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
+    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) | SecurityForm (_, f, _) ->
       is_float_formula f;
     | And (f1, f2, _) | Or (f1, f2, _,_) ->
       (helper f1) || (helper f2)
@@ -2372,7 +2379,7 @@ and is_exp_arith (e:exp) : bool=
 and is_formula_arith_x (f:formula) :bool = match f with
   | BForm (b,_) -> is_b_form_arith b
   | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
-  | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
+  | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_) | SecurityForm (_, f, _) -> (is_formula_arith f)
   | AndList l -> all_l_snd  is_formula_arith l
 
 and is_formula_arith (f:formula) :bool =
@@ -3020,7 +3027,8 @@ and dperm_subst_simpl f =
     | Or _ ->  []
     | Not _ -> []
     | Forall (v,f,_,_)
-    | Exists (v,f,_,_)-> coll_eq f
+    | Exists (v,f,_,_) -> coll_eq f
+    | SecurityForm (_, f, _) -> coll_eq f
     | BForm ((f,_),_)-> (match f with
         |Eq (Var (v,_),Tsconst (t,_),_)
         |Eq (Tsconst (t,_),Var (v,_),_)-> [(v,t)]
@@ -3195,6 +3203,7 @@ and join_disjunctions xs = disj_of_list (List.rev xs) no_pos
 and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
   | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
+  | SecurityForm (_, f, _) -> no_andl f
   | AndList _ -> false
 
 (* decided to drop zero since same as f_comb e [] *)
@@ -3677,6 +3686,9 @@ let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
       | Exists (sv, f1, lbl, l) ->
         let nf1, r1 = foldr_f new_arg f1 in
         (Exists (sv, nf1, lbl, l), f_comb [r1])
+      | SecurityForm (lbl, f, pos) ->
+        let nf, r = foldr_f new_arg f in
+        (SecurityForm (lbl, nf, pos), f_comb [r])
   in foldr_f arg e
 
 (* f = (f_f, f_bf, f_e) and
@@ -3778,6 +3790,9 @@ let rec transform_formula f (e:formula) :formula =
     | Exists (v,e,fl,l) ->
       let ne = transform_formula f e in
       Exists(v,ne,fl,l)
+    | SecurityForm (lbl, e, pos) ->
+      let ne = transform_formula f e in
+      SecurityForm (lbl, ne, pos)
 
 let transform_formula f (e:formula) :formula =
   Debug.no_1 "transform_formula"
@@ -4129,6 +4144,7 @@ and pos_of_formula (f: formula) =
   | Not (_, _, p) -> p
   | Forall (_, _, _, p) -> p
   | Exists (_, _, _, p) -> p
+  | SecurityForm (_, _, p) -> p
   | AndList l -> match l with | x::_ -> pos_of_formula (snd x) | _-> no_pos
 
 (*used by error explanation*)
@@ -4142,6 +4158,7 @@ and list_pos_of_formula f rs: loc list=
   | Not (f,_, l) -> rs @ [l]
   | Forall (_, f,_, l) -> rs @ [l]
   | Exists (_, f,_, l) -> rs @ [l]
+  | SecurityForm (_, f, l) -> rs @ [l]
 
 and subst_pos_pformula p pf= match pf with
   | Frm (sv,_) -> Frm (sv,p)
@@ -4182,6 +4199,7 @@ and subst_pos_formula p f = match f with
   | Not (f, ofl, _) ->  Not (subst_pos_formula p f, ofl, p)
   | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
   | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
+  | SecurityForm (lbl, f, _) -> SecurityForm (lbl, subst_pos_formula p f, p)
 
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string =
@@ -4545,6 +4563,7 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
       Exists  (fresh_v, apply_subs sst (apply_subs [(v, fresh_v)] qf), lbl, pos)
     else Exists (v, apply_subs sst qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_subs sst) b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs sst f, pos)
 
 
 and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
@@ -4555,6 +4574,7 @@ and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula = 
   | Forall (v, qf,lbl, pos)  ->  Forall (subs_one sst v, apply_subs_all sst qf, lbl, pos)
   | Exists (v, qf, lbl, pos) ->  Exists (subs_one sst v, apply_subs_all sst qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_subs_all sst) b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs_all sst f, pos)
 
 (* cannot change to a let, why? *)
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
@@ -4844,6 +4864,7 @@ and apply_par_term (sst : (spec_var * exp) list) f = match f with
     else if sst==[] then f else
       Exists  (v, apply_par_term sst qf, lbl, pos)
   | AndList b-> AndList (map_l_snd (apply_par_term sst) b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_par_term sst f, pos)
 
 and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr || (is_member v t)) false sst
 
@@ -4958,6 +4979,7 @@ and apply_one_term (fr, t) f = match f with
   | Forall (v, qf, lbl, pos) -> if eq_spec_var v fr then f else Forall (v, apply_one_term (fr, t) qf, lbl, pos)
   | Exists (v, qf, lbl, pos) -> if eq_spec_var v fr then f else Exists (v, apply_one_term (fr, t) qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_one_term (fr,t)) b)
+  | SecurityForm (lbl, sf, pos) -> SecurityForm (lbl, apply_one_term (fr, t) sf, pos)
 
 and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   let (pf,il) = bf in
@@ -5274,6 +5296,9 @@ and split_ex_quantifiers_rec_x (f0 : formula) : formula * (spec_var list) =
     | Exists (sv, f, lbl, pos) ->
       let n_f,evars = helper f in
       n_f, sv::evars
+    | SecurityForm (lbl, f, pos) ->
+      let nf, evars = helper f in
+      SecurityForm (lbl, nf, pos), evars
   in helper f0
 
 and split_ex_quantifiers_rec (f0 : formula) : formula * (spec_var list) =
@@ -5303,6 +5328,7 @@ and bag_vars_formula (f0 : formula) : spec_var list = match f0 with
   | Not (f1, lbl, pos) -> (bag_vars_formula f1)
   | Forall (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
   | Exists (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
+  | SecurityForm (lbl, sf, pos) -> bag_vars_formula sf
 
 and bag_vars_b_formula (bf : b_formula) : spec_var list =
   let (pf,il) = bf in
@@ -5477,6 +5503,7 @@ and prune_perm_bounds f =
     | Not (f,l,pos) -> mkNot (helper_f f) l pos
     | Forall (v,f,l,pos) -> mkForall [v] (helper_f f) l pos
     | Exists (v,f,l,pos) -> mkExists [v] (helper_f f) l pos
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper_f f, pos)
   in
   helper_f f
 
@@ -5490,6 +5517,7 @@ and list_of_bformula (f0:formula): formula list = match f0 with
   | Or (f1,f2,_,_) ->(list_of_bformula f1)@(list_of_bformula f2)
   | Not (f1,_,_) ->list_of_bformula f1
   | AndList b -> fold_l_snd list_of_bformula b
+  | SecurityForm (_, f, pos) -> list_of_bformula f
 
 and  check_dependent f ls_working: bool=
   let ls_var = fv f in
@@ -5541,6 +5569,7 @@ and elim_of_bformula (f0:formula) ls: formula  =  match f0 with
   | Forall _ -> f0 (*should be improved*)
   | Exists _ -> f0 (*should be improved*)
   | AndList b -> AndList (map_l_snd (fun c-> elim_of_bformula c ls) b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, elim_of_bformula f ls, pos)
 
 and string_of_ls_pure_formula ls =
   match ls with
@@ -5701,6 +5730,7 @@ and elim_exists_with_ineq (f0: formula): formula =
     mkForall [qvar] eqf lbl pos
   | BForm _ -> f0
   | AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, elim_exists_with_ineq f, pos)
 
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
@@ -5749,6 +5779,7 @@ and elim_exists_x (f0 : formula) : formula =
     | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos
     | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos
     | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos)
     | BForm _ -> f0 in
   helper f0
 
@@ -5796,6 +5827,7 @@ let add_gte0_for_mona (f0 : formula): (formula)=
     | Or (f1, f2, lbl, pos) -> mkOr (helper f1) (helper f2) lbl pos
     | Not (f1, lbl, pos) ->  mkNot (helper f1) lbl pos
     | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos)
     | BForm _ -> f0 in
   helper f0
 
@@ -5838,6 +5870,7 @@ let rec add_flow_var (f0 : formula) : formula =
     | Not (f,lbl,pos) -> Not (add_flow_var f, lbl, pos)
     | Forall (sv,f,lbl,pos) -> Forall (sv, add_flow_var f, lbl, pos)
     | Exists (sv,f,lbl,pos) -> Exists (sv, add_flow_var f, lbl, pos)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, add_flow_var f, pos)
 
 let add_flow_var (f0 : formula) : formula =
   let pr = !print_formula in
@@ -6490,6 +6523,7 @@ let rec drop_bag_formula (f0 : formula) : formula = match f0 with
   | Not (f1, lbl, pos) -> mkNot (drop_bag_formula f1) lbl pos
   | Forall (qvar, qf,lbl, pos) ->mkForall [qvar] (drop_bag_formula qf) lbl pos
   | Exists (qvar, qf,lbl, pos) -> mkExists [qvar] ( drop_bag_formula qf) lbl pos
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, drop_bag_formula f, pos)
 
 and drop_bag_b_formula (bf : b_formula) : b_formula =
   let (pf,il) = bf in
@@ -6529,6 +6563,7 @@ let rec drop_float_formula (f0 : formula) : formula = match f0 with
     if (is_float_var qvar) then (drop_float_formula qf)
     else
       mkExists [qvar] (drop_float_formula qf) lbl pos
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, drop_float_formula f, pos)
 
 and drop_float_b_formula (bf : b_formula) : b_formula =
   if (is_float_bformula bf) then (BConst (true, no_pos),None)
@@ -6579,6 +6614,7 @@ and apply_one_exp ((fr, t) : spec_var * exp) f =
   | Exists (v, qf, lbl, pos) ->
     if eq_spec_var v fr then f
     else Exists (v, rec_f qf, lbl, pos)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, rec_f f, pos)
 
 and b_apply_one_exp (fr, t) bf =
   let (pf,il) = bf in
@@ -6702,6 +6738,7 @@ and elim_idents_x (f : formula) : formula = match f with
   | Forall (sv, f1, lbl, pos) -> mkForall [sv] (elim_idents_x f1) lbl pos
   | Exists (sv, f1, lbl, pos) -> mkExists [sv] (elim_idents_x f1) lbl pos
   | BForm (f1,lbl) -> BForm(elim_idents_b_formula f1, lbl)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, elim_idents_x f, pos)
 
 (* remove trivial idents such as
    x=x -> true
@@ -6823,6 +6860,7 @@ let rec drop_disjunct (f:formula) : formula =
   | Not (f,_,_) -> f  (* Not ((drop_disjunct f),l) TODO: investigate if f is the proper return value, in conjunction with case inference*)
   | Forall (q,f,lbl,l) -> Forall (q,(drop_disjunct f),lbl, l)
   | Exists (q,f,lbl,l) -> Exists (q,(drop_disjunct f),lbl, l)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, drop_disjunct f, pos)
 
 and float_out_quantif f = match f with
   | BForm b-> (f,[],[])
@@ -6848,6 +6886,9 @@ and float_out_quantif f = match f with
   | Exists (q,b,lbl,l)->
     let l1,l2,l3 = float_out_quantif b in
     (l1,l2,q::l3)
+  | SecurityForm (lbl, f, pos) ->
+      let l1, l2, l3 = float_out_quantif f in
+      (SecurityForm (lbl, l1, pos), l2, l3)
 
 and check_not (f:formula):formula =
   let rec inner (f:formula):formula*bool = match f with
@@ -6948,6 +6989,7 @@ and drop_null (f:formula) self neg:formula =
   | Not (b,lbl,l)-> Not ((drop_null b self (not neg)),lbl,l)
   | Forall (q,f,lbl,l) -> Forall (q,(drop_null f self neg),lbl,l)
   | Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, drop_null f self neg, pos)
 
 and add_null f self : formula =
   mkAnd f (BForm ((mkEq_b (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos
@@ -7020,7 +7062,8 @@ and b_form_list f: b_formula list = match f with
   | Or _ -> []
   | Not _ -> []
   | Forall (_,f,_,_)
-  | Exists (_,f,_,_) -> (b_form_list f)
+  | Exists (_,f,_,_)
+  | SecurityForm (_, f, _) -> (b_form_list f)
 
 and simp_mult (e: exp) : exp =
   let pr = !print_exp in
@@ -7593,11 +7636,13 @@ and arith_simplify_x (pf : formula) :  formula =
       |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
       |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
       |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
+      | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, helper f, loc)
     in helper pf
 
 let get_pure_label n =  match n with
   | And _
-  | AndList _ ->  None
+  | AndList _
+  | SecurityForm _ ->  None
   | BForm (_,l)
   | Or (_,_,l,_)
   | Not (_,l,_)
@@ -7619,11 +7664,13 @@ let rename_labels  e=
     match e with
     | BForm (b,f_l) -> Some (BForm (b,(n_l_f f_l)))
     | And _
-    | AndList _ -> None
+    | AndList _
+    | SecurityForm _ -> None
     | Or (e1,e2,f_l,l) -> (Some (Or (e1,e2,(n_l_f f_l),l)))
     | Not (e1,f_l, l) -> (Some (Not (e1,(n_l_f f_l),l)))
     | Forall (v,e1,f_l, l) -> (Some (Forall (v,e1,(n_l_f f_l),l)))
-    | Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))in
+    | Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))
+  in
   transform_formula ((fun _-> None),(fun _-> None), f_f,f_b,f_e) e
 
 let remove_dup_constraints (f:formula):formula =
@@ -7858,6 +7905,7 @@ let arith_simplify_new (pf : formula) :  formula =
       |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
       |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
       |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
+      | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, helper f, loc)
     in helper pf
 
 (* get string name of var e *)
@@ -8395,6 +8443,7 @@ let rec replace_pure_formula_label nl f = match f with
   | Not (b1,b2,b3) -> Not ((replace_pure_formula_label nl b1),(nl()),b3)
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, replace_pure_formula_label nl f, pos)
 
 let store_tp_is_sat : (formula -> bool) ref = ref (fun _ -> true)
 
@@ -8897,6 +8946,7 @@ let rec get_xpure p0=
     | Not (b,_,_) -> helper b
     | Forall (_,b,_,_)-> 	helper b
     | Exists (q,b,lbl,l)-> helper b
+    | SecurityForm (_, f, _) -> helper f
   in
   helper p0
 
@@ -8934,6 +8984,7 @@ and drop_xpure f0 =
     | Not (f, ofl, p) ->  Not (helper f, ofl, p)
     | Forall (sv, f, ofl, p) -> Forall (sv, helper f, ofl, p)
     | Exists (sv, f, ofl, p) -> Exists (sv, helper f, ofl, p)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos)
   in
   helper f0
 
@@ -9420,6 +9471,7 @@ let rec filter_complex_inv f = match f with
   | Forall _ -> f
   | Exists _ -> f
   | Not (_,_,l) -> mkTrue l
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, filter_complex_inv f, pos)
   | BForm ((pf,il),l) -> match pf with
     | XPure _
     | BConst _
@@ -9752,6 +9804,7 @@ let rec break_formula1 (f: formula) : formula list = match f with
   | Not (f, _, _) -> break_formula1 f
   | Forall (_, f, _, _) -> break_formula1 f
   | Exists (_, f, _, _) -> break_formula1 f
+  | SecurityForm (_, f, _) -> break_formula1 f
 
 let rec break_formula (f: formula) : b_formula list = match f with
   | BForm (bf, _) -> [bf]
@@ -9761,6 +9814,7 @@ let rec break_formula (f: formula) : b_formula list = match f with
   | Not (f, _, _) -> break_formula f
   | Forall (_, f, _, _) -> break_formula f
   | Exists (_, f, _, _) -> break_formula f
+  | SecurityForm (_, f, _) -> break_formula f
 
 and fv_with_slicing_label_new f = (* OUT: (non-linking vars, linking vars) of formula *)
   match f with
@@ -9804,6 +9858,7 @@ and fv_with_slicing_label_new f = (* OUT: (non-linking vars, linking vars) of fo
     let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
     let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
     (n_vs, n_lkl)
+  | SecurityForm (_, f, _) -> fv_with_slicing_label_new f
 
 and fv_with_slicing_label_new_1 f = (* OUT: (non-linking vars, linking vars) of formula *)
   match f with
@@ -9847,6 +9902,7 @@ and fv_with_slicing_label_new_1 f = (* OUT: (non-linking vars, linking vars) of 
     let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
     let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
     (n_vs, n_lkl)
+  | SecurityForm (_, f, _) -> fv_with_slicing_label_new_1 f
 
 and fv_with_slicing_label_new_2 f = (* OUT: (non-linking vars, linking vars) of formula *)
   match f with
@@ -9890,6 +9946,7 @@ and fv_with_slicing_label_new_2 f = (* OUT: (non-linking vars, linking vars) of 
     let n_vs = Gen.BList.difference_eq eq_spec_var vs [sv] in
     let n_lkl = Gen.BList.difference_eq eq_spec_var lkl [sv] in
     (n_vs, n_lkl)
+  | SecurityForm (_, f, _) -> fv_with_slicing_label_new_2 f
 
 and fv_with_slicing_label f =
   if !Globals.opt_ineq then fv_with_slicing_label_new f
@@ -9940,6 +9997,7 @@ let rec formula_linking_vars_exps f =
   | Exists (sv, f, _, _) ->
     let lv = formula_linking_vars_exps f in
     Gen.BList.difference_eq eq_spec_var lv [sv]
+  | SecurityForm (_, f, _) -> formula_linking_vars_exps f
 
 and b_formula_linking_vars_exps bf =
   let (_, sl) = bf in
@@ -9991,6 +10049,7 @@ let rec set_il_formula_with_dept_list f rel_vars_lst =
   | Not (f, lbl, l) -> Not (set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
   | Forall (sv, f, lbl, l) -> Forall (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
   | Exists (sv, f, lbl, l) -> Exists (sv, set_il_formula_with_dept_list f rel_vars_lst, lbl, l)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, set_il_formula_with_dept_list f rel_vars_lst, pos)
 
 (* Slicing: Substitute vars bound by EX by fresh vars in LHS *)
 let rec elim_exists_with_fresh_vars f =
@@ -10018,6 +10077,9 @@ let rec elim_exists_with_fresh_vars f =
     let l1,f1 = elim_exists_with_fresh_vars f1 in
     l1,Not (f1, fl, loc)
   | Forall _ -> [],f  (* Not skolemization: All x. Ex y. P(x, y) -> All x. P(x, f(x)) *)
+  | SecurityForm (lbl, f, loc) ->
+      let vars, f' = elim_exists_with_fresh_vars f in
+      vars, SecurityForm (lbl, f', loc)
 
 let elim_exists_with_fresh_vars f =
   let pr = !print_formula in
@@ -10034,13 +10096,15 @@ let rec dist_not_inwards f =
      | Or (f2, f3, _, loc) -> And (dist_not_inwards (Not (f2, fl, no_pos)), dist_not_inwards (Not (f3, fl, no_pos)), loc)
      | Not (f2, _, _) -> dist_not_inwards f2
      | Forall (sv, f2, fl, loc) -> Exists (sv, dist_not_inwards (Not (f2, fl, no_pos)), fl, loc)
-     | Exists (sv, f2, fl, loc) -> Forall (sv, dist_not_inwards (Not (f2, fl, no_pos)), fl, loc))
+     | Exists (sv, f2, fl, loc) -> Forall (sv, dist_not_inwards (Not (f2, fl, no_pos)), fl, loc)
+     | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, dist_not_inwards f, loc))
   | BForm _ -> f
   | And (f1, f2, loc) -> And (dist_not_inwards f1, dist_not_inwards f2, loc)
   | AndList b-> AndList (map_l_snd dist_not_inwards b)
   | Or (f1, f2, fl, loc) -> Or (dist_not_inwards f1, dist_not_inwards f2, fl, loc)
   | Forall (sv, f1, fl, loc) -> Forall (sv, dist_not_inwards f1, fl, loc)
   | Exists (sv, f1, fl, loc) -> Exists (sv, dist_not_inwards f1, fl, loc)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, dist_not_inwards f, loc)
 
 let rec standardize_vars f =
   match f with
@@ -10057,6 +10121,7 @@ let rec standardize_vars f =
     let SpecVar (t, i, p) = sv in
     let nf1 = subst [sv, SpecVar (t, fresh_any_name i, p)] f1 in
     Forall (sv, nf1, fl, loc)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, standardize_vars f, loc)
 
 let rec dist_and_over_or f =
   match f with
@@ -10084,6 +10149,7 @@ let rec dist_and_over_or f =
   | Not (f, fl, loc) -> Not (dist_and_over_or f, fl, loc)
   | Forall (sv, f, fl, loc) -> Forall (sv, dist_and_over_or f, fl, loc)
   | Exists (sv, f, fl, loc) -> Exists (sv, dist_and_over_or f, fl, loc)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, dist_and_over_or f, loc)
 
 let trans_dnf f =
   let f = dist_not_inwards f in
@@ -10156,7 +10222,14 @@ let remove_primitive should_elim e =
       let nf = elim_formula f1 in
       (match nf with
        | None -> None
-       | Some nf1 -> Some (Not (nf1, fl, loc))) in
+       | Some nf1 -> Some (Not (nf1, fl, loc)))
+    | SecurityForm (lbl, f, loc) ->
+        let nf = elim_formula f in
+        begin match nf with
+        | None -> None
+        | Some nf' -> Some (SecurityForm (lbl, nf', loc))
+        end
+  in
   let r = elim_formula e in
   match r with
   | None -> mkTrue no_pos
@@ -10482,7 +10555,8 @@ let rec contains_neq (f:formula) : bool =  match f with
   | And (f1,f2, _) -> (contains_neq f1) || (contains_neq f2)
   | Not(f1,_,_)
   | Forall (_ ,f1,_,_)
-  | Exists (_ ,f1,_,_) -> (contains_neq f1)
+  | Exists (_ ,f1,_,_)
+  | SecurityForm (_, f1, _)-> (contains_neq f1)
   | AndList l -> exists_l_snd contains_exists l
 
 
@@ -10539,6 +10613,7 @@ let map_f f0 fnc_bf fnc_comb=
     | Not (b,_,_)-> recf b
     | Forall (_,f,_,_) -> recf f
     | Exists (_,f,_,_) -> recf f
+    | SecurityForm (_, f, _) -> recf f
   in
   recf f0
 
@@ -10687,6 +10762,7 @@ let rec get_Rank pf = match pf with
   | Not (f,_,_) -> get_Rank f
   | Forall (_,f,_,_) -> get_Rank f
   | Exists (_,f,_,_) -> get_Rank f
+  | SecurityForm (_, f, _) -> get_Rank f
 
 let term_id = 1
 let loop_id = 2
@@ -10940,6 +11016,7 @@ let rec get_RelForm pf = match pf with
   | Not (f,_,_) -> get_RelForm f
   | Forall (_,f,_,_) -> get_RelForm f
   | Exists (_,f,_,_) -> get_RelForm f
+  | SecurityForm (_, f, _) -> get_RelForm f
 
 let get_RelForm_arg_list_with_name pf name =
   let rel_form_list = get_RelForm pf in
@@ -10965,6 +11042,7 @@ let rec get_Neg_RelForm pf = match pf with
   | Not (f,_,_) -> get_RelForm f
   | Forall (_,f,_,_) -> get_Neg_RelForm f
   | Exists (_,f,_,_) -> get_Neg_RelForm f
+  | SecurityForm (_, f, _) -> get_Neg_RelForm f
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   if !filtering_flag (* && (not !allow_pred_spec) *)
@@ -11086,7 +11164,8 @@ let rec has_lexvar (f: formula) : bool =
   | Or (f1, f2, _, _) -> (has_lexvar f1) && (has_lexvar f2)
   | Not (f, _, _) -> has_lexvar f
   | Forall (_, f, _, _)
-  | Exists (_, f, _, _) -> has_lexvar f
+  | Exists (_, f, _, _)
+  | SecurityForm (_, f, _) -> has_lexvar f
 
 let has_unknown_pre_lexvar (f: formula) =
   let f_b bf =
@@ -11154,6 +11233,7 @@ let rec drop_formula (pr_w:p_formula -> formula option) pr_s (f:formula) : formu
     | Exists (vs,f,l,p) -> Exists (vs, helper f, l, p)
     | Not (f,l,p) -> Not (drop_formula pr_s pr_w f,l,p)
     | Forall (vs,f,l,p) -> Forall (vs, helper f, l, p)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos)
   in helper f
 
 let drop_rel_formula_ops =
@@ -11915,7 +11995,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
       else Some e
     | _ -> None
   in
-  let f_arg_f (start_flag,emap,nonlinear) e =
+  let rec f_arg_f (start_flag,emap,nonlinear) e =
     match e with
     | And _
     | AndList _ ->
@@ -11930,6 +12010,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
       (* change vs_set vs-v *)
       (true,EMapSV.elim_elems_one emap v,nonlinear)
     | BForm _ -> (false,emap,nonlinear)
+    | SecurityForm (_, f, _) -> f_arg_f (start_flag, emap, nonlinear) f
   in
   let f_arg_bf (s,em,nonlinear) e =
     (s,em,false)
@@ -12160,6 +12241,9 @@ let rec add_term_nums_pure f log_vars call_num phase_var =
   | Exists (sv, f, lbl, pos) ->
     let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
     (Exists (sv, n_f, lbl, pos), pv)
+  | SecurityForm (lbl, f, pos) ->
+      let n_f, pv = add_term_nums_pure f log_vars call_num phase_var in
+      (SecurityForm (lbl, n_f, pos), pv)
 
 (* Only add call number to Term *)
 (* Add phase variable into Term only if
@@ -12235,6 +12319,7 @@ let rec count_term_pure f =
   | Not (f, _, _) -> count_term_pure f
   | Forall (_, f, _, _) -> count_term_pure f
   | Exists (_, f, _, _) -> count_term_pure f
+  | SecurityForm (_, f, _) -> count_term_pure f
 
 and count_term_b_formula bf =
   let (pf, _) = bf in
@@ -12263,6 +12348,7 @@ let rec remove_cnts remove_vars f = match f with
   | Not (f,o,p) -> mkNot (remove_cnts remove_vars f) o p
   | Forall (v,f,o,p) -> mkForall [v] (remove_cnts remove_vars f) o p
   | Exists (v,f,o,p) -> mkExists [v] (remove_cnts remove_vars f) o p
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_cnts remove_vars f, pos)
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec remove_cnts2 keep_vars f = match f with
@@ -12282,6 +12368,7 @@ let rec remove_cnts2 keep_vars f = match f with
   | Not (f,o,p) -> mkNot (remove_cnts2 keep_vars f) o p
   | Forall (v,f,o,p) -> mkForall [v] (remove_cnts2 keep_vars f) o p
   | Exists (v,f,o,p) -> mkExists [v] (remove_cnts2 keep_vars f) o p
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_cnts2 keep_vars f, pos)
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec is_num_dom_exp_0 e = match e with
@@ -12333,6 +12420,7 @@ let rec get_num_dom f = match f with
   | Not (f,_,_) -> get_num_dom f
   | Forall (_,f,_,_) -> get_num_dom f
   | Exists (_,f,_,_) -> get_num_dom f
+  | SecurityForm (_, f, _) -> get_num_dom f
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let order_var v1 v2 vs =
@@ -12393,6 +12481,7 @@ let rec no_of_cnts f = match f with
   | Not (f,_,_) -> no_of_cnts f
   | Exists (_,f,_,_) -> no_of_cnts f
   | Forall (_,f,_,_) -> no_of_cnts f
+  | SecurityForm (_, f, _) -> no_of_cnts f
 
 let rec remove_red_primed_vars f = match f with
   | BForm _ -> f
@@ -12412,6 +12501,7 @@ let rec remove_red_primed_vars f = match f with
     let vars = fv new_f in
     if mem_svl v vars then Exists (v, new_f, l, p)
     else new_f
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_red_primed_vars f, pos)
 
 and remove_red_primed_als f = match f with
   | BForm ((Eq(Var(v1,_),Var(v2,_),p),_),_) ->
@@ -12426,6 +12516,7 @@ and remove_red_primed_als f = match f with
   | AndList fs -> AndList (List.map (fun (l,c) -> (l, remove_red_primed_als c)) fs)
   | Forall (v,f,l,p) -> Forall (v, remove_red_primed_als f, l, p)
   | Exists (v,f,l,p) -> Exists (v, remove_red_primed_als f, l, p)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_red_primed_als f, pos)
 
 (* Just a temp patch *)
 and remove_red_primed_exp e = match e with
@@ -12442,6 +12533,7 @@ let rec andl_to_and f = match f with
   | AndList b ->
     let l = List.map (fun (_,c)-> andl_to_and c) b in
     List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, andl_to_and f, pos)
 
 and extractLS_b_formula (bf : b_formula) : b_formula =
   let (pf,_) = bf in
@@ -12486,6 +12578,9 @@ let extractLS_pure_x (f : formula) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let n_f = helper f in
+        SecurityForm (lbl, n_f, pos)
   in helper f
 type tscons_res =
   | No_cons
@@ -12523,7 +12618,8 @@ let rec has_tscons f =  match f with
   | AndList l -> fold_l_snd_f join_res has_tscons No_cons l
   | Not (f,_,_)
   | Forall (_,f,_,_)
-  | Exists (_,f,_,_) -> has_tscons f
+  | Exists (_,f,_,_)
+  | SecurityForm (_, f, _)-> has_tscons f
 
 let has_tscons f =
   let pr f = match f with | No_cons -> "no_cons" | No_split -> "no_split" | Can_split -> "can_split" in
@@ -12539,6 +12635,7 @@ let rec tpd_drop_all_perm f = match f with
   | Exists (v,f,l,p) ->
     if (type_of_spec_var v)=Tree_sh then tpd_drop_all_perm f
     else Exists (v, tpd_drop_all_perm f, l,p)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, tpd_drop_all_perm f, pos)
 
 
 let rec tpd_drop_perm f = match f with
@@ -12550,6 +12647,7 @@ let rec tpd_drop_perm f = match f with
   | Forall (s,f,l,p) -> mkForall [s] (tpd_drop_perm f) l p
   | Exists (v,f,l,p) -> if (type_of_spec_var v)=Tree_sh then tpd_drop_perm f
     else Exists (v, tpd_drop_perm f, l,p)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, tpd_drop_perm f, pos)
 
 let tpd_drop_perm f = Debug.no_1 "tpd_drop_perm" !print_formula !print_formula tpd_drop_perm f
 
@@ -12561,6 +12659,7 @@ let rec tpd_drop_nperm f = match f with
   | Not (b,_,_) ->  if tpd_drop_nperm b=[] then [] else report_error no_pos "tree shares under negation"
   | Forall (_,b,_,_) -> if tpd_drop_nperm b =[] then [] else report_error no_pos "tree shares under forall"
   | Exists _ -> report_error no_pos ("tpd_drop_nperm: to_dnf has failed "^(!print_formula f))
+  | SecurityForm (_, f, _) -> tpd_drop_nperm f
 
 let tpd_drop_nperm f = Debug.no_1 "tpd_drop_nperm" !print_formula (pr_list (fun c-> !print_b_formula (c,None))) tpd_drop_nperm f
 
@@ -12579,6 +12678,7 @@ let rec get_inst fct v f = match f with
   | Forall _
   | Exists _
   | Or _ -> None
+  | SecurityForm (_, f, _) -> get_inst fct v f
 
 let get_inst_tree v f =
   let fct e = match e with
@@ -12737,7 +12837,7 @@ let split_disjunctions_deep (f:formula) : formula list =
 
 let drop_exists (f:formula) :formula =
   let rec helper f =
-    let f_f f =
+    let rec f_f f =
       match f with
       | Exists(qid,qf,fl,pos) -> let fresh_fr = fresh_spec_vars [qid] in
         let st = List.combine [qid] fresh_fr in
@@ -12745,6 +12845,7 @@ let drop_exists (f:formula) :formula =
         Some((helper rename_exist_vars))
       | And _ | AndList _ | Or _  -> None
       | Not _ | Forall _ | BForm _ -> Some(f)
+      | SecurityForm (_, f, _) -> f_f f
     in
     let f_bf bf = Some bf in
     let f_e e = Some e in
@@ -12779,6 +12880,7 @@ let get_rel_args_x f0=
     | Not (p, _, _) ->  helper p
     | Forall (_, p, _, _) -> helper p
     | Exists (_, p, _, _) -> helper p
+    | SecurityForm (_, f, _) -> helper f
   in
   helper f0
 
@@ -12904,6 +13006,9 @@ let removeLS_pure_x (pf : formula) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let n_f = helper f in
+        SecurityForm (lbl, n_f, pos)
   in helper pf
 
 (*remove lockset constraints from a formula*)
@@ -12974,6 +13079,9 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let n_f = helper f in
+        SecurityForm (lbl, n_f, pos)
   in helper pf
 
 (*
@@ -13032,6 +13140,9 @@ let translate_level_eqn_pure_x (pf : formula) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let n_f = helper f in
+        SecurityForm (lbl, n_f, pos)
   in helper pf
 
 (*
@@ -13124,6 +13235,9 @@ let translate_level_pure_x (pf : formula) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let nf = helper f in
+        SecurityForm (lbl, nf, pos)
   in helper pf
 
 (*Translate level(l) into l_mu before sending to provers*)
@@ -13219,6 +13333,9 @@ let infer_level_pure_x (pf : formula) : formula =
     | Exists (sv, f, lbl, pos) ->
       let n_f = helper f in
       Exists (sv, n_f, lbl, pos)
+    | SecurityForm (lbl, f, pos) ->
+        let nf = helper f in
+        SecurityForm (lbl, nf, pos)
   in helper pf
 
 let infer_level_pure (f : formula) : formula =
@@ -13334,6 +13451,9 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
         | Exists (var,f,lbl,pos) ->
           let nf = helper f in
           Exists (var,nf,lbl,pos)
+        | SecurityForm (lbl, f, pos) ->
+            let nf = helper f in
+            SecurityForm (lbl, nf, pos)
       in helper p
     in
     let nf = fct f in
@@ -13763,6 +13883,9 @@ and translate_waitlevel_pure_x (pf : formula) : formula =
       | Exists (sv, f, lbl, pos) ->
         let n_f = helper f in
         Exists (sv, n_f, lbl, pos)
+      | SecurityForm (lbl, f, pos) ->
+          let nf = helper f in
+          SecurityForm (lbl, nf, pos)
     in helper pf
 
 (*
@@ -14701,6 +14824,9 @@ let prune_irr_neq p0 irr_svl =
       if b then b,mkTrue pos else false,Forall (a,np,c,pos)
     | Exists (q,b,lbl,pos)-> let b,np = helper b in
       if b then b,mkTrue pos else (false,Exists (q,np,lbl,pos))
+    | SecurityForm (lbl, f, pos) ->
+        let b, nf = helper f in
+        (b, SecurityForm (lbl, nf, pos))
   in
   helper p0
 
@@ -14759,6 +14885,7 @@ let get_null_ptrs p0 =
     | Not (b, _,pos) -> []
     | Forall (a,b,c,pos)-> let svl = helper b in (diff_svl svl [a])
     | Exists (q,b,lbl,pos)-> let svl = helper b in (diff_svl svl [q])
+    | SecurityForm (lbl, f, pos) -> helper f
   in
   remove_dups_svl (helper p0)
 
@@ -14855,6 +14982,7 @@ let get_cmp_form_x p0=
     | Not (p,_ , _) -> helper p
     | Forall (_ , p,_,_) -> helper p
     | Exists (_, p,_,_) -> helper p
+    | SecurityForm (_, f, _) -> helper f
   in
   helper p0
 
@@ -14963,7 +15091,8 @@ let drop_dupl_x f =
       | Or _
       | Not _
       | Forall _
-      | Exists _ -> a, f::o in
+      | Exists _ -> a, f::o
+      | SecurityForm (_, f, _) -> splitter (a, o) f in
     let a,o = splitter ([],[]) f in
     join_conjunctions ((remove_dupl_conj_list a)@o)	in
   join_disjunctions (List.map helper (split_disjunctions f))
@@ -14989,11 +15118,12 @@ let get_vv_eqs (f0 : formula) : (spec_var * spec_var) list =
     | BForm _ -> Some (f,[])
     | _ -> None in
   let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
-  let f_cmb e l = match e with
+  let rec f_cmb e l = match e with
     | BForm _  | And _ | AndList _  | Not _ -> List.concat l
     | Or _ -> Gen.BList.intersect_eq eq_pair_eq  (List.hd l) (List.hd (List.tl l))
     | Forall (sv,_,_,_)
-    | Exists (sv,_,_,_) -> List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2)))(List.concat l) in
+    | Exists (sv,_,_,_) -> List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2)))(List.concat l)
+    | SecurityForm (_, f, _) -> f_cmb f l in
   let f_stop1 a b = Some (b,[]) in
   let f_stop2 a b = Some (b,[]) in
   snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> []), (fun _ _ -> [])))
@@ -15009,7 +15139,7 @@ let get_neqs (f0 : formula) : ((spec_var * spec_var) list) * (spec_var list) =
     | BForm _ -> Some (f,([],[]))
     | _ -> None in
   let f_arg arg e = match e with | Not _ -> not arg | _ -> arg in
-  let f_cmb e l :((spec_var * spec_var) list) * (spec_var list)  = match e with
+  let rec f_cmb e l :((spec_var * spec_var) list) * (spec_var list)  = match e with
     | BForm _  | And _ | AndList _  | Not _ -> Gen.fold_pair2f List.concat List.concat (List.split l)
     | Or _ ->
       let r1neq, r1null = List.hd l in
@@ -15019,7 +15149,8 @@ let get_neqs (f0 : formula) : ((spec_var * spec_var) list) * (spec_var list) =
     | Exists (sv,_,_,_) ->
       let l1,l2 = Gen.fold_pair2f List.concat List.concat (List.split l) in
       List.filter (fun (v1,v2)-> not ((eq_spec_var sv v1)||(eq_spec_var sv v2))) l1,
-      List.filter (fun v-> not (eq_spec_var sv v)) l2 in
+      List.filter (fun v-> not (eq_spec_var sv v)) l2
+    | SecurityForm (_, f, _) -> f_cmb f l in
   let f_stop1 a b = Some (b,([],[])) in
   let f_stop2 a b = Some (b,([],[])) in
   snd (foldr_formula f0 true (fct,f_stop1, f_stop2) (f_arg,idf2,idf2) (f_cmb, (fun _ _ -> ([],[])), (fun _ _ -> ([],[]))))
@@ -15052,7 +15183,8 @@ let force_all_vv_eqs_x f0 =
     | AndList l -> Gen.fold_l_snd (helper b) l
     | Not (f,_,_)-> helper (not b) f
     | Forall (_,f,_,_)
-    | Exists (_,f,_,_)-> helper b f  in
+    | Exists (_,f,_,_)-> helper b f
+    | SecurityForm (_, f, _) -> helper b f in
   remove_dups_svl (List.filter is_node_typ (helper true f0))
 
 let force_all_vv_eqs f0 =
@@ -15762,6 +15894,7 @@ let overapp_ptrs_x f0=
     | Forall (a, p, c,l) ->
       Forall (a, helper p, c,l)
     | AndList l -> AndList( List.map (fun (a, p) -> (a, helper p) ) l)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos)
   in
   helper f0
 
@@ -15843,6 +15976,7 @@ let transform_bexpr_x p0=
     | Not (f1, lbl, p) -> Not (recf f1, lbl, p)
     | Forall (sv, f1, lbl, p) -> Forall (sv, recf f1, lbl, p)
     | Exists (sv, f1, lbl, p ) -> Exists (sv, recf f1, lbl, p )
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, recf f, pos)
   in
   recf p0
 

@@ -227,6 +227,7 @@ and coq_of_formula pr_w pr_s f =
     | CP.AndList _ -> Gen.report_error no_pos "coq.ml: encountered AndList, should have been already handled"
     | CP.Or (p1, p2, _, _) ->
       "(" ^ (helper p1) ^ " \\/ " ^ (helper p2) ^ ")"
+    | CP.SecurityForm (_, f, _) -> helper f
   in helper f
 
 let coq_of_formula pr_w pr_s f =

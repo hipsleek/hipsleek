@@ -45,9 +45,9 @@ let expression = Gram.Entry.mk "expression"
 (*     Typeinfer.get_spec_var_ident stab var Primed          *)
 (*   else Typeinfer.get_spec_var_ident stab var Unprimed     *)
 
-let get_var var tlist = 
-  if is_substr "PRI" var 
-  then 
+let get_var var tlist =
+  if is_substr "PRI" var
+  then
     let var = String.sub var 3 (String.length var - 3) in
     tlist # get_spec_var_ident var Primed
     (* TI.get_spec_var_ident (tlist # get_stk) var Primed *)
@@ -56,21 +56,21 @@ let get_var var tlist =
 let add_prefix var prefix = match var with
   | SpecVar (t,id,p) -> SpecVar (t,prefix ^ id,p)
 
-let is_node var = match var with 
+let is_node var = match var with
   | Var (SpecVar (_,id,_), _) -> (* is_substr "NOD" id || *) id=self
   | _ -> false
 
-let get_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> 
-    if id=self then id else 
+let get_node var = match var with
+  | Var (SpecVar (_,id,_), _) ->
+    if id=self then id else
       String.sub id 3 (String.length id - 3)
   | _ -> report_error no_pos "Expected a pointer variable"
 
-let is_rec_node var = match var with 
+let is_rec_node var = match var with
   (* | Var (SpecVar (_,id,_), _) -> is_substr "RECNOD" id *)
   | _ -> false
 
-let get_rec_node var = match var with 
+let get_rec_node var = match var with
   | Var (SpecVar (_,id,_), _) -> String.sub id 6 (String.length id - 6)
   | _ -> report_error no_pos "Expected a recursive pointer variable"
 
@@ -119,7 +119,8 @@ let get_type_list_for_fixcalc_output (f:Cpure.formula) =
       failwith "get_type_list_for_fixcalc_output: AndList To Be Implemented, can use [] as default"
     | Not (nf,_,_)
     | Forall (_,nf,_,_)
-    | Exists (_,nf,_,_)->
+    | Exists (_,nf,_,_)
+    | SecurityForm (_, nf, _) ->
       helper nf
   in
   helper f
@@ -206,16 +207,16 @@ formula:
                 (* else if is_bool_res_var x && is_one y then *)
                 (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
                 (* else *)
-                  let tmp = 
+                  let tmp =
                     if !Globals.old_parse_fix then
-                      if is_node y && is_zero x then 
+                      if is_node y && is_zero x then
                         Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                      else if is_node x && is_one y then 
+                      else if is_node x && is_one y then
                         Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                      else if is_self_var y then 
+                      else if is_self_var y then
                         Neq (Var(get_var "self" tlist, loc), Null loc, loc)
-                      else Lt (x, y, loc) 
-                    else Lt (x, y, loc) 
+                      else Lt (x, y, loc)
+                    else Lt (x, y, loc)
                   in BForm ((tmp, None), None)
           | x = exp; ">"; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
@@ -225,13 +226,13 @@ formula:
                 (* else if is_bool_res_var y && is_one x then  *)
                 (*   Not (BForm ((BVar (get_var "res" tlist, loc), None), None), None, loc)  *)
                 (* else *)
-                  let tmp = 
+                  let tmp =
                     if !Globals.old_parse_fix then
-                      if is_node x && is_zero y then 
+                      if is_node x && is_zero y then
                         Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                      else if is_node y && is_one x then 
+                      else if is_node y && is_one x then
                         Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                      else if is_self_var x then 
+                      else if is_self_var x then
                         Neq (Var(get_var "self" tlist, loc), Null loc, loc)
                       else Gt (x, y, loc)
                     else Gt (x, y, loc)
@@ -244,13 +245,13 @@ formula:
                 (* else if is_bool_res_var y && is_one x then  *)
                 (*   BForm ((BVar (get_var "res" tlist, loc), None), None)  *)
                 (* else *)
-                  let tmp = 
+                  let tmp =
                     if !Globals.old_parse_fix then
-                      if is_node x && is_zero y then 
+                      if is_node x && is_zero y then
                         Eq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
-                      else if is_node y && is_one x then 
+                      else if is_node y && is_one x then
                         Neq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
-                      else if is_self_var x then 
+                      else if is_self_var x then
                         Eq (Var(get_var "self" tlist, loc), Null loc, loc)
                       else Lte (x, y, loc)
                     else Lte (x, y, loc)
@@ -264,15 +265,15 @@ formula:
                 (*   if is_bool_res_var x && is_one y then  *)
                 (*     BForm ((BVar (get_var "res" tlist, loc), None), None)  *)
                 (*   else *)
-                    let tmp = 
+                    let tmp =
                     if !Globals.old_parse_fix then
-                      if is_node y && is_zero x then 
+                      if is_node y && is_zero x then
                         Eq (Var(get_var (get_node y) tlist, loc), Null loc, loc)
                       else
-                        if is_node x && is_one y then 
+                        if is_node x && is_one y then
                           Neq (Var(get_var (get_node x) tlist, loc), Null loc, loc)
                         else
-                          if is_self_var y then 
+                          if is_self_var y then
                             Eq (Var(get_var "self" tlist, loc), Null loc, loc)
                           else Gte (x, y, loc)
                     else Gte (x, y, loc)
@@ -280,22 +281,22 @@ formula:
           | x = exp; "="; y = exp ->
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) x no_pos in *)
                 (* let () = Debug.binfo_hprint (add_str "test" Cprinter.string_of_formula_exp) y no_pos in *)
-                let tmp = 
+                let tmp =
                     if !Globals.old_parse_fix then
-                      if is_node x && is_node y then 
-                        Eq (Var(get_var (get_node x) tlist, loc), 
+                      if is_node x && is_node y then
+                        Eq (Var(get_var (get_node x) tlist, loc),
                         Var(get_var (get_node y) tlist, loc), loc)
                       else
-                      if is_node x && is_rec_node y then 
-                        Eq (Var(get_var (get_node x) tlist, loc), 
+                      if is_node x && is_rec_node y then
+                        Eq (Var(get_var (get_node x) tlist, loc),
                             Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
                       else
-                      if is_node y && is_rec_node x then 
-                        Eq (Var(get_var (get_node y) tlist, loc), 
+                      if is_node y && is_rec_node x then
+                        Eq (Var(get_var (get_node y) tlist, loc),
                             Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), loc)
                       else
-                      if is_rec_node x && is_rec_node y then 
-                        Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc), 
+                      if is_rec_node x && is_rec_node y then
+                        Eq (Var(add_prefix (get_var (get_rec_node x) tlist) "REC", loc),
                             Var(add_prefix (get_var (get_rec_node y) tlist) "REC", loc), loc)
                       else Eq (x, y, loc)
                     else Eq (x, y, loc)
@@ -314,10 +315,10 @@ exp:
                 (*       let ni=IConst (int_of_string x, loc)  *)
                 (*       in Mult (ni, y, loc) *) (* bugs in post/t/ack3.ss : res >= 1 && m >= 0 && res >= 1 + m + n 0 >= res && 0 = m && res = n + 1 1 = 0 *)
           | x = INT; "*"; y = SELF ->
-                let ni=IConst (int_of_string x, loc) 
+                let ni=IConst (int_of_string x, loc)
                 in Mult (ni, y, loc)
           | x = specvar             -> Var (x, loc)
-          | x = INT                 -> IConst (int_of_string x, loc) 
+          | x = INT                 -> IConst (int_of_string x, loc)
           | NATIVEINT               -> Var (SpecVar(Named "abc", "abc", Unprimed),loc)
         ]
     ];

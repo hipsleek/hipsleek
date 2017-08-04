@@ -305,7 +305,7 @@ and is_cnf_old2 f =
   | And (BForm(b,_),f2,_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f2 else true
   | And (f1,BForm(b,_),_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f1 else true
   | And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
-  | AndList _ | Not _ |  Forall _ | Exists _ -> Error.report_no_pattern ()
+  | AndList _ | Not _ |  Forall _ | Exists _ | SecurityForm _ -> Error.report_no_pattern ()
 
 and is_cnf_old1 f = (*Should use heuristic in CNF*)
   match f with
@@ -314,7 +314,7 @@ and is_cnf_old1 f = (*Should use heuristic in CNF*)
   | And (BForm(b,_),f2,_)->is_cnf f2
   | And (f1,BForm(b,_),_)->is_cnf f1
   | And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
-  | AndList _ | Not _ | Forall _ | Exists _ -> Error.report_no_pattern()
+  | AndList _ | Not _ | Forall _ | Exists _ | SecurityForm _ -> Error.report_no_pattern()
 
 and is_cnf f = (*Should use heuristic in CNF*)
   match f with
@@ -351,6 +351,7 @@ let rec nnf_to_xxx f rule =
     (* let _=print_endline ("CNF form: "^Cprinter.string_of_pure_formula f1) in let _= print_endline ("[minisat.ml exit 0] Please use the option '--enable-slicing'") in exit 0 *)
     (* | Exists _ ->  *)
     | AndList _ | Forall _ -> Error.report_no_pattern()
+    | SecurityForm (_, f, _) -> nnf_to_xxx f rule
   in
   rule nf
 
@@ -467,6 +468,7 @@ and can_minisat_handle_formula (f: Cpure.formula) : bool =
   | Not (f, _, _)       -> can_minisat_handle_formula f
   | Forall (_, f, _, _) -> can_minisat_handle_formula f
   | Exists (_, f, _, _) -> can_minisat_handle_formula f
+  | SecurityForm (_, f, _) -> can_minisat_handle_formula f
   | AndList _ -> Error.report_no_pattern()
 
 (***************************************************************

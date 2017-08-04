@@ -534,7 +534,8 @@ let rec is_ep_pformula_arith_x (pf : Cpure.formula) : bool =
   | Or (f1,f2,_,_) -> (is_ep_pformula_arith f1) || (is_ep_pformula_arith f2)
   | Not (f,_,_)
   | Forall (_,f,_,_)
-  | Exists (_,f,_,_) -> (is_ep_pformula_arith f)
+  | Exists (_,f,_,_)
+  | SecurityForm (_, f, _) -> (is_ep_pformula_arith f)
   | AndList l -> List.exists (fun (_,pf) -> is_ep_pformula_arith pf) l
 
 and is_ep_pformula_arith (pf : Cpure.formula) : bool =

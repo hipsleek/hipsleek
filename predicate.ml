@@ -174,7 +174,7 @@ let trans_rels_gen pf0 =
         | (CP.RelForm (r, eargs, p),x) ->
           let ohp = heap_pred_name_of_pure_relation r in
           (
-            match ohp with 
+            match ohp with
             | None -> (pf,[])
             | Some hp -> (CP.BForm (((CP.BConst (true, p)), x) ,a),  [(CF.HRel (hp, eargs, p))])
           )
@@ -217,6 +217,9 @@ let trans_rels_gen pf0 =
         (CP.mkTrue p, hfs)
       else
         (CP.Exists (a,np,b,p), hfs)
+    | CP.SecurityForm (lbl, f, pos) ->
+        let f', hfs = helper f in
+        (CP.SecurityForm (lbl, f', pos), hfs)
   in
   helper pf0
 
@@ -228,7 +231,7 @@ let trans_rels_x pf0 =
         | (CP.RelForm (r, eargs, p),x) ->
           let ohp = heap_pred_name_of_pure_relation r in
           (
-            match ohp with 
+            match ohp with
             | None -> None
             | Some hp -> Some (hp, CF.HRel (hp, eargs, p))
           )

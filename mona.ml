@@ -271,6 +271,7 @@ let compute_order_formula_x (f:CP.formula) : order_atom list =
     | CP.Not(f1, _,_) -> (aux f1)
     | CP.AndList b -> List.concat (List.map (fun (_,e) -> aux e) b)
     | CP.BForm(bf,_) -> (compute_order_b_formula bf)
+    | CP.SecurityForm (_, f, _) -> aux f
   in aux f
 
 let compute_order_formula (f:CP.formula) : order_atom list =
@@ -518,6 +519,7 @@ and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
           (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl)) constr no_pos))
         | Some f -> helper f
       end
+    | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, helper f, pos)
   in helper f
 
 and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
@@ -558,6 +560,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.Not(f1, _,_) -> (find_order_formula f1 vs)
   | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
+  | CP.SecurityForm (_, f, _) -> find_order_formula f vs
 
 and exp_order e vs =
   match e with
@@ -1145,6 +1148,7 @@ and mona_of_formula_x f initial_f vs =
         begin
           " (ex2 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
         end
+    | CP.SecurityForm (_, f, _) -> helper f
   in helper f
 
 (* pretty printing for boolean vars *)

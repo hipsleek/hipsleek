@@ -82,7 +82,8 @@ and b_formulas_list (f0 : formula) : b_formula list = match f0 with
     l1 @ l2
   | Not (f1, _, _)
   | Forall (_, f1, _, _)
-  | Exists (_, f1, _, _) ->
+  | Exists (_, f1, _, _)
+  | SecurityForm (_, f1, _) ->
     b_formulas_list f1
 
 (*
@@ -336,6 +337,8 @@ and normalize (f0 : formula) : formula = match f0 with
     let nqf = normalize qf in
     let nf = Exists (qvar, nqf, lbl, pos) in
     nf
+  | SecurityForm (lbl, f, pos) ->
+      SecurityForm (lbl, normalize f, pos)
 
 and is_normalized_term (e : exp) : bool = match e with
   | Null _
@@ -664,6 +667,7 @@ and mona_of_formula_helper f0 = match f0 with
     let tmp2 = mona_of_formula_helper f in
     let quant = ex_quant_of_spec_var sv in
     "(" ^ quant ^ " " ^ tmp1 ^ " : " ^ tmp2 ^ ")"
+  | SecurityForm (_, f, _) -> mona_of_formula_helper f
 
 (*
   Interfacing with MONA in set mode.

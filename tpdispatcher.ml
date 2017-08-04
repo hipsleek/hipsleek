@@ -1781,6 +1781,8 @@ let norm_var_name (e: CP.formula) : CP.formula =
       CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
       CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+    | CP.SecurityForm (lbl, f, loc) ->
+        CP.SecurityForm (lbl, simplify f vnames, loc)
   in
   (* renaming free vars to unique vars for better caching *)
   let simplify f0 vnames =
@@ -1805,20 +1807,20 @@ let disj_cnt a c s =
         | CP.BForm _ -> 1
         | CP.AndList b -> List.fold_left (fun a (_,c)-> a+(p_f_size c)) 0 b
         | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
-        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) | CP.SecurityForm (_, f, _) -> p_f_size f in
 
       let rec or_f_size f = match f with
         | CP.BForm _ -> 1
         | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
         | CP.AndList b -> List.fold_left (fun a (_,c)-> a*(p_f_size c)) 0 b
         | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
-        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) | CP.SecurityForm (_, f, _) -> or_f_size f in
       let rec add_or_f_size f = match f with
         | CP.BForm _ -> 0
         | CP.AndList b -> List.fold_left (fun a (_,c)-> a+(p_f_size c)) 0 b
         | CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
         | CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
-        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
+        | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) | CP.SecurityForm (_, f, _) -> add_or_f_size f in
       match c with
       | None ->
         Gen.Profiling.inc_counter ("stat_count_"^s);

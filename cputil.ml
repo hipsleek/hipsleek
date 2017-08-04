@@ -50,6 +50,7 @@ let hloc_enum_to_symb_x f0: formula=
     | Not (f1, lbl, l) -> Not (recf f1, lbl, l)
     | Forall (sv, f1, lbl, l) -> Forall (sv, recf f1, lbl, l)
     | Exists (sv, f1, lbl, l) -> Exists (sv, recf f1, lbl, l)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, recf f, pos)
   in
   recf f0
 

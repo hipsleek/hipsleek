@@ -242,6 +242,7 @@ and smt_of_formula pr_w pr_s f =
       "(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
     | CP.Exists (sv, p, _,_) ->
       "(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
+    | CP.SecurityForm (_, f, _) -> helper f
   ) in
   helper f
 
@@ -291,6 +292,7 @@ and collect_formula_info_raw f = match f with
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
   | CP.Not (f1,_,_) -> collect_formula_info_raw f1
   | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> collect_formula_info_raw f1
+  | CP.SecurityForm (_, f, _) -> collect_formula_info_raw f
 
 and collect_combine_formula_info_raw f1 f2 =
   combine_formula_info (collect_formula_info_raw f1) (collect_formula_info_raw f2)
@@ -990,6 +992,7 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
   | CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
   | CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
   | CP.Forall _ | CP.Exists _ -> []
+  | CP.SecurityForm (_, f, _) -> collect_induction_value_candidates ante f
 
 (**
     * Select the value to do induction on.

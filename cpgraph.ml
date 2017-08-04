@@ -23,6 +23,7 @@ let get_frame_x p0=
     | Not (b,_,_) -> helper b
     | Forall (_,b,_,_)-> 	helper b
     | Exists (q,b,lbl,l)-> helper b
+    | SecurityForm (_, f, _) -> helper f
   in
   helper p0
 
@@ -63,6 +64,9 @@ let get_prune_frame_x p0=
       if svl=[] then p,[] else (mkTrue pos, svl)
     | Exists (q,b,lbl,pos)-> let nb,svl = helper b in
       if svl=[] then p,[] else (mkTrue pos, svl)
+    | SecurityForm (lbl, f, pos) ->
+        let f', spec_var_list = helper f in
+        SecurityForm (lbl, f', pos), spec_var_list
   in
   helper p0
 
@@ -131,6 +135,9 @@ let prune_irr_neq_x p0 irr_svl comps=
       if b then b,mkTrue pos else false,Forall (a,np,c,pos)
     | Exists (q,b,lbl,pos)-> let b,np = helper b in
       if b then b,mkTrue pos else (false,Exists (q,np,lbl,pos))
+    | SecurityForm (lbl, f, pos) ->
+        let b, f' = helper f in
+        (b, SecurityForm (lbl, f', pos))
   in
   helper p0
 
@@ -204,6 +211,9 @@ let prune_irr_neq_ll_x p0 irr_svl comps=
       if b then b,mkTrue pos else false,Forall (a,np,c,pos)
     | Exists (q,b,lbl,pos)-> let b,np = helper b in
       if b then b,mkTrue pos else (false,Exists (q,np,lbl,pos))
+    | SecurityForm (lbl, f, pos) ->
+        let b, f' = helper f in
+        (b, SecurityForm (lbl, f', pos))
   in
   helper p0
 
@@ -261,6 +271,9 @@ let prune_irr_neq_new_x p0 irr_svl=
       if b then b,mkTrue pos else false,Forall (a,np,c,pos)
     | Exists (q,b,lbl,pos)-> let b,np = helper b in
       if b then b,mkTrue pos else (false,Exists (q,np,lbl,pos))
+    | SecurityForm (lbl, f, pos) ->
+        let b, f' = helper f in
+        (b, SecurityForm (lbl, f', pos))
   in
   helper p0
 
@@ -304,3 +317,4 @@ let rec inconsisten_neq (f:formula) =
   | Not (b,_,_)-> not (inconsisten_neq  b)
   | Forall (_,f,_,_) -> inconsisten_neq f
   | Exists (_,f,_,_) -> inconsisten_neq f
+  | SecurityForm (_, f, _) -> inconsisten_neq f

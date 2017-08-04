@@ -179,6 +179,7 @@ and spass_dfg_of_formula f : (string * string list * string list) =
       let new_pred_list = Gen.BList.remove_elem_eq (=) local_sv pred_list in
       (new_s, new_func_list, new_pred_list)
     )
+  | SecurityForm (_, f, _) -> spass_dfg_of_formula f
 
 (* let spass_dfg_of_formula f = *)
 (*   Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_dfg_of_formula f *)
@@ -275,6 +276,7 @@ and spass_tptp_of_formula f =
   | Not (f, _, _)        -> "~ " ^ (spass_tptp_of_formula f)
   | Forall (sv, f, _, _) -> "( ! [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
   | Exists (sv, f, _, _) -> "( ? [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
+  | SecurityForm (_, f, _) -> spass_tptp_of_formula f
 
 let spass_tptp_of_formula f =
   Debug.no_1 "spass_of_formula" Cprinter.string_of_pure_formula pr_id spass_tptp_of_formula f
@@ -367,6 +369,7 @@ and can_spass_handle_formula (f: Cpure.formula) : bool =
   | Not (f, _, _)       -> can_spass_handle_formula f
   | Forall (_, f, _, _) -> can_spass_handle_formula f
   | Exists (_, f, _, _) -> can_spass_handle_formula f
+  | SecurityForm (_, f, _) -> can_spass_handle_formula f
 
 (***************************************************************
    INTERACTION

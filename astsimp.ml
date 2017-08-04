@@ -10189,7 +10189,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         |CP.BForm (l,_) ->(CP.mkTrue no_pos, [(false,l)])
         |_ ->(f,[]))
     | CP.Forall (_,ff,_,_)
-    | CP.Exists (_,ff,_,_) -> (f,[]) in
+    | CP.Exists (_,ff,_,_) -> (f,[])
+    | CP.SecurityForm (_, f, _) -> get_pure_conj_list f in
 
 
   let filter_pure_conj_list pc  =

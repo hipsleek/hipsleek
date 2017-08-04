@@ -20,12 +20,12 @@ module MCP = Mcpure
 module TP = Tpdispatcher
 
 (* Operators *)
-let op_lt = "<" 
-let op_lte = "<=" 
-let op_gt = ">" 
-let op_gte = ">=" 
-let op_eq = "=" 
-let op_neq = "!=" 
+let op_lt = "<"
+let op_lte = "<="
+let op_gt = ">"
+let op_gte = ">="
+let op_eq = "="
+let op_neq = "!="
 let op_and = " && "
 let op_or = " || "
 let op_add = "+"
@@ -35,9 +35,9 @@ let op_sub = "-"
 
 (*let is_null = CP.is_null*)
 
-let rec string_of_elems elems string_of sep = match elems with 
+let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
-  | h::[] -> string_of h 
+  | h::[] -> string_of h
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 let fixbag_of_spec_var x = match x with
@@ -52,12 +52,12 @@ let rec fixbag_of_exp e = match e with
   | CP.Var (x, _) -> fixbag_of_spec_var x
   | CP.IConst (i, _) -> string_of_int i
   (*  | CP.FConst (f, _) -> string_of_float f*)
-  | CP.Add (e1, e2, _) -> fixbag_of_exp e1 ^ op_add ^ fixbag_of_exp e2 
+  | CP.Add (e1, e2, _) -> fixbag_of_exp e1 ^ op_add ^ fixbag_of_exp e2
   | CP.Subtract (e1, e2, _) -> fixbag_of_exp e2
   | CP.Bag (es, _) -> "{" ^ (string_of_elems es fixbag_of_exp ",") ^ "}"
   | CP.BagUnion (es, _) -> string_of_elems es fixbag_of_exp "+"
   | CP.BagIntersect (es, _) -> string_of_elems es fixbag_of_exp "."
-  | CP.BagDiff (e1, e2, _) -> fixbag_of_exp e1 ^ op_sub ^ fixbag_of_exp e2 
+  | CP.BagDiff (e1, e2, _) -> fixbag_of_exp e1 ^ op_sub ^ fixbag_of_exp e2
   | _ -> illegal_format ("Fixbag.fixbag_of_exp: Not supported expression")
 
 let rec fixbag_of_b_formula b =
@@ -72,7 +72,7 @@ let rec fixbag_of_b_formula b =
   | CP.Eq (e1, e2, _) -> if CP.is_null e2 && not (is_bag e1) then fixbag_of_exp e1 ^op_lte^"0"
     else if CP.is_null e1 && not(is_bag e2) then fixbag_of_exp e2 ^op_lte^"0"
     else fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
-  | CP.Neq (e1, e2, _) -> 
+  | CP.Neq (e1, e2, _) ->
     if CP.is_null e2 && not (is_bag e1) then fixbag_of_exp e1 ^op_gt^"0"
     else if CP.is_null e1 && not(is_bag e2) then fixbag_of_exp e2 ^op_gt^"0"
     else if (* !allow_pred_spec *) not !dis_ps && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
@@ -95,7 +95,7 @@ let rec fixbag_of_pure_formula f = match f with
   | CP.AndList b -> "(" ^ String.concat op_and (List.map (fun (_,c)-> fixbag_of_pure_formula c) b) ^ ")"
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixbag_of_pure_formula p1 ^ op_or ^ fixbag_of_pure_formula p2 ^ ")"
-  | CP.Not (p,_ , _) -> 
+  | CP.Not (p,_ , _) ->
     begin
       match p with
       | CP.BForm ((CP.BVar (x,_),_),_) -> "!$" ^ fixbag_of_spec_var x
@@ -105,14 +105,15 @@ let rec fixbag_of_pure_formula f = match f with
   (*    " (forall (" ^ fixbag_of_spec_var sv ^ ":" ^ fixbag_of_pure_formula p ^ ")) "*)
   | CP.Exists (sv, p,_ , _) ->
     " (exists " ^ fixbag_of_spec_var sv ^ ":" ^ fixbag_of_pure_formula p ^ ") "
+  | CP.SecurityForm (_, f, _) -> fixbag_of_pure_formula f
 
 let rec fixbag_of_h_formula f = match f with
-  | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} -> 
+  | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} ->
     "(" ^ fixbag_of_h_formula h1 ^ op_and ^ fixbag_of_h_formula h2 ^ ")"
   | CF.Phase _ -> illegal_format ("Fixbag.fixbag_of_h_formula: Not supported Phase-formula")
-  | CF.Conj {CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2} -> 
+  | CF.Conj {CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2} ->
     "(" ^ fixbag_of_h_formula h1 ^ op_or ^ fixbag_of_h_formula h2 ^ ")"
-  | CF.DataNode {CF.h_formula_data_node = sv; CF.h_formula_data_name = c;CF.h_formula_data_arguments = svs} -> 
+  | CF.DataNode {CF.h_formula_data_node = sv; CF.h_formula_data_name = c;CF.h_formula_data_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
     else c ^ "(" ^ (fixbag_of_spec_var sv) ^ "," ^ (string_of_elems svs fixbag_of_spec_var ",") ^ ")"
   | CF.ViewNode {CF.h_formula_view_node = sv; CF.h_formula_view_name = c; CF.h_formula_view_arguments = svs} ->
@@ -133,9 +134,9 @@ let rec fixbag_of_formula e = match e with
   | CF.Or _ -> illegal_format ("Fixbag.fixbag_of_formula: Not supported Or-formula")
   | CF.Base {CF.formula_base_heap = h; CF.formula_base_pure = p; CF.formula_base_label = b} ->
     "(" ^ fixbag_of_h_formula h ^ op_and ^ fixbag_of_mix_formula (p,b) ^ ")"
-  | CF.Exists {CF.formula_exists_qvars = svs; CF.formula_exists_heap = h; 
-               CF.formula_exists_pure = p; CF.formula_exists_label = b} ->  
-    "(exists " ^ (string_of_elems svs fixbag_of_spec_var ",") ^ ": " ^ 
+  | CF.Exists {CF.formula_exists_qvars = svs; CF.formula_exists_heap = h;
+               CF.formula_exists_pure = p; CF.formula_exists_label = b} ->
+    "(exists " ^ (string_of_elems svs fixbag_of_spec_var ",") ^ ": " ^
     fixbag_of_h_formula h ^ op_and ^ fixbag_of_mix_formula (p,b) ^ ")"
 
 let fixbag = "fixbag4"
@@ -162,10 +163,10 @@ let compute_inv name vars fml pf no_of_disjs =
   else
     let rhs = string_of_elems fml (fun (c,_) ->fixbag_of_formula c) op_or in
     let no = string_of_int no_of_disjs in
-    let input_fixbag = 
+    let input_fixbag =
       try
         name ^ "(" ^"self," ^ (string_of_elems vars fixbag_of_spec_var ",") ^ " -> "
-        ^ res_name ^ ") := " 
+        ^ res_name ^ ") := "
         ^ rhs
       with _ -> report_error no_pos "Error in translating the input for fixbag"
     in
@@ -188,7 +189,7 @@ let compute_inv name vars fml pf no_of_disjs =
       Pr.fmt_string "INV:  ";
       Pr.pr_angle name (fun x -> Pr.fmt_string (Pr.string_of_typed_spec_var x)) vars;
       Pr.fmt_string ("\nOLD: " ^ (Pr.string_of_pure_formula pf) ^
-                     "\nNEW: " ^ (Pr.string_of_pure_formula new_pf) ^ "\n\n");			
+                     "\nNEW: " ^ (Pr.string_of_pure_formula new_pf) ^ "\n\n");
       new_pf)
     else pf
 
@@ -205,10 +206,10 @@ let compute_inv name vars fml pf no_of_disjs =
     | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos "Wrong format"
   in
-  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in  
+  let pf = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs) in
   try
-    let rhs = fixbag_of_pure_formula pf in 
-    let input_fixbag =  name ^ ":={[" ^ (string_of_elems vars fixbag_of_spec_var ",") 
+    let rhs = fixbag_of_pure_formula pf in
+    let input_fixbag =  name ^ ":={[" ^ (string_of_elems vars fixbag_of_spec_var ",")
       ^ "] -> [] -> []: " ^ rhs ^ "\n};\n\nFix1:=bottomup(" ^ name ^ ",1,SimHeur);\nFix1;\n"
       ^ "Fix2:=topdown(" ^ name ^ ",1,SimHeur);\nFix2;"
     in
@@ -227,8 +228,8 @@ let compute_inv name vars fml pf no_of_disjs =
     x_dinfo_pp ("Result of fixbag: " ^ res) no_pos;
     let fixpoint = Parse_fix.parse_fix res in
     x_dinfo_hp (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
-    let fixpoint = List.map (fun f -> 
-        let args = CP.fv f in 
+    let fixpoint = List.map (fun f ->
+        let args = CP.fv f in
         let quan_vars = CP.diff_svl args vars in
         TP.simplify_raw (CP.mkExists quan_vars f None no_pos)) fixpoint in
     match fixpoint with
@@ -244,6 +245,7 @@ let rec is_rec pf = match pf with
   | CP.Not (f,_,_) -> is_rec f
   | CP.Forall (_,f,_,_) -> is_rec f
   | CP.Exists (_,f,_,_) -> is_rec f
+  | CP.SecurityForm (_, f, _) -> is_rec f
 
 let rec get_rel_vars pf = match pf with
   | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.get_rel_args pf else []
@@ -253,30 +255,31 @@ let rec get_rel_vars pf = match pf with
   | CP.Not (f,_,_) -> get_rel_vars f
   | CP.Forall (_,f,_,_) -> get_rel_vars f
   | CP.Exists (_,f,_,_) -> get_rel_vars f
+  | CP.SecurityForm (_, f, _) -> get_rel_vars f
 
 let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with
   | CP.Var _ -> (e, [])
   | _ -> (
-      try 
-        let arb = List.hd (CP.afv e) in 
+      try
+        let arb = List.hd (CP.afv e) in
         let var = CP.fresh_spec_var_prefix "fb" arb in
         let var = CP.mkVar var no_pos in
         (var, [CP.mkEqExp var e no_pos])
       with _ -> (e,[]))
 
 let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) = match (rel,rel_def) with
-  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
-    if id = id_def then 
-      let new_args_def = 
+  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) ->
+    if id = id_def then
+      let new_args_def =
         let pre_args, post_args = List.partition (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args_def in
-        pre_args @ post_args 
+        pre_args @ post_args
       in
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
       let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
       let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
-    else 
+    else
       let args, subs = List.split (List.map (fun a -> substitute a) args) in
       let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
@@ -328,17 +331,17 @@ let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_v
 
 let matching_exp pf1 pf2 = match (pf1,pf2) with
   | (Lt (Var (v1,p1), Var (v2,p2), p), Lt (Var (v3,_), Var (v4,_), _))
-  | (Gt (Var (v1,p1), Var (v2,p2), p), Gt (Var (v3,_), Var (v4,_), _)) -> 
+  | (Gt (Var (v1,p1), Var (v2,p2), p), Gt (Var (v3,_), Var (v4,_), _)) ->
     let res = eq_spec_var v1 v4 && eq_spec_var v2 v3 in
     if res then (true, [Neq  (Var (v1,p1), Var (v2,p2), p)]) else (false,[])
   | (Eq (v1, Bag ([],_), _), Eq (v2, BagUnion (es,_), _))
   | (Eq (v1, Bag ([],_), _), Eq (BagUnion (es,_), v2, _))
   | (Eq (Bag ([],_), v1, _), Eq (v2, BagUnion (es,_), _))
   | (Eq (Bag ([],_), v1, _), Eq (BagUnion (es,_), v2, _))
-  | (Eq (v2, BagUnion (es,_), _), Eq (v1, Bag ([],_), _)) 
-  | (Eq (v2, BagUnion (es,_), _), Eq (Bag ([],_), v1, _)) 
-  | (Eq (BagUnion (es,_), v2, _), Eq (v1, Bag ([],_), _)) 
-  | (Eq (BagUnion (es,_), v2, _), Eq (Bag ([],_), v1, _)) -> 
+  | (Eq (v2, BagUnion (es,_), _), Eq (v1, Bag ([],_), _))
+  | (Eq (v2, BagUnion (es,_), _), Eq (Bag ([],_), v1, _))
+  | (Eq (BagUnion (es,_), v2, _), Eq (v1, Bag ([],_), _))
+  | (Eq (BagUnion (es,_), v2, _), Eq (Bag ([],_), v1, _)) ->
     begin
       match (v1,v2) with
       | (Var (b1,_), Var (b2,_))
@@ -351,7 +354,7 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
   | _ -> (false,[])
 
 let matching f1 f2 = match (f1,f2) with
-  | (BForm ((pf1,o),p), BForm ((pf2,_),_)) -> 
+  | (BForm ((pf1,o),p), BForm ((pf2,_),_)) ->
     (*    x_dinfo_hp (add_str "matching: " (pr_list !CP.print_formula)) [f1;f2] no_pos;*)
     let (res1,res2) = matching_exp pf1 pf2 in
     if res2 = [] then (res1,[])
@@ -399,8 +402,8 @@ let pre_process vars fmls =
 
 let rec create_alias_tbl vs aset all_rel_vars base_case = match vs with
   | [] -> []
-  | [hd] -> 
-    if base_case then 
+  | [hd] ->
+    if base_case then
       [hd::(List.filter (fun x -> not(List.mem x all_rel_vars)) (CP.EMapSV.find_equiv_all hd aset))]
     else [List.filter (fun x -> not(List.mem x all_rel_vars)) (hd::(CP.EMapSV.find_equiv_all hd aset))]
   | hd::tl ->
@@ -414,7 +417,7 @@ let rewrite pure rel_lhs_vars rel_vars base_case =
   let aset = CP.EMapSV.build_eset als in
   let int_vars, other_vars = List.partition CP.is_int_typ (CP.fv pure) in
   let alias = create_alias_tbl (rel_vars@int_vars@other_vars) aset rel_lhs_vars base_case in
-  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else 
+  let subst_lst = List.concat (List.map (fun vars -> if vars = [] then [] else
                                             let hd = List.hd vars in List.map (fun v -> (v,hd)) (List.tl vars)) alias) in
   (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   (*  DD.info_hprint (add_str "PURE: " (!CP.print_formula)) pure no_pos;*)
@@ -438,7 +441,7 @@ let rewrite pure rel_lhs_vars rel_vars base_case =
 
 let rec get_all_pairs conjs = match conjs with
   | [] -> []
-  | c::cs -> 
+  | c::cs ->
     let lst = List.map (fun conj -> (c,conj)) cs in
     lst @ (get_all_pairs cs)
 
@@ -447,21 +450,21 @@ let rec rewrite_by_subst pairs = match pairs with
   | [(e1,e2)] ->
     begin
       match (e1,e2) with
-      | (BForm ((pf1,_),_), BForm ((pf2,_),_)) -> 
+      | (BForm ((pf1,_),_), BForm ((pf2,_),_)) ->
         begin
           match pf1,pf2 with
           | Eq (exp1, exp2, _), Eq (exp3, exp4, _) ->
             begin
-              match (exp1,exp2,exp3,exp4) with 
+              match (exp1,exp2,exp3,exp4) with
               (* Add more if necessary *)
-              | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), 
-                Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
+              | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_),
+                Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_);
                                          Bag([Var (sv24,_)],_)],_)
               (*        | Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_), *)
               (*          Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);*)
               (*          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_) *)
-              | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_); 
-                                         Bag([Var (sv24,_)],_)],_), 
+              | Var (sv21,_), BagUnion ([BagUnion ([Var (sv22,_);Bag([Var (sv23,_)],_)],_);
+                                         Bag([Var (sv24,_)],_)],_),
                 Var (sv11,_), BagUnion ([Var (sv12,_);Bag([Var (sv13,_)],_)],_)
                 (*        | Var (sv21,_), BagUnion ([Subtract (_,Subtract(_,BagUnion ([Var (sv22,_);*)
                 (*          Bag([Var (sv23,_)],_)],_),_),_); Bag([Var (sv24,_)],_)],_), *)
@@ -470,13 +473,13 @@ let rec rewrite_by_subst pairs = match pairs with
                 if eq_spec_var sv12 sv22 && eq_spec_var sv13 sv23 then
                   [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv11 no_pos; Bag([mkVar sv24 no_pos],no_pos)],no_pos)) no_pos]
                 else []
-              | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_), 
+              | Var (sv11,_), BagUnion ([Var (sv12,_);Var (sv13,_);Bag([Var (sv14,_)],_)],_),
                 Var (sv21,_), BagUnion ([Var (sv22,_);Var (sv23,_);Bag([Var (sv24,_)],_)],_)
-                -> 
+                ->
                 if eq_spec_var sv13 sv23 && eq_spec_var sv14 sv24 then
-                  [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos; 
+                  [CP.mkEqExp (mkVar sv21 no_pos) (BagUnion ([mkVar sv22 no_pos;
                                                               Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos;
-                   CP.mkEqExp (mkVar sv11 no_pos) (BagUnion ([mkVar sv12 no_pos; 
+                   CP.mkEqExp (mkVar sv11 no_pos) (BagUnion ([mkVar sv12 no_pos;
                                                               Bag([mkVar (SpecVar (Int,"v_fb",Unprimed)) no_pos],no_pos)],no_pos)) no_pos]
                 else []
               | _ -> []
@@ -492,12 +495,12 @@ let rec rewrite_by_subst2 pairs = match pairs with
   | [(f1,f2)] ->
     begin
       match (f1,f2) with
-      | (BForm ((Eq (exp1, exp2, _),_),_), BForm ((Eq (exp3, exp4, _),_),_)) -> 
+      | (BForm ((Eq (exp1, exp2, _),_),_), BForm ((Eq (exp3, exp4, _),_),_)) ->
         begin
-          match (exp1,exp2,exp3,exp4) with 
-          | Var (sv1,_), Var (sv2,_), Var (sv3,_), BagUnion (es,_) -> 
+          match (exp1,exp2,exp3,exp4) with
+          | Var (sv1,_), Var (sv2,_), Var (sv3,_), BagUnion (es,_) ->
             let evars = List.concat (List.map afv es) in
-            let subst = 
+            let subst =
               if mem_svl sv3 evars && eq_spec_var sv1 sv3 && is_bag_typ sv1 then [(sv1,sv2)] else
               if mem_svl sv3 evars && eq_spec_var sv2 sv3 && is_bag_typ sv1 then [(sv2,sv1)] else [] in
             let exp = e_apply_subs subst exp4 in
@@ -511,7 +514,7 @@ let rec rewrite_by_subst2 pairs = match pairs with
     end
   | p::ps -> (rewrite_by_subst2 [p]) @ (rewrite_by_subst2 ps)
 
-let rec filter_var f vars = 
+let rec filter_var f vars =
   match f with
   | CP.Or (f1,f2,l,p) -> CP.mkOr (filter_var f1 vars) (filter_var f2 vars) l p
   | _ -> CP.filter_var (CP.drop_rel_formula f) vars
@@ -543,12 +546,12 @@ let propagate_rec_helper rcase_orig rel ante_vars =
   if List.exists (fun conj -> is_emp_bag conj rel_vars) rcase_conjs then CP.mkFalse no_pos
   else
     let rcase_conjs_eq = List.filter is_beq_exp rcase_conjs in
-    let rcase_conjs = 
+    let rcase_conjs =
       if List.length rcase_conjs_eq <= 4 then
         let all_pairs = get_all_pairs rcase_conjs_eq in
         (*        DD.info_hprint (add_str "PAIRS: " (pr_list (pr_pair !CP.print_formula !CP.print_formula))) all_pairs no_pos;*)
         rcase_conjs @ (rewrite_by_subst all_pairs)
-      else rcase_conjs 
+      else rcase_conjs
     in
     let rcase = CP.conj_of_list (pre_process all_rel_vars rcase_conjs) no_pos in
     let rcase = filter_var rcase all_rel_vars in
@@ -590,7 +593,7 @@ let rec transform fml v_synch fv_rel = match fml with
   | BForm ((Eq (v1, BagUnion ([b2;Bag([Var (v,_)],_)],_), _), _),_)
   | BForm ((Eq (v1, BagUnion ([Bag([Var (v,_)],_);b2],_), _), _),_)
   | BForm ((Eq (BagUnion ([Bag([Var (v,_)],_);b2],_), v1, _), _),_)
-  | BForm ((Eq (BagUnion ([b2;Bag([Var (v,_)],_)],_), v1, _), _),_) -> 
+  | BForm ((Eq (BagUnion ([b2;Bag([Var (v,_)],_)],_), v1, _), _),_) ->
     begin
       match v1 with
       | Var (b1,_) ->
@@ -612,7 +615,7 @@ let rec transform fml v_synch fv_rel = match fml with
       | _ -> fml
     end
   | And (BForm f1, BForm f2, _) -> mkAnd (transform (BForm f1) v_synch fv_rel) (transform (BForm f2) v_synch fv_rel) no_pos
-  | And _ -> 
+  | And _ ->
     let v_synch = List.filter CP.is_int_typ (CP.diff_svl v_synch fv_rel) in
     let v_subst = List.filter CP.is_int_typ (CP.diff_svl (CP.fv fml) fv_rel) in
     (*    x_dinfo_hp (add_str "VSYNCH: " (!print_svl)) v_synch no_pos;*)
@@ -648,6 +651,7 @@ let rec remove_subtract pure = match pure with
   | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
   | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
   | AndList l -> AndList (map_l_snd remove_subtract l)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, remove_subtract f, pos)
 
 let isComp pure = match pure with
   | BForm ((pf,_),_) ->
@@ -684,7 +688,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let bcases = List.concat (List.map (fun x -> CP.list_of_disjs x) bcases) in
     let rcases = List.concat (List.map (fun x -> CP.list_of_disjs (TP.simplify_raw x)) rcases) in
     let bcases = List.map remove_subtract bcases in
-    let bcases = List.map (fun bcase -> 
+    let bcases = List.map (fun bcase ->
         let conjs = list_of_conjs bcase in
         let conjs =  Gen.BList.remove_dups_eq CP.equalFormula (List.filter (fun x -> not (isComp x)) conjs) in
         conj_of_list conjs no_pos) bcases in
@@ -700,7 +704,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let fv_rel = get_rel_args rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
                             if List.length fv_x <= 10 || !dis_ps (* not(!allow_pred_spec) *) then x else
-                              let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
+                              let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in
                               let r = Redlog.elim_exists_with_eq r in
                               TP.simplify_raw r) bcases in
     (*    let bcases = List.map (fun x -> rewrite2 x [] fv_rel) bcases in*)
@@ -715,7 +719,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     x_dinfo_hp (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
     let bcases = Gen.BList.remove_dups_eq (fun p1 p2 -> TP.imply_raw p1 p2 && TP.imply_raw p2 p1) bcases in
     let bcases = if List.length fv_rel <= 5 then bcases else
-        List.map (fun bcase -> 
+        List.map (fun bcase ->
             let bcase = remove_subtract bcase in
             let bcase_conjs = list_of_conjs bcase in
             let all_pairs = get_all_pairs bcase_conjs in
@@ -723,10 +727,10 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
             let (rem,add) = List.split (rewrite_by_subst2 all_pairs) in
             let conjs = (Gen.BList.difference_eq (=) bcase_conjs (List.concat rem)) @ (List.concat add) in
             conj_of_list conjs no_pos
-          ) bcases 
+          ) bcases
     in
-    let bcases = List.map (fun bcase -> 
-        if diff_svl fv_rel (fv bcase) != [] && diff_svl (fv bcase) fv_rel != [] 
+    let bcases = List.map (fun bcase ->
+        if diff_svl fv_rel (fv bcase) != [] && diff_svl (fv bcase) fv_rel != []
         then mkFalse no_pos else bcase) bcases in
     let no_of_disjs = List.length bcases in
     (bcases @ rcases, no_of_disjs)
@@ -743,25 +747,26 @@ let rec no_of_cnts f = match f with
   | Not (f,_,_) -> no_of_cnts f
   | Forall (_,f,_,_) -> no_of_cnts f
   | Exists (_,f,_,_) -> no_of_cnts f
-  | AndList l -> List.fold_left (fun a (_,c)-> a+(no_of_cnts c)) 0 l 
+  | AndList l -> List.fold_left (fun a (_,c)-> a+(no_of_cnts c)) 0 l
+  | SecurityForm (_, f, _) -> no_of_cnts f
 
-let helper input_pairs rel ante_vars = 
+let helper input_pairs rel ante_vars =
   let pairs = List.filter (fun (p,r) -> CP.equalFormula r rel) input_pairs in
   let pfs,_ = List.split pairs in
   let pfs = List.map (fun p ->
       let noc = no_of_cnts p in
       (*    DD.info_hprint (add_str "NO: " string_of_int) noc no_pos;*)
       let p = if noc > 20 then p else Redlog.elim_exists_with_eq p in
-      let p = TP.simplify_raw p in 
+      let p = TP.simplify_raw p in
       let exists_node_vars = List.filter CP.is_node_typ (CP.fv p) in
       let num_vars, others, num_vars_new = get_num_dom p in
       (*    x_dinfo_hp (add_str "VARS: " (!print_svl)) others no_pos;    *)
       let num_vars = if CP.intersect num_vars others = [] then num_vars else num_vars_new in
       CP.remove_cnts (exists_node_vars@num_vars) p) pfs in
   let pfs,no = propagate_rec pfs rel ante_vars in
-  let pfs = List.map (fun p -> 
-      let exists_vars = CP.diff_svl (List.filter 
-                                       (fun x -> not(CP.is_bag_typ x || CP.is_rel_typ x)) (CP.fv p)) (CP.fv rel) in 
+  let pfs = List.map (fun p ->
+      let exists_vars = CP.diff_svl (List.filter
+                                       (fun x -> not(CP.is_bag_typ x || CP.is_rel_typ x)) (CP.fv p)) (CP.fv rel) in
       CP.mkExists exists_vars p None no_pos) pfs in
   match pfs with
   | [] -> []
@@ -771,12 +776,12 @@ let helper input_pairs rel ante_vars =
 let simplify_res fixpoint =
   let disjs = list_of_disjs fixpoint in
   match disjs with
-  | [p1;p2] -> 
-    if TP.imply_raw p1 p2 then p2 else 
+  | [p1;p2] ->
+    if TP.imply_raw p1 p2 then p2 else
     if TP.imply_raw p2 p1 then p1 else fixpoint
   | _ -> fixpoint
 
-let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur = 
+let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
   if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos)
   else (
     let (name,vars) = match rel_fml with
@@ -788,7 +793,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
       let rhs = fixbag_of_pure_formula pf in
       let no = string_of_int no_of_disjs in
       let input_fixbag =  "fixbagA" (*^ name *)^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
-                          ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := " 
+                          ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := "
                           ^ rhs
       in
       (*print_endline ("\nINPUT: " ^ input_fixbag);*)
@@ -803,15 +808,15 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
       let res = remove_paren res (String.length res) in
       (*print_endline ("RES: " ^ res);*)
       x_dinfo_pp ("Result of fixbag: " ^ res) no_pos;
-      let fixpoint = Parse_fixbag.parse_fix res in 
+      let fixpoint = Parse_fixbag.parse_fix res in
       x_dinfo_hp (add_str "Result of fixbag (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
       match fixpoint with
       | [post] -> (rel_fml, simplify_res post)
       | _ -> report_error no_pos "Expecting a post"
-    with _ -> 
-      if not(is_rec pf) then 
+    with _ ->
+      if not(is_rec pf) then
         let () = x_dinfo_hp (add_str "Input: " !CP.print_formula) pf no_pos in
-        let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
+        let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)
       else report_error no_pos "Unexpected error in computing fixpoint by FixBag"
@@ -850,5 +855,5 @@ let compute_fixpoint (i:int) input_pairs pre_vars is_rec =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_pair pr0 pr0)) 
+  Debug.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_pair pr0 pr0))
     (fun _ _ -> compute_fixpoint input_pairs pre_vars is_rec) input_pairs pre_vars

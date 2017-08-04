@@ -20,7 +20,7 @@ let print_exp = ref (fun (c:Cpure.exp) -> "cpure printer has not been initialize
 
 (* ================================= *)
 (* UTILITIES for Permissions*)
-let rev_trans_spec_var v = match v with Cpure.SpecVar (t,v,p)-> (v,p) 
+let rev_trans_spec_var v = match v with Cpure.SpecVar (t,v,p)-> (v,p)
 (* ================================ *)
 
 let string_of_perm_type t =
@@ -65,7 +65,7 @@ let enable_para () =
      Reference: http://www.comp.nus.edu.sg/~leduykha/pubs/ldk-vperm-icfem2012-tr.pdf
   *)
   pass_global_by_value := false;
-  (* 
+  (*
      For testing.
      Clear this flag so that information about locksets are transferred
      until proving post-condition when new locks are created inside
@@ -74,24 +74,24 @@ let enable_para () =
   (* Globals.elim_exists := false; *)
   allow_locklevel:=true
 
-let allow_perm ():bool = 
+let allow_perm ():bool =
   match !perm with
   | NoPerm -> false
   | _ -> true
 
-let set_perm perm_str = 
+let set_perm perm_str =
   if perm_str = "fperm" then
     let () = allow_norm := false in
     perm:=Frac
   else if perm_str = "cperm" then perm:=Count
-  else if perm_str = "dperm" then perm:=Dperm 
-  else if perm_str = "bperm" then perm:=Bperm 
+  else if perm_str = "dperm" then perm:=Dperm
+  else if perm_str = "bperm" then perm:=Bperm
   else perm:= NoPerm
 
 (*Some constants*)
 module PERM_const =
 struct
-  let full_perm_name = full_perm_var_name 
+  let full_perm_name = full_perm_var_name
   let perm_name = ("perm_")
 end;;
 
@@ -137,7 +137,7 @@ module BPERM : PERM=
 struct
   include PERM_const
   let cperm_typ = Bptyp (* Bounded permission typ*)
-  let empty_iperm = None 
+  let empty_iperm = None
   let full_iperm =
     let exp_one = Ipure.IConst (0, no_pos) in
     Some (Ipure.Bptriple ((exp_one,exp_one,exp_one), no_pos)) (*undefined for bperm*)
@@ -203,16 +203,16 @@ struct
        f12
      | _ -> failwith ("[perm.ml] BPERM.mkPermWrite : bounded permission is undefined"))
 
-  let full_perm_constraint = 
+  let full_perm_constraint =
     Mcpure.OnePF (mkPermWrite_var full_perm_var)
 
-  let float_out_iperm perm pos = 
+  let float_out_iperm perm pos =
     match perm with
     | None -> (None, [])
     | Some e ->
       match e with
       | Ipure.Bptriple ((ec,et,ea),e_pos) ->
-        let float_one f = 
+        let float_one f =
           match f with
           | Ipure.Var _ -> (f,[])
           | _ ->
@@ -237,7 +237,7 @@ struct
   let float_out_min_max_iperm perm pos =
     match perm with
     | None -> (None, None)
-    | Some f -> 
+    | Some f ->
       match f with
       | Ipure.Bptriple ((ec,et,ea),e_pos) ->
         let float_one f =
@@ -276,7 +276,7 @@ struct
   let get_cperm_var perm : cperm_var list =
     (match perm with
      | None -> []
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Bptriple ((varc,vart,vara),_) -> [varc;vart;vara]
         | _ -> failwith ("get_cperm: expecting Bptriple")))
@@ -337,8 +337,8 @@ struct
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Var (full_perm_var,no_pos) , no_pos) ,None), None)
   let mkFullPerm_pure_from_ident id : Cpure.formula =   mkFullPerm_pure (Cpure.SpecVar (cperm_typ, id, Unprimed))
-  let mkPermInv_var (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos 
-  let mkPermInv (e:Cpure.exp) : Cpure.formula = Cpure.mkTrue no_pos 
+  let mkPermInv_var (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos
+  let mkPermInv (e:Cpure.exp) : Cpure.formula = Cpure.mkTrue no_pos
 
   let mkPermWrite_var (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None)
   let mkPermWrite (e:Cpure.exp) : Cpure.formula =
@@ -375,7 +375,7 @@ struct
   let get_cperm_var perm : cperm_var list =
     (match perm with
      | None -> []
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,_) -> [v]
         | _ -> failwith ("get_cperm: expecting Var")))
@@ -385,7 +385,7 @@ struct
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
   let rev_trans_perm (c : cperm) : iperm =
     (match c with
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
         | _ -> failwith ("rev_trans_perm: expecting Var"))
@@ -428,23 +428,23 @@ struct
     pr_opt !print_exp perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
-  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
         (Cpure.Var (full_perm_var,no_pos)),
         no_pos
       )),None), None)
-  let mkFullPerm_pure_from_ident id : Cpure.formula = 
+  let mkFullPerm_pure_from_ident id : Cpure.formula =
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
   (*create fractional permission invariant 0<f<=1*)
   let mkPermInv (e:Cpure.exp) : Cpure.formula =
     (match e with
      | Cpure.Var _ ->
-       let upper = 
+       let upper =
          Cpure.BForm (((Cpure.Lte (e,(Cpure.FConst (1.0,no_pos)),no_pos)), None),None) in
        let lower =  Cpure.BForm (((Cpure.Gt (e,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
-       let inv = 
+       let inv =
          (Cpure.And (lower,upper,no_pos)) in
        inv
      | _ -> failwith ("[perm.ml] FPERM.mkPermInv : expecting Var"))
@@ -466,9 +466,9 @@ struct
         no_pos
       )),None),None)
   (*LDK: a constraint to indicate FULL permission = 1.0*)
-  let full_perm_constraint = 
+  let full_perm_constraint =
     Mcpure.OnePF (mkPermWrite_var full_perm_var)
-  let float_out_iperm perm pos = 
+  let float_out_iperm perm pos =
     match perm with
     | None -> (None, [])
     | Some f -> match f with
@@ -481,7 +481,7 @@ struct
   let float_out_min_max_iperm perm pos =
     match perm with
     | None -> (None, None)
-    | Some f -> 
+    | Some f ->
       match f with
       | Ipure.Null _
       | Ipure.IConst _
@@ -503,7 +503,7 @@ struct
   let get_cperm_var perm : cperm_var list =
     (match perm with
      | None -> []
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,_) -> [v]
         | _ -> failwith ("get_cperm: expecting Var")))
@@ -515,7 +515,7 @@ struct
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
   let rev_trans_perm (c : cperm) : iperm =
     (match c with
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
         | _ -> failwith ("rev_trans_perm: expecting Var"))
@@ -563,13 +563,13 @@ struct
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   (*LDK: a constraint to indicate FULL permission = 0*)
-  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
         (Cpure.Var (full_perm_var,no_pos)),
         no_pos
       )),None), None)
-  let mkFullPerm_pure_from_ident id : Cpure.formula = 
+  let mkFullPerm_pure_from_ident id : Cpure.formula =
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
   (*create counting permission invariant c >=-1*)
@@ -598,10 +598,10 @@ struct
         no_pos
       )),None),None)
 
-  let full_perm_constraint = 
+  let full_perm_constraint =
     Mcpure.OnePF (mkPermWrite_var full_perm_var)
 
-  let float_out_iperm perm pos = 
+  let float_out_iperm perm pos =
     match perm with
     | None -> (None, [])
     | Some f -> match f with
@@ -614,7 +614,7 @@ struct
   let float_out_min_max_iperm perm pos =
     match perm with
     | None -> (None, None)
-    | Some f -> 
+    | Some f ->
       match f with
       | Ipure.Null _
       | Ipure.IConst _
@@ -634,7 +634,7 @@ struct
   let get_cperm_var perm : cperm_var list =
     (match perm with
      | None -> []
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,_) -> [v]
         | _ -> failwith ("get_cperm: expecting Var")))
@@ -643,7 +643,7 @@ struct
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
   let rev_trans_perm (c : cperm) : iperm =
     (match c with
-     | Some f -> 
+     | Some f ->
        (match f with
         | Cpure.Var (v,p) -> Some (Ipure.Var (rev_trans_spec_var v, p))
         | _ -> failwith ("rev_trans_perm: expecting Var"))
@@ -673,7 +673,7 @@ end;; (*CPERM*)
 (*==============================*)
 
 (*get two equal-size lists of varperms*)
-let get_perm_var_lists cperm1 cperm2 = 
+let get_perm_var_lists cperm1 cperm2 =
   match !perm with
   | Count -> CPERM.get_perm_var_lists cperm1 cperm2
   | Dperm -> DPERM.get_perm_var_lists cperm1 cperm2
@@ -681,7 +681,7 @@ let get_perm_var_lists cperm1 cperm2 =
   | Frac -> FPERM.get_perm_var_lists cperm1 cperm2
   | NoPerm -> FPERM.get_perm_var_lists cperm1 cperm2
 
-let rev_trans_perm cperm = 
+let rev_trans_perm cperm =
   match !perm with
   | Count -> CPERM.rev_trans_perm cperm
   | Dperm -> DPERM.rev_trans_perm cperm
@@ -689,7 +689,7 @@ let rev_trans_perm cperm =
   | Frac -> FPERM.rev_trans_perm cperm
   | NoPerm -> None
 
-let cperm_typ () = 
+let cperm_typ () =
   match !perm with
   | Count -> CPERM.cperm_typ
   | Dperm -> DPERM.cperm_typ
@@ -697,7 +697,7 @@ let cperm_typ () =
   | Frac -> FPERM.cperm_typ
   | NoPerm -> FPERM.cperm_typ
 
-let empty_iperm () = 
+let empty_iperm () =
   match !perm with
   | Count -> CPERM.empty_iperm
   | Dperm -> DPERM.empty_iperm
@@ -873,17 +873,18 @@ let string_of_cperm () = match !perm with
 
 
 
-let drop_tauto f = 
+let drop_tauto f =
   let fv = full_perm_var () in
-  let rec helper f = match f with 
-    | BForm ((Eq (Tsconst (t,_), Var (v,_),_),_),_) 
+  let rec helper f = match f with
+    | BForm ((Eq (Tsconst (t,_), Var (v,_),_),_),_)
     | BForm ((Eq (Var (v,_), Tsconst (t,_),_),_),_) -> if eq_spec_var v fv && Tree_shares.Ts.full t then mkTrue no_pos else f
     | BForm _ -> f
     | And (f1,f2,l) -> mkAnd (helper f1) (helper f2) l
     | AndList l -> AndList (map_l_snd helper l)
-    | Or (f1,f2,l,p) -> mkOr (helper f1) (helper f2) l p 
-    | Not (b,l,p) -> mkNot (helper b) l p 
-    | Forall (s,f,l,p) -> Forall (s, helper f, l,p) 
-    | Exists (v,f,l,p) -> Exists (v, helper f, l,p) in
+    | Or (f1,f2,l,p) -> mkOr (helper f1) (helper f2) l p
+    | Not (b,l,p) -> mkNot (helper b) l p
+    | Forall (s,f,l,p) -> Forall (s, helper f, l,p)
+    | Exists (v,f,l,p) -> Exists (v, helper f, l,p)
+    | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, helper f, pos) in
   let pr =  !print_formula in
   Debug.no_1 "drop_tauto" pr pr helper f

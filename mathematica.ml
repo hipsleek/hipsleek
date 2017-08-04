@@ -431,6 +431,7 @@ and math_of_formula pr_w pr_s f0 : string =
       let sf1 = formula_to_string f1 in
       let sf2 = formula_to_string f2 in
       "(" ^ sf1 ^ " || " ^ sf2 ^ ")"
+    | CP.SecurityForm (_, f, _) -> formula_to_string f
   ) in
   formula_to_string f0
 
@@ -486,7 +487,9 @@ let simplify_var_name (e: CP.formula) : CP.formula =
       CP.Or (nf1, nf2, lbl, l)
     | CP.Not (f1, lbl, l) -> CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
-      CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl) in
+      CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+    | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, simplify f vnames, loc)
+  in
   simplify e (Hashtbl.create 100)
 
 let rec is_linear_exp exp =
@@ -520,7 +523,7 @@ let rec is_linear_formula f0 =
   match f0 with
   | CP.BForm (b,_) -> is_linear_bformula b
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
-  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
+  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) | CP.SecurityForm (_, f, _) ->
     is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
     (is_linear_formula f1) && (is_linear_formula f2)
@@ -574,6 +577,7 @@ let rec strengthen_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+  | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, strengthen_formula f, loc)
 
 let strengthen_formula f =
   let pr = string_of_formula in
@@ -616,6 +620,7 @@ let rec weaken_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
+  | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, weaken_formula f, loc)
 
 let weaken2 f0 =
   let f_f f =
@@ -664,6 +669,7 @@ let rec negate_formula f0 = match f0 with
   | CP.Not (f, lbl, pos) -> f
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Forall (sv, negate_formula f, lbl, pos)
+  | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, negate_formula f, pos)
 
 let negate_formula f0 =
   let pr = !print_formula in
@@ -678,6 +684,7 @@ let rec normalize_formula f0 =
   | CP.Not (f1, lbl, pos) -> negate_formula f1
   | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, normalize_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, normalize_formula f, lbl, pos)
+  | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, normalize_formula f, pos)
 
 (**********************
    Verification works

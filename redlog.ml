@@ -58,8 +58,8 @@ let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initi
 let print_svl = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initialized")
 
-type rl_mode = 
-  | OFSF 
+type rl_mode =
+  | OFSF
   | PASF
 
 let rl_current_mode = ref OFSF
@@ -69,14 +69,14 @@ let rl_current_mode = ref OFSF
  **********************)
 
 let start_with str prefix =
-  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix)
 
 (* helper for logging *)
 type log_level =
   | ERROR
   | DEBUG
 
-let log level msg = 
+let log level msg =
   let write_msg () = output_string log_file (msg ^ "\n") in
   match level with
   | ERROR -> write_msg ()
@@ -86,20 +86,20 @@ let log level msg =
  * read from input channel until we found the reduce's prompt
  * return every lines read
  *)
-let rec read_till_prompt (channel: in_channel) : string = 
+let rec read_till_prompt (channel: in_channel) : string =
   let line = Gen.trim_str (input_line channel) in
   let match_prompt = Str.string_match prompt_regexp line 0 in
   if match_prompt then ""
   else line ^ (read_till_prompt channel)
 
-(* 
+(*
  * send cmd to reduce
  * for some weird i/o reasons, the reduce's prompt for this cmd
  * can only be read after we send this cmd, thus after send the cmd
  * to reduce, we read till the prompt (of this cmd) is found to discard it
  *)
 let send_cmd cmd =
-  if !is_reduce_running then 
+  if !is_reduce_running then
     let cmd = cmd ^ ";\n" in
     let () = output_string !process.outchannel cmd in
     let () = flush !process.outchannel in
@@ -118,7 +118,7 @@ let set_rl_mode mode =
 (* start Reduce system in a separated process and load redlog package *)
 let start () =
   if not !is_reduce_running then begin
-    let prelude () =    
+    let prelude () =
       is_reduce_running := true;
       send_cmd "off nat";
       send_cmd "linelength 10000";
@@ -138,9 +138,9 @@ let start () =
   end
 
 (* stop Reduce system *)
-let stop () = 
+let stop () =
   if !is_reduce_running then begin
-    let ending_fnc () = 
+    let ending_fnc () =
       let outchannel = !process.outchannel in
       output_string outchannel "quit;\n"; flush outchannel;
       if not !Globals.web_compile_flag then print_endline_quiet "Halting Reduce... "; flush stdout;
@@ -206,7 +206,7 @@ let send_and_receive f =
 
 
 let send_and_receive f =
-  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s)
     send_and_receive f
 
 let check_formula f =
@@ -219,11 +219,11 @@ let check_formula f =
     None
 
 let check_formula f =
-  Debug.no_1 "check_formula" (fun s -> s) 
-    (pr_option string_of_bool) check_formula f 
+  Debug.no_1 "check_formula" (fun s -> s)
+    (pr_option string_of_bool) check_formula f
 
-(* 
- * run func and return its result together with running time 
+(*
+ * run func and return its result together with running time
  * func must be lazy
  *)
 let time func =
@@ -250,7 +250,7 @@ let call_redlog func =
   (res, time)
 
 (*
- * run func with timeout checking 
+ * run func with timeout checking
  * return default_val if the running time exceed allowed time
  * also print err_msg when timeout happen
  * func must be lazy
@@ -278,14 +278,14 @@ let rec rl_of_var_list (vars : ident list) : string =
   | [v] -> v
   | v :: rest -> v ^ ", " ^ (rl_of_var_list rest)
 
-let rl_of_spec_var (sv: CP.spec_var) = 
+let rl_of_spec_var (sv: CP.spec_var) =
   match sv with
   | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "PRMD" else "")
 
 let get_vars_formula (p : CP.formula) =
   let svars = Cpure.fv p in List.map rl_of_spec_var svars
 
-let rec rl_of_exp e0 = 
+let rec rl_of_exp e0 =
   match e0 with
   | CP.Null _ -> "0" (* TEMP *)
   | CP.Var (v, _) -> rl_of_spec_var v
@@ -304,18 +304,18 @@ let rec rl_of_exp e0 =
       | Globals.Int -> "fix(" ^ (rl_of_exp e1) ^ ")"
       | Globals.Float -> rl_of_exp e1
       | _ -> failwith ("redlog.rl_of_exp: redlog don't support type casting to '"
-                       ^ (Globals.string_of_typ t) ^ "'") 
+                       ^ (Globals.string_of_typ t) ^ "'")
     )
   | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =
-  let mk_bin_exp opt e1 e2 = 
+  let mk_bin_exp opt e1 e2 =
     "(" ^ (rl_of_exp e1) ^ opt ^ (rl_of_exp e2) ^ ")"
   in
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.BVar (bv, _) -> 
+  | CP.BVar (bv, _) ->
     (* The following solution is just a copy of what omega.ml used. *)
     "(" ^ (rl_of_spec_var bv) ^ " > 0)"
   | CP.Lt (e1, e2, l) -> mk_bin_exp " < " e1 e2
@@ -328,7 +328,7 @@ let rl_of_b_formula b =
     (*else if CP.is_null e1 then (rl_of_exp e2) ^ " <= 0"*)
     (*else*)
     mk_bin_exp " = " e1 e2
-  | CP.Neq (e1, e2, _) -> 
+  | CP.Neq (e1, e2, _) ->
     (*if CP.is_null e2 then (rl_of_exp e1) ^ " > 0"*)
     (*else if CP.is_null e1 then (rl_of_exp e2) ^ " > 0"*)
     (*else*)
@@ -353,7 +353,7 @@ let rl_of_b_formula b =
 let rec rl_of_formula_x pr_w pr_s f0 =
   let rec helper f0 =
     match f0 with
-    | CP.BForm ((b,_) as bf,_) -> 
+    | CP.BForm ((b,_) as bf,_) ->
       begin
         match (pr_w b) with
         | None -> "(" ^ (rl_of_b_formula bf) ^ ")"
@@ -365,6 +365,7 @@ let rec rl_of_formula_x pr_w pr_s f0 =
     | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
     | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
     | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
+    | CP.SecurityForm (_, f, _) -> helper f
   in helper f0
 
 let rl_of_formula pr_w pr_s f0 =
@@ -377,7 +378,7 @@ let rl_of_formula pr_w pr_s f0 =
 (***********************************
    pretty printer for pure formula
  **********************************)
-let string_of_exp e0 = !print_exp e0 
+let string_of_exp e0 = !print_exp e0
 
 let string_of_b_formula bf = !print_b_formula bf
 
@@ -428,18 +429,20 @@ let simplify_var_name (e: CP.formula) : CP.formula =
       CP.Not (simplify f1 vnames, lbl, l)
     | CP.BForm (bf, lbl) ->
       CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+    | CP.SecurityForm (lbl, f, loc) ->
+        CP.SecurityForm (lbl, simplify f vnames, loc)
   in
   simplify e (Hashtbl.create 100)
 
-let rec is_linear_exp exp = 
+let rec is_linear_exp exp =
   match exp with
   | CP.Null _ | CP.Var _ | CP.IConst _ | CP.AConst _ -> true
   | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> (is_linear_exp e1) && (is_linear_exp e2)
-  | CP.Mult (e1, e2, _) -> 
+  | CP.Mult (e1, e2, _) ->
     let res = match e1 with
       | CP.IConst _ -> is_linear_exp e2
-      | _ -> (match e2 with 
-          | CP.IConst _ -> is_linear_exp e1 
+      | _ -> (match e2 with
+          | CP.IConst _ -> is_linear_exp e1
           | _ -> false)
     in res
   | CP.Div (e1, e2, _) -> false
@@ -456,7 +459,7 @@ let is_linear_bformula b =
   match pf with
   | CP.BConst _ -> true
   | CP.BVar _ | CP.SubAnn _ -> true
-  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
+  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _)
   | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
   | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
     -> (is_linear_exp e1) && (is_linear_exp e2)
@@ -464,11 +467,11 @@ let is_linear_bformula b =
     -> (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
   | _ -> false
 
-let rec is_linear_formula f0 = 
+let rec is_linear_formula f0 =
   match f0 with
   | CP.BForm (b,_) -> is_linear_bformula b
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
+  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) | CP.SecurityForm (_, f, _) ->
     is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
     (is_linear_formula f1) && (is_linear_formula f2)
@@ -482,20 +485,20 @@ let has_var_exp e0 =
     | CP.Var _ -> Some true
     | _ -> None
   in
-  CP.fold_exp e0 f or_list 
+  CP.fold_exp e0 f or_list
 
 let is_linear2 f0 =
-  let f_bf bf = 
+  let f_bf bf =
     if CP.is_bag_bform bf || CP.is_list_bform bf then
       Some false
     else None
   in
   let rec f_e e =
-    if CP.is_bag e || CP.is_list e then 
+    if CP.is_bag e || CP.is_list e then
       Some false
     else
       match e with
-      | CP.Mult (e1, e2, _) -> 
+      | CP.Mult (e1, e2, _) ->
         if (has_var_exp e1 && has_var_exp e2) then
           Some false
         else None
@@ -505,11 +508,11 @@ let is_linear2 f0 =
   CP.fold_formula f0 (nonef, f_bf, f_e) and_list
 
 let rec has_existential_quantifier f0 negation_bounded =
-  match f0 with 
-  | CP.Exists (_, f, _, _) -> 
-    if negation_bounded then 
-      has_existential_quantifier f negation_bounded 
-    else 
+  match f0 with
+  | CP.Exists (_, f, _, _) ->
+    if negation_bounded then
+      has_existential_quantifier f negation_bounded
+    else
       true
   | CP.Forall (_, f, _, _) ->
     if negation_bounded then
@@ -517,30 +520,32 @@ let rec has_existential_quantifier f0 negation_bounded =
     else
       has_existential_quantifier f negation_bounded
   | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
     (has_existential_quantifier f1 negation_bounded) ||
     (has_existential_quantifier f2 negation_bounded)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
+  | CP.SecurityForm (_, f, _) -> has_existential_quantifier f negation_bounded
 
 let rec has_existential_quantifier_of_int f0 negation_bounded =
-  match f0 with 
-  | CP.Exists (_, f, _, _) -> 
-    if ( (not negation_bounded) && (not (CP.is_float_formula f))) then 
+  match f0 with
+  | CP.Exists (_, f, _, _) ->
+    if ( (not negation_bounded) && (not (CP.is_float_formula f))) then
       true
     else
-      has_existential_quantifier_of_int f negation_bounded 
+      has_existential_quantifier_of_int f negation_bounded
   | CP.Forall (_, f, _, _) ->
     if (negation_bounded && (not (CP.is_float_formula f)) )then
       true
     else
       has_existential_quantifier_of_int f negation_bounded
   | CP.Not (f, _,  _) -> has_existential_quantifier_of_int f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
     (has_existential_quantifier_of_int f1 negation_bounded) ||
     (has_existential_quantifier_of_int f2 negation_bounded)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.BForm _ -> false
+  | CP.SecurityForm (_, f, _) -> has_existential_quantifier_of_int f negation_bounded
 
 let has_exists2 f0 =
   let f_f neg_bounded e = match e with
@@ -564,7 +569,7 @@ let has_exists2 f0 =
 
 let rec strengthen_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) -> 
+  | CP.BForm ((pf,il),lbl) ->
     let r = match pf with
       | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
       | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
@@ -580,6 +585,7 @@ let rec strengthen_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+  | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, strengthen_formula f, loc)
 
 
 (* let strengthen_formula f =         *)
@@ -627,6 +633,7 @@ and weaken_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
+  | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, weaken_formula f, loc)
 
 and weaken2 f0 =
   let f_f f = match f with
@@ -646,7 +653,7 @@ and weaken2 f0 =
   CP.map_formula f0 (f_f, f_bf, nonef)
 
 (***********************************
-   existential quantifier elimination 
+   existential quantifier elimination
  **********************************)
 
 (* using redlog's linear optimization to find bound of a variable in linear formula *)
@@ -691,10 +698,10 @@ let find_bound_b_formula v b0 =
   else (None, None)
 
 let rec find_bound v f0 =
-  if CP.is_float_var v 
+  if CP.is_float_var v
   then (* do not give bound for floating point type *)
     (None,None)
-  else 
+  else
     let f0 = strengthen_formula f0 in (* replace gt,lt with gte,lte to be able to find bound *)
     match f0 with
     | CP.And (f1, f2, _) ->
@@ -767,7 +774,7 @@ and get_subst_max_b_formula (bf,lbl) v =
     else ([], CP.BForm (bf,lbl))
   | _ -> ([], CP.BForm (bf,lbl))
 
-(* 
+(*
  * partition an expression based on variable v
  * return a tuple (f, rest)
  * e = f*v + rest
@@ -808,14 +815,14 @@ let rec partition_by_var e v =
 let get_subst_equation_b_formula bf0 v lbl =
   let (pf,il) = bf0 in
   match pf with
-  | CP.Eq (e1, e2, pos) -> 
+  | CP.Eq (e1, e2, pos) ->
     let e = CP.Subtract (e1, e2, no_pos) in
     let with_v, without_v = partition_by_var e v in
     if with_v = 1 then
       let zero = CP.IConst (0, no_pos) in
       let rhs = match without_v with
         | None -> zero
-        | Some e -> CP.Subtract (zero, e, no_pos) 
+        | Some e -> CP.Subtract (zero, e, no_pos)
       in
       ([(v, rhs)], CP.mkTrue no_pos)
     else if with_v = -1 then
@@ -846,7 +853,7 @@ let rec get_subst_equation f0 v =
 let rec elim_exists_helper core f0 =
   let elim_exists = elim_exists_helper core in
   match f0 with
-  | CP.Exists (qvar, qf, lbl, pos) -> 
+  | CP.Exists (qvar, qf, lbl, pos) ->
     let res = match qf with
       | CP.Or (qf1, qf2, lbl2, qpos) ->
         let new_qf1 = CP.mkExists [qvar] qf1 lbl qpos in
@@ -883,6 +890,7 @@ let rec elim_exists_helper core f0 =
     end
   | CP.BForm _ -> f0
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
+  | CP.SecurityForm (lbl, f, loc) -> CP.SecurityForm (lbl, elim_exists f, loc)
 
 let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   let f_f f = match f with
@@ -903,7 +911,7 @@ let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   in
   CP.map_formula f0 (f_f, somef, somef)
 
-let rec elim_exists_with_eq_x f0 = 
+let rec elim_exists_with_eq_x f0 =
   let core qvar qf lbl pos =
     let qf = elim_exists_with_eq_x qf in
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
@@ -945,8 +953,8 @@ and elim_exists_min f0 =
     let st, pp1 = get_subst_min with_qvars_f qvar in
     if not (Gen.is_empty st) then
       let v, e1, e2 = List.hd st in
-      let tmp1 = 
-        CP.mkOr 
+      let tmp1 =
+        CP.mkOr
           (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkLte e1 e2 pos), None),None)) pos) pp1 pos)
           (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkGt e1 e2 pos), None),None)) pos) pp1 pos)
           None
@@ -973,8 +981,8 @@ and elim_exists_max f0 =
     let st, pp1 = get_subst_max with_qvars_f qvar in
     if not (Gen.is_empty st) then
       let v, e1, e2 = List.hd st in
-      let tmp1 = 
-        CP.mkOr 
+      let tmp1 =
+        CP.mkOr
           (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkGte e1 e2 pos), None),None) ) pos) pp1 pos)
           (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkLt e1 e2 pos), None),None) ) pos) pp1 pos)
           None
@@ -1017,7 +1025,7 @@ let elim_exist_quantifier f =
   let f = elim_exists_with_eq f in
   let f = elim_exists_min f in
   let f = elim_exists_max f in
-  let f = elim_exists_with_ineq f in 
+  let f = elim_exists_with_ineq f in
   f
 
 let elim_exist_quantifier f =
@@ -1057,6 +1065,7 @@ let rec negate_formula f0 = match f0 with
   | CP.Not (f, lbl, pos) -> f
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Forall (sv, negate_formula f, lbl, pos)
+  | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, negate_formula f, pos)
 
 let negate_formula f0 =
   let pr = !print_formula in
@@ -1070,9 +1079,10 @@ let rec normalize_formula f0 = match f0 with
   | CP.Not (f1, lbl, pos) -> negate_formula f1
   | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, normalize_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, normalize_formula f, lbl, pos)
+  | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, normalize_formula f, pos)
 
 (**********************
-   Verification works  
+   Verification works
  *********************)
 
 (* to check whether a formula is satisfiable or not
@@ -1093,15 +1103,15 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
   if (not !dis_omega) && is_linear then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
-    let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
-      then f 
+    let sf = if (!no_pseudo_ops || CP.is_float_formula f)
+      then f
       else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
-    let () = if !pasf then begin 
+    let () = if !pasf then begin
         if is_linear then set_rl_mode PASF
         else set_rl_mode OFSF end
-    in 
+    in
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -1110,9 +1120,9 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     (sat, time)
 
 let is_sat_no_cache_ops pr_w pr_s f sat_no =
-  Debug.no_1 "is_sat_no_cache (redlog)" !print_formula 
+  Debug.no_1 "is_sat_no_cache (redlog)" !print_formula
     (fun (b,_) -> string_of_bool b)
-    (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f 
+    (fun _ -> is_sat_no_cache_ops pr_w pr_s f sat_no) f
 
 let is_sat_ops pr_w pr_s f sat_no =
   fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
@@ -1141,7 +1151,7 @@ let is_valid_ops pr_w pr_s f imp_no =
   (valid, time)
 
 let is_valid_ops pr_w pr_s f imp_no =
-  Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+  Debug.no_2 "[Redlog] is_valid" string_of_formula (fun c -> c) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair)
     (fun _ _ -> is_valid_ops pr_w pr_s f imp_no) f imp_no
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
@@ -1150,17 +1160,17 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
   in
-  let valid f = 
-    let wf = if (!no_pseudo_ops || CP.is_float_formula f) 
-      then f 
+  let valid f =
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f)
+      then f
       else weaken_formula f in
-    let () = if !pasf then begin 
+    let () = if !pasf then begin
         if (is_linear_formula f) then set_rl_mode PASF
         else set_rl_mode OFSF end
-    in 
+    in
     is_valid_ops pr_w pr_s wf imp_no
   in
-  let res = 
+  let res =
     if (not !dis_omega) && (is_linear_formula f) then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
       (* (is_valid f imp_no) *)
@@ -1179,15 +1189,15 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
       else
         let () = incr success_ee_count in
         valid eef
-    else 
+    else
       valid f
   in
   res
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
-  Debug.no_2 "[Redlog] imply_no_cache" 
+  Debug.no_2 "[Redlog] imply_no_cache"
     (add_str "formula" string_of_formula)
-    (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
+    (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair)
     (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
 
 
@@ -1260,10 +1270,10 @@ let imply f imp_no =
   imply_ops pr_w pr_s f imp_no
 
 let imply ante conseq imp_no =
-  Debug.no_3 "[Redlog] imply" 
-    (add_str "ante" string_of_formula) 
+  Debug.no_3 "[Redlog] imply"
+    (add_str "ante" string_of_formula)
     (add_str "conseq" string_of_formula)
-    (add_str "imp_no" (fun c -> c)) 
+    (add_str "imp_no" (fun c -> c))
     string_of_bool imply ante conseq imp_no
 
 (* let imply ante conseq imp_no = *)
@@ -1286,12 +1296,12 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
   if (CP.is_float_formula f) then
     (* do a manual existential elimination *)
     elim_exist_quantifier f
-  else 
+  else
     let rlf = rl_of_formula pr_n pr_n (normalize_formula f) in
     (* pasf only works with Presburger arithmetic, which is already handled by Omega *)
-    (* let () = send_cmd "rlset pasf" in *) 
+    (* let () = send_cmd "rlset pasf" in *)
     (* let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in *)
-    let redlog_result = send_and_receive ("rlqe " ^ rlf) in 
+    let redlog_result = send_and_receive ("rlqe " ^ rlf) in
     (* let () = print_endline ("RL: " ^ redlog_result) in *)
     (* let () = send_cmd "rlset ofsf" in *)
     let lexbuf = Lexing.from_string redlog_result in
@@ -1336,19 +1346,19 @@ let simplify (f: CP.formula) : CP.formula =
 let simplify (f: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "Redlog.simplify" pr pr simplify f
-  
+
 (* unimplemented *)
 
-let hull (f: CP.formula) : CP.formula = 
-  if is_linear_formula f then 
-    Omega.hull f 
-  else 
+let hull (f: CP.formula) : CP.formula =
+  if is_linear_formula f then
+    Omega.hull f
+  else
     f
 
 let pairwisecheck (f: CP.formula): CP.formula =
-  if is_linear_formula f then 
-    x_add_1 Omega.pairwisecheck f 
-  else 
+  if is_linear_formula f then
+    x_add_1 Omega.pairwisecheck f
+  else
     f
 
 (** An Hoa : EQUATION SOLVING FACILITY **)
@@ -1363,7 +1373,7 @@ let rec enum_str_prefix prefix n =
 (* An Hoa : Map a list of spec var to red log vars
    	@return The list of new variables, the correspondence between old variables and new vars (for instance (h',hprmd) to indicate h' --> hprmd), the reverse correspondence between new variable names & the original variables. *)
 let rl_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
-  let helper prefix vars = 
+  let helper prefix vars =
     let numvars = List.length vars in
     let rlvarsnames = enum_str_prefix prefix numvars in
     let newvars = List.map2 (fun v w -> CP.SpecVar (CP.type_of_spec_var v, w, Unprimed)) vars rlvarsnames in
@@ -1380,7 +1390,7 @@ let rl_vars_map (vars : CP.spec_var list) (bv : CP.spec_var list) =
 
 (* An Hoa : Parse the assignments *)
 let parse_assignment (assignment : string) : (string * string) =
-  try 
+  try
     let i = String.index assignment '=' in
     let l = String.length assignment in
     let lhs = String.sub assignment 0 i in
@@ -1390,22 +1400,22 @@ let parse_assignment (assignment : string) : (string * string) =
     (*let () = print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n") in*)
     (lhs,rhs)
   with
-  | Not_found -> let () = print_string ("parse_assignment is called with input " ^ assignment) 
+  | Not_found -> let () = print_string ("parse_assignment is called with input " ^ assignment)
     in ("","")
 ;;
 
 
 (* An Hoa : Group equal variables into lists *)
 let group_eq_vars (ass : (string * string) list) =
-  (* Since reduce already order the right hand side, we only need 
-     	to group the variables according to the string representation of 
+  (* Since reduce already order the right hand side, we only need
+     	to group the variables according to the string representation of
      	the right hand side *)
   let ass_sorted = List.sort (fun (l1,r1) (l2,r2) -> String.compare r1 r2) ass in
   (*let () = print_endline "\nSorted assignments:" in
     	let todo_unk = List.map (fun (lhs,rhs) -> print_string ("$" ^ lhs ^ "$ = $" ^ rhs ^ "$\n")) ass_sorted in*)
 
   (** Internal function to partition the solution **)
-  let rec partition (a : (string * string) list) (res : (string * (string list)) list) = 
+  let rec partition (a : (string * string) list) (res : (string * (string list)) list) =
     match a with
     | [] -> res
     | (lhs,rhs)::a1 -> match res with
@@ -1425,17 +1435,17 @@ let group_eq_vars (ass : (string * string) list) =
     	let todo_unk = List.map (fun (x,y) -> print_string ((String.concat " = " y) ^ " = " ^ x ^ "\n"))
     			grouped_vars in*)
   grouped_vars
-;;	
+;;
 
 
-(* An Hoa : parse the solution given out by reduce. Assume that solution is of the form 
+(* An Hoa : parse the solution given out by reduce. Assume that solution is of the form
    { { (var = exp)* }+ }
    and that ONLY ONE root is obtained! *)
 let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * CP.spec_var) list) : (CP.spec_var * CP.spec_var) list * (CP.spec_var * string) list=
   let l = String.length solution in
   (* Remove the braces { and } at the beginning & end of the list of solution *)
-  if (l = 0 || solution.[0] = '*') then 
-    ([],[]) 
+  if (l = 0 || solution.[0] = '*') then
+    ([],[])
   else
 
     let solution = String.sub solution 1 (l-2) in
@@ -1467,7 +1477,7 @@ let parse_reduce_solution solution (bv : CP.spec_var list) (revmap : (string * C
           res
       in
       let strrep = try
-          List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result 
+          List.map (fun (x,y) -> (List.assoc x revmap,recover_strrep y revmap)) result
         with
         | Not_found -> let () = print_endline_quiet "Assoc NotFound at strrep" in []
       in
@@ -1553,7 +1563,7 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
   (* Internal function to generate reduce equations *)
   let rec rl_of_exp varsmap e = match e with
     | CP.Null _ -> "null" (* null serves as a symbollic variable *)
-    | CP.Var (v, _) -> (try List.assoc v varsmap with 
+    | CP.Var (v, _) -> (try List.assoc v varsmap with
         | Not_found -> let () = print_endline_quiet ("Variable " ^(CP.string_of_spec_var v) ^ " cannot be found!") in failwith "solve : variable not found in variable mapping!")
     | CP.IConst (i, _) -> string_of_int i
     | CP.FConst (f, _) -> string_of_float f
@@ -1567,11 +1577,11 @@ let solve_eqns (eqns : (CP.exp * CP.exp) list) (bv : CP.spec_var list) =
   let rec read_stream () =
     let line = Gen.trim_str (input_line !process.inchannel) in
     let l = String.length line in
-    if (l == 0) then 
-      "" 
-    else if (line.[l-1] == '$') then 
+    if (l == 0) then
+      ""
+    else if (line.[l-1] == '$') then
       String.sub line 0 (l-1)
-    else 
+    else
       line ^ (read_stream ())
   in
   try

@@ -168,6 +168,7 @@ and cvc3_of_formula f = match f with
   | CP.Exists (sv, p, _,_) ->
     let typ_str = cvc3_of_sv_type sv in
     "(EXISTS (" ^ (cvc3_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvc3_of_formula p) ^ ")"
+  | CP.SecurityForm (_, f, _) -> cvc3_of_formula f
 
 and remove_quantif f quant_list  = match f with
   | CP.BForm (b,_) ->
@@ -216,6 +217,7 @@ and remove_quantif f quant_list  = match f with
       (*let () = print_string ("\n#### Exists: " ^ Cprinter.string_of_pure_formula tmp ) in*)
       (tmp , quant_list_modif)
     end
+  | CP.SecurityForm (_, f, _) -> remove_quantif f quant_list
 
 (*
   split a list of spec_vars to three lists:

@@ -8505,6 +8505,7 @@ and subst_rel_by_def_x rel_w_defs (f0:CP.formula) =
     | CP.Not (p1,ofl,pos1) -> (CP.Not (helper p1,ofl,pos1))
     | CP.Forall (sv,p1,ofl,pos1) -> CP.Forall (sv,helper p1,ofl,pos1)
     | CP.Exists (sv,p1,ofl,pos1) -> CP.Exists (sv,helper p1,ofl,pos1)
+    | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, helper f, pos)
   in
   helper f0
 

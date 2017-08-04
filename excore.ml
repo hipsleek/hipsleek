@@ -53,25 +53,25 @@ let h_2_mem_obj = object (self)
     (* let () = print_endline_quiet ("XXXX "^(s)) in *)
     ()
   method init =
-    self # logging "init" ; 
+    self # logging "init" ;
     let () = state <- CP.mkTrue no_pos in
     let () = list <- [] in
     ()
   method notempty = list!=[]
-  method add_pure p = 
-    self # logging ((add_str "add_pure" !CP.print_formula) p); 
+  method add_pure p =
+    self # logging ((add_str "add_pure" !CP.print_formula) p);
     let () = state <- CP.mkAnd state p no_pos in
     ()
-  method get_id v e = 
+  method get_id v e =
     self # logging "get_id";
     let eq_v = try
         fst(List.find (fun (_,e2) ->
             let rhs = (CP.mk_eq_exp e e2) in
-            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in 
-            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in 
+            let () = self # logging ((add_str "lhs" !CP.print_formula) state) in
+            let () =  self # logging ((add_str "rhs" !CP.print_formula) rhs) in
             !CP.tp_imply state rhs
           ) list)
-      with _ ->  
+      with _ ->
         let x = CP.fresh_spec_var v in
         let () = list <- (x,e)::list in
         x
@@ -301,6 +301,8 @@ let subs_null f0 =
       Exists (a, helper f, c, l)
     | Forall (a, f, c, l) ->
       Forall (a, helper f, c, l)
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, helper f, loc)
   in
   helper f0
 
@@ -702,21 +704,21 @@ module EPURE =
       let proc (baga,f) =
         let () = h_2_mem_obj # add_pure f in
         let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
-        let lst2 = List.map (fun e -> 
+        let lst2 = List.map (fun e ->
             let v =  Elt.get_interval e in
-            match v with 
+            match v with
             | Some (id,d) -> (id,d)
             | _  -> failwith x_tbi
           ) lst2 in
-        let lst2 = List.filter (fun (id,(_,d)) -> 
+        let lst2 = List.filter (fun (id,(_,d)) ->
             let rhs = Cpure.mk_exp_geq d 1 in
             !Cpure.tp_imply f rhs) lst2 in
-        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) -> 
+        let lst2 = List.concat (List.map (fun (id,(e_ind,_)) ->
             let nid = h_2_mem_obj # get_id id e_ind in
             Elt.from_var [nid]) lst2) in
         (lst1@lst2,f)
       in
-      List.map proc efpd1 
+      List.map proc efpd1
 
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
@@ -786,7 +788,7 @@ module EPURE =
       let rec aux m disj =
         match disj with
           | [] -> m
-          | (m2,_)::lst -> Elt.hull_baga m (aux m2 lst) 
+          | (m2,_)::lst -> Elt.hull_baga m (aux m2 lst)
       in match disj with
         | [] -> []
         | (m,_)::lst -> aux m lst
@@ -1001,16 +1003,16 @@ class ['a] inv_store name (pr:'a->string) =
       Hashtbl.replace tab vn fix
     method string_of =
       let lst = Hashtbl.fold (fun a b lst -> (a,b)::lst) tab [] in
-      pr_list (pr_pair pr_id pr) lst 
+      pr_list (pr_pair pr_id pr) lst
   end;;
 
 let map_baga_invs : ((string, ef_pure_disj) Hashtbl.t) = Hashtbl.create 10
 let map_num_invs : ((string, (Cpure.spec_var list * Cpure.formula)) Hashtbl.t) = Hashtbl.create 10
 let map_precise_invs : ((string, bool) Hashtbl.t) = Hashtbl.create 10
 
-let map_baga_invs 
+let map_baga_invs
   = new inv_store  "XXXBAGAXXX "  EPureI.string_of_disj
-let map_num_invs 
-  = new inv_store  "XXXNUMXXX " (pr_pair !Cpure.print_svl !Cpure.print_formula) 
-let map_precise_invs 
+let map_num_invs
+  = new inv_store  "XXXNUMXXX " (pr_pair !Cpure.print_svl !Cpure.print_formula)
+let map_precise_invs
   = new inv_store "XXXprecise " string_of_bool

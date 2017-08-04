@@ -200,6 +200,7 @@ and cvcl_of_formula f = match f with
   | CP.Exists (sv, p, _,_) ->
     let typ_str = cvcl_of_sv_type sv in
     "(EXISTS (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p ) ^ ")"
+  | CP.SecurityForm (_, f, _) -> cvcl_of_formula f
 
 (*
   split a list of spec_vars to three lists:

@@ -286,6 +286,7 @@ let rec contain_array
     contain_array f1
   | Exists (sv,f1,fl,loc)->
     contain_array f1
+  | SecurityForm (_, f, _) -> contain_array f
 ;;
 
 let contain_array
@@ -334,6 +335,7 @@ let rec normalize_not
   | Forall _
   | Exists _->
     f
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, normalize_not f, pos)
 ;;
 
 let normalize_not
@@ -362,6 +364,7 @@ let rec normalize_or
   | Forall _
   | Exists _->
     [f]
+  | SecurityForm (_, f, _) -> normalize_or f
 ;;
 
 let normalize_or
@@ -411,6 +414,7 @@ let rec normalize_to_lst
     | Forall _
     | Exists _->
       [[f]]
+    | SecurityForm (_, f, _) -> normalize_to_lst f
   in
   helper (normalize_not f)
 ;;
@@ -548,6 +552,7 @@ let rec can_be_simplify
       is_valid_forall nf nsv
     | Exists (nsv,nf,fl,loc) ->
       is_valid_forall nf nsv
+    | SecurityForm (_, f, _) -> is_valid_forall f sv
   in
   let is_valid_forall
       (f1:formula) (sv:spec_var) : bool =
@@ -566,6 +571,7 @@ let rec can_be_simplify
     (is_valid_forall f1 sv) || (not (contain_array f1))
   | Exists (sv,f1,fl,loc) ->
     (is_valid_forall f1 sv) || (not (contain_array f1))
+  | SecurityForm (lbl, f, loc) -> x_add_1 can_be_simplify f
 ;;
 
 let can_be_simplify
@@ -723,6 +729,7 @@ let rec process_quantifier
         | None ->
           Exists (sv,process_helper f1 ctx,fl,loc)
       end
+    | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, process_helper f ctx, loc)
   in
   process_helper f []
 ;;
@@ -884,6 +891,7 @@ let constantize_ex_q f=
                 | None ->
                       Exists (sv,process_helper f1 ctx,fl,loc)
             end
+      | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, process_helper f ctx, loc)
   in
   process_helper f []
 ;;
@@ -1056,6 +1064,9 @@ let rec standarize_array_formula
   | Exists (sv,f,fl,l)->
     let (nf1,flst1,svlst) = standarize_array_formula f in
     (Exists (sv,nf1,fl,l),flst1,svlst)
+  | SecurityForm (lbl, f, loc) ->
+      let f', formula_list, spec_var_list = standarize_array_formula f in
+      (SecurityForm (lbl, f', loc), formula_list, spec_var_list)
 ;;
 
 let rec standarize_one_formula
@@ -1084,6 +1095,8 @@ let rec standarize_one_formula
       Forall (sv,standarize_one_formula f,fl,l)
     | Exists (sv,f,fl,l)->
       Exists (sv,standarize_one_formula f,fl,l)
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, standarize_one_formula f, loc)
   in
   (helper f)
 ;;
@@ -1175,6 +1188,8 @@ let rec translate_array_relation
     Forall (sv,translate_array_relation f,fl,loc)
   | Exists (sv,f,fl,loc)->
     Exists (sv,translate_array_relation f,fl,loc)
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, translate_array_relation f, loc)
 ;;
 
 let translate_array_relation
@@ -1244,6 +1259,7 @@ let translate_array_equality
       []
     | Exists (sv,f,fl,loc)->
       []
+    | SecurityForm (_, f, _) -> helper f scheme
   in
   match helper f scheme with
   | [] -> None
@@ -1304,6 +1320,7 @@ let translate_array_equality
       f
     | Exists _->
       f
+    | SecurityForm (_, f, _) -> helper f scheme
   in
   helper f scheme
 ;;
@@ -1363,6 +1380,8 @@ let translate_array_equality_to_forall
       Forall (sv,helper nf,fl,loc)
     | Exists (sv,nf,fl,loc)->
       Exists (sv,helper nf,fl,loc)
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, helper f, loc)
   in
   helper f
 ;;
@@ -1421,6 +1440,9 @@ let rec split_formula
       let nf = BForm ((hole,None),fl) in
       (nf,[(f,nsv)])
       (* failwith "exists!!!!" *)
+  | SecurityForm (lbl, f, loc) ->
+      let f', f_sv_list = split_formula f cond in
+      (SecurityForm (lbl, f', loc), f_sv_list)
 ;;
 
 let split_formula
@@ -1488,6 +1510,8 @@ let rec combine_formula
     f
   | Exists (sv,f1,fl,loc)->
     f
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, combine_formula f sv2f, loc)
 ;;
 
 let combine_formula
@@ -1619,6 +1643,8 @@ let rec mk_array_free_formula
     Forall (sv,mk_array_free_formula f,fl,l)
   | Exists (sv,f,fl,l)->
     Exists (sv,mk_array_free_formula f,fl,l)
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, mk_array_free_formula f, loc)
 ;;
 
 let mk_array_free_formula
@@ -1735,6 +1761,8 @@ let rec get_array_element_in_f
     get_array_element_in_f nf sv
   | Exists (nsv,nf,fl,l)->
     get_array_element_in_f nf sv
+  | SecurityForm (_, f, loc) ->
+      get_array_element_in_f f sv
 ;;
 
 let get_array_element_in_f
@@ -1802,6 +1830,7 @@ let collect_free_array_index f:exp list =
   | Forall (sv,sub_f,fl,loc)
   | Exists (sv,sub_f,fl,loc)->
     helper sub_f (sv::notfv)
+  | SecurityForm (_, f, _) -> helper f notfv
   in
   remove_dupl is_same_exp (helper f [])
 ;;
@@ -1853,6 +1882,8 @@ let rec process_exists_array
       (* let () = x_binfo_pp ("nqlst: "^((pr_list string_of_exp) nqlst)) no_pos in *)
       let new_nf = Exists (sv,process_exists_array nf,fl,l) in
       List.fold_left (fun r nq -> Exists(mk_new_name_helper nq,r,None,no_pos)) new_nf nqlst
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, process_exists_array f, loc)
 ;;
 
 let process_exists_array
@@ -1942,6 +1973,8 @@ let rec drop_array_formula
     Forall (sv,drop_array_formula f,fl,loc)
   | Exists (sv,f,fl,loc)->
     Exists (sv,drop_array_formula f,fl,loc)
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, drop_array_formula f, loc)
 ;;
 
 let drop_array_formula
@@ -2093,6 +2126,8 @@ let rec contain_array_element f arr_sv index_sv:bool =
     | Forall (sv,sub_f,fl,loc)
     | Exists (sv,sub_f,fl,loc)->
           contain_array_element sub_f arr_sv index_sv
+    | SecurityForm (lbl, f, loc) ->
+        contain_array_element f arr_sv index_sv
 ;;
 
 (* For a formula and an index sv, produce the auxiliary formula that contains the information between the index sv to the other indexes *)
@@ -2256,6 +2291,8 @@ let rec extend_env old_env (nfv:not_free_var) f:arr2index_env =
     | Exists (sv,sub_f,fl,loc)->
           let new_env = extend_env old_env (add_v nfv sv) sub_f in
           new_env
+    | SecurityForm (lbl, f, loc) ->
+        extend_env old_env nfv f
 ;;
 
 let extend_env old_env nfv f =
@@ -2351,6 +2388,8 @@ let expand_relation f =
        Forall (sv,helper nf replace,fl,loc)
      | Exists (sv,nf,fl,loc)->
        Exists (sv,helper nf replace,fl,loc)
+     | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, helper f replace, loc)
    in
    (* let replace = *)
    (*   let env = extend_env [] [] f in *)
@@ -2466,6 +2505,8 @@ let expand_array rel_def rel_f prevlst postvlst =
         Forall (sv,helper nf replace,fl,loc)
       | Exists (sv,nf,fl,loc)->
         Exists (sv,helper nf replace,fl,loc)
+      | SecurityForm (lbl, f, loc) ->
+          SecurityForm (lbl, helper f replace, loc)
     in
     helper f replace
   in
@@ -2583,6 +2624,8 @@ let instantiate_forall
               Forall (n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
         | Exists (n_sv,sub_f,fl,loc)->
               Exists(n_sv,instantiate_with_one_sv_helper sub_f sv index,fl,loc)
+        | SecurityForm (lbl, f, loc) ->
+            SecurityForm (lbl, instantiate_with_one_sv_helper f sv index, loc)
     in
     let contains_arr f arr=
       (* To Be Implemented *)
@@ -2619,6 +2662,8 @@ let instantiate_forall
       let new_env = remove_dupl is_same_exp ((collect_free_array_index sub_f)@env) in
       let new_sub_f = instantiate_forall_helper sub_f new_env in
       Exists (sv,new_sub_f,fl,loc)
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, instantiate_forall_helper f env, loc)
   in
   let instantiate_forall_helper f env =
     Debug.no_2 "instantiate_forall_helper" !print_pure  (pr_list string_of_exp)  !print_pure instantiate_forall_helper f env
@@ -2654,6 +2699,8 @@ let rec instantiate_exists f =
                     Exists (sv,instantiate_exists sub_f,fl,loc)
               | _ -> instantiate_exists sub_f
           end
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, instantiate_exists f, loc)
 ;;
 
 let instantiate_exists f=
@@ -2689,6 +2736,8 @@ let rec produce_aux_formula_for_exists
           Forall (sv,new_sub_f,fl,loc)
     | BForm (b,fl) ->
           f
+    | SecurityForm (lbl, f, loc) ->
+        SecurityForm (lbl, produce_aux_formula_for_exists f env, loc)
 ;;
 
 let produce_aux_formula_for_exists f env =
@@ -2823,7 +2872,8 @@ let simplify_array_equality f=
       failwith "get_eqlst: AndList To Be Implemented"
     | Not (sub_f,_,_)
     | Forall (_,sub_f,_,_)
-    | Exists (_,sub_f,_,_)->
+    | Exists (_,sub_f,_,_)
+    | SecurityForm (_, sub_f, _) ->
       get_eqlst sub_f
   in
   let is_equal_arr =
@@ -2881,6 +2931,11 @@ let simplify_array_equality f=
         | Some new_nf -> Some (Exists (sv,new_nf,fl,loc))
         | None -> None
       end
+    | SecurityForm (lbl, f, loc) ->
+        begin match simplify_helper f with
+        | Some f' -> Some (SecurityForm (lbl, f', loc))
+        | None -> None
+        end
   in
   (* equal relation is a list of pairs *)
   match simplify_helper f with
@@ -3004,6 +3059,8 @@ let rec translate_back_array_in_one_formula
     Forall (sv,translate_back_array_in_one_formula f,fl,loc)
   | Exists (sv,f,fl,loc)->
     Exists (sv,translate_back_array_in_one_formula f,fl,loc)
+  | SecurityForm (lbl, f, loc) ->
+      SecurityForm (lbl, translate_back_array_in_one_formula f, loc)
 ;;
 
 let translate_back_array_in_one_formula f =

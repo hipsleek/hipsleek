@@ -276,6 +276,7 @@ and isabelle_of_formula f =
     if (is_bag_formula p2) then
       "(" ^ (isabelle_of_formula p2) ^ ")"
     else ""
+  | CP.SecurityForm (_, f, _) -> isabelle_of_formula f
 
 
 let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)

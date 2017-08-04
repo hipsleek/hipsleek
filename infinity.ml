@@ -563,7 +563,9 @@ let rec normalize_inf_formula (pf: CP.formula) : CP.formula =
    | CP.Forall (qid, qf,fl,pos) ->
      let qf_norm = normalize_inf_formula qf in CP.Forall(qid,qf_norm,fl,pos)
    | CP.Exists (qid, qf,fl,pos) ->
-     let qf_norm = normalize_inf_formula qf in CP.Exists(qid,qf_norm,fl,pos))
+     let qf_norm = normalize_inf_formula qf in CP.Exists(qid,qf_norm,fl,pos)
+   | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, normalize_inf_formula f, pos))
+
 
 (* convert \inf to Zinfinity and -\inf to ZinfinityPRMD
    and add ZinfintyPRMD < Zinfinity *)
@@ -664,6 +666,7 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
   | CP.Not (nf,fl,pos) -> contains_inf_eq nf
   | CP.Forall (qid, qf,fl,pos)
   | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
+  | CP.SecurityForm (lbl, f, pos) -> contains_inf_eq f
 
 let contains_inf_eq (pf:CP.formula) : bool  =
   DD.no_1 "contains_inf_eq" string_of_pure_formula string_of_bool contains_inf_eq pf
@@ -1085,6 +1088,7 @@ and sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) (is_bound:
       | CP.Exists (qid, qf,fl,pos) ->
         let qf_norm = helper qf vl
         in CP.Exists(qid,qf_norm,fl,pos)
+      | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, helper f vl, pos)
     in
     helper f vl
 
@@ -1338,6 +1342,9 @@ let rec initialize_pai_formula (f:CP.formula) (ls:(spec_var * pai_num) list)
     | CP.Exists (qid, qf,fl,pos) ->
       let qf,ls = helper qf ls
       in CP.Exists(qid,qf,fl,pos),ls
+    | CP.SecurityForm (lbl, f, pos) ->
+        let f', ls = helper f ls in
+        (CP.SecurityForm (lbl, f', pos), ls)
   in
   helper f ls
 
@@ -1423,6 +1430,8 @@ let rec elim_forall (f: CP.formula) : CP.formula =
   | CP.Exists (qid, qf,fl,pos) ->
     let qf = elim_forall qf
     in CP.Exists(qid,qf,fl,pos)
+  | CP.SecurityForm (lbl, f, pos) ->
+      CP.SecurityForm (lbl, elim_forall f, pos)
 
 let elim_forall (f: CP.formula) : CP.formula =
   Debug.no_1 "elim_forall_inf" string_of_pure_formula string_of_pure_formula elim_forall f
@@ -1480,6 +1489,8 @@ let rec elim_forall_exists (f: CP.formula) : CP.formula =
   | CP.Exists (qid, qf,fl,pos) ->
     let insf = helper_ex qid qf in
     CP.Or(f,insf,None,pos)
+  | CP.SecurityForm (lbl, f, pos) ->
+      CP.SecurityForm (lbl, elim_forall_exists f, pos)
 
 let elim_forall_exists (f: CP.formula) : CP.formula =
   Debug.no_1 "elim_forall_exists_inf" string_of_pure_formula string_of_pure_formula elim_forall_exists f

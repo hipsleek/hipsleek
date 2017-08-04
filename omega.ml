@@ -48,41 +48,41 @@ let init_files () =
   end
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
-  | SpecVar (t, v, p) -> 
+  | SpecVar (t, v, p) ->
     let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
       | []->
         (* omega doesn't allow variable name starting with underscore *)
-        let v = if ((String.get v 0) == '_') then "v" ^ v 
+        let v = if ((String.get v 0) == '_') then "v" ^ v
           else v in
         let v =
           let reg = Str.regexp "\." in
           Str.global_replace reg "" v
         in
-        let ln = (String.length v) in  
+        let ln = (String.length v) in
         let r_c = if (ln<20) then v
           else "v" ^ (String.sub v (ln-20)  20) in
         begin
-          omega_subst_lst := (r_c,v,t)::!omega_subst_lst; 
+          omega_subst_lst := (r_c,v,t)::!omega_subst_lst;
           r_c end
-      | (a,b,_)::h->  a in 
+      | (a,b,_)::h->  a in
     r ^ (if is_primed sv then Oclexer.primed_str else "")
 
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (SpecVar(_,n,_) as sv, _) -> 
+  | Var (SpecVar(_,n,_) as sv, _) ->
     if n="null" then "0"
     else (omega_of_spec_var sv)
-  | IConst (i, _) -> string_of_int i 
-  | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
-  | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
+  | IConst (i, _) -> string_of_int i
+  | AConst (i, _) -> string_of_int(int_of_heap_ann i)
+  | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2)
   | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^"("^(omega_of_exp a2)^")"
   | Mult (a1, a2, l) ->
         let r = match a1 with
           | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
           | _ -> let rr = match a2 with
               | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-              | _ -> 
+              | _ ->
                     (* "0=0" *)
                     illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
                     (* if (!Globals.non_linear_flag) then *)
@@ -175,19 +175,19 @@ and omega_of_b_formula b =
             "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
             ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
                 (* | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint") *)
-      | RelForm _ -> 
+      | RelForm _ ->
             if !Globals.oc_weaken_rel_flag then "0=0"
             else illegal_format ("Omega.omega_of_exp: RelForm")
       | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
       | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
-  in 
+  in
   (* let () = non_linear_detect # reset in *)
   let ans = aux pf in
   (* let flag = non_linear_detect # get in *)
   (* let () = non_linear_detect # reset in *)
   (* if flag then "(0=0)" *)
   (* else *) ans
-    
+
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f =
     match f with
@@ -207,6 +207,7 @@ and omega_of_formula_x pr_w pr_s f  =
     | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula_x pr_s pr_w p) ^ ")) "
     | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
     | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+    | SecurityForm (_, f, _) -> helper f
   in
   try
     helper f
@@ -224,13 +225,13 @@ let omega_of_formula i pr_w pr_s f  =
   let () = set_prover_type () in
   let pr = !print_formula in
   (*let () = print_string ("source:"^(string_of_int i)^": "^(pr f)^"\n"); flush_all in*)
-  Debug.no_1_num i "omega_of_formula" 
+  Debug.no_1_num i "omega_of_formula"
     pr pr_id (fun _ -> omega_of_formula_x pr_w pr_s f) f
 
 let omega_of_formula_old i f  =
   if has_template_formula f then None else
     let (pr_w, pr_s) = no_drop_ops in
-    try 
+    try
       Some (omega_of_formula i pr_w pr_s f)
     with | _ ->
       None
@@ -248,10 +249,10 @@ let omegacalc = if !compete_mode (* (Sys.file_exists "oc") *) then ref ("./oc":s
 let local_oc = "./oc"
 let global_oc = "/usr/local/bin/oc"
 
-let omegacalc = 
+let omegacalc =
   if (Sys.file_exists local_oc) then ref local_oc
   else if (Sys.file_exists global_oc)  then ref global_oc
-  else 
+  else
     begin
       print_endline "ERROR : oc cannot be found!!"; ref ("oc_cannot be found":string)
     end
@@ -262,12 +263,12 @@ let omegacalc =
 (* let omegacalc = ref ("/home/locle/workspace/hg/cparser-1/sleekex/omega_modified/omega_calc/obj/oc": string) *)
 
 let start_with str prefix =
-  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix)
 
 let send_cmd cmd =
   if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
-let set_process (proc: GlobProver.prover_process_t) = 
+let set_process (proc: GlobProver.prover_process_t) =
   process := proc
 
 let prelude () =
@@ -352,7 +353,7 @@ let read_from_in_channel chn : string =
   - in: input channel
   - out: last non-comment line of the input channel
   - Desc: read from the channel, return the last line
-*)	
+*)
 let read_last_line_from_in_channel chn : string =
   let line = ref "" in
   let quitloop = ref false in
@@ -361,7 +362,7 @@ let read_last_line_from_in_channel chn : string =
     let n = String.length !line in
     if n > 0 then begin
       (* print_string (line^"\n"); flush stdout;*)
-      (if !log_all_flag then 
+      (if !log_all_flag then
          output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
       if !line.[0] != '#' then
         begin
@@ -390,7 +391,7 @@ let check_formula f timeout =
         restart("Regularly restart:1 ");
         omega_call_count := 0;
       end;
-    let fnc f = 
+    let fnc f =
       (* let () = print_endline ("check:" ^ f) in *)
       let () = incr omega_call_count in
       let new_f = Gen.break_lines_1024 f
@@ -417,7 +418,7 @@ let check_formula f timeout =
         end;
       !result
     in
-    let fail_with_timeout () = 
+    let fail_with_timeout () =
       restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
       true (* it was checking for sat*) in
     if not (!dis_provers_timeout) then
@@ -437,7 +438,7 @@ let check_formula i f timeout =
 let rec send_and_receive f timeout=
   begin
     if not !is_omega_running then
-      start_prover (); 
+      start_prover ();
     if (!omega_call_count = !omega_restart_interval) then
       begin
         restart ("Regularly restart:2");
@@ -474,7 +475,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Debug.no_2 "Omega:send_and_receive" pr string_of_float pr2 send_and_receive f timeout
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -607,7 +608,7 @@ let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
 
 let is_sat_with_check pr_weak pr_strong (pe : formula) sat_no : bool option =
   let pf = !print_pure in
-  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool)
     (fun _ -> is_sat_with_check pr_weak pr_strong pe sat_no) pe
 
 let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
@@ -615,13 +616,13 @@ let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option 
 
 let is_sat_with_check_ops pr_weak pr_strong (pe : formula) sat_no : bool option =
   let pf = !print_pure in
-  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool) 
+  Debug.no_1 "Omega.is_sat_with_check" pf (pr_option string_of_bool)
     (fun _ -> is_sat_with_check_ops pr_weak pr_strong pe sat_no) pe
 
 let is_sat (pe : formula) sat_no : bool =
   try
     is_sat pe sat_no
-  with Illegal_Prover_Format s -> 
+  with Illegal_Prover_Format s ->
     begin
       print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
       print_endline_quiet ("Apply Omega.is_sat on formula :"^(!print_pure pe));
@@ -663,7 +664,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
         try
           not (check_formula 2 (fomega ^ "\n") !in_timeout)
         with
-        | Procutils.PrvComms.Timeout as exc -> 
+        | Procutils.PrvComms.Timeout as exc ->
           let () = set_proof_result ("TIMEOUT") in
           if !Globals.dis_provers_timeout then (stop (); raise exc)
           else begin
@@ -695,7 +696,7 @@ let is_valid_ops pr_weak pr_strong (pe : formula) timeout: bool =
 let is_valid_ops p e pe tm =
   try
     Wrapper.wrap_silence_output (is_valid_ops p e pe) tm
-  with e -> 
+  with e ->
     begin
       if !Globals.oc_warning then
         let () = x_binfo_pp "WARNING: exception from Omega.is_valid" no_pos in
@@ -719,7 +720,7 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 (*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = 
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool =
   do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
@@ -743,9 +744,9 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
-    if result then 
-      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
-    else 
+    if result then
+      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n")
+    else
       output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
@@ -757,7 +758,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
-  imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
+  imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout
 
 let imply_with_check pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
   do_with_check2 "" (fun a c -> imply_ops pr_weak pr_strong a c imp_no timeout) ante conseq
@@ -768,7 +769,7 @@ let imply_with_check_ops pr_weak pr_strong (ante : formula) (conseq : formula) (
 let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool =
   try
     imply_ops pr_weak pr_strong ante conseq imp_no timeout
-  with Illegal_Prover_Format s -> 
+  with Illegal_Prover_Format s ->
     begin
       print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
       print_endline_quiet ("Apply Omega.imply on ante Formula :"^(!print_pure ante));
@@ -786,7 +787,7 @@ let is_valid (pe : formula) timeout : bool =
   let (pr_w,pr_s) = drop_complex_ops in
   try
     is_valid_ops pr_w pr_s pe timeout
-  with Illegal_Prover_Format s -> 
+  with Illegal_Prover_Format s ->
     begin
       print_endline_quiet ("\nWARNING : Illegal_Prover_Format for :"^s);
       print_endline_quiet ("Apply Omega.is_valid on Formula :"^(!print_pure pe));
@@ -795,7 +796,7 @@ let is_valid (pe : formula) timeout : bool =
     end
 
 let filter_imm_var_eq sv e f f_imm f_def =
-  if is_True f (* && is_ann_typ sv  *)then 
+  if is_True f (* && is_ann_typ sv  *)then
     match e with
     | Var (ev, _) -> if (Str.string_match (Str.regexp "In_[0-9]*") (name_of_sv ev) 0 ) then f_imm else f_def
     | _ -> f_def
@@ -900,13 +901,13 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
   let pe = Trans_arr.translate_array_one_formula pe in
   let () = x_tinfo_hp (add_str "simplify_ops_x(after trans_arr):" !print_formula) pe no_pos in
   begin
-    let svl0 = Cpure.fv pe in	
+    let svl0 = Cpure.fv pe in
     let svl,fr_svl = mkSpecVarList 0 svl0 in
     let ss1 = List.combine svl fr_svl in
     let ss2 = List.combine fr_svl svl in
     let pe1 =  Cpure.subst ss1 pe in
     (*let pe = drop_varperm_formula pe in*)
-    let v = try 
+    let v = try
         (* Debug.info_pprint "here1" no_pos; *)
         Some (omega_of_formula 8 pr_weak pr_strong pe1)
       with | Illegal_Prover_Format s ->
@@ -916,7 +917,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
     match v with
     | None -> (* Cpure.subst ss2 *) pe
     | Some fstr ->
-      (* Debug.info_pprint "here2" no_pos;*) 
+      (* Debug.info_pprint "here2" no_pos;*)
       omega_subst_lst := [];
       (* let vars_list = get_vars_formula pe1 in *)
       (*todo: should fix in code of OC: done*)
@@ -971,8 +972,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 let () = print_endline_quiet ("WARNING (cannot simplify) : "^(!print_pure pe)) in
                 let () = print_endline_quiet ("Exception : "^exs) in
                 (* WN : 2 statements below disabled for TermInfer *)
-                (* Printf.eprintf "Unexpected exception : %s" exs; *) 
-                (* restart ("Unexpected exception when checking #simplify "^exs^"\n "); *)  
+                (* Printf.eprintf "Unexpected exception : %s" exs; *)
+                (* restart ("Unexpected exception when checking #simplify "^exs^"\n "); *)
                 (* Cpure.subst ss2 *) pe
               end
           in
@@ -983,7 +984,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
           simp_f (* Cpure.subst ss2  simp_f *)
         with
         (* Timeout exception of provers is not expected at this level *)
-        | Procutils.PrvComms.Timeout as exc -> let () = is_complex_form := false in raise exc 
+        | Procutils.PrvComms.Timeout as exc -> let () = is_complex_form := false in raise exc
         | _ -> let () = is_complex_form := false in
           (* Cpure.subst ss2 *) pe (* not simplified *)
       end
@@ -991,11 +992,11 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
 
 let simplify_ops pr_weak pr_strong (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.simplify_ops" pf pf 
+  Debug.no_1 "Omega.simplify_ops" pf pf
     (fun _ -> simplify_ops_x pr_weak pr_strong pe) pe
 
 let simplify (pe : formula) : formula =
-  let pr_w, pr_s = 
+  let pr_w, pr_s =
     (* if !Globals.non_linear_flag then drop_nonlinear_formula_ops  *)
     (* else *) no_drop_ops in
   (* WN:todo - should not simplify with non-linear *)
@@ -1160,7 +1161,7 @@ let pairwisecheck (pe : formula) : formula =
         let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
       (* trans_bool *) r
-      with 
+      with
       | End_of_file ->
           let () = set_proof_result ("END_OF_FILE") in
           restart ("PAIRWISECHECK: End_of_file exception occurs!\n");

@@ -1091,6 +1091,7 @@ and pr_pure_formula  (e:P.formula) =
     pr_formula_label_opt lbl;
     fmt_string "exists("; pr_spec_var x; fmt_string ":";
     pr_pure_formula f; fmt_string ")"
+  | P.SecurityForm (lbl, f, _) -> fmt_string "c#: "; pr_sec_label lbl; fmt_string "("; pr_pure_formula f; fmt_string ")"
 
 and pr_term_ann_debug pr_short ann =
   match ann with
@@ -5361,6 +5362,7 @@ and html_of_pure_formula f =
     html_forall ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
   | P.Exists (x, f1, lbl, l) ->
     html_exist ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
+  | P.SecurityForm (lbl, f, _) -> x_fail "SecurityForm: To be implemented"
 
 let rec html_of_h_formula h = match h with
   | Star ({h_formula_star_h1 = h1;

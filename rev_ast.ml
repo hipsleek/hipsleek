@@ -124,6 +124,7 @@ and rev_trans_pure f = match f with
   | CP.Not (f,lbl,pos)-> IP.Not (rev_trans_pure f, lbl, pos)
   | CP.Forall (v,f,lbl,pos)->  IP.Forall (rev_trans_spec_var v,rev_trans_pure f, lbl, pos)
   | CP.Exists (v,f,lbl,pos)->  IP.Exists (rev_trans_spec_var v,rev_trans_pure f, lbl, pos)
+  | CP.SecurityForm (lbl, f, pos) -> x_fail "TODO"
 
 let rec rev_trans_mix f = rev_trans_pure(Mcpure.pure_of_mix f)
 
