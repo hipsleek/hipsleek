@@ -2388,6 +2388,8 @@ cexp_w:
     | t=cid -> Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
     | `NOT; `OPAREN; c=pure_constr; `CPAREN -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))
     | `NOT; t=cid -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
+    | `SEC_CONTEXT; `COLON; lbl = sec_expr; `OPAREN; pc = SELF; `CPAREN ->
+        apply_pure_form1 (fun f -> P.SecurityForm (lbl, f, get_pos_camlp4 _loc 1)) pc
     ]
   ];
 
