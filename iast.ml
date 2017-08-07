@@ -2199,6 +2199,7 @@ and collect_data_view_from_pure_formula_x (f0 : P.formula) (data_decls: data_dec
   | P.Not (f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
   | P.Forall (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
   | P.Exists (_, f1, _, _) -> collect_data_view_from_pure_formula f1 data_decls henv
+  | P.SecurityForm (_, f, _) -> collect_data_view_from_pure_formula f data_decls henv
 
 and collect_data_view_from_pure_formula (f0 : P.formula) (data_decls: data_decl list)
     (henv: (ident * typ) list)

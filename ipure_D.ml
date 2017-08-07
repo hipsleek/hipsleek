@@ -53,6 +53,7 @@ type formula =
   | Not of (formula *(formula_label option)* loc)
   | Forall of ((ident * primed) * formula *(formula_label option)* loc)
   | Exists of (( ident * primed) * formula *(formula_label option)* loc)
+  | SecurityForm of sec_label * formula * loc
 
 (* Boolean constraints *)
 and b_formula = p_formula * ((bool * int * (exp list)) option)

@@ -815,6 +815,7 @@ and gather_type_info_pure_x prog (p0 : IP.formula) (tlist : spec_var_type_list) 
         let n_tlist = x_add gather_type_info_pure prog qf ((qv,vk)::n_tl) in
         n_tlist
       end
+  | IP.SecurityForm (lbl, f, pos) -> x_add gather_type_info_pure prog f tlist
 
 and gather_type_info_pure prog (p0 : IP.formula) (tlist : spec_var_type_list) : spec_var_type_list =
   (* Debug.no_eff_2 "gather_type_info_pure" [false;true]  (Iprinter.string_of_pure_formula) string_of_tlist string_of_tlist *)

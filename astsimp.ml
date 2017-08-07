@@ -8506,6 +8506,7 @@ and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formu
     let pf = x_add trans_pure_formula f tlist in
     let sv = trans_var (v,p) tlist pos in
     CP.mkExists [ sv ] pf lbl pos
+  | IP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (trans_sec_label tlist pos lbl, x_add trans_pure_formula f tlist, pos)
 
 and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   let pr_f = !IP.print_formula in

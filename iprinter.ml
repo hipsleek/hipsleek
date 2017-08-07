@@ -465,6 +465,7 @@ and string_of_pure_formula f = match f with
                                          ^ " (" ^ (string_of_pure_formula f) ^ ")"
   | P.Exists (x, f,lbl, l)            -> "ex " ^ (string_of_id x)
                                          ^ " (" ^ (string_of_pure_formula f) ^ ")"
+  | P.SecurityForm (lbl, f, loc) -> "c#: " ^ string_of_sec_label lbl ^ " (" ^ string_of_pure_formula f ^ ")"
 ;;
 
 (* TOCHECK : what is the purpose? *)

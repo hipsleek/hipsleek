@@ -156,6 +156,7 @@ let rec fv (f : formula) : (ident * primed) list = match f with
   | Not (nf, _,_) -> fv nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
+  | SecurityForm (_, f, _) -> fv f
 
 and combine_pvars p1 p2 =
   let fv1 = fv p1 in
@@ -473,6 +474,7 @@ and no_andl  = function
   | BForm _ | And _ | Not _ | Forall _ | Exists _  -> true
   | Or (f1,f2,_,_) -> no_andl f1 && no_andl f2
   | AndList _ -> false
+  | SecurityForm (_, f, _) -> no_andl f
 
 and mkOr f1 f2 lbl pos = match f1 with
   | BForm ((BConst (false, _), _), _) -> f2
@@ -595,7 +597,7 @@ and build_relation relop alist10 alist20 pos =
 and pos_of_formula (f : formula) = match f with
   | BForm ((pf,_),_) -> pos_of_pf pf
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
-  | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
+  | Forall (_,_,_,p) -> p | Exists (_,_,_,p) | SecurityForm (_, _, p) -> p
   | AndList l -> match l with | x::_ -> pos_of_formula (snd x) | _-> no_pos
 
 
@@ -713,6 +715,7 @@ and apply_one (fr, t) f = match f with
       let fresh_v = fresh_var v in
       Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
     else Exists (v, apply_one (fr, t) qf, lbl, pos)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_one (fr, t) f, pos)
 
 and b_apply_one ((fr, t) as p) bf =
   let (pf,il) = bf in
@@ -947,6 +950,7 @@ and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = matc
   | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)
   | Forall (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
   | Exists (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
+  | SecurityForm (_, f, _) -> look_for_anonymous_pure_formula f
 
 
 and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
@@ -1130,6 +1134,7 @@ let rec break_pure_formula (f: formula) : b_formula list =
   | Not (f, _, _) -> break_pure_formula f
   | Forall (_, f, _, _) -> break_pure_formula f
   | Exists (_, f, _, _) -> break_pure_formula f
+  | SecurityForm (_, f, _) -> break_pure_formula f
 
 
 
@@ -1180,7 +1185,8 @@ and f_contain_vars_exp f=
   | AndList fs -> List.exists (fun (_,f1) -> recf f1) fs
   | Not (f1, _, _)
   | Forall (_,f1,_,_)
-  | Exists (_,f1,_,_) -> recf f1
+  | Exists (_,f1,_,_)
+  | SecurityForm (_, f1, _) -> recf f1
 
 and p_contain_vars_exp (pf) : bool = match pf with
   | Frm _
@@ -1755,6 +1761,7 @@ and float_out_pure_min_max (p : formula) : formula =
   | Not (f1,lbl, l) -> Not((float_out_pure_min_max f1), lbl, l)
   | Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   | Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, float_out_pure_min_max f, loc)
 
 let find_equal_var (p:formula) : ((ident*primed) * (ident*primed)) list =
   (match p with
@@ -1796,7 +1803,8 @@ let rec find_p_val x v p = match p with
   | Or (f1,f2,_,_) -> (find_p_val x v f1) && (find_p_val x v f2)
   | Not (f,_,_)
   | Forall (_,f,_,_)
-  | Exists (_,f,_,_)-> find_p_val x v f
+  | Exists (_,f,_,_)
+  | SecurityForm (_, f, _) -> find_p_val x v f
 
 
 (* get type of an expression *)
@@ -2270,6 +2278,8 @@ let rec transform_formula_x f (e : formula) : formula =
       | Exists (v,e,fl,l) ->
         let ne = transform_formula f e in
         Exists(v,ne,fl,l)
+      | SecurityForm (lbl, e, loc) ->
+          SecurityForm (lbl, transform_formula f e, loc)
     )
 
 and transform_formula f (e:formula) :formula =
@@ -2304,7 +2314,8 @@ let rec is_bexp_x f=
   | Or (f1,f2,_,_) -> (recf f1)&&(recf f2)
   | Not (f1, _, _)
   | Forall (_,f1,_,_)
-  | Exists (_,f1,_,_) -> (recf f1)
+  | Exists (_,f1,_,_)
+  | SecurityForm (_, f1, _) -> (recf f1)
 
 let is_bexp f=
   let pr = !print_formula in
@@ -2394,6 +2405,7 @@ let rec transform_bexp_form f: formula=
   | Not (f1, a, b) -> Not (recf f1, a,b)
   | Forall (a,f1,b,c) -> Forall (a,recf f1,b,c)
   | Exists (a,f1,b,c) -> Exists(a,recf f1, b, c)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, recf f, loc)
 
 let is_ann_type = (=) AnnT
 

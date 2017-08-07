@@ -2097,6 +2097,8 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       Ipure.Forall (idp, helper_pure_formula f, fl, pos)
     | Ipure.Exists (idp, f, fl, pos) ->
       Ipure.Exists (idp, helper_pure_formula f, fl, pos)
+    | Ipure.SecurityForm (lbl, f, pos) ->
+        Ipure.SecurityForm (lbl, helper_pure_formula f, pos)
   )
   and helper_b_formula (b : Ipure.b_formula) : Ipure.b_formula = (
     match b with
