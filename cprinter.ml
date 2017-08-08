@@ -1056,7 +1056,7 @@ and pr_b_formula (e:P.b_formula) =
         | P.VarBound (var, lbl) ->
             let v = string_of_spec_var var in
             let l = string_of_sec_label lbl in
-            pr_op fmt_string v "<^" l
+            pr_op fmt_string v " <^ " l
       end
 
 and pr_sec_label lbl = fmt_string (string_of_sec_label lbl)
