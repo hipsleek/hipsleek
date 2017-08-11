@@ -29,6 +29,7 @@ relation R1(int r, int a).
 checkentail x::sortHO<v,R0> |- x::sortHO<_,R0>.
 print residue. 
 expect Valid.
+// !!! **WARNING****solver.ml#4442:FREE VAR IN HEAP RHS :[R0]
 
 checkentail x::sortHO<v,Ra> |- x::sortHO<_,Rb>.
 print residue. 
@@ -37,8 +38,8 @@ expect Fail.
 checkentail x::sortHO<v,Rb> |- x::sortHO<_,Ra>.
 print residue. 
 expect Valid.
+// not working
 
-// !!! **WARNING****solver.ml#4442:FREE VAR IN HEAP RHS :[R0]
 
 checkentail Ra(x,y) |- Rb(x,y).
 print residue.
