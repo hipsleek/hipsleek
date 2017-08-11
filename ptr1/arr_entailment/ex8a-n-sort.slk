@@ -18,9 +18,44 @@ pred sortHO<v,R:relation(int,int)> ==
       & R(v,v2) 
 inv self!=null.
 
-relation R(int r, int a) == r<=a .
+relation R(int r, int a) .
+relation Ra(int r, int a) == r<=a .
+relation Rb(int r, int a) == r<a .
 relation R0(int r, int a).
 relation R1(int r, int a).
+
+// shouldn't Ra,Rb be global?
+
+checkentail x::sortHO<v,R0> |- x::sortHO<_,R0>.
+print residue. 
+expect Valid.
+
+checkentail x::sortHO<v,Ra> |- x::sortHO<_,Rb>.
+print residue. 
+expect Fail.
+
+checkentail x::sortHO<v,Rb> |- x::sortHO<_,Ra>.
+print residue. 
+expect Valid.
+
+// !!! **WARNING****solver.ml#4442:FREE VAR IN HEAP RHS :[R0]
+
+checkentail Ra(x,y) |- Rb(x,y).
+print residue.
+expect Fail.
+
+checkentail Rb(x,y) |- Ra(x,y).
+print residue.
+expect Valid.
+
+checkentail R0(x,y) |- R1(x,y).
+print residue.
+expect Fail.
+
+checkentail R1(x,y) |- R1(x,y).
+print residue.
+expect Valid.
+
 
   /* 
 # ex8a.slk

@@ -258,7 +258,18 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                         match t5,t6 with
                           | Some d1, Some d2 -> (n_tl2,Some (Tup2 (d1,d2)))
                           | _ -> (n_tl2,None))
-                    | _,_ -> (tl,None)
+                    | RelT lst1,RelT lst2 -> 
+                          if lst2=[] then
+                            (tl,Some (RelT lst1))
+                          else
+                            (* need to check that parameters unifies *)
+                            let pr = string_of_typ in
+                            let () = x_binfo_hp (add_str "Need to check RelT unifies" (string_of_pair pr pr)) (t1,t2) no_pos in
+                            (tl,Some (RelT lst1))
+                    | _,_ -> 
+                          let pr = string_of_typ in
+                          let () = x_binfo_hp (add_str "Need to cater to type" (string_of_pair pr pr)) (t1,t2) no_pos in
+                          (tl,None)
               end
       )
   in unify k1 k2 tlist
