@@ -1,0 +1,36 @@
+/* selection sort */
+
+data node {
+	int val; 
+	node next; 
+}.
+
+// needs infinity
+/*
+sortA<v> == self::node<v,null> 
+ or self::node<v, p> * p::sortA<v2> & v<=v2 
+inv self!=null;
+*/
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> 
+      & R(v,v2) 
+inv self!=null.
+
+relation R(int r, int a) == r<=a .
+relation R0(int r, int a).
+relation R1(int r, int a).
+
+  /* 
+# ex8a.slk
+
+Why is there a Relt([])?
+
+
+Exception processed: Failure("gather_type_info_var : unexpected exception Failure(\"UNIFICATION ERROR : at location {(Line:18,Col:8),(Line:18,Col:15)} types RelT([int;int]) and RelT([]) are inconsistent\")")
+
+type error..
+
+which branch is working for n-sort.ss?
+  */
