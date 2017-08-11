@@ -1750,7 +1750,7 @@ and float_out_pure_min_max (p : formula) : formula =
       let nargse = List.map fst nargs in
       let t = BForm ((RelForm (r, nargse, l), il), lbl) in
       t
-    | Security _ -> x_fail "TODO"
+    | Security (sec_f, loc) -> BForm (b,lbl)
 
   in
   match p with
