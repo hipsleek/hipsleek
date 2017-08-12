@@ -1,0 +1,36 @@
+//Valid.Valid.Valid.Fail.Fail.Fail
+data node { node next }.
+
+pred lseg<p> == self = p 
+         or self::node<next = r> * r::lseg<p> & self!=p
+         inv true.
+
+lemma "L61" self::lseg<p>  -> (exists r1: self::lseg<r1> * r1::lseg<p>).
+
+relation alloc(node x).
+
+lemma "L62" self::lseg<p>  <- (exists r1: self::lseg<r1> * r1::lseg<p> &
+    (q=null|alloc(x))).
+
+
+infer [@classic]  x::lseg<p> |- x::lseg<r1> * r1::lseg<p>.
+expect Valid.
+print residue.
+
+/*
+# Why two answers?
+ <1>emp&r1=p&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  COND ==>  Match(x,x) ==>  SEARCH ==>  COND ==>  BaseCaseFold]]
+
+<2>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  (Lemma ==> L61(x,x)) ==> (left: L61) ==>  SEARCH ==>  COND ==>  Match(x,x) ==>  SEARCH ==>  SEARCH ==>  COND ==>  Match(r1_61,r1)]]
+*/
+
+
+infer [@classic]   x::lseg<q> * q::lseg<p> |- x::lseg<p> .
+expect Fail.
+print residue.
+
+infer [@classic]   x::lseg<q> * q::lseg<p> & p=null |- x::lseg<p> .
+expect Valid.
+print residue.

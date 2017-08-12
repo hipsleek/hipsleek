@@ -1,0 +1,35 @@
+Test Suites
+===========
+ ls(x,y) * y->x --norm-> y->x * ls(x,y)
+
+ ls(x,y)   |- ex q. ls(x,q) * ls(q,y)
+ ls(x,q)*ls(q,y)   |- ls(x,y) // fail
+
+ ls(x,y) * y->x   |- ex q,x1. x1->q * ls(q,x1) // circular list
+ ls(x,y) * y->x   |- ex q. x->q * ls(q,x) // circular list
+ y->x * ls(x,y)   |- ex q. ls(y,q) // fail
+ y->x * ls(x,y)   |- ex q. ls(y,q) & y=q // fail
+ y->x * ls(x,y)   |- ex q2. ls(y,q) & q->q2 // 
+ y->x * ls(x,y)   |- ex q2. ls(y,q) & q->q2 & y!=q // 
+  ls(x,y)   |- ex q,q1. ls(x,q) * ls(q,q1) * ls(q1,y)
+ ls(x,y)   |- ex q. ls(x,q) * ls(q,y) & q!=y // fail
+ ls(x,y)   |- ex q. ls(x,q) * ls(q,y) & x!=q // fail
+ ls(x,y)   |- ex q. ls(x,q) * q->y // fail
+ ls(x,y) & x!=y   |- ex q. ls(x,q) * q->y 
+ ls(x,y) & x!=y   |- ex q. ls(x,q) * q->y & x!=q //fail
+ ls(x,y)   |- ex y1. ls(x,y1)
+ ls(x,y)   |- ex x1. ls(x1,y)
+ ls(x,y)   |- ex x1,y1. ls(x1,y1)
+ ls(x,y)   |- ex y1,y2. ls(x,y1)*ls(y1,y2)
+ ls(x,q)*ls(q,y)   |- ls(x,y) // fail
+ ls(x,q)*ls(q,nil)   |- ls(x,y) 
+ ls(x,q)*ls(q,y)*y->r   |- ex v. ls(x,y)*y->v 
+ ls(x,q)*ls(q,y)*y->x   |- ex v. ls(x,y)*y->v 
+ ls(x,q)*ls(q,y)*y->x   |- ls(x,y)*y->x 
+ ls(x,q)*ls(q,x)   |- ex y. ls(x,y)*y->x // fail
+ ls(x,q)*ls(q,x) & x!=q   |- ex y. ls(x,y)*y->x // 
+ ls(x,q)*ls(q,x) & x!=q   |- ex y,y1. ls(x,y)*y->y1*y1->x // 
+ ls(x,q)*ls(q,x) & x!=q   |- ex y. x->y * ls(y,x) // 
+ ls(x,q)*ls(q,x) & x!=q   |- ex y,y1. x->y * ls(y,y1)*y1->x 
+ ls(x,q)*ls(q,x) & x!=q   |- ex y,y1,y2. x->y * ls(y,y1)*y1->y2*y2->x // fail
+ ls(x,q)*ls(q,x) & x!=q   |- ex y,y1,y2. x->y * ls(y,y1)*y1->y2 & y!=y1 // fail
