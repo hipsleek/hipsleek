@@ -529,7 +529,13 @@ let construct_context_lst aflst neg =
       [neg_ctx]
 ;;
 
-
+let drop_antiframe implylst =
+  List.filter
+    (fun ((aeset,afp,antiframe),(eset,fp,frame)) ->
+      List.length antiframe = 0 && not(isValid afp))
+    implylst
+;;
+  
 let array_entailment_biabduction_interface lhs rhs =
   let (f,norm) = array_entailment_biabduction_norm lhs rhs in
   let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
@@ -544,4 +550,19 @@ let array_entailment_biabduction_interface lhs rhs =
   (true, mkSuccCtx (construct_context_lst implylst neg), [])
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
+
+let array_entailment_frame_interface lhs rhs =
+  let (f,norm) = array_entailment_biabduction_norm lhs rhs in
+  let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
+  let () = print_endline_verbose (str_pre_condition f) in
+  let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
+  let () = print_endline_verbose (str_norm_pre_condition norm) in
+  (* let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in *)
+  let simp_norm = simplify_norm_pre_condition norm in
+  (* let () = print_endline_verbose (str_norm_pre_condition simp_norm) in *)
+  (* let () = print_endline_verbose ("=========== extracted anti-frame ==============") in *)
+  let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
+  (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), [])
+(* (true, mkEmptySuccCtx (),[]) *)
+;;  
 
