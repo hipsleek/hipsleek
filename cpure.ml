@@ -11258,6 +11258,7 @@ let is_update_array_relation (r:string) =
 
 let drop_complex_ops =
   let pr_weak b = match b with
+    | Security _ -> Some (mkTrue no_pos)
     | LexVar t_info -> Some (mkTrue t_info.lex_loc)
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
@@ -11266,6 +11267,7 @@ let drop_complex_ops =
     | _ -> if has_template_b_formula (b, None)
       then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
+    | Security _ -> Some (mkFalse no_pos)
     | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
@@ -11286,7 +11288,15 @@ let drop_lexvar_ops =
       then Some (mkFalse (pos_of_b_formula (b, None))) else None in
   (pr_weak,pr_strong)
 
-let drop_complex_ops_z3 = drop_lexvar_ops
+let drop_complex_ops_z3 =
+  let (drop_lexvar_weak, drop_lexvar_strong) = drop_lexvar_ops in
+  let drop_weak = function
+    | Security _ -> Some (mkTrue no_pos)
+    | f -> drop_lexvar_weak f in
+  let drop_strong = function
+    | Security _ -> Some (mkFalse no_pos)
+    | f -> drop_lexvar_strong f in
+  (drop_weak, drop_strong)
 
 let memo_complex_ops stk bool_vars is_complex =
   let pr b = match b with
@@ -13957,6 +13967,18 @@ and is_bag_constraint_weak_x (e: formula) : bool =
   in
   let or_list = List.fold_left (||) false in
   fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
+
+and is_security_constraint = function
+  | Security _ -> true
+  | _ -> false
+
+and drop_security_formula' pf =
+  match pf with
+  | Security _ -> mkTrue_p no_pos
+  | _ -> pf
+
+and drop_security_formula pf =
+  Debug.no_1 "drop_security_formula" !print_p_formula !print_p_formula drop_security_formula' pf
 
 and is_bag_constraint_weak (e: formula) : bool =
   Debug.no_1 "is_bag_constraint_weak" !print_formula string_of_bool
