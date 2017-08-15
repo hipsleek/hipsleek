@@ -4150,19 +4150,45 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
                 x_add heap_entail_after_sat_struc 4 prog is_folding has_post
                     n_ctx conseq tid delayed_f join_id pos pid ss
               else
-                (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
-                let () = flush(stdout) in
-                let () = x_tinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
-                let () = flush(stdout) in
-                let es = (CF.add_to_estate_with_steps es ss) in
-                let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
-                let () = flush(stdout) in
-                let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
-                  x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
-                in
-                let m = "***heap_entail_cnj_lhs_struc(after)** " in
-                let () = lemma_soundness # start_disjunct (m^x_loc) in
-                (filter_set tmp, prf)
+                let new_ante = es.es_formula in
+                let new_conseq = CF.extract_cformula_from_struc_formula conseq in
+                if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
+                then
+                  let () = y_tinfo_pp "array entailment" in
+                  let () = y_tinfo_pp (!CF.print_struc_formula conseq) in
+                  let () = y_tinfo_pp (!CF.print_formula new_conseq) in
+                  let full_rs =
+                    if !Globals.array_pre
+                    then
+                      Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
+                    else
+                      Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
+                  in
+                  (full_rs,Prooftracer.Unknown)
+                else
+                  if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
+                  then
+                    let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
+                    (full_rs,Prooftracer.Unknown)
+                  else
+                    if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
+                    then
+                      let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
+                      (full_rs,Prooftracer.Unknown)
+                    else
+                      (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
+                      let () = flush(stdout) in
+                      let () = x_tinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+                      let () = flush(stdout) in
+                      let es = (CF.add_to_estate_with_steps es ss) in
+                      let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+                      let () = flush(stdout) in
+                      let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
+                        x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
+                      in
+                      let m = "***heap_entail_cnj_lhs_struc(after)** " in
+                      let () = lemma_soundness # start_disjunct (m^x_loc) in
+                      (filter_set tmp, prf)
             end
           in wrap_trace es.es_path_label exec ()
 

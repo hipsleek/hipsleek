@@ -1289,6 +1289,12 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 (* For array entailment *)
 let array_verbose = ref false
 ;;
+let array_entailment = ref false
+;;
+let array_entailment_frame = ref false
+;;
+let array_biabduction = ref false
+;;
 
 let array_proof_search = ref false
 ;;

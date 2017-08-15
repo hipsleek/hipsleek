@@ -18,6 +18,12 @@ infer[@arr_en]  base::AsegNE<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
+// // 1.5
+// checkentail  base::AsegNE<2,2>  |- base::AsegNE<1,2>.
+// print residue.
+// expect Valid.
+
+
 // 2
 infer[@arr_en]  base::Elem<1,2>  |- base::Elem<1,2>.
 print residue.

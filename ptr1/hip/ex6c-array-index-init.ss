@@ -35,6 +35,14 @@ void init2(arrI base,int i)
   }
 }
 
+void init3(arrI base)
+  requires base::arr_seg<i,m> & i=1 & m=2
+  ensures base::arr_seg<i,m>;
+{
+ upd_arr(base,1,0);
+	return;
+}
+
 
 /*
 ex6b.ss (due to incomplete same_base computation)

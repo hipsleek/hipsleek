@@ -503,11 +503,12 @@ let construct_context_lst aflst neg =
       else
         construct_exists h_frame fpf feset
     in
+    let infer_pure = simplify (mkExists aeset apf) in
     mkCtx
       {es with
         es_formula = state ;
         es_infer_heap = [h_antiframe];
-        es_infer_pure = [apf];
+        es_infer_pure = [infer_pure];
       }
   in
   let construct_helper_neg pf =
@@ -520,19 +521,22 @@ let construct_context_lst aflst neg =
   in
   let imply_ctx = List.map construct_helper_imply aflst in
   let neg_ctx = construct_helper_neg neg in
-  if List.length imply_ctx > 0 && isFalse neg
+  if !Globals.array_entailment_frame
   then imply_ctx
   else
-    if List.length imply_ctx > 0
-    then neg_ctx::imply_ctx
+    if List.length imply_ctx > 0 && isFalse neg
+    then imply_ctx
     else
-      [neg_ctx]
+      if List.length imply_ctx > 0
+      then neg_ctx::imply_ctx
+      else
+        [neg_ctx]
 ;;
 
 let drop_antiframe implylst =
   List.filter
     (fun ((aeset,afp,antiframe),(eset,fp,frame)) ->
-      List.length antiframe = 0 && not(isValid afp))
+      List.length antiframe = 0 (* && (isValid (mkExists aeset afp)) *))
     implylst
 ;;
   
@@ -547,11 +551,16 @@ let array_entailment_biabduction_interface lhs rhs =
   (* let () = print_endline_verbose (str_norm_pre_condition simp_norm) in *)
   (* let () = print_endline_verbose ("=========== extracted anti-frame ==============") in *)
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
-  (true, mkSuccCtx (construct_context_lst implylst neg), [])
+  mkSuccCtx (construct_context_lst implylst neg)
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
 
 let array_entailment_frame_interface lhs rhs =
+  let () = print_endline_verbose ("=========== input LHS formula ==============") in
+  let () = print_endline_verbose (!str_cformula lhs) in
+  let () = print_endline_verbose ("=========== input RHS formula ==============") in
+  let () = print_endline_verbose (!str_cformula rhs) in
+
   let (f,norm) = array_entailment_biabduction_norm lhs rhs in
   let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
   let () = print_endline_verbose (str_pre_condition f) in
@@ -562,7 +571,8 @@ let array_entailment_frame_interface lhs rhs =
   (* let () = print_endline_verbose (str_norm_pre_condition simp_norm) in *)
   (* let () = print_endline_verbose ("=========== extracted anti-frame ==============") in *)
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
-  (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), [])
+  mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg)
+  (* (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), []) *)
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;  
 

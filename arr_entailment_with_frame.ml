@@ -458,12 +458,15 @@ let array_entailment_classical_interface lhs rhs =
   (* let () = print_endline ("Frame: "^(str_frameFormula f)) in *)
   if check_validity f
   then
-    (true,mkEmptySuccCtx (),[])
+    mkEmptySuccCtx ()
+    (* (true,mkEmptySuccCtx (),[]) *)
   else
-    (false,mkEmptyFailCtx (),[])
+    mkEmptyFailCtx ()
+    (* (false,mkEmptyFailCtx (),[]) *)
 ;;
 
 let array_entailment_classical_infer_interface lhs rhs =
   let f = frameFormula_to_pure (array_entailment_classical lhs rhs) in
-  (true,mkCtxWithPure (simplify f),[])
+  mkCtxWithPure (simplify f)
+  (* (true,mkCtxWithPure (simplify f),[]) *)
 ;;
