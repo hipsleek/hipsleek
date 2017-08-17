@@ -90,47 +90,6 @@ let simplify_pure_in_norm_pre_condition =
             NormOr (List.map (function (vset,clst,base) ->
                                        (vset,[simplify (mkAndlst clst)],base)) lst))
 ;;
-  
-(* let merge_false_in_norm_pre_condition = *)
-(*   let merge_helper fnormlst = *)
-(*     let allcase = List.fold_left *)
-(*                     (fun r item -> *)
-(*                       match item with *)
-(*                       | NormBaseNeg (vset,clst,pflst) -> mkOr (mkAndlst clst) r *)
-(*                       | _ -> failwith "merge_false_in_norm_pre_condition: Invalid input") *)
-(*                     (mkFalse ()) fnormlst *)
-(*     in *)
-(*     match fnormlst with *)
-(*     | (NormBaseNeg (_,_,pflst))::tail -> *)
-(*        mkNormBaseNeg [] [simplify allcase] pflst *)
-(*     | _ -> failwith "merge_helper: Invalid input" *)
-(*   in *)
-(*   function NormOr nlst -> *)
-(*            let (falselst, others) = List.partition *)
-(*                                       (function *)
-(*                                          NormBaseNeg _ -> true *)
-(*                                        | _ -> false) nlst *)
-(*            in *)
-           
-
-
-
-
-
-
-  
-
-(*   match norm with *)
-(*   | NormBaseNeg _ *)
-(*   | NormBaseImply _ -> *)
-(*      norm *)
-(*   | NormOr (vset,nlst) -> *)
-(*      if List.length falselst = 0 *)
-(*      then norm *)
-(*      else *)
-(*        mkNormOr vset ((merge_helper falselst)::others) *)
-(* ;; *)
-
 
 let simplify_norm_pre_condition norm =
   (simplify_pure_in_norm_pre_condition norm)
@@ -370,17 +329,45 @@ let array_entailment_biabduction_norm lhs rhs =
               failwith "Gap_p vs Gap_p: Invalid case"
          )
   in
-
-  
+  (* Both LHS and RHS are given some order *)
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
     let orig_lhs_p = (get_sorted_puref_general lhs_h)::lhs_p in
     let orig_rhs_p = (get_sorted_puref_general rhs_h)::rhs_p in
     let f,norm = helper orig_lhs_p (orig_lhs_p,lhs_h) (orig_rhs_p,rhs_h) rhs_e [] [] [] 0 in
     (mkBForall (lhs_e,f),norm)
   in
+  (* LHS is given some order *)
+  let helper_lhs_sorted (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
+    let rhs_perm = generic_get_permutation rhs_h in
+    match (List.map
+             (fun item ->
+               helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,item))
+             rhs_perm ) with
+    | [h] -> h
+    | h::tail ->
+       (List.fold_left
+          (fun (rf,NormOr rnorm) (nf,NormOr nnorm) ->
+            (mkBOr [rf;nf], NormOr (rnorm@nnorm))))
+         h tail
+    | [] -> failwith "helper_lhs_sorted: Empty output"
+  in
+
+  (* Neither side is given any order *)
+  let helper_lhs_unsorted (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
+    let lhs_perm = generic_get_permutation lhs_h in
+    let lhs_perm_pure = List.map get_sorted_puref_general lhs_perm in
+    let (flst,normlst) = List.split
+                           (List.map
+                              (fun item ->
+                                helper_lhs_sorted (lhs_e,lhs_p,item)
+                                                  (rhs_e,rhs_p,rhs_h))
+                              lhs_perm)
+    in
+    (mkBAnd flst,combine_norm normlst lhs_perm_pure [])
+  in
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
-  helper_entry (aPredF_to_asegF (transAnte#formula_to_general_formula)) (aPredF_to_asegF (transConseq#formula_to_general_formula))
+  helper_lhs_unsorted (aPredF_to_asegF (transAnte#formula_to_general_formula)) (aPredF_to_asegF (transConseq#formula_to_general_formula))
 ;;
 
 

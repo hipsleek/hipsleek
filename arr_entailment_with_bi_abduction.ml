@@ -102,6 +102,16 @@ let mkBAnd flst =
           [] flst)
 ;;
 
+let mkBOr flst =
+  BOr (List.fold_left
+          (fun r item ->
+            match item with
+            | BOr flst1 ->
+               flst1@r
+            | _ -> item::r )
+          [] flst)
+;;
+  
 let mkBExists (vset,f) =
   if List.length vset = 0
   then f

@@ -861,6 +861,25 @@ class arrPredTransformer initcf = object(self)
 end
 ;;
 
+let generic_get_permutation lst =
+  let rec insert k lst =
+    match lst with
+    | h::tail -> 
+       (k::lst)::(List.map (fun item -> h::item) (insert k tail))
+    | [] -> [[k]]
+  in
+  let rec helper lst =
+    (* let () = print_endline ("call helper here " ^ (str_list str_asegPred lst)) in *)
+    match lst with
+    | [] -> [[]]
+    | h::tail -> List.flatten (List.map (insert h) (helper tail))
+  in
+  let r = helper lst in
+  if List.length r = 0
+  then failwith "empty list 2"
+  else r
+;;
+
 class arrPredTransformer_orig initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)

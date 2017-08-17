@@ -4703,9 +4703,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             let res_ctx, res_prf = match formula_cont with
                                               | Some l -> x_add heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
                                               | None -> (n_ctx_list, prf) in
-                                            x_binfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
+                                            x_tinfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
-                                            x_binfo_hp (add_str "after pre 1: " (Cprinter.string_of_list_context)) res_ctx no_pos;
+                                            x_tinfo_hp (add_str "after pre 1: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             (* let () = Debug.info_hprint (add_str "conseq:EBASE rel_ass_stk end" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in *)
                                             (res_ctx,res_prf)
                                                 (*  let () = print_endline ("###: 3") in*)
