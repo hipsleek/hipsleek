@@ -3918,7 +3918,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
           let rf2 = rename_bound_vars f2 in
           let qvars1, base1 = split_quantifiers rf1 in
           let qvars2, base2 = split_quantifiers rf2 in
-          let new_base = mkStar_combine base1 base2 flow_tr pos in
+          let new_base = mkStar_combine base2 base1 flow_tr pos in (* Does the order matter here? *)
           let new_h, new_p, new_vp, new_fl, new_t, new_a = split_components new_base in
           let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_t new_fl new_a pos in (* qvars[1|2] are fresh vars, hence no duplications *)
           resform
@@ -20669,6 +20669,58 @@ let extract_formula_from_Ebase_struc_formula strucf =
      elim_exists sbf.formula_struc_base
   | _ -> failwith "extract_formula_from_Ebase_struc_formula: Not valid input"
 ;;
+
+let add_implicit_existential_variables cf impl =
+  if List.length impl = 0
+  then cf
+  else
+    match cf with
+    | Base ({  
+               formula_base_heap = bh;
+               formula_base_vperm = vp;
+               formula_base_pure = pf;
+               formula_base_type = bt;
+               formula_base_and = ba;
+               formula_base_flow = bf; 
+               formula_base_label = bl;
+               formula_base_pos = bloc; }) ->
+       ( Exists ({
+                    formula_exists_qvars = impl;
+                    formula_exists_heap = bh;
+                    formula_exists_vperm = vp;
+                    formula_exists_pure = pf;
+                    formula_exists_type = bt;
+                    formula_exists_and = ba;
+                    formula_exists_flow = bf; 
+                    formula_exists_label = bl;
+                    formula_exists_pos = bloc;
+       }))
+    |  Exists ({
+                  formula_exists_qvars = eset;
+                  formula_exists_heap = bh;
+                  formula_exists_vperm = vp;
+                  formula_exists_pure = pf;
+                  formula_exists_type = bt;
+                  formula_exists_and = ba;
+                  formula_exists_flow = bf; 
+                  formula_exists_label = bl;
+                  formula_exists_pos = bloc
+              }) ->
+        Exists
+          ({
+              formula_exists_qvars = impl@eset;
+              formula_exists_heap = bh;
+              formula_exists_vperm = vp;
+              formula_exists_pure = pf;
+              formula_exists_type = bt;
+              formula_exists_and = ba;
+              formula_exists_flow = bf; 
+              formula_exists_label = bl;
+              formula_exists_pos = bloc
+          })
+    | _ -> failwith "TO BE IMPLEMENTED"
+;;
+
 
 let rec extract_cformula_from_struc_formula strucf =
   let is_anon_var (SpecVar (_,name,_)) =

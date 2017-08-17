@@ -4148,47 +4148,22 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
                 in
                 let n_ctx = List.fold_left (fun c1 c2 -> CF.OCtx (c1, c2)) (List.hd orctx) (List.tl orctx) in
                 x_add heap_entail_after_sat_struc 4 prog is_folding has_post
-                    n_ctx conseq tid delayed_f join_id pos pid ss
+                      n_ctx conseq tid delayed_f join_id pos pid ss
               else
-                let new_ante = es.es_formula in
-                let new_conseq = CF.extract_cformula_from_struc_formula conseq in
-                if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
-                then
-                  let () = y_tinfo_pp "array entailment" in
-                  let () = y_tinfo_pp (!CF.print_struc_formula conseq) in
-                  let () = y_tinfo_pp (!CF.print_formula new_conseq) in
-                  let full_rs =
-                    if !Globals.array_pre
-                    then
-                      Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
-                    else
-                      Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
-                  in
-                  (full_rs,Prooftracer.Unknown)
-                else
-                  if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
-                  then
-                    let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
-                    (full_rs,Prooftracer.Unknown)
-                  else
-                    if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
-                    then
-                      let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
-                      (full_rs,Prooftracer.Unknown)
-                    else
-                      (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
-                      let () = flush(stdout) in
-                      let () = x_tinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
-                      let () = flush(stdout) in
-                      let es = (CF.add_to_estate_with_steps es ss) in
-                      let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
-                      let () = flush(stdout) in
-                      let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
-                        x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
-                      in
-                      let m = "***heap_entail_cnj_lhs_struc(after)** " in
-                      let () = lemma_soundness # start_disjunct (m^x_loc) in
-                      (filter_set tmp, prf)
+
+                (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
+                let () = flush(stdout) in
+                let () = x_tinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+                let () = flush(stdout) in
+                let es = (CF.add_to_estate_with_steps es ss) in
+                let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+                let () = flush(stdout) in
+                let tmp, prf = (* if CF.is_en_error_exc es && not (is_dis_error_exc es) then *)
+                  x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
+                in
+                let m = "***heap_entail_cnj_lhs_struc(after)** " in
+                let () = lemma_soundness # start_disjunct (m^x_loc) in
+                (filter_set tmp, prf)
             end
           in wrap_trace es.es_path_label exec ()
 
@@ -4724,13 +4699,13 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               else (n_ctx_list, prf)
                                                 (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
                                       | SuccCtx _ ->
-                                            let () = x_tinfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
+                                            let () = x_binfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
                                             let res_ctx, res_prf = match formula_cont with
                                               | Some l -> x_add heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
                                               | None -> (n_ctx_list, prf) in
-                                            x_tinfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
+                                            x_binfo_hp (add_str "after pre 0: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
-                                            x_tinfo_hp (add_str "after pre 1: " (Cprinter.string_of_list_context)) res_ctx no_pos;
+                                            x_binfo_hp (add_str "after pre 1: " (Cprinter.string_of_list_context)) res_ctx no_pos;
                                             (* let () = Debug.info_hprint (add_str "conseq:EBASE rel_ass_stk end" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in *)
                                             (res_ctx,res_prf)
                                                 (*  let () = print_endline ("###: 3") in*)
@@ -5505,70 +5480,97 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
           let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
           ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
     | Ctx es ->
-          (* let () = lemma_soundness # start_disjunct x_loc in *)
-          let exec_old () = 
-            begin
-              let pr = Cprinter.string_of_entail_state_short in
-              Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-              let es = (CF.add_to_estate_with_steps es ss) in
-              let tmp, prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
-              (filter_set tmp, prf)
-            end in
-          let exec () =
-            begin
-              let pr = Cprinter.string_of_entail_state_short in
-              x_dinfo_zp (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-              let es = (CF.add_to_estate_with_steps es ss) in
-              let () = Debug.ninfo_hprint (add_str "es (before vperm)" pr) es no_pos in
-              (* let es = if (!Globals.ann_vp) then                                                                       *)
-              (*   (* FILTER OUT VarPerm formula *)                                                                       *)
-              (*   (* let es_f = es.es_formula in                                                                      *) *)
-              (*   (* let es_f = normalize_varperm_formula es_f in                                                     *) *)
-              (*   (* (* let vperm_fs, _ = filter_varperm_formula es_f in *)                                           *) *)
-              (*   (* (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)         *) *)
-              (*   (* let vars = CF.get_varperm_formula es_f VP_Zero in                                                *) *)
-              (*   (* let vars_val = CF.get_varperm_formula es_f VP_Value in                                           *) *)
-              (*   (* let vars_full = CF.get_varperm_formula es_f VP_Full in                                           *) *)
-              (*   (* let new_f = drop_varperm_formula es_f in                                                         *) *)
-              (*   (* let () = if ((vars_val@vars_full)!=[]) then                                                       *) *)
-              (*   (*   print_endline ("\n[Warning] heap_entail_conjunct_lhs:                                          *) *)
-              (*   (*                   the entail state should not include variable                                   *) *)
-              (*   (*                   permissions other than " ^ (string_of_vp_ann VP_Zero) ^                        *) *)
-              (*   (*                   ". They will be filtered out automatically.") in                               *) *)
-              (*   (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *) *)
-              (*   (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *) *)
-              (*   (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *) *)
-              (*   let vps, es_f = VP.strip_vperm_formula es.es_formula in                                                *)
-              (*   let vps = CVP.norm_vperm_sets (CVP.merge_vperm_sets [es.es_vperm_sets; vps]) in                        *)
-              (*   { es with es_formula = es_f; es_vperm_sets = vps }                                                     *)
-              (* else es in                                                                                               *)
-              let () = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
-              (* treat err states as unreachable states *)
-              (* let osubsumed_es, non_subsume_es = x_add_1 Cfutil.partition_error_es es in *)
-              (* let tmp0, prf = match osafe_es with *)
-              (*   | Some es1 -> *)
-              (*         x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos *)
-              (*   | None -> (SuccCtx [ctx], UnsatAnte) *)
-              (* in *)
-              (* let tmp = match oerr_es with *)
-              (*   | None -> tmp0 *)
-              (*   | Some error_es -> begin *)
-              (*       let err_states = SuccCtx [(Ctx error_es)] in *)
-              (*       let lc = match osafe_es with *)
-              (*         | Some _ -> or_list_context err_states tmp0 *)
-              (*         | None -> err_states *)
-              (*       in *)
-              (*       lc *)
-              (*     end *)
-              (* in *)
-              let osubsumed_es, non_subsume_es = if not !Globals.enable_error_as_exc then
-                (Some es), None
-              else if (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
-              then (Some es), None
-              else Cfutil.obtain_subsume_es es conseq
-              in
-              let tmp0, prf = match osubsumed_es with
-                | Some es1 ->
+       let impl_vars = es.es_gen_impl_vars in
+       let () = y_binfo_pp ("IMPL "^(!print_svl impl_vars)) in
+       let new_ante = es.es_formula in
+       let new_conseq = add_implicit_existential_variables conseq impl_vars in
+       if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
+       then
+         let () = y_tinfo_pp "array entailment" in
+         let () = y_tinfo_pp (!CF.print_formula new_conseq) in
+         let full_rs =
+           if !Globals.array_pre
+           then
+             Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
+           else
+             Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
+         in
+         (full_rs,Prooftracer.Unknown)
+       else
+         if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
+         then
+           let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
+           (full_rs,Prooftracer.Unknown)
+         else
+           if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
+           then
+             let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
+             (full_rs,Prooftracer.Unknown)
+           else
+             (* let () = lemma_soundness # start_disjunct x_loc in *)
+             let exec_old () = 
+               begin
+                 let pr = Cprinter.string_of_entail_state_short in
+                 Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+                 let es = (CF.add_to_estate_with_steps es ss) in
+                 let tmp, prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in  
+                 (filter_set tmp, prf)
+               end in
+             let exec () =
+               begin
+                 let pr = Cprinter.string_of_entail_state_short in
+                 x_dinfo_zp (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
+                 let es = (CF.add_to_estate_with_steps es ss) in
+                 let () = Debug.ninfo_hprint (add_str "es (before vperm)" pr) es no_pos in
+                 (* let es = if (!Globals.ann_vp) then                                                                       *)
+                 (*   (* FILTER OUT VarPerm formula *)                                                                       *)
+                 (*   (* let es_f = es.es_formula in                                                                      *) *)
+                 (*   (* let es_f = normalize_varperm_formula es_f in                                                     *) *)
+                 (*   (* (* let vperm_fs, _ = filter_varperm_formula es_f in *)                                           *) *)
+                 (*   (* (* let ls1,ls2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vperm_fs in *)         *) *)
+                 (*   (* let vars = CF.get_varperm_formula es_f VP_Zero in                                                *) *)
+                 (*   (* let vars_val = CF.get_varperm_formula es_f VP_Value in                                           *) *)
+                 (*   (* let vars_full = CF.get_varperm_formula es_f VP_Full in                                           *) *)
+                 (*   (* let new_f = drop_varperm_formula es_f in                                                         *) *)
+                 (*   (* let () = if ((vars_val@vars_full)!=[]) then                                                       *) *)
+                 (*   (*   print_endline ("\n[Warning] heap_entail_conjunct_lhs:                                          *) *)
+                 (*   (*                   the entail state should not include variable                                   *) *)
+                 (*   (*                   permissions other than " ^ (string_of_vp_ann VP_Zero) ^                        *) *)
+                 (*   (*                   ". They will be filtered out automatically.") in                               *) *)
+                 (*   (* (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *) *) *)
+                 (*   (* let new_zero_vars = CF.CP.remove_dups_svl (es.es_var_zero_perm@vars) in                          *) *)
+                 (*   (* {es with es_formula = new_f; es_var_zero_perm=new_zero_vars}                                     *) *)
+                 (*   let vps, es_f = VP.strip_vperm_formula es.es_formula in                                                *)
+                 (*   let vps = CVP.norm_vperm_sets (CVP.merge_vperm_sets [es.es_vperm_sets; vps]) in                        *)
+                 (*   { es with es_formula = es_f; es_vperm_sets = vps }                                                     *)
+                 (* else es in                                                                                               *)
+                 let () = Debug.ninfo_hprint (add_str "es (after vperm)" pr) es no_pos in
+                 (* treat err states as unreachable states *)
+                 (* let osubsumed_es, non_subsume_es = x_add_1 Cfutil.partition_error_es es in *)
+                 (* let tmp0, prf = match osafe_es with *)
+                 (*   | Some es1 -> *)
+                 (*         x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos *)
+                 (*   | None -> (SuccCtx [ctx], UnsatAnte) *)
+                 (* in *)
+                 (* let tmp = match oerr_es with *)
+                 (*   | None -> tmp0 *)
+                 (*   | Some error_es -> begin *)
+                 (*       let err_states = SuccCtx [(Ctx error_es)] in *)
+                 (*       let lc = match osafe_es with *)
+                 (*         | Some _ -> or_list_context err_states tmp0 *)
+                 (*         | None -> err_states *)
+                 (*       in *)
+                 (*       lc *)
+                 (*     end *)
+                 (* in *)
+                 let osubsumed_es, non_subsume_es = if not !Globals.enable_error_as_exc then
+                                                      (Some es), None
+                                                    else if (not(Cfutil.is_empty_heap_f es.CF.es_formula) && (Cast.exist_left_lemma_w_fl (List.filter (fun c -> c.coercion_case = (Cast.Simple)) (Lem_store.all_lemma # get_left_coercion)) (CF.flow_formula_of_formula conseq)))
+                                                    then (Some es), None
+                                                    else Cfutil.obtain_subsume_es es conseq
+                 in
+                 let tmp0, prf = match osubsumed_es with
+                   | Some es1 ->
                       let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
                       let rs,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es1) conseq pos in
                       (* let res = *)
@@ -5582,29 +5584,29 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
                       (*   () *)
                       (* else () in *)
                       rs,prf
-                | None ->  (let ls = match non_subsume_es with
-                    | None -> []
-                    | Some es -> [Ctx es]
-                  in
-                  (SuccCtx ls (* [] *), UnsatAnte)
-                  )
-              in
-              (* let tmp0,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in *)
-              let tmp = tmp0 in
-              (* let tmp = match oerr_es with *)
-              (*   | None -> tmp0 *)
-              (*   | Some error_es -> begin *)
-              (*       let err_states = SuccCtx [(Ctx error_es)] in *)
-              (*       let lc = match osafe_es with *)
-              (*         | Some _ -> or_list_context err_states tmp0 *)
-              (*         | None -> err_states *)
-              (*       in *)
-              (*       lc *)
-              (*     end *)
-              (* in *)
-              (filter_set tmp, prf)
-            end
-          in wrap_trace es.es_path_label exec_old ()
+                   | None ->  (let ls = match non_subsume_es with
+                                 | None -> []
+                                 | Some es -> [Ctx es]
+                               in
+                               (SuccCtx ls (* [] *), UnsatAnte)
+                              )
+                 in
+                 (* let tmp0,prf = x_add heap_entail_conjunct_lhs 1 prog is_folding  (Ctx es) conseq pos in *)
+                 let tmp = tmp0 in
+                 (* let tmp = match oerr_es with *)
+                 (*   | None -> tmp0 *)
+                 (*   | Some error_es -> begin *)
+                 (*       let err_states = SuccCtx [(Ctx error_es)] in *)
+                 (*       let lc = match osafe_es with *)
+                 (*         | Some _ -> or_list_context err_states tmp0 *)
+                 (*         | None -> err_states *)
+                 (*       in *)
+                 (*       lc *)
+                 (*     end *)
+                 (* in *)
+                 (filter_set tmp, prf)
+               end
+             in wrap_trace es.es_path_label exec_old ()
 
 and early_hp_contra_detection_x hec_num prog estate conseq pos = 
   (* let new_slk_log slk_no result es =  *)

@@ -571,8 +571,16 @@ let array_entailment_frame_interface lhs rhs =
   (* let () = print_endline_verbose (str_norm_pre_condition simp_norm) in *)
   (* let () = print_endline_verbose ("=========== extracted anti-frame ==============") in *)
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
-  mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg)
+  let dropped_implylst = drop_antiframe implylst in
+  let list_ctx =
+    if List.length dropped_implylst = 0
+    then mkEmptyFailCtx ()
+    else
+      mkSuccCtx (construct_context_lst dropped_implylst neg) in
+  let () = y_binfo_pp ("List context: " ^(!Cformula.print_list_context list_ctx)) in
+  list_ctx
   (* (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), []) *)
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;  
 
+  

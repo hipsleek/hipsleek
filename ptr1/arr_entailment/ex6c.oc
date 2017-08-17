@@ -32,3 +32,6 @@ gist P2 given P1;
 P1:={[x,y,a]: a<y | a=y};
 P2:={[x,y,a]: y=a};
 gist P2 given P1;
+
+P1:={[]:(exists y:(y=x & x>0))};
+P1;
