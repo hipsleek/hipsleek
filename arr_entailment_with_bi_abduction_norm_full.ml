@@ -138,9 +138,9 @@ let array_entailment_biabduction_norm lhs rhs =
       | h::tail ->
          ( match h with
            | AsegNE_p (t,m) ->
-              helper tail (mkVar m) [mkLtSv t m]
+              helper tail (mkVar m) ((mkLtSv t m)::flst)
            | Pointsto_p (t,v) ->
-              helper tail (incOne (mkVar t)) []
+              helper tail (incOne (mkVar t)) flst
            | Aseg_p (t,m) ->
               mkOr
                 (helper_entry tail ((mkEqSv t m)::flst))
@@ -595,7 +595,7 @@ let array_entailment_classical_entailment_interface lhs rhs =
   let simp_norm = array_entailment_biabduction_get_norm lhs rhs in
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   
-  if valid_classical_entailment implylst neg
+  if valid_classical_entailment (mkTrue ()) implylst neg
   then
     mkEmptySuccCtx ()
   else
