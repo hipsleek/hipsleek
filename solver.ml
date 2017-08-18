@@ -5483,7 +5483,13 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
        let impl_vars = es.es_gen_impl_vars in
        let () = y_binfo_pp ("IMPL "^(!print_svl impl_vars)) in
        let new_ante = es.es_formula in
-       let new_conseq = add_implicit_existential_variables conseq impl_vars in
+       let new_conseq =
+         if !Globals.array_raw_entailment
+         then
+           conseq
+         else
+           add_implicit_existential_variables conseq impl_vars
+       in
        if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
        then
          let () = y_tinfo_pp "array entailment" in
@@ -5493,7 +5499,8 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
            then
              Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
            else
-             Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq
+             (* Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq *)
+             Arr_entailment_with_bi_abduction_norm_full.array_entailment_classical_entailment_interface new_ante new_conseq
          in
          (full_rs,Prooftracer.Unknown)
        else

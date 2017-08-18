@@ -1295,7 +1295,10 @@ let array_entailment_frame = ref false
 ;;
 let array_biabduction = ref false
 ;;
-
+let array_raw_entailment = ref false
+;;
+  
+  
 let array_proof_search = ref false
 ;;
 

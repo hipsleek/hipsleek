@@ -18,6 +18,7 @@ infer[@arr_en]  base::AsegNE<1,2>  |- base::AsegNE<1,2>.
 print residue.
 expect Valid.
 
+
 // 2
 infer[@arr_en]  base::Elem<1,2>  |- base::Elem<1,2>.
 print residue.
@@ -184,20 +185,20 @@ infer[@arr_en]  base::AsegNE<1,2> |- exists b: base::Aseg<1,b> & b>2.
 print residue.
 expect Fail.
 
-// 33
-infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<3,y>.
-print residue.
-expect Fail.
+// // 33
+// infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<3,y>.
+// print residue.
+// expect Fail.
 
-// 34
-infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b,y: base::Aseg<1,b> * base::Elem<3,y>.
-print residue.
-expect Valid.
+// // 34
+// infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b,y: base::Aseg<1,b> * base::Elem<3,y>.
+// print residue.
+// expect Valid.
 
-// 35
-infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<c,x>.
-print residue.
-expect Fail.
+// // 35
+// infer[@arr_en]  base::AsegNE<1,2> * base::Elem<3,x> |- exists b: base::Aseg<1,b> * base::Elem<c,x>.
+// print residue.
+// expect Fail.
 
 // 36
 infer[@arr_en]  base::AsegNE<a,a+2> |- exists u,c: base::Elem<a,u> * base::Elem<a+1,u>.
@@ -214,20 +215,20 @@ infer[@arr_en]  base::AsegNE<x,y> |- base::Aseg<x,y-1> * base::Elem<y-1,_>.
 print residue.
 expect Valid.
 
-// 39
-infer[@arr_en]  base::AsegNE<x,y> |- exists u: base::Aseg<x,y-1> * base::Elem<y-1,u>.
-print residue.
-expect Valid.
+// // 39
+// infer[@arr_en]  base::AsegNE<x,y> |- exists u: base::Aseg<x,y-1> * base::Elem<y-1,u>.
+// print residue.
+// expect Valid.
 
-// 40
-infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
-print residue.
-expect Valid.
+// // 40
+// infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
+// print residue.
+// expect Valid.
 
-// 41
-infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::AsegNE<a,y>.
-print residue.
-expect Fail.
+// // 41
+// infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::AsegNE<a,y>.
+// print residue.
+// expect Fail.
 
 // 42
 infer[@arr_en] base::Elem<t114,t115>*base::AsegNE<t116,t117>*base::AsegNE<t118,t119>& t114=7 & t116=8 & t117=12 & t118=12 & t119=15 & t120=7 & t121=15 |- base::AsegNE<t120,t121>&true.

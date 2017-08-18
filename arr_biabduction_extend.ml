@@ -123,17 +123,21 @@ let mkLt e1 e2 =
   Cpure.mkLtExp e1 e2 no_pos
 ;;
 
-let mkLte e1 e2 =
-  Cpure.mkLteExp e1 e2 no_pos
-;;
-
-let mkGte e1 e2 =
-  Cpure.mkGteExp e1 e2 no_pos
-;;
 
 let mkEq e1 e2 =
   Cpure.mkEqExp e1 e2 no_pos
 ;;
+
+let mkLte e1 e2 =
+  mkOr (mkLt e1 e2) (mkEq e1 e2)
+  (* Cpure.mkLteExp e1 e2 no_pos *)
+;;
+
+let mkGte e1 e2 =
+  mkOr (mkGt e1 e2) (mkEq e1 e2)
+  (* Cpure.mkGteExp e1 e2 no_pos *)
+;;
+  
 
 let mkNeq e1 e2 =
   Cpure.mkNeqExp e1 e2 no_pos
