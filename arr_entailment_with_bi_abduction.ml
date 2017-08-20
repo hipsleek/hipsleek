@@ -122,7 +122,45 @@ let mkBForall (vset,f) =
   if List.length vset = 0
   then f
   else BForall (vset,f)
-;;  
+;;
+
+(* ONLY FOR CLASSICAL ENTAILMENT *)
+let biabFormula_to_pure_classical f =
+  let rec helper f =
+    match f with
+    | BBaseNeg plst ->
+       (mkNot (mkAndlst plst))
+    | BBaseImply (lplst, rplst, frame, antiframe) ->
+       if List.length frame = 0 && List.length antiframe = 0
+       then
+         simplify (mkImply (mkAndlst lplst) (mkAndlst rplst))
+       else
+         simplify (mkImply (mkAndlst lplst) (mkFalse ()))
+    | BExists (vset, nf) ->
+       if List.length vset = 0
+       then helper nf
+       else (mkExists vset (helper nf))
+    | BForall (vset, nf) ->
+       if List.length vset = 0
+       then helper nf
+       else simplify (mkForall vset (helper nf))
+    | BAnd flst ->
+       simplify (mkAndlst (List.map helper flst))
+    | BOr flst ->
+       simplify (mkOrlst (List.map helper flst))
+    | BNot nf ->
+       simplify (mkNot (helper nf))
+  in
+  let newf = helper f in
+  let () = y_binfo_pp (!str_pformula newf) in
+  newf
+;;
+
+let check_validity f =
+  let pf = biabFormula_to_pure_classical f in
+  isValid pf
+;;
+        
 
 
 let array_entailment_biabduction lhs rhs =

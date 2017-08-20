@@ -186,8 +186,6 @@ let array_entailment_biabduction_norm lhs rhs =
            let (f3,norm3) = helper orig_lhs_p (case3::lhs_p,lhs_h) rhs vsetprime uqset frame antiframe (indent+1) in
            (print_and_return (mkBExists (uset,mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
 
-        
-
       | [], [] ->
          let frame = List.rev frame in
          let antiframe = List.rev antiframe in
@@ -588,14 +586,15 @@ let array_entailment_biabduction_get_norm lhs rhs =
   let () = print_endline_verbose (str_norm_pre_condition norm) in
   (* let () = print_endline_verbose ("=========== Simplified Normalized pre-condition ==============") in *)
   let simp_norm = simplify_norm_pre_condition norm in
-  simp_norm
+  (f,simp_norm)
 ;;
 
 let array_entailment_classical_entailment_interface lhs rhs =
-  let simp_norm = array_entailment_biabduction_get_norm lhs rhs in
+  let (f,simp_norm) = array_entailment_biabduction_get_norm lhs rhs in
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   
-  if valid_classical_entailment (mkTrue ()) implylst neg
+  (* if valid_classical_entailment (mkTrue ()) implylst neg *)
+  if check_validity f
   then
     mkEmptySuccCtx ()
   else
@@ -603,14 +602,14 @@ let array_entailment_classical_entailment_interface lhs rhs =
 ;;
   
 let array_entailment_biabduction_interface lhs rhs =
-  let simp_norm = array_entailment_biabduction_get_norm lhs rhs in
+  let (f,simp_norm) = array_entailment_biabduction_get_norm lhs rhs in
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   mkSuccCtx (construct_context_lst implylst neg)
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
 
 let array_entailment_frame_interface lhs rhs =
-  let simp_norm = array_entailment_biabduction_get_norm lhs rhs in
+  let (f,simp_norm) = array_entailment_biabduction_get_norm lhs rhs in
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   let dropped_implylst = drop_antiframe implylst in
   let list_ctx =
