@@ -2,59 +2,64 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 // 1
-infer[@arr_en] base::Elem<t130,t131>*base::Elem<t132,t133>& t130=3 & t132=4 & t134=3 & t136=4 & t137=5 |- exists t135: base::Elem<t134,t135>*base::AsegNE<t136,t137>&true.
+infer[@arr_en] base::AsegNE<t168,t169>*base::AsegNE<t170,t171>& t168=0 & t169=2 & t170=4 & t171=5 & t172=0 & t174=1 & t175=2 & t176=4 & 
+ t177=5 |- exists t173: base::Elem<t172,t173>*base::AsegNE<t174,t175>*base::AsegNE<t176,t177>&true.
 print residue.
 expect Valid.
 
 // 2
-infer[@arr_en] base::AsegNE<t122,t123>*base::Elem<t124,t125>& t122=4 & t123=5 & t124=9 & t126=4 & t127=5 & t128=9 |- exists t129: base::AsegNE<t126,t127>*base::Elem<t128,t129>&true.
+infer[@arr_en] base::AsegNE<t154,t155>*base::AsegNE<t156,t157>*base::AsegNE<t158,t159>*base::AsegNE<t160,t161>*base::Elem<t162,t163>& t154=2 & t155=4 & t156=4 & t157=5 & t158=5 & t159=6 & t160=6 & t161=9 & 
+ t162=9 & t164=2 & t165=9 & t166=9 & t167=10 |- base::AsegNE<t164,t165>*base::AsegNE<t166,t167>&true.
 print residue.
 expect Valid.
 
 // 3
-infer[@arr_en] base::Elem<t114,t115>*base::AsegNE<t116,t117>*base::AsegNE<t118,t119>& t114=7 & t116=8 & t117=12 & t118=12 & t119=15 & t120=7 & t121=15 |- base::AsegNE<t120,t121>&true.
+infer[@arr_en] base::Elem<t144,t145>*base::AsegNE<t146,t147>& t144=6 & t146=13 & t147=15 & t148=6 & t150=13 & t151=14 & t152=14 |- exists t149,t153: base::Elem<t148,t149>*base::AsegNE<t150,t151>*base::Elem<t152,t153>&true.
 print residue.
 expect Valid.
 
 // 4
-infer[@arr_en] base::AsegNE<t96,t97>*base::AsegNE<t98,t99>*base::AsegNE<t100,t101>& t96=5 & t97=10 & t98=11 & t99=19 & t100=19 & t101=20 & t102=5 & t103=7 & 
- t104=7 & t105=8 & t106=8 & t107=10 & t108=11 & t109=16 & t110=16 & 
- t111=18 & t112=18 & t113=20 |- base::AsegNE<t102,t103>*base::AsegNE<t104,t105>*base::AsegNE<t106,t107>*base::AsegNE<t108,t109>*base::AsegNE<t110,t111>*base::AsegNE<t112,t113>&true.
+infer[@arr_en] base::Elem<t128,t129>*base::Elem<t130,t131>*base::AsegNE<t132,t133>*base::Elem<t134,t135>& t128=16 & t130=17 & t132=18 & t133=19 & t134=19 & t136=16 & t137=17 & 
+ t138=17 & t139=18 & t140=18 & t141=19 & t142=19 & t143=20 |- base::AsegNE<t136,t137>*base::AsegNE<t138,t139>*base::AsegNE<t140,t141>*base::AsegNE<t142,t143>&true.
 print residue.
 expect Valid.
 
 // 5
-infer[@arr_en] base::AsegNE<t72,t73>*base::Elem<t74,t75>*base::AsegNE<t76,t77>*base::Elem<t78,t79>*base::AsegNE<t80,t81>& t72=7 & t73=11 & t74=11 & t76=17 & t77=19 & t78=19 & t80=23 & t81=25 & 
- t82=7 & t83=11 & t84=11 & t85=12 & t86=17 & t87=18 & t88=18 & t90=19 & 
- t91=20 & t92=23 & t93=24 & t94=24 & t95=25 |- exists t89: base::AsegNE<t82,t83>*base::AsegNE<t84,t85>*base::AsegNE<t86,t87>*base::Elem<t88,t89>*base::AsegNE<t90,t91>*base::AsegNE<t92,t93>*base::AsegNE<t94,t95>&true.
+infer[@arr_en] base::Elem<t106,t107>*base::AsegNE<t108,t109>*base::Elem<t110,t111>*base::AsegNE<t112,t113>*base::AsegNE<t114,t115>& t106=9 & t108=12 & t109=21 & t110=21 & t112=22 & t113=23 & t114=24 & 
+ t115=25 & t116=9 & t118=12 & t119=16 & t120=16 & t121=21 & t122=21 & 
+ t123=22 & t124=22 & t125=23 & t126=24 & t127=25 |- exists t117: base::Elem<t116,t117>*base::AsegNE<t118,t119>*base::AsegNE<t120,t121>*base::AsegNE<t122,t123>*base::AsegNE<t124,t125>*base::AsegNE<t126,t127>&true.
 print residue.
 expect Valid.
 
 // 6
-infer[@arr_en] base::AsegNE<t64,t65>*base::Elem<t66,t67>& t64=28 & t65=29 & t66=29 & t68=28 & t70=29 & t71=30 |- exists t69: base::Elem<t68,t69>*base::AsegNE<t70,t71>&true.
+infer[@arr_en] base::AsegNE<t88,t89>*base::AsegNE<t90,t91>*base::AsegNE<t92,t93>*base::AsegNE<t94,t95>*base::Elem<t96,t97>& t88=0 & t89=2 & t90=9 & t91=17 & t92=17 & t93=19 & t94=19 & t95=26 & 
+ t96=29 & t98=0 & t99=2 & t100=9 & t101=25 & t102=25 & t103=26 & t104=29 |- exists t105: base::AsegNE<t98,t99>*base::AsegNE<t100,t101>*base::AsegNE<t102,t103>*base::Elem<t104,t105>&true.
 print residue.
 expect Valid.
 
 // 7
-infer[@arr_en] base::AsegNE<t46,t47>*base::Elem<t48,t49>*base::Elem<t50,t51>*base::AsegNE<t52,t53>& t46=18 & t47=20 & t48=20 & t50=21 & t52=32 & t53=35 & t54=18 & t55=19 & 
- t56=19 & t57=22 & t58=32 & t60=33 & t61=34 & t62=34 |- exists t59,t63: base::AsegNE<t54,t55>*base::AsegNE<t56,t57>*base::Elem<t58,t59>*base::AsegNE<t60,t61>*base::Elem<t62,t63>&true.
+infer[@arr_en] base::Elem<t62,t63>*base::Elem<t64,t65>*base::Elem<t66,t67>*base::Elem<t68,t69>*base::AsegNE<t70,t71>*base::AsegNE<t72,t73>& t62=16 & t64=17 & t66=18 & t68=19 & t70=31 & t71=34 & t72=34 & t73=35 & 
+ t74=16 & t76=17 & t77=19 & t78=19 & t79=20 & t80=31 & t81=32 & t82=32 & 
+ t84=33 & t85=34 & t86=34 |- exists t75,t83,t87: base::Elem<t74,t75>*base::AsegNE<t76,t77>*base::AsegNE<t78,t79>*base::AsegNE<t80,t81>*base::Elem<t82,t83>*base::AsegNE<t84,t85>*base::Elem<t86,t87>&true.
 print residue.
 expect Valid.
 
 // 8
-infer[@arr_en] base::Elem<t34,t35>*base::Elem<t36,t37>*base::Elem<t38,t39>& t34=37 & t36=38 & t38=39 & t40=37 & t41=38 & t42=38 & t44=39 & t45=40 |- exists t43: base::AsegNE<t40,t41>*base::Elem<t42,t43>*base::AsegNE<t44,t45>&true.
+infer[@arr_en] base::AsegNE<t44,t45>*base::AsegNE<t46,t47>*base::Elem<t48,t49>*base::Elem<t50,t51>& t44=10 & t45=13 & t46=13 & t47=23 & t48=23 & t50=39 & t52=10 & t53=16 & 
+ t54=16 & t55=21 & t56=21 & t57=22 & t58=22 & t59=24 & t60=39 |- exists t61: base::AsegNE<t52,t53>*base::AsegNE<t54,t55>*base::AsegNE<t56,t57>*base::AsegNE<t58,t59>*base::Elem<t60,t61>&true.
 print residue.
 expect Valid.
 
 // 9
-infer[@arr_en] base::AsegNE<t12,t13>*base::AsegNE<t14,t15>*base::AsegNE<t16,t17>*base::AsegNE<t18,t19>*base::AsegNE<t20,t21>& t12=20 & t13=22 & t14=22 & t15=28 & t16=28 & t17=33 & t18=42 & t19=44 & 
- t20=44 & t21=45 & t22=20 & t23=27 & t24=27 & t25=31 & t26=31 & t28=32 & 
- t29=33 & t30=42 & t31=44 & t32=44 & t33=45 |- exists t27: base::AsegNE<t22,t23>*base::AsegNE<t24,t25>*base::Elem<t26,t27>*base::AsegNE<t28,t29>*base::AsegNE<t30,t31>*base::AsegNE<t32,t33>&true.
+infer[@arr_en] base::AsegNE<t14,t15>*base::AsegNE<t16,t17>*base::AsegNE<t18,t19>*base::AsegNE<t20,t21>*base::AsegNE<t22,t23>*base::AsegNE<t24,t25>*base::AsegNE<t26,t27>& t14=2 & t15=16 & t16=16 & t17=28 & t18=28 & t19=30 & t20=36 & t21=39 & 
+ t22=39 & t23=42 & t24=42 & t25=44 & t26=44 & t27=45 & t28=2 & t29=22 & 
+ t30=22 & t31=25 & t32=25 & t33=26 & t34=26 & t35=30 & t36=36 & t37=41 & 
+ t38=41 & t39=42 & t40=42 & t41=44 & t42=44 & t43=45 |- base::AsegNE<t28,t29>*base::AsegNE<t30,t31>*base::AsegNE<t32,t33>*base::AsegNE<t34,t35>*base::AsegNE<t36,t37>*base::AsegNE<t38,t39>*base::AsegNE<t40,t41>*base::AsegNE<t42,t43>&true.
 print residue.
 expect Valid.
 
 // 10
-infer[@arr_en] base::AsegNE<t0,t1>*base::AsegNE<t2,t3>*base::AsegNE<t4,t5>& t0=44 & t1=46 & t2=48 & t3=49 & t4=49 & t5=50 & t6=44 & t7=45 & t8=45 & 
- t10=48 & t11=50 |- exists t9: base::AsegNE<t6,t7>*base::Elem<t8,t9>*base::AsegNE<t10,t11>&true.
+infer[@arr_en] base::AsegNE<t0,t1>*base::Elem<t2,t3>*base::AsegNE<t4,t5>& t0=41 & t1=47 & t2=47 & t4=48 & t5=50 & t6=41 & t7=44 & t8=44 & t9=47 & 
+ t10=47 & t11=49 & t12=49 |- exists t13: base::AsegNE<t6,t7>*base::AsegNE<t8,t9>*base::AsegNE<t10,t11>*base::Elem<t12,t13>&true.
 print residue.
 expect Valid.
