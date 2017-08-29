@@ -293,8 +293,9 @@ let rec smt_of_b_formula b =
 (* | CP.XPure _ -> Error.report_no_pattern () *)
 
 let rec smt_of_formula pr_w pr_s f =
-  let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
+
   let rec helper f= (
+      let () = x_tinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
     match f with
     | CP.BForm ((b,_) as bf,_) -> (
         match (pr_w b) with

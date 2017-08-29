@@ -4699,7 +4699,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                               else (n_ctx_list, prf)
                                                 (* (Musterr.convert_list_context prog n_ctx_list, prf) *)
                                       | SuccCtx _ ->
-                                            let () = x_binfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
+                                            let () = x_tinfo_hp (add_str "n_ctx_list: " (Cprinter.string_of_list_context)) n_ctx_list no_pos in
                                             let res_ctx, res_prf = match formula_cont with
                                               | Some l -> x_add heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f join_id pos pid (*also propagate tid*)
                                               | None -> (n_ctx_list, prf) in
@@ -5481,7 +5481,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
           ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
     | Ctx es ->
        let impl_vars = es.es_gen_impl_vars in
-       let () = y_binfo_pp ("IMPL "^(!print_svl impl_vars)) in
+       let () = y_tinfo_pp ("IMPL "^(!print_svl impl_vars)) in
        let new_ante = es.es_formula in
        let new_conseq =
          if !Globals.array_raw_entailment

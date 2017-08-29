@@ -9,15 +9,15 @@ class __ArrBoundErr extends __Error {}
 class __RET extends __Exc {}
 
 int add___(int a, int b)
-  requires true
+  requires emp
   ensures res = a + b;
 
 int minus___(int a, int b)
-  requires true
+  requires emp
   ensures res = a - b;
 
 int mult___(int a, int b) 
-  requires true 
+  requires emp
   ensures res = a * b;
 
 

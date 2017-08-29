@@ -12608,7 +12608,38 @@ let subs_var_with_exp sve f =
   nf
 ;;
 
-           
+let reduce_relform relname_lst newpf inputf =
+  let f_bf arg (pf,lbl) =
+    match pf with
+    | RelForm (SpecVar (_,name,_),_,_) ->
+       if List.exists (fun item -> compare name item = 0) relname_lst
+       then Some ((newpf,lbl),[])
+       else Some ((pf,lbl),[])
+    | _ -> None
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, _ = trans_formula inputf arg f f_arg f_comb in
+  npf
+;;
+
+let remove_termann inputf =
+  let f_bf arg (pf,lbl) =
+    match pf with
+    | LexVar _ ->
+       Some (mkTrue_b no_pos,[])
+    | _ ->  None
+  in
+  let f = (nonef2,f_bf,nonef2) in
+  let f_arg = voidf2, voidf2, voidf2 in
+  let f_comb = List.concat in
+  let arg = () in
+  let npf, _ = trans_formula inputf arg f f_arg f_comb in
+  npf
+;;
+  
 let rec norm_subs subs =
   match subs with
   | [] -> []

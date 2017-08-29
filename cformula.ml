@@ -11860,6 +11860,7 @@ let add_infer_rel_to_list_context cp (l : list_context) : list_context  =
 let add_infer_pre f_ctx ctx =
   let ch = collect_pre_heap f_ctx in
   if (ch!=[]) then
+    let () = y_binfo_pp ("add_infer_pre: "^(pr_list !print_h_formula ch)) in
     if(!Globals.pa) then add_infer_heap_to_ctx ch ctx
     else 
       let () = print_endline_quiet "ERROR : non-pure heap inferred for false" in
