@@ -17,7 +17,7 @@ void upd_arr(arrI base, int i, int v)
    requires base::AsegNE<i,i+1>
    ensures base::AsegNE<i,i+1>;
 */
-// Should succeed
+// Should fail
 
 
 void init3(arrI base,int i,int m)

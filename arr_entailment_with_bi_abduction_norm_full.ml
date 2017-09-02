@@ -181,7 +181,6 @@ let array_entailment_biabduction_norm lhs rhs =
       (print_and_return (mkBExists (vset, (mkBBaseNeg lhs_p))) indent,norm)
     else
       match lhs_h, rhs_h with
-
       | (Aseg_p (la,lb))::ltail, _ ->
          let (uset,vsetprime) = mkUsetandVsetprime [la;lb] vset in
          let case1 = mkEqSv la lb in
@@ -478,7 +477,7 @@ let extract_anti_frame_and_frame norm =
     in
         
     let norm_imply_to_antiframe_frame (eset,lhs_p,rhs_p,afpure,frame,antiframe) =
-      let state_pure = simplify_p (mkAndlst (afpure::lhs_p)) in
+      let state_pure = simplify (mkAndlst (afpure::lhs_p)) in
       let norm_af = (eset,afpure,remove_aseg state_pure antiframe) in
       let frame_pure = state_pure in
       let norm_f = (eset,frame_pure,remove_aseg state_pure frame) in
@@ -499,7 +498,7 @@ let extract_anti_frame_and_frame norm =
         )
         ([],mkFalse ()) lst
     in
-    (List.map norm_imply_to_antiframe_frame (merge_result imply),simplify_p neg)
+    (List.map norm_imply_to_antiframe_frame (merge_result imply),simplify neg)
   in
   match norm with
   | NormOr lst ->
@@ -523,7 +522,7 @@ let arrPredPlus_to_h_formula hflst =
   in
   let construct_h_formula plst =
     match (List.map one_arrPredPlus_to_h_formula plst) with
-    | h::tail -> Some (List.fold_left (fun r itemh -> mkStarH itemh h) h tail)
+    | h::tail -> Some (List.fold_left (fun r itemh -> mkStarH itemh r) h tail)
     | [] -> None
   in
   construct_h_formula hflst
@@ -543,6 +542,7 @@ let construct_context_lst aflst neg =
       | Some nh -> nh
       | None -> HEmp
     in
+    let () = y_tinfo_pp ("h_frame:"^(!Cformula.print_h_formula h_frame)) in
     let state =
       if List.length feset = 0
       then
@@ -601,10 +601,11 @@ let merge_context_lst_for_frame clst lhs_p =
          let () = y_tinfo_pp ("check frame VALID") in
          let es = mkEmptyes () in
          (* Cformula.SuccCtx [Ctx {es with es_formula = state_f}] *)
-         mkSuccCtx [(mkOCtx clst)]
+         mkSuccCtx clst(* [(mkOCtx clst)] *)
        else
          mkEmptyFailCtx ()
      in
+     let () = y_binfo_pp ("List context: " ^(!Cformula.print_list_context ctx)) in
      ctx
   | _ -> mkEmptyFailCtx ()
 ;;
@@ -672,7 +673,6 @@ let array_entailment_frame_interface lhs rhs =
   let (implylst,neg) = extract_anti_frame_and_frame simp_norm in
   let dropped_implylst = construct_context_lst (drop_antiframe implylst) (mkTrue ()) in
   let list_ctx = merge_context_lst_for_frame dropped_implylst lhs_p in
-  let () = y_tinfo_pp ("List context: " ^(!Cformula.print_list_context list_ctx)) in
   list_ctx
   (* (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), []) *)
 (* (true, mkEmptySuccCtx (),[]) *)

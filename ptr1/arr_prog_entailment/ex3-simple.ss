@@ -16,7 +16,7 @@ void fun1(arrI base, int i, int m)
   requires base::AsegNE<i,m> 
   ensures base::AsegNE<i,m+1>;
 
-// Should succeed
+// Should fail
 
 void init3(arrI base,int i,int m)
   requires base::AsegNE<i,m> & i<m

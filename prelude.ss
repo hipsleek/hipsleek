@@ -232,8 +232,8 @@ bool lte___(float a, float b) case {
     a >  b -> ensures !res;}
 */
 bool gt___(int a, int b) case {
-    a >  b -> ensures  res;
-    a <= b -> ensures !res;}
+    a >  b  -> ensures   res;
+    a <= b  -> ensures !res;}
 /*
 bool gt___(float a, float b) case {
     a >  b -> ensures  res;
