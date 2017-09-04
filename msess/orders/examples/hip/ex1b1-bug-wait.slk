@@ -8,10 +8,30 @@ v_131=msg_49 & ohbp(B,id_22,B,id_21) & ocb(C,id_21,B,id_21) &
 ocb(A,id_22,B,id_22) 
  |-  w::WAIT{ %P, %R}<>@M * %P.
 print residue.
+expect Valid.
 
 
 checkentail !(ev(A)) |- !(ev(A)).
+expect Valid.
 print residue.
 
 checkentail !(oev(A,i1)) |- !(oev(A,i1)).
+expect Valid.
 print residue.
+
+//4
+checkentail oev(A,i2) |- !(oev(A,i4)).
+expect Valid.
+print residue.
+
+checkentail oev(A,i4) |- !(oev(A,i4)).
+expect Fail.
+print residue.
+
+checkentail oev(A,i4) |- oev(A,i4).
+expect Valid.
+print residue.
+
+pred_prim NEG{%P}<>.
+
+checkentail x::node<_,_> |- x::node<_,_> * .

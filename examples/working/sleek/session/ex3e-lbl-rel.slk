@@ -1,6 +1,7 @@
 sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
+
 //1
 checkentail c::Chan{@S Guard{emp & hbp(b12, c14)}<>;;!1}<> *
            c2::Chan{@S Assume{emp & hbp(b23, c25)}<>;;!1}<>

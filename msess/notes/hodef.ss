@@ -40,4 +40,4 @@ relation snot_eq(int a,int b).
 /* apply A+ before G- */
 lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * %P.
 /* to check if * %P is neccessary in the body of this lemma */
-lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<> * %P -> self::Chan{@S %R}<> * %P.
+lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<> * %P -> self::Chan{@S %R}<>.

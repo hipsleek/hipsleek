@@ -99,9 +99,18 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "CHR.prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
+let start () =
+  print_string_quiet "\nStarting CHR... \n"; flush stdout;
+  let args = [| chr_cmd |] in
+  let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in
+  in_chan := inchn;
+  out_chan := outchn;
+  err_chan := errchn
+
 (* send a query to CHR and receive result -> true/false/unknown *)
 let send_query (query : string) : sat =
   let () = output_string !out_chan query in
+  (* let () = print_endline ("CHR Query: " ^ query) in *)
   let () = flush !out_chan in
   let result =
     try  
@@ -111,7 +120,9 @@ let send_query (query : string) : sat =
       | "false" -> UNSAT
       | "true"  -> SAT
       (* used to show the possible errors returned by CHR prover *)
-      | "CHR_INPUT_ERROR"
+      | "CHR_INPUT_ERROR" ->
+          let () = start() in
+          let () = y_winfo_pp ("WARNING (CHR) : "^result) in SAT
       | "CHR_EXEC_GOAL_ERROR"
       | _       -> let () = y_winfo_pp ("WARNING (CHR) : "^result) in SAT
     with _ ->
@@ -153,14 +164,6 @@ let is_sat (form : CP.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "CHR.is_sat" pr string_of_bool (fun _ -> is_sat form sat_no) form
     
-let start () =
-  print_string_quiet "\nStarting CHR... \n"; flush stdout;
-  let args = [| chr_cmd |] in
-  let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in
-  in_chan := inchn;
-  out_chan := outchn;
-  err_chan := errchn
-
 let stop () = 
   print_string_quiet "\nStop CHR... \n"; flush stdout;
   output_string !out_chan halt

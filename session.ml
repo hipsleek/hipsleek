@@ -2468,21 +2468,14 @@ module CTPProjection_base = TPProjection_base_formula(CForm);;
 
 module IProtocol = Make_Session(Protocol_base_formula)(IForm);;
 module CProtocol = Make_Session(Protocol_base_formula)(CForm);;
-(* module IProtocol = Make_Session(IProtocol_base)(\* (IOrders) *\);; *)
-(* module CProtocol = Make_Session(CProtocol_base)(\* (COrders) *\);; *)
 
 (* per party  *)
 module IProjection = Make_Session(Projection_base_formula)(IForm);;
 module CProjection = Make_Session(Projection_base_formula)(CForm);;
-(* module IProjection = Make_Session(IProjection_base)(\* (IOrders) *\);; *)
-(* module CProjection = Make_Session(CProjection_base)(\* (COrders) *\);; *)
-
 
 (* per channel *)
 module ITPProjection = Make_Session(TPProjection_base_formula)(IForm);;
 module CTPProjection = Make_Session(TPProjection_base_formula)(CForm);;
-(* module ITPProjection = Make_Session(ITPProjection_base)(\* (IOrders) *\);; *)
-(* module CTPProjection = Make_Session(CTPProjection_base)(\* (COrders) *\);; *)
 
 type session_iformula = ProtocolSession of IProtocol.session
                   | ProjectionSession of IProjection.session

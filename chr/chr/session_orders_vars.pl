@@ -50,6 +50,7 @@ id4     @ id(ev(A))    <=> ev(A).
 id5     @ id(snot(A))  <=> snot(A).
 id6     @ id(snot_eq(A)) <=> snot_eq(A).
 % id7     @ id(A=B)       <=> A=B.
+%andreea: is it sound to use this?
 id7     @ id(A=B)       <=> true.
 
 % neg5   @ hb(A,A),snot(hb(A,A)) <=> false.

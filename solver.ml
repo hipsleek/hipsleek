@@ -4544,18 +4544,19 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
   let fv_s = CP.diff_svl fv_s (impl_expl_vs(* @evars_rhs *)) in
   if fv_s!=[]  then
-    begin
-      let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
-      let () = x_winfo_pp msg no_pos in
-      let () = print_endline_quiet ((add_str "\nimpl/expl/evars vars" !CP.print_svl) impl_expl_vs) in
-      (* let () = print_endline_quiet ((add_str "evars_rhs" !CP.print_svl) evars_rhs) in *)
-      let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
-      (* let () = x_tinfo_hp (add_str "fv_conseq (heap only)" !CP.print_svl) fv_s no_pos in *)
-      let () = print_endline_quiet ((add_str "RHS" Cprinter.string_of_struc_formula) conseq) in
-      if !Globals.warn_free_vars_conseq then
-        failwith msg
-      else ()
-    end;
+    if !Globals.warn_free_vars_conseq then (* Andreea TODO : remove this check*)
+      begin
+        let msg = ("FREE VAR IN HEAP RHS :"^(!CP.print_svl fv_s)) in
+        let () = x_winfo_pp msg no_pos in
+        let () = print_endline_quiet ((add_str "\nimpl/expl/evars vars" !CP.print_svl) impl_expl_vs) in
+        (* let () = print_endline_quiet ((add_str "evars_rhs" !CP.print_svl) evars_rhs) in *)
+        let () = print_endline_quiet ((add_str "LHS" Cprinter.string_of_context_short) ctx_00) in
+        (* let () = x_tinfo_hp (add_str "fv_conseq (heap only)" !CP.print_svl) fv_s no_pos in *)
+        let () = print_endline_quiet ((add_str "RHS" Cprinter.string_of_struc_formula) conseq) in
+        if !Globals.warn_free_vars_conseq then
+          failwith msg
+        else ()
+      end;
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
     (* let _= print_endline ("calling heap entail conjunct lhs") in			 *)
     Debug.no_2_num i (*loop*) "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
@@ -15505,6 +15506,7 @@ and norm_w_coerc_h_formula prog es ?left:(left = true) hform =
     | ((pivot,head_h) as head)::tail_orig ->
       let tail = Gen.unwrap_indx tail_orig in
       let tail_h = CF.join_star_conjunctions tail in
+      (* disable nested lemma normalization *)
       let res = Wrapper.wrap_one_bool Globals.allow_lem_norm false (apply_norm_coerc prog es ~left:left head_h) tail_h in
       let ctx = extract_succ res in
       let () = y_ninfo_hp (add_str "context:" (pr_opt Cprinter.string_of_context)) ctx in
@@ -15544,20 +15546,25 @@ and norm_w_coerc_context_x prog ?left:(left = true) ctx =
   transform_context fnc ctx
 
 and norm_w_coerc_context_debug prog ?left:(left = true) ctx =
-  let pr = Cprinter.string_of_context in
+  let pr = add_str ("allow_lem_norm:" ^ (string_of_bool !Globals.allow_lem_norm)) Cprinter.string_of_context in
   Debug.no_1 "norm_w_coerc_context" pr pr (norm_w_coerc_context_x ~left:left prog) ctx
 
 and norm_w_coerc_context prog ?left:(left = true) ctx =
+  let () = y_ninfo_pp "HERE2-start" in
   let f () = 
     if (!Globals.allow_lem_norm) then
       norm_w_coerc_context_debug prog ~left:left ctx
     else ctx
   in
-  Wrapper.wrap_one_bool Globals.allow_unfold false (fun _ -> f ()) ()
+  let res = Wrapper.wrap_one_bool Globals.allow_unfold false (fun _ -> f ()) () in
+  let () = y_ninfo_pp "HERE2-finish" in
+  res
 
 and norm_w_coerc_formula prog ?left:(left = true) es formula =
+  let () = y_ninfo_pp "HERE1-start" in
   let es = {es with es_formula = formula} in
   let new_ctx = x_add_1 (fun _ ->  norm_w_coerc_context prog ~left:left (Ctx es)) () in
+  let () = y_ninfo_pp "HERE1-finish" in
   new_ctx, (CF.formula_of_context new_ctx)
   
 (* -------------------- end norm lemma app -------------------- *)

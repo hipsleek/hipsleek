@@ -742,7 +742,7 @@ let collect view prot fnc_i2c params =
 
 let collect view prot fnc_i2c params =
   let pr_out = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) in
-  Debug.no_1 "OS.collect" pr_none pr_out (fun _ -> collect view prot fnc_i2c params) prot
+  Debug.no_1 "OS.collect" SProt.string_of_session pr_out (fun _ -> collect view prot fnc_i2c params) prot
 
 
 (* ------------------------------------------------------------------------ *)

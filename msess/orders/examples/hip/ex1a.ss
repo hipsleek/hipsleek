@@ -18,9 +18,11 @@ void B(Channel k1, Channel k2)
  ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
 {
  int x = receive(k1);
- send(k2,2);
- int y = receive(k1);
  dprint;
+ send(k2,2);
+// dprint;
+ int y = receive(k1);
+// dprint;
 }
 
 void C(Channel k1, Channel k2)
@@ -28,6 +30,7 @@ void C(Channel k1, Channel k2)
  ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
 {
  int x = receive(k2);
+ dprint;
  send(k1,3);
  dprint;
 }
@@ -38,6 +41,7 @@ void C_fail(Channel k1, Channel k2)
  ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
 {
  send(k1,3);
+ dprint;
  int x = receive(k2);
  dprint;
 }

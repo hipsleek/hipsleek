@@ -208,3 +208,20 @@ why do we need 2 relations for HB, CB and Event?
 =====================================
 [DONE] update examples/working/sleek/session/ex3e-lbl-rel.slk
 to remove labels
+
+=====================================
+=====================================
+possible ways to improve some performance issued due to lemma norm:
+once the lemma norm was applied exhaustive,
+only re-schedule a normalization after
+the state has changed wrt  the ordering events. 
+
+=====================================
+=====================================
+check why so many event duplications
+
+=====================================
+=====================================
+
+=====================================
+=====================================
