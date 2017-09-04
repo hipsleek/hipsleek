@@ -6037,6 +6037,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
       if !Globals.use_set then
         let rs1, prf1 = x_add heap_entail_conjunct_lhs 2 prog is_folding  ctx_L f1 pos in
         let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq 1" (Cprinter.string_of_formula )) (f1)  no_pos in
+
         let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq rel_ass_stk end 1" ( pr_list_ln Cprinter.string_of_hprel_short)) (Infer.rel_ass_stk# get_stk)  no_pos in
         let rs2, prf2 = x_add heap_entail_conjunct_lhs 3 prog is_folding  ctx_R f2 pos in
         let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_lhs:conseq 2" (Cprinter.string_of_formula )) (f2)  no_pos in
