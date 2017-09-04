@@ -211,6 +211,7 @@ print residue.
 expect Fail.
 
 // 38
+// explicit variables to be fixed...
 infer[@arr_en]  base::AsegNE<x,y> |- base::Aseg<x,y-1> * base::Elem<y-1,_>.
 print residue.
 expect Valid.

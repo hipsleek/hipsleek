@@ -5480,40 +5480,6 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
           let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
           ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
     | Ctx es ->
-       let impl_vars = es.es_gen_impl_vars in
-       let () = y_tinfo_pp ("IMPL "^(!print_svl impl_vars)) in
-       let new_ante = es.es_formula in
-       let new_conseq =
-         if !Globals.array_raw_entailment
-         then
-           conseq
-         else
-           add_implicit_existential_variables conseq impl_vars
-       in
-       if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
-       then
-         let () = y_tinfo_pp "array entailment" in
-         let () = y_tinfo_pp (!CF.print_formula new_conseq) in
-         let full_rs =
-           if !Globals.array_pre
-           then
-             Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
-           else
-             (* Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq *)
-             Arr_entailment_with_bi_abduction_norm_full.array_entailment_classical_entailment_interface new_ante new_conseq
-         in
-         (full_rs,Prooftracer.Unknown)
-       else
-         if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
-         then
-           let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
-           (full_rs,Prooftracer.Unknown)
-         else
-           if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
-           then
-             let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
-             (full_rs,Prooftracer.Unknown)
-           else
              (* let () = lemma_soundness # start_disjunct x_loc in *)
              let exec_old () = 
                begin
@@ -7720,74 +7686,46 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
     match ctx0 with
     | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
     | Ctx estate -> (
-        let ante = estate.es_formula in
-        x_tinfo_hp (add_str "ctx0.es_heap after" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
-        (*let () = print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante)) in*)
-        let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_helper:es_form " Cprinter.string_of_formula) estate.es_formula no_pos in
-        match ante with
-        | Exists {formula_exists_qvars = qvars;
-                  formula_exists_heap = qh;
-                  formula_exists_pure = qp;
-                  formula_exists_vperm = qvp;
-                  formula_exists_type = qt;
-                  formula_exists_flow = qfl;
-                  formula_exists_and = qa;
-                  formula_exists_pos = pos} -> (
-            (* eliminating existential quantifiers from the LHS *)
-            (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
-            let ws = CP.fresh_spec_vars qvars in
-            (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
-            let st = List.combine qvars ws in
+      let impl_vars = estate.es_gen_impl_vars in
+      let () = y_tinfo_pp ("IMPL "^(!print_svl impl_vars)) in
+      let new_ante = estate.es_formula in
+      let new_conseq =
+        if !Globals.array_raw_entailment
+        then
+          conseq
+        else
+          add_implicit_existential_variables conseq impl_vars
+      in
+      if !Globals.array_entailment (* List.mem INF_ARR_ENTAILMENT itype                 *)
+      then
+        let () = y_tinfo_pp "array entailment" in
+        let () = y_tinfo_pp (!CF.print_formula new_conseq) in
+        let full_rs =
+          if !Globals.array_pre
+          then
+            Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
+          else
+            (* Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq *)
+            Arr_entailment_with_bi_abduction_norm_full.array_entailment_classical_entailment_interface new_ante new_conseq
+        in
+        (full_rs,Prooftracer.Unknown)
+      else
+        if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
+        then
+          let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
+          (full_rs,Prooftracer.Unknown)
+        else
+          if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
+          then
+            let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
+            (full_rs,Prooftracer.Unknown)
+          else
 
-            let univ_vars = CP.get_RelForm_arg_list_with_name (MCP.pure_of_mix qp) "Univ" in
-            let eqns' = MCP.ptr_equations_without_null qp in
-            let emap = CP.EMapSV.build_eset eqns' in
-            let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
-            let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
-            let univ_rel v = CP.mkRel_sv v in
-            let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
-            let qp_pure = (MCP.pure_of_mix qp) in
-            let nqp =  
-              if true (* !Globals.adhoc_flag_2 *) then qp_pure 
-              else List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) qp_pure univ_vars2 in
-            let () = y_tinfo_hp (add_str "qp (orig)" !CP.print_formula) qp_pure in
-            let () = y_tinfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
-            let mix_nqp = MCP.mix_of_pure nqp in
-            let baref = mkBase qh mix_nqp qvp qt qfl qa pos in
-            let new_baref = x_add subst st baref in
-            let fct st v =
-              try
-                let (_,v2) = List.find (fun (v1,_) -> CP.eq_spec_var_ident v v1) st in
-                (*If zero_perm is an exists var -> rename it *)
-                v2
-              with _ -> v in
-            let new_zero_vars = List.map (fct st) estate.es_var_zero_perm in
-            (* let () = print_endline ("heap_entail_conjunct_helper: rename es.es_var_zero_perm: \n ### old = " ^ (Cprinter.string_of_spec_var_list estate.es_var_zero_perm) ^ "\n ### new = " ^ (Cprinter.string_of_spec_var_list new_zero_vars)) in *)
-            (* let () =  print_endline ("new_baref:" ^ (Cprinter.string_of_formula new_baref) )  in *)
-            (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
-            let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
-                                           es_formula = new_baref (* estate.es_formula *);
-                                           es_ante_evars = ws @ estate.es_ante_evars;
-                                           es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
-                                           es_unsat_flag = estate.es_unsat_flag;} in
-            Debug.ninfo_hprint (add_str "new_ctx (exists)" (Cprinter.string_of_context)) new_ctx no_pos;
-            (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
-            (* WN : need to drop outer Exist to avoid looping *)
-            let rs, prf1 = x_add (heap_entail_conjunct_helper ~caller:(x_loc^":"^caller)) 2 prog is_folding  new_ctx conseq rhs_h_matched_set pos in
-            (* --- added 11.05.2008 *)
-            let new_rs =
-              if !Globals.wrap_exist then
-                (* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
-                (add_exist_vars_to_ctx_list rs ws)
-              else
-                rs in
-            Debug.ninfo_hprint (add_str "new_rs (exists)" (Cprinter.string_of_list_context)) new_rs no_pos;
-            (* log the transformation for the proof tracere *)
-            let prf = mkExLeft ctx0 conseq qvars ws prf1 in
-            (new_rs, prf)
-          )
-        | _ -> (
-            match conseq with
+            let ante = estate.es_formula in
+            x_tinfo_hp (add_str "ctx0.es_heap after" (Cprinter.string_of_h_formula)) estate.es_heap no_pos;
+            (*let () = print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante)) in*)
+            let () = Debug.ninfo_hprint (add_str "heap_entail_conjunct_helper:es_form " Cprinter.string_of_formula) estate.es_formula no_pos in
+            match ante with
             | Exists {formula_exists_qvars = qvars;
                       formula_exists_heap = qh;
                       formula_exists_pure = qp;
@@ -7796,12 +7734,75 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                       formula_exists_flow = qfl;
                       formula_exists_and = qa;
                       formula_exists_pos = pos} -> (
+              (* eliminating existential quantifiers from the LHS *)
+              (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+              let ws = CP.fresh_spec_vars qvars in
+              (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
+              let st = List.combine qvars ws in
+
+              let univ_vars = CP.get_RelForm_arg_list_with_name (MCP.pure_of_mix qp) "Univ" in
+              let eqns' = MCP.ptr_equations_without_null qp in
+              let emap = CP.EMapSV.build_eset eqns' in
+              let univ_vars2 = List.concat (List.map (fun x -> CP.EMapSV.find_equiv_all x emap) univ_vars) in
+              let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars2 in
+              let univ_rel v = CP.mkRel_sv v in
+              let mk_Univ_rel v = CP.mkRel (univ_rel "Univ") [CP.mk_exp_var v] no_pos in
+              let qp_pure = (MCP.pure_of_mix qp) in
+              let nqp =  
+                if true (* !Globals.adhoc_flag_2 *) then qp_pure 
+                else List.fold_left (fun g v -> CP.mkAnd g (mk_Univ_rel v) no_pos) qp_pure univ_vars2 in
+              let () = y_tinfo_hp (add_str "qp (orig)" !CP.print_formula) qp_pure in
+              let () = y_tinfo_hp (add_str "qp with univ" !CP.print_formula) nqp in
+              let mix_nqp = MCP.mix_of_pure nqp in
+              let baref = mkBase qh mix_nqp qvp qt qfl qa pos in
+              let new_baref = x_add subst st baref in
+              let fct st v =
+                try
+                  let (_,v2) = List.find (fun (v1,_) -> CP.eq_spec_var_ident v v1) st in
+                  (*If zero_perm is an exists var -> rename it *)
+                  v2
+                with _ -> v in
+              let new_zero_vars = List.map (fct st) estate.es_var_zero_perm in
+              (* let () = print_endline ("heap_entail_conjunct_helper: rename es.es_var_zero_perm: \n ### old = " ^ (Cprinter.string_of_spec_var_list estate.es_var_zero_perm) ^ "\n ### new = " ^ (Cprinter.string_of_spec_var_list new_zero_vars)) in *)
+              (* let () =  print_endline ("new_baref:" ^ (Cprinter.string_of_formula new_baref) )  in *)
+              (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
+              let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
+                                             es_formula = new_baref (* estate.es_formula *);
+                                             es_ante_evars = ws @ estate.es_ante_evars;
+                                             es_term_res_lhs = List.map (CP.subst_term_ann st) estate.es_term_res_lhs;
+                                             es_unsat_flag = estate.es_unsat_flag;} in
+              Debug.ninfo_hprint (add_str "new_ctx (exists)" (Cprinter.string_of_context)) new_ctx no_pos;
+              (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
+              (* WN : need to drop outer Exist to avoid looping *)
+              let rs, prf1 = x_add (heap_entail_conjunct_helper ~caller:(x_loc^":"^caller)) 2 prog is_folding  new_ctx conseq rhs_h_matched_set pos in
+              (* --- added 11.05.2008 *)
+              let new_rs =
+                if !Globals.wrap_exist then
+                  (* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
+                  (add_exist_vars_to_ctx_list rs ws)
+                else
+                  rs in
+              Debug.ninfo_hprint (add_str "new_rs (exists)" (Cprinter.string_of_list_context)) new_rs no_pos;
+              (* log the transformation for the proof tracere *)
+              let prf = mkExLeft ctx0 conseq qvars ws prf1 in
+              (new_rs, prf)
+            )
+            | _ -> (
+              match conseq with
+              | Exists {formula_exists_qvars = qvars;
+                        formula_exists_heap = qh;
+                        formula_exists_pure = qp;
+                        formula_exists_vperm = qvp;
+                        formula_exists_type = qt;
+                        formula_exists_flow = qfl;
+                        formula_exists_and = qa;
+                        formula_exists_pos = pos} -> (
                 (* quantifiers on the RHS. Keep them for later processing *)
                 let qvars_fo = List.filter (fun (CP.SpecVar (t,_,_)) ->
-                    match t with
-                    | RelT _ | HpT -> false
-                    | _ -> true
-                  ) qvars in
+                                   match t with
+                                   | RelT _ | HpT -> false
+                                   | _ -> true
+                                 ) qvars in
                 Debug.ninfo_hprint (add_str "qvars " !CP.print_svl) qvars no_pos;
                 Debug.ninfo_hprint (add_str "qvars_fo " !CP.print_svl) qvars_fo no_pos;
                 (* let ws = CP.fresh_spec_vars qvars in *)
