@@ -191,7 +191,8 @@ let pr_sleek_log_entry e =
   fmt_string ("; caller: " ^ (e.sleek_proving_caller));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
   let x = if e.sleek_timeout then "(TIMEOUT)" else "" in
-  if e.sleek_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.sleek_time)^x);
+  (* if e.sleek_time > 0.5 then fmt_string ("; TIME: " ^ (string_of_float e.sleek_time)^x); *)
+  fmt_string ("; TIME: " ^ (string_of_float e.sleek_time)^x);
   fmt_string ("; classic: " ^ (string_of_bool e.sleek_proving_classic_flag)) ;
   fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
@@ -529,7 +530,7 @@ let add_sleek_logging (es_opt:Cformula.entail_state option) timeout_flag stime i
       sleek_proving_res = result;
     }
     in
-    let () =  x_dinfo_pp (string_of_sleek_log_entry sleek_log_entry) no_pos in
+    let () =  x_binfo_pp (string_of_sleek_log_entry sleek_log_entry) no_pos in
     let () = last_cmd # set_sleek sleek_log_entry in
     let () = sleek_log_stk # push sleek_log_entry in
     (if not(avoid) then 
