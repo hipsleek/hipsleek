@@ -906,6 +906,25 @@ let generic_get_permutation lst =
   else r
 ;;
 
+let generic_get_disjointness helper_two pair_lst =
+  let helper_h_lst h lst =
+    match lst with
+    | h1::tail ->
+       List.fold_left
+         (fun r item ->
+           mkAnd (helper_two item h) r)
+         (helper_two h1 h) tail
+    | [] -> mkTrue ()
+  in
+  let rec helper_lst lst =
+    match lst with
+    | [_] | [] -> mkTrue ()
+    | h::tail -> mkAnd (helper_h_lst h tail) (helper_lst tail)
+  in
+  helper_lst pair_lst
+;;
+
+  
 class arrPredTransformer_orig initcf = object(self)
   val cf = initcf               (* cf is Cformula.formula *)
   val mutable eqmap = ([]: (spec_var * exp) list)

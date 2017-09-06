@@ -83,6 +83,39 @@ let compare_list l1 l2 cmp =
   compare_helper l1 l2
 ;;
 
+let get_disjoint_pure hlst =
+  let helper_two a1 a2 =
+    match a1, a2 with
+    | Aseg_p (s1,e1), Aseg_p (s2,e2)
+      | AsegNE_p (s1,e1), AsegNE_p (s2,e2)
+      | Aseg_p (s1,e1), AsegNE_p (s2,e2)
+      | AsegNE_p (s1,e1), Aseg_p (s2,e2) ->
+       mkOr (mkLteSv e1 s2) (mkLteSv e2 s1)
+    | Pointsto_p (s1,_), Pointsto_p (s2,_) ->
+       mkNeqSv s1 s2
+    | Pointsto_p (s1,_), Aseg_p (s2,e2)
+      | Pointsto_p (s1,_), AsegNE_p (s2,e2)
+      | Aseg_p (s2,e2),Pointsto_p (s1,_)
+      | AsegNE_p (s2,e2),Pointsto_p (s1,_) ->
+       mkOr (mkLteSv e2 s1) (mkLtSv s1 s2)
+    | _,_ ->
+       failwith "get_disjoint_pure: TO BE IMPLEMENTED"
+  in
+  generic_get_disjointness helper_two hlst
+;;
+
+let get_segment_pure hlst =
+  List.fold_left
+    (fun r item ->
+      match item with
+      | Aseg_p (s,e) ->  (mkLteSv s e)::r
+      | AsegNE_p (s,e) -> (mkLtSv s e)::r
+      | _ -> r
+    )
+    [] hlst
+;;
+                                  
+
 let compare_asegPredplus_lst l1 l2 =
   compare_list l1 l2 is_same_asegPredplus
 ;;

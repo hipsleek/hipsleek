@@ -97,7 +97,8 @@ let simplify_pure_in_norm_pre_condition =
 ;;
 
 let simplify_norm_pre_condition norm =
-  (simplify_pure_in_norm_pre_condition norm)
+  norm
+  (* (simplify_pure_in_norm_pre_condition norm) *)
   (* merge_false_in_norm_pre_condition  *)
 ;;
 
@@ -368,11 +369,22 @@ let array_entailment_biabduction_norm lhs rhs =
   in
   (* Both LHS and RHS are given some order *)
   let helper_entry (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
-    let orig_lhs_p = (get_sorted_puref_general lhs_h)::lhs_p in
+    let new_lhs_p = (get_sorted_puref_general lhs_h)::lhs_p in
     let orig_rhs_p = (get_sorted_puref_general rhs_h)::rhs_p in
-    let f,norm = helper orig_lhs_p (orig_lhs_p,lhs_h) (orig_rhs_p,rhs_h) rhs_e [] [] [] [] 0 in
-    (mkBForall (lhs_e,f),norm,mkAndlst orig_lhs_p)
+    let f,norm = helper lhs_p (new_lhs_p,lhs_h) (orig_rhs_p,rhs_h) rhs_e [] [] [] [] 0 in
+    (mkBForall (lhs_e,f),norm,mkAndlst lhs_p)
   in
+
+  let get_sat_perm orig_pure hlst =
+    List.fold_left
+      (fun r perm ->
+        let perm_pure = get_sorted_puref_general perm in
+        if isSat (mkAndlst (perm_pure::orig_pure))
+        then (perm_pure,perm)::r
+        else r)
+      [] (generic_get_permutation hlst)
+  in
+
   (* LHS is given some order *)
   let helper_lhs_sorted (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
     let rhs_perm = generic_get_permutation rhs_h in
@@ -389,10 +401,12 @@ let array_entailment_biabduction_norm lhs rhs =
     | [] -> failwith "helper_lhs_sorted: Empty output"
   in
 
+
   (* Neither side is given any order *)
   let helper_lhs_unsorted (lhs_e,lhs_p,lhs_h) (rhs_e,rhs_p,rhs_h) =
-    let lhs_perm = generic_get_permutation lhs_h in
-    let lhs_perm_pure = List.map get_sorted_puref_general lhs_perm in
+    let lhs_p = (get_segment_pure lhs_h)@lhs_p in                                           
+    let disjoint_lhs_pure = get_disjoint_pure lhs_h in
+    let (lhs_perm_pure,lhs_perm) = List.split (get_sat_perm lhs_p lhs_h) in
     let (flst,normlst,lhs_p_lst) = split_list_3
                                      (List.map
                                         (fun item ->
@@ -400,7 +414,7 @@ let array_entailment_biabduction_norm lhs rhs =
                                                             (rhs_e,rhs_p,rhs_h))
                                         lhs_perm)
     in
-    (mkBAnd flst,combine_norm normlst lhs_perm_pure [],mkOrlst lhs_p_lst)
+    (mkBAnd flst,combine_norm normlst lhs_perm_pure [],mkAndlst (disjoint_lhs_pure::lhs_p))
   in
   let transAnte = new arrPredTransformer_orig lhs in
   let transConseq = new arrPredTransformer_orig rhs in
@@ -499,7 +513,7 @@ let extract_anti_frame_and_frame norm =
         )
         ([],mkFalse ()) lst
     in
-    (List.map norm_imply_to_antiframe_frame (merge_result imply),simplify neg)
+    (List.map norm_imply_to_antiframe_frame (merge_result imply),neg)
   in
   match norm with
   | NormOr lst ->
