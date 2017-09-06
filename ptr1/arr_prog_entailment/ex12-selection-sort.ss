@@ -32,7 +32,7 @@ int read_arr(arrI base, int i)
 
 int select(arrI base,int i,int m)
   requires base::AsegNE<i,m> & i>=0
-  ensures base::AsegNE<i,m> ;
+  ensures base::AsegNE<i,m> & res>=i & res<m; 
 {
 
  if(i+1<m){
@@ -45,7 +45,7 @@ int select(arrI base,int i,int m)
 	   return i;
 		  }
 	else{
-	   assume false;
+	   //assume false;
 	   return tmpi;
        }
      }

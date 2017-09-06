@@ -455,7 +455,8 @@ let extract_anti_frame_and_frame norm =
       if isSat inner_pure && true
       then
         let anti_frame_pure =
-          let f = get_gist (mkExists iuset (mkAndlst (clst@rhs_p))) (mkAndlst lhs_p) in
+          (* let f = get_gist (mkExists iuset (mkAndlst (clst@rhs_p))) (mkAndlst lhs_p) in *)
+          let f = (mkExists iuset (mkAndlst (clst@rhs_p))) in
           f
         in
         Some (eset@ieset,lhs_p,rhs_p,anti_frame_pure,frame,antiframe)
@@ -594,18 +595,18 @@ let merge_context_lst_for_frame clst lhs_p =
            (mkAndlst h.Cformula.es_infer_pure,h.Cformula.es_formula) tail
        in
        let infer_f =  infer_f in
-       let () = y_tinfo_pp ("check frame "^(!str_pformula infer_f)) in
-       let () = y_tinfo_pp ("check frame "^(!str_pformula lhs_p)) in
+       let () = y_binfo_pp ("check frame "^(!str_pformula infer_f)) in
+       let () = y_binfo_pp ("check frame "^(!str_pformula lhs_p)) in
        if isValid (simplify (mkImply lhs_p infer_f))
        then
-         let () = y_tinfo_pp ("check frame VALID") in
+         let () = y_binfo_pp ("check frame VALID") in
          let es = mkEmptyes () in
          (* Cformula.SuccCtx [Ctx {es with es_formula = state_f}] *)
          mkSuccCtx clst(* [(mkOCtx clst)] *)
        else
          mkEmptyFailCtx ()
      in
-     let () = y_binfo_pp ("List context: " ^(!Cformula.print_list_context ctx)) in
+     let () = y_tinfo_pp ("List context: " ^(!Cformula.print_list_context ctx)) in
      ctx
   | _ -> mkEmptyFailCtx ()
 ;;
