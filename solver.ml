@@ -7706,18 +7706,18 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
             Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
           else
             (* Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq *)
-            Arr_entailment_with_bi_abduction_norm_full.array_entailment_classical_entailment_interface new_ante new_conseq
+            Array_biabduction.array_entailment_classical_entailment_interface new_ante new_conseq
         in
         (full_rs,Prooftracer.Unknown)
       else
         if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)
         then
-          let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_frame_interface new_ante new_conseq in
+          let full_rs = Array_biabduction.array_entailment_frame_interface new_ante new_conseq in
           (full_rs,Prooftracer.Unknown)
         else
           if !Globals.array_biabduction (* List.mem INF_ARR_BIABDUCTION itype *)
           then
-            let full_rs = Arr_entailment_with_bi_abduction_norm_full.array_entailment_biabduction_interface new_ante new_conseq in
+            let full_rs = Array_biabduction.array_entailment_biabduction_interface new_ante new_conseq in
             (full_rs,Prooftracer.Unknown)
           else
 

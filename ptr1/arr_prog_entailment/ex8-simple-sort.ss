@@ -7,7 +7,7 @@ data arrI {
 }
 
 
-/*
+
 void upd_arr(arrI base, int i, int v)
    requires base::Elem<i,_> & i>=0
    ensures base::Elem<i,v>;
@@ -15,7 +15,8 @@ void upd_arr(arrI base, int i, int v)
 int read_arr(arrI base, int i)
    requires base::Elem<i,v> & i>=0
    ensures base::Elem<i,v>;
-*/
+
+/*
 void upd_arr(arrI base, int i, int v)
    requires base::AsegNE<i,i+1> & i>=0
    ensures base::AsegNE<i,i+1>;
@@ -23,7 +24,7 @@ void upd_arr(arrI base, int i, int v)
 int read_arr(arrI base, int i)
    requires base::AsegNE<i,i+1> & i>=0
    ensures base::AsegNE<i,i+1>;
-
+*/
 
 
 // Should succeed
