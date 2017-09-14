@@ -8,6 +8,7 @@ data arrI {
 
 
 
+/*
 void upd_arr(arrI base, int i, int v)
    requires base::Elem<i,_> & i>=0
    ensures base::Elem<i,v>;
@@ -42,8 +43,8 @@ void bubble_push(arrI base,int i,int m)
      if(tmp1>tmp2){
         upd_arr(base,i,tmp2);
 	upd_arr(base,i+1,tmp1);
-     }                   
-  }     
+     }
+  }
 }
 
 /*

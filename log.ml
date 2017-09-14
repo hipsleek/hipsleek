@@ -425,7 +425,7 @@ class last_commands =
 
 let last_cmd = new last_commands
 
-let sleek_counter= ref 0
+let sleek_counter = ref 0
 
 (* this part is not properly maintained *)
 (* to create a hash_table from proof_stk *)

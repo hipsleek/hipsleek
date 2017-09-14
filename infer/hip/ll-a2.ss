@@ -16,10 +16,14 @@ ll<n> == self = null & n = 0
 
 
 /* append two singly linked lists */
+relation R(int x, int y).
+  relation R2(int x, int y, int z).
+
 void append2(node x, node y)
-  infer  [n1]
-  requires x::ll<n1> * y::ll<n2>
-  ensures x::ll<m> & m=n1+n2;
+  infer  [R2]
+  requires x::ll<n1> * y::ll<n2> & n1>0//R(n1,n2)
+     ensures x::ll<m> & R2(m,n1,n2);
+     //m=n1+n2;
 {    
 	if (x.next == null) 
            x.next = y;
