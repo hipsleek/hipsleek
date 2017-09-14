@@ -148,3 +148,8 @@ print residue.
 expect Valid.
 
 
+//(6)
+infer[@arr_ba]  base::AsegNE<x,y> & y<a |- base::AsegNE<x,a>.
+print residue.
+expect Valid.
+
