@@ -488,6 +488,7 @@ let common_arguments = [
   ("--print-ba-trace", Arg.Set Globals.array_ba_trace,"print proof trace for array biabduction");
   ("--verbose-arr", Arg.Set Globals.array_verbose,"In array entailment, print the whole pre-condition");
   ("--arr-entfr", Arg.Set Globals.array_entailment_frame,"Array entailment with frame");
+  ("--arr-full-order", Arg.Set Globals.array_full_order, "Array entailment with full order");  
   ("--arr-raw", Arg.Set Globals.array_raw_entailment,"Raw Array entailment");
   ("--ps-arr",Arg.Set Globals.array_proof_search,"Enable proof search of existential variables in array entailment");
   ("--en-remove-abs", Arg.Set Globals.remove_abs,"remove @A nodes from formula (incl nodes with all fields ann with @A)");

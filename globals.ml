@@ -1297,6 +1297,9 @@ let array_biabduction = ref false
 ;;
 let array_raw_entailment = ref false
 ;;
+let array_full_order = ref false
+;;
+
   
   
 let array_proof_search = ref false

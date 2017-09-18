@@ -587,7 +587,7 @@ let generic_get_disjointness helper_two pair_lst =
 ;;
 
 
-type asegPredplus =
+type aseg_pred_plus =
   | Aseg_p of (Cpure.spec_var * Cpure.spec_var)
   | AsegNE_p of (Cpure.spec_var * Cpure.spec_var)
   | Pointsto_p of (Cpure.spec_var * Cpure.spec_var)
@@ -608,7 +608,7 @@ let str_list_delimeter str lst d emp =
   "["^(str_list_delimeter_raw str lst d emp)^"]"
 ;;
   
-let str_asegPredplus aseg =
+let str_aseg_pred_plus aseg =
   match aseg with
   | Aseg_p (s,e) ->
      "Aseg<"^(!str_sv s)^","^(!str_sv e)^">"
@@ -620,11 +620,11 @@ let str_asegPredplus aseg =
      (!str_sv s)^" -> "^(!str_sv v)
 ;;
 
-let str_asegPredplus_lst hf =
-  str_list_delimeter str_asegPredplus hf "*" "EMP"
+let str_aseg_pred_plus_lst hf =
+  str_list_delimeter str_aseg_pred_plus hf "*" "EMP"
 ;;
 let str_asegplusF (pf,hf) =
-  (str_list !str_pformula pf)^"/\\"^(str_asegPredplus_lst hf)
+  (str_list !str_pformula pf)^"/\\"^(str_aseg_pred_plus_lst hf)
 ;;
 
   

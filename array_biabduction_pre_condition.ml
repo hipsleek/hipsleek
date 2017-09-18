@@ -5,7 +5,7 @@ open Format
 
 type biabFormula =
   | BBaseNeg of (Cpure.formula list)
-  | BBaseImply of (Cpure.formula list * Cpure.formula list * asegPredplus list * asegPredplus list)
+  | BBaseImply of (Cpure.formula list * Cpure.formula list * aseg_pred_plus list * aseg_pred_plus list)
   | BExists of (Cpure.spec_var list * biabFormula)
   | BForall of (Cpure.spec_var list * biabFormula)
   | BAnd of (biabFormula list)
@@ -18,7 +18,7 @@ let rec str_biabFormula f =
   | BBaseNeg plst ->
      "{NOT "^(str_list !str_pformula plst)^"}"
   | BBaseImply (lplst, rplst, frame, antiframe) ->
-     "{"^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^"}"
+     "{"^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_aseg_pred_plus_lst frame)^" * "^(str_aseg_pred_plus_lst antiframe)^"}"
   | BExists (vset, nf) ->
      if List.length vset = 0
      then str_biabFormula nf
@@ -50,7 +50,7 @@ let rec str_pre_condition f =
     | BBaseNeg plst ->       
        print_indent indent ("{ NOT "^(str_list !str_pformula plst)^" }")      
     | BBaseImply (lplst, rplst, frame, antiframe) ->
-       print_indent indent ("{ "^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_asegPredplus_lst frame)^" * "^(str_asegPredplus_lst antiframe)^" }")
+       print_indent indent ("{ "^(str_list !str_pformula lplst)^"==>"^(str_list !str_pformula rplst)^" @"^(str_aseg_pred_plus_lst frame)^" * "^(str_aseg_pred_plus_lst antiframe)^" }")
     | BExists (vset, nf) ->
        (* if List.length vset = 0 *)
        (* then helper nf indent *)
