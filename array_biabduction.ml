@@ -463,6 +463,10 @@ let add_frame pre_cond h =
   { pre_cond with frame = h::(pre_cond.frame)}
 ;;
 
+let update_vset pre_cond vset =
+  { pre_cond with vset = vset}
+;;
+
 
 let add_pure (newf, orig_f) inputf =
   (inputf::newf, orig_f)
@@ -477,6 +481,10 @@ let present_pure (newf, orig_f) =
 ;;
 
 let get_new_pure = fst
+;;
+
+let str_pair_f (newf, orig_f) =
+  str_list !str_pformula newf
 ;;
   
 let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) =
@@ -555,10 +563,10 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        aux_entry indent (lhs_p, ltail) (rhs_p, mkStarForm []) (add_frame pre_cond lh)
 
   and aux_entry indent (lhs_p, lhs_h) (rhs_p, rhs_h) pre_cond =
-    (* let () = *)
-    (*   let str_f pf hf = (str_list !str_pformula pf) ^ "/\\ " ^ (str_partial_sort_pred hf) in *)
-    (*   print_endline_verbose (""^(print_indent indent ((str_f lhs_p lhs_h)^" |- "^(str_f rhs_p rhs_h)))) *)
-    (* in *)
+    let () =
+      let str_f pf hf = (str_pair_f pf) ^ "/\\ " ^ (str_partial_sort_pred hf) in
+      print_endline_verbose (""^(print_indent indent ((str_f lhs_p lhs_h)^" |- "^(str_f rhs_p rhs_h))))
+    in
     if not(isSat (mkAnd (present_pure lhs_p) (present_pure rhs_p)))
     then
       let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
@@ -581,7 +589,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          (mkBAnd flst, combine_norm normlst caselst [])
       | MatchForm _, StarForm r_lst ->
          let sorted_rhs_lst = List.map (fun (order_plst, hlst) -> (add_pure_lst rhs_p order_plst, hlst)) (get_sorted [present_pure rhs_p] r_lst) in
-         begin match List.map (fun item -> aux_sorted (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with
+         begin match List.map (fun item -> aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with (* can use aux_sorted directly *)
          | h :: tail ->
             (List.fold_left
                (fun (rf, NormOr rnorm) (nf, NormOr nnorm) ->
@@ -630,6 +638,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          let case1 = mkEqSv ls rs in
          let case2 = mkLtSv ls rs in
          let case3 = mkGtSv ls rs in
+         let pre_cond = update_vset pre_cond vsetprime in
          let f1, norm1 = aux_entry indent (add_pure lhs_p case1, ltail) (add_pure rhs_p (mkEqSv lv rv), rtail) pre_cond in
          let f2, norm2 = aux_entry indent (add_pure lhs_p case2, ltail) (rhs_p, mkMatchForm rh rtail) (add_frame pre_cond lh) in
          let f3, norm3 = aux_entry indent (add_pure lhs_p case3, mkMatchForm lh ltail) (rhs_p, rtail) (add_antiframe pre_cond rh) in
@@ -1025,7 +1034,7 @@ let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, r
       array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h)
   in
   let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
-  let () = print_endline_verbose (str_pre_condition f) in
+  (* let () = print_endline_verbose (str_pre_condition f) in *)
   let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
   let () = print_endline_verbose (str_norm_pre_condition norm) in
   (* let simp_norm = simplify_norm_pre_condition norm in *)
@@ -1045,16 +1054,20 @@ let norm_to_pure_for_classical_entailment (NormOr lst)=
        if List.length frame > 0 || List.length antiframe > 0
        then None
        else
-         Some (mkAndlst rhs_p)
+         Some (mkExists eset (mkAndlst rhs_p))
     | NormBaseNeg _ -> None
   in
-  mkOrlst
-    ( List.fold_left
-        (fun r (elst, clst, p) ->
-          match helper_norm_pre_condition_base p with
-          | Some np -> (mkAndlst (np::clst)) :: r
-          | None -> r )
-        [] lst )
+  let f =
+    mkOrlst
+      ( List.fold_left
+          (fun r (elst, clst, p) ->
+            match helper_norm_pre_condition_base p with
+            | Some np -> (mkExists elst (mkAndlst (np::clst))) :: r
+            | None -> r )
+          [] lst )
+  in
+  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
+  f
 ;;
 
 let check_norm_validity norm lhs_p rhs_p =
@@ -1078,7 +1091,7 @@ let array_entailment_classical_entailment_interface lhs rhs =
   let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
   let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in  
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
-  if check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p)
+  if check_norm_validity norm (mkAndlst lhs_p) (mkExists rhs_e (mkAndlst rhs_p))
   then
     mkEmptySuccCtx ()
   else
