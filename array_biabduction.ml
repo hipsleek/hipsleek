@@ -486,8 +486,9 @@ let get_new_pure = fst
 let str_pair_f (newf, orig_f) =
   str_list !str_pformula newf
 ;;
-  
+
 let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) =
+
   let get_sorted plst hlst =
     let enumerate hlst =
       let enum_helper item lst =
@@ -525,7 +526,6 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
     in
     (enumerate hlst)
   in
-
   
   let rec base_case0 indent lhs_p rhs_p pre_cond =
     let frame = List.rev pre_cond.frame in
@@ -564,7 +564,8 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
 
   and aux_entry indent (lhs_p, lhs_h) (rhs_p, rhs_h) pre_cond =
     let () =
-      let str_f pf hf = (str_pair_f pf) ^ "/\\ " ^ (str_partial_sort_pred hf) in
+      (* let str_f pf hf = (str_pair_f pf) ^ "/\\ " ^ (str_partial_sort_pred hf) in *)
+      let str_f pf hf = (str_partial_sort_pred hf) in
       print_endline_verbose (""^(print_indent indent ((str_f lhs_p lhs_h)^" |- "^(str_f rhs_p rhs_h))))
     in
     if false (* not(isSat (mkAnd (present_pure lhs_p) (present_pure rhs_p))) *)
@@ -625,7 +626,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        let pre_cond = update_vset pre_cond vsetprime in
        let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, lhs_h) (rhs_p, rtail) pre_cond in
        let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, lhs_h) (rhs_p, mkMatchForm (mkAsegNE_p a b) rtail) pre_cond in
-       let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, lhs_h) (rhs_p, rhs_h) pre_cond in
+       let f3, norm3 = (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p]))), mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()])) in
        (print_and_return (mkBExists (uset,mkBAnd [f1; f2; f3])) indent,combine_norm [norm1; norm2; norm3] [case1; case2; case3] uset)
       
     | Pointsto_p (ls, lv), Pointsto_p (rs, rv) ->
@@ -672,11 +673,11 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        if is_same_sv la ra
        then
          let (uset,vsetprime) = mkUsetandVsetprime [lb; rb] pre_cond.vset in
-         let case1 = (mkLtSv lb rb) in
-         let case2 = (mkGteSv lb rb) in
+         let case1 = (mkLteSv lb rb) in
+         let case2 = (mkGtSv lb rb) in
          let pre_cond = update_vset pre_cond vsetprime in
          let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, ltail) (rhs_p, rtail) (add_frame pre_cond lh) in
-         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, mkMatchForm (mkAseg_p rb lb) ltail) (rhs_p, rtail) (add_frame pre_cond (mkAsegNE_p la rb)) in
+         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, mkMatchForm (mkAsegNE_p rb lb) ltail) (rhs_p, rtail) (add_frame pre_cond (mkAsegNE_p la rb)) in
          (print_and_return (mkBExists (uset, mkBAnd [f1; f2])) indent,combine_norm [norm1; norm2] [case1; case2] uset)
        else
          failwith "AsegNE v.s Gap: Not aligned"
@@ -685,14 +686,12 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        if is_same_sv la ra
        then
          let (uset,vsetprime) = mkUsetandVsetprime [lb; rb] pre_cond.vset in
-         let case1 = (mkGtSv lb rb) in
+         let case1 = (mkGteSv lb rb) in
          let case2 = (mkLtSv lb rb) in
-         let case3 = (mkEqSv lb rb) in
          let pre_cond = update_vset pre_cond vsetprime in
          let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, ltail) (rhs_p, rtail) (add_antiframe pre_cond (mkAsegNE_p la rb)) in
          let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, ltail) (rhs_p, mkMatchForm (mkAsegNE_p lb rb) rtail) (add_frame pre_cond (mkAsegNE_p la rb)) in
-         let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, ltail) (rhs_p, rtail) (add_frame pre_cond (mkAsegNE_p la rb)) in
-         (print_and_return (mkBExists (uset, mkBAnd [f1; f2])) indent,combine_norm [norm1; norm2; norm3] [case1; case2; case3] uset)
+         (print_and_return (mkBExists (uset, mkBAnd [f1; f2])) indent,combine_norm [norm1; norm2] [case1; case2] uset)
        else
          failwith "AsegNE v.s Gap: Not aligned"
 
@@ -712,75 +711,71 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        else
          failwith "Gap v.s Pointsto_p: Not aligned"
 
-    (* | AsegNE_p (la,lb), Pointsto_p (rs,rv) -> *)
-    (*    if is_same_sv la rs *)
-    (*    then *)
-    (*      failwith "TO BE IMPLEMENTED" *)
-    (*      (\* let subst_case_var (NormOr lst) subs = *\) *)
-    (*      (\*   NormOr *\) *)
-    (*      (\*     (List.map *\) *)
-    (*      (\*        (fun (eset,clst,base)-> *\) *)
-    (*      (\*          (eset,List.map (Cpure.subs_var_with_exp subs) clst,base)) *\) *)
-    (*      (\*        lst *\) *)
-    (*      (\*     ) *\) *)
-    (*      (\* in *\) *)
-    (*      (\* let fresh_c = global_get_new_var () in (\\* c=la+1 *\\) *\) *)
-    (*      (\* let fresh_u = global_get_new_var () in *\) *)
-    (*      (\* let c_exp = incOne (mkVar la) in *\) *)
-    (*      (\* let eq_c_exp = mkEq (mkVar fresh_c) c_exp in *\) *)
-    (*      (\* let subst = [(fresh_c,c_exp)]in *\) *)
-    (*      (\* let f,norm = helper orig_lhs_p (eq_c_exp::lhs_p,([mkPointsto_p la fresh_u; mkAseg_p fresh_c lb]@ltail)) *\) *)
-    (*      (\*                     (rhs_p,rhs_h) (vset) ([fresh_u;fresh_c]@uqset) ((fresh_c,c_exp)::uqset_eq) frame antiframe (indent+1) in *\) *)
-    (*      (\* (print_and_return (mkBForall ([fresh_u;fresh_c],f)) indent,subst_case_var norm subst) *\) *)
-    (*    else *)
-    (*      let (uset,vsetprime) = mkUsetandVsetprime [la;rs] pre_cond.vset in *)
-    (*      let case1 = (mkEqSv la rs) in *)
-    (*      let case2 = (mkLtSv la rs) in *)
-    (*      let case3 = (mkGtSv la rs) in *)
-    (*      (\* let f1,norm1 = helper orig_lhs_p (case1::lhs_p, lhs_h) (rhs_p, (mkPointsto_p la rv)::rtail) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f1, norm1 = aux_entry (indent+1) (case1::lhs_p, mkMatchForm lh ltail) (rhs_p, mkMatchForm (mkPointsto_p la rv) rtail) pre_cond in *)
-    (*      (\* let f2,norm2 = helper orig_lhs_p (case2::lhs_p, lhs_h) (rhs_p, (mkGap_p la rs)::rhs_h) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f2, norm2 = aux_entry (indent+1) (case2::lhs_p, mkMatchForm lh ltail) (rhs_p, mkMatchForm (mkGap_p la rs) rtail) pre_cond in *)
-    (*      (\* let f3,norm3 = helper orig_lhs_p (case3::lhs_p, (mkGap_p rs la)::lhs_h) (rhs_p, rhs_h) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f3, norm3 = aux_entry (indent+1) (case3::lhs_p, mkMatchForm (mkGap_p rs la) (mkMatchForm lh ltail)) (rhs_p, (mkMatchForm rh rtail)) pre_cond in *)
-    (*      (print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset) *)
-           
-    (* | Pointsto_p (ls,lv),AsegNE_p (ra,rb) -> *)
-    (*    if is_same_sv ls ra *)
-    (*    then *)
-    (*      failwith "TO BE IMPLEMENTED" *)
-    (*      (\* let fresh_c = global_get_new_var () in *\) *)
-    (*      (\* let fresh_u = global_get_new_var () in *\) *)
-    (*      (\* let f,norm = (helper orig_lhs_p lhs *\) *)
-    (*      (\*                      ((mkEq (mkVar fresh_c) (incOne (mkVar ra)))::rhs_p,([mkPointsto_p ra fresh_u; mkAseg_p fresh_c rb]@rtail)) *\) *)
-    (*      (\*                      ([fresh_c;fresh_u]@vset) uqset uqset_eq *\) *)
-    (*      (\*                      frame antiframe (indent+1)) *\) *)
-    (*      (\* in *\) *)
-    (*      (\* (print_and_return f indent,norm) *\) *)
-    (*    else *)
-    (*      let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] pre_cond.vset in *)
-    (*      let case1 = (mkEqSv ls ra) in *)
-    (*      let case2 = (mkLtSv ls ra) in *)
-    (*      let case3 = (mkGtSv ls ra) in *)
-    (*      (\* let f1,norm1 = helper orig_lhs_p (case1::lhs_p, lhs_h) (rhs_p, (mkAsegNE_p ls rb)::rtail) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f1, norm1 = aux_entry (indent+1) (case1::lhs_p, (mkMatchForm lh ltail)) (rhs_p, (mkMatchForm (mkAsegNE_p ls rb) rtail)) pre_cond in *)
-    (*      (\* let f2,norm2 = helper orig_lhs_p (case2::lhs_p, lhs_h) (rhs_p, (mkGap_p ls ra)::rhs_h) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f2, norm2 = aux_entry (indent+1) (case2::lhs_p, (mkMatchForm lh ltail)) (rhs_p, mkMatchForm (mkGap_p ls ra) (mkMatchForm rh rtail)) pre_cond in *)
-    (*      (\* let f3,norm3 = helper orig_lhs_p (case3::lhs_p, (mkGap_p ra ls)::lhs_h) (rhs_p, rhs_h) vsetprime uqset uqset_eq frame antiframe (indent+1) in *\) *)
-    (*      let f3, norm3 = aux_entry (indent+1) (case3::lhs_p, (mkMatchForm (mkGap_p ra ls) (mkMatchForm lh ltail))) (rhs_p, mkMatchForm rh rtail) pre_cond in *)
-    (*      (print_and_return (mkBExists (uset, BAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset) *)
+    | AsegNE_p (la,lb), Pointsto_p (rs,rv) ->
+       if is_same_sv la rs
+       then
+         let subst_case_var (NormOr lst) subs =
+           NormOr
+             (List.map
+                (fun (eset,clst,base)->
+                  let new_base = match base with
+                    | NormBaseImply (nuset, ueset, nlhsp, nrhsp, nframe, nantiframe) ->
+                       let new_nlhsp = List.map (Cpure.subs_var_with_exp subs) nlhsp in
+                       let new_nrhsp = List.map (Cpure.subs_var_with_exp subs) nrhsp in
+                       NormBaseImply (nuset, ueset, new_nlhsp, new_nrhsp, nframe, nantiframe)
+                    | NormBaseNeg (nuset, neset, pflst) ->
+                       NormBaseNeg (nuset, neset, List.map (Cpure.subs_var_with_exp subs) pflst)
+                  in
+                  (eset,List.map (Cpure.subs_var_with_exp subs) clst,base))
+                lst
+             )
+         in
+         let fresh_c = global_get_new_var () in (* c=la+1 *)
+         let fresh_u = global_get_new_var () in
+         let c_exp = incOne (mkVar la) in
+         let eq_c_exp = mkEq (mkVar fresh_c) c_exp in
+         let subst = [(fresh_c, c_exp)] in
+         let new_point_to = mkPointsto_p la fresh_u in
+         let new_aseg = mkAseg_p fresh_c lb in
+         let f, norm = aux_entry (indent + 1) (add_pure lhs_p eq_c_exp, mkMatchForm new_point_to (mkMatchForm new_aseg ltail)) (rhs_p, rhs_h) pre_cond in
+         (print_and_return (mkBForall ([fresh_u; fresh_c], f)) indent, subst_case_var norm subst)
+       else
+         let (uset,vsetprime) = mkUsetandVsetprime [la;rs] pre_cond.vset in
+         let case1 = (mkEqSv la rs) in
+         let case2 = (mkLtSv la rs) in
+         let case3 = (mkGtSv la rs) in
+         let pre_cond = update_vset pre_cond vsetprime in
+         let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, lhs_h) (rhs_p, mkMatchForm (mkPointsto_p la rv) rtail) pre_cond in
+         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, lhs_h) (rhs_p, mkMatchForm (mkGap_p la rs) rtail) pre_cond in
+         let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, mkMatchForm (mkGap_p rs la) lhs_h) (rhs_p, rhs_h) pre_cond in
+         (print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
+                  
+    | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
+       if is_same_sv ls ra
+       then
+         let fresh_c = global_get_new_var () in
+         let fresh_u = global_get_new_var () in
+         let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar ra)) in
+         let rhs_point_to = mkPointsto_p ra fresh_u in
+         let rhs_aseg = mkAseg_p fresh_c rb in
+         let pre_cond = update_vset pre_cond ([fresh_c;fresh_u]@pre_cond.vset) in
+         let f, norm = aux_entry (indent+1) (lhs_p, lhs_h) (add_pure rhs_p eq_pure, mkMatchForm rhs_point_to (mkMatchForm rhs_aseg rtail)) pre_cond in
+         (print_and_return f indent,norm)
+       else
+         let (uset,vsetprime) = mkUsetandVsetprime [ls;ra] pre_cond.vset in
+         let case1 = (mkEqSv ls ra) in
+         let case2 = (mkLtSv ls ra) in
+         let case3 = (mkGtSv ls ra) in
+         let pre_cond = update_vset pre_cond vsetprime in
+         let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, (mkMatchForm lh ltail)) (rhs_p, (mkMatchForm (mkAsegNE_p ls rb) rtail)) pre_cond in
+         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, (mkMatchForm lh ltail)) (rhs_p, mkMatchForm (mkGap_p ls ra) (mkMatchForm rh rtail)) pre_cond in
+         let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, (mkMatchForm (mkGap_p ra ls) (mkMatchForm lh ltail))) (rhs_p, mkMatchForm rh rtail) pre_cond in
+         (print_and_return (mkBExists (uset, BAnd [f1; f2; f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
 
-    (* | Gap_p _, Gap_p _ -> *)
-    (*    failwith "Gap_p vs Gap_p: Invalid case"                                      *)
-    | _, _ -> failwith "TO BE IMPLEMENTED"
-
+    | Gap_p _, Gap_p _ ->
+       failwith "Gap_p vs Gap_p: Invalid case"    
   in
 
-
-  (* let transAnte = new arrPredTransformer_orig lhs in *)
-  (* let transConseq = new arrPredTransformer_orig rhs in *)
-  (* let (lhs_e_lst, lhs_p_lst, lhs_h_lst) = transAnte#formula_to_general_formula in *)
-  (* let (rhs_e_lst, rhs_p_lst, rhs_h_lst) = transConseq#formula_to_general_formula in *)
   let initial_pre_cond =
     {
       antiframe = [];
@@ -1050,13 +1045,14 @@ let trans_array_formula cf =
   (elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
 ;;
 
-let norm_to_pure_for_classical_entailment (NormOr lst)=
+let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
+  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
   let helper_norm_pre_condition_base = function
     | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
        if List.length frame > 0 || List.length antiframe > 0
        then None
        else
-         Some (mkExists eset (mkAndlst rhs_p))
+         Some (eset, mkAndlst rhs_p)
     | NormBaseNeg _ -> None
   in
   let f =
@@ -1064,7 +1060,7 @@ let norm_to_pure_for_classical_entailment (NormOr lst)=
       ( List.fold_left
           (fun r (elst, clst, p) ->
             match helper_norm_pre_condition_base p with
-            | Some np -> (mkExists elst (mkAndlst (np::clst))) :: r
+            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
             | None -> r )
           [] lst )
   in
@@ -1073,8 +1069,14 @@ let norm_to_pure_for_classical_entailment (NormOr lst)=
 ;;
 
 let check_norm_validity norm lhs_p rhs_p =
-  (isValid (mkImply lhs_p rhs_p)) &&
-    (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm)))
+  (* let () = print_endline "check_norm_validity" in *)
+  (* let () = print_endline (!str_pformula lhs_p) in *)
+  (* let () = print_endline (!str_pformula rhs_p) in *)
+  (* Why isValid is not working? *)
+
+  (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)))
+  (* (imply lhs_p rhs_p) && *)
+(* (imply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)) *)
 ;;
 
 (* let array_entailment_classical_entailment_interface lhs rhs = *)
@@ -1093,7 +1095,7 @@ let array_entailment_classical_entailment_interface lhs rhs =
   let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
   let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in  
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
-  if check_norm_validity norm (mkAndlst lhs_p) (mkExists rhs_e (mkAndlst rhs_p))
+  if check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   then
     mkEmptySuccCtx ()
   else

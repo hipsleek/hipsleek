@@ -3563,7 +3563,7 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no time
   (* let conseq0 = CP.infer_level_pure conseq in *) (*add l.mu>0*) (*MERGE CHECK*)
   let acpairs = x_add imply_label_filter ante conseq in
   let pairs = List.map (fun (ante,conseq) -> 
-      let () = x_dinfo_hp (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
+      let () = x_binfo_hp (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
       (* RHS split already done outside *)
       (* let cons = split_conjunctions conseq in *)
       let cons = [conseq] in
