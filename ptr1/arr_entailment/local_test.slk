@@ -12,9 +12,18 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-// infer[@arr_en]  base::Elem<a,b>  |- base::Elem<a,b>.
-// print residue.
-// expect Valid.
+infer[@arr_enfr]  base::Elem<a,b>  |- base::Elem<a,b>.
+print residue.
+expect Valid.
+
+infer[@arr_enfr]  base::Elem<a,b> * base::Elem<c,d>  |- base::Elem<a,b>.
+print residue.
+expect Valid.
+
+infer[@arr_enfr] base::AsegNE<a,b> |- exists c: base::Elem<a,c>.
+print residue.
+expect Valid.
+
 
 // infer[@arr_en]  base::Elem<a,b>  |- base::Elem<a,c>.
 // print residue.
@@ -57,43 +66,9 @@ pred_prim Elem<start:int,value:int>.
 // print residue.
 // expect Fail.
 
-infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<c+2,10>.
-print residue.
-expect Fail.
-
-// exists(flted_60_59:exists(flted_60_60:exists(c_62:exists(flted_60_61:
-
-// (c_62<flted_60_60 | c_62=flted_60_60) & flted_60_60<flted_60_59 & 
-// flted_60_61<c_62 & 
-// ((flted_60_59<flted_60_61 | flted_60_59=flted_60_61 | c_62<flted_60_60 | 
-//   c_62=flted_60_60)) & 
-// flted_60_61=1 & flted_60_60=7 & flted_60_59=10 & c_62=5 & a=flted_60_61 & 
-// c_62<b & c_62=flted_60_60 & flted_60_59=b)
-// )))
-
-// exists(flted_56_35:exists(flted_56_36:exists(c_38:exists(flted_56_37:
-// (c_38<flted_56_36 | c_38=flted_56_36) &
-// flted_56_36<flted_56_35 &
-// flted_56_37<c_38 & 
-// ((flted_56_35<flted_56_37 | flted_56_35=flted_56_37 | c_38<flted_56_36 | 
-//   c_38=flted_56_36))  &
-// flted_56_37=1 &
-// c_38=flted_56_36-2 &
-// flted_56_35=10 &
-// a=flted_56_37 & 
-// c_38<b &
-// c_38=flted_56_36 &
-// flted_56_35=b
-// ))))
-
-exists(flted_60_35:exists(flted_60_36:exists(c_38:exists(flted_60_37:
-((c_38<flted_60_36 | c_38=flted_60_36)) &
-flted_60_36<flted_60_35 & 
-flted_60_37<c_38 & 
-((flted_60_35<flted_60_37 | flted_60_35=flted_60_37 | c_38<flted_60_36 | 
-  c_38=flted_60_36)) &
-flted_60_37=1 & c_38=flted_60_36-2 & flted_60_35=10 & a=flted_60_37 & 
-c_38<b & c_38=flted_60_36 & flted_60_35=b))))
+// infer[@arr_en]  base::AsegNE<a,b> &  a=1 & b=10  |- exists c: base::AsegNE<1,c> * base::AsegNE<c+2,10>.
+// print residue.
+// expect Fail.
 
 
 

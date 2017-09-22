@@ -894,8 +894,8 @@ let extract_anti_frame_and_frame norm =
       
 
 (* From asegPlus to h_formula *)
-let arrPredPlus_to_h_formula hflst =  
-  let one_arrPredPlus_to_h_formula p =
+let arr_pred_plus_to_h_formula hflst =  
+  let one_arr_pred_plus_to_h_formula p =
     let basePtr = mkSV "base" in
     match p with
     | AsegNE_p (s,e) ->
@@ -907,7 +907,7 @@ let arrPredPlus_to_h_formula hflst =
     | _ -> failwith "arrPredPlus_to_h_formula: TO BE IMPLEMENTED"
   in
   let construct_h_formula plst =
-    match (List.map one_arrPredPlus_to_h_formula plst) with
+    match (List.map one_arr_pred_plus_to_h_formula plst) with
     | h::tail -> Some (List.fold_left (fun r itemh -> mkStarH itemh r) h tail)
     | [] -> None
   in
@@ -919,12 +919,12 @@ let construct_context_lst aflst neg =
   let construct_helper_imply ((aeset,apf,ahlst),(feset,fpf,phlst)) =
     let es = mkEmptyes () in
     let h_antiframe_lst =
-      match arrPredPlus_to_h_formula ahlst with
+      match arr_pred_plus_to_h_formula ahlst with
       | Some nh -> [nh]
       | None -> []
     in
     let h_frame =
-      match arrPredPlus_to_h_formula phlst with
+      match arr_pred_plus_to_h_formula phlst with
       | Some nh -> nh
       | None -> HEmp
     in
@@ -1133,19 +1133,51 @@ let norm_to_pure_for_frame (NormOr lst) rhs =
   f
 ;;
 
-let extract_frame (NormOr lst) =
+let extract_frame (NormOr lst) lhs_p rhs_p=
+  let extract_one_frame (elst, clst, norm_base) =
+    match norm_base with      
+    | NormBaseImply (iuset, ieset, ilhs_p, irhs_p, frame, antiframe) ->
+       (* lhs_p should be empty *)
+       (* And need to add the uqset_eq *)
+       if List.length antiframe > 0
+       then None
+       else
+         let state_pure = simplify (mkAndlst ([lhs_p; rhs_p] @ (clst @ irhs_p))) in
+         let new_elst = elst @ ieset in
+         let h_frame =
+           match arr_pred_plus_to_h_formula frame with
+           | Some nh -> nh
+           | None -> HEmp
+         in
+         let state =
+           if List.length new_elst = 0
+           then construct_base h_frame state_pure
+           else construct_exists h_frame state_pure new_elst
+         in
+         Some (mkCtx
+                 {(mkEmptyes ()) with
+                   es_formula = state;
+              })
+    | NormBaseNeg _ -> None
+  in
+  mkSuccCtx (List.fold_left (fun r item ->
+                 match extract_one_frame item with
+                 | None -> r
+                 | Some ctx -> ctx::r) [] lst)
+;;
+                                 
   
 
 let array_entailment_frame_interface lhs rhs =
   let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in  
+  let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
   if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
   then
-    failwith "Extract frame"
+    extract_frame norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   else
     mkEmptyFailCtx ()
-;;                   
+;;
   (* let (implylst,neg) = extract_anti_frame_and_frame simp_norm in *)
   (* let dropped_implylst = construct_context_lst (drop_antiframe implylst) (mkTrue ()) in *)
   (* let list_ctx = merge_context_lst_for_frame dropped_implylst lhs_p in *)
