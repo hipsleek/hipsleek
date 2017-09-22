@@ -1110,15 +1110,48 @@ let array_entailment_biabduction_interface lhs rhs =
 (* (true, mkEmptySuccCtx (),[]) *)
 ;;
 
+let norm_to_pure_for_frame (NormOr lst) rhs =
+  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
+  let helper_norm_pre_condition_base = function
+    | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
+       if List.length antiframe > 0
+       then None
+       else
+         Some (eset, mkAndlst rhs_p)
+    | NormBaseNeg _ -> None
+  in
+  let f =
+    mkOrlst
+      ( List.fold_left
+          (fun r (elst, clst, p) ->
+            match helper_norm_pre_condition_base p with
+            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
+            | None -> r )
+          [] lst )
+  in
+  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
+  f
+;;
+
+let extract_frame (NormOr lst) =
+  
+
 let array_entailment_frame_interface lhs rhs =
-  failwith "TO BE IMPLEMENTED"
-  (* let (f,simp_norm,lhs_p) = array_entailment_biabduction_get_norm lhs rhs in *)
+  let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
+  let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in  
+  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
+  then
+    failwith "Extract frame"
+  else
+    mkEmptyFailCtx ()
+;;                   
   (* let (implylst,neg) = extract_anti_frame_and_frame simp_norm in *)
   (* let dropped_implylst = construct_context_lst (drop_antiframe implylst) (mkTrue ()) in *)
   (* let list_ctx = merge_context_lst_for_frame dropped_implylst lhs_p in *)
   (* list_ctx *)
   (* (true, mkSuccCtx (construct_context_lst (drop_antiframe implylst) neg), []) *)
 (* (true, mkEmptySuccCtx (),[]) *)
-;;  
+(* ;;   *)
 
   
