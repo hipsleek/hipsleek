@@ -114,7 +114,6 @@ let mkUsetandVsetprime set vset =
   
 let array_entailment_biabduction_norm lhs rhs =
 
-
   (* input: heap formulas, output: a pure formula with sorted information  *)  
   let get_sorted_puref_general arrPredlst =
     let rec helper lst lastm flst =
@@ -467,6 +466,9 @@ let update_vset pre_cond vset =
   { pre_cond with vset = vset}
 ;;
 
+let add_uqset_eq pre_cond new_uqset_eq =
+  { pre_cond with uqset_eq = new_uqset_eq @ pre_cond.uqset_eq }
+;;
 
 let add_pure (newf, orig_f) inputf =
   (inputf::newf, orig_f)
@@ -530,7 +532,9 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
   let rec base_case0 indent lhs_p rhs_p pre_cond =
     let frame = List.rev pre_cond.frame in
     let antiframe = List.rev pre_cond.antiframe in
-    let norm = mkNormOr_base pre_cond.uqset_eq (mkNormBaseImply pre_cond.norm_uqset pre_cond.vset [] (get_new_pure rhs_p) frame antiframe) in
+    let upset_eq_v, uqset_eq_f = List.split (List.map (fun (v, e) -> (v, mkEq (mkVar v) e)) pre_cond.uqset_eq) in
+    let () = print_endline ("uqset_eq_f: " ^ (str_list !str_pformula uqset_eq_f)) in
+    let norm = mkNormOr_base pre_cond.uqset_eq (mkNormBaseImply pre_cond.norm_uqset pre_cond.vset uqset_eq_f (get_new_pure rhs_p) frame antiframe) in
     (print_and_return (mkBExists (pre_cond.vset, BBaseImply ([present_pure lhs_p],[present_pure rhs_p],frame,antiframe))) indent, norm)
       
   and base_case1 indent lhs_p (rhs_p, rh, rtail) pre_cond =
@@ -720,9 +724,9 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
                 (fun (eset,clst,base)->
                   let new_base = match base with
                     | NormBaseImply (nuset, ueset, nlhsp, nrhsp, nframe, nantiframe) ->
-                       let new_nlhsp = List.map (Cpure.subs_var_with_exp subs) nlhsp in
+                       (* let new_nlhsp = List.map (Cpure.subs_var_with_exp subs) nlhsp in *)
                        let new_nrhsp = List.map (Cpure.subs_var_with_exp subs) nrhsp in
-                       NormBaseImply (nuset, ueset, new_nlhsp, new_nrhsp, nframe, nantiframe)
+                       NormBaseImply (nuset, ueset, nlhsp, new_nrhsp, nframe, nantiframe)
                     | NormBaseNeg (nuset, neset, pflst) ->
                        NormBaseNeg (nuset, neset, List.map (Cpure.subs_var_with_exp subs) pflst)
                   in
@@ -737,6 +741,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          let subst = [(fresh_c, c_exp)] in
          let new_point_to = mkPointsto_p la fresh_u in
          let new_aseg = mkAseg_p fresh_c lb in
+         let pre_cond = add_uqset_eq pre_cond subst in
          let f, norm = aux_entry (indent + 1) (add_pure lhs_p eq_c_exp, mkMatchForm new_point_to (mkMatchForm new_aseg ltail)) (rhs_p, rhs_h) pre_cond in
          (print_and_return (mkBForall ([fresh_u; fresh_c], f)) indent, subst_case_var norm subst)
        else
@@ -1137,27 +1142,37 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
   let extract_one_frame (elst, clst, norm_base) =
     match norm_base with      
     | NormBaseImply (iuset, ieset, ilhs_p, irhs_p, frame, antiframe) ->
-       (* lhs_p should be empty *)
+       (* lhs_p is the formula for new introduced variables when unfolding LHS *)
        (* And need to add the uqset_eq *)
        if List.length antiframe > 0
        then None
        else
-         let state_pure = simplify (mkAndlst ([lhs_p; rhs_p] @ (clst @ irhs_p))) in
-         let new_elst = elst @ ieset in
-         let h_frame =
-           match arr_pred_plus_to_h_formula frame with
-           | Some nh -> nh
-           | None -> HEmp
-         in
-         let state =
-           if List.length new_elst = 0
-           then construct_base h_frame state_pure
-           else construct_exists h_frame state_pure new_elst
-         in
-         Some (mkCtx
-                 {(mkEmptyes ()) with
-                   es_formula = state;
-              })
+         let raw_state_pure = mkAndlst ([lhs_p; rhs_p] @ (ilhs_p @ (clst @ irhs_p))) in
+         let () = print_endline ("raw_state_pure: " ^ (!str_pformula raw_state_pure)) in
+         let state_pure = simplify raw_state_pure in
+         let () = print_endline ("state_pure: " ^ (!str_pformula state_pure)) in
+         if isSat state_pure
+         then
+           let new_elst = elst @ ieset in
+           let h_frame =
+             match arr_pred_plus_to_h_formula frame with
+             | Some nh -> nh
+             | None -> HEmp
+           in
+           let state =
+             if true (* List.length new_elst = 0 *)
+             then construct_base h_frame state_pure
+             else construct_exists h_frame state_pure new_elst
+           in
+           let ctx = (mkCtx
+                        {(mkEmptyes ()) with
+                          es_formula = state;
+                     })
+           in
+           let () = print_endline ("ctx " ^ (!str_context ctx)) in
+           Some ctx
+         else
+           None
     | NormBaseNeg _ -> None
   in
   mkSuccCtx (List.fold_left (fun r item ->
@@ -1165,8 +1180,6 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
                  | None -> r
                  | Some ctx -> ctx::r) [] lst)
 ;;
-                                 
-  
 
 let array_entailment_frame_interface lhs rhs =
   let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in

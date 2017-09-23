@@ -2,85 +2,18 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-// 1
-infer[@arr_ba]  base::AsegNE<a,b> & a+1<b |- exists c1,c2: base::AsegNE<a,c1> * base::AsegNE<c2,b>.
+infer[@arr_enfr]  base::Elem<a,b>  |- base::Elem<a,b>.
 print residue.
 expect Valid.
 
-// 2
-infer[@arr_ba]  base::AsegNE<1,2>  |- exists v: base::Elem<1,v>.
+infer[@arr_enfr]  base::Elem<a,b> * base::Elem<c,d>  |- base::Elem<a,b>.
 print residue.
 expect Valid.
 
-// 3
-infer[@arr_ba]  base::AsegNE<1,2>  |- base::Elem<1,v>.
-print residue.
-expect Fail.
-
-// 4
-infer[@arr_ba]  base::Elem<1,v>  |- base::AsegNE<1,2>.
+infer[@arr_enfr] base::AsegNE<a,b> |- exists c: base::Elem<a,c>.
 print residue.
 expect Valid.
 
-// 5
-infer[@arr_ba]  base::Elem<1,v>  |- base::Elem<1,3>.
-print residue.
-expect Fail.
-
-// 6
-infer[@arr_ba]  base::AsegNE<1,2>  |- exists v: base::Elem<1,v> & v>0.
-print residue.
-expect Fail.
-
-// 7
-infer[@arr_ba]  base::AsegNE<1,10>  |- exists c: base::AsegNE<1,c>* base::AsegNE<8,10>.
+infer[@arr_enfr] base::AsegNE<a,b> |- exists c, d: base::Elem<d,c>.
 print residue.
 expect Valid.
-
-// 8
-infer[@arr_ba]  base::AsegNE<1,10>  |- exists c: base::AsegNE<1,c>* base::AsegNE<c,10>.
-print residue.
-expect Valid.
-
-// 9
-infer[@arr_ba]  base::AsegNE<1,10>  |- exists c: base::AsegNE<1,c>* base::AsegNE<c,12>.
-print residue.
-expect Fail.
-
-// 10
-infer[@arr_ba]  base::AsegNE<1,2>  |- exists v,x: base::Elem<x,v>.
-print residue.
-expect Valid.
-
-// 11
-infer[@arr_ba]  base::AsegNE<1,2>  |- exists v,x: base::Elem<x,v> &  x>1.
-print residue.
-expect Fail.
-
-/*
-// 26
-infer[@arr_ba]  base::AsegNE<1,3>  |- exists v1,v2,x,y: base::Elem<x,v1> * base::Elem<y,v2> & x>1.
-print residue.
-expect Valid.
-
-// 27
-infer[@arr_ba]  base::AsegNE<1,3>  |- exists v1,v2,x,y: base::Elem<x,v1> * base::Elem<y,v2> & x>5.
-print residue.
-expect Fail.
-
-// 28
-infer[@arr_ba]  base::AsegNE<1,2>  |- base::Elem<1,v>.
-print residue.
-expect Fail.
-
-// 29
-infer[@arr_ba]  base::AsegNE<1,2> *  base::Elem<2,v> |- base::AsegNE<1,3>.
-print residue.
-expect Valid.
-
-// 30
-infer[@arr_ba]  base::AsegNE<1,2> *  base::Elem<2,v> |- exists a,b: base::AsegNE<a,a+2> .
-print residue.
-expect Valid.
-
-*/

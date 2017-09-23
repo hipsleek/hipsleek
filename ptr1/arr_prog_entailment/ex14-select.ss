@@ -36,7 +36,7 @@ int selectMax(arrI base,int i,int m)
 {
 
  if(i+1<m){
-    int tmpv = select(base,i+1,m);
+    int tmpv = selectMax(base,i+1,m);
 	int tmp1;
 	tmp1 = read_arr(base,i);
 	if(tmp1<tmpv){

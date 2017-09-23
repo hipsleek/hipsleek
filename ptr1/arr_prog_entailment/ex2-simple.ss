@@ -8,12 +8,6 @@ data arrI {
 
 
 
-/*
-void upd_arr(arrI base, int i, int v)
-   requires base::Elem<i,_> & i>=0
-   ensures base::Elem<i,v>;
-*/
-
 void upd_arr(arrI base, int i, int v)
    requires base::AsegNE<i,i+1>
    ensures base::AsegNE<i,i+1>;

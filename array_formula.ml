@@ -139,13 +139,13 @@ let mkEq e1 e2 =
 ;;
 
 let mkLte e1 e2 =
-  mkOr (mkLt e1 e2) (mkEq e1 e2)
-  (* Cpure.mkLteExp e1 e2 no_pos *)
+  (* mkOr (mkLt e1 e2) (mkEq e1 e2) *)
+  Cpure.mkLteExp e1 e2 no_pos
 ;;
 
 let mkGte e1 e2 =
-  mkOr (mkGt e1 e2) (mkEq e1 e2)
-  (* Cpure.mkGteExp e1 e2 no_pos *)
+  (* mkOr (mkGt e1 e2) (mkEq e1 e2) *)
+  Cpure.mkGteExp e1 e2 no_pos
 ;;
   
 
@@ -268,6 +268,9 @@ let str_exp = print_exp
 let str_cformula = Cformula.print_formula
 ;;
 
+let str_context = Cformula.print_context
+;;
+  
 let str_pformula = Cpure.print_formula
 ;;
 
