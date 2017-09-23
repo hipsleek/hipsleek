@@ -6,24 +6,17 @@ data arrI {
   int val;
 }
 
-
-
 void upd_arr(arrI base, int i, int v)
    requires base::Elem<i,_> & i>=0
    ensures base::Elem<i,v>;
 
-void fun1(arrI base, int i, int m)
-  requires base::AsegNE<i,m> 
-  ensures base::AsegNE<i,m+1>;
-
 // Should fail
-
 void init3(arrI base,int i,int m)
-  requires base::AsegNE<i,m> & i<m
-  ensures base::AsegNE<i,m+1>;
+  requires base::AsegNE<i,m> & i<m & i>=0
+  ensures base::AsegNE<i,m>;
 {
 
-  if(i<10){
-    fun1(base,i,m);
+  if(i<10 && 10<m){
+    upd_arr(base,10,m);
   } 
 }

@@ -8,7 +8,7 @@ data arrI {
 
 
 
-/*
+
 void upd_arr(arrI base, int i, int v)
    requires base::Elem<i,_> & i>=0
    ensures base::Elem<i,v>;
@@ -17,19 +17,7 @@ int read_arr(arrI base, int i)
    requires base::Elem<i,v> & i>=0
    ensures base::Elem<i,v>;
 
-/*
-void upd_arr(arrI base, int i, int v)
-   requires base::AsegNE<i,i+1> & i>=0
-   ensures base::AsegNE<i,i+1>;
-
-int read_arr(arrI base, int i)
-   requires base::AsegNE<i,i+1> & i>=0
-   ensures base::AsegNE<i,i+1>;
-*/
-
-
 // Should succeed
-
 void bubble_push(arrI base,int i,int m)
   requires base::AsegNE<i,m> & i>=0
   ensures base::AsegNE<i,m>;
@@ -47,7 +35,7 @@ void bubble_push(arrI base,int i,int m)
   }
 }
 
-/*
+
 void bubble_sort(arrI base, int i, int m)
   requires base::AsegNE<i,m> & i>=0
   ensures base::AsegNE<i,m>;
@@ -57,4 +45,4 @@ void bubble_sort(arrI base, int i, int m)
 	 bubble_sort(base,i+1,m);
  }
 }
-*/
+

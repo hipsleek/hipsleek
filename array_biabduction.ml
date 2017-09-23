@@ -533,7 +533,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
     let frame = List.rev pre_cond.frame in
     let antiframe = List.rev pre_cond.antiframe in
     let upset_eq_v, uqset_eq_f = List.split (List.map (fun (v, e) -> (v, mkEq (mkVar v) e)) pre_cond.uqset_eq) in
-    let () = print_endline ("uqset_eq_f: " ^ (str_list !str_pformula uqset_eq_f)) in
+    (* let () = print_endline ("uqset_eq_f: " ^ (str_list !str_pformula uqset_eq_f)) in *)
     let norm = mkNormOr_base pre_cond.uqset_eq (mkNormBaseImply pre_cond.norm_uqset pre_cond.vset uqset_eq_f (get_new_pure rhs_p) frame antiframe) in
     (print_and_return (mkBExists (pre_cond.vset, BBaseImply ([present_pure lhs_p],[present_pure rhs_p],frame,antiframe))) indent, norm)
       
@@ -1069,7 +1069,7 @@ let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
             | None -> r )
           [] lst )
   in
-  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
+  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
   f
 ;;
 
@@ -1134,7 +1134,7 @@ let norm_to_pure_for_frame (NormOr lst) rhs =
             | None -> r )
           [] lst )
   in
-  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
+  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
   f
 ;;
 
@@ -1148,9 +1148,9 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
        then None
        else
          let raw_state_pure = mkAndlst ([lhs_p; rhs_p] @ (ilhs_p @ (clst @ irhs_p))) in
-         let () = print_endline ("raw_state_pure: " ^ (!str_pformula raw_state_pure)) in
+         (* let () = print_endline ("raw_state_pure: " ^ (!str_pformula raw_state_pure)) in *)
          let state_pure = simplify raw_state_pure in
-         let () = print_endline ("state_pure: " ^ (!str_pformula state_pure)) in
+         (* let () = print_endline ("state_pure: " ^ (!str_pformula state_pure)) in *)
          if isSat state_pure
          then
            let new_elst = elst @ ieset in
@@ -1169,7 +1169,7 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
                           es_formula = state;
                      })
            in
-           let () = print_endline ("ctx " ^ (!str_context ctx)) in
+           (* let () = print_endline ("ctx " ^ (!str_context ctx)) in *)
            Some ctx
          else
            None

@@ -14,7 +14,7 @@ void upd_arr(arrI base, int i, int v)
 
 
 int read_arr(arrI base, int i)
-   requires base::Elem<i,v> & i>=0
+   requires base::Elem<i,_> & i>=0
    ensures base::Elem<i,v> & res=v;
 
 /*
@@ -29,7 +29,6 @@ int read_arr(arrI base, int i)
 
 
 // Should succeed
-
 int select(arrI base,int i,int m)
   requires base::AsegNE<i,m> & i>=0
   ensures base::AsegNE<i,m> & res>=i & res<m; 
