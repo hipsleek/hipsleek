@@ -687,7 +687,11 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          failwith "AsegNE v.s Gap: Not aligned"
 
     | Gap_p (la,lb), AsegNE_p (ra,rb)->
-       if is_same_sv la ra
+       if !Globals.array_entailment_frame
+       then
+         let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+         (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+       else if is_same_sv la ra
        then
          let (uset,vsetprime) = mkUsetandVsetprime [lb; rb] pre_cond.vset in
          let case1 = (mkGteSv lb rb) in
@@ -708,7 +712,11 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          failwith "Pointsto_p v.s Gap: Not aligned"
 
     | Gap_p (la,lb), Pointsto_p (rs,rv) ->
-       if is_same_sv la rs
+       if !Globals.array_entailment_frame
+       then
+         let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+         (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+       else if is_same_sv la rs
        then
          let f, norm = aux_entry (indent+1) (lhs_p, ltail) (rhs_p, rtail) (add_antiframe pre_cond rh) in
          (print_and_return f indent,norm)
@@ -751,7 +759,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          let case3 = (mkGtSv la rs) in
          let pre_cond = update_vset pre_cond vsetprime in
          let f1, norm1 = aux_entry (indent+1) (add_pure lhs_p case1, lhs_h) (rhs_p, mkMatchForm (mkPointsto_p la rv) rtail) pre_cond in
-         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, lhs_h) (rhs_p, mkMatchForm (mkGap_p la rs) rtail) pre_cond in
+         let f2, norm2 = aux_entry (indent+1) (add_pure lhs_p case2, lhs_h) (rhs_p, mkMatchForm (mkGap_p la rs) rhs_h) pre_cond in
          let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, mkMatchForm (mkGap_p rs la) lhs_h) (rhs_p, rhs_h) pre_cond in
          (print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
                   
@@ -1000,6 +1008,67 @@ let merge_context_lst_for_frame clst lhs_p =
      ctx
   | _ -> mkEmptyFailCtx ()
 ;;
+
+let rec merge_aseg_lst pf hlst =
+  let is_eq v1 v2 =
+    isValid (mkImply pf (mkEqSv v1 v2))
+  in
+  let rec helper_entry hlst =
+    match hlst with
+    | h :: tail ->
+       begin match h with
+       | AsegNE_p _ | Aseg_p _-> helper [] h tail
+       | _-> h :: (helper_entry tail) end
+    | [] -> []
+
+  and helper head target hlst =
+    match target with
+    | AsegNE_p (ta, tb) ->
+       begin match hlst with
+       | h :: tail ->
+          begin match h with
+          | AsegNE_p (a, b) | Aseg_p (a, b) ->
+             if is_eq tb a
+             then
+               helper_entry ((mkAsegNE_p ta b)::(head@tail))
+             else if is_eq b ta
+             then
+               helper_entry ((mkAsegNE_p a tb)::(head@tail))
+             else
+               helper (h::head) target tail             
+          | _ -> helper (h::head) target tail end
+       | [] -> target::(helper_entry head) end
+    | Aseg_p (ta, tb) ->
+       begin match hlst with
+       | h :: tail ->
+          begin match h with
+          | AsegNE_p (a, b) ->
+             if is_eq tb a
+             then
+               helper_entry ((mkAsegNE_p ta b)::(head@tail))
+             else if is_eq b ta
+             then
+               helper_entry ((mkAsegNE_p a tb)::(head@tail))
+             else
+               helper (h::head) target tail
+          | Aseg_p (a, b) ->
+             if is_eq tb a
+             then
+               helper_entry ((mkAseg_p ta b)::(head@tail))
+             else if is_eq b ta
+             then
+               helper_entry ((mkAseg_p a tb)::(head@tail))
+             else
+               helper (h::head) target tail             
+          | _ -> helper (h::head) target tail end
+       | [] -> target::(helper_entry head) end
+    | _ -> failwith "merge_aseg_lst: Invalid input"
+  in
+  helper_entry hlst
+;;
+         
+    
+         
                         
   
 let valid_classical_entailment lhs implylst neg =
@@ -1047,6 +1116,7 @@ let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, r
 let trans_array_formula cf =
   let transF = new arrPredTransformer_orig cf in
   let (elst, plst, hlst) = transF#formula_to_general_formula in
+  let hlst = merge_aseg_lst (mkAndlst plst) hlst in
   (elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
 ;;
 

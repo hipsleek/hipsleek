@@ -2202,7 +2202,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
             else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
           x_dinfo_zp (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-          x_binfo_pp ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
+          x_tinfo_pp ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
           let else_ctx =
             if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
             else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in

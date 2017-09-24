@@ -12,15 +12,19 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-infer[@arr_enfr]  base::Elem<a,b>  |- base::Elem<a,b>.
-print residue.
-expect Valid.
+// infer[@arr_enfr]  base::Elem<a,b>  |- base::Elem<a,b>.
+// print residue.
+// expect Valid.
 
-infer[@arr_enfr]  base::Elem<a,b> * base::Elem<c,d>  |- base::Elem<a,b>.
-print residue.
-expect Valid.
+// infer[@arr_enfr]  base::Elem<a,b> * base::Elem<c,d>  |- base::Elem<a,b>.
+// print residue.
+// expect Valid.
 
-infer[@arr_enfr] base::AsegNE<a,b> |- exists c: base::Elem<a,c>.
+
+infer[@arr_enfr] base::AsegNE<i_2029,m'> * base::AsegNE<i_94,i_2029>&
+i_2029<=tmpi' & tmpi'<m'  & i_94=i_2029-1 & m_95=m_2030 &
+i'=i_2029-1 & m=m_2030 & i=i_2029-1 & m'=m_2030 & 1<=i_2029 &
+i_2029<m_2030 & v_bool_37_1954'|- exists i_100, c: base::Elem<i_100,c> & 0<=tmpi' & i_100=tmpi'.
 print residue.
 expect Valid.
 
