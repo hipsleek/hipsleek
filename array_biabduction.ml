@@ -2,6 +2,10 @@
 open Array_formula
 open Array_biabduction_pre_condition
 
+(* Global variables *)
+let non_trivial = ref false     (* To indentify trivial cases *)
+;;
+(*  *)
 type norm_pre_condition_base =
   | NormBaseNeg of (Cpure.spec_var list * Cpure.spec_var list * Cpure.formula list)
   | NormBaseImply of (Cpure.spec_var list *
@@ -471,6 +475,7 @@ let add_uqset_eq pre_cond new_uqset_eq =
 ;;
 
 let add_pure (newf, orig_f) inputf =
+  (* let () = non_trivial := true in                             *)
   (inputf::newf, orig_f)
 ;;
 
@@ -907,9 +912,12 @@ let extract_anti_frame_and_frame norm =
       
 
 (* From asegPlus to h_formula *)
-let arr_pred_plus_to_h_formula hflst =  
+let arr_pred_plus_to_h_formula ?(root=None) hflst =  
   let one_arr_pred_plus_to_h_formula p =
-    let basePtr = mkSV "base" in
+    let basePtr =
+      match root with
+      | Some base -> base
+      | None -> mkSV "base" in
     match p with
     | AsegNE_p (s,e) ->
        mkViewNode basePtr "AsegNE" [s;e]
@@ -1117,7 +1125,7 @@ let trans_array_formula cf =
   let transF = new arrPredTransformer_orig cf in
   let (elst, plst, hlst) = transF#formula_to_general_formula in
   let hlst = merge_aseg_lst (mkAndlst plst) hlst in
-  (elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
+  (transF#get_root, elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
 ;;
 
 let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
@@ -1167,8 +1175,14 @@ let check_norm_validity norm lhs_p rhs_p =
 (* ;; *)
 
 let array_entailment_classical_entailment_interface lhs rhs =
-  let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in  
+  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
+  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
+  (* Instantiate root *)
+  let rhs_p =
+    match lhs_root, rhs_root with
+    | Some base1, Some base2 -> (mkEqSv base1 base2)::rhs_p
+    | _, _ -> rhs_p
+  in
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
   if check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   then
@@ -1204,11 +1218,11 @@ let norm_to_pure_for_frame (NormOr lst) rhs =
             | None -> r )
           [] lst )
   in
-  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
+  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
   f
 ;;
 
-let extract_frame (NormOr lst) lhs_p rhs_p=
+let extract_frame root (NormOr lst) lhs_p rhs_p=
   let extract_one_frame (elst, clst, norm_base) =
     match norm_base with      
     | NormBaseImply (iuset, ieset, ilhs_p, irhs_p, frame, antiframe) ->
@@ -1225,7 +1239,7 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
          then
            let new_elst = elst @ ieset in
            let h_frame =
-             match arr_pred_plus_to_h_formula frame with
+             match arr_pred_plus_to_h_formula ~root:root frame with
              | Some nh -> nh
              | None -> HEmp
            in
@@ -1251,13 +1265,23 @@ let extract_frame (NormOr lst) lhs_p rhs_p=
                  | Some ctx -> ctx::r) [] lst)
 ;;
 
+
 let array_entailment_frame_interface lhs rhs =
-  let (lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
+  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
+  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
+  
+  let rhs_p =
+    match lhs_root, rhs_root with
+    | Some base1, Some base2 ->
+       let () = print_endline "here" in
+       (mkEqSv base1 base2)::rhs_p
+    | _, _ -> rhs_p
+  in
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  let () = print_endline ("frame interface lhs_p: " ^ (str_list !str_pformula lhs_p)) in
   if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
   then
-    extract_frame norm (mkAndlst lhs_p) (mkAndlst rhs_p)
+    extract_frame lhs_root norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   else
     mkEmptyFailCtx ()
 ;;

@@ -12,6 +12,41 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
+infer[@arr_enfr]  base::AsegNE<0,10> & ptr= base + 3  |- exists p, v: base::Elem<p, v> & ptr = base + p.
+print residue.
+expect Valid.
+
+
+// Exists [p_39,t_t0]: [ true, flted_15_28=p_39, flted_15_28+1=flted_15_27]/\Exists [v_40]: [ t_t0=flted_15_28+1]=>[ t_t1=v_40] @[EMP] * [EMP]
+// Exists [p_39,t_t0]: [ true, flted_15_28=p_39, (flted_15_28+1)<flted_15_27]/\Exists [v_40]: [ t_t0=flted_15_28+1]=>[ t_t1=v_40] @[AsegNE<t_t0,flted_15_27>] * [EMP]
+// Exists [p_39,t_t2]: [ true, flted_15_28<p_39, flted_15_27>p_39, p_39+1=flted_15_27]/\Exists [v_40]: [ t_t2=p_39+1]=>[ t_t3=v_40] @[AsegNE<flted_15_28,p_39>] * [EMP]
+// Exists [p_39,t_t2]: [ true, flted_15_28<p_39, flted_15_27>p_39, (p_39+1)<flted_15_27]/\Exists [v_40]: [ t_t2=p_39+1]=>[ t_t3=v_40] @[AsegNE<flted_15_28,p_39>*AsegNE<t_t2,flted_15_27>] * [EMP]
+
+
+
+// norm to pure
+//   (exists(v_40:exists(t_t2:exists(p_39:
+//                                       t_t3=v_40 & base=ptr-p_39 & 
+//                                       flted_15_28<p_39 & flted_15_27>p_39 & 
+//                                       (p_39+1)<flted_15_27))) |
+				      
+//   exists(v_40:exists(t_t2:exists(p_39:t_t3=v_40 & base=ptr-p_39 & 
+//                                       flted_15_28<p_39 & flted_15_27>p_39 & 
+//                                       p_39+1=flted_15_27))) |
+				      
+//   exists(v_40:exists(t_t0:exists(p_39:t_t1=v_40 & base=ptr-p_39 & 
+//                                       flted_15_28=p_39 & 
+//                                       (flted_15_28+1)<flted_15_27))) |
+				      
+//   exists(v_40:exists(t_t0:exists(p_39:t_t1=v_40 & base=ptr-p_39 & 
+//                                       flted_15_28=p_39 & 
+//                                       flted_15_28+1=flted_15_27))))
+
+// infer[@arr_enfr] base::Elem<k,v> |- exists c: base::Elem<k,c>.
+// print residue.
+// expect Valid.
+
+
 // infer[@arr_enfr]  base::Elem<a,b>  |- base::Elem<a,b>.
 // print residue.
 // expect Valid.
@@ -21,12 +56,12 @@ pred_prim Elem<start:int,value:int>.
 // expect Valid.
 
 
-infer[@arr_enfr] base::AsegNE<i_2029,m'> * base::AsegNE<i_94,i_2029>&
-i_2029<=tmpi' & tmpi'<m'  & i_94=i_2029-1 & m_95=m_2030 &
-i'=i_2029-1 & m=m_2030 & i=i_2029-1 & m'=m_2030 & 1<=i_2029 &
-i_2029<m_2030 & v_bool_37_1954'|- exists i_100, c: base::Elem<i_100,c> & 0<=tmpi' & i_100=tmpi'.
-print residue.
-expect Valid.
+// infer[@arr_enfr] base::AsegNE<i_2029,m'> * base::AsegNE<i_94,i_2029>&
+// i_2029<=tmpi' & tmpi'<m'  & i_94=i_2029-1 & m_95=m_2030 &
+// i'=i_2029-1 & m=m_2030 & i=i_2029-1 & m'=m_2030 & 1<=i_2029 &
+// i_2029<m_2030 & v_bool_37_1954'|- exists i_100, c: base::Elem<i_100,c> & 0<=tmpi' & i_100=tmpi'.
+// print residue.
+// expect Valid.
 
 
 // infer[@arr_en]  base::Elem<a,b>  |- base::Elem<a,c>.
@@ -45,9 +80,6 @@ expect Valid.
 // print residue.
 // expect Valid.
 
-// infer[@arr_en]  base::AsegNE<a,b>  |- base::AsegNE<a,b>.
-// print residue.
-// expect Valid.
 
 // infer[@arr_en]  base::AsegNE<a,b>  |- base::AsegNE<a,c>.
 // print residue.

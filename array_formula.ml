@@ -722,6 +722,7 @@ class arrPredTransformer_orig initcf = object(self)
   val mutable orig_puref = None
   val mutable puref = None      (* Extend with disjointness *)
   val mutable general_formula = None
+  val mutable root = None
                                   
 
   (* method generate_pure = *)
@@ -844,6 +845,9 @@ class arrPredTransformer_orig initcf = object(self)
        self#get_orig_pure
     | Some f -> f
 
+  method get_root =
+    root
+
   method generate_arrPred_lst =
     let one_pred_to_arrPred hf=
       if isAsegPred hf
@@ -858,6 +862,25 @@ class arrPredTransformer_orig initcf = object(self)
             if isEmpty hf
             then None
             else failwith "one_pred_to_arrPred: Invalid input"
+    in
+    let extract_root_hflst hlst =      
+      let extract_root_one_pred hf =
+        if isAsegPred hf
+        then Some (self#getAsegBase hf)
+        else
+          if isAsegNEPred hf
+          then Some (self#getAsegNEBase hf)
+          else
+            if isElemPred hf
+            then Some (self#getElemBase hf)
+            else
+              if isEmpty hf
+              then None
+              else failwith "extract_root_one_pred: Invalid input"
+      in
+      match hlst with
+      | h :: tail -> extract_root_one_pred h
+      | [] -> None
     in
     let build_eqmap pf evars=
       let eqlst = find_eq_at_toplevel pf in
@@ -885,19 +908,27 @@ class arrPredTransformer_orig initcf = object(self)
       in
       List.fold_left (fun r ee -> (helper ee)@r) [] eqlst
     in
-    let general_f =
+    let (base, general_f) =
       let rec get_general_f cf =
         match cf with
         | Base f ->
            let pred_list = flatten_heap_star_formula f.formula_base_heap in
-           [[],[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
+           (extract_root_hflst pred_list, [[],[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)])
         | Or f->
-           (get_general_f f.formula_or_f1)@(get_general_f f.formula_or_f2)
+           let (base1, general_f1) = get_general_f f.formula_or_f1 in
+           let (base2, general_f2) = get_general_f f.formula_or_f2 in
+           let base =
+             match base1, base2 with
+             | Some _, _ -> base1
+             | _, Some _ -> base2
+             | _ -> base1
+           in
+           (base, general_f1@general_f2)
         | Exists f ->
            let pf = Mcpure.pure_of_mix f.formula_exists_pure in           
            let evars = f.formula_exists_qvars in
            let pred_list = flatten_heap_star_formula f.formula_exists_heap in
-           [evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)]
+           (extract_root_hflst pred_list, [evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)])
       in
       get_general_f cf
     in
@@ -917,6 +948,7 @@ class arrPredTransformer_orig initcf = object(self)
                       (*    let pred_list = flatten_heap_star_formula f.formula_exists_heap in *)
                       (*    map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list) *)
     in
+    root <- base;
     general_formula <- Some general_f;
     aseglst <- Some aPrelst
 

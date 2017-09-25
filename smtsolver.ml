@@ -644,6 +644,7 @@ let iget_answer chn input =
     with _ -> false
   in
   let output = icollect_output chn [] in
+  (* let () = List.iter print_endline output in *)
   let solver_sat_result = List.nth output (List.length output - 1) in
   let last_z3_sat_type = sat_type_from_string solver_sat_result input in
   let st = if List.length output > 1 then
@@ -713,7 +714,7 @@ let smtsolver_path =
 let test_number = ref 0
 let last_test_number = ref 0
 let log_all_flag = ref false
-let z3_restart_interval = ref (-1)
+let z3_restart_interval = ref 3
 let log_all = open_log_out ("allinput.z3")
 
 
@@ -802,7 +803,7 @@ let stop () =
 (* restart Z3 system *)
 let restart reason =
   if !is_z3_running then (
-    let () = print_string_if !Globals.enable_count_stats (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations. ") in
+    (* let () = print_string_if !Globals.enable_count_stats (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations. ") in *)
     Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
   ) else (
     let () = print_string_if !Globals.enable_count_stats (reason^" not restarting z3 ... "^(string_of_int !z3_call_count)^" invocations ") in
@@ -811,7 +812,10 @@ let restart reason =
 
 (* send formula to z3 and receive result -true/false/unknown*)
 let check_formula f timeout =
-  let tstartlog = Gen.Profiling.get_time () in 
+  let tstartlog = Gen.Profiling.get_time () in
+
+  (* restart("Regularly restart:1 "); *)
+  (* z3_call_count := 0; *)
   if not !is_z3_running then start ()
   else if (!z3_call_count = !z3_restart_interval) then (
     restart("Regularly restart:1 ");
