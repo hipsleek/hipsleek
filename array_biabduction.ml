@@ -1273,7 +1273,7 @@ let array_entailment_frame_interface lhs rhs =
   let rhs_p =
     match lhs_root, rhs_root with
     | Some base1, Some base2 ->
-       let () = print_endline "here" in
+       (* let () = print_endline "here" in *)
        (mkEqSv base1 base2)::rhs_p
     | _, _ -> rhs_p
   in

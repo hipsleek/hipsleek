@@ -14,7 +14,6 @@ int read_ptr(arrI ptr)
 void upd_arr(arrI ptr, int v)
    requires base::Elem<i,_> & ptr = base + i
    ensures base::Elem<i,v>;
-   
 
 arrI ptr_add(arrI ptr, int index)
    requires ptr!=null
