@@ -5,8 +5,9 @@ case{
 	 
      }
 {
- if(i>j){
-	 return fun(i,j+1);
+  bool k;
+ if(k){
+	 return 0;
 		}
    else{
 	return 0;
