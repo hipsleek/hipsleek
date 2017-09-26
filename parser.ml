@@ -4574,8 +4574,8 @@ let add_tnt_prim_proc prog id =
   if String.compare id Globals.nondet_int_proc_name == 0 then
     let proc_src = 
       "int " ^ Globals.nondet_int_proc_name ^ "()\n" ^
-      "  requires true\n" ^
-      "  ensures true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
+      "  requires emp & true\n" ^
+      "  ensures emp & true & " ^ Globals.nondet_int_rel_name ^ "(res)" ^ ";\n"
     in
     let nondet_rel = {
       rel_name = nondet_int_rel_name;
