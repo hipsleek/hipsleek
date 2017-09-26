@@ -35,7 +35,9 @@ int main(){
         requires ptr::AsegNE<k, 10> & a=ptr+k & k>=0 & k<=9 & end = ptr+9
         ensures ptr::AsegNE<k, 10>;
       {
-	    a = ptr_add(a, 1);
+	upd_arr(a, read_ptr(end));
+	a = ptr_add(a, 1);
+	    
       }
       return 0;
 }
