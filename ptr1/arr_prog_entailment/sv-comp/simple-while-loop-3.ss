@@ -30,9 +30,9 @@ int main(){
       arrI a = ptr;
       arrI end = ptr_add(ptr, 9);
       
-      //while( read_ptr( a )!= read_ptr( end ) )
-      while( read_ptr( a )!= 0 )
-        requires ptr::AsegNE<k, 10> & a=ptr+k & k>=0 & k<=9 //& end = ptr+9
+      while( read_ptr( a )!= read_ptr( end ) )
+      /* while( read_ptr( a )!= 0 ) */
+        requires ptr::AsegNE<k, 10> & a=ptr+k & k>=0 & k<=9 & end = ptr+9
         ensures ptr::AsegNE<k, 10>;
       {
 	    a = ptr_add(a, 1);

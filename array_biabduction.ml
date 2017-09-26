@@ -1218,7 +1218,7 @@ let norm_to_pure_for_frame (NormOr lst) rhs =
             | None -> r )
           [] lst )
   in
-  let () = print_endline ("norm to pure " ^ (!str_pformula f)) in
+  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
   f
 ;;
 
@@ -1259,10 +1259,12 @@ let extract_frame root (NormOr lst) lhs_p rhs_p=
            None
     | NormBaseNeg _ -> None
   in
-  mkSuccCtx (List.fold_left (fun r item ->
+  mkSuccCtx
+    [mkOCtx
+      (List.fold_left (fun r item ->
                  match extract_one_frame item with
                  | None -> r
-                 | Some ctx -> ctx::r) [] lst)
+                 | Some ctx -> ctx::r) [] lst)]
 ;;
 
 
@@ -1278,7 +1280,7 @@ let array_entailment_frame_interface lhs rhs =
     | _, _ -> rhs_p
   in
   let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
-  let () = print_endline ("frame interface lhs_p: " ^ (str_list !str_pformula lhs_p)) in
+  (* let () = print_endline ("frame interface lhs_p: " ^ (str_list !str_pformula lhs_p)) in *)
   if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
   then
     extract_frame lhs_root norm (mkAndlst lhs_p) (mkAndlst rhs_p)
