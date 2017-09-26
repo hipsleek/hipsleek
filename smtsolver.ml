@@ -768,7 +768,8 @@ let rec prelude () = ()
 and start() =
   try (
     if not !is_z3_running then (
-      print_string_if (not !compete_mode (* && not !Globals.web_compile_flag *)) "Starting z3... \n"; flush stdout;
+      (* print_string_if (not !compete_mode (\* && not !Globals.web_compile_flag *\)) "Starting z3... \n"; *)
+      flush stdout;
       last_test_number := !test_number;
       let () = (
         if !smtsolver_name = "z3-2.19" then
@@ -795,7 +796,8 @@ and start() =
 let stop () =
   if !is_z3_running then (
     let num_tasks = !test_number - !last_test_number in
-    print_string_if !Globals.enable_count_stats ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+    (* print_string_if !Globals.enable_count_stats ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); *)
+    flush stdout;
     let () = Procutils.PrvComms.stop !log_all_flag log_all !prover_process num_tasks Sys.sigkill (fun () -> ()) in
     is_z3_running := false;
   )

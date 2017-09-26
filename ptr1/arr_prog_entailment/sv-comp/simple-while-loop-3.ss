@@ -1,10 +1,3 @@
-pred_prim Aseg<start:int, end:int>;
-pred_prim AsegNE<start:int, end:int>;
-pred_prim Elem<start:int,value:int>;
-
-data arrI {
-  int val;
-}
 
 
 int read_ptr(arrI ptr)

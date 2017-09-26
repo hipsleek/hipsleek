@@ -1138,7 +1138,8 @@ let last_infer_lhs_contra = new store false string_of_bool
 (* let set_last_infer_lhs_contra () =  *)
 (*   last_infer_lhs_contra:=false *)
 
-let add_false_ctx pos = 
+let add_false_ctx pos =
+
   last_sat_ctx # set None;
   last_infer_lhs_contra # reset;
   false_ctx_line_list := pos::!false_ctx_line_list

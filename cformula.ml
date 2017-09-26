@@ -13580,7 +13580,8 @@ and find_false_ctx ctx pos =
       false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
-  if (List.exists isAnyFalseFailescCtx ctx) then 
+  if (List.exists isAnyFalseFailescCtx ctx) then
+    (* let () = print_endline ("find_false_list_failesc_ctx " ^ (!print_list_failesc_context ctx)) in *)
     false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
   else ()
 
