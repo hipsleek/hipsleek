@@ -34,10 +34,11 @@ void bubbleSort(int numbers[], int array_size)
 	    }
 	  */
 	  {
-            if (numbers[j-1] > numbers[j]) {
-                temp = numbers[j-1];
-                numbers[j-1] = numbers[j];
-                numbers[j] = temp;
+            if (j>1) {
+	      temp = 1;
+                /* temp = numbers[j-1]; */
+                /* numbers[j-1] = numbers[j]; */
+                /* numbers[j] = temp; */
             }
         }
     }
