@@ -12,10 +12,11 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-infer[@arr_enfr]  base::AsegNE<0,10> & ptr= base + 3  |- exists p, v: base::Elem<p, v> & ptr = base + p.
-print residue.
-expect Valid.
+// infer[@arr_enfr]  base::AsegNE<0,10> & ptr= base + 3  |- exists p, v: base::Elem<p, v> & ptr = base + p.
+// print residue.
+// expect Valid.
 
+infer[@arr_en] base::Elem<v2, 0> * base::Elem<v0, 0> * base::Elem<a1+100, 100> * base::Elem<a3, 0> & a1+100<a3 & a3<v0 & v0<v2 |- base::Elem<a1+100, 100> * base::Elem<v2, 0> * base::Elem<a3, 0> * base::Elem<v0, 0>.
 
 // Exists [p_39,t_t0]: [ true, flted_15_28=p_39, flted_15_28+1=flted_15_27]/\Exists [v_40]: [ t_t0=flted_15_28+1]=>[ t_t1=v_40] @[EMP] * [EMP]
 // Exists [p_39,t_t0]: [ true, flted_15_28=p_39, (flted_15_28+1)<flted_15_27]/\Exists [v_40]: [ t_t0=flted_15_28+1]=>[ t_t1=v_40] @[AsegNE<t_t0,flted_15_27>] * [EMP]
