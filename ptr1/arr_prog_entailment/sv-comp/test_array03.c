@@ -30,9 +30,10 @@ void test_fun(int a[], int N)
 	  {
             res1 = res1 * a[i];
             a[i]--;
-        }
+	  }
+	
         a[i] = res1;
-    }
+      }
 }
 
 int main() {

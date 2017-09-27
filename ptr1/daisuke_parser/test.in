@@ -1,0 +1,7 @@
+// This header is created by checksli
+// ENTLS:1
+// TYPE/SIZE:PTO;4;[4]
+
+Ex ex2. v2 -> (0, 0) * v0 -> (0, 0) * a1 -> (100, ex2) * a3 -> (0, 0) |- Ex v3,v1,ex2. 0 = a1 & a1 -> (100, ex2) * a3 -> (0, 0) * v1 -> (0, 0) * v3 -> (0, 0)
+
+
