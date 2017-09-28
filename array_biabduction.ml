@@ -1074,7 +1074,43 @@ let rec merge_aseg_lst pf hlst =
   in
   helper_entry hlst
 ;;
-         
+
+let match_common (lhs_h, rhs_h) var_info =
+  let is_eq v1 v2 =
+    isValid (mkImply var_info (mkEqSv v1 v2))
+  in
+  
+  let helper h1 h2 =
+    match h1, h2 with
+    | AsegNE_p (a1, b1), AsegNE_p (a2, b2)
+      | AsegNE_p (a1, b1), Aseg_p (a2, b2)
+      | Aseg_p (a1, b1), AsegNE_p (a2, b2) ->
+       is_eq a1 a2 && is_eq b1  b2
+    | Pointsto_p (i1, v1), Pointsto_p (i2, v2) ->
+       is_eq i1 i2 && is_eq v1 v2
+    | _, _ -> false
+  in
+
+  let rec helper_entry lhead lhs_h rhead rhs_h =
+    match lhs_h with
+    | lh :: ltail ->
+       begin match rhs_h with
+       | rh :: rtail ->
+          if helper lh rh
+          then helper_entry lhead ltail [] (rhead @ rtail)
+          else helper_entry lhead lhs_h (rh :: rhead) rtail
+       | [] ->
+          helper_entry (lh :: lhead) ltail [] (rhead @ rhs_h) end
+    | [] ->
+       (lhead, rhead @ rhs_h)
+  in
+
+  helper_entry [] lhs_h [] rhs_h
+;;
+
+  
+                       
+                                             
     
          
                         
@@ -1128,6 +1164,19 @@ let trans_array_formula cf =
   (transF#get_root, elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
 ;;
 
+let trans_array_entailment lhs rhs =
+  let () = print_endline ("lhs: " ^ (!str_cformula lhs)) in
+  let () = print_endline ("rhs: " ^ (!str_cformula rhs)) in
+  let transLHS = new arrPredTransformer_orig lhs in
+  let (l_elst, l_plst, l_hlst) = transLHS#formula_to_general_formula in
+  let transRHS = new arrPredTransformer_orig rhs in
+  let (r_elst, r_plst, r_hlst) = transRHS#formula_to_general_formula in
+  let var_info = simplify (mkAndlst (l_plst @ r_plst)) in
+  let (new_l_hlst, new_r_hlst) = match_common (l_hlst, r_hlst) var_info in
+  ((transLHS#get_root, l_elst, (get_segment_pure l_hlst) @ [get_disjoint_pure l_hlst] @ l_plst, new_l_hlst),
+   (transRHS#get_root, r_elst, (get_segment_pure r_hlst) @ [get_disjoint_pure r_hlst] @ r_plst, new_r_hlst))
+;;
+
 let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
   (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
   let helper_norm_pre_condition_base = function
@@ -1175,8 +1224,11 @@ let check_norm_validity norm lhs_p rhs_p =
 (* ;; *)
 
 let array_entailment_classical_entailment_interface lhs rhs =
-  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
+  (* let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in *)
+  (* let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in *)
+  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h)) =
+    trans_array_entailment lhs rhs
+  in
   (* Instantiate root *)
   let rhs_p =
     match lhs_root, rhs_root with
@@ -1296,3 +1348,4 @@ let array_entailment_frame_interface lhs rhs =
 (* ;;   *)
 
   
+
