@@ -455,6 +455,7 @@ type pre_condition =
     norm_uqset : Cpure.spec_var list;
     vset : Cpure.spec_var list;
     uqset_eq_f : Cpure.formula;
+    var_info : Cpure.formula;
   }
 ;;
 
@@ -494,7 +495,7 @@ let str_pair_f (newf, orig_f) =
   str_list !str_pformula newf
 ;;
 
-let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) =
+let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) var_info=
 
   let get_sorted plst hlst =
     let enumerate hlst =
@@ -802,6 +803,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
       norm_uqset = [];
       vset = rhs_e_lst;
       uqset_eq_f = mkTrue ();
+      var_info = var_info
     }
   in
   (* let lhs_p_lst = (get_segment_pure lhs_h_lst)@lhs_p_lst in *)
@@ -1076,6 +1078,7 @@ let rec merge_aseg_lst pf hlst =
 ;;
 
 let match_common (lhs_h, rhs_h) var_info =
+  let () = print_endline ("match_common " ^ (!str_pformula var_info)) in
   let is_eq v1 v2 =
     isValid (mkImply var_info (mkEqSv v1 v2))
   in
@@ -1107,12 +1110,6 @@ let match_common (lhs_h, rhs_h) var_info =
 
   helper_entry [] lhs_h [] rhs_h
 ;;
-
-  
-                       
-                                             
-    
-         
                         
   
 let valid_classical_entailment lhs implylst neg =
@@ -1134,7 +1131,7 @@ let drop_antiframe implylst =
     implylst
 ;;
 
-let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) =
+let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info =
   (* let () = print_endline_verbose ("=========== input LHS formula ==============") in *)
   (* let () = print_endline_verbose (!str_cformula lhs) in *)
   (* let () = print_endline_verbose ("=========== input RHS formula ==============") in *)
@@ -1146,7 +1143,7 @@ let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, r
       (* array_entailment_biabduction_norm (lhs_p, lhs_h) (rhs_p, rhs_h) *)
       failwith "TO BE IMPLEMENTED"
     else
-      array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h)
+      array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info
   in
   let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
   (* let () = print_endline_verbose (str_pre_condition f) in *)
@@ -1165,16 +1162,34 @@ let trans_array_formula cf =
 ;;
 
 let trans_array_entailment lhs rhs =
+  let get_hlst_var_lst hlst =
+    let helper = function
+      | AsegNE_p (a, b)
+        | Aseg_p (a, b)
+        | Gap_p (a, b)
+        -> [a; b]
+      | Pointsto_p (p, _) ->
+         [p]
+    in
+    List.concat (List.map helper hlst)
+  in
+        
+  
   let () = print_endline ("lhs: " ^ (!str_cformula lhs)) in
   let () = print_endline ("rhs: " ^ (!str_cformula rhs)) in
   let transLHS = new arrPredTransformer_orig lhs in
   let (l_elst, l_plst, l_hlst) = transLHS#formula_to_general_formula in
   let transRHS = new arrPredTransformer_orig rhs in
   let (r_elst, r_plst, r_hlst) = transRHS#formula_to_general_formula in
-  let var_info = simplify (mkAndlst (l_plst @ r_plst)) in
+  
+  let is_heap_vars sv = List.exists (fun nsv -> is_same_sv nsv sv) (get_hlst_var_lst (l_hlst @ r_hlst)) in
+  let not_heap_vars = List.filter (fun sv -> not (is_heap_vars sv)) ((get_fv_pure (mkAndlst l_plst)) @ (get_fv_pure (mkAndlst r_plst))) in
+  
+  let var_info = simplify (mkExists not_heap_vars (mkAndlst (l_plst @ r_plst))) in
   let (new_l_hlst, new_r_hlst) = match_common (l_hlst, r_hlst) var_info in
   ((transLHS#get_root, l_elst, (get_segment_pure l_hlst) @ [get_disjoint_pure l_hlst] @ l_plst, new_l_hlst),
-   (transRHS#get_root, r_elst, (get_segment_pure r_hlst) @ [get_disjoint_pure r_hlst] @ r_plst, new_r_hlst))
+   (transRHS#get_root, r_elst, (get_segment_pure r_hlst) @ [get_disjoint_pure r_hlst] @ r_plst, new_r_hlst),
+  var_info)
 ;;
 
 let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
@@ -1226,7 +1241,7 @@ let check_norm_validity norm lhs_p rhs_p =
 let array_entailment_classical_entailment_interface lhs rhs =
   (* let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in *)
   (* let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in *)
-  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h)) =
+  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) =
     trans_array_entailment lhs rhs
   in
   (* Instantiate root *)
@@ -1235,7 +1250,7 @@ let array_entailment_classical_entailment_interface lhs rhs =
     | Some base1, Some base2 -> (mkEqSv base1 base2)::rhs_p
     | _, _ -> rhs_p
   in
-  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info in
   if check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   then
     mkEmptySuccCtx ()
@@ -1321,9 +1336,10 @@ let extract_frame root (NormOr lst) lhs_p rhs_p=
 
 
 let array_entailment_frame_interface lhs rhs =
-  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
-  
+  (* let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in *)
+  (* let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in *)
+  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) = trans_array_entailment lhs rhs
+  in
   let rhs_p =
     match lhs_root, rhs_root with
     | Some base1, Some base2 ->
@@ -1331,7 +1347,7 @@ let array_entailment_frame_interface lhs rhs =
        (mkEqSv base1 base2)::rhs_p
     | _, _ -> rhs_p
   in
-  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info in
   (* let () = print_endline ("frame interface lhs_p: " ^ (str_list !str_pformula lhs_p)) in *)
   if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
   then

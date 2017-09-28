@@ -16,6 +16,10 @@ pred_prim Elem<start:int,value:int>.
 // |- exists y1,y2,y3,x1,x2,x3 : base::Elem<y+y2, y3> * base::Elem<x1+x2, x3> & y2!=0 & y=y1 & x=x1 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
 // expect Fail.
 
+
+infer[@arr_en] base::AsegNE<y, y+1> * base::AsegNE<x, x+1> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0 |- exists ex16,ex17 : base::AsegNE<y, y+1> * base::AsegNE<x, x+1> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0.
+expect Valid.
+
 infer[@arr_en] base::Elem<3+40, 20> * base::Elem<4+1, tempx17+1> * base::Elem<5, 0> & tempx8=20 & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists u : base::Elem<u+40, 20> * base::Elem<u+1+1, tempx17+1> & u=3 & tempx8=20 & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
 expect Fail.
 

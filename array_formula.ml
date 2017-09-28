@@ -29,6 +29,9 @@ let mkCformulaOr f1 f2 =
 let get_fv_pure = Cpure.fv
 ;;
 
+let get_fv_cformula = Cformula.fv
+;;
+
 let mkSV = Cpure.mk_spec_var
 ;;
   
