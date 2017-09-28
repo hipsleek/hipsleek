@@ -20,6 +20,11 @@ open Array_pred
 %token POINTTO
 %token ARRAY
 
+%token RESULT
+%token VALID
+%token INVALID
+
+
 %token EQUAL
 %token NEQ
 %token GT
@@ -28,12 +33,17 @@ open Array_pred
 %token LTE
 
 %start main
-%type < Array_pred.entailment > main
+%type < (string * Array_pred.entailment) > main
 %%
 
 main:
-    entailment EOF { $1 }
+    result entailment EOF { ($1, $2) }
 ;
+
+result:
+    VALID { "Valid" }
+    | INVALID { "Fail" }
+;    
 
 entailment:
     formula IMPLY formula_list { ($1, $3) }
@@ -46,12 +56,20 @@ pair:
 exp:
     VAR { Var $1 }
     | CONST { Const $1 }
-    | exp ADD exp { Add ($1, $3) }
-    | exp MINUS exp { Minus ($1, $3) }
+    | exp ADD exp { match $1, $3 with
+                    | Const num, _ when num = 0 ->
+		      $3
+		    | _, Const num when num = 0 -> $1
+		    | _, _ ->
+                      Add ($1, $3) }
+    | exp MINUS exp { match $1, $3 with
+		    | _, Const 0 -> $1
+		    | _, _ ->
+                      Minus ($1, $3) }
 ;
 
 arr_term:
-    VAR POINTTO pair { let (a, b) = $3 in Arrf (Pto (Var $1, a, b)) }
+    exp POINTTO pair { let (a, b) = $3 in Arrf (Pto ($1, a, b)) }
     | ARRAY pair { let (a, b) = $2 in Arrf (Aseg (a, b))}
 ;
 

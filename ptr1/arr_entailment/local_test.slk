@@ -12,6 +12,26 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
+// infer[@arr_en] base::Elem<y, 0> * base::Elem<x+x1, x2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0
+// |- exists y1,y2,y3,x1,x2,x3 : base::Elem<y+y2, y3> * base::Elem<x1+x2, x3> & y2!=0 & y=y1 & x=x1 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+// expect Fail.
+
+infer[@arr_en] base::Elem<3+40, 20> * base::Elem<4+1, tempx17+1> * base::Elem<5, 0> & tempx8=20 & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists u : base::Elem<u+40, 20> * base::Elem<u+1+1, tempx17+1> & u=3 & tempx8=20 & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+expect Fail.
+
+
+// infer[@arr_en] base::Elem<y, 0> *base::Elem<x+x1, x2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0
+// |- exists y1,y2,y3,x1,x2,x3 : base::Elem<y1+y2, y3> * base::Elem<x1+x2, x3> & y2!=0 & y=y1 & x=x1 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+// expect Fail.
+
+
+// Ex ex16,ex17. w = 1 & z = 40 & tempx8 = 20 & tempx9 = 20 & tempx10 = 20 & 3 < tempx11 & tempx11 = 20 & tempx12 = 20 & tempx13 = 20 & tempx14 = 20 & tempx15 = tempx17+1 & y =/ 0 & tempx17 = 1 & ex17 = 0 & ex16 = 0 & ex7 = 0 & Array(v0, v0+1) |- Ex ex16,ex17,u0,u1,w0,w1. w = 1 & z = 40 & tempx8 = 20 & tempx9 = 20 & tempx10 = 20 & 3 < tempx11 & tempx11 = 20 & tempx12 = 20 & tempx13 = 20 & tempx14 = 20 & tempx15 = tempx17+1 & y =/ 0 & tempx17 = 1 & ex17 = 0 & ex16 = 0 & ex7 = 0 & v0 -> (u0, w0) * v0+1 -> (u1, w1)
+
+// infer[@arr_en] base::AsegNE<v0, v0+1> & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 & y=0 |- exists u0,u1,w0,w1 : base::Elem<v0+u0, u0> * base::Elem<v0+1+u1, u1> & 3<tempx9 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+// expect Valid.
+// infer[@arr_en] base::AsegNE<y, y> * base::AsegNE<x, x> & 3<tempx8 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- base::AsegNE<w, tempx13> * base::AsegNE<tempx13, tempx15> & 3<tempx8 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+// expect Fail.
+
 // infer[@arr_enfr]  base::AsegNE<0,10> & ptr= base + 3  |- exists p, v: base::Elem<p, v> & ptr = base + p.
 // print residue.
 // expect Valid.
@@ -23,7 +43,7 @@ pred_prim Elem<start:int,value:int>.
 
 // infer[@arr_en] base::Elem<v2, 0> * base::Elem<v0, 0> * base::Elem<a1+100, 100> * base::Elem<a3, 0> & a1+100<a3 & a3<v0 & v0<v2 |- base::Elem<a1+100, 100> * base::Elem<v2, 0> * base::Elem<a3, 0> * base::Elem<v0, 0>.
 
-infer[@arr_en] base::Elem<v0+0, 0> * base::Elem<a1+100, 100> * base::Elem<a3+ex4, ex4> |- (exists v1,ex2,ex4,ex5 : base::Elem<a1+100, 100> * base::Elem<a3+ex4, ex4> * base::Elem<v1+0, 0>).
+// infer[@arr_en] base::Elem<v0+0, 0> * base::Elem<a1+100, 100> * base::Elem<a3+ex4, ex4> |- (exists v1,ex2,ex4,ex5 : base::Elem<a1+100, 100> * base::Elem<a3+ex4, ex4> * base::Elem<v1+0, 0>).
 
 
 // Exists [p_39,t_t0]: [ true, flted_15_28=p_39, flted_15_28+1=flted_15_27]/\Exists [v_40]: [ t_t0=flted_15_28+1]=>[ t_t1=v_40] @[EMP] * [EMP]

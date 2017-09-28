@@ -35,5 +35,7 @@ rule token = parse
 
 
    and comment = parse
-     ['\n'] { token lexbuf }
+     "RESULT:Valid" { VALID }
+   | "RESULT:Invalid" { INVALID }
+   | ['\n'] { token lexbuf }
    | _ { comment lexbuf }
