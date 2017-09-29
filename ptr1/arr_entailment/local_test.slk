@@ -15,16 +15,16 @@ pred_prim Elem<start:int,value:int,value2:int>.
 
 // 116
 // slar/Base/s100.sli
-infer[@arr_en] exists ex1: base::Elem<a1, ex1, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<ex4, ex1+1> |- exists ex2,ex5,b : base::Elem<a1, ex1, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<b, b+ex1-ex4+1>.
-expect Fail.
+// infer[@arr_en] exists ex1: base::Elem<a1, ex1, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<ex4, ex1+1> |- exists ex2,ex5,b : base::Elem<a1, ex1, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<b, b+ex1-ex4+1>.
+// expect Fail.
 
 
 // Ex ex1,ex2,ex4,ex5. a1 -> (ex1, ex2) * a3 -> (ex4, ex5) * Array(ex4, ex1) |- Ex ex2,ex5,b. a1 -> (ex1, ex2) * a3 -> (ex4, ex5) * Array(b, b+ex1-ex4)
 
 // // 115
 // // slar/Base/s083.sli
-// infer[@arr_en] base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists x1,x2 : base::AsegNE<v0, v0+2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
-// expect Valid.
+infer[@arr_en] base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists x1,x2 : base::AsegNE<v0, v0+2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+expect Valid.
 
 
 // infer[@arr_en] base::Elem<y, 0> * base::Elem<x+x1, x2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0
