@@ -64,7 +64,7 @@ let rec str_exp = function
 
 let rec str_arr_term = function
   | Aseg (e1, e2) -> "base::AsegNE<" ^ (str_exp e1) ^ ", " ^ (str_exp (add_one e2)) ^ ">"
-  | Pto (e1, e2, e3) -> "base::Elem<" ^ (str_exp (mkAdd e1 e2)) ^ ", " ^ (str_exp e3) ^ ">"
+  | Pto (e1, e2, e3) -> "base::Elem<" ^ (str_exp e1) ^ ", " ^ (str_exp e2) ^ ", " ^ (str_exp e3) ^ ">"
 ;;
 
 let rec str_pure_term = function
@@ -104,7 +104,7 @@ let str_formula_lhs = function
 let str_entailment = function
   | (lhs, rhs) ->
      "infer[@arr_en] " ^
-     (str_formula_lhs lhs) ^
-                    " |- " ^
-                      (str_list (fun item ->  (str_formula item) ) " or "rhs) ^ "."
+     (str_formula lhs) ^
+       " |- " ^
+         (str_list (fun item ->  (str_formula item) ) " or "rhs) ^ "."
 ;;

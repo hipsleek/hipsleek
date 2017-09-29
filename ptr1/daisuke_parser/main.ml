@@ -2,7 +2,7 @@ let _ =
     let file_list = Sys.readdir Sys.argv.(1) in
     print_endline "pred_prim Aseg<start:int, end:int>.
                    pred_prim AsegNE<start:int, end:int>.
-                   pred_prim Elem<start:int,value:int>.";
+                   pred_prim Elem<start:int,value:int, value2:int>.";
 
     Array.iteri
       (fun i file_name->

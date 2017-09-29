@@ -7705,8 +7705,8 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
           then
             Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
           else
-            (* Arr_entailment_with_frame.array_entailment_classical_interface new_ante new_conseq *)
-            Array_biabduction.array_entailment_classical_entailment_interface new_ante new_conseq
+            (* Array_biabduction.array_entailment_classical_entailment_interface new_ante new_conseq *)
+            Array_biabduction.array_entailment_classical_entailment_interface_pair_content new_ante new_conseq
         in
         (full_rs,Prooftracer.Unknown)
       else
