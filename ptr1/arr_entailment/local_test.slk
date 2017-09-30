@@ -12,6 +12,18 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int,value2:int>.
 
+// 53
+// slar/Base/s119.sli
+infer[@arr_en] exists ex7,ex9 : base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+expect Fail.
+
+
+
+// // 6
+// // slar/Base/s002.sli
+// infer[@arr_en] exists ex7,ex9 : base::Elem<a1, 100, 200> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9 : base::Elem<a1, 100, 200> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+// expect Valid.
+
 
 // 116
 // slar/Base/s100.sli
@@ -23,8 +35,8 @@ pred_prim Elem<start:int,value:int,value2:int>.
 
 // // 115
 // // slar/Base/s083.sli
-infer[@arr_en] base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists x1,x2 : base::AsegNE<v0, v0+2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
-expect Valid.
+// infer[@arr_en] base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0 |- exists x1,x2 : base::AsegNE<v0, v0+2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0.
+// expect Valid.
 
 
 // infer[@arr_en] base::Elem<y, 0> * base::Elem<x+x1, x2> & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & w=0 & z=0 & ex7=0

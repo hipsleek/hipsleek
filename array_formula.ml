@@ -629,6 +629,7 @@ let str_aseg_pred_plus_generic content_printer aseg =
   | Pointsto_p (s,v) ->
      (!str_sv s)^" -> "^(content_printer v)
 ;;
+  
 
 let str_aseg_pred_plus = str_aseg_pred_plus_generic !str_sv
 ;;

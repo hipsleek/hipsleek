@@ -185,7 +185,7 @@ let pr_sleek_log_entry e =
   );
   let src = e.sleek_src_no in
   let par_id = e.sleek_parent_no in
-  let rest = if src!=3 then " src:"^(string_of_int src) else "" in
+  let rest = if (* src!=3 *) false then " src:"^(string_of_int src) else "" in
   let rest = if par_id>=(0) then "<:"^(string_of_int par_id)^rest else rest in
   fmt_string ("id: " ^ (string_of_int e.sleek_proving_id)^rest);
   fmt_string ("; caller: " ^ (e.sleek_proving_caller));
