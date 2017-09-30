@@ -503,8 +503,6 @@ let str_pair_f (newf, orig_f) =
 let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshContent ((lhs_e_lst:(Cpure.spec_var list)), lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) var_info=
 
   let str_partial_sort_pred = str_partial_sort_pred_generic content_printer in
-
-
   
   let rec base_case0 indent lhs_p rhs_p pre_cond =
     let frame = List.rev pre_cond.frame in
@@ -801,8 +799,7 @@ let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshCont
   (*   (print_and_return (mkBExists (initial_pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) 0,norm) *)
 ;;
 
-let array_biabduction_partial_order_generic =
-  let get_sorted plst hlst =
+let get_sorted plst hlst =
     let enumerate hlst =
       let enum_helper item lst =
         let order_plst =
@@ -838,11 +835,36 @@ let array_biabduction_partial_order_generic =
       helper hlst []
     in
     (enumerate hlst)
-  in
-  array_biabduction_generic get_sorted
+;;
+  
+let array_biabduction_partial_order_generic =
+  let f = get_sorted in
+  array_biabduction_generic f
 ;;
 
-let array_biabduction_full_order_generic =
+  
+
+let array_biabduction_partial_order =
+  let mkFreshContent () =
+    let fresh_u = global_get_new_var () in
+    ([fresh_u], fresh_u)
+  in
+  array_biabduction_partial_order_generic !str_sv mkEqSv mkFreshContent
+;;
+
+let array_biabduction_full_order_generic
+    :('a -> string) ->
+     ('a -> 'a -> Tpdispatcher.CP.formula) ->
+     (unit -> Cpure.spec_var list * 'a) ->
+     Cpure.spec_var list *
+       (Tpdispatcher.CP.formula list * Tpdispatcher.CP.formula list) *
+         'a partial_sort_pred ->
+     Cpure.spec_var list *
+       (Tpdispatcher.CP.formula list * Tpdispatcher.CP.formula list) *
+         'a partial_sort_pred ->
+     Cpure.formula ->
+     'a Array_biabduction_pre_condition.biabFormula *
+       'a norm_pre_condition =
   let get_sorted plst hlst =
     List.fold_left
       (fun r perm ->
@@ -858,16 +880,14 @@ let array_biabduction_full_order_generic =
   in
   array_biabduction_generic get_sorted
 ;;
-  
 
-let array_biabduction_partial_order =
-  let mkFreshContent () =
-    let fresh_u = global_get_new_var () in
-    ([fresh_u], fresh_u)
-  in
-  array_biabduction_partial_order_generic !str_sv mkEqSv mkFreshContent
-;;
-
+(* let array_biabduction_full_order = *)
+(*   let mkFreshContent () = *)
+(*     let fresh_u = global_get_new_var () in *)
+(*     ([fresh_u], fresh_u) *)
+(*   in *)
+(*   array_biabduction_full_order_generic !str_sv mkEqSv mkFreshContent *)
+(* ;; *)
 
 (* norm: normalized pre-condition, in the form of (Exists V0:forall V1:Exists V2: f*)
 let extract_anti_frame_and_frame norm =

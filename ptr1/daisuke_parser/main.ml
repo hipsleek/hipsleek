@@ -19,4 +19,15 @@ let _ =
           flush stdout
         with _ -> print_endline "expection")
       file_list
+;;
 
+(* let funa f a = *)
+(*   f a *)
+(* ;; *)
+
+(* let funb a = *)
+(*   1 *)
+(* ;; *)
+
+(* let func = funa funb *)
+(* ;; *)
