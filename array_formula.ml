@@ -1112,7 +1112,16 @@ class arrPredTransformer_orig_pair_content initcf = object(self)
     | None ->
        self#generate_arrPred_lst;
        self#formula_to_general_formula
-      
+
+  method formula_disj_formula_lst =
+    let rec flatten_or f =
+      match f with
+      | Or nf ->
+         (flatten_or nf.formula_or_f1) @ (flatten_or nf.formula_or_f2)
+      | _ -> [f]
+    in
+    flatten_or cf
+   
 end
 ;;
   

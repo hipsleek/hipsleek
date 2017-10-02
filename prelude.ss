@@ -615,8 +615,8 @@ void finalize_str (char_star s, int n)
 
 
 /* Array verification */
- class void_star extends Object {void value}
- class int_star extends Object {int value}
+/* class void_star extends Object {void value}
+ class int_star extends Object {int value}*/
 
 pred_prim Aseg<start:int, end:int>;
 pred_prim AsegNE<start:int, end:int>;

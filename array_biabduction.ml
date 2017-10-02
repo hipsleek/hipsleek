@@ -500,7 +500,38 @@ let str_pair_f (newf, orig_f) =
   str_list !str_pformula newf
 ;;
 
+let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
+  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
+  let helper_norm_pre_condition_base = function
+    | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
+       if List.length frame > 0 || List.length antiframe > 0
+       then None
+       else
+         Some (eset, mkAndlst rhs_p)
+    | NormBaseNeg _ -> None
+  in
+  let f =
+    mkOrlst
+      ( List.fold_left
+          (fun r (elst, clst, p) ->
+            match helper_norm_pre_condition_base p with
+            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
+            | None -> r )
+          [] lst )
+  in
+  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
+  f
+;;
+
+let check_norm_validity norm lhs_p rhs_p =
+  (* let () = print_endline ("lhs_p " ^ (!str_pformula lhs_p)) in *)
+  (* let () = print_endline ("rhs_p " ^ (!str_pformula rhs_p)) in *)
+  (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)))
+;;  
+
 let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshContent ((lhs_e_lst:(Cpure.spec_var list)), lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) var_info=
+
+
 
   let str_partial_sort_pred = str_partial_sort_pred_generic content_printer in
   
@@ -568,19 +599,43 @@ let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshCont
          in
          let (flst, normlst) = List.split (List.map (fun item -> aux_entry (indent+1) item (rhs_p, rhs_h) pre_cond) sorted_lhs_lst) in
          (mkBAnd flst, combine_norm normlst caselst [])
-           
+
       | MatchForm _, StarForm r_lst ->
          let sorted_rhs_lst = List.map (fun (order_plst, hlst) -> (add_pure_lst rhs_p order_plst, hlst)) (get_sorted [present_pure rhs_p] r_lst) in
-         begin match List.map (fun item -> aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with (* can use aux_sorted directly *)
-         | h :: tail ->
-            (List.fold_left
-               (fun (rf, NormOr rnorm) (nf, NormOr nnorm) ->
-                 (mkBOr [rf; nf], NormOr (rnorm @ nnorm))))
-              h tail
-         | [] ->
-            let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
-            (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
-         end
+         (* if true *)
+         (* then *)
+
+           begin match List.map (fun item -> aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with (* can use aux_sorted directly *)
+           | h :: tail ->
+              (List.fold_left
+                 (fun (rf, NormOr rnorm) (nf, NormOr nnorm) ->
+                   (mkBOr [rf; nf], NormOr (rnorm @ nnorm))))
+                h tail
+           | [] ->
+              let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+              (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+           end
+         (* else *)
+         (*   let simp_lhs_p = simplify (present_pure lhs_p) in *)
+         (*   let simp_rhs_p = simplify (present_pure rhs_p) in *)
+         (*   let check = List.fold_left *)
+         (*                 (fun r item -> *)
+         (*                   if r *)
+         (*                   then r *)
+         (*                   else *)
+         (*                     let (_, norm) = aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond in *)
+         (*                     r || (check_norm_validity norm simp_lhs_p simp_rhs_p) *)
+         (*                 ) *)
+         (*                 false sorted_rhs_lst *)
+         (*   in *)
+         (*   if check *)
+         (*   then *)
+         (*     let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkTrue ()]) in *)
+         (*     (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+         (*   else *)
+         (*     let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in *)
+         (*     (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+               
       | MatchForm _, MatchForm _ ->
          aux_sorted indent (lhs_p, lhs_h) (rhs_p, rhs_h) pre_cond
                     
@@ -1306,7 +1361,7 @@ let match_common_generic mkFreshContent mkContentEq (lhs_h, rhs_h) var_info =
   
 let trans_array_entailment_generic mkTransformer mkContentEq lhs rhs =
   let match_common (lhs_h, rhs_h) var_info =
-    let () = print_endline ("match_common " ^ (!str_pformula var_info)) in
+    (* let () = print_endline ("match_common " ^ (!str_pformula var_info)) in *)
     let is_eq v1 v2 =
       isValid (mkImply var_info (mkEqSv v1 v2))
     in
@@ -1376,39 +1431,9 @@ let trans_array_entailment = trans_array_entailment_generic mkTransformer mkEqSv
 
   
 
-let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
-  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
-  let helper_norm_pre_condition_base = function
-    | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
-       if List.length frame > 0 || List.length antiframe > 0
-       then None
-       else
-         Some (eset, mkAndlst rhs_p)
-    | NormBaseNeg _ -> None
-  in
-  let f =
-    mkOrlst
-      ( List.fold_left
-          (fun r (elst, clst, p) ->
-            match helper_norm_pre_condition_base p with
-            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
-            | None -> r )
-          [] lst )
-  in
-  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
-  f
-;;
-
-let check_norm_validity norm lhs_p rhs_p =
-  (* let () = print_endline "check_norm_validity" in *)
-  (* let () = print_endline (!str_pformula lhs_p) in *)
-  (* let () = print_endline (!str_pformula rhs_p) in *)
-  (* Why isValid is not working? *)
-
-  (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)))
   (* (imply lhs_p rhs_p) && *)
 (* (imply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)) *)
-;;
+
 
 (* let array_entailment_classical_entailment_interface lhs rhs = *)
 (*   let (f,simp_norm,lhs_p) = array_entailment_biabduction_get_norm lhs rhs in *)

@@ -45,8 +45,8 @@ let trans_array_entailment_pair_content lhs rhs =
     in
     
     
-    let () = print_endline ("lhs: " ^ (!str_cformula lhs)) in
-    let () = print_endline ("rhs: " ^ (!str_cformula rhs)) in
+    (* let () = print_endline ("lhs: " ^ (!str_cformula lhs)) in *)
+    (* let () = print_endline ("rhs: " ^ (!str_cformula rhs)) in *)
     let transLHS = mkTransformer lhs in
     let (l_elst, l_plst, l_hlst) = transLHS#formula_to_general_formula in
     let transRHS = mkTransformer rhs in
@@ -60,11 +60,11 @@ let trans_array_entailment_pair_content lhs rhs =
     let not_heap_vars = List.filter (fun sv -> not (is_heap_vars sv)) ((get_fv_pure (mkAndlst l_plst)) @ (get_fv_pure (mkAndlst r_plst))) in
     
     let var_info = simplify (mkExists not_heap_vars (mkAndlst (l_plst @ r_plst))) in
-    let () = print_endline ("before match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content l_hlst)) in
-    let () = print_endline ("before match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content r_hlst)) in
+    (* let () = print_endline ("before match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content l_hlst)) in *)
+    (* let () = print_endline ("before match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content r_hlst)) in *)
     let ((new_l_hlst, new_r_hlst), extra_lhs_p, (extra_rhs_e, extra_rhs_p)) = match_common (l_hlst, r_hlst) var_info in
-    let () = print_endline ("after match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_l_hlst)) in
-    let () = print_endline ("after match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_r_hlst)) in
+    (* let () = print_endline ("after match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_l_hlst)) in *)
+    (* let () = print_endline ("after match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_r_hlst)) in *)
 
     let lhs_ptr_positive = mkAndlst (List.map mkPositive lhs_hlst_var_lst) in
     let rhs_ptr_positive = mkAndlst (List.map mkPositive rhs_hlst_var_lst) in
@@ -75,10 +75,40 @@ let trans_array_entailment_pair_content lhs rhs =
   in
   trans_array_entailment_generic (fun f -> new arrPredTransformer_orig_pair_content f) (fun (v11, v12) (v21, v22) -> mkAnd (mkEqSv v11 v21) (mkEqSv v12 v22)) lhs rhs
 ;;
+
+let array_entailment_classical_entailment_interface_disj_pair_content lhs rhs =
+  let mkTransformer f = new arrPredTransformer_orig_pair_content f in
+  let transLHS = mkTransformer lhs in
+  let transRHS = mkTransformer rhs in
+  match transLHS#formula_disj_formula_lst, transRHS#formula_disj_formula_lst with
+  | [lhs_general], rhs_general_lst ->
+     let check =
+       List.fold_left
+         (fun r item ->
+           if r
+           then r
+           else
+             let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) =
+               trans_array_entailment_pair_content lhs_general item
+             in
+             let (f, norm) =
+               if !Globals.array_full_order
+               then
+                 array_biabduction_full_order_pair_content (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info
+               else
+                 array_biabduction_partial_order_pair_content (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info
+             in
+             r || check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p))
+         false rhs_general_lst
+     in
+     if check
+     then
+       mkEmptySuccCtx ()
+     else
+       mkEmptyFailCtx ()
+  | _ -> failwith "array_entailment_classical_entailment_interface_disj_pair_content: Invalid input"
+;;
   
-
-
-
 let array_entailment_classical_entailment_interface_pair_content lhs rhs =
   let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) =
      trans_array_entailment_pair_content lhs rhs

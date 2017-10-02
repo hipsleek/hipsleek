@@ -12,10 +12,63 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int,value2:int>.
 
-// 1
-// slar/SingleNFrame-3/s005.sli
-infer[@arr_en] exists ex2,ex4,ex5 : base::Elem<v2, 0, 0> * base::Elem<v0, 0, 0> * base::Elem<a1, 106, ex2> * base::Elem<a3, ex4, ex5> |- exists v3,v1,a3,a1,ex2,ex4,ex5 : base::Elem<a3, ex4, ex5> * base::Elem<a1, 106, ex2> * base::Elem<v1, 0, 0> * base::Elem<v3, 0, 0>.
+// 17
+// slar/Base/s052.sli
+infer[@arr_en] base::AsegNE<u0, u1+1> & u0+3<=u1 & x=1 |- exists ex1,ex2,ex4,ex5,w1 : base::AsegNE<u0, w1+1> * base::AsegNE<w1+1, u1+1>.
 expect Valid.
+
+
+// exists(w1_48:exists(ex2_45:exists(ex1_44:exists(flted_17_41:exists(flted_17_42:exists(flted_17_43:exists(u0_49:
+// flted_17_43<=flted_17_42 & flted_17_42<flted_17_41 & u0_49<flted_17_43 & 
+// u0_49>0 & flted_17_43>0 & flted_17_42>0 & flted_17_41>0 & 
+// ((flted_17_41<=u0_49 | flted_17_43<=flted_17_42)) & 
+// flted_17_42=flted_17_43 & w1_48=flted_17_43-1 & u1=flted_17_41-1 & 
+// ex2_45=ex1_44 & u0=u0_49 & u0=u0_49 & flted_17_43<flted_17_27 & 
+// flted_17_43=flted_17_42 & flted_17_41=flted_17_27)))))))
+
+// !!! **tpdispatcher.ml#492:init_tp by default: 
+// !!! **WARNING****sleek.ml#418:[../../prelude.slk,local_test.slk]
+// lhs:  (exists flted_17_27: base::AsegNE<u0,flted_17_27>@M&
+// x=1 & (3+u0)<=u1 & flted_17_27=1+u1&{FLOW,(4,5)=__norm#E}[])
+// rhs:  (exists u0_49,flted_17_41,flted_17_42,flted_17_43,ex1_44,ex2_45,
+// w1_48: base::AsegNE<u0_49,flted_17_43>@M * 
+//        base::AsegNE<flted_17_42,flted_17_41>@M&
+// flted_17_43=1+w1_48 & flted_17_42=1+w1_48 & flted_17_41=1+u1 & 
+// ex1_44=ex2_45 & u0_49=u0&{FLOW,(4,5)=__norm#E}[])
+
+// Starting Omega.../usr/local/bin/oc
+// before match_common lhs_h: [AsegNE<u0,flted_17_27>]
+// before match_common rhs_h: [AsegNE<u0_49,flted_17_43>,AsegNE<flted_17_42,flted_17_41>]
+// after match_common lhs_h: [AsegNE<u0,flted_17_27>]
+// after match_common rhs_h: [AsegNE<flted_17_42,flted_17_41>,AsegNE<u0_49,flted_17_43>]
+//    [AsegNE<u0,flted_17_27>] |- [AsegNE<flted_17_42,flted_17_41>*AsegNE<u0_49,flted_17_43>]
+//       # AsegNE<u0,flted_17_27> # ; [EMP] |- [AsegNE<flted_17_42,flted_17_41>*AsegNE<u0_49,flted_17_43>]
+//          # AsegNE<u0,flted_17_27> # ; [EMP] |- # AsegNE<u0_49,flted_17_43> # ; [AsegNE<flted_17_42,flted_17_41>]
+//             # AsegNE<u0,flted_17_27> # ; [EMP] |- # AsegNE<u0,flted_17_43> # ; [AsegNE<flted_17_42,flted_17_41>]
+//                [EMP] |- # AsegNE<flted_17_27,flted_17_43> # ; [AsegNE<flted_17_42,flted_17_41>]
+//                [EMP] |- [AsegNE<flted_17_42,flted_17_41>]
+//                [EMP] |- [EMP]
+//                # AsegNE<flted_17_43,flted_17_27> # ; [EMP] |- [AsegNE<flted_17_42,flted_17_41>]
+//                   # AsegNE<flted_17_43,flted_17_27> # ; [EMP] |- # AsegNE<flted_17_42,flted_17_41> # ; [EMP]
+//                      # AsegNE<flted_17_43,flted_17_27> # ; [EMP] |- # AsegNE<flted_17_43,flted_17_41> # ; [EMP]
+//                         [EMP] |- # AsegNE<flted_17_27,flted_17_41> # ; [EMP]
+//                         [EMP] |- [EMP]
+//                         # AsegNE<flted_17_41,flted_17_27> # ; [EMP] |- [EMP]
+//                         [EMP] |- [EMP]
+//                         [EMP] |- [EMP]
+//                      # AsegNE<flted_17_43,flted_17_27> # ; [EMP] |- # Gap<_,flted_17_43,flted_17_42> # ; # AsegNE<flted_17_42,flted_17_41> # ; [EMP]
+//                      # Gap<_,flted_17_42,flted_17_43> # ; # AsegNE<flted_17_43,flted_17_27> # ; [EMP] |- # AsegNE<flted_17_42,flted_17_41> # ; [EMP]
+//                [EMP] |- [AsegNE<flted_17_42,flted_17_41>]
+//                [EMP] |- [EMP]
+//             # AsegNE<u0,flted_17_27> # ; [EMP] |- # Gap<_,u0,u0_49> # ; # AsegNE<u0_49,flted_17_43> # ; [AsegNE<flted_17_42,flted_17_41>]
+//             # Gap<_,u0_49,u0> # ; # AsegNE<u0,flted_17_27> # ; [EMP] |- # AsegNE<u0_49,flted_17_43> # ; [AsegNE<flted_17_42,flted_17_41>]
+
+
+
+// // 1
+// // slar/SingleNFrame-3/s005.sli
+// infer[@arr_en] exists ex2,ex4,ex5 : base::Elem<v2, 0, 0> * base::Elem<v0, 0, 0> * base::Elem<a1, 106, ex2> * base::Elem<a3, ex4, ex5> |- exists v3,v1,a3,a1,ex2,ex4,ex5 : base::Elem<a3, ex4, ex5> * base::Elem<a1, 106, ex2> * base::Elem<v1, 0, 0> * base::Elem<v3, 0, 0>.
+// expect Valid.
 
 // // 106
 // // slar/SingleNFrame-3/s101.sli
