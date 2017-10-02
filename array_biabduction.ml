@@ -884,7 +884,7 @@ let get_partial_sorted plst hlst =
         match hlst with
         | h::tail ->
            let (new_plst, item) = enum_helper h (head@tail) in
-           if not(isSat (mkAndlst (new_plst @ plst)))
+           if false (* not(isSat (mkAndlst (new_plst @ plst))) *)
            then helper tail (h::head)
            else (new_plst, item)::(helper tail (h::head))
         | [] -> []
@@ -898,7 +898,7 @@ let get_full_sorted plst hlst =
     List.fold_left
       (fun r perm ->
         let perm_pure = get_sorted_puref_general perm in
-        if isSat (mkAndlst (perm_pure :: plst))
+        if true (* isSat (mkAndlst (perm_pure :: plst)) *)
         then
           let sorted_hlst =
             List.fold_right (fun item r -> mkMatchForm item r) perm (mkStarForm [])

@@ -17,6 +17,23 @@ pred_prim Elem<start:int,value:int,value2:int>.
 infer[@arr_en] base::AsegNE<u0, u1+1> & u0+3<=u1 & x=1 |- exists ex1,ex2,ex4,ex5,w1 : base::AsegNE<u0, w1+1> * base::AsegNE<w1+1, u1+1>.
 expect Valid.
 
+// lhs_p  u0<flted_17_27 & u0>0 & flted_17_27>0 & x=1 & u1=flted_17_27-1 & u0<=(flted_17_27-4)
+// rhs_p  flted_17_42<flted_17_41 & u0_49<flted_17_43 & u0_49>0 & flted_17_43>0 & 
+//  flted_17_42>0 & flted_17_41>0 & 
+//  ((flted_17_41<=u0_49 | flted_17_43<=flted_17_42)) & 
+//  flted_17_42=flted_17_43 & w1_48=flted_17_43-1 & u1=flted_17_41-1 & u0=u0_49
+
+
+
+// norm to pure  exists(w1_48:exists(flted_17_41:exists(flted_17_42:exists(flted_17_43:exists(u0_49:
+// flted_17_43<=flted_17_42 & flted_17_42<flted_17_41 & u0_49<flted_17_43 & 
+// u0_49>0 & flted_17_43>0 & flted_17_42>0 & flted_17_41>0 & 
+// ((flted_17_41<=u0_49 | flted_17_43<=flted_17_42)) & 
+// flted_17_42=flted_17_43 & w1_48=flted_17_43-1 & u1=flted_17_41-1 & 
+// u0=u0_49 & u0=u0_49 & flted_17_43<flted_17_27 & flted_17_43=flted_17_42 & 
+// flted_17_41=flted_17_27)))))
+
+
 
 // exists(w1_48:exists(ex2_45:exists(ex1_44:exists(flted_17_41:exists(flted_17_42:exists(flted_17_43:exists(u0_49:
 // flted_17_43<=flted_17_42 & flted_17_42<flted_17_41 & u0_49<flted_17_43 & 
