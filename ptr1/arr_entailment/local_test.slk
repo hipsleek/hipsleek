@@ -12,8 +12,25 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int,value2:int>.
 
-infer[@arr_en] exists ex16,ex17 : base::Elem<v1, 0, 0> * base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0 |- exists ex16,ex17 : base::AsegNE<v0, v0+2> * base::Elem<v1, 0, 0> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0.
+// 1
+// slar/SingleNFrame-3/s005.sli
+infer[@arr_en] exists ex2,ex4,ex5 : base::Elem<v2, 0, 0> * base::Elem<v0, 0, 0> * base::Elem<a1, 106, ex2> * base::Elem<a3, ex4, ex5> |- exists v3,v1,a3,a1,ex2,ex4,ex5 : base::Elem<a3, ex4, ex5> * base::Elem<a1, 106, ex2> * base::Elem<v1, 0, 0> * base::Elem<v3, 0, 0>.
 expect Valid.
+
+// // 106
+// // slar/SingleNFrame-3/s101.sli
+// infer[@arr_en] base::AsegNE<v2, v2+1> * base::AsegNE<v0, v0+1> * base::Elem<a1, 100, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<ex4, ex5+1> & v2=v3 & v0=v1 |- exists ex2,ex4 : base::Elem<a1, 100, ex2> * base::Elem<a3, ex4, ex5> * base::AsegNE<a1, ex5+1> * base::AsegNE<v1, v1+1> * base::AsegNE<v3, v3+1>.
+// expect Fail.
+
+
+// // 101
+// // slar/SingleNFrame-3/s103.sli
+// infer[@arr_en] exists ex7,ex9 : base::Elem<v2, 0, 0> * base::AsegNE<v0, v0+1> * base::AsegNE<u0, u0+2> * base::AsegNE<u1+1, u2+1> * base::AsegNE<u2+1, u3+1> & v0=v1 & u0+4<=u3 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists v3,ex7,ex9,w0,w1 : base::AsegNE<u1, u2+1> * base::Elem<w0, w1, ex7> * base::AsegNE<v1, v1+1> * base::Elem<v3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+// expect Fail.
+
+
+// infer[@arr_en] exists ex16,ex17 : base::Elem<v1, 0, 0> * base::Elem<v0, 0, 0> * base::Elem<v0+1, 0, 0> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0 |- exists ex16,ex17 : base::AsegNE<v0, v0+2> * base::Elem<v1, 0, 0> & w=1 & z=40 & tempx8=20 & tempx9=20 & tempx10=20 & 3<tempx11 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0.
+// expect Valid.
 
 
 
