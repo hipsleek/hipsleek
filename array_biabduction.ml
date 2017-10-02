@@ -799,7 +799,7 @@ let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshCont
   (*   (print_and_return (mkBExists (initial_pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) 0,norm) *)
 ;;
 
-let get_sorted plst hlst =
+let get_partial_sorted plst hlst =
     let enumerate hlst =
       let enum_helper item lst =
         let order_plst =
@@ -836,36 +836,8 @@ let get_sorted plst hlst =
     in
     (enumerate hlst)
 ;;
-  
-let array_biabduction_partial_order_generic =
-  let f = get_sorted in
-  array_biabduction_generic f
-;;
 
-  
-
-let array_biabduction_partial_order =
-  let mkFreshContent () =
-    let fresh_u = global_get_new_var () in
-    ([fresh_u], fresh_u)
-  in
-  array_biabduction_partial_order_generic !str_sv mkEqSv mkFreshContent
-;;
-
-let array_biabduction_full_order_generic
-    :('a -> string) ->
-     ('a -> 'a -> Tpdispatcher.CP.formula) ->
-     (unit -> Cpure.spec_var list * 'a) ->
-     Cpure.spec_var list *
-       (Tpdispatcher.CP.formula list * Tpdispatcher.CP.formula list) *
-         'a partial_sort_pred ->
-     Cpure.spec_var list *
-       (Tpdispatcher.CP.formula list * Tpdispatcher.CP.formula list) *
-         'a partial_sort_pred ->
-     Cpure.formula ->
-     'a Array_biabduction_pre_condition.biabFormula *
-       'a norm_pre_condition =
-  let get_sorted plst hlst =
+let get_full_sorted plst hlst =
     List.fold_left
       (fun r perm ->
         let perm_pure = get_sorted_puref_general perm in
@@ -877,17 +849,26 @@ let array_biabduction_full_order_generic
           ([perm_pure], sorted_hlst) :: r
         else r)
       [] (generic_get_permutation hlst)
+;;
+  
+  
+
+let array_biabduction_partial_order =
+  let mkFreshContent () =
+    let fresh_u = global_get_new_var () in
+    ([fresh_u], fresh_u)
   in
-  array_biabduction_generic get_sorted
+  array_biabduction_generic get_partial_sorted !str_sv mkEqSv mkFreshContent
 ;;
 
-(* let array_biabduction_full_order = *)
-(*   let mkFreshContent () = *)
-(*     let fresh_u = global_get_new_var () in *)
-(*     ([fresh_u], fresh_u) *)
-(*   in *)
-(*   array_biabduction_full_order_generic !str_sv mkEqSv mkFreshContent *)
-(* ;; *)
+let array_biabduction_full_order =
+  let mkFreshContent () =
+    let fresh_u = global_get_new_var () in
+    ([fresh_u], fresh_u)
+  in
+  array_biabduction_generic get_full_sorted !str_sv mkEqSv mkFreshContent
+;;
+
 
 (* norm: normalized pre-condition, in the form of (Exists V0:forall V1:Exists V2: f*)
 let extract_anti_frame_and_frame norm =
@@ -1209,49 +1190,97 @@ let mkTransformer f =
   new arrPredTransformer_orig f
 ;;
 
-let match_common_generic mkContentEq (lhs_h, rhs_h) var_info =
-  
+let match_common_generic mkFreshContent mkContentEq (lhs_h, rhs_h) var_info =
+
   (* let () = print_endline ("match_common " ^ (!str_pformula var_info)) in *)
   
-  let is_eq v1 v2 =
-    isValid (mkImply var_info (mkEqSv v1 v2))
-  in
-  
-  let helper h1 h2 =
+  let helper h1 h2 var_info =
+    let is_eq v1 v2  =
+      isValid (mkImply var_info (mkEqSv v1 v2))
+    in
+
     match h1, h2 with
     | AsegNE_p (a1, b1), AsegNE_p (a2, b2)
       | AsegNE_p (a1, b1), Aseg_p (a2, b2)
       | Aseg_p (a1, b1), AsegNE_p (a2, b2) ->
-       (is_eq a1 a2 && is_eq b1 b2, [])
+       (is_eq a1 a2 && is_eq b1 b2, ([], None), ([], [], None))
+    | AsegNE_p (a1, b1), Pointsto_p (i2, v2) ->
+       if is_eq a1 i2
+       then
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         if isValid (mkImply var_info (mkEq (incOne (mkVar a1)) (mkVar b1))) (* a1+1=b1 *)
+         then
+           (true, ([], None), ([], [mkContentEq v2 fresh_content], None))
+         else if isValid (mkImply var_info (mkLt (incOne (mkVar a1)) (mkVar b1))) (* a1+1<b1 *)
+         then
+           let fresh_c = global_get_new_var () in
+           let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar a1)) in
+           let rhs_aseg = mkAsegNE_p fresh_c b1 in
+           (true, ([eq_pure], Some rhs_aseg), ([], [mkContentEq v2 fresh_content], None))
+         else
+           (false, ([], None), ([], [], None))
+       else
+         (false, ([], None), ([], [], None))
+    | Pointsto_p (i1, v1), AsegNE_p (a2, b2) ->
+       if is_eq i1 a2
+       then
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         if isValid (mkImply var_info (mkEq (incOne (mkVar a2)) (mkVar b2))) (* a2+1=b2 *)
+         then
+           (true, ([], None), (fresh_u_lst, [mkContentEq v1 fresh_content], None))
+         else if isValid (mkImply var_info (mkLt (incOne (mkVar a2)) (mkVar b2))) (* a2+1<b2 *)
+         then
+           let fresh_c = global_get_new_var () in
+           let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar a2)) in
+           let rhs_aseg = mkAsegNE_p fresh_c b2 in
+           (true, ([], None), (fresh_c :: fresh_u_lst, [eq_pure; mkContentEq v1 fresh_content], Some rhs_aseg))
+         else
+           (false, ([], None), ([], [], None))
+       else
+         (false, ([], None), ([], [], None))
     | Pointsto_p (i1, v1), Pointsto_p (i2, v2) ->
        if is_eq i1 i2
-       then (true, [mkContentEq v1 v2])
-       else (false, [])
-    | _, _ -> (false, [])
+       then (true, ([], None), ([], [mkContentEq v1 v2], None))
+       else (false, ([], None), ([], [], None))
+    | _, _ -> (false, ([], None), ([], [], None))
   in
 
-  let rec helper_entry lhead lhs_h rhead rhs_h extra_pure_lst =
+  let rec helper_entry lhead lhs_h rhead rhs_h extra_lhs_p (extra_rhs_e, extra_rhs_p) var_info =
     match lhs_h with
     | lh :: ltail ->
        begin match rhs_h with
        | rh :: rtail ->
-          let (can_match, new_extra_pure_lst) = helper lh rh in
-          if can_match
+          let (can_match, (new_extra_lhs_p, new_lhs_h), (new_extra_rhs_e, new_extra_rhs_p, new_rhs_h)) = helper lh rh var_info in
+          if can_match               
           then
-            (* let () = print_endline (("match common!: ") ^ (str_aseg_pred_plus_pair_content lh)) in *)
-            helper_entry lhead ltail [] (rhead @ rtail) (new_extra_pure_lst @ extra_pure_lst)
-          else helper_entry lhead lhs_h (rh :: rhead) rtail extra_pure_lst
+            begin match new_lhs_h, new_rhs_h with
+            | Some new_lh, None ->
+               helper_entry lhead (new_lh :: ltail) [] (rtail @ rhead)
+                            (new_extra_lhs_p @ extra_lhs_p) (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | None, Some new_rh ->
+               helper_entry [] (ltail @ lhead) rhead (new_rh :: rtail)
+                            (new_extra_lhs_p @ extra_lhs_p)(new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | None, None ->
+               helper_entry lhead ltail [] (rhead @ rtail)
+                            (new_extra_lhs_p @ extra_lhs_p) (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | Some _, Some _ -> failwith "match_common_generic: Invalid input" end
+          else
+            helper_entry lhead lhs_h (rh :: rhead) rtail
+                         (new_extra_lhs_p @ extra_lhs_p)
+                         (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p) var_info
        | [] ->
-          helper_entry (lh :: lhead) ltail [] (rhead @ rhs_h) extra_pure_lst end
+          helper_entry (lh :: lhead) ltail [] (rhead @ rhs_h) extra_lhs_p (extra_rhs_e, extra_rhs_p) var_info end
     | [] ->
-       ((lhead, rhead @ rhs_h), extra_pure_lst)
+       ((lhead, rhead @ rhs_h), extra_lhs_p, (extra_rhs_e, extra_rhs_p))
   in
-
-  helper_entry [] lhs_h [] rhs_h []
+  helper_entry [] lhs_h [] rhs_h [] ([], []) var_info
 ;;
 
-let match_common = match_common_generic mkEqSv
-;;
+(* let match_common = match_common_generic mkEqSv *)
+(* ;; *)
   
 let trans_array_entailment_generic mkTransformer mkContentEq lhs rhs =
   let match_common (lhs_h, rhs_h) var_info =

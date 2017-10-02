@@ -1,0 +1,145 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+// infer[@arr_enfr]  base::AsegNE<k,m>  |-  base::AsegNE<10,11>.
+// print residue.
+// expect Fail.
+
+// infer[@arr_enfr]  base::AsegNE<k,m>  |-  base::AsegNE<k,k+1>.
+// print residue.
+// expect Valid.
+
+// infer[@arr_enfr] base::Elem<a,b> * base::Elem<c,d> * base::Elem<e,f> |- base::Elem<a,b> * base::Elem<c,d>.
+// print residue.
+// expect Valid.
+
+// infer[@arr_enfr] base::Elem<a,b> * base::Elem<c,d> * base::Elem<e,f> |- base::Elem<a,b>.
+// print residue.
+// expect Valid.
+
+infer[@arr_enfr]  base::AsegNE<k,m> * base::AsegNE<a,b> |-  base::AsegNE<k,m>.
+print residue.
+expect Valid.
+
+
+
+/*
+infer[@arr_enfr] base::AsegNE<i,m> & i=m-1 |- base::AsegNE<m-1,m>.
+print residue.
+expect Valid.
+*/
+// infer[@arr_enfr] base::AsegNE<i_92,m_93> & v_bool_31_2034' & m=i+1 & m'=i+1 & pivot'=pivot & base'=base & i_92=i &  i'=i & m_93=i+1 |- (exists i_104,flted_24_103: base'::AsegNE<i_104,flted_24_103>@M&
+// flted_24_103=1+i' & 0<=i' & i_104=i').
+// print residue.
+// expect Valid.
+
+// infer[@arr_ba] base::AsegNE<i,m> & i1>=i & i1<m |- base::AsegNE<i1,i1+1>.
+// print residue.
+// expect Fail.
+
+
+// infer[@arr_enfr] base::AsegNE<i',flted_21_2084>@M * base::AsegNE<flted_24_2066,m'>@M&
+// v_int_45_1961'=1+i' & base=base' & flted_25_2057=i_2042 & 
+// v_int_41_1928'=i_2042 & i_104=i_2042-1 & i_2065=i_2042 & i_113=i_2042-1 & 
+// flted_20_112=i_2042 & flted_24_103=i_2042 & flted_25_2072=i_2042+1 & 
+// v_int_43_1944'=i_2042 & i=i_2042-1 & m_2043=m & i_92=i_2042-1 & m_93=m & 
+// m'=m & i'=i_2042-1 & flted_21_2084=i_2042 & flted_24_2066=i_2042+1 & 
+// 1<=i_2042 & i_2042<=(m-2) & v_bool_40_1962' |- (exists i_2095,flted_20_2096: base'::AsegNE<i_2095,flted_20_2096>@M&
+// flted_20_2096=1+v_int_45_1961' & 0<=v_int_45_1961' & i_2095=v_int_45_1961').
+// print residue.
+// expect Valid.
+
+// infer[@arr_enfr] base::AsegNE<i,i+1>@M * base::AsegNE<flted_24_2066 (i+2???) ,m>@M& 
+// v_int_45_1961'=1+i' & base=base' & flted_25_2057=i_2042 & 
+// v_int_41_1928'=i_2042 & i_104=i_2042-1 & i_2065=i_2042 & i_113=i_2042-1 & 
+// flted_20_112=i_2042 & flted_24_103=i_2042 & flted_25_2072=i_2042+1 & 
+// v_int_43_1944'=i_2042 & i=i_2042-1 & m_2043=m & i_92=i_2042-1 & m_93=m & 
+// m'=m & i'=i_2042-1 & flted_21_2084=i_2042 & flted_24_2066=i_2042+1 & 
+// 1<=i_2042 & i_2042<=(m-2) & v_bool_40_1962' |- (exists i_2095,flted_20_2096: base'::AsegNE<i+1,i+2>@M&
+// flted_20_2096=1+v_int_45_1961' & 0<=v_int_45_1961' & i_2095=v_int_45_1961').
+// print residue.
+// expect Valid.
+
+
+
+// // 7 extremely slow...
+// infer[@arr_en]  base::Elem<1,2> * base::Elem<2,2>  |- base::AsegNE<1,3>.
+// print residue.
+// expect Valid.
+
+
+// // 33
+// infer[@arr_en]  base::AsegNE<a,b> * base::Elem<c,x> & a=1 & b=2 & c=3 |- exists b: base::Aseg<1,b> * base::Elem<3,y>.
+// print residue.
+// expect Fail.
+
+// // 1
+// infer[@arr_en]  base::AsegNE<x,y> * base::AsegNE<a,b> |- base::AsegNE<a,b> * base::AsegNE<x,y> .
+// print residue.
+// expect Valid.
+
+
+// // 1
+// infer[@arr_en]  base::Aseg<a,b> & b=2  |- base::Aseg<a,2>.
+// print residue.
+// expect Valid.
+
+// // 1
+// infer[@arr_en]  base::Aseg<a,2>  |- base::Aseg<a,2>.
+// print residue.
+// expect Valid.
+//
+/*
+// 1
+infer[@arr_enfr]  base::AsegNE<a,b> & a=1 & b=2 |- base::AsegNE<a,b>.
+print residue.
+expect Valid.
+
+// 2
+infer[@arr_enfr]  base::AsegNE<1,2> & a=1 & b=2 |- base::AsegNE<a,b>.
+print residue.
+expect Valid.
+
+// 3
+infer[@arr_enfr]  base::AsegNE<1,2> & a=1 & b=2 |- exists c: base::AsegNE<c,b> & c=1.
+print residue.
+expect Valid.
+
+// 4
+infer[@arr_enfr]  base::AsegNE<1,2> |- base::AsegNE<1,2>.
+print residue.
+expect Valid.
+*/
+
+/*
+// 6
+infer[@arr_en]  base::AsegNE<x,y> |- [a] base::AsegNE<x,a> * base::Aseg<a,y>.
+print residue.
+expect Valid.
+*/
+
+
+// // 2
+// infer[@arr_enfr]  base::AsegNE<a,c> & a=1 & b=2 & c=3 |- base::AsegNE<a,b>.
+// print residue.
+// expect Valid.
+
+// Aseg<a,b> * Aseg<c,d> |- Aseg<a,b> * Aseg<c,d> & b<c
+// ==>
+// b<c --> true
+// /\
+// a<d --> b<c
+
+// Aseg<a,b> * Aseg<c,d> |- Aseg<e,f> * Aseg<c,d> & b<c
