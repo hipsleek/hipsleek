@@ -12,10 +12,14 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int,value2:int>.
 
-// 17
-// slar/Base/s052.sli
-infer[@arr_en] base::AsegNE<u0, u1+1> & u0+3<=u1 & x=1 |- exists ex1,ex2,ex4,ex5,w1 : base::AsegNE<u0, w1+1> * base::AsegNE<w1+1, u1+1>.
-expect Valid.
+
+infer[@arr_en] exists ex7,ex9 : base::Elem<v1, 0, 0> * base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> * base::Elem<v1, 0, 0> * base::Elem<a3, 0, 0> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+expect Fail.
+
+// // 17
+// // slar/Base/s052.sli
+// infer[@arr_en] base::AsegNE<u0, u1+1> & u0+3<=u1 & x=1 |- exists ex1,ex2,ex4,ex5,w1 : base::AsegNE<u0, w1+1> * base::AsegNE<w1+1, u1+1>.
+// expect Valid.
 
 // lhs_p  u0<flted_17_27 & u0>0 & flted_17_27>0 & x=1 & u1=flted_17_27-1 & u0<=(flted_17_27-4)
 // rhs_p  flted_17_42<flted_17_41 & u0_49<flted_17_43 & u0_49>0 & flted_17_43>0 & 

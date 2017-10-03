@@ -261,10 +261,10 @@ expect Valid.
 infer[@arr_en] exists ex16,ex17 : base::Elem<v0, 0, 0> * base::Elem<y, 40, 20> * base::Elem<x, 1, tempx17+1> & x=x1 & y=y1 & w=1 & z=40 & 3<tempx8 & tempx8=20 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0 |- exists v1,ex16,ex17 : base::Elem<x1, 40, 20> * base::Elem<x1, 1, tempx17+1> * base::Elem<v1, 0, 0> & w=1 & z=40 & 3<tempx8 & tempx8=20 & tempx9=20 & 3<tempx10 & tempx10=20 & tempx11=20 & tempx12=20 & tempx13=20 & tempx14=20 & tempx15=tempx17+1 & y!=0 & tempx17=1 & ex17=0 & ex16=0 & ex7=0.
 expect Fail.
 
-// 53
-// slar/SingleNFrame-2/s119.sli
-infer[@arr_en] exists ex7,ex9 : base::AsegNE<v1, v1+1> * base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & v1=v2 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> * base::AsegNE<v2, v2+1> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
-expect Fail.
+// // 53
+// // slar/SingleNFrame-2/s119.sli
+// infer[@arr_en] exists ex7,ex9 : base::AsegNE<v1, v1+1> * base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & v1=v2 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> * base::AsegNE<v2, v2+1> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+// expect Fail.
 
 // 54
 // slar/SingleNFrame-2/s092.sli

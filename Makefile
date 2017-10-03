@@ -16,10 +16,17 @@ CPPO_FLAGS =
 
 ifdef OCAML_TOPLEVEL_PATH
  INCLPRE = $(OPREP)
+ INCLPREALL = $(OPREP)/*
  LIBBATLIB = $(OPREP)/$(BATLIB)
  LIBELIB = $(OPREP)/$(ELIB)
  LIBGLIB = $(OPREP)/$(GRLIB)
  LIBIGRAPH = $(OPREP)/ocamlgraph
+ LIBASYNCKERNEL = $(OPREP)/async_kernel
+ LIBASYNC = $(OPREP)/async/async
+ LIBASYNCUNIX = $(OPREP)/async_unix/async_unix
+ LIBCORE = $(OPREP)/core
+ LIBCOREKERNEL = $(OPREP)/core_kernel
+ LIBBASE = $(OPREP)/base
  # LIBGLPK = $(OPREP)/$(GLPKLIB)
 else
  INCLPRE = +site-lib
@@ -33,14 +40,16 @@ endif
 #  number of parallel jobs, 0 means unlimited.
 JOBS = 16
 
+
+
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)# ,$(LIBGLPK)	
+LIBSB = unix,bigarray,str,xml-light,nums,dynlink,camlp4lib,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)# ,$(LIBGLPK)	
 LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)# ,$(LIBGLPK)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(INCLPRE)/glpk
-INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(INCLPRE)/glpk,-I,$(LIBASYNCKERNEL),-I,$(INCLPRE)/async_kernel,-I,$(INCLPRE)/async_unix,-I,$(LIBCORE),-I,$(LIBCOREKERNEL),-I,$(LIBBASE)
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH),-I,$(LIBASYNC)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 

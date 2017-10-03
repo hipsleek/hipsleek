@@ -2,6 +2,8 @@
 open Array_formula
 open Array_biabduction_pre_condition
 open Array_biabduction
+(* open Async_kernel.Deferred_std *)
+
 
 
 let str_aseg_pred_plus_pair_content =
@@ -129,3 +131,27 @@ let array_entailment_classical_entailment_interface_pair_content lhs rhs =
   else
     mkEmptyFailCtx ()
 ;;
+  
+
+(* open Async_kernel.Deferred *)
+(* ;; *)
+
+(* let array_entailment_classical_entailment_interface_pair_content_deferred lhs rhs = *)
+(*   return (array_entailment_classical_entailment_interface_pair_content lhs rhs) *)
+(* ;; *)
+  
+(* let array_entailment_classical_entailment_interface_pair_content_timeout lhs rhs = *)
+(*   let deferred = *)
+(*     (any *)
+(*        [ (\* (after (Core.Time.Span.of_sec 10.0) >>| fun () -> None) ;*\) *)
+(*          (array_entailment_classical_entailment_interface_pair_content_deferred lhs rhs *)
+(*           >>| fun ctx -> Some ctx) *)
+(*     ]) *)
+(*   in *)
+(*   match peek deferred with *)
+(*   | None -> failwith "peek error" *)
+(*   | Some ctx_op -> *)
+(*      begin match ctx_op with *)
+(*      | Some ctx -> ctx *)
+(*      | None -> failwith "TIME OUT" end *)
+(* ;; *)
