@@ -10,11 +10,51 @@
       
 pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
-pred_prim Elem<start:int,value:int,value2:int>.
+pred_prim Elem<start:int,value:int>.
 
+infer[@arr_enfr] a'::AsegNE<flted_28_2676,array_size_2123> & j>=0 & j<array_size_2123
+& v_int_star_33_2457'=j'+a' & flted_28_2676=0 & flted_27_2210=0
+& index_2661=index & j_2665=j & index'=t_t265 & t_t293=t_t265 & v=t_t265 & flted_16_2122=0 & flted_27_2209=i_2647+1 & t_t292=i_2647+1 & i=i_2647 & v_int_star_24_2197'=a'+i_2647
+& array_size'=array_size & a=a' & base=a' & i'=i_2647 & array_size_2123=array_size & flted_28_2675=i_2647+1 & t_t264=i_2647+1 & 1<=i_2647 & i_2647<=(array_size-2) & v_bool_12_2176' & v_bool_12_2479'
+|- a'::Elem<i_2695,Anon_24>& i_2695=j. //& v_int_star_33_2457'=i_2695+base_2694.
 
-infer[@arr_en] exists ex7,ex9 : base::Elem<v1, 0, 0> * base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> * base::Elem<v1, 0, 0> * base::Elem<a3, 0, 0> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
-expect Fail.
+/*
+frame interface lhs_p: [ flted_28_2676<array_size_2123, true, flted_28_2675=t_t264 & i'=t_t264-1 & a=base & array_size'=array_size_2123 & 
+ array_size=array_size_2123 & i=t_t264-1 & t_t292=t_t264 & 
+ flted_27_2209=t_t264 & i_2647=t_t264-1 & flted_16_2122=0 & t_t293=v & 
+ index'=v & t_t265=v & j=j_2665 & index=index_2661 & flted_27_2210=0 & 
+ flted_28_2676=0 & a'=base & j'=v_int_star_33_2457'-base & 2<=t_t264 & 
+ t_t264<array_size_2123 & v_bool_12_2479' & v_bool_12_2176']
+norm to pure  (exists(Anon_24:exists(base_2694:exists(t_t2:exists(i_2695:t_t3=Anon_24 & 
+                                                            a'=base_2694 & 
+                                                            i_2695=v_int_star_33_2457'-
+                                                            base_2694 & 
+                                                            flted_28_2676<i_2695 & 
+                                                            array_size_2123>i_2695 & 
+                                                            (i_2695+1)<array_size_2123)))) | 
+  exists(Anon_24:exists(base_2694:exists(t_t2:exists(i_2695:t_t3=Anon_24 & 
+                                                            a'=base_2694 & 
+                                                            i_2695=v_int_star_33_2457'-
+                                                            base_2694 & 
+                                                            flted_28_2676<i_2695 & 
+                                                            array_size_2123>i_2695 & 
+                                                            i_2695+1=array_size_2123)))) | 
+  exists(Anon_24:exists(base_2694:exists(t_t0:exists(i_2695:t_t1=Anon_24 & 
+                                                            a'=base_2694 & 
+                                                            i_2695=v_int_star_33_2457'-
+                                                            base_2694 & 
+                                                            flted_28_2676=i_2695 & 
+                                                            (flted_28_2676+1)<array_size_2123)))) | 
+  exists(Anon_24:exists(base_2694:exists(t_t0:exists(i_2695:t_t1=Anon_24 & 
+                                                            a'=base_2694 & 
+                                                            i_2695=v_int_star_33_2457'-
+                                                            base_2694 & 
+                                                            flted_28_2676=i_2695 & 
+                                                            flted_28_2676+1=array_size_2123)))))
+
+*/
+// infer[@arr_en] exists ex7,ex9 : base::Elem<v1, 0, 0> * base::AsegNE<v0, v0+2> * base::AsegNE<a1, a1+1> * base::Elem<a3, 0, 0> & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0 |- exists ex7,ex9,a11,u0,u1,w0,w1,z : base::Elem<v0, u0, w0> * base::Elem<v0+1, u1, w1> * base::AsegNE<z, z+1> * base::Elem<v1, 0, 0> * base::Elem<a3, 0, 0> & a1=a11 & a2=ret & ret=a1 & ex9=0 & s=0 & a4=0 & ex7=0 & ex7=0.
+// expect Fail.
 
 // // 17
 // // slar/Base/s052.sli

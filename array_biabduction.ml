@@ -585,8 +585,20 @@ let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshCont
     else
       match lhs_h, rhs_h with
       | StarForm [], StarForm [] -> base_case0 indent lhs_p rhs_p pre_cond
-      | StarForm [], StarForm (rh::rtail) -> base_case1 indent lhs_p (rhs_p, rh, mkStarForm rtail) pre_cond
-      | StarForm [], MatchForm (rh, rtail) -> base_case1 indent lhs_p (rhs_p, rh, rtail) pre_cond
+      | StarForm [], StarForm (rh::rtail) ->
+         if !Globals.array_entailment_frame || !Globals.array_entailment
+         then
+           let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+           (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+         else
+           base_case1 indent lhs_p (rhs_p, rh, mkStarForm rtail) pre_cond
+      | StarForm [], MatchForm (rh, rtail) ->
+         if !Globals.array_entailment_frame || !Globals.array_entailment
+         then
+           let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+           (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+         else
+           base_case1 indent lhs_p (rhs_p, rh, rtail) pre_cond
       | StarForm (lh::ltail), StarForm [] -> base_case2 indent (lhs_p, lh, mkStarForm ltail) rhs_p  pre_cond
       | MatchForm (lh, ltail), StarForm [] -> base_case2 indent (lhs_p, lh, ltail) rhs_p  pre_cond
                                                          
@@ -1224,7 +1236,7 @@ let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, r
     if !Globals.array_full_order
     then
       (* array_entailment_biabduction_norm (lhs_p, lhs_h) (rhs_p, rhs_h) *)
-      failwith "TO BE IMPLEMENTED"
+      array_biabduction_full_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info
     else
       array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info
   in
