@@ -65,8 +65,8 @@ let trans_array_entailment_pair_content lhs rhs =
     (* let () = print_endline ("before match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content l_hlst)) in *)
     (* let () = print_endline ("before match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content r_hlst)) in *)
     
-    (* let ((new_l_hlst, new_r_hlst), extra_lhs_p, (extra_rhs_e, extra_rhs_p)) = match_common (l_hlst, r_hlst) var_info in *)
-    let ((new_l_hlst, new_r_hlst), extra_lhs_p, (extra_rhs_e, extra_rhs_p)) = ((l_hlst, r_hlst), [], ([], [])) in
+    let ((new_l_hlst, new_r_hlst), extra_lhs_p, (extra_rhs_e, extra_rhs_p)) = match_common (l_hlst, r_hlst) var_info in
+    (* let ((new_l_hlst, new_r_hlst), extra_lhs_p, (extra_rhs_e, extra_rhs_p)) = ((l_hlst, r_hlst), [], ([], [])) in *)
     
     (* let () = print_endline ("after match_common lhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_l_hlst)) in *)
     (* let () = print_endline ("after match_common rhs_h: " ^ (str_list str_aseg_pred_plus_pair_content new_r_hlst)) in *)
