@@ -11258,7 +11258,7 @@ let is_update_array_relation (r:string) =
 
 let drop_complex_ops =
   let pr_weak b = match b with
-    | Security _ -> Some (mkTrue no_pos)
+    (* | Security _ -> Some (mkTrue no_pos) *)
     | LexVar t_info -> Some (mkTrue t_info.lex_loc)
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
@@ -11267,7 +11267,7 @@ let drop_complex_ops =
     | _ -> if has_template_b_formula (b, None)
       then Some (mkTrue (pos_of_b_formula (b, None))) else None in
   let pr_strong b = match b with
-    | Security _ -> Some (mkFalse no_pos)
+    (* | Security _ -> Some (mkFalse no_pos) *)
     | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
@@ -13968,18 +13968,6 @@ and is_bag_constraint_weak_x (e: formula) : bool =
   let or_list = List.fold_left (||) false in
   fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
 
-and is_security_constraint = function
-  | Security _ -> true
-  | _ -> false
-
-and drop_security_formula' pf =
-  match pf with
-  | Security _ -> mkTrue_p no_pos
-  | _ -> pf
-
-and drop_security_formula pf =
-  Debug.no_1 "drop_security_formula" !print_p_formula !print_p_formula drop_security_formula' pf
-
 and is_bag_constraint_weak (e: formula) : bool =
   Debug.no_1 "is_bag_constraint_weak" !print_formula string_of_bool
     is_bag_constraint_weak_x (e: formula)
@@ -14541,6 +14529,41 @@ and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (r
     !print_formula
     create_acyclic_rel_x concrete_bags f rel
 
+and translate_sec_label = function
+  | Hi -> [], [], IConst (1, no_pos)
+  | Lo -> [], [], IConst (0, no_pos)
+  | SecVar (SpecVar (typ, var_name, _)) ->
+      let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+      [], [], Var (var, no_pos)
+  | Lub (l1, l2) ->
+      let lst1, fv1, t1 = translate_sec_label l1 in
+      let lst2, fv2, t2 = translate_sec_label l2 in
+      let var = mk_spec_var (fresh_name ()) in
+      let max_var = Var (var , no_pos) in
+      lst1 @ lst2 @ [EqMax (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
+
+and translate_sec_formula = function
+  | Security (sf, loc) ->
+      begin match sf with
+      | VarBound (SpecVar (typ, var_name, _), sec) ->
+          let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+          let extra_p_form, fv, expr = translate_sec_label sec in
+          extra_p_form, fv, Lte (Var (var, loc), expr, loc)
+      end
+  | p_formula -> [], [], p_formula
+
+and translate_security_formula = function
+  | BForm ((pf, bf_ann), flbl) ->
+      let extra_p_form, fv, pf = translate_sec_formula pf in
+      let extra_forms = List.map (fun elem -> BForm ((elem, None), None)) extra_p_form in
+      let f = BForm ((pf, bf_ann), flbl) in
+      let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f extra_forms in
+      mkExists fv full_f None no_pos
+  | And (f1, f2, loc) -> And (translate_security_formula f1, translate_security_formula f2, loc)
+  | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula f)) formulas)
+  | Or (f1, f2, flbl, loc) -> Or (translate_security_formula f1, translate_security_formula f2, flbl, loc)
+  | Not (f, lbl, loc) -> Not (translate_security_formula f, lbl, loc)
+  | others -> others
 
 (*
   forall acyclic(B) in f.

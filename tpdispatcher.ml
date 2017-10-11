@@ -1840,6 +1840,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   (* Drop array formula *)
   (* let f = translate_array_relation f in *)
   (* let f = drop_array_formula f in *)
+  let f = CP.translate_security_formula f in
   let _ = CP.filter_bag_constrain f f in
   let f, _ = if !Globals.constraint_sets_expansion
     then CP.expand_constraint_sets f (CP.mkTrue no_pos)
@@ -2908,6 +2909,8 @@ let tp_imply_concrete_rel ante conseq : bool =
   Some res -> stop with res
 *)
 let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option * CP.formula * CP.formula) =
+  let ante = CP.translate_security_formula ante in
+  let conseq = CP.translate_security_formula conseq in
   if (CP.is_concrete_rel conseq) then
     let res = tp_imply_concrete_rel ante conseq in
     (Some res, ante, conseq)
