@@ -12,11 +12,23 @@ pred_prim Aseg<start:int, end:int>.
 pred_prim AsegNE<start:int, end:int>.
 pred_prim Elem<start:int,value:int>.
 
-infer[@arr_enfr] a'::AsegNE<flted_28_2676,array_size_2123> & j>=0 & j<array_size_2123
-& v_int_star_33_2457'=j'+a' & flted_28_2676=0 & flted_27_2210=0
-& index_2661=index & j_2665=j & index'=t_t265 & t_t293=t_t265 & v=t_t265 & flted_16_2122=0 & flted_27_2209=i_2647+1 & t_t292=i_2647+1 & i=i_2647 & v_int_star_24_2197'=a'+i_2647
-& array_size'=array_size & a=a' & base=a' & i'=i_2647 & array_size_2123=array_size & flted_28_2675=i_2647+1 & t_t264=i_2647+1 & 1<=i_2647 & i_2647<=(array_size-2) & v_bool_12_2176' & v_bool_12_2479'
-|- a'::Elem<i_2695,Anon_24>& i_2695=j. //& v_int_star_33_2457'=i_2695+base_2694.
+
+
+
+// infer[@arr_enfr] base_2306::Elem<i_2307,v_2308> * base_2306::AsegNE<t_t0,i_2307>* base_2306::Elem<i,v> &
+// v_bool_12_2261' & t_t1!=v_2308 & v_bool_12_2270' & k<=(t_t6-3) & 0<=k & 
+// t_t0=k+1 & i=k & i_2307=t_t6-1 & v=t_t1 & t_t7=v_2308 & length'=t_t6 & 
+// length_2175=t_t6 & length=t_t6 & base=base_2306 & arr'=base_2306 & 
+// arr=base_2306 & a'=k+base_2306 & a=k+base_2306
+//  |-  exists length_2330: arr'::AsegNE<k_2329,length_2330> & a'=k_2329+arr' & 0<=k_2329 & k_2329<=length' & length_2330=length'.
+
+infer[@arr_enfr] arr::Elem<k,v>|- arr::AsegNE<k,k+1>.
+
+// infer[@arr_enfr] a'::AsegNE<flted_28_2676,array_size_2123> & j>=0 & j<array_size_2123
+// & v_int_star_33_2457'=j'+a' & flted_28_2676=0 & flted_27_2210=0
+// & index_2661=index & j_2665=j & index'=t_t265 & t_t293=t_t265 & v=t_t265 & flted_16_2122=0 & flted_27_2209=i_2647+1 & t_t292=i_2647+1 & i=i_2647 & v_int_star_24_2197'=a'+i_2647
+// & array_size'=array_size & a=a' & base=a' & i'=i_2647 & array_size_2123=array_size & flted_28_2675=i_2647+1 & t_t264=i_2647+1 & 1<=i_2647 & i_2647<=(array_size-2) & v_bool_12_2176' & v_bool_12_2479'
+// |- a'::Elem<i_2695,Anon_24>& i_2695=j. //& v_int_star_33_2457'=i_2695+base_2694.
 
 /*
 frame interface lhs_p: [ flted_28_2676<array_size_2123, true, flted_28_2675=t_t264 & i'=t_t264-1 & a=base & array_size'=array_size_2123 & 
