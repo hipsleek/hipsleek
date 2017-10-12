@@ -1,0 +1,42 @@
+void init(int arr[], int pos){
+   if (pos < 10) {
+     arr[pos] = 0;
+     init(arr, pos+1);
+   }
+}
+
+
+P(arr, pos) & pos<10 |- arr::elem(pos,_) * R(arr,pos)
+arr::elem(pos,_) * R(arr,pos) & pos<10 |- P(arr,pos+1) * R1(arr,pos)
+
+1. pre-processing
+Transform to ones with same predicates in both sides
+assume P(arr,pos) = arr::elem(pos,_) * R(arr,pos) & pos<10
+arr::elem(pos,_) * R(arr,pos) & pos<10 |- arr:elem(pos+1,_) * R(arr,pos+1) * R1(arr,pos)
+
+arr::elem(pos+1,_) can only be matched by R(arr,pos)
+R(arr,pos) = arr::elem(pos+1,_) * R2(arr,pos)
+arr::elem(pos,_) * arr::elem(pos+1,_) * R2(arr,pos) & pos<10 |- 
+arr:elem(pos+1,_) * arr::elem(pos+2,_) * R2(arr,pos+1) * R1(arr,pos)
+
+match arr:elem(pos+1,_)
+arr::elem(pos,_) * R2(arr,pos) & pos<10 |- 
+arr::elem(pos+2,_) * R2(arr,pos+1) * R1(arr,pos)
+compared with
+arr::elem(pos,_) * R(arr,pos) & pos<10 |- 
+arr:elem(pos+1,_) * R(arr,pos+1) * R1(arr,pos)
+
+Since arr::elem(pos,_) and R1(arr,pos) do not change, they should be matched
+R2(arr,pos) & pos<10 |- 
+arr::elem(pos+2,_) * R2(arr,pos+1)
+similarly
+R(arr,pos) & pos<10 |- 
+arr:elem(pos+1,_) * R(arr,pos+1)
+Now with both sides R, we can assume that R is a single predicate plus a common heap
+assume R = Aseg() * Q, Q can be removed
+
+Assume R = Aseg(f1(pos), f2(pos))
+f1(pos) = min(pos+1, f1(pos+1))
+f2(pos) = max(pos+1, f2(pos+1))
+f2(pos)-f1(pos) = 1 + f2(pos+1)-f1(pos+1)
+(pos+1=f1(pos+1)-1 or pos+1==f2(pos+1))
