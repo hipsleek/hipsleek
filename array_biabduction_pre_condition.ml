@@ -3,14 +3,14 @@ open Array_formula
 (* open Array_formula_plus *)
 open Format
 
-type biabFormula =
+type 'a biabFormula =
   | BBaseNeg of (Cpure.formula list)
-  | BBaseImply of (Cpure.formula list * Cpure.formula list * aseg_pred_plus list * aseg_pred_plus list)
-  | BExists of (Cpure.spec_var list * biabFormula)
-  | BForall of (Cpure.spec_var list * biabFormula)
-  | BAnd of (biabFormula list)
-  | BOr of (biabFormula list)
-  | BNot of biabFormula
+  | BBaseImply of (Cpure.formula list * Cpure.formula list * 'a aseg_pred_plus list * 'a aseg_pred_plus list)
+  | BExists of (Cpure.spec_var list * 'a biabFormula)
+  | BForall of (Cpure.spec_var list * 'a biabFormula)
+  | BAnd of ('a biabFormula list)
+  | BOr of ('a biabFormula list)
+  | BNot of 'a biabFormula
 ;;
 
 let rec str_biabFormula f =  

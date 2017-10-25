@@ -18,7 +18,7 @@ int main() {
       ensures arr::AsegNE<k, length>;
      */
     {
-      *a += *(arr + length - 1);
+      /* *a += *(arr + length - 1); */
       a++;
     }
   return 0;

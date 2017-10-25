@@ -316,7 +316,8 @@ struct
     (* start z3 system in a separated process and load redlog package *)
     and start() =
       if not !is_z3_running then begin
-        print_string "Starting z3... \n"; flush stdout;
+          (* print_string "Starting z3... \n"; *)
+          flush stdout;
         last_test_number := !test_number;
         PrvComms.start (!smtsolver_name, !smtsolver_name, [|!smtsolver_name;"-smt2"; "-si"|]) (fun proc ->  prover_process := proc);
         is_z3_running := true;
@@ -325,7 +326,8 @@ struct
     let stop () =
       if !is_z3_running then begin
         let num_tasks = !test_number - !last_test_number in
-        print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); flush stdout;
+        (* print_string ("Stop z3... "^(string_of_int !z3_call_count)^" invocations "); *)
+        flush stdout;
         let () = PrvComms.stop !prover_process num_tasks Sys.sigkill in
         is_z3_running := false;
       end

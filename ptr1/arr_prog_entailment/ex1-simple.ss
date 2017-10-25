@@ -1,11 +1,3 @@
-pred_prim Aseg<start:int, end:int>;
-pred_prim AsegNE<start:int, end:int>;
-pred_prim Elem<start:int,value:int>;
-
-data arrI {
-  int val;
-}
-
 
 void upd_arr(arrI base, int i, int v)
    requires base::Elem<i,_> & i>=0

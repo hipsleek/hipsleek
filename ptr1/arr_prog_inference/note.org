@@ -1,0 +1,13 @@
+void init(int arr[], int pos){
+    if (pos < 10) {
+      arr[pos] = 0;
+      init(arr, pos+1);
+    }
+}
+
+P(arr, pos) /\ pos < 10 ==> arr::elem<pos,_> * R(arr, pos)
+arr::elem<pos, 0> * R(arr, pos) /\ pos < 10 ==> P(arr, pos+1) * R1(arr, pos)
+Q(arr, pos+1) * R1(arr, pos) ==> Q(arr, pos)
+
+P(arr, pos) /\ pos<=10 ==> Q(arr, pos)
+

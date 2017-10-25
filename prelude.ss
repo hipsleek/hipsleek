@@ -22,7 +22,7 @@ int mult___(int a, int b)
 
 
 int mults___(int a, int b)
-  requires true 
+  requires emp & true 
   ensures res = a * b;
 /*
   case {
@@ -615,6 +615,9 @@ void finalize_str (char_star s, int n)
 
 
 /* Array verification */
+/* class void_star extends Object {void value} */
+ /* class int_star extends Object {int value} */
+
 pred_prim Aseg<start:int, end:int>;
 pred_prim AsegNE<start:int, end:int>;
 pred_prim Elem<start:int,value:int>;
@@ -623,10 +626,11 @@ data arrI {
   int val;
 }
 
+
 void_star __builtin_alloca(int size)
  case {
-  size <= 0 -> requires emp & true ensures res = null;
-  size > 0 -> requires emp & true ensures res::AsegNE<0, size> & res!=null;
+  size <= 0 | size>=2147483647 -> requires emp & true ensures res = null;
+  size > 0 & size<2147483647  -> requires emp & true ensures res::AsegNE<0, size> & res!=null;
  }
 
 int_star __cast_void_pointer_to_int_star__(void_star ptr)

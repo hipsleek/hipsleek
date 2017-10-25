@@ -29,6 +29,9 @@ let mkCformulaOr f1 f2 =
 let get_fv_pure = Cpure.fv
 ;;
 
+let get_fv_cformula = Cformula.fv
+;;
+
 let mkSV = Cpure.mk_spec_var
 ;;
   
@@ -191,7 +194,11 @@ let mkLteSv a b =
 
 let mkGtSv a b =
   mkGt (mkVar a) (mkVar b)
-;;  
+;;
+
+let mkPositive sv =
+  mkGt (mkVar sv) (mkConst 0)
+;;
 
 let mkGteSv a b =
   mkGte (mkVar a) (mkVar b)
@@ -590,10 +597,10 @@ let generic_get_disjointness helper_two pair_lst =
 ;;
 
 
-type aseg_pred_plus =
+type 'a aseg_pred_plus =
   | Aseg_p of (Cpure.spec_var * Cpure.spec_var)
   | AsegNE_p of (Cpure.spec_var * Cpure.spec_var)
-  | Pointsto_p of (Cpure.spec_var * Cpure.spec_var)
+  | Pointsto_p of (Cpure.spec_var * 'a)
   | Gap_p of (Cpure.spec_var * Cpure.spec_var)
 ;;
 
@@ -611,7 +618,7 @@ let str_list_delimeter str lst d emp =
   "["^(str_list_delimeter_raw str lst d emp)^"]"
 ;;
   
-let str_aseg_pred_plus aseg =
+let str_aseg_pred_plus_generic content_printer aseg =
   match aseg with
   | Aseg_p (s,e) ->
      "Aseg<"^(!str_sv s)^","^(!str_sv e)^">"
@@ -620,7 +627,11 @@ let str_aseg_pred_plus aseg =
   | Gap_p (s,e)->
      "Gap<"^("_")^","^(!str_sv s)^","^(!str_sv e)^">"
   | Pointsto_p (s,v) ->
-     (!str_sv s)^" -> "^(!str_sv v)
+     (!str_sv s)^" -> "^(content_printer v)
+;;
+  
+
+let str_aseg_pred_plus = str_aseg_pred_plus_generic !str_sv
 ;;
 
 let str_aseg_pred_plus_lst hf =
@@ -723,63 +734,6 @@ class arrPredTransformer_orig initcf = object(self)
   val mutable puref = None      (* Extend with disjointness *)
   val mutable general_formula = None
   val mutable root = None
-                                  
-
-  (* method generate_pure = *)
-  (*   let generate_disjoint_formula_with_two_pred p1 p2 = *)
-  (*     match p1, p2 with *)
-  (*     | Aseg_p (_,s1,e1), Aseg_p (_,s2,e2) -> *)
-  (*        mkOr (mkOr (mkGte s2 e1) (mkGte s1 e2)) (mkOr (mkEq s1 e1) (mkEq s2 e2)) *)
-  (*     | Aseg_p (_,s1,e1), Elem (_,s2,_) -> *)
-  (*        mkOr (mkOr (mkGte s2 e1) (mkGt s1 s2)) (mkEq s1 e1) *)
-  (*     | Elem (_,s1,_), Aseg_p (_,s2,e2)  -> *)
-  (*        mkOr (mkOr (mkGte s1 e2) (mkGte s2 s1)) (mkEq s2 e2) *)
-  (*     | Elem (_,s1,_), Elem (_,s2,_) -> *)
-  (*        mkOr (mkGt s2 s1) (mkGt s1 s2) *)
-  (*     | _, _ -> mkTrue () *)
-  (*   in *)
-  (*   let rec generate_disjoint_formula lst flst = *)
-  (*     match lst with *)
-  (*     | h::tail -> *)
-  (*        generate_disjoint_formula tail *)
-  (*                                  ((List.map (fun item -> generate_disjoint_formula_with_two_pred h item) tail)@flst) *)
-  (*     | [] -> flst *)
-  (*   in *)
-  (*   let rec generate_segment_formula lst flst = *)
-  (*     List.fold_left *)
-  (*       (fun r item -> *)
-  (*         match item with *)
-  (*         | Some f -> f::r *)
-  (*         | None -> r *)
-  (*       ) *)
-  (*       []          *)
-  (*       (List.map *)
-  (*          (fun item -> *)
-  (*            match item with *)
-  (*            | Aseg_p (_,s,e) -> Some (mkLte s e) *)
-  (*            | _ -> None) *)
-  (*          lst *)
-  (*       ) *)
-  (*   in *)
-
-  (*   let lst = self#formula_to_arrPred in *)
-  (*   puref <- Some (mkAndlst ((self#get_orig_pure) *)
-  (*                            ::((generate_disjoint_formula lst []) *)
-  (*                               @(generate_segment_formula lst [])))); *)
-  (*   () *)
-
-  (* method get_pure = *)
-  (*   match puref with *)
-  (*   | Some f -> f *)
-  (*   | None -> self#generate_pure; *)
-  (*             self#get_pure *)
-                
-  (* method pred_var_to_arrPred_exp sv = *)
-  (*   match (self#find_in_eqmap sv) with *)
-  (*   | None -> *)
-  (*      Var (sv,no_pos) *)
-  (*   | Some e -> *)
-  (*      e *)
 
   method pred_var_to_arrPred_exp sv =
     sv
@@ -832,10 +786,11 @@ class arrPredTransformer_orig initcf = object(self)
        self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
     | _ -> failwith "getElemStart: Invalid input"
 
+
   method getElemValue cf =
     match cf with
     | ViewNode f ->
-       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 1)
+       (self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 1))
     | _ -> failwith "getElemStart: Invalid input"
 
   method get_orig_pure =
@@ -965,6 +920,213 @@ class arrPredTransformer_orig initcf = object(self)
       
 end
 ;;
+
+class arrPredTransformer_orig_pair_content initcf = object(self)
+  val cf = initcf               (* cf is Cformula.formula *)
+  val mutable eqmap = ([]: (spec_var * exp) list)
+  val mutable aseglst = None
+  val mutable orig_puref = None
+  val mutable puref = None      (* Extend with disjointness *)
+  val mutable general_formula = None
+  val mutable root = None
+
+  method pred_var_to_arrPred_exp sv =
+    sv
+         
+  method getAsegBase cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp f.h_formula_view_node
+    | _ -> failwith "getAsegBase: Invalid input"
+                    
+  method getAsegStart cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
+    | _ -> failwith "getAsegStart: Invalid input"
+
+  method getAsegEnd cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 1)
+    | _ -> failwith "getAsegEnd: Invalid input"
+
+  method getAsegNEBase cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp f.h_formula_view_node
+    | _ -> failwith "getAsegBase: Invalid input"
+                    
+  method getAsegNEStart cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
+    | _ -> failwith "getAsegStart: Invalid input"
+
+  method getAsegNEEnd cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 1)
+    | _ -> failwith "getAsegEnd: Invalid input"
+                    
+  method getElemBase cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp f.h_formula_view_node
+    | _ -> failwith "getElemBase: Invalid input"
+                    
+  method getElemStart cf =
+    match cf with
+    | ViewNode f ->
+       self#pred_var_to_arrPred_exp (List.nth f.h_formula_view_arguments 0)
+    | _ -> failwith "getElemStart: Invalid input"
+
+
+  method getElemValue cf =
+    match cf with
+    | ViewNode f ->
+       ((List.nth f.h_formula_view_arguments 1), (List.nth f.h_formula_view_arguments 2))
+    | _ -> failwith "getElemStart: Invalid input"
+
+  method get_orig_pure =
+    match orig_puref with
+    | None -> 
+       orig_puref <- Some (remove_termann (simplify (Cformula.get_pure_ignore_exists cf)));
+       self#get_orig_pure
+    | Some f -> f
+
+  method get_root =
+    root
+
+  method generate_arrPred_lst =
+    let one_pred_to_arrPred hf=
+      if isAsegPred hf
+      then Some (mkAseg_p (self#getAsegStart hf) (self#getAsegEnd hf))
+      else
+        if isAsegNEPred hf
+        then Some (mkAsegNE_p (self#getAsegNEStart hf) (self#getAsegNEEnd hf))
+        else
+          if isElemPred hf
+          then Some (mkPointsto_p (self#getElemStart hf) (self#getElemValue hf))
+          else
+            if isEmpty hf
+            then None
+            else failwith "one_pred_to_arrPred: Invalid input"
+    in
+    let extract_root_hflst hlst =      
+      let extract_root_one_pred hf =
+        if isAsegPred hf
+        then Some (self#getAsegBase hf)
+        else
+          if isAsegNEPred hf
+          then Some (self#getAsegNEBase hf)
+          else
+            if isElemPred hf
+            then Some (self#getElemBase hf)
+            else
+              if isEmpty hf
+              then None
+              else failwith "extract_root_one_pred: Invalid input"
+      in
+      match hlst with
+      | h :: tail -> extract_root_one_pred h
+      | [] -> None
+    in
+    let build_eqmap pf evars=
+      let eqlst = find_eq_at_toplevel pf in
+      let evarsContains evars sv =
+        try 
+          List.exists (fun v -> (compare_sv v sv)=0) evars
+        with _ ->
+          false
+      in
+      let helper (e1,e2) =
+        match e1,e2 with
+        | Var (sv1,_) , Var (sv2,_) ->
+           if evarsContains evars sv1 && evarsContains evars sv2
+           then [(sv1,e2);(sv2,e1)]
+           else
+             if evarsContains evars sv1
+             then [(sv1,e2)]
+             else [(sv2,e1)]
+        | Var (sv,_), e
+          | e, Var (sv,_) ->
+           if evarsContains evars sv
+           then [(sv,e2)]
+           else []
+        | _,_ -> []
+      in
+      List.fold_left (fun r ee -> (helper ee)@r) [] eqlst
+    in
+    let (base, general_f) =
+      let rec get_general_f cf =
+        match cf with
+        | Base f ->
+           let pred_list = flatten_heap_star_formula f.formula_base_heap in
+           (extract_root_hflst pred_list, [[],[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)])
+        | Or f->
+           let (base1, general_f1) = get_general_f f.formula_or_f1 in
+           let (base2, general_f2) = get_general_f f.formula_or_f2 in
+           let base =
+             match base1, base2 with
+             | Some _, _ -> base1
+             | _, Some _ -> base2
+             | _ -> base1
+           in
+           (base, general_f1@general_f2)
+        | Exists f ->
+           let pf = Mcpure.pure_of_mix f.formula_exists_pure in           
+           let evars = f.formula_exists_qvars in
+           let pred_list = flatten_heap_star_formula f.formula_exists_heap in
+           (extract_root_hflst pred_list, [evars,[self#get_orig_pure],map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)])
+      in
+      get_general_f cf
+    in
+    let aPrelst =
+      match general_f with
+      | (_,_,h)::_ -> h
+      | _ -> failwith "aPrelst: Not constructed yet"
+                      (* match cf with *)
+                      (* | Base f -> *)
+                      (*    let pred_list = flatten_heap_star_formula f.formula_base_heap in *)
+                      (*    map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list)        *)
+                      (* | Or f-> failwith "TO BE IMPLEMENTED" *)
+                      (* | Exists f -> *)
+                      (*    let pf = Mcpure.pure_of_mix f.formula_exists_pure in *)
+                      (*    let evars = f.formula_exists_qvars in *)
+                      (*    let () = eqmap <- build_eqmap pf evars in *)
+                      (*    let pred_list = flatten_heap_star_formula f.formula_exists_heap in *)
+                      (*    map_op_list (fun x->x) (List.map one_pred_to_arrPred pred_list) *)
+    in
+    root <- base;
+    general_formula <- Some general_f;
+    aseglst <- Some aPrelst
+
+  method formula_to_general_formula =
+    match general_formula with
+    | Some f ->
+       (
+         match f with
+         | [nf] -> nf
+         | _ -> failwith "formula_to_general_formula: TO BE IMPLEMENTED")
+    | None ->
+       self#generate_arrPred_lst;
+       self#formula_to_general_formula
+
+  method formula_disj_formula_lst =
+    let rec flatten_or f =
+      match f with
+      | Or nf ->
+         (flatten_or nf.formula_or_f1) @ (flatten_or nf.formula_or_f2)
+      | _ -> [f]
+    in
+    flatten_or cf
+   
+end
+;;
+  
+
+
 
 let mkEmptyes () =
   empty_es (mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos

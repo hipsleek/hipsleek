@@ -6,12 +6,12 @@ open Array_biabduction_pre_condition
 let non_trivial = ref false     (* To indentify trivial cases *)
 ;;
 (*  *)
-type norm_pre_condition_base =
+type 'a norm_pre_condition_base =
   | NormBaseNeg of (Cpure.spec_var list * Cpure.spec_var list * Cpure.formula list)
   | NormBaseImply of (Cpure.spec_var list *
                         Cpure.spec_var list *
                           Cpure.formula list *
-                            Cpure.formula list * aseg_pred_plus list * aseg_pred_plus list)
+                            Cpure.formula list * 'a aseg_pred_plus list * 'a aseg_pred_plus list)
 ;;
 
 let mkNormBaseNeg uset eset pf =
@@ -50,8 +50,8 @@ let str_norm_pre_condition_base norm =
      else "Forall " ^ (str_list !str_sv uset) ^ " " ^ s
 ;;
   
-type norm_pre_condition =
-  | NormOr of (Cpure.spec_var list * Cpure.formula list * norm_pre_condition_base) list
+type 'a norm_pre_condition =
+  | NormOr of (Cpure.spec_var list * Cpure.formula list * 'a norm_pre_condition_base) list
 ;;
   
 let mkNormOr lst =
@@ -114,47 +114,48 @@ let mkUsetandVsetprime set vset =
   let vsetprime = List.filter (fun item -> not (List.exists (fun item1 -> is_same_sv item item1) uset)) vset in
   (uset,vsetprime)
 ;;
+
+
+(* input: heap formulas, output: a pure formula with sorted information  *)  
+let get_sorted_puref_general arrPredlst =
+  let rec helper lst lastm flst =
+    match lst with
+    | [] -> mkAndlst flst
+    | h::tail ->
+       begin match h with
+       | AsegNE_p (t,m) ->
+          helper tail (mkVar m) ([mkLte lastm (mkVar t);mkLtSv t m]@flst)
+       | Pointsto_p (t,v) ->
+          helper tail (incOne (mkVar t)) ((mkLte lastm (mkVar t))::flst)
+       | Aseg_p (t,m) ->
+          mkOr
+            (helper tail lastm ((mkEqSv t m)::flst))
+            (helper tail (mkVar m) ([mkLte lastm (mkVar t);mkLtSv t m]@flst))
+       | _ -> failwith "get_sorted_puref: Invalid input"
+       end
+  in
+
+  let rec helper_entry arrPredlst flst =
+    match arrPredlst with
+    | [] -> mkAndlst flst
+    | h::tail ->
+       begin match h with
+       | AsegNE_p (t,m) ->
+          helper tail (mkVar m) ((mkLtSv t m)::flst)
+       | Pointsto_p (t,v) ->
+          helper tail (incOne (mkVar t)) flst
+       | Aseg_p (t,m) ->
+          mkOr
+            (helper_entry tail ((mkEqSv t m)::flst))
+            (helper tail (mkVar m) ((mkLtSv t m)::flst))
+       | _ -> failwith "get_sorted_puref: Invalid input"
+       end
+  in
+  helper_entry arrPredlst []
+;;
   
   
 let array_entailment_biabduction_norm lhs rhs =
-
-  (* input: heap formulas, output: a pure formula with sorted information  *)  
-  let get_sorted_puref_general arrPredlst =
-    let rec helper lst lastm flst =
-      match lst with
-      | [] -> mkAndlst flst
-      | h::tail ->
-         begin match h with
-         | AsegNE_p (t,m) ->
-            helper tail (mkVar m) ([mkLte lastm (mkVar t);mkLtSv t m]@flst)
-         | Pointsto_p (t,v) ->
-            helper tail (incOne (mkVar t)) ((mkLte lastm (mkVar t))::flst)
-         | Aseg_p (t,m) ->
-            mkOr
-              (helper tail lastm ((mkEqSv t m)::flst))
-              (helper tail (mkVar m) ([mkLte lastm (mkVar t);mkLtSv t m]@flst))
-         | _ -> failwith "get_sorted_puref: Invalid input"
-         end
-    in
-
-    let rec helper_entry arrPredlst flst =
-      match arrPredlst with
-      | [] -> mkAndlst flst
-      | h::tail ->
-         begin match h with
-         | AsegNE_p (t,m) ->
-            helper tail (mkVar m) ((mkLtSv t m)::flst)
-         | Pointsto_p (t,v) ->
-            helper tail (incOne (mkVar t)) flst
-         | Aseg_p (t,m) ->
-            mkOr
-              (helper_entry tail ((mkEqSv t m)::flst))
-              (helper tail (mkVar m) ((mkLtSv t m)::flst))
-         | _ -> failwith "get_sorted_puref: Invalid input"
-         end
-    in
-    helper_entry arrPredlst []
-  in
 
   let helper_sv_to_exp uqset_eq sv =
     try
@@ -426,16 +427,20 @@ let array_entailment_biabduction_norm lhs rhs =
 ;;
 
 
-type partial_sort_pred =
-  | MatchForm of (aseg_pred_plus * partial_sort_pred)
-  | StarForm of (aseg_pred_plus list)
+type 'a partial_sort_pred =
+  | MatchForm of ('a aseg_pred_plus * 'a partial_sort_pred)
+  | StarForm of ('a aseg_pred_plus list)
 ;;
 
-let rec str_partial_sort_pred = function
-  | MatchForm (head, tail) -> "# "^(str_aseg_pred_plus head)^" # ; "^(str_partial_sort_pred tail)
-  | StarForm lst -> str_aseg_pred_plus_lst lst
+
+  
+let rec str_partial_sort_pred_generic content_printer = function
+  | MatchForm (head, tail) -> "# "^(str_aseg_pred_plus_generic content_printer head)^" # ; "^(str_partial_sort_pred_generic content_printer tail)
+  | StarForm lst -> str_list_delimeter (str_aseg_pred_plus_generic content_printer) lst "*" "EMP"
 ;;
 
+let str_partial_sort_pred = str_partial_sort_pred_generic !str_sv
+;;
 
 let mkMatchForm h tail =
   MatchForm (h, tail)
@@ -446,15 +451,16 @@ let mkStarForm lst =
 ;;
                
   
-type pre_condition =
+type 'a pre_condition =
   {
-    antiframe : aseg_pred_plus list;
-    frame : aseg_pred_plus list;
+    antiframe : 'a aseg_pred_plus list;
+    frame : 'a aseg_pred_plus list;
     uqset_eq : (Cpure.spec_var * Cpure.exp) list;
     (* binding universal variables *)
     norm_uqset : Cpure.spec_var list;
     vset : Cpure.spec_var list;
     uqset_eq_f : Cpure.formula;
+    var_info : Cpure.formula;
   }
 ;;
 
@@ -494,45 +500,40 @@ let str_pair_f (newf, orig_f) =
   str_list !str_pformula newf
 ;;
 
-let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) =
-
-  let get_sorted plst hlst =
-    let enumerate hlst =
-      let enum_helper item lst =
-        let order_plst =
-          match item with
-          | Aseg_p (a, b) | AsegNE_p (a, b) | Gap_p (a, b) ->
-             List.map
-               (fun nitem ->
-                 match nitem with
-                 | Aseg_p (na, _) | AsegNE_p (na, _)
-                   | Gap_p (na, _) | Pointsto_p (na, _) ->
-                    mkLteSv b na)
-               lst
-          | Pointsto_p (a, _) ->
-             List.map
-               (fun nitem ->
-                 match nitem with
-                 | Aseg_p (na, _) | AsegNE_p (na, _)
-                   | Gap_p (na, _) | Pointsto_p (na, _) ->
-                    mkLtSv a na)
-               lst
-        in
-        (order_plst, mkMatchForm item (mkStarForm lst))
-      in
-      let rec helper hlst head =
-        match hlst with
-        | h::tail ->
-           let (new_plst, item) = enum_helper h (head@tail) in
-           if not(isSat (mkAndlst (new_plst @ plst)))
-           then helper tail (h::head)
-           else (new_plst, item)::(helper tail (h::head))
-        | [] -> []
-      in
-      helper hlst []
-    in
-    (enumerate hlst)
+let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
+  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
+  let helper_norm_pre_condition_base = function
+    | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
+       if List.length frame > 0 || List.length antiframe > 0
+       then None
+       else
+         Some (eset, mkAndlst rhs_p)
+    | NormBaseNeg _ -> None
   in
+  let f =
+    mkOrlst
+      ( List.fold_left
+          (fun r (elst, clst, p) ->
+            match helper_norm_pre_condition_base p with
+            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
+            | None -> r )
+          [] lst )
+  in
+  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
+  f
+;;
+
+let check_norm_validity norm lhs_p rhs_p =
+  (* let () = print_endline ("lhs_p " ^ (!str_pformula lhs_p)) in *)
+  (* let () = print_endline ("rhs_p " ^ (!str_pformula rhs_p)) in *)
+  (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)))
+;;  
+
+let array_biabduction_generic get_sorted content_printer mkContentEq mkFreshContent ((lhs_e_lst:(Cpure.spec_var list)), lhs_p, lhs_h) (rhs_e_lst, rhs_p, rhs_h) var_info=
+
+
+
+  let str_partial_sort_pred = str_partial_sort_pred_generic content_printer in
   
   let rec base_case0 indent lhs_p rhs_p pre_cond =
     let frame = List.rev pre_cond.frame in
@@ -584,10 +585,23 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
     else
       match lhs_h, rhs_h with
       | StarForm [], StarForm [] -> base_case0 indent lhs_p rhs_p pre_cond
-      | StarForm [], StarForm (rh::rtail) -> base_case1 indent lhs_p (rhs_p, rh, mkStarForm rtail) pre_cond
-      | StarForm [], MatchForm (rh, rtail) -> base_case1 indent lhs_p (rhs_p, rh, rtail) pre_cond
+      | StarForm [], StarForm (rh::rtail) ->
+         (* if !Globals.array_entailment_frame || !Globals.array_entailment *)
+         (* then *)
+         (*   let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in *)
+         (*   (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+         (* else *)
+           base_case1 indent lhs_p (rhs_p, rh, mkStarForm rtail) pre_cond
+      | StarForm [], MatchForm (rh, rtail) ->
+         (* if !Globals.array_entailment_frame || !Globals.array_entailment *)
+         (* then *)
+         (*   let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in *)
+         (*   (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+         (* else *)
+           base_case1 indent lhs_p (rhs_p, rh, rtail) pre_cond
       | StarForm (lh::ltail), StarForm [] -> base_case2 indent (lhs_p, lh, mkStarForm ltail) rhs_p  pre_cond
       | MatchForm (lh, ltail), StarForm [] -> base_case2 indent (lhs_p, lh, ltail) rhs_p  pre_cond
+                                                         
       | StarForm l_lst, _->
          let (caselst, sorted_lhs_lst) =
            List.fold_left
@@ -597,15 +611,43 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          in
          let (flst, normlst) = List.split (List.map (fun item -> aux_entry (indent+1) item (rhs_p, rhs_h) pre_cond) sorted_lhs_lst) in
          (mkBAnd flst, combine_norm normlst caselst [])
+
       | MatchForm _, StarForm r_lst ->
          let sorted_rhs_lst = List.map (fun (order_plst, hlst) -> (add_pure_lst rhs_p order_plst, hlst)) (get_sorted [present_pure rhs_p] r_lst) in
-         begin match List.map (fun item -> aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with (* can use aux_sorted directly *)
-         | h :: tail ->
-            (List.fold_left
-               (fun (rf, NormOr rnorm) (nf, NormOr nnorm) ->
-                 (mkBOr [rf; nf], NormOr (rnorm @ nnorm))))
-              h tail
-         | [] -> failwith "aux_lhs_sorted: Empty output" end
+         (* if true *)
+         (* then *)
+
+           begin match List.map (fun item -> aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond) sorted_rhs_lst with (* can use aux_sorted directly *)
+           | h :: tail ->
+              (List.fold_left
+                 (fun (rf, NormOr rnorm) (nf, NormOr nnorm) ->
+                   (mkBOr [rf; nf], NormOr (rnorm @ nnorm))))
+                h tail
+           | [] ->
+              let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+              (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+           end
+         (* else *)
+         (*   let simp_lhs_p = simplify (present_pure lhs_p) in *)
+         (*   let simp_rhs_p = simplify (present_pure rhs_p) in *)
+         (*   let check = List.fold_left *)
+         (*                 (fun r item -> *)
+         (*                   if r *)
+         (*                   then r *)
+         (*                   else *)
+         (*                     let (_, norm) = aux_entry (indent+1) (lhs_p, lhs_h) item pre_cond in *)
+         (*                     r || (check_norm_validity norm simp_lhs_p simp_rhs_p) *)
+         (*                 ) *)
+         (*                 false sorted_rhs_lst *)
+         (*   in *)
+         (*   if check *)
+         (*   then *)
+         (*     let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkTrue ()]) in *)
+         (*     (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+         (*   else *)
+         (*     let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in *)
+         (*     (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm) *)
+               
       | MatchForm _, MatchForm _ ->
          aux_sorted indent (lhs_p, lhs_h) (rhs_p, rhs_h) pre_cond
                     
@@ -642,15 +684,15 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        if is_same_sv ls rs
        then
          (* let f,norm = helper orig_lhs_p (lhs_p, ltail) ((mkEqSv lv rv)::rhs_p, rtail) vset uqset uqset_eq frame antiframe (indent+1) in *)
-         let f, norm = aux_entry indent (lhs_p, ltail) (add_pure rhs_p (mkEqSv lv rv), rtail) pre_cond in
-         (print_and_return f indent,norm)
+         let f, norm = aux_entry indent (lhs_p, ltail) (add_pure rhs_p (mkContentEq lv rv), rtail) pre_cond in
+         (print_and_return f indent, norm)
        else
          let (uset,vsetprime) = mkUsetandVsetprime [ls;rs] pre_cond.vset in
          let case1 = mkEqSv ls rs in
          let case2 = mkLtSv ls rs in
          let case3 = mkGtSv ls rs in
          let pre_cond = update_vset pre_cond vsetprime in
-         let f1, norm1 = aux_entry indent (add_pure lhs_p case1, ltail) (add_pure rhs_p (mkEqSv lv rv), rtail) pre_cond in
+         let f1, norm1 = aux_entry indent (add_pure lhs_p case1, ltail) (add_pure rhs_p (mkContentEq lv rv), rtail) pre_cond in
          let f2, norm2 = aux_entry indent (add_pure lhs_p case2, ltail) (rhs_p, mkMatchForm rh rtail) (add_frame pre_cond lh) in
          let f3, norm3 = aux_entry indent (add_pure lhs_p case3, mkMatchForm lh ltail) (rhs_p, rtail) (add_antiframe pre_cond rh) in
          (print_and_return (mkBExists (uset, mkBAnd [f1; f2; f3])) indent, combine_norm [norm1; norm2; norm3] [case1; case2; case3] uset)
@@ -679,7 +721,11 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          (print_and_return (mkBExists (uset, mkBAnd [f1; f2; f3])) indent, combine_norm [norm1; norm2; norm3] [case1; case2; case3] uset)
 
     | AsegNE_p (la,lb), Gap_p (ra,rb) ->
-       if is_same_sv la ra
+       if !Globals.array_entailment
+       then
+         let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+         (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+       else if is_same_sv la ra
        then
          let (uset,vsetprime) = mkUsetandVsetprime [lb; rb] pre_cond.vset in
          let case1 = (mkLteSv lb rb) in
@@ -692,7 +738,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          failwith "AsegNE v.s Gap: Not aligned"
 
     | Gap_p (la,lb), AsegNE_p (ra,rb)->
-       if !Globals.array_entailment_frame
+       if !Globals.array_entailment_frame || !Globals.array_entailment
        then
          let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
          (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
@@ -709,7 +755,11 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          failwith "AsegNE v.s Gap: Not aligned"
 
     | Pointsto_p (ls,lv), Gap_p (ra,rb) ->
-       if is_same_sv ls ra
+       if !Globals.array_entailment
+       then
+         let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+         (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
+       else if is_same_sv ls ra
        then
          let f, norm = aux_entry (indent+1) (lhs_p, ltail) (rhs_p, rtail) (add_frame pre_cond lh) in
          (print_and_return f indent,norm)
@@ -717,7 +767,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          failwith "Pointsto_p v.s Gap: Not aligned"
 
     | Gap_p (la,lb), Pointsto_p (rs,rv) ->
-       if !Globals.array_entailment_frame
+       if !Globals.array_entailment_frame || !Globals.array_entailment
        then
          let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
          (print_and_return (mkBExists (pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) indent,norm)
@@ -728,7 +778,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
        else
          failwith "Gap v.s Pointsto_p: Not aligned"
 
-    | AsegNE_p (la,lb), Pointsto_p (rs,rv) ->
+    | AsegNE_p (la, lb), Pointsto_p (rs, rv) ->
        if is_same_sv la rs
        then
          let subst_case_var (NormOr lst) subs =
@@ -748,15 +798,15 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
              )
          in
          let fresh_c = global_get_new_var () in (* c=la+1 *)
-         let fresh_u = global_get_new_var () in
          let c_exp = incOne (mkVar la) in
          let eq_c_exp = mkEq (mkVar fresh_c) c_exp in
          let subst = [(fresh_c, c_exp)] in
-         let new_point_to = mkPointsto_p la fresh_u in
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         let new_point_to = mkPointsto_p la fresh_content in
          let new_aseg = mkAseg_p fresh_c lb in
          let pre_cond = add_uqset_eq pre_cond subst in
          let f, norm = aux_entry (indent + 1) (add_pure lhs_p eq_c_exp, mkMatchForm new_point_to (mkMatchForm new_aseg ltail)) (rhs_p, rhs_h) pre_cond in
-         (print_and_return (mkBForall ([fresh_u; fresh_c], f)) indent, subst_case_var norm subst)
+         (print_and_return (mkBForall (fresh_c :: fresh_u_lst, f)) indent, subst_case_var norm subst)
        else
          let (uset,vsetprime) = mkUsetandVsetprime [la;rs] pre_cond.vset in
          let case1 = (mkEqSv la rs) in
@@ -768,15 +818,15 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          let f3, norm3 = aux_entry (indent+1) (add_pure lhs_p case3, mkMatchForm (mkGap_p rs la) lhs_h) (rhs_p, rhs_h) pre_cond in
          (print_and_return (mkBExists (uset, mkBAnd [f1;f2;f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
                   
-    | Pointsto_p (ls,lv),AsegNE_p (ra,rb) ->
+    | Pointsto_p (ls,lv), AsegNE_p (ra,rb) ->
        if is_same_sv ls ra
        then
          let fresh_c = global_get_new_var () in
-         let fresh_u = global_get_new_var () in
          let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar ra)) in
-         let rhs_point_to = mkPointsto_p ra fresh_u in
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         let rhs_point_to = mkPointsto_p ra fresh_content in
          let rhs_aseg = mkAseg_p fresh_c rb in
-         let pre_cond = update_vset pre_cond ([fresh_c;fresh_u]@pre_cond.vset) in
+         let pre_cond = update_vset pre_cond ([fresh_c]@fresh_u_lst@pre_cond.vset) in
          let f, norm = aux_entry (indent+1) (lhs_p, lhs_h) (add_pure rhs_p eq_pure, mkMatchForm rhs_point_to (mkMatchForm rhs_aseg rtail)) pre_cond in
          (print_and_return f indent,norm)
        else
@@ -791,7 +841,7 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
          (print_and_return (mkBExists (uset, BAnd [f1; f2; f3])) indent,combine_norm [norm1;norm2;norm3] [case1;case2;case3] uset)
 
     | Gap_p _, Gap_p _ ->
-       failwith "Gap_p vs Gap_p: Invalid case"    
+       failwith "Gap_p vs Gap_p: Invalid case"
   in
 
   let initial_pre_cond =
@@ -802,14 +852,92 @@ let array_biabduction_partial_order (lhs_e_lst, lhs_p, lhs_h) (rhs_e_lst, rhs_p,
       norm_uqset = [];
       vset = rhs_e_lst;
       uqset_eq_f = mkTrue ();
+      var_info = var_info
     }
   in
   (* let lhs_p_lst = (get_segment_pure lhs_h_lst)@lhs_p_lst in *)
   (* let rhs_p_lst = (get_segment_pure rhs_h_lst)@rhs_p_lst in *)
   (* let f, norm = (aux_wrap_orig_pure lhs_p_lst) 0 (lhs_p_lst, mkStarForm lhs_h_lst) (rhs_p_lst, mkStarForm rhs_h_lst) initial_pre_cond in *)
-(* (f, norm, mkAndlst ((get_disjoint_pure lhs_h_lst)::lhs_p_lst)) *)
-  aux_entry 0 (lhs_p, lhs_h) (rhs_p, rhs_h) initial_pre_cond
+  (* (f, norm, mkAndlst ((get_disjoint_pure lhs_h_lst)::lhs_p_lst)) *)
+  (* aux_entry 0 (lhs_p, lhs_h) (rhs_p, rhs_h) initial_pre_cond *)
+  if isValid (mkImply (present_pure lhs_p) (mkExists rhs_e_lst (present_pure rhs_p)))
+  then
+    aux_entry 0 (lhs_p, lhs_h) (rhs_p, rhs_h) initial_pre_cond
+  else
+    let norm = mkNormOr_base [] (mkNormBaseNeg [] [] [mkFalse ()]) in
+    (print_and_return (mkBExists (initial_pre_cond.vset, (mkBBaseNeg ([present_pure lhs_p])))) 0,norm)
 ;;
+
+let get_partial_sorted plst hlst =
+    let enumerate hlst =
+      let enum_helper item lst =
+        let order_plst =
+          match item with
+          | Aseg_p (a, b) | AsegNE_p (a, b) | Gap_p (a, b) ->
+             List.map
+               (fun nitem ->
+                 match nitem with
+                 | Aseg_p (na, _) | AsegNE_p (na, _)
+                   | Gap_p (na, _) | Pointsto_p (na, _) ->
+                    mkLteSv b na)
+               lst
+          | Pointsto_p (a, _) ->
+             List.map
+               (fun nitem ->
+                 match nitem with
+                 | Aseg_p (na, _) | AsegNE_p (na, _)
+                   | Gap_p (na, _) | Pointsto_p (na, _) ->
+                    mkLtSv a na)
+               lst
+        in
+        (order_plst, mkMatchForm item (mkStarForm lst))
+      in
+      let rec helper hlst head =
+        match hlst with
+        | h::tail ->
+           let (new_plst, item) = enum_helper h (head@tail) in
+           if false (* not(isSat (mkAndlst (new_plst @ plst))) *)
+           then helper tail (h::head)
+           else (new_plst, item)::(helper tail (h::head))
+        | [] -> []
+      in
+      helper hlst []
+    in
+    (enumerate hlst)
+;;
+
+let get_full_sorted plst hlst =
+    List.fold_left
+      (fun r perm ->
+        let perm_pure = get_sorted_puref_general perm in
+        if true (* isSat (mkAndlst (perm_pure :: plst)) *)
+        then
+          let sorted_hlst =
+            List.fold_right (fun item r -> mkMatchForm item r) perm (mkStarForm [])
+          in
+          ([perm_pure], sorted_hlst) :: r
+        else r)
+      [] (generic_get_permutation hlst)
+;;
+  
+  
+
+let array_biabduction_partial_order =
+  let mkFreshContent () =
+    let fresh_u = global_get_new_var () in
+    ([fresh_u], fresh_u)
+  in
+  array_biabduction_generic get_partial_sorted !str_sv mkEqSv mkFreshContent
+;;
+
+let array_biabduction_full_order =
+  let mkFreshContent () =
+    let fresh_u = global_get_new_var () in
+    ([fresh_u], fresh_u)
+  in
+  array_biabduction_generic get_full_sorted !str_sv mkEqSv mkFreshContent
+;;
+
 
 (* norm: normalized pre-condition, in the form of (Exists V0:forall V1:Exists V2: f*)
 let extract_anti_frame_and_frame norm =
@@ -1074,10 +1202,10 @@ let rec merge_aseg_lst pf hlst =
   in
   helper_entry hlst
 ;;
-         
-    
-         
-                        
+
+
+
+
   
 let valid_classical_entailment lhs implylst neg =
   isValid
@@ -1098,7 +1226,7 @@ let drop_antiframe implylst =
     implylst
 ;;
 
-let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) =
+let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info =
   (* let () = print_endline_verbose ("=========== input LHS formula ==============") in *)
   (* let () = print_endline_verbose (!str_cformula lhs) in *)
   (* let () = print_endline_verbose ("=========== input RHS formula ==============") in *)
@@ -1108,15 +1236,14 @@ let array_entailment_biabduction_get_norm (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, r
     if !Globals.array_full_order
     then
       (* array_entailment_biabduction_norm (lhs_p, lhs_h) (rhs_p, rhs_h) *)
-      failwith "TO BE IMPLEMENTED"
+      array_biabduction_full_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info
     else
-      array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h)
+      array_biabduction_partial_order (lhs_e, lhs_p, lhs_h) (rhs_e, rhs_p, rhs_h) var_info
   in
   let () = print_endline_verbose ("=========== formatted pre-condition ==============") in
   (* let () = print_endline_verbose (str_pre_condition f) in *)
   let () = print_endline_verbose ("=========== Normalized pre-condition ==============") in
   let () = print_endline_verbose (str_norm_pre_condition norm) in
-  (* let simp_norm = simplify_norm_pre_condition norm in *)
   let simp_norm = norm in
   (f,simp_norm)    
 ;;
@@ -1128,39 +1255,197 @@ let trans_array_formula cf =
   (transF#get_root, elst, (get_segment_pure hlst) @ [get_disjoint_pure hlst] @ plst, hlst)
 ;;
 
-let norm_to_pure_for_classical_entailment (NormOr lst) rhs =
-  (* let () = print_endline ("norm_to_pure_for_classical_entailment: here") in *)
-  let helper_norm_pre_condition_base = function
-    | NormBaseImply (uset, eset, lhs_p, rhs_p, frame, antiframe) ->
-       if List.length frame > 0 || List.length antiframe > 0
-       then None
-       else
-         Some (eset, mkAndlst rhs_p)
-    | NormBaseNeg _ -> None
-  in
-  let f =
-    mkOrlst
-      ( List.fold_left
-          (fun r (elst, clst, p) ->
-            match helper_norm_pre_condition_base p with
-            | Some (ne, np) -> (mkExists (elst@ne) (mkAndlst ([np; rhs] @ clst))) :: r
-            | None -> r )
-          [] lst )
-  in
-  (* let () = print_endline ("norm to pure " ^ (!str_pformula f)) in *)
-  f
+let mkTransformer f =
+  new arrPredTransformer_orig f
 ;;
 
-let check_norm_validity norm lhs_p rhs_p =
-  (* let () = print_endline "check_norm_validity" in *)
-  (* let () = print_endline (!str_pformula lhs_p) in *)
-  (* let () = print_endline (!str_pformula rhs_p) in *)
-  (* Why isValid is not working? *)
+let match_common_generic mkFreshContent mkContentEq (lhs_h, rhs_h) var_info =
 
-  (isValid (mkImply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)))
+  (* let () = print_endline ("match_common " ^ (!str_pformula var_info)) in *)
+  
+  let helper h1 h2 var_info =
+    let is_eq v1 v2  =
+      isValid (mkImply var_info (mkEqSv v1 v2))
+    in
+    let is_lt v1 v2 =
+      isValid (mkImply var_info (mkLtSv v1 v2))
+    in
+    match h1, h2 with
+    | AsegNE_p (a1, b1), AsegNE_p (a2, b2)
+      | AsegNE_p (a1, b1), Aseg_p (a2, b2)
+      | Aseg_p (a1, b1), AsegNE_p (a2, b2) ->
+       if is_eq a1 a2
+       then
+         if is_eq b1 b2
+         then (true, ([], None), ([], [], None))
+         else if is_lt b1 b2
+         then (true, ([], None), ([], [], Some (mkAsegNE_p b1 b2)))
+         else if is_lt b2 b1
+         then (true, ([], Some (mkAsegNE_p b2 b1)), ([], [], None))
+         else
+           (false, ([], None), ([], [], None))
+       else
+         if is_eq b1 b2
+         then if is_lt a2 a1
+              then (true, ([], None), ([], [], Some (mkAsegNE_p a2 a1)))
+              else if is_lt a1 a2
+              then (true, ([], Some (mkAsegNE_p a1 b2)), ([], [], None))
+              else (false, ([], None), ([], [], None))
+         else (false, ([], None), ([], [], None))
+    (* (is_eq a1 a2 && is_eq b1 b2, ([], None), ([], [], None)) *)
+    | AsegNE_p (a1, b1), Pointsto_p (i2, v2) ->
+       if is_eq a1 i2
+       then
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         if isValid (mkImply var_info (mkEq (incOne (mkVar a1)) (mkVar b1))) (* a1+1=b1 *)
+         then
+           (true, ([], None), ([], [mkContentEq v2 fresh_content], None))
+         else if isValid (mkImply var_info (mkLt (incOne (mkVar a1)) (mkVar b1))) (* a1+1<b1 *)
+         then
+           let fresh_c = global_get_new_var () in
+           let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar a1)) in
+           let rhs_aseg = mkAsegNE_p fresh_c b1 in
+           (true, ([eq_pure], Some rhs_aseg), ([], [mkContentEq v2 fresh_content], None))
+         else
+           (false, ([], None), ([], [], None))
+       else
+         (false, ([], None), ([], [], None))
+    | Pointsto_p (i1, v1), AsegNE_p (a2, b2) ->
+       if is_eq i1 a2
+       then
+         let (fresh_u_lst, fresh_content) = mkFreshContent () in
+         if isValid (mkImply var_info (mkEq (incOne (mkVar a2)) (mkVar b2))) (* a2+1=b2 *)
+         then
+           (true, ([], None), (fresh_u_lst, [mkContentEq v1 fresh_content], None))
+         else if isValid (mkImply var_info (mkLt (incOne (mkVar a2)) (mkVar b2))) (* a2+1<b2 *)
+         then
+           let fresh_c = global_get_new_var () in
+           let eq_pure = mkEq (mkVar fresh_c) (incOne (mkVar a2)) in
+           let rhs_aseg = mkAsegNE_p fresh_c b2 in
+           (true, ([], None), (fresh_c :: fresh_u_lst, [eq_pure; mkContentEq v1 fresh_content], Some rhs_aseg))
+         else
+           (false, ([], None), ([], [], None))
+       else
+         (false, ([], None), ([], [], None))
+    | Pointsto_p (i1, v1), Pointsto_p (i2, v2) ->
+       if is_eq i1 i2
+       then (true, ([], None), ([], [mkContentEq v1 v2], None))
+       else (false, ([], None), ([], [], None))
+    | _, _ -> (false, ([], None), ([], [], None))
+  in
+
+  let rec helper_entry lhead lhs_h rhead rhs_h extra_lhs_p (extra_rhs_e, extra_rhs_p) var_info =
+    match lhs_h with
+    | lh :: ltail ->
+       begin match rhs_h with
+       | rh :: rtail ->
+          let (can_match, (new_extra_lhs_p, new_lhs_h), (new_extra_rhs_e, new_extra_rhs_p, new_rhs_h)) = helper lh rh var_info in
+          if can_match               
+          then
+            begin match new_lhs_h, new_rhs_h with
+            | Some new_lh, None ->
+               helper_entry lhead (new_lh :: ltail) [] (rtail @ rhead)
+                            (new_extra_lhs_p @ extra_lhs_p) (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | None, Some new_rh ->
+               helper_entry [] (ltail @ lhead) rhead (new_rh :: rtail)
+                            (new_extra_lhs_p @ extra_lhs_p)(new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | None, None ->
+               helper_entry lhead ltail [] (rhead @ rtail)
+                            (new_extra_lhs_p @ extra_lhs_p) (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p)
+                            (mkAndlst (var_info :: (new_extra_lhs_p @ new_extra_rhs_p))) (* var_info *)
+            | Some _, Some _ -> failwith "match_common_generic: Invalid input" end
+          else
+            helper_entry lhead lhs_h (rh :: rhead) rtail
+                         (new_extra_lhs_p @ extra_lhs_p)
+                         (new_extra_rhs_e @ extra_rhs_e, new_extra_rhs_p @ extra_rhs_p) var_info
+       | [] ->
+          helper_entry (lh :: lhead) ltail [] (rhead @ rhs_h) extra_lhs_p (extra_rhs_e, extra_rhs_p) var_info end
+    | [] ->
+       ((lhead, rhead @ rhs_h), extra_lhs_p, (extra_rhs_e, extra_rhs_p))
+  in
+  helper_entry [] lhs_h [] rhs_h [] ([], []) var_info
+;;
+
+(* let match_common = match_common_generic mkEqSv *)
+(* ;; *)
+  
+let trans_array_entailment_generic mkTransformer mkContentEq lhs rhs =
+  let match_common (lhs_h, rhs_h) var_info =
+    (* let () = print_endline ("match_common " ^ (!str_pformula var_info)) in *)
+    let is_eq v1 v2 =
+      isValid (mkImply var_info (mkEqSv v1 v2))
+    in
+    let is_content_eq v1 v2 =
+      isValid (mkImply var_info (mkContentEq v1 v2))
+    in
+    let helper h1 h2 =
+      match h1, h2 with
+      | AsegNE_p (a1, b1), AsegNE_p (a2, b2)
+        | AsegNE_p (a1, b1), Aseg_p (a2, b2)
+        | Aseg_p (a1, b1), AsegNE_p (a2, b2) ->
+         is_eq a1 a2 && is_eq b1  b2
+      | Pointsto_p (i1, v1), Pointsto_p (i2, v2) ->
+         is_eq i1 i2 && is_content_eq v1 v2
+      | _, _ -> false
+    in
+
+    let rec helper_entry lhead lhs_h rhead rhs_h =
+      match lhs_h with
+      | lh :: ltail ->
+         begin match rhs_h with
+         | rh :: rtail ->
+            if helper lh rh
+            then helper_entry lhead ltail [] (rhead @ rtail)
+            else helper_entry lhead lhs_h (rh :: rhead) rtail
+         | [] ->
+            helper_entry (lh :: lhead) ltail [] (rhead @ rhs_h) end
+      | [] ->
+         (lhead, rhead @ rhs_h)
+    in
+
+    helper_entry [] lhs_h [] rhs_h
+  in
+  let get_hlst_var_lst hlst =
+    let helper = function
+      | AsegNE_p (a, b)
+        | Aseg_p (a, b)
+        | Gap_p (a, b)
+        -> [a; b]
+      | Pointsto_p (p, _) ->
+         [p]
+    in
+    List.concat (List.map helper hlst)
+  in
+        
+  
+  (* let () = print_endline ("lhs: " ^ (!str_cformula lhs)) in *)
+  (* let () = print_endline ("rhs: " ^ (!str_cformula rhs)) in *)
+  let transLHS = mkTransformer lhs in
+  let (l_elst, l_plst, l_hlst) = transLHS#formula_to_general_formula in
+  let transRHS = mkTransformer rhs in
+  let (r_elst, r_plst, r_hlst) = transRHS#formula_to_general_formula in
+  
+  let is_heap_vars sv = List.exists (fun nsv -> is_same_sv nsv sv) (get_hlst_var_lst (l_hlst @ r_hlst)) in
+  let not_heap_vars = List.filter (fun sv -> not (is_heap_vars sv)) ((get_fv_pure (mkAndlst l_plst)) @ (get_fv_pure (mkAndlst r_plst))) in
+  
+  let var_info = simplify (mkExists not_heap_vars (mkAndlst (l_plst @ r_plst))) in
+  let (new_l_hlst, new_r_hlst) = match_common (l_hlst, r_hlst) var_info in
+  ((transLHS#get_root, l_elst, (get_segment_pure l_hlst) @ [get_disjoint_pure l_hlst] @ l_plst, new_l_hlst),
+   (transRHS#get_root, r_elst, (get_segment_pure r_hlst) @ [get_disjoint_pure r_hlst] @ r_plst, new_r_hlst),
+  var_info)
+;;
+
+
+let trans_array_entailment = trans_array_entailment_generic mkTransformer mkEqSv
+;;
+
+  
+
   (* (imply lhs_p rhs_p) && *)
 (* (imply lhs_p (norm_to_pure_for_classical_entailment norm rhs_p)) *)
-;;
+
 
 (* let array_entailment_classical_entailment_interface lhs rhs = *)
 (*   let (f,simp_norm,lhs_p) = array_entailment_biabduction_get_norm lhs rhs in *)
@@ -1175,21 +1460,25 @@ let check_norm_validity norm lhs_p rhs_p =
 (* ;; *)
 
 let array_entailment_classical_entailment_interface lhs rhs =
-  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
+  (* let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in *)
+  (* let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in *)
+  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) =
+    trans_array_entailment lhs rhs
+  in
   (* Instantiate root *)
   let rhs_p =
     match lhs_root, rhs_root with
     | Some base1, Some base2 -> (mkEqSv base1 base2)::rhs_p
     | _, _ -> rhs_p
   in
-  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info in
   if check_norm_validity norm (mkAndlst lhs_p) (mkAndlst rhs_p)
   then
     mkEmptySuccCtx ()
   else
     mkEmptyFailCtx ()
 ;;
+
   
 let array_entailment_biabduction_interface lhs rhs =
   failwith "TO BE IMPLEMENTED"
@@ -1269,9 +1558,10 @@ let extract_frame root (NormOr lst) lhs_p rhs_p=
 
 
 let array_entailment_frame_interface lhs rhs =
-  let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in
-  let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in
-  
+  (* let (lhs_root, lhs_e, lhs_p, lhs_h) = trans_array_formula lhs in *)
+  (* let (rhs_root, rhs_e, rhs_p, rhs_h) = trans_array_formula rhs in *)
+  let ((lhs_root, lhs_e, lhs_p, lhs_h), (rhs_root, rhs_e, rhs_p, rhs_h), var_info) = trans_array_entailment lhs rhs
+  in
   let rhs_p =
     match lhs_root, rhs_root with
     | Some base1, Some base2 ->
@@ -1279,7 +1569,7 @@ let array_entailment_frame_interface lhs rhs =
        (mkEqSv base1 base2)::rhs_p
     | _, _ -> rhs_p
   in
-  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) in
+  let (f, norm) = array_entailment_biabduction_get_norm (lhs_e, ([], lhs_p), mkStarForm lhs_h) (rhs_e, ([], rhs_p), mkStarForm rhs_h) var_info in
   (* let () = print_endline ("frame interface lhs_p: " ^ (str_list !str_pformula lhs_p)) in *)
   if isValid (mkImply (mkAndlst lhs_p) (norm_to_pure_for_frame norm (mkAndlst rhs_p)))
   then
@@ -1296,3 +1586,4 @@ let array_entailment_frame_interface lhs rhs =
 (* ;;   *)
 
   
+
