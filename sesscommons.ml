@@ -322,3 +322,26 @@ struct
   end;;
 
 
+let is_rel_sleek_orders rel_sv =
+  let ev_rel_id = un_option !sevent_rel_id "" in
+  let hbp_rel_id = un_option !shbp_rel_id "" in
+  let hb_rel_id = un_option !shb_rel_id "" in
+  let cb_rel_id = un_option !scb_rel_id "" in
+  let sleek_orders_rel = [ev_rel_id; hbp_rel_id; hb_rel_id; cb_rel_id; "snot_eq"; "snot"] in
+  let rel_id = Cpure.name_of_spec_var rel_sv in
+  let eq_rel rel1 rel2 = (String.compare rel1 rel2 == 0) in
+  List.exists (eq_rel rel_id) sleek_orders_rel 
+
+let is_rel_orders rel_sv =
+  let ev_rel_id  = un_option !event_rel_id "" in
+  let hbp_rel_id = un_option !hbp_rel_id "" in
+  let hb_rel_id = un_option !hb_rel_id "" in
+  let cb_rel_id  = un_option !cb_rel_id "" in
+  let rel_id = Cpure.name_of_spec_var rel_sv in
+  let eq_rel rel1 rel2 = (String.compare rel1 rel2 == 0) in
+  (eq_rel rel_id ev_rel_id)  ||
+  (eq_rel rel_id hbp_rel_id) ||
+  (eq_rel rel_id hb_rel_id)  ||
+  (eq_rel rel_id cb_rel_id)  
+  
+

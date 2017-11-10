@@ -142,7 +142,7 @@ term:
     {
       let pn = nondet_int_proc_name in
       let () = Hashtbl.add tnt_prim_proc_tbl pn pn in 
-      mkCallNRecv pn None [] None (fresh_branch_point_id "") (get_pos 1) 
+      mkCallNRecv pn None [] (fresh_branch_point_id "") (get_pos 1) 
     }
   ;
 

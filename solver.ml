@@ -7767,7 +7767,8 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : conte
   (*                                  (Cprinter.prtt_string_of_formula conseq))) pos in *)
   (* disable unfolding during normalization using lemmas *)
   (* disable nested lemma normalization *)
-  let ctx0 = x_add_1 (fun _ -> norm_w_coerc_context prog ctx0) () in
+  let ctx0   = x_add_1 (fun _ -> norm_w_coerc_context prog ctx0) () in
+  let _, conseq = x_add_1 (fun _ -> norm_w_coerc_formula prog ~left:false (CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos) conseq) () in
   let () = y_tinfo_hp (add_str "temp_res" Cprinter.string_of_context) ctx0 in
   let ls, prf = x_add (heap_entail_conjunct_helper ~caller:x_loc) 3 prog is_folding  ctx0 conseq rhs_matched_set pos in
   let ls, prf = post_process_result ls prf in

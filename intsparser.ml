@@ -141,7 +141,7 @@ let trans_ints_block (blk: ints_block): I.exp =
   let t = blk.ints_block_to in
   let pos = blk.ints_block_pos in
   (* Translate to_label to a method call *)
-  let to_exp = I.mkCallNRecv (name_of_ints_loc t) None [] None (fresh_branch_point_id "") (pos_of_ints_loc t) in
+  let to_exp = I.mkCallNRecv (name_of_ints_loc t) None [] (fresh_branch_point_id "") (pos_of_ints_loc t) in
   (* Translate ints_exp list *)
   trans_ints_exp_lst exps to_exp
 
@@ -156,7 +156,7 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
       match blks with
       | [] -> (I.Empty no_pos)
       | blk::blks ->
-        let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None [] None None no_pos in
+        let nondet_call = I.mkCallNRecv Globals.nondet_int_proc_name None []  None no_pos in
         let nondet_cond = I.mkBinary I.OpGt nondet_call (I.mkIntLit 0 no_pos) None no_pos in
         I.mkCond nondet_cond (trans_ints_block blk) (nondet_chain_for blks) None blk.ints_block_pos in
     let nondet_chain = nondet_chain_for blks in
@@ -174,14 +174,14 @@ let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_d
           nondet_seq_for_blocks cond blks in
       I.mkSeq acc blks_exp (I.get_exp_pos acc)
     ) (I.Empty pos) blks in
-  I.mkProc fn proc_name [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
+  I.mkProc fn proc_name [] "" None false [] [] I.void_type  (IF.EList []) (IF.mkEFalseF ()) pos (Some proc_body)
 
 let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let main_proc =
     let start_lbl = iprog.ints_prog_start in
     let pos = pos_of_ints_loc start_lbl in
-    let start_exp = I.mkCallNRecv (name_of_ints_loc start_lbl) None [] None (fresh_branch_point_id "") pos in
-    I.mkProc fn "main" [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some start_exp)
+    let start_exp = I.mkCallNRecv (name_of_ints_loc start_lbl) None []  (fresh_branch_point_id "") pos in
+    I.mkProc fn "main" [] "" None false [] [] I.void_type  (IF.EList []) (IF.mkEFalseF ()) pos (Some start_exp)
   in
   let from_lbls = List.map (fun blk -> blk.ints_block_from) iprog.ints_prog_blocks in
   let to_lbls = List.map (fun blk -> blk.ints_block_to) iprog.ints_prog_blocks in
@@ -189,7 +189,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
   let abandoned_procs = List.map (fun lbl ->
       let pos = pos_of_ints_loc lbl in
       let ret_exp = I.mkReturn None None pos in
-      I.mkProc fn (name_of_ints_loc lbl) [] "" None false [] [] I.void_type None (IF.EList []) (IF.mkEFalseF ()) pos (Some ret_exp)
+      I.mkProc fn (name_of_ints_loc lbl) [] "" None false [] [] I.void_type  (IF.EList []) (IF.mkEFalseF ()) pos (Some ret_exp)
     ) abandoned_to_lbls in
   
   let proc_blks = partition_by_key (fun blk -> blk.ints_block_from) eq_ints_loc iprog.ints_prog_blocks in

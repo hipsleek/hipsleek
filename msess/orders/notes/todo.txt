@@ -222,6 +222,30 @@ check why so many event duplications
 
 =====================================
 =====================================
+../../../../hip ex1b-explicit-sync.ss --sess -dre "SP.mk_proje" -p C
 
+TO check why both heap and sleek predicates below:
+
+!!! **typechecker.ml#2231:Dprint:[A,B,C,k1,w]
+dprint(simpl): ex1b-explicit-sync.ss:39: ctx:  List of Failesc Context: [FEC(0, 0, 1  [])]
+ Successful States:
+ [
+  Label: []
+  State:
+     k1::Common{ . (G{[]}<[A,B,C,k1]>) ;; (emp)
+&{FLOW,(4,5)=__norm#E}}<>@M * 
+ k1'::Chan{ . (Assume{[ . emp&oev(C,id_21)]}<[]>) ;; ((Assume{[ . emp&ohbp(B,id_22,B,id_21)]}<[]>) ;; ((Guard{[ . emp&ohbp(A,id_22,C,id_21)]}<[]>) ;; (emp)))
+&
+{FLOW,(4,5)=__norm#E}}<>@M * 
+ w'::WAIT{ . emp&oev(C,id_21)&{FLOW,(4,5)=__norm#E}, . emp&{FLOW,(4,5)=__norm#E}}<>@M&
+k1'=k1 & w'=w & oev(C,id_21) & hb(A__id_22,C__id_21)&{FLOW,(4,5)=__norm#E}
+    es_gen_impl_vars(E): []
+    es_pure: v_int_37_2260'=3 & ev(C__id_21)
+    es_subst (from,to): []:[]
+    es_cond_path: [0]
+    es_var_measures 1: Some(MayLoop[]{})
+    
+  Exc:None
+  ]
 =====================================
 =====================================

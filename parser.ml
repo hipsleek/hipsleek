@@ -925,6 +925,14 @@ let peek_relassume =
       | [IDENTIFIER "RA",_] -> raise Stream.Failure
       | _ -> ())
 
+ let peek_logic_param =
+   SHGram.Entry.of_parser "peek_logic_param"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             | [WITH, _;  OPAREN,_ ] -> ()
+             | _ -> raise Stream.Failure)
+
+
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
   let (base_heap_id, ref_level, deref_level, l) = heap_id in
   let s = ref base_heap_id in
@@ -2542,7 +2550,7 @@ ann_term:
       (*     let (fn, id, c) = un_option tid ("", 0, P.mkTrue no_pos) in     *)
       (*     P.TermR ({ P.tu_id = id; P.tu_sid = ""; P.tu_fname = fn;        *)
       (*                P.tu_args = targs; P.tu_cond = c; P.tu_pos = pos; }) *)
-    ]];
+     ]];
 
 cexp :
     [[t = cexp_data_p -> match t with
@@ -3204,6 +3212,7 @@ infer_type:
    | `INFER_AT_PREMUST -> INF_PRE_MUST
    | `INFER_AT_ERRMAY -> INF_ERR_MAY
    | `INFER_AT_FLOW -> INF_FLOW
+   | `INFER_AT_NEG -> INF_NEG
    ]];
 
 infer_id:
@@ -4086,13 +4095,22 @@ flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
-resource_param: [[ `WITH; `PERCENT; `IDENTIFIER hid -> 
-  { param_mod = NoMod;
-    param_type = FORM;
-    param_loc = get_pos_camlp4 _loc 3;
-    param_name = hid } ]];
+resource_param:
+[[
+  peek_logic_param; `WITH; `OPAREN; pl= id_list; `CPAREN ->
+    List.map (fun id ->
+        { param_mod = NoMod;
+          param_type = FORM;
+          param_loc = get_pos_camlp4 _loc 3;
+          param_name = id }) pl
+  | `WITH; `PERCENT; `IDENTIFIER hid -> 
+    [{ param_mod = NoMod;
+       param_type = FORM;
+       param_loc = get_pos_camlp4 _loc 3;
+       param_name = hid }]
+]];
 
-opt_resource_param: [[ hid = OPT resource_param -> hid ]];
+opt_resource_param: [[ hid = OPT resource_param -> Gen.map_opt_def [] (fun x -> x) hid ]];
 
 proc_decl:
   [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
@@ -4102,14 +4120,14 @@ proc_decl:
 
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
-    (*let static_specs, dynamic_specs = split_specs osl in*)
-      let cur_file = proc_files # top in
-     mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     (*let static_specs, dynamic_specs = split_specs osl in*)
+     let cur_file = proc_files # top in
+     mkProc cur_file id [] "" None false ot fpl t ~ho_param:hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
     let cur_file = proc_files # top in
-    mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    mkProc cur_file id [] "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -4120,7 +4138,7 @@ constructor_header:
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
     let cur_file = proc_files # top in
-      mkProc cur_file id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc cur_file id flgs "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -4670,9 +4688,9 @@ cast_expression:
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
             
-ho_arg: [[ `WITH; dc = disjunctive_constr -> F.subst_stub_flow n_flow dc ]];
+ho_arg: [[ `WITH; dc = LIST1 disjunctive_constr SEP `COMMA -> List.map (F.subst_stub_flow n_flow) dc ]];
 
-opt_ho_arg: [[ oha = OPT ho_arg -> oha ]];
+opt_ho_arg: [[ oha = OPT ho_arg -> map_opt_def [] (fun x -> x) oha ]];
 
 invocation_expression:
  [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->

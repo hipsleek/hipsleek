@@ -948,12 +948,7 @@ let rename_exp2 e subs =
                       })
         end
       | CallNRecv b ->
-        begin match b.exp_call_nrecv_ho_arg with
-          | None -> None
-          | Some f -> 
-            let nf = rename_formula subs f in
-            Some (CallNRecv { b with exp_call_nrecv_ho_arg = Some nf })
-        end
+        Some (CallNRecv { b with exp_call_nrecv_ho_arg = List.map (rename_formula subs) b.exp_call_nrecv_ho_arg})
       | _ -> None
     in
     map_exp_args e (bvars, subs) f f_args

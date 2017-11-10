@@ -32,8 +32,8 @@ expect Valid.
 print residue.
 
 //6
-checkentail  emp & ["chr": cb(A2,B2)]
-        |- emp & ["chr": snot_eq(A2,B2)].
+checkentail  emp & cb(A2,B2)
+        |- emp &  snot_eq(A2,B2).
 expect Valid.
 print residue.
 

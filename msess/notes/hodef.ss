@@ -21,7 +21,11 @@ pred_prim Peer{%P}<>; //peer
 /* explicit sync */
 pred_prim NOTIFY{%P}<>;
 pred_prim WAIT{%P,%P}<>;
-pred_prim SAFE<b: bool>;
+pred_prim NOT{%P}<>;
+pred_prim IMPL{%P,%P}<>;
+
+/* special specs */
+pred_prim OPEN{%P,%P}<>;
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
@@ -41,3 +45,5 @@ relation snot_eq(int a,int b).
 lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * %P.
 /* to check if * %P is neccessary in the body of this lemma */
 lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<> * %P -> self::Chan{@S %R}<>.
+
+lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.

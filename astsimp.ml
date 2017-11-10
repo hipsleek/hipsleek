@@ -4217,10 +4217,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     else
       (E.push_scope ();
        (
-         let ho_arg = match proc.I.proc_ho_arg with
-           | None -> [] 
-           | Some ha -> [ha]  
-         in
+         let ho_arg = proc.I.proc_ho_arg in
          let all_args =
            if Gen.is_some proc.I.proc_data_decl then
              (let cdef = Gen.unsome proc.I.proc_data_decl in
@@ -4310,7 +4307,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           * or TermR and TermU if @term *)
          let args = List.map (fun p ->
              ((x_add trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
-         let ho_arg = map_opt (fun ha -> 
+         let ho_arg = List.map (fun ha -> 
              ((x_add trans_type prog ha.I.param_type ha.I.param_loc), (ha.I.param_name))) proc.I.proc_ho_arg in
          (* let fname = proc.I.proc_name in                                                                                        *)
          (* let params = List.map (fun (t, v) -> CP.SpecVar (t, v, Unprimed)) args in                                              *)
@@ -5175,7 +5172,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = a :: index;
-          I.exp_call_nrecv_ho_arg = None;
+          I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
           I.exp_call_nrecv_pos = pos;} in 
       helper new_e
@@ -5340,7 +5337,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = rhs :: a :: index;
-                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
                   I.exp_call_nrecv_path_id = pid;
                   I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
               let new_e = I.Assign {
@@ -5453,7 +5450,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1_prim ];
-             I.exp_call_nrecv_ho_arg = None;
+             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
              I.exp_call_nrecv_pos = pos;}in 
          helper new_e)
@@ -5464,7 +5461,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "mult___" else "mults___"; 
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
-            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_path_id = pid;
             I.exp_call_nrecv_pos = pos; } in 
         helper new_e
@@ -5480,7 +5477,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "div___" else "divs___";
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
-            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_path_id = pid;
             I.exp_call_nrecv_pos = pos; } in 
         helper new_e
@@ -5504,7 +5501,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1; e2 ];
-             I.exp_call_nrecv_ho_arg = None;
+             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
              I.exp_call_nrecv_pos = pos; } in 
          helper new_e)
@@ -5719,7 +5716,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                        C.exp_scall_method_name = mingled_mn;
                        C.exp_scall_lock = lock;
                        C.exp_scall_arguments = mingled_forked_mn::arg_vars;
-                       C.exp_scall_ho_arg = None;
+                       C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
                        C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                        C.exp_scall_pos = pos;
                        C.exp_scall_path_id = pi; } in
@@ -5767,7 +5764,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_scall_method_name = mingled_mn;
                   C.exp_scall_lock = lock;
                   C.exp_scall_arguments = arg_vars;
-                  C.exp_scall_ho_arg = None;
+                  C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
                   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                   C.exp_scall_pos = pos;
                   C.exp_scall_path_id = pi; } in
@@ -5807,11 +5804,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           let all_names = List.map (fun (t, n) -> ((x_add trans_type prog t pos), n)) tmp_names in
           let free_vars = List.map snd all_names in
           let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
-          let c_ho_arg = match ho_arg with
-            | None -> None
-            | Some f ->
-              let (_, cf) = x_add trans_formula prog false free_vars true f n_tl false in
-              Some cf 
+          let c_ho_arg =
+            List.map ( fun f ->  snd (x_add trans_formula prog false free_vars true f n_tl false)) ho_arg
           in
           if ( != ) (List.length args) (List.length proc_args) then
             Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
@@ -6037,7 +6031,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = array_allocate_call;
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = [List.hd dims];
-          I.exp_call_nrecv_ho_arg = None;
+          I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_path_id = None;
           I.exp_call_nrecv_pos = pos; }
       in helper newie
@@ -6237,7 +6231,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = u_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e ];
-             I.exp_call_nrecv_ho_arg = None;
+             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_path_id = pid;
              I.exp_call_nrecv_pos = pos;} in helper call_e
        | I.OpPostInc ->
@@ -6493,7 +6487,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = w_name;
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = w_args;
-                  I.exp_call_nrecv_ho_arg = None;
+                  I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
                   I.exp_call_nrecv_pos = pos;
                   I.exp_call_nrecv_path_id = pi; };
               I.exp_seq_pos = pos; };
@@ -6536,7 +6530,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_constructor = false;
         I.proc_args = w_formal_args;
         I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) w_formal_args;
-        I.proc_ho_arg = None;
+        I.proc_ho_arg = [];
         I.proc_return = I.void_type;
         (* I.proc_important_vars= [];*)
         I.proc_static_specs = prepost;
@@ -6609,7 +6603,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = w_name;
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = w_args;
-          I.exp_call_nrecv_ho_arg = None;
+          I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_pos = pos;
           I.exp_call_nrecv_path_id = pi; } in
       let w_call = temp_call (*match wrap with
@@ -9701,12 +9695,10 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.CallNRecv b -> 
       let subst_list = List.fold_left (fun a (c1, c2) -> 
           ((c1, Unprimed), (c2, Unprimed))::((c1, Primed), (c2, Primed))::a) [] ren in
-      let ho_arg = match b.Iast.exp_call_nrecv_ho_arg with
-        | None -> None
-        | Some f -> Some (IF.subst subst_list f) 
-      in Iast.CallNRecv{ b with 
-                         Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments;
-                         Iast.exp_call_nrecv_ho_arg = ho_arg; }
+      let ho_arg = List.map (IF.subst subst_list)  b.Iast.exp_call_nrecv_ho_arg in
+      Iast.CallNRecv{ b with 
+                      Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments;
+                      Iast.exp_call_nrecv_ho_arg = ho_arg; }
     | Iast.Catch b-> Iast.Catch {b with
                                  Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
                                  Iast.exp_catch_var = (match b.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
@@ -10002,12 +9994,11 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
   | Iast.Barrier _ -> (f,h,p)
   | Iast.CallNRecv b ->
     let nl = List.map (fun c-> let r1, _, _ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
-    let ho_arg = match b.Iast.exp_call_nrecv_ho_arg with
-      | None -> None
-      | Some f ->
-        let r = case_normalize_formula prog h f in
-        let () = check_eprim_in_formula " is not a valid program variable " r in
-        Some r 
+    let ho_arg =
+      List.map (fun f ->
+          let r = case_normalize_formula prog h f in
+          let () = check_eprim_in_formula " is not a valid program variable " r in
+          r) b.Iast.exp_call_nrecv_ho_arg
     in 
     let nc = Iast.CallNRecv { b with 
                               Iast.exp_call_nrecv_ho_arg = ho_arg;
@@ -10159,7 +10150,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
   let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
   let gl_proc_args = gl_v @ f.Iast.proc_args in
-  let gl_proc_args = gl_proc_args @ (match f.Iast.proc_ho_arg with | None -> [] | Some ha -> [ha]) in
+  let gl_proc_args = gl_proc_args @ f.Iast.proc_ho_arg in
   let h = (List.map (fun c1 -> (c1.Iast.param_name, Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1 -> (c1.Iast.param_name, Primed)) gl_proc_args) in
   (*LOCKSET variable*********)

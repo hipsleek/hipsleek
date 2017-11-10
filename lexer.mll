@@ -430,6 +430,7 @@ rule tokenizer file_name = parse
   | "@classic" { INFER_AT_CLASSIC }
   | "@par" { INFER_AT_PAR }
   | "@term" { INFER_AT_TERM }
+  | "@neg" { INFER_AT_NEG }     (* negation as failure *)
   | "@term_wo_post" { INFER_AT_TERM_WO_POST }
   | "@pre_n" { INFER_AT_PRE }
   | "@post_n" { INFER_AT_POST }

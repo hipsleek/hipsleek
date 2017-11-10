@@ -31,11 +31,10 @@ void C(Channel k1, cond w)
  ensures  k1::Chan{emp}<> ;
 {
  /* assume w::WAIT{ oev(C,id_21), w::Assume{ w::IMPL{ oev(C,id_21), ohbp(A,id_22,C,id_21)}<> }<> }<>; */
- assume w::WAIT{ oev(C,id_21), w::NOTIFY{ emp}<> }<>;
+ assume w::WAIT{ oev(C,id_21), w::IMPL{oev(C,id_21), ohbp(A,id_22,C,id_21)}<> }<>;
+ wait(w);
  send(k1,3);
  dprint;
- wait(w);
- assert w::SAFE<true>;
  dprint;
 }
 

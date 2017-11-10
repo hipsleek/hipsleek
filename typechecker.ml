@@ -2526,13 +2526,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 
               let renamed_spec =
-                match proc.proc_ho_arg, ha with
-                | Some hv, Some ha ->
-                  let ht, hn = hv in
-                  let hsv = (CP.SpecVar (ht, hn, Unprimed), []) in
-                  CF.subst_hvar_struc renamed_spec [(hsv, ha)]
-                | _ -> renamed_spec
-              in
+                if (List.length proc.proc_ho_arg == List.length ha) then
+                  let hv_ha = List.combine proc.proc_ho_arg ha in
+                  List.fold_left (fun acc (hv,ha) ->
+                                          let ht, hn = hv in
+                                          let hsv = (CP.SpecVar (ht, hn, Unprimed), []) in
+                                          CF.subst_hvar_struc renamed_spec [(hsv, ha)]
+                                 ) renamed_spec hv_ha
+                else renamed_spec in
 
               (* let () = Debug.info_zprint (lazy (("  renamed spec 2 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
               (* let () = Debug.info_zprint (lazy (("  renamed spec 3:" ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)

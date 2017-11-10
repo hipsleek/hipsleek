@@ -3,7 +3,7 @@
 module CP = Cpure
 open GlobProver
 open Gen
-
+open VarGen
 
 let set_prover_type () = Others.last_tp_used # set Others.CHR
     
@@ -99,7 +99,16 @@ let prepare_formula_for_chr (f : CP.formula) : string =
 let prepare_formula_for_chr (f : CP.formula) : string =
   Debug.no_1 "CHR.prepare_formula_for_chr" Cprinter.string_of_pure_formula (fun x-> x) prepare_formula_for_chr f
 
+let check_prover_existence prover_cmd_str =
+  let exit_code = Sys.command ("which " ^ prover_cmd_str ^ " >/dev/null 2>&1") in
+  if exit_code > 0 then
+    (* let () = print_string_if (not !compete_mode)  ("WARNING: Attempting to make CHR calls, but the (" ^ prover_cmd_str ^ ") is not found!\n") in *)
+     let () = print_string_if (not !compete_mode)  ("WARNING: Command (" ^ prover_cmd_str ^ ") not found!\n") in
+    failwith (x_loc ^ " constraint system not found ")
+  else ()
+
 let start () =
+  check_prover_existence chr_cmd;
   print_string_quiet "\nStarting CHR... \n"; flush stdout;
   let args = [| chr_cmd |] in
   let inchn, outchn, errchn, npid = Procutils.open_process_full chr_cmd args in

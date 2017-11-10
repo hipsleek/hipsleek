@@ -28,6 +28,17 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 
 (* type typed_ident = (typ * ident) *)
 
+(************************)
+(*    default values    *)
+(************************)
+
+let def_exp_scall_ho_arg = []
+
+(************************)
+(* END - default values *)
+(************************)
+
+
 type prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
@@ -238,7 +249,7 @@ and axiom_decl = {
 and proc_decl = {
   proc_name : ident;
   proc_args : typed_ident list;
-  proc_ho_arg : typed_ident option;
+  proc_ho_arg : typed_ident list;
   proc_args_wi: (ident*hp_arg_kind) list;
   proc_imm_args : (ident * bool) list;
   proc_source : ident; (* source file *)
@@ -448,7 +459,7 @@ and exp_scall = {
   exp_scall_method_name : ident;
   exp_scall_lock : ident option;
   exp_scall_arguments : ident list;
-  exp_scall_ho_arg : F.formula option;
+  exp_scall_ho_arg : F.formula list;
   exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
   (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
   exp_scall_path_id : control_path_id;

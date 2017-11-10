@@ -86,6 +86,7 @@ type sleek_token =
   | INFER_AT_SIZE | INFER_ANA_NI
   | INFER_AT_ARR_AS_VAR 
   | INFER_IMM_PRE | INFER_IMM_POST
+  | INFER_AT_NEG
   | UTPRE | UTPOST
   | UIPRE | UIPOST
   | UNFOLD | UNION
@@ -255,6 +256,7 @@ module Token = struct
     | INFER_AT_DE_EXC -> "@dis_err"
     | INFER_AT_ERRMAY -> "@err_may"
     | INFER_AT_TERM_WO_POST -> "@term_wo_post"
+    | INFER_AT_NEG -> "@neg"
     | INFER_AT_PRE -> "@pre_n"
     | INFER_AT_POST -> "@post_n"
     | INFER_AT_VER_POST -> "@ver_post"

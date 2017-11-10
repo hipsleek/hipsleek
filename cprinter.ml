@@ -4842,8 +4842,8 @@ let rec string_of_exp = function
       exp_scall_is_rec = is_rec}) ->
     let lock_info = match lock with | None -> "" | Some id -> ("[" ^ id ^ "]") in
     let has = match harg with
-      | None -> ""
-      | Some f -> "with " ^ (string_of_formula f)
+      | [] -> ""
+      | flst -> "with " ^ (pr_list string_of_formula flst)
     in
     string_of_control_path_id_opt pid (
       id ^ lock_info ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ has ^
@@ -5019,7 +5019,7 @@ let rec string_of_coerc_list l = match l with
 let string_of_proc_decl p =
   let locstr = (string_of_full_loc p.proc_loc)
   in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
-      ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_decl ha))
+      ^ (match p.proc_ho_arg with | [] -> "" | ha -> " with " ^ (pr_list string_of_decl ha))
       ^ (if Gen.is_empty p.proc_by_name_params then ""
          else ("\n@ref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
       ^ (if Gen.is_empty p.proc_by_copy_params then ""

@@ -66,10 +66,22 @@ SString receives (Channel c)
   requires c::Chan{@S ?v#%L(v);;%R}<>
   ensures  c::Chan{@S %R}<> * %L(res);
   
-
 /**
 
 ============================= 2 ============================
+OPEN/CLOSE
+*/
+
+Channel open() with (c,P) 
+  requires true
+  ensures  res::Chan{@S emp}<>;
+
+
+
+
+/**
+
+============================= 3 ============================
 Explicit Synchronization Mechanisms
 */
 
@@ -77,11 +89,15 @@ void notifyAll(cond w)
   requires w::NOTIFY{ w::Guard{ %P }<>}<> * %P
   ensures  w::NOTIFY{ %P}<> ;
 
+/* perhaps split formula in 2 (non-not, not). solve the non-not and w its residue solve not if fail -> succeed, succeed - >fail */
 void wait(cond w)
-  requires w::WAIT{ %P, %R }<> * %P
-  ensures  w::SAFE<false>;
-  requires w::WAIT{ %P, %R }<>
-  ensures  w::WAIT{ %P, emp}<> * %R *  w::SAFE<true>;
+/* infer [] */
+  requires w::WAIT{ %P, %R}<>  * w::NOT{ %P}<>
+  ensures  w::WAIT{ %P, emp}<> * %R ;
+
+
+
+/* lemma NOT{%R} * %R <- false. */
 
 /* lemma_norm self::SNOT{%P}<> * %P <- false. */
 /* lemma_norm !(%P) <- self::SNOT{%P}<>       */

@@ -168,7 +168,7 @@ let rec find_read_write_global_var
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
             I.exp_call_nrecv_arguments = args;
-            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
             I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         find_read_write_global_var global_vars local_vars new_e
@@ -763,7 +763,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
             I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
             I.exp_call_nrecv_method = fn;
             I.exp_call_nrecv_arguments = args;
-            I.exp_call_nrecv_ho_arg = None;
+            I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
             I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
         let new_e1 = extend_body temp_procs new_e in
@@ -777,7 +777,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
               I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
               I.exp_call_nrecv_method = e.I.exp_call_nrecv_method; (*fork_name*)
               I.exp_call_nrecv_arguments = fn1::(e1.I.exp_call_nrecv_arguments);
-              I.exp_call_nrecv_ho_arg = None;
+              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
               I.exp_call_nrecv_path_id = e1.I.exp_call_nrecv_path_id;
               I.exp_call_nrecv_pos = e1.I.exp_call_nrecv_pos} 
           in

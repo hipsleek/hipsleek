@@ -23,6 +23,16 @@ module VP = IvpermUtils
 (* moved to globals.ml *)
 (* type typed_ident = (typ * ident) *)
 
+(************************)
+(*    default values    *)
+(************************)
+
+let def_exp_call_nrecv_ho_arg = []
+
+(************************)
+(* END - default values *)
+(************************)
+
 
 type prog_decl = { 
   prog_include_decls : ident list;
@@ -267,7 +277,7 @@ and proc_decl = {
   proc_source : ident;
   proc_constructor : bool;
   proc_args : param list;
-  proc_ho_arg : param option;
+  proc_ho_arg : param list;
   mutable proc_args_wi : (ident *hp_arg_kind) list;
   proc_return : typ;
   (*   mutable proc_important_vars : CP.spec_var list;*)
@@ -428,7 +438,7 @@ and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 and exp_call_nrecv = { 
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
-  exp_call_nrecv_ho_arg : Iformula.formula option;
+  exp_call_nrecv_ho_arg : Iformula.formula list;
   exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
@@ -1727,7 +1737,7 @@ let genESpec_wNI body_header body_opt args ret pos=
      proc_args_wi = args_wi;
     }
 
-let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r ?ho_param:(ho_param = []) ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
   (*   | None -> [] *)
@@ -2674,7 +2684,7 @@ and mkMember base fields path_id pos =
            exp_member_path_id = path_id;
            exp_member_pos = pos }
 
-and mkCallNRecv method_name lock args ho_arg path_id pos =
+and mkCallNRecv method_name lock args ?ho_arg:(ho_arg = def_exp_call_nrecv_ho_arg) path_id pos =
   CallNRecv { exp_call_nrecv_method = method_name;
               exp_call_nrecv_lock = lock;
               exp_call_nrecv_arguments = args;
@@ -3366,7 +3376,7 @@ let add_bar_inits prog =
         proc_hp_decls = [];
         proc_constructor = false;
         proc_args = ags;
-        proc_ho_arg = None;
+        proc_ho_arg = [];
         proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
         proc_return = Void;
         proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
