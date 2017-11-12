@@ -2402,6 +2402,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_scall_lock = lock;
         exp_scall_arguments = vs;
         exp_scall_ho_arg = ha;
+        exp_scall_extra_arg = extra_arg;
         exp_scall_is_rec = is_rec_flag;
         exp_scall_path_id = pid;
         exp_scall_pos = pos}) ->
@@ -2437,10 +2438,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let proc = look_up_proc_def pos prog.new_proc_decls mn in
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
           let () = Debug.ninfo_zprint (lazy (("   stk spec: " ^(Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *))))) no_pos in
-          let farg_types, farg_names = List.split proc.proc_args in
+          let farg_types, farg_names = List.split proc.proc_args in         
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-
+          
+          let extra_arg_types, extra_arg_names = List.split proc.proc_extra_args in
+          let () = y_binfo_hp (add_str "Checking method call " (Cprinter.string_of_proc_decl 1)) proc in
+          let () = y_binfo_hp (add_str "extra arg names: "  string_of_int) (List.length extra_arg_names) in
+          let () = y_binfo_hp (add_str "extra arg types: "  string_of_int) (List.length extra_arg_types) in
+          let () = y_binfo_hp (add_str "extra arg : "  string_of_int) (List.length extra_arg) in
+          let earg_spec_vars, actual_e_spec_vars = 
+            try
+              List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) extra_arg_names extra_arg_types,
+              List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) extra_arg extra_arg_types
+            with Invalid_argument _ -> failwith "The number of call args and proc params should be the same"
+          in
           (*************************************************************)
           (* VPerm: Check @lend for normal args and @full for ref args *)
           (*************************************************************)
@@ -2517,6 +2529,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (*let () = print_string_quiet (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
               let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
               let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+              let fr_vars = fr_vars @ earg_spec_vars @ (List.map CP.to_primed earg_spec_vars) in
+              let to_vars = to_vars @ actual_e_spec_vars @ (List.map CP.to_primed actual_e_spec_vars) in
 
               (* let () = print_string_quiet ("\ncheck_pre_post@SCall@sctx: " ^ *)
               (*    (Cprinter.string_of_pos pos) ^ "\n" ^ *)

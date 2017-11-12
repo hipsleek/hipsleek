@@ -4218,6 +4218,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       (E.push_scope ();
        (
          let ho_arg = proc.I.proc_ho_arg in
+         let extra_arg = proc.I.proc_extra_arg in
          let all_args =
            if Gen.is_some proc.I.proc_data_decl then
              (let cdef = Gen.unsome proc.I.proc_data_decl in
@@ -4241,8 +4242,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                 I.param_name = waitlevel_name;
                 I.param_mod = I.NoMod;
                 I.param_loc = proc.I.proc_loc;} in
-              waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args @ ho_arg)
-           else proc.I.proc_args @ ho_arg in
+              waitlevel_arg::lsmu_arg::ls_arg::this_arg :: proc.I.proc_args @ ho_arg @ extra_arg)
+           else proc.I.proc_args @ ho_arg @ extra_arg in
          let p2v (p : I.param) = {
            E.var_name = p.I.param_name;
            E.var_alpha = p.I.param_name;
@@ -4307,6 +4308,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           * or TermR and TermU if @term *)
          let args = List.map (fun p ->
              ((x_add trans_type prog p.I.param_type p.I.param_loc), (p.I.param_name))) proc.I.proc_args in
+         let extra_args = List.map (fun ep ->
+             ((x_add trans_type prog ep.I.param_type ep.I.param_loc), (ep.I.param_name))) proc.I.proc_extra_arg in
          let ho_arg = List.map (fun ha -> 
              ((x_add trans_type prog ha.I.param_type ha.I.param_loc), (ha.I.param_name))) proc.I.proc_ho_arg in
          (* let fname = proc.I.proc_name in                                                                                        *)
@@ -4518,6 +4521,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_source = proc.I.proc_source;
            C.proc_flags = proc.I.proc_flags;
            C.proc_args = args;
+           C.proc_extra_args = extra_args;
            C.proc_ho_arg = ho_arg;
            C.proc_args_wi = args_wi;
            C.proc_imm_args = List.map (fun (id,_) -> (id,false)) args_wi;

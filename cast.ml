@@ -34,6 +34,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 
 let def_exp_scall_ho_arg = []
 let def_exp_scall_extra_arg = []
+let def_proc_extra_args = []
 
 (************************)
 (* END - default values *)
@@ -250,6 +251,7 @@ and axiom_decl = {
 and proc_decl = {
   proc_name : ident;
   proc_args : typed_ident list;
+  proc_extra_args : typed_ident list;
   proc_ho_arg : typed_ident list;
   proc_args_wi: (ident*hp_arg_kind) list;
   proc_imm_args : (ident * bool) list;

@@ -76,7 +76,8 @@ type ann =
   | AnnMater
   | AnnInst
 
-type with_args = HO_ARG of Iformula.formula list | EXTRA_ARG of exp list
+type with_args_call = HO_ARG of Iformula.formula list | EXTRA_ARG of exp list
+type with_args_decl = HO_ARG_d of Iast.param list | EXTRA_ARG_d of Iast.param list
 
 type file_offset =
   {
@@ -4100,19 +4101,19 @@ opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 resource_param:
 [[
   peek_logic_param; `WITH; `OPAREN; pl= id_list; `CPAREN ->
-    List.map (fun id ->
-        { param_mod = NoMod;
-          param_type = FORM;
-          param_loc = get_pos_camlp4 _loc 3;
-          param_name = id }) pl
+    EXTRA_ARG_d (List.map (fun id ->
+      { param_mod = NoMod;
+        param_type = UNK;
+        param_loc = get_pos_camlp4 _loc 3;
+        param_name = id }) pl)
   | `WITH; `PERCENT; `IDENTIFIER hid -> 
-    [{ param_mod = NoMod;
+    HO_ARG_d [{ param_mod = NoMod;
        param_type = FORM;
        param_loc = get_pos_camlp4 _loc 3;
        param_name = hid }]
 ]];
 
-opt_resource_param: [[ hid = OPT resource_param -> Gen.map_opt_def [] (fun x -> x) hid ]];
+opt_resource_param: [[ hid = OPT resource_param -> hid ]];
 
 proc_decl:
   [[ h=proc_header; flgs=opt_flag_list;b=proc_body ->
@@ -4124,7 +4125,12 @@ proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
      (*let static_specs, dynamic_specs = split_specs osl in*)
      let cur_file = proc_files # top in
-     mkProc cur_file id [] "" None false ot fpl t ~ho_param:hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     let hparam, extraparam = match hparam with
+       | Some (HO_ARG_d ho)    -> ho,Iast.def_proc_extra_arg
+       | Some (EXTRA_ARG_d ea) -> Iast.def_proc_ho_arg, ea
+       | _ -> def_proc_ho_arg, def_proc_extra_arg
+     in
+     mkProc cur_file id [] "" None false ot fpl t ~ho_param:hparam ~extra_param:extraparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)

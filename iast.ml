@@ -29,6 +29,9 @@ module VP = IvpermUtils
 
 let def_exp_call_nrecv_ho_arg = []
 let def_exp_call_nrecv_extra_arg = []
+let def_proc_ho_arg = []
+let def_proc_extra_arg = []
+
 
 (************************)
 (* END - default values *)
@@ -1740,7 +1743,9 @@ let genESpec_wNI body_header body_opt args ret pos=
      proc_args_wi = args_wi;
     }
 
-let mkProc sfile id flgs n dd c ot ags r ?ho_param:(ho_param = []) ?extra_param:(extra_param = []) ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r
+    ?ho_param:(ho_param = [])
+    ?extra_param:(extra_param = []) ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
   (*   | None -> [] *)
