@@ -1035,6 +1035,7 @@ and mkDelete (var:ident) pos =
     exp_call_nrecv_lock = None;
     exp_call_nrecv_arguments = args;
     exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+    exp_call_nrecv_extra_arg = Iast.def_exp_call_nrecv_extra_arg;
     exp_call_nrecv_path_id = None;
     exp_call_nrecv_pos = pos;}
 
@@ -1357,6 +1358,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
               exp_call_nrecv_method = fn;
               exp_call_nrecv_arguments = args;
               exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+              exp_call_nrecv_extra_arg = Iast.def_exp_call_nrecv_extra_arg;
               exp_call_nrecv_path_id = c.exp_call_nrecv_path_id;
               exp_call_nrecv_pos = c.exp_call_nrecv_pos} in
           (*trans_exp_addr that asyn call*)
@@ -1373,6 +1375,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
                 exp_call_nrecv_method = c.exp_call_nrecv_method; (*fork_name*)
                 exp_call_nrecv_arguments = fn1::(e1.exp_call_nrecv_arguments);
                 exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+                exp_call_nrecv_extra_arg = Iast.def_exp_call_nrecv_extra_arg;
                 exp_call_nrecv_path_id = e1.exp_call_nrecv_path_id;
                 exp_call_nrecv_pos = e1.exp_call_nrecv_pos} 
             in

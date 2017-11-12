@@ -26,6 +26,9 @@ pred_prim IMPL{%P,%P}<>;
 
 /* special specs */
 pred_prim OPEN{%P,%P}<>;
+pred_prim INIT<G>;
+pred_prim OPENED<c,P,G,c>;
+pred_prim EMPTY<c,c,G>;
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */

@@ -28,6 +28,7 @@ module VP = IvpermUtils
 (************************)
 
 let def_exp_call_nrecv_ho_arg = []
+let def_exp_call_nrecv_extra_arg = []
 
 (************************)
 (* END - default values *)
@@ -278,6 +279,7 @@ and proc_decl = {
   proc_constructor : bool;
   proc_args : param list;
   proc_ho_arg : param list;
+  proc_extra_arg : param list;  (* specification arguments eg. with (a,b,c) *)
   mutable proc_args_wi : (ident *hp_arg_kind) list;
   proc_return : typ;
   (*   mutable proc_important_vars : CP.spec_var list;*)
@@ -439,6 +441,7 @@ and exp_call_nrecv = {
   exp_call_nrecv_method : ident;
   exp_call_nrecv_lock : ident option;
   exp_call_nrecv_ho_arg : Iformula.formula list;
+  exp_call_nrecv_extra_arg : exp list; (* treated just like the call arguments, but they are strictly related to the spec of the fuction *)
   exp_call_nrecv_arguments : exp list;
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
@@ -1737,7 +1740,7 @@ let genESpec_wNI body_header body_opt args ret pos=
      proc_args_wi = args_wi;
     }
 
-let mkProc sfile id flgs n dd c ot ags r ?ho_param:(ho_param = []) ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r ?ho_param:(ho_param = []) ?extra_param:(extra_param = []) ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
   (*   | None -> [] *)
@@ -1764,6 +1767,7 @@ let mkProc sfile id flgs n dd c ot ags r ?ho_param:(ho_param = []) ss ds pos bd 
     proc_exceptions = ot;
     proc_args = ags;
     proc_ho_arg = ho_param;
+    proc_extra_arg = extra_param;
     proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
     proc_return = r;
     (*  proc_important_vars = [];*)
@@ -2684,11 +2688,15 @@ and mkMember base fields path_id pos =
            exp_member_path_id = path_id;
            exp_member_pos = pos }
 
-and mkCallNRecv method_name lock args ?ho_arg:(ho_arg = def_exp_call_nrecv_ho_arg) path_id pos =
+and mkCallNRecv method_name lock args
+    ?ho_arg:(ho_arg = def_exp_call_nrecv_ho_arg)
+    ?extra_arg:(extra_arg = def_exp_call_nrecv_extra_arg)
+    path_id pos =
   CallNRecv { exp_call_nrecv_method = method_name;
               exp_call_nrecv_lock = lock;
               exp_call_nrecv_arguments = args;
               exp_call_nrecv_ho_arg = ho_arg;
+              exp_call_nrecv_extra_arg = extra_arg;
               exp_call_nrecv_path_id = path_id;
               exp_call_nrecv_pos = pos }
 
@@ -3377,6 +3385,7 @@ let add_bar_inits prog =
         proc_constructor = false;
         proc_args = ags;
         proc_ho_arg = [];
+        proc_extra_arg = [];
         proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) ags;
         proc_return = Void;
         proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;

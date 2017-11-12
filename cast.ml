@@ -33,6 +33,7 @@ let pure_hprel_map = ref ([]: (ident * ident) list)
 (************************)
 
 let def_exp_scall_ho_arg = []
+let def_exp_scall_extra_arg = []
 
 (************************)
 (* END - default values *)
@@ -460,6 +461,7 @@ and exp_scall = {
   exp_scall_lock : ident option;
   exp_scall_arguments : ident list;
   exp_scall_ho_arg : F.formula list;
+  exp_scall_extra_arg : ident list;
   exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
   (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
   exp_scall_path_id : control_path_id;

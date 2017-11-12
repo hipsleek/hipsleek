@@ -76,6 +76,8 @@ type ann =
   | AnnMater
   | AnnInst
 
+type with_args = HO_ARG of Iformula.formula list | EXTRA_ARG of exp list
+
 type file_offset =
   {
     line_num: int;
@@ -925,12 +927,12 @@ let peek_relassume =
       | [IDENTIFIER "RA",_] -> raise Stream.Failure
       | _ -> ())
 
- let peek_logic_param =
-   SHGram.Entry.of_parser "peek_logic_param"
-       (fun strm ->
-           match Stream.npeek 2 strm with
-             | [WITH, _;  OPAREN,_ ] -> ()
-             | _ -> raise Stream.Failure)
+let peek_logic_param =
+  SHGram.Entry.of_parser "peek_logic_param"
+    (fun strm ->
+       match Stream.npeek 2 strm with
+       | [WITH, _;  OPAREN,_ ] -> ()
+       | _ ->  raise Stream.Failure)
 
 
 let get_heap_id_info (cid: ident * primed) (heap_id : (ident * int * int * Camlp4.PreCast.Loc.t)) =
@@ -4688,9 +4690,12 @@ cast_expression:
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
             
-ho_arg: [[ `WITH; dc = LIST1 disjunctive_constr SEP `COMMA -> List.map (F.subst_stub_flow n_flow) dc ]];
+extra_arg: [[
+    `WITH; `OPAREN ; args = argument_list; `CPAREN  -> EXTRA_ARG args
+  | `WITH; dc = LIST1 disjunctive_constr SEP `COMMA -> HO_ARG (List.map (F.subst_stub_flow n_flow) dc)
+]];
 
-opt_ho_arg: [[ oha = OPT ho_arg -> map_opt_def [] (fun x -> x) oha ]];
+opt_arg: [[ oha = OPT extra_arg -> oha ]];
 
 invocation_expression:
  [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
@@ -4699,16 +4704,22 @@ invocation_expression:
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
+  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_arg ->
     let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 
       else () 
     in
+    let oha,extra = match oha with
+      | Some (EXTRA_ARG args) -> def_exp_call_nrecv_ho_arg, args
+      | Some (HO_ARG args)    -> args, def_exp_call_nrecv_extra_arg
+      | _ -> def_exp_call_nrecv_ho_arg, def_exp_call_nrecv_extra_arg
+    in    
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
                 exp_call_nrecv_ho_arg = oha;
+                exp_call_nrecv_extra_arg = extra; 
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
   ]];

@@ -815,10 +815,13 @@ let rec string_of_exp = function
     exp_call_nrecv_lock = lock;
     exp_call_nrecv_path_id = pid;
     exp_call_nrecv_arguments = el;
-    exp_call_nrecv_ho_arg = ha })-> 
+    exp_call_nrecv_ho_arg = ha;
+    exp_call_nrecv_extra_arg = ea})-> 
         let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
         string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
-            (pr_list string_of_formula ha))
+        (pr_list string_of_formula ha) ^
+        (match ea with | [] -> "" | _ ->  "(" ^ (string_of_exp_list ea ",") ^ ")"  )
+    )
   | CallRecv ({exp_call_recv_receiver = recv;
     exp_call_recv_method = id;
     exp_call_recv_path_id = pid;
@@ -1118,6 +1121,7 @@ let string_of_proc_decl p =
   (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
   ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
   ^ (match p.proc_ho_arg with | [] -> "" | ha -> " with " ^ (pr_list string_of_param ha))
+  ^ (match p.proc_extra_arg with | [] -> "" | ha -> " with " ^ (pr_list string_of_param ha))
   ^ "[" ^ p.proc_mingled_name ^ "]"
   ^ "\n" 
   ^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)

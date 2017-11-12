@@ -948,7 +948,9 @@ let rename_exp2 e subs =
                       })
         end
       | CallNRecv b ->
-        Some (CallNRecv { b with exp_call_nrecv_ho_arg = List.map (rename_formula subs) b.exp_call_nrecv_ho_arg})
+        Some (CallNRecv { b with
+                          exp_call_nrecv_ho_arg = List.map (rename_formula subs) b.exp_call_nrecv_ho_arg;
+                          exp_call_nrecv_extra_arg = List.map (fun exp -> rename_exp exp (bvars, subs)) b.exp_call_nrecv_extra_arg})
       | _ -> None
     in
     map_exp_args e (bvars, subs) f f_args

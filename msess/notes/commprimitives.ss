@@ -72,11 +72,21 @@ SString receives (Channel c)
 OPEN/CLOSE
 */
 
-Channel open() with (c,P) 
-  requires true
-  ensures  res::Chan{@S emp}<>;
+/* 
+   cl  - logical channel
+   res - program channel
+*/
+Channel open() with (cl,P,GGG) 
+  requires cl::INIT<GGG>
+  ensures  cl::OPENED<cl,P,GGG,res>;
 
-
+/* 
+   cl - logical channel
+   c  - program channel
+*/
+void close(Channel c)
+  requires c::EMPTY<cl,c,G>
+  ensures  true;
 
 
 /**

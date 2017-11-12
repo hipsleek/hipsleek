@@ -5173,6 +5173,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = a :: index;
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+          I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
           I.exp_call_nrecv_pos = pos;} in 
       helper new_e
@@ -5338,6 +5339,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = rhs :: a :: index;
                   I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+                  I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
                   I.exp_call_nrecv_path_id = pid;
                   I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
               let new_e = I.Assign {
@@ -5451,6 +5453,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1_prim ];
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+             I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
              I.exp_call_nrecv_pos = pos;}in 
          helper new_e)
@@ -5462,6 +5465,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+            I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
             I.exp_call_nrecv_path_id = pid;
             I.exp_call_nrecv_pos = pos; } in 
         helper new_e
@@ -5478,6 +5482,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+            I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
             I.exp_call_nrecv_path_id = pid;
             I.exp_call_nrecv_pos = pos; } in 
         helper new_e
@@ -5502,6 +5507,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1; e2 ];
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+             I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
              I.exp_call_nrecv_pos = pos; } in 
          helper new_e)
@@ -5640,6 +5646,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.exp_call_nrecv_lock = lock;
         I.exp_call_nrecv_arguments = args;
         I.exp_call_nrecv_ho_arg = ho_arg;
+        I.exp_call_nrecv_extra_arg = extra_arg;
         I.exp_call_nrecv_path_id = pi;
         I.exp_call_nrecv_pos = pos } ->
       (* let () = print_string "trans_exp :: case CallNRecv\n" in*)
@@ -5717,6 +5724,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                        C.exp_scall_lock = lock;
                        C.exp_scall_arguments = mingled_forked_mn::arg_vars;
                        C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
+                       C.exp_scall_extra_arg = C.def_exp_scall_extra_arg;
                        C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                        C.exp_scall_pos = pos;
                        C.exp_scall_path_id = pi; } in
@@ -5765,6 +5773,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_scall_lock = lock;
                   C.exp_scall_arguments = arg_vars;
                   C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
+                  C.exp_scall_extra_arg = C.def_exp_scall_extra_arg;
                   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                   C.exp_scall_pos = pos;
                   C.exp_scall_path_id = pi; } in
@@ -5822,12 +5831,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                (let ret_ct = x_add trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                 let positions = List.map I.get_exp_pos args in
                 let (local_vars, init_seq, arg_vars) = x_add_1 trans_args (Gen.combine3 cargs cts positions) in
+
+                let eargs = List.map (fun a -> match a with
+                    | I.Var { exp_var_name = id;
+                              exp_var_pos  = pos;
+                      } ->  id
+                    | _ -> failwith x_tbi) extra_arg in
+                (* let epositions= List.map I.get_exp_pos extra_arg in *)
+                (* let (elocal_vars, einit_seq, earg_vars) = x_add_1 trans_args (Gen.combine3 eargs ets epositions) in (\* TODO andreeac check if spec related local vars, and init shoudl be added in teh program - perhaps as assumptions? *\) *)
                 let call_e = C.SCall {
                     C.exp_scall_type = ret_ct;
                     C.exp_scall_method_name = mingled_mn;
                     C.exp_scall_lock = lock;
                     C.exp_scall_arguments = arg_vars;
                     C.exp_scall_ho_arg = c_ho_arg;
+                    C.exp_scall_extra_arg = eargs;
                     (* Termination: Default value - 
                      * it will be set later in trans_prog
                      * by mark_rec_and_call_order *)
@@ -6032,6 +6050,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = [List.hd dims];
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+          I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_path_id = None;
           I.exp_call_nrecv_pos = pos; }
       in helper newie
@@ -6232,6 +6251,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e ];
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+             I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid;
              I.exp_call_nrecv_pos = pos;} in helper call_e
        | I.OpPostInc ->
@@ -6488,6 +6508,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = w_args;
                   I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+                  I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
                   I.exp_call_nrecv_pos = pos;
                   I.exp_call_nrecv_path_id = pi; };
               I.exp_seq_pos = pos; };
@@ -6531,6 +6552,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_args = w_formal_args;
         I.proc_args_wi = List.map (fun p -> (p.I.param_name,Globals.I)) w_formal_args;
         I.proc_ho_arg = [];
+        I.proc_extra_arg = [];
         I.proc_return = I.void_type;
         (* I.proc_important_vars= [];*)
         I.proc_static_specs = prepost;
@@ -6604,6 +6626,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = w_args;
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+          I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_pos = pos;
           I.exp_call_nrecv_path_id = pi; } in
       let w_call = temp_call (*match wrap with
@@ -9698,6 +9721,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
       let ho_arg = List.map (IF.subst subst_list)  b.Iast.exp_call_nrecv_ho_arg in
       Iast.CallNRecv{ b with 
                       Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments;
+                      Iast.exp_call_nrecv_extra_arg = List.map (helper ren) b.Iast.exp_call_nrecv_extra_arg;
                       Iast.exp_call_nrecv_ho_arg = ho_arg; }
     | Iast.Catch b-> Iast.Catch {b with
                                  Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
@@ -9809,7 +9833,9 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.Break _ | Iast.Barrier _ -> (f,[])  
   | Iast.CallNRecv b ->
     let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
-    (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
+    let ne = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_extra_arg in
+    (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl;
+                   Iast.exp_call_nrecv_extra_arg = ne},[]) 
   | Iast.CallRecv b->
     let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_recv_arguments in
     (Iast.CallRecv{b with 
@@ -9994,6 +10020,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
   | Iast.Barrier _ -> (f,h,p)
   | Iast.CallNRecv b ->
     let nl = List.map (fun c-> let r1, _, _ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
+    let nextra = List.map (fun c-> let r1, _, _ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_extra_arg in
     let ho_arg =
       List.map (fun f ->
           let r = case_normalize_formula prog h f in
@@ -10002,7 +10029,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
     in 
     let nc = Iast.CallNRecv { b with 
                               Iast.exp_call_nrecv_ho_arg = ho_arg;
-                              Iast.exp_call_nrecv_arguments = nl }
+                              Iast.exp_call_nrecv_arguments = nl;
+                              Iast.exp_call_nrecv_extra_arg = nextra; }
     in (nc, h, p) 
   | Iast.CallRecv b->
     let a1,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in

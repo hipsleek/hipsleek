@@ -1155,7 +1155,8 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
       let ce = CallNRecv ({
           exp_call_nrecv_method = "IntAug.max";
           exp_call_nrecv_arguments = [ce1; ce2];
-          exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_ho_arg = def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
           exp_call_nrecv_lock = None;
           exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
           exp_call_nrecv_pos = pos}) in
@@ -1168,6 +1169,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
                            exp_call_nrecv_lock = None;
                            exp_call_nrecv_arguments = [ce1; ce2];
                            exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+                           exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
                            exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
                            exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
@@ -1449,6 +1451,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
           exp_call_nrecv_lock = None;
           exp_call_nrecv_arguments = [ce1; ce2];
           exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
           exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
           exp_call_nrecv_pos = pos}) in
       let ce = Binary ({exp_binary_op = OpEq;
@@ -1467,6 +1470,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
           exp_call_nrecv_lock = None;
           exp_call_nrecv_arguments = [ce1; ce2];
           exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
           exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
           exp_call_nrecv_pos = pos}) in
       let ce = Binary ({exp_binary_op = OpEq;
@@ -1739,6 +1743,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
       proc_args = [cur_color pos; new_color pos];
       proc_args_wi =  List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
       proc_ho_arg = [];
+      proc_extra_arg = [];
       proc_return = Bool;
       (* proc_static_specs = Iformula.mkEFalseF (); *)
       proc_static_specs = Iformula.mkETrueF ();
@@ -1771,6 +1776,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
           exp_call_nrecv_lock = None;
           exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
           exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
           exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
           exp_call_nrecv_pos = pos}) in
       let undo_call' = CallNRecv ({
@@ -1778,6 +1784,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
           exp_call_nrecv_lock = None;
           exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
           exp_call_nrecv_ho_arg = Iast.def_exp_call_nrecv_ho_arg;
+          exp_call_nrecv_extra_arg = def_exp_call_nrecv_extra_arg;
           exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
           exp_call_nrecv_pos = pos}) in
       let undo_call = VarDecl {exp_var_decl_type = Bool;
@@ -1871,6 +1878,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
       proc_args = [cur_color pos; new_color pos];
       proc_args_wi = List.map (fun p -> (p.param_name,Globals.I)) [cur_color pos; new_color pos];
       proc_ho_arg = [];
+      proc_extra_arg = [];
       proc_return = Bool;
       proc_static_specs = Iformula.mkETrueF ();
       proc_dynamic_specs = Iformula.mkEFalseF ();
