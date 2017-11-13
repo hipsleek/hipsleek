@@ -12,12 +12,12 @@ do so by using an exclusive channel
  int
 */
 void send (Channel ccc, int xxx)
-  requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
-  ensures  ccc::Chan{@S %R}<>;
+  requires ccc::Chan{@S !v#%L(v);;%R}<P> * %L(xxx) * P::Peer<>
+  ensures  ccc::Chan{@S %R}<P> * P::Peer<>;
 
 int receive (Channel ccc)
-  requires ccc::Chan{@S ?v#%L(v);;%R}<>
-  ensures  ccc::Chan{@S %R}<> * %L(res);
+  requires ccc::Chan{@S ?v#%L(v);;%R}<P> * P::Peer<>
+  ensures  ccc::Chan{@S %R}<P> * %L(res) * P::Peer<>;
 
 
 
@@ -25,46 +25,46 @@ int receive (Channel ccc)
  Channel
 */
 void sendc (Channel c, Channel x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
+  requires c::Chan{@S !v#%L(v);;%R}<P> * %L(x)
+  ensures  c::Chan{@S %R}<P>;
 
 Channel receivec (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
+  requires c::Chan{@S ?v#%L(v);;%R}<P>
+  ensures  c::Chan{@S %R}<P> * %L(res);
 
 /**
    Addr
 */
 void senda (Channel c, Addr x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
+  requires c::Chan{@S !v#%L(v);;%R}<P> * %L(x)
+  ensures  c::Chan{@S %R}<P>;
 
 Addr receivea (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
+  requires c::Chan{@S ?v#%L(v);;%R}<P>
+  ensures  c::Chan{@S %R}<P> * %L(res);
 
 
 /**
    Date
 */
 void sendd (Channel c, DDate x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
+  requires c::Chan{@S !v#%L(v);;%R}<P> * %L(x)
+  ensures  c::Chan{@S %R}<P>;
 
 DDate received (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
+  requires c::Chan{@S ?v#%L(v);;%R}<P>
+  ensures  c::Chan{@S %R}<P> * %L(res);
 
 /**
    String
 */
 void sends (Channel c, SString x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
+  requires c::Chan{@S !v#%L(v);;%R}<P> * %L(x)
+  ensures  c::Chan{@S %R}<P>;
 
 SString receives (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
+  requires c::Chan{@S ?v#%L(v);;%R}<P>
+  ensures  c::Chan{@S %R}<P> * %L(res);
   
 /**
 

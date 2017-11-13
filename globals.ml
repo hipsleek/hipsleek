@@ -1095,7 +1095,7 @@ let print_compact_projection_formula = ref true
 let print_flow_flag = ref true
 
 let dedicated_session_ids = [session_msg_id; session_seq_id; session_chan_id]
-let dedicated_ids = [self; null_name] @ dedicated_session_ids
+let dedicated_ids = [self; null_name; this] @ dedicated_session_ids
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)

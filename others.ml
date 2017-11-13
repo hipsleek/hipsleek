@@ -171,6 +171,7 @@ type tp_type =
   | LOG (* Using previous results instead of invoking the actual provers *)
   | CHR
   | CZ
+  | CZM
 
 let string_of_prover prover = match prover with
   | OmegaCalc -> "OMEGA CALCULATOR"
@@ -201,6 +202,7 @@ let string_of_prover prover = match prover with
   | LOG -> "LOG"
   | CHR -> "CHR"
   | CZ -> "CHR, Z3"
+  | CZM-> "CHR, Z3, Mona"
 
 let string_of_ato () =
   if !Globals.array_translate then "(ato)"
@@ -235,6 +237,7 @@ let string_of_prover_code prover = match prover with
   | LOG -> "26"
   | CHR -> "27"
   | CZ -> "28"
+  | CZM -> "29"
 
 let last_tp_used = new VarGen.store LOG string_of_prover
 

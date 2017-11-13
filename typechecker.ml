@@ -2443,10 +2443,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
           
           let extra_arg_types, extra_arg_names = List.split proc.proc_extra_args in
-          let () = y_binfo_hp (add_str "Checking method call " (Cprinter.string_of_proc_decl 1)) proc in
-          let () = y_binfo_hp (add_str "extra arg names: "  string_of_int) (List.length extra_arg_names) in
-          let () = y_binfo_hp (add_str "extra arg types: "  string_of_int) (List.length extra_arg_types) in
-          let () = y_binfo_hp (add_str "extra arg : "  string_of_int) (List.length extra_arg) in
           let earg_spec_vars, actual_e_spec_vars = 
             try
               List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) extra_arg_names extra_arg_types,

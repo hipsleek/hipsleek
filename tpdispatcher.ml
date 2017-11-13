@@ -476,6 +476,8 @@ let set_tp user_flag tp_str =
     (pure_tp := CHR; prover_str := "orderchr"::!prover_str)
   else if tp_str = "cz" then
     (pure_tp := CZ; prover_str := "orderchr"::!prover_str; prover_str := "z3"::!prover_str;)
+  else if tp_str = "czm" then
+    (pure_tp := CZM; prover_str := "orderchr"::!prover_str; prover_str := "z3"::"mona"::!prover_str;)
   else
     ();
   if not !Globals.is_solver_local then check_prover_existence !prover_str else ()
@@ -533,6 +535,7 @@ let string_of_tp tp = match tp with
   | LOG -> "log"
   | CHR -> "chr"
   | CZ -> "cz"
+  | CZM -> "czm"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -562,7 +565,8 @@ let name_of_tp tp = match tp with
   | MINISAT -> "MINISAT"
   | LOG -> "LOG"
   | CHR -> "CHR"
-  | CZ -> "CHR and Z3"
+  | CZ-> "CHR and Z3"
+  | CZM-> "CHR and Z3 and MONA"    
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -621,6 +625,11 @@ let start_prover () =
       Chr.start();
       Z3.start();
     )
+  | CZM -> (
+      Chr.start();
+      Z3.start();
+      Mona.start();
+    )
   | _ -> Omega.start_prover()
 
 let start_prover () =
@@ -672,6 +681,11 @@ let stop_prover () =
   | CZ -> (
       Chr.stop();
       Z3.stop();
+    )
+  | CZM -> (
+      Chr.stop();
+      Z3.stop();
+      Mona.stop();
     )
   | _ -> Omega.stop();;
 
@@ -1630,6 +1644,7 @@ let wrapper_enable_ord2sleek f =
 let tp_supports_chr () =
   match !pure_tp with
   | CHR
+  | CZM
   | CZ  -> true
   | _   -> false
 
@@ -2099,6 +2114,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | LOG -> find_bool_proof_res sat_no
     | CHR -> Chr.is_sat f sat_no
     | CZ -> z3_is_sat f
+    | CZM ->
+      if (is_bag_constraint f) then mona_is_sat f
+      else z3_is_sat f
   ) in 
   if not !tp_batch_mode then stop_prover ();
   res
@@ -3246,6 +3264,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       | LOG -> find_bool_proof_res imp_no 
       | CHR -> Chr.imply ante conseq imp_no
       | CZ -> z3_imply ante conseq
+      | CZM -> 
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          ((* called_prover := "mona "; *) mona_imply ante_w conseq_s)
+        else z3_imply ante conseq
+            
     ) in
 
     if not !tp_batch_mode then stop_prover ();

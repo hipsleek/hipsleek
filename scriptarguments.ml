@@ -1154,7 +1154,7 @@ let common_arguments = [
   ("--en-print-ann" , Arg.Set Globals.print_ann, "enable annotation printing (default)");
   ("--dis-print-clean", Arg.Clear Globals.print_clean_flag, "disable cleaner printing");
   ("--dis-comp-sess", Arg.Clear Globals.print_compact_projection_formula, "disable compact printing of projection formulae in core structures");
-  ("--sess", Arg.Unit (fun () -> set_tp "cz"), "set the session flags accordingly");
+  ("--sess", Arg.Unit (fun () -> set_tp "czm"), "set the session flags accordingly");
   ("--dis-sess-refine", Arg.Clear Globals.sess_refinement, "disable session refinement");
   ("--print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (not default)");
   ("--print-clean" , Arg.Set Globals.print_clean_flag, "enable cleaner printing (not default)");

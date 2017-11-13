@@ -2448,12 +2448,12 @@ and trans_I2C_session_formulae_x prog free_vars tlist (form : I.session_formulae
   | Some sess_form ->
   let sess = sess_form.session in
   let i2c_proj = List.fold_left (fun acc (k, v) -> 
-    let (_, c_struc) = trans_I2C_struc_formula 8 prog false true free_vars v tlist false true in
+    let (_, c_struc) = x_add_1 (trans_I2C_struc_formula 8 prog false true free_vars v tlist false) true in
     let pos = CF.pos_of_struc_formula c_struc in
     let key = trans_var k tlist pos in 
     SP.CPrjMap.add_elem_dupl acc key c_struc) (SP.CPrjMap.mkEmpty()) (sess_form.proj_per_party) in
   let i2c_tproj = List.fold_left (fun acc ((kc, kr), v) -> 
-    let (_, c_struc) = trans_I2C_struc_formula 8 prog false true free_vars v tlist false true in
+    let (_, c_struc) = x_add_1 (trans_I2C_struc_formula 8 prog false true free_vars v tlist false) true in
     let pos = CF.pos_of_struc_formula c_struc in
     let key_chan = trans_var kc tlist pos in 
     let key_role = trans_var kr tlist pos in 
@@ -2493,7 +2493,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       else (Named data_name,tlist) in
     let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
-    let (n_tl,cf) = trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false true (*check_pre*) in
+    let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
     let data_name = match self_ty with
       | Named s -> s
@@ -2874,7 +2874,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let () = y_tinfo_hp (add_str "lst_heap_ptrs" (pr_list !CP.print_svl)) lst_heap_ptrs in *)
       
       (* transform session_formulae from I (input formula) to C (core formula) *)
-      let sess_formulae = trans_I2C_session_formulae prog free_vars n_tl vdef.I.view_session in
+      let sess_formulae = x_add_1 (trans_I2C_session_formulae prog free_vars n_tl) vdef.I.view_session in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -4252,6 +4252,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let todo_unk = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
          let cret_type = x_add trans_type prog proc.I.proc_return proc.I.proc_loc in
          let free_vars = List.map (fun p -> p.I.param_name) all_args in
+         let free_vars = free_vars @ Globals.dedicated_ids in
          let add_param p = (p.I.param_name,
                             {sv_info_kind =  (x_add trans_type prog p.I.param_type p.I.param_loc);
                              id = fresh_int () }) in
@@ -4272,12 +4273,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          (* let () = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
          (* let () = Debug.info_zprint (lazy (("  transform I2C: " ^  proc.I.proc_name ))) no_pos in *)
          (* let () = Debug.info_zprint (lazy (("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)))) no_pos in *)
-         let (n_tl,cf) = trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true true (*check_pre*) in
+         let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 2 prog false true free_vars proc.I.proc_static_specs n_tl true) true (*check_pre*) in
          let cf = CF.add_inf_cmd_struc is_primitive cf in
          let static_specs_list = set_pre_flow cf in
          (* let () = Debug.info_zprint (lazy (("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)))) no_pos in *)
          (* let () = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
-         let (n_tl,cf) = trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true true (*check_pre*) in
+         let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 3 prog false true free_vars proc.I.proc_dynamic_specs n_tl true) true (*check_pre*) in
          let cf = CF.add_inf_cmd_struc is_primitive cf in
          let dynamic_specs_list = set_pre_flow cf in
          (****** Infering LSMU from LS if there is LS in spec >>*********)
@@ -4888,7 +4889,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let wf,_ = case_normalize_struc_formula 1 prog h p (IF.formula_to_struc_formula i_rhs (* coer.I.coercion_body *)) false 
       false (*allow_post_vars*) true [] in
   let quant = true in
-  let (n_tl,cs_body_norm) = trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false 
+  let (n_tl,cs_body_norm) = x_add_1 (trans_I2C_struc_formula 4 prog false quant (* fv_names *) lhs_fnames0 wf n_tl false )
       true (*check_pre*) in
   let () = y_tinfo_hp (add_str "cs_body_norm(I2C)" !CF.print_struc_formula) cs_body_norm in
   let cs_body_norm =
@@ -5211,7 +5212,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       let n_tl = List.map (fun (t, n) -> (n,{ sv_info_kind = t;id = fresh_int () })) all_names in
       let (n_tl,assert_cf_o) = match assert_f_o with
         | Some f -> 
-          let (n_tl,cf) = trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false true in  
+          let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 6 prog false false free_vars (fst f) n_tl false) true in  
           (n_tl,Some cf)
         | None -> (n_tl,None) in
       let (n_tl,assume_cf_o) = match assume_f_o with
@@ -11301,7 +11302,7 @@ and trans_bdecl_x prog bd =
     match il with 
     | []->tl,[]
     | hd::tail ->
-      let (n_tl,sf) = trans_I2C_struc_formula 7 prog false true vl hd tl false true in
+      let (n_tl,sf) = x_add_1 (trans_I2C_struc_formula 7 prog false true vl hd tl false) true in
       let (n_tl,n_il) = aux1 n_tl tail in
       (n_tl, (sf::n_il))
   ) in
