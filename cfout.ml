@@ -509,7 +509,7 @@ let simplify_context ?(prog_vs=None) ctx =
 
 let simplify_context ?(prog_vs=None) ctx =
   let pr = !print_context in
-  Debug.no_1 "simplify_context" pr pr (simplify_context ~prog_vs:prog_vs)  ctx
+  Debug.no_1 "[cfout.ml]simplify_context" pr pr (simplify_context ~prog_vs:prog_vs)  ctx
 
 let simplify_branch_context ?(prog_vs=None) (pt, ctx, fail_type) =
   let ctx = simplify_context ~prog_vs:prog_vs ctx in

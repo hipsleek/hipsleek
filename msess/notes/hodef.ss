@@ -25,11 +25,17 @@ pred_prim IMPL{%P,%P}<>;
 
 /* special specs */
 pred_prim OPEN{%P,%P}<>;
-pred_prim OPENED<c,P,G,c>;
+pred_prim OPENED<P,G,c>; //P->peers, G->global prot, c->program channel, root->logical channel
 pred_prim EMPTY<c,c,G>;
 pred_prim Peer<>; //peer
+pred_prim Party{%P}<C>; //%P -> spec,C->bag of channels
 pred_prim INITALL<B>;
 pred_prim INIT<G>;
+pred_prim GLOB{%R}<P,C>; //parties,channels
+pred_prim PROJP{%R}<>;  // root->party,   %R->global prot
+pred_prim PROJC{%R}<P>; // root->channel, %R->global prot, P->party
+
+
 
 
 /* orders relation */
@@ -53,10 +59,40 @@ lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<P> * %P -> self::Chan{@S %R}<P>
 
 lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.
 
-// lemma_norm  "INIT" self::INITALL<B> & B=union({b},B1) -> b::INIT<self> * self::INITALL<B1>.
 
+/* #################################################
+      initall({c1..cm}) -> init(c1) * ... init(cm). 
+   ################################################# */
+lemma_norm  "INIT" self::INITALL<B> & B=union({b},B1) & (b notin B1)-> b::INIT<self> * self::INITALL<B1>.
+                                            /*
 lemma_norm "INIT1" self::INITALL<B> & B={a}   -> a::INIT<self>.
-lemma_norm "INIT2" self::INITALL<B> & B={a,b} & a!=b -> a::INIT<self> * b::INIT<self>.
+lemma_norm "INIT2" self::INITALL<B> & B={aa,bb} & aa!=bb -> aa::INIT<self> * bb::INIT<self>.
 lemma_norm "INIT3" self::INITALL<B> & B={a,b,c} & a!=b & a!=c & b!=c-> a::INIT<self> * b::INIT<self>* c::INIT<self>.
+                                            */
+
+/* ################################################################
+    G({P1..Pn},C)  -> Party(P1,C,(G)|P1) * ... * Party(Pn,C,(G)|Pn) 
+   ################################################################ */
+lemma_norm "SPLIT_GLOB1" self::GLOB{%R}<P,C> & P={A}       
+                         -> A::Party{  A::PROJP{%R}<> }<C> * self::INITALL<C>.
+lemma_norm "SPLIT_GLOB2" self::GLOB{%R}<P,C> & P={A1,A2} & A1!=A2
+                         -> A1::Party{ A1::PROJP{%R}<> }<C> * A2::Party{ A2::PROJP{%R}<> }<C> * self::INITALL<C>.
+lemma_norm "SPLIT_GLOB3" self::GLOB{%R}<P,C> & P={A1,A2,A3} & A1!=A2 & A3!=A2 & A1!=A3
+                         -> A1::Party{ A1::PROJP{%R}<> }<C> * A2::Party{ A2::PROJP{%R}<> }<C> * A3::Party{ A3::PROJP{%R}<> }<C> * self::INITALL<C>.
+
+/* ##########################################################################
+   Party(P,{c1...cm},(G)|P) -> Chan(c1,P,(G)|P,c1) *...* Chan(cm,P,(G)|P,cm) 
+   ########################################################################## */
+lemma_norm "SPLIT_PROJ1" self::Party{  self::PROJP{%R}<> }<C> & C={c} -> c::Chan{ c::PROJC{%R}<self>}<self>.
+lemma_norm "SPLIT_PROJ2" self::Party{  self::PROJP{%R}<> }<C> & C={c1,c2} -> c1::Chan{ c1::PROJC{%R}<self>}<self>* c2::Chan{ c2::PROJC{%R}<self>}<self>.
+lemma_norm "SPLIT_PROJ3" self::Party{  self::PROJP{%R}<> }<C> & C={c1,c2,c3} -> c1::Chan{ c1::PROJC{%R}<self>}<self> * c2::Chan{ c2::PROJC{%R}<self>}<self> * c3::Chan{ c3::PROJC{%R}<self>}<self>.
 
 
+/* #################################################
+      initall({c1..cm}) -> init(c1) * ... init(cm). 
+   ################################################# */
+/*
+lemma_norm "INIT1" self::INITALL<B> & B={a}   -> a::INIT<self>.
+lemma_norm "INIT2" self::INITALL<B> & B={aa,bb} & aa!=bb -> aa::INIT<self> * bb::INIT<self>.
+lemma_norm "INIT3" self::INITALL<B> & B={a,b,c} & a!=b & a!=c & b!=c-> a::INIT<self> * b::INIT<self>* c::INIT<self>.
+*/

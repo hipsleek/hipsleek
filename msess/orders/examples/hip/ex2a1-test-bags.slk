@@ -1,0 +1,33 @@
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_sess_prot G<S:role,C:role,ms:chan,mc:chan> == C->S:ms(1) ;; S->C:mc(v#v>0).
+
+
+checkentail S={a} |- exists b: S={b} & a=b.
+expect Valid.
+
+checkentail S={a} |-  S={a}.
+expect Valid.
+
+checkentail S=union({a},B) & B={} |- S={a}.
+print residue.
+expect Valid.
+
+checkentail x::INITALL<BB>  & BB={aaa} |- aaa::INIT<x>.
+print residue.
+expect Valid.
+
+
+checkentail x::GLOB{ x::G<SS,CC,s,c>}<{SS,CC},{s,c}> & SS!=CC & s!=c
+      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *
+         CC::Party{  CC::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *
+         x::INITALL<{s,c}>.
+print residue.
+expect Valid.
+
+checkentail x::GLOB{ x::G<SS,CC,s,c>}<{SS,CC},{s,c}> & SS!=CC & s!=c
+      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *         
+         x::INITALL<{s,c}>.
+print residue.
+expect Valid.
+

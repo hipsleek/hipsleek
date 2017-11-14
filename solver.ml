@@ -14994,8 +14994,8 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
     *)
     (*let () = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
-    let coer_lhs = x_add CF.subst tmp_rho coer.coercion_head in
-    let coer_rhs = x_add CF.subst tmp_rho coer.coercion_body in
+    let coer_lhs = x_add_1 (CF.subst ~incl_ho:true tmp_rho) coer.coercion_head in
+    let coer_rhs = x_add_1 (CF.subst ~incl_ho:true tmp_rho) coer.coercion_body in
     let () = y_dinfo_hp (add_str "coer_rhs_0" !CF.print_formula) coer_rhs in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)

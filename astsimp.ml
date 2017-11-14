@@ -10179,11 +10179,11 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   Debug.no_1 "case_normalize_proc" pr pr
     (fun _ -> case_normalize_proc_x prog f) f
 
-and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl = 
+and case_normalize_proc_x prog (proc:Iast.proc_decl):Iast.proc_decl = 
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
   let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
-  let gl_proc_args = gl_v @ f.Iast.proc_args in
-  let gl_proc_args = gl_proc_args @ f.Iast.proc_ho_arg in
+  let gl_proc_args = gl_v @ proc.Iast.proc_args in
+  let gl_proc_args = gl_proc_args @ proc.Iast.proc_ho_arg @ proc.Iast.proc_extra_arg in
   let h = (List.map (fun c1 -> (c1.Iast.param_name, Unprimed)) gl_proc_args) in
   let h_prm = (List.map (fun c1 -> (c1.Iast.param_name, Primed)) gl_proc_args) in
   (*LOCKSET variable*********)
@@ -10199,31 +10199,31 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
                      (List.map (fun c1-> (c1.Iast.param_name,Primed)) 
                         (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args))) in
   let strad_s = 
-    let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
+    let pr,pst = IF.struc_split_fv proc.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
   (* let () = print_endline ("h (proc) = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h)) in *)
   (* let () = print_endline ("p (proc)= " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
-  let nst,h11 = case_normalize_struc_formula 5 prog h p f.Iast.proc_static_specs false 
+  let nst,h11 = case_normalize_struc_formula 5 prog h p proc.Iast.proc_static_specs false 
       false (*allow_post_vars*) false strad_s in
   (* let () = print_endline ("strad_s = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad_s)) in *)
   let () = check_eprim_in_struc_formula " is not allowed in precond " nst in 
   let strad_d = 
-    let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
+    let pr,pst = IF.struc_split_fv proc.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in
-  let ndn, h12 = case_normalize_struc_formula 6 prog h p f.Iast.proc_dynamic_specs false 
+  let ndn, h12 = case_normalize_struc_formula 6 prog h p proc.Iast.proc_dynamic_specs false 
       false (*allow_post_vars*) false strad_d in
   let () = check_eprim_in_struc_formula "is not allowed in precond " ndn in
   let h1 = Gen.BList.remove_dups_eq (=) (h11@h12) in 
   let h2 = Gen.BList.remove_dups_eq (=) (h@h_prm@(Gen.BList.difference_eq (=) h1 h)@ (IF.struc_free_vars true nst)) in
-  let nb = match f.Iast.proc_body with 
+  let nb = match proc.Iast.proc_body with 
       None -> None 
     | Some f->
       (* let f,_ = x_add_1 case_rename_var_decls_init f in *)
       let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
       Some r in
-  {f with Iast.proc_static_specs =nst;
-          Iast.proc_dynamic_specs = ndn;
-          Iast.proc_body = nb;
+  {proc with Iast.proc_static_specs =nst;
+             Iast.proc_dynamic_specs = ndn;
+             Iast.proc_body = nb;
   }
 
 and case_normalize_barrier_x prog bd = 

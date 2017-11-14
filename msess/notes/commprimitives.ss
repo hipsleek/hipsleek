@@ -76,9 +76,9 @@ OPEN/CLOSE
    cl  - logical channel
    res - program channel
 */
-Channel open() with (cl,P,GGG) 
+Channel open() with (cl,P,GGG)
   requires cl::INIT<GGG>
-  ensures  cl::OPENED<cl,P,GGG,res>;
+  ensures  cl::OPENED<P,GGG,res>;
 
 /* 
    cl - logical channel
