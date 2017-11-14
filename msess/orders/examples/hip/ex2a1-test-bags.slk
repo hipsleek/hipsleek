@@ -17,17 +17,35 @@ checkentail x::INITALL<BB>  & BB={aaa} |- aaa::INIT<x>.
 print residue.
 expect Valid.
 
-
+/*
 checkentail x::GLOB{ x::G<SS,CC,s,c>}<{SS,CC},{s,c}> & SS!=CC & s!=c
-      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *
-         CC::Party{  CC::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *
+      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> *
+         CC::Party{  CC::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> *
          x::INITALL<{s,c}>.
 print residue.
 expect Valid.
 
 checkentail x::GLOB{ x::G<SS,CC,s,c>}<{SS,CC},{s,c}> & SS!=CC & s!=c
-      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<{s,c}> *         
+      |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> *         
          x::INITALL<{s,c}>.
 print residue.
 expect Valid.
 
+
+checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> & SS!=CC & s!=c
+     |- s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>.
+expect Fail.
+*/
+
+lemma_norm "SPLIT_PROJ"
+            self::Party{  self::PROJP{%R}<> }<GG,C> *
+            self::Peer<GG> & C=union({c},C1) & (c notin C1)
+            -> c::Chan{ c::PROJC{%R}<self>}<self> * self::Peer<GG> * self::Party{  self::PROJP{%R}<> }<GG,C1>.
+
+checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<H,{s,c}> *
+            SS::Peer<H> & SS!=CC & s!=c
+     |- 
+      s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS> *
+        c::Chan{c::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>. 
+expect Valid.
+print residue.
