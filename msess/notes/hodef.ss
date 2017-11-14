@@ -16,9 +16,6 @@ pred_prim CB{%P, %P}<>; //cb
 /* protocol lang related */
 pred_prim Assume{%P}<>; //assumed
 pred_prim Guard{%P}<>; //guard
-pred_prim Peer<>; //peer
-pred_prim initall<B>;
-pred_prim init<c>;
 
 /* explicit sync */
 pred_prim NOTIFY{%P}<>;
@@ -28,9 +25,12 @@ pred_prim IMPL{%P,%P}<>;
 
 /* special specs */
 pred_prim OPEN{%P,%P}<>;
-pred_prim INIT<G>;
 pred_prim OPENED<c,P,G,c>;
 pred_prim EMPTY<c,c,G>;
+pred_prim Peer<>; //peer
+pred_prim INITALL<B>;
+pred_prim INIT<G>;
+
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
@@ -53,11 +53,10 @@ lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<P> * %P -> self::Chan{@S %R}<P>
 
 lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.
 
-/* lemma_.. initall<B> & B={b} union B' => b::init<> *  initall<B'>. */
+// lemma_norm  "INIT" self::INITALL<B> & B=union({b},B1) -> b::INIT<self> * self::INITALL<B1>.
 
-lemma_norm self::initall<B> & B={a}   -> a::init<self>.
-lemma_norm self::initall<B> & B={a,b} -> a::init<self> * b::init<self>. 
-
-
+lemma_norm "INIT1" self::INITALL<B> & B={a}   -> a::INIT<self>.
+lemma_norm "INIT2" self::INITALL<B> & B={a,b} & a!=b -> a::INIT<self> * b::INIT<self>.
+lemma_norm "INIT3" self::INITALL<B> & B={a,b,c} & a!=b & a!=c & b!=c-> a::INIT<self> * b::INIT<self>* c::INIT<self>.
 
 

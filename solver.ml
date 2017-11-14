@@ -8388,15 +8388,19 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let estate = lhs in
   let pos = no_pos in
   let formula = estate.es_formula in
-  let formula4xpure = match formula with
+  let formula4xpure =
+    let rec helper formula = match formula with
     | Or _ -> report_error no_pos ("xpure_imply: encountered Or formula on lhs")
     | Base b -> Base {b with formula_base_heap = mkStarH b.formula_base_heap estate.es_heap pos}
-    | Exists b ->  report_error no_pos ("xpure_imply: encountered Exists formula on lhs") in
+    | Exists b -> helper (CF.remove_quantifiers b.formula_exists_qvars formula)
+    (* report_error no_pos ("xpure_imply: encountered Exists formula on lhs") *) in
+    helper formula
+  in
   let formula4xpure = Norm.imm_norm_formula prog formula4xpure unfold_for_abs_merge pos in
   let rrr,c = match formula4xpure with
     | Or _ -> report_error no_pos ("xpure_imply: encountered Or formula on lhs")
     | Base b ->  (b,lhs)
-    | Exists b ->  report_error no_pos ("xpure_imply: encountered Exists formula on lhs")in
+    | Exists b -> report_error no_pos ("xpure_imply: encountered Exists formula on lhs") in
   let lhs_h = rrr.formula_base_heap in
   let lhs_p = rrr.formula_base_pure in
   let () = Gen.reset_int2 () in
@@ -15131,7 +15135,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
               let () = y_dinfo_hp (add_str "lhs_guard_new" !CP.print_formula) lhs_guard_new in
               let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in
               let () = y_dinfo_hp (add_str "guard_conseq" !CP.print_formula) guard_conseq in
-              let guard_flag = xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
+              let guard_flag = x_add xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
               if not(guard_flag) then
                 let msg = "univ guard not satisfied" in 
                 mk_fail_ctx msg estate
