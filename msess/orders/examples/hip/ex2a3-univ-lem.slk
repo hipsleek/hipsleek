@@ -1,0 +1,18 @@
+sleek_include 'msess/notes/node.slk'.
+
+pred H<b> == self::node<v,null> & v>b.
+pred G<b> == self=null or self::node<v,null> & v>b.
+
+relation R(node x, node y).
+
+lemma_norm self::H<b> & self!=null   -> self::G<b>.
+lemma "TEST" self::H<b> & R(self,null) -> self::G<b>.
+
+
+checkentail x::H<5> & x!=null |- x::G<5>.
+expect Valid.
+print residue.
+
+checkentail x::H<5> & R(x,null) |- x::G<5>.
+expect Valid.
+print residue.

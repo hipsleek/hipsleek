@@ -1,0 +1,14 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+/*
+checkentail  x::node<_,_> |- emp.
+expect Valid.
+print residue.
+*/
+
+lemma_norm "NEG" self::NOT{ %P}<> <- %P.
+
+infer [@neg] x::node<_,_> |-   x::NOT{ x::node<_,_> }<>.
+expect Fail.
+print residue.

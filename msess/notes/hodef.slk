@@ -35,6 +35,7 @@ pred_prim GLOB   {%R}   <P,C>.   //parties,channels
 pred_prim PROJP  {%R}   <>.      // root->party,   %R->global prot
 pred_prim PROJC  {%R}   <P>.     // root->channel, %R->global prot, P->party
 pred_prim BIND          <G,C>.   // root->party, G->glob prot, C->channels
+relation  PeerRel       (int G, int P).
 
 /* orders relation */
 /* need to sync this rel definitions with chr_orders_prelude */
@@ -60,7 +61,11 @@ lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.
 /* #################################################
       initall({c1..cm}) -> init(c1) * ... init(cm). 
    ################################################# */
-lemma_norm  "INIT" self::INITALL<B> & B=union({b},B1) & (b notin B1)-> b::INIT<self> * self::INITALL<B1>.
+lemma_norm  "INIT" self::INITALL<B> & B=union({b},B1) & (b notin B1)
+                   -> b::INIT<self> * self::INITALL<B1>.
+lemma_norm  "INIT_BASE"
+                   self::INITALL<B> & B={}
+                   -> true.
 
 /* ################################################################
     G({P1..Pn},C)  -> Party(P1,G,C,(G)|P1) * ... * Party(Pn,G,C,(G)|Pn) 
@@ -74,8 +79,12 @@ lemma_norm "GLOB_INIT"  self::GLOB{%R}<P,C> & P={}
    Party(P,{c1...cm},(G)|P) * Peer(P) -> Chan(c1,P,(G)|P,c1) *...* Chan(cm,P,(G)|P,cm)
    only realease the per-channel spec when in the abstract state of a peer
    ########################################################################## */
-lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{%R}<> }<GG,C> *
-                        self::Peer<GG> & C=union({c},C1) & (c notin C1)
-                         -> c::Chan{ c::PROJC{%R}<self>}<self> * GG::Peer<GG> * self::Party{  self::PROJP{%R}<> }<GG,C1>.
-lemma_norm "PROJ_BIND"  self::Party{  self::PROJP{%R}<> }<GG,C> & C={}
-                         -> self::BIND<GG,C>.
+lemma_norm "PROJ_BIND " self::Party{ %R }<GG,C> * self::Peer<GG>
+                        -> self::Party{  %R }<GG,C> * self::BIND<GG,C> & PeerRel(self,GG).
+
+lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{%R}<> }<GG,C> 
+                        & C=union({c},C1) & (c notin C1) & PeerRel(self,GG)
+                         -> c::Chan{ c::PROJC{%R}<self>}<self> * self::Party{  self::PROJP{%R}<> }<GG,C1>.
+
+lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{%R}<> }<GG,C> & C={}
+                        -> true.

@@ -1040,11 +1040,13 @@ let is_not_global_rel prog i =
 let univ_vars_of_lemma l_head = 
   let h, p, vp, _, _,_ = CF.split_components l_head in
   let pvars = MCP.mfv p in
-  let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> 
+  let pvars = List.filter (fun ((CP.SpecVar (_,id,_)) as sv) -> 
     not (id = Globals.cyclic_name || 
          id = Globals.acyclic_name || 
          id = Globals.concrete_name || 
-         id = Globals.set_comp_name)) pvars in (* ignore cyclic & acyclic rels *)
+         id = Globals.set_comp_name ||
+         (CP.is_rel_typ sv)
+        )) pvars in (* ignore cyclic & acyclic rels *)
   let hvars = CF.h_fv h in
   let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
   Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars

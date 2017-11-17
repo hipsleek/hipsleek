@@ -8353,9 +8353,16 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   let avars = mfv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
+  let () = y_binfo_hp (add_str "outer_vars" Cprinter.string_of_spec_var_list) outer_vars in
+  let () = y_binfo_hp (add_str "inner_vars" Cprinter.string_of_spec_var_list) inner_vars in
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in
-  let tmp2 = MCP.mix_push_exists outer_vars tmp1 in
+  (* let tmp2 = MCP.mix_push_exists outer_vars tmp1 in *)
+  (* TODO TOCHECK andreeac - replaced the above tmp2 with below, since it makes no sense to quantify vars existing in the ante  *)
+  let tmp2 = tmp1 in 
+  let () = y_binfo_hp (add_str "conseq" Cprinter.string_of_mix_formula) conseq in
+  let () = y_binfo_hp (add_str "tmp1" Cprinter.string_of_mix_formula) tmp1 in
+  let () = y_binfo_hp (add_str "tmp2" Cprinter.string_of_mix_formula) tmp2 in
   (* let () = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq) *)
   (*   ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in *)
   (ante,tmp2)
@@ -8383,7 +8390,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
   Debug.no_2 "xpure_imply" pr1 pr2 string_of_bool
     (fun _ _ -> xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout) lhs rhs_p
 
-and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : bool =
+and xpure_imply_x (prog : prog_decl) (is_folding : bool)  lhs rhs_p timeout : bool =
   let imp_subno = ref 0 in
   let estate = lhs in
   let pos = no_pos in
@@ -8408,9 +8415,11 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let heap_f = lhs_h in
   let xpure_lhs_h, _, memset = x_add xpure_heap 8 prog heap_f lhs_p 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
-  let new_ante, new_conseq = x_add heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1
+  let new_ante, new_conseq = x_add heap_entail_build_mix_formula_check 1 (estate.es_evars@estate.es_gen_expl_vars)(* @estate.es_gen_impl_vars@estate.es_ivars) *) tmp1
       (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
-  let (res,_,_) = imply_mix_formula_no_memo 1 new_ante new_conseq !imp_no !imp_subno (Some timeout) memset in
+  (* true *)
+  (* let (new_ante, new_conseq)  = x_add heap_entail_build_mix_formula_check 2 exist_vars tmp3 rhs_p pos in *)
+  let (res,_,_), _ = imply_mix_formula(* _no_memo *) 1 new_ante new_ante new_conseq imp_no (* !imp_subno (Some timeout) *) memset in
   imp_subno := !imp_subno+1;
   res
 
@@ -15133,8 +15142,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
               (* ?? *)
               let () = y_dinfo_hp (add_str "f_univ_vars" !CP.print_svl) f_univ_vars in
               let () = y_dinfo_hp (add_str "lhs_guard_new" !CP.print_formula) lhs_guard_new in
-              let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in
+              (* let guard_conseq = CP.mkExists f_univ_vars lhs_guard_new None no_pos in *)
+              let guard_conseq =  lhs_guard_new in
               let () = y_dinfo_hp (add_str "guard_conseq" !CP.print_formula) guard_conseq in
+              let estate = { estate with es_evars = estate.es_evars @ f_univ_vars } in
               let guard_flag = x_add xpure_imply prog is_folding estate guard_conseq !Globals.imply_timeout_limit in
               if not(guard_flag) then
                 let msg = "univ guard not satisfied" in 

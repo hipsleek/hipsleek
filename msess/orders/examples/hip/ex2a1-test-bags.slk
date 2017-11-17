@@ -1,7 +1,16 @@
+sleek_include 'msess/notes/node.slk'.
 sleek_include 'msess/notes/hodef.slk'.
 
 pred_sess_prot G<S:role,C:role,ms:chan,mc:chan> == C->S:ms(1) ;; S->C:mc(v#v>0).
 
+/*
+checkentail x::INITALL<BB>  & BB={aaa} |- true.
+print residue.
+expect Valid.
+
+checkentail x::Peer<BB>  |-  Peer_rel(x,BB).
+print residue.
+expect Valid.
 
 checkentail S={a} |- exists b: S={b} & a=b.
 expect Valid.
@@ -13,10 +22,11 @@ checkentail S=union({a},B) & B={} |- S={a}.
 print residue.
 expect Valid.
 
+
 checkentail x::INITALL<BB>  & BB={aaa} |- aaa::INIT<x>.
 print residue.
 expect Valid.
-
+*/
 /*
 checkentail x::GLOB{ x::G<SS,CC,s,c>}<{SS,CC},{s,c}> & SS!=CC & s!=c
       |- SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> *
@@ -36,16 +46,81 @@ checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<x,{s,c}> & SS!=CC & s!=c
      |- s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>.
 expect Fail.
 */
-
+/*
 lemma_norm "SPLIT_PROJ"
             self::Party{  self::PROJP{%R}<> }<GG,C> *
             self::Peer<GG> & C=union({c},C1) & (c notin C1)
             -> c::Chan{ c::PROJC{%R}<self>}<self> * self::Peer<GG> * self::Party{  self::PROJP{%R}<> }<GG,C1>.
+*/
 
+/*
 checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<H,{s,c}> *
             SS::Peer<H> & SS!=CC & s!=c
-     |- 
-      s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS> *
+     |-  PeerRel(SS,H).
+expect Valid.
+print residue.
+*/
+
+/*
+checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<H,{s,c}>
+            // * SS::Peer<H>
+            & SS!=CC & s!=c & PeerRel(SS,H)
+     |-
+        s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS> *
         c::Chan{c::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>. 
 expect Valid.
 print residue.
+*/
+
+
+checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
+            & PeerRel(SS,H)
+            & SS!=CC & s!=c 
+     |-
+        s::Chan{s::PROJC{ x::node<a,b>}<SS> }<SS> *
+        c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS>. 
+expect Valid.
+print residue.
+
+
+checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<H,{s,c}>
+            & PeerRel(SS,H)
+            & SS!=CC & s!=c 
+     |-
+        s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS> *
+        c::Chan{c::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>. 
+expect Valid.
+print residue.
+
+/*
+checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
+            * SS::Peer<H>
+            & SS!=CC & s!=c 
+     |-
+        s::Chan{s::PROJC{ x::node<a,b>}<SS> }<SS> *
+        c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS>. 
+expect Valid.
+print residue.
+
+checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
+            * SS::Peer<H>
+            & SS!=CC & s!=c 
+     |-
+        s::Chan{s::PROJC{ x::node<a,b>}<SS> }<SS> *
+        c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS>. 
+expect Valid.
+print residue.
+
+*/
+/*
+checkentail C1_385=union({c_441},C1_442) & (c_441 notin C1_442)  
+    & flted_86_348=union({c_384},C1_385) & (c_384 notin C1_385)  
+    & s!=c & SS!=CC & PeerRel(SS,H) 
+    & flted_86_348={s,c} |- c_384=s.
+
+checkentail C1_377=union({c_433},C1_434) & (c_433 notin C1_434)  & Univ(c_433) & 
+ flted_76_348=union({c_376},C1_377) & (c_376 notin C1_377)  & 
+ Univ(c_376) &  s!=c & SS!=CC & PeerRel(SS,H) & 
+ flted_76_348={s,c} |-
+c_433=s.
+*/
