@@ -1,0 +1,16 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred_sess_prot G<S:role,C:role,ms:chan,mc:chan> == C->S:ms(1) ;; S->C:mc(v#v>0).
+
+
+checkentail SS::Party{  SS::PROJP{ x::node<s,b>}<> }<H,{s,c}>
+            & PeerRel(SS,H)
+            & SS!=CC & s!=c 
+     |-
+        c::Chan{c::PROJC{ x::node<s,b>}<SS> }<SS> *
+                s::Chan{s::PROJC{ x::node<s,b>}<SS> }<SS>.
+expect Valid.
+print residue.
+
+

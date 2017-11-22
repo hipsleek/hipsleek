@@ -1,0 +1,16 @@
+sleek_include 'msess/notes/node.slk'.
+
+pred ls<q,n> == self=q & n=0 or
+                self::node<_,r> * r::ls<q,n-1>.
+
+lemma self::ls<q,n> & n=a+b & a,b>=0 -> self::ls<r,a> * r::ls<q,b>.
+--lemma self::ls<q,n>  -> self::ls<r,a> * r::ls<q,b> & n=a+b & a,b>=0.
+lemma self::ls<q,S>  -> ex A,B. self::ls<r,A> * r::ls<q,B> & S=A U B .
+
+lemma self::ls<q,n> & n=a+b & a,b>=0 -> self::ls<r,a> * r::ls<q,b>.
+
+lemma self::ls<q,S> S=A U B & univ(A,b) 
+   -> ex A,B. self::ls<r,A> * r::ls<q,B> .
+
+checkentail x::ls<q,5> |- x::ls<r,2> * r::ls<q,3>.
+print residue.

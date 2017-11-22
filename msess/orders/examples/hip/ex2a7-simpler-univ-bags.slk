@@ -1,0 +1,94 @@
+sleek_include 'msess/notes/node.slk'.
+
+
+pred_prim Party<C>.
+pred_prim Chan <P>.
+
+//lemma_norm "SPLIT_PARTY" self::Party<S> & S=union({ccc},S1) & (ccc notin S1) -> ccc::Chan<self> * self::Party<S1>.
+//lemma_norm "SPLIT_PARTY" self::Party<S> & S!={} -> ccc::Chan<self> * self::Party<S1> & S=union({ccc},S1) & (ccc notin S1).
+//lemma_norm "CLEAN_PARTY" self::Party<S> & S={}  -> true.
+
+/*
+checkentail x::node<aa,bb> |- exists dd: x::node<cc,dd>.
+print residue.
+*/
+
+/*
+checkentail x::Chan<SS> *y::Chan<SS1> & S={x,y} & S={a,b} & Univ(a) & Univ(b) |-  x::Chan<SS> * y::Chan<SS1> .
+print residue.
+*/
+/*
+checkentail x1::Chan<SS> *y1::Chan<SS1> & S={x1,y1} & S={x,y} & Univ(x1) & Univ(y1)
+   |- y::Chan<SS1> * x::Chan<SS> .
+print residue.
+*/
+checkentail x1::Chan<SS> *y1::Chan<SS1> & S={x1,y1} & S={x,y} & Univ(x1) & Univ(y1)
+   |- x::Chan<SS> * y::Chan<SS1>.
+print residue.
+
+
+/*
+checkentail SS::Party<{aa,bb}> & aa!=bb 
+     |-  aa::Chan<SS> * bb::Chan<SS>.
+expect Valid.
+print residue.
+*/
+
+/*
+checkentail S= {aa,bb} & S = {cc,dd} //& Univ(aa) & Univ(bb)
+    |- aa=dd .
+*/
+
+//checkentail S= {aa,bb} & S = {cc,dd}  |- exists aa,bb: aa=dd & bb=dd & S={aa,bb} & S={cc,dd}.
+/*
+
+  lhs |- ex aa,bb. rhs &  {aa,bb}={cc,dd}
+
+S= {aa,bb} & S = {cc,dd}  |- ex aa,bb: aa=dd & bb=cc & S={aa,bb} & S={cc,dd}
+S= {aa,bb} & S = {cc,dd}  |- ex aa,bb: aa=dd & bb=dd & {aa,bb}={cc,dd}
+S= {aa,bb} & S = {cc,dd}  |- {dd,cc}={dd,dd}
+
+*/
+
+//checkentail S= {aa,bb} & S = {cc,dd} |- aa=cc & bb=dd or aa=dd & bb=cc.
+
+
+/*
+checkentail SS::Party<{s,c}> & s!=c 
+     |-  c::Chan<SS> * s::Chan<SS>.
+expect Valid.
+print residue.
+
+checkentail SS::Party<S> & S!={}
+     |-  exists c: c::Chan<SS>.
+*/
+/*
+checkentail s::Chan<SS>
+     |-  exists c: c::Chan<SS>.
+// do not handle
+
+checkentail a::Chan<SS> * b::Chan<SS> & (a=s | b=s)
+     |-  s::Chan<SS>.
+expect Valid.
+print residue.
+
+checkentail a::Chan<SS> * b::Chan<SS> &  a=s or
+            a::Chan<SS> * b::Chan<SS> &  b=s
+     |-  s::Chan<SS>.
+expect Valid.
+print residue.
+
+*/
+/*
+checkentail SS::Party<{a,b,c}> & a!=b & a!=c & b!=c
+     |-  a::Chan<SS> * b::Chan<SS> * c::Chan<SS>. 
+expect Valid.
+print residue.
+*/
+/*
+
+checkentail SS::Party<{a,b,c,d}> & a!=b & a!=c & a!=d & b!=c & b!=d & c!=d
+     |-  a::Chan<SS> * b::Chan<SS> * c::Chan<SS> * d::Chan<SS>.
+expect Valid.
+print residue.
+*/
