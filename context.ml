@@ -970,6 +970,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       if !Globals.ptr_arith_flag then
         let enlst = x_add_1 enhance_paset impr_stk paset in
         let lst = List.filter (fun (_,(f,_),_) -> f==1) enlst in
+        (* let lst = enlst in *)
         let same_base_lst = List.filter (fun (_,(f,_),_) -> f==2) enlst in
         let lst_with_reason = List.filter (fun (_,(f,_),_) -> f>0) enlst in
         let lst = List.map (fun (d,_,r) -> (d,r)) lst in

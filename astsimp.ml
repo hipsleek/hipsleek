@@ -4806,7 +4806,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let compute_univ () =
     let h, p, vp, _, _,_ = CF.split_components c_lhs in
     let pvars =mfv p in
-    let pvars = List.filter (fun (CP.SpecVar (_,id,_) as sv) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name || ((CP.is_rel_typ sv)))) pvars in (*ignore cyclic & acyclic rels *)
+    let pvars = List.filter (fun (CP.SpecVar (_,id,_) as sv) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name || (CP.is_rel_typ sv) (* || (CP.is_bag_typ sv) *))) pvars in (*ignore cyclic & acyclic rels *)
     let hvars = CF.h_fv h in
     let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
     Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in

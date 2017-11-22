@@ -70,9 +70,9 @@ lemma_norm  "INIT_BASE"
 /* ################################################################
     G({P1..Pn},C)  -> Party(P1,G,C,(G)|P1) * ... * Party(Pn,G,C,(G)|Pn) 
    ################################################################ */
-lemma_norm "SPLIT_GLOB" self::GLOB{%R}<P,C> & P=union({A},P1) & (A notin P1)
-                         -> A::Party{  A::PROJP{%R}<> }<self,C> * self::GLOB{%R}<P1,C>.
-lemma_norm "GLOB_INIT"  self::GLOB{%R}<P,C> & P={}
+lemma_norm "SPLIT_GLOB" self::GLOB{@S %R}<P,C> & P=union({A},P1) & (A notin P1)
+                         -> A::Party{  A::PROJP{@S %R}<> }<self,C> * self::GLOB{@S %R}<P1,C>.
+lemma_norm "GLOB_INIT"  self::GLOB{@S %R}<P,C> & P={}
                          -> self::INITALL<C>.
 
 /* ##########################################################################
@@ -82,9 +82,9 @@ lemma_norm "GLOB_INIT"  self::GLOB{%R}<P,C> & P={}
 lemma_norm "PROJ_BIND " self::Party{ %R }<GG,C> * self::Peer<GG>
                         -> self::Party{  %R }<GG,C> * self::BIND<GG,C> & PeerRel(self,GG).
 
-lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{%R}<> }<GG,C> 
-                        & C=union({c},C1) & (c notin C1) & PeerRel(self,GG)
-                         -> c::Chan{ c::PROJC{%R}<self>}<self> * self::Party{  self::PROJP{%R}<> }<GG,C1>.
+lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{@S %R}<> }<GG,C> 
+                        & C=union({ccc},C1) & (ccc notin C1) & PeerRel(self,GG)
+                         -> ccc::Chan{ ccc::PROJC{@S %R}<self>}<self> * self::Party{  self::PROJP{@S %R}<> }<GG,C1>.
 
-lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{%R}<> }<GG,C> & C={}
+lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{@S %R}<> }<GG,C> & C={}
                         -> true.

@@ -78,19 +78,31 @@ checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
             & SS!=CC & s!=c 
      |-
         s::Chan{s::PROJC{ x::node<a,b>}<SS> }<SS> *
-        c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS>. 
+        c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS> .
 expect Valid.
 print residue.
 
-
-checkentail SS::Party{  SS::PROJP{ x::G<SS,CC,s,c>}<> }<H,{s,c}>
+/*
+checkentail SS::Party{  SS::PROJP{@S G<AA,BB,sss,ccc>}<> }<H,{s,c}>
+            //* SS::Peer<H>
+           & PeerRel(SS,H) 
+           & SS!=CC & s!=c 
+     |-
+        s::Chan{s::PROJC{@S G<AA,BB,sss,ccc>}<SS> }<SS> *
+        c::Chan{c::PROJC{@S G<AA,BB,sss,ccc>}<SS> }<SS>. 
+expect Valid.
+print residue.
+*/
+/*
+checkentail SS::Party{  SS::PROJP{@S G<SS,CC,s,c>}<> }<H,{s,c}>
             & PeerRel(SS,H)
             & SS!=CC & s!=c 
      |-
-        s::Chan{s::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS> *
-        c::Chan{c::PROJC{ x::G<SS,CC,s,c>}<SS> }<SS>. 
+        s::Chan{s::PROJC{@S G<SS,CC,s,c>}<SS> }<SS> *
+        c::Chan{c::PROJC{@S G<SS,CC,s,c>}<SS> }<SS>. 
 expect Valid.
 print residue.
+*/
 
 /*
 checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
@@ -101,7 +113,8 @@ checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
         c::Chan{c::PROJC{ x::node<a,b>}<SS> }<SS>. 
 expect Valid.
 print residue.
-
+*/
+/*
 checkentail SS::Party{  SS::PROJP{ x::node<a,b>}<> }<H,{s,c}>
             * SS::Peer<H>
             & SS!=CC & s!=c 

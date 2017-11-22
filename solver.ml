@@ -15485,8 +15485,9 @@ and apply_one_norm_coerc_x prog coerc estate fnode frest =
 and apply_one_norm_coerc prog coerc estate fnode frest =
   let prc = Cprinter.string_of_coercion in
   let prh = Cprinter.string_of_h_formula in
+  let pre = Cprinter.string_of_entail_state in
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3 "apply_one_norm_coerc" (add_str "coerc" prc) (add_str "fnode" prh) (add_str "frest" prh) pr (fun _ _ _ -> apply_one_norm_coerc_x prog coerc estate fnode frest) coerc fnode frest 
+  Debug.no_4 "apply_one_norm_coerc" (add_str "coerc" prc) (add_str "fnode" prh) (add_str "frest" prh) (add_str "estate" pre) pr (fun _ _ _ _ -> apply_one_norm_coerc_x prog coerc estate fnode frest) coerc fnode frest estate
 
 and apply_norm_coerc prog estate ?left:(left = true) fnode frest =
   let coerc_candidates = choose_coerc_candidates_for_norm prog ~left:left fnode in
