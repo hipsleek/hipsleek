@@ -3877,11 +3877,12 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
     let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
     let () = y_dinfo_hp (add_str "new_conseq" !CP.print_formula) new_conseq in
-    let (b,_,_) as r = x_add imply_timeout ante0 new_conseq imp_no timeout process in
+    let (b,_,_) as res = x_add imply_timeout ante0 new_conseq imp_no timeout process in
     let () = y_dinfo_hp (add_str "imply_timeout_univ: b " string_of_bool) b in
     if b then
-      let () = univ_rhs_store # set conseq0 in r
-    else r
+      let () = univ_rhs_store # set conseq0 in res
+    else res
+    (* res *)
 
 let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
   let pf = Cprinter.string_of_pure_formula in

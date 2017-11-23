@@ -9989,6 +9989,8 @@ type entail_state = {
 
   (* used for early contra detect (when checking choices) during the entailment for session formulae *)
   es_conseq_for_unsat_check: formula option;
+  (* universal instatiations - previously stored in univ_rhs_store *)
+  es_univ_rhs: CP.formula list;
 }
 
 and context = 
@@ -10464,6 +10466,7 @@ let empty_es flowt grp_lbl pos =
     es_conc_err = [];
     es_rhs_pure = None;
     es_conseq_for_unsat_check = None;
+    es_univ_rhs = def_univ_rhs;
     (*es_infer_invs = [];*)
   }
 
@@ -20885,3 +20888,8 @@ let get_rel_id_list_from_list_context cl =
   match cl with
   | FailCtx _  -> []
   | SuccCtx cl -> List.fold_left (fun acc ctx -> acc@(get_rel_id_list_from_context ctx)) [] cl 
+
+let update_es_univ_rhs estate univ_rhs = {estate with es_univ_rhs = univ_rhs@estate.es_univ_rhs}
+
+let reset_es_univ_rhs estate = {estate with es_univ_rhs = def_univ_rhs}
+

@@ -9386,12 +9386,22 @@ type: bool *
       (* ========== end - Immutability normalization ======== *)
       (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
       let add_univ_pure es =
-        let univ_rhs_store = TP.univ_rhs_store in
-        if univ_rhs_store # is_empty then es
+       let univ_rhs_store = TP.univ_rhs_store in
+        let es = if univ_rhs_store # is_empty then es
         else 
           let nf = univ_rhs_store # get_rm in
           let () = y_dinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
           CF.add_pure_estate es nf 
+        in	
+        match es.es_univ_rhs with
+        | [] -> es
+        | nf ->
+          let () = y_dinfo_hp (add_str "univ pure --> lhs" (pr_list !CP.print_formula)) nf in
+          (* add univ_rhs to the current estate*)
+          let es = List.fold_left (fun es nf -> CF.add_pure_estate es nf) es nf in
+          (* reset the def_univ_rhs*)
+          let es = CF.reset_es_univ_rhs es in
+          es
       in
       let add_univ_pure es =
         let pr =  Cprinter.string_of_entail_state_short in 
@@ -9901,35 +9911,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           let a0l = if !label_split_ante then CP.split_disjunctions a0 else [a0] in
           let a0l = List.filter is_sat a0l in a0l
       in
-      let process_univ univ_vars ante0 conseq0 =
-        if not (TP.connected_rhs univ_vars conseq0) then ()
-        else
-          let prev_inst = TP.univ_rhs_store # get in
-          let ante0 = CP.drop_rel_formula ante0 in
-          let ante1 =TP.filter_inv ante0 in
-          let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
-          let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
-          let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
-          let b = x_add !CP.tp_imply ante0 new_conseq in
-          if b then
-            let () = y_tinfo_hp (add_str "process_univ added!" Cprinter.string_of_pure_formula) conseq0 in
-            TP.univ_rhs_store # set conseq0
-          else
-            ()
-      in
-      let process_univ univ_vars ante0 conseq0 =
-        Debug.no_3 "process_univ" !CP.print_svl Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun x -> "()") process_univ univ_vars ante0 conseq0
-      in
+      (* REMOVED unused  process_univ *)
       let univ_vars = TP.get_univs_from_ante a0 in
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
-      (* let () = List.iter (process_univ univ_vars a0) new_rhs in *)
-      (* let a0 = *)
-      (*   if TP.univ_rhs_store # is_empty *)
-      (*   then a0 *)
-      (*   else *)
-      (*     let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in *)
-      (*     a0 *)
-      (* in *)
       let a0l = f a0 in
       let a1l = match ante_m1 with
         | Some (MCP.OnePF a1) -> f a1
@@ -11626,7 +11610,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           in
           (* x_tinfo_hp (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos; *)
           x_tinfo_hp (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
-          let process_early univ_vs new_ante_p conseq_univ  =
+          let process_early univ_vs new_ante_p conseq_univ estate =
             let () = y_dinfo_pp "TODO: process early univ instantiation" in
             let () = y_dinfo_pp "=========================================" in
             let () = x_dinfo_hp (add_str "univ_vs" Cprinter.string_of_spec_var_list) univ_vs no_pos in
@@ -11638,20 +11622,27 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
             let lhs1 = MCP.pure_of_mix new_ante_p in
             let (b,_,_) = TP.imply_timeout_univ univ_vs lhs1 conseq_univ "666" 0.0 None in
             let () = y_dinfo_hp (add_str "outcome" string_of_bool) b in
-            if b then 
+            if b then
+              let new_ante, estate =
               let r = TP.univ_rhs_store # get_rm in
               let new_ante = CP.mkAnd lhs1 r no_pos in
-              (b,MCP.mix_of_pure new_ante)
-            else (b,new_ante_p)
+                match estate.es_univ_rhs with
+                | [] -> new_ante,estate
+                | nf ->
+                  let estate = CF.reset_es_univ_rhs estate in
+                  let () = y_dinfo_hp (add_str "univ pure --> lhs" (pr_list !CP.print_formula)) nf in
+                  (List.fold_left (fun acc nf -> CP.mkAnd acc nf no_pos) lhs1 nf), estate in
+              (b,MCP.mix_of_pure new_ante,estate)
+            else (b,new_ante_p,estate)
             (* failwith ("early univ inst proc here"^x_tbi) *)
           in
-          let new_conseq_p,new_ante_p = 
+          let new_conseq_p,new_ante_p, estate = 
             if conseq_lst_univ!=[] then
               let conseq_univ = CP.join_conjunctions conseq_lst_univ in
-              let (flag,ante) = process_early univ_vs new_ante_p conseq_univ in
-              if flag then (new_conseq_p2,ante)
-              else (new_conseq_p,new_ante_p)
-            else new_conseq_p,new_ante_p in
+              let (flag,ante,new_estate) = process_early univ_vs new_ante_p conseq_univ estate in
+              if flag then (new_conseq_p2,ante,new_estate)
+              else (new_conseq_p,new_ante_p,estate)
+            else new_conseq_p,new_ante_p,estate in
           (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
           (* let () = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in             *)
           (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
@@ -13319,12 +13310,14 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_rhs_rest = rhs_rest;
         Context.match_res_infer = infer_opt;
         Context.match_res_holes = holes;
+        Context.match_res_univ_rhs = univ_rhs;
       } as m_res)->
       x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
       x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
       x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
       x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      let estate = update_es_univ_rhs estate univ_rhs in
       let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
                                     ) lhs_rest holes
       in

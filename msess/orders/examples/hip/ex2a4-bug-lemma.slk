@@ -14,12 +14,12 @@ expect Valid.
 print residue.
 */
 
-checkentail SS::Party{  SS::PROJP{ x::node<s,b>}<> }<H,{c,c,s}>
+checkentail SS::Party{  SS::PROJP{ x::node<s,b>}<> }<H,{c,s}>
             & PeerRel(SS,H)
             & SS!=CC & s!=c 
      |-
-        c::Chan{c::PROJC{ x::node<s,b>}<SS> }<SS> *
-        s::Chan{s::PROJC{ x::node<s,b>}<SS> }<SS> .
+         s::Chan{s::PROJC{ x::node<s,b>}<SS> }<SS> *
+         c::Chan{c::PROJC{ x::node<s,b>}<SS> }<SS> .
 expect Valid.
 print residue.
 

@@ -49,6 +49,7 @@ type match_res = {
   (* this indicates compatible variables from LHS/RHS that can be used *)
   (* for base-case-fold/unfold and instantiation *)
   match_res_compatible: (CP.spec_var * CP.spec_var) list; (* for infer_unfold (unkown pred, unkown pred), rhs args are inst with lhs args *)
+  match_res_univ_rhs: CP.formula list;
 }
 
 (*
@@ -122,7 +123,7 @@ let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
 
 
-let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node rhs_rest =
+let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node ?(univ_rhs=def_univ_rhs) rhs_rest =
   {
     match_res_lhs_node = lhs_node;
     match_res_lhs_rest = lhs_rest;
@@ -135,6 +136,7 @@ let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(m
     match_res_alias_set = alias;
     match_res_root_inst = root_inst;
     match_res_infer = imprecise;
+    match_res_univ_rhs = univ_rhs;
   }
 
 let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node rhs_rest =
@@ -283,6 +285,7 @@ let pr_match_res (c:match_res):unit =
   fmt_string "alias set: "; fmt_string ((pr_list pr_sv) c.match_res_alias_set) ; fmt_cut ();
   fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ; fmt_cut ();
   fmt_string "rhs_infer: "; fmt_string ((pr_opt !CP.print_formula) c.match_res_infer) ; fmt_cut ();
+  fmt_string "univ_rhs: "; fmt_string ((pr_list !CP.print_formula) c.match_res_univ_rhs) ; fmt_cut ();
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -807,7 +810,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       in
        let () = y_tinfo_hp (add_str "view_root(rhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
       (* this picks existential/instvars in estate *)
-      let lst = List.map (fun (d,root_lhs) -> 
+      let lst = List.map (fun (d,root_lhs) ->
+          (*   TODO andreeac reset the store here for each possible alias *)
           let () = y_tinfo_hp (add_str "view_root(lhs)" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) root_lhs in
          match view_root_rhs with
           | Some ((v,rf)) -> 
@@ -1022,11 +1026,21 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* ) in                                                               *)
       let mt_res =
         List.map (fun (alias,_) ->
+            (* let paset_orig = paset in *)
             let paset = alias::paset in
-            x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap
+            let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+            if TP.univ_rhs_store # is_empty then mt_res
+            else
+              let univ_rhs = TP.univ_rhs_store # get_rm in
+              let mt_res = List.map (fun mt_res ->
+                  {mt_res with match_res_univ_rhs =
+                                 univ_rhs::mt_res.match_res_univ_rhs}
+                ) mt_res in
+              (* let mt_res = List.map (fun mt_res -> add_univ_vars mt_res paset_orig alias) mt_res in *)
+              mt_res 
           ) lst in
       let mt_res = List.flatten mt_res in
-        (* x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in *)
+      (* x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in *)
       (* let mt_res = *)
       (*   match rhs_inst_eq with *)
       (*     |[] -> mt_res *)

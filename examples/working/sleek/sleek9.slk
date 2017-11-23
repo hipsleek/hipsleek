@@ -34,6 +34,7 @@ checkentail x::lseg<n, p> & n = 10 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::l
 // valid 
 
 checkentail x::ll_tail<r3, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 2.
+print residue.
 // fail
 
 checkentail x::ll_tail<r3, n> & n = 11 |- x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 3 & n2 = 4 & n3 = 3.

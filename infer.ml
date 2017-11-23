@@ -529,7 +529,9 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
             match_res_root_inst = None;
             match_res_alias_set = rt_al;
             match_res_infer    = None;
-            match_res_compatible = []; } in
+            match_res_compatible = [];
+            match_res_univ_rhs = def_univ_rhs;
+          } in
           let act = M_match r in
           (
             (* WARNING : any dropping of match action must be followed by pop *)

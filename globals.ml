@@ -1681,6 +1681,8 @@ let pre_residue_lvl = ref 0
 
 let def_coerc_prio = 1
 
+let def_univ_rhs = []
+
 let check_coercions = ref false
 let eager_coercions = ref true
 let dump_lemmas = ref false
