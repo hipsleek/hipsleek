@@ -3872,7 +3872,7 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
     let ante0 = CP.drop_rel_formula ante0 in
     let ante1 = filter_inv ante0 in
     let () = y_dinfo_hp (add_str "ante1 (aftre filter inv)" !CP.print_formula) ante1 in
-    let new_conseq = CP.mkAnd ante1 prev_inst no_pos in
+    let new_conseq = ante1 (* CP.mkAnd ante1 prev_inst no_pos *) in
     (* let () = y_tinfo_hp (add_str "univ_vars2" (pr_list !CP.print_sv)) univ_vars in *)
     let new_conseq = CP.mkAnd new_conseq conseq0 no_pos in
     let new_conseq = CP.mkExists univ_vars new_conseq None no_pos in
@@ -3883,6 +3883,11 @@ let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
       let () = univ_rhs_store # set conseq0 in r
     else r
 
+let imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process =
+  let pf = Cprinter.string_of_pure_formula in
+  Debug.no_3 "imply_timeout_univ" pf pf !CP.print_svl (fun (b,_,_) -> string_of_bool b)
+    (fun _ _ _ -> imply_timeout_univ univ_vars ante0 conseq0 imp_no timeout process)
+    ante0 conseq0 univ_vars
 
 let imply_timeout ante0 conseq0 imp_no timeout process =
   let (b,lst,fl) as ans = x_add imply_timeout ante0 conseq0 imp_no timeout process in

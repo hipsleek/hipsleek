@@ -273,16 +273,16 @@ let pr_match_type (e:match_type):unit =
 
 
 let pr_match_res (c:match_res):unit =
-  fmt_open_vbox 0;
+  fmt_open_vbox 0; fmt_cut ();
   pr_hwrap "Type: " pr_match_type c.match_res_type; fmt_cut ();
   pr_hwrap "LHS: " pr_h_formula c.match_res_lhs_node; fmt_cut ();
   pr_hwrap "RHS: " pr_h_formula c.match_res_rhs_node; fmt_cut ();
   pr_hwrap "root_inst: " fmt_string ((pr_option !CP.print_sv) c.match_res_root_inst); fmt_cut ();
   fmt_string "lhs_rest: "; pr_h_formula c.match_res_lhs_rest; fmt_cut ();
   fmt_string "rhs_rest: "; pr_h_formula c.match_res_rhs_rest; fmt_cut ();
-  fmt_string "alias set: "; fmt_string ((pr_list pr_sv) c.match_res_alias_set) ;
-  fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ;
-  fmt_string "rhs_infer: "; fmt_string ((pr_opt !CP.print_formula) c.match_res_infer) ;
+  fmt_string "alias set: "; fmt_string ((pr_list pr_sv) c.match_res_alias_set) ; fmt_cut ();
+  fmt_string "rhs_inst: "; fmt_string ((pr_list (pr_pair pr_sv pr_sv)) c.match_res_compatible) ; fmt_cut ();
+  fmt_string "rhs_infer: "; fmt_string ((pr_opt !CP.print_formula) c.match_res_infer) ; fmt_cut ();
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
   fmt_close ()
@@ -786,6 +786,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (* in *)
       (* let () = y_tinfo_hp (add_str "diff_ptrs" !CP.print_svl) diff_ptrs in *)
       let () = y_tinfo_hp (add_str "lhs_nodes(b4)" !CP.print_svl) (List.map fst lhs_nodes) in
+      let () = y_tinfo_hp (add_str "lhs_nodes(b4)" (pr_list (pr_pair !CP.print_sv (pr_option (pr_pair !CP.print_sv !CP.print_formula))))) lhs_nodes in
       (* let lhs_nodes = Gen.BList.difference_eq (fun (d,_) v -> CP.eq_spec_var d v) lhs_nodes paset in *)
       let () = y_tinfo_hp (add_str "lhs_nodes(ptr_arith)" !CP.print_svl) (List.map fst lhs_nodes) in
       (* let () = y_winfo_pp "unfolding need to access to view_root_lhs" in *)
@@ -893,9 +894,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let r =
                     if same_base then
                       let neg_rhs = CP.mkNot_s rhs in
-                      not(!CP.tp_imply lhs_w_rhs_inst neg_rhs)  
+                      not(x_add !CP.tp_imply lhs_w_rhs_inst neg_rhs)  
                     else 
-                      (!CP.tp_imply lhs_w_rhs_inst rhs)  
+                      (x_add !CP.tp_imply lhs_w_rhs_inst rhs)  
                   in
                   (* let r = !CP.tp_imply lhs_w_rhs_inst rhs  in *)
                   let () =  y_tinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate  in
@@ -990,11 +991,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       else
         []
     in
-    let paset =
-      if !Globals.ptr_arith_flag then
-        if lst==[] then paset
-        else (List.map fst lst)@paset
-       else paset in
+    let paset = paset in
+      (* if !Globals.ptr_arith_flag then *)
+      (*   if lst==[] then paset *)
+      (*   else (List.map fst lst)@paset *)
+      (*  else paset in *)
     let paset_with_reason =
       let orgin_set = List.map (fun v -> (v,None)) paset in
       (orgin_set)@(List.map (fun (f,s,t) -> (f,s))lst_with_reason)
@@ -1019,7 +1020,13 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
-      let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
+      let mt_res =
+        List.map (fun (alias,_) ->
+            let paset = alias::paset in
+            x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap
+          ) lst in
+      let mt_res = List.flatten mt_res in
+        (* x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in *)
       (* let mt_res = *)
       (*   match rhs_inst_eq with *)
       (*     |[] -> mt_res *)

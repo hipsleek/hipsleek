@@ -17,15 +17,24 @@ print residue.
 checkentail x::Chan<SS> *y::Chan<SS1> & S={x,y} & S={a,b} & Univ(a) & Univ(b) |-  x::Chan<SS> * y::Chan<SS1> .
 print residue.
 */
+
 /*
 checkentail x1::Chan<SS> *y1::Chan<SS1> & S={x1,y1} & S={x,y} & Univ(x1) & Univ(y1)
    |- y::Chan<SS1> * x::Chan<SS> .
 print residue.
 */
+
 checkentail x1::Chan<SS> *y1::Chan<SS1> & S={x1,y1} & S={x,y} & Univ(x1) & Univ(y1)
    |- x::Chan<SS> * y::Chan<SS1>.
 print residue.
 
+/*
+checkentail Univ(y1) & Univ(x1) & S={x,y} & S={x1,y1} |- x1=x.
+print residue.
+
+checkentail Univ(y1) & Univ(x1) & S={x,y} & S={x1,y1} |- y1=x.
+print residue.
+*/
 
 /*
 checkentail SS::Party<{aa,bb}> & aa!=bb 

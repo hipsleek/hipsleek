@@ -255,7 +255,27 @@ simplification of context leads to disjunctive formula
 
 =====================================
 =====================================
+why is the entailment dependent on the order of matching?
 
+@30!:0: 0: **tpdispatcher.ml#3879:new_conseq: exists(x1:exists(y1:S={x,y} & S={x1,y1} & y1=x & x1=x))
+!!! **mona.ml#1518:mona_answ:Formula is satisfiable
+(==tpdispatcher.ml#3711==)
+tp_imply@32@31@30@26@25@24@23@12@11
+tp_imply inp1 :ante: S={x,y} & S={x1,y1}
+tp_imply inp2 :conseq: S={x,y} & S={x,x}
+tp_imply@32 EXIT:solver:MONA: false
+
+
+vs
+
+
+@20!:0: 0: **tpdispatcher.ml#3879:new_conseq: exists(x1:exists(y1:S={x,y} & S={x1,y1} & y1=x))
+!!! **mona.ml#1518:mona_answ:Formula is valid
+(==tpdispatcher.ml#3711==)
+tp_imply@22@21@20@16@15@14@13@12@11
+tp_imply inp1 :ante: S={x,y} & S={x1,y1}
+tp_imply inp2 :conseq: exists(x1_34:S={x,y} & S={x1_34,x})
+tp_imply@22 EXIT:solver:MONA: true
 
 =====================================
 =====================================
