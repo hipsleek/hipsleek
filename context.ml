@@ -776,7 +776,16 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       else []
     in
     let rhs_inst_eq = get_rhs_inst_eq rhs_ptr estate in
+    let get_univ_rhs b =
+      if b then
+        if TP.univ_rhs_store # is_empty then None
+        else
+          let univ_rhs = TP.univ_rhs_store # get_rm in
+          Some univ_rhs
+      else None
+    in
     let enhance_paset impr_stk paset =
+      let def_opt_univ_rhs = None in
       let lhs_nodes = get_views_offset prog lhs_h in
       let heap_ptrs = h_fv ~vartype:Global_var.var_with_heap_ptr_only lhs_h in
       let () = y_tinfo_hp (add_str "heap_ptrs" !CP.print_svl) heap_ptrs in
@@ -857,8 +866,8 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let rf = CP.apply_subs [(v,d)] rf in
                   let () =  y_tinfo_hp (add_str "rf(subs)" !CP.print_formula) rf  in
                   let () =  y_tinfo_hp (add_str "is_sat [lhs_pure;eq;rf;rhs_p]" string_of_bool) r  in
-                  (d,(map_r r,None),Some rf)
-                else (d,(map_r r,None),None)
+                  (d,(map_r r,None),Some rf,def_opt_univ_rhs)
+                else (d,(map_r r,None),None,def_opt_univ_rhs)
               | Some ((v2,pf)) ->
                 let rhs_eq = CP.mkEqVars d rhs_ptr in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr" !CP.print_formula) rhs_eq  in
@@ -867,7 +876,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 (* let new_lhs = CP.join_conjunctions (lhs_pure::rhs_inst_eq) in *)
                 let r = !CP.tp_imply lhs_w_rhs_inst rhs_eq in
                 let () =  y_tinfo_hp (add_str "lhs=rhs_ptr(view matching)" string_of_bool) r  in
-                (d,(map_r r,None),None)
+                (d,(map_r r,None),None,get_univ_rhs r)
                 (* failwith (x_loc^"view matching..") *)
             end
           | None   -> 
@@ -907,20 +916,20 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
                   let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
-                  if CF.no_infer_all_all estate || r || !Globals.adhoc_flag_6 then (d,(map_r r,None),None)
+                  if CF.no_infer_all_all estate || r || !Globals.adhoc_flag_6 then (d,(map_r r,None),None, get_univ_rhs r)
                   else
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)
                       let () = y_winfo_pp "pushing to infer" in
                       let () =  y_tinfo_hp (add_str "lhs_pure" !CP.print_formula) lhs_pure  in
                       let () = impr_stk # push (d,rhs) in
-                      (d,(map_r same_base,None),None)
+                      (d,(map_r same_base,None),None,get_univ_rhs r)
                     end
                 else 
                   let () = y_tinfo_pp "Not same base" in
                   (* (d,false,None) *)
                   (* 0=false, 1=true, 2=same base *)
-                  (d,(0,None),None)
+                  (d,(0,None),None,def_opt_univ_rhs)
               | Some ((root,root_pf)) ->
                 let () = y_tinfo_hp (add_str "d" !CP.print_sv) d in
                 (* let () = y_winfo_hp (add_str "TODO: rename root" !CP.print_sv) root in *)
@@ -938,7 +947,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                 let r = !CP.tp_imply lhs rhs in
                 let () = y_tinfo_hp (add_str "ante --> rhs" string_of_bool) r  in
                 if r then
-                  (d,(map_r r,None),None)
+                  (d,(map_r r,None),None,get_univ_rhs r)
                 else
                   let rhs_for_base = CP.mk_is_base_ptr rhs_ptr d in
                   let r = !CP.tp_imply lhs rhs_for_base in
@@ -946,9 +955,9 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   (* r==2 means that it is NOT exact match but they have the same base, ex. a=b+1 *)
                   (* r==0 means that it is nether exact match nor same base *)
                   if r then
-                    (d,(0,Some lhs),None)
+                    (d,(0,Some lhs),None,get_univ_rhs r)
                   else
-                    (d,(0,None),None)
+                    (d,(0,None),None,get_univ_rhs r)
                 (* failwith (x_loc^"unfolding") *)
             end
             (*   | _ -> (d,false,None) *)
@@ -958,8 +967,11 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       lst in
     let enhance_paset impr_stk paset =
       let pr2 = !CP.print_svl in
-      let pr_item =function
-        | (sv,(b,r),fo) -> "("^(!CP.print_sv sv)^",("^(string_of_int b)^","^(pr_option (!CP.print_formula) r)^"),"^((pr_option !CP.print_formula) fo)^")"
+      let pr_item =
+        pr_quad !CP.print_sv
+          (pr_pair string_of_int (pr_option (!CP.print_formula)))
+          (pr_option !CP.print_formula)
+          (add_str "univ_rhs" (pr_option !CP.print_formula))
       in
       let pr1 impr=
         let stk = impr_stk # get_stk in
@@ -974,20 +986,22 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let (lst,same_base_lst,lst_with_reason) =
       if !Globals.ptr_arith_flag then
         let enlst = x_add_1 enhance_paset impr_stk paset in
-        let lst = List.filter (fun (_,(f,_),_) -> f==1) enlst in
+        let lst = List.filter (fun (_,(f,_),_,_) -> f==1) enlst in
         (* let lst = enlst in *)
-        let same_base_lst = List.filter (fun (_,(f,_),_) -> f==2) enlst in
-        let lst_with_reason = List.filter (fun (_,(f,_),_) -> f>0) enlst in
-        let lst = List.map (fun (d,_,r) -> (d,r)) lst in
-        let same_base_lst = List.map (fun (d,_,r) -> (d,r)) same_base_lst in
-        let lst_with_reason = List.map (fun (d,(_,reason),r) -> (d,reason,r)) lst_with_reason in
+        (* why filter by f==2 if f can only be 1 or 0? - see enhance_paset *)
+        let same_base_lst = List.filter (fun (_,(f,_),_,_) -> f==2) enlst in
+        let lst_with_reason = List.filter (fun (_,(f,_),_,_) -> f>0) enlst in
+        let lst = List.map (fun (d,_,r,u) -> (d,r,u)) lst in
+        let same_base_lst = List.map (fun (d,_,r,_) -> (d,r)) same_base_lst in
+        let lst_with_reason = List.map (fun (d,(_,reason),r,_) -> (d,reason,r)) lst_with_reason in
         (lst, same_base_lst,lst_with_reason)
       else ([],[],[])
     in
     let () = y_tinfo_hp (add_str "paset_old" !CP.print_svl) paset_old in
     let () = y_tinfo_hp (add_str "paset" !CP.print_svl) paset in
-    let () = y_tinfo_hp (add_str "lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) lst in
-    let () = y_tinfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv (pr_option !CP.print_formula)))) same_base_lst in
+    let pr_opt_form = (pr_option !CP.print_formula) in
+    let () = y_tinfo_hp (add_str "lst" (pr_list (pr_triple !CP.print_sv pr_opt_form pr_opt_form))) lst in
+    let () = y_tinfo_hp (add_str "same_base_lst" (pr_list (pr_pair !CP.print_sv pr_opt_form))) same_base_lst in
     let () = y_tinfo_hp (add_str "view_root_rhs" (pr_option ( (pr_pair !CP.print_sv !CP.print_formula)))) view_root_rhs in
     let same_base_aset =
       if !Globals.ptr_arith_flag then
@@ -1008,7 +1022,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
     let () = y_tinfo_hp (add_str "same_base_aset:2" (pr_list (!CP.print_sv))) same_base_aset in
     (* view with root ptrs *)
     (* what is this root_lst, should it not be for the rhs_node? *)
-    let root_lst = List.fold_left (fun acc (d,r) ->
+    let root_lst = List.fold_left (fun acc (d,r,_) ->
         match r with
         | None -> acc
         | Some r -> (d,r)::acc
@@ -1024,20 +1038,19 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*     spatial_ctx_accfold_extract prog lhs_h lhs_p rhs_node rhs_rest *)
       (*   else []                                                          *)
       (* ) in                                                               *)
+      
+      (* create a distinct match for each possible alias insted of          *)
+      (* creating one single match comprising  each possible alias          *)
       let mt_res =
-        List.map (fun (alias,_) ->
-            (* let paset_orig = paset in *)
+        List.map (fun (alias,_,univ) ->
             let paset = alias::paset in
             let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
-            if TP.univ_rhs_store # is_empty then mt_res
-            else
-              let univ_rhs = TP.univ_rhs_store # get_rm in
-              let mt_res = List.map (fun mt_res ->
-                  {mt_res with match_res_univ_rhs =
-                                 univ_rhs::mt_res.match_res_univ_rhs}
-                ) mt_res in
-              (* let mt_res = List.map (fun mt_res -> add_univ_vars mt_res paset_orig alias) mt_res in *)
-              mt_res 
+            match univ with
+            | None    -> mt_res
+            | Some un -> 
+              List.map (fun mt_res ->
+                  {mt_res with match_res_univ_rhs = un::mt_res.match_res_univ_rhs}
+                ) mt_res
           ) lst in
       let mt_res = List.flatten mt_res in
       (* x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in *)
