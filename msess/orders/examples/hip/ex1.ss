@@ -28,20 +28,24 @@ Guards:     [f#1cmap ; b#2cmap]: k#1 <_HB k#2 == A^1 <_HB B^2 /\ B^1 <_HB C^2
 
 /* lemma_norm self::Common{@S Assume{%P}<>}<> -> %P. */
 
+chan
+
 void A(Channel k1, Channel k2)
- requires k1::Chan{@S G<A@peer,B,C,k1@chan,k2>}<> * k1::Common{@S G@all<A,B,C,k1,k2>}<>
- ensures  k1::Chan{emp}<>;
+ requires k1::Chan{@S G<A@peer,B,C,k1@chan,k2>}<A> *
+          k1::Common{@S G@all<A,B,C,k1,k2>}<> *
+          A::Peer<G>
+ ensures  k1::Chan{emp}<A> * A::Peer<G>;
 {
- //assert k1::Common{emp}<>;
  send(k1,1);
  dprint;
- // assert  ohbp(B,id_22,B,id_21) & ocb(B,id_21,C,id_21) & ocb(A,id_22,B,id_22);
 }
 
-
 void B(Channel k1, Channel k2)
- requires k1::Chan{@S G<A,B@peer,C,k1@chan,k2>}<> * k2::Chan{@S G<A,B@peer,C,k1,k2@chan>}<> * k1::Common{@S G@all<A,B,C,k1,k2>}<>
- ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
+ requires k1::Chan{@S G<A,B@peer,C,k1@chan,k2>}<B> *
+          k2::Chan{@S G<A,B@peer,C,k1,k2@chan>}<B> *
+          k1::Common{@S G@all<A,B,C,k1,k2>}<> *
+          B::Peer<G>
+ ensures  k1::Chan{emp}<B> * k2::Chan{emp}<B> * B::Peer<G>;
 {
  int x = receive(k1);
  int y = receive(k2);
@@ -50,8 +54,12 @@ void B(Channel k1, Channel k2)
 }
 
 void B_fail(Channel k1, Channel k2)
- requires k1::Chan{@S G<A,B@peer,C,k1@chan,k2>}<> * k2::Chan{@S G<A,B@peer,C,k1,k2@chan>}<> * k1::Common{@S G@all<A,B,C,k1,k2>}<>
- ensures  k1::Chan{emp}<> * k2::Chan{emp}<>;
+ requires k1::Chan{@S G<A,B@peer,C,k1@chan,k2>}<B> *
+          k2::Chan{@S G<A,B@peer,C,k1,k2@chan>}<B> *
+          k1::Common{@S G@all<A,B,C,k1,k2>}<> *
+          B::Peer<G>
+ ensures  k1::Chan{emp}<B> * k2::Chan{emp}<B> *
+          B::Peer<G>;
 {
  int x = receive(k1);
  send(k2,3);
@@ -60,11 +68,13 @@ void B_fail(Channel k1, Channel k2)
 
 
 void C(Channel k1, Channel k2)
- requires k2::Chan{@S G<A,B,C@peer,k1,k2@chan>}<> * k2::Common{@S G@all<A,B,C,k1,k2>}<>
- ensures  k2::Chan{emp}<>;
+ requires k2::Chan{@S G<A,B,C@peer,k1,k2@chan>}<C> *
+          k2::Common{@S G@all<A,B,C,k1,k2>}<> *
+          C::Peer<G>
+ ensures  k2::Chan{emp}<C> *
+          C::Peer<G>;
 {
 // int x = receive(k2);
 send(k2,2);
  dprint;
 }
-

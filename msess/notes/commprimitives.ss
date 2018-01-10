@@ -12,12 +12,12 @@ do so by using an exclusive channel
  int
 */
 void send (Channel ccc, int xxx)
-  requires ccc::Chan{@S !v#%L(v);;%R}<P> * %L(xxx) * P::Peer<>
-  ensures  ccc::Chan{@S %R}<P> * P::Peer<>;
+  requires ccc::Chan{@S !v#%L(v);;%R}<P> * %L(xxx) * P::Peer<G>
+  ensures  ccc::Chan{@S %R}<P> * P::Peer<G>;
 
 int receive (Channel ccc)
-  requires ccc::Chan{@S ?v#%L(v);;%R}<P> * P::Peer<>
-  ensures  ccc::Chan{@S %R}<P> * %L(res) * P::Peer<>;
+  requires ccc::Chan{@S ?v#%L(v);;%R}<P> * P::Peer<G>
+  ensures  ccc::Chan{@S %R}<P> * %L(res) * P::Peer<G>;
 
 
 
@@ -65,14 +65,14 @@ void sends (Channel c, SString x)
 SString receives (Channel c)
   requires c::Chan{@S ?v#%L(v);;%R}<P>
   ensures  c::Chan{@S %R}<P> * %L(res);
-  
+
 /**
 
 ============================= 2 ============================
 OPEN/CLOSE
 */
 
-/* 
+/*
    cl  - logical channel
    res - program channel
 */
@@ -80,7 +80,7 @@ Channel open() with (cl,P,GGG)
   requires cl::INIT<GGG>
   ensures  cl::OPENED<P,GGG,res>;
 
-/* 
+/*
    cl - logical channel
    c  - program channel
 */
