@@ -711,8 +711,8 @@ let smart_string_of_spec_var x =
     else string_of_spec_var x
 
 let rec string_of_sec_label = function
-  | CP.Hi -> "Hi"
-  | CP.Lo -> "Lo"
+  | CP.Hi -> "@Hi"
+  | CP.Lo -> "@Lo"
   | CP.Lub (l1, l2) -> string_of_sec_label l1 ^ " |_| " ^ string_of_sec_label l2
   | CP.SecVar var -> string_of_spec_var var
 
@@ -3729,6 +3729,7 @@ let pr_estate ?(nshort=true) (es : entail_state) =
   pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel_short) (es.es_infer_hp_rel # get_stk_recent);
   pr_wrap_test "es_evars: "  Gen.is_empty (pr_seq "" pr_spec_var)  es.es_evars;
   pr_wrap_test "es_gen_impl_vars(E): "  (fun _ -> false) (pr_seq "" pr_spec_var)  es.es_gen_impl_vars;
+  pr_wrap_test "es_security_context: " (fun _ -> false) pr_sec_label es.es_security_context;
   (* added temporarily to see consumed heap *)
   if !Globals.print_extra then
     begin
