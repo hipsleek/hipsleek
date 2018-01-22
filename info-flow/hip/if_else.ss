@@ -179,7 +179,7 @@ int if_var7_fails(int x, int y)
 	return z;
 }
 
-int if_var1(int x, int y)
+int if_var8(int x, int y)
 	requires x <^ @Hi & y <^ @Hi
 	ensures res <^ @Hi;
 {
