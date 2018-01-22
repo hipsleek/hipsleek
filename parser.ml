@@ -2152,7 +2152,7 @@ sec_expr: [
   | `LO_SEC -> P.Lo
   | lc=SELF; `LUB_SEC; cl=SELF -> P.Lub (lc, cl)
   | `RES _ -> P.SecVar (res_name, Unprimed)
-  | `IDENTIFIER id -> P.SecVar (id, Unprimed)
+  | `IDENTIFIER id -> P.SecVar (sv_of_id id)
 ]];
 
 cexp_w:
@@ -2183,7 +2183,7 @@ cexp_w:
     ]
   | "bconstr"
     [ `IDENTIFIER id; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity (id, Unprimed) sec (get_pos_camlp4 _loc 2) in
+        let sec_form = P.mkSecurity (sv_of_id id) sec (get_pos_camlp4 _loc 2) in
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
