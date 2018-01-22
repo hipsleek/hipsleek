@@ -388,6 +388,12 @@ and sec_label =
   | Lub of sec_label * sec_label
   | SecVar of spec_var
 
+let sec_var v = SecVar v
+
+let lub s1 s2 = Lub (s1, s2)
+
+let mk_security v lbl pos = Security (VarBound (v, lbl), pos)
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
@@ -4638,6 +4644,7 @@ and b_apply_subs_x sst bf =
                          lex_exp = e_apply_subs_list sst t_info.lex_exp;
                          lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
               | Security (sec_formula, pos) ->
+                  let sst = List.filter (fun (fr, SpecVar (_, t, _)) -> t <> Globals.res_name) sst in
                   let sub_formula = match sec_formula with
                     | VarBound (var, lbl) -> VarBound (subs_one sst var, sec_label_apply_subs sst lbl)
                   in
@@ -5044,7 +5051,14 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
                          lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
                          lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp;
                          lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
-              | Security (_, _) -> pf
+              | Security (VarBound (var, sec_lbl) , pos) ->
+                  begin match t with
+                  | Var (nv, _) ->
+                      let pf, _ = b_apply_subs [(fr, nv)] bf
+                      in
+                      pf
+                  | _ -> pf
+                  end
     in helper pf
   in (npf,il)
 
@@ -14532,8 +14546,8 @@ and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (r
 and translate_sec_label = function
   | Hi -> [], [], IConst (1, no_pos)
   | Lo -> [], [], IConst (0, no_pos)
-  | SecVar (SpecVar (typ, var_name, _)) ->
-      let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+  | SecVar (SpecVar (_, var_name, primed)) ->
+      let var = SpecVar (Globals.UNK, "sec_" ^ var_name, primed) in
       [], [], Var (var, no_pos)
   | Lub (l1, l2) ->
       let lst1, fv1, t1 = translate_sec_label l1 in
@@ -14545,8 +14559,8 @@ and translate_sec_label = function
 and translate_sec_formula = function
   | Security (sf, loc) ->
       begin match sf with
-      | VarBound (SpecVar (typ, var_name, _), sec) ->
-          let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+      | VarBound (SpecVar (_, var_name, primed), sec) ->
+          let var = SpecVar (Globals.UNK, "sec_" ^ var_name, primed) in
           let extra_p_form, fv, expr = translate_sec_label sec in
           extra_p_form, fv, Lte (Var (var, loc), expr, loc)
       end
