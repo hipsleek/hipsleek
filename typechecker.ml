@@ -1711,7 +1711,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       with _ -> t0
                     else t0
                   in
-                  let _ = print_endline (!print_formula c1.CF.es_formula) in
+
                   (* Security formula handling -- start *)
                   (* let fvs = List.map CP.mk_spec_var (Cast.exp_fv rhs) in
                   let bound = match fvs with
@@ -2220,11 +2220,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         begin
           let () = proving_loc#set pos in
           (* let ctx = CF.push_esc_level_list ctx idf pid in *)
-          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
+          let cond_var = CP.to_primed @@ CP.mk_typed_spec_var Globals.Bool v in
+          let pure_cond = (CP.BForm ((CP.BVar (cond_var, pos), None), None)) in
 
           (* Raise security context *)
+          let orig_sec_ctx = ref CP.Lo in
           let raise_sec_ctx state =
-            let sec_v = CP.SecVar (CP.mk_spec_var v) in
+            let () = orig_sec_ctx := state.CF.es_security_context in
+
+            let sec_v = CP.SecVar cond_var in
             let sec_ctx = CP.Lub (sec_v, state.CF.es_security_context) in
             let raised_state = CF.Ctx { state with CF.es_security_context = sec_ctx } in
             raised_state
@@ -2254,6 +2258,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+
+          let restore_sec_ctx entail_state =
+            let restored_state = CF.Ctx { entail_state with CF.es_security_context = !orig_sec_ctx } in
+            restored_state
+          in
+          let res = CF.transform_list_failesc_context (idf, idf, restore_sec_ctx) res in
+
           (* let res = CF.pop_esc_level_list res pid in *)
           res
         end in
