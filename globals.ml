@@ -865,6 +865,10 @@ let lsmu_typ = BagT (Int)
 let thrd_name = "thrd"
 let thrd_typ = Named "thrd"
 
+let sec_res_name = "sec_" ^ res_name
+
+let distinguished_ids = ["sec_" ^ res_name]
+
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
