@@ -3810,6 +3810,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* fsvars are the spec vars corresponding to the parameters *)
           let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
           let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
+          let bounds = CF.base_sec_bounds fsvars proc.proc_loc in
+          let pf = CP.mkAnd pf bounds proc.proc_loc in
           (* let pf = if (!Globals.allow_locklevel) then  *)
           (*       CP.translate_level_eqn_pure pf (\*l'=l ==> level(l')=level(l)*\) *)
           (*     else pf *)

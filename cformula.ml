@@ -2645,6 +2645,15 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
     CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
 
+and base_sec_bounds vars pos =
+  let make_bound_eqn v =
+    let sec_v = CP.sec_spec_var v in
+    let sec_pf = CP.mk_security (CP.to_primed sec_v) (CP.sec_var @@ CP.to_unprimed sec_v) pos in
+    CP.BForm ((sec_pf, None), None)
+  in
+  let bound_eqns = List.map make_bound_eqn vars in
+  List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) bound_eqns
+
 (* and mkEq fr_svl to_svl pos: CP.formula= *)
 (*   let ss = List.combine to_svl fr_svl in *)
 (*   let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in *)
