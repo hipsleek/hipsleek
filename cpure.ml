@@ -14549,7 +14549,7 @@ and translate_sec_label = function
   | Hi -> [], [], IConst (1, no_pos)
   | Lo -> [], [], IConst (0, no_pos)
   | SecVar (SpecVar (_, var_name, primed)) ->
-      let var = SpecVar (Globals.UNK, "sec_" ^ var_name, primed) in
+      let var = SpecVar (Globals.UNK, var_name, primed) in
       [], [], Var (var, no_pos)
   | Lub (l1, l2) ->
       let lst1, fv1, t1 = translate_sec_label l1 in
@@ -14562,7 +14562,7 @@ and translate_sec_formula = function
   | Security (sf, loc) ->
       begin match sf with
       | VarBound (SpecVar (_, var_name, primed), sec) ->
-          let var = SpecVar (Globals.UNK, "sec_" ^ var_name, primed) in
+          let var = SpecVar (Globals.UNK, var_name, primed) in
           let extra_p_form, fv, expr = translate_sec_label sec in
           extra_p_form, fv, Lte (Var (var, loc), expr, loc)
       end
@@ -14579,7 +14579,9 @@ and translate_security_formula = function
   | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula f)) formulas)
   | Or (f1, f2, flbl, loc) -> Or (translate_security_formula f1, translate_security_formula f2, flbl, loc)
   | Not (f, lbl, loc) -> Not (translate_security_formula f, lbl, loc)
-  | others -> others
+  | Forall (v, f, lbl, loc) -> Forall (v, translate_security_formula f, lbl, loc)
+  | Exists (v, f, lbl, loc) -> Exists (v, translate_security_formula f, lbl, loc)
+  | SecurityForm (lbl, f, loc) -> SecurityForm (lbl, translate_security_formula f, loc)
 
 (*
   forall acyclic(B) in f.
