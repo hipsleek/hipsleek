@@ -844,7 +844,7 @@ and p_apply_one ((fr, t) as p) pf =
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
     LexVar (t_ann, args1,args2,pos)
-  | Security _ -> x_fail "TODO"
+  | Security _ -> pf
 
 and subst_exp sst (e: exp) : exp =
   match sst with
@@ -986,7 +986,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
     let vs = List.concat (List.map look_for_anonymous_exp (args)) in
     vs
   | ImmRel (r, _, _) -> look_for_anonymous_b_formula (r,il)
-  | Security _ -> x_fail "TODO"
+  | Security _ -> []
 
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
@@ -1062,7 +1062,7 @@ and find_lexp_p_formula (pf: p_formula) ls =
   | RelForm (_, el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
   | ImmRel (r, _, _) -> find_lexp_p_formula r ls
   | LexVar (_,e1, e2, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] (e1@e2)
-  | Security _ -> x_fail "TODO"
+  | Security _ -> []
 
 (* WN : what does this method do? *)
 and find_lexp_exp (e: exp) ls =
@@ -1215,7 +1215,7 @@ and p_contain_vars_exp (pf) : bool = match pf with
   | ListPerm (exp1, exp2,_)  -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | RelForm _
   | ImmRel  _ -> false
-  | Security _ -> x_fail "TODO"
+  | Security _ -> false
 
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with
   | Null _
@@ -2240,7 +2240,7 @@ let transform_b_formula_x f (e : b_formula) : b_formula =
                       let nes1 = List.map (transform_exp f_exp) es1 in
                       let nes2 = List.map (transform_exp f_exp) es2 in
                       LexVar (t,nes1,nes2,l)
-                    | Security _ -> x_fail "TODO"
+                    | Security _ -> pf
                   in helper pf) in
       (npf,il)
     )
