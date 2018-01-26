@@ -2151,8 +2151,11 @@ sec_expr: [
   [ `HI_SEC -> P.Hi
   | `LO_SEC -> P.Lo
   | lc=SELF; `LUB_SEC; cl=SELF -> P.Lub (lc, cl)
-  | `RES _ -> P.SecVar (res_name, Unprimed)
-  | `IDENTIFIER id -> P.SecVar (sv_of_id id)
+  | `RES _ -> P.SecVar ("sec_" ^ res_name, Unprimed)
+  | `IDENTIFIER id ->
+      let name, primed = sv_of_id id
+      in
+      P.SecVar ("sec_" ^ name, primed)
 ]];
 
 cexp_w:
@@ -2183,13 +2186,14 @@ cexp_w:
     ]
   | "bconstr"
     [ `IDENTIFIER id; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity (sv_of_id id) sec (get_pos_camlp4 _loc 2) in
+        let name, primed = sv_of_id id in
+        let sec_form = P.mkSecurity ("sec_" ^ name, primed) sec (get_pos_camlp4 _loc 2) in
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
         set_slicing_utils_pure_double f false
     | `RES _; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity (res_name, Unprimed) sec (get_pos_camlp4 _loc 2) in
+        let sec_form = P.mkSecurity ("sec_" ^ res_name, Unprimed) sec (get_pos_camlp4 _loc 2) in
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
