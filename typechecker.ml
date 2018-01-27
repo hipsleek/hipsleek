@@ -1876,6 +1876,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
+      let add_sec_bounds entail_state =
+        let sec_ctx = entail_state.CF.es_security_context in
+        let bound_var_sec = v |> CP.mk_primed_spec_var |> CP.sec_spec_var |> CP.sec_var in
+        let sec_lbl = CP.lub sec_ctx bound_var_sec in
+        let field_sec_bfs =
+          lvars
+          |> List.map snd
+          |> List.map CP.mk_primed_spec_var
+          |> List.map CP.sec_spec_var
+          |> List.map (fun v -> CP.mk_security v sec_lbl pos)
+          |> List.map (fun f -> CP.BForm ((f, None), None) ) in
+        let sec_f = List.fold_left (fun acc f -> CP.mkAnd acc f pos) (List.hd field_sec_bfs) (List.tl field_sec_bfs) in
+        let new_f = CF.add_pure_formula_to_formula sec_f entail_state.CF.es_formula in
+        let state' = CF.Ctx { entail_state with CF.es_formula = new_f } in
+        state'
+      in
+      let ctx = CF.transform_list_failesc_context (idf, idf, add_sec_bounds) ctx in
+
       let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
       let bind_op () =
         begin
