@@ -2455,11 +2455,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
         let add_sec_f entail_state =
           let sec_ctx = entail_state.CF.es_security_context in
-          let spec_vs = List.map CP.mk_primed_spec_var vs in
-          let spec_vs = List.map CP.sec_spec_var spec_vs in
-          let sec_vs = List.map CP.sec_var spec_vs in
-          let sec_v = List.fold_left CP.lub sec_ctx sec_vs in
-          let sec_f = CP.mk_security res_var sec_v pos in
+          let sec_lbl =
+            vs
+            |> List.map CP.mk_primed_spec_var
+            |> List.map CP.sec_spec_var
+            |> List.map CP.sec_var
+            |> List.fold_left CP.lub sec_ctx in
+          let sec_f = CP.mk_security (CP.sec_spec_var res_var) sec_lbl pos in
           let sec_bf = CP.BForm ((sec_f, None), None) in
 
           let new_f = CF.add_pure_formula_to_formula sec_bf entail_state.CF.es_formula in
@@ -2774,7 +2776,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let rec update_sec_res f =
                     let update_sec_form = function
                       | CP.Security (sec_f, loc) ->
-                          let new_sec_f =match sec_f with
+                          let new_sec_f = match sec_f with
                             | CP.VarBound (v, lbl) as sf ->
                                 if CP.get_unprime v = Globals.sec_res_name then
                                   CP.VarBound (v, CP.lub sec_lbl lbl)
