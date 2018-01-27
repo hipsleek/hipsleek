@@ -2795,15 +2795,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, update_sec_res f, pos)
                   in
 
-                  let f_e_f _ = None in
-                  let f_f _ = None in
-                  let f_hf e = Some e in
-                  let f_m mp = Some mp in
-                  let f_a a = Some a in
-                  let f_pf pf = Some (update_sec_res pf) in
-                  let f_b bf = Some bf in
-                  let f_e e = Some e in
-                  let new_f = CF.transform_formula (f_e_f, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) entail_state.CF.es_formula in
+                  let formula_fv = CF.fv entail_state.CF.es_formula in
+                  let new_f =
+                    if List.mem res_var formula_fv then
+                      CF.transform_pure update_sec_res entail_state.CF.es_formula
+                    else
+                      let sec_f = CP.mk_security res_var sec_lbl pos in
+                      let sec_bf = CP.BForm ((sec_f, None), None) in
+                      CF.add_pure_formula_to_formula sec_bf entail_state.CF.es_formula
+                  in
                   let state' = CF.Ctx { entail_state with CF.es_formula = new_f } in
                   state'
                 else

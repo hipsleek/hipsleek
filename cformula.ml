@@ -20633,3 +20633,14 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+let transform_pure f_pure f =
+  let f_e_f _ = None in
+  let f_f _ = None in
+  let f_hf e = Some e in
+  let f_m mp = Some mp in
+  let f_a a = Some a in
+  let f_pf pf = Some (f_pure pf) in
+  let f_b bf = Some bf in
+  let f_e e = Some e in
+  transform_formula (f_e_f, f_f, f_hf, (f_m, f_a, f_pf, f_b, f_e)) f
