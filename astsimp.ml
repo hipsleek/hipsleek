@@ -4416,7 +4416,16 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            let waitlevel_var = (waitlevel_typ,waitlevel_name) in
            let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
            (**************************)
-           let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+           (* Security variables *)
+           let sec_params =
+            List.map
+              (fun p ->
+                let sec_param_name = "sec_" ^ p.I.param_name in
+                (Globals.UNK, sec_param_name))
+              proc.I.proc_args in
+           let security_vars = (Globals.UNK, sec_res_name) :: sec_params in
+           (**********************)
+           let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (security_vars @ lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
            let ffv = List.filter (fun v -> not (CP.is_form_typ v)) ffv in
            let str = Cprinter.string_of_spec_var_list ffv in
            if (ffv!=[]) then
@@ -10060,7 +10069,16 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   let waitlevel_uvar = (waitlevel_name,Unprimed) in
   let lock_vars = [waitlevel_uvar;waitlevel_pvar;lsmu_uvar;lsmu_pvar;ls_uvar;ls_pvar] in
   (**************************)
-  let p = lock_vars@((eres_name,Unprimed)::(res_name,Unprimed)::
+  (* Security variables *)
+  let sec_params =
+    List.map
+      (fun p ->
+        let sec_param_name = "sec_" ^ p.I.param_name in
+        [(sec_param_name, Primed); (sec_param_name, Unprimed)])
+      f.Iast.proc_args in
+  let security_vars = (sec_res_name, Unprimed) :: List.concat sec_params in
+  (**********************)
+  let p = security_vars @ lock_vars@((eres_name,Unprimed)::(res_name,Unprimed)::
                      (List.map (fun c1-> (c1.Iast.param_name,Primed))
                         (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args))) in
   let strad_s =
