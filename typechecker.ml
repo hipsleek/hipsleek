@@ -1888,7 +1888,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let sec_lbl = match eq_v with
                 | [] -> sec_ctx
                 | (_, var) :: _ -> CP.lub (CP.sec_var @@ CP.sec_spec_var var) sec_ctx in
-              print_endline ("eq_vars: " ^ pr_list (pr_pair !print_sv !print_sv) eq_vars);
               CP.mk_security (CP.sec_spec_var v) sec_lbl pos)
           |> List.map (fun f -> CP.BForm ((f, None), None) ) in
         let sec_f = List.fold_left (fun acc f -> CP.mkAnd acc f pos) (List.hd field_sec_bfs) (List.tl field_sec_bfs) in
