@@ -2185,15 +2185,12 @@ cexp_w:
     end
     ]
   | "bconstr"
-    [ `IDENTIFIER id; `LT; `CARET; sec=sec_expr ->
-        let name, primed = sv_of_id id in
+    [ lc=SELF; `SEC_BOUND; sec=sec_expr ->
+        let id, pos = match lc with
+          | Pure_c (P.Var v) -> v
+          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid in lhs of security expression" in
+        let name, primed = id in
         let sec_form = P.mkSecurity ("sec_" ^ name, primed) sec (get_pos_camlp4 _loc 2) in
-        let b_formula = (sec_form, None) in
-        let bform = P.BForm (b_formula, None) in
-        let f = Pure_f bform in
-        set_slicing_utils_pure_double f false
-    | `RES _; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity ("sec_" ^ res_name, Unprimed) sec (get_pos_camlp4 _loc 2) in
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in

@@ -458,6 +458,7 @@ rule tokenizer file_name = parse
   | "@Lo" { LO_SEC }
   | "|_|" { LUB_SEC }
   | "c#" { SEC_CONTEXT }
+  | "<^" { SEC_BOUND }
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }

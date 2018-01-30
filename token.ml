@@ -125,7 +125,7 @@ type sleek_token =
   | ARGOPTION of string
 
   | HI_SEC | LO_SEC | LUB_SEC
-  | SEC_CONTEXT
+  | SEC_BOUND | SEC_CONTEXT
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -282,6 +282,7 @@ module Token = struct
     | HI_SEC  -> "@Hi"
     | LO_SEC -> "@Lo"
     | LUB_SEC -> "|_|"
+    | SEC_BOUND -> "<^"
     | SEC_CONTEXT -> "c#"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
