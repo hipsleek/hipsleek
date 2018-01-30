@@ -1877,22 +1877,55 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
       let add_sec_bounds entail_state =
+        let eq_vars, _ = CP.get_all_vv_eqs @@ CF.extract_pure entail_state.CF.es_formula in
         let sec_ctx = entail_state.CF.es_security_context in
-        let bound_var_sec = v |> CP.mk_primed_spec_var |> CP.sec_spec_var |> CP.sec_var in
-        let sec_lbl = CP.lub sec_ctx bound_var_sec in
         let field_sec_bfs =
           lvars
           |> List.map snd
           |> List.map CP.mk_primed_spec_var
-          |> List.map CP.sec_spec_var
-          |> List.map (fun v -> CP.mk_security v sec_lbl pos)
+          |> List.map (fun v ->
+              let eq_v = List.filter (fun (v1, v2) ->  CP.eq_spec_var v1 v) eq_vars in
+              let sec_lbl = match eq_v with
+                | [] -> sec_ctx
+                | (_, var) :: _ -> CP.lub (CP.sec_var @@ CP.sec_spec_var var) sec_ctx in
+              print_endline ("eq_vars: " ^ pr_list (pr_pair !print_sv !print_sv) eq_vars);
+              CP.mk_security (CP.sec_spec_var v) sec_lbl pos)
           |> List.map (fun f -> CP.BForm ((f, None), None) ) in
         let sec_f = List.fold_left (fun acc f -> CP.mkAnd acc f pos) (List.hd field_sec_bfs) (List.tl field_sec_bfs) in
         let new_f = CF.add_pure_formula_to_formula sec_f entail_state.CF.es_formula in
         let state' = CF.Ctx { entail_state with CF.es_formula = new_f } in
         state'
       in
-      let ctx = CF.transform_list_failesc_context (idf, idf, add_sec_bounds) ctx in
+
+      let update_sec_res_entail_state entail_state =
+        let bound_var_sec = v |> CP.mk_primed_spec_var |> CP.sec_spec_var |> CP.sec_var in
+        let rec update_sec_res f =
+          let update_sec_form = function
+            | CP.Security (sec_f, loc) ->
+                let new_sec_f = match sec_f with
+                  | CP.VarBound (v, lbl) as sf ->
+                      if CP.get_unprime v = Globals.sec_res_name then
+                        CP.VarBound (v, CP.lub bound_var_sec lbl)
+                      else
+                        sf
+                in
+                CP.Security (new_sec_f, loc)
+            | pf -> pf
+          in
+          match f with
+            | CP.BForm ((pf, l1), l2) -> CP.BForm ((update_sec_form pf, l1), l2)
+            | CP.And (f1, f2, pos) -> CP.And (update_sec_res f1, update_sec_res f2, pos)
+            | CP.AndList fs -> CP.AndList (List.map (fun (lbl, f) -> (lbl, update_sec_res f)) fs)
+            | CP.Or (f1, f2, lbl, pos) -> CP.Or (update_sec_res f1, update_sec_res f2, lbl, pos)
+            | CP.Not (f, lbl, pos) -> CP.Not (update_sec_res f, lbl, pos)
+            | CP.Forall (v, f, lbl, pos) -> CP.Forall (v, update_sec_res f, lbl, pos)
+            | CP.Exists (v, f, lbl, pos) -> CP.Exists (v, update_sec_res f, lbl, pos)
+            | CP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (lbl, update_sec_res f, pos)
+        in
+        let new_f = CF.transform_pure update_sec_res entail_state.CF.es_formula in
+        let state' = CF.Ctx { entail_state with CF.es_formula = new_f } in
+        state'
+      in
 
       let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
       let bind_op () =
@@ -2144,6 +2177,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 in
                 let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
+
+                let tmp_res3 = CF.transform_list_failesc_context (idf, idf, add_sec_bounds) tmp_res3 in
+                let tmp_res3 = CF.transform_list_failesc_context (idf, idf, update_sec_res_entail_state) tmp_res3 in
+
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
