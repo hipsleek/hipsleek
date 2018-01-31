@@ -6,7 +6,8 @@ int obj_const1()
 	requires true
 	ensures res <^ @Lo;
 {
-	C c = new C(1);
+	int a = 1;
+	C c = new C(a);
 	return c.x;
 }
 
@@ -14,7 +15,8 @@ int obj_const2()
 	requires true
 	ensures res <^ @Hi;
 {
-	C c = new C(1);
+	int a = 1;
+	C c = new C(a);
 	return c.x;
 }
 
