@@ -2315,6 +2315,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
 
+          let modified_vars_e1 = Security.modified_variables e1 in
+          let modified_vars_e2 = Security.modified_variables e2 in
+          let modified_vars = Gen.remove_dups (modified_vars_e1 @ modified_vars_e2) in
+          let update_sec_vars entail_state =
+            let sec_ctx = entail_state.CF.es_security_context in
+            let init_f = entail_state.CF.es_formula in
+            let new_f =
+              List.fold_left
+                (fun f var -> Security.update_security_formula_for ~add_label:true var sec_ctx f)
+                init_f
+                modified_vars in
+            let state' = CF.Ctx { entail_state with CF.es_formula = new_f } in
+            state'
+          in
+          let res = CF.transform_list_failesc_context (idf, idf, update_sec_vars) res in
+
+
           let restore_sec_ctx entail_state =
             let restored_state = CF.Ctx { entail_state with CF.es_security_context = !orig_sec_ctx } in
             restored_state
