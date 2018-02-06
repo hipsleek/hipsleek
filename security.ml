@@ -47,7 +47,6 @@ let modified_variables e =
 
 let update_security_formula_for ?(add_label=false) var new_lbl formula =
   let spec_var = CP.sec_spec_var @@ CP.mk_primed_spec_var var in
-  print_endline ("v: " ^ !CF.print_sv spec_var);
 
   let update_sec_p_form = function
     | CP.Security (sec_f, loc) as spf -> begin match sec_f with
