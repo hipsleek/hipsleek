@@ -2400,6 +2400,7 @@ and pr_formula_1 e =
              formula_exists_type = t;
              formula_exists_flow = fl;
              formula_exists_and = a;
+             formula_exists_sec = sec;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2412,6 +2413,7 @@ and pr_formula_1 e =
         formula_base_type = t;
         formula_base_flow = fl;
         formula_base_and = a;
+        formula_base_sec = sec;
         formula_base_label = lbl;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
@@ -2558,7 +2560,7 @@ and prtt_pr_formula_inst_html prog post_hps e =
 
 and pr_formula_for_spec e =
   let print_fun = fun fml ->
-    let h,p,vp,_,_,_ = Cformula.split_components fml in
+    let h,p,vp,_,_,_,_ = Cformula.split_components fml in
     (pr_h_formula_for_spec h);
     if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (fmt_string " * ";pr_vperm_sets vp);
     fmt_string " & ";
@@ -3466,7 +3468,7 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
              | Some l -> pr_struc_formula_for_spec1 l
             ) );
         | _ ->
-          let h, _, _, _, _, _ = split_components fb in
+          let h, _, _, _, _, _, _ = split_components fb in
           if (is_empty_heap h)
           then (
             (match cont with

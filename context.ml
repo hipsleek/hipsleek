@@ -1555,7 +1555,7 @@ and coerc_mater_match_gen_x estate l_vname (l_vargs:P.spec_var list) r_vname (r_
   else
     let res = ref [] in
     let extract_root pred_id (f: CF.formula)  =
-      let heap_f, _, _, _, _, _ = CF.split_components f in
+      let heap_f, _, _, _, _, _, _ = CF.split_components f in
       (* let res = ref [] in *)
       let f hf = match hf with
         | HTrue | HFalse | HEmp | DataNode _ | Hole _ | HRel _ | HVar _ -> Some hf

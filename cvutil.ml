@@ -271,7 +271,7 @@ let extract_callee_view_info_x prog f=
   in
   (*******************)
   (* local info *)
-  let h,mf, _, _, _, _ = split_components f in
+  let h,mf, _, _, _, _, _ = split_components f in
   let p = (MCP.pure_of_mix mf) in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let neqs = CP.get_neqs_new p in

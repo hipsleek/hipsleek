@@ -76,7 +76,7 @@ let simplify_and_slit_disj f =
 
 (* To be improved *)
 let fp_imply f p =
-  let _, pf, _, _, _, _ = CF.split_components f in
+  let _, pf, _, _, _, _, _ = CF.split_components f in
   let (res, _, _) = Tpdispatcher.mix_imply pf (MCP.mix_of_pure p) "999" in
   res
 

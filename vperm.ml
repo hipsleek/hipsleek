@@ -82,7 +82,7 @@ let formula_of_vperm_anns ann_list =
   formula_of_vperm_sets vps
 
 let collect_vperm_sets f = 
-  let _, _, vp, _, _, _ = split_components f in
+  let _, _, vp, _, _, _, _ = split_components f in
   vp
 
 let rec vperm_sets_of_formula f = 

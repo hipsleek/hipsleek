@@ -1687,7 +1687,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
       let () = x_tinfo_hp (add_str "lhs(after)" !CF.print_formula) lhs no_pos in
       let () = x_tinfo_hp (add_str "rhs" !CF.print_formula) rhs_f no_pos in
       let () = x_tinfo_hp (add_str "(hp,args)"  (pr_pair !CP.print_sv !CP.print_svl)) (hp,args) no_pos in
-      let ( _,lmf,_,_,_,_) = CF.split_components lhs in
+      let ( _,lmf,_,_,_,_,_) = CF.split_components lhs in
       let leqNulls = CF.find_close (MCP.get_null_ptrs lmf) leqs in
       let ass_guard = x_add find_guard prog hds leqs leqNulls [(hp,CP.diff_svl args leqNulls)] [] in
       let hprel_lst = match extr_ans with
@@ -1760,7 +1760,7 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
             | Base fb -> fb
             | _ -> report_error pos "Infer.infer_collect_hp_rel_empty_rhs: impossible"
           in
-          let ( _,mix_lf,_,_,_,_) = CF.split_components lhs0 in
+          let ( _,mix_lf,_,_,_,_,_) = CF.split_components lhs0 in
           let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf) in
           (* let () = DD.ninfo_hprint (add_str "   sst0: " pr) (sst0) pos in *)
@@ -1789,8 +1789,8 @@ let infer_collect_hp_rel_empty_rhs prog (es0:entail_state) lhs_b (* rhs0 *) mix_
           (* let lhs_b1 = Sautil.smart_subst_lhs lhs0 l_hpargs leqs0 es0.es_infer_vars in *)
           (* let rhs_b1 = rhs_b0 in *)
           let lhs_h = lhs_b1.CF.formula_base_heap in
-          let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
-          let ( _,mix_rf1,_,_,_,_) = CF.split_components (CF.Base rhs_b1) in
+          let ( _,mix_lf1,_,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+          let ( _,mix_rf1,_,_,_,_,_) = CF.split_components (CF.Base rhs_b1) in
           let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
           let reqs1 = (MCP.ptr_equations_without_null mix_rf1) in
           (********** END BASIC INFO LHS, RHS **********)
@@ -1931,7 +1931,7 @@ let infer_collect_hp_rel_fold prog iact (es0:entail_state) lhs_node rhs_node rhs
         let (pred_hf,new_hp_rel) = x_add (Sautil.add_raw_hp_rel ~caller:x_loc) prog false false undef_lhs_ptrs pos in
         [pred_hf], [new_hp_rel]
     in
-    let (lhf,lmf,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+    let (lhf,lmf,_,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
     let lhds, lhvs, lhrs = CF.get_hp_rel_h_formula lhf in
     let leqs = (MCP.ptr_equations_without_null lmf) in
     let leqNulls = MCP.get_null_ptrs lmf in
@@ -2088,11 +2088,11 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
           in
           (* DD.info_pprint "  hp_rel found" pos; *)
           (*which pointers are defined and which arguments of data nodes are pointer*)
-          let ( _,mix_lf,_,_,_,_) = CF.split_components (CF.Base lhs_b0) in
+          let ( _,mix_lf,_,_,_,_,_) = CF.split_components (CF.Base lhs_b0) in
           let leqs = (MCP.ptr_equations_without_null mix_lf) in
 
           let l_emap0 = get_eqset (MCP.pure_of_mix mix_lf) in
-          let (_,mix_rf0,_,_,_,_) = CF.split_components (CF.Base rhs_b0) in
+          let (_,mix_rf0,_,_,_,_,_) = CF.split_components (CF.Base rhs_b0) in
           let reqs_orig = (MCP.ptr_equations_without_null mix_rf0) in
 
           let r_emap0 = get_eqset (MCP.pure_of_mix mix_rf0) in
@@ -2105,7 +2105,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
           (* let rls1,rls2  = List.split es.CF.es_rhs_eqset in *)
           (* let n_rhs_eqset = List.combine (CP.subst_var_list sst0 rls1) (CP.subst_var_list sst0 rls2) *)
           (* (MCP.ptr_equations_without_null mix_rf)  in *)
-          let (_,mix_rf,_,_,_,_) = CF.split_components (CF.Base rhs_b) in
+          let (_,mix_rf,_,_,_,_,_) = CF.split_components (CF.Base rhs_b) in
           let r_emap = get_eqset (MCP.pure_of_mix mix_rf) in
           let r_eqsetmap = CP.EMapSV.build_eset es.CF.es_rhs_eqset in
 
@@ -2205,7 +2205,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
                 constant_checking prog rhs lhs_b0 rhs_b es
             end
           else
-            let ( _,mix_lf1,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
+            let ( _,mix_lf1,_,_,_,_,_) = CF.split_components (CF.Base lhs_b1) in
             let leqs1 = (MCP.ptr_equations_without_null mix_lf1) in
             let reqs1 = [] in
             (********** END BASIC INFO LHS, RHS **********)
@@ -2433,7 +2433,7 @@ let infer_collect_hp_rel_fold_lemma_guided prog iact es lhs_node rhs rhs_rest rh
 
 let collect_classic_assumption prog es lfb sel_hps infer_vars pos=
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-  let (_ ,mix_lf,_,_,_,_) = CF.split_components (CF.Base lfb) in
+  let (_ ,mix_lf,_,_,_,_,_) = CF.split_components (CF.Base lfb) in
   let leqNulls = MCP.get_null_ptrs mix_lf in
   let leqs = (MCP.ptr_equations_without_null mix_lf) in
   let l_def_vs = leqNulls @ (List.map (fun hd -> hd.CF.h_formula_data_node) lhds)
@@ -2490,7 +2490,7 @@ let infer_collect_hp_rel_classsic prog (es:entail_state) rhs pos =
       (false,es)
     else begin
       (*which pointers are defined and which arguments of data nodes are pointer*)
-      let ( _,mix_lf,_,_,_,_) = CF.split_components lhs in
+      let ( _,mix_lf,_,_,_,_,_) = CF.split_components lhs in
       let leqs = (MCP.ptr_equations_without_null mix_lf) in
       let _ =
         x_tinfo_pp ">>>>>> infer_hp_rel_classic <<<<<<" pos;

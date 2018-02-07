@@ -1438,7 +1438,7 @@ let rec get_may_aliases (sv:CP.spec_var) (h: CF.h_formula) : (CP.spec_var) list 
 
 let ramify_assign v rhs es = 
   let f = es.CF.es_formula in
-  let h,p,_,fl,t,a = CF.split_components f in
+  let h,p,_,fl,t,a,_ = CF.split_components f in
   let t = Gen.unsome (C.type_of_exp rhs) in
   let var = (CP.SpecVar (t, v, Unprimed)) in
   (*let () = print_string("\nAssign : "^(string_of_formula f)^"\n") in*)
@@ -2173,7 +2173,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
            CF.formula_or_f2 = (ramify_unfolded_formula f2 vl)}
   | CF.Base f ->
     let pos = f.CF.formula_base_pos in
-    let h,mcp,vp,fl,t,a = CF.split_components cf in
+    let h,mcp,vp,fl,t,a,_ = CF.split_components cf in
     (*let p = MCP.pure_of_mix mcp in*)
     let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
     let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
@@ -2181,7 +2181,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     CF.disj_of_list or_list pos
   | CF.Exists f ->
     let pos = f.CF.formula_exists_pos in
-    let h,mcp,vp,fl,t,a = CF.split_components cf in
+    let h,mcp,vp,fl,t,a,_ = CF.split_components cf in
     let qvars = f.CF.formula_exists_qvars in
     (*let p = MCP.pure_of_mix mcp in*)
     let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
@@ -2244,14 +2244,14 @@ let rec remove_accs_from_formula (cf:CF.formula)  : CF.formula =
            CF.formula_or_f2 = (remove_accs_from_formula f2)}
   | CF.Base f ->
     let pos = f.CF.formula_base_pos in
-    let h,mcp,vp,fl,t,a = CF.split_components cf in
+    let h,mcp,vp,fl,t,a,_ = CF.split_components cf in
     (*let p = MCP.pure_of_mix mcp in*)
     let h,new_p = remove_accs_from_heap h in
     let mcp = MCP.merge_mems (MCP.mix_of_pure new_p) mcp true in
     CF.mkBase h mcp vp t fl a pos
   | CF.Exists f ->
     let pos = f.CF.formula_exists_pos in
-    let h,mcp,vp,fl,t,a = CF.split_components cf in
+    let h,mcp,vp,fl,t,a,_ = CF.split_components cf in
     let qvars = f.CF.formula_exists_qvars in
     (*let p = MCP.pure_of_mix mcp in*)
     let h,new_p = remove_accs_from_heap h in

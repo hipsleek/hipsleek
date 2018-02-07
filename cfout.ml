@@ -449,7 +449,8 @@ let simplify_context ?(prog_vs=None) ctx =
                      es_formula =
                        let () = x_tinfo_hp (add_str "formula" !print_formula) en.es_formula no_pos in
                        let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
-                       let h,mf,vp,fl,t,a = split_components en.es_formula in
+                       let h,mf,vp,fl,t,a,sec = split_components en.es_formula in
+                       (* ADI TODO: use sec? *)
                        let curr_svl = match prog_vs with
                          | None -> stk_vars # get_stk 
                          | Some vs -> vs
@@ -459,7 +460,8 @@ let simplify_context ?(prog_vs=None) ctx =
                        let eq_part = CP.EMapSV.partition eqmap in
                        let sst = List.concat (List.map (fun lst -> build_subs lst curr_svl) eq_part) in
                        let new_formula = subst sst en.es_formula in
-                       let h,mf,vp,fl,t,a = split_components new_formula in
+                       let h,mf,vp,fl,t,a,sec = split_components new_formula in
+                       (* ADI TODO: use sec? *)
                        let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair !print_sv !print_sv))) sst no_pos in
                        let () = x_tinfo_hp (add_str "new_formula" !print_formula) new_formula no_pos in
                        let exists_svl = match en.es_formula with

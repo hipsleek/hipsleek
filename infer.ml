@@ -416,7 +416,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, _, fl, t, a) = split_components f in
+  let (h, p, _, fl, t, a, _) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -510,7 +510,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
               (* replace with new root name *)
               set_node_var new_r inf_rhs 
           in
-          let lhs_h,_,_,_,_,_ = CF.split_components es.es_formula in
+          let lhs_h,_,_,_,_,_,_ = CF.split_components es.es_formula in
           x_dinfo_pp ">>>>>> infer_heap_nodes <<<<<<" pos;
           x_dinfo_hp (add_str "unmatch RHS : " !print_h_formula) rhs pos;
           x_dinfo_hp (add_str "orig inf vars : " !print_svl) iv pos;
@@ -4433,7 +4433,7 @@ let rec create_alias_tbl svl keep_vars aset = match svl with
 
 (* Supposed fml to be Base _ *)
 let filter_var_heap keep_vars fml =
-  let _,pure,_,_,_,_ = CF.split_components fml in
+  let _,pure,_,_,_,_,_ = CF.split_components fml in
   let als = MCP.ptr_equations_without_null pure in
   (*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
   let aset = CP.EMapSV.build_eset als in
@@ -4444,7 +4444,7 @@ let filter_var_heap keep_vars fml =
                               List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
   (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   let fml = x_add CF.subst subst_lst fml in
-  let heap,pure,_,_,_,_ = CF.split_components fml in
+  let heap,pure,_,_,_,_,_ = CF.split_components fml in
   let pure = CP.remove_redundant_constraints (MCP.pure_of_mix pure) in
   (*  CF.normalize_combine_heap (CF.formula_of_pure_formula pure no_pos) heap*)
   (heap, pure)
