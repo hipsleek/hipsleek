@@ -282,7 +282,7 @@ let trans_view_one_derv_x (prog : Iast.prog_decl) rev_formula_fnc trans_view_fnc
   let is_fs, tis = List.fold_left (fun (r_ifs, r_tis) f_body ->
       let f_body1,tis = Cfutil.norm_free_vars f_body ( self_sv::view_sv) in
       let new_body = CF.set_flow_in_formula_override {CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link =None} f_body1 in
-      let (h ,mf,_,_,_,_) = Cformula.split_components f_body in
+      let (h,mf,_,_,_,_,_) = Cformula.split_components f_body in
       let eqsets = (MCP.ptr_equations_without_null mf) in
       let hdns, hvns,_ = Cformula.get_hp_rel_h_formula h in
       let dnodes = List.map (fun dn -> dn.Cformula.h_formula_data_node) hdns in
@@ -731,7 +731,7 @@ class prop_table pname (* name of extn *) ?(vn_of_pname=None) (prop_name, pview)
     method get_inv =
       inv
     method reset_disj f =
-      let (h,p,_,_,_,_) = CF.split_components f in
+      let (h,p,_,_,_,_,_) = CF.split_components f in
       self # mk_emap (MCP.pure_of_mix p);
       def_lst <- [];
       lst <- [(self_sv,orig_sv)];

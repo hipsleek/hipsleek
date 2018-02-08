@@ -382,7 +382,7 @@ let check_equality_constr lhpargs lhs_f_rem rhs svl2=
   let helper args f=
     match args with
     | sv::_ ->
-      let ( _,mix_f,_,_,_,_) = CF.split_components f in
+      let ( _,mix_f,_,_,_,_,_) = CF.split_components f in
       let reqs2 = (MCP.ptr_equations_without_null mix_f) in
       let cl_svl = CP.remove_dups_svl (CF.find_close [sv] (reqs2)) in
       (* let () = Debug.info_hprint (add_str "   cl_svl: " !CP.print_svl) cl_svl no_pos in *)
@@ -2693,7 +2693,7 @@ let shape_widening_x prog hp args unk_hps pdefs pos=
       | [f21;f22] -> (*after reaarange + subst*)
         let hpargs1 = CF.get_HRels_f f21 in
         let hpargs2 = CF.get_HRels_f f22 in
-        let ( _,mix_lf2,_,_,_,_) = CF.split_components f22 in
+        let ( _,mix_lf2,_,_,_,_,_) = CF.split_components f22 in
         let sst2 = MCP.ptr_equations_without_null mix_lf2 in
         let hpargs22 = List.map (fun (hp, args) ->
             (hp, List.fold_left Sautil.close_def args sst2)
@@ -2977,7 +2977,7 @@ let elim_diverg_paras_x prog pdefs=
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let f1, _ = CF.drop_hrel_f f [hp] in
     let svl = CF.get_ptrs_w_args_f  ~en_pure_field:false f1 in
-    let ( _,mf,_,_,_,_) = CF.split_components f in
+    let ( _,mf,_,_,_,_,_) = CF.split_components f in
     let eqNulls = MCP.get_null_ptrs mf in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let may_reach_ptrs = CP.remove_dups_svl ((svl@eqNulls@args)@(CF.find_close (svl@eqNulls@args) eqs)) in
@@ -2990,7 +2990,7 @@ let elim_diverg_paras_x prog pdefs=
     (* x_add CF.subst  *)
   in
   let elim_diverg_paras_pdef diver_pos (hp,args,f)=
-    let ( _,mf,_,_,_,_) = CF.split_components f in
+    let ( _,mf,_,_,_,_,_) = CF.split_components f in
     let ls_rec_hpars = List.filter (fun (hp1,_) -> CP.eq_spec_var hp hp1) (CF.get_HRels_f f) in
     let eqs = (MCP.ptr_equations_without_null mf) in
     let diverg_svl0 = List.fold_left (fun r (_,args) ->
@@ -3025,7 +3025,7 @@ let elim_diverg_paras prog pdefs=
 let compute_lfp_x prog dang_hps defs pdefs=
   (********INTERNAL*******)
   let mk_exp_root_x hp r f =
-    let _, mf, _, _, _, _ = CF.split_components f in
+    let _, mf, _, _, _, _, _ = CF.split_components f in
     let ss = MCP.ptr_equations_without_null mf in
     (CF.trans_heap (mk_expl_root_fnc hp ss r) f)
   in
@@ -3295,7 +3295,7 @@ let pred_split_cands_one_branch_x prog unk_hps hprel f=
   in
   (*******************END INTERNAL************************)
   let hns, hvs, hrs = CF.get_hp_rel_formula f in
-  let ( _,mf,_,_,_,_) = CF.split_components f in
+  let ( _,mf,_,_,_,_,_) = CF.split_components f in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
   let cands = hprel::hrs in
@@ -4356,7 +4356,7 @@ let simplify_defined_pred def=
       let hp_rels = CF.get_HRels_f f in
       if hp_rels = [] then (f,og)
       else
-        let ( _,mf,_,_,_,_) = CF.split_components f in
+        let ( _,mf,_,_,_,_,_) = CF.split_components f in
         let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mf) in
         if eqNulls = [] then (f,og)
         else

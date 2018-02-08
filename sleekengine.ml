@@ -1046,7 +1046,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
           Cpure.mkNull sv no_pos) subst_vars in
       let new_const = List.fold_left (fun f0 f1 ->
           Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
-      let new_h, new_p, new_vp, new_fl, new_t, new_a = Cformula.split_components f in
+      let new_h, new_p, new_vp, new_fl, new_t, new_a, new_sec = Cformula.split_components f in
+      (* ADI TODO: use new_sec *)
       let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
       let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
       new_f
@@ -1175,7 +1176,7 @@ let run_simplify (iante0 : meta_formula) =
     else ante
   in
   let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
-  let (heap_f,p,_,_,_,_) = CF.split_components ante in
+  let (heap_f,p,_,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   let () = x_binfo_hp (add_str "simplify:ante" pr) ante no_pos in
   let () = x_binfo_hp (add_str "simplify:heap" pr_h) heap_f no_pos in
@@ -1210,7 +1211,7 @@ let run_hull (iante0 : meta_formula) =
     else ante
   in
   let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
-  let (h,p,_,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.hull pf in
@@ -1228,7 +1229,7 @@ let run_pairwise (iante0 : meta_formula) =
     else ante
   in
   let ante = x_add Norm.imm_abs_norm_formula ante !cprog (Solver.unfold_for_abs_merge !cprog no_pos) in
-  let (h,p,_,_,_,_) = CF.split_components ante in
+  let (h,p,_,_,_,_,_) = CF.split_components ante in
   let pf = MCP.pure_of_mix p in
   (* print_endline "calling tp_dispatcher?"; *)
   let r = Tpdispatcher.tp_pairwisecheck pf in
@@ -1251,7 +1252,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* need a better solution here *)
   let xpure_all f = 
     let lst = CF.split_components_all f in
-    let disj = List.map (fun (h,p,_,_,_,_) ->
+    let disj = List.map (fun (h,p,_,_,_,_,_) -> (* ADI TODO: double check function arguments *)
         let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog h p 0 in
         (MCP.pure_of_mix mf)) lst in
     CP.join_disjunctions disj in
@@ -2994,7 +2995,7 @@ let process_simplify (f : meta_formula) =
   let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
   try 
     let rs = run_simplify f in
-    let (hf,pf,_,_,_,_) = CF.split_components rs in
+    let (hf,pf,_,_,_,_,_) = CF.split_components rs in
     let () = x_tinfo_hp (add_str "heap" Cprinter.string_of_h_formula) hf no_pos in 
     if CF.is_emp_h_formula hf then print_result (MCP.pure_of_mix pf) num_id
     else print_cf_result rs num_id

@@ -2581,7 +2581,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             match n_un_str with
             | [(f,_)] ->
               begin try
-                  let (h,p,_,_,_,_) = CF.split_components f in
+                  let (h,p,_,_,_,_,_) = CF.split_components f in
                   let p = MCP.pure_of_mix p in
                   let emap = Infer.get_eqset p in
                   let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in
@@ -2675,7 +2675,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let lst_heap_ptrs =
         if !Globals.ptr_arith_flag then
           let lst_ptr = List.map (fun (f,_) ->
-              let (h,pure,_,_,_,_) = CF.split_components f in
+              let (h,pure,_,_,_,_,_) = CF.split_components f in
               let pure = MCP.pure_of_mix pure in
               let vs = CP.fv pure in
               let lst = CF.get_data_and_views h in
@@ -4634,7 +4634,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let change_univ c_head_norm_rlem c = match c.C.coercion_univ_vars with
     (* move LHS guard to RHS regardless of universal lemma *)
     | v ->
-      let c_hd, c_guard,c_vp, c_fl, c_t, c_a = CF.split_components c.C.coercion_head in
+      let c_hd, c_guard,c_vp, c_fl, c_t, c_a, c_sec = CF.split_components c.C.coercion_head in
+      (* ADI TODO: use c_sec *)
       let new_body = c.C.coercion_body in
       let () = x_tinfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
       let new_body = CF.normalize 1 new_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
@@ -4710,7 +4711,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let () = x_tinfo_hp (add_str "c_lhs 3 " Cprinter.string_of_formula) c_lhs no_pos in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
-    let h, p, vp, _, _,_ = CF.split_components c_lhs in
+    let h, p, vp, _, _, _, _ = CF.split_components c_lhs in
     let pvars =mfv p in
     let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name)) pvars in (*ignore cyclic & acyclic rels *)
     let hvars = CF.h_fv h in
@@ -4724,7 +4725,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (* let c_rhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int c_rhs in *)
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
-  let lhs_heap ,_,_,_, _,_  = CF.split_components c_lhs in
+  let lhs_heap,_,_,_,_,_,_  = CF.split_components c_lhs in
   let lhs_view_name = match lhs_heap with
     | CF.ViewNode vn -> vn.CF.h_formula_view_name
     | CF.DataNode dn -> dn.CF.h_formula_data_name
@@ -4765,7 +4766,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
             match f with
             | CF.Base _
             | CF.Exists _ ->
-              let h, p, vp, _, _,_ = CF.split_components f in
+              let h, p, vp, _, _, _, _ = CF.split_components f in
               let heaps = CF.split_star_conjunctions h in
               let heaps = List.filter (fun h ->
                   match h with
@@ -10345,7 +10346,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (* TODO : obtain propagated constraints & keep only stronger constraint *)
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label))
     : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
-    let h,p,_,_,_,_ = CF.split_components b0 in
+    let h,p,_,_,_,_,_ = CF.split_components b0 in
     let cm,ba = x_add Cvutil.xpure_heap_symbolic_i cp h p 0 in
     let ms = x_add_1 Cvutil.formula_2_mem b0 cp in
     let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in

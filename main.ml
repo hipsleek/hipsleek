@@ -732,9 +732,9 @@ let process_source_full source =
                                                              ^")"
         | _ -> "" in
       let lemma_list = List.map (fun cd ->
-          let h1, p1, _,_, _, _ = CF.split_components 
+          let h1, p1, _,_, _, _, _ = CF.split_components 
               (CF.elim_exists cd.C.coercion_head) in
-          let h2, p2,_, _, _, _ = CF.split_components 
+          let h2, p2,_, _, _, _, _ = CF.split_components 
               (CF.elim_exists cd.C.coercion_body) in
           let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
               (String.length (CP.name_of_spec_var sv)) < 3)

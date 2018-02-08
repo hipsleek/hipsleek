@@ -272,7 +272,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
 
 let view_decl_of_hprel iprog prog hpr=
   let extract_heap f =
-    let f_h, _, _, _, _, _ = CF.split_components f in
+    let f_h, _, _, _, _, _, _ = CF.split_components f in
     f_h
   in
   let proc_name = "" in
