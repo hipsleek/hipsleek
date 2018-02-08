@@ -987,7 +987,7 @@ let generate_error_constraints prog es lhs rhs_hf lhs_hps es_cond_path pos=
       if not( TP.is_sat_raw (MCP.mix_of_pure lhs_extra)) then None else
         (******************************************)
         let neg_prhs = MCP.mix_of_pure neg_prhs0 in
-        let ass_rhs = CF.mkBase HEmp neg_prhs CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos in
+        let ass_rhs = CF.mkBase HEmp neg_prhs CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] [] pos in (* ADI TODO: to check *)
         let knd = CP.RelAssume lhs_hps in
         let ehp_rel = CF.mkHprel_w_flow knd [] [] [] lhs None ass_rhs es_cond_path !error_flow_int in
         (* let hp_rel_list = Gen.BList.difference_eq Sautil.constr_cmp hp_rel_list0 ex_ass in *)

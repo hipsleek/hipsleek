@@ -1986,7 +1986,7 @@ let split_guard_constrs_x prog is_guarded lhds lhvs post_hps ls_rhp_args (hp,arg
           let n_orig_lhs_hf2 = CF.mkStarH n_orig_lhs_hf n_constr_rhs_hf pos in
           let n_orig_lhsb = {lhsb with CF.formula_base_heap = n_orig_lhs_hf2} in
           let n_constr_lhf = CF.HRel (hp, List.map (fun sv -> CP.mkVar sv pos) args, pos) in
-          let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow()) [] pos in
+          let n_constr_lhs = CF.mkBase n_constr_lhf (MCP.mix_of_pure (CP.conj_of_list ps pos)) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow()) [] [] pos in (* ADI TODO: to check *)
           (Some (n_orig_lhsb, (hp, n_constr_lhs,  n_constr_rhs, None), new_hp))
   else
     let g_hfs = (List.map (fun hd -> CF.DataNode hd) keep_hds)@

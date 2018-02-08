@@ -1985,7 +1985,8 @@ let convert_formula_to_linear_x prog (vdef: C.view_decl) (f: CF.formula): CF.for
       if not(Gen.is_empty f1_qv) then 
         (* should never reach this branch if normalization works ok *)
         CF.mkExists_w_lbl f1_qv f1_heap f1_pure f1.CF.formula_base_vperm f1.CF.formula_base_type 
-          f1.CF.formula_base_flow  f1.CF.formula_base_and f1.CF.formula_base_pos f1.CF.formula_base_label
+          f1.CF.formula_base_flow f1.CF.formula_base_and f1.CF.formula_base_sec f1.CF.formula_base_pos f1.CF.formula_base_label
+          (* ADI TODO: to check with convert_h_formula_to_linear *)
       else
         CF.Base({f1 with formula_base_heap = f1_heap; formula_base_pure = f1_pure})
     | CF.Exists f1 ->

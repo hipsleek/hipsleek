@@ -4633,7 +4633,7 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
   let mkRel h hf h_args p pos= 
     let lhs = 
       if !Globals.adhoc_flag_6 then
-        CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] pos 
+        CF.mkBase hf (MCP.mix_of_pure p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow ()) [] [] pos (* ADI TODO: to check *)
       else formula_of_heap hf pos
     in
     let rhs = 
@@ -4709,7 +4709,8 @@ let add_infer_hp_contr_to_list_context h_arg_map cps (l:list_context) rhs_p : li
                 let () = y_tinfo_pp "1 (not is_sat)" in
                 let new_rel = mkHprel (CP.RelAssume [h]) [] [] []
                     (CF.formula_of_heap hf (* (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] *) pos)
-                    None (CF.mkBase CF.HTrue  (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] pos) (* (CF.mkFalse_nf pos ) *) es_cond_path in
+                    None (CF.mkBase CF.HTrue  (MCP.mix_of_pure n_p) CvpermUtils.empty_vperm_sets TypeTrue (mkNormalFlow () ) [] [] pos) (* (CF.mkFalse_nf pos ) *) es_cond_path in
+                    (* ADI TODO: to check with fun r (...) above *)
                 r@[new_rel]
               else 
                let () = y_tinfo_pp "2" in

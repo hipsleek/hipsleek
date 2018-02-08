@@ -121,7 +121,7 @@ let subst_cont vn cont_args f ihf chf self_hns self_null pos=
     let cp = CP.mkNull cont pos in
     let emp_vps = CvpermUtils.empty_vperm_sets in
     (subst_helper ss f, IF.mkBase ihf ip IvpermUtils.empty_vperm_sets IF.top_flow [] pos,
-     CF.mkBase chf (MCP.mix_of_pure cp) emp_vps CF.TypeTrue (CF.mkNormalFlow()) [] pos)
+     CF.mkBase chf (MCP.mix_of_pure cp) emp_vps CF.TypeTrue (CF.mkNormalFlow()) [] [] pos)
   else if self_hns <> [] then
     let () = report_warning no_pos ("Lemma.subst_cont: to handle") in
     (f, IF.formula_of_heap_1 ihf pos, CF.formula_of_heap chf pos)

@@ -3081,7 +3081,8 @@ let compute_lfp_x prog dang_hps defs pdefs=
         ) ([],false) fixn in
       let def = if is_diver then 
           [((CF.mkBase CF.HTrue (MCP.mkMTrue no_pos) CvpermUtils.empty_vperm_sets 
-               CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos ), None)] else def0 in
+               CF.TypeTrue (CF.mkTrueFlow ()) [] [] no_pos ), None)] else def0 in 
+               (* ADI TODO: to check *)
       let lhs = CF.HRel (hp0, List.map (fun x -> CP.mkVar x pos) args0, pos) in
       (hp0, CF.mk_hp_rel_def1 (CP.HPRelDefn (hp0, r, non_r_args)) lhs def None)
     | [] -> report_error no_pos "sac.compute gfp: sth wrong"
@@ -3876,7 +3877,7 @@ let pred_split_ext iprog cprog proc_name ass_stk hpdef_stk
   (*************************END INTERNAL*********************)
   (****************************************************************)
   let is_valid, nhp_defs, n_split = prove_sem_ext (List.map fst comps) (List.map fst pure_comps)
-      [] (CF.mkBase rhs_hf0 (MCP.mix_of_pure rhs_rel_pure0) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) []  no_pos)
+      [] (CF.mkBase rhs_hf0 (MCP.mix_of_pure rhs_rel_pure0) CvpermUtils.empty_vperm_sets Cformula.TypeTrue (Cformula.mkTrueFlow ()) [] [] no_pos) (* ADI TODO: to check *)
       cur_hpdef [] 0 in
   (is_valid, nhp_defs, n_split)
 

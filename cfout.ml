@@ -461,7 +461,7 @@ let simplify_context ?(prog_vs=None) ctx =
                        let sst = List.concat (List.map (fun lst -> build_subs lst curr_svl) eq_part) in
                        let new_formula = subst sst en.es_formula in
                        let h,mf,vp,fl,t,a,sec = split_components new_formula in
-                       (* ADI TODO: use sec? *)
+                       (* ADI TODO: use sec? --> line 503 *)
                        let () = x_tinfo_hp (add_str "sst" (pr_list (pr_pair !print_sv !print_sv))) sst no_pos in
                        let () = x_tinfo_hp (add_str "new_formula" !print_formula) new_formula no_pos in
                        let exists_svl = match en.es_formula with
@@ -500,7 +500,7 @@ let simplify_context ?(prog_vs=None) ctx =
                          let pf3 = Cpure.mkExists bag_exists_svl pf2 None no_pos in
                          let pf_simp = Cpure.elim_exists pf3 in
                          let mf_simp = Mcpure.mix_of_pure pf_simp in
-                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a no_pos in
+                         let new_f0 = mkExists exists_svl h mf_simp vp t fl a sec no_pos in
                          let () = x_tinfo_hp (add_str "new_f0" !print_formula) new_f0 no_pos in
                          let new_f = elim_exists new_f0 in
                          let () = x_tinfo_hp (add_str "new_f" !print_formula) new_f no_pos in

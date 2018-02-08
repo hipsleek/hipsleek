@@ -1047,9 +1047,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
       let new_const = List.fold_left (fun f0 f1 ->
           Cpure.mkAnd f0 f1 no_pos) (Cpure.mkTrue no_pos) new_const0 in
       let new_h, new_p, new_vp, new_fl, new_t, new_a, new_sec = Cformula.split_components f in
-      (* ADI TODO: use new_sec *)
       let new_p = Mcpure.mix_of_pure (Cpure.mkAnd new_const (Mcpure.pure_of_mix new_p) no_pos) in
-      let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a no_pos in
+      let new_f = Cformula.mkExists subst_vars new_h new_p new_vp new_t new_fl new_a new_sec no_pos in (* ADI TODO: to check *)
       new_f
   in
   match mf0 with

@@ -7,13 +7,12 @@ TODO:
 4. formula_base_sec
 - 5a. CF.split_components
 5b. IF.split_components
-6. formula_of_heap
-7a. CF.all_components
-7b. CF.extr_formula_base
-7c. linearize_base
-8. Solver.unfold_struc_x (add sec?)
+- 6a. CF.all_components
+- 6b. CF.extr_formula_base :: (h,p,vp,t,fl,a,sec)
+6c. linearize_base
+7. Solver.unfold_struc_x (add sec?)
    - inside struc_unfold_baref
-9. Solver.eliminate_exists_from_LHS (add sec?)
+8. Solver.eliminate_exists_from_LHS (add sec?)
 
 !!
 IFormula structure

@@ -4667,7 +4667,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
       {c with
        C.coercion_type = Iast.Right;
-       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a no_pos;
+       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a c_sec no_pos;
+       (* ADI TODO: to check *)
        (* C.coercion_head_norm = new_head_norm; *)
        C.coercion_body = new_body;
        C.coercion_head_norm = c_head_norm_rlem; (*w/o guard*)
@@ -8428,7 +8429,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = base.IF.formula_base_pos in
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
     let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-    (n_tl, CF.mkBase nh np nvp nt nfl na pos, newvars)
+    (n_tl, CF.mkBase nh np nvp nt nfl na [] pos, newvars)
+    (* ADI TODO: to check with linearize_base *)
   | IF.Exists {IF.formula_exists_heap = h;
                IF.formula_exists_pure = p;
                IF.formula_exists_vperm = vp;
@@ -8445,7 +8447,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in
     let qvars = qvars @ newvars in
-    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na pos, [])
+    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na [] pos, [])
+    (* ADI TODO: to check with linearize_base *)
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula =
   { CF.formula_flow_interval = exlist #  get_hash f0;
@@ -10999,7 +11002,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = x_add_1 Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] no_pos in (* ADI TODO: to check *)
   let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
   let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
   let f_gen_tot st =
