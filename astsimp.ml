@@ -2493,6 +2493,18 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let allow_ex_vs = extr_exist_vars inv_pf vs2 in
         let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
+
+        (* filter out security variables *)
+        let struc_vars =
+          CF.struc_all_vars cf
+          |> List.filter (fun v -> not @@ Security.is_security_spec_var v) in
+        let valid_sec_vars = List.map CP.sec_spec_var struc_vars in
+
+        let ffv =
+          List.filter
+            (fun v -> (not @@ Gen.BList.mem_eq CP.eq_spec_var v valid_sec_vars))
+            ffv in
+
         (* filter out holes (#) *)
         (* let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in *)
         let ffv = List.filter (fun v -> not
