@@ -1,21 +1,21 @@
 TODO:
-- 1a. CF.mkExists
-- 1b. CP.mkExists
-- 1c. mkBase :: heap mix v_perm t_form flow one_form sec_form pos [label]
-- 1d. mk_new_formula (check higher-order)
-- 3. formula_exists_sec
-- 4. formula_base_sec
-- 5a. CF.split_components
-- 5b. IF.split_components :: (h, p, vp, fl, a, sec)
-- 6a. CF.all_components
-- 6b. CF.extr_formula_base :: (h,p,vp,t,fl,a,sec)
-- 6c. linearize_base -> transform IF.sec_formula to CF.sec_formula
-7. Solver.unfold_struc_x (add sec?)
-   - inside struc_unfold_baref
-8. Solver.eliminate_exists_from_LHS (add sec?)
-
-!!
-- IFormula structure
-
-TO ADD:
-1. CF.formula_sec_of_formula
++--------+---------+-----------------------------------------------------------------+
+| Status | Source  | Name                                                            |
++--------+---------+-----------------------------------------------------------------+
+| CP     | CF      | mkExists [add arg]                                              |
+| CP     | CP      | mkExists [add arg]                                              |
+| CP     | CF      | mkBase   [add arg]                                              |
+| CP     | CF      | mk_new_formula (higher-order)                                   |
+| CP     | CF      | formula_exists_sec [add struc]                                  |
+| CP     | IF      | formula_exists_sec [add struc]                                  |
+| CP     | CF      | formula_base_sec   [add struc]                                  |
+| CP     | IF      | formula_base_sec   [add struc]                                  |
+| CP     | CF      | split_components (7 args) [add arg]                             |
+| CP     | CF      | split_components (6 args) :: (h, p, vp, fl, a, sec) [add arg]   |
+| CP     | CF      | all_components [add arg]                                        |
+| CP     | CF      | extr_formula_base :: (h,p,vp,t,fl,a,sec) [add arg]              |
+| CP     | ASTSimp | linearize_base [transform IF.sec_formula to CF.sec_formula]     |
+| NN     | Solver  | unfold_struc_x (inside struc_unfold_baref) [add sec?]           |
+| NN     | Solver  | eliminate_exists_from_LHS [add sec?]                            |
+| NN     | CF      | formula_sec_of_formula [to add]                                 |
++--------+---------+-----------------------------------------------------------------+
