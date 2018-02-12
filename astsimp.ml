@@ -4554,12 +4554,12 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     let body = coer.I.coercion_body in
     let head = coer.I.coercion_head in
     let dir = coer.I.coercion_type in
-    let (hf,_,_,_,_) = IF.split_components head in
+    let (hf,_,_,_,_,_) = IF.split_components head in
     let new_coer = match hf with
       | IF.HeapNode _ | IF.HeapNode2 _ -> coer
       | _ ->
         begin
-          let (hf,pf,_,_,_) = IF.split_components body in
+          let (hf,pf,_,_,_,_) = IF.split_components body in
           match hf with
           | IF.HeapNode _ | IF.HeapNode2 _ ->
             if Ipure.isConstTrue pf then
@@ -4569,7 +4569,7 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
             if dir==I.Right then change_dir coer head body dir
             else coer
           | _ -> coer
-        end in
+        end in (* ADI TODO: use sec in split_components? *)
     trans_one_coercion_x prog cprog new_coer
   in
   let old_switch coer =
@@ -4813,7 +4813,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in
-  let c_hd0, c_guard0, vp0, c_fl0, c_a0 = IF.split_components form in
+  let c_hd0, c_guard0, vp0, c_fl0, c_a0, c_sec0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
   let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] no_pos in
@@ -4845,6 +4845,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
       let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
       let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
+      (* ADI TODO: use c_sec0? *)
       let lhs_vars = if !Globals.old_free_var_lhs then l_fnames else fnames in
       snd (x_add trans_head new_head (lhs_vars (* rhs_fnames *)  (* l_fnames *)) quant n_tl)
     else c_head_norm in
@@ -8392,6 +8393,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       (fun _ -> linearize_one_formula_x f pos tlist) f
   ) in
 
+  let rec trans_if_sec_form_to_cf_sec_form_list sec_list pos tlist = (
+    let rec trans_if_sec_form_to_cf_sec_form sec_lbl pos tlist = (
+      match sec_lbl with
+      | IF.Sec_Var(id,pr) -> 
+        let spec_var = CP.mk_spec_var id in
+        let p_spec_var = CP.sp_add_prime spec_var pr in
+        CF.Sec_Var(p_spec_var)
+      | IF.Sec_LUB(lbl1,lbl2) -> CF.Sec_LUB(trans_if_sec_form_to_cf_sec_form lbl1 pos tlist,
+                                            trans_if_sec_form_to_cf_sec_form lbl2 pos tlist)
+      | IF.Sec_HI -> CF.Sec_HI
+      | IF.Sec_LO -> CF.Sec_LO
+    ) in match sec_list with
+    | { IF.sec_var = var ; IF.sec_lbl = lbl }::sl -> 
+      let (id,pr) = var in
+      let spec_var = CP.mk_spec_var id in
+      let p_spec_var = CP.sp_add_prime spec_var pr in
+      { CF.sec_var = p_spec_var ; CF.sec_lbl = (trans_if_sec_form_to_cf_sec_form lbl pos tlist); }::(trans_if_sec_form_to_cf_sec_form_list sl pos tlist)
+    | [] -> []
+  ) in
+
   let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
@@ -8414,6 +8435,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_a = ref [] in
     let newvars2 = ref [] in
     let new_tl = ref n_tl in
+    let new_sec = trans_if_sec_form_to_cf_sec_form_list sec pos tl in
+    (* ADI NOTE: transform IF.sec_formula to CF.sec_formula *)
     List.iter (fun f ->
         let a1, _, nvs, new_tl1 = linearize_one_formula f pos !new_tl in
         new_tl := new_tl1;
@@ -8421,7 +8444,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         newvars2 := !newvars2 @ nvs;
       ) a;
     (* let () = print_string("\new_p: "^(Cprinter.string_of_pure_formula new_p)) in *)
-    (new_h, new_p, new_vp, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl)
+    (new_h, new_p, new_vp, type_f, new_fl, !new_a, newvars1 @ !newvars2, n_tl, new_sec)
   ) in
   match f0 with
   | IF.Or {IF.formula_or_f1 = f1;
@@ -8433,10 +8456,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (n_tl,result, newvars1 @ newvars2)
   | IF.Base base ->
     let pos = base.IF.formula_base_pos in
-    let nh,np,nvp,nt,nfl,na,newvars,n_tl = (linearize_base base pos tlist) in
+    let nh,np,nvp,nt,nfl,na,newvars,n_tl,sec = (linearize_base base pos tlist) in
     let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-    (n_tl, CF.mkBase nh np nvp nt nfl na [] pos, newvars)
-    (* ADI TODO: to check with linearize_base *)
+    (n_tl, CF.mkBase nh np nvp nt nfl na sec pos, newvars)
   | IF.Exists {IF.formula_exists_heap = h;
                IF.formula_exists_pure = p;
                IF.formula_exists_vperm = vp;
@@ -8452,11 +8474,10 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                IF.formula_base_and = a;
                IF.formula_base_sec = sec;
                IF.formula_base_pos = pos;} in
-    let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
+    let nh,np,nvp,nt,nfl,na,newvars,n_tl,sec = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in
     let qvars = qvars @ newvars in
-    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na [] pos, [])
-    (* ADI TODO: to check with linearize_base *)
+    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na sec pos, [])
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula =
   { CF.formula_flow_interval = exlist #  get_hash f0;

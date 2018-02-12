@@ -1754,7 +1754,8 @@ core_constr_conjunctions: [ "core_constr_and" LEFTA
 and_core_constr:
   [
     [ dl = pure_constr; `CONSTR; f = core_constr  ->
-      let h,p,_,fl,_ = F.split_components f in
+      let h,p,_,fl,_,_ = F.split_components f in
+      (* ADI TODO: use sec? *)
       let pos = (get_pos_camlp4 _loc 2) in 
       F.mkOneFormula h p dl None pos
     ]

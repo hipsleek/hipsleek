@@ -1022,15 +1022,15 @@ and split_components (f : formula) =  match f with
       formula_base_pure = p; 
       formula_base_vperm = vp;
       formula_base_and = a;
-      formula_base_sec = sec; (* ADI TODO: to use *)
-      formula_base_flow =fl }) -> (h, p, vp, fl, a)
+      formula_base_sec = sec;
+      formula_base_flow =fl }) -> (h, p, vp, fl, a, sec)
   | Exists ({
       formula_exists_heap = h;
       formula_exists_pure = p;
       formula_exists_vperm = vp;
       formula_exists_and = a;
-      formula_exists_sec = sec; (* ADI TODO: to use *)
-      formula_exists_flow = fl }) -> (h, p, vp, fl, a)
+      formula_exists_sec = sec;
+      formula_exists_flow = fl }) -> (h, p, vp, fl, a, sec)
   | _ -> failwith ("split_components: don't expect OR")
 
 and split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match f with
@@ -2665,8 +2665,8 @@ let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
 
 (* merge f1 into f2 *)
 let mkStar_formula (f1 : formula) (f2 : formula) (pos : loc) = 
-  let h1, p1, vp1, fl1, a1 = split_components f1 in
-  let h2, p2, vp2, fl2, a2 = split_components f2 in
+  let h1, p1, vp1, fl1, a1, sec1 = split_components f1 in
+  let h2, p2, vp2, fl2, a2, sec2 = split_components f2 in
   (* assume no phase *)
   let h = mkStar h1 h2 pos in
   let p = Ipure.mkAnd p1 p2 pos in
@@ -2674,6 +2674,7 @@ let mkStar_formula (f1 : formula) (f2 : formula) (pos : loc) =
   (* assume similar flow *)
   let fl = fl2 in (* or fl1 *)
   let a = a1@a2 in (* combine a1 and a2: assuming merging a1 and a2 *)
+  let sec = sec1@sec2 in (* ADI TODO: unique with lub? *)
   mkBase h p vp fl a pos (* TO CHECK: how about a1,a2: DONE *)
 
 (* merge f1 into f2 *)
@@ -2696,9 +2697,10 @@ let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) =
             let qvars1, base1 = split_quantifiers rf1 in
             let qvars2, base2 = split_quantifiers rf2 in
             let new_base = mkStar_formula base1 base2 pos in
-            let new_h, new_p, new_vp, new_fl, new_a = split_components new_base in
+            let new_h, new_p, new_vp, new_fl, new_a, new_sec = split_components new_base in
             (* qvars[1|2] are fresh vars, hence no duplications *)
             let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_fl new_a pos in
+            (* ADI TODO: change mkExists *)
             resform
           end
       end

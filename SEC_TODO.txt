@@ -1,21 +1,21 @@
 TODO:
 - 1a. CF.mkExists
-1b. CP.mkExists
+- 1b. CP.mkExists
 - 1c. mkBase :: heap mix v_perm t_form flow one_form sec_form pos [label]
 - 1d. mk_new_formula (check higher-order)
-3. formula_exists_sec
-4. formula_base_sec
+- 3. formula_exists_sec
+- 4. formula_base_sec
 - 5a. CF.split_components
-5b. IF.split_components
+- 5b. IF.split_components :: (h, p, vp, fl, a, sec)
 - 6a. CF.all_components
 - 6b. CF.extr_formula_base :: (h,p,vp,t,fl,a,sec)
-6c. linearize_base
+- 6c. linearize_base -> transform IF.sec_formula to CF.sec_formula
 7. Solver.unfold_struc_x (add sec?)
    - inside struc_unfold_baref
 8. Solver.eliminate_exists_from_LHS (add sec?)
 
 !!
-IFormula structure
+- IFormula structure
 
 TO ADD:
 1. CF.formula_sec_of_formula
