@@ -1664,9 +1664,11 @@ and unfold_struc_x (prog:prog_or_branches) (f : struc_formula) (v : CP.spec_var)
           formula_base_pure = p;
           formula_base_vperm = vp;
           formula_base_and = a;
+          formula_base_sec = sec; (* ADI TODO: to check *)
           formula_base_flow = fl;
           formula_base_pos = pos; } ->
         struc_unfold_baref prog h p vp a fl v pos []  ee ei ii already_unsat uf
+        (* ADI TODO: to add *)
       | Exists _ ->
         let pr = Cprinter.string_of_spec_var_list in
         let () = x_tinfo_hp (add_str "Solver.unfold_struc: ee: " pr) ee pos in
@@ -1824,10 +1826,12 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
         formula_base_vperm = vp;
         formula_base_flow = fl;
         formula_base_and = a;
+        formula_base_sec = sec; (* ADI TODO: to check *)
         formula_base_pos = pos}) ->
       let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*)
+      (* ADI TODO: to add *)
 
     | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
       let rf,l = x_add_1 rename_bound_vars_with_subst f in

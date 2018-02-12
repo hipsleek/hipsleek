@@ -2332,6 +2332,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_base_vperm = vp;
       IF.formula_base_flow = fl;
       IF.formula_base_and = a;
+      IF.formula_base_sec = sec; (* ADI TODO: to check *)
       IF.formula_base_pos = pos;}) -> 
     let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
     let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
@@ -2342,6 +2343,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_base_vperm = vp;
       IF.formula_base_flow = fl;
       IF.formula_base_and = a;
+      IF.formula_base_sec = sec;
       IF.formula_base_pos = pos; }, [p], fieldl, fieldv
   | IF.Exists ({
       IF.formula_exists_qvars = qvars;
@@ -2350,6 +2352,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_exists_vperm = vp;
       IF.formula_exists_flow = fl;
       IF.formula_exists_and = a;
+      IF.formula_exists_sec = sec; (* ADI TODO: to check *)
       IF.formula_exists_pos = pos;}) -> 
     let new_exp, fieldl, fieldv = infer_mem_from_heap h prog in
     let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
@@ -2361,6 +2364,7 @@ let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp)
       IF.formula_exists_vperm = vp;
       IF.formula_exists_flow = fl;
       IF.formula_exists_and = a;
+      IF.formula_exists_sec = sec;
       IF.formula_exists_pos = pos; }, [p], fieldl, fieldv
   | IF.Or ({IF.formula_or_f1 = f1;
             IF.formula_or_f2 = f2;

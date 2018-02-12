@@ -362,6 +362,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_vperm = vp;
         IF.formula_base_flow = fl0;
         IF.formula_base_and = a0;
+        IF.formula_base_sec = sec0; (* ADI TODO: to check *)
         IF.formula_base_pos = l0
       } -> (*as f*)
     let tmp1 = look_for_anonymous_h_formula h0 in
@@ -380,6 +381,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
           IF.formula_exists_vperm = vp;
           IF.formula_exists_flow = fl0;
           IF.formula_exists_and = a1;
+          IF.formula_exists_sec = sec0; (* ADI TODO: to check *)
           IF.formula_exists_pos = l0;
         }
     else f0
@@ -7687,6 +7689,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_base_vperm = vp;
         IF.formula_base_flow = fl;
         IF.formula_base_and = a;
+        IF.formula_base_sec = sec; (* ADI TODO: to check *)
         IF.formula_base_pos = pos} as fb) ->(
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let n_tl =
@@ -7730,6 +7733,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_exists_vperm = vp;
         IF.formula_exists_flow = fl;
         IF.formula_exists_and = a;
+        IF.formula_exists_sec = sec; (* ADI TODO: to check *)
         IF.formula_exists_pos = pos} -> (
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
@@ -7747,6 +7751,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_vperm = vp;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
+            IF.formula_base_sec = sec; (* ADI TODO: to check *)
             IF.formula_base_pos = pos; }) in
         (* let () = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
         (* transform bexp *)
@@ -8393,6 +8398,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let vp = base.IF.formula_base_vperm in
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
+    let sec = base.IF.formula_base_sec in (* ADI TODO: to check *)
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = x_add linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
@@ -8437,12 +8443,14 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                IF.formula_exists_flow = fl;
                IF.formula_exists_qvars = qvars;
                IF.formula_exists_and = a;
+               IF.formula_exists_sec = sec; (* ADI TODO: to check *)
                IF.formula_exists_pos = pos} ->
     let base ={IF.formula_base_heap = h;
                IF.formula_base_pure = p;
                IF.formula_base_vperm = vp;
                IF.formula_base_flow = fl;
                IF.formula_base_and = a;
+               IF.formula_base_sec = sec;
                IF.formula_base_pos = pos;} in
     let nh,np,nvp,nt,nfl,na,newvars,n_tl = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in

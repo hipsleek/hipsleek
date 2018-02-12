@@ -1731,8 +1731,10 @@ disjunctive_constr:
           F.formula_base_pure = p;
           F.formula_base_vperm = vp;
           F.formula_base_flow = fl;
-          F.formula_base_and = a; }) -> 
+          F.formula_base_and = a;
+          F.formula_base_sec = sec; }) -> 
         F.mkExists ocl h p vp fl a (get_pos_camlp4 _loc 1)
+        (* ADI TODO: to add *)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
     ]
   ];

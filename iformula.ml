@@ -87,7 +87,8 @@ and formula_base = {
   formula_base_pure : P.formula;
   formula_base_vperm : VP.vperm_sets;
   formula_base_flow : flow_formula;
-  formula_base_and: one_formula list;
+  formula_base_and : one_formula list;
+  formula_base_sec : sec_formula list;
   formula_base_pos : loc }
 
 and formula_exists = { 
@@ -97,6 +98,7 @@ and formula_exists = {
   formula_exists_vperm : VP.vperm_sets;
   formula_exists_flow : flow_formula;
   formula_exists_and : one_formula list;
+  formula_exists_sec : sec_formula list;
   formula_exists_pos : loc }
 
 (*Note that one_formula and h_formula_thread
@@ -110,6 +112,17 @@ and one_formula = {
   formula_thread : (ident*primed) option;
   formula_pos : loc
 }
+
+(* Information Flow Analysis *)
+and sec_formula = {
+  sec_var : (ident * primed); (* variable identifier *)
+  sec_lbl : sec_label;   (* security label *)
+}
+and sec_label = 
+  | Sec_Var of (ident * primed) (* variable identifier *)
+  | Sec_LUB of (sec_label * sec_label)
+  | Sec_HI
+  | Sec_LO
 
 and flow_formula = constant_flow
 
@@ -378,6 +391,7 @@ and mkTrue flow pos = Base {
     formula_base_vperm = VP.empty_vperm_sets;
     formula_base_flow = flow;
     formula_base_and = [];
+    formula_base_sec = [];
     formula_base_pos = pos }
 
 and mkFalse flow pos = Base { 
@@ -386,6 +400,7 @@ and mkFalse flow pos = Base {
     formula_base_vperm = VP.empty_vperm_sets;
     formula_base_flow = flow;
     formula_base_and = [];
+    formula_base_sec = [];
     formula_base_pos = pos }
 
 and mkTrivAssume flow pos = EAssume {
@@ -479,6 +494,7 @@ and mkBase (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) flow (a: one_form
         formula_base_vperm = vp;
         formula_base_flow = flow;
         formula_base_and = a;
+        formula_base_sec = []; (* ADI TODO: to change to sec *)
         formula_base_pos = pos }
 
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) 
@@ -495,6 +511,7 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) (vp
         formula_exists_vperm = vp;
         formula_exists_flow = flow;
         formula_exists_and = a;
+        formula_exists_sec = []; (* ADI TODO: to check *)
         formula_exists_pos = pos }
 
 and mkOneFormula (h : h_formula) (p : P.formula) (dl : P.formula) id pos = 
@@ -950,6 +967,7 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
       formula_base_vperm = vp; 
       formula_base_flow = f;
       formula_base_and = a;
+      formula_base_sec = sec; (* ADI TODO: to use *)
       formula_base_pos = pos }) -> 
     mkExists qvars h p vp f a pos (*TO CHECK*)
   | Exists ({
@@ -959,6 +977,7 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
       formula_exists_vperm = vp;
       formula_exists_flow = f;
       formula_exists_and = a;
+      formula_exists_sec = sec; (* ADI TODO: to use *)
       formula_exists_pos = pos }) ->
     let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
     mkExists new_qvars h p vp f a pos (*TO CHECK*)
@@ -1003,12 +1022,14 @@ and split_components (f : formula) =  match f with
       formula_base_pure = p; 
       formula_base_vperm = vp;
       formula_base_and = a;
+      formula_base_sec = sec; (* ADI TODO: to use *)
       formula_base_flow =fl }) -> (h, p, vp, fl, a)
   | Exists ({
       formula_exists_heap = h;
       formula_exists_pure = p;
       formula_exists_vperm = vp;
       formula_exists_and = a;
+      formula_exists_sec = sec; (* ADI TODO: to use *)
       formula_exists_flow = fl }) -> (h, p, vp, fl, a)
   | _ -> failwith ("split_components: don't expect OR")
 
@@ -1020,6 +1041,7 @@ and split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
       formula_exists_vperm = vp; 
       formula_exists_flow = f;
       formula_exists_and = a;
+      formula_exists_sec = sec; (* ADI TODO: to use *)
       formula_exists_pos = pos}) -> (qvars, mkBase h p vp f a pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
@@ -1108,6 +1130,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
+      formula_base_sec = sec;
       formula_base_pos = pos }) ->
     Base ({
         formula_base_heap = h_apply_one s h;
@@ -1115,6 +1138,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
         formula_base_vperm = VP.vp_apply_one s vp;
         formula_base_flow = fl;
         formula_base_and = List.map (one_formula_apply_one s) a;
+        formula_base_sec = sec;
         formula_base_pos = pos })
   | Exists ({
       formula_exists_qvars = qsv;
@@ -1123,6 +1147,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
       formula_exists_vperm = vp;
       formula_exists_flow = fl;
       formula_exists_and = a;
+      formula_exists_sec = sec;
       formula_exists_pos = pos }) ->
     if List.mem (fst fr) (List.map fst qsv) then f
     else Exists ({
@@ -1132,6 +1157,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
         formula_exists_vperm = VP.vp_apply_one s vp;
         formula_exists_flow = fl;
         formula_exists_and = List.map (one_formula_apply_one s) a;
+        formula_exists_sec = sec;
         formula_exists_pos = pos })
 
 (*subst all including existential variables*)
@@ -1145,6 +1171,7 @@ and apply_one_all ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formul
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
+      formula_base_sec = sec;
       formula_base_pos = pos }) ->
     Base ({
         formula_base_heap = h_apply_one s h;
@@ -1152,6 +1179,7 @@ and apply_one_all ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formul
         formula_base_vperm = VP.vp_apply_one s vp;
         formula_base_flow = fl;
         formula_base_and = List.map (one_formula_apply_one s) a;
+        formula_base_sec = sec;
         formula_base_pos = pos })
   | Exists ({
       formula_exists_qvars = qsv;
@@ -1160,6 +1188,7 @@ and apply_one_all ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formul
       formula_exists_pure = qp;
       formula_exists_flow = fl;
       formula_exists_and = a;
+      formula_exists_sec = sec;
       formula_exists_pos = pos }) ->
     (*also substitute exist vars*)
     let new_evars = List.map (subst_var s) qsv in
@@ -1170,6 +1199,7 @@ and apply_one_all ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formul
         formula_exists_pure = Ipure.apply_one s qp;
         formula_exists_flow = fl;
         formula_exists_and = List.map (one_formula_apply_one s) a;
+        formula_exists_sec = sec;
         formula_exists_pos = pos })
 
 
@@ -1183,6 +1213,7 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
+      formula_base_sec = sec;
       formula_base_pos = pos }) ->
     (* let closure = List.map (fun v -> Ipure.find_closure_pure v p) vars in *)
     (* let closure = List.concat closure in *)
@@ -1200,6 +1231,7 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
         formula_base_vperm = VP.vp_apply_one s vp;
         formula_base_flow = fl;
         formula_base_and = List.map (fun f -> one_formula_apply_one_pointer s f vars) a;
+        formula_base_sec = sec;
         formula_base_pos = pos})
   | Exists ({
       formula_exists_qvars = qsv;
@@ -1208,6 +1240,7 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
       formula_exists_vperm = vp;
       formula_exists_flow = fl;
       formula_exists_and = a;
+      formula_exists_sec = sec;
       formula_exists_pos = pos }) ->
     let closure = List.map (fun v -> Ipure.find_closure_pure v qp) vars in
     let closure = List.concat closure in
@@ -1242,6 +1275,7 @@ and apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : fo
         formula_exists_vperm = VP.vp_apply_one s vp;
         formula_exists_flow = fl;
         formula_exists_and = List.map (fun f -> one_formula_apply_one_pointer s f vars) a;
+        formula_exists_sec = sec;
         formula_exists_pos = pos })
 
 and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formula) vars : h_formula * (Ipure.formula list)= 
@@ -1760,6 +1794,7 @@ and apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
+      formula_base_sec = sec;
       formula_base_pos = pos }) ->
     Base ({
         formula_base_heap = h_apply_one_w_data_name s h;
@@ -1767,6 +1802,7 @@ and apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
         formula_base_vperm = VP.vp_apply_one s vp;
         formula_base_flow = fl;
         formula_base_and = List.map (one_formula_apply_one_w_data_name s) a;
+        formula_base_sec = sec;
         formula_base_pos = pos })
   | Exists ({
       formula_exists_qvars = qsv;
@@ -1775,6 +1811,7 @@ and apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
       formula_exists_vperm = vp;
       formula_exists_flow = fl;
       formula_exists_and = a;
+      formula_exists_sec = sec;
       formula_exists_pos = pos }) ->
     if List.mem (fst fr) (List.map fst qsv) then f
     else Exists ({
@@ -1784,6 +1821,7 @@ and apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
         formula_exists_vperm = VP.vp_apply_one s vp;
         formula_exists_flow = fl;
         formula_exists_and = List.map (one_formula_apply_one_w_data_name s) a;
+        formula_exists_sec = sec;
         formula_exists_pos = pos })
 
 and subst_w_data_name sst (f : formula) = match sst with
@@ -2034,6 +2072,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_flow = b.formula_base_flow;
             formula_exists_pure = Ipure.mkAnd r2 b.formula_base_pure b.formula_base_pos;
             formula_exists_and = afs;
+            formula_exists_sec = b.formula_base_sec; (* ADI TODO: to check *)
             formula_exists_pos = b.formula_base_pos })
     | Exists b ->
       let rh,rl = float_out_exps 3 b.formula_exists_heap in
@@ -2053,6 +2092,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
             formula_exists_vperm = b.formula_exists_vperm;
             formula_exists_flow = b.formula_exists_flow;
             formula_exists_and = afs;
+            formula_exists_sec = b.formula_exists_sec; (* ADI TODO: to check *)
             formula_exists_pos = b.formula_exists_pos })
     | Or b -> Or ({
         formula_or_f1 = float_out_exps_from_heap 6 lbl_getter annot_getter b.formula_or_f1 ;
@@ -2092,6 +2132,7 @@ and float_out_min_max (f :  formula) :  formula =
       formula_base_vperm = vp;
       formula_base_flow = fl;
       formula_base_and = a;
+      formula_base_sec = sec;
       formula_base_pure = p0 } as b ->
     let (nh, nhpf) = float_out_heap_min_max h0 in
     let np = Ipure.float_out_pure_min_max p0 in
@@ -2103,7 +2144,8 @@ and float_out_min_max (f :  formula) :  formula =
       formula_base_pure = (match nhpf with
           | None -> np
           | Some e1 -> Ipure.And (np, e1, l));
-      formula_base_and = List.map float_out_one_formula_min_max a; }
+      formula_base_and = List.map float_out_one_formula_min_max a;
+      formula_base_sec = sec; }
   | Exists {
       formula_exists_qvars = qv;
       formula_exists_heap = h0;
@@ -2111,6 +2153,7 @@ and float_out_min_max (f :  formula) :  formula =
       formula_exists_vperm = vp;
       formula_exists_flow = fl;
       formula_exists_and = a;
+      formula_exists_sec = sec;
       formula_exists_pos = l } ->
     let (nh, nhpf) = float_out_heap_min_max h0 in
     let np = Ipure.float_out_pure_min_max p0 in
@@ -2123,6 +2166,7 @@ and float_out_min_max (f :  formula) :  formula =
           | None -> np
           | Some e1 -> (Ipure.And (np, e1, l)));
       formula_exists_and = List.map float_out_one_formula_min_max a;
+      formula_exists_sec = sec; (* ADI TODO: to check *)
       formula_exists_pos = l; }
   |  Or b -> Or {
       formula_or_f1 = float_out_min_max b.formula_or_f1;
