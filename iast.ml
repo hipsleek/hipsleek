@@ -761,9 +761,10 @@ let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
         hp_root_pos = root_pos;
         hp_part_vars = parts;
         hp_is_pre = is_pre;
-        hp_formula =  F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1);
+        hp_formula =  F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] [] (pos1);
+        (* ADI TODO: to check *)
         (* hp_view = view_d; *)
-    }
+      }
 
 
 let norm_par_case_list pl pos =
@@ -1363,7 +1364,8 @@ let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int option) parts
 (*   int -> int list list -> Iformula.formula -> hp_decl *)
 
 let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
-  let hp_f = F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1) in
+  let hp_f = F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] [] (pos1) in
+  (* ADI TODO: to check *)
   mk_hp_decl_0 ~is_pre:is_pre ~view_d:view_d id tl root_pos parts hp_f
     (*  { *)
     (*     hp_name = id; *)
@@ -1517,7 +1519,8 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           hp_part_vars = [];
           hp_root_pos = None;
           hp_is_pre = true;
-          hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;
+          hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] [] pos;
+          (* ADI TODO: to check *)
           (* hp_view = None *)
         }
         in
@@ -1559,7 +1562,8 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           hp_root_pos = None;
           hp_is_pre = false;
           (* hp_view = None; *)
-          hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos;}
+          hp_formula = F.mkBase F.HEmp (P.mkTrue pos) VP.empty_vperm_sets top_flow [] [] pos;}
+          (* ADI TODO: to check *)
       in
       let () = Debug.info_hprint (add_str ("generate unknown predicate for Post synthesis of " ^ pname ^ ": ") pr_id) hp_post_decl.hp_name no_pos in
       (*todo: care ref args*)
@@ -3383,7 +3387,8 @@ let gen_normalize_lemma_comb ddef =
    coercion_infer_vars = [];
    coercion_infer_obj = new Globals.inf_obj_sub;
    coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
-   coercion_body = F. mkBase (gennode perm3 args1) pure VP.empty_vperm_sets top_flow [] no_pos;
+   coercion_body = F. mkBase (gennode perm3 args1) pure VP.empty_vperm_sets top_flow [] [] no_pos;
+   (* ADI TODO: to check *)
    coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };
    coercion_type_orig = None;
    coercion_kind = LEM_SAFE; (*default. should improve*)
@@ -3403,7 +3408,8 @@ let gen_normalize_lemma_split ddef =
    coercion_exact = false;
    coercion_infer_vars = [];
    coercion_infer_obj = new Globals.inf_obj_sub;
-   coercion_head = F.mkBase (gennode perm3 args) pure VP.empty_vperm_sets top_flow [] no_pos;
+   coercion_head = F.mkBase (gennode perm3 args) pure VP.empty_vperm_sets top_flow [] [] no_pos;
+   (* ADI TODO: to check *)
    coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
 
    coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos };

@@ -87,29 +87,29 @@ let hack_filter_global_rel prog ls =
 (* Add this to adapt to the ret_int problem. Because in string_of_typ in globals, bool will return "boolean", which will cause a lot of trouble.*)
 let rec new_string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
-  | FORM          -> "Formula"
-  | UNK          -> "Unknown"
-  | Bool          -> "bool"
-  | Float         -> "float"
-  | Int           -> "int"
-  | INFInt        -> "INFint"
-  | Void          -> "void"
-  | NUM          -> "NUM"
-  | AnnT          -> "AnnT"
-  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
-  | BagT t        -> "bag("^(string_of_typ t)^")"
-  | TVar t        -> "TVar["^(string_of_int t)^"]"
-  | List t        -> "list("^(string_of_typ t)^")"
-  | Tree_sh		  -> "Tsh"
-  | Bptyp		  -> "Bptyp"
-  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
-  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FORM           -> "Formula"
+  | UNK            -> "Unknown"
+  | Bool           -> "bool"
+  | Float          -> "float"
+  | Int            -> "int"
+  | INFInt         -> "INFint"
+  | Void           -> "void"
+  | NUM            -> "NUM"
+  | AnnT           -> "AnnT"
+  | Tup2 (t1,t2)   -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
+  | BagT t         -> "bag("^(string_of_typ t)^")"
+  | TVar t         -> "TVar["^(string_of_int t)^"]"
+  | List t         -> "list("^(string_of_typ t)^")"
+  | Tree_sh		     -> "Tsh"
+  | Bptyp		       -> "Bptyp"
+  | RelT a         -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t      -> "Pointer{"^(string_of_typ t)^"}"
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
-  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
-  | HpT        -> "HpT"
+  | UtT b          -> "UtT("^(if b then "pre" else "post")^")"
+  | HpT            -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
-  | Array (et, r) -> (* An Hoa *)
+  | Array (et, r)  -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
 ;;
@@ -348,9 +348,9 @@ and convert_anonym_to_exist_struc f = match f with
 
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
   match f0 with
-  | (* - added 17.04.2008 - in case the formula contains anonymous vars ->   *)
-    (* transforms them into existential vars (transforms IF.formula_base *)
-    (* to IF.formula_exists)                                             *)
+  | (* - added 17.04.2008 - in case the formula contains anonymous vars -> *)
+    (* transforms them into existential vars (transforms IF.formula_base   *)
+    (* to IF.formula_exists)                                               *)
     IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
     let tmp1 = convert_anonym_to_exist f1 in
     let tmp2 = convert_anonym_to_exist f2

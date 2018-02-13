@@ -89,15 +89,15 @@ let sv_of_id t =
 
 let convert_lem_kind (l: lemma_kind_t) =
     match l with
-      | TLEM           -> LEM
-      | TLEM_PROP      -> LEM_PROP
+      | TLEM            -> LEM
+      | TLEM_PROP       -> LEM_PROP
       | TLEM_SPLIT      -> LEM_SPLIT
-      | TLEM_TEST      -> LEM_TEST
-      | TLEM_TEST_NEW  -> LEM_TEST_NEW
-      | TLEM_UNSAFE    -> LEM_UNSAFE
-      | TLEM_SAFE      -> LEM_SAFE
-      | TLEM_INFER     -> LEM_INFER
-      | TLEM_INFER_PRED   -> LEM_INFER_PRED
+      | TLEM_TEST       -> LEM_TEST
+      | TLEM_TEST_NEW   -> LEM_TEST_NEW
+      | TLEM_UNSAFE     -> LEM_UNSAFE
+      | TLEM_SAFE       -> LEM_SAFE
+      | TLEM_INFER      -> LEM_INFER
+      | TLEM_INFER_PRED -> LEM_INFER_PRED
 
 let default_rel_id = "rel_id__"
 (* let tmp_rel_decl = ref (None : rel_decl option) *)
@@ -1335,18 +1335,18 @@ mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layo
 				-> let fal,g = List.split mpl in
 				   let fv,al = List.split fal in
 					{	F.mem_formula_exp = e;
-					F.mem_formula_exact = false;
-					F.mem_formula_field_values = fv;
-					F.mem_formula_field_layout = al;
-					F.mem_formula_guards = g}
+				  	F.mem_formula_exact = false;
+					  F.mem_formula_field_values = fv;
+					  F.mem_formula_field_layout = al;
+					  F.mem_formula_guards = g}
 		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
 				-> let fal,g = List.split mpl in
 				   let fv,al = List.split fal in   
 					{	F.mem_formula_exp = e;
-					F.mem_formula_exact = true;
-					F.mem_formula_field_values = fv;
-					F.mem_formula_field_layout = al;
-					F.mem_formula_guards = g} ]];
+					  F.mem_formula_exact = true;
+					  F.mem_formula_field_values = fv;
+					  F.mem_formula_field_layout = al;
+					  F.mem_formula_guards = g} ]];
 
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
@@ -1772,7 +1772,8 @@ core_constr:
 emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in 
-      F.mkBase hc (P.mkAnd pc fb pos) vp fc [] pos
+      F.mkBase hc (P.mkAnd pc fb pos) vp fc [] [] pos
+      (* ADI TODO: to check *)
     ]
   ];
 
@@ -3896,7 +3897,8 @@ par_statement:
       let lend_heap = un_option lh F.HEmp in
       let lend_form = 
         F.mkBase lend_heap (P.mkAnd (P.mkTrue lend_pos) (P.mkTrue lend_pos) lend_pos)
-          VP.empty_vperm_sets n_flow [] lend_pos 
+          VP.empty_vperm_sets n_flow [] [] lend_pos 
+          (* ADI TODO: to check *)
       in
       Par {
         exp_par_vperm = vps;

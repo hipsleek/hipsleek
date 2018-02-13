@@ -1,21 +1,25 @@
 TODO:
-+--------+---------+-----------------------------------------------------------------+
-| Status | Source  | Name                                                            |
-+--------+---------+-----------------------------------------------------------------+
-| CP     | CF      | mkExists [add arg]                                              |
-| CP     | CP      | mkExists [add arg]                                              |
-| CP     | CF      | mkBase   [add arg]                                              |
-| CP     | CF      | mk_new_formula (higher-order)                                   |
-| CP     | CF      | formula_exists_sec [add struc]                                  |
-| CP     | IF      | formula_exists_sec [add struc]                                  |
-| CP     | CF      | formula_base_sec   [add struc]                                  |
-| CP     | IF      | formula_base_sec   [add struc]                                  |
-| CP     | CF      | split_components (7 args) [add arg]                             |
-| CP     | CF      | split_components (6 args) :: (h, p, vp, fl, a, sec) [add arg]   |
-| CP     | CF      | all_components [add arg]                                        |
-| CP     | CF      | extr_formula_base :: (h,p,vp,t,fl,a,sec) [add arg]              |
-| CP     | ASTSimp | linearize_base [transform IF.sec_formula to CF.sec_formula]     |
-| NN     | Solver  | unfold_struc_x (inside struc_unfold_baref) [add sec?]           |
-| NN     | Solver  | eliminate_exists_from_LHS [add sec?]                            |
-| NN     | CF      | formula_sec_of_formula [to add]                                 |
-+--------+---------+-----------------------------------------------------------------+
++------+---------+-----------------------------------------------------------------+
+| Stat | Source  | Name                                                            |
++------+---------+-----------------------------------------------------------------+
+| CP   | CF      | mkExists [add arg]                                              |
+| CP   | CP      | mkExists [add arg]                                              |
+| CP   | CF      | mkBase   [add arg]                                              |
+| CP   | IF      | mkBase   [add arg] :: (h, p, vp, f, a, sec, pos)                |
+| CP   | CF      | mk_new_formula (higher-order)                                   |
+| CP   | CF      | formula_exists_sec [add struc]                                  |
+| CP   | IF      | formula_exists_sec [add struc]                                  |
+| CP   | CF      | formula_base_sec   [add struc]                                  |
+| CP   | IF      | formula_base_sec   [add struc]                                  |
+| CP   | CF      | split_components (7 args) [add arg]                             |
+| CP   | CF      | split_components (6 args) :: (h, p, vp, fl, a, sec) [add arg]   |
+| CP   | CF      | all_components [add arg]                                        |
+| CP   | CF      | extr_formula_base :: (h,p,vp,t,fl,a,sec) [add arg]              |
+| CP   | ASTSimp | linearize_base [transform IF.sec_formula to CF.sec_formula]     |
+| NN   | Solver  | unfold_struc_x (inside struc_unfold_baref) [add sec?]           |
+| NN   | Solver  | eliminate_exists_from_LHS [add sec?]                            |
+| NN   | CF      | formula_sec_of_formula [to add]                                 |
+| NN   | IF      | add_formula_sec        [to add]                                 |
+| CP   | Token   | Add token for sec_formula [to add]                              |
+| IP   | Parser  | Parse sec_formula [to add]                                      |
+|------+---------+-----------------------------------------------------------------+

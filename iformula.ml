@@ -279,29 +279,31 @@ let rec is_param_ann_list_empty (anns:  P.ann option list) : bool =
 (* constructors *)
 
 let rec formula_of_heap_1 h pos = 
-  mkBase h (P.mkTrue pos) VP.empty_vperm_sets top_flow [] pos
+  mkBase h (P.mkTrue pos) VP.empty_vperm_sets top_flow [] [] pos
 
-and formula_of_pure_1 p pos = mkBase HEmp p VP.empty_vperm_sets top_flow [] pos                (* pure formula has Empty heap *)
+and formula_of_pure_1 p pos = mkBase HEmp p VP.empty_vperm_sets top_flow [] [] pos
+(* pure formula has Empty heap *)
 
-and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) VP.empty_vperm_sets f [] pos
+and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) VP.empty_vperm_sets f [] [] pos
 
-and formula_of_pure_with_flow p f a pos = mkBase HEmp p VP.empty_vperm_sets f a pos            (* pure formula has Empty heap *)
+and formula_of_pure_with_flow p f a pos = mkBase HEmp p VP.empty_vperm_sets f a [] pos
+(* pure formula has Empty heap *)
 
 and formula_of_pure_with_flow_htrue p f a pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p VP.empty_vperm_sets f a pos (* pure formula has HTRUE heap *)
+  mkBase h p VP.empty_vperm_sets f a [] pos (* pure formula has HTRUE heap *)
 
 and formula_of_pure_with_flow_emp p f a pos =
   let h = HEmp in
-  mkBase h p VP.empty_vperm_sets f a pos (* pure formula has HTRUE heap *)
+  mkBase h p VP.empty_vperm_sets f a [] pos (* pure formula has HTRUE heap *)
 
 and formula_of_vperm_pure_with_flow_htrue p vp f a pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p vp f a pos
+  mkBase h p vp f a [] pos
 
 and formula_of_vperm_pure_with_flow_emp p vp f a pos =
   let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
-  mkBase h p vp f a pos
+  mkBase h p vp f a [] pos
 
 and one_formula_of_formula f =
   match f with
@@ -313,18 +315,18 @@ and one_formula_of_formula f =
     Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expected base formula, not found"} 
 
 and one_formula_of_formula_base b =
-  {formula_heap = b.formula_base_heap;
-   formula_pure = b.formula_base_pure;
-   formula_thread = None;
+  {formula_heap    = b.formula_base_heap;
+   formula_pure    = b.formula_base_pure;
+   formula_thread  = None;
    formula_delayed = (P.mkTrue b.formula_base_pos);
-   formula_pos = b.formula_base_pos}
+   formula_pos     = b.formula_base_pos}
 
 and one_formula_of_formula_exists b =
-  {formula_heap = b.formula_exists_heap;
-   formula_pure = b.formula_exists_pure;
-   formula_thread = None;
+  {formula_heap    = b.formula_exists_heap;
+   formula_pure    = b.formula_exists_pure;
+   formula_thread  = None;
    formula_delayed = (P.mkTrue b.formula_exists_pos);
-   formula_pos = b.formula_exists_pos}
+   formula_pos     = b.formula_exists_pos}
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
   match f with
@@ -386,27 +388,27 @@ and mkTrue_nf p =  mkTrue n_flow p
 
 (* TRUNG TODO: should change name to mkEmp ? *)
 and mkTrue flow pos = Base { 
-    formula_base_heap = HEmp;
-    formula_base_pure = P.mkTrue pos;
+    formula_base_heap  = HEmp;
+    formula_base_pure  = P.mkTrue pos;
     formula_base_vperm = VP.empty_vperm_sets;
-    formula_base_flow = flow;
-    formula_base_and = [];
-    formula_base_sec = [];
-    formula_base_pos = pos }
+    formula_base_flow  = flow;
+    formula_base_and   = [];
+    formula_base_sec   = [];
+    formula_base_pos   = pos }
 
 and mkFalse flow pos = Base { 
-    formula_base_heap = HFalse;
-    formula_base_pure = P.mkFalse pos;
+    formula_base_heap  = HFalse;
+    formula_base_pure  = P.mkFalse pos;
     formula_base_vperm = VP.empty_vperm_sets;
-    formula_base_flow = flow;
-    formula_base_and = [];
-    formula_base_sec = [];
-    formula_base_pos = pos }
+    formula_base_flow  = flow;
+    formula_base_and   = [];
+    formula_base_sec   = [];
+    formula_base_pos   = pos }
 
 and mkTrivAssume flow pos = EAssume {
     formula_assume_simpl = mkTrue flow pos; 
     formula_assume_struc = mkETrue flow pos;
-    formula_assume_lbl = (-1,"");
+    formula_assume_lbl   = (-1,"");
     formula_assume_ensures_type = None;
   }
 
@@ -414,15 +416,15 @@ and mkETrueTrue flow flow2 pos = EBase {
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
     formula_struc_exists = [];
-    formula_struc_base = mkTrue flow pos;
-    formula_struc_is_requires = true;
+    formula_struc_base   = mkTrue flow pos;
+    formula_struc_is_requires  = true;
     formula_struc_continuation = Some (mkTrivAssume flow2 pos) ;
     formula_struc_pos = pos	}
 
 and mkEAssume simp struc lbl ens = EAssume{
     formula_assume_simpl = simp;
     formula_assume_struc = struc;
-    formula_assume_lbl = lbl;
+    formula_assume_lbl   = lbl;
     formula_assume_ensures_type = ens;
   }
 
@@ -430,8 +432,8 @@ and mkETrue flow pos = EBase {
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
     formula_struc_exists = [];
-    formula_struc_base = mkTrue flow pos;
-    formula_struc_is_requires = false;
+    formula_struc_base   = mkTrue flow pos;
+    formula_struc_is_requires  = false;
     formula_struc_continuation = None;
     formula_struc_pos = pos	}
 
@@ -439,13 +441,13 @@ and mkEFalse flow pos = EBase {
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
     formula_struc_exists = [];
-    formula_struc_base = mkFalse flow pos;
-    formula_struc_is_requires = false;
+    formula_struc_base   = mkFalse flow pos;
+    formula_struc_is_requires  = false;
     formula_struc_continuation = None;
     formula_struc_pos = pos	}
 
 and mkEFalseF () = mkEFalse false_flow no_pos
-and mkETrueF () = mkETrue n_flow no_pos
+and mkETrueF ()  = mkETrue n_flow no_pos
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos
 
 (*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
@@ -479,23 +481,24 @@ and disj_of_list l default pos = match l with
   | [] -> if default then mkTrue n_flow pos else mkFalse false_flow pos
   | h::t -> List.fold_left (fun c1 c2-> mkOr c1 c2 pos) h t
 
-and mkBase_wo_flow (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) (a: one_formula list) pos =
-  mkBase h p vp top_flow a pos
+and mkBase_wo_flow (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) (a: one_formula list) (sec: sec_formula list) pos =
+  mkBase h p vp top_flow a sec pos
 
-and mkBase (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) flow (a: one_formula list) pos = 
+and mkBase (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) flow (a: one_formula list) (sec: sec_formula list) pos = 
   match h with
   | HFalse -> mkFalse flow pos
   | _ -> 
     if P.isConstFalse p then mkFalse flow pos
     else 
       Base { 
-        formula_base_heap = h;
-        formula_base_pure = p;
+        formula_base_heap  = h;
+        formula_base_pure  = p;
         formula_base_vperm = vp;
-        formula_base_flow = flow;
-        formula_base_and = a;
-        formula_base_sec = []; (* ADI TODO: to change to sec *)
-        formula_base_pos = pos }
+        formula_base_flow  = flow;
+        formula_base_and   = a;
+        formula_base_sec   = sec;
+        formula_base_pos   = pos;
+      }
 
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) 
     flow (a: one_formula list) pos = 
@@ -1041,8 +1044,8 @@ and split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
       formula_exists_vperm = vp; 
       formula_exists_flow = f;
       formula_exists_and = a;
-      formula_exists_sec = sec; (* ADI TODO: to use *)
-      formula_exists_pos = pos}) -> (qvars, mkBase h p vp f a pos)
+      formula_exists_sec = sec;
+      formula_exists_pos = pos}) -> (qvars, mkBase h p vp f a sec pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
@@ -2675,7 +2678,7 @@ let mkStar_formula (f1 : formula) (f2 : formula) (pos : loc) =
   let fl = fl2 in (* or fl1 *)
   let a = a1@a2 in (* combine a1 and a2: assuming merging a1 and a2 *)
   let sec = sec1@sec2 in (* ADI TODO: unique with lub? *)
-  mkBase h p vp fl a pos (* TO CHECK: how about a1,a2: DONE *)
+  mkBase h p vp fl a sec pos (* TO CHECK: how about a1,a2: DONE *)
 
 (* merge f1 into f2 *)
 let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) = 
