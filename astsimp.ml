@@ -4816,7 +4816,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let c_hd0, c_guard0, vp0, c_fl0, c_a0, c_sec0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
-  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] no_pos in
+  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] [] no_pos in
+  (* ADI TODO: to check *)
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames =  Gen.BList.remove_dups_eq (=) (List.map CP.name_of_spec_var (CF.fv c_rhs)) in
   let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
@@ -4844,8 +4845,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let c_head_norm_rlem = if coer_type = I.Equiv then
       let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
       let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
-      let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] no_pos in
-      (* ADI TODO: use c_sec0? *)
+      let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] c_sec0 no_pos in
+      (* ADI TODO: to check *)
       let lhs_vars = if !Globals.old_free_var_lhs then l_fnames else fnames in
       snd (x_add trans_head new_head (lhs_vars (* rhs_fnames *)  (* l_fnames *)) quant n_tl)
     else c_head_norm in
@@ -9183,7 +9184,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
        let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
        let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in
        (to_evars,to_expl))in
-    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a pos in
+    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a [] pos in
+    (* ADI TODO: to check, new_sec? *)
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then
       Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos

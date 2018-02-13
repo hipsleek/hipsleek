@@ -219,6 +219,21 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_label : formula_label option;
                         h_formula_heap2_pos : loc }
 
+
+(* IFA: constructors *)
+let mkHiSec = {
+  sec_var = ("__ALL__", Unprimed);
+  sec_lbl = Sec_HI
+}
+let mkLoSec = {
+  sec_var = ("__ALL__", Unprimed);
+  sec_lbl = Sec_LO
+}
+let mkSecForm var lbl = {
+  sec_var = var;
+  sec_lbl = lbl
+}
+
 let mk_hrel id cl pos =
   HRel(id,cl,pos)
 
@@ -501,7 +516,7 @@ and mkBase (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) flow (a: one_form
       }
 
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) (vp: VP.vperm_sets) 
-    flow (a: one_formula list) pos = 
+    flow (a: one_formula list) (sec: sec_formula list) pos = 
   match h with
   | HFalse -> mkFalse flow pos
   | _ ->
@@ -514,7 +529,7 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) (vp
         formula_exists_vperm = vp;
         formula_exists_flow = flow;
         formula_exists_and = a;
-        formula_exists_sec = []; (* ADI TODO: to check *)
+        formula_exists_sec = sec;
         formula_exists_pos = pos }
 
 and mkOneFormula (h : h_formula) (p : P.formula) (dl : P.formula) id pos = 
@@ -970,9 +985,9 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
       formula_base_vperm = vp; 
       formula_base_flow = f;
       formula_base_and = a;
-      formula_base_sec = sec; (* ADI TODO: to use *)
+      formula_base_sec = sec;
       formula_base_pos = pos }) -> 
-    mkExists qvars h p vp f a pos (*TO CHECK*)
+    mkExists qvars h p vp f a sec pos (*TO CHECK*)
   | Exists ({
       formula_exists_qvars = qvs; 
       formula_exists_heap = h; 
@@ -980,10 +995,10 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
       formula_exists_vperm = vp;
       formula_exists_flow = f;
       formula_exists_and = a;
-      formula_exists_sec = sec; (* ADI TODO: to use *)
+      formula_exists_sec = sec;
       formula_exists_pos = pos }) ->
     let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
-    mkExists new_qvars h p vp f a pos (*TO CHECK*)
+    mkExists new_qvars h p vp f a sec pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
 
 and push_exists (qvars : (ident*primed) list) (f : formula) = 
@@ -1476,18 +1491,21 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
     HVar (v1,ls)
   | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
 
+(* ADI TODO: check if renaming is here... *)
 and rename_bound_vars_x (f : formula) = 
   let add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = 
     match f with
     | Base b -> 
       mkExists qvars 
         b.formula_base_heap b.formula_base_pure b.formula_base_vperm 
-        b.formula_base_flow b.formula_base_and b.formula_base_pos
+        b.formula_base_flow b.formula_base_and b.formula_base_sec
+        b.formula_base_pos
     | Exists b -> 
       let new_qvars = Gen.BList.remove_dups_eq (=) (b.formula_exists_qvars @ qvars) in
       mkExists new_qvars 
         b.formula_exists_heap b.formula_exists_pure b.formula_exists_vperm 
-        b.formula_exists_flow b.formula_exists_and b.formula_exists_pos
+        b.formula_exists_flow b.formula_exists_and b.formula_exists_sec
+        b.formula_exists_pos
     | _ -> failwith ("add_quantifiers: invalid argument") 
   in
   match f with
@@ -2702,8 +2720,7 @@ let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) =
             let new_base = mkStar_formula base1 base2 pos in
             let new_h, new_p, new_vp, new_fl, new_a, new_sec = split_components new_base in
             (* qvars[1|2] are fresh vars, hence no duplications *)
-            let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_fl new_a pos in
-            (* ADI TODO: change mkExists *)
+            let resform = mkExists (qvars1 @ qvars2) new_h new_p new_vp new_fl new_a new_sec pos in
             resform
           end
       end

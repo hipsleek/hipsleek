@@ -454,6 +454,13 @@ rule tokenizer file_name = parse
   | "@value" {PVALUE}
   | "@lend" { PLEND }
   | "@Split" { SPLITANN } (*Split annotation*)
+  (* information flow analysis *)
+  (*
+  | "<^"  { SEC_OP  }
+  | "@Hi" { HI_SEC  }
+  | "@Lo" { LO_SEC  }
+  | "|_|" { LUB_SEC }
+  *)
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }

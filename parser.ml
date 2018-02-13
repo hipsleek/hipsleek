@@ -161,13 +161,13 @@ let get_pos x =
     let mp = Parsing.rhs_start_pos x in
     if (!is_cparser_mode) then (
       let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
-                            Lexing.pos_bol = sp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_bol  = sp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
                             Lexing.pos_cnum = sp.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
       let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
-                            Lexing.pos_bol = ep.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_bol  = ep.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
                             Lexing.pos_cnum = ep.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
       let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !cparser_base_loc.line_num -1;
-                            Lexing.pos_bol = mp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
+                            Lexing.pos_bol  = mp.Lexing.pos_bol + !cparser_base_loc.byte_num -1;
                             Lexing.pos_cnum = mp.Lexing.pos_cnum + !cparser_base_loc.byte_num -1;} in
       { start_pos = new_sp;
         end_pos = new_ep;
@@ -1723,7 +1723,7 @@ disjunctive_constr:
   | [ dc=SELF; `ANDWORD; oc=SELF -> dc]
   | [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
-    [ cc=core_constr_and -> cc
+    [ cc=core_constr_and -> cc (* ADI TODO: check core_constr_and *)
     | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and -> 
 	  (match cc with
       | F.Base ({
@@ -1733,7 +1733,7 @@ disjunctive_constr:
           F.formula_base_flow = fl;
           F.formula_base_and = a;
           F.formula_base_sec = sec; }) -> 
-        F.mkExists ocl h p vp fl a (get_pos_camlp4 _loc 1)
+        F.mkExists ocl h p vp fl a sec (get_pos_camlp4 _loc 1)
         (* ADI TODO: to add *)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
     ]
@@ -1773,9 +1773,13 @@ emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
       let pos = (get_pos_camlp4 _loc 1) in 
       F.mkBase hc (P.mkAnd pc fb pos) vp fc [] [] pos
-      (* ADI TODO: to check *)
+      (* ADI TODO: to check and to add `; sec= opt_sec_constr` *)
     ]
   ];
+
+(* information flow analysis *)
+(* opt_sec_constr: [[ sec = OPT ?? -> un_option sec ?? ]]; *)
+
 
 opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];
 
@@ -3126,7 +3130,7 @@ id_part_ann: [[
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
-  | t = typ; `RO; (id,n) = id_part_ann -> let () = pred_root_id := id in (t,(id,n), Globals.I)
+  |  t = typ; `RO; (id,n) = id_part_ann -> let () = pred_root_id := id in (t,(id,n), Globals.I)
   |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
   |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
  ]];
