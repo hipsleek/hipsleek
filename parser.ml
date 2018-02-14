@@ -1778,7 +1778,15 @@ emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
   ];
 
 (* information flow analysis *)
-(* opt_sec_constr: [[ sec = OPT ?? -> un_option sec ?? ]]; *)
+(* ADI TODO: type mismatch *)
+opt_sec_formula: [[ sec = OPT sec_formula -> un_option sec F.mk_hi_sec_all ]];
+sec_formula: [[ `IDENTIFIER id; lbl=sec_label -> F.mk_sec_form id lbl ]];
+sec_label: [[
+    `IDENTIFIER id -> id
+  | `HI_SEC -> F.Sec_HI
+  | `LO_SEC -> F.Sec_LO
+  | lbl1=sec_label; `LUB_SEC; lbl2=sec_label -> F.Sec_LUB(lbl1,lbl2)
+]];
 
 
 opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];

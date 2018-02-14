@@ -221,15 +221,15 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 
 
 (* IFA: constructors *)
-let mkHiSec = {
+let mk_hi_sec_all = {
   sec_var = ("__ALL__", Unprimed);
   sec_lbl = Sec_HI
 }
-let mkLoSec = {
+let mk_lo_sec_all = {
   sec_var = ("__ALL__", Unprimed);
   sec_lbl = Sec_LO
 }
-let mkSecForm var lbl = {
+let mk_sec_form var lbl = {
   sec_var = var;
   sec_lbl = lbl
 }
