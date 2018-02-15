@@ -72,8 +72,6 @@ let update_security_formula_for ?(add_label=false) var new_lbl formula =
 
   CF.transform_pure update_sec_form formula
 
-let is_security_spec_var v = BatString.starts_with (CP.name_of_spec_var v) "sec_"
-
 let is_security_p_formula = function
   | CP.Security _ -> true
   | _ -> false

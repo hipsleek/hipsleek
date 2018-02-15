@@ -1061,8 +1061,9 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
   let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
   (*LDK: ??? be careful to handle frac var properly.
     Currently, no fracvar in view definition*)
-  let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
-  let to_svs = p :: vs in
+  let self_sv = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
+  let from_svs = self_sv :: CP.sec_spec_var self_sv :: vdef.view_vars in
+  let to_svs = p :: CP.sec_spec_var p :: vs in
   let res =
     (match inv_opt with
      | None ->

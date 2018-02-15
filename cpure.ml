@@ -815,6 +815,8 @@ let string_of_xpure_view xp = match xp with
     in
     "XPURE("^rn^vname^args_s^")"
 
+let is_security_spec_var v = BatString.starts_with (name_of_spec_var v) "sec_"
+
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
   let n=String.length s in

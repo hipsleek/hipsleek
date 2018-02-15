@@ -2497,7 +2497,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (* filter out security variables *)
         let struc_vars =
           CF.struc_all_vars cf
-          |> List.filter (fun v -> not @@ Security.is_security_spec_var v) in
+          |> List.filter (fun v -> not @@ CP.is_security_spec_var v) in
         let valid_sec_vars = List.map CP.sec_spec_var struc_vars in
 
         let ffv =

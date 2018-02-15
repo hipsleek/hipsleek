@@ -4640,7 +4640,16 @@ and rename_bound_vars_x (f : formula) = match f with
     let qvars, base_f = split_quantifiers f in
     (*filter out RelT and HpT*)
     let qvars = List.filter (fun sv -> not(CP.is_rel_all_var sv)) qvars in
+
+    (* filter out security vars *)
+    let qvars = List.filter (fun v -> not @@ CP.is_security_spec_var v) qvars in
+    let sec_qvars = List.map CP.sec_spec_var qvars in
+
     let new_qvars = CP.fresh_spec_vars qvars in
+    let new_sec_qvars = List.map CP.sec_spec_var new_qvars in
+
+    let qvars = qvars @ sec_qvars in
+    let new_qvars = new_qvars @ new_sec_qvars in
     (*--- 09.05.2000 *)
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
     (*09.05.2000 ---*)

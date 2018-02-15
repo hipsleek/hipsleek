@@ -1959,10 +1959,12 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           else renamed_view_formula
         in
         (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
-        let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
+        let self_v = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
+        let fr_vars = self_v
+                      :: CP.sec_spec_var self_v
                       :: (* fr_rem *) vdef.view_vars in
         let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
-        let to_vars = v :: (* to_rem *) vs in
+        let to_vars = v :: CP.sec_spec_var (CP.to_unprimed v) :: (* to_rem *) vs in
         let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
         (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
         (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
@@ -7668,7 +7670,14 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                   formula_exists_pos = pos} -> (
             (* eliminating existential quantifiers from the LHS *)
             (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+            let qvars = List.filter (fun v -> not @@ CP.is_security_spec_var v) qvars in
+            let sec_qvars = List.map CP.sec_spec_var qvars in
             let ws = CP.fresh_spec_vars qvars in
+            let sec_ws = List.map CP.sec_spec_var ws in
+
+            let qvars = qvars @ sec_qvars in
+            let ws = ws @ sec_ws in
+
             (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
             let st = List.combine qvars ws in
             let baref = mkBase qh qp qvp qt qfl qa pos in
