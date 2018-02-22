@@ -229,10 +229,26 @@ let mk_lo_sec_all = {
   sec_var = ("__ALL__", Unprimed);
   sec_lbl = Sec_LO
 }
-let mk_sec_form var lbl = {
+let mk_sec_form var lbl : sec_formula = {
   sec_var = var;
   sec_lbl = lbl
 }
+
+let rec sec_lbl_to_str lbl =
+match lbl with
+| Sec_Var(id,pr) -> id
+| Sec_LUB(lbl1,lbl2) -> sec_lbl_to_str lbl1 ^ " |_| " ^ sec_lbl_to_str lbl2
+| Sec_HI -> "@Hi"
+| Sec_LO -> "@Lo"
+
+let sec_form_to_str sec =
+let (id,pr) = sec.sec_var in
+  id^" <: "^sec_lbl_to_str sec.sec_lbl
+
+let rec sec_form_list_to_str sec_list =
+match sec_list with
+| sec::sl -> sec_form_to_str sec ^ sec_form_list_to_str sl
+| [] -> ""
 
 let mk_hrel id cl pos =
   HRel(id,cl,pos)
@@ -312,13 +328,21 @@ and formula_of_pure_with_flow_emp p f a pos =
   let h = HEmp in
   mkBase h p VP.empty_vperm_sets f a [] pos (* pure formula has HTRUE heap *)
 
-and formula_of_vperm_pure_with_flow_htrue p vp f a pos =
+and formula_of_pure_with_flow_htrue_sec p f a sec pos = 
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p vp f a [] pos
+  mkBase h p VP.empty_vperm_sets f a sec pos (* ADI: added sec *)
 
-and formula_of_vperm_pure_with_flow_emp p vp f a pos =
+and formula_of_pure_with_flow_emp_sec p f a sec pos =
+  let h = HEmp in
+  mkBase h p VP.empty_vperm_sets f a sec pos (* ADI: added sec *)
+
+and formula_of_vperm_pure_with_flow_htrue_sec p vp f a sec pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p vp f a sec pos  (* ADI: added sec *)
+
+and formula_of_vperm_pure_with_flow_emp_sec p vp f a sec pos =
   let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
-  mkBase h p vp f a [] pos
+  mkBase h p vp f a sec pos  (* ADI: added sec *)
 
 and one_formula_of_formula f =
   match f with

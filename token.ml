@@ -125,7 +125,7 @@ type sleek_token =
   | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
   (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
-  | HI_SEC | LO_SEC | LUB_SEC (* information flow analysis *)
+  | SEC_OP | SEC_SEP | HI_SEC | LO_SEC | LUB_SEC (* information flow analysis *)
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
@@ -279,6 +279,8 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
     (* | SKIP -> "skip" *)
     (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
+    | SEC_OP  -> "<?" (* ADI: information flow analysis *)
+    | SEC_SEP -> "%%"
     | HI_SEC  -> "@Hi"
     | LO_SEC  -> "@Lo"
     | LUB_SEC -> "|_|"  (* IFA: a __ b => least_upper_bound(a,b) *)

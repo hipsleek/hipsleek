@@ -388,6 +388,13 @@ rule tokenizer file_name = parse
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
   | "##OPTION " (['0'-'9' 'A'-'Z' 'a'-'z' '-' ' ' '.' '_' '"' ]* as x) {ARGOPTION (Camlp4.Struct.Token.Eval.string x)}
+  (* information flow analysis *)
+  | "<?"  { SEC_OP  }
+  | "%%"  { SEC_SEP }
+  | "@Hi" { HI_SEC  }
+  | "@Lo" { LO_SEC  }
+  | "|_|" { LUB_SEC }
+
   | "@frac" { PFRAC }
   | "@A" { ACCS }
   | '&' { AND }
@@ -454,10 +461,6 @@ rule tokenizer file_name = parse
   | "@value" {PVALUE}
   | "@lend" { PLEND }
   | "@Split" { SPLITANN } (*Split annotation*)
-  (* information flow analysis *)
-  | "@Hi" { HI_SEC  }
-  | "@Lo" { LO_SEC  }
-  | "|_|" { LUB_SEC }
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)
   | '^' { CARET }

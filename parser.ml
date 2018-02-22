@@ -1723,7 +1723,7 @@ disjunctive_constr:
   | [ dc=SELF; `ANDWORD; oc=SELF -> dc]
   | [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
-    [ cc=core_constr_and -> cc (* ADI TODO: check core_constr_and *)
+    [ cc=core_constr_and -> cc 
     | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and -> 
 	  (match cc with
       | F.Base ({
@@ -1734,7 +1734,6 @@ disjunctive_constr:
           F.formula_base_and = a;
           F.formula_base_sec = sec; }) -> 
         F.mkExists ocl h p vp fl a sec (get_pos_camlp4 _loc 1)
-        (* ADI TODO: to add *)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
     ]
   ];
@@ -1747,8 +1746,8 @@ core_constr_and : [[
 ]];
 
 core_constr_conjunctions: [ "core_constr_and" LEFTA
-                   [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
-                   | [f1 = and_core_constr -> [f1]]
+                      [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
+                    | [f1 = and_core_constr -> [f1]]
                   ];
 
 and_core_constr:
@@ -1763,31 +1762,38 @@ and_core_constr:
 
 core_constr:
   [
-    [ pc= pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
-      let pos = (get_pos_camlp4 _loc 1) in
-      F.formula_of_pure_with_flow_htrue (P.mkAnd pc fb pos) fc [] pos
-    | vp= vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches ->
-      let pos = (get_pos_camlp4 _loc 1) in
-      F.formula_of_vperm_pure_with_flow_emp (*
-emp|htrue?*) (P.mkAnd pc fb pos) vp fc [] pos
-    | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches ->
-      let pos = (get_pos_camlp4 _loc 1) in 
-      F.mkBase hc (P.mkAnd pc fb pos) vp fc [] [] pos
-      (* ADI TODO: to check and to add `; sec= opt_sec_constr` *)
+    [ pc= pure_constr; fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
+      -> let pos = (get_pos_camlp4 _loc 1) in
+          F.formula_of_pure_with_flow_htrue_sec (P.mkAnd pc fb pos) fc [] sc pos
+    | vp= vperm_constr; pc= opt_pure_constr;
+      fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
+      -> let pos = (get_pos_camlp4 _loc 1) in
+          F.formula_of_vperm_pure_with_flow_emp_sec (*emp|htrue?*)
+          (P.mkAnd pc fb pos) vp fc [] sc pos
+    | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr;
+      fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
+      -> let pos = (get_pos_camlp4 _loc 1) in 
+          F.mkBase hc (P.mkAnd pc fb pos) vp fc [] sc pos
+          (* ADI TODO: to add *)
     ]
   ];
 
 (* information flow analysis *)
-(* ADI TODO: type mismatch *)
-opt_sec_formula: [[ sec = OPT sec_formula -> un_option sec F.mk_hi_sec_all ]];
-sec_formula: [[ `IDENTIFIER id; lbl=sec_label -> F.mk_sec_form id lbl ]];
-sec_label: [[
-    `IDENTIFIER id -> id
-  | `HI_SEC -> F.Sec_HI
-  | `LO_SEC -> F.Sec_LO
-  | lbl1=sec_label; `LUB_SEC; lbl2=sec_label -> F.Sec_LUB(lbl1,lbl2)
-]];
+(* ADI TODO: to complete *)
+opt_sec_constr: [[ scl = OPT sep_sec_constr -> un_option scl [] ]];
 
+sep_sec_constr: [[ `SEC_SEP; scl = sec_constr_list -> scl ]];
+
+sec_constr_list: [[ scl = LIST1 sec_constr SEP `AND -> scl ]];
+
+sec_constr: [[ sid = cid; `SEC_OP; slbl = sec_label -> F.mk_sec_form sid slbl ]];
+
+sec_label: [[
+    `HI_SEC -> F.Sec_HI
+  | `LO_SEC -> F.Sec_LO
+  | slbl1 = SELF; `LUB_SEC; slbl2 = SELF -> F.Sec_LUB(slbl1, slbl2)
+  | sid = cid -> F.Sec_Var(sid)
+]];
 
 opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];
 
