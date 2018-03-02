@@ -8,8 +8,12 @@ TODO:
 | NN   | Solver  | eliminate_exists_from_LHS [add sec?]                            |
 | NN   | CF      | formula_sec_of_formula [to add]                                 |
 | NN   | IF      | add_formula_sec        [to add]                                 |
-| IP   | Parser  | Parse sec_formula [to add]                                      |
-| IP   | Parser  | opt_sec_constr    [to add]                                      |
+| NN   | ASTSimp | translate iformula to cformula                                  |
+| CP   | Parser  | opt_sec_constr [to add]                                         |
+| CP   | Parser  | sep_sec_constr [to add]                                         |
+| CP   | Parser  | sec_constr_list [to add]                                        |
+| CP   | Parser  | sec_constr [to add]                                             |
+| CP   | Parser  | sec_label [to add]                                              |
 | IP   | IF      | mkExists [add arg]                                              |
 | CP   | CF      | mkExists [add arg]                                              |
 | CP   | CP      | mkExists [add arg]                                              |

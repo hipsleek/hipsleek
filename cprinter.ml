@@ -138,59 +138,66 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
   end
 
 (** shorter op code used internally *)
-let op_add_short = "+"
-let op_sub_short = "-"
-let op_mult_short = "*"
-let op_div_short = "/"
-let op_max_short = "mx"
-let op_min_short = "mi"
-let op_union_short = "U"
+let op_add_short       = "+"
+let op_sub_short       = "-"
+let op_mult_short      = "*"
+let op_div_short       = "/"
+let op_max_short       = "mx"
+let op_min_short       = "mi"
+let op_union_short     = "U"
 let op_intersect_short = "I"
-let op_diff_short = "D"
-let op_and_short = "&"
-let op_or_short = "|"
-let op_not_short = "!"
-let op_star_short = "*"
+let op_diff_short      = "D"
+let op_and_short       = "&"
+let op_or_short        = "|"
+let op_not_short       = "!"
+let op_star_short      = "*"
 let op_starminus_short = "--@"
-let op_phase_short = ";"
-let op_conj_short = "U*"
-let op_conjsep_short = "/&\\"
-let op_conjstar_short = "&*"
-let op_conjconj_short = "&"
-let op_f_or_short = "or"
-let op_lappend_short = "APP"
-let op_cons_short = ":::"
+let op_phase_short     = ";"
+let op_conj_short      = "U*"
+let op_conjsep_short   = "/&\\"
+let op_conjstar_short  = "&*"
+let op_conjconj_short  = "&"
+let op_f_or_short      = "or"
+let op_lappend_short   = "APP"
+let op_cons_short      = ":::"
 
 (** op code that will be printed *)
-let op_add = "+"
-let op_sub = "-"
-let op_mult = "*"
-let op_div = "/"
-let op_max = "max"
-let op_min = "min"
-let op_union = "union"
+let op_add       = "+"
+let op_sub       = "-"
+let op_mult      = "*"
+let op_div       = "/"
+let op_max       = "max"
+let op_min       = "min"
+let op_union     = "union"
 let op_intersect = "intersect"
-let op_diff = "-"
-let op_lt = if not (!print_html) then "<" else "&lt;"
-let op_lte = "<="
-let op_gt = if not (!print_html) then ">" else "&gt;"
-let op_gte = ">="
-let op_sub_ann = "<:"
-let op_eq = "="
-let op_neq = "!="
-let op_and = " & "
-let op_or = " | "
-let op_not = "!"
-let op_star = " * "
+let op_diff      = "-"
+let op_lt        = if not (!print_html) then "<" else "&lt;"
+let op_lte       = "<="
+let op_gt        = if not (!print_html) then ">" else "&gt;"
+let op_gte       = ">="
+let op_sub_ann   = "<:"
+let op_eq        = "="
+let op_neq       = "!="
+let op_and       = " & "
+let op_or        = " | "
+let op_not       = "!"
+let op_star      = " * "
 let op_starminus = " --@ "
-let op_phase = " ; "
-let op_conj = " U* "
-let op_conjstar = " &* "
-let op_conjconj = " & "
-let op_f_or = "or"
-let op_lappend = "app"
-let op_cons = ":::"
-let op_comma = ","
+let op_phase     = " ; "
+let op_conj      = " U* "
+let op_conjstar  = " &* "
+let op_conjconj  = " & "
+let op_f_or      = "or"
+let op_lappend   = "app"
+let op_cons      = ":::"
+let op_comma     = ","
+
+(** ADI: op for security formula **)
+let string_of_sec_operator  = " <? "
+let string_of_sec_lub       = " |_| "
+let string_of_sec_separator = " %% "
+let string_of_sec_secret    = "@Hi"
+let string_of_sec_public    = "@Lo"
 
 (** add a bracket around e if is simple yields false *)
 (*
@@ -2297,6 +2304,24 @@ and pr_one_formula_list (ls:one_formula list) =
 
 and string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
 
+(* ADI: information flow analysis *)
+and string_of_sec_label label =
+match label with
+| Sec_Var(var)   -> !print_spec_var var
+| Sec_LUB(l1,l2) ->
+    string_of_sec_label l1 ^ string_of_sec_lub ^ string_of_sec_label l2
+| Sec_HI         -> string_of_sec_secret
+| Sec_LO         -> string_of_sec_public
+and string_of_sec_formula sec =
+  !print_spec_var sec.sec_var ^ string_of_sec_operator ^ string_of_sec_label sec.sec_lbl
+and string_of_sec_formula_list (seclist:sec_formula list) =
+  let rec str_of_sec_formula_list sl =
+    match sl with
+    | sec::[] -> string_of_sec_formula sec
+    | sec::sr -> string_of_sec_formula sec ^ " & " ^ str_of_sec_formula_list sr
+    | []      -> ""
+  in string_of_sec_separator ^ " [" ^ str_of_sec_formula_list seclist ^ "]"
+
 and pr_formula_base e =
   match e with
   | ({formula_base_heap = h;
@@ -2319,6 +2344,7 @@ and pr_formula_base e =
     else
       fmt_string ("\nAND "); pr_one_formula_list a
     ;
+    fmt_string (string_of_sec_formula_list sec)
     (* ADI TODO: to add *)
 
 and slk_formula_base e =
@@ -2336,6 +2362,8 @@ and slk_formula_base e =
        (pr_cut_after "&"; pr_mix_formula p));
     if (a==[]) then ()
     else (fmt_string ("\nAND "); pr_one_formula_list a)
+    ;
+    fmt_string (string_of_sec_formula_list sec)
     (* ADI TODO: to add *)
 
 and prtt_pr_formula_base e =
@@ -2352,6 +2380,8 @@ and prtt_pr_formula_base e =
     prtt_pr_h_formula h ;
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p))
+    ;
+    fmt_string (string_of_sec_formula_list sec)
     ;()
     (* ADI TODO: to add *)
 (* pr_cut_after  "&"; *) (*;  fmt_string (string_of_flow_formula "FLOW" fl) *)
@@ -2374,6 +2404,8 @@ and prtt_pr_formula_base_inst prog e =
     prtt_pr_h_formula_inst prog h;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
+    ;
+    fmt_string (string_of_sec_formula_list sec)
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 (* ADI TODO: to add *)
 
@@ -2391,6 +2423,8 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
     prtt_pr_h_formula_inst_html prog post_hps h ;
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
+    ;
+    fmt_string (string_of_sec_formula_list sec)
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
 (* ADI TODO: to add *)
 
@@ -2427,6 +2461,8 @@ and pr_formula_1 e =
         formula_base_label = lbl;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
+    ;
+    fmt_string (string_of_sec_formula_list sec)
 (* pr_h_formula h;                                        *)
 (* (if not(MP.isConstMTrue p) then                        *)
 (*   (pr_cut_after "&" ; pr_mix_formula p))               *)

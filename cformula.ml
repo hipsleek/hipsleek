@@ -710,6 +710,18 @@ let is_or_formula f = match f with
   | Or _ -> true
   | _ -> false
 
+
+(* ADI: Information Flow Analysis *)
+let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula list) : sec_label =
+  (* NOTE: ensure that there is only one label in sec_formula list *)
+  (* ADI TODO: make it smarter? if none at all -> HI, else, GLB of all? *)
+  match sl with
+  | []      -> Sec_HI
+  | sec::sr -> if (=) (var) (sec.sec_var)
+               then sec.sec_lbl
+               else get_sec_label_from_sec_formula_list var sr
+
+
 module Exp_Heap =
 struct
   type e = h_formula

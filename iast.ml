@@ -44,6 +44,7 @@ type prog_decl = {
   (* An Hoa: relational declaration *)
   prog_proc_decls : proc_decl list;
   prog_barrier_decls : barrier_decl list;
+  (* ADI TODO: add lattice decl for information flow analysis? *)
   mutable prog_coercion_decls : coercion_decl_list list;
   prog_test_comps: (ident*test_comps) list
 }
@@ -3309,6 +3310,41 @@ let b_data_constr bn larg=
   else report_error no_pos ("the first field of barrier "^bn^" is not state")
 
 
+(* ADI TO REMOVE: for debugging purposes *)
+let rec string_of_sec_label (lbl:F.sec_label) =
+  match lbl with
+  | F.Sec_Var(id,pr)     -> string_of_var (id,pr)
+  | F.Sec_LUB(lbl1,lbl2) ->
+      string_of_sec_label lbl1 ^ " |_| "^ string_of_sec_label lbl2
+  | F.Sec_HI -> "@Hi"
+  | F.Sec_LO -> "@Lo"
+
+and string_of_sec_formula (sec:F.sec_formula) =
+  string_of_var sec.sec_var ^ " <? " ^ string_of_sec_label sec.sec_lbl
+
+and string_of_sec_formula_list (seclist:F.sec_formula list) =
+  let rec str_of_sec_formula_list sl =
+    match sl with
+    | sec::[] -> string_of_sec_formula sec
+    | sec::sr -> string_of_sec_formula sec ^ " & " ^ str_of_sec_formula_list sr
+    | []      -> ""
+  in "%% [" ^ str_of_sec_formula_list seclist ^ "]"
+
+and string_of_sec_formula_list_from_formula (f:F.formula) =
+  match f with
+    | Base   { formula_base_sec = sec }
+      -> string_of_sec_formula_list sec
+    | Exists { formula_exists_sec = sec }
+      -> string_of_sec_formula_list sec
+    | Or {formula_or_f1 = f1; formula_or_f2 = f2 }
+      -> string_of_sec_formula_list_from_formula f1 ^ " OR " ^ string_of_sec_formula_list_from_formula f2
+and string_of_var (id,pr) = id ^ (string_of_primed pr)
+and string_of_primed pr   =
+  match pr with
+    | Unprimed -> ""
+    | Primed   -> "'"
+
+(* Barrier Initialization *)
 let add_bar_inits prog =
   let b_data_def = (b_data_constr b_datan []) ::
                    (List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in

@@ -346,6 +346,7 @@ and convert_anonym_to_exist_struc f = match f with
   | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation =convert_anonym_to_exist_struc b.IF.formula_inf_continuation}
   | IF.EList b -> IF.EList (map_l_snd convert_anonym_to_exist_struc b)
 
+(* ADI NOTE: may need to modify for sec_formula *)
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
   match f0 with
   | (* - added 17.04.2008 - in case the formula contains anonymous vars -> *)
@@ -1093,7 +1094,6 @@ and prepare_labels (fct: I.proc_decl): I.proc_decl =
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
   | None -> fct
   | Some e-> {fct with C.proc_body = Some (seq_elim e)}
-
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
 
@@ -1456,6 +1456,7 @@ let mk_ret_type_into_data_decls (prog:I.prog_decl):(I.data_decl list)=
   helper typ_list
 
 (*HIP*)
+(* ADI TODO: transfer spec from I.prog_decl to (C.prog_decl * I.prog_decl) *)
 let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl * I.prog_decl=
   (*let () = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in*)
   (* print_string "trans_prog\n"; *)
@@ -1563,7 +1564,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
        else (
          (* let () = print_string ("\ntrans_prog: Iast.prog_decl: before case_normalize" ^ (Iprinter.string_of_program prog) ^ "\n") in *)
-         let prog = case_normalize_program prog in
+         let prog = case_normalize_program prog in (* ADI TODO: change case_normalize_program for sec *)
 
          let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
@@ -1739,7 +1740,11 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
   let tp p = let (cp,_) as res = trans_prog_x p in
     let () = Cast.global_prog := cp in
     res in
-  Debug.no_1 "trans_prog" pr_in pr_out (fun x -> tp prog) prog
+  let (cp,ip) = Debug.no_1 "trans_prog" pr_in pr_out (fun x -> tp prog) prog in
+(*  print_endline ("input: " ^ (Iprinter.string_of_program prog));
+    print_endline ("iprog: " ^ (Iprinter.string_of_program ip  ));
+    print_endline ("oprog: " ^ (Cprinter.string_of_program cp  )); *)
+  (cp,ip)
 
 (* Replaced to use new_proc_decls *)
 (*
@@ -4637,7 +4642,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     (* move LHS guard to RHS regardless of universal lemma *)
     | v ->
       let c_hd, c_guard,c_vp, c_fl, c_t, c_a, c_sec = CF.split_components c.C.coercion_head in
-      (* ADI TODO: use c_sec *)
       let new_body = c.C.coercion_body in
       let () = x_tinfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
       let new_body = CF.normalize 1 new_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
@@ -7279,6 +7283,25 @@ and trans_var p (tlist: spec_var_type_list) pos =
   let pr = pr_var_prime in
   Debug.no_1 "trans_var" pr Cprinter.string_of_spec_var (fun _ -> trans_var_x p tlist pos) p
 
+(* ADI: Information Flow Analysis *)
+(* Security Formula Translation   *)
+and trans_sec_label (lbl:IF.sec_label) (tlist:spec_var_type_list) pos : CF.sec_label =
+  match lbl with
+  | IF.Sec_Var(id,pr) -> CF.Sec_Var(trans_var (id,pr) tlist pos)
+  | IF.Sec_LUB(l1,l2) -> CF.Sec_LUB(trans_sec_label l1 tlist pos,trans_sec_label l2 tlist pos)
+  | IF.Sec_HI         -> CF.Sec_HI
+  | IF.Sec_LO         -> CF.Sec_LO
+and trans_sec_formula (sf:IF.sec_formula) (tlist:spec_var_type_list) pos : CF.sec_formula = {
+  CF.sec_var = trans_var sf.IF.sec_var tlist pos;
+  CF.sec_lbl = trans_sec_label sf.IF.sec_lbl tlist pos
+}
+and trans_sec_formula_list_x (sl:IF.sec_formula list) (tlist:spec_var_type_list) pos : CF.sec_formula list =
+  match sl with
+  | sec::sr -> (trans_sec_formula sec tlist pos)::(trans_sec_formula_list_x sr tlist pos)
+  | []      -> []
+and trans_sec_formula_list (sl:IF.sec_formula list) (tlist:spec_var_type_list) pos : CF.sec_formula list =
+  trans_sec_formula_list_x sl tlist pos
+
 (* TODO WN : need to test how type checking handle # vars *)
 and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
@@ -7665,6 +7688,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) =
   let prb = string_of_bool in
+  (* let ()  = print_endline ("trans_formula: " ^ Iprinter.string_of_sec_formula_list_from_formula f0) in *)
   let pr_out (_, f) = Cprinter.string_of_formula f in
   Debug.no_eff_5 "trans_formula" [true]
     string_of_tlist (add_str "quantify" prb) (add_str "cleanres" prb)
@@ -8394,26 +8418,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       (fun _ -> linearize_one_formula_x f pos tlist) f
   ) in
 
-  let rec trans_if_sec_form_to_cf_sec_form_list sec_list pos tlist = (
-    let rec trans_if_sec_form_to_cf_sec_form sec_lbl pos tlist = (
-      match sec_lbl with
-      | IF.Sec_Var(id,pr) -> 
-        let spec_var = CP.mk_spec_var id in
-        let p_spec_var = CP.sp_add_prime spec_var pr in
-        CF.Sec_Var(p_spec_var)
-      | IF.Sec_LUB(lbl1,lbl2) -> CF.Sec_LUB(trans_if_sec_form_to_cf_sec_form lbl1 pos tlist,
-                                            trans_if_sec_form_to_cf_sec_form lbl2 pos tlist)
-      | IF.Sec_HI -> CF.Sec_HI
-      | IF.Sec_LO -> CF.Sec_LO
-    ) in match sec_list with
-    | { IF.sec_var = var ; IF.sec_lbl = lbl }::sl -> 
-      let (id,pr) = var in
-      let spec_var = CP.mk_spec_var id in
-      let p_spec_var = CP.sp_add_prime spec_var pr in
-      { CF.sec_var = p_spec_var ; CF.sec_lbl = (trans_if_sec_form_to_cf_sec_form lbl pos tlist); }::(trans_if_sec_form_to_cf_sec_form_list sl pos tlist)
-    | [] -> []
-  ) in
-
   let linearize_base base pos (tl:spec_var_type_list) = (
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
@@ -8434,10 +8438,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (* let () = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_fl = x_add trans_flow_formula fl pos in
     let new_a = ref [] in
+    let new_sec = trans_sec_formula_list sec tl pos in (* ADI: translate IF.sec_formula -> CF.sec_formula *)
     let newvars2 = ref [] in
     let new_tl = ref n_tl in
-    let new_sec = trans_if_sec_form_to_cf_sec_form_list sec pos tl in
-    (* ADI NOTE: transform IF.sec_formula to CF.sec_formula *)
     List.iter (fun f ->
         let a1, _, nvs, new_tl1 = linearize_one_formula f pos !new_tl in
         new_tl := new_tl1;
@@ -8827,6 +8830,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
   IF.formula* ((ident*primed)list) * ((ident*primed)list) =
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
+  (* ADI TODO: trace sec_formula here *)
   let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * LO.t) list) pos :
     ((ident*primed) list) * (IP.exp list) * ((ident*primed) list) * IP.formula =
 
@@ -9143,7 +9147,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     let pr0 = pr_primed_ident_list in
     Debug.no_2 "linearize_heap" (add_str "used" pr0) pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
-  let rec normalize_base heap cp vp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
+  (* ADI TODO: currently sec_formula is passed on unchanged, may need to formalize *)
+  let rec normalize_base heap cp vp fl a sec evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let () = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
     let heap = (*if !Globals.allow_mem then heap else*) Immutable.normalize_h_formula heap false in
     (*let () = print_string("After Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
@@ -9151,7 +9156,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     (*let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in*)
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)
-    let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap f.IF.formula_pure IVP.empty_vperm_sets top_flow [] evars f.IF.formula_pos in
+    let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap f.IF.formula_pure IVP.empty_vperm_sets top_flow [] sec evars f.IF.formula_pos in
     let tmp_a = List.map (func h_evars) a in
     let rec split3 ls = match ls with
       | [] -> [],[],[]
@@ -9184,7 +9189,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
        let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
        let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in
        (to_evars,to_expl))in
-    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a [] pos in
+    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a sec pos in
     (* ADI TODO: to check, new_sec? *)
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then
@@ -9200,10 +9205,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
        Gen.BList.remove_dups_eq (=) (l1@l2),(Gen.BList.remove_dups_eq (=) (expl1@expl2)))
     | IF.Base b -> normalize_base
                      b.IF.formula_base_heap b.IF.formula_base_pure b.IF.formula_base_vperm
-                     b.IF.formula_base_flow b.IF.formula_base_and [] b.IF.formula_base_pos
+                     b.IF.formula_base_flow b.IF.formula_base_and b.IF.formula_base_sec [] b.IF.formula_base_pos
     | IF.Exists b -> normalize_base
                        b.IF.formula_exists_heap b.IF.formula_exists_pure b.IF.formula_exists_vperm
-                       b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_qvars b.IF.formula_exists_pos in
+                       b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_sec b.IF.formula_exists_qvars b.IF.formula_exists_pos in
   helper f
 
 (* AN HOA : TODO CECK *)
@@ -9261,9 +9266,10 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name && c1<>Globals.lsmu_name)) need_quant in
     let () = if vars!=[] then
         let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
-        Err.report_error{
+        Err.report_error {
           Err.error_loc = IF.pos_of_formula f;
-          Err.error_text = msg; }
+          Err.error_text = msg;
+        }
 
     (*   Err.report_error{  *)
     (* Err.error_loc = IF.pos_of_formula f;  *)
@@ -9275,7 +9281,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     let need_quant = hack_filter_global_rel prog need_quant in
     let anon_vs,need_quant = List.partition IP.is_anon_ident need_quant in
     let flag = not(need_quant==[]) in
-    let msg = (add_str ("Post-condition has existentially quantified free vars"^", error position: "^(VarGen.string_of_loc (IF.pos_of_formula f))) pr_ident_list) need_quant in
+    (* ADI NOTE: may need to change this when containing exists quant *)
+    let msg  = (add_str ("Post-condition has existentially quantified free vars"^", error position: "^(VarGen.string_of_loc (IF.pos_of_formula f))) pr_ident_list) need_quant in
     if !Globals.warn_post_free_vars && flag then
       let () = x_winfo_pp msg (IF.pos_of_formula f) in
       Err.report_error{
@@ -9367,6 +9374,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
           else () in
         let onb = convert_anonym_to_exist b.IF.formula_struc_base in
         let ann_vars = IF.collect_annot_vars onb in
+        (* ADI TODO: copy sec_formula in case_normalize_renamed_formula *)
         let nb,h3,new_expl = case_normalize_renamed_formula prog hv strad_vs onb ann_vars in
         let all_expl = rdups (new_expl @ init_expl) in
         let () = x_tinfo_hp (add_str "new_expl" pr_l_v)  new_expl pos in
@@ -9437,11 +9445,11 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 
 and simpl_case_normalize_struc_formula id prog (h_vars:(ident*primed) list)(f:IF.struc_formula)
   :IF.struc_formula =
-  let diff = Gen.BList.difference_eq (=) in
-  let rdups = Gen.BList.remove_dups_eq (=) in
-  let inters = Gen.BList.intersect_eq (=)  in
+  let diff   = Gen.BList.difference_eq  (=) in (* note: find difference   *)
+  let rdups  = Gen.BList.remove_dups_eq (=) in (* note: find duplicate    *)
+  let inters = Gen.BList.intersect_eq   (=) in (* note: find intersection *)
   let pr_l_v = pr_list (pr_pair pr_id string_of_primed) in
-  let pos = IF.pos_of_struc_formula f in
+  let pos    = IF.pos_of_struc_formula f in
 
   let nf = convert_struc2 prog f in
   let nf = IF.float_out_thread_struc_formula (I.lbl_getter prog) (I.annot_args_getter prog) nf  in
@@ -10090,6 +10098,7 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
     Gen.BList.intersect_eq (=) pr pst in
   (* let () = print_endline ("h (proc) = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) h)) in *)
   (* let () = print_endline ("p (proc)= " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
+  (* ADI TODO: copy sec_formula in case_normalize_struc_formula *)
   let nst,h11 = case_normalize_struc_formula 5 prog h p f.Iast.proc_static_specs false
       false (*allow_post_vars*) false strad_s in
   (* let () = print_endline ("strad_s = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad_s)) in *)
@@ -10108,10 +10117,9 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
       (* let f,_ = x_add_1 case_rename_var_decls_init f in *)
       let r,_,_ = (case_normalize_exp prog h2 [(eres_name,Unprimed);(res_name,Unprimed)] f) in
       Some r in
-  {f with Iast.proc_static_specs =nst;
+  {f with Iast.proc_static_specs  = nst;
           Iast.proc_dynamic_specs = ndn;
-          Iast.proc_body = nb;
-  }
+          Iast.proc_body = nb;}
 
 and case_normalize_barrier_x prog bd =
   (*let lv = bd.I.barrier_shared_vars in
@@ -10128,7 +10136,8 @@ and case_normalize_barrier prog bd =
   Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
 
 
-(* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
+(* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO?  *)
+(* ADI : good question, this should be in iformula? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
   Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
 
@@ -10160,6 +10169,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let () = x_add Iast.set_check_fixpt prog  prog.I.prog_data_decls tmp_views in
   let todo_unk = List.map (fun v -> (* if v.view_kind = View_NORM then *)
       v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
+  (* ADI TODO: copy sec_formula in case_normalize_proc *)
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   (* let coer1 = List.map (case_normalize_coerc_list prog) prog.Iast.prog_coercion_decls in   *)

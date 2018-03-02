@@ -116,13 +116,13 @@ and one_formula = {
 (* Information Flow Analysis *)
 and sec_formula = {
   sec_var : (ident * primed); (* variable identifier *)
-  sec_lbl : sec_label;   (* security label *)
+  sec_lbl : sec_label;        (* security label      *)
 }
 and sec_label = 
   | Sec_Var of (ident * primed) (* variable identifier *)
   | Sec_LUB of (sec_label * sec_label)
-  | Sec_HI
-  | Sec_LO
+  | Sec_HI (* secret data *)
+  | Sec_LO (* public data *)
 
 and flow_formula = constant_flow
 
@@ -220,7 +220,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
                         h_formula_heap2_pos : loc }
 
 
-(* IFA: constructors *)
+(* ADI: Information Flow Analysis constructors *)
 let mk_hi_sec_all = {
   sec_var = ("__ALL__", Unprimed);
   sec_lbl = Sec_HI
@@ -233,6 +233,21 @@ let mk_sec_form var lbl : sec_formula = {
   sec_var = var;
   sec_lbl = lbl
 }
+
+(* ADI: Information Flow Analysis accessros for debug *)
+let rec sec_formula_of_struc_base_formula ebase = sec_formula_of_formula ebase.formula_struc_base
+and sec_formula_of_struc_formula sf =
+  match sf with
+    | EBase eb -> sec_formula_of_struc_base_formula eb
+    | _        -> []
+and sec_formula_of_formula f =
+  match f with
+    | Base   { formula_base_sec   = sec } -> sec
+    | Exists { formula_exists_sec = sec } -> sec
+    | Or {
+        formula_or_f1 = f1;
+        formula_or_f2 = f2
+      } -> (sec_formula_of_formula f1)@(sec_formula_of_formula f2)
 
 let rec sec_lbl_to_str lbl =
 match lbl with
@@ -308,50 +323,80 @@ let rec is_param_ann_list_empty (anns:  P.ann option list) : bool =
   | (None)::t    -> true  && (is_param_ann_list_empty t)
 
 (* constructors *)
-
-let rec formula_of_heap_1 h pos = 
+(* heap formula with true pure *)
+let rec formula_of_heap_1 h pos =
   mkBase h (P.mkTrue pos) VP.empty_vperm_sets top_flow [] [] pos
 
-and formula_of_pure_1 p pos = mkBase HEmp p VP.empty_vperm_sets top_flow [] [] pos
 (* pure formula has Empty heap *)
+and formula_of_pure_1 p pos =
+  mkBase HEmp p VP.empty_vperm_sets top_flow [] [] pos
 
-and formula_of_heap_with_flow h f pos = mkBase h (P.mkTrue pos) VP.empty_vperm_sets f [] [] pos
+(* heap formula with flow and true pure *)
+and formula_of_heap_with_flow h f pos =
+  mkBase h (P.mkTrue pos) VP.empty_vperm_sets f [] [] pos
 
-and formula_of_pure_with_flow p f a pos = mkBase HEmp p VP.empty_vperm_sets f a [] pos
-(* pure formula has Empty heap *)
+(* pure formula with flow has Empty heap *)
+and formula_of_pure_with_flow p f a pos =
+  mkBase HEmp p VP.empty_vperm_sets f a [] pos
 
+(* pure formula with flow has HTrue heap *)
 and formula_of_pure_with_flow_htrue p f a pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p VP.empty_vperm_sets f a [] pos (* pure formula has HTRUE heap *)
+  mkBase h p VP.empty_vperm_sets f a [] pos 
 
+(* pure formula with flow has Empty heap *)
 and formula_of_pure_with_flow_emp p f a pos =
   let h = HEmp in
-  mkBase h p VP.empty_vperm_sets f a [] pos (* pure formula has HTRUE heap *)
+  mkBase h p VP.empty_vperm_sets f a [] pos
 
-and formula_of_pure_with_flow_htrue_sec p f a sec pos = 
+(* vperm formula with pure, flow has HTrue heap *)
+and formula_of_vperm_pure_with_flow_htrue p vp f a pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p VP.empty_vperm_sets f a sec pos (* ADI: added sec *)
+  mkBase h p vp f a [] pos
 
+(* vperm formula with pure, flow has Empty heap *)
+and formula_of_vperm_pure_with_flow_emp p vp f a pos =
+  let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
+  mkBase h p vp f a [] pos
+
+
+(* ADI: add sec for information flow analysis *)
+(* heap formula with true pure & sec *)
+and formula_of_heap_1_sec h sec pos =
+  mkBase h (P.mkTrue pos) VP.empty_vperm_sets top_flow [] sec pos
+(* pure formula has Empty heap & sec*)
+and formula_of_pure_1_sec p sec pos =
+  mkBase HEmp p VP.empty_vperm_sets top_flow [] sec pos
+(* heap formula with flow and true pure & sec *)
+and formula_of_heap_with_flow_sec h f sec pos =
+  mkBase h (P.mkTrue pos) VP.empty_vperm_sets f [] sec pos
+(* pure formula with flow has Empty heap &sec *)
+and formula_of_pure_with_flow_sec p f a sec pos =
+  mkBase HEmp p VP.empty_vperm_sets f a sec pos
+(* pure formula with flow has HTrue heap & sec *)
+and formula_of_pure_with_flow_htrue_sec p f a sec pos =
+  let h = if Ipure.isConstTrue p then HTrue else HEmp in
+  mkBase h p VP.empty_vperm_sets f a sec pos 
+(* pure formula with flow has Empty heap &sec *)
 and formula_of_pure_with_flow_emp_sec p f a sec pos =
   let h = HEmp in
-  mkBase h p VP.empty_vperm_sets f a sec pos (* ADI: added sec *)
-
+  mkBase h p VP.empty_vperm_sets f a sec pos
+(* vperm formula with pure, flow has Htrue heap & sec *)
 and formula_of_vperm_pure_with_flow_htrue_sec p vp f a sec pos =
   let h = if Ipure.isConstTrue p then HTrue else HEmp in
-  mkBase h p vp f a sec pos  (* ADI: added sec *)
-
+  mkBase h p vp f a sec pos
+(* vperm formula with pure, flow has Empty heap & sec *)
 and formula_of_vperm_pure_with_flow_emp_sec p vp f a sec pos =
   let h = (* if Ipure.isConstTrue p then HTrue else *) HEmp in
-  mkBase h p vp f a sec pos  (* ADI: added sec *)
+  mkBase h p vp f a sec pos
+
+
 
 and one_formula_of_formula f =
   match f with
-  | Base b ->
-    one_formula_of_formula_base b
-  | Exists b ->
-    one_formula_of_formula_exists b
-  | _ ->
-    Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expected base formula, not found"} 
+  | Base b   -> one_formula_of_formula_base b
+  | Exists b -> one_formula_of_formula_exists b
+  | _        -> Error.report_error	{Error.error_loc = no_pos; Error.error_text = "expected base formula, not found"} 
 
 and one_formula_of_formula_base b =
   {formula_heap    = b.formula_base_heap;
@@ -367,6 +412,7 @@ and one_formula_of_formula_exists b =
    formula_delayed = (P.mkTrue b.formula_exists_pos);
    formula_pos     = b.formula_exists_pos}
 
+(* ADI TODO: add sec_formula? *)
 and add_formula_and (a: one_formula list) (f:formula) : formula =
   match f with
   | Or o -> mkOr (add_formula_and a o.formula_or_f1) (add_formula_and a o.formula_or_f2) o.formula_or_pos
@@ -2505,12 +2551,11 @@ and has_top_flow_struc (f:struc_formula) =
     | EList b-> List.iter (fun c-> helper (snd c)) b  in
   helper f
 
-
 and subst_flow_of_formula fr t (f:formula):formula = match f with
-  | Base b-> Base {b with formula_base_flow = 
-                            if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;}
+  | Base b -> Base {b with formula_base_flow = 
+        if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;}
   | Exists b-> Exists {b with formula_exists_flow = 
-                                if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;}
+        if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;}
   | Or b -> Or {b with formula_or_f1 = (subst_flow_of_formula fr t b.formula_or_f1);
                        formula_or_f2 = (subst_flow_of_formula fr t b.formula_or_f2);}
 

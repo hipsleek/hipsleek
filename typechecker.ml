@@ -1455,6 +1455,7 @@ and check_exp prog proc ctx (e0:exp) label =
 (* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
 and get_xpure_of_formula f = 1
 
+(* ADI TODO: inference rule for security formula *)
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context =
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{es with CF.es_formula = CF.elim_e_var !proc_used_names es.CF.es_formula} in
@@ -1462,6 +1463,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     else ctx in
   if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
+  (*(if proc.proc_name = "foo$int" then print_endline (Cprinter.string_of_proc_decl 1 proc));*)
   let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     (*let () = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
     match e0 with
@@ -1647,10 +1649,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           | _ -> PK_Assert_Assume)
          (wrap_classic x_loc atype (assert_op_wrapper))) ()
 
+    (* ADI TODO: assignment inference rule *)
     | Assign ({ 
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
         exp_assign_pos = pos }) ->
+      print_endline ("lhs: " ^ v);
+      print_endline ("rhs: " ^ Cprinter.string_of_exp rhs);
       let pr = Cprinter.string_of_exp in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
           (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs 
@@ -1691,6 +1696,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           else
             (* let () = Gen.Profiling.push_time "[check_rhs_exp] Assign" in *)
             let ctx1 = check_rhs_exp rhs in
+            print_endline ("+ rhs: " ^ pr rhs ^ (if (is_const_or_tmp rhs) then " :: True" else " :: False"));
             (* let () = Gen.Profiling.pop_time "[check_rhs_exp] Assign" in *)
             (* let () = print_endline ("RHS: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             (* let () = Gen.Profiling.push_time "[check_exp] Assign: other" in *)
@@ -1835,6 +1841,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
       end
 
+    (* ADI TODO: field access inference rule *)
     | Bind ({ 
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
@@ -2181,6 +2188,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         Err.error_loc = b.exp_catch_pos;
         Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"
       }
+
+    (* ADI TODO: if-statement inference rule *)
     | Cond ({ exp_cond_type = t;
               exp_cond_condition = v;
               exp_cond_then_arm = e1;
@@ -3611,6 +3620,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
     (**************end cp_test _ gen_cpfile******************)
     ()
 
+(* ADI TODO: inference rule for sec_formula *)
 (* checking procedure: (PROC p61) *)
 and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   Debug.vv_debug ("check_proc:"^proc0.proc_name);
@@ -3626,6 +3636,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
   let proc =
     find_proc prog proc0.proc_name
   in
+  (*(if proc.proc_name = "foo$int" then print_endline ("proc: " ^ Cprinter.string_of_proc_decl 0 proc));*)
   let () =  Debug.ninfo_hprint (add_str "in check_proc proc" (Cprinter.string_of_struc_formula_for_spec_inst prog)) 
       (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *) no_pos in
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)

@@ -1754,7 +1754,6 @@ and_core_constr:
   [
     [ dl = pure_constr; `CONSTR; f = core_constr  ->
       let h,p,_,fl,_,_ = F.split_components f in
-      (* ADI TODO: use sec? *)
       let pos = (get_pos_camlp4 _loc 2) in 
       F.mkOneFormula h p dl None pos
     ]
@@ -1764,6 +1763,7 @@ core_constr:
   [
     [ pc= pure_constr; fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
       -> let pos = (get_pos_camlp4 _loc 1) in
+         (*let ()  = print_endline ("constraint: " ^ Iprinter.string_of_sec_formula_list sc) in*)
           F.formula_of_pure_with_flow_htrue_sec (P.mkAnd pc fb pos) fc [] sc pos
     | vp= vperm_constr; pc= opt_pure_constr;
       fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
@@ -1774,12 +1774,10 @@ core_constr:
       fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
       -> let pos = (get_pos_camlp4 _loc 1) in 
           F.mkBase hc (P.mkAnd pc fb pos) vp fc [] sc pos
-          (* ADI TODO: to add *)
     ]
   ];
 
-(* information flow analysis *)
-(* ADI TODO: to complete *)
+(* ADI: Information Flow Analysis *)
 opt_sec_constr: [[ scl = OPT sep_sec_constr -> un_option scl [] ]];
 
 sep_sec_constr: [[ `SEC_SEP; scl = sec_constr_list -> scl ]];
@@ -3395,57 +3393,67 @@ hprogn:
     prog_coercion_decls = List.rev !coercion_defs;
     prog_hopred_decls = !hopred_defs;
     prog_barrier_decls = !barrier_defs;
+    (* ADI TODO: add lattice declarations for information flow analysis? *)
     prog_test_comps = [];
-    } ]];
+    }]];
 
-opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
+opt_decl_list: [[t=LIST0 mdecl -> (List.concat t)]];
 
 mdecl:
-	[[ t=macro -> []
-	  |t=decl -> [t]]];
+	[[  t=macro -> []
+	  | t=decl  -> [t] ]];
 
 decl:
   [[ `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> Include ic
-	|  t=type_decl                  -> Type t
-  |  r=func_decl; `DOT -> Func r
-  |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+	|  t=type_decl        -> Type t
+  |  r=func_decl; `DOT  -> Func r
+  |  r=rel_decl; `DOT   -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
-  |  r=ut_decl; `DOT -> Ut r
-  |  r=ui_decl; `DOT -> Ui r
-  |  r=hp_decl; `DOT -> Hp r
+  |  r=ut_decl; `DOT    -> Ut r
+  |  r=ui_decl; `DOT    -> Ui r
+  |  r=hp_decl; `DOT    -> Hp r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
-  |  g=global_var_decl            -> Global_var g
+  |  g=global_var_decl  -> Global_var g
   |  l=logical_var_decl -> Logical_var l
-  |  p=proc_decl                  -> Proc p
-  | `RLEMMA ; c= coercion_decl; `SEMICOLON    -> let c =  {c with coercion_kind = RLEM} in
-                                                 Coercion_list { coercion_list_elems = [c];
-                                                                 coercion_list_kind = RLEM}
-  | `RLEMMA ; c= coercion_decl; `DOT    -> let c =  {c with coercion_kind = RLEM} in
-                                                 Coercion_list { coercion_list_elems = [c];
-                                                                 coercion_list_kind = RLEM}
-  | `LEMMA kind; c= coercion_decl; `SEMICOLON    -> 
-        let k = convert_lem_kind kind in
-        let c = {c with coercion_kind = k;} in
-        Coercion_list
-        { coercion_list_elems = [c];
-          coercion_list_kind  = k}
-  | `LEMMA kind; c= coercion_decl; `DOT    -> 
-        let k = convert_lem_kind kind in
-        let c = {c with coercion_kind = k;} in
-        Coercion_list
-        { coercion_list_elems = [c];
-          coercion_list_kind  = k}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
-  | `LEMMA kind(* lex *); c = coercion_decl_list; `DOT    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind}
+  |  p=proc_decl        -> Proc p
+  | `RLEMMA ; c= coercion_decl; `SEMICOLON
+    -> let c =  {c with coercion_kind = RLEM} in
+       Coercion_list {
+         coercion_list_elems = [c];
+         coercion_list_kind = RLEM
+       }
+  | `RLEMMA ; c= coercion_decl; `DOT
+    -> let c =  {c with coercion_kind = RLEM} in
+       Coercion_list {
+         coercion_list_elems = [c];
+         coercion_list_kind = RLEM
+       }
+  | `LEMMA kind; c= coercion_decl; `SEMICOLON
+    -> let k = convert_lem_kind kind in
+       let c = {c with coercion_kind = k;} in
+       Coercion_list {
+         coercion_list_elems = [c];
+         coercion_list_kind  = k
+       }
+  | `LEMMA kind; c= coercion_decl; `DOT
+    -> let k = convert_lem_kind kind in
+       let c = {c with coercion_kind = k;} in
+       Coercion_list {
+         coercion_list_elems = [c];
+         coercion_list_kind  = k
+       }
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `SEMICOLON
+    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind }
+  | `LEMMA kind(* lex *); c = coercion_decl_list; `DOT
+    -> Coercion_list {c with (* coercion_exact = false *) coercion_list_kind = convert_lem_kind kind }
   ]];
 
-dir_path: [[t = LIST1 file_name SEP `DIV ->
-    let str  = List.fold_left (fun res str -> res^str^"/") "" t in
-    let len = String.length str in
-    Str.string_before str (len-1)
-           ]];
+dir_path: [[ t = LIST1 file_name SEP `DIV
+    -> let str = List.fold_left (fun res str -> res^str^"/") "" t in
+       let len = String.length str in
+       Str.string_before str (len-1)]];
 
-file_name: [[ `DOTDOT -> ".."
+file_name: [[   `DOTDOT        -> ".."
               | `IDENTIFIER id -> id
             ]];
 
@@ -3530,7 +3538,7 @@ opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
 
 opt_spec_list_file: [[t = LIST0 spec_list_file -> t]];
 
-spec_list_file: [[`IDENTIFIER id; t = opt_spec_list -> (id, t)]];
+spec_list_file: [[`IDENTIFIER id; t = opt_spec_list -> (id,t)]];
  
 opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
@@ -3543,26 +3551,21 @@ spec_list_outer : [[t= LIST1 spec_list_grp -> label_struc_groups_auto t ]];
 spec_list_grp:
   [[
       (* c=spec -> [(empty_spec_label_def,c)] *)
-     t= LIST1 spec -> List.map (fun c -> (Lbl.empty_spec_label_def,c)) t
-    | `IDENTIFIER id; `COLON; `OSQUARE; 
-          t = spec_list_only 
-          (* LIST0 spec SEP `ORWORD *)
-      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,id::l),c)) t
-    | `OSQUARE; 
-          t = spec_list_only
-      ; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
+      t = LIST1 spec -> List.map (fun c -> (Lbl.empty_spec_label_def,c)) t 
+    | `IDENTIFIER id; `COLON; `OSQUARE; t = spec_list_only (* LIST0 spec SEP `ORWORD *); `CSQUARE -> List.map (fun ((n,l),c)-> ((n,id::l),c)) t
+    | `OSQUARE;  t = spec_list_only; `CSQUARE -> List.map (fun ((n,l),c)-> ((n,l),c)) t
   ]];
 
 disj_or_extn_constr:
   [[
-      dc= disjunctive_constr -> 
-	  let f = F.subst_stub_flow n_flow dc in
-	  let sf = F.mkEBase [] [] [] f None no_pos in
-          (f,sf)
-    | dc= extended_constr -> 
-          let dc = F.subst_stub_flow_struc n_flow dc in
-	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
-	  (f,dc)
+      dc = disjunctive_constr
+      -> let f  = F.subst_stub_flow n_flow dc in
+         let sf = F.mkEBase [] [] [] f None no_pos in
+         (f,sf)
+    | dc = extended_constr
+      -> let dc = F.subst_stub_flow_struc n_flow dc in
+         let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
+         (f,dc)
   ]];
 
 
@@ -3685,14 +3688,14 @@ proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
       let cur_file = proc_files # top in
-     mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
     let cur_file = proc_files # top in
     mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
-constructor_decl: 
+constructor_decl:
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
    | h=constructor_header -> h]];
 
@@ -3704,23 +3707,22 @@ constructor_header:
       mkProc cur_file id flgs "" None true ot fpl (Named id) None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
-	
 
 
 opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
-  
+
 
 fixed_parameter:
-  [[ t=typ; pm=OPT pass_t; `IDENTIFIER id -> 
-      { param_mod = un_option pm NoMod;
-        param_type = t;
-        param_loc = get_pos_camlp4 _loc 3;
-        param_name = id }
-    | pm=OPT pass_t2; t=typ;  `IDENTIFIER id -> 
-      { param_mod = un_option pm NoMod;
-        param_type = t;
-        param_loc = get_pos_camlp4 _loc 3;
-        param_name = id }
+  [[  t=typ; pm=OPT pass_t; `IDENTIFIER id
+      -> { param_mod  = un_option pm NoMod;
+           param_type = t;
+           param_loc  = get_pos_camlp4 _loc 3;
+           param_name = id }
+    | pm=OPT pass_t2; t=typ; `IDENTIFIER id
+      -> { param_mod  = un_option pm NoMod;
+           param_type = t;
+           param_loc  = get_pos_camlp4 _loc 3;
+           param_name = id }
 ]];
 
 pass_t2: [[`PASS_REF2 -> RefMod ]];
@@ -3732,8 +3734,8 @@ proc_body: [[t=block-> t]];
 
 (*********** Statements ***************)
 
-block: 
-  [[ `OBRACE; t=statement_list; `CBRACE -> 
+block:
+  [[ `OBRACE; t=statement_list; `CBRACE ->
 	  match t with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos_camlp4 _loc 1);
                          exp_block_jump_label = NoJumpLabel;
@@ -3745,7 +3747,7 @@ block:
                    exp_block_pos = get_pos_camlp4 _loc 1 }
 				   ]];
 
-statement_list: 
+statement_list:
 [[ s = statement -> s
   | sl=SELF; s=statement  -> Seq { exp_seq_exp1 = sl;
 									 exp_seq_exp2 = s;
@@ -3756,7 +3758,6 @@ statement_list:
 (*     match t with  *)
 (*      | [] ->  Empty no_pos *)
 (*      | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos_camlp4 _loc 1}) h t ]]; *)
-  
 statement:
   [[ t=declaration_statement; `SEMICOLON -> t
    | t=labeled_valid_declaration_statement -> t]];
@@ -3767,12 +3768,12 @@ declaration_statement:
 
 local_variable_type: [[ t= typ ->  t]];
 
-local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators -> mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]]; 
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators -> mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]];
 
 local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos_camlp4 _loc 1)]];
-	
+
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
-  
+
 variable_declarator:
   [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos_camlp4 _loc 1)
    | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos_camlp4 _loc 1) ]];
@@ -3793,55 +3794,55 @@ labeled_valid_declaration_statement:
       | t = valid_declaration_statement -> t ]];
 
 valid_declaration_statement:
-  [[ t=block -> t
-   | t=expression_statement;`SEMICOLON ->t
-   | t=selection_statement -> t
-   | t=iteration_statement -> t
-   | t=try_statement; `SEMICOLON -> t
-   | t=java_statement -> t
-   | t=jump_statement;`SEMICOLON  -> t
-   | t= assert_statement;`SEMICOLON -> t
-   | t=dprint_statement;`SEMICOLON  -> t
-   (* | t=skip_statement;`SEMICOLON  -> t *)
-   | t=debug_statement -> t
-   | t=time_statement -> t
-   | t=bind_statement -> t
-   | t=barr_statement -> t
-   | t=par_statement -> t
-   | t=unfold_statement -> t]
-   | [t= empty_statement -> t]
+  [[ t=block                           -> t
+   | t=expression_statement;`SEMICOLON -> t
+   | t=selection_statement             -> t
+   | t=iteration_statement             -> t
+   | t=try_statement; `SEMICOLON       -> t
+   | t=java_statement                  -> t
+   | t=jump_statement;`SEMICOLON       -> t
+   | t= assert_statement;`SEMICOLON    -> t
+   | t=dprint_statement;`SEMICOLON     -> t
+(* | t=skip_statement;`SEMICOLON       -> t *)
+   | t=debug_statement                 -> t
+   | t=time_statement                  -> t
+   | t=bind_statement                  -> t
+   | t=barr_statement                  -> t
+   | t=par_statement                   -> t
+   | t=unfold_statement                -> t]
+   |[t= empty_statement                -> t]
 ];
 
 empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
- 
+
 barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; exp_barrier_pos = get_pos_camlp4 _loc 1}]];
- 
+
 assert_statement:
-  [[ `ASSERT; ol= opt_label; f=formulas ->
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
-   | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
-   | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
-   | `INFER_ASSUME; `OSQUARE;il1=OPT id_list;`CSQUARE ->
-       mkAssert ~inf_vars:(un_option il1 []) None None (fresh_formula_label "") None (get_pos_camlp4 _loc 1)
-   | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
-       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
-   | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
-   | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
-   | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)]];
+  [[ `ASSERT; ol= opt_label; f=formulas
+      -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
+   | `ASSERT_EXACT; ol= opt_label; f=formulas
+      -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
+   | `ASSERT_INEXACT; ol= opt_label; f=formulas
+      -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
+   | `INFER_ASSUME; `OSQUARE;il1=OPT id_list;`CSQUARE
+     -> mkAssert ~inf_vars:(un_option il1 []) None None (fresh_formula_label "") None (get_pos_camlp4 _loc 1)
+   | `ASSUME; ol=opt_label; dc=disjunctive_constr
+     -> mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+   | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr
+     -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
+   | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr
+     -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
+   | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr
+     -> mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)]];
 
 debug_statement:
-  [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }
+  [[ `DDEBUG; `ON  -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }
    | `DDEBUG; `OFF -> Debug { exp_debug_flag = false; exp_debug_pos = get_pos_camlp4 _loc 2 }]];
-   
+
 time_statement:
-  [[ `DTIME; `ON; `IDENTIFIER id -> I.Time (true,id,get_pos_camlp4 _loc 1)
+  [[ `DTIME; `ON ; `IDENTIFIER id -> I.Time (true,id,get_pos_camlp4 _loc 1)
    | `DTIME; `OFF; `IDENTIFIER id -> I.Time (false,id,get_pos_camlp4 _loc 1)]];
 
 dprint_statement:
@@ -3850,7 +3851,7 @@ dprint_statement:
 
 (* skip_statement: *)
 (*   [[ `SKIP  -> Empty (get_pos_camlp4 _loc 1); ]]; *)
-   
+
 bind_statement:
   [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b= block ->
       Bind { exp_bind_bound_var = id;
@@ -3872,17 +3873,17 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_ca
 (*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
         peek_invocation; t= invocation_expression -> t
-      | t= object_creation_expression -> t
-      | t= post_increment_expression -> t
-      | t= post_decrement_expression -> t
-      | t= pre_increment_expression -> t  
-      | t= pre_decrement_expression -> t
-      | peek_exp_st; t= assignment_expression -> t
-]]; 
+      | t= object_creation_expression             -> t
+      | t= post_increment_expression              -> t
+      | t= post_decrement_expression              -> t
+      | t= pre_increment_expression               -> t
+      | t= pre_decrement_expression               -> t
+      | peek_exp_st; t= assignment_expression     -> t
+]];
 
 (*statement_expression:
   [[
-      
+
   ]];*)
 
 selection_statement: [[t=if_statement -> t]];
@@ -3892,21 +3893,21 @@ embedded_statement: [[t=valid_declaration_statement -> t]];
 if_statement:
   [[ `IF; `OPAREN; bc = boolean_expression; `CPAREN; es=embedded_statement ->
 	  Cond { exp_cond_condition = bc;
-           exp_cond_then_arm = es;
-           exp_cond_else_arm = Empty (get_pos_camlp4 _loc 1);
-           exp_cond_path_id = None; 
-           exp_cond_pos = get_pos_camlp4 _loc 1 } 	   
-  |`IF; 
-  `OPAREN; bc=boolean_expression; 
-  `CPAREN; tb=embedded_statement; 
+           exp_cond_then_arm  = es;
+           exp_cond_else_arm  = Empty (get_pos_camlp4 _loc 1);
+           exp_cond_path_id   = None;
+           exp_cond_pos       = get_pos_camlp4 _loc 1 }
+  |`IF;
+  `OPAREN; bc=boolean_expression;
+  `CPAREN; tb=embedded_statement;
   `ELSE_TT; eb=embedded_statement ->
 		Cond { exp_cond_condition = bc;
-			   exp_cond_then_arm = tb;
-			   exp_cond_else_arm = eb;
-			   exp_cond_path_id = None; 
-			   exp_cond_pos = get_pos_camlp4 _loc 1 }]];
+           exp_cond_then_arm  = tb;
+			     exp_cond_else_arm  = eb;
+			     exp_cond_path_id   = None;
+			     exp_cond_pos       = get_pos_camlp4 _loc 1 }]];
 
-par_statement: 
+par_statement:
   [[  `PAR; vps = vperm_var_list_opt; lh = OPT heap_constr;
       `OBRACE; pl = par_case_list; `CBRACE ->
       let pos = get_pos_camlp4 _loc 1 in
