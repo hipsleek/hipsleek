@@ -3058,9 +3058,12 @@ and elim_unsat_estate ?(sat_subno=vv_ref) prog es =
   (b,f,es)
 
 and elim_unsat_es_now_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : entail_state =
-  let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
-  if not b then es else
-    false_es_with_orig_ante es f no_pos
+  if !Globals.prune_false_entail_state then
+    let (b,f,es) = elim_unsat_estate ~sat_subno:sat_subno prog es in
+    if not b then es else
+      false_es_with_orig_ante es f no_pos
+  else
+    es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   Ctx (elim_unsat_es_now_es prog sat_subno es)

@@ -58,6 +58,8 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+  ("--disable-false-pruning", Arg.Clear Globals.prune_false_entail_state, "Disable pruning of false entail states");
+  ("--disable-combine-security-labels", Arg.Clear Globals.prune_false_entail_state, "Disable combining security labels in conditionals");
   ("--set-expand", Arg.Set Globals.constraint_sets_expansion, "Expand sets of constraints to conjunctive and");
   ("--sctx", Arg.Set Typechecker.simplify_context, "Simplify the context before each execution in symbolic execution."); (* An Hoa *)
   ("--sdp", Arg.Set Globals.simplify_dprint,

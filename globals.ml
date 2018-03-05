@@ -884,6 +884,9 @@ let lib_files = ref ([] : string list)
 
 (* command line options *)
 
+let prune_false_entail_state = ref true
+let combine_security_labels_in_cond = ref true
+
 let constraint_sets_expansion = ref true
 
 let split_fixcalc = ref false (* present split is unsound *)
