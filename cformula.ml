@@ -214,6 +214,7 @@ and sec_label =
   | Sec_LUB of (sec_label * sec_label)
   | Sec_HI
   | Sec_LO
+(*****************************)
 
 and one_formula = {
   formula_heap : h_formula;
@@ -711,32 +712,56 @@ let is_or_formula f = match f with
   | _ -> false
 
 
-(* ADI: Information Flow Analysis *)
+(* Information Flow Analysis *)
 let mkSecFormula var lbl =
   {
     sec_var = var;
     sec_lbl = lbl
   }
 
-let rename_sec_var (sl:sec_formula list) : sec_formula list =
-  let rec in_sec_formula_list sl =
+let replace_sec_var (rep_list:(CP.spec_var*CP.spec_var) list) (f:formula) : formula =
+  let rec replace_spec_var (var:CP.spec_var) (rep_list:(CP.spec_var*CP.spec_var) list) : CP.spec_var =
+    match rep_list with
+    | []                  -> var
+    | (old_v,new_v)::rest -> if (old_v = var) then new_v else replace_spec_var var rest
+  in
+  let rec in_formula f =
+    match f with
+    | Or ({
+      formula_or_f1  = f1;
+      formula_or_f2  = f2;
+      formula_or_pos = pos
+      })
+      -> Or {
+        formula_or_f1  = in_formula f1;
+        formula_or_f2  = in_formula f2;
+        formula_or_pos = pos
+      }
+    | Base sub_f
+      -> Base   {
+         sub_f with formula_base_sec   = in_sec_formula_list sub_f.formula_base_sec
+      }
+    | Exists sub_f
+      -> Exists {
+         sub_f with formula_exists_sec = in_sec_formula_list sub_f.formula_exists_sec
+      }
+  and in_sec_formula_list sl =
     match sl with
     | []      -> []
     | sec::sr -> (in_sec_var sec)::(in_sec_formula_list sr)
   and in_sec_var sec =
     {
-      sec_var = CP.rename_spec_var sec.sec_var ("sec_" ^ (CP.name_of_spec_var sec.sec_var));
+      sec_var = replace_spec_var sec.sec_var rep_list;
       sec_lbl = in_sec_label sec.sec_lbl
     }
   and in_sec_label lbl =
     match lbl with
-    | Sec_Var(var)       ->
-        Sec_Var(CP.rename_spec_var var ("sec_" ^ (CP.name_of_spec_var var)))
+    | Sec_Var(var)       -> Sec_Var(replace_spec_var var rep_list)
     | Sec_LUB(lbl1,lbl2) -> Sec_LUB(in_sec_label lbl1, in_sec_label lbl2)
     | Sec_HI             -> Sec_HI
     | Sec_LO             -> Sec_LO
   in
-  in_sec_formula_list sl
+  in_formula f
 
 let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula list) : sec_label =
   (* NOTE: ensure that there is only one label in sec_formula list *)
@@ -747,6 +772,13 @@ let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula li
                then sec.sec_lbl
                else get_sec_label_from_sec_formula_list var sr
 
+let rec get_sec_var_from_sec_formula_list (sl:sec_formula list) : CP.spec_var list =
+  match sl with
+  | []      -> []
+  | sec::sr ->
+    let var_list  = get_sec_var_from_sec_formula_list sr in
+    if List.exists (fun v -> (v = sec.sec_var)) var_list then var_list else sec.sec_var::var_list
+(*****************************)
 
 
 module Exp_Heap =
@@ -3443,6 +3475,36 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
     Or ({formula_or_f1 = add_mix_formula_to_formula_x f1_mix f1 ; formula_or_f2 =  add_mix_formula_to_formula_x f1_mix f2 ; formula_or_pos = pos})
   | Base b -> Base { b with formula_base_pure = add_mix_formula_to_mix_formula f1_mix b.formula_base_pure;}
   | Exists b -> Exists {b with  formula_exists_pure = add_mix_formula_to_mix_formula f1_mix b.formula_exists_pure;}
+
+(* Information Flow Analysis *)
+and add_sec_formula_to_formula (sf:sec_formula) (f:formula) : formula =
+  match f with
+  | Or ({
+      formula_or_f1  = f1;
+      formula_or_f2  = f2;
+      formula_or_pos = pos
+    })
+    -> Or {
+      formula_or_f1  = add_sec_formula_to_formula sf f1;
+      formula_or_f2  = add_sec_formula_to_formula sf f2;
+      formula_or_pos = pos
+    }
+  | Base sub_f
+    -> Base   {
+       sub_f with formula_base_sec   = add_sec_formula_to_sec_formula_list sf sub_f.formula_base_sec
+    }
+  | Exists sub_f
+    -> Exists {
+       sub_f with formula_exists_sec = add_sec_formula_to_sec_formula_list sf sub_f.formula_exists_sec
+    }
+
+and add_sec_formula_to_sec_formula_list (sf:sec_formula) (sl:sec_formula list) : sec_formula list =
+(* NOTE: smart add -> replace if exists [especially for res] *)
+  match sl with
+  | []      -> [sf]
+  | sec::sr -> if (sec.sec_var = sf.sec_var) then sf::sr
+               else sec::(add_sec_formula_to_sec_formula_list sf sr)
+(*****************************)
 
 (*add f1 into p*)
 and add_mix_formula_to_mix_formula (f1: MCP.mix_formula) (f2: MCP.mix_formula) :MCP.mix_formula =

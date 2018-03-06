@@ -1654,8 +1654,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
         exp_assign_pos = pos }) ->
-      print_endline ("lhs: " ^ v);
-      print_endline ("rhs: " ^ Cprinter.string_of_exp rhs);
       let pr = Cprinter.string_of_exp in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
           (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs 
@@ -1717,11 +1715,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       with _ -> t0
                     else t0
                   in
-                  (*********** ADI: information flow analysis **********)
-                  print_endline ("c1: " ^ !print_formula c1.CF.es_formula);
-                  (*****************************************************)
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
+
+                  (* Information Flow Analysis *)
+                  let new_formula = CF.replace_sec_var [(vsv, tmp_vsv); (CP.mkSecRes, vsv)] c1.CF.es_formula in
+                  let c1 = {c1 with CF.es_formula = new_formula} in
+                  print_endline (v ^ " = " ^ Cprinter.string_of_exp rhs ^ " ::: " ^ !print_formula c1.CF.es_formula);
+                  (*****************************)
+
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
@@ -1822,7 +1824,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* normalize_list_failesc_context_w_lemma prog rs *)
         rs
 
-    (* ADI TODO: bool constant inference rule *)
     | BConst ({exp_bconst_val = b;
                exp_bconst_pos = pos}) -> begin
         Gen.Profiling.push_time "[check_exp] BConst";
@@ -1839,6 +1840,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if b then tmp1
             else CP.Not (tmp1, None, pos) in
           let f = CF.formula_of_pure_N tmp2 pos in
+          (* Information Flow Analysis: *)
+          let add_res_to_sec_formula state =
+            let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+            let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
+            let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
+            let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
+            new_context
+          in
+          let ctx = CF.transform_list_failesc_context (idf,idf,add_res_to_sec_formula) ctx in
+          (******************************)
           let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
           Gen.Profiling.push_time "[check_exp] BConst";
           res
@@ -2300,7 +2311,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       Err.report_error {Err.error_loc = pos;
                         Err.error_text = "[typechecker.ml]: We do not support instant calls"}
 
-    (* ADI TODO: int constant inference rule *)
     | IConst ({exp_iconst_val = i;
                exp_iconst_pos = pos}) ->
       Gen.Profiling.push_time "[check_exp] IConst";
@@ -2313,16 +2323,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         else c
       in
       let f  = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      (* Information Flow Analysis: *)
+      let add_res_to_sec_formula state =
+        let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+        let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
+        let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
+        let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
+        new_context
+      in
+      let ctx = CF.transform_list_failesc_context (idf,idf,add_res_to_sec_formula) ctx in
+      (******************************)
       (* ADI TODO: check normalize_max_renaming_list_failesc_context *)
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
-      (* ADI: information flow analysis *)
-      let res_s = CP.mkRes int_type in
-      let res_s = CF.mkSecFormula res_s CF.Sec_LO in (* ADI TODO: switch to sec_context *)
-      (**********************************)
       Gen.Profiling.pop_time "[check_exp] IConst";
       res_ctx
 
-    (* ADI TODO: float constant inference rule *)
     | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
       let c_e = CP.FConst (f, pos) in
       let res_v = CP.Var (CP.mkRes float_type, pos) in
@@ -2333,6 +2348,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         else c
       in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      (* Information Flow Analysis: *)
+      let add_res_to_sec_formula state =
+        let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+        let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
+        let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
+        let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
+        new_context
+      in
+      let ctx = CF.transform_list_failesc_context (idf,idf,add_res_to_sec_formula) ctx in
+      (******************************)
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       res_ctx
 
@@ -2849,12 +2874,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*   else true *)
           (* else true *)
         in
-        let res = 
+        let res =
           (* if (not b) then res (*do not have permission for variable v*) *)
           (* else                                                          *)
           if not b then ctx (* Unreachable branch *) 
           else
-            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
+            (* Information Flow Analysis *)
+            let add_res_to_sec_formula state =
+              let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+              let sec_formula = CF.mkSecFormula CP.mkSecRes (CF.Sec_LUB (sec_context,(CF.Sec_Var(CP.mkSecVar v Primed)))) in
+              let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
+              let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
+              new_context
+            in
+            let ctx = CF.transform_list_failesc_context (idf,idf,add_res_to_sec_formula) ctx in
+            (*****************************)
+            CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
         in
         Gen.Profiling.pop_time "[check_exp] Var";
         res 

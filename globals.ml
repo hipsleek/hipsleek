@@ -815,7 +815,8 @@ let mem_leak = "memory leak"
 let undefined_error = "undefined"
 let timeout_error = "timeout"
 
-let eres_name = "eres"
+let eres_name   = "eres"
+let secres_name = "sec_res" (* information flow analysis *)
 
 
 let self = "self"
