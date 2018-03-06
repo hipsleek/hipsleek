@@ -712,6 +712,32 @@ let is_or_formula f = match f with
 
 
 (* ADI: Information Flow Analysis *)
+let mkSecFormula var lbl =
+  {
+    sec_var = var;
+    sec_lbl = lbl
+  }
+
+let rename_sec_var (sl:sec_formula list) : sec_formula list =
+  let rec in_sec_formula_list sl =
+    match sl with
+    | []      -> []
+    | sec::sr -> (in_sec_var sec)::(in_sec_formula_list sr)
+  and in_sec_var sec =
+    {
+      sec_var = CP.rename_spec_var sec.sec_var ("sec_" ^ (CP.name_of_spec_var sec.sec_var));
+      sec_lbl = in_sec_label sec.sec_lbl
+    }
+  and in_sec_label lbl =
+    match lbl with
+    | Sec_Var(var)       ->
+        Sec_Var(CP.rename_spec_var var ("sec_" ^ (CP.name_of_spec_var var)))
+    | Sec_LUB(lbl1,lbl2) -> Sec_LUB(in_sec_label lbl1, in_sec_label lbl2)
+    | Sec_HI             -> Sec_HI
+    | Sec_LO             -> Sec_LO
+  in
+  in_sec_formula_list sl
+
 let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula list) : sec_label =
   (* NOTE: ensure that there is only one label in sec_formula list *)
   (* ADI TODO: make it smarter? if none at all -> HI, else, GLB of all? *)
@@ -720,6 +746,7 @@ let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula li
   | sec::sr -> if (=) (var) (sec.sec_var)
                then sec.sec_lbl
                else get_sec_label_from_sec_formula_list var sr
+
 
 
 module Exp_Heap =

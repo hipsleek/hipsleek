@@ -1695,8 +1695,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           if not b then ctx
           else
             (* let () = Gen.Profiling.push_time "[check_rhs_exp] Assign" in *)
-            let ctx1 = check_rhs_exp rhs in
-            print_endline ("+ rhs: " ^ pr rhs ^ (if (is_const_or_tmp rhs) then " :: True" else " :: False"));
+            let ctx1 = check_rhs_exp rhs in (* ADI TODO: retrieve sec_formula *)
+            (*print_endline ("ctx1: " ^ !CF.print_list_failesc_context ctx1);*)
             (* let () = Gen.Profiling.pop_time "[check_rhs_exp] Assign" in *)
             (* let () = print_endline ("RHS: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             (* let () = Gen.Profiling.push_time "[check_exp] Assign: other" in *)
@@ -1717,6 +1717,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       with _ -> t0
                     else t0
                   in
+                  (*********** ADI: information flow analysis **********)
+                  print_endline ("c1: " ^ !print_formula c1.CF.es_formula);
+                  (*****************************************************)
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
@@ -1819,6 +1822,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* normalize_list_failesc_context_w_lemma prog rs *)
         rs
 
+    (* ADI TODO: bool constant inference rule *)
     | BConst ({exp_bconst_val = b;
                exp_bconst_pos = pos}) -> begin
         Gen.Profiling.push_time "[check_exp] BConst";
@@ -2119,6 +2123,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       in
       wrap_proving_kind PK_BIND bind_op_wrapper ()
 
+    (* ADI TODO: block inference rule *)
     | Block ({
         exp_block_type = t;
         exp_block_body = e;
@@ -2149,6 +2154,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] Block"; raise ex
       end
+
+    (* ADI TODO: typecast inference rule *)
     | Cast ({ exp_cast_target_type = target_typ;
               exp_cast_body = org_exp;
               exp_cast_pos = pos}) -> (
@@ -2292,21 +2299,30 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_icall_pos = pos}) ->
       Err.report_error {Err.error_loc = pos;
                         Err.error_text = "[typechecker.ml]: We do not support instant calls"}
+
+    (* ADI TODO: int constant inference rule *)
     | IConst ({exp_iconst_val = i;
                exp_iconst_pos = pos}) ->
       Gen.Profiling.push_time "[check_exp] IConst";
       let c_e = CP.IConst (i, pos) in
       let res_v = CP.Var (CP.mkRes int_type, pos) in
       let c = CP.mkEqExp res_v c_e pos in
-      let c = 
-        if !Globals.infer_lvar_slicing then 
+      let c =
+        if !Globals.infer_lvar_slicing then
           CP.set_il_formula c (Some (false, fresh_int(), [res_v]))
-        else c 
+        else c
       in
-      let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      let f  = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      (* ADI TODO: check normalize_max_renaming_list_failesc_context *)
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
+      (* ADI: information flow analysis *)
+      let res_s = CP.mkRes int_type in
+      let res_s = CF.mkSecFormula res_s CF.Sec_LO in (* ADI TODO: switch to sec_context *)
+      (**********************************)
       Gen.Profiling.pop_time "[check_exp] IConst";
       res_ctx
+
+    (* ADI TODO: float constant inference rule *)
     | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
       let c_e = CP.FConst (f, pos) in
       let res_v = CP.Var (CP.mkRes float_type, pos) in
@@ -2319,6 +2335,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       res_ctx
+
+    (* ADI TODO: new object inference rule *)
     | New ({exp_new_class_name = c;
             exp_new_parent_name = pname;
             exp_new_arguments = args;
@@ -2399,12 +2417,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* let () = print_endline ("res = " ^ (Cprinter.string_of_list_failesc_context res)) in *)
         res
       end;
+
+    (* ADI TODO: null constant inference rule *)
     | Null pos ->
       let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (Globals.null_type, res_name, Unprimed)) pos) (CP.Null pos) pos in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
       let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       res
     | EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
+
+    (* ADI TODO: function call inference rule *)
     | SCall ({
         exp_scall_type = ret_t;
         exp_scall_method_name = mn; (* mn is mingled name of the method *)
@@ -2768,6 +2790,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   res)
             end
       end
+
+    (* ADI TODO: sequence inference rule *)
     | Seq ({exp_seq_type = te2;
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2;
@@ -2780,12 +2804,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         ctx2
       end
     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
+
+    (* ADI TODO: this inference rule *)
     | This ({exp_this_type = t;
              exp_this_pos = pos}) -> 
       begin
         let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos)) pos in
         CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
       end
+
+    (* ADI TODO: variable inference rule *)
     | Var ({
         exp_var_type = t;
         exp_var_name = v;
@@ -2826,8 +2854,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* else                                                          *)
           if not b then ctx (* Unreachable branch *) 
           else
-            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
-            CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
         in
         Gen.Profiling.pop_time "[check_exp] Var";
         res 

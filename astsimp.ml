@@ -10136,7 +10136,7 @@ and case_normalize_barrier prog bd =
   Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
 
 
-(* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO?  *)
+(* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO?   *)
 (* ADI : good question, this should be in iformula? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
   Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
