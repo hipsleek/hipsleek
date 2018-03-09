@@ -1744,9 +1744,6 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
 (*  print_endline ("input: " ^ (Iprinter.string_of_program prog));
     print_endline ("iprog: " ^ (Iprinter.string_of_program ip  ));
     print_endline ("oprog: " ^ (Cprinter.string_of_program cp  )); *)
-  (* Information Flow Analysis *)
-  (* NOTE: add x' <? x for every x <? _ except for res *)
-  (*****************************)
   (cp,ip)
 
 (* Replaced to use new_proc_decls *)

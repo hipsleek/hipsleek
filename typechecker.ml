@@ -2816,7 +2816,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             end
       end
 
-    (* ADI TODO: sequence inference rule *)
     | Seq ({exp_seq_type = te2;
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2;
@@ -2838,7 +2837,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
       end
 
-    (* ADI TODO: variable inference rule *)
     | Var ({
         exp_var_type = t;
         exp_var_name = v;

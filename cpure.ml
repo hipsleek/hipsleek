@@ -2413,7 +2413,7 @@ and mkRes t = SpecVar (t, res_name, Unprimed)
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
 and mkSecRes = SpecVar (int_type, secres_name, Unprimed) (* information flow analysis *)
-and mkSecVar id pr = SpecVar (int_type, id, pr)          (* information flow analysis **)
+and mkSecVar id pr = SpecVar (int_type, id, pr)          (* information flow analysis *)
 
 and mkRel_sv n = SpecVar (RelT[], n, Unprimed)
 
