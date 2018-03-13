@@ -1730,9 +1730,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let sec_vsv = CP.SpecVar (t, "sec_" ^ v, Primed) in
                   let sec_tmp_vsv = CP.SpecVar (t, "sec_" ^ CP.get_unprime tmp_vsv, Unprimed) in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                  let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv); (sec_vsv, sec_tmp_vsv); (P.mkSecRes t, sec_vsv)] c1.CF.es_formula in
+                  let substs = [(vsv, tmp_vsv); ((P.mkRes t), vsv); (sec_vsv, sec_tmp_vsv); (P.mkSecRes t, sec_vsv)] in
+                  let compose_es = x_add CF.subst substs c1.CF.es_formula in
+                  let compose_sec_ctx = CP.sec_label_apply_subs substs c1.CF.es_security_context in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
-                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es; CF.es_security_context = compose_sec_ctx})) in
                   (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   (* let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
                   (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)

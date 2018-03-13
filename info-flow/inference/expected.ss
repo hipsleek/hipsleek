@@ -12,12 +12,12 @@ data C {
 }
 
 
-int id1(int x)
+/*int id1(int x)
   requires forall (sec_a: x <^ a)
   ensures res <^ a;
 {
   return x;
-}
+}*/
 
 int id2(int x)
   requires x <^ @Lo
@@ -157,7 +157,7 @@ int func_id_const1()
 	ensures res <^ @Lo;
 {
 	int v = 1;
-	return id1(v);
+	return id2(v);
 }
 
 int if_const1(int x)
