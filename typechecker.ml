@@ -1674,7 +1674,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* else                                                          *)
 
           (* VPerm: Check @full for LHS var *)
-          let b = 
+          let b =
             if !ann_vp then
               let tv = Gen.unsome (type_of_exp rhs) in
               let sv = (CP.SpecVar (tv, v, Unprimed)) in
@@ -1717,16 +1717,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
-
-                  (* Information Flow Analysis *)
-                  let new_formula = CF.replace_sec_var [(vsv, tmp_vsv); (CP.mkSecRes, vsv)] c1.CF.es_formula in
-                  let c1 = {c1 with CF.es_formula = new_formula} in
-                  print_endline (v ^ " = " ^ Cprinter.string_of_exp rhs ^ " ::: " ^ !print_formula c1.CF.es_formula);
-                  (*****************************)
-
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
+
+                  (* Information Flow Analysis *)
+                  let compose_es = CF.replace_sec_var [vsv;P.mkSecRes] [tmp_vsv;vsv] compose_es in
+                  (*****************************)
+
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   (* let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
@@ -1842,7 +1840,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let f = CF.formula_of_pure_N tmp2 pos in
           (* Information Flow Analysis: *)
           let add_res_to_sec_formula state =
-            let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+            let sec_context = CF.get_sec_context_from_estate state in
             let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
             let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
             let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
@@ -2006,10 +2004,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               if (read_only)
               then
                 let read_f = mkPermInv () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO pos
               else
                 let write_f = mkPermWrite () fresh_perm_exp in
-                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+                CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO pos
             else
               vheap
           in
@@ -2325,7 +2323,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let f  = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       (* Information Flow Analysis: *)
       let add_res_to_sec_formula state =
-        let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+        let sec_context = CF.get_sec_context_from_estate state in
         let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
         let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
         let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
@@ -2350,7 +2348,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       (* Information Flow Analysis: *)
       let add_res_to_sec_formula state =
-        let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
+        let sec_context = CF.get_sec_context_from_estate state in
         let sec_formula = CF.mkSecFormula CP.mkSecRes sec_context in
         let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
         let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
@@ -2432,9 +2430,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (*If this is not a lock, level_f = true*)
         let aux_f = MCP.memoise_add_pure_N level_f perm_f in
         let heap_form = if (perm_vars!=[]) then
-            CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+            CF.mkExists perm_vars heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO pos
           else
-            CF.mkBase heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos
+            CF.mkBase heap_node aux_f CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO pos
         in
         (* let () = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
         let heap_form = x_add Cvutil.prune_preds prog false heap_form in
@@ -2500,7 +2498,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*************************************************************)
           (* VPerm: Check @lend for normal args and @full for ref args *)
           (*************************************************************)
-          (* WN : NO NEED - as we may require no access or read-only *)
+          (* WN : NO NEED - as we may require no access or read-only   *)
+          (*************************************************************)
           let b = true
           (* if !ann_vp then *)
           (*   let ref_params = proc.proc_by_name_params in *)
@@ -2573,6 +2572,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (*let () = print_string_quiet (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
               let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
               let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+              (******************)
+
+
+              (* NOTE:
+                 actual_spec_vars  :: the variable name corresponding to the argument being passed
+                                      to the function
+                 farg_spec_vars    :: the variable name correspondint to the formal parameter name
+                 fr_vars(,to_vars) :: similar to farg_spec_vars (,actual_spec_vars) but with
+                                      primed version of the variable names as well
+              *)
+
+
 
               (* let () = print_string_quiet ("\ncheck_pre_post@SCall@sctx: " ^ *)
               (*    (Cprinter.string_of_pos pos) ^ "\n" ^ *)
@@ -2580,7 +2591,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* let () = Debug.info_zprint (lazy (("  renamed spec 1 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
               let renamed_spec = CF.subst_struc st1 renamed_spec in
               let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
-
               let renamed_spec =
                 match proc.proc_ho_arg, ha with
                 | Some hv, Some ha ->
@@ -2637,6 +2647,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
               let () = PTracer.log_proof prf in
+              (* ADI DEBUGGING: *)
+              print_endline ("********************************************");
+              print_endline ("spec : " ^ new_spec);
+              print_endline ("pre2 : " ^ Cprinter.string_of_struc_formula pre2);
+              print_endline ("sctx : " ^ Cprinter.string_of_list_failesc_context sctx);
+              print_endline ("rs   : " ^ Cprinter.string_of_list_failesc_context rs);
+              print_endline ("********************************************");
 
               (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
                  Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
@@ -2731,6 +2748,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 normalization lemmas in the programs*)
               (* Already did in EAssume *)
               (* let res = normalize_list_failesc_context_w_lemma prog res in *)
+
+              (* Information Flow Analysis *)
+              (*let add_res_sec_to_formula state =
+                if ret_t <> Globals.Void then
+                  let sec_context = CF.Sec_LO in (* ADI TODO: add context *)
+
+                  let rec update_sec_res f =
+                    let update_sec_formula sf =
+                      sf*)
+              (*****************************)
+
               res
             else begin
               (*   let () = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
@@ -2880,8 +2908,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
             (* Information Flow Analysis *)
             let add_res_to_sec_formula state =
-              let sec_context = CF.Sec_LO in (* ADI TODO: add context into cformula *)
-              let sec_formula = CF.mkSecFormula CP.mkSecRes (CF.Sec_LUB (sec_context,(CF.Sec_Var(CP.mkSecVar v Primed)))) in
+              let sec_context = CF.get_sec_context_from_estate state in
+              let sec_formula = CF.mkSecFormula CP.mkSecRes (CF.lub_op
+                                                               sec_context
+                                                               (CF.Sec_Var(CP.mkSecVar v Primed))) in
               let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
               let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
               new_context
@@ -2891,7 +2921,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
         in
         Gen.Profiling.pop_time "[check_exp] Var";
-        res 
+        res
       end
     | VarDecl {
         exp_var_decl_type = t;
@@ -3779,7 +3809,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           in
           let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
           (* Termination: Add the set of logical variables into the initial context *)
-          let init_ctx = 
+          let init_ctx =
             if !Globals.dis_term_chk then init_ctx
             else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
           let () = x_tinfo_hp (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
@@ -3788,6 +3818,11 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               Prooftracer.start_compound_object ();
             end
           in
+          (* Information Flow Analysis *)
+          (* > add x'<?x for all args  *)
+          let init_sf  = CF.addBaseSecFormula fsvars in
+          let init_ctx = CF.build_init_sec_context init_ctx init_sf in
+          (*****************************)
           let pp, exc =
             try (* catch exception to close the section appropriately *)
               (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)

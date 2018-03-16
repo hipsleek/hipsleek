@@ -1500,7 +1500,7 @@ let look_up_hp_decl_data_name decls hp arg_pos=
 let cmp_hp_def d1 d2 = String.compare d1.hp_name d2.hp_name = 0
 
 let generate_pure_rel hprel=
-  let n_p_hprel ={
+  let n_p_hprel = {
     rel_name = default_prefix_pure_hprel ^ hprel.hp_name;
     rel_vars = List.map fst hprel.hp_vars_inst;
     rel_formula = F.get_pure hprel.hp_formula;
@@ -1514,19 +1514,23 @@ let generate_pure_rel hprel=
 
 let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
-    let hp_decl =
-      { hp_name = (if is_unknown then Globals.unkhp_default_prefix_name else
-                   if is_pre then Globals.hp_default_prefix_name else hppost_default_prefix_name)
-                  ^ (string_of_int (Globals.fresh_int()));
-        hp_part_vars = [];
-        hp_root_pos = None (* Some 0 *);
-        (* Use None since we do not know how it will be instantiated *)
-        (* First ptr is the root of the new HPRel *)
-        (* None; (* default, reset when def is inferred *) *)
-        hp_vars_inst = unknown_ptrs;
-        hp_is_pre = is_pre;
-        hp_view = None;
-        hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow()) [] [] pos;}
+    let hp_decl = {
+      hp_name = (if is_unknown
+                 then Globals.unkhp_default_prefix_name
+                 else if is_pre
+                 then Globals.hp_default_prefix_name
+                 else hppost_default_prefix_name) ^ (string_of_int (Globals.fresh_int()));
+      hp_part_vars = [];
+      hp_root_pos = None (* Some 0 *);
+      (* Use None since we do not know how it will be instantiated *)
+      (* First ptr is the root of the new HPRel *)
+      (* None; (* default, reset when def is inferred *) *)
+      hp_vars_inst = unknown_ptrs;
+      hp_is_pre = is_pre;
+      hp_view = None;
+      hp_formula = F.mkBase F.HEmp (MP.mkMTrue pos) CVP.empty_vperm_sets F.TypeTrue (F.mkTrueFlow())
+                     [] [] F.Sec_LO pos;
+      }
     in
     let unk_args = (fst (List.split hp_decl.hp_vars_inst)) in
     prog.prog_hp_decls <- (hp_decl :: prog.prog_hp_decls);
@@ -2029,7 +2033,7 @@ let exist_left_lemma_w_fl coers fl=
 *)
 (*TODO: re-implement with care*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
-  let h,_,_,_,_,_,_ = F.split_components lhs in
+  let h,_,_,_,_,_,_,_ = F.split_components lhs in
   let hs = F.split_star_conjunctions h in
   let flag = if (List.length hs) == 1 then
       let sm = List.hd hs in (match sm with
@@ -3195,7 +3199,7 @@ let is_complex_entailment_4graph_x prog ante conseq=
               let quans,bare = F.split_quantifiers eb.F.formula_struc_base in
               let () = Debug.ninfo_hprint (add_str "quans" !Cpure.print_svl) quans no_pos in
               if quans = [] then false else
-                let _, mf, _, _, _, _, _ = F.split_components bare in
+                let _, mf, _, _, _, _, _, _ = F.split_components bare in
                 let eqnull_svl =  Mcpure.get_null_ptrs mf in
                 let eqs = (Mcpure.ptr_equations_without_null mf) in
                 let svl_eqs = List.fold_left (fun r (sv1,sv2) -> r@[sv1;sv2]) [] eqs in
@@ -3239,7 +3243,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_touching_branch branch = (
-    let (_,mf,_,_,_,_,_) = F.split_components branch in
+    let (_,mf,_,_,_,_,_,_) = F.split_components branch in
     let self_sv = P.SpecVar (Named vdecl.view_data_name, self, Unprimed) in
     let nontouching_cond = (
       let conds = List.map (fun y -> P.mkNeqVar self_sv y pos) forward_ptrs in
@@ -3274,7 +3278,7 @@ let is_segmented_view_x (vdecl: view_decl) : bool =
   let pos = vdecl.view_pos in
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_segmented_branch branch = (
-    let (_,mf,_,_,_,_,_) = F.split_components branch in
+    let (_,mf,_,_,_,_,_,_) = F.split_components branch in
     let pf = MP.pure_of_mix mf in
     List.exists (fun sv ->
         let null_cond = P.mkNull sv pos in
@@ -3420,7 +3424,7 @@ let is_tail_recursive_view_x (vd: view_decl) : bool =
   let vname = vd.view_name in
   let collect_view_pointed_by_self f = (
     let views = ref [] in
-    let (hf,_,_,_,_,_,_) = F.split_components f in
+    let (hf,_,_,_,_,_,_,_) = F.split_components f in
     let f_hf hf = (match hf with
         | F.ViewNode vn ->
           let nname = P.name_of_spec_var vn.F.h_formula_view_node in
@@ -3556,7 +3560,7 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
           let () = Debug.ninfo_hprint (add_str "subs" (pr_list (pr_pair !P.print_sv !P.print_sv))) subs no_pos in
           let replacing_f = F.subst_one_by_one subs base_f in
           let () = Debug.ninfo_hprint (add_str "replacing_f" !F.print_formula) replacing_f no_pos in
-          let (replacing_hf,extra_pf,_,_,_,_,_) = F.split_components replacing_f in
+          let (replacing_hf,extra_pf,_,_,_,_,_,_) = F.split_components replacing_f in
           let extra_qvars = F.get_exists replacing_f in
           let () = Debug.ninfo_hprint (add_str "extra_qvars" (pr_list !P.print_sv)) extra_qvars no_pos in
           extra_pure := !extra_pure @ [(extra_pf, extra_qvars)];
@@ -3610,7 +3614,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
         | _ -> None
       ) in
     let () = List.iter (fun f->
-        let (hf,pf,_,_,_,_,_) = F.split_components f in
+        let (hf,pf,_,_,_,_,_,_) = F.split_components f in
         let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
@@ -3619,7 +3623,7 @@ let compute_view_residents_x (vd: view_decl) : P.spec_var list =
     let () = List.iter (fun f ->
         (* unfold the inductive formulathen collect residents *)
         let new_f = unfold_base_case_formula f vd base_f in
-        let (hf,pf,_,_,_,_,_) = F.split_components new_f in
+        let (hf,pf,_,_,_,_,_,_) = F.split_components new_f in
         let todo_unk = F.transform_h_formula collect_node hf in
         let eqs = MP.ptr_equations_without_null pf in
         residents := F.find_close !residents eqs;
@@ -3636,7 +3640,7 @@ let compute_view_residents (vd: view_decl) : P.spec_var list =
     (fun _ -> compute_view_residents_x vd) vd
 
 let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp bwf =
-  let (hf,pf,_,_,_,_,_) = F.split_components f in
+  let (hf,pf,_,_,_,_,_,_) = F.split_components f in
   let eqs = MP.ptr_equations_without_null pf in
   let dname = ddecl.data_name in
   let vname = vdecl.view_name in
@@ -3862,7 +3866,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
                 Debug.ninfo_hprint (add_str "body_nodes" (pr_list !F.print_h_formula)) body_nodes no_pos;
                 Debug.ninfo_hprint (add_str "head_ptrs" (pr_list !P.print_sv)) head_ptrs no_pos;
                 Debug.ninfo_hprint (add_str "body_ptrs" (pr_list !P.print_sv)) body_ptrs no_pos;
-                let (hf,pf,_,_,_,_,_) = F.split_components f in
+                let (hf,pf,_,_,_,_,_,_) = F.split_components f in
                 let eqs = MP.ptr_equations_without_null pf in
                 let () = match head_node with
                   | F.ViewNode vn ->

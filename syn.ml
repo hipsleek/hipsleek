@@ -43,8 +43,8 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
     let () = y_tinfo_pp ("Do not add dangling into the post-hprel " ^ (Cprinter.string_of_hprel_short hpr)) in
     hpr, false
   else
-    let _, lhs_p, _, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_lhs in
-    let _, rhs_p, _, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_rhs in
+    let _, lhs_p, _, _, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_lhs in
+    let _, rhs_p, _, _, _, _, _, _ = x_add_1 CF.split_components hpr.hprel_rhs in
     let lhs_aliases = MCP.ptr_equations_with_null lhs_p in
     let rhs_aliases = MCP.ptr_equations_with_null rhs_p in
     let rhs_aset = CP.EMapSV.build_eset rhs_aliases in
@@ -52,7 +52,7 @@ let add_dangling_hprel prog (hpr: CF.hprel) =
       match hpr.hprel_guard with
       | None -> []
       | Some g -> 
-        let _, guard_p, _, _, _, _, _ = x_add_1 CF.split_components g in
+        let _, guard_p, _, _, _, _, _, _ = x_add_1 CF.split_components g in
         MCP.ptr_equations_with_null guard_p
     in
     let aliases = CP.find_all_closures (lhs_aliases @ guard_aliases) in
@@ -130,11 +130,11 @@ let rename_hprel_list hprels =
     hpr::(List.map (rename_hprel_args n_args) hprs)
 
 let cond_of_pre_hprel (hprel: CF.hprel) = 
-  let _, lhs_p, _, _, _, _, _ = x_add_1 CF.split_components hprel.hprel_lhs in
+  let _, lhs_p, _, _, _, _, _, _ = x_add_1 CF.split_components hprel.hprel_lhs in
   match hprel.hprel_guard with
   | None -> MCP.pure_of_mix lhs_p
   | Some g -> 
-    let _, g_p, _, _, _, _, _ = x_add_1 CF.split_components g in
+    let _, g_p, _, _, _, _, _, _ = x_add_1 CF.split_components g in
     CP.mkAnd (MCP.pure_of_mix lhs_p) (MCP.pure_of_mix g_p) no_pos
 
 let cond_guard_of_pre_hprel cond_list hprel_cond =
@@ -303,7 +303,7 @@ let unfolding_one_hrel_def prog ctx hrel (hrel_def: CF.hprel) =
       | None -> CF.mkBase_simp HEmp (MCP.mkMTrue pos)
       | Some g -> g
     in
-    let guard_h, guard_p, _, _, _, _, _ = x_add_1 CF.split_components guard_f in
+    let guard_h, guard_p, _, _, _, _, _, _ = x_add_1 CF.split_components guard_f in
     (* let guard_h_f = CF.mkBase_simp guard_h ex_lhs_p in *)
     let guard_h_f = CF.formula_of_heap guard_h no_pos in
     let rs, residue = x_add heap_entail_formula prog ctx guard_h_f in

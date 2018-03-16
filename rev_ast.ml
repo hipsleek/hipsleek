@@ -166,26 +166,31 @@ and rev_trans_formula f =
   in
   match f with
   | CF.Base b -> IF.Base {
-      IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
-      IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
-      IF.formula_base_vperm = (* b.CF.formula_base_vperm; *) IvpermUtils.empty_vperm_sets;
-      IF.formula_base_flow = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
-      IF.formula_base_and = [];
-      IF.formula_base_sec = []; (* ADI TODO: to check *)
-      IF.formula_base_pos = b.CF.formula_base_pos }
+      IF.formula_base_heap    = rev_trans_heap b.CF.formula_base_heap;
+      IF.formula_base_pure    = rev_trans_mix b.CF.formula_base_pure;
+      IF.formula_base_vperm   = (* b.CF.formula_base_vperm; *) IvpermUtils.empty_vperm_sets;
+      IF.formula_base_flow    = remove_s (exlist # get_closest b.CF.formula_base_flow.CF.formula_flow_interval);
+      IF.formula_base_and     = [];
+      IF.formula_base_sec     = []; (* ADI TODO: to check *)
+      IF.formula_base_sec_ctx = IF.Sec_LO;
+      IF.formula_base_pos     = b.CF.formula_base_pos;
+    }
   | CF.Exists b -> IF.Exists {
-      IF.formula_exists_qvars = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
-      IF.formula_exists_heap = rev_trans_heap b.CF.formula_exists_heap;
-      IF.formula_exists_pure = rev_trans_mix b.CF.formula_exists_pure;
-      IF.formula_exists_vperm = (* b.CF.formula_exists_vperm; *) IvpermUtils.empty_vperm_sets;
-      IF.formula_exists_flow = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
-      IF.formula_exists_and = [];
-      IF.formula_exists_sec = []; (* ADI TODO: to check *)
-      IF.formula_exists_pos =b.CF.formula_exists_pos}
-  | CF.Or b-> IF.Or {
+      IF.formula_exists_qvars   = List.map rev_trans_spec_var b.CF.formula_exists_qvars;
+      IF.formula_exists_heap    = rev_trans_heap b.CF.formula_exists_heap;
+      IF.formula_exists_pure    = rev_trans_mix b.CF.formula_exists_pure;
+      IF.formula_exists_vperm   = (* b.CF.formula_exists_vperm; *) IvpermUtils.empty_vperm_sets;
+      IF.formula_exists_flow    = remove_s (exlist # get_closest b.CF.formula_exists_flow.CF.formula_flow_interval);
+      IF.formula_exists_and     = [];
+      IF.formula_exists_sec     = []; (* ADI TODO: to check *)
+      IF.formula_exists_sec_ctx = IF.Sec_LO;
+      IF.formula_exists_pos     = b.CF.formula_exists_pos;
+    }
+  | CF.Or b -> IF.Or {
       IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1;
       IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2;
-      IF.formula_or_pos = b.CF.formula_or_pos;}
+      IF.formula_or_pos = b.CF.formula_or_pos;
+    }
 
 let rev_trans_formula f=
   let pr1 = Cprinter.prtt_string_of_formula in

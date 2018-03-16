@@ -364,6 +364,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_flow = fl0;
         IF.formula_base_and = a0;
         IF.formula_base_sec = sec0; (* ADI TODO: to check *)
+        IF.formula_base_sec_ctx = ctx0;
         IF.formula_base_pos = l0
       } -> (*as f*)
     let tmp1 = look_for_anonymous_h_formula h0 in
@@ -383,6 +384,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
           IF.formula_exists_flow = fl0;
           IF.formula_exists_and = a1;
           IF.formula_exists_sec = sec0; (* ADI TODO: to check *)
+          IF.formula_exists_sec_ctx = ctx0;
           IF.formula_exists_pos = l0;
         }
     else f0
@@ -2588,7 +2590,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             match n_un_str with
             | [(f,_)] ->
               begin try
-                  let (h,p,_,_,_,_,_) = CF.split_components f in
+                  let (h,p,_,_,_,_,_,_) = CF.split_components f in
                   let p = MCP.pure_of_mix p in
                   let emap = Infer.get_eqset p in
                   let (_,l_args,l_node_name,_,_,_,_,_) = x_add_1 CF.get_args_of_node h in
@@ -2682,7 +2684,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let lst_heap_ptrs =
         if !Globals.ptr_arith_flag then
           let lst_ptr = List.map (fun (f,_) ->
-              let (h,pure,_,_,_,_,_) = CF.split_components f in
+              let (h,pure,_,_,_,_,_,_) = CF.split_components f in
               let pure = MCP.pure_of_mix pure in
               let vs = CP.fv pure in
               let lst = CF.get_data_and_views h in
@@ -4559,12 +4561,12 @@ and trans_one_coercion_a (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
     let body = coer.I.coercion_body in
     let head = coer.I.coercion_head in
     let dir = coer.I.coercion_type in
-    let (hf,_,_,_,_,_) = IF.split_components head in
+    let (hf,_,_,_,_,_,_) = IF.split_components head in
     let new_coer = match hf with
       | IF.HeapNode _ | IF.HeapNode2 _ -> coer
       | _ ->
         begin
-          let (hf,pf,_,_,_,_) = IF.split_components body in
+          let (hf,pf,_,_,_,_,_) = IF.split_components body in
           match hf with
           | IF.HeapNode _ | IF.HeapNode2 _ ->
             if Ipure.isConstTrue pf then
@@ -4641,7 +4643,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let change_univ c_head_norm_rlem c = match c.C.coercion_univ_vars with
     (* move LHS guard to RHS regardless of universal lemma *)
     | v ->
-      let c_hd, c_guard,c_vp, c_fl, c_t, c_a, c_sec = CF.split_components c.C.coercion_head in
+      let c_hd, c_guard,c_vp, c_fl, c_t, c_a, c_sec, c_ctx = CF.split_components c.C.coercion_head in (* ADI TODO: use c_ctx? *)
       let new_body = c.C.coercion_body in
       let () = x_tinfo_hp (add_str "coercion_body" Cprinter.string_of_formula) new_body no_pos in
       let new_body = CF.normalize 1 new_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
@@ -4673,7 +4675,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
       (* let new_body_norm = CF.push_struc_exists c.C.coercion_univ_vars new_body_norm in *)
       {c with
        C.coercion_type = Iast.Right;
-       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a c_sec no_pos;
+       C.coercion_head = CF.mkBase c_hd (mkMTrue no_pos) c_vp c_t c_fl c_a c_sec c_ctx no_pos;
        (* ADI TODO: to check *)
        (* C.coercion_head_norm = new_head_norm; *)
        C.coercion_body = new_body;
@@ -4718,7 +4720,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let () = x_tinfo_hp (add_str "c_lhs 3 " Cprinter.string_of_formula) c_lhs no_pos in
   let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
-    let h, p, vp, _, _, _, _ = CF.split_components c_lhs in
+    let h, p, vp, _, _, _, _, _ = CF.split_components c_lhs in
     let pvars =mfv p in
     let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> not (id= Globals.cyclic_name || id = Globals.acyclic_name || id = Globals.concrete_name || id = Globals.set_comp_name)) pvars in (*ignore cyclic & acyclic rels *)
     let hvars = CF.h_fv h in
@@ -4732,7 +4734,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (* let c_rhs = CF.substitute_flow_in_f !norm_flow_int !top_flow_int c_rhs in *)
   (*LDK: TODO: check for interraction with lemma proving*)
   (*pass lhs_heap into add_origs *)
-  let lhs_heap,_,_,_,_,_,_  = CF.split_components c_lhs in
+  let lhs_heap,_,_,_,_,_,_,_  = CF.split_components c_lhs in
   let lhs_view_name = match lhs_heap with
     | CF.ViewNode vn -> vn.CF.h_formula_view_name
     | CF.DataNode dn -> dn.CF.h_formula_data_name
@@ -4773,7 +4775,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
             match f with
             | CF.Base _
             | CF.Exists _ ->
-              let h, p, vp, _, _, _, _ = CF.split_components f in
+              let h, p, vp, _, _, _, _, _ = CF.split_components f in
               let heaps = CF.split_star_conjunctions h in
               let heaps = List.filter (fun h ->
                   match h with
@@ -4817,11 +4819,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   (* let cs_body_norm = CF.reset_struc_origins cs_body_norm in *)
   (* c_head_norm is used only for proving r2l part of a lemma (right & equiv lemmas) *)
   let (qvars, form) = IF.split_quantifiers i_lhs (* coer.I.coercion_head *) in
-  let c_hd0, c_guard0, vp0, c_fl0, c_a0, c_sec0 = IF.split_components form in
+  let c_hd0, c_guard0, vp0, c_fl0, c_a0, c_sec0, c_ctx0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
   let head_pure = if coer_type = I.Left || coer_type = I.Equiv then c_guard0 else (IP.mkTrue no_pos) in
-  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] [] no_pos in
-  (* ADI TODO: to check *)
+  let new_head =  IF.mkExists qvars c_hd0 (* (IP.mkTrue no_pos) *) head_pure vp0 c_fl0 [] c_sec0 c_ctx0 no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames =  Gen.BList.remove_dups_eq (=) (List.map CP.name_of_spec_var (CF.fv c_rhs)) in
   let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
@@ -4849,7 +4850,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
   let c_head_norm_rlem = if coer_type = I.Equiv then
       let () = y_tinfo_hp (add_str "qvars in <->" string_of_primed_ident_list) qvars in
       let () = y_tinfo_hp (add_str "c_head_norm" !CF.print_formula) c_head_norm in
-      let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] c_sec0 no_pos in
+      let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) IVP.empty_vperm_sets c_fl0 [] c_sec0 c_ctx0 no_pos in
       (* ADI TODO: to check *)
       let lhs_vars = if !Globals.old_free_var_lhs then l_fnames else fnames in
       snd (x_add trans_head new_head (lhs_vars (* rhs_fnames *)  (* l_fnames *)) quant n_tl)
@@ -7716,6 +7717,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_base_flow = fl;
         IF.formula_base_and = a;
         IF.formula_base_sec = sec; (* ADI TODO: to check *)
+        IF.formula_base_sec_ctx = ctx;
         IF.formula_base_pos = pos} as fb) ->(
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let n_tl =
@@ -7760,6 +7762,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
         IF.formula_exists_flow = fl;
         IF.formula_exists_and = a;
         IF.formula_exists_sec = sec; (* ADI TODO: to check *)
+        IF.formula_exists_sec_ctx = ctx;
         IF.formula_exists_pos = pos} -> (
         let (n_tl,rl) = res_retrieve tl clean_res fl in
         let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
@@ -7778,6 +7781,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
             IF.formula_base_sec = sec; (* ADI TODO: to check *)
+            IF.formula_base_sec_ctx = ctx;
             IF.formula_base_pos = pos; }) in
         (* let () = print_string ("Cform f1: "^(Iprinter.string_of_formula f1) ^"\n" ) in *)
         (* transform bexp *)
@@ -8425,6 +8429,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
     let sec = base.IF.formula_base_sec in (* ADI TODO: to check *)
+    let ctx = base.IF.formula_base_sec_ctx in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f, newvars1, n_tl) = x_add linearize_heap h pos tl in
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
@@ -8462,26 +8467,32 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let pos = base.IF.formula_base_pos in
     let nh,np,nvp,nt,nfl,na,newvars,n_tl,sec = (linearize_base base pos tlist) in
     let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-    (n_tl, CF.mkBase nh np nvp nt nfl na sec pos, newvars)
-  | IF.Exists {IF.formula_exists_heap = h;
-               IF.formula_exists_pure = p;
-               IF.formula_exists_vperm = vp;
-               IF.formula_exists_flow = fl;
-               IF.formula_exists_qvars = qvars;
-               IF.formula_exists_and = a;
-               IF.formula_exists_sec = sec; (* ADI TODO: to check *)
-               IF.formula_exists_pos = pos} ->
-    let base ={IF.formula_base_heap = h;
-               IF.formula_base_pure = p;
-               IF.formula_base_vperm = vp;
-               IF.formula_base_flow = fl;
-               IF.formula_base_and = a;
-               IF.formula_base_sec = sec;
-               IF.formula_base_pos = pos;} in
+    (n_tl, CF.mkBase nh np nvp nt nfl na sec CF.Sec_LO pos, newvars) (* ADI TODO: change linearize_base *)
+  | IF.Exists {
+      IF.formula_exists_heap    = h;
+      IF.formula_exists_pure    = p;
+      IF.formula_exists_vperm   = vp;
+      IF.formula_exists_flow    = fl;
+      IF.formula_exists_qvars   = qvars;
+      IF.formula_exists_and     = a;
+      IF.formula_exists_sec     = sec;
+      IF.formula_exists_sec_ctx = ctx;
+      IF.formula_exists_pos     = pos;
+    } ->
+    let base = {
+      IF.formula_base_heap    = h;
+      IF.formula_base_pure    = p;
+      IF.formula_base_vperm   = vp;
+      IF.formula_base_flow    = fl;
+      IF.formula_base_and     = a;
+      IF.formula_base_sec     = sec;
+      IF.formula_base_sec_ctx = ctx;
+      IF.formula_base_pos     = pos;
+    } in
     let nh,np,nvp,nt,nfl,na,newvars,n_tl,sec = linearize_base base pos tlist in
     let np = memoise_add_pure_N (mkMTrue pos) np in
     let qvars = qvars @ newvars in
-    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na sec pos, [])
+    (n_tl, CF.mkExists (List.map (fun c-> x_add trans_var_safe c UNK tlist pos) qvars) nh np nvp nt nfl na sec CF.Sec_LO pos, []) (* ADI TODO: change linearize_base *)
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula =
   { CF.formula_flow_interval = exlist #  get_hash f0;
@@ -9148,6 +9159,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     Debug.no_2 "linearize_heap" (add_str "used" pr0) pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f in
 
   (* ADI TODO: currently sec_formula is passed on unchanged, may need to formalize *)
+  (* ADI TODO: currently sec_context is set to Sec_LO, may need to change *)
   let rec normalize_base heap cp vp fl a sec evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     (*let () = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
     let heap = (*if !Globals.allow_mem then heap else*) Immutable.normalize_h_formula heap false in
@@ -9189,7 +9201,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
        let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
        let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in
        (to_evars,to_expl))in
-    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a sec pos in
+    let result = IF.mkExists tmp_evars new_h new_p vp fl new_a sec IF.Sec_LO pos in
     (* ADI TODO: to check, new_sec? *)
     let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
     if not (Gen.is_empty tmp_evars)  then
@@ -9205,10 +9217,14 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
        Gen.BList.remove_dups_eq (=) (l1@l2),(Gen.BList.remove_dups_eq (=) (expl1@expl2)))
     | IF.Base b -> normalize_base
                      b.IF.formula_base_heap b.IF.formula_base_pure b.IF.formula_base_vperm
-                     b.IF.formula_base_flow b.IF.formula_base_and b.IF.formula_base_sec [] b.IF.formula_base_pos
+                     b.IF.formula_base_flow b.IF.formula_base_and b.IF.formula_base_sec []
+                     b.IF.formula_base_pos
+      (* ADI TODO: change normalize_base? *)
     | IF.Exists b -> normalize_base
                        b.IF.formula_exists_heap b.IF.formula_exists_pure b.IF.formula_exists_vperm
-                       b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_sec b.IF.formula_exists_qvars b.IF.formula_exists_pos in
+                       b.IF.formula_exists_flow b.IF.formula_exists_and b.IF.formula_exists_sec
+                       b.IF.formula_exists_qvars b.IF.formula_exists_pos in
+      (* ADI TODO: change normalize_base? *)
   helper f
 
 (* AN HOA : TODO CECK *)
@@ -10390,7 +10406,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   (* TODO : obtain propagated constraints & keep only stronger constraint *)
   let split_one_branch (vl:CP.spec_var list) (uinvl:CP.b_formula list) ((b0,lbl):(CF.formula * Globals.formula_label))
     : CP.formula * (formula_label * CP.spec_var list * CP.b_formula list) =
-    let h,p,_,_,_,_,_ = CF.split_components b0 in
+    let h,p,_,_,_,_,_,_ = CF.split_components b0 in
     let cm,ba = x_add Cvutil.xpure_heap_symbolic_i cp h p 0 in
     let ms = x_add_1 Cvutil.formula_2_mem b0 cp in
     let ba = match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h in
@@ -11043,7 +11059,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = x_add_1 Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] no_pos in (* ADI TODO: to check *)
+    CF.mkExists [v;st_v] h p CVP.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO no_pos in (* ADI TODO: to check *)
   let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
   let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
   let f_gen_tot st =

@@ -2304,7 +2304,7 @@ and pr_one_formula_list (ls:one_formula list) =
 
 and string_of_one_formula_list ls = poly_string_of_pr  pr_one_formula_list ls
 
-(* ADI: information flow analysis *)
+(* Information Flow Analysis *)
 and string_of_sec_label label =
 match label with
 | Sec_Var(var)   -> !print_spec_var var
@@ -2322,6 +2322,9 @@ and string_of_sec_formula_list (seclist:sec_formula list) =
     | []      -> ""
   in string_of_sec_separator ^ " [" ^ str_of_sec_formula_list seclist ^ "]"
 
+and string_of_sec_context ctx = " @ctx@ " ^ string_of_sec_label ctx
+(*****************************)
+
 and pr_formula_base e =
   match e with
   | ({formula_base_heap = h;
@@ -2330,7 +2333,8 @@ and pr_formula_base e =
       formula_base_type = t;
       formula_base_flow = fl;
       formula_base_and = a;
-      formula_base_sec = sec; (* ADI TODO: to check *)
+      formula_base_sec = sec;
+      formula_base_sec_ctx = ctx;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2344,8 +2348,10 @@ and pr_formula_base e =
     else
       fmt_string ("\nAND "); pr_one_formula_list a
     ;
-    fmt_string (string_of_sec_formula_list sec)
-    (* ADI TODO: to add *)
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and slk_formula_base e =
   match e with
@@ -2355,6 +2361,7 @@ and slk_formula_base e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_sec = sec;
+      formula_base_sec_ctx = ctx;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
     pr_h_formula h;
@@ -2363,8 +2370,10 @@ and slk_formula_base e =
     if (a==[]) then ()
     else (fmt_string ("\nAND "); pr_one_formula_list a)
     ;
-    fmt_string (string_of_sec_formula_list sec)
-    (* ADI TODO: to add *)
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and prtt_pr_formula_base e =
   match e with
@@ -2374,6 +2383,7 @@ and prtt_pr_formula_base e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_sec = sec;
+      formula_base_sec_ctx = ctx;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string (  (* "<NoLabel> "*)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2381,9 +2391,10 @@ and prtt_pr_formula_base e =
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p))
     ;
-    fmt_string (string_of_sec_formula_list sec)
-    ;()
-    (* ADI TODO: to add *)
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 (* pr_cut_after  "&"; *) (*;  fmt_string (string_of_flow_formula "FLOW" fl) *)
 (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
 (* if (a==[]) then () *)
@@ -2398,6 +2409,7 @@ and prtt_pr_formula_base_inst prog e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_sec = sec;
+      formula_base_sec_ctx = ctx;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2405,9 +2417,11 @@ and prtt_pr_formula_base_inst prog e =
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
     ;
-    fmt_string (string_of_sec_formula_list sec)
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
-(* ADI TODO: to add *)
 
 and prtt_pr_formula_base_inst_html prog post_hps e =
   match e with
@@ -2417,6 +2431,7 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
       formula_base_flow = fl;
       formula_base_and = a;
       formula_base_sec = sec;
+      formula_base_sec_ctx = ctx;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
     (match lbl with | None -> fmt_string  ( (* "(\* <NoLabel> *\)" *) "" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2424,9 +2439,11 @@ and prtt_pr_formula_base_inst_html prog post_hps e =
     ((* if not( MP.isTrivMTerm p) then *) (*L2: we should print what it is*)
        (pr_cut_after "&" ; pr_mix_formula p))
     ;
-    fmt_string (string_of_sec_formula_list sec)
+    (* Infomration Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 (* pr_cut_after "&" ; pr_mix_formula p;() *)
-(* ADI TODO: to add *)
 
 and pr_formula_1 e =
   let f_b e =  pr_bracket formula_wo_paren pr_formula_1 e in
@@ -2445,6 +2462,7 @@ and pr_formula_1 e =
              formula_exists_flow = fl;
              formula_exists_and = a;
              formula_exists_sec = sec;
+             formula_exists_sec_ctx = ctx;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2458,11 +2476,15 @@ and pr_formula_1 e =
         formula_base_flow = fl;
         formula_base_and = a;
         formula_base_sec = sec;
+        formula_base_sec_ctx = ctx;
         formula_base_label = lbl;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
     ;
-    fmt_string (string_of_sec_formula_list sec)
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 (* pr_h_formula h;                                        *)
 (* (if not(MP.isConstMTrue p) then                        *)
 (*   (pr_cut_after "&" ; pr_mix_formula p))               *)
@@ -2472,7 +2494,6 @@ and pr_formula_1 e =
 (* ;if (a==[]) then ()                                    *)
 (* else                                                   *)
 (*   fmt_string ("\nAND "); pr_one_formula_list a         *)
-(* ADI TODO: to add *)
 
 and pr_formula e =
   let e = Cfout.tidy_print e  in
@@ -2501,7 +2522,8 @@ and slk_formula e =
       formula_exists_type = t;
       formula_exists_flow = fl;
       formula_exists_and = a;
-      formula_exists_sec = sec; (* ADI TODO: to check *)
+      formula_exists_sec = sec;
+      formula_exists_sec_ctx = ctx;
       formula_exists_label = lbl;
       formula_exists_pos = pos}) ->
     fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
@@ -2510,8 +2532,11 @@ and slk_formula e =
        (pr_cut_after "&" ; pr_mix_formula p));
     fmt_string ")";
     if (a==[]) then ()
-    else (fmt_string ("\nAND "); pr_one_formula_list a)
-    (* ADI TODO: to add *)
+    else (fmt_string ("\nAND "); pr_one_formula_list a);
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and prtt_pr_formula e =
   let f_b e =  pr_bracket formula_wo_paren prtt_pr_formula e in
@@ -2528,7 +2553,8 @@ and prtt_pr_formula e =
              formula_exists_type = t;
              formula_exists_flow = fl;
              formula_exists_and = a;
-             formula_exists_sec = sec; (* ADI TODO: to check *)
+             formula_exists_sec = sec;
+             formula_exists_sec_ctx = ctx;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2539,8 +2565,11 @@ and prtt_pr_formula e =
     (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
     if (a==[]) then ()
     else
-      fmt_string ("\nAND "); pr_one_formula_list a
-    (* ADI TODO: to add *)
+      fmt_string ("\nAND "); pr_one_formula_list a;
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and prtt_pr_formula_inst_1 prog print_flow e =
   let f_b e =  pr_bracket formula_wo_paren (prtt_pr_formula_inst_1 prog print_flow) e in
@@ -2560,7 +2589,8 @@ and prtt_pr_formula_inst_1 prog print_flow e =
              formula_exists_type = t;
              formula_exists_flow = fl;
              formula_exists_and = a;
-             formula_exists_sec = sec; (* ADI TODO: to check *)
+             formula_exists_sec = sec;
+             formula_exists_sec_ctx = ctx;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2572,8 +2602,11 @@ and prtt_pr_formula_inst_1 prog print_flow e =
     (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
     if (a==[]) then ()
     else
-      fmt_string ("\nAND "); pr_one_formula_list a
-    (* ADI TODO: to add *)
+      fmt_string ("\nAND "); pr_one_formula_list a;
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and prtt_pr_formula_inst prog e =
   let e = Cfout.tidy_print e in
@@ -2599,7 +2632,8 @@ and prtt_pr_formula_inst_html prog post_hps e =
              formula_exists_type = t;
              formula_exists_flow = fl;
              formula_exists_and = a;
-             formula_exists_sec = sec; (* ADI TODO: to check *)
+             formula_exists_sec = sec;
+             formula_exists_sec_ctx = ctx;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
     (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
@@ -2610,12 +2644,15 @@ and prtt_pr_formula_inst_html prog post_hps e =
     (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)
     if (a==[]) then ()
     else
-      fmt_string ("\nAND "); pr_one_formula_list a
-    (* ADI TODO: to add *)
+      fmt_string ("\nAND "); pr_one_formula_list a;
+    (* Information Flow Analysis *)
+    fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)
+    (*****************************)
 
 and pr_formula_for_spec e =
   let print_fun = fun fml ->
-    let h,p,vp,_,_,_,_ = Cformula.split_components fml in
+    let h,p,vp,_,_,_,_,_ = Cformula.split_components fml in
     (pr_h_formula_for_spec h);
     if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (fmt_string " * ";pr_vperm_sets vp);
     fmt_string " & ";
@@ -3523,7 +3560,7 @@ let rec pr_struc_formula_for_spec1 (e:struc_formula) =
              | Some l -> pr_struc_formula_for_spec1 l
             ) );
         | _ ->
-          let h, _, _, _, _, _, _ = split_components fb in
+          let h, _, _, _, _, _, _, _ = split_components fb in
           if (is_empty_heap h)
           then (
             (match cont with

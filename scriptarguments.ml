@@ -681,6 +681,9 @@ let common_arguments = [
   ("-prelude", Arg.String (fun s ->
        Globals.prelude_file:=Some s),
    "Read from a specified prelude file");
+  ("--info_flow", Arg.Unit (fun () ->
+       Globals.is_info_flow_analysis := true),
+   "Perform information flow analysis");
   ("-debug-regexp", Arg.String (fun s ->
        Debug.z_debug_file:=("$"^s); z_debug_flag:=true),
    "Match logged methods from a regular expression");

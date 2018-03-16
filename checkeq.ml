@@ -1340,7 +1340,7 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
   in
   let checkeq_mix_formulas_one mp1 mp2 mtl = (
     match mp1,mp2 with
-    | MCP.MemoF _,MCP.MemoF _  -> 
+    | MCP.MemoF _,MCP.MemoF _  ->
       if (not !allow_threads_as_resource) then
         report_error no_pos "Have not support comparing 2 MemoF yet"
       else
@@ -1353,9 +1353,9 @@ and checkeq_mix_formulas_with_diff_x (hvars: ident list)(mp1: MCP.mix_formula) (
     | _,_ ->  (false, List.map (fun mt -> (mt,CP.mkTrue no_pos)) mtl)
   ) in
   let helper mp1 mp2 mt hf =
-    let () = Debug.ninfo_zprint (lazy  ("Need to add hf: " ^ (Cprinter.string_of_h_formula hf))) no_pos in 
+    let () = Debug.ninfo_zprint (lazy  ("Need to add hf: " ^ (Cprinter.string_of_h_formula hf))) no_pos in
     let (b,nmtl) = checkeq_mix_formulas_one mp1 mp2 [mt] in
-    let mkF hf pf = CF.mkBase hf (* (MCP.OnePF (pf)) *) (MCP.mix_of_pure pf) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] no_pos in (* ADI TODO: to check *)
+    let mkF hf pf = CF.mkBase hf (* (MCP.OnePF (pf)) *) (MCP.mix_of_pure pf) CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkTrueFlow ()) [] [] CF.Sec_LO no_pos in
     let mix_mtl1 = List.map (fun (mt1, pf) -> (mt1,mkF hf pf)) nmtl in
     (b,mix_mtl1)
   in 

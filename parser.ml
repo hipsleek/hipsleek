@@ -1727,13 +1727,14 @@ disjunctive_constr:
     | `EXISTS; ocl= cid_list; `COLON; cc= core_constr_and -> 
 	  (match cc with
       | F.Base ({
-          F.formula_base_heap = h;
-          F.formula_base_pure = p;
-          F.formula_base_vperm = vp;
-          F.formula_base_flow = fl;
-          F.formula_base_and = a;
-          F.formula_base_sec = sec; }) -> 
-        F.mkExists ocl h p vp fl a sec (get_pos_camlp4 _loc 1)
+          F.formula_base_heap    = h;
+          F.formula_base_pure    = p;
+          F.formula_base_vperm   = vp;
+          F.formula_base_flow    = fl;
+          F.formula_base_and     = a;
+          F.formula_base_sec     = sec;
+          F.formula_base_sec_ctx = ctx;
+        }) -> F.mkExists ocl h p vp fl a sec ctx (get_pos_camlp4 _loc 1)
       | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
     ]
   ];
@@ -1752,8 +1753,9 @@ core_constr_conjunctions: [ "core_constr_and" LEFTA
 
 and_core_constr:
   [
-    [ dl = pure_constr; `CONSTR; f = core_constr  ->
-      let h,p,_,fl,_,_ = F.split_components f in
+    [
+      dl = pure_constr; `CONSTR; f = core_constr  ->
+      let h,p,_,fl,_,_,_ = F.split_components f in
       let pos = (get_pos_camlp4 _loc 2) in 
       F.mkOneFormula h p dl None pos
     ]
@@ -1764,16 +1766,19 @@ core_constr:
     [ pc= pure_constr; fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
       -> let pos = (get_pos_camlp4 _loc 1) in
          (*let ()  = print_endline ("constraint: " ^ Iprinter.string_of_sec_formula_list sc) in*)
-          F.formula_of_pure_with_flow_htrue_sec (P.mkAnd pc fb pos) fc [] sc pos
+         F.formula_of_pure_with_flow_htrue_sec (P.mkAnd pc fb pos) fc [] sc pos
+         (* IFA: formula_base_sec_ctx = Sec_LO *)
     | vp= vperm_constr; pc= opt_pure_constr;
       fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
       -> let pos = (get_pos_camlp4 _loc 1) in
-          F.formula_of_vperm_pure_with_flow_emp_sec (*emp|htrue?*)
-          (P.mkAnd pc fb pos) vp fc [] sc pos
+         F.formula_of_vperm_pure_with_flow_emp_sec (*emp|htrue?*)
+           (P.mkAnd pc fb pos) vp fc [] sc pos
+           (* IFA: formula_base_sec_ctx = Sec_LO *)
     | hc= opt_heap_constr; vp= opt_vperm_constr; pc= opt_pure_constr;
       fc= opt_flow_constraints; fb= opt_branches; sc= opt_sec_constr
-      -> let pos = (get_pos_camlp4 _loc 1) in 
-          F.mkBase hc (P.mkAnd pc fb pos) vp fc [] sc pos
+      -> let pos = (get_pos_camlp4 _loc 1) in
+         F.mkBase hc (P.mkAnd pc fb pos) vp fc [] sc F.Sec_LO pos
+         (* IFA: formula_base_sec_ctx = Sec_LO *)
     ]
   ];
 
@@ -1784,13 +1789,13 @@ sep_sec_constr: [[ `SEC_SEP; scl = sec_constr_list -> scl ]];
 
 sec_constr_list: [[ scl = LIST1 sec_constr SEP `AND -> scl ]];
 
-sec_constr: [[ sid = cid; `SEC_OP; slbl = sec_label -> F.mk_sec_form sid slbl ]];
+sec_constr: [[ sid = cid; `SEC_OP; slbl = sec_label -> F.mk_sec_form sid slbl]];
 
 sec_label: [[
     `HI_SEC -> F.Sec_HI
   | `LO_SEC -> F.Sec_LO
   | slbl1 = SELF; `LUB_SEC; slbl2 = SELF -> F.Sec_LUB(slbl1, slbl2)
-  | sid = cid -> F.Sec_Var(sid)
+  | sid   = cid -> F.Sec_Var(sid)
 ]];
 
 opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];
@@ -3916,7 +3921,7 @@ par_statement:
       let lend_heap = un_option lh F.HEmp in
       let lend_form = 
         F.mkBase lend_heap (P.mkAnd (P.mkTrue lend_pos) (P.mkTrue lend_pos) lend_pos)
-          VP.empty_vperm_sets n_flow [] [] lend_pos 
+          VP.empty_vperm_sets n_flow [] [] F.Sec_LO lend_pos
           (* ADI TODO: to check *)
       in
       Par {

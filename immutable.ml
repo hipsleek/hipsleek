@@ -2837,7 +2837,7 @@ let merge_alias_nodes_formula_helper prog heapf puref quantif xpure unfold_fun q
 (*   merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl) qvars *)
 
 let merge_and_combine prog f heap pure quantif xpure unfold_fun qvars mk_new_f rec_fun =
-  let _, _, vperm, fl, _, a, _ = split_components f in
+  let _, _, vperm, fl, _, a, _, _ = split_components f in
   let pos = pos_of_formula f in
   let new_h, new_p, unfold_f_lst = merge_alias_nodes_formula_helper prog heap pure quantif xpure (unfold_fun fl qvars vperm pure a) qvars in
   let new_f =  mk_new_f new_h new_p in

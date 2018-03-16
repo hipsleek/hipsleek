@@ -22,6 +22,8 @@ let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
 
+let is_info_flow_analysis = ref false (* Information Flow Analysis *)
+
 type formula_type =
   | Simple
   | Complex
@@ -816,7 +818,7 @@ let undefined_error = "undefined"
 let timeout_error = "timeout"
 
 let eres_name   = "eres"
-let secres_name = "sec_res" (* information flow analysis *)
+let secres_name = "res" (* information flow analysis *)
 
 
 let self = "self"

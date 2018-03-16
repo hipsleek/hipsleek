@@ -29,9 +29,9 @@ let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr "fixcalc_stk" (pr_
 let rec add_relation_to_formula f rel =
   match f with
   | CF.Base b ->
-    let h,p,vp,fl,t,a,sec = CF.split_components f in
+    let h,p,vp,fl,t,a,sec,ctx = CF.split_components f in
     let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
-    CF.mkBase h new_p vp t fl a sec no_pos (* ADI TODO: to check *)
+    CF.mkBase h new_p vp t fl a sec ctx no_pos
   | CF.Or o ->
     let f1 = add_relation_to_formula o.CF.formula_or_f1 rel in
     let f2 = add_relation_to_formula o.CF.formula_or_f2 rel in
@@ -39,10 +39,10 @@ let rec add_relation_to_formula f rel =
             CF.formula_or_f1 = f1;
             CF.formula_or_f2 = f2 }
   | CF.Exists e ->
-    let h,p,vp,fl,t,a,sec = CF.split_components f in
+    let h,p,vp,fl,t,a,sec,ctx = CF.split_components f in
     let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) rel no_pos) in
     (* CF.mkBase h new_p t fl a no_pos *)
-    CF.mkExists e.CF.formula_exists_qvars h new_p vp t fl a sec no_pos (* ADI TODO: to check *)
+    CF.mkExists e.CF.formula_exists_qvars h new_p vp t fl a sec ctx no_pos
 
 let add_relation_to_formula f rel =
   let pr = Cprinter.string_of_formula in
@@ -549,7 +549,7 @@ let trans_res_formula prog f =
   in
   let mk_new_formula qvars f =
     let svl = CF.fv f in
-    let h,p,vp,fl,tf,a,sec = CF.split_components f in
+    let h,p,vp,fl,tf,a,sec,ctx = CF.split_components f in
     let pos = CF.pos_of_formula f in
     let new_f = if exlist # is_exc_flow fl.CF.formula_flow_interval then
         let exc_name = exlist # get_closest fl.CF.formula_flow_interval in
@@ -583,7 +583,7 @@ let trans_res_formula prog f =
         let () = Debug.ninfo_hprint (add_str "dnode" Cprinter.string_of_h_formula) dnode no_pos in
         let new_h = CF.mkStarH h dnode pos in
         let new_p = MCP.mix_of_pure (mk_new_p t (MCP.pure_of_mix p)) in
-        CF.mkExists (res::qvars) new_h new_p vp tf fl a sec pos (* ADI TODO: to check *)
+        CF.mkExists (res::qvars) new_h new_p vp tf fl a sec ctx pos (* ADI TODO: add ctx *)
       else f in
     new_f
   in

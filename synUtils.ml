@@ -215,7 +215,7 @@ module VGO = Graph.Oper.P(VG)
 
 let heap_chain_of_formula f =
   let dg = VG.empty in
-  let f_h, f_p, _, _, _, _, _ = CF.split_components f in
+  let f_h, f_p, _, _, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in
   let aset = CP.EMapSV.build_eset aliases in
   let rec helper dg f =
@@ -254,7 +254,7 @@ let find_root_hprel_formula_base prog hprel_name num_args f =
   | [] -> None
   | r::[] -> Some r
   | _ ->
-    let f_h, f_p, _, _, _, _, _ = CF.split_components f in
+    let f_h, f_p, _, _, _, _, _, _ = CF.split_components f in
     let aliases = MCP.ptr_equations_without_null f_p in
     let aset = CP.EMapSV.build_eset aliases in
     let dg = heap_chain_of_formula (* aset *) f in
@@ -738,7 +738,7 @@ let rec get_inf_pred_extn_struc_formula f =
   | CF.EList el -> List.concat (List.map (fun (_, c) -> get_inf_pred_extn_struc_formula c) el)
 
 let find_heap_node root (f: CF.formula) =
-  let _, f_p, _, _, _, _, _ = CF.split_components f in
+  let _, f_p, _, _, _, _, _, _ = CF.split_components f in
   let aliases = MCP.ptr_equations_without_null f_p in
   let aset = CP.EMapSV.build_eset aliases in
   let root_aliases = CP.EMapSV.find_equiv_all_new root aset in
@@ -823,13 +823,13 @@ let rec get_all_node_name_formula (f: CF.formula): ident list =
   match f with
   | CF.Base _
   | CF.Exists _ ->
-    let f_h, _, _, _, _, _, _ = CF.split_components f in
+    let f_h, _, _, _, _, _, _, _ = CF.split_components f in
     get_all_node_name f_h
   | CF.Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->
     (get_all_node_name_formula f1) @ (get_all_node_name_formula f2)
 
 let is_pred_base_case mut_pred_list (f: CF.formula) =
-  let f_h, _, _, _, _, _, _ = CF.split_components f in
+  let f_h, _, _, _, _, _, _, _ = CF.split_components f in
   let f_node_names = get_all_node_name f_h in
   not (Gen.BList.overlap_eq eq_str f_node_names mut_pred_list)
 
@@ -1038,7 +1038,7 @@ let is_not_global_rel prog i =
   with _ -> true
 
 let univ_vars_of_lemma l_head = 
-  let h, p, vp, _, _, _, _ = CF.split_components l_head in
+  let h, p, vp, _, _, _, _, _ = CF.split_components l_head in
   let pvars = MCP.mfv p in
   let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> 
     not (id = Globals.cyclic_name || 

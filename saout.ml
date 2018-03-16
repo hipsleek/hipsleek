@@ -124,7 +124,7 @@ let syn_hprel_x crem_hprels irem_hprels=
           I.hp_part_vars = chp.C.hp_part_vars;
           I.hp_root_pos = chp.C.hp_root_pos;
           I.hp_is_pre = chp.C.hp_is_pre;
-          I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) IvpermUtils.empty_vperm_sets top_flow [] [] no_pos;
+          I.hp_formula = IF.mkBase IF.HEmp (IP.mkTrue no_pos) IvpermUtils.empty_vperm_sets top_flow [] [] IF.Sec_LO no_pos;
           (* ADI TODO: to check *)
         }
         in
@@ -273,7 +273,7 @@ let trans_hprel_2_cview iprog cprog proc_name hp_rels :
 
 let view_decl_of_hprel iprog prog hpr=
   let extract_heap f =
-    let f_h, _, _, _, _, _, _ = CF.split_components f in
+    let f_h, _, _, _, _, _, _, _ = CF.split_components f in
     f_h
   in
   let proc_name = "" in

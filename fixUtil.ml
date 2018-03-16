@@ -331,7 +331,7 @@ let compute_inv_baga ls_mut_rec_views cviews0 =
       let cviews1 = (* if !Globals.gen_baga_inv then *)
         List.map (fun cv ->
             if (List.exists (fun (f,_) ->
-                let _,p,_,_,_,_,_ = Cformula.split_components f in
+                let _,p,_,_,_,_,_,_ = Cformula.split_components f in
                 (CP.is_AndList (Mcpure.pure_of_mix p))
               ) cv.Cast.view_un_struc_formula)
             then cv else

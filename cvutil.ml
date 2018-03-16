@@ -271,7 +271,7 @@ let extract_callee_view_info_x prog f=
   in
   (*******************)
   (* local info *)
-  let h,mf, _, _, _, _, _ = split_components f in
+  let h,mf, _, _, _, _, _, _ = split_components f in
   let p = (MCP.pure_of_mix mf) in
   let eqs = (MCP.ptr_equations_without_null mf) in
   let neqs = CP.get_neqs_new p in
@@ -1403,22 +1403,26 @@ and xpure_symbolic_slicing_x (prog : prog_decl) (f0 : formula) : (formula * CP.s
     | Base b ->
       let ({ formula_base_heap = h;
              formula_base_pure = p;
-             formula_base_pos = pos }) = b in
+             formula_base_pos  = pos }) = b in
       let ph, addrs, _ = x_add xpure_heap_symbolic 2 prog h p 1 in
       let n_p = x_add MCP.merge_mems p ph true in
       (* Set a complex heap formula to a simpler one *)
-      let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] [] pos in (* formula_of_mix_formula n_p *) (* ADI TODO: to check for sec_formula *)
+      let n_f0 = mkBase HEmp n_p CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ())
+                   [] b.formula_base_sec b.formula_base_sec_ctx pos in
+                   (* formula_of_mix_formula n_p *)
       (n_f0, addrs)
     | Exists e ->
       let ({ formula_exists_qvars = qvars;
-             formula_exists_heap = qh;
-             formula_exists_pure = qp;
-             formula_exists_pos = pos}) = e in 
+             formula_exists_heap  = qh;
+             formula_exists_pure  = qp;
+             formula_exists_pos   = pos}) = e in
       let pqh, addrs', _ = x_add xpure_heap_symbolic 3 prog qh qp 1 in
       let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
       let n_qp = x_add MCP.merge_mems qp pqh true in
       (* Set a complex heap formula to a simpler one *)
-      let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] [] pos in (* ADI TODO: to check with desconstruct at line 1413 *)
+      let n_f0 = mkExists qvars HEmp n_qp CvpermUtils.empty_vperm_sets TypeTrue (mkTrueFlow ())
+                   [] e.formula_exists_sec e.formula_exists_sec_ctx pos in
+      (* ADI TODO: to check with desconstruct at line 1413 *)
       (n_f0, addrs)
   in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -1434,7 +1438,7 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
     let heaps = List.filter (fun h ->
         match h with
         | HEmp
-        | HTrue 
+        | HTrue
         | Hole _-> false
         | _ -> true) heaps
     in
@@ -2354,14 +2358,14 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
           (ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;},new_mem2, false)
         else 
           let ai = (lookup_view_invs_with_subs rem_br v_def zip) in
-          let gr_ai = MCP.create_memo_group_wrapper ai Implied_P in     
+          let gr_ai = MCP.create_memo_group_wrapper ai Implied_P in
           let l_no_prune = List.filter (fun (_,c)-> (List.length(Gen.BList.intersect_eq (=) c rem_br))>0) l_no_prune in
           let new_hp = ViewNode {v with  h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
           (new_hp, MCP.merge_mems_m new_mem2 gr_ai true, true) in
       (r_hp,r_memo,r_b)
 
 
-and heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)= 
+and heap_prune_preds prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_formula * memo_pure * bool)=
   let pr = Cprinter.string_of_h_formula in
   let pr1 = Cprinter.string_of_memo_pure_formula in
   let pr2 (h,o,r) = pr_triple Cprinter.string_of_h_formula pr1 string_of_bool (h,o,r) in
@@ -2375,17 +2379,17 @@ and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formu
   | MCP.OnePF _ -> (hp,old_mem,false)
 
 and prune_preds_x prog (simp_b:bool) (f:formula):formula =
-  let simp_b = simp_b && !Globals.enable_redundant_elim in 
-  let imply_w f1 f2 = let r,_,_ = x_add TP.imply_one 26 f1 f2 "elim_rc" false None in r in   
+  let simp_b = simp_b && !Globals.enable_redundant_elim in
+  let imply_w f1 f2 = let r,_,_ = x_add TP.imply_one 26 f1 f2 "elim_rc" false None in r in
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
     else
-      let nh, mem, changed = heap_prune_preds_mix prog oh op in 
+      let nh, mem, changed = heap_prune_preds_mix prog oh op in
       if changed then fct (i+1) mem nh
       else ((match op with | MCP.MemoF f -> MCP.MemoF (MCP.reset_changed f)| _ -> op) ,oh) in
   (*prune concurrent threads*)
   let helper_one_formula one_f =
-    let rp,rh = fct 0 one_f.formula_pure one_f.formula_heap in 
+    let rp,rh = fct 0 one_f.formula_pure one_f.formula_heap in
     let rp = f_p_simp rp in
     {one_f with formula_pure=rp;formula_heap=rh}
   in
@@ -2395,27 +2399,27 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
       let f2 = helper_formulas o.formula_or_f2 in
       mkOr f1 f2 o.formula_or_pos
     (*Or {o with formula_or_f1 = f1; formula_or_f2 = f2;}*)
-    | Exists e ->    
-      let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
+    | Exists e ->
+      let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in
       let rp = f_p_simp rp in
       let new_a = List.map helper_one_formula e.formula_exists_and in
       mkExists_w_lbl e.formula_exists_qvars rh rp e.formula_exists_vperm
-        e.formula_exists_type e.formula_exists_flow new_a 
-        e.formula_exists_sec e.formula_exists_pos 
+        e.formula_exists_type e.formula_exists_flow new_a
+        e.formula_exists_sec e.formula_exists_sec_ctx e.formula_exists_pos
         e.formula_exists_label
-      (* ADI TODO: to check *)
     | Base b ->
-      let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
+      let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in
       (* let () = print_endline ("\nprune_preds: before: rp = " ^ (Cprinter.string_of_mix_formula rp)) in *)
       let rp = f_p_simp rp in
       let new_a = List.map helper_one_formula b.formula_base_and in
-      mkBase_w_lbl rh rp b.formula_base_vperm b.formula_base_type  b.formula_base_flow new_a b.formula_base_sec b.formula_base_pos b.formula_base_label in
-      (* ADI TODO: to check *)
+      mkBase_w_lbl rh rp b.formula_base_vperm b.formula_base_type b.formula_base_flow new_a
+        b.formula_base_sec b.formula_base_sec_ctx b.formula_base_pos b.formula_base_label in
+        (* ADI TODO: to check *)
   (* if not !Globals.allow_pred_spec then f *)
-  let helper_formulas f = 
+  let helper_formulas f =
     let p2 = Cprinter.string_of_formula in
-    Debug.no_1 "helper_formulas" p2 p2 helper_formulas f in 
-  if (isAnyConstFalse f) then f 
+    Debug.no_1 "helper_formulas" p2 p2 helper_formulas f in
+  if (isAnyConstFalse f) then f
   else if !Globals.dis_ps then f
   else
     (

@@ -128,7 +128,9 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
     Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then
+  if !Globals.is_info_flow_analysis && (Sys.file_exists "./prelude_sec.ss") then
+    [(parse_file_full "./prelude_sec.ss" true)]
+  else if (Sys.file_exists "./prelude.ss") then
     [(parse_file_full "./prelude.ss" true)]
   else List.map (fun x -> parse_file_full x true) new_names
 
@@ -732,9 +734,9 @@ let process_source_full source =
                                                              ^")"
         | _ -> "" in
       let lemma_list = List.map (fun cd ->
-          let h1, p1, _,_, _, _, _ = CF.split_components 
+          let h1, p1, _, _, _, _, _, _ = CF.split_components 
               (CF.elim_exists cd.C.coercion_head) in
-          let h2, p2,_, _, _, _, _ = CF.split_components 
+          let h2, p2, _, _, _, _, _, _ = CF.split_components 
               (CF.elim_exists cd.C.coercion_body) in
           let var_list = CP.remove_dups_svl (List.filter (fun sv -> 
               (String.length (CP.name_of_spec_var sv)) < 3)
