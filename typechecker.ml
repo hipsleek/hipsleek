@@ -2653,6 +2653,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               print_endline ("pre2 : " ^ Cprinter.string_of_struc_formula pre2);
               print_endline ("sctx : " ^ Cprinter.string_of_list_failesc_context sctx);
               print_endline ("rs   : " ^ Cprinter.string_of_list_failesc_context rs);
+              print_endline ("proof: " ^ PTracer.string_of_proof prf);
               print_endline ("********************************************");
 
               (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
