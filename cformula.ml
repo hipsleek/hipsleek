@@ -166,38 +166,40 @@ and list_formula = formula list
 and formula_sig = ident list
 
 and formula_base = {
-  formula_base_heap : h_formula;
-  formula_base_vperm : CVP.vperm_sets;
-  formula_base_pure : MCP.mix_formula;
-  formula_base_type : t_formula; (* a collection ot subtype information *)
-  formula_base_and : one_formula list; (*to capture concurrent flows*)
-  formula_base_flow : flow_formula;
-  formula_base_sec : sec_formula list; (* information flow analysis *)
+  formula_base_heap    : h_formula;
+  formula_base_vperm   : CVP.vperm_sets;
+  formula_base_pure    : MCP.mix_formula;
+  formula_base_type    : t_formula; (* a collection ot subtype information *)
+  formula_base_and     : one_formula list; (*to capture concurrent flows*)
+  formula_base_flow    : flow_formula;
+  formula_base_sec     : sec_formula list; (* information flow analysis *)
   formula_base_sec_ctx : sec_label;
-  formula_base_label : formula_label option;
-  formula_base_pos : loc }
+  formula_base_label   : formula_label option;
+  formula_base_pos     : loc
+}
 
 and mem_formula = {
   mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)
 }
 
 and formula_or = {
-  formula_or_f1 : formula;
-  formula_or_f2 : formula;
+  formula_or_f1  : formula;
+  formula_or_f2  : formula;
   formula_or_pos : loc }
 
 and formula_exists = {
-  formula_exists_qvars : CP.spec_var list;
-  formula_exists_heap : h_formula;
-  formula_exists_vperm : CVP.vperm_sets;
-  formula_exists_pure : MCP.mix_formula;
-  formula_exists_type : t_formula;
-  formula_exists_and : one_formula list;
-  formula_exists_flow : flow_formula;
-  formula_exists_sec : sec_formula list;
+  formula_exists_qvars   : CP.spec_var list;
+  formula_exists_heap    : h_formula;
+  formula_exists_vperm   : CVP.vperm_sets;
+  formula_exists_pure    : MCP.mix_formula;
+  formula_exists_type    : t_formula;
+  formula_exists_and     : one_formula list;
+  formula_exists_flow    : flow_formula;
+  formula_exists_sec     : sec_formula list;
   formula_exists_sec_ctx : sec_label;
-  formula_exists_label : formula_label option;
-  formula_exists_pos : loc }
+  formula_exists_label   : formula_label option;
+  formula_exists_pos     : loc
+}
 
 and flow_formula = {  formula_flow_interval : nflow;
                       formula_flow_link : (ident option)}
@@ -476,7 +478,6 @@ let dummy_lbl n = None
 
 (* added a dummy_label for --eps *)
 let mkFalse (flowt: flow_formula) pos = mkFalseLbl flowt (dummy_lbl 1) pos
-
 
 let mkEFalse flowt pos = EBase({
     formula_struc_explicit_inst = [];
@@ -1788,6 +1789,56 @@ and mkBase (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (t : t_formula) (fl : flow_formula) (a: one_formula list)
     (sec: sec_formula list) (ctx: sec_label) (pos : loc) : formula=
   mkBase_w_lbl h p vp t fl a sec ctx pos None
+
+(* Information Flow Analysis *)
+and mkEmptySecFormula (f:formula) : formula =
+  match f with
+  | Base ({
+      formula_base_sec     = sec;
+      formula_base_sec_ctx = ctx;
+      formula_base_label   = lbl;
+      formula_base_pos     = pos;
+    }) -> Base ({
+      formula_base_heap    = HEmp;
+      formula_base_vperm   = CVP.empty_vperm_sets;
+      formula_base_pure    = (MCP.mkMTrue no_pos);
+      formula_base_type    = TypeTrue;
+      formula_base_and     = [];
+      formula_base_flow    = (mkTrueFlow ());
+      formula_base_sec     = sec;
+      formula_base_sec_ctx = ctx;
+      formula_base_label   = lbl;
+      formula_base_pos     = pos;
+    })
+  | Exists ({
+      formula_exists_sec     = sec;
+      formula_exists_sec_ctx = ctx;
+      formula_exists_label   = lbl;
+      formula_exists_pos     = pos;
+    }) -> Exists ({
+      formula_exists_qvars   = [];
+      formula_exists_heap    = HEmp;
+      formula_exists_vperm   = CVP.empty_vperm_sets;
+      formula_exists_pure    = (MCP.mkMTrue no_pos);
+      formula_exists_type    = TypeTrue;
+      formula_exists_and     = [];
+      formula_exists_flow    = (mkTrueFlow ());
+      formula_exists_sec     = sec;
+      formula_exists_sec_ctx = ctx;
+      formula_exists_label   = lbl;
+      formula_exists_pos     = pos;
+    })
+  | Or ({
+      formula_or_f1  = f1;
+      formula_or_f2  = f2;
+      formula_or_pos = pos;
+    }) -> Or ({
+      formula_or_f1  = mkEmptySecFormula f1;
+      formula_or_f2  = mkEmptySecFormula f2;
+      formula_or_pos = pos;
+    })
+(* mkBase HEmp (MCP.mkMTrue no_pos) CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] sl ctx no_pos *)
+(*****************************)
 
 and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) (dl : MCP.mix_formula) lbl (pos : loc) : one_formula=
   {formula_heap = h;
@@ -13483,6 +13534,8 @@ and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
       })
   | _                                         -> f (* ADI TODO: unsupported for now *)
 and rewrite_sec_formula_in_formula (f:formula) : formula =
+  (* ADI TODO: check if using BLANK formula *)
+  let f = mkEmptySecFormula f in
   let rewriter f =
     match f with
     | Base   b -> rewrite_sec_formula_in_sec_formula_list b.formula_base_sec   f
