@@ -216,7 +216,7 @@ and sec_label =
   | Sec_LUB of (sec_label * sec_label)
   | Sec_HI
   | Sec_LO
-(*****************************)
+  (*****************************)
 
 and one_formula = {
   formula_heap : h_formula;
@@ -469,7 +469,7 @@ let mkFalseLbl (flowt: flow_formula) lbl pos =
       formula_base_sec_ctx = Sec_LO;
       formula_base_label = lbl;
       formula_base_pos = pos
-  })
+    })
 
 let dummy_lbl n = None
 (* Some (-n,"")  *)
@@ -737,6 +737,9 @@ let addBaseSecFormula (svl:CP.spec_var list) : sec_formula list =
       else (mkBaseSecFormula sv)::(addBaseToList svr (sv::vl))
   in addBaseToList svl []
 
+let is_eq_sec_var (x:CP.spec_var) (y:CP.spec_var) =
+  ((CP.full_name_of_spec_var x) = (CP.full_name_of_spec_var y))
+
 let replace_sec_var (fr:CP.spec_var list) (tv:CP.spec_var list) (f:formula) : formula =
   let fresh = CP.fresh_spec_vars fr in
   let sub1  = List.combine fr fresh in
@@ -745,7 +748,7 @@ let replace_sec_var (fr:CP.spec_var list) (tv:CP.spec_var list) (f:formula) : fo
     match rep_list with
     | []                  -> var
     | (old_v,new_v)::rest ->
-      if ((CP.ident_of_spec_var old_v) = (CP.ident_of_spec_var var))
+      if (is_eq_sec_var old_v var)
       then new_v else replace_spec_var var rest
   in
   let rec in_formula sub_list f =
@@ -793,7 +796,7 @@ let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula li
   (* ADI TODO: make it smarter? if none at all -> HI, else, GLB of all? *)
   match sl with
   | []      -> Sec_HI
-  | sec::sr -> if (=) (var) (sec.sec_var)
+  | sec::sr -> if (is_eq_sec_var var sec.sec_var)
     then sec.sec_lbl
     else get_sec_label_from_sec_formula_list var sr
 
@@ -802,7 +805,7 @@ let rec get_sec_var_from_sec_formula_list (sl:sec_formula list) : CP.spec_var li
   | []      -> []
   | sec::sr ->
     let var_list  = get_sec_var_from_sec_formula_list sr in
-    if List.exists (fun v -> (v = sec.sec_var)) var_list then var_list else sec.sec_var::var_list
+    if List.exists (fun v -> (is_eq_sec_var v sec.sec_var)) var_list then var_list else sec.sec_var::var_list
 (*****************************)
 
 
@@ -3556,7 +3559,7 @@ and add_sec_formula_to_sec_formula_list (sf:sec_formula) (sl:sec_formula list) :
   (* NOTE: smart add -> replace if exists [especially for res] *)
   match sl with
   | []      -> [sf]
-  | sec::sr -> if (sec.sec_var = sf.sec_var) then sf::sr
+  | sec::sr -> if (is_eq_sec_var sec.sec_var sf.sec_var) then sf::sr
     else sec::(add_sec_formula_to_sec_formula_list sf sr)
 (*****************************)
 
@@ -3887,12 +3890,12 @@ and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_
 (* Information Flow Analysis *)
 and apply_one_sec_label ((fr, t) as s : (CP.spec_var * CP.spec_var)) (lbl : sec_label) =
   match lbl with
-  | Sec_Var(v)     -> if (fr = v) then Sec_Var(t) else Sec_Var(v)
+  | Sec_Var(v)     -> if (is_eq_sec_var v fr) then Sec_Var(t) else Sec_Var(v)
   | Sec_LUB(l1,l2) -> Sec_LUB(apply_one_sec_label s l1, apply_one_sec_label s l2)
   | Sec_HI         -> Sec_HI
   | Sec_LO         -> Sec_LO
 and apply_one_sec_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : sec_formula) =
-  let new_sec_var = if ((CP.ident_of_spec_var fr) = (CP.ident_of_spec_var f.sec_var))
+  let new_sec_var = if (is_eq_sec_var fr f.sec_var)
     then t else f.sec_var in
   let new_sec_lbl = apply_one_sec_label s f.sec_lbl in
   { sec_var = new_sec_var; sec_lbl = new_sec_lbl }
@@ -13435,10 +13438,91 @@ end
 
 (* Information Flow Analysis *)
 (* ADI TODO: perform translation *)
-and translate_sec_formula (sf:sec_formula) =
-  sf
-and translate_sec_label (lbl:sec_label) =
-  lbl
+and rewrite_sec_formula_in_entail_state (es:entail_state) =
+  let nf = rewrite_sec_formula_in_formula es.es_formula in
+  ({es with es_formula = nf})
+and rewrite_sec_formula_in_context (ctxt:context) =
+  match ctxt with
+  | Ctx (es)    -> Ctx(rewrite_sec_formula_in_entail_state es)
+  | OCtx(c1,c2) ->
+    let ctxt1 = rewrite_sec_formula_in_context c1 in
+    let ctxt2 = rewrite_sec_formula_in_context c2 in
+    OCtx(ctxt1,ctxt2)
+and rewrite_sec_formula_in_failesc_context (ctx:failesc_context) =
+  let (bfl,esc,bcl) = ctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in (bfl,esc,nbcl)
+and rewrite_sec_formula_in_list_failesc_context (lfc:list_failesc_context) =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (rewrite_sec_formula_in_failesc_context ctx)::(rewrite_sec_formula_in_list_failesc_context rs)
+and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
+  match f with
+  | EBase ({
+      formula_struc_base         = sb;
+      formula_struc_continuation = sc;
+    } as b) ->
+    let nsb = rewrite_sec_formula_in_formula sb in
+    let nsc = match sc with
+      | Some ssc -> Some (rewrite_sec_formula_in_struc_formula ssc)
+      | _        -> sc
+    in EBase ({
+        b with
+        formula_struc_base         = nsb;
+        formula_struc_continuation = nsc
+      })
+  | EAssume ({
+      formula_assume_simpl = si;
+      formula_assume_struc = st;
+    } as a) ->
+    let nsi = rewrite_sec_formula_in_formula si in
+    let nst = rewrite_sec_formula_in_struc_formula st in
+    EAssume ({
+        a with
+        formula_assume_simpl = nsi;
+        formula_assume_struc = nst
+      })
+  | _                                         -> f (* ADI TODO: unsupported for now *)
+and rewrite_sec_formula_in_formula (f:formula) : formula =
+  let rewriter f =
+    match f with
+    | Base   b -> rewrite_sec_formula_in_sec_formula_list b.formula_base_sec   f
+    | Exists e -> rewrite_sec_formula_in_sec_formula_list e.formula_exists_sec f
+    | Or     o ->
+      let f1 = rewrite_sec_formula_in_formula o.formula_or_f1 in
+      let f2 = rewrite_sec_formula_in_formula o.formula_or_f2 in
+      Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
+  in
+  let res = rewriter f in
+  res
+and rewrite_sec_formula_in_sec_formula_list (sl:sec_formula list) (f:formula) =
+  let rec trans (sl:sec_formula list) (f:formula) =
+    match sl with
+    | []     -> f
+    | sf::sr -> trans sr (rewrite_sec_formula_in_sec_formula sf f)
+  in trans sl f
+and rewrite_sec_formula_in_sec_formula (sf:sec_formula) (f:formula) =
+  let lub,fvs,exp = rewrite_sec_label sf.sec_lbl in
+  let sec_var = CP.Lte (CP.Var (rewrite_spec_var sf.sec_var, no_pos), exp, no_pos) in
+  let max_formula = List.map (fun x -> CP.BForm ((x, None), None)) lub in
+  let simp_f = CP.mkPure sec_var in
+  let full_f = List.fold_left (fun acc x -> CP.And (acc, x, no_pos)) simp_f max_formula in
+  add_pure_formula_to_formula full_f f
+and rewrite_sec_label (lbl:sec_label) =
+  match lbl with
+  | Sec_HI         -> ([],[], (CP.mkIConst 1 no_pos))
+  | Sec_LO         -> ([],[], (CP.mkIConst 0 no_pos))
+  | Sec_Var(v)     -> ([],[], Var (CP.mk_typed_spec_var Int ("sec_" ^ CP.ident_of_spec_var v), no_pos))
+  | Sec_LUB(l1,l2) ->
+    let lu1,fv1,ex1 = rewrite_sec_label l1 in
+    let lu2,fv2,ex2 = rewrite_sec_label l2 in
+    let var = CP.mk_spec_var (fresh_name ()) in
+    let m_v = Var (var, no_pos) in
+    (lu1@lu2@[CP.EqMax (m_v, ex1, ex2, no_pos)], fv1@fv2@[var], m_v)
+and rewrite_spec_var (var:CP.spec_var) =
+  let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
+  let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
+  (*if (CP.ident_of_spec_var var) = "res" then print_endline (" >> res: " ^ (!print_spec_var res)) else print_endline (" >> old: " ^ (!print_spec_var res))*)
+  res
 (*****************************)
 
 let rec set_flow_in_context_override f_f ctx = match ctx with
