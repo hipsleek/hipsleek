@@ -1,0 +1,64 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+//(1) // why is it incomplete?
+// assume that * is sorted already ..
+infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b,c: base::Elem<b,2> * base::Elem<c,1>.
+print residue.
+expect Valid.
+//  inferred pure: [false]
+
+//(2) // why is it incomplete?
+infer[@arr_en]  base::Elem<a,1>*base::Elem<aa,2> |- exists b,c: base::Elem<b,2> * base::Elem<c,3>.
+print residue.
+expect Valid.
+//  inferred pure: [false]
+
+
+//(2)
+infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b,c: base::Elem<b,1> * base::Elem<c,2>.
+print residue.
+expect Valid.
+//  inferred pure: [false]
+
+
+//(3)
+infer[@arr_en]  base::Elem<a+1,1>*base::Elem<a,2> |- exists b,c: base::AsegNE<a,c>.
+print residue.
+expect Valid.
+
+//(3)
+infer[@arr_en]  base::Elem<a,1>*base::Elem<b,2> |- exists b,c: base::AsegNE<a,c>.
+print residue.
+expect Valid.
+
+
+
+//(3)  residue should be hfalse
+infer[@arr_en]  base::Elem<a+1,1>*base::Elem<a,2> |- emp & x!=x.
+print residue.
+expect Valid.
+// <1>emp&{FLOW,(1,26)=__flow#E}[]
+// inferred pure: [false]
+
+
+//(3)
+infer[@arr_en]  base::Elem<a,1>*base::Elem<b,2> |- base::Elem<a,1> * base::Elem<b,_> & a<b.
+print residue.
+expect Valid.
+//<1>emp&{FLOW,(1,26)=__flow#E}[]
+// inferred pure: [true]
+// a<b not captured in the residue
