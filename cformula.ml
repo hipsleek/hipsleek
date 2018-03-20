@@ -1794,6 +1794,7 @@ and mkBase (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
 and mkEmptySecFormula (f:formula) : formula =
   match f with
   | Base ({
+      formula_base_flow    = fl;
       formula_base_sec     = sec;
       formula_base_sec_ctx = ctx;
       formula_base_label   = lbl;
@@ -1804,13 +1805,14 @@ and mkEmptySecFormula (f:formula) : formula =
       formula_base_pure    = (MCP.mkMTrue no_pos);
       formula_base_type    = TypeTrue;
       formula_base_and     = [];
-      formula_base_flow    = (mkTrueFlow ());
+      formula_base_flow    = fl;
       formula_base_sec     = sec;
       formula_base_sec_ctx = ctx;
       formula_base_label   = lbl;
       formula_base_pos     = pos;
     })
   | Exists ({
+      formula_exists_flow    = fl;
       formula_exists_sec     = sec;
       formula_exists_sec_ctx = ctx;
       formula_exists_label   = lbl;
@@ -1822,7 +1824,7 @@ and mkEmptySecFormula (f:formula) : formula =
       formula_exists_pure    = (MCP.mkMTrue no_pos);
       formula_exists_type    = TypeTrue;
       formula_exists_and     = [];
-      formula_exists_flow    = (mkTrueFlow ());
+      formula_exists_flow    = fl;
       formula_exists_sec     = sec;
       formula_exists_sec_ctx = ctx;
       formula_exists_label   = lbl;
@@ -13541,7 +13543,7 @@ and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
         formula_assume_simpl = nsi;
         formula_assume_struc = nst
       })
-  | _                                         -> f (* ADI TODO: unsupported for now *)
+  | _ -> f (* ADI TODO: unsupported for now *)
 and rewrite_sec_formula_in_formula (f:formula) : formula =
   (* ADI TODO: check if using BLANK formula *)
   let f = mkEmptySecFormula f in
@@ -13568,7 +13570,9 @@ and rewrite_sec_formula_in_sec_formula (sf:sec_formula) (f:formula) =
   let max_formula = List.map (fun x -> CP.BForm ((x, None), None)) lub in
   let simp_f = CP.mkPure sec_var in
   let full_f = List.fold_left (fun acc x -> CP.And (acc, x, no_pos)) simp_f max_formula in
-  add_pure_formula_to_formula full_f f
+  (* NOTE: without existential quantified
+     add_pure_formula_to_formula full_f f*)
+  (add_pure_formula_to_formula (CP.mkExists fvs full_f None no_pos) f)
 and rewrite_sec_label (lbl:sec_label) =
   match lbl with
   | Sec_HI         -> ([],[], (CP.mkIConst 1 no_pos))
@@ -13583,8 +13587,72 @@ and rewrite_sec_label (lbl:sec_label) =
 and rewrite_spec_var (var:CP.spec_var) =
   let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
   let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
-  (*if (CP.ident_of_spec_var var) = "res" then print_endline (" >> res: " ^ (!print_spec_var res)) else print_endline (" >> old: " ^ (!print_spec_var res))*)
   res
+
+(* NOTE: add bound formula to pure formula *)
+and add_sec_bound_in_entail_state (es:entail_state) (svl:CP.spec_var list) =
+  let nf = add_sec_bound_in_formula es.es_formula svl in
+  ({es with es_formula = nf})
+and add_sec_bound_in_context (ctxt:context) (svl:CP.spec_var list) =
+  match ctxt with
+  | Ctx (es)    -> Ctx(add_sec_bound_in_entail_state es svl)
+  | OCtx(c1,c2) ->
+    let ctxt1 = add_sec_bound_in_context c1 svl in
+    let ctxt2 = add_sec_bound_in_context c2 svl in
+    OCtx(ctxt1,ctxt2)
+and add_sec_bound_in_failesc_context (ctx:failesc_context) (svl:CP.spec_var list) =
+  let (bfl,esc,bcl) = ctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, add_sec_bound_in_context ctxt svl, ftype)) bcl in (bfl,esc,nbcl)
+and add_sec_bound_in_list_failesc_context (lfc:list_failesc_context) (svl:CP.spec_var list) =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (add_sec_bound_in_failesc_context ctx svl)::(add_sec_bound_in_list_failesc_context rs svl)
+and add_sec_bound_in_partial_context (pctx:partial_context) (svl:CP.spec_var list) =
+  let (bfl,bcl) = pctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, add_sec_bound_in_context ctxt svl, ftype)) bcl in
+  (bfl,nbcl)
+and add_sec_bound_in_list_partial_context (lpc:list_partial_context) (svl:CP.spec_var list) =
+  match lpc with
+  | []       -> []
+  | pctx::rs -> (add_sec_bound_in_partial_context pctx svl)::(add_sec_bound_in_list_partial_context rs svl)
+and add_sec_bound_in_struc_formula (f:struc_formula) (svl:CP.spec_var list) : struc_formula =
+  match f with
+  | EBase ({
+      formula_struc_base         = sb;
+      formula_struc_continuation = sc;
+    } as b) ->
+    let nsb = add_sec_bound_in_formula sb svl in
+    let nsc = match sc with
+      | Some ssc -> Some (add_sec_bound_in_struc_formula ssc svl)
+      | _        -> sc
+    in EBase ({
+        b with
+        formula_struc_base         = nsb;
+        formula_struc_continuation = nsc
+      })
+  | EAssume ({
+      formula_assume_simpl = si;
+      formula_assume_struc = st;
+    } as a) ->
+    let nsi = add_sec_bound_in_formula si svl in
+    let nst = add_sec_bound_in_struc_formula st svl in
+    EAssume ({
+        a with
+        formula_assume_simpl = nsi;
+        formula_assume_struc = nst
+      })
+  | _ -> f (* ADI TODO: unsupported for now *)
+and add_sec_bound_in_formula (f:formula) (svl:CP.spec_var list) : formula =
+  let rec helper svl f =
+    match svl with
+    | []     -> f
+    | v::svr -> helper svr (add_sec_bound_to_formula v f)
+  in helper svl f
+and add_sec_bound_to_formula (v:CP.spec_var) (f:formula) : formula =
+  let sec = rewrite_spec_var v in
+  let lt1 = CP.mkLteVarInt sec 1 no_pos in
+  let gt0 = CP.mkGteVarInt sec 0 no_pos in
+  (add_pure_formula_to_formula lt1 (add_pure_formula_to_formula gt0 f))
 
 (* NOTE: translation from pure formula (from translated security formula) back to security formula *)
 (* ADI TODO: perform unwrite for pretty printing of error message *)
@@ -13631,10 +13699,8 @@ and unwrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
         formula_assume_simpl = nsi;
         formula_assume_struc = nst
       })
-  | _                                         -> f (* ADI TODO: unsupported for now *)
+  | _ -> f (* ADI TODO: unsupported for now *)
 and unwrite_sec_formula_in_formula (f:formula) : formula =
-  (* ADI TODO: check if using BLANK formula *)
-  let f = mkEmptySecFormula f in
   let unwriter f =
     match f with
     | Base   b -> unwrite_sec_formula_in_sec_formula_list b.formula_base_sec   f
@@ -13674,9 +13740,82 @@ and unwrite_spec_var (var:CP.spec_var) =
   let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
   let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
   res
+
+(* NOTE: Collect Security Variables *)
+and collect_sec_vars_in_list_failesc_context (lfc:list_failesc_context) : (CP.spec_var list) =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (collect_sec_vars_in_failesc_context ctx)@(collect_sec_vars_in_list_failesc_context rs)
+and collect_sec_vars_in_list_partial_context (lpc:list_partial_context) : (CP.spec_var list) =
+  match lpc with
+  | []       -> []
+  | pctx::rs -> (collect_sec_vars_in_partial_context pctx)@(collect_sec_vars_in_list_partial_context rs)
+and collect_sec_vars_in_failesc_context (ctx:failesc_context) : (CP.spec_var list) =
+  let (_,_,bcl) = ctx in
+  let rec helper bcl =
+    match bcl with
+    | []             -> []
+    | (_,ctxt,_)::bcr -> (collect_sec_vars_in_context ctxt)@(helper bcr)
+  in helper bcl
+and collect_sec_vars_in_partial_context (pctx:partial_context) : (CP.spec_var list) =
+  let (_,bcl) = pctx in
+  let rec helper bcl =
+    match bcl with
+    | []             -> []
+    | (_,ctxt,_)::bcr -> (collect_sec_vars_in_context ctxt)@(helper bcr)
+  in helper bcl
+and collect_sec_vars_in_context (ctxt:context) : (CP.spec_var list) =
+  match ctxt with
+  | Ctx (es)    -> collect_sec_vars_in_entail_state es
+  | OCtx(c1,c2) -> (collect_sec_vars_in_context c1)@(collect_sec_vars_in_context c2)
+and collect_sec_vars_in_entail_state (es:entail_state) : (CP.spec_var list)=
+  collect_sec_vars_in_formula es.es_formula
+and collect_sec_vars_in_struc_formula (f:struc_formula) : (CP.spec_var list) =
+  match f with
+  | EBase ({
+      formula_struc_base         = sb;
+      formula_struc_continuation = sc;
+    } as b) ->
+    let nsb = collect_sec_vars_in_formula sb in
+    let nsc = match sc with
+      | Some ssc -> collect_sec_vars_in_struc_formula ssc
+      | _        -> []
+    in nsb@nsc
+  | EAssume ({
+      formula_assume_simpl = si;
+      formula_assume_struc = st;
+    } as a) ->
+    let nsi = collect_sec_vars_in_formula si in
+    let nst = collect_sec_vars_in_struc_formula st in
+    nsi@nst
+  | _ -> [] (* ADI TODO: unsupported for now *)
+and collect_sec_vars_in_formula (f:formula) : (CP.spec_var list) =
+  match f with
+  | Base   b -> collect_sec_vars_in_sec_formula_list b.formula_base_sec
+  | Exists e -> collect_sec_vars_in_sec_formula_list e.formula_exists_sec
+  | Or     o -> (collect_sec_vars_in_formula o.formula_or_f1)@(collect_sec_vars_in_formula o.formula_or_f2)
+and collect_sec_vars_in_sec_formula_list (sl:sec_formula list) : (CP.spec_var list) =
+  let rec helper sl =
+    match sl with
+    | []     -> []
+    | sf::sr -> (collect_sec_vars_in_sec_formula sf)@(helper sr)
+  in helper sl
+and collect_sec_vars_in_sec_formula (sf:sec_formula) : (CP.spec_var list) =
+  sf.sec_var::(collect_sec_vars_in_sec_label sf.sec_lbl)
+and collect_sec_vars_in_sec_label (lbl:sec_label) : (CP.spec_var list) =
+  match lbl with
+  | Sec_HI | Sec_LO -> []
+  | Sec_Var(var)    -> [var]
+  | Sec_LUB(l1,l2)  -> (collect_sec_vars_in_sec_label l1)@(collect_sec_vars_in_sec_label l2)
+
+(* NOTE: remove duplicate *)
+and remove_dupl_sec_vars (svl:CP.spec_var list) : (CP.spec_var list) =
+  match svl with
+  | []     -> []
+  | v::svr -> v::(remove_dupl_sec_vars (List.filter (fun x -> (CP.full_name_of_spec_var v) <> (CP.full_name_of_spec_var x)) svr))
 (*****************************)
 
-let rec set_flow_in_context_override f_f ctx = match ctx with
+    let rec set_flow_in_context_override f_f ctx = match ctx with
   | Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
   | OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
 

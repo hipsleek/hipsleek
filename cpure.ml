@@ -2830,8 +2830,17 @@ and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos =
   else
     BForm ((Neq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
 
+and mkLtVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Lt (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkLteVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Lte (Var (sv, pos), IConst (i, pos), pos), None),None)
+
 and mkGtVarInt (sv: spec_var) (i : int) pos =
   BForm ((Gt (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkGteVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Gte (Var (sv, pos), IConst (i, pos), pos), None),None)
 
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)

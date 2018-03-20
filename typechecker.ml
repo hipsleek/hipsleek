@@ -2676,8 +2676,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               print_endline ("rs   : " ^ Cprinter.string_of_list_failesc_context rs);
               print_endline ("proof: " ^ PTracer.string_of_proof prf);
               *)
+
+              let info_fv_pre2 = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_struc_formula pre2) in
+              let info_fv_sctx = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_list_failesc_context sctx) in
               let info_pre2 = (CF.rewrite_sec_formula_in_struc_formula pre2) in
               let info_sctx = (CF.rewrite_sec_formula_in_list_failesc_context sctx) in
+              let info_pre2 = (CF.add_sec_bound_in_struc_formula info_pre2 info_fv_pre2) in
+              let info_sctx = (CF.add_sec_bound_in_list_failesc_context info_sctx info_fv_sctx) in
               let info_rs, info_prf = x_add heap_entail_struc_list_failesc_context_init 999 prog false true info_sctx info_pre2 None None None pos pid in
               (*
               print_endline ("*********************");
@@ -2896,9 +2901,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
                 check_info_flow_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
             in
-            print_endline ("*******************************************************");
-            print_endline ("info_res : " ^ Cprinter.string_of_list_failesc_context info_res);
-            print_endline ("*******************************************************");
             (*****************************)
 
             let () = if !print_proof then Prooftracer.add_pre e0 in
@@ -3455,7 +3457,7 @@ and check_par_case (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.lis
   let pr2 = pr_pair (fun c -> "\nREM: " ^ (pr1 c))
       (fun c -> "\nPOST: " ^ (pr1 c)) in
   let pr3 = string_of_full_loc in
-  Debug.no_2 "check_par_case" pr1 pr3 pr2 
+  Debug.no_2 "check_par_case" pr1 pr3 pr2
     (fun _ _ -> check_par_case_x prog proc par_init_ctx ctx par_case par_label) ctx (par_case.exp_par_case_pos)
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
@@ -3474,14 +3476,24 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  print_endline ("****************************   Post-Condition Check   ****************************");
   let res       = (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid in
-  print_endline ("***************   Information Flow Analysis Post-Condition Check   ***************");
-  let info_ctx  = CF.rewrite_sec_formula_in_list_partial_context ctx in
   let f_po,s_po = posts in
-  let info_post = (CF.rewrite_sec_formula_in_formula f_po, CF.rewrite_sec_formula_in_struc_formula s_po) in
+  let info_fv_ctx  = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_list_partial_context ctx) in
+  let info_fv_f_po = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_formula f_po) in
+  let info_fv_s_po = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_struc_formula s_po) in
+  let info_ctx  = CF.rewrite_sec_formula_in_list_partial_context ctx in
+  let info_f_po = CF.rewrite_sec_formula_in_formula f_po in
+  let info_s_po = CF.rewrite_sec_formula_in_struc_formula s_po in
+  let info_ctx  = CF.add_sec_bound_in_list_partial_context info_ctx info_fv_ctx in
+  let info_f_po = CF.add_sec_bound_in_formula info_f_po info_fv_f_po in
+  let info_s_po = CF.add_sec_bound_in_struc_formula info_s_po info_fv_s_po in
+  let info_post = (info_f_po,info_s_po) in
+  (* NOTE: Information Flow Debug
+  print_endline ("context: " ^ Cprinter.string_of_list_partial_context info_ctx);
+  print_endline ("formula: " ^ Cprinter.string_of_formula info_f_po);
+  print_endline ("s_formula: " ^ Cprinter.string_of_struc_formula info_s_po);
+  *)
   let _         = (wrap_classic x_loc etype (check_post_x_x prog proc info_ctx info_post pos)) pid in
-  print_endline ("**********************************************************************************");
   res
 
 
@@ -3504,11 +3516,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
   *)
   let ctx = CF.fresh_view_list_partial_context ctx0 in
   (* DEBUGGING: checking ctx & posts *****************************************************
-   ***************************************************************************************)
   print_endline ("Check post list ctx  : " ^ Cprinter.string_of_list_partial_context ctx);
   let (fst_posts, snd_posts) = posts in
   print_endline ("Check post fst posts : " ^ Cprinter.string_of_formula fst_posts);
   print_endline ("Check post snd posts : " ^ Cprinter.string_of_struc_formula snd_posts);
+   ***************************************************************************************)
   if !Globals.dis_post_chk
   then ctx
   else
@@ -3672,10 +3684,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
                 "Post condition cannot be derived"
             in
             (* let () = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in *)
-            let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
+            let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^ s ^ "\n") in
             Err.report_error {
               Err.error_loc = pos;
-              Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^".")
+              Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^ ".")
             }
           else
             begin
