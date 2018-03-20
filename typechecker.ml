@@ -3180,6 +3180,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         VP.add_vperm_sets_list_failesc_ctx vp ctx
       else ctx
     | Unit pos -> ctx
+
+    (* ADI TODO: inference rule for return statement *)
     | Sharp ({exp_sharp_type =t;
               exp_sharp_flow_type = ft;(*P.flow_typ*)
               exp_sharp_val = v; (*maybe none*)
@@ -3196,8 +3198,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (*   let () = print_string_quiet ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
       (*   let () = print_string_quiet ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
       (* let () = print_endline ("flow_store = " ^ (Cprinter.string_of_flow_store !flow_store)) in *)
-      let nctx = match v with 
-        | Sharp_var (t,v) -> 
+      let nctx = match v with
+        | Sharp_var (t,v) ->
           (* let b,res = (if !Globals.ann_vp then                          *)
           (*   (*check for access permissions*)                            *)
           (*   let var = (CP.SpecVar (t, v, Primed)) in                    *)
@@ -3209,7 +3211,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* else                                                          *)
           let t1 = (get_sharp_flow ft) in
           let () = x_tinfo_pp ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) no_pos in
-          let ctx, vr,vf = 
+          let ctx, vr,vf =
             let sharp_val = CP.SpecVar (t, v, Primed) in
             let eres_var = CP.mkeRes t in
             let res_var = CP.mkRes t in
@@ -3237,11 +3239,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (ctx,eres_var,sharp_val)
                     (* (ctx,(CP.mkeRes t),(CP.SpecVar (t, v, Primed))) *)
                 )
-              | _ -> 
+              | _ ->
                 (* ctx,(CP.mkeRes t), (CP.SpecVar (t, v, Primed)) *)
                 ctx,eres_var, sharp_val
             else ctx, res_var, sharp_val
           in
+
+          (* Information Flow Analysis *)
+          let add_res_to_sec_formula state =
+            let sec_context = CF.get_sec_context_from_estate state in
+            let sec_formula = CF.mkSecFormula CP.mkSecRes (CF.lub_op
+                                                             sec_context
+                                                             (CF.Sec_Var(CP.mkSecVar (CP.ident_of_spec_var vf) Primed))) in
+            let new_formula = CF.add_sec_formula_to_formula sec_formula state.CF.es_formula in
+            let new_context = CF.Ctx { state with CF.es_formula = new_formula } in
+            new_context
+          in
+          let ctx = CF.transform_list_failesc_context (idf,idf,add_res_to_sec_formula) ctx in
+          (*****************************)
+
           let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
           (* let () = print_string_quiet ("tmp: "^(Cprinter.string_of_formula tmp)^"\n") in *)
           let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
@@ -3366,7 +3382,7 @@ and check_par_case_wrapper (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx
     (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   wrap_par_case_check (fun c -> check_par_case prog proc par_init_ctx ctx c par_label) par_case
 
-and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.list_failesc_context) 
+and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.list_failesc_context)
     (par_case: exp_par_case) par_label: CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
   let rem_ctx, pre_ctx = 
@@ -3378,10 +3394,10 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
       let vp = par_case.exp_par_case_vperm in
       let pre =
         match par_case.exp_par_case_cond with
-        | None -> 
+        | None ->
           let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
           CF.Base { b with CF.formula_base_vperm = vp; }
-        | Some f -> norm_par_case_pre vp f 
+        | Some f -> norm_par_case_pre vp f
       in
       (* Remaining context for the other cases *)
       let rem_ctx =
@@ -3455,23 +3471,47 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   in
   let f = wrap_ver_post (wrap_add_flow (wrap_proving_kind PK_POST ((* check_post_x *) 
       post_op_wrapper (check_post_x prog proc ctx posts pos) pid) )) in
-  Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
+  Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid
+  print_endline ("****************************   Post-Condition Check   ****************************");
+  let res       = (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid in
+  print_endline ("***************   Information Flow Analysis Post-Condition Check   ***************");
+  let info_ctx  = CF.rewrite_sec_formula_in_list_partial_context ctx in
+  let f_po,s_po = posts in
+  let info_post = (CF.rewrite_sec_formula_in_formula f_po, CF.rewrite_sec_formula_in_struc_formula s_po) in
+  let _         = (wrap_classic x_loc etype (check_post_x_x prog proc info_ctx info_post pos)) pid in
+  print_endline ("**********************************************************************************");
+  res
 
 
 and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
+(* NOTE: Post-condition check *)
 and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
   (* let () = print_string_quiet ("got into check_post on the succCtx branch\n") in *)
   (* let () = print_string_quiet ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
   (*fresh views: h_formula_view_original = true*)
+
+  (*
+     NOTE:
+     prog  :: program
+     proc  :: procedures
+     ctx0  :: last state of the program execution before return statement
+     posts :: post-condition of the program (fst -> in formula ; snd -> in struc_formula) [why?]
+  *)
   let ctx = CF.fresh_view_list_partial_context ctx0 in
-  (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
-  if !Globals.dis_post_chk then ctx else 
+  (* DEBUGGING: checking ctx & posts *****************************************************
+   ***************************************************************************************)
+  print_endline ("Check post list ctx  : " ^ Cprinter.string_of_list_partial_context ctx);
+  let (fst_posts, snd_posts) = posts in
+  print_endline ("Check post fst posts : " ^ Cprinter.string_of_formula fst_posts);
+  print_endline ("Check post snd posts : " ^ Cprinter.string_of_struc_formula snd_posts);
+  if !Globals.dis_post_chk
+  then ctx
+  else
     let () = if !print_proof then
         begin
           Prooftracer.push_post ();
@@ -3482,19 +3522,21 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
           (* print_endline "VERIFYING POST-CONDITION" *)
         end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
-    let todo_unk = 
-      if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
+    let todo_unk =
+      if !Globals.dis_term_chk || !Globals.dis_post_chk
+      then true
       else
-        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in 
-        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
+        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in
+        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid
     in
 
     (* Rho: print conc err, if any *)
     let _ =
       let conc_errs = CF.collect_conc_err_list_partial_context ctx in
-      if is_empty conc_errs then ()
-      else 
-        let str_conc_err = pr_list 
+      if is_empty conc_errs
+      then () (* why not `if (not (is_empty conc_errs))` ?? *)
+      else
+        let str_conc_err = pr_list
             (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
         print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
     in
@@ -3524,13 +3566,13 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_tinfo_hp (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
         (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
         let final_state_prim = CF.push_exists_list_partial_context w ctx in
-        x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
+        x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;
         (* let () = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
         (* let () = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
         Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
-        let final_state = 
+        let final_state =
           if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
-        x_tinfo_hp  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
+        x_tinfo_hp  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;
         (* let () = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
         (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
         (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
@@ -3593,68 +3635,69 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
-    else begin
-      (* get source code position of failed branches *)
-      (*let locs_of_failures = 
-        List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
-        in*)
-      (*let string_of_loc_list locs =
-        List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
-        in*)
-      let _ =
-        if not !Globals.disable_failure_explaining then
-          let rs = if Globals.global_efa_exc () then
-              (* convert brs with error flow -> Fail *)
-              List.fold_left (fun acc (fs, brs) ->
-                  let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
-                      match oft with
-                      | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
-                      | None -> (acc_fs, acc_rest@[br])
-                    ) ([],[]) brs in
-                  acc@[(fs@ex_fs, rest)]
-                ) [] rs
-            else rs in
-          let s,fk,ets= CF.get_failure_list_partial_context rs in
-          (* let s = match CF.get_must_failure_list_partial_context rs with *)
-          (*     | Some s -> "(must) cause:\n"^s *)
-          (*     | None -> "( may) cause:\n"^s *)
-          (* (match  CF.get_may_failure_list_partial_context rs with *)
-          (*   | Some s -> "( may) cause:\n"^s *)
-          (*   | None -> "INCONSISTENCY : expected failure but success instead" *)
-          (* ) *)
-          (*should check bot with is_bot_status*)
-          (* in *)
-          let failure_str = if List.exists (fun et -> et = Mem 1) ets then
-              "memory leak failure" else
-              "Post condition cannot be derived"
-          in
-          (* let () = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in *)
-          let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
-          Err.report_error {
-            Err.error_loc = pos;
-            Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^".")
-          }
-        else
-          begin
-            Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
-              ("Postcondition cannot be derived from context\n")
-              pos;
-            Debug.print_info ("(Cause of PostCond Failure)")
-              (Cprinter.string_of_failure_list_partial_context rs) pos;
+    else
+      begin
+        (* get source code position of failed branches *)
+        (*let locs_of_failures = 
+          List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
+          in*)
+        (*let string_of_loc_list locs =
+          List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
+          in*)
+        let _ =
+          if not !Globals.disable_failure_explaining then
+            let rs = if Globals.global_efa_exc () then
+                (* convert brs with error flow -> Fail *)
+                List.fold_left (fun acc (fs, brs) ->
+                    let ex_fs, rest = List.fold_left (fun (acc_fs, acc_rest) ((lbl,c, oft) as br) ->
+                        match oft with
+                        | Some ft -> (acc_fs@[(lbl, ft)], acc_rest)
+                        | None -> (acc_fs, acc_rest@[br])
+                      ) ([],[]) brs in
+                    acc@[(fs@ex_fs, rest)]
+                  ) [] rs
+              else rs in
+            let s,fk,ets= CF.get_failure_list_partial_context rs in
+            (* let s = match CF.get_must_failure_list_partial_context rs with *)
+            (*     | Some s -> "(must) cause:\n"^s *)
+            (*     | None -> "( may) cause:\n"^s *)
+            (* (match  CF.get_may_failure_list_partial_context rs with *)
+            (*   | Some s -> "( may) cause:\n"^s *)
+            (*   | None -> "INCONSISTENCY : expected failure but success instead" *)
+            (* ) *)
+            (*should check bot with is_bot_status*)
+            (* in *)
+            let failure_str = if List.exists (fun et -> et = Mem 1) ets then
+                "memory leak failure" else
+                "Post condition cannot be derived"
+            in
+            (* let () = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in *)
+            let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
             Err.report_error {
               Err.error_loc = pos;
-              Err.error_text = Printf.sprintf
-                  (*         "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
-                  "Post condition cannot be derived by the system."
-                  (* (Cprinter.string_of_formula post)
-                     (Cprinter.string_of_list_partial_context final_state)
-                     (Cprinter.string_of_list_partial_context rs)
-                     (string_of_loc_list locs_of_failures)*)
+              Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^".")
             }
-          end
-      in
-      rs
-    end
+          else
+            begin
+              Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
+                ("Postcondition cannot be derived from context\n")
+                pos;
+              Debug.print_info ("(Cause of PostCond Failure)")
+                (Cprinter.string_of_failure_list_partial_context rs) pos;
+              Err.report_error {
+                Err.error_loc = pos;
+                Err.error_text = Printf.sprintf
+                    (*         "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
+                    "Post condition cannot be derived by the system."
+                    (* (Cprinter.string_of_formula post)
+                       (Cprinter.string_of_list_partial_context final_state)
+                       (Cprinter.string_of_list_partial_context rs)
+                       (string_of_loc_list locs_of_failures)*)
+              }
+            end
+        in
+        rs
+      end
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)
 (* replacing each spec with new spec with phase numbering *)

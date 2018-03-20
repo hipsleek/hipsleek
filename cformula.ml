@@ -13488,7 +13488,7 @@ end
 *)
 
 (* Information Flow Analysis *)
-(* ADI TODO: perform translation *)
+(* NOTE: translation from security formula to pure formula for checking *)
 and rewrite_sec_formula_in_entail_state (es:entail_state) =
   let nf = rewrite_sec_formula_in_formula es.es_formula in
   ({es with es_formula = nf})
@@ -13501,11 +13501,20 @@ and rewrite_sec_formula_in_context (ctxt:context) =
     OCtx(ctxt1,ctxt2)
 and rewrite_sec_formula_in_failesc_context (ctx:failesc_context) =
   let (bfl,esc,bcl) = ctx in
-  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in (bfl,esc,nbcl)
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in
+  (bfl,esc,nbcl)
 and rewrite_sec_formula_in_list_failesc_context (lfc:list_failesc_context) =
   match lfc with
   | []      -> []
   | ctx::rs -> (rewrite_sec_formula_in_failesc_context ctx)::(rewrite_sec_formula_in_list_failesc_context rs)
+and rewrite_sec_formula_in_partial_context (pctx:partial_context) =
+  let (bfl,bcl) = pctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in
+  (bfl,nbcl)
+and rewrite_sec_formula_in_list_partial_context (lpc:list_partial_context) =
+  match lpc with
+  | []       -> []
+  | pctx::rs -> (rewrite_sec_formula_in_partial_context pctx)::(rewrite_sec_formula_in_list_partial_context rs)
 and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
   match f with
   | EBase ({
@@ -13564,7 +13573,7 @@ and rewrite_sec_label (lbl:sec_label) =
   match lbl with
   | Sec_HI         -> ([],[], (CP.mkIConst 1 no_pos))
   | Sec_LO         -> ([],[], (CP.mkIConst 0 no_pos))
-  | Sec_Var(v)     -> ([],[], Var (CP.mk_typed_spec_var Int ("sec_" ^ CP.ident_of_spec_var v), no_pos))
+  | Sec_Var(v)     -> ([],[], Var (rewrite_spec_var v, no_pos))
   | Sec_LUB(l1,l2) ->
     let lu1,fv1,ex1 = rewrite_sec_label l1 in
     let lu2,fv2,ex2 = rewrite_sec_label l2 in
@@ -13575,6 +13584,95 @@ and rewrite_spec_var (var:CP.spec_var) =
   let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
   let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
   (*if (CP.ident_of_spec_var var) = "res" then print_endline (" >> res: " ^ (!print_spec_var res)) else print_endline (" >> old: " ^ (!print_spec_var res))*)
+  res
+
+(* NOTE: translation from pure formula (from translated security formula) back to security formula *)
+(* ADI TODO: perform unwrite for pretty printing of error message *)
+and unwrite_sec_formula_in_entail_state (es:entail_state) =
+  let nf = unwrite_sec_formula_in_formula es.es_formula in
+  ({es with es_formula = nf})
+and unwrite_sec_formula_in_context (ctxt:context) =
+  match ctxt with
+  | Ctx (es)    -> Ctx(unwrite_sec_formula_in_entail_state es)
+  | OCtx(c1,c2) ->
+    let ctxt1 = unwrite_sec_formula_in_context c1 in
+    let ctxt2 = unwrite_sec_formula_in_context c2 in
+    OCtx(ctxt1,ctxt2)
+and unwrite_sec_formula_in_failesc_context (ctx:failesc_context) =
+  let (bfl,esc,bcl) = ctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, unwrite_sec_formula_in_context ctxt, ftype)) bcl in (bfl,esc,nbcl)
+and unwrite_sec_formula_in_list_failesc_context (lfc:list_failesc_context) =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (unwrite_sec_formula_in_failesc_context ctx)::(unwrite_sec_formula_in_list_failesc_context rs)
+and unwrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
+  match f with
+  | EBase ({
+      formula_struc_base         = sb;
+      formula_struc_continuation = sc;
+    } as b) ->
+    let nsb = unwrite_sec_formula_in_formula sb in
+    let nsc = match sc with
+      | Some ssc -> Some (unwrite_sec_formula_in_struc_formula ssc)
+      | _        -> sc
+    in EBase ({
+        b with
+        formula_struc_base         = nsb;
+        formula_struc_continuation = nsc
+      })
+  | EAssume ({
+      formula_assume_simpl = si;
+      formula_assume_struc = st;
+    } as a) ->
+    let nsi = unwrite_sec_formula_in_formula si in
+    let nst = unwrite_sec_formula_in_struc_formula st in
+    EAssume ({
+        a with
+        formula_assume_simpl = nsi;
+        formula_assume_struc = nst
+      })
+  | _                                         -> f (* ADI TODO: unsupported for now *)
+and unwrite_sec_formula_in_formula (f:formula) : formula =
+  (* ADI TODO: check if using BLANK formula *)
+  let f = mkEmptySecFormula f in
+  let unwriter f =
+    match f with
+    | Base   b -> unwrite_sec_formula_in_sec_formula_list b.formula_base_sec   f
+    | Exists e -> unwrite_sec_formula_in_sec_formula_list e.formula_exists_sec f
+    | Or     o ->
+      let f1 = unwrite_sec_formula_in_formula o.formula_or_f1 in
+      let f2 = unwrite_sec_formula_in_formula o.formula_or_f2 in
+      Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
+  in
+  let res = unwriter f in
+  res
+and unwrite_sec_formula_in_sec_formula_list (sl:sec_formula list) (f:formula) =
+  let rec unwrite (sl:sec_formula list) (f:formula) =
+    match sl with
+    | []     -> f
+    | sf::sr -> unwrite sr (unwrite_sec_formula_in_sec_formula sf f)
+  in unwrite sl f
+and unwrite_sec_formula_in_sec_formula (sf:sec_formula) (f:formula) =
+  let lub,fvs,exp = unwrite_sec_label sf.sec_lbl in
+  let sec_var = CP.Lte (CP.Var (unwrite_spec_var sf.sec_var, no_pos), exp, no_pos) in
+  let max_formula = List.map (fun x -> CP.BForm ((x, None), None)) lub in
+  let simp_f = CP.mkPure sec_var in
+  let full_f = List.fold_left (fun acc x -> CP.And (acc, x, no_pos)) simp_f max_formula in
+  add_pure_formula_to_formula full_f f
+and unwrite_sec_label (lbl:sec_label) =
+  match lbl with
+  | Sec_HI         -> ([],[], (CP.mkIConst 1 no_pos))
+  | Sec_LO         -> ([],[], (CP.mkIConst 0 no_pos))
+  | Sec_Var(v)     -> ([],[], Var (unwrite_spec_var v, no_pos))
+  | Sec_LUB(l1,l2) ->
+    let lu1,fv1,ex1 = unwrite_sec_label l1 in
+    let lu2,fv2,ex2 = unwrite_sec_label l2 in
+    let var = CP.mk_spec_var (fresh_name ()) in
+    let m_v = Var (var, no_pos) in
+    (lu1@lu2@[CP.EqMax (m_v, ex1, ex2, no_pos)], fv1@fv2@[var], m_v)
+and unwrite_spec_var (var:CP.spec_var) =
+  let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
+  let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
   res
 (*****************************)
 
