@@ -1,0 +1,40 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int>.
+pred_prim AsegNE<start:int, end:int>.
+pred_prim Elem<start:int,value:int>.
+
+
+
+//(3)  residue should be hfalse
+//infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- emp & x!=x.
+
+data cell {
+ int x;
+}.
+
+/*
+infer [] emp & x!=x |- emp & y!=y.
+print residue.
+*/
+
+infer [] xx::cell<_> * xx::cell<_>  |- emp & y=y.
+print residue.
+
+
+/*
+infer[@arr_en]  base::Elem<aaa+1,1>*base::Elem<aaa,2> |- emp & x!=x.
+print residue.
+expect Valid.
+*/
+// <1>emp&{FLOW,(1,26)=__flow#E}[]
+// why isn't above false?

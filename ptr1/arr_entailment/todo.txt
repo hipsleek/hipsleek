@@ -1,4 +1,27 @@
 =====================================================================
+# ex0a2.slk
+
+heap_entail_conjunct_helper
+unsat_base_nth#1@14@13@12
+elim_unsat_es_now#4@13@12
+
+add debugging for:
+ array_entailment_classical_infer_interface
+
+--dd-calls-all
+# ex0a3.slk
+
+elim_unsat_es#9
+sleek_entail_check
+run_infer_one_pass
+
+tp_is_sat
+simplify_omega@42
+simplify_omega inp1 : (((flted_34_30+1)<aaa | flted_34_30+1=aaa)) & flted_34_28=2 & 
+ flted_34_29=1 & aaa=flted_34_30-1
+simplify_omega@42 EXIT: false
+
+=====================================================================
 # ex0a1.slk
 
 (i) assumed sorted

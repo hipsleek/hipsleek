@@ -793,7 +793,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         let () = post_pos#set (pos_post) in
         x_dinfo_zp (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         (* let () = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *)
-        let ctx1 = if !Globals.disable_pre_sat then ctx else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
+        let ctx1 = if !Globals.disable_pre_sat then ctx else CF.transform_context (x_add elim_unsat_es 2 prog (ref 1)) ctx in
         if (CF.isAnyFalseCtx ctx1) then
           let () = x_ninfo_zp (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
                                      (Cprinter.string_of_context_short ctx))) no_pos in
@@ -936,7 +936,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   if already_unsat_flag then e
                   else
                     let () = x_ninfo_hp (add_str "es_unsat_flag" string_of_bool) already_unsat_flag no_pos in
-                    let (b,_,e) = elim_unsat_estate prog e in
+                    let (b,_,e) = x_add elim_unsat_estate prog e in
                     if b then tmp_false_cnt # inc;
                     let () = x_ninfo_hp (add_str "elim_unsat(b)" string_of_bool) b no_pos in
                     e 
@@ -1409,7 +1409,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
         (*acquire() an invariant may cause UNSAT*)
         let unsat_check_fct es =
           let new_es = {es with CF.es_unsat_flag = false} in (*trigger unsat_check*)
-          elim_unsat_es 12 prog (ref 1) new_es
+          x_add elim_unsat_es 12 prog (ref 1) new_es
         in
         let tmp_res2 = CF.transform_list_failesc_context (idf,idf,unsat_check_fct) tmp_res in 
         tmp_res2
@@ -1587,7 +1587,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let () = Debug.ninfo_hprint (add_str "assumed_ctx" Cprinter.string_of_list_failesc_context) assumed_ctx pos in
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
                     else 
-                      CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
+                      CF.transform_list_failesc_context (idf,idf,(x_add elim_unsat_es 4 prog (ref 1))) assumed_ctx in
                   let res = List.map (x_add_1 CF.remove_dupl_false_fe) r in
                   match assert_failed_msg with
                   | None -> res
@@ -3061,7 +3061,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
       let pre_ctx = 
         if !Globals.disable_pre_sat then pre_ctx 
-        else CF.transform_context (elim_unsat_es 10 prog (ref 1)) pre_ctx 
+        else CF.transform_context (x_add elim_unsat_es 10 prog (ref 1)) pre_ctx 
       in
       let () = flow_store := [] in
       let pre_ctx = CF.set_flow_in_context_override

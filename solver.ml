@@ -1411,7 +1411,7 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
   else Ctx {es with es_formula = r1;}
 
 and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
-  let r = transform_list_context ((elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
+  let r = transform_list_context ((x_add elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
   TP.incr_sat_no () ; r
 
 (*and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
@@ -1426,7 +1426,7 @@ and list_context_and_unsat_now prog (ctx : list_context) : list_context =
   TP.incr_sat_no () ; r*)
 
 and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
-  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es 6 prog (ref 1))) ctx in
+  let r = transform_list_failesc_context (idf,idf,(x_add elim_unsat_es 6 prog (ref 1))) ctx in
   let r = List.map (x_add_1 CF.remove_dupl_false_fe) r in
   TP.incr_sat_no () ; r
 
@@ -1458,7 +1458,7 @@ and combine_context_and_unsat_now_x prog (ctx : context) (f : MCP.mix_formula) :
       (* expand all predicates in a definition *)
 
 and context_and_unsat_now prog (ctx : context)  : context = 
-  let r = transform_context (elim_unsat_es 5 prog (ref 1)) ctx in
+  let r = transform_context (x_add elim_unsat_es 5 prog (ref 1)) ctx in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
 
@@ -3035,7 +3035,7 @@ and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
 
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
-  else elim_unsat_es_now 4 prog sat_subno es
+  else x_add elim_unsat_es_now 4 prog sat_subno es
 
 
 and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
@@ -9128,7 +9128,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                 (* !Globals.allow_pred_spec || !Globals.do_slicing *)
                 then 
                   let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
-                  let n_es = elim_unsat_es 11 prog (ref 1) estate in
+                  let n_es = x_add elim_unsat_es 11 prog (ref 1) estate in
                   if CF.isAnyFalseCtx n_es then  
                     (smart_unsat_estate := Some (estate_of_context n_es no_pos); true)
                   else false
