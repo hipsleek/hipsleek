@@ -14576,11 +14576,23 @@ and translate_sec_formula = function
 
 and translate_security_formula = function
   | BForm ((pf, bf_ann), flbl) ->
-      let extra_p_form, fv, pf = translate_sec_formula pf in
+      let extra_p_form, fvs, pf = translate_sec_formula pf in
       let extra_forms = List.map (fun elem -> BForm ((elem, None), None)) extra_p_form in
       let f = BForm ((pf, bf_ann), flbl) in
       let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f extra_forms in
-      mkExists fv full_f None no_pos
+      let free_vars = fv full_f in
+      let sec_free_vars = List.filter (fun sv -> BatString.starts_with (ident_of_spec_var sv) "sec_") free_vars in
+      let restrict_sec_var_values =
+        List.map
+          (fun sv ->
+            mkAnd
+              (mkGteExp (mkVar sv no_pos) (mkIConst 0 no_pos) no_pos)
+              (mkLteExp (mkVar sv no_pos) (mkIConst 1 no_pos) no_pos)
+              no_pos
+          )
+          sec_free_vars in
+      let full_f = List.fold_left (fun acc elem -> mkAnd acc elem no_pos) full_f restrict_sec_var_values in
+      mkExists fvs full_f None no_pos
   | And (f1, f2, loc) -> And (translate_security_formula f1, translate_security_formula f2, loc)
   | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula f)) formulas)
   | Or (f1, f2, flbl, loc) -> Or (translate_security_formula f1, translate_security_formula f2, flbl, loc)
