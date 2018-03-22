@@ -149,6 +149,26 @@ type frameFormula =
   | FNot of frameFormula
 ;;
 
+let rec str_frameFormula f =  
+  match f with
+  | FBase (plst,hlst) ->     
+     (str_list !str_pformula plst)^"/\\"^(str_asegPredplus_lst hlst)
+  | FExists (vset, nf) ->
+     if List.length vset = 0
+     then str_frameFormula nf
+     else "Exists "^(str_list !str_sv vset)^": "^(str_frameFormula nf)
+  | FForall (vset, nf) ->
+     if List.length vset = 0
+     then str_frameFormula nf
+     else "Forall "^(str_list !str_sv vset)^": "^(str_frameFormula nf)
+  | FAnd flst ->
+     str_list_delimeter str_frameFormula flst "/\\" ""
+  | FOr flst ->
+     str_list_delimeter str_frameFormula flst "\\/" ""  
+  | FNot nf ->
+     "not("^(str_frameFormula nf)^")"
+;;
+
 let frameFormula_to_pure f =
   let rec helper f =
     match f with
@@ -177,30 +197,15 @@ let check_validity f =
   isValid pf
 ;;
 
+let check_validity f =
+  Debug.no_1 "check_validity" str_frameFormula string_of_bool check_validity f
+;;
+
 let mkFBase (plst,hlst) =
   let pf = [simplify (mkAndlst plst)] in
   FBase (pf,hlst)
 ;;
 
-let rec str_frameFormula f =  
-  match f with
-  | FBase (plst,hlst) ->     
-     (str_list !str_pformula plst)^"/\\"^(str_asegPredplus_lst hlst)
-  | FExists (vset, nf) ->
-     if List.length vset = 0
-     then str_frameFormula nf
-     else "Exists "^(str_list !str_sv vset)^": "^(str_frameFormula nf)
-  | FForall (vset, nf) ->
-     if List.length vset = 0
-     then str_frameFormula nf
-     else "Forall "^(str_list !str_sv vset)^": "^(str_frameFormula nf)
-  | FAnd flst ->
-     str_list_delimeter str_frameFormula flst "/\\" ""
-  | FOr flst ->
-     str_list_delimeter str_frameFormula flst "\\/" ""  
-  | FNot nf ->
-     "not("^(str_frameFormula nf)^")"
-;;
 
 let array_entailment_classical lhs rhs =
   let mkUsetandVsetprime set vset =
@@ -346,6 +351,10 @@ let array_entailment_classical lhs rhs =
   f
 ;;
   
+let array_entailment_classical lhs rhs =
+  let pr = Cprinter.string_of_formula in
+  Debug.no_2 "array_entailment_classical" pr pr str_frameFormula array_entailment_classical lhs rhs
+
 let array_entailment_frame lhs rhs =
   let mkUsetandVsetprime set vset =
     let uset = List.filter (fun item -> List.exists (fun item1 -> is_same_sv item item1) set)  vset in
@@ -499,7 +508,13 @@ let array_entailment_classical_interface lhs rhs =
 ;;
 
 let array_entailment_classical_infer_interface lhs rhs =
-  let f = frameFormula_to_pure (array_entailment_classical lhs rhs) in
+  let fr = array_entailment_classical lhs rhs in
+  let f = frameFormula_to_pure fr in
+  let b = check_validity fr in
   mkCtxWithPure (simplify f)
   (* (true,mkCtxWithPure (simplify f),[]) *)
+;;
+
+let array_entailment_classical_infer_interface lhs rhs =
+  array_entailment_classical_interface lhs rhs
 ;;

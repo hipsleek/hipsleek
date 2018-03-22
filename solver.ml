@@ -7703,12 +7703,14 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
         let full_rs =
           if !Globals.array_pre
           then
+            let () = y_tinfo_pp "array entailment_classic" in
             Arr_entailment_with_frame.array_entailment_classical_infer_interface new_ante new_conseq
           else
             (* Array_biabduction.array_entailment_classical_entailment_interface new_ante new_conseq *)
             (* Array_biabduction_pair_content.array_entailment_classical_entailment_interface_pair_content new_ante new_conseq *)
             Array_biabduction_pair_content.array_entailment_classical_entailment_interface_pair_content new_ante new_conseq
         in
+        let () = y_tinfo_pp (Cprinter.string_of_list_context full_rs) in
         (full_rs,Prooftracer.Unknown)
       else
         if !Globals.array_entailment_frame (* List.mem INF_ARR_ENTAILMENT_FRAME itype *)

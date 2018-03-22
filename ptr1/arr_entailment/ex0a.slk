@@ -18,7 +18,7 @@ pred_prim Elem<start:int,value:int>.
 //(1)
 infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b: base::Elem<b,2> * base::Elem<b+1,1>.
 print residue.
-expect Valid.
+expect Fail.
 
 //(2) // incomplete
 infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b,c: base::Elem<b,2> * base::Elem<c,1>.
@@ -42,10 +42,10 @@ infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b,c: base::AsegNE<b,
 print residue.
 expect Valid.
 
-//(5)
+//(6)
 infer[@arr_en]  base::Elem<a,1>*base::Elem<a+2,2> |- exists b,c: base::AsegNE<b,c>.
 print residue.
-expect Valid.
+expect Fail.
 
 
 //(5)

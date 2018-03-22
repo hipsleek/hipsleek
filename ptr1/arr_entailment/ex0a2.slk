@@ -36,3 +36,9 @@ print residue.
 expect Valid.
 // <1>emp&{FLOW,(1,26)=__flow#E}[]
 // why isn't above false?
+
+
+infer[@arr_en]  base::Elem<aaa,1>*base::Elem<aaa+1,2> |- emp & x!=x.
+print residue.
+expect Fail.
+

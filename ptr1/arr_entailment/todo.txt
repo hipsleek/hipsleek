@@ -1,6 +1,24 @@
 =====================================================================
 # ex0a2.slk
 
+
+Only -arr-pre is working
+
+All others trigger:
+!!! WARNING logtime exception (sleek-hec):0.
+Entail (2) : Failure("nth")
+
+
+  ("--lazy-enum", Arg.Set Globals.array_lazy_enum,"array biabduction with lazy enumeration");
+  ("--simp-enum", Arg.Clear Globals.array_lazy_enum,"array biabduction with simple enumeration");
+  ("--print-ba-trace", Arg.Set Globals.array_ba_trace,"print proof trace for array biabduction");
+  ("--verbose-arr", Arg.Set Globals.array_verbose,"In array entailment, print the whole pre-condition");
+  ("--arr-entfr", Arg.Set Globals.array_entailment_frame,"Array entailment with frame");
+  ("--arr-full-order", Arg.Set Globals.array_full_order, "Array entailment with full order");  
+  ("--arr-raw", Arg.Set Globals.array_raw_entailment,"Raw Array entailment");
+
+
+
 heap_entail_conjunct_helper
 unsat_base_nth#1@14@13@12
 elim_unsat_es_now#4@13@12
