@@ -34,3 +34,14 @@ print residue.
 infer [@classic]   x::lseg<q> * q::lseg<p> & p=null |- x::lseg<p> .
 expect Valid.
 print residue.
+
+/*
+# two identical answers..
+
+ <1>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  (Lemma <== L62(x,x)) ==>  SEARCH ==>  COND ==>  Match(x,x) ==>  SEARCH ==>  SEARCH ==>  COND ==>  Match(q,q)]]
+
+<2>emp&p=null&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  SEARCH ==>  (Lemma <== L62(x,x)) ==>  SEARCH ==>  COND ==>  Match(x,x) ==>  SEARCH ==>  SEARCH ==>  (Lemma <== L62(q,q)) ==>  SEARCH ==>  COND ==>  Match(q,q) ==>  SEARCH ==>  COND ==>  BaseCaseFold]]
+
+*/
