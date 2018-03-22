@@ -14581,7 +14581,10 @@ and translate_security_formula = function
       let f = BForm ((pf, bf_ann), flbl) in
       let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f extra_forms in
       let free_vars = fv full_f in
-      let sec_free_vars = List.filter (fun sv -> BatString.starts_with (ident_of_spec_var sv) "sec_") free_vars in
+      let sec_free_vars =
+        free_vars
+        |> List.filter (fun sv -> BatString.starts_with (ident_of_spec_var sv) "sec_")
+        |> Gen.BList.remove_dups_eq eq_spec_var in
       let restrict_sec_var_values =
         List.map
           (fun sv ->
