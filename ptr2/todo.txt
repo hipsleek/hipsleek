@@ -1,0 +1,13 @@
+# ex4a.slk
+
+//(2)
+checkentail_exact x::Elem<s,1> |- x::Elem<p,_>.
+expect Fail.
+print residue.
+// should not match by x, but by s+p
+
+pred_prim Elem<start:int,value:int> inv_exact BG([start], 0<start). // non-null
+direct match requires us to prove:
+   s=p
+
+   

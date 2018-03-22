@@ -1,0 +1,41 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+pred_prim Aseg<start:int, end:int> inv_exact BG([(start,end)],0<=start<=end). // possibly empty
+pred_prim AsegNE<start:int, end:int> inv_exact BG([(start,end)], 0<start<end). // definitely bounded
+pred_prim Elem<start:int,value:int> inv_exact BG([start], 0<start). // non-null
+
+checkentail_exact x::Elem<s,1> |- x::Elem<s,_>.
+expect Valid.
+print residue.
+
+//(2)
+checkentail_exact x::Elem<s,1> |- x::Elem<p,_>.
+expect Fail.
+print residue.
+// should not match by x, but by s+p
+
+checkentail_exact x::AsegNE<s,e> |- x::AsegNE<s,e>.
+expect Valid.
+print residue.
+// should not match by x, but by s+p
+
+//(4)
+checkentail_exact x::AsegNE<s,e> |- x::AsegNE<s,d>.
+expect Fail.
+print residue.
+// should not match since we require e=d
+
+/*
+checkentail_exact x::Aseg<s,e> & e=s+1 |- x::Elem<s,_>.
+expect Valid.
+print residue.
+*/
