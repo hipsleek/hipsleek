@@ -10,7 +10,7 @@ data node2 {
 	int f1;
 }.
 
-/*
+
 checkentail x.f1::<1> * x.node.f5::<a> * x.f4::<b> |- x::node<r,#,#,u,v>.
 print residue.
 
@@ -20,11 +20,13 @@ print residue.
 
 
 checkentail  x::node<m,n,#,#,#> * x::node<#,#,a,b,c> |- false.
+print residue.
 // OK to fail
 
 checkentail  x::node<m,n,o,#,#> * x::node<#,#,a,b,c> |- false.
+print residue.
 // OK
-*/
+
 
 //checkentail  x::node<m,n,#,#,#> |- x::node<m1,n1,a,b,c>.
 // need to check that LHS is bigger than RHS

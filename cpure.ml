@@ -6030,6 +6030,12 @@ let mk_exp_leq lhs i =
   let e = Lte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 
+let mk_exp_leq_vars v1 v2 = 
+  (* let v1 = mkVar v1 no_pos in *)
+  (* let v2 = mkVar v2 no_pos in *)
+  let e = Lte(v1,v2,no_pos) in
+  mk_bform e
+
 let mk_exp_neq_null lhs = 
   (* let lhs = mkVar v no_pos in *)
   let e = Neq(lhs,(Null no_pos),no_pos) in
@@ -6133,13 +6139,14 @@ struct
       in
       merge_and_list (proc tlst)
     in
-    let () = y_binfo_pp "inside get_pure (SV_INTV)" in
+    let () = y_tinfo_pp "inside get_pure (SV_INTV)" in
     (* let () = y_winfo_pp ("TODO: get_pure"^x_loc) in *)
     let lst_intv = List.fold_left (fun acc (base,s) -> match s with
         | None -> acc
         | Some(b,d) -> (base,(b,d))::acc) [] lst in
     let string_of_lst = pr_list (pr_pair !print_sv (pr_pair !print_exp !print_exp)) in
-    let () = y_binfo_hp (add_str "lst_intv" string_of_lst) lst_intv in
+    let () = y_tinfo_hp (add_str "lst_intv" string_of_lst) lst_intv in
+    (* oold copy *)
     let add_intv_formula f lst =
       List.fold_left (fun acc (base,(b,d)) ->
         let f1 = mk_exp_leq (mkAdd (mkVar base no_pos) d no_pos) 0 in
@@ -6150,14 +6157,21 @@ struct
         mkAnd acc f no_pos
       ) f lst in
     let add_intv_formula f lst =
+      List.fold_left (fun acc (base,(b,d)) ->
+        let f1 = mk_exp_geq b 0 in
+        let f2 = mk_exp_leq_vars b d in
+        let f = mkAnd f1 f2 no_pos in
+        mkAnd acc f no_pos
+      ) f lst in
+    let add_intv_formula f lst =
       Debug.no_2 "add_intv_formula" !print_formula string_of_lst !print_formula add_intv_formula f lst in
     let lst = List.filter (fun (_,p) -> p==None) lst in
     let lst = List.map fst lst in
     if enum_flag
     then
-      let () = y_binfo_pp "inside get_pure (SV_INTV), enum_flag is true" in
+      let () = y_tinfo_pp "inside get_pure (SV_INTV), enum_flag is true" in
       let baga_enum_lst = baga_enum lst in
-      let () = y_binfo_hp (add_str "(baga_enum) lst:" !print_formula) baga_enum_lst in
+      let () = y_tinfo_hp (add_str "(baga_enum) lst:" !print_formula) baga_enum_lst in
       baga_enum_lst
     else
       let f = baga_conv ~neq_flag:neq_flag lst in
@@ -6170,8 +6184,8 @@ struct
        | None -> x_add add_intv_formula f lst_intv
        | Some disj_f ->
           mkAnd (x_add add_intv_formula f lst_intv) disj_f no_pos) in
-      let () = y_binfo_hp (add_str "WN:f" !print_formula) f in
-      let () = y_binfo_hp (add_str "WN:f2" !print_formula) f2 in
+      let () = y_tinfo_hp (add_str "WN:f" !print_formula) f in
+      let () = y_tinfo_hp (add_str "WN:f2" !print_formula) f2 in
       f2
                    
   let conv_var lst = 

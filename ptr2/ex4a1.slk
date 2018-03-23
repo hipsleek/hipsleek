@@ -1,3 +1,4 @@
+
 // README:
 
 //       Use @arr_ba for bi-abduction
@@ -9,13 +10,24 @@
 //       For example, ../../sleek ex1.slk --arr-pre
 //       To print all the intermediate steps, run with --verbose-arr
       
-pred_prim Aseg<start:int, end:int> inv_exact BG([(start,end)],0<=start<=end). // possibly empty
-pred_prim AsegNE<start:int, end:int> inv_exact BG([(start,end)], 0<start<end). // definitely bounded
-pred_prim Elem<start:int,value:int> inv_exact BG([start], 0<start). // non-null
+pred_prim Aseg<end:int,start:int> 
+     inv_exact BG([(start,end)],true). //0<=start<=end). // possibly empty
+
+/*
+pred_prim AsegNE<start:int, end:int> 
+     inv_exact BG([(start,end)], 0<start<end). // definitely bounded
+pred_prim Elem<start:int,value:int> 
+     inv_exact BG([start], true). // non-null
 
 //(1)
-checkentail_exact x::Elem<s,1> |- x::Elem<p,_>.
+checkentail_exact x::Elem<s,1> & p=p |- x::Elem<p,_>.
 expect Fail.
 print residue.
 // should not match by x, but by s+p
+*/
+
+checkentail_exact x::Aseg<s,b>  |- x::Aseg<s,c>.
+//checkentail_exact x::Aseg<s,b>  |- x::Aseg<s',c> & s'=s.
+expect Fail.
+print residue.
 

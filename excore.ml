@@ -1082,7 +1082,7 @@ module EPURE =
   end
 
 
-module EPureIOld = EPURE(SV)
+(* module EPureIOld = EPURE(SV) *)
 module EPureI = EPURE(SV_INTV)
 
 (* module EPureI = EPUREN(SV) *)

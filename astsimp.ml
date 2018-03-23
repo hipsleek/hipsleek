@@ -2678,9 +2678,25 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "name" (fun x -> x)) vn no_pos;
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
-      Debug.ninfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
+      (* Excore.EPureI.epure list option *)
+      Debug.binfo_hprint (add_str "vbi" (pr_option pr)) vbc_i no_pos;
+      (* ((IastUtil.CP.spec_var * (IastUtil.CP.exp * IastUtil.CP.exp) option) list * *)
+      (*  Cpure.formula) *)
+      (* list option *)
+      let lst = match vbc_i with 
+          Some l -> l
+        | _ -> [] in
+      let ans = match lst with [([(_,(Some (st,ed)))],_)] -> Some(st,ed) 
+                             | _ -> None in
+      let strip e1 = match e1 with CP.Var(sv,_) -> [sv] 
+                                  | _ -> [] in
+      let ans = match ans with None -> []
+                             | Some(e1,e2) -> (strip e1)@(strip e2) in
       (* let lst_uns = List.map fst n_un_str in *)
-      let () = y_tinfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let () = y_binfo_hp (add_str "extracted start/end" !CP.print_svl) ans in
+      let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let inter_vars = CP.intersect_svl ans view_sv in
+      let () = y_binfo_hp (add_str "inter_vars" !CP.print_svl) inter_vars in
       let keep_vs = CP.self_sv::view_sv in
       let lst_heap_ptrs = 
         if !Globals.ptr_arith_flag then 
@@ -2835,14 +2851,15 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           );
         C.view_prop_extns = view_prop_extns;
         C.view_parent_name = None;
-        C.view_domains = [];
         C.view_vars = view_sv;
+        C.view_domains = [];
         C.view_ho_vars = view_ho_sv;
         C.view_cont_vars = [];
-        C.view_match_args = 
-              (let () = (y_binfo_pp "WN : Need to fix match_args") in
-              []);
-        C.view_match_align = None;
+        C.view_match_args = inter_vars;
+              (* (let () = (y_binfo_pp "WN : Need to fix match_args") in *)
+              (* []); *)
+        C.view_match_align = (match inter_vars with (x::_) -> Some x 
+                                                 | [] -> None);
         C.view_seg_opz = None;
         C.view_uni_vars = [];
         C.view_labels = labels;

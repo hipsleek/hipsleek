@@ -732,7 +732,12 @@ let pr_typed_view_arg_lbl ?(lvl=(!glob_lvl)) (l,x) =
     else (LO.string_of l)^":"
   in wrap_pr_1 lvl fmt_string (s^(string_of_typed_view_arg x))
 
-let pr_list_of_spec_var ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_spec_var xs
+let pr_list_of_spec_var ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_spec_var xs;;
+
+let pr_opt_of_spec_var ?(lvl=(!glob_lvl)) xs = 
+  match xs with
+    None -> pr_list_of_spec_var []
+  | Some a -> pr_list_of_spec_var [a];;
 
 let pr_list_of_view_arg ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_view_arg xs
 
@@ -4383,6 +4388,11 @@ let pr_view_decl v =
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
+  pr_add_str_cut ~emp_test:Gen.is_empty "match args: "  pr_list_of_spec_var v.view_match_args;
+  let lst2 = (match v.view_match_align with
+    | None -> []
+    | Some a -> [a]) in
+   pr_add_str_cut ~emp_test:Gen.is_empty "match align: "  pr_list_of_spec_var lst2;
   pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
