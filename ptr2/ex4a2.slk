@@ -1,0 +1,33 @@
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+
+//pred_prim Elem<start:int,value:int> inv_exact BG([self], 0<start). // non-null
+pred_prim Elem<start:int,value:int> inv_exact BG([self+start], 0<start). // non-null
+
+//(1)
+checkentail_exact x::Elem<s,1> |- x::Elem<p,_>.
+expect Fail.
+print residue.
+// should not match by x, but by s+p
+
+/*
+
+# Expr not allowed..
+
+File "ex4a2.slk", line 14, characters 50-54
+ error: Stream.Error("COMMA or CSQUARE then COMMA expected (in [baga_inv])")
+ at:
+Exception processed: Stream.Error("COMMA or CSQUARE then COMMA expected (in [baga_inv])")
+error at: 
+SLEEK FAILURE (END)
+
+*/

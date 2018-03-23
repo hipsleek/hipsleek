@@ -1,0 +1,238 @@
+# ex4a1.slk
+
+There are two problems in the current system to fix. 
+This is likely in a method where "inv" is being formed.
+
+(==cpure.ml#6170==)
+add_intv_formula@1
+add_intv_formula inp1 : true
+add_intv_formula inp2 :[(_,( start, end))]
+add_intv_formula@1 EXIT: ((_+end)<=0 | (_+start)!=null)
+
+Why do we use (base+end<=0 | base+start!=null) ???
+ should be start<=end 
+perhaps which can be empty..
+
+
+
+# Got:
+  inv: _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_)))
+  inv should be 0<=start & start<=end
+
+# need to add : matching expression [start,end]
+  based on:
+  baga inv: [([(_,( start, end))], 0<=start & start<=end)]
+
+
+@2! **cpure.ml#6131:inside get_pure (SV_INTV)
+@2! **excore.ml#663:baga_conv: ((_+end)<=0 | (_+start)!=null)
+@2! **omega.ml#901:simplify_ops_x(after trans_arr)::
+ ((0<=start & start<=end & (_+end)<=0) | 
+  (0<=start & start<=end & (_+start)>0))
+Starting Omega.../usr/local/bin/oc
+
+@2! **omega.ml#454:omega inp:{[end, v_, start] : (((((0 <= start) & (start <= end)) & (v_ + end <= 0)) | (((0 <= start) & (start <= end)) & (v_ + start > 0))))};
+
+@2! **omega.ml#461:omega out:{[end,v_,start]: 0 <= start <= end <= -v_} union {[end,v_,start]: 0, -v_+1 <= start <= end}
+(====)
+ef_conv_disj@2@1
+ef_conv_disj inp1 :[([(_,( start, end))], 0<=start & start<=end)]
+ef_conv_disj@2 EXIT: _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_)))
+
+./sleek ex4a1.slk -dre ".*baga_invs" --trace-log-num 1 --pcp > 1
+
+@1! **cpure.ml#6131:inside get_pure (SV_INTV)
+@1! **excore.ml#663:baga_conv: ((_+end)<=0 | (_+start)!=null)
+@1! **omega.ml#901:simplify_ops_x(after trans_arr)::
+ ((0<=start & start<=end & (_+end)<=0) | 
+  (0<=start & start<=end & (_+start)>0))
+Starting Omega.../usr/local/bin/oc
+
+@1! **omega.ml#454:omega inp:{[end, v_, start] : (((((0 <= start) & (start <= end)) & (v_ + end <= 0)) | (((0 <= start) & (start <= end)) & (v_ + start > 0))))};
+
+@1! **omega.ml#461:omega out:{[end,v_,start]: 0 <= start <= end <= -v_} union {[end,v_,start]: 0, -v_+1 <= start <= end}
+(==astsimp.ml#2477==)
+compute_baga_invs@1
+compute_baga_invs inp1 :(Some([([(_,( start, end))], 0<=start & start<=end)]),None,None)
+compute_baga_invs inp2 : true
+compute_baga_invs@1 EXIT:(Some([([(_,( start, end))], 0<=start & start<=end)]),Some([([(_,( start, end))], 0<=start & start<=end)]), _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_))), _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_))))
+
+../sleek ex4a1.slk -dre "trans_View" --trace-log-num 3 --pcp > 1
+
+@3! **astsimp.ml#7743:n_tl:[(self:19:Aseg)(start:17:int)(end:18:int)]
+@3! **astsimp.ml#7750:n_tl:[(self:19:Aseg)(start:17:int)(end:18:int)]
+@3! **astsimp.ml#7797:cf: emp&{FLOW,(1,26)=__flow#E}[]
+@3! **astsimp.ml#7465:new_base: emp&{FLOW,(1,26)=__flow#E}[]
+@3! **astsimp.ml#7466:impl_vars:[]
+@3! **astsimp.ml#7531:fvars:[self,start,end]
+@3! **astsimp.ml#2428:orig_tl:[(self:19:Aseg)(start:17:int)(end:18:int)]
+@3! **astsimp.ml#2429:n_tl:[(self:19:Aseg)(start:17:int)(end:18:int)]
+@3! cf 3:
+ EBase 
+   emp&{FLOW,(1,26)=__flow#E}[]
+@3! **astsimp.ml#2452:inv:true
+@3! **astsimp.ml#2462:inv:true
+@3! **astsimp.ml#2477:inv_pf: true
+@3! **astsimp.ml#2477:view_sv_vars:[start,end]
+@3! **astsimp.ml#2477:vs1:[]
+@3! **astsimp.ml#2477:vs1a:[]
+@3! **astsimp.ml#2477:allow_ex_vs:[]
+@3! **astsimp.ml#2477:allow_ex_vs:[]
+@3! **astsimp.ml#2477:XXX:view_name:Aseg
+@3! **astsimp.ml#2477:raw_base_case:None
+@3!:0: 0: **astsimp.ml#2477:inv_pf: true
+@3!:0: 0: **astsimp.ml#2477:new_pf: true
+@3! **astsimp.ml#2477:baga_inv:Some([([(_,Some((start,end)))],(0 <= start) & (start <= end))])
+@3! **astsimp.ml#2477:baga_inv:None
+@3! **astsimp.ml#2477:baga_inv:None
+@3! **cpure.ml#6131:inside get_pure (SV_INTV)
+@3! **excore.ml#663:baga_conv: ((_+end)<=0 | (_+start)!=null)
+@3! **omega.ml#901:simplify_ops_x(after trans_arr)::
+ ((0<=start & start<=end & (_+end)<=0) | 
+  (0<=start & start<=end & (_+start)>0))
+@3! **omega.ml#454:omega inp:{[end, v_, start] : (((((0 <= start) & (start <= end)) & (v_ + end <= 0)) | (((0 <= start) & (start <= end)) & (v_ + start > 0))))};
+
+was v_ "self"??
+
+@3! **omega.ml#461:omega out:{[end,v_,start]: 0 <= start <= end <= -v_} union {[end,v_,start]: 0, -v_+1 <= start <= end}
+@3! **astsimp.ml#2477:user_inv: _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_)))
+@3! **astsimp.ml#2477:user_x_inv: _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_)))
+@3! **astsimp.ml#2477:view_vars:[start,end]
+@3! **cformula.ml#20537:get_data_and_views:[]
+@3! **astsimp.ml#2477:lst(root):[]
+@3! **astsimp.ml#2477: true
+@3! **astsimp.ml#2477:lst(choose smallest in each branch):[]
+@3! **astsimp.ml#2477:TODO: lst(fresh_name):[]
+@3! **astsimp.ml#2477:[]
+@3! **astsimp.ml#2477:Actual roots..:[]
+@3! **astsimp.ml#2477:data name:Aseg
+@3! **cpure.ml#15719:lst_sv:[?,?]
+@3! **cpure.ml#15720:lst:[?,?]
+@3!ex4a1.slk:12: 10: **astsimp.ml#2477:
+ view_prim Aseg{}[]<start:int,end:int>= 
+  view_domains: 
+   view_prim Aseg<start:int,end:int>= 
+    EBase 
+      (* lbl: *){1}->emp&{FLOW,(1,26)=__flow#E}[]
+  view vars: start,end
+  cont vars: 
+  unstructured formula: (* lbl: *){1}->emp&{FLOW,(1,26)=__flow#E}[]
+  inv: _=v_ & 0<=start & start<=end & ((((0-v_)+1)<=start | end<=(0-v_)))
+  baga inv: [([(_,( start, end))], 0<=start & start<=end)]
+  baga over inv: [([(_,( start, end))], 0<=start & start<=end)]
+  baga over inv (unfolded): [([(_,( start, end))], 0<=start & start<=end)]
+  baga under inv: [([(_,( start, end))], 0<=start & start<=end)]
+ 
+(==astsimp.ml#2919==)
+trans_view@31@27
+trans_view inp1 :AsegNE{}[]<start,end> == EBase: [][](EX  . (emp)*([] & true)( FLOW __flow)) 
+inv true
+inv_lock: None
+view_data_name: AsegNE
+view_imm_map: []
+view_baga_over_inv: None
+extends
+trans_view inp2 :mutrec:[]
+trans_view inp3 :trans_views:[Aseg]
+trans_view inp4 :ann_typs:[]
+trans_view@31 EXIT: view_prim AsegNE{}[]<start:int,end:int>= 
+  view_domains: 
+   view_prim AsegNE<start:int,end:int>= 
+    EBase 
+      (* lbl: *){2}->emp&{FLOW,(1,26)=__flow#E}[]
+  view vars: start,end
+  cont vars: 
+  unstructured formula: (* lbl: *){2}->emp&{FLOW,(1,26)=__flow#E}[]
+  inv: _=v_ & 1<=start & start<end & ((((0-v_)+1)<=start | end<=(0-v_)))
+  baga inv: [([(_,( start, end))], 0<start & start<end)]
+
+ view_prim Aseg{}[]<start:int,end:int>= 
+  view_domains: 
+   view_prim Aseg<start:int,end:int>= 
+    EBase 
+      (* lbl: *){1}->emp&{FLOW,(1,26)=__flow#E}[]
+  view vars: start,end
+
+
+=============================================================
+
+@3! **context.ml#2483:Root for:( x::Elem<s,flted_17_35>@M, x::Elem<p,Anon_13>@M)
+@3! **context.ml#2485:Complex lemma:[]
+@3! **context.ml#2495:lhs_root:x
+@3! **context.ml#2592:VIEW vs VIEW:(Elem,Elem)
+@3! **context.ml#2604:VIEW vs VIEW (after view_equiv):(Elem,Elem)
+@3! **context.ml#2627:vl_name: :Elem
+@3! **context.ml#2628:vl_kind: :View_PRIM
+@3! **context.ml#2629:vr_kind: :View_PRIM
+@3! **context.ml#2630:vr_name: :Elem
+@3! force_match:false
+@3! sf_force_match:false
+@3! **context.ml#2702:imm_subtype_flag:true
+@3! **context.ml#2703:old_base_case_unfold:false
+@3! **context.ml#2708:a1:
+ Prio:-1
+ NothingToDo => base_case_unfold not selected
+@3! **context.ml#2734:choosing matching
+@3! **context.ml#2772:a2:
+Some( Prio:1
+ Match =>)
+@3! **context.ml#2784:a3:
+Some( Prio:1
+ COND =>[
+  Prio:-1
+  NothingToDo => base_case_unfold not selected;
+  Prio:1
+  Match =>
+  ])
+@3!  vl_is_rec:false
+@3!  vl_is_prim:true
+@3!  vr_is_rec:false
+@3!  vr_is_prim:true
+@3! **context.ml#2800:a4:None
+@3! **context.ml#2815:unfold on self-fold defn (rev-seg):false
+@3! **context.ml#2830:a5:None
+@3! **context.ml#2841:a6:
+Some( Prio:1
+ COND =>[
+  Prio:-1
+  NothingToDo => base_case_unfold not selected;
+  Prio:1
+  Match =>
+  ])
+@3! **context.ml#2852:a7:
+Some( Prio:1
+ COND =>[
+  Prio:-1
+  NothingToDo => base_case_unfold not selected;
+  Prio:1
+  Match =>
+  ])
+@3! **context.ml#2918:l2:
+[ Prio:1
+ COND =>[
+  Prio:-1
+  NothingToDo => base_case_unfold not selected;
+  Prio:1
+  Match =>
+  ]]
+@3! **context.ml#2924:l3:[]
+@3! **context.ml#2943:a_accfold length:0
+@3! **context.ml#2944:a normal length:1
+(==context.ml#3745==)
+process_one_match@3@2@1
+process_one_match inp1 :match_res:
+ Type: Root
+ LHS: x::Elem<s,flted_17_35>@M
+ RHS: x::Elem<p,Anon_13>@M
+ root_inst: None
+ lhs_rest: emp
+ rhs_rest: emp
+ alias set: [x,x]rhs_inst: []rhs_infer: None
+process_one_match inp2 :lhs_h: x::Elem<s,flted_17_35>@M
+process_one_match inp3 :lhs_p: flted_17_35=1
+process_one_match inp4 :rhs_node: x::Elem<p,Anon_13>@M
+process_one_match inp5 :rhs_rest: emp
+process_one_match inp6 :rhs_p: true
+process_one_match inp7 :([],None)
+process_one_match@3 EXIT: Prio:1
+ Match =>
