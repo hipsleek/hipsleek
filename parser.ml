@@ -888,7 +888,7 @@ let set_slicing_utils_pure_double f il =
 		(* if (ls == []) then f                                                       *)
 		(* else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))       *)
   | Pure_c pc -> let () = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
-    | Pure_t (pc, ann0) -> let () = Hashtbl.add !Ipure.linking_exp_list pc 0 in
+  | Pure_t (pc, ann0) -> let () = Hashtbl.add !Ipure.linking_exp_list pc 0 in
                           (* let () = Hashtbl.add !Ipure.linking_exp_list ann0 0 in *)
                           f
   else f
@@ -1590,12 +1590,17 @@ cid:
     | `NULL                     ->  (null_name, Unprimed)
     | `THIS _         		->  (this, Unprimed)]];
 
+cid_or_cexp:
+  [[ (* i = cid -> ? *)
+   (* |  *)
+    e1 = cexp_w -> get_pure_exp e1 no_pos
+   ]];
 
 cid_or_pair_or_triple:
   [[
-    `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN -> 
-    let pe1 = get_pure_exp e1 no_pos in
-    let pe2 = get_pure_exp e2 no_pos in
+    `OPAREN; e1= cid_or_cexp ; `COMMA;  e2= cid_or_cexp; `CPAREN -> 
+    let pe1 = e1 in
+    let pe2 = e2 in
     (("_",Unprimed),(Some(pe1,pe2)))
     | i = cid -> (i,None)
     | `OPAREN; `SELFT _; `COMMA; e2=cexp_w ; `COMMA;  e3= cexp_w; `CPAREN ->
@@ -2158,7 +2163,11 @@ slicing_label: [[ `DOLLAR -> true ]];
 exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2 ]];
 
 cexp_w:
-  [ "pure_lbl"
+  [ (* "self id" *)
+  (*   [ ptr =cid ->  *)
+  (*     let f = Pure_f (P.Var(v,(get_pos_camlp4 _loc 1)))  *)
+  (*       set_slicing_utils_pure_double f false] *)
+  (* | *) "pure_lbl"
     [ ofl= pure_label ; spc=SELF -> apply_pure_form1 (fun c-> label_formula c ofl) spc]
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]

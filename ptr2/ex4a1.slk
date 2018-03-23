@@ -19,6 +19,9 @@ pred_prim AsegNE<start:int, end:int>
 pred_prim Elem<start:int,value:int> 
      inv_exact BG([start], true). // non-null
 
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+
 //(1)
 checkentail_exact x::Elem<s,1> & p=p |- x::Elem<p,_>.
 expect Fail.
@@ -26,8 +29,10 @@ print residue.
 // should not match by x, but by s+p
 */
 
-checkentail_exact x::Aseg<s,b>  |- x::Aseg<s,c>.
-//checkentail_exact x::Aseg<s,b>  |- x::Aseg<s',c> & s'=s.
+//checkentail_exact x::Aseg<s,b> //& c=c  
+ //                      |- x::Aseg<s,c>.
+checkentail_exact x::Aseg<s,b> & s'=s' |- x::Aseg<s',c> .
+checkentail_exact x::ElemN<c> & s'=s' |- x::ElemN<_>.
 expect Fail.
 print residue.
 
