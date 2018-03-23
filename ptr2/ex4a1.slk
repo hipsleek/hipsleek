@@ -10,8 +10,15 @@
 //       For example, ../../sleek ex1.slk --arr-pre
 //       To print all the intermediate steps, run with --verbose-arr
       
-pred_prim Aseg<end:int,start:int> 
-     inv_exact BG([(start,end)],true). //0<=start<=end). // possibly empty
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred_prim AsegNE<end> 
+     inv_exact BG([(self,end)],0<self<end). 
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
 
 /*
 pred_prim AsegNE<start:int, end:int> 
@@ -19,8 +26,6 @@ pred_prim AsegNE<start:int, end:int>
 pred_prim Elem<start:int,value:int> 
      inv_exact BG([start], true). // non-null
 
-pred_prim ElemN<start:int> 
-     inv_exact BG([self], true). // non-null
 
 //(1)
 checkentail_exact x::Elem<s,1> & p=p |- x::Elem<p,_>.
@@ -31,8 +36,59 @@ print residue.
 
 //checkentail_exact x::Aseg<s,b> //& c=c  
  //                      |- x::Aseg<s,c>.
-checkentail_exact x::Aseg<s,b> & s'=s' |- x::Aseg<s',c> .
-checkentail_exact x::ElemN<c> & s'=s' |- x::ElemN<_>.
+checkentail_exact x::Aseg<b> & s'=s' |- x::Aseg<c> .
+expect Valid.
+print residue.
+checkentail_exact x::Aseg<b> & c=c |- x::Aseg<c> .
 expect Fail.
 print residue.
+checkentail_exact x::ElemN<c> & s'=s' |- x::ElemN<_>.
+expect Valid.
+print residue.
+
+checkentail_exact x::ElemN<c> & s'=s' |- x::ElemN<_> & x!=null.
+expect Valid.
+print residue.
+
+checkentail_exact x::Aseg<b> & s'=s' |- x::Aseg<c> & x<=c.
+expect Valid.
+print residue.
+// <1>emp&c=b&{FLOW,(4,5)=__norm#E}[]
+// what about reside pure..
+
+checkentail_exact x::Aseg<b> & s'=s' |- x::Aseg<c> & x!=null.
+expect Fail.
+print residue.
+
+
+checkentail_exact x::Aseg<b> & s'=s' |- x::Aseg<c> & x<=c.
+expect Valid.
+print residue.
+// <1>emp&c=b&{FLOW,(4,5)=__norm#E}[]
+// what about reside pure..
+
+
+checkentail_exact x::AsegNE<b> * x::AsegNE<c> |- x=null.
+expect Valid.
+print residue.
+// <1>hfalse&false&{FLOW,(4,5)=__norm#E}[]
+
+checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
+expect Valid.
+print residue.
+/* should succeed, currently fail with
+<1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
+
+
+Entail (9) : Fail.(must) cause: ((!(_=_) | x>=b | x>=c)) 
+  & x<=c & x<b & x!=null |-  x=null. LOCS:[0;1;76] (must-bug)
+*/
+
+checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=null.
+expect Fail.
+print residue.
+/* should do we have !(_,_)..
+Entail (9) : Fail.(must) cause: ((!(_=_) | x>=b | x>=c)) 
+  & x<=c & x<b & x!=null |-  x=null. LOCS:[0;1;76] (must-bug)
+*/
 

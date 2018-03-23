@@ -273,10 +273,10 @@ module Make (Token : SleekTokenS)
    ("relation", REL);
    ("requires", REQUIRES);
    ("refines", REFINES);
-   ("res", RES "res");
+   ("__res", RES "res");
    ("rev",REVERSE);
    ("return", RETURN);
-   ("self", SELFT "self");
+   ("__self", SELFT "self");
    ("set",SET);
    ("split", SPLIT);
    ("LexVar", LEXVAR);
@@ -294,7 +294,7 @@ module Make (Token : SleekTokenS)
    ("static", STATIC);
    ("tail",TAIL);
    ("then", THEN);
-   ("this", THIS "this");
+   ("__this", THIS "this");
    ("time", DTIME);
    ("throws", THROWS);
    ("to", TO);
