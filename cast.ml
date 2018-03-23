@@ -106,6 +106,12 @@ and view_decl = {
   view_ann_params : (P.annot_arg * int) list;
   view_domains: (ident * int * int) list;(* (view_extn_name, r_pos (0 is self) , extn_arg_pos) list;*)
   view_cont_vars : P.spec_var list;
+  view_match_align : P.spec_var option; 
+  view_match_args : P.spec_var list; 
+  (* this shd be a set of vars used by view matching *)
+  (* if non-empty, match procedure should use it as the root is determined by it.
+     <= self, view_vars
+  *)
 
   view_pos : loc;
 
@@ -793,6 +799,8 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_ho_vars = [];
 
     view_cont_vars = [];
+    view_match_args = [];
+    view_match_align = None;
     view_seg_opz = None;
     view_case_vars = [];
     view_uni_vars = [];
@@ -860,6 +868,8 @@ let mk_view_prim v_name v_args v_inv pos =
     view_data_name = "";
     view_ho_vars = [];
     view_cont_vars = [];
+    view_match_args = [];
+    view_match_align = None;
     view_seg_opz = None;
     view_case_vars = [];
     view_uni_vars = [];
