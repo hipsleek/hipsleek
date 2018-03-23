@@ -396,7 +396,9 @@ let lub s1 s2 = Lub (s1, s2)
 
 let mk_security v lbl pos = Security (VarBound (v, lbl), pos)
 
-let sec_spec_var (SpecVar (t, id, primed)) = SpecVar (t, "sec_" ^ id, primed)
+let mk_security_bform v lbl pos = BForm ((mk_security v lbl pos, None), None)
+
+let sec_spec_var (SpecVar (_, id, primed)) = SpecVar (SecT, "sec_" ^ id, primed)
 
 let get_rel_from_imm_ann p = match p with
   | PostImm f
@@ -2452,7 +2454,7 @@ and mkBagSubExp e1 e2 pos =
 
 and mkRes t = SpecVar (t, res_name, Unprimed)
 
-and mkSecRes t = SpecVar (t, "sec_" ^ res_name, Unprimed)
+and secRes = SpecVar (SecT, sec_res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
 

@@ -84,3 +84,5 @@ let extract_security_formulas f =
   let formulas = CP.split_conjunctions f in
   let security_formulas, other_formulas = List.partition is_security_formula formulas in
   security_formulas, CP.join_conjunctions other_formulas
+
+let is_sec_ident ident = BatString.starts_with ident "sec_"
