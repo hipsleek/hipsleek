@@ -212,6 +212,7 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
 (* | SLTyp (* type of ho formula *) *)
+  | SecT (* Type for spec vars representing security vars *)
 
 (* let eq_type t1 t2 = match *)
 (*     | FORM, FORM  *)
@@ -630,6 +631,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | SecT -> "SecT"
 ;;
 
 let string_of_typed_ident (typ,id) =

@@ -964,7 +964,16 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
       | _ -> print_endline_quiet ("gather_type_info_b_formula: relation " ^ r);tlist
     )
-  | IP.Security (sec_formula, pos) -> tlist (* TODO: this may be wrong, need to check; at the very least, this is probably unsound *)
+  | IP.Security (sec_formula, pos) ->
+      let free_vars = IP.sec_formula_fv sec_formula in
+      let tl = List.fold_left
+        (fun tl (v, _) ->
+          fst @@ gather_type_info_var v tl SecT pos
+        )
+        tlist
+        free_vars in
+      (* y_binfo_hp (add_str "new tlist" string_of_tlist) tl; *)
+      tl
 
 and gather_type_info_term_ann prog tann tlist =
   match tann with
