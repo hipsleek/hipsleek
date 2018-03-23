@@ -1012,89 +1012,90 @@ expect_infer:
   ]];
 
 non_empty_command:
-    [[  t=data_decl           -> DataDef t
-        | c=class_decl -> DataDef c
-      | `PRED;t= view_decl     -> PredDef t
-      | `PRED_EXT;t= view_decl_ext     -> PredDef t
-      | `PRED_PRIM;t=prim_view_decl     -> PredDef t
-      | t=barrier_decl        -> BarrierCheck t
-      | t = func_decl         -> FuncDef t
-      | t = rel_decl          -> RelDef t
-      | t = hp_decl          -> HpDef t
-      | l = coerc_decl_aux -> LemmaDef l
-      | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
-      | t=let_decl            -> t
-      | t= checknorm_cmd         -> CheckNorm t
-      | t= checkeq_cmd         -> EqCheck t
-      | t= checkentail_cmd     -> EntailCheck t
-      | t= checksat_cmd     -> SatCheck t
-      | t= checknondet_cmd     -> NonDetCheck t
-      | t= validate_cmd     -> Validate t
-      | t= relassume_cmd     -> RelAssume t
-      | t=reldefn_cmd     -> RelDefn t
-      | t=shapeinfer_cmd     -> ShapeInfer t
-      | t=shapedivide_cmd     -> ShapeDivide t
-      | t=shapeconquer_cmd     -> ShapeConquer t
-      | t=shapelfp_cmd     -> ShapeLFP t
-      | t=shaperec_cmd     -> ShapeRec t
-      | t=shapepost_obl_cmd     -> ShapePostObl t
-      | t=shapeinfer_proper_cmd     -> ShapeInferProp t
-      | t=shapesplit_base_cmd     -> ShapeSplitBase t
-      | t=shapeElim_cmd     -> ShapeElim t
-      | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
-      | t=shapeReuse_cmd     -> ShapeReuse t
-      | t=predUnfold_cmd     -> 
+    [[  t = data_decl                  -> DataDef t
+      | c = class_decl                 -> DataDef c
+      | `PRED; t = view_decl           -> PredDef t
+      | `PRED_EXT; t = view_decl_ext   -> PredDef t
+      | `PRED_PRIM; t = prim_view_decl -> PredDef t
+      | t = barrier_decl               -> BarrierCheck t
+      | t = func_decl                  -> FuncDef t
+      | t = rel_decl                   -> RelDef t
+      | t = hp_decl                    -> HpDef t
+      | l = coerc_decl_aux             -> LemmaDef l
+      | t = axiom_decl                 -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+      | t = let_decl                   -> t
+      | t = checknorm_cmd              -> CheckNorm t
+      | t = checkeq_cmd                -> EqCheck t
+      | t = checkentail_cmd            -> EntailCheck t
+      | t = checksat_cmd               -> SatCheck t
+      | t = checknondet_cmd            -> NonDetCheck t
+      | t = validate_cmd               -> Validate t
+      | t = relassume_cmd              -> RelAssume t
+      | t = reldefn_cmd                -> RelDefn t
+      | t = shapeinfer_cmd             -> ShapeInfer t
+      | t = shapedivide_cmd            -> ShapeDivide t
+      | t = shapeconquer_cmd           -> ShapeConquer t
+      | t = shapelfp_cmd               -> ShapeLFP t
+      | t = shaperec_cmd               -> ShapeRec t
+      | t = shapepost_obl_cmd          -> ShapePostObl t
+      | t = shapeinfer_proper_cmd      -> ShapeInferProp t
+      | t = shapesplit_base_cmd        -> ShapeSplitBase t
+      | t = shapeElim_cmd              -> ShapeElim t
+      | t = shapeReuseSubs_cmd         -> ShapeReuseSubs t
+      | t = shapeReuse_cmd             -> ShapeReuse t
+      | t = predUnfold_cmd             ->
         let check_qualifier q =
           begin
            match q with
-           | Some id -> 
-             if id="disj" then () else failwith ("found "^id^" qbut expecting disj")
-           | None -> ()
+           | Some id ->
+             if id="disj" then () else failwith ("found " ^ id ^ " but expecting disj")
+           | None    -> ()
           end in
         let q = fst t in
         let () = check_qualifier q in
         PredUnfold t
-      | t=shapeExtract_cmd     -> ShapeExtract t
-      | t=decl_dang_cmd        -> ShapeDeclDang t
-      | t= decl_unknown_cmd        -> ShapeDeclUnknown t
-      | t=shape_sconseq_cmd     -> ShapeSConseq t
-      | t=shape_sante_cmd     -> ShapeSAnte t
-      | t = shape_add_dangling_cmd -> ShapeAddDangling t
-      | t = shape_unfold_cmd -> ShapeUnfold t
-      | t = shape_param_dangling_cmd -> ShapeParamDangling t
-      | t = shape_simplify_cmd -> ShapeSimplify t
-      | t = shape_merge_cmd -> ShapeMerge t
-      | t = shape_trans_to_view_cmd -> ShapeTransToView t
-      | t = shape_derive_pre_cmd -> ShapeDerivePre t
-      | t = shape_derive_post_cmd -> ShapeDerivePost t
-      | t = shape_derive_view_cmd -> ShapeDeriveView t
-      | t = shape_extn_view_cmd -> ShapeExtnView t
-      | t = data_mark_rec_cmd -> DataMarkRec t
-      | t = shape_normalize_cmd -> ShapeNormalize t
-      | t = pred_elim_head_cmd -> PredElimHead t
-      | t = pred_elim_tail_cmd -> PredElimTail t
-      | t = pred_unify_disj_cmd -> PredUnifyDisj t
-      | t=pred_split_cmd     -> PredSplit t
-      | t=pred_norm_seg_cmd     -> PredNormSeg t
-      | t=pred_norm_disj_cmd     -> PredNormDisj t
-      | t = rel_infer_cmd -> RelInfer t
-      | t=simplify_cmd        -> Simplify t
-      | t=hull_cmd        -> Slk_Hull t
-      | t=pairwise_cmd        -> Slk_PairWise t
-      | t= infer_cmd           -> InferCmd t  
-      | t= captureresidue_cmd  -> CaptureResidue t
-      | t=print_cmd           -> PrintCmd t
-      | t=cmp_cmd           ->  CmpCmd t
-      | t=time_cmd            -> t 
-      | t = ui_decl         -> UiDef t
+      | t = shapeExtract_cmd           -> ShapeExtract t
+      | t = decl_dang_cmd              -> ShapeDeclDang t
+      | t = decl_unknown_cmd           -> ShapeDeclUnknown t
+      | t = shape_sconseq_cmd          -> ShapeSConseq t
+      | t = shape_sante_cmd            -> ShapeSAnte t
+      | t = shape_add_dangling_cmd     -> ShapeAddDangling t
+      | t = shape_unfold_cmd           -> ShapeUnfold t
+      | t = shape_param_dangling_cmd   -> ShapeParamDangling t
+      | t = shape_simplify_cmd         -> ShapeSimplify t
+      | t = shape_merge_cmd            -> ShapeMerge t
+      | t = shape_trans_to_view_cmd    -> ShapeTransToView t
+      | t = shape_derive_pre_cmd       -> ShapeDerivePre t
+      | t = shape_derive_post_cmd      -> ShapeDerivePost t
+      | t = shape_derive_view_cmd      -> ShapeDeriveView t
+      | t = shape_extn_view_cmd        -> ShapeExtnView t
+      | t = data_mark_rec_cmd          -> DataMarkRec t
+      | t = shape_normalize_cmd        -> ShapeNormalize t
+      | t = pred_elim_head_cmd         -> PredElimHead t
+      | t = pred_elim_tail_cmd         -> PredElimTail t
+      | t = pred_unify_disj_cmd        -> PredUnifyDisj t
+      | t = pred_split_cmd             -> PredSplit t
+      | t = pred_norm_seg_cmd          -> PredNormSeg t
+      | t = pred_norm_disj_cmd         -> PredNormDisj t
+      | t = rel_infer_cmd              -> RelInfer t
+      | t = simplify_cmd               -> Simplify t
+      | t = hull_cmd                   -> Slk_Hull t
+      | t = pairwise_cmd               -> Slk_PairWise t
+      | t = infer_cmd                  -> InferCmd t
+      | t = captureresidue_cmd         -> CaptureResidue t
+      | t = print_cmd                  -> PrintCmd t
+      | t = cmp_cmd                    ->  CmpCmd t
+      | t = time_cmd                   -> t
+      | t = ui_decl                    -> UiDef t
       (* TermInf: Command for Termination Inference *)
-      | t = templ_decl -> TemplDef t
-      | t = templ_solve_cmd -> TemplSolv t
-      | t = ut_decl -> UtDef t
-      | t = term_infer_cmd -> TermInfer
-      | t = term_assume_cmd -> TermAssume t
-      | t = expect_infer -> t
-      | t=macro	-> EmptyCmd]];
+      | t = templ_decl                 -> TemplDef t
+      | t = templ_solve_cmd            -> TemplSolv t
+      | t = ut_decl                    -> UtDef t
+      | t = term_infer_cmd             -> TermInfer
+      | t = term_assume_cmd            -> TermAssume t
+      | t = expect_infer               -> t
+      | t = macro                      -> EmptyCmd
+       ]];
 
 pure_inv: [[`INV; pf=pure_constr -> pf]];
 
@@ -1782,21 +1783,19 @@ core_constr:
     ]
   ];
 
-(* ADI: Information Flow Analysis *)
+(* Information Flow Analysis *)
+(* NOTE: in cformula         *)
 opt_sec_constr: [[ scl = OPT sep_sec_constr -> un_option scl [] ]];
-
 sep_sec_constr: [[ `SEC_SEP; scl = sec_constr_list -> scl ]];
-
 sec_constr_list: [[ scl = LIST1 sec_constr SEP `AND -> scl ]];
-
 sec_constr: [[ sid = cid; `SEC_OP; slbl = sec_label -> F.mk_sec_form sid slbl]];
-
 sec_label: [[
     `HI_SEC -> F.Sec_HI
   | `LO_SEC -> F.Sec_LO
   | slbl1 = SELF; `LUB_SEC; slbl2 = SELF -> F.Sec_LUB(slbl1, slbl2)
   | sid   = cid -> F.Sec_Var(sid)
 ]];
+(*****************************)
 
 opt_vperm_constr: [[ vp = OPT star_vperm_constr -> un_option vp VP.empty_vperm_sets ]];
 
@@ -1844,12 +1843,12 @@ opt_heap_constr: [[ t = heap_constr -> t]];
 heap_constr:
   [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
-   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]]; 
+   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]];
 
-heap_rd: 
+heap_rd:
   [[ shi= simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
-   | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos_camlp4 _loc 2)
-   | shi=simple_heap_constr_imm                  -> shi]];
+   | shi= simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos_camlp4 _loc 2)
+   | shi= simple_heap_constr_imm                  -> shi]];
 
 
 heap_rw:
@@ -1865,8 +1864,8 @@ heap_rw:
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
-  [[   
-     shc=SELF; peek_star; `STAR; hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
+  [[
+     shc=SELF; peek_star; `STAR; hw=simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
@@ -1876,46 +1875,47 @@ heap_wr:
 
 heap_id:
   [[
-     `IDENTIFIER id -> (id, 0, 0, _loc)
+     `IDENTIFIER id         -> (id     , 0, 0, _loc)
    (* definitions below is for cparser *)
-   | `VOID; `STAR -> ("void", 1, 0, _loc)
-   | `INT; `STAR -> ("int", 1, 0, _loc)
-   | `FLOAT; `STAR -> ("float", 1, 0, _loc)
-   | `BOOL; `STAR -> ("bool", 1, 0, _loc)
-   | `IDENTIFIER id; `STAR -> (id, 1, 0, _loc)
-   | `VOID; `CARET -> ("void", 0, 1, _loc)
-   | `INT; `CARET -> ("int", 0, 1, _loc)
-   | `FLOAT; `CARET -> ("float", 0, 1, _loc)
-   | `BOOL; `CARET -> ("bool", 0, 1, _loc)
-   | `IDENTIFIER id; `CARET -> (id, 0, 1, _loc)
-   | hid = heap_id; `STAR -> 
+   | `VOID ; `STAR          -> ("void" , 1, 0, _loc)
+   | `INT  ; `STAR          -> ("int"  , 1, 0, _loc)
+   | `FLOAT; `STAR          -> ("float", 1, 0, _loc)
+   | `BOOL ; `STAR          -> ("bool" , 1, 0, _loc)
+   | `IDENTIFIER id; `STAR  -> (id     , 1, 0, _loc)
+   | `VOID ; `CARET         -> ("void" , 0, 1, _loc)
+   | `INT  ; `CARET         -> ("int"  , 0, 1, _loc)
+   | `FLOAT; `CARET         -> ("float", 0, 1, _loc)
+   | `BOOL ; `CARET         -> ("bool" , 0, 1, _loc)
+   | `IDENTIFIER id; `CARET -> (id     , 0, 1, _loc)
+   | hid = heap_id; `STAR   ->
        let (h, s, c, l) = hid in
        if (c > 0) then
          report_error (get_pos_camlp4 _loc 1) "invalid heap_id string"
        else
          (h, s+1, c, l)
-   | hid = heap_id; `CARET ->
+   | hid = heap_id; `CARET  ->
        let (h, s, c, l) = hid in
        (h, s, c+1, l)
   ]];
 
-(*LDK: frac for fractional permission*)   
+(*LDK: frac for fractional permission*)
 (* TODO:HO *)
 simple_heap_constr_imm:
-  [[ peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list; frac = opt_perm; `LT; hl= opt_data_h_args; `GT; annl = ann_heap_list; dr= opt_derv; split= opt_split; ofl= opt_formula_label ->
+  [[ peek_heap; c = cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list; frac = opt_perm; `LT;
+     hl = opt_data_h_args; `GT; annl = ann_heap_list; dr = opt_derv; split = opt_split; ofl = opt_formula_label ->
        let imm_opt = get_heap_ann annl in
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        match hl with
        | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> 
-           let t11, t12 = List.split t in
+       | ([],t)  ->
+           let t11, t12 = List.split t   in
            let t21, t22 = List.split t12 in
-           let t3 = List.combine t11 t21 in
+           let t3       = List.combine t11 t21 in
            F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t3 t22 ofl  (get_pos_camlp4 _loc 2)
-       | (t,_)  -> 
-           let t1, t2 = List.split t in 
+       | (t,_)   ->
+           let t1, t2 = List.split t in
            F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
   ]];
 
@@ -1956,9 +1956,15 @@ simple_heap_constr:
        match hl with
        (* WN : HeapNode2 is for d<field=v*> *)
        (*  p<> can be either node or predicate *)
-       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) ->
+         let res = F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2) in
+         res
+       | ([],t)  ->
+         let res = F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         res
+       | (t,_)   ->
+         let res = F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         res
      )
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; 
      (* `LT; hl= opt_data_h_args; `GT;*)
@@ -1970,15 +1976,24 @@ simple_heap_constr:
         let (c, hid, deref) = get_heap_id_info c hid in
         let ho_args = un_option opt1 [] in
         match hl with
-        | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-        | ([], t) -> 
-            let t11, t12 = List.split t in  
-            let t21, t22 = List.split t12 in 
-            let t3 = List.combine t11 t21 in  
-            F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
+        | ([],[]) ->
+          let res = F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2) in
+          res
+        | ([], t) ->
+          let t11, t12 = List.split t in
+          let t21, t22 = List.split t12 in
+          let t3 = List.combine t11 t21 in
+          let res = F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2) in
+          res
         | (t, _)  ->
-            let t1, t2 = List.split t in  
-            F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
+          let t1, t2 = List.split t in
+          let res = F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2) in
+          let pr_ann_opt ann =
+            match ann with
+            | Some a -> P.string_of_ann a
+            | _      -> ""
+          in
+          res
      )
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;
      (* `LT; hal=opt_general_h_args; `GT; *)
@@ -1987,17 +2002,21 @@ simple_heap_constr:
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        match hal with
-       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) ->
+         let res = F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("3: ([],[]) => " ^ !F.print_h_formula res) in
+         res
+       | ([],t) ->
+         let res = F.mkHeapNode2 c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("3: ([],t ) => " ^ !F.print_h_formula res) in
+         res
+       | (t,_)  ->
+         let res = F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("3: (t,_  ) => " ^ !F.print_h_formula res) in
+         res
      )
    | t = ho_fct_header -> (
-       let frac = (
-         if (Perm.allow_perm ()) then 
-           full_iperm ()
-         else 
-           empty_iperm ()
-       ) in
+       let frac = (if (Perm.allow_perm ()) then full_iperm () else empty_iperm ()) in
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
@@ -2009,17 +2028,32 @@ simple_heap_constr:
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
        match hl with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) ->
+         let res = F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("4: ([],t ) => " ^ !F.print_h_formula res) in
+         res
+       | (t,_)  ->
+         let res = F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("4: (t,_  ) => " ^ !F.print_h_formula res) in
+         res
      )
    | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
          hal = non_thread_args1;
          dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
        let ho_args = un_option opt1 [] in
        match hal with
-       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) ->
+         let res = F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("5: ([],[]) => " ^ !F.print_h_formula res) in
+         res
+       | ([],t)  ->
+         let res = F.mkHeapNode2 c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("5: ([],_ ) => " ^ !F.print_h_formula res) in
+         res
+       | (t,_)   ->
+         let res = F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2) in
+         let _ = print_endline ("5: (t,_  ) => " ^ !F.print_h_formula res) in
+         res
      )
      (* High-order variables, e.g. %P*)
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
@@ -2037,7 +2071,7 @@ simple_heap_constr:
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
-  
+
 (* (* HO Resource variables' annotation *)  *)
 (* rflow_ann: [[ `IN_RFLOW | `OUT_RFLOW ]]; *)
 
@@ -3052,21 +3086,21 @@ id_star:[[`IDENTIFIER id; v = OPT triv_star ->
 
 (********** Higher Order Preds *******)
 
-hopred_decl: 
-    [[`HPRED; h=hpred_header; `EXTENDS; b=ext_form 
-                                      -> mkHoPred  (fst (fst h)) "extends" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
+hopred_decl:
+    [[ `HPRED; h=hpred_header; `EXTENDS; b=ext_form
+       -> mkHoPred  (fst (fst h)) "extends" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
 	   | `HPRED; h=hpred_header; `REFINES;  b=ext_form
-                                         -> mkHoPred  (fst (fst h)) "refines" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
-       | `HPRED; h=hpred_header; `JOIN; s=split_combine 
-                                      -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos)
-	   | `HPRED; h=hpred_header;  `EQEQ; s=shape; oi= opt_inv; `SEMICOLON 
-           -> 
-               let (oi, _) = oi in
-               mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi]];
+       -> mkHoPred  (fst (fst h)) "refines" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos)
+     | `HPRED; h=hpred_header; `JOIN; s=split_combine
+       -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos)
+	   | `HPRED; h=hpred_header;  `EQEQ; s=shape; oi= opt_inv; `SEMICOLON
+       -> let (oi, _) = oi in
+          mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi
+     ]];
 
 shape: [[ t= formulas -> fst t]];
 
-split_combine: 
+split_combine:
   [[ h=hpred_header -> ()
    | h=hpred_header; `SPLIT; t=SELF -> ()
    | h=hpred_header; `COMBINE; t=SELF -> ()]];
@@ -3465,16 +3499,17 @@ file_name: [[   `DOTDOT        -> ".."
 opt_pred:
   [[ OPT [ x = `PRED] -> 1]];
 type_decl:
-  [[ t= data_decl  -> Data t
-   | t= template_data_decl  -> Data t
-   | c=class_decl -> Data c
-   | e=enum_decl  -> Enum e
-   | peek_view_decl; o = opt_pred; v=view_decl; `SEMICOLON -> View v
-   | peek_view_decl; o = opt_pred; v=view_decl; `DOT -> View v
-   | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
-   | `PRED_EXT;v= view_decl_ext  ; `SEMICOLON   -> View v
-   | b=barrier_decl ; `SEMICOLON   -> Barrier b
-   | h=hopred_decl-> Hopred h ]];
+  [[ t = data_decl          -> Data t
+   | t = template_data_decl -> Data t
+   | c = class_decl         -> Data c
+   | e = enum_decl          -> Enum e
+   | peek_view_decl; o = opt_pred; v = view_decl; `SEMICOLON -> View v
+   | peek_view_decl; o = opt_pred; v = view_decl; `DOT       -> View v
+   | `PRED_PRIM; v = prim_view_decl; `SEMICOLON              -> View v
+   | `PRED_EXT ; v = view_decl_ext ; `SEMICOLON              -> View v
+   | b = barrier_decl              ; `SEMICOLON              -> Barrier b
+   | h = hopred_decl                                         -> Hopred h
+   ]];
 
 
 (***************** Global_variable **************)

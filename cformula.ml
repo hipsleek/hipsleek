@@ -794,7 +794,7 @@ let replace_sec_var (fr:CP.spec_var list) (tv:CP.spec_var list) (f:formula) : fo
 
 let rec get_sec_label_from_sec_formula_list (var:CP.spec_var) (sl:sec_formula list) : sec_label =
   (* NOTE: ensure that there is only one label in sec_formula list *)
-  (* ADI TODO: make it smarter? if none at all -> HI, else, GLB of all? *)
+  (* NOTE: if none exists, take Sec_HI                             *)
   match sl with
   | []      -> Sec_HI
   | sec::sr -> if (is_eq_sec_var var sec.sec_var)
@@ -3577,16 +3577,53 @@ and add_mix_formula_to_formula_x (f1_mix: MCP.mix_formula) (f2_f:formula)  : for
   | Exists b -> Exists {b with  formula_exists_pure = add_mix_formula_to_mix_formula f1_mix b.formula_exists_pure;}
 
 (* Information Flow Analysis *)
+and simpl_lub (lbl1:sec_label) (lbl2:sec_label) : sec_label =
+  match lbl1,lbl2 with
+  | (Sec_HI,_) | (_,Sec_HI) -> Sec_HI
+  | (Sec_LO,_)              -> lbl2
+  | (_,Sec_LO)              -> lbl1
+  | (Sec_Var(x),Sec_Var(y)) -> if (CP.eq_spec_var x y) then lbl1 else Sec_LUB(lbl1,lbl2)
+  | _                       -> Sec_LUB(lbl1,lbl2)
 and lub_op (lbl1:sec_label) (lbl2:sec_label) : sec_label =
+  match lbl1,lbl2 with
+  | (Sec_HI,_) | (_,Sec_HI)         -> Sec_HI
+  | (Sec_LO,_)                      -> lbl2
+  | (_,Sec_LO)                      -> lbl1
+  | (Sec_Var(x),Sec_Var(y))         -> if (CP.eq_spec_var x y) then lbl1 else Sec_LUB(lbl1,lbl2)
+  | (Sec_LUB(l1,l2),Sec_LUB(r1,r2)) -> simpl_lub (lub_op l1 l2) (lub_op r1 r2)
+  | (Sec_LUB(l1,l2),_)              -> simpl_lub (lub_op l1 l2) lbl2
+  | (_,Sec_LUB(r1,r2))              -> simpl_lub lbl1           (lub_op r1 r2)
+and lub_op_old (lbl1:sec_label) (lbl2:sec_label) : sec_label =
   match lbl1 with
   | Sec_LO         -> lbl2
   | Sec_HI         -> Sec_HI
-  | Sec_LUB(l1,l2) -> lub_op l1 l2
-  | Sec_Var(_)     -> Sec_LUB(lbl1,lbl2)
-and simpl_sec_label (lbl:sec_label) : sec_label =
-  match lbl with
-  | Sec_LO | Sec_HI | Sec_Var(_) -> lbl
-  | Sec_LUB(lbl1,lbl2)           -> lub_op lbl1 lbl2
+  | Sec_LUB(l1,l2) -> Sec_LUB(lub_op l1 l2, lbl2)
+  | Sec_Var(_)     ->
+    match lbl2 with
+    | Sec_LO         -> lbl1
+    | Sec_HI         -> Sec_HI
+    | Sec_LUB(l1,l2) -> Sec_LUB(lbl1, lub_op l1 l2)
+    | Sec_Var(_)     -> Sec_LUB(lbl1,lbl2)
+and add_sec_context_to_formula (ctx:sec_label) (f:formula) : formula =
+  match f with
+  | Or ({
+      formula_or_f1  = f1;
+      formula_or_f2  = f2;
+      formula_or_pos = pos;
+    })
+    -> Or {
+        formula_or_f1  = add_sec_context_to_formula ctx f1;
+        formula_or_f2  = add_sec_context_to_formula ctx f2;
+        formula_or_pos = pos
+      }
+  | Base sub_f
+    -> Base {
+        sub_f with formula_base_sec_ctx = ctx
+      }
+  | Exists sub_f
+    -> Exists {
+        sub_f with formula_exists_sec_ctx = ctx
+      }
 and add_sec_formula_to_formula (sf:sec_formula) (f:formula) : formula =
   match f with
   | Or ({
@@ -3941,17 +3978,32 @@ and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_
   {one_f with formula_ref_vars = ref_vars}
 
 (* Information Flow Analysis *)
+and simpl_sec_label (lbl:sec_label) : sec_label =
+  match lbl with
+  | Sec_LO | Sec_HI | Sec_Var(_) -> lbl
+  | Sec_LUB(lbl1,lbl2)           -> lub_op lbl1 lbl2
+and subst_sec_label (fr, t) (o : CP.spec_var) =
+  if CP.eq_spec_var fr o then t else Sec_Var(o)
 and apply_one_sec_label ((fr, t) as s : (CP.spec_var * CP.spec_var)) (lbl : sec_label) =
   match lbl with
-  | Sec_Var(v)     -> if (is_eq_sec_var v fr) then Sec_Var(t) else Sec_Var(v)
-  | Sec_LUB(l1,l2) -> Sec_LUB(apply_one_sec_label s l1, apply_one_sec_label s l2)
+  | Sec_Var(v)     -> Sec_Var(subst_var s v)
+  | Sec_LUB(l1,l2) -> (simpl_sec_label (Sec_LUB((apply_one_sec_label s l1), (apply_one_sec_label s l2))))
   | Sec_HI         -> Sec_HI
   | Sec_LO         -> Sec_LO
 and apply_one_sec_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : sec_formula) =
-  let new_sec_var = if (is_eq_sec_var fr f.sec_var)
-    then t else f.sec_var in
-  let new_sec_lbl = apply_one_sec_label s f.sec_lbl in
-  { sec_var = new_sec_var; sec_lbl = new_sec_lbl }
+  mkSecFormula (subst_var s f.sec_var) (apply_one_sec_label s f.sec_lbl)
+and apply_rhs_sec_label ((fr, t) as s : (CP.spec_var * sec_label)) (lbl : sec_label) =
+  match lbl with
+  | Sec_Var(v)     -> subst_sec_label s v
+  | Sec_LUB(l1,l2) -> (simpl_sec_label (Sec_LUB((apply_rhs_sec_label s l1), (apply_rhs_sec_label s l2))))
+  | Sec_HI         -> Sec_HI
+  | Sec_LO         -> Sec_LO
+and apply_rhs_sec_formula ((fr, t) as s : (CP.spec_var * sec_label)) (f : sec_formula) =
+  mkSecFormula f.sec_var (apply_rhs_sec_label s f.sec_lbl)
+and subst_rhs_sec_formula_list ((fr, t) as s : (CP.spec_var * sec_label)) (sl : sec_formula list) =
+  match sl with
+  | []      -> []
+  | sec::sr -> (apply_rhs_sec_formula s sec)::(subst_rhs_sec_formula_list s sr)
 (*****************************)
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
@@ -13813,9 +13865,125 @@ and remove_dupl_sec_vars (svl:CP.spec_var list) : (CP.spec_var list) =
   match svl with
   | []     -> []
   | v::svr -> v::(remove_dupl_sec_vars (List.filter (fun x -> (CP.full_name_of_spec_var v) <> (CP.full_name_of_spec_var x)) svr))
+
+(* NOTE: Propagation of information flow state *)
+and propagate_const_res_to_entail_state (es:entail_state) =
+  let sec_context = get_sec_context_from_estate es in
+  let sec_formula = mkSecFormula CP.mkSecRes sec_context in
+  let new_formula = add_sec_formula_to_formula sec_formula es.es_formula in
+  let new_context = Ctx { es with es_formula = new_formula } in
+  new_context
+and propagate_var_res_to_entail_state (var:ident) (es:entail_state) =
+  let sec_context = get_sec_context_from_estate es in
+  let sec_formula = mkSecFormula CP.mkSecRes (lub_op sec_context (Sec_Var(CP.mkSecVar var Primed))) in
+  let new_formula = add_sec_formula_to_formula sec_formula es.es_formula in
+  let new_context = Ctx { es with es_formula = new_formula } in
+  new_context
+and propagate_ret_res_to_entail_state (res:CP.spec_var) (es:entail_state) =
+  let sec_context = get_sec_context_from_estate es in
+  let sec_formula = mkSecFormula CP.mkSecRes (lub_op sec_context
+                                                (Sec_Var(CP.mkSecVar (CP.ident_of_spec_var res) Primed))) in
+  let new_formula = add_sec_formula_to_formula sec_formula es.es_formula in
+  let new_context = Ctx { es with es_formula = new_formula } in
+  new_context
+and propagate_cond_to_sec_context (cvar:CP.spec_var) (old_cvar:sec_label ref) (es:entail_state) =
+  let old_context = get_sec_context_from_estate es in
+  old_cvar := old_context; (* update old security context *)
+  let new_context = (lub_op old_context (Sec_Var(cvar))) in
+  update_sec_context_to_entail_state new_context es
+and update_sec_context_to_entail_state (ctx:sec_label) (es:entail_state) =
+  let new_formula = add_sec_context_to_formula ctx es.es_formula in
+  Ctx {es with es_formula = new_formula }
+
+(* NOTE: Sec Formula List Retrieval *)
+and gather_sec_formula_list_in_list_failesc_context (lfc:list_failesc_context) : ((sec_formula list) list) =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (gather_sec_formula_list_in_failesc_context ctx)@(gather_sec_formula_list_in_list_failesc_context rs)
+and gather_sec_formula_list_in_failesc_context (ctx:failesc_context) : ((sec_formula list) list) =
+  let (_,_,bcl) = ctx in
+  gather_sec_formula_list_in_branch_context_list bcl
+and gather_sec_formula_list_in_branch_context_list (bcl:branch_ctx list) : ((sec_formula list) list) =
+  match bcl with
+  | []     -> []
+  | bc::rs -> (gather_sec_formula_list_in_branch_context bc)@(gather_sec_formula_list_in_branch_context_list rs)
+and gather_sec_formula_list_in_branch_context (bc:branch_ctx) : ((sec_formula list) list) =
+  let (_,ctx,_) = bc in
+  gather_sec_formula_list_in_context ctx
+and gather_sec_formula_list_in_context (ctx:context) : ((sec_formula list) list) =
+  match ctx with
+  | Ctx(es)     -> gather_sec_formula_list_in_entail_state es
+  | OCtx(c1,c2) -> (gather_sec_formula_list_in_context c1)@(gather_sec_formula_list_in_context c2)
+and gather_sec_formula_list_in_entail_state (es:entail_state) : ((sec_formula list) list) =
+  gather_sec_formula_list_in_formula es.es_formula
+and gather_sec_formula_list_in_formula (f:formula) : ((sec_formula list) list) =
+  match f with
+  | Base   b -> [b.formula_base_sec]
+  | Exists e -> [e.formula_exists_sec]
+  | Or     o -> (gather_sec_formula_list_in_formula o.formula_or_f1)@(gather_sec_formula_list_in_formula o.formula_or_f2)
+
+(* NOTE: Simplification of Sec Formula via Transitive Closure *)
+(*       This is done by substituting Sec_Var until symbolic  *)
+and simpl_sec_formula_list (sl:sec_formula list) : (sec_formula list) =
+  let rec simpl sl subl =
+    match sl with
+    | []      -> subl
+    | sec::sr -> simpl sr (subst_rhs_sec_formula_list (sec.sec_var,sec.sec_lbl) subl)
+  in
+  let rec fixp sl =
+    let nsl = simpl sl sl in
+    if nsl = sl then nsl else fixp nsl
+  in
+  fixp sl
+
+(* NOTE: sec formula list merge with LUB => use lub_op for simplified version *)
+and merge_sec_formula_list_list (sll:((sec_formula list) list)) : (sec_formula list) =
+  let rec merge sl1 sl2 msl =
+    match sl1 with
+    | []      -> (List.map (fun sf -> {sf with sec_lbl = Sec_HI} ) sl2)@msl
+    | sec::rs ->
+      let dif_l = List.filter (fun sf -> not (CP.eq_spec_var sec.sec_var sf.sec_var)) sl2 in
+      let label = get_sec_label_from_sec_formula_list sec.sec_var sl2 in
+      merge rs dif_l (({sec with sec_lbl = (lub_op label sec.sec_lbl)})::msl)
+  in
+  let rec helper sll msl =
+    match sll with
+    | []     -> msl
+    | sl::rs -> helper rs (merge (simpl_sec_formula_list sl) (simpl_sec_formula_list msl) [])
+  in
+  match sll with
+  | []         -> []
+  | sll0::rssl -> helper rssl sll0
+
+(* NOTE: update sec formula list with merged list *)
+and update_sec_formula_list_in_list_failesc_context (lfc:list_failesc_context) (sec:sec_formula list) : list_failesc_context =
+  match lfc with
+  | []      -> []
+  | ctx::rs -> (update_sec_formula_list_in_failesc_context ctx sec)::(update_sec_formula_list_in_list_failesc_context rs sec)
+and update_sec_formula_list_in_failesc_context (ctx:failesc_context) (sec:sec_formula list) : failesc_context =
+  let (bfl,esc,bcl) = ctx in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, update_sec_formula_list_in_context ctxt sec, ftype)) bcl in (bfl,esc,nbcl)
+and update_sec_formula_list_in_context (ctxt:context) (sec:sec_formula list) : context =
+  match ctxt with
+  | Ctx(es)     -> Ctx(update_sec_formula_list_in_entail_state es sec)
+  | OCtx(c1,c2) ->
+    let ctxt1 = update_sec_formula_list_in_context c1 sec in
+    let ctxt2 = update_sec_formula_list_in_context c2 sec in
+    OCtx(ctxt1,ctxt2)
+and update_sec_formula_list_in_entail_state (es:entail_state) (sec:sec_formula list) : entail_state =
+  let nf = update_sec_formula_list_in_formula es.es_formula sec in
+  ({es with es_formula = nf})
+and update_sec_formula_list_in_formula (f:formula) (sec:sec_formula list) : formula =
+  match f with
+  | Base   b -> Base   ({b with formula_base_sec   = sec})
+  | Exists e -> Exists ({e with formula_exists_sec = sec})
+  | Or     o ->
+    let f1 = update_sec_formula_list_in_formula o.formula_or_f1 sec in
+    let f2 = update_sec_formula_list_in_formula o.formula_or_f2 sec in
+    Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
 (*****************************)
 
-    let rec set_flow_in_context_override f_f ctx = match ctx with
+let rec set_flow_in_context_override f_f ctx = match ctx with
   | Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
   | OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
 

@@ -2480,10 +2480,10 @@ and pr_formula_1 e =
         formula_base_label = lbl;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
-    ;
+    (*;*)
     (* Information Flow Analysis *)
-    fmt_string (string_of_sec_formula_list sec);
-    fmt_string (string_of_sec_context ctx)
+    (*fmt_string (string_of_sec_formula_list sec);
+    fmt_string (string_of_sec_context ctx)*)
     (*****************************)
 (* pr_h_formula h;                                        *)
 (* (if not(MP.isConstMTrue p) then                        *)

@@ -1597,13 +1597,13 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
     else res in
   transform_list_partial_context (fct,(fun c->c)) ctx
 
-and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
+and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : list_failesc_context =
   let pr1 = Cprinter.string_of_list_failesc_context in
   let pr2 = CP.string_of_spec_var in
   Debug.no_2 "unfold_failesc_context" pr1 pr2 pr1
     (fun _ _ -> unfold_failesc_context_x prog ctx v already_unsat pos) ctx v
 
-and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
+and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : list_failesc_context =
   let fct es =
     (* this came from unfolding for bind mostly *)
     (*VarPerm: to keep track of es_var_zero_perm, when rename_bound_vars, also rename zero_perm*)
@@ -1824,6 +1824,7 @@ and unfold_nth (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
     ?(lem_unfold = false) (already_unsat:bool) (uf:int) (pos : loc)  =
+  (* ADI TODO: check if I need to unfold sec formula *)
   let rec aux f v  uf pos =
     match f with
     | Base ({
@@ -1838,8 +1839,14 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       }) ->
       let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-      (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*)
-      (* ADI TODO: to add *)
+      let res = (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) in
+      (* Information Flow Analysis *)
+      (* NOTE: Add back sec & ctx  *)
+      let new_f,x = res in
+      let new_f = CF.add_sec_context_to_formula ctx new_f in
+      let new_f = CF.update_sec_formula_list_in_formula new_f sec in
+      (*****************************)
+      (new_f,x)
 
     | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
       let rf,l = x_add_1 rename_bound_vars_with_subst f in
@@ -1849,7 +1856,14 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       (*let () = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
       let uf = unfold_baref prog h p vp a fl v pos qvars ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-      (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*)
+      let res = (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*) in
+      (* Information Flow Analysis *)
+      (* NOTE: Add back sec & ctx  *)
+      let new_f,x = res in
+      let new_f = CF.add_sec_context_to_formula ctx new_f in
+      let new_f = CF.update_sec_formula_list_in_formula new_f sec in
+      (*****************************)
+      (new_f,x)
     | Or ({formula_or_f1 = f1;
            formula_or_f2 = f2;
            formula_or_pos = pos}) ->
@@ -3604,15 +3618,19 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
     (conseq : 'a) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
                                                                                                                                          (f: prog_decl->bool->bool->context->'a -> CP.spec_var option -> MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id->(list_context * proof))
                                                                                                                                         ) : (list_failesc_context * proof) =
-  if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n")
+  print_endline ("***** HEAP ENTAIL FAILESC PREFIX INIT  *****");
+  if (List.length cl)<1 then (print_endline ("cl: " ^ Cprinter.string_of_list_failesc_context cl); report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n"))
   else
     (* TODO : must avoid empty context *)
     (* if (cl==[]) then ([],UnsatAnte) *)
     (* else *)
     begin
       reset_formula_point_id();
-      let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+      let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula} in
+      print_endline ("***** HEAP ENTAIL FAILESC PREFIX *****");
+      print_endline ("old_conseq: " ^ (to_string conseq));
       let conseq = rename_f conseq in
+      print_endline ("new_conseq: " ^ (to_string conseq));
       let rec prepare_ctx es = {es with
                                 es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
                                 es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
@@ -3620,9 +3638,16 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
                                 (* es_orig_ante   = es.es_formula; *)
                                 (*es_orig_conseq = conseq ;*)}in
       let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
+      print_endline ("cl_old: " ^ Cprinter.string_of_list_failesc_context cl);
+      print_endline ("cl_new: " ^ Cprinter.string_of_list_failesc_context cl_new);
       let entail_fct = fun c -> x_add heap_entail_struc_list_failesc_context prog is_folding has_post c conseq tid delayed_f join_id pos pid f to_string in
       let ctx, prf = heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new in
-      (subs_crt_holes_list_failesc_ctx ctx, prf)
+      print_endline ("clx  : " ^ Cprinter.string_of_list_failesc_context ctx);
+      let res = (subs_crt_holes_list_failesc_ctx ctx, prf) in
+      let (nctx, _) = res in
+      print_endline ("nclx : " ^ Cprinter.string_of_list_failesc_context nctx);
+      print_endline ("**************************************");
+      res
     end
 
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
@@ -3682,14 +3707,21 @@ and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding : bo
     (conseq) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =
   (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
   (* print_string (Cprinter.string_of_list_partial_context cl); *)
+  print_endline ("***** HEAP ENTAIL STRUC LIST FAILESC CONTEXT *****");
+  print_endline ("conseq: " ^ to_string conseq);
+  print_endline ("cl    : " ^ Cprinter.string_of_list_failesc_context cl);
   let l = List.map
-      (fun c-> x_add heap_entail_struc_failesc_context prog is_folding  has_post c conseq tid delayed_f join_id pos pid f to_string) cl in
+      (fun c-> x_add heap_entail_struc_failesc_context
+          prog is_folding  has_post c conseq tid delayed_f join_id pos pid f to_string) cl in
   let l_ctx , prf_l = List.split l in
+  List.iter (fun ctx -> print_endline ("l_ctx : " ^ Cprinter.string_of_list_failesc_context ctx)) l_ctx;
   let result = List.fold_left list_failesc_context_union (List.hd l_ctx) (List.tl l_ctx) in
+  print_endline ("result: " ^ Cprinter.string_of_list_failesc_context result);
   let proof = ContextList {
       context_list_ante = [];
       context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
       context_list_proofs = prf_l; } in
+  print_endline ("**************************************************");
   (result, proof)
 
 and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
