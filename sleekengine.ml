@@ -1196,7 +1196,7 @@ let run_simplify (iante0 : meta_formula) =
   let () = x_tinfo_hp (add_str "simplify:pure" pr_pf) pf no_pos in
   let p1 = MCP.mkMTrue no_pos in
   let () = x_tinfo_pp "Andreea: heap need to be normalized before xpure_heap_sym" no_pos in
-  let (mf1,_,_) as rr = Cvutil.xpure_heap_sym 11 !cprog heap_f p1 0 in
+  let (mf1,_,_) as rr = x_add Cvutil.xpure_heap_sym 11 !cprog heap_f p1 0 in
   let mf1 = MCP.pure_of_mix mf1 in
   let pr_r = fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4) in 
   let () = x_tinfo_hp (add_str "simplify:xpure_heap" pr_r) rr no_pos in
@@ -1266,13 +1266,13 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   let xpure_all f = 
     let lst = CF.split_components_all f in
     let disj = List.map (fun (h,p,_,_,_,_) ->
-        let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog h p 0 in
+        let (mf,_,_) = x_add Cvutil.xpure_heap_symbolic 999 !cprog h p 0 in
         (MCP.pure_of_mix mf)) lst in
     CP.join_disjunctions disj in
   let f = xpure_all ante in
   let mf = MCP.mix_of_pure f in
   (* let (ante_h,ante_p,_,_,_,_) = CF.split_components ante in *)
-  (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in *)
+  (* let (mf,_,_) = x_add Cvutil.xpure_heap_symbolic 999 !cprog ante_h ante_p 0 in *)
   let () = last_entail_lhs_xpure := Some mf in
   (*let ante = x_add Solver.normalize_formula_w_coers !cprog (CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) ante !cprog.Cast.prog_left_coercions in*)
   let ante = Cvutil.prune_preds !cprog true ante in
@@ -2153,7 +2153,7 @@ validation: validation)  =
                        let p = List.fold_left (fun acc p -> CP.mkAnd acc p pos) (CP.mkTrue pos) ps in
                        let h = List.fold_left (fun acc p -> CF.mkStarH acc p pos) CF.HEmp hs in
                        let empty_es = CF.empty_es (CF.mkNormalFlow ()) Lab2_List.unlabelled pos in
-                       (* let (mf,_,_) = Cvutil.xpure_heap_symbolic 999 !cprog es.CF.es_heap (Mcpure.mix_of_pure p) 0 in *)
+                       (* let (mf,_,_) = x_add Cvutil.xpure_heap_symbolic 999 !cprog es.CF.es_heap (Mcpure.mix_of_pure p) 0 in *)
                        let mf = match !last_entail_lhs_xpure with 
                            Some f -> f 
                          | None -> Mcpure.mix_of_pure (CP.mkTrue no_pos) in

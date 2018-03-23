@@ -1,0 +1,86 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred_prim AsegNE<end> 
+     inv_exact BG([(self,end)],0<self<end). 
+
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+
+checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
+expect Valid.
+print residue.
+/* should succeed, 
+<1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+checkentail_exact x::AsegNE<bbb> * x::Aseg<c> |- x=null.
+expect Fail.
+print residue.
+/* why is there .. !(_,_)..
+Entail (9) : Fail.(must) cause: ((!(_=_) | x>=b | x>=c)) 
+  & x<=c & x<b & x!=null |-  x=null. LOCS:[0;1;76] (must-bug)
+
+(==sleekengine.ml#1269==)
+xpure_heap_symbolic#999@7
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::AsegNE<b>@M * x::Aseg<c>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@7 EXIT: x!=null & x<b & x<=c & ((!(_=_) | x>=b | x>=c))#[]# [[_22]]true
+
+
+*/
+checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
+expect Valid.
+print residue.
+/* should succeed, 
+<1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+//checkentail_exact x::AsegNE<bbb> * x::AsegNE<c> |- x=null.
+//expect Fail.
+//print residue.
+checkentail_exact x::AsegNE<b> * y::Aseg<c> |- b<=y | c<=x.
+expect Fail.
+print residue.
+/* # ex4a6.slk
+should fail ..
+
+should be: 
+  (x<b & y<c --> y>=b | x>=c)
+
+instead of: 
+  generate_constraint_from_baga_range_disj@48 EXIT:[[ (!(_=_) | y>=b | x>=c)]]
+
+(==cvutil.ml#984==)
+generate_constraint_from_baga_range_disj@48@46
+generate_constraint_from_baga_range_disj inp1 :[[(_,( x, b))],[(_,( y, c))]]
+generate_constraint_from_baga_range_disj@48 EXIT:[[ (!(_=_) | y>=b | x>=c)]]
+
+(==sleekengine.ml#1269==)
+xpure_heap_symbolic#999@46
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::AsegNE<b>@M * y::AsegNE<c>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@46 EXIT: x!=null & x<b & y!=null & y<c & ((!(_=_) | y>=b | x>=c))#[]# [[_43,_44]]true
+
+
+*/
+
+

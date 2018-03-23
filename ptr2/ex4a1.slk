@@ -76,12 +76,9 @@ print residue.
 checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
 expect Valid.
 print residue.
-/* should succeed, currently fail with
+/* succeed with
 <1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
 
-
-Entail (9) : Fail.(must) cause: ((!(_=_) | x>=b | x>=c)) 
-  & x<=c & x<b & x!=null |-  x=null. LOCS:[0;1;76] (must-bug)
 */
 
 checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=null.

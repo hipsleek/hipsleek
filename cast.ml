@@ -1644,6 +1644,13 @@ type baga_range =
 | Element of P.spec_var
 ;;
 
+let string_of_baga_range br =
+  match br with
+    | Segment (sv,(e1,e2)) -> "("^(!CP.print_sv sv)^",("^(!CP.print_exp e1)^","^(!CP.print_exp e2)^"))"
+    | Element sv -> (!CP.print_sv sv)
+;;
+
+
 (* The result is list of list,  each sub list can be considered as a disjunction *)
 let collect_baga_range prog  (f:F.h_formula) =
   let f_comb = List.concat in
@@ -1719,6 +1726,7 @@ let rec generate_constraint_from_baga_range lst =
   | [] -> []
 ;;
 
+ (* baga_range list list -> Cformula.CP.formula list list *)
 (* ...[A1;B1;C1][A2;B2;C2]... -> A1&A2 || A1&B2 || A1&C2... *)
 let generate_constraint_from_baga_range_disj lstlst =
   let rec helper lstlst =
@@ -1736,6 +1744,10 @@ let generate_constraint_from_baga_range_disj lstlst =
   in
   List.map generate_constraint_from_baga_range (helper lstlst)
 ;;
+let generate_constraint_from_baga_range_disj lstlst =
+  let pr_2 = pr_list (pr_list !CP.print_formula) in
+  let pr_1 = pr_list (pr_list string_of_baga_range) in
+  Debug.no_1 "generate_constraint_from_baga_range_disj" pr_1 pr_2 generate_constraint_from_baga_range_disj lstlst
 
 let merge_baga_constraints lstlst =
   match (List.fold_left
