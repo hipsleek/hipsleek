@@ -2055,24 +2055,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
             (* let () = print_endline ("rs after clear:" ^(Cprinter.string_of_list_failesc_context rs)) in *)
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
-
-            print_endline ("*****************************************************");
-            print_endline ("lsv: " ^ Cprinter.string_of_spec_var_list lsv);
-            print_endline ("vs : " ^ Cprinter.string_of_ident_list vs "vs~~");
-            print_endline ("v' : " ^ Cprinter.string_of_spec_var v_prim);
-            print_endline ("vs': " ^ Cprinter.string_of_spec_var_list vs_prim);
-            print_endline ("p  : " ^ Cprinter.string_of_spec_var p);
-            print_endline ("lpv: " ^ Cprinter.string_of_formula link_pv);
-            print_endline ("ctx: " ^ Cprinter.string_of_list_failesc_context ctx);
-            print_endline ("unf: " ^ Cprinter.string_of_list_failesc_context unfolded);
-            print_endline ("bpt: " ^ Cprinter.string_of_spec_var bind_ptr);
-            print_endline ("vdn: " ^ Cprinter.string_of_h_formula vdatanode);
-            print_endline ("vhp: " ^ Cprinter.string_of_formula vheap);
-            print_endline ("svh: " ^ Cprinter.string_of_struc_formula struc_vheap);
-            print_endline ("rsp: " ^ Cprinter.string_of_list_failesc_context rs_prim);
-            print_endline ("rs : " ^ Cprinter.string_of_list_failesc_context rs);
-            print_endline ("*****************************************************");
-
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
                 if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
