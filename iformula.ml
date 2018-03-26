@@ -1678,20 +1678,18 @@ and rename_bound_vars_x (f : formula) =
     let new_qvars = Ipure.fresh_vars qvars in
     let rho = List.combine qvars new_qvars in
     let lhs,rhs = List.split rho in
-    x_binfo_hp (add_str "lhs" (string_of_spec_var_list)) lhs no_pos;
-    x_binfo_hp (add_str "rhs" (string_of_spec_var_list)) rhs no_pos;
     let new_base_f = subst rho base_f in
     let resform = add_quantifiers new_qvars new_base_f in
     resform
 
-and rename_bound_vars (f : formula): formula = 
+and rename_bound_vars (f : formula): formula =
   let pr = !print_formula in
   Debug.no_1 "IF.rename_bound_vars" pr pr rename_bound_vars_x f
 
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
-  | EAssume b -> 
-    EAssume {b with 
-             formula_assume_simpl = subst sst b.formula_assume_simpl; 
+  | EAssume b ->
+    EAssume {b with
+             formula_assume_simpl = subst sst b.formula_assume_simpl;
              formula_assume_struc = subst_struc sst b.formula_assume_struc;}
   | ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches}
   | EBase b->  EBase { b with

@@ -1850,9 +1850,20 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
 
     | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
       let rf,l = x_add_1 rename_bound_vars_with_subst f in
+      let _l1,_l2 = List.split l in
+      x_tinfo_hp (add_str "_l1_" Cprinter.string_of_spec_var_list) _l1 no_pos;
+      x_tinfo_hp (add_str "_l2_" Cprinter.string_of_spec_var_list) _l2 no_pos;
+      x_tinfo_hp (add_str "v(1)" Cprinter.string_of_spec_var) v no_pos;
       let v = CP.subst_var_par l v in
+      x_tinfo_hp (add_str "v(2)" Cprinter.string_of_spec_var) v no_pos;
       let qvars, baref = split_quantifiers rf in
       let h, p, vp, fl, t, a, sec, ctx = split_components baref in
+
+      (* Information Flow Analysis: renaming  *)
+      let sec = CF.subst_sec_formula_list l sec in
+      let ctx = CF.subst_sec_context l ctx in
+      (****************************************)
+
       (*let () = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
       let uf = unfold_baref prog h p vp a fl v pos qvars ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
@@ -7743,7 +7754,13 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
             let ws = CP.fresh_spec_vars qvars in
             (* TODO : for memo-pure, these fresh_vars seem to affect partitioning *)
             let st = List.combine qvars ws in
-            let baref = mkBase qh qp qvp qt qfl qa qsec qctx pos in
+
+            (* Information Flow Analysis: renaming  *)
+            let nqsec = CF.subst_sec_formula_list st qsec in
+            let nqctx = CF.subst_sec_context st qctx in
+            (****************************************)
+
+            let baref = mkBase qh qp qvp qt qfl qa nqsec nqctx pos in
             let new_baref = x_add subst st baref in
             let fct st v =
               try
@@ -7811,7 +7828,13 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                 let ws = CP.fresh_spec_vars qvars_fo in
                 (* let st = List.combine qvars ws in *)
                 let st_fo = List.combine qvars_fo ws in
-                let baref = mkBase qh qp qvp qt qfl qa qsec qctx pos in
+
+                (* Information Flow Analysis: renaming  *)
+                let nqsec = CF.subst_sec_formula_list st_fo qsec in
+                let nqctx = CF.subst_sec_context st_fo qctx in
+                (****************************************)
+
+                let baref = mkBase qh qp qvp qt qfl qa nqsec nqctx pos in
                 let new_baref = x_add subst (* st *) st_fo baref in
                 x_tinfo_hp (add_str "baref (conseq)" Cprinter.string_of_formula) baref no_pos;
                 x_tinfo_hp (add_str "new_baref (conseq)" Cprinter.string_of_formula) new_baref no_pos;

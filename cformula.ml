@@ -3982,19 +3982,37 @@ and simpl_sec_label (lbl:sec_label) : sec_label =
   match lbl with
   | Sec_LO | Sec_HI | Sec_Var(_) -> lbl
   | Sec_LUB(lbl1,lbl2)           -> lub_op lbl1 lbl2
-and subst_sec_label (fr, t) (o : CP.spec_var) =
-  if CP.eq_spec_var fr o then t else Sec_Var(o)
 and apply_one_sec_label ((fr, t) as s : (CP.spec_var * CP.spec_var)) (lbl : sec_label) =
   match lbl with
   | Sec_Var(v)     -> Sec_Var(subst_var s v)
   | Sec_LUB(l1,l2) -> (simpl_sec_label (Sec_LUB((apply_one_sec_label s l1), (apply_one_sec_label s l2))))
   | Sec_HI         -> Sec_HI
   | Sec_LO         -> Sec_LO
+and subst_sec_context (subsl:(CP.spec_var * CP.spec_var) list) (sctx : sec_label) =
+  let _fr,_to = List.split subsl in
+  let _fs_var = CP.fresh_spec_vars _fr in
+  let _subsl1 = List.combine _fr _fs_var in
+  let _subsl2 = List.combine _fs_var _to in
+  let sctx = List.fold_left (fun acc el -> apply_one_sec_label el acc) sctx _subsl1 in
+  let sctx = List.fold_left (fun acc el -> apply_one_sec_label el acc) sctx _subsl2 in
+  sctx
 and apply_one_sec_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : sec_formula) =
   mkSecFormula (subst_var s f.sec_var) (apply_one_sec_label s f.sec_lbl)
+and apply_one_sec_formula_list ((fr, t) as s : (CP.spec_var * CP.spec_var)) (sl : sec_formula list) =
+  List.map (fun x -> apply_one_sec_formula s x) sl
+and subst_sec_formula_list (subsl:(CP.spec_var * CP.spec_var) list) (sl : sec_formula list) =
+  let _fr,_to = List.split subsl in
+  let _fs_var = CP.fresh_spec_vars _fr in
+  let _subsl1 = List.combine _fr _fs_var in
+  let _subsl2 = List.combine _fs_var _to in
+  let sl = List.fold_left (fun acc el -> apply_one_sec_formula_list el acc) sl _subsl1 in
+  let sl = List.fold_left (fun acc el -> apply_one_sec_formula_list el acc) sl _subsl2 in
+  sl
+and replace_sec_label (fr, t) (o : CP.spec_var) =
+  if CP.eq_spec_var fr o then t else Sec_Var(o)
 and apply_rhs_sec_label ((fr, t) as s : (CP.spec_var * sec_label)) (lbl : sec_label) =
   match lbl with
-  | Sec_Var(v)     -> subst_sec_label s v
+  | Sec_Var(v)     -> replace_sec_label s v
   | Sec_LUB(l1,l2) -> (simpl_sec_label (Sec_LUB((apply_rhs_sec_label s l1), (apply_rhs_sec_label s l2))))
   | Sec_HI         -> Sec_HI
   | Sec_LO         -> Sec_LO
@@ -4065,7 +4083,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_pure    = MCP.regroup_memo_group (MCP.m_apply_one s qp);
         formula_exists_type    = tconstr;
         formula_exists_and     = List.map (apply_one_one_formula s) a;
-        formula_exists_sec     = List.map (fun x -> apply_one_sec_formula s x) sec; (* ADI TODO: to check *)
+        formula_exists_sec     = apply_one_sec_formula_list s sec; (* ADI TODO: to check *)
         formula_exists_sec_ctx = apply_one_sec_label s ctx;
         formula_exists_flow    = fl;
         formula_exists_label   = lbl;
