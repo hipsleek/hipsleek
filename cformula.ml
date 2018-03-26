@@ -13981,6 +13981,39 @@ and update_sec_formula_list_in_formula (f:formula) (sec:sec_formula list) : form
     let f1 = update_sec_formula_list_in_formula o.formula_or_f1 sec in
     let f2 = update_sec_formula_list_in_formula o.formula_or_f2 sec in
     Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
+
+(* NOTE: Construct sec_formula list [x <? y, ...] from x = y & ... in Cpure.formula *)
+and constr_sec_formula_list_from_formula (f:Cpure.formula) (ctx:sec_label) : (sec_formula list) =
+  let rec helper (f:Cpure.formula) : (sec_formula list) =
+    match f with
+    | BForm(bf,_) -> constr_sec_formula_list_from_b_formula bf ctx
+    | And(l,r,_)  -> (helper l)@(helper r)
+    | _           -> [] (* ADI TODO: to be added? *)
+  in
+  helper f
+and constr_sec_formula_list_from_b_formula (bf:Cpure.b_formula) (ctx:sec_label) : (sec_formula list) =
+  let (pf,_) = bf in
+  constr_sec_formula_list_from_p_formula pf ctx
+and constr_sec_formula_list_from_p_formula (pf:Cpure.p_formula) (ctx:sec_label) : (sec_formula list) =
+  match pf with
+  | Eq(l,r,loc) ->
+    begin
+      match l with
+      | Var(v,_) -> [mkSecFormula v (lub_op ctx (constr_sec_label_from_exp r))]
+      | _        -> Error.report_error {
+          Err.error_loc  = loc;
+          Err.error_text = "[constr sec formula] unexpected lhs of sec formula"
+        }
+    end
+  | _         -> [] (* ADI TODO: to be added? *)
+and constr_sec_label_from_exp (e:Cpure.exp) : sec_label =
+  match e with
+  | Add(l,r,_) | Subtract(l,r,_) | Mult(l,r,_) | Div(l,r,_) | Max(l,r,_) | Min(l,r,_)
+    -> lub_op (constr_sec_label_from_exp l) (constr_sec_label_from_exp r)
+  | Var(v,_)
+    -> Sec_Var(v)
+  | _ (* ADI TODO: to be added? *)
+    -> Sec_LO
 (*****************************)
 
 let rec set_flow_in_context_override f_f ctx = match ctx with

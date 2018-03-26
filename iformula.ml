@@ -2059,6 +2059,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
     | _ ->
       let nn = (("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
       let nv = Ipure.Var (nn,l) in
+      x_tinfo_hp (add_str "nn (float_ann_var|_)" (pr_var_prime)) nn no_pos;
       let npf =
         (* if !Globals.do_slicing then *)
         if not !Globals.dis_slc_ann then
@@ -2111,6 +2112,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
       let prep_one_arg_helper (id,c) =
         let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+        x_tinfo_hp (add_str "nn (float_out_exp|HeapNode)" (pr_var_prime)) nn no_pos;
         let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
         let npf =
           (* if !Globals.do_slicing then *)
@@ -2149,6 +2151,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
       let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap2_pos in
       let prep_one_arg_helper (id,c) =
         let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+        x_tinfo_hp (add_str "nn2 (float_out_exp|HeapNode2)" (pr_var_prime)) nn no_pos;
         let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
         let npf =
           (* if !Globals.do_slicing then *)

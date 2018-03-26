@@ -1854,7 +1854,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       end
 
     (* ADI TODO: field access inference rule *)
-    | Bind ({ 
+    | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
         exp_bind_fields = lvars; (* fields of bound node *)
@@ -1863,18 +1863,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_bind_param_imm = pimm; (* imm annotation for each field *)
         exp_bind_read_only = read_only;
         exp_bind_path_id = pid;
-        exp_bind_pos = pos }) -> 
+        exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
       let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
       let bind_op () =
         begin
-          x_tinfo_pp ">>>>>> bind type-checker <<<<<<" pos;
-          x_tinfo_hp (add_str "node" (fun x -> x)) v pos;
-          x_tinfo_hp (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;
-          x_tinfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
-          x_tinfo_hp (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
-          x_tinfo_hp (add_str "read-only" string_of_bool) read_only pos;
+          x_binfo_pp ">>>>>> bind type-checker <<<<<<" pos;
+          x_binfo_hp (add_str "node" (fun x -> x)) v pos;
+          x_binfo_hp (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;
+          x_binfo_hp (add_str "imm_node" Cprinter.string_of_imm) imm_node pos;
+          x_binfo_hp (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;
+          x_binfo_hp (add_str "read-only" string_of_bool) read_only pos;
           (* yes below is safe *)
           (* x_tinfo_pp ("Check for @L read permission on bind node "^v) pos; *)
           (* x_winfo_pp "Safe to use @L for Bind? Use frac?" pos; *)
@@ -1987,9 +1987,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let vheap = CF.formula_of_heap vdatanode pos in
           let vheap =
             if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
-          let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
-          let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
-          let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_binfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
+          let () = x_binfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
+          let () = x_binfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
           (*Test whether fresh_perm_exp is full permission or not
             writable -> fresh_perm_exp = full_perm => normally
             read-only -> fresh_perm_exp != full_perm => in order to 
@@ -2010,10 +2010,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else
               vheap
           in
-          let () = x_tinfo_hp (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
+          let () = x_binfo_hp (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
           let vheap = x_add_1 Immutable.normalize_field_ann_formula vheap in
           let vheap = x_add Cvutil.prune_preds prog false vheap in
-          let () = x_tinfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
+          let () = x_binfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)) vheap pos in
           (* WN : provided implicit instantation to vs_prim *)
           let struc_vheap = CF.EBase {
               CF.formula_struc_explicit_inst = [];
@@ -2039,7 +2039,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let () = y_tinfo_pp "need to use local version of infer_const_obj" in
             (* let struc_vheap =  *)
             (*   if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in *)
-            let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
+            let () = x_binfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
             (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
             (* do not allow leak detection in binding*)
             (* let do_classic_frame = (check_is_classic ()) in *)
@@ -2085,7 +2085,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else
               begin
                 stk_vars # push_list lsv;
-                let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
+                let () = x_binfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
                 let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
@@ -2100,9 +2100,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   else tmp_res1
                 in
                 x_tinfo_pp "WN : adding vheap to exception too" no_pos;
-                x_tinfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
+                x_binfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
+                x_binfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
+                x_binfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                 let bind_field = CF.mk_bind_fields_struc vs_prim in
                 let tmp_res2 =
@@ -2119,6 +2119,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                let res =
+                  if !Globals.is_info_flow_analysis (* Information Flow Analysis *)
+                  then res
+                  else res
+                in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
                 x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)

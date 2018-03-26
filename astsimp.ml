@@ -11770,6 +11770,7 @@ let plugin_inferred_iviews views iprog cprog=
   let plug_views_proc proc =
     let vnames = List.filter (fun (p,_)-> (String.compare p proc.I.proc_name)==0) vnames in
     (* let () = print_string ("gugu: "^proc.I.proc_name^" "^(pr_list (pr_pair pr_id pr_id) vnames)^"\n") in *)
+    x_tinfo_hp (add_str "vnames" (fun x -> x)) (proc.I.proc_name^" "^(pr_list (pr_pair pr_id pr_id) vnames)) no_pos;
     let hn_trans = hn_trans proc.I.proc_name vnames in
     {proc with  I.proc_static_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_static_specs);
                 I.proc_dynamic_specs= IF.struc_formula_trans_heap_node hn_trans (IF.struc_formula_drop_infer proc.I.proc_dynamic_specs)} in

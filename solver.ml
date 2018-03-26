@@ -10430,6 +10430,9 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
       (*   (\* (List.map (fun (sv1,sv2) -> CP.mkEqVar sv1 sv2 no_pos) rho_0) *\) *)
       (*   CP.mkTrue no_pos *)
       (* in *)
+
+      (* ADI NOTE: BIND matched over here => generate sec_formula and add ?? *)
+
       (rho_0, label_list, to_ante (* CP.mkTrue no_pos *),to_conseq (* CP.mkTrue no_pos *))
 
   end
@@ -11303,8 +11306,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           (* let () = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in *)
           (* let () = print_string("l_node : "^(Cprinter.string_of_h_formula l_node)^"\n") in         *)
           (* An Hoa : fix new_ante *)
-          let new_ante   = mkBase l_h new_ante_p   l_vp l_t l_fl l_a l_sec l_ctx pos in
-          let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a r_sec r_ctx pos in
+          (* ADI TODO: modify l_sec [done?] & r_sec [not done] *)
+          let nl_sec = l_sec@CF.constr_sec_formula_list_from_formula p_ante l_ctx in
+          let new_ante   = mkBase l_h new_ante_p   l_vp l_t l_fl l_a nl_sec l_ctx pos in
+          let tmp_conseq = mkBase r_h new_conseq_p r_vp r_t r_fl r_a  r_sec r_ctx pos in
           let () = x_dinfo_hp (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
           let () = x_dinfo_hp (add_str "new_ante 00" (Cprinter.string_of_formula)) new_ante pos in
           let lhs_vars = CP.fv to_lhs in
