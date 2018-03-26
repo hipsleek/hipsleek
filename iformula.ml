@@ -1196,28 +1196,28 @@ and split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
 
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
-  | [] -> f 
+  | [] -> f
 
 (*subst all including existential variables*)
-and subst_all sst (f : formula) = 
+and subst_all sst (f : formula) =
   let rec helper sst f =
     match sst with
     | s :: rest -> helper rest (apply_one_all s f)
-    | [] -> f 
+    | [] -> f
   in helper sst f
 
 (*subst all including existential variables*)
-and subst_pointer sst (f : formula) vars = 
+and subst_pointer sst (f : formula) vars =
   let rec helper sst f =
     match sst with
     | s :: rest -> helper rest (apply_one_pointer s f vars)
-    | [] -> f 
+    | [] -> f
   in helper sst f
 
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
-and subst_var_list ft (o : (ident*primed)) = 
+and subst_var_list ft (o : (ident*primed)) =
   let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
-  match r with 
+  match r with
   | [] -> o
   | _ -> snd (List.hd r)
 
@@ -1228,12 +1228,10 @@ and one_formula_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f 
   {formula_heap = h_apply_one s h;
    formula_pure = Ipure.apply_one s p;
    formula_delayed = Ipure.apply_one s dl;
-   formula_thread = (match id with 
+   formula_thread = (match id with
        | None -> None
        | Some v -> Some (subst_var s v));
-   formula_pos = pos} 
-
-
+   formula_pos = pos}
 
 and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) vars =
   let h,p,dl,id,pos = split_one_formula f in
@@ -1262,13 +1260,28 @@ and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*prime
   {formula_heap = new_h;
    formula_pure = new_p2;
    formula_delayed = dl; (*TO CHECK*)
-   formula_thread = (match id with 
+   formula_thread = (match id with
        | None -> None
        | Some v -> Some (subst_var s v));
    formula_pos = pos}
 
+(* Information Flow Analysis *)
+and sec_formula_list_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (sl : sec_formula list) =
+  match sl with
+  | []     -> []
+  | sf::sr -> (sec_formula_apply_one s sf)::(sec_formula_list_apply_one s sr)
+and sec_formula_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (sf : sec_formula) =
+  mk_sec_form (subst_var s sf.sec_var) (sec_label_apply_one s sf.sec_lbl)
+and sec_label_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (lbl : sec_label) =
+  match lbl with
+  | Sec_Var(v)     -> Sec_Var(subst_var s v)
+  | Sec_LUB(l1,l2) -> Sec_LUB(sec_label_apply_one s l1, sec_label_apply_one s l2)
+  | Sec_LO         -> Sec_LO
+  | Sec_HI         -> Sec_HI
+(*****************************)
+
 and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) = match f with
-  | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
+  | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) ->
     Or ({ formula_or_f1 = apply_one s f1; formula_or_f2 =  apply_one s f2; formula_or_pos = pos })
   | Base ({
       formula_base_heap    = h;
@@ -1285,8 +1298,8 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
         formula_base_vperm   = VP.vp_apply_one s vp;
         formula_base_flow    = fl;
         formula_base_and     = List.map (one_formula_apply_one s) a;
-        formula_base_sec     = sec;
-        formula_base_sec_ctx = ctx;
+        formula_base_sec     = sec_formula_list_apply_one s sec;
+        formula_base_sec_ctx = sec_label_apply_one s ctx;
         formula_base_pos     = pos;
       })
   | Exists ({
@@ -1308,8 +1321,8 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
         formula_exists_vperm   = VP.vp_apply_one s vp;
         formula_exists_flow    = fl;
         formula_exists_and     = List.map (one_formula_apply_one s) a;
-        formula_exists_sec     = sec;
-        formula_exists_sec_ctx = ctx;
+        formula_exists_sec     = sec_formula_list_apply_one s sec;
+        formula_exists_sec_ctx = sec_label_apply_one s ctx;
         formula_exists_pos     = pos;
       })
 
@@ -1664,6 +1677,9 @@ and rename_bound_vars_x (f : formula) =
     let qvars, base_f = split_quantifiers f in
     let new_qvars = Ipure.fresh_vars qvars in
     let rho = List.combine qvars new_qvars in
+    let lhs,rhs = List.split rho in
+    x_binfo_hp (add_str "lhs" (string_of_spec_var_list)) lhs no_pos;
+    x_binfo_hp (add_str "rhs" (string_of_spec_var_list)) rhs no_pos;
     let new_base_f = subst rho base_f in
     let resform = add_quantifiers new_qvars new_base_f in
     resform
