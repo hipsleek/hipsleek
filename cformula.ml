@@ -810,17 +810,17 @@ let rec get_sec_var_from_sec_formula_list (sl:sec_formula list) : CP.spec_var li
 (*****************************)
 
 
-module Exp_Heap =
-struct
-  type e = h_formula
-  let comb x y = Star
-      { h_formula_star_h1 = x;
-        h_formula_star_h2 = y;
-        h_formula_star_pos = no_pos
-      }
-  let string_of = !print_h_formula
-  let ref_string_of = print_h_formula
-end;;
+  module Exp_Heap =
+  struct
+    type e = h_formula
+    let comb x y = Star
+        { h_formula_star_h1 = x;
+          h_formula_star_h2 = y;
+          h_formula_star_pos = no_pos
+        }
+    let string_of = !print_h_formula
+    let ref_string_of = print_h_formula
+  end;;
 
 module Exp_Spec =
 struct
@@ -10326,6 +10326,25 @@ let get_sec_context_from_estate (estate:entail_state) : sec_label =
       Err.error_loc  = no_pos;
       Err.error_text = "get_sec_context_from_estate: disjunctive formula";
     }
+
+let rec subst_sec_formula_list_in_entail_state (subsl:(CP.spec_var * CP.spec_var) list) (es:entail_state) : entail_state =
+  let rec helper (f:formula) =
+    match f with
+    | Base   b ->
+      let new_sec_form_list = subst_sec_formula_list subsl b.formula_base_sec in
+      let new_sec_context   = subst_sec_context subsl b.formula_base_sec_ctx in
+      Base ({b with formula_base_sec = new_sec_form_list; formula_base_sec_ctx = new_sec_context})
+    | Exists e ->
+      let new_sec_form_list = subst_sec_formula_list subsl e.formula_exists_sec in
+      let new_sec_context   = subst_sec_context subsl e.formula_exists_sec_ctx in
+      Exists ({e with formula_exists_sec = new_sec_form_list; formula_exists_sec_ctx = new_sec_context})
+    | Or     o ->
+      let new_f1 = helper o.formula_or_f1 in
+      let new_f2 = helper o.formula_or_f2 in
+      Or ({o with formula_or_f1 = new_f1; formula_or_f2 = new_f2})
+  in
+  let new_formula = helper es.es_formula in
+  {es with es_formula = new_formula}
 (*****************************)
 
 
@@ -13904,6 +13923,29 @@ and propagate_ret_res_to_entail_state (res:CP.spec_var) (es:entail_state) =
   let new_formula = add_sec_formula_to_formula sec_formula es.es_formula in
   let new_context = Ctx { es with es_formula = new_formula } in
   new_context
+and propagate_bind_obj_to_list_failesc_context (obj:CP.spec_var) (lfc:list_failesc_context) : list_failesc_context =
+  let old_res = CP.fresh_spec_var obj in
+  List.map (fun ctx -> propagate_bind_obj_to_failesc_context old_res obj ctx) lfc
+and propagate_bind_obj_to_failesc_context (old:CP.spec_var) (obj:CP.spec_var) (ctx:failesc_context) : failesc_context =
+  let (bfl,esc,bcl) = ctx in
+  let nbcl = List.map (fun (pt,ctxt,fto) -> (pt,propagate_bind_obj_to_context old obj ctxt,fto)) bcl in
+  (bfl,esc,nbcl)
+and propagate_bind_obj_to_context (old:CP.spec_var) (obj:CP.spec_var) (ctxt:context) : context =
+  match ctxt with
+  | Ctx (es)    -> propagate_bind_obj_to_entail_state old obj es
+  | OCtx(o1,o2) -> OCtx(propagate_bind_obj_to_context old obj  o1, propagate_bind_obj_to_context old obj o2)
+and propagate_bind_obj_to_entail_state (old_res:CP.spec_var) (obj:CP.spec_var) (es:entail_state) =
+  let new_estate  = subst_sec_formula_list_in_entail_state [(CP.mkSecRes,old_res)] es in
+  let sec_context = get_sec_context_from_estate new_estate in
+  let partial_bnd = lub_op sec_context (Sec_Var(obj)) in
+  let full_bound  = lub_op partial_bnd (get_sec_label_from_consistent_entail_state old_res new_estate) in
+  let sec_formula = mkSecFormula (CP.mkSecRes) full_bound in
+  let new_formula = add_sec_formula_to_formula sec_formula new_estate.es_formula in
+  let new_context = Ctx { new_estate with es_formula = new_formula } in
+  x_binfo_hp (add_str "old_es " !print_entail_state) es no_pos;
+  x_binfo_hp (add_str "new_es " !print_entail_state) new_estate no_pos;
+  x_binfo_hp (add_str "new_ctx" !print_context) new_context no_pos;
+  new_context
 and propagate_cond_to_sec_context (cvar:CP.spec_var) (old_cvar:sec_label ref) (es:entail_state) =
   let old_context = get_sec_context_from_estate es in
   old_cvar := old_context; (* update old security context *)
@@ -13912,6 +13954,17 @@ and propagate_cond_to_sec_context (cvar:CP.spec_var) (old_cvar:sec_label ref) (e
 and update_sec_context_to_entail_state (ctx:sec_label) (es:entail_state) =
   let new_formula = add_sec_context_to_formula ctx es.es_formula in
   Ctx {es with es_formula = new_formula }
+and get_sec_label_from_consistent_entail_state (var:CP.spec_var) (es:entail_state) : sec_label =
+  (* NOTE: ensure consistent entail state *)
+  let rec helper (f:formula) : sec_label =
+    match es.es_formula with
+    | Base   b -> get_sec_label_from_sec_formula_list var b.formula_base_sec
+    | Exists e -> get_sec_label_from_sec_formula_list var e.formula_exists_sec
+    | Or     o -> helper o.formula_or_f1 (* need consistency *)
+
+  in
+  helper es.es_formula
+
 
 (* NOTE: Sec Formula List Retrieval *)
 and gather_sec_formula_list_in_list_failesc_context (lfc:list_failesc_context) : ((sec_formula list) list) =

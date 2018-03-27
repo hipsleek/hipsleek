@@ -2129,11 +2129,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                x_binfo_hp (add_str "res (before)" (Cprinter.string_of_list_failesc_context)) res no_pos;
                 let res =
                   if !Globals.is_info_flow_analysis (* Information Flow Analysis *)
-                  then res
+                  then CF.propagate_bind_obj_to_list_failesc_context  (CP.SpecVar (v_t,v,Primed)) res
                   else res
                 in
+                x_binfo_hp (add_str "res (after)" (Cprinter.string_of_list_failesc_context)) res no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
                 x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)
