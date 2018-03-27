@@ -86,6 +86,11 @@ checkentail_exact x::AsegNE<b> * y::Aseg<c> |- b<=y | c<=x.
 expect Fail.
 print residue.
 
+
+   <x,b>    <y,c>
+   <5,6>    <1,10>
+
+
 You can fix it by changing:
 
 instead of: 

@@ -21,7 +21,10 @@ pred_prim AsegNE<end>
 pred_prim ElemN<start:int> 
      inv_exact BG([self], true). // non-null
 
-checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
+
+checkentail_exact xxx::ElemN<_> * yyy::ElemN<_> |- x=c.
+
+checkentail_exact x::AsegNE<b> * y::Aseg<c> |- x=c.
 expect Valid.
 print residue.
 /* should succeed, 
