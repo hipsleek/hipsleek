@@ -13674,8 +13674,8 @@ and rewrite_sec_label (lbl:sec_label) =
     let m_v = Var (var, no_pos) in
     (lu1@lu2@[CP.EqMax (m_v, ex1, ex2, no_pos)], fv1@fv2@[var], m_v)
 and rewrite_spec_var (var:CP.spec_var) =
-  let sec_var = CP.mk_typed_spec_var Int ("sec_" ^ (CP.ident_of_spec_var var)) in
-  let res = if is_primed var then CP.to_primed sec_var else CP.to_unprimed sec_var in
+  let sec_var = CP.mk_typed_spec_var Int ((*"sec_" ^ *)(CP.ident_of_spec_var var)) in
+  let res = if (is_primed var) then CP.to_primed sec_var else CP.to_unprimed sec_var in
   res
 
 (* NOTE: add bound formula to pure formula *)
