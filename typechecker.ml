@@ -2643,8 +2643,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (
                     if (!Globals.web_compile_flag) then
                       let to_print = "\nProving " ^ msg ^ " in method " ^ proc.proc_name ^ " Failed.\n" in
-                      let s,_,_= CF.get_failure_list_failesc_context res in
-                      let () = print_string_quiet (to_print ^s^"\n") in
+                      let s,_,_    = CF.get_failure_list_failesc_context res in
+                      let err_msg  = Globals.report_info_flow_err s in
+                      let () = print_string_quiet (to_print ^ err_msg ^"\n") in
                       res
                     else
                       (*FAILURE explaining*)
@@ -2660,9 +2661,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             ) *)
                           (*should check bot with is_bot_status*)
                           in
+                          let err_msg = Globals.report_info_flow_err s in
                           x_tinfo_hp (add_str "res" Cprinter.string_of_list_failesc_context) res no_pos;
                           x_tinfo_hp (add_str "s" pr_id) s no_pos;
-                          if (String.length s) >  0
+                          if (String.length err_msg) >  0
                           then
                             (* let () = print_string_quiet (to_print ^s^"\n") in *)
                             (* Err.report_error { *)
@@ -2698,7 +2700,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               end;
                             raise (Err.Ppf ({
                                 Err.error_loc = pos;
-                                Err.error_text = (to_print ^ s (* ^ "\n" ^ (pr hprel_assumptions) *))
+                                Err.error_text = (to_print ^ err_msg (* ^ "\n" ^ (pr hprel_assumptions) *))
                               }, (match fk with
                                 | CF.Failure_Bot _  -> 0
                                 | CF.Failure_Must _ -> 1
@@ -3447,6 +3449,7 @@ and check_post_x_x ?message:(m="Post-condition") (prog : prog_decl) (proc : proc
                   ) [] rs
               else rs in
             let s,fk,ets= CF.get_failure_list_partial_context rs in
+            let err_msg = Globals.report_info_flow_err s in
             (* let s = match CF.get_must_failure_list_partial_context rs with *)
             (*     | Some s -> "(must) cause:\n"^s *)
             (*     | None -> "( may) cause:\n"^s *)
@@ -3461,7 +3464,7 @@ and check_post_x_x ?message:(m="Post-condition") (prog : prog_decl) (proc : proc
                 m ^ " cannot be derived"
             in
             (* let () = print_string_quiet ("\nPost condition cannot be derived:\n" ^s^"\n") in *)
-            let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^ s ^ "\n") in
+            let () = print_string_quiet ("\n" ^ failure_str ^ ":\n" ^ err_msg ^ "\n") in
             Err.report_error {
               Err.error_loc = pos;
               Err.error_text = (* ("Post condition cannot be derived.") *)(failure_str ^ ".")
