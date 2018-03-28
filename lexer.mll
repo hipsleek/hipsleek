@@ -520,7 +520,7 @@ rule tokenizer file_name = parse
   | '*' { STAR }
   | "<:" { SUBANN }
   | '/' { DIV }
-  | ident as idstr 
+  | ident as idstr
 	  {
 		if idstr = "_" then
 		  IDENTIFIER ("Anon" ^ fresh_trailer ())

@@ -3546,15 +3546,16 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
   let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
   let pr3 = string_of_action_wt_res0 in
   Debug.no_4 "process_matches" (add_str "lhs_h" pr)
-    (add_str "matches" pr1)
-    (add_str "rhs_node" pr) 
-    (add_str "rhs_rest" pr) pr3 
+    (add_str "matches"  pr1)
+    (add_str "rhs_node" pr )
+    (add_str "rhs_rest" pr ) pr3
     (fun _ _ _ _ -> process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
     lhs_h l rhs_node rhs_rest
 
 and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))=
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let emap = CP.EMapSV.build_eset eqns' in
+  x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos;
   if !Debug.devel_debug_steps then
     begin
       let pr = Cprinter.string_of_h_formula   in
@@ -3562,7 +3563,7 @@ and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:m
       let pr2 x = (fun (l1, (c1,c2)) -> "(" ^ (pr1 l1) ^ ",(" ^ (pr c1) ^ "," ^ (pr c2) ^ "))" ) x in
       let pr3 = string_of_action_wt_res0 in
       let pr_estate = Cprinter.string_of_entail_state_short in
-      x_info_zp (lazy ("process_matches (steps) :"
+      x_binfo_zp (lazy ("process_matches (steps) :"
                        ^ ((add_str "\n ### LHS " pr) lhs_h)
                        ^ ((add_str "\n ### RHS " pr) rhs_node)
                        ^ ((add_str "\n ### estate " pr_estate) estate)

@@ -2743,15 +2743,17 @@ let build_sel_scc scc_lst get_name lst =
         ) scc
     ) scc_lst
 
-let report_info_flow_err str =
+let report_info_flow_err str = (* make Information Flow error message more readable *)
   let str = Str.global_replace (Str.regexp_string "<=" ) "<?"   str in
   let str = Str.global_replace (Str.regexp_string "max") "LUB"  str in
-  let str = Str.global_replace (Str.regexp_string "0<" ) "@Lo<" str in
+  let str = Str.global_replace (Str.regexp "\\([^0-9]\\)[0]\\([^0-9]\\)") "\1@Lo\2" str in
+  let str = Str.global_replace (Str.regexp "\\([^0-9]\\)[1]\\([^0-9]\\)") "\1@Hi\2" str in
+(*let str = Str.global_replace (Str.regexp_string "0<" ) "@Lo<" str in
   let str = Str.global_replace (Str.regexp_string "?0" ) "?@Lo" str in
   let str = Str.global_replace (Str.regexp_string "0," ) "@Lo," str in
   let str = Str.global_replace (Str.regexp_string ",0" ) ",@Lo" str in
   let str = Str.global_replace (Str.regexp_string "1<" ) "@Hi<" str in
   let str = Str.global_replace (Str.regexp_string "?1" ) "?@Hi" str in
   let str = Str.global_replace (Str.regexp_string "1," ) "@Hi," str in
-  let str = Str.global_replace (Str.regexp_string ",1" ) ",@Hi" str in
+  let str = Str.global_replace (Str.regexp_string ",1" ) ",@Hi" str in*)
   str

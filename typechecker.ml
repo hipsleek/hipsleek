@@ -2609,7 +2609,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
             (* NOTE: Auxiliary Function to Check Entailment of Precondition *)
             (*       and Additionally print error messages                  *)
-            let check_entailment_of_pre res msg =
+            let check_entailment_of_pre ?is_info_flow:(is_info=false) res msg =
               x_tinfo_hp (add_str msg Cprinter.string_of_list_failesc_context_short) res no_pos;
               if (Globals.global_efa_exc () || CF.isSuccessListFailescCtx_new res)
               then
@@ -2644,7 +2644,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     if (!Globals.web_compile_flag) then
                       let to_print = "\nProving " ^ msg ^ " in method " ^ proc.proc_name ^ " Failed.\n" in
                       let s,_,_    = CF.get_failure_list_failesc_context res in
-                      let err_msg  = Globals.report_info_flow_err s in
+                      let err_msg  = if is_info then Globals.report_info_flow_err s else s in
                       let () = print_string_quiet (to_print ^ err_msg ^"\n") in
                       res
                     else
@@ -2661,9 +2661,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             ) *)
                           (*should check bot with is_bot_status*)
                           in
-                          let err_msg = Globals.report_info_flow_err s in
+                          let err_msg = if is_info then Globals.report_info_flow_err s else s in
                           x_tinfo_hp (add_str "res" Cprinter.string_of_list_failesc_context) res no_pos;
-                          x_tinfo_hp (add_str "s" pr_id) s no_pos;
+                          x_tinfo_hp (add_str "err" pr_id) err_msg no_pos;
                           if (String.length err_msg) >  0
                           then
                             (* let () = print_string_quiet (to_print ^s^"\n") in *)
@@ -2733,7 +2733,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let info_res = check_info_pre_ctx ctx in
                 Gen.Profiling.pop_time "[check_exp] SCall";
                 let pure_res = check_entailment_of_pre pure_res "precondition" in
-                let info_res = check_entailment_of_pre info_res "information flow precondition" in
+                let info_res = check_entailment_of_pre ~is_info_flow:true info_res "information flow precondition" in
                 pure_res
               else
                 let pure_res = check_pre_ctx ctx in
@@ -3256,7 +3256,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
     Debug.no_2(* _loop *) "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts
 
 and check_post_info_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  let res       = (wrap_classic x_loc etype (check_post_x_x ~message:"Post-condition" prog proc ctx posts pos)) pid in
+  let res       = (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid in
   let f_po,s_po = posts in
   let info_fv_ctx  = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_list_partial_context ctx) in
   let info_fv_f_po = CF.remove_dupl_sec_vars (CF.collect_sec_vars_in_formula f_po) in
@@ -3273,15 +3273,15 @@ and check_post_info_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_parti
   print_endline ("formula: " ^ Cprinter.string_of_formula info_f_po);
   print_endline ("s_formula: " ^ Cprinter.string_of_struc_formula info_s_po);
   *)
-  let _         = (wrap_classic x_loc etype (check_post_x_x ~message:"Information-flow post-condition" prog proc info_ctx info_post pos)) pid in
+  let _         = (wrap_classic x_loc etype (check_post_x_x ~message:"Information-flow post-condition" ~is_info_flow:true prog proc info_ctx info_post pos)) pid in
   res
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  let res       = (wrap_classic x_loc etype (check_post_x_x ~message:"Post-condition" prog proc ctx posts pos)) pid in
+  let res       = (wrap_classic x_loc etype (check_post_x_x prog proc ctx posts pos)) pid in
   res
 
 (* NOTE: Post-condition check *)
-and check_post_x_x ?message:(m="Post-condition") (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
+and check_post_x_x ?message:(m="Post-condition") ?is_info_flow:(is_info=false) (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
   (* let () = print_string_quiet ("got into check_post on the succCtx branch\n") in *)
   (* let () = print_string_quiet ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
   (*fresh views: h_formula_view_original = true*)
@@ -3448,8 +3448,8 @@ and check_post_x_x ?message:(m="Post-condition") (prog : prog_decl) (proc : proc
                     acc@[(fs@ex_fs, rest)]
                   ) [] rs
               else rs in
-            let s,fk,ets= CF.get_failure_list_partial_context rs in
-            let err_msg = Globals.report_info_flow_err s in
+            let s,fk,ets = CF.get_failure_list_partial_context rs in
+            let err_msg  = if is_info then Globals.report_info_flow_err s else s in
             (* let s = match CF.get_must_failure_list_partial_context rs with *)
             (*     | Some s -> "(must) cause:\n"^s *)
             (*     | None -> "( may) cause:\n"^s *)

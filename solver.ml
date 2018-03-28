@@ -1840,6 +1840,10 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       let res = (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) in
+
+      x_binfo_hp (add_str "f (before) [BASE]" Cprinter.string_of_formula) f no_pos;
+      x_binfo_hp (add_str "f (after ) [BASE]" Cprinter.string_of_formula) new_f no_pos;
+
       (* Information Flow Analysis *)
       (* NOTE: Add back sec & ctx  *)
       let new_f,x = res in
@@ -1868,12 +1872,17 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       let uf = unfold_baref prog h p vp a fl v pos qvars ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       let res = (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*) in
+
+      x_binfo_hp (add_str "f (before) [BASE]" Cprinter.string_of_formula) f no_pos;
+      x_binfo_hp (add_str "f (after ) [BASE]" Cprinter.string_of_formula) uf no_pos;
+
       (* Information Flow Analysis *)
       (* NOTE: Add back sec & ctx  *)
       let new_f,x = res in
       let new_f = CF.add_sec_context_to_formula ctx new_f in
       let new_f = CF.update_sec_formula_list_in_formula new_f sec in
       (*****************************)
+
       (new_f,x)
     | Or ({formula_or_f1 = f1;
            formula_or_f2 = f2;
@@ -1884,6 +1893,8 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       resform,l1@l2
   in
   let new_f,ss0 = aux f v uf pos in
+  x_binfo_hp (add_str "f (before)" Cprinter.string_of_formula) f no_pos;
+  x_binfo_hp (add_str "f (after) " Cprinter.string_of_formula) new_f no_pos;
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
@@ -1894,12 +1905,17 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
+  x_binfo_hp (add_str "unfolded_h" Cprinter.string_of_formula) unfolded_h no_pos;
   let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] [] Sec_LO pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
+  x_binfo_hp (add_str "tmp_form_norm" Cprinter.string_of_formula) tmp_form_norm no_pos;
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
+  x_binfo_hp (add_str "tmp_form (0)" Cprinter.string_of_formula) tmp_form no_pos;
   let tmp_form = add_formula_and a tmp_form in
+  x_binfo_hp (add_str "tmp_form (1)" Cprinter.string_of_formula) tmp_form no_pos;
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
   (*let res_form = elim_unsat prog resform in*)
+  x_binfo_hp (add_str "resform" Cprinter.string_of_formula) resform no_pos;
   if already_unsat then match (snd prog) with
     | None ->
       (Gen.Profiling.push_time "unfold_unsat";
@@ -1934,6 +1950,7 @@ and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var
     (fun _ _ _ _ _ -> unfold_heap_x prog f aset v fl uf ~lem_unfold:lem_unfold pos)
     f v aset lem_unfold uf
 
+(* ADI TODO: check sec formula in unfold heap *)
 and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
     fl (uf:int) ?(lem_unfold = false) pos: formula =
   (*  let () = print_string("unfold heap " ^ (Cprinter.string_of_h_formula f) ^ "\n\n") in*)
@@ -1985,13 +2002,16 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             propagate_imm_formula forms lhs_name imm mpa
           with _ -> forms
         in
+        x_binfo_hp (add_str "renamed_view (-1)" Cprinter.string_of_formula) forms no_pos;
         let renamed_view_formula = x_add_1 rename_bound_vars forms in
         (* let () = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
+        x_binfo_hp (add_str "renamed_view (0)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         let renamed_view_formula = add_unfold_num renamed_view_formula uf in
         (* propagate the immutability annotation inside the definition *)
         (*let () = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
         (*let () = print_string ("unfold post subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
         (*if any, propagate the fractional permission inside the definition *)
+        x_binfo_hp (add_str "renamed_view (1)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         let renamed_view_formula =
           if (Perm.allow_perm ()) then
             (match perm with
@@ -1999,6 +2019,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
              | Some f -> Cformula.propagate_perm_formula renamed_view_formula (Cpure.get_var f))
           else renamed_view_formula
         in
+        x_binfo_hp (add_str "renamed_view (2)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
         let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
                       :: (* fr_rem *) vdef.view_vars in
@@ -2007,8 +2028,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
         (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
         (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
-        let () = y_tinfo_pp ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)) in
-        let () = y_tinfo_pp (("unfold post subst: "^(Cprinter.string_of_formula res_form))) in
+        let () = y_binfo_pp ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)) in
+        let () = y_binfo_pp (("unfold post subst: "^(Cprinter.string_of_formula res_form))) in
+        (* ADI BEFORE: y_tinfo_hp *)
         let res_form = add_origins res_form origs in
         (* let res_form = add_original res_form original in*)
         let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
@@ -12462,13 +12484,16 @@ and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx2" pr_id) "END"  no_pos in
   (0, actions)
 
+(* ADI TODO: unfold sec formula *)
 and process_unfold_x prog estate conseq a is_folding pos has_post pid =
   match a with
   | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) ->
     let lhs_var = get_node_var lhs_node in
     let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
     let ctx1 = build_context (Ctx estate) delta1 pos in
+    x_tinfo_hp (add_str "ctx1 (0)" Cprinter.string_of_context_short) ctx1 no_pos;
     let ctx1 = set_unsat_flag ctx1 true in
+    x_tinfo_hp (add_str "ctx1 (1)" Cprinter.string_of_context_short) ctx1 no_pos;
     let res_rs, prf1 = x_add heap_entail_one_context_struc_x prog is_folding has_post ctx1 conseq None None None pos pid in
     let prf = mkUnfold_no_conseq (Ctx estate) lhs_node prf1 in
     (res_rs, prf)
@@ -13029,6 +13054,7 @@ and process_small_action prog estate act conseq is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
   failwith "TBI process_small_action"
 
+(* ADI TODO: processing the action *)
 and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
   y_tinfo_hp (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b;
@@ -13513,6 +13539,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         (* pm_aux estate lhs_b (Context.M_infer_heap (2, lhs_node, rhs_node,rhs_rest)) *)
         (* failwith "TBI" *)
       end
+
+    (* ADI TODO: UNFOLD *)
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
                          Context.match_res_rhs_node=rhs_node;
                         },unfold_num) -> begin
@@ -13540,7 +13568,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                                           CF.mk_failure_must "infinite unfolding" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
           else
             let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+            x_binfo_hp (add_str "delta1" Cprinter.string_of_formula) delta1 no_pos;
             let ctx1 = build_context (Ctx estate) delta1 pos in
+            x_binfo_hp (add_str "ctx1" Cprinter.string_of_context) ctx1 no_pos;
             (* let ctx1 = elim_unsat_ctx_now prog (ref 1) ctx1 in *)
             (* let ctx1 = set_unsat_flag ctx1 true in *)
             let rec prune_helper c =

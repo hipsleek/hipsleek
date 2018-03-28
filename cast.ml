@@ -2572,7 +2572,14 @@ let check_proper_return cret_type exc_list f =
 (* TODO : res must be consistent with flow outcome *)
 
 let formula_of_unstruc_view_f vd =
-  F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
+  x_tinfo_hp (add_str "vd" !print_view_decl) vd no_pos;
+  let uns_f,uns_l = List.split vd.view_un_struc_formula in
+  x_tinfo_hp (add_str "uns_f" (List.fold_left (fun acc el -> acc ^ " <|> " ^ (!Cformula.print_formula el)) "")) uns_f no_pos;
+  let res = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula)) in
+  x_tinfo_hp (add_str "res" !Cformula.print_formula) res no_pos;
+  res
+
+
 
 let vdef_fold_use_bc prog ln2  = match ln2 with
   | F.ViewNode vn ->

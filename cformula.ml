@@ -4008,6 +4008,15 @@ and subst_sec_formula_list (subsl:(CP.spec_var * CP.spec_var) list) (sl : sec_fo
   let sl = List.fold_left (fun acc el -> apply_one_sec_formula_list el acc) sl _subsl1 in
   let sl = List.fold_left (fun acc el -> apply_one_sec_formula_list el acc) sl _subsl2 in
   sl
+and subst_sec_formula_list_in_formula (subsl:(CP.spec_var * CP.spec_var) list) (f:formula) =
+  match f with
+  | Base   b -> Base ({b with formula_base_sec = subst_sec_formula_list subsl b.formula_base_sec})
+  | Exists e -> Exists ({e with formula_exists_sec = subst_sec_formula_list subsl e.formula_exists_sec})
+  | Or     o -> Or ({
+      o with
+      formula_or_f1 = subst_sec_formula_list_in_formula subsl o.formula_or_f1;
+      formula_or_f2 = subst_sec_formula_list_in_formula subsl o.formula_or_f2
+    })
 and replace_sec_label (fr, t) (o : CP.spec_var) =
   if CP.eq_spec_var fr o then t else Sec_Var(o)
 and apply_rhs_sec_label ((fr, t) as s : (CP.spec_var * sec_label)) (lbl : sec_label) =
@@ -5028,7 +5037,11 @@ and rename_bound_vars_x (f : formula) = match f with
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
     (*09.05.2000 ---*)
     let rho = List.combine qvars new_qvars in
+    x_binfo_hp (add_str "new_base_f (-1)" !print_formula) base_f no_pos;
     let new_base_f = x_add subst rho base_f in (*TO CHECK*)
+    x_binfo_hp (add_str "new_base_f (0)" !print_formula) new_base_f no_pos;
+    let new_base_f = subst_sec_formula_list_in_formula rho new_base_f in
+    x_binfo_hp (add_str "new_base_f (1)" !print_formula) new_base_f no_pos;
     let resform = add_quantifiers new_qvars new_base_f in
     (resform,rho)
 
