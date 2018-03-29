@@ -1707,7 +1707,8 @@ let rec generate_constraint_from_baga_range lst =
     | Segment (base1,(exp1h,exp1t)), Segment (base2,(exp2h,exp2t)) ->
        let base_rhs = CP.BForm ((CP.mkEq_b (Var (base1,no_pos)) (Var (base2,no_pos)) no_pos),None) in
        let c1 = (CP.BForm (((CP.mkLt exp1h exp1t no_pos),None),None)) in
-       let base_rhs = CP.mkAnd c1 c1 no_pos in
+       let c2 = (CP.BForm (((CP.mkLt exp2h exp2t no_pos),None),None)) in
+       let base_rhs = CP.mkAnd c1 c2 no_pos in
        CP.mkOr
          (CP.mkNot_s base_rhs)
          (CP.mkOr
