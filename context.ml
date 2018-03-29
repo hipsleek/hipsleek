@@ -3552,9 +3552,14 @@ and process_matches prog estate lhs_h lhs_p conseq is_normalizing reqset (((l:ma
     (fun _ _ _ _ -> process_matches_norm prog estate lhs_h lhs_p conseq is_normalizing reqset ks) 
     lhs_h l rhs_node rhs_rest
 
-and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p))=
+and process_matches_x prog estate lhs_h lhs_p conseq is_normalizing reqset ((l:match_res list),(rhs_node,rhs_rest,rhs_p)) =
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let emap = CP.EMapSV.build_eset eqns' in
+  x_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate no_pos;
+  x_binfo_hp (add_str "lhs_h"  Cprinter.string_of_h_formula) lhs_h no_pos;
+  x_binfo_hp (add_str "lhs_p"  Cprinter.string_of_mix_formula) lhs_p no_pos;
+  x_binfo_hp (add_str "rhs_h"  Cprinter.string_of_h_formula) rhs_node no_pos;
+  x_binfo_hp (add_str "rhs_p"  Cprinter.string_of_mix_formula) rhs_p no_pos;
   x_binfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq no_pos;
   if !Debug.devel_debug_steps then
     begin

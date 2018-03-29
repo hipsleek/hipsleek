@@ -5037,12 +5037,13 @@ and rename_bound_vars_x (f : formula) = match f with
     (*let () = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
     (*09.05.2000 ---*)
     let rho = List.combine qvars new_qvars in
-    x_binfo_hp (add_str "new_base_f (-1)" !print_formula) base_f no_pos;
+    x_tinfo_hp (add_str "new_base_f (-1)" !print_formula) base_f no_pos;
     let new_base_f = x_add subst rho base_f in (*TO CHECK*)
-    x_binfo_hp (add_str "new_base_f (0)" !print_formula) new_base_f no_pos;
+    x_tinfo_hp (add_str "new_base_f (0)" !print_formula) new_base_f no_pos;
     let new_base_f = subst_sec_formula_list_in_formula rho new_base_f in
-    x_binfo_hp (add_str "new_base_f (1)" !print_formula) new_base_f no_pos;
+    x_tinfo_hp (add_str "new_base_f (1)" !print_formula) new_base_f no_pos;
     let resform = add_quantifiers new_qvars new_base_f in
+    x_tinfo_hp (add_str "new_base_f (2)" !print_formula) resform no_pos;
     (resform,rho)
 
 and propagate_perm_formula (f : formula) (permvar:cperm_var) : formula =

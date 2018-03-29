@@ -1841,16 +1841,10 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       let res = (normalize_formula_w_coers 1 (fst prog) tmp_es new_f (Lem_store.all_lemma # get_left_coercion), []) (*(fst prog).prog_left_coercions*) in
 
-      x_binfo_hp (add_str "f (before) [BASE]" Cprinter.string_of_formula) f no_pos;
-      x_binfo_hp (add_str "f (after ) [BASE]" Cprinter.string_of_formula) new_f no_pos;
+      x_tinfo_hp (add_str "f (before) [BASE]" Cprinter.string_of_formula) f no_pos;
+      x_tinfo_hp (add_str "f (after ) [BASE]" Cprinter.string_of_formula) new_f no_pos;
 
-      (* Information Flow Analysis *)
-      (* NOTE: Add back sec & ctx  *)
-      let new_f,x = res in
-      let new_f = CF.add_sec_context_to_formula ctx new_f in
-      let new_f = CF.update_sec_formula_list_in_formula new_f sec in
-      (*****************************)
-      (new_f,x)
+      res
 
     | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
       let rf,l = x_add_1 rename_bound_vars_with_subst f in
@@ -1873,28 +1867,24 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       let res = (normalize_formula_w_coers 2 (fst prog) tmp_es uf (Lem_store.all_lemma # get_left_coercion), l) (*(fst prog).prog_left_coercions*) in
 
-      x_binfo_hp (add_str "f (before) [BASE]" Cprinter.string_of_formula) f no_pos;
-      x_binfo_hp (add_str "f (after ) [BASE]" Cprinter.string_of_formula) uf no_pos;
+      x_tinfo_hp (add_str "f (before) [EXISTS]" Cprinter.string_of_formula) f no_pos;
+      x_tinfo_hp (add_str "f (after ) [EXISTS]" Cprinter.string_of_formula) uf no_pos;
 
-      (* Information Flow Analysis *)
-      (* NOTE: Add back sec & ctx  *)
-      let new_f,x = res in
-      let new_f = CF.add_sec_context_to_formula ctx new_f in
-      let new_f = CF.update_sec_formula_list_in_formula new_f sec in
-      (*****************************)
-
-      (new_f,x)
+      res
     | Or ({formula_or_f1 = f1;
            formula_or_f2 = f2;
            formula_or_pos = pos}) ->
       let uf1,l1 = aux f1 v uf pos in
       let uf2,l2 = aux f2 v uf pos in
       let resform = mkOr uf1 uf2 pos in
+      x_tinfo_hp (add_str "f_or_1" Cprinter.string_of_formula) uf1 no_pos;
+      x_tinfo_hp (add_str "f_or_2" Cprinter.string_of_formula) uf2 no_pos;
+      x_tinfo_hp (add_str "f_or_R" Cprinter.string_of_formula) resform no_pos;
       resform,l1@l2
   in
   let new_f,ss0 = aux f v uf pos in
-  x_binfo_hp (add_str "f (before)" Cprinter.string_of_formula) f no_pos;
-  x_binfo_hp (add_str "f (after) " Cprinter.string_of_formula) new_f no_pos;
+  x_tinfo_hp (add_str "f (before)" Cprinter.string_of_formula) f no_pos;
+  x_tinfo_hp (add_str "f (after) " Cprinter.string_of_formula) new_f no_pos;
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
@@ -1905,17 +1895,17 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
-  x_binfo_hp (add_str "unfolded_h" Cprinter.string_of_formula) unfolded_h no_pos;
+  x_tinfo_hp (add_str "unfolded_h" Cprinter.string_of_formula) unfolded_h no_pos;
   let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] [] Sec_LO pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
-  x_binfo_hp (add_str "tmp_form_norm" Cprinter.string_of_formula) tmp_form_norm no_pos;
+  x_tinfo_hp (add_str "tmp_form_norm" Cprinter.string_of_formula) tmp_form_norm no_pos;
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
-  x_binfo_hp (add_str "tmp_form (0)" Cprinter.string_of_formula) tmp_form no_pos;
+  x_tinfo_hp (add_str "tmp_form (0)" Cprinter.string_of_formula) tmp_form no_pos;
   let tmp_form = add_formula_and a tmp_form in
-  x_binfo_hp (add_str "tmp_form (1)" Cprinter.string_of_formula) tmp_form no_pos;
+  x_tinfo_hp (add_str "tmp_form (1)" Cprinter.string_of_formula) tmp_form no_pos;
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
   (*let res_form = elim_unsat prog resform in*)
-  x_binfo_hp (add_str "resform" Cprinter.string_of_formula) resform no_pos;
+  x_tinfo_hp (add_str "resform" Cprinter.string_of_formula) resform no_pos;
   if already_unsat then match (snd prog) with
     | None ->
       (Gen.Profiling.push_time "unfold_unsat";
@@ -2002,16 +1992,16 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
             propagate_imm_formula forms lhs_name imm mpa
           with _ -> forms
         in
-        x_binfo_hp (add_str "renamed_view (-1)" Cprinter.string_of_formula) forms no_pos;
+        x_tinfo_hp (add_str "renamed_view (-1)" Cprinter.string_of_formula) forms no_pos;
         let renamed_view_formula = x_add_1 rename_bound_vars forms in
         (* let () = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
-        x_binfo_hp (add_str "renamed_view (0)" Cprinter.string_of_formula) renamed_view_formula no_pos;
+        x_tinfo_hp (add_str "renamed_view (0)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         let renamed_view_formula = add_unfold_num renamed_view_formula uf in
         (* propagate the immutability annotation inside the definition *)
         (*let () = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
         (*let () = print_string ("unfold post subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
         (*if any, propagate the fractional permission inside the definition *)
-        x_binfo_hp (add_str "renamed_view (1)" Cprinter.string_of_formula) renamed_view_formula no_pos;
+        x_tinfo_hp (add_str "renamed_view (1)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         let renamed_view_formula =
           if (Perm.allow_perm ()) then
             (match perm with
@@ -2019,7 +2009,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
              | Some f -> Cformula.propagate_perm_formula renamed_view_formula (Cpure.get_var f))
           else renamed_view_formula
         in
-        x_binfo_hp (add_str "renamed_view (2)" Cprinter.string_of_formula) renamed_view_formula no_pos;
+        x_tinfo_hp (add_str "renamed_view (2)" Cprinter.string_of_formula) renamed_view_formula no_pos;
         (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
         let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
                       :: (* fr_rem *) vdef.view_vars in
@@ -2028,15 +2018,21 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
         let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
         (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
         (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
-        let () = y_binfo_pp ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)) in
-        let () = y_binfo_pp (("unfold post subst: "^(Cprinter.string_of_formula res_form))) in
-        (* ADI BEFORE: y_tinfo_hp *)
+        x_tinfo_hp (add_str "fr_vars" Cprinter.string_of_spec_var_list) fr_vars no_pos;
+        x_tinfo_hp (add_str "to_vars" Cprinter.string_of_spec_var_list) to_vars no_pos;
+        let () = y_tinfo_pp ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)) in
+        let () = y_tinfo_pp (("unfold post subst: "^(Cprinter.string_of_formula res_form))) in
+        x_tinfo_hp (add_str "res_form (0)" Cprinter.string_of_formula) res_form no_pos;
         let res_form = add_origins res_form origs in
         (* let res_form = add_original res_form original in*)
+        x_tinfo_hp (add_str "res_form (1)" Cprinter.string_of_formula) res_form no_pos;
         let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
         (*let res_form = struc_to_formula res_form in*)
+        x_tinfo_hp (add_str "res_form (2)" Cprinter.string_of_formula) res_form no_pos;
         let ()  = y_tinfo_pp "2" in
-        CF.replace_formula_label v_lbl res_form
+        let res_form = CF.replace_formula_label v_lbl res_form in
+        x_tinfo_hp (add_str "res_form (3)" Cprinter.string_of_formula) res_form no_pos;
+        res_form
       | Some (base , (pred_id,to_vars)) -> (* base case unfold *)
         (* ensures that only view with a specific pred and arg are base-case unfolded *)
         let flag =
@@ -13087,21 +13083,23 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_infer = infer_opt;
         Context.match_res_holes = holes;
       } as m_res)->
-      x_tinfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
-      x_tinfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
-      x_tinfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
-      x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
-      x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      x_binfo_hp (add_str "lhs_node" (Cprinter.string_of_h_formula)) lhs_node pos;
+      x_binfo_hp (add_str "lhs_rest" (Cprinter.string_of_h_formula)) lhs_rest pos;
+      x_binfo_hp (add_str "rhs_node" (Cprinter.string_of_h_formula)) rhs_node pos;
+      x_binfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
+      x_binfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
+      (* before: tinfo *)
       let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos) lhs_rest holes
       in
-      x_tinfo_hp (add_str "lhs_rest (after adding the nodes)" (Cprinter.string_of_h_formula)) lhs_rest pos;
+      x_binfo_hp (add_str "lhs_rest (after adding the nodes)" (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
         | Some f ->
-          let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
-          let () = x_dinfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
-          let () = x_dinfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
+          let () = y_binfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
+          let () = x_binfo_hp (add_str "rhs_to_prove" !CP.print_formula) f pos in
+          let () = x_binfo_hp (add_str "conseq" !CF.print_formula) conseq pos in
           [f]
-        | _ -> [] in
+        | _ -> []
+      in
       (*******SPLIT/COMBINE permissions********>>
               if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
               else SPLIT followed by MATCH or COMBINE followed by MATCH
@@ -13123,6 +13121,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           (* let flag = lhs_orignal in (\*if flag then MATCH*\) *)
           (* let lhs_pvars = Perm.get_cperm lhs_perm in *)
           (* let rhs_pvars = Perm.get_cperm rhs_perm in *)
+          x_binfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) lhs_perm no_pos;
+          x_binfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) rhs_perm no_pos;
           let exact_flag,perm_f,vars = match lhs_perm,rhs_perm with
             | None,None -> (true,CP.mkTrue no_pos,[]) (*1.0 = 1.0 => exact match*)
             | Some f, None ->
@@ -13166,7 +13166,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           *)
           (* if (flag || exact_flag) then None else *)
           (* let tmp = Gen.BList.intersect_eq (CP.eq_spec_var) vars (estate.es_gen_expl_vars(\* @estate.es_ivars *\)@estate.es_gen_impl_vars) in *)
+          x_binfo_hp (add_str "exists_vars (A)" Cprinter.string_of_spec_var_list) exists_vars no_pos;
+          x_binfo_hp (add_str "exists_vars (B)" Cprinter.string_of_spec_var_list) vars no_pos;
           let exists_vars = Gen.BList.difference_eq (CP.eq_spec_var) exists_vars vars in
+          x_binfo_hp (add_str "exists_vars (A-B)" Cprinter.string_of_spec_var_list) exists_vars no_pos;
           let rhs_frac = if (vars=[]) then MCP.mkMTrue no_pos
             else MCP.find_rel_constraints (rhs_b.formula_base_pure) vars in
           let xpure_lhs, _, memset = x_add xpure 11 prog (Base lhs_b) in
@@ -13213,14 +13216,17 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       in
       (match res with
        | Some r ->
-         Debug.ninfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos;
+         x_binfo_hp (add_str "match res with: " idf) "Some r" no_pos;
+         Debug.binfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos; (* before: ninfo *)
          r
        | None  -> begin
            (*<<***END SPLIT/COMBINE permissions*******************)
-           y_dinfo_pp ("Match action, do process_before_do_match r");
+           x_binfo_hp (add_str "match res with: " idf) "None" no_pos;
+           y_binfo_pp ("Match action, do process_before_do_match r");
+           (* before: dinfo *)
            let r = process_before_do_match pure_to_add prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
                lhs_node lhs_rest rhs_node rhs_rest holes in
-           Debug.dinfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos;
+           Debug.binfo_hprint (add_str "Match action, context r" (fun x -> Cprinter.string_of_list_context (fst x))) r no_pos; (* before: dinfo *)
            r
            (* let subsumes, to_be_proven = prune_branches_subsume(\*_debug*\) prog lhs_node rhs_node in *)
            (* if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos, CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias) *)
@@ -13540,7 +13546,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         (* failwith "TBI" *)
       end
 
-    (* ADI TODO: UNFOLD *)
+    (* ADI TODO: to check UNFOLD *)
     | Context.M_unfold ({Context.match_res_lhs_node=lhs_node;
                          Context.match_res_rhs_node=rhs_node;
                         },unfold_num) -> begin
@@ -13579,7 +13585,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
               | Ctx es -> Ctx ({es with es_formula = prune_preds prog false (*true*) es.es_formula})
             in
             (* TODO: prune_helper slows down the spaguetti benchmark *)
-            let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding (prune_helper ctx1) (*ctx1*) conseq None None None pos in
+            let prune_ctx1 = (prune_helper ctx1) in
+            x_binfo_hp (add_str "pruned" Cprinter.string_of_context) prune_ctx1 no_pos;
+            let res_rs, prf1 = x_add heap_entail_one_context 8 prog is_folding prune_ctx1 (*ctx1*) conseq None None None pos in
+            x_binfo_hp (add_str "res_rs" Cprinter.string_of_list_context) res_rs no_pos;
             let prf = mkUnfold (Ctx estate) conseq lhs_node prf1 in
             (res_rs, prf)
       end
