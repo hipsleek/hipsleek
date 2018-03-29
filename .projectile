@@ -1,0 +1,12 @@
+-/_build
+-*.cmi*
+-*.cma*
+-*.cmx*
+-*.slk
+-*.txt
+-/sleek
+-/hip
+-*.byte
+-/_tags
+-/Makefile
+-/.*
