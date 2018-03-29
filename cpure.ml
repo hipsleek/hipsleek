@@ -6104,7 +6104,7 @@ struct
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) *)
   (* [(b,d),(b2,d2)],p   ==> p & (d>0 -> b!=null) & (d2>0 -> b2!=null) & (d<=b2||d2<=b) (to ensure disjointness) *)
   let get_pure ?(enum_flag=false) ?(neq_flag=false) (lst:t list) =
-    let () = y_binfo_hp (add_str "WN: get_pure" (pr_list string_of)) lst in
+    let () = y_tinfo_hp (add_str "WN: get_pure" (pr_list string_of)) lst in
     let gen_disj tlst =
       let gen_disj_f basenew eh et base e1 e2=
         let f =

@@ -1694,7 +1694,7 @@ let rec generate_constraint_from_baga_range lst =
        let base_rhs = CP.BForm ((CP.mkEq_b (Var (sv1,no_pos)) (Var (sv2,no_pos)) no_pos),None) in
        CP.mkNot_s base_rhs
     | Element sv, Segment (base,(exph,expt))
-      | Segment (base,(exph,expt)), Element sv ->
+    | Segment (base,(exph,expt)), Element sv ->
        let expsv = CP.Var (sv,no_pos) in
        let expbase = CP.Var (base,no_pos) in
        let rangeh = CP.mkAdd expbase exph no_pos in

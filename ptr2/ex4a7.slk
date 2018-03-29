@@ -1,0 +1,130 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=self<=end). 
+// 5::Aseg<5> -- empty
+// 5::Aseg<6> -- 1 elem
+// 5::Aseg<10> -- 5 elems
+
+
+pred_prim AsegNE<end> 
+     inv_exact BG([(self,end)],0<self<end).
+// non-empty 
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+// x::ElemN<2>
+
+checkentail x::ElemN<2> * x::ElemN<_> |- false.
+checkentail x::ElemN<2> * y::ElemN<_> |- x!=y.
+print residue.
+checkentail x::ElemN<2> * y::ElemN<_> |- false.
+print residue.
+
+
+checkentail x1::AsegNE<y1> * x2::AsegNE<y2> |- false.
+print residue.
+
+//(5)
+checkentail x1::AsegNE<y1> * x2::AsegNE<y2> |- x1<y1  & x1!=null.
+print residue.
+
+//(6)
+checkentail x1::AsegNE<y1> * x2::AsegNE<y2> |- y1<=x2 | y2<=x1.
+print residue.
+
+//(7)
+checkentail xx1::AsegNE<y1> * x2::AsegNE<y2> |- y1<=x2 .
+print residue.
+
+//(8)
+checkentail xxx::ElemN<_> * yyy::AsegNE<c> |- xxx!=yyy.
+
+/*
+# xxx is lost..
+
+generate_constraint_from_baga_range_disj@18
+generate_constraint_from_baga_range_disj inp1 :[[],[(_,( yyy, c))]]
+generate_constraint_from_baga_range_disj@18 EXIT:[]
+*/
+
+checkentail xxx::ElemN<_> * yyy::ElemN<_> |- xxx!=yyy.
+// both xxx and yyy are lost..
+
+checkentail_exact x::AsegNE<b> * y::Aseg<c> |- x=c.
+expect Valid.
+print residue.
+/* should succeed, 
+<1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+checkentail_exact x::AsegNE<bbb> * x::Aseg<c> |- x=null.
+expect Fail.
+print residue.
+/* why is there .. !(_,_)..
+Entail (9) : Fail.(must) cause: ((!(_=_) | x>=b | x>=c)) 
+  & x<=c & x<b & x!=null |-  x=null. LOCS:[0;1;76] (must-bug)
+
+(==sleekengine.ml#1269==)
+xpure_heap_symbolic#999@7
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::AsegNE<b>@M * x::Aseg<c>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@7 EXIT: x!=null & x<b & x<=c & ((!(_=_) | x>=b | x>=c))#[]# [[_22]]true
+
+
+*/
+checkentail_exact x::AsegNE<b> * x::Aseg<c> |- x=c.
+expect Valid.
+print residue.
+/* should succeed, 
+<1>x::AsegNE<b>@M * x::Aseg<c>@M&{FLOW,(4,5)=__norm#E}[]
+
+*/
+
+//checkentail_exact x::AsegNE<bbb> * x::AsegNE<c> |- x=null.
+//expect Fail.
+//print residue.
+checkentail x::AsegNE<b> * y::Aseg<c> |- // !(y<c) | 
+    b<=y | c<=x.
+expect Fail.
+print residue.
+/* # ex4a6.slk
+should fail ..
+
+should be: 
+  (x<b & y<c --> y>=b | x>=c)
+
+instead of: 
+  generate_constraint_from_baga_range_disj@48 EXIT:[[ (!(_=_) | y>=b | x>=c)]]
+
+(==cvutil.ml#984==)
+generate_constraint_from_baga_range_disj@48@46
+generate_constraint_from_baga_range_disj inp1 :[[(_,( x, b))],[(_,( y, c))]]
+generate_constraint_from_baga_range_disj@48 EXIT:[[ (!(_=_) | y>=b | x>=c)]]
+
+(==sleekengine.ml#1269==)
+xpure_heap_symbolic#999@46
+xpure_heap_symbolic#999 inp1 :0
+xpure_heap_symbolic#999 inp2 : x::AsegNE<b>@M * y::AsegNE<c>@M
+xpure_heap_symbolic#999 inp3 : true
+xpure_heap_symbolic#999@46 EXIT: x!=null & x<b & y!=null & y<c & ((!(_=_) | y>=b | x>=c))#[]# [[_43,_44]]true
+
+
+*/
+
+
+checkentail x::AsegNE<b> * y::ElemN<_> |- x!=y.
+expect Valid.
