@@ -70,7 +70,8 @@ print residue.
 //checkentail_exact x::AsegNE<bbb> * x::AsegNE<c> |- x=null.
 //expect Fail.
 //print residue.
-checkentail_exact x::AsegNE<b> * y::Aseg<c> |- b<=y | c<=x.
+checkentail x::AsegNE<b> * y::Aseg<c> |- // !(y<c) | 
+    b<=y | c<=x.
 expect Fail.
 print residue.
 /* # ex4a6.slk
@@ -98,3 +99,5 @@ xpure_heap_symbolic#999@46 EXIT: x!=null & x<b & y!=null & y<c & ((!(_=_) | y>=b
 */
 
 
+checkentail x::AsegNE<b> * y::ElemN<_> |- x!=y.
+expect Valid.
