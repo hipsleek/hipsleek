@@ -1410,7 +1410,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
     let () = x_tinfo_hp (add_str "h0" Cprinter.string_of_h_formula) h0 no_pos in
     (* let () = x_dinfo_hp (add_str "p0" Cprinter.string_of_mix_formula) p0 no_pos in *)
     let () = x_tinfo_hp (add_str "memset" Cprinter.string_of_mem_formula) memset no_pos in
-    if (is_sat_mem_formula memset) then 
+    if (x_add_1 is_sat_mem_formula memset) then 
       let pure_of_memset = x_add xpure_heap_helper prog h0 which_xpure memset in
 
       let pf_with_baga = enhance_with_baga_inv prog h0 pf in
@@ -1803,7 +1803,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) 
   (* let (h0,pf) = elim_absent_nodes (aux_xpure_for_view prog memset) h0 which_xpure in *)
   (* let pf = CP.join_conjunctions pf in *)
   let ph, pa = x_add xpure_heap_symbolic_i prog h0 p0 which_xpure in
-  if (is_sat_mem_formula memset) then
+  if (x_add_1 is_sat_mem_formula memset) then
     let pf =  enhance_with_baga_inv prog h0 pf in
     let ph =  if !Globals.old_keep_absent then ph
       else MCP.merge_mix_w_pure ph pf in

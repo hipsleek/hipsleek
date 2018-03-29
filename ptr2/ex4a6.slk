@@ -22,7 +22,18 @@ pred_prim ElemN<start:int>
      inv_exact BG([self], true). // non-null
 
 
-checkentail_exact xxx::ElemN<_> * yyy::ElemN<_> |- x=c.
+checkentail xxx::ElemN<_> * yyy::Aseg<c> |- xxx!=yyy.
+
+/*
+# xxx is lost..
+
+generate_constraint_from_baga_range_disj@18
+generate_constraint_from_baga_range_disj inp1 :[[],[(_,( yyy, c))]]
+generate_constraint_from_baga_range_disj@18 EXIT:[]
+*/
+
+checkentail xxx::ElemN<_> * yyy::ElemN<_> |- xxx!=yyy.
+// both xxx and yyy are lost..
 
 checkentail_exact x::AsegNE<b> * y::Aseg<c> |- x=c.
 expect Valid.
