@@ -810,17 +810,17 @@ let rec get_sec_var_from_sec_formula_list (sl:sec_formula list) : CP.spec_var li
 (*****************************)
 
 
-  module Exp_Heap =
-  struct
-    type e = h_formula
-    let comb x y = Star
-        { h_formula_star_h1 = x;
-          h_formula_star_h2 = y;
-          h_formula_star_pos = no_pos
-        }
-    let string_of = !print_h_formula
-    let ref_string_of = print_h_formula
-  end;;
+module Exp_Heap =
+struct
+  type e = h_formula
+  let comb x y = Star
+      { h_formula_star_h1 = x;
+        h_formula_star_h2 = y;
+        h_formula_star_pos = no_pos
+      }
+  let string_of = !print_h_formula
+  let ref_string_of = print_h_formula
+end;;
 
 module Exp_Spec =
 struct
@@ -13888,10 +13888,8 @@ and get_sec_label_from_consistent_entail_state (var:CP.spec_var) (es:entail_stat
     | Base   b -> get_sec_label_from_sec_formula_list var b.formula_base_sec
     | Exists e -> get_sec_label_from_sec_formula_list var e.formula_exists_sec
     | Or     o -> helper o.formula_or_f1 (* need consistency *)
-
   in
   helper es.es_formula
-
 
 (* NOTE: Sec Formula List Retrieval *)
 and gather_sec_formula_list_in_list_failesc_context (lfc:list_failesc_context) : ((sec_formula list) list) =
@@ -13981,6 +13979,10 @@ and update_sec_formula_list_in_formula (f:formula) (sec:sec_formula list) : form
     Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
 
 (* NOTE: Construct sec_formula list [x <? y, ...] from x = y & ... in Cpure.formula *)
+and constr_sec_formula_list_from_mix_formula (mf:MCP.mix_formula) (ctx:sec_label) : (sec_formula list) =
+  match mf with
+  | OnePF f -> constr_sec_formula_list_from_formula f ctx
+  | _       -> [] (* ADI TODO: to be added? *)
 and constr_sec_formula_list_from_formula (f:Cpure.formula) (ctx:sec_label) : (sec_formula list) =
   let rec helper (f:Cpure.formula) : (sec_formula list) =
     match f with

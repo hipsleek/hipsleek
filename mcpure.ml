@@ -2137,9 +2137,9 @@ let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b
   (ne, f_comb vals)*)
 
 
-type mix_formula = 
+type mix_formula =
   | MemoF of Mcpure_D.memo_pure
-  | OnePF of Cpure.formula 
+  | OnePF of Cpure.formula
 
 let is_sat_raw = ref(fun (c:mix_formula) -> true)
 

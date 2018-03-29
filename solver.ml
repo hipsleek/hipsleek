@@ -1888,7 +1888,8 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
   let new_f = x_add_1 Immutable.normalize_field_ann_formula new_f in
   new_f,ss0
 
-and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var)
+(* ADI TODO: add sctx in ALL call to unfold_baref_x *)
+and unfold_baref_x ?sctx:(sec_ctx=CF.Sec_LO) prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) a (fl:flow_formula) (v : CP.spec_var)
     pos qvars ?(lem_unfold = false) already_unsat (uf:int) =
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
@@ -1896,7 +1897,9 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
   let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
   x_tinfo_hp (add_str "unfolded_h" Cprinter.string_of_formula) unfolded_h no_pos;
-  let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] [] Sec_LO pos in
+  let sec_f  = CF.constr_sec_formula_list_from_mix_formula p sec_ctx in
+  let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] sec_f sec_ctx pos in
+  x_tinfo_hp (add_str "mix_form" Cprinter.string_of_mix_formula) p no_pos;
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
   x_tinfo_hp (add_str "tmp_form_norm" Cprinter.string_of_formula) tmp_form_norm no_pos;
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
@@ -11728,10 +11731,10 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
   let () = x_tinfo_hp (add_str " estate.es_evars" !CP.print_svl) estate.es_evars  no_pos in
   let () = x_tinfo_hp (add_str " state.es_gen_impl_vars" !CP.print_svl) estate.es_gen_impl_vars no_pos in
   let () = x_tinfo_hp (add_str " state.es_gen_expl_vars" !CP.print_svl) estate.es_gen_expl_vars no_pos in
-  let lhs_h,lhs_p,_,_,_,_,_,_ = CF.extr_formula_base lhs_b in
-  let rhs_h,rhs_p,_,_,_,_,_,_ = CF.extr_formula_base rhs_b in
+  let lhs_h,lhs_p,_,_,_,_,lhs_sec,_ = CF.extr_formula_base lhs_b in
+  let rhs_h,rhs_p,_,_,_,_,rhs_sec,_ = CF.extr_formula_base rhs_b in (* ADI TODO: check lhs/rhs sec *)
   let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
-  let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
+  let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p,rhs_sec)) rhs_lst in
   let () = x_tinfo_hp (add_str " Aliases" (Cprinter.string_of_list_f Cprinter.string_of_spec_var)) posib_r_alias no_pos in
   let rhs_eqset = (* if !Globals.allow_imm then *)Gen.BList.remove_dups_eq (fun (sv11,sv12) (sv21,sv22) ->
       CP.eq_spec_var sv11 sv21 && CP.eq_spec_var sv12 sv22
@@ -11748,7 +11751,7 @@ and heap_entail_non_empty_rhs_heap_x ?(caller="") ?(cont_act=[]) prog is_folding
   let () = x_tinfo_hp (add_str "ctx0" Cprinter.string_of_context_short) ctx0  no_pos in
   let () = x_tinfo_hp (add_str "estate.es_folding_conseq_pure " (pr_option Cprinter.string_of_mix_formula)) estate.es_folding_conseq_pure pos in
   let actions,cont_act = match cont_act with
-      [] -> (x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
+      [] -> (x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p lhs_sec rhs_p
                posib_r_alias rhs_lst estate.es_is_normalizing conseq pos,[])
     | (_,a)::lst -> (a,lst)
   in
@@ -12466,17 +12469,17 @@ and comp_act prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
 and comp_act_x prog (estate:entail_state) (rhs:formula) : (Context.action_wt) =
   let rhs_b = extr_rhs_b rhs in
   let lhs_b = extr_lhs_b estate in
-  let lhs_h,lhs_p,_,_,_,_,_,_ = extr_formula_base lhs_b in
-  let rhs_h,rhs_p,_,_,_,_,_,_ = extr_formula_base rhs_b in
+  let lhs_h,lhs_p,_,_,_,_,lhs_sec,_ = extr_formula_base lhs_b in
+  let rhs_h,rhs_p,_,_,_,_,rhs_sec,_ = extr_formula_base rhs_b in (* ADI TODO: check lhs/rhs sec *)
   let rhs_lst = split_linear_node_guided (CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
-  let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p)) rhs_lst in
+  let rhs_lst = List.map (fun (h1,h2) -> (h1,h2,rhs_p,rhs_sec)) rhs_lst in
   (* let rhs_lst = [] in *)
   let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
   let rhs_eqset = estate.es_rhs_eqset in
   (* let () = print_endline "CA:2" in *)
   let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx2" pr_id) "START"  no_pos in
-  let actions = x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p rhs_p
-      posib_r_alias rhs_lst  estate.es_is_normalizing rhs no_pos in
+  let actions = x_add Context.compute_actions prog estate rhs_eqset lhs_h lhs_p lhs_sec rhs_p
+      posib_r_alias rhs_lst estate.es_is_normalizing rhs no_pos in
   let () = x_tinfo_hp (add_str " xxxxxxxxxxxxxx2" pr_id) "END"  no_pos in
   (0, actions)
 
@@ -12999,6 +13002,8 @@ and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched
     (* let () = print_string ("\n(andreeac) new estate " ^ ( Cprinter.string_of_entail_state_short new_estate)) in  *)
     (*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
       if it succeeds and the flag from to_be_proven is true then make current context false*)
+    x_tinfo_hp (add_str "estate (before)" Cprinter.string_of_entail_state) estate no_pos;
+    x_tinfo_hp (add_str "estate (after )" Cprinter.string_of_entail_state) new_estate no_pos;
     let rhs_p = match to_be_proven with
       | None -> rhs_b.formula_base_pure
       | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
@@ -13054,6 +13059,7 @@ and process_small_action prog estate act conseq is_folding pos
 and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set: CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
   y_tinfo_hp (add_str "process_action lhs_b" !CF.print_formula_base) lhs_b;
+  y_tinfo_hp (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b;
   Debug.ninfo_hprint (add_str "process_action rhs_b" !CF.print_formula_base) rhs_b pos;
   if (Context.is_steps_action a) then
     begin
@@ -13121,8 +13127,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
           (* let flag = lhs_orignal in (\*if flag then MATCH*\) *)
           (* let lhs_pvars = Perm.get_cperm lhs_perm in *)
           (* let rhs_pvars = Perm.get_cperm rhs_perm in *)
-          x_binfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) lhs_perm no_pos;
-          x_binfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) rhs_perm no_pos;
+          x_tinfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) lhs_perm no_pos;
+          x_tinfo_hp (add_str "lhs_perm" (Perm.string_of_cperm ())) rhs_perm no_pos;
           let exact_flag,perm_f,vars = match lhs_perm,rhs_perm with
             | None,None -> (true,CP.mkTrue no_pos,[]) (*1.0 = 1.0 => exact match*)
             | Some f, None ->
@@ -13573,7 +13579,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
             (CF.mkFailCtx_in(Basic_Reason(mkFailContext (* "ensuring finite unfold" *) err_msg estate conseq (get_node_label lhs_node) pos,
                                           CF.mk_failure_must "infinite unfolding" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true),NoAlias)
           else
-            let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *)
+            let delta1,_ = unfold_nth 1 (prog,None) estate.es_formula lhs_var true unfold_num pos in (* update unfold_num *) (* ADI TODO: look at unfold_nth *)
+            x_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate no_pos;
             x_binfo_hp (add_str "delta1" Cprinter.string_of_formula) delta1 no_pos;
             let ctx1 = build_context (Ctx estate) delta1 pos in
             x_binfo_hp (add_str "ctx1" Cprinter.string_of_context) ctx1 no_pos;
