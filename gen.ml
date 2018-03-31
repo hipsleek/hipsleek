@@ -16,6 +16,7 @@ let enable_counters = ref false
 let profiling = ref false
 let profile_threshold = 0.5
 
+
 module type INC_TYPE =
 sig
   type t
@@ -53,6 +54,9 @@ struct
 
   exception Bad_string
   exception Bail
+  type ('a,'b) choose = 
+    | LLeft of 'a 
+    | RRight of 'b
 
   let add_num ls =
     let rec aux ls n = match ls with

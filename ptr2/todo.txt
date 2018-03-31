@@ -71,7 +71,7 @@ generate_constraint_from_baga_range_disj@48@46
 generate_constraint_from_baga_range_disj inp1 :[[(_,( x, b))],[(_,( y, c))]]
 generate_constraint_from_baga_range_disj@48 EXIT:[[ (!(_=_) | y>=b | x>=c)]]
 ===============================================================================
-# ex4a6.slk
+# ex4a6.slk (FIXED)
 should fail ..
 
 pred_prim Aseg<end> 
@@ -102,7 +102,7 @@ to using a weaker condition:
 
 
 ===============================================================================
-# ex4a4.slk
+# ex4a7.slk  (FIXED)
 
 checkentail_exact x::AsegNE<bbb> * x::Aseg<c> |- x=null.
 expect Fail.
@@ -123,8 +123,54 @@ xpure_heap_symbolic#999@7 EXIT: x!=null & x<b & x<=c & ((!(_=_) | x>=b | x>=c))#
 
  (x<b & y<c) --> (y<=b |x>=c)
 ===================================================================
+# ex4a7.slk (FIXED)
+
+Fixed by changing:
+
+(==cvutil.ml#982==)
+collect_baga_range@21@19
+collect_baga_range inp1 : xxx::ElemN<Anon_13>@M * yyy::AsegNE<c>@M
+collect_baga_range@21 EXIT:[[],[(_,( yyy, c))]]
+
+to:
+
+(==cvutil.ml#982==)
+collect_baga_range@24@23
+collect_baga_range inp1 : xxx::ElemN<Anon_13>@M * yyy::AsegNE<c>@M
+collect_baga_range@24 EXIT:[[xxx],[(_,( yyy, c))]]
+
 ===================================================================
+ex47a.slk
+
+Bug at:
+
+(==cvutil.ml#984==)
+generate_constraint_from_baga_range_disj@25@23
+generate_constraint_from_baga_range_disj inp1 :[[xxx],[(_,( yyy, c))]]
+generate_constraint_from_baga_range_disj@25 EXIT:[[ ((_+yyy)>xxx | xxx>=(_+c))]]
+
+to change to : yyy>xxx | xxx>=c
+
+(==cvutil.ml#984==)
+generate_constraint_from_baga_range_disj@31@29
+generate_constraint_from_baga_range_disj inp1 :[[xxx],[(_,( yyy, c))]]
+generate_constraint_from_baga_range_disj@31 EXIT:[[ (yyy>xxx | xxx>=c)]]
 ===================================================================
+# ex4a7.slk
+
+checkentail xxx::ElemN<_> * yyy::AsegNE<c> |- xxx!=yyy.
+
+Instead of: [[xxx,_30]]
+should be [[xxx,yyy]
+
+@29! **cvutil.ml#1412:memset: [[xxx,_30]]
+
+(==cvutil.ml#2035==)
+xpure_heap_mem_enum#6@29
+xpure_heap_mem_enum#6 inp1 : xxx::ElemN<Anon_13>@M * yyy::AsegNE<c>@M
+xpure_heap_mem_enum#6 inp2 :lhs_pure: true
+xpure_heap_mem_enum#6 inp3 :xpure_int:1
+xpure_heap_mem_enum#6@29 EXIT: xxx!=null & yyy!=null & yyy<c & ((yyy>xxx | xxx>=c)) #  [[xxx,_30]]
 ===================================================================
 ===================================================================
 ===================================================================

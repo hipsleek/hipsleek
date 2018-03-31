@@ -1652,6 +1652,7 @@ let string_of_baga_range br =
 
 
 (* The result is list of list,  each sub list can be considered as a disjunction *)
+(* type: prog_decl -> F.h_formula -> baga_range list list *)
 let collect_baga_range prog  (f:F.h_formula) =
   let f_comb = List.concat in
   let visit e =
@@ -1674,9 +1675,16 @@ let collect_baga_range prog  (f:F.h_formula) =
               let sst = List.combine from_svs to_svs in
               List.map (Excore.EPureI.subst_epure sst) bl
             in
-            Some (List.map
-                    (fun lst  -> (List.map (fun item -> Segment item) lst))
-                    (Excore.EPureI.get_intv_disj baga_lst))
+            (* type: Excore.EPureI.epure_disj *)
+            let () = y_binfo_hp (add_str "baga_lst" Excore.EPureI.string_of_disj) baga_lst in
+            let lst1 = Excore.EPureI.get_intv_disj_new baga_lst in
+            Some (List.map (fun lst -> List.map (fun x -> match x with
+              | LLeft i -> Element i
+              | RRight i -> Segment i) lst)
+                lst1)
+            (* Some (List.map *)
+            (*         (fun lst  -> (List.map (fun item -> Segment item) lst)) *)
+            (*         (Excore.EPureI.get_intv_disj baga_lst)) *)
             (* Some (Segment (Excore.EPureI.get_intv_disj baga_lst)) *)
        )
     | F.DataNode data->
@@ -1685,6 +1693,11 @@ let collect_baga_range prog  (f:F.h_formula) =
   in
   F.fold_h_formula f visit f_comb
 ;;
+
+let collect_baga_range prog  (f:F.h_formula) =
+  let pr_1 = pr_list (pr_list string_of_baga_range) in
+  Debug.no_1 "collect_baga_range" !print_h_formula pr_1
+      (fun f -> collect_baga_range prog  (f:F.h_formula)) f
 
 let rec generate_constraint_from_baga_range lst =
   let helper range1 range2 =
@@ -1697,8 +1710,10 @@ let rec generate_constraint_from_baga_range lst =
     | Segment (base,(exph,expt)), Element sv ->
        let expsv = CP.Var (sv,no_pos) in
        let expbase = CP.Var (base,no_pos) in
-       let rangeh = CP.mkAdd expbase exph no_pos in
-       let ranget = CP.mkAdd expbase expt no_pos in
+       (* let rangeh = CP.mkAdd expbase exph no_pos in *)
+       (* let ranget = CP.mkAdd expbase expt no_pos in *)
+       let rangeh = exph in
+       let ranget = expt in
        CP.mkOr
          (CP.BForm (((CP.mkGt rangeh expsv no_pos),None),None))
          (CP.BForm (((CP.mkGte expsv ranget no_pos),None),None))

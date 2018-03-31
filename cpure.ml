@@ -5968,7 +5968,7 @@ struct
     if enum_flag then baga_enum lst
     else baga_conv ~neq_flag:neq_flag lst
 
-  let get_interval x = None
+  let get_interval x = (x,None)
   let conv_var x = x
   let from_var x = x
   (* let conv_var_pairs x = x *)
@@ -6081,11 +6081,11 @@ struct
     end
   let mk_addr x = (x,None)
   (* TODO : to change this function *)
-  let get_interval (x,y) = 
-   let () = y_tinfo_pp "inside get_interval (SV_INTV)" in
-    match y with
-    | None -> None
-    | Some exp -> Some(x,exp)
+  let get_interval (x,y) = (x,y)
+   (* let () = y_tinfo_pp "inside get_interval (SV_INTV)" in *)
+   (*  match y with *)
+   (*  | None -> None *)
+   (*  | Some exp -> Some(x,exp) *)
                    (* Some(x,id) *)
   let string_of (sv,sv_opt) =
     (* let () = y_tinfo_pp "inside SV_INTV" in *)

@@ -979,7 +979,7 @@ let formula_2_mem (f : formula) prog : CF.mem_formula =
     (fun _ -> formula_2_mem_x f prog) f
 
 let enhance_with_baga_inv prog h0 pf=
-  let baga_ranges = Cast.collect_baga_range prog h0 in (* extract the list of ranges from baga inv *)
+  let baga_ranges = x_add Cast.collect_baga_range prog h0 in (* extract the list of ranges from baga inv *)
       (* turn the ranges into formulas, ex. (base1,[a,b])(base2, [c,d]) --> base1=base2 -> c>b | a>d *)
       let baga_constraint = x_add_1 Cast.generate_constraint_from_baga_range_disj baga_ranges in
       let pr_baga = pr_list

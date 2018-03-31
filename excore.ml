@@ -11,7 +11,6 @@ open Gen.Basic
 (* open Label *)
 
 open Cpure
-open VarGen
 (* open Cprinter *)
 
 module CP = Cpure
@@ -591,7 +590,8 @@ sig
   val mk_elem_from_sv : spec_var -> t
   val get_pure : ?enum_flag:bool -> ?neq_flag:bool -> t list -> Cpure.formula
   val conv_var : t list -> spec_var list
-  val get_interval : t -> (spec_var * (Cpure.exp * Cpure.exp)) option
+  (* val get_interval : t -> (spec_var * (Cpure.exp * Cpure.exp)) option *)
+  val get_interval : t -> (spec_var * ((Cpure.exp * Cpure.exp) option))
   val from_var : spec_var list -> t list
   (* val conv_var_pairs : (t*t) list -> (spec_var * spec_var) list *)
   (* val from_var_pairs : (spec_var * spec_var) list -> (t*t) list *)
@@ -751,7 +751,7 @@ module EPURE =
       ef_conv_disj_ho ef_conv_enum disj
 
     let ef_has_intv_baga ((baga,f)) =
-      List.exists (fun b -> (Elt.get_interval b)!=None) baga
+      List.exists (fun b -> (snd (Elt.get_interval b))!=None) baga
 
     let ef_has_intv_baga_disj disj =
       List.exists ef_has_intv_baga disj
@@ -781,11 +781,11 @@ module EPURE =
     let conv_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
         (* let () = h_2_mem_obj_intv # add_pure f in *)
-        let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
+        let (lst1,lst2) = List.partition (fun e -> snd (Elt.get_interval e)==None) baga in
         let lst2 = List.map (fun e -> 
-            let v =  Elt.get_interval e in
+            let (id,v) =  Elt.get_interval e in
             match v with 
-            | Some (id,d) -> (id,d)
+            | Some d -> (id,d)
             | _  -> failwith x_tbi
                      ) lst2 in
         (* Why to filter ?*)
@@ -800,20 +800,40 @@ module EPURE =
       in
       List.map proc efpd1
 
-    let get_intv_disj (efpd1:epure_disj)  =
+     let get_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
         (* let () = h_2_mem_obj_intv # add_pure f in *)
-        let (lst1,lst2) = List.partition (fun e -> Elt.get_interval e==None) baga in
+        let (lst1,lst2) = List.partition (fun e -> snd(Elt.get_interval e)==None) baga in
+        (* let lst2 = baga in *)
         let lst2 = List.map (fun e -> 
-            let v =  Elt.get_interval e in
+            let (id,v) =  Elt.get_interval e in
             match v with 
-            | Some (id,d) -> (id,d)
+            | Some d -> (id,d)
             | _  -> failwith x_tbi
                      ) lst2
         in
         lst2
       in
       List.map proc efpd1
+   (* type: epure_disj -> (Cpure.spec_var * (Cpure.exp * Cpure.exp)) list list *)
+
+     let get_intv_disj_new (efpd1:epure_disj)  =
+      let proc (baga,f) =
+        (* let () = h_2_mem_obj_intv # add_pure f in *)
+        (* let (lst1,lst2) = List.partition (fun e -> snd(Elt.get_interval e)==None) baga in *)
+        let lst2 = baga in
+        let lst2 = List.map (fun e -> 
+            let (id,v) =  Elt.get_interval e in
+            match v with 
+            | Some d -> RRight (id,d)
+            | None -> LLeft id
+            (* | _  -> failwith x_tbi *)
+                     ) lst2
+        in
+        lst2
+      in
+      List.map proc efpd1
+   (* type: epure_disj -> (Cpure.spec_var * (Cpure.exp * Cpure.exp)) list list *)
 
     let mk_star_disj_x (efpd1:epure_disj) (efpd2:epure_disj)  =
       let () = x_tinfo_pp ("Omega mk_star_disj:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
