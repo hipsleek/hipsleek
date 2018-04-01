@@ -4234,7 +4234,7 @@ let is_resourceless_h_formula_x prog (h: F.h_formula) =
   in helper h
 
 let is_resourceless_h_formula prog (h: F.h_formula) =
-  Debug.no_1 "is_resourceless_h_formula"
+  Debug.no_1 "is_classic_resourceless_h_formula"
     !print_h_formula string_of_bool
     (fun _ -> is_resourceless_h_formula_x prog h) h
 

@@ -489,8 +489,9 @@ let init_tp () =
                   let () = Omega.omegacalc := "./oc" in
                   ()
                 else ()) in
-      let () = x_binfo_pp ("init_tp by default: ") no_pos in 
-      x_add_1 set_tp false !Smtsolver.smtsolver_name (* "z3" *)
+      let solver = !Smtsolver.smtsolver_name in
+      let () = x_binfo_pp (("init_tp by default: ")^solver) no_pos in 
+      x_add_1 set_tp false solver (* !Smtsolver.smtsolver_name  *)(* "z3" *)
       (* set_tp "parahip" *)
     end
 

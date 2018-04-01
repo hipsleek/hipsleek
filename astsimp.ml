@@ -2459,7 +2459,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
       | None -> (n_tl,None)
     ) in
-    let () = y_binfo_hp (add_str "inv" !IP.print_formula) inv in
+    let () = y_tinfo_hp (add_str "inv" !IP.print_formula) inv in
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in 
     let inv_pf = x_add trans_pure_formula inv n_tl in   
@@ -2494,8 +2494,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let vs1a = CP.fv inv_pf in
         let pr_svl = !CP.print_svl in
         (* y_tinfo_hp (add_str "cf" !Cast.print_struc_formula) cf; *)
-        let () = y_binfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf in
-        let () = y_binfo_hp (add_str "inv" !IP.print_formula) inv in
+        let () = y_tinfo_hp (add_str "inv_pf" !CP.print_formula) inv_pf in
         y_tinfo_hp (add_str "view_sv_vars" pr_svl) view_sv_vars;
         y_tinfo_hp (add_str "vs1" pr_svl) vs1;
         y_tinfo_hp (add_str "vs1a" pr_svl) vs1a; (* from invariant *)
@@ -2680,7 +2679,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       Debug.ninfo_hprint (add_str "vboi" (pr_option pr)) vboi no_pos;
       Debug.ninfo_hprint (add_str "vbui" (pr_option pr)) vbui no_pos;
       (* Excore.EPureI.epure list option *)
-      let () = x_binfo_hp (add_str "vbi" (pr_option pr)) vbc_i no_pos in
+      let () = x_tinfo_hp (add_str "vbi" (pr_option pr)) vbc_i no_pos in
       (* ((IastUtil.CP.spec_var * (IastUtil.CP.exp * IastUtil.CP.exp) option) list * *)
       (*  Cpure.formula) *)
       (* list option *)
@@ -2694,11 +2693,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let ans = match ans with None -> []
                              | Some(e1,e2) -> (strip e1)@(strip e2) in
       (* let lst_uns = List.map fst n_un_str in *)
-      let () = y_binfo_hp (add_str "extracted start/end" !CP.print_svl) ans in
-      let () = x_binfo_hp (add_str "extracted start/end" !CP.print_svl) ans no_pos in
-      let () = y_binfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
+      let () = y_tinfo_hp (add_str "extracted start/end" !CP.print_svl) ans in
+      let () = y_tinfo_hp (add_str "view_vars" !CP.print_svl) view_sv in
       let inter_vars = CP.intersect_svl ans view_sv in
-      let () = y_binfo_hp (add_str "inter_vars" !CP.print_svl) inter_vars in
+      let () = y_tinfo_hp (add_str "inter_vars" !CP.print_svl) inter_vars in
       let keep_vs = CP.self_sv::view_sv in
       let lst_heap_ptrs = 
         if !Globals.ptr_arith_flag then 
@@ -2858,7 +2856,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_ho_vars = view_ho_sv;
         C.view_cont_vars = [];
         C.view_match_args = inter_vars;
-              (* (let () = (y_binfo_pp "WN : Need to fix match_args") in *)
+              (* (let () = (y_tinfo_pp "WN : Need to fix match_args") in *)
               (* []); *)
         C.view_match_align = (match inter_vars with (x::_) -> Some x 
                                                  | [] -> None);

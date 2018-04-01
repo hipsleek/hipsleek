@@ -13,42 +13,57 @@ data cell {
  int v;
 }.
 
-
+//(1)
 checkentail_exact x::cell<_> |- x!=null.
 expect Fail.
 print residue.
+// fail due to memory footprint
 
+//(2)
 checkentail_exact x::ElemN<_> |- x!=null.
 expect Fail.
 print residue.
+// must fail since there is a memory footprint
 
+
+//(3)
+checkentail_exact x::Aseg<_> |- true.
+expect Fail.
+print residue.
+// may fail since there maybe a memory footprint
+
+//(4)
+checkentail_exact x::Aseg<y> & x=y |- true.
+expect Valid.
+print residue.
+// should succeed since there isn't any memory footprint
 
 /*
 
 # ex4a8.slk
 
-  Error in debugging output; 2477 is wrong..
-
-!!! vbi:Some([([(_,( self, end))], true)])
-!!! **astsimp.ml#2477:extracted start/end:[self,end]
-!!! **astsimp.ml#2477:view_vars:[end]
-!!! **astsimp.ml#2477:inter_vars:[end]
-!!! vbi:Some([([(_,( self, end))], 0<self & self<end)])
-!!! **astsimp.ml#2477:extracted start/end:[self,end]
-!!! **astsimp.ml#2477:view_vars:[end]
-!!! **astsimp.ml#2477:inter_vars:[end]
-!!! vbi:Some([([self], true)])
-!!! **astsimp.ml#2477:extracted start/end:[]
-!!! **astsimp.ml#2477:view_vars:[start]
-!!! **astsimp.ml#2477:inter_vars:[]
-
-
-# ex4a8.slk
-
-# classic not detecting primitive..
-
+//(2)
 checkentail_exact x::ElemN<_> |- x!=null.
 expect Fail.
 print residue.
+// must fail since there is a memory footprint
+
+
+//(3)
+checkentail_exact x::Aseg<_> |- true.
+expect Fail.
+print residue.
+// may fail since there maybe a memory footprint
+
+//(4)
+checkentail_exact x::Aseg<y> & x=y |- true.
+expect Valid.
+print residue.
+
+(==solver.ml#10157==)
+is_classic_resourceless_h_formula@9@7
+is_classic_resourceless_h_formula inp1 : x::ElemN<Anon_14>@M
+is_classic_resourceless_h_formula@9 EXIT:true
+
 
 */

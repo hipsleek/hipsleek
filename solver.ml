@@ -7994,7 +7994,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                           (* ) in *)
                           let is_lhs_emp =  
                             if ((check_is_classic ()) && (h2 = HEmp)) then
-                              Some (is_classic_lhs_emp prog h1 ante pos) 
+                              Some (x_add is_classic_lhs_emp prog h1 ante pos) 
                             else None
                           in
                           (* let estate = {estate with es_formula = Base base_lhs} in *)
@@ -8013,7 +8013,7 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                           (*use global var is dangerous, should pass as parameter*)
                           (*Do "h2 = HEmp" and "is_rhs_emp" 
                             already imply "!rhs_rest_emp" ??? Loc: not correct. examples of SMT compete will fail. *)
-                          (* let flag = not (is_resourceless_h_formula prog prep_h1) *)
+                          (* let flag = not (x_add is_resourceless_h_formula prog prep_h1) *)
                           (*     (\* && (prep_h1 != HEmp) && (prep_h1 != HFalse) *\) *)
                           (*     && not (is_classic_lending_hformula(prep_h1)) in *)
                           let new_flag = match is_lhs_emp with
@@ -8692,7 +8692,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
           let () = x_tinfo_hp (add_str "XXXX(h1)" !CF.print_h_formula) h1 no_pos in
           let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) no_pos in
           let () = x_tinfo_hp (add_str "is_folding" string_of_bool) is_folding no_pos  in
-          let flag = is_classic_lhs_emp prog h1 ante pos in
+          let flag = x_add is_classic_lhs_emp prog h1 ante pos in
           let () = y_tinfo_hp (add_str "is_classic_lhs_emp prog h1 ante pos" string_of_bool) flag in
           let () = y_tinfo_hp (add_str "h1" !CF.print_h_formula) h1 in
           let () = y_tinfo_hp (add_str "ante" !CF.print_formula) ante in
@@ -10143,9 +10143,9 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
       Some(do_fold_result,prf)
   end
 
-and is_classic_lhs_emp prog h1 ante pos =
+and is_classic_lhs_emp_x prog h1 ante pos =
   let h1_unfold =
-    let prep_ante = do_unfold_for_classic_reasoning prog ante pos in
+    let prep_ante = x_add do_unfold_for_classic_reasoning prog ante pos in
     match prep_ante with
     | CF.Or _ -> h1
     | _ -> let h,_,_,_,_,_ = split_components prep_ante in h
@@ -10154,8 +10154,12 @@ and is_classic_lhs_emp prog h1 ante pos =
   in 
   let () = x_tinfo_hp (add_str "h1_unfold" !CF.print_h_formula) h1_unfold no_pos 
   in
-  h1_unfold==HEmp || (is_resourceless_h_formula prog h1_unfold)
+  h1_unfold==HEmp || (x_add is_resourceless_h_formula prog h1_unfold)
   || (is_classic_lending_hformula h1_unfold)
+
+and is_classic_lhs_emp prog h1 ante pos =
+  Debug.no_2 "is_classic_lhs_emp" !CF.print_h_formula !CF.print_formula string_of_bool
+      (fun _ _ -> is_classic_lhs_emp_x prog h1 ante pos) h1 ante
 
 and do_unfold_for_classic_reasoning prog (f: CF.formula) (pos : loc) =
   let pr_in = Cprinter.string_of_formula in
