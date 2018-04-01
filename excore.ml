@@ -778,6 +778,9 @@ module EPURE =
       let res = mk_star_wrap efp1 efp2 in
       res
 
+(* @33! **cast.ml#1854:add_epure(2) = :[([(_,( yyy, c))], 0<yyy & yyy<c)] *)
+(* @33! **cast.ml#1856:add_epure (3) = :[([_24], 0<yyy & yyy<c)] *)
+(* why not use yyy instead of _24 *)
     let conv_intv_disj (efpd1:epure_disj)  =
       let proc (baga,f) =
         (* let () = h_2_mem_obj_intv # add_pure f in *)
@@ -789,13 +792,40 @@ module EPURE =
             | _  -> failwith x_tbi
                      ) lst2 in
         (* Why to filter ?*)
-        let lst2 = List.filter (fun (id,(_,d)) ->
+        let lst2 = List.filter (fun (id,(s,d)) ->
             let rhs = Cpure.mk_exp_geq d 0 in
             !Cpure.tp_imply f rhs) lst2 in
         let lst2 = List.concat
                      (List.map (fun (id,(eh,et)) -> 
                           let nid = h_2_mem_obj_intv # get_id id eh et f in
                           Elt.from_var [nid]) lst2) in
+        (lst1@lst2,f)
+      in
+      List.map proc efpd1
+
+    let conv_intv_disj_new (efpd1:epure_disj)  =
+      let proc (baga,f) =
+        (* let () = h_2_mem_obj_intv # add_pure f in *)
+        let (lst1,lst2) = List.partition (fun e -> snd (Elt.get_interval e)==None) baga in
+        let lst2 = List.map (fun e -> 
+            let (id,v) =  Elt.get_interval e in
+            match v with 
+            | Some d -> (id,d)
+            | _  -> failwith x_tbi
+                     ) lst2 in
+        (* Need to prove non-empty interval first *)
+        let lst2 = List.filter (fun (id,(s,d)) ->
+            let rhs = Cpure.mk_exp_gt d s in
+            !Cpure.tp_imply f rhs) lst2 in
+        let lst2 = List.concat
+                     (List.map (fun (id,(eh,et)) -> 
+                         (* let nid = h_2_mem_obj_intv # get_id id eh et f in *)
+                         let lst = (match (CP.get_var_opt eh) with 
+                           | Some  v -> [v]
+                           | None -> []) in
+                         Elt.from_var lst
+                             (* [nid] *)
+                     ) lst2) in
         (lst1@lst2,f)
       in
       List.map proc efpd1
