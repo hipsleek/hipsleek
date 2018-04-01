@@ -273,8 +273,38 @@ MustErr Context:
    }
  [[empty]]
  CEX:true
-
 ===================================================================
+/* ex5a3.slk
+
+small error: why is xxx undefined?
+
+# Allow pred-prim inv view_data_name
+     view_data_name: 
+  
+
+# is type inference correct?
+   view AsegN<end:TVar[31]>= 
+    EBase 
+      exists (Impl)[Anon_13:int; 
+      xxx:TVar[26]](* lbl: *){3}->(exists end_15:TVar[31]: (* lbl: *){3}->
+      self:TVar[26]::ElemN<Anon_13:int>@M * 
+      xxx:TVar[26]::Aseg<end_15:TVar[31]>@M&
+      xxx:TVar[26]=1+self:TVar[26] & end_15:TVar[31]=end:TVar[31]&
+      {FLOW,(1,26)=__flow#E}[])
+
+
+
+WARNING: ex5a3.slk_20:5_20:15:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: ex5a3.slk_14:10_14:26
+
+ERROR: at ex5a3.slk_20:5_20:15
+Message: compute_view_fw_bw: data not found: 
+
+Last Proving Location: ex5a3.slk_14:10_14:26
+
+ERROR: at _0:0_0:0
+Message: xxx is undefined (7)
 ===================================================================
 ===================================================================
 ===================================================================

@@ -1703,7 +1703,7 @@ let rec generate_constraint_from_baga_range lst =
   let helper range1 range2 =
     match range1,range2 with
     | Element sv1, Element sv2 ->
-      let () = y_binfo_pp "elem vs elem" in
+      let () = y_tinfo_pp "elem vs elem" in
        let base_rhs = CP.BForm ((CP.mkEq_b (Var (sv1,no_pos)) (Var (sv2,no_pos)) no_pos),None) in
        CP.mkNot_s base_rhs
     | Element sv, Segment (base,(exph,expt))

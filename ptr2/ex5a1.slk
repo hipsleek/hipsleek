@@ -1,0 +1,155 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+      
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred_prim AsegNE<end> 
+     inv_exact BG([(self,end)],0<self<end). 
+
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+
+
+//(1)
+checkentail_exact xxx::ElemN<3>  |- xxx::ElemN<a>.
+expect Valid.
+print residue.
+
+//(2)
+checkentail_exact xxx::Aseg<5>  |- xxx::Aseg<n>.
+expect Valid.
+print residue.
+
+//(3)
+checkentail_exact xxx::Aseg<5>  |- xxx::Aseg<n> & n<6.
+expect Valid.
+print residue.
+
+
+//(4)
+checkentail_exact xxx::Aseg<5> & n<6  |- xxx::Aseg<n>.
+expect Fail.
+print residue.
+
+//(5) match
+checkentail_exact xxx::Aseg<5> & n=5  |- xxx::Aseg<n>.
+expect Valid.
+print residue.
+
+//(6) folding
+checkentail_exact xxx::ElemN<_>*zzz::AsegN<yyy> & zzz=xxx+1  |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(7) unfolding
+checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(8)
+checkentail_exact xxx::ElemN<_>  |- xxx::AsegN<xxx+1>.
+expect Valid.
+print residue.
+
+//(9)
+checkentail_exact xxx::ElemN<_>  |- xxx::Aseg<xxx+1>.
+expect Valid.
+print residue.
+
+//(10)
+checkentail_exact  xxx::AsegN<xxx+1> |- xxx::ElemN<_> .
+expect Valid.
+print residue.
+
+//(11)
+checkentail_exact  xxx::Aseg<xxx+1> |- xxx::ElemN<_> .
+expect Valid.
+print residue.
+
+//(12) weakening
+checkentail_exact xxx::AsegN<5> & n=5  |- xxx::Aseg<n>.
+expect Valid.
+print residue.
+
+//(13)
+checkentail_exact xxx::Aseg<yyy> & xxx=yyy   |- emp.
+expect Valid.
+print residue.
+
+//(14)
+checkentail_exact  xxx::Aseg<yyy> |- xxx::AsegN<yyy>.
+expect Fail.
+print residue.
+
+//(15)
+checkentail_exact  xxx::Aseg<yyy> & xxx<yyy |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(16)
+checkentail_exact  xxx::Aseg<yyy> & xxx+1<yyy |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(17)
+checkentail_exact  xxx::Aseg<yyy> * yyy::Aseg<zzz> |- xxx::Aseg<zzz>.
+expect Valid.
+print residue.
+
+//(18)
+checkentail_exact  xxx::Aseg<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
+expect Fail.
+print residue.
+
+//(19)
+checkentail_exact  xxx::Aseg<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(20)
+checkentail_exact  xxx::AsegN<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(21)
+checkentail_exact  xxx::AsegN<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(22)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::AsegN<zzz> * zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+
+//(23)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::Aseg<zzz> * zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(24)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<yyy |- xxx::AsegN<zzz> * zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(25)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::AsegN<zzz> * zzz::AsegN<yyy>.
+expect Fail.
+print residue.
+
+//(26)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::Aseg<zzz> * zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+

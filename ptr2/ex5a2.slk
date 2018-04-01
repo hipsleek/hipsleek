@@ -1,0 +1,67 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
+     inv_exact BG([(self,end)],0<self<end). 
+
+
+//(1) unfolding
+checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+
+//(2) unfolding
+checkentail_exact xxx::AsegN<yyy> |- xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1.
+expect Valid.
+print residue.
+
+//(2) unfolding with explicit instantation
+checkentail_exact xxx::AsegN<yyy> |- [zzz] xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1.
+expect Valid.
+print residue.
+
+//(2) requires existential entailment
+checkentail_exact xxx::AsegN<yyy> |- [zzz] xxx::ElemN<_>*zzz::Aseg<yyy> .
+expect Valid.
+print residue.
+
+//(2) requires existential
+checkentail_exact xxx::AsegN<yyy> |- (exists zzz: xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1) .
+expect Valid.
+print residue.
+
+//(2) requires existential
+checkentail_exact xxx::AsegN<yyy> |- (exists zzz: xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+2) .
+expect Fail.
+print residue.
+
+//(1) folding
+checkentail_exact xxx::ElemN<_>*zzz::Aseg<yyy>  & zzz=xxx+1 |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(1) folding
+checkentail_exact xxx::ElemN<_>*zzz::Aseg<yyy>  & zzz=xxx+1 |- (exists ccc: xxx::AsegN<ccc>).
+expect Valid.
+print residue.
+
+//(1) folding
+checkentail_exact xxx::ElemN<_>*zzz::Aseg<yyy>  & zzz=xxx+1 |- xxx::AsegN<ccc>.
+expect Valid.
+print residue.

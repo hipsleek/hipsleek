@@ -1,0 +1,45 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+
+
+pred_prim ElemN<start:int> 
+     inv_exact BG([self], true). // non-null
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
+     inv_exact BG([(self,end)],0<self<end). 
+
+
+//(1) unfolding
+checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+
+
+/* ex5a3.slk
+
+small error: why is xxx undefined?
+
+WARNING: ex5a3.slk_20:5_20:15:compute_view_fw_bw: data name in view is empty
+
+Last Proving Location: ex5a3.slk_14:10_14:26
+
+ERROR: at ex5a3.slk_20:5_20:15
+Message: compute_view_fw_bw: data not found: 
+
+Last Proving Location: ex5a3.slk_14:10_14:26
+
+ERROR: at _0:0_0:0
+Message: xxx is undefined (7)
+*/
