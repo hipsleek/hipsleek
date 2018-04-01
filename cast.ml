@@ -4203,18 +4203,36 @@ let categorize_view (prog: prog_decl) : prog_decl =
 
 
 (*
+   Should we consider may/must failure also
+
    A h_formula is resourceless if
    - prim_pred
    - ho_args = [] 
+
+  For primitive, if over heap location is
+  present
 *)
-let is_resourceless_h_formula_x prog (h: F.h_formula) =
+let is_resourceless_h_formula prog (h: F.h_formula) =
   let rec helper h =
     match h with
     | F.HEmp -> true
     | F.HFalse -> true
     | F.ViewNode v ->
       let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
-      (vdef.view_is_prim && v.h_formula_view_ho_arguments=[])
+      let is_prim = vdef.view_is_prim && v.h_formula_view_ho_arguments=[] in
+      if is_prim then
+        let () = y_tinfo_hp !print_view_decl vdef in
+        let under = vdef.view_baga_under_inv in
+        begin
+          match under with
+            | None -> true
+            | Some ef -> 
+                  let () = y_tinfo_hp (add_str "baga under inv" Excore.EPureI.string_of_disj) ef in
+                  List.fold_left (fun b e -> 
+                      (* let () = y_binfo_hp (add_str "baga under inv" Excore.EPureI.string_of) e in *)
+                      b && (Excore.EPureI.is_emp e)) true ef
+        end
+      else false
     | F.DataNode _
     | F.ThreadNode _ -> false
     | F.Star ({h_formula_star_h1 = h1;
@@ -4236,7 +4254,7 @@ let is_resourceless_h_formula_x prog (h: F.h_formula) =
 let is_resourceless_h_formula prog (h: F.h_formula) =
   Debug.no_1 "is_classic_resourceless_h_formula"
     !print_h_formula string_of_bool
-    (fun _ -> is_resourceless_h_formula_x prog h) h
+    (fun _ -> is_resourceless_h_formula prog h) h
 
 let get_ret_vars_exp exp =
   let f e = 

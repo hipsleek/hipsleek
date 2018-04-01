@@ -30,6 +30,14 @@ pred_prim ElemN<start:int>
 checkentail xxx::ElemN<_> * yyy::AsegNE<c> |- xxx!=yyy.
 
 /*
+
+Should be: xxx<yyy | yyy+c<=xxx
+
+(==cvutil.ml#984==)
+generate_constraint_from_baga_range_disj@25@23
+generate_constraint_from_baga_range_disj inp1 :[[xxx],[(_,( yyy, c))]]
+generate_constraint_from_baga_range_disj@25 EXIT:[[ ((_+yyy)>xxx | xxx>=(_+c))]]
+
 Entail (1) : Fail.(may) cause: xxx!=_29 & yyy<c & yyy!=null & xxx!=null |-  xxx!=yyy. LOCS:[0;1;30] (may-bug)
 
 

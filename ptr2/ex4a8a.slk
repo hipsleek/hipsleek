@@ -1,0 +1,24 @@
+
+
+pred_prim Aseg<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+
+//(1)
+checkentail x::Aseg<_> |- true.
+expect Valid.
+print residue.
+// may fail since there maybe a memory footprint
+
+
+//(2)
+checkentail_exact x::Aseg<y> |- emp.
+expect Fail.
+print residue.
+// may fail since there maybe a memory footprint
+
+//(3)
+checkentail_exact x::Aseg<y> |- true.
+expect Valid.
+print residue.
+// may fail since there maybe a memory footprint

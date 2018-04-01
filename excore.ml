@@ -640,6 +640,7 @@ module EPURE =
     type epure_disj = epure list
     (* let mk_spec_var e = SpecVar (UNK,Elt.string_of e,Unprimed) *)
     (* type baga_ty = .. *)
+    let is_emp ((x,_):epure) = (x==[])
     let mk_false = ([], mkFalse no_pos)
     let mk_false_disj = []
     let mk_true = [([], mkTrue no_pos)]

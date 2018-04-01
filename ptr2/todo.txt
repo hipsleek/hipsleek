@@ -221,7 +221,8 @@ Problem solved by pinning cppo to 1.1.2.
 !!! **astsimp.ml#2477:view_vars:[start]
 !!! **astsimp.ml#2477:inter_vars:[]
 ===================================================================
-# ex4a8.slk
+# ex4a8.slk (FIXED) 
+ by looking at BAGA under_approx for prim_pred
 
 //(2)
 checkentail_exact x::ElemN<_> |- x!=null.
@@ -249,6 +250,30 @@ is_classic_resourceless_h_formula@9 EXIT:true
 # need to consider primitive predicates which 
 have over-approx heap locations.
 ===================================================================
+# ex4a8.slk
+
+   Should consider may/must failure also?
+
+//(4)
+checkentail_exact x::Aseg<_> |- emp.
+expect Fail.
+print residue.
+// may fail since there maybe a memory footprint
+/*
+# ex4a8.slk
+
+most of these should be MayErr rather than MustErr
+
+MustErr Context: 
+   fe_kind: MUST
+   fe_name: 
+   fe_locs: {
+     fc_message: classical separation logic
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+
 ===================================================================
 ===================================================================
 ===================================================================

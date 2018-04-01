@@ -9,6 +9,9 @@ pred_prim AsegNE<end>
 pred_prim ElemN<start:int> 
      inv_exact BG([self], true). // non-null
 
+pred_prim Stack<start:int> 
+     inv_exact BG([], true). // this has empty baga..
+
 data cell {
  int v;
 }.
@@ -27,35 +30,69 @@ print residue.
 
 
 //(3)
-checkentail_exact x::Aseg<_> |- true.
+checkentail_exact x::Aseg<_> |- emp.
 expect Fail.
 print residue.
 // may fail since there maybe a memory footprint
 
 //(4)
-checkentail_exact x::Aseg<y> & x=y |- true.
+checkentail_exact x::Aseg<_> |- emp.
+expect Fail.
+print residue.
+// may fail since there maybe a memory footprint
+/*
+# ex4a8.slk
+
+most of these should be MayErr rather than MustErr
+
+MustErr Context: 
+   fe_kind: MUST
+   fe_name: 
+   fe_locs: {
+     fc_message: classical separation logic
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[empty]]
+ CEX:true
+*/
+
+//(5)
+checkentail_exact x::Aseg<y> & x=y |- emp.
+expect Valid.
+print residue.
+// should succeed if normamlization via
+// eliminating of Aseg is supported.
+
+//(6)
+checkentail_exact x::Stack<y> & x=y |- emp.
 expect Valid.
 print residue.
 // should succeed since there isn't any memory footprint
+/*
+  baga inv: [([], true)]
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([], true)]
+  baga under inv: [([], true)]
+*/
 
 /*
 
 # ex4a8.slk
 
-//(2)
+//(6)
 checkentail_exact x::ElemN<_> |- x!=null.
 expect Fail.
 print residue.
 // must fail since there is a memory footprint
 
 
-//(3)
+//(7)
 checkentail_exact x::Aseg<_> |- true.
 expect Fail.
 print residue.
 // may fail since there maybe a memory footprint
 
-//(4)
+//(8)
 checkentail_exact x::Aseg<y> & x=y |- true.
 expect Valid.
 print residue.
