@@ -8032,7 +8032,8 @@ and heap_entail_conjunct_helper_x ?(caller="") (prog : prog_decl) (is_folding : 
                               let () = x_tinfo_pp "no_infer_hp_rel? " no_pos in
                               let err_msg =  "residue is forbidden.(1)" in
                               let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
-                              let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must (* "residue is forbidden.(1)" *) err_msg "" , estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, err_msg, Failure_Must err_msg) (mk_cex true) in
+                              (* Failure_Must can be used if we can determine definitely non-empty residue *)
+                              let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_may (* "residue is forbidden.(1)" *) err_msg "" , estate.es_trace)) ({estate with es_formula = CF.substitute_flow_into_f !error_flow_int estate.es_formula}, err_msg, Failure_May err_msg) (mk_cex true) in
                               let proof = mkClassicSepLogic ctx0 conseq in
                               let () = x_tinfo_hp (add_str "ls_ctx" Cprinter.string_of_list_context) ls_ctx no_pos in
                               (ls_ctx, proof)
