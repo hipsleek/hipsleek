@@ -2842,18 +2842,6 @@ and mkGtVarInt (sv: spec_var) (i : int) pos =
 and mkGteVarInt (sv: spec_var) (i : int) pos =
   BForm ((Gte (Var (sv, pos), IConst (i, pos), pos), None),None)
 
-and mkLtIntVar (i : int) (sv: spec_var) pos =
-  BForm ((Lt (IConst (i, pos), Var (sv, pos), pos), None),None)
-
-and mkLteIntVar (i : int) (sv: spec_var) pos =
-  BForm ((Lte (IConst (i, pos), Var (sv, pos), pos), None),None)
-
-and mkGtIntVar (i : int) (sv: spec_var) pos =
-  BForm ((Gt (IConst (i, pos), Var (sv, pos), pos), None),None)
-
-and mkGteIntVar (i : int) (sv: spec_var) pos =
-  BForm ((Gte (IConst (i, pos), Var (sv, pos), pos), None),None)
-
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)
 

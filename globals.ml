@@ -2742,16 +2742,3 @@ let build_sel_scc scc_lst get_name lst =
           List.find (fun v -> (get_name v)=c) lst
         ) scc
     ) scc_lst
-
-let report_info_flow_err str =
-  let str = Str.global_replace (Str.regexp_string "<=" ) "<?"   str in
-  let str = Str.global_replace (Str.regexp_string "max") "LUB"  str in
-  let str = Str.global_replace (Str.regexp_string "0<" ) "@Lo<" str in
-  let str = Str.global_replace (Str.regexp_string "?0" ) "?@Lo" str in
-  let str = Str.global_replace (Str.regexp_string "0," ) "@Lo," str in
-  let str = Str.global_replace (Str.regexp_string ",0" ) ",@Lo" str in
-  let str = Str.global_replace (Str.regexp_string "1<" ) "@Hi<" str in
-  let str = Str.global_replace (Str.regexp_string "?1" ) "?@Hi" str in
-  let str = Str.global_replace (Str.regexp_string "1," ) "@Hi," str in
-  let str = Str.global_replace (Str.regexp_string ",1" ) ",@Hi" str in
-  str

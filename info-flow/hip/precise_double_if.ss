@@ -1,6 +1,3 @@
-//////////////////////////////////////////////////
-// DOUBLE-IF CHECK with pure checking
-//////////////////////////////////////////////////
 int double_if_1(int x)
   requires (x = 1 | x = 0) %% x <? @Lo
   ensures res = x %% res <? @Lo;

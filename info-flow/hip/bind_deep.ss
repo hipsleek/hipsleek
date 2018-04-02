@@ -1,6 +1,3 @@
-//////////////////////////////////////////////////
-// AUXILIARY DATA TYPES
-//////////////////////////////////////////////////
 data Cell {
   int val;
 }
@@ -9,10 +6,6 @@ data Pair {
   Cell p2;
 }
 
-
-//////////////////////////////////////////////////
-// DEEP BIND-GET CHECK with pure checking
-//////////////////////////////////////////////////
 int sum_1(Pair p)
   requires p::Pair<c1,c2> * c1::Cell<1> * c2::Cell<2> & true %% p <? @Lo & c1 <? @Lo & c2 <? @Lo
   ensures res = 3 %% res <? @Lo;
