@@ -1,0 +1,18 @@
+data node{
+ int v;
+ node next;
+}.
+
+relation SecL(UNK x).
+relation SecH(UNK x).
+relation Sec(UNK x,UNK y).
+relation Lub(UNK x,UNK y).
+
+function Sec(UNK x): Sec.
+
+   Sec(self)<:L
+
+Sec(x, Lub(y,SecL(z)))
+
+pred safell<n> == self=null & n=0
+      or self::node<v,q> * q::safell<n-1> & SecL(v) & SecL(self).

@@ -3,6 +3,6 @@ data pair{
  int snd;
 }.
 
-checkentail p::pair<f,s> |- p::pair<v@L,_@A>.
+checkentail p::pair<f@A,s> |- p::pair<v@L,_@A>.
 
 print residue.

@@ -1,0 +1,43 @@
+data node{
+ int v;
+ node next;
+}.
+
+relation Low(node x).
+relation High(node x).
+functor Sec(node x):int.
+
+pred ll<n> == self=null & n=0
+  or self::node<v,q> * q::ll<n-1>
+  inv n>=0.
+
+pred safell<n> == self=null & n=0 & Low(self)
+  or self::node<v,q> * q::safell<n-1> & Low(self)
+  inv n>=0 & Low(self).
+
+// x<:u & x<:z --> x<:LUB(u,z)
+
+checkentail self=null |- self::ll<n>.
+print residue.
+
+checkentail self=null & Low(self) |- self::safell<n>.
+print residue.
+
+checkentail Low(self) |- High(self).
+print residue.
+
+checkentail true |- (x<=0 | x<=1).
+
+// Sec(self)<=0 |- Sec(self)<=1
+// res<=0  means res=L
+// 1<=res  means res=H
+
+
+/*
+  y = (x==2)
+
+bool eq(int x, int y)
+   requires true
+   ensures  res=(x==y) & S(y)<=S(res) & S(x)<=S(res)
+
+*/
