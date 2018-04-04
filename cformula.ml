@@ -13580,41 +13580,41 @@ end
 
 (* Information Flow Analysis *)
 (* NOTE: translation from security formula to pure formula for checking *)
-and rewrite_sec_formula_in_entail_state (es:entail_state) =
-  let nf = rewrite_sec_formula_in_formula es.es_formula in
+and rewrite_sec_formula_in_entail_state ?blank:(is_blank=true) ?rename:(is_rename=false) (es:entail_state) =
+  let nf = rewrite_sec_formula_in_formula ~blank:is_blank ~rename:is_rename es.es_formula in
   ({es with es_formula = nf})
-and rewrite_sec_formula_in_context (ctxt:context) =
+and rewrite_sec_formula_in_context ?blank:(is_blank=true) ?rename:(is_rename=false) (ctxt:context) =
   match ctxt with
-  | Ctx (es)    -> Ctx(rewrite_sec_formula_in_entail_state es)
+  | Ctx (es)    -> Ctx(rewrite_sec_formula_in_entail_state ~blank:is_blank ~rename:is_rename es)
   | OCtx(c1,c2) ->
-    let ctxt1 = rewrite_sec_formula_in_context c1 in
-    let ctxt2 = rewrite_sec_formula_in_context c2 in
+    let ctxt1 = rewrite_sec_formula_in_context ~blank:is_blank ~rename:is_rename c1 in
+    let ctxt2 = rewrite_sec_formula_in_context ~blank:is_blank ~rename:is_rename c2 in
     OCtx(ctxt1,ctxt2)
-and rewrite_sec_formula_in_failesc_context (ctx:failesc_context) =
+and rewrite_sec_formula_in_failesc_context ?blank:(is_blank=true) ?rename:(is_rename=false) (ctx:failesc_context) =
   let (bfl,esc,bcl) = ctx in
-  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ~blank:is_blank ~rename:is_rename ctxt, ftype)) bcl in
   (bfl,esc,nbcl)
-and rewrite_sec_formula_in_list_failesc_context (lfc:list_failesc_context) =
+and rewrite_sec_formula_in_list_failesc_context ?blank:(is_blank=true) ?rename:(is_rename=false) (lfc:list_failesc_context) =
   match lfc with
   | []      -> []
-  | ctx::rs -> (rewrite_sec_formula_in_failesc_context ctx)::(rewrite_sec_formula_in_list_failesc_context rs)
-and rewrite_sec_formula_in_partial_context (pctx:partial_context) =
+  | ctx::rs -> (rewrite_sec_formula_in_failesc_context ~blank:is_blank ~rename:is_rename ctx)::(rewrite_sec_formula_in_list_failesc_context ~blank:is_blank ~rename:is_rename rs)
+and rewrite_sec_formula_in_partial_context ?blank:(is_blank=true) ?rename:(is_rename=false) (pctx:partial_context) =
   let (bfl,bcl) = pctx in
-  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ctxt, ftype)) bcl in
+  let nbcl = List.map (fun (ptrace, ctxt, ftype) -> (ptrace, rewrite_sec_formula_in_context ~blank:is_blank ~rename:is_rename ctxt, ftype)) bcl in
   (bfl,nbcl)
-and rewrite_sec_formula_in_list_partial_context (lpc:list_partial_context) =
+and rewrite_sec_formula_in_list_partial_context ?blank:(is_blank=true) ?rename:(is_rename=false) (lpc:list_partial_context) =
   match lpc with
   | []       -> []
-  | pctx::rs -> (rewrite_sec_formula_in_partial_context pctx)::(rewrite_sec_formula_in_list_partial_context rs)
-and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
+  | pctx::rs -> (rewrite_sec_formula_in_partial_context ~blank:is_blank ~rename:is_rename pctx)::(rewrite_sec_formula_in_list_partial_context ~blank:is_blank ~rename:is_rename rs)
+and rewrite_sec_formula_in_struc_formula ?blank:(is_blank=true) ?rename:(is_rename=false) (f:struc_formula) : struc_formula =
   match f with
   | EBase ({
       formula_struc_base         = sb;
       formula_struc_continuation = sc;
     } as b) ->
-    let nsb = rewrite_sec_formula_in_formula sb in
+    let nsb = rewrite_sec_formula_in_formula ~blank:is_blank ~rename:is_rename sb in
     let nsc = match sc with
-      | Some ssc -> Some (rewrite_sec_formula_in_struc_formula ssc)
+      | Some ssc -> Some (rewrite_sec_formula_in_struc_formula ~blank:is_blank ~rename:is_rename ssc)
       | _        -> sc
     in EBase ({
         b with
@@ -13625,58 +13625,70 @@ and rewrite_sec_formula_in_struc_formula (f:struc_formula) : struc_formula =
       formula_assume_simpl = si;
       formula_assume_struc = st;
     } as a) ->
-    let nsi = rewrite_sec_formula_in_formula si in
-    let nst = rewrite_sec_formula_in_struc_formula st in
+    let nsi = rewrite_sec_formula_in_formula ~blank:is_blank ~rename:is_rename si in
+    let nst = rewrite_sec_formula_in_struc_formula ~blank:is_blank ~rename:is_rename st in
     EAssume ({
         a with
         formula_assume_simpl = nsi;
         formula_assume_struc = nst
       })
   | _ -> f (* ADI TODO: unsupported for now *)
-and rewrite_sec_formula_in_formula (f:formula) : formula =
-  (* ADI TODO: check if using BLANK formula *)
-  let f = mkEmptySecFormula f in
+and rewrite_sec_formula_in_formula_base ?blank:(is_blank=true) ?rename:(is_rename=false) (f:formula_base) : formula_base =
+  let b = rewrite_sec_formula_in_formula ~blank:is_blank ~rename:is_rename (Base(f)) in
+  match b with
+  | Base   bf -> bf
+  | Exists ef -> report_error ef.formula_exists_pos "rewrite_sec_formula_in_formula_base: expects formula_base"
+  | Or     o  -> report_error o.formula_or_pos "rewrite_sec_formula_in_formula_base: expects formula_base"
+and rewrite_sec_formula_in_formula_exists ?blank:(is_blank=true) ?rename:(is_rename=false) (f:formula_exists) : formula_exists =
+  let e = rewrite_sec_formula_in_formula ~blank:is_blank ~rename:is_rename (Exists(f)) in
+  match e with
+  | Base   bf -> report_error bf.formula_base_pos "rewrite_sec_formula_in_formula_exists: expects formula_exists"
+  | Exists ef -> ef
+  | Or     o  -> report_error o.formula_or_pos "rewrite_sec_formula_in_formula_exists: expects formula_exists"
+and rewrite_sec_formula_in_formula ?blank:(is_blank=true) ?rename:(is_rename=false) (f:formula) : formula =
+  (* NOTE: default to use blank formula *)
+  let f = if is_blank then mkEmptySecFormula f else f in
   let rewriter f =
     match f with
-    | Base   b -> rewrite_sec_formula_in_sec_formula_list b.formula_base_sec   f
-    | Exists e -> rewrite_sec_formula_in_sec_formula_list e.formula_exists_sec f
+    | Base   b -> rewrite_sec_formula_in_sec_formula_list ~rename:is_rename b.formula_base_sec   f
+    | Exists e -> rewrite_sec_formula_in_sec_formula_list ~rename:is_rename e.formula_exists_sec f
     | Or     o ->
-      let f1 = rewrite_sec_formula_in_formula o.formula_or_f1 in
-      let f2 = rewrite_sec_formula_in_formula o.formula_or_f2 in
+      let f1 = rewrite_sec_formula_in_formula ~rename:is_rename o.formula_or_f1 in
+      let f2 = rewrite_sec_formula_in_formula ~rename:is_rename o.formula_or_f2 in
       Or ({o with formula_or_f1 = f1; formula_or_f2 = f2})
   in
   let res = rewriter f in
   res
-and rewrite_sec_formula_in_sec_formula_list (sl:sec_formula list) (f:formula) =
+and rewrite_sec_formula_in_sec_formula_list ?rename:(is_rename=false) (sl:sec_formula list) (f:formula) =
   let rec trans (sl:sec_formula list) (f:formula) =
     match sl with
     | []     -> f
-    | sf::sr -> trans sr (rewrite_sec_formula_in_sec_formula sf f)
+    | sf::sr -> trans sr (rewrite_sec_formula_in_sec_formula ~rename:is_rename sf f)
   in trans sl f
-and rewrite_sec_formula_in_sec_formula (sf:sec_formula) (f:formula) =
-  let lub,fvs,exp = rewrite_sec_label sf.sec_lbl in
-  let sec_var = CP.Lte (CP.Var (rewrite_spec_var sf.sec_var, no_pos), exp, no_pos) in
+and rewrite_sec_formula_in_sec_formula ?rename:(is_rename=false) (sf:sec_formula) (f:formula) =
+  let lub,fvs,exp = rewrite_sec_label ~rename:is_rename sf.sec_lbl in
+  let sec_var = CP.Lte (CP.Var (rewrite_spec_var ~rename:is_rename  sf.sec_var, no_pos), exp, no_pos) in
   let max_formula = List.map (fun x -> CP.BForm ((x, None), None)) lub in
   let simp_f = CP.mkPure sec_var in
   let full_f = List.fold_left (fun acc x -> CP.And (acc, x, no_pos)) simp_f max_formula in
   (* NOTE: without existential quantified
      add_pure_formula_to_formula full_f f*)
   (add_pure_formula_to_formula (CP.mkExists fvs full_f None no_pos) f)
-and rewrite_sec_label (lbl:sec_label) =
+and rewrite_sec_label ?rename:(is_rename=false) (lbl:sec_label) =
   match lbl with
   | Sec_HI         -> ([],[], (CP.mkIConst 1 no_pos))
   | Sec_LO         -> ([],[], (CP.mkIConst 0 no_pos))
-  | Sec_Var(v)     -> ([],[], Var (rewrite_spec_var v, no_pos))
+  | Sec_Var(v)     -> ([],[], Var (rewrite_spec_var ~rename:is_rename v, no_pos))
   | Sec_LUB(l1,l2) ->
-    let lu1,fv1,ex1 = rewrite_sec_label l1 in
-    let lu2,fv2,ex2 = rewrite_sec_label l2 in
+    let lu1,fv1,ex1 = rewrite_sec_label ~rename:is_rename l1 in
+    let lu2,fv2,ex2 = rewrite_sec_label ~rename:is_rename l2 in
     let var = CP.mk_spec_var (fresh_name ()) in
     let m_v = Var (var, no_pos) in
     (lu1@lu2@[CP.EqMax (m_v, ex1, ex2, no_pos)], fv1@fv2@[var], m_v)
-and rewrite_spec_var (var:CP.spec_var) =
-  let sec_var = CP.mk_typed_spec_var Int ((*"sec_" ^ *)(CP.ident_of_spec_var var)) in
-  let res = if (is_primed var) then CP.to_primed sec_var else CP.to_unprimed sec_var in
-  res
+and rewrite_spec_var ?rename:(is_rename=false) (var:CP.spec_var) =
+  let sec_name = if is_rename then "sec_" ^ (CP.ident_of_spec_var var) else (CP.ident_of_spec_var var) in
+  let sec_var  = CP.mk_typed_spec_var Int sec_name in
+  if (is_primed var) then CP.to_primed sec_var else CP.to_unprimed sec_var
 
 (* NOTE: add bound formula to pure formula *)
 and add_sec_bound_in_entail_state (es:entail_state) (svl:CP.spec_var list) =
@@ -13942,9 +13954,9 @@ and propagate_bind_obj_to_entail_state (old_res:CP.spec_var) (obj:CP.spec_var) (
   let sec_formula = mkSecFormula (CP.mkSecRes) full_bound in
   let new_formula = add_sec_formula_to_formula sec_formula new_estate.es_formula in
   let new_context = Ctx { new_estate with es_formula = new_formula } in
-  x_binfo_hp (add_str "old_es " !print_entail_state) es no_pos;
-  x_binfo_hp (add_str "new_es " !print_entail_state) new_estate no_pos;
-  x_binfo_hp (add_str "new_ctx" !print_context) new_context no_pos;
+  x_tinfo_hp (add_str "old_es " !print_entail_state) es no_pos;
+  x_tinfo_hp (add_str "new_es " !print_entail_state) new_estate no_pos;
+  x_tinfo_hp (add_str "new_ctx" !print_context) new_context no_pos;
   new_context
 and propagate_cond_to_sec_context (cvar:CP.spec_var) (old_cvar:sec_label ref) (es:entail_state) =
   let old_context = get_sec_context_from_estate es in

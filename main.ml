@@ -130,6 +130,8 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if !Globals.is_info_flow_analysis && (Sys.file_exists "./prelude_sec.ss") then
     [(parse_file_full "./prelude_sec.ss" true)]
+  else if !Globals.is_ifa && (Sys.file_exists "./prelude_sec.ss") then (* ADI: for testing *)
+    [(parse_file_full "./prelude_sec.ss" true)]
   else if (Sys.file_exists "./prelude.ss") then
     [(parse_file_full "./prelude.ss" true)]
   else List.map (fun x -> parse_file_full x true) new_names
