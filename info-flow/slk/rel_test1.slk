@@ -1,0 +1,36 @@
+// Check Safety
+checkentail LO(x) |- LO(x). // valid
+checkentail LO(x) |- HI(x). // valid
+checkentail HI(x) |- LO(x). // fail
+checkentail HI(x) |- HI(x). // valid
+
+// Check Transitive Flow
+checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(x,z). // valid
+checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(z,x). // fail
+checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(z,y). // fail
+
+// Check Inference
+checkentail FLOW(x,y) & LO(x) |- LO(y). // valid
+checkentail FLOW(x,y) & LO(x) |- HI(y). // valid
+checkentail FLOW(x,y) & HI(x) |- LO(y). // fail
+checkentail FLOW(x,y) & HI(x) |- HI(y). // valid
+
+// Check LUB
+checkentail LO(x) | LO(x) |- LO(x). // valid
+checkentail LO(x) | LO(x) |- HI(x). // valid
+checkentail LO(x) | HI(x) |- LO(x). // fail
+checkentail LO(x) | HI(x) |- HI(x). // valid
+checkentail HI(x) | LO(x) |- LO(x). // fail
+checkentail HI(x) | LO(x) |- HI(x). // valid
+checkentail HI(x) | HI(x) |- LO(x). // fail
+checkentail HI(x) | HI(x) |- HI(x). // valid
+
+// Check GLB
+checkentail LO(x) & LO(x) |- LO(x). // valid
+checkentail LO(x) & LO(x) |- HI(x). // valid
+checkentail LO(x) & HI(x) |- LO(x). // valid
+checkentail LO(x) & HI(x) |- HI(x). // valid
+checkentail HI(x) & LO(x) |- LO(x). // valid
+checkentail HI(x) & LO(x) |- HI(x). // valid
+checkentail HI(x) & HI(x) |- LO(x). // fail
+checkentail HI(x) & HI(x) |- HI(x). // valid

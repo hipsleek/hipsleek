@@ -273,7 +273,7 @@ let is_possible_node_typ t =
   match t with
   | Named id -> true (* String.compare id "" != 0 *)
   | TVar _ -> true
-   (* Unknown can also be a node *)
+  (* Unknown can also be a node *)
   | UNK -> true
   | _ -> false
 
@@ -1335,7 +1335,7 @@ let old_compute_act = ref false (* false *)
 let new_heap_contra = ref true 
 let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
-  (* false here causes ex21u3e7.slk to go into a loop FIXED *)
+(* false here causes ex21u3e7.slk to go into a loop FIXED *)
 let cond_action_always = ref false
 let rev_priority = ref false
 
@@ -1618,6 +1618,8 @@ let nondet_int_rel_name = "nondet_int__"
 let hip_sleek_keywords = ["res"; "max"; "min"]
 
 let rec_field_id = "REC"
+
+let is_ifa = ref false (* IFA *)
 
 type infer_extn = {
   extn_pred: ident;

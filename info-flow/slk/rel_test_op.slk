@@ -1,0 +1,16 @@
+// Simulating Binary Operation: x = y + z
+checkentail FLOW(y,x) | FLOW(z,x) |- FLOW(y,x) | FLOW(z,x). // valid
+checkentail FLOW(y,x) | FLOW(z,x) |- FLOW(y,x).             // fail
+checkentail FLOW(y,x) | FLOW(z,x) |- FLOW(z,x).             // fail
+
+checkentail (FLOW(y,x) | FLOW(z,x)) & LO(y) & LO(z) |- LO(x). // valid
+checkentail (FLOW(y,x) | FLOW(z,x)) & LO(y) & LO(z) |- HI(x). // valid
+checkentail (FLOW(y,x) | FLOW(z,x)) & LO(y) & HI(z) |- LO(x). // fail
+checkentail (FLOW(y,x) | FLOW(z,x)) & LO(y) & HI(z) |- HI(x). // valid
+checkentail (FLOW(y,x) | FLOW(z,x)) & HI(y) & LO(z) |- LO(x). // fail
+checkentail (FLOW(y,x) | FLOW(z,x)) & HI(y) & LO(z) |- HI(x). // valid
+checkentail (FLOW(y,x) | FLOW(z,x)) & HI(y) & HI(z) |- LO(x). // fail
+checkentail (FLOW(y,x) | FLOW(z,x)) & HI(y) & HI(z) |- HI(x). // valid
+
+checkentail (FLOW(y,x) | FLOW(z,x)) & LO(y) & HI(z) |- FLOW(z,x). // valid?
+checkentail (FLOW(y,x) | FLOW(z,x)) & HI(y) & LO(z) |- FLOW(y,x). // valid?

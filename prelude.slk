@@ -1,1 +1,29 @@
 relation Univ(int x).
+
+// Information Flow Analysis
+relation LO(x).
+relation HI(x).
+relation FLOW(x,y). // read: x flows to y
+
+axiom LO(X) ==> HI(x).
+
+// Least Upper Bound
+axiom LO(x) | LO(x) ==> LO(x).
+axiom LO(x) | HI(x) ==> HI(x).
+axiom HI(x) | LO(x) ==> HI(x).
+axiom HI(x) | HI(x) ==> HI(x).
+
+// Greatest Lower Bound
+axiom LO(x) & LO(x) ==> LO(x).
+axiom LO(x) & HI(x) ==> LO(x).
+axiom HI(x) & LO(x) ==> LO(x).
+axiom HI(x) & HI(x) ==> HI(x).
+
+// Transitivity of Flow
+axiom FLOW(x,y) & FLOW(y,z) ==> FLOW(x,z).
+axiom FLOW(x,y) & LO(x)     ==> LO(y).
+axiom FLOW(x,y) & HI(x)     ==> HI(y).
+
+// Flow Selection
+axiom (FLOW(y,x) | FLOW(z,x)) & LO(y) ==> FLOW(z,x).
+axiom (FLOW(y,x) | FLOW(z,x)) & HI(y) ==> FLOW(y,x).

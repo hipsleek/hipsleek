@@ -2129,7 +2129,7 @@ cexp :
       | f, _ ->  f ]
     ];
 
-cexp_data_p: 
+cexp_data_p:
     [[t = cexp_w -> match t with
       | Pure_c f -> (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
@@ -3105,7 +3105,8 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
-typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
+typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id)
+               | `IDENTIFIER id          ->  (Globals.UNK, id) ]];
 
 id_part_ann: [[
     `IDENTIFIER id-> (id,-1)
@@ -3137,7 +3138,7 @@ typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists

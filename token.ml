@@ -125,6 +125,7 @@ type sleek_token =
   | ARGOPTION of string
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
+  | SEC_HI | SEC_LO | SEC_OP | SEC_LUB (* IFA *)
 
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
@@ -278,6 +279,10 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
+    | SEC_HI  -> "@H" (* IFA *)
+    | SEC_LO  -> "@L"
+    | SEC_OP  -> "<?"
+    | SEC_LUB -> "%%"
 
   let print ppf x = pp_print_string ppf (to_string x)
 
