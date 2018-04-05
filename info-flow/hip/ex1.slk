@@ -7,8 +7,12 @@ relation SecL(UNK x).
 relation SecH(UNK x).
 relation Sec(UNK x,UNK y).
 relation Lub(UNK x,UNK y).
+relation <:(Sec, Sec).
 
 function Sec(UNK x): Sec.
+function LUB(Sec x, Sec y) : Sec.
+function Low() : Sec.
+function High() : Sec.
 
    Sec(self)<:L
 
@@ -16,3 +20,6 @@ Sec(x, Lub(y,SecL(z)))
 
 pred safell<n> == self=null & n=0
       or self::node<v,q> * q::safell<n-1> & SecL(v) & SecL(self).
+
+pred safell<n> == self=null & n=0
+      or self::node<v,q> * q::safell<n-1> & v<:Low()  & self<:Low().

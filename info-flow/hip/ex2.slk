@@ -27,6 +27,12 @@ checkentail Low(self) |- High(self).
 print residue.
 
 checkentail true |- (x<=0 | x<=1).
+checkentail true |- (Low(x) | High(H)).
+checkentail true |- x<:High().
+checkentail x<:Low() |- x<:High().
+expect Valid.
+checkentail x<:High() |- x<:Low().
+expect Fail.
 
 // Sec(self)<=0 |- Sec(self)<=1
 // res<=0  means res=L
