@@ -1,38 +1,68 @@
 relation LO(x) == x<=0.
+relation HI(x) == x<=1.
+relation FLOW(x,y) == x<=y.
 
 // Check Safety
 checkentail LO(x) |- LO(x). // valid
+expect Valid.
 checkentail LO(x) |- HI(x). // valid
+expect Valid.
 checkentail HI(x) |- LO(x). // fail
+expect Fail.
 checkentail HI(x) |- HI(x). // valid
+expect Valid.
 
 // Check Transitive Flow
 checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(x,z). // valid
+expect Valid.
 checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(z,x). // fail
+expect Fail.
 checkentail FLOW(x,y) & FLOW(y,z) |- FLOW(z,y). // fail
+expect Fail.
 
+//(8)
 // Check Inference
 checkentail FLOW(x,y) & LO(x) |- LO(y). // valid
+expect Valid.
 checkentail FLOW(x,y) & LO(x) |- HI(y). // valid
+expect Valid.
 checkentail FLOW(x,y) & HI(x) |- LO(y). // fail
+expect Fail.
 checkentail FLOW(x,y) & HI(x) |- HI(y). // valid
+expect Valid.
 
 // Check LUB
 checkentail LO(x) | LO(x) |- LO(x). // valid
+expect Valid.
 checkentail LO(x) | LO(x) |- HI(x). // valid
+expect Valid.
 checkentail LO(x) | HI(x) |- LO(x). // fail
+expect Fail.
 checkentail LO(x) | HI(x) |- HI(x). // valid
+expect Valid.
 checkentail HI(x) | LO(x) |- LO(x). // fail
+expect Fail.
 checkentail HI(x) | LO(x) |- HI(x). // valid
+expect Valid.
 checkentail HI(x) | HI(x) |- LO(x). // fail
+expect Fail.
 checkentail HI(x) | HI(x) |- HI(x). // valid
+expect Valid.
 
 // Check GLB
 checkentail LO(x) & LO(x) |- LO(x). // valid
+expect Valid.
 checkentail LO(x) & LO(x) |- HI(x). // valid
+expect Valid.
 checkentail LO(x) & HI(x) |- LO(x). // valid
+expect Valid.
 checkentail LO(x) & HI(x) |- HI(x). // valid
+expect Valid.
 checkentail HI(x) & LO(x) |- LO(x). // valid
+expect Valid.
 checkentail HI(x) & LO(x) |- HI(x). // valid
+expect Valid.
 checkentail HI(x) & HI(x) |- LO(x). // fail
+expect Fail.
 checkentail HI(x) & HI(x) |- HI(x). // valid
+expect Valid.

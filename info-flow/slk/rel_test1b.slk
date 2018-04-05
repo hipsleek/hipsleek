@@ -1,0 +1,79 @@
+relation LO(x) == x<=0.
+relation HI(x) == x<=1.
+relation FLOW(x,y) == x<=y.
+
+// Check Safety
+checkentail x<=0 |- x<=0. // valid
+expect Valid.
+checkentail x<=0 |- x<=1. // valid
+expect Valid.
+checkentail x<=1 |- x<=0. // fail
+expect Fail.
+checkentail x<=1 |- x<=1. // valid
+expect Valid.
+
+// Check Transitive Flow
+//(5)
+checkentail x<=y & y<=z |- x<=z. // valid
+expect Valid.
+checkentail x<=y & y<=z |- z<=x. // fail
+expect Fail.
+checkentail x<=y & y<=z |- z<=y. // fail
+expect Fail.
+
+// Check Inference
+//(8)
+//checkentail FLOW(x,y) & LO(x) |- LO(y). // valid
+checkentail x<=y & x<=0 |- y<=0. // valid // wrong
+expect Valid.
+checkentail x<=y & x<=0 |- y<=1. // valid
+expect Valid.
+checkentail x<=y & x<=1 |- y<=0. // fail
+expect Fail.
+//(11)
+checkentail x<=y & x<=1 |- y<=1. // valid
+expect Valid.
+
+//(12)
+checkentail x<=y & x<=0 & 0<=x<=1 & 0<=y<=1 |- y<=0. // valid
+expect Valid. //wrong
+checkentail x<=y & x<=0 & 0<=x<=1 & 0<=y<=1 |- y<=1. // valid
+expect Valid.
+checkentail x<=y & x<=1 & 0<=x<=1 & 0<=y<=1 |- y<=1. // valid
+expect Valid.
+
+// Check LUB
+checkentail x<=0 | x<=0 |- x<=0. // valid
+expect Valid.
+checkentail x<=0 | x<=0 |- x<=1. // valid
+expect Valid.
+checkentail x<=0 | x<=1 |- x<=0. // fail
+expect Fail.
+checkentail x<=0 | x<=1 |- x<=1. // valid
+expect Valid.
+checkentail x<=1 | x<=0 |- x<=0. // fail
+expect Fail.
+checkentail x<=1 | x<=0 |- x<=1. // valid
+expect Valid.
+checkentail x<=1 | x<=1 |- x<=0. // fail
+expect Fail.
+checkentail x<=1 | x<=1 |- x<=1. // valid
+expect Valid.
+
+// Check GLB
+checkentail x<=0 & x<=0 |- x<=0. // valid
+expect Valid.
+checkentail x<=0 & x<=0 |- x<=1. // valid
+expect Valid.
+checkentail x<=0 & x<=1 |- x<=0. // valid
+expect Valid.
+checkentail x<=0 & x<=1 |- x<=1. // valid
+expect Valid.
+checkentail x<=1 & x<=0 |- x<=0. // valid
+expect Valid.
+checkentail x<=1 & x<=0 |- x<=1. // valid
+expect Valid.
+checkentail x<=1 & x<=1 |- x<=0. // fail
+expect Fail.
+checkentail x<=1 & x<=1 |- x<=1. // valid
+expect Valid.
