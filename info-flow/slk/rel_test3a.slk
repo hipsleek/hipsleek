@@ -1,0 +1,11 @@
+//relation LO(x) == x<=0.
+//relation HI(x) == x<=1.
+//relation FLOW(x,y) == x<=y.
+
+//(8)
+// Check Inference
+checkentail FLOW(x,y) & LO(x) |- LO(y). // valid
+expect Valid.
+
+checkentail FLOW(w,y) & FLOW(x,y) & LO(x) & HI(w) |- LO(y). // valid
+expect Fail.
