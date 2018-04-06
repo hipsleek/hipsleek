@@ -3,22 +3,73 @@ int double_if(int x)
   req HI(x) & (x=1|x=0)
   ens LO(res) & res=x
 {
-  int y=0,z=0; // LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)
+  int y=0,z=0; // LO(y') & LO(z') & HI(x) & FLOW(x,x') & y'=0 & z'=0 & (x=1|x=0) & x'=x
+
   if(x == 0) {
     y = 1;
-    // LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1
+    // LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y') & y_0=0 & z'=0 & (x=1|x=0) & x'=x & x=0 & y'=1
   }
-  // (LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)
+
+  // THEN:
+  // - PURE
+  //   (y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1)
+  // - INFO:
+  //   (LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y'))
+  // ELSE:
+  // - PURE:
+  //   (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0)
+  // - INFO:
+  //   (LO(y') & LO(z') & HI(x) & FLOW(x,x'))
+
+  // MERGED:
+  //   ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0))
+  // & ((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))
+
   if(y == 0) {
     z = 1;
-    // ((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1
+    //   ((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1))
+    // & ((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))
   }
-  // ((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)
-  // return z
-  // (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z
+
+  // THEN:
+  // - PURE:
+  //   (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)))
+  // - INFO:
+  //   (((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z'))))
+  // ELSE:
+  // - PURE:
+  //   ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 y'!=0))
+  // - INFO:
+  //   (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x'))))
+
+  // MERGED:
+  //   (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)) | ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 y'!=0)))
+  // & ((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
+  return z
+
 }
 */
 
-checkentail (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z |- LO(res).
+checkentail (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)) | ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 & y'!=0)))
+&
+((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
+&
+res=z' |- LO(res).
 
-checkentail (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z |- HI(res).
+checkentail (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)) | ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 & y'!=0)))
+&
+((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
+&
+res=z' |- HI(res).
+
+checkentail (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)) | ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 & y'!=0)))
+&
+((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
+&
+res=z' |- LO(res) & res=x.
+
+checkentail (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (y'=0 & z_0=0 & (x=1|x=0) & x'=x & x'!=0 & y'=0 & z'=1)) | ((y_0=0 & z'=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'!=0) | (y'=0 & z'=0 & (x=1|x=0) & x'=x & x'!=0 & y'!=0)))
+&
+((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
+&
+res=z' |- HI(res) & res=x.

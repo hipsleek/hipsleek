@@ -24,6 +24,6 @@ axiom FLOW(x,y) & FLOW(y,z) ==> FLOW(x,z).
 axiom FLOW(x,y) & LO(x)     ==> LO(y).
 axiom FLOW(x,y) & HI(x)     ==> HI(y).
 
-// Flow Selection
+// Flow Selection: to be argued
 axiom (FLOW(y,x) | FLOW(z,x)) & LO(y) ==> FLOW(z,x).
 axiom (FLOW(y,x) | FLOW(z,x)) & HI(y) ==> FLOW(y,x).
