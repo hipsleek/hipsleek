@@ -1,0 +1,24 @@
+/* TEST: Double-If
+int double_if(int x)
+  req HI(x) & (x=1|x=0)
+  ens LO(res) & res=x
+{
+  int y=0,z=0; // LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)
+  if(x == 0) {
+    y = 1;
+    // LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1
+  }
+  // (LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)
+  if(y == 0) {
+    z = 1;
+    // ((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1
+  }
+  // ((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)
+  // return z
+  // (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z
+}
+*/
+
+checkentail (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z |- LO(res).
+
+checkentail (((LO(y) & LO(z) & y=0 & z=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z) & y0=0 & z=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) | (((LO(y) & LO(z0) & y=0 & z0=0 & HI(x) & (x=1|x=0)) | (LO(y0) & LO(z0) & y0=0 & z0=0 & HI(x) & (x=1|x=0) & FLOW(x,y) & y=1)) & FLOW(y,z) & z=1)) & res=z |- HI(res).
