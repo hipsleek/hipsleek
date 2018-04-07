@@ -426,7 +426,7 @@ let process_pred_def_4_iast pdef =
 
 (* TODO: *)
 let process_func_def fdef =
-  if Astsimp.check_data_pred_name iprog fdef.I.func_name then
+  if x_add Astsimp.check_data_pred_name iprog fdef.I.func_name then
     let tmp = iprog.I.prog_func_decls in
     try
       iprog.I.prog_func_decls <- ( fdef :: iprog.I.prog_func_decls);
@@ -435,11 +435,11 @@ let process_func_def fdef =
     with
     | e ->  dummy_exception e ; iprog.I.prog_func_decls <- tmp
   else
-    print_string (fdef.I.func_name ^ " is already defined.\n")
+    print_string (fdef.I.func_name ^ " is already defined (2).\n")
 
 (* An Hoa : process the relational definition *)
 let process_rel_def rdef =
-  if Astsimp.check_data_pred_name iprog rdef.I.rel_name then
+  if x_add Astsimp.check_data_pred_name iprog rdef.I.rel_name then
     let tmp = iprog.I.prog_rel_decls in
     try
       (*let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) rdef.Iast.view_vars ) in
@@ -472,28 +472,28 @@ let process_rel_def rdef =
     with
     | e ->  dummy_exception e ; iprog.I.prog_rel_decls <- tmp
   else
-    print_string (rdef.I.rel_name ^ " is already defined.\n")
+    print_string (rdef.I.rel_name ^ " is already defined (3).\n")
 
 let process_templ_def tdef =
-  if Astsimp.check_data_pred_name iprog tdef.I.templ_name then
+  if x_add Astsimp.check_data_pred_name iprog tdef.I.templ_name then
     let tmp = iprog.I.prog_templ_decls in
     try
       iprog.I.prog_templ_decls <- (tdef::iprog.I.prog_templ_decls);
       !cprog.Cast.prog_templ_decls <- (Astsimp.trans_templ iprog tdef)::!cprog.Cast.prog_templ_decls
     with e -> dummy_exception e; iprog.I.prog_templ_decls <- tmp 
-  else print_endline_quiet (tdef.I.templ_name ^ " is already defined.")
+  else print_endline_quiet (tdef.I.templ_name ^ " is already defined (4).")
 
 let process_ut_def utdef =
-  if Astsimp.check_data_pred_name iprog utdef.I.ut_name then
+  if x_add Astsimp.check_data_pred_name iprog utdef.I.ut_name then
     let tmp = iprog.I.prog_ut_decls in
     try
       iprog.I.prog_ut_decls <- (utdef::iprog.I.prog_ut_decls);
       !cprog.Cast.prog_ut_decls <- (Astsimp.trans_ut iprog utdef)::!cprog.Cast.prog_ut_decls
     with e -> dummy_exception e; iprog.I.prog_ut_decls <- tmp 
-  else print_endline_quiet (utdef.I.ut_name ^ " is already defined.")
+  else print_endline_quiet (utdef.I.ut_name ^ " is already defined (5).")
 
 let process_ui_def uidef =
-  if Astsimp.check_data_pred_name iprog uidef.I.ui_rel.rel_name then
+  if x_add Astsimp.check_data_pred_name iprog uidef.I.ui_rel.rel_name then
     let tmp = iprog.I.prog_ui_decls in
     try
       iprog.I.prog_ui_decls <- (uidef::iprog.I.prog_ui_decls);
@@ -503,11 +503,11 @@ let process_ui_def uidef =
       (* !cprog.Cast.prog_rel_decls <- cuidef.Cast.ui_rel::!cprog.Cast.prog_rel_decls; *)
       !cprog.Cast.prog_rel_decls # push cuidef.Cast.ui_rel;
     with e -> dummy_exception e; iprog.I.prog_ui_decls <- tmp 
-  else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined.")
+  else print_endline_quiet (uidef.I.ui_rel.rel_name ^ " is already defined (6).")
 
 let process_hp_def hpdef =
   let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
-  if Astsimp.check_data_pred_name iprog hpdef.I.hp_name then
+  if x_add Astsimp.check_data_pred_name iprog hpdef.I.hp_name then
     let tmp = iprog.I.prog_hp_decls in
     try
       (* PURE_RELATION_OF_HEAP_PRED *)
@@ -540,7 +540,7 @@ let process_hp_def hpdef =
         iprog.I.prog_hp_decls <- tmp
       end
   else
-    print_string (hpdef.I.hp_name ^ " is already defined.\n")
+    print_string (hpdef.I.hp_name ^ " is already defined (8).\n")
 
 let process_hp_def hpdef =
   Debug.no_1 "process_hp_def" pr_none pr_none process_hp_def hpdef
@@ -736,7 +736,7 @@ let process_list_lemma ldef_lst =
   Debug.no_1 "process_list_lemma" !I.print_coerc_decl_list pr_unit process_list_lemma  ldef_lst
 
 let process_data_def ddef =
-  if Astsimp.check_data_pred_name iprog ddef.I.data_name then
+  if x_add Astsimp.check_data_pred_name iprog ddef.I.data_name then
     (* let tmp = iprog.I.prog_data_decls in *)
     let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_eq dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
     let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
@@ -748,7 +748,7 @@ let process_data_def ddef =
   else begin
     (* dummy_exception() ; *)
     (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
-    report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
+    report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined (9).")
   end
 
 let process_data_def ddef =

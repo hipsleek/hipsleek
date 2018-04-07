@@ -11507,22 +11507,28 @@ let check_data_pred_name iprog name : bool =
     let todo_unk = x_add I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with | Not_found -> begin
       try
+        let () = y_binfo_pp "look_up view " in
         let todo_unk = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls name in false
       with | Not_found -> begin
           try
+            let () = y_binfo_pp "look_up rel_def " in
             let todo_unk = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false
           with | Not_found -> begin
               try
+                let () = y_binfo_pp "look_up func def " in
                 let todo_unk = I.look_up_func_def_raw iprog.I.prog_func_decls name in false
               with | Not_found -> begin
                   try
+                    let () = y_binfo_pp "look_up hp_def " in
                     let todo_unk = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in false
                   with | Not_found -> begin
                       try
+                        let () = y_binfo_pp "look_up templ_def " in
                         let todo_unk = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false
                       with | Not_found -> begin
                           try
-                            let todo_unk = I.look_up_ut_def_raw iprog.I.prog_ut_decls name in false
+                            let () = y_binfo_pp "look_up ut_def " in
+                             let todo_unk = I.look_up_ut_def_raw iprog.I.prog_ut_decls name in false
                           with | Not_found -> true
                         end
                     end
@@ -11530,6 +11536,9 @@ let check_data_pred_name iprog name : bool =
             end
         end
     end
+
+let check_data_pred_name iprog name : bool =
+  Debug.no_1 "check_data_pred_name" pr_id string_of_bool (fun _ -> check_data_pred_name iprog name) name 
 
 (* let check_data_pred_name iprog name : bool = *)
 (*   let pr1 x = x in *)
@@ -11566,11 +11575,11 @@ let check_data_pred_name iprog name : bool =
 (*       (fun _ -> process_pred_def_4_iast iprog pdef) pdef *)
 
 let process_pred_def_4_iast_x iprog check_exists pdef=
-  if not check_exists || check_data_pred_name iprog pdef.I.view_name then
+  if not check_exists || (x_add check_data_pred_name iprog pdef.I.view_name) then
     let curr_view_decls = iprog.I.prog_view_decls in
     iprog.I.prog_view_decls <- pdef :: curr_view_decls;
   else
-    report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.")
+    report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined (1).")
 
 let process_pred_def_4_iast iprog check_exists pdef=
   let pr = Iprinter.string_of_view_decl in

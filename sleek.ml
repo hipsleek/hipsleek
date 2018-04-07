@@ -405,43 +405,52 @@ let parse_file (parse) (source_file : string) =
   ()
 
 let main () =
-  let () = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
-                I.prog_data_decls = [iobj_def;ithrd_def];
-                I.prog_global_var_decls = [];
-                I.prog_logical_var_decls = [];
-                I.prog_enum_decls = [];
-                I.prog_view_decls = [];
-                I.prog_func_decls = [];
-                I.prog_rel_decls = [];
-                I.prog_rel_ids = [];
-                I.prog_templ_decls = [];
-                I.prog_ut_decls = [];
-                I.prog_ui_decls = [];
-                I.prog_hp_decls = [];
-                I.prog_hp_ids = [];
-                I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-                I.prog_proc_decls = [];
-                I.prog_coercion_decls = [];
-                I.prog_hopred_decls = [];
-                I.prog_barrier_decls = [];
-                I.prog_test_comps = [];
-              } in
-  (*Generate barrier data type*)
-  let () = if (!Globals.perm = Globals.Dperm) then
-      process_data_def (I.b_data_constr b_datan [])
-    else if (!Globals.perm = Globals.Bperm) then
-      process_data_def (I.b_data_constr b_datan [((Int,"phase"))])
+  I.prog_data_decls = [iobj_def;ithrd_def];
+  I.prog_global_var_decls = [];
+  I.prog_logical_var_decls = [];
+  I.prog_enum_decls = [];
+  I.prog_view_decls = [];
+  I.prog_func_decls = [];
+  I.prog_rel_decls = [];
+  I.prog_rel_ids = [];
+  I.prog_templ_decls = [];
+  I.prog_ut_decls = [];
+  I.prog_ui_decls = [];
+  I.prog_hp_decls = [];
+  I.prog_hp_ids = [];
+  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
+  I.prog_proc_decls = [];
+  I.prog_coercion_decls = [];
+  I.prog_hopred_decls = [];
+  I.prog_barrier_decls = [];
+  I.prog_test_comps = [];
+  } in
+  let init ip =
+    begin
+      let () = y_binfo_pp "init ip.." in
+      let () = I.init_iprog ip in
+      let () = record_backtrace_quite () in
+      (*Generate barrier data type*)
+      let () = 
+        if (!Globals.perm = Globals.Dperm) then
+          process_data_def (I.b_data_constr b_datan [])
+        else if (!Globals.perm = Globals.Bperm) then
+          process_data_def (I.b_data_constr b_datan [((Int,"phase"))])
+        else () in
+      let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
+      let () = Iast.build_exc_hierarchy true iprog in
+      let () = exlist # compute_hierarchy  in 
+      ()
+    end 
   in
-  let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-  let () = Iast.build_exc_hierarchy true iprog in
-  let () = exlist # compute_hierarchy  in  
+  let () = init iprog in
   (* let () = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
-    | Scriptarguments.NativeFE -> NF.parse_slk x
-    | Scriptarguments.XmlFE -> XF.parse x in
+      | Scriptarguments.NativeFE -> NF.parse_slk x
+      | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
   try
@@ -451,74 +460,75 @@ let main () =
         while not (!quit) do
           if !inter then (* check for interactivity *)
             print_string !prompt;
-          let input = read_line () in
-          (* let () = print_string("here") in  *)
-          match input with
-          | "" -> ()
-          | _ ->
-            begin
-              try
+            let input = read_line () in
+            (* let () = print_string("here") in  *)
+            match input with
+              | "" -> ()
+              | _ ->
+                    begin
+                      try
 
-                let term_indx = String.index input terminator in
-                let s = String.sub input 0 (term_indx+1) in
-                Buffer.add_string buffer s;
-                let cts = Buffer.contents buffer in
-                if cts = "quit" || cts = "quit\n" then quit := true
-                else 
-                  try
-                    let cmd = parse cts in
-                    (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
-                    proc_gen_cmd cmd;
-                    Buffer.clear buffer;
-                    if !inter then
-                      prompt := "SLEEK> "
-                  with
-                  | e -> warn_exception e;
-                    print_string_quiet ("Error.\n");
-                    print_endline_quiet "Last SLEEK FAILURE:";
-                    Log.last_cmd # dumping "sleek_dump(interactive)";
-                    (*     sleek_command # dump; *)
-                    (* print_endline "Last PURE PROOF FAILURE:"; *)
-                    (* Log.last_proof_command # dump; *)
-                    Buffer.clear buffer;
-                    if !inter then prompt := "SLEEK> "
-              with
-              | SLEEK_Exception
-              | Not_found -> dummy_exception();
-                Buffer.add_string buffer input;
-                Buffer.add_char buffer '\n';
-                if !inter then prompt := "- "
-            end
+                        let term_indx = String.index input terminator in
+                        let s = String.sub input 0 (term_indx+1) in
+                        Buffer.add_string buffer s;
+                        let cts = Buffer.contents buffer in
+                        if cts = "quit" || cts = "quit\n" then quit := true
+                        else 
+                          try
+                            let cmd = parse cts in
+                            (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
+                            proc_gen_cmd cmd;
+                            Buffer.clear buffer;
+                            if !inter then
+                              prompt := "SLEEK> "
+                          with
+                            | e -> warn_exception e;
+                                  print_string_quiet ("Error.\n");
+                                  print_endline_quiet "Last SLEEK FAILURE:";
+                                  Log.last_cmd # dumping "sleek_dump(interactive)";
+                                  (*     sleek_command # dump; *)
+                                  (* print_endline "Last PURE PROOF FAILURE:"; *)
+                                  (* Log.last_proof_command # dump; *)
+                                  Buffer.clear buffer;
+                                  if !inter then prompt := "SLEEK> "
+                      with
+                        | SLEEK_Exception
+                        | Not_found -> dummy_exception();
+                              Buffer.add_string buffer input;
+                              Buffer.add_char buffer '\n';
+                              if !inter then prompt := "- "
+                    end
         done
       end
     else
       let rec batch_processing () = 
         try
-          x_tinfo_pp "sleek : batch processing" no_pos;
-            let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
-            (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
-            let all_files = slk_prelude_path::!Globals.source_files in
-            let () = y_tinfo_pp ((pr_list (fun x -> x)) all_files) in
-            let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
+          let () = x_binfo_pp "sleek : batch processing" no_pos in
+          let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
+          (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
+          let all_files = slk_prelude_path::!Globals.source_files in
+          let () = y_tinfo_pp ((pr_list (fun x -> x)) all_files) in
+          let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
         with Batch_Processing_Exception -> 
             let () = y_binfo_pp ("clear previous data ") in
+            let () = init iprog in
             batch_processing ()
       in
       begin
         batch_processing () 
       end
   with
-  | End_of_file ->
-    begin
-      print_string_quiet ("\n")
-    end
-  | e ->
-    begin
-      warn_exception e;
-      let () = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
-      print_endline_quiet "SLEEK FAILURE (END)";
-      Log.last_cmd # dumping "sleek_dumEND)";
-    end
+    | End_of_file ->
+          begin
+            print_string_quiet ("\n")
+          end
+    | e ->
+          begin
+            warn_exception e;
+            let () = print_string_quiet ( "error at: \n" ^ (get_backtrace_quiet ())) in
+            print_endline_quiet "SLEEK FAILURE (END)";
+            Log.last_cmd # dumping "sleek_dumEND)";
+          end
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)

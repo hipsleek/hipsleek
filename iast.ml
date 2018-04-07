@@ -716,7 +716,20 @@ let mk_view_header vn opt1 cids mvs modes pos =
     try_case_inference = false;
   }
 
-
+let init_iprog ip =
+  let () = ip.prog_data_decls <- [] in
+  let () = ip.prog_view_decls <- [] in
+  let () = ip.prog_func_decls <- [] in
+  let () = ip.prog_rel_decls <- [] in
+  let () = ip.prog_templ_decls <- [] in
+  let () = ip.prog_ut_decls <- [] in
+  let () = ip.prog_ui_decls <- [] in
+  let () = ip.prog_hp_decls <- [] in
+  let () = ip.prog_axiom_decls <- [] in
+  let () = ip.prog_hopred_decls <- [] in
+  let () = ip.prog_rel_ids <- [] in
+  let () = ip.prog_hp_ids <- [] in
+  ()
 
 let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   (* let mix_true = Mcpure.mkMTrue pos in *)
@@ -1799,7 +1812,7 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
   | [] ->
-    let msg = ("Cannot find definition of iview " ^ name) in
+    let msg = ("Cannot find definition of iview (1) " ^ name) in
     let () = if !VarGen.trace_exc then y_winfo_pp (x_loc^msg) in
     Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
@@ -1818,7 +1831,7 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) =
 and look_up_view_def_raw_x loc (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x loc rest name
   | [] ->
-    let msg = ("Cannot find definition of iview " ^ name) in
+    let msg = ("Cannot find definition of iview (2) " ^ name) in
     let () = y_tinfo_pp (loc^msg) in
     raise Not_found
 
@@ -1831,11 +1844,14 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
   | [] -> raise Not_found
 
 (* An Hoa *)
-and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
+and look_up_rel_def_raw_x (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest ->
     (* let () = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
     if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
+
+and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = 
+  Debug.no_2 "look_up_rel_def_raw" (pr_list pr_none) pr_id pr_none look_up_rel_def_raw_x defs name 
 
 and look_up_templ_def_raw (defs: templ_decl list) (name : ident) =
   List.find (fun d -> d.templ_name = name) defs
