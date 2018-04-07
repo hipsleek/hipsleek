@@ -44,6 +44,7 @@ exception SA_HP_TUPLED
 exception SA_HP_NOT_PRED
 
 exception NOT_HANDLE_YET
+exception Batch_Processing_Exception
 
 let reverify_flag = ref false
 let reverify_all_flag = ref false

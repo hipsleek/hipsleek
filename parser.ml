@@ -964,7 +964,7 @@ let cp_file = SHGram.Entry.mk "cp_file"
 
 EXTEND SHGram
   GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
-  sprog:[[ t = command_list; `EOF -> t ]];
+  sprog:[[ (* opt_decls = opt_decl_list ; *) t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   hproc:[[ t = proc_decl; `EOF -> t]];
@@ -1013,7 +1013,15 @@ expect_infer:
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
-        | c=class_decl -> DataDef c
+      | c=class_decl -> DataDef c
+      | `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> 
+        let all_files = !Globals.source_files in
+        let () = print_endline((pr_list (fun x -> x)) all_files) in
+        if List.exists (fun x -> ic=x) all_files then EmptyCmd
+        else 
+          let () = Globals.source_files := ic::all_files in
+          (* let () = print_endline ("including:"^ic) in *)
+          raise Batch_Processing_Exception
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
@@ -3282,8 +3290,8 @@ hp_decl:[[
  (*end of sleek part*)   
  (*start of hip part*)
 hprogn: 
-  [[ t = opt_decl_list ->
-		  let include_defs = ref ([]: string list) in
+  [[ opt_decls = opt_decl_list ->
+      let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
       let logical_var_defs = ref ([] : exp_var_decl list) in
@@ -3324,7 +3332,7 @@ hprogn:
               let () = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
               proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
-    let todo_unk = List.map choose t in
+    let todo_unk = List.map choose opt_decls in
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];

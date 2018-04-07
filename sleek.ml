@@ -241,11 +241,15 @@ let parse_file (parse) (source_file : string) =
       parse source_file 
     with
     | End_of_file -> List.rev cmds
-    | M.Loc.Exc_located (l,t)-> (
+    (* | Globals.Batch_Processing_Exception as t -> raise t *)
+    | M.Loc.Exc_located (l,t)-> 
+      if t=Batch_Processing_Exception then raise t
+      else(
         print_string_quiet ((Camlp4.PreCast.Loc.to_string l)^"\n error: "
                             ^(Printexc.to_string t)^"\n at:"^(get_backtrace_quiet ()));
         raise t
-      ) in
+      )
+  in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
@@ -395,7 +399,10 @@ let parse_file (parse) (source_file : string) =
   (*Long: reset unexpected_cmd = [] *)
   y_tinfo_pp "sleek : after cviews calling add_uni_vars " ;
   Sleekengine.unexpected_cmd # reset (* := [] *);
-  List.iter proc_one_cmd cmds
+  y_tinfo_pp "sleek : before proc_one_cmd " ;
+  List.iter proc_one_cmd cmds;
+  y_tinfo_pp "sleek : after proc_one_cmd " ;
+  ()
 
 let main () =
   let () = record_backtrace_quite () in
@@ -485,14 +492,20 @@ let main () =
         done
       end
     else
+      let rec batch_processing () = 
+        try
+          x_tinfo_pp "sleek : batch processing" no_pos;
+            let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
+            (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
+            let all_files = slk_prelude_path::!Globals.source_files in
+            let () = y_tinfo_pp ((pr_list (fun x -> x)) all_files) in
+            let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
+        with Batch_Processing_Exception -> 
+            let () = y_binfo_pp ("clear previous data ") in
+            batch_processing ()
+      in
       begin
-        (* let () = print_endline "Prior to parse_file" in *)
-        x_tinfo_pp "sleek : batch processing" no_pos;
-        let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
-        (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
-        let all_files = slk_prelude_path::!Globals.source_files in
-        let () = x_winfo_pp ((pr_list (fun x -> x)) all_files) no_pos in
-        let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
+        batch_processing () 
       end
   with
   | End_of_file ->

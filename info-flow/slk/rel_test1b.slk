@@ -1,7 +1,7 @@
-relation LO(x) == x<=0.
-relation HI(x) == x<=1.
-relation FLOW(x,y) == x<=y.
-
+//relation LO(x) == x<=0.
+//relation HI(x) == x<=1.
+//relation FLOW(x,y) == x<=y.
+hip_include '../../prelude_flow.slk'.
 // Check Safety
 checkentail x<=0 |- x<=0. // valid
 expect Valid.

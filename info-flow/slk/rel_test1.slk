@@ -1,4 +1,5 @@
-relation LO(x) == x<=0.
+//relation LO(x) == x<=0.
+hip_include '../../prelude_flow.slk'.
 
 // Check Safety
 checkentail LO(x) |- LO(x). // valid

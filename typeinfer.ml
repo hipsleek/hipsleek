@@ -1435,8 +1435,9 @@ and get_spec_var_type_list_x ?(lprime=Unprimed) (v : ident) tlist pos =
   try
     let v_info = snd(List.find (fun (tv,en) -> tv=v) tlist) in
     match v_info.sv_info_kind with
-    | UNK -> Err.report_error { Err.error_loc = pos;
-                                Err.error_text = v ^ " is undefined (7)"; }
+    (* remove this to allow UNK type as generic types - rel_test1.slk *)
+    (* | UNK -> Err.report_error { Err.error_loc = pos; *)
+    (*                             Err.error_text = v ^ " is undefined (7)"; } *)
     | t -> let sv = CP.SpecVar (t, v, lprime) in sv
   with
   | Not_found -> let () = x_ninfo_pp (v^" not found in tlist ") pos in

@@ -1,3 +1,4 @@
+hip_include '../../prelude_flow.slk'.
 //relation LO(x) == x<=0.
 //relation HI(x) == x<=1.
 //relation FLOW(x,y) == x<=y.
@@ -9,3 +10,11 @@ expect Valid.
 
 checkentail FLOW(w,y) & FLOW(x,y) & LO(x) & HI(w) |- LO(y). // valid
 expect Fail.
+
+
+/*
+# rel_test3a.slk
+
+Entail 2: Valid. 
+Validate 2: Expecting(3)Fail BUT got : Valid
+*/
