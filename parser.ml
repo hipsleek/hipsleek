@@ -1016,7 +1016,7 @@ non_empty_command:
       | c=class_decl -> DataDef c
       | `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> 
         let all_files = !Globals.source_files in
-        let () = print_endline((pr_list (fun x -> x)) all_files) in
+        (* let () = print_endline((pr_list (fun x -> x)) all_files) in *)
         if List.exists (fun x -> ic=x) all_files then EmptyCmd
         else 
           let () = Globals.source_files := ic::all_files in

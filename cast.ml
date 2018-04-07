@@ -1435,7 +1435,7 @@ let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs w
 
 (* Returned the list of types of arguments *)
 let look_up_rel_args_type (defs: rel_decl list) name =
-  let rel = look_up_rel_def_raw defs name in
+  let rel = x_add look_up_rel_def_raw defs name in
   List.map (fun sv ->
       match sv with
       | Cpure.SpecVar (typ,id,_) ->

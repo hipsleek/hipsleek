@@ -935,7 +935,7 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
         n_tlist
       in
       try
-        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+        let rdef = x_add I.look_up_rel_def_raw prog.I.prog_rel_decls r in
         helper rdef
       with
       | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
@@ -1484,7 +1484,7 @@ and get_var_type_x fvs v : (typ * bool) =
     let prog = I.get_iprog () in
     begin
       try
-        let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls v in
+        let rdef = x_add I.look_up_rel_def_raw prog.I.prog_rel_decls v in
         (RelT (List.map fst rdef.I.rel_typed_vars),false)
       with _ ->
         let () = x_tinfo_pp ("Cannot find "^v^" in rel_decls, use Void type?")  no_pos in

@@ -77,7 +77,7 @@ let is_not_global_hp_def prog i =
 
 let is_not_global_rel prog i =
       try
-        let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls i
+        let todo_unk = x_add I.look_up_rel_def_raw prog.I.prog_rel_decls i
         in false
       with _ -> true
 
@@ -4473,7 +4473,7 @@ and ident_to_spec_var id n_tl p prog =
   | CP.SpecVar(t,id,pr) ->
     if t == UNK then
       try
-        let todo_unk = I.look_up_rel_def_raw (prog.I.prog_rel_decls ) id in
+        let todo_unk = x_add I.look_up_rel_def_raw (prog.I.prog_rel_decls ) id in
         CP.SpecVar(RelT[],id,pr)
       with _ ->
         try
@@ -8806,7 +8806,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
              if not(rel_flag) && not(List.mem v ann_vars) && ((List.mem v avail_vars) || (List.mem v used_names)) then
                (*existential wrapping and liniarization*)
                try
-                 let todo_unk = I.look_up_rel_def_raw prog.I.prog_rel_decls (fst v) in
+                 let todo_unk = x_add I.look_up_rel_def_raw prog.I.prog_rel_decls (fst v) in
                  ((v :: used_names), [ e ], [],IP.mkTrue pos_e)
                (* global relation name need not be captured in existential heap_var *)
                with Not_found ->
@@ -11507,27 +11507,27 @@ let check_data_pred_name iprog name : bool =
     let todo_unk = x_add I.look_up_data_def_raw iprog.I.prog_data_decls name in false
   with | Not_found -> begin
       try
-        let () = y_binfo_pp "look_up view " in
+        let () = y_tinfo_pp "look_up view " in
         let todo_unk = I.look_up_view_def_raw x_loc iprog.I.prog_view_decls name in false
       with | Not_found -> begin
           try
-            let () = y_binfo_pp "look_up rel_def " in
-            let todo_unk = I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false
+            let () = y_tinfo_pp "look_up rel_def " in
+            let todo_unk = x_add I.look_up_rel_def_raw iprog.I.prog_rel_decls name in false
           with | Not_found -> begin
               try
-                let () = y_binfo_pp "look_up func def " in
+                let () = y_tinfo_pp "look_up func def " in
                 let todo_unk = I.look_up_func_def_raw iprog.I.prog_func_decls name in false
               with | Not_found -> begin
                   try
-                    let () = y_binfo_pp "look_up hp_def " in
+                    let () = y_tinfo_pp "look_up hp_def " in
                     let todo_unk = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in false
                   with | Not_found -> begin
                       try
-                        let () = y_binfo_pp "look_up templ_def " in
+                        let () = y_tinfo_pp "look_up templ_def " in
                         let todo_unk = I.look_up_templ_def_raw iprog.I.prog_templ_decls name in false
                       with | Not_found -> begin
                           try
-                            let () = y_binfo_pp "look_up ut_def " in
+                            let () = y_tinfo_pp "look_up ut_def " in
                              let todo_unk = I.look_up_ut_def_raw iprog.I.prog_ut_decls name in false
                           with | Not_found -> true
                         end

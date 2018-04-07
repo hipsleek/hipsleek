@@ -219,7 +219,7 @@ let proc_gen_cmd cmd = proc_one_cmd cmd
   (* | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2 *)
   (* | InferCmd (itype, ivars, iante, iconseq, etype) -> *)
   (*   let () = print_endline "InferCmd" in *)
-  (*   let () = x_binfo_hp (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in *)
+  (*   let () = x_tinfo_hp (add_str "i_type" (pr_list string_of_inf_const)) itype no_pos in *)
   (*   (process_infer itype ivars iante iconseq etype; ()) *)
   (* | CaptureResidue lvar -> process_capture_residue lvar *)
   (* | LemmaDef ldef -> process_list_lemma ldef *)
@@ -405,30 +405,31 @@ let parse_file (parse) (source_file : string) =
   ()
 
 let main () =
-  let iprog = { I.prog_include_decls =[];
-  I.prog_data_decls = [iobj_def;ithrd_def];
-  I.prog_global_var_decls = [];
-  I.prog_logical_var_decls = [];
-  I.prog_enum_decls = [];
-  I.prog_view_decls = [];
-  I.prog_func_decls = [];
-  I.prog_rel_decls = [];
-  I.prog_rel_ids = [];
-  I.prog_templ_decls = [];
-  I.prog_ut_decls = [];
-  I.prog_ui_decls = [];
-  I.prog_hp_decls = [];
-  I.prog_hp_ids = [];
-  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
-  I.prog_proc_decls = [];
-  I.prog_coercion_decls = [];
-  I.prog_hopred_decls = [];
-  I.prog_barrier_decls = [];
-  I.prog_test_comps = [];
-  } in
+  (* already defined in sleekengine.ml *)
+  (* let iprog_3 = { I.prog_include_decls =[]; *)
+  (* I.prog_data_decls = [iobj_def;ithrd_def]; *)
+  (* I.prog_global_var_decls = []; *)
+  (* I.prog_logical_var_decls = []; *)
+  (* I.prog_enum_decls = []; *)
+  (* I.prog_view_decls = []; *)
+  (* I.prog_func_decls = []; *)
+  (* I.prog_rel_decls = []; *)
+  (* I.prog_rel_ids = []; *)
+  (* I.prog_templ_decls = []; *)
+  (* I.prog_ut_decls = []; *)
+  (* I.prog_ui_decls = []; *)
+  (* I.prog_hp_decls = []; *)
+  (* I.prog_hp_ids = []; *)
+  (* I.prog_axiom_decls = []; (\* [4/10/2011] An Hoa *\) *)
+  (* I.prog_proc_decls = []; *)
+  (* I.prog_coercion_decls = []; *)
+  (* I.prog_hopred_decls = []; *)
+  (* I.prog_barrier_decls = []; *)
+  (* I.prog_test_comps = []; *)
+  (* } in *)
   let init ip =
     begin
-      let () = y_binfo_pp "init ip.." in
+      let () = y_tinfo_pp "init ip.." in
       let () = I.init_iprog ip in
       let () = record_backtrace_quite () in
       (*Generate barrier data type*)
@@ -439,7 +440,7 @@ let main () =
           process_data_def (I.b_data_constr b_datan [((Int,"phase"))])
         else () in
       let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
-      let () = Iast.build_exc_hierarchy true iprog in
+      let () = Iast.build_exc_hierarchy true ip in
       let () = exlist # compute_hierarchy  in 
       ()
     end 
@@ -503,15 +504,15 @@ let main () =
     else
       let rec batch_processing () = 
         try
-          let () = x_binfo_pp "sleek : batch processing" no_pos in
+          let () = x_tinfo_pp "sleek : batch processing" no_pos in
+          let () = init iprog in
           let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
           (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
           let all_files = slk_prelude_path::!Globals.source_files in
           let () = y_tinfo_pp ((pr_list (fun x -> x)) all_files) in
           let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
         with Batch_Processing_Exception -> 
-            let () = y_binfo_pp ("clear previous data ") in
-            let () = init iprog in
+            let () = y_tinfo_pp ("clear previous data ") in
             batch_processing ()
       in
       begin
