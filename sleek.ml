@@ -508,7 +508,12 @@ let main () =
           let () = init iprog in
           let slk_prelude_path = (Gen.get_path Sys.executable_name)^"prelude.slk" in
           (* let () = x_dinfo_pp slk_prelude_path no_pos in *)
-          let all_files = slk_prelude_path::!Globals.source_files in
+          let all_files = if !Globals.is_ifa
+            then
+              let flow_prelude_path = (Gen.get_path Sys.executable_name)^"prelude_flow.slk" in
+              slk_prelude_path::flow_prelude_path::!Globals.source_files
+            else slk_prelude_path::!Globals.source_files 
+          in
           let () = y_tinfo_pp ((pr_list (fun x -> x)) all_files) in
           let todo_unk = List.map (parse_file NF.list_parse) all_files in ()
         with Batch_Processing_Exception -> 

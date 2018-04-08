@@ -1,0 +1,13 @@
+checkentail x' <? @Lo |- x' <? @Lo.
+checkentail x' <? @Lo |- x' <? @Hi.
+checkentail x' <? @Hi |- x' <? @Lo.
+checkentail x' <? @Hi |- x' <? @Hi.
+
+checkentail x <? y %% z & y <? @Lo & z <? @Lo |- x <? @Lo.
+checkentail x <? y %% z & y <? @Lo & z <? @Lo |- x <? @Hi.
+checkentail x <? y %% z & y <? @Lo & z <? @Hi |- x <? @Lo.
+checkentail x <? y %% z & y <? @Lo & z <? @Hi |- x <? @Hi.
+checkentail x <? y %% z & y <? @Hi & z <? @Lo |- x <? @Lo.
+checkentail x <? y %% z & y <? @Hi & z <? @Lo |- x <? @Hi.
+checkentail x <? y %% z & y <? @Hi & z <? @Hi |- x <? @Lo.
+checkentail x <? y %% z & y <? @Hi & z <? @Hi |- x <? @Hi.

@@ -98,6 +98,11 @@ and term_ann =
   | TermU of uid  (* unknown precondition, need to be inferred *)
   | TermR of uid  (* unknown postcondition, need to be inferred *)
 
+(* IFA *)
+and sec_label =
+  | HI | LO
+  | SVAR of (ident * primed)
+
 and uid = {
   tu_id: int;
   tu_sid: ident;

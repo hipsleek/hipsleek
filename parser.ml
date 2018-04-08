@@ -2154,6 +2154,13 @@ slicing_label: [[ `DOLLAR -> true ]];
 (*This is just syntactic sugar for p1 & p2 *)
 exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2 ]];
 
+sec_label:[
+  [ `SEC_HI -> [P.HI]
+  | `SEC_LO -> [P.LO]
+  | id=cid  -> [P.SVAR (id)]
+  | l1=SELF; `SEC_LUB; l2=SELF -> l1@l2
+]];
+
 cexp_w:
   [ "pure_lbl"
     [ ofl= pure_label ; spc=SELF -> apply_pure_form1 (fun c-> label_formula c ofl) spc]
@@ -2180,8 +2187,33 @@ cexp_w:
           set_slicing_utils_pure_double f false
     end
     ]  
+
   | "bconstr" 
-    [ lc=SELF; `LTE; cl=SELF ->
+    [ id=SELF; `SEC_OP; sl=sec_label ->
+        let pos = get_pos_camlp4 _loc 2 in
+        let mkSec rel_name id =
+          Pure_f(P.BForm ((P.RelForm (rel_name, [P.Var(id,pos)], pos), None), None))
+        in
+        let mkFlow fr_var to_var =
+          Pure_f(P.BForm ((P.RelForm ("FLOW", [P.Var(fr_var,pos);P.Var(to_var,pos)], pos), None), None))
+        in
+        let cid, pos = match id with
+          | Pure_c (P.Var (t, l)) -> (t, l)
+          | Pure_c (P.Null l) -> ((null_name,Unprimed), l)
+          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid"
+        in
+        let mkOneSec l = match l with 
+          | P.HI     -> mkSec "HI" cid
+          | P.LO     -> mkSec "LO" cid
+          | P.SVAR v -> mkFlow v cid
+        in
+        let rec mkSecRel sl = match sl with
+          | []    -> report_error pos "sec_label cannot be empty"
+          | l::[] -> mkOneSec l
+          | l::sr -> apply_pure_form2 (fun c1 c2 -> P.mkOr c1 c2 None pos) (mkOneSec l) (mkSecRel sr)
+        in
+        apply_pure_form1 (fun c -> c) (mkSecRel sl)
+    | lc=SELF; `LTE; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
         set_slicing_utils_pure_double f false
     | lc=SELF; `LT; cl=SELF ->
