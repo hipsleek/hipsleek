@@ -73,3 +73,79 @@ checkentail (((y_0=0 & z_0=0 & (x=1|x=0) & x'=x & x'=0 & y'=1 & y'=0 & z'=1) | (
 ((((LO(y_0) & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(x',y') & FLOW(y',z')) | (LO(y') & LO(z_0) & HI(x) & FLOW(x,x') & FLOW(y',z')))) | (((LO(y_0) & LO(z') & HI(x) & FLOW(x,x') & FLOW(x',y')) | (LO(y') & LO(z') & HI(x) & FLOW(x,x')))))
 &
 res=z' |- HI(res) & res=x.
+
+/*
+int dif(int x)
+  req (x=1|x=0) & x<?@Lo
+  ens res=x & res<?@Lo
+{
+  // (x=1|x=0) & x'=x & x<?@Lo & x'<?x
+  int y=0,z=0;
+  // (x=1|x=0) & x'=x & y'=0 & z'=0 & x<?@Lo & x'<?x & y'<?@Lo & z'<?@Lo
+
+  if (x == 0) {
+    y = 1;
+    // (x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1 & x<?@Lo & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x'
+  }
+
+  // THEN:
+  // - PURE:
+  //   ((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1)
+  // - INFO:
+  //   (x<?@Lo & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x')
+
+  // ELSE:
+  // - PURE:
+  //   ((x=1|x=0) & x'=x & y'=0 & z'=0 && x'!=0)
+  // - INFO:
+  //   (x<?@Lo & x'<?x & y'<?@Lo & z'<?@Lo)
+
+  // MERGED:
+  //   (((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 && x'!=0))
+  // & ((x<?@Lo & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z'<?@Lo))
+
+  if (y == 0) {
+    z = 1;
+    //   ((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 && x'!=0)) & y'=0 & z'=1)
+    // & (((x<?@Lo & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')
+  }
+
+  // THEN:
+  // - PURE:
+  //   (((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 && x'!=0)) & y'=0 & z'=1))
+  // - INFO:
+  //   ((((x<?@Lo & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y'))
+
+  // ELSE:
+  // - PURE:
+  //   ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 && x'!=0)) & y'!=0)
+  // - INFO:
+  //   (((x<?@Lo & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z'<?@Lo)))
+
+  // MERGED:
+  //   ((((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 && x'!=0)) & y'=0 & z'=1)) |  ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 && x'!=0)) & y'!=0))
+  // & (((((x<?@Lo & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')) | (((x<?@Lo & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Lo & x'<?x & y'<?@Lo & z'<?@Lo))))
+
+  return z;
+}
+*/
+
+checkentail 
+  ((((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 & x'!=0)) & y'=0 & z'=1)) |  ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 & x'!=0)) & y'!=0))
+& (((((x<?@Hi & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')) | (((x<?@Hi & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z'<?@Lo))))
+& res=z' |- res<?@Lo.
+
+checkentail 
+  ((((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 & x'!=0)) & y'=0 & z'=1)) |  ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 & x'!=0)) & y'!=0))
+& (((((x<?@Hi & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')) | (((x<?@Hi & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z'<?@Lo))))
+& res=z' |- res<?@Hi.
+
+checkentail 
+  ((((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 & x'!=0)) & y'=0 & z'=1)) |  ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 & x'!=0)) & y'!=0))
+& (((((x<?@Hi & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')) | (((x<?@Hi & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z'<?@Lo))))
+& res=z' |- res<?@Lo & res=x.
+
+checkentail 
+  ((((((x=1|x=0) & x'=x & y0=0 & z0=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z0=0 & x'!=0)) & y'=0 & z'=1)) |  ((((x=1|x=0) & x'=x & y0=0 & z'=0 & x'=0 & y'=1) | ((x=1|x=0) & x'=x & y'=0 & z'=0 & x'!=0)) & y'!=0))
+& (((((x<?@Hi & x'<?x & y0<?@Lo & z0<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z0<?@Lo)) & z'<?@Lo%%y')) | (((x<?@Hi & x'<?x & y0<?@Lo & z'<?@Lo & y'<?@Lo%%x') | (x<?@Hi & x'<?x & y'<?@Lo & z'<?@Lo))))
+& res=z' |- res<?@Hi & res=x.
