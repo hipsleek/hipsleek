@@ -1,5 +1,6 @@
 /*
 # rank-1a.slk
+../../sleek rank-1a.slk -dre "smt_imply" --smtinp --smtout 
 
 checkentail f(x)>5 |- f(x)>8.
 
@@ -20,16 +21,30 @@ the z3 proof?
 unsat
 >>> VERDICT: UNSAT/VALID!
 
+(==smtsolver.ml#1179==)
+smt_imply@17@14@13@12@11@9@8@7@6@5@4@3@2
+smt_imply inp1 :( 5<(f( x)), 8<(f( x)))
+smt_imply inp2 :timeout:10.
+smt_imply@17 EXIT:true
+
+(==smtsolver.ml#1179==)
+smt_imply@34@31@30@29@28@26@25@24@23@22@21@20@19
+smt_imply inp1 :( 5<x, 8<x)
+smt_imply inp2 :timeout:10.
+smt_imply@34 EXIT:false
+
 */
 
 template int f(int x).
 
 template int g(int x, int y).
 
-checkentail f(x)>5 |- f(x)>3.
-expect Valid.
+//checkentail f(x)>5 |- f(x)>3.
+//expect Valid.
 
 
 checkentail f(x)>5 |- f(x)>8.
 expect Fail.
 
+checkentail x>5 |- x>8.
+expect Fail.
