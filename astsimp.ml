@@ -1624,6 +1624,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          in
          (* let () = print_string "trans_prog :: trans_view PASSED\n" in *)
          let crels0 = List.map (x_add trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
+         let xfunc = List.map (x_add trans_func prog) prog.I.prog_func_decls in (* An Hoa *)
          let () = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
          let pr_chps = List.map (x_add trans_hp prog) prog.I.prog_hp_decls in
          let chps1, pure_chps = List.split pr_chps in
@@ -1685,6 +1686,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_logical_vars = log_vars;
            (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
            C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr x_loc xrels ; s));
+           C.prog_func_decls = (let s = new Gen.stack_pr "func_decls" Cprinter.string_of_func_decl (* TODO *) (fun x y -> x.func_name = y.func_name) in (s # push_list_pr x_loc xfunc (* TODO *)  ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
@@ -3315,6 +3317,28 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   (* in-used *)
   let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
   let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+  crdef
+
+and trans_func (prog : I.prog_decl) (rdef : I.func_decl) : C.func_decl =
+  (* let pos = IP.pos_of_formula rdef.I.func_formula in *)
+  let pos = rdef.func_pos in
+  let func_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (x_add trans_type prog var_type pos, var_name, Unprimed)) rdef.I.func_typed_vars in
+  let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (x_add trans_type prog var_type pos);id = fresh_int () })) rdef.I.func_typed_vars in
+  (* Need to collect the type information before translating the formula *)
+  (* let n_tl = x_add gather_type_info_pure prog rdef.I.func_formula n_tl in *)
+  (* let crf = x_add trans_pure_formula rdef.I.func_formula n_tl in *)
+  let crdef = {C.func_name = rdef.I.func_name;
+               C.func_typed_vars = func_sv_vars;
+               C.func_result = rdef.func_result; 
+               C.func_pos = rdef.func_pos;
+  }
+  in
+  let () = y_binfo_pp ("TODO : Need to add to func declaration "^rdef.I.func_name^" to smt/z3") in
+  (* Forward the relation to the smt solver. *)
+  (* in-used *)
+  (* TODO : how to forward function to SMT solver? *)
+  (* let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in *)
+  (* let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in *)
   crdef
 
 and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =

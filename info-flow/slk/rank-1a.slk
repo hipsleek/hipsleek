@@ -2,6 +2,17 @@
 # rank-1a.slk
 ../../sleek rank-1a.slk -dre "smt_imply" --smtinp --smtout 
 
+
+(==smtsolver.ml#839==)
+smt_of_formula@3
+smt_of_formula inp1 : 5<(f( x))
+smt_of_formula@3 EXIT:true
+
+(==smtsolver.ml#841==)
+smt_of_formula@4
+smt_of_formula inp1 : 8<(f( x))
+smt_of_formula@4 EXIT:true
+
 checkentail f(x)>5 |- f(x)>8.
 
 How come uninterpreded function is absent in
@@ -48,3 +59,7 @@ expect Fail.
 
 checkentail x>5 |- x>8.
 expect Fail.
+
+
+checkentail  f(x)>8 |- f(x)>5.
+expect Valid.

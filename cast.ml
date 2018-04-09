@@ -34,6 +34,7 @@ type prog_decl = {
   mutable prog_view_decls : view_decl  list; (* WN : to change to Gen.stack_pr *)
   (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
   prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
+  prog_func_decls : func_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
   mutable prog_ui_decls: ui_decl list;
@@ -184,6 +185,12 @@ and rel_decl = {
   rel_name : ident;
   rel_vars : P.spec_var list;
   rel_formula : P.formula;}
+
+and func_decl = { func_name : ident;
+                  func_typed_vars : P.spec_var list;
+                  func_result : typ;
+                  func_pos:loc
+}
 
 and templ_decl = {
   templ_name: ident;
@@ -583,6 +590,9 @@ let cprog = ref {
     prog_logical_vars = [];
     prog_rel_decls =
       (let s = new Gen.stack_pr "prog_rel_decls(CAST)"
+         (fun x -> "not yet initialized" ) (=) in s);
+    prog_func_decls =
+      (let s = new Gen.stack_pr "prog_func_decls(CAST)"
          (fun x -> "not yet initialized" ) (=) in s);
     (* Cprinter.string_of_rel_decl (=)          *)
     prog_templ_decls = [];

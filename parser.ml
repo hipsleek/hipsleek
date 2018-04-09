@@ -3128,11 +3128,19 @@ func_decl:
 
 func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
+typer:[[ `COLON; t = typ -> t]];
+
+opt_type:[[ t = OPT typer -> t]];
+
 func_header:
-  [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
+  [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN; opt = opt_type ->
       let () = func_names # push id in 
       { func_name = id;
         func_typed_vars = tl;
+        func_result = (match opt with
+          | None -> Int
+          | Some t -> t);
+        func_pos = (get_pos_camlp4 _loc 2)
       }
   ]];
 

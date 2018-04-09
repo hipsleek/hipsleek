@@ -1,0 +1,15 @@
+ranking term_r(int m, int n). // = (m,n).
+
+infer [term_r] n>=0 & m>=0 |- term_r(m,n)>=0.
+print residue.
+
+infer [term_r] n>=0 & m>=0 & n=0 & m1=m-1 & n1=1 & Term[term_r(m,n)] 
+         |- Term[term_r(m1,n1)].
+print residue.
+
+infer [term_r] n>=0 & m>=0 & n!=0 & m1=m-1 & n1=n-1 & Term[term_r(m,n)] 
+         |- Term[term_r(m,n1)].
+print residue.
+
+infer [term_r] n>=0 & m>=0 & n!=0 & m1=m-1 & n1=n-1 & r>0 & Term[term_r(m,n)]   |- Term[term_r(m1,r)].
+print residue.
