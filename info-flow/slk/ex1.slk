@@ -1,0 +1,6 @@
+data Cell {
+ int x;
+}.
+
+checkentail x::Cell<zzz+1> |- x::Cell<y>.
+print residue.

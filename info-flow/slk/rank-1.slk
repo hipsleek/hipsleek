@@ -1,0 +1,49 @@
+/*
+# rank-1.slk
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 64 column 27: invalid function declaration, ')' expected")
+
+;Variables declarations
+(declare-fun x_primed () Int)
+(declare-fun y_primed () Int)
+(declare-fun g (Int) (Int) Int)
+(declare-fun x () Int)
+(declare-fun y () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (<= 0 x))
+(assert (<= y 0))
+(assert (= x_primed (+ y x)))
+(assert (= y_primed y))
+(assert true)
+;Negation of Consequence
+(assert (not false))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+(error "line 142 column 27: invalid function declaration, ')' expected")
+sat
+>>> VERDICT: FAILED!
+
+
+WARNING: _0:0_0:0:Z3 error message: (error "line 160 column 27: invalid function declaration, ')' expected")
+>>> GENERATED SMT INPUT:
+
+*/
+
+template int f(int x).
+
+template int g(int x, int y).
+
+infer[f] x >= 0 & x' = x - 1 & Term[f(x)] |- Term[f(x')].
+print residue.
+
+template_solve{f}.
+
+infer[g] x >= 0 & y < 0 & x' = x + y & y' = y & Term[g(x, y)] |- Term[g(x', y')].
+
+template_solve{g}.
+
+infer[g] x >= 0 & y <= 0 & x' = x + y & y' = y & Term[g(x, y)] |- Term[g(x', y')].
+
+template_solve{g}.

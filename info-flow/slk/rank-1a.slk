@@ -1,0 +1,35 @@
+/*
+# rank-1a.slk
+
+checkentail f(x)>5 |- f(x)>8.
+
+How come uninterpreded function is absent in
+the z3 proof?
+
+;Variables declarations
+(declare-fun f (Int) Int)
+(declare-fun x () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert true)
+;Negation of Consequence
+(assert (not true))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+unsat
+>>> VERDICT: UNSAT/VALID!
+
+*/
+
+template int f(int x).
+
+template int g(int x, int y).
+
+checkentail f(x)>5 |- f(x)>3.
+expect Valid.
+
+
+checkentail f(x)>5 |- f(x)>8.
+expect Fail.
+
