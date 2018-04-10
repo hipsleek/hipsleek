@@ -9,8 +9,8 @@
 //       For example, ../../sleek ex1.slk --arr-pre
 //       To print all the intermediate steps, run with --verbose-arr
       
-pred_prim Aseg<start:int, end:int>.
-pred_prim AsegNE<start:int, end:int>.
+pred_prim Aseg<start:int, end:int>. // start<=end
+pred_prim AsegNE<start:int, end:int>. // start<end
 pred_prim Elem<start:int,value:int>.
 
 
@@ -22,32 +22,34 @@ expect Valid.
 //  inferred pure: [false]
 
 //(2) // why is it incomplete?
+//    a<aa
 infer[@arr_en]  base::Elem<a,1>*base::Elem<aa,2> |- exists b,c: base::Elem<b,2> * base::Elem<c,3>.
 print residue.
 expect Valid.
 //  inferred pure: [false]
 
 
-//(2)
+
+//(3)
 infer[@arr_en]  base::Elem<a,1>*base::Elem<a+1,2> |- exists b,c: base::Elem<b,1> * base::Elem<c,2>.
 print residue.
 expect Valid.
 //  inferred pure: [false]
 
 
-//(3)
+//(4)
 infer[@arr_en]  base::Elem<a+1,1>*base::Elem<a,2> |- exists b,c: base::AsegNE<a,c>.
 print residue.
 expect Valid.
 
-//(3)
+//(5)
 infer[@arr_en]  base::Elem<a,1>*base::Elem<b,2> |- exists b,c: base::AsegNE<a,c>.
 print residue.
 expect Valid.
 
 
 
-//(3)  residue should be hfalse
+//(6)  residue should be hfalse
 infer[@arr_en]  base::Elem<a+1,1>*base::Elem<a,2> |- emp & x!=x.
 print residue.
 expect Valid.
@@ -55,10 +57,61 @@ expect Valid.
 // inferred pure: [false]
 
 
-//(3)
+//(7)
 infer[@arr_en]  base::Elem<a,1>*base::Elem<b,2> |- base::Elem<a,1> * base::Elem<b,_> & a<b.
 print residue.
 expect Valid.
 //<1>emp&{FLOW,(1,26)=__flow#E}[]
 // inferred pure: [true]
 // a<b not captured in the residue
+
+
+//(8)
+infer[@arr_en]  base::Elem<a,1>*base::Elem<aa,2> |- emp & x!=x.
+print residue.
+expect Valid.
+//  inferred pure: [aa<=a]
+
+
+//(8)
+infer[@arr_en]  base::Elem<a,1> |- emp & x!=x.
+print residue.
+expect Valid.
+//  inferred pure: [false] // a<0
+
+
+infer[@arr_en]  base::Elem<a,1> |- base::Elem<a,_> & a>=0.
+print residue.
+
+
+infer[@arr_en]  base::Aseg<a,b> |- base::Aseg<a,b> & a<=b.
+print residue.
+
+infer[@arr_en]  base::Aseg<a,b> |- base::Aseg<a,b> & a<b.
+print residue.
+
+
+infer[@arr_en]  base::Aseg<a,b> |- base::AsegNE<a,b> .
+print residue.
+
+infer[@arr_en]  base::AsegNE<a,b> |- base::Aseg<a,b> .
+print residue.
+
+
+// Aseg<a,b> === emp & a=b \/ AsegNE<a,b> & a<b
+
+infer[@arr_en]  base::AsegNE<a,b> |- base::AsegNE<a,b> & a<b .
+print residue.
+// no simplified
+// inferred pure: [(b<=a | a<b)]
+
+
+infer[@arr_en]  base::AsegNE<a,b> |- base::AsegNE<a,b>.
+print residue.
+// ??? not simplified
+// inferred pure: [(b<=a | a<b)]
+
+
+infer[@arr_en]  aaa<=b |- aaa<b.
+print residue.
+// inferred pure: [(a!=b)]

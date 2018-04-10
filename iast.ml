@@ -2374,7 +2374,8 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
   List.iter (fun (v,a,tl) ->
       (* print_endline ("update_fixpt for " ^ v.view_name);
          		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
-      v.view_pt_by_self<-tl;
+               v.view_pt_by_self<-tl;
+               let () = y_binfo_hp (pr_list pr_id) tl in
       if (List.length a==0) then 
         if v.view_is_prim || v.view_kind = View_EXTN then
           let () = x_tinfo_hp (add_str "XXX:0v.view_name" pr_id) v.view_name no_pos in
@@ -2393,7 +2394,8 @@ and update_fixpt_x iprog (vl:(view_decl * ident list *ident list) list)  =
         (* else if String.length v.view_data_name = 0 then *)
         (*   (\* self has unknown type *\) *)
         (*   report_warning no_pos (x_loc^"self of "^(v.view_name)^" cannot have its type determined") *)
-        else ()
+else if tl==[] then ()
+  else v.view_data_name <- List.hd tl
       else 
         let () = x_tinfo_hp (add_str "XXX:view" pr_id) v.view_name no_pos in
         let () = x_tinfo_hp (add_str "XXX:a" (pr_list pr_id)) a no_pos in

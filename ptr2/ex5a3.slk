@@ -14,7 +14,11 @@
 pred_prim ElemN<start:int> 
      inv_exact BG([self], true). // non-null
 
-pred_prim Aseg<end> 
+pred_prim AsegA<end> 
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end 
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
 pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
@@ -26,6 +30,37 @@ checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::Aseg<yyy>.
 expect Valid.
 print residue.
 
+
+//(2) require existential handling
+checkentail_exact xxx::AsegN<yyy> //& zzz=xxx+1
+       |- xxx::ElemN<_>*zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+
+//(3) lhs maybe empty
+checkentail_exact xxx::Aseg<yyy> & zzz=xxx+1
+       |- xxx::ElemN<_>*zzz::Aseg<yyy>.
+expect Fail.
+print residue.
+
+//(4) lhs is non-empty
+checkentail_exact xxx::Aseg<yyy> & zzz=xxx+1 & xxx<yyy
+       |- xxx::ElemN<_>*zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+
+
+checkentail_exact
+       xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1
+       |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+checkentail_exact
+       xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1
+       |- xxx::AsegN<kkk>.
+expect Valid.
+print residue.
 
 /* ex5a3.slk
 
@@ -42,4 +77,14 @@ Last Proving Location: ex5a3.slk_14:10_14:26
 
 ERROR: at _0:0_0:0
 Message: xxx is undefined (7)
+
+
+(==iast.ml#2420==)
+update_fixpt@2
+update_fixpt inp1 :[(Aseg:@,[],[]),(ElemN:@,[],[]),(AsegN:@,[],[ElemN])]
+update_fixpt res1 :[(Aseg:Aseg@,[],[]),(ElemN:ElemN@,[],[]),(AsegN:AsegN@,[],[ElemN])]
+update_fixpt@2 EXIT:()
+
+
+
 */
