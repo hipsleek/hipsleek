@@ -9825,6 +9825,7 @@ type entail_state = {
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
   (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
+  es_sec_ctx: CP.sec_label; (* IFA: security context *)
 }
 
 and context =
@@ -10300,6 +10301,7 @@ let empty_es flowt grp_lbl pos =
     es_conc_err = [];
     es_rhs_pure = None;
     (*es_infer_invs = [];*)
+    es_sec_ctx = CP.LO; (* IFA: empty entail state has a low context *)
   }
 
 let flatten_context ctx0=

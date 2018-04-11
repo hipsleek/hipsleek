@@ -224,6 +224,11 @@ and b_formula = p_formula * (bf_annot option)
 
 and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
 
+(* IFA *)
+and sec_label =
+  | HI | LO
+  | SVAR of spec_var
+
 (* should migrate to form below *)
 and lex_info = {
   lex_ann : term_ann;
@@ -2567,6 +2572,11 @@ and mkFormulaFromXP xp=
 
 and mkRel rel args pos=
   BForm ((RelForm (rel,args,pos), None) , None)
+
+(* IFA *)
+and mkSecLO id = mkRel (mk_spec_var "LO") [Var (id,no_pos)] no_pos
+and mkSecHI id = mkRel (mk_spec_var"HI") [Var (id,no_pos)] no_pos
+and mkSecFLOW fr_var to_var = mkRel (mk_spec_var "FLOW") [Var (fr_var,no_pos); Var(to_var,no_pos)] no_pos
 
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
