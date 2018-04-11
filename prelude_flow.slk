@@ -1,7 +1,7 @@
 // Information Flow Analysis
-relation LO(x).
-relation HI(x).
-relation FLOW(x,y). // read: x flows to y
+untypedrel LO(x).
+untypedrel HI(x).
+untypedrel FLOW(x,y). // read: x flows to y
 
 axiom LO(X) ==> HI(x).
 

@@ -71,7 +71,7 @@ type sleek_token =
   | PRINT | PRINT_LEMMAS | CMP | HIP_INCLUDE
   (* | PRINT_VIEW *)
   (* | PRINT_VIEW_LONG *)
-  | PASS_REF | PASS_REF2 |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
+  | PASS_REF | PASS_REF2 | REL | UNREL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
   | SELFT of string | SPLIT | SUBSET | STATIC
   | THEN | THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP (* | TERMU | TERMR *)
@@ -198,7 +198,7 @@ module Token = struct
     | PRINT_LEMMAS -> "print_lemmas"
     (* | PRINT_VIEW -> "print_view"  *)
     (* | PRINT_VIEW_LONG -> "print_view_long"  *)
-    |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s
+    |CMP -> "sleek compare" | PASS_REF ->"@R" | PASS_REF2 ->"ref"| REL->"relation" | UNREL->"untypedrel" |REQUIRES ->"requires" | RES s->"res "^s
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s

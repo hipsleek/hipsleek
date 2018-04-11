@@ -169,7 +169,6 @@ and template = {
   templ_body: exp option;
   templ_pos: loc;
 }
-
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
   | BaseRel of (exp list * formula)

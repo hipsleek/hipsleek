@@ -964,7 +964,7 @@ let cp_file = SHGram.Entry.mk "cp_file"
 
 EXTEND SHGram
   GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
-  sprog:[[ (* opt_decls = opt_decl_list ; *) t = command_list; `EOF -> t ]];
+  sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   hproc:[[ t = proc_decl; `EOF -> t]];
@@ -2187,7 +2187,6 @@ cexp_w:
           set_slicing_utils_pure_double f false
     end
     ]  
-
   | "bconstr" 
     [ id=SELF; `SEC_OP; sl=sec_label ->
         let pos = get_pos_camlp4 _loc 2 in
@@ -2202,7 +2201,7 @@ cexp_w:
           | Pure_c (P.Null l) -> ((null_name,Unprimed), l)
           | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid"
         in
-        let mkOneSec l = match l with 
+        let mkOneSec l = match l with
           | P.HI     -> mkSec "HI" cid
           | P.LO     -> mkSec "LO" cid
           | P.SVAR v -> mkFlow v cid
@@ -3153,8 +3152,9 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
-typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id)
-               | `IDENTIFIER id          ->  (Globals.UNK, id) ]];
+typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
+
+untyped_id_list:[[ `IDENTIFIER id        ->  (Globals.UNK, id) ]]; (* UNTYPED relation *)
 
 id_part_ann: [[
     `IDENTIFIER id-> (id,-1)
@@ -3179,6 +3179,8 @@ typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
+untyped_id_list_opt: [[ t = LIST0 untyped_id_list SEP `COMMA -> t ]];
+
 typed_id_inst_list_opt: [[ t = LIST0 typed_id_inst_list SEP `COMMA -> t ]];
 
 typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
@@ -3186,7 +3188,7 @@ typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  `REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists
@@ -3197,10 +3199,18 @@ rel_header:[[
 	  else
 		let modes = get_modes anns in *)
     let () = rel_names # push id in
-		  { rel_name = id;
-			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
-			}
+		  {
+        rel_name = id;
+			  rel_typed_vars = tl;
+			  rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+		  }
+| `UNREL; `IDENTIFIER id; `OPAREN; utl=untyped_id_list_opt; (* opt_ann_cid_list *) `CPAREN ->
+    let () = rel_names # push id in
+		  {
+        rel_name = id;
+			  rel_typed_vars = utl;
+			  rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+		  }
 ]];
 
 rel_header_view:[[
@@ -3330,8 +3340,8 @@ hp_decl:[[
  (*end of sleek part*)   
  (*start of hip part*)
 hprogn: 
-  [[ opt_decls = opt_decl_list ->
-      let include_defs = ref ([]: string list) in
+  [[ t = opt_decl_list ->
+		  let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
       let logical_var_defs = ref ([] : exp_var_decl list) in
@@ -3372,7 +3382,7 @@ hprogn:
               let () = List.iter (fun n_hp_decl -> hp_defs # push n_hp_decl) pdef.Iast.proc_hp_decls in
               proc_defs := pdef :: !proc_defs 
         | Coercion_list cdef -> coercion_defs := cdef :: !coercion_defs in
-    let todo_unk = List.map choose opt_decls in
+    let todo_unk = List.map choose t in
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];
