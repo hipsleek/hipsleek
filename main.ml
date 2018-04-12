@@ -130,7 +130,7 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if List.for_all (fun x -> Sys.file_exists x) new_names    (* parses this if all exists      *)
   then List.map (fun x -> parse_file_full x true) new_names
-  else if !Global.is_ifa
+  else if !Globals.is_ifa
   then [(parse_file_full "./prelude_flow.ss" true)]         (* IFA default to prelude_flow.ss *)
   else [(parse_file_full "./prelude.ss" true)]              (* default to prelude.ss          *)
 (*if (Sys.file_exists "./prelude.ss") then

@@ -3089,18 +3089,26 @@ fct_list: [[ `OSQUARE; t=fct_arg_list; `CSQUARE -> [] ]];
 
 opt_fct_list:[[ t = OPT fct_list -> []]];
 
-(*** Function declaration ***)  
+(*** Function declaration ***)
 func_decl:
   [[ fh=func_header -> fh
   ]];
 
 func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
+typer:[[ `COLON; t = typ -> t]];
+
+opt_type:[[ t = OPT typer -> t]];
+
 func_header:
-  [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
-      let () = func_names # push id in 
+  [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN; opt = opt_type ->
+      let () = func_names # push id in
       { func_name = id;
         func_typed_vars = tl;
+        func_result = (match opt with
+          | None -> Int
+          | Some t -> t);
+        func_pos = (get_pos_camlp4 _loc 2)
       }
   ]];
 
@@ -3113,9 +3121,8 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
-typed_id_list:  [[ t = typ; `IDENTIFIER id ->  (t,id)            ]];
-
-untyped_id_list:[[ `IDENTIFIER id          ->  (Globals.UNK, id) ]];
+typed_id_list:   [[ t = typ; `IDENTIFIER id ->  (t,id)            ]];
+untyped_id_list: [[ `IDENTIFIER id          ->  (Globals.UNK, id) ]];
 
 id_part_ann: [[
     `IDENTIFIER id-> (id,-1)
@@ -3132,7 +3139,7 @@ id_part_ann: [[
 
 typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
   |  t = typ; `NI; id_ann = id_part_ann ->  (t,id_ann, Globals.NI)
-  | t = typ; `RO; (id,n) = id_part_ann -> let () = pred_root_id := id in (t,(id,n), Globals.I)
+  |  t = typ; `RO; (id,n) = id_part_ann -> let () = pred_root_id := id in (t,(id,n), Globals.I)
   |  t = typ; `NI; `RO; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
   |  t = typ; `RO; `NI; (id,n) = id_part_ann->  let () = pred_root_id := id in (t,(id,n), Globals.NI)
  ]];

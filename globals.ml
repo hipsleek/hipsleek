@@ -22,6 +22,8 @@ let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
 
+let is_ifa = ref false (* IFA *)
+
 type formula_type =
   | Simple
   | Complex
