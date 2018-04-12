@@ -840,7 +840,7 @@ let common_arguments = [
   ("--piecewise", Arg.Set Globals.templ_piecewise, "Enable piecewise function inference");
   ("--dis-ln-z3", Arg.Set Globals.dis_ln_z3, "Disable linearization on Z3 (using non-linear engine)");
   (* IFA *)
-  ("--ifa", Arg.Unit (fun () -> Globals.is_ifa := true), "Enable information flow analysis");
+  ("--ifa", Arg.Set Globals.is_ifa, "Enable information flow analysis");
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
   ("--term-verbose", Arg.Set_int Globals.term_verbosity,

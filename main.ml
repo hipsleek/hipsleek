@@ -128,9 +128,14 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
     Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then
+  if List.for_all (fun x -> Sys.file_exists x) new_names    (* parses this if all exists      *)
+  then List.map (fun x -> parse_file_full x true) new_names
+  else if !Global.is_ifa
+  then [(parse_file_full "./prelude_flow.ss" true)]         (* IFA default to prelude_flow.ss *)
+  else [(parse_file_full "./prelude.ss" true)]              (* default to prelude.ss          *)
+(*if (Sys.file_exists "./prelude.ss") then
     [(parse_file_full "./prelude.ss" true)]
-  else List.map (fun x -> parse_file_full x true) new_names
+    else List.map (fun x -> parse_file_full x true) new_names*)
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in

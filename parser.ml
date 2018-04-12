@@ -3113,8 +3113,9 @@ rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) ->
   | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
-typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id)
-               | `IDENTIFIER id          ->  (Globals.UNK, id) ]];
+typed_id_list:  [[ t = typ; `IDENTIFIER id ->  (t,id)            ]];
+
+untyped_id_list:[[ `IDENTIFIER id          ->  (Globals.UNK, id) ]];
 
 id_part_ann: [[
     `IDENTIFIER id-> (id,-1)
@@ -3139,6 +3140,8 @@ typed_id_inst_list:[[ t = typ; id_ann = id_part_ann ->  (t,id_ann, Globals.I)
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
+untyped_id_list_opt: [[ t = LIST0 untyped_id_list SEP `COMMA -> t ]];
+
 typed_id_inst_list_opt: [[ t = LIST0 typed_id_inst_list SEP `COMMA -> t ]];
 
 typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
@@ -3146,7 +3149,7 @@ typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
 typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
 
 rel_header:[[
-`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  `REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists
@@ -3158,8 +3161,14 @@ rel_header:[[
 		let modes = get_modes anns in *)
     let () = rel_names # push id in
 		  { rel_name = id;
-			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+		  	rel_typed_vars = tl;
+			  rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
+			}
+| `UNTREL; `IDENTIFIER id; `OPAREN; utl=untyped_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    let () = rel_names # push id in
+		  { rel_name = id;
+  			rel_typed_vars = utl;
+	  		rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)
 			}
 ]];
 

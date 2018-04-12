@@ -267,7 +267,7 @@ module Make (Token : SleekTokenS)
    ("dprint", DPRINT);
    ("sleek_compare", CMP);
    ("raise", RAISE);
-   ("relation", REL);
+   ("relation", REL); ("untypedrel", UNTREL);
    ("requires", REQUIRES);
    ("refines", REFINES);
    ("res", RES "res");
