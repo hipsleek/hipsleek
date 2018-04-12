@@ -224,6 +224,11 @@ and b_formula = p_formula * (bf_annot option)
 
 and lex_info_old = (term_ann * (exp list) * (exp list) * loc)
 
+(* IFA *)
+and sec_label =
+  | HI | LO
+  | SVAR of spec_var
+
 (* should migrate to form below *)
 and lex_info = {
   lex_ann : term_ann;
@@ -2411,6 +2416,27 @@ and mkBagSubExp e1 e2 pos =
 and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
+
+(* IFA *)
+and mkSecLO id = mkRel (mk_spec_var "LO") [Var (id,no_pos)] no_pos
+
+and mkSecHI id = mkRel (mk_spec_var"HI") [Var (id,no_pos)] no_pos
+
+and mkSecFLOW fr_var to_var = mkRel (mk_spec_var "FLOW") [Var (fr_var,no_pos); Var(to_var,no_pos)] no_pos
+
+and mkCtxOneFlow to_var lbl =
+  match lbl with
+  | HI          -> mkSecLO to_var
+  | LO          -> mkSecHI to_var
+  | SVAR fr_var -> mkSecFLOW fr_var to_var
+
+and mkCtxFLOW to_var ctxl =
+  let rec helper ctxl =
+    match ctxl with
+    | []        -> report_error no_pos "sec context list must not be empty"
+    | lbl::[]   -> mkCtxOneFlow to_var lbl
+    | lbl::ctxr -> mkOr (mkCtxOneFlow to_var lbl) (helper ctxr) None no_pos
+  in helper ctxl
 
 and mkRel_sv n = SpecVar (RelT[], n, Unprimed)
 

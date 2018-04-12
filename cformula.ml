@@ -58,11 +58,11 @@ let view_ptr_arith_lst = new Gen.stack_pr "view-ptr-arith" pr_id (=)
 (* type typed_ident = (typ * ident) *)
 
 type mem_perm_formula = {mem_formula_exp : CP.exp;
-                        mem_formula_exact : bool;
-                        mem_formula_field_values : (ident * (CP.exp list)) list;
-                        mem_formula_field_layout : (ident * (ann list)) list;
-                        mem_formula_guards : CP.formula list;
-                       }
+                         mem_formula_exact : bool;
+                         mem_formula_field_values : (ident * (CP.exp list)) list;
+                         mem_formula_field_layout : (ident * (ann list)) list;
+                         mem_formula_guards : CP.formula list;
+                        }
 
 let string_of_typed_ident = pr_pair string_of_typ pr_id
 
@@ -73,10 +73,10 @@ let string_of_typed_ident = pr_pair string_of_typ pr_id
 
 type t_formula = (* type constraint *)
   (* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
-     	   | TypeExact of t_formula_sub_type (* for t = C *)
-     	   | TypeSub of t_formula_sub_type (* for t <: C *)
-     	   | TypeSuper of t_formula_sub_type (* for t < C *)
-     	*)
+     | TypeExact of t_formula_sub_type (* for t = C *)
+     | TypeSub of t_formula_sub_type (* for t <: C *)
+     | TypeSuper of t_formula_sub_type (* for t < C *)
+     *)
 
   | TypeAnd of t_formula_and
   | TypeTrue
@@ -9825,6 +9825,7 @@ type entail_state = {
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
   (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
+  es_sec_ctx: CP.sec_label list; (* IFA: security context *)
 }
 
 and context =
@@ -10300,6 +10301,7 @@ let empty_es flowt grp_lbl pos =
     es_conc_err = [];
     es_rhs_pure = None;
     (*es_infer_invs = [];*)
+    es_sec_ctx = [CP.LO]; (* IFA: empty entail state has a low context *)
   }
 
 let flatten_context ctx0=
@@ -20620,3 +20622,14 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+
+(* IFA *)
+let prop_const res estate =
+  let sctx = estate.es_sec_ctx in
+  let flow = CP.mkCtxFLOW res sctx in
+  let form = add_pure_formula_to_formula flow estate.es_formula in
+  let _ctx = Ctx { estate with es_formula = form } in
+  _ctx
+
+(*let prop_assign*)

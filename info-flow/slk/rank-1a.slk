@@ -1,0 +1,65 @@
+/*
+# rank-1a.slk
+../../sleek rank-1a.slk -dre "smt_imply" --smtinp --smtout 
+
+
+(==smtsolver.ml#839==)
+smt_of_formula@3
+smt_of_formula inp1 : 5<(f( x))
+smt_of_formula@3 EXIT:true
+
+(==smtsolver.ml#841==)
+smt_of_formula@4
+smt_of_formula inp1 : 8<(f( x))
+smt_of_formula@4 EXIT:true
+
+checkentail f(x)>5 |- f(x)>8.
+
+How come uninterpreded function is absent in
+the z3 proof?
+
+;Variables declarations
+(declare-fun f (Int) Int)
+(declare-fun x () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert true)
+;Negation of Consequence
+(assert (not true))
+(check-sat)
+>>> Z3 OUTPUT RECEIVED:
+unsat
+>>> VERDICT: UNSAT/VALID!
+
+(==smtsolver.ml#1179==)
+smt_imply@17@14@13@12@11@9@8@7@6@5@4@3@2
+smt_imply inp1 :( 5<(f( x)), 8<(f( x)))
+smt_imply inp2 :timeout:10.
+smt_imply@17 EXIT:true
+
+(==smtsolver.ml#1179==)
+smt_imply@34@31@30@29@28@26@25@24@23@22@21@20@19
+smt_imply inp1 :( 5<x, 8<x)
+smt_imply inp2 :timeout:10.
+smt_imply@34 EXIT:false
+
+*/
+
+template int f(int x).
+
+template int g(int x, int y).
+
+//checkentail f(x)>5 |- f(x)>3.
+//expect Valid.
+
+
+checkentail f(x)>5 |- f(x)>8.
+expect Fail.
+
+checkentail x>5 |- x>8.
+expect Fail.
+
+
+checkentail  f(x)>8 |- f(x)>5.
+expect Valid.

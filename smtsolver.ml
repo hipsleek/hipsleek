@@ -150,7 +150,13 @@ let rec smt_of_exp a =
     List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
   | CP.NegInfConst _
   | CP.InfConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (infconst should not appear here)")
-  | CP.Template t -> smt_of_exp (CP.exp_of_template t)
+  | CP.Template t -> 
+        let fn = CP.name_of_spec_var t.templ_id in
+        let args = List.map (smt_of_exp) t.templ_args in
+        (* let args = List.map (fun s -> "("^s^")") args in *)
+        let () = y_binfo_pp "TODO: (i) add back (CP.exp_of_template t), (ii) pr_w+pr_s" in 
+        "("^fn^" "^(String.concat " " args)^")"
+            (* smt_of_exp (CP.exp_of_template t) *)
   | CP.BExpr f ->
       let (pr_w, pr_s) = CP.drop_complex_ops in
       smt_of_formula pr_w pr_s f
@@ -228,11 +234,13 @@ and smt_of_formula pr_w pr_s f =
   let () = x_dinfo_hp (add_str "f(smt)" !CP.print_formula) f no_pos in
   let rec helper f= (
     match f with
-    | CP.BForm ((b,_) as bf,_) -> (
-        match (pr_w b) with
-        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
-        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
-      )
+    | CP.BForm ((b,_) as bf,_) -> 
+          smt_of_b_formula bf
+      (* ( *)
+      (*   match (pr_w b) with *)
+      (*   | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf) *)
+      (*   | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f *)
+      (* ) *)
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
@@ -357,8 +365,8 @@ let add_axiom h dir c =
     let cache_smt_input = (
       "(assert " ^
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
-      "\t(" ^ op ^ " " ^ (smt_of_formula pr_w pr_s h) ^
-      "\n\t" ^ (smt_of_formula pr_w pr_s c) ^ ")" ^ (* close the main part of the axiom *)
+      "\t(" ^ op ^ " " ^ (x_add smt_of_formula pr_w pr_s h) ^
+      "\n\t" ^ (x_add smt_of_formula pr_w pr_s c) ^ ")" ^ (* close the main part of the axiom *)
       (if params = [] then "" else ")") (* close the forall if added *) ^ ")\n" (* close the assert *)
     ) in
     (* Add 'h dir c' to the global axioms *)
@@ -835,9 +843,9 @@ let to_smt_v2 pr_weak pr_strong ante conseq fvars0 info =
   (* Antecedent and consequence : split /\ into small asserts for easier management *)
   let ante_clauses = CP.split_conjunctions ante in
   let ante_clauses = Gen.BList.remove_dups_eq CP.equalFormula ante_clauses in
-  let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
+  let ante_strs = List.map (fun x -> "(assert " ^ (x_add smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
   let ante_str = String.concat "" ante_strs in
-  let conseq_str = smt_of_formula pr_weak pr_strong conseq in (
+  let conseq_str = x_add smt_of_formula pr_weak pr_strong conseq in (
     ";Variables declarations\n" ^
     smt_var_decls ^
     ";Relations declarations\n" ^
@@ -859,8 +867,8 @@ and to_smt_v1 ante conseq logic fvars =
   in
   (* let () = print_endline ("#### ante = " ^ (!CP.print_formula ante)) in *)
   let (pr_w,pr_s) = CP.drop_complex_ops in
-  let ante = smt_of_formula pr_w pr_s ante in
-  let conseq = smt_of_formula pr_w pr_s conseq in
+  let ante = x_add smt_of_formula pr_w pr_s ante in
+  let conseq = x_add smt_of_formula pr_w pr_s conseq in
   (*--------------------------------------*)
   let extrafuns =
     if fvars = [] then ""
@@ -1333,7 +1341,7 @@ let get_model is_linear vars assertions =
 
   let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
   let smt_asserts = List.map (fun a ->
-      "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
+      "(assert " ^ (x_add smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp =
     ";Variables Declarations\n" ^ smt_var_decls ^
@@ -1407,7 +1415,7 @@ let get_unsat_core assertions =
       acc @ [(i + 1, a)], i + 1) ([], 0) assertions) in
   let smt_asserts = List.map (fun (i, a) ->
       let label = assert_label_prefix ^ (string_of_int i) in
-      "(assert (! " ^ (smt_of_formula pr_w pr_s a) ^ " :named " ^ label ^ "))\n") assertions_w_label in
+      "(assert (! " ^ (x_add smt_of_formula pr_w pr_s a) ^ " :named " ^ label ^ "))\n") assertions_w_label in
   let smt_asserts = String.concat "" smt_asserts in
   let smt_inp =
     (* "(set-option :produce-unsat-cores true)\n" ^ *)

@@ -1,0 +1,5 @@
+(declare-fun f (Int) Int)
+(declare-const x Int)
+(assert (< 5 (f x)))
+(assert (not false))
+(check-sat)

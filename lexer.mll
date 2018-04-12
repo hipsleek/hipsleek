@@ -267,7 +267,7 @@ module Make (Token : SleekTokenS)
    ("dprint", DPRINT);
    ("sleek_compare", CMP);
    ("raise", RAISE);
-   ("relation", REL); ("untypedrel", UNTREL);
+   ("relation", REL); ("untypedrel", UNREL); (* typed & untyped relation *)
    ("requires", REQUIRES);
    ("refines", REFINES);
    ("res", RES "res");
@@ -449,10 +449,10 @@ rule tokenizer file_name = parse
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }
   (*  | "XPURE" {XPURE} *)
-  | "@H" { SEC_HI  } (* IFA *)
-  | "@L" { SEC_LO  }
-  | "<?" { SEC_OP  }
-  | "%%" { SEC_LUB }
+  | "@Hi" { SEC_HI  } (* IFA *)
+  | "@Lo" { SEC_LO  }
+  | "<?"  { SEC_OP  }
+  | "%"   { SEC_LUB }
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}

@@ -121,7 +121,10 @@ and view_decl =
     view_materialized_vars: ident list; }
 
 and func_decl = { func_name : ident;
-                  func_typed_vars : (typ * ident) list;}
+                  func_typed_vars : (typ * ident) list;
+                  func_result : typ;
+                  func_pos : loc;
+}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident;

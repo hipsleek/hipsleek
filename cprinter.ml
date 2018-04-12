@@ -2744,6 +2744,17 @@ let string_of_hp_decl hpdecl =
   let parts = if hpdecl.Cast.hp_part_vars = [] then "" else "#" ^((pr_list (pr_list string_of_int)) hpdecl.Cast.hp_part_vars) in
   decl_kind ^ name ^ "(" ^ args ^parts ^").\n"
 
+let string_of_func_decl funcdecl =
+  let name = funcdecl.Cast.func_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = " relation " in
+  let args = pr_lst ", " pr_arg funcdecl.Cast.func_typed_vars in
+  decl_kind ^ name ^ "(" ^ args ^ "):"^(CP.name_of_type funcdecl.func_result)^ ".\n"
 
 let string_of_rel_decl reldecl =
   let name = reldecl.Cast.rel_name in

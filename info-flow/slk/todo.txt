@@ -12,6 +12,19 @@ expect Fail.
 Entail 2: Valid. 
 Validate 2: Expecting(3)Fail BUT got : Valid
 =================================================================
+ rank-1a.slk
+../../sleek rank-1a.slk -dre "smt_imply" --smtinp --smtout 
+
+
+(==smtsolver.ml#839==)
+smt_of_formula@3
+smt_of_formula inp1 : 5<(f( x))
+smt_of_formula@3 EXIT:true
+
+(==smtsolver.ml#841==)
+smt_of_formula@4
+smt_of_formula inp1 : 8<(f( x))
+smt_of_formula@4 EXIT:true
 =================================================================
 =================================================================
 =================================================================
