@@ -235,12 +235,12 @@ and smt_of_formula pr_w pr_s f =
   let rec helper f= (
     match f with
     | CP.BForm ((b,_) as bf,_) -> 
-          smt_of_b_formula bf
-      (* ( *)
-      (*   match (pr_w b) with *)
-      (*   | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf) *)
-      (*   | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f *)
-      (* ) *)
+          (* smt_of_b_formula bf *) (* <-- this does not work *)
+      (
+        match (pr_w b) with
+        | None -> let () = x_dinfo_pp ("NONE #") no_pos in (smt_of_b_formula bf)
+        | Some f -> let () = x_dinfo_pp ("SOME #") no_pos in helper f
+      )
     | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
     | CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
