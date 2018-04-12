@@ -358,7 +358,7 @@ let rec pr_action_name a = match a with
     let str = if i!=0 then (string_of_int i)^" :"^str else str in
     fmt_string (""^(match s with | None -> "AnyLemma" | Some c-> "(Lemma "
                                                                  ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name ^ str ^ ")"))
-  | M_Nothing_to_do s -> fmt_string ("NothingToDo"^s)
+  | M_Nothing_to_do s -> fmt_string ("NothingToDo:"^s)
   | M_infer_heap p -> fmt_string ("InferHeap")
   | M_unmatched_rhs_data_node (h,_,_) -> fmt_string ("UnmatchedRHSData")
   | Cond_action l -> fmt_string "COND"

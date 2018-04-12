@@ -11,25 +11,23 @@
 //       To print all the intermediate steps, run with --verbose-arr
 
 
-pred_prim ElemN<start:int> 
+pred_prim ElemN<start:int>
      inv_exact BG([self], true). // non-null
 
-pred_prim AsegA<end> 
-     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
-
-pred Aseg<end> == self=end
-     or self::AsegN<end> & self<end 
+pred_prim AsegA<end>
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
 pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
-     inv_exact BG([(self,end)],0<self<end). 
+     inv_exact BG([(self,end)],0<self<end).
 
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
 //(1) unfolding
 checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::Aseg<yyy>.
 expect Valid.
 print residue.
-
 
 //(2) require existential handling
 checkentail_exact xxx::AsegN<yyy> //& zzz=xxx+1
@@ -49,42 +47,197 @@ checkentail_exact xxx::Aseg<yyy> & zzz=xxx+1 & xxx<yyy
 expect Valid.
 print residue.
 
-
+//(5) fold
 checkentail_exact
        xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1
        |- xxx::AsegN<yyy>.
 expect Valid.
 print residue.
 
+//(6) fold
 checkentail_exact
        xxx::ElemN<_>*zzz::Aseg<yyy> & zzz=xxx+1
        |- xxx::AsegN<kkk>.
 expect Valid.
 print residue.
 
+//(7) fold; non-empty lhs
+checkentail_exact
+       zzz::Aseg<yyy> & zzz<yyy
+       |- zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(8) fold
+checkentail_exact
+       zzz::AsegN<y>
+       |- zzz::Aseg<yyy> & zzz<yyy.
+expect Valid.
+print residue.
+
+//(9) fold; non empty lhs
+checkentail_exact
+       xxx::ElemN<_> * yyy::Aseg<zzz> & yyy=xxx+1
+       |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(10) empty lhs
+checkentail_exact
+       xxx::Aseg<yyy> & xxx=yyy |- emp.
+expect Valid.
+print residue.
+
+//(11) unfold; non-empty lhs
+checkentail_exact
+       yyy::Aseg<zzz> & yyy<zzz
+       |- yyy::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(12)
+checkentail_exact
+       yyy::ElemN<_> * xxx::Aseg<zzz> & xxx=yyy+1 & yyy<zzz
+       |- yyy::Aseg<zzz>.
+expect Valid.
+print residue.
+/*
+cond action is empty
+[[ SEARCH ==>  NothingToDo:cond action is empty]]
+ CEX:false
+*/
+
+//(13)
+checkentail_exact xxx::Aseg<5>  |- xxx::Aseg<n>.
+expect Valid.
+print residue.
+/*
+!!! **typeinfer.ml#271:Need to cater to type:(AsegN,int)
+Message: UNIFICATION ERROR : at location {(Line:107,Col:18),(Line:107,Col:30)} types AsegN and int are inconsistent
+*/
+
+//(14) folding
+checkentail_exact xxx::ElemN<_>*zzz::AsegN<yyy> & zzz=xxx+1  |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+/*
+(1+xxx)<yyy & (1+xxx)!=null & (1+xxx)!=xxx & (((1+xxx)>xxx | xxx>=yyy)) &
+ xxx!=null |-  xxx_318=xxx+1. LOCS:[0;1;112;20] (may-bug)
+ [[ SEARCH ==>  Fold ==>  SEARCH ==>  Match(xxx,xxx) ==>  SEARCH ==>  Fold]]
+*/
+
+//(15) unfolding
+checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 & zzz<yyy
+                  |- xxx::ElemN<_>*zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(16) unfolding
+checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 // & zzz<yyy
+                  |- xxx::ElemN<_>*zzz::AsegN<yyy>.
+expect Fail.
+print residue.
+
+//(17) fold
+checkentail_exact xxx::ElemN<_> |- xxx::Aseg<xxx+1>.
+expect Valid.
+print residue.
+// [[ SEARCH ==>  NothingToDo:cond action is empty]]
+
+//(18) fold
+checkentail_exact xxx::ElemN<_> |- xxx::AsegN<xxx+1>.
+expect Valid.
+print residue.
+// fc_message: do_unmatched_rhs : xxx_407::Aseg<end_411>@M(may)
+// fc_current_lhs_flow: {FLOW,(4,8)=__MayError#E}
+// [[ SEARCH ==>  Fold ==>  SEARCH ==>  Match(xxx,xxx) ==>  SEARCH ==>  COND ==> UnmatchedRHSData]]
+
+//(19) unfolding
+checkentail_exact  xxx::Aseg<xxx+1> |- xxx::ElemN<_>.
+expect Valid.
+print residue.
+
+//(20) unfolding
+checkentail_exact  xxx::AsegN<xxx+1> |- xxx::ElemN<_> .
+expect Valid.
+print residue.
+
+//(21)
+checkentail_exact  xxx::Aseg<yyy> |- xxx::AsegN<yyy>.
+expect Fail.
+print residue.
+// fe_kind: MUST or fe_kind: Valid
+
+//(22)
+checkentail_exact  xxx::Aseg<yyy> & xxx<yyy |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(23)
+checkentail_exact  xxx::Aseg<yyy> & xxx+1<yyy |- xxx::AsegN<yyy>.
+expect Valid.
+print residue.
+
+//(24)
+checkentail_exact  xxx::Aseg<yyy> * yyy::Aseg<zzz> |- xxx::Aseg<zzz>.
+expect Valid.
+print residue.
+// Fail_May
+// fc_message: base_case_unfold failed
+
+//(25)
+checkentail_exact  xxx::Aseg<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
+expect Fail. // xxx=yyy=zzz
+print residue.
+// Fail_Must, Fail_May or Valid???
+
+//(26)
+checkentail_exact  xxx::Aseg<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+
+//(27)
+checkentail_exact  xxx::AsegN<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+// fc_message: base_case_unfold failed
+// [[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+
+//(28)
+checkentail_exact  xxx::AsegN<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
+expect Valid.
+print residue.
+// Fail_May?
+// base_case_unfold failed
+// [[ SEARCH ==>  COND ==>  BaseCaseUnfold]]
+
+//(29)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::AsegN<zzz> * zzz::Aseg<yyy>.
+expect Valid.
+print residue.
+// Fail_May
+
+//(30)
+checkentail_exact  xxx::AsegN<yyy> & xxx<=zzz<yyy |- xxx::Aseg<zzz> * zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+// Fail_May
+
+//(31)
+checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<yyy |- xxx::AsegN<zzz> * zzz::AsegN<yyy>.
+expect Valid.
+print residue.
+// Fail_May
+
 /* ex5a3.slk
 
-small error: why is xxx undefined?
+!!! **WARNING****astsimp.ml#2222:skip INV Check
+Inv Check: Fail.(View Aseg:Under)
 
-WARNING: ex5a3.slk_20:5_20:15:compute_view_fw_bw: data name in view is empty
+Last Proving Location: ex5a3.slk_17:10_17:20
 
-Last Proving Location: ex5a3.slk_14:10_14:26
-
-ERROR: at ex5a3.slk_20:5_20:15
-Message: compute_view_fw_bw: data not found: 
-
-Last Proving Location: ex5a3.slk_14:10_14:26
-
-ERROR: at _0:0_0:0
-Message: xxx is undefined (7)
-
-
-(==iast.ml#2420==)
-update_fixpt@2
-update_fixpt inp1 :[(Aseg:@,[],[]),(ElemN:@,[],[]),(AsegN:@,[],[ElemN])]
-update_fixpt res1 :[(Aseg:Aseg@,[],[]),(ElemN:ElemN@,[],[]),(AsegN:AsegN@,[],[ElemN])]
-update_fixpt@2 EXIT:()
-
+ERROR: at ex5a3.slk_24:5_24:15
+Message: compute_view_fw_bw: data not found: ElemN
 
 
 */
