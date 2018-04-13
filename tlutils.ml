@@ -20,7 +20,7 @@ let pr_spec_var = Cprinter.string_of_spec_var
 
 let is_sat f = 
   (* Tpdispatcher.is_sat_sub_no 0 f (ref 0)  *)
-  let (pr_weak, pr_strong) = drop_complex_ops in
+  let (pr_weak, pr_strong) = drop_complex_ops () in
   Omega.is_sat_ops pr_weak pr_strong f ""
 
 (***********************************)

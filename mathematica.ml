@@ -334,7 +334,7 @@ let rec math_of_exp e0 : string=
   | CP.InfConst _  -> failwith ("mathematica.math_of_exp: cannot handle InfConst operator")
   | CP.Template t -> math_of_exp (CP.exp_of_template t)
   | CP.BExpr f ->
-      let (pr_w, pr_s) = CP.drop_complex_ops in
+      let (pr_w, pr_s) = CP.drop_complex_ops () in
       math_of_formula pr_w pr_s f
 
 and math_of_b_formula b : string =
@@ -731,7 +731,7 @@ let is_sat_ops pr_w pr_s f sat_no =
     (fun f sat_no -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 let is_sat_x f sat_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   is_sat_ops pr_w pr_s f sat_no
 
 let is_sat f sat_no =
@@ -814,7 +814,7 @@ let imply_ops pr_w pr_s ante conseq imp_no =
     (fun _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   imply_ops pr_w pr_s f imp_no
 
 let imply ante conseq imp_no =

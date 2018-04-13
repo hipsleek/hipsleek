@@ -54,12 +54,13 @@ template int g(int x, int y).
 //expect Valid.
 
 
+/*
 checkentail f(x)>5 |- f(x)>8.
 expect Fail.
 
 checkentail x>5 |- x>8.
 expect Fail.
+*/
 
-
-checkentail  f(x)>8 |- f(x)>5.
-expect Valid.
+checkentail  f(x)>5 |- f(x)>8.
+expect Fail.

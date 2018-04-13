@@ -143,7 +143,7 @@ and coq_of_exp e0 =
   | CP.InfConst _ -> illegal_format "coq_of_exp : \inf cannot be handled"
   | CP.Template t -> coq_of_exp (CP.exp_of_template t)
   | CP.BExpr f ->
-      let (pr_w, pr_s) = CP.drop_complex_ops in
+      let (pr_w, pr_s) = CP.drop_complex_ops () in
       coq_of_formula pr_w pr_s f
 
 (* pretty printing for a list of expressions *)

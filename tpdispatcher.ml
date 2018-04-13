@@ -1864,8 +1864,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   (* let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in  *)
   (* let f = Cpure.add_ann_constraints imm_vrs f in *)
   let () = disj_cnt f None "sat_no_cache" in
-  let (pr_weak,pr_strong) = CP.drop_complex_ops in
-  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+  let (pr_weak,pr_strong) = CP.drop_complex_ops () in
+  let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 () in
   (* Handle Infinity Constraints *)
   let f = if !Globals.allow_inf then
       (* let _ = Coqinf.cpure_to_coqpure f in *)
@@ -2983,8 +2983,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       reset_generated_prover_input ();
       reset_prover_original_output ();
     );
-    let (pr_weak,pr_strong) = CP.drop_complex_ops in
-    let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+    let (pr_weak,pr_strong) = CP.drop_complex_ops () in
+    let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 () in
     let ante_w = ante in
     let conseq_s = conseq in
     let omega_imply a c = Omega.imply_ops pr_weak pr_strong a c imp_no timeout in
@@ -3203,7 +3203,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
     (*   conj_of_list  *)
     (*    (List.map (fun c -> disj_of_list (Infinity.quantifier_elim c) no_pos) forall_lst) no_pos in *)
     let expand_quantifier = Infinity.elim_forall_exists in
-    tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
+    x_add tp_imply_no_cache (expand_quantifier ante) (expand_quantifier conseq) imp_no timeout process
   else if !Globals.allow_inf && !Globals.allow_inf_qe_coq then
     (*let f = mkAnd ante (mkNot_dumb conseq None no_pos) no_pos in
       let f = mkForall (fv f) f None no_pos in*)

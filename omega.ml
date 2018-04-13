@@ -756,7 +756,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
-  let (pr_w,pr_s) = drop_complex_ops in
+  let (pr_w,pr_s) = drop_complex_ops () in
   imply_ops pr_w pr_s (ante : formula) (conseq : formula) (imp_no : string) timeout 
 
 let imply_with_check pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : string) timeout: bool option =
@@ -783,7 +783,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     (fun _ _ -> imply_ops pr_weak pr_strong ante conseq imp_no timeout) ante conseq
 
 let is_valid (pe : formula) timeout : bool =
-  let (pr_w,pr_s) = drop_complex_ops in
+  let (pr_w,pr_s) = drop_complex_ops () in
   try
     is_valid_ops pr_w pr_s pe timeout
   with Illegal_Prover_Format s -> 
