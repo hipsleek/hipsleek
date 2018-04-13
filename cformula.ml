@@ -20628,6 +20628,50 @@ let normalize_struc nb b =
 let base_flows vars loc = (* NOTE: adds FLOW(x,x') *)
   List.fold_left (fun acc fr -> CP.mkAnd acc (CP.mkSecFLOW fr (CP.to_primed fr)) loc) (CP.mkTrue loc) vars
 
+let set_sec_context (sctx:sec_label list)(lfc:list_failesc_context) : list_failesc_context =
+  let rec in_context (ctx:context) =
+    match ctx with
+    | Ctx(es)   -> Ctx({es with es_sec_ctx = sctx})
+    | OCtx(l,r) -> OCtx(in_context l, in_context r)
+  in
+  let in_branch_context (bc:branch_ctx) =
+    let (pt,ctx,ft) = bc in
+    let nctx = in_context ctx in
+    (pt,nctx,ft)
+  in
+  let in_failesc_context (fc:failesc_context) =
+    let (bfl,esc,bcl) = fc in
+    let nbcl = List.map (fun bc -> in_branch_context bc) bcl in
+    (bfl,esc,nbcl)
+  in
+  List.map (fun fc -> in_failesc_context fc) lfc
+
+let get_sec_context (lfc:list_failesc_context) : (sec_label list) =
+  let rec from_context ctx =
+    match ctx with
+    | Ctx(es)   -> es.es_sec_ctx
+    | OCtx(l,_) -> from_context l
+  in
+  let from_branch_context bc =
+    let (_,ctx,_) = bc in
+    from_context ctx
+  in
+  let from_branch_context_list bcl =
+    match bcl with
+    | []    -> [CP.LO]
+    | bc::_ -> from_branch_context bc
+  in
+  let from_failesc_context fc =
+    let (_,_,bcl) = fc in
+    from_branch_context_list bcl
+  in
+  let from_list_failesc_context lfc =
+    match lfc with
+    | []    -> [CP.LO]
+    | fc::_ -> from_failesc_context fc
+  in
+  from_list_failesc_context lfc
+
 let prop_const res estate = (* NOTE: propagate sec context to res *)
   let sctx = estate.es_sec_ctx in
   let flow = CP.mkCtxFLOW res sctx in

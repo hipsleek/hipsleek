@@ -2204,6 +2204,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let then_cond_prim = MCP.mix_of_pure pure_cond in
           (*let () = print_string_quiet ("\nthen_cond_prim  : "^(Cprinter.string_of_mix_formula then_cond_prim )) in*)
           let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
+          let old_sctx = CF.get_sec_context ctx in (* IFA *)
+          let new_sctx = (CP.SVAR(CP.mk_spec_var v))::old_sctx in
           let then_ctx = 
             if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
             else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
@@ -2216,12 +2218,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
+          let then_ctx1 = if !Globals.is_ifa (* IFA *)
+            then CF.set_sec_context new_sctx then_ctx1
+            else then_ctx1
+          in
+          let else_ctx1 = if !Globals.is_ifa (* IFA *)
+            then CF.set_sec_context new_sctx else_ctx1
+            else else_ctx1
+          in
           let then_ctx2 = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
           (* let () = print_endline ("then_ctx2 :" ^ (Cprinter.string_of_list_failesc_context then_ctx2)) in *)
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           (* let res = CF.pop_esc_level_list res pid in *)
+          let res = if !Globals.is_ifa
+            then CF.set_sec_context old_sctx res
+            else res
+          in
           res
         end in
       Gen.Profiling.push_time "[check_exp] Cond";
