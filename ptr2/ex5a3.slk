@@ -185,25 +185,25 @@ print residue.
 // Fail_May
 // fc_message: base_case_unfold failed
 
-//(25)
+//(25) needs lemma
 checkentail_exact  xxx::Aseg<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
 expect Fail. // xxx=yyy=zzz
 print residue.
 // Fail_Must, Fail_May or Valid???
 
-//(26)
+//(26) needs lemma
 checkentail_exact  xxx::Aseg<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
 expect Valid.
 print residue.
 
-//(27)
+//(27) needs lemma
 checkentail_exact  xxx::AsegN<yyy> * yyy::Aseg<zzz> |- xxx::AsegN<zzz>.
 expect Valid.
 print residue.
 // fc_message: base_case_unfold failed
 // [[ SEARCH ==>  Unfold 0 ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
 
-//(28)
+//(28) needs lemma
 checkentail_exact  xxx::AsegN<yyy> * yyy::AsegN<zzz> |- xxx::AsegN<zzz>.
 expect Valid.
 print residue.
@@ -211,23 +211,52 @@ print residue.
 // base_case_unfold failed
 // [[ SEARCH ==>  COND ==>  BaseCaseUnfold]]
 
-//(29)
+//(29) needs lemma
 checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<=yyy |- xxx::AsegN<zzz> * zzz::Aseg<yyy>.
 expect Valid.
 print residue.
 // Fail_May
 
-//(30)
+//(30) needs lemma
 checkentail_exact  xxx::AsegN<yyy> & xxx<=zzz<yyy |- xxx::Aseg<zzz> * zzz::AsegN<yyy>.
 expect Valid.
 print residue.
 // Fail_May
 
-//(31)
-checkentail_exact  xxx::AsegN<yyy> & xxx<zzz<yyy |- xxx::AsegN<zzz> * zzz::AsegN<yyy>.
+//(31) needs lemma
+checkentail_exact xxx::AsegN<yyy> & xxx<zzz<yyy |- xxx::AsegN<zzz> * zzz::AsegN<yyy>.
 expect Valid.
 print residue.
 // Fail_May
+
+//(32) paper example
+checkentail_exact x::ElemN<_> * y::ElemN<3> & x=a & y=x+1 |- [b] a::Aseg<b> & b=a+2 & a=x.
+expect Valid.
+print residue.
+// Fail.(may) cause:Nothing_to_do?cond action is empty
+
+//(33) paper example
+checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- [b] a::Aseg<b> & b=a & a=b.
+expect Valid.
+print residue.
+//Message: x is undefined (7)
+
+//(34)
+checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- a::Aseg<a>.
+expect Valid. //Should this be valid?
+print residue.
+//Message: x is undefined (7)
+//Fail.(may) cause:do_unmatched_rhs : a::Aseg<a>@M(may)
+
+//35
+checkentail_exact a::Aseg<a> |- emp.
+expect Valid.
+print residue.
+
+//36
+checkentail_exact a::Aseg<b> & b=a & a=b |- emp.
+expect Valid.
+print residue.
 
 /* ex5a3.slk
 
