@@ -158,7 +158,7 @@ let rec smt_of_exp a =
         "("^fn^" "^(String.concat " " args)^")"
             (* smt_of_exp (CP.exp_of_template t) *)
   | CP.BExpr f ->
-      let (pr_w, pr_s) = CP.drop_complex_ops in
+      let (pr_w, pr_s) = CP.drop_complex_ops () in
       smt_of_formula pr_w pr_s f
 
 and smt_of_b_formula b =
@@ -361,7 +361,7 @@ let add_axiom h dir c =
     let op = match dir with
       | IMPLIES -> "=>"
       | IFF -> "=" in
-    let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
+    let (pr_w,pr_s) = CP.drop_complex_ops_z3 () in
     let cache_smt_input = (
       "(assert " ^
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
@@ -866,7 +866,7 @@ and to_smt_v1 ante conseq logic fvars =
     | var::rest -> "(" ^ (smt_of_spec_var var) ^ " Int) " ^ (defvars rest)
   in
   (* let () = print_endline ("#### ante = " ^ (!CP.print_formula ante)) in *)
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   let ante = x_add smt_of_formula pr_w pr_s ante in
   let conseq = x_add smt_of_formula pr_w pr_s conseq in
   (*--------------------------------------*)
@@ -1078,12 +1078,12 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
     let a0 = fst bc in
     let c0 = snd bc in
     (* check the base case first *)
-    let (pr_w,pr_s) = Cpure.drop_complex_ops in
+    let (pr_w,pr_s) = Cpure.drop_complex_ops () in
     let bcv = x_add smt_imply pr_w pr_s a0 c0 prover 15.0 in
     if bcv then (* base case is valid *)
       let a1 = fst ic in
       let c1 = snd ic in
-      let (pr_w,pr_s) = CP.drop_complex_ops in
+      let (pr_w,pr_s) = CP.drop_complex_ops () in
       x_add smt_imply pr_w pr_s a1 c1 prover 15.0 (* check induction case *)
     else
       false
@@ -1174,7 +1174,7 @@ let instantiate_array_vars_before_imply pr_w pr_s ante conseq prover timeout =
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   let f  = x_add smt_imply pr_w pr_s ante conseq Z3 timeout in
   (*let () = print_endline ("Ante3 : "^ !print_pure ante) in*)
   if (not f && !Globals.allow_array_inst) then instantiate_array_vars_before_imply pr_w pr_s ante conseq Z3 timeout
@@ -1228,7 +1228,7 @@ let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: 
     (* (false, true) in *)
     (* if (Cpure.contains_exists f) then                                    *)
     (*   try                                                                *)
-    (*     let (pr_w,pr_s) = CP.drop_complex_ops in                         *)
+    (*     let (pr_w,pr_s) = CP.drop_complex_ops () in                         *)
     (*     let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in ( *)
     (*     match optr with                                                  *)
     (*       | Some r -> (r, false)                                         *)
@@ -1260,7 +1260,7 @@ let is_sat_ops_x pr_weak pr_strong f sat_no =
 
 (* see imply *)
 let is_sat f sat_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   smt_is_sat pr_w pr_s f sat_no Z3 z3_sat_timeout_limit
 
 let is_sat_ops pr_weak pr_strong f sat_no =
@@ -1339,7 +1339,7 @@ let get_model is_linear vars assertions =
     ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in
 
-  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 () in
   let smt_asserts = List.map (fun a ->
       "(assert " ^ (x_add smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
@@ -1410,7 +1410,7 @@ let get_unsat_core assertions =
     ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in
 
-  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 () in
   let assertions_w_label = fst (List.fold_left (fun (acc, i) a ->
       acc @ [(i + 1, a)], i + 1) ([], 0) assertions) in
   let smt_asserts = List.map (fun (i, a) ->

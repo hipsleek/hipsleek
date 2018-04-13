@@ -11160,40 +11160,46 @@ let is_update_array_relation (r:string) =
   let udl = String.length udrel in
   (String.length r) >= udl && (String.sub r 0 udl) = udrel
 
-let drop_complex_ops =
+let drop_complex_ops() =
+  let () = y_binfo_pp "inside drop_complex_ops" in
   let pr_weak b = match b with
     | LexVar t_info -> Some (mkTrue t_info.lex_loc)
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
       if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
       else Some (mkTrue p)
-    | _ -> if has_template_b_formula (b, None)
-      then Some (mkTrue (pos_of_b_formula (b, None))) else None in
+    | _ -> None
+      (*   if has_template_b_formula (b, None) *)
+      (* then Some (mkTrue (pos_of_b_formula (b, None))) else None *) in 
   let pr_strong b = match b with
     | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
       if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
       else Some (mkFalse p)
-    | _ -> if has_template_b_formula (b, None)
-      then Some (mkFalse (pos_of_b_formula (b, None))) else None in
+                    | _ -> None
+                      (* if has_template_b_formula (b, None) *)
+                      (*    then Some (mkFalse (pos_of_b_formula (b, None))) else None  *)
+                            in
   (pr_weak,pr_strong)
 
-let drop_lexvar_ops =
+let drop_lexvar_ops () =
+  let () = y_binfo_pp "inside drop_lexvar_ops" in
   let pr_weak b = match b with
     | LexVar t_info -> Some (mkTrue t_info.lex_loc)
-    | _ -> if has_template_b_formula (b, None)
-      then Some (mkTrue (pos_of_b_formula (b, None))) else None in
+    | _ -> (* if has_template_b_formula (b, None) *)
+      (* then Some (mkTrue (pos_of_b_formula (b, None))) else *) None in
   let pr_strong b = match b with
     | LexVar t_info -> Some (mkFalse t_info.lex_loc)
-    | _ -> if has_template_b_formula (b, None)
-      then Some (mkFalse (pos_of_b_formula (b, None))) else None in
+    | _ -> (* if has_template_b_formula (b, None) *)
+      (* then Some (mkFalse (pos_of_b_formula (b, None))) else *) None in
   (pr_weak,pr_strong)
 
-let drop_complex_ops_z3 = drop_lexvar_ops
+let drop_complex_ops_z3 () = drop_lexvar_ops ()
 
 let memo_complex_ops stk bool_vars is_complex =
-  let pr b = match b with
+  let () = y_binfo_pp "inside memo_complex_ops" in
+   let pr b = match b with
     | BVar(v,_) -> bool_vars # push v; None
     | _ ->
       if (is_complex b) then

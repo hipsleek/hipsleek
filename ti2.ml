@@ -42,7 +42,7 @@ let simplify f args =
 
 let is_sat f = 
   Tpdispatcher.is_sat_raw (MCP.mix_of_pure f)
-  (* let (pr_weak, pr_strong) = CP.drop_complex_ops in *)
+  (* let (pr_weak, pr_strong) = CP.drop_complex_ops () in *)
   (* Omega.is_sat_ops pr_weak pr_strong f ""           *)
 
 let is_sat f = 

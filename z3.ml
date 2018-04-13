@@ -146,7 +146,7 @@ let rec smt_of_exp a =
   | CP.InfConst _ -> Error.report_no_pattern ()
   | CP.Template t -> smt_of_exp (CP.exp_of_template t)
   | CP.BExpr f ->
-      let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+      let (pr_w, pr_s) = CP.drop_complex_ops_z3 () in
       smt_of_formula pr_w pr_s f
 
 and smt_of_b_formula b =
@@ -343,7 +343,7 @@ let add_axiom h dir c =
     let op = match dir with
       | IMPLIES -> "=>"
       | IFF -> "=" in
-    let (pr_w,pr_s) = CP.drop_complex_ops_z3 in
+    let (pr_w,pr_s) = CP.drop_complex_ops_z3 () in
     let cache_smt_input = (
       "(assert " ^
       (if params = [] then "" else "(forall (" ^ smt_params ^ ")\n") ^
@@ -771,7 +771,7 @@ and to_smt_v1 ante conseq logic fvars =
     | var::rest -> "(" ^ (smt_of_spec_var var) ^ " Int) " ^ (defvars rest)
   in
   (* let () = print_endline ("#### ante = " ^ (!CP.print_formula ante)) in *)
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   let ante = smt_of_formula pr_w pr_s ante in
   let conseq = smt_of_formula pr_w pr_s conseq in
   (*--------------------------------------*)
@@ -982,12 +982,12 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
     let a0 = fst bc in
     let c0 = snd bc in
     (* check the base case first *)
-    let (pr_w,pr_s) = Cpure.drop_complex_ops in
+    let (pr_w,pr_s) = Cpure.drop_complex_ops () in
     let bcv = smt_imply pr_w pr_s a0 c0 prover bget_cex 15.0 in
     if bcv then (* base case is valid *)
       let a1 = fst ic in
       let c1 = snd ic in
-      let (pr_w,pr_s) = CP.drop_complex_ops in
+      let (pr_w,pr_s) = CP.drop_complex_ops () in
       smt_imply pr_w pr_s a1 c1 prover bget_cex 15.0 (* check induction case *)
     else
       false
@@ -1024,7 +1024,7 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
   let res, should_run_smt = (
     (* (false, true) in                                                             *)
     (* if (has_exists conseq) then                                                  *)
-    (*   let (pr_w,pr_s) = CP.drop_complex_ops in                                   *)
+    (*   let (pr_w,pr_s) = CP.drop_complex_ops () in                                   *)
     (*   try (                                                                      *)
     (*     match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with *)
     (*     | None -> (false, true)                                                  *)
@@ -1066,7 +1066,7 @@ and has_exists conseq =
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
  * specific smt-prover argument as well *)
 let imply ante conseq timeout =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   smt_imply pr_w pr_s ante conseq Z3N false timeout
 
 let imply ante conseq timeout =
@@ -1148,7 +1148,7 @@ let is_sat_ops_cex pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f s
 
 (* see imply *)
 let is_sat f sat_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops  ()in
   smt_is_sat pr_w pr_s f sat_no Z3N false z3_sat_timeout_limit
 
 
@@ -1221,7 +1221,7 @@ let get_model is_linear vars assertions =
     ) vars in
   let smt_var_decls = String.concat "" smt_var_decls in
 
-  let (pr_w, pr_s) = CP.drop_complex_ops_z3 in
+  let (pr_w, pr_s) = CP.drop_complex_ops_z3 () in
   let smt_asserts = List.map (fun a ->
       "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in

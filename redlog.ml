@@ -1118,7 +1118,7 @@ let is_sat_ops pr_w pr_s f sat_no =
   fst(is_sat_no_cache_ops pr_w pr_s f sat_no)
 
 let is_sat f sat_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   is_sat_ops pr_w pr_s f sat_no
 
 let is_sat f sat_no =
@@ -1256,7 +1256,7 @@ let imply_ops pr_w pr_s ante conseq imp_no =
     (fun _ _ -> imply_ops_a pr_w pr_s ante conseq imp_no) ante conseq
 
 let imply f imp_no =
-  let (pr_w,pr_s) = CP.drop_complex_ops in
+  let (pr_w,pr_s) = CP.drop_complex_ops () in
   imply_ops pr_w pr_s f imp_no
 
 let imply ante conseq imp_no =

@@ -147,7 +147,7 @@ and cvc3_of_sv_type sv = match sv with
 and cvc3_of_formula f = match f with
   | CP.BForm (b,_) ->
     begin
-      match (fst CP.drop_complex_ops) (fst b) with
+      match (fst (CP.drop_complex_ops ())) (fst b) with
       | None -> "(" ^ (cvc3_of_b_formula b) ^ ")"
       | Some f -> cvc3_of_formula f
     end
