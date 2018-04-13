@@ -20625,11 +20625,22 @@ let normalize_struc nb b =
 
 
 (* IFA *)
-let prop_const res estate =
+let base_flows vars loc = (* NOTE: adds FLOW(x,x') *)
+  List.fold_left (fun acc fr -> CP.mkAnd acc (CP.mkSecFLOW fr (CP.to_primed fr)) loc) (CP.mkTrue loc) vars
+
+let prop_const res estate = (* NOTE: propagate sec context to res *)
   let sctx = estate.es_sec_ctx in
   let flow = CP.mkCtxFLOW res sctx in
   let form = add_pure_formula_to_formula flow estate.es_formula in
   let _ctx = Ctx { estate with es_formula = form } in
   _ctx
 
-(*let prop_assign*)
+let prop_var res v estate = (* NOTE: propagate sec context & v to res *)
+  let sctx  = estate.es_sec_ctx in
+  let sflow = CP.mkCtxFLOW res sctx in
+  let lflow = CP.mkSecFLOW v res in
+  let flow  = CP.mkOr sflow lflow None no_pos in
+  let form  = add_pure_formula_to_formula flow estate.es_formula in
+  let _ctx  = Ctx { estate with es_formula = form } in
+  _ctx
+

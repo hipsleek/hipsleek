@@ -4217,6 +4217,10 @@ and fresh_spec_var (sv : spec_var) =
   let t = type_of_spec_var sv in
   SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 
+(* ADI NOTE: added for IFA to prevent adding LO(1) *)
+and fresh_iconst_var pos = Var(SpecVar(Int  , fresh_old_name "const", Unprimed), pos)
+and fresh_fconst_var pos = Var(SpecVar(Float, fresh_old_name "const", Unprimed), pos)
+
 and fresh_thread_var () =
   let old_name = "tid" in
   let name = fresh_old_name old_name in
