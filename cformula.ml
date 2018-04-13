@@ -9825,6 +9825,7 @@ type entail_state = {
   es_infer_pure_thus : CP.formula; (* WN:whay is this needed? docu*)
   (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
+  es_sec_ctx: CP.sec_label list; (* IFA security context *)
 }
 
 and context =
@@ -10300,6 +10301,7 @@ let empty_es flowt grp_lbl pos =
     es_conc_err = [];
     es_rhs_pure = None;
     (*es_infer_invs = [];*)
+    es_sec_ctx = [CP.LO];
   }
 
 let flatten_context ctx0=
@@ -20620,3 +20622,15 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+
+
+(* IFA *)
+let prop_const res estate =
+  let sctx = estate.es_sec_ctx in
+  let flow = CP.mkCtxFLOW res sctx in
+  let form = add_pure_formula_to_formula flow estate.es_formula in
+  let _ctx = Ctx { estate with es_formula = form } in
+  _ctx
+
+(*let prop_assign*)

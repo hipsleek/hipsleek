@@ -1830,6 +1830,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else CP.Not (tmp1, None, pos) in
           let f = CF.formula_of_pure_N tmp2 pos in
           let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
+          let ctx = if !Globals.is_ifa (* IFA *)
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_const res_v) ctx
+            else ctx
+          in
           Gen.Profiling.push_time "[check_exp] BConst";
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
@@ -2283,11 +2287,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               exp_icall_pos = pos}) ->
       Err.report_error {Err.error_loc = pos;
                         Err.error_text = "[typechecker.ml]: We do not support instant calls"}
+
     | IConst ({exp_iconst_val = i;
                exp_iconst_pos = pos}) ->
       Gen.Profiling.push_time "[check_exp] IConst";
       let c_e = CP.IConst (i, pos) in
-      let res_v = CP.Var (CP.mkRes int_type, pos) in
+      let var_r = CP.mkRes int_type in
+      let res_v = CP.Var (var_r, pos) in
       let c = CP.mkEqExp res_v c_e pos in
       let c = 
         if !Globals.infer_lvar_slicing then 
@@ -2295,12 +2301,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         else c 
       in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      let ctx = if !Globals.is_ifa (* IFA *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const var_r) ctx
+        else ctx
+      in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       Gen.Profiling.pop_time "[check_exp] IConst";
       res_ctx
+
     | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
       let c_e = CP.FConst (f, pos) in
-      let res_v = CP.Var (CP.mkRes float_type, pos) in
+      let var_r = CP.mkRes float_type in
+      let res_v = CP.Var (var_r, pos) in
       let c = CP.mkEqExp res_v c_e pos in
       let c =
         if !Globals.infer_lvar_slicing then
@@ -2308,8 +2320,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         else c
       in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
+      let ctx = if !Globals.is_ifa (* IFA *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const var_r) ctx
+        else ctx
+      in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
       res_ctx
+
     | New ({exp_new_class_name = c;
             exp_new_parent_name = pname;
             exp_new_arguments = args;

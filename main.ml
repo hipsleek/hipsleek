@@ -128,9 +128,14 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
     Debug.info_zprint (lazy ((" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n"))) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then
+  if List.for_all (fun x -> Sys.file_exists x) new_names    (* CHECK: all file must exists *)
+  then List.map (fun x -> parse_file_full x true) new_names (* - Load files                *)
+  else if !Globals.is_ifa
+  then [(parse_file_full "./prelude_flow.ss" true)]         (* IFA: load prelude_flow.ss   *)
+  else [(parse_file_full "./prelude.ss" true)]              (* DEFAULT: load prelude.ss    *)
+  (*if (Sys.file_exists "./prelude.ss") then
     [(parse_file_full "./prelude.ss" true)]
-  else List.map (fun x -> parse_file_full x true) new_names
+    else List.map (fun x -> parse_file_full x true) new_names*)
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -428,7 +433,7 @@ let process_source_full source =
   let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None -> ["\"prelude.ss\""]
+    | None   -> if !Globals.is_ifa then  ["\"prelude_else.ss\""] else  ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   (*let () = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
@@ -931,7 +936,7 @@ let process_source_full_parse_only source =
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None -> ["\"prelude.ss\""]
+    | None   -> if !Globals.is_ifa then  ["\"prelude_else.ss\""] else  ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
