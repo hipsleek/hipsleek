@@ -924,11 +924,14 @@ let mk_view_prim v_name v_args v_inv pos =
 
 (** An Hoa [22/08/2011] Extract data field information **)
 
+let primitive_rel_list = ["dom"; "domb"; "LO"; "HI"; "FLOW"];;
+
 let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 
 let is_primitive_rel rel =
   let eq_str s1 s2 = (String.compare s1 s2 == 0) in
-  (eq_str rel.rel_name "dom") || (eq_str rel.rel_name "domb")
+  List.exists (eq_str rel.rel_name) primitive_rel_list
+  (*(eq_str rel.rel_name "dom") || (eq_str rel.rel_name "domb")*)
 
 let name_of_proc p = p.proc_name
 

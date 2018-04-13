@@ -1827,13 +1827,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* in                                                                            *)
           let tmp2 =
             if b then tmp1
-            else CP.Not (tmp1, None, pos) in
+            else CP.Not (tmp1, None, pos)
+          in
           let f = CF.formula_of_pure_N tmp2 pos in
-          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
           let ctx = if !Globals.is_ifa (* IFA *)
             then CF.transform_list_failesc_context (idf, idf, CF.prop_const res_v) ctx
             else ctx
           in
+          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
           Gen.Profiling.push_time "[check_exp] BConst";
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex

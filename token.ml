@@ -279,10 +279,10 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
-    | SEC_HI  -> "@H" (* IFA *)
-    | SEC_LO  -> "@L"
+    | SEC_HI  -> "@Hi" (* IFA *)
+    | SEC_LO  -> "@Lo"
     | SEC_OP  -> "<?"
-    | SEC_LUB -> "%%"
+    | SEC_LUB -> "%"
 
   let print ppf x = pp_print_string ppf (to_string x)
 
