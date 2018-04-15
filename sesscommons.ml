@@ -10,6 +10,7 @@ let sevent_rel_id: string option ref = ref None
 let shb_rel_id: string option ref = ref None
 let shbp_rel_id: string option ref = ref None
 let scb_rel_id: string option ref = ref None
+let fence_rel_id: string option ref = ref None
 
 (* ======= base formula for session type ====== *)
 (* ============================================ *)
@@ -24,6 +25,7 @@ module type Message_type = sig
   type param
   type var
   type flow
+  type exp
   type arg = var (* node *) * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
 
@@ -35,7 +37,7 @@ module type Message_type = sig
   val print_var  : (var -> string)
   val print_param: (param -> string) ref
   val print_pure_formula: (pure_formula -> string) ref
-      
+
   val mk_node: arg -> session_kind -> node_kind -> h_formula
   val mk_formula_heap_only: ?flow:flow -> h_formula -> VarGen.loc -> formula
   val mk_rflow_formula: ?sess_kind:(session_kind option) -> ?kind:ho_flow_kind -> formula -> ho_param_formula
@@ -51,7 +53,7 @@ module type Message_type = sig
   val mk_true: unit -> pure_formula
   val mk_hvar: ident -> var list -> h_formula
   val mk_seq_wrapper: ?sess_kind:session_kind option -> h_formula -> VarGen.loc -> session_kind -> h_formula
-  val mk_exp_rel: ident -> (var * VarGen.loc) list -> VarGen.loc -> pure_formula 
+  val mk_exp_rel: ident -> exp list -> VarGen.loc -> pure_formula
 
   val choose_ptr: ?ptr:string -> unit -> var (* node *)
   val id_to_param:  ident ->  VarGen.loc -> param
@@ -59,6 +61,9 @@ module type Message_type = sig
   val fconst_to_param:  float ->  VarGen.loc -> param
   val var_to_param: var ->  VarGen.loc -> param
   val param_to_var: param -> var
+  val var_to_exp:  var ->  VarGen.loc -> exp
+  val const_to_exp:  int ->  VarGen.loc -> exp
+
 
   val add_pure_to_formula: pure_formula -> formula -> formula
   val transform_h_formula: (h_formula -> h_formula option)-> h_formula -> h_formula
@@ -111,7 +116,7 @@ module type Message_type = sig
   val get_anns: h_formula -> sess_ann option
   val get_exists_vars: formula -> (ident * primed) list
   val get_formula_pos: formula -> VarGen.loc
-      
+
   val get_h_formula_safe: formula -> h_formula option
   val get_h_formula_from_struc_formula_safe: struc_formula -> h_formula option
 
@@ -150,7 +155,7 @@ module type KEY_EQ_TYPE =
 sig
   type t
   val eq        : t -> t -> bool
-  val string_of : t -> string   
+  val string_of : t -> string
 end;;
 
 (* ====== General SMap utilities ====== *)
@@ -171,13 +176,13 @@ sig
   val string_of_elem : elem -> string
   val string_of_key  : key -> string
   val string_of:  emap -> string
-    
+
   val mkEmpty : emap
   val is_empty :emap -> bool
 
   val mkSingleton : key -> elem -> emap
   val init : (key * elem) list -> emap
-    
+
   val add : emap-> key -> elem -> emap
   val find: emap -> key -> elem
   val get_keys : emap -> klist
@@ -198,15 +203,15 @@ struct
   type emap = (key * elem) list
   type epart = (elem list) list
   type elist = (elem list)
-  type klist = (key list) 
+  type klist = (key list)
 
-  let eq = Key.eq 
+  let eq = Key.eq
   let string_of_elem = Elem.string_of
-  let string_of_key  = Key.string_of 
+  let string_of_key  = Key.string_of
 
-  let string_of (e: emap) : string =    
+  let string_of (e: emap) : string =
     "["^ (pr_lst "," (pr_pair string_of_key string_of_elem) e) ^"]"
-    
+
   let mkEmpty () : emap = []
   let is_empty (m:emap) = match m with | [] -> true | _ -> false
 
@@ -233,7 +238,7 @@ struct
     remove_duplicate_keys all_keys
 
   let get_data (emap:emap) : elist = List.map snd emap
-  
+
   (* each key is returned only once *)
   let union_keys (e1:klist) (e2:klist) : klist =
     remove_duplicate_keys (e1@e2)
@@ -244,10 +249,10 @@ struct
   (* allow key duplicates *)
   let add_elem_dupl (e1:emap) (k:key) (el:elem) : emap =
     (k,el)::e1
-    
+
   (* if key exists in emap, then replace its corresponding element *)
   let add_elem (e1:emap) (k:key) (el:elem) : emap =
-    try 
+    try
       let _ = find e1 k in (* only checks if the key exists in map *)
       update_elem e1 k el
     with Not_found -> add_elem_dupl e1 k el
@@ -264,7 +269,7 @@ sig
   val union      : emap -> emap -> emap
   val merge_seq  : emap -> emap -> emap
   val merge_sor  : emap -> emap -> emap
-  val merge_star : emap -> emap -> emap 
+  val merge_star : emap -> emap -> emap
   val map_data   : (elem -> elem) -> emap -> emap
   val find_safe  : emap -> key -> elem
 end;;
@@ -286,16 +291,16 @@ struct
 
   let union (e1:emap) (e2:emap) : emap =
     let pr = string_of in
-    Debug.no_2 "union" pr pr pr union e1 e2 
-      
+    Debug.no_2 "union" pr pr pr union e1 e2
+
   (* this merge assumes e1 and e2 have no key duplicates *)
-  let flatten (e0:emap list) : emap =    
+  let flatten (e0:emap list) : emap =
     List.fold_left (fun acc e1 -> union acc e1) (mkEmpty ()) e0
 
   let flatten (e0:emap list) : emap =
     let pr = string_of in
     Debug.no_1 "flatten" (pr_list pr) pr flatten e0
-  
+
   (* find element with key k in s *)
   let find_safe (s : emap) (k: key) : elem  = find_aux s k (Elem.bot ())
 
@@ -311,14 +316,14 @@ struct
     List.fold_left (fun map (key,elem) ->
         let elem1 = find_safe map key in (* \bot or some element *)
         let elem1 = (merge_elem op) elem1 elem in
-        add_elem map key elem1) e1 e2 
-    
-  let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2 
+        add_elem map key elem1) e1 e2
+
+  let merge_seq  (e1:emap) (e2:emap) :emap = merge_op SEQ e1 e2
   let merge_sor  (e1:emap) (e2:emap) :emap = merge_op SOR e1 e2
   let merge_star (e1:emap) (e2:emap) :emap = merge_op STAR e1 e2
 
   let map_data (fnc: elem->elem) (map: emap) : emap = List.map (fun (k,elem) -> (k, fnc elem)) map
-  
+
   end;;
 
 
@@ -330,7 +335,7 @@ let is_rel_sleek_orders rel_sv =
   let sleek_orders_rel = [ev_rel_id; hbp_rel_id; hb_rel_id; cb_rel_id; "snot_eq"; "snot"] in
   let rel_id = Cpure.name_of_spec_var rel_sv in
   let eq_rel rel1 rel2 = (String.compare rel1 rel2 == 0) in
-  List.exists (eq_rel rel_id) sleek_orders_rel 
+  List.exists (eq_rel rel_id) sleek_orders_rel
 
 let is_rel_orders rel_sv =
   let ev_rel_id  = un_option !event_rel_id "" in
@@ -342,6 +347,4 @@ let is_rel_orders rel_sv =
   (eq_rel rel_id ev_rel_id)  ||
   (eq_rel rel_id hbp_rel_id) ||
   (eq_rel rel_id hb_rel_id)  ||
-  (eq_rel rel_id cb_rel_id)  
-  
-
+  (eq_rel rel_id cb_rel_id)

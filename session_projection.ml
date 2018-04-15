@@ -310,6 +310,23 @@ let mk_projection_per_party prot role =
                     let prot_guard = SProt.update_session_predicate ~orders:assrt_guard sp in
                     let proj_guard = x_add_1 Session.convert_pred_from_prot_to_proj prot_guard in
                     SProj.mk_session_seq_formula proj_assume proj_guard pred_pos
+                | Fence ->
+                    let params = sp.session_predicate_params in
+                    begin
+                     match params with
+                     | roles::chan::id::[] ->
+                       begin
+                         match roles,chan,id with
+                          | Ipure.Bag ([Ipure.Var (sender, _);Ipure.Var (receiver, _)],_),
+                            Ipure.Var (var, _),
+                            Ipure.IConst (id,_) ->
+                               if ((SBProt.eq_role sender role) or (SBProt.eq_role receiver role))
+                               then (Session.convert_pred_from_prot_to_proj sb)
+                               else SProj.SEmp
+                          | _ -> SProj.SEmp
+                       end
+                     | _ -> SProj.SEmp
+                    end
                 | _ -> SProj.SEmp
               end
             | _ -> SProj.SEmp
@@ -383,7 +400,10 @@ let mk_projection_per_channel prj chan =
                     let (assrt_assume, assrt_guard) = mk_prj_assume_on_chan pred_orders chan in
                     let prot_assume = SProj.update_session_predicate ~orders:assrt_assume pred in
                     let proj_assume = Session.convert_pred_from_prot_to_tproj prot_assume in
-                    let prot_guard = SProj.update_session_predicate ~name:"Guard" ~orders:assrt_guard ~sess_pred_kind:(Assert Guard) pred in
+                    let prot_guard = SProj.update_session_predicate
+                                             ~name:(Session.get_prim_pred_id_by_kind (mk_sess_pred_kind (mk_sess_assert_kind Guard)))
+                                             ~orders:assrt_guard
+                                             ~sess_pred_kind:(Assert Guard) pred in
                     let proj_guard = Session.convert_pred_from_prot_to_tproj prot_guard in
                     STProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | Guard ->
@@ -391,6 +411,29 @@ let mk_projection_per_channel prj chan =
                     let prot = SProj.update_session_predicate ~orders:assrt pred in
                     let proj = Session.convert_pred_from_prot_to_tproj prot in
                     proj
+                | Fence ->
+                    let params = pred.session_predicate_params in
+                    begin
+                     match params with
+                     | roles::chn::id::[] ->
+                       begin
+                         match roles,chn,id with
+                          | Ipure.Bag (_,_),
+                            Ipure.Var (var, _),
+                            Ipure.IConst _ ->
+                               let rel = SBTProj.mk_exp_rel (un_option !SC.fence_rel_id "") [chn;id] pred_pos in
+                               let ho_param = SBTProj.mk_rflow_formula (SBTProj.mk_formula_of_pure_1 rel pred_pos) in
+                               let proj_fence assert_kind = STProj.SBase
+                                      (STProj.mk_session_predicate
+                                            (Session.get_prim_pred_id_by_kind (mk_sess_pred_kind assert_kind))
+                                            [ho_param] [] ~sess_pred_kind:assert_kind pred_pos) in
+                               if (SBProj.eq_chan var chan)
+                               then proj_fence (mk_sess_assert_kind Assume)
+                               else proj_fence (mk_sess_assert_kind Guard)
+                          | _ -> STProj.SEmp
+                       end
+                     | _ -> STProj.SEmp
+                    end
                 | _ -> STProj.SEmp
               end
             | _ -> STProj.SEmp

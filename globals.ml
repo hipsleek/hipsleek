@@ -257,6 +257,7 @@ and orders_kind =
 and relation_kind =
   | Orders of orders_kind       (* sleek order relations *)
   | Sleek  of orders_kind       (* sleek order relations *)
+  | Fence
   | NO_RKIND                    (* no relation kind *)
 
 (* protocol lang related *)
@@ -264,6 +265,7 @@ and assertions_predicate_kind =
   | Assume
   | Guard
   | Peer
+  | Fence
 
 type view_session_info =
   {
@@ -410,6 +412,7 @@ let string_of_assertions_predicate_kind nk = match nk with
   | Assume -> "Assume"
   | Guard  -> "Guard"
   | Peer   -> "Peer"
+  | Fence  -> "Fence"
 
 let string_of_session_predicate_kind pk = match pk with
   | Order kind  -> "Order " ^ (string_of_orders_kind kind)
@@ -439,7 +442,7 @@ let string_of_view_session_info (si:view_session_info) =
   let nk = match si.node_kind with
              | Some nk -> "node_kind: " ^ string_of_node_kind nk
              | None -> "" in
-  "\n" ^ sk ^ "" ^ nk
+  sk ^ "" ^ nk
 
 (* let string_of_node_session_info (si:node_session_info) = *)
 (*   let sk = string_of_session_kind si.session_kind in *)

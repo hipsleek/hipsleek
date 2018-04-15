@@ -2422,6 +2422,7 @@ and session_to_iform_x (view:I.view_decl) =
         let prot = S.annotate_suid prot in
         let params = view.I.view_typed_vars in
         let prot = x_add_1 Sess_order_summary.insert_orders view prot params (fun p -> trans_pure_formula p []) in
+        let prot = x_add_1 Sess_order_summary.insert_fences view prot  in
         (* makes projection *)
         let prj_map, tprj_map, assrt_prj_list = SP.mk_projection prot params in
         let h_prj_map, h_tprj_map = SP.convert_prj_maps prj_map tprj_map in

@@ -771,9 +771,9 @@ let insert_orders view prot params fnc_i2c =
                   sequence
             in
             (* inserts order assumptions *)
-            let seq = create_sequence assume "Assume" Assume sf in
+            let seq = create_sequence assume (S.get_prim_pred_id_by_kind (Predicate (Assert Assume))) Assume sf in
             (* then, inserts order guards *)
-            let seq = create_sequence guard "Guard" Guard seq in
+            let seq = create_sequence guard  (S.get_prim_pred_id_by_kind (Predicate (Assert Guard))) Guard seq in
             Some seq
         | _ -> None
       end
@@ -785,6 +785,47 @@ let insert_orders view prot params fnc_i2c =
 let insert_orders view prot params fnc_i2c =
   let pr = SProt.string_of_session in
   Debug.no_1 "OS.insert_orders" pr pr (fun _ -> insert_orders view prot params fnc_i2c) prot
+
+(* TODO: BELOW REFINEMENT NEEDS TO BE MOVED IN A SEPARATE FILE *)
+(* --------------------------- REFINEMENT 2-------------------------------- *)
+(* Inserts fence assumptions and proof obligations in the session protocol. *)
+let insert_fences view prot  =
+  if not (!Globals.sess_insert_fences) then prot
+  else
+  let insert sf = match sf with
+    | SProt.SBase sb ->
+      begin
+        match sb with
+        | SProt.Base t ->
+            let uid = SBProt.get_uid t in
+            let loc = SBProt.get_base_pos t in
+            (* creates a fence *)
+            let rflow = SBProt.mk_rflow_formula_from_heap IF.HEmp loc in
+            let trans_to_exp = (fun (x,_) -> Ipure.Var ((S.IForm.mk_var x),no_pos)) in
+            let sender   = trans_to_exp (SBProt.get_sender t) in
+            let receiver = trans_to_exp (SBProt.get_receiver t) in
+            let param    = Ipure.Bag ([sender;receiver],no_pos) in
+            let params   = map_opt_def
+                              [param]
+                              (fun x -> param::[(trans_to_exp x)])
+                              (SBProt.get_chan t) in
+            let id       = Ipure.IConst (Globals.fresh_int (), no_pos) in
+            let params   = params @ [id] in
+            let fence_kind = mk_sess_assert_kind Fence in
+            let pred = SProt.SBase (SProt.mk_session_predicate (S.get_prim_pred_id_by_kind (mk_sess_pred_kind fence_kind)) [] params  ~sess_pred_kind:fence_kind loc) in
+            let sequence = SProt.mk_session_seq_formula sf pred loc in
+            Some sequence
+        | _ -> None
+      end
+    | _ -> None in
+  let fnc = (insert, (nonef, nonef)) in
+  let prot = x_add_1 SProt.trans_session_formula fnc prot in
+  prot
+
+let insert_fences view prot =
+  let pr = SProt.string_of_session in
+  Debug.no_1 "OS.insert_fences" pr pr (fun _ -> insert_fences view prot) prot
+
 
 let infer_orders_formula assume guard inf_vars =
   (* let inf_vars = estate.CF.es_infer_vars in *)

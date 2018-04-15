@@ -50,6 +50,7 @@ let cb_id: string option ref = ref None
 let assume_id: string option ref = ref None
 let guard_id: string option ref = ref None
 let peer_id: string option ref = ref None
+let fence_id: string option ref = ref None
 
 let set_rels_id id kind =
   match kind with
@@ -64,6 +65,7 @@ let set_rels_id id kind =
     | Sleek CB    -> SC.scb_rel_id := Some id
     | Sleek HB    -> SC.shb_rel_id := Some id
     | Sleek HBP   -> SC.shbp_rel_id := Some id
+    | Fence       -> SC.fence_rel_id := Some id
     | _ -> ()
 
 let set_prim_pred_id kind id =
@@ -86,6 +88,7 @@ let set_prim_pred_id kind id =
             | Assert Assume  -> assume_id := Some id
             | Assert Guard   -> guard_id := Some id
             | Assert Peer    -> peer_id := Some id
+            | Assert Fence   -> fence_id := Some id
             | _ -> ()
         end
     | Emp          -> ()
@@ -119,6 +122,7 @@ let get_prim_pred_id_by_kind kind = match kind with
             | Assert Assume  -> get_prim_pred_id assume_id
             | Assert Guard   -> get_prim_pred_id guard_id
             | Assert Peer    -> get_prim_pred_id peer_id
+            | Assert Fence   -> get_prim_pred_id fence_id
             | _ -> ""
         end
   | Emp          -> ""
@@ -150,6 +154,9 @@ let get_pred_kind name =
     else if name = (exists_pred_kind !peer_id)
     then
        mk_sess_assert_kind Peer
+    else if name = (exists_pred_kind !fence_id)
+    then
+       mk_sess_assert_kind Fence
     else
        NO_KIND
 
@@ -178,7 +185,8 @@ module IForm = struct
   type var = Globals.ident * VarGen.primed
   type flow = ident
   (* type node = var *)
-  type param = Ipure.exp
+  type exp = Ipure.exp
+  type param = exp
   type arg = var (* node *) * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
 
@@ -283,16 +291,17 @@ module IForm = struct
     | _ -> hform
 
   let mk_exp_rel id args pos =
-    let exp_var = List.fold_left (fun acc elem -> acc@[Ipure_D.Var elem]) [] args in
+    (* let exp_var = List.fold_left (fun acc elem -> acc@[Ipure_D.Var elem]) [] args in *)
+    let exp_var = args in
     let p_form = Ipure_D.RelForm (id, exp_var, pos) in
     let b_form = (p_form, None) in
     Ipure_D.BForm (b_form, None)
 
-  let mk_exp_rel id args pos =
-    let pr1 = pr_id in
-    let pr2 = pr_list (pr_pair print_var pr_none) in
-    let pr_out = !print_pure_formula in
-    Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args
+  (* let mk_exp_rel id args pos =
+   *   let pr1 = pr_id in
+   *   let pr2 = pr_list (pr_pair print_var pr_none) in
+   *   let pr_out = !print_pure_formula in
+   *   Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args *)
 
   let join_conjunctions lst = Ipure.join_conjunctions lst
 
@@ -300,7 +309,11 @@ module IForm = struct
 
   let id_to_param id pos = Ipure_D.Var((id,Unprimed), pos)
 
+  let var_to_exp id pos = Ipure_D.Var(id, pos)
+
   let const_to_param c pos = Ipure_D.IConst(c, pos)
+
+  let const_to_exp c pos = Ipure_D.IConst(c, pos)
 
   let fconst_to_param c pos = Ipure_D.FConst(c, pos)
 
@@ -548,6 +561,7 @@ module CForm = struct
   type var = CP.spec_var
   type flow = CF.flow_formula
   (* type node = var *)
+  type exp = CP.exp
   type param = CP.spec_var
   type arg = var * ident * (ho_param_formula list) *
              (param list) * VarGen.loc
@@ -647,16 +661,17 @@ module CForm = struct
 
   let mk_exp_rel id args pos =
     let sv = mk_var id in
-    let exp_var = List.fold_left (fun acc elem -> acc@[CP.Var elem]) [] args in
+    (* let exp_var = List.fold_left (fun acc elem -> acc@[CP.Var elem]) [] args in *)
+    let exp_var = args in
     let p_form = CP.RelForm (sv, exp_var, pos) in
     let b_form = (p_form, None) in
     CP.BForm (b_form, None)
 
-  let mk_exp_rel id args pos =
-    let pr1 = pr_id in
-    let pr2 = pr_list (pr_pair print_var pr_none) in
-    let pr_out = !print_pure_formula in
-    Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args
+  (* let mk_exp_rel id args pos =
+   *   let pr1 = pr_id in
+   *   let pr2 = pr_list (pr_pair print_var pr_none) in
+   *   let pr_out = !print_pure_formula in
+   *   Debug.no_2 "mk_exp_rel" pr1 pr2 pr_out (fun _ _ -> mk_exp_rel id args pos) id args *)
 
   let join_conjunctions lst = CP.join_conjunctions lst
 
@@ -664,7 +679,11 @@ module CForm = struct
 
   let id_to_param id pos = CP.SpecVar(UNK,id,Unprimed)
 
+  let var_to_exp id pos =  CP.Var (id,pos)
+
   let const_to_param c pos = failwith x_tbi
+
+  let const_to_exp c pos = failwith x_tbi
 
   let fconst_to_param c pos = failwith x_tbi
 

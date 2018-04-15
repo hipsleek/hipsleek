@@ -511,7 +511,7 @@ let pr_sharp_angle ?(lvl=(!glob_lvl)) op f xs =
 (** print a sequence with cut after separator*)
 let pr_seq ?(lvl=(!glob_lvl)) op f xs = pr_args ~lvl None (Some "A") op "[" "]" "; " f xs
 
-let pr_seq_opt ?(lvl=(!glob_lvl)) op f xs = 
+let pr_seq_opt ?(lvl=(!glob_lvl)) op f xs =
   if xs==[] then ()
   else pr_seq ~lvl:lvl op f xs
 
@@ -648,7 +648,7 @@ let rec string_of_imm_helper imm =
   | CP.ConstAnn(Accs) -> "@A"
   | CP.ConstAnn(Imm) -> "@I"
   | CP.ConstAnn(Lend) -> "@L"
-  | CP.ConstAnn(Mutable) -> if not !Globals.print_ann then "" else  "@M" 
+  | CP.ConstAnn(Mutable) -> if not !Globals.print_ann then "" else  "@M"
   | CP.TempAnn(t) -> "@[" ^ (string_of_imm_helper t) ^ "]"
   | CP.TempRes(l,r) -> "@[" ^ (string_of_imm_helper l) ^ ", " ^ (string_of_imm_helper r) ^ "]"
   | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
@@ -745,14 +745,14 @@ let string_of_session session_formulae =
     let pr_orders = match session_formulae.shared_orders with
     | Some orders -> !Cformula.print_formula orders
     | None -> "None" in
-    "{ " ^ 
+    "{ " ^
     "Session: " ^ pr_sess ^ "\n" ^
     "Proj per party: " ^ (pr_pty session_formulae.proj_per_party) ^ "\n" ^
     "Proj per chan: " ^ (pr_chan session_formulae.proj_per_chan) ^ "\n" ^
     "Shared orders: " ^ pr_orders ^
     " }"
   in
-  Gen.map_opt_def "" 
+  Gen.map_opt_def ""
     (fun x -> string_of_session_projection_helper x)
     session_formulae
 
@@ -1087,7 +1087,7 @@ let rec pr_b_formula (e:P.b_formula) =
   | P.LexVar t_info ->
     pr_term_ann false t_info.CP.lex_ann;
     pr_s "" pr_formula_exp t_info.CP.lex_exp
-  | P.ImmRel (r,cond,l) -> 
+  | P.ImmRel (r,cond,l) ->
     pr_b_formula (r,il);
   | P.Frm  (x, l) -> fmt_string ((string_of_spec_var x) ^ "@F")
   | P.BConst (b,l) -> fmt_bool b
@@ -1437,8 +1437,8 @@ let rec pr_h_formula h =
         (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
         pr_spec_var sv; fmt_string "::";
         try
-          (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
-           else pr_angle (c^perm_str) (fun (x,y) -> 
+          (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs
+           else pr_angle (c^perm_str) (fun (x,y) ->
                (* prints absent field as "#" *)
                (* if is_absent y then fmt_string "#" *)
                (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
@@ -1915,7 +1915,7 @@ and prtt_pr_h_formula_inst prog h =
   | HRel (r, args, l) ->
     let hp_name= CP.name_of_spec_var r in
     let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hp_name in
-    let ss = try List.combine args hprel.Cast.hp_vars_inst 
+    let ss = try List.combine args hprel.Cast.hp_vars_inst
       with Invalid_argument _ -> failwith "Cprinter.ml, prtt_pr_h_formula_inst, List.combine args hprel.Cast.hp_vars_inst"
     in
     let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
@@ -2088,7 +2088,7 @@ and prtt_pr_h_formula_inst_html prog post_hps h =
     fmt_string s_color;
     let hp_name= CP.name_of_spec_var r in
     let hprel = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls hp_name in
-    let ss = try List.combine args hprel.Cast.hp_vars_inst 
+    let ss = try List.combine args hprel.Cast.hp_vars_inst
       with Invalid_argument _ -> failwith "Cprinter.ml, prtt_pr_h_formula_inst_html List.combine args hprel.Cast.hp_vars_inst"
     in
     let args_inst = List.map (fun (sv,(_,i)) -> (sv,i)) ss in
@@ -2913,7 +2913,7 @@ let pr_hprel_short hpa =
   fmt_string (if !Globals.sae then (String.concat "," (List.map string_of_flow hpa.hprel_flow)) else "" );
   fmt_close()
 
-let pr_hprel_list_short hprl = 
+let pr_hprel_list_short hprl =
   fmt_open_box 1;
   pr_wrap_test "" Gen.is_empty (pr_seq "" pr_hprel_short) hprl;
   fmt_close()
@@ -4400,6 +4400,7 @@ let pr_barrier_decl v =
 let pr_bool b = fmt_string (string_of_bool b)
 
 let pr_session_info si = fmt_string (map_opt_def "" string_of_view_session_info si)
+let pr_session_formulae sess = fmt_string (string_of_session sess)
 
 let pr_list_id b = fmt_string (pr_list pr_id b)
 
@@ -4420,7 +4421,7 @@ let pr_view_hdr v =
   in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
                                         "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
-                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();s 
+                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();s
 
 let pr_view_decl_inv_only v =
   pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
@@ -4471,7 +4472,8 @@ let pr_view_decl v =
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
   pr_add_str_cut ~emp_test:(fun x -> false) "session info: "  pr_session_info v.view_session_info;
-  pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+  pr_add_str_cut ~emp_test:(fun x -> false) "session: "  pr_session_formulae v.view_session;
+  pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: "
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   (* pr_vwrap  "ann vars: "  pr_list_of_annot_arg (List.map fst v.view_ann_params); *)
   pr_add_str_cut  ~emp_test:Gen.is_empty "ann vars (0 - not a posn): "  pr_list_of_annot_arg_posn v.view_ann_params;
@@ -4528,7 +4530,7 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
-let pr_view_decl_short ?(pr_inv=false) v = 
+let pr_view_decl_short ?(pr_inv=false) v =
   pr_mem:=false;
   (* let f bc = *)
   (*   match bc with *)
@@ -4541,18 +4543,18 @@ let pr_view_decl_short ?(pr_inv=false) v =
   try
     x_tinfo_hp (add_str "view_labels" (pr_list (fun l ->     if LO.is_common l then ""
                                                  else (LO.string_of l)^":"))) v.view_labels  no_pos;
-    x_tinfo_hp (add_str "v.view_params_orig" (pr_list 
+    x_tinfo_hp (add_str "v.view_params_orig" (pr_list
                                                 (pr_pair string_of_typed_view_arg string_of_int)
                                              ))
       v.view_params_orig no_pos;
 
     wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_view_arg_lbl
                          (List.combine v.view_labels (List.map fst v.view_params_orig)); fmt_string "= ") ();
-    fmt_cut (); 
+    fmt_cut ();
     wrap_box ("B",0) pr_struc_formula v.view_formula;
     (if pr_inv then pr_view_decl_inv v);
     (* pr_add_str_cut  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula; *)
-    pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: " 
+    pr_add_str_cut ~emp_test:(fun stk -> stk # is_empty) "equiv_set: "
     (fun stk -> fmt_string (stk # string_of)) v.view_equiv_set;
   with Invalid_argument _ -> failwith "Cprinter.ml, pr_view_decl_short, List.combine v.view_labels... ";
     (* fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula;  *)
@@ -4573,7 +4575,7 @@ let slk_view_decl v =
     wrap_box ("B", 0) (fun () -> pr_angle ("pred " ^ v.view_name) pr_typed_spec_var_lbl
                           (List.combine v.view_labels v.view_vars); fmt_string " == ") ();
   with Invalid_argument _ -> failwith "Cprinter.ml, slk_view_decl - List.combine";
-    fmt_cut (); wrap_box ("B", 0) slk_struc_formula_view v.view_formula; 
+    fmt_cut (); wrap_box ("B", 0) slk_struc_formula_view v.view_formula;
     pr_vwrap  "inv "  pr_mix_formula v.view_user_inv;
     fmt_string ".";
     fmt_close_box ();
@@ -4890,7 +4892,7 @@ let rec string_of_exp = function
     Can't we use None inside fields to control it?
 *)
 let string_of_field_ann ann =
-  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact 
+  if (* not !print_ann || *) !Globals.sleek_gen_vc || !Globals.sleek_gen_vc_exact
   then ""
   else (* match ann with *)
     (* | VAL -> "@VAL" *)
@@ -5129,13 +5131,13 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-let string_of_derived_program p = 
-  "\n*****************************" ^ 
-  "\n     DERIVED PREDICATES " ^ 
-  "\n*****************************\n" ^ 
+let string_of_derived_program p =
+  "\n*****************************" ^
+  "\n     DERIVED PREDICATES " ^
+  "\n*****************************\n" ^
   (* (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ *)
-  ((pr_list string_of_view_decl_short) (List.filter 
-                               (fun v -> v.Cast.view_kind==View_HREL || not(v.Cast.view_equiv_set # is_empty)) p.prog_view_decls)) ^ "\n\n" 
+  ((pr_list string_of_view_decl_short) (List.filter
+                               (fun v -> v.Cast.view_kind==View_HREL || not(v.Cast.view_equiv_set # is_empty)) p.prog_view_decls)) ^ "\n\n"
   (* (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ *)
   (* (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^ *)
   (* (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^ *)
@@ -5833,4 +5835,4 @@ Cfout.print_sv := string_of_spec_var;;
 (*   get_lemma_cprog cdefs; *)
 (*   cdefs *)
 
-let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula) 
+let () = Excore.map_num_invs # set_pr (pr_pair !Cpure.print_svl !Cpure.print_formula)

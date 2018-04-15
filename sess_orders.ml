@@ -32,7 +32,7 @@ struct
   type chan = Var.t
   type suid = Var.t
 
-  
+
   (* type event *)
   (* type transmission *)
 
@@ -49,7 +49,7 @@ struct
     uid      : suid;
     channel  : chan;
   }
-  
+
   type orders  = HBe of hbe_type
                | HBt of hbt_type
                | CBe of cbe_type
@@ -87,7 +87,7 @@ struct
     impl_event :  event;
     impl_assrt :  assrt;
   }
-  
+
 end;;
 
 module type GORDERS_TYPE =
@@ -101,19 +101,19 @@ sig
   val string_of_event : event -> string
   val string_of_transmission : transmission -> string
 
-  val string_of : assrt -> string 
+  val string_of : assrt -> string
 
   val mk_hbe : event ->  event -> assrt
   val mk_hbt : transmission -> transmission -> assrt
-  val mk_cbe : event -> event -> assrt 
+  val mk_cbe : event -> event -> assrt
 
-  val mk_and : assrt -> assrt -> assrt 
-  val mk_or : assrt -> assrt -> assrt 
+  val mk_and : assrt -> assrt -> assrt
+  val mk_or : assrt -> assrt -> assrt
   val mk_order : orders -> assrt
 
   val mk_event : role -> suid -> chan -> event
   val mk_assrt_event : role -> suid -> chan -> assrt
-  
+
   val mk_transmission : role -> role -> suid -> chan -> transmission
   val mk_assrt_transmission : role -> role -> suid -> chan -> assrt
 
@@ -135,8 +135,8 @@ sig
   val eq_suid  : suid  -> suid  -> bool
   val eq_event : event -> event -> bool
 
-  val contains_suid  : suid list -> suid -> bool 
-  val contains_event : event list -> event -> bool 
+  val contains_suid  : suid list -> suid -> bool
+  val contains_event : event list -> event -> bool
 
   val norm_orders : assrt -> assrt
 end;;
@@ -155,7 +155,7 @@ struct
   let string_of_transmission e = (string_of_role e.sender) ^ "-" ^ (string_of_suid e.uid) ^ "->" ^ (string_of_role e.receiver)
 
   let string_of e1 =
-    let rec helper e1 = 
+    let rec helper e1 =
       match e1 with
       | Event e  -> "(" ^ string_of_event e ^ ")"
       | NEvent e -> "not("^ (string_of_event e) ^ ")"
@@ -177,13 +177,13 @@ struct
   let mk_and assrt1 assrt2 = And {and_assrt1 = assrt1; and_assrt2 = assrt2}
   let mk_or assrt1 assrt2 = Or {or_assrt1 = assrt1; or_assrt2 = assrt2}
   let mk_order order = Order order
-  
+
   let mk_event (r:role) (id:suid) (chan:chan) : event = {role = r; uid = id; channel = chan}
   let mk_assrt_event (r:role) (id:suid) (chan:chan) : assrt = Event (mk_event r id chan)
 
   let mk_transmission (sender:role) (receiver:role) (id:suid) (chan:chan) : transmission = {sender = sender; receiver = receiver; uid = id; channel = chan}
   let mk_assrt_transmission (sender:role) (receiver:role) (id:suid) (chan:chan) : assrt = Transm {sender = sender; receiver = receiver; uid = id; channel = chan}
-  
+
   let is_assrt a = match a with
     | NoAssrt -> false
     | _ -> true
@@ -202,7 +202,7 @@ struct
     match assrt with
     | Order (CBe _) -> true
     | _             -> false
-  
+
   let is_hb assrt =
     match assrt with
     | Order (HBe _) -> true
@@ -233,18 +233,18 @@ struct
 
   let get_and_value assrt =
     match assrt with
-    | And typ -> typ.and_assrt1, typ.and_assrt2 
+    | And typ -> typ.and_assrt1, typ.and_assrt2
     | _ -> failwith "Expecting an And order relation"
 
   let get_or_value assrt =
     match assrt with
-    | Or typ -> typ.or_assrt1, typ.or_assrt2 
+    | Or typ -> typ.or_assrt1, typ.or_assrt2
     | _ -> failwith "Expecting an Or order relation"
 
   (* Removes Bot assrt from orders *)
   (* Example: Bot & (A,id_55) & Bot -> (A,id_55) *)
   let norm_orders orders =
-    let fixpt = ref true in 
+    let fixpt = ref true in
     let rec norm_order assrt =
       if is_and assrt then (
         let assrt1, assrt2 = get_and_value assrt in
@@ -254,7 +254,7 @@ struct
         else if is_bot assrt2 then
           let () = fixpt := false in
           norm_order assrt1
-        else 
+        else
           mk_and (norm_order assrt1) (norm_order assrt2))
       else if is_or assrt then
         let assrt1, assrt2 = get_or_value assrt in
@@ -272,7 +272,7 @@ end ;;
 module Orders2Form (Form: SC.Message_type) =
 struct
   module Ord = GOrders(Var(Form))
-  
+
   (* Transform assrt orders -> pure formula *)
   let rec trans_orders_to_pure_formula (orders:Ord.assrt) pos =
     match orders with
@@ -287,9 +287,9 @@ struct
     | Ord.Event e ->
         begin match !SC.event_rel_id with
         | Some rel_id ->
-            let role = e.role in
-            let suid = e.uid in
-            let p_form = Form.mk_exp_rel rel_id [(role, pos); (suid, pos)] pos in
+            let role = Form.var_to_exp e.role pos in
+            let suid = Form.var_to_exp e.uid pos in
+            let p_form = Form.mk_exp_rel rel_id [role; suid] pos in
             [p_form]
         | None -> []
         end
@@ -303,10 +303,10 @@ struct
                let hbe_role2 = hbe.Ord.hbe_event2.role in
                let hbe_suid1 = hbe.Ord.hbe_event1.uid in
                let hbe_suid2 = hbe.Ord.hbe_event2.uid in
-               let var1 = (hbe_role1, pos) in
-               let var2 = (hbe_suid1, pos) in
-               let var3 = (hbe_role2, pos) in
-               let var4 = (hbe_suid2, pos) in
+               let var1 = Form.var_to_exp hbe_role1 pos in
+               let var2 = Form.var_to_exp hbe_suid1 pos in
+               let var3 = Form.var_to_exp hbe_role2 pos in
+               let var4 = Form.var_to_exp hbe_suid2 pos in
                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
                [p_form]
            | None -> []
@@ -318,10 +318,10 @@ struct
                let cbe_role2 = cbe.Ord.cbe_event2.role in
                let cbe_suid1 = cbe.Ord.cbe_event1.uid in
                let cbe_suid2 = cbe.Ord.cbe_event2.uid in
-               let var1 = (cbe_role1, pos) in
-               let var2 = (cbe_suid1, pos) in
-               let var3 = (cbe_role2, pos) in
-               let var4 = (cbe_suid2, pos) in
+               let var1 = Form.var_to_exp cbe_role1 pos in
+               let var2 = Form.var_to_exp cbe_suid1 pos in
+               let var3 = Form.var_to_exp cbe_role2 pos in
+               let var4 = Form.var_to_exp cbe_suid2 pos in
                let p_form = Form.mk_exp_rel rel_id [var1; var2; var3; var4] pos in
                [p_form]
            | None -> []
@@ -338,18 +338,18 @@ struct
   let trans_orders_to_formula (orders:Ord.assrt list) pos =
     let orders_p_formula = List.fold_left (fun acc elem ->
       let f = x_add trans_orders_to_pure_formula elem pos in
-      acc@f) [] orders in 
+      acc@f) [] orders in
     let pure_formula = Form.join_conjunctions orders_p_formula in
-    let formula = Form.mk_formula_of_pure_1 pure_formula pos in 
+    let formula = Form.mk_formula_of_pure_1 pure_formula pos in
     formula
-  
+
   let trans_orders_to_formula (orders:Ord.assrt list) pos =
     let pr = pr_list Ord.string_of in
     let pr_out = !Form.print in
     Debug.no_1 "O2F.trans_orders_to_formula" pr pr_out (fun _ -> trans_orders_to_formula orders pos) orders
 
 end
-  
+
 (* ==================== KEY =========================== *)
 module type DAG_KEY_TYPE =
 (* functor (Orders : GORDERS_TYPE) -> *)
@@ -375,12 +375,12 @@ struct
   let compare e1 e2 = String.compare (string_of e1) (string_of e2)
 end;;
 
- 
+
 (* ==================== VERTEX =========================== *)
 module type ELEM_TYPE =
   (* functor (Param : VAR_TYPE) -> *)
 sig
-  type t 
+  type t
 
   val eq: t ->  t -> bool
   val compare: t ->  t -> int
@@ -406,9 +406,9 @@ struct
   type t = Param.t
 
   let eq e1 e2       = Param.eq e1 e2
-  let string_of e    = Param.string_of e 
+  let string_of e    = Param.string_of e
   let compare e1 e2  = String.compare (string_of e1) (string_of e2)
-  let contains lst e = List.exists (eq e) lst 
+  let contains lst e = List.exists (eq e) lst
 end;;
 
 module type LIST_TYPE =
@@ -529,7 +529,7 @@ struct
   let mk_elem a v      = {arrow = a; vertex = v}
   (* let mk_edge t a h    = {tail = t; kind = a; head = h} *)
 
-  
+
   (* QUERIES *)
   let find tbl vertex      = M.find vertex tbl
   let find_safe tbl vertex = try find tbl vertex with Not_found -> mk_empty_data ()
@@ -566,18 +566,18 @@ struct
   let rec get_all_successors tbl vertex =
     let successors = get_successors tbl vertex in
     List.fold_left (fun acc v -> acc@(get_all_successors tbl v.vertex)) successors successors
-  let rec get_all_predecessors tbl vertex = 
+  let rec get_all_predecessors tbl vertex =
     let predecessors = get_predecessors tbl vertex in
-    List.fold_left (fun acc v -> acc@(get_all_predecessors tbl v.vertex)) predecessors predecessors  
+    List.fold_left (fun acc v -> acc@(get_all_predecessors tbl v.vertex)) predecessors predecessors
   let get_all_vertex_successors tbl vertex   = List.map get_vertex (get_all_successors tbl vertex)
   let get_all_vertex_predecessors tbl vertex = List.map get_vertex (get_all_predecessors tbl vertex)
-      
+
   (* UPDATES *)
   let set_successors  succ data  = {data with successors = succ}
   let set_predecessors pred data = {data with predecessors = pred}
   let add_successors   succ data = {data with successors = succ::data.successors}
   let add_predecessors pred data = {data with predecessors = pred::data.predecessors}
- 
+
   let add_vertex tbl key =
     let data = find_safe tbl key in
     M.add key data tbl
@@ -606,8 +606,8 @@ struct
     let tbl      = add_predecessors_tbl tbl vertex2 new_pred in
     let new_succ = mk_elem arrow (mk_vertex vertex2) in
     add_successors_tbl tbl vertex1 new_succ
-      
-  let connect_list tbl xs = 
+
+  let connect_list tbl xs =
     List.fold_left (fun tbl (kind,(e1,e2)) -> connect tbl kind e1 e2) tbl xs
 
   let connect_edge_list tbl xs =
@@ -633,7 +633,7 @@ struct
     List.fold_left (fun acc_tbl edge -> add_edge acc_tbl edge) tbl edges
 
   (* remove the weak arrows, by replacing them with the stronger connection:
-     ex: A <_CB B & B <_HB C ~~> A <_HB C  *)    
+     ex: A <_CB B & B <_HB C ~~> A <_HB C  *)
   let norm_weak tbl special_elem =
     (* mark for removing the weak(CB) edge with tail "key" and head in "elem"
        add all HB edges which would result from applying CB-HB once*)
@@ -670,7 +670,7 @@ struct
       (* succ_inf X pred_inf *)
       let inferred_hbs =  List.fold_left (fun acc head ->
           List.fold_left (fun acc tail -> (Edge.mk_edge tail Edge.HB head)::acc) acc succ_inf
-        ) [] pred_inf in      
+        ) [] pred_inf in
       inferred_hbs
 
   let create_dag_and_infer inf_vertexes assume guards_hb =

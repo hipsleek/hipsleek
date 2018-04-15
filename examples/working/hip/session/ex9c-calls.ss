@@ -29,15 +29,16 @@ int sor3(Channel c, int id)
   return x;
 }
 
+pred_sess_prot SOR1<C:role,S:role,c:chan> == C->S:c(0) or C->S:c(1);; SOR1<C,S,c>;
+
 /* should  fail? */
 void loop1_sor1(Channel c, int id)
-  requires  c::Chan{@S !0 or !1;;%R}<>
-  ensures   c::Chan{@S %R}<>;
+  requires  c::Chan{@S SOR1<C@peer,S,c@chan>}<>
+  ensures   c::Chan{@S emp}<>;
 {
   if (id<0) send(c,1);
   else  send(c,0);
   dprint;
-  //c::Chan{@S %R}<> |- c::Chan{@S !0 or !1;;%R1}<>
   loop1_sor1(c,id);
   dprint;
 }
