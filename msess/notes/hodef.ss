@@ -1,6 +1,7 @@
 pred_prim Trans{%P}<sender,receiver>; //trans
 pred_prim Sess{%P}<>; //session
-pred_prim Chan{%P}<P>; //channel
+// pred_prim Chan{%P}<P>; //channel
+pred_prim Chan{%P}<>; //channel
 pred_prim Common{%P}<>;
 pred_prim S{-%P}<a@IP>; //send
 pred_prim R{+%P}<a@IP>; //receive
@@ -52,10 +53,17 @@ relation snot_eq(int a,int b).
 
 
 /* apply A+ before G- */
-lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<P> -> self::Chan{@S %R}<P> * %P.
+lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<> -> self::Chan{@S %R}<> * %P.
 /* to check if * %P is neccessary in the body of this lemma */
-lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<P> * %P -> self::Chan{@S %R}<P>.
+lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<> * %P -> self::Chan{@S %R}<>.
 lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.
+
+
+// /* apply A+ before G- */
+// lemma_norm@0 "A+" self::Chan{@S Assume{%P}<>;;%R}<P> -> self::Chan{@S %R}<P> * %P.
+// /* to check if * %P is neccessary in the body of this lemma */
+// lemma_norm@1 "G-" self::Chan{@S Guard{%P}<>;;%R}<P> * %P -> self::Chan{@S %R}<P>.
+// lemma_norm   "IMPL" self::IMPL{%P, %R}<> * %P -> %R.
 
 
 /* #################################################
@@ -82,9 +90,9 @@ lemma_norm "GLOB_INIT"  self::GLOB{@S %R}<P,C> & P={}
 lemma_norm "PROJ_BIND " self::Party{ %R }<GG,C> * self::Peer<GG>
                         -> self::Party{  %R }<GG,C> * self::BIND<GG,C> & PeerRel(self,GG).
 
-lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{@S %R}<> }<GG,C>
-                        & C=union({ccc},C1) & (ccc notin C1) & PeerRel(self,GG)
-                         -> ccc::Chan{ ccc::PROJC{@S %R}<self>}<self> * self::Party{  self::PROJP{@S %R}<> }<GG,C1>.
+// lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{@S %R}<> }<GG,C>
+//                         & C=union({ccc},C1) & (ccc notin C1) & PeerRel(self,GG)
+//                          -> ccc::Chan{ ccc::PROJC{@S %R}<self>}<self> * self::Party{  self::PROJP{@S %R}<> }<GG,C1>.
 
 lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{@S %R}<> }<GG,C> & C={}
                         -> true.

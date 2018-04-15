@@ -23,7 +23,7 @@ type isuid = SIOrd.suid
 type crole = SCOrd.role
 type cchan = SCOrd.chan
 type csuid = SCOrd.suid
-              
+
 (* elements of the boundaries *)
 type 'a bform = BBase of 'a | BStar of ('a bform) * ('a bform)
 and  'a eform = BOT | FBase of 'a bform | BOr of ('a eform) * ('a eform)
@@ -55,7 +55,7 @@ end;;
 module IChanRole =
 struct
   type t = IChan.t * IRole.t
-  let eq (c1, r1) (c2, r2) = (IChan.eq c1 c2) && (IRole.eq r1 r2)  
+  let eq (c1, r1) (c2, r2) = (IChan.eq c1 c2) && (IRole.eq r1 r2)
   let string_of = pr_pair IChan.string_of IRole.string_of
 end;;
 
@@ -80,7 +80,7 @@ end;;
 module CChanRole =
 struct
   type t = CChan.t * CRole.t
-  let eq (c1, r1) (c2, r2) = (CChan.eq c1 c2) && (CRole.eq r1 r2)  
+  let eq (c1, r1) (c2, r2) = (CChan.eq c1 c2) && (CRole.eq r1 r2)
   let string_of = pr_pair CChan.string_of CRole.string_of
 end;;
 
@@ -118,15 +118,15 @@ module BEvent =
 struct
   type t = event
   type a = irole * isuid * ichan
-           
+
   let make ((role,uid,chan) : a) : t = {role = role; uid = uid; channel = chan }
-                                         
+
   let eq (e1:t) (e2:t) : bool   = SIOrd.eq_event e1 e2
 
   let string_of (ev:t) : string = SIOrd.string_of_event ev
 
   let contains (lst: t list) (ev:t)   = SIOrd.contains_event lst ev
-      
+
   let remove_duplicates (lst: t list) = List.fold_left (fun acc ev ->
       if contains acc ev then acc else ev::acc) [] lst
 
@@ -140,16 +140,16 @@ struct
   type t = transmission
   type a = irole * irole * ichan * isuid
   module UID = IUID
-           
+
   let make ((sender,receiver,chan,uid) :a) : t =
     {sender = sender; receiver = receiver; channel = chan; uid = uid}
-    
+
   let eq (t1:t) (t2:t) : bool =
     (UID.eq t1.uid t2.uid)
     && (IRole.eq t1.sender t2.sender)
     && (IRole.eq t1.receiver t2.receiver)
     && (IChan.eq t1.channel t2.channel)
-       
+
   let string_of (e:t) : string =
     (IRole.string_of e.sender) ^ "-" ^ (UID.string_of e.uid) ^ "->" ^ (IRole.string_of e.receiver)
 
@@ -203,13 +203,13 @@ struct
   let eq e1 e2 = failwith x_tbi
   let string_of e1 = (pr_list (Ord.string_of)) e1
   let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi
   let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
   let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
   let merge_star (f1:t) (f2:t) : t = failwith x_tbi
   let mkSingleton (e:base) : t = [e]
-  let add_elem (old_e:t) (new_e:t) :t  = old_e@new_e    
+  let add_elem (old_e:t) (new_e:t) :t  = old_e@new_e
 end;;
 
 module Event_element =
@@ -217,11 +217,11 @@ struct
   include BEvent
   type base = BEvent.t
 
-  let bot () = failwith x_tbi 
+  let bot () = failwith x_tbi
   let is_bot x = failwith x_tbi
   let mk_base (base: base) : t = failwith x_tbi
-  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi 
-  let mk_star (star1:t) (star2:t) : t = failwith x_tbi 
+  let mk_or   (or1:t) (or2:t) : t = failwith x_tbi
+  let mk_star (star1:t) (star2:t) : t = failwith x_tbi
   let merge_seq (f1:t) (f2:t) : t = failwith x_tbi
   let merge_sor (f1:t) (f2:t) : t = failwith x_tbi
   let merge_star (f1:t) (f2:t) : t = failwith x_tbi
@@ -260,12 +260,12 @@ let mk_empty_summary () =
   let guards   = ConstrMap.mkEmpty () in
   {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
 
-let init_summary bborder fborder assum guards = 
+let init_summary bborder fborder assum guards =
   {bborder = bborder ; fborder = fborder ; assumptions = assum ; guards = guards}
 
 let string_of_border = pr_pair (add_str "\nRMap:" RMap.string_of) (add_str "\nCMap:" CMap.string_of)
-  
-  
+
+
 (* ------------------------------------------------ *)
 (* ----- merging functions for prot constructs ---- *)
 
@@ -348,7 +348,7 @@ let merge_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap)
     rmap_merge cmap_merge : RMap.emap * CMap.emap =
   let rmap1, cmap1 = b1 in
   let rmap2, cmap2 = b2 in
-  let rmap0 = rmap_merge rmap1 rmap2 in 
+  let rmap0 = rmap_merge rmap1 rmap2 in
   let cmap0 = cmap_merge cmap1 cmap2 in
   (rmap0,cmap0)
 
@@ -368,7 +368,7 @@ let merge_sor_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMa
 (* [*] in paper *)
 let merge_star_border (b1:RMap.emap * CMap.emap) (b2:RMap.emap * CMap.emap) : RMap.emap * CMap.emap =
   x_add merge_border b1 b2 RMap.merge_star CMap.merge_star
-  
+
 (* f1 in paper *)
 let merge_all_seq (seq1:summary) (seq2:summary) : summary =
   let bborder0 = merge_seq_border seq1.bborder seq2.bborder in
@@ -398,7 +398,7 @@ let merge_all_star (star1:summary) (star2:summary) : summary =
 (* Everything else remains the same *)
 let order_normalization_x list =
     let helper assrt = match assrt with
-      | SIOrd.Transm t -> 
+      | SIOrd.Transm t ->
         let event_sender = SIOrd.mk_assrt_event t.sender t.uid t.channel in
         let event_receiver = SIOrd.mk_assrt_event t.receiver t.uid t.channel in
         let create_cbe ev1 ev2 = match ev1, ev2 with
@@ -406,9 +406,9 @@ let order_normalization_x list =
           | _,_ -> NoAssrt in
         let cbe = create_cbe event_sender event_receiver in
         [event_sender; event_receiver; cbe]
-      | SIOrd.Order SIOrd.HBe _ 
+      | SIOrd.Order SIOrd.HBe _
       | SIOrd.Order SIOrd.CBe _ -> [assrt]
-      | SIOrd.Order SIOrd.HBt hbt -> 
+      | SIOrd.Order SIOrd.HBt hbt ->
         let trans1 = hbt.hbt_transmission1 in
         let trans2 = hbt.hbt_transmission2 in
         let event1_sender = SIOrd.mk_assrt_event trans1.sender trans1.uid trans1.channel in
@@ -419,21 +419,21 @@ let order_normalization_x list =
           | SIOrd.Event e1, SIOrd.Event e2 -> SIOrd.mk_hbe e1 e2
           | _,_ -> SIOrd.NoAssrt in
         let hbe1 = create_hbe event1_sender event2_sender in
-        let hbe2 = create_hbe event1_receiver event2_receiver in 
+        let hbe2 = create_hbe event1_receiver event2_receiver in
         [hbe1; hbe2]
       | _ -> []
      in
      let res = List.fold_left (fun acc assrt -> acc@(helper assrt)) [] list in
      res
 
-let order_normalization list = 
-  let pr = pr_list SIOrd.string_of in 
+let order_normalization list =
+  let pr = pr_list SIOrd.string_of in
   Debug.no_1 "OS.order_normalization" pr pr order_normalization_x list
 
-let mk_and_list lst = 
-  List.fold_left (fun acc assrt -> SIOrd.mk_and acc assrt) SIOrd.Bot lst 
+let mk_and_list lst =
+  List.fold_left (fun acc assrt -> SIOrd.mk_and acc assrt) SIOrd.Bot lst
 
-let mk_and_list lst = 
+let mk_and_list lst =
   let pr = SIOrd.string_of in
   Debug.no_1 "OS.mk_and_list" (pr_list pr) pr mk_and_list lst
 
@@ -452,7 +452,7 @@ let mk_and_list lst =
 (* ConstrMap : uid  -> order                        *)
 
 let derive_summ prot =
-  let rec helper prot = 
+  let rec helper prot =
     match prot with
     | SProt.SSeq  seq  -> merge_all_seq (helper seq.SProt.session_seq_formula_head)
                             (helper seq.SProt.session_seq_formula_tail)
@@ -479,9 +479,9 @@ let derive_summ prot =
       let assum    = ConstrMap.init [(suid,IOL.mkSingleton (SIOrd.Transm trans))] in
       let guards   = ConstrMap.mkEmpty () in
       {bborder = (rmap,cmap) ; fborder = (rmap,cmap) ; assumptions = assum ; guards = guards}
-    | SProt.SEmp 
+    | SProt.SEmp
     | _ -> mk_empty_summary ()
-  in helper prot 
+  in helper prot
 
 let derive_summ prot =
   let pr_out summ = pr_pair (add_str "\nAssumptions:" ConstrMap.string_of) (add_str "\nGuards:" ConstrMap.string_of) (summ.assumptions,summ.guards) in
@@ -496,13 +496,13 @@ let mk_def_summary roles channs =
   let rmap =  List.map (fun role ->
       let fresh_suid = fresh_any_name role in
       let suid  = SBProt.mk_suid fresh_suid in
-      let role  = SBProt.mk_role role in 
+      let role  = SBProt.mk_role role in
       let event = BEvent.make (role,suid,def_chan) in
       (suid,(role, Events.mk_base event))) roles in
 
   (* collect the freshly introduced suids *)
   let suids1,rmap = List.split rmap in
-  
+
   let cmap_int =  List.map (fun chan ->
       let fresh_suid = fresh_any_name chan in
       let suid     = SBProt.mk_suid fresh_suid in
@@ -511,11 +511,11 @@ let mk_def_summary roles channs =
       let chan     = SBProt.mk_chan chan in
       let trans    = BTrans.make (sender,receiver,chan,suid) in
       (suid,(chan, trans))) channs in
-  
+
   (* collect the freshly introduced suids *)
   let suids2,cmap_int = List.split cmap_int in
   let cmap = List.map (fun (c,t) -> (c, Trans.mk_base t)) cmap_int in
-  
+
   let assumes = List.map (fun (_,trans) ->
       let sender   = BTrans.get_sender trans in
       let receiver = BTrans.get_receiver trans in
@@ -552,7 +552,7 @@ let iedge_to_rel edge =
   let helper id edge =
     match id with
     | Some id ->
-      
+
       let ids = List.map (fun ev -> (IRole.string_of (BEvent.get_role ev)) ^ orders_vars_separator ^(IUID.string_of (BEvent.get_uid ev))) [arg1;arg2] in
       let rel = Ipure.RelForm (id, (List.map (fun x -> Ipure.Var ((S.IForm.mk_var x),no_pos)) ids), no_pos) in
       let rel = Ipure.BForm ((rel,None) ,None) in
@@ -565,9 +565,9 @@ let iedge_to_rel edge =
 
 let test_dag assume guard def_suids fnc_i2c =
   (* collect the events related to the precondition / default summary *)
-  let helper map = 
+  let helper map =
     let alldata1 = ConstrMap.get_data map in
-    (* let alldata2 = ConstrMap.get_data guard  in *)  
+    (* let alldata2 = ConstrMap.get_data guard  in *)
     let alldata  = List.flatten (alldata1 (* @ alldata2 *)) in
     let edges = List.map (fun assrt ->
         match assrt with
@@ -585,7 +585,7 @@ let test_dag assume guard def_suids fnc_i2c =
   let assume_edges = helper assume in
   let guards_edges = helper guard in
   let all_edges = assume_edges @ guards_edges in
-  let pre_vertexes = List.fold_left (fun acc edge -> 
+  let pre_vertexes = List.fold_left (fun acc edge ->
       let helper acc vertex =
         if (IUID.contains def_suids (SIOrd.get_suid vertex)) then vertex::acc
         else acc in
@@ -665,7 +665,7 @@ let test_dag3 assume guard def_suids =
       | SIOrd.Order (SIOrd.CBe cbe) -> [(S.DAG_ivar.Edge.CB, (cbe.SIOrd.cbe_event1.role,cbe.SIOrd.cbe_event2.role))]
       | _ -> []
     ) lst in
-  let lst = List.flatten lst in 
+  let lst = List.flatten lst in
   let tbl = S.DAG_ivar.connect_list (S.DAG_ivar.create ()) lst in
   let () = y_binfo_hp (add_str "DAG:" S.DAG_ivar.string_of) tbl in
   let pre_events = List.map (fun ev -> ev.SIOrd.role) pre_events in
@@ -673,7 +673,7 @@ let test_dag3 assume guard def_suids =
   let () = y_binfo_hp (add_str "DAG(normed):" S.DAG_ivar.string_of) tbl in
 
   let keys = S.DAG_ivar.get_keys tbl in
-  let () = List.iter (fun ev -> 
+  let () = List.iter (fun ev ->
     let all_pred = S.DAG_ivar.get_all_predecessors tbl ev in
     y_tinfo_hp (add_str "(vertex, all predecessors)" (pr_pair S.DAG_ivar.Vertex.string_of S.DAG_ivar.string_of_elist)) (ev, all_pred)) keys in
 
@@ -749,21 +749,21 @@ let collect view prot fnc_i2c params =
 (* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders view prot params fnc_i2c =
   if not (!Globals.sess_refinement) then prot
-  else 
+  else
   let amap,gmap = collect view prot fnc_i2c params in
   let insert sf = match sf with
-    | SProt.SBase sb -> 
-      begin 
-        match sb with 
-        | SProt.Base t -> 
-            let uid = SBProt.get_uid t in 
+    | SProt.SBase sb ->
+      begin
+        match sb with
+        | SProt.Base t ->
+            let uid = SBProt.get_uid t in
             let loc = SBProt.get_base_pos t in
             let assume = ConstrMap.find_safe amap uid in
             let guard  = ConstrMap.find_safe gmap uid in
             (* creates a sequence with order assumptions and guards *)
             let create_sequence orders name sess_pred_kind prot_session = match orders with
               | [] -> prot_session
-              | _ -> 
+              | _ ->
                   let order_norm  = mk_and_list orders in
                   let rflow = SBProt.mk_rflow_formula_from_heap IF.HEmp loc in
                   let pred = SProt.SBase (SProt.mk_session_predicate name [rflow] [] ~orders:order_norm ~sess_pred_kind:(Assert sess_pred_kind) loc) in
@@ -778,7 +778,7 @@ let insert_orders view prot params fnc_i2c =
         | _ -> None
       end
     | _ -> None in
-  let fnc = (insert, (nonef, nonef)) in 
+  let fnc = (insert, (nonef, nonef)) in
   let prot = x_add_1 SProt.trans_session_formula fnc prot in
   prot
 
@@ -835,12 +835,9 @@ let infer_orders_formula assume guard inf_vars =
 
 let infer_orders_estate estate guard =
   infer_orders_formula estate.CF.es_formula guard estate.CF.es_infer_vars
-  
+
 let infer_orders_estate estate guard =
   let pr1 = !CF.print_entail_state in
   let pr2 = !Mcpure.print_mix_formula in
   let prout = pr_list !CP.print_formula in
   Debug.no_2 "OS.infer_orders_estate" pr1 pr2 prout infer_orders_estate estate guard
-
-
-

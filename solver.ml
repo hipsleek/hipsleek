@@ -8353,16 +8353,16 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   let avars = mfv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
-  let () = y_binfo_hp (add_str "outer_vars" Cprinter.string_of_spec_var_list) outer_vars in
-  let () = y_binfo_hp (add_str "inner_vars" Cprinter.string_of_spec_var_list) inner_vars in
+  let () = y_ninfo_hp (add_str "outer_vars" Cprinter.string_of_spec_var_list) outer_vars in
+  let () = y_ninfo_hp (add_str "inner_vars" Cprinter.string_of_spec_var_list) inner_vars in
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in
   (* let tmp2 = MCP.mix_push_exists outer_vars tmp1 in *)
   (* TODO TOCHECK andreeac - replaced the above tmp2 with below, since it makes no sense to quantify vars existing in the ante  *)
   let tmp2 = tmp1 in
-  let () = y_binfo_hp (add_str "conseq" Cprinter.string_of_mix_formula) conseq in
-  let () = y_binfo_hp (add_str "tmp1" Cprinter.string_of_mix_formula) tmp1 in
-  let () = y_binfo_hp (add_str "tmp2" Cprinter.string_of_mix_formula) tmp2 in
+  let () = y_ninfo_hp (add_str "conseq" Cprinter.string_of_mix_formula) conseq in
+  let () = y_ninfo_hp (add_str "tmp1" Cprinter.string_of_mix_formula) tmp1 in
+  let () = y_ninfo_hp (add_str "tmp2" Cprinter.string_of_mix_formula) tmp2 in
   (* let () = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq) *)
   (*   ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in *)
   (ante,tmp2)

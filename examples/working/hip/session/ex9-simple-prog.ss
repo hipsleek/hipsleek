@@ -2,11 +2,14 @@ hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
-void buyer1(Channel c, int id)
-  requires  c::Chan{@S !0}<>
-  ensures   c::Chan{emp}<>;
+int buyer1(Channel c, int id)
+  requires  c::Chan{@S !0;;?v#v>0}<>
+  ensures   c::Chan{emp}<> & res>=0;
 {
   send(c,0);
+  int x = receive(c);
+  dprint;
+  return x;
 }
 
 
