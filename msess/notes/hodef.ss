@@ -9,6 +9,11 @@ pred_prim Seq{%P,%P}<>; //sequence
 pred_prim SOr{%P}<>; //disjunction
 /*pred_prim Pred{%P}<>; //spred */
 
+/* fences */
+pred_prim F1<peers,chan,id>;
+pred_prim F2<peer,chan,id>;
+pred_prim F3<id>;
+
 /* orders */
 pred_prim Event<peer,id:int>; //event
 pred_prim HB{%P,%P}<>; //hb

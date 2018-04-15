@@ -39,7 +39,7 @@ exception False_from_explicit_inst of string;;
 
 (* module LO = Label_only.Lab_List *)
 module LO = Label_only.LOne
-module OS = Order_summary
+module OS = Sess_order_summary
 (* module ME = Musterr *)
 
 (* let check_is_classic = Wrapper.check_is_classic *)
@@ -4142,15 +4142,15 @@ and heap_entail_one_context_struc_wrapper
   let f_pre (ctx,conseq) =
     if not(!ord2sleek) then (ctx,conseq)
     else
-      let ctx = Orders_relation.trans_ord2sleek_rels_in_context ctx in
-      let conseq = Orders_relation.trans_ord2sleek_rels_in_struc_formula conseq in
+      let ctx = Sess_orders_relation.trans_ord2sleek_rels_in_context ctx in
+      let conseq = Sess_orders_relation.trans_ord2sleek_rels_in_struc_formula conseq in
       (ctx,conseq)
   in
   let f_post (res,proof) =
     if not(!ord2sleek) then (res,proof)
     else
       (* transforms from sleek rels to orders rels *)
-      let list_context = Orders_relation.trans_sleek2ord_rels_in_list_context res in
+      let list_context = Sess_orders_relation.trans_sleek2ord_rels_in_list_context res in
       (list_context, proof)
   in
   let fct (ctx,conseq) =
@@ -5533,15 +5533,15 @@ and heap_entail_wrapper p is_folding cl conseq pos : (list_context * proof) =
   let f_pre (cl,conseq) =
     if not(!ord2sleek) then (cl,conseq)
     else
-      let cl = Orders_relation.trans_ord2sleek_rels_in_list_context cl in
-      let conseq = Orders_relation.trans_ord2sleek_rels_in_formula conseq in
+      let cl = Sess_orders_relation.trans_ord2sleek_rels_in_list_context cl in
+      let conseq = Sess_orders_relation.trans_ord2sleek_rels_in_formula conseq in
       (cl,conseq)
   in
   let f_post (res,proof) =
     if not(!ord2sleek) then (res,proof)
     else
       (* transforms from sleek rels to orders rels *)
-      let list_context = Orders_relation.trans_sleek2ord_rels_in_list_context res in
+      let list_context = Sess_orders_relation.trans_sleek2ord_rels_in_list_context res in
       (list_context, proof)
   in
   let fct (cl,conseq) = heap_entail_main p is_folding cl conseq pos in

@@ -35,7 +35,7 @@ void S(Channel c, int reward, int no_players)
  int option = receive(c);
  if (fee>=1000) { reward = reward + fee; }
  else { reward = 0; }
- dprint;
+// dprint;
  assert reward'>=1000;
  assert reward'=0 | reward'>=1000;
 // dprint;

@@ -85,9 +85,9 @@ struct
 end;;
 
 (* key for ConstrMap *)
-module UID (Var: Orders.VAR_TYPE) =
+module UID (Var: Sess_orders.VAR_TYPE) =
 struct
-  module Ord = Orders.GOrders(Var)
+  module Ord = Sess_orders.GOrders(Var)
   type t = Ord.suid
   let eq = Ord.eq_suid
   let string_of = Ord.string_of_suid
@@ -98,8 +98,8 @@ end;;
 (* module CUID = UID(SCOrd) *)
 (* module IUID = UID(S.IVar) *)
 (* module CUID = UID(S.CVar) *)
-module IUID = UID(Orders.Var(S.IForm))
-module CUID = UID(Orders.Var(S.CForm))
+module IUID = UID(Sess_orders.Var(S.IForm))
+module CUID = UID(Sess_orders.Var(S.CForm))
 
 
 (* ------------------------------ *)
@@ -192,9 +192,9 @@ module BOUNDARY_ELEMENT =
     let add_elem (old_e:t)(new_e:t) :t  = new_e
   end;;
 
-module Orders_list (Var: Orders.VAR_TYPE) =
+module Orders_list (Var: Sess_orders.VAR_TYPE) =
 struct
-  module Ord = Orders.GOrders(Var)
+  module Ord = Sess_orders.GOrders(Var)
   type t = Ord.assrt list
   type base = Ord.assrt
 
@@ -232,8 +232,8 @@ end;;
 (* ------------------------------------------------ *)
 (* module IOL = Orders_list(SIOrd) *)
 (* module COL = Orders_list(SCOrd) *)
-module IOL = Orders_list(Orders.Var(S.IForm))
-module COL = Orders_list(Orders.Var(S.CForm))
+module IOL = Orders_list(Sess_orders.Var(S.IForm))
+module COL = Orders_list(Sess_orders.Var(S.CForm))
 
 module Events = BOUNDARY_ELEMENT(BEvent) ;;
 module Trans = BOUNDARY_ELEMENT(BTrans) ;;
@@ -242,7 +242,7 @@ module RMap       = SC.SMap(IRole)(Events) ;;
 module CMap       = SC.SMap(IChan)(Trans) ;;
 module ConstrMap  = SC.SMap(IUID)(IOL) ;;
 module CConstrMap = SC.SMap(CUID)(COL) ;;
-module VarEvent   = SC.SMap(Orders.Var(S.IForm))(Event_element) ;;
+module VarEvent   = SC.SMap(Sess_orders.Var(S.IForm))(Event_element) ;;
 
 (* ------------------------------------------------ *)
 (* ------------- summary related stuff ------------ *)
@@ -745,10 +745,10 @@ let collect view prot fnc_i2c params =
   Debug.no_1 "OS.collect" SProt.string_of_session pr_out (fun _ -> collect view prot fnc_i2c params) prot
 
 
-(* ------------------------------------------------------------------------ *)
+(* --------------------------- REFINEMENT 1-------------------------------- *)
 (* Inserts order assumptions and proof obligations in the session protocol. *)
 let insert_orders view prot params fnc_i2c =
-  if not (!Globals.sess_refinement) then prot
+  if not (!Globals.sess_insert_orders) then prot
   else
   let amap,gmap = collect view prot fnc_i2c params in
   let insert sf = match sf with

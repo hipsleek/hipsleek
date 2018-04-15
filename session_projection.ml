@@ -9,7 +9,7 @@ open Gen.BList
 module SProt  = Session.IProtocol
 module SBProt = Session.IProtocol_base
 module SIOrd = Session.IOrders
-module OS = Order_summary
+module OS = Sess_order_summary
 module SProj = Session.IProjection
 module SBProj = Session.IProjection_base
 module STProj = Session.ITPProjection
@@ -22,9 +22,9 @@ type chan = SIOrd.chan
 (* ====== Projection Maps ====== *)
 (* ============================= *)
 
-module Projection_map = 
+module Projection_map =
 struct
-  type t = SProj.session 
+  type t = SProj.session
 
   let eq e1 e2 = failwith x_tbi
   let string_of f = SProj.string_of_session f
@@ -45,7 +45,7 @@ struct
   type t = Iformula.struc_formula
 
   let eq e1 e2 = failwith x_tbi
-  let string_of f = !Iformula.print_struc_formula f 
+  let string_of f = !Iformula.print_struc_formula f
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
@@ -54,7 +54,7 @@ struct
   type t = Cformula.struc_formula
 
   let eq e1 e2 = failwith x_tbi
-  let string_of f = !Cformula.print_struc_formula f 
+  let string_of f = !Cformula.print_struc_formula f
   let add_elem (old_e:t) (new_e:t) : t  = new_e
 end;;
 
@@ -89,12 +89,12 @@ let create_session_base_tprj transmission msg_var pos heap_node msg =
 (* Makes projection per party for assumptions *)
 let rec mk_prj_assume_on_role pred_orders role =
   match pred_orders with
-   | SIOrd.And and_type -> 
+   | SIOrd.And and_type ->
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
        let prj1 = mk_prj_assume_on_role and_head role in
        let prj2 = mk_prj_assume_on_role and_tail role in
-       SIOrd.mk_and prj1 prj2 
+       SIOrd.mk_and prj1 prj2
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
@@ -109,7 +109,7 @@ let rec mk_prj_assume_on_role pred_orders role =
    | _ -> SIOrd.Bot
 
 (* Makes projection per channel for assumptions
- * Returns a pair of SIOrd.assrt: 
+ * Returns a pair of SIOrd.assrt:
    * (orders for Assume, orders for Guard) *)
 let rec mk_prj_assume_on_chan pred_orders chan =
   match pred_orders with
@@ -118,7 +118,7 @@ let rec mk_prj_assume_on_chan pred_orders chan =
         let and_tail = and_type.and_assrt2 in
         let prj_assume1, prj_guard1 = mk_prj_assume_on_chan and_head chan in
         let prj_assume2, prj_guard2 = mk_prj_assume_on_chan and_tail chan in
-       (SIOrd.mk_and prj_assume1 prj_assume2, SIOrd.mk_and prj_guard1 prj_guard2) 
+       (SIOrd.mk_and prj_assume1 prj_assume2, SIOrd.mk_and prj_guard1 prj_guard2)
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
@@ -141,13 +141,13 @@ let rec mk_prj_assume_on_chan pred_orders chan =
        | _ -> (SIOrd.Bot, SIOrd.Bot)
        end
    | _ -> (SIOrd.Bot, SIOrd.Bot)
- 
+
 (* Makes projection per party for proof obligations *)
-(* Returns a pair of SIOrd.assrt: 
+(* Returns a pair of SIOrd.assrt:
   * (orders for Assume, orders for Guard) *)
 let rec mk_prj_guard_on_role_x pred_orders role =
   match pred_orders with
-   | SIOrd.And and_type -> 
+   | SIOrd.And and_type ->
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
        let (prj_assume1, prj_guard1) = mk_prj_guard_on_role_x and_head role in
@@ -163,11 +163,11 @@ let rec mk_prj_guard_on_role_x pred_orders role =
    | SIOrd.Order order ->
      begin
       match order with
-      | SIOrd.HBe hbe -> 
+      | SIOrd.HBe hbe ->
           let hbe_role = hbe.hbe_event2.role in
           if (SBProt.eq_role role hbe_role) then
             (SIOrd.Bot, SIOrd.mk_order (SIOrd.HBe hbe))
-          else 
+          else
             (SIOrd.mk_order (SIOrd.HBe hbe), SIOrd.Bot)
       | _ -> (SIOrd.Bot, SIOrd.Bot)
      end
@@ -175,20 +175,20 @@ let rec mk_prj_guard_on_role_x pred_orders role =
 
 let rec mk_prj_guard_on_role pred_orders role =
   let pr1 = SIOrd.string_of in
-  let pr2 = Iformula.string_of_spec_var in 
-  let pr_out = pr_pair pr1 pr1 in 
+  let pr2 = Iformula.string_of_spec_var in
+  let pr_out = pr_pair pr1 pr1 in
   Debug.no_2 "mk_prj_guard_on_role" pr1 pr2 pr_out (fun _ _ -> mk_prj_guard_on_role_x pred_orders role) pred_orders role
-  
+
 
 (* Makes projection per channel for proof obligations *)
 let rec mk_prj_guard_on_chan pred_orders chan =
   match pred_orders with
-   | SIOrd.And and_type -> 
+   | SIOrd.And and_type ->
        let and_head = and_type.and_assrt1 in
        let and_tail = and_type.and_assrt2 in
        let prj1 = mk_prj_guard_on_chan and_head chan in
        let prj2 = mk_prj_guard_on_chan and_tail chan in
-       SIOrd.mk_and prj1 prj2 
+       SIOrd.mk_and prj1 prj2
    | SIOrd.Or or_type ->
        let or_head = or_type.or_assrt1 in
        let or_tail = or_type.or_assrt2 in
@@ -208,7 +208,7 @@ let rec mk_prj_guard_on_chan pred_orders chan =
    | _ -> SIOrd.Bot
 
 (* per party *)
-let norm_proj (session:SProj.session) : SProj.session = 
+let norm_proj (session:SProj.session) : SProj.session =
   (* removes assrt Bot *)
   let norm_sess = SProj.norm_assrt session in
   (* removes assertions and guards that contain orders with only one Bot *)
@@ -242,7 +242,7 @@ let rec remove_bot_from_list lst new_lst =
 (* global spec -> per party spec *)
 let mk_projection_per_party prot role =
   let rec deconstruct_prot prot = match prot with
-    | SProt.SSeq seq -> 
+    | SProt.SSeq seq ->
         let head      = seq.session_seq_formula_head in
         let tail      = seq.session_seq_formula_tail in
         let pos       = seq.session_seq_formula_pos in
@@ -257,13 +257,13 @@ let mk_projection_per_party prot role =
         let sess_prj2 = deconstruct_prot session2 in
         SProj.mk_session_or_formula sess_prj1 sess_prj2 pos
     | SProt.SStar star ->
-        let session1  = star.session_star_formula_star1 in 
-        let session2  = star.session_star_formula_star2 in 
+        let session1  = star.session_star_formula_star1 in
+        let session2  = star.session_star_formula_star2 in
         let pos       = star.session_star_formula_pos in
         let sess_prj1 = deconstruct_prot session1 in
         let sess_prj2 = deconstruct_prot session2 in
         SProj.mk_session_star_formula sess_prj1 sess_prj2 pos
-    | SProt.SBase sb -> 
+    | SProt.SBase sb ->
         begin
           match sb with
           | SProt.Base base ->
@@ -278,8 +278,8 @@ let mk_projection_per_party prot role =
             let sender = SBProt.get_sender base in
             let receiver = SBProt.get_receiver base in
             let heap_node = SBProt.get_session_heap_node base in
-            (* creates session_formula based on transmission role *) 
-            if (SBProt.eq_role sender role) then 
+            (* creates session_formula based on transmission role *)
+            if (SBProt.eq_role sender role) then
               let session_formula = create_session_base_prj Session.TSend chan msg_var pos heap_node msg in
               session_formula
             else if (SBProt.eq_role receiver role) then
@@ -295,7 +295,7 @@ let mk_projection_per_party prot role =
             (* makes projection per Predicate kind *)
             (* only Assert Assume and Assert Guard are taken into consideration *)
             begin match pred_kind with
-            | Assert a -> 
+            | Assert a ->
               begin
                 match a with
                 | Assume ->
@@ -303,7 +303,7 @@ let mk_projection_per_party prot role =
                     let prot = SProt.update_session_predicate ~orders:assrt sp in
                     let proj = x_add_1 Session.convert_pred_from_prot_to_proj prot in
                     proj
-                | Guard -> 
+                | Guard ->
                     let (assrt_assume, assrt_guard) = mk_prj_guard_on_role pred_orders role in
                     let prot_assume = SProt.update_session_predicate ~name:"Assume" ~orders:assrt_assume ~sess_pred_kind:(Assert Assume) sp in
                     let proj_assume = x_add_1 Session.convert_pred_from_prot_to_proj prot_assume in
@@ -312,7 +312,7 @@ let mk_projection_per_party prot role =
                     SProj.mk_session_seq_formula proj_assume proj_guard pred_pos
                 | _ -> SProj.SEmp
               end
-            | _ -> SProj.SEmp 
+            | _ -> SProj.SEmp
             end
           | _ -> SProj.SEmp
         end
@@ -332,7 +332,7 @@ let mk_projection_per_party prot role =
 (* per party spec -> per channel spec *)
 let mk_projection_per_channel prj chan =
   let rec prj_per_chan prj chan = match prj with
-  | SProj.SSeq seq -> 
+  | SProj.SSeq seq ->
       let head      = seq.session_seq_formula_head in
       let tail      = seq.session_seq_formula_tail in
       let pos       = seq.session_seq_formula_pos in
@@ -347,13 +347,13 @@ let mk_projection_per_channel prj chan =
       let sess_prj2 = prj_per_chan session2 chan in
       STProj.mk_session_or_formula sess_prj1 sess_prj2 pos
   | SProj.SStar star ->
-      let session1  = star.session_star_formula_star1 in 
-      let session2  = star.session_star_formula_star2 in 
+      let session1  = star.session_star_formula_star1 in
+      let session2  = star.session_star_formula_star2 in
       let pos       = star.session_star_formula_pos in
       let sess_prj1 = prj_per_chan session1 chan in
       let sess_prj2 = prj_per_chan session2 chan in
       STProj.mk_session_star_formula sess_prj1 sess_prj2 pos
-  | SProj.SBase sb -> 
+  | SProj.SBase sb ->
       begin match sb with
       | SProj.Base base ->
           (* gets information nedeed for projection *)
@@ -376,7 +376,7 @@ let mk_projection_per_channel prj chan =
           let pred_orders = pred.session_predicate_orders in
           let pred_kind   = pred.session_predicate_kind in
           begin match pred_kind with
-            | Assert a -> 
+            | Assert a ->
               begin
                 match a with
                 | Assume ->
@@ -413,7 +413,7 @@ let mk_projection_per_channel prj chan =
 (* Returns a list of assumptions orders          *)
 let mk_projection_shared_spec prot lst =
   let rec deconstruct_prot prot lst = match prot with
-    | SProt.SSeq seq -> 
+    | SProt.SSeq seq ->
         let head      = seq.session_seq_formula_head in
         let tail      = seq.session_seq_formula_tail in
         let sess_prj1 = deconstruct_prot head lst in
@@ -426,8 +426,8 @@ let mk_projection_shared_spec prot lst =
         let sess_prj2 = deconstruct_prot session2 lst in
         lst @ sess_prj1 @ sess_prj2
     | SProt.SStar star ->
-        let session1  = star.session_star_formula_star1 in 
-        let session2  = star.session_star_formula_star2 in 
+        let session1  = star.session_star_formula_star1 in
+        let session2  = star.session_star_formula_star2 in
         let sess_prj1 = deconstruct_prot session1 lst in
         let sess_prj2 = deconstruct_prot session2 lst in
         lst @ sess_prj1 @ sess_prj2
@@ -439,7 +439,7 @@ let mk_projection_shared_spec prot lst =
             (* makes projection per Predicate kind *)
             (* only Assert Assume is checked *)
             begin match pred_kind with
-            | Assert a -> 
+            | Assert a ->
               begin match a with
               | Assume ->
                   let rec order_prj pred_orders = begin match pred_orders with
@@ -460,7 +460,7 @@ let mk_projection_shared_spec prot lst =
                   | _ -> SIOrd.Bot
                   end in
                   [order_prj pred_orders]
-              | _ -> [] 
+              | _ -> []
               end
             | _ -> []
             end
@@ -469,7 +469,7 @@ let mk_projection_shared_spec prot lst =
     | _ -> lst in
   let res = deconstruct_prot prot [] in
   remove_bot_from_list res []
-   
+
 let mk_projection_shared_spec prot lst =
   let pr1 = SProt.string_of_session in
   let pr2 = pr_list SIOrd.string_of in
@@ -498,7 +498,7 @@ let create_map_of_tprj prj_map vars =
       else
         acc) map vars in
   List.fold_left (fun acc (role, prj) -> mk_prj_per_channel prj role vars acc) (TPrjMap.mkEmpty()) prj_map
-      
+
 (* Applies projection per party, then per channel.
  * Returns a pair of projections *)
 let mk_projection prot vars =
@@ -522,7 +522,7 @@ let convert_prj_maps prj_map tprj_map =
     let pos = SProj.get_pos elem in
     let h_form = SProj.trans_from_session elem in
     let form = SProj.mk_formula_heap_only h_form pos in
-    Session.IMessage.mk_struc_formula form pos 
+    Session.IMessage.mk_struc_formula form pos
    ) prj_map
   in
   let htprj_map = TPrjMap.map_data_ext (fun elem ->
@@ -539,5 +539,3 @@ let convert_prj_maps prj_map tprj_map =
   let pr2 = TPrjMap.string_of in
   let pr_out = pr_pair IPrjMap.string_of ITPrjMap.string_of in
   Debug.no_2 "SP.convert_prj_maps" pr1 pr2 pr_out (fun _ _ -> convert_prj_maps prj_map tprj_map) prj_map tprj_map
-
-
