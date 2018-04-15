@@ -329,7 +329,17 @@ let mk_projection_per_party prot role =
                     end
                 | _ -> SProj.SEmp
               end
-            | _ -> SProj.SEmp
+            | _ ->              (* not assert *)
+                 try
+                   let () = y_binfo_pp "SORRR " in
+                   let params = List.map (fun param -> SBProt.param_to_var param) sp.session_predicate_params in
+                   (* let anns = List.combine params sp.session_predicate_anns.peers in *)
+                   let anns = List.map (fun param -> if SBProt.eq_role param role then (AnnPeer PEER) else AnnInactive) params in
+                   let anns = {sp.session_predicate_anns with peers = anns} in
+                   let pred = SProt.update_session_predicate ~sess_ann:anns sp in
+                   let proj = x_add_1 Session.convert_pred_from_prot_to_proj pred in
+                   proj
+                 with _ -> SProj.SEmp
             end
           | _ -> SProj.SEmp
         end
@@ -436,7 +446,18 @@ let mk_projection_per_channel prj chan =
                     end
                 | _ -> STProj.SEmp
               end
-            | _ -> STProj.SEmp
+            | _ ->              (* not assert *)
+                 try
+                   let () = y_binfo_pp "SORRR " in
+                   let params = List.map (fun param -> SBProj.param_to_var param) pred.session_predicate_params in
+                   let anns = List.combine params pred.session_predicate_anns.peers in
+                   let anns = List.map (fun (param,ann) -> if SBProj.eq_chan param chan then (AnnPeer CHAN) else ann) anns in
+                   let anns = {pred.session_predicate_anns with peers = anns} in
+                   let pred = SProj.update_session_predicate ~sess_ann:anns pred in
+                   let proj = x_add_1 Session.convert_pred_from_prot_to_tproj pred in
+                   proj
+                 with _ -> STProj.SEmp
+            (* | _ -> STProj.SEmp *)
           end
       | _ -> STProj.SEmp
       end

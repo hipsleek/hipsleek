@@ -15453,19 +15453,22 @@ Doing case splitting based on the guard.
 
 (* ------------------------------------------------------------ *)
 (* ----------------------- norm lemma app --------------------- *)
-
+(* TODO: avoid lemma application with HVar when head_node is HVar *)
 and choose_coerc_candidates_for_norm prog ?left:(left = true) head_node =
   try
     let head_name = get_node_name 0 head_node in
-    let lemmas = if left then (Lem_store.norm_lemma # get_all_left_coercion)
-      else (Lem_store.norm_lemma # get_right_coercion) in
-    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-    (* only use norm lemmas for normalization *)
-    (* let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in *)
-    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-    let lemmas = look_up_coercion_def_raw lemmas head_name in
-    let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
-    lemmas
+    let is_hvar = match head_node with | HVar _ -> true | _ -> false in (* change the match with a contains *)
+    if is_hvar then []
+    else
+     let lemmas = if left then (Lem_store.norm_lemma # get_all_left_coercion)
+       else (Lem_store.norm_lemma # get_right_coercion) in
+     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+     (* only use norm lemmas for normalization *)
+     (* let lemmas = List.filter (fun c -> c.coercion_kind = LEM_NORM) lemmas in *)
+     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+     let lemmas = look_up_coercion_def_raw lemmas head_name in
+     let () = y_ninfo_hp (add_str "lemmas no:" string_of_int) (List.length  lemmas) in
+     lemmas
   with _ -> []
 
 (* and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) = *)
