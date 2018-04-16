@@ -2328,8 +2328,8 @@ let fold_mem_lst init_f with_dupl with_inv f : formula= match f with
 (*
 let fold_mem_lst init_f with_dupl with_inv f =
   Debug.no_2 "fold_mem_lst"
-	!print_p_f_f !print_mix_f !print_p_f_f
-	(fun _ _ -> fold_mem_lst init_f with_dupl with_inv f) init_f f
+!print_p_f_f !print_mix_f !print_p_f_f
+(fun _ _ -> fold_mem_lst init_f with_dupl with_inv f) init_f f
 *)
 let memoise_add_pure_N_m = memoise_add_pure_N
 
@@ -2983,3 +2983,9 @@ let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
 
 let update_pure_of_mix f (mf: mix_formula) =
   transform_mix_formula (nonef, nonef, f, somef, somef) mf
+
+(* IFA *)
+let add_flow_in_mix (v:Cpure.spec_var) (mf:mix_formula) : mix_formula =
+  match mf with
+  | MemoF _  -> mf
+  | OnePF pf -> OnePF(Cpure.add_flow_in_pure v pf)

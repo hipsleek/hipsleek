@@ -55,6 +55,7 @@ int double_if_4(int x)
   if(y == 0) {
     z = 1;
   }
+  dprint;
   return z;
 }
 

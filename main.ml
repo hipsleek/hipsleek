@@ -433,7 +433,7 @@ let process_source_full source =
   let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None   -> if !Globals.is_ifa then  ["\"prelude_else.ss\""] else  ["\"prelude.ss\""]
+    | None   -> if !Globals.is_ifa then  ["\"prelude_flow.ss\""] else  ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   (*let () = print_endline ("header_files"^((pr_list (fun x -> x)) header_files)) in*)
@@ -936,7 +936,7 @@ let process_source_full_parse_only source =
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None   -> if !Globals.is_ifa then  ["\"prelude_else.ss\""] else  ["\"prelude.ss\""]
+    | None   -> if !Globals.is_ifa then  ["\"prelude_flow.ss\""] else  ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in 
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in

@@ -1841,7 +1841,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
       end
 
-    | Bind ({ 
+    | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
         exp_bind_fields = lvars; (* fields of bound node *)
@@ -1850,7 +1850,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_bind_param_imm = pimm; (* imm annotation for each field *)
         exp_bind_read_only = read_only;
         exp_bind_path_id = pid;
-        exp_bind_pos = pos }) -> 
+        exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
       let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
@@ -1877,7 +1877,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* else                                                          *)
 
           (* VPerm: vperm of fields is inherited from the bound var *)
-          let ctx = 
+          let ctx =
             if !ann_vp then
               (* let vp = VP.vperm_sets_list_failesc_context ctx in             *)
               (* let bound_var = CP.SpecVar (v_t, v, Unprimed) in               *)
@@ -1889,7 +1889,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* in                                                             *)
               (* VPerm: fields have @full permission like local variables  *)
               let vperm_fields = CVP.vperm_sets_of_anns [(
-                  VP_Full, 
+                  VP_Full,
                   List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)]
               in
               VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
@@ -1911,6 +1911,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if !Globals.large_bind then
               CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
             else ctx in
+          (* let () = print_endline ("link pv: " ^ (Cprinter.string_of_formula link_pv)) in
+           * let () = print_endline ("tmp ctx: " ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
           (* let () = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
           (* let () = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
           let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
@@ -2071,8 +2073,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else
               begin
                 stk_vars # push_list lsv;
-                let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
+                let () = x_binfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
                 let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
+                let () = print_endline ("body: " ^ (Cprinter.string_of_exp body)) in
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                 (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
@@ -2086,9 +2089,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   else tmp_res1 
                 in 
                 x_tinfo_pp "WN : adding vheap to exception too" no_pos;
-                x_tinfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
+                x_binfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
+                x_binfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
+                x_binfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                 let bind_field = CF.mk_bind_fields_struc vs_prim in
                 let tmp_res2 =
@@ -2105,6 +2108,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                let res = if !Globals.is_ifa (* IFA *)
+                  then CF.transform_list_failesc_context (idf, idf, CF.prop_bind (CP.to_primed (CP.mk_spec_var v))) res
+                  else res
+                in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
                 x_tinfo_hp (add_str "bind:tmp_res2" (pr_list Cprinter.string_of_failesc_context)) tmp_res2 no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)
@@ -2226,16 +2233,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             then CF.set_sec_context new_sctx else_ctx1
             else else_ctx1
           in
+          let () = print_endline ("then: " ^ Cprinter.string_of_list_failesc_context then_ctx1) in
+          let () = print_endline ("else: " ^ Cprinter.string_of_list_failesc_context else_ctx1) in
           let then_ctx2 = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
           (* let () = print_endline ("then_ctx2 :" ^ (Cprinter.string_of_list_failesc_context then_ctx2)) in *)
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           (* let res = CF.pop_esc_level_list res pid in *)
+          let () = print_endline ("res1: " ^ Cprinter.string_of_list_failesc_context res) in
           let res = if !Globals.is_ifa
             then CF.set_sec_context old_sctx res
             else res
           in
+          let () = print_endline ("res2: " ^ Cprinter.string_of_list_failesc_context res) in
           res
         end in
       Gen.Profiling.push_time "[check_exp] Cond";

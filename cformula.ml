@@ -20628,6 +20628,14 @@ let normalize_struc nb b =
 let base_flows vars loc = (* NOTE: adds FLOW(x,x') *)
   List.fold_left (fun acc fr -> CP.mkAnd acc (CP.mkSecFLOW fr (CP.to_primed fr)) loc) (CP.mkTrue loc) vars
 
+let add_flow (v:CP.spec_var) (f:formula) : formula =
+  let rec in_formula form =
+    match form with
+    | Base   f -> Base   { f with formula_base_pure   = MCP.add_flow_in_mix v f.formula_base_pure   }
+    | Exists f -> Exists { f with formula_exists_pure = MCP.add_flow_in_mix v f.formula_exists_pure }
+    | Or     f -> Or { f with formula_or_f1 = (in_formula f.formula_or_f1); formula_or_f2 = (in_formula f.formula_or_f2)}
+  in
+  in_formula f
 let set_sec_context (sctx:sec_label list)(lfc:list_failesc_context) : list_failesc_context =
   let rec in_context (ctx:context) =
     match ctx with
@@ -20688,3 +20696,22 @@ let prop_var res v estate = (* NOTE: propagate sec context & v to res *)
   let _ctx  = Ctx { estate with es_formula = form } in
   _ctx
 
+let prop_bind x estate = (* NOTE: propagate sec context, old_res, x to res while renaming old_res *)
+  let form = (add_flow x estate.es_formula) in
+  let () = print_endline ("old f: " ^ !print_formula estate.es_formula) in
+  let () = print_endline ("new f: " ^ !print_formula form) in
+  Ctx { estate with es_formula = form }
+  (* let sctx  = estate.es_sec_ctx in
+   * let subf  = subst_avoid_capture [res] [old_res] estate.es_formula in
+   * let () = print_endline ("old f: " ^ !print_formula estate.es_formula) in
+   * let () = print_endline ("sub f: " ^ !print_formula subf) in
+   * let puref = CP.mkEqExp (Var(res,no_pos)) (Var(old_res,no_pos)) no_pos in
+   * let sflow = CP.mkCtxFLOW res sctx in
+   * let lflow = CP.mkSecFLOW x res in
+   * let oflow = CP.mkSecFLOW old_res res in
+   * let flow  = CP.mkOr sflow (CP.mkOr lflow oflow None no_pos) None no_pos in
+   * let fpure = CP.mkAnd puref flow no_pos in
+   * let form  = add_pure_formula_to_formula fpure subf in
+   * let () = print_endline ("new f: " ^ !print_formula form) in
+   * let _ctx  = Ctx { estate with es_formula = form } in
+   * _ctx *)

@@ -24,16 +24,16 @@ axiom LO(x) & HI(x) ==> LO(x).
 axiom HI(x) & LO(x) ==> LO(x).
 axiom HI(x) & HI(x) ==> HI(x).
 
-// GLB FLOW
-axiom LO(x) & FLOW(y,x) ==> LO(x).
-axiom HI(x) & FLOW(y,x) ==> FLOW(y,x).
-axiom FLOW(y,x) & LO(x) ==> LO(x).
-axiom FLOW(y,x) & HI(x) ==> FLOW(y,x).
+/* // GLB FLOW */
+/* axiom LO(x) & FLOW(y,x) ==> LO(x). */
+/* axiom HI(x) & FLOW(y,x) ==> FLOW(y,x). */
+/* axiom FLOW(y,x) & LO(x) ==> LO(x). */
+/* axiom FLOW(y,x) & HI(x) ==> FLOW(y,x). */
 
-// Transitivity of Flow
-axiom FLOW(x,y) & FLOW(y,z) ==> FLOW(x,z).
-axiom FLOW(x,y) & LO(x)     ==> LO(y).
-axiom FLOW(x,y) & HI(x)     ==> HI(y).
+/* // Transitivity of Flow */
+/* axiom FLOW(x,y) & FLOW(y,z) ==> FLOW(x,z). */
+/* axiom FLOW(x,y) & LO(x)     ==> LO(y). */
+/* axiom FLOW(x,y) & HI(x)     ==> HI(y). */
 
 // Flow Selection: to be argued
 // UNSOUND:
