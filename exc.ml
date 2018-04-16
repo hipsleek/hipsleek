@@ -15,21 +15,21 @@ type nflow = (int*int)(*numeric representation of flow*)
 
 (*========================================*)
 (*LDK*)
-(*conversion between lflow, list and set*) 
+(*conversion between lflow, list and set*)
 (*lflow can be implemented as a set of element*)
 (*Therefore, operations on flow can follow set theory *)
 (*========================================*)
-module IntSet = Set.Make( 
+module IntSet = Set.Make(
   struct
     let compare = Pervasives.compare
     type t = int
   end )
 
 (* n1 <= n2 *)
-let rec list_of_pair (n1,n2): int list = 
+let rec list_of_pair (n1,n2): int list =
   if (n2<n1) then []
   else
-  if (n1==n2) then 
+  if (n1==n2) then
     [n1]
   else
     (n1::(list_of_pair (n1+1,n2)))
@@ -47,7 +47,7 @@ let rec list_of_list_pair ls  =
 let rec set_of_list ls =
   match ls with
   | [] -> IntSet.empty
-  | x::xs -> 
+  | x::xs ->
     let s = set_of_list xs in
     IntSet.add x s
 
@@ -63,7 +63,7 @@ let partition ls =
     match ls with
     | [] -> [[]]
     | [x] -> [[x]]
-    | x::xs -> 
+    | x::xs ->
       let rs = helper xs in
       let tmp = List.hd rs in (*rs has at least 1 list containing a least 1 lement*)
       let y = List.hd tmp in
@@ -122,8 +122,8 @@ let list_pair_of_set s =
 
 *)
 
-(* Khanh : need to generalise our code to 
-   use dflow instead of nflow 
+(* Khanh : need to generalise our code to
+   use dflow instead of nflow
    e.g in the code:
      try {
        .. throw v(of e1)
@@ -133,7 +133,7 @@ let list_pair_of_set s =
      }
      // D & flow e1-e2
    The flow  e1-e2 which is
-   captured as 
+   captured as
    (e1, e1-e2)
    = ((12,15),[(12,15)-(12,14)])
    = ((12,15),[(15,15)])
@@ -218,7 +218,7 @@ let order_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
 
 (* f1 - f2 *)
 let subtract_flow_ne (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-  let minus (s1,b1) (s2,b2) = 
+  let minus (s1,b1) (s2,b2) =
     (* fst is larger than than the second *)
     let r1 = if (s1==s2) then [] else [(s1,s2-1)] in
     let r2 = if (b1==b2) then [] else [(b2+1,b1)] in
@@ -489,14 +489,14 @@ sig
   val c_flow_int : nflow ref
   val loop_ret_flow_int : nflow ref
   val spec_flow_int : nflow ref
-  val top_flow_int : nflow ref 
+  val top_flow_int : nflow ref
   val abnormal_flow_int : nflow ref
   val raisable_flow_int : nflow ref
   val error_flow_int : nflow ref
   val mayerror_flow_int : nflow ref
   val bfail_flow_int : nflow ref
   val false_flow_int : nflow
-  val empty_flow : nflow 
+  val empty_flow : nflow
   val is_false_flow : nflow -> bool
   val is_empty_flow : nflow -> bool
   (* is fst the exact flow of snd *)
@@ -508,7 +508,7 @@ sig
   val is_eq_flow : nflow -> nflow -> bool
   val is_overlap_flow : nflow -> nflow -> bool
   val order_flow : nflow -> nflow -> int
-  val norm_flow : nflow -> nflow 
+  val norm_flow : nflow -> nflow
   val string_of_flow : nflow -> string
   val string_of_list_flow : nflow list -> string
   val subtract_flow : nflow -> nflow -> nflow
@@ -569,31 +569,31 @@ struct
   let empty_flow : nflow = (-1,0)
   let norm_flow_int = ref empty_flow
   let c_flow_int = ref empty_flow
-  let ret_flow_int = ref empty_flow 
+  let ret_flow_int = ref empty_flow
   let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
-  let top_flow_int = ref empty_flow 
+  let top_flow_int = ref empty_flow
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
-  let error_flow_int  = ref empty_flow 
-  let mayerror_flow_int  = ref empty_flow 
-  let bfail_flow_int  = ref empty_flow 
-  let top_flow_int = ref empty_flow 
-  let false_flow_int = (0,0) 
+  let error_flow_int  = ref empty_flow
+  let mayerror_flow_int  = ref empty_flow
+  let bfail_flow_int  = ref empty_flow
+  let top_flow_int = ref empty_flow
+  let false_flow_int = (0,0)
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
-  let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2  
+  let is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0) || p1>p2
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
     if (is_empty_flow nf) || (is_false_flow nf) then (false_flow,1)
     else
       let res = List.filter (fun (_,_,n) -> (is_subset_flow_ne nf n)) elist in
       match res with
       | [] -> ("## cannot find flow type",-2)
-      | (s,_,nf2)::_ -> (s, 
+      | (s,_,nf2)::_ -> (s,
                          if is_exact_flow_ne nf nf2 then 0 (* exact *)
                          else if is_eq_flow_ne nf nf2 then 1 (* full *)
                          else -1) (* partial *)
   let is_subsume_flow (n1,n2)(p1,p2) : bool =
-    if (is_false_flow (p1,p2)) then true 
+    if (is_false_flow (p1,p2)) then true
     else (n1<=p1)&&(p2<=n2)
   let is_subset_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     if is_empty_flow(f1) then true
@@ -616,7 +616,7 @@ struct
     if is_subset_flow f1 f2 then
       if is_subset_flow f2 f1 then
         1 (* full flow *)
-      else 
+      else
       if is_exact_flow f1 f2 then 0 (* exact type *)
       else -1 (* partial flow *)
     else -2 (* unknown *)
@@ -625,7 +625,7 @@ struct
   let is_full_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
     (is_status_flow f1 f2) == 1
   let order_flow (((s1,b1):nflow) as f1) (((s2,b2):nflow) as f2) =
-    if (is_empty_flow f1) then 
+    if (is_empty_flow f1) then
       if (is_empty_flow f2) then 0
       else 1
     else if (is_empty_flow f2) then -1
@@ -650,19 +650,19 @@ struct
   let compute_hierarchy_aux_x cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
       let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
-      if ((List.length l1)==0) then 
+      if ((List.length l1)==0) then
         let i = cnt # inc_and_get in
         let j = cnt # inc_and_get in
         ([(f1,f2,(i,j))],(i,j))
-      else 
-        let ll,(mn,mx) = List.fold_left 
-            (fun (t,(o_min,o_max)) (a,b,(c,d)) -> 
-               let temp_l,(n_min, n_max) = (lrr a b) 
+      else
+        let ll,(mn,mx) = List.fold_left
+            (fun (t,(o_min,o_max)) (a,b,(c,d)) ->
+               let temp_l,(n_min, n_max) = (lrr a b)
                in (temp_l@t
                   ,( (if ((o_min== -1)||(n_min<o_min)) then n_min else o_min)
-                   ,(if (o_max<n_max) then n_max else o_max)))) 
-            ([],(-1,-1)) 
-            l1 
+                   ,(if (o_max<n_max) then n_max else o_max))))
+            ([],(-1,-1))
+            l1
         in let () = cnt # inc in  (* to account for internal node *)
         ( ((f1,f2,(mn,mx+1))::ll) ,(mn,mx+1))
     in
@@ -691,7 +691,7 @@ struct
           bfail_flow_int := empty_flow;
           elist <- []
         end
-      method private sort = 
+      method private sort =
         begin
           elist <- sort_flow elist
         end
@@ -702,7 +702,7 @@ struct
       method string_of =
         begin
           let x = elist in
-          let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int)) 
+          let el = pr_list (pr_triple pr_id pr_id (pr_pair string_of_int string_of_int))
               (List.map (fun (a,e,p) -> (a,e,p)) x) in
           "Exception List : "^(string_of_int (List.length x))^"members \n"^el
         end
@@ -710,7 +710,7 @@ struct
         begin
           let foo f =
             if (f="") then  !top_flow_int
-            else if ((String.compare f stub_flow)==0) then 
+            else if ((String.compare f stub_flow)==0) then
               Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
             else
               let rec get (lst:(string*string*nflow)list):nflow = match lst with
@@ -779,7 +779,7 @@ struct
             else (List.exists (fun c-> (cc c (c::visited))) sons) in
           (cc top_flow [top_flow])
         end
-      method sub_type_obj (t1 : ident) (t2 : ident): bool = 
+      method sub_type_obj (t1 : ident) (t2 : ident): bool =
         begin
           let n1 = self#get_hash t1 in
           let n2 = self#get_hash t2 in
@@ -815,13 +815,13 @@ struct
         end
     end
   let exlist = new exc
-  let rec sub_type (t1 : typ) (t2 : typ) = 
+  let rec sub_type (t1 : typ) (t2 : typ) =
     match t1,t2 with
     | UNK, _ -> true
-    | Named c1, Named c2 -> 
+    | Named c1, Named c2 ->
       if c1=c2 then true
       else if c1="" then true
-      else 
+      else
         begin
           Debug.ninfo_zprint (lazy (exlist#string_of)) no_pos ;
           exlist # sub_type_obj c1 c2
@@ -833,6 +833,7 @@ struct
     | List et1, List et2 -> sub_type et1 et2
     | Int, NUM        -> true
     | Float, NUM        -> true
+    | NUM, Poly _  | Int, Poly _ | Float, Poly _ | Named _, Poly _ -> true
     | p1, p2 -> p1=p2
   ;;
 end;;
@@ -865,7 +866,7 @@ struct
   let false_flow_int = ((0,0),[(0,0)])
 
   let is_empty_flow ((a,b),lst) = lst==[] || a<0 || (a>b)
-  let is_false_flow ((p1,p2),lst) :bool = (p2==0)&&(p1==0) || p1>p2 
+  let is_false_flow ((p1,p2),lst) :bool = (p2==0)&&(p1==0) || p1>p2
   (*n1,n2 subsume p1,p2*)
   let is_subsume_flow ((n1,n2),lst1) ((p1,p2),lst2) : bool =
     if (is_false_flow ((p1,p2),lst2)) then true
@@ -877,7 +878,7 @@ struct
         true
       else
         false
-  (*f1 is a subset of f2*) 
+  (*f1 is a subset of f2*)
   (*??? biff b/w subset and subsume*)
   (*f1 is a subset of f2 => f2 subsume f1*)
   let is_subset_flow ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) =
@@ -910,7 +911,7 @@ struct
     if is_empty_flow(f1) then
       if (is_empty_flow f2) then true
       else false
-    else 
+    else
       let s1 = set_of_list_pair lst1 in
       let s2 = set_of_list_pair lst2 in
       (IntSet.equal s1 s2)
@@ -932,7 +933,7 @@ struct
       if (is_empty_flow f2) then 0
       else 1
     else if (is_empty_flow f2) then -1
-    else 
+    else
     if (is_subset_flow f1 f2) then
       if (is_subset_flow f2 f1) then 0 (*f1=f2 => 0*)
       else 1 (*if f1 is subset of f2*)
@@ -945,13 +946,13 @@ struct
       let res = List.filter (fun (_,_,n) -> (is_subset_flow nf n)) elist in
       match res with
       | [] -> ("## cannot find flow type",-2)
-      | (s,_,nf2)::_ -> (s, 
+      | (s,_,nf2)::_ -> (s,
                          if is_exact_flow nf nf2 then 0 (* exact *)
                          else if is_eq_flow nf nf2 then 1 (* full *)
                          else -1) (* partial *)
   let sort_flow (xs:(ident * ident * dflow) list) =
     List.sort (fun (_,_,n1) (_,_,n2) -> order_flow n2 n1) xs
-  (*f1-f2*) 
+  (*f1-f2*)
   (*??? substract_flow_f vs subtract_flow*)
   let subtract_flow_l  ((((s1,b1),lst1):dflow) as f1) ((((s2,b2),lst2):dflow) as f2) : dflow list =
     if is_empty_flow(f1) || is_empty_flow(f2) then []
@@ -964,12 +965,12 @@ struct
   (* List.map (fun (a,b) -> ((s1,b1),[(a,b)])) rs (\* different flows *\) *)
   let norm_flow (nf:dflow)  =
     if (is_empty_flow nf) then empty_flow
-    else 
+    else
       let ((a,b),lst) = nf in
       let s1 = set_of_list_pair lst in (*convert list of intervals into a set*)
       let lst1 = list_pair_of_set s1 in (**)
       ((a,b),lst1)
-  let string_of_flow  ((((s1,b1),lst1):dflow) as f1) = 
+  let string_of_flow  ((((s1,b1),lst1):dflow) as f1) =
     let pr_pair_int = pr_pair (string_of_int) (string_of_int) in
     let pr_pair_int_list = pr_list (fun (a,b) -> pr_pair_int (a,b)) in
     pr_pair (pr_pair_int) (pr_pair_int_list) f1
@@ -1028,7 +1029,7 @@ struct
     object (self)
       val mutable elist = ([]:flow_entry list)
       val mutable cnt = new counter 0
-      method clear = 
+      method clear =
         begin
           norm_flow_int := empty_flow;
           c_flow_int := empty_flow;
@@ -1042,7 +1043,7 @@ struct
           bfail_flow_int := empty_flow;
           elist <- []
         end
-      method private sort = 
+      method private sort =
         begin
           elist <- sort_flow elist (*?? name conflict*)
         end
@@ -1057,7 +1058,7 @@ struct
       method string_of =
         begin
           let x = elist in
-          let el = pr_list (pr_triple pr_id pr_id (string_of_flow)) 
+          let el = pr_list (pr_triple pr_id pr_id (string_of_flow))
               (List.map (fun (a,e,p) -> (a,e,p)) x) in
           "Exception List : "^(string_of_int (List.length x))^"members \n"^el
         end
@@ -1065,13 +1066,13 @@ struct
         begin
           let foo f =
             if (f="") then !top_flow_int
-            else if ((String.compare f stub_flow)==0) then 
+            else if ((String.compare f stub_flow)==0) then
               Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
             else
               let rec get (lst:(string*string*dflow)list):dflow = match lst with
                 | [] -> false_flow_int
                 | (a,_,fl)::rst -> if (String.compare f a)==0 then fl
-                  else get rst 
+                  else get rst
               in (get elist)
           in
           (* let pr = pr_pair string_of_int string_of_int in *)
@@ -1089,7 +1090,7 @@ struct
         begin
           let () = self # clean in
           let () = cnt # reset in
-          let el = List.fold_left (fun acc (a,b,_) -> 
+          let el = List.fold_left (fun acc (a,b,_) ->
               if a="" then acc else (a,b,((0,0),[(0,0)]))::acc) [] elist in
           elist <- el
         end
@@ -1131,11 +1132,11 @@ struct
             else (List.exists (fun c-> (cc c (c::visited))) sons) in
           (cc top_flow [top_flow])
         end
-      method sub_type_obj (t1 : ident) (t2 : ident): bool = 
+      method sub_type_obj (t1 : ident) (t2 : ident): bool =
         begin
           let n1 = self#get_hash t1 in
           let n2 = self#get_hash t2 in
-          if (is_false_flow n2) 
+          if (is_false_flow n2)
           then t1=t2
           else is_subset_flow n1 n2
         end
@@ -1165,7 +1166,7 @@ struct
         end
     end
   let exlist = new exc
-  let rec sub_type (t1 : typ) (t2 : typ) = 
+  let rec sub_type (t1 : typ) (t2 : typ) =
     match t1,t2 with
     | UNK, _ -> true
     | Named c1, Named c2 ->
@@ -1181,9 +1182,9 @@ struct
     | List et1, List et2 -> sub_type et1 et2
     | Int, NUM        -> true
     | Float, NUM        -> true
+    | NUM, Poly _  | Int, Poly _ | Float, Poly _ | Named _, Poly _ -> true
     | p1, p2 -> p1=p2
   ;;
 end;;
 
 module GTable = ETABLE_NFLOW
-

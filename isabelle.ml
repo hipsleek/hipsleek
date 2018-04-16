@@ -38,11 +38,11 @@ let rec isabelle_of_typ = function
   | BagT	t	  ->
     if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
     else "("^(isabelle_of_typ t) ^") set"
-  | UNK           -> 	
-    Error.report_error {Error.error_loc = no_pos; 
+  | UNK           ->
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "unexpected UNKNOWN type"}
   | List _    | FORM | Tup2 _     -> 	(* lists are not supported *)
-    Error.report_error {Error.error_loc = no_pos; 
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "list/FORM/Tup2 not supported for Isabelle"}
   | NUM
   | RelT _
@@ -50,17 +50,19 @@ let rec isabelle_of_typ = function
   | UtT _
   | HpT
   | AnnT->
-    Error.report_error {Error.error_loc = no_pos; 
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "NUM, RelT, HpT and AnnT not supported for Isabelle"}
-  | TVar _ 
+  | TVar _
   (* | SLTyp *)
-  | Named _ 
+  | Named _
+  | Poly _
+  | PolyT
   | Array _ ->
-    Error.report_error {Error.error_loc = no_pos; 
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "type var, array and named type not supported for Isabelle"}
-  | INFInt | Pointer _ -> Error.report_no_pattern ()  
+  | INFInt | Pointer _ -> Error.report_no_pattern ()
   | Bptyp ->
-    Error.report_error {Error.error_loc = no_pos; 
+    Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "Bptyp type not supported for Isabelle"}
 ;;
 
@@ -195,7 +197,7 @@ and isabelle_of_b_formula b =
     let a1str = isabelle_of_exp a1 in
     let a2str = isabelle_of_exp a2 in
     let a3str = isabelle_of_exp a3 in
-    "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | (" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" 
+    "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | (" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | CP.EqMin (a1, a2, a3, _) ->
     let a1str = isabelle_of_exp a1 in
     let a2str = isabelle_of_exp a2 in
@@ -234,7 +236,7 @@ and isabelle_of_b_formula b =
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
   (* | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle") *)
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
-  | CP.ImmRel _ 
+  | CP.ImmRel _
   | CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
 
 (* pretty printing for formulas *)
@@ -293,21 +295,21 @@ let rec get_answer chn : string =
 let rec read_until substr chn : string =
   let str = get_answer chn in
   try
-    if (Str.search_forward (Str.regexp substr) str 0 >= 0) then str 
+    if (Str.search_forward (Str.regexp substr) str 0 >= 0) then str
     else str ^ read_until substr chn
   with
   | Not_found ->  str^read_until substr chn
   | e -> ignore e; print_string "[isabelle.ml] -> Exception while reading initial prompt"; str
 
-let read_prompt () = 
-  let chn = !process.inchannel in 
+let read_prompt () =
+  let chn = !process.inchannel in
   let (todo_unk:char) = input_char chn in (*reads '>'*)
   let (todo_unk:char) = input_char chn in (*reades space*)
   ()
 
 let prelude ()  =
-  let ichn = !process.inchannel in 
-  let ochn = !process.outchannel in 
+  let ichn = !process.inchannel in
+  let ochn = !process.outchannel in
   let (todo_unk:string) = read_until "Welcome to Isabelle" ichn in (*welcome text*)
   let () = read_prompt () in
   if !bag_flag then
@@ -315,8 +317,8 @@ let prelude ()  =
       let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
       let (todo_unk:char) = input_char ichn in (*reads space*)
       output_string ochn "begin\n"; flush ochn;
-      let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
-      let () = read_prompt() in 
+      let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*)
+      let () = read_prompt() in
       output_string ochn ("declare union_ac [simp]\n");
       let (todo_unk:string) = read_until "declare#" ichn in (*declare#*)
       if!log_all_flag==true then
@@ -327,8 +329,8 @@ let prelude ()  =
      let (todo_unk:string) = get_answer ichn in (*reads "theory#"*)
      let (todo_unk:char) = input_char ichn in (*reads space*)
      output_string ochn "begin\n"; flush ochn;
-     let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*) 
-     let () = read_prompt() in 
+     let (todo_unk:string) = get_answer ichn in (*reads "theory isabelle_proofs"*)
+     let () = read_prompt() in
      if!log_all_flag==true then
        output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
     )
@@ -338,13 +340,13 @@ let set_process proc =
 
 let rec check_image_existence image_lst =
   match image_lst with
-  | [] -> let () = print_string ("\n WARNING: Isabelle's Image was not found. Aborting execution ...\n") in 
+  | [] -> let () = print_string ("\n WARNING: Isabelle's Image was not found. Aborting execution ...\n") in
     exit(0)
-  | img::imgs ->   
-    if Sys.file_exists img then 
+  | img::imgs ->
+    if Sys.file_exists img then
       isabelle_image := img
-    else 
-      let () = print_string ("\n WARNING: " ^ img ^ " was not found. Searching for the image in the next path...\n") in 
+    else
+      let () = print_string ("\n WARNING: " ^ img ^ " was not found. Searching for the image in the next path...\n") in
       check_image_existence imgs
 
 (* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
@@ -354,11 +356,11 @@ let start () =
   let () = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; !isabelle_image;"2> /dev/null"|]) set_process prelude in
   last_test_number := !test_number
 
-let ending_remarks () = 
-  output_string !process.outchannel "end\n"; 
+let ending_remarks () =
+  output_string !process.outchannel "end\n";
   flush !process.outchannel
 
-let stop () = 
+let stop () =
   let num_tasks = !test_number - !last_test_number in
   let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
   print_string_if !Globals.enable_count_stats ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
@@ -377,7 +379,7 @@ let rec check str : bool=
       output_string log_all (" [isabelle.ml]: --> SUCCESS\n");
     true
   with
-  | Not_found -> 
+  | Not_found ->
     (if !log_all_flag==true then
        output_string log_all (" [isabelle.ml]: --> fail \n"));
     false
@@ -392,7 +394,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
     let ichn = !process.inchannel in
     let ochn = !process.outchannel in
 
-    let fnc () = 
+    let fnc () =
       (* communication protocol with interactive isabelle *)
       output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
       let (todo_unk:string) = get_answer ichn in (*lemma#*)
@@ -405,7 +407,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
       let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
       check str
     in
-    let fail_with_timeout () =   
+    let fail_with_timeout () =
       print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
       restart ("Timeout!");
       is_sat_b in

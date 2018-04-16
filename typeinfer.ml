@@ -233,6 +233,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       (tl, Some (Named n1))
     | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
+    | t1, Poly _  | Poly _, t1 -> (tl, Some t1)
     | t1, t2  -> (
         let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
@@ -303,7 +304,9 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
   let rec unify k1 k2 tl =
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
-    | _, UNK -> (tl,Some k1)
+    | _, UNK -> (tl, Some k1)
+    | Poly _, _ -> (tl ,Some k2)
+    | _, Poly _  -> (tl, Some k1)
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)

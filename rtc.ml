@@ -6,7 +6,7 @@ open VarGen
   Emit runtime checks.
 
   Compute checks that need to be done prior to each expression.
-  Assignments: 
+  Assignments:
   Things like w.f.g = e will be flattened out to
   tmp1 = w.f;
   tmp1.g = e;
@@ -52,7 +52,7 @@ let primitives =
 
 let no_pp = ref ([] : string list)
 
-let set_nopp arg = 
+let set_nopp arg =
   let procs = Gen.split_by "," arg in
   no_pp := procs @ !no_pp
 
@@ -85,7 +85,7 @@ let write_to_file java_code file_name : unit =
   + A class for precondition: p_Pre
   + A class for postcondition: p_Post
   + Body is instrumented.
-  + All procedures are stored together in a file with the same name as 
+  + All procedures are stored together in a file with the same name as
   input file (with .java extension).
 
   - All input files are put in a subdirectory of the working directory.
@@ -95,9 +95,9 @@ let write_to_file java_code file_name : unit =
 let rec compile_prog (prog : C.prog_decl) source : unit =
   let java_code = Buffer.create 10240 in
   (* Compile data declarations *)
-  let todo_unk = List.map 
-      (fun ddef -> compile_data prog ddef java_code) 
-      prog.C.prog_data_decls 
+  let todo_unk = List.map
+      (fun ddef -> compile_data prog ddef java_code)
+      prog.C.prog_data_decls
   in
   (* Compile predicates *)
   let pbvars_tmp = List.map
@@ -109,8 +109,8 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
   (* Compile procedures *)
   let () = Buffer.clear java_code in
   (* Compile specs *)
-  (* 
-     let todo_unk = List.map 
+  (*
+     let todo_unk = List.map
      (fun pdef -> compile_proc_spec prog pdef java_code) prog.C.old_proc_decls in
   *)
   let () = C.proc_decls_iter prog (fun pdef -> compile_proc_spec prog pdef java_code) in
@@ -120,7 +120,7 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
   let main_class = Gen.replace_minus_with_uscore tmp in
   let () = Buffer.add_string java_code ("public class " ^ main_class ^ " {\n") in
   (*
-    let todo_unk = List.map (fun pdef -> 
+    let todo_unk = List.map (fun pdef ->
     compile_proc_body prog pdef java_code) prog.C.old_proc_decls in
   *)
   let () = C.proc_decls_iter prog (fun pdef -> compile_proc_body prog pdef java_code) in
@@ -128,7 +128,7 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
   let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
   write_to_file java_code (tmp2 ^ ".java")
 
-and compile_data prog ddef java_code : unit = 
+and compile_data prog ddef java_code : unit =
   if not (ddef.C.data_name = "String" || ddef.C.data_name = "Object") then begin
     Buffer.clear java_code;
     Cjava.java_of_data_decl prog ddef java_code;
@@ -145,7 +145,7 @@ and compile_view prog vdef java_code : (CP.spec_var list) =
 
 and remove_dup_types (vars : CP.spec_var list) : CP.spec_var list = match vars with
   | (((CP.SpecVar (tv, v, _)) as h) :: rest) ->
-    if List.exists 
+    if List.exists
         (fun (CP.SpecVar (t, _, _)) -> string_of_typ t = CP.name_of_type tv) rest
     then
       remove_dup_types rest
@@ -153,7 +153,7 @@ and remove_dup_types (vars : CP.spec_var list) : CP.spec_var list = match vars w
       h :: (remove_dup_types rest)
   | [] -> []
 
-and compile_partially_bound_vars (pbvars : CP.spec_var list) java_code : unit = 
+and compile_partially_bound_vars (pbvars : CP.spec_var list) java_code : unit =
   let pbvars = remove_dup_types pbvars in
   let pstr = Java.java_of_partially_bound_params2 pbvars in
   Buffer.clear java_code;
@@ -164,27 +164,27 @@ and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
   if Gen.is_some proc.C.proc_body then begin
     let body = Gen.unsome proc.C.proc_body in
     let cbody = compile_exp prog proc body in
-    let cproc = {proc with 
+    let cproc = {proc with
                  C.proc_name = C.unmingle_name proc.C.proc_name;
                  C.proc_body = Some cbody} in
     Cjava.java_of_proc_decl prog cproc java_code
   end
 
-and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit = 
+and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit =
   let r = Cformula.split_struc_formula (proc.C.proc_stk_of_static_specs # top) (* proc.C.proc_static_specs *) in
   match r with
-  | [] -> 
+  | [] ->
     let pre = CF.mkTrue ( CF.mkNormalFlow ()) no_pos in
     let post = CF.mkTrue ( CF.mkNormalFlow ()) no_pos in
     let pre_outvars, pbvars = compile_pre prog proc pre java_code in
-    compile_post prog proc post pre_outvars pbvars java_code		
-  | [(pre, post)] -> 
+    compile_post prog proc post pre_outvars pbvars java_code
+  | [(pre, post)] ->
     let pre_outvars, pbvars = compile_pre prog proc pre java_code in
     compile_post prog proc post pre_outvars pbvars java_code
   | _ -> failwith ("compile_proc: currently support only at most one pair of pre/post: " ^ proc.C.proc_name)
 
 (*
-  Each method is compiled to 
+  Each method is compiled to
   - a preconditiion class
   - a postcondition class
   - a method with instrumented body
@@ -205,16 +205,16 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     let fargs = proc.C.proc_args in
     let farg_names = List.map snd fargs in
     let farg_types = List.map fst fargs in
-    let farg_spec_vars = List.map2 
-        (fun n -> fun t -> CP.SpecVar (t, n, Unprimed)) 
+    let farg_spec_vars = List.map2
+        (fun n -> fun t -> CP.SpecVar (t, n, Unprimed))
         farg_names farg_types in
     let output_vars = Gen.BList.difference_eq CP.eq_spec_var pre_fv farg_spec_vars in
     (* build vmap *)
     let vmap = H.create 103 in
-    let todo_unk = List.map 
+    let todo_unk = List.map
         (fun fname -> H.add vmap fname (HExp ("this", fname, false))) farg_names in
     let () = Predcomp.precond_output := output_vars in
-    let combined_exp, disj_procs, _ = 
+    let combined_exp, disj_procs, _ =
       gen_formula prog pre vmap [] (*output_vars*) in
     let () = Predcomp.precond_output := [] in
     (* generate fields *)
@@ -222,7 +222,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
     let fields_tmp = CP.remove_dups_spec_var_list (farg_spec_vars @ pre_fv) in
     let fields = gen_fields fields_tmp pbvars pos in
     (* parameters for traverse *)
-    let check_proc = 
+    let check_proc =
       { I.proc_name = "traverse";
         I.proc_source = "source_file";
         I.proc_flags = [];
@@ -246,7 +246,9 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
         I.proc_verified_domains = [];
         I.proc_file = "";
         I.proc_loc = no_pos;
-        I.proc_test_comps = None } in
+        I.proc_test_comps = None;
+        I.proc_poly_vars = []
+      } in
     let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
                  I.data_fields = fields;
                  I.data_pos = no_pos;
@@ -277,29 +279,29 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     let fargs = proc.C.proc_args in
     let farg_names = List.map snd fargs in
     let farg_types = List.map fst fargs in
-    let farg_spec_vars = List.map2 
-        (fun n -> fun t -> CP.SpecVar (t, n, Unprimed)) 
+    let farg_spec_vars = List.map2
+        (fun n -> fun t -> CP.SpecVar (t, n, Unprimed))
         farg_names farg_types in
     let farg_names =
       if proc.C.proc_return = C.void_type then
         farg_names
       else
-        "res" :: farg_names 
+        "res" :: farg_names
     in
     let field_names = farg_names @ (List.map CP.name_of_spec_var pre_outvars) in
     (* build vmap *)
     let vmap = H.create 103 in
-    let todo_unk = List.map 
+    let todo_unk = List.map
         (fun fname -> H.add vmap fname (HExp ("this", fname, false))) field_names in
     (* compile formula *)
     let combined_exp, disj_procs, _ = gen_formula prog post vmap [] in
     (* generate fields *)
     let res = CP.SpecVar (proc.C.proc_return, "res", Unprimed) in
-    let fields_tmp = 
+    let fields_tmp =
       if proc.C.proc_return = C.void_type then
         CP.remove_dups_spec_var_list (farg_spec_vars @ post_fv @ pre_outvars)
       else
-        CP.remove_dups_spec_var_list (res :: farg_spec_vars @ post_fv @ pre_outvars) 
+        CP.remove_dups_spec_var_list (res :: farg_spec_vars @ post_fv @ pre_outvars)
     in
     (*
       let () = print_string ("Compiling " ^ proc.C.proc_name ^ "\n") in
@@ -307,7 +309,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
     *)
     let fields = gen_fields fields_tmp pbvars pos in
     (* parameters for traverse *)
-    let check_proc = 
+    let check_proc =
       { I.proc_name = "traverse";
         I.proc_source = "source_file";
         I.proc_flags = [];
@@ -331,6 +333,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
         I.proc_verified_domains = [];
         I.proc_file = "";
         I.proc_loc = no_pos;
+        I.proc_poly_vars = [];
         I.proc_test_comps =None } in
     let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
                  I.data_fields = fields;
@@ -351,7 +354,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
             C.exp_seq_exp2 = e2} as e) ->
     let ce1 = compile_exp prog proc e1 in
     let ce2 = compile_exp prog proc e2 in
-    C.Seq ({e with 
+    C.Seq ({e with
             C.exp_seq_exp1 = ce1;
             C.exp_seq_exp2 = ce2})
   | C.Cond ({C.exp_cond_then_arm = then_arm;
@@ -359,7 +362,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
     let cthen = compile_exp prog proc then_arm in
     let celse = compile_exp prog proc else_arm in
     C.Cond ({e with
-             C.exp_cond_then_arm = cthen; 
+             C.exp_cond_then_arm = cthen;
              C.exp_cond_else_arm = celse})
   | C.Block ({C.exp_block_body = body} as e) ->
     let cbody = compile_exp prog proc body in
@@ -368,7 +371,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
              C.exp_bind_bound_var = (t, v);
              C.exp_bind_pos = pos}) ->
     let mn = C.unmingle_name proc.C.proc_name in
-    if !no_field = ["all"] || List.mem mn !no_field then 
+    if !no_field = ["all"] || List.mem mn !no_field then
       e0
     else
       let chk = C.CheckRef ({C.exp_check_ref_var = v;
@@ -379,7 +382,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
                C.exp_assign_rhs = rhs;
                C.exp_assign_pos = pos} as e) ->
     if C.is_cond rhs then
-      (* 
+      (*
 	     This assignment was introduced by the Iast to Cast translation.
 	     No effects on program execution.
 	  *)
@@ -389,7 +392,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
       let normal_compile () =
         let bind_vars = find_binds rhs in
         let helper e (_, bv) =
-          if !no_field = ["all"] || List.mem mn !no_field then 
+          if !no_field = ["all"] || List.mem mn !no_field then
             e
           else
             let chk = C.CheckRef ({C.exp_check_ref_var = bv;
@@ -445,11 +448,11 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
       else
         (*let pdef = C.look_up_proc_def_raw prog.C.old_proc_decls mn0 in*)
         let pdef = C.look_up_proc_def_raw prog.C.new_proc_decls mn0 in
-        let pre = 
-          let r = Cformula.split_struc_formula (pdef.C.proc_stk_of_static_specs # top) (* pdef.C.proc_static_specs *) in 
+        let pre =
+          let r = Cformula.split_struc_formula (pdef.C.proc_stk_of_static_specs # top) (* pdef.C.proc_static_specs *) in
           match r with
           | [(pre, post)] -> pre
-          | [] -> CF.mkTrue (CF.mkNormalFlow ()) pos 
+          | [] -> CF.mkTrue (CF.mkNormalFlow ()) pos
           | _ -> failwith ("compile_call: currently support only one pair of pre/post: " ^ mn)
         in
         let pre_fv = CF.fv pre in
@@ -463,17 +466,17 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
         let pre_chkr_cls = mn ^ "_PRE" in
         let pre_chkr = fresh_name () in
         let pre_init_tmp = List.map2
-            (fun farg -> fun aarg -> pre_chkr ^ "." ^ farg ^ " = " ^ aarg ^ ";") 
+            (fun farg -> fun aarg -> pre_chkr ^ "." ^ farg ^ " = " ^ aarg ^ ";")
             farg_names vs in
         let pre_init = String.concat "\n" pre_init_tmp in
         let pos_str = Debug.string_of_pos pos in
-        let pre_traverse_call = 
+        let pre_traverse_call =
           "\nRTC.call();\n"
           ^ "if (!(" ^ pre_chkr ^ ".traverse(RTC.callStack[RTC.size - 1], RTC.curColor))) {\n"
           ^ "\tSystem.out.println(\"" ^ pos_str ^ "precondition violation.\");\n"
           ^ "\tSystem.exit(-1);\n"
           ^ "}\n" in
-        let java_pre_str = 
+        let java_pre_str =
           pre_chkr_cls ^ " " ^ pre_chkr ^ ";\n"
           ^ pre_chkr ^ " = new " ^ pre_chkr_cls ^ "();\n"
           ^ pre_init ^ pre_traverse_call in
@@ -485,7 +488,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
         let post_chkr_cls = mn ^ "_POST" in
         let post_chkr = fresh_name () in
         let post_init_tmp1 = List.map2
-            (fun farg -> fun aarg -> post_chkr ^ "." ^ farg ^ " = " ^ aarg ^ ";") 
+            (fun farg -> fun aarg -> post_chkr ^ "." ^ farg ^ " = " ^ aarg ^ ";")
             farg_names vs in
         let post_init_tmp2 = List.map
             (fun pre_v -> post_chkr ^ "." ^ pre_v ^ " = " ^ pre_chkr ^ "." ^ pre_v ^ ";")
@@ -494,15 +497,15 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
         let post_init_tmp3 =
           if pdef.C.proc_return = C.void_type then []
           else [post_chkr ^ ".res = " ^ res ^ ";"] in
-        let post_init = String.concat "\n" 
+        let post_init = String.concat "\n"
             (post_init_tmp3 @ post_init_tmp1 @ post_init_tmp2) in
-        let post_traverse_call = 
+        let post_traverse_call =
           "\nif (!(" ^ post_chkr ^ ".traverse(RTC.curColor, RTC.callStack[RTC.size - 1]))) {\n"
           ^ "\tSystem.out.println(\"" ^ pos_str ^ "postcondition violation.\");\n"
           ^ "\tSystem.exit(-1);\n"
-          ^ "}\n" 
+          ^ "}\n"
           ^ "RTC.ret();\n" in
-        let java_post_str = 
+        let java_post_str =
           post_chkr_cls ^ " " ^ post_chkr ^ ";\n"
           ^ post_chkr ^ " = new " ^ post_chkr_cls ^ "();\n"
           ^ post_init ^ post_traverse_call in
@@ -514,7 +517,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
         let call, result =
           if pdef.C.proc_return = C.void_type then
             (e0, "")
-          else 
+          else
             let assign = C.Assign ({C.exp_assign_lhs = res;
                                     C.exp_assign_rhs = e0;
                                     C.exp_assign_pos = pos}) in
@@ -550,7 +553,7 @@ and push_assignment_in (lhs : ident) (rhs : C.exp) pos : C.exp = match rhs with
 
 and find_binds (e0 : C.exp) : typed_ident list = match e0 with
   | C.Seq ({C.exp_seq_exp1 = e1;
-            C.exp_seq_exp2 = e2}) 
+            C.exp_seq_exp2 = e2})
   | C.Cond ({C.exp_cond_then_arm = e1;
              C.exp_cond_else_arm = e2}) ->
     let tmp1 = find_binds e1 in

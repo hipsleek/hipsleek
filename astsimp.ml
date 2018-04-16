@@ -1,4 +1,3 @@
-
 #include "xdebug.cppo"
 open VarGen
 
@@ -120,6 +119,8 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Poly t -> ("`" ^ t)
+  | PolyT     -> "Poly"
 ;;
 
 
@@ -4551,6 +4552,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_is_recursive = false;
            C.proc_file = proc.I.proc_file;
            C.proc_loc = proc.I.proc_loc;
+           C.proc_poly_vars = List.map (fun id -> CP.SpecVar (PolyT,id,Unprimed)) proc.I.proc_poly_vars;
            (* C.proc_while_with_return = None; *)
            C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps } in
          let () = cproc.C.proc_stk_of_static_specs # push_pr (x_loc ^ "init of proc_stk_of_static_specs") final_static_specs_list in
@@ -5178,6 +5180,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = a :: index;
+          I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
@@ -5344,6 +5347,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = rhs :: a :: index;
+                  I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
                   I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
                   I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
                   I.exp_call_nrecv_path_id = pid;
@@ -5458,6 +5462,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1_prim ];
+             I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
@@ -5470,6 +5475,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "mult___" else "mults___";
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
+            I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
             I.exp_call_nrecv_path_id = pid;
@@ -5487,6 +5493,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_method = if !Globals.prelude_is_mult then "div___" else "divs___";
             I.exp_call_nrecv_lock = None;
             I.exp_call_nrecv_arguments = [ e1; e2 ];
+            I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
             I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
             I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
             I.exp_call_nrecv_path_id = pid;
@@ -5512,6 +5519,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e1; e2 ];
+             I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
@@ -5651,6 +5659,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.exp_call_nrecv_method = mn;
         I.exp_call_nrecv_lock = lock;
         I.exp_call_nrecv_arguments = args;
+        I.exp_call_nrecv_poly_args = pargs;
         I.exp_call_nrecv_ho_arg = ho_arg;
         I.exp_call_nrecv_extra_arg = extra_arg;
         I.exp_call_nrecv_path_id = pi;
@@ -5690,6 +5699,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_recv_receiver = I.This { I.exp_this_pos = pos; };
           I.exp_call_recv_method = mingled_mn;
           I.exp_call_recv_arguments = args;
+          I.exp_call_recv_poly_args = [];
           I.exp_call_recv_path_id = pi;
           I.exp_call_recv_pos = pos; } in helper call_recv)
       else if (mn=Globals.fork_name) then
@@ -5729,6 +5739,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                        C.exp_scall_method_name = mingled_mn;
                        C.exp_scall_lock = lock;
                        C.exp_scall_arguments = mingled_forked_mn::arg_vars;
+                       C.exp_scall_poly_args = pargs;
                        C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
                        C.exp_scall_extra_arg = C.def_exp_scall_extra_arg;
                        C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
@@ -5778,6 +5789,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   C.exp_scall_method_name = mingled_mn;
                   C.exp_scall_lock = lock;
                   C.exp_scall_arguments = arg_vars;
+                  C.exp_scall_poly_args = pargs;
                   C.exp_scall_ho_arg = C.def_exp_scall_ho_arg;
                   C.exp_scall_extra_arg = C.def_exp_scall_extra_arg;
                   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
@@ -5795,9 +5807,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       else (
         try (
           let pdef = if (mn=Globals.join_name) then proc_decl else
+              let () = y_binfo_pp "HERE1" in
+              let () = y_binfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
               let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
               I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
           in
+          let () = y_binfo_pp "HERE12" in
           let proc_args = if (mn=Globals.join_name) then
               if (!Globals.allow_threads_as_resource) then
                 (*threads as resource -> thrd type*)
@@ -5850,6 +5865,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                     C.exp_scall_method_name = mingled_mn;
                     C.exp_scall_lock = lock;
                     C.exp_scall_arguments = arg_vars;
+                    C.exp_scall_poly_args = pargs;
                     C.exp_scall_ho_arg = c_ho_arg;
                     C.exp_scall_extra_arg = eargs;
                     (* Termination: Default value -
@@ -6055,6 +6071,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = array_allocate_call;
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = [List.hd dims];
+          I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_path_id = None;
@@ -6256,6 +6273,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              I.exp_call_nrecv_method = u_call;
              I.exp_call_nrecv_lock = None;
              I.exp_call_nrecv_arguments = [ e ];
+             I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
              I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
              I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
              I.exp_call_nrecv_path_id = pid;
@@ -6513,6 +6531,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_call_nrecv_method = w_name;
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = w_args;
+                  I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
                   I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
                   I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
                   I.exp_call_nrecv_pos = pos;
@@ -6572,6 +6591,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_verified_domains = [];
         I.proc_file = proc.I.proc_file;
         I.proc_loc = pos;
+        I.proc_poly_vars = proc.I.proc_poly_vars;
         I.proc_test_comps = if not !Globals.validate then None else
             I.look_up_test_comps prog.I.prog_test_comps w_name} in
       let () = Debug.ninfo_hprint (add_str "w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in
@@ -6631,6 +6651,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method = w_name;
           I.exp_call_nrecv_lock = None;
           I.exp_call_nrecv_arguments = w_args;
+          I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
           I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_pos = pos;
@@ -6954,6 +6975,8 @@ and default_value (t :typ) pos : C.exp =
                    C.exp_emparray_pos = pos}
   | Bptyp ->
     failwith "default_value: Bptyp can only be used for constraints"
+  | Poly _ -> failwith x_tbi
+  | PolyT  -> failwith x_tbi
 
 (* and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  = *)
 (*   Debug.no_3 "flatten_to_bind "  *)

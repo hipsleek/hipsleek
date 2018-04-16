@@ -907,6 +907,20 @@ let peek_array_type =
              (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
+let peek_poly_type =
+   SHGram.Entry.of_parser "peek_poly_type"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[ACUTE,_; IDENTIFIER id,_] ->  ()
+             | _ -> raise Stream.Failure)
+
+(* let peek_poly_invocation =
+ *    SHGram.Entry.of_parser "peek_poly_type"
+ *        (fun strm ->
+ *            match Stream.npeek 3 strm with
+ *              |[_,_; OSQUARE,_ IDENTIFIER id,_] ->  ()
+ *              | _ -> raise Stream.Failure) *)
+
 let peek_pointer_type =
    SHGram.Entry.of_parser "peek_pointer_type"
        (fun strm ->
@@ -3407,17 +3421,18 @@ name:[[ `STRING(_,id)  -> id]];
 typ:
   [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
+   | peek_poly_type; t = parse_poly_type -> t
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
   [[ `VOID               -> void_type
    | `INT                -> int_type
-   | `ANN_KEY           -> ann_type
+   | `ANN_KEY            -> ann_type
    | `FLOAT              -> float_type
    | `INFINT_TYPE        -> infint_type
    | `BOOL               -> bool_type
-   | `BAG               -> bag_type
-   | `ABSTRACT          -> void_type
+   | `BAG                -> bag_type
+   | `ABSTRACT           -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
    | `IDENTIFIER id      -> Named id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)
@@ -3432,6 +3447,13 @@ pointer_type:
   (* let () = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in *)
   pointer_t
    ]];
+
+typ_list: [[ tl = LIST1 typ SEP `COMMA -> tl]];
+
+parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
+parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
+parse_poly_args:    [[`OSQUARE; ids = typ_list;`CSQUARE -> ids]];
+parse_poly_args_opt:[[ ids = OPT parse_poly_args        -> ids]];
 
 star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
@@ -4124,7 +4146,7 @@ proc_decl:
    | h=proc_header; _=opt_flag_list-> h]];
 
 proc_header:
-  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
+  [[ t = typ; `IDENTIFIER id; polyt = OPT parse_poly_var ; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
      (*let static_specs, dynamic_specs = split_specs osl in*)
      let cur_file = proc_files # top in
      let hparam, extraparam = match hparam with
@@ -4132,12 +4154,14 @@ proc_header:
        | Some (EXTRA_ARG_d ea) -> Iast.def_proc_ho_arg, ea
        | _ -> def_proc_ho_arg, def_proc_extra_arg
      in
-     mkProc cur_file id [] "" None false ot fpl t ~ho_param:hparam ~extra_param:extraparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     let poly_vars = un_option polyt [] in
+     mkProc cur_file id [] "" None false ot fpl t ~ho_param:hparam ~extra_param:extraparam ~poly_vars:poly_vars osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
-  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  | `VOID;  `IDENTIFIER id; polyt = OPT parse_poly_var; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
     let cur_file = proc_files # top in
-    mkProc cur_file id [] "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    let poly_vars = un_option polyt [] in
+    mkProc cur_file id [] "" None false ot fpl void_type ~poly_vars:poly_vars osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl:
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -4706,13 +4730,20 @@ extra_arg: [[
 opt_arg: [[ oha = OPT extra_arg -> oha ]];
 
 invocation_expression:
- [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
+ [[ (* peek_invocation; *) qi=qualified_identifier;
+    `OPAREN; oal=opt_argument_list; `CPAREN;
+    polyargs = parse_poly_args_opt ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
+               exp_call_recv_poly_args = un_option polyargs [];
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_arg ->
+  | (* peek_invocation; *) `IDENTIFIER id;
+      l = opt_lock_info ;
+      `OPAREN; oal=opt_argument_list; `CPAREN;
+      polyargs = parse_poly_args_opt;
+      oha = opt_arg ->
     let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id
@@ -4726,6 +4757,7 @@ invocation_expression:
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
+                exp_call_nrecv_poly_args = un_option polyargs [];
                 exp_call_nrecv_ho_arg = oha;
                 exp_call_nrecv_extra_arg = extra;
                 exp_call_nrecv_path_id = None;

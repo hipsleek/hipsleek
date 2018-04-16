@@ -15,20 +15,19 @@ data msg{
 pred_sess_prot G<C:role,S:role,c:chan> == C->S:c(v#v::msg<1000,2>) ;; C->S:c(v#emp & 1<=v & v<=3);
 
 void C(Channel c)
- requires c::Chan{@S G<C@peer,S,c@chan>}<> *
-          c::Common{@S G@all<C,S,c>}<>
+ requires c::Chan{@S G<C@peer,S,c@chan>}<>
  ensures  c::Chan{emp}<> ;
 {
  msg m = new msg(1000,2);
- send(c,m);
- send(c,3);
+ dprint;
+ gsend(c,m)[msg];
+ gsend(c,3)[int];
 // dprint;
 }
 
 
 void S(Channel c, int reward, int no_players)
- requires c::Chan{@S G<C,S@peer,c@chan>}<> *
-          c::Common{@S G@all<C,S,c>}<> & reward>=0
+ requires c::Chan{@S G<C,S@peer,c@chan>}<> & reward>=0
  ensures  c::Chan{emp}<> ;
 {
  int fee    = receive(c);

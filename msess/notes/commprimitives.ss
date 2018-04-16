@@ -19,6 +19,17 @@ int receive (Channel ccc)
   requires ccc::Chan{@S ?v#%L(v);;%R}<>
   ensures  ccc::Chan{@S %R}<> * %L(res) ;
 
+/**
+ generic
+*/
+void gsend [aaa] (Channel ccc, `aaa xxx)
+  requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
+  ensures  ccc::Chan{@S %R}<>;
+
+`bbb greceive [bbb] (Channel ccc)
+  requires ccc::Chan{@S ?v#%L(v);;%R}<>
+  ensures  ccc::Chan{@S %R}<> * %L(res) ;
+
 
 
 /**

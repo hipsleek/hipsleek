@@ -2441,6 +2441,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let farg_types, farg_names = List.split proc.proc_args in
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+          let () = y_tinfo_hp (add_str "actual_spec_vars" Cprinter.string_of_spec_var_list) actual_spec_vars in
+          let () = y_tinfo_hp (add_str "farg_spec_vars" Cprinter.string_of_spec_var_list) farg_spec_vars in
 
           let extra_arg_types, extra_arg_names = List.split proc.proc_extra_args in
           let earg_spec_vars, actual_e_spec_vars =

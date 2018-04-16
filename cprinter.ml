@@ -5020,7 +5020,9 @@ let rec string_of_coerc_list l = match l with
 (* pretty printing for a procedure *)
 let string_of_proc_decl p =
   let locstr = (string_of_full_loc p.proc_loc)
-  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
+  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name
+     ^ (match p.proc_poly_vars with | [] -> "" | ha -> " " ^ (string_of_spec_var_list ha))
+     ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
       ^ (match p.proc_ho_arg with | [] -> "" | ha -> " with " ^ (pr_list string_of_decl ha))
       ^ (match p.proc_extra_args with | [] -> "" | ha -> " with " ^ (pr_list string_of_decl ha))
       ^ (if Gen.is_empty p.proc_by_name_params then ""

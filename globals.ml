@@ -330,6 +330,8 @@ type typ =
   | UtT of bool (* unknown temporal type - pre(true)/post(false)*)
   | Bptyp
   | Pointer of typ (* base type and dimension *)
+  | Poly of ident
+  | PolyT
 (* | SLTyp (* type of ho formula *) *)
 
 (* let eq_typegen t1 t2 = match *)
@@ -836,6 +838,8 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Poly t    -> ("`" ^ t)
+  | PolyT     -> "Poly"
 ;;
 
 let string_of_typed_ident (typ,id) =
@@ -890,6 +894,8 @@ let rec string_of_typ_alpha = function
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Poly t    -> ("`" ^ t)
+  | PolyT     -> "Poly"
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =
@@ -2986,3 +2992,21 @@ let build_sel_scc scc_lst get_name lst =
           List.find (fun v -> (get_name v)=c) lst
         ) scc
     ) scc_lst
+
+
+let eq_mingled_name mingled_name name =
+  let lst1 = Str.split_delim (Str.regexp "\\$") mingled_name in
+  let lst2 = Str.split_delim (Str.regexp "\\$") name in
+  match lst1,lst2 with
+   | nm1::[args1], nm2::[args2] ->
+      if String.equal nm1 nm2 then
+       let args1 = Str.split_delim (Str.regexp "~") args1 in
+       let args2 = Str.split_delim (Str.regexp "~") args2 in
+       try
+         let args  = List.combine args1 args2 in
+         List.fold_left (fun acc (a1,a2) -> acc &&
+                  ((String.contains a1 '`') or
+                   (String.equal a1 a2))) true args
+       with _ -> false
+     else false
+   | _, _ -> false
