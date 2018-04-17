@@ -37,10 +37,10 @@ void B1(Channel a, Channel b, CDL c)
   requires a::Chan{@S ?1;;down<c>}<> * b::Chan{@S await<c>;;!1}<>  //* c::CNT<1>
   ensures  a::Chan{emp}<> * b::Chan{emp}<> * c::CNT<(-1)>;
 {
-  int x = receive(a);
+  int x = receive(a)[int];
   DOWN(c);
   AWAIT(c);
-  send(b,1);
+  send(b,1)[int];
 }
 
 
@@ -51,9 +51,9 @@ void B2(Channel a, Channel b, CDL c)
   requires a::Chan{@S ?1;;down<c>}<> * b::Chan{@S await<c>;;!1}<>  //* c::CNT<1>
   ensures  a::Chan{emp}<> * b::Chan{emp}<> * c::CNT<(-1)>;
 {
-  int x = receive(a);
+  int x = receive(a)[int];
   DOWN(c);
-  send(b,1);
+  send(b,1)[int];
   AWAIT(c);
 }
 
@@ -65,7 +65,7 @@ void B3(Channel a, Channel b, CDL c)
   ensures  a::Chan{emp}<> * b::Chan{emp}<> * c::CNT<(-1)>;
 {
   DOWN(c);
-  int x = receive(a);
+  int x = receive(a)[int];
   AWAIT(c);
-  send(b,1);
+  send(b,1)[int];
 }

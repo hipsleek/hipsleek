@@ -103,7 +103,6 @@ let default_value (t :typ) pos : exp =
   | Bptyp ->
     failwith "default_value: Bptyp not supported"
   | Poly _ -> failwith x_tbi
-  | PolyT  -> failwith x_tbi
 
 (*similar to that in Astsimp.ml*)
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =

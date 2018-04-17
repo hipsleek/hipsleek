@@ -33,9 +33,9 @@ void B(Channel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * c::Chan{@S Fc2<22,1.0,qqq>;;?1}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
-  int y = receive(c);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
+  int y = receive(c)[int];
 }
 
 //should succeed
@@ -56,9 +56,9 @@ void B_F1(Channel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.4,qqq>}<> * c::Chan{@S Fc2<22,0.5,qqq>;;?1}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
-  int y = receive(c);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
+  int y = receive(c)[int];
 }
 
 
@@ -67,9 +67,9 @@ void B_F2(Channel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.4,qqq>}<> * c::Chan{@S Fc2<22,0.9,qqq>;;?1}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
-  int y = receive(c);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
+  int y = receive(c)[int];
 }
 
 
@@ -78,8 +78,8 @@ void B_F3(Channel a, Channel d, Channel c)
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * c::Chan{@S Fc2<22,1.0,qqq>;;?1}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<>;
 {
-  int x = receive(a);
+  int x = receive(a)[int];
   //swapped below two:
-  int y = receive(c);
-  int z = receive(d);
+  int y = receive(c)[int];
+  int z = receive(d)[int];
 }

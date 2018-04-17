@@ -120,7 +120,6 @@ let rec new_string_of_typ (x:typ) : string = match x with
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
   | Poly t -> ("`" ^ t)
-  | PolyT     -> "Poly"
 ;;
 
 
@@ -4552,7 +4551,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_is_recursive = false;
            C.proc_file = proc.I.proc_file;
            C.proc_loc = proc.I.proc_loc;
-           C.proc_poly_vars = (* List.map (fun id -> CP.SpecVar (PolyT,id,Unprimed)) *) proc.I.proc_poly_vars;
+           C.proc_poly_vars = proc.I.proc_poly_vars;
            (* C.proc_while_with_return = None; *)
            C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps } in
          let () = cproc.C.proc_stk_of_static_specs # push_pr (x_loc ^ "init of proc_stk_of_static_specs") final_static_specs_list in
@@ -5679,6 +5678,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           let _ = Debug.ninfo_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
           if ((List.length args) != (List.length proc_decl.I.proc_args)) then
             report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of arguments")
+          else if ((List.length pargs) != (List.length proc_decl.I.proc_poly_vars)) then
+            report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of polymorphic type arguments")
           else
             List.map2 (fun p1 t2 ->
                 let t1 = p1.I.param_type in
@@ -6976,7 +6977,6 @@ and default_value (t :typ) pos : C.exp =
   | Bptyp ->
     failwith "default_value: Bptyp can only be used for constraints"
   | Poly _ -> failwith x_tbi
-  | PolyT  -> failwith x_tbi
 
 (* and flatten_to_bind prog proc b r rhs_o pid imm read_only pos  = *)
 (*   Debug.no_3 "flatten_to_bind "  *)

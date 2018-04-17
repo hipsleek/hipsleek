@@ -134,7 +134,6 @@ and aug_class_name (t : typ) = match t with
   | List t -> "List("^(aug_class_name t)^")"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
   | Poly _ -> failwith x_tbi
-  | PolyT  -> failwith x_tbi
 
 (*
   split view parameters according to their modes:

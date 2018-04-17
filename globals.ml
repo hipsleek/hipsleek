@@ -331,7 +331,6 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
   | Poly of ident
-  | PolyT
 (* | SLTyp (* type of ho formula *) *)
 
 (* let eq_typegen t1 t2 = match *)
@@ -839,7 +838,6 @@ let rec string_of_typ (x:typ) : string = match x with
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
   | Poly t    -> ("`" ^ t)
-  | PolyT     -> "Poly"
 ;;
 
 let string_of_typed_ident (typ,id) =
@@ -895,7 +893,6 @@ let rec string_of_typ_alpha = function
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
   | Poly t    -> ("`" ^ t)
-  | PolyT     -> "Poly"
 ;;
 
 let subs_tvar_in_typ t (i:int) nt =

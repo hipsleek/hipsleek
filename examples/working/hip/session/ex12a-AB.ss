@@ -33,7 +33,7 @@ void B(Channel a, Channel c)
   ensures  a::Chan{emp}<> * c::Chan{emp}<>;
 {
   dprint;
-  int x = receive(a); 
+  int x = receive(a)[int];
   dprint;
-  int y = receive(c);
+  int y = receive(c)[int];
 }

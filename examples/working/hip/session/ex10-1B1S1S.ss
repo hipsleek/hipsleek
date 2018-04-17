@@ -41,13 +41,13 @@ void buyer(ref Channel c, int budget)
 {
   int id = get_id();
   Addr a = get_addrs();
-  send(c, id);
-  int price = receive(c);
+  send(c, id)[int];
+  int price = receive(c)[int];
   if(price <= budget) {
-    send(c, 1);
-    senda(c, a);
-    DDate sd = received(c);
-  } else {send (c, 0);}
+    send(c, 1)[int];
+    send(c, a)[Addr];
+    DDate sd = receive(c)[DDate];
+  } else {send (c, 0)[int];}
   dprint;
 }
 
@@ -62,17 +62,17 @@ void seller(ref Channel cb, ref Channel cs)
   requires cb::Chan{@S GSa<>}<> * cs::Chan{@S GSb<>}<>
   ensures  cb'::Chan{emp}<> * cs'::Chan{emp}<>;
 {
-  int id = receive(cb);
-  send(cb, get_price(id));
-  int opt = receive(cb);
+  int id = receive(cb)[int];
+  send(cb, get_price(id))[int];
+  int opt = receive(cb)[int];
   if(opt == 1){
-    send(cs, opt);
-    send(cs, id);
+    send(cs, opt)[int];
+    send(cs, id)[int];
     dprint;
-    sendc(cs, cb);
-    cb = receivec(cs);
+    send(cs, cb)[Channel];
+    cb = receive(cs)[Channel];
   } else {
-    send(cs, opt);
+    send(cs, opt)[int];
   }
 }
 
@@ -88,11 +88,11 @@ void shipper(Channel c)
   requires c::Chan{@S GS<>}<>
   ensures  c::Chan{emp}<>;
 {
-  int prod = receive(c);
-  Channel cd = receivec(c);
-  Addr a = receivea(cd);
+  int prod = receive(c)[int];
+  Channel cd = receive(c)[Channel];
+  Addr a = receive(cd)[Addr];
   dprint;
   DDate sd = get_date(a, prod);
-  sendd(cd, sd);
-  sendc(c, cd);
+  send(cd, sd)[DDate];
+  send(c, cd)[Channel];
 }

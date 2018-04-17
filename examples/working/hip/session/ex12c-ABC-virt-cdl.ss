@@ -49,18 +49,16 @@ void B_dyn(Channel a, Channel b, CDL c)
 requires a::Chan{@S ?1;;downd<c>}<> * b::Chan{@S await<c>;;!1}<>  //* c::CNT<1>
   ensures  a::Chan{emp}<> * b::Chan{emp}<> * c::CNT<(-1)>;
 {
-  int x = receive(a);
+  int x = receive(a)[int];
   DOWN(c);
   AWAIT(c);
-  send(b,1);
+  send(b,1)[int];
 }
 
 void B1(Channel a, Channel b)
   requires a::Chan{@S ?1;;downv<c,1>}<> * b::Chan{@S await<c>;;!1}<>  //* c::CNT<1>
   ensures  a::Chan{emp}<> * b::Chan{emp}<> * c::CNT<(-1)>;
 {
-  int x = receive(a);
-  send(b,1);
+  int x = receive(a)[int];
+  send(b,1)[int];
 }
-
-

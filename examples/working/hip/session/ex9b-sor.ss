@@ -7,8 +7,8 @@ void sor1(Channel c, int id)
   requires  c::Chan{@S !0 or !1}<>
   ensures   c::Chan{emp}<>;
 {
-  if (id<0) send(c,1);
-  else  send(c,0);
+  if (id<0) send(c,1)[int];
+  else  send(c,0)[int];
 }
 
 /* sor for send */
@@ -16,9 +16,9 @@ int sor2(Channel c, int id)
   requires  c::Chan{@S !0 or !1;;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  if (id<0) send(c,1);
-  else  send(c,0);
-  int x = receive(c);
+  if (id<0) send(c,1)[int];
+  else  send(c,0)[int];
+  int x = receive(c)[int];
   return x;
 }
 
@@ -27,10 +27,10 @@ int sor3(Channel c, int id)
   requires  c::Chan{@S (?0;;!7) or (?1;;!9);;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  int y = receive(c);
-  if (y==0) send(c,7);
-  else send(c,9);
-  int x = receive(c);
+  int y = receive(c)[int];
+  if (y==0) send(c,7)[int];
+  else send(c,9)[int];
+  int x = receive(c)[int];
   return x;
 }
 
@@ -39,9 +39,9 @@ int sor4(Channel c, int id)
   requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  int y = receive(c);
-  if (y==0) send(c,7);
-  int x = receive(c);
+  int y = receive(c)[int];
+  if (y==0) send(c,7)[int];
+  int x = receive(c)[int];
   return x;
 }
 
@@ -50,9 +50,9 @@ int sor5(Channel c, int id)
   requires  c::Chan{@S (?0;;!7) or ?1;;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  int y = receive(c);
-  /* if (y==0) */ send(c,7);
-  int x = receive(c);
+  int y = receive(c)[int];
+  /* if (y==0) */ send(c,7)[int];
+  int x = receive(c)[int];
   return x;
 }
 
@@ -61,12 +61,12 @@ int sor6(Channel c, int id)
   requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  int z = receive(c);
+  int z = receive(c)[int];
   dprint;
-  int y = receive(c);
-  if (y==0) send(c,7);
-  else send(c,z);
-  int x = receive(c);
+  int y = receive(c)[int];
+  if (y==0) send(c,7)[int];
+  else send(c,z)[int];
+  int x = receive(c)[int];
   dprint;
   return x;
 }
@@ -76,11 +76,11 @@ int sor7(Channel c, int id)
   requires  c::Chan{@S (?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
   ensures   c::Chan{emp}<> & res>0;
 {
-  
-  int y = receive(c);
-  if (y==0) send(c,7);
-  else send(c,id);
-  int x = receive(c);
+
+  int y = receive(c)[int];
+  if (y==0) send(c,7)[int];
+  else send(c,id)[int];
+  int x = receive(c)[int];
   dprint;
   return x;
 }
@@ -90,8 +90,8 @@ void sor8(Channel c, int id)
   requires  c::Chan{@S (?2 or ?3);;(?0;;!7) or (?1;;(!2 or !3));;?v#v>0}<>
   ensures   c::Chan{@S ?w#w>0}<>;
 {
-  int z = receive(c);
-  int y = receive(c);
-  if (y==0) send(c,7);
-  else send(c,z);
+  int z = receive(c)[int];
+  int y = receive(c)[int];
+  if (y==0) send(c,7)[int];
+  else send(c,z)[int];
 }

@@ -33,10 +33,10 @@ lemma_norm "REM"  self::Fc<id,aaa> & aaa=0.0 -> emp.
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * c::Chan{@S Fc2<22,0.5,qqq>;;!1}<> * e::Chan{@S Fc2<22,0.5,qqq>;;!2}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<> * e::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
-  send(c,1);
-  send(e,2);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
+  send(c,1)[int];
+  send(e,2)[int];
 }
 
 
@@ -63,10 +63,10 @@ qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.4,qqq>}<> * c::Chan{@S Fc2<22,0.5,qqq>;;!1}<> * e::Chan{@S Fc2<22,0.4,qqq>;;!2}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<> * e::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
-  send(c,1);
-  send(e,2);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
+  send(c,1)[int];
+  send(e,2)[int];
 }
 
 
@@ -75,11 +75,11 @@ qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
   requires a::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * d::Chan{@S ?1;;Fa2<22,0.5,qqq>}<> * c::Chan{@S Fc2<22,0.5,qqq>;;!1}<> * e::Chan{@S Fc2<22,0.5,qqq>;;!2}<>
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<> * e::Chan{emp}<>;
 {
-  int x = receive(a);
-  int z = receive(d);
+  int x = receive(a)[int];
+  int z = receive(d)[int];
   //swapped below two:
-  send(e,2);
-  send(c,1);
+  send(e,2)[int];
+  send(c,1)[int];
 
 }
 
@@ -90,8 +90,8 @@ qqq:Unknown::Fc<flted_33_2634:int,flted_16_10612:float>@M&
   ensures  a::Chan{emp}<> * d::Chan{emp}<> * c::Chan{emp}<> * e::Chan{emp}<>;
 {
   //swapped below two:
-  int z = receive(d);
-  int x = receive(a);
-  send(c,1);
-  send(e,2);
+  int z = receive(d)[int];
+  int x = receive(a)[int];
+  send(c,1)[int];
+  send(e,2)[int];
 }

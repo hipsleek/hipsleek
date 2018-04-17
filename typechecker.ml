@@ -1456,8 +1456,8 @@ and subs_poly_vars_struc_x spec poly_hash =
     | _ -> None in
   let fh hform =
     match hform with
-    | CF.ViewNode _    -> None  (* TODO *)
-    | CF.DataNode _    -> None  (* TODO *)
+    | CF.ViewNode _    -> None  (* TODO incomplete *)
+    | CF.DataNode _    -> None  (* TODO incomplete *)
     | CF.HVar (cv,cvl) -> let cvl = List.map (fun sv -> un_option (fsv sv) sv) cvl in Some (CF.HVar (cv,cvl))
     | _ -> None
   in
