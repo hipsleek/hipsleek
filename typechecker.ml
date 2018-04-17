@@ -1439,8 +1439,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*== <<< init/finalize/acquires/release[LOCK](lock,args) =====*)
 (*============================================================*)
 
-and subs_poly_vars_struc spec poly_hash =
-  let () = Hashtbl.iter ( fun a b -> y_tinfo_hp (fun (a,b) -> (pr_id a) ^ " >> " ^ (string_of_typ b)) (a,b) )  poly_hash in
+and subs_poly_vars_struc_x spec poly_hash =
   let fsv sv  =
     match sv with
     | CP.SpecVar(ty,id,prmd) ->
@@ -1464,6 +1463,11 @@ and subs_poly_vars_struc spec poly_hash =
   in
   let renamed_spec = CF.transform_struc_formula (nonef,nonef,fh,(nonef,nonef,nonef,nonef,fexp)) spec in
   renamed_spec
+
+and subs_poly_vars_struc spec poly_hash =
+  let pr1 =  Cprinter.string_of_struc_formula in
+  let pr2 hash =  pr_id (Hashtbl.fold ( fun a b c -> c ^ "\n" ^ (pr_id a) ^ " >> " ^ (string_of_typ b)) hash "") in
+  Debug.no_2 "subs_poly_vars_struc" pr1 (add_str "poly_hash" pr2) pr1 subs_poly_vars_struc_x spec poly_hash
 
 (* and check_exp prog proc ctx (e0:exp) label =                          *)
 (*   Gen.Profiling.do_1 "check_exp" (check_exp_d prog proc ctx e0) label *)
@@ -2602,9 +2606,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                  ) renamed_spec hv_ha
                 else renamed_spec in
               (************** SUBST poly types *************)
-              (* TODO andreeac rename the poly types for all spec *)
               let () = y_tinfo_hp (add_str "renamed_spec (bef poly subs)" Cprinter.string_of_struc_formula) renamed_spec in
-              let () = y_tinfo_pp "poly_hash" in
               let renamed_spec = subs_poly_vars_struc renamed_spec poly_hash in
               let () = x_tinfo_hp (add_str "renamed_spec (after poly subs)" Cprinter.string_of_struc_formula) renamed_spec no_pos in
               (************** SUBST poly types *************)
