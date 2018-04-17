@@ -5782,6 +5782,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                    with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize requires an associated lock");})
               in
               let ret_ct = x_add trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+              let ret_ct = Globals.subs_one_poly_typ pdef.I.proc_poly_vars pargs ret_ct in
               let positions = List.map I.get_exp_pos args in
               let (local_vars, init_seq, arg_vars) = x_add_1 trans_args (Gen.combine3 cargs cts positions) in
               let call_e = C.SCall {
@@ -5848,6 +5849,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              else
                let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
                (let ret_ct = x_add trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                let ret_ct = Globals.subs_one_poly_typ pdef.I.proc_poly_vars pargs ret_ct in
                 let positions = List.map I.get_exp_pos args in
                 let (local_vars, init_seq, arg_vars) = x_add_1 trans_args (Gen.combine3 cargs cts positions) in
 

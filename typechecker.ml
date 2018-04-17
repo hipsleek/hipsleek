@@ -1439,6 +1439,32 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*== <<< init/finalize/acquires/release[LOCK](lock,args) =====*)
 (*============================================================*)
 
+and subs_poly_vars_struc spec poly_hash =
+  let () = Hashtbl.iter ( fun a b -> y_tinfo_hp (fun (a,b) -> (pr_id a) ^ " >> " ^ (string_of_typ b)) (a,b) )  poly_hash in
+  let fsv sv  =
+    match sv with
+    | CP.SpecVar(ty,id,prmd) ->
+      begin
+        match ty with
+        | Poly _ -> let ty0 = hsubs_one_poly_typ poly_hash ty in
+          let ()  = y_tinfo_hp (add_str "changing to" string_of_typ) ty0 in
+          Some (CP.SpecVar(ty0,id,prmd))
+        | _      -> None
+      end
+  in
+  let fexp exp = match exp with
+    | CP.Var(sv,loc) -> let sv = fsv sv in map_opt (fun sv -> CP.Var(sv,loc)) sv
+    | _ -> None in
+  let fh hform =
+    match hform with
+    | CF.ViewNode _    -> None  (* TODO *)
+    | CF.DataNode _    -> None  (* TODO *)
+    | CF.HVar (cv,cvl) -> let cvl = List.map (fun sv -> un_option (fsv sv) sv) cvl in Some (CF.HVar (cv,cvl))
+    | _ -> None
+  in
+  let renamed_spec = CF.transform_struc_formula (nonef,nonef,fh,(nonef,nonef,nonef,nonef,fexp)) spec in
+  renamed_spec
+
 (* and check_exp prog proc ctx (e0:exp) label =                          *)
 (*   Gen.Profiling.do_1 "check_exp" (check_exp_d prog proc ctx e0) label *)
 
@@ -1455,20 +1481,20 @@ and check_exp prog proc ctx (e0:exp) label =
 (* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
 and get_xpure_of_formula f = 1
 
-and subs_poly_typ poly_vars poly_args args_types pos =
-  try
-  let poly_types = List.combine poly_vars poly_args in
-  let args_types = List.map (fun farg ->
-    match farg with
-     | Poly t ->
-        begin
-         try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
-         with _ ->  farg
-        end
-     | _ -> farg
-    ) args_types in
-  args_types
-  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+(* and subs_poly_typ poly_vars poly_args args_types pos =
+ *   try
+ *   let poly_types = List.combine poly_vars poly_args in
+ *   let args_types = List.map (fun farg ->
+ *     match farg with
+ *      | Poly t ->
+ *         begin
+ *          try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
+ *          with _ ->  farg
+ *         end
+ *      | _ -> farg
+ *     ) args_types in
+ *   args_types
+ *   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments" *)
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context =
   let ctx = if !Globals.tc_drop_unused then
@@ -2455,7 +2481,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
           let () = Debug.ninfo_zprint (lazy (("   stk spec: " ^(Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *))))) no_pos in
           let farg_types, farg_names = List.split proc.proc_args in
-          let farg_types = subs_poly_typ proc.proc_poly_vars pargs farg_types pos in
+          (*****************************)
+          (**  poly vars substitution **)
+          (*****************************)
+          (*** creates a hash to store the poly vars substitutions ***)
+          let poly_hash = Hashtbl.create 5 in
+          let poly_types = List.combine proc.proc_poly_vars pargs in
+          let () = List.iter (fun (poly_var,poly_arg) -> Hashtbl.add poly_hash  poly_var poly_arg) poly_types in
+          (*** performs substitution of poly args types***)
+          let farg_types = Globals.hsubs_poly_typ poly_hash farg_types in
+          (**********************************)
+          (** end - poly vars substitution **)
+          (**********************************)
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
 
@@ -2564,7 +2601,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                           CF.subst_hvar_struc renamed_spec [(hsv, ha)]
                                  ) renamed_spec hv_ha
                 else renamed_spec in
-
+              (************** SUBST poly types *************)
+              (* TODO andreeac rename the poly types for all spec *)
+              let () = y_tinfo_hp (add_str "renamed_spec (bef poly subs)" Cprinter.string_of_struc_formula) renamed_spec in
+              let () = y_tinfo_pp "poly_hash" in
+              let renamed_spec = subs_poly_vars_struc renamed_spec poly_hash in
+              let () = x_tinfo_hp (add_str "renamed_spec (after poly subs)" Cprinter.string_of_struc_formula) renamed_spec no_pos in
+              (************** SUBST poly types *************)
               (* let () = Debug.info_zprint (lazy (("  renamed spec 2 " ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
               (* let () = Debug.info_zprint (lazy (("  renamed spec 3:" ^ (Cprinter.string_of_struc_formula renamed_spec)))) no_pos in *)
               let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in

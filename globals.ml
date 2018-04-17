@@ -908,6 +908,40 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
+let subs_one_poly_typ poly_types target_ty =
+    match target_ty with
+     | Poly t ->
+        begin
+         try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
+         with _ ->  target_ty
+        end
+     | _ -> target_ty
+
+let subs_poly_typ poly_vars poly_args args_types =
+  try
+   let poly_types = List.combine poly_vars poly_args in
+   let args_types = List.map (fun farg -> subs_one_poly_typ poly_types farg) args_types in
+   args_types
+  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+
+let subs_one_poly_typ poly_vars poly_args target_ty =
+  try
+   let poly_types = List.combine poly_vars poly_args in
+   let target_ty  = subs_one_poly_typ poly_types target_ty in
+   target_ty
+  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+
+let hsubs_one_poly_typ poly_hash target_ty =
+  match target_ty with
+   | Poly t ->
+      begin
+        try  Hashtbl.find poly_hash t  with _ ->  target_ty
+      end
+   | _ -> target_ty
+
+let hsubs_poly_typ poly_hash args_types =
+   List.map (fun farg -> hsubs_one_poly_typ poly_hash farg) args_types
+
 
 (* let null_type = Named "" *)
 (* ;;                       *)
