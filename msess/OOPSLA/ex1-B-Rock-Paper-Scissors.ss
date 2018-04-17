@@ -20,8 +20,8 @@ void C(Channel c)
 {
  msg m = new msg(1000,2);
  dprint;
- gsend(c,m)[msg];
- gsend(c,3)[int];
+ send(c,m)[msg];
+ send(c,3)[int];
 // dprint;
 }
 
@@ -30,9 +30,9 @@ void S(Channel c, int reward, int no_players)
  requires c::Chan{@S G<C,S@peer,c@chan>}<> & reward>=0
  ensures  c::Chan{emp}<> ;
 {
- int fee    = receive(c);
- int option = receive(c);
- if (fee>=1000) { reward = reward + fee; }
+ msg m      = receive(c)[msg];
+ int option = receive(c)[int];
+ if (m.value >= 1000) { reward = reward + m.value; }
  else { reward = 0; }
 // dprint;
  assert reward'>=1000;

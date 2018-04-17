@@ -1455,6 +1455,21 @@ and check_exp prog proc ctx (e0:exp) label =
 (* WN_2_Loc : to be implemented by returing xpure of asserted f formula*)
 and get_xpure_of_formula f = 1
 
+and subs_poly_typ poly_vars poly_args args_types pos =
+  try
+  let poly_types = List.combine poly_vars poly_args in
+  let args_types = List.map (fun farg ->
+    match farg with
+     | Poly t ->
+        begin
+         try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
+         with _ ->  farg
+        end
+     | _ -> farg
+    ) args_types in
+  args_types
+  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label) : CF.list_failesc_context =
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{es with CF.es_formula = CF.elim_e_var !proc_used_names es.CF.es_formula} in
@@ -2401,6 +2416,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_scall_method_name = mn; (* mn is mingled name of the method *)
         exp_scall_lock = lock;
         exp_scall_arguments = vs;
+        exp_scall_poly_args = pargs;
         exp_scall_ho_arg = ha;
         exp_scall_extra_arg = extra_arg;
         exp_scall_is_rec = is_rec_flag;
@@ -2439,8 +2455,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
           let () = Debug.ninfo_zprint (lazy (("   stk spec: " ^(Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *))))) no_pos in
           let farg_types, farg_names = List.split proc.proc_args in
+          let farg_types = subs_poly_typ proc.proc_poly_vars pargs farg_types pos in
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+
           let () = y_tinfo_hp (add_str "actual_spec_vars" Cprinter.string_of_spec_var_list) actual_spec_vars in
           let () = y_tinfo_hp (add_str "farg_spec_vars" Cprinter.string_of_spec_var_list) farg_spec_vars in
 

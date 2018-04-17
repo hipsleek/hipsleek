@@ -11,71 +11,25 @@ do so by using an exclusive channel
 /**
  int
 */
-void send (Channel ccc, int xxx)
+void isend (Channel ccc, int xxx)
   requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
   ensures  ccc::Chan{@S %R}<>;
 
-int receive (Channel ccc)
+int ireceive (Channel ccc)
   requires ccc::Chan{@S ?v#%L(v);;%R}<>
   ensures  ccc::Chan{@S %R}<> * %L(res) ;
 
 /**
  generic
 */
-void gsend [aaa] (Channel ccc, `aaa xxx)
+void send [aaa] (Channel ccc, `aaa xxx)
   requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
   ensures  ccc::Chan{@S %R}<>;
 
-`bbb greceive [bbb] (Channel ccc)
+`bbb receive [bbb] (Channel ccc)
   requires ccc::Chan{@S ?v#%L(v);;%R}<>
   ensures  ccc::Chan{@S %R}<> * %L(res) ;
 
-
-
-/**
- Channel
-*/
-void sendc (Channel c, Channel x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
-
-Channel receivec (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
-
-/**
-   Addr
-*/
-void senda (Channel c, Addr x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
-
-Addr receivea (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
-
-
-/**
-   Date
-*/
-void sendd (Channel c, DDate x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
-
-DDate received (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
-
-/**
-   String
-*/
-void sends (Channel c, SString x)
-  requires c::Chan{@S !v#%L(v);;%R}<> * %L(x)
-  ensures  c::Chan{@S %R}<>;
-
-SString receives (Channel c)
-  requires c::Chan{@S ?v#%L(v);;%R}<>
-  ensures  c::Chan{@S %R}<> * %L(res);
 
 /**
 

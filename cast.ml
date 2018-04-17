@@ -288,7 +288,7 @@ and proc_decl = {
   proc_is_recursive : bool;
   proc_file : string;
   proc_loc : loc;
-  proc_poly_vars : P.spec_var list;
+  proc_poly_vars : (* P.spec_var *) ident list;
   (* none - not while, Some(true) : while with ret *)
   (* proc_while_with_return : bool option;  *)
   proc_test_comps :  test_comps option}

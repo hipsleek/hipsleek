@@ -4552,7 +4552,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_is_recursive = false;
            C.proc_file = proc.I.proc_file;
            C.proc_loc = proc.I.proc_loc;
-           C.proc_poly_vars = List.map (fun id -> CP.SpecVar (PolyT,id,Unprimed)) proc.I.proc_poly_vars;
+           C.proc_poly_vars = (* List.map (fun id -> CP.SpecVar (PolyT,id,Unprimed)) *) proc.I.proc_poly_vars;
            (* C.proc_while_with_return = None; *)
            C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps } in
          let () = cproc.C.proc_stk_of_static_specs # push_pr (x_loc ^ "init of proc_stk_of_static_specs") final_static_specs_list in
@@ -5807,12 +5807,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       else (
         try (
           let pdef = if (mn=Globals.join_name) then proc_decl else
-              let () = y_binfo_pp "HERE1" in
-              let () = y_binfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
+              let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
               let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
               I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
           in
-          let () = y_binfo_pp "HERE12" in
           let proc_args = if (mn=Globals.join_name) then
               if (!Globals.allow_threads_as_resource) then
                 (*threads as resource -> thrd type*)

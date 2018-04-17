@@ -5021,7 +5021,7 @@ let rec string_of_coerc_list l = match l with
 let string_of_proc_decl p =
   let locstr = (string_of_full_loc p.proc_loc)
   in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name
-     ^ (match p.proc_poly_vars with | [] -> "" | ha -> " " ^ (string_of_spec_var_list ha))
+     ^ (match p.proc_poly_vars with | [] -> "" | ha -> " " ^ ((* string_of_spec_var_list *)pr_list pr_id ha))
      ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")"
       ^ (match p.proc_ho_arg with | [] -> "" | ha -> " with " ^ (pr_list string_of_decl ha))
       ^ (match p.proc_extra_args with | [] -> "" | ha -> " with " ^ (pr_list string_of_decl ha))
