@@ -24,6 +24,15 @@ pred Aseg<end> == self=end
      or self::AsegN<end> & self<end
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
+
+/*
+  Aseg<x,y> & x=y ==> emp
+  Aseg<x,y> & x<y ==> AsegN<x,y>
+*/
+lemma_safe self::Aseg<y> & self=y -> emp.
+lemma_safe self::Aseg<y> & self<y -> self::AsegN<y>.
+
+
 //(1) unfolding
 checkentail_exact xxx::AsegN<yyy> & zzz=xxx+1 |- xxx::ElemN<_>*zzz::Aseg<yyy>.
 expect Valid.
@@ -102,7 +111,7 @@ print residue.
 //(12)  
 checkentail_exact
        yyy::ElemN<_> * xxx::Aseg<zzz> & xxx=yyy+1 & yyy<zzz
-       |- yyy::Aseg<zzz>.
+       |- yyy::AsegN<zzz>.
 expect Valid.
 print residue.
 /*
