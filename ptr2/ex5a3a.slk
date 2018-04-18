@@ -25,7 +25,7 @@ pred Aseg<end> == self=end
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
 
-
+// yyy::Elem<_> * xxx::Aseg<zzz> & xxx=yyy+1 & yyy<zzz |- yyy::AsegN<zzz>
 checkentail_exact
        yyy::ElemN<_>  & xxx=zzz & xxx=yyy+1 & yyy<zzz
    or  yyy::ElemN<_> * xxx::AsegN<zzz> & xxx=yyy+1 & yyy<zzz
