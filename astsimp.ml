@@ -185,7 +185,7 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     let all_prims = Buffer.contents prim_buffer in
     let prog = 
       (try
-         Parser.parse_hip_string "primitives" all_prims 
+         Parser.parse_hip_string "primitives" all_prims
        with  _ ->
          Error.report_error {Error.error_loc = no_pos;
                              Error.error_text = ("Parsing error in gen_primitives")}
@@ -392,12 +392,12 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
     then
       (let rec append_no_duplicates (l1 : (ident * primed) list)
           (l2 : (ident * primed) list) : (ident * primed) list =
-        match l1 with
-        | h :: rest ->
-          if List.mem h l2
-          then append_no_duplicates rest l2
-          else h :: (append_no_duplicates rest l2)
-        | [] -> l2
+         match l1 with
+         | h :: rest ->
+           if List.mem h l2
+           then append_no_duplicates rest l2
+           else h :: (append_no_duplicates rest l2)
+         | [] -> l2
        in
        IF.Exists
          {
@@ -1229,7 +1229,7 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
           let eqs = (CFS.get_equations_sets c1 aset)in
           let eqs = (CFS.transform_null eqs) in
           (*let () = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
-            		let () = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
+            let () = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
           (c1,c2,aset,eqs)) f_list_init in
       let pr = pr_list (fun (f,_,vl,bf) -> pr_triple Cprinter.string_of_pure_formula Cprinter.string_of_spec_var_list 
                            (pr_list Cprinter.string_of_b_formula) (f,vl,bf)) in
@@ -1251,11 +1251,11 @@ let rec splitter_x (f_list_init:(Cpure.formula*CF.struc_formula) list) (v1:Cpure
           if (x<y) then filled_matr.(y).(x)
           else filled_matr.(x).(y)) c)) filled_matr in
       (*let () = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
-        	    (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
-        	    (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
-        	    let () = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
-        	    Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
-        	    ) filled_matr "")^"\n") in*)
+        (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
+        (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
+        let () = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
+        Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
+        ) filled_matr "")^"\n") in*)
 
       let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
           let rec arr_exists i b = 
@@ -1329,12 +1329,12 @@ let rec move_instantiations_x (f:CF.struc_formula):CF.struc_formula*(Cpure.spec_
       (List.concat var_list))			
   | CF.EAssume b-> (f,[])
   (*| CF.EVariance b ->
-    	  let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
-    	  | None -> Cpure.afv e1
-    	  | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.CF.formula_var_measures in
-    	  let i_var_list = List.fold_left (fun rs e -> rs@(Cpure.afv e)) [] b.CF.formula_var_infer in
-    	  let new_cont, c_var_list = helper b.CF.formula_var_continuation in
-    	  (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))*)
+    let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
+    | None -> Cpure.afv e1
+    | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.CF.formula_var_measures in
+    let i_var_list = List.fold_left (fun rs e -> rs@(Cpure.afv e)) [] b.CF.formula_var_infer in
+    let new_cont, c_var_list = helper b.CF.formula_var_continuation in
+    (CF.EVariance {b with CF.formula_var_continuation = new_cont}, (m_var_list@i_var_list@c_var_list))*)
   | CF.EInfer b ->
     let new_cont, c_var_list = move_instantiations_x b.CF.formula_inf_continuation in
     (CF.EInfer {b with CF.formula_inf_continuation = new_cont}, c_var_list)
@@ -2218,9 +2218,9 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
               let () = y_winfo_pp "skip INV Check" in
               print_endline_quiet ("\nInv Check: Fail.(View "^vn^":"^msg^")")
               (* report_error pos  ("\nInv Check: Fail.(View "^vn^":"^msg^")"^x_loc) *)
-          else
-            let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
-            y_tinfo_pp ("Inv Check: Valid.("^msg^")")
+            else
+              let () = y_tinfo_hp (add_str "inv" Cprinter.string_of_ef_pure_disj) f in
+              y_tinfo_pp ("Inv Check: Valid.("^msg^")")
           | None -> ()
         else ()
       in
@@ -2609,7 +2609,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                       (ne1,ne2)
                     ) c_o in
                   (nc,nc_o)
-                  ) idl in
+                ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
               let cpf = x_add trans_pure_formula pf n_tl in
               let cpf = x_add Cpure.arith_simplify 1 cpf in
@@ -2628,7 +2628,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let vbc_u = conv_baga_inv vbi_u in
       (* let vbi = vbc_i in *)
       let (vboi,vbui,user_inv,user_x_inv) = 
-          x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
+        x_add CFE.compute_baga_invs vbc_i vbc_o vbc_u new_pf pos in
       let () = y_tinfo_hp (add_str "user_inv" !MCP.print_mix_formula) user_inv in
       let () = y_tinfo_hp (add_str "user_x_inv" !MCP.print_mix_formula) user_x_inv in
       (* let unfold_once baga = *)
@@ -2694,8 +2694,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                     then eq_lst else [] in
                   let () = y_tinfo_hp (add_str "new_p" !CP.print_formula) new_p in
                   (v,no,eq_lst)
-                    (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
-                    (* else (\* view node*\) []) *)
+                  (* if no=0 then (\*data nodee*\) CP.join_conjunctions eq_lst  *)
+                  (* else (\* view node*\) []) *)
                 ) lst in
               let () = y_tinfo_hp (add_str "lst(root)" (pr_list (pr_triple !CP.print_sv string_of_int (pr_list !CP.print_formula)))) lst in
               let () = y_tinfo_hp !CP.print_formula pure in
@@ -2738,9 +2738,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
                 let new_p = CP.join_disjunctions [p1;p2] in
                 (* WN : why !CP.simplify did not work even though oc did ? *)
                 let new_p = !CP.oc_hull new_p in
-                  aux xss (v1,new_p)
-                (* if !CP.tp_imply lhs rhs then  *)
-                (* else []  *)
+                aux xss (v1,new_p)
+              (* if !CP.tp_imply lhs rhs then  *)
+              (* else []  *)
               | _::xss -> [] (* not consistent *) 
             in
             let rec is_empty xs = match xs with
@@ -2749,8 +2749,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               | _ -> false in
             let xs = List.filter (fun x -> not(x==[])) xs in
             let ans = match xs with 
-            | [xs]::xss -> aux xss xs 
-            | _ -> [] in
+              | [xs]::xss -> aux xss xs 
+              | _ -> [] in
             let () = if not (is_empty xs) && ans==[] then 
                 y_tinfo_hp (add_str "inconsistent roots" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_formula)))) xs
             in ans
@@ -2762,8 +2762,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
             let pr3 = pr_list (pr_pair pr_sv pr1)  in
             Debug.no_1 "choose_one" (pr_list pr3) pr3 choose_one xs in
           let fresh_name (v,f) = (v,f) in
-              (* let fr_v = CP.fresh_spec_var v in *)
-              (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
+          (* let fr_v = CP.fresh_spec_var v in *)
+          (* (fr_v,CP.apply_subs [(v,fr_v)] f) in *)
           (* remove base-cases without data and heap nodes *)
           let pr_f = !CP.print_formula in
           let pr_lst_f = pr_list pr_f in
@@ -2783,7 +2783,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           (* give fresh name for root ptr *)
           let lst = List.map fresh_name lst in
           let () = y_tinfo_hp (add_str "TODO: lst(fresh_name)" pr_3a) lst in
-           lst
+          lst
         else []
       in
       let () = y_tinfo_hp (pr_list (pr_pair !CP.print_sv !CP.print_formula)) lst_heap_ptrs in
@@ -5392,21 +5392,28 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             I.exp_call_nrecv_pos = pos; } in 
         helper new_e
       else
-        (let b_call = if !Globals.check_integer_overflow then (let func exp = match exp with
-             | I.Var v -> Some([v.I.exp_var_name])
-             | _ -> Some([]) in
-            let e1_vars = I.fold_exp e1 func List.flatten [] in
-            (*let () = print_string ("\ne1_vars: "^(String.concat " " e1_vars)) in*)
-            let e2_vars = I.fold_exp e2 func List.flatten [] in
-            (*let () = print_string ("\ne2_vars: "^(String.concat " " e2_vars)) in*)
-            let local_vars = List.map (fun (t,id) -> id) (E.names_on_top ()) in
-            (*let () = print_string ("\nlocal_vars: "^(String.concat " " local_vars)) in*)
-            let flag1 = List.for_all (fun c -> List.mem c local_vars) e1_vars in
-            let flag2 = List.for_all (fun c -> List.mem c local_vars) e2_vars in
-            if flag1 && flag2 then get_binop_call b_op
-            else get_binop_call_safe_int b_op
-           )
-            else get_binop_call b_op in
+        (
+          let b_call =
+            if !Globals.check_integer_overflow
+            then (
+              let func exp =
+                match exp with
+                | I.Var v -> Some([v.I.exp_var_name])
+                | _ -> Some([])
+              in
+              let e1_vars = I.fold_exp e1 func List.flatten [] in
+              (*let () = print_string ("\ne1_vars: "^(String.concat " " e1_vars)) in*)
+              let e2_vars = I.fold_exp e2 func List.flatten [] in
+              (*let () = print_string ("\ne2_vars: "^(String.concat " " e2_vars)) in*)
+              let local_vars = List.map (fun (t,id) -> id) (E.names_on_top ()) in
+              (*let () = print_string ("\nlocal_vars: "^(String.concat " " local_vars)) in*)
+              let flag1 = List.for_all (fun c -> List.mem c local_vars) e1_vars in
+              let flag2 = List.for_all (fun c -> List.mem c local_vars) e2_vars in
+              if flag1 && flag2 then get_binop_call b_op
+              else get_binop_call_safe_int b_op
+            )
+            else get_binop_call b_op
+         in
          let new_e = I.CallNRecv {
              I.exp_call_nrecv_method = b_call;
              I.exp_call_nrecv_lock = None;

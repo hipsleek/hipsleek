@@ -66,7 +66,8 @@ let common_arguments = [
   ("-wpf", Arg.Set Globals.print_proof,
    "Print all the verification conditions, the input to external prover and its output.");
   ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
-  "Do unfolding of predicates with duplicated pointers."); (* An Hoa *)
+   "Do unfolding of predicates with duplicated pointers."); (* An Hoa *)
+
   (* Labelling Options *)
   ("--temp-opt", Arg.Set Globals.temp_opt_flag,
    "Temporary option flag.");
@@ -812,6 +813,7 @@ let common_arguments = [
    "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
   ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
   ("--en-null-aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+
   (*for cav experiments*)
   (*maintains one slice if memo formulas are used otherwise has no effect*)
   ("--force-one-slice", Arg.Set Globals.f_1_slice,"use one slice for memo formulas");
@@ -824,6 +826,9 @@ let common_arguments = [
   (*maintains multi slices but combines them into one slice just before going to the prover
     in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+
+  (* IFA *)
+  ("--ifa", Arg.Set Globals.is_ifa,"information flow analysis using ghost field");
 
   (* String Inference *)
   ("--old-pred-synthesis", Arg.Clear Globals.new_pred_syn, "Disable new predicate synthesis");
