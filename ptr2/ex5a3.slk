@@ -95,7 +95,11 @@ checkentail_exact
 expect Valid.
 print residue.
 
-//(12)
+/*
+  Aseg<x,y> & x=y ==> emp
+  Aseg<x,y> & x<y ==> AsegN<x,y>
+*/
+//(12)  
 checkentail_exact
        yyy::ElemN<_> * xxx::Aseg<zzz> & xxx=yyy+1 & yyy<zzz
        |- yyy::Aseg<zzz>.
@@ -270,3 +274,11 @@ Message: compute_view_fw_bw: data not found: ElemN
 
 
 */
+
+
+checkentail_exact
+       yyy::ElemN<_>  & xxx=zzz & xxx=yyy+1 & yyy<zzz
+   or  yyy::ElemN<_> * xxx::AsegN<zzz> & xxx=yyy+1 & yyy<zzz
+       |- yyy::AsegN<zzz>.
+expect Valid.
+print residue.

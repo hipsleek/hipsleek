@@ -1,0 +1,34 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+
+
+pred_prim ElemN<start:int>
+     inv_exact BG([self], true). // non-null
+
+pred_prim AsegA<end>
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
+     inv_exact BG([(self,end)],0<self<end).
+
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+
+
+checkentail_exact
+       yyy::ElemN<_>  & xxx=zzz & xxx=yyy+1 & yyy<zzz
+   or  yyy::ElemN<_> * xxx::AsegN<zzz> & xxx=yyy+1 & yyy<zzz
+       |- yyy::AsegN<zzz>.
+expect Valid.
+print residue.
