@@ -9025,6 +9025,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let expl = if true (* !Globals.adhoc_flag_4 *) then estate.es_gen_expl_vars else [] in
         let exist_vars = estate.es_evars@expl@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* shouldn't the current implicit be considered as existential esp for base-case-fold *)
+        let () = y_binfo_pp "should implicit var be existential here.." in
         let exist_vars = if false (* !Globals.adhoc_flag_4 *) then exist_vars@estate.es_gen_impl_vars else exist_vars in
         (* TODO-EXPURE : need to build new expure stuff *)
         let () = x_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars no_pos in

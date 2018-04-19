@@ -1,0 +1,19 @@
+/*
+   not instanatiating
+
+Starting Omega.../usr/local/bin/oc
+ <1>emp&{FLOW,(20,21)=__norm#E}[]
+[[ SEARCH ==>  Match(x,x)]]
+
+
+*/
+
+
+data Cell {
+ int val;
+}.
+
+checkentail_exact
+ x::Cell<3> |- x::Cell<yy>.
+expect Valid.
+print residue.

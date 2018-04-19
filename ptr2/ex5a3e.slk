@@ -26,10 +26,6 @@ pred Aseg<end> == self=end
      or self::AsegN<end> & self<end
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
-data Cell {
- int val;
-}.
- 
 /*
 (==solver.ml#13753==)
 do_base_fold@29@27@26@25@24
@@ -106,18 +102,6 @@ do_base_fold@23 EXIT: 1[
 
 checkentail_exact
  emp&zzz=1+yyy & yyy<zzz & Anon_56=Anon_14 & Anon_56=Anon_14
-|- exists end_61,zzz_55: xxx_57::Aseg<end_61>@M&xxx_57=1+yyy & end_61=zzz_55.
-expect Valid.
-print residue.
-
-
-checkentail_exact
- x::ElemN<3> |- x::ElemN<yy>.
-expect Valid.
-print residue.
-
-
-checkentail_exact
- x::Cell<3> |- x::Cell<yy>.
+|- exists end_61,zzz_55,xxx_57: xxx_57::Aseg<end_61>@M&xxx_57=1+yyy & end_61=zzz_55.
 expect Valid.
 print residue.
