@@ -65,7 +65,7 @@ let var_with_view_only =
 
 let var_with_implicit_explicit =
   let v = new var_types in
-  (* let () = v # set_implicit in *)
+  let () = v # set_implicit in
   let () = v # set_explicit in
   v
 
