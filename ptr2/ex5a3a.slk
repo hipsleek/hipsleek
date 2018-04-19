@@ -11,6 +11,8 @@
 //       To print all the intermediate steps, run with --verbose-arr
 
 
+//lemma_unsafe self::Aseg<y> <- self::AsegN<y>.
+
 pred_prim ElemN<start:int>
      inv_exact BG([self], true). // non-null
 
@@ -31,4 +33,25 @@ checkentail_exact
    or  yyy::ElemN<_> * xxx::AsegN<zzz> & xxx=yyy+1 & yyy<zzz
        |- yyy::AsegN<zzz>.
 expect Valid.
+
+
+checkentail_exact
+    yyy::AsegN<zzz>
+       |- yyy::Aseg<zzz>.
+expect Valid.
+
 print residue.
+
+
+checkentail_exact
+       yyy::ElemN<_>  & xxx=zzz & xxx=yyy+1 & yyy<zzz
+       |- yyy::AsegN<zzz>.
+expect Valid.
+print residue.
+
+
+checkentail_exact
+       yyy=zzz |- yyy::Aseg<zzz>.
+expect Valid.
+print residue.
+

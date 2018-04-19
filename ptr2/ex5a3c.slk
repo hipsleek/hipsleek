@@ -1,0 +1,77 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+
+
+//lemma_unsafe self::Aseg<y> <- self::AsegN<y>.
+
+pred_prim ElemN<start:int>
+     inv_exact BG([self], true). // non-null
+
+pred_prim AsegA<end>
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == exists xxx: self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
+     inv_exact BG([(self,end)],0<self<end).
+
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+/*
+(==solver.ml#13753==)
+do_base_fold@29@27@26@25@24
+do_base_fold inp1 :  emp&zzz=1+yyy & yyy<zzz & Anon_56=Anon_14 & Anon_56=Anon_14&
+{FLOW,(4,5)=__norm#E}[]
+ es_evars: [end_61; zzz_55]
+ es_gen_impl_vars(E): [xxx_57]
+ es_heap: yyy::ElemN<Anon_14>@M
+ es_rhs_eqset: [zzz_55:zzz; end_61:zzz_55; end_61:zzz_55]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  Fold ==>  SEARCH ==>  Match(yyy,yyy) ==>  SEARCH ==>  COND ==>  BaseCaseFold
+do_base_fold inp2 : xxx_57::Aseg<end_61>@M&xxx_57=1+yyy & end_61=zzz_55&{FLOW,(1,26)=__flow#E}[]
+do_base_fold@29 EXIT: failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  yyy!=null & yyy<(1+yyy) |-  xxx_57=yyy+1. LOCS:[1;32;22] (may-bug)
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ SEARCH ==>  Fold ==>  SEARCH ==>  Match(yyy,yyy) ==>  SEARCH ==>  COND ==>  BaseCaseFold]]false
+
+
+(==solver.ml#13753==)
+do_base_fold@23
+do_base_fold inp1 :  emp&Anon_56=Anon_14 & yyy<zzz & zzz=yyy+1&{FLOW,(4,5)=__norm#E}[]
+ es_evars: [end_62; zzz_63]
+ es_gen_impl_vars(E): [xxx_57]
+ es_rhs_eqset: [end_62:zzz_63]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  BaseCaseFold
+do_base_fold inp2 : xxx_57::Aseg<end_62>@M&xxx_57=yyy+1 & end_62=zzz_63&{FLOW,(4,5)=__norm#E}[]
+do_base_fold@23 EXIT: failctxfe_kind: MAY
+        fe_name: logical bug
+        fe_locs: {
+    fc_message:  yyy<(yyy+1) |-  xxx_57=1+yyy. LOCS:[69;70] (may-bug)
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ SEARCH ==>  COND ==>  BaseCaseFold]]false
+
+*/
+
+
+checkentail_exact
+       yyy::ElemN<_>  //& xxx=zzz
+         & zzz=yyy+1 & yyy<zzz
+       |- yyy::AsegN<zzz>.
+expect Valid.
+print residue.
+
+
