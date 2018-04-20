@@ -1,5 +1,7 @@
 #include "xdebug.cppo"
 module CP = Cpure
+open Gen.Basic
+  
 
 let pr_sv = CP.string_of_spec_var
 let pr_svl = CP.string_of_spec_var_list
@@ -7,8 +9,10 @@ let pr_pair_id = fun (x,y) -> x ^ "-->" ^  y
 let eq_pair_id = fun (x1,y1) (x2,y2) -> (x1=x2) && (y1=y2)
 
 let stk_vars = new Gen.stack_pr "stk-vars" (pr_sv) CP.eq_spec_var_nop
+let stk_impl_vars = new Gen.stack_pr "stk-impl-vars" (pr_sv) CP.eq_spec_var_nop
 
-let set_stk_vars vs = 
+let set_stk_vars vs =
+  (* let () = y_binfo_hp (add_str "pushing stk_vars" pr_svl) vs in *)
   let () = stk_vars # reset in
   stk_vars # push_list vs
 
