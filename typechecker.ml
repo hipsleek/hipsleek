@@ -777,7 +777,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           (* run-fast-test: classic2, classic2a *)
           etype0  (* None *)
       in
-      let curr_vars = stk_vars # get_stk in
+      let curr_vars = stk_vars # get_stk_loc x_loc in
       (* let ovars = CF.fv post_cond in *)
       (* let ov = CP.diff_svl ovars curr_vars in *)
       in_vars # set curr_vars ;
@@ -2229,7 +2229,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     | Dprint ({exp_dprint_string = str;
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
-        let curr_svl = stk_vars # get_stk in
+        let curr_svl = stk_vars # get_stk_loc x_loc in
         let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
         (* let ctx0 = ctx in *)

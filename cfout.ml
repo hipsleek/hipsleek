@@ -451,7 +451,7 @@ let simplify_context ?(prog_vs=None) ctx =
                        let () = x_tinfo_hp (add_str "renamed_vars" pr_id) (stk_renamed_vars # string_of_no_ln) no_pos in
                        let h,mf,vp,fl,t,a = split_components en.es_formula in
                        let curr_svl = match prog_vs with
-                         | None -> stk_vars # get_stk 
+                         | None -> stk_vars # get_stk_loc x_loc
                          | Some vs -> vs
                        in
                        let pure_f = MCP.pure_of_mix mf in

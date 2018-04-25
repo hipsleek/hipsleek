@@ -645,7 +645,7 @@ class ['a] stack =
     method get_stk  =
        (* return entire content of stack *)
        (* let () = y_binfo_pp "get_stk" in *)
-      let () = print_endline "get_stk" in
+      (* let () = print_endline "get_stk" in *)
           stk
     method get_stk_recent  = 
       if recent<=0 then []
@@ -729,61 +729,77 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
   object (self)
     inherit ['a] stack as super
     val name = nn (* name of stack *)
-    val elem_pr = epr 
-    val elem_eq = eq 
-    method get_stk_no_dupl  = 
+    val elem_pr = epr
+    val elem_eq = eq
+    method get_stk_no_dupl  =
       (* remove dupl *)
       let () = print_endline "get_stk_no_dupl" in
       let s = super # get_stk in
       BList.remove_dups_eq eq s
-    (* method get_stk  =  *)
-    (*   (\* remove dupl *\) *)
-    (*   let s = self # get_stk_no_dupl in *)
-    (*   print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s));  *)
-    (*   s *)
-    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =  
+    (* method get_stk  = *)
+      (* remove dupl *)
+      (* let s = self # get_stk_no_dupl in *)
+      (* print_endline ("\nget_stk("^name^"):"^((Basic.pr_list epr) s)); *)
+      (* s *)
+    method get_stk_x f loc =
+      let stk = super # get_stk in
+      let n = List.length stk in
+      let () =
+        match !Globals.show_get_stack with
+        | None -> ()
+        | Some s ->
+          let flag = match !Globals.show_get_stack_rgx with
+            | None -> true
+            | Some rgx -> Str.string_match rgx name 0 in
+          if flag || f then
+            print_endline ("\nget_stk("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) stk))
+          else () in
+      stk
+    method get_stk_loc loc =
+      self # get_stk_x false loc
+    method push_list_x f loc (* ?(pr_flag=false) *) (ls:'a list) =
       (* WN : below is to be removed later *)
       (* let ls = List.filter (fun x -> not(List.exists (fun r -> r==x) stk)) ls in *)
       let n = List.length ls in
       if n=0 (* || name="" *)  then ()
-      else 
-      let () = 
+      else
+      let () =
         match !Globals.show_push_list with
         | None -> ()
-        | Some s -> 
+        | Some s ->
           let flag = match !Globals.show_push_list_rgx with
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
           if flag || f (* s=name || s="" *) then
-            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls)) 
+            print_endline ("\npush_list("^name^"):"^loc^(string_of_int n)^((Basic.pr_list epr) ls))
           else () in
-      super # push_list ls 
-    method push_list_loc s (ls:'a list) =  
+      super # push_list ls
+    method push_list_loc s (ls:'a list) =
       self # push_list_x false s ls
-    method push_list (* ?(pr_flag=false) *) (ls:'a list) =  
+    method push_list (* ?(pr_flag=false) *) (ls:'a list) =
       self # push_list_x false "" ls
-    method push_list_pr loc (ls:'a list) =  
+    method push_list_pr loc (ls:'a list) =
       self # push_list_x true  loc (* ~pr_flag:true *) ls
-    method reset_pr  =  
+    method reset_pr  =
         (* let () = print_endline ("\nXXXX reset("^name) in *)
         super # reset 
-    method push_pr (s:string) (ls:'a) =  
+    method push_pr (s:string) (ls:'a) =
       (* let () = print_endline ("push_pr("^s^"):"^(epr ls)) in *)
-      super # push ls 
-    method string_of = 
+      super # push ls
+    method string_of =
       let stk2 = self # get_stk(* _no_dupl *) in
       Basic.pr_list_ln elem_pr stk
-    method string_of_recent = 
+    method string_of_recent =
       let stk = self # get_stk_recent in
       Basic.pr_list_ln elem_pr stk
     method string_of_no_ln = Basic.pr_list elem_pr stk
-    method string_of_no_ln_rev = 
+    method string_of_no_ln_rev =
       let s = super#reverse_of in
       Basic.pr_list elem_pr s
-    method string_of_reverse = 
+    method string_of_reverse =
       let s = super#reverse_of  in
       Basic.pr_list_ln elem_pr s
-    method string_of_reverse_log = 
+    method string_of_reverse_log =
       let s = super#reverse_of  in
       Basic.pr_list_mln elem_pr s
     method dump_no_ln =
@@ -792,10 +808,10 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
         List.iter (fun e -> print_string (elem_pr e)) s
       end
     method mem (i:'a) = List.exists (elem_eq i) stk
-    method overlap (ls:'a list) = 
+    method overlap (ls:'a list) =
       if (ls == []) then false
       else List.exists (fun x -> List.exists (elem_eq x) ls) stk
-    method reset_recent = 
+    method reset_recent =
       (* if nn="es_infer_hp_rel" then  *)
       (*   begin *)
       (*     print_endline ("XXXX reset recent "^(string_of_int recent)); *)
