@@ -410,7 +410,7 @@ let add_axiom h dir c =
         else x
       ) global_rel_defs # get_stk in
     global_rel_defs # reset_pr;
-    global_rel_defs # push_list_pr x_loc new_rel_defs;
+    global_rel_defs # push_list_loc x_loc new_rel_defs;
     (* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
     let params = List.append (CP.fv h) (CP.fv c) in
     (* let _ = print_endline ("params : " ^ (!CP.print_svl params) ^ "\n") in *)
@@ -467,7 +467,7 @@ let add_relation (rname1:string) rargs rform =
     } in
   let () = y_tinfo_hp (add_str "rname1" pr_id) rname1 in
   let () = y_tinfo_hp (add_str "rargs" !CP.print_svl) rargs in
-    global_rel_defs # push_list_pr x_loc [rdef];
+    global_rel_defs # push_list_loc x_loc [rdef];
     (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
     match rform with
     | CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
@@ -493,7 +493,7 @@ let add_hp_relation (rname1:string) rargs rform =
                related_rels = []; (* to be filled up by add_axiom *)
                related_axioms = []; (* to be filled up by add_axiom *)
                rel_cache_smt_declare_fun = cache_smt_input; } in
-  global_rel_defs # push_list_pr x_loc [rdef];
+  global_rel_defs # push_list_loc x_loc [rdef];
   (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 
   (***************************************************************

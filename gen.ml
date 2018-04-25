@@ -642,7 +642,11 @@ class ['a] stack =
         stk <- i::stk;
         recent <- recent+1
       end
-    method get_stk  = stk (* return entire content of stack *)
+    method get_stk  =
+       (* return entire content of stack *)
+       (* let () = y_binfo_pp "get_stk" in *)
+      let () = print_endline "get_stk" in
+          stk
     method get_stk_recent  = 
       if recent<=0 then []
       else BList.take recent stk 
@@ -729,6 +733,7 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
     val elem_eq = eq 
     method get_stk_no_dupl  = 
       (* remove dupl *)
+      let () = print_endline "get_stk_no_dupl" in
       let s = super # get_stk in
       BList.remove_dups_eq eq s
     (* method get_stk  =  *)
