@@ -26,10 +26,6 @@ pred Aseg<end> == self=end
      or self::AsegN<end> & self<end
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
-data Cell {
- int val;
-}.
- 
 /*
 (==solver.ml#13753==)
 do_base_fold@29@27@26@25@24
@@ -102,17 +98,6 @@ do_base_fold@23 EXIT: 1[
    es_evars: [end_63; zzz_64; xxx_65]
    es_gen_impl_vars(E): []
    ]
-
-
-Why these always printed?
--------------------------
-push_list(global_rel_defs):**smtsolver.ml#470:1[Univ[x]]
-
-push_list(global_rel_defs):**smtsolver.ml#470:1[BasePtr[x]]
-
-stk-vars
---------
-
 
 */
 

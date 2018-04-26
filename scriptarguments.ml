@@ -714,13 +714,6 @@ let common_arguments = [
        ()
      ),
    "Show all push-list calls with that name (reg-ex)");
-  ("-show-get-stack", Arg.String (fun s ->
-       let _ = print_endline ("!!!-show-get-stack "^s) in
-       let () = Globals.show_get_stack:=Some s in
-       let () = if not(s="") then Globals.show_get_stack_rgx := Some (Str.regexp s) in
-       ()
-     ),
-   "Show all get_stack calls with that name (reg-ex)");
   ("-drea", Arg.String (fun s ->
        Debug.z_debug_file:=("$.*"); z_debug_flag:=true;
        Debug.mk_debug_arg s),

@@ -108,7 +108,7 @@ print residue.
   Aseg<x,y> & x=y ==> emp
   Aseg<x,y> & x<y ==> AsegN<x,y>
 */
-//(12)  
+//(12)
 checkentail_exact
        yyy::ElemN<_> * xxx::Aseg<zzz> & xxx=yyy+1 & yyy<zzz
        |- yyy::AsegN<zzz>.
@@ -283,7 +283,6 @@ Message: compute_view_fw_bw: data not found: ElemN
 
 
 */
-
 
 checkentail_exact
        yyy::ElemN<_>  & xxx=zzz & xxx=yyy+1 & yyy<zzz
