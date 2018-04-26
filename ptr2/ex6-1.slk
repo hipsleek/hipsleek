@@ -1,0 +1,80 @@
+
+// README:
+
+//       Use @arr_ba for bi-abduction
+//       Use @arr_en for classical entailment.
+// 	 Use @arr_enfr for entailment with frame inference
+
+//       In classical entailment, by default, it will just return TRUE or FALSE.
+//       To generate pre-condition instead of just TRUE or FALSE, run with "--arr-pre".
+//       For example, ../../sleek ex1.slk --arr-pre
+//       To print all the intermediate steps, run with --verbose-arr
+
+pred_prim ElemN<start:int>
+     inv_exact BG([self], true). // non-null
+
+pred_prim AsegA<end>
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == self::ElemN<_> * xxx::Aseg<end> & xxx=self+1
+     inv_exact BG([(self,end)],0<self<end).
+
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+
+/*
+  Aseg<x,y> & x=y ==> emp
+  Aseg<x,y> & x<y ==> AsegN<x,y>
+*/
+//lemma_safe self::Aseg<y> & self=y -> emp.
+//lemma_safe self::Aseg<y> & self<y -> self::AsegN<y>.
+
+
+//(1) paper example
+checkentail_exact x::ElemN<_> * y::ElemN<3> & x=a & y=x+1 & b=x+2 |- a::Aseg<b>.
+expect Valid.
+print residue.
+// Fail.(may) cause:Nothing_to_do?cond action is empty
+
+//(2) paper example
+checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- [b] a::Aseg<b> & b=a & a=b.
+expect Valid.
+print residue.
+//Message: x is undefined (7)
+
+//(3)
+checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- a::Aseg<a>.
+expect Valid. //Should this be valid?
+print residue.
+//Message: x is undefined (7)
+//Fail.(may) cause:do_unmatched_rhs : a::Aseg<a>@M(may)
+
+//(4) pred
+checkentail_exact a::Aseg<a> |- emp.
+expect Valid.
+print residue.
+
+//(5) pred_prim
+checkentail_exact a::AsegA<a> |- emp.
+expect Valid.
+print residue.
+// fc_message: do_unmatched_rhs : a::Aseg<a>@M(may)
+
+//(6) pred
+checkentail_exact a::Aseg<b> & b=a & a=b |- emp.
+expect Valid.
+print residue.
+
+//(7) pred_prim
+checkentail_exact a::AsegA<b> & b=a & a=b |- emp.
+expect Valid.
+print residue.
+
+//(8) EQ rule 1
+checkentail_exact x::ElemN<_> & a=x |- a::ElemN<_>.
+expect Valid.
+print residue.
+
+
