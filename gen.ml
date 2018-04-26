@@ -745,10 +745,10 @@ class ['a] stack_pr nn (epr:'a->string) (eq:'a->'a->bool)  =
       let stk = super # get_stk in
       let n = List.length stk in
       let () =
-        match !Globals.show_get_stack with
+        match !Globals.show_push_list with
         | None -> ()
         | Some s ->
-          let flag = match !Globals.show_get_stack_rgx with
+          let flag = match !Globals.show_push_list_rgx with
             | None -> true
             | Some rgx -> Str.string_match rgx name 0 in
           if flag || f then
