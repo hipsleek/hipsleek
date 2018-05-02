@@ -1,0 +1,8 @@
+#check_pre_post(2),Trace
+#subst_struc
+#subst_struc_avoid_capture
+#check_exp1,Trace
+#unify_type
+process_one_match,Trace
+compute_actions,Trace
+process_matches
