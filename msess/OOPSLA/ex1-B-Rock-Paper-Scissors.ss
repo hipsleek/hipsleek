@@ -32,6 +32,7 @@ void S(Channel c, int reward, int no_players)
 {
  msg m      = receive(c)[msg];
  int option = receive(c)[int];
+ assert option'>=1 & option'<=3;
  if (m.value >= 1000) { reward = reward + m.value; }
  else { reward = 0; }
  dprint;
