@@ -5,6 +5,8 @@ data node {
 
 lemma_safe self::safell<n> -> self::unsafell<n>;
 lemma_safe self::unsafell<n> -> self::safell<n>;
+lemma_safe self::zeroll<n> -> self::onell<n>;
+lemma_safe self::onell<n> -> self::zeroll<n>;
 
 pred safell<n> == self = null & n = 0 & self <^ @Lo & n <^ @Lo
   or self::node<v,q> * q::safell<n-1> & n > 0 & self <^ @Lo & v <^ @Lo
