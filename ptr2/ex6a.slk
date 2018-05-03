@@ -1,0 +1,24 @@
+data node {
+ int val;
+ }.
+
+/*
+checkentail x::node<5> |- x::node<u>.
+print residue.
+expect Valid.
+
+
+checkentail y::node<5> & y=x |- x::node<u>.
+print residue.
+expect Valid.
+
+
+checkentail y::node<5> & y>=x |- x::node<u>.
+expect Fail.
+print residue.
+*/
+
+infer[@sem_eq] y::node<5> & y>=x & y<=x |- x::node<u>.
+expect Valid.
+print residue.
+
