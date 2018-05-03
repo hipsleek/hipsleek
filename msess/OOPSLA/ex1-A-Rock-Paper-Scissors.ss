@@ -9,8 +9,8 @@ void C(Channel c)
  requires c::Chan{@S G<C@peer,S,c@chan>}<>
  ensures  c::Chan{emp}<> ;
 {
- send(c,1000);
- send(c,3);
+ send(c,1000)[int];
+ send(c,3)[int];
 // dprint;
 }
 
@@ -19,8 +19,8 @@ void S(Channel c, int reward, int no_players)
  requires c::Chan{@S G<C,S@peer,c@chan>}<> & reward>=0
  ensures  c::Chan{emp}<> ;
 {
- int fee    = receive(c);
- int option = receive(c);
+ int fee    = receive(c)[int];
+ int option = receive(c)[int];
  if (fee>=1000) { reward = reward + fee; }
  else { reward = 0; }
  dprint;

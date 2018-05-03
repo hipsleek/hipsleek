@@ -379,7 +379,22 @@ let mk_projection_per_channel prj chan =
       let pos       = star.session_star_formula_pos in
       let sess_prj1 = prj_per_chan session1 chan in
       let sess_prj2 = prj_per_chan session2 chan in
-      STProj.mk_session_star_formula sess_prj1 sess_prj2 pos
+      let pred base_prj =
+        match base_prj with
+        | SProj.Base bproj ->
+          let ch = SBProj.get_channel bproj in
+          SBProj.eq_chan ch chan
+        | SProj.Predicate pproj ->
+          (* returning false is not sound, we should check the predicates parameters if any is an alias of chan *)
+          false
+        | SProj.HVar hproj -> false
+      in
+      if (SProj.find pred session1 && SProj.find pred session2 ) then
+        failwith (x_loc ^ ": Nondeterminism is not supported.")
+      else if (SProj.find pred session1) then sess_prj1
+      else sess_prj2
+      (* ANDREEA TODO: do not add a star for per channel projection - check projection rules *)
+      (* STProj.mk_session_star_formula sess_prj1 sess_prj2 pos *)
   | SProj.SBase sb ->
       begin match sb with
       | SProj.Base base ->

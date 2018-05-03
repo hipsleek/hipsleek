@@ -2447,6 +2447,20 @@ struct
     let pr = string_of_session in
     Debug.no_1 "remove_assrt_bot" pr pr remove_assrt_bot prj
 
+  let find pred fsess =
+    let rec helper sess =
+      match sess with
+      | SSeq s    -> helper s.session_seq_formula_head ||
+                     helper s.session_seq_formula_tail
+      | SOr s     -> helper s.session_sor_formula_or1  ||
+                     helper s.session_sor_formula_or2
+      | SStar s   -> helper s.session_star_formula_star1 ||
+                     helper s.session_star_formula_star2
+      | SExists s -> helper s.session_exists_formula_session
+      | SBase s   -> pred s
+      | SEmp      -> false
+	  in
+    helper fsess
 
 end;;
 
