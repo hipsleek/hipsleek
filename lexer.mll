@@ -452,6 +452,7 @@ rule tokenizer file_name = parse
   | "@arr_ba" {INFER_AT_ARRBA}
   | "@arr_en" {INFER_AT_EN}
   | "@arr_enfr" {INFER_AT_ENFR}
+  | "@sem_eq" {INFER_AT_SEM_EQ}
   | "termAssume" { TREL_ASSUME }
   | "term_infer" { TERM_INFER }
   | "@xpost" { XPOST }

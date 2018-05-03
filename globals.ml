@@ -1698,6 +1698,7 @@ type infer_type =
   | INF_ERR_MUST_ONLY (* For infer[@err_must_only] *)
   | INF_ERR_MAY (* For infer[@err_may] *)
   | INF_SIZE (* For infer[@size] *)
+  | INF_SEM_EQ (* For infer[@sem_eq] *)
   | INF_ANA_NI
   | INF_IMM (* For infer[@imm] *)
   | INF_FIELD_IMM (* For infer[@field_imm] *)
@@ -1748,6 +1749,7 @@ let string_of_inf_const x =
   | INF_ERR_MUST_ONLY -> "@err_must_only"
   | INF_ERR_MAY -> "@err_may"
   | INF_SIZE -> "@size"
+  | INF_SEM_EQ -> "@sem_eq"
   | INF_ANA_NI -> "@ana_ni"
   | INF_IMM -> "@imm"
   | INF_PURE_FIELD -> "@pure_field"

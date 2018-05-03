@@ -86,6 +86,7 @@ type sleek_token =
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_SHAPE_PRE | INFER_AT_SHAPE_POST | INFER_AT_SHAPE_PRE_POST | INFER_AT_BOUND | INFER_AT_ARRBA | INFER_AT_EN | INFER_AT_ENFR
   | INFER_AT_ERROR | INFER_AT_FLOW | INFER_AT_PURE_FIELD
   | INFER_AT_SIZE | INFER_ANA_NI
+  | INFER_AT_SEM_EQ
   | INFER_AT_ARR_AS_VAR 
   | INFER_IMM_PRE | INFER_IMM_POST
   | UTPRE | UTPOST
@@ -278,6 +279,7 @@ module Token = struct
     | INFER_AT_ERROR -> "@error"
     | INFER_AT_FLOW -> "@flow"
     | INFER_AT_SIZE -> "@size"
+    | INFER_AT_SEM_EQ -> "@sem_eq"
     | INFER_ANA_NI -> "@ana_ni"
     | INFER_IMM_PRE -> "@imm_pre"
     | INFER_IMM_POST -> "@imm_post"
