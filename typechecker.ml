@@ -1711,7 +1711,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       with _ -> t0
                     else t0
                   in
-                  let _ = print_endline (!print_formula c1.CF.es_formula) in
+                  (* let _ = print_endline (!print_formula c1.CF.es_formula) in *)
                   (* Security formula handling -- start *)
                   (* let fvs = List.map CP.mk_spec_var (Cast.exp_fv rhs) in
                   let bound = match fvs with
@@ -2093,7 +2093,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               begin
                 stk_vars # push_list lsv;
                 let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
+
+                (* Raise security context *)
+                let orig_sec_ctx = ref CP.Lo in
+                let raise_sec_ctx state =
+                  let () = orig_sec_ctx := state.CF.es_security_context in
+                  let sec_v = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
+                  let sec_ctx = CP.Lub (sec_v, state.CF.es_security_context) in
+                  let raised_state = CF.Ctx { state with CF.es_security_context = sec_ctx } in
+                  raised_state
+                in
+                let rs = CF.transform_list_failesc_context (idf, idf, raise_sec_ctx) rs in
+
                 let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
+
+                let restore_sec_ctx entail_state =
+                  let restored_state = CF.Ctx { entail_state with CF.es_security_context = !orig_sec_ctx } in
+                  restored_state
+                in
+                let tmp_res1 = CF.transform_list_failesc_context (idf, idf, restore_sec_ctx) tmp_res1 in
+
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                 (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
@@ -2223,15 +2242,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 
           (* Raise security context *)
+          let orig_sec_ctx = ref CP.Lo in
           let raise_sec_ctx state =
-            let sec_v = CP.SecVar (CP.mk_spec_var v) in
+            let () = orig_sec_ctx := state.CF.es_security_context in
+            let sec_v = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
             let sec_ctx = CP.Lub (sec_v, state.CF.es_security_context) in
             let raised_state = CF.Ctx { state with CF.es_security_context = sec_ctx } in
             raised_state
           in
           let ctx = CF.transform_list_failesc_context (idf, idf, raise_sec_ctx) ctx in
-
-
 
           (*let () = print_string_quiet ("\nPure_Cond : "^(Cprinter.string_of_pure_formula pure_cond)) in*)
           let then_cond_prim = MCP.mix_of_pure pure_cond in
@@ -2255,6 +2274,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let () = print_endline ("else_ctx2 :" ^ (Cprinter.string_of_list_failesc_context else_ctx2)) in *)
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           (* let res = CF.pop_esc_level_list res pid in *)
+
+          let sec_form = CF.get_sec_in_list_failesc_ctx res in
+          let () = print_endline ("sec_form: " ^ (List.fold_left (fun acc ell ->
+              acc ^ "[" ^ (List.fold_left (fun acc el -> acc ^ " & " ^ (!CP.print_p_formula el)) "" ell) ^ "]") "" sec_form)) in
+          let sec_form = CF.merge_sec_form_list sec_form in
+          let () = print_endline ("merge_sec: " ^ (List.fold_left (fun acc el ->
+              acc ^ " & " ^ (!CP.print_p_formula el)) "" sec_form)) in
+
+          let restore_sec_ctx entail_state =
+            let restored_state = CF.Ctx { entail_state with CF.es_security_context = !orig_sec_ctx } in
+            restored_state
+          in
+          let res = CF.transform_list_failesc_context (idf, idf, restore_sec_ctx) res in
+          let res = CF.transform_list_failesc_context (idf, idf, CF.replace_sec_in_estate sec_form) res in
+
           res
         end in
       Gen.Profiling.push_time "[check_exp] Cond";
@@ -2864,6 +2898,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*   else true *)
           (* else true *)
         in
+        (* Add security formula to state *)
+        let add_sec_f state =
+          let ctx_sec = state.CF.es_security_context in
+          let sec = CP.Security (CP.VarBound ((CP.mkRes int_type), (CP.Lub (CP.SecVar (CP.SpecVar (t, v, Primed)), ctx_sec))), pos) in
+          let sec_b = CP.BForm ((sec, None), None) in
+
+          let new_f = CF.add_pure_formula_to_formula sec_b state.CF.es_formula in
+          let ctx = CF.Ctx { state with CF.es_formula = new_f } in
+          ctx
+        in
+        let ctx = CF.transform_list_failesc_context (idf, idf, add_sec_f) ctx in
         let res =
           (* if (not b) then res (*do not have permission for variable v*) *)
           (* else                                                          *)
@@ -3753,6 +3798,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* fsvars are the spec vars corresponding to the parameters *)
           let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
           let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
+          let bounds = CF.base_sec_bounds fsvars proc.proc_loc in
+          let pf = CP.mkAnd pf bounds proc.proc_loc in
           (* let pf = if (!Globals.allow_locklevel) then  *)
           (*       CP.translate_level_eqn_pure pf (\*l'=l ==> level(l')=level(l)*\) *)
           (*     else pf *)

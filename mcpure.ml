@@ -2984,3 +2984,14 @@ let partition_mix_formula (mf: mix_formula) ff : mix_formula * mix_formula =
 
 let update_pure_of_mix f (mf: mix_formula) =
   transform_mix_formula (nonef, nonef, f, somef, somef) mf
+
+(* Information Flow Analysis *)
+let get_sec_in_mcpure mf =
+  match mf with
+  | MemoF mf -> [] (* ADI TODO: to be added *)
+  | OnePF cf -> CP.get_sec_in_formula cf
+
+let filter_out_sec_form mf =
+  match mf with
+  | MemoF _  -> mf (* ADI TODO: to be added *)
+  | OnePF cf -> OnePF (CP.filter_out_sec_form cf)

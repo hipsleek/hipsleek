@@ -844,7 +844,17 @@ and p_apply_one ((fr, t) as p) pf =
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
     LexVar (t_ann, args1,args2,pos)
-  | Security _ -> x_fail "TODO"
+  | Security (sf,pos) ->
+    let sub_f = match sf with
+      | VarBound (var,lbl) -> VarBound (v_apply_one p var, lbl_apply_one p lbl)
+    in
+    Security (sub_f, pos)
+
+and lbl_apply_one ((fr, t) as p) lbl =
+  match lbl with
+  | Hi | Lo -> lbl
+  | Lub(l1, l2) -> Lub(lbl_apply_one p l1, lbl_apply_one p l2)
+  | SecVar var -> SecVar (v_apply_one p var)
 
 and subst_exp sst (e: exp) : exp =
   match sst with

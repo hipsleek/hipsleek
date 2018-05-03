@@ -2182,14 +2182,24 @@ cexp_w:
     end
     ]
   | "bconstr"
-    [ `IDENTIFIER id; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity (id, Unprimed) sec (get_pos_camlp4 _loc 2) in
-        let b_formula = (sec_form, None) in
-        let bform = P.BForm (b_formula, None) in
-        let f = Pure_f bform in
-        set_slicing_utils_pure_double f false
-    | `RES _; `LT; `CARET; sec=sec_expr ->
-        let sec_form = P.mkSecurity (res_name, Unprimed) sec (get_pos_camlp4 _loc 2) in
+    [ (* `IDENTIFIER id; `LT; `CARET; sec=sec_expr ->
+     *     let sec_form = P.mkSecurity (id, Unprimed) sec (get_pos_camlp4 _loc 2) in
+     *     let b_formula = (sec_form, None) in
+     *     let bform = P.BForm (b_formula, None) in
+     *     let f = Pure_f bform in
+     *     set_slicing_utils_pure_double f false
+     * | `RES _; `LT; `CARET; sec=sec_expr ->
+     *     let sec_form = P.mkSecurity (res_name, Unprimed) sec (get_pos_camlp4 _loc 2) in
+     *     let b_formula = (sec_form, None) in
+     *     let bform = P.BForm (b_formula, None) in
+     *     let f = Pure_f bform in
+     *     set_slicing_utils_pure_double f false *)
+      id=SELF; `LT; `CARET; sec=sec_expr ->
+        let cid,pos = match id with
+          | Pure_c (P.Var (t,l)) -> (t,l)
+          | Pure_c (P.Null l)    -> ((null_name, Unprimed), l)
+          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
+        let sec_form = P.mkSecurity cid sec (get_pos_camlp4 _loc 2) in
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
