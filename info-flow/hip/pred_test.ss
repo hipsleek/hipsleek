@@ -8,11 +8,11 @@ lemma_safe self::unsafell<n> -> self::safell<n>;
 lemma_safe self::zeroll<n> -> self::onell<n>;
 lemma_safe self::onell<n> -> self::zeroll<n>;
 
-pred safell<n> == self = null & n = 0 & self <^ @Lo & n <^ @Lo
+pred safell<n> == self = null & n = 0 & self <^ @Lo
   or self::node<v,q> * q::safell<n-1> & n > 0 & self <^ @Lo & v <^ @Lo
   inv n >= 0;
 
-pred unsafell<n> == self = null & n = 0 & self <^ @Hi & n <^ @Hi
+pred unsafell<n> == self = null & n = 0 & self <^ @Hi
   or self::node<v,q> * q::unsafell<n-1> & n > 0 & self <^ @Hi & v <^ @Hi
   inv n >= 0;
 

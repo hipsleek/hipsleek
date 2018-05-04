@@ -10655,13 +10655,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | HVar (v1, _), HVar (v2, _) -> (v1, v2)
     | _, _ -> failwith ("do match failure: "^m_str)
   in
-  let () = x_tinfo_hp (add_str "[LHS,RHS]" !print_svl) [lhs_self;rhs_self] no_pos in
-  let () = x_tinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
-  let () = x_tinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in
-  let () = x_tinfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
-  let () = x_tinfo_hp (add_str "es_rhs_pure" (pr_opt !CP.print_formula)) estate.es_rhs_pure no_pos in
-  let () = x_tinfo_hp (add_str "es_aux_pure_lemma" !CP.print_formula) estate.es_conseq_pure_lemma no_pos in
-  let () = x_tinfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
+
+  (* NOTE: Moved here since l_args & r_args is needed for IFA *)
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
   let l_ho_args, l_args, l_node_name, node_kind,_, l_perm, l_ann, l_param_ann
@@ -10669,6 +10664,27 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
   let r_ho_args, r_args, r_node_name, _, r_var, r_perm, r_ann, r_param_ann
     = x_add_1 CF.get_args_of_node r_node in
   let fvars_rhs = CF.get_args_of_hrel r_node in
+
+  let estate = if !Globals.ifa
+    then (
+      let old_f = estate.es_formula in
+      let new_f = List.fold_left2 (fun acc el1 el2 ->
+          (
+            if CP.eq_spec_var el1 el2
+            then acc
+            else (add_pure_formula_to_formula (CP.mk_sec_bform el1 (SecVar(el2)) no_pos) acc)
+          )) old_f (rhs_self::r_args) (lhs_self::l_args) in (* NOTE: double check lhs and rhs order *)
+      { estate with es_formula = new_f }
+    )
+    else estate
+  in
+  let () = x_tinfo_hp (add_str "[LHS,RHS]" !print_svl) [lhs_self;rhs_self] no_pos in
+  let () = x_tinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
+  let () = x_tinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in
+  let () = x_tinfo_hp (add_str "es_aux_conseq" !CP.print_formula) estate.es_aux_conseq no_pos in
+  let () = x_tinfo_hp (add_str "es_rhs_pure" (pr_opt !CP.print_formula)) estate.es_rhs_pure no_pos in
+  let () = x_tinfo_hp (add_str "es_aux_pure_lemma" !CP.print_formula) estate.es_conseq_pure_lemma no_pos in
+  let () = x_tinfo_hp (add_str "es_aux_xpure_1" !MCP.print_mix_formula) estate.es_aux_xpure_1 no_pos in
   let () = y_tinfo_hp (add_str "l_args(do match)" !CP.print_svl) l_args in
   let () = y_tinfo_hp (add_str "r_args(do match)" !CP.print_svl) r_args in
   (*   match l_node with *)
