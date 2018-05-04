@@ -393,6 +393,8 @@ let sec_var v = SecVar v
 
 let mk_security v lbl pos = Security (VarBound (v, lbl), pos)
 
+let mk_sec_bform v lbl pos = BForm ((mk_security v lbl pos, None), None)
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
@@ -4577,16 +4579,38 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
   | AndList b -> AndList (map_l_snd (apply_subs sst) b)
   | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs sst f, pos)
 
+(* (\* Information Flow Analysis *\)
+ * let connect_flow (sst : (spec_var * spec_var) list) (v : spec_var) =
+ *   let rec helper sl
+ *       match sl with
+ *       | []         -> mkTrue no_pos
+ *       | (fr,t)::sr ->
+ *         if eq_spec_var v fr
+ *         then mkAnd mk_security
+ *   in
+ *   helper sst *)
 
-and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
+and apply_subs_all_x (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
   | BForm (bf,lbl) -> BForm ((b_apply_subs sst bf),lbl)
-  | And (p1, p2, pos) -> And (apply_subs_all sst p1, apply_subs_all sst p2, pos)
-  | Or (p1, p2, lbl,pos) -> Or (apply_subs_all sst p1, apply_subs_all sst p2, lbl, pos)
-  | Not (p, lbl, pos) -> Not (apply_subs_all sst p, lbl, pos)
-  | Forall (v, qf,lbl, pos)  ->  Forall (subs_one sst v, apply_subs_all sst qf, lbl, pos)
-  | Exists (v, qf, lbl, pos) ->  Exists (subs_one sst v, apply_subs_all sst qf, lbl, pos)
-  | AndList b -> AndList (map_l_snd (apply_subs_all sst) b)
-  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs_all sst f, pos)
+  | And (p1, p2, pos) -> And (apply_subs_all_x sst p1, apply_subs_all_x sst p2, pos)
+  | Or (p1, p2, lbl,pos) -> Or (apply_subs_all_x sst p1, apply_subs_all_x sst p2, lbl, pos)
+  | Not (p, lbl, pos) -> Not (apply_subs_all_x sst p, lbl, pos)
+  | Forall (v, qf,lbl, pos)  ->  Forall (subs_one sst v, apply_subs_all_x sst qf, lbl, pos)
+  | Exists (v, qf, lbl, pos) ->  Exists (subs_one sst v, apply_subs_all_x sst qf, lbl, pos)
+  | AndList b -> AndList (map_l_snd (apply_subs_all_x sst) b)
+  | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs_all_x sst f, pos)
+
+and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula =
+  let rec connect_flow sl f =
+    match sl with
+    | []         -> f
+    | (fr,t)::sr -> (connect_flow sr (mkAnd f (mk_sec_bform fr (SecVar(t)) no_pos) no_pos))
+  in
+  let new_f = apply_subs_all_x sst f in
+  let flows = connect_flow sst new_f in
+  flows
+
+
 
 (* cannot change to a let, why? *)
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list

@@ -31,13 +31,20 @@ node id(node x)
   return x;
 }
 
+node id_fail(node x)
+  requires x::unsafell<n> & n > 0
+  ensures  res::node<_,_> & true & res <^ @Lo;
+{
+  return x;
+}
+
 node id2(node x)
   requires x::safell<n>
   ensures res::unsafell<n>;
 {
   return x;
 }
-node id_fail(node x)
+node id2_fail(node x)
   requires x::unsafell<n>
   ensures res::safell<n>;
 {
@@ -46,9 +53,18 @@ node id_fail(node x)
 
 node idx(node x)
   requires x::safell<n> & n > 0
-  ensures  res::node<_,_> & true & res <^ @Lo;
+  ensures  res::node<_,_> & res <^ @Lo;
 {
   int y = x.val;
   //  dprint;
   return x;
+}
+
+int get(node x)
+  requires x::safell<n> & n > 0
+  ensures  res <^ @Lo;
+{
+  int y = x.val;
+  //  dprint;
+  return y;
 }
