@@ -18,7 +18,7 @@ expect Fail.
 print residue.
 */
 
-infer[@sem_eq] y::node<5> & y>=x & y<=x |- x::node<u>.
+infer [@sem_eq] y::node<5> & y>=x & y<=x |- x::node<u>.
 expect Valid.
 print residue.
 

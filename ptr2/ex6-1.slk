@@ -23,58 +23,77 @@ pred Aseg<end> == self=end
      or self::AsegN<end> & self<end
      inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
 
+//lemma_safe self::Aseg<y> & self=y <-> emp.
+//lemma_safe self::Aseg<y> & self<y <-> self::AsegN<y>.
+
+//lemma_safe self::AsegN<y> & y=self+1 <-> self::ElemN<_>.
+//lemma_safe self::AsegN<y> & y>=self+1 <-> self::ElemN<_> * x::Aseg<y> & x=self+1.
 
 /*
-  Aseg<x,y> & x=y ==> emp
-  Aseg<x,y> & x<y ==> AsegN<x,y>
+//(1) pred
+checkentail_exact a::Aseg<a> |- emp.
+expect Valid.
+print residue.
+
+//(2) pred
+checkentail_exact a::Aseg<b> & b=a & a=b |- emp.
+expect Valid.
+print residue.
+
+//(3) pred
+checkentail_exact a::Aseg<b> & b=a |- b::Aseg<a>.
+expect Valid.
+print residue.
+
+//(4) EQ rule 1
+checkentail_exact x::ElemN<_> & a=x |- a::ElemN<_>.
+expect Valid.
+print residue.
+
+//(5)
+checkentail_exact x::ElemN<_> & x=a & b=x+1 |- a::Aseg<b>.
+expect Valid.
+print residue.
+
+//(6)
+checkentail_exact a::ElemN<_> & b=a+1 |- a::AsegN<b>.
+expect Valid.
+print residue.
+
+//(7)
+checkentail_exact a::AsegN<b> & b=a+1 |- a::ElemN<_>.
+expect Valid.
+print residue.
 */
-//lemma_safe self::Aseg<y> & self=y -> emp.
-//lemma_safe self::Aseg<y> & self<y -> self::AsegN<y>.
 
+//(8)
+checkentail_exact y::Aseg<z> & z=y+1 |- y::ElemN<_>.
+expect Valid.
+print residue.
 
-//(1) paper example
-checkentail_exact x::ElemN<_> * y::ElemN<3> & x=a & y=x+1 & b=x+2 |- a::Aseg<b>.
+/*
+//9
+checkentail_exact x::ElemN<_> * y::ElemN<_> & y=x+1 & z=y+1 |- x::AsegN<z>.
+expect Valid.
+print residue.
+
+//(9) paper example
+checkentail_exact x::ElemN<_> * y::ElemN<3> & x=a & y=x+1 & b=x+2 |- a::AsegN<b>.
 expect Valid.
 print residue.
 // Fail.(may) cause:Nothing_to_do?cond action is empty
 
-//(2) paper example
+//(10) paper example
 checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- [b] a::Aseg<b> & b=a & a=b.
 expect Valid.
 print residue.
 //Message: x is undefined (7)
 
-//(3)
+//(11)
 checkentail_exact x::ElemN<_> * y::ElemN<3> & y=x+1 |- a::Aseg<a>.
 expect Valid. //Should this be valid?
 print residue.
 //Message: x is undefined (7)
 //Fail.(may) cause:do_unmatched_rhs : a::Aseg<a>@M(may)
 
-//(4) pred
-checkentail_exact a::Aseg<a> |- emp.
-expect Valid.
-print residue.
-
-//(5) pred_prim
-checkentail_exact a::AsegA<a> |- emp.
-expect Valid.
-print residue.
-// fc_message: do_unmatched_rhs : a::Aseg<a>@M(may)
-
-//(6) pred
-checkentail_exact a::Aseg<b> & b=a & a=b |- emp.
-expect Valid.
-print residue.
-
-//(7) pred_prim
-checkentail_exact a::AsegA<b> & b=a & a=b |- emp.
-expect Valid.
-print residue.
-
-//(8) EQ rule 1
-checkentail_exact x::ElemN<_> & a=x |- a::ElemN<_>.
-expect Valid.
-print residue.
-
-
+*/

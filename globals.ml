@@ -1786,6 +1786,7 @@ let inf_const_of_string s =
   | "@err_must_only" -> INF_ERR_MUST_ONLY
   | "@err_may" -> INF_ERR_MAY
   | "@size" -> INF_SIZE
+  | "@sem_eq" -> INF_SEM_EQ
   | "@imm" -> INF_IMM
   | "@pure_field" -> INF_PURE_FIELD
   | "@field_imm" -> INF_FIELD_IMM
@@ -1982,6 +1983,7 @@ class inf_obj  =
     method is_err_may  = not(self # get INF_DE_EXC) 
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
+    method is_sem_eq  = self # get INF_SEM_EQ
     method is_ana_ni  = self # get INF_ANA_NI
     method is_efa  = self # get INF_EFA
     method is_dfa  = self # get INF_DFA

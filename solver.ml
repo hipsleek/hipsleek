@@ -5828,6 +5828,30 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
     (fun _ -> f is_folding) estate 
 
+and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
+  let es = match ctx with
+    | Ctx es -> es
+    | _ -> failwith "[do_sem_eq_x]::Unexpected OCtx as input!"
+  in
+  let () = Debug.tinfo_hprint (add_str "do_sem_eq: estate" Cprinter.string_of_entail_state) es no_pos in
+  ()
+
+and do_sem_eq (ctx:context) (conseq:CF.formula) =
+  let pr1 = Cprinter.string_of_context in
+  let pr2 = Cprinter.string_of_formula in
+  let pr3 = (fun _ -> "?") in
+  Debug.no_2 "do_sem_eq" pr1 pr2 pr3
+    (fun _ _ -> do_sem_eq_x ctx conseq) ctx conseq
+
+and check_sem_eq (ctx:context) (conseq:CF.formula) =
+  let is_sem_eq = match ctx with
+      | Ctx es -> es.es_infer_obj # is_sem_eq
+      | OCtx _ -> false
+  in
+  if is_sem_eq then
+    do_sem_eq ctx conseq
+  else ()
+
 and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) =
   let pr1 = (fun _ -> "prog_decl") in
   let pr2 = string_of_bool in
@@ -5861,7 +5885,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   (* this is intended to unfold duplicated ptr for completeness *)
   let rec generate_action_x nodes eset =
     match nodes with
-    | [] 
+    | []
     | [_] -> Context.M_Nothing_to_do "No duplicated nodes!" 
     | x::t -> 
       try
@@ -5969,11 +5993,13 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   (* End of process_entail_state *)
   (*********************************************)
 
+  let () = check_sem_eq ctx conseq in
+
   (* Call the internal function to do the unfolding and do the checking *)
   (* Check duplication only when there are no permissions*)
   let temp,dup = if !unfold_duplicated_pointers && not (Perm.allow_perm ()) then
       match ctx with 
-      | Ctx es -> x_add_1 process_entail_state es 
+      | Ctx es -> x_add_1 process_entail_state es
       | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
     else
       (* Dummy result & set dup = false to do the usual checking. *)
