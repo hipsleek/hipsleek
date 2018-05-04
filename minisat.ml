@@ -21,7 +21,7 @@ let is_minisat_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let minisat_call_count: int ref = ref 0
 let log_file = open_log_out ("allinput.minisat")
-let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
+let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *)
 
 (*minisat*)
 let minisat_path = "/usr/local/bin/minisat"
@@ -50,15 +50,15 @@ let minisat_process = ref {  name = "minisat";
                              pid = 0;
                              inchannel = stdin;
                              outchannel = stdout;
-                             errchannel = stdin 
+                             errchannel = stdin
                           }
 (***************************************************************
                                                                 TRANSLATE CPURE FORMULA TO PROBLEM IN CNF FORMAT
  **************************************************************)
 (*minisat*)
-let de_morgan f=match f with 
+let de_morgan f=match f with
   |Not (And(f1,f2,_),l1,l2)-> Or(Not(f1,l1,l2), Not (f2,l1,l2),l1,l2)
-  |Not (Or(f1,f2,_,_),l1,l2)-> And(Not(f1,l1,l2),Not(f2,l1,l2),l2)  
+  |Not (Or(f1,f2,_,_),l1,l2)-> And(Not(f1,l1,l2),Not(f2,l1,l2),l2)
   |_->f
 let double_negative f= match f with
   |Not (Not(f1,_,_),_,_)->f1
@@ -104,15 +104,15 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
   | XPure _ -> "" (* WN : weakening *)
-  | BVar (sv, pos)    -> 
-    let _= x_binfo_hp (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos 
+  | BVar (sv, pos)    ->
+    let _= x_binfo_hp (add_str "minisat_cnf_of_p_formula Bvar" minisat_cnf_of_spec_var) sv pos
     in ""
   | Lt _            -> ""
   | Lte _           -> ""
   | Gt _            -> ""
   | Gte _           -> ""
   | SubAnn _        -> ""
-  | Eq (e1, e2, _)  ->  
+  | Eq (e1, e2, _)  ->
     (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
     (* let () = print_endline("minisat of e1: "^li^" minisat of e2: "^ri) in *)
     (* if(li=ri) then                                    *)
@@ -126,13 +126,13 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
     (* let _=if(mem=false)then                  *)
     let _=
       begin
-        let _=number_vars := !number_vars+1 in 
-        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in 
+        let _=number_vars := !number_vars+1 in
+        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in
         Glabel.add_edge_e allvars cx
       end
-    in	   	
-    (*let rtc=new rTC in*) 
-    let lr=get_var li ri allvars in 
+    in
+    (*let rtc=new rTC in*)
+    let lr=get_var li ri allvars in
     lr
   | Neq (e1, e2, _) -> (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
     (* if(li=ri) then (let index=addBooleanConst (li) in ("-"^index))  *)
@@ -143,11 +143,11 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
     (* let _=if(mem=false)then                  *)
     let _=
       begin
-        let _=number_vars := !number_vars+1 in 
-        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in 
+        let _=number_vars := !number_vars+1 in
+        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in
         Glabel.add_edge_e allvars cx
       end
-    in	   	 	
+    in
     (*let rtc=new rTC in*) let lr=get_var li ri allvars
     in "-"^lr
   | EqMax _         -> ""
@@ -164,7 +164,8 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | ListAllN _
   | ListPerm _
   | ImmRel _
-  | RelForm _       -> "" 
+  | RelForm _       -> ""
+  | TVar _ -> failwith x_tbi
 (* | VarPerm _ -> Error.report_no_pattern () *)
 
 let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t)=
@@ -175,7 +176,7 @@ let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) 
 let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match pf with
   | Frm _ -> ""
-  | ImmRel _    
+  | ImmRel _
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper BConst EXIT!")  in*) ""
   | BVar (sv, _)    -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper Bvar EXIT!")  in*) ""
@@ -196,13 +197,13 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
     (* let _=if(mem=false)then                  *)
     let _=
       begin
-        let _=number_vars := !number_vars+1 in 
-        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in 
+        let _=number_vars := !number_vars+1 in
+        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in
         Glabel.add_edge_e allvars cx
       end
-    in	   	 	
+    in
     (*let rtc=new rTC in *)let lr=get_var li ri allvars in
-    "-"^lr 
+    "-"^lr
   | Neq (e1, e2, _) -> (*Handle here*)let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
     (* if(li=ri) then (let index=addBooleanConst li in index ) (*add xx to the set of boolean constants *) *)
     (* else                                                                                                *)
@@ -212,13 +213,13 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
     (* let _=if(mem=false)then                  *)
     let _=
       begin
-        let _=number_vars := !number_vars+1 in 
-        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in 
+        let _=number_vars := !number_vars+1 in
+        let cx=Glabel.E.create li (ref (string_of_int !number_vars)) ri in
         Glabel.add_edge_e allvars cx
       end
-    in	   	 	 
+    in
     (*let rtc=new rTC in *) let lr=get_var li ri allvars in
-    lr 
+    lr
   | EqMax _         -> ""
   | EqMin _         -> ""
   (* bag formulas *)
@@ -234,6 +235,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
   | ListPerm _
   | RelForm _       -> ""
   | XPure _ (* | VarPerm _ *) -> Error.report_no_pattern ()
+  | TVar _ -> failwith x_tbi
 
 let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match bf with
@@ -245,23 +247,24 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 
 (*---------------------------------------CNF conversion here-----------------------------------*)
 let return_pure bf f= match bf with
-  | (pf,_)-> match pf with 
+  | (pf,_)-> match pf with
     | Eq _ -> f
     | Neq _ -> f
     | Frm _ -> f
     | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
     | BVar(_,_)->f
-    | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
+    | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _
     | BagMin _ | BagMax _ (* | VarPerm _ *) | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ | ImmRel _ -> Error.report_no_pattern ()
+    | TVar _ -> failwith x_tbi
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
   match f with
   | BForm (b, _)         -> (*return_pure b *)f
-  | And (f1, f2, l1)      ->   And(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1)  
-  | Or (f1, f2, l1, l2)    ->   Or(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1,l2)    
+  | And (f1, f2, l1)      ->   And(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1)
+  | Or (f1, f2, l1, l2)    ->   Or(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1,l2)
   | Not (BForm(b,_), _, _) -> return_pure b f
-  | _ -> minisat_cnf_of_formula (de_morgan (double_negative f));; 
+  | _ -> minisat_cnf_of_formula (de_morgan (double_negative f));;
 
 (*let rec cnf_to_string f =                                               *)
 (*  match f with                                                          *)
@@ -286,16 +289,16 @@ let unsat_in_cnf (bf : Cpure.b_formula) =
   | (pf, _) -> match pf with
     | Neq(e1,e2,_)->let li=minisat_of_exp e1 and ri=minisat_of_exp e2 in
       let _=if(li=ri) then  let _=print_endline_quiet ("UNSAT CNF") (*Debug-bach*)in sat:=false in ()
-    | _->()					
+    | _->()
 
 let rec has_and f =
   match f with
-  |BForm _ -> false 
+  |BForm _ -> false
   |And(_,_,_)->true
   |Or(f1,f2,_,_) -> if(has_and f1) then true else if (has_and f2) then true else false
   | _->false
 
-and is_cnf_old2 f = 
+and is_cnf_old2 f =
   match f with
   | BForm _ -> true
   | Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
@@ -308,8 +311,8 @@ and is_cnf_old1 f = (*Should use heuristic in CNF*)
   match f with
   | BForm _ -> true
   | Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
-  | And (BForm(b,_),f2,_)->is_cnf f2 
-  | And (f1,BForm(b,_),_)->is_cnf f1 
+  | And (BForm(b,_),f2,_)->is_cnf f2
+  | And (f1,BForm(b,_),_)->is_cnf f1
   | And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
   | AndList _ | Not _ | Forall _ | Exists _ -> Error.report_no_pattern()
 
@@ -317,21 +320,21 @@ and is_cnf f = (*Should use heuristic in CNF*)
   match f with
   | BForm _ -> true
   | Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
-  | And (BForm(b,_),f2,_)->is_cnf f2 
-  | And (f1,BForm(b,_),_)->is_cnf f1 
+  | And (BForm(b,_),f2,_)->is_cnf f2
+  | And (f1,BForm(b,_),_)->is_cnf f1
   | And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
   | _->	 let _=print_endline_quiet ("CNF conv here: "^Cprinter.string_of_pure_formula f) in true
 
 (* distributive law 1 - (f & k) v (g & h) -> (f v g) & (f v h) & (k v g) & (k v h) *)
-let dist_1 f = 
+let dist_1 f =
   match f with (*using heuristic for the first one*)
   | Or(f1, And(f2, f3,_),l1,l2) -> Or (f1,f3,l1,l2)(*And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)*) (*The main here- when using slicing*)
   (*| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)*)
   | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
   | _ -> f
 
-let dist_no_slicing f = 
-  match f with 
+let dist_no_slicing f =
+  match f with
   | Or(f1, And(f2, f3,_),l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2) (*The main here- when using slicing*)
   (*| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)*)
   | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
@@ -339,8 +342,8 @@ let dist_no_slicing f =
 
 
 let rec nnf_to_xxx f rule =
-  let nf = match f with  
-      BForm (b,_) -> return_pure b f 
+  let nf = match f with
+      BForm (b,_) -> return_pure b f
     | Not (f1,l1,l2) -> Not ((nnf_to_xxx f1 rule),l1,l2)
     | And (f1, f2,l1) -> And (nnf_to_xxx f1 rule, nnf_to_xxx f2 rule,l1)
     | Or (f1, f2,l1,l2) -> Or (nnf_to_xxx f1 rule, nnf_to_xxx f2 rule,l1,l2)
@@ -351,7 +354,7 @@ let rec nnf_to_xxx f rule =
   in
   rule nf
 
-let nnf_to_cnf f= nnf_to_xxx f dist_1 
+let nnf_to_cnf f= nnf_to_xxx f dist_1
 
 let nnf_to_cnf_no_slicing f=	nnf_to_xxx f dist_no_slicing
 (*let to_cnf f = nnf_to_cnf (minisat_cnf_of_formula f)*)
@@ -367,11 +370,11 @@ let rec to_cnf f =
 
 let to_cnf_no_slicing f=
   let _=print_endline_quiet ("Orig: "^Cprinter.string_of_pure_formula f) in
-  let nnf= minisat_cnf_of_formula f in 
+  let nnf= minisat_cnf_of_formula f in
   let _=print_endline_quiet ("NNF here: "^Cprinter.string_of_pure_formula nnf) in
   to_cnf nnf
 
-(*The no need CNF conversion adapt to slicing, we just need the distributive law*)		
+(*The no need CNF conversion adapt to slicing, we just need the distributive law*)
 
 (* let minisat_cnf_of_formula f = *)
 (*   Debug.no_1 "minisat_of_formula" Cprinter.string_of_pure_formula pr_id minisat_cnf_of_formula f *)
@@ -387,7 +390,7 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
-  | Cpure.NegInfConst _ 
+  | Cpure.NegInfConst _
   | Cpure.InfConst _  -> false
   (* arithmetic expressions *)
   | Cpure.Add _
@@ -412,9 +415,9 @@ let rec can_minisat_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ListReverse _  -> false
   (* array expressions *)
   | Cpure.ArrayAt _      -> false
-  | Cpure.Func _ ->  false 
+  | Cpure.Func _ ->  false
   | Cpure.Template _ -> false
-  | Cpure.Level _ 
+  | Cpure.Level _
   | Cpure.Tsconst _ -> Error.report_no_pattern()
   | Cpure.Tup2 _ -> Error.report_no_pattern()
   | Cpure.Bptriple _ -> Error.report_no_pattern()
@@ -449,6 +452,7 @@ and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ImmRel _
   | RelForm _            -> false
   | XPure _ (* | VarPerm _ *) -> Error.report_no_pattern()
+  | TVar _ -> failwith x_tbi
 
 and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with
@@ -475,10 +479,10 @@ let rec collect_output (chn: in_channel)  : (string * bool) =
     if line = "SATISFIABLE" then
       (line, true)
     else if (line = "c SAT")	then
-      ("SATISFIABLE",true) 
+      ("SATISFIABLE",true)
     else
-      collect_output chn 
-  with 
+      collect_output chn
+  with
   | End_of_file ->  ("", false)
 
 (* read the output stream of minisat prover, return (conclusion * reason)    *)
@@ -497,17 +501,17 @@ let get_prover_result (output : string) :bool =
       true
     else
       (*			let _=print_endline output in*)
-      false in 
+      false in
   validity
 
-(* output:  - prover_output 
+(* output:  - prover_output
    - the running status of prover: true if running, otherwise false *)
 let get_answer (chn: in_channel) : (bool * bool)=
   let (output, running_state) = collect_output chn  in
   let
     validity_result = get_prover_result output;
   in
-  (validity_result, running_state)  
+  (validity_result, running_state)
 
 let remove_file filename =
   try Sys.remove filename;
@@ -566,7 +570,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
   let minisat_result="minisatres.txt" in
   let set_process proc = minisat_process := proc in
   let fnc () =
-    if (minisat_input_format = "cnf") then ( 
+    if (minisat_input_format = "cnf") then (
       (* let tstartlog = Gen.Profiling.get_time () in	 *)
       (* let ch = Unix.open_process_in "/usr/local/bin/ minisat22 bach_eq_minisat.cnf" in  *)
       (* let ch = Unix.execvp "/usr/local/bin/minisat22" [|"minisat22";"bach_eq_minisat.cnf"|]  in  *)
@@ -581,7 +585,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
 
     )
     else illegal_format "[minisat.ml] The value of minisat_input_format is invalid!" in
-  let res = 
+  let res =
     try
       let res = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       res
@@ -613,15 +617,15 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
 let rtc_generate_B (f:Cpure.formula) =
   let ge=G.create() and gd=G.create() and gr_e=Glabel.create() in (*ge is eq graph and gd is diseq graph*)
   (*let () = print_endline("INSIDE rtc_generate_B, f=="^Cprinter.string_of_pure_formula f) in*)
-  let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)                                                           
+  let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)
     match f with
-    |BForm (b,_)->  minisat_cnf_of_b_formula b gr_e ge gd 
+    |BForm (b,_)->  minisat_cnf_of_b_formula b gr_e ge gd
     |And (f1, f2, _) ->cnf_to_string_to_file f1 ^" 0"^"\n"^ cnf_to_string_to_file f2
     |Or  (f1, f2, _, _)->cnf_to_string_to_file f1 ^" "^ cnf_to_string_to_file f2
     |Not ((BForm(b,_)),_,_)-> minisat_cnf_of_not_of_b_formula b gr_e ge gd
-    | _-> 
+    | _->
 
-      let _= 
+      let _=
         x_tinfo_hp (add_str "imply Final Formula :"  Cprinter.string_of_pure_formula) f no_pos
       in ""
   in
@@ -646,10 +650,10 @@ let to_minisat_cnf (ante: Cpure.formula)  =
   in
   (* let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in *)
   match ante with
-  | BForm ((BConst (a,_),_),_)-> 
-    let () = print_endline_quiet ("BForm:\n ") in 
-    if (a) 
-    then (false,"t",G.create(),G.create(),Glabel.create()) 
+  | BForm ((BConst (a,_),_),_)->
+    let () = print_endline_quiet ("BForm:\n ") in
+    if (a)
+    then (false,"t",G.create(),G.create(),Glabel.create())
     else (false,"f",G.create(),G.create(),Glabel.create())
   |	_ ->
     (* let () = print_endline ("other\n") in  *)
@@ -664,7 +668,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
     (* let _=Gen.Profiling.pop_time("stat_CNF_generation_of_B") in  *)
     (true,final_res,ge,gd,gr_e)
 
-(*bach*) 
+(*bach*)
 (***************************************************************
                                                                 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
  **************************************************************)
@@ -690,12 +694,12 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     begin
 
       if(minisat_input = "t") then true
-      else 
+      else
 
       if(minisat_input = "f") then false
       else false
     end
-  else 
+  else
     (* let validity =                                                     *)
     (*   (* if ((List.length !bcl)>0 ) then *)                            *)
     (* 		(* let _=Gen.Profiling.push_time("stat_check_sat_1") in *)     *)
@@ -704,7 +708,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     (* 	(* else true *)                                                  *)
     (* in                    check_problem_through_file                                             *)
     (* if(validity=false) then                                            *)
-    (* let _= print_endline "check sat1" in *)                      
+    (* let _= print_endline "check sat1" in *)
     (* 		validity                                                       *)
     (* else                                                               *)
     (*			let _= print_endline "check sat2" in*)
@@ -725,7 +729,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
     (* let _=print_endline ("All input: \n"^all_input) in *)
     (* let tstartlog = Gen.Profiling.get_time () in *)
     (* let () = print_endline("all_input: "^all_input^"\n") in  *)
-    let res= check_problem_through_file (all_input) timeout in 
+    let res= check_problem_through_file (all_input) timeout in
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
     res
@@ -748,7 +752,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 let is_sat (f: Cpure.formula) (sat_no: string) : bool =
   (* debug *)
   (* let () = print_endline "** In function minisat.is_sat: " in *)
-  minisat_is_sat f sat_no 
+  minisat_is_sat f sat_no
 
 let is_sat_with_check (pe : Cpure.formula) sat_no : bool option =
   Cpure.do_with_check "" (fun x -> is_sat x sat_no) pe
@@ -783,7 +787,7 @@ let imply (ante: Cpure.formula) (conseq: Cpure.formula) (timeout: float) : bool 
   let imply_f= mkAnd ante cons no_pos  in
   (* x_tinfo_pp "hello\n" no_pos; *)
   let res =is_sat imply_f ""
-  in 	
+  in
   (*		let _=if(res) then print_endline ("SAT") else print_endline ("UNSAT") in *)
   if(res) then false else true
 
@@ -828,4 +832,3 @@ let simplify (pe : Cpure.formula) : Cpure.formula =
 let hull (f: Cpure.formula) : Cpure.formula = f
 
 let pairwisecheck (f: Cpure.formula): Cpure.formula = f
-

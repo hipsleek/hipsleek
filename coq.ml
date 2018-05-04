@@ -196,6 +196,7 @@ and coq_of_b_formula b =
   | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
                      (* | CP.VarPerm _ -> *)
                      illegal_format "coq_of_exp : VarPerm cannot be handled"
+  | CP.TVar _ ->  failwith x_tbi
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =

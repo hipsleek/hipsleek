@@ -8766,7 +8766,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_remaining_branches = brs;
                            CP.xpure_view_pos = pos
                           }
-               | IP.TVar _ -> failwith x_tbi
+               | IP.TVar _ -> failwith "ANDREEA: add a proper translation and reasoning"
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with

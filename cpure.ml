@@ -305,7 +305,7 @@ and p_formula =
   | ListPerm of (exp * exp * loc)
   | RelForm of (spec_var * (exp list) * loc)
   | ImmRel of (p_formula * imm_ann * loc) (* RelForm * cond * pos *)
-
+  | TVar of (exp * typ * loc)
 (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
@@ -1562,6 +1562,7 @@ and bfv (bf : b_formula) =
   (* | VarPerm (t,ls,_) -> ls *)
   | LexVar l_info ->
     List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
+  | TVar (exp,_,_) -> afv exp
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -2316,7 +2317,7 @@ and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
   (* | VarPerm _ *)
   (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
-  | RelForm _ | ImmRel _ -> false (* An Hoa *)
+  | RelForm _ | ImmRel _ | TVar _ -> false (* An Hoa *)
 
 and is_xpure p=
   match p with
@@ -3492,6 +3493,9 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
                           | ImmRel (r, cond, l) ->
                             let new_ir, rs = helper3 r in
                             (new_ir, rs)
+                          | TVar (exp,typ,l) ->
+                            let exp,rs = helper new_arg exp in
+                            (TVar (exp,typ,l), rs)
                           | LexVar t_info ->
                             let tmp1 = List.map (helper new_arg) t_info.lex_exp in
                             let n_lex_exp = List.map fst tmp1 in
@@ -3612,6 +3616,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
                   let nle = List.map (transform_exp f_exp) t_info.lex_exp in
                   let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
                   LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+                | TVar (exp,typ,l) -> TVar ((transform_exp f_exp exp),typ,l)
       in helper pf
     in (npf,il)
 
@@ -4116,7 +4121,8 @@ and pos_of_b_formula (b: b_formula) =
   | ListAllN (_, _, p) -> p
   | ListPerm (_, _, p) -> p
   | ImmRel (_, _, p)
-  | RelForm (_, _, p) -> p
+  | RelForm (_, _, p)
+  | TVar (_,_,p) -> p
 (* | VarPerm (_,_,p) -> p *)
 
 and pos_of_formula (f: formula) =
@@ -4167,6 +4173,7 @@ and subst_pos_pformula p pf= match pf with
   | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
   | RelForm (id, el, _) -> RelForm (id, el, p)
   | ImmRel (id, cond, _) -> ImmRel (id, cond, p)
+  | TVar (exp,typ, _) -> TVar (exp,typ, p)
 (* | VarPerm (t,ls,_) -> VarPerm (t,ls,p) *)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
@@ -4608,6 +4615,7 @@ and b_apply_subs_x sst bf =
                          lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
                          lex_exp = e_apply_subs_list sst t_info.lex_exp;
                          lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
+              | TVar (exp,typ,pos) -> TVar (e_apply_subs sst exp, typ, pos)
     in helper pf
   in
   (* Slicing: Add the inferred linking variables into sl field *)
@@ -4877,6 +4885,8 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
                          lex_ann = map_term_ann (apply_par_term sst) (a_apply_par_term sst) t_info.lex_ann;
                          lex_exp = a_apply_par_term_list sst t_info.lex_exp;
                          lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
+              | TVar (exp, typ, pos) -> TVar (a_apply_par_term sst
+                                                exp,typ,pos)
     in helper pf
   in (npf,il)
 
@@ -5003,6 +5013,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
                          lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
                          lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp;
                          lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
+              | TVar (exp,typ,pos) -> TVar (a_apply_one_term (fr, t) exp, typ, pos)
     in helper pf
   in (npf,il)
 
@@ -6612,6 +6623,7 @@ and b_apply_one_exp (fr, t) bf =
                          lex_ann = map_term_ann (apply_one_exp (fr, t)) (e_apply_one_exp (fr, t)) t_info.lex_ann;
                          lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp;
                          lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
+              | TVar (exp,typ,pos) -> TVar (e_apply_one_exp (fr, t) exp, typ, pos)
     in helper pf
   in (npf,il)
 
@@ -7533,6 +7545,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
                 let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
                 RelForm (v,new_exs,p)
               |  ImmRel (v,cond,p) ->  let new_v = helper v in ImmRel (new_v,cond,p)
+              | TVar (exp, typ, pos) -> TVar (purge_mult (simp_mult exp),typ,pos)
     in helper pf
   in (npf,il)
 
@@ -7783,6 +7796,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
                     let nle = List.map norm_exp t_info.lex_exp in
                     let nlt = List.map norm_exp t_info.lex_tmp in
                     LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
+                  | TVar (exp, typ, pos) -> TVar (norm_exp exp, typ, pos)
         in helper pf
       in (npf, il)
 
@@ -8819,7 +8833,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
               (* | VarPerm _ *)
               | Frm _ | XPure _ | BConst _ | BVar _ | EqMax _
               | EqMin _ |  BagSub _ | BagMin _
-              | BagMax _ | ListAllN _ | ListPerm _ -> pf
+              | BagMax _ | ListAllN _ | ListPerm _ | TVar _ -> pf
     in helper pf
   in (npf, il)
 
@@ -13155,7 +13169,9 @@ let level_vars_b_formula bf =
    | EqMin _
    (* | VarPerm _ *)
    | XPure _
-   | BagMax _ -> []
+   | BagMax _
+   | TVar _
+     -> []
   )
 
 (*for each level(l), add a constraint level(l) > 0*)
@@ -13685,7 +13701,8 @@ and contain_level_b_formula bf =
    | EqMin _
    (* | VarPerm _ *)
    | XPure _
-   | BagMax _ -> false
+   | BagMax _
+   | TVar _ -> false
   )
 
 and drop_locklevel_pure_x (f : formula) : formula =

@@ -21,13 +21,13 @@ module CF = Cformula
 module CP = Cpure
 module LO = Label_only.LOne
 
-let rev_trans_spec_var v = match v with CP.SpecVar (t,v,p)-> (v,p) 
-let sv_n = CP.name_of_spec_var 
+let rev_trans_spec_var v = match v with CP.SpecVar (t,v,p)-> (v,p)
+let sv_n = CP.name_of_spec_var
 
 let rec rev_trans_exp e = match e with
-  | CP.Null p -> IP.Null p 
+  | CP.Null p -> IP.Null p
   (* | CP.Var (v,p) -> IP.Var (rev_trans_spec_var v, p) *)
-  | CP.Var (v,p) -> 
+  | CP.Var (v,p) ->
     let t =  CP.type_of_spec_var v in
     (* let () = print_endline ((!CP.print_sv v)^ ": " ^ (string_of_typ t)) in *)
     if is_type_var t then IP.Var (rev_trans_spec_var v, p)
@@ -64,7 +64,7 @@ let rec rev_trans_exp e = match e with
   | CP.ArrayAt (v,el,p)   -> IP.ArrayAt (rev_trans_spec_var v, List.map rev_trans_exp el, p)
   | CP.Func (v,el,p)      -> IP.Func (sv_n v, List.map rev_trans_exp el, p)
   | CP.Level _| CP.InfConst _ | CP.NegInfConst _ -> report_error no_pos "AS.rev_trans_exp: not handle yet"
-  | CP.Template t         -> 
+  | CP.Template t         ->
     IP.Template {
       IP.templ_id = sv_n t.CP.templ_id;
       IP.templ_args = List.map rev_trans_exp t.CP.templ_args;
@@ -73,7 +73,7 @@ let rec rev_trans_exp e = match e with
       IP.templ_pos = t.CP.templ_pos; }
 
 let rec rev_trans_pf f = match f with
-  | CP.XPure b -> IP.XPure{  
+  | CP.XPure b -> IP.XPure{
       IP.xpure_view_node = map_opt sv_n b.CP.xpure_view_node;
       IP.xpure_view_name = b.CP.xpure_view_name;
       IP.xpure_view_arguments = List.map sv_n b.CP.xpure_view_arguments;
@@ -90,9 +90,9 @@ let rec rev_trans_pf f = match f with
   | CP.Gte (e1,e2,p) -> IP.Gte (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.SubAnn (e1,e2,p) -> IP.SubAnn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.Eq (e1,e2,p) -> IP.Eq (rev_trans_exp e1, rev_trans_exp e2, p)
-  | CP.Neq (e1,e2,p) -> IP.Neq (rev_trans_exp e1, rev_trans_exp e2, p)  
+  | CP.Neq (e1,e2,p) -> IP.Neq (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.EqMax (e1,e2,e3,p) -> IP.EqMax (rev_trans_exp e1, rev_trans_exp e2, rev_trans_exp e3, p)
-  | CP.EqMin (e1,e2,e3,p) -> IP.EqMin (rev_trans_exp e1, rev_trans_exp e2, rev_trans_exp e3, p)  
+  | CP.EqMin (e1,e2,e3,p) -> IP.EqMin (rev_trans_exp e1, rev_trans_exp e2, rev_trans_exp e3, p)
   | CP.BagIn (v,e,p) -> IP.BagIn (rev_trans_spec_var v, rev_trans_exp e, p)
   | CP.BagNotIn (v,e,p) -> IP.BagNotIn (rev_trans_spec_var v, rev_trans_exp e, p)
   | CP.BagSub (e1,e2,p) -> IP.BagSub (rev_trans_exp e1, rev_trans_exp e2, p)
@@ -104,6 +104,7 @@ let rec rev_trans_pf f = match f with
   | CP.ListNotIn (e1,e2,p) -> IP.ListNotIn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListAllN (e1,e2,p) -> IP.ListAllN (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListPerm (e1,e2,p) -> IP.ListPerm (rev_trans_exp e1, rev_trans_exp e2, p)
+  | CP.TVar _ -> failwith x_tbi
 
 let rec rev_trans_pure f = match f with
   | CP.BForm ((b1,_),b2)  -> IP.BForm ((rev_trans_pf b1,None), b2)
@@ -116,13 +117,13 @@ let rec rev_trans_pure f = match f with
 
 let rec rev_trans_mix f = rev_trans_pure(Mcpure.pure_of_mix f)
 
-let rec rev_trans_heap f = match f with 
+let rec rev_trans_heap f = match f with
   | CF.HTrue  -> IF.HTrue
   | CF.HFalse -> IF.HFalse
   | CF.HEmp   -> IF.HEmp
   | CF.HVar (CP.SpecVar(_,v,_),ls)   -> IF.HVar (v,List.map CP.primed_ident_of_spec_var ls)
   | CF.ThreadNode b ->
-    IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node) 
+    IF.mkThreadNode (rev_trans_spec_var b.CF.h_formula_thread_node)
       b.CF.h_formula_thread_name
       (rev_trans_formula b.CF.h_formula_thread_resource)
       (rev_trans_pure b.CF.h_formula_thread_delayed)
@@ -130,7 +131,7 @@ let rec rev_trans_heap f = match f with
       None
       b.CF.h_formula_thread_pos
   | CF.DataNode b ->
-    IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node) 
+    IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_data_node)
       b.CF.h_formula_data_name [] (* TODO:HO *)
       0
       b.CF.h_formula_data_derv
@@ -141,8 +142,8 @@ let rec rev_trans_heap f = match f with
       (List.map (fun c-> IP.Var ((rev_trans_spec_var c),no_pos)) b.CF.h_formula_data_arguments) []
       None b.CF.h_formula_data_pos
   | CF.ViewNode b ->
-    IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node) 
-      b.CF.h_formula_view_name  [] (* IMP_TODO:HO *) 
+    IF.mkHeapNode (rev_trans_spec_var b.CF.h_formula_view_node)
+      b.CF.h_formula_view_name  [] (* IMP_TODO:HO *)
       0
       b.CF.h_formula_view_derv
       b.CF.h_formula_view_split
@@ -163,8 +164,8 @@ and rev_trans_formula f =
     let is = String.index s '#' in
     String.sub s 0 is
   in
-  match f with 
-  | CF.Base b -> IF.Base { 
+  match f with
+  | CF.Base b -> IF.Base {
       IF.formula_base_heap = rev_trans_heap b.CF.formula_base_heap;
       IF.formula_base_pure = rev_trans_mix b.CF.formula_base_pure;
       IF.formula_base_vperm = (* b.CF.formula_base_vperm; *) IvpermUtils.empty_vperm_sets;
@@ -180,8 +181,8 @@ and rev_trans_formula f =
       IF.formula_exists_and = [];
       IF.formula_exists_pos =b.CF.formula_exists_pos}
   | CF.Or b-> IF.Or {
-      IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1; 
-      IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2; 
+      IF.formula_or_f1 =rev_trans_formula b.CF.formula_or_f1;
+      IF.formula_or_f2 =rev_trans_formula b.CF.formula_or_f2;
       IF.formula_or_pos = b.CF.formula_or_pos;}
 
 let rev_trans_formula f=
@@ -190,7 +191,7 @@ let rev_trans_formula f=
   Debug.no_1 "rev_trans_formula" pr1 pr2
     (fun _ -> rev_trans_formula f) f
 
-let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list = 
+let transform_hp_rels_to_iviews (hp_rels:(ident* CF.hp_rel_def) list):(ident*ident*I.view_decl) list =
   (*CP.rel_cat * h_formula * formula*)
 
   List.fold_left (fun acc (proc_id,(* (rel_cat, hf,_,f_body) *) def)->
@@ -266,16 +267,16 @@ let transform_hp_rels_to_iviews hp_rels =
   let pr2 = pr_list (pr_triple pr_id pr_id Iprinter.string_of_view_decl) in
   Debug.no_1 "transform_hp_rels_to_iviews" pr1 pr2 transform_hp_rels_to_iviews hp_rels
 
-let rev_trans_hp_decl (hp_decl: C.hp_decl): I.hp_decl = 
+let rev_trans_hp_decl (hp_decl: C.hp_decl): I.hp_decl =
   { I.hp_name = hp_decl.C.hp_name;
-    I.hp_typed_inst_vars = List.map (fun (sv, k) -> 
+    I.hp_typed_inst_vars = List.map (fun (sv, k) ->
         (CP.type_of_spec_var sv, CP.name_of_spec_var sv, k)) hp_decl.C.hp_vars_inst;
     I.hp_part_vars = hp_decl.C.hp_part_vars;
     I.hp_root_pos = hp_decl.C.hp_root_pos;
     I.hp_is_pre = hp_decl.C.hp_is_pre;
     I.hp_formula = rev_trans_formula hp_decl.C.hp_formula; }
 
-let rec rev_trans_ann (a: CP.ann): IP.ann = 
+let rec rev_trans_ann (a: CP.ann): IP.ann =
   match a with
   | CP.NoAnn -> IP.NoAnn
   | CP.ConstAnn x -> IP.ConstAnn x
@@ -283,19 +284,19 @@ let rec rev_trans_ann (a: CP.ann): IP.ann =
   | CP.TempAnn t -> rev_trans_ann t
   | CP.TempRes _ -> failwith "rev_trans_ann: Unexpected ann"
 
-let rev_trans_mem_formula (m: CF.mem_perm_formula): IF.mem_formula = 
+let rev_trans_mem_formula (m: CF.mem_perm_formula): IF.mem_formula =
   { IF.mem_formula_exp = rev_trans_exp m.CF.mem_formula_exp;
     IF.mem_formula_exact = m.CF.mem_formula_exact;
     IF.mem_formula_field_values = List.map (fun (id, el) -> (id, List.map rev_trans_exp el)) m.CF.mem_formula_field_values;
     IF.mem_formula_field_layout = List.map (fun (id, al) -> (id, List.map rev_trans_ann al)) m.CF.mem_formula_field_layout;
     IF.mem_formula_guards = List.map rev_trans_pure m.CF.mem_formula_guards; }
 
-let rec rev_trans_struc_formula (sf: CF.struc_formula): IF.struc_formula = 
+let rec rev_trans_struc_formula (sf: CF.struc_formula): IF.struc_formula =
   match sf with
   | CF.EList l -> IF.EList (List.map (fun (sld, sf) -> (sld, rev_trans_struc_formula sf)) l)
   | CF.ECase c -> IF.ECase (rev_trans_struc_case_formula c)
   | CF.EBase b -> IF.EBase (rev_trans_struc_base_formula b)
-  | CF.EAssume a -> IF.EAssume (rev_trans_struc_assume_formula a) 
+  | CF.EAssume a -> IF.EAssume (rev_trans_struc_assume_formula a)
   | CF.EInfer i -> IF.EInfer (rev_trans_struc_infer_formula i)
 
 and rev_trans_struc_infer_formula (i: CF.struc_infer_formula): IF.struc_infer_formula =
@@ -336,10 +337,10 @@ let rev_intv (sv,ssv_opt) = (rev_sv sv,
                              let () = y_binfo_pp x_tbi in
                              None (* map_opt rev_sv ssv_opt *))
 
-let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
+let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   let rev_trans_baga_inv baga_inv =
     map_opt (List.map ((fun (svl, f) -> (
-          List.map (fun sv -> rev_intv sv) svl, 
+          List.map (fun sv -> rev_intv sv) svl,
           rev_trans_pure f)))) baga_inv
   in
   { I.view_name = v.C.view_name;
@@ -359,11 +360,11 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_derv_from = None;
     I.view_derv_extns = [];
     I.view_derv_info = []; (* TODO *)
-    I.view_type_of_self = 
+    I.view_type_of_self =
       v.C.view_type_of_self;
     I.view_kind = v.C.view_kind;
     I.view_prop_extns = List.map (fun sv -> (CP.type_of_spec_var sv, CP.name_of_spec_var sv)) v.C.view_prop_extns;
-    I.view_invariant = 
+    I.view_invariant =
       (let () = y_binfo_pp "XXX" in
       rev_trans_mix v.C.view_user_inv);
     I.view_baga_inv = rev_trans_baga_inv v.C.view_baga_inv;
@@ -379,7 +380,7 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.try_case_inference = false; (* TODO *)
     I.view_materialized_vars = List.map (fun mv -> CP.name_of_spec_var mv.C.mater_var) v.C.view_materialized_vars; }
 
-let rev_trans_view_decl (v: C.view_decl): I.view_decl = 
+let rev_trans_view_decl (v: C.view_decl): I.view_decl =
   let pr1 = Cprinter.string_of_view_decl in
   let pr2 = Iprinter.string_of_view_decl in
   Debug.no_1 "rev_trans_view_decl" pr1 pr2 rev_trans_view_decl v

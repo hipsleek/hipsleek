@@ -202,6 +202,7 @@ let rec smt_of_b_formula b =
     illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
   | CP.ImmRel _ ->
     illegal_format ("z3.smt_of_b_formula: ImmRel should not appear here.\n")
+  | TVar _ ->  failwith x_tbi
   | CP.RelForm (r, args, l) ->
     let smt_args = List.map smt_of_exp args in
     (* special relation 'update_array' translate to smt primitive store in array theory *)
