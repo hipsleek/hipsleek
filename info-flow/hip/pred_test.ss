@@ -60,9 +60,36 @@ node idx(node x)
   return x;
 }
 
-int get(node x)
+int get1(node x)
   requires x::safell<n> & n > 0
   ensures  res <^ @Lo;
+{
+  int y = x.val;
+  //  dprint;
+  return y;
+}
+
+int get1_fail(node x)
+  requires x::unsafell<n> & n > 0
+  ensures  res <^ @Lo;
+{
+  int y = x.val;
+  //  dprint;
+  return y;
+}
+
+int get2a(node x)
+  requires x::safell<n> & n > 0
+  ensures  res <^ @Hi;
+{
+  int y = x.val;
+  //  dprint;
+  return y;
+}
+
+int get2b(node x)
+  requires x::unsafell<n> & n > 0
+  ensures  res <^ @Hi;
 {
   int y = x.val;
   //  dprint;

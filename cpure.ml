@@ -2606,17 +2606,17 @@ and mkGt a1 a2 pos =
   else
     Gt (a1, a2, pos)
 
-and mkFormulaFromXP xp=
-  BForm ((XPure xp,None),None)
-
-and mkRel rel args pos=
-  BForm ((RelForm (rel,args,pos), None) , None)
-
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
   else
     Gte (a1, a2, pos)
+
+and mkFormulaFromXP xp=
+  BForm ((XPure xp,None),None)
+
+and mkRel rel args pos=
+  BForm ((RelForm (rel,args,pos), None) , None)
 
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 
@@ -2874,12 +2874,23 @@ and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos =
 and mkGtVarInt (sv: spec_var) (i : int) pos =
   BForm ((Gt (Var (sv, pos), IConst (i, pos), pos), None),None)
 
+and mkGteVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Gte (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkLtVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Lt (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkLteVarInt (sv: spec_var) (i : int) pos =
+  BForm ((Lte (Var (sv, pos), IConst (i, pos), pos), None),None)
+
+and mkSecBnd (sv: spec_var) pos =
+  And (mkGteVarInt sv 0 pos, mkLteVarInt sv 1 pos, pos)
+
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)
 
 and mkNeqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Neq (Var (sv, pos), IConst (i, pos), pos), None),None)
-
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
 
@@ -4600,15 +4611,17 @@ and apply_subs_all_x (sst : (spec_var * spec_var) list) (f : formula) : formula 
   | AndList b -> AndList (map_l_snd (apply_subs_all_x sst) b)
   | SecurityForm (lbl, f, pos) -> SecurityForm (lbl, apply_subs_all_x sst f, pos)
 
+(* ADI NOTE: attempt at information flow analysis changes (to be modified/removed) *)
 and apply_subs_all (sst : (spec_var * spec_var) list) (f : formula) : formula =
-  let rec connect_flow sl f =
-    match sl with
-    | []         -> f
-    | (fr,t)::sr -> (connect_flow sr (mkAnd f (mk_sec_bform fr (SecVar(t)) no_pos) no_pos))
-  in
+  (* let rec connect_flow sl f =
+   *   match sl with
+   *   | []         -> f
+   *   | (fr,t)::sr -> (connect_flow sr (mkAnd f (mk_sec_bform fr (SecVar(t)) no_pos) no_pos))
+   * in *)
   let new_f = apply_subs_all_x sst f in
-  let flows = connect_flow sst new_f in
-  flows
+  (* let flows = connect_flow sst new_f in
+   * flows *)
+  new_f
 
 
 
@@ -14584,16 +14597,19 @@ and translate_sec_formula = function
       | VarBound (SpecVar (typ, var_name, _), sec) ->
         let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
         let extra_p_form, fv, expr = translate_sec_label sec in
-        extra_p_form, fv, Lte (Var (var, loc), expr, loc)
+        extra_p_form, fv, Lte (Var (var, loc), expr, loc), [var]
     end
-  | p_formula -> [], [], p_formula
+  | p_formula -> [], [], p_formula, []
 
 and translate_security_formula = function
   | BForm ((pf, bf_ann), flbl) ->
-    let extra_p_form, fv, pf = translate_sec_formula pf in
+    let extra_p_form, fv, pf, sv = translate_sec_formula pf in
     let extra_forms = List.map (fun elem -> BForm ((elem, None), None)) extra_p_form in
+    let all_sv      = sv@fv in
+    let bnd_forms   = List.map (fun elem -> (mkSecBnd elem no_pos)) all_sv in
     let f = BForm ((pf, bf_ann), flbl) in
-    let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f extra_forms in
+    let bnd_f  = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f bnd_forms in
+    let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) bnd_f extra_forms in
     mkExists fv full_f None no_pos
   | And (f1, f2, loc) -> And (translate_security_formula f1, translate_security_formula f2, loc)
   | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula f)) formulas)
@@ -16583,11 +16599,31 @@ let is_less_sec_var sf1 sf2 =
     less_spec_var v1 v2
   | _ -> false
 
+let lub_op lb1 lb2 =
+  let once lb1 lb2 =
+    match (lb1,lb2) with
+    | (Hi,_) | (_,Hi)         -> Hi
+    | (Lo,_)                  -> lb2
+    | (_,Lo)                  -> lb1
+    | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
+    | _                       -> Lub(lb1,lb2)
+  in
+  let rec multi lb1 lb2 =
+    match (lb1,lb2) with
+    | (Hi,_) | (_,Hi)         -> Hi
+    | (Lo,_)                  -> lb2
+    | (_,Lo)                  -> lb1
+    | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
+    | (Lub(l1,l2),Lub(r1,r2)) -> once (multi l1 l2) (multi r1 r2)
+    | (Lub(l1,l2),_)          -> once (multi l1 l2) lb1
+    | (_,Lub(r1,r2))          -> once lb1 (multi r1 r2)
+  in
+  multi lb1 lb2
 let sec_lub sf1 sf2 =
   match (sf1,sf2) with
   | Security(VarBound(v1,l1),_),Security(VarBound(v2,l2),_) ->
     if eq_spec_var v1 v2
-    then Security(VarBound(v1,Lub(l1,l2)), no_pos) (* ADI TODO: smarter lub *)
+    then Security(VarBound(v1, (lub_op l1 l2)), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | _ -> x_report_error no_pos "sec_lub : not security formula"
 

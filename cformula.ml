@@ -20745,3 +20745,20 @@ let base_sec_bounds vars pos =
   in
   let bound_eqns = List.map make_bound_eqn vars in
   List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) bound_eqns
+
+(* NOTE: Security Context Utilities *)
+let elevate_sctx o_sctx v state =
+  let ()   = o_sctx := state.es_security_context in
+  let secv = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
+  let sctx = CP.lub_op secv state.es_security_context in
+  Ctx { state with es_security_context = sctx }
+
+let restore_sctx o_sctx state =
+  Ctx { state with es_security_context = !o_sctx }
+
+(* NOTE: Propagation of information flow *)
+let prop_const (res_v : CP.spec_var) pos state =
+  let sctx = state.es_security_context in
+  let secf = CP.mk_sec_bform res_v sctx pos in
+  let newf = add_pure_formula_to_formula secf state.es_formula in
+  Ctx { state with es_formula = newf }
