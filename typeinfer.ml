@@ -491,7 +491,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  (* Debug.no_2 "sub_type" pr pr string_of_bool *) sub_type_x t1 t2
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
   let pr = string_of_typ in
@@ -931,6 +931,11 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
     let (n_tl,t1) = gather_type_info_exp_x prog e1 n_tl new_et in
     let (n_tl,t2) = gather_type_info_exp_x prog e2 n_tl new_et in
     let (n_tl,_) = x_add must_unify t1 t2 n_tl pos in
+    n_tl
+  | IP.TVar (var, typ, pos) ->
+    let (et,n_tl) = fresh_tvar tlist in
+    let (n_tl,t1) = x_add gather_type_info_exp prog var n_tl et in
+    let (n_tl,t) = x_add must_unify t1 typ n_tl pos  in
     n_tl
   | IP.RelForm (r, args, pos) ->
     (

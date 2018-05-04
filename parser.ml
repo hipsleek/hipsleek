@@ -715,6 +715,22 @@ let peek_dc =
              | [IDENTIFIER first,_; LEFTARROW,_; IDENTIFIER second,_; COLON,_; _,_; OPAREN,_;] -> ()
              | _ -> raise Stream.Failure)
 
+  let peek_protocol_base_msg_var_only =
+   SHGram.Entry.of_parser "peek_protocol_base_msg_var_only"
+       (fun strm ->
+           match Stream.npeek 5 strm with
+             | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;CPAREN,_;] -> let () = print_endline ("PEEK 1 "^ var) in ()
+             | _ -> let () = print_endline ("PEEK 2 ") in raise Stream.Failure)
+
+  let peek_protocol_base_msg =
+    SHGram.Entry.of_parser "peek_protocol_base_msg"
+      (fun strm ->
+         match Stream.npeek 5 strm with
+         | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;HASH,_ ;] -> let () = print_endline ("PEEK 3 "^ var) in ()
+         | [OPAREN,_;IDENTIFIER var,_;HASH,_ ; _,_ ; _,_ ] -> let () = print_endline ("PEEK 4 "^ var) in ()
+         | [OPAREN,_;INT_LITER (msg,_),_; _,_ ; _,_;_,_ ] -> let () = print_endline ("PEEK 6 ") in ()
+         | _ -> let () = print_endline ("PEEK 5 ") in raise Stream.Failure)
+
  let peek_protocol_base_chan_suid =
    SHGram.Entry.of_parser "peek_protocol_base_chan_suid"
        (fun strm ->
@@ -1442,7 +1458,17 @@ prot_view_decl:
 
 (* e.g. v# *)
 session_msg_var:
-  [[ `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var ]];
+  [[  `IDENTIFIER msg_var;(* `DOT;  *)`HASH -> msg_var
+    (* | `IDENTIFIER msg_var; t = c_typ; `HASH -> msg_var *)
+   ]];
+
+session_msg_pair:
+  [[
+      peek_protocol_base_msg;          `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN -> (msg_var,None,Some c)
+    | peek_protocol_base_msg_var_only; `OPAREN; `IDENTIFIER msg_var; t = c_typ; `CPAREN -> (Some msg_var, Some t, None)
+  ]];
+
+
 (* e.g. ch(<message>) *)
 session_channel:
   [[ channel = cid -> channel ]];
@@ -1478,11 +1504,26 @@ protocol_formula:
         let mv = session_extract_msg_var msg_var loc in
         let suid = (def_suid_name^(string_of_int suid),Unprimed) in
         Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, suid) c)
+      (* | peek_protocol_base_chan; first = cid; `LEFTARROW; second = cid;
+       *   `COLON; sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
+       *   let loc = (get_pos_camlp4 _loc 1) in
+       *   (\* let c = F.subst_stub_flow top_flow c in *\)
+       *   let mv = session_extract_msg_var msg_var loc in
+       *   let suid = Session.IProtocol_base.def_suid  in
+       *   Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, suid) c) *)
       | peek_protocol_base_chan; first = cid; `LEFTARROW; second = cid;
-        `COLON; sc = session_channel; `OPAREN; msg_var = OPT session_msg_var; c = session_message; `CPAREN ->
+        `COLON; sc = session_channel; msg_pair = session_msg_pair ->
+        let msg_var,msg_typ,c_opt = msg_pair in
         let loc = (get_pos_camlp4 _loc 1) in
         (* let c = F.subst_stub_flow top_flow c in *)
         let mv = session_extract_msg_var msg_var loc in
+        let def_form =
+          match msg_var,msg_typ with
+          | Some var, Some mtyp -> F.formula_of_pure_with_flow (BForm (((P.mkTVar var mtyp loc), None),None)) stub_flow [] loc
+          | _, _ -> F.mkTrue stub_flow loc
+        in
+        (* let def_form = F.mkTrue stub_flow loc in *)
+        let c = un_option c_opt def_form in
         let suid = Session.IProtocol_base.def_suid  in
         Session.IProtocol.SBase (Session.IProtocol.mk_base (first, second, Some sc, mv, loc, suid) c)
       | peek_protocol_base; first = cid; `LEFTARROW; second = cid; `COLON; msg_var = OPT session_msg_var; c = session_message ->

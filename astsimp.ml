@@ -5845,6 +5845,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           else
             (let parg_types = List.map (fun p -> x_add trans_type prog p.I.param_type p.I.param_loc) proc_args in
              if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
+               let () = y_binfo_hp (add_str "t1" (pr_list string_of_typ)) cts in
+               let () = y_binfo_hp (add_str "t2" (pr_list string_of_typ)) parg_types in
                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
              else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
              else
@@ -8764,6 +8766,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_remaining_branches = brs;
                            CP.xpure_view_pos = pos
                           }
+               | IP.TVar _ -> failwith x_tbi
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
