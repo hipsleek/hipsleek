@@ -2203,6 +2203,7 @@ cexp_w:
         let b_formula = (sec_form, None) in
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
+        let () = Globals.ifa := true in
         set_slicing_utils_pure_double f false
     | lc=SELF; `LTE; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
