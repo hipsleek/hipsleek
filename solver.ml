@@ -5834,6 +5834,8 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
     | _ -> failwith "[do_sem_eq_x]::Unexpected OCtx as input!"
   in
   let () = Debug.tinfo_hprint (add_str "do_sem_eq: estate" Cprinter.string_of_entail_state) es no_pos in
+  let free_var_list = (fv es.es_formula) in
+  let () = y_tinfo_hp (add_str "fv list" string_of_spec_var_list) free_var_list in
   ()
 
 and do_sem_eq (ctx:context) (conseq:CF.formula) =

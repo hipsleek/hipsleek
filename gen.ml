@@ -1045,16 +1045,16 @@ module EqMap =
     type key = elem keyt
     type emap = (elem * key) list
     type epart = (elem list) list
-    type elist = (elem list) 
-    type epair = ((elem * elem) list) 
+    type elist = (elem list)
+    type epair = ((elem * elem) list)
     open Basic
 
-    let eq = Elt.eq 
-    let string_of_elem = Elt.string_of 
+    let eq = Elt.eq
+    let string_of_elem = Elt.string_of
     (* let string_of_emap = Basic.pr_list (fun (e,_) -> Elt.string_of e) *)
     (* let string_of_epart = Basic.pr_list (Basic.pr_list Elt.string_of) *)
 
-    let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s 
+    let emap_sort s = List.sort (fun (e1,_) (e2,_) -> Elt.compare e1 e2) s
 
     (* TODO : rec03.slk bug here *)
     (* partition@53 *)
@@ -1122,7 +1122,7 @@ module EqMap =
 
     let string_of (e: emap) : string =
       let f = string_of_elem in
-      let ll = partition e in 
+      let ll = partition e in
       (* let ll = List.filter (fun v -> List.length v > 1) ll in *)
 
       "emap["^ (String.concat ";" (List.map (fun cl -> "{"^(String.concat ","(List.map f cl))^"}") ll))^"]"
@@ -1134,10 +1134,10 @@ module EqMap =
       (pr_list (pr_pair Elt.string_of key_string_of) e)
 
     let un_partition (ll:epart) : emap =
-      let flat xs = 
-        if (List.length xs>1) then 
+      let flat xs =
+        if (List.length xs>1) then
           let newk = new_key () in
-          List.map (fun x -> (x,newk)) xs 
+          List.map (fun x -> (x,newk)) xs
         else [] in
       List.concat (List.map (fun x -> flat x) ll)
 
