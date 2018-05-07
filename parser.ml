@@ -2755,6 +2755,9 @@ cexp_w:
     | t1=SELF ; `DIV ; t2=SELF -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
     ]
   | [`MINUS; c=SELF -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c]
+  | [`IDENTIFIER id; `COLON; ty=typ -> Pure_f (BForm (((P.mkTVar id ty (get_pos_camlp4 _loc 1)), None),None))
+       (* apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e *)
+    ]
   | "ann_exp"
     [e=SELF ; `COLON; ty=typ -> apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e]
   | "una"
