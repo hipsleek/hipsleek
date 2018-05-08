@@ -1649,10 +1649,21 @@ let tp_supports_chr () =
   | CZ  -> true
   | _   -> false
 
+let wrapper_remove_tvar form =
+  let fp bform =
+    let (pf,il) = bform in
+    match pf with
+    | CP.TVar (_,_,pos) -> Some (CP.mkTrue_p pos,il)
+    | _ -> None
+  in
+  let fnc = (nonef,nonef,nonef,fp,somef) in
+  CP.transform_formula fnc form
+
 let sat_label_filter fct f =
   let pr = Cprinter.string_of_pure_formula in
   let test ?lbl:(lbl = LO.unlabelled) f1 =
     if no_andl f1 then
+      let f1 = wrapper_remove_tvar f1 in
       let (chr, chr_formula, residue_formula) = wrapper_enable_ord2sleek f1 in
       if chr && (tp_supports_chr ()) then
         let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct chr_formula in
@@ -3479,7 +3490,9 @@ let tp_imply ante conseq old_imp_no timeout process =
 
 let tp_imply ante conseq old_imp_no timeout process =
   let (chr1, chr_ante, residue_ante) = wrapper_enable_ord2sleek ante in
+  let residue_ante = wrapper_remove_tvar residue_ante in
   let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek conseq in
+  let residue_conseq = wrapper_remove_tvar residue_conseq in
   let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
   if (chr1 || chr2) && (tp_supports_chr ()) then
     let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct (chr_ante, chr_conseq) in
