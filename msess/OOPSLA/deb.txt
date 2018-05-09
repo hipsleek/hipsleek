@@ -3,6 +3,11 @@
 #subst_struc_avoid_capture
 #check_exp1,Trace
 #unify_type
-process_one_match,Trace
-compute_actions,Trace
-process_matches
+#process_one_match,Trace
+#compute_actions,Trace
+#process_matches
+trans_exp,Trace
+check_pre_post
+check_exp1
+do_match
+look_up_proc_def

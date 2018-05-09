@@ -5670,9 +5670,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       (*TO CHECK: not sure what is it for? but it may not be
         applicable to concurrency as these invocations (except join())
         are generic to the number of arguments *)
-      let cts = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts
+      let cts,cts_mndef = if (mn=Globals.fork_name || mn=Globals.acquire_name || mn=Globals.release_name || mn=Globals.finalize_name || mn=Globals.init_name) then cts,cts
         else if (mn=Globals.join_name) then
-          (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ] else [Globals.thread_typ])
+          (if (!Globals.allow_threads_as_resource) then [Globals.thrd_typ],[Globals.thrd_typ] else [Globals.thread_typ],[Globals.thread_typ])
         else (
           let _ = Debug.ninfo_hprint (add_str "length proc_decl.I.proc_args" (string_of_int)) (List.length proc_decl.I.proc_args) no_pos in
           let _ = Debug.ninfo_hprint (add_str "proc_decl.I.proc_args" (!Iast.print_param_list)) (proc_decl.I.proc_args) no_pos in
@@ -5681,15 +5681,29 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           else if ((List.length pargs) != (List.length proc_decl.I.proc_poly_vars)) then
             report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of polymorphic type arguments")
           else
+            (****** replace poly vars *****)
+            let subs     = Hashtbl.create 5 in
+            let subs_lst = List.combine pargs proc_decl.I.proc_poly_vars in
+            let ()       = List.iter (fun (a,b) -> Hashtbl.add subs (Poly b) a) subs_lst in
+            let proc_args_typ = List.map (fun p1 ->
+                try Hashtbl.find subs p1.I.param_type
+                with Not_found -> p1.I.param_type
+              ) proc_decl.I.proc_args in
+            (****** end - replace poly vars *****)
             List.map2 (fun p1 t2 ->
                 let t1 = p1.I.param_type in
                 match t1, t2 with
                 | Globals.Named _, Globals.Named "" -> t1  (* null case *)
                 | _ -> t2
               ) proc_decl.I.proc_args cts
+            ,
+            proc_args_typ
         )
       in
-      let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
+      let mingled_mn     = C.mingle_name mn cts in       (* signature of the function based on the types of the method's arguments*)
+      let mingled_mn_def = C.mingle_name mn cts_mndef in (* signature of the function based on the method definition types with instantiated poly types*)
+      let () = y_tinfo_hp (add_str "mingled_mn" pr_id) mingled_mn in
+      let () = y_tinfo_hp (add_str "mingled_mn_def" pr_id) mingled_mn_def in
       let this_recv =
         if Gen.is_some proc.I.proc_data_decl then
           (let cdef = Gen.unsome proc.I.proc_data_decl in
@@ -5809,9 +5823,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       else (
         try (
           let pdef = if (mn=Globals.join_name) then proc_decl else
-              let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
-              let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
-              I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
+            if (mingled_mn = mingled_mn_def) then proc_decl else
+              raise Not_found
+              (* let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
+               * let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
+               * I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn *)
           in
           let proc_args = if (mn=Globals.join_name) then
               if (!Globals.allow_threads_as_resource) then

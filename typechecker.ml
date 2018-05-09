@@ -570,8 +570,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           match b.CF.formula_inf_transpec with
           | None -> b.CF.formula_inf_continuation,[]
           | Some (old_view_name, new_view_name) ->
-            let old_view = look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls old_view_name in
-            let new_view = look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls new_view_name in
+            let old_view = x_add look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls old_view_name in
+            let new_view = x_add look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls new_view_name in
             let sub_pair = ((old_view_name,old_view.view_vars),(new_view_name,new_view.view_vars)) in
             let new_spec,new_args = CF.tran_spec b.CF.formula_inf_continuation sub_pair in
             x_tinfo_hp (add_str "TEMP SPECS" pr_spec) new_spec no_pos;
@@ -1169,7 +1169,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
     let fn = List.hd vs in
     (* let () = print_endline ("\ncheck_exp: SCall: vs = " ^ (string_of_ident_list vs)) in *)
     let fargs = List.tl vs in
-    let proc = look_up_proc_def pos prog.new_proc_decls fn in
+    let proc = x_add look_up_proc_def pos prog.new_proc_decls fn in
     let farg_types, farg_names = List.split proc.proc_args in
     let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
     let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) fargs farg_types in
@@ -2481,7 +2481,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*=========================*)
           (*=== NORMAL METHOD CALL ==*)
           (*=========================*)
-          let proc = look_up_proc_def pos prog.new_proc_decls mn in
+          let proc = x_add look_up_proc_def pos prog.new_proc_decls mn in
           let () = Debug.ninfo_zprint (lazy (("   " ^ proc.Cast.proc_name))) no_pos in
           let () = Debug.ninfo_zprint (lazy (("   stk spec: " ^(Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *))))) no_pos in
           let farg_types, farg_names = List.split proc.proc_args in
@@ -3636,7 +3636,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                 let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps
                     scc_inferred_hps
                 in
-                let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+                let new_scc_procs = List.map (fun pn -> x_add Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
                 (* let () = List.iter (fun proc -> *)
                 (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
                 (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
@@ -3646,7 +3646,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                 nprog,true
               else prog,false
             | _ -> let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
-              let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+              let new_scc_procs = List.map (fun pn -> x_add Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
               (* let () = List.iter (fun proc -> *)
               (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
               (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
@@ -3663,7 +3663,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
               let prog = SynUtils.remove_inf_vars_spec_scc prog scc_procs_names scc_sel_hps in
               prog, true
         in
-        let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
+        let new_scc_procs = List.map (fun pn -> x_add Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
         (* let () = cprog_obj # check_prog_only x_loc nprog in *)
         let () = List.iter (fun proc ->
             if is_print_inferred_spec then
@@ -4767,7 +4767,7 @@ let rec check_prog iprog (prog : prog_decl) =
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
     let updated_scc = List.fold_left (fun r proc_id ->
         try
-          let proc = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_id in
+          let proc = x_add Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_id in
           r@[proc]
         with _ -> r
       ) [] scc_ids in

@@ -1926,6 +1926,9 @@ let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : stri
            Error.error_loc = pos;
            Error.error_text = "look_up_proc_def: Procedure " ^ name ^ " is not found."}
 
+let look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
+  Debug.no_1 "look_up_proc_def" pr_id pr_none (look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t)) (name : string)
+
 let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
   try
     let proc = Hashtbl.find procs name in

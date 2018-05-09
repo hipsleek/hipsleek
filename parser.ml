@@ -719,17 +719,17 @@ let peek_dc =
    SHGram.Entry.of_parser "peek_protocol_base_msg_var_only"
        (fun strm ->
            match Stream.npeek 5 strm with
-             | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;CPAREN,_;] -> let () = print_endline ("PEEK 1 "^ var) in ()
-             | _ -> let () = print_endline ("PEEK 2 ") in raise Stream.Failure)
+             | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;CPAREN,_;] ->  ()
+             | _ -> raise Stream.Failure)
 
   let peek_protocol_base_msg =
     SHGram.Entry.of_parser "peek_protocol_base_msg"
       (fun strm ->
          match Stream.npeek 5 strm with
-         | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;HASH,_ ;] -> let () = print_endline ("PEEK 3 "^ var) in ()
-         | [OPAREN,_;IDENTIFIER var,_;HASH,_ ; _,_ ; _,_ ] -> let () = print_endline ("PEEK 4 "^ var) in ()
-         | [OPAREN,_;INT_LITER (msg,_),_; _,_ ; _,_;_,_ ] -> let () = print_endline ("PEEK 6 ") in ()
-         | _ -> let () = print_endline ("PEEK 5 ") in raise Stream.Failure)
+         | [OPAREN,_;IDENTIFIER var,_;COLON,_; _,_ ;HASH,_ ;] -> ()
+         | [OPAREN,_;IDENTIFIER var,_;HASH,_ ; _,_ ; _,_ ] ->  ()
+         | [OPAREN,_;INT_LITER (msg,_),_; _,_ ; _,_;_,_ ] ->  ()
+         | _ -> raise Stream.Failure)
 
  let peek_protocol_base_chan_suid =
    SHGram.Entry.of_parser "peek_protocol_base_chan_suid"

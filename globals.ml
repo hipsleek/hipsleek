@@ -3025,7 +3025,7 @@ let build_sel_scc scc_lst get_name lst =
     ) scc_lst
 
 
-let eq_mingled_name mingled_name name =
+let eq_mingled_name mingled_name name = (* (mingled_name = name) *)
   let lst1 = Str.split_delim (Str.regexp "\\$") mingled_name in
   let lst2 = Str.split_delim (Str.regexp "\\$") name in
   match lst1,lst2 with

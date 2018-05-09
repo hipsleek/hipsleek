@@ -1824,3 +1824,6 @@ let get_type_of_self ntl =
     let v = snd(List.find (fun (v,_) -> v=self) ntl) in
     v.sv_info_kind
   with _ -> UNK
+;;
+
+Tpdispatcher.sub_type := sub_type ;;
