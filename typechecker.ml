@@ -1728,9 +1728,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
                   (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                  let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
+                  let new_res_v  = (P.mkRes t) in
+                  let compose_es = x_add CF.subst [(vsv, tmp_vsv); (new_res_v, vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
-                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
+                  (* Information Flow Analysis: renaming of security context *)
+                  let rename_sctx = CF.subst_sctx [vsv;new_res_v] [tmp_vsv;vsv] c1 in
+                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es;
+                                                      CF.es_security_context = rename_sctx})) in
                   (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   (* let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
                   (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
@@ -2089,9 +2093,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let () = x_tinfo_hp (add_str "inside bind" pr_id) (stk_vars # string_of_no_ln) no_pos in
 
                 (* Information Flow Analysis *)
-                let orig_sctx = ref CP.Lo in
                 let rs = if !Globals.ifa
-                  then CF.transform_list_failesc_context (idf, idf, CF.elevate_sctx orig_sctx v) rs
+                  then CF.transform_list_failesc_context (idf, idf, CF.elevate_sctx v) rs
                   else rs
                 in
 
@@ -2099,7 +2102,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
                 (* Information Flow Analysis *)
                 let tmp_res1 = if !Globals.ifa
-                  then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx orig_sctx) tmp_res1
+                  then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) tmp_res1
                   else tmp_res1
                 in
 
@@ -2235,9 +2238,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 
           (* Information Flow Analysis *)
-          let orig_sctx = ref CP.Lo in
           let ctx = if !Globals.ifa
-            then CF.transform_list_failesc_context (idf, idf, CF.elevate_sctx orig_sctx v) ctx
+            then CF.transform_list_failesc_context (idf, idf, CF.elevate_sctx v) ctx
             else ctx
           in
 
@@ -2265,16 +2267,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let res = CF.pop_esc_level_list res pid in *)
 
           (* Information Flow Analysis *)
-          (* ADI TODO: Cleanup *)
           let sec_form = CF.get_sec_in_list_failesc_ctx res in
-          (* let () = print_endline ("sec_form: " ^ (List.fold_left (fun acc ell ->
-           *     acc ^ "[" ^ (List.fold_left (fun acc el -> acc ^ " & " ^ (!CP.print_p_formula el)) "" ell) ^ "]") "" sec_form)) in *)
           let sec_form = CF.merge_sec_form_list sec_form in
-          (* let () = print_endline ("merge_sec: " ^ (List.fold_left (fun acc el ->
-           *     acc ^ " & " ^ (!CP.print_p_formula el)) "" sec_form)) in *)
 
           let res = if !Globals.ifa
-            then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx orig_sctx) res
+            then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) res
             else res
           in
           let res = if !Globals.ifa
@@ -2898,16 +2895,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* else true *)
         in
         (* Add security formula to state *)
-        let add_sec_f state =
-          let ctx_sec = state.CF.es_security_context in
-          let sec = CP.Security (CP.VarBound ((CP.mkRes int_type), (CP.Lub (CP.SecVar (CP.SpecVar (t, v, Primed)), ctx_sec))), pos) in
-          let sec_b = CP.BForm ((sec, None), None) in
-
-          let new_f = CF.add_pure_formula_to_formula sec_b state.CF.es_formula in
-          let ctx = CF.Ctx { state with CF.es_formula = new_f } in
-          ctx
-        in
-        let ctx = CF.transform_list_failesc_context (idf, idf, add_sec_f) ctx in
+        (* let add_sec_f state =
+         *   let ctx_sec = state.CF.es_security_context in
+         *   let sec = CP.Security (CP.VarBound ((CP.mkRes int_type), (CP.Lub (CP.SecVar (CP.SpecVar (t, v, Primed)), ctx_sec))), pos) in
+         *   let sec_b = CP.BForm ((sec, None), None) in
+         * 
+         *   let new_f = CF.add_pure_formula_to_formula sec_b state.CF.es_formula in
+         *   let ctx = CF.Ctx { state with CF.es_formula = new_f } in
+         *   ctx
+         * in *)
+        (* Information Flow Analysis *)
+        let ctx = CF.transform_list_failesc_context (idf, idf, CF.prop_var (CP.mkRes t) (CP.mk_spec_var v) pos) ctx in
         let res =
           (* if (not b) then res (*do not have permission for variable v*) *)
           (* else                                                          *)
@@ -2994,16 +2992,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else ctx, res_var, sharp_val
           in
 
-          let add_sec_form entail_state =
-            let sec_ctx = entail_state.CF.es_security_context in
-            let sec_bound = CP.Security (CP.VarBound (vr, CP.Lub (sec_ctx, CP.SecVar vf)), pos) in
-            let sec_bform = CP.BForm ((sec_bound, None), None) in
-
-            let new_f = CF.add_pure_formula_to_formula sec_bform entail_state.CF.es_formula in
-            let ctx = CF.Ctx { entail_state with CF.es_formula = new_f } in
-            ctx
-          in
-          let ctx = CF.transform_list_failesc_context (idf, idf, add_sec_form) ctx in
+          (* let add_sec_form entail_state =
+           *   let sec_ctx = entail_state.CF.es_security_context in
+           *   let sec_bound = CP.Security (CP.VarBound (vr, CP.Lub (sec_ctx, CP.SecVar vf)), pos) in
+           *   let sec_bform = CP.BForm ((sec_bound, None), None) in
+           * 
+           *   let new_f = CF.add_pure_formula_to_formula sec_bform entail_state.CF.es_formula in
+           *   let ctx = CF.Ctx { entail_state with CF.es_formula = new_f } in
+           *   ctx
+           * in *)
+          (* Information Flow Analysis *)
+          let ctx = CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) ctx in
 
           let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
           (* let () = print_string_quiet ("tmp: "^(Cprinter.string_of_formula tmp)^"\n") in *)

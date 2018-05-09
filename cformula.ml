@@ -9826,7 +9826,7 @@ type entail_state = {
   (* es_infer_acc  : infer_acc; (\* outcome of accumulated inference *\) *)
   es_group_lbl: spec_label_def;
 
-  es_security_context : CP.sec_label;
+  es_security_context : CP.sec_label list; (* Information Flow Analysis: Security Context *)
 }
 
 and context =
@@ -10302,7 +10302,7 @@ let empty_es flowt grp_lbl pos =
     es_conc_err = [];
     es_rhs_pure = None;
     (*es_infer_invs = [];*)
-    es_security_context = CP.Lo;
+    es_security_context = (* [CP.Lo] *) [];
   }
 
 let flatten_context ctx0=
@@ -20626,6 +20626,16 @@ let normalize_struc nb b =
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
 
 (* Information Flow Analysis *)
+(* NOTE: Build Security Context *)
+let build_sec_ctx sctx =
+  let rec helper sl =
+    match sl with
+    | []    -> CP.Lo
+    | l::[] -> l
+    | l::sr -> CP.lub_op l (helper sr)
+  in
+  helper sctx
+
 (* NOTE: Get ALL security formula from ALL branches *)
 let get_sec_in_formula f =
   let rec helper f =
@@ -20747,18 +20757,40 @@ let base_sec_bounds vars pos =
   List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) bound_eqns
 
 (* NOTE: Security Context Utilities *)
-let elevate_sctx o_sctx v state =
-  let ()   = o_sctx := state.es_security_context in
+let elevate_sctx v state =
   let secv = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
-  let sctx = CP.lub_op secv state.es_security_context in
+  let sctx = secv::state.es_security_context in
+  (* let sctx = CP.lub_op secv (build_sec_ctx state.es_security_context) in *)
   Ctx { state with es_security_context = sctx }
 
-let restore_sctx o_sctx state =
-  Ctx { state with es_security_context = !o_sctx }
+let restore_sctx state =
+  let o_sctx = state.es_security_context in
+  match o_sctx with
+  | []      -> Ctx { state with es_security_context = o_sctx }
+  | _::sctx -> Ctx { state with es_security_context =   sctx }
+
+let subst_sctx (fr:CP.spec_var list) (t:CP.spec_var list) state =
+  let rec subst_all sst ll =
+    match ll with
+    | []      -> []
+    | lbl::lr -> (CP.sec_label_apply_subs sst lbl)::(subst_all sst lr)
+  in
+  let fresh = CP.fresh_spec_vars fr in
+  let st1   = List.combine fr fresh in
+  let st2   = List.combine fresh t  in
+  let sctx1 = subst_all st1 state.es_security_context in
+  let sctx2 = subst_all st2 sctx1 in
+  sctx2
 
 (* NOTE: Propagation of information flow *)
 let prop_const (res_v : CP.spec_var) pos state =
-  let sctx = state.es_security_context in
+  let sctx = (build_sec_ctx state.es_security_context) in
   let secf = CP.mk_sec_bform res_v sctx pos in
+  let newf = add_pure_formula_to_formula secf state.es_formula in
+  Ctx { state with es_formula = newf }
+
+let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx state.es_security_context) in
+  let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(CP.to_primed v))sctx) pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
