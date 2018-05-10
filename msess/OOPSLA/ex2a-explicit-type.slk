@@ -1,0 +1,37 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+pred p1<v> == emp & v>0.
+
+// checkentail x::p1<z:int> |- x::p1<2>.
+// print residue.
+
+relation R(int v).
+
+checkentail x=0  |- R(x).
+
+checkentail emp  |- x=0.
+print residue.
+
+checkentail x:int  |- x:int.
+print residue.
+
+checkentail x:int |- x:bool.
+print residue.
+
+checkentail c::Chan{@S !v#v=1}<> |- c::Chan{@S !v#v:int}<>.
+print residue.
+expect Fail.
+
+checkentail c::Chan{@S !v#v:int}<> |- c::Chan{@S !v#v=1}<>.
+print residue.
+expect Valid.
+
+
+checkentail  c2::Chan{@S !v#(v:boolean);;Assume{fnce(c2,29)}<>}<> &
+             fnce(c2,31) & fnce(c1,32) & 0<=reward & reward=reward &
+             1<=opt1 & opt1<=3 & 1<=opt2 & opt2<=3 & !(v_boolean_87_2493) &
+             v_int_88_2499=4
+             |-  c2::Chan{@S !v_188#%L(v_188) ;;%R}<> * %L(v_int_88_2499).
+print residue.
+expect Fail.

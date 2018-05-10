@@ -391,8 +391,10 @@ let mk_projection_per_channel prj chan =
       in
       if (SProj.find pred session1 && SProj.find pred session2 ) then
         failwith (x_loc ^ ": Nondeterminism is not supported.")
-      else if (SProj.find pred session1) then sess_prj1
-      else sess_prj2
+      (* adds the RHS proj as seq trailing to proj(RHS) (assuming RHS contains on +/-) *)
+      else if (SProj.find pred session1) then STProj.mk_session_seq_formula sess_prj1 sess_prj2 pos
+      (* adds the LHS proj as seq trailing to proj(LHS) (assuming LHS contains on +/-) *)
+      else STProj.mk_session_seq_formula sess_prj2 sess_prj1 pos
       (* ANDREEA TODO: do not add a star for per channel projection - check projection rules *)
       (* STProj.mk_session_star_formula sess_prj1 sess_prj2 pos *)
   | SProj.SBase sb ->
