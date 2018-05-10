@@ -1,24 +1,89 @@
 data node {
  int val;
- }.
+}.
 
-/*
-checkentail x::node<5> |- x::node<u>.
+//1
+infer [@sem_eq] y::node<5> & y=x |- x::node<u>.
 print residue.
 expect Valid.
 
-
-checkentail y::node<5> & y=x |- x::node<u>.
-print residue.
-expect Valid.
-
-
-checkentail y::node<5> & y>=x |- x::node<u>.
+//2
+infer [@sem_eq] y::node<5> & y>=x |- x::node<u>.
 expect Fail.
 print residue.
-*/
 
+//3
 infer [@sem_eq] y::node<5> & y>=x & y<=x |- x::node<u>.
 expect Valid.
 print residue.
 
+//4
+infer [@sem_eq] x::node<_> & x=y+1 & z=y+1 |- z::node<_>.
+expect Valid.
+print residue.
+//Message: y is undefined (7)
+//y appears only in the lhs pure formula
+
+//5
+infer [@sem_eq] x::node<_> * y::node<_> & y=x+1 & y=z+1 |- z::node<_>.
+expect Valid.
+print residue.
+
+//6
+infer [@sem_eq] x::node<3> & x<=y+1 & z<=y+1 & x>=y+1 & z>=y+1 |- z::node<3>.
+expect Valid.
+print residue.
+
+//7
+infer [@sem_eq] x::node<3> & x<y+1 & x>y-1 |- y::node<3>.
+expect Valid.
+print residue.
+
+
+//8
+infer [@sem_eq] x::node<3> & x<y+1 & z<y+1 & x>y-1 & z>y-1 |- y::node<3>.
+expect Valid.
+print residue.
+// Entail (8) : Failure("TYPE ERROR 1 : Found NUM but expecting node")
+// Validate 8: Expecting1 ValidBUT got no residue
+
+//9
+infer [@sem_eq] y::node<_> |- [x] x::node<_> & x=y.
+expect Valid.
+print residue.
+
+//10
+infer [@sem_eq] y::node<5> |- [x] x::node<v> & x=y.
+expect Valid.
+print residue.
+
+//11
+infer [@sem_eq] y::node<5> |- x::node<v> & x=y.
+expect Valid.
+print residue.
+
+//12
+checkentail_exact y::node<_> & x=y |- exists x: x::node<_>.
+expect Fail.
+print residue.
+
+//13
+checkentail_exact y::node<_> & y=z |- exists x: x::node<_> & x=y.
+expect Valid.
+print residue.
+
+//14
+checkentail_exact y::node<5> |- exists x: y::node<x>.
+expect Valid.
+print residue.
+
+//15
+checkentail_exact y::node<x> |- [x0] y::node<x0>.
+expect Valid.
+print residue.
+
+//16
+checkentail_exact x::node<5> * y::node<_> & x=a & y=x+1
+    |- exists y0, x0, v0: y0::node<_> * x0::node<v0> & x0=x & y0=x0+1.
+expect Valid.
+print residue.

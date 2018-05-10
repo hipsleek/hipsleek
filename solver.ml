@@ -1204,7 +1204,6 @@ let no_check_outer_vars = ref false
 (*     | HEmp   -> (MCP.mkMTrue no_pos, []) in *)
 (*   helper h0 *)
 
-
 let rec pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
   let rec diff_one sv svars = match svars with
     | sv2 :: rest ->
@@ -5828,6 +5827,14 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
     (fun _ -> f is_folding) estate 
 
+and extract_heap_and_pure_formula (es:CF.entail_state)=
+  (* Extract the heap formula *)
+  let f = es.es_formula in
+  match f with
+    | Base b -> (b.formula_base_heap,b.formula_base_pure)
+    | Or _ -> failwith "[extract_heap_and_pure_formula]::Unexpected OR formula in context!"
+    | Exists b -> (b.formula_exists_heap,b.formula_exists_pure)
+
 and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
   let es = match ctx with
     | Ctx es -> es
@@ -5836,6 +5843,9 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
   let () = Debug.tinfo_hprint (add_str "do_sem_eq: estate" Cprinter.string_of_entail_state) es no_pos in
   let free_var_list = (fv es.es_formula) in
   let () = y_tinfo_hp (add_str "fv list" string_of_spec_var_list) free_var_list in
+  let (lhs_heap,lhs_pure) = extract_heap_and_pure_formula es in
+  let () = x_tinfo_hp (add_str "lhs_pure" (Cprinter.string_of_mix_formula)) lhs_pure no_pos in
+  (* let () = y_binfo_hp (add_str "are eq" string_of_bool) r in *)
   ()
 
 and do_sem_eq (ctx:context) (conseq:CF.formula) =
@@ -9053,7 +9063,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         let expl = if true (* !Globals.adhoc_flag_4 *) then estate.es_gen_expl_vars else [] in
         let exist_vars = estate.es_evars@expl@estate.es_ivars (* @estate.es_gen_impl_vars *) in (*TO CHECK: ???*)
         (* shouldn't the current implicit be considered as existential esp for base-case-fold *)
-        let () = y_binfo_pp "should implicit var be existential here.." in
+        let () = y_tinfo_pp "should implicit var be existential here.." in
         let exist_vars = if false (* !Globals.adhoc_flag_4 *) then exist_vars@estate.es_gen_impl_vars else exist_vars in
         (* TODO-EXPURE : need to build new expure stuff *)
         let () = x_tinfo_hp (add_str "exist_vars(b4)" Cprinter.string_of_spec_var_list) exist_vars no_pos in
