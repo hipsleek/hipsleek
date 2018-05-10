@@ -5824,10 +5824,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         try (
           let pdef = if (mn=Globals.join_name) then proc_decl else
             if (mingled_mn = mingled_mn_def) then proc_decl else
-              raise Not_found
-              (* let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
-               * let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
-               * I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn *)
+            if (List.length pargs != 0) then raise Not_found
+            else
+              let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
+              let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
+              I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
           in
           let proc_args = if (mn=Globals.join_name) then
               if (!Globals.allow_threads_as_resource) then
