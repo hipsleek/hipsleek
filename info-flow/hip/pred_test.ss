@@ -24,6 +24,15 @@ pred onell<n> == self = null & n = 0
   or self::node<v,q> * q::zeroll<n-1> & n > 0 & v <= 1
   inv n >= 0;
 
+node id0(node x)
+  requires x::safell<n>
+  ensures  res::safell<n> & res <^ @Lo;
+{
+  return x;
+  dprint;
+}
+
+
 node id(node x)
   requires x::safell<n> & n > 0
   ensures  res::node<_,_> & true & res <^ @Lo;

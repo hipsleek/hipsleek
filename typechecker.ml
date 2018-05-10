@@ -2894,18 +2894,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (*   else true *)
           (* else true *)
         in
-        (* Add security formula to state *)
-        (* let add_sec_f state =
-         *   let ctx_sec = state.CF.es_security_context in
-         *   let sec = CP.Security (CP.VarBound ((CP.mkRes int_type), (CP.Lub (CP.SecVar (CP.SpecVar (t, v, Primed)), ctx_sec))), pos) in
-         *   let sec_b = CP.BForm ((sec, None), None) in
-         * 
-         *   let new_f = CF.add_pure_formula_to_formula sec_b state.CF.es_formula in
-         *   let ctx = CF.Ctx { state with CF.es_formula = new_f } in
-         *   ctx
-         * in *)
+
         (* Information Flow Analysis *)
         let ctx = CF.transform_list_failesc_context (idf, idf, CF.prop_var (CP.mkRes t) (CP.mk_spec_var v) pos) ctx in
+
         let res =
           (* if (not b) then res (*do not have permission for variable v*) *)
           (* else                                                          *)
@@ -2992,15 +2984,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else ctx, res_var, sharp_val
           in
 
-          (* let add_sec_form entail_state =
-           *   let sec_ctx = entail_state.CF.es_security_context in
-           *   let sec_bound = CP.Security (CP.VarBound (vr, CP.Lub (sec_ctx, CP.SecVar vf)), pos) in
-           *   let sec_bform = CP.BForm ((sec_bound, None), None) in
-           * 
-           *   let new_f = CF.add_pure_formula_to_formula sec_bform entail_state.CF.es_formula in
-           *   let ctx = CF.Ctx { entail_state with CF.es_formula = new_f } in
-           *   ctx
-           * in *)
           (* Information Flow Analysis *)
           let ctx = CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) ctx in
 
