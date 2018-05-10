@@ -1595,7 +1595,7 @@ let build_branches_sat br lbs =
   let pr3 = pr_list (pr_pair LO.string_of !print_formula) in
   Debug.no_2 "build_branches_sat" (add_str "br" pr3) (add_str "lbs" pr2) pr3 (build_branches_sat) br lbs
 
-let rec filter_chr_dependencies_x f =
+let rec filter_chr_dependencies_x efv f =
   let conj_list = CP.split_conjunctions f in
   (* split farmulae in two: CHR formulae and other formulae *)
   let (chr_prover_rels, rest_rels) = List.fold_left (fun (acc1, acc2) f ->
@@ -1615,7 +1615,8 @@ let rec filter_chr_dependencies_x f =
   let chr_free_vars = List.fold_left (fun acc f ->
     let fvs = CP.fv f in (* hbp, cb and event are also free vars *)
     acc@fvs
-  ) [] chr_prover_rels in
+    ) [] chr_prover_rels in
+  let chr_free_vars = chr_free_vars @ efv in
   (* gets the formulae related to CHR from the second list *)
   let (chr_form_list, other_formulae) = List.fold_left (fun (acc1, acc2) f ->
     let free_vars = CP.fv f in
@@ -1629,20 +1630,20 @@ let rec filter_chr_dependencies_x f =
   (* let () = y *)
   (chr, chr_formula, residue_formula)
 
-let filter_chr_dependencies f =
+let filter_chr_dependencies efv f =
   let pr = !CP.print_formula in
   let pr_bool = (add_str "contains CHR rels" string_of_bool) in
   let pr_out = pr_triple pr_bool pr pr in
-  Debug.no_1 "filter_chr_dependencies" pr pr_out filter_chr_dependencies_x f
+  Debug.no_1 "filter_chr_dependencies" pr pr_out (filter_chr_dependencies_x efv) f
 
-let preprocess_ord2sleek pform =
+let preprocess_ord2sleek efv pform =
   let form =  Sess_orders_relation.trans_ord2sleek_rels_in_pure_formula pform in
-  filter_chr_dependencies form
+  filter_chr_dependencies efv form
 
-let wrapper_enable_ord2sleek f =
+let wrapper_enable_ord2sleek ?extrafv:(efv=[]) f =
   let rels = CP.get_rels_from_formula f in
   let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
-  Wrapper.wrap_one_bool ord2sleek contains_ords preprocess_ord2sleek f
+  Wrapper.wrap_one_bool ord2sleek contains_ords (preprocess_ord2sleek efv) f
 
 let tp_supports_chr () =
   match !pure_tp with
@@ -3503,7 +3504,7 @@ let tp_imply ante conseq old_imp_no timeout process =
 let tp_imply ante conseq old_imp_no timeout process =
   let (chr1, chr_ante, residue_ante) = wrapper_enable_ord2sleek ante in
   let residue_ante = wrapper_remove_tvar ~sat:false residue_ante in
-  let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek conseq in
+  let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek ~extrafv:(CP.fv chr_ante) conseq in
   let residue_conseq = wrapper_remove_tvar ~sat:false residue_conseq in
   let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
   if (chr1 || chr2) && (tp_supports_chr ()) then
