@@ -6,54 +6,54 @@ pred_sess_tpproj GSa<> == ?v#v>=1;;!v#v>0;;((?1;;?v#v::Addr<_>;;!v#v::DDate<_,_,
 pred_sess_tpproj GSb<> == (!1) or (!0).
 pred_sess_tpproj GSb1<> == !1.
 
-//1                                           
-checkentail cs::Chan{@S GSb<>}<P>@M * 
-cb'::Chan{@S ?v#v::Addr<Anon_2154>;;!v#v::DDate<Anon_2156,Anon_2157,Anon_2158>}<P>
+//1
+checkentail cs::Chan{@S GSb<>}<>@M *
+cb'::Chan{@S ?v#v::Addr<Anon_2154>;;!v#v::DDate<Anon_2156,Anon_2157,Anon_2158>}<>
 &
-v_bool_65_209g7' & opt'=1 & 0<v_int_62_2175 & 1<=id' & cb'=cb & cs'=cs 
-                                           |-  cs'::Chan{@S !v#%L(v);;%R}<P> * %L(opt').
+v_bool_65_209g7' & opt'=1 & 0<v_int_62_2175 & 1<=id' & cb'=cb & cs'=cs
+                                           |-  cs'::Chan{@S !v#%L(v);;%R}<> * %L(opt').
 expect Valid.
 print residue.
 
 //2
-checkentail cs::Chan{@S GSb<>}<P>@M &
+checkentail cs::Chan{@S GSb<>}<>@M &
 v_bool_65_2097 & 0<v_int_62_2175 & 1<=id
-                                           |-  cs::Chan{@S !v#%L(v);;%R}<P> .
+                                           |-  cs::Chan{@S !v#%L(v);;%R}<> .
 expect Valid.
 print residue.
 
 //3
-checkentail cs::Chan{@S (!1) or (!0)}<P>@M & opt=1 |-  cs::Chan{@S !v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S (!1) or (!0)}<>@M & opt=1 |-  cs::Chan{@S !v#%L(v);;%R}<> * %L(opt).
 expect Valid.
 print residue.
 
 //4
-checkentail cs::Chan{@S (!1) or (!0)}<P>@M & opt=2 |-  cs::Chan{@S !v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S (!1) or (!0)}<>@M & opt=2 |-  cs::Chan{@S !v#%L(v);;%R}<> * %L(opt).
 expect Fail.
 print residue.
 
 //5
-checkentail cs::Chan{@S !3;;(!1) or (!0)}<P>@M & opt=2 |-  cs::Chan{@S !3;;!v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S !3;;(!1) or (!0)}<>@M & opt=2 |-  cs::Chan{@S !3;;!v#%L(v);;%R}<> * %L(opt).
 expect Fail.
 print residue.
 
 //6
-checkentail cs::Chan{@S GSb<>}<P>@M & opt=1 |-  cs::Chan{@S !v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S GSb<>}<>@M & opt=1 |-  cs::Chan{@S !v#%L(v);;%R}<> * %L(opt).
 expect Valid.
 print residue.
 
 //7
-checkentail cs::Chan{@S GSb<>}<P>@M & opt=2 |-  cs::Chan{@S !v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S GSb<>}<>@M & opt=2 |-  cs::Chan{@S !v#%L(v);;%R}<> * %L(opt).
 expect Fail.
 print residue.
 
 //8
-checkentail cs::Chan{@S !1;;GSb<>}<P>@M & opt=2 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb<>}<>@M & opt=2 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<> * %L(opt).
 expect Fail.
 print residue.
 
 //9
-checkentail cs::Chan{@S !1;;GSb<>}<P>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb<>}<>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<> * %L(opt).
 expect Valid.
 print residue.
 
@@ -61,29 +61,28 @@ print residue.
 pred_sess_tpproj GSb2<> == (!1) or (!0;;!1).
 
 //10
-checkentail cs::Chan{@S !1;;GSb2<>;;!2}<P>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;%R}<> * %L(opt).
 expect Valid.
 print residue.
 
 //11
-checkentail cs::Chan{@S !1;;GSb2<>;;!2}<P>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M & opt=1 |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<> * %L(opt).
 expect Fail.
 print residue.
 
 //12
 // should this succeed?
-checkentail cs::Chan{@S !1;;GSb2<>;;!2}<P>@M & opt=0 |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M & opt=0 |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<> * %L(opt).
 expect Valid.
 print residue.
 
 //13
 // should this succeed?
-checkentail cs::Chan{@S !1;;GSb2<>;;!2}<P>@M |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<P> * %L(opt).
+checkentail cs::Chan{@S !1;;GSb2<>;;!2}<>@M |-  cs::Chan{@S !1;;!v#%L(v);;!1;;!2}<> * %L(opt).
 expect Fail.
 print residue.
 
 //14
-checkentail cs::Chan{@S (!1) or (!2);;!3;;!2}<P>@M & opt=0 |-  cs::Chan{@S (!1) or (!2);;!m#%L(m);;!2}<P> * %L(opt).
+checkentail cs::Chan{@S (!1) or (!2);;!3;;!2}<>@M & opt=0 |-  cs::Chan{@S (!1) or (!2);;!m#%L(m);;!2}<> * %L(opt).
 expect Fail.
 print residue.
-
