@@ -456,7 +456,10 @@ rule tokenizer file_name = parse
   | "@Split" { SPLITANN } (*Split annotation*)
   | "@Hi" { HI_SEC }
   | "@Lo" { LO_SEC }
-  | "|_|" { LUB_SEC }
+  | "#" { LUB_SEC }
+  | "<?" { OP_SEC }
+  | "<E" { OP_EXPLICIT_SEC }
+  | "<I" { OP_IMPLICIT_SEC }
   | "c#" { SEC_CONTEXT }
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)

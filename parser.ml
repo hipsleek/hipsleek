@@ -2194,7 +2194,7 @@ cexp_w:
      *     let bform = P.BForm (b_formula, None) in
      *     let f = Pure_f bform in
      *     set_slicing_utils_pure_double f false *)
-      id=SELF; `LT; `CARET; sec=sec_expr ->
+      id=SELF; `OP_SEC; sec=sec_expr ->
         let cid,pos = match id with
           | Pure_c (P.Var (t,l)) -> (t,l)
           | Pure_c (P.Null l)    -> ((null_name, Unprimed), l)

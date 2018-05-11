@@ -125,7 +125,7 @@ type sleek_token =
   | ARGOPTION of string
 
   | HI_SEC | LO_SEC | LUB_SEC
-  | SEC_CONTEXT
+  | SEC_CONTEXT | OP_SEC | OP_EXPLICIT_SEC | OP_IMPLICIT_SEC
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
