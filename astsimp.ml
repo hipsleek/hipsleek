@@ -8649,8 +8649,8 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_remaining_branches = brs;
                            CP.xpure_view_pos = pos
                           }
-               | IP.Security (sec_formula, pos) ->
-                  CP.Security (trans_sec_formula tlist pos sec_formula, pos)
+               | IP.Security (var, lbl, pos) ->
+                  CP.Security (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
 
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
@@ -8663,9 +8663,6 @@ and trans_sec_label tlist pos = function
   | IP.Lo -> CP.Lo
   | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
   | IP.SecVar var -> CP.SecVar (trans_var var tlist pos)
-
-and trans_sec_formula tlist pos = function
-  | IP.VarBound (var, lbl) -> CP.VarBound (trans_var var tlist pos, trans_sec_label tlist pos lbl)
 
 and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   let trans_term_fail f = match f with

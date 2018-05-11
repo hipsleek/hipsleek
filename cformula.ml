@@ -20690,7 +20690,7 @@ let replace_sec_in_estate sfl state =
 let simpl_sec_form sfl =
   let replace_one sf lbl =
     match sf with
-    | Security(VarBound(v,_),loc) -> Security(VarBound(v,lbl),loc)
+    | Security (v,_,loc) -> Security (v, lbl, loc)
     | _                           -> x_report_error no_pos "replace : not security formula"
   in
   let rec replace_all sfl sec lbl =
@@ -20707,7 +20707,7 @@ let simpl_sec_form sfl =
     | sf::sl ->
       begin
         match sf with
-        | Security(VarBound(v,lbl),loc) -> helper (replace_all curr sf lbl) sl
+        | Security (v, lbl, loc) -> helper (replace_all curr sf lbl) sl
         | _                             -> x_report_error no_pos "helper : not security formula"
       end
   in

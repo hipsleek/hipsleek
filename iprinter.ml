@@ -338,16 +338,13 @@ and string_of_p_formula pf =
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
-  | P.Security (sec_formula, pos) -> string_of_sec_formula sec_formula
+  | P.Security (var, lbl, pos) -> string_of_var var ^ " <? " ^ string_of_sec_label lbl
 
 and string_of_sec_label = function
   | P.Hi -> "@Hi"
   | P.Lo -> "@Lo"
-  | P.Lub (l1, l2) -> string_of_sec_label l1 ^ " |_| " ^ string_of_sec_label l2
+  | P.Lub (l1, l2) -> string_of_sec_label l1 ^ " # " ^ string_of_sec_label l2
   | P.SecVar var -> string_of_var var
-
-and string_of_sec_formula = function
-  | P.VarBound (var, lbl) -> string_of_var var ^ " <^ " ^ string_of_sec_label lbl
 
 and string_of_vperm_sets vps =
   let pr_elem vpa svl =

@@ -305,7 +305,7 @@ and p_formula =
   | RelForm of (spec_var * (exp list) * loc)
   | ImmRel of (p_formula * imm_ann * loc) (* RelForm * cond * pos *)
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
-  | Security of sec_formula * loc
+  | Security of spec_var * sec_label * loc
 
 (* Expression *)
 and exp =
@@ -375,8 +375,8 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
-and sec_formula =
-  | VarBound of spec_var * sec_label
+(* and sec_formula =
+  | VarBound of spec_var * sec_label *)
   (* | ContextBound of sec_label * loc *)
 (* | ResultBound of sec_label * loc *)
 (* No v.i <: sigma since in HIP/SLEEK, v.i is not expressed directly *)
@@ -391,7 +391,7 @@ and sec_label =
 (* Information Flow Analysis *)
 let sec_var v = SecVar v
 
-let mk_security v lbl pos = Security (VarBound (v, lbl), pos)
+let mk_security v lbl pos = Security (v, lbl, pos)
 
 let mk_sec_bform v lbl pos = BForm ((mk_security v lbl pos, None), None)
 
@@ -1588,10 +1588,7 @@ and bfv (bf : b_formula) =
   (* | VarPerm (t,ls,_) -> ls *)
   | LexVar l_info ->
     List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
-  | Security (sec_formula, _) ->
-    begin match sec_formula with
-      | VarBound (var, lbl) -> remove_dups_svl (var :: sec_label_fv lbl)
-    end
+  | Security (var, lbl, _) -> remove_dups_svl (var :: sec_label_fv lbl)
 
 and sec_label_fv = function
   | Hi | Lo -> []
@@ -4159,7 +4156,7 @@ and pos_of_b_formula (b: b_formula) =
   | ImmRel (_, _, p)
   | RelForm (_, _, p) -> p
   (* | VarPerm (_,_,p) -> p *)
-  | Security (_, p) -> p
+  | Security (_, _, p) -> p
 
 and pos_of_formula (f: formula) =
   match f with
@@ -4212,7 +4209,7 @@ and subst_pos_pformula p pf= match pf with
   | RelForm (id, el, _) -> RelForm (id, el, p)
   | ImmRel (id, cond, _) -> ImmRel (id, cond, p)
   (* | VarPerm (t,ls,_) -> VarPerm (t,ls,p) *)
-  | Security (s, _) -> Security (s, p)
+  | Security (v, lbl, _) -> Security (v, lbl, p)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
@@ -4686,11 +4683,7 @@ and b_apply_subs_x sst bf =
                          lex_ann = map_term_ann (apply_subs sst) (e_apply_subs sst) t_info.lex_ann;
                          lex_exp = e_apply_subs_list sst t_info.lex_exp;
                          lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
-              | Security (sec_formula, pos) ->
-                let sub_formula = match sec_formula with
-                  | VarBound (var, lbl) -> VarBound (subs_one sst var, sec_label_apply_subs sst lbl)
-                in
-                Security (sub_formula, pos)
+              | Security (var, lbl, pos) -> Security (subs_one sst var, sec_label_apply_subs sst lbl, pos)
 
     in helper pf
   in
@@ -4964,7 +4957,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
                          lex_ann = map_term_ann (apply_par_term sst) (a_apply_par_term sst) t_info.lex_ann;
                          lex_exp = a_apply_par_term_list sst t_info.lex_exp;
                          lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; }
-              | Security (_, _) -> pf
+              | Security (_, _, _) -> pf
     in helper pf
   in (npf,il)
 
@@ -5093,7 +5086,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
                          lex_ann = map_term_ann (apply_one_term (fr, t)) (a_apply_one_term (fr, t)) t_info.lex_ann;
                          lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp;
                          lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; }
-              | Security (_, _) -> pf
+              | Security (_, _, _) -> pf
     in helper pf
   in (npf,il)
 
@@ -6719,7 +6712,7 @@ and b_apply_one_exp (fr, t) bf =
                          lex_ann = map_term_ann (apply_one_exp (fr, t)) (e_apply_one_exp (fr, t)) t_info.lex_ann;
                          lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp;
                          lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
-              | Security (_, _) -> pf
+              | Security (_, _, _) -> pf
     in helper pf
   in (npf,il)
 
@@ -7657,7 +7650,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
                 let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
                 RelForm (v,new_exs,p)
               |  ImmRel (v,cond,p) ->  let new_v = helper v in ImmRel (new_v,cond,p)
-              | Security (_, _) -> pf
+              | Security (_, _, _) -> pf
     in helper pf
   in (npf,il)
 
@@ -7914,7 +7907,7 @@ let norm_bform_a (bf:b_formula) : b_formula =
                     let nle = List.map norm_exp t_info.lex_exp in
                     let nlt = List.map norm_exp t_info.lex_tmp in
                     LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-                  | Security (_, _) -> pf
+                  | Security (_, _, _) -> pf
         in helper pf
       in (npf, il)
 
@@ -14592,13 +14585,10 @@ and translate_sec_label = function
     lst1 @ lst2 @ [EqMax (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
 
 and translate_sec_formula = function
-  | Security (sf, loc) ->
-    begin match sf with
-      | VarBound (SpecVar (typ, var_name, _), sec) ->
-        let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+  | Security ((SpecVar (typ, var_name, _)), sec, loc) ->
+      let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
         let extra_p_form, fv, expr = translate_sec_label sec in
         extra_p_form, fv, Lte (Var (var, loc), expr, loc), [var]
-    end
   | p_formula -> [], [], p_formula, []
 
 and translate_security_formula = function
@@ -16554,7 +16544,7 @@ let is_Or f = match f with
 (* Information Flow Analysis *)
 let get_sec_in_p_formula pf =
   match pf with
-  | Security (sf,_) -> [pf]
+  | Security _ -> [pf]
   | _               -> []
 let get_sec_in_formula cf =
   let rec helper cf =
@@ -16567,34 +16557,24 @@ let get_sec_in_formula cf =
 
 let to_sec_hi sf =
   match sf with
-  | Security (vb,loc) ->
-    begin
-      match vb with
-      | VarBound(v,_) -> Security(VarBound(v,Hi),loc)
-      (* | _             -> sf *)
-    end
+  | Security (v, _, loc) -> mk_security v Hi loc
   | _                 -> sf
 
 let to_sec_lo sf =
   match sf with
-  | Security (vb,loc) ->
-    begin
-      match vb with
-      | VarBound(v,_) -> Security(VarBound(v,Hi),loc)
-      (* | _             -> sf *)
-    end
+  | Security (v, _, loc) -> mk_security v Lo loc
   | _                 -> sf
 
 let is_eq_sec_var sf1 sf2 =
   match (sf1,sf2) with
-  | (Security(VarBound(v1,_),_), Security(VarBound(v2,_),_)) ->
+  | (Security(v1,_,_), Security(v2,_,_)) ->
     (* let () = print_endline (string_of_spec_var_list [v1;v2] ^ " == " ^ string_of_bool (eq_spec_var v1 v2)) in *)
     eq_spec_var v1 v2
   | _ -> false
 
 let is_less_sec_var sf1 sf2 =
   match (sf1,sf2) with
-  | (Security(VarBound(v1,_),_), Security(VarBound(v2,_),_)) ->
+  | (Security(v1,_,_), Security(v2,_,_)) ->
     (* let () = print_endline (string_of_spec_var_list [v1;v2] ^ " < " ^ string_of_bool (less_spec_var v1 v2)) in *)
     less_spec_var v1 v2
   | _ -> false
@@ -16621,9 +16601,9 @@ let lub_op lb1 lb2 =
   multi lb1 lb2
 let sec_lub sf1 sf2 =
   match (sf1,sf2) with
-  | Security(VarBound(v1,l1),_),Security(VarBound(v2,l2),_) ->
+  | Security(v1,l1,_),Security(v2,l2,_) ->
     if eq_spec_var v1 v2
-    then Security(VarBound(v1, (lub_op l1 l2)), no_pos)
+    then Security(v1, (lub_op l1 l2), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | _ -> x_report_error no_pos "sec_lub : not security formula"
 
@@ -16643,7 +16623,7 @@ let rec filter_out_sec_form f =
   | BForm ((pf,opt),lbl) ->
     begin
       match pf with
-      | Security (_,loc) -> mkTrue loc
+      | Security (_, _, loc) -> mkTrue loc
       | _                -> f
     end
   | And(f1,f2,loc) ->

@@ -281,8 +281,11 @@ module Token = struct
     | ARGOPTION arg -> "##OPTION "^arg
     | HI_SEC  -> "@Hi"
     | LO_SEC -> "@Lo"
-    | LUB_SEC -> "|_|"
+    | LUB_SEC -> "#"
     | SEC_CONTEXT -> "c#"
+    | OP_SEC -> "<?"
+    | OP_EXPLICIT_SEC -> "<E"
+    | OP_IMPLICIT_SEC -> "<I"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

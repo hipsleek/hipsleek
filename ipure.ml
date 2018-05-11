@@ -231,16 +231,12 @@ and pfv (pf: p_formula)=
   | LexVar (_, args1, args2, _) ->
     let args_fv = List.concat (List.map afv (args1@args2)) in
     Gen.BList.remove_dups_eq (=) args_fv
-  | Security (sec_formula, _) -> sec_formula_fv sec_formula
+  | Security (var, lbl, _) -> Gen.BList.remove_dups_eq (=) (var :: sec_label_fv lbl)
 
 and sec_label_fv = function
   | Hi | Lo -> []
   | Lub (l1, l2) -> Gen.BList.remove_dups_eq (=) (sec_label_fv l1 @ sec_label_fv l2)
   | SecVar var -> [var]
-
-and sec_formula_fv = function
-  | VarBound (var, lbl) -> Gen.BList.remove_dups_eq (=) (var :: sec_label_fv lbl)
-
 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
   let fv1 = afv a1 in
@@ -352,7 +348,7 @@ and mkXPure id cl pos =
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
-and mkSecurity a1 a2 pos = Security (VarBound (a1, a2), pos)
+and mkSecurity a1 a2 pos = Security (a1, a2, pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
@@ -609,7 +605,7 @@ and pos_of_pf pf=
     | EqMax (_,_,_,p) | EqMin (_,_,_,p)
     | BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)
     | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
-    | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) | Security (_, p) -> p
+    | RelForm (_,_,p)  | LexVar (_,_,_,p) | ImmRel (_,_,p) | Security (_, _, p) -> p
     (* | VarPerm (_,_,p) -> p *)
     | XPure xp ->  xp.xpure_view_pos
 
@@ -844,11 +840,7 @@ and p_apply_one ((fr, t) as p) pf =
     let args1 = List.map (fun x -> e_apply_one (fr, t) x) args1 in
     let args2 = List.map (fun x -> e_apply_one (fr, t) x) args2 in
     LexVar (t_ann, args1,args2,pos)
-  | Security (sf,pos) ->
-    let sub_f = match sf with
-      | VarBound (var,lbl) -> VarBound (v_apply_one p var, lbl_apply_one p lbl)
-    in
-    Security (sub_f, pos)
+  | Security (var, lbl, pos) -> Security (v_apply_one p var, lbl_apply_one p lbl, pos)
 
 and lbl_apply_one ((fr, t) as p) lbl =
   match lbl with
@@ -1760,7 +1752,7 @@ and float_out_pure_min_max (p : formula) : formula =
       let nargse = List.map fst nargs in
       let t = BForm ((RelForm (r, nargse, l), il), lbl) in
       t
-    | Security (sec_f, loc) -> BForm (b,lbl)
+    | Security _ -> BForm (b,lbl)
 
   in
   match p with
