@@ -9,20 +9,20 @@ class __RET extends __Exc {}
 
 int add___(int a, int b)
   requires true
-  ensures res = a + b & res <^ a |_| b;
+  ensures res = a + b & res <? a # b;
 
 int minus___(int a, int b)
   requires true
-  ensures res = a - b & res <^ a |_| b;
+  ensures res = a - b & res <? a # b;
 
 int mult___(int a, int b)
   requires true
-  ensures res = a * b & res <^ a |_| b;
+  ensures res = a * b & res <? a # b;
 
 
 int mults___(int a, int b)
   requires true
-  ensures res = a * b & res <^ a |_| b;
+  ensures res = a * b & res <? a # b;
 /*
   case {
     a = 0 -> ensures res = 0;
@@ -48,14 +48,14 @@ r=a*b & b=c*d
 int div___(int a, int b) 
  case {
   a >= 0 -> case {
-    b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1 & res <^ a |_| b);
-    b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1 & res <^ a |_| b);
+    b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1 & res <? a # b);
+    b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1 & res <? a # b);
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
   a < 0 -> case {
-    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1 & res <^ a |_| b);
-    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1 & res <^ a |_| b);
+    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1 & res <? a # b);
+    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1 & res <? a # b);
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
@@ -64,29 +64,29 @@ int div___(int a, int b)
 int divs___(int a, int b) 
   case {
     a = 0 -> case {
-      b >= 1 -> ensures res = 0 & res <^ a |_| b;
-      b <= -1 -> ensures res = 0 & res <^ a |_| b;
+      b >= 1 -> ensures res = 0 & res <? a # b;
+      b <= -1 -> ensures res = 0 & res <? a # b;
       -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
     a > 0 -> case {
-      b = 1 -> ensures res = a & res <^ a |_| b;
-      b = -1 -> ensures res = -a & res <^ a |_| b;
+      b = 1 -> ensures res = a & res <? a # b;
+      b = -1 -> ensures res = -a & res <? a # b;
       b > 1 -> case {
-        a < b -> ensures res = 0 & res <^ a |_| b;
-        a >= b -> ensures res >= 1 & res < a & res <^ a |_| b;
+        a < b -> ensures res = 0 & res <? a # b;
+        a >= b -> ensures res >= 1 & res < a & res <? a # b;
       }
       b < -1 -> case {
-        -a > b -> ensures res = 0 & res <^ a |_| b;
-        -a <= b -> ensures res <= 1 & a + res > 0 & res <^ a |_| b;
+        -a > b -> ensures res = 0 & res <? a # b;
+        -a <= b -> ensures res <= 1 & a + res > 0 & res <? a # b;
       }
       /* -1 < b < 1 -> requires false ensures false; */
       -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
     a < 0 -> case {
-      b = 1 -> ensures res = a & res <^ a |_| b;
-      b = -1 -> ensures res = -a & res <^ a |_| b;
-      b > 1 -> ensures res <= 0 & res > a & res <^ a |_| b;
-      b < -1 -> ensures res >= 0 & a + res < 0 & res <^ a |_| b;
+      b = 1 -> ensures res = a & res <? a # b;
+      b = -1 -> ensures res = -a & res <? a # b;
+      b > 1 -> ensures res <= 0 & res > a & res <? a # b;
+      b < -1 -> ensures res >= 0 & a + res < 0 & res <? a # b;
       /* -1 < b < 1 -> requires false ensures false; */
       -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
@@ -96,36 +96,36 @@ int divs___(int a, int b)
 int div2(int a, int b)
  requires true 
  case {
-  b != 0 -> ensures true & res <^ a |_| b;
+  b != 0 -> ensures true & res <? a # b;
   b = 0 -> ensures true & flow __DivByZeroErr; 
  }
 
 int div3(int a, int b) 
  case {
-  b = 0 -> requires false ensures false & res <^ a |_| b;
-  b != 0 -> ensures true & res <^ a |_| b;
+  b = 0 -> requires false ensures false & res <? a # b;
+  b != 0 -> ensures true & res <? a # b;
  }
 
 int div4(int a, int b) 
   requires b != 0
-  ensures true & res <^ a |_| b;
+  ensures true & res <? a # b;
 
 int mod___(int a, int b) case {
   a >= 0 -> case {
 	b >= 1 -> case {
-	  a < b -> ensures res = a & res <^ a |_| b;
+	  a < b -> ensures res = a & res <? a # b;
 	  a >= b -> case {
-      a < 2*b -> ensures res = a - b & res <^ a |_| b;
-      a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1 & res <^ a |_| b);
+      a < 2*b -> ensures res = a - b & res <? a # b;
+      a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1 & res <? a # b);
 	  }
 	}
-  b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1 & res <^ a |_| b);
+  b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1 & res <? a # b);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
   }
   a < 0 -> case {
-    b >= 1 -> ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1 & res <^ a |_| b);
-    b <= -1 -> ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1 & res <^ a |_| b);
+    b >= 1 -> ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1 & res <? a # b);
+    b <= -1 -> ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1 & res <? a # b);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
   }
@@ -133,41 +133,41 @@ int mod___(int a, int b) case {
 
 float add___(int a, float b) 
   requires true 
-  ensures res = a + b & res <^ a |_| b;
+  ensures res = a + b & res <? a # b;
 
 float add___(float a, int b) 
   requires true 
-  ensures res = a + b & res <^ a |_| b;
+  ensures res = a + b & res <? a # b;
 
 float add___(float a, float b) 
   requires true 
-  ensures res = a + b & res <^ a |_| b;
+  ensures res = a + b & res <? a # b;
 
 
 float minus___(int a, float b) 
   requires true 
-  ensures res = a - b & res <^ a |_| b;
+  ensures res = a - b & res <? a # b;
 
 float minus___(float a, int b) 
   requires true 
-  ensures res = a - b & res <^ a |_| b;
+  ensures res = a - b & res <? a # b;
 
 float minus___(float a, float b) 
   requires true 
-  ensures res = a - b & res <^ a |_| b;
+  ensures res = a - b & res <? a # b;
 
 
 float mult___(int a, float b) 
   requires true 
-  ensures res = a * b & res <^ a |_| b;
+  ensures res = a * b & res <? a # b;
 
 float mult___(float a, int b) 
   requires true 
-  ensures res = a * b & res <^ a |_| b;
+  ensures res = a * b & res <? a # b;
 
 float mult___(float a, float b) 
   requires true 
-  ensures res = a * b & res <^ a |_| b;
+  ensures res = a * b & res <? a # b;
 
 
 /*
@@ -192,8 +192,8 @@ float div___(float a, float b)
 
 bool eq___(int a, int b) 
   case {
-  a = b -> ensures res & res <^ a |_| b;
-  a != b -> ensures !res & res <^ a |_| b;}
+  a = b -> ensures res & res <? a # b;
+  a != b -> ensures !res & res <? a # b;}
 
 /*
 bool eq___(float a, float b) 
@@ -203,66 +203,66 @@ bool eq___(float a, float b)
 */
 bool neq___(int a, int b) 
   case {
-  a = b -> ensures !res & res <^ a |_| b;
-  a != b -> ensures res & res <^ a |_| b;}
+  a = b -> ensures !res & res <? a # b;
+  a != b -> ensures res & res <? a # b;}
 
 bool neq___(bool a, bool b) case {
-  a = b -> ensures !res & res <^ a |_| b;
-  a != b -> ensures res & res <^ a |_| b;}
+  a = b -> ensures !res & res <? a # b;
+  a != b -> ensures res & res <? a # b;}
 /*
 bool neq___(float a, float b) case {
     a = b -> ensures !res;
     a != b -> ensures res;}
 */
 bool lt___(int a, int b) case {
-  a <  b -> ensures  res & res <^ a |_| b;
-  a >= b -> ensures !res & res <^ a |_| b;}
+  a <  b -> ensures  res & res <? a # b;
+  a >= b -> ensures !res & res <? a # b;}
 /*
 bool lt___(float a, float b) case {
     a <  b -> ensures  res;
     a >= b -> ensures !res;}
 */
 bool lte___(int a, int b) case {
-  a <= b -> ensures  res & res <^ a |_| b;
-  a >  b -> ensures !res & res <^ a |_| b;}
+  a <= b -> ensures  res & res <? a # b;
+  a >  b -> ensures !res & res <? a # b;}
 /*
 bool lte___(float a, float b) case {
     a <= b -> ensures  res;
     a >  b -> ensures !res;}
 */
 bool gt___(int a, int b) case {
-  a >  b -> ensures  res & res <^ a |_| b;
-  a <= b -> ensures !res & res <^ a |_| b;}
+  a >  b -> ensures  res & res <? a # b;
+  a <= b -> ensures !res & res <? a # b;}
 /*
 bool gt___(float a, float b) case {
     a >  b -> ensures  res;
     a <= b -> ensures !res;}
 */
 bool gte___(int a, int b) case {
-  a >= b -> ensures  res & res <^ a |_| b;
-  a <  b -> ensures !res & res <^ a |_| b;}
+  a >= b -> ensures  res & res <? a # b;
+  a <  b -> ensures !res & res <? a # b;}
 /*
 bool gte___(float a, float b) case {
     a >= b -> ensures  res;
     a <  b -> ensures !res;}
 */
 bool land___(bool a, bool b) case {
-  a -> case { b -> ensures res & res <^ a |_| b; 
-    !b -> ensures !res & res <^ a |_| b;}
-  !a -> ensures !res & res <^ a |_| b;}
+  a -> case { b -> ensures res & res <? a # b; 
+    !b -> ensures !res & res <? a # b;}
+  !a -> ensures !res & res <? a # b;}
 
 bool lor___(bool a, bool b) case {
-  a -> requires true ensures res & res <^ a |_| b;
-  !a -> case { b -> ensures res & res <^ a |_| b; 
-    !b -> ensures !res & res <^ a |_| b;}}
+  a -> requires true ensures res & res <? a # b;
+  !a -> case { b -> ensures res & res <? a # b; 
+    !b -> ensures !res & res <? a # b;}}
 
 bool not___(bool a) 
- case { a -> ensures !res & res <^ a; 
-  !a -> ensures res & res <^ a;}
+ case { a -> ensures !res & res <? a; 
+  !a -> ensures res & res <? a;}
 
 int pow___(int a, int b) 
    requires true 
-  ensures true & res <^ a |_| b;
+  ensures true & res <? a # b;
 
 //////////////////////////////////////////////////////////////////
 // <OLD> SPECIFICATIONS

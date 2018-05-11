@@ -188,23 +188,23 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
         (ddef.I.data_name ^
          (" a, " ^
           (ddef.I.data_name ^
-           " b) case { a=b -> requires true ensures res & res <^ a |_| b ; a!=b -> requires true ensures !res & res <^ a |_| b ;}\n"))) in
+           " b) case { a=b -> requires true ensures res & res <? a # b ; a!=b -> requires true ensures !res & res <? a # b ;}\n"))) in
       let neq_str =
         "bool neq___(" ^
         (ddef.I.data_name ^
          (" a, " ^
           (ddef.I.data_name ^
-           " b)case { a=b -> requires true ensures !res & res <^ a |_| b ; a!=b -> requires true ensures res & res <^ a |_| b ;}\n"))) in
+           " b)case { a=b -> requires true ensures !res & res <? a # b ; a!=b -> requires true ensures res & res <? a # b ;}\n"))) in
       let is_null_str =
         "bool is_null___(" ^
         (ddef.I.data_name ^
          (" a" ^
-          ") case { a=null -> requires true ensures res & res <^ a ; a!=null -> requires true ensures !res & res <^ a ;}\n")) in
+          ") case { a=null -> requires true ensures res & res <? a ; a!=null -> requires true ensures !res & res <? a ;}\n")) in
       let is_not_null_str =
         "bool is_not_null___(" ^
         (ddef.I.data_name ^
          (" a" ^
-          ") case { a=null -> requires true ensures !res & res <^ a ; a!=null -> requires true ensures res & res <^ a ;}\n"))
+          ") case { a=null -> requires true ensures !res & res <? a ; a!=null -> requires true ensures res & res <? a ;}\n"))
       in
       (Buffer.add_string prim_buffer eq_str;
        Buffer.add_string prim_buffer neq_str;
