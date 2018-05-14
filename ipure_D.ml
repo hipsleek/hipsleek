@@ -91,6 +91,8 @@ and p_formula =
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
   | ImmRel of (p_formula * imm_ann * loc)
   | Security of spec_var * sec_label * loc
+  | ExplicitFlow of spec_var * sec_label * loc
+  | ImplicitFlow of spec_var * sec_label * loc
 
 and term_ann =
   | Term    (* definite termination *)
@@ -176,6 +178,7 @@ and sec_label =
   | Hi
   | Lo
   | Lub of sec_label * sec_label
+  | Glb of sec_label * sec_label
   | SecVar of spec_var
 
 (* let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized") *)

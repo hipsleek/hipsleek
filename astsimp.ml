@@ -8651,6 +8651,10 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                           }
                | IP.Security (var, lbl, pos) ->
                   CP.Security (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
+               | IP.ExplicitFlow (var, lbl, pos) ->
+                  CP.ExplicitFlow (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
+               | IP.ImplicitFlow (var, lbl, pos) ->
+                  CP.ImplicitFlow (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
 
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
@@ -8662,6 +8666,7 @@ and trans_sec_label tlist pos = function
   | IP.Hi -> CP.Hi
   | IP.Lo -> CP.Lo
   | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
+  | IP.Glb (l1, l2) -> CP.Glb (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
   | IP.SecVar var -> CP.SecVar (trans_var var tlist pos)
 
 and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =

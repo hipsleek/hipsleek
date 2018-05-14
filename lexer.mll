@@ -457,6 +457,7 @@ rule tokenizer file_name = parse
   | "@Hi" { HI_SEC }
   | "@Lo" { LO_SEC }
   | "#" { LUB_SEC }
+  | "%" { GLB_SEC }
   | "<?" { OP_SEC }
   | "<E" { OP_EXPLICIT_SEC }
   | "<I" { OP_IMPLICIT_SEC }

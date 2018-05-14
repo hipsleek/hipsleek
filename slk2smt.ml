@@ -115,7 +115,9 @@ let rec process_p_formula pre_fix_var pf =
     "(" ^ id ^ ")"
   | Ipure.ImmRel _ ->
     ";immrel"
-  | Ipure.Security _ -> ";security"
+  | Ipure.Security     _ -> ";security"
+  | Ipure.ExplicitFlow _ -> ";explict_flow"
+  | Ipure.ImplicitFlow _ -> ";implict_flow"
 
 let rec process_pure_formula pre_fix_var pf =
   let recf = process_pure_formula pre_fix_var in

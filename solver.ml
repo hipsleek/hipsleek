@@ -10678,6 +10678,19 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     )
     else estate
   in
+  let estate = if !Globals.eximpf
+    then (
+      let old_f = estate.es_formula in
+      let new_f = List.fold_left2 (fun acc el1 el2 ->
+          (
+            if CP.eq_spec_var el1 el2
+            then acc
+            else (add_pure_formula_to_formula (CP.mk_explicit_bform el1 (SecVar(el2)) no_pos) acc)
+          )) old_f (rhs_self::r_args) (lhs_self::l_args) in (* NOTE: double check lhs and rhs order *)
+      { estate with es_formula = new_f }
+    )
+    else estate
+  in
   let () = x_tinfo_hp (add_str "[LHS,RHS]" !print_svl) [lhs_self;rhs_self] no_pos in
   let () = x_tinfo_zp (lazy ("do_match: source LHS: " ^ (Cprinter.string_of_entail_state estate))) pos in
   let () = x_tinfo_zp (lazy ("do_match: source RHS: " ^ (Cprinter.string_of_formula rhs))) pos in

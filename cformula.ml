@@ -20625,6 +20625,34 @@ let normalize_struc nb b =
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
 
+(* Common IFA Functions *)
+(* NOTE: Security Context Utilities *)
+let elevate_sctx v state =
+  let secv = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
+  let sctx = secv::state.es_security_context in
+  (* let sctx = CP.lub_op secv (build_sec_ctx state.es_security_context) in *)
+  Ctx { state with es_security_context = sctx }
+
+let restore_sctx state =
+  let o_sctx = state.es_security_context in
+  match o_sctx with
+  | []      -> Ctx { state with es_security_context = o_sctx }
+  | _::sctx -> Ctx { state with es_security_context =   sctx }
+
+let subst_sctx (fr:CP.spec_var list) (t:CP.spec_var list) state =
+  let rec subst_all sst ll =
+    match ll with
+    | []      -> []
+    | lbl::lr -> (CP.sec_label_apply_subs sst lbl)::(subst_all sst lr)
+  in
+  let fresh = CP.fresh_spec_vars fr in
+  let st1   = List.combine fr fresh in
+  let st2   = List.combine fresh t  in
+  let sctx1 = subst_all st1 state.es_security_context in
+  let sctx2 = subst_all st2 sctx1 in
+  sctx2
+(************************)
+
 (* Information Flow Analysis *)
 (* NOTE: Build Security Context *)
 let build_sec_ctx sctx =
@@ -20668,17 +20696,6 @@ let rec filter_sec_form f =
   | Or     f -> Or { f with formula_or_f1 = filter_sec_form f.formula_or_f1;
                             formula_or_f2 = filter_sec_form f.formula_or_f2 }
 
-(* let rec add_sec_form sfl f =
- *   match f with
- *   | Base   f ->
- *     let new_f = List.fold_left (fun acc el -> add_pure_formula_to_formula el acc) f.formula_base_pure sfl in
- *     Base   { f with formula_base_pure   = new_f }
- *   | Exists f ->
- *     let new_f = List.fold_left (fun acc el -> add_pure_formula_to_formula el acc) f.formula_exists_pure sfl in
- *     Exists { f with formula_exists_pure = new_f }
- *   | Or     f -> Or { f with formula_or_f1 = add_sec_form sfl f.formula_or_f1;
- *                             formula_or_f2 = add_sec_form sfl f.formula_or_f2 } *)
-
 (* NOTE: Add sec formula *)
 let replace_sec_in_estate sfl state =
   let old_f = filter_sec_form state.es_formula in
@@ -20691,7 +20708,7 @@ let simpl_sec_form sfl =
   let replace_one sf lbl =
     match sf with
     | Security (v,_,loc) -> Security (v, lbl, loc)
-    | _                           -> x_report_error no_pos "replace : not security formula"
+    | _                  -> x_report_error no_pos "replace : not security formula"
   in
   let rec replace_all sfl sec lbl =
     match sfl with
@@ -20747,40 +20764,14 @@ let merge_sec_form_list sfll =
   | sfl::[]  -> sfl
   | sfl::sfr -> helper sfr sfl
 
+(* NOTE: Initial Bound *)
 let base_sec_bounds vars pos =
   let make_bound_eqn v =
     let sec_v = (* CP.sec_spec_var *) v in
-    let sec_pf = CP.mk_security (CP.to_primed sec_v) (CP.sec_var @@ CP.to_unprimed sec_v) pos in
-    CP.BForm ((sec_pf, None), None)
+    CP.mk_sec_bform (CP.to_primed sec_v) (CP.sec_var @@ CP.to_unprimed sec_v) pos
   in
   let bound_eqns = List.map make_bound_eqn vars in
   List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) bound_eqns
-
-(* NOTE: Security Context Utilities *)
-let elevate_sctx v state =
-  let secv = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
-  let sctx = secv::state.es_security_context in
-  (* let sctx = CP.lub_op secv (build_sec_ctx state.es_security_context) in *)
-  Ctx { state with es_security_context = sctx }
-
-let restore_sctx state =
-  let o_sctx = state.es_security_context in
-  match o_sctx with
-  | []      -> Ctx { state with es_security_context = o_sctx }
-  | _::sctx -> Ctx { state with es_security_context =   sctx }
-
-let subst_sctx (fr:CP.spec_var list) (t:CP.spec_var list) state =
-  let rec subst_all sst ll =
-    match ll with
-    | []      -> []
-    | lbl::lr -> (CP.sec_label_apply_subs sst lbl)::(subst_all sst lr)
-  in
-  let fresh = CP.fresh_spec_vars fr in
-  let st1   = List.combine fr fresh in
-  let st2   = List.combine fresh t  in
-  let sctx1 = subst_all st1 state.es_security_context in
-  let sctx2 = subst_all st2 sctx1 in
-  sctx2
 
 (* NOTE: Propagation of information flow *)
 let prop_const (res_v : CP.spec_var) pos state =
@@ -20791,6 +20782,135 @@ let prop_const (res_v : CP.spec_var) pos state =
 
 let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
   let sctx = (build_sec_ctx state.es_security_context) in
-  let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(CP.to_primed v))sctx) pos in
+  let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(CP.to_primed v)) sctx) pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
+(*****************************)
+
+(* Explicit & Implicit Flow: EXIMPF *)
+(* NOTE: Simplification *)
+let simpl_eximpf_sec_form sfl =
+  let replace_one_explicit sf lbl =
+    match sf with
+    | ExplicitFlow (v,_,loc) -> ExplicitFlow (v, lbl, loc)
+    | ImplicitFlow _         -> sf
+    | _                      -> x_report_error no_pos "replace : not explicit flow formula"
+  in
+  let replace_one_implicit sf lbl =
+    match sf with
+    | ExplicitFlow _         -> sf
+    | ImplicitFlow (v,_,loc) -> ImplicitFlow (v, lbl, loc)
+    | _                      -> x_report_error no_pos "replace : not explicit flow formula"
+  in
+  let rec replace_all_explicit sfl sec lbl =
+    match sfl with
+    | []     -> []
+    | sf::sl ->
+      if CP.is_eq_eximpf_sec_var sf sec
+      then (replace_one_explicit sf lbl)::(replace_all_explicit sl sec lbl)
+      else sf::(replace_all_explicit sl sec lbl)
+  in
+  let rec replace_all_implicit sfl sec lbl =
+    match sfl with
+    | []     -> []
+    | sf::sl ->
+      if CP.is_eq_eximpf_sec_var sf sec
+      then (replace_one_implicit sf lbl)::(replace_all_implicit sl sec lbl)
+      else sf::(replace_all_implicit sl sec lbl)
+  in
+  let rec helper curr prev =
+    match prev with
+    | []     -> curr
+    | sf::sl ->
+      begin
+        match sf with
+        | ExplicitFlow (v, lbl, loc) -> helper (replace_all_explicit curr sf lbl) sl
+        | ImplicitFlow (v, lbl, loc) -> helper (replace_all_implicit curr sf lbl) sl
+        | _                          -> x_report_error no_pos "helper : not explicit/implicit flow formula"
+      end
+  in
+  let rec fixpoint sfl =
+    let next = helper sfl sfl in
+    if next = sfl then next else fixpoint next
+  in
+  fixpoint sfl
+
+(* NOTE: Get ALL security formula from ALL branches *)
+let get_eximpf_sec_in_formula f =
+  let rec helper f =
+    match f with
+    | Base   f -> [MCP.get_eximpf_sec_in_mcpure f.formula_base_pure  ]
+    | Exists f -> [MCP.get_eximpf_sec_in_mcpure f.formula_exists_pure]
+    | Or     f -> (helper f.formula_or_f1)@(helper f.formula_or_f2)
+  in
+  helper f
+
+let get_eximpf_sec_in_context ctx =
+  let rec helper ctx =
+    match ctx with
+    | Ctx  es     -> get_eximpf_sec_in_formula es.es_formula
+    | OCtx(c1,c2) -> (helper c1)@(helper c2)
+  in
+  helper ctx
+
+let get_eximpf_sec_in_branch_ctx_list bcl =
+  List.fold_left (fun acc bc -> let (_,ctx,_) = bc in acc@get_eximpf_sec_in_context ctx) [] bcl
+
+let get_eximpf_sec_in_list_failesc_ctx lfc =
+  List.fold_left (fun acc fc -> let (_,_,bcl) = fc in acc@get_eximpf_sec_in_branch_ctx_list bcl) [] lfc
+
+(* NOTE: Combine security formula *)
+let rec merge_eximpf_sec = function
+  | l, [] | [], l  -> l (* ADI TODO: to Hi *)
+  | sf1::sr1, sf2::sr2 ->
+    if CP.is_eq_eximpf_sec_var sf1 sf2
+    then (sec_lub sf1 sf2)::(merge_eximpf_sec (sr1, sr2))
+    else if is_less_eximpf_sec_var sf1 sf2
+    (* NOTE: alternative is to use sf1 & sf2 *)
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_eximpf_sec (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_eximpf_sec (sf1::sr1, sr2))
+
+let rec merge_eximpf_sec_form = function
+  | [] | [_] as l -> l
+  | l             -> let l1,l2 = halve l in merge_eximpf_sec (merge_eximpf_sec_form l1, merge_eximpf_sec_form l2)
+
+let merge_eximpf_sec_form_list sfll =
+  let rec helper sfll msf =
+    match sfll with
+    | []       -> msf
+    | sfl::sfr -> helper sfr (merge_eximpf_sec (merge_eximpf_sec_form (simpl_eximpf_sec_form sfl), merge_eximpf_sec_form msf))
+  in
+  match sfll with
+  | []       -> []
+  | sfl::[]  -> sfl
+  | sfl::sfr -> helper sfr sfl
+
+(* NOTE: Initial Bound *)
+let base_eximpf_sec_bounds vars pos =
+  let make_explicit_eqn v =
+    let sec_v = (* CP.sec_spec_var *) v in
+    CP.mk_explicit_bform (CP.to_primed sec_v) (CP.sec_var @@ CP.to_unprimed sec_v) pos
+  in
+  let make_implicit_eqn v =
+    let sec_v = (* CP.sec_spec_var *) v in
+    CP.mk_implicit_bform (CP.to_primed sec_v) CP.Lo pos
+  in
+  let expf_eqns = List.map make_explicit_eqn vars in
+  let impf_eqns = List.map make_implicit_eqn vars in
+  List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) (expf_eqns@impf_eqns)
+
+(* NOTE: Propagation Rule *)
+let prop_eximpf_const (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx state.es_security_context) in
+  let secf = CP.mk_implicit_bform res_v sctx pos in
+  let newf = add_pure_formula_to_formula secf state.es_formula in
+  Ctx { state with es_formula = newf }
+
+let prop_eximpf_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx state.es_security_context) in
+  let expf = CP.mk_explicit_bform res_v (CP.SecVar(CP.to_primed v)) pos in
+  let impf = CP.mk_implicit_bform res_v sctx pos in
+  let secf = CP.mkAnd expf impf pos in
+  let newf = add_pure_formula_to_formula secf state.es_formula in
+  Ctx { state with es_formula = newf }
+(************************************)

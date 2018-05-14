@@ -200,6 +200,8 @@ and coq_of_b_formula b =
                      (* | CP.VarPerm _ -> *)
                      (* illegal_format "coq_of_exp : VarPerm cannot be handled" *)
   | CP.Security _ -> illegal_format "coq_of_exp: Security cannot be handled"
+  | CP.ExplicitFlow _ -> illegal_format "coq_of_exp: ExplicitFlow cannot be handled"
+  | CP.ImplicitFlow _ -> illegal_format "coq_of_exp: ImplicitFlow cannot be handled"
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =

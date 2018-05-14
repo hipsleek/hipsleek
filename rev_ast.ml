@@ -105,12 +105,15 @@ and rev_trans_pf f = match f with
   | CP.ListNotIn (e1,e2,p) -> IP.ListNotIn (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListAllN (e1,e2,p) -> IP.ListAllN (rev_trans_exp e1, rev_trans_exp e2, p)
   | CP.ListPerm (e1,e2,p) -> IP.ListPerm (rev_trans_exp e1, rev_trans_exp e2, p)
-  | CP.Security (var, lbl, pos) -> IP.Security (rev_trans_spec_var var, rev_trans_sec_label lbl, pos)
+  | CP.Security     (var, lbl, pos) -> IP.Security (rev_trans_spec_var var, rev_trans_sec_label lbl, pos)
+  | CP.ExplicitFlow (var, lbl, pos) -> IP.ExplicitFlow (rev_trans_spec_var var, rev_trans_sec_label lbl, pos)
+  | CP.ImplicitFlow (var, lbl, pos) -> IP.ImplicitFlow (rev_trans_spec_var var, rev_trans_sec_label lbl, pos)
 
 and rev_trans_sec_label = function
   | CP.Hi -> IP.Hi
   | CP.Lo -> IP.Lo
   | CP.Lub (l1, l2) -> IP.Lub (rev_trans_sec_label l1, rev_trans_sec_label l2)
+  | CP.Glb (l1, l2) -> IP.Glb (rev_trans_sec_label l1, rev_trans_sec_label l2)
   | CP.SecVar var -> IP.SecVar (rev_trans_spec_var var)
 
 and rev_trans_pure f = match f with

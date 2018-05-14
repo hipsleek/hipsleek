@@ -2151,6 +2151,7 @@ sec_expr: [
   [ `HI_SEC -> P.Hi
   | `LO_SEC -> P.Lo
   | lc=SELF; `LUB_SEC; cl=SELF -> P.Lub (lc, cl)
+  | lc=SELF; `GLB_SEC; cl=SELF -> P.Glb (lc, cl)
   | `RES _ -> P.SecVar (res_name, Unprimed)
   | `IDENTIFIER id -> P.SecVar (id, Unprimed)
 ]];
@@ -2204,6 +2205,28 @@ cexp_w:
         let bform = P.BForm (b_formula, None) in
         let f = Pure_f bform in
         let () = Globals.ifa := true in
+        set_slicing_utils_pure_double f false
+    | id=SELF; `OP_EXPLICIT_SEC; sec=sec_expr ->
+        let cid,pos = match id with
+          | Pure_c (P.Var (t,l)) -> (t,l)
+          | Pure_c (P.Null l)    -> ((null_name, Unprimed), l)
+          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
+        let sec_form = P.mkExplicitFlow cid sec (get_pos_camlp4 _loc 2) in
+        let b_formula = (sec_form, None) in
+        let bform = P.BForm (b_formula, None) in
+        let f = Pure_f bform in
+        let () = Globals.eximpf := true in
+        set_slicing_utils_pure_double f false
+    | id=SELF; `OP_IMPLICIT_SEC; sec=sec_expr ->
+        let cid,pos = match id with
+          | Pure_c (P.Var (t,l)) -> (t,l)
+          | Pure_c (P.Null l)    -> ((null_name, Unprimed), l)
+          | _ -> report_error (get_pos_camlp4 _loc 1) "expected cid" in
+        let sec_form = P.mkImplicitFlow cid sec (get_pos_camlp4 _loc 2) in
+        let b_formula = (sec_form, None) in
+        let bform = P.BForm (b_formula, None) in
+        let f = Pure_f bform in
+        let () = Globals.eximpf := true in
         set_slicing_utils_pure_double f false
     | lc=SELF; `LTE; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in

@@ -131,7 +131,9 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
   if List.for_all (fun x -> Sys.file_exists x) new_names
   then List.map (fun x -> parse_file_full x true) new_names
   else if !Globals.ifa && (Sys.file_exists "./prelude_flow.ss")
-  then [(parse_file_full "./prelude.ss" true)]
+  then [(parse_file_full "./prelude_flow.ss" true)]
+  else if !Globals.eximpf && (Sys.file_exists "./prelude_eximpf.ss")
+  then [(parse_file_full "./prelude_eximpf.ss" true)]
   else if (Sys.file_exists "./prelude.ss")
   then [(parse_file_full "./prelude.ss" true)]
   else let () = print_string ("\nError5 (s): detected at parsing prelude") in []
@@ -432,7 +434,7 @@ let process_source_full source =
   let () = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None   -> if !Globals.ifa then ["\"prelude_flow.ss\""] else ["\"prelude.ss\""]
+    | None   -> if !Globals.ifa then ["\"prelude_flow.ss\""] else if !Globals.eximpf then ["\"prelude_eximpf.ss\""] else ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""]
   in
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)
@@ -936,7 +938,7 @@ let process_source_full_parse_only source =
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
-    | None   -> if !Globals.ifa then ["\"prelude_flow.ss\""] else ["\"prelude.ss\""]
+    | None   -> if !Globals.ifa then ["\"prelude_flow.ss\""] else if !Globals.eximpf then ["\"prelude_eximpf.ss\""] else ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""]
   in
   (* let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (\*prelude.ss*\) *)

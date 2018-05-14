@@ -140,6 +140,8 @@ and cvc3_of_b_formula b =
   | CP.ImmRel _ -> failwith ("ImmRel not supported in cvc3")
   | CP.XPure _  -> Error.report_no_pattern ()
   | CP.Security _ -> failwith "Security not supported in cvc3"
+  | CP.ExplicitFlow _ -> failwith "ExplicitFlow not supported in cvc3"
+  | CP.ImplicitFlow _ -> failwith "ImplicitFlow not supported in cvc3"
 
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"

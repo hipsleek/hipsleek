@@ -714,6 +714,7 @@ let rec string_of_sec_label = function
   | CP.Hi -> "Hi"
   | CP.Lo -> "Lo"
   | CP.Lub (l1, l2) -> string_of_sec_label l1 ^ " # " ^ string_of_sec_label l2
+  | CP.Glb (l1, l2) -> string_of_sec_label l1 ^ " % " ^ string_of_sec_label l2
   | CP.SecVar var -> string_of_spec_var var
 
 let pr_spec_var ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (smart_string_of_spec_var x)
@@ -1055,6 +1056,14 @@ and pr_b_formula (e:P.b_formula) =
       let v = string_of_spec_var var in
       let l = string_of_sec_label lbl in
       pr_op fmt_string v " <? " l
+  | P.ExplicitFlow (var, lbl, pos) ->
+      let v = string_of_spec_var var in
+      let l = string_of_sec_label lbl in
+      pr_op fmt_string v " <E " l
+  | P.ImplicitFlow (var, lbl, pos) ->
+      let v = string_of_spec_var var in
+      let l = string_of_sec_label lbl in
+      pr_op fmt_string v " <I " l
 
 and pr_sec_label lbl = fmt_string (string_of_sec_label lbl)
 
@@ -5338,7 +5347,7 @@ and html_of_pure_b_formula f = match f with
   | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
   | P.ImmRel (r, args, l) -> "ImmRel (to be implemented)"
 (* (html_of_imm_ann r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")" *)
-  | P.Security _ -> failwith "TODO"
+  | P.Security _ | P.ExplicitFlow _ | P.ImplicitFlow _ -> failwith "TODO"
 
 and html_of_pure_formula f =
   match f with

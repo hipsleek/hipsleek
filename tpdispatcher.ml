@@ -776,7 +776,7 @@ and is_array_b_formula (pf,_) = match pf with
   | CP.ListAllN _
   | CP.ListPerm _
   | CP.ImmRel _
-  | CP.Security _
+  | CP.Security _ | CP.ExplicitFlow _ | CP.ImplicitFlow _
     -> Some false
   | CP.RelForm _ -> Some true
 (* | CP.VarPerm _ -> Some false *)

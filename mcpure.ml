@@ -2819,7 +2819,7 @@ let remove_level_mix_formula_x (mf : mix_formula) : mix_formula =
       | RelForm (r, args, l) -> pf (*TOCHECK*)
       | ImmRel (r, args, l) -> pf (*TOCHECK*)
       | LexVar t_info -> pf (*TOCHECK*)
-      | Security _ -> pf
+      | Security _ | ExplicitFlow _ | ImplicitFlow _ -> pf
     in Some (npf,il)
   in
   let f_e e = None in
@@ -2990,6 +2990,11 @@ let get_sec_in_mcpure mf =
   match mf with
   | MemoF mf -> [] (* ADI TODO: to be added *)
   | OnePF cf -> CP.get_sec_in_formula cf
+
+let get_eximpf_sec_in_mcpure mf =
+  match mf with
+  | MemoF mf -> [] (* ADI TODO: to be added *)
+  | OnePF cf -> CP.get_eximpf_sec_in_formula cf
 
 let filter_out_sec_form mf =
   match mf with
