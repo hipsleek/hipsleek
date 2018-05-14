@@ -763,6 +763,16 @@ and string_of_spec_var = function
       | Unprimed -> "")
 (*09.05.2000 ---*)
 
+and string_of_spec_var_pair (x: (CP.spec_var * CP.spec_var)): string =
+  let (a,b) = x in
+  let pr = string_of_spec_var in
+  let res = string_of_pair pr pr x in
+  res
+
+and string_of_spec_var_pair_list xs =
+  "["^(String.concat "," (List.map (string_of_spec_var_pair) xs))^"]"
+
+
 let consistent_formula f : bool = 
   let rec helper f = match f with
     | Base {formula_base_pure = mf}

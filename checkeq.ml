@@ -18,9 +18,9 @@ type map_table = ((CP.spec_var * CP.spec_var) list)
 
 let string_of_pair(x: (CP.spec_var * CP.spec_var)): string =
   (
-    let (a,b) = x in 
+    let (a,b) = x in
     let res = "(" ^ (CP.name_of_spec_var a) ^ ", " ^ (CP.name_of_spec_var b) ^ ")" in
-    res 
+    res
   )
 
 let string_of_map_table (mt: map_table): string = 

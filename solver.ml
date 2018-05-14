@@ -5835,17 +5835,44 @@ and extract_heap_and_pure_formula (es:CF.entail_state)=
     | Or _ -> failwith "[extract_heap_and_pure_formula]::Unexpected OR formula in context!"
     | Exists b -> (b.formula_exists_heap,b.formula_exists_pure)
 
+and are_spec_var_eq mix_f v1 v2 =
+  let r = if CP.eq_spec_var v1 v2 then true
+  else
+    try
+      x_add TP.imply_raw_mix mix_f (MCP.mix_of_pure (CP.mkEqVar v1 v2 no_pos))
+    with _ -> false
+  in
+  r
+
 and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
+  let rec pairs_of ls =
+    match ls with
+     | [] -> []
+     | x::xs ->
+      let res1 = pairs_of xs in
+      let res2 = List.map (fun v -> (x,v)) xs in
+      res1@res2
+  in
   let es = match ctx with
     | Ctx es -> es
     | _ -> failwith "[do_sem_eq_x]::Unexpected OCtx as input!"
   in
-  let () = Debug.tinfo_hprint (add_str "do_sem_eq: estate" Cprinter.string_of_entail_state) es no_pos in
+  let lhs_f = es.es_formula in
   let free_var_list = (fv es.es_formula) in
+  (* TODO: elim duplicates from free_var_list *)
   let () = y_tinfo_hp (add_str "fv list" string_of_spec_var_list) free_var_list in
   let (lhs_heap,lhs_pure) = extract_heap_and_pure_formula es in
   let () = x_tinfo_hp (add_str "lhs_pure" (Cprinter.string_of_mix_formula)) lhs_pure no_pos in
-  (* let () = y_binfo_hp (add_str "are eq" string_of_bool) r in *)
+
+  let pairs = pairs_of free_var_list in
+  let () = y_tinfo_hp (add_str "fv pairs" string_of_spec_var_pair_list) pairs in
+  let lhs_eq_pairs = List.filter (fun (v1,v2) -> are_spec_var_eq lhs_pure v1 v2) pairs in
+  let () = y_tinfo_hp (add_str "fv eq pairs" string_of_spec_var_pair_list) lhs_eq_pairs in
+  (* replace subst_one_by_one with apply one? *)
+  let lhs_f = subst_one_by_one lhs_eq_pairs lhs_f in
+  let rhs_f = subst_one_by_one lhs_eq_pairs conseq in
+  let () = x_binfo_hp (add_str "lhs_f subst" (Cprinter.string_of_formula)) lhs_f no_pos in
+  let () = x_binfo_hp (add_str "rhs_f subst" (Cprinter.string_of_formula)) rhs_f no_pos in
   ()
 
 and do_sem_eq (ctx:context) (conseq:CF.formula) =
