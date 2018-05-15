@@ -402,6 +402,14 @@ let mk_explicit_bform v lbl pos = BForm ((mk_explicit_flow v lbl pos, None), Non
 
 let mk_implicit_flow  v lbl pos = ImplicitFlow (v, lbl, pos)
 let mk_implicit_bform v lbl pos = BForm ((mk_implicit_flow v lbl pos, None), None)
+
+let is_explicit_flow = function
+  | ExplicitFlow _ -> true
+  | _              -> false
+
+let is_implicit_flow = function
+  | ImplicitFlow _ -> true
+  | _              -> false
 (***********************************)
 
 let get_rel_from_imm_ann p = match p with

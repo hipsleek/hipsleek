@@ -38,16 +38,19 @@ int double_if3_fail(int x)
   requires x <E @Hi
   ensures res <E @Lo;
 {
-  dprint;
   int y=0;
   int z=0;
+  dprint;
   if(x == 0) {
     y = 1;
   }
+  dprint;
   if(y == 0) {
     z = 1;
   }
+  dprint;
   return z;
+  dprint;
 }
 
 int double_if4(int x)

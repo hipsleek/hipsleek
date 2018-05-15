@@ -20794,13 +20794,13 @@ let simpl_eximpf_sec_form sfl =
     match sf with
     | ExplicitFlow (v,_,loc) -> ExplicitFlow (v, lbl, loc)
     | ImplicitFlow _         -> sf
-    | _                      -> x_report_error no_pos "replace : not explicit flow formula"
+    | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
   in
   let replace_one_implicit sf lbl =
     match sf with
     | ExplicitFlow _         -> sf
     | ImplicitFlow (v,_,loc) -> ImplicitFlow (v, lbl, loc)
-    | _                      -> x_report_error no_pos "replace : not explicit flow formula"
+    | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
   in
   let rec replace_all_explicit sfl sec lbl =
     match sfl with
@@ -20866,19 +20866,21 @@ let rec merge_eximpf_sec = function
     if CP.is_eq_eximpf_sec_var sf1 sf2
     then (sec_lub sf1 sf2)::(merge_eximpf_sec (sr1, sr2))
     else if is_less_eximpf_sec_var sf1 sf2
-    (* NOTE: alternative is to use sf1 & sf2 *)
+    (* NOTE: alternative is to use to_hi from sf1 & sf2 *)
     then (* (CP.to_sec_hi sf1) *) sf1::(merge_eximpf_sec (sr1, sf2::sr2))
     else (* (CP.to_sec_hi sf2) *) sf2::(merge_eximpf_sec (sf1::sr1, sr2))
 
 let rec merge_eximpf_sec_form = function
   | [] | [_] as l -> l
-  | l             -> let l1,l2 = halve l in merge_eximpf_sec (merge_eximpf_sec_form l1, merge_eximpf_sec_form l2)
+  | l             -> let l1,l2 = halve l in merge_eximpf_sec (merge_eximpf_sec_form l1,
+                                                              merge_eximpf_sec_form l2)
 
 let merge_eximpf_sec_form_list sfll =
   let rec helper sfll msf =
     match sfll with
     | []       -> msf
-    | sfl::sfr -> helper sfr (merge_eximpf_sec (merge_eximpf_sec_form (simpl_eximpf_sec_form sfl), merge_eximpf_sec_form msf))
+    | sfl::sfr -> helper sfr (merge_eximpf_sec (merge_eximpf_sec_form (simpl_eximpf_sec_form sfl),
+                                                merge_eximpf_sec_form msf))
   in
   match sfll with
   | []       -> []
@@ -20902,7 +20904,9 @@ let base_eximpf_sec_bounds vars pos =
 (* NOTE: Propagation Rule *)
 let prop_eximpf_const (res_v : CP.spec_var) pos state =
   let sctx = (build_sec_ctx state.es_security_context) in
-  let secf = CP.mk_implicit_bform res_v sctx pos in
+  let impf = CP.mk_implicit_bform res_v sctx  pos in
+  let expf = CP.mk_explicit_bform res_v CP.Lo pos in
+  let secf = CP.mkAnd impf expf pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
 

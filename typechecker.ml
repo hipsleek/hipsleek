@@ -1731,22 +1731,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let new_res_v  = (P.mkRes t) in
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); (new_res_v, vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
+
                   (* Information Flow Analysis: renaming of security context *)
-                  let rename_sctx = if !Globals.ifa
-                    then CF.subst_sctx [vsv;new_res_v] [tmp_vsv;vsv] c1
-                    else c1.es_security_context
-                  in
-                  let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es;
-                                                      CF.es_security_context = rename_sctx})) in
                   (* Explicit & Implicit Flow : renaming of security context *)
-                  let rename_sctx = if !Globals.eximpf
+                  let rename_sctx = if !Globals.ifa || !Globals.eximpf
                     then CF.subst_sctx [vsv;new_res_v] [tmp_vsv;vsv] c1
                     else c1.es_security_context
                   in
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es;
                                                       CF.es_security_context = rename_sctx})) in
-                  (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                  (* let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
+                  (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in
+                   * let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
                   (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                   (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
                   (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
@@ -2314,7 +2309,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           in
           (* Explicit & Implicit Flow  *)
           let eximpf_sec_form = CF.get_eximpf_sec_in_list_failesc_ctx res in
-          let eximpf_sec_form = CF.merge_eximpf_sec_form_list eximpf_sec_form in
+          let expf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_explicit_flow y) x) eximpf_sec_form in
+          let impf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_implicit_flow y) x) eximpf_sec_form in
+          let expf_sec_form   = CF.merge_eximpf_sec_form_list expf_sec_form in
+          let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in
+          let eximpf_sec_form = (expf_sec_form@impf_sec_form) in
 
           let res = if !Globals.eximpf
             then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) res
