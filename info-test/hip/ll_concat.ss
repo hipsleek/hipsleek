@@ -13,26 +13,26 @@ pred pri_ll<n> == self=null & n=0 & self<?@Hi
 lemma_safe "public->private" self::pub_ll<n> -> self::pri_ll<n>;
 lemma_safe "private->public_fail" self::pri_ll<n> -> self::pub_ll<n>;
 
-node concat1(node p, node q)
+node concat1_safe(node p, node q)
   requires p::pub_ll<n> * q::pub_ll<m> & p <? @Lo & q <? @Lo
   ensures res::pub_ll<n+m> & res<?@Lo;
 {
   if(p == null) {
     return q;
   } else {
-    p.n = concat1(p.n, q);
+    p.n = concat1_safe(p.n, q);
     return p;
   }
 }
 
-node concat2(node p, node q)
+node concat2_safe(node p, node q)
   requires p::pub_ll<n> * q::pub_ll<m> & p <? @Lo & q <? @Lo
   ensures res::pri_ll<n+m> & res<?@Hi;
 {
   if(p == null) {
     return q;
   } else {
-    p.n = concat2(p.n, q);
+    p.n = concat2_safe(p.n, q);
     return p;
   }
 }
@@ -49,14 +49,14 @@ node concat3_fail(node p, node q)
   }
 }
 
-node concat4(node p, node q)
+node concat4_safe(node p, node q)
   requires p::pub_ll<n> * q::pri_ll<m> & p <? @Lo & q <? @Hi
   ensures res::pri_ll<n+m> & res<?@Hi;
 {
   if(p == null) {
     return q;
   } else {
-    p.n = concat4(p.n, q);
+    p.n = concat4_safe(p.n, q);
     return p;
   }
 }
@@ -73,14 +73,14 @@ node concat5_fail(node p, node q)
   }
 }
 
-node concat6(node p, node q)
+node concat6_safe(node p, node q)
   requires p::pri_ll<n> * q::pub_ll<m> & p <? @Hi & q <? @Lo
   ensures res::pri_ll<n+m> & res<?@Hi;
 {
   if(p == null) {
     return q;
   } else {
-    p.n = concat6(p.n, q);
+    p.n = concat6_safe(p.n, q);
     return p;
   }
 }
@@ -97,7 +97,7 @@ node concat7_fail(node p, node q)
   }
 }
 
-node concat8(node p, node q)
+node concat8_safe(node p, node q)
   requires p::pri_ll<n> * q::pri_ll<m> & p <? @Hi & q <? @Hi
   ensures res::pri_ll<n+m> & res<?@Hi;
 {

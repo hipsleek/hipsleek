@@ -2991,12 +2991,19 @@ let get_sec_in_mcpure mf =
   | MemoF mf -> [] (* ADI TODO: to be added *)
   | OnePF cf -> CP.get_sec_in_formula cf
 
+let filter_out_sec_form mf =
+  match mf with
+  | MemoF _  -> mf (* ADI TODO: to be added *)
+  | OnePF cf -> OnePF (CP.filter_out_sec_form cf)
+
+(* Explicit & Implicit Flow  *)
 let get_eximpf_sec_in_mcpure mf =
   match mf with
   | MemoF mf -> [] (* ADI TODO: to be added *)
   | OnePF cf -> CP.get_eximpf_sec_in_formula cf
 
-let filter_out_sec_form mf =
+let filter_eximpf_out_sec_form mf =
   match mf with
   | MemoF _  -> mf (* ADI TODO: to be added *)
   | OnePF cf -> OnePF (CP.filter_out_sec_form cf)
+(*****************************)

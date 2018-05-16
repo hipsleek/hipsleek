@@ -10,28 +10,29 @@ pred pri_ll<n> == self=null & n=0 & self<?@Hi
   or self::node<v,q> * q::pri_ll<m> & n>0 & m=n-1 & self<?@Hi & v<?@Hi
   inv n>=0;
 
-lemma_safe "public->private" self::pub_ll<n> -> self::pri_ll<n>;
+lemma_safe "public->private_safe" self::pub_ll<n> -> self::pri_ll<n>;
 lemma_safe "private->public_fail" self::pri_ll<n> -> self::pub_ll<n>;
 
-int length1(node p)
+int length1_safe(node p)
   requires p::pub_ll<n> & p <? @Lo
   ensures res=n & res <? @Lo;
 {
   if(p == null) {
     return 0;
   } else {
-    return 1 + length1(p.n);
+    return 1 + length1_safe(p.n);
   }
+  dprint;
 }
 
-int length2(node p)
+int length2_safe(node p)
   requires p::pub_ll<n> & p <? @Lo
   ensures res=n & res <? @Hi;
 {
   if(p == null) {
     return 0;
   } else {
-    return 1 + length2(p.n);
+    return 1 + length2_safe(p.n);
   }
 }
 
@@ -46,13 +47,13 @@ int length3_fail(node p)
   }
 }
 
-int length4(node p)
+int length4_safe(node p)
   requires p::pri_ll<n> & p <? @Hi
   ensures res=n & res <? @Hi;
 {
   if(p == null) {
     return 0;
   } else {
-    return 1 + length4(p.n);
+    return 1 + length4_safe(p.n);
   }
 }

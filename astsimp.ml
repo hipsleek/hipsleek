@@ -214,9 +214,47 @@ let gen_primitives (prog : I.prog_decl) : (I.proc_decl list) * (I.rel_decl list)
     | [] -> ()
   in
 
+  let rec eximpf_helper (ddecls : I.data_decl list) =
+    match ddecls with
+    | ddef :: rest ->
+      let eq_str =
+        "bool eq___(" ^
+        (ddef.I.data_name ^
+         (" a, " ^
+          (ddef.I.data_name ^
+           " b) case { a=b -> requires true ensures res & res <E a # b ; a!=b -> requires true ensures !res & res <E a # b ;}\n"))) in
+      let neq_str =
+        "bool neq___(" ^
+        (ddef.I.data_name ^
+         (" a, " ^
+          (ddef.I.data_name ^
+           " b)case { a=b -> requires true ensures !res & res <E a # b ; a!=b -> requires true ensures res & res <E a # b ;}\n"))) in
+      let is_null_str =
+        "bool is_null___(" ^
+        (ddef.I.data_name ^
+         (" a" ^
+          ") case { a=null -> requires true ensures res & res <E a ; a!=null -> requires true ensures !res & res <E a ;}\n")) in
+      let is_not_null_str =
+        "bool is_not_null___(" ^
+        (ddef.I.data_name ^
+         (" a" ^
+          ") case { a=null -> requires true ensures !res & res <E a ; a!=null -> requires true ensures res & res <E a ;}\n"))
+      in
+      (Buffer.add_string prim_buffer eq_str;
+       Buffer.add_string prim_buffer neq_str;
+       Buffer.add_string prim_buffer is_null_str;
+       Buffer.add_string prim_buffer is_not_null_str;
+       eximpf_helper rest)
+    | [] -> ()
+  in
+
   (
     (* let () = print_string ("\n primitives: "^prim_str^"\n") in *)
-    (if !Globals.ifa then ifa_helper prog.I.prog_data_decls else helper prog.I.prog_data_decls);
+    (if !Globals.ifa
+     then ifa_helper prog.I.prog_data_decls
+     else if !Globals.eximpf
+     then eximpf_helper prog.I.prog_data_decls
+     else helper prog.I.prog_data_decls);
     let all_prims = Buffer.contents prim_buffer in
     let prog =
       (try

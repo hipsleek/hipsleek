@@ -1,4 +1,4 @@
-int double_if1(int x)
+int double_if1_safe(int x)
   requires x <E @Lo
   ensures res <E @Lo;
 {
@@ -19,7 +19,7 @@ int double_if1(int x)
   dprint;
 }
 
-int double_if2(int x)
+int double_if2_safe(int x)
   requires x <E @Lo
   ensures res <E @Hi;
 {
@@ -53,7 +53,7 @@ int double_if3_fail(int x)
   dprint;
 }
 
-int double_if4(int x)
+int double_if4_safe(int x)
   requires x <E @Hi
   ensures res <E @Hi;
 {
@@ -68,7 +68,7 @@ int double_if4(int x)
   return z;
 }
 
-int double_ifS(int x)
+int double_ifS_safe(int x)
   requires true
   ensures res <E x;
 {

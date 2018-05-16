@@ -14715,7 +14715,6 @@ and translate_security_formula orig =
     | _                       -> f
   in
   let trans_f = translate_security_formula_only (helper_f orig) in
-  let () = print_endline (!print_formula trans_f) in
   trans_f
 
 (*
@@ -16758,8 +16757,10 @@ let rec filter_out_sec_form f =
   | BForm ((pf,opt),lbl) ->
     begin
       match pf with
-      | Security (_, _, loc) -> mkTrue loc
-      | _                -> f
+      | Security (_, _, loc)     -> mkTrue loc
+      | ExplicitFlow (_, _, loc) -> mkTrue loc
+      | ImplicitFlow (_, _, loc) -> mkTrue loc
+      | _                        -> f
     end
   | And(f1,f2,loc) ->
     begin

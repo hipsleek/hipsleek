@@ -20859,6 +20859,21 @@ let get_eximpf_sec_in_branch_ctx_list bcl =
 let get_eximpf_sec_in_list_failesc_ctx lfc =
   List.fold_left (fun acc fc -> let (_,_,bcl) = fc in acc@get_eximpf_sec_in_branch_ctx_list bcl) [] lfc
 
+(* NOTE: Remove sec formula *)
+let rec filter_eximpf_sec_form f =
+  match f with
+  | Base   f -> Base   { f with formula_base_pure   = MCP.filter_eximpf_out_sec_form f.formula_base_pure   }
+  | Exists f -> Exists { f with formula_exists_pure = MCP.filter_eximpf_out_sec_form f.formula_exists_pure }
+  | Or     f -> Or { f with formula_or_f1 = filter_eximpf_sec_form f.formula_or_f1;
+                            formula_or_f2 = filter_eximpf_sec_form f.formula_or_f2 }
+
+(* NOTE: Add sec formula *)
+let replace_eximpf_sec_in_estate sfl state =
+  let old_f = filter_sec_form state.es_formula in
+  let new_f = List.fold_left (fun acc el -> add_pure_formula_to_formula (CP.BForm((el,None),None)) acc) old_f sfl in
+  let ctx   = Ctx{ state with es_formula = new_f } in
+  ctx
+
 (* NOTE: Combine security formula *)
 let rec merge_eximpf_sec = function
   | l, [] | [], l  -> l (* ADI TODO: to Hi *)
