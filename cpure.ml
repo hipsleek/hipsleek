@@ -410,6 +410,10 @@ let is_explicit_flow = function
 let is_implicit_flow = function
   | ImplicitFlow _ -> true
   | _              -> false
+
+let is_eq_p_formula = function
+  | Eq _ -> true
+  | _    -> false
 (***********************************)
 
 let get_rel_from_imm_ann p = match p with
@@ -14661,17 +14665,17 @@ and translate_security_formula_only = function
   | others -> others
 
 and translate_security_formula orig =
-  let rec get_p v bf =
+  let rec get_p_i v bf =
     match bf with
     | ImplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
     | _                     -> None
   in
-  let rec get_f v f =
+  let rec get_f_i v f =
     match f with
-    | BForm ((pf,_),opt)  -> get_p v pf
+    | BForm ((pf,_),opt)  -> get_p_i v pf
     | And(f1,f2,l)    ->
-      let l1 = get_f v f1 in
-      let l2 = get_f v f2 in
+      let l1 = get_f_i v f1 in
+      let l2 = get_f_i v f2 in
       (
         match l1,l2 with
         | None,None                       -> None
@@ -14679,42 +14683,98 @@ and translate_security_formula orig =
         | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
       )
     | Or(f1,f2,opt,l) ->
-      let l1 = get_f v f1 in
-      let l2 = get_f v f2 in
+      let l1 = get_f_i v f1 in
+      let l2 = get_f_i v f2 in
       (
         match l1,l2 with
         | None,None                       -> None
         | Some(fl1),None | None,Some(fl1) -> Some(fl1)
         | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
       )
-    | Not(f0, opt, l) -> get_f v f0
-    | Forall (sv, f0, opt, l) -> get_f v f0
-    | Exists (sv, f0, opt, l) -> get_f v f0
-    | _                       -> None
-  in
-  let rec helper_p bf =
+    | Not(f0, opt, l) -> get_f_i v f0
+    | Forall (sv, f0, opt, l) -> get_f_i v f0
+    | Exists (sv, f0, opt, l) -> get_f_i v f0
+    | _                       -> None in
+  let rec helper_p_e_to_i bf =
     match bf with
     | ExplicitFlow(v,l1,loc) ->
-      let opt_l = get_f v orig in
+      let opt_l = get_f_i v orig in
       (
         match opt_l with
         | None     -> mk_security v l1           loc
         | Some(l2) -> mk_security v (Lub(l1,l2)) loc
       )
-    | ImplicitFlow _         -> mkTrue_p no_pos
+    (* | ImplicitFlow _         -> mkTrue_p no_pos *)
     | _                      -> bf
   in
-  let rec helper_f f  =
+  let rec helper_f_e_to_i f  =
     match f with
-    | BForm ((pf,lbl),opt)  -> BForm ((helper_p pf,lbl), opt)
-    | And(f1,f2,l)    -> And (helper_f f1, helper_f f2, l)
-    | Or(f1,f2,opt,l) -> Or (helper_f f1, helper_f f2, opt, l)
-    | Not(f0, opt, l) -> Not (helper_f f0, opt, l)
-    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f f0, opt, l)
-    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f f0, opt, l)
+    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_e_to_i pf,lbl), opt)
+    | And(f1,f2,l)    -> And (helper_f_e_to_i f1, helper_f_e_to_i f2, l)
+    | Or(f1,f2,opt,l) -> Or (helper_f_e_to_i f1, helper_f_e_to_i f2, opt, l)
+    | Not(f0, opt, l) -> Not (helper_f_e_to_i f0, opt, l)
+    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_e_to_i f0, opt, l)
+    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_e_to_i f0, opt, l)
     | _                       -> f
   in
-  let trans_f = translate_security_formula_only (helper_f orig) in
+
+  let rec get_p_e v bf =
+    match bf with
+    | ExplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
+    | _                     -> None
+  in
+  let rec get_f_e v f =
+    match f with
+    | BForm ((pf,_),opt)  -> get_p_e v pf
+    | And(f1,f2,l)    ->
+      let l1 = get_f_e v f1 in
+      let l2 = get_f_e v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
+      )
+    | Or(f1,f2,opt,l) ->
+      let l1 = get_f_e v f1 in
+      let l2 = get_f_e v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
+      )
+    | Not(f0, opt, l) -> get_f_e v f0
+    | Forall (sv, f0, opt, l) -> get_f_e v f0
+    | Exists (sv, f0, opt, l) -> get_f_e v f0
+    | _                       -> None
+  in
+  let rec helper_p_i_to_e bf =
+    match bf with
+    | ImplicitFlow(v,l1,loc) ->
+      let opt_l = get_f_e v orig in
+      (
+        match opt_l with
+        | None     -> mk_security v l1           loc
+        | Some(l2) -> mk_security v (Lub(l1,l2)) loc
+      )
+    (* | ExplicitFlow _         -> mkTrue_p no_pos *)
+    | _                      -> bf
+  in
+  let rec helper_f_i_to_e f  =
+    match f with
+    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_i_to_e pf,lbl), opt)
+    | And(f1,f2,l)    -> And (helper_f_i_to_e f1, helper_f_i_to_e f2, l)
+    | Or(f1,f2,opt,l) -> Or (helper_f_i_to_e f1, helper_f_i_to_e f2, opt, l)
+    | Not(f0, opt, l) -> Not (helper_f_i_to_e f0, opt, l)
+    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_i_to_e f0, opt, l)
+    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_i_to_e f0, opt, l)
+    | _                       -> f
+  in
+
+  let f_e_to_i = helper_f_e_to_i orig in
+  let f_i_to_e = helper_f_i_to_e orig in
+  let trans_f  = translate_security_formula_only (mkAnd f_e_to_i f_i_to_e no_pos) in
   trans_f
 
 (*
@@ -16667,8 +16727,9 @@ let get_sec_in_formula cf =
 
 let get_eximpf_sec_in_p_formula pf =
   match pf with
-  | ExplicitFlow _
+  (* | ExplicitFlow _ *)
   | ImplicitFlow _ -> [pf]
+  (* | Eq(Var _,_,_)  -> [pf] (\* NOTE: Equality for simplification of Implicit Flow *\) *)
   | _              -> []
 let get_eximpf_sec_in_formula cf =
   let rec helper cf =
@@ -16758,7 +16819,7 @@ let rec filter_out_sec_form f =
     begin
       match pf with
       | Security (_, _, loc)     -> mkTrue loc
-      | ExplicitFlow (_, _, loc) -> mkTrue loc
+      (* | ExplicitFlow (_, _, loc) -> mkTrue loc *)
       | ImplicitFlow (_, _, loc) -> mkTrue loc
       | _                        -> f
     end

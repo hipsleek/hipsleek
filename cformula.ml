@@ -20902,6 +20902,68 @@ let merge_eximpf_sec_form_list sfll =
   | sfl::[]  -> sfl
   | sfl::sfr -> helper sfr sfl
 
+(* NOTE: Merge implicit formula with equality simplification *)
+let rec merge_implicit_sec = function
+  | l, [] | [], l  -> l (* ADI TODO: to Hi *)
+  | sf1::sr1, sf2::sr2 ->
+    if CP.is_eq_eximpf_sec_var sf1 sf2
+    then (sec_lub sf1 sf2)::(merge_implicit_sec (sr1, sr2))
+    else if is_less_eximpf_sec_var sf1 sf2
+    (* NOTE: alternative is to use to_hi from sf1 & sf2 *)
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_implicit_sec (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_implicit_sec (sf1::sr1, sr2))
+
+let rec merge_implicit_sec_form = function
+  | [] | [_] as l -> l
+  | l             -> let l1,l2 = halve l in merge_implicit_sec (merge_implicit_sec_form l1,
+                                                                merge_implicit_sec_form l2)
+
+let merge_implicit_sec_form_list eqll p_sctx sfll =
+  (*
+     NOTE: eqll contains all equivalent values from all branches
+           p_sctx is the previous security context
+     NOTE: if the value of a variable is the same on all branches
+           the merging 'roll-back' the implicit flow into previous security context
+  *)
+  let rec helper sfll msf =
+    match sfll with
+    | []       -> msf
+    | sfl::sfr -> helper sfr (merge_implicit_sec (merge_implicit_sec_form (simpl_eximpf_sec_form sfl),
+                                                  merge_implicit_sec_form msf))
+  in
+  match sfll with
+  | []       -> []
+  | sfl::[]  -> sfl
+  | sfl::sfr -> helper sfr sfl
+
+(* NOTE: Get all equivalent values *)
+let equiv_values eql =
+  let replace_one e v e0 =  (* NOTE: replace v with e0 in rhs of e ::= lhs = rhs *)
+    match e with
+    | CP.Eq(lhs,rhs,loc) -> CP.Eq(lhs,CP.a_apply_one_term (v,e0) rhs,loc)
+    | _                  -> e
+  in
+  let rec replace_all el v e0 = (* NOTE: el is a list of lhs = rhs *)
+    match el with
+    | []    -> []
+    | e::er -> (replace_one e v e0)::(replace_all er v e0)
+  in
+  let rec helper eqc eql =
+    match eql with
+    | []      -> eqc
+    | eq::eqr ->
+      begin
+        match eq with
+        | CP.Eq(CP.Var(v,_),e,_) -> helper (replace_all eql v e) eqr
+        | _                      -> helper eqc eqr
+      end
+  in
+  let rec fixpoint eql =
+    let nxt = helper eql eql in
+    if nxt = eql then nxt else fixpoint nxt
+  in
+  fixpoint eql
+
 (* NOTE: Initial Bound *)
 let base_eximpf_sec_bounds vars pos =
   let make_explicit_eqn v =

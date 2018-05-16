@@ -8203,6 +8203,7 @@ and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP
     (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
     ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq
 
+(* ADI TODO: to be used in IFA *)
 and heap_entail_build_pure_check ev an cq pos =
   Debug.no_1 "heap_entail_build_pure_check"
     Cprinter.string_of_pure_formula
@@ -10656,7 +10657,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     | _, _ -> failwith ("do match failure: "^m_str)
   in
 
-  (* Information Flow Analysis *)
   (* NOTE: Moved here since l_args & r_args is needed for IFA *)
   (* x_tinfo_hp (add_str "source LHS estate" (Cprinter.string_of_entail_state)) estate pos; *)
   (* x_tinfo_hp (add_str "source RHS rhs" (Cprinter.string_of_formula)) rhs pos; *)
@@ -10666,7 +10666,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     = x_add_1 CF.get_args_of_node r_node in
   let fvars_rhs = CF.get_args_of_hrel r_node in
 
-  let estate = if !Globals.ifa
+  let estate = if !Globals.ifa (* Information Flow Analysis *)
     then (
       let old_f = estate.es_formula in
       let new_f = List.fold_left2 (fun acc el1 el2 ->
@@ -10677,7 +10677,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
           )) old_f (rhs_self::r_args) (lhs_self::l_args) in (* NOTE: double check lhs and rhs order *)
       { estate with es_formula = new_f }
     )
-    else if !Globals.eximpf
+    else if !Globals.eximpf    (* Explicit & Implicit Flow  *)
     then (
       let old_f = estate.es_formula in
       let new_f = List.fold_left2 (fun acc el1 el2 ->
