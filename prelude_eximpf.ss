@@ -48,14 +48,14 @@ r=a*b & b=c*d
 int div___(int a, int b) 
  case {
   a >= 0 -> case {
-    b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1 & res <E a # b);
-    b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1 & res <E a # b);
+    b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1 & res <E a # b & res <I a # b);
+    b <= -1 -> ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1 & res <E a # b & res <I a # b);
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
   a < 0 -> case {
-    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1 & res <E a # b);
-    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1 & res <E a # b);
+    b >= 1 -> ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1 & res <E a # b & res <I a # b);
+    b <= -1 -> ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1 & res <E a # b & res <I a # b);
     /* -1 < b < 1 -> requires false ensures false; */
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
@@ -116,16 +116,16 @@ int mod___(int a, int b) case {
 	  a < b -> ensures res = a & res <E a # b;
 	  a >= b -> case {
       a < 2*b -> ensures res = a - b & res <E a # b;
-      a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1 & res <E a # b);
+      a >= 2*b -> ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1 & res <E a # b & res <I a # b);
 	  }
 	}
-  b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1 & res <E a # b);
+  b <= -1 -> ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1 & res <E a # b & res <I a # b);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
   }
   a < 0 -> case {
-    b >= 1 -> ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1 & res <E a # b);
-    b <= -1 -> ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1 & res <E a # b);
+    b >= 1 -> ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1 & res <E a # b & res <I a # b);
+    b <= -1 -> ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1 & res <E a # b & res <I a # b);
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     /* -1 < b < 1 -> requires false ensures false; */
   }
@@ -247,17 +247,17 @@ bool gte___(float a, float b) case {
     a <  b -> ensures !res;}
 */
 bool land___(bool a, bool b) case {
-  a -> case { b -> ensures res & res <E a # b; 
+  a -> case { b -> ensures res & res <E a # b;
     !b -> ensures !res & res <E a # b;}
   !a -> ensures !res & res <E a # b;}
 
 bool lor___(bool a, bool b) case {
   a -> requires true ensures res & res <E a # b;
-  !a -> case { b -> ensures res & res <E a # b; 
+  !a -> case { b -> ensures res & res <E a # b;
     !b -> ensures !res & res <E a # b;}}
 
-bool not___(bool a) 
- case { a -> ensures !res & res <E a; 
+bool not___(bool a)
+ case { a -> ensures !res & res <E a;
   !a -> ensures res & res <E a;}
 
 int pow___(int a, int b) 

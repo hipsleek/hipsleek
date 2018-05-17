@@ -20633,11 +20633,11 @@ let elevate_sctx v state =
   (* let sctx = CP.lub_op secv (build_sec_ctx state.es_security_context) in *)
   Ctx { state with es_security_context = sctx }
 
-let restore_sctx state =
+let restore_sctx p_sctx state =
   let o_sctx = state.es_security_context in
   match o_sctx with
-  | []      -> Ctx { state with es_security_context = o_sctx }
-  | _::sctx -> Ctx { state with es_security_context =   sctx }
+  | []      -> p_sctx := o_sctx; Ctx { state with es_security_context = o_sctx }
+  | _::sctx -> p_sctx :=   sctx; Ctx { state with es_security_context =   sctx }
 
 let subst_sctx (fr:CP.spec_var list) (t:CP.spec_var list) state =
   let rec subst_all sst ll =
@@ -20903,24 +20903,59 @@ let merge_eximpf_sec_form_list sfll =
   | sfl::sfr -> helper sfr sfl
 
 (* NOTE: Merge implicit formula with equality simplification *)
-let rec merge_implicit_sec = function
+let is_equivalent_value eqvl var =
+  let hd = List.hd eqvl in
+  let tl = List.tl eqvl in
+  let get_eq_var eql v = List.filter(fun x -> CP.is_eq_var_formula v x) eql in
+  let mk_bform eq = BForm((eq,None),None) in
+  let check_imply eql eqv v =
+    let vl = get_eq_var eql v in
+    if List.length vl = 0
+    then false
+    else !MCP.is_sat_raw (MCP.mix_of_pure
+                            (List.fold_left (fun acc el ->
+                                 (mkAnd acc (mk_bform el) no_pos))
+                                (mk_bform eqv) eql))
+  in
+  let vl = get_eq_var hd var in
+  if List.length vl = 0
+  (* NOTE: variable does not exists as equivalent *)
+  then false
+  (* NOTE: variable exists as equivalent => check all other paths *)
+  else (
+    let eqv = List.hd vl in
+    let res = List.map (fun x -> check_imply x eqv var) tl in
+    let res = List.fold_left (fun acc el -> acc && el) true res in
+    res
+  )
+
+let rec merge_implicit_sec eqvl p_sctx = function
   | l, [] | [], l  -> l (* ADI TODO: to Hi *)
   | sf1::sr1, sf2::sr2 ->
     if CP.is_eq_eximpf_sec_var sf1 sf2
-    then (sec_lub sf1 sf2)::(merge_implicit_sec (sr1, sr2))
+    then (
+      let sv = CP.get_spec_var_in_sec sf1 in
+      let lb = CP.lub_op (CP.get_sec_label_in_sec sf1) (CP.get_sec_label_in_sec sf2) in
+      let rb = build_sec_ctx p_sctx (* CP.Glb(lb, build_sec_ctx p_sctx) *) in
+      let () = print_endline (!print_spec_var sv ^ " == " ^ string_of_bool (is_equivalent_value eqvl sv)) in
+      if is_equivalent_value eqvl sv
+      then (CP.mk_implicit_flow sv rb no_pos)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
+      else (sec_lub sf1 sf2)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
+    )
     else if is_less_eximpf_sec_var sf1 sf2
     (* NOTE: alternative is to use to_hi from sf1 & sf2 *)
-    then (* (CP.to_sec_hi sf1) *) sf1::(merge_implicit_sec (sr1, sf2::sr2))
-    else (* (CP.to_sec_hi sf2) *) sf2::(merge_implicit_sec (sf1::sr1, sr2))
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_implicit_sec eqvl p_sctx (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_implicit_sec eqvl p_sctx (sf1::sr1, sr2))
 
-let rec merge_implicit_sec_form = function
+let rec merge_implicit_sec_form eqvl p_sctx = function
   | [] | [_] as l -> l
-  | l             -> let l1,l2 = halve l in merge_implicit_sec (merge_implicit_sec_form l1,
-                                                                merge_implicit_sec_form l2)
+  | l             -> let l1,l2 = halve l in
+    merge_implicit_sec eqvl p_sctx (merge_implicit_sec_form eqvl p_sctx l1,
+                                    merge_implicit_sec_form eqvl p_sctx l2)
 
-let merge_implicit_sec_form_list eqll p_sctx sfll =
+let merge_implicit_sec_form_list eqvl p_sctx sfll =
   (*
-     NOTE: eqll contains all equivalent values from all branches
+     NOTE: eqvl contains all equivalent values from all branches
            p_sctx is the previous security context
      NOTE: if the value of a variable is the same on all branches
            the merging 'roll-back' the implicit flow into previous security context
@@ -20928,8 +20963,10 @@ let merge_implicit_sec_form_list eqll p_sctx sfll =
   let rec helper sfll msf =
     match sfll with
     | []       -> msf
-    | sfl::sfr -> helper sfr (merge_implicit_sec (merge_implicit_sec_form (simpl_eximpf_sec_form sfl),
-                                                  merge_implicit_sec_form msf))
+    | sfl::sfr -> helper sfr (merge_implicit_sec eqvl p_sctx
+                                (merge_implicit_sec_form eqvl p_sctx
+                                   (simpl_eximpf_sec_form sfl),
+                                 merge_implicit_sec_form eqvl p_sctx msf))
   in
   match sfll with
   | []       -> []
@@ -20993,5 +21030,11 @@ let prop_eximpf_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
   let impf = CP.mk_implicit_bform res_v sctx pos in
   let secf = CP.mkAnd expf impf pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
+  Ctx { state with es_formula = newf }
+
+let prop_eximpf_call (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx state.es_security_context) in
+  let impf = CP.mk_implicit_bform res_v sctx pos in
+  let newf = add_pure_formula_to_formula impf state.es_formula in
   Ctx { state with es_formula = newf }
 (************************************)

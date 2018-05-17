@@ -16729,7 +16729,7 @@ let get_eximpf_sec_in_p_formula pf =
   match pf with
   (* | ExplicitFlow _ *)
   | ImplicitFlow _ -> [pf]
-  (* | Eq(Var _,_,_)  -> [pf] (\* NOTE: Equality for simplification of Implicit Flow *\) *)
+  | Eq(Var _,_,_)  -> [pf] (* NOTE: Equality for simplification of Implicit Flow *)
   | _              -> []
 let get_eximpf_sec_in_formula cf =
   let rec helper cf =
@@ -16872,4 +16872,20 @@ let is_less_eximpf_sec_var sf1 sf2 =
   | (ImplicitFlow(v1,_,_), ImplicitFlow(v2,_,_)) ->
     less_spec_var v1 v2
   | _ -> false
+
+let is_eq_var_formula v = function
+  | Eq(Var(sv,_),_,_) -> eq_spec_var sv v
+  | _                 -> false
+
+let get_spec_var_in_sec = function
+  | Security(v,_,_)
+  | ExplicitFlow(v,_,_)
+  | ImplicitFlow(v,_,_) -> v
+  | _                   -> failwith "Should only be security formula"
+
+let get_sec_label_in_sec = function
+  | Security(_,l,_)
+  | ExplicitFlow(_,l,_)
+  | ImplicitFlow(_,l,_) -> l
+  | _                   -> failwith "Should only be security formula"
 (***********************************)

@@ -8203,7 +8203,6 @@ and heap_entail_build_mix_formula_check i (evars : CP.spec_var list) (ante : MCP
     (add_str "ante" pr) (add_str "conseq" pr) (pr_pair pr pr)
     ( fun c1 ante c2 -> heap_entail_build_mix_formula_check_a c1 ante c2 pos) evars ante conseq
 
-(* ADI TODO: to be used in IFA *)
 and heap_entail_build_pure_check ev an cq pos =
   Debug.no_1 "heap_entail_build_pure_check"
     Cprinter.string_of_pure_formula

@@ -2109,8 +2109,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
 
                 (* Information Flow Analysis *) (* Explicit & Implicit Flow  *)
+                let p_sctx   = ref [] in
                 let tmp_res1 = if !Globals.ifa || !Globals.eximpf
-                  then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) tmp_res1
+                  then CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) tmp_res1
                   else tmp_res1
                 in
                 (*****************************)
@@ -2283,7 +2284,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (
                 let sec_form = CF.get_sec_in_list_failesc_ctx res in
                 let sec_form = CF.merge_sec_form_list sec_form in
-                let temp_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) res in
+                let p_sctx = ref [] in
+                let temp_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
                 CF.transform_list_failesc_context (idf, idf, CF.replace_sec_in_estate sec_form) res
               )
             else if !Globals.eximpf (* Explicit & Implicit Flow  *)
@@ -2298,9 +2300,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let impf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_implicit_flow y) x) eximpf_sec_form in
                 let eq_sec_form     = List.map (fun x -> List.filter (fun y -> CP.is_eq_p_formula y) x) eximpf_sec_form in
                 let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
-                let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in
+                let () = print_endline ("\nequiv classes") in
+                let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
+                (* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *)
+                let p_sctx = ref [] in
+                let temp_eximpf_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
+                let impf_sec_form   = CF.merge_implicit_sec_form_list eq_sec_form !p_sctx impf_sec_form in
                 let eximpf_sec_form = ((* expf_sec_form@ *)impf_sec_form) in
-                let temp_eximpf_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx) res in
                 CF.transform_list_failesc_context (idf, idf, CF.replace_eximpf_sec_in_estate eximpf_sec_form) res
               )
             else res
@@ -2353,7 +2359,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                else ""
              in
              let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
-             print_string_quiet (tmp1 ^ tmp2));
+             let _ = print_string_quiet (tmp1 ^ tmp2) in
+             let _ = if !Globals.eximpf
+               then (
+                 let impf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
+                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) impf in
+                 let () = List.iter (fun x -> print_endline (
+                     List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
+                   )) impf in
+                 ()
+               )
+               else ()
+             in
+             ()
+          );
           ctx
         end else begin
           ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
@@ -2870,7 +2889,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         }
                       end
                   in
-                  res)
+                  if !Globals.eximpf && not(ret_t==Void)
+                  then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+                  else res
+              )
             end
       end
     | Seq ({exp_seq_type = te2;

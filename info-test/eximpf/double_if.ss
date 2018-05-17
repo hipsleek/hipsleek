@@ -40,7 +40,7 @@ int double_if3_fail(int x)
 {
   int y=0;
   int z=0;
-  dprint;
+  /* dprint; */
   if(x == 0) {
     y = 1;
   }
