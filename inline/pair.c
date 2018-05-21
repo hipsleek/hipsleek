@@ -17,3 +17,18 @@ int main()
   return pp->x;
 
 }
+
+/*
+
+{local: pair p,pair pp
+pair p = new pair()
+pair pp
+{member access p~~>x = 1
+pp = p
+member access pp~~>x = (int)member access pp~~>x + 1
+(113, ):return member access pp~~>x}}
+}
+
+# shd have a free p at the end ..
+
+*/
