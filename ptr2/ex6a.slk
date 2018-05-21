@@ -72,6 +72,7 @@ infer [@sem_eq] y::node<_> & y=z |- exists x: x::node<_> & x=y.
 expect Valid.
 print residue.
 
+
 //14
 // Early: []
 // Late: []
@@ -79,6 +80,7 @@ print residue.
 infer [@sem_eq] y::node<5> |- exists x: y::node<x>.
 expect Valid.
 print residue.
+// residue: emp
 
 //15 late instantiation
 // Early: []
@@ -87,6 +89,7 @@ print residue.
 infer [@sem_eq] y::node<x> |- [x0] y::node<x0>.
 expect Valid.
 print residue.
+// residue: x0=x
 
 //16 early instantiation
 // checkentail_exact x=x0 |- emp .
@@ -96,6 +99,7 @@ print residue.
 infer [@sem_eq] y::node<x> |- y::node<x0>.
 expect Valid.
 print residue.
+// residue: x0=x
 
 //17
 infer [@sem_eq] y::node<x> & x0=0 |- y::node<x0>.
@@ -109,6 +113,21 @@ expect Valid.
 print residue.
 
 //19
-infer [@sem_eq] y::node<5> & x=y & y=z & z=q & b=a |- x::node<v> & x=y.
+infer [@sem_eq] y::node<c> & x=y & y=z & z=q & b=a |- x::node<v> & x=y.
 expect Valid.
+print residue.
+
+//20
+infer [@sem_eq] a::node<x> * b::node<y> & x=y |- a::node<x> * b::node<x>.
+expect Valid.
+print residue.
+
+//21
+infer [@sem_eq] a::node<x> * b::node<y> & x=y |- [x0] a::node<x0> * b::node<x0>.
+expect Valid.
+print residue.
+
+//22
+infer [@sem_eq] a::node<x> * b::node<y> & x=z |- a::node<x> * b::node<x>.
+expect Fail.
 print residue.
