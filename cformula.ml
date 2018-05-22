@@ -20704,6 +20704,7 @@ let replace_sec_in_estate sfl state =
   ctx
 
 (* NOTE: Simplification *)
+(* OLD ALGORITHM: this does not simplify *)
 (* let simpl_sec_form sfl =
  *   let replace_one sf lbl =
  *     match sf with
@@ -20748,8 +20749,8 @@ let simpl_sec_form sfl =
     | Security (sv,l,loc) -> Security (sv, replace_lbl l v lbl, loc)
     | _                   -> x_report_error no_pos "replace : not security formula"
   in
-  let rec replace_all sfl v lbl = List.map (fun sf -> replace_one sf v lbl) sfl in
-    (* match sfl with
+  let replace_all sfl v lbl = List.map (fun sf -> replace_one sf v lbl) sfl in
+  (* match sfl with
    *   | []     -> []
    *   | sf::sl -> (replace_one sf v lbl)::(replace_all sl v lbl)
    * in *)
@@ -20863,51 +20864,150 @@ let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
 
 (* Explicit & Implicit Flow: EXIMPF *)
 (* NOTE: Simplification *)
+(* let simpl_eximpf_sec_form sfl =
+ *   let replace_one_explicit sf lbl =
+ *     match sf with
+ *     | ExplicitFlow (v,_,loc) -> ExplicitFlow (v, lbl, loc)
+ *     | ImplicitFlow _         -> sf
+ *     | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
+ *   in
+ *   let replace_one_implicit sf lbl =
+ *     match sf with
+ *     | ExplicitFlow _         -> sf
+ *     | ImplicitFlow (v,_,loc) -> ImplicitFlow (v, lbl, loc)
+ *     | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
+ *   in
+ *   let rec replace_all_explicit sfl sec lbl =
+ *     match sfl with
+ *     | []     -> []
+ *     | sf::sl ->
+ *       if CP.is_eq_eximpf_sec_var sf sec
+ *       then (replace_one_explicit sf lbl)::(replace_all_explicit sl sec lbl)
+ *       else sf::(replace_all_explicit sl sec lbl)
+ *   in
+ *   let rec replace_all_implicit sfl sec lbl =
+ *     match sfl with
+ *     | []     -> []
+ *     | sf::sl ->
+ *       if CP.is_eq_eximpf_sec_var sf sec
+ *       then (replace_one_implicit sf lbl)::(replace_all_implicit sl sec lbl)
+ *       else sf::(replace_all_implicit sl sec lbl)
+ *   in
+ *   let rec helper curr prev =
+ *     match prev with
+ *     | []     -> curr
+ *     | sf::sl ->
+ *       begin
+ *         match sf with
+ *         | ExplicitFlow (v, lbl, loc) -> helper (replace_all_explicit curr sf lbl) sl
+ *         | ImplicitFlow (v, lbl, loc) -> helper (replace_all_implicit curr sf lbl) sl
+ *         | _                          -> x_report_error no_pos "helper : not explicit/implicit flow formula"
+ *       end
+ *   in
+ *   let rec fixpoint sfl =
+ *     let next = helper sfl sfl in
+ *     if next = sfl then next else fixpoint next
+ *   in
+ *   fixpoint sfl *)
+
 let simpl_eximpf_sec_form sfl =
-  let replace_one_explicit sf lbl =
+  let rec replace_lbl l_old v lbl =
+    match l_old with
+    | Hi | Lo    -> l_old
+    | Lub(l1,l2) -> CP.lub_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | Glb(l1,l2) -> CP.glb_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | SecVar sv  -> if eq_spec_var v sv then lbl else l_old
+  in
+
+  let replace_one_expf sf v lbl =
     match sf with
-    | ExplicitFlow (v,_,loc) -> ExplicitFlow (v, lbl, loc)
-    | ImplicitFlow _         -> sf
-    | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
+    | ExplicitFlow (sv,l,loc) -> ExplicitFlow (sv, replace_lbl l v lbl, loc)
+    | ImplicitFlow _          -> sf
+    | _                       -> x_report_error no_pos "replace : not explicit/implicit formula"
   in
-  let replace_one_implicit sf lbl =
+  let replace_all_expf sfl v lbl = List.map (fun sf -> replace_one_expf sf v lbl) sfl in
+
+  let replace_one_impf sf v lbl =
     match sf with
-    | ExplicitFlow _         -> sf
-    | ImplicitFlow (v,_,loc) -> ImplicitFlow (v, lbl, loc)
-    | _                      -> x_report_error no_pos "replace : not explicit/implicit flow formula"
+    | ImplicitFlow (sv,l,loc) -> ImplicitFlow (sv, replace_lbl l v lbl, loc)
+    | ExplicitFlow _          -> sf
+    | _                       -> x_report_error no_pos "replace : not explicit/implicit formula"
   in
-  let rec replace_all_explicit sfl sec lbl =
-    match sfl with
-    | []     -> []
-    | sf::sl ->
-      if CP.is_eq_eximpf_sec_var sf sec
-      then (replace_one_explicit sf lbl)::(replace_all_explicit sl sec lbl)
-      else sf::(replace_all_explicit sl sec lbl)
-  in
-  let rec replace_all_implicit sfl sec lbl =
-    match sfl with
-    | []     -> []
-    | sf::sl ->
-      if CP.is_eq_eximpf_sec_var sf sec
-      then (replace_one_implicit sf lbl)::(replace_all_implicit sl sec lbl)
-      else sf::(replace_all_implicit sl sec lbl)
-  in
-  let rec helper curr prev =
-    match prev with
-    | []     -> curr
-    | sf::sl ->
-      begin
+  let replace_all_impf sfl v lbl = List.map (fun sf -> replace_one_impf sf v lbl) sfl in
+
+  let rec helper curr prev = List.fold_left (fun acc sf -> (
         match sf with
-        | ExplicitFlow (v, lbl, loc) -> helper (replace_all_explicit curr sf lbl) sl
-        | ImplicitFlow (v, lbl, loc) -> helper (replace_all_implicit curr sf lbl) sl
-        | _                          -> x_report_error no_pos "helper : not explicit/implicit flow formula"
-      end
+        | ExplicitFlow (v, lbl, _) -> replace_all_expf acc v lbl
+        | ImplicitFlow (v, lbl, _) -> replace_all_impf acc v lbl
+        | _                        -> x_report_error no_pos "helper : not explicit/implicit formula"
+      )) curr prev
+  (* match prev with
+   * | []     -> curr
+   * | sf::sl ->
+   *   begin
+   *     match sf with
+   *     | Security (v, lbl, loc) -> helper (replace_all curr v lbl) sl
+   *     | _                      -> x_report_error no_pos "helper : not security formula"
+   *   end *)
   in
   let rec fixpoint sfl =
     let next = helper sfl sfl in
+    let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in
     if next = sfl then next else fixpoint next
   in
+  let is_trivial sf =
+    match sf with
+    | ExplicitFlow (v,SecVar sv,_)
+    | ImplicitFlow (v,SecVar sv,_) -> eq_spec_var v sv
+    | _                            -> false
+  in
+  let is_same_expf v sf =
+    match sf with
+    | ExplicitFlow (sv,_,_) -> eq_spec_var v sv
+    | _                     -> false
+  in
+  let is_same_impf v sf =
+    match sf with
+    | ImplicitFlow (sv,_,_) -> eq_spec_var v sv
+    | _                     -> false
+  in
+  let rec atomize sfl =
+    match sfl with
+    | []     -> []
+    | sf::sr ->
+      begin
+        match sf with
+        | ExplicitFlow (v, lbl, loc) ->
+          begin
+            let svl = List.filter (fun x -> is_same_expf v x) sr in
+            let srl = List.filter (fun x -> not (is_same_expf v x)) sr in
+            let glb = List.fold_left (fun acc x -> (
+                  match x with
+                  | ExplicitFlow(_,l,_) -> CP.glb_op acc l
+                  | _                   -> x_report_error no_pos "helper : not explicit formula"
+                )
+              ) lbl svl in
+            (ExplicitFlow(v,glb,loc))::(atomize srl)
+          end
+        | ImplicitFlow (v, lbl, loc) ->
+          begin
+            let svl = List.filter (fun x -> is_same_impf v x) sr in
+            let srl = List.filter (fun x -> not (is_same_impf v x)) sr in
+            let glb = List.fold_left (fun acc x -> (
+                  match x with
+                  | ImplicitFlow(_,l,_) -> CP.glb_op acc l
+                  | _                   -> x_report_error no_pos "helper : not implicit formula"
+                )
+              ) lbl svl in
+            (ImplicitFlow(v,glb,loc))::(atomize srl)
+          end
+        | _                      -> x_report_error no_pos "helper : not explicit/implicit formula"
+      end
+  in
+  let sfl = List.filter (fun x -> not (is_trivial x)) sfl in
+  let sfl = atomize sfl in
   fixpoint sfl
+  (* fixpoint (helper,sfl) *)
 
 (* NOTE: Get ALL security formula from ALL branches *)
 let get_eximpf_sec_in_formula f =
