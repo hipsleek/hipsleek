@@ -3069,3 +3069,12 @@ let compute_eager_inst prog lhs_b rhs_b lhp rhp leargs reargs=
 
 (* and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect *)
 (*     (f0 : IF.formula) tlist (clean_res:bool) : (spec_var_type_list*CF.formula) = *)
+
+(* let rec wwhile (f,b) = let v,bl = f b b in if bl then wwhile (f,v) else v
+ * let fixpoint (f,b) = wwhile ((
+ *     let x b =
+ *       let v = f b b in
+ *       if b == v then (v, false) else (v, true)
+ *     in
+ *     x
+ *   ), b) *)

@@ -2283,6 +2283,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             then
               (
                 let sec_form = CF.get_sec_in_list_failesc_ctx res in
+                let one = List.hd sec_form in
+                let () = print_endline ("ONE (0): " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" one) in
+                let one = CF.simpl_sec_form one in
+                let () = print_endline ("ONE (1): " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" one) in
                 let sec_form = CF.merge_sec_form_list sec_form in
                 let p_sctx = ref [] in
                 let temp_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in

@@ -14620,163 +14620,6 @@ and create_acyclic_rel (concrete_bags:(spec_var * exp list) list) (f:formula) (r
     !print_formula
     create_acyclic_rel_x concrete_bags f rel
 
-and translate_sec_label = function
-  (* NOTE: LUB as MAX and GLB as MIN *)
-  | Hi -> [], [], IConst (1, no_pos)
-  | Lo -> [], [], IConst (0, no_pos)
-  | SecVar (SpecVar (typ, var_name, _)) ->
-    let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
-    [], [], Var (var, no_pos)
-  | Lub (l1, l2) ->
-    let lst1, fv1, t1 = translate_sec_label l1 in
-    let lst2, fv2, t2 = translate_sec_label l2 in
-    let var = mk_spec_var (fresh_name ()) in
-    let max_var = Var (var , no_pos) in
-    lst1 @ lst2 @ [EqMax (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
-  | Glb (l1, l2) ->
-    let lst1, fv1, t1 = translate_sec_label l1 in
-    let lst2, fv2, t2 = translate_sec_label l2 in
-    let var = mk_spec_var (fresh_name ()) in
-    let max_var = Var (var , no_pos) in
-    lst1 @ lst2 @ [EqMin (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
-
-and translate_sec_formula = function
-  | Security ((SpecVar (typ, var_name, _)), sec, loc) ->
-      let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
-        let extra_p_form, fv, expr = translate_sec_label sec in
-        extra_p_form, fv, Lte (Var (var, loc), expr, loc), [var]
-  (* | ExplicitFlow _ | ImplicitFlow _ -> failwith ("Explicit & Implicit Flow Should have been converted to Security") *)
-  | p_formula -> [], [], p_formula, []
-
-and translate_security_formula_only = function
-  | BForm ((pf, bf_ann), flbl) ->
-    let extra_p_form, fv, pf, sv = translate_sec_formula pf in
-    let extra_forms = List.map (fun elem -> BForm ((elem, None), None)) extra_p_form in
-    let all_sv      = sv@fv in
-    let bnd_forms   = List.map (fun elem -> (mkSecBnd elem no_pos)) all_sv in
-    let f = BForm ((pf, bf_ann), flbl) in
-    let bnd_f  = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f bnd_forms in
-    let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) bnd_f extra_forms in
-    mkExists fv full_f None no_pos
-  | And (f1, f2, loc) -> And (translate_security_formula_only f1, translate_security_formula_only f2, loc)
-  | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula_only f)) formulas)
-  | Or (f1, f2, flbl, loc) -> Or (translate_security_formula f1, translate_security_formula_only f2, flbl, loc)
-  | Not (f, lbl, loc) -> Not (translate_security_formula_only f, lbl, loc)
-  | others -> others
-
-and translate_security_formula orig =
-  let rec get_p_i v bf =
-    match bf with
-    | ImplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
-    | _                     -> None
-  in
-  let rec get_f_i v f =
-    match f with
-    | BForm ((pf,_),opt)  -> get_p_i v pf
-    | And(f1,f2,l)    ->
-      let l1 = get_f_i v f1 in
-      let l2 = get_f_i v f2 in
-      (
-        match l1,l2 with
-        | None,None                       -> None
-        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
-        | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
-      )
-    | Or(f1,f2,opt,l) ->
-      let l1 = get_f_i v f1 in
-      let l2 = get_f_i v f2 in
-      (
-        match l1,l2 with
-        | None,None                       -> None
-        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
-        | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
-      )
-    | Not(f0, opt, l) -> get_f_i v f0
-    | Forall (sv, f0, opt, l) -> get_f_i v f0
-    | Exists (sv, f0, opt, l) -> get_f_i v f0
-    | _                       -> None in
-  let rec helper_p_e_to_i bf =
-    match bf with
-    | ExplicitFlow(v,l1,loc) ->
-      let opt_l = get_f_i v orig in
-      (
-        match opt_l with
-        | None     -> mk_security v l1           loc
-        | Some(l2) -> mk_security v (Lub(l1,l2)) loc
-      )
-    (* | ImplicitFlow _         -> mkTrue_p no_pos *)
-    | _                      -> bf
-  in
-  let rec helper_f_e_to_i f  =
-    match f with
-    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_e_to_i pf,lbl), opt)
-    | And(f1,f2,l)    -> And (helper_f_e_to_i f1, helper_f_e_to_i f2, l)
-    | Or(f1,f2,opt,l) -> Or (helper_f_e_to_i f1, helper_f_e_to_i f2, opt, l)
-    | Not(f0, opt, l) -> Not (helper_f_e_to_i f0, opt, l)
-    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_e_to_i f0, opt, l)
-    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_e_to_i f0, opt, l)
-    | _                       -> f
-  in
-
-  let rec get_p_e v bf =
-    match bf with
-    | ExplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
-    | _                     -> None
-  in
-  let rec get_f_e v f =
-    match f with
-    | BForm ((pf,_),opt)  -> get_p_e v pf
-    | And(f1,f2,l)    ->
-      let l1 = get_f_e v f1 in
-      let l2 = get_f_e v f2 in
-      (
-        match l1,l2 with
-        | None,None                       -> None
-        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
-        | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
-      )
-    | Or(f1,f2,opt,l) ->
-      let l1 = get_f_e v f1 in
-      let l2 = get_f_e v f2 in
-      (
-        match l1,l2 with
-        | None,None                       -> None
-        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
-        | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
-      )
-    | Not(f0, opt, l) -> get_f_e v f0
-    | Forall (sv, f0, opt, l) -> get_f_e v f0
-    | Exists (sv, f0, opt, l) -> get_f_e v f0
-    | _                       -> None
-  in
-  let rec helper_p_i_to_e bf =
-    match bf with
-    | ImplicitFlow(v,l1,loc) ->
-      let opt_l = get_f_e v orig in
-      (
-        match opt_l with
-        | None     -> mk_security v l1           loc
-        | Some(l2) -> mk_security v (Lub(l1,l2)) loc
-      )
-    (* | ExplicitFlow _         -> mkTrue_p no_pos *)
-    | _                      -> bf
-  in
-  let rec helper_f_i_to_e f  =
-    match f with
-    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_i_to_e pf,lbl), opt)
-    | And(f1,f2,l)    -> And (helper_f_i_to_e f1, helper_f_i_to_e f2, l)
-    | Or(f1,f2,opt,l) -> Or (helper_f_i_to_e f1, helper_f_i_to_e f2, opt, l)
-    | Not(f0, opt, l) -> Not (helper_f_i_to_e f0, opt, l)
-    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_i_to_e f0, opt, l)
-    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_i_to_e f0, opt, l)
-    | _                       -> f
-  in
-
-  let f_e_to_i = helper_f_e_to_i orig in
-  let f_i_to_e = helper_f_i_to_e orig in
-  let trans_f  = translate_security_formula_only (mkAnd f_e_to_i f_i_to_e no_pos) in
-  trans_f
-
 (*
   forall acyclic(B) in f.
   (1) B is a set of pairs. Otherwise, undefined (error)
@@ -16769,20 +16612,18 @@ let lub_op lb1 lb2 =
   let once lb1 lb2 =
     match (lb1,lb2) with
     | (Hi,_) | (_,Hi)         -> Hi
-    | (Lo,_)                  -> lb2
-    | (_,Lo)                  -> lb1
+    | (Lo,l) | (l,Lo)         -> l
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
     | _                       -> Lub(lb1,lb2)
   in
   let rec multi lb1 lb2 =
     match (lb1,lb2) with
     | (Hi,_) | (_,Hi)         -> Hi
-    | (Lo,_)                  -> lb2
-    | (_,Lo)                  -> lb1
+    | (Lo,l) | (l,Lo)         -> l
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
     | (Lub(l1,l2),Lub(r1,r2)) -> once (multi l1 l2) (multi r1 r2)
-    | (Lub(l1,l2),_)          -> once (multi l1 l2) lb1
-    | (_,Lub(r1,r2))          -> once lb1 (multi r1 r2)
+    | (Lub(l1,l2),l)          (* -> once (multi l1 l2) lb1 *)
+    | (l,Lub(l1,l2))          -> once l (multi l1 l2)
     | _                       -> Lub(lb1,lb2) (* NOTE: Leave GLB as it is without normalization *)
   in
   multi lb1 lb2
@@ -16801,6 +16642,41 @@ let sec_lub sf1 sf2 =
     then ImplicitFlow(v1, (lub_op l1 l2), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | _ -> x_report_error no_pos "sec_lub : not security formula"
+
+let glb_op lb1 lb2 =
+  let once lb1 lb2 =
+    match (lb1,lb2) with
+    | (Lo,_) | (_,Lo)         -> Lo
+    | (Hi,l) | (l,Hi)         -> l
+    | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Glb(lb1,lb2)
+    | _                       -> Glb(lb1,lb2)
+  in
+  let rec multi lb1 lb2 =
+    match (lb1,lb2) with
+    | (Lo,_) | (_,Lo)         -> Lo
+    | (Hi,l) | (l,Hi)         -> l
+    | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Glb(lb1,lb2)
+    | (Glb(l1,l2),Glb(r1,r2)) -> once (multi l1 l2) (multi r1 r2)
+    | (Glb(l1,l2),l)          (* -> once (multi l1 l2) lb1 *)
+    | (l,Glb(l1,l2))          -> once l (multi l1 l2)
+    | _                       -> Glb(lb1,lb2) (* NOTE: Leave LUB as it is without normalization *)
+  in
+  multi lb1 lb2
+let sec_glb sf1 sf2 =
+  match (sf1,sf2) with
+  | Security(v1,l1,_)    ,Security(v2,l2,_)     ->
+    if eq_spec_var v1 v2
+    then Security(v1, (glb_op l1 l2), no_pos)
+    else x_report_error no_pos "sec_glb : different spec_var"
+  | ExplicitFlow(v1,l1,_),ExplicitFlow(v2,l2,_) ->
+    if eq_spec_var v1 v2
+    then ExplicitFlow(v1, (glb_op l1 l2), no_pos)
+    else x_report_error no_pos "sec_glb : different spec_var"
+  | ImplicitFlow(v1,l1,_),ImplicitFlow(v2,l2,_) ->
+    if eq_spec_var v1 v2
+    then ImplicitFlow(v1, (glb_op l1 l2), no_pos)
+    else x_report_error no_pos "sec_glb : different spec_var"
+  | _ -> x_report_error no_pos "sec_glb : not security formula"
 
 let rec only_sec_form f =
   match f with
@@ -16888,4 +16764,263 @@ let get_sec_label_in_sec = function
   | ExplicitFlow(_,l,_)
   | ImplicitFlow(_,l,_) -> l
   | _                   -> failwith "Should only be security formula"
+
+let rec translate_sec_label = function
+  (* NOTE: LUB as MAX and GLB as MIN *)
+  | Hi -> [], [], IConst (1, no_pos)
+  | Lo -> [], [], IConst (0, no_pos)
+  | SecVar (SpecVar (typ, var_name, _)) ->
+    let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+    [], [], Var (var, no_pos)
+  | Lub (l1, l2) ->
+    let lst1, fv1, t1 = translate_sec_label l1 in
+    let lst2, fv2, t2 = translate_sec_label l2 in
+    let var = mk_spec_var (fresh_name ()) in
+    let max_var = Var (var , no_pos) in
+    lst1 @ lst2 @ [EqMax (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
+  | Glb (l1, l2) ->
+    let lst1, fv1, t1 = translate_sec_label l1 in
+    let lst2, fv2, t2 = translate_sec_label l2 in
+    let var = mk_spec_var (fresh_name ()) in
+    let max_var = Var (var , no_pos) in
+    lst1 @ lst2 @ [EqMin (max_var, t1, t2, no_pos)], fv1 @ fv2 @ [var], max_var
+
+and translate_sec_formula = function
+  | Security ((SpecVar (typ, var_name, _)), sec, loc) ->
+    let var = mk_typed_spec_var typ ("sec_" ^ var_name) in
+    let extra_p_form, fv, expr = translate_sec_label sec in
+    extra_p_form, fv, Lte (Var (var, loc), expr, loc), [var]
+  (* | ExplicitFlow _ | ImplicitFlow _ -> failwith ("Explicit & Implicit Flow Should have been converted to Security") *)
+  | p_formula -> [], [], p_formula, []
+
+and translate_security_formula_only = function
+  | BForm ((pf, bf_ann), flbl) ->
+    let extra_p_form, fv, pf, sv = translate_sec_formula pf in
+    let extra_forms = List.map (fun elem -> BForm ((elem, None), None)) extra_p_form in
+    let all_sv      = sv@fv in
+    let bnd_forms   = List.map (fun elem -> (mkSecBnd elem no_pos)) all_sv in
+    let f = BForm ((pf, bf_ann), flbl) in
+    let bnd_f  = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) f bnd_forms in
+    let full_f = List.fold_left (fun acc elem -> And (acc, elem, no_pos)) bnd_f extra_forms in
+    mkExists fv full_f None no_pos
+  | And (f1, f2, loc) -> And (translate_security_formula_only f1, translate_security_formula_only f2, loc)
+  | AndList formulas -> AndList (List.map (fun (lbl, f) -> (lbl, translate_security_formula_only f)) formulas)
+  | Or (f1, f2, flbl, loc) -> Or (translate_security_formula f1, translate_security_formula_only f2, flbl, loc)
+  | Not (f, lbl, loc) -> Not (translate_security_formula_only f, lbl, loc)
+  | others -> others
+
+and simpl_eximpf_form orig =
+  let rec replace_sec_label l_old v lbl =
+    match l_old with
+    | Hi | Lo    -> l_old
+    | Lub(l1,l2) -> Lub(replace_sec_label l1 v lbl, replace_sec_label l2 v lbl)
+    | Glb(l1,l2) -> Glb(replace_sec_label l1 v lbl, replace_sec_label l2 v lbl)
+    | SecVar sv  -> if eq_spec_var v sv then lbl else l_old
+  in
+
+  let rec replace_one_expf_pf pf v lbl =
+    match pf with
+    | ExplicitFlow (sv,l0,p) -> ExplicitFlow(sv, replace_sec_label l0 v lbl, p)
+    | _                      -> pf
+  and replace_one_expf_f f v lbl =
+    match f with
+    | BForm((pf,l),opt) -> BForm((replace_one_expf_pf pf v lbl,l),opt)
+    | And(f1,f2,p)        -> And(replace_one_expf_f f1 v lbl, replace_one_expf_f f2 v lbl, p)
+    | Or(f1,f2,opt,p)     -> Or(replace_one_expf_f f1 v lbl, replace_one_expf_f f2 v lbl, opt, p)
+    | Not(f,opt,p)        -> Not(replace_one_expf_f f v lbl, opt, p)
+    | Forall(sv,f,opt,p)  -> Forall(sv, replace_one_expf_f f v lbl, opt, p)
+    | Exists(sv,f,opt,p)  -> Exists(sv, replace_one_expf_f f v lbl, opt, p)
+    | _                   -> f
+  in
+
+  let rec replace_one_impf_pf sf v lbl =
+    match sf with
+    | ImplicitFlow (sv,l0,p) -> ImplicitFlow(sv, replace_sec_label l0 v lbl, p)
+    | _                      -> sf
+  and replace_one_impf_f f v lbl =
+    match f with
+    | BForm((pf,l0),opt) -> BForm((replace_one_impf_pf pf v lbl,l0),opt)
+    | And(f1,f2,p)        -> And(replace_one_impf_f f1 v lbl, replace_one_impf_f f2 v lbl, p)
+    | Or(f1,f2,opt,p)     -> Or(replace_one_impf_f f1 v lbl, replace_one_impf_f f2 v lbl, opt, p)
+    | Not(f,opt,p)        -> Not(replace_one_impf_f f v lbl, opt, p)
+    | Forall(sv,f,opt,p)  -> Forall(sv, replace_one_impf_f f v lbl, opt, p)
+    | Exists(sv,f,opt,p)  -> Exists(sv, replace_one_impf_f f v lbl, opt, p)
+    | _                   -> f
+  in
+  let rec helper curr_f prev_f =
+    match curr_f with
+    | BForm((ExplicitFlow(sv,l0,p),lbl),opt) -> replace_one_expf_f prev_f sv l0
+    | BForm((ImplicitFlow(sv,l0,p),lbl),opt) -> replace_one_impf_f prev_f sv l0
+    | And(f1,f2,p)        -> let next_f = helper f1 prev_f in helper f2 next_f
+    | Or(f1,f2,opt,p)     -> let next_f = helper f1 prev_f in helper f2 next_f
+    | Not(f,opt,p)        -> helper f prev_f
+    | Forall(sv,f,opt,p)  -> helper f prev_f
+    | Exists(sv,f,opt,p)  -> helper f prev_f
+    | _                   -> prev_f
+  and fixpoint f =
+    let nxt = helper f f in
+    if nxt = f then nxt else fixpoint nxt
+  in
+  fixpoint orig
+
+
+and simpl_eximpf_form_alt orig =
+  let rec replace_one_expf_pf pf v lbl =
+    match pf with
+    | ExplicitFlow (sv,l0,p) -> if eq_spec_var v sv then ExplicitFlow(sv, lbl, p) else pf
+    | _                      -> pf
+  and replace_one_expf_f f v lbl =
+    match f with
+    | BForm((pf,l),opt)   -> BForm((replace_one_expf_pf pf v lbl,l),opt)
+    | And(f1,f2,p)        -> And(replace_one_expf_f f1 v lbl, replace_one_expf_f f2 v lbl, p)
+    | Or(f1,f2,opt,p)     -> Or(replace_one_expf_f f1 v lbl, replace_one_expf_f f2 v lbl, opt, p)
+    | Not(f,opt,p)        -> Not(replace_one_expf_f f v lbl, opt, p)
+    | Forall(sv,f,opt,p)  -> Forall(sv, replace_one_expf_f f v lbl, opt, p)
+    | Exists(sv,f,opt,p)  -> Exists(sv, replace_one_expf_f f v lbl, opt, p)
+    | _                   -> f
+  in
+
+  let rec replace_one_impf_pf pf v lbl =
+    match pf with
+    | ImplicitFlow (sv,l0,p) -> if eq_spec_var v sv then ImplicitFlow(sv, lbl, p) else pf
+    | _                      -> pf
+  and replace_one_impf_f f v lbl =
+    match f with
+    | BForm((pf,l),opt)   -> BForm((replace_one_impf_pf pf v lbl,l),opt)
+    | And(f1,f2,p)        -> And(replace_one_impf_f f1 v lbl, replace_one_impf_f f2 v lbl, p)
+    | Or(f1,f2,opt,p)     -> Or(replace_one_impf_f f1 v lbl, replace_one_impf_f f2 v lbl, opt, p)
+    | Not(f,opt,p)        -> Not(replace_one_impf_f f v lbl, opt, p)
+    | Forall(sv,f,opt,p)  -> Forall(sv, replace_one_impf_f f v lbl, opt, p)
+    | Exists(sv,f,opt,p)  -> Exists(sv, replace_one_impf_f f v lbl, opt, p)
+    | _                   -> f
+  in
+  let rec helper curr_f prev_f =
+    match curr_f with
+    | BForm((ExplicitFlow(sv,l0,p),lbl),opt) -> replace_one_expf_f prev_f sv l0
+    | BForm((ImplicitFlow(sv,l0,p),lbl),opt) -> replace_one_impf_f prev_f sv l0
+    | And(f1,f2,p)        -> let next_f = helper f1 prev_f in helper f2 next_f
+    | Or(f1,f2,opt,p)     -> let next_f = helper f1 prev_f in helper f2 next_f
+    | Not(f,opt,p)        -> helper f prev_f
+    | Forall(sv,f,opt,p)  -> helper f prev_f
+    | Exists(sv,f,opt,p)  -> helper f prev_f
+    | _                   -> prev_f
+  and fixpoint f =
+    let nxt = helper f f in
+    if nxt = f then nxt else fixpoint nxt
+  in
+  fixpoint orig
+
+and translate_security_formula orig =
+  let rec get_p_i v bf =
+    match bf with
+    | ImplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
+    | _                     -> None
+  in
+  let rec get_f_i v f =
+    match f with
+    | BForm ((pf,_),opt)  -> get_p_i v pf
+    | And(f1,f2,l)    ->
+      let l1 = get_f_i v f1 in
+      let l2 = get_f_i v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
+      )
+    | Or(f1,f2,opt,l) ->
+      let l1 = get_f_i v f1 in
+      let l2 = get_f_i v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
+      )
+    | Not(f0, opt, l) -> get_f_i v f0
+    | Forall (sv, f0, opt, l) -> get_f_i v f0
+    | Exists (sv, f0, opt, l) -> get_f_i v f0
+    | _                       -> None in
+  let rec helper_p_e_to_i bf =
+    match bf with
+    | ExplicitFlow(v,l1,loc) ->
+      let opt_l = get_f_i v orig in
+      (
+        match opt_l with
+        | None     -> mk_security v l1           loc
+        | Some(l2) -> mk_security v (Lub(l1,l2)) loc
+      )
+    (* | ImplicitFlow _         -> mkTrue_p no_pos *)
+    | _                      -> bf
+  in
+  let rec helper_f_e_to_i f  =
+    match f with
+    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_e_to_i pf,lbl), opt)
+    | And(f1,f2,l)    -> And (helper_f_e_to_i f1, helper_f_e_to_i f2, l)
+    | Or(f1,f2,opt,l) -> Or (helper_f_e_to_i f1, helper_f_e_to_i f2, opt, l)
+    | Not(f0, opt, l) -> Not (helper_f_e_to_i f0, opt, l)
+    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_e_to_i f0, opt, l)
+    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_e_to_i f0, opt, l)
+    | _                       -> f
+  in
+
+  let rec get_p_e v bf =
+    match bf with
+    | ExplicitFlow (sv,l,_) -> if eq_spec_var v sv then Some(l) else None
+    | _                     -> None
+  in
+  let rec get_f_e v f =
+    match f with
+    | BForm ((pf,_),opt)  -> get_p_e v pf
+    | And(f1,f2,l)    ->
+      let l1 = get_f_e v f1 in
+      let l2 = get_f_e v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Glb(fl1,fl2))
+      )
+    | Or(f1,f2,opt,l) ->
+      let l1 = get_f_e v f1 in
+      let l2 = get_f_e v f2 in
+      (
+        match l1,l2 with
+        | None,None                       -> None
+        | Some(fl1),None | None,Some(fl1) -> Some(fl1)
+        | Some(fl1),Some(fl2)             -> Some(Lub(fl1,fl2))
+      )
+    | Not(f0, opt, l) -> get_f_e v f0
+    | Forall (sv, f0, opt, l) -> get_f_e v f0
+    | Exists (sv, f0, opt, l) -> get_f_e v f0
+    | _                       -> None
+  in
+  let rec helper_p_i_to_e bf =
+    match bf with
+    | ImplicitFlow(v,l1,loc) ->
+      let opt_l = get_f_e v orig in
+      (
+        match opt_l with
+        | None     -> mk_security v l1           loc
+        | Some(l2) -> mk_security v (Lub(l1,l2)) loc
+      )
+    (* | ExplicitFlow _         -> mkTrue_p no_pos *)
+    | _                      -> bf
+  in
+  let rec helper_f_i_to_e f  =
+    match f with
+    | BForm ((pf,lbl),opt)  -> BForm ((helper_p_i_to_e pf,lbl), opt)
+    | And(f1,f2,l)    -> And (helper_f_i_to_e f1, helper_f_i_to_e f2, l)
+    | Or(f1,f2,opt,l) -> Or (helper_f_i_to_e f1, helper_f_i_to_e f2, opt, l)
+    | Not(f0, opt, l) -> Not (helper_f_i_to_e f0, opt, l)
+    | Forall (sv, f0, opt, l) -> Forall (sv, helper_f_i_to_e f0, opt, l)
+    | Exists (sv, f0, opt, l) -> Exists (sv, helper_f_i_to_e f0, opt, l)
+    | _                       -> f
+  in
+
+  (* let orig     = simpl_eximpf_form_alt orig in *)
+  let f_e_to_i = helper_f_e_to_i orig in
+  let f_i_to_e = helper_f_i_to_e orig in
+  let trans_f  = translate_security_formula_only (mkAnd f_e_to_i f_i_to_e no_pos) in
+  trans_f
 (***********************************)

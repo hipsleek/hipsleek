@@ -734,13 +734,22 @@ let string_of_logic logic =
   | AUFLIA -> "AUFLIA"
   | UFNIA -> "UFNIA"
 
+let var_decl v t =
+  "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+  (* ^ (
+   *   if !Globals.ifa || !Globals.eximpf
+   *   then "(declare-fun sec_" ^ (smt_of_spec_var v) ^ " () Int)\n"
+   *   else ""
+   * ) *)
+
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 pr_weak pr_strong ante conseq fvars info bget_cex=
   (* Variable declarations *)
   let smt_var_decls = List.map (fun v ->
       let tp = (CP.type_of_spec_var v)in
       let t = smt_of_typ tp in
-      "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n"
+      (* "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (t) ^ ")\n" *)
+      var_decl v t
     ) fvars in
   let smt_var_decls = String.concat "" smt_var_decls in
   (* Relations that appears in the ante and conseq *)
