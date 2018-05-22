@@ -53,7 +53,7 @@ expect Valid.
 print residue.
 
 //10
-infer [@sem_eq] y::node<5> |- [x] x::node<v> & x=y.
+infer [@sem_eq] y::node<5> |- [x] x::node<v> & y=x.
 expect Valid.
 print residue.
 
@@ -71,7 +71,6 @@ print residue.
 infer [@sem_eq] y::node<_> & y=z |- exists x: x::node<_> & x=y.
 expect Valid.
 print residue.
-
 
 //14
 // Early: []
@@ -131,3 +130,4 @@ print residue.
 infer [@sem_eq] a::node<x> * b::node<y> & x=z |- a::node<x> * b::node<x>.
 expect Fail.
 print residue.
+

@@ -29,7 +29,7 @@ pred Aseg<end> == self=end
 data Cell {
  int val;
 }.
- 
+
 /*
 (==solver.ml#13753==)
 do_base_fold@29@27@26@25@24
