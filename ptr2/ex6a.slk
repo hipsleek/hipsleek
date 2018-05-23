@@ -6,6 +6,12 @@ data node {
 infer [@sem_eq] y::node<5> & y=x |- x::node<u>.
 print residue.
 expect Valid.
+// BEFORE
+//Residue: <1>emp&u=5&{FLOW,(20,21)=__norm#E}[]
+// [[ SEARCH ==>  Match(y,y)]]
+//AFTER:
+//Residue: <1>emp&y=x & u=5&{FLOW,(20,21)=__norm#E}[]
+// [[ SEARCH ==>  Match(y,x)]]
 
 //2
 infer [@sem_eq] y::node<5> & y>=x |- x::node<u>.
@@ -33,12 +39,13 @@ print residue.
 infer [@sem_eq] x::node<3> & x<=y+1 & z<=y+1 & x>=y+1 & z>=y+1 |- z::node<3>.
 expect Valid.
 print residue.
+//Message: y is undefined (7)
+//y appears only in the lhs pure formula
 
 //7
 infer [@sem_eq] x::node<3> & x<y+1 & x>y-1 |- y::node<3>.
 expect Valid.
 print residue.
-
 
 //8
 infer [@sem_eq] x::node<3> & x<y+1 & z<y+1 & x>y-1 & z>y-1 |- y::node<3>.

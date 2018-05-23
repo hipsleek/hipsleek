@@ -5897,7 +5897,7 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
              (List.mem v2 lhs_k_vars && not (List.mem v1 lhs_k_vars)))) then
           let () = y_tinfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
           let rhs_f = apply_one (v2, v1) rhs_f in
-          do_sem_eq prog ctx rhs_f
+          do_sem_eq_x prog ctx rhs_f
         else
           (ctx, rhs_f)
       in
@@ -5917,7 +5917,7 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
         else if (List.mem v1 rhs_expl_vars) then
           let () = y_tinfo_hp (add_str "SE2 pairs2" string_of_spec_var_pair) (v1,v2) in
           let rhs_f = apply_one (v1, v2) rhs_f in
-          do_sem_eq prog ctx rhs_f
+          do_sem_eq_x prog ctx rhs_f
         else
           (ctx, rhs_f)
       in
@@ -5936,7 +5936,7 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
           let lhs_f = apply_one (v2,v1) lhs_f in
           let rhs_f = apply_one (v2,v1) rhs_f in
           (* call do_sem_eq recursively *)
-          do_sem_eq prog (Ctx ({es with es_formula = lhs_f})) rhs_f
+          do_sem_eq_x prog (Ctx ({es with es_formula = lhs_f})) rhs_f
         else (ctx, rhs_f)
       in
       (ctx, rhs_f)
@@ -5947,10 +5947,10 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
   (ctx, rhs_f)
 
 and do_sem_eq prog (ctx:context) (conseq:CF.formula) =
-  let pr0 = Cprinter.string_of_program in
+  let pr0 = (fun _ -> "") in
   let pr1 = Cprinter.string_of_context in
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = (fun _ -> "?") in
+  let pr3 = (fun (ctx, conseq) -> "ctx:" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:" ^ (Cprinter.string_of_formula conseq)) in
   Debug.no_3 "do_sem_eq" pr0 pr1 pr2 pr3
     (fun _ _ _ -> do_sem_eq_x prog ctx conseq) prog ctx conseq
 
