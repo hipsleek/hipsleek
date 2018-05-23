@@ -1,0 +1,28 @@
+/*
+bool dif(bool x)
+  requires x <? S1
+  ensures res <? S2;
+{
+  int y=false, z=false;
+  if(!x) {
+    y = true;
+  }
+  // y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I @Lo & x <I @Lo  [x:false, y:true ]
+  // y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I @Lo & x <I @Lo  [x:true , y:false]
+  if(!y) {
+    z = true;
+  }
+  // y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I x & x <I @Lo  [x:false, y:true , z:false]
+  // y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I x & x <I @Lo  [x:true , y:false, z:true ]
+  return z;
+}
+*/
+
+checkentail y <E @Lo & z <E @Lo & x <E @Lo  &  y <I x & z <I x & x <I @Lo |- z <E @Lo.
+expect Valid.
+checkentail y <E @Lo & z <E @Lo & x <E @Lo  &  y <I x & z <I x & x <I @Lo |- z <E @Hi.
+expect Valid.
+checkentail y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I x & x <I @Lo |- z <E @Lo.
+expect Fail.
+checkentail y <E @Lo & z <E @Lo & x <E @Hi  &  y <I x & z <I x & x <I @Lo |- z <E @Hi.
+expect Valid.

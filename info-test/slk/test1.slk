@@ -1,0 +1,16 @@
+checkentail res <E @Lo & res <I @Lo |- res <E @Lo.
+expect Valid.
+checkentail res <E @Lo & res <I @Lo |- res <E @Hi.
+expect Valid.
+checkentail res <E @Lo & res <I @Hi |- res <E @Lo.
+expect Fail.
+checkentail res <E @Lo & res <I @Hi |- res <E @Hi.
+expect Valid.
+checkentail res <E @Hi & res <I @Lo |- res <E @Lo.
+expect Fail.
+checkentail res <E @Hi & res <I @Lo |- res <E @Hi.
+expect Valid.
+checkentail res <E @Hi & res <I @Hi |- res <E @Lo.
+expect Fail.
+checkentail res <E @Hi & res <I @Hi |- res <E @Hi.
+expect Valid.

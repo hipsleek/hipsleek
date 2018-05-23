@@ -1,0 +1,16 @@
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Lo) & (u <I x & v <I x & res <I @Lo) |- res <E @Lo.
+expect Valid.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Lo) & (u <I x & v <I x & res <I @Lo) |- res <E @Hi.
+expect Valid.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Lo) & (u <I x & v <I x & res <I @Hi) |- res <E @Lo.
+expect Fail.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Lo) & (u <I x & v <I x & res <I @Hi) |- res <E @Hi.
+expect Valid.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Hi) & (u <I x & v <I x & res <I @Lo) |- res <E @Lo.
+expect Valid.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Hi) & (u <I x & v <I x & res <I @Lo) |- res <E @Hi.
+expect Valid.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Hi) & (u <I x & v <I x & res <I @Hi) |- res <E @Lo.
+expect Fail.
+checkentail (u <E @Lo & v <E @Lo & res <E u#v & x <E @Hi) & (u <I x & v <I x & res <I @Hi) |- res <E @Hi.
+expect Valid.
