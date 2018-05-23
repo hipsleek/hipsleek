@@ -20807,7 +20807,7 @@ let simpl_sec_form sfl =
   let sfl = List.filter (fun x -> not (is_trivial x)) sfl in
   let sfl = atomize sfl in
   fixpoint sfl
-  (* fixpoint (helper,sfl) *)
+(* fixpoint (helper,sfl) *)
 
 (* NOTE: Combine security formula *)
 let rec merge_sec = function
@@ -20941,14 +20941,6 @@ let simpl_eximpf_sec_form sfl =
         | ImplicitFlow (v, lbl, _) -> replace_all_impf acc v lbl
         | _                        -> x_report_error no_pos "helper : not explicit/implicit formula"
       )) curr prev
-  (* match prev with
-   * | []     -> curr
-   * | sf::sl ->
-   *   begin
-   *     match sf with
-   *     | Security (v, lbl, loc) -> helper (replace_all curr v lbl) sl
-   *     | _                      -> x_report_error no_pos "helper : not security formula"
-   *   end *)
   in
   let rec fixpoint sfl =
     let next = helper sfl sfl in
@@ -21007,7 +20999,7 @@ let simpl_eximpf_sec_form sfl =
   let sfl = List.filter (fun x -> not (is_trivial x)) sfl in
   let sfl = atomize sfl in
   fixpoint sfl
-  (* fixpoint (helper,sfl) *)
+(* fixpoint (helper,sfl) *)
 
 (* NOTE: Get ALL security formula from ALL branches *)
 let get_eximpf_sec_in_formula f =
@@ -21211,4 +21203,34 @@ let prop_eximpf_call (res_v : CP.spec_var) pos state =
   let impf = CP.mk_implicit_bform res_v sctx pos in
   let newf = add_pure_formula_to_formula impf state.es_formula in
   Ctx { state with es_formula = newf }
+
+let normalize_eximpf state =
+  let rec in_formula = function
+    | Base   f -> Base   { f with formula_base_pure   = in_mcpure f.formula_base_pure   }
+    | Exists f -> Exists { f with formula_exists_pure = in_mcpure f.formula_exists_pure }
+    | Or     f -> Or     { f with formula_or_f1 = in_formula f.formula_or_f1;
+                                  formula_or_f2 = in_formula f.formula_or_f2 }
+  and in_mcpure f =
+    match f with
+    | OnePF cf -> OnePF(in_pure cf)
+    | _        -> f
+  and in_pure f =
+    let eximpf = CP.split_conjunctions f in
+    let expf   = List.filter (fun f -> CP.is_explicit_bform f) eximpf in
+    let impf   = List.filter (fun f -> CP.is_implicit_bform f) eximpf in
+    let othf   = List.filter (fun f -> not (CP.is_implicit_bform f) && not (CP.is_explicit_bform f)) eximpf in
+    let expf   = simpl_eximpf_sec_form (List.map (fun f -> CP.get_p_formula f) expf) in
+    let impf   = simpl_eximpf_sec_form (List.map (fun f -> CP.get_p_formula f) impf) in
+    let expf   = List.map (fun x -> BForm((x,None),None)) expf in
+    let impf   = List.map (fun x -> BForm((x,None),None)) impf in
+    (* let othf   = List.map (fun f -> CP.get_p_formula f) othf in *)
+    let all_f  = expf@impf@othf in
+    let first  = List.hd all_f in
+    let pure_f = List.fold_left (fun acc x -> CP.mkAnd x acc no_pos) first (List.tl all_f) in
+    let () = print_endline ("F (0): " ^ !CP.print_formula f) in
+    let () = print_endline ("F (1): " ^ !CP.print_formula pure_f) in
+    pure_f
+  in
+  let norm_f = in_formula state.es_formula in
+  Ctx { state with es_formula = norm_f }
 (************************************)

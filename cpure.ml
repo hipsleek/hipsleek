@@ -400,16 +400,32 @@ let mk_sec_bform v lbl pos = BForm ((mk_security v lbl pos, None), None)
 let mk_explicit_flow  v lbl pos = ExplicitFlow (v, lbl, pos)
 let mk_explicit_bform v lbl pos = BForm ((mk_explicit_flow v lbl pos, None), None)
 
-let mk_implicit_flow  v lbl pos = ImplicitFlow (v, lbl, pos)
-let mk_implicit_bform v lbl pos = BForm ((mk_implicit_flow v lbl pos, None), None)
-
 let is_explicit_flow = function
   | ExplicitFlow _ -> true
   | _              -> false
+let is_explicit_bform = function
+  | BForm((ExplicitFlow _, _), _) -> true
+  | _                             -> false
+let get_explicit_flow = function
+  | BForm((ExplicitFlow (v,lbl,p), _), _) -> ExplicitFlow (v,lbl,p)
+  | _                                     -> report_error no_pos "get_explicit_flow: not explicit formula"
+
+let mk_implicit_flow  v lbl pos = ImplicitFlow (v, lbl, pos)
+let mk_implicit_bform v lbl pos = BForm ((mk_implicit_flow v lbl pos, None), None)
 
 let is_implicit_flow = function
   | ImplicitFlow _ -> true
   | _              -> false
+let is_implicit_bform = function
+  | BForm((ImplicitFlow _, _), _) -> true
+  | _                             -> false
+let get_implicit_flow = function
+  | BForm((ImplicitFlow (v,lbl,p), _), _) -> ImplicitFlow (v,lbl,p)
+  | _                                     -> report_error no_pos "get_implicit_flow: not implicit formula"
+
+let get_p_formula = function
+  | BForm((pf,_),_) -> pf
+  | _               -> report_error no_pos "get_p_formula: not BForm"
 
 let is_eq_p_formula = function
   | Eq _ -> true

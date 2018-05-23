@@ -38,15 +38,18 @@ int double_if3_fail(int x)
   requires x<?@Hi
   ensures res<?@Lo;
 {
-  dprint;
   int y=0;
   int z=0;
+  dprint;
   if(x == 0) {
+    dprint;
     y = 1;
   }
+  dprint;
   if(y == 0) {
     z = 1;
   }
+  dprint;
   return z;
 }
 
@@ -54,9 +57,12 @@ int double_if4_safe(int x)
   requires x<?@Hi
   ensures res<?@Hi;
 {
-  int y=0;
-  int z=0;
-  if(x == 0) {
+  int y,z;
+  y = 0;
+  z = 0;
+  bool b;
+  b = x == 0;
+  if(b) {
     y = 1;
   }
   if(y == 0) {
