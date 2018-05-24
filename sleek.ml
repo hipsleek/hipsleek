@@ -41,8 +41,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 (* let source_files = ref ([] : string list) *)
 
-let set_source_file arg = 
-  Globals.source_files := arg :: !Globals.source_files 
+let set_source_file arg =
+  Globals.source_files := arg :: !Globals.source_files
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -51,7 +51,7 @@ let print_version () =
   print_endline ("IT IS CURRENTLY FREE FOR NON-COMMERCIAL USE");
   print_endline ("Copyright @ PLS2 @ NUS")
 
-let process_cmd_line () = 
+let process_cmd_line () =
   if not (Perm.allow_perm ()) then Perm.disable_para();
   Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
@@ -88,7 +88,7 @@ module M = Lexer.Make(Token.Token)
 (*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
 (*       raise t) *)
 
-  let proc_one_cmd c = 
+  let proc_one_cmd c =
     match c with
     | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
@@ -130,7 +130,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeriveView ids -> process_shape_derive_view ids
     | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
     | ShapeNormalize ids -> process_shape_normalize ids
-    | DataMarkRec ids -> process_data_mark_rec ids 
+    | DataMarkRec ids -> process_data_mark_rec ids
     | PredElimHead ids -> process_pred_elim_head ids
     | PredElimTail ids -> process_pred_elim_tail ids
     | PredUnifyDisj ids -> process_pred_unify_disj ids
@@ -142,15 +142,15 @@ module M = Lexer.Make(Token.Token)
     | EqCheck (lv, if1, if2) ->
       (* let () = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
       process_eq_check lv if1 if2
-    | InferCmd (itype, ivars, iante, iconseq, etype) -> 
+    | InferCmd (itype, ivars, iante, iconseq, etype) ->
       (* None  -> look for presence of @leak
          Some true
          Some false
       *)
       (* let () = print_endline "InferCmd2" in *)
-      let change_etype x f = 
-        if f then match x with 
-          | None -> Some f 
+      let change_etype x f =
+        if f then match x with
+          | None -> Some f
           | _ -> x
         else x in
       let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
@@ -164,17 +164,18 @@ module M = Lexer.Make(Token.Token)
     | CmpCmd ccmd -> process_cmp_command ccmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | BarrierCheck bdef -> process_barrier_def bdef
-    | Time (b,s,_) -> 
-      if b then Gen.Profiling.push_time s 
+    | Time (b,s,_) ->
+      if b then Gen.Profiling.push_time s
       else Gen.Profiling.pop_time s
     | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
     | TemplSolv idl -> process_templ_solve idl
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *)
     | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
-    | EmptyCmd -> () 
+    | EmptyCmd -> ()
+    | SecurityLabelsDef _ -> ()
 
 (* TODO : This is a repetition of proc_one_cmd *)
 let proc_gen_cmd cmd = proc_one_cmd cmd
@@ -237,8 +238,8 @@ let proc_gen_cmd cmd = proc_one_cmd cmd
 
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
-    try 
-      parse source_file 
+    try
+      parse source_file
     with
     | End_of_file -> List.rev cmds
     | M.Loc.Exc_located (l,t)-> (
@@ -249,7 +250,7 @@ let parse_file (parse) (source_file : string) =
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
-  let proc_one_def c = 
+  let proc_one_def c =
     match c with
     | DataDef ddef -> process_data_def ddef
     | PredDef pdef -> process_pred_def_4_iast pdef
@@ -262,22 +263,22 @@ let parse_file (parse) (source_file : string) =
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-    | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _ 
+    | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
-    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _ 
-    | ShapeReuse _ 
-    | ShapeReuseSubs _ 
+    | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _
+    | ShapeReuse _
+    | ShapeReuseSubs _
     | ShapeExtract _ | ShapeDeclDang _ | ShapeDeclUnknown _
     | ShapeSConseq _ | ShapeSAnte _ | PredSplit _ | PredNormSeg _ | PredNormDisj _ | RelInfer _
     | TemplSolv _ | TermInfer
-    | Time _ | EmptyCmd | _ -> () 
+    | Time _ | EmptyCmd | _ -> ()
   in
   let proc_one_def c =
-    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c 
+    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c
   in
-  (* 
+  (*
      Processing lemmas so that we could add_uni_vars_to_view.
-     See examples/working/sleek/fracperm/uni_vars 
+     See examples/working/sleek/fracperm/uni_vars
      for an example of uni_vars - This is a general solution,
      not limited to fracperm only
   *)
@@ -388,8 +389,8 @@ let parse_file (parse) (source_file : string) =
   (*-------------END lemma --------------------*)
   y_tinfo_pp "sleek : end of lemma " ;
   let cviews = !cprog.C.prog_view_decls in
-  let cviews = 
-    if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews 
+  let cviews =
+    if !Globals.old_univ_vars then List.map (Cast.add_uni_vars_to_view !cprog (Lem_store.all_lemma # get_left_coercion) (*!cprog.C.prog_left_coercions*)) cviews
     else cviews in
   !cprog.C.prog_view_decls <- cviews;
   (*Long: reset unexpected_cmd = [] *)
@@ -419,6 +420,7 @@ let main () =
                 I.prog_hopred_decls = [];
                 I.prog_barrier_decls = [];
                 I.prog_test_comps = [];
+                I.prog_sec_labels = Security.empty_lattice
               } in
   (*Generate barrier data type*)
   let () = if (!Globals.perm = Globals.Dperm) then
@@ -428,7 +430,7 @@ let main () =
   in
   let () = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let () = Iast.build_exc_hierarchy true iprog in
-  let () = exlist # compute_hierarchy  in  
+  let () = exlist # compute_hierarchy  in
   (* let () = print_endline ("GenExcNum"^(Exc.string_of_exc_list (1))) in *)
   let quit = ref false in
   let parse x =
@@ -457,7 +459,7 @@ let main () =
                 Buffer.add_string buffer s;
                 let cts = Buffer.contents buffer in
                 if cts = "quit" || cts = "quit\n" then quit := true
-                else 
+                else
                   try
                     let cmd = parse cts in
                     (* let () = Slk2smt.cmds := (!Slk2smt.cmds)@[cmd] in *)
@@ -510,7 +512,7 @@ let main () =
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
 
-let sleek_prologue () = 
+let sleek_prologue () =
   let () = Globals.is_sleek_running := true in
   Globals.infer_const_obj # init
 
@@ -629,7 +631,7 @@ let _ =
         print_endline_quiet (str_res)
       else ()
     in
-    if (not !Globals.web_compile_flag) then 
+    if (not !Globals.web_compile_flag) then
       let rev_false_ctx_line_list = List.rev !Globals.false_ctx_line_list in
       print_string_quiet ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
                           (List.fold_left (fun a c-> a^" ("^(string_of_int c.VarGen.start_pos.Lexing.pos_lnum)^","^

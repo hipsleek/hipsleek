@@ -49,6 +49,7 @@ type decl =
   | Func of func_decl
   | Rel of rel_decl (* An Hoa *)
   | Hp of hp_decl
+  | SecLabels of Security.lattice
   | Axm of axiom_decl (* An Hoa *)
   | Global_var of exp_var_decl
   | Logical_var of exp_var_decl (* Globally logical vars *)
@@ -1013,8 +1014,9 @@ expect_infer:
   ]];
 
 non_empty_command:
-    [[  t=data_decl           -> DataDef t
-        | c=class_decl -> DataDef c
+    [ [ t=data_decl           -> DataDef t
+      | c=class_decl -> DataDef c
+      | l = sec_label_decl -> EmptyCmd
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t
@@ -1135,6 +1137,29 @@ data_body:
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
       | `OBRACE; `CBRACE                   -> []] ];
+
+sec_label_decl: [[
+  lbls = sec_label_decl_header; `OBRACE; lbl_relations = sec_label_decl_body; `CBRACE ->
+    let security_labels = List.map Security.Label.make lbls in
+    let label_relations = List.map (fun (l1, l2) -> (Security.Label.make l1, Security.Label.make l2)) lbl_relations in
+    Security.make_lattice security_labels label_relations
+]];
+
+sec_label_decl_header: [[
+  `LABEL_DEF_SEC; `OPAREN; lbls = LIST1 sec_label SEP `COMMA; `CPAREN -> lbls
+]];
+
+sec_label: [[
+  `LABEL_SEC l -> l
+]];
+
+sec_label_decl_body: [[
+  lbl_relations = LIST1 sec_label_relation SEP `SEMICOLON -> lbl_relations
+]];
+
+sec_label_relation: [[
+  l1 = sec_label; `LTE; l2 = sec_label -> (l1, l2)
+]];
 
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
@@ -2148,8 +2173,7 @@ slicing_label: [[ `DOLLAR -> true ]];
 exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2 ]];
 
 sec_expr: [
-  [ `HI_SEC -> P.Hi
-  | `LO_SEC -> P.Lo
+  [ l = sec_label -> P.SecLabel (Security.Label.make l)
   | lc=SELF; `LUB_SEC; cl=SELF -> P.Lub (lc, cl)
   | lc=SELF; `GLB_SEC; cl=SELF -> P.Glb (lc, cl)
   | `RES _ -> P.SecVar (res_name, Unprimed)
@@ -3339,6 +3363,7 @@ hp_decl:[[
  (*start of hip part*)
 hprogn:
   [[ t = opt_decl_list ->
+      let sec_label_defs = ref Security.default_lattice in
 		  let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
@@ -3373,6 +3398,7 @@ hprogn:
         | Ut utdef -> ut_defs # push utdef
         | Ui uidef -> ui_defs # push uidef
         | Hp hpdef -> hp_defs # push hpdef
+        | SecLabels l -> sec_label_defs := l
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
@@ -3431,6 +3457,7 @@ hprogn:
     prog_hopred_decls = !hopred_defs;
     prog_barrier_decls = !barrier_defs;
     prog_test_comps = [];
+    prog_sec_labels = !sec_label_defs
     } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
@@ -3448,6 +3475,7 @@ decl:
   |  r=ut_decl; `DOT -> Ut r
   |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
+  | l = sec_label_decl -> SecLabels l
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l

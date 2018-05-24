@@ -175,8 +175,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | UnionRel of (relation * relation)
 
 and sec_label =
-  | Hi
-  | Lo
+  | SecLabel of Security.Label.t
   | Lub of sec_label * sec_label
   | Glb of sec_label * sec_label
   | SecVar of spec_var

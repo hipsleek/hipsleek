@@ -44,6 +44,7 @@ type command =
   | UtDef of I.ut_decl
   | UiDef of I.ui_decl
   | HpDef of I.hp_decl
+  | SecurityLabelsDef of Security.lattice
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
@@ -107,7 +108,7 @@ type command =
   | EmptyCmd
 
 and print_cmd =
-  | PVar of ident 
+  | PVar of ident
   | PCmd of ident * (((ident * bool) regex_list) option)
 
 and meta_formula =
@@ -119,9 +120,9 @@ and meta_formula =
   | MetaEFormCF of CF.struc_formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
 
-and validate_result = 
+and validate_result =
   | VR_Valid
-  | VR_Fail of int (* 0 - any; -1 may; +1 must *) 
+  | VR_Fail of int (* 0 - any; -1 may; +1 must *)
   | VR_Unknown of string
   | VR_Sat
   | VR_Unsat
@@ -149,15 +150,16 @@ let var_tab : var_table_t = H.create 10240
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
-  | FuncDef  _ -> "FuncDef"  
-  | RelDef  _ -> "RelDef" 
+  | FuncDef  _ -> "FuncDef"
+  | RelDef  _ -> "RelDef"
   | TemplDef _ -> "TemplDef"
   | UtDef _ -> "UtDef"
   | UiDef _ -> "UiDef"
-  | HpDef  _ -> "HpDef"  
-  | AxiomDef  _ -> "AxiomDef"  
+  | HpDef  _ -> "HpDef"
+  | SecurityLabelsDef _ -> "SecurityLabelsDef"
+  | AxiomDef  _ -> "AxiomDef"
   | LemmaDef  _ -> "LemmaDef"
-  | LetDef  _ -> "LetDef"   
+  | LetDef  _ -> "LetDef"
   | EntailCheck _ -> "EntailCheck"
   | SatCheck _ -> "SatCheck"
   | NonDetCheck _ -> "NonDetCheck"
@@ -207,9 +209,9 @@ let string_of_command c = match c with
   | CheckNorm _ -> "check_normalize"
   | BarrierCheck _ -> "BarrierCheck"
   | InferCmd _ -> "Infer"
-  | CaptureResidue _ -> "CaptureResidue"  
-  | PrintCmd _ -> "PrintCmd"  
-  | CmpCmd _ -> "CmpCmd"  
+  | CaptureResidue _ -> "CaptureResidue"
+  | PrintCmd _ -> "PrintCmd"
+  | CmpCmd _ -> "CmpCmd"
   | Time _ -> "Time"
   | TemplSolv _ -> "TemplSolv"
   | TermInfer -> "TermInfer"
@@ -222,7 +224,7 @@ let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 let get_var (v : ident) : meta_formula = H.find var_tab v
 
 (* An Hoa : String representation of meta_formula *)
-let string_of_meta_formula (mf : meta_formula) = 
+let string_of_meta_formula (mf : meta_formula) =
   match mf with
   | MetaVar i -> i
   | MetaForm f -> "IFORM:"^Iprinter.string_of_formula f
@@ -240,12 +242,12 @@ let rec fv_meta_formula (mf: meta_formula) =
   | MetaVar i -> [(i, Unprimed)]
   | MetaForm iform -> IF.heap_fv iform
   | MetaFormCF cform -> List.map ident_of_sv (CF.fv cform)
-  | MetaFormLCF lcform -> 
+  | MetaFormLCF lcform ->
     List.map ident_of_sv (List.concat (List.map CF.fv lcform))
   | MetaEForm isf -> IF.struc_hp_fv isf
   | MetaEFormCF csf -> List.map ident_of_sv (CF.struc_fv csf)
-  | MetaCompose (idl, m1, m2) -> 
-    (List.map (fun i -> (i, Unprimed)) idl) @ 
+  | MetaCompose (idl, m1, m2) ->
+    (List.map (fun i -> (i, Unprimed)) idl) @
     (fv_meta_formula m1) @ (fv_meta_formula m2)
 
 let string_of_validation v=
@@ -271,5 +273,5 @@ let clear_var_table () = H.clear var_tab
   let lbody = get_var v in
   match lbody with
   | LetForm lf -> lf
-  | 
+  |
 *)

@@ -343,8 +343,7 @@ and string_of_p_formula pf =
   | P.ImplicitFlow (var, lbl, pos) -> string_of_var var ^ " <I " ^ string_of_sec_label lbl
 
 and string_of_sec_label = function
-  | P.Hi -> "@Hi"
-  | P.Lo -> "@Lo"
+  | P.SecLabel l -> Security.Label.to_string l
   | P.Lub (l1, l2) -> string_of_sec_label l1 ^ " # " ^ string_of_sec_label l2
   | P.Glb (l1, l2) -> string_of_sec_label l1 ^ " % " ^ string_of_sec_label l2
   | P.SecVar var -> string_of_var var

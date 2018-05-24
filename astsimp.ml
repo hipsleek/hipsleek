@@ -1767,7 +1767,9 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            (*C.old_proc_decls = cprocs;*)
            C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
            (*C.prog_left_coercions = l2r_coers;*)
-           (*C.prog_right_coercions = r2l_coers;*)} in
+           (*C.prog_right_coercions = r2l_coers;*)
+           C.prog_sec_labels = prog4.I.prog_sec_labels
+          } in
 
          let cprog1 = { cprog with
                         (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
@@ -8701,8 +8703,9 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
   | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist in (npf, Some (il,lbl,nel))
 
 and trans_sec_label tlist pos = function
-  | IP.Hi -> CP.Hi
-  | IP.Lo -> CP.Lo
+  | IP.SecLabel l -> CP.Hi
+  (* | IP.Hi -> CP.Hi
+  | IP.Lo -> CP.Lo *)
   | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
   | IP.Glb (l1, l2) -> CP.Glb (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
   | IP.SecVar var -> CP.SecVar (trans_var var tlist pos)

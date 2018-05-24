@@ -118,6 +118,6 @@ task :test_info_flow do
   end
 end
 
-rule ".mli" do |task|
-  sh "ocamlbuild -use-ocamlfind #{task.name.ext "inferred.mli"}"
+rule "inferred.mli" do |task|
+  sh "ocamlbuild -use-ocamlfind #{task.name.ext.ext "inferred.mli"}"
 end

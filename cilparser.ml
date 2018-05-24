@@ -2497,6 +2497,7 @@ and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl)
     Iast.prog_test_comps = [];
     Iast.prog_ut_decls = main_prog.Iast.prog_ut_decls @ aux_prog.Iast.prog_ut_decls;
     Iast.prog_ui_decls = main_prog.Iast.prog_ui_decls @ aux_prog.Iast.prog_ui_decls;
+    Iast.prog_sec_labels = main_prog.Iast.prog_sec_labels
   } in
   newprog
 
@@ -2613,7 +2614,8 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_coercion_decls = !coercion_decls;
     Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
     Iast.prog_hp_ids = [];
-    Iast.prog_test_comps = []
+    Iast.prog_test_comps = [];
+    Iast.prog_sec_labels = Security.empty_lattice
   } in
   let newprog = List.fold_left (fun x y -> merge_iast_prog x y) newprog !aux_progs in
   newprog

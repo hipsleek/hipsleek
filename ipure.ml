@@ -236,7 +236,7 @@ and pfv (pf: p_formula)=
   | ImplicitFlow (var, lbl, _) -> Gen.BList.remove_dups_eq (=) (var :: sec_label_fv lbl)
 
 and sec_label_fv = function
-  | Hi | Lo -> []
+  | SecLabel _ -> []
   | Lub (l1, l2) -> Gen.BList.remove_dups_eq (=) (sec_label_fv l1 @ sec_label_fv l2)
   | Glb (l1, l2) -> Gen.BList.remove_dups_eq (=) (sec_label_fv l1 @ sec_label_fv l2)
   | SecVar var -> [var]
@@ -856,7 +856,7 @@ and p_apply_one ((fr, t) as p) pf =
 
 and lbl_apply_one ((fr, t) as p) lbl =
   match lbl with
-  | Hi | Lo -> lbl
+  | SecLabel _ -> lbl
   | Lub(l1, l2) -> Lub(lbl_apply_one p l1, lbl_apply_one p l2)
   | Glb(l1, l2) -> Glb(lbl_apply_one p l1, lbl_apply_one p l2)
   | SecVar var -> SecVar (v_apply_one p var)

@@ -316,6 +316,7 @@ module Make (Token : SleekTokenS)
    ("template_solve", TEMPL_SOLVE);
    (flow, FLOW flow);
    ("par", PAR);
+   ("sec_labels", LABEL_DEF_SEC)
    (* ("skip", SKIP) *)
   ]
 }
@@ -461,6 +462,8 @@ rule tokenizer file_name = parse
   | "<?" { OP_SEC }
   | "<E" { OP_EXPLICIT_SEC }
   | "<I" { OP_IMPLICIT_SEC }
+  | "sec_labels" { LABEL_DEF_SEC }
+  | "#@" (identseq as l) { LABEL_SEC l }
   | "c#" { SEC_CONTEXT }
   | "tup2" { TUP2 } (*pair*)
   (* | "@p_ref" {PREF} *)

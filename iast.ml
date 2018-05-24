@@ -45,7 +45,8 @@ type prog_decl = {
   prog_proc_decls : proc_decl list;
   prog_barrier_decls : barrier_decl list;
   mutable prog_coercion_decls : coercion_decl_list list;
-  prog_test_comps: (ident*test_comps) list
+  prog_test_comps: (ident*test_comps) list;
+  prog_sec_labels : Security.lattice
 }
 
 and data_field_ann =
@@ -3121,6 +3122,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_coercion_decls = hd.prog_coercion_decls @  iprims.prog_coercion_decls;
       prog_barrier_decls = hd.prog_barrier_decls @ iprims.prog_barrier_decls;
       prog_test_comps = [];
+      prog_sec_labels = hd.prog_sec_labels;
     } in
     append_iprims_list new_iprims tl
 
@@ -3148,6 +3150,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_coercion_decls = [];
       prog_barrier_decls = [];
       prog_test_comps = [];
+      prog_sec_labels = Security.empty_lattice;
     }
     in new_prims
   | hd::tl -> append_iprims_list hd tl

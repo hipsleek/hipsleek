@@ -44,7 +44,8 @@ type prog_decl = {
   new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
   (*mutable prog_left_coercions : coercion_decl list;*)
   (*mutable prog_right_coercions : coercion_decl list;*)
-  prog_barrier_decls : barrier_decl list
+  prog_barrier_decls : barrier_decl list;
+  prog_sec_labels : Security.lattice
 }
 
 and prog_or_branches = (prog_decl *
@@ -596,7 +597,9 @@ let cprog = ref {
     new_proc_decls = Hashtbl.create 1; (* no need for proc *)
     (*prog_left_coercions = [];
       prog_right_coercions = [];*)
-     prog_barrier_decls = []} ;;
+     prog_barrier_decls = [];
+    prog_sec_labels = Security.empty_lattice
+  } ;;
 
 let global_prog = cprog
 (* ref (None : prog_decl option) *)

@@ -126,6 +126,7 @@ type sleek_token =
 
   | HI_SEC | LO_SEC | LUB_SEC | GLB_SEC
   | SEC_CONTEXT | OP_SEC | OP_EXPLICIT_SEC | OP_IMPLICIT_SEC
+  | LABEL_SEC of string | LABEL_DEF_SEC
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -287,6 +288,8 @@ module Token = struct
     | OP_SEC -> "<?"
     | OP_EXPLICIT_SEC -> "<E"
     | OP_IMPLICIT_SEC -> "<I"
+    | LABEL_DEF_SEC -> "sec_labels"
+    | LABEL_SEC l -> "#@" ^ l
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

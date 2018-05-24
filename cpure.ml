@@ -385,8 +385,7 @@ and infer_rel_type =  (rel_cat * formula * formula)
 (* No /\, because formula already handles that *)
 
 and sec_label =
-  | Hi
-  | Lo
+  | Hi | Lo
   | Lub of sec_label * sec_label
   | Glb of sec_label * sec_label
   | SecVar of spec_var
