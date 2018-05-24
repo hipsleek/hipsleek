@@ -16875,6 +16875,7 @@ and simpl_eximpf_form orig =
     | _                   -> prev_f
   and fixpoint f =
     let nxt = helper f f in
+    let () = print_endline ("F::: " ^ !print_formula f) in
     if nxt = f then nxt else fixpoint nxt
   in
   fixpoint orig

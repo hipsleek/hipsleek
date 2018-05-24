@@ -2300,11 +2300,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* NOTE: Explicit Flows are kept in disjunction *)
                 (* let expf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_explicit_flow y) x) eximpf_sec_form in
                  * let expf_sec_form   = CF.merge_eximpf_sec_form_list expf_sec_form in *)
+                let () = print_endline ("RES_COND: " ^ Cprinter.string_of_list_failesc_context res) in
 
                 let impf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_implicit_flow y) x) eximpf_sec_form in
                 let eq_sec_form     = List.map (fun x -> List.filter (fun y -> CP.is_eq_p_formula y) x) eximpf_sec_form in
+                let () = print_endline ("\nEQV (0)") in
+                let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
                 let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
-                let () = print_endline ("\nequiv classes") in
+                let () = print_endline ("\nEQV (1)") in
                 let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
                 (* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *)
                 let p_sctx = ref [] in
@@ -2797,6 +2800,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* move must, may flow into esc_stack *)
             if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
               (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in *)
+
+
+              (* let res =
+               *   if !Globals.eximpf && not(ret_t==Void)
+               *   then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+               *   else res
+               * in *)
+
+
               let res =
                 (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
@@ -2897,9 +2909,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         }
                       end
                   in
-                  if !Globals.eximpf && not(ret_t==Void)
-                  then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
-                  else res
+                  res
               )
             end
       end

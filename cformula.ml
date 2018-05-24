@@ -21157,7 +21157,7 @@ let equiv_values eql =
     | eq::eqr ->
       begin
         match eq with
-        | CP.Eq(CP.Var(v,_),e,_) -> helper (replace_all eql v e) eqr
+        | CP.Eq(CP.Var(v,_),e,_) -> helper (replace_all eqc v e) eqr
         | _                      -> helper eqc eqr
       end
   in
