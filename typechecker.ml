@@ -2366,11 +2366,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
              let _ = print_string_quiet (tmp1 ^ tmp2) in
              let _ = if !Globals.eximpf
                then (
-                 let impf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
-                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) impf in
+                 let eximpf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
+                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) eximpf in
                  let () = List.iter (fun x -> print_endline (
                      List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
                    )) impf in
+                 let expf = List.map (fun l -> List.filter (fun x -> CP.is_explicit_flow x) l) eximpf in
+                 let () = List.iter (fun x -> print_endline (
+                     List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
+                   )) expf in
                  ()
                )
                else ()
