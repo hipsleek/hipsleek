@@ -3150,7 +3150,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_coercion_decls = [];
       prog_barrier_decls = [];
       prog_test_comps = [];
-      prog_sec_labels = Security.empty_lattice;
+      prog_sec_labels = Security.default_lattice;
     }
     in new_prims
   | hd::tl -> append_iprims_list hd tl

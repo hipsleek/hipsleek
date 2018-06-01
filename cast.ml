@@ -598,7 +598,7 @@ let cprog = ref {
     (*prog_left_coercions = [];
       prog_right_coercions = [];*)
      prog_barrier_decls = [];
-    prog_sec_labels = Security.empty_lattice
+    prog_sec_labels = Security.default_lattice
   } ;;
 
 let global_prog = cprog

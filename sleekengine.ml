@@ -173,7 +173,7 @@ let iprog = { I.prog_include_decls =[];
               I.prog_hopred_decls = [];
               I.prog_barrier_decls = [];
               I.prog_test_comps = [];
-              I.prog_sec_labels = Security.empty_lattice
+              I.prog_sec_labels = Security.default_lattice
             }
 
 let () = Iast.set_iprog iprog

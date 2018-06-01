@@ -272,7 +272,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     prog_hopred_decls = [];
     prog_barrier_decls = [];
     prog_test_comps = [];
-    prog_sec_labels = Security.empty_lattice }
+    prog_sec_labels = Security.default_lattice }
 
 let parse_ints (file_name: string): I.prog_decl =
   let in_chnl = open_in file_name in

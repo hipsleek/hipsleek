@@ -2615,7 +2615,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
     Iast.prog_hp_ids = [];
     Iast.prog_test_comps = [];
-    Iast.prog_sec_labels = Security.empty_lattice
+    Iast.prog_sec_labels = Security.default_lattice
   } in
   let newprog = List.fold_left (fun x y -> merge_iast_prog x y) newprog !aux_progs in
   newprog
