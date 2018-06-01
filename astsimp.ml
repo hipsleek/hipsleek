@@ -1933,7 +1933,7 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* let () = Debug.info_hprint (add_str "    fields:" (pr_list (pr_pair (pr_pair string_of_typ pr_id) (pr_list pr_id)))) *)
   (*     fields no_pos in *)
   let inv_pf = match ddef.I.data_pure_inv with
-      Some f -> Some (x_add trans_pure_formula f [])  (* WN : where is type table? *)
+      Some f -> Some (x_add trans_pure_formula prog.prog_sec_labels f [])  (* WN : where is type table? *)
     | None -> None
   in
   let res = {
@@ -2526,13 +2526,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let () = Mem.check_mem_formula vdef prog.I.prog_data_decls in
         let (new_typ_mem,n_tl) = fresh_tvar n_tl in
         let (n_tl,_) = x_add gather_type_info_exp prog a.IF.mem_formula_exp n_tl new_typ_mem in
-        (n_tl,x_add trans_view_mem vdef.I.view_mem n_tl)
+        (n_tl,x_add trans_view_mem prog.prog_sec_labels vdef.I.view_mem n_tl)
       | None -> (n_tl,None)
     ) in
     y_tinfo_hp (add_str "inv" !IP.print_formula) inv;
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in
-    let inv_pf = x_add trans_pure_formula inv n_tl in
+    let inv_pf = x_add trans_pure_formula prog.prog_sec_labels inv n_tl in
     (* Thai : pf - user given invariant in core form *)
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
     let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
@@ -2679,14 +2679,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
               let svl = List.map (fun (c,c_o) ->
                   let nc = conv_id c in
                   let nc_o = map_opt (fun (e1,e2) ->
-                      let ne1 = x_add trans_pure_exp e1 n_tl in
-                      let ne2 = x_add trans_pure_exp e2 n_tl in
+                      let ne1 = x_add trans_pure_exp prog.prog_sec_labels e1 n_tl in
+                      let ne2 = x_add trans_pure_exp prog.prog_sec_labels e2 n_tl in
                       (ne1,ne2)
                     ) c_o in
                   (nc,nc_o)
                   ) idl in
               (* let svl, _, _, _ = x_add_1 Immutable.split_sv svl vdef in *)
-              let cpf = x_add trans_pure_formula pf n_tl in
+              let cpf = x_add trans_pure_formula prog.prog_sec_labels pf n_tl in
               let cpf = x_add Cpure.arith_simplify 1 cpf in
               (svl,cpf)
             ) lst in
@@ -3381,7 +3381,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let n_tl = List.map (fun (var_type, var_name) -> (var_name,{ sv_info_kind = (x_add trans_type prog var_type pos);id = fresh_int () })) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
   let n_tl = x_add gather_type_info_pure prog rdef.I.rel_formula n_tl in
-  let crf = x_add trans_pure_formula rdef.I.rel_formula n_tl in
+  let crf = x_add trans_pure_formula prog.prog_sec_labels rdef.I.rel_formula n_tl in
   let crdef = {C.rel_name = rdef.I.rel_name;
                C.rel_vars = rel_sv_vars;
                C.rel_formula = crf; }
@@ -3411,7 +3411,7 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
       Some body
     | Some bd ->
       let n_tl = x_add gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
-      Some (x_add trans_pure_exp bd (fst n_tl))
+      Some (x_add trans_pure_exp prog.prog_sec_labels bd (fst n_tl))
   in
   let c_templ = {
     C.templ_name = tdef.I.templ_name;
@@ -3499,8 +3499,8 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let n_tl = x_add gather_type_info_pure prog adef.I.axiom_hypothesis [] in
   let n_tl = x_add gather_type_info_pure prog adef.I.axiom_conclusion n_tl in
   (* Translate the hypothesis and conclusion *)
-  let chyp = x_add trans_pure_formula adef.I.axiom_hypothesis n_tl in
-  let ccln = x_add trans_pure_formula adef.I.axiom_conclusion n_tl in
+  let chyp = x_add trans_pure_formula prog.prog_sec_labels adef.I.axiom_hypothesis n_tl in
+  let ccln = x_add trans_pure_formula prog.prog_sec_labels adef.I.axiom_conclusion n_tl in
   (* let () = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
   let cadef = { C.axiom_id=adef.I.axiom_id;
                 C.axiom_hypothesis = chyp;
@@ -7503,7 +7503,7 @@ and trans_I2C_struc_formula_x ?(idpl=[]) (prog : I.prog_decl) (prepost_flag:bool
           match clist with
           | []->(tlist,[])
           | (c1,c2)::tl ->
-            let cf1 = x_add trans_pure_formula c1 tlist in
+            let cf1 = x_add trans_pure_formula prog.prog_sec_labels c1 tlist in
             let (n_tl,cf2) = x_add trans_struc_formula fvars tlist c2 in
             let f1 = x_add Cpure.arith_simplify 2 cf1 in
             let f2 = cf2 in
@@ -8049,7 +8049,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                        IF.h_formula_thread_label = pi;} ->
         let dataNode = IF.mkHeapNode (v,p) c [] 0 false SPLIT0 (Ipure.ConstAnn(Mutable)) false false false perm [] [] pi pos in
         let dataNode2, t_f, n_tl1, sv1 = linearize_heap dataNode pos tl in
-        let new_dl = x_add trans_pure_formula dl tl in
+        let new_dl = x_add trans_pure_formula prog.prog_sec_labels dl tl in
         let new_dl = x_add Cpure.arith_simplify 5 new_dl in
         let sv2, rsr2, n_tl2 = x_add linearize_formula prog rsr tlist in
         let newNode = CF.ThreadNode {
@@ -8357,7 +8357,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
       | IF.HRel (r, args, pos) ->
         let nv = trans_var_safe (r,Unprimed) HpT tl pos in
         (* Match types of arguments with relation signature *)
-        let cpargs = trans_pure_exp_list args tl in
+        let cpargs = trans_pure_exp_list prog.prog_sec_labels args tl in
         if !Globals.hrel_as_view_flag then
           let () = x_tinfo_hp (add_str "HRel(nv)" !CP.print_sv) nv no_pos in
           let () = x_tinfo_hp (add_str "HRel(cpargs)" (pr_list !CP.print_exp)) cpargs no_pos in
@@ -8418,12 +8418,12 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     (*let () = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars = newvars@new_vars in
-    let new_p = x_add trans_pure_formula p n_tl in
+    let new_p = x_add trans_pure_formula prog.prog_sec_labels p n_tl in
     let new_p = CP.join_disjunctions (new_p::new_constr) in
     let new_p = x_add Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
     (*formula_delayed*)
-    let new_dl = x_add trans_pure_formula dl tlist in
+    let new_dl = x_add trans_pure_formula prog.prog_sec_labels dl tlist in
     let new_dl = x_add Cpure.arith_simplify 5 new_dl in
     let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in
     let id_var = (match id with
@@ -8471,7 +8471,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
     let new_h, new_constr, new_vars = x_add_1 Immutable.normalize_field_ann_heap_node new_h in
     let newvars1 = newvars1@new_vars in
     let new_vp = trans_vperm_sets vp n_tl pos in
-    let new_p = x_add trans_pure_formula p n_tl in
+    let new_p = x_add trans_pure_formula prog.prog_sec_labels p n_tl in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
     let new_p = CP.conj_of_list (new_p::new_constr) pos in
     (* let () = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in *)
@@ -8560,39 +8560,39 @@ and trans_vperm_sets (vps: IVP.vperm_sets) (tlist: spec_var_type_list) pos: CVP.
   CVP.norm_vperm_sets vp
 
 
-and trans_pure_formula_x (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+and trans_pure_formula_x lattice (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   let f1 = Ipure.transform_bexp_form f0 in
   match f1 with
-  | IP.BForm (bf,lbl) -> CP.BForm (x_add trans_pure_b_formula bf tlist , lbl)
+  | IP.BForm (bf,lbl) -> CP.BForm (x_add trans_pure_b_formula lattice bf tlist , lbl)
   | IP.And (f1, f2, pos) ->
-    let pf1 = x_add trans_pure_formula f1 tlist in
-    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkAnd pf1 pf2 pos
-  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> x_add trans_pure_formula c tlist) b)
+    let pf1 = x_add trans_pure_formula lattice f1 tlist in
+    let pf2 = x_add trans_pure_formula lattice f2 tlist in CP.mkAnd pf1 pf2 pos
+  | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> x_add trans_pure_formula lattice c tlist) b)
   | IP.Or (f1, f2,lbl, pos) ->
-    let pf1 = x_add trans_pure_formula f1 tlist in
-    let pf2 = x_add trans_pure_formula f2 tlist in CP.mkOr pf1 pf2 lbl pos
-  | IP.Not (f, lbl, pos) -> let pf = x_add trans_pure_formula f tlist in CP.mkNot pf lbl pos
+    let pf1 = x_add trans_pure_formula lattice f1 tlist in
+    let pf2 = x_add trans_pure_formula lattice f2 tlist in CP.mkOr pf1 pf2 lbl pos
+  | IP.Not (f, lbl, pos) -> let pf = x_add trans_pure_formula lattice f tlist in CP.mkNot pf lbl pos
   | IP.Forall ((v, p), f, lbl, pos) ->
-    let pf = x_add trans_pure_formula f tlist in
+    let pf = x_add trans_pure_formula lattice f tlist in
     let v_type = Cpure.type_of_spec_var (x_add trans_var (v,Unprimed) tlist pos) in
     let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
   | IP.Exists ((v, p), f, lbl, pos) ->
-    let pf = x_add trans_pure_formula f tlist in
+    let pf = x_add trans_pure_formula lattice f tlist in
     let sv = trans_var (v,p) tlist pos in
     CP.mkExists [ sv ] pf lbl pos
-  | IP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (trans_sec_label tlist pos lbl, x_add trans_pure_formula f tlist, pos)
+  | IP.SecurityForm (lbl, f, pos) -> CP.SecurityForm (trans_sec_label lattice tlist pos lbl, x_add trans_pure_formula lattice f tlist, pos)
 
-and trans_pure_formula (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
+and trans_pure_formula lattice (f0 : IP.formula) (tlist:spec_var_type_list) : CP.formula =
   let pr_f = !IP.print_formula in
   let pr_tlist = string_of_tlist in
   let pr_out = !CP.print_formula in
-  (* Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out *) trans_pure_formula_x f0 tlist
+  (* Debug.no_2 "trans_pure_formula" pr_f pr_tlist pr_out *) trans_pure_formula_x lattice f0 tlist
 
-and trans_pure_b_formula (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
-  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b tlist) b0
+and trans_pure_b_formula lattice (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
+  Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x lattice b tlist) b0
 
-and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
+and trans_pure_b_formula_x lattice (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b_formula =
   let (pf, sl) = b0 in
   let npf =  let rec helper pf =
                match pf with
@@ -8603,53 +8603,53 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                | IP.BConst (b, pos) -> CP.BConst (b, pos)
                | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
                | IP.LexVar (t_ann, ls1, ls2, pos) ->
-                 let cle = List.map (fun e -> x_add trans_pure_exp e tlist) ls1 in
-                 let clt = List.map (fun e -> x_add trans_pure_exp e tlist) ls2 in
+                 let cle = List.map (fun e -> x_add trans_pure_exp lattice e tlist) ls1 in
+                 let clt = List.map (fun e -> x_add trans_pure_exp lattice e tlist) ls2 in
                  CP.LexVar {
-                   CP.lex_ann = trans_term_ann t_ann tlist;
+                   CP.lex_ann = trans_term_ann lattice t_ann tlist;
                    CP.lex_exp = cle;
                    CP.lex_fid = "";
                    CP.lex_tmp = clt;
                    CP.lex_loc = pos; }
-               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann cond tlist, pos)
+               | IP.ImmRel (r, cond, pos) -> CP.ImmRel(helper r, trans_imm_ann lattice cond tlist, pos)
                | IP.Lt (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLt pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.mkLt pe1 pe2 pos
                | IP.Lte (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkLte pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.mkLte pe1 pe2 pos
                | IP.SubAnn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.SubAnn(pe1,pe2,pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.SubAnn(pe1,pe2,pos)
                | IP.Gt (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGt pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.mkGt pe1 pe2 pos
                | IP.Gte (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkGte pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.mkGte pe1 pe2 pos
                | IP.Eq (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in
                  (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
                | IP.Neq (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.mkNeq pe1 pe2 pos
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.mkNeq pe1 pe2 pos
                | IP.EqMax (e1, e2, e3, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
-                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in
+                 let pe3 = x_add trans_pure_exp lattice e3 tlist in CP.EqMax (pe1, pe2, pe3, pos)
                | IP.EqMin (e1, e2, e3, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in
-                 let pe3 = x_add trans_pure_exp e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in
+                 let pe3 = x_add trans_pure_exp lattice e3 tlist in CP.EqMin (pe1, pe2, pe3, pos)
                | IP.BagIn ((v, p), e, pos) ->
-                 let pe = x_add trans_pure_exp e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
+                 let pe = x_add trans_pure_exp lattice e tlist in CP.BagIn ((trans_var (v,p) tlist pos), pe, pos)
                | IP.BagNotIn ((v, p), e, pos) ->
-                 let pe = x_add trans_pure_exp e tlist in
+                 let pe = x_add trans_pure_exp lattice e tlist in
                  CP.BagNotIn ((trans_var (v,p) tlist pos), pe, pos)
                | IP.BagSub (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.BagSub (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.BagSub (pe1, pe2, pos)
                | IP.BagMax ((v1, p1), (v2, p2), pos) ->
                  CP.BagMax (CP.SpecVar (C.int_type, v1, p1),CP.SpecVar (C.bag_type, v2, p2), pos)
                | IP.BagMin ((v1, p1), (v2, p2), pos) ->
@@ -8661,21 +8661,21 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                (*       let ls1 = List.map func ls in                         *)
                (*       CP.VarPerm (ct,ls1,pos)                               *)
                | IP.ListIn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListIn (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.ListIn (pe1, pe2, pos)
                | IP.ListNotIn (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListNotIn (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.ListNotIn (pe1, pe2, pos)
                | IP.ListAllN (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListAllN (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.ListAllN (pe1, pe2, pos)
                | IP.ListPerm (e1, e2, pos) ->
-                 let pe1 = x_add trans_pure_exp e1 tlist in
-                 let pe2 = x_add trans_pure_exp e2 tlist in CP.ListPerm (pe1, pe2, pos)
+                 let pe1 = x_add trans_pure_exp lattice e1 tlist in
+                 let pe2 = x_add trans_pure_exp lattice e2 tlist in CP.ListPerm (pe1, pe2, pos)
                | IP.RelForm (r, args, pos) ->
                  let nv = trans_var_safe (r,Unprimed) (RelT[]) tlist pos in
                  (* Match types of arguments with relation signature *)
-                 let cpargs = x_add trans_pure_exp_list args tlist in
+                 let cpargs = x_add trans_pure_exp_list lattice args tlist in
                  CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
                | IP.XPure ({IP.xpure_view_node = vn ;
                             IP.xpure_view_name = r;
@@ -8690,27 +8690,29 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_pos = pos
                           }
                | IP.Security (var, lbl, pos) ->
-                  CP.Security (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
+                  CP.Security (trans_var var tlist pos, trans_sec_label lattice tlist pos lbl, pos)
                | IP.ExplicitFlow (var, lbl, pos) ->
-                  CP.ExplicitFlow (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
+                  CP.ExplicitFlow (trans_var var tlist pos, trans_sec_label lattice tlist pos lbl, pos)
                | IP.ImplicitFlow (var, lbl, pos) ->
-                  CP.ImplicitFlow (trans_var var tlist pos, trans_sec_label tlist pos lbl, pos)
+                  CP.ImplicitFlow (trans_var var tlist pos, trans_sec_label lattice tlist pos lbl, pos)
 
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
   | None -> (npf, None)
-  | Some (il,lbl,el) -> let nel = trans_pure_exp_list el tlist in (npf, Some (il,lbl,nel))
+  | Some (il,lbl,el) -> let nel = trans_pure_exp_list lattice el tlist in (npf, Some (il,lbl,nel))
 
-and trans_sec_label tlist pos = function
-  | IP.SecLabel l -> CP.Hi
-  (* | IP.Hi -> CP.Hi
-  | IP.Lo -> CP.Lo *)
-  | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
-  | IP.Glb (l1, l2) -> CP.Glb (trans_sec_label tlist pos l1, trans_sec_label tlist pos l2)
+and trans_sec_label lattice tlist pos = function
+  | IP.SecLabel l ->
+      if Security.is_valid_security_label lattice l then
+        CP.SecLabel l
+      else
+        report_error pos (Security.Label.to_string l ^ " is not a valid security label")
+  | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label lattice tlist pos l1, trans_sec_label lattice tlist pos l2)
+  | IP.Glb (l1, l2) -> CP.Glb (trans_sec_label lattice tlist pos l1, trans_sec_label lattice tlist pos l2)
   | IP.SecVar var -> CP.SecVar (trans_var var tlist pos)
 
-and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
+and trans_term_ann lattice (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   let trans_term_fail f = match f with
     | IP.TermErr_May -> CP.TermErr_May
     | IP.TermErr_Must -> CP.TermErr_Must in
@@ -8719,8 +8721,8 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
     CP.tu_sid = uid.IP.tu_sid;
     CP.tu_fname = uid.IP.tu_fname;
     CP.tu_call_num = 0;
-    CP.tu_args = List.map (fun e -> x_add trans_pure_exp e tlist) uid.IP.tu_args;
-    CP.tu_cond = x_add trans_pure_formula uid.IP.tu_cond tlist;
+    CP.tu_args = List.map (fun e -> x_add trans_pure_exp lattice e tlist) uid.IP.tu_args;
+    CP.tu_cond = x_add trans_pure_formula lattice uid.IP.tu_cond tlist;
     CP.tu_icond = CP.mkTrue no_pos;
     CP.tu_sol = None;
     CP.tu_pos = uid.IP.tu_pos; } in
@@ -8732,21 +8734,21 @@ and trans_term_ann (ann: IP.term_ann) (tlist:spec_var_type_list): CP.term_ann =
   | IP.TermR uid -> CP.TermR (trans_term_id uid tlist)
   | IP.Fail f -> CP.Fail (trans_term_fail f)
 
-and trans_imm_ann (ann: IP.imm_ann) (tlist:spec_var_type_list): CP.imm_ann =
+and trans_imm_ann lattice (ann: IP.imm_ann) (tlist:spec_var_type_list): CP.imm_ann =
   let helper p_f =
-    let (p,_) = x_add trans_pure_b_formula (p_f, None) tlist in
+    let (p,_) = x_add trans_pure_b_formula lattice (p_f, None) tlist in
     p in
   match ann with
   | IP.PreImm  uid -> CP.PreImm (helper uid)
   | IP.PostImm uid -> CP.PostImm (helper uid)
 
-and trans_pure_exp (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
+and trans_pure_exp lattice (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   Debug.no_1 "trans_pure_exp"
     (Iprinter.string_of_formula_exp)
     (Cprinter.string_of_formula_exp)
-    (fun e -> trans_pure_exp_x e tlist) e0
+    (fun e -> trans_pure_exp_x lattice e tlist) e0
 
-and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
+and trans_pure_exp_x lattice (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
   match e0 with
   | IP.Null pos -> CP.Null pos
   | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
@@ -8758,7 +8760,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
        let pa = trans_var va tlist posa in
        CP.Bptriple ((pc,pt,pa),pos)
      | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
-  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist), pos)
+  | IP.Tup2 ((e1, e2), pos) -> CP.Tup2 ((trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist), pos)
   | IP.AConst(a,pos) -> CP.AConst(a,pos)
   | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
   | IP.NegInfConst(a,pos) -> CP.NegInfConst(a,pos)
@@ -8766,29 +8768,29 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     CP.Var ((trans_var (v,p) tlist pos),pos)
   | IP.Level ((v, p), pos) ->
     CP.Level ((trans_var (v,p) tlist pos),pos)
-  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x e tlist
+  | IP.Ann_Exp (e, t, pos) -> trans_pure_exp_x lattice e tlist
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.FConst (c, pos) -> CP.FConst (c, pos)
-  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp_x e1 tlist, pos)
-  | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist tlist, pos)
-  | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list elist tlist, pos)
-  | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list elist tlist, pos)
-  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist tlist, pos)
-  | IP.ListAppend (elist, pos) -> CP.ListAppend (trans_pure_exp_list elist tlist, pos)
-  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp_x e1 tlist, trans_pure_exp_x e2 tlist, pos)
-  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp_x e tlist, pos)
-  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x e tlist, pos)
-  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x e tlist, pos)
-  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x e tlist, pos)
+  | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.Subtract (e1, e2, pos) -> CP.Subtract (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.TypeCast (ty, e1, pos) -> CP.TypeCast (ty, trans_pure_exp_x lattice e1 tlist, pos)
+  | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list lattice elist tlist, pos)
+  | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list lattice elist tlist, pos)
+  | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list lattice elist tlist, pos)
+  | IP.BagDiff (e1, e2, pos) -> CP.BagDiff (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.List (elist, pos) -> CP.List (trans_pure_exp_list lattice elist tlist, pos)
+  | IP.ListAppend (elist, pos) -> CP.ListAppend (trans_pure_exp_list lattice elist tlist, pos)
+  | IP.ListCons (e1, e2, pos) -> CP.ListCons (trans_pure_exp_x lattice e1 tlist, trans_pure_exp_x lattice e2 tlist, pos)
+  | IP.ListHead (e, pos) -> CP.ListHead (trans_pure_exp_x lattice e tlist, pos)
+  | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp_x lattice e tlist, pos)
+  | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp_x lattice e tlist, pos)
+  | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp_x lattice e tlist, pos)
   | IP.Func (id, es, pos) ->
-    let es = List.map (fun e -> trans_pure_exp_x e tlist) es in
+    let es = List.map (fun e -> trans_pure_exp_x lattice e tlist) es in
     CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
   | IP.Template t ->
     let pos = t.IP.templ_pos in
@@ -8797,7 +8799,7 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
     let tparams = tdef.C.templ_params in
     let tbody = tdef.C.templ_body in
 
-    let templ_args = List.map (fun a -> trans_pure_exp_x a tlist) t.IP.templ_args in
+    let templ_args = List.map (fun a -> trans_pure_exp_x lattice a tlist) t.IP.templ_args in
     let sst = List.combine tparams templ_args in
     let templ_unks, templ_body = match tbody with
       | Some cb ->
@@ -8814,19 +8816,19 @@ and trans_pure_exp_x (e0 : IP.exp) (tlist:spec_var_type_list) : CP.exp =
       CP.templ_body = templ_body;
       CP.templ_pos = pos; }
   | IP.ArrayAt ((a, p), ind, pos) ->
-    let cpind = List.map (fun i -> trans_pure_exp_x i tlist) ind in
+    let cpind = List.map (fun i -> trans_pure_exp_x lattice i tlist) ind in
     let dim = List.length ind in (* currently only support int type array *)
     CP.ArrayAt (CP.SpecVar ((Array (C.int_type, dim)), a, p), cpind, pos)
   | IP.BExpr f ->
       (*report_error no_pos "trans_pure_exp BExpr"*)
-      BExpr (trans_pure_formula f tlist)
+      BExpr (trans_pure_formula lattice f tlist)
 (* let nf1 = IP.transform_bexp f1 in *)
 (* BExpr (trans_pure_formula nf1 tlist) *)
 
-and trans_pure_exp_list (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
+and trans_pure_exp_list lattice (elist : IP.exp list) (tlist:spec_var_type_list) : CP.exp list =
   match elist with
   | [] -> []
-  | e :: rest -> (x_add trans_pure_exp e tlist) :: (trans_pure_exp_list rest tlist)
+  | e :: rest -> (x_add trans_pure_exp lattice e tlist) :: (trans_pure_exp_list lattice rest tlist)
 
 
 (*MERGE CHECK*)
@@ -11266,11 +11268,11 @@ and trans_bdecl prog bd =
 
 and trans_field_layout (iann : IP.ann list) : CP.ann list = List.map Immutable.iformula_ann_to_cformula_ann iann
 
-and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula =
-  let mem_exp = x_add trans_pure_exp imem.IF.mem_formula_exp tlist in
+and trans_mem_formula lattice (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.mem_perm_formula =
+  let mem_exp = x_add trans_pure_exp lattice imem.IF.mem_formula_exp tlist in
   let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
   let helpl2 = List.map trans_field_layout helpl2 in
-  let guards = List.map (fun c -> x_add trans_pure_formula c tlist) imem.IF.mem_formula_guards in
+  let guards = List.map (fun c -> x_add trans_pure_formula lattice c tlist) imem.IF.mem_formula_guards in
   let field_values = List.map (fun c -> (fst c),
                                         (List.map (fun a -> match a with
                                              | IP.Var ((ve, pe), pos_e) -> CP.Var(trans_var_safe (ve, pe) UNK tlist pos_e,pos_e)
@@ -11284,9 +11286,9 @@ and trans_mem_formula (imem : IF.mem_formula) (tlist:spec_var_type_list) : CF.me
    CF.mem_formula_field_layout =  meml;
    CF.mem_formula_guards = guards}
 
-and trans_view_mem (vmem : IF.mem_formula option) (tlist:spec_var_type_list) : CF.mem_perm_formula option =
+and trans_view_mem lattice (vmem : IF.mem_formula option) (tlist:spec_var_type_list) : CF.mem_perm_formula option =
   match vmem with
-  | Some a -> Some(trans_mem_formula a tlist)
+  | Some a -> Some(trans_mem_formula lattice a tlist)
   | None -> None
 
 and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) (pos: loc) =

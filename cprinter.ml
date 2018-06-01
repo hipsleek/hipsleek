@@ -711,8 +711,7 @@ let smart_string_of_spec_var x =
     else string_of_spec_var x
 
 let rec string_of_sec_label = function
-  | CP.Hi -> "Hi"
-  | CP.Lo -> "Lo"
+  | CP.SecLabel l -> Security.Label.to_string l
   | CP.Lub (l1, l2) -> string_of_sec_label l1 ^ " # " ^ string_of_sec_label l2
   | CP.Glb (l1, l2) -> string_of_sec_label l1 ^ " % " ^ string_of_sec_label l2
   | CP.SecVar var -> string_of_spec_var var

@@ -20626,6 +20626,9 @@ let normalize_struc nb b =
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
 
 (* Common IFA Functions *)
+let sec_label_bottom lattice = CP.sec_label @@ Security.get_bottom lattice
+let sec_label_top lattice = CP.sec_label @@ Security.get_top lattice
+
 (* NOTE: Security Context Utilities *)
 let elevate_sctx v state =
   let secv = CP.SecVar (CP.to_primed (CP.mk_spec_var v)) in
@@ -20655,12 +20658,12 @@ let subst_sctx (fr:CP.spec_var list) (t:CP.spec_var list) state =
 
 (* Information Flow Analysis *)
 (* NOTE: Build Security Context *)
-let build_sec_ctx sctx =
+let build_sec_ctx lattice sctx =
   let rec helper sl =
     match sl with
-    | []    -> CP.Lo
+    | []    -> CP.SecLabel (Security.get_bottom lattice)
     | l::[] -> l
-    | l::sr -> CP.lub_op l (helper sr)
+    | l::sr -> CP.lub_op lattice l (helper sr)
   in
   helper sctx
 
@@ -20736,12 +20739,12 @@ let replace_sec_in_estate sfl state =
  *   in
  *   fixpoint sfl *)
 
-let simpl_sec_form sfl =
+let simpl_sec_form lattice sfl =
   let rec replace_lbl l_old v lbl =
     match l_old with
-    | Hi | Lo    -> l_old
-    | Lub(l1,l2) -> CP.lub_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
-    | Glb(l1,l2) -> CP.glb_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | SecLabel _ -> l_old
+    | Lub(l1,l2) -> CP.lub_op lattice (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | Glb(l1,l2) -> CP.glb_op lattice (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
     | SecVar sv  -> if eq_spec_var v sv then lbl else l_old
   in
   let replace_one sf v lbl =
@@ -20795,7 +20798,7 @@ let simpl_sec_form sfl =
             let srl = List.filter (fun x -> not (is_same v x)) sr in
             let glb = List.fold_left (fun acc x -> (
                   match x with
-                  | Security(_,l,_) -> CP.glb_op acc l
+                  | Security(_,l,_) -> CP.glb_op lattice acc l
                   | _               -> x_report_error no_pos "helper : not security formula"
                 )
               ) lbl svl in
@@ -20810,29 +20813,29 @@ let simpl_sec_form sfl =
 (* fixpoint (helper,sfl) *)
 
 (* NOTE: Combine security formula *)
-let rec merge_sec = function
+let rec merge_sec lattice = function
   | l, [] | [], l  -> l (* ADI TODO: to Hi *)
   | sf1::sr1, sf2::sr2 ->
     if CP.is_eq_sec_var sf1 sf2
-    then (sec_lub sf1 sf2)::(merge_sec (sr1, sr2))
+    then (sec_lub lattice sf1 sf2)::(merge_sec lattice (sr1, sr2))
     else if is_less_sec_var sf1 sf2
     (* NOTE: alternative is to use sf1 & sf2 *)
-    then (* (CP.to_sec_hi sf1) *) sf1::(merge_sec (sr1, sf2::sr2))
-    else (* (CP.to_sec_hi sf2) *) sf2::(merge_sec (sf1::sr1, sr2))
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_sec lattice (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_sec lattice (sf1::sr1, sr2))
 
 let rec halve = function
   | [] | [_] as t1 -> t1, []
   | h::t           -> let t1,t2 = halve t in h::t2, t1
 
-let rec merge_sec_form = function
+let rec merge_sec_form lattice = function
   | [] | [_] as l -> l
-  | l             -> let l1,l2 = halve l in merge_sec(merge_sec_form l1, merge_sec_form l2)
+  | l             -> let l1,l2 = halve l in merge_sec lattice (merge_sec_form lattice l1, merge_sec_form lattice l2)
 
-let merge_sec_form_list sfll =
+let merge_sec_form_list lattice sfll =
   let rec helper sfll msf =
     match sfll with
     | []       -> msf
-    | sfl::sfr -> helper sfr (merge_sec (merge_sec_form (simpl_sec_form sfl), merge_sec_form msf))
+    | sfl::sfr -> helper sfr (merge_sec lattice (merge_sec_form lattice (simpl_sec_form lattice sfl), merge_sec_form lattice msf))
   in
   match sfll with
   | []       -> []
@@ -20849,15 +20852,15 @@ let base_sec_bounds vars pos =
   List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) bound_eqns
 
 (* NOTE: Propagation of information flow *)
-let prop_const (res_v : CP.spec_var) pos state =
-  let sctx = (build_sec_ctx state.es_security_context) in
+let prop_const lattice (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx lattice state.es_security_context) in
   let secf = CP.mk_sec_bform res_v sctx pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
 
-let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
-  let sctx = (build_sec_ctx state.es_security_context) in
-  let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(CP.to_primed v)) sctx) pos in
+let prop_var lattice (res_v : CP.spec_var) (v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx lattice state.es_security_context) in
+  let secf = CP.mk_sec_bform res_v (CP.lub_op lattice (CP.SecVar(CP.to_primed v)) sctx) pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
 (*****************************)
@@ -20910,12 +20913,12 @@ let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
  *   in
  *   fixpoint sfl *)
 
-let simpl_eximpf_sec_form sfl =
+let simpl_eximpf_sec_form lattice sfl =
   let rec replace_lbl l_old v lbl =
     match l_old with
-    | Hi | Lo    -> l_old
-    | Lub(l1,l2) -> CP.lub_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
-    | Glb(l1,l2) -> CP.glb_op (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | SecLabel _ -> l_old
+    | Lub(l1,l2) -> CP.lub_op lattice (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
+    | Glb(l1,l2) -> CP.glb_op lattice (replace_lbl l1 v lbl) (replace_lbl l2 v lbl)
     | SecVar sv  -> if eq_spec_var v sv then lbl else l_old
   in
 
@@ -20975,7 +20978,7 @@ let simpl_eximpf_sec_form sfl =
             let srl = List.filter (fun x -> not (is_same_expf v x)) sr in
             let glb = List.fold_left (fun acc x -> (
                   match x with
-                  | ExplicitFlow(_,l,_) -> CP.glb_op acc l
+                  | ExplicitFlow(_,l,_) -> CP.glb_op lattice acc l
                   | _                   -> x_report_error no_pos "helper : not explicit formula"
                 )
               ) lbl svl in
@@ -20987,7 +20990,7 @@ let simpl_eximpf_sec_form sfl =
             let srl = List.filter (fun x -> not (is_same_impf v x)) sr in
             let glb = List.fold_left (fun acc x -> (
                   match x with
-                  | ImplicitFlow(_,l,_) -> CP.glb_op acc l
+                  | ImplicitFlow(_,l,_) -> CP.glb_op lattice acc l
                   | _                   -> x_report_error no_pos "helper : not implicit formula"
                 )
               ) lbl svl in
@@ -21041,27 +21044,30 @@ let replace_eximpf_sec_in_estate sfl state =
   ctx
 
 (* NOTE: Combine security formula *)
-let rec merge_eximpf_sec = function
+let rec merge_eximpf_sec lattice = function
   | l, [] | [], l  -> l (* ADI TODO: to Hi *)
   | sf1::sr1, sf2::sr2 ->
     if CP.is_eq_eximpf_sec_var sf1 sf2
-    then (sec_lub sf1 sf2)::(merge_eximpf_sec (sr1, sr2))
+    then (sec_lub lattice sf1 sf2)::(merge_eximpf_sec lattice (sr1, sr2))
     else if is_less_eximpf_sec_var sf1 sf2
     (* NOTE: alternative is to use to_hi from sf1 & sf2 *)
-    then (* (CP.to_sec_hi sf1) *) sf1::(merge_eximpf_sec (sr1, sf2::sr2))
-    else (* (CP.to_sec_hi sf2) *) sf2::(merge_eximpf_sec (sf1::sr1, sr2))
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_eximpf_sec lattice (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_eximpf_sec lattice (sf1::sr1, sr2))
 
-let rec merge_eximpf_sec_form = function
+let rec merge_eximpf_sec_form lattice = function
   | [] | [_] as l -> l
-  | l             -> let l1,l2 = halve l in merge_eximpf_sec (merge_eximpf_sec_form l1,
-                                                              merge_eximpf_sec_form l2)
+  | l             -> let l1,l2 = halve l in merge_eximpf_sec lattice (merge_eximpf_sec_form lattice l1,
+                                                                      merge_eximpf_sec_form lattice l2)
 
-let merge_eximpf_sec_form_list sfll =
+let merge_eximpf_sec_form_list lattice sfll =
   let rec helper sfll msf =
     match sfll with
     | []       -> msf
-    | sfl::sfr -> helper sfr (merge_eximpf_sec (merge_eximpf_sec_form (simpl_eximpf_sec_form sfl),
-                                                merge_eximpf_sec_form msf))
+    | sfl::sfr ->
+        helper
+          sfr
+          (merge_eximpf_sec lattice (merge_eximpf_sec_form lattice (simpl_eximpf_sec_form lattice sfl),
+                                     merge_eximpf_sec_form lattice msf))
   in
   match sfll with
   | []       -> []
@@ -21095,31 +21101,31 @@ let is_equivalent_value eqvl var =
     res
   )
 
-let rec merge_implicit_sec eqvl p_sctx = function
+let rec merge_implicit_sec lattice eqvl p_sctx = function
   | l, [] | [], l  -> l (* ADI TODO: to Hi *)
   | sf1::sr1, sf2::sr2 ->
     if CP.is_eq_eximpf_sec_var sf1 sf2
     then (
       let sv = CP.get_spec_var_in_sec sf1 in
-      let lb = CP.lub_op (CP.get_sec_label_in_sec sf1) (CP.get_sec_label_in_sec sf2) in
-      let rb = build_sec_ctx p_sctx (* CP.Glb(lb, build_sec_ctx p_sctx) *) in
+      let lb = CP.lub_op lattice (CP.get_sec_label_in_sec sf1) (CP.get_sec_label_in_sec sf2) in
+      let rb = build_sec_ctx lattice p_sctx (* CP.Glb(lb, build_sec_ctx p_sctx) *) in
       let () = print_endline (!print_spec_var sv ^ " == " ^ string_of_bool (is_equivalent_value eqvl sv)) in
       if is_equivalent_value eqvl sv
-      then (CP.mk_implicit_flow sv rb no_pos)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
-      else (sec_lub sf1 sf2)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
+      then (CP.mk_implicit_flow sv rb no_pos)::(merge_implicit_sec lattice eqvl p_sctx (sr1, sr2))
+      else (sec_lub lattice sf1 sf2)::(merge_implicit_sec lattice eqvl p_sctx (sr1, sr2))
     )
     else if is_less_eximpf_sec_var sf1 sf2
     (* NOTE: alternative is to use to_hi from sf1 & sf2 *)
-    then (* (CP.to_sec_hi sf1) *) sf1::(merge_implicit_sec eqvl p_sctx (sr1, sf2::sr2))
-    else (* (CP.to_sec_hi sf2) *) sf2::(merge_implicit_sec eqvl p_sctx (sf1::sr1, sr2))
+    then (* (CP.to_sec_hi sf1) *) sf1::(merge_implicit_sec lattice eqvl p_sctx (sr1, sf2::sr2))
+    else (* (CP.to_sec_hi sf2) *) sf2::(merge_implicit_sec lattice eqvl p_sctx (sf1::sr1, sr2))
 
-let rec merge_implicit_sec_form eqvl p_sctx = function
+let rec merge_implicit_sec_form lattice eqvl p_sctx = function
   | [] | [_] as l -> l
   | l             -> let l1,l2 = halve l in
-    merge_implicit_sec eqvl p_sctx (merge_implicit_sec_form eqvl p_sctx l1,
-                                    merge_implicit_sec_form eqvl p_sctx l2)
+    merge_implicit_sec lattice eqvl p_sctx (merge_implicit_sec_form lattice eqvl p_sctx l1,
+                                            merge_implicit_sec_form lattice eqvl p_sctx l2)
 
-let merge_implicit_sec_form_list eqvl p_sctx sfll =
+let merge_implicit_sec_form_list lattice eqvl p_sctx sfll =
   (*
      NOTE: eqvl contains all equivalent values from all branches
            p_sctx is the previous security context
@@ -21129,10 +21135,10 @@ let merge_implicit_sec_form_list eqvl p_sctx sfll =
   let rec helper sfll msf =
     match sfll with
     | []       -> msf
-    | sfl::sfr -> helper sfr (merge_implicit_sec eqvl p_sctx
-                                (merge_implicit_sec_form eqvl p_sctx
-                                   (simpl_eximpf_sec_form sfl),
-                                 merge_implicit_sec_form eqvl p_sctx msf))
+    | sfl::sfr -> helper sfr (merge_implicit_sec lattice eqvl p_sctx
+                                (merge_implicit_sec_form lattice eqvl p_sctx
+                                   (simpl_eximpf_sec_form lattice sfl),
+                                 merge_implicit_sec_form lattice eqvl p_sctx msf))
   in
   match sfll with
   | []       -> []
@@ -21168,43 +21174,43 @@ let equiv_values eql =
   fixpoint eql
 
 (* NOTE: Initial Bound *)
-let base_eximpf_sec_bounds vars pos =
+let base_eximpf_sec_bounds lattice vars pos =
   let make_explicit_eqn v =
     let sec_v = (* CP.sec_spec_var *) v in
     CP.mk_explicit_bform (CP.to_primed sec_v) (CP.sec_var @@ CP.to_unprimed sec_v) pos
   in
   let make_implicit_eqn v =
     let sec_v = (* CP.sec_spec_var *) v in
-    CP.mk_implicit_bform (CP.to_primed sec_v) CP.Lo pos
+    CP.mk_implicit_bform (CP.to_primed sec_v) (sec_label_bottom lattice) pos
   in
   let expf_eqns = List.map make_explicit_eqn vars in
   let impf_eqns = List.map make_implicit_eqn vars in
   List.fold_left (fun f_acc f -> CP.mkAnd f_acc f pos) (CP.mkTrue pos) (expf_eqns@impf_eqns)
 
 (* NOTE: Propagation Rule *)
-let prop_eximpf_const (res_v : CP.spec_var) pos state =
-  let sctx = (build_sec_ctx state.es_security_context) in
+let prop_eximpf_const lattice (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx lattice state.es_security_context) in
   let impf = CP.mk_implicit_bform res_v sctx  pos in
-  let expf = CP.mk_explicit_bform res_v CP.Lo pos in
+  let expf = CP.mk_explicit_bform res_v (sec_label_bottom lattice) pos in
   let secf = CP.mkAnd impf expf pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
 
-let prop_eximpf_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
-  let sctx = (build_sec_ctx state.es_security_context) in
+let prop_eximpf_var lattice (res_v : CP.spec_var) (v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx lattice state.es_security_context) in
   let expf = CP.mk_explicit_bform res_v (CP.SecVar(CP.to_primed v)) pos in
   let impf = CP.mk_implicit_bform res_v sctx pos in
   let secf = CP.mkAnd expf impf pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
 
-let prop_eximpf_call (res_v : CP.spec_var) pos state =
-  let sctx = (build_sec_ctx state.es_security_context) in
+let prop_eximpf_call lattice (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx lattice state.es_security_context) in
   let impf = CP.mk_implicit_bform res_v sctx pos in
   let newf = add_pure_formula_to_formula impf state.es_formula in
   Ctx { state with es_formula = newf }
 
-let normalize_eximpf state =
+let normalize_eximpf lattice state =
   let rec in_formula = function
     | Base   f -> Base   { f with formula_base_pure   = in_mcpure f.formula_base_pure   }
     | Exists f -> Exists { f with formula_exists_pure = in_mcpure f.formula_exists_pure }
@@ -21219,8 +21225,8 @@ let normalize_eximpf state =
     let expf   = List.filter (fun f -> CP.is_explicit_bform f) eximpf in
     let impf   = List.filter (fun f -> CP.is_implicit_bform f) eximpf in
     let othf   = List.filter (fun f -> not (CP.is_implicit_bform f) && not (CP.is_explicit_bform f)) eximpf in
-    let expf   = simpl_eximpf_sec_form (List.map (fun f -> CP.get_p_formula f) expf) in
-    let impf   = simpl_eximpf_sec_form (List.map (fun f -> CP.get_p_formula f) impf) in
+    let expf   = simpl_eximpf_sec_form lattice (List.map (fun f -> CP.get_p_formula f) expf) in
+    let impf   = simpl_eximpf_sec_form lattice (List.map (fun f -> CP.get_p_formula f) impf) in
     let expf   = List.map (fun x -> BForm((x,None),None)) expf in
     let impf   = List.map (fun x -> BForm((x,None),None)) impf in
     (* let othf   = List.map (fun f -> CP.get_p_formula f) othf in *)

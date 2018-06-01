@@ -1854,9 +1854,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let f = CF.formula_of_pure_N tmp2 pos in
 
           let ctx = if !Globals.ifa (* Information Flow Analysis *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_const res_v pos) ctx
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_const prog.prog_sec_labels res_v pos) ctx
             else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const res_v pos) ctx
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const prog.prog_sec_labels res_v pos) ctx
             else ctx
           in
           (*****************************)
@@ -2285,9 +2285,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let sec_form = CF.get_sec_in_list_failesc_ctx res in
                 let one = List.hd sec_form in
                 let () = print_endline ("ONE (0): " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" one) in
-                let one = CF.simpl_sec_form one in
+                let one = CF.simpl_sec_form prog.prog_sec_labels one in
                 let () = print_endline ("ONE (1): " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" one) in
-                let sec_form = CF.merge_sec_form_list sec_form in
+                let sec_form = CF.merge_sec_form_list prog.prog_sec_labels sec_form in
                 let p_sctx = ref [] in
                 let temp_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
                 CF.transform_list_failesc_context (idf, idf, CF.replace_sec_in_estate sec_form) res
@@ -2309,7 +2309,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *)
                 let p_sctx = ref [] in
                 let temp_eximpf_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
-                let impf_sec_form   = CF.merge_implicit_sec_form_list eq_sec_form !p_sctx impf_sec_form in
+                let impf_sec_form   = CF.merge_implicit_sec_form_list prog.prog_sec_labels eq_sec_form !p_sctx impf_sec_form in
                 let eximpf_sec_form = ((* expf_sec_form@ *)impf_sec_form) in
                 CF.transform_list_failesc_context (idf, idf, CF.replace_eximpf_sec_in_estate eximpf_sec_form) res
               )
@@ -2413,9 +2413,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
 
       let ctx = if !Globals.ifa (* Information Flow Analysis *)
-        then CF.transform_list_failesc_context (idf, idf, CF.prop_const res_n pos) ctx
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const prog.prog_sec_labels res_n pos) ctx
         else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const res_n pos) ctx
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const prog.prog_sec_labels res_n pos) ctx
         else ctx
       in
       (*****************************)
@@ -2437,9 +2437,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
 
       let ctx = if !Globals.ifa (* Information Flow Analysis *)
-        then CF.transform_list_failesc_context (idf, idf, CF.prop_const res_n pos) ctx
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const prog.prog_sec_labels res_n pos) ctx
         else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const res_n pos) ctx
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const prog.prog_sec_labels res_n pos) ctx
         else ctx
       in
       (*****************************)
@@ -2894,7 +2894,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       end
                   in
                   if !Globals.eximpf && not(ret_t==Void)
-                  then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+                  then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call prog.prog_sec_labels (CP.mkRes ret_t) pos) res
                   else res
               )
             end
@@ -2955,9 +2955,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
         let sec_res = CP.mkRes t in
         let ctx = if !Globals.ifa (* Information Flow Analysis *)
-          then CF.transform_list_failesc_context (idf, idf, CF.prop_var sec_res (CP.mk_spec_var v) pos) ctx
+          then CF.transform_list_failesc_context (idf, idf, CF.prop_var prog.prog_sec_labels sec_res (CP.mk_spec_var v) pos) ctx
           else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-          then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var sec_res (CP.mk_spec_var v) pos) ctx
+          then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var prog.prog_sec_labels sec_res (CP.mk_spec_var v) pos) ctx
           else ctx
         in
         (*****************************)
@@ -3049,9 +3049,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           in
 
           let ctx = if !Globals.ifa (* Information Flow Analysis *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) ctx
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_var prog.prog_sec_labels vr vf pos) ctx
             else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var vr vf pos) ctx
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var prog.prog_sec_labels vr vf pos) ctx
             else ctx
           in
           (*****************************)
@@ -3851,7 +3851,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           let bounds = if !Globals.ifa
             then CF.base_sec_bounds fsvars proc.proc_loc
             else if !Globals.eximpf
-            then CF.base_eximpf_sec_bounds fsvars proc.proc_loc
+            then CF.base_eximpf_sec_bounds prog.prog_sec_labels fsvars proc.proc_loc
             else CP.mkTrue no_pos
           in
           let pf = CP.mkAnd pf bounds proc.proc_loc in

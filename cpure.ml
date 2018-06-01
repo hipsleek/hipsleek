@@ -385,13 +385,14 @@ and infer_rel_type =  (rel_cat * formula * formula)
 (* No /\, because formula already handles that *)
 
 and sec_label =
-  | Hi | Lo
+  | SecLabel of Security.Label.t
   | Lub of sec_label * sec_label
   | Glb of sec_label * sec_label
   | SecVar of spec_var
 
 (* NOTE: Information Flow Analysis *)
 let sec_var v = SecVar v
+let sec_label l = SecLabel l
 
 let mk_security  v lbl pos = Security (v, lbl, pos)
 let mk_sec_bform v lbl pos = BForm ((mk_security v lbl pos, None), None)
@@ -1629,7 +1630,7 @@ and bfv (bf : b_formula) =
   | ImplicitFlow (var, lbl, _) -> remove_dups_svl (var :: sec_label_fv lbl)
 
 and sec_label_fv = function
-  | Hi | Lo -> []
+  | SecLabel _ -> []
   | Lub (l1, l2) -> remove_dups_svl (sec_label_fv l1 @ sec_label_fv l2)
   | Glb (l1, l2) -> remove_dups_svl (sec_label_fv l1 @ sec_label_fv l2)
   | SecVar var -> [var]
@@ -4682,7 +4683,7 @@ and b_apply_subs sst bf =
 
 and sec_label_apply_subs sst lbl =
   match lbl with
-  | Hi | Lo -> lbl
+  | SecLabel _ -> lbl
   | Lub (l1, l2) -> Lub (sec_label_apply_subs sst l1, sec_label_apply_subs sst l2)
   | Glb (l1, l2) -> Glb (sec_label_apply_subs sst l1, sec_label_apply_subs sst l2)
   | SecVar var -> SecVar (subs_one sst var)
@@ -16599,14 +16600,14 @@ let get_eximpf_sec_in_formula cf =
   helper cf
 
 (* NOTE: Information Flow Analysis *)
-let to_sec_hi sf =
+let to_sec_top lattice sf =
   match sf with
-  | Security (v, _, loc) -> mk_security v Hi loc
+  | Security (v, _, loc) -> mk_security v (sec_label (Security.get_top lattice)) loc
   | _                 -> sf
 
-let to_sec_lo sf =
+let to_sec_bottom lattice sf =
   match sf with
-  | Security (v, _, loc) -> mk_security v Lo loc
+  | Security (v, _, loc) -> mk_security v (sec_label (Security.get_bottom lattice)) loc
   | _                 -> sf
 
 let is_eq_sec_var sf1 sf2 =
@@ -16623,18 +16624,30 @@ let is_less_sec_var sf1 sf2 =
     less_spec_var v1 v2
   | _ -> false
 
-let lub_op lb1 lb2 =
+let lub_op lattice lb1 lb2 =
   let once lb1 lb2 =
     match (lb1,lb2) with
-    | (Hi,_) | (_,Hi)         -> Hi
-    | (Lo,l) | (l,Lo)         -> l
+    | (SecLabel l1, SecLabel l2) -> sec_label (Security.least_upper_bound lattice l1 l2)
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
+    | (l0, SecLabel l1) | (SecLabel l1, l0) ->
+        if l1 = Security.get_top lattice then
+          SecLabel l1
+        else if l1 = Security.get_bottom lattice then
+          l0
+        else
+          Lub (lb1, lb2)
     | _                       -> Lub(lb1,lb2)
   in
   let rec multi lb1 lb2 =
     match (lb1,lb2) with
-    | (Hi,_) | (_,Hi)         -> Hi
-    | (Lo,l) | (l,Lo)         -> l
+    | (SecLabel l1, SecLabel l2) -> sec_label (Security.least_upper_bound lattice l1 l2)
+    | (l0, SecLabel l1) | (SecLabel l1, l0) ->
+        if l1 = Security.get_top lattice then
+          SecLabel l1
+        else if l1 = Security.get_bottom lattice then
+          l0
+        else
+          Lub (lb1, lb2)
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Lub(lb1,lb2)
     | (Lub(l1,l2),Lub(r1,r2)) -> once (multi l1 l2) (multi r1 r2)
     | (Lub(l1,l2),l)          (* -> once (multi l1 l2) lb1 *)
@@ -16642,54 +16655,66 @@ let lub_op lb1 lb2 =
     | _                       -> Lub(lb1,lb2) (* NOTE: Leave GLB as it is without normalization *)
   in
   multi lb1 lb2
-let sec_lub sf1 sf2 =
+let sec_lub lattice sf1 sf2 =
   match (sf1,sf2) with
   | Security(v1,l1,_)    ,Security(v2,l2,_)     ->
     if eq_spec_var v1 v2
-    then Security(v1, (lub_op l1 l2), no_pos)
+    then Security(v1, (lub_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | ExplicitFlow(v1,l1,_),ExplicitFlow(v2,l2,_) ->
     if eq_spec_var v1 v2
-    then ExplicitFlow(v1, (lub_op l1 l2), no_pos)
+    then ExplicitFlow(v1, (lub_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | ImplicitFlow(v1,l1,_),ImplicitFlow(v2,l2,_) ->
     if eq_spec_var v1 v2
-    then ImplicitFlow(v1, (lub_op l1 l2), no_pos)
+    then ImplicitFlow(v1, (lub_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_lub : different spec_var"
   | _ -> x_report_error no_pos "sec_lub : not security formula"
 
-let glb_op lb1 lb2 =
+let glb_op lattice lb1 lb2 =
   let once lb1 lb2 =
     match (lb1,lb2) with
-    | (Lo,_) | (_,Lo)         -> Lo
-    | (Hi,l) | (l,Hi)         -> l
+    | (SecLabel l1, SecLabel l2) -> sec_label (Security.greatest_lower_bound lattice l1 l2)
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Glb(lb1,lb2)
+    | (l0, SecLabel l1) | (SecLabel l1, l0) ->
+        if l1 = Security.get_top lattice then
+          l0
+        else if l1 = Security.get_bottom lattice then
+          SecLabel l1
+        else
+          Glb (lb1, lb2)
     | _                       -> Glb(lb1,lb2)
   in
   let rec multi lb1 lb2 =
     match (lb1,lb2) with
-    | (Lo,_) | (_,Lo)         -> Lo
-    | (Hi,l) | (l,Hi)         -> l
+    | (SecLabel l1, SecLabel l2) -> sec_label (Security.greatest_lower_bound lattice l1 l2)
     | (SecVar(v1),SecVar(v2)) -> if eq_spec_var v1 v2 then lb1 else Glb(lb1,lb2)
+    | (l0, SecLabel l1) | (SecLabel l1, l0) ->
+        if l1 = Security.get_top lattice then
+          l0
+        else if l1 = Security.get_bottom lattice then
+          SecLabel l1
+        else
+          Glb (lb1, lb2)
     | (Glb(l1,l2),Glb(r1,r2)) -> once (multi l1 l2) (multi r1 r2)
     | (Glb(l1,l2),l)          (* -> once (multi l1 l2) lb1 *)
     | (l,Glb(l1,l2))          -> once l (multi l1 l2)
     | _                       -> Glb(lb1,lb2) (* NOTE: Leave LUB as it is without normalization *)
   in
   multi lb1 lb2
-let sec_glb sf1 sf2 =
+let sec_glb lattice sf1 sf2 =
   match (sf1,sf2) with
   | Security(v1,l1,_)    ,Security(v2,l2,_)     ->
     if eq_spec_var v1 v2
-    then Security(v1, (glb_op l1 l2), no_pos)
+    then Security(v1, (glb_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_glb : different spec_var"
   | ExplicitFlow(v1,l1,_),ExplicitFlow(v2,l2,_) ->
     if eq_spec_var v1 v2
-    then ExplicitFlow(v1, (glb_op l1 l2), no_pos)
+    then ExplicitFlow(v1, (glb_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_glb : different spec_var"
   | ImplicitFlow(v1,l1,_),ImplicitFlow(v2,l2,_) ->
     if eq_spec_var v1 v2
-    then ImplicitFlow(v1, (glb_op l1 l2), no_pos)
+    then ImplicitFlow(v1, (glb_op lattice l1 l2), no_pos)
     else x_report_error no_pos "sec_glb : different spec_var"
   | _ -> x_report_error no_pos "sec_glb : not security formula"
 
@@ -16738,16 +16763,16 @@ let rec filter_out_sec_form f =
 (***********************************)
 
 (* NOTE: Explicit & Implicit Flow  *)
-let to_eximpf_sec_hi sf =
+let to_eximpf_sec_top lattice sf =
   match sf with
-  | ExplicitFlow (v, _, loc) -> mk_explicit_flow v Hi loc
-  | ImplicitFlow (v, _, loc) -> mk_implicit_flow v Hi loc
+  | ExplicitFlow (v, _, loc) -> mk_explicit_flow v (sec_label (Security.get_top lattice)) loc
+  | ImplicitFlow (v, _, loc) -> mk_implicit_flow v (sec_label @@ Security.get_top lattice) loc
   | _                        -> sf
 
-let to_eximpf_sec_lo sf =
+let to_eximpf_sec_bottom lattice sf =
   match sf with
-  | ExplicitFlow (v, _, loc) -> mk_explicit_flow v Lo loc
-  | ImplicitFlow (v, _, loc) -> mk_implicit_flow v Lo loc
+  | ExplicitFlow (v, _, loc) -> mk_explicit_flow v (sec_label @@ Security.get_bottom lattice) loc
+  | ImplicitFlow (v, _, loc) -> mk_implicit_flow v (sec_label @@ Security.get_bottom lattice) loc
   | _                        -> sf
 
 let is_eq_eximpf_sec_var sf1 sf2 =
@@ -16780,7 +16805,9 @@ let get_sec_label_in_sec = function
   | ImplicitFlow(_,l,_) -> l
   | _                   -> failwith "Should only be security formula"
 
-let rec translate_sec_label = function
+let translate_security_formula f = f
+
+(* let rec translate_sec_label = function
   (* NOTE: LUB as MAX and GLB as MIN *)
   | Hi -> [], [], IConst (1, no_pos)
   | Lo -> [], [], IConst (0, no_pos)
@@ -17037,5 +17064,5 @@ and translate_security_formula orig =
   let f_e_to_i = helper_f_e_to_i orig in
   let f_i_to_e = helper_f_i_to_e orig in
   let trans_f  = translate_security_formula_only (mkAnd f_e_to_i f_i_to_e no_pos) in
-  trans_f
+  trans_f *)
 (***********************************)

@@ -89,11 +89,11 @@ let pure_formula_of_condition (cond : ints_exp_assume list) : IP.formula =
     let pf1 = trans_pure_formula a in
     IP.And (pf1, pf2, pos)) cond true_formula
 
-let is_equivalent_condition c1 c2 =
+let is_equivalent_condition lattice c1 c2 =
   let pf1 = pure_formula_of_condition c1 in
   let pf2 = pure_formula_of_condition c2 in
-  let cf1 = Astsimp.trans_pure_formula pf1 [] in
-  let cf2 = Astsimp.trans_pure_formula pf2 [] in
+  let cf1 = Astsimp.trans_pure_formula lattice pf1 [] in
+  let cf2 = Astsimp.trans_pure_formula lattice pf2 [] in
   Tpdispatcher.simpl_imply_raw cf1 cf2 &&
   Tpdispatcher.simpl_imply_raw cf2 cf1
 
@@ -148,7 +148,7 @@ let trans_ints_block (blk: ints_block): I.exp =
 let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_decl =
   let pos = pos_of_ints_loc fr_lbl in
   let proc_name = name_of_ints_loc fr_lbl in
-  let blks = partition_by_key init_conditions_of_block is_equivalent_condition blks in
+  let blks = partition_by_key init_conditions_of_block (is_equivalent_condition Security.default_lattice) blks in
   (* Take blocks with equivalent starting conditions
    * and form into sequence of if/else with nondet() condition. *)
   let nondet_seq_for_blocks cond blks =
