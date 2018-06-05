@@ -2226,6 +2226,10 @@ let mfv f = match f with
   | MemoF mf -> mfv mf
   | OnePF f -> fv f
 
+let all_vars f = match f with
+  | MemoF mf -> []
+  | OnePF f -> all_vars f
+
 let merge_mems_m = merge_mems
 
 let merge_mems f1 f2 slice_dup = match (f1,f2) with

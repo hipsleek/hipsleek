@@ -5847,8 +5847,8 @@ and are_spec_var_eq mix_f v1 v2 =
 and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
   let rec pairs_of ls =
     match ls with
-     | [] -> []
-     | x::xs ->
+    | [] -> []
+    | x::xs ->
       let res1 = pairs_of xs in
       let res2 = List.map (fun v -> (x,v)) xs in
       res1@res2
@@ -5861,12 +5861,12 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
   let lhs_f = es.es_formula in
   let lhs_fv_list = (fv lhs_f) in
   let (lhs_heap,lhs_pure) = extract_heap_and_pure_formula es in
-  let lhs_k_vars = fv_heap_of lhs_f in
+  let lhs_h_vars = fv_heap_of lhs_f in
   let lhs_p_vars = mfv lhs_pure in
   let lhs_pairs = pairs_of lhs_p_vars in
   let lhs_eq_pairs = List.filter (fun (v1,v2) -> are_spec_var_eq lhs_pure v1 v2) lhs_pairs in
 
-  let () = y_tinfo_hp (add_str "lhs_fv_k list" string_of_spec_var_list) lhs_k_vars in
+  let () = y_tinfo_hp (add_str "lhs_fv_h list" string_of_spec_var_list) lhs_h_vars in
   let () = y_tinfo_hp (add_str "lhs_fv_p list" string_of_spec_var_list) lhs_p_vars in
   let () = x_tinfo_hp (add_str "lhs_pure" (Cprinter.string_of_mix_formula)) lhs_pure no_pos in
   let () = y_tinfo_hp (add_str "lhs_fv pairs" string_of_spec_var_pair_list) lhs_pairs in
@@ -5874,28 +5874,32 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
 
   let rhs_f = conseq in
   let rhs_pure,_,_ = x_add xpure 3 prog rhs_f in
-  let rhs_k_vars = fv_heap_of rhs_f in
-  let rhs_p_vars = mfv rhs_pure in
+  let rhs_h_vars = fv_heap_of rhs_f in
+  let rhs_p_vars = MCP.all_vars rhs_pure in
   let rhs_pairs = pairs_of rhs_p_vars in
   let rhs_eq_pairs = List.filter (fun (v1,v2) -> are_spec_var_eq rhs_pure v1 v2) rhs_pairs in
-  let rhs_expl_vars = es.es_gen_expl_vars in
 
-  let () = y_tinfo_hp (add_str "rhs_fv_k list" string_of_spec_var_list) rhs_k_vars in
-  let () = y_tinfo_hp (add_str "rhs_fv_p list" string_of_spec_var_list) rhs_p_vars in
-  let () = y_tinfo_hp (add_str "rhs_expl_vars list" string_of_spec_var_list) rhs_expl_vars in
-  let () = x_tinfo_hp (add_str "rhs_pure" (Cprinter.string_of_mix_formula)) rhs_pure no_pos in
-  let () = y_tinfo_hp (add_str "rhs_fv pairs" string_of_spec_var_pair_list) rhs_pairs in
-  let () = y_tinfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
+  let rhs_exists_vars = match rhs_f with
+    | Exists ef -> ef.formula_exists_qvars
+    | _ -> []
+  in
+
+  let () = y_binfo_hp (add_str "rhs_fv_h list" string_of_spec_var_list) rhs_h_vars in
+  let () = y_binfo_hp (add_str "rhs_fv_p list" string_of_spec_var_list) rhs_p_vars in
+  let () = y_binfo_hp (add_str "rhs_exists_vars list" string_of_spec_var_list) rhs_exists_vars in
+  let () = x_binfo_hp (add_str "rhs_pure" (Cprinter.string_of_mix_formula)) rhs_pure no_pos in
+  let () = y_binfo_hp (add_str "rhs_fv pairs" string_of_spec_var_pair_list) rhs_pairs in
+  let () = y_binfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
 
   (* SE3 *)
   let (ctx, rhs_f) =
     if List.length rhs_eq_pairs > 0 then
       let (v1,v2) = List.hd rhs_eq_pairs in
       let (ctx, rhs_f) =
-        if ((not (List.mem v1 rhs_expl_vars)) && (not (List.mem v2 rhs_expl_vars)) &&
-            ((List.mem v1 lhs_k_vars && not (List.mem v2 lhs_k_vars)) ||
-             (List.mem v2 lhs_k_vars && not (List.mem v1 lhs_k_vars)))) then
-          let () = y_tinfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
+        if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
+            ((List.mem v1 lhs_h_vars && not (List.mem v2 lhs_h_vars)) ||
+             (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars)))) then
+          let () = y_binfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
           let rhs_f = apply_one (v2, v1) rhs_f in
           do_sem_eq_x prog ctx rhs_f
         else
@@ -5910,12 +5914,12 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
     if List.length rhs_eq_pairs > 0 then
       let (v1,v2) = List.hd rhs_eq_pairs in
       let (ctx, rhs_f) =
-        if (List.mem v2 rhs_expl_vars) then
-          let () = y_tinfo_hp (add_str "SE2 pairs1" string_of_spec_var_pair) (v1,v2) in
+        if (List.mem v2 rhs_exists_vars) then
+          let () = y_binfo_hp (add_str "SE2 pairs1" string_of_spec_var_pair) (v1,v2) in
           let rhs_f = apply_one (v2, v1) rhs_f in
           do_sem_eq prog ctx rhs_f
-        else if (List.mem v1 rhs_expl_vars) then
-          let () = y_tinfo_hp (add_str "SE2 pairs2" string_of_spec_var_pair) (v1,v2) in
+        else if (List.mem v1 rhs_exists_vars) then
+          let () = y_binfo_hp (add_str "SE2 pairs2" string_of_spec_var_pair) (v1,v2) in
           let rhs_f = apply_one (v1, v2) rhs_f in
           do_sem_eq_x prog ctx rhs_f
         else
@@ -5930,10 +5934,10 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
     if List.length lhs_eq_pairs > 0 then
       let (v1,v2) = List.hd lhs_eq_pairs in
       let (ctx, rhs_f) =
-        if (List.mem v1 lhs_k_vars && List.mem v1 lhs_p_vars && List.mem v2 lhs_p_vars)
-        || (List.mem v2 lhs_k_vars && List.mem v2 lhs_p_vars && List.mem v1 lhs_p_vars) then
-          let () = y_tinfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
-          let lhs_f = apply_one (v2,v1) lhs_f in
+        if (List.mem v1 lhs_h_vars && (List.mem v2 rhs_h_vars || List.mem v2 rhs_p_vars || List.mem v2 lhs_h_vars))
+        || (List.mem v2 lhs_h_vars && (List.mem v1 rhs_h_vars || List.mem v1 rhs_p_vars || List.mem v1 lhs_h_vars)) then
+          let () = y_binfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
+          let lhs_f = apply_one_h (v2,v1) lhs_f in
           let rhs_f = apply_one (v2,v1) rhs_f in
           (* call do_sem_eq recursively *)
           do_sem_eq_x prog (Ctx ({es with es_formula = lhs_f})) rhs_f
@@ -5942,6 +5946,7 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
       (ctx, rhs_f)
     else (ctx, rhs_f)
   in
+
   let () = x_tinfo_hp (add_str "lhs_res" (Cprinter.string_of_formula)) (get_es ctx).es_formula no_pos in
   let () = x_tinfo_hp (add_str "rhs_res" (Cprinter.string_of_formula)) rhs_f no_pos in
   (ctx, rhs_f)

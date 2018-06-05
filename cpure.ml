@@ -61,7 +61,6 @@ let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
 let is_same_sv sv1 sv2 =
   compare_sv sv1 sv2 = 0
 ;;
-          
 
 let is_hole_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n.[0] = '#'

@@ -3799,6 +3799,50 @@ and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = 
         formula_exists_label = lbl;
         formula_exists_pos = pos })
 
+(*Only substitute heap formula*)
+and apply_one_h ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
+  | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
+    Or ({ formula_or_f1 = apply_one_h s f1; formula_or_f2 =  apply_one_h s f2; formula_or_pos = pos })
+  | Base ({
+      formula_base_heap = h;
+      formula_base_vperm = vp;
+      formula_base_pure = p;
+      formula_base_type = t;
+      formula_base_and = a;
+      formula_base_flow = fl;
+      formula_base_label = lbl;
+      formula_base_pos = pos }) ->
+    Base ({
+        formula_base_heap = h_apply_one s h;
+        formula_base_vperm = CVP.subst_one s vp;
+        formula_base_pure = p;
+        formula_base_type = t;
+        formula_base_and = List.map (apply_one_one_formula s) a;
+        formula_base_flow = fl;
+        formula_base_label = lbl;
+        formula_base_pos = pos })
+  | Exists ({
+      formula_exists_qvars = qsv;
+      formula_exists_heap = qh;
+      formula_exists_vperm = vp;
+      formula_exists_pure = qp;
+      formula_exists_type = tconstr;
+      formula_exists_and = a;
+      formula_exists_flow = fl;
+      formula_exists_label = lbl;
+      formula_exists_pos = pos }) ->
+    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f
+    else Exists ({
+        formula_exists_qvars = qsv;
+        formula_exists_heap = h_apply_one s qh;
+        formula_exists_vperm = CVP.subst_one s vp;
+        formula_exists_pure = qp;
+        formula_exists_type = tconstr;
+        formula_exists_and = List.map (apply_one_one_formula s) a;
+        formula_exists_flow = fl;
+        formula_exists_label = lbl;
+        formula_exists_pos = pos })
+
 and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
            h_formula_star_h2 = f2; 
@@ -13246,7 +13290,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
       formula_base_and = a;
       formula_base_flow = fl;
       formula_base_label = lbl;
-      formula_base_pos = pos }) -> 
+      formula_base_pos = pos }) ->
     Base ({
         formula_base_heap = h;
         formula_base_vperm = vp;
