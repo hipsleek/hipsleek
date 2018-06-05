@@ -25,12 +25,19 @@ pred pri_ll<n> == self=null & n=0 & self<E@Hi
   or self::ll_node<v,q> * q::pri_ll<m> & n>0 & m=n-1 & self<E@Hi & v<E@Hi
   inv n>=0;
 
+pred ff_pri_ll<n,m> == self::pub_ll<m> & n=0 & self<E@Lo
+  or self::ll_node<v,q> * q::ff_pri_ll<n-1,m> & n>0 & self<E@Hi & v<E@Hi
+  inv n>=0 & m>=0;
+
 lemma_safe "ll__public->first_private_safe" self::pub_ll<n> -> self::fpri_ll<n>;
 lemma_safe "ll__first_private->public_fail" self::fpri_ll<n> -> self::pub_ll<n>;
 lemma_safe "ll__public->private_safe" self::pub_ll<n> -> self::pri_ll<n>;
 lemma_safe "ll__private->public_fail" self::pri_ll<n> -> self::pub_ll<n>;
 lemma_safe "ll__private->first_private_fail" self::pri_ll<n> -> self::fpri_ll<n>;
 lemma_safe "ll__first_private->private_safe" self::fpri_ll<n> -> self::pri_ll<n>;
+
+lemma_safe "ll__ff_private->public_safe" self::ff_pri_ll<0,n> -> self::pub_ll<n>;
+lemma_safe "ll__public->ff_private_safe" self::pub_ll<n> -> self::ff_pri_ll<0,n>;
 
 pred pub_dll<p,n> == self=null & n=0 & self<E@Lo
   or self::dll_node<v,p,q> * q::pub_dll<q1,m> & n>0 & m=n-1 & self=q1 & self<E@Lo & v<E@Lo

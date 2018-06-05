@@ -2300,16 +2300,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* NOTE: Explicit Flows are kept in disjunction *)
                 (* let expf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_explicit_flow y) x) eximpf_sec_form in
                  * let expf_sec_form   = CF.merge_eximpf_sec_form_list expf_sec_form in *)
-                let () = print_endline ("RES_COND: " ^ Cprinter.string_of_list_failesc_context res) in
+                (* let () = print_endline ("RES_COND: " ^ Cprinter.string_of_list_failesc_context res) in *)
 
                 let impf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_implicit_flow y) x) eximpf_sec_form in
                 let eq_sec_form     = List.map (fun x -> List.filter (fun y -> CP.is_eq_p_formula y) x) eximpf_sec_form in
-                let () = print_endline ("\nEQV (0)") in
-                let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
-                let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
-                let () = print_endline ("\nEQV (1)") in
-                let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
-                (* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *)
+                (* let () = print_endline ("\nEQV (0)") in
+                 * let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
+                 * let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
+                 * let () = print_endline ("\nEQV (1)") in
+                 * let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
+                 * (\* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *\) *)
                 let p_sctx = ref [] in
                 let temp_eximpf_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
                 let impf_sec_form   = CF.merge_implicit_sec_form_list eq_sec_form !p_sctx impf_sec_form in

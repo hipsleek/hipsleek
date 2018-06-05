@@ -20770,7 +20770,7 @@ let simpl_sec_form sfl =
   in
   let rec fixpoint sfl =
     let next = helper sfl sfl in
-    let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in
+    (* let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in *)
     if next = sfl then next else fixpoint next
   in
   let is_trivial sf =
@@ -20944,7 +20944,7 @@ let simpl_eximpf_sec_form sfl =
   in
   let rec fixpoint sfl =
     let next = helper sfl sfl in
-    let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in
+    (* let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in *)
     if next = sfl then next else fixpoint next
   in
   let is_trivial sf =
@@ -21103,7 +21103,7 @@ let rec merge_implicit_sec eqvl p_sctx = function
       let sv = CP.get_spec_var_in_sec sf1 in
       let lb = CP.lub_op (CP.get_sec_label_in_sec sf1) (CP.get_sec_label_in_sec sf2) in
       let rb = build_sec_ctx p_sctx (* CP.Glb(lb, build_sec_ctx p_sctx) *) in
-      let () = print_endline (!print_spec_var sv ^ " == " ^ string_of_bool (is_equivalent_value eqvl sv)) in
+      (* let () = print_endline (!print_spec_var sv ^ " == " ^ string_of_bool (is_equivalent_value eqvl sv)) in *)
       if is_equivalent_value eqvl sv
       then (CP.mk_implicit_flow sv rb no_pos)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
       else (sec_lub sf1 sf2)::(merge_implicit_sec eqvl p_sctx (sr1, sr2))
