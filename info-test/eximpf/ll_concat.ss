@@ -113,14 +113,14 @@ node concat8_safe(node p, node q)
   }
 }
 
-node concat_pri_pub1_safe(node p, node q)
-  requires p::pri_ll<n> * q::pub_ll<m> & p <E @Hi & q <E @Lo
-  ensures res::ff_pri_ll<n,m> & res <E @Hi;
-{
-  if(p == null) {
-    return q;
-  } else {
-    p.n = concat_pri_pub1_safe(p.n, q);
-    return p;
-  }
-}
+/* node concat_pri_pub1_safe(node p, node q) */
+/*   requires p::pri_ll<n> * q::pub_ll<m> & p <E @Hi & q <E @Lo */
+/*   ensures res::ff_pri_ll<n,m> & res <E @Hi; */
+/* { */
+/*   if(p == null) { */
+/*     return q; */
+/*   } else { */
+/*     p.n = concat_pri_pub1_safe(p.n, q); */
+/*     return p; */
+/*   } */
+/* } */

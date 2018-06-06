@@ -2993,11 +2993,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (*************************************)
       (* VPerm: Set @full permission for v *)
       (*************************************)
-      if !ann_vp then
-        let sv = CP.SpecVar (t, v, Unprimed) in
-        let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
-        VP.add_vperm_sets_list_failesc_ctx vp ctx
-      else ctx
+      let res =
+        if !ann_vp then
+          let sv = CP.SpecVar (t, v, Unprimed) in
+          let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
+          VP.add_vperm_sets_list_failesc_ctx vp ctx
+        else ctx
+      in
+      let sv = CP.SpecVar (t, v, Primed) in
+      let res = if !Globals.ifa (* Information Flow Analysis *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const sv no_pos) res
+        else if !Globals.eximpf (* Explicit & Implicit Flow  *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const sv no_pos) res
+        else res
+      in
+      res
+
     | Unit pos -> ctx
     | Sharp ({exp_sharp_type =t;
               exp_sharp_flow_type = ft;(*P.flow_typ*)

@@ -36,8 +36,8 @@ lemma_safe "ll__private->public_fail" self::pri_ll<n> -> self::pub_ll<n>;
 lemma_safe "ll__private->first_private_fail" self::pri_ll<n> -> self::fpri_ll<n>;
 lemma_safe "ll__first_private->private_safe" self::fpri_ll<n> -> self::pri_ll<n>;
 
-lemma_safe "ll__ff_private->public_safe" self::ff_pri_ll<0,n> -> self::pub_ll<n>;
-lemma_safe "ll__public->ff_private_safe" self::pub_ll<n> -> self::ff_pri_ll<0,n>;
+/* lemma_safe "ll__ff_private->public_safe" self::ff_pri_ll<0,n> -> self::pub_ll<n>; */
+/* lemma_safe "ll__public->ff_private_safe" self::pub_ll<n> -> self::ff_pri_ll<0,n>; */
 
 pred pub_dll<p,n> == self=null & n=0 & self<E@Lo
   or self::dll_node<v,p,q> * q::pub_dll<q1,m> & n>0 & m=n-1 & self=q1 & self<E@Lo & v<E@Lo
