@@ -5937,6 +5937,7 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
         if (List.mem v1 lhs_h_vars && (List.mem v2 rhs_h_vars || List.mem v2 rhs_p_vars || List.mem v2 lhs_h_vars))
         || (List.mem v2 lhs_h_vars && (List.mem v1 rhs_h_vars || List.mem v1 rhs_p_vars || List.mem v1 lhs_h_vars)) then
           let () = y_binfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
+          (* keep the pure formula on lhs for not altering the residue *)
           let lhs_f = apply_one_h (v2,v1) lhs_f in
           let rhs_f = apply_one (v2,v1) rhs_f in
           (* call do_sem_eq recursively *)

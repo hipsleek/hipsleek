@@ -3799,8 +3799,8 @@ and apply_one_pure ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = 
         formula_exists_label = lbl;
         formula_exists_pos = pos })
 
-(*Only substitute heap formula*)
-and apply_one_h ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
+(*Only substitute in heap of formula*)
+and apply_one_h ((v1, v2) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
   | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
     Or ({ formula_or_f1 = apply_one_h s f1; formula_or_f2 =  apply_one_h s f2; formula_or_pos = pos })
   | Base ({
@@ -3831,7 +3831,7 @@ and apply_one_h ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = mat
       formula_exists_flow = fl;
       formula_exists_label = lbl;
       formula_exists_pos = pos }) ->
-    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f
+    if List.mem (CP.name_of_spec_var v1) (List.map CP.name_of_spec_var qsv) then f
     else Exists ({
         formula_exists_qvars = qsv;
         formula_exists_heap = h_apply_one s qh;

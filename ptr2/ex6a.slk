@@ -1,7 +1,7 @@
 data node {
  int val;
 }.
-
+/*
 //1
 infer [@sem_eq] y::node<5> & y=x |- x::node<u>.
 print residue.
@@ -137,7 +137,7 @@ print residue.
 infer [@sem_eq] a::node<x> * b::node<y> & x=z |- a::node<x> * b::node<x>.
 expect Fail.
 print residue.
-
+*/
 //23
 infer [@sem_eq] x::node<3> |- exists y: x::node<z> & y=z.
 expect Valid.
