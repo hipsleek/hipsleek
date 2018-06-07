@@ -1,0 +1,1 @@
+checkentail x = m + 2 & y = m + 1 & m > 0 |- x = y.

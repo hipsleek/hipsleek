@@ -14,8 +14,8 @@ ensures x::ll<n> & res = n;
 {
    if(x==null) return 0;
      else {
-          int m = 2 + length(x.next);
-          return m;
+          int n = 2 + length(x.next);
+          return n;
      }
 }
 
