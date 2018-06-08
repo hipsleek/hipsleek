@@ -21,6 +21,7 @@ module BoundsMap = Map.Make (struct
   type t = Label.t * Label.t
   let compare = compare
 end)
+module RepresentationMap = Map.Make (Label)
 
 exception Not_a_lattice of string
 
@@ -31,7 +32,8 @@ type lattice =
     greatest_lower_bounds : Label.t BoundsMap.t;
     top : Label.t;
     bottom : Label.t;
-    labels : Label.t list
+    labels : Label.t list;
+    label_representations : int list RepresentationMap.t
   }
 
 let compute_lub l1 l2 lattice =
@@ -98,6 +100,47 @@ let compute_all_glb lattice =
     []
   |> List.flatten
 
+let make_sec_lattice_representation lattice =
+  let size = G.nb_vertex lattice in
+  let path_checker = PathG.create lattice in
+  let exists_path = PathG.check_path path_checker in
+  let rec empty_label size = if size = 0 then [] else 0 :: (empty_label (size - 1)) in
+  let rec next_label label index =
+    if index = 0 then 1 :: (List.tl label) else (List.hd label) :: (next_label (List.tl label) (index - 1)) in
+  let rec lub l1 l2 = match l1,l2 with
+  | (0 :: r1, 0 :: r2)   -> 0 :: (lub r1 r2)
+  | (_ :: r1, _ :: r2)   -> 1 :: (lub r1 r2)
+  | ([], _) | (_, []) -> []
+  in
+  let rp =
+    TopoG.fold
+      (fun v map ->
+        if RepresentationMap.is_empty map then
+          RepresentationMap.add v (empty_label size) map
+        else
+          let index = RepresentationMap.cardinal map - 1 in
+          let label =
+            RepresentationMap.fold
+              (fun l l_rep v_rep ->
+                if exists_path l v then
+                  lub v_rep l_rep
+                else
+                  v_rep
+              )
+              map
+              (empty_label size) in
+          RepresentationMap.add v (next_label label index) map
+      )
+      lattice
+      RepresentationMap.empty in
+  (* let rp = TopoG.fold (fun v a ->
+    if a = [] then [(v, empty_label size)] else
+      let idx = (List.length a) - 1 in
+      let lb  = List.fold_left (fun acc (vl,r) -> if exists_path vl v then (lub acc r) else acc) (empty_label size) a in
+      (v, next_label lb idx) :: a
+    ) lattice [] in *)
+  rp
+
 let make_lattice labels relations =
   if labels = [] then
     Gen.report_error VarGen.no_pos "Security lattice cannot be empty"
@@ -121,7 +164,8 @@ let make_lattice labels relations =
       greatest_lower_bounds = glb_map;
       labels;
       top = List.fold_left (fun acc v -> if G.out_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
-      bottom = List.fold_left (fun acc v -> if G.in_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels)
+      bottom = List.fold_left (fun acc v -> if G.in_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
+      label_representations = make_sec_lattice_representation lattice
     }
 
 let default_lattice =
@@ -132,27 +176,24 @@ let default_lattice =
 
 let is_valid_security_label { lattice } l = G.mem_vertex lattice l
 
-let translate_sec_lattice { lattice } =
-  let size = G.nb_vertex lattice in
-  let path_checker = PathG.create lattice in
-  let exists_path = PathG.check_path path_checker in
-  let rec empty_label s = if s = 0 then [] else 0::(empty_label (s - 1)) in
-  let rec next_label l i = if i = 0 then 1::(List.tl l) else (List.hd l)::(next_label (List.tl l) (i-1)) in
-  let rec lub l1 l2 = match l1,l2 with
-  | (0::r1,0::r2)   -> 0::(lub r1 r2)
-  | (_::r1,_::r2)   -> 1::(lub r1 r2)
-  | ([],_) | (_,[]) -> []
-  in
-  let rp = TopoG.fold (fun v a ->
-    if a = [] then [(v, empty_label size)] else
-      let idx = (List.length a) - 1 in
-      let lb  = List.fold_left (fun acc (vl,r) -> if exists_path vl v then (lub acc r) else acc) (empty_label size) a in
-      (v,(next_label lb idx))::a
-    ) lattice [] in
-  rp
-
 let get_top lattice = lattice.top
 let get_bottom lattice = lattice.bottom
 
-let least_upper_bound { least_upper_bounds } l1 l2 = BoundsMap.find (l1, l2) least_upper_bounds
-let greatest_lower_bound { greatest_lower_bounds } l1 l2 = BoundsMap.find (l1, l2) greatest_lower_bounds
+let get_representation { label_representations } label =
+  RepresentationMap.find label label_representations
+
+let least_upper_bound { least_upper_bounds } l1 l2 =
+  if l1 = l2 then
+    l1
+  else
+    BoundsMap.find (l1, l2) least_upper_bounds
+
+let greatest_lower_bound { greatest_lower_bounds } l1 l2 =
+  if l1 = l2 then
+    l1
+  else
+    BoundsMap.find (l1, l2) greatest_lower_bounds
+
+let current_lattice = ref default_lattice
+
+let lattice_size { lattice } = G.nb_vertex lattice
