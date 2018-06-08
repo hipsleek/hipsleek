@@ -54,35 +54,6 @@ task :clean do
   sh "ocamlbuild -clean"
 end
 
-eximpf_test_files =
-  [
-    "info-test/eximpf/double_if.ss",
-    "info-test/eximpf/double_if_precise.ss",
-    "info-test/eximpf/lemma.ss",
-    "info-test/eximpf/ll_length.ss",
-    "info-test/eximpf/ll_concat.ss",
-    "info-test/eximpf/ll_sum.ss",
-    "info-test/eximpf/pred_id.ss",
-    "info-test/eximpf/pred_cast.ss",
-    "info-test/eximpf/pred_unfold.ss",
-    "info-test/eximpf/mutual_exclusive.ss",
-    "info-test/eximpf/equal_branches.ss"
-  ]
-hip_test_files =
-  [
-    "info-test/hip/double_if_precise.ss",
-    "info-test/hip/double_if.ss",
-    "info-test/hip/lemma.ss",
-    "info-test/hip/ll_length.ss",
-    "info-test/hip/ll_concat.ss",
-    "info-test/hip/ll_sum.ss",
-    "info-test/hip/pred_id.ss",
-    "info-test/hip/pred_cast.ss",
-    "info-test/hip/pred_unfold.ss",
-    "info-test/hip/mutual_exclusive.ss",
-    "info-test/hip/equal_branches.ss"
-  ]
-
 task :test_info_flow do
   data_regex = "Procedure\|Stop\|Total verification\|Time spent\|Z3 Prover\|lemma"
 
