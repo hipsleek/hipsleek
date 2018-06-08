@@ -1,6 +1,6 @@
 int mutual1_safe(int x)
-  requires x <E @Lo
-  ensures res=1 & res <E @Lo;
+  requires x <E #@Lo
+  ensures res=1 & res <E #@Lo;
 {
   int y;
   if(x == 0) {
@@ -13,8 +13,8 @@ int mutual1_safe(int x)
 }
 
 int mutual2_safe(int x)
-  requires x <E @Lo
-  ensures res=1 & res <E @Hi;
+  requires x <E #@Lo
+  ensures res=1 & res <E #@Hi;
 {
   int y;
   if(x == 0) {
@@ -27,8 +27,8 @@ int mutual2_safe(int x)
 }
 
 int mutual3_safe(int x)
-  requires x <E @Hi & (x=0|x=1)
-  ensures res=1 & res <E @Lo;
+  requires x <E #@Hi & (x=0|x=1)
+  ensures res=1 & res <E #@Lo;
 {
   int y;
   if(x == 0) {
@@ -41,8 +41,8 @@ int mutual3_safe(int x)
 }
 
 int mutual4_safe(int x)
-  requires x <E @Hi
-  ensures res=1 & res <E @Hi;
+  requires x <E #@Hi
+  ensures res=1 & res <E #@Hi;
 {
   int y;
   if(x == 0) {

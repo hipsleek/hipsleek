@@ -1,6 +1,6 @@
 int pdouble_if1_safe(int x)
-  requires x<?@Lo & (x=0|x=1)
-  ensures res<?@Lo & res=x;
+  requires x<?#@Lo & (x=0|x=1)
+  ensures res<?#@Lo & res=x;
 {
   int y=0;
   int z=0;
@@ -20,8 +20,8 @@ int pdouble_if1_safe(int x)
 }
 
 int pdouble_if2_safe(int x)
-  requires x<?@Lo & (x=0|x=1)
-  ensures res<?@Hi & res=x;
+  requires x<?#@Lo & (x=0|x=1)
+  ensures res<?#@Hi & res=x;
 {
   int y=0;
   int z=0;
@@ -35,8 +35,8 @@ int pdouble_if2_safe(int x)
 }
 
 int pdouble_if3_fail(int x)
-  requires x<?@Hi & (x=0|x=1)
-  ensures res<?@Lo & res=x;
+  requires x<?#@Hi & (x=0|x=1)
+  ensures res<?#@Lo & res=x;
 {
   dprint;
   int y=0;
@@ -51,8 +51,8 @@ int pdouble_if3_fail(int x)
 }
 
 int pdouble_if4_safe(int x)
-  requires x<?@Hi & (x=0|x=1)
-  ensures res<?@Hi & res=x;
+  requires x<?#@Hi & (x=0|x=1)
+  ensures res<?#@Hi & res=x;
 {
   int y=0;
   int z=0;

@@ -1,6 +1,6 @@
 int equal_branch1_safe(int x)
-  requires x <E @Lo
-  ensures res <E @Lo;
+  requires x <E #@Lo
+  ensures res <E #@Lo;
 {
   int y = x;
   if(x == 0) {
@@ -12,8 +12,8 @@ int equal_branch1_safe(int x)
 }
 
 int equal_branch2_safe(int x)
-  requires x <E @Lo
-  ensures res <E @Hi;
+  requires x <E #@Lo
+  ensures res <E #@Hi;
 {
   int y = x;
   if(x == 0) {
@@ -25,8 +25,8 @@ int equal_branch2_safe(int x)
 }
 
 int equal_branch3_safe(int x)
-  requires x <E @Hi
-  ensures res <E @Lo;
+  requires x <E #@Hi
+  ensures res <E #@Lo;
 {
   int y = x;
   if(x == 0) {
@@ -38,8 +38,8 @@ int equal_branch3_safe(int x)
 }
 
 int equal_branch4_safe(int x)
-  requires x <E @Hi
-  ensures res <E @Hi;
+  requires x <E #@Hi
+  ensures res <E #@Hi;
 {
   int y = x;
   if(x == 0) {
@@ -52,7 +52,7 @@ int equal_branch4_safe(int x)
 
 int equal_branchS1_safe(int x)
   requires true
-  ensures res <E @Lo;
+  ensures res <E #@Lo;
 {
   int y = x;
   if(x == 0) {
@@ -65,7 +65,7 @@ int equal_branchS1_safe(int x)
 
 int equal_branchS2_safe(int x)
   requires true
-  ensures res <E @Hi;
+  ensures res <E #@Hi;
 {
   int y = x;
   if(x == 0) {

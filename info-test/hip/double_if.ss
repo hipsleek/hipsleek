@@ -1,6 +1,6 @@
 int double_if1_safe(int x)
-  requires x<?@Lo
-  ensures res<?@Lo;
+  requires x<?#@Lo
+  ensures res<?#@Lo;
 {
   int y=0;
   int z=0;
@@ -20,8 +20,8 @@ int double_if1_safe(int x)
 }
 
 int double_if2_safe(int x)
-  requires x<?@Lo
-  ensures res<?@Hi;
+  requires x<?#@Lo
+  ensures res<?#@Hi;
 {
   int y=0;
   int z=0;
@@ -35,8 +35,8 @@ int double_if2_safe(int x)
 }
 
 int double_if3_fail(int x)
-  requires x<?@Hi
-  ensures res<?@Lo;
+  requires x<?#@Hi
+  ensures res<?#@Lo;
 {
   int y=0;
   int z=0;
@@ -54,8 +54,8 @@ int double_if3_fail(int x)
 }
 
 int double_if4_safe(int x)
-  requires x<?@Hi
-  ensures res<?@Hi;
+  requires x<?#@Hi
+  ensures res<?#@Hi;
 {
   int y,z;
   y = 0;

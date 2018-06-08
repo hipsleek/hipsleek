@@ -1,6 +1,6 @@
 int single_if1_safe(int x)
-  requires x <E @Lo
-  ensures res <E @Lo;
+  requires x <E #@Lo
+  ensures res <E #@Lo;
 {
   int y=0;
   if(x == 0) {
@@ -10,8 +10,8 @@ int single_if1_safe(int x)
 }
 
 int single_if2_safe(int x)
-  requires x <E @Lo
-  ensures res <E @Hi;
+  requires x <E #@Lo
+  ensures res <E #@Hi;
 {
   int y=0;
   if(x == 0) {
@@ -21,8 +21,8 @@ int single_if2_safe(int x)
 }
 
 int single_if3_fail(int x)
-  requires x <E @Hi
-  ensures res <E @Lo;
+  requires x <E #@Hi
+  ensures res <E #@Lo;
 {
   int y=0;
   if(x == 0) {
@@ -32,8 +32,8 @@ int single_if3_fail(int x)
 }
 
 int single_if4_safe(int x)
-  requires x <E @Hi
-  ensures res <E @Hi;
+  requires x <E #@Hi
+  ensures res <E #@Hi;
 {
   int y=0;
   if(x == 0) {
