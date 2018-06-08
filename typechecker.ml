@@ -4258,7 +4258,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           in
           let () = match exc with
             | Some e ->
-              (* let _ = print_string_quiet (get_backtrace_quiet ()) in *)
+              let _ =
+                if !VarGen.trace_failure
+                || !VarGen.trace_exc
+                || !VarGen.z_debug_flag
+                || !Debug.debug_on
+                || !Debug.devel_debug_on then
+                  print_string_quiet (get_backtrace_quiet ()) in
               raise e
             | None -> ()
           in
