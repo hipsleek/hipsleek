@@ -2819,7 +2819,9 @@ infer_type_list:
 
 
 infer_cmd:
-  [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE; b=extended_meta_constr ->
+  [[ `INFER; il_w_itype = cid_list_w_itype; t=meta_constr; `DERIVE;
+     b=extended_meta_constr ->
+     print_string "\ninfer cmdddddddddddddddd\n";
       (* let inf_o = new Globals.inf_obj_sub (\* Globals.clone_sub_infer_const_obj () *\) (\* Globals.infer_const_obj # clone *\) in *)
       (* let (i_consts,ivl) = List.fold_left  *)
       (*   (fun (lst_l,lst_r) e -> match e with FstAns l -> (l::lst_l,lst_r)  *)

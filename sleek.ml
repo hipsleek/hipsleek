@@ -147,15 +147,16 @@ module M = Lexer.Make(Token.Token)
          Some true
          Some false
       *)
-      (* let () = print_endline "InferCmd2" in *)
+
+      let () = print_endline "InferCmd2" in
       let change_etype x f = 
         if f then match x with 
           | None -> Some f 
           | _ -> x
         else x in
       let etype = change_etype etype (List.exists (fun x -> x=INF_CLASSIC) itype) in
-      let () = x_tinfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
-      let () = x_tinfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
+      let () = x_binfo_hp (add_str "etype" (pr_option string_of_bool)) etype no_pos in
+      let () = x_binfo_hp (add_str "itype" (pr_list string_of_inf_const)) itype no_pos in
       (process_infer itype ivars iante iconseq etype;())
     | CaptureResidue lvar -> process_capture_residue lvar
     | PrintCmd pcmd ->
@@ -398,6 +399,7 @@ let parse_file (parse) (source_file : string) =
   List.iter proc_one_cmd cmds
 
 let main () =
+  print_string "\nmain line 401\n";
   let () = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
                 I.prog_data_decls = [iobj_def;ithrd_def];
@@ -569,8 +571,8 @@ let _ =
     Gen.Profiling.push_time "Overall";
     (* let () = print_endline "before main" in *)
     main ();
+    print_string "\nline 573, after parsing\n";
     let _ =
-      print_endline_quiet "";
       if !Globals.show_unexpected_ents && ((unexpected_cmd # len) > 0)
       then (
         let () = print_endline_quiet ("Unexpected List: "^(unexpected_cmd # string_of_no_ln_rev)) in

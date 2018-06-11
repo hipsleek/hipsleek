@@ -575,6 +575,7 @@ let get_current_tp_name () = name_of_tp !pure_tp
 let omega_count = ref 0
 
 let start_prover () =
+  print_string "\ntpdispatcher start_prover";
   match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | OCRed | RM -> Redlog.start ();
@@ -1838,6 +1839,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let f = CP.translate_waitS_pure f in (*waitS before acyclic*)
   let f = CP.translate_acyclic_pure f in
   let f,_ = x_add CP.translate_tup2_imply f (CP.mkTrue no_pos)in
+  (* let () = x_binfo_hp (add_str "formula: " Cprinter.string_of_pure_formula) f
+   *     no_pos in *)
   let f = if (!Globals.allow_locklevel) then
       (*should translate waitlevel before level*)
       let f = CP.infer_level_pure f in (*add l.mu>0*)
@@ -2374,6 +2377,7 @@ let om_pairwisecheck f =
   Debug.no_1 "om_pairwisecheck" pr pr om_pairwisecheck f
 
 let tp_pairwisecheck2_x (f1 : CP.formula) (f2 : CP.formula) : CP.formula =
+  print_string "start prover";
   if not !tp_batch_mode then Omega.start_prover ();
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in

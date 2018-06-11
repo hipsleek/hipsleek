@@ -285,6 +285,7 @@ let start_prover() =
   try (
     if not !is_omega_running then begin
       (* if (not !Globals.web_compile_flag) then  *)
+      print_endline "ldflfe";
       print_endline_quiet  ("\nStarting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let () = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
@@ -314,6 +315,7 @@ let stop () =
 
 (* restart Omega system *)
 let restart reason =
+  print_string("flfldf");
   if !is_omega_running then begin
     let () = print_string_if !Globals.enable_count_stats (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start_prover stop
@@ -381,7 +383,8 @@ let read_last_line_from_in_channel chn : string =
 
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
-(*  try*)
+  (*  try*)
+  print_string "dflfdf";
   begin
     (* let () = x_binfo_pp f no_pos in *)
     if not !is_omega_running then start_prover ()
@@ -391,7 +394,7 @@ let check_formula f timeout =
         omega_call_count := 0;
       end;
     let fnc f = 
-      (* let () = print_endline ("check:" ^ f) in *)
+      let () = print_endline ("check:" ^ f) in
       let () = incr omega_call_count in
       let new_f = Gen.break_lines_1024 f
       (*  if ((String.length f) > 1024) then
