@@ -9,6 +9,10 @@ pred pub_ll<n> == self=null & n=0 & self <E #@Lo
 pred pri_ll<n> == self=null & n=0 & self <E #@Hi
   or self::node<v,q> * q::pri_ll<m> & n>0 & m=n-1 & self <E #@Hi & v <E #@Hi
   inv n>=0;
+pred ff_pri_ll<n,m> == self::pub_ll<m> & n=0 & self<E@Lo
+  or self::node<v,q> * q::ff_pri_ll<n-1,m> & n>0 & self<E@Hi & v<E@Hi
+  inv n>=0 & m>=0;
+
 
 lemma_safe "public->private_safe" self::pub_ll<n> -> self::pri_ll<n>;
 lemma_safe "private->public_fail" self::pri_ll<n> -> self::pub_ll<n>;
@@ -108,3 +112,15 @@ node concat8_safe(node p, node q)
     return p;
   }
 }
+
+/* node concat_pri_pub1_safe(node p, node q) */
+/*   requires p::pri_ll<n> * q::pub_ll<m> & p <E @Hi & q <E @Lo */
+/*   ensures res::ff_pri_ll<n,m> & res <E @Hi; */
+/* { */
+/*   if(p == null) { */
+/*     return q; */
+/*   } else { */
+/*     p.n = concat_pri_pub1_safe(p.n, q); */
+/*     return p; */
+/*   } */
+/* } */

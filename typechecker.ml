@@ -2300,13 +2300,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* NOTE: Explicit Flows are kept in disjunction *)
                 (* let expf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_explicit_flow y) x) eximpf_sec_form in
                  * let expf_sec_form   = CF.merge_eximpf_sec_form_list expf_sec_form in *)
+                (* let () = print_endline ("RES_COND: " ^ Cprinter.string_of_list_failesc_context res) in *)
 
                 let impf_sec_form   = List.map (fun x -> List.filter (fun y -> CP.is_implicit_flow y) x) eximpf_sec_form in
                 let eq_sec_form     = List.map (fun x -> List.filter (fun y -> CP.is_eq_p_formula y) x) eximpf_sec_form in
-                let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
-                let () = print_endline ("\nequiv classes") in
-                let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
-                (* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *)
+                (* let () = print_endline ("\nEQV (0)") in
+                 * let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
+                 * let eq_sec_form     = List.map (fun x -> CF.equiv_values x) eq_sec_form in
+                 * let () = print_endline ("\nEQV (1)") in
+                 * let () = List.iter (fun eql -> print_endline (List.fold_left (fun acc eq -> acc ^ (!CP.print_p_formula eq) ^ " ") "" eql)) eq_sec_form in
+                 * (\* let impf_sec_form   = CF.merge_eximpf_sec_form_list impf_sec_form in *\) *)
                 let p_sctx = ref [] in
                 let temp_eximpf_res = CF.transform_list_failesc_context (idf, idf, CF.restore_sctx p_sctx) res in
                 let impf_sec_form   = CF.merge_implicit_sec_form_list prog.prog_sec_labels eq_sec_form !p_sctx impf_sec_form in
@@ -2366,11 +2369,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
              let _ = print_string_quiet (tmp1 ^ tmp2) in
              let _ = if !Globals.eximpf
                then (
-                 let impf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
-                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) impf in
+                 let eximpf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
+                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) eximpf in
                  let () = List.iter (fun x -> print_endline (
                      List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
                    )) impf in
+                 let expf = List.map (fun l -> List.filter (fun x -> CP.is_explicit_flow x) l) eximpf in
+                 let () = List.iter (fun x -> print_endline (
+                     List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
+                   )) expf in
                  ()
                )
                else ()
@@ -2793,6 +2800,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* move must, may flow into esc_stack *)
             if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
               (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in *)
+
+
+              (* let res =
+               *   if !Globals.eximpf && not(ret_t==Void)
+               *   then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+               *   else res
+               * in *)
+
+
               let res =
                 (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
@@ -2893,9 +2909,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         }
                       end
                   in
-                  if !Globals.eximpf && not(ret_t==Void)
-                  then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call prog.prog_sec_labels (CP.mkRes ret_t) pos) res
-                  else res
+                  res
               )
             end
       end
@@ -2979,11 +2993,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (*************************************)
       (* VPerm: Set @full permission for v *)
       (*************************************)
-      if !ann_vp then
-        let sv = CP.SpecVar (t, v, Unprimed) in
-        let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
-        VP.add_vperm_sets_list_failesc_ctx vp ctx
-      else ctx
+      let res =
+        if !ann_vp then
+          let sv = CP.SpecVar (t, v, Unprimed) in
+          let vp = CVP.vperm_sets_of_anns [(VP_Full, [sv])] in
+          VP.add_vperm_sets_list_failesc_ctx vp ctx
+        else ctx
+      in
+      let sv = CP.SpecVar (t, v, Primed) in
+      let res = if !Globals.ifa (* Information Flow Analysis *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_const prog.prog_sec_labels sv no_pos) res
+        else if !Globals.eximpf (* Explicit & Implicit Flow  *)
+        then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_const prog.prog_sec_labels sv no_pos) res
+        else res
+      in
+      res
+
     | Unit pos -> ctx
     | Sharp ({exp_sharp_type =t;
               exp_sharp_flow_type = ft;(*P.flow_typ*)
