@@ -119,7 +119,6 @@ int equal_single_branch3_safe(int x)
   if(x > 0) {
     y = 0;
   }
-  dprint;
   return y;
 }
 
@@ -130,6 +129,61 @@ int equal_single_branch4_safe(int x)
   int y = 0;
   if(x > 0) {
     y = 0;
+  }
+  return y;
+}
+
+
+
+int equal_branch_plus1_safe(int x)
+  requires x <E @Lo
+  ensures res <E @Lo;
+{
+  int y = x;
+  if(x == 0) {
+    y = 1+1;
+  } else {
+    y = 2;
+  }
+  return y;
+}
+
+int equal_branch_plus2_safe(int x)
+  requires x <E @Lo
+  ensures res <E @Hi;
+{
+  int y = x;
+  if(x == 0) {
+    y = 1+1;
+  } else {
+    y = 2;
+  }
+  return y;
+}
+
+int equal_branch_plus3_safe(int x)
+  requires x <E @Hi
+  ensures res <E @Lo;
+{
+  int y = x;
+  if(x == 0) {
+    y = 1+1;
+  } else {
+    y = 2;
+  }
+  return y;
+  dprint;
+}
+
+int equal_branch_plus4_safe(int x)
+  requires x <E @Hi
+  ensures res <E @Hi;
+{
+  int y = x;
+  if(x == 0) {
+    y = 1+1;
+  } else {
+    y = 2;
   }
   return y;
 }

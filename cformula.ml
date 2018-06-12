@@ -20860,6 +20860,23 @@ let prop_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
   let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(CP.to_primed v)) sctx) pos in
   let newf = add_pure_formula_to_formula secf state.es_formula in
   Ctx { state with es_formula = newf }
+
+let prop_call (res_v : CP.spec_var) pos state =
+  let sctx = (build_sec_ctx state.es_security_context) in
+  let nres = CP.fresh_spec_var res_v in
+  let nctx = subst [(res_v,nres)] state.es_formula in
+  let secf = CP.mk_sec_bform res_v (CP.lub_op (CP.SecVar(nres)) sctx) pos in
+  let pure = CP.mkEqVar res_v nres pos in
+  let allf = CP.mkAnd secf pure pos in
+  let newf = add_pure_formula_to_formula allf nctx in
+  Ctx { state with es_formula = newf }
+
+let prop_sharp (v : ident) pos state =
+  let sctx   = (build_sec_ctx state.es_security_context) in
+  let rest,_ = get_var_type v state.es_formula in
+  let res_v  = CP.mkRes rest in
+  let var_v  = CP.SpecVar (rest, v, Primed) in
+  prop_var res_v var_v pos state
 (*****************************)
 
 (* Explicit & Implicit Flow: EXIMPF *)
@@ -21200,9 +21217,22 @@ let prop_eximpf_var (res_v : CP.spec_var) (v : CP.spec_var) pos state =
 
 let prop_eximpf_call (res_v : CP.spec_var) pos state =
   let sctx = (build_sec_ctx state.es_security_context) in
+  (* let nres = CP.fresh_spec_var res_v in
+   * let nctx = subst [(res_v,nres)] state.es_formula in *)
   let impf = CP.mk_implicit_bform res_v sctx pos in
+  (* let expf = CP.mk_explicit_bform res_v (CP.SecVar(nres)) pos in
+   * let pure = CP.mkEqVar res_v nres pos in
+   * let secf = CP.mkAnd expf impf pos in
+   * let allf = CP.mkAnd secf pure pos in *)
   let newf = add_pure_formula_to_formula impf state.es_formula in
   Ctx { state with es_formula = newf }
+
+let prop_eximpf_sharp (v : ident) pos state =
+  let sctx   = (build_sec_ctx state.es_security_context) in
+  let rest,_ = get_var_type v state.es_formula in
+  let res_v  = CP.mkRes rest in
+  let var_v  = CP.SpecVar (rest, v, Primed) in
+  prop_eximpf_var res_v var_v pos state
 
 let normalize_eximpf state =
   let rec in_formula = function

@@ -22,7 +22,6 @@ int length1_safe(node p)
   } else {
     return 1 + length1_safe(p.n);
   }
-  dprint;
 }
 
 int length2_safe(node p)

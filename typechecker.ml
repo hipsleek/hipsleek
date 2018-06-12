@@ -2331,7 +2331,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
     | Dprint ({exp_dprint_string = str;
                exp_dprint_visible_names = visib_names;
-               exp_dprint_pos = pos}) -> begin
+               exp_dprint_pos = pos}) -> (* ctx *)
+
+      begin
         let curr_svl = stk_vars # get_stk in
         let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         (* let () = print_endline ("check_exp: Dprint: ctx :" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
@@ -2347,49 +2349,54 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* Debug.info_hprint (add_str "dprint ctx0:" Cprinter.string_of_list_failesc_context) ctx0 pos; *)
         (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
         (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
-        if str = "" then begin
-          let str1 = (Cprinter.string_of_list_failesc_context ctx) in
-          let str2 = (Cprinter.string_of_list_failesc_context ctx_simp) in
-          (if (Gen.is_empty ctx) then
-             (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
-                                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
-           else
-             let tmp1 =
-               if !Globals.simplify_dprint then ""
-               else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
-                    ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
-             let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 =
-               if !Globals.simplify_dprint then
-                 "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
-                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
-               else ""
-             in
-             let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
-             let _ = print_string_quiet (tmp1 ^ tmp2) in
-             let _ = if !Globals.eximpf
-               then (
-                 let eximpf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
-                 let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) eximpf in
-                 let () = List.iter (fun x -> print_endline (
-                     List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
-                   )) impf in
-                 let expf = List.map (fun l -> List.filter (fun x -> CP.is_explicit_flow x) l) eximpf in
-                 let () = List.iter (fun x -> print_endline (
-                     List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
-                   )) expf in
-                 ()
-               )
-               else ()
-             in
-             ()
-          );
-          ctx
-        end else begin
-          ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
-          ctx
-        end
-      end;
+        if str = ""
+        then
+          begin
+            let str1 = (Cprinter.string_of_list_failesc_context ctx) in
+            let str2 = (Cprinter.string_of_list_failesc_context ctx_simp) in
+            (if (Gen.is_empty ctx) then
+               (print_string_quiet ("\ndprint:"^pos.start_pos.Lexing.pos_fname
+                                    ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context"))
+             else
+               let tmp1 =
+                 if !Globals.simplify_dprint then ""
+                 else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
+                      ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
+               let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
+               let tmp2 =
+                 if !Globals.simplify_dprint then
+                   "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
+                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
+                 else ""
+               in
+               let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
+               let _ = print_string_quiet (tmp1 ^ tmp2) in
+               (* let _ = if !Globals.eximpf
+                *   then (
+                *     let eximpf = CF.get_eximpf_sec_in_list_failesc_ctx ctx in
+                *     let impf = List.map (fun l -> List.filter (fun x -> CP.is_implicit_flow x) l) eximpf in
+                *     let () = List.iter (fun x -> print_endline (
+                *         List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
+                *       )) impf in
+                *     let expf = List.map (fun l -> List.filter (fun x -> CP.is_explicit_flow x) l) eximpf in
+                *     let () = List.iter (fun x -> print_endline (
+                *         List.fold_left (fun acc el -> acc ^ (!CP.print_p_formula el) ^ " ") "" x
+                *       )) expf in
+                *     ()
+                *   )
+                *   else ()
+                * in *)
+               ()
+            );
+            ctx
+          end
+        else
+          begin
+            ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
+            ctx
+          end
+      end(* ; *)
+
     | Debug ({exp_debug_flag = flag;
               exp_debug_pos = pos}) -> begin
         (if flag then Omega.log_mark "debug on"
@@ -2801,14 +2808,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
               (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in *)
 
-
-              (* let res =
-               *   if !Globals.eximpf && not(ret_t==Void)
-               *   then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
-               *   else res
-               * in *)
-
-
               let res =
                 (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
                 (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
@@ -2822,6 +2821,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
                                                                              CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
+
+
+              (* let () = print_endline ("res (0): " ^ Cprinter.string_of_list_failesc_context res) in *)
+              let res = if !Globals.ifa (* Information Flow Analysis *)
+                then CF.transform_list_failesc_context (idf, idf, CF.prop_call (CP.mkRes ret_t) pos) res
+                else if !Globals.eximpf (* Explicit & Implicit Flow  *)
+                then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+                else res
+              in
+              (* let () = print_endline ("res (1): " ^ Cprinter.string_of_list_failesc_context res) in *)
+              let res = list_failesc_context_and_unsat_now prog res in
+              (* let () = print_endline ("res (2): " ^ Cprinter.string_of_list_failesc_context res) in *)
+
+
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since
                 this will incur overhead if we have many
@@ -2909,6 +2922,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         }
                       end
                   in
+
+                  (* let () = print_endline ("res (0): " ^ Cprinter.string_of_list_failesc_context res) in
+                   * let res = if !Globals.ifa (\* Information Flow Analysis *\)
+                   *   then CF.transform_list_failesc_context (idf, idf, CF.prop_call (CP.mkRes ret_t) pos) res
+                   *   else if !Globals.eximpf (\* Explicit & Implicit Flow  *\)
+                   *   then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_call (CP.mkRes ret_t) pos) res
+                   *   else res
+                   * in
+                   * let () = print_endline ("res (1): " ^ Cprinter.string_of_list_failesc_context res) in
+                   * let res = list_failesc_context_and_unsat_now prog res in
+                   * let () = print_endline ("res (2): " ^ Cprinter.string_of_list_failesc_context res) in *)
                   res
               )
             end
@@ -3073,14 +3097,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             else ctx, res_var, sharp_val
           in
 
-          let ctx = if !Globals.ifa (* Information Flow Analysis *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) ctx
-            else if !Globals.eximpf (* Explicit & Implicit Flow  *)
-            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var vr vf pos) ctx
-            else ctx
-          in
-          (*****************************)
-
           let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar vr vf pos)) pos in
           (* let () = print_string_quiet ("tmp: "^(Cprinter.string_of_formula tmp)^"\n") in *)
           let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
@@ -3088,6 +3104,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let () = x_binfo_pp ("ctx1 :"^(Cprinter.string_of_list_failesc_context ctx1)) no_pos in *)
           (* let () = x_binfo_hp (add_str "vr" Cprinter.string_of_spec_var) vr no_pos in *)
           (* let () = x_binfo_hp (add_str "vf" Cprinter.string_of_spec_var) vf no_pos in *)
+
+          (* let ctx1 = if !Globals.ifa   (\* Information Flow Analysis *\)
+           *   then CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) ctx1
+           *   else if !Globals.eximpf (\* Explicit & Implicit Flow  *\)
+           *   then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var vr vf pos) ctx1
+           *   else ctx1
+           * in *)
+
           ctx1
         | Sharp_flow v ->
           let fct es =
@@ -3098,20 +3122,80 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               else CF.normalize_clash_es vsv_f pos true es
             else CF.Ctx es
           in
-          CF.transform_list_failesc_context (idf,idf,fct) ctx
-        | Sharp_no_val -> ctx in
+          let ctx = CF.transform_list_failesc_context (idf,idf,fct) ctx in
+
+          ctx
+        | Sharp_no_val -> ctx
+      in
+
       let r = match ft with
         | Sharp_ct nf ->
+          let () = print_endline ("Sharp_ct") in
           if not un then
             CF.transform_list_failesc_context
               (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula nf es.CF.es_formula})) nctx
           else CF.transform_list_failesc_context
               (idf,idf,(fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_to_link_f !flow_store es.CF.es_formula no_pos})) nctx
-        | Sharp_id v -> CF.transform_list_failesc_context
-                          (idf,idf,
-                           (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
-                          nctx in
-      CF.add_path_id_ctx_failesc_list r (pid,0) (-1)
+        | Sharp_id v ->
+          let () = print_endline ("Sharp_id") in
+          CF.transform_list_failesc_context
+            (idf,idf,
+             (fun es -> CF.Ctx {es with CF.es_formula = CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store pos) es.CF.es_formula}))
+            nctx
+      in
+
+      let r = CF.add_path_id_ctx_failesc_list r (pid,0) (-1) in
+
+      let r = match v with
+        | Sharp_var (t,v) ->
+          let t1 = (get_sharp_flow ft) in
+          let vr,vf =
+            let sharp_val = CP.SpecVar (t, v, Primed) in
+            let eres_var = CP.mkeRes t in
+            let res_var = CP.mkRes t in
+            if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int
+            then (eres_var, sharp_val)
+            else (res_var , sharp_val)
+          in
+      
+          let r = if !Globals.ifa   (* Information Flow Analysis *)
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_var vr vf pos) r
+            else if !Globals.eximpf (* Explicit & Implicit Flow  *)
+            then CF.transform_list_failesc_context (idf, idf, CF.prop_eximpf_var vr vf pos) r
+            else r
+          in
+          let () = print_endline ("R (Sharp_var ): " ^ Cprinter.string_of_list_failesc_context r) in
+          r
+      
+        | Sharp_flow v ->
+          let r = if !Globals.ifa   (* Information Flow Analysis *)
+            then CF.transform_list_failesc_context (idf,idf,CF.prop_sharp v pos) r
+            else if !Globals.eximpf (* Explicit & Implicit Flow  *)
+            then CF.transform_list_failesc_context (idf,idf,CF.prop_eximpf_sharp v pos) r
+            else r
+          in
+          let () = print_endline ("R (Sharp_flow): " ^ Cprinter.string_of_list_failesc_context r) in
+          r
+      
+        | Sharp_no_val ->
+          let () = print_endline ("R (Sharp_none): " ^ Cprinter.string_of_list_failesc_context r) in
+          r
+      in
+      let r = list_failesc_context_and_unsat_now prog r in
+      let r = prune_ctx_failesc_list prog r in
+
+      let r = if !Globals.tc_drop_unused then
+          let f es = CF.Ctx{es with CF.es_formula = CF.elim_e_var !proc_used_names es.CF.es_formula} in
+          List.map (CF.transform_failesc_context (idf,idf,f)) r
+        else r
+      in
+
+      let nd_vars = CF.collect_nondet_vars_list_failesc_context r in
+      let r = x_add CF.push_exists_list_failesc_context nd_vars r in
+      let r = elim_exists_failesc_ctx_list r in
+      let () = print_endline ("result: " ^ Cprinter.string_of_list_failesc_context r) in
+      r
+
     | Try ({exp_try_body = body;
             exp_catch_clause = cc;
             exp_try_path_id = pid;
