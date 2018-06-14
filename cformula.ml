@@ -12466,10 +12466,6 @@ let isSuccBranches succ_brs=
 let isSuccessPartialCtx_new (fs,succ_brs) =
   let is_succ = List.for_all isSuccessBranchFail fs in
   if not !Globals.enable_error_as_exc || not is_succ then is_succ else
-    (* all succ branch should not subsume must, may flows *)
-    (* succ_brs != [] && List.for_all (fun (_, _, oft) -> *)
-    (*     oft = None *)
-    (* ) succ_brs *)
     isSuccBranches succ_brs
 
 let isSuccessFailescCtx (fs,_,_) =
@@ -12491,10 +12487,10 @@ let isSuccessListPartialCtx cl =
   Debug.no_1 "isSuccessListPartialCtx" pr string_of_bool isSuccessListPartialCtx cl
 
 let isSuccessListPartialCtx_new cl =
-  (* cl==[] || *) List.exists isSuccessPartialCtx_new cl
+  List.exists isSuccessPartialCtx_new cl
 
 let isSuccessListFailescCtx cl =
-  (* cl==[] || *) List.exists isSuccessFailescCtx cl 
+  List.exists isSuccessFailescCtx cl 
 
 let isSuccessListFailescCtx cl =
   (* let cl = list_failesc_context_simplify cl in *)

@@ -32,7 +32,6 @@ type prog_decl = {
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
   mutable prog_view_decls : view_decl  list; (* WN : to change to Gen.stack_pr *)
-  (* mutable prog_rel_decls : rel_decl list; (\* An Hoa : relation definitions *\) *)
   prog_rel_decls : rel_decl Gen.stack_pr; (* An Hoa : relation definitions *)
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
@@ -40,10 +39,7 @@ type prog_decl = {
   mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
   mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
   mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
-  (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
   new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-  (*mutable prog_left_coercions : coercion_decl list;*)
-  (*mutable prog_right_coercions : coercion_decl list;*)
   prog_barrier_decls : barrier_decl list
 }
 
