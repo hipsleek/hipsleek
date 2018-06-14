@@ -12603,7 +12603,7 @@ let list_partial_context_union (l1:list_partial_context) (l2:list_partial_contex
 
 let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = x_add_1 remove_dupl_false_fe_list (l1 @ l2)
 
-let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = 
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context =
   let pr x = string_of_int(List.length x) in
   Debug.no_2 "list_partial_context_union" pr pr pr list_partial_context_union l1 l2
 
