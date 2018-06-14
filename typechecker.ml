@@ -3594,7 +3594,7 @@ let rec check_prog iprog (prog : prog_decl) =
     in
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
-    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc)
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
     let () = x_tinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
     let () = x_tinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
