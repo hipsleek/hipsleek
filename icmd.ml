@@ -76,12 +76,6 @@ let rec compute_cmd cprog scc: icmd =
       (if has_infer_classic then [INF_CLASSIC] else []))
   in
   if has_infer_shape_prepost_proc then
-    (* let scc_wo_shape,_ = List.split (Iincr.update_infer_const_scc [] [INF_SHAPE_PRE_POST] scc) in *)
-    (* let scc_pre,_ = List.split (Iincr.update_infer_const_scc [INF_SHAPE_PRE;INF_CLASSIC] infs scc) in *)
-    (* let pre_cmd = compute_cmd cprog [INF_SHAPE_PRE;INF_CLASSIC] in *)
-    (* let scc_post,_ = List.split (Iincr.update_infer_const_scc [INF_SHAPE_POST] infs scc) in *)
-    (* let post_cmd =  compute_cmd cprog [INF_SHAPE_POST] in *)
-    (* let pre_cmd = mk_norm_icmd [INF_SHAPE_PRE] in *)
     let post_cmd = mk_norm_icmd [INF_SHAPE_POST] in
     let snd_cmd = 
       if Globals.infer_const_obj # is_shape_post || List.exists (fun it -> it != INF_SHAPE_PRE_POST) infs
@@ -93,11 +87,6 @@ let rec compute_cmd cprog scc: icmd =
     if (Globals.infer_const_obj # is_shape_pre || List.exists (fun it -> it = INF_SHAPE_PRE) infs) && 
        (Globals.infer_const_obj # is_shape_post || List.exists (fun it -> it = INF_SHAPE_POST) infs) 
     then
-      (* let pre_cmd =                                                                               *)
-      (*   if Globals.infer_const_obj # is_classic || List.exists (fun it -> it = INF_CLASSIC) infs  *)
-      (*   then mk_norm_icmd [INF_SHAPE_PRE; INF_CLASSIC]                                            *)
-      (*   else mk_norm_icmd [INF_SHAPE_PRE]                                                         *)
-      (* in                                                                                          *)
       let post_cmd = mk_norm_icmd [INF_SHAPE_POST] in
       let rem = List.filter (fun it -> it!= INF_SHAPE_PRE && it != INF_SHAPE_POST && it != INF_CLASSIC) infs in
       let snd_cmd = 
@@ -106,18 +95,6 @@ let rec compute_cmd cprog scc: icmd =
       in
       mk_seq_icmd (1, inf_shape_pre_cmd) (1, snd_cmd)
     else
-      (* let has_infer_shape_pre_proc =List.exists (fun it -> it = INF_SHAPE_PRE) infs in *)
-      (* if has_infer_shape_pre_proc then *)
-      (*   (\*TOFIX: care other infer consts*\) *)
-      (*   let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_pre_shape_relation scc in *)
-      (*   mk_norm_icmd scc *)
-      (* else *)
-      (*   let has_infer_shape_post_proc = List.exists (fun it -> it = INF_SHAPE_POST) infs in *)
-      (*   if has_infer_shape_post_proc then *)
-      (*     (\*TOFIX: care other infer consts*\) *)
-      (*     let () = Iincr.add_prepost_shape_relation_scc cprog Iincr.add_post_shape_relation scc in *)
-      (*     mk_norm_icmd scc *)
-      (*   else *)
       mk_norm_icmd infs
 
 let compute_cmd cprog scc: icmd =
