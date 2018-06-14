@@ -18,3 +18,22 @@ ensures x::ll<n> & res = n;
           return n;
      }
 }
+
+/*
+Checking procedure length$node...
+
+Post condition cannot be derived:
+(may) cause: [  (must) cause: do_unmatched_rhs : x::ll<n_1923>@M(must),valid]
+
+Context of Verification Failure: repair-ex-2.ss_13:8_13:26
+
+Last Proving Location: repair-ex-2.ss_17:18_17:36
+
+ERROR: at repair-ex-2.ss_13:8_13:26
+Message: Post condition cannot be derived.
+
+Procedure length$node FAIL.(2)
+
+
+Exception Failure("Post condition cannot be derived.") Occurred!
+*/

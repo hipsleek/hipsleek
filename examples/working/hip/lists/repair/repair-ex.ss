@@ -12,9 +12,9 @@ int length(node x)
 requires x::ll<n>
 ensures x::ll<n> & res = n;
 {
-   if(x==null) return 1;
+   if(x==null) return 0;
      else {
-          int n = 1 + length(x.next);
+          int n = 9 + length(x.next);
           return n;
      }
 }
