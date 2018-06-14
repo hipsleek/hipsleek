@@ -55,167 +55,12 @@ let scc_proc_sel_post_hps = ref ([]: CP.spec_var list)
 let parallelize num =
   num_para := num
 
-(* let cond_path = new Gen.stack_pr (string_of_int) (==)  *)
-
-(* let wrap_cond_path i exec_function args = *)
-(*   begin *)
-(*     let () = cond_path # push i in *)
-(*     let () = x_binfo_zp (lazy (("cond_path "^(cond_path # string_of_no_ln_rev)))) no_pos in *)
-(*     try  *)
-(*       let res = exec_function args in *)
-(*       let () = cond_path # pop in *)
-(*       res *)
-(*     with _ as e -> *)
-(*         begin *)
-(*           let () = cond_path # pop in *)
-(*           raise e *)
-(*         end *)
-(*   end *)
-
-(* let rec check_specs prog proc ctx spec_list e0 = *)
-(*   check_specs_a prog proc ctx spec_list e0 *)
-(*       (\*Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
-
-(* (\* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *\) *)
-
-(* (\* assumes the pre, and starts the symbolic execution*\) *)
-(* and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = *)
-(*   (\* let (_,_,b) = check_specs_infer prog proc ctx spec_list e0 in *\) *)
-(*   (\* b *\) *)
-(*       let rec do_spec_verification (spec: CF.ext_formula):bool = *)
-(*         (\*let () = print_string_quiet (Cprinter.string_of_ext_formula spec) in*\) *)
-(*         let pos_spec = CF.pos_of_struc_formula [spec] in *)
-(*         log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum); *)
-(*         match spec with *)
-(*           | CF.ECase b -> *)
-(*         	    List.for_all (fun (c1, c2) -> *)
-(*         	        let mn = Cast.unmingle_name (proc.Cast.proc_name) in (\*get proc_name*\) *)
-(*         	        let f_formula = fun f -> None in *)
-(*         	        let f_b_formula (pf, il) = match pf with *)
-(*         		      | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some ((CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc)), il) *)
-(*         		      | _ -> None *)
-(*         	        in *)
-(*                     (\*???*\) *)
-(*         	        let f_exp = function *)
-(*         		      | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc)) *)
-(*         		      | _ -> None *)
-(*         	        in *)
-(*                     (\*???*\) *)
-(*         	        let new_c1 = CP.transform_formula (true, true, f_formula, f_b_formula, f_exp) c1 in *)
-(*         	        (\* Termination: Add source condition *\) *)
-(*         	        let nctx = CF.transform_context (fun es -> *)
-(*         		        CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in (\*???*\) *)
-
-(*   	        (\*let () = print_string_quiet ("\ncheck_specs: nctx: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*\) *)
-
-(*   	        let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in *)
-(*   	        let r = check_specs_a prog proc nctx c2 e0 in *)
-(*   	        (\*let () = x_dinfo_zp (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in*\) *)
-(*   	        r) b.CF.formula_case_branches *)
-(*     | CF.EBase b -> *)
-(*           x_dinfo_zp (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
-(*           let nctx = *)
-(*             if !Globals.max_renaming *)
-(*             then (CF.transform_context (CF.normalize_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) (\*apply normalize_es into ctx.es_state*\) *)
-(*             else (CF.transform_context (CF.normalize_clash_es b.CF.formula_ext_base b.CF.formula_ext_pos false) ctx) in *)
-(*   		(\* let () = print_string_quiet ("check_specs: EBase: New context = " ^ (Cprinter.string_of_context nctx) ^ "\n") in *\) *)
-(*           let r = check_specs_a prog proc nctx b.CF.formula_ext_continuation e0 in *)
-(*           let () = x_dinfo_zp (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in *)
-(*           r *)
-(*     | CF.EVariance b -> *)
-(*           x_dinfo_zp (lazy ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
-(*   		let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_measures = List.map (fun (e,b) -> e) b.CF.formula_var_measures; *)
-(*   		    CF.es_var_label = b.CF.formula_var_label}) ctx in *)
-(*   	    check_specs_a prog proc nctx b.CF.formula_var_continuation e0 *)
-(*     | CF.EInfer b -> *)
-(*           x_dinfo_zp (lazy ("check_specs: EInfer: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
-(*           let vars = b.CF.formula_inf_vars in *)
-(*           let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars = vars}) ctx in *)
-(*           check_specs_a prog proc nctx b.CF.formula_inf_continuation e0 *)
-(*     | CF.EAssume (x,post_cond,post_label) -> *)
-(*           if(Immutable.is_lend post_cond) then *)
-(*         	  Error.report_error *)
-(*   	          {Error.error_loc = pos_spec; *)
-(*   	          Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")} *)
-(*           else *)
-(*             let () = post_pos#set (CF.pos_of_formula post_cond) in *)
-(*             x_dinfo_zp (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos; *)
-(*             let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in *)
-(*             (\* let () = print_string_quiet ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in *\) *)
-(*             if (CF.isAnyFalseCtx ctx1) then *)
-(*   	        let () = x_dinfo_pp ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^ *)
-(*   			    (Cprinter.string_of_context_short ctx)) no_pos in *)
-(*   	        true *)
-(*             else *)
-(*   	        let () = Gen.Profiling.push_time ("method "^proc.proc_name) in *)
-(*   	        try *)
-(*   	          let r = *)
-(*   	            flow_store := []; *)
-(*   	            let ctx1 = CF.set_flow_in_context_override *)
-(*   		          { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in *)
-(*   	            let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in *)
-(*                   (\* need to add initial esc_stack *\) *)
-(*                   let init_esc = [((0,""),[])] in *)
-(*   	            let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in *)
-(*   		        let res_ctx = CF.list_failesc_to_partial (x_add check_exp prog proc lfe e0 post_label) in *)
-(*                   (\* let () = print_string_quiet ("\n WN 1 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *\) *)
-(*   		        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in *)
-(*                   (\* let () = print_string_quiet ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *\) *)
-(*   		        if (CF.isFailListPartialCtx res_ctx) then false *)
-(*   		        else *)
-(*                     let lh = Infer.collect_pre_heap_list_partial_context res_ctx in *)
-(*                     let lp = Infer.collect_pre_pure_list_partial_context res_ctx in *)
-(*   		          let tmp_ctx = check_post prog proc res_ctx post_cond (CF.pos_of_formula post_cond) post_label in *)
-(*                     let res = CF.isSuccessListPartialCtx tmp_ctx in *)
-(*                     (if res then *)
-(*                       let flist = Infer.collect_formula_list_partial_context tmp_ctx in *)
-(*                       begin *)
-(*                         if (List.length lh)+(List.length lp) > 0 then *)
-(*                           begin *)
-(*                             print_endline ("\nInferred Heap:"^(pr_list Cprinter.string_of_h_formula lh)) ; *)
-(*                             print_endline ("Inferred Pure:"^(pr_list Cprinter.string_of_pure_formula lp)) *)
-(*                           end *)
-(*                         else print_endline " "; *)
-(*                         print_endline ("Residual Post : "^(pr_list Cprinter.string_of_formula flist)) *)
-(*                       end); res *)
-(*   	          in *)
-(*   	          let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in *)
-(*   	          r *)
-(*   	        with _ as e -> *)
-(*   	            let () = Gen.Profiling.pop_time ("method "^proc.proc_name) in raise e *)
-(* in *)
-(* (\* let () = print_string_quiet ("\ncheck_specs: " ^ (Cprinter.string_of_context ctx) ^ "\n") in *\) *)
-(* List.for_all do_spec_verification spec_list *)
-
-(*pre_f : pre-condition*)
-
-(* pre_f = b.CF.formula_ext_base *)
 let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula) (ctx : CF.context) (pre_f:CF.formula) pos = 
-  (*************************************************************)
-  (******** Check permissions variables in pre-condition ******)
-  (*************************************************************) 
-  (*In the precondition, there will be @value in the main thread and @full in the child threads*)
-  (*a parameter MUST be either @value or @full*)
-  (*TO DO: have to deal with OR *)
-  (*Pickup variable permissions in both thread only*)
   x_dinfo_zp (lazy ("\ncheck_specs: EBase: checking VarPerm in the precondition:  \n" ^ (Cprinter.string_of_struc_formula spec) ^ "\n")) pos;
-  (* let vp_list,_ = CF.filter_varperm_formula_all pre_f in *)
-  (* let val_list, vp_rest = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_list in *)
-  (* let full_list, vp_rest2 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_rest in *)
-  (* let () = if (vp_rest2!=[]) then *)
-  (*       report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition") *)
-  (* in *)
-  (* let val_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list) in *)
-  (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list) in *)
-  (* TODO: VPerm *)
-  (* let zero_vars = CF.get_varperm_formula_all pre_f VP_Zero in *)
   let zero_vars = [] in
   let () = if (zero_vars!=[]) then
       report_error pos ("\ncheck_specs: EBase: unexpected @zero VarPerm in the pre-condition")
   in
-  (* TODO: VPerm *)
-  (* let val_vars = CF.get_varperm_formula_all pre_f VP_Value in *)
-  (* let full_vars = CF.get_varperm_formula_all pre_f VP_Full in *)
   let val_vars = [] in
   let full_vars = [] in
   let tmp = Gen.BList.intersect_eq CP.eq_spec_var_ident val_vars full_vars in
@@ -225,23 +70,6 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   (*Ensure that all arguments have corresponding varialbe permissions*)
   let farg_types, farg_names = List.split proc.proc_args in
   let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
-  (*let all_vars = val_vars@full_vars in
-    let tmp1 = Gen.BList.difference_eq CP.eq_spec_var_ident farg_spec_vars all_vars in*)
-  (*enable this check require enabling --ann-vp *)
-  (* let () = if (tmp1!=[]) then *)
-  (*       report_error pos ("\ncheck_specs: EBase: missing variable permissions for " ^ (Cprinter.string_of_spec_var_list tmp1)) *)
-  (* in *)
-  (*Find out @zero for the main thread*)
-  (*Pickup variable permissions in the main thread only*)
-  (* let vp_list2,_ = CF.filter_varperm_formula pre_f in *)
-  (* let full_list2, vp_rest4 = List.partition (fun f -> CP.is_varperm_of_typ f VP_Full) vp_list2 in *)
-  (* let val_list2, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Value) vp_rest4 in *)
-  (* let full_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Full)) full_list2) in *)
-  (* let val_vars2 = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Value)) val_list2) in *)
-
-  (* TODO: VPerm *)
-  (* let val_vars2 = CF.get_varperm_formula pre_f VP_Value in *)
-  (* let full_vars2 = CF.get_varperm_formula pre_f VP_Full in *)
   let val_vars2 = [] in
   let full_vars2 = [] in
   let all_vars2 = full_vars2@val_vars2 in
@@ -253,64 +81,11 @@ let check_varperm (prog : prog_decl) (proc : proc_decl) (spec: CF.struc_formula)
   let ext_base = pre_f in
   x_dinfo_zp (lazy ("\n check_specs: EBase: checking VarPerm in the precondition: Done. " ^ "\n ### zero_vars = " ^ (Cprinter.string_of_spec_var_list zero_vars) ^ "\n")) pos;
   (ctx,ext_base)
-(*************************************************************)
-(*****<<<< Check permissions variables in pre-condition ******)
-(*************************************************************) 
-
-(* (*checking whether the current state has full permissions of a list of spec vars *)                                                                                   *)
-(* (*check at | Var | Bind | Assign | Sharp_var*)                                                                                                                        *)
-(* let check_full_varperm_x prog ctx ( xs:CP.spec_var list) pos =                                                                                                        *)
-(*   if (not  (CF.isSuccessListFailescCtx ctx)) || (Gen.is_empty ctx)  then (true,ctx) (*propagate fail contexts*)                                                       *)
-(*   else                                                                                                                                                                *)
-(*     let () = x_dinfo_pp ("check_full_varperm for var " ^ (Cprinter.string_of_spec_var_list xs)^ "\n") pos in                                                   *)
-(*     (* TODO: VPerm *)                                                                                                                                                 *)
-(*     (* let full_p = CP.mk_varperm_full xs pos in *)                                                                                                                   *)
-(*     let full_p = CP.mkTrue pos in                                                                                                                                     *)
-(*     let full_f = CF.formula_of_pure_formula full_p pos in                                                                                                             *)
-(*     let rs,prf = heap_entail_list_failesc_context_init prog false ctx full_f None None None pos None in                                                               *)
-(*     (if (CF.isFailListFailescCtx rs) then                                                                                                                             *)
-(*           let () = Debug.print_info "VarPerm Failure" ("check_full_varperm: var " ^ (Cprinter.string_of_spec_var_list xs)^ " MUST have full permission" ^ "\n") pos in *)
-(*           (false,rs)                                                                                                                                                  *)
-(*      else                                                                                                                                                             *)
-(*           (true,ctx))                                                                                                                                                 *)
-
-(* let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =                                                                                                          *)
-(*   let pr_out = pr_pair string_of_bool Cprinter.string_of_list_failesc_context in                                                                                      *)
-(*   Debug.no_2 "check_full_varperm"                                                                                                                                     *)
-(*       Cprinter.string_of_list_failesc_context                                                                                                                         *)
-(*       Cprinter.string_of_spec_var_list                                                                                                                                *)
-(*       pr_out                                                                                                                                                          *)
-(*       (fun _ _ -> check_full_varperm_x prog ctx xs pos) ctx xs                                                                                                        *)
 
 let pre_ctr = new Gen.counter 0
 let post_ctr = new Gen.counter 0
 let prepost_ctr = new Gen.counter 0
 
-(* WN : moved so solver.ml so that sleek can use *)
-(* (\*Merging fractional heap nodes when possible using normalization lemmas*\) *)
-(* let normalize_list_failesc_context_w_lemma prog lctx = *)
-(*   if not (Perm.allow_perm ()) then lctx *)
-(*   else *)
-(*     (\*TO CHECK merging nodes*\) *)
-(*     let fct (es:CF.entail_state) = *)
-(*       let es = CF.clear_entailment_vars es in *)
-(*       (\*create a tmp estate for normalizing*\) *)
-(*       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in *)
-(*       CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog tmp_es es.CF.es_formula prog.prog_left_coercions} *)
-(*     in *)
-(*     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in *)
-(*     res *)
-
-(* let normalize_list_failesc_context_w_lemma prog lctx = *)
-(*   let pr = pr_none in *)
-(*   Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr *)
-(*       (normalize_list_failesc_context_w_lemma prog) lctx *)
-
-(* this checks for read permission *)
-(* 
-   TODO:WN: is @Lend safe for bind, can v be updated and
-   and would it cause race problem?
-*)
 let check_var_read_perm_type msg prog ctx pos v t perm_ty =
   if !ann_vp then
     let sv = (CP.SpecVar (t, v, Unprimed)) in
@@ -339,18 +114,8 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * (CP.spec_var list) * ((CP.spec_var * int list) * CP.xpure_view) list * bool =
   let () = pre_ctr # reset in
   let () = post_ctr # reset in
-  (* let pr1 = Cprinter.string_of_struc_formula in *)
-  (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
-  (* let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in *)
-  (* let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in *)
-  (* let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in *)
-  (* let pr4 = Cprinter.string_of_spec_var_list in *)
-  (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
-  (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
   let f = wrap_proving_kind PK_Check_Specs (x_add check_specs_infer_a0 prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list
-
-
 
 (* Termination *)
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
@@ -453,39 +218,6 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl) (ctx : CF.context
   Debug.no_3 "check_specs_infer" pr0 pr1 pr_exp pr3
     (fun _ _ _ -> fn sp) ctx sp e0
 
-(* move to cformula *)
-(* and determine_infer_type sp t  = match sp with *)
-(*   | CF.EInfer b -> *)
-(*     let inf_o = b.CF.formula_inf_obj in *)
-(*     inf_o # get t *)
-(*   | _ -> false  *)
-
-(* and determine_infer_classic sp  =  *)
-(*   determine_infer_type sp INF_CLASSIC *)
-
-(* must move to cformula.ml
-
-   and determine_infer_type sp t  = match sp with
-
-   and determine_infer_classic sp  = 
-   determine_infer_type sp INF_CLASSIC
-
-   and determine_infer_field_imm sp  = 
-   determine_infer_type sp INF_FIELD_IMM
-
-   and determine_infer_type sp t  = match sp with
-   | CF.EInfer b ->
-    let inf_o = b.CF.formula_inf_obj in
-    inf_o # get t
-   | _ -> false 
-
-*)
-
-(* match sp with *)
-(*   | CF.EInfer b -> *)
-(*     let inf_o = b.CF.formula_inf_obj in *)
-(*     inf_o # is_classic *)
-(*   | _ -> false  *)
 
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)
   : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list)* (CP.spec_var list) * ((CP.spec_var * int list)  *CP.xpure_view ) list * bool =
@@ -705,35 +437,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           CF.es_infer_vars_sel_post_hp_rel = es.CF.es_infer_vars_sel_post_hp_rel;
                           CF.es_infer_post = es.CF.es_infer_post || postf}) ctx in
       let (c,pre,rel,hprel, _, post_hps ,unk_map,f) = wrap_ana_ni (helper nctx) new_formula_inf_continuation in
-      (*            let nctx_sc, pr_rel, po_rel, new_formula_inf_continuation_sc =*)
-      (*              if !TP.tp == TP.Z3 & proc.proc_is_recursive then*)
-      (*                let tmp_rel1, tmp_rel2, tmp_fml = CF.remove_rel new_formula_inf_continuation in*)
-      (*                let () = proc.proc_stk_of_static_specs # push tmp_fml in*)
-      (*                CF.transform_context (fun es -> CF.Ctx {es with CF.es_infer_vars_rel = []}) ctx,tmp_rel1,tmp_rel2,tmp_fml*)
-      (*              else nctx,[],[],new_formula_inf_continuation*)
-      (*            in*)
-      (*(*            let () = print_endline ("debug1: " ^ Cprinter.string_of_context nctx_sc) in*)*)
-      (*(*            let () = if !TP.tp == TP.Z3 & proc.proc_is_recursive then *)*)
-      (*(*                print_endline ("debug2: " ^ Cprinter.string_of_struc_formula new_formula_inf_continuation_sc) *)*)
-      (*(*              else () in*)*)
-      (*            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = helper nctx_sc new_formula_inf_continuation_sc in*)
-      (*            let (c,pre,rel,hprel, x, post_hps ,unk_map,f) = *)
-      (*              if f then*)
-      (*                let () = if !TP.tp == TP.Z3 & proc.proc_is_recursive then*)
-      (*                  let tr = CP.mkTrue no_pos in*)
-      (*                  let pr_rel = Gen.BList.remove_dups_eq (CP.equalFormula) pr_rel in*)
-      (*                  let po_rel = Gen.BList.remove_dups_eq (CP.equalFormula) po_rel in*)
-      (*                  let rec fold_x list1 list2 = match list1, list2 with*)
-      (*                    | [],[] -> []*)
-      (*                    | [],ls -> List.map (fun l -> (tr,tr,l,tr)) ls*)
-      (*                    | ls,[] -> List.map (fun l -> (l,tr,tr,tr)) ls*)
-      (*                    | l1::ls1,l2::ls2 -> (l1,tr,l2,tr) :: fold_x ls1 ls2*)
-      (*                  in*)
-      (*                  let tuples = fold_x pr_rel po_rel in*)
-      (*                  Infer.fixcalc_rel_stk # push_list tuples;*)
-      (*                else () in*)
-      (*                (c,pre,rel,hprel, x, post_hps ,unk_map,f)*)
-      (*              else helper nctx new_formula_inf_continuation in*)
       let new_c = if pre=[] then c else
           match c with
           | CF.EAssume _ -> CF.EBase {
@@ -924,12 +627,6 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         DD.info_hprint (add_str "Inferred constraints" (pr_list !CP.print_formula)) lp pos in
                     let () = x_add_1 Term.add_phase_constr_by_scc proc (List.map TP.simplify_raw cl) in ()
                 in
-                (* let () = Debug.info_zprint (lazy (("res_ctx: " ^ (Cprinter.string_of_list_partial_context_short res_ctx) ^ "\n"))) no_pos in *)
-                (* todo : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
-                (*                      let rel1 = x_add_1 Infer.collect_rel_list_partial_context res_ctx in*)
-                (*                      x_dinfo_zp (lazy (">>>>> Performing check_post STARTS")) no_pos;*)
-                (* let hp_rels1 = Gen.BList.remove_dups_eq (=) (Infer.collect_hp_rel_list_partial_context res_ctx) in *)
-                (*  let () = print_string_quiet ("\n WN 2 : "^(Cprinter.prtt_string_of_formula post_cond)) in *)
                 let tmp_false_cnt  = new Gen.counter 0 in
                 let elim_unsat e = 
                   let already_unsat_flag = e.CF.es_unsat_flag in
@@ -1660,18 +1357,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       let assign_op () =
         begin
           let () = proving_loc # set pos in
-          (* let b,res = (if !Globals.ann_vp then                          *)
-          (*   (*check for access permissions*)                            *)
-          (*   let t = Gen.unsome (type_of_exp rhs) in                     *)
-          (*   let var = (CP.SpecVar (t, v, Primed)) in                    *)
-          (*   check_full_varperm prog ctx [var] pos                       *)
-          (* else true,ctx)                                                *)
-          (* in                                                            *)
-          (* if (not b) then res (*do not have permission for variable v*) *)
-          (* else                                                          *)
-
-          (* VPerm: Check @full for LHS var *)
-          let b = 
+          let b =
             if !ann_vp then
               let tv = Gen.unsome (type_of_exp rhs) in
               let sv = (CP.SpecVar (tv, v, Unprimed)) in
@@ -1717,24 +1403,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
                   (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
-                  (* let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in *)
-                  (* let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in *)
-                  (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
-                  (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
-                  (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
                   compose_ctx
-
-                (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
-                (* let ctx1 = (CF.Ctx c1) in                                                                      *)
-                (* let () = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
-                (* (* TODO : eps bug below *)                                                                     *)
-                (* let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in  -> add perm normalization  if uncomment     *)
-                (* let () = CF.must_consistent_context "assign 2" tmp_ctx1  in                                     *)
-                (* let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in                                 *)
-                (* let () = CF.must_consistent_context "assign 3" tmp_ctx2  in                                     *)
-                (* let resctx = if !Globals.elim_exists_ff then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in            *)
-                (* let () = CF.must_consistent_context "assign 4" resctx  in                                       *)
-                (* resctx                                                                                         *)
                 else (CF.Ctx c1) in
               (* let () = Gen.Profiling.pop_time "[check_exp] Assign: fct" in *)
               res 
@@ -1819,12 +1488,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         try
           let res_v = CP.mkRes bool_type in
           let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
-          (* TODO: Slicing - Can we mark a boolean constant as linking var                 *)
-          (* let tmp1 =                                                                    *)
-          (*   if !Globals.infer_lvar_slicing then                                         *)
-          (*     CP.set_il_formula tmp1 (Some (false, fresh_int (), [CP.mkVar res_v pos])) *)
-          (*   else tmp1                                                                   *)
-          (* in                                                                            *)
           let tmp2 =
             if b then tmp1
             else CP.Not (tmp1, None, pos) in
@@ -1860,30 +1523,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* x_tinfo_pp ("Check for @L read permission on bind node "^v) pos; *)
           (* x_winfo_pp "Safe to use @L for Bind? Use frac?" pos; *)
           check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t;
-          (* let b,res = (if !Globals.ann_vp then                          *)
-          (*   (*check for access permissions*)                            *)
-          (*   let var = (CP.SpecVar (v_t, v, Primed)) in                  *)
-          (*   check_full_varperm prog ctx [var] pos                       *)
-          (* else                                                          *)
-          (*   true,ctx)                                                   *)
-          (* in                                                            *)
-          (* if (not b) then res (*do not have permission for variable v*) *)
-          (* else                                                          *)
-
-          (* VPerm: vperm of fields is inherited from the bound var *)
-          let ctx = 
+          let ctx =
             if !ann_vp then
-              (* let vp = VP.vperm_sets_list_failesc_context ctx in             *)
-              (* let bound_var = CP.SpecVar (v_t, v, Unprimed) in               *)
-              (* (* VPerm: vperm of fields is inherited from the bound var *)   *)
-              (* let vperm_bound_var = CVP.get_vperm_spec_var bound_var vp in   *)
-              (* let vperm_fields = CVP.vperm_sets_of_anns [(                   *)
-              (*   vperm_bound_var,                                             *)
-              (*   List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)] *)
-              (* in                                                             *)
-              (* VPerm: fields have @full permission like local variables  *)
               let vperm_fields = CVP.vperm_sets_of_anns [(
-                  VP_Full, 
+                  VP_Full,
                   List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)]
               in
               VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
@@ -1898,21 +1541,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let p = CP.fresh_spec_var v_prim in
           let link_pv = CF.formula_of_pure_N
               (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
-          (* let () = print_string_quiet ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
-          (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
-          (* let () = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
           let tmp_ctx =
             if !Globals.large_bind then
               CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
             else ctx in
-          (* let () = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
-          (* let () = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
           let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
           (* let () = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
           let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
           let unfolded =  CF.transform_list_failesc_context (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es))) unfolded in
-          (* let () = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
-          (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
           let () = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
           let () = x_dinfo_zp (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                                      ^ "\n")) pos in
@@ -1938,15 +1574,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                let perm_var = Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
                Cpure.Var (perm_var,no_pos),[perm_var])
           in
-          (* let perm = (if (Perm.allow_perm ()) then  *)
-          (*       (\*there exists fresh_perm_exp statisfy ... *\) *)
-          (*       (if (read_only) then *)
-          (*             Some fresh_perm_exp  *)
-          (*        else *)
-          (*             (\* writeable *\) *)
-          (*             None) *)
-          (*     else None) *)
-          (* in *)
           let bind_ptr = if !Globals.large_bind then p else v_prim in
           let vdatanode = CF.DataNode ({
               CF.h_formula_data_node = bind_ptr;
@@ -1971,13 +1598,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
           let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
           let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
-          (*Test whether fresh_perm_exp is full permission or not
-            writable -> fresh_perm_exp = full_perm => normally
-            read-only -> fresh_perm_exp != full_perm => in order to 
-            detect permission violation
-            We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
-            Othewiese, false -> write -> f=1.0
-          *)
           let vheap = 
             if (Perm.allow_perm ()) then 
               (*there exists fresh_perm_exp statisfy ... *)
@@ -2012,18 +1632,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             unfolded
           else
             let () = consume_all := true in
-            (* let () = DD.info_zprint (lazy (("       sleek-logging (binding):" ^ (to_print)))) pos in *)
-            (* let () = Log.update_sleek_proving_kind Log.BINDING in *)
-            (* let () = x_tinfo_pp ("Andreea : we need to normalise struc_vheap") no_pos in *)
-            (* let () = x_tinfo_pp ("==========================================") no_pos in *)
             let () = y_tinfo_pp "need to use local version of infer_const_obj" in
             (* let struc_vheap =  *)
             (*   if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_struc bind_ptr else struc_vheap in *)
             let () = x_tinfo_hp (add_str "struc_vheap" Cprinter.string_of_struc_formula) struc_vheap no_pos in
-            (* let () = print_endline ("unfolded:" ^(Cprinter.string_of_list_failesc_context unfolded)) in *)
-            (* do not allow leak detection in binding*)
-            (* let do_classic_frame = (check_is_classic ()) in *)
-            (* let () = Wrapper.set_classic  false in *)
             let fn = heap_entail_struc_list_failesc_context_init 5 prog false  true unfolded struc_vheap None None None pos in
             let rs_prim, prf = x_add Wrapper.wrap_classic x_loc (Some false) fn (Some pid) in
             (* recover classic_frame for mem leak detection at post proving*)
@@ -2038,11 +1650,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (CF.isSuccessListFailescCtx_new unfolded) && (not(CF.isSuccessListFailescCtx_new rs))then
               begin
                 if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
-                  (*  let () = Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") *)
-                  (*       ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos in (\* add branch info *\) *)
-                  (* (\* add branch info *\) *)
-                  (*   let () = Debug.print_info ("(Cause of Bind Failure)") *)
-                  (*     (Cprinter.string_of_failure_list_failesc_context rs) pos in *)
                   let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula vheap (*vdatanode*)) ^
                                   " cannot be derived from context (") ^ (string_of_loc pos) ^ ")" in
                   let idf = (fun c -> c) in
@@ -2440,38 +2047,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let farg_types, farg_names = List.split proc.proc_args in
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-
-          (*************************************************************)
-          (* VPerm: Check @lend for normal args and @full for ref args *)
-          (*************************************************************)
-          (* WN : NO NEED - as we may require no access or read-only *)
           let b = true
-          (* if !ann_vp then *)
-          (*   let ref_params = proc.proc_by_name_params in *)
-          (*   let pairs_sst = List.combine farg_spec_vars actual_spec_vars in *)
-          (*   let ref_args = CP.subst_var_list pairs_sst ref_params in *)
-          (*   let norm_args = Gen.BList.difference_eq CP.eq_spec_var actual_spec_vars ref_args in *)
-          (*   let vperm_f = VP.formula_of_vperm_anns [] in *)
-          (*   (\* (VP_Lend, norm_args); (VP_Full, ref_args)] in *\) *)
-          (*   let vperm_f = CF.set_flow_in_formula_override *)
-          (*     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } vperm_f *)
-          (*   in *)
-          (*   let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx vperm_f None None None pos None in *)
-          (*   if not (CF.isSuccessListFailescCtx_new vperm_res) then *)
-          (*     let msg = ("Arguments do not have @lend/@full permission to read/write.") in *)
-          (*     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos; *)
-          (*      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos; *)
-          (*      Err.report_error { Err.error_loc = pos; Err.error_text = msg }) *)
-          (*   else true *)
-          (* else true *)
           in
           if not b then ctx
           else
-            (***************************************************************************)
-            (* let () = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
-            (* let () = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)
-
-            (* Internal function to check pre/post condition of the function call. *)
             let check_pre_post_orig org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
               (* Termination: Stripping the "variance" feature from
                * org_spec if the call is not a recursive call *)
@@ -2572,18 +2151,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (*     (Cprinter.string_of_struc_formula pre2)) in *)
               (*we use new rules to judge the spec*)
               let rs, prf = x_add heap_entail_struc_list_failesc_context_init 6 prog false true sctx pre2 None None None pos pid in
-              (* Already subst_hvar in EAssume *)
-              (* let fet es = {es with CF.es_formula = CF.subst_hvar es.CF.es_formula es.CF.es_ho_vars_map ; CF.es_ho_vars_map = [];} in *)
-              (* let ff = ((fun x -> x), (fun x -> x), (fun es -> CF.Ctx (fet es))) in *)
-              (* let rs = CF.transform_list_failesc_context ff rs in *)
-              (* let () = x_binfo_pp "Khanh : need to perform ho_var subs here" no_pos in *)
-              (* let () = x_binfo_hp (add_str "residue(subs_ho)" Cprinter.string_of_list_failesc_context) rs no_pos in *)
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
-              (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
               let () = PTracer.log_proof prf in
-
-              (* if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
-                 Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ; *)
               rs
             in
             (*******************************END_CHECK_PRE_POST****************************************)
@@ -2595,12 +2164,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let pr3 = Cprinter.string_of_struc_formula in
               (* let () = Log.update_sleek_proving_kind Log.PRE in *)
               let () = Debug.ninfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula) org_spec no_pos in
-              (* let is_post_false = CF.is_struc_false_post org_spec in *)
-              (* let wrap_classic_fnc a b = check_pre_post_orig a b in *)
-                (*   if is_post_false then *)
-                (* wrap_classic (Some true) (check_pre_post_orig a) b  *)
-                (* else check_pre_post_orig a b in *)
-              (* let () = Debug.ninfo_hprint (add_str  "is_post_false" string_of_bool) is_post_false no_pos in *)
               let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must else wrap_err_pre in
               let pre_post_op_wrapper a b c =
                 (* wrap_err_pre *) wrap_fnc (* (Some false) *)
@@ -2797,20 +2360,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (* let sv = (CP.SpecVar (t, v, Unprimed)) in *)
           let () = check_var_read_perm ~msg:"(var access)" prog ctx pos v t in
           true
-          (* if !ann_vp then *)
-          (*   let sv = (CP.SpecVar (t, v, Unprimed)) in *)
-          (*   let lend_f = VP.formula_of_vperm_anns [(VP_Lend, [sv])] in *)
-          (*   let lend_f = CF.set_flow_in_formula_override *)
-          (*     { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f  *)
-          (*   in *)
-          (*   let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in *)
-          (*   if not (CF.isSuccessListFailescCtx_new vperm_res) then *)
-          (*     let msg = (v ^ " does not have @lend/@full permission to read.") in *)
-          (*     (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos; *)
-          (*      Debug.print_info ("(Cause of ParCase Failure)") (Cprinter.string_of_failure_list_failesc_context vperm_res) pos; *)
-          (*      Err.report_error { Err.error_loc = pos; Err.error_text = msg }) *)
-          (*   else true *)
-          (* else true *)
         in
         let res = 
           (* if (not b) then res (*do not have permission for variable v*) *)
@@ -2847,21 +2396,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
         t
       in
-      (*   let _ =print_string_quiet ("sharp start ctx: "^ (Cprinter.string_of_list_failesc_context ctx)^"\n") in *)
-      (*   let () = print_string_quiet ("raising: "^(Cprinter.string_of_exp e0)^"\n") in *)
-      (*   let () = print_string_quiet ("sharp flow type: "^(Cprinter.string_of_sharp_flow ft)^"\n") in *)
-      (* let () = print_endline ("flow_store = " ^ (Cprinter.string_of_flow_store !flow_store)) in *)
       let nctx = match v with 
         | Sharp_var (t,v) -> 
-          (* let b,res = (if !Globals.ann_vp then                          *)
-          (*   (*check for access permissions*)                            *)
-          (*   let var = (CP.SpecVar (t, v, Primed)) in                    *)
-          (*   check_full_varperm prog ctx [var] pos                       *)
-          (* else                                                          *)
-          (*   true,ctx)                                                   *)
-          (* in                                                            *)
-          (* if (not b) then res (*do not have permission for variable v*) *)
-          (* else                                                          *)
           let t1 = (get_sharp_flow ft) in
           let () = x_tinfo_pp ("Sharp Flow:"^(string_of_flow t1) ^" Exc:"^(string_of_flow !raisable_flow_int)) no_pos in
           let ctx, vr,vf = 
@@ -3153,21 +2689,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
         print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
     in
-
-    (* let ctx = if (!Globals.allow_locklevel) then *)
-    (*       (\*to maintain the information of locklevels on varables *)
-    (*         whose scopes are within scope of this procedure only. *)
-    (*         For example, for any pass-by-value or local variables, *)
-    (*         at the end of the procedure, it will become existential *)
-    (*         variables. Exist vars, however, will be renamed sometimes. *)
-    (*         However, elim_exists is not aware of constraints on locklevels, *)
-    (*         we have to maintain these constraints by translating before *)
-    (*         elim_exists *)
-    (*       *\) *)
-    (*       trans_level_list_partial_context ctx *)
-    (*     else ctx *)
-    (* in *)
-    (* WN : is code below redundant?  *)
     let fn_state=
       if (false (* !Globals.disable_failure_explaining *)) then
         let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
@@ -3180,8 +2701,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
         let final_state_prim = CF.push_exists_list_partial_context w ctx in
         x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
-        (* let () = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
-        (* let () = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
         Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
         let final_state = 
           if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
@@ -3200,8 +2719,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     in
     (* let () = DD.info_zprint (lazy (("       sleek-logging (POST): "  ^ "\n" ^ (to_print)))) pos in *)
     let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
-    (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
-    (* let () = print_string_quiet ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
       if not(Globals.global_efa_exc ()) && f1 then
         begin
@@ -3220,13 +2737,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_tinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
         let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
         rs_struc, prf
-        (*let () = print_string_quiet "stop struct checking \n" in*)
-        (*let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  *)
-        (*let () = print_string_quiet "stop flat checking \n" in*)
-        (*if ( CF.isSuccessListPartialCtx_new rs_struc != CF.isSuccessListPartialCtx_new rs_flat ) then *)
-        (*report_error pos ("got difference in assume proving: \n flat: "^(Cprinter.string_of_formula (fst posts))^"\n struc:"*)
-        (*^(Cprinter.string_of_struc_formula (snd posts))^"\n struc rez: "^(string_of_bool (CF.isSuccessListPartialCtx_new rs_struc))^"\n")*)
-        (*else rs_flat,prf*)
     in
     let () = PTracer.log_proof prf in
     let () = if !print_proof then
@@ -3249,13 +2759,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     if ((* CF.isSuccessListPartialCtx_new rs *) is_reachable_succ) then
       rs
     else begin
-      (* get source code position of failed branches *)
-      (*let locs_of_failures = 
-        List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
-        in*)
-      (*let string_of_loc_list locs =
-        List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
-        in*)
       let _ =
         if not !Globals.disable_failure_explaining then
           let rs = if Globals.global_efa_exc () then
@@ -3270,15 +2773,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
                 ) [] rs
             else rs in
           let s,fk,ets= CF.get_failure_list_partial_context rs in
-          (* let s = match CF.get_must_failure_list_partial_context rs with *)
-          (*     | Some s -> "(must) cause:\n"^s *)
-          (*     | None -> "( may) cause:\n"^s *)
-          (* (match  CF.get_may_failure_list_partial_context rs with *)
-          (*   | Some s -> "( may) cause:\n"^s *)
-          (*   | None -> "INCONSISTENCY : expected failure but success instead" *)
-          (* ) *)
-          (*should check bot with is_bot_status*)
-          (* in *)
           let failure_str = if List.exists (fun et -> et = Mem 1) ets then
               "memory leak failure" else
               "Post condition cannot be derived"
@@ -3301,10 +2795,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
               Err.error_text = Printf.sprintf
                   (*         "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s." *)
                   "Post condition cannot be derived by the system."
-                  (* (Cprinter.string_of_formula post)
-                     (Cprinter.string_of_list_partial_context final_state)
-                     (Cprinter.string_of_list_partial_context rs)
-                     (string_of_loc_list locs_of_failures)*)
             }
           end
       in
@@ -3472,24 +2962,6 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                 (* to combine hpdefs of set of states *)
                 r1@l1,r2@l2,r3@l3, CP.remove_dups_svl (scc_sel_hps1@new_sel_hps)
               ) ([],[],[],scc_sel_hps) hprels_flows
-            (* if not (!Globals.pred_syn_modular) then *)
-            (*   if not (!Globals.sa_dnc) then *)
-            (*     let r1,r2,r3 = x_add Sa2.infer_shapes iprog prog (\* proc.proc_name *\)"" scc_hprel_ass *)
-            (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
-            (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
-            (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
-            (*     in (r1,r2,r3) *)
-            (*   else *)
-            (*     let () = x_add Sa2.infer_shapes_new iprog prog (\* proc.proc_name *\)"" scc_hprel_ass *)
-            (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
-            (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
-            (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
-            (*     in ([],[], []) *)
-            (* else *)
-            (*   Sa3.infer_shapes iprog prog proc.proc_name (\* "" *\) scc_hprel_ass *)
-            (*       scc_sel_hps scc_sel_post_hps (Gen.BList.remove_dups_eq *)
-            (*           (fun ((hp1,_),_) ((hp2, _),_) -> *)
-            (*               (CP.eq_spec_var hp1 hp2 )) scc_hprel_unkmap) [] [] true true *)
           in
           (a,b,c)
       else [],[],[]
@@ -3505,13 +2977,6 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let () = y_tinfo_hp (add_str "iviews" (pr_list Iprinter.string_of_view_decl)) iprog.prog_view_decls in
         ()
     in
-    (* let () = if !Globals.sae then *)
-    (*   let defs1 = x_add Sautil.combine_hpdef_flow (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps (CF.rel_def_stk # get_stk) in *)
-    (*   let () = CF.rel_def_stk # reset in *)
-    (*   let () = CF.rel_def_stk # push_list defs1 in *)
-    (*   () *)
-    (* else () *)
-    (* in *)
     let rel_defs = if not (!Globals.pred_syn_modular) then CF.rel_def_stk (* Sa2.rel_def_stk *)
       else CF.rel_def_stk
     in
@@ -3561,22 +3026,10 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
                     scc_inferred_hps
                 in
                 let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-                (* let () = List.iter (fun proc -> *)
-                (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
-                (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
-                (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
-                (*     () *)
-                (* ) new_scc_procs in *)
                 nprog,true
               else prog,false
             | _ -> let nprog = x_add Saout.plug_shape_into_specs prog iprog dang_hps scc_procs_names (CP.diff_svl scc_sel_hps scc_sel_post_hps) scc_sel_post_hps scc_inferred_hps in
               let new_scc_procs = List.map (fun pn -> Cast.look_up_proc_def_raw nprog.new_proc_decls pn) scc_procs_names in
-              (* let () = List.iter (fun proc -> *)
-              (*     (\* if proc.Cast.proc_sel_hps != [] then *\) *)
-              (*     let () =  Debug.info_hprint (add_str "SHAPE inferred spec" *)
-              (*         (Cprinter.string_of_struc_formula)) proc.proc_static_specs  no_pos in *)
-              (*     () *)
-              (* ) new_scc_procs in *)
               nprog,true
           else
             if is_empty scc_sel_hps || is_empty scc_hprel_ass then prog, false
@@ -3618,11 +3071,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
   let () =  Debug.ninfo_hprint (add_str "in check_proc proc0" 
     (Cprinter.string_of_struc_formula_for_spec_inst prog)) 
     (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) no_pos in
-  (* get latest procedure from table *)
-  (*Loc: overlap proc is dangerous: mutable info of proc0 is overlapped and lost after this function return.
-    (i.e: all inferred info updated into proc is lost.)
-    which infor do you want to get from the last proc?
-    get it and update explicitly into proc0*)
   let proc =
     find_proc prog proc0.proc_name
   in
@@ -3649,12 +3097,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           if pr_flag then
             begin
               print_string_web_mode (("\n\nChecking procedure ") ^ proc.proc_name ^ "...\n"); flush stdout;
-              (* x_binfo_hp (add_str "Static spec (proc)" Cprinter.string_of_struc_formula) proc.proc_static_specs; flush stdout;           *)
-              (* x_binfo_hp (add_str "Static spec (stk of proc)" Cprinter.string_of_struc_formula) (proc.proc_stk_of_static_specs # top);   *)
-              (* x_binfo_hp (add_str "Static spec (stk of proc0)" Cprinter.string_of_struc_formula) (proc0.proc_stk_of_static_specs # top); *)
-              (* print_endline_quiet ("Static spec (proc): " ^ (Cprinter.string_of_struc_formula proc.proc_static_specs)); flush stdout;                         *)
-              (* print_endline_quiet ("Static spec (stk of proc): " ^ (Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))); flush stdout;   *)
-              (* print_endline_quiet ("Static spec (stk of proc0): " ^ (Cprinter.string_of_struc_formula (proc0.proc_stk_of_static_specs # top))); flush stdout; *)
               x_dinfo_zp (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
               x_dinfo_zp (lazy ("Specs1 :\n" ^ Cprinter.string_of_struc_formula (proc.Cast.proc_stk_of_static_specs # top) (* proc.proc_static_specs *))) proc.proc_loc;
             end;
@@ -3718,51 +3160,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           in
           let pp, exc =
             try (* catch exception to close the section appropriately *)
-              (* let f = check_specs prog proc init_ctx (proc.proc_static_specs (\* @ proc.proc_dynamic_specs *\)) body in *)
-              (*TODO: old_hpdecls is for CP TEST*)
-              (* let old_hpdecls = prog.prog_hp_decls in *)
-              (* Long: TODO here *)
-              (* let rec add_relation sf rel_name rel_type = match sf with *)
-              (*   | CF.EBase eb -> *)
-              (*         let cont = eb.CF.formula_struc_continuation in ( *)
-              (*         match cont with *)
-              (*           | None -> sf *)
-              (*           | Some cont -> CF.EBase {eb with CF.formula_struc_continuation = Some (add_relation cont rel_name rel_type)} ) *)
-              (*   | CF.EAssume ea -> *)
-              (*         let rel_vars = (List.map (fun (t,id) -> CP.mk_typed_spec_var t id) proc.proc_args)@[CP.mk_typed_spec_var proc.proc_return res_name] in *)
-              (*         let rel_formula = CP.mkTrue no_pos in *)
-              (*         let rel_decl = {rel_name = rel_name; rel_vars = rel_vars; rel_formula = rel_formula} in *)
-              (*         let () = prog.prog_rel_decls <- prog.prog_rel_decls@[rel_decl] in *)
-              (*         let rel_spec_var = CP.mk_typed_spec_var rel_type rel_name in *)
-              (*         let rel_args = (List.map (fun (_,id) -> CP.mkVar (CP.mk_spec_var id) no_pos) proc.proc_args)@[CP.mkVar (CP.mk_spec_var res_name) no_pos] in *)
-              (*         let new_rel = CP.mkRel rel_spec_var rel_args no_pos in *)
-              (*         let old_f = ea.CF.formula_assume_simpl in *)
-              (*         let h,p,fl,t,a = CF.split_components old_f in *)
-              (*         let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix p) new_rel no_pos) in *)
-              (*         let new_f = CF.mkBase h new_p t fl a no_pos in *)
-              (*         let new_struc_f = CF.mkEBase new_f None no_pos in *)
-              (*         CF.EAssume {ea with *)
-              (*             CF.formula_assume_simpl = new_f; *)
-              (*             CF.formula_assume_struc = new_struc_f} *)
-              (*   | _ -> sf *)
-              (* in *)
-              (* let rec is_infer_post sf = match sf with *)
-              (*   | CF.EList el -> CF.EList (List.map (fun (lbl,sf) -> *)
-              (*         (lbl,is_infer_post sf)) el) *)
-              (*   | CF.EInfer ei -> *)
-              (*         let inf_obj = ei.CF.formula_inf_obj in *)
-              (*         if (inf_obj # is_post) then *)
-              (*           let rel_name = fresh_any_name "post" in *)
-              (*           let rel_type = RelT ((List.map (fun (t,_) -> t) proc.proc_args)@[proc.proc_return]) in *)
-              (*           CF.EInfer {ei with *)
-              (*               CF.formula_inf_vars = ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]; *)
-              (*               CF.formula_inf_continuation = add_relation ei.CF.formula_inf_continuation rel_name rel_type} *)
-              (*         else sf *)
-              (*   | _ -> sf *)
-              (* in *)
-              (* Long: end TODO here *)
-              (* Evan: we use proc0 instead of proc here because the inference result
-                  may not be reflected on the prog *)
               let spec = proc0.proc_stk_of_static_specs # top in
               let () =  Debug.ninfo_hprint (add_str "in check_proc proc spec:" (Cprinter.string_of_struc_formula_for_spec_inst prog)) spec no_pos in
 
@@ -3779,9 +3176,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               let (hp_lst_assume,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelAssume _ -> true | _ -> false) hp_rest) in
               (*let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in*)
               let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
-              (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
-              (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
-              (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
               (****************************************************************)
               (********************SHAPE INFER*****************************)
               (****************************************************************)
@@ -3826,47 +3220,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                     if !Globals.testing_flag then print_endline_quiet "<rstop>*************************************"
                   end
                 end;
-              (****************************************************************)
-              (*inference is postponed until all scc procs are analized*)
-              (********************END SHAPE INFER*****************************)
-              (****************************************************************)
-              (* let s_hprel, ls_inferred_hps, dropped_hps = *)
-              (*   if !Globals.pred_syn_flag && List.length sel_hp_rels> 0 && List.length hp_lst_assume > 0 then *)
-              (*     let res =  if not (!Globals.sa_dnc) then *)
-              (*       Sa2.infer_shapes iprog prog proc.proc_name hp_lst_assume *)
-              (*           sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
-              (*               (fun ((hp1,_),_) ((hp2, _),_) -> *)
-              (*                   (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true *)
-              (*     else *)
-              (*       let _= x_add Sa2.infer_shapes_new iprog prog proc.proc_name hp_lst_assume *)
-              (*         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq *)
-              (*             (fun ((hp1,_),_) ((hp2, _),_) -> *)
-              (*                 (CP.eq_spec_var hp1 hp2 )) hp_rel_unkmap) [] [] true true *)
-              (*       in ([],[],[]) *)
-              (*     in res *)
-              (*   else [],[],[] *)
-              (* in *)
-              (*update hpdefs for func call*)
-              (* let () = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name *)
-              (* in *)
-              (* let rel_defs = Sa2.rel_def_stk in *)
-              (* if not(rel_defs# is_empty) then *)
-              (*   begin *)
-              (*     print_endline "*************************************"; *)
-              (*     print_endline "*******relational definition ********"; *)
-              (*     print_endline "*************************************"; *)
-              (*     if !Globals.testing_flag then print_endline "<dstart>";  *)
-              (*     print_endline (rel_defs # string_of_reverse); *)
-              (*     if !Globals.testing_flag then print_endline "<dstop>";  *)
-              (*     print_endline "*************************************"; *)
-              (*     let () = Sa2.rel_def_stk # reset in *)
-              (*     () *)
-              (*   end; *)
-              (**************cp_test _ gen_cpfile******************)
-              (* let () = if(!Globals.cp_test || !Globals.cp_prefile) then *)
-              (*   CEQ.cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in *)
-              (* let () = if(!Globals.gen_cpfile) then *)
-              (*   CEQ.gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in *)
               (**************end cp_test _ gen_cpfile******************)
               let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
               (*let () = Ranking.do_nothing in*)
@@ -3882,183 +3235,10 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                 begin
                   let new_spec = if rels=[] then proc.proc_stk_of_static_specs # top else
                       proc.proc_stk_of_static_specs # top in
-                  (* let inf_post_flag = post_ctr # get > 0 in *)
-
-                  (* x_dinfo_pp ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos; *)
-                  (* let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = *)
-                  (*   CF.get_pre_post_vars [] Cvutil.xpure_heap (proc.proc_stk_of_static_specs # top) prog in *)
-                  (* let () = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in *)
-                  (* let all_posts = CP.remove_dups_svl (inf_vars@all_posts) in (\* add Uf1 into all_posts *\) *)
-                  (* let () = x_binfo_hp (add_str "all_posts" !print_svl) all_posts no_pos in *)
-                  (* let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in *)
-                  (* let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in *)
-                  (* let () = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in *)
-                  (* let pre_vars = CP.remove_dups_svl (pres @ (List.map *)
-                  (*     (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in *)
-                  (* let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in *)
-                  (* let post_vars = CP.remove_dups_svl all_posts in *)
-                  (* let proc_spec = proc.proc_stk_of_static_specs # top in *)
-                  (* try *)
-                  (*   begin *)
-                  (*     let () = x_dinfo_pp ">>>>>> do_compute_fixpoint <<<<<<" no_pos in *)
-                  (*     let pr = Cprinter.string_of_pure_formula in *)
-                  (*     x_binfo_hp (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos; *)
-                  (*     x_binfo_hp (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos; *)
-                  (*     let tuples (\* rel_post, post, rel_pre, pre *\) = *)
-                  (*       if rels = [] then (Infer.infer_rel_stk # reset;[]) *)
-                  (*       else if mutual_grp != [] then [] *)
-                  (*       else *)
-                  (*         let () = x_binfo_pp ">>>>>> do_compute_bottom_up_fixpoint <<<<<<" no_pos in *)
-                  (*         let rels = Infer.infer_rel_stk # get_stk in *)
-                  (*         let () = Infer.infer_rel_stk # reset in *)
-                  (*         let rels = Gen.Basic.remove_dups rels in *)
-                  (*         if rels!=[] then *)
-                  (*           begin *)
-                  (*             print_endline "\n*************************************"; *)
-                  (*             print_endline "*******pure relation assumption ******"; *)
-                  (*             print_endline "*************************************"; *)
-                  (*             print_endline (Gen.Basic.pr_list_ln (CP.string_of_infer_rel) (List.rev rels)); *)
-                  (*             print_endline "*************************************"; *)
-                  (*           end; *)
-                  (*          (\*gen sleek file*\) *)
-                  (*         let () = if !Globals.sa_gen_slk then *)
-                  (*           try *)
-                  (*             let pre_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv *)
-                  (*                 && not(CP.mem_svl sv post_vars)) pre_vars in *)
-                  (*             let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in *)
-                  (*             Fixpoint.gen_slk_file_4fix prog (List.hd !Globals.source_files) *)
-                  (*                 pre_rel_ids post_rel_ids rels *)
-                  (*           with _ -> () *)
-                  (*         else () *)
-                  (*         in *)
-                  (*         let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in *)
-                  (*         let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in *)
-                  (*         let is_post_rel fml pvars = *)
-                  (*           let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in *)
-                  (*           List.for_all (fun x -> List.mem x pvars) rhs_rel_defn *)
-                  (*         in *)
-                  (*         let () = x_binfo_hp (add_str "post_vars" !print_svl) post_vars no_pos in *)
-                  (*         let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in *)
-                  (*         let () = x_dinfo_hp (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in *)
-                  (*         let () = x_dinfo_hp (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in *)
-                  (*         (\*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*\) *)
-                  (*         let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x *)
-                  (*             && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in *)
-                  (*         let post_rel_ids = List.filter (fun sv -> CP.is_rel_typ sv) post_vars in *)
-                  (*         let () = x_dinfo_hp (add_str "pre_rel_ids" !print_svl) pre_rel_ids no_pos in *)
-                  (*         let post_rel_df_new = *)
-                  (*           if pre_rel_ids=[] then post_rel_df *)
-                  (*           else List.concat (List.map (fun (f1,f2) -> *)
-                  (*               if TP.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)] *)
-                  (*               else *)
-                  (*                 let tmp = List.filter (fun x -> CP.intersect *)
-                  (*                     (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in *)
-                  (*                 if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)] *)
-                  (*           ) post_rel_df) *)
-                  (*         in *)
-                  (*         let () = x_dinfo_hp (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in *)
-                  (*         let pre_invs,post_invs = *)
-                  (*           x_add CF.get_pre_post_invs pre_rel_ids post_rel_ids (Fixpoint.get_inv prog) (proc.proc_stk_of_static_specs # top) in *)
-                  (*         let post_inv = CP.join_disjunctions post_invs in *)
-                  (*         let () = Debug.ninfo_hprint (add_str "post_inv" pr ) post_inv no_pos in *)
-                  (*         let bottom_up_fp0 = x_add Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in *)
-                  (*         let bottom_up_fp = List.map (fun (r,p) -> *)
-                  (*             let p1 = TP.om_gist p post_inv in *)
-                  (*             let p2 = TP.pairwisecheck_raw p1 in *)
-                  (*             (r,p2) *)
-                  (*         ) bottom_up_fp0 in *)
-                  (*         let () = Debug.ninfo_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in *)
-                  (*         Fixpoint.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs *)
-                  (*             Fixcalc.compute_fixpoint_td Fixcalc.fixc_preprocess *)
-                  (*             reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag *)
-                  (*     in *)
-                  (*     (\* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *\) *)
-                  (*     Infer.fixcalc_rel_stk # push_list tuples; *)
-                  (*     if not(Infer.fixcalc_rel_stk # is_empty) then *)
-                  (*       begin *)
-                  (*         print_endline "\n*************************************"; *)
-                  (*         print_endline "*******fixcalc of pure relation *******"; *)
-                  (*         print_endline "*************************************"; *)
-                  (*         print_endline (Infer.fixcalc_rel_stk # string_of_reverse); *)
-                  (*         print_endline "*************************************" *)
-                  (*       end; *)
-                  (*     Infer.fixcalc_rel_stk # reset; *)
-                  (*     let tuples = List.map (fun (rel_post,post,rel_pre,pre) -> *)
-                  (*         let pre_new = if CP.isConstTrue rel_pre then *)
-                  (*           (\* let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in *\) *)
-                  (*           let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in *)
-                  (*           TP.simplify_exists_raw exist_vars post *)
-                  (*         else pre in *)
-                  (*         (rel_post,post,rel_pre,pre_new)) tuples in *)
-                  (*     let evars = stk_evars # get_stk in *)
-                  (*     (\* let evars = [] in*\) *)
-                  (*     let () = List.iter (fun (rel_post,post,rel_pre,pre) -> *)
-                  (*         Debug.ninfo_zprint (lazy (("REL POST : "^Cprinter.string_of_pure_formula rel_post))) no_pos; *)
-                  (*         Debug.ninfo_zprint (lazy (("POST: "^Cprinter.string_of_pure_formula post))) no_pos; *)
-                  (*         Debug.ninfo_zprint (lazy (("REL PRE : "^Cprinter.string_of_pure_formula rel_pre))) no_pos; *)
-                  (*         Debug.ninfo_zprint (lazy (("PRE : "^Cprinter.string_of_pure_formula pre))) no_pos *)
-                  (*     ) tuples in *)
-                  (*     (\* TODO *\) *)
-                  (*     let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in *)
-                  (*     if triples = [] then *)
-                  (*       fst (Fixpoint.simplify_relation new_spec None *)
-                  (*           pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume) *)
-                  (*     else *)
-                  (*       let new_spec1 = (CF.transform_spec new_spec (CF.list_of_posts proc_spec)) in *)
-                  (*       fst (Fixpoint.simplify_relation new_spec1 *)
-                  (*           (Some triples) pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume) *)
-                  (*   end *)
-                  (* with ex -> *)
-                  (*     begin *)
-                  (*       Debug.info_pprint "PROBLEM with fix-point calculation" no_pos; *)
-                  (*       (\* Debug.info_zprint (lazy (("Exception:"^(Printexc.to_string ex)))) no_pos; *\) *)
-                  (*       raise ex *)
-                  (*           (\* new_spec *\) *)
-                  (*     end *)
-                  (* in *)
-                  (* let () = Specutil.test prog in*)
-                  (* TODO WN : what happen to the old MayLoop? *)
-                  (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
-                  (* let () = Debug.ninfo_zprint (lazy (("   old_spec: " ^(Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))))) no_pos in *)
-                  (* let () = Debug.ninfo_zprint (lazy (("   new_spec: " ^(Cprinter.string_of_struc_formula new_spec)))) no_pos in *)
-                  (* let new_spec = CF.flatten_struc_formula new_spec in *)
-                  (* let () = proc.proc_stk_of_static_specs # push new_spec in *)
-                  (* let () = print_endline "\nPost Inference result:" in *)
-                  (* let () = print_endline proc.proc_name in *)
-                  (* let () = print_endline (Cprinter.string_of_struc_formula_for_spec new_spec) in *)
-                  (* let new_rels = pr_list Cprinter.string_of_only_lhs_rhs rels in *)
                   if !dis_post_chk then
                     (f,None)
                   else
                     begin
-                      (*let vars = stk_vars # get_stk in*)
-                      (* let order_var v1 v2 vs = *)
-                      (*   if List.exists (CP.eq_spec_var_nop v1) vs then *)
-                      (*     if List.exists (CP.eq_spec_var_nop v2) vs then None *)
-                      (*     else Some (v2,v1) *)
-                      (*   else if List.exists (CP.eq_spec_var_nop v2) vs then Some (v1,v2) *)
-                      (*   else None in *)
-                      (* let rec extr_subs xs vs subs rest = match xs with  *)
-                      (*   | [] -> (vs,subs,rest) *)
-                      (*   | ((v1,v2) as p)::xs1 -> let m = order_var v1 v2 vs in *)
-                      (*     (match m with *)
-                      (*       | None -> extr_subs xs1 vs subs (p::rest)   *)
-                      (*       | Some ((fr,t) as p2) -> extr_subs xs1 (fr::vs) (p2::subs) rest) in *)
-                      (* let extr_subs xs vs subs rest =  *)
-                      (*   let pr_vars = !CP.print_svl in *)
-                      (*   let pr_subs = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
-                      (*   let pr_res = pr_triple pr_vars pr_subs pr_subs in *)
-                      (*   Debug.no_2 "extr_subs" pr_subs pr_vars pr_res (fun _ _ -> extr_subs xs vs subs rest) xs vs in *)
-                      (* let rec simplify_subs xs vs ans =  *)
-                      (*   let (vs1,subs,rest) = extr_subs xs vs [] [] in *)
-                      (*    if subs==[] then ans *)
-                      (*    else simplify_subs_f rest vs1 (subs@ans) *)
-                      (* in  *)
-                      (* let ra = List.map (fun (l,r) -> MCP.pure_ptr_equations l) lst_assume in *)
-                      (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
-                      (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
-                      (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                      (* Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos; *)
                       let () = if prepost_ctr # get > 0 then
                           Debug.info_ihprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                       let () = prepost_ctr # reset in
@@ -4074,12 +3254,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                         else Infer.print_spec (" " ^ (Infer.get_proc_name proc.proc_name) ^ "\n" ^
                                                (pr_spec2 (CF.struc_to_prepost new_spec)))
                             (Infer.get_file_name Sys.argv.(1)) in
-                      (* let f = if f && !reverify_flag then *)
-                      (*   let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in *)
-                      (*   x_binfo_hp (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos; *)
-                      (*   is_valid *)
-                      (* else f *)
-                      (* in *)
                       (f, None)
                     end
                 end
@@ -4232,65 +3406,19 @@ let check_proc_wrapper iprog prog proc cout_option mutual_grp =
   try
      let () =  Debug.ninfo_hprint (add_str "check_proc_wrapper" (Cprinter.string_of_struc_formula_for_spec_inst prog)) proc.Cast.proc_stk_of_static_specs # top  no_pos in
     let res = check_proc iprog prog proc cout_option mutual_grp in
-    (* let () = Debug.info_hprint (add_str "proc.proc_sel_hps"  !CP.print_svl) proc.proc_sel_hps  no_pos in *)
-    (* Termination: Infer the phase numbers of functions in a scc group *)
-    (* TODO: The list of scc group does not
-     * need to be computed many times *)
-    (* let n_res =  *)
-    (*   if (proc.Cast.proc_is_main &&  *)
-    (*       not !Globals.dis_phase_num &&  *)
-    (*       not !Globals.dis_term_chk) then *)
-    (*   begin *)
-    (*     let (_, mutual_grps) = Cast.re_proc_mutual (Cast.sort_proc_decls (Cast.list_of_procs prog)) in *)
-    (*     let name_mutual_grps = List.map (fun lp -> List.map (fun p -> p.Cast.proc_name) lp) mutual_grps in *)
-    (*     let mutual_grp = List.find (fun g -> List.mem proc.Cast.proc_name g) name_mutual_grps in *)
-    (*     let n_prog = Term.phase_num_infer_scc_grp mutual_grp prog proc in *)
-    (*     (\* Termination: Reverify all procedures in the scc group *\) *)
-    (*     if !term_reverify then *)
-    (*       let scc_procs = List.map (fun nm -> Cast.find_proc n_prog nm) mutual_grp in  *)
-    (*       List.for_all (fun p -> check_proc n_prog p) scc_procs  *)
-    (*     else res  *)
-    (*   end *)
-    (*   else res *)
-    (* in n_res *)
-    (* Log.last_cmd # dumping; *)
     res
   with _ as e -> (
-      (* if !Globals.check_all then  *)
       begin
-        (* dummy_exception(); *)
         let () = Infer.rel_ass_stk # reset in
         print_web_mode ("\nProcedure "^proc.proc_name^" FAIL.(2)\n");
         print_web_mode ("\nException "^(Printexc.to_string e)^" Occurred!\n");
         print_backtrace_quiet ();
         print_string_quiet ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
-        Log.last_cmd # dumping (proc.proc_name^" FAIL2");
-        (* print_endline "Last PURE PROOF FAILURE:"; *)
-        (* Log.last_proof_command # dump; *)
         if !Globals.check_all then false
         else raise e
-      end 
+      end
       (* else raise e *)
     )
-(*
-let check_view vdef =
-  let ante = vdef.view_formula in
-  let conseq = vdef.view_invariant in
-  let pos = get_constr_pos conseq in
-  let ctx = build_ctx (Ctx (es_empty (get_constr_pos conseq))) ante pos in
-  let ok, res = x_add heap_entail false ctx conseq pos in
-	if ok then
-	  true
-	else (* if !Globals.check_all then begin
-			print_string_quiet ("Error detected when checking view " ^ vdef.view_name ^ ": invalid invariant");
-			false
-			end else *)
-	  report_error pos ("Error detected when checking view " ^ vdef.view_name ^ ": invalid invariant")
-
-let check_view_wrapper def = match def with
-  | Data _ -> true
-  | View vdef -> check_view vdef
-*)
 
 let check_data iprog (prog : prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
@@ -4435,21 +3563,12 @@ let rec check_prog iprog (prog : prog_decl) =
     else  None
   in
   let () = I.set_iprog iprog in
-  let () = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in
-  (* let () = Debug.info_zprint (lazy (("  check_prog: " ^ (Cprinter.string_of_program prog) ))) no_pos in *)
-  (* if true (\* !Globals.check_coercions *\) then  *)
-  (*   begin *)
-  (*     print_string_quiet "Checking lemmas... "; *)
-  (*     (\* ignore (check_coercion prog); *\) *)
-  (*     check_coercion prog; *)
-  (*     print_string_quiet "DONE.\n" *)
-  (*   end; *)
   ignore (List.map (check_data iprog prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
-  let () = Debug.ninfo_hprint (add_str "sorted_proc_main"
+  let () = Debug.binfo_hprint (add_str "sorted_proc_main"
                                  (pr_list Astsimp.pr_proc_call_order)
                               ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)
@@ -4461,23 +3580,11 @@ let rec check_prog iprog (prog : prog_decl) =
         else [x]::a
     ) [] sorted_proc_main in
   let proc_scc0 = List.rev proc_scc in
-  (* let () = List.iter (fun scc -> *)
-  (*     List.iter (fun proc -> *)
-  (*         DD.info_hprint (add_str "proc_scc0" Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos *)
-  (*     ) scc *)
-  (* ) proc_scc0 in *)
   let proc_scc = Cast.update_mut_vars_bu iprog prog proc_scc0 in
-  (* let () = List.iter (fun scc -> *)
-  (*     List.iter (fun proc -> *)
-  (*         DD.info_hprint (add_str "proc_scc"  Cprinter.string_of_struc_formula) (proc.proc_static_specs) no_pos *)
-  (*     ) scc *)
-  (* ) proc_scc in *)
-  let () = x_tinfo_hp (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
+  let () = x_binfo_hp (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
-  (****************************************************************)
   (*************************** INTERNAL ***************************)
-  (****************************************************************)
   let verify_scc_helper prog verified_sccs scc =
     let () = Cast.cprog_obj # check_prog_warning x_loc prog in
     let () = print_infer_scc (x_loc^" Beginning") scc in
@@ -4488,16 +3595,10 @@ let rec check_prog iprog (prog : prog_decl) =
     let has_infer_shape_pre_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE in
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
     (* let has_infer_shape_prepost_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_PRE_POST in *)
-    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) (* || has_infer_shape_pre_proc || *)
+    let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc)
+    (* || has_infer_shape_pre_proc || *)
       (* has_infer_shape_post_proc || has_infer_shape_prepost_proc *) in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
-
-    (* let () = if (has_infer_shape_pre_proc || has_infer_shape_prepost_proc) then *)
-    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_pre_shape_relation scc in *)
-
-    (* let () = if (has_infer_shape_post_proc) then *)
-    (*   Iincr.add_prepost_shape_relation_scc prog Iincr.add_post_shape_relation scc in *)
-
     let () = x_tinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
     let () = x_tinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
@@ -4565,7 +3666,7 @@ let rec check_prog iprog (prog : prog_decl) =
         else acc) false scc in
     let () = if should_print_term_res then Term.term_check_output_scc () else () in
 
-    let scc = 
+    let scc =
       if is_all_verified2 || not !Globals.sa_ex then scc
       else
         let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in
@@ -4620,10 +3721,7 @@ let rec check_prog iprog (prog : prog_decl) =
         let r2 = Str.regexp "pre_" in
         not(Str.string_match r1 rel_decl.rel_name 0) && not(Str.string_match r2 rel_decl.rel_name 0)
       ) (prog.prog_rel_decls # get_stk) in
-    (* let () = prog.prog_rel_decls <- rem_pure_inf_prog_rel_decls in *)
     (* QUICK FIX : why did we remove pre/post? *)
-    (* let () = prog.prog_rel_decls # reset in *)
-    (* let () = prog.prog_rel_decls # push_list rem_pure_inf_prog_rel_decls in *)
     let () = DD.ninfo_hprint (add_str "has_infer_post_proc" string_of_bool) has_infer_post_proc no_pos in
     (* Resume other infer. *)
     let () = print_infer_scc (x_loc^" After infer_pure..") scc in
@@ -4635,8 +3733,6 @@ let rec check_prog iprog (prog : prog_decl) =
 
     let () = print_infer_scc (x_loc^" After remove shape/pre/post..") scc in
     (* Reverify *)
-    (* let has_infer_others_proc = (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && Pi.is_infer_others_scc scc in *)
-    (* let () = if has_infer_others_proc then wrap_reverify_scc reverify_scc prog scc false in                                           *)
     let has_infer_term_scc = x_add_1 Ti3.is_infer_term_scc scc in
     let () =
       if has_infer_term_scc then
@@ -4646,12 +3742,6 @@ let rec check_prog iprog (prog : prog_decl) =
         ()
       else ()
     in
-
-    (* let () = DD.info_hprint (add_str "reverify" pr_id) "" no_pos in *)
-
-    (* Redundant re-verification? *)
-    (* let () = x_add reverify_scc prog scc false in *)
-
     let () =
       let inf_templs = List.map (fun tdef -> tdef.Cast.templ_name) prog.Cast.prog_templ_decls in
       if inf_templs = [] then ()
@@ -4672,7 +3762,7 @@ let rec check_prog iprog (prog : prog_decl) =
       is_empty err
     in
 
-    let () = 
+    let () =
       if not is_term_verified then
         x_binfo_pp ("Errors in TNT verification") no_pos
     in
@@ -4687,7 +3777,6 @@ let rec check_prog iprog (prog : prog_decl) =
     let () = Ti.finalize () in
 
     let () = print_infer_scc (x_loc^" After term infer result..") scc in
-    
     let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in
     let updated_scc = List.fold_left (fun r proc_id ->
         try
@@ -4705,62 +3794,14 @@ let rec check_prog iprog (prog : prog_decl) =
   let verify_scc_helper prog verified_sccs scc = 
     Imminfer.wrapper_infer_imm_pre_post Infer.infer_rel_stk verify_scc_helper prog verified_sccs scc in
 
-  let case_verify_scc_helper prog verified_sccs scc=
-    match scc with
-    | [] -> (prog, verified_sccs)
-    | [proc] -> begin
-        match proc.proc_body with
-        | Some body -> 
-          let sel_hps = CF.get_hp_rel_name_struc (proc.Cast.proc_stk_of_static_specs # top) (* proc.Cast.proc_static_specs *) in
-          if sel_hps = [] then verify_scc_helper prog verified_sccs scc
-          else
-            (*get case inference*)
-            let pcs = x_add_1 Da.get_spec_cases prog proc body in
-            if List.length pcs < 2 then
-              verify_scc_helper prog verified_sccs scc
-            else begin
-              let so_spec = proc.Cast.proc_stk_of_static_specs # top (* proc.Cast.proc_static_specs *) in
-              let so_spec1 = (* CF.elim_useless_term_struc *) so_spec in
-              let () =  Debug.ninfo_hprint (add_str "so_spec1" (Cprinter.string_of_struc_formula)) so_spec1 no_pos in
-              let infer_specs = List.map (fun p ->
-                  let fr_sel_hps = CP.fresh_spec_vars sel_hps in
-                  let so_spec2 = CF.subst_struc (List.combine sel_hps fr_sel_hps) so_spec1 in
-                  let pc_spec = CF.mkAnd_pure_pre_struc_formula p so_spec2 in
-                  let () =  Debug.ninfo_hprint (add_str "pc_spec" (Cprinter.string_of_struc_formula)) pc_spec no_pos in
-                  (* let n_proc = {proc with Cast.proc_static_specs = pc_spec} in *)
-                  let n_proc = proc in
-                  let n_procs = Cast.update_sspec_proc prog.Cast.new_proc_decls proc.Cast.proc_name pc_spec in
-                  let n_prog = {prog with Cast.new_proc_decls = n_procs} in
-                  let todo_unk = verify_scc_helper n_prog verified_sccs [n_proc] in
-                  pc_spec
-                ) pcs in
-              verify_scc_helper prog verified_sccs scc
-            end
-        | None -> (prog, verified_sccs)
-      end
-    | _ -> verify_scc_helper prog verified_sccs scc
-  in
   let rec verify_scc_incr prog verified_sccs scc=
     let old_infer_err_flag = !Globals.sae in
     let () = Globals.sae := (Pi.is_infer_error_scc scc || infer_const_obj # is_error) in
-    (*extract props: shape - pure - sortedness - term*)
-    (*for each, incrementally infer*)
-    (* let map_views = Iincr.extend_views iprog prog "size" scc in *)
-    (* let new_scc = List.map (Iincr.extend_inf iprog prog "size") scc in *)
-    (* let _ = List.map (fun proc -> *)
-    (*     let res = x_add Iincr.extend_pure_props_view iprog prog Rev_ast.rev_trans_formula Astsimp.trans_view proc in *)
-    (*     let () =  Debug.info_hprint (add_str "SPEC AFTER EXTENDED SIZE" (Cprinter.string_of_struc_formula)) *)
-    (*       (proc.Cast.proc_stk_of_static_specs # top) no_pos in *)
-    (*     res *)
-    (* ) scc in *)
     let r = verify_scc_helper prog verified_sccs scc in
     let () = Globals.sae := old_infer_err_flag in
     r
-    (*     let inf = Iincr.get_infer_type INF_SHAPE *)
-    (*   with Not_found -> scc *)
-    (* in *)
   in
-  let rec process_cmd iprog cprog verified_sccs scc icmd =
+  let rec process_cmd iprog cprog verified_sccs scc (icmd: Icmd.icmd) =
     match icmd with
       | Icmd.I_Norm {cmd_res_infs = infs} ->
             let is_inf_size = List.exists (fun it -> it = INF_SIZE) infs in
@@ -4782,12 +3823,11 @@ let rec check_prog iprog (prog : prog_decl) =
                     res
                 ) iscc in
                 ()
-              else 
+              else
                 let niscc = Iincr.reset_infer_const_scc [INF_SIZE] iscc in
                 ()
             else () in
             let res = verify_scc_incr cprog verified_sccs iscc in
-            (* let todo_unk = Iincr.reset_infer_const_scc infs iscc in *)
             res
       | Icmd.I_Seq cmds
       | Icmd.I_Search cmds (*TOFIX*) ->
@@ -4795,79 +3835,10 @@ let rec check_prog iprog (prog : prog_decl) =
                 (cprog, verified_sccs) cmds
   in
   (********************************************************)
-  (********************************************************)
-  (********************************************************)
-  let prog, _ = List.fold_left (fun (prog, verified_sccs) scc -> 
-      (* let is_all_verified1, prog = *)
-      (*   let call_order = (List.hd scc).proc_call_order in *)
-      (*   (\* perform phase inference for mutual-recursive groups captured by stk_scc_with_phases *\) *)
-      (*   if not(skip_pre_phase) && (stk_scc_with_phases # mem call_order) then  *)
-      (*     begin *)
-      (*       x_dinfo_pp ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos; *)
-      (*       x_dinfo_hp (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos; *)
-      (*       drop_phase_infer_checks(); *)
-      (*       let b= proc_mutual_scc prog scc (fun prog proc -> *)
-      (*           (\* Debug.info_hprint (add_str "MG_new "  ( (fun p -> p.proc_name))) proc no_pos; *\) *)
-      (*            (check_proc iprog prog proc cout_option [])) in *)
-      (*       restore_phase_infer_checks(); *)
-      (*       (\* the message here should be empty *\) *)
-      (*       (\* Term.term_check_output Term.term_res_stk; *\) *)
-      (*       b,Term.phase_num_infer_whole_scc prog scc  *)
-      (*     end *)
-      (*   else true,prog *)
-      (* in *)
-      (* (\* let () = Debug.info_hprint (add_str "is_all_verified1" string_of_bool) is_all_verified1 no_pos in *\) *)
-      (* let mutual_grp = ref scc in *)
-      (* x_tinfo_hp (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos; *)
-      (* let is_all_verified2 = proc_mutual_scc prog scc (fun prog proc -> *)
-      (*   begin  *)
-      (*     mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp; *)
-      (*     x_tinfo_hp (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos; *)
-      (*     x_tinfo_hp (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos; *)
-      (*     let r = check_proc_wrapper iprog prog proc cout_option !mutual_grp in *)
-      (*     (\* add rel_assumption of r to relass_grp *\) *)
-      (*     r *)
-      (*   end *)
-      (* ) in *)
-      (* let scc = if is_all_verified2 || not !Globals.sa_ex then scc *)
-      (* else *)
-      (*   let rele_sccs = lookup_called_procs iprog prog scc verified_sccs in *)
-      (*   (\*extn rele views and specs*\) *)
-      (*   let error_traces = [] in *)
-      (*    let n_scc = ext_pure_check_procs iprog prog (scc::rele_sccs) error_traces in *)
-      (*   (\*do analysis on the new domain*\) *)
-      (*   (\*if fail, give up; if succ, move fwd*\) *)
-      (*   n_scc *)
-      (* in *)
-      (* (\* let () = Debug.info_hprint (add_str "is_all_verified2" string_of_bool) is_all_verified2 no_pos in *\) *)
-      (* let () = if (\* is_all_verified1 && *\) is_all_verified2 then *)
-      (*   let () = Infer.scc_rel_ass_stk # reverse in *)
-      (*   let () = proc_mutual_scc_shape_infer iprog prog scc in *)
-      (*   let () = Infer.rel_ass_stk # reset in *)
-      (*   let () = Infer.scc_rel_ass_stk # reset in *)
-      (*   let () = scc_proc_sel_hps := [] in *)
-      (*   let () = scc_proc_sel_post_hps := [] in *)
-      (*   () *)
-      (* else () *)
-      (* in *)
-      (* let scc_ids = List.map (fun proc -> proc.Cast.proc_name) scc in *)
-      (* let updated_scc = List.fold_left (fun r proc_id -> *)
-      (*     try *)
-      (*       let proc = Cast.look_up_proc_def_raw prog.Cast.new_proc_decls proc_id in *)
-      (*       r@[proc] *)
-      (*     with _ -> r *)
-      (* ) [] scc_ids in *)
-      (* let n_verified_sccs = verified_sccs@[updated_scc] in *)
-      (* (prog,n_verified_sccs) *)
-      let prog, n_verified_sccs = if !Globals.sac then
-          case_verify_scc_helper prog verified_sccs scc
-        else
-          (* let () = List.iter (fun proc -> *)
-          (* DD.info_hprint (add_str "  " Cprinter.string_of_struc_formula) (proc.Cast.proc_stk_of_static_specs # top) no_pos) scc in *)
-          if !Globals.old_incr_infer then verify_scc_incr prog verified_sccs scc
-          else
-            let icmd = Icmd.compute_cmd prog scc in
-            process_cmd iprog prog verified_sccs scc icmd
+  let prog, _ = List.fold_left (fun (prog, verified_sccs) scc ->
+      let prog, n_verified_sccs =
+        let icmd = Icmd.compute_cmd prog scc in
+        process_cmd iprog prog verified_sccs scc icmd
       in
       let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in
@@ -4878,16 +3849,7 @@ let rec check_prog iprog (prog : prog_decl) =
       prog, no_verified_sccs
     ) (prog,[]) proc_scc
   in
-
-  let _ =
-    if !Globals.gen_templ_slk then Template.gen_slk_file prog
-    else ()
-  in
-
-  (* let () = Term.term_check_output () in *)
-
   ignore (List.map (fun proc -> check_proc_wrapper iprog prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
-  (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let () =  match cout_option with
     | Some cout -> close_out cout
     | _ -> ()
@@ -4895,4 +3857,3 @@ let rec check_prog iprog (prog : prog_decl) =
 
 let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog
-(*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

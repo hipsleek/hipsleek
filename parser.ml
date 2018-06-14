@@ -4415,7 +4415,6 @@ let parse_sleek n s =
 let parse_hip_with_option n s : (string * Iast.prog_decl) =
   let (slst,p) = SHGram.parse hip_with_option (PreCast.Loc.mk n) s in
   let s = List.fold_left (fun r s -> r^s) "" slst in
-  (* let _ = print_endline s in*)
   (s,p)
 ;;
 let parse_sleek n s =

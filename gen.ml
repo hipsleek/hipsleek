@@ -1885,7 +1885,7 @@ struct
     profiling_stack#push (msg, timer,true) 
   (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
 
-  let push_time msg = 
+  let push_time msg =
     if (!profiling) then
       push_time_always msg
     else ()

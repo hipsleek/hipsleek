@@ -31,7 +31,7 @@ let mk_norm_icmd_wt i infs= (i, I_Norm {cmd_res_infs=infs(* ;cmd_res_scc = scc *
 
 let mk_seq_icmd c1 c2 = I_Seq [c1;c2]
 
-let rec string_of_icmd cmd =
+let rec string_of_icmd (cmd: icmd) =
   match cmd with
   | I_Norm infs -> "iNorm" ^ (pr_list string_of_inf_const infs.cmd_res_infs)
   | I_Seq iseq -> "iSeq" ^ (pr_list string_of_icmd_wt iseq)
@@ -44,7 +44,7 @@ let print_infer_scc scc =
     match s with
     | CF.EList lst -> List.concat (List.map (fun (_,s) -> collect_inf s) lst)
     | CF.EInfer s -> (s.CF.formula_inf_vars, s.CF.formula_inf_obj)::(collect_inf s.CF.formula_inf_continuation)
-    | _ -> [] 
+    | _ -> []
   in
   let lst = List.map (fun p -> 
     let lst = p.Cast.proc_stk_of_static_specs # get_stk in

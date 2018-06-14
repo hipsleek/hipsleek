@@ -1,12 +1,9 @@
 let dummy = ()
 
 type print_level =
-  (* | P_Quiet *)
-  (* | P_VShort *)
   | P_Short
   | P_Norm  (* default *)
   | P_Detail
-  (* | P_Debug *)
 
 type print_set =
   | PS_Debug (* to assist with debugging *)
@@ -46,7 +43,7 @@ let string_of_primed p =
   | Primed -> "Primed"
   | Unprimed -> "Unprimed"
 
-let no_pos = 
+let no_pos =
   let no_pos1 = { Lexing.pos_fname = "";
                   Lexing.pos_lnum = 0;
                   Lexing.pos_bol = 0; 
