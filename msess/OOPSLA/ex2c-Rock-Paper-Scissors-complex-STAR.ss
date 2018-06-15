@@ -92,16 +92,12 @@ void S24(Channel c1, Channel c2, Channel c3, int reward)
 {
  int opt1     = receive(c1)[int];
  int opt2     = receive(c2)[int];
- dprint;
  assert opt1'>=1 & opt1'<=3;
  assert opt2'>=1 & opt2'<=3;
- dprint;
  par{c1,c2,c3}
  {
   case {c1,c3} c1::Chan{@S %R1}<> * c3::Chan{@S %R2}<> ->
-       dprint;
        send(c1,false)[bool];
-       dprint;
        send(c3,true)[bool];
   ||
   case {c2} c2::Chan{@S %R3}<> ->
