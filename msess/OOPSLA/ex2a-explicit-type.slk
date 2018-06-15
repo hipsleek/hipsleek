@@ -35,3 +35,7 @@ checkentail  c2::Chan{@S !v#(v:boolean);;Assume{fnce(c2,29)}<>}<> &
              |-  c2::Chan{@S !v_188#%L(v_188) ;;%R}<> * %L(v_int_88_2499).
 print residue.
 expect Fail.
+
+checkentail x::Party{ emp }<G0,{c1,c2,c3}> * x::Peer<G0> |- c1::Chan{@S emp}<>.
+print residue.
+expect Valid

@@ -10,13 +10,22 @@ checkentail c1::Chan{@S G<C1,C2,S@peer,c1@chan,c2>}<> & fnce(c2,27)
  c1::Chan{@S Guard{emp & fnce(c1,28)}<>;;(?v#((1 <= v) & (v <= 3)))}<>.
 */
 
-
+/*
 checkentail c2::Chan{@S Guard{emp&fnce(c1,28)}<>;;?v_63#(1<=v_63 & v_63<=3);;Assume{fnce(c2,27)}<>}<> *
             c1::Chan{@S Assume{fnce(c1,28)}<>;;Guard{fnce(c2,27)}<>}<>
             // & fnce(c1,28)
        |-   //fnce(c1,28).
             c2::Chan{@S ?v#%L(v);;%R}<>.
 expect Valid.
+*/
+
+checkentail c2::Chan{@S Guard{emp&fnce(c1,28)}<>;;Assume{fnce(c2,27)}<>}<> *
+            c1::Chan{@S Assume{fnce(c1,28)}<>;;Guard{fnce(c2,27)}<>}<>
+            // & fnce(c1,28)
+       |-   fnce(c2,27).
+            //c2::Chan{@S ?v#%L(v);;%R}<>.
+expect Valid.
+
 
 /*
 checkentail c2::Chan{@S ?v#(1<=v & v<=3);;Assume{fnce(c2,27)}<>}<> *

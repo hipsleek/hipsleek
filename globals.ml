@@ -1127,6 +1127,7 @@ let session_chan_id = session_def_id (* "chan" *)
 
 let sess_insert_orders = ref true
 let sess_insert_fences = ref false
+let sess_flag () = !sess_insert_orders || !sess_insert_fences
 
 let ord2sleek = ref true
 

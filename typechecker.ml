@@ -79,7 +79,7 @@ let parallelize num =
 (* (\* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *\) *)
 
 (* (\* assumes the pre, and starts the symbolic execution*\) *)
-(* and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = *)
+(* and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struSay goodbye also to the other Romanian girl!c_formula) e0 : bool = *)
 (*   (\* let (_,_,b) = check_specs_infer prog proc ctx spec_list e0 in *\) *)
 (*   (\* b *\) *)
 (*       let rec do_spec_verification (spec: CF.ext_formula):bool = *)
@@ -3029,7 +3029,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (DD.info_pprint ("WARNING: Skip reasoning PAR construct because --ann-vp is not enabled.") pos;
          ctx)
       else
-        let f_ent ctx f = heap_entail_list_failesc_context_init prog false ctx f None None None pos None in
+        let f_ent ctx f = x_add heap_entail_list_failesc_context_init prog false ctx f None None None pos None in
         let par_pre_ctx, rem_ctx = VP.prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos in
         let no_vp_par_pre_ctx =
           let pre_ctx = TermUtils.strip_lexvar_list_failesc_ctx par_pre_ctx in
@@ -3118,6 +3118,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
       let rem_ctx =
         let ctx = VP.set_inf_par_list_failesc_ctx ctx in
         let res, _ = heap_entail_list_failesc_context_init prog false ctx pre None None None pos None in
+        let () = y_binfo_pp "ANDREEA-TODO: add es_ho_vars_map info within the proving context"  in
         if (CF.isSuccessListFailescCtx_new res) then
           VP.clear_inf_par_list_failesc_ctx res
         else
@@ -3127,11 +3128,22 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
              (Cprinter.string_of_failure_list_failesc_context res) pos;
            Err.report_error { Err.error_loc = pos; Err.error_text = msg })
       in
-
-      let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
+      (* let ho_var_map = CF.collect_hovar_map_list_failesc_context rem_ctx in *)
+      (* let init_ctx = rem_ctx in *)
+      let ctx_lst = CF.succ_context_of_list_failesc_context (CF.remove_heap_list_failesc_ctx rem_ctx) in
+      let init_ctx =
+        match ctx_lst with
+        | ctx::_ -> ctx
+        | [] -> CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
+      (* let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in *)
+      (* let init_ctx = CF.transform_context (fun es -> Ctx {es with CF.es_ho_vars_map = ho_var_map} )  init_ctx in *)
+      let () = y_binfo_hp (add_str "init_ctx" Cprinter.string_of_context) init_ctx in
+      (* let init_ctx = CF.succ_context_of_failesc_context rem_ctx in *)
       (* let ml = CP.mkPure (CP.mkLexVar (CP.MayLoop None) [] [] pos) in *)
       (* let pre = CF.add_pure_formula_to_formula ml pre in              *)
       let pre_ctx = CF.build_context init_ctx pre pos in
+      let pre_ctx = CF.transform_context (fun es -> CF.subst_hvar_es es es.CF.es_ho_vars_map) pre_ctx in
+      let () = y_binfo_hp (add_str "pre_ctx-1" Cprinter.string_of_context) pre_ctx in
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
       let pre_ctx =
         if !Globals.disable_pre_sat then pre_ctx
@@ -3144,8 +3156,15 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx: CF.l
       let init_esc = [((0, ""), [])] in
       rem_ctx, ([CF.mk_failesc_context pre_ctx [] init_esc])
   in
-  let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx rem_ctx pos in
-  let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx par_init_ctx pos in
+  let () = y_binfo_hp (add_str "pre_ctx-2" Cprinter.string_of_list_failesc_context) pre_ctx in
+  let () = y_binfo_hp (add_str "rem_ctx-2" Cprinter.string_of_list_failesc_context) rem_ctx in
+  let ctx_fv =
+    let ctx_lst = CF.succ_context_of_list_failesc_context ctx in
+    List.fold_left (fun acc ct -> acc @ (CF.context_fv ct)) [] ctx_lst in
+  let pre_ctx = VP.compose_list_failesc_contexts_for_par true ~fv:ctx_fv pre_ctx rem_ctx pos in
+  let () = y_binfo_hp (add_str "pre_ctx-2" Cprinter.string_of_list_failesc_context) pre_ctx in
+  let pre_ctx = VP.compose_list_failesc_contexts_for_par true  ~fv:ctx_fv pre_ctx par_init_ctx pos in
+  let () = y_binfo_hp (add_str "pre_ctx-3" Cprinter.string_of_list_failesc_context) pre_ctx in
 
   let pr = !CF.print_list_failesc_context in
   let () = Debug.ninfo_hprint (add_str "check_par_case: rem_ctx:" pr) rem_ctx pos in

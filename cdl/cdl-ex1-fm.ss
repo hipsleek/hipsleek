@@ -28,7 +28,7 @@ CDL create_latch(int n) with %P
 void countDown(CDL c)
   requires c::LatchIn{-%P}<> * %P * c::CNT<n> & n>0
   ensures c::CNT<n-1>;
-  requires c::CNT<(-1)> 
+  requires c::CNT<(-1)>
   ensures c::CNT<(-1)>;
 
 void await(CDL c)
@@ -36,13 +36,14 @@ void await(CDL c)
   ensures c::CNT<(-1)> * %P;
   requires c::CNT<(-1)>
   ensures c::CNT<(-1)>;
-  
+
 void main()
   requires emp ensures emp;
 {
   cell h, r;
   int v;
   CDL c = create_latch(2) with h'::cell<1> * r'::cell<2>;
+  dprint;
   par {h, r, v, c@L}
   {
     case {h, c@L} c'::LatchIn{- h'::cell<1>}<> * c'::CNT<(1)> ->

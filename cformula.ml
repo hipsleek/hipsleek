@@ -14100,6 +14100,14 @@ let get_hvar e vars =
   Debug.no_2 "get_hvar" pr1 !print_svl (pr_list pr1)
     get_hvar_x e vars
 
+let get_all_hvar e  =
+  let f hf = match hf with
+    | HVar (v,_) ->  Some [hf]
+    | _ -> None
+  in
+  fold_h_formula e f List.concat
+
+
 (*drop hvars whose spec_var belong to vars*)
 let drop_hvar_x hf vars =
   let func hf = match hf with
@@ -19889,6 +19897,9 @@ let collect_nondet_vars_list_failesc_context c =
 let collect_infer_rel_context c =
    (fold_context (fun xs es -> (es.es_infer_rel # get_stk) @ xs) [] c)
 
+let collect_hovar_map_context c =
+   (fold_context (fun xs es -> (es.es_ho_vars_map) @ xs) [] c)
+
 let collect_infer_rel_list_context lfc =
   let f_a a _ = a in
   let f_b _ c = Some (c,collect_infer_rel_context c) in
@@ -19903,6 +19914,12 @@ let collect_infer_rel_list_failesc_context lfc =
   let f_a a _ = a in
   let f_b _ c = Some (c,collect_infer_rel_context c) in
   Gen.Basic.remove_dups (snd(trans_list_failesc_context lfc () f_b f_a List.concat))
+
+let collect_hovar_map_list_failesc_context lfc =
+  let f_a a _ = a in
+  let f_b _ c = Some (c,collect_hovar_map_context c) in
+  Gen.Basic.remove_dups (snd(trans_list_failesc_context lfc () f_b f_a List.concat))
+
 
 (* type: list_partial_context -> *)
 (*   (entail_state -> entail_state) -> (branch_fail list * branch_ctx list) list *)

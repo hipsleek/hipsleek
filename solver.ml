@@ -11800,7 +11800,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                     ) res in
                   let inferred_rels = List.flatten inferred_rels in
                   let pure_rels, hp_rels = List.split inferred_rels in
-                  (* TODO andreeac to renmae ante/conseq with teh freshly dicovered rel *)
+                  (* TODO andreeac to renmae ante/conseq with the freshly dicovered rel *)
                   let new_ante = CF.subst_hvar new_ante new_maps in
                   let pure_from_unfold = map_opt MCP.mix_of_pure l_pure_opt in
                   (* why do we need to add the residue from checking HO args back to ante? *)
@@ -15457,7 +15457,8 @@ Doing case splitting based on the guard.
 and choose_coerc_candidates_for_norm prog ?left:(left = true) head_node =
   try
     let head_name = get_node_name 0 head_node in
-    let is_hvar = match head_node with | HVar _ -> true | _ -> false in (* change the match with a contains *)
+    let is_hvar = (List.length (CF.get_all_hvar head_node) > 0) in
+      (* match head_node with | HVar _ -> true | _ -> false in *) (* change the match with a contains *)
     if is_hvar then []
     else
      let lemmas = if left then (Lem_store.norm_lemma # get_all_left_coercion)

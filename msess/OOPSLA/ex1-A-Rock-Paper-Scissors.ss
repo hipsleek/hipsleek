@@ -16,7 +16,8 @@ void C(Channel c)
 
 
 void S(Channel c, int reward, int no_players)
- requires c::Chan{@S G<C,S@peer,c@chan>}<> & reward>=0
+ requires c::Chan{@S G<C,S@peer,c@chan>}<> & reward>=0  //projection(G,S,c)
+ //requires c::Chan{@S ?1000 ;; ?v#(emp & 1<=v & v<=3) }<> & reward>=0
  ensures  c::Chan{emp}<> ;
 {
  int fee    = receive(c)[int];
