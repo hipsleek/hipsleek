@@ -14,9 +14,9 @@ pred_sess_prot GG<C:role,S:role,c:chan,c0:chan> ==
 
 //server's view
 pred_sess_prot GGG<S:role,c:chan> == exists C,c0:
-         C->S:c(v#v::Chan{@S G<C,S@peer,c0@chan>}<> & v:Channel & v=c0) ;; GGG<S,c>;
+         C->S:c(v#v::Chan{@S G<C,S@peer,c0@chan>}<> & v=c0) ;; GGG<S,c>;
 
-
+//client
 void C(Channel c, Channel c0)
  requires c::Chan{@S GG<C@peer,_,c@chan,c0>}<> *
           c0::Chan{@S GG<C@peer,_,c,c0@chan>}<>
@@ -28,24 +28,23 @@ void C(Channel c, Channel c0)
  dprint;
 }
 
-
-void S(Channel c)
- requires c::Chan{@S GGG<S@peer,c@chan>}<>
-          * @full[c]
- ensures  c::Chan{emp}<>;
+//server
+void Server(Channel cc)
+ requires cc::Chan{@S GGG<SS@peer,cc@chan>}<>
+ ensures  false;
 {
- dprint;
- Channel c0 = receive(c)[Channel];
- dprint;
+ Channel c0 = receive(cc)[Channel];
  int req = receive(c0)[int];
  send(c0,1)[int];
- S(c);
+ dprint;
+ Server(cc);
 }
 
+//efficient server
 void S_complex(Channel c)
  requires c::Chan{@S GGG<S@peer,c@chan>}<>
           * @full[c]
- ensures  false; //c::Chan{emp}<>;
+ ensures  false;
 {
  dprint;
  Channel c0 = receive(c)[Channel];
