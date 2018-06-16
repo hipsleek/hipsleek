@@ -2283,13 +2283,16 @@ struct
             | SBase (Predicate pl) as sess_lhs, _ -> (* l_ho_args,r_ho_args,(CF.get_node_name_x lnode) *)
               let headl = x_add_1 trans_from_session sess_lhs in
               if (is_prime_fun headl) then
-	        def
+	              def
               else
                 let ptr = Base.get_base_ptr (Base.mk_var session_def_id) pl.session_predicate_formula_heap_node in
                 let new_head = unfold_fun headl ptr in
                 let pure = Base.get_pure_formula new_head in
                 let new_head = trans_formula_to_session new_head in
-                let new_lseq = append_tail new_head s_lhs.session_seq_formula_tail in
+                let new_lseq =
+                  match new_head with
+                  | SEmp -> s_lhs.session_seq_formula_tail
+                  | _    -> append_tail new_head s_lhs.session_seq_formula_tail in
                 let new_lseq = norm3_sequence new_lseq in
                 let new_lseq = x_add_1 trans_from_session new_lseq in
                 let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
@@ -2340,13 +2343,17 @@ struct
           | SBase (Predicate pl) as sess_pl ->
             let headl = x_add_1 trans_from_session sess_pl in
             if (is_prime_fun headl) then
-	      def
+	            def
             else
               let ptr = Base.get_base_ptr (Base.mk_var session_def_id) pl.session_predicate_formula_heap_node in
               let new_head = unfold_fun headl ptr in
               let pure = Base.get_pure_formula new_head in
               let new_head = trans_formula_to_session new_head in
-              let new_lseq = append_tail new_head seq.session_seq_formula_tail in
+              let new_lseq =
+                  match new_head with
+                  | SEmp -> let () = y_binfo_pp "SEMP" in seq.session_seq_formula_tail
+                  | _    -> let () = y_binfo_pp "else-SEMP" in append_tail new_head seq.session_seq_formula_tail in
+              (* let new_lseq = append_tail new_head seq.session_seq_formula_tail in *)
               let new_lseq = norm3_sequence new_lseq in
               let new_lseq = x_add_1 trans_from_session new_lseq in
               let new_lseq = map_opt_def new_lseq idf (norm_last_seq_node new_lseq) in
@@ -2963,9 +2970,10 @@ let rebuild_nodes lnode rnode l_ho_args r_ho_args unfold_fun is_prime_fun =
   try
     match lnode, rnode with
     | CF.ViewNode nodel, CF.ViewNode noder ->
+
       begin
         match nodel.CF.h_formula_view_session_info, noder.CF.h_formula_view_session_info with
-        | Some sil,  Some sir -> helper sil sir
+        | Some sil,  Some sir ->  helper sil sir
         | _,_ -> default_res
       end
     | _,_ -> default_res

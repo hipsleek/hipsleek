@@ -263,6 +263,9 @@ let mk_projection_per_party prot role =
         let sess_prj1 = deconstruct_prot session1 in
         let sess_prj2 = deconstruct_prot session2 in
         SProj.mk_session_star_formula sess_prj1 sess_prj2 pos
+    | SProt.SExists se ->
+      let proj = deconstruct_prot se.session_exists_formula_session in
+      SProj.mk_session_exists_formula se.session_exists_formula_vars proj se.session_exists_formula_pos
     | SProt.SBase sb ->
         begin
           match sb with
@@ -331,7 +334,7 @@ let mk_projection_per_party prot role =
               end
             | _ ->              (* not assert *)
                  try
-                   let () = y_binfo_pp "SORRR " in
+                   (* let () = y_binfo_pp "SORRR " in *)
                    let params = List.map (fun param -> SBProt.param_to_var param) sp.session_predicate_params in
                    (* let anns = List.combine params sp.session_predicate_anns.peers in *)
                    let anns = List.map (fun param -> if SBProt.eq_role param role then (AnnPeer PEER) else AnnInactive) params in
@@ -396,7 +399,10 @@ let mk_projection_per_channel prj chan =
       (* adds the LHS proj as seq trailing to proj(LHS) (assuming LHS contains on +/-) *)
       else STProj.mk_session_seq_formula sess_prj2 sess_prj1 pos
       (* ANDREEA TODO: do not add a star for per channel projection - check projection rules *)
-      (* STProj.mk_session_star_formula sess_prj1 sess_prj2 pos *)
+  (* STProj.mk_session_star_formula sess_prj1 sess_prj2 pos *)
+  | SProj.SExists se ->
+    let proj = prj_per_chan se.session_exists_formula_session chan in
+    STProj.mk_session_exists_formula se.session_exists_formula_vars proj se.session_exists_formula_pos
   | SProj.SBase sb ->
       begin match sb with
       | SProj.Base base ->
@@ -465,7 +471,7 @@ let mk_projection_per_channel prj chan =
               end
             | _ ->              (* not assert *)
                  try
-                   let () = y_binfo_pp "SORRR " in
+                   (* let () = y_binfo_pp "SORRR " in *)
                    let params = List.map (fun param -> SBProj.param_to_var param) pred.session_predicate_params in
                    let anns = List.combine params pred.session_predicate_anns.peers in
                    let anns = List.map (fun (param,ann) -> if SBProj.eq_chan param chan then (AnnPeer CHAN) else ann) anns in
@@ -602,14 +608,16 @@ let convert_prj_maps prj_map tprj_map =
   let hprj_map = PrjMap.map_data_ext (fun elem ->
     let pos = SProj.get_pos elem in
     let h_form = SProj.trans_from_session elem in
-    let form = SProj.mk_formula_heap_only h_form pos in
+    let form = SProj.merge_formulae h_form (Session.IMessage.mk_formula_of_pure_1 (Session.IMessage.mk_true ()) pos) pos in
+    (* let form = SProj.mk_formula_heap_only h_form pos in *)
     Session.IMessage.mk_struc_formula form pos
    ) prj_map
   in
   let htprj_map = TPrjMap.map_data_ext (fun elem ->
     let pos = STProj.get_pos elem in
     let h_form = STProj.trans_from_session elem in
-    let form = STProj.mk_formula_heap_only h_form pos in
+    let form = STProj.merge_formulae h_form (Session.IMessage.mk_formula_of_pure_1 (Session.IMessage.mk_true ()) pos) pos in
+    (* let form = STProj.mk_formula_heap_only h_form pos in *)
     Session.IMessage.mk_struc_formula form pos
     ) tprj_map
   in

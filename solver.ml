@@ -1944,7 +1944,7 @@ and find_formula_x vdef sess_ann =
         | Some vs -> vs.shared_orders
         | None -> None
   (* any of the above exceptions will be caught here *)
-  with _ -> let () = x_winfo_pp "Cannot find required formula." no_pos in None
+  with _ -> let () = x_winfo_pp "Cannot find required formula." no_pos in Some (CF.mkTrue_nf no_pos) (* None *)
 
 and find_formula vdef sess_ann =
   let pr = pr_opt string_of_sess_ann in
@@ -11732,6 +11732,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* let l_ho_args, r_ho_args, l_node_name0 = Session.rebuild_SeqSor l_node r_node l_ho_args r_ho_args in *)
               let unfold_fun hform ptr = unfold_baref (prog, None) hform (MCP.mkMTrue pos) l_vp [] l_fl ptr pos new_exist_vars false 0 in
               let is_prime_fun hform = Cast.is_resourceless_h_formula prog ~ho_check:false hform in
+              (* let l_ho_args, r_ho_args = Session.remove_em *)
               let l_ho_args, r_ho_args, l_node_name0,l_pure_opt,r_pure_opt = x_add Session.rebuild_nodes l_node r_node l_ho_args r_ho_args unfold_fun is_prime_fun in
 
               (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)

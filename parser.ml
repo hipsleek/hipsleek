@@ -1451,7 +1451,8 @@ prot_view_decl:
            view_session = Some (Iast.mk_session_formulae (Session.ProtocolSession session_formula))}
 
   | vh = view_header; `EQEQ; s = protocol_formula
-          -> { vh with
+    ->
+    { vh with
                view_session_info = Some (mk_view_session_info ~sk:Protocol ());
                view_session = Some (Iast.mk_session_formulae (Session.ProtocolSession s))}
   ]];
