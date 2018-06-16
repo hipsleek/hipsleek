@@ -2,19 +2,23 @@ hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
 
+/*
+./hip msess/OOPSLA/ex3a-compl-calc.ss --sess --ann-vp
+*/
+
 relation REQ(int v) == 0<=v & v<=3.
 relation ANS(int v) == 0<=v & v<=3.
 
-pred_sess_prot G<C:role,S:role,c:chan> ==
+pred_sess_prot CALC<C:role,S:role,c:chan> ==
          C->S:c(v#REQ(v)) ;; S->C:c(v#ANS(v));
 
 //client's view
 pred_sess_prot GG<C:role,S:role,c:chan,c0:chan> ==
-         C->S:c(v#v:Channel & v=c0) ;; G<C,S,c0> ;
+         C->S:c(v#v:Channel & v=c0) ;; CALC<C,S,c0> ;
 
 //server's view
-pred_sess_prot GGG<S:role,c:chan> == exists C,c0:
-         C->S:c(v#v::Chan{@S G<C,S@peer,c0@chan>}<> & v=c0) ;; GGG<S,c>;
+pred_sess_prot GProt<S:role,c:chan> == exists C,c0:
+         C->S:c(v#v::Chan{@S CALC<C,S@peer,c0@chan>}<> & v=c0) ;; GProt<S,c>;
 
 //client
 void C(Channel c, Channel c0)
@@ -30,7 +34,7 @@ void C(Channel c, Channel c0)
 
 //server
 void Server(Channel cc)
- requires cc::Chan{@S GGG<SS@peer,cc@chan>}<>
+ requires cc::Chan{@S GProt<SS@peer,cc@chan>}<>
  ensures  false;
 {
  Channel c0 = receive(cc)[Channel];
@@ -42,7 +46,7 @@ void Server(Channel cc)
 
 //efficient server
 void S_complex(Channel c)
- requires c::Chan{@S GGG<S@peer,c@chan>}<>
+ requires c::Chan{@S GProt<S@peer,c@chan>}<>
           * @full[c]
  ensures  false;
 {
