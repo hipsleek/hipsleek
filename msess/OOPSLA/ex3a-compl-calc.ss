@@ -16,17 +16,23 @@ pred_sess_prot CALC<C:role,S:role,c:chan> ==
 pred_sess_prot GG<C:role,S:role,c:chan,c0:chan> ==
          C->S:c(v#v:Channel & v=c0) ;; CALC<C,S,c0> ;
 
+//client's view
+pred_sess_prot GC<C:role,S:role,c:chan,c0:chan> ==
+         C->S:c(v#v::Chan{@S CALC<C,S@peer,c0@chan>}<> & v=c0) ;; CALC<C,S,c0> ;
+
 //server's view
 pred_sess_prot GProt<S:role,c:chan> == exists C,c0:
          C->S:c(v#v::Chan{@S CALC<C,S@peer,c0@chan>}<> & v=c0) ;; GProt<S,c>;
 
 //client
 void C(Channel c, Channel c0)
- requires c::Chan{@S GG<C@peer,_,c@chan,c0>}<> *
-          c0::Chan{@S GG<C@peer,_,c,c0@chan>}<>
+ requires c::Chan{@S GC<C@peer,S,c@chan,c0>}<> *
+          c0::Chan{@S GC<C@peer,S,c,c0@chan>}<> * c0::Chan{@S CALC<C,S@peer,c0@chan>}<>
  ensures  c::Chan{@S emp}<> * c0::Chan{@S emp}<>;
 {
+ dprint;
  send(c,c0)[Channel];
+ dprint;
  send(c0,1)[int];
  int answ = receive(c0)[int];
  dprint;
