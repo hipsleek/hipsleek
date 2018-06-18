@@ -127,17 +127,6 @@ class timelog =
 
 let logtime = new timelog
 
-(* let logtime_wrapper s f x = *)
-(*     try *)
-(*       let () = logtime # start_time s in *)
-(*       let res = f x in *)
-(*       let () = logtime # stop_time in *)
-(*       res *)
-(*     with e -> *)
-(*         let tt = logtime # stop_time in  *)
-(*         let () = Debug.info_hprint (add_str "WARNING logtime exception" string_of_float) tt no_pos in *)
-(*         raise e *)
-
 let log_wrapper s logger f x  =
   try
     let () = logtime # start_time s in
@@ -145,7 +134,6 @@ let log_wrapper s logger f x  =
     let r = logtime # stop_time in
     let to_flag = logtime # get_timeout () in
     let (pr,no) = logger (Some res) r to_flag in
-    (* if s="sleek-hec" then print_endline ("log_wrapper (normal):"^no); *)
     logtime # add_proof_info pr no;
     res
   with e ->
@@ -153,6 +141,5 @@ let log_wrapper s logger f x  =
     let to_flag = logtime # get_timeout () in
     let (pr,no) = logger None tt to_flag in
     logtime # add_proof_info (pr^"*EXC*") no;
-    (* if s="sleek-hec" then print_endline ("log_wrapper (exc):"^no); *)
     let () = Debug.info_hprint (add_str ("WARNING logtime exception (" ^ s ^ ")") string_of_float) tt no_pos in
     raise e

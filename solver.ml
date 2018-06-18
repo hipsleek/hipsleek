@@ -7335,6 +7335,7 @@ type: bool *
   string
 *)
   let fold_fun_impt x (rhs_p:MCP.mix_formula) =
+    let () = x_binfo_pp "marking \n" no_pos in
     let pr = Cprinter.string_of_mix_formula in
     let pr_lp = pr_list (pr_pair !CF.print_pure_f  !CF.print_pure_f) in
     let pr1 (r, _, _, (_,(lp,_,_))) = pr_pair string_of_bool pr_lp (r,lp) in
@@ -7346,15 +7347,12 @@ type: bool *
     x_add fold_fun_impt  (true,[],None, (Failure_Valid, ([],[],[]))) rhs_p in
 
   let ctx, prf =
-    if r_rez then begin (* Entailment is valid *)
-      (* ========== Immutability normalization ======== *)
-      (* let lhs_h, estate_orig = Immutable.imm_norm_for_entail_empty_rhs lhs_h lhs_p  estate_orig in *)
-      (* ========== end - Immutability normalization ======== *)
-      (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
+    if r_rez then begin
+      (* Entailment is valid *)
       let add_univ_pure es =
         let univ_rhs_store = TP.univ_rhs_store in
         if univ_rhs_store # is_empty then es
-        else 
+        else
           let nf = univ_rhs_store # get_rm in
           let () = y_dinfo_hp (add_str "univ pure --> lhs" !CP.print_formula) nf in
           CF.add_pure_estate es nf 
@@ -7363,11 +7361,12 @@ type: bool *
         let pr =  Cprinter.string_of_entail_state_short in 
         Debug.no_1 "add_univ_pure" pr pr add_univ_pure es in
       let flag = stk_estate # is_empty in
-      let () = y_dinfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
-      let () = y_dinfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
+      let () = y_binfo_hp (add_str "stk_estate # is_empty" string_of_bool) flag in
+      let () = y_binfo_hp (add_str "estate" Cprinter.string_of_entail_state) estate in
       if not(flag) || !Globals.adhoc_flag_5 then
         let pr = Cprinter.string_of_entail_state_short in
-        let () = x_info_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
+        let () = x_binfo_pp "marking \n" no_pos in
+        let () = x_binfo_hp (add_str "stk_estate: " (pr_list pr)) (stk_estate # get_stk) no_pos in
         let new_estate = stk_estate # top in
         let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
         let new_estate = {new_estate with es_formula = disj_of_list_pure new_ante_fmls pos} in
@@ -7537,7 +7536,7 @@ type: bool *
     else
       (*** CODE TO INFER PRECOND ***)
       begin
-        x_dinfo_zp (lazy ("heap_entail_empty_rhs_heap: formula is not valid\n")) pos;
+        x_binfo_zp (lazy ("heap_entail_empty_rhs_heap: formula is not valid\n")) pos;
         (*compute lub of estate.es_formula and current fc_flow*)
       (*
         fc_flow: safe -> normal_flow --or higher
@@ -7555,9 +7554,8 @@ type: bool *
                                 CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                               else
                                 CF.substitute_flow_into_f !error_flow_int estate.es_formula
-                            | CF.Failure_May _ -> (* if is_sat then *)
-                              (*   CF.substitute_flow_into_f !error_flow_int estate.es_formula *)
-                              (* else *) CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
+                            | CF.Failure_May _ ->
+                               CF.substitute_flow_into_f !mayerror_flow_int estate.es_formula
                             (* this denotes a maybe error *)
                             | CF.Failure_Bot _ -> estate.es_formula
                             | CF.Failure_Valid -> estate.es_formula
@@ -7578,7 +7576,7 @@ type: bool *
           let lc0 = x_add Musterr.build_and_failures 1 "213" fc_kind Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
           (lc0, prf)
         else
-          (* let () = Globals. smt_return_must_on_error () in *)
+          let () = x_binfo_pp "marking \n" no_pos in
           let err_msg = "failed in entailing pure formula(s) in conseq" in
           (CF.mkFailCtx_in (Basic_Reason ({
                fc_message =(* "failed in entailing pure formula(s) in conseq" *) err_msg;
@@ -7589,7 +7587,6 @@ type: bool *
                fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];},
                {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) cex, prf)
       end in
-  (* let ctx,prf = post_process_result ctx prf in *)
   (ctx, prf)
 (****************************************************************)  
 (* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
@@ -7793,18 +7790,13 @@ type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
 
 *)
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
-  (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
-  (* let () = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^ *)
-  (*let _ = print_endline ("ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n") in*)
-  (*let _ = print_endline ("CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n") in*)
-  (* "memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n\n") in  *)
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0, conseq_m with
   | MCP.MemoF a, MCP.MemoF c ->
     begin
-      x_dinfo_pp ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
+      x_binfo_pp ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
       (*print_endline "imply_mix_formula: first";*)
       if (MCP.isConstMFalse conseq_m) then ((false,[],None),None)
       else 
@@ -7821,10 +7813,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
     end
   | MCP.OnePF a0, MCP.OnePF c ->
     begin
-      x_dinfo_pp ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+      x_binfo_pp ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
       let f a0 =
-        (* WN : what if Omega cannot handle?  *)
-        (* WN : cause of performance bug? needed by tut/ex2/bugs-sim5b.slk *)
         let a0 = (* Wrapper.wrap_exception a0 TP.simplify_omega *) a0 in
         if CP.no_andl a0 && !Globals.deep_split_disjuncts
         then
@@ -7864,14 +7854,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
       in
       let univ_vars = TP.get_univs_from_ante a0 in
       let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
-      (* let () = List.iter (process_univ univ_vars a0) new_rhs in *)
-      (* let a0 = *)
-      (*   if TP.univ_rhs_store # is_empty *)
-      (*   then a0 *)
-      (*   else *)
-      (*     let a01 = CP.mkAnd a0 (TP.univ_rhs_store # get) no_pos in *)
-      (*     a0 *)
-      (* in *)
       let a0l = f a0 in
       let a1l = match ante_m1 with
         | Some (MCP.OnePF a1) -> f a1
@@ -7885,20 +7867,11 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
         (* then if ln0>ln1 then Some (a0l,[]) else Some(a1l,[])  *)
         else None in
       let pr = Cprinter.string_of_pure_formula in 
-      x_tinfo_hp (add_str "a0" pr) a0 no_pos;
-      x_tinfo_hp (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
-      x_tinfo_hp (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
+      x_binfo_hp (add_str "a0" pr) a0 no_pos;
+      x_binfo_hp (add_str "ante-a0l" (pr_list pr)) a0l no_pos;
+      x_info_hp (add_str "ante-a1l" (pr_list pr)) a1l no_pos;
       let () = CP.store_tp_is_sat := (fun f -> TP.is_sat 77 f "store_tp_is_sat" true) in
       (x_add CP.imply_conj_orig (ante_m1==None) a0l a1l new_rhs (x_add TP.imply_one 29) imp_no, extra_step)
-      (* original code	        
-         CP.imply_conj_orig
-         (CP.split_disjunctions a0) 
-         (CP.split_disjunctions a1) 
-         (CP.split_conjunctions c) 
-         TP.imply
-         imp_no
-      *)
-
     end
   | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
