@@ -55,7 +55,7 @@ and data_field_ann =
 
 and data_decl = {
   data_name : ident;
-  mutable data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list;
+  mutable data_fields : (typed_ident * loc * bool * (ident list)) list;
   (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
   (* TODO design revision on how to make this more extensible; for instance:                 *)
   (* use a record instead of a bool to capture additional information on the field?          *)
@@ -65,19 +65,6 @@ and data_decl = {
   data_pure_inv : P.formula option;
   data_is_template: bool;
   data_methods : proc_decl list }
-
-(*
-  and global_var_decl = { global_var_decl_type : typ;
-  global_var_decl_decls : (ident * exp option * loc) list;
-  global_var_decl_pos : loc }
-*)
-
-(* and view_kind = *)
-(*   | View_PRIM *)
-(*   | View_NORM *)
-(*   | View_EXTN *)
-(*   | View_DERV *)
-(*   | View_SPEC *)
 
 and ibaga_pure = ((ident * ((P.exp * P.exp) option)) list * P.formula) list
 
@@ -92,7 +79,6 @@ and view_decl =
     view_is_hrel : bool option; (* bool is for PostHeap *)
 
     mutable view_data_name : ident;
-    (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
 
     mutable view_imm_map: (P.ann * int) list;
@@ -123,14 +109,10 @@ and view_decl =
 and func_decl = { func_name : ident;
                   func_typed_vars : (typ * ident) list;}
 
-(* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident;
-                 (* rel_vars : ident list; *)
-                 (* rel_labels : branch_label list; *)
                  rel_typed_vars : (typ * ident) list;
-                 (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
                  rel_formula : P.formula (* Iformula.struc_formula *) ;
-                 (* try_case_inference: bool *) }
+               }
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
@@ -164,15 +146,11 @@ and ui_decl = {
 }
 
 and hp_decl = { hp_name : ident;
-                (* rel_vars : ident list; *)
-                (* rel_labels : branch_label list; *)
                 mutable hp_typed_inst_vars : (typ * ident * hp_arg_kind) list;
                 hp_part_vars: (int list) list; (*partition vars into groups e.g. pointer + pure properties*)
                 mutable hp_root_pos: int option;
                 hp_is_pre : bool;
                 hp_formula : Iformula.formula ;
-                (* try_case_inference: bool *)
-                (* hp_view : view_decl option *)
               }
 
 and hopred_decl = {
@@ -216,36 +194,6 @@ and param = {
   param_name : ident;
   param_mod : param_modifier;
   param_loc : loc }
-
-(*
-  and multi_spec = spec list
-
-  and spec =
-  | SCase of scase_spec
-  | SRequires of srequires_spec
-  | SEnsure of sensures_spec
-
-  and scase_spec =
-  {
-  scase_branches : (Ipure.formula * multi_spec ) list ;
-  scase_pos : loc
-  }
-
-  and srequires_spec =
-  {
-  srequires_explicit_inst : (ident * primed) list;
-  srequires_implicit_inst : (ident * primed) list;
-  srequires_base : Iformula.formula;
-  srequires_continuation : multi_spec;
-  srequires_pos : loc
-  }
-
-  and sensures_spec =
-  {
-  sensures_base : Iformula.formula;
-  sensures_pos : loc
-  }
-*)
 
 and proc_decl = {
   proc_name : ident;
@@ -361,11 +309,6 @@ and assign_op =
 and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
                     exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
                     exp_arrayat_pos : loc; }
-
-(* (\* An Hoa : array memory allocation expression *\) *)
-(* and exp_aalloc = { exp_aalloc_etype_name : ident;		(\* Name of the base element *\) *)
-(* 					exp_aalloc_dimensions : exp list;	(\* List of size for each dimensions *\) *)
-(* 					exp_aalloc_pos : loc; } *)
 
 (* An Hoa : array memory allocation expression *)
 and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
@@ -632,7 +575,6 @@ let print_hp_decl = ref (fun (x: hp_decl) -> "Uninitialised printer")
 let print_coerc_decl_list = ref (fun (c:coercion_decl_list) -> "cast printer has not been initialized")
 let print_coerc_decl = ref (fun (c:coercion_decl) -> "cast printer has not been initialized")
 
-(* let mk_iview_decl name dname vars f pos = *)
 (* type: Globals.ident -> *)
 (*   Globals.ident -> *)
 (*   (Globals.ident * 'a) list -> *)
@@ -672,28 +614,18 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
 			}
 
 let mk_view_header vn opt1 cids mvs modes pos =
-  (* let mvs = get_mater_vars l in *)
-  (* let modes = get_modes anns in *)
-  (* let pos = get_pos_camlp4 _loc 1 *)
-  (* let cids, anns = List.split l in *)
   let cids_t, br_labels = List.split cids in
   let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
-  (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
   let _, cids = List.split cids_t in
-  (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
-  (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
-  (* else *)
   { view_name = vn;
     view_pos = pos ;
     view_data_name = "";
     view_type_of_self = None;
-    (* view_actual_root = None; *)
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_ho_vars = un_option opt1 [];
     view_derv = false;
     view_parent_name = None;
-    (* view_frac_var = empty_iperm; *)
     view_labels = br_labels,has_labels;
     view_modes = modes;
     view_typed_vars = cids_t;
@@ -723,35 +655,6 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
   let f = F.mkETrue top_flow pos in
   let vs = List.map fst vars in (* where to store annotation? *)
   mk_iview_decl hp_n hp_n vs f pos
-  (* let vs = List.map fst vars in (\* where to store annotation? *\) *)
-  (*       { view_name = hp_n; *)
-  (*         view_pos = pos; *)
-  (*         view_data_name = hp_n; *)
-  (*         view_type_of_self = None; *)
-  (*         view_imm_map = []; *)
-  (*         view_vars = (\* List.map fst *\) vs; *)
-  (*         view_ho_vars = []; *)
-  (*         view_derv = false; *)
-  (*         view_parent_name = None; *)
-  (*         view_labels = [],false; *)
-  (*         view_modes = []; *)
-  (*         view_typed_vars = []; *)
-  (*         view_pt_by_self  = []; *)
-  (*         view_formula = F.mkETrue top_flow pos; *)
-  (*         view_inv_lock = None; *)
-  (*         view_is_prim = false; *)
-  (*         view_is_hrel = None; *)
-  (*         view_kind = View_HREL; *)
-  (*         view_prop_extns = []; *)
-  (*         view_derv_info = []; *)
-  (*         view_invariant = P.mkTrue pos; *)
-  (*         view_baga_inv = None; *)
-  (*         view_baga_over_inv = None; *)
-  (*         view_baga_under_inv = None; *)
-  (*         view_mem = None; *)
-  (*         view_materialized_vars = []; *)
-  (*         try_case_inference = false; *)
-  (*       		} *)
 
 
 let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
@@ -1021,8 +924,6 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | Bind b ->
         let r1 = helper n_arg b.exp_bind_body  in r1
       | Barrier _ -> zero
-      (* let e,r = helper n_arg b.exp_barrier_recv  in *)
-      (* (Barrier {b with exp_barrier_recv = e},r) *)
       | Block b ->
         helper n_arg b.exp_block_body
       | CallRecv b ->
@@ -1238,92 +1139,8 @@ let get_catch_of_exp e = match e with
 let get_finally_of_exp e = match e with
   | Finally e -> e
   | _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting finally clause"}
- (*
-let rec type_of_exp e = match e with
-  | Assert _ -> None
-  | Assign _ -> Some void_type
-  | Binary {
-      exp_binary_op = op;
-      exp_binary_oper1 = e1;
-      exp_binary_oper2 = e2;
-      exp_binary_pos = _
-    } ->
-        begin
-          let t1 = type_of_exp e1 in
-          let t2 = type_of_exp e2 in
-          let typ = match op with
-            | OpEq | OpNeq | OpLt | OpLte | OpGt | OpGte
-            | OpLogicalAnd | OpLogicalOr | OpIsNull | OpIsNotNull ->
-                bool_type
-            | OpPlus | OpMinus | OpMult ->
-                begin
-                  match t1, t2 with
-                  | Some Prim Int, Some Prim Int -> int_type
-                  | _ -> float_type
-                end
-            | OpDiv -> float_type
-            | OpMod -> int_type
-          in Some typ
-        end
-  | Bind {
-      exp_bind_bound_var = _;
-      exp_bind_fields = _;
-      exp_bind_body = e1;
-      exp_bind_pos = _
-    } -> type_of_exp e1
-  | Block _ -> Some void_type
-  | BoolLit _ -> Some bool_type
-  | Break _ -> Some void_type
-  | CallRecv _ -> None (* FIX-IT *)
-  | CallNRecv _ -> Some void_type
-  | Cast {
-      exp_cast_target_type = typ;
-      exp_cast_body = _;
-      exp_cast_pos = _
-    } -> Some typ
-  | Cond _ -> Some void_type
-  | ConstDecl _ -> Some void_type
-  | Continue _ -> Some void_type
-  | Debug _ -> None
-  | Dprint _ -> None
-  | Empty _ -> None
-  | FloatLit _ -> Some float_type
-  | IntLit _ -> Some int_type
-  | Java _ -> None
-  | Member _ -> None (* FIX-IT *)
-  | New {
-      exp_new_class_name = name;
-      exp_new_arguments = _;
-      exp_new_pos = _
-    } -> Some (Named name)
-  | Null _ -> Some void_type
-  | Raise _ -> Some void_type
-  | Return _ -> Some void_type
-  | Seq _ -> Some void_type
-  | This _ -> None
-  | Try _ -> Some void_type
-  | Unary {
-      exp_unary_op = op;
-      exp_unary_ = e1;
-      exp_unary_pos = _
-    } -> type_of_exp e1
-  | Unfold _ -> None
-  | Var _ -> None
-  | VarDecl _ -> Some void_type
-  | While _ -> Some void_type
-*)
 
 and mkSpecTrue pos = Iformula.mkETrue pos
-(*[SRequires {
-  		srequires_explicit_inst = [];
-  		srequires_implicit_inst = [];
-  		srequires_base  = Iformula.mkTrue pos;
-  		srequires_continuation =  [SEnsure{
-  			sensures_base =  Iformula.mkTrue pos;
-  			sensures_pos = pos
-  			}];
-  		srequires_pos = pos
-  		}]	*)
 
 and mkHoPred  n m mh tv ta fa s i=
   {   hopred_name = n;
@@ -1365,15 +1182,6 @@ let mk_hp_decl_0 ?(is_pre=true) ?(view_d=None) id tl (root_pos:int option) parts
 let mk_hp_decl ?(is_pre=true) ?(view_d=None) id tl root_pos parts pos1 =
   let hp_f = F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1) in
   mk_hp_decl_0 ~is_pre:is_pre ~view_d:view_d id tl root_pos parts hp_f
-    (*  { *)
-    (*     hp_name = id; *)
-    (*     hp_typed_inst_vars = tl; *)
-    (*     hp_root_pos = root_pos; *)
-    (*     hp_part_vars = parts; *)
-    (*     hp_is_pre = is_pre; *)
-    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (pos1)) VP.empty_vperm_sets top_flow [] (pos1); *)
-    (*     hp_view = view_d; *)
-    (* } *)
 
 let mk_hp_view id tl root_pos parts pos1 =
   let pr = pr_triple string_of_typ pr_id string_of_arg_kind in
@@ -1388,13 +1196,6 @@ let mk_hp_decl_w_view ?(is_pre=true) id tl root_pos parts pos1 =
 
 let mkhp_decl iprog hp_id vars parts rpos is_pre body=
   let nhp_dclr = mk_hp_decl_0 ~is_pre:is_pre hp_id vars rpos [] body
-      (* { hp_name = hp_id; *)
-      (*   hp_typed_inst_vars = vars; *)
-      (*   hp_part_vars = []; *)
-      (*   hp_root_pos = rpos; *)
-      (*   hp_is_pre = is_pre; *)
-      (*   hp_formula =  body; *)
-      (* }  *)
   in
   let () = iprog.prog_hp_decls <- iprog.prog_hp_decls@[nhp_dclr] in
   nhp_dclr
@@ -1460,8 +1261,6 @@ let rec get_mut_vars_x e0 =
   let bind_vars = fold_exp e0 collect_bind_vars(List.concat) [] in
   let mut_vars = find_close_ids (lhs_vars@bind_vars) eqs in
   Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars
-(* let mut_vars = helper e0 in *)
-(* Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) mut_vars *)
 
 let rec get_mut_vars e0 =
   let pr1 = !print_exp in

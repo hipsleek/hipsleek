@@ -473,8 +473,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         CF.formula_assume_lbl = post_label;
         CF.formula_assume_ensures_type = etype0; (* duplicate??? *)
         CF.formula_assume_struc = post_struc} ->
-      (* let () = cond_path # reset in *)
-      (* let () = cond_path # push 0 in *)
+      let () = x_binfo_pp "marking \n" no_pos in
       let ctx = CF.add_path_id ctx (None,0) 0 in
       let etype = if (check_is_classic ()) then Some ((check_is_classic ())) else
           (* run-fast-test: classic2, classic2a *)
@@ -636,14 +635,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let (b,_,e) = elim_unsat_estate prog e in
                     if b then tmp_false_cnt # inc;
                     let () = x_ninfo_hp (add_str "elim_unsat(b)" string_of_bool) b no_pos in
-                    e 
+                    e
                 in
                 let res_ctx = CF.map_list_partial_context res_ctx elim_unsat  in
                 let new_false_cnt = tmp_false_cnt # get in
-                let () = x_tinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
+                let () = x_binfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
                 let tmp_ctx = x_add_1 check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
-                let () = x_tinfo_pp "After check_post. It fail, will not show this" no_pos in
-                let () = 
+                let () = x_binfo_pp "After check_post. It fail, will not show this" no_pos in
+                let () =
                   if not(!Globals.old_infer_hp_collect) then
                     begin
                       let hp_rel_list = Infer.collect_hp_rel_list_partial_context tmp_ctx in
@@ -1078,10 +1077,10 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
         (***generating spec for init***)
         CF.prepost_of_init lock_var lock_sort new_args post_start_label pos
     in
-    let () = x_binfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
+    let () = x_ninfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
     let prepost = x_add Cvutil.prune_pred_struc prog true prepost in (* specialise --eps *)
-    let () = x_binfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
-    let ctx = 
+    let () = x_ninfo_hp (add_str "prepost" Cprinter.string_of_struc_formula) prepost no_pos in
+    let ctx =
       if (mn_str=Globals.finalize_name) then
         (*try to combine fractional permission before finalize*)
         normalize_list_failesc_context_w_lemma prog ctx
@@ -2650,130 +2649,126 @@ and pr_spec = Cprinter.string_of_struc_formula
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
 and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label):  CF.list_partial_context  =
-  (* let () = print_string_quiet ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
-  (*fresh views: h_formula_view_original = true*)
   let ctx = CF.fresh_view_list_partial_context ctx0 in
-  (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
-  if !Globals.dis_post_chk then ctx else 
-    let () = if !print_proof then
-        begin
-          Prooftracer.push_post ();
-          Prooftracer.start_compound_object ();
-          Prooftracer.push_list_partial_context_formula_entailment ctx (fst posts);
-          Tpdispatcher.push_suppress_imply_output_state ();
-          Tpdispatcher.unsuppress_imply_output ();
-          (* print_endline "VERIFYING POST-CONDITION" *)
-        end in
-    (* Termination: Poststate of Loop must be unreachable (soundness) *)
-    let todo_unk = 
-      if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-      else
-        let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in 
-        Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
-    in
+  let () = if !print_proof then
+      begin
+        Prooftracer.push_post ();
+        Prooftracer.start_compound_object ();
+        Prooftracer.push_list_partial_context_formula_entailment ctx (fst posts);
+        Tpdispatcher.push_suppress_imply_output_state ();
+        Tpdispatcher.unsuppress_imply_output ();
+      end in
+  (* Termination: Poststate of Loop must be unreachable (soundness) *)
+  let todo_unk =
+    if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
+    else
+      let check_falsify ctx = heap_entail_one_context 17 prog false ctx (CF.mkFalse_nf pos) None None None pos in
+      Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid 
+  in
 
-    (* Rho: print conc err, if any *)
+  (* Rho: print conc err, if any *)
+  let _ =
+    let conc_errs = CF.collect_conc_err_list_partial_context ctx in
+    if is_empty conc_errs then ()
+    else 
+      let str_conc_err = pr_list 
+          (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
+      print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
+  in
+  let fn_state=
+    if (false (* !Globals.disable_failure_explaining *)) then
+      let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
+          proc.proc_args in
+      let r = proc.proc_by_name_params in
+      let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
+      (* WN: do not existentially quantify by-value parameters *)
+      let w=[] in
+      let () = x_tinfo_hp (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
+      (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
+      let final_state_prim = CF.push_exists_list_partial_context w ctx in
+      x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
+      Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
+      let final_state = 
+        if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
+      x_tinfo_hp  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;
+      x_binfo_zp (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  (fst posts)) ^ "\n")) pos;
+      x_dinfo_zp (lazy ("Struc-post-cond:\n" ^ (Cprinter.string_of_struc_formula  (snd posts)) ^ "\n")) pos;
+      let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
+      x_dinfo_pp to_print pos;
+      final_state
+    else
+      ctx
+  in
+  let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
+  let rs, prf =
+    if f1 then
+      begin
+        let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
+        let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
+        (*possibly change to flat post here as well??*)
+        let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state flat_post None None None pos (Some pid) in
+        let () =  DD.ninfo_hprint (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos in
+        let ans1 = if !mem_leak_detect then
+            Soutil.detect_mem_leak prog proc ans
+          else ans
+        in
+        (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
+      end
+    else
+      let () = x_ninfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
+      let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
+      rs_struc, prf
+  in
+  let pr1 = Cprinter.string_of_list_partial_context in
+  let () = x_ninfo_hp (add_str "rs: " pr1) rs pos in
+  let () = PTracer.log_proof prf in
+  let () = if !print_proof then
+      begin
+        Tpdispatcher.restore_suppress_imply_output_state ();
+        Prooftracer.add_post ();
+        Prooftracer.pop_div ();
+        Prooftracer.pop_div ();
+        (* print_endline "DONE!" *)
+      end in
+  let is_succ = CF.isSuccessListPartialCtx_new rs in
+  let is_reachable_succ = if not f1 then
+      is_succ
+    else
+      is_succ && (CF.exist_reachable_states rs)
+  in
+  let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
+  let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
+  if (is_reachable_succ) then
+    rs
+  else begin
     let _ =
-      let conc_errs = CF.collect_conc_err_list_partial_context ctx in
-      if is_empty conc_errs then ()
-      else 
-        let str_conc_err = pr_list 
-            (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
-        print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
-    in
-    let fn_state=
-      if (false (* !Globals.disable_failure_explaining *)) then
-        let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
-            proc.proc_args in
-        let r = proc.proc_by_name_params in
-        let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
-        (* WN: do not existentially quantify by-value parameters *)
-        let w=[] in
-        let () = x_tinfo_hp (add_str "post(vars)" Cprinter.string_of_spec_var_list) w no_pos in
-        (* print_string_quiet ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
-        let final_state_prim = CF.push_exists_list_partial_context w ctx in
-        x_tinfo_hp  (add_str "\nList Partial Ctx(before)"  Cprinter.string_of_list_partial_context) final_state_prim no_pos;  
-        Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
-        let final_state = 
-          if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
-        x_tinfo_hp  (add_str "List Partial Ctx(after exists_elim)"  Cprinter.string_of_list_partial_context) final_state no_pos;  
-        (* let () = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
-        x_dinfo_zp (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  (fst posts)) ^ "\n")) pos;
-        x_dinfo_zp (lazy ("Struc-post-cond:\n" ^ (Cprinter.string_of_struc_formula  (snd posts)) ^ "\n")) pos;
-        let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
-        x_dinfo_pp to_print pos;
-        final_state
+      if not !Globals.disable_failure_explaining then
+        let s,fk,ets= CF.get_failure_list_partial_context rs in
+        let failure_str = if List.exists (fun et -> et = Mem 1) ets then
+            "memory leak failure" else
+            "Post condition cannot be derivedddddddddddddddddddddddddd"
+        in
+        let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
+        Err.report_error {
+          Err.error_loc = pos;
+          Err.error_text = (failure_str ^".")
+        }
       else
-        ctx
-    in
-    let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
-    let rs, prf =
-      if f1 then
         begin
-          let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
-          let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
-          (*possibly change to flat post here as well??*)
-          let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state flat_post None None None pos (Some pid) in
-          let () =  DD.ninfo_hprint (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos in
-          let ans1 = if !mem_leak_detect then
-              Soutil.detect_mem_leak prog proc ans
-            else ans
-          in
-          (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
-        end
-      else
-        let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
-        let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
-        rs_struc, prf
-    in
-    let () = PTracer.log_proof prf in
-    let () = if !print_proof then
-        begin
-          Tpdispatcher.restore_suppress_imply_output_state ();
-          Prooftracer.add_post ();
-          Prooftracer.pop_div ();
-          Prooftracer.pop_div ();
-          (* print_endline "DONE!" *)
-        end in
-    let is_succ = CF.isSuccessListPartialCtx_new rs in
-    let is_reachable_succ = if not f1 then
-        is_succ
-      else
-        is_succ && (CF.exist_reachable_states rs)
-    in
-    let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
-    let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
-    if (is_reachable_succ) then
-      rs
-    else begin
-      let _ =
-        if not !Globals.disable_failure_explaining then
-          let s,fk,ets= CF.get_failure_list_partial_context rs in
-          let failure_str = if List.exists (fun et -> et = Mem 1) ets then
-              "memory leak failure" else
-              "Post condition cannot be derivedddddddddddddddddddddddddd"
-          in
-          let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
+          Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
+            ("Postcondition cannot be derived from context\n")
+            pos;
+          Debug.print_info ("(Cause of PostCond Failure)")
+            (Cprinter.string_of_failure_list_partial_context rs) pos;
           Err.report_error {
             Err.error_loc = pos;
-            Err.error_text = (failure_str ^".")
+            Err.error_text = Printf.sprintf
+                "Post condition cannot be derived by the system."
           }
-        else
-          begin
-            Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
-              ("Postcondition cannot be derived from context\n")
-              pos;
-            Debug.print_info ("(Cause of PostCond Failure)")
-              (Cprinter.string_of_failure_list_partial_context rs) pos;
-            Err.report_error {
-              Err.error_loc = pos;
-              Err.error_text = Printf.sprintf
-                  "Post condition cannot be derived by the system."
-            }
-          end
-      in
-      rs
-    end
+        end
+    in
+    rs
+  end
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)
 (* replacing each spec with new spec with phase numbering *)
@@ -2785,8 +2780,8 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
       let nres =
         try
           let () =  DD.ninfo_hprint 
-            (add_str "proc_mutual_scc: proc_lst" Cprinter.string_of_struc_formula) 
-            (p.proc_stk_of_static_specs # top) (* (p.proc_static_specs) *) no_pos in
+              (add_str "proc_mutual_scc: proc_lst" Cprinter.string_of_struc_formula) 
+              (p.proc_stk_of_static_specs # top) (* (p.proc_static_specs) *) no_pos in
           let cur_r = (fn prog p) in
           let () = if not cur_r then
               let () = if not !Globals.web_compile_flag then Debug.ninfo_hprint (add_str "proc.proc_name"  pr_id) (p.proc_name) no_pos in
@@ -3064,7 +3059,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
-          let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_ninfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let pr_flag = not(!phase_infer_ind) in
           let sel_hps = CF.get_hp_rel_name_struc (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
@@ -3323,7 +3318,7 @@ let reverify_proc prog proc do_infer =
         else Infer.restore_infer_vars_ctx proc.proc_logical_vars [] init_ctx in
       let () = x_tinfo_hp (add_str "Init Ctx" !CF.print_context) init_ctx no_pos in
       let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body do_infer in
-      x_binfo_hp (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos;
+      x_ninfo_hp (add_str "Performing a Re-verification, Valid?" string_of_bool) is_valid no_pos;
       ()
   else ()
 
