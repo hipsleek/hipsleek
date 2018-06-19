@@ -75,7 +75,7 @@ let compute_all_lub lattice =
     (fun v1 lubs1 ->
       G.fold_vertex
         (fun v2 lubs2 ->
-          if v1 <> v2 then compute_lub v1 v2 lattice :: lubs2 else lubs2
+          if v1 <> v2 then compute_lub v1 v2 lattice :: lubs2 else (v1, v1, v1) :: lubs2
         )
         lattice
         []
@@ -90,7 +90,7 @@ let compute_all_glb lattice =
     (fun v1 lubs1 ->
       G.fold_vertex
         (fun v2 lubs2 ->
-          if v1 <> v2 then compute_glb v1 v2 lattice :: lubs2 else lubs2
+          if v1 <> v2 then compute_glb v1 v2 lattice :: lubs2 else (v1, v1, v1) :: lubs2
         )
         lattice
         []
@@ -182,17 +182,9 @@ let get_bottom lattice = lattice.bottom
 let get_representation { label_representations } label =
   RepresentationMap.find label label_representations
 
-let least_upper_bound { least_upper_bounds } l1 l2 =
-  if l1 = l2 then
-    l1
-  else
-    BoundsMap.find (l1, l2) least_upper_bounds
+let least_upper_bound { least_upper_bounds } l1 l2 = BoundsMap.find (l1, l2) least_upper_bounds
 
-let greatest_lower_bound { greatest_lower_bounds } l1 l2 =
-  if l1 = l2 then
-    l1
-  else
-    BoundsMap.find (l1, l2) greatest_lower_bounds
+let greatest_lower_bound { greatest_lower_bounds } l1 l2 = BoundsMap.find (l1, l2) greatest_lower_bounds
 
 let current_lattice = ref default_lattice
 
