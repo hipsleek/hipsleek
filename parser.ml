@@ -1142,7 +1142,9 @@ sec_label_decl: [[
   lbls = sec_label_decl_header; `OBRACE; lbl_relations = sec_label_decl_body; `CBRACE ->
     let security_labels = List.map Security.Label.make lbls in
     let label_relations = List.map (fun (l1, l2) -> (Security.Label.make l1, Security.Label.make l2)) lbl_relations in
-    Security.make_lattice security_labels label_relations
+    let lattice = Security.make_lattice security_labels label_relations in
+    Security.current_lattice := lattice;
+    lattice
 ]];
 
 sec_label_decl_header: [[
