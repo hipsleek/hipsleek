@@ -2464,7 +2464,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
     (f: prog_decl->bool->bool->context->'a -> CP.spec_var option ->  MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id->(list_context * proof)) to_string
   : (list_partial_context * proof) = 
   (* print_string "\nbach:calling struct_partial_context .."; *)
-  x_tinfo_zp (lazy ("heap_entail_struc_partial_context:"
+   x_tinfo_zp (lazy ("heap_entail_struc_partial_context:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
                     ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
@@ -14596,14 +14596,14 @@ and normalize_list_partial_context_w_lemma prog lctx =
     res
 
 let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
-    (b1:bool)  (ctx : context) 
+    (b1:bool)  (ctx : context)
     (conseq : formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (b2:control_path_id): (list_context * proof) =
   x_add heap_entail_one_context 11 prog is_folding  ctx conseq tid delayed_f join_id pos
 
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
     (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let () = set_entail_pos pos in
-  x_tinfo_zp (lazy ("heap_entail_init struc_list_partial_context_init:"
+  x_binfo_zp (lazy ("heap_entail_init struc_list_partial_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
                     ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) 
@@ -14650,7 +14650,7 @@ let heap_entail_struc_list_failesc_context_init i (prog : prog_decl) (is_folding
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
     (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let () = set_entail_pos pos in
-  x_dinfo_zp (lazy ("heap_entail_init list_partial_context_init:"
+  x_binfo_zp (lazy ("heap_entail_init list_partial_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
                     ^ "\nconseq:\n"^ (Cprinter.string_of_formula conseq) 

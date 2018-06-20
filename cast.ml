@@ -624,27 +624,12 @@ let cprog_obj =
     (* val cprog = cprog *)
     method get = !cprog
     method logging s =
-      (* let m = "\n*XXcprog** " in *)
-      (* let () = print_endline_quiet (m^s) in *)
       ()
     method check_prog_x ?(loc="") flag prg =
       let store_prg = !cprog in
-      (* match !cprog with *)
-      (* | None ->  *)
-      (*   let () = y_tinfo_pp "cprog still None" in *)
-      (*   let () = cprog := Some prg in *)
-      (*   false *)
-      (* | Some store_prg ->  *)
       if not(prg==store_prg) then
         begin
           let () = y_winfo_pp (loc ^ "prog and cprog_obj are different") in
-          (* if prg = store_prg then  *)
-          (*   let () = y_tinfo_pp "same content though" in *)
-          (*   () *)
-          (* else *)
-          (*   let () = y_tinfo_hp (add_str "new prog" !print_prog) prg in *)
-          (*   let () = y_tinfo_hp (add_str "old cprog" !print_prog) store_prg in *)
-          (*   (); *)
           if flag then cprog := prg;
           false
         end
@@ -662,10 +647,6 @@ let cprog_obj =
         let () = y_winfo_pp "updating Cast.cprog" in
         self # logging ((add_str (loc^"update (same prog?)") string_of_bool) r)
     method get_hp_decls =
-      (* match !cprog with *)
-      (* | None ->  *)
-      (*   let () = y_winfo_pp "cprog_obj not yet intiliazed" in [] *)
-      (* | Some cp ->  *)
       !cprog.prog_hp_decls
     method get_hp_one_decl n =
       let lst = self # get_hp_decls in
@@ -1537,7 +1518,6 @@ let add_raw_hp_rel_x ?(caller="") prog is_pre is_unknown unknown_ptrs pos=
               List.map (fun sv -> P.mkVar sv pos) unk_args,
               pos)
     in
-    (* let () = cprog_obj # check_prog_upd (x_loc ^ ":" ^ caller) prog in *)
     let () = x_winfo_hp (add_str "define: " !print_hp_decl) hp_decl pos in
     Debug.ninfo_zprint (lazy (("       gen hp_rel: " ^ (!F.print_h_formula hf)))) pos;
     (hf, P.SpecVar (HpT,hp_decl.hp_name, Unprimed))
@@ -4104,7 +4084,6 @@ let update_view_decl ?(caller="") prog vdecl =
       y_info_pp ("Updating an available view decl (" ^ vhdr ^ ") in cprog.")
     else y_info_pp ("Adding the view " ^ vhdr ^ " into cprog.")
   in
-  (* let () = cprog_obj # check_prog_upd(* _only *) (x_loc ^ ":" ^ caller) prog in *)
   prog.prog_view_decls <- others @ [vdecl]
 
 let update_view_decl ?(caller="") prog vdecl =
@@ -4114,17 +4093,7 @@ let update_view_decl ?(caller="") prog vdecl =
     (fun _ -> update_view_decl ~caller:caller prog vdecl) vdecl
 
 let add_equiv_to_view_decl frm_vdecl keep_sst to_vdecl =
-  (* let frm_name = frm_vdecl.view_name in *)
-  (* if HipUtil.view_scc_obj # compare frm_name to_name  < 0 then *)
-  (*   begin *)
-  (*   y_tinfo_pp "change order of sst"; *)
-  (*   to_vdecl.view_equiv_set # set (keep_sst,frm_name) *)
-  (*   end *)
-  (* else  *)
   frm_vdecl.view_equiv_set # set (keep_sst,to_vdecl.view_name)
-
-(* let add_equiv_to_view_decl frm_vdecl keep_sst to_view = *)
-(*   frm_vdecl.view_equiv_set # set (keep_sst,to_view) *)
 
 let is_finish_equiv_view_decl frm_vdecl to_vdecl =
   let (_,target_frm) = frm_vdecl.view_equiv_set # get in
@@ -4134,15 +4103,6 @@ let is_finish_equiv_view_decl frm_vdecl to_vdecl =
   if (frm_name=target_to) || (to_name=target_frm) then true
   else if not(target_frm="") && not(target_to="") then true
   else false
-
-(* let change_to_view_decl frm_vdecl to_vdecl = *)
-(*   let frm_flag = frm_vdecl.view_equiv_set # is_avail in *)
-(*   let (_,target_to) = to_vdecl.view_equiv_set # get in *)
-(*   if frm_flag then (to_vdecl,true) (\* finish since frm_vdecl already has an equiv *\) *)
-(*   else if not(target_to="") then  *)
-(*     let () = y_winfo_hp (add_str  "change to_decl to" pr_id) target_to in *)
-(*     (to_vdecl,false) *)
-(*   else (to_vdecl,false) *)
 
 let smart_view_name_equiv view_decls vl vr =
   let vl_name = vl.h_formula_view_name in

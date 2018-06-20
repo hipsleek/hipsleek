@@ -3531,13 +3531,6 @@ let detect_invoke_x prog proc =
   (* let () = Debug.ninfo_hprint (add_str "Long: to implement" pr_id) "start" no_pos in *)
   let collect_called_proc e =
     match e with
-    (* | CallRecv cr -> *)
-    (*       let () = print_endline "rec" in *)
-    (*       let called_proc_name = cr.exp_call_recv_method in *)
-    (*       let called_proc = look_up_proc_def_raw prog.prog_proc_decls called_proc_name in *)
-    (*       if (called_proc.proc_is_main && (not called_proc.proc_is_invoked)) *)
-    (*       then let () = called_proc.proc_is_invoked <- true in Some [called_proc_name] *)
-    (*       else None *)
     | CallNRecv cnr ->
       let called_proc_name = cnr.exp_call_nrecv_method in
       let cmp = String.compare called_proc_name proc.proc_name in
