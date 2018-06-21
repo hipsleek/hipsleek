@@ -2752,21 +2752,78 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
         in
         let pure_rhs = get_pure_conseq_from_struc rhs in
+        let (pure_lhs, pure_rhs) = Cpure.expand_eqs_x pure_failed_lhs pure_rhs
+        in
+        let pure_lhs = Cpure.drop_triv_eq pure_lhs in
         let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
-        let pure_failed_lhs = Cpure.simplify_eqn pure_failed_lhs in
+        (* let pure_failed_lhs = Cpure.simplify_eqn pure_failed_lhs in *)
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
-            pure_failed_lhs pos in
+            pure_lhs pos in
 
-        let found_f = ref false in
-        let unprimed_vars = Cpure.fv pure_failed_lhs in
+        (* let found_f = ref false in *)
+        let unprimed_vars = Cpure.fv pure_lhs in
         let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in
-        let () = x_binfo_hp (add_str "var list: " Cpure.string_of_var_list)
-            unprimed_vars pos in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"
         in
+        let vars = unprimed_vars in
+        let var_res = CP.mk_spec_var "res" in
+        let vars = List.filter (fun var -> not(CP.eq_spec_var var var_res)) vars in
+
+        (* let new_model = *)
+        let (new_lhs, model_vars) =
+          if (List.length vars == 1) then
+            let var_a = CP.mk_spec_var "a" in
+            let var_a_exp = CP.mk_exp_var var_a in
+            let var_b = CP.mk_spec_var "b" in
+            let var_b_exp = CP.mk_exp_var var_b in
+            let var_c = CP.mk_spec_var "c" in
+            let var_c_exp = CP.mk_exp_var var_c in
+
+            let fst_var = List.hd vars in
+            let fst_var_exp = CP.mk_exp_var fst_var in
+            let mult_exp = CP.mkMult var_a_exp fst_var_exp  no_pos in
+            let rhs_exp = CP.mkAdd mult_exp var_b_exp no_pos in
+            let var_f = CP.mk_spec_var "f" in
+            let var_f_exp = CP.mk_exp_var var_f in
+            let new_pure_lhs = match pure_lhs with
+              | CP.BForm (b_form, _) ->
+                let (p_form, _) = b_form in
+                begin
+                  match p_form with
+                  | CP.Eq (a, _, _)
+                  | CP.Gt (a, _, _)
+                  | CP.Gte (a, _, _)
+                  | CP.Lt (a, _, _)
+                  | CP.Lte (a, _, _)
+                    -> CP.mk_eq_exp a var_f_exp
+                  | _ -> report_error no_pos "lhs_b_formula not handled"
+                end
+              | _ -> report_error no_pos "lhs_b_formula not handled"
+            in
+            let f_formula = CP.mkPure (CP.mkEq var_f_exp rhs_exp no_pos) in
+            (CP.mkAnd new_pure_lhs f_formula no_pos, [var_a; var_b])
+          else report_error no_pos "length var_list > 1 not handled"
+        in
+        let () = x_binfo_hp (add_str "new lhs: " Cprinter.string_of_pure_formula)
+            new_lhs pos in
+        let assertions = [new_lhs; pure_rhs] in
+        let () = x_binfo_hp (add_str "model vars: " Cpure.string_of_var_list)
+            model_vars pos in
+        let pr1 = pr_list !CP.print_formula in
+        let () = x_binfo_hp (add_str "assertions: " pr1) assertions pos in
+        let z3_res = Z3.get_model false model_vars assertions in
+        let () = x_binfo_hp (add_str "model res: " Z3m.string_of_z3m_res)
+            z3_res pos in
+        (* let () = match z3_res with
+         *   | Z3m.Unsat _ -> let () = x_binfo_pp "UNSAT \n" no_pos in
+         *     ()
+         *   | Z3m.Sat_or_Unk sat ->
+         *
+         *     ()
+         * in *)
         (* let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in *)
         (* let () = x_binfo_pp ("failure: " ^s) no_pos in *)
         (* let () = x_binfo_hp (add_str "rs: " pr1) rs pos in *)

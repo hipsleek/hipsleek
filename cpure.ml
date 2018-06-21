@@ -1390,6 +1390,7 @@ let full_name_of_spec_var (sv : spec_var) : ident =
 let is_void_type t = match t with | Void -> true | _ -> false
 
 let filter_primed_vars fv = List.filter (fun v -> is_unprimed v) fv
+let filter_unprimed_vars fv = List.filter (fun v -> is_primed v) fv
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
@@ -5690,7 +5691,7 @@ let baga_enum baga : formula =
    
 *)
 module SV =
-struct 
+struct
   type t = spec_var
   let zero = mk_zero
   (* "_" to denote null value *)
@@ -14375,7 +14376,7 @@ let get_vv_eqs (f0 : formula) : (spec_var * spec_var) list =
 let get_neqs (f0 : formula) : ((spec_var * spec_var) list) * (spec_var list) =
   let fct p f = match f with 
     | BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,([],[])) else Some (f,([(vl,vr)],[]))
-    | BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,([(vl,vr)],[])) else Some (f,([],[])) 
+    | BForm ((Neq(Var(vl,_),Var(vr,_),_),_),_) ->  if p then Some (f,([(vl,vr)],[])) else Some (f,([],[]))
     | BForm ((Eq (Null _ ,Var(v ,_),_),_),_)
     | BForm ((Eq (Var(v ,_),Null _ ,_),_),_) ->  if p then Some (f,([],[])) else Some (f,([],[v]))
     | BForm ((Neq(Var(v ,_),Null _ ,_),_),_)
@@ -14412,7 +14413,7 @@ let drop_neq (aneq,anull) f =
 
 
 (*lump all pointer vars apearing in anything but disequalities*)
-let force_all_vv_eqs_x f0 = 
+let force_all_vv_eqs_x f0 =
   let rec helper b f = match f with
     | BForm ((Eq (Var(vl,_),Var(vr,_),_),_),_) ->  if b&&(not (eq_spec_var vl vr)) then [vl;vr] else []
     | BForm ((Eq(Var(vl,_),(Null _),_),_),_)

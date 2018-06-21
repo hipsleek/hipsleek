@@ -1222,13 +1222,14 @@ let get_model is_linear vars assertions =
   let smt_asserts = List.map (fun a ->
       "(assert " ^ (smt_of_formula pr_w pr_s a) ^ ")\n") assertions in
   let smt_asserts = String.concat "" smt_asserts in
-  let smt_inp = 
+  let smt_inp =
     ";Variables Declarations\n" ^ smt_var_decls ^
     ";Assertion Declations\n" ^ smt_asserts ^
     (if is_linear then "(check-sat)" else "(check-sat-using qfnra-nlsat)") ^ "\n" ^
     (* "(check-sat)\n" ^ *)
     "(get-model)\n"
   in
+  let () = x_binfo_pp ("smt_inpt:\n" ^ smt_inp ^ "\n") no_pos in
 
   let fail_with_timeout _ = (
     restart ("[smtsolver.ml] Timeout when getting model!" ^ (string_of_float !smt_timeout))
