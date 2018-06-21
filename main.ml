@@ -930,29 +930,16 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* Append all primitives in list into one only *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
-  (* let _= List.map (fun x-> print_endline_quiet ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
-  (* let () = print_endline_quiet ("process_source_full: before Globalvars.trans_global_to_param") in *)
-  (* let () = print_endline_quiet (Iprinter.string_of_program prog) in *)
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
-  (* let () = print_endline_quiet ("process_source_full: before pre_process_of_iprog") in *)
-  (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
-  (* let () = print_endline_quiet ("process_source_full: before label_procs_prog") in *)
-  (* let () = print_endline_quiet (Iprinter.string_of_program intermediate_prog) in *)
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
-  (* let () = print_endline_quiet ("process_source_full: before --pip") in *)
-  let () = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+  let () = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog)
     else if(!Globals.print_input) then
       print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
     else () in
-  (* let () = print_endline_quiet ("process_source_full: after --pip") in *)
   let () = Gen.Profiling.pop_time "Translating global var" in
   (* Global variables translated *)
-  (* let ptime1 = Unix.times () in
-     let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
   let () = Gen.Profiling.push_time "Translating to Core" in
-  (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
-
   (**************************************)
   (*Simple heuristic for ParaHIP website*)
   (*Heuristic: check if waitlevel and locklevels have been used for verification
@@ -975,12 +962,8 @@ let process_source_full_after_parser source (prog, prims_list) =
   (**************************************)
   (*annotate field*)
   let () = Iast.annotate_field_pure_ext intermediate_prog in
-  (*used in lemma*)
-  (* let () =  Debug.info_zprint (lazy  ("XXXX 2: ")) no_pos in *)
-  (* let () = I.set_iprog intermediate_prog in *)
   let cprog,tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   let () = saved_cprog := cprog in
-  (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
 
   (* Forward axioms and relations declarations to SMT solver module *)
   (* L2: not-in-used *)
@@ -994,7 +977,6 @@ let process_source_full_after_parser source (prog, prims_list) =
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
     ) (List.rev cprog.Cast.prog_axiom_decls) in
-  (* let () = print_string (" done-2\n"); flush stdout in *)
   let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)
     else if(!Globals.print_core) then
       print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
@@ -1006,13 +988,10 @@ let process_source_full_after_parser source (prog, prims_list) =
       Globals.procs_verified := tmp
     end in
   let () = Gen.Profiling.pop_time "Translating to Core" in
-  (* let ptime2 = Unix.times () in
-     let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-     let () = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
   let _ =
     if !Scriptarguments.comp_pred then begin
       let () = print_string ("Compiling predicates to Java..."); flush stdout in
-      let compile_one_view vdef = 
+      let compile_one_view vdef =
         if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
           let data_def, pbvars = Predcomp.gen_view cprog vdef in
           let java_str = Java.java_of_data data_def pbvars in
@@ -1026,7 +1005,7 @@ let process_source_full_after_parser source (prog, prims_list) =
       ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
       print_string ("\nDone-3.\n"); flush stdout;
       exit 0
-    end 
+    end
   in
   let _ =
     if !Scriptarguments.rtc then begin
@@ -1039,7 +1018,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* An Hoa : initialize html *)
   let () = Prooftracer.initialize_html source in
 
-  if (!Scriptarguments.typecheck_only) 
+  if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
           (* let () =  Debug.info_zprint (lazy  ("XXXX 3: ")) no_pos in *)
@@ -1062,8 +1041,6 @@ let process_source_full_after_parser source (prog, prims_list) =
       end
   in
 
-  (* print mapping table control path id and loc *)
-  (*let () = print_endline_quiet (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
   if (not !Globals.web_compile_flag) then 
@@ -1080,25 +1057,6 @@ let process_source_full_after_parser source (prog, prims_list) =
 
 let main1 () =
   let () = y_tinfo_pp "XXXX main1" in
-  (* Cprinter.fmt_set_margin 40; *)
-  (* Cprinter.fmt_string "TEST1.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST2...............................................................'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''............"; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (* Cprinter.fmt_string "TEST4..............................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST5.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST6.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST7.................................."; *)
-  (* Cprinter.fmt_cut (); *)
   process_cmd_line ();
   Tpdispatcher.init_tp();
   Scriptarguments.check_option_consistency ();
@@ -1108,14 +1066,9 @@ let main1 () =
   if !Globals.print_version_flag then begin
     print_version ()
   end else
-    (*let () = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in*)
     let () = record_backtrace_quite () in
-    (*let () = print_endline_quiet (string_of_bool (Printexc.backtrace_status())) in *)
 
     if List.length (!Globals.source_files) = 0 then begin
-      (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-      (* Globals.procs_verified := ["f3"]; *)
-      (* Globals.source_files := ["examples/test5.ss"] *)
       print_string "Source file(s) not specified\n"
     end;
     let () = Gen.Profiling.push_time "Overall" in
@@ -1123,9 +1076,6 @@ let main1 () =
     let () = Gen.Profiling.pop_time "Overall" in
     (*  Tpdispatcher.print_stats (); *)
     ()
-
-(* let main1 () = *)
-(*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 
 let pre_main () =
   process_cmd_line ();
@@ -1153,8 +1103,6 @@ let finalize_bug () =
        let () = Log.process_proof_logging !Globals.source_files cprog prim_names in ()
      | None ->
        let () = Log.process_proof_logging !Globals.source_files cprog [] in ()
-       (* | _,_ -> *)
-       (*   let () = x_binfo_pp "WARNING : Logging not done on finalize" no_pos in () *)
     ) in
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
@@ -1162,14 +1110,6 @@ let old_main () =
   let () = y_tinfo_pp "XXXX old_main" in
   try
     main1 ();
-    (* let () =  *)
-    (*   if !Global.enable_counters then *)
-    (*     print_string (Gen.Profiling.string_of_counters ()) *)
-    (*   else () in *)
-    (* let _ = print_endline ("unsat_count_syn:" ^ (string_of_int !unsat_count_syn)) in *)
-    (* let _ = print_endline ("unsat_count_sem:" ^ (string_of_int !unsat_count_sem)) in *)
-    (* let _ = print_endline ("Excore.UnCa.hit:" ^ (string_of_int !Excore.UnCa.hit_cache)) in *)
-    (* let _ = print_endline ("Excore.UnCa.miss:" ^ (string_of_int !Excore.UnCa.miss_cache)) in *)
     let () = Gen.Profiling.print_counters_info () in
     let () = Gen.Profiling.print_info () in
     hip_epilogue ()
@@ -1189,7 +1129,7 @@ let old_main () =
       hip_epilogue ()
     end
 
-let () = 
+let () =
   if not(!Globals.do_infer_inc) then
     let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()

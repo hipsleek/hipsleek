@@ -637,7 +637,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 in
                 let res_ctx = CF.map_list_partial_context res_ctx elim_unsat  in
                 let new_false_cnt = tmp_false_cnt # get in
-                let () = x_binfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
+                let () = x_dinfo_hp (add_str "new_false_cnt" string_of_int) new_false_cnt no_pos in
                 let tmp_ctx = x_add_1 check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                 let () = x_ninfo_pp "After check_post. It fail, will not show this" no_pos in
                 let () =
@@ -2705,11 +2705,74 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
+        (* TODO: handle all list, not just first error *)
+        let (trace, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
+        let failed_ctx = match typ with
+          | Basic_Reason (ctx,_, _) -> ctx
+          | _ -> Err.report_error {
+              Err.error_loc = pos;
+              Err.error_text = ("unhandled")
+            }
+        in
+        let rec get_pure_conseq_from_formula f =
+          match f with
+          | CF.Or fo ->
+            let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) f no_pos in
+            let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
+            let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
+            CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
+          | _  ->
+            let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) f no_pos in
+            let _,p,_,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
+        in
+        let () = x_binfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)
+                            ) failed_ctx.fc_current_lhs.es_formula pos in
+        let failed_lhs = failed_ctx.fc_current_lhs.es_formula in
+        let pure_failed_lhs = get_pure_conseq_from_formula failed_lhs in
+        let rhs = failed_ctx.fc_orig_conseq in
+        let () = x_binfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
+            rhs pos in
+        let rec get_pure_conseq_from_struc sf =
+          match sf with
+          | CF.EBase eb ->
+            let f1 = get_pure_conseq_from_formula eb.CF.formula_struc_base in
+            let f2 = match eb.CF.formula_struc_continuation with
+              | None -> CP.mkTrue no_pos
+              | Some cont -> get_pure_conseq_from_struc cont
+            in
+            CP.mkAnd f1 f2 no_pos
+          | EInfer ei -> get_pure_conseq_from_struc ei.CF.formula_inf_continuation
+          | EAssume ea -> get_pure_conseq_from_formula ea.CF.formula_assume_simpl
+          | EList el -> List.fold_left (fun acc (_,sf) ->
+              CP.mkOr acc (get_pure_conseq_from_struc sf) None no_pos
+            ) (CP.mkFalse no_pos) el
+          | ECase ec -> List.fold_left (fun acc (pf,sf) ->
+              let new_f = CP.mkAnd pf (get_pure_conseq_from_struc sf) no_pos in
+              CP.mkOr acc new_f None no_pos
+            ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
+        in
+        let pure_rhs = get_pure_conseq_from_struc rhs in
+        let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
+            pure_rhs pos in
+        let pure_failed_lhs = Cpure.simplify_eqn pure_failed_lhs in
+        let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
+            pure_failed_lhs pos in
+
+        let found_f = ref false in
+        let unprimed_vars = Cpure.fv pure_failed_lhs in
+        let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in
+        let () = x_binfo_hp (add_str "var list: " Cpure.string_of_var_list)
+            unprimed_vars pos in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"
         in
-        let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
+        (* let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in *)
+        (* let () = x_binfo_pp ("failure: " ^s) no_pos in *)
+        (* let () = x_binfo_hp (add_str "rs: " pr1) rs pos in *)
+        (* let () = x_binfo_hp (add_str "failed state: " Cprinter.pr_failed_states) rs pos in *)
+
+
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
@@ -3600,7 +3663,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
                  not (has_infer_shape_pre_proc || has_infer_shape_post_proc)
               then Pi.resume_infer_obj_scc scc old_specs
               else scc in
-    let () = x_binfo_hp (add_str "stk_of_static_specs (resume)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
+    let () = x_dinfo_hp (add_str "stk_of_static_specs (resume)" (pr_list (fun p -> (Cprinter.string_of_struc_formula p.proc_stk_of_static_specs # top)))) scc no_pos in
 
     let () = print_infer_scc (x_loc^" After remove shape/pre/post..") scc in
     let () =
@@ -3619,7 +3682,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
         with _ -> r
       ) [] scc_ids in
     let () = Term.term_res_stk # reset in
-    let () = x_binfo_hp (add_str "updated_scc" (pr_list (fun p -> 
+    let () = x_dinfo_hp (add_str "updated_scc" (pr_list (fun p -> 
         (Cprinter.string_of_struc_formula (p.Cast.proc_stk_of_static_specs # top) (* p.Cast.proc_static_specs *))))) updated_scc no_pos in
     let n_verified_sccs = verified_sccs@[updated_scc] in
     (prog,n_verified_sccs)

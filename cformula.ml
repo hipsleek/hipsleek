@@ -165,7 +165,7 @@ and list_formula = formula list
 
 and formula_sig = ident list
 
-and formula_base = {  
+and formula_base = {
   formula_base_heap : h_formula;
   formula_base_vperm : CVP.vperm_sets;
   formula_base_pure : MCP.mix_formula;

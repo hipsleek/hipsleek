@@ -118,17 +118,6 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-(* and loc =  { *)
-(*     start_pos : Lexing.position (\* might be expanded to contain more information *\); *)
-(*     mid_pos : Lexing.position; *)
-(*     end_pos : Lexing.position; *)
-(*   } *)
-
-(* moved to Gen *)
-(* and primed = *)
-(*   | Primed *)
-(*   | Unprimed *)
-
 (* indicate whether lemma_split is applicable or not*)
 and split_ann =
     SPLIT0 (* do not split, exact match - DEFAULT *)

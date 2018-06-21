@@ -245,7 +245,7 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and imm_ann = 
+and imm_ann =
   | PostImm of p_formula  (* unknown precondition, need to be inferred *)
   | PreImm of p_formula (* unknown postcondition, need to be inferred *)
 
@@ -264,7 +264,7 @@ and p_formula =
   | Neq of (exp * exp * loc)
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
-  (* bag formulas *)
+  (* bag formulaus *)
   | BagIn of (spec_var * exp * loc)
   | BagNotIn of (spec_var * exp * loc)
   | BagSub of (exp * exp * loc)
@@ -345,11 +345,16 @@ and rounding_func =
 
 and infer_rel_type =  (rel_cat * formula * formula)
 
+let get_var (e:exp) =
+  match e with
+  | Var (v,_) -> v
+  | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
+
 let get_rel_from_imm_ann p = match p with
   | PostImm f
   | PreImm  f -> f
 
-let extr_spec_var e = match e with 
+let extr_spec_var e = match e with
   | Var(v,_) -> v
   | _ -> x_report_error no_pos "extr_spec_var : did not encounter var" 
 
@@ -879,13 +884,8 @@ let get_var_opt (e:exp) =
   | Var (v,_) -> Some v
   | _ -> None
 
-let get_var (e:exp) =
-  match e with
-  | Var (v,_) -> v
-  | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
-
 let get_var_opt (e:exp) =
-  match e with 
+  match e with
   | Var (v, _) -> Some v
   | _ -> None
 
@@ -1388,6 +1388,8 @@ let full_name_of_spec_var (sv : spec_var) : ident =
   | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
 let is_void_type t = match t with | Void -> true | _ -> false
+
+let filter_primed_vars fv = List.filter (fun v -> is_unprimed v) fv
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
@@ -7935,7 +7937,7 @@ let conv_exp_to_exp_eq aset e : exp =
   | _ -> e
 
 (* check if v is null - to implement *)
-let is_null_var_eq (aset : var_aset) (v:spec_var) : bool = 
+let is_null_var_eq (aset : var_aset) (v:spec_var) : bool =
   let nlst = get_all_const_eq aset v in
   List.exists (is_null_const) nlst
 
@@ -11363,83 +11365,8 @@ let add_eqmap_at_toplevel em e =
   (* let extra_eq_list = List.fold_left  *)
   let new_eq_list = x_add_1 enhance_eq_list eq_list in
   let new_em = add_to_em_set new_eq_list (em,[]) in
-  
-  (*add_to_eqmap eq_list em*)
   new_em
 
-(* let find_eq_all e = build_eqmap_at_toplevel e *)
-(*   let f_f f =  *)
-(*     (match f with *)
-(*      | And _ | AndList _  | BForm _ -> None  *)
-(*      | _ -> Some []) *)
-(*   in *)
-(*   let f_bf bf =  *)
-(*     (match bf with *)
-(*      | (Eq _) ,_ -> Some ([bf])  *)
-(*      | _,_ -> Some ([]) *)
-(*     ) *)
-(*   in *)
-(*   let f_e e = Some ([]) in *)
-(*   (\* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *\) *)
-(*   (\* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *\) *)
-(*   let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in *)
-(*   let eq_list = find_eq e in *)
-(*   (\* ZH:TODO use EMapSV to build an equality map involving variable  *\) *)
-(*   let eqset = EMapSV.mkEmpty in *)
-(*   let eqset = List.fold_left (fun eset exp ->  *)
-(*       let (p_f,bf_ann) = exp in *)
-(*       (match p_f with *)
-(*        | Eq (e1,e2,pos) ->  *)
-(*          (match e1,e2 with *)
-(*           | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2 *)
-(*           | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2) *)
-(*           | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2 *)
-(*           | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2) *)
-(*           | _  -> eset) *)
-(*        | _ -> eset) *)
-(*     ) eqset eq_list in eqset  *)
-(* ;; *)
-
-
-(*
-new substitute to work under negation & quantifiers
-but not implication
-
-(==omega.ml#517==)
-subs_const_var_formula@1
-subs_const_var_formula inp1 : forall(b:1<=(a*b)) & a=1
-subs_const_var_formula@1 EXIT: forall(b:1<=(1*b)) & a=1
-
-(==omega.ml#517==)
-subs_const_var_formula@2
-subs_const_var_formula inp1 : forall(a:1<=(a*b)) & a=1
-subs_const_var_formula@2 EXIT: forall(a:1<=(a*b)) & a=1
-
-(==omega.ml#517==)
-subs_const_var_formula@1
-subs_const_var_formula inp1 : 1<=(a*b) & a=1
-subs_const_var_formula@1 EXIT: 1<=(1*b) & a=1
-
-!!! **cpure.ml#11034:emap[]
-(==omega.ml#632==)
-subs_const_var_formula@2
-subs_const_var_formula inp1 : (not((a=1 & 1<=(a*b))) | 1<=b)
-subs_const_var_formula@2 EXIT: (not((a=1 & 1<=(1*b))) | 1<=b)
-
-Can we use eqmap of LHS for conseq but
-how far can we go?
-
-Fails for implication
-=====================
-!!! **cpure.ml#11034:emap[]
-(==omega.ml#632==)
-subs_const_var_formula@2
-subs_const_var_formula inp1 : (not((a=1 & 1<=b)) | 1<=(a*b))
-subs_const_var_formula@2 EXIT: (not((a=1 & 1<=b)) | 1<=(a*b))
-
-  not(x=3 & LHS) \/ RHS
-  <==>  not(x=3 & LHS) \/ RHS[x->3]
-*)
 let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
   let is_neg f = match f with
     | Not _ -> true
@@ -11447,7 +11374,7 @@ let rec subs_const_var_formula ?(em=None) (f:formula) : formula =
   let extr_neg f = match f with
     | Not (l,_,_) -> l
     | _ -> failwith "subs_const: expects neg here" in
-  let f_f ((sflag,em,nonlinear) as em_arg) e = 
+  let f_f ((sflag,em,nonlinear) as em_arg) e =
     if sflag then
       let lst = split_disjunctions e in
       if List.length lst <= 1 then None
@@ -15661,18 +15588,18 @@ let extr_ptr_eqn (f:formula)  =
   let pr_sv = !print_sv in
   Debug.no_1 "extr_ptr_eqn" pr (pr_pair (pr_list (pr_pair pr_sv pr_sv)) (pr_list pr)) extr_ptr_eqn f
 
-let simplify_eqn (f:formula)  = 
+let simplify_eqn (f:formula)  =
   let rec helper f =
     let f_f f = None in
-    let f_bf bf = 
+    let f_bf bf =
       match bf with
-      | (Eq (Var(v1,_),Var(v2,_),_),_) -> 
+      | (Eq (Var(v1,_),Var(v2,_),_),_) ->
          if eq_spec_var v1 v2 then Some (BConst(true,no_pos),None)
          else Some bf
-      | (Neq (Var(v1,_),Var(v2,_),_),_) -> 
+      | (Neq (Var(v1,_),Var(v2,_),_),_) ->
          if eq_spec_var v1 v2 then Some (BConst(false,no_pos),None)
          else Some bf
-      | _ -> Some bf 
+      | _ -> Some bf
     in
     let f_e e = Some e in
     map_formula f (f_f,f_bf,f_e) in
