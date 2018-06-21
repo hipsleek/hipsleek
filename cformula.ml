@@ -2763,7 +2763,7 @@ and struc_fv ?(vartype=Global_var.var_with_none) (f: struc_formula) : CP.spec_va
       (List.concat (List.map (fun (c1,c2) -> 
            let vars = if vartype # is_heap_only then [] else CP.fv c1 in
            vars@(aux c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
-    | EBase b -> 
+    | EBase b ->
       let impl_vs = if vartype # is_implicit then [] else b.formula_struc_implicit_inst in
       let expl_vs = if vartype # is_explicit then [] else b.formula_struc_explicit_inst in
       let exists_vs = if vartype # is_exists then [] else b.formula_struc_exists in
@@ -3831,9 +3831,10 @@ and apply_one_h ((v1, v2) as s : (CP.spec_var * CP.spec_var)) (f : formula) = ma
       formula_exists_flow = fl;
       formula_exists_label = lbl;
       formula_exists_pos = pos }) ->
-    if List.mem (CP.name_of_spec_var v1) (List.map CP.name_of_spec_var qsv) then f
-    else Exists ({
-        formula_exists_qvars = qsv;
+    (*if List.mem (CP.name_of_spec_var v1) (List.map CP.name_of_spec_var qsv) then f
+    else *)
+      Exists ({
+        formula_exists_qvars = List.filter (fun x -> not (eq_spec_var x v1)) qsv;
         formula_exists_heap = h_apply_one s qh;
         formula_exists_vperm = CVP.subst_one s vp;
         formula_exists_pure = qp;
@@ -3897,10 +3898,10 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                h_formula_view_remaining_branches = ann;
                h_formula_view_pruning_conditions = pcond;
                h_formula_view_annot_arg = annot_args;
-               h_formula_view_pos = pos} as g) -> 
-    ViewNode {g with h_formula_view_node = subst_var s x; 
+               h_formula_view_pos = pos} as g) ->
+    ViewNode {g with h_formula_view_node = subst_var s x;
                      h_formula_view_perm = subst_var_perm () s perm;  (*LDK*)
-                     h_formula_view_imm = apply_one_imm s imm;  
+                     h_formula_view_imm = apply_one_imm s imm;
                      (* WN:subs_pre *)
                      h_formula_view_ho_arguments = 
                        if !pre_subst_flag then ho_svs
@@ -3909,27 +3910,27 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                      h_formula_view_annot_arg = apply_one_annot_arg s annot_args;
                      h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
              }
-  | DataNode ({h_formula_data_node = x; 
-               h_formula_data_name = c; 
+  | DataNode ({h_formula_data_node = x;
+               h_formula_data_name = c;
                h_formula_data_derv = dr;
                h_formula_data_split = split;
-               h_formula_data_imm = imm; 
+               h_formula_data_imm = imm;
                h_formula_data_param_imm = ann_param;
                h_formula_data_perm = perm; (*LDK*)
                h_formula_data_origins = orgs;
                h_formula_data_original = original;
-               h_formula_data_arguments = svs; 
+               h_formula_data_arguments = svs;
                h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
                h_formula_data_label = lbl;
                h_formula_data_remaining_branches = ann;
                h_formula_data_pruning_conditions = pcond;
-               h_formula_data_pos = pos}) -> 
-    DataNode ({h_formula_data_node = subst_var s x; 
-               h_formula_data_name = c; 
+               h_formula_data_pos = pos}) ->
+    DataNode ({h_formula_data_node = subst_var s x;
+               h_formula_data_name = c;
                h_formula_data_derv = dr;
                h_formula_data_split = split;
                h_formula_data_perm = subst_var_perm () s perm; (*LDK*)
-               h_formula_data_imm = apply_one_imm s imm;  
+               h_formula_data_imm = apply_one_imm s imm;
                h_formula_data_param_imm = List.map (apply_one_imm s) ann_param;
                h_formula_data_origins = orgs;
                h_formula_data_original = original;
@@ -3939,20 +3940,22 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
                h_formula_data_remaining_branches = ann;
                h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
                h_formula_data_pos = pos})
-  | ThreadNode ({h_formula_thread_node = x; 
-                 h_formula_thread_resource = rsr; 
-                 h_formula_thread_delayed = dl; 
-                 h_formula_thread_perm = perm;} as t) -> 
-    ThreadNode ({t with h_formula_thread_node = subst_var s x; 
+  | ThreadNode ({h_formula_thread_node = x;
+                 h_formula_thread_resource = rsr;
+                 h_formula_thread_delayed = dl;
+                 h_formula_thread_perm = perm;} as t) ->
+    ThreadNode ({t with h_formula_thread_node = subst_var s x;
                         h_formula_thread_perm = subst_var_perm () s perm; (*LDK*)
                         h_formula_thread_delayed = CP.apply_one s dl;
                         h_formula_thread_resource = apply_one s rsr;})
-  | HRel (r, args, pos) -> HRel (r, List.map (CP.e_apply_one s ) args, pos)
-  | HVar (v,ls) -> HVar (CP.subst_var s v, List.map (CP.subst_var s) ls)
+  | HRel (r, args, pos) ->
+    HRel (r, List.map (CP.e_apply_one s ) args, pos)
+  | HVar (v,ls) ->
+    HVar (CP.subst_var s v, List.map (CP.subst_var s) ls)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
-  | Hole _ | FrmHole _ -> f    
+  | Hole _ | FrmHole _ -> f
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)

@@ -1,7 +1,7 @@
 data node {
  int val;
 }.
-/*
+
 //1
 infer [@sem_eq] y::node<5> & y=x |- x::node<u>.
 print residue.
@@ -69,6 +69,7 @@ infer [@sem_eq] y::node<5> |- x::node<v> & x=y.
 expect Valid.
 print residue.
 
+
 //12
 infer [@sem_eq] y::node<_> & x=y |- exists x: x::node<_>.
 expect Fail.
@@ -108,37 +109,59 @@ print residue.
 // residue: x0=x
 
 //17
+//
+// Early:
+// Late: []
+// Subst: []
+infer [@sem_eq] y::node<x> |- y::node<x>.
+expect Valid.
+print residue.
+// y::node<x> |- (exists x_219: y::node<x_219>@M&x_219=x)
+// residue: emp
+
+//18
 infer [@sem_eq] y::node<x> & x0=0 |- y::node<x0>.
 expect Fail.
 print residue.
 
-//18
+//19
 infer [@sem_eq] x::node<5> * y::node<_> & x=a & y=x+1
     |- exists y0, x0, v0: y0::node<_> * x0::node<v0> & x0=x & y0=x0+1.
 expect Valid.
 print residue.
 
-//19
+//20
 infer [@sem_eq] y::node<c> & x=y & y=z & z=q & b=a |- x::node<v> & x=y.
 expect Valid.
 print residue.
 
-//20
+//21
 infer [@sem_eq] a::node<x> * b::node<y> & x=y |- a::node<x> * b::node<x>.
 expect Valid.
 print residue.
 
-//21
+//22
 infer [@sem_eq] a::node<x> * b::node<y> & x=y |- [x0] a::node<x0> * b::node<x0>.
 expect Valid.
 print residue.
 
-//22
+//23
 infer [@sem_eq] a::node<x> * b::node<y> & x=z |- a::node<x> * b::node<x>.
 expect Fail.
 print residue.
-*/
-//23
+
+//24
 infer [@sem_eq] x::node<3> |- exists y: x::node<z> & y=z.
 expect Valid.
+print residue.
+
+
+//25
+infer [@sem_eq] x::node<3> |- exists y: x::node<y> & y=z.
+expect Valid.
+print residue.
+
+//26
+infer [@sem_eq] x::node<3> |- exists y: y::node<3> & y=z.
+expect Fail.
 print residue.

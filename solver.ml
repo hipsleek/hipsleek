@@ -5825,11 +5825,9 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
                                     | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state_short es))  in
   let f = wrap_proving_kind PK_Contra_Detect_Pure (early_pure_contra_detection_x hec_num prog estate conseq pos msg) in
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res 
-    (fun _ -> f is_folding) estate 
+    (fun _ -> f is_folding) estate
 
-and extract_heap_and_pure_formula (es:CF.entail_state)=
-  (* Extract the heap formula *)
-  let f = es.es_formula in
+and extract_heap_and_pure_formula (f:CF.formula)=
   match f with
     | Base b -> (b.formula_base_heap,b.formula_base_pure)
     | Or _ -> failwith "[extract_heap_and_pure_formula]::Unexpected OR formula in context!"
@@ -5844,7 +5842,22 @@ and are_spec_var_eq mix_f v1 v2 =
   in
   r
 
-and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
+(* Remove Eq exp from a given formula *)
+and remove_eq_formula (f:CF.formula) (s1:CP.spec_var) (s2:CP.spec_var) =
+  let (h,p) = extract_heap_and_pure_formula f in
+  let () = y_binfo_hp (add_str "remove_eq_formula mix_f before" Cprinter.string_of_mix_formula) p in
+  let p = match p with
+    | OnePF cp -> let c,p_list = CP.drop_eq_formula_and_return s1 s2 cp in
+      OnePF c
+    | MemoF _ -> p
+  in
+  let () = y_binfo_hp (add_str "remove_eq_formula mix_f after" Cprinter.string_of_mix_formula) p in
+  match f with
+  | Or c -> f
+  | Base b-> Base {b with formula_base_pure = p;}
+  | Exists e-> Exists {e with formula_exists_pure = p;}
+
+and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
   let rec pairs_of ls =
     match ls with
     | [] -> []
@@ -5857,10 +5870,14 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
     | Ctx es -> es
     | _ -> failwith "[do_sem_eq_x]::Unexpected OCtx as input!"
   in
+
+  let ctx_ref = ref ctx in
+  let rhs_ref = ref conseq in
+
   let es = get_es ctx in
   let lhs_f = es.es_formula in
   let lhs_fv_list = (fv lhs_f) in
-  let (lhs_heap,lhs_pure) = extract_heap_and_pure_formula es in
+  let (lhs_heap,lhs_pure) = extract_heap_and_pure_formula es.es_formula in
   let lhs_h_vars = fv_heap_of lhs_f in
   let lhs_p_vars = mfv lhs_pure in
   let lhs_pairs = pairs_of lhs_p_vars in
@@ -5872,14 +5889,13 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
   let () = y_tinfo_hp (add_str "lhs_fv pairs" string_of_spec_var_pair_list) lhs_pairs in
   let () = y_tinfo_hp (add_str "lhs_fv eq pairs" string_of_spec_var_pair_list) lhs_eq_pairs in
 
-  let rhs_f = conseq in
-  let rhs_pure,_,_ = x_add xpure 3 prog rhs_f in
-  let rhs_h_vars = fv_heap_of rhs_f in
+  let (rhs_heap,rhs_pure) = extract_heap_and_pure_formula conseq in
+  let rhs_h_vars = fv_heap_of conseq in
   let rhs_p_vars = MCP.all_vars rhs_pure in
   let rhs_pairs = pairs_of rhs_p_vars in
   let rhs_eq_pairs = List.filter (fun (v1,v2) -> are_spec_var_eq rhs_pure v1 v2) rhs_pairs in
 
-  let rhs_exists_vars = match rhs_f with
+  let rhs_exists_vars = match conseq with
     | Exists ef -> ef.formula_exists_qvars
     | _ -> []
   in
@@ -5892,82 +5908,106 @@ and do_sem_eq_x prog (ctx:context) (conseq:CF.formula) =
   let () = y_binfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
 
   (* SE3 *)
-  let (ctx, rhs_f) =
-    if List.length rhs_eq_pairs > 0 then
-      let (v1,v2) = List.hd rhs_eq_pairs in
-      let (ctx, rhs_f) =
-        if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
-            ((List.mem v1 lhs_h_vars && not (List.mem v2 lhs_h_vars)) ||
-             (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars)))) then
-          let () = y_binfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
-          let rhs_f = apply_one (v2, v1) rhs_f in
-          do_sem_eq_x prog ctx rhs_f
-        else
-          (ctx, rhs_f)
-      in
-      (ctx, rhs_f)
-    else (ctx, rhs_f)
+  let helper_se3 v1 v2 =
+    if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
+            (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars))
+            && List.mem v1 rhs_h_vars) then
+      (true, v1, v2)
+    else if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
+             (List.mem v1 lhs_h_vars && not (List.mem v2 lhs_h_vars))
+             && List.mem v2 rhs_h_vars) then
+      (true, v2, v1)
+    else (false, v1, v2)
   in
+
+  let cont = ref true in
+  let len = ref (List.length rhs_eq_pairs) in
+  while !cont && (!len > 0) do
+    len := !len -1;
+    let (v1,v2) = List.nth rhs_eq_pairs (!len) in
+    let (b, v1, v2) = helper_se3 v1 v2 in
+    cont := (not b);
+    if b then
+      let () = y_binfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
+      let rhs_f = apply_one_h (v1, v2) !rhs_ref in
+      let rhs_f = remove_eq_formula rhs_f v1 v2 in
+      rhs_ref := rhs_f;
+      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      ctx_ref := ctx;
+      rhs_ref := rhs_f;
+  done;
 
   (* SE2 *)
-  let (ctx, rhs_f) =
-    if List.length rhs_eq_pairs > 0 then
-      let (v1,v2) = List.hd rhs_eq_pairs in
-      let (ctx, rhs_f) =
-        if (List.mem v2 rhs_exists_vars) then
-          let () = y_binfo_hp (add_str "SE2 pairs1" string_of_spec_var_pair) (v1,v2) in
-          let rhs_f = apply_one (v2, v1) rhs_f in
-          do_sem_eq prog ctx rhs_f
-        else if (List.mem v1 rhs_exists_vars) then
-          let () = y_binfo_hp (add_str "SE2 pairs2" string_of_spec_var_pair) (v1,v2) in
-          let rhs_f = apply_one (v1, v2) rhs_f in
-          do_sem_eq_x prog ctx rhs_f
-        else
-          (ctx, rhs_f)
-      in
-      (ctx, rhs_f)
-    else (ctx, rhs_f)
+  let helper_se2 v1 v2 =
+    if (List.mem v1 rhs_exists_vars && List.mem v1 rhs_h_vars) then
+      (true, v1, v2)
+    else if (List.mem v2 rhs_exists_vars && List.mem v2 rhs_h_vars) then
+      (true, v2, v1)
+    else (false, v1, v2)
   in
+
+  let cont = ref true in
+  let len = ref (List.length rhs_eq_pairs) in
+  while !cont && (!len > 0) do
+    len := !len -1;
+    let (v1,v2) = List.nth rhs_eq_pairs (!len) in
+    let (b, v1, v2) = helper_se2 v1 v2 in
+    cont := (not b);
+    if b then
+      let () = y_binfo_hp (add_str "SE2 pairs" string_of_spec_var_pair) (v1,v2) in
+      let rhs_f = apply_one_h (v1, v2) !rhs_ref in
+      let rhs_f = force_elim_exists rhs_f [v1] in
+      rhs_ref := rhs_f;
+      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      ctx_ref := ctx;
+      rhs_ref := rhs_f;
+  done;
 
   (* SE1 *)
-  let (ctx, rhs_f) =
-    if List.length lhs_eq_pairs > 0 then
-      let (v1,v2) = List.hd lhs_eq_pairs in
-      let (ctx, rhs_f) =
-        if (List.mem v1 lhs_h_vars && (List.mem v2 rhs_h_vars || List.mem v2 rhs_p_vars || List.mem v2 lhs_h_vars))
-        || (List.mem v2 lhs_h_vars && (List.mem v1 rhs_h_vars || List.mem v1 rhs_p_vars || List.mem v1 lhs_h_vars)) then
-          let () = y_binfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
-          (* keep the pure formula on lhs for not altering the residue *)
-          let lhs_f = apply_one_h (v2,v1) lhs_f in
-          let rhs_f = apply_one (v2,v1) rhs_f in
-          (* call do_sem_eq recursively *)
-          do_sem_eq_x prog (Ctx ({es with es_formula = lhs_f})) rhs_f
-        else (ctx, rhs_f)
-      in
-      (ctx, rhs_f)
-    else (ctx, rhs_f)
+  let helper_se1 v1 v2 =
+    if (List.mem v1 lhs_h_vars && (List.mem v2 rhs_h_vars || List.mem v2 rhs_p_vars || List.mem v2 lhs_h_vars)) then
+      (true, v2, v1)
+    else if (List.mem v2 lhs_h_vars && (List.mem v1 rhs_h_vars || List.mem v1 rhs_p_vars || List.mem v1 lhs_h_vars)) then
+      (true, v1, v2)
+    else (false, v1, v2)
   in
 
-  let () = x_tinfo_hp (add_str "lhs_res" (Cprinter.string_of_formula)) (get_es ctx).es_formula no_pos in
-  let () = x_tinfo_hp (add_str "rhs_res" (Cprinter.string_of_formula)) rhs_f no_pos in
-  (ctx, rhs_f)
+  let cont = ref true in
+  let len = ref (List.length lhs_eq_pairs) in
+  while !cont && (!len > 0) do
+    len := !len -1;
+    let (v1,v2) = List.nth lhs_eq_pairs (!len) in
+    let (b, v1, v2) = helper_se1 v1 v2 in
+    cont := (not b);
+    if b then
+      let () = y_binfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
+      let lhs_f = apply_one_h (v2,v1) lhs_f in
+      ctx_ref := (Ctx ({es with es_formula = lhs_f}));
+      rhs_ref := apply_one (v2,v1) !rhs_ref;
+      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      ctx_ref := ctx;
+      rhs_ref := rhs_f;
+  done;
 
-and do_sem_eq prog (ctx:context) (conseq:CF.formula) =
-  let pr0 = (fun _ -> "") in
+  let () = x_binfo_hp (add_str "lhs_res" (Cprinter.string_of_formula)) (get_es (!ctx_ref)).es_formula no_pos in
+  let () = x_binfo_hp (add_str "rhs_res" (Cprinter.string_of_formula)) !rhs_ref no_pos in
+  (!ctx_ref, !rhs_ref)
+
+and do_sem_eq (ctx:context) (conseq:CF.formula) =
   let pr1 = Cprinter.string_of_context in
   let pr2 = Cprinter.string_of_formula in
   let pr3 = (fun (ctx, conseq) -> "ctx:" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:" ^ (Cprinter.string_of_formula conseq)) in
-  Debug.no_3 "do_sem_eq" pr0 pr1 pr2 pr3
-    (fun _ _ _ -> do_sem_eq_x prog ctx conseq) prog ctx conseq
+  Debug.no_2 "do_sem_eq" pr1 pr2 pr3
+    (fun _ _ -> do_sem_eq_x ctx conseq) ctx conseq
 
-and check_sem_eq prog (ctx:context) (conseq:CF.formula) =
+and check_sem_eq (ctx:context) (conseq:CF.formula) =
   let is_sem_eq = match ctx with
     | Ctx es -> es.es_infer_obj # is_sem_eq
     | OCtx _ -> false
   in
   if is_sem_eq then
-    let (es, rhs_f) = do_sem_eq prog ctx conseq in
-    (es, rhs_f)
+    let (es, conseq) = do_sem_eq ctx conseq in
+    (es, conseq)
   else (ctx, conseq)
 
 and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) =
@@ -6111,27 +6151,27 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   (* End of process_entail_state *)
   (*********************************************)
 
-  let (ctx, conseq) = check_sem_eq prog ctx conseq in
+  let (ctx, conseq) = check_sem_eq ctx conseq in
 
   (* Call the internal function to do the unfolding and do the checking *)
   (* Check duplication only when there are no permissions*)
   let temp,dup = if !unfold_duplicated_pointers && not (Perm.allow_perm ()) then
-      match ctx with 
+      match ctx with
       | Ctx es -> x_add_1 process_entail_state es
       | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
     else
       (* Dummy result & set dup = false to do the usual checking. *)
-      match ctx with 
+      match ctx with
       | Ctx es -> ((FailCtx (Trivial_Reason (CF.mk_failure_must "Dummy list_context" Globals.sl_error, es.es_trace) ,Ctx (convert_to_must_es es), (mk_cex true)), Prooftracer.TrueConseq) ,false) 
       | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
   in
   let () = Debug.ninfo_hprint (add_str "temp" (pr_pair Cprinter.string_of_list_context pr_none )) temp no_pos in 
   if dup then (* Contains duplicate --> already handled by process_action in process_entail_state *) 
-    temp 
-  else 
+    temp
+  else
     let (ctx, conseq) = (match !Globals.preprocess_disjunctive_consequence with
         | true -> handle_disjunctive_conseq ctx conseq
-        | false -> ctx, conseq 
+        | false -> ctx, conseq
       ) in
     let () = Debug.ninfo_hprint (add_str "[heap_entail_conjunct_lhs_x]:: conseq 2: " Cprinter.string_of_formula) conseq no_pos in
     match conseq with
@@ -15787,9 +15827,9 @@ and apply_left_coercion_complex_x estate coer prog conseq resth1 anode lhs_b rhs
             let rel_kind = CP.RelAssume [lhs_hrel_name; lem_hrel_name] in
             let rel_path = CF.get_es_cond_path new_estate in
             let lhs_f = CF.mkBase_simp anode (MCP.mkMTrue no_pos) in
-            let rhs_f = CF.mkBase_simp head_node_new (MCP.mkMTrue no_pos) in
+            let conseq = CF.mkBase_simp head_node_new (MCP.mkMTrue no_pos) in
             let unk_svl = [lhs_hrel_name; lem_hrel_name] in
-            let rel_assume = CF.mkHprel rel_kind unk_svl [] [] lhs_f None rhs_f rel_path in
+            let rel_assume = CF.mkHprel rel_kind unk_svl [] [] lhs_f None conseq rel_path in
             new_estate.es_infer_hp_rel # push_list_loc x_loc [rel_assume]
         in
         let new_ctx1 = Ctx new_estate in

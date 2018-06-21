@@ -11323,14 +11323,56 @@ let rec drop_formula_and_return (pr_w:p_formula -> formula option) pr_s (f:formu
        (Exists (vs, newf, l, p),df)
     | Not (f,l,p) ->
        let (newf,df) = drop_formula_and_return pr_s pr_w f in
-       (Not (newf,l,p),df)       
+       (Not (newf,l,p),df)
     | Forall (vs,f,l,p) ->
        let (newf,df) = helper f in
        (Forall (vs, newf, l, p),df)
   in
   helper f
 ;;
-            
+
+let match_eq (p:p_formula) (s1:spec_var) (s2:spec_var) =
+  match p with
+  | Eq (e1,e2,p) ->
+    let e1 = exp_to_spec_var e1 in
+    let e2 = exp_to_spec_var e2 in
+    if (eq_spec_var e1 s1 || eq_spec_var e1 s2) && (eq_spec_var e2 s1 || eq_spec_var e2 s2) then
+      Some (mkTrue p)
+    else None
+  | _ -> None
+;;
+
+(* Drop Eq exp of the formula and return the dropped parts. The returned parts are of type p_formula. *)
+let rec drop_eq_formula_and_return (s1:spec_var) (s2:spec_var) (f:formula) =
+  let rec helper f =
+    match f with
+    | BForm ((b,_),_) ->
+      (match match_eq b s1 s2 with
+       | None -> (f,[])
+       | Some nf -> (nf,[b]))
+    | And (f1,f2,p) ->
+      let (newf1,df1) = helper f1 in
+      let (newf2,df2) = helper f2 in
+      (And (newf1,newf2,p),df1@df2)
+    | AndList b ->
+      failwith "drop_formula_and_return: AndList TO BE IMPLEMENTED"
+    | Or (f1,f2,l,p) ->
+      let (newf1,df1) = helper f1 in
+      let (newf2,df2) = helper f2 in
+      (Or (newf1,newf2,l,p),df1@df2)
+    | Exists (vs,f,l,p) ->
+      let (newf,df) = helper f in
+      (Exists (vs, newf, l, p),df)
+    | Not (f,l,p) ->
+      let (newf,df) = drop_eq_formula_and_return s2 s1 f in
+      (Not (newf,l,p),df)
+    | Forall (vs,f,l,p) ->
+      let (newf,df) = helper f in
+      (Forall (vs, newf, l, p),df)
+  in
+  helper f
+;;
+
 let drop_rel_formula_ops =
   let pr_weak b = match b with
     | RelForm (_,_,p) -> Some (mkTrue p)
@@ -11350,7 +11392,7 @@ let drop_rel_formula_ops_with_filter filter =
     | _ -> None in
   (pr_weak,pr_strong)
 ;;
-  
+
 let no_drop_ops =
   let pr x = None in
   (pr,pr)
