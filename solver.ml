@@ -5932,7 +5932,7 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
       let rhs_f = apply_one_h (v1, v2) !rhs_ref in
       let rhs_f = remove_eq_formula rhs_f v1 v2 in
       rhs_ref := rhs_f;
-      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      let ctx, rhs_f = do_sem_eq !ctx_ref (!rhs_ref) in
       ctx_ref := ctx;
       rhs_ref := rhs_f;
   done;
@@ -5958,7 +5958,7 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
       let rhs_f = apply_one_h (v1, v2) !rhs_ref in
       let rhs_f = force_elim_exists rhs_f [v1] in
       rhs_ref := rhs_f;
-      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      let ctx, rhs_f = do_sem_eq !ctx_ref (!rhs_ref) in
       ctx_ref := ctx;
       rhs_ref := rhs_f;
   done;
@@ -5984,7 +5984,7 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
       let lhs_f = apply_one_h (v2,v1) lhs_f in
       ctx_ref := (Ctx ({es with es_formula = lhs_f}));
       rhs_ref := apply_one (v2,v1) !rhs_ref;
-      let ctx, rhs_f = do_sem_eq_x !ctx_ref (!rhs_ref) in
+      let ctx, rhs_f = do_sem_eq !ctx_ref (!rhs_ref) in
       ctx_ref := ctx;
       rhs_ref := rhs_f;
   done;

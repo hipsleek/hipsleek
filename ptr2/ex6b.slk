@@ -1,7 +1,7 @@
 data node {
  int val;
 }.
-
+/*
 //1; SE3
 infer [@sem_eq] y::node<5> |- x::node<v> & x=y.
 expect Valid.
@@ -25,7 +25,7 @@ checkentail_exact y::node<5> |- x::node<v> & x=y & z=y & x=z.
 expect Fail.
 print residue.
 // AndR[ y!=null |-  z=y. ;;;  x!=null |-  x=z.]
-
+*/
 //5; SE2-2
 infer [@sem_eq] y::node<x> & x0=0 |- y::node<x0>.
 expect Fail.
@@ -47,32 +47,32 @@ print residue.
 // a::node<x> * b::node<y> |- (exists x_64: a::node<x_64> * b::node<x> & x=x_64)
 // a::node<x> * b::node<y> |- a::node<x>@M * b::node<x>
 
-//7
+//8
 checkentail_exact a::node<x> * b::node<y> & x=z |- a::node<x> * b::node<x>.
 expect Fail.
 print residue.
-
-//8
+/*
+//9
 infer [@sem_eq] y::node<x>  |- y::node<x>.
 expect Valid.
 print residue.
 // y::node<x> |- exists x_16: y::node<x_16> & x_16=x
 
-//9
+//10
 checkentail_exact y::node<x> |- y::node<x0>.
 expect Valid.
 print residue.
 // y::node<x> |- exists x_16: y::node<x_16> & x_16=x
 
-//10
+//11
 infer [@sem_eq] y::node<x>  |- y::node<x0>.
 expect Valid.
 print residue.
 // y::node<x> |- y::node<x0>
 
-//11
+//12
 checkentail_exact y::node<x> |- y::node<x0>.
 expect Valid.
 print residue.
 // y::node<x> |- y::node<x0>
-
+*/
