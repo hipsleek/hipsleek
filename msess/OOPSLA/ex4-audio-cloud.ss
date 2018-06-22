@@ -101,6 +101,152 @@ file Server_helper(file fd)
  return fd;
 }
 
+/*============ HELPER ============*/
+file Server_helper1(file fd)
+     requires  //c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
+              fd::MEDIA_FILE<vid,aud> *
+              @full[fd,vid,aud,c]
+     ensures  res::EFF_MEDIA_FILE<fd> ;
+{
+ sess s;
+ assume s'::Session<S,H1,H2,c1,c2>;
+
+ Channel c1 = init_H1(fd,s);
+ Channel c2 = init_H2(fd,s);
+
+ media video = fd.vid;
+ media audio = fd.aud;
+
+ dprint;
+
+ par{c1',c2',video',audio'}
+ {
+  case {c1',video'} c1'::Chan{@S %R1}<> * video'::media<> ->
+       dprint;
+       send(c1,video)[media];
+  ||
+  case {c2',audio'} c2'::Chan{@S %R2}<> * audio'::media<> ->
+       send(c2,audio)[media];
+ }
+ dprint; /* attempt to access/modify video/audio/fd.vid/fd.aud would fail */
+
+ par{c1',c2',fd,video,audio}
+ {
+  case {c1',video} c1'::Chan{@S %R3}<> ->
+       video = receive(c1)[media];
+  ||
+  case {c2',audio} c2'::Chan{@S %R4}<> ->
+       audio = receive(c2)[media];
+ }
+ release_H(c1);
+ release_H(c2);
+
+ fd.vid = video;
+ fd.aud = audio;
+
+ return fd;
+}
+
+file Server_helper2(file fd)
+     requires  //c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
+              fd::MEDIA_FILE<vid,aud> *
+              @full[fd,vid,aud,c]
+     ensures  res::EFF_MEDIA_FILE<fd> ;
+{
+ sess s;
+ assume s'::Session<S,H1,H2,c1,c2>;
+
+ Channel c1 = init_H1(fd,s);
+ Channel c2 = init_H2(fd,s);
+
+ media video = fd.vid;
+ media audio = fd.aud;
+
+  send(c1,video)[media];
+  send(c2,audio)[media];
+  video = receive(c1)[media];
+  audio = receive(c2)[media];
+
+ release_H(c1);
+ release_H(c2);
+
+ fd.vid = video;
+ fd.aud = audio;
+
+ return fd;
+}
+
+file Server_helper22(file fd)
+     requires  //c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
+              fd::MEDIA_FILE<vid,aud> *
+              @full[fd,vid,aud,c]
+     ensures  res::EFF_MEDIA_FILE<fd> ;
+{
+ sess s;
+ assume s'::Session<S,H1,H2,c1,c2>;
+
+ Channel c1 = init_H1(fd,s);
+ Channel c2 = init_H2(fd,s);
+
+ media video = fd.vid;
+ media audio = fd.aud;
+
+  send(c2,audio)[media];
+  send(c1,video)[media];
+  video = receive(c1)[media];
+  audio = receive(c2)[media];
+
+ release_H(c1);
+ release_H(c2);
+
+ fd.vid = video;
+ fd.aud = audio;
+
+ return fd;
+}
+
+
+/*============ HELPER ============*/
+file Server_helper3(file fd)
+     requires  //c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
+              fd::MEDIA_FILE<vid,aud> *
+              @full[fd,vid,aud,c]
+     ensures  res::EFF_MEDIA_FILE<fd> ;
+{
+ sess s;
+ assume s'::Session<S,H1,H2,c1,c2>;
+
+ Channel c1 = init_H1(fd,s);
+ Channel c2 = init_H2(fd,s);
+
+ media video = fd.vid;
+ media audio = fd.aud;
+
+ dprint;
+
+ par{c1',c2',video',audio'}
+ {
+  case {c1',video'} c1'::Chan{@S %R1}<> * video'::media<> ->
+       dprint;
+       send(c1,video)[media];
+  ||
+  case {c2',audio'} c2'::Chan{@S %R2}<> * audio'::media<> ->
+       send(c2,audio)[media];
+ }
+ dprint; /* attempt to access/modify video/audio/fd.vid/fd.aud would fail */
+
+ video = receive(c1)[media];
+ audio = receive(c2)[media];
+
+ release_H(c1);
+ release_H(c2);
+
+ fd.vid = video;
+ fd.aud = audio;
+
+ return fd;
+}
+
 /*============ SERVER ============*/
 void Server(Channel c)
      requires  c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
@@ -111,6 +257,25 @@ void Server(Channel c)
  fd = Server_helper(fd);
  send(c,fd)[file];
 }
+
+/*============ SERVER ============*/
+void Server_par(Channel c)
+     requires  c::Chan{@S CLOUD<C,S@peer,c@chan>}<> *
+               @full[fd,c]
+     ensures   false;
+{
+ Channel c0  = receive(c)[Channel];
+ file fd = receive(c)[file];
+ par{c,c0}
+ { case {c1',video} c1'::Chan{@S %R3}<> ->
+       fd = Server_helper(fd);
+       send(c,fd)[file];
+ ||
+  case {c1',video} c1'::Chan{@S %R3}<> ->
+       Server_par(c)
+ }
+}
+
 
 
 /*============ SERVER ============*/

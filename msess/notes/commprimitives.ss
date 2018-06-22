@@ -1,27 +1,12 @@
 /* hip_include 'msess/notes/node.ss' */
 /**
-
 ============================= 1 ============================
 Send/Receive where the means for transmission are channels:
 each two roles/process who are communicating with each other
 do so by using an exclusive channel
-
 */
 
-/**
- int
-*/
-void isend (Channel ccc, int xxx)
-  requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
-  ensures  ccc::Chan{@S %R}<>;
-
-int ireceive (Channel ccc)
-  requires ccc::Chan{@S ?v#%L(v);;%R}<>
-  ensures  ccc::Chan{@S %R}<> * %L(res) ;
-
-/**
- generic
-*/
+/** generic */
 void send [aaa] (Channel ccc, `aaa xxx)
   requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
   ensures  ccc::Chan{@S %R}<>;
@@ -32,7 +17,6 @@ void send [aaa] (Channel ccc, `aaa xxx)
 
 
 /**
-
 ============================= 2 ============================
 OPEN/CLOSE
 */
@@ -76,3 +60,15 @@ void wait(cond w)
 
 /* lemma_norm self::SNOT{%P}<> * %P <- false. */
 /* lemma_norm !(%P) <- self::SNOT{%P}<>       */
+
+
+/**
+ int
+*/
+void isend (Channel ccc, int xxx)
+  requires ccc::Chan{@S !v#%L(v);;%R}<> * %L(xxx)
+  ensures  ccc::Chan{@S %R}<>;
+
+int ireceive (Channel ccc)
+  requires ccc::Chan{@S ?v#%L(v);;%R}<>
+  ensures  ccc::Chan{@S %R}<> * %L(res) ;
