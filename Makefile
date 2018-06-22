@@ -87,6 +87,8 @@ sleek: sleek.native
 ghip: ghip.native
 gsleek: gsleek.native
 
+songbird: songbird/src/prover.cma
+
 xml: xml/xml-light.cma
 
 xml/xml-light.cma:
