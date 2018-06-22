@@ -166,7 +166,7 @@ let collect_unk_constrs (ante: term list) (cons: term list) pos: formula list =
   constrs @ rem_constrs
 
 let gen_templ_constr_farkas (ante_tl: term list list) (cons_t: term list) pos: formula list =
-  let constrs =
+  let constrs = 
     let ante_w_unks, unks, _ = List.fold_left (fun (a, unks, i) tl ->
         let unk_lambda = mkVar (unk_lambda_sv [fresh_int (); i]) pos in
         let tl = List.map (fun t -> { t with term_coe = mkMult t.term_coe unk_lambda pos; }) tl in
