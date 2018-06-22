@@ -52,4 +52,4 @@ omega_modified/code_gen/obj/.library
 omega_modified/omega_lib/obj/.library
 omega_modified/omega_calc/obj/
 /mona.failure
-
+songbird/*
