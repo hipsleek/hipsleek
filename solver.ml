@@ -838,7 +838,7 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
-  let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
+  let unfolded_h = (x_add_1 unfold_heap prog) h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
   let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
@@ -2820,7 +2820,7 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     (* Do compaction for field annotations *)
     (* let () = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
     let conseq = Norm.imm_norm_struc prog conseq true unfold_for_abs_merge  pos in
-    let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+    let unfold_fun fl h aset v uf =  (x_add_1 unfold_heap (prog, None)) h aset v fl uf pos in
     let cl = List.map (fun c -> CF.transform_context (fun es ->
         CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }
       ) c) cl

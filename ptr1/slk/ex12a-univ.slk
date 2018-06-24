@@ -9,6 +9,12 @@
 //print residue.
 
 
+checkentail 1<V<=K & Univ(V) //& K<=3 
+     |- //V=2 & 
+        V<K.
+print residue.
+
+
 //checkentail 1<V<4 |- V<=2.
 //print residue.
 
