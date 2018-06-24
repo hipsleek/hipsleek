@@ -1130,7 +1130,7 @@ let old_main () =
     end
 
 let () =
-  let _ = Songbird.translate true in
+  (* let _ = Songbird.translate true in *)
   if not(!Globals.do_infer_inc) then
     let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()

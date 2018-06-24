@@ -319,8 +319,8 @@ module Make (Token : SleekTokenS)
    (* ("skip", SKIP) *)
   ]
 }
-  
-  
+
+
   let newline = ('\010' | '\013' | "\013\010")
   let blank = [' ' '\009' '\012']
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
