@@ -1,4 +1,4 @@
-/*
+/*  
 # NONE if user wants to get the value
 # SOME (signed hash of the string, string)
 parameter (option (pair signature (pair string nat)));
