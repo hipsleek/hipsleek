@@ -5845,13 +5845,13 @@ and are_spec_var_eq mix_f v1 v2 =
 (* Remove Eq exp from a given formula *)
 and remove_eq_formula (f:CF.formula) (s1:CP.spec_var) (s2:CP.spec_var) =
   let (h,p) = extract_heap_and_pure_formula f in
-  let () = y_binfo_hp (add_str "remove_eq_formula mix_f before" Cprinter.string_of_mix_formula) p in
+  let () = y_tinfo_hp (add_str "remove_eq_formula mix_f before" Cprinter.string_of_mix_formula) p in
   let p = match p with
     | OnePF cp -> let c,p_list = CP.drop_eq_formula_and_return s1 s2 cp in
       OnePF c
     | MemoF _ -> p
   in
-  let () = y_binfo_hp (add_str "remove_eq_formula mix_f after" Cprinter.string_of_mix_formula) p in
+  let () = y_tinfo_hp (add_str "remove_eq_formula mix_f after" Cprinter.string_of_mix_formula) p in
   match f with
   | Or c -> f
   | Base b-> Base {b with formula_base_pure = p;}
@@ -5899,21 +5899,26 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
     | Exists ef -> ef.formula_exists_qvars
     | _ -> []
   in
+  let es_gen_expl_vars = es.es_gen_expl_vars in (* explicit instantiation var *)
+  let es_gen_impl_vars = es.es_gen_impl_vars in (* implicit instantiation var *)
 
-  let () = y_binfo_hp (add_str "rhs_fv_h list" string_of_spec_var_list) rhs_h_vars in
-  let () = y_binfo_hp (add_str "rhs_fv_p list" string_of_spec_var_list) rhs_p_vars in
-  let () = y_binfo_hp (add_str "rhs_exists_vars list" string_of_spec_var_list) rhs_exists_vars in
-  let () = x_binfo_hp (add_str "rhs_pure" (Cprinter.string_of_mix_formula)) rhs_pure no_pos in
-  let () = y_binfo_hp (add_str "rhs_fv pairs" string_of_spec_var_pair_list) rhs_pairs in
-  let () = y_binfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
+  let () = y_tinfo_hp (add_str "rhs_fv_h list" string_of_spec_var_list) rhs_h_vars in
+  let () = y_tinfo_hp (add_str "rhs_fv_p list" string_of_spec_var_list) rhs_p_vars in
+  let () = y_tinfo_hp (add_str "rhs_exists_vars list" string_of_spec_var_list) rhs_exists_vars in
+  let () = x_tinfo_hp (add_str "rhs_pure" (Cprinter.string_of_mix_formula)) rhs_pure no_pos in
+  let () = y_tinfo_hp (add_str "rhs_fv pairs" string_of_spec_var_pair_list) rhs_pairs in
+  let () = y_tinfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
+
+  let ext_vars = CP.remove_dups_svl (rhs_exists_vars@es_gen_impl_vars@es_gen_expl_vars) in
+  let () = y_tinfo_hp (add_str "ext_vars" string_of_spec_var_list) ext_vars in
 
   (* SE3 *)
   let helper_se3 v1 v2 =
-    if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
+    if ((not (List.mem v1 ext_vars)) && (not (List.mem v2 ext_vars)) &&
             (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars))
             && List.mem v1 rhs_h_vars) then
       (true, v1, v2)
-    else if ((not (List.mem v1 rhs_exists_vars)) && (not (List.mem v2 rhs_exists_vars)) &&
+    else if ((not (List.mem v1 ext_vars)) && (not (List.mem v2 ext_vars)) &&
              (List.mem v1 lhs_h_vars && not (List.mem v2 lhs_h_vars))
              && List.mem v2 rhs_h_vars) then
       (true, v2, v1)
@@ -5928,35 +5933,9 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
     let (b, v1, v2) = helper_se3 v1 v2 in
     cont := (not b);
     if b then
-      let () = y_binfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
-      let rhs_f = apply_one_h (v1, v2) !rhs_ref in
+      let () = y_tinfo_hp (add_str "SE3 pairs" string_of_spec_var_pair) (v1,v2) in
+      let rhs_f = apply_one (v1, v2) !rhs_ref in
       let rhs_f = remove_eq_formula rhs_f v1 v2 in
-      rhs_ref := rhs_f;
-      let ctx, rhs_f = do_sem_eq !ctx_ref (!rhs_ref) in
-      ctx_ref := ctx;
-      rhs_ref := rhs_f;
-  done;
-
-  (* SE2 *)
-  let helper_se2 v1 v2 =
-    if (List.mem v1 rhs_exists_vars && List.mem v1 rhs_h_vars) then
-      (true, v1, v2)
-    else if (List.mem v2 rhs_exists_vars && List.mem v2 rhs_h_vars) then
-      (true, v2, v1)
-    else (false, v1, v2)
-  in
-
-  let cont = ref true in
-  let len = ref (List.length rhs_eq_pairs) in
-  while !cont && (!len > 0) do
-    len := !len -1;
-    let (v1,v2) = List.nth rhs_eq_pairs (!len) in
-    let (b, v1, v2) = helper_se2 v1 v2 in
-    cont := (not b);
-    if b then
-      let () = y_binfo_hp (add_str "SE2 pairs" string_of_spec_var_pair) (v1,v2) in
-      let rhs_f = apply_one_h (v1, v2) !rhs_ref in
-      let rhs_f = force_elim_exists rhs_f [v1] in
       rhs_ref := rhs_f;
       let ctx, rhs_f = do_sem_eq !ctx_ref (!rhs_ref) in
       ctx_ref := ctx;
@@ -5980,7 +5959,7 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
     let (b, v1, v2) = helper_se1 v1 v2 in
     cont := (not b);
     if b then
-      let () = y_binfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
+      let () = y_tinfo_hp (add_str "SE1 pairs" string_of_spec_var_pair) (v1,v2) in
       let lhs_f = apply_one_h (v2,v1) lhs_f in
       ctx_ref := (Ctx ({es with es_formula = lhs_f}));
       rhs_ref := apply_one (v2,v1) !rhs_ref;
@@ -5989,8 +5968,6 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
       rhs_ref := rhs_f;
   done;
 
-  let () = x_binfo_hp (add_str "lhs_res" (Cprinter.string_of_formula)) (get_es (!ctx_ref)).es_formula no_pos in
-  let () = x_binfo_hp (add_str "rhs_res" (Cprinter.string_of_formula)) !rhs_ref no_pos in
   (!ctx_ref, !rhs_ref)
 
 and do_sem_eq (ctx:context) (conseq:CF.formula) =

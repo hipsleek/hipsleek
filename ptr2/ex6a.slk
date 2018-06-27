@@ -155,13 +155,17 @@ infer [@sem_eq] x::node<3> |- exists y: x::node<z> & y=z.
 expect Valid.
 print residue.
 
-
 //25
-infer [@sem_eq] x::node<3> |- exists y: x::node<y> & y=z.
-expect Valid.
+checkentail_exact x::node<3> |- exists y: x::node<y> & y=z.
+expect Fail.
 print residue.
 
 //26
 infer [@sem_eq] x::node<3> |- exists y: y::node<3> & y=z.
 expect Fail.
+print residue.
+
+//27
+infer [@sem_eq] x::node<3> |- exists y: y::node<3> & y=x.
+expect Valid.
 print residue.
