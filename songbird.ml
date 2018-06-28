@@ -1,7 +1,7 @@
 #include "xdebug.cppo"
 
-(* module SBCastLib = Libsongbird.Cast *)
-module SBLGlobals = Libsongbird.Globals
+module SBCast = Libsongbird.Cast
+module SBGlobals = Libsongbird.Globals
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
