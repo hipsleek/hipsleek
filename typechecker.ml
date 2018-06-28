@@ -2760,16 +2760,15 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         (* let pure_failed_lhs = Cpure.simplify_eqn pure_failed_lhs in *)
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
-        let sb_lhs = Songbird.translate_pure_formula pure_lhs in
-        let sb_rhs = Songbird.translate_pure_formula pure_rhs in
-        (* let _ = Songbird.infer_model sb_lhs sb_rhs in *)
+
+        let sb_lhs = Songbirdfront.translate_pure_formula pure_lhs in
+        let sb_rhs = Songbirdfront.translate_pure_formula pure_rhs in
         let () = x_binfo_hp (add_str "translated sb_lhs: " Libsongbird.Cast.pr_pure_form)
             sb_lhs pos in
         let () = x_binfo_hp (add_str "translated sb_rhs: " Libsongbird.Cast.pr_pure_form)
             sb_rhs pos in
-        (* let _ = Songbird.create_templ_prog sb_lhs sb_rhs in *)
-        (* let () = x_binfo_hp (add_str "sb_lhs model: " SBCast.pr_pure_form)
-         *     lhs_tmpl pos in *)
+
+        let _ = Songbirdfront.create_templ_prog sb_lhs sb_rhs in
 
         (* let unprimed_vars = Cpure.fv pure_lhs in
          * let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in *)
