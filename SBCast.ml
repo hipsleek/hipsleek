@@ -17,6 +17,7 @@ type func =
   | Max
   | Min
   | Abs
+  | FuncName of string
 
 (** each linear arithmetic term is stored as
     a list of variables with their coefficients and the integer part *)
@@ -165,10 +166,21 @@ type rel_body_template = {
   templ_dummy : bool;
 }
 
+type func_body_template = {
+  func_templ_unk_coes : unk_coes_rel;
+  func_templ_body : exp;
+  func_templ_dummy : bool;
+}
+
 type rel_body_form =
   | RbForm of pure_form
   | RbTemplate of rel_body_template
   | RbUnknown
+
+type func_body_form =
+  | FuncUnknown
+  | FuncForm of exp
+  | FuncTemplate of func_body_template
 
 type rel_defn = {
   rel_name : string;
@@ -176,6 +188,15 @@ type rel_defn = {
   rel_body : rel_body_form;
   rel_pos : pos;
 }
+
+type func_defn = {
+  func_name: string;
+  func_params: var list;
+  func_body: func_body_form;
+  func_pos: pos;
+}
+
+type func_defns = func_defn list
 
 type rel_defns = rel_defn list
 
@@ -253,12 +274,20 @@ and infer_rels = {
   ifr_rels : pure_entail list;
 }
 
+and result =
+  | ResMvl of mvlogic
+  | ResBool of bool
+  | ResUnkn
+
 and command =
-  | CheckEntail of (entailment * status)
+  | CheckEntail of entailment
   | CheckSat of (formula * sat_solver)
   | InferLemma of (entailment * lemma_typ list)
   | InferEntail of entailment
+  | InferVar of entailment * (var list)
   | InferRels of infer_rels
+  | InferFuncs of infer_rels
+  | Expect of result
   | Process of formula
   | ProcessTwo of (formula * formula)
   | CmdUnkn
@@ -268,9 +297,15 @@ and command_stats = {
   cmd_time : float option;
 }
 
+and unit_test = {
+  mutable unt_cmd : command;
+  mutable unt_res : result;
+}
+
 and program = {
   prog_filename : string;
   prog_rels : rel_defn list;
+  prog_funcs: func_defn list;
   prog_datas : data_defn list;
   prog_views : view_defn list;
   prog_lemmas : lemma list;
@@ -311,6 +346,7 @@ let pr_func = function
   | Max -> "max"
   | Min -> "min"
   | Abs -> "abs"
+  | FuncName name -> name
 
 let pr_var ?(typ=false) (v : var) =
   let vname, vtyp = v in
@@ -514,9 +550,22 @@ let pr_rel_defn ?(typ=false) ?(paren=false) (rel: rel_defn) =
     | RbForm f -> pr_pure_form f in
   header ^ "(" ^ params ^ ") := " ^ body
 
+let pr_func_defn ?(typ=false) ?(paren=false) (func: func_defn) =
+  let header = func.func_name in
+  let params = pr_args (pr_var ~typ:typ) func.func_params in
+  let body = match func.func_body with
+    | FuncUnknown -> "FuncUnknown"
+    | FuncForm exp -> pr_exp exp
+    | FuncTemplate tmpl -> "Template (" ^ (pr_exp tmpl.func_templ_body) ^ ")"
+  in
+  header ^ "(" ^ params ^ ") := " ^ body
+
 let pr_rd = pr_rel_defn ~typ:false ~paren:false
+let pr_fd = pr_func_defn ~typ:false ~paren:false
 let pr_rds = pr_items ~bullet:"  #" pr_rd
+let pr_fds = pr_items ~bullet:"  #" pr_fd
 let pr_rdsl = pr_list ~sep:"; " pr_rd
+let pr_fdsl = pr_list ~sep:"; " pr_fd
 let pr_rdss = pr_items ~bullet:"  +++" pr_rds
 
 let pr_data_defn (data: data_defn) =
@@ -593,19 +642,31 @@ let pr_pred_defn = function
   | PredView vd -> pr_view_defn vd
   | PredRel rl -> pr_rel_defn rl
 
+let pr_result res = match res with
+  | ResUnkn -> "Unknown Result"
+  | ResBool b -> pr_bool b
+  | ResMvl mvl -> pr_mvl mvl
+
 let pr_cmd ?(typ=false) ?(paren=false) cmd =
   let pr_f = pr_formula ~typ:typ ~paren:paren in
   let pr_ent = pr_entailment ~typ:typ ~paren:paren in
   match cmd with
-  | CheckEntail (ent, _) -> "CheckEntail " ^ (pr_ent ent)
+  | CheckEntail ent -> "CheckEntail " ^ (pr_ent ent)
   | InferLemma (ent, lmts) ->
     "InferLemma" ^ (pr_list_sbrace pr_lmt lmts) ^ (pr_ent ent)
+  | InferVar (ent, var_list) ->
+    let pr_var_list = pr_list pr_var in
+    "InferVar[" ^ (pr_var_list var_list) ^ "] " ^ (pr_ent ent) ^ ";"
   | CheckSat (f, sv) -> "CheckSat[" ^ (pr_ssv sv) ^ "] " ^ (pr_f f)
   | InferEntail ent ->
     "InferEntail [" ^ (pr_prm ent.ent_mode) ^ "]: " ^ (pr_ent ent)
   | InferRels ifr ->
     "InferRels[" ^ (pr_ifr ifr.ifr_typ) ^ "]\n"
     ^ (pr_items ~bullet:"  #" pr_pure_entail ifr.ifr_rels)
+  | InferFuncs iff ->
+    "InferFuncs[" ^ (pr_ifr iff.ifr_typ) ^ "]\n"
+    ^ (pr_items ~bullet:"  #" pr_pure_entail iff.ifr_rels)
+  | Expect res -> "Expect " ^ (pr_result res)
   | Process f -> "Process " ^ (pr_f f)
   | ProcessTwo (f1, f2) ->
     "ProcessTwo " ^ (pr_f f1) ^ " ~|~ " ^ (pr_f f2)
@@ -619,6 +680,9 @@ let pr_program ?(typ=false) ?(paren=false) prog =
   let rel_str =
     prog.prog_rels |> List.fold_left (fun acc rel ->
       acc ^ "\n\n" ^ (pr_rel_defn ~typ:typ rel)) "" in
+  let func_str =
+    prog.prog_funcs |> List.fold_left (fun acc rel ->
+      acc ^ "\n\n" ^ (pr_func_defn ~typ:typ rel)) "" in
   let view_str =
     prog.prog_views |> List.fold_left (fun acc vdefn ->
       acc ^ "\n\n" ^ (pr_view_defn ~typ:typ vdefn)) "" in
@@ -631,6 +695,7 @@ let pr_program ?(typ=false) ?(paren=false) prog =
   (* prog *)
   let prog_str = data_str in
   let prog_str = (String.trim prog_str) ^ "\n\n" ^ rel_str in
+  let prog_str = (String.trim prog_str) ^ "\n\n" ^ func_str in
   let prog_str = (String.trim prog_str) ^ "\n\n" ^ view_str in
   let prog_str = (String.trim prog_str) ^ "\n\n" ^ lemma_str in
   let prog_str = (String.trim prog_str) ^ "\n\n" ^ command_str in
@@ -972,9 +1037,6 @@ and fv_x = function
 
 let fv_fs fs = fs |> List.map fv |> List.concat |> dedup_vs
 
-let fv_ent ent =
-  ((fv ent.ent_lhs) @ (fv ent.ent_rhs)) |> dedup_vs
-
 let fhv f =
   let rec aux g = match g with
     | FBase (hg, pg, p) -> (fv_hf hg) |> dedup_vs
@@ -1055,11 +1117,14 @@ let av_vdef vd =
 let av_ent e = ((av e.ent_lhs) @ (av e.ent_rhs)) |> dedup_vs
 
 let av_cmd = function
-  | CheckEntail (e, _) -> av_ent e
+  | CheckEntail e -> av_ent e
   | CheckSat (f, _) -> av f
   | InferLemma (e, _) -> av_ent e
   | InferEntail e -> av_ent e
+  | InferVar (e, var_list) -> error "av_cmd InferVar: handle later"
   | InferRels _ -> error "av_cmd: handle later"
+  | InferFuncs _ -> error "av_cmd: handle later"
+  | Expect _ -> []
   | Process f -> av f
   | ProcessTwo (f1, f2) -> ((av f1) @ (av f2)) |> dedup_vs
   | CmdUnkn -> []
@@ -1194,6 +1259,8 @@ let typ_of_exp = function
   | Func (Max, _, _) -> TInt
   | Func (Min, _, _) -> TInt
   | Func (Abs, _, _) -> TInt
+  | Func (_, _, _) -> TInt      (* TODO: type of function call? *)
+
 
 let typs_of_rdefn rdefn =
   match rdefn.rel_body with
@@ -1497,6 +1564,11 @@ let is_unk_rdefn rel =
   | RbUnknown -> true
   | _ -> false
 
+let is_unk_fdefn func =
+  match func.func_body with
+  | FuncUnknown -> true
+  | _ -> false
+
 let is_known_rdefn rel =
   match rel.rel_body with
   | RbForm _ -> true
@@ -1505,6 +1577,11 @@ let is_known_rdefn rel =
 let is_template_rdefn rel =
   match rel.rel_body with
   | RbTemplate _ -> true
+  | _ -> false
+
+let is_template_fdefn func =
+  match func.func_body with
+  | FuncTemplate _ -> true
   | _ -> false
 
 let get_rel_body rel =
@@ -2078,9 +2155,14 @@ let mk_view_defn name params body pos =
     view_emid_cases = [];
     view_pos = pos; }
 
+let mk_unknown_unit_test () =
+  { unt_cmd = CmdUnkn;
+    unt_res = ResUnkn; }
+
 let mk_program filename =
   { prog_filename = filename;
     prog_rels = [];
+    prog_funcs = [];
     prog_datas = [];
     prog_views = [];
     prog_lemmas = [];
@@ -2123,6 +2205,13 @@ let rec subst_exp ssts exp = match exp with
     let ne2 = e2 |> subst_exp ssts in
     mk_bin_op op ne1 ne2 ~pos:p
   | Func (f, es, p) -> Func (f, List.map (subst_exp ssts) es, p)
+
+
+(* let subst_fdefn_exp ssts exp = match exp with
+ *   | Null _ -> exp
+ *   | Var (v,p) ->
+ *     exp
+ *   | _ -> exp *)
 
 let subst_exps ssts exps = List.map (subst_exp ssts) exps
 
@@ -2647,6 +2736,23 @@ let collect_rform_pf (pf: pure_form) : rel_form list =
     | PNeg (g, _) | PForall (_, g, _) | PExists (_, g, _) -> collect g in
   collect pf
 
+let collect_fform_pf (pf: pure_form)  =
+  let collect_exp exp = match exp with
+    | Func (func, exp_list, loc ) ->
+      begin
+        match func with
+        | FuncName name -> [(name, exp_list, loc)]
+        | _ -> []
+      end
+    | _ -> []
+  in
+  let rec collect = function
+    | BConst _ | PRel _ -> []
+    | BinRel (_, exp1, exp2, _) -> (collect_exp exp1) @ (collect_exp exp2)
+    | PDisj (gs, _) | PConj (gs, _) -> gs |> List.map collect |> List.concat
+    | PNeg (g, _) | PForall (_, g, _) | PExists (_, g, _) -> collect g in
+  collect pf
+
 let collect_rform (f: formula) : rel_form list =
   let rec collect = function
     | FBase (_, g, _) -> collect_rform_pf g
@@ -2664,6 +2770,9 @@ let collect_rform_ent (ent: entailment) : rel_form list =
 
 let collect_rform_pent (pent: pure_entail) : rel_form list =
   (collect_rform_pf pent.pent_lhs) @ (collect_rform_pf pent.pent_rhs)
+
+let collect_fform_pent (pent: pure_entail) =
+  (collect_fform_pf pent.pent_lhs) @ (collect_fform_pf pent.pent_rhs)
 
 let collect_typ_pf pf =
   pf |> fv_pf |>
@@ -2783,11 +2892,21 @@ let find_rel_defn rels rname : rel_defn =
   try List.find (fun x -> eq_s x.rel_name rname) rels
   with Not_found -> failwith ("find_rel_defn: not found: " ^ rname)
 
+let find_func_defn funcs fname : func_defn =
+  try List.find (fun x -> eq_s x.func_name fname) funcs
+  with Not_found -> failwith ("find_rel_defn: not found: " ^ fname)
+
 let remove_rel_defn rels rname =
   List.filter (fun rel -> not (eq_s rel.rel_name rname)) rels
 
 let update_rel_defn rels rdefn =
   (remove_rel_defn rels rdefn.rel_name) @ [rdefn]
+
+let remove_func_defn funcs fname =
+  List.filter (fun func -> not (eq_s func.func_name fname)) funcs
+
+let update_func_defn funcs fdefn =
+  (remove_func_defn funcs fdefn.func_name) @ [fdefn]
 
 let insert_prog_rdefns prog rdefns =
   let dup_names =
@@ -2805,6 +2924,11 @@ let find_rel_defn_pf rels (pf: pure_form): rel_defn list =
   List.map (fun rel -> rel.prel_name) |> dedup_ss |>
   List.map (fun rname -> find_rel_defn rels rname)
 
+let find_func_defn_pf funcs (pf: pure_form): func_defn list =
+  pf |> collect_fform_pf |>
+  List.map (fun (name, _, _) -> name) |> dedup_ss |>
+  List.map (fun fname -> find_func_defn funcs fname)
+
 let find_rel_defn_pf rels (pf: pure_form): rel_defn list =
   DB.trace_1 "find_rel_defn_pf" (pr_pf, pr_list pr_rel_defn) pf
     (fun () -> find_rel_defn_pf rels pf)
@@ -2814,15 +2938,32 @@ let find_rel_defn_pfs rels (pfs: pure_form list): rel_defn list =
   List.map (fun rel -> rel.prel_name) |> dedup_ss |>
   List.map (fun rname -> find_rel_defn rels rname)
 
+let find_func_defn_pfs funcs (pfs: pure_form list): func_defn list =
+  let fforms = List.map (collect_fform_pf) pfs in
+  let fformss = List.concat fforms in
+  let fform_names = List.map (fun (a, _, _) -> a) fformss in
+  let fform_names = dedup_ss fform_names in
+  List.map (fun fname -> find_func_defn funcs fname) fform_names
+
 let find_rel_defn_pents rels (pents: pure_entail list): rel_defn list =
   pents |>
   List.map (fun p -> [p.pent_lhs; p.pent_rhs]) |> List.concat |>
   find_rel_defn_pfs rels
 
+let find_func_defn_pents funcs (pents: pure_entail list): func_defn list =
+  let ll = List.map (fun p -> [p.pent_lhs; p.pent_rhs]) pents in
+  let lll = List.concat ll in
+  find_func_defn_pfs funcs lll
+
 let find_template_rel_names rels (pents: pure_entail list): string list =
   pents |> find_rel_defn_pents rels |>
   List.filter (fun rdefn -> is_template_rdefn rdefn) |>
   List.map (fun rdefn -> rdefn.rel_name) |> dedup_ss
+
+let find_template_func_names funcs (pents: pure_entail list) =
+  pents |> find_func_defn_pents funcs |>
+  List.map (fun rdefn -> rdefn.func_name) |> dedup_ss
+
 
 let has_unk_rform_pf rels pf =
   find_rel_defn_pf rels pf |>
@@ -2878,6 +3019,49 @@ and unfold_rform_pf_x rdefns pf : pure_form =
     | PForall (vs, g, p) -> PForall (vs, unfold g, p) in
   unfold pf
 
+let unfold_fform_fdefn fdefns (func_name, exp_list, pos) =
+  try
+    let fdefn = find_func_defn fdefns func_name in
+    let fd_params = fdefn.func_params in
+    let ssts = List.combine fd_params exp_list in
+    match fdefn.func_body with
+    | FuncTemplate tmpl ->
+      subst_exp ssts tmpl.func_templ_body
+    | FuncUnknown -> Func (FuncName func_name, exp_list, pos)
+    | FuncForm f -> subst_exp ssts f
+  with _ -> failwith ("unfold_fform_fdefn: fail to unfold")
+
+let rec unfold_fform_exp fdefns exp = match exp with
+  | Null _
+  | Var _
+  | IConst _
+  | LTerm _ -> exp
+  | BinOp (bin_op, exp1, exp2, pos) ->
+    BinOp(bin_op, unfold_fform_exp fdefns exp1, unfold_fform_exp fdefns exp2, pos)
+  | Func (func, exp_list, pos) ->
+    begin
+      match func with
+      | Max
+      | Min
+      | Abs -> exp
+      | FuncName name -> unfold_fform_fdefn fdefns (name, exp_list, pos)
+    end
+
+let unfold_fform_pf fdefns pf =
+  let () = DB.nhprint "fdefns 3089: " (pr_list pr_func_defn) fdefns in
+  let rec unfold g = match g with
+    | BConst _
+    | PRel _ -> g
+    | BinRel (bin_rel, exp1, exp2, pos) ->
+      BinRel (bin_rel, unfold_fform_exp fdefns exp1,
+              unfold_fform_exp fdefns exp2, pos)
+    | PNeg (g, p) -> PNeg (unfold g, p)
+    | PConj (gs, p) -> PConj (List.map unfold gs, p)
+    | PDisj (gs, p) -> PDisj (List.map unfold gs, p)
+    | PExists (vs, g, p) -> PExists (vs, unfold g, p)
+    | PForall (vs, g, p) -> PForall (vs, unfold g, p) in
+  unfold pf
+
 (** unfold relation formula *)
 let rec unfold_rform rdefns (f: formula) : formula =
   SBDebug.trace_1 "unfold_rform" (pr_f, pr_f) f
@@ -2902,6 +3086,18 @@ let replace_prog_rdefns ?(norm_unk=false) prog rdefns =
       | RbUnknown -> {rd with rel_body = RbForm (mk_true no_pos)}
       | _ -> rd) in
     {prog with prog_rels = rdefns}
+
+let replace_prog_fdefns prog fdefns =
+  let ordefns = prog.prog_funcs |> List.filter (fun fd ->
+    List.for_all (fun re -> not (eq_s fd.func_name re.func_name)) fdefns) in
+  {prog with prog_funcs = ordefns @ fdefns}
+
+  (* let fdefns = prog.prog_funcs in
+   * let new_fdefns = List.map (fun fd ->
+   *   match fd.func_body with
+   *   | FuncUnknown -> {fd with func_body = FuncForm (mk_null no_pos)}
+   *   | _ -> fd) fdefns
+   * in {prog with prog_funcs = new_fdefns} *)
 
 (** unfold view formula *)
 let rec unfold_vform vdefns (vf: view_form) : view_defn_case list =
@@ -3427,3 +3623,23 @@ let create_formula_name f  =
     | HView vf -> vf.viewf_name) |>
   List.sorti String.compare |>
   String.concat "_"
+
+let get_base_f f = match f with
+  | FBase base -> base
+  | _ -> error "not handled"
+
+let get_pure_form (heap_form , pure_form ,  pos) = pure_form
+
+(* translate ent a |- b to the form !a | b *)
+let ent_to_formula ent =
+  let ent_lhs = ent.ent_lhs in
+  let ent_rhs = ent.ent_rhs in
+  let ent_lhs_base = get_base_f ent_lhs in
+  let ent_rhs_base = get_base_f ent_rhs in
+  let ent_lhs_pure = get_pure_form ent_lhs_base in
+  let ent_rhs_pure = get_pure_form ent_rhs_base in
+  let neq_ent_lhs_pure = mk_pneg ent_lhs_pure in
+  let pure_res = mk_pdisj [neq_ent_lhs_pure; ent_rhs_pure] in
+  mk_fpure pure_res
+
+

@@ -19,6 +19,10 @@ let pr_rels rs = match rs with
   | [] -> "[]"
   | _ -> "\n" ^ (pr_items ~bullet:"  # " pr_rel_defn rs)
 
+let pr_funcs fs = match fs with
+  | [] -> "[]"
+  | _ -> "\n" ^ (pr_items ~bullet:"  # " pr_func_defn fs)
+
 
 (*************************************************)
 (*** Internal data structure for Farkas' lemma ***)
@@ -318,6 +322,62 @@ type fent = {
 let pr_fent (fe: fent) =
   (pr_fform fe.fent_lhs) ^ " --> " ^ (pr_fterm fe.fent_rhs)
 
+(* make farkas entailment in case of function inference *)
+let mk_fent_funcs prog (pe: pure_entail) : fent list =
+  let ante = pe.pent_lhs in
+  let cons = pe.pent_rhs in
+  let vs = [ante; cons] |> List.map fv_pf |>
+           List.concat |> dedup_vs in
+  let f_unk_coes =
+    (TL.get_unk_coes_pf_funcs prog ante) @ (TL.get_unk_coes_pf_funcs prog cons) |>
+    TL.dedup_unk_coes_rels in
+  let ante = ante |> unfold_fform_pf prog.prog_funcs in
+  let cons = cons |> unfold_fform_pf prog.prog_funcs in
+  DB.nhprint "ante: " (pr_pf) ante;
+  DB.nhprint "conseq: " (pr_pf) cons;
+  let sante =
+     ante |> NO.simplify_all_pf |>
+    norm_p |> NO.transform_dnf in
+  let scons =
+    cons |> NO.simplify_all_pf |>
+    norm_p |> NO.transform_cnf in
+  let ante_disj = match sante with
+    | PDisj (fs, _) -> fs
+    | _ -> [sante] in
+  let () = DB.nhprint "ante_disj: \n" (pr_items ~bullet:"  #" pr_pf) ante_disj in
+  let cons_conj = match scons with
+    | PConj (fs, _) -> fs
+    | _ -> [scons] in
+  List.map (fun a ->
+    List.map (fun c ->
+      let fa = fterm_of_pf vs a in
+      let fa, fc =
+        match c with
+        | PDisj (cs, _) -> (
+            match cs with
+            | [] -> fa, []
+            | f::[] -> fa, fterm_of_pf vs f
+            | f::fs ->
+              let neg_fs = List.map (fun f ->
+                (* !(e>=0) <-> -e-1>=0 *)
+                let ft = fterm_of_pf vs f in
+                let m_one = [term_of_int (-1)] in
+                List.map (fun t ->
+                  mk_add_fterm (mk_mul_fterm t m_one) m_one) ft
+              ) fs |> List.concat in
+              fa @ neg_fs, fterm_of_pf vs f)
+        | _ -> fa, fterm_of_pf vs c
+      in
+      List.map (fun tc ->
+        { fent_id = pe.pent_id;
+          fent_vars = vs;
+          fent_unk_coes = f_unk_coes;
+          fent_lhs = fa;
+          fent_rhs = tc;
+          fent_pos = pe.pent_pos; }) fc
+    ) cons_conj
+  ) ante_disj |> List.concat |> List.concat
+
 (* Assume that pe is already a Horn-clause *)
 let mk_fent prog (pe: pure_entail): fent list =
   let ante = pe.pent_lhs in
@@ -478,6 +538,9 @@ let gen_farkas_constr_pfent (fe: pfent): pure_form list * var list =
   constrs, lambda_vs @ [lambda_pos_v]
 
 let is_feasible_model prog (pents: pure_entail list) (model: model): bool =
+  let () = DB.nhprint "prog: " pr_program prog in
+  let () = DB.nhprint "pents: " pr_pents pents in
+  let () = DB.nhprint "model: " pr_model model in
   let ssts = model in
   let unfold_and_subst prog ssts f =
     unfold_rform_pf prog.prog_rels f |>
@@ -490,6 +553,28 @@ let is_feasible_model prog (pents: pure_entail list) (model: model): bool =
     List.exists (fun pe ->
       let ante = unfold_and_subst prog ssts pe.pent_lhs in
       FP.check_sat ante != MvlFalse) non_contra_pents
+
+(* Checking return model is feasible or not
+   Function inference case
+*)
+let is_feasible_model_func prog (pents: pure_entail list) (model: model): bool =
+  let () = DB.nhprint "prog: " pr_program prog in
+  let () = DB.nhprint "pents: " pr_pents pents in
+  let () = DB.nhprint "model: " pr_model model in
+  let ssts = model in
+  let unfold_and_subst prog ssts f =
+    unfold_fform_pf prog.prog_funcs f |>
+    subst_pf ssts
+  in
+  (* let non_contra_pents = List.filter (fun pe ->
+   *   FP.check_sat (mk_pconj [pe.pent_lhs; pe.pent_rhs]) != MvlFalse) pents in
+   * if non_contra_pents = [] then true
+   * else
+   *   let () = DB.hprint "non-contra pents: " pr_pents non_contra_pents in *)
+  List.exists (fun pe ->
+    let ante = unfold_and_subst prog ssts pe.pent_lhs in
+    (* FP.check_sat ante != MvlFalse) non_contra_pents *)
+    FP.check_sat ante != MvlFalse) pents
 
 let is_feasible_rel_defn (rel: rel_defn) (model: model): bool =
   let body =
@@ -528,7 +613,7 @@ let rec find_feasible_model f_sat prog pents constrs =
     | _ ->
       let () = DB.npprint "AFTER FARKAS: NOT SAT" in
       is_sat, model
-  with _ ->
+  with e ->
     let () = DB.npprint "AFTER FARKAS: EXCEPTION" in
     MvlUnkn, []
 
@@ -540,11 +625,13 @@ let rec find_feasible_model_full ?(iter=0) tk coefs prog pents constrs =
     | MvlTrue ->
       let rel_defns = find_rel_defn_pents prog.prog_rels pents in
       let () = DB.nhprint "RDEFNS: " pr_rds rel_defns in
+      let () = DB.nhprint "model: " pr_model model in
+      let cond = is_feasible_model prog pents model in
       if (List.exists (fun rel -> not (is_feasible_rel_defn rel model)) rel_defns) ||
          (iter > !thd_farkas_max_num_negate_model) then
         let () = DB.npprint "UNKNOWN model: " in
         MvlUnkn, []
-      else if is_feasible_model prog pents model then
+      else if cond then
         let () = DB.nhprint "FEASIBLE model: " pr_model model in
         is_sat, model
       else
@@ -565,6 +652,44 @@ let rec find_feasible_model_full ?(iter=0) tk coefs prog pents constrs =
     let () = DB.npprint "AFTER FARKAS: EXCEPTION" in
     MvlUnkn, []
 
+(* Finding a feasible model using Farkas
+   Function inference case
+   Difference: tk
+*)
+let rec find_feasible_model_full_func ?(iter=0) tk coefs prog pents constrs =
+  try
+    let () = DB.nhprint "find_feasible_model_constrs: " pr_pf constrs in
+    let is_sat, model = FP.check_sat_and_get_opt_model_func tk coefs constrs in
+    match is_sat with
+    | MvlTrue ->
+      let func_defns = find_func_defn_pents prog.prog_funcs pents in
+      let () = DB.nhprint "RDEFNS: " pr_fds func_defns in
+      let () = DB.nhprint "model: " pr_model model in
+      let cond = is_feasible_model_func prog pents model in
+      if (iter > !thd_farkas_max_num_negate_model) then
+        let () = DB.pprint "UNKNOWN model: " in
+        MvlUnkn, []
+      else if cond  then
+        let () = DB.nhprint "FEASIBLE model: " pr_model model in
+        is_sat, model
+      else
+        let () = DB.nhprint "INFEASIBLE model: " pr_model model in
+        let neg_model =
+          List.map (fun (v, e) -> (mk_exp_var v, e)) model |>
+          FP.mk_conj_constrs (fun (v1, e1) (v2, e2) ->
+            mk_eq_exp (mk_bin_op Mul v1 e2) (mk_bin_op Mul v2 e1)) |>
+          mk_pconj |> mk_pneg in
+        let n_constrs = mk_pconj [constrs; neg_model] in
+        find_feasible_model_full_func ~iter:(iter+1) tk coefs prog pents n_constrs
+    | _ ->
+      let () = DB.npprint "AFTER FARKAS: NOT SAT" in
+      is_sat, model
+  with e ->
+    let () = DB.nhprint "exception: " pr_exn e in
+    let () = DB.npprint "AFTER FARKAS: EXCEPTION" in
+    MvlUnkn, []
+
+
 let gen_templ (tk: TL.templ_kind) prog rnames : program =
   (match tk with
    | TL.LinearT -> (new TL.LinearTempl.templ) # update_rel_defn
@@ -577,10 +702,16 @@ let gen_templ (tk: TL.templ_kind) prog rnames : program =
    | TL.IncrT (t, _) -> (new TL.IncrTempl.templ t) # update_rel_defn)
     tk prog rnames
 
+let gen_func_templ (tk: TL.func_templ_kind) prog fnames =
+  (match tk with
+  | TL.ArithExpT -> (new TL.ArithExpTempl.func_templ) # update_func_defn)
+    tk prog fnames
+
 let solve_pentails_templ (tk: TL.templ_kind) prog rnames distinct_constrs
     (pents: pure_entail list): (mvlogic * model * program) =
   let prog = gen_templ tk prog rnames in
-  let () = DB.nhprint "prog_rels: " pr_rels prog.prog_rels in
+  let () = DB.nhprint "prog 584: " pr_program prog in
+  let () = DB.nhprint "prog_rels 584: " pr_rels prog.prog_rels in
   let fents = pents |> List.map (mk_fent prog) |> List.concat in
   if fents = [] then MvlUnkn, [], prog
   else
@@ -702,6 +833,37 @@ and sst_model_rels_x ?(norm_ptr=false) prog pents model =
         nrd :: acc) [] in
   solved_rel_defns
 
+(* Substitute model to program to get new function definition *)
+let sst_model_funcs prog pents model =
+  let () = DB.nhprint "MODEL: " pr_model model in
+  let ssts = model in
+  let solved_func_defns =
+    pents |>
+    List.map (fun p -> [p.pent_lhs; p.pent_rhs]) |> List.concat |>
+    find_func_defn_pfs prog.prog_funcs |>
+    List.fold_left (fun acc fd ->
+      DB.nhprint "func_name: " pr_id fd.func_name;
+      match fd.func_body with
+      | FuncUnknown ->
+        error ("is_feasible_func_defn: unknown relation: " ^ (pr_fd fd))
+      | FuncForm _ -> acc
+      | FuncTemplate tmpl ->
+        let fbody = match tmpl.func_templ_dummy with
+          | true -> FuncUnknown
+          | _ ->
+            let body = tmpl.func_templ_body |> subst_exp ssts in
+            let nbody = NO.simplify_arith_exp body in
+            let () = DB.nhprint "body: " pr_exp body in
+            let () = DB.nhprint "nbody: " pr_exp nbody in
+            (* let nbody =
+             *   nbody |> collect_pure_conjuncts_pf |>
+             *   List.filter (fun pf -> not (TP.unsat_or_has_unique_model_all_vars pf)) |>
+             *   mk_pconj in *)
+            FuncForm nbody in
+        let nrd = {fd with func_body = fbody} in
+        nrd :: acc) [] in
+  solved_func_defns
+
 let rec solve_pentails_incr_one_conj tk prog rnames distinct_constrs pents =
   let pr_res x = pr_rels (snd3 x) in
   DB.trace_3 "solve_pentails_incr_one_conj"
@@ -709,20 +871,22 @@ let rec solve_pentails_incr_one_conj tk prog rnames distinct_constrs pents =
     (fun () -> solve_pentails_incr_one_conj_x tk prog rnames distinct_constrs pents)
 
 and solve_pentails_incr_one_conj_x tk prog rnames distinct_constrs pents =
+  DB.nhprint "pk: " (TL.pr_tk) tk;
   let inf_ptr = TL.is_ptr_tk tk in
   let inf_func =
     if inf_ptr then solve_pentails_ptr_templ
     else solve_pentails_templ in
   let sst_func = sst_model_rels ~norm_ptr:inf_ptr in
-    let res, model, nprog = inf_func tk prog rnames distinct_constrs pents in
-    let () = DB.nhprint "prog_rels: " pr_rels nprog.prog_rels in
-    if res = MvlTrue then
-      let inf_rels = sst_func nprog pents model in
-      let nrel_defns = List.fold_left (fun rels ir ->
-        update_rel_defn rels ir) nprog.prog_rels inf_rels in
-      let nprog = { nprog with prog_rels = nrel_defns } in
-      nprog, inf_rels, model
-    else prog, [], []
+  let res, model, nprog = inf_func tk prog rnames distinct_constrs pents in
+  let () = DB.nhprint "prog_rels: " pr_rels nprog.prog_rels in
+  let () = DB.nhprint "model: " pr_model model in
+  if res = MvlTrue then
+    let inf_rels = sst_func nprog pents model in
+    let nrel_defns = List.fold_left (fun rels ir ->
+      update_rel_defn rels ir) nprog.prog_rels inf_rels in
+    let nprog = { nprog with prog_rels = nrel_defns } in
+    nprog, inf_rels, model
+  else prog, [], []
 
 
 let mk_distinct_constr model =
@@ -766,8 +930,6 @@ and solve_pentails_incr_x prog rnames strong pents : rel_defns =
   let rec solve_iter tk prog distinct_constrs =
     let nprog, rels, model = solve_pentails_incr_one_conj
         tk prog rnames distinct_constrs pents in
-    (* if is_fixed_point_res prog rels then prog *)
-    (* else *)
     let cont_tk =
       if (not strong) && (rels <> []) then None
       else if strong then
@@ -809,8 +971,59 @@ and solve_pentails_precise_x prog ?(rnames=[]) strong pents : rel_defns =
   let rnames =
     if rnames = [] then find_template_rel_names prog.prog_rels pents
     else rnames in
+  DB.hprint "names: " (pr_list (fun x -> x)) rnames;
+  let () = DB.hprint "prog_rels farkas: " pr_rels prog.prog_rels in
   let rdefns = solve_pentails_incr prog rnames strong pents in
   rdefns
+
+(* infer function definition with expression template *)
+let solve_fentails_templ prog pents =
+  let fnames = find_template_func_names prog.prog_funcs pents in
+  DB.nhprint "fnames: " (pr_list (fun x-> x)) fnames;
+  let template = TL.ArithExpT in
+  let prog = gen_func_templ template prog fnames in
+  DB.nhprint "prog 888: " (pr_program) prog;
+  let fents = pents |> List.map (mk_fent_funcs prog) |> List.concat in
+  let distinct_constrs = [] in
+  let tk = template in
+  if fents = [] then MvlUnkn, [], prog
+  else
+    let fents_unk_coes =
+      fents |> List.map (fun fent -> fent.fent_unk_coes) |>
+      List.concat |> TL.dedup_unk_coes_rels in
+    let () = DB.nhprint "unk_coes_rel: " (pr_list TL.pr_unk_coes_rel)
+               (fents |> List.map (fun fent -> fent.fent_unk_coes) |> List.concat) in
+    let farkas_constrs, _ =
+      fents |> List.map gen_farkas_constr_fent |>
+      List.split |>
+      (fun (fc, fvs) -> (List.concat fc), (List.concat fvs)) in
+    let () = DB.nhprint "pents: " (pr_list pr_pent) pents in
+    let () = DB.nhprint "fents: "  (pr_list pr_fent) fents in
+    let () = DB.nhprint "farkas_constrs: " (pr_list pr_pf) farkas_constrs in
+    let () = DB.nhprint "distinct_constrs: " (pr_list pr_pf) distinct_constrs in
+    let is_sat, farkas_model =
+      let constrs = mk_pconj (farkas_constrs @ distinct_constrs) in
+      let res, t = time (fun () ->
+        find_feasible_model_full_func tk fents_unk_coes prog pents constrs) in
+      DB.nhprint "farkas time find model full: " pr_float t;
+      res in
+    is_sat, farkas_model, prog
+
+(* can be extend like solve_pentails_incr*)
+let solve_fentails_incr prog strong pents =
+  let res, model, nprog = solve_fentails_templ prog  pents in
+  let () = DB.nhprint "prog: " pr_program nprog in
+  let () = DB.nhprint "model: " pr_model model in
+  let () = DB.nhprint "res: " pr_mvl res in
+  if res = MvlTrue then
+    let inf_funcs = sst_model_funcs nprog pents model in
+    let nfunc_defns = List.fold_left (fun funcs inf ->
+      update_func_defn funcs inf) nprog.prog_funcs inf_funcs in
+    let nprog = { nprog with prog_funcs = nfunc_defns } in
+    (* nprog, inf_funcs, model *)
+    nprog.prog_funcs
+(* else prog, [], [] *)
+  else []
 
 let rec solve_pentails_partial prog rnames strong pents : rel_defns =
   let pr_inf b = if b then "Infer Strong" else "Infer Weak" in

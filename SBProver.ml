@@ -17,10 +17,7 @@ module FF = SBFarkasfix
 module TL = SBTemplate
 module LN = SBLearner
 module IP = SBIprover
-
-let time_lm_cv = ref 0.
-let time_lm_sp = ref 0.
-let time_lm_cb = ref 0.
+module DB = SBDebug
 
 let get_max_var_index prog =
   let vs = av_prog prog in
@@ -732,7 +729,8 @@ and process_conjunctive_subgoals_x pstate goal rule subgoals =
         let naasm = (aasm @ ptc.ptc_assums) |> dedup_assums in
         combine_status_conjuct (MvlInfer, apt, aptc @ [ptc], naasm, None) gs
       | PtInvalid ->
-        if is_rule_bidirection rule then
+        if not !disprove_entail then (MvlUnkn, apt, [], [], None)
+        else if is_rule_bidirection rule || List.length subgoals = 1 then
           (MvlFalse, apt, [], [], None)
         else (MvlUnkn, apt, [], [], None)
       | PtUnkn _ -> (MvlUnkn, apt, [], [], None) in
@@ -797,7 +795,7 @@ and process_candidate_actions pstate goal heur actions =
       DB.pprint "Quit";
       mk_ptree_search_unkn goal aptrees ~heur:heur "Quit"
     | None, _, [] ->
-      mk_ptree_search_unkn goal aptrees  ~heur:heur "No more rules"
+      mk_ptree_search_invalid goal [] ~heur:heur
     | None, _, _ ->
       List.iter (fun pt ->
         let status = pt |> get_ptree_status |> pr_ptree_status in
@@ -1154,8 +1152,7 @@ and process_one_derivation_x pstate (drv: derivation) : proof_tree =
   | DrvStatus MvlTrue -> process_axiom_goal pstate g r MvlTrue
   | DrvStatus MvlInfer -> process_axiom_goal pstate g r MvlInfer
   | DrvStatus MvlUnkn -> mk_ptd g r [] (PtUnkn "ProcessOneDerivation")
-  | DrvSubgoals sgs ->
-    process_conjunctive_subgoals pstate g r sgs
+  | DrvSubgoals sgs -> process_conjunctive_subgoals pstate g r sgs
   | DrvBackjump (sgs, ent_id) ->
     let ptree = process_conjunctive_subgoals pstate g r sgs in
     let bkj = mk_backjump ent_id drv.drv_rule in
@@ -2118,6 +2115,8 @@ and infer_unknown_relations typ prog pents : infer_rdefns =
     (fun () -> infer_unknown_relations_x typ prog pents)
 
 and infer_unknown_relations_x typ prog pents : infer_rdefns =
+  (* DB.hprint "program.rel_defn: " (pr_list pr_rel_defn) prog.prog_rels;
+   * DB.hprint "program.command list: " (pr_list pr_cmd) prog.prog_rels; *)
   PT.reset_cache ();
   let unk_rnames =
     pents |> List.map collect_rform_pent |> List.concat |>
@@ -2130,7 +2129,11 @@ and infer_unknown_relations_x typ prog pents : infer_rdefns =
       | IfrWeak -> false in
     let nrdefns = List.map (fun rd ->
       TL.mk_rdefn_dummy rd.rel_name rd.rel_params) unk_rdefns in
+    DB.nhprint "nrdefns: " (pr_list pr_rel_defn) nrdefns;
+    DB.nhprint "program: " (pr_program) prog;
     let nprog = replace_prog_rdefns prog nrdefns in
+    (* let () = DB.hprint "prog_rels prover: " FK.pr_rels nprog.prog_rels in *)
+    DB.nhprint "program: " (pr_program) nprog;
     let rds =
       try
         if List.length unk_rnames > 1 then []
@@ -2159,6 +2162,27 @@ and infer_unknown_relations_x typ prog pents : infer_rdefns =
                if rds = [] then []
                else [mk_infer_rdefn ird.ird_solver rds]) |> List.concat in
   irds
+
+and infer_unknown_functions typ prog pents (* : infer_rdefns *) =
+  PT.reset_cache ();
+  let unk_fdefns =
+    pents |> List.map collect_fform_pent |> List.concat in
+  let unk_fnames = List.map (fun (a, _, _) -> a) unk_fdefns in
+  let unk_fdefns = prog.prog_funcs |> List.filter (fun fd ->
+    (is_unk_fdefn fd) && (mem_ss fd.func_name unk_fnames)) in
+  let strong = match typ with
+    | IfrStrong -> true
+    | IfrWeak -> false in
+  DB.nhprint "program: " (pr_program) prog;
+  let nfdefns = List.map (fun fd ->
+    TL.mk_fdefn_dummy fd.func_name fd.func_params) unk_fdefns in
+  let nprog = replace_prog_fdefns prog nfdefns in
+  let fds = FK.solve_fentails_incr nprog strong pents in
+  let fds =
+    if List.for_all (fun rd -> not (is_unk_fdefn rd)) fds then fds
+    else [] in
+  DB.nhprint "RESULT OF SOLVE ENTAIL BY FARKAS: " pr_fds fds;
+  [mk_infer_fdefn IsvFarkas fds]
 
 and decompose_rdefn goal rdefn : rel_defn list =
   DB.trace_1 "decompose_rdefn" (pr_rd, pr_rds) rdefn

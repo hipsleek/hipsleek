@@ -14,6 +14,12 @@ type templ_kind =
   | EqPtrConjT of int
   | IncrT of (templ_kind * int)
 
+type func_templ_kind =
+  | ArithExpT
+
+let pr_func_tk = function
+  | ArithExpT -> "ArithExpT"
+
 let rec pr_tk = function
   | LinearT -> "LinearT"
   | EqArithT -> "EqArithT"
@@ -92,10 +98,22 @@ let get_unk_coes_rel_defn (rel: rel_defn): unk_coes_rel option =
   | RbUnknown -> None
   | RbTemplate tmpl -> Some tmpl.templ_unk_coes
 
+let get_unk_coes_func_defn (func: func_defn): unk_coes_rel option =
+  match func.func_body with
+  | FuncForm _ -> None
+  | FuncUnknown -> None
+  | FuncTemplate tmpl -> Some tmpl.func_templ_unk_coes
+
 let get_unk_coes_pf (prog: program) (f: pure_form): unk_coes_rel list =
   f |> find_rel_defn_pf prog.prog_rels |>
   List.fold_left (fun acc r ->
     match (get_unk_coes_rel_defn r) with
+    | None -> acc | Some u -> acc @ [u]) []
+
+let get_unk_coes_pf_funcs (prog: program) (f: pure_form): unk_coes_rel list =
+  f |> find_func_defn_pf prog.prog_funcs |>
+  List.fold_left (fun acc r ->
+    match (get_unk_coes_func_defn r) with
     | None -> acc | Some u -> acc @ [u]) []
 
 let get_unk_coes_pf (prog: program) (f: pure_form): unk_coes_rel list =
@@ -154,6 +172,41 @@ class virtual ['t] template = object(self)
     in { prog with prog_rels = new_rels }
 end
 
+class virtual ['t] func_template = object(self)
+  method virtual get_form: 't -> exp
+
+  method virtual get_unk_coes: 't -> unk_coes_rel
+
+  method virtual mk_func_templ: func_defn -> 't
+
+  method mk_func_body (func: func_defn): func_body_form =
+    let templ = self # mk_func_templ func in
+    FuncTemplate { func_templ_unk_coes = self # get_unk_coes templ;
+                 func_templ_body = self # get_form templ;
+                 func_templ_dummy = false }
+
+  method update_pure_entail (prog: program) (pent: pure_entail): pure_entail =
+    { pent with
+      pent_lhs = unfold_rform_pf prog.prog_rels pent.pent_lhs;
+      pent_rhs = unfold_rform_pf prog.prog_rels  pent.pent_rhs; }
+
+  method update_func_defn (tk: func_templ_kind) (prog: program)
+      (unk_rel_names: string list): program =
+    let funcs = prog.prog_funcs in
+    let new_funcs = List.map (fun func ->
+      let new_body =
+        let b = (mem_ss func.func_name unk_rel_names) &&
+                (is_template_fdefn func) in
+          let () = DB.nhprint "bool 188: " (string_of_bool) b in
+        if ((mem_ss func.func_name unk_rel_names) &&
+            (is_template_fdefn func))
+        then self # mk_func_body func
+        else func.func_body
+      in
+      { func with func_body = new_body }) funcs
+    in { prog with prog_funcs = new_funcs }
+end
+
 module DummyTempl = struct
   type t = pure_form
 
@@ -167,6 +220,22 @@ module DummyTempl = struct
       uc_coes_conjs = []; }
 
     method mk_templ _ = mk_true no_pos
+  end
+end
+
+module DummyFuncTempl = struct
+  type t = exp
+
+  class func_templ = object
+    inherit [t] func_template
+
+    method get_form func_templ = func_templ
+
+    method get_unk_coes _ = {
+      uc_name = "";
+      uc_coes_conjs = []; }
+
+    method mk_func_templ _ = mk_null no_pos
   end
 end
 
@@ -340,6 +409,52 @@ module EqArithTempl = struct
       { rname = rel.rel_name;
         unk_coe = List.hd t.EqArithConjTempl.unk_coes;
         form = t.EqArithConjTempl.form; }
+  end
+end
+
+module ArithExpTempl = struct
+  type t = {
+    fname: string;
+    unk_coe: unk_coes_conj;
+    form: exp;
+  }
+
+  class func_templ = object
+    inherit [t] func_template
+
+    method get_form func_templ = func_templ.form
+    method get_unk_coes templ =
+      {
+        uc_name = templ.fname;
+        uc_coes_conjs = [templ.unk_coe];
+      }
+
+    method mk_func_templ func_defn =
+      let mk_base_templ name params =
+        let cnt = new counter in
+        let coe_prefix = name ^ "_c_" in
+        let base_coe = mk_var (cnt # get_name coe_prefix) TInt in
+        let param_coes = List.map
+                           (fun _ -> mk_var (cnt # get_name coe_prefix) TInt) params in
+        let unk_coes = {
+          uc_param_coes = param_coes; uc_base_coes = [base_coe] } in
+        let unk_exp =
+          List.combine
+            (List.map mk_exp_var param_coes)
+            (List.map mk_exp_var params) |>
+          List.fold_left (fun s (c, p) -> mk_bin_op Mul c p |>
+                                          mk_bin_op Add s)
+            (mk_exp_var base_coe)
+        in
+        (unk_exp, unk_coes)
+      in
+      let name, params = func_defn.func_name, func_defn.func_params in
+      let (unk_exp, unk_coes) = mk_base_templ name params in
+      {
+        fname = func_defn.func_name;
+        unk_coe = unk_coes;
+        form = unk_exp;
+      }
   end
 end
 
@@ -545,6 +660,17 @@ let mk_rdefn_dummy ?(pos=no_pos) name params =
     rel_params = params;
     rel_body = RbTemplate dummy_body;
     rel_pos = pos; }
+
+let mk_fdefn_dummy ?(pos=no_pos) name params =
+  let f_null = mk_null pos in
+  let dummy_body = {
+    func_templ_unk_coes = (new DummyFuncTempl.func_templ) # get_unk_coes f_null;
+    func_templ_body = f_null;
+    func_templ_dummy = true; } in
+  { func_name = name;
+    func_params = params;
+    func_body = FuncTemplate dummy_body;
+    func_pos = pos; }
 
 let mk_rdefn_true ?(pos=no_pos) name params =
   { rel_name = name;
