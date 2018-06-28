@@ -1,0 +1,211 @@
+require 'fileutils'
+require 'open3'
+require 'mixlib/shellout' # requires the gem 'mixlib-shellout' to be installed
+
+class File
+  def self.append(file, text)
+    write file, text, size(file), mode: 'a'
+  end
+end
+
+SLCOMP18_TO_SLCOMP14 = "tools/smtlib2Xparser-sl/slcomp-parser"
+SLCOMP14_TO_SLK = "tools/slcomp14tools/compile -sleek"
+SLEEK = "~/projects/sleekex2/sleek"
+RESULT_FILE = "results.csv"
+
+desc "Convert benchmarks from SL-COMP18 format to SLEEK"
+task :convert do
+  Dir.glob("bench/**/*.smt2").each do |f|
+    dir = File.dirname(f).gsub("bench/", "")
+    filename = File.basename f
+    tmp_file = "bench-sleek/#{dir}/#{filename}.sl14"
+    converted_file = "bench-sleek/#{dir}/#{filename}.sl14.sle"
+
+    unless Dir.exist? "bench-sleek/#{dir}"
+      FileUtils.mkdir_p "bench-sleek/#{dir}"
+    end
+
+    # Translate Input format from SL-COMP18 to SL-COMP14
+    puts "Converting #{f} to SL-COMP14 format..."
+    sh "#{SLCOMP18_TO_SLCOMP14} --config input.prop --output SL_COMP14 #{f} 1> #{tmp_file}"
+
+    puts "Converting to Sleek format..."
+    sh "#{SLCOMP14_TO_SLK} #{tmp_file}"
+
+    sh "rm #{tmp_file}"
+  end
+
+  converted_count = {}
+  Dir.glob("bench/*").select { |f| File.directory? f }.each do |f|
+    folder = f.gsub "bench/", ""
+    converted_folder = f.gsub "bench/", "bench-sleek/"
+    original = `ls -1 #{f} | wc -l`.to_i
+    converted = `ls -1 #{converted_folder} | wc -l`.to_i
+
+    converted_count[folder] = { original: original, converted: converted }
+  end
+
+  puts "\nConversion results"
+  converted_count.each do |folder, res|
+    puts "#{folder}:"
+    puts "Original - #{res[:original]}, Converted - #{res[:converted]}"
+  end
+
+  orig, converted = converted_count.inject([0,0]) do |(total, conv), (folder, res)|
+    [total + res[:original], conv + res[:converted]]
+  end
+
+  puts "\nTotal:"
+  puts "Original - #{orig}, Converted - #{converted}"
+end
+
+def test_one(f, quiet = true, timeout = 10, full = false)
+  folder = File.dirname(f).gsub("bench-sleek/", "bench/")
+  file = File.basename f, ".sl14.sle"
+  res_file = "#{folder}/#{file}"
+
+  puts "Testing #{res_file}..."
+
+  expected_res = File.read(res_file).match(/\(.*status (.*)\)/).captures.first
+
+  cmd = Mixlib::ShellOut.new("#{"timeout #{timeout} " if !timeout.nil?}#{SLEEK}#{" --smt-test" if !full} #{f}")
+  cmd.live_stream = $stdout if !quiet
+  cmd.run_command
+
+  actual_res = if cmd.exitstatus == 124
+    "Timeout"
+  else
+    cmd.stdout.match(/SAT|UNSAT|UNKNOWN/).to_s
+  end
+
+  passed = actual_res.downcase == expected_res
+
+  remark = if cmd.exitstatus == 124 || passed
+    ""
+  elsif cmd.stdout.match(/Entail \d*:(.*)\n/)
+    "\"#{cmd.stdout.match(/Entail \d*:(.*)\n/).captures.first.strip}\""
+  elsif cmd.stdout.match(/(Stream\.Error\(.*\))/)
+    "\"Parse error: #{cmd.stdout.match(/(Stream\.Error\(.*\))/).captures.first}\""
+  else
+    "\"Other error: #{cmd.stdout.match(/Exception processed:(.*)/).captures.first.strip}\""
+  end
+
+  [expected_res, actual_res, passed, remark]
+end
+
+def test_all
+  total = 0
+  passed = 0
+  timeouts = 0
+  statistics = {}
+
+  File.write RESULT_FILE, "Benchmark,Expected,Actual,Result,Remark\n"
+
+  Dir.glob("bench-sleek/**/*.sle").sort.each do |f|
+    folder = File.dirname(f).gsub("bench-sleek/", "bench/")
+    file = File.basename f, ".sl14.sle"
+
+    category = File.dirname(f).gsub("bench-sleek/", "")
+
+    statistics[category] = {passed: 0, failed: 0, total: 0, timeout: 0} unless statistics.has_key? category
+
+    if f.include? "logic"
+      next
+    end
+
+    total += 1
+
+    expected, actual, res, remark = test_one(f)
+
+    passed += 1 if res
+
+    timeouts += 1 if actual == "Timeout"
+
+    statistics[category][:passed] += 1 if res
+    statistics[category][:failed] += 1 if !res
+    statistics[category][:total] += 1
+    statistics[category][:timeout] += 1 if actual == "Timeout"
+
+    log_data = "#{folder.gsub("bench/", "")}/#{file},#{expected},#{actual},#{res ? "Passed" : "Failed"},#{remark}"
+    File.append RESULT_FILE, "#{log_data}\n"
+  end
+
+  [passed, total, timeouts, statistics]
+end
+
+def test_category(category)
+  statistics = { passed: 0, failed: 0, timeout: 0 }
+  result_file = "results_#{category}.csv"
+
+  File.write result_file, "Benchmark,Expected,Actual,Result,Remark\n"
+
+  Dir.glob("bench-sleek/#{category}/*.sle").sort.each do |f|
+    folder = File.dirname(f).gsub("bench-sleek/", "bench/")
+    file = File.basename f, ".sl14.sle"
+
+    if f.include? "logic"
+      next
+    end
+
+    statistics[:total] += 1
+
+    expected, actual, res, remark = test_one f
+
+    statistics[:passed] += 1 if res
+
+    statistics[:timeout] += 1 if actual == "Timeout"
+
+    File.append "#{folder.gsub("bench/", "")}/#{file},#{expected},#{actual},#{res ? "Passed" : "Failed"},#{remark}\n"
+  end
+
+  statistics
+end
+
+namespace :test do
+  desc "Test all benchmarks"
+  task :all do
+    passed, total, timeouts, stats = test_all
+
+    puts "\nResult: passed #{passed}/#{total}"
+    puts "Timeout: #{timeouts}\n\n"
+
+    puts "Breakdown"
+    stats.each do |category, data|
+      puts "\n" + category
+      puts "Passed: #{data[:passed]}/#{data[:total]}"
+      puts "Timeout: #{data[:timeout]}"
+    end
+  end
+
+  desc "Test a single benchmark, name given as original_folder/original_file"
+  task :one, [:file, :timeout, :full] do |t, args|
+    args.timeout ||= 10
+    args.full ||= false
+
+    file = "bench-sleek/#{args.file}.sl14.sle"
+    expected, actual, res, remark = test_one(file, false, args.timeout, args.full)
+
+    puts "Expected result: #{expected}"
+    puts "Actual result: #{actual}"
+  end
+
+  desc "Test benchmark category"
+  task :category, [:cat] do |t, args|
+    fail "No category for testing provided" if args.category.nil?
+    fail "Category #{args.category} does not exist" unless Dir.exist?("bench-sleek/#{args.category}")
+
+    stats = test_category args.category
+
+    puts "\nPassed: #{stats[:passed]}/#{stats[:total]}"
+    puts "Timeouts: #{stats[:timeout]}"
+  end
+end
+
+desc "Test all benchmarks, convenience for test:all"
+task test: ['test:all']
+
+task :slcomp14 do
+  Dir.chdir("tools/slcomp14tools") do
+    sh "make"
+  end
+end
