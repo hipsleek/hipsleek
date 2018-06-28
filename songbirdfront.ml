@@ -65,14 +65,14 @@ let translate_pure_formula (pure_f: Cpure.formula) : (SBCast.pure_form) =
  *   let f_var = SBCast.mk_var "f" SBGlobals.TInt *)
 
 (* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
-(* let translate_lhs_to_templ (lhs: SBCast.pure_form) (\* : SBCast.pure_form *\) =
- *   match lhs with
- *   | BinRel (rel, exp1, exp2, pos) ->
- *     let exp2_vars = SBCast.fv_exp exp2 in
- *       let exp2_args = List.map (SBCast.mk_exp_var) exp2_vars in
- *       let func_exp = SBCast.mk_func (SBCast.FuncName "f") exp2_args in
- *       (SBCast.BinRel (rel, exp1, func_exp, pos), exp2_vars)
- *   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled" *)
+let translate_lhs_to_templ (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_form *) =
+  match lhs with
+  | BinRel (rel, exp1, exp2, pos) ->
+    let exp2_vars = SBCast.fv_exp exp2 in
+      let exp2_args = List.map (SBCast.mk_exp_var) exp2_vars in
+      let func_exp = SBCast.mk_func (SBCast.FuncName "f") exp2_args in
+      (Libsongbird.Cast.BinRel (rel, exp1, func_exp, pos), exp2_vars)
+  | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
 
 
 (* Input: lhs and rhs
@@ -80,22 +80,23 @@ let translate_pure_formula (pure_f: Cpure.formula) : (SBCast.pure_form) =
    Adding template f(args) = ?
    Output: Input for songbird infer_unknown_functions
 *)
-(* let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
- *   let (lhs_templ, args) = translate_lhs_to_templ lhs in
- *   let program = SBCast.mk_program "hip_input" in
- *   let f_defn = SBCast.mk_func_defn_unknown "f" args in
- *   let ifr_typ = SBGlobals.IfrStrong in
- *   let entail = SBCast.mk_pure_entail lhs_templ rhs in
- *   let infer_func = {
- *     SBCast.ifr_typ = ifr_typ;
- *     SBCast.ifr_rels = [entail]
- *   }
- *   in
- *   let nprog = {program with
- *              prog_funcs = [f_defn];
- *              prog_commands = [SBCast.InferFuncs infer_func]
- *             }
- *   in
- *   let _ = SBProver.infer_unknown_functions ifr_typ program [entail] in
- *   () *)
+let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
+  let (lhs_templ, args) = translate_lhs_to_templ lhs in
+  let program = SBCast.mk_program "hip_input" in
+  let f_defn = SBCast.mk_func_defn_unknown "f" args in
+  let ifr_typ = SBGlobals.IfrStrong in
+  let entail = SBCast.mk_pure_entail lhs_templ rhs in
+  let infer_func = {
+    SBCast.ifr_typ = ifr_typ;
+    SBCast.ifr_rels = [entail]
+  }
+  in
+  let nprog = {program with
+             prog_funcs = [f_defn];
+             prog_commands = [SBCast.InferFuncs infer_func]
+            }
+  in
+  let ifds = Libsongbird.Prover.infer_unknown_functions ifr_typ program [entail] in
+  let () = Libsongbird.Debug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds ifds in
+  ()
 
