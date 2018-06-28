@@ -245,6 +245,7 @@ module Make (Token : SleekTokenS)
    ("notin", NOTIN);
    ("notinlist", NOTINLIST);
    ("null", NULL);
+   ("nil", NULL);
    ("off", OFF);
    ("on", ON);
    ("or", ORWORD);
