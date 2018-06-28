@@ -9,12 +9,14 @@ class File
 end
 
 SLCOMP18_TO_SLCOMP14 = "tools/smtlib2Xparser-sl/slcomp-parser"
-SLCOMP14_TO_SLK = "tools/slcomp14tools/compile -sleek"
-SLEEK = "~/projects/sleekex2/sleek"
+SLCOMP14_TO_PROVER = "tools/slcomp14tools/compile -sleek"
+PROVER = "~/projects/sleekex2/sleek"
 RESULT_FILE = "results.csv"
 
 desc "Convert benchmarks from SL-COMP18 format to SLEEK"
 task :convert do
+  sh "rm -rf bench-sleek/"
+
   Dir.glob("bench/**/*.smt2").each do |f|
     dir = File.dirname(f).gsub("bench/", "")
     filename = File.basename f
@@ -30,7 +32,7 @@ task :convert do
     sh "#{SLCOMP18_TO_SLCOMP14} --config input.prop --output SL_COMP14 #{f} 1> #{tmp_file}"
 
     puts "Converting to Sleek format..."
-    sh "#{SLCOMP14_TO_SLK} #{tmp_file}"
+    sh "#{SLCOMP14_TO_PROVER} #{tmp_file}"
 
     sh "rm #{tmp_file}"
   end
@@ -68,14 +70,14 @@ def test_one(f, quiet = true, timeout = 10, full = false)
 
   expected_res = File.read(res_file).match(/\(.*status (.*)\)/).captures.first
 
-  cmd = Mixlib::ShellOut.new("#{"timeout #{timeout} " if !timeout.nil?}#{SLEEK}#{" --smt-test" if !full} #{f}")
+  cmd = Mixlib::ShellOut.new("#{"timeout #{timeout} " if !timeout.nil?}#{PROVER}#{" --smt-test" if !full} #{f}")
   cmd.live_stream = $stdout if !quiet
   cmd.run_command
 
   actual_res = if cmd.exitstatus == 124
     "Timeout"
   else
-    cmd.stdout.match(/SAT|UNSAT|UNKNOWN/).to_s
+    cmd.stdout.match(/SAT|UNSAT|UNKNOWN/i).to_s
   end
 
   passed = actual_res.downcase == expected_res
@@ -134,7 +136,7 @@ def test_all
 end
 
 def test_category(category)
-  statistics = { passed: 0, failed: 0, timeout: 0 }
+  statistics = { passed: 0, failed: 0, timeout: 0, total: 0 }
   result_file = "results_#{category}.csv"
 
   File.write result_file, "Benchmark,Expected,Actual,Result,Remark\n"
@@ -155,7 +157,7 @@ def test_category(category)
 
     statistics[:timeout] += 1 if actual == "Timeout"
 
-    File.append "#{folder.gsub("bench/", "")}/#{file},#{expected},#{actual},#{res ? "Passed" : "Failed"},#{remark}\n"
+    File.append result_file, "#{folder.gsub("bench/", "")}/#{file},#{expected},#{actual},#{res ? "Passed" : "Failed"},#{remark}\n"
   end
 
   statistics
@@ -179,10 +181,15 @@ namespace :test do
 
   desc "Test a single benchmark, name given as original_folder/original_file"
   task :one, [:file, :timeout, :full] do |t, args|
+    fail "No file to test" if args.file.nil?
+
     args.timeout ||= 10
     args.full ||= false
 
     file = "bench-sleek/#{args.file}.sl14.sle"
+
+    fail "File to test does not exist" unless File.exist? file
+
     expected, actual, res, remark = test_one(file, false, args.timeout, args.full)
 
     puts "Expected result: #{expected}"
@@ -191,10 +198,10 @@ namespace :test do
 
   desc "Test benchmark category"
   task :category, [:cat] do |t, args|
-    fail "No category for testing provided" if args.category.nil?
-    fail "Category #{args.category} does not exist" unless Dir.exist?("bench-sleek/#{args.category}")
+    fail "No category for testing provided" if args.cat.nil?
+    fail "Category #{args.category} does not exist" unless Dir.exist?("bench-sleek/#{args.cat}")
 
-    stats = test_category args.category
+    stats = test_category args.cat
 
     puts "\nPassed: #{stats[:passed]}/#{stats[:total]}"
     puts "Timeouts: #{stats[:timeout]}"
