@@ -49,3 +49,25 @@ let translate_pure_formula (pure_f: Cpure.formula) : (SBCast.pure_form) =
 (* calls to Songbird's functions in songbird/src/prover.ml
    will be done here *)
 
+(* Input: 2 pure formulas: lhs and rhs of type SBCast.pure_form
+   Output: using Farkas and templates to infer to model*)
+
+(* let infer_model (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) =
+ *   let pure_entail = SBCast.mk_entailment lhs rhs in
+ *   let entail_list = [pure_entail] in
+ *   () *)
+
+(* let create_rel_with_var var =
+ *   let f_var = SBCast.mk_var "f" SBGlobals.TInt *)
+
+(* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
+let translate_lhs_to_templ (lhs: SBCast.pure_form) (* : SBCast.pure_form *) =
+  match lhs with
+  | BinRel (rel, exp1, exp2, pos) ->
+    let exp2_vars = SBCast.fv_exp exp2 in
+    if (List.length exp2_vars == 1) then
+      let model_var = List.hd exp2_vars in
+      ()
+    else
+      Gen.Basic.report_error VarGen.no_pos "length exp2_vars > 1 not handled"
+  | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
