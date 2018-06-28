@@ -18,7 +18,7 @@ try the following proof planners:
 
 
 let rec find_unifying_plan prog goal : unification list =
-  Debug.trace_1 "find_unifying_plan" (pr_g, pr_unfs) goal
+  SBDebug.trace_1 "find_unifying_plan" (pr_g, pr_unfs) goal
     (fun () -> find_unifying_plan_x prog goal)
 
 and find_unifying_plan_x prog goal : unification list =
@@ -45,15 +45,15 @@ and find_unifying_plan_x prog goal : unification list =
     let init_unf = mk_unification [] [] [] [] [] in
     let unfs = unify_hatoms prog hfs1 hfs2 [] vars init_unf in
     List.filter (fun unf ->
-      unf.unf_conflict_ssts = [] &&
-      unf.unf_residue = []) unfs
+        unf.unf_conflict_ssts = [] &&
+        unf.unf_residue = []) unfs
   with EUnfs res -> res
 
 let rec find_precise_unifying_plan prog goal : unification list =
   let pr_out x = match x with
     | [] -> "[]"
     | _ -> pr_items ~bullet:"  # " pr_unf x in
-  Debug.trace_1 "find_precise_unifying_plan" (pr_g, pr_out) goal
+  SBDebug.trace_1 "find_precise_unifying_plan" (pr_g, pr_out) goal
     (fun () -> find_precise_unifying_plan_x prog goal)
 
 and find_precise_unifying_plan_x prog goal : unification list =
@@ -82,7 +82,7 @@ let rec find_matching_plan prog goal : unification list =
   let pr_out x = match x with
     | [] -> "[]"
     | _ -> pr_items ~bullet:"  # " pr_unf x in
-  Debug.trace_1 "find_matching_plan" (pr_g, pr_out) goal
+  SBDebug.trace_1 "find_matching_plan" (pr_g, pr_out) goal
     (fun () -> find_matching_plan_x prog goal)
 
 and find_matching_plan_x prog goal : unification list =

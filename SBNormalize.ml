@@ -428,8 +428,8 @@ let collect_substs_from_equal_pf (f: pure_form) : substs =
             let cvs, c = lterm in
             let cs, vs = List.split cvs in
             let gcd =
-              if (c != 0) then Math.gcd (c::cs)
-              else Math.gcd cs in
+              if (c != 0) then SBMath.gcd (c::cs)
+              else SBMath.gcd cs in
             let cs = List.map (fun x -> x / gcd) cs in
             let c = c / gcd in
             (List.combine cs vs, c) in

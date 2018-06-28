@@ -2767,9 +2767,12 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             sb_lhs pos in
         let () = x_binfo_hp (add_str "translated sb_rhs: " SBCast.pr_pure_form)
             sb_rhs pos in
-        (* let found_f = ref false in *)
-        let unprimed_vars = Cpure.fv pure_lhs in
-        let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in
+        let _ = Songbird.create_templ_prog sb_lhs sb_rhs in
+        (* let () = x_binfo_hp (add_str "sb_lhs model: " SBCast.pr_pure_form)
+         *     lhs_tmpl pos in *)
+
+        (* let unprimed_vars = Cpure.fv pure_lhs in
+         * let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in *)
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"

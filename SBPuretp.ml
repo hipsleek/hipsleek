@@ -61,7 +61,7 @@ let check_sat_core f =
   res
 
 let rec check_sat ?(prog=None) f : mvlogic =
-  Debug.trace_1 "check_sat" (pr_pf, pr_mvl) f
+  SBDebug.trace_1 "check_sat" (pr_pf, pr_mvl) f
     (fun () -> check_sat_x ~prog:prog f)
 
 and check_sat_x ?(prog=None) f : mvlogic =
@@ -83,12 +83,12 @@ and check_sat_x ?(prog=None) f : mvlogic =
 
 let rec check_sat_get_model ?(prog=None) f vs : mvlogic * model =
   let pr_res = pr_pair pr_mvl (pr_list (pr_pair pr_var pr_exp )) in
-  Debug.trace_2 "check_sat_get_model" (pr_pf, pr_vs, pr_res) f vs
+  SBDebug.trace_2 "check_sat_get_model" (pr_pf, pr_vs, pr_res) f vs
     (fun () -> check_sat_get_model_x ~prog:prog f vs)
 
 and check_sat_get_model_x ?(prog=None) f vs : mvlogic * model =
   let check = match !pure_prover with
-    | PpZ3bin -> Z3bin.check_sat_and_get_model
+    | PpZ3bin -> SBZ3bin.check_sat_and_get_model
     | PpZ3lib -> Z3l.check_sat_and_get_model
     | _ -> error ("check_sat_core: unsupported prover: \
                   " ^ (pr_prover !pure_prover)) in
@@ -104,7 +104,7 @@ and check_sat_get_model_x ?(prog=None) f vs : mvlogic * model =
   res
 
 let rec has_unique_model ?(prog=None) f vs : bool =
-  Debug.trace_2 "has_unique_model" (pr_pf, pr_vs, pr_bool) f vs
+  SBDebug.trace_2 "has_unique_model" (pr_pf, pr_vs, pr_bool) f vs
     (fun () -> has_unique_model_x ~prog:prog f vs)
 
 and has_unique_model_x ?(prog=None) f vs : bool =
@@ -128,7 +128,7 @@ let rec has_unique_model_one_var ?(prog=None) f : bool =
   List.exists (fun v -> has_unique_model ~prog:prog f [v]) vs
 
 let rec unsat_or_has_unique_model ?(prog=None) ?(constr=IctAll) f vs : bool =
-  Debug.trace_2 "unsat_or_has_unique_model" (pr_pf, pr_vs, pr_bool) f vs
+  SBDebug.trace_2 "unsat_or_has_unique_model" (pr_pf, pr_vs, pr_bool) f vs
     (fun () -> unsat_or_has_unique_model_x ~prog:prog ~constr:constr f vs)
 
 and unsat_or_has_unique_model_x ?(prog=None) ?(constr=IctAll) f vs : bool =
@@ -158,7 +158,7 @@ let rec unsat_or_has_unique_model_one_var ?(prog=None) ?(constr=IctAll) f : bool
 (******************     check inconsistency     *****************)
 
 let rec check_consistency f1 f2 : mvlogic =
-  Debug.trace_2 "check_consistency" (pr_pf, pr_pf, pr_mvl) f1 f2
+  SBDebug.trace_2 "check_consistency" (pr_pf, pr_pf, pr_mvl) f1 f2
     (fun () -> check_consistency_x f1 f2)
 
 and check_consistency_x f1 f2 : mvlogic =
@@ -185,7 +185,7 @@ let check_imply_core lhs rhs =
   check_imply lhs rhs
 
 let rec check_imply ?(prog=None) ?(norm=false) lhs rhs =
-  Debug.trace_2 "check_imply" (pr_pf, pr_pf, pr_mvl) lhs rhs
+  SBDebug.trace_2 "check_imply" (pr_pf, pr_pf, pr_mvl) lhs rhs
     (fun () -> check_imply_x ~prog:prog ~norm:norm lhs rhs)
 
 and check_imply_x ?(prog=None) ?(norm=false) lhs rhs =
@@ -206,7 +206,7 @@ and check_imply_x ?(prog=None) ?(norm=false) lhs rhs =
   else check_imply_core lhs rhs
 
 let rec check_imply_slice_lhs ?(prog=None) lhs rhs : mvlogic =
-  Debug.trace_2 "check_imply_slice_lhs" (pr_pf, pr_pf, pr_mvl) lhs rhs
+  SBDebug.trace_2 "check_imply_slice_lhs" (pr_pf, pr_pf, pr_mvl) lhs rhs
     (fun () -> check_imply_slice_lhs_x ~prog:prog lhs rhs)
 
 and check_imply_slice_lhs_x ?(prog=None) lhs rhs : mvlogic =
@@ -237,7 +237,7 @@ let reset_cache () =
 
 let restart_prover () =
   match !pure_prover with
-  | PpZ3bin -> Z3bin.restart_prover ()
+  | PpZ3bin -> SBZ3bin.restart_prover ()
   | _ -> ()
 
 
@@ -245,7 +245,7 @@ let restart_prover () =
 (*******************     check pure entail     ******************)
 
 let rec check_pure_entail ?(prog=None) ?(norm=true) pent =
-  Debug.trace_1 "check_pure_entail" (pr_pent, pr_mvl) pent
+  SBDebug.trace_1 "check_pure_entail" (pr_pent, pr_mvl) pent
     (fun () -> check_pure_entail_x ~prog:prog ~norm:norm pent)
 
 and check_pure_entail_x ?(prog=None) ?(norm=true) pent =
@@ -253,7 +253,7 @@ and check_pure_entail_x ?(prog=None) ?(norm=true) pent =
   check_imply ~prog:prog ~norm:norm lhs rhs
 
 let rec check_pure_entails ?(prog=None) ?(norm=true) pents =
-  Debug.trace_1 "check_pure_entails" (pr_pents, pr_mvl) pents
+  SBDebug.trace_1 "check_pure_entails" (pr_pents, pr_mvl) pents
     (fun () -> check_pure_entails_x ~prog:prog ~norm:norm pents)
 
 and check_pure_entails_x ?(prog=None) ?(norm=true) pents =

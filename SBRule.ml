@@ -94,7 +94,7 @@ let choose_rule_pure_entail pstate goal : rule list =
                    | _ -> []) |> List.concat in
       mk_pconj (goal.gl_lhs_encoded::invs) in
     let rhsp = extract_pf goal.gl_rhs in
-    let status = Puretp.check_imply_slice_lhs lhsp rhsp in
+    let status = SBPuretp.check_imply_slice_lhs lhsp rhsp in
     if (status = MvlTrue) then
       [mk_rule_pure_entail goal.gl_lhs goal.gl_rhs status]
     else if (is_pmode_infer goal) &&
@@ -479,7 +479,7 @@ and choose_rule_from_hypothesis_x pstate goal : rule list =
               let remids =
                 let rhp = mk_rule_hypothesis hp unf in
                 if not !proof_use_rule_excl_mid then []
-                else if Puretp.check_consistency plg fr = MvlFalse then []
+                else if SBPuretp.check_consistency plg fr = MvlFalse then []
                 else if List.exists (is_rule_hypothesis) acc then []
                 else [(mk_rule_excl_mid fr ~plan_rules:[rhp])] in
               let nlhs, wpf =
@@ -625,7 +625,7 @@ and choose_rule_from_theorem_x pstate goal : rule list =
           | Some fr ->
             (* ignore unproductive failure *)
             DB.nhprint "choose_hypo: failure reason: " pr_pf fr;
-            if (Puretp.check_consistency plg fr = MvlFalse) then acc
+            if (SBPuretp.check_consistency plg fr = MvlFalse) then acc
             else if (has_unprocessed_unplanned_excl_mid goal) then acc
             else
               let rth = mk_rule_theorem th unf true in
@@ -2356,7 +2356,7 @@ let compare_weaken_left_vs_other_rule pstate goal r1 r2 : priority =
 (***********     compare all rules      ***********)
 
 let rec compare_rule pstate goal (r1: rule) (r2: rule) : priority =
-  Debug.trace_2 "compare_rule" (pr_rule, pr_rule, pr_prio) r1 r2
+  SBDebug.trace_2 "compare_rule" (pr_rule, pr_rule, pr_prio) r1 r2
     (fun () -> compare_rule_x pstate goal r1 r2)
 
 and compare_rule_x pstate goal (r1: rule) (r2: rule) : priority =

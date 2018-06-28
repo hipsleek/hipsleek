@@ -39,7 +39,7 @@ LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
-PROPERERRS = -warn-error,+4+8+9+11+12+25+28
+PROPERERRS = -warn-error,+4+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-bin-annot,-ccopt,-fopenmp #,-ccopt,CFLAGS1,-ccopt,CFLAGS2

@@ -14,7 +14,7 @@ let time_unify = ref 0.
 
 (** analyze failure when unifying f1 and f2 *)
 let rec analyze_fail_unf mode prog (f1: formula) (f2: formula) unf =
-  Debug.trace_3 "analyze_fail_unf" (pr_f, pr_f, pr_unf, pr_opt pr_pf) f1 f2 unf
+  SBDebug.trace_3 "analyze_fail_unf" (pr_f, pr_f, pr_unf, pr_opt pr_pf) f1 f2 unf
     (fun () -> analyze_fail_unf_x mode prog f1 f2 unf)
 
 and analyze_fail_unf_x mode prog (f1: formula) (f2: formula) unf =

@@ -30,7 +30,7 @@ type exp =
   | LTerm of (lterm * pos)
   | Func of (func * exp list * pos)
   | BinOp of (bin_op * exp * exp * pos)
-  (* TODO: transform BinOp to list-representation
+  (* TO DO: transform BinOp to list-representation
      Add of (exp list * pos)
      Sub of (exp list * pos) *)
 
@@ -2122,11 +2122,23 @@ let mk_rel_defn ?(pos=no_pos) name params body =
     rel_body = body;
     rel_pos = pos; }
 
+let mk_func_defn ?(pos=no_pos) name params body =
+  { func_name = name;
+    func_params = params;
+    func_body = body;
+    func_pos = pos; }
+
 let mk_rel_defn_unknown ?(pos=no_pos) name params =
   { rel_name = name;
     rel_params = params;
     rel_body = RbUnknown;
     rel_pos = pos; }
+
+let mk_func_defn_unknown ?(pos=no_pos) name params =
+  { func_name = name;
+    func_params = params;
+    func_body = FuncUnknown;
+    func_pos = pos; }
 
 let mk_data_defn name fields pos =
   { datad_name = name;

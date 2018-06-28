@@ -19,6 +19,11 @@ module LN = SBLearner
 module IP = SBIprover
 module DB = SBDebug
 
+
+let time_lm_cv = ref 0.
+let time_lm_sp = ref 0.
+let time_lm_cb = ref 0.
+
 let get_max_var_index prog =
   let vs = av_prog prog in
   let index = ref 0 in
@@ -351,7 +356,7 @@ and is_unproductive_goal_x pstate goal : bool =
     (* check if pure LHS is inconsistent with pure RHS *)
     if not (is_pmode_infer goal) &&
        goal.gl_tstats.tst_size >= pth.pth_trace_min_length_inconsist &&
-       Puretp.check_consistency plhs prhs = MvlFalse then
+       SBPuretp.check_consistency plhs prhs = MvlFalse then
       decide "detect unproductive goal by inconsitent LHS, RHS";
     (* check size *)
     let trace = List.filter (fun x ->
@@ -811,7 +816,7 @@ and process_candidate_actions pstate goal heur actions =
       let acc = aptrees @ [ptree] in
       let status = get_ptree_status ptree in
       if !dump_ptree_profile && is_valid_status status then
-        Xml.export_negative_goal_rule prog goal rule;
+        SBXml.export_negative_goal_rule prog goal rule;
       let ptree = match status with
         | PtValid _ | PtInfer _ ->
           mk_proof_tree_search ~heur:heur goal acc status
@@ -2007,7 +2012,7 @@ and infer_one_lemma_template_x pstate goal lmt : lemmas =
         | LmtCombine | LmtSplit -> !timeout_infer_lemma
         | _ -> 60 in
       let lms = Func.timeout_default timeout (fun () ->
-        Z3bin.restart_prover ();
+        SBZ3bin.restart_prover ();
         let time_begin = get_time () in
         let res = match lmt_typ with
           | LmtCombine -> infer_one_lemma_combine pstate lhs rhs
@@ -2989,10 +2994,10 @@ and check_entailment ?(interact=false) prog ent : mvlogic =
 
 and dump_proof_info pstate ptree =
   let prog = pstate.prs_prog in
-  if !dump_ptree_latex then Latex.export_ptree ptree;
-  if !dump_ptcore_latex then Latex.export_ptcore ptree;
-  if !dump_ptree_xml then Xml.export_ptree ptree;
-  if !dump_ptree_profile then Xml.export_ptree_profile prog ptree;
+  if !dump_ptree_latex then SBLatex.export_ptree ptree;
+  if !dump_ptcore_latex then SBLatex.export_ptcore ptree;
+  if !dump_ptree_xml then SBXml.export_ptree ptree;
+  if !dump_ptree_profile then SBXml.export_ptree_profile prog ptree;
   let ptstatus = get_ptree_status ptree in
   match ptstatus with
   | PtValid ptc ->
@@ -3086,7 +3091,7 @@ and check_unsat_approx prog (f: formula) : mvlogic =
 and check_unsat_approx_x prog (f: formula) : mvlogic =
   let pf = f |> NO.encode_formula prog |>
            NO.simplify_all_pf ~prog:(Some prog) in
-  Puretp.check_sat pf
+  SBPuretp.check_sat pf
 
 and check_unsat_indt ?(interact=false) prog (f: formula) : mvlogic =
   DB.trace_1 "check_unsat_indt" (pr_f, pr_mvl) f
@@ -3098,10 +3103,10 @@ and check_unsat_indt_x ?(interact=false) prog (f: formula) : mvlogic =
   let goal = mk_goal prog lhs rhs ~mode:PrfUnsat in
   let pstate = mk_prover_state ~interact:interact prog goal in
   let ptree = prove_one_goal pstate goal in
-  let _ = if !dump_ptree_latex then Latex.export_ptree ptree in
-  let _ = if !dump_ptcore_latex then Latex.export_ptcore ptree in
-  let _ = if !dump_ptree_xml then Xml.export_ptree ptree in
-  let _ = if !dump_ptree_profile then Xml.export_ptree_profile prog ptree in
+  let _ = if !dump_ptree_latex then SBLatex.export_ptree ptree in
+  let _ = if !dump_ptcore_latex then SBLatex.export_ptcore ptree in
+  let _ = if !dump_ptree_xml then SBXml.export_ptree ptree in
+  let _ = if !dump_ptree_profile then SBXml.export_ptree_profile prog ptree in
   match get_ptree_status ptree with
   | PtValid _ -> MvlFalse
   | PtInvalid -> MvlTrue

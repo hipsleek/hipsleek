@@ -574,6 +574,11 @@ and infer_rdefn = {
   ird_solver : infer_solver;
 }
 
+and infer_fdefn = {
+  ifd_fdefns : func_defn list;
+  ifd_solver : infer_solver;
+}
+
 and infer_rdefns = infer_rdefn list
 
 and verify_ifent = {
@@ -1076,7 +1081,16 @@ let pr_infer_rdefn ird =
 
 let pr_ird = pr_infer_rdefn
 
+let pr_infer_fdefn frd =
+  "  # Fdefns: " ^ ( pr_fdsl frd.ifd_fdefns)
+  ^ "\n   # Solver: " ^ (pr_isv frd.ifd_solver)
+
+let pr_ifd = pr_infer_fdefn
+
 let pr_irds = pr_items ~bullet:"  +++\n" pr_ird
+
+(* ifd: infer function definition *)
+let pr_ifds = pr_items ~bullet:"  +++\n" pr_ifd
 
 let pr_verify_ifent vif =
   "  # Infer entails: " ^ ( pr_ifes vif.vif_ifents)
@@ -1978,10 +1992,13 @@ let is_rule_trivial rule =
 let is_rule_bidirection rule =
   match rule with
   | RlPureEntail _ | RlFalseLeft _
+  | RlExistsLeft _ | RlExistsRight _
   | RlEmpLeft _ | RlEmpRight _
-  | RlExistsLeft _ | RlEqualLeft _
+  | RlDropLeft _ | RlDropRight _
+  | RlEqualLeft _ | RlUnfoldRel _ -> true
+  | RlStarData rsd ->
+    eq_exp rsd.rsd_lg_data.dataf_root rsd.rsd_rg_data.dataf_root
   | RlInduction _ | RlExclMid _ -> true
-  | RlUnfoldRel _ -> true
   | _ -> false
 
 let is_unplanned_excl_mid_case emc =
@@ -2043,6 +2060,9 @@ let mk_entail_of_goal goal =
 
 let mk_infer_rdefn solver rdefns =
   {ird_rdefns = rdefns; ird_solver = solver}
+
+let mk_infer_fdefn solver fdefns =
+  {ifd_fdefns = fdefns; ifd_solver = solver}
 
 let mk_verify_ifent ifents continue msg =
   { vif_ifents = ifents;

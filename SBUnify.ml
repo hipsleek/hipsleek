@@ -112,7 +112,7 @@ and dedup_unfs (unfs: unification list) =
   EList.unique ~cmp:compare_unf unfs
 
 let rec unify_var v e vars unf : unification list =
-  Debug.trace_4 "unify_var" (pr_v, pr_e, pr_vs, pr_unf, pr_unfs) v e vars unf
+  SBDebug.trace_4 "unify_var" (pr_v, pr_e, pr_vs, pr_unf, pr_unfs) v e vars unf
     (fun () -> unify_var_x v e vars unf)
 
 and unify_var_x v e vars unf : unification list =
@@ -142,7 +142,7 @@ and unify_var_x v e vars unf : unification list =
   else []
 
 let rec unify_lterm lterm1 lterm2 vars unf : unification list =
-  Debug.trace_4 "unify_lterm"
+  SBDebug.trace_4 "unify_lterm"
     (pr_lt, pr_lt, pr_vs, pr_unf, pr_unfs) lterm1 lterm2 vars unf
     (fun () -> unify_lterm_x lterm1 lterm2 vars unf)
 
@@ -175,7 +175,7 @@ and unify_lterm_x lterm1 lterm2 vars unf : unification list =
 
 (** unify the expression exp1 into the expression exp2 *)
 let rec unify_exp exp1 exp2 vars unf : unification list =
-  Debug.trace_4 "unify_exp"
+  SBDebug.trace_4 "unify_exp"
     (pr_e, pr_e, pr_vs, pr_unf, pr_unfs) exp1 exp2 vars unf
     (fun () -> unify_exp_x exp1 exp2 vars unf)
 
@@ -239,7 +239,7 @@ and unify_exp_x exp1 exp2 vars unf : unification list =
 
 (** unify the heap atom htom1 into the heap atom hatom2 *)
 let rec unify_hatom prog hatom1 hatom2 vars unf : unification list =
-  Debug.trace_4 "unify_hatom"
+  SBDebug.trace_4 "unify_hatom"
     (pr_ha, pr_ha, pr_vs, pr_unf, pr_unfs) hatom1 hatom2 vars unf
     (fun () -> unify_hatom_x prog hatom1 hatom2 vars unf)
 
@@ -277,7 +277,7 @@ and unify_hatom_x prog hatom1 hatom2 vars unf : unification list =
 (** unify the heap atoms hatoms1 into into the heap atoms hatoms2 *)
 and unify_hatoms prog hatoms1 hatoms2 pairs vars unf : unification list =
   let pr_pairs = pr_list_sbrace (pr_pair pr_ha pr_ha) in
-  Debug.trace_5 "unify_hatoms"
+  SBDebug.trace_5 "unify_hatoms"
     (pr_has, pr_has, pr_pairs, pr_vs, pr_unf, pr_unfs)
     hatoms1 hatoms2 pairs vars unf
     (fun () -> unify_hatoms_x prog hatoms1 hatoms2 pairs vars unf)
@@ -299,7 +299,7 @@ and unify_hatoms_x prog hatoms1 hatoms2 pairs vars unf : unification list =
 
 (** unify the formula f1 into the formula f2 *)
 let rec unify_heap prog (f1: formula) (f2: formula) : unification list =
-  Debug.trace_2 "unify_heap"
+  SBDebug.trace_2 "unify_heap"
     (pr_f, pr_f, pr_unfs) f1 f2
     (fun () -> unify_heap_x prog f1 f2)
 
@@ -354,7 +354,7 @@ let extend_heap_unification prog unf f1 f2 =
 
 (** check if f1 can unify with f2 *)
 let rec unify_pure mode prog (f1: formula) (f2: formula) unf : bool =
-  Debug.trace_3 "unify_pure" (pr_f, pr_f, pr_unf, pr_b) f1 f2 unf
+  SBDebug.trace_3 "unify_pure" (pr_f, pr_f, pr_unf, pr_b) f1 f2 unf
     (fun () -> unify_pure_x mode prog f1 f2 unf)
 
 and unify_pure_x mode prog (f1: formula) (f2: formula) unf : bool =
