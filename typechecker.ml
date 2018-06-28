@@ -2767,7 +2767,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             sb_lhs pos in
         let () = x_binfo_hp (add_str "translated sb_rhs: " SBCast.pr_pure_form)
             sb_rhs pos in
-        let _ = Songbird.create_templ_prog sb_lhs sb_rhs in
+        (* let _ = Songbird.create_templ_prog sb_lhs sb_rhs in *)
         (* let () = x_binfo_hp (add_str "sb_lhs model: " SBCast.pr_pure_form)
          *     lhs_tmpl pos in *)
 

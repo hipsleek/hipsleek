@@ -31,13 +31,13 @@ endif
 JOBS = 16
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
-LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSB = unix,str,xml-light,libsongbird,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSN = unix,str,xml-light,libsongbird,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
-INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDES = -I,$(CURDIR)/xml,-I,$(CURDIR)/libsongbird,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
+INCLUDESN = -I,$(CURDIR)/xml,-I,$(CURDIR)/libsongbird,-I,$(CURDIR)/cil,-I,$(CURDIR)/joust,-I,$(CURDIR)/ints,-I,+lablgtk2,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+9+11+12+25+28
 
