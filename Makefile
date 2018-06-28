@@ -7,6 +7,7 @@ BATLIB = batteries/batteries
 ELIB = extlib/extLib
 GRLIB = ocamlgraph/graph
 OLIBS = $(OPREP)/$(GRLIB),
+SBLIB = $(CURDIR)/libsongbird/libsongbird
 #CPPO_FLAGS = -pp "cppo -I ../ -D TRACE"
 CPPO_FLAGS =
 
@@ -31,8 +32,8 @@ endif
 JOBS = 16
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,xml-light,libsongbird,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
-LIBSN = unix,str,xml-light,libsongbird,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(SBLIB)
+LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB),$(SBLIB)
 #,z3
 LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
