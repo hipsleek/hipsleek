@@ -206,7 +206,7 @@ module Make (Token : SleekTokenS)
    ("ranking", FUNC);
    ("global",GLOBAL);
    ("logical", LOGICAL);
-   (* ("head",HEAD); *)
+   ("head",HEAD);
    ("HeapPred", HP);
    ("PostPred", HPPOST);
    ("ho_pred",HPRED);
@@ -289,7 +289,7 @@ module Make (Token : SleekTokenS)
    (* ("TermR", TERMR); *)
    ("subset", SUBSET);
    ("static", STATIC);
-   (* ("tail",TAIL); *)
+   ("tail",TAIL);
    ("then", THEN);
    ("this", THIS "this");
    ("time", DTIME);
