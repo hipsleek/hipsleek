@@ -96,7 +96,9 @@ let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let ifds = Libsongbird.Prover.infer_unknown_functions ifr_typ program [entail] in
+  let () = Libsongbird.Debug.hprint "prog: " Libsongbird.Cast.pr_program nprog in
+  let () = Libsongbird.Debug.hprint "pure entails: " Libsongbird.Cast.pr_pent entail in
+  let ifds = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
   let () = Libsongbird.Debug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds ifds in
   ()
 
