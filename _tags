@@ -12,6 +12,7 @@ not(<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml> or <cil/ocamlutil
 <omega_modified/uniform/obj/*.*>: not_hygienic
 <z3/lib/*.*>: not_hygienic
 <smt2slk_src/*.*>: not_hygienic
+<mona-1.4/**/*>: not_hygienic
 <mona-1.4/comp/lib/*.*>: not_hygienic
 <mona-1.4/comp/Lib/*.*>: not_hygienic
 <mona-1.4/comp/BDD/*.*>: not_hygienic
