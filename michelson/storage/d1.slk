@@ -1,0 +1,6 @@
+pred_prim Wallet<n:int> inv n >= 0.
+
+lemma self::Wallet<n> & n = a+b -> exists x: self::Wallet<a> * x::Wallet<b>.
+
+checkentail w::Wallet<3> |- w::Wallet<1>.
+print residue.

@@ -1,0 +1,77 @@
+data Coin {
+        Coin next;
+}.
+
+// List structure
+data Node {
+        int val;
+        Node next;
+}.
+
+pred list<n> == self = null & n = 0
+        or self::Node<_,r> * r::list<m> & n = m + 1
+        inv n >= 0.
+
+// View for a user
+pred money<n> == self = null & n = 0
+        or self::Coin<r> * r::money<m> & n = m+1
+        inv n >= 0.
+
+data User {
+        int key;
+        Coin wallet;
+}.
+
+data Storage1 {
+        int key;
+        int nat;
+        int value;
+}.
+
+data Parameter1 {
+        int option;
+        int sign;
+        int value;
+        int nat;
+}.
+
+data Transfer {
+        int from;
+        int rcv;
+        int amount;
+        int result;
+}.
+
+pred_prim Wallet<n> inv n >= 0.
+
+lemma_split "splitWallet" self::Wallet<f> & f = f1 + f2 & f1 >= 0 & f2 >= 0 -> self::Wallet<f> * self::Wallet<f>.
+
+lemma "combineWallet" self::Wallet<f1> * self::Wallet<f2> -> self::Wallet<f1+f2>.
+
+
+
+
+
+ checkentail  fltd_21=m & 
+             flted_21=100 & flted_22=100  & v_int_44_1918'=100
+ |-   fltd_22=v_int_44_1918'. 
+-----------------------------------------------------------------------------
+ checkentail  fltd_21=m & 
+             flted_21=100 & flted_22_2068=100  & v_int_44_1918'=100
+ |-  [flted_22/amount_100]
+(exists amount_100: amount_100=v_int_44_1918'). 
+-----------------------------------------------------------------------------[match w2,w2]
+ checkentail  w2::Wallet<flted_21>@M * 
+             flted_21=100 & flted_22_2068=100  & v_int_44_1918'=100
+ |-  [flted_22/amount_100]
+(exists amount_100: w2::Wallet<m>@M & amount_100=v_int_44_1918'). 
+-----------------------------------------------------------------------------[match w1,w1]
+ checkentail w1::Wallet<flted_22>@M * w2::Wallet<flted_22_2080>@M * 
+             flted_22_2080=100 & flted_22_2068=100  & v_int_44_1918'=100
+ |-  
+(exists amount_100: w1::Wallet<amount_100>@M * w2::Wallet<m>@M & amount_100=v_int_44_1918'). 
+
+print residue.
+
+
+

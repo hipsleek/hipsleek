@@ -1,0 +1,3 @@
+data Storage { int value; int key }
+
+

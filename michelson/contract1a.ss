@@ -10,17 +10,22 @@ transfer<from,rcv,amount,n> == self::Transfer<from,rcv,amount,n>
 	inv n >= 0 & n <= 2 & amount >= 0;
 
 // Money
-pred_prim Wallet<n:int>
-	inv n >= 0;
+data wallet {
+	int amount;
+}
+
+pred_prim Wallet<k,n> inv n >= 0;
+
+lemma "wallet" self::Wallet<k,n> <-> (exists w1: self::User<from,w1> * w1::wallet<n> & n >= 0);
 
 // User info
 data User {
 	int key;
-	int balance;
+	Wallet wallet;
 }
 
 void transfer(ref Transfer t, ref User u1, ref User u2)
-	requires t::transfer<from,rcv,amount,r> * u1::User<from,n> * u2::User<rcv,m>
+	requires t::transfer<from,rcv,amount,r> * u1::User<from,w1> * u2::User<rcv,w2> * w1::Wallet<n> * w2::Wallet<m>
 	case {
 		r = 0 -> 
 			case {
@@ -30,9 +35,10 @@ void transfer(ref Transfer t, ref User u1, ref User u2)
 		r != 0 -> ensures t::transfer<from,rcv,amount,r> * u1::User<from,n> * u2::User<rcv,m>;
 	}
 {
+/*
 	if (t.result == 0){
 		if (u1.balance >= t.amount) {
-			u1.balance = u1.balance - t.amount;
+			u1. = u1.balance - t.amount;
 			u2.balance = u2.balance + t.amount;
 			t.result = 1;
 		}
@@ -40,6 +46,8 @@ void transfer(ref Transfer t, ref User u1, ref User u2)
 			t.result = 2;
 		}
 	}
+*/
+	int n = u1.wallet.n;
 	return;
 }
 
@@ -57,6 +65,7 @@ data Parameter1 {
 	int nat;
 }
 
+/*
 int code1(Parameter1 p, ref Storage1 s, ref Transfer t)
         requires p::Parameter1<option,sign,value1,nat>@L * s::Storage1<key,nat2,value2> * t::transfer<from,rcv,amount,0>
         case {
@@ -139,4 +148,4 @@ void contract1(int option, int sign, int value, int nat, Transfer t, ref Storage
         }
         return;
 }
-
+*/
