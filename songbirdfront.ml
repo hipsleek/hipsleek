@@ -34,7 +34,7 @@ let rec translate_exp (exp: Cpure.exp): SBCast.exp =
   translate_loc loc)
   | _ -> Gen.Basic.report_error VarGen.no_pos "this exp is not handled"
 
-let translate_pure_formula (pure_f: Cpure.formula) : (SBCast.pure_form) =
+let translate_pf (pure_f: Cpure.formula) : (SBCast.pure_form) =
   match pure_f with
   | Cpure.BForm (b_formula, _) ->
     let (p_formula, _) = b_formula in
@@ -53,19 +53,8 @@ let translate_pure_formula (pure_f: Cpure.formula) : (SBCast.pure_form) =
 (* calls to Songbird's functions in songbird/src/prover.ml
    will be done here *)
 
-(* Input: 2 pure formulas: lhs and rhs of type SBCast.pure_form
-   Output: using Farkas and templates to infer to model*)
-
-(* let infer_model (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) =
- *   let pure_entail = SBCast.mk_entailment lhs rhs in
- *   let entail_list = [pure_entail] in
- *   () *)
-
-(* let create_rel_with_var var =
- *   let f_var = SBCast.mk_var "f" SBGlobals.TInt *)
-
 (* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
-let translate_lhs_to_templ (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_form *) =
+let translate_rhs_to_fdefn (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_form *) =
   match lhs with
   | BinRel (rel, exp1, exp2, pos) ->
     let exp2_vars = SBCast.fv_exp exp2 in
@@ -81,7 +70,7 @@ let translate_lhs_to_templ (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_fo
    Output: Input for songbird infer_unknown_functions
 *)
 let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
-  let (lhs_templ, args) = translate_lhs_to_templ lhs in
+  let (lhs_templ, args) = translate_rhs_to_fdefn lhs in
   let program = SBCast.mk_program "hip_input" in
   let f_defn = SBCast.mk_func_defn_unknown "f" args in
   let ifr_typ = SBGlobals.IfrStrong in
@@ -99,6 +88,15 @@ let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
   let () = Libsongbird.Debug.hprint "prog: " Libsongbird.Cast.pr_program nprog in
   let () = Libsongbird.Debug.hprint "pure entails: " Libsongbird.Cast.pr_pent entail in
   let ifds = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
-  let () = Libsongbird.Debug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds ifds in
-  ()
+  let () = Libsongbird.Debug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
+      ifds in
+  let func_defns = ifds |> List.map (fun ifd -> Libsongbird.Proof.get_ifd_fdefns
+                                        ifd) |> List.concat in
+  let lhs_repaired = Libsongbird.Cast.unfold_func_pf func_defns lhs in
+  lhs_repaired
 
+let get_repair_candidate (lhs: Cpure.formula) (rhs: Cpure.formula) =
+  let sb_lhs = translate_pf lhs in
+  let sb_rhs = translate_pf rhs in
+  let _ = create_templ_prog sb_lhs sb_rhs in
+  ()

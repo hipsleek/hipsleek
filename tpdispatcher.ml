@@ -2922,8 +2922,8 @@ let tp_imply_preprocess_x (ante: CP.formula) (conseq: CP.formula) : (bool option
         let conseq = CP.infer_level_pure conseq in (*add l.mu>0*)
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
-        let () = x_binfo_hp (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
-        let () = x_binfo_hp (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
+        let () = x_ninfo_hp (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
+        let () = x_ninfo_hp (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
         (ante,conseq)
       else
         (ante,conseq)
@@ -3222,9 +3222,9 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq old_imp_no timeout process =
   let imp_num = next_proof_no () in
   let imp_no = (string_of_int imp_num) in
-  x_binfo_zp (lazy ("IMP #" ^ imp_no)) no_pos;
-  x_binfo_zp (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
-  x_binfo_zp (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
+  x_ninfo_zp (lazy ("IMP #" ^ imp_no)) no_pos;
+  x_ninfo_zp (lazy ("imply_timeout: ante: " ^ (!print_pure ante))) no_pos;
+  x_ninfo_zp (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq))) no_pos;
   let cmd = PT_IMPLY(ante,conseq) in
   (* let () = Log.last_proof_command # set cmd in *)
   let fn () = x_add tp_imply ante conseq imp_no timeout process in
@@ -3434,9 +3434,9 @@ let imply_timeout_helper ante conseq process ante_inner conseq_inner imp_no
       let cons = [conseq] in
       List.map (fun cons->
           let (ante,cons) = simpl_pair false (requant ante, requant cons) in
-          let () = x_binfo_hp (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
+          let () = x_ninfo_hp (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
           let ante = CP.remove_dup_constraints ante in
-          let () = x_binfo_hp (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
+          let () = x_ninfo_hp (add_str "ante 4: " Cprinter.string_of_pure_formula) ante no_pos in
           match process with
           | Some (Some proc, true) -> (ante, cons)
           (* don't filter when in incremental mode - need to send full ante to prover *)

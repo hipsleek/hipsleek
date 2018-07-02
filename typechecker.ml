@@ -2761,17 +2761,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
 
-        let sb_lhs = Songbirdfront.translate_pure_formula pure_lhs in
-        let sb_rhs = Songbirdfront.translate_pure_formula pure_rhs in
-        let () = x_binfo_hp (add_str "translated sb_lhs: " Libsongbird.Cast.pr_pure_form)
-            sb_lhs pos in
-        let () = x_binfo_hp (add_str "translated sb_rhs: " Libsongbird.Cast.pr_pure_form)
-            sb_rhs pos in
-
-        let _ = Songbirdfront.create_templ_prog sb_lhs sb_rhs in
-
-        (* let unprimed_vars = Cpure.fv pure_lhs in
-         * let unprimed_vars = Cpure.filter_primed_vars unprimed_vars in *)
+        let _ = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"
@@ -2837,7 +2827,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
          *
          *     ()
          * in *)
-        (* let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in *)
+        let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
         (* let () = x_binfo_pp ("failure: " ^s) no_pos in *)
         (* let () = x_binfo_hp (add_str "rs: " pr1) rs pos in *)
         (* let () = x_binfo_hp (add_str "failed state: " Cprinter.pr_failed_states) rs pos in *)
@@ -3146,7 +3136,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
-          let () = x_ninfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let pr_flag = not(!phase_infer_ind) in
           let sel_hps = CF.get_hp_rel_name_struc (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
