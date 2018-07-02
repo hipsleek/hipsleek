@@ -2761,7 +2761,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
 
-        let _ = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
+        let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
+        let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
+            repaired_lhs no_pos in
+
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"
