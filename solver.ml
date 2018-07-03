@@ -2686,7 +2686,7 @@ and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option) (del
     (fun cs cl _ _ -> heap_entail_one_context_struc_x p i1 hp cl cs tid delayed_f join_id pos pid) cs cl i1 hp
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
-  x_tinfo_zp (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
+  x_dinfo_zp (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
   let rec get_pure_conseq_from_formula f =
     match f with
     | Or fo ->
@@ -2725,8 +2725,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = x_tinfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = x_tinfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_info_hp (add_str "false_iv" pr_svl) false_iv no_pos in
     let () = x_tinfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
     let () = Debug.tinfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
     let () = Debug.tinfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
@@ -2747,10 +2747,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
   else if (isConstETrue conseq) && (join_id=None) then
     ((SuccCtx [ctx]), TrueConseq)
   else
-    let () = Debug.ninfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
+    let () = Debug.dinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
     let result, prf = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
     let result = subs_crt_holes_list_ctx result in
-    let () = Debug.ninfo_hprint (add_str "result 2766: " Cprinter.string_of_list_context) result no_pos in
+    let () = Debug.dinfo_hprint (add_str "result 2766: " Cprinter.string_of_list_context) result no_pos in
     (result, prf)
 
 and need_unfold_rhs prog vn=
@@ -2833,10 +2833,10 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
         else
           (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
           let () = flush(stdout) in
-          let () = x_tinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
+          let () = x_dinfo_hp (add_str "es(2)" Cprinter.string_of_entail_state(* _short *)) es no_pos in
           let () = flush(stdout) in
           let es = (CF.add_to_estate_with_steps es ss) in
-          let () = x_tinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state) es no_pos in
+          let () = x_dinfo_hp (add_str "es(3)" Cprinter.string_of_entail_state) es no_pos in
           let () = flush(stdout) in
           let tmp, prf =
             x_add heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid delayed_f join_id pos pid
@@ -3144,7 +3144,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
             (****************************************************)
             (match join_id with
              | Some id ->
-               let () = x_tinfo_pp "inferring join_id some id\n" no_pos in
+               let () = x_binfo_pp "inferring join_id some id\n" no_pos in
                let res,ctx_option = find_thread_delayed_resource es es.CF.es_formula id pos in
                (match res, ctx_option with
                 | _ , Some ctx -> ctx (*often error ctx*)
@@ -3171,12 +3171,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                   (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) (mk_cex true) pos, Failure)
                ) (*END match res, ctx_option with *)
              | None ->
-               let () = x_tinfo_pp "inferring join_id none\n" no_pos in
+               let () = x_dinfo_pp "inferring join_id none\n" no_pos in
                (****************************************************)
                (**************** <<< Perform check when join *******)
                match f with
                | ECase b   ->
-                 let () = x_tinfo_pp "inferring f ecase\n" no_pos in
+                 let () = x_binfo_pp "inferring f ecase\n" no_pos in
                  let ctx = add_to_context_num 1 ctx11 "case rule" in
                  let ivs = collect_infer_vars ctx11 in
                  let case_brs = b.formula_case_branches in
@@ -3265,7 +3265,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                      | None -> (false, [], [], [])
                    in
                    if need_unfold then
-                     let () = x_tinfo_pp "need_unfold \n" no_pos in
+                     let () = x_binfo_pp "need_unfold \n" no_pos in
                      let nf = CF.do_unfold_view prog pr_views formula_base in
                      let fs = CF.list_of_disjs nf in
                      let struc_disj = List.map (fun f ->
@@ -4419,16 +4419,16 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
             | None ->
               (true,false, None, None)
           in
-          let () = Debug.tinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
-          let () = Debug.tinfo_hprint (add_str "real_c" string_of_bool) real_c no_pos in
-          let () = Debug.tinfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
+          let () = Debug.dinfo_hprint (add_str "early contra detect" string_of_bool) contra no_pos in
+          let () = Debug.dinfo_hprint (add_str "real_c" string_of_bool) real_c no_pos in
+          let () = Debug.dinfo_hprint (add_str "ctx" Cprinter.string_of_context) ctx no_pos in
           if not(contra) then
             let () = x_tinfo_pp "not contra \n" no_pos in
             if real_c then
               let () = x_tinfo_pp "real c \n" no_pos in
               heap_entail()
             else (* early failure due to real lhs-rhs contra detected *)
-              let () = Debug.ninfo_pprint "Early lhs-rhs contra detected" no_pos in
+              let () = Debug.binfo_pprint "Early lhs-rhs contra detected" no_pos in
               let pr = Cprinter.string_of_formula in
               let pr2 = Cprinter.string_of_context in
               let cex = (mk_cex true) in
@@ -4453,7 +4453,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               (* let () = Globals. smt_return_must_on_error () in *)
               let lc = x_add Musterr.build_and_failures 5 "early contra detect: " fc
                   Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
-              let () = Debug.ninfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
+              let () = Debug.binfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
               (lc,prf)
           else
             match (r1,prf) with
@@ -5882,7 +5882,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         else
           (*   let () = x_tinfo_pp "temp_opt:no convert_maymust" no_pos in *)
           res
-      else 
+      else
         (* let () = x_tinfo_pp "no convert_maymust" no_pos in *)
         res
     in
@@ -6758,7 +6758,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
       CF.add_quantifiers quans neg_f
     | CF.Or orf -> report_error pos "heap_entail_empty_rhs_heap: conseq must not contain or"
   in
-  let safe_exc () = 
+  let safe_exc () =
     (* infer empty HP_Rel for classic reasoning *)
     let classic_flag = estate_orig.CF.es_infer_obj # is_classic_all in
     let () = x_tinfo_hp (add_str "lhs" Cprinter.string_of_formula_base) lhs no_pos in
@@ -6828,7 +6828,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) conseq (is_folding : bool)  
               (CF.rm_htrue_estate estate_orig1
               ,{lhs1 with formula_base_heap = CF.rm_htrue_heap lhs1.formula_base_heap})
             else estate_orig1,lhs1 
-        else 
+        else
           let () = x_tinfo_pp "not HTrue branch?" no_pos in
           estate_orig1,lhs1 in
       let ctx, proof = heap_entail_empty_rhs_heap_one_flow prog conseq is_folding estate_orig1 lhs1 rhs_p rhs_matched_set pos in
@@ -7136,7 +7136,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
         x_dinfo_pp ">>>>>> entail_empty_heap: cp1 <<<<<<" pos;
         x_dinfo_hp (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
         x_dinfo_hp (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
-        x_tinfo_hp (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
+        x_dinfo_hp (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
         (* what exactly is split_a_opt??? *)
         let (i_res1, i_res2, i_res3), _ = 
           if (MCP.isConstMTrue rhs_p) then ((true, [], None), None)
@@ -7193,7 +7193,7 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
               in
               let merge_rel_ass (rs1,rs2) =
                 rs1 @ rs2 in
-              let (ip1,ip2,relass,entail_states,false_es) = 
+              let (ip1,ip2,relass,entail_states,false_es) =
                 let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
                     match neg,pure,rel with
                     | None,None,[] ->
@@ -7243,28 +7243,31 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                   let () = x_tinfo_pp "marking \n" no_pos in
                   begin
                     match ip2 with
-                    | None -> 
+                    | None ->
+                      let () = x_tinfo_pp "marking \n" no_pos in
                       begin
                         match relass with
-                        | [] -> 
+                        | [] ->
                           i_res1,i_res2,i_res3
                         | _ -> (* stk_inf_pure # push pf; *)
                           stk_rel_ass # push_list relass;
-                          let () = 
+                          let () =
                             if entail_states = [] then 
                               report_error pos "Expecting a non-empty list of entail states"
-                            else 
+                            else
                             if not(false_es) then ()
-                            else 
+                            else
                               let n = List.length entail_states in
                               let () = Debug.ninfo_zprint  (lazy  ("WARNING : Pushing "^(string_of_int n)^"stk_estate (6)")) pos in
                               stk_estate # push_list entail_states in
                           (true,[],None)
                       end
                     | Some pf ->
+                      let () = x_tinfo_pp "marking \n" no_pos in
                       begin
                         match relass with
-                        | [] -> 
+                        | [] ->
+                          let () = x_tinfo_pp "marking \n" no_pos in
                           stk_inf_pure # push_list_loc x_loc [pf];
                           let new_pf = MCP.mix_of_pure pf in
                           let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
@@ -7299,7 +7302,9 @@ and heap_entail_empty_rhs_heap_one_flow (prog : prog_decl) conseq (is_folding : 
                 let cons4 = (MCP.pure_of_mix split_conseq) in
                 (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure,otherwise MUST failure *)
                 (*check maymust for ante0*)
-                let (fc, (contra_list, must_list, may_list)) = x_add Musterr.check_maymust_failure (MCP.pure_of_mix split_ante0) cons4 in
+                let (fc, (contra_list, must_list, may_list)) =
+                  x_add Musterr.check_maymust_failure (MCP.pure_of_mix split_ante0) cons4 in
+                x_dinfo_hp (add_str "add_to_rhs" Cprinter.string_of_pure_formula) (MCP.pure_of_mix split_ante1) pos;
                 match fc with
                 | Failure_May _ -> Musterr.check_maymust_failure (MCP.pure_of_mix split_ante1) cons4
                 | _ -> (fc, (contra_list, must_list, may_list)) in
@@ -7560,6 +7565,7 @@ type: bool *
             else
               (must_list, may_list, contra_list)
           in
+          let () = x_tinfo_zp (lazy ("new estate: " ^ (Cprinter.string_of_entail_state new_estate))) pos in
           let lc0 = x_add Musterr.build_and_failures 1 "213" fc_kind Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
           (lc0, prf)
         else

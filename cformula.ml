@@ -10880,7 +10880,7 @@ let get_final_error cl=
       get_failure_ctx_list cs
 
 let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state option)) =
-  let rec helper ft = 
+  let rec helper ft =
     match ft with
     | Basic_Reason (fc,fe,ft) ->
       (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)

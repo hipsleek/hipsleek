@@ -14440,11 +14440,12 @@ let decide_keep vars_to_keep v =
   (not (is_node_typ v)) || (List.exists (eq_spec_var v) vars_to_keep)
 
 (*get ante substitutions and try and apply as many as possible*)
-let expand_eqs_x ante conseq = 
+let expand_eqs_x ante conseq =
   let a_alias = get_vv_eqs ante in
+
   let rec sub (ante,conseq) nf = match nf with 
     | [] -> (ante,conseq)
-    | h::t -> 
+    | h::t ->
       let t = List.map (fun (c1,c2)-> subst_var h c1, subst_var h c2) t in
       sub (subst [h] ante ,subst [h] conseq) t in
   sub (ante,conseq) a_alias

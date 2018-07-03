@@ -473,7 +473,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         CF.formula_assume_lbl = post_label;
         CF.formula_assume_ensures_type = etype0; (* duplicate??? *)
         CF.formula_assume_struc = post_struc} ->
-      let () = x_binfo_pp "marking \n" no_pos in
+      let () = x_dinfo_pp "marking \n" no_pos in
       let ctx = CF.add_path_id ctx (None,0) 0 in
       let etype = if (check_is_classic ()) then Some ((check_is_classic ())) else
           (* run-fast-test: classic2, classic2a *)
@@ -2676,12 +2676,12 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans1,prf)
       end
     else
-      let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
+      let () = x_dinfo_hp (add_str "do_classic_frame_rule" string_of_bool) (check_is_classic ()) pos in
       let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf
   in
   let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_ninfo_hp (add_str "rs: " pr1) rs pos in
+  let () = x_dinfo_hp (add_str "rs: " pr1) rs pos in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
       begin
@@ -2725,12 +2725,12 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) f no_pos in
             let _,p,_,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
         in
-        let () = x_binfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)
+        let () = x_dinfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)
                             ) failed_ctx.fc_current_lhs.es_formula pos in
         let failed_lhs = failed_ctx.fc_current_lhs.es_formula in
         let pure_failed_lhs = get_pure_conseq_from_formula failed_lhs in
         let rhs = failed_ctx.fc_orig_conseq in
-        let () = x_binfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
+        let () = x_dinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
             rhs pos in
         let rec get_pure_conseq_from_struc sf =
           match sf with
@@ -2752,12 +2752,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
         in
         let pure_rhs = get_pure_conseq_from_struc rhs in
-        let (pure_lhs, pure_rhs) = Cpure.expand_eqs_x pure_failed_lhs pure_rhs
-        in
-        let pure_lhs = Cpure.drop_triv_eq pure_lhs in
+        let pure_lhs = Cpure.elim_equi_ante pure_failed_lhs pure_rhs in
         let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
-        (* let pure_failed_lhs = Cpure.simplify_eqn pure_failed_lhs in *)
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
 
@@ -2769,67 +2766,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             "memory leak failure" else
             "Post condition cannot be derivedddddddddddddddddddddddddd"
         in
-        (* let () = SBDebug.pprint "\nsb debug trying\n" in
-         * let () = SBDebug.pprint (SBLib.Print.pr_int 3) in
-         * let _ = !SBGlobals.dump_prog_smt in
-         * let _ = !SBCast.time_mk_pconj in *)
-        (* let vars = unprimed_vars in
-         * let var_res = CP.mk_spec_var "res" in
-         * let vars = List.filter (fun var -> not(CP.eq_spec_var var var_res)) vars in
-         * 
-         * (\* let new_model = *\)
-         * let (new_lhs, model_vars) =
-         *   if (List.length vars == 1) then
-         *     let var_a = CP.mk_spec_var "a" in
-         *     let var_a_exp = CP.mk_exp_var var_a in
-         *     let var_b = CP.mk_spec_var "b" in
-         *     let var_b_exp = CP.mk_exp_var var_b in
-         *     let var_c = CP.mk_spec_var "c" in
-         *     let var_c_exp = CP.mk_exp_var var_c in
-         * 
-         *     let fst_var = List.hd vars in
-         *     let fst_var_exp = CP.mk_exp_var fst_var in
-         *     let mult_exp = CP.mkMult var_a_exp fst_var_exp  no_pos in
-         *     let rhs_exp = CP.mkAdd mult_exp var_b_exp no_pos in
-         *     let var_f = CP.mk_spec_var "f" in
-         *     let var_f_exp = CP.mk_exp_var var_f in
-         *     let new_pure_lhs = match pure_lhs with
-         *       | CP.BForm (b_form, _) ->
-         *         let (p_form, _) = b_form in
-         *         begin
-         *           match p_form with
-         *           | CP.Eq (a, _, _)
-         *           | CP.Gt (a, _, _)
-         *           | CP.Gte (a, _, _)
-         *           | CP.Lt (a, _, _)
-         *           | CP.Lte (a, _, _)
-         *             -> CP.mk_eq_exp a var_f_exp
-         *           | _ -> report_error no_pos "lhs_b_formula not handled"
-         *         end
-         *       | _ -> report_error no_pos "lhs_b_formula not handled"
-         *     in
-         *     let f_formula = CP.mkPure (CP.mkEq var_f_exp rhs_exp no_pos) in
-         *     (CP.mkAnd new_pure_lhs f_formula no_pos, [var_a; var_b])
-         *   else report_error no_pos "length var_list > 1 not handled"
-         * in
-         * let () = x_binfo_hp (add_str "new lhs: " Cprinter.string_of_pure_formula)
-         *     new_lhs pos in
-         * let assertions = [new_lhs; pure_rhs] in
-         * let () = x_binfo_hp (add_str "model vars: " Cpure.string_of_var_list)
-         *     model_vars pos in
-         * let pr1 = pr_list !CP.print_formula in
-         * let () = x_binfo_hp (add_str "assertions: " pr1) assertions pos in
-         * let z3_res = Z3.get_model false model_vars assertions in
-         * let () = x_binfo_hp (add_str "model res: " Z3m.string_of_z3m_res)
-         *     z3_res pos in *)
-
-        (* let () = match z3_res with
-         *   | Z3m.Unsat _ -> let () = x_binfo_pp "UNSAT \n" no_pos in
-         *     ()
-         *   | Z3m.Sat_or_Unk sat ->
-         *
-         *     ()
-         * in *)
         let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
         (* let () = x_binfo_pp ("failure: " ^s) no_pos in *)
         (* let () = x_binfo_hp (add_str "rs: " pr1) rs pos in *)
@@ -3139,7 +3075,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
           (* push proc.proc_args *)
           let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
           stk_vars # push_list args;
-          let () = x_binfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
+          let () = x_dinfo_hp (add_str "start check_proc" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let pr_flag = not(!phase_infer_ind) in
           let sel_hps = CF.get_hp_rel_name_struc (proc0.Cast.proc_stk_of_static_specs # top) (* proc0.Cast.proc_static_specs *) in
           let () =  Debug.ninfo_hprint (add_str "sel_hps" (!CP.print_svl) ) sel_hps no_pos in
@@ -3597,7 +3533,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
     ) [] sorted_proc_main in
   let proc_scc0 = List.rev proc_scc in
   let proc_scc = Cast.update_mut_vars_bu iprog prog proc_scc0 in
-  let () = x_binfo_hp (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
+  let () = x_dinfo_hp (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   (*************************** INTERNAL ***************************)
   let verify_scc_helper prog verified_sccs scc =
@@ -3612,8 +3548,8 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
     let has_infer_shape_post_proc = x_add Iincr.is_infer_const_scc scc INF_SHAPE_POST in
     let has_infer_shape_proc = (x_add_1 Pi.is_infer_shape_scc scc) in
     let has_infer_pre_proc = Pi.is_infer_pre_scc scc in
-    let () = x_binfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
-    let () = x_binfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
+    let () = x_dinfo_hp (add_str "has_infer_shape_proc" string_of_bool) has_infer_shape_proc no_pos in
+    let () = x_dinfo_hp (add_str "has_infer_pre_proc" string_of_bool) has_infer_pre_proc no_pos in
     let () = if (not(has_infer_shape_proc) && has_infer_pre_proc) then Pi.add_pre_relation_scc prog scc in
     let has_infer_post_proc = Pi.is_infer_post_scc scc in
     let () = if (not(has_infer_shape_proc)) then x_add Pi.add_post_relation_scc prog scc in
