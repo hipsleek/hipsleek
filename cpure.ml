@@ -678,7 +678,7 @@ let is_int_str_aux (n:int) (s:string) : bool =
     else false
 
 let ident_of_spec_var (sv: spec_var) = match sv with
-  | SpecVar (t, v, _) -> v 
+  | SpecVar (t, v, _) -> v
 
 let string_of_spec_var ?(print_typ=false) (sv: spec_var) = match sv with
   | SpecVar (t, v, p) -> 

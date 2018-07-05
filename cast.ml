@@ -531,8 +531,6 @@ and exp = (* expressions keep their types *)
   | CheckRef of exp_check_ref
   | Java of exp_java
   (* standard expressions *)
-  (* | ArrayAt of exp_arrayat (* An Hoa *) *)
-  (* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -545,20 +543,12 @@ and exp = (* expressions keep their types *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
-        (*
-	  | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc)
-        (* v.f --> (type of f, v, (f, position of f in field list), pos *)
-	  | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc)
-        (* field assignment is flattened to form x.f = y only *)
-        *)
   | ICall of exp_icall
   | IConst of exp_iconst
-  (*| ArrayAlloc of exp_aalloc *) (* An Hoa *)
   | New of exp_new
   | Null of loc
   | EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
   | Print of (int * loc)
-  (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
   | This of exp_this
@@ -3001,7 +2991,6 @@ let exp_fv (e:exp) =
     | _ -> ac in
   fold_exp_args e [] f f_args comb_f []
 
-
 let get_mut_vars_bu_x cprocs (e0 : exp): (ident list * ident list) =
   let f e=
     match e with
@@ -4457,4 +4446,51 @@ let is_segmented_view vd =
 (*   let pr = pr_pair !CP.print_sv (pr_option (pr_list (pr_pair !CP.print_sv !CP.print_formula))) in *)
 (*   let () = y_tinfo_hp (add_str "get_data_and_views" (pr_list pr)) r in *)
 (*   r *)
+
+let flatter (exp: exp) =
+  let rec aux exp list =
+    match exp with
+    | Seq exp_seq ->
+      let () = x_binfo_pp ("Sequence") no_pos in
+      let exp1_list = aux exp_seq.exp_seq_exp1 list in
+      aux exp_seq.exp_seq_exp2 exp1_list
+    | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
+      aux block.exp_block_body list
+    | _ -> [exp] @ list
+    (* | Label b -> let () = x_binfo_pp ("marking") no_pos in
+     *                [exp] @ list
+     * | CheckRef _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Java _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Assert _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Assign _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Barrier _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | BConst _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Bind _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Cast _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Catch _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Cond _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Debug _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Dprint _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | FConst _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | IConst _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | New _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | Null _ -> let () = x_binfo_pp ("marking") no_pos in  [exp] @ list
+     * | _ -> [exp] @ list *)
+    (* | SCall ({exp_scall_type = t;
+   *           exp_scall_method_name = _;
+   *           exp_scall_arguments = _;
+   *           exp_scall_pos = _}) -> Some t
+   * | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
+   * | This ({exp_this_type = t}) -> Some t
+   * | Var ({exp_var_type = t; exp_var_name = _; exp_var_pos = _}) -> Some t
+   * | VarDecl _ -> Some void_type
+   * | Unit _ -> Some void_type
+   * | While _ -> Some void_type
+   * | Unfold _ -> Some void_type
+   * | Try _ -> Some void_type
+   * | Time _ -> None
+   * | Sharp b -> Some b.exp_sharp_type
+   * | Par _ -> Some void_type *)
+
+  in List.rev(aux exp [])
 
