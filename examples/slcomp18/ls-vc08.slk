@@ -1,0 +1,12 @@
+
+data node {
+	node next;
+}.
+
+pred ls<out> ==   emp & self=out
+	or  exists u: self::node<u:next> * u::ls<out>
+.
+
+
+checkentail x::ls<y> * y::ls<z> & z=null & x != null & y != null
+	 |- x::ls<z>.
