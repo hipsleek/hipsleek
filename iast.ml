@@ -106,6 +106,10 @@ and view_decl =
     try_case_inference: bool;
     view_materialized_vars: ident list; }
 
+(* and func_decl =
+ *   | FuncForm of func_decl_body
+ *   | FuncUnknown of func_decl_body *)
+
 and func_decl = { func_name : ident;
                   func_typed_vars : (typ * ident) list;}
 

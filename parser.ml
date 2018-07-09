@@ -3083,16 +3083,17 @@ fct_list: [[ `OSQUARE; t=fct_arg_list; `CSQUARE -> [] ]];
 
 opt_fct_list:[[ t = OPT fct_list -> []]];
 
-(*** Function declaration ***)  
+(*** Function declaration ***)
 func_decl:
   [[ fh=func_header -> fh
+   (* | fh=func_header; `EQ; `QMARK -> FuncUnknown fh *)
   ]];
 
 func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
 func_header:
   [[ `FUNC; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
-      let () = func_names # push id in 
+      let () = func_names # push id in
       { func_name = id;
         func_typed_vars = tl;
       }

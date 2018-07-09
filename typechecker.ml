@@ -2758,48 +2758,49 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
 
-        let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
-        let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
-            repaired_lhs no_pos in
-        let repair_vars = Cpure.fv repaired_lhs in
+        (* let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
+         * let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
+         *     repaired_lhs no_pos in
+         * let repair_vars = Cpure.fv repaired_lhs in *)
 
         (* let () = x_binfo_hp (add_str "prog: " Cprinter.string_of_program) prog no_pos in *)
         (* let () = x_binfo_hp (add_str "prog.data_decls: " (pr_list Cprinter.string_of_data_decl)) prog.prog_data_decls no_pos in
          * let () = x_binfo_hp (add_str "prog.procs: " (Cprinter.string_of_proc_decl_list)) (Cast.list_of_procs prog) no_pos in *)
         (* let () = x_binfo_hp (add_str "proc: " Cprinter.string_of_proc_decl_no_body) proc no_pos in *)
 
-        let proc_name = proc.proc_name in
-        let current_proc = Cast.find_proc prog proc_name in
-        let body_exp = match current_proc.proc_body with
-          | Some exp -> exp
-          | None -> Gen.Basic.report_error VarGen.no_pos
-                      "get_candidate: there is no body"
-        in
-        let ident_list = List.map (fun var -> Cpure.ident_of_spec_var var) repair_vars in
+        (* let proc_name = proc.proc_name in
+         * let current_proc = Cast.find_proc prog proc_name in
+         * let body_exp = match current_proc.proc_body with
+         *   | Some exp -> exp
+         *   | None -> Gen.Basic.report_error VarGen.no_pos
+         *               "get_candidate: there is no body"
+         * in
+         * let ident_list = List.map (fun var -> Cpure.ident_of_spec_var var) repair_vars in *)
 
         (* let () = x_binfo_hp (add_str "proc: " (Cprinter.string_of_proc_decl 1)) current_proc no_pos in *)
-        let str = match current_proc.proc_body with
-          | Some e -> (Cprinter.string_of_exp e) ^ "\n"
-          | None -> "None\n"
-        in
-        let () = x_binfo_pp str no_pos in
-        let get_candidate_repair_exp exp idents =
-          let exp_list = Cast.flatter exp in
-          let exp_idents = exp_fv exp in
-          let exp_idents = Gen.BList.remove_dups_eq (fun s1 s2 ->
-              String.compare s1 s2 = 0
-            ) exp_idents in
-          let () = x_binfo_hp (add_str "idents: " (Cprinter.str_ident_list))
-              exp_idents no_pos in
-          (* if (List.mem "res" idents) then (List.hd (List.rev exp_list))
-           * else *)
-          List.find (fun x -> let x_fv = exp_fv x in
-                           (Gen.BList.intersect_eq (fun x y ->
-                                String.compare x y = 0) x_fv exp_idents) != [])
-              (List.tl (List.rev exp_list))
-        in
-        let candidate_exp = get_candidate_repair_exp body_exp ident_list in
-        let () = x_binfo_hp (add_str "candidate_exp: " Cprinter.string_of_exp) candidate_exp pos in
+
+        (* let str = match current_proc.proc_body with
+         *   | Some e -> (Cprinter.string_of_exp e) ^ "\n"
+         *   | None -> "None\n"
+         * in
+         * let () = x_binfo_pp str no_pos in
+         * let get_candidate_repair_exp exp idents =
+         *   let exp_list = Cast.flatter exp in
+         *   let exp_idents = exp_fv exp in
+         *   let exp_idents = Gen.BList.remove_dups_eq (fun s1 s2 ->
+         *       String.compare s1 s2 = 0
+         *     ) exp_idents in
+         *   let () = x_binfo_hp (add_str "idents: " (Cprinter.str_ident_list))
+         *       exp_idents no_pos in
+         *   (\* if (List.mem "res" idents) then (List.hd (List.rev exp_list))
+         *    * else *\)
+         *   List.find (fun x -> let x_fv = exp_fv x in
+         *                    (Gen.BList.intersect_eq (fun x y ->
+         *                         String.compare x y = 0) x_fv exp_idents) != [])
+         *       (List.tl (List.rev exp_list))
+         * in
+         * let candidate_exp = get_candidate_repair_exp body_exp ident_list in
+         * let () = x_binfo_hp (add_str "candidate_exp: " Cprinter.string_of_exp) candidate_exp pos in *)
 
 
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
