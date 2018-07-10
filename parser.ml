@@ -57,6 +57,7 @@ type decl =
   | Coercion_list of coercion_decl_list
   | Include of string
   | Template of templ_decl
+  | ExpDecl of exp_decl
   | Ut of ut_decl
   | Ui of ui_decl
 
@@ -122,6 +123,7 @@ let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let templ_names = new Gen.stack (* List of declared templates' names *)
+let exp_names = new Gen.stack (* List of declared templates' names *)
 let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
 let ui_names = new Gen.stack (* List of declared unknown imm rel *)
 let view_names = new Gen.stack (* list of names of views declared *)
@@ -2297,10 +2299,11 @@ cexp_w:
        *)
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
         else if templ_names # mem id then
+          let () = print_string "\n template name\n" in
           Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
         else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
           report_error (get_pos 1) ("should be a pure relation, and not a heap pred here")
-        else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then 
+        else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then
           begin
             let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
             let pos = get_pos_camlp4 _loc 1 in
@@ -3047,9 +3050,9 @@ split_combine:
   [[ h=hpred_header -> ()
    | h=hpred_header; `SPLIT; t=SELF -> ()
    | h=hpred_header; `COMBINE; t=SELF -> ()]];
-   
+
 ext_form: [[ h=hpred_header;	`WITH; `OBRACE; t=ho_fct_def_list; `CBRACE ->("",[])]];
-  
+
 ho_fct_header: [[`IDENTIFIER id; `OPAREN; f= fct_arg_list; `CPAREN -> f]];
 
 ho_fct_def:	[[ h=ho_fct_header; `EQ; s=shape -> ()]];
@@ -3068,7 +3071,7 @@ typed_arg:
 
 opt_typed_arg_list: [[t=LIST0 typed_arg SEP `COMMA -> [] ]];
 
-type_var: 
+type_var:
    [[ t= typ -> ()
     | `SET; `OSQUARE; t=typ; `CSQUARE -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE -> ()]];
@@ -3175,7 +3178,7 @@ rel_body:[[ (* formulas {
 (* Template Definition *)
 templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN; b = OPT templ_body -> 
   let () = templ_names # push id in 
-  let tdef = { 
+  let tdef = {
     templ_name = id;
     templ_ret_typ = t;
     templ_typed_params = tl;
@@ -3184,6 +3187,30 @@ templ_decl: [[ `TEMPLATE; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_o
   tdef ]];
 
 templ_body: [[ `EQEQ; pc = cexp -> pc ]];
+
+(* Expression Definition *)
+exp_decl: [[
+    `FUNC; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN;
+    `EQEQ; b = cexp ->
+    let () = exp_names # push id in
+    let tdef = {
+      exp_name = id;
+      exp_ret_typ = t;
+      exp_typed_params = tl;
+      exp_body = ExpForm b;
+      exp_pos = get_pos_camlp4 _loc 1; } in 
+    tdef
+  | `FUNC; t = typ; `IDENTIFIER id; `OPAREN; tl = typed_id_list_opt; `CPAREN;
+    `EQEQ; `QMARK->
+  let () = exp_names # push id in
+  let tdef = {
+    exp_name = id;
+    exp_ret_typ = t;
+    exp_typed_params = tl;
+    exp_body = ExpUnk;
+    exp_pos = get_pos_camlp4 _loc 1; } in 
+  tdef
+           ]];
 
 (* Unknown Temporal Definition *)
 ut_fname: [[ `AT; `IDENTIFIER fn -> fn ]];
@@ -3296,6 +3323,7 @@ hprogn:
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
       let templ_defs = new Gen.stack in (* List of template definitions *)
+      let exp_defs = new Gen.stack in (* List of template definitions *)
       let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let ui_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
@@ -3316,6 +3344,7 @@ hprogn:
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef
         | Template tdef -> templ_defs # push tdef
+        | ExpDecl exp_def -> exp_defs # push exp_def
         | Ut utdef -> ut_defs # push utdef
         | Ui uidef -> ui_defs # push uidef
         | Hp hpdef -> hp_defs # push hpdef 
@@ -3391,6 +3420,7 @@ decl:
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=templ_decl; `DOT -> Template r
+  |  r=exp_decl; `DOT -> ExpDecl r
   |  r=ut_decl; `DOT -> Ut r
   |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
@@ -4244,7 +4274,8 @@ invocation_expression:
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
-    let _ =
+                         let () = print_string "\nfunction call\n" in
+   let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 
       else () 

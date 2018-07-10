@@ -133,6 +133,18 @@ and templ_decl = {
   templ_pos: loc;
 }
 
+and exp_body_typ =
+  | ExpForm of P.exp
+  | ExpUnk
+
+and exp_decl = {
+  exp_name: ident;
+  exp_ret_typ: typ;
+  exp_typed_params: (typ * ident) list;
+  exp_body: exp_body_typ;
+  exp_pos: loc;
+}
+
 (* Unknown Temporal Declaration *)
 and ut_decl = {
   ut_name: ident;
