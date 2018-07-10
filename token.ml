@@ -181,7 +181,7 @@ module Token = struct
     | SIMPLIFY -> "simplify" | SLK_HULL -> "slk_hull"  | SLK_PAIRWISE -> "slk_pairwise"
     | COMPOSE ->"compose" | CONST ->"const" | CONTINUE ->"continue"	| DATA ->"data" | DDEBUG ->"debug" | DIFF ->"diff"| DYNAMIC ->"dynamic"
     | DTIME ->"time" | ELSE_TT ->"else" | EMPTY -> "emp"| ENSURES ->"ensures" | ENSURES_EXACT ->"ensures_exact" | ENSURES_INEXACT ->"ensures_inexact" | ENUM ->"enum"| EXISTS ->"ex" | EXTENDS ->"extends" | EXPECT_INFER -> "expect_infer"
-    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> (* "ranking" *) "func"
+    | FALSE ->"false"| FLOAT ->"float" | FORALL ->"forall" | FUNC -> "ranking"
     | HTRUE -> "htrue"
     | HP->"HeapPred" | HPPOST->"PostPred"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INFINT_TYPE ->"INFint"| INTERSECT ->"intersect" | INV->"inv" | INLINE ->"inline" (* An Hoa : inline added *)
