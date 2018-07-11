@@ -36,6 +36,7 @@ type prog_decl = {
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
   mutable prog_ui_decls: ui_decl list;
+  mutable prog_exp_decls: exp_decl list;
   mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
   mutable prog_view_equiv : (ident * ident) list; (*inferred with --pred-en-equiv*)
   mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
@@ -202,6 +203,14 @@ and ui_decl = {
   ui_rel: rel_decl;
   ui_is_pre: bool;
   ui_pos: loc;
+}
+
+and exp_decl = {
+  exp_name: ident;
+  exp_ret_typ: typ;
+  exp_params: P.spec_var list;
+  exp_body: P.exp;
+  exp_pos: loc;
 }
 
 and hp_decl = {
@@ -579,6 +588,7 @@ let cprog = ref {
          (fun x -> "not yet initialized" ) (=) in s);
     (* Cprinter.string_of_rel_decl (=)          *)
     prog_templ_decls = [];
+    prog_exp_decls = [];
     prog_ui_decls = [];
     prog_ut_decls = [];
     prog_hp_decls = [];

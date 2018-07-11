@@ -1590,6 +1590,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let tmp_views,ls_mut_rec_views = x_add_1 order_views prog.I.prog_view_decls in
          let cuts = List.map (x_add trans_ut prog) prog.I.prog_ut_decls in
          let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
+         let cexp_decls = List.map (trans_exp_decl prog) prog.I.prog_exp_decls in
          (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
          (* let () = print_string "trans_prog :: going to trans_view \n" in *)
          x_tinfo_hp (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
@@ -1689,6 +1690,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
            C.prog_ui_decls = (ui_vs);
+           C.prog_exp_decls = cexp_decls;
            C.prog_hp_decls = chps;
            C.prog_view_equiv = []; (*to update if views equiv is allowed to checking at beginning*)
            C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
@@ -3335,7 +3337,7 @@ and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
       let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
           (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
       Some body
-    | Some bd -> 
+    | Some bd ->
       let n_tl = x_add gather_type_info_exp prog bd n_tl tdef.I.templ_ret_typ in
       Some (x_add trans_pure_exp bd (fst n_tl))
   in
@@ -3368,6 +3370,35 @@ and trans_ui (prog: I.prog_decl) (uidef: I.ui_decl): C.ui_decl =
     C.ui_is_pre = uidef.I.ui_is_pre;
     C.ui_pos = pos; } in
   c_ui
+
+and trans_exp_decl (prog: I.prog_decl) (exp_def: I.exp_decl): C.exp_decl =
+  let pos = exp_def.I.exp_pos in
+  let c_ret_typ = x_add trans_type prog exp_def.I.exp_ret_typ pos in
+  let c_params = List.map (fun (t, n) ->
+      CP.SpecVar (x_add trans_type prog t pos, n, Unprimed)) exp_def.I.exp_typed_params in
+  let n_tl = List.map (fun (t, n) -> 
+      (n, { sv_info_kind = (x_add trans_type prog t pos); id = fresh_int (); })) exp_def.I.exp_typed_params in
+  let c_body = match exp_def.I.exp_body with
+    | I.ExpUnk ->
+      let unk_coes = List.map
+          (fun (t, n) -> CP.SpecVar (x_add trans_type prog t pos, exp_def.I.exp_name ^ "_" ^ n, Unprimed))
+          exp_def.I.exp_typed_params in
+      let unk_const = CP.SpecVar (Int, exp_def.I.exp_name ^ "_" ^ (string_of_int 0), Unprimed) in
+      let unk_exps = List.map (fun v -> CP.mkVar v pos) (unk_const::unk_coes) in
+      let body = List.fold_left (fun a (c, v) -> CP.mkAdd a (CP.mkMult c (CP.mkVar v pos) pos) pos) 
+          (List.hd unk_exps) (List.combine (List.tl unk_exps) c_params) in
+      body
+    | I.ExpForm bd ->
+      let n_tl = x_add gather_type_info_exp prog bd n_tl exp_def.I.exp_ret_typ in
+      (x_add trans_pure_exp bd (fst n_tl))
+  in
+  {
+    C.exp_name = exp_def.I.exp_name;
+    C.exp_ret_typ = c_ret_typ;
+    C.exp_body = c_body;
+    C.exp_params = c_params;
+    C.exp_pos = exp_def.I.exp_pos;
+  }
 
 and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in
@@ -11293,9 +11324,9 @@ and trans_expected_ass prog ass =
     let (n_tl,f2) = x_add trans_formula prog false [] false if2 n_tl false in
     (f1,f2)
   in
-  let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in         
+  let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in
   match ass with
-  | None -> None 
+  | None -> None
   | Some (il,sl,assl) -> Some(il,sl,helper assl)
 
 (******end trans_test_components**********)
