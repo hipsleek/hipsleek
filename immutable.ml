@@ -127,10 +127,10 @@ let upper_bounds aliases pure =
   CP.fold_formula pure fncs f_comb
 
 let is_global a quantif =
-  match a with 
+  match a with
   | CP.ConstAnn _ -> true
   | CP.PolyAnn sv -> not (CP.EMapSV.mem sv quantif)
-  | _ -> 
+  | _ ->
     failwith "TempRes/TempAnn not yet supported for instantiations"
 
 let weakest_rels v a1 a2 loc = CP.mkEqMax v a1 a2 loc

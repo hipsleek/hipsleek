@@ -3377,6 +3377,7 @@ hprogn:
     let templ_lst = templ_defs # get_stk in
     let ut_lst = ut_defs # get_stk in
     let ui_lst = ui_defs # get_stk in
+    let exp_lst = exp_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
     let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in 
     (* WN : how come not executed for loop2.slk? *)
@@ -3392,6 +3393,7 @@ hprogn:
     prog_view_decls = !view_defs;
     prog_func_decls = func_defs # get_stk ;
     prog_ui_decls = ui_lst;
+    prog_exp_decls = exp_lst;
     prog_rel_decls = rel_lst@extra_rels; (* An Hoa *)
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in

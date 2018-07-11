@@ -36,6 +36,7 @@ type prog_decl = {
   mutable prog_templ_decls: templ_decl list;
   mutable prog_ut_decls: ut_decl list;
   mutable prog_ui_decls: ui_decl list;
+  mutable prog_exp_decls: exp_decl list;
   mutable prog_hp_decls : hp_decl list;
   mutable prog_rel_ids : (typ * ident) list;
   mutable prog_hp_ids : (typ * ident) list;
@@ -2631,6 +2632,7 @@ let rec label_e e =
     | Barrier _  (*Cristian: no label for barrier calls*)
     | Debug _
     | Dprint _
+    | UnkExp _
     | Empty _
     | FloatLit _
     | IntLit _
@@ -2942,6 +2944,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_templ_decls = hd.prog_templ_decls @ iprims.prog_templ_decls;
       prog_ut_decls = hd.prog_ut_decls @ iprims.prog_ut_decls;
       prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
+      prog_exp_decls = hd.prog_exp_decls @ iprims.prog_exp_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids;
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
@@ -2969,6 +2972,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_templ_decls = [];
       prog_ut_decls = [];
       prog_ui_decls = [];
+      prog_exp_decls = [];
       prog_hp_decls = [];
       prog_hp_ids = [];
       prog_axiom_decls = [];
