@@ -71,6 +71,11 @@ let transform_exp
         let e2l,r2l = List.split ler in
         let r = comb_f r2l in
         (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
+      | UnkExp b -> 
+        let ler = List.map (helper n_arg) b.unk_exp_arguments in
+        let e2l,r2l = List.split ler in
+        let r = comb_f r2l in
+        (UnkExp {b with unk_exp_arguments = e2l;},r)
       | Cast b -> 
         let e1,r1 = helper n_arg b.exp_cast_body  in  
         (Cast {b with exp_cast_body = e1},r1)

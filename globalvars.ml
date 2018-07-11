@@ -235,6 +235,15 @@ let rec find_read_write_global_var
                     let w = IdentSet.union wl wr in
                     (r,w)
           end
+    | I.UnkExp e ->
+          begin
+            let r_w_list = List.map (find_read_write_global_var global_vars
+                                       local_vars) e.I.unk_exp_arguments in
+            let (r1, w1) = List.split r_w_list in
+            let r = List.fold_left (fun x y -> IdentSet.union x y) IdentSet.empty r1 in
+            let w = List.fold_left (fun x y -> IdentSet.union x y) IdentSet.empty w1 in
+            (r,w)
+          end
     | I.Binary e ->
           begin
             let (r1,w1) = find_read_write_global_var global_vars local_vars e.I.exp_binary_oper1 in
@@ -711,6 +720,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.Time _ 
   | I.Unfold _
   | I.Barrier _
+  | I.UnkExp _
   | I.Var _ -> 
     exp
   | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
@@ -924,6 +934,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Dprint _
   | I.Empty _
   | I.FloatLit _
+  | I.UnkExp _
   | I.IntLit _
   | I.Java _
   | I.Null _

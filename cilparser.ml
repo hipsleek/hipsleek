@@ -126,6 +126,7 @@ let string_of_cil_file (f: Cil.file) : string =
 let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   match e with
   | Iast.ArrayAt e -> e.Iast.exp_arrayat_pos
+  | Iast.UnkExp e -> e.Iast.unk_exp_pos
   | Iast.ArrayAlloc e -> e.Iast.exp_aalloc_pos
   | Iast.Assert e -> e.Iast.exp_assert_pos
   | Iast.Assign e -> e.Iast.exp_assign_pos

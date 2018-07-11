@@ -4275,11 +4275,19 @@ invocation_expression:
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
                          let () = print_string "\nfunction call\n" in
+                         let () = print_string ("\nfunction call"
+                                                ^ (string_of_bool
+                                                     (exp_names # mem id)) ^ "\n" )in
    let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 
-      else () 
-    in
+      else ()
+                         in
+                         if (exp_names # mem id) then UnkExp {
+                             unk_exp_name = id;
+                             unk_exp_arguments = oal;
+                             unk_exp_pos = get_pos_camlp4 _loc 1
+                           } else
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;

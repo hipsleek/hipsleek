@@ -288,6 +288,9 @@ and java_of_exp = function
   | CallNRecv ({exp_call_nrecv_method = id;
                 exp_call_nrecv_arguments = el}) -> 
     id ^ "(" ^ (String.concat "," (List.map java_of_exp el)) ^ ")"
+  | UnkExp ({unk_exp_name = id;
+                unk_exp_arguments = el}) ->
+    id ^ "(" ^ (String.concat "," (List.map java_of_exp el)) ^ ")"
   | CallRecv ({exp_call_recv_receiver = recv;
                exp_call_recv_method = id;
                exp_call_recv_arguments = el}) -> 

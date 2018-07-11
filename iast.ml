@@ -380,6 +380,11 @@ and exp_call_nrecv = {
   exp_call_nrecv_path_id : control_path_id;
   exp_call_nrecv_pos : loc }
 
+and unk_exp = {
+  unk_exp_name : ident;
+  unk_exp_arguments : exp list;
+  unk_exp_pos : loc }
+
 and exp_call_recv = { exp_call_recv_receiver : exp;
                       exp_call_recv_method : ident;
                       exp_call_recv_arguments : exp list;
@@ -524,6 +529,7 @@ and exp =
   | Barrier of exp_barrier
   | CallRecv of exp_call_recv
   | CallNRecv of exp_call_nrecv
+  | UnkExp of unk_exp
   | Cast of exp_cast
   | Cond of exp_cond
   | ConstDecl of exp_const_decl
@@ -803,6 +809,11 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
         let e2l,r2l = List.split ler in
         let r = comb_f r2l in
         (CallNRecv {b with exp_call_nrecv_arguments = e2l;},r)
+      | UnkExp unk ->
+        let ler = List.map (helper n_arg) unk.unk_exp_arguments in
+        let e2l,r2l = List.split ler in
+        let r = comb_f r2l in
+        (UnkExp {unk with unk_exp_arguments = e2l;},r)
       | Cast b ->
         let e1,r1 = helper n_arg b.exp_cast_body  in
         (Cast {b with exp_cast_body = e1},r1)
@@ -950,6 +961,9 @@ let fold_exp (e:exp) (init_arg:'b) (f:'b->exp-> 'a option)  (f_args:'b->exp->'b)
       | CallNRecv b ->
         let ler = List.map (helper n_arg) b.exp_call_nrecv_arguments in
         (* let e2l,r2l = List.split ler in *)
+        comb_f ler
+      | UnkExp b ->
+        let ler = List.map (helper n_arg) b.unk_exp_arguments in
         comb_f ler
       | Cast b ->
         helper n_arg b.exp_cast_body
@@ -1111,6 +1125,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
+  | UnkExp unk -> unk.unk_exp_pos
   | Binary e -> e.exp_binary_pos
   | Bind e -> e.exp_bind_pos
   | Block e -> e.exp_block_pos

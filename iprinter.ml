@@ -771,6 +771,12 @@ let rec string_of_exp = function
         let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
         string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
             (match ha with | None -> "" | Some f -> string_of_formula f))
+
+  | UnkExp ({
+      unk_exp_name = id;
+      unk_exp_arguments = el;
+    }) -> id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+          
   | CallRecv ({exp_call_recv_receiver = recv;
     exp_call_recv_method = id;
     exp_call_recv_path_id = pid;

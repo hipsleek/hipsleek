@@ -248,6 +248,9 @@ let modifies (e:exp) (bvars:ident list) prog : (ident list) * (ident list) * (id
       (* let _,fvars_l = List.split (List.map (fun e -> helper e bvars) c.exp_call_nrecv_arguments) in *)
       (* let fvars = List.concat fvars_l in *)
       (bvars,fvars,fw1@fw2)
+    | UnkExp c ->
+      let _,fvars,fw1 = accumulate c.unk_exp_arguments bvars in
+      (bvars,fvars,fw1)
     | Cast c ->
       let _,fvars,fw = helper c.exp_cast_body bvars in
       (bvars,fvars,fw)
@@ -425,6 +428,10 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
     | CallNRecv c ->
       let new_args = List.map (fun e -> helper e subst) c.exp_call_nrecv_arguments in
       let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in
+      (new_e)
+    | UnkExp c ->
+      let new_args = List.map (fun e -> helper e subst) c.unk_exp_arguments in
+      let new_e = UnkExp {c with unk_exp_arguments = new_args} in
       (new_e)
     | Cast c ->
       let new_body = helper c.exp_cast_body subst in
@@ -696,6 +703,10 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
     | CallNRecv c ->
       let new_args,_ = helper_list c.exp_call_nrecv_arguments vars in
       let new_e = CallNRecv {c with exp_call_nrecv_arguments = new_args} in
+      (new_e,vars)
+    | UnkExp c ->
+      let new_args,_ = helper_list c.unk_exp_arguments vars in
+      let new_e = UnkExp {c with unk_exp_arguments = new_args} in
       (new_e,vars)
     | Cast c ->
       let new_body,_ = helper c.exp_cast_body vars in
@@ -1324,6 +1335,10 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       let new_e = CallRecv {c with exp_call_recv_arguments = new_args;
                                    exp_call_recv_receiver = new_rev;}
       in (new_e)
+    | UnkExp c ->
+      let new_args = List.map (fun e -> helper e vars) c.unk_exp_arguments in
+      let new_e = UnkExp {c with unk_exp_arguments = new_args}
+      in (new_e)
     | CallNRecv c ->
       (*Do not need for Globals.join_name because join(id) is always
         passed by value*)
@@ -1680,6 +1695,9 @@ and find_addr (e:exp) : ident list =
       (vs1@vs2)
     | CallNRecv c ->
       let vs = List.concat (List.map helper c.exp_call_nrecv_arguments) in
+      vs
+    | UnkExp c ->
+      let vs = List.concat (List.map helper c.unk_exp_arguments) in
       vs
     | Cast c ->
       let vs = helper c.exp_cast_body in
@@ -2131,6 +2149,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
   let rec helper e vs=
     match e with
     | Var v -> []
+    | UnkExp _ -> []
     | VarDecl v ->
       let vars = List.map (fun (id,e0,pos) ->
           match e0 with

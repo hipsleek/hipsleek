@@ -411,6 +411,12 @@ and exp_icall = { exp_icall_type : typ;
                   exp_icall_path_id : control_path_id;
                   exp_icall_pos : loc }
 
+and unk_exp = {
+  unk_exp_name: ident;
+  unk_exp_arguments: ident list;
+  unk_exp_pos: loc
+}
+
 and exp_iconst = {
   exp_iconst_val : int;
   exp_iconst_pos : loc }
@@ -544,6 +550,7 @@ and exp = (* expressions keep their types *)
   | Dprint of exp_dprint
   | FConst of exp_fconst
   | ICall of exp_icall
+  | UnkExp of unk_exp
   | IConst of exp_iconst
   | New of exp_new
   | Null of loc
@@ -1056,6 +1063,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
       | Dprint _
       | FConst _
       | ICall _
+      | UnkExp _
       | IConst _
       (* | ArrayAlloc _ *) (* An Hoa *)
       | New _
@@ -1268,6 +1276,7 @@ let rec type_of_exp (e : exp) = match e with
            exp_cond_pos = _}) -> Some t
   | Debug _ -> None
   | Dprint _ -> None
+  | UnkExp _ -> Some int_type
   | FConst _ -> Some float_type
   (*| FieldRead (t, _, _, _) -> Some t*)
   (*| FieldWrite _ -> Some Void*)
@@ -2086,6 +2095,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Label e -> callees_of_exp e.exp_label_exp
   | CheckRef _ -> []
   | Java _ -> []
+  | UnkExp _ -> []
   | Assert _ -> []
   (* AN HOA *)
   (*| ArrayAt ({exp_arrayat_type = _;
@@ -2388,6 +2398,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Cond _
   | Try _
   | Time _
+  | UnkExp _
   | Java _ -> false
 
   | Par _
@@ -2419,6 +2430,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | Bind b -> b.exp_bind_pos
   | Cast b -> b.exp_cast_pos
   | Catch b -> b.exp_catch_pos
+  | UnkExp b -> b.unk_exp_pos
   | Debug b -> b.exp_debug_pos
   | Dprint b -> b.exp_dprint_pos
   | Assign b -> b.exp_assign_pos

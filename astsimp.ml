@@ -609,6 +609,7 @@ let loop_procs : (C.proc_decl list) ref = ref []
 
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
+  | C.UnkExp _
   | C.Assert _ -> e
   (*| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)*)
   (*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*)
@@ -3808,6 +3809,7 @@ and all_paths_return (e0 : I.exp) : bool =
   | I.Break _ -> false
   | I.CallNRecv _ -> false
   | I.CallRecv _ -> false
+  | I.UnkExp _ -> false
   | I.Cast _ -> false
   | I.Catch b-> all_paths_return b.I.exp_catch_body
   | I.Cond e ->
@@ -5480,7 +5482,26 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
              C.exp_block_pos = pos; }), te))
       )
     | I.BoolLit { I.exp_bool_lit_val = b; I.exp_bool_lit_pos = pos } ->
-      ((C.BConst { C.exp_bconst_val = b; C.exp_bconst_pos = pos; }), C.bool_type)
+      ((C.BConst { C.exp_bconst_val = b; C.exp_bconst_pos = pos; }), C.bool_type
+      )
+
+    | I.UnkExp {
+        I.unk_exp_name = id;
+        I.unk_exp_arguments = args;
+        I.unk_exp_pos = pos
+      } ->
+      let tmp = List.map (helper) args in
+      let (cargs, cts) = List.split tmp in
+      let positions = List.map I.get_exp_pos args in
+      let (_, _, arg_vars) =
+        x_add_1 trans_args (Gen.combine3 cargs cts positions) in
+      (* Current the type is int <-> just consider integer exp first *)
+      ((C.UnkExp {
+        C.unk_exp_name = id;
+        C.unk_exp_arguments = arg_vars;
+        C.unk_exp_pos = pos
+      }), C.int_type)
+
     | I.CallRecv {
         I.exp_call_recv_receiver = recv;
         I.exp_call_recv_method = mn;
@@ -9572,6 +9593,8 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.CallRecv b -> Iast.CallRecv{b with
                                        Iast.exp_call_recv_receiver = helper ren b.Iast.exp_call_recv_receiver;
                                        Iast.exp_call_recv_arguments = List.map (helper ren) b.Iast.exp_call_recv_arguments}
+    | Iast.UnkExp b -> Iast.UnkExp{b with
+                                       Iast.unk_exp_arguments = List.map (helper ren) b.Iast.unk_exp_arguments}
     | Iast.CallNRecv b -> 
       let subst_list = List.fold_left (fun a (c1, c2) -> 
           ((c1, Unprimed), (c2, Unprimed))::((c1, Primed), (c2, Primed))::a) [] ren in
@@ -9692,6 +9715,10 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
   | Iast.CallNRecv b ->
     let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
     (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
+  | Iast.UnkExp b ->
+    let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.unk_exp_arguments in
+    (Iast.UnkExp {b with Iast.unk_exp_arguments = nl },[])
+
   | Iast.CallRecv b->
     let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_recv_arguments in
     (Iast.CallRecv{b with 
@@ -9893,6 +9920,10 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
     (Iast.CallRecv{b with 
                    Iast.exp_call_recv_receiver = a1;
                    Iast.exp_call_recv_arguments = nl},h,p)
+  | Iast.UnkExp b->
+    let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.unk_exp_arguments in
+    (Iast.UnkExp {b with Iast.unk_exp_arguments = nl},h,p)
+
   | Iast.Cast b->
     let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
     (Iast.Cast {b with Iast.exp_cast_body= nb},h,p)
@@ -10765,7 +10796,8 @@ and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.ex
   | C.Label e -> 
     let ex, il = irf_traverse_exp cp e.C.exp_label_exp scc in
     (C.Label {e with C.exp_label_exp = ex}, il)
-  | C.CheckRef _ 
+  | C.CheckRef _
+  | C.UnkExp _
   | C.Java _
   | C.Assert _ -> (exp, [])
   | C.Assign e -> 

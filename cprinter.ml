@@ -4682,6 +4682,11 @@ let rec string_of_exp = function
             exp_block_local_vars = _;
             exp_block_pos = _}) -> "{" ^ (string_of_exp e) ^ "}"
   | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
+  | UnkExp ({
+      unk_exp_name = id;
+      unk_exp_arguments = args;
+      unk_exp_pos = l
+    }) -> id ^ (string_of_ident_list args ",")
   | ICall ({exp_icall_type = _;
             exp_icall_receiver = r;
             exp_icall_method_name = id;
