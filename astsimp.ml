@@ -5521,6 +5521,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.unk_exp_arguments = args;
         I.unk_exp_pos = pos
       } ->
+      (* let iexp_defs = prog.I.prog_exp_decls in
+       * let cexp_defs = List.map trans_exp_decl iexp_defs in
+       * let cexp_def = List.find (fun def -> str_eq def.exp_name id) cexp_defs in *)
       let tmp = List.map (helper) args in
       let (cargs, cts) = List.split tmp in
       let positions = List.map I.get_exp_pos args in

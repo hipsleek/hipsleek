@@ -1341,13 +1341,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           | _ -> PK_Assert_Assume)
          (wrap_classic x_loc atype (assert_op_wrapper))) ()
 
-    | Assign ({ 
+    | Assign ({
         exp_assign_lhs = v;
         exp_assign_rhs = rhs;
         exp_assign_pos = pos }) ->
       let pr = Cprinter.string_of_exp in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
-          (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs 
+          (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs
       in
       let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (Cprinter.string_of_list_failesc_context) (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs
       in
@@ -1372,18 +1372,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           in
           if not b then ctx
           else
-            (* let () = Gen.Profiling.push_time "[check_rhs_exp] Assign" in *)
             let ctx1 = check_rhs_exp rhs in
-            (* let () = Gen.Profiling.pop_time "[check_rhs_exp] Assign" in *)
-            (* let () = print_endline ("RHS: " ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
-            (* let () = Gen.Profiling.push_time "[check_exp] Assign: other" in *)
-            (* let () = print_endline ("\nAssign: ctx1:\n" ^ (Cprinter.string_of_list_failesc_context ctx1)) in *)
             let () = CF.must_consistent_list_failesc_context "assign 1" ctx1  in
             let fct c1 =
-              (* let () = Gen.Profiling.push_time "[check_exp] Assign: fct" in *)
               let res = if (CF.subsume_flow_f !norm_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then
                   let t0 = Gen.unsome (type_of_exp rhs) in
-                  (* let t = t0 in *)
                   (* Loc: find an appropriate type of v instead of null_type (swl example).
                      it is better for shape inference *)
                   let t = if is_null_type t0 then
@@ -1396,27 +1389,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
-                  (* let () = print_endline ("Before :"^(Cprinter.string_of_formula c1.CF.es_formula)) in *)
                   let compose_es = x_add CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
-                  (* let () = print_endline ("After :"^(Cprinter.string_of_formula compose_es)) in *)
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   compose_ctx
                 else (CF.Ctx c1) in
-              (* let () = Gen.Profiling.pop_time "[check_exp] Assign: fct" in *)
               res 
             in
-            (* let () = Gen.Profiling.push_time "[check_exp] Assign: transform" in *)
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
-            (* let () = print_endline ("res after: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
-            (* let () = Gen.Profiling.pop_time "[check_exp] Assign: transform" in *)
-            (* let () = Gen.Profiling.push_time "[check_exp] Assign: consistent" in *)
             let () = CF.must_consistent_list_failesc_context "assign final" res  in
-            (* let () = Gen.Profiling.pop_time "[check_exp] Assign: consistent" in *)
-            (* let () = Gen.Profiling.pop_time "[check_exp] Assign: other" in *)
             res
         end
       in
-      Gen.Profiling.push_time "[check_exp] Assign";  
+      Gen.Profiling.push_time "[check_exp] Assign";
       let res = wrap_proving_kind PK_Assign_Stmt assign_op () in
       Gen.Profiling.pop_time "[check_exp] Assign";
       res
@@ -1495,7 +1479,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         with ex -> Gen.Profiling.pop_time "[check_exp] BConst"; raise ex
       end
 
-    | Bind ({ 
+    | Bind ({
         exp_bind_type = body_t;
         exp_bind_bound_var = (v_t, v); (* node to bind *)
         exp_bind_fields = lvars; (* fields of bound node *)
@@ -1673,16 +1657,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let tmp_res1 = x_add check_exp prog proc rs body post_start_label in
                 stk_vars # pop_list lsv;
                 let () = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
-                (* Debug.info_pprint "WN : adding vheap to exception too 1" no_pos; *)
-                (* let f_esc = proc_esc_stack pid in *)
-                (* TODO WN : Does this work for field level access? *)
-                let tmp_res2 = 
+                let tmp_res2 =
                   if not(CP.isLend imm_node) && not(CP.isAccs imm_node) (* asankhs: Do not change this please&& not(!Globals.allow_field_ann)*) then 
                     CF.normalize_max_renaming_list_failesc_context_4_bind pid vheap pos true tmp_res1 
                     (* for Lend, Accs it should not be added back and 
                        field level annotations should be added back and compacted *)
-                  else tmp_res1 
-                in 
+                  else tmp_res1
+                in
                 x_tinfo_pp "WN : adding vheap to exception too" no_pos;
                 x_tinfo_hp (add_str "bind:vheap" Cprinter.string_of_formula) vheap no_pos;
                 x_tinfo_hp (add_str "bind:tmp_res1" (pr_list Cprinter.string_of_failesc_context)) tmp_res1 no_pos;
@@ -1720,7 +1701,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_block_type = t;
         exp_block_body = e;
         exp_block_local_vars = local_vars;
-        exp_block_pos = pos }) -> 
+        exp_block_pos = pos }) ->
       begin
         Gen.Profiling.push_time "[check_exp] Block";
         try
@@ -1735,13 +1716,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let nd_vars = CF.collect_nondet_vars_list_failesc_context ctx1 in
           let svars = Gen.BList.difference_eq CP.eq_spec_var svars nd_vars in
           let ctx2 = x_add CF.push_exists_list_failesc_context svars ctx1 in
-          (* let () = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
-          (* let () = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^            *)
-          (*   (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
           let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
-          (*       trans_level_eqn_list_failesc_context ctx2 *)
-          (*     else ctx2 *)
-          (* in *)
           Gen.Profiling.pop_time "[check_exp] Block";
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] Block"; raise ex
@@ -2346,8 +2321,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
         in
         Gen.Profiling.pop_time "[check_exp] Var";
-        res 
+        res
       end
+
     | VarDecl {
         exp_var_decl_type = t;
         exp_var_decl_name = v; } ->
@@ -2460,7 +2436,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       (* let () = print_endline ("WN:ESCAPE ctx4:"^(Cprinter.string_of_list_failesc_context ctx4)) in *)
       let ctx5 = x_add check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
       CF.pop_esc_level_list ctx5 pid
-    | Par { exp_par_vperm = vp; exp_par_lend_heap = lh; exp_par_cases = cl; exp_par_pos = pos; } -> 
+
+    | UnkExp {
+        unk_exp_name = id;
+        unk_exp_arguments = args;
+        unk_exp_pos = pos;
+      } ->
+      let exp_defs = prog.prog_exp_decls in
+      begin
+      try
+        let exp_def = List.find (fun exp_decl -> String.compare exp_decl.Cast.exp_name id == 0)
+            exp_defs in
+        let res_exp = CP.mk_exp_var (CP.mkRes exp_def.exp_ret_typ) in
+        let pure_f = CP.mkEqExp res_exp exp_def.exp_body pos in
+        let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
+        CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+      with Not_found ->
+        Err.report_error { Err.error_loc = pos;
+                           Err.error_text = "No expression declaration found." }
+      end
+    | Par { exp_par_vperm = vp; exp_par_lend_heap = lh; exp_par_cases = cl; exp_par_pos = pos; } ->
       if not !ann_vp then
         (DD.info_pprint ("WARNING: Skip reasoning PAR construct because --ann-vp is not enabled.") pos;
          ctx)
@@ -2493,7 +2488,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         (* Norm ERR *)
         let norm_lem_es es = Solver.normalize_estate_w_coers prog es lem pos in
         VP.norm_list_failesc_context_for_par norm_lem_es res_ctx
-    | _ -> 
+
+  | _ ->
       failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
   let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     let pr = Cprinter.string_of_list_failesc_context in
