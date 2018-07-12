@@ -6,6 +6,7 @@ open VarGen
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
 module SBDebug = Libsongbird.Debug
+module CP = Cpure
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
@@ -43,44 +44,56 @@ let translate_back_type (typ) = match typ with
   | _ -> Gen.Basic.report_error VarGen.no_pos "translate_back_type: this type is not handled"
 
 
-let translate_var (var: Cpure.spec_var): SBGlobals.var =
+let translate_var (var: CP.spec_var): SBGlobals.var =
   match var with
   | SpecVar (typ, ident, primed) -> (ident, translate_type typ)
 
 let translate_back_var (var : SBGlobals.var) =
   let (str, typ) = var in
-  Cpure.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
+  CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
 
-let rec translate_exp (exp: Cpure.exp): SBCast.exp =
+let rec translate_exp (exp: CP.exp) =
   match exp with
-  | Cpure.Null loc -> SBCast.Null (translate_loc loc)
-  | Cpure.Var (var, loc) -> SBCast.Var (translate_var var, translate_loc loc)
-  | Cpure.IConst (num, loc) -> SBCast.IConst (num, translate_loc loc)
-  | Cpure.Add (exp1, exp2, loc) -> SBCast.BinOp (Add, translate_exp exp1, translate_exp exp2,
-  translate_loc loc)
-  | Cpure.Subtract (exp1, exp2, loc) -> SBCast.BinOp (Sub, translate_exp exp1, translate_exp exp2,
-  translate_loc loc)
-  | Cpure.Mult (exp1, exp2, loc) -> SBCast.BinOp (Mul, translate_exp exp1, translate_exp exp2,
-  translate_loc loc)
-  | Cpure.Div (exp1, exp2, loc) -> SBCast.BinOp (Div, translate_exp exp1, translate_exp exp2,
-  translate_loc loc)
+  | CP.Null loc -> (SBCast.Null (translate_loc loc), [])
+  | CP.Var (var, loc) -> (SBCast.Var (translate_var var, translate_loc loc),[])
+  | CP.IConst (num, loc) -> (SBCast.IConst (num, translate_loc loc),[])
+  | CP.Add (exp1, exp2, loc) ->
+        let (t_exp1, l1) = translate_exp exp1 in
+        let (t_exp2, l2) = translate_exp exp2 in
+        (SBCast.BinOp (Add, t_exp1, t_exp2, translate_loc loc), l1@l2)
+  | CP.Subtract (exp1, exp2, loc) ->
+        let (t_exp1, l1) = translate_exp exp1 in
+        let (t_exp2, l2) = translate_exp exp2 in
+        (SBCast.BinOp (Sub, t_exp1, t_exp2, translate_loc loc), l1@l2)
+  | CP.Mult (exp1, exp2, loc) ->
+        let (t_exp1, l1) = translate_exp exp1 in
+        let (t_exp2, l2) = translate_exp exp2 in
+        (SBCast.BinOp (Mul, t_exp1, t_exp2, translate_loc loc), l1@l2)
+  | CP.Div (exp1, exp2, loc) ->
+        let (t_exp1, l1) = translate_exp exp1 in
+        let (t_exp2, l2) = translate_exp exp2 in
+        (SBCast.BinOp (Div, t_exp1, t_exp2, translate_loc loc), l1@l2)
+  | CP.Template templ ->
+    let fun_name = CP.name_of_sv templ.templ_id in
+    let args = templ.templ_args |> List.map translate_exp |> List.map fst in
+    ((SBCast.mk_func (SBCast.FuncName fun_name) args), [templ])
   | _ -> Gen.Basic.report_error VarGen.no_pos "this exp is not handled"
 
 let rec translate_back_exp (exp: SBCast.exp) = match exp with
-  | SBCast.Null pos -> Cpure.Null (translate_back_pos pos)
-  | SBCast.Var (var, pos) -> Cpure.Var (translate_back_var var, translate_back_pos
+  | SBCast.Null pos -> CP.Null (translate_back_pos pos)
+  | SBCast.Var (var, pos) -> CP.Var (translate_back_var var, translate_back_pos
                                       pos)
-  | SBCast.IConst (num, pos) -> Cpure.IConst (num, translate_back_pos pos)
+  | SBCast.IConst (num, pos) -> CP.IConst (num, translate_back_pos pos)
   | SBCast.BinOp (bin_op, exp1, exp2, pos) ->
     begin
       match bin_op with
-      | SBCast.Add -> Cpure.Add (translate_back_exp exp1, translate_back_exp exp2,
+      | SBCast.Add -> CP.Add (translate_back_exp exp1, translate_back_exp exp2,
                translate_back_pos pos)
-      | SBCast.Sub -> Cpure.Subtract (translate_back_exp exp1, translate_back_exp exp2,
+      | SBCast.Sub -> CP.Subtract (translate_back_exp exp1, translate_back_exp exp2,
                translate_back_pos pos)
-      | SBCast.Mul -> Cpure.Mult (translate_back_exp exp1, translate_back_exp exp2,
+      | SBCast.Mul -> CP.Mult (translate_back_exp exp1, translate_back_exp exp2,
                translate_back_pos pos)
-      | SBCast.Div -> Cpure.Div (translate_back_exp exp1, translate_back_exp exp2,
+      | SBCast.Div -> CP.Div (translate_back_exp exp1, translate_back_exp exp2,
                translate_back_pos pos)
     end
   | SBCast.LTerm (lterm, pos) ->
@@ -89,17 +102,17 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
            ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
 
-let translate_pf (pure_f: Cpure.formula) : (SBCast.pure_form) =
+let translate_pf (pure_f: CP.formula)  =
   match pure_f with
-  | Cpure.BForm (b_formula, _) ->
+  | CP.BForm (b_formula, _) ->
     let (p_formula, _) = b_formula in
     begin
     match p_formula with
       | Eq (exp1, exp2, loc) ->
-        let sb_exp1 = translate_exp exp1 in
-        let sb_exp2 = translate_exp exp2 in
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
         let sb_loc = translate_loc loc in
-         SBCast.BinRel (Eq, sb_exp1, sb_exp2, sb_loc)
+         (SBCast.BinRel (Eq, sb_exp1, sb_exp2, sb_loc), l1@l2)
      | _ -> Gen.Basic.report_error VarGen.no_pos "this p_formula is not handled"
   end
 
@@ -107,32 +120,32 @@ let translate_pf (pure_f: Cpure.formula) : (SBCast.pure_form) =
 
 let translate_back_pf (pf : SBCast.pure_form) = match pf with
   | SBCast.BConst (b, pos)
-    -> Cpure.BForm ((Cpure.BConst (b, translate_back_pos pos), None), None)
+    -> CP.BForm ((CP.BConst (b, translate_back_pos pos), None), None)
   | SBCast.BinRel (br, exp1, exp2, pos) ->
     let exp1_hip = translate_back_exp exp1 in
     let exp2_hip = translate_back_exp exp2 in
     let loc = translate_back_pos pos in
     begin
       match br with
-      | SBCast.Lt -> Cpure.BForm((Cpure.Lt (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Le -> Cpure.BForm((Cpure.Lte (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Gt -> Cpure.BForm((Cpure.Gt (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Ge -> Cpure.BForm((Cpure.Gte (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Eq -> Cpure.BForm((Cpure.Eq (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Ne -> Cpure.BForm((Cpure.Neq (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Lt -> CP.BForm((CP.Lt (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Le -> CP.BForm((CP.Lte (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Gt -> CP.BForm((CP.Gt (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Ge -> CP.BForm((CP.Gte (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Eq -> CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
     end
   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
 
 
 (* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
-let translate_lhs_to_fdefn (lhs: SBCast.pure_form) (* : SBCast.pure_form *) =
-  match lhs with
-  | BinRel (rel, exp1, exp2, pos) ->
-    let exp2_vars = SBCast.fv_exp exp2 in
-      let exp2_args = List.map (SBCast.mk_exp_var) exp2_vars in
-      let func_exp = SBCast.mk_func (SBCast.FuncName "f") exp2_args in
-      (Libsongbird.Cast.BinRel (rel, exp1, func_exp, pos), exp2_vars)
-  | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
+(* let translate_lhs_to_fdefn (lhs: SBCast.pure_form) (\* : SBCast.pure_form *\) =
+ *   match lhs with
+ *   | BinRel (rel, exp1, exp2, pos) ->
+ *     let exp2_vars = SBCast.fv_exp exp2 in
+ *       let exp2_args = List.map (SBCast.mk_exp_var) exp2_vars in
+ *       let func_exp = SBCast.mk_func (SBCast.FuncName "f") exp2_args in
+ *       (Libsongbird.Cast.BinRel (rel, exp1, func_exp, pos), exp2_vars)
+ *   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled" *)
 
 
 (* Input: lhs and rhs
@@ -140,12 +153,14 @@ let translate_lhs_to_fdefn (lhs: SBCast.pure_form) (* : SBCast.pure_form *) =
    Adding template f(args) = ?
    Output: Input for songbird infer_unknown_functions
 *)
-let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
-  let (lhs_templ, args) = translate_lhs_to_fdefn lhs in
+let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
+  =
   let program = SBCast.mk_program "hip_input" in
-  let f_defn = SBCast.mk_func_defn_unknown "f" args in
+  let fun_name = CP.name_of_sv templ.CP.templ_id in
+  let args = templ.templ_args |> List.map CP.get_var |> List.map translate_var in
+  let f_defn = SBCast.mk_func_defn_unknown fun_name args in
   let ifr_typ = SBGlobals.IfrStrong in
-  let entail = SBCast.mk_pure_entail lhs_templ rhs in
+  let entail = SBCast.mk_pure_entail lhs rhs in
   let infer_func = {
     SBCast.ifr_typ = ifr_typ;
     SBCast.ifr_rels = [entail]
@@ -165,12 +180,13 @@ let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
    *                                       ifd) |> List.concat in
    * let lhs_repaired = Libsongbird.Cast.unfold_func_pf func_defns lhs in *)
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
-  let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs_templ in
+  let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs in
   lhs_repaired
 
-let get_repair_candidate (lhs: Cpure.formula) (rhs: Cpure.formula) =
-  let sb_lhs = translate_pf lhs in
-  let sb_rhs = translate_pf rhs in
-  let repaired_lhs = create_templ_prog sb_lhs sb_rhs in
+let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
+  let (sb_lhs, tmpl_list) = translate_pf lhs in
+  let (sb_rhs, _) = translate_pf rhs in
+  let templ = List.hd tmpl_list in
+  let repaired_lhs = create_templ_prog prog sb_lhs sb_rhs templ in
   let () = SBDebug.nhprint "repaired pf: " SBCast.pr_pf repaired_lhs in
   translate_back_pf repaired_lhs

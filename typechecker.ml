@@ -2444,11 +2444,24 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       } ->
       let exp_defs = prog.prog_exp_decls in
       begin
-      try
-        let exp_def = List.find (fun exp_decl -> String.compare exp_decl.Cast.exp_name id == 0)
-            exp_defs in
-        let res_exp = CP.mk_exp_var (CP.mkRes exp_def.exp_ret_typ) in
-        let pure_f = CP.mkEqExp res_exp exp_def.exp_body pos in
+        try
+          let exp_def = List.find (fun exp_decl -> String.compare exp_decl.Cast.exp_name id == 0)
+              exp_defs in
+          let res_exp = CP.mk_exp_var (CP.mkRes exp_def.exp_ret_typ) in
+          let unk_coes = List.map
+              (fun var -> CP.SpecVar (CP.int_type,
+                                      id ^ "_" ^ (CP.name_of_spec_var var), Unprimed))
+              exp_def.exp_params in
+          let unk_const = CP.SpecVar (Int, id ^ "_" ^ (string_of_int 0), Unprimed) in
+          let templ = CP.Template {
+            templ_id = CP.mk_spec_var exp_def.exp_name;
+            templ_args = List.map (fun x -> CP.mkVar x pos) exp_def.exp_params;
+            templ_unks = List.map (fun x -> CP.mkVar x pos) (unk_const::unk_coes);
+            templ_body = None;
+            templ_pos = pos;
+          }
+          in
+        let pure_f = CP.mkEqExp res_exp templ pos in
         let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
         CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
       with Not_found ->
@@ -2754,11 +2767,13 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
 
-        let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
+        let repaired_lhs = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
         let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
             repaired_lhs no_pos in
-        (* let repair_vars = Cpure.fv repaired_lhs in *)
 
+
+
+        (* let repair_vars = Cpure.fv repaired_lhs in *)
         (* let () = x_binfo_hp (add_str "prog: " Cprinter.string_of_program) prog no_pos in *)
         (* let () = x_binfo_hp (add_str "prog.data_decls: " (pr_list Cprinter.string_of_data_decl)) prog.prog_data_decls no_pos in
          * let () = x_binfo_hp (add_str "prog.procs: " (Cprinter.string_of_proc_decl_list)) (Cast.list_of_procs prog) no_pos in *)
