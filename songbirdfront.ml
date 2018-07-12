@@ -58,6 +58,12 @@ let rec translate_exp (exp: Cpure.exp): SBCast.exp =
   | Cpure.IConst (num, loc) -> SBCast.IConst (num, translate_loc loc)
   | Cpure.Add (exp1, exp2, loc) -> SBCast.BinOp (Add, translate_exp exp1, translate_exp exp2,
   translate_loc loc)
+  | Cpure.Subtract (exp1, exp2, loc) -> SBCast.BinOp (Sub, translate_exp exp1, translate_exp exp2,
+  translate_loc loc)
+  | Cpure.Mult (exp1, exp2, loc) -> SBCast.BinOp (Mul, translate_exp exp1, translate_exp exp2,
+  translate_loc loc)
+  | Cpure.Div (exp1, exp2, loc) -> SBCast.BinOp (Div, translate_exp exp1, translate_exp exp2,
+  translate_loc loc)
   | _ -> Gen.Basic.report_error VarGen.no_pos "this exp is not handled"
 
 let rec translate_back_exp (exp: SBCast.exp) = match exp with
@@ -65,10 +71,23 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Var (var, pos) -> Cpure.Var (translate_back_var var, translate_back_pos
                                       pos)
   | SBCast.IConst (num, pos) -> Cpure.IConst (num, translate_back_pos pos)
-  | SBCast.BinOp (Add, exp1, exp2, pos) ->
-    Cpure.Add (translate_back_exp exp1, translate_back_exp exp2,
+  | SBCast.BinOp (bin_op, exp1, exp2, pos) ->
+    begin
+      match bin_op with
+      | SBCast.Add -> Cpure.Add (translate_back_exp exp1, translate_back_exp exp2,
                translate_back_pos pos)
-  | _ -> Gen.Basic.report_error VarGen.no_pos "translate_back_exp: this exp is not handled"
+      | SBCast.Sub -> Cpure.Subtract (translate_back_exp exp1, translate_back_exp exp2,
+               translate_back_pos pos)
+      | SBCast.Mul -> Cpure.Mult (translate_back_exp exp1, translate_back_exp exp2,
+               translate_back_pos pos)
+      | SBCast.Div -> Cpure.Div (translate_back_exp exp1, translate_back_exp exp2,
+               translate_back_pos pos)
+    end
+  | SBCast.LTerm (lterm, pos) ->
+    let n_exp = SBCast.convert_lterm_to_exp lterm in
+    translate_back_exp n_exp
+  | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
+           ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
 
 let translate_pf (pure_f: Cpure.formula) : (SBCast.pure_form) =
   match pure_f with
@@ -106,7 +125,7 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
 
 
 (* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
-let translate_rhs_to_fdefn (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_form *) =
+let translate_lhs_to_fdefn (lhs: SBCast.pure_form) (* : SBCast.pure_form *) =
   match lhs with
   | BinRel (rel, exp1, exp2, pos) ->
     let exp2_vars = SBCast.fv_exp exp2 in
@@ -122,7 +141,7 @@ let translate_rhs_to_fdefn (lhs: Libsongbird.Cast.pure_form) (* : SBCast.pure_fo
    Output: Input for songbird infer_unknown_functions
 *)
 let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
-  let (lhs_templ, args) = translate_rhs_to_fdefn lhs in
+  let (lhs_templ, args) = translate_lhs_to_fdefn lhs in
   let program = SBCast.mk_program "hip_input" in
   let f_defn = SBCast.mk_func_defn_unknown "f" args in
   let ifr_typ = SBGlobals.IfrStrong in
@@ -137,19 +156,21 @@ let create_templ_prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form)=
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = Libsongbird.Debug.hprint "prog: " Libsongbird.Cast.pr_program nprog in
-  let () = Libsongbird.Debug.hprint "pure entails: " Libsongbird.Cast.pr_pent entail in
-  let ifds = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
-  let () = Libsongbird.Debug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
+  let () = SBDebug.nhprint "prog: " SBCast.pr_program nprog in
+  let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent entail in
+  let (ifds, inferred_prog) = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
+  let () = SBDebug.nhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in
-  let func_defns = ifds |> List.map (fun ifd -> Libsongbird.Proof.get_ifd_fdefns
-                                        ifd) |> List.concat in
-  let lhs_repaired = Libsongbird.Cast.unfold_func_pf func_defns lhs in
+  (* let func_defns = ifds |> List.map (fun ifd -> Libsongbird.Proof.get_ifd_fdefns
+   *                                       ifd) |> List.concat in
+   * let lhs_repaired = Libsongbird.Cast.unfold_func_pf func_defns lhs in *)
+  let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
+  let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs_templ in
   lhs_repaired
 
 let get_repair_candidate (lhs: Cpure.formula) (rhs: Cpure.formula) =
   let sb_lhs = translate_pf lhs in
   let sb_rhs = translate_pf rhs in
   let repaired_lhs = create_templ_prog sb_lhs sb_rhs in
-  (* let () = SBDebug.hprint "repaired pf: " SBCast.pr_pf repaired_lhs in *)
+  let () = SBDebug.nhprint "repaired pf: " SBCast.pr_pf repaired_lhs in
   translate_back_pf repaired_lhs

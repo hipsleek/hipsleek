@@ -2749,15 +2749,15 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in
         let pure_rhs = get_pure_conseq_from_struc rhs in
         let pure_lhs = Cpure.elim_equi_ante pure_failed_lhs pure_rhs in
-        let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
-            pure_rhs pos in
         let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
+        let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
+            pure_rhs pos in
 
-        (* let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
-         * let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
-         *     repaired_lhs no_pos in
-         * let repair_vars = Cpure.fv repaired_lhs in *)
+        let repaired_lhs = Songbirdfront.get_repair_candidate pure_lhs pure_rhs in
+        let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
+            repaired_lhs no_pos in
+        (* let repair_vars = Cpure.fv repaired_lhs in *)
 
         (* let () = x_binfo_hp (add_str "prog: " Cprinter.string_of_program) prog no_pos in *)
         (* let () = x_binfo_hp (add_str "prog.data_decls: " (pr_list Cprinter.string_of_data_decl)) prog.prog_data_decls no_pos in

@@ -784,6 +784,7 @@ let common_arguments = [
   ("-version", Arg.Set Globals.print_version_flag,"current version of software");
   (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
+  ("--en-repair", Arg.Clear Globals.enable_repair,"enable repair process");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");

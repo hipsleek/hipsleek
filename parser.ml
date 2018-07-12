@@ -4276,10 +4276,10 @@ invocation_expression:
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN; oha = opt_ho_arg ->
-                         let () = print_string "\nfunction call\n" in
-                         let () = print_string ("\nfunction call"
-                                                ^ (string_of_bool
-                                                     (exp_names # mem id)) ^ "\n" )in
+                         (* let () = print_string "\nfunction call\n" in
+                          * let () = print_string ("\nfunction call"
+                          *                        ^ (string_of_bool
+                          *                             (exp_names # mem id)) ^ "\n" )in *)
    let _ =
       if (Iast.is_tnt_prim_proc id) then
         Hashtbl.add Iast.tnt_prim_proc_tbl id id 
