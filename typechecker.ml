@@ -2767,7 +2767,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
 
-        let repaired_lhs = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
+        let (repaired_lhs, _, _) = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
         let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
             repaired_lhs no_pos in
 

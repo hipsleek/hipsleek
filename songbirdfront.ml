@@ -176,17 +176,38 @@ let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   let (ifds, inferred_prog) = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
   let () = SBDebug.nhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in
-  (* let func_defns = ifds |> List.map (fun ifd -> Libsongbird.Proof.get_ifd_fdefns
-   *                                       ifd) |> List.concat in
-   * let lhs_repaired = Libsongbird.Cast.unfold_func_pf func_defns lhs in *)
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
   let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs in
-  lhs_repaired
+  (lhs_repaired, inferred_prog.prog_funcs)
+
+let get_func_exp fun_defs ident =
+  try
+    let fun_def = List.find (fun fun_def -> String.compare ident fun_def.SBCast.func_name == 0)
+        fun_defs in
+    match fun_def.SBCast.func_body with
+    | SBCast.FuncTemplate _
+    | SBCast.FuncUnknown -> None
+    | SBCast.FuncForm exp -> Some exp
+  with Not_found -> None
 
 let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
   let (sb_lhs, tmpl_list) = translate_pf lhs in
   let (sb_rhs, _) = translate_pf rhs in
   let templ = List.hd tmpl_list in
-  let repaired_lhs = create_templ_prog prog sb_lhs sb_rhs templ in
+  let (repaired_lhs, fun_defs) = create_templ_prog prog sb_lhs sb_rhs templ in
   let () = SBDebug.nhprint "repaired pf: " SBCast.pr_pf repaired_lhs in
-  translate_back_pf repaired_lhs
+  let fun_def_exp = get_func_exp fun_defs (CP.name_of_sv templ.templ_id) in
+  let (updated, f_prog) = match fun_def_exp with
+    | Some fun_sb_exp ->
+      let fun_def_cexp = translate_back_exp fun_sb_exp in
+      let () = x_binfo_hp (add_str "exp: " (Cprinter.poly_string_of_pr
+                                              Cprinter.pr_formula_exp))
+          fun_def_cexp no_pos in
+      let exp_decl = List.hd prog.Cast.prog_exp_decls in
+      let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
+      let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
+      (true, n_prog)
+    | None -> let () = x_binfo_pp "No expression \n" no_pos in
+      (false, prog)
+  in
+  (translate_back_pf repaired_lhs, updated, f_prog)
