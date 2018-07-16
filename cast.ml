@@ -4516,3 +4516,132 @@ let flatter (exp: exp) =
 
   in List.rev(aux exp [])
 
+let rec trans_exp_to_cast (exp: Cpure.exp) = match exp with
+  | Cpure.Var (var, loc) ->
+    let Cpure.SpecVar (typ, ident, _) = var in
+    (Unit loc, ident, false)
+
+  | Cpure.IConst (num, loc) ->
+    let cons = IConst {
+      exp_iconst_val = num;
+      exp_iconst_pos = loc
+    } in
+    let n_name = fresh_ty_var_name int_type loc.start_pos.Lexing.pos_lnum in
+    let n_var = Var {
+        exp_var_type = int_type;
+        exp_var_name = n_name;
+        exp_var_pos = loc;
+      }   in
+    let assign = Assign {
+        exp_assign_lhs = n_name;
+        exp_assign_rhs = cons;
+        exp_assign_pos = loc
+      }  in
+    (mkSeq int_type n_var assign loc, n_name, false)
+
+  | Cpure.Add (exp1, exp2, loc) ->
+    let exp1_typ = Cpure.get_exp_type exp1 in
+    let exp2_typ = Cpure.get_exp_type exp2 in
+    let (n_exp1, arg1, rname1) = trans_exp_to_cast exp1 in
+    let (n_exp2, arg2, rname2) = trans_exp_to_cast exp2 in
+    let (n_exp1, arg1) = if rname1 then
+        let n_name1 = fresh_ty_var_name int_type loc.start_pos.Lexing.pos_lnum in
+        let n_var = Var {
+            exp_var_type = int_type;
+            exp_var_name = n_name1;
+            exp_var_pos = loc;
+          }   in
+        let assign = Assign {
+            exp_assign_lhs = n_name1;
+            exp_assign_rhs = n_exp1;
+            exp_assign_pos = loc
+          }  in
+        (mkSeq int_type n_var assign loc, n_name1)
+      else (n_exp1, arg1) in
+    let (n_exp2, arg2) = if rname2 then
+        let n_name2 = fresh_ty_var_name int_type loc.start_pos.Lexing.pos_lnum in
+        let n_var = Var {
+            exp_var_type = int_type;
+            exp_var_name = n_name2;
+            exp_var_pos = loc;
+          }   in
+        let assign = Assign {
+            exp_assign_lhs = n_name2;
+            exp_assign_rhs = n_exp1;
+            exp_assign_pos = loc
+          }  in
+        (mkSeq int_type n_var assign loc, n_name2)
+      else (n_exp2, arg2) in
+
+    let mingled_mn = mingle_name "add" [exp1_typ; exp2_typ] in
+    let scall = SCall {
+        exp_scall_type = int_type;
+        exp_scall_method_name = mingled_mn;
+        exp_scall_lock = None;
+        exp_scall_arguments = [arg1; arg2];
+        exp_scall_ho_arg = None;
+        exp_scall_is_rec = false;
+        exp_scall_pos = loc;
+        exp_scall_path_id = None
+      }
+    in
+    let arg_seq = mkSeq int_type n_exp1 n_exp2 loc in
+    (mkSeq int_type arg_seq scall loc, mingled_mn, true)
+
+  | _ -> Err.report_error{
+      Err.error_loc = no_pos;
+      Err.error_text = "this exp is not supported";
+    }
+
+let rec repair_exp exp exp_decls =
+  match exp with
+  | Label l -> Label {l with exp_label_exp = repair_exp l.exp_label_exp exp_decls}
+  | CheckRef _ -> exp
+  | Java _ -> exp
+  | Assert _ -> exp
+  | Assign a -> Assign {a with exp_assign_rhs = repair_exp a.exp_assign_rhs exp_decls}
+  | BConst _ -> exp
+  | Bind b -> Bind {b with exp_bind_body = repair_exp b.exp_bind_body exp_decls}
+  | Block b -> Block {b with exp_block_body = repair_exp b.exp_block_body exp_decls}
+  | Barrier _ -> exp
+  | Cond c -> Cond {c with exp_cond_then_arm = repair_exp c.exp_cond_then_arm exp_decls;
+              exp_cond_else_arm = repair_exp c.exp_cond_else_arm exp_decls}
+  | Cast c -> Cast {c with exp_cast_body = repair_exp c.exp_cast_body exp_decls}
+  | Catch c -> Catch {c with exp_catch_body = repair_exp c.exp_catch_body exp_decls}
+  | Debug _ -> exp
+  | Dprint _ -> exp
+  | FConst _ -> exp
+  | ICall _ -> exp
+  | UnkExp unk ->
+    begin
+      try
+        let exp_decl = List.find (fun x -> String.compare x.exp_name
+                                     unk.unk_exp_name == 0) exp_decls in
+        let (res, _, _) = trans_exp_to_cast exp_decl.exp_body in
+        res
+      with Not_found -> exp
+    end
+  | IConst _ -> exp
+  | New _ -> exp
+  | Null _ -> exp
+  | EmptyArray _ -> exp
+  | Print _ -> exp
+  | SCall _ -> exp
+  | Seq s -> Seq {s with exp_seq_exp1 = repair_exp s.exp_seq_exp1 exp_decls;
+             exp_seq_exp2 = repair_exp s.exp_seq_exp2 exp_decls}
+  | This _ -> exp
+  | Time _ -> exp
+  | Var _ -> exp
+  | VarDecl _ -> exp
+  | Unfold _ -> exp
+  | Unit _ -> exp
+  | While w -> While {w with exp_while_body = repair_exp w.exp_while_body exp_decls}
+  | Sharp _ -> exp
+  | Try t -> Try {t with exp_try_body = repair_exp t.exp_try_body exp_decls}
+  | Par _ -> exp
+
+
+let repair_proc proc exp_decls =
+  match proc.proc_body with
+  | None -> proc
+  | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls)}

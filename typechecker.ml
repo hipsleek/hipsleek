@@ -2767,11 +2767,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
 
-        let (repaired_lhs, _, _) = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
+        let (repaired_lhs, _, nprog) = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
         let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
             repaired_lhs no_pos in
+        (* let () = x_binfo_hp (add_str "proc: " (Cprinter.string_of_proc_decl 1))
+         *     proc no_pos in *)
 
-
+        let n_proc = Cast.repair_proc proc nprog.prog_exp_decls in
+        let () = x_binfo_hp (add_str "new proc: " (Cprinter.string_of_proc_decl 1)) n_proc no_pos in
 
         (* let repair_vars = Cpure.fv repaired_lhs in *)
         (* let () = x_binfo_hp (add_str "prog: " Cprinter.string_of_program) prog no_pos in *)

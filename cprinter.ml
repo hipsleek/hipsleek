@@ -4686,7 +4686,9 @@ let rec string_of_exp = function
       unk_exp_name = id;
       unk_exp_arguments = args;
       unk_exp_pos = l
-    }) -> id ^ (string_of_ident_list args ",")
+    }) ->
+    id ^ "(" ^ (string_of_ident_list args ",")
+
   | ICall ({exp_icall_type = _;
             exp_icall_receiver = r;
             exp_icall_method_name = id;
