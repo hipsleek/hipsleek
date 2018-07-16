@@ -2757,6 +2757,18 @@ let string_of_rel_decl reldecl =
   let args = pr_lst ", " pr_arg reldecl.Cast.rel_vars in
   decl_kind ^ name ^ "(" ^ args ^ ").\n"
 
+let string_of_exp_decl expdecl =
+  let name = expdecl.Cast.exp_name in
+  let pr_arg arg =
+    let t = CP.type_of_spec_var arg in
+    let arg_name = string_of_spec_var arg in
+    let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+    (CP.name_of_type t)  ^ " " ^ arg_name
+  in
+  let decl_kind = "fun " in
+  let args = pr_lst ", " pr_arg expdecl.Cast.exp_params in
+  decl_kind ^ name ^ "(" ^ args ^ ") = " ^ (string_of_formula_exp expdecl.Cast.exp_body)  ^ "\n"
+
 let string_of_ut_decl ut_decl =
   let name = ut_decl.Cast.ut_name in
   let pr_arg arg =
@@ -5005,6 +5017,9 @@ let string_of_rel_decl_list rdecls =
   String.concat "\n" (List.map string_of_rel_decl rdecls)
 (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
 
+let string_of_exp_decl_list exp_decls =
+  String.concat "\n" (List.map string_of_exp_decl exp_decls)
+
 let string_of_ut_decl_list ut_decls =
   String.concat "\n" (List.map string_of_ut_decl ut_decls)
 
@@ -5033,6 +5048,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
                           (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^
                           (string_of_ut_decl_list p.prog_ut_decls) ^ "\n\n" ^
                           (string_of_rel_decl_list (p.prog_rel_decls # get_stk)) ^ "\n\n" ^
+                          (string_of_exp_decl_list p.prog_exp_decls) ^ "\n\n" ^
                           (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
                           (* WN_all_lemma - override usage? *)
                           (string_of_coerc_decl_list (*p.prog_left_coercions*) (Lem_store.all_lemma # get_left_coercion))^"\n\n"^

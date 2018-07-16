@@ -2019,6 +2019,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           let farg_types, farg_names = List.split proc.proc_args in
           let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
           let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
+          let () = x_dinfo_hp (add_str "actual_svs:" Cprinter.string_of_spec_var_list) actual_spec_vars no_pos in
           let b = true
           in
           if not b then ctx
@@ -2026,8 +2027,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let check_pre_post_orig org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
               (* Termination: Stripping the "variance" feature from
                * org_spec if the call is not a recursive call *)
+              let () = x_dinfo_hp (add_str "actual_svs:"
+                                     Cprinter.string_of_list_failesc_context)
+                  sctx no_pos in
               let org_spec = if !Globals.change_flow then CF.change_spec_flow org_spec else org_spec in
-              (* let () = x_binfo_hp (add_str "org_spec 2" Cprinter.string_of_struc_formula) org_spec no_pos in *)
               let lbl_ctx = store_label # get in
               let org_spec2 =
                 if is_rec_flag && !auto_number then match org_spec with
@@ -2103,37 +2106,33 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               x_dinfo_zp (lazy (to_print^"\n")) pos;
               (* An Hoa : output the context and new spec before checking pre-condition *)
               let () = if !print_proof && should_output_html then Prooftracer.push_list_failesc_context_struct_entailment sctx pre2 in
-              (* let () = print_endline ("\nlocle: check_pre_post@SCall@sctx: " ^ *)
-              (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
-              (* let () = print_endline ("\nlocle: new_spec@SCall@sctx: " ^ *)
-              (*     (Cprinter.string_of_struc_formula pre2)) in *)
               (*we use new rules to judge the spec*)
+              let () = x_dinfo_hp (add_str "old rs:"
+                                     Cprinter.string_of_list_failesc_context)
+                  sctx no_pos in
               let rs, prf = x_add heap_entail_struc_list_failesc_context_init 6 prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
+              let () = x_dinfo_hp (add_str "new rs:"
+                                     Cprinter.string_of_list_failesc_context)
+                  rs no_pos in
               rs
             in
             (*******************************END_CHECK_PRE_POST****************************************)
             (* Call check_pre_post with debug information *)
             (***************************************************************************)
             let check_pre_post ir org_spec (sctx:CF.list_failesc_context) should_output_html : CF.list_failesc_context =
-              (* let () = Cprinter.string_of_list_failesc_context in *)
               let pr2 = Cprinter.string_of_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
-              (* let () = Log.update_sleek_proving_kind Log.PRE in *)
-              let () = Debug.ninfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula) org_spec no_pos in
+              let () = Debug.dinfo_hprint (add_str  "org_spec" Cprinter.string_of_struc_formula) org_spec no_pos in
               let wrap_fnc = if CF.is_infer_pre_must org_spec then wrap_err_must else wrap_err_pre in
-              let pre_post_op_wrapper a b c =
-                (* wrap_err_pre *) wrap_fnc (* (Some false) *)
-                (* (check_pre_post_orig a b) *)  (check_pre_post_orig a b )   c
-              in
+              let pre_post_op_wrapper a b c = wrap_fnc (check_pre_post_orig a b) c in
               let pk = if ir then PK_PRE_REC else PK_PRE in
-              let f = wrap_proving_kind pk  ((* check_pre_post_orig *) pre_post_op_wrapper org_spec sctx) in
+              let f = wrap_proving_kind pk (pre_post_op_wrapper org_spec sctx) in
               let is_post_false = CF.is_struc_false_post org_spec in
-              let f x = 
-                (* let () = y_binfo_pp "if post_cond is false, inference on and orig classic on, apply Wrapper.wrap_classic" in *)
-                if is_post_false then 
-                  if !Globals.new_trace_classic then 
+              let f x =
+                if is_post_false then
+                  if !Globals.new_trace_classic then
                     wrap_msg "check pre/post classic" (wrap_classic x_loc (Some true) f) x
                   else (wrap_classic x_loc (Some true) f) x
                 else f x in
@@ -2151,16 +2150,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* print_endline ("CHECKING PRE-CONDITION OF FUNCTION CALL " ^ (Cprinter.string_of_exp e0)) *)
                 end else false in
 
-            (* let () = print_endline "locle6" in *)
             let res = if (CF.isFailListFailescCtx_new ctx) then
                 let _ = if !print_proof && scall_pre_cond_pushed then Prooftracer.append_html "Program state is unreachable." in
-                (* let () = print_endline "locle7" in *)
                 ctx
               else
-                (* let () = print_endline "locle8" in *)
-                (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
                 let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
-                (* let () = print_endline "locle8a" in *)
                 check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
             in
             let () = if !print_proof then Prooftracer.add_pre e0 in
@@ -2170,23 +2164,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   Tpdispatcher.restore_suppress_imply_output_state ();
                   (* print_endline "OK.\n" *)
                 end in
-            (* let () = Debug.info_zprint (lazy ( (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)))) no_pos in *)
             Gen.Profiling.pop_time "[check_exp] SCall";
-            (* let () = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
             (*Loc: error as exception *)
             (* move must, may flow into esc_stack *)
             if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
-              (* let () = print_endline ("\nlocle1:" ^ proc.proc_name) in *)
-              let res = 
-                (* let () = Debug.info_zprint (lazy (("   callee:" ^ mn))) no_pos in *)
-                (* let () = Debug.info_zprint (lazy (("   caller:" ^ proc0.proc_name))) no_pos in *)
+              let res =
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                 let idf = (fun c -> c) in
                 let err_kind_msg = if CF.is_infer_pre_must (proc.proc_stk_of_static_specs#top) then "must" else "may" in
                 let to_print = "Proving precondition in method " ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^
                                ") Failed (" ^  err_kind_msg ^ ")" in
                 CF.transform_list_failesc_context (idf,idf,
-                                                   (fun es -> CF.Ctx{es with CF.es_formula = 
+                                                   (fun es -> CF.Ctx{es with CF.es_formula =
                                                                                Norm.imm_norm_formula prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
                                                                              CF.es_final_error = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
@@ -2442,28 +2431,33 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         unk_exp_arguments = args;
         unk_exp_pos = pos;
       } ->
+      let () = x_tinfo_hp (add_str "old ctx:" Cprinter.string_of_list_failesc_context) ctx no_pos in
       let exp_defs = prog.prog_exp_decls in
       begin
         try
           let exp_def = List.find (fun exp_decl -> String.compare exp_decl.Cast.exp_name id == 0)
               exp_defs in
           let res_exp = CP.mk_exp_var (CP.mkRes exp_def.exp_ret_typ) in
+          let arg_exps = List.map (fun x -> CP.to_primed (CP.mk_spec_var x)) args in
           let unk_coes = List.map
               (fun var -> CP.SpecVar (CP.int_type,
                                       id ^ "_" ^ (CP.name_of_spec_var var), Unprimed))
-              exp_def.exp_params in
+              arg_exps in
           let unk_const = CP.SpecVar (Int, id ^ "_" ^ (string_of_int 0), Unprimed) in
           let templ = CP.Template {
             templ_id = CP.mk_spec_var exp_def.exp_name;
-            templ_args = List.map (fun x -> CP.mkVar x pos) exp_def.exp_params;
+            templ_args = List.map CP.mk_exp_var arg_exps;
             templ_unks = List.map (fun x -> CP.mkVar x pos) (unk_const::unk_coes);
             templ_body = None;
             templ_pos = pos;
           }
           in
-        let pure_f = CP.mkEqExp res_exp templ pos in
-        let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
-        CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
+          let pure_f = CP.mkEqExp res_exp templ pos in
+          let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
+          let n_ctx =
+            CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
+          let () = x_dinfo_hp (add_str "n_ctx:" Cprinter.string_of_list_failesc_context) n_ctx no_pos in
+          n_ctx
       with Not_found ->
         Err.report_error { Err.error_loc = pos;
                            Err.error_text = "No expression declaration found." }
@@ -2723,6 +2717,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
               Err.error_text = ("unhandled")
             }
         in
+
+        (* let () = x_binfo_hp (add_str "proc: " (Cprinter.string_of_proc_decl 1))
+         *     proc no_pos in *)
+
         let rec get_pure_conseq_from_formula f =
           match f with
           | CF.Or fo ->
@@ -2768,15 +2766,41 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             pure_rhs pos in
 
         let (repaired_lhs, _, nprog) = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
-        let () = x_binfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
+        let () = x_dinfo_hp (add_str "repaired lhs: " Cprinter.string_of_pure_formula)
             repaired_lhs no_pos in
-        (* let () = x_binfo_hp (add_str "proc: " (Cprinter.string_of_proc_decl 1))
-         *     proc no_pos in *)
-
+        let () = x_binfo_hp (add_str "fun_defns: " Cprinter.string_of_exp_decl_list)
+            nprog.prog_exp_decls no_pos in
         let n_proc = Cast.repair_proc proc nprog.prog_exp_decls in
         let () = x_binfo_hp (add_str "new proc: " (Cprinter.string_of_proc_decl 1)) n_proc no_pos in
 
-        (* let repair_vars = Cpure.fv repaired_lhs in *)
+        let failure_str = if List.exists (fun et -> et = Mem 1) ets then
+            "memory leak failure" else
+            "Post condition cannot be derivedddddddddddddddddddddddddd"
+        in
+        let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
+
+        Err.report_error {
+          Err.error_loc = pos;
+          Err.error_text = (failure_str ^".")
+        }
+      else
+        begin
+          Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
+            ("Postcondition cannot be derived from context\n")
+            pos;
+          Debug.print_info ("(Cause of PostCond Failure)")
+            (Cprinter.string_of_failure_list_partial_context rs) pos;
+          Err.report_error {
+            Err.error_loc = pos;
+            Err.error_text = Printf.sprintf
+                "Post condition cannot be derived by the system."
+          }
+        end
+    in
+    rs
+  end
+
+(* let repair_vars = Cpure.fv repaired_lhs in *)
         (* let () = x_binfo_hp (add_str "prog: " Cprinter.string_of_program) prog no_pos in *)
         (* let () = x_binfo_hp (add_str "prog.data_decls: " (pr_list Cprinter.string_of_data_decl)) prog.prog_data_decls no_pos in
          * let () = x_binfo_hp (add_str "prog.procs: " (Cprinter.string_of_proc_decl_list)) (Cast.list_of_procs prog) no_pos in *)
@@ -2816,38 +2840,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
          * let candidate_exp = get_candidate_repair_exp body_exp ident_list in
          * let () = x_binfo_hp (add_str "candidate_exp: " Cprinter.string_of_exp) candidate_exp pos in *)
 
-
-        let failure_str = if List.exists (fun et -> et = Mem 1) ets then
-            "memory leak failure" else
-            "Post condition cannot be derivedddddddddddddddddddddddddd"
-        in
-        let () = print_string ("\n"^failure_str ^ ":\n" ^s^"\n") in
-        (* let () = x_binfo_pp ("failure: " ^s) no_pos in *)
-        (* let () = x_binfo_hp (add_str "rs: " pr1) rs pos in *)
-        (* let () = x_binfo_hp (add_str "failed state: " Cprinter.pr_failed_states) rs pos in *)
-
-
-
-        Err.report_error {
-          Err.error_loc = pos;
-          Err.error_text = (failure_str ^".")
-        }
-      else
-        begin
-          Debug.print_info ("("^(Cprinter.string_of_label_list_partial_context rs)^") ")
-            ("Postcondition cannot be derived from context\n")
-            pos;
-          Debug.print_info ("(Cause of PostCond Failure)")
-            (Cprinter.string_of_failure_list_partial_context rs) pos;
-          Err.report_error {
-            Err.error_loc = pos;
-            Err.error_text = Printf.sprintf
-                "Post condition cannot be derived by the system."
-          }
-        end
-    in
-    rs
-  end
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)
 (* replacing each spec with new spec with phase numbering *)

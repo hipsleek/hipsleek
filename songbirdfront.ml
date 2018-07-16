@@ -155,9 +155,14 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
 *)
 let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   =
+  (* let () = x_binfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
+   *                                             Cprinter.pr_formula_exp))
+   *         (CP.exp_of_template templ) no_pos in *)
+  let () = x_dinfo_hp (add_str "templ args: " (Cprinter.string_of_formula_exp_list))
+          (templ.Cpure.templ_args) no_pos in
   let program = SBCast.mk_program "hip_input" in
   let fun_name = CP.name_of_sv templ.CP.templ_id in
-  let args = templ.templ_args |> List.map CP.get_var |> List.map translate_var in
+  let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in
   let f_defn = SBCast.mk_func_defn_unknown fun_name args in
   let ifr_typ = SBGlobals.IfrStrong in
   let entail = SBCast.mk_pure_entail lhs rhs in
@@ -200,7 +205,7 @@ let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
   let (updated, f_prog) = match fun_def_exp with
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in
-      let () = x_binfo_hp (add_str "exp: " (Cprinter.poly_string_of_pr
+      let () = x_ninfo_hp (add_str "exp: " (Cprinter.poly_string_of_pr
                                               Cprinter.pr_formula_exp))
           fun_def_cexp no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in

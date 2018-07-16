@@ -4540,8 +4540,10 @@ let rec trans_exp_to_cast (exp: Cpure.exp) = match exp with
     (mkSeq int_type n_var assign loc, n_name, false)
 
   | Cpure.Add (exp1, exp2, loc) ->
-    let exp1_typ = Cpure.get_exp_type exp1 in
-    let exp2_typ = Cpure.get_exp_type exp2 in
+    (* let exp1_typ = Cpure.get_exp_type exp1 in
+     * let exp2_typ = Cpure.get_exp_type exp2 in *)
+    let exp1_typ = Cpure.int_type in
+    let exp2_typ = Cpure.int_type in
     let (n_exp1, arg1, rname1) = trans_exp_to_cast exp1 in
     let (n_exp2, arg2, rname2) = trans_exp_to_cast exp2 in
     let (n_exp1, arg1) = if rname1 then

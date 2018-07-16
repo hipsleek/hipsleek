@@ -776,7 +776,6 @@ let rec string_of_exp = function
       unk_exp_name = id;
       unk_exp_arguments = el;
     }) -> id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
-          
   | CallRecv ({exp_call_recv_receiver = recv;
     exp_call_recv_method = id;
     exp_call_recv_path_id = pid;
@@ -1079,11 +1078,18 @@ let string_of_proc_decl p =
       ^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
 
-let string_of_rel_decl p = 
+let string_of_rel_decl p =
   let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
   p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
 ;;
 
+let string_of_exp_decl exp_decl =
+  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+  let body = match exp_decl.exp_body with
+    | ExpForm e -> string_of_formula_exp e
+    | ExpUnk -> "ExpUnk"
+  in
+  exp_decl.exp_name ^ "(" ^ (pr exp_decl.exp_typed_params) ^ ") = " ^ body 
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
@@ -1191,6 +1197,8 @@ let rec string_of_global_var_decl_list l =
 let string_of_rel_decl_list rdecls =
   String.concat "\n" (List.map string_of_rel_decl rdecls)
 (* String.concat "\n" (List.map (fun r -> "relation " ^ r.rel_name) rdecls) *)
+let string_of_exp_decl_list exp_decls =
+  String.concat "\n" (List.map string_of_exp_decl exp_decls)
 
 let string_of_hp_decl hpdecl =
   let name = hpdecl.Iast.hp_name in
@@ -1228,6 +1236,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n" ^
+  (string_of_exp_decl_list p.prog_exp_decls) ^"\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list_list p.prog_coercion_decls) ^ "\n\n" ^ 
