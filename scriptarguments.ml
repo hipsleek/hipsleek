@@ -784,7 +784,6 @@ let common_arguments = [
   ("-version", Arg.Set Globals.print_version_flag,"current version of software");
   (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
-  ("--en-repair", Arg.Clear Globals.enable_repair,"enable repair process");
   ("--efa", Arg.Clear Globals.disable_failure_explaining,"shorthand for --en-failure-analysis");
   ("--efa-exc", Arg.Set Globals.enable_error_as_exc,"enable to transform error as exception");
   ("--dis-efa-exc", Arg.Clear Globals.enable_error_as_exc,"disable to transform error as exception");
@@ -802,7 +801,9 @@ let common_arguments = [
   (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
   (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
   ("--dis-elimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-  ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
+  ("--esi",Arg.Set Globals.enable_strong_invariant,
+   "enable strong predicate invariant");
+  ("--en-repair", Arg.Set Globals.enable_repair,"enable repair process");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
   ("--constr-filter", Arg.Set Globals.enable_constraint_based_filtering, "Enable assumption filtering based on contraint type");

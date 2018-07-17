@@ -15619,3 +15619,27 @@ let mk_is_base_ptr d rhs_ptr =
 let is_Or f = match f with
   | Or _ -> true
   | _ -> false
+
+let translate_var var =
+  let SpecVar (_, ident, primed) = var in
+  (ident, primed)
+
+let rec translate_exp_to_ipure exp = match exp with
+  | Null loc -> Ipure_D.Null loc
+  | Var (spec_var, loc) -> Ipure_D.Var (translate_var spec_var, loc)
+  | IConst (num, loc) -> Ipure_D.IConst (num, loc)
+  | FConst (num, loc) -> Ipure_D.FConst (num, loc)
+  | Add (exp1, exp2, loc) -> Ipure_D.Add (translate_exp_to_ipure exp1,
+                                          translate_exp_to_ipure exp2, loc)
+  | Subtract (exp1, exp2, loc) -> Ipure_D.Subtract (translate_exp_to_ipure exp1,
+                                                    translate_exp_to_ipure exp2, loc)
+  | Mult (exp1, exp2, loc) -> Ipure_D.Mult (translate_exp_to_ipure exp1,
+                                            translate_exp_to_ipure exp2, loc)
+  | Div (exp1, exp2, loc) -> Ipure_D.Div (translate_exp_to_ipure exp1,
+                                          translate_exp_to_ipure exp2, loc)
+  | Max (exp1, exp2, loc) -> Ipure_D.Max (translate_exp_to_ipure exp1,
+                                          translate_exp_to_ipure exp2, loc)
+  | Min (exp1, exp2, loc) -> Ipure_D.Min (translate_exp_to_ipure exp1,
+                                          translate_exp_to_ipure exp2, loc)
+  | _ -> report_error no_pos ("translate_exp_to_ipure: not supported exp\n")
+
