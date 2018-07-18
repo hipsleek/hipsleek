@@ -720,14 +720,18 @@ let process_source_full source =
   if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
-          let () = x_binfo_pp "marking 737 \n" no_pos in
           Typechecker.check_prog_wrapper intermediate_prog cprog;
         with _ as e ->
-          let () = x_binfo_pp "marking 740 \n" no_pos in
           begin
-            let (lhs, rhs) = !Typechecker.lhs_rhs_to_repair in
-            if (lhs == []) then
-              let () = x_binfo_pp "marking 743 \n" no_pos in
+            if (!Globals.enable_repair) then
+              let (repaired, n_iprog) = Repair.repair_prog intermediate_prog
+                  cprog in
+              if repaired then
+                let n_cprog, _ = Astsimp.trans_prog n_iprog in
+                try Typechecker.check_prog_wrapper n_iprog n_cprog
+                with e2 -> raise e2
+              else raise e
+            else
               let () = print_string_quiet ("\nException MAIN"
                                            ^(Printexc.to_string e)^"Occurred!\n"
                                           ) in
@@ -735,19 +739,6 @@ let process_source_full source =
                                           ) in
               let () = Log.process_proof_logging !Globals.source_files cprog prim_names in
               raise e
-            else
-                (* (lhs, rhs) = ([lhs], [rhs])*)
-              let () = x_binfo_pp "marking 751 \n" no_pos in
-                let pure_lhs = List.hd lhs in
-                let pure_rhs = List.hd rhs in
-                let (repaired_lhs, _, nprog) =
-                  Songbirdfront.get_repair_candidate cprog pure_lhs pure_rhs in
-                let n_iprog = Typechecker.update_iprog_exp_defns intermediate_prog nprog.prog_exp_decls in
-                let () = x_dinfo_hp (add_str "fun_defns: " Cprinter.string_of_exp_decl_list)
-                    nprog.prog_exp_decls no_pos in
-                let () = x_binfo_hp (add_str "new iprog exp_decls: " Iprinter.string_of_exp_decl_list)
-                    n_iprog.prog_exp_decls no_pos in
-                raise e
           end);
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then
@@ -951,7 +942,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
-          let () = x_binfo_pp "marking 966\n" no_pos in
+          let () = x_binfo_pp "marking \n" no_pos in
           ignore (Typechecker.check_prog intermediate_prog cprog);
         with _ as e -> begin
             print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");

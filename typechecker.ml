@@ -37,6 +37,7 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
 let lhs_rhs_to_repair = ref ([], [])
+let proc_to_repair = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -2776,6 +2777,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
             (!Globals.enable_repair) pos in
         let () = if (!Globals.enable_repair) then
             let () = lhs_rhs_to_repair := ([pure_lhs], [pure_rhs]) in
+            let () = proc_to_repair := Some (proc.Cast.proc_name) in
             ()
         in
         (* let (repaired_lhs, _, nprog) = Songbirdfront.get_repair_candidate prog pure_lhs pure_rhs in
@@ -3431,7 +3433,7 @@ let check_data iprog (prog : prog_decl) (cdef : data_decl) =
   try
     List.map (check_proc_wrapper iprog prog) cdef.data_methods
   with e ->
-    let () = x_binfo_pp "marking \n" no_pos in
+    let () = x_dinfo_pp "marking \n" no_pos in
     raise e
 
 let check_coercion (prog : prog_decl) =
@@ -3644,11 +3646,11 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
         Debug.ninfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
         Debug.ninfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
         let () =  Debug.ninfo_hprint (add_str "before check_proc_wrapper" (Cprinter.string_of_struc_formula_for_spec_inst prog)) proc1.Cast.proc_stk_of_static_specs # top  no_pos in
-        let () = x_binfo_pp "marking \n" no_pos in
+        let () = x_dinfo_pp "marking \n" no_pos in
         let r =
           try
             check_proc_wrapper iprog prog proc1 cout_option !mutual_grp
-          with _ as e -> let () = x_binfo_pp "marking \n" no_pos in
+          with _ as e -> let () = x_dinfo_pp "marking \n" no_pos in
             raise e
         in
         r
@@ -3657,7 +3659,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
     let is_all_verified2 =
       try
         proc_mutual_scc prog scc tmp_fun
-      with _ as e -> let () = x_binfo_pp "marking \n" no_pos in
+      with _ as e -> let () = x_dinfo_pp "marking \n" no_pos in
         raise e
     in
     let () = print_infer_scc (x_loc^" After check_proc") scc in
