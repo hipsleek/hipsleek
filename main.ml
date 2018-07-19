@@ -724,10 +724,10 @@ let process_source_full source =
         with _ as e ->
           begin
             if (!Globals.enable_repair) then
-              let () = print_endline "!!! REPAIR: starting repair process \n" in
-              let _ = Repair.start_repair intermediate_prog cprog in
-              raise e
-
+              let () = print_endline "!!!! REPAIR: starting repair process" in
+              let is_repaired = Repair.start_repair intermediate_prog cprog in
+              if (is_repaired) then ()
+              else raise e
               (* let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
                *     intermediate_prog cprog in
                * if repaired then

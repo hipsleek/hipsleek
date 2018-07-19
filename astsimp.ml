@@ -3387,7 +3387,7 @@ and trans_exp_decl (prog: I.prog_decl) (exp_def: I.exp_decl): C.exp_decl =
     C.exp_pos = exp_def.I.exp_pos;
   }
   in
-  let () = x_binfo_hp (add_str "new exp_decl: " (Cprinter.string_of_exp_decl))
+  let () = x_dinfo_hp (add_str "new exp_decl: " (Cprinter.string_of_exp_decl))
         res no_pos in
   res
 
@@ -9292,7 +9292,10 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
         Err.error_text = msg; } 
     else if !Globals.old_post_impl_to_ex && flag (* need_quant!=[] *) then 
       begin
-        let () = x_winfo_pp msg (IF.pos_of_formula f) in
+        let () = if not(!Globals.enable_repair) then
+            let () = x_winfo_pp msg (IF.pos_of_formula f) in
+            ()
+        in
 (*        let () = print_endline ("!!!"^(VarGen.string_of_loc (IF.pos_of_formula f))) in
         let () = print_endline ("###"^(proving_loc # string_of)) in*)
         IF.push_exists (need_quant@anon_vs) f

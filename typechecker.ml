@@ -2773,7 +2773,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in
         let pure_rhs = get_pure_conseq_from_struc rhs in
         let pure_lhs = Cpure.elim_equi_ante pure_failed_lhs pure_rhs in
-        let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
+        let () = x_dinfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
         let () = x_dinfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
@@ -2794,10 +2794,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
 
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
-            "Post condition cannot be derivedddddddddddddddddddddddddd"
+            "Post condition cannot be derived"
         in
-        (* let () = x_binfo_hp (add_str "failure_str: " (fun x -> x))
-         *     failure_str pos in *)
         let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
         Err.report_error {
           Err.error_loc = pos;
@@ -3572,7 +3570,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
-  let () = Debug.binfo_hprint (add_str "sorted_proc_main"
+  let () = Debug.dinfo_hprint (add_str "sorted_proc_main"
                                  (pr_list Astsimp.pr_proc_call_order)
                               ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)

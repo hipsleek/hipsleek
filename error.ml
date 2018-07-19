@@ -53,7 +53,7 @@ let report_error_msg (error_msg: string) =
 
 let report_error e =
   if post_pos#is_avail then
-    print_endline_q ("\nContext of Verification Failureeeeeeeeee: " ^ post_pos#string_of);
+    print_endline_q ("\nContext of Verification Failure: " ^ post_pos#string_of);
   if proving_loc#is_avail then
     print_endline_q ("\nLast Proving Location: " ^  proving_loc#string_of);
   print_endline_q ("\nERROR: at " ^ (string_of_loc e.error_loc)
