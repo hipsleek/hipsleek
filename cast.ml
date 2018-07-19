@@ -4473,7 +4473,7 @@ let flatter (exp: exp) =
   let rec aux exp list =
     match exp with
     | Seq exp_seq ->
-      let () = x_binfo_pp ("Sequence") no_pos in
+      (* let () = x_binfo_pp ("Sequence") no_pos in *)
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
     | Block block -> let () = x_dinfo_pp ("marking block") no_pos in

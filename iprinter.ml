@@ -1089,7 +1089,7 @@ let string_of_exp_decl exp_decl =
     | ExpForm e -> string_of_formula_exp e
     | ExpUnk -> "ExpUnk"
   in
-  exp_decl.exp_name ^ "(" ^ (pr exp_decl.exp_typed_params) ^ ") = " ^ body 
+  exp_decl.exp_name ^ "(" ^ (pr exp_decl.exp_typed_params) ^ ") = " ^ body
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 

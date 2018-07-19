@@ -285,7 +285,6 @@ let start_prover() =
   try (
     if not !is_omega_running then begin
       (* if (not !Globals.web_compile_flag) then  *)
-      print_endline "ldflfe";
       print_endline_quiet  ("\nStarting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let () = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in

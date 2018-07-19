@@ -3878,6 +3878,22 @@ let rec translate_ipure_exp_to_iast (exp : Ipure_D.exp) = match exp with
       Err.error_text = "translate_ipure_exp_to_iast: this exp is not supported";
     }
 
+let mk_unk_exp vars loc =
+  UnkExp {
+    unk_exp_name = "fff";
+    unk_exp_arguments = List.map (fun x -> mkVar x no_pos) vars;
+    unk_exp_pos = loc
+  }
+
+let mk_exp_decl params =
+  {
+    exp_name = "fff";
+    exp_ret_typ = int_type;
+    exp_typed_params = params;
+    exp_body = ExpUnk;
+    exp_pos = no_pos
+  }
+
 let rec repair_exp exp exp_decls =
   match exp with
   | ArrayAt _ -> exp
@@ -3984,3 +4000,163 @@ let repair_proc proc exp_decls =
   match proc.proc_body with
   | None -> proc
   | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls)}
+
+let list_of_assign_exp (exp: exp) =
+  let rec aux exp list =
+    match exp with
+    | Seq exp_seq ->
+      let exp1_list = aux exp_seq.exp_seq_exp1 list in
+      aux exp_seq.exp_seq_exp2 exp1_list
+    | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
+      aux block.exp_block_body list
+    | Assign exp_assign ->
+      [(exp_assign, exp_assign.exp_assign_pos)] @ list
+    (* | Binary exp_binary ->
+     *   let exp1_list = aux exp_binary.exp_binary_oper1 list in
+     *   aux exp_seq.exp_binary_oper2 exp1_list
+     * | Var exp_var ->
+     *   [(exp_var.exp_var_name, exp_var.exp_var_pos)] @ list *)
+    | _ -> list
+
+  in List.rev(aux exp [])
+
+let replace_assign_exp exp vars =
+  let rhs = exp.exp_assign_rhs in
+  let rec prelist a b = match a, b with
+    | [], _ -> true
+    | _, [] -> false
+    | h::t, h'::t' -> h = h' && prelist t t'
+  in
+  let rec sublist a b = match a, b with
+    | [], _ -> true
+    | _, [] -> false
+    | h::_, h'::t' -> (h = h' && prelist a b) || sublist a t'
+  in
+  let simple_collect_vars exp =
+    let rec aux exp list = match exp with
+      | Var var -> [var.exp_var_name] @ list
+      | Binary bin ->
+        let tmp = aux bin.exp_binary_oper1 list in
+        aux bin.exp_binary_oper2 tmp
+      | _ -> list
+    in
+    let vars = aux exp [] in
+    Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
+  in
+
+  let rec replace rhs vars =
+    let rhs_vars = simple_collect_vars rhs in
+    (* let () = x_binfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in *)
+    if (rhs_vars == []) then (rhs, [])
+    else if sublist rhs_vars vars then
+      (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars)
+    else
+      match rhs with
+      | Binary b -> (Binary {
+          b with exp_binary_oper1 = fst (replace b.exp_binary_oper1 vars);
+                 exp_binary_oper2 = fst (replace b.exp_binary_oper2 vars);
+        }, (snd (replace b.exp_binary_oper1 vars)) @ (snd (replace b.exp_binary_oper2 vars)))
+      | _ -> (rhs, [])
+
+  in
+  let (replaced_rhs, replaced_vars) = replace rhs vars in
+  (Assign { exp with exp_assign_rhs = replaced_rhs }, replaced_vars)
+
+let rec replace_exp_with_loc exp n_exp loc =
+  match exp with
+  | ArrayAt _ -> exp
+  | ArrayAlloc _ -> exp
+  | Assert _ -> exp
+  | Assign e ->
+    if (e.exp_assign_pos = loc) then n_exp else
+      let r_exp1 = replace_exp_with_loc e.exp_assign_lhs n_exp loc in
+      let r_exp2 = replace_exp_with_loc e.exp_assign_rhs n_exp loc in
+      Assign {e with exp_assign_lhs = r_exp1;
+                     exp_assign_rhs = r_exp2}
+  | Binary e ->
+    if e.exp_binary_pos = loc then n_exp else
+      let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
+      let r_exp2 = replace_exp_with_loc e.exp_binary_oper2 n_exp loc in
+      Binary {e with exp_binary_oper1 = r_exp1;
+                     exp_binary_oper2 = r_exp2}
+  | Bind e ->
+    if e.exp_bind_pos = loc then n_exp else
+      let r_exp = replace_exp_with_loc e.exp_bind_body n_exp loc in
+      Bind {e with exp_bind_body = r_exp}
+  | Block e ->
+    if e.exp_block_pos = loc then n_exp
+    else
+      let r_exp = replace_exp_with_loc e.exp_block_body n_exp loc in
+      Block {e with exp_block_body = r_exp}
+  | BoolLit _ -> exp
+  | Break _ -> exp
+  | Barrier _ -> exp
+  | CallNRecv e  ->
+    let r_args = List.map (fun x -> replace_exp_with_loc x n_exp loc) e.exp_call_nrecv_arguments in
+    CallNRecv {e with exp_call_nrecv_arguments = r_args}
+  | CallRecv e  ->
+    let n_receiver = replace_exp_with_loc e.exp_call_recv_receiver n_exp loc in
+    let r_args = List.map (fun x -> replace_exp_with_loc x n_exp loc) e.exp_call_recv_arguments in
+    CallRecv {e with exp_call_recv_receiver = n_receiver;
+              exp_call_recv_arguments = r_args}
+  | Cast e -> Cast {e with
+                    exp_cast_body = replace_exp_with_loc e.exp_cast_body n_exp loc}
+  | Cond e ->
+    let r_cond = replace_exp_with_loc e.exp_cond_condition n_exp loc in
+    let r_then_branch = replace_exp_with_loc e.exp_cond_then_arm n_exp loc in
+    let r_else_branch = replace_exp_with_loc e.exp_cond_else_arm n_exp loc in
+    Cond {e with exp_cond_condition = r_cond;
+                 exp_cond_then_arm = r_then_branch;
+                 exp_cond_else_arm = r_else_branch}
+  | ConstDecl _ -> exp
+  | Continue _ -> exp
+  | Catch e ->
+    Catch { e with exp_catch_body = replace_exp_with_loc e.exp_catch_body n_exp loc}
+  | Debug _ -> exp
+  | Dprint _ -> exp
+  | Empty _ -> exp
+  | FloatLit _ -> exp
+  | Finally e  ->
+    Finally { e with exp_finally_body = replace_exp_with_loc e.exp_finally_body n_exp loc}
+  | IntLit _ -> exp
+  | Java _ -> exp
+  | Label (a, body) -> Label (a, replace_exp_with_loc body n_exp loc)
+  | Member e ->
+    Member {e with exp_member_base = replace_exp_with_loc e.exp_member_base n_exp loc}
+  | New e ->
+    exp
+    (* let r_args = List.map (fun x -> repair_exp x exp_decls) e.exp_new_arguments in
+     * New { e with exp_new_arguments = r_args} *)
+  | Null _ -> exp
+  | Raise _ -> exp
+  | Return e -> exp
+    (* let r_val = match e.exp_return_val with
+     *   | None -> None
+     *   | Some e -> Some (repair_exp e exp_decls)
+     * in Return {e with exp_return_val = r_val} *)
+  | Seq e ->
+    let r_e1 = replace_exp_with_loc e.exp_seq_exp1 n_exp loc in
+    let r_e2 = replace_exp_with_loc e.exp_seq_exp2 n_exp loc in
+    Seq {e with exp_seq_exp1 = r_e1;
+                exp_seq_exp2 = r_e2}
+  | This _ -> exp
+  | Time _ -> exp
+  | Try e -> exp
+    (* let r_body = repair_exp e.exp_try_block exp_decls in
+     * let r_c_block = List.map (fun x -> repair_exp x  exp_decls) e.exp_catch_clauses in
+     * let r_f_block = List.map (fun x -> repair_exp x  exp_decls) e.exp_finally_clause in
+     * Try { e with exp_try_block = r_body;
+     *              exp_catch_clauses = r_c_block;
+     *              exp_finally_clause = r_f_block} *)
+  | Unary e -> exp
+    (* Unary {e with exp_unary_exp = repair_exp e.exp_unary_exp exp_decls} *)
+  | Unfold _ -> exp
+  | Var _ -> exp
+  | VarDecl _ -> exp
+  | While e ->
+    let r_cond = replace_exp_with_loc e.exp_while_condition n_exp loc in
+    let r_body = replace_exp_with_loc e.exp_while_body n_exp loc in
+    While {e with exp_while_condition = r_cond;
+                  exp_while_body = r_body}
+  | Par _ -> exp
+  | UnkExp unk -> exp

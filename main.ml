@@ -437,7 +437,7 @@ let process_source_full source =
         (prog, acc @ [id]))
     Iast.tnt_prim_proc_tbl (prog, [])
   in
-  
+
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
@@ -724,13 +724,17 @@ let process_source_full source =
         with _ as e ->
           begin
             if (!Globals.enable_repair) then
-              let (repaired, n_iprog) = Repair.repair_prog intermediate_prog
-                  cprog in
-              if repaired then
-                let n_cprog, _ = Astsimp.trans_prog n_iprog in
-                try Typechecker.check_prog_wrapper n_iprog n_cprog
-                with e2 -> raise e2
-              else raise e
+              let () = print_endline "!!! REPAIR: starting repair process \n" in
+              let _ = Repair.start_repair intermediate_prog cprog in
+              raise e
+
+              (* let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
+               *     intermediate_prog cprog in
+               * if repaired then
+               *   let n_cprog, _ = Astsimp.trans_prog n_iprog in
+               *   try Typechecker.check_prog_wrapper n_iprog n_cprog
+               *   with e2 -> raise e2
+               * else raise e *)
             else
               let () = print_string_quiet ("\nException MAIN"
                                            ^(Printexc.to_string e)^"Occurred!\n"
@@ -942,7 +946,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   if (!Scriptarguments.typecheck_only)
   then print_string (Cprinter.string_of_program cprog)
   else (try
-          let () = x_binfo_pp "marking \n" no_pos in
+          (* let () = x_binfo_pp "marking \n" no_pos in *)
           ignore (Typechecker.check_prog intermediate_prog cprog);
         with _ as e -> begin
             print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");

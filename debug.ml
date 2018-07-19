@@ -264,7 +264,7 @@ let y_tinfo_hprint pr msg = tinfo_hprint pr msg no_pos
 
 let y_winfo_pprint msg = winfo_pprint msg no_pos
 
-let print_info prefix str (pos:loc) = 
+let print_info prefix str (pos:loc) =
   let tmp = "\n" ^ prefix ^ ":" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^": " ^ str ^ "\n" in
   print_string tmp; flush stdout
 

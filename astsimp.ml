@@ -1591,8 +1591,6 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let cuts = List.map (x_add trans_ut prog) prog.I.prog_ut_decls in
          let cuis = List.map (trans_ui prog) prog.I.prog_ui_decls in
          let cexp_decls = List.map (trans_exp_decl prog) prog.I.prog_exp_decls in
-         (* let () = x_add Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in *)
-         (* let () = print_string "trans_prog :: going to trans_view \n" in *)
          x_tinfo_hp (add_str "trans_prog 1 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
          let todo_unk = List.map (fun v ->  v.I.view_imm_map <- Immutable.icollect_imm v.I.view_formula v.I.view_vars v.I.view_data_name  prog.I.prog_data_decls )  prog.I.prog_view_decls  in
          x_tinfo_hp (add_str "trans_prog 2 (views)" (pr_list Iprinter.string_of_view_decl))  prog.I.prog_view_decls  no_pos;
@@ -1656,18 +1654,7 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
          let c_loophps, loop_pure_chps = List.split pr_loop_chps in
          let chps = chps1@c_loophps in
          let crels = crels1@loop_pure_chps in
-         (* let () = print_string "trans_prog :: trans_proc PASSED\n" in *)
-         (* Start calling is_sat,imply,simplify from trans_proc *)
          let cprocs = !loop_procs @ cprocs1 in
-         (* let () = print_newline () in *)
-         (* let () = List.iter (fun p -> *)
-         (*     if p.C.proc_is_main then *)
-         (*     print_endline (p.C.proc_name ^ " : " ^ string_of_bool(p.C.proc_is_invoked)) *)
-         (*     else () *)
-         (* ) cprocs in *)
-         (* let (l2r_coers, r2l_coers) = trans_coercions prog in (\* Andreeac: Lemma - to unify here *\) *)
-         (* let () = Lem_store.all_lemma # set_coercion l2r_coers r2l_coers in *)
-         (* let () = List.iter proc_one_lemma cmds; *)
          let log_vars = List.concat (List.map (trans_logical_vars) prog.I.prog_logical_var_decls) in 
          let bdecls = List.map (x_add trans_bdecl prog) prog.I.prog_barrier_decls in
          let ut_vs = cuts @ C.ut_decls # get_stk in
@@ -1685,7 +1672,6 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
            C.prog_view_decls = cviews2@new_v_d;
            C.prog_barrier_decls = bdecls;
            C.prog_logical_vars = log_vars;
-           (* C.prog_rel_decls = xrels (\* crels@extra_rels *\); (\* An Hoa *\) *)
            C.prog_rel_decls = (let s = new Gen.stack_pr "rel_decls" Cprinter.string_of_rel_decl (=) in (s # push_list_pr x_loc xrels ; s));
            C.prog_templ_decls = ctempls;
            C.prog_ut_decls = (ut_vs);
@@ -3392,6 +3378,7 @@ and trans_exp_decl (prog: I.prog_decl) (exp_def: I.exp_decl): C.exp_decl =
       let n_tl = x_add gather_type_info_exp prog bd n_tl exp_def.I.exp_ret_typ in
       (x_add trans_pure_exp bd (fst n_tl))
   in
+  let res =
   {
     C.exp_name = exp_def.I.exp_name;
     C.exp_ret_typ = c_ret_typ;
@@ -3399,6 +3386,10 @@ and trans_exp_decl (prog: I.prog_decl) (exp_def: I.exp_decl): C.exp_decl =
     C.exp_params = c_params;
     C.exp_pos = exp_def.I.exp_pos;
   }
+  in
+  let () = x_binfo_hp (add_str "new exp_decl: " (Cprinter.string_of_exp_decl))
+        res no_pos in
+  res
 
 and trans_hp_x (prog : I.prog_decl) (hpdef : I.hp_decl) : (C.hp_decl * C.rel_decl) =
   let pos = IF.pos_of_formula hpdef.I.hp_formula in

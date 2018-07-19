@@ -1,3 +1,5 @@
+PKG core lwt Z3 camlp4 csv extlib batteries thread core async
+
 S .
 
 B _build/
