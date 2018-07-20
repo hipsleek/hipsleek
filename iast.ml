@@ -4046,21 +4046,24 @@ let replace_assign_exp exp vars =
 
   let rec replace rhs vars =
     let rhs_vars = simple_collect_vars rhs in
-    (* let () = x_binfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in *)
-    if (rhs_vars == []) then (rhs, [])
+    let () = x_tinfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
+    if (rhs_vars == []) then (rhs, [], [])
     else if sublist rhs_vars vars then
-      (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars)
+      (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
     else
       match rhs with
-      | Binary b -> (Binary {
-          b with exp_binary_oper1 = fst (replace b.exp_binary_oper1 vars);
-                 exp_binary_oper2 = fst (replace b.exp_binary_oper2 vars);
-        }, (snd (replace b.exp_binary_oper1 vars)) @ (snd (replace b.exp_binary_oper2 vars)))
-      | _ -> (rhs, [])
+      | Binary b ->
+        let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
+        let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
+        (Binary {
+          b with exp_binary_oper1 = a1;
+                 exp_binary_oper2 = a2;
+        }, b1 @ b2, c1@c2)
+      | _ -> (rhs, [], [])
 
   in
-  let (replaced_rhs, replaced_vars) = replace rhs vars in
-  (Assign { exp with exp_assign_rhs = replaced_rhs }, replaced_vars)
+  let (replaced_rhs, replaced_vars, replaced_pos) = replace rhs vars in
+  (Assign { exp with exp_assign_rhs = replaced_rhs }, replaced_vars, replaced_pos)
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with

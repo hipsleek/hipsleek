@@ -155,9 +155,9 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
 *)
 let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   =
-  (* let () = x_binfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
-   *                                             Cprinter.pr_formula_exp))
-   *         (CP.exp_of_template templ) no_pos in *)
+  let () = x_tinfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
+                                              Cprinter.pr_formula_exp))
+          (CP.exp_of_template templ) no_pos in
   let () = x_dinfo_hp (add_str "templ args: " (Cprinter.string_of_formula_exp_list))
           (templ.Cpure.templ_args) no_pos in
   let program = SBCast.mk_program "hip_input" in
@@ -202,7 +202,7 @@ let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
   let (repaired_lhs, fun_defs) = create_templ_prog prog sb_lhs sb_rhs templ in
   let () = SBDebug.nhprint "repaired pf: " SBCast.pr_pf repaired_lhs in
   let fun_def_exp = get_func_exp fun_defs (CP.name_of_sv templ.templ_id) in
-  let (updated, f_prog) = match fun_def_exp with
+  match fun_def_exp with
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in
       let () = x_ninfo_hp (add_str "exp: " (Cprinter.poly_string_of_pr
@@ -211,8 +211,6 @@ let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
-      (true, n_prog)
-    | None -> let () = x_binfo_pp "No expression \n" no_pos in
-      (false, prog)
-  in
-  (translate_back_pf repaired_lhs, updated, f_prog)
+      Some (n_prog, fun_def_cexp)
+    | None -> let () = x_tinfo_pp "No expression \n" no_pos in
+      None

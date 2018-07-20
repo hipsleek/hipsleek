@@ -477,9 +477,6 @@ let process_source_full source =
   let () = Iast.annotate_field_pure_ext intermediate_prog in
   (*END: annotate field*)
   (*used in lemma*)
-  (* let () =  Debug.info_zprint (lazy  ("XXXX 1: ")) no_pos in *)
-  (* let () = I.set_iprog intermediate_prog in *)
-  (*let () = print_endline ("@@intermediate_prog\n"^Iprinter.string_of_program intermediate_prog) in*)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
   let () = saved_cprog := cprog in
   (* ========= lemma process (normalize, translate, verify) ========= *)
@@ -662,20 +659,10 @@ let process_source_full source =
       close_out oc;
       print_endline ("Complete the proof in "^file);
     else () in
-  (* let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in *)
-  (* let () = print_string ("Translating to core language...\n"); flush stdout in *)
-  (*let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in*)
-  (* Forward axioms and relations declarations to SMT solver module *)
-  (* L2: these relations were added at Astsimp.trans_rel *)
-  (* let todo_unk = List.map (fun crdef ->  *)
-  (*     let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula in *)
-  (*     Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula *)
-  (*   ) (List.rev cprog.Cast.prog_rel_decls) in *)
   let todo_unk = List.map (fun cadef ->
       let () = Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion in
       Z3.add_axiom cadef.Cast.axiom_hypothesis Z3.IMPLIES cadef.Cast.axiom_conclusion
     ) (List.rev cprog.Cast.prog_axiom_decls) in
-  (* let () = print_string (" done-2\n"); flush stdout in *)
   let () = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
     else if(!Globals.print_core) then
       print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
@@ -725,10 +712,15 @@ let process_source_full source =
           begin
             if (!Globals.enable_repair) then
               let () = print_endline "!!!! REPAIR: starting repair process" in
-              let is_repaired = Repair.start_repair intermediate_prog cprog in
-              if (is_repaired) then ()
-              else raise e
-              (* let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
+              let repaired_iprog = Repair.start_repair intermediate_prog cprog
+              in
+              match repaired_iprog with
+              | None -> raise e
+              | Some (r_iprog, pos, repaired_exp) ->
+                let () = Repair.output_repaired_iprog source pos repaired_exp in
+                ()
+
+            (* let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
                *     intermediate_prog cprog in
                * if repaired then
                *   let n_cprog, _ = Astsimp.trans_prog n_iprog in
