@@ -60,28 +60,36 @@ let repair_prog_with_templ iprog =
       let (lhs, rhs) = !Typechecker.lhs_rhs_to_repair in
       let lhs_pf = List.hd lhs in
       let rhs_pf = List.hd rhs in
-      let (repaired_lhs, _, nprog) =
-        Songbirdfront.get_repair_candidate cprog lhs_pf rhs_pf in
-      let n_iprog = Typechecker.update_iprog_exp_defns iprog nprog.Cast.prog_exp_decls in
-      match !Typechecker.proc_to_repair with
-      | None -> Some (false, iprog)
-      | Some proc_name_to_repair ->
-        let () = x_dinfo_pp proc_name_to_repair no_pos in
-        let proc_to_repair = List.find (fun x ->
-            let params = x.Iast.proc_args in
-            let typs = List.map (fun x -> x.Iast.param_type) params in
-            let mingled_name = Cast.mingle_name x.Iast.proc_name typs in
-            contains proc_name_to_repair mingled_name)
-            iprog.Iast.prog_proc_decls in
-        let n_iproc = Iast.repair_proc proc_to_repair
-            n_iprog.Iast.prog_exp_decls in
-        let () = x_dinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
-            n_iproc no_pos in
-        let n_proc_decls =
-          List.map (fun x -> if (x.Iast.proc_name = n_iproc.proc_name)
-                     then n_iproc else x) iprog.prog_proc_decls in
-        let n_prog = {iprog with prog_proc_decls = n_proc_decls} in
-        Some (true, n_prog)
+      try
+        begin
+          let (repaired_lhs, _, nprog) =
+            Songbirdfront.get_repair_candidate cprog lhs_pf rhs_pf in
+          let n_iprog = Typechecker.update_iprog_exp_defns iprog nprog.Cast.prog_exp_decls in
+          match !Typechecker.proc_to_repair with
+          | None -> Some (false, iprog)
+          | Some proc_name_to_repair ->
+            let () = x_dinfo_pp proc_name_to_repair no_pos in
+            let proc_to_repair = List.find (fun x ->
+                let params = x.Iast.proc_args in
+                let typs = List.map (fun x -> x.Iast.param_type) params in
+                let mingled_name = Cast.mingle_name x.Iast.proc_name typs in
+                contains proc_name_to_repair mingled_name)
+                iprog.Iast.prog_proc_decls in
+            let n_iproc = Iast.repair_proc proc_to_repair
+                n_iprog.Iast.prog_exp_decls in
+            let () = x_dinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
+                n_iproc no_pos in
+            let n_proc_decls =
+              List.map (fun x -> if (x.Iast.proc_name = n_iproc.proc_name)
+                         then n_iproc else x) iprog.prog_proc_decls in
+            let n_iprog = {iprog with prog_proc_decls = n_proc_decls} in
+            let n_cprog, _ = Astsimp.trans_prog n_iprog in
+            try
+              let () = Typechecker.check_prog_wrapper n_iprog n_cprog in
+              Some (true, n_iprog)
+            with _ -> Some (false, iprog)
+        end
+      with _ -> None
 
 let create_templ_proc proc replaced_exp loc vars =
   let var_names = List.map CP.name_of_sv vars in
@@ -126,12 +134,12 @@ let repair_one_statement iprog proc statement statement_pos vars lhs_pf rhs_pf =
     | Some (res, res_iprog) ->
       let repaired_proc = List.find (fun x -> x.I.proc_name = proc.proc_name)
         res_iprog.Iast.prog_proc_decls in
-      let () = x_dinfo_hp (add_str "repaired proc" (Iprinter.string_of_proc_decl
+      let () = x_binfo_hp (add_str "repaired proc" (Iprinter.string_of_proc_decl
                                                    )) repaired_proc no_pos in
       let score = if res then
         100 * (10 - (List.length vars)) + statement_pos.VarGen.start_pos.Lexing.pos_lnum
         else 0 in
-
+      let () = x_dinfo_hp (add_str "score:" (string_of_int)) score no_pos in
       (score, res_iprog)
 
 let get_best_repair score_and_prog_list =
@@ -140,7 +148,8 @@ let get_best_repair score_and_prog_list =
     let res = List.fold_left (fun x y ->
         if (fst x) > (fst y) then x else y
       ) max_candidate (List.tl score_and_prog_list) in
-    Some res
+    if (fst res == 0) then None
+    else Some res
 
   with Failure _ -> None
 
