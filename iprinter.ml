@@ -711,8 +711,6 @@ let rec string_of_form_list l = match l with
 let need_parenthesis2 = function 
   | Var _ | BoolLit _ | IntLit _ | FloatLit _ | Member _ -> false
   | _  -> true
-;; 
-
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function
@@ -733,13 +731,11 @@ let rec string_of_exp = function
         exp_block_body = e;
         exp_block_pos = p;
       })->
-    if (!Globals.enable_repair) then string_of_exp e
-    else
-      "{" ^(match lv with
-          | [] -> ""
-          | _ -> "local: "^
-                 (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-      ^ (string_of_exp e) ^ "}"
+    "{" ^(match lv with
+        | [] -> ""
+        | _ -> "local: "^
+               (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+    ^ (string_of_exp e) ^ "}"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
@@ -797,7 +793,7 @@ let rec string_of_exp = function
             else (string_of_exp e)
         ) in
         let newexp = (
-          match idl with 
+          match idl with
             | _ -> "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
         ) in
         newexp
@@ -807,30 +803,27 @@ let rec string_of_exp = function
   | Cond ({exp_cond_condition = e1;
     exp_cond_then_arm = e2;
     exp_cond_path_id = pid;
-    exp_cond_else_arm = e3}) -> 
-        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
-            (match e3 with 
+    exp_cond_else_arm = e3}) ->
+        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^
+            (match e3 with
               | Empty ll -> ""
               | _        -> " else { \n  " ^ (string_of_exp e3) ^ "\n}"))
   | While ({exp_while_condition = e1;
     exp_while_body = e2;
     exp_while_jump_label = lb;
-    exp_while_specs = li}) -> 
+    exp_while_specs = li}) ->
         (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ (string_of_struc_formula li)^" \n"^ "{\n"^ (string_of_exp e2) ^ "\n}"
   | Return ({exp_return_val = v; exp_return_path_id = pid})  ->
-    if (!Globals.enable_repair) then ("return " ^ (match v with
-        | None   -> ";"
-        | Some e -> (string_of_exp e) ^ ";") )
-    else string_of_control_path_id_opt pid ("return " ^
-                                            (match v with
-                                             | None   -> ";"
-                                             | Some e -> (string_of_exp e) ^ ";") )
+    string_of_control_path_id_opt pid ("return " ^
+                                       (match v with
+                                        | None   -> ""
+                                        | Some e -> (string_of_exp e) ^ "") )
   | Seq (
       {
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2
         })->
-        (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)   
+        (string_of_exp e1) ^ "\n" ^ (string_of_exp e2)   
   | VarDecl ({exp_var_decl_type = t;
     exp_var_decl_decls = l})
       -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l);
@@ -1083,18 +1076,6 @@ let string_of_proc_decl p =
       ^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n"
       ^ body)
 
-let string_of_proc_decl_w_repair p =
-  let body = match p.proc_body with
-    | None     -> ""
-    | Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" in
-  (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ") ^
-  p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
-  ^ (match p.proc_ho_arg
-     with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
-  ^ "\n"
-  ^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs) ^ "\n"
-      ^ body)
-
 let string_of_rel_decl p =
   let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
   p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
@@ -1122,12 +1103,6 @@ let rec string_of_proc_decl_list l = match l with
   | []        -> ""
   | h::[]     -> (string_of_proc_decl h) 
   | h::t      -> (string_of_proc_decl h) ^ "\n" ^ (string_of_proc_decl_list t)
-;;
-
-let rec string_of_proc_decl_list_w_repair l = match l with
-  | []        -> ""
-  | h::[]     -> (string_of_proc_decl_w_repair h)
-  | h::t      -> (string_of_proc_decl_w_repair h) ^ "\n" ^ (string_of_proc_decl_list_w_repair t)
 ;;
 
 (* pretty printing for a list of view_decl *)
@@ -1264,18 +1239,6 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
-;;
-
-(* pretty printing for program without prelude *)
-let string_of_program_without_prelude p prelude_prog =
-  let prelude_procs = prelude_prog.prog_proc_decls in
-  let prelude_proc_names = List.map (fun x -> x.proc_name) prelude_procs in
-  let procs = List.filter (fun x -> not(List.mem x.proc_name prelude_proc_names)
-                          ) p.prog_proc_decls in
-  (* (string_of_proc_decl_list p.prog_proc_decls) ^ "\n" *)
-  (string_of_proc_decl_list_w_repair procs) ^ "\n"
-  (* ^  "========================================\n" ^
-   * (string_of_proc_decl_list prelude_procs) ^ "\n" *)
 ;;
 
 Iformula.print_pure_formula := string_of_pure_formula;;
