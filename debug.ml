@@ -795,7 +795,7 @@ struct
     hp bs xs
 
   let ho_aux_no s (f:'a -> 'z) (last:'a) : 'z =
-    (* WN : why was this clearing done traced debug function? *)                   
+    (* WN : why was this clearing done traced debug function? *)
     (* let ff z =  *)
     (*     let () = VarGen.last_posn # reset in *)
     (*     f z in *)
@@ -992,7 +992,7 @@ struct
         | DO_None -> 
           (* let _ = print_endline ("splitter(none):"^s) in  *)
           f_none
-      else         
+      else
         (* let _ = print_endline ("splitter(none):"^s) in  *)
         f_none in 
     if !dump_calls then wrap_pop_call fn

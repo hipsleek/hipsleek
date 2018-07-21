@@ -2725,8 +2725,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     let false_iv = false_es.CF.es_infer_vars in
     let rhs = get_pure_conseq_from_struc conseq in
     let rel_id_conseq = CP.get_rel_id_list rhs in
-    let () = x_binfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
-    let () = x_info_hp (add_str "false_iv" pr_svl) false_iv no_pos in
+    let () = x_tinfo_hp (add_str "false_iv_rel" pr_svl) false_iv_rel no_pos in
+    let () = x_tinfo_hp (add_str "false_iv" pr_svl) false_iv no_pos in
     let () = x_tinfo_hp (add_str "rel_id_conseq" pr_svl) rel_id_conseq no_pos in
     let () = Debug.tinfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs no_pos in
     let () = Debug.tinfo_hprint (add_str "conseq" Cprinter.string_of_struc_formula) conseq no_pos in
@@ -3176,7 +3176,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                (**************** <<< Perform check when join *******)
                match f with
                | ECase b   ->
-                 let () = x_binfo_pp "inferring f ecase\n" no_pos in
+                 let () = x_tinfo_pp "inferring f ecase\n" no_pos in
                  let ctx = add_to_context_num 1 ctx11 "case rule" in
                  let ivs = collect_infer_vars ctx11 in
                  let case_brs = b.formula_case_branches in

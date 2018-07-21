@@ -4034,11 +4034,49 @@ let replace_assign_exp exp vars =
   in
   let simple_collect_vars exp =
     let rec aux exp list = match exp with
-      | Var var -> [var.exp_var_name] @ list
       | Binary bin ->
         let tmp = aux bin.exp_binary_oper1 list in
         aux bin.exp_binary_oper2 tmp
-      | _ -> list
+      | Block block -> aux block.exp_block_body list
+      | Cast cast -> aux cast.exp_cast_body list
+      | Var var -> [var.exp_var_name] @ list
+      | IntLit _ -> list
+      | ArrayAt _ -> report_error no_pos "simple_collect_vars: ArrayAt is not supported"
+      | ArrayAlloc _ -> report_error no_pos "simple_collect_vars: ArrayAlloc is not supported"
+      | Assert _ -> report_error no_pos "simple_collect_vars: Assert is not supported"
+      | Assign _ -> report_error no_pos "simple_collect_vars: Assign is not supported"
+      | Bind _ -> report_error no_pos "simple_collect_vars: Bind is not supported"
+      | BoolLit _ -> report_error no_pos "simple_collect_vars: BoolLit is not supported"
+      | Break _ -> report_error no_pos "simple_collect_vars: Break is not supported"
+      | Barrier _ -> report_error no_pos "simple_collect_vars: Barrier is not supported"
+      | CallRecv _ -> report_error no_pos "simple_collect_vars: CallRec is not supported"
+      | CallNRecv _ -> report_error no_pos "simple_collect_vars: CallNRec is not supported"
+      | UnkExp _ -> report_error no_pos "simple_collect_vars: Unkexp is not supported"
+      | Cond _ -> report_error no_pos "simple_collect_vars: Cond is not supported"
+      | ConstDecl _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
+      | Catch _ -> report_error no_pos "simple_collect_vars: Catch is not supported"
+      | Debug _ -> report_error no_pos "simple_collect_vars: Debug is not supported"
+      | Dprint _ -> report_error no_pos "simple_collect_vars: Dprint is not supported"
+      | Empty _ -> report_error no_pos "simple_collect_vars: Empty is not supported"
+      | FloatLit _ -> report_error no_pos "simple_collect_vars: flit is not supported"
+      | Finally _ -> report_error no_pos "simple_collect_vars: finally is not supported"
+      | Java _ -> report_error no_pos "simple_collect_vars: Java is not supported"
+      | Label _ -> report_error no_pos "simple_collect_vars: Label is not supported"
+      | Member _ -> report_error no_pos "simple_collect_vars: Member is not supported"
+      | New _ -> report_error no_pos "simple_collect_vars: New is not supported"
+      | Null _ -> report_error no_pos "simple_collect_vars: Null is not supported"
+      | Raise _ -> report_error no_pos "simple_collect_vars: Raise is not supported"
+      | Return _ -> report_error no_pos "simple_collect_vars: Return is not supported"
+      | Seq _ -> report_error no_pos "simple_collect_vars: Seq is not supported"
+      | This _ -> report_error no_pos "simple_collect_vars: This is not supported"
+      | Time _ -> report_error no_pos "simple_collect_vars: Time is not supported"
+      | Try _ -> report_error no_pos "simple_collect_vars: Try is not supported"
+      | Unary _ -> report_error no_pos "simple_collect_vars: Unary is not supported"
+      | Unfold _ -> report_error no_pos "simple_collect_vars: Unfold is not supported"
+      | VarDecl _ -> report_error no_pos "simple_collect_vars: VarDecl is not supported"
+      | While _ -> report_error no_pos "simple_collect_vars: While is not supported"
+      | Par _ -> report_error no_pos "simple_collect_vars: Par is not supported"
+      |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported"
     in
     let vars = aux exp [] in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
@@ -4046,7 +4084,7 @@ let replace_assign_exp exp vars =
 
   let rec replace rhs vars =
     let rhs_vars = simple_collect_vars rhs in
-    let () = x_tinfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
+    let () = x_binfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
     if (rhs_vars == []) then (rhs, [], [])
     else if sublist rhs_vars vars then
       (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])

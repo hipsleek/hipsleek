@@ -189,9 +189,7 @@ type typ =
   | Void
   | List of typ
   | BagT of typ
-  (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
-  (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)

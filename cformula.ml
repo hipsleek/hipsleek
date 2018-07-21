@@ -11504,7 +11504,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(x_add_1 is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc,_) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    x_binfo_hp (add_str "false ctx removed" pr) fl no_pos; 
+    x_tinfo_hp (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]
@@ -15859,8 +15859,8 @@ and merge_two_nodes dn1 dn2 =
         (* TO DO: ??? Can not use spec_var name to tell whether it is a hole
            or not. It also depends on the positions stored in
            h_formula_data_holes *)
-        let () = x_binfo_hp (add_str "holes1" (pr_list string_of_int)) holes1 no_pos in
-        let () = x_binfo_hp (add_str "holes2" (pr_list string_of_int)) holes2 no_pos in
+        let () = x_tinfo_hp (add_str "holes1" (pr_list string_of_int)) holes1 no_pos in
+        let () = x_tinfo_hp (add_str "holes2" (pr_list string_of_int)) holes2 no_pos in
         let is_hole_specvar sv = 
           let svname = CP.name_of_spec_var sv in
           svname.[0] = '#' in

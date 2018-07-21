@@ -98,11 +98,13 @@ let repair_prog_with_templ iprog =
 
 let create_templ_proc proc replaced_exp loc vars =
   let var_names = List.map CP.name_of_sv vars in
-  let () = x_dinfo_hp (add_str "replaced_exp: " (Iprinter.string_of_exp))
+  let () = x_binfo_hp (add_str "replaced_exp: " (Iprinter.string_of_exp))
       (I.Assign replaced_exp) no_pos in
+  let () = x_binfo_hp (add_str "vars: " (pr_list Cprinter.string_of_spec_var))
+      vars no_pos in
   let (n_exp, replaced_vars, replaced_pos_list) =
     I.replace_assign_exp replaced_exp var_names in
-  let () = x_dinfo_hp (add_str "replaced_vars: " (pr_list pr_id))
+  let () = x_binfo_hp (add_str "replaced_vars: " (pr_list pr_id))
       replaced_vars no_pos in
   let () = x_dinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos in
   if n_exp = (I.Assign replaced_exp) then None
@@ -169,7 +171,7 @@ let start_repair iprog cprog =
   match !Typechecker.proc_to_repair with
   | None -> None
   | Some proc_name_to_repair ->
-    let () = x_tinfo_pp "marking \n" no_pos in
+    let () = x_binfo_pp "marking \n" no_pos in
     let proc_to_repair = List.find (fun x ->
         let params = x.Iast.proc_args in
         let typs = List.map (fun x -> x.Iast.param_type) params in

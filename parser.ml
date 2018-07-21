@@ -438,9 +438,9 @@ let cexp_to_pure2 fct f01 f02 =
         )
     )
   | Pure_f f1 , Pure_c f2 -> (
-      match f1  with 
+      match f1  with
       | P.BForm((pf,il),oe) -> (
-          match pf with 
+          match pf with
           | P.Lt (a1, a2, _) 
           | P.Lte (a1, a2, _) 
           | P.Gt (a1, a2, _) 
@@ -467,6 +467,10 @@ let cexp_to_pure2 fct f01 f02 =
         end
     )
   | Pure_c e1, Pure_f f -> begin
+      (* print_string ((string_of_pure_double (Pure_c e1)) ^ "\n");
+       * print_string ((string_of_pure_double (Pure_f f)) ^ "\n");
+       * print_string ("is_esv e1" ^ (string_of_bool (P.is_esv e1)) ^ "\n");
+       * print_string ("is_bexp e2" ^ (string_of_bool (P.is_bexp f)) ^ "\n"); *)
       if P.is_esv e1 && P.is_bexp f then
         begin
           let e2 = P.BExpr f in
@@ -477,7 +481,7 @@ let cexp_to_pure2 fct f01 f02 =
           Pure_f nf
         end
       else
-        report_error (get_pos 1) "with 2 convert bexpr  1" 
+        report_error (get_pos 1) "with 2 convert bexpr 1"
     end
   | Pure_f f1, Pure_f f2 -> begin
       if  P.is_bexp f1 && P.is_bexp f2 then
@@ -867,7 +871,7 @@ let is_ineq_linking_constraint e1 e2 =
 (* 	string_of_bool                                    *)
 (* 	pr_pure_double                                    *)
 (* 	set_slicing_utils_pure_double_x f il              *)
-				   
+
 let set_slicing_utils_pure_double f il =
   (*
 	il = true  -> Pure_f pf is a linking constraint

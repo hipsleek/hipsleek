@@ -111,12 +111,12 @@ and term_fail =
   | TermErr_May
   | TermErr_Must
 
-and imm_ann = 
+and imm_ann =
   | PreImm of p_formula
   | PostImm of p_formula
 
 (* Expression *)
-and exp = 
+and exp =
   | Ann_Exp of (exp * typ * loc)
   | Null of loc
   | Level of ((ident * primed) * loc)
