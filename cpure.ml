@@ -6361,7 +6361,7 @@ and apply_one_exp ((fr, t) : spec_var * exp) f =
 
 and b_apply_one_exp (fr, t) bf =
   let (pf,il) = bf in
-  let npf = let rec helper pf = 
+  let npf = let rec helper pf =
               match pf with
               | Frm (fv,p) -> if eq_spec_var fv fr then
                   match t with
@@ -6382,10 +6382,6 @@ and b_apply_one_exp (fr, t) bf =
               | SubAnn (a1, a2, pos) -> SubAnn (e_apply_one_exp (fr, t) a1,
                                                 e_apply_one_exp (fr, t) a2, pos)
               | Eq (a1, a2, pos) ->
-    (*
-  		if (eq_b_formula bf (mkEq (mkVar fr pos) t pos)) then
-  			bf
-  		else*)
                 Eq (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
               | Neq (a1, a2, pos) -> Neq (e_apply_one_exp (fr, t) a1,
                                           e_apply_one_exp (fr, t) a2, pos)

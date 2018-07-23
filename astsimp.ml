@@ -5512,10 +5512,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.unk_exp_arguments = args;
         I.unk_exp_pos = pos
       } ->
-      (* let iexp_defs = prog.I.prog_exp_decls in
-       * let cexp_defs = List.map trans_exp_decl iexp_defs in
-       * let cexp_def = List.find (fun def -> str_eq def.exp_name id) cexp_defs in *)
       let tmp = List.map (helper) args in
+      let () = x_tinfo_hp (add_str "exp names" Iprinter.string_of_exp_decl_list)
+          prog.I.prog_exp_decls no_pos in
+      let exp_decl = List.find (fun x -> x.I.exp_name = id)
+          prog.I.prog_exp_decls in
       let (cargs, cts) = List.split tmp in
       let positions = List.map I.get_exp_pos args in
       let (_, _, arg_vars) =
@@ -5525,7 +5526,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         C.unk_exp_name = id;
         C.unk_exp_arguments = arg_vars;
         C.unk_exp_pos = pos
-      }), C.int_type)
+      }), exp_decl.I.exp_ret_typ)
 
     | I.CallRecv {
         I.exp_call_recv_receiver = recv;
@@ -5873,7 +5874,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
                C.exp_catch_flow_var = cfv;
                C.exp_catch_var = Some (ct,alpha);
-               C.exp_catch_body = new_bd;                                                                                     
+               C.exp_catch_body = new_bd;
                C.exp_catch_pos = pos;
               } in (r,ct2) end
         | None ->  
@@ -5883,7 +5884,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           (C.Catch{ C.exp_catch_flow_type = exlist # get_hash cvt;
                     C.exp_catch_flow_var = cfv;
                     C.exp_catch_var = None;
-                    C.exp_catch_body = new_bd;                                                                                       
+                    C.exp_catch_body = new_bd;
                     C.exp_catch_pos = pos;},ct2)
       end
     | I.Cond {I.exp_cond_condition = e1;
@@ -5891,10 +5892,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
               I.exp_cond_else_arm = e3;
               I.exp_cond_path_id = pi;
               I.exp_cond_pos = pos } ->
-      (* let str_pi=match pi with                                                          *)
-      (*          | None -> print_endline "none path id of cond"                              *)
-      (*          | Some (x,y)->  print_endline ("Cond id: "^(string_of_int x)^" and "^y) in *)
-      (* let () = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
       let (ce1, te1) = helper e1 in
       if not (CP.are_same_types te1 C.bool_type) then
         Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}

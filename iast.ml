@@ -1352,7 +1352,7 @@ let genESpec_x pname body_opt args0 ret cur_pre0 cur_post0 g_infer_type infer_ls
           (* hp_view = None *)
         }
         in
-        let () = x_binfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
+        let () = x_tinfo_hp (add_str ("generate unknown predicate for Pre synthesis of " ^ pname ^ ": ") pr_id)
             hp_pre_decl.hp_name no_pos in
         let pre_eargs = List.map (fun p -> P.Var ((p.param_name, Unprimed),pos)) args in
         let ipre_simpl0 = (F.formula_of_heap_with_flow (F.HRel (hp_pre_decl.hp_name, pre_eargs, pos)) n_flow pos) in
@@ -4020,7 +4020,7 @@ let list_of_assign_exp (exp: exp) =
 
   in List.rev(aux exp [])
 
-let replace_assign_exp exp vars =
+let replace_assign_exp exp vars heuristic =
   let rhs = exp.exp_assign_rhs in
   let rec prelist a b = match a, b with
     | [], _ -> true
@@ -4084,10 +4084,12 @@ let replace_assign_exp exp vars =
 
   let rec replace rhs vars =
     let rhs_vars = simple_collect_vars rhs in
-    let () = x_binfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
+    let () = x_tinfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
     if (rhs_vars == []) then (rhs, [], [])
     else if sublist rhs_vars vars then
-      (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
+      if not(heuristic) then
+        (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
+      else (mk_unk_exp vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
     else
       match rhs with
       | Binary b ->

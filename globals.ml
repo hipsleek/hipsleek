@@ -1505,6 +1505,8 @@ let disable_failure_explaining = ref false
 
 let enable_repair = ref false
 
+let enable_repair_template = ref false
+
 let enable_error_as_exc = ref false (* true *)
 
 let bug_detect = ref false

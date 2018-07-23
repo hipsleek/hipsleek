@@ -4267,7 +4267,7 @@ cast_expression:
       Cast { exp_cast_target_type = Float;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
-            
+
 ho_arg: [[ `WITH; dc = disjunctive_constr -> F.subst_stub_flow n_flow dc ]];
 
 opt_ho_arg: [[ oha = OPT ho_arg -> oha ]];
@@ -4286,7 +4286,7 @@ invocation_expression:
                           *                             (exp_names # mem id)) ^ "\n" )in *)
    let _ =
       if (Iast.is_tnt_prim_proc id) then
-        Hashtbl.add Iast.tnt_prim_proc_tbl id id 
+        Hashtbl.add Iast.tnt_prim_proc_tbl id id
       else ()
                          in
                          if (exp_names # mem id) then UnkExp {

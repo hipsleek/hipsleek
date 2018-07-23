@@ -712,21 +712,22 @@ let process_source_full source =
           begin
             if (!Globals.enable_repair) then
               let () = print_endline "!!!! REPAIR: starting repair process" in
-              let repaired_iprog = Repair.start_repair intermediate_prog cprog
-              in
-              match repaired_iprog with
-              | None -> raise e
-              | Some (r_iprog, pos, repaired_exp) ->
-                let () = Repair.output_repaired_iprog source pos repaired_exp in
-                ()
-
-            (* let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
-               *     intermediate_prog cprog in
-               * if repaired then
-               *   let n_cprog, _ = Astsimp.trans_prog n_iprog in
-               *   try Typechecker.check_prog_wrapper n_iprog n_cprog
-               *   with e2 -> raise e2
-               * else raise e *)
+              if (!Globals.enable_repair_template) then
+                let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
+                    intermediate_prog cprog in
+                if repaired then
+                  let n_cprog, _ = Astsimp.trans_prog n_iprog in
+                  try Typechecker.check_prog_wrapper n_iprog n_cprog
+                  with e2 -> raise e2
+                else raise e
+              else
+                let repaired_iprog = Repair.start_repair intermediate_prog cprog
+                in
+                match repaired_iprog with
+                | None -> raise e
+                | Some (r_iprog, pos, repaired_exp) ->
+                  let () = Repair.output_repaired_iprog source pos repaired_exp in
+                  ()
             else
               let () = print_string_quiet ("\nException MAIN"
                                            ^(Printexc.to_string e)^"Occurred!\n"
