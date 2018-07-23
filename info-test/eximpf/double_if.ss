@@ -4,19 +4,13 @@ int double_if1_safe(int x)
 {
   int y=0;
   int z=0;
-  dprint;
   if(x == 0) {
     y = 1;
-    dprint;
   }
-  dprint;
   if(y == 0) {
     z = 1;
-    dprint;
   }
-  dprint;
   return z;
-  dprint;
 }
 
 int double_if2_safe(int x)
@@ -40,17 +34,14 @@ int double_if3_fail(int x)
 {
   int y=0;
   int z=0;
-  /* dprint; */
   if(x == 0) {
     y = 1;
   }
-  dprint;
   if(y == 0) {
     z = 1;
   }
-  dprint;
+  dprint; // test
   return z;
-  dprint;
 }
 
 int double_if4_safe(int x)
