@@ -104,7 +104,7 @@ node concat8_safe(node p, node q)
   if(p == null) {
     return q;
   } else {
-    p.n = concat8(p.n, q);
+    p.n = concat8_safe(p.n, q);
     return p;
   }
 }

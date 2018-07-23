@@ -21227,8 +21227,8 @@ let normalize_eximpf state =
     let all_f  = expf@impf@othf in
     let first  = List.hd all_f in
     let pure_f = List.fold_left (fun acc x -> CP.mkAnd x acc no_pos) first (List.tl all_f) in
-    let () = print_endline ("F (0): " ^ !CP.print_formula f) in
-    let () = print_endline ("F (1): " ^ !CP.print_formula pure_f) in
+    (* let () = print_endline ("F (0): " ^ !CP.print_formula f) in
+     * let () = print_endline ("F (1): " ^ !CP.print_formula pure_f) in *)
     pure_f
   in
   let norm_f = in_formula state.es_formula in
