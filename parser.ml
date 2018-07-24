@@ -1685,7 +1685,7 @@ formulas:
 	 | dc=disjunctive_constr  -> ((F.formula_to_struc_formula dc),true)]];
    
 extended_l:
-  [[ peek_extended; `OSQUARE; h=extended_constr_grp ; `ORWORD; t=LIST1 extended_constr_grp SEP `ORWORD; `CSQUARE -> 
+  [[ peek_extended; `OSQUARE; h=extended_constr_grp ; `ORWORD; t=LIST1 extended_constr_grp SEP `ORWORD; `CSQUARE ->
      label_struc_groups (h::t)
    | h=extended_constr_grp -> label_struc_groups [h]]];
 

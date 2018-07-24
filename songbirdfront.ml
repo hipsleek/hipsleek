@@ -102,7 +102,7 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
            ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
 
-let translate_pf (pure_f: CP.formula)  =
+let rec translate_pf (pure_f: CP.formula)  =
   match pure_f with
   | CP.BForm (b_formula, _) ->
     let (p_formula, _) = b_formula in
@@ -112,10 +112,42 @@ let translate_pf (pure_f: CP.formula)  =
         let (sb_exp1, l1) = translate_exp exp1 in
         let (sb_exp2, l2) = translate_exp exp2 in
         let sb_loc = translate_loc loc in
-         (SBCast.BinRel (Eq, sb_exp1, sb_exp2, sb_loc), l1@l2)
-     | _ -> Gen.Basic.report_error VarGen.no_pos "this p_formula is not handled"
-  end
-
+        (SBCast.BinRel (Eq, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | Neq (exp1, exp2, loc) ->
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
+        let sb_loc = translate_loc loc in
+        (SBCast.BinRel (Ne, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | Gt (exp1, exp2, loc) ->
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
+        let sb_loc = translate_loc loc in
+        (SBCast.BinRel (Gt, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | Gte (exp1, exp2, loc) ->
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
+        let sb_loc = translate_loc loc in
+        (SBCast.BinRel (Ge, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | Lt (exp1, exp2, loc) ->
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
+        let sb_loc = translate_loc loc in
+        (SBCast.BinRel (Gt, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | Lte (exp1, exp2, loc) ->
+        let (sb_exp1, l1) = translate_exp exp1 in
+        let (sb_exp2, l2) = translate_exp exp2 in
+        let sb_loc = translate_loc loc in
+        (SBCast.BinRel (Le, sb_exp1, sb_exp2, sb_loc), l1@l2)
+      | _ -> Gen.Basic.report_error VarGen.no_pos "this p_formula is not handled"
+    end
+  | And (f1, f2, loc) ->
+    let (n_f1, l1) = translate_pf f1 in
+    let (n_f2, l2) = translate_pf f2 in
+    (SBCast.PConj ([n_f1; n_f2], translate_loc loc), l1@l2)
+  | Or (f1, f2, _, loc) ->
+    let (n_f1, l1) = translate_pf f1 in
+    let (n_f2, l2) = translate_pf f2 in
+    (SBCast.PDisj ([n_f1; n_f2], translate_loc loc), l1@l2)
   | _ -> Gen.Basic.report_error VarGen.no_pos "this pure formula not handled"
 
 let translate_back_pf (pf : SBCast.pure_form) = match pf with
@@ -179,7 +211,7 @@ let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   let () = SBDebug.nhprint "prog: " SBCast.pr_program nprog in
   let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent entail in
   let (ifds, inferred_prog) = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
-  let () = SBDebug.nhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
+  let () = SBDebug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
   let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs in
@@ -196,6 +228,8 @@ let get_func_exp fun_defs ident =
   with Not_found -> None
 
 let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
+  let lhs = CP.elim_bvar_f lhs in
+  let () = x_binfo_hp (add_str "after elim bvar lhs: " Cprinter.string_of_pure_formula) lhs no_pos in
   let (sb_lhs, tmpl_list) = translate_pf lhs in
   let (sb_rhs, _) = translate_pf rhs in
   let templ = List.hd tmpl_list in

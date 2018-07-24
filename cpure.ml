@@ -5121,7 +5121,7 @@ and bag_vars_exp (e : exp) : spec_var list =
     | _ -> []
   in helper e
 
-and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * spec_var) list * formula) = 
+and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * spec_var) list * formula) =
   let r1,r2 = get_subst_equation_formula f0 v true in
   let r =List.fold_left (fun a (c1,c2)->match c2 with
       | Var (v,_)-> (c1,v)::a
@@ -15638,4 +15638,43 @@ let rec translate_exp_to_ipure exp = match exp with
   | Min (exp1, exp2, loc) -> Ipure_D.Min (translate_exp_to_ipure exp1,
                                           translate_exp_to_ipure exp2, loc)
   | _ -> report_error no_pos ("translate_exp_to_ipure: not supported exp\n")
+
+
+let is_bvar (pf:p_formula) = match pf with
+  | BVar _ -> true
+  | _ -> false
+
+let is_bvar_bform bf =
+  let (pf, annot) = bf in
+  is_bvar pf
+
+let rec is_bvar_f f = match f with
+  | BForm (bf, _) -> is_bvar_bform bf
+  | And (f1, f2, _)
+  | Or (f1, f2, _, _) -> is_bvar_f f1 or is_bvar_f f2
+  | AndList list -> List.exists (fun (_, b) -> is_bvar_f b) list
+  | Not (f, _, _)
+  | Forall (_, f, _, _)
+  | Exists (_, f, _, _) -> is_bvar_f f
+
+let rec elim_bvar_f (f:formula) =
+  let is_bform ff = match ff with
+    | BForm _ -> true
+    | _ -> false
+  in
+  match f with
+  | AndList list -> let () = x_tinfo_pp "marking \n" no_pos in
+    AndList (List.filter (fun (_, b) -> is_bvar_f b) list)
+  | And (f1, f2, loc) -> let () = x_tinfo_pp "marking \n" no_pos in
+    begin
+      if (is_bvar_f f1) then
+        if is_bform f1 then f2
+        else And (elim_bvar_f f1, f2, loc)
+      else if (is_bvar_f f2) then
+        if is_bform f2 then f1
+        else And(f1, elim_bvar_f f2, loc)
+      else f
+    end
+  | _ -> f
+  (* | report_error no_pos ("elim_bvar_f: this formula type not supported \n") *)
 

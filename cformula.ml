@@ -179,12 +179,12 @@ and mem_formula = {
   mem_formula_mset : CP.DisjSetSV.dpart ; (* list of disjoint vars *)
 }
 
-and formula_or = {  
+and formula_or = {
   formula_or_f1 : formula;
   formula_or_f2 : formula;
   formula_or_pos : loc }
 
-and formula_exists = {  
+and formula_exists = {
   formula_exists_qvars : CP.spec_var list;
   formula_exists_heap : h_formula;
   formula_exists_vperm : CVP.vperm_sets;
