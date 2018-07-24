@@ -364,7 +364,6 @@ task :all_benchmark do
               time1_tmp = line.match(total_regex_time)[1].to_i
               time2_tmp = line.match(total_regex_time)[2].to_i
               time1 = ((time1_tmp*100)+time2_tmp+0.0)/100
-              puts "#{time1} #{time2}"
               time2 = time2 + time1
             else
               tot = tot + 1
@@ -429,7 +428,6 @@ task :all_benchmark do
               time1_tmp = line.match(total_regex_time)[1].to_i
               time2_tmp = line.match(total_regex_time)[2].to_i
               time1 = ((time1_tmp*100)+time2_tmp+0.0)/100
-              puts "#{time1} #{time2}"
               time2 = time2 + time1
             else
               tot = tot + 1
