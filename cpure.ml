@@ -167,9 +167,9 @@ let is_inf_sv sv = match sv with
   | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
 
-type flow_range = int * int 
+type flow_range = int * int
 
-type rel_cat = 
+type rel_cat =
   | RelDefn of spec_var * (string option) (* WN : extra global flow var in 2nd parameter; for non-normal flows *)
   | HPRelDefn of (spec_var * spec_var * spec_var list) (*hp name * root * arguments*)
   | HPRelLDefn of spec_var list
@@ -15658,8 +15658,9 @@ let rec is_bvar_f f = match f with
   | Exists (_, f, _, _) -> is_bvar_f f
 
 let rec elim_bvar_f (f:formula) =
-  let is_bform ff = match ff with
+  let rec is_bform ff = match ff with
     | BForm _ -> true
+    | Not (f, _, _) -> is_bform f
     | _ -> false
   in
   match f with
@@ -15676,5 +15677,3 @@ let rec elim_bvar_f (f:formula) =
       else f
     end
   | _ -> f
-  (* | report_error no_pos ("elim_bvar_f: this formula type not supported \n") *)
-

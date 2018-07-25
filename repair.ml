@@ -21,11 +21,11 @@ let repair_prog_with_templ_main iprog cprog =
   in
   let sb_res = Songbirdfront.get_repair_candidate cprog lhs_pf rhs_pf in
   match sb_res with
-  | None -> (false, iprog)
+  | None -> None
   | Some (nprog, _) ->
     let n_iprog = Typechecker.update_iprog_exp_defns iprog nprog.Cast.prog_exp_decls in
     match !Typechecker.proc_to_repair with
-    | None -> (false, iprog)
+    | None -> None
     | Some proc_name_to_repair ->
       let () = x_tinfo_pp proc_name_to_repair no_pos in
       let proc_to_repair = List.find (fun x ->
@@ -33,17 +33,39 @@ let repair_prog_with_templ_main iprog cprog =
           let typs = List.map (fun x -> x.Iast.param_type) params in
           let mingled_name = Cast.mingle_name x.Iast.proc_name typs in
           contains proc_name_to_repair mingled_name)
-          iprog.Iast.prog_proc_decls in
-      let n_iproc = Iast.repair_proc proc_to_repair
-          n_iprog.Iast.prog_exp_decls in
-      let () = x_binfo_hp (add_str "new proc: "
-                             (Iprinter.string_of_proc_decl))
+          iprog.I.prog_proc_decls in
+      let () = x_tinfo_hp (add_str "old proc: " (Iprinter.string_of_proc_decl))
+          proc_to_repair no_pos in
+      let n_iproc = I.repair_proc proc_to_repair n_iprog.I.prog_exp_decls false in
+
+      let () = x_tinfo_hp (add_str "exp_decls: " (Iprinter.string_of_exp_decl_list))
+      n_iprog.I.prog_exp_decls no_pos in
+      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_proc_decl))
           n_iproc no_pos in
       let n_proc_decls =
         List.map (fun x -> if (x.Iast.proc_name = n_iproc.proc_name)
                    then n_iproc else x) iprog.prog_proc_decls in
       let n_prog = {iprog with prog_proc_decls = n_proc_decls} in
-      (true, n_prog)
+      let n_cprog, _ = Astsimp.trans_prog n_prog in
+      try
+        let () = Typechecker.check_prog_wrapper n_iprog n_cprog in
+        Some n_prog
+      with _ ->
+        begin
+          let n_iproc = I.repair_proc proc_to_repair n_iprog.I.prog_exp_decls true in
+          let n_proc_decls =
+            List.map (fun x -> if (x.Iast.proc_name = n_iproc.proc_name)
+                       then n_iproc else x) iprog.prog_proc_decls in
+          let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_proc_decl))
+          n_iproc no_pos in
+          let n_prog = {iprog with prog_proc_decls = n_proc_decls} in
+          let n_cprog, _ = Astsimp.trans_prog n_prog in
+          try
+            let () = Typechecker.check_prog_wrapper n_iprog n_cprog in
+            Some n_prog
+          with _ -> None
+        end
+
 
 let repair_prog_with_templ iprog =
   let () = x_tinfo_pp "marking \n" no_pos in
@@ -81,7 +103,7 @@ let repair_prog_with_templ iprog =
                   contains proc_name_to_repair mingled_name)
                   iprog.Iast.prog_proc_decls in
               let n_iproc = Iast.repair_proc proc_to_repair
-                  n_iprog.Iast.prog_exp_decls in
+                  n_iprog.Iast.prog_exp_decls false in
               let () = x_dinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
                   n_iproc no_pos in
               let n_proc_decls =

@@ -2773,9 +2773,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx0 : CF.list_partial
         in
         let pure_rhs = get_pure_conseq_from_struc rhs in
         let pure_lhs = Cpure.elim_equi_ante pure_failed_lhs pure_rhs in
-        let () = x_binfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
+        let () = x_tinfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
             pure_lhs pos in
-        let () = x_binfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
+        let () = x_tinfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
             pure_rhs pos in
         let () = x_dinfo_hp (add_str "enable repair: " string_of_bool)
             (!Globals.enable_repair) pos in

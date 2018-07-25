@@ -713,13 +713,15 @@ let process_source_full source =
             if (!Globals.enable_repair) then
               let () = print_endline "!!!! REPAIR: starting repair process" in
               if (!Globals.enable_repair_template) then
-                let (repaired, n_iprog) = Repair.repair_prog_with_templ_main
-                    intermediate_prog cprog in
-                if repaired then
-                  let n_cprog, _ = Astsimp.trans_prog n_iprog in
-                  try Typechecker.check_prog_wrapper n_iprog n_cprog
-                  with e2 -> raise e2
-                else raise e
+                match Repair.repair_prog_with_templ_main intermediate_prog cprog
+                with
+                | None -> raise e
+                | _ -> ()
+                (* if repaired then
+                 *   let n_cprog, _ = Astsimp.trans_prog n_iprog in
+                 *   try Typechecker.check_prog_wrapper n_iprog n_cprog
+                 *   with e2 -> raise e2
+                 * else raise e *)
               else
                 let repaired_iprog = Repair.start_repair intermediate_prog cprog
                 in

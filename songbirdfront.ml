@@ -1,8 +1,5 @@
 #include "xdebug.cppo"
 
-open Gen.Basic
-open VarGen
-
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
 module SBDebug = Libsongbird.Debug
@@ -168,18 +165,6 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
     end
   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
 
-
-(* translate lhs of the entalment e.g. res = x + 1 to template form: res = f(x)*)
-(* let translate_lhs_to_fdefn (lhs: SBCast.pure_form) (\* : SBCast.pure_form *\) =
- *   match lhs with
- *   | BinRel (rel, exp1, exp2, pos) ->
- *     let exp2_vars = SBCast.fv_exp exp2 in
- *       let exp2_args = List.map (SBCast.mk_exp_var) exp2_vars in
- *       let func_exp = SBCast.mk_func (SBCast.FuncName "f") exp2_args in
- *       (Libsongbird.Cast.BinRel (rel, exp1, func_exp, pos), exp2_vars)
- *   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled" *)
-
-
 (* Input: lhs and rhs
    Create template for lhs
    Adding template f(args) = ?
@@ -187,11 +172,11 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
 *)
 let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   =
-  let () = x_tinfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
+  let () = x_tinfo_hp (Gen.Basic.add_str "templ: " (Cprinter.poly_string_of_pr
                                               Cprinter.pr_formula_exp))
-          (CP.exp_of_template templ) no_pos in
-  let () = x_dinfo_hp (add_str "templ args: " (Cprinter.string_of_formula_exp_list))
-          (templ.Cpure.templ_args) no_pos in
+          (CP.exp_of_template templ) VarGen.no_pos in
+  let () = x_dinfo_hp (Gen.Basic.add_str "templ args: " (Cprinter.string_of_formula_exp_list))
+          (templ.Cpure.templ_args) VarGen.no_pos in
   let program = SBCast.mk_program "hip_input" in
   let fun_name = CP.name_of_sv templ.CP.templ_id in
   let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in
@@ -210,8 +195,10 @@ let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
   in
   let () = SBDebug.nhprint "prog: " SBCast.pr_program nprog in
   let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent entail in
-  let (ifds, inferred_prog) = Libsongbird.Prover.infer_unknown_functions ifr_typ nprog [entail] in
-  let () = SBDebug.rhprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
+  let (ifds, inferred_prog) =
+    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
+      [entail] in
+  let () = SBDebug.hprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
   let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs in
@@ -229,7 +216,8 @@ let get_func_exp fun_defs ident =
 
 let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
   let lhs = CP.elim_bvar_f lhs in
-  let () = x_binfo_hp (add_str "after elim bvar lhs: " Cprinter.string_of_pure_formula) lhs no_pos in
+  let () = x_tinfo_hp (Gen.Basic.add_str "after elim bvar lhs: "
+                         Cprinter.string_of_pure_formula) lhs VarGen.no_pos in
   let (sb_lhs, tmpl_list) = translate_pf lhs in
   let (sb_rhs, _) = translate_pf rhs in
   let templ = List.hd tmpl_list in
@@ -239,12 +227,13 @@ let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
   match fun_def_exp with
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in
-      let () = x_ninfo_hp (add_str "exp: " (Cprinter.poly_string_of_pr
+      let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
                                               Cprinter.pr_formula_exp))
-          fun_def_cexp no_pos in
+          fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
       Some (n_prog, fun_def_cexp)
-    | None -> let () = x_tinfo_pp "No expression \n" no_pos in
+    | None ->
+      let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None

@@ -128,10 +128,10 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Var (sv, _) ->
     let id = fst sv in
     if (id.[0] = '#') then [] else [sv]
-  | Null _ 
-  | AConst _ 
-  | IConst _ 
-  | Tsconst _ 
+  | Null _
+  | AConst _
+  | IConst _
+  | Tsconst _
   | InfConst _
   | NegInfConst _
   | FConst _ -> []
@@ -2230,3 +2230,15 @@ let rec transform_bexp_form f: formula=
 let is_ann_type = (=) AnnT
 
 let is_anon_ident (n,p) : bool = ((String.length n) > 5) && ((String.compare (String.sub n 0 5) "Anon_") == 0) && (p==Unprimed)
+
+let rec mk_neg_exp exp = match exp with
+  | Var v ->
+    let const_minus_one = IConst(-1, no_pos) in
+    Mult (const_minus_one, exp, no_pos)
+  | Add (a, b, loc) -> Add (mk_neg_exp a, mk_neg_exp b, loc)
+  | Subtract (a, b, loc) -> Subtract (mk_neg_exp a, mk_neg_exp b, loc)
+  | Mult (a, b, loc) -> Mult (mk_neg_exp a, mk_neg_exp b, loc)
+  | Div (a, b, loc) -> Div (mk_neg_exp a, mk_neg_exp b, loc)
+  | Max (a, b, loc) -> Max (mk_neg_exp a, mk_neg_exp b, loc)
+  | Min (a, b, loc) -> Min (mk_neg_exp a, mk_neg_exp b, loc)
+  | _ -> exp
