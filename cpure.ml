@@ -16641,7 +16641,6 @@ let lub_op lattice lb1 lb2 =
   let rec multi lb1 lb2 =
     match (lb1,lb2) with
     | (SecLabel l1, SecLabel l2) ->
-        let () = y_binfo_hp (add_str "get lub of " (pr_pair Security.Label.to_string Security.Label.to_string)) (l1, l2) in
         sec_label (Security.least_upper_bound lattice l1 l2)
     | (l0, SecLabel l1) | (SecLabel l1, l0) ->
         if l1 = Security.get_top lattice then
