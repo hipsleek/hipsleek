@@ -3878,10 +3878,6 @@ let rec translate_ipure_exp_to_iast (exp : Ipure_D.exp) = match exp with
       Err.error_text = "translate_ipure_exp_to_iast: this exp is not supported";
     }
 
-let translate_ipure_exp_to_iast_wrapper exp use_neg =
-  let exp = if use_neg then Ipure.mk_neg_exp exp else exp in
-  translate_ipure_exp_to_iast exp
-
 let mk_unk_exp vars loc =
   UnkExp {
     unk_exp_name = "fff";
@@ -3912,94 +3908,94 @@ let neg_exp exp = match exp with
     | None -> None)
   | _ -> None
 
-let rec repair_exp exp exp_decls use_neg =
+let rec repair_exp exp exp_decls =
   match exp with
   | ArrayAt _ -> exp
   | ArrayAlloc _ -> exp
   | Assert _ -> exp
   | Assign e ->
-    let r_exp1 = repair_exp e.exp_assign_lhs exp_decls use_neg in
-    let r_exp2 = repair_exp e.exp_assign_rhs exp_decls use_neg in
+    let r_exp1 = repair_exp e.exp_assign_lhs exp_decls in
+    let r_exp2 = repair_exp e.exp_assign_rhs exp_decls in
     Assign {e with exp_assign_lhs = r_exp1;
            exp_assign_rhs = r_exp2}
   | Binary e ->
-    let r_exp1 = repair_exp e.exp_binary_oper1 exp_decls use_neg in
-    let r_exp2 = repair_exp e.exp_binary_oper2 exp_decls use_neg in
+    let r_exp1 = repair_exp e.exp_binary_oper1 exp_decls  in
+    let r_exp2 = repair_exp e.exp_binary_oper2 exp_decls  in
     Binary {e with exp_binary_oper1 = r_exp1;
            exp_binary_oper2 = r_exp2}
   | Bind e ->
-    let r_exp = repair_exp e.exp_bind_body exp_decls use_neg in
+    let r_exp = repair_exp e.exp_bind_body exp_decls  in
     Bind {e with exp_bind_body = r_exp}
   | Block e ->
-    let r_exp = repair_exp e.exp_block_body exp_decls use_neg in
+    let r_exp = repair_exp e.exp_block_body exp_decls  in
     Block {e with exp_block_body = r_exp}
   | BoolLit _ -> exp
   | Break _ -> exp
   | Barrier _ -> exp
   | CallNRecv e  ->
-    let r_args = List.map (fun x -> repair_exp x exp_decls use_neg) e.exp_call_nrecv_arguments in
+    let r_args = List.map (fun x -> repair_exp x exp_decls ) e.exp_call_nrecv_arguments in
     CallNRecv {e with exp_call_nrecv_arguments = r_args}
   | CallRecv e  ->
-    let n_receiver = repair_exp e.exp_call_recv_receiver exp_decls use_neg in
-    let r_args = List.map (fun x -> repair_exp x exp_decls use_neg) e.exp_call_recv_arguments in
+    let n_receiver = repair_exp e.exp_call_recv_receiver exp_decls  in
+    let r_args = List.map (fun x -> repair_exp x exp_decls ) e.exp_call_recv_arguments in
     CallRecv {e with exp_call_recv_receiver = n_receiver;
               exp_call_recv_arguments = r_args}
   | Cast e -> Cast {e with
-                    exp_cast_body = repair_exp e.exp_cast_body exp_decls use_neg}
+                    exp_cast_body = repair_exp e.exp_cast_body exp_decls }
   | Cond e ->
-    let r_cond = repair_exp e.exp_cond_condition exp_decls use_neg in
-    let r_then_branch = repair_exp e.exp_cond_then_arm exp_decls use_neg in
-    let r_else_branch = repair_exp e.exp_cond_else_arm exp_decls use_neg in
+    let r_cond = repair_exp e.exp_cond_condition exp_decls  in
+    let r_then_branch = repair_exp e.exp_cond_then_arm exp_decls  in
+    let r_else_branch = repair_exp e.exp_cond_else_arm exp_decls  in
     Cond {e with exp_cond_condition = r_cond;
                  exp_cond_then_arm = r_then_branch;
                  exp_cond_else_arm = r_else_branch}
   | ConstDecl _ -> exp
   | Continue _ -> exp
   | Catch e ->
-    Catch { e with exp_catch_body = repair_exp e.exp_catch_body exp_decls use_neg}
+    Catch { e with exp_catch_body = repair_exp e.exp_catch_body exp_decls }
   | Debug _ -> exp
   | Dprint _ -> exp
   | Empty _ -> exp
   | FloatLit _ -> exp
   | Finally e  ->
-    Finally { e with exp_finally_body = repair_exp e.exp_finally_body exp_decls use_neg}
+    Finally { e with exp_finally_body = repair_exp e.exp_finally_body exp_decls }
   | IntLit _ -> exp
   | Java _ -> exp
-  | Label (a, body) -> Label (a, repair_exp body exp_decls use_neg)
+  | Label (a, body) -> Label (a, repair_exp body exp_decls )
   | Member e ->
-    Member {e with exp_member_base = repair_exp e.exp_member_base exp_decls use_neg}
+    Member {e with exp_member_base = repair_exp e.exp_member_base exp_decls }
   | New e ->
-    let r_args = List.map (fun x -> repair_exp x exp_decls use_neg) e.exp_new_arguments in
+    let r_args = List.map (fun x -> repair_exp x exp_decls ) e.exp_new_arguments in
     New { e with exp_new_arguments = r_args}
   | Null _ -> exp
   | Raise _ -> exp
   | Return e ->
     let r_val = match e.exp_return_val with
       | None -> None
-      | Some e -> Some (repair_exp e exp_decls use_neg)
+      | Some e -> Some (repair_exp e exp_decls )
     in Return {e with exp_return_val = r_val}
   | Seq e ->
-    let r_e1 = repair_exp e.exp_seq_exp1 exp_decls use_neg in
-    let r_e2 = repair_exp e.exp_seq_exp2 exp_decls use_neg in
+    let r_e1 = repair_exp e.exp_seq_exp1 exp_decls  in
+    let r_e2 = repair_exp e.exp_seq_exp2 exp_decls  in
     Seq {e with exp_seq_exp1 = r_e1;
                 exp_seq_exp2 = r_e2}
   | This _ -> exp
   | Time _ -> exp
   | Try e ->
-    let r_body = repair_exp e.exp_try_block exp_decls use_neg in
-    let r_c_block = List.map (fun x -> repair_exp x exp_decls use_neg) e.exp_catch_clauses in
-    let r_f_block = List.map (fun x -> repair_exp x exp_decls use_neg) e.exp_finally_clause in
+    let r_body = repair_exp e.exp_try_block exp_decls  in
+    let r_c_block = List.map (fun x -> repair_exp x exp_decls ) e.exp_catch_clauses in
+    let r_f_block = List.map (fun x -> repair_exp x exp_decls ) e.exp_finally_clause in
     Try { e with exp_try_block = r_body;
                  exp_catch_clauses = r_c_block;
                  exp_finally_clause = r_f_block}
   | Unary e ->
-    Unary {e with exp_unary_exp = repair_exp e.exp_unary_exp exp_decls use_neg}
+    Unary {e with exp_unary_exp = repair_exp e.exp_unary_exp exp_decls }
   | Unfold _ -> exp
   | Var _ -> exp
   | VarDecl _ -> exp
   | While e ->
-    let r_cond = repair_exp e.exp_while_condition exp_decls use_neg in
-    let r_body = repair_exp e.exp_while_body exp_decls use_neg in
+    let r_cond = repair_exp e.exp_while_condition exp_decls  in
+    let r_body = repair_exp e.exp_while_body exp_decls  in
     While {e with exp_while_condition = r_cond;
                   exp_while_body = r_body}
   | Par _ -> exp
@@ -4011,15 +4007,15 @@ let rec repair_exp exp exp_decls use_neg =
         match exp_decl.exp_body with
         | ExpUnk -> exp
         | ExpForm e ->
-          let res = translate_ipure_exp_to_iast_wrapper e use_neg in
+          let res = translate_ipure_exp_to_iast e in
           res
        with Not_found -> exp
     end
 
-let repair_proc proc exp_decls use_neg =
+let repair_proc proc exp_decls =
   match proc.proc_body with
   | None -> proc
-  | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls use_neg)}
+  | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls)}
 
 (* find exp to be replaced by template, e.g. f(x, y) or f(x) *)
 (* current exp: rhs of the assign and lhs of the condition *)

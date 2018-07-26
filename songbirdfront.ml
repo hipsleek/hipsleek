@@ -228,12 +228,16 @@ let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in
       let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
-                                              Cprinter.pr_formula_exp))
-          fun_def_cexp VarGen.no_pos in
+                                                        Cprinter.pr_formula_exp)
+                          ) fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
-      Some (n_prog, fun_def_cexp)
+      let neg_cexp = CP.mkMult_minus_one fun_def_cexp in
+      let neg_cexp = CP.simp_mult neg_cexp in
+      let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
+      let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
+      Some (n_prog, fun_def_cexp, neg_prog, neg_cexp)
     | None ->
       let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None

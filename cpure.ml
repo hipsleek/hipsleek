@@ -2326,6 +2326,10 @@ and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
 and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
+and mkMult_minus_one a =
+  let minus_one = mkIConst (-1) no_pos in
+  mkMult minus_one a no_pos
+
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
 and mkMin a1 a2 pos = Min (a1, a2, pos)
@@ -7174,11 +7178,11 @@ and purge_mult_x (e :  exp):  exp = match e with
                              templ_body = map_opt purge_mult t.templ_body; }
   |  ArrayAt (a, i, l) -> ArrayAt (a, List.map purge_mult i, l) (* An Hoa *)
 
-and b_form_simplify (pf : b_formula) :  b_formula =   
+and b_form_simplify (pf : b_formula) :  b_formula =
   Debug.no_1 "b_form_simplify " !print_b_formula !print_b_formula 
     b_form_simplify_x pf
 
-and b_form_simplify_x (b:b_formula) :b_formula = 
+and b_form_simplify_x (b:b_formula) :b_formula =
   let do_all e1 e2 l =
     let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
