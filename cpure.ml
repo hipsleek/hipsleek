@@ -7166,6 +7166,10 @@ and b_form_list f: b_formula list = match f with
   | Forall (_,f,_,_)
   | Exists (_,f,_,_) -> (b_form_list f)
 
+and p_form_list (f:formula) : p_formula list =
+  let b_formula_list = b_form_list f in
+  List.map (fun (p,_) -> p) b_formula_list
+
 and simp_mult (e: exp) : exp =
   let pr = !print_exp in
   Debug.no_1 "simp_mult" pr pr simp_mult_x e

@@ -1,0 +1,52 @@
+/*
+pred_prim AsegP<end>
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred_prim AsegNEP<end>
+     inv_exact BG([(self,end)],0<self<end).
+*/
+pred_prim ElemN<start:int>
+     inv_exact BG([self], true). // non-null
+
+pred Aseg<end> == self=end
+     or self::AsegN<end> & self<end
+     inv_exact BG([(self,end)],true). //0<=start<=end). // possibly empty
+
+pred AsegN<end> == self::ElemN<_> * x::Aseg<end> & x=self+1
+     inv_exact BG([(self,end)],0<self<end).
+
+/*
+data node {
+ int val;
+}.
+*/
+/*
+lemma_safe self::Aseg<y> & self=y <-> emp.
+lemma_safe self::Aseg<y> & self<y <-> self::AsegN<y>.
+*/
+//lemma_safe self::AsegN<y> & y=self+1 <-> self::ElemN<_>.
+//lemma_safe self::AsegN<y> & y>=self+1 <-> self::ElemN<_> * x::Aseg<y> & x=self+1.
+
+//(1)
+// Eq1 + Norm1 rules
+infer [@sem_eq] x::Aseg<y> & y=x |- emp.
+expect Valid.
+print residue.
+
+//(2) Norm2
+infer [@sem_eq] emp & a=b & a=c |- c::Aseg<b> & a=b & a=c.
+expect Valid.
+print residue.
+
+
+//(3) Norm3
+infer [@sem_eq] x::Aseg<y> & x<y |- x::AsegN<y>.
+expect Valid.
+print residue.
+
+/*
+//(3)
+infer [@sem_eq] y::ElemN<x> |- emp.
+expect Valid.
+print residue.
+*/

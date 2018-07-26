@@ -830,6 +830,14 @@ let is_eq_view_spec a b =
   Debug.no_2 "is_eq_view_spec" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_spec a b) 
     a.h_formula_view_name b.h_formula_view_name
 
+let is_eq_view (a:h_formula_view) (b:h_formula_view) : bool =
+  (is_eq_view_spec a b) &&
+  (match a,b with
+   | {h_formula_view_node = vn1; h_formula_view_arguments = args1},
+     {h_formula_view_node = vn2; h_formula_view_arguments = args2} ->
+     Cpure.eq_spec_var vn1 vn2 && CP.eq_spec_var_order_list args1 args2
+  )
+
 let mk_mem_formula vs =
   { mem_formula_mset = CP.DisjSetSV.one_list_dset vs}
 
@@ -7940,6 +7948,55 @@ let drop_views_h_formula hf0 views=
     | DataNode hd -> (hf)
     | ViewNode hv ->
       if List.exists (fun view -> String.compare view hv.h_formula_view_name = 0) views then
+        HEmp
+      else hf
+    | ThreadNode _ -> (hf)
+    | HRel _
+    | Hole _ | FrmHole _
+    | HTrue
+    | HFalse
+    | HEmp | HVar _ -> hf
+    | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "drop_views_h_formula: not handle yet"
+  in
+  helper hf0
+
+let drop_view_h_formula (hf0:h_formula) (view:h_formula_view) (eq_f: h_formula_view -> h_formula_view -> bool) =
+  let rec helper hf=
+    match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;
+            h_formula_star_pos = pos} ->
+      let n_hf1 = helper hf1 in
+      let n_hf2 = helper hf2 in
+      let new_hf=
+        match n_hf1,n_hf2 with
+        | (HEmp,HEmp) -> HEmp
+        | (HEmp,_) -> n_hf2
+        | (_,HEmp) -> n_hf1
+        | _ -> (Star {h_formula_star_h1 = n_hf1;
+                      h_formula_star_h2 = n_hf2;
+                      h_formula_star_pos = pos})
+      in
+      (new_hf)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+      let n_hf1 = helper hf1 in
+      let n_hf2 = helper hf2 in
+      (Conj { h_formula_conj_h1 = n_hf1;
+              h_formula_conj_h2 = n_hf2;
+              h_formula_conj_pos = pos})
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+      let n_hf1 = helper hf1 in
+      let n_hf2 = helper hf2 in
+      (Phase { h_formula_phase_rd = n_hf1;
+               h_formula_phase_rw = n_hf2;
+               h_formula_phase_pos = pos})
+    | DataNode hd -> (hf)
+    | ViewNode hv ->
+      if eq_f hv view then
         HEmp
       else hf
     | ThreadNode _ -> (hf)

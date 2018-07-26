@@ -5833,6 +5833,17 @@ and extract_heap_and_pure_formula (f:CF.formula)=
     | Or _ -> failwith "[extract_heap_and_pure_formula]::Unexpected OR formula in context!"
     | Exists b -> (b.formula_exists_heap,b.formula_exists_pure)
 
+and update_heap_and_pure_formula (f:CF.formula) (heap:h_formula) (pure:mix_formula) =
+  match f with
+    | Base b -> Base {b with formula_base_heap = heap; formula_base_pure = pure;}
+    | Or _ -> failwith "[extract_heap_and_pure_formula]::Unexpected OR formula in context!"
+    | Exists b -> Exists {b with formula_exists_heap = heap; formula_exists_pure = pure;}
+
+and get_es (ctx:context) =
+  match ctx with
+    | Ctx es -> es
+    | _ -> failwith "[do_arr_norm_x]::Unexpected OCtx as input!"
+
 and are_spec_var_eq mix_f v1 v2 =
   let r = if CP.eq_spec_var v1 v2 then true
   else
@@ -5857,19 +5868,17 @@ and remove_eq_formula (f:CF.formula) (s1:CP.spec_var) (s2:CP.spec_var) =
   | Base b-> Base {b with formula_base_pure = p;}
   | Exists e-> Exists {e with formula_exists_pure = p;}
 
-and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
-  let rec pairs_of ls =
-    match ls with
+and pairs_of ls =
+  let rec helper ls = match ls with
     | [] -> []
     | x::xs ->
-      let res1 = pairs_of xs in
+      let res1 = helper xs in
       let res2 = List.map (fun v -> (x,v)) xs in
       res1@res2
   in
-  let get_es ctx = match ctx with
-    | Ctx es -> es
-    | _ -> failwith "[do_sem_eq_x]::Unexpected OCtx as input!"
-  in
+  helper ls
+
+and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
 
   let ctx_ref = ref ctx in
   let rhs_ref = ref conseq in
@@ -5915,8 +5924,8 @@ and do_sem_eq_x (ctx:context) (conseq:CF.formula) =
   (* SE3 *)
   let helper_se3 v1 v2 =
     if ((not (List.mem v1 ext_vars)) && (not (List.mem v2 ext_vars)) &&
-            (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars))
-            && List.mem v1 rhs_h_vars) then
+        (List.mem v2 lhs_h_vars && not (List.mem v1 lhs_h_vars))
+        && List.mem v1 rhs_h_vars) then
       (true, v1, v2)
     else if ((not (List.mem v1 ext_vars)) && (not (List.mem v2 ext_vars)) &&
              (List.mem v1 lhs_h_vars && not (List.mem v2 lhs_h_vars))
@@ -5984,6 +5993,141 @@ and check_sem_eq (ctx:context) (conseq:CF.formula) =
   in
   if is_sem_eq then
     let (es, conseq) = do_sem_eq ctx conseq in
+    (es, conseq)
+  else (ctx, conseq)
+
+and check_aseg (prog:prog_decl) (f:CF.h_formula) =
+  match f with
+  | CF.ViewNode {h_formula_view_node = root; h_formula_view_name = c;h_formula_view_arguments=args} ->
+    let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+    let b = match vdef.view_user_inv with
+      | MemoF m -> false
+      | OnePF cpf ->
+        let p_list = CP.p_form_list cpf in
+        if List.length p_list == 1 then
+          let p = List.hd p_list in
+          match p with
+          | Cpure.Lte (e1,e2,loc) -> true
+          | _ -> false
+        else false
+    in b
+  | _ -> false
+
+and check_asegn (prog:prog_decl) (f:CF.h_formula) =
+  match f with
+  | CF.ViewNode {h_formula_view_node = root; h_formula_view_name = c;h_formula_view_arguments=args} ->
+    let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+    let b = match vdef.view_user_inv with
+      | MemoF m -> false
+      | OnePF cpf ->
+        let p_list = CP.p_form_list cpf in
+        if List.length p_list == 2 then
+          let h = List.hd p_list in
+          let t = List.nth p_list 1 in
+          match (h,t) with
+          | (Cpure.Lt (e1,e2,loc1), Cpure.Neq (e3,e4,loc2)) -> true
+          | (Cpure.Neq (e3,e4,loc2), Cpure.Lt (e1,e2,loc1)) -> true
+          | _ -> false
+        else false
+    in b
+  | _ -> false
+
+and check_asegn_view_decl (view_decl:Cast.view_decl) =
+  match view_decl.view_user_inv with
+  | MemoF m -> false
+  | OnePF cpf ->
+    let p_list = CP.p_form_list cpf in
+    if List.length p_list == 2 then
+      let h = List.hd p_list in
+      let t = List.nth p_list 1 in
+      match (h,t) with
+      | (Cpure.Lt (e1,e2,loc1), Cpure.Neq (e3,e4,loc2)) -> true
+      | (Cpure.Neq (e3,e4,loc2), Cpure.Lt (e1,e2,loc1)) -> true
+      | _ -> false
+    else false
+
+and is_aseg_norm_1 (v1:h_formula_view) (v2:h_formula_view) : bool =
+  if (List.length v1.h_formula_view_arguments == 1 && List.length v2.h_formula_view_arguments == 1) then
+    (CP.eq_spec_var v1.h_formula_view_node (List.hd v1.h_formula_view_arguments)) && CF.is_eq_view v1 v2
+  else
+    false
+
+and do_aseg_norm_1 (ctx:context) (conseq:CF.formula) (aseg_vnodes: h_formula list) =
+  let es = get_es ctx in
+  let (lhs_h,lhs_pure) = extract_heap_and_pure_formula es.es_formula in
+  let helper (lhs_h:h_formula) (hf:h_formula) : h_formula =
+    match hf with
+    | ViewNode v ->
+      drop_view_h_formula lhs_h v is_aseg_norm_1
+    | _ -> failwith "[do_aseg_norm_1]::Unexpected non ViewNode type as input!"
+  in
+  let lhs_h = List.fold_left helper lhs_h aseg_vnodes in
+  let es_f = update_heap_and_pure_formula es.es_formula lhs_h lhs_pure in
+  let () = y_tinfo_hp (add_str "[aseg_norm_1] es_formula" Cprinter.string_of_formula) es_f in
+  ((Ctx ({es with es_formula = es_f})), conseq)
+
+and is_aseg_norm_2 (v1:h_formula_view) (v2:h_formula_view) : bool =
+  if (List.length v1.h_formula_view_arguments == 1 && List.length v2.h_formula_view_arguments == 1) then
+    CF.is_eq_view v1 v2
+  else
+    false
+
+and do_aseg_norm_2 (ctx:context) (conseq:CF.formula) (aseg_vnodes: h_formula list) =
+  let (rhs_h,rhs_pure) = extract_heap_and_pure_formula conseq in
+  let rhs_pairs = pairs_of (MCP.all_vars rhs_pure) in
+  let rhs_eq_pairs = List.filter (fun (v1,v2) -> are_spec_var_eq rhs_pure v1 v2) rhs_pairs in
+  let () = y_tinfo_hp (add_str "rhs_fv eq pairs" string_of_spec_var_pair_list) rhs_eq_pairs in
+
+  let helper (rhs_h:h_formula) (hf:h_formula) : h_formula =
+    match hf with
+    | ViewNode v ->
+      let node = v.h_formula_view_node in
+      let arg = List.hd v.h_formula_view_arguments in
+      if (List.mem (node,arg) rhs_eq_pairs || List.mem (arg,node) rhs_eq_pairs) then
+        drop_view_h_formula rhs_h v is_aseg_norm_2
+      else rhs_h
+    | _ -> failwith "[do_aseg_norm_2]::Unexpected non ViewNode type as input!"
+  in
+
+  let () = y_tinfo_hp (add_str "rhs_h" Cprinter.string_of_h_formula) rhs_h in
+  let rhs_h = List.fold_left helper rhs_h aseg_vnodes in
+  let conseq = update_heap_and_pure_formula conseq rhs_h rhs_pure in
+  let () = y_tinfo_hp (add_str "conseq" Cprinter.string_of_formula) conseq in
+  (ctx, conseq)
+
+and do_arr_norm_x (prog:prog_decl) (ctx:context) (conseq:CF.formula) =
+  let es = get_es ctx in
+  let lhs_vnodes = get_vnodes es.es_formula in
+  let lhs_aseg_vnodes = List.filter (fun vnode -> check_aseg prog vnode) lhs_vnodes in
+  let lhs_asegn_vnodes = List.filter (fun vnode -> check_asegn prog vnode) lhs_vnodes in
+  let asegn_vdecls = List.filter (fun view_decl -> check_asegn_view_decl view_decl) prog.prog_view_decls in
+  let (ctx, conseq) = do_aseg_norm_1 ctx conseq lhs_aseg_vnodes in
+
+  let () = y_tinfo_hp (add_str "lhs_asegn" (pr_list Cprinter.string_of_h_formula)) lhs_asegn_vnodes in
+  let () = y_tinfo_hp (add_str "asegn view_decls" (pr_list Cprinter.string_of_view_decl)) asegn_vdecls in
+
+  let rhs_vnodes = get_vnodes conseq in
+  let rhs_aseg_vnodes = List.filter (fun vnode -> check_aseg prog vnode) rhs_vnodes in
+  let (ctx, conseq) = do_aseg_norm_2 ctx conseq rhs_aseg_vnodes in
+  (ctx, conseq)
+
+and do_arr_norm (prog:prog_decl) (ctx:context) (conseq:CF.formula) =
+  (* let pr0 = Cprinter.string_of_program in *)
+  let pr0 = (fun _ -> "prog_decl") in
+  let pr1 = Cprinter.string_of_context in
+  let pr2 = Cprinter.string_of_formula in
+  let pr3 = (fun (ctx, conseq) -> "ctx:" ^ (Cprinter.string_of_context ctx) ^ "\nconseq:" ^ (Cprinter.string_of_formula conseq)) in
+  Debug.no_3 "do_arr_norm" pr0 pr1 pr2 pr3
+    (fun _ _ _ -> do_arr_norm_x prog ctx conseq) prog ctx conseq
+
+and check_arr_norm (prog:prog_decl) (ctx:context) (conseq:CF.formula) =
+  (* TODO: change to norm check *)
+  let is_sem_eq = match ctx with
+    | Ctx es -> es.es_infer_obj # is_sem_eq
+    | OCtx _ -> false
+  in
+  if is_sem_eq then
+    let (es, conseq) = do_arr_norm prog ctx conseq in
     (es, conseq)
   else (ctx, conseq)
 
@@ -6129,6 +6273,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   (*********************************************)
 
   let (ctx, conseq) = check_sem_eq ctx conseq in
+  let (ctx, conseq) = check_arr_norm prog ctx conseq in
 
   (* Call the internal function to do the unfolding and do the checking *)
   (* Check duplication only when there are no permissions*)
@@ -17099,27 +17244,27 @@ and prop_entail_state_w_lemma prog (es:CF.entail_state) =
     Cprinter.string_of_estate Cprinter.string_of_context
     (fun _ -> prop_entail_state_w_lemma_x prog es) es
 
-and normalize_list_failesc_context_w_lemma_x prog lctx =
-  (* if not (Perm.allow_perm ()) then lctx *)
-  (* else *)
-  (* TO CHECK merging nodes *)
-  if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
-  else
-    let fct = normalize_entail_state_w_lemma prog in
-    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
-    res
+    and normalize_list_failesc_context_w_lemma_x prog lctx =
+      (* if not (Perm.allow_perm ()) then lctx *)
+      (* else *)
+      (* TO CHECK merging nodes *)
+      if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
+      else
+        let fct = normalize_entail_state_w_lemma prog in
+        let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
+        res
 
-and normalize_list_failesc_context_w_lemma prog lctx =
-  let pr = Cprinter.string_of_list_failesc_context in
-  Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
-    (normalize_list_failesc_context_w_lemma_x prog) lctx
+    and normalize_list_failesc_context_w_lemma prog lctx =
+      let pr = Cprinter.string_of_list_failesc_context in
+      Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
+        (normalize_list_failesc_context_w_lemma_x prog) lctx
 
-and normalize_list_partial_context_w_lemma prog lctx = 
-  if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
-  else
-    let fct = normalize_entail_state_w_lemma prog in
-    let res = CF.transform_list_partial_context (fct, idf) lctx in
-    res
+    and normalize_list_partial_context_w_lemma prog lctx = 
+      if (Lem_store.all_lemma # get_left_coercion) (*prog.prog_left_coercions*) == [] then lctx
+      else
+        let fct = normalize_entail_state_w_lemma prog in
+        let res = CF.transform_list_partial_context (fct, idf) lctx in
+        res
 
 let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
     (b1:bool)  (ctx : context) 
