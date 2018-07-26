@@ -4026,21 +4026,72 @@ let repair_proc proc exp_decls use_neg =
   | None -> proc
   | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls use_neg)}
 
-let list_of_assign_exp (exp: exp) =
+(* find exp to be replaced by template, e.g. f(x, y) or f(x) *)
+(* current exp: rhs of the assign and lhs of the condition *)
+let list_of_candidate_exp (exp: exp) =
   let rec aux exp list =
     match exp with
+    | ArrayAt _ -> report_error no_pos "simple_collect_vars: ArrayAt is not supported"
+    | ArrayAlloc _ -> report_error no_pos "simple_collect_vars: ArrayAlloc is not supported"
+    | Assert _ -> report_error no_pos "simple_collect_vars: Assert is not supported"
+    | Assign exp_assign -> [(exp_assign.exp_assign_rhs, false)] @ list
+    | Bind _ -> report_error no_pos "simple_collect_vars: Bind is not supported"
+    | Binary exp_binary ->
+      begin
+        match exp_binary.exp_binary_op with
+        | OpEq
+        | OpNeq
+        | OpLt
+        | OpLte
+        | OpGte
+        | OpGt ->
+          [(exp_binary.exp_binary_oper1, true)] @ list
+        | _ -> list
+      end
+    | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
+      aux block.exp_block_body list
+    | BoolLit _ -> report_error no_pos "simple_collect_vars: BoolLit is not supported"
+    | Break _ -> report_error no_pos "simple_collect_vars: Break is not supported"
+    | Barrier _ -> report_error no_pos "simple_collect_vars: Barrier is not supported"
+    | CallRecv _ -> report_error no_pos "simple_collect_vars: CallRec is not supported"
+    | CallNRecv _ -> report_error no_pos "simple_collect_vars: CallNRec is not supported"
+    | UnkExp _ -> report_error no_pos "simple_collect_vars: Unkexp is not supported"
+    | Cast _ -> report_error no_pos "simple_collect_vars: Cast is not supported"
+    | Cond exp_cond ->
+      let exp1_list = aux exp_cond.exp_cond_condition list in
+      let exp1_list = aux exp_cond.exp_cond_then_arm exp1_list in
+      aux exp_cond.exp_cond_else_arm exp1_list
+    | ConstDecl _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
+    | Continue _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
+    | Catch _ -> report_error no_pos "simple_collect_vars: Catch is not supported"
+    | Debug _ -> report_error no_pos "simple_collect_vars: Debug is not supported"
+    | Dprint _ -> report_error no_pos "simple_collect_vars: Dprint is not supported"
+    | Empty _ -> report_error no_pos "simple_collect_vars: Empty is not supported"
+    | FloatLit _ -> report_error no_pos "simple_collect_vars: flit is not supported"
+    | Finally _ -> report_error no_pos "simple_collect_vars: finally is not supported"
+    | IntLit _ -> report_error no_pos "simple_collect_vars: finally is not supported"
+    | Java _ -> report_error no_pos "simple_collect_vars: Java is not supported"
+    | Label (_, l_exp) -> aux l_exp list
+    | Member _ -> report_error no_pos "simple_collect_vars: Member is not supported"
+    | New _ -> report_error no_pos "simple_collect_vars: New is not supported"
+    | Null _ -> report_error no_pos "simple_collect_vars: Null is not supported"
+    | Raise _ -> report_error no_pos "simple_collect_vars: Raise is not supported"
+    | Return _ -> list
     | Seq exp_seq ->
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
-    | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
-      aux block.exp_block_body list
-    | Assign exp_assign ->
-      [(exp_assign, exp_assign.exp_assign_pos)] @ list
-    | _ -> list
+    | This _ -> report_error no_pos "simple_collect_vars: This is not supported"
+    | Time _ -> report_error no_pos "simple_collect_vars: Time is not supported"
+    | Try _ -> report_error no_pos "simple_collect_vars: Try is not supported"
+    | Unary _ -> report_error no_pos "simple_collect_vars: Unary is not supported"
+    | Unfold _ -> report_error no_pos "simple_collect_vars: Unfold is not supported"
+    | Var _ -> report_error no_pos "simple_collect_vars: Var is not supported"
+    | VarDecl _ -> list
+    | While _ -> report_error no_pos "simple_collect_vars: While is not supported"
+    | Par _ -> report_error no_pos "simple_collect_vars: Par is not supported"
   in List.rev(aux exp [])
 
 let replace_assign_exp exp vars heuristic =
-  let rhs = exp.exp_assign_rhs in
   let rec prelist a b = match a, b with
     | [], _ -> true
     | _, [] -> false
@@ -4097,20 +4148,20 @@ let replace_assign_exp exp vars heuristic =
       | Par _ -> report_error no_pos "simple_collect_vars: Par is not supported"
       |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported"
     in
-    let vars = aux exp [] in
+    let vars = List.rev (aux exp []) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
   in
 
-  let rec replace rhs vars =
-    let rhs_vars = simple_collect_vars rhs in
-    let () = x_tinfo_hp (add_str "rhs_vars: " (pr_list pr_id)) rhs_vars no_pos in
-    if (rhs_vars == []) then (rhs, [], [])
-    else if sublist rhs_vars vars then
+  let rec replace exp vars =
+    let exp_vars = simple_collect_vars exp in
+    let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos in
+    if (exp_vars == []) then (exp, [], [])
+    else if sublist exp_vars vars then
       if not(heuristic) then
-        (mk_unk_exp rhs_vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
-      else (mk_unk_exp vars (get_exp_pos rhs), rhs_vars, [get_exp_pos rhs])
+        (mk_unk_exp exp_vars (get_exp_pos exp), exp_vars, [get_exp_pos exp])
+      else (mk_unk_exp vars (get_exp_pos exp), vars, [get_exp_pos exp])
     else
-      match rhs with
+      match exp with
       | Binary b ->
         let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
         let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
@@ -4118,11 +4169,9 @@ let replace_assign_exp exp vars heuristic =
           b with exp_binary_oper1 = a1;
                  exp_binary_oper2 = a2;
         }, b1 @ b2, c1@c2)
-      | _ -> (rhs, [], [])
+      | _ -> (exp, [], [])
 
-  in
-  let (replaced_rhs, replaced_vars, replaced_pos) = replace rhs vars in
-  (Assign { exp with exp_assign_rhs = replaced_rhs }, replaced_vars, replaced_pos)
+  in replace exp vars
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
