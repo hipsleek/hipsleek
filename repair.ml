@@ -281,24 +281,25 @@ let start_repair iprog cprog =
     let repair_res_list =
       List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
                    (snd stmt) vars false) candidate_exp_list in
-    let repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-    let h_repair_res_list = if (repair_res_list == []) then
-        List.map (fun stmt -> repair_one_statement iprog proc_to_repair
-                     (fst stmt) (snd stmt) vars true) candidate_exp_list
-      else repair_res_list
-    in
-    let h_repair_res_list = List.filter(fun x -> x != None) h_repair_res_list in
-    let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-    let best_res = get_best_repair h_repair_res_list in
-    match best_res with
-    | None -> None
-    | Some (_, best_r_prog, pos, repaired_exp) ->
-      let repaired_proc = List.find (fun x -> x.I.proc_name = proc_to_repair.proc_name)
-          best_r_prog.Iast.prog_proc_decls in
-      let () = x_binfo_hp (add_str "best repaired proc" (Iprinter.string_of_proc_decl
-                                                        )) repaired_proc no_pos
-      in
-      let () = x_tinfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
-                                                Cprinter.pr_formula_exp))
-          repaired_exp no_pos in
-      Some (best_r_prog, pos, repaired_exp)
+    None
+    (* let repair_res_list = List.filter(fun x -> x != None) repair_res_list in
+     * let h_repair_res_list = if (repair_res_list == []) then
+     *     List.map (fun stmt -> repair_one_statement iprog proc_to_repair
+     *                  (fst stmt) (snd stmt) vars true) candidate_exp_list
+     *   else repair_res_list
+     * in
+     * let h_repair_res_list = List.filter(fun x -> x != None) h_repair_res_list in
+     * let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
+     * let best_res = get_best_repair h_repair_res_list in
+     * match best_res with
+     * | None -> None
+     * | Some (_, best_r_prog, pos, repaired_exp) ->
+     *   let repaired_proc = List.find (fun x -> x.I.proc_name = proc_to_repair.proc_name)
+     *       best_r_prog.Iast.prog_proc_decls in
+     *   let () = x_binfo_hp (add_str "best repaired proc" (Iprinter.string_of_proc_decl
+     *                                                     )) repaired_proc no_pos
+     *   in
+     *   let () = x_tinfo_hp (add_str "templ: " (Cprinter.poly_string_of_pr
+     *                                             Cprinter.pr_formula_exp))
+     *       repaired_exp no_pos in
+     *   Some (best_r_prog, pos, repaired_exp) *)

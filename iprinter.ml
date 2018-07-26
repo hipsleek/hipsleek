@@ -708,7 +708,7 @@ let rec string_of_form_list l = match l with
     | While of exp * exp * F.formula * F.formula * loc *)
 
 (* function used to decide if parentrhesis are needed or not *)
-let need_parenthesis2 = function 
+let need_parenthesis2 = function
   | Var _ | BoolLit _ | IntLit _ | FloatLit _ | Member _ -> false
   | _  -> true
 
@@ -762,7 +762,9 @@ let rec string_of_exp = function
                                        ^ (string_of_binary_op o)
                                        ^ (parenthesis (string_of_exp e2))
           else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
-        else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
+        else if need_parenthesis2 e2 then (string_of_exp e1) ^ (string_of_binary_op o)
+          ^ (parenthesis (string_of_exp e2))
+        else (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
     exp_call_nrecv_lock = lock;
     exp_call_nrecv_path_id = pid;

@@ -4013,11 +4013,6 @@ let rec repair_exp exp exp_decls use_neg =
         | ExpForm e ->
           let res = translate_ipure_exp_to_iast_wrapper e use_neg in
           res
-          (* begin
-           *   match neg_exp res with
-           *   | Some n_res -> n_res
-           *   | None -> res
-           * end *)
        with Not_found -> exp
     end
 
