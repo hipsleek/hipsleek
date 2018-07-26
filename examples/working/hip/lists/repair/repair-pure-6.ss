@@ -6,7 +6,7 @@ int foo(int x, int y)
    requires x <= y ensures res = y + 2;
 {
   int a;
-  if (x - y < 0 ) {
+  if (x - y  <= 0 ) {
      a = x;
   } else {
      a = y;

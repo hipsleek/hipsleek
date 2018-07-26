@@ -129,7 +129,7 @@ let rec translate_pf (pure_f: CP.formula)  =
         let (sb_exp1, l1) = translate_exp exp1 in
         let (sb_exp2, l2) = translate_exp exp2 in
         let sb_loc = translate_loc loc in
-        (SBCast.BinRel (Gt, sb_exp1, sb_exp2, sb_loc), l1@l2)
+        (SBCast.BinRel (Lt, sb_exp1, sb_exp2, sb_loc), l1@l2)
       | Lte (exp1, exp2, loc) ->
         let (sb_exp1, l1) = translate_exp exp1 in
         let (sb_exp2, l2) = translate_exp exp2 in
