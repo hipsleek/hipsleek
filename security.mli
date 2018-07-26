@@ -18,6 +18,7 @@ val is_valid_security_label : lattice -> Label.t -> bool
 val get_top : lattice -> Label.t
 val get_bottom : lattice -> Label.t
 val get_representation : lattice -> Label.t -> int list
+val representation_to_label : lattice -> int list -> Label.t
 val least_upper_bound : lattice -> Label.t -> Label.t -> Label.t
 val greatest_lower_bound : lattice -> Label.t -> Label.t -> Label.t
 val lattice_size : lattice -> int

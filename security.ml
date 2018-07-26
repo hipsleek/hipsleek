@@ -22,6 +22,10 @@ module BoundsMap = Map.Make (struct
   let compare = compare
 end)
 module RepresentationMap = Map.Make (Label)
+module ReverseRepresentationMap = Map.Make (struct
+  type t = int list
+  let compare = compare
+end)
 
 exception Not_a_lattice of string
 
@@ -33,7 +37,8 @@ type lattice =
     top : Label.t;
     bottom : Label.t;
     labels : Label.t list;
-    label_representations : int list RepresentationMap.t
+    label_representations : int list RepresentationMap.t;
+    reverse_label_representations : Label.t ReverseRepresentationMap.t
   }
 
 let compute_lub l1 l2 lattice =
@@ -114,9 +119,10 @@ let make_sec_lattice_representation lattice =
   in
   let rp =
     TopoG.fold
-      (fun v map ->
+      (fun v (map, reverse_map) ->
         if RepresentationMap.is_empty map then
-          RepresentationMap.add v (empty_label size) map
+          let rep = empty_label size in
+          RepresentationMap.add v rep map, ReverseRepresentationMap.add rep v reverse_map
         else
           let index = RepresentationMap.cardinal map - 1 in
           let label =
@@ -129,10 +135,11 @@ let make_sec_lattice_representation lattice =
               )
               map
               (empty_label size) in
-          RepresentationMap.add v (next_label label index) map
+          let rep = next_label label index in
+          RepresentationMap.add v rep map, ReverseRepresentationMap.add rep v reverse_map
       )
       lattice
-      RepresentationMap.empty in
+      (RepresentationMap.empty, ReverseRepresentationMap.empty) in
   (* let rp = TopoG.fold (fun v a ->
     if a = [] then [(v, empty_label size)] else
       let idx = (List.length a) - 1 in
@@ -158,6 +165,7 @@ let make_lattice labels relations =
     let glb_map =
       compute_all_glb lattice
       |> List.fold_left (fun glbs (l1, l2, glb) -> BoundsMap.add (l1, l2) glb glbs) BoundsMap.empty in
+    let representation_map, reverse_representation_map = make_sec_lattice_representation lattice in
     {
       lattice = lattice;
       least_upper_bounds = lub_map;
@@ -165,7 +173,8 @@ let make_lattice labels relations =
       labels;
       top = List.fold_left (fun acc v -> if G.out_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
       bottom = List.fold_left (fun acc v -> if G.in_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
-      label_representations = make_sec_lattice_representation lattice
+      label_representations = representation_map;
+      reverse_label_representations = reverse_representation_map
     }
 
 let default_lattice =
@@ -181,6 +190,9 @@ let get_bottom lattice = lattice.bottom
 
 let get_representation { label_representations } label =
   RepresentationMap.find label label_representations
+
+let representation_to_label { reverse_label_representations } representation =
+  ReverseRepresentationMap.find representation reverse_label_representations
 
 let least_upper_bound { least_upper_bounds } l1 l2 = BoundsMap.find (l1, l2) least_upper_bounds
 
