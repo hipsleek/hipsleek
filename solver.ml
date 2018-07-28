@@ -2608,7 +2608,7 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
   (has_post: bool) (cl : failesc_context) (conseq:'a) (tid: CP.spec_var option)
   (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
   (pid:control_path_id) f to_string: (list_failesc_context * proof) =
-  x_binfo_zp (lazy ("heap_entail_struc_failesc_context:"
+  x_dinfo_zp (lazy ("heap_entail_struc_failesc_context:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
                     ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)

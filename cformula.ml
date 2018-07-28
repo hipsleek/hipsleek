@@ -4724,7 +4724,7 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
   | _ -> (f,[])
 
 (* type: struc_formula -> formula -> struc_formula *)
-and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_formula  =  
+and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_formula  =
   let pr1 = !print_struc_formula in
   let pr2 = !print_formula in
   Debug.no_2 "rename_struc_clash_bound_vars" pr1 pr2 pr1 rename_struc_clash_bound_vars_X f1 f2 
@@ -4733,40 +4733,57 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 (* rename only those bound vars of f1 which clash with fv(f2) *)
 (* return the new formula and the list of fresh names *)
 and rename_struc_clash_bound_vars_X (f1 : struc_formula) (f2 : formula) : struc_formula  =  match f1 with
-  | EAssume b -> EAssume {b with
-                          formula_assume_simpl = fst (rename_clash_bound_vars b.formula_assume_simpl f2);
-                          formula_assume_struc = rename_struc_clash_bound_vars b.formula_assume_struc f2;}
-  | ECase b ->  
-    let r1 = List.map (fun (c1,c2) -> (c1,(rename_struc_clash_bound_vars c2 f2))) b.formula_case_branches in
-    (* let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_case_exists in *)
-    (* let rho = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2))) new_exs) in *)
-    ECase {(* formula_case_exists = (snd (List.split new_exs)); *)
-      formula_case_branches = (* List.map (fun (c1,c2)-> ((Cpure.subst rho c1),(subst_struc rho c2))) *) r1;
+  | EAssume b ->
+    EAssume {
+      b with formula_assume_simpl = fst (rename_clash_bound_vars b.formula_assume_simpl f2);
+             formula_assume_struc = rename_struc_clash_bound_vars b.formula_assume_struc f2;}
+
+  | ECase b ->
+    let r1 = List.map (fun (c1,c2) -> (c1,(rename_struc_clash_bound_vars c2 f2))
+                      ) b.formula_case_branches in
+    ECase {
+      formula_case_branches = r1;
       formula_case_pos = b.formula_case_pos}
+
   | EBase b ->
-    (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst))) no_pos in *)
-    (* let () = Debug.info_zprint (lazy  ("  b.formula_struc_explicit_inst " ^ (!CP.print_svl b.formula_struc_explicit_inst))) no_pos in *)
-    let new_imp = List.map (fun v -> (if (check_name_clash v f2) &&
-                                         not(CP.is_rel_all_var v) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
-    let new_exp = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_explicit_inst in
-    let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_exists in
+    let new_imp = List.map
+        (fun v -> (if (check_name_clash v f2) && not(CP.is_rel_all_var v)
+                   then (v,(CP.fresh_spec_var v)) else (v,v))
+        ) b.formula_struc_implicit_inst in
+    let new_exp = List.map
+        (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v))
+                   else (v,v))
+        ) b.formula_struc_explicit_inst in
+    let new_exs = List.map (fun v -> (if (check_name_clash v f2)
+                                      then (v,(CP.fresh_spec_var v)) else (v,v))
+                           ) b.formula_struc_exists in
     (* fresh_qvars contains only the freshly generated names *)
     let rho_imp = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_imp) in
     let rho_exp = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exp) in
     let rho_exs = (List.filter (fun (v1,v2) -> (not (CP.eq_spec_var v1 v2)))  new_exs) in
     let rho = rho_imp@rho_exp@rho_exs in
-    EBase {b with 
+    EBase {b with
            formula_struc_implicit_inst = (snd (List.split new_imp));
            formula_struc_explicit_inst = (snd (List.split new_exp));
            formula_struc_exists = (snd (List.split new_exs));
-           formula_struc_base = x_add subst rho (fst ( rename_clash_bound_vars b.formula_struc_base f2 ));
-           formula_struc_continuation = map_opt (fun c-> rename_struc_clash_bound_vars (subst_struc rho c) f2) b.formula_struc_continuation;
+           formula_struc_base = x_add subst rho (fst ( rename_clash_bound_vars
+                                                         b.formula_struc_base f2
+                                                     ));
+           formula_struc_continuation = map_opt
+               (fun c-> rename_struc_clash_bound_vars (subst_struc rho c)
+                   f2) b.formula_struc_continuation;
           }
-  | EInfer b -> EInfer {b with formula_inf_continuation = rename_struc_clash_bound_vars b.formula_inf_continuation f2}
-  | EList b -> EList (map_l_snd (fun c->rename_struc_clash_bound_vars c f2) b)
 
+  | EInfer b ->
+    EInfer
+      {b with formula_inf_continuation = rename_struc_clash_bound_vars
+                  b.formula_inf_continuation f2}
 
-and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_var list) = match f1 with
+  | EList b ->
+    EList (map_l_snd (fun c->rename_struc_clash_bound_vars c f2) b)
+
+and rename_clash_bound_vars (f1 : formula) (f2 : formula) :
+  (formula * CP.spec_var list) = match f1 with
   | Or ({formula_or_f1 = or1; formula_or_f2 = or2; formula_or_pos = pos}) ->
     let (rf1, fvar1) = (rename_clash_bound_vars or1 f2) in
     let (rf2, fvar2) = (rename_clash_bound_vars or2 f2) in
