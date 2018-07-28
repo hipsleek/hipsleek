@@ -2364,58 +2364,78 @@ and filter_set (cl : list_context) : list_context =
     | SuccCtx l -> if Gen.is_empty l then cl else SuccCtx [(List.hd l)]
 (* setup the labeling in conseq and the fail context in cl *)
 
-and heap_entail_failesc_prefix_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
-    (conseq : 'a) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
-                                                                                                                                         (f: prog_decl->bool->bool->context->'a -> CP.spec_var option -> MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id->(list_context * proof))
-                                                                                                                                        ) : (list_failesc_context * proof) =
+and heap_entail_failesc_prefix_init i (prog : prog_decl) (is_folding : bool)
+  (has_post: bool)(cl : list_failesc_context) (conseq : 'a) (tid: CP.spec_var
+  option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
+  (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string), (f:
+  prog_decl->bool->bool->context->'a -> CP.spec_var option -> MCP.mix_formula
+  option -> CP.spec_var option -> loc ->control_path_id->(list_context *
+  proof))) : (list_failesc_context * proof) =
   let pr = to_string in
   let pr2 = Cprinter.string_of_list_failesc_context in
   Debug.no_2_num i "heap_entail_failesc_prefix_init" pr2 pr (fun (c,_) -> pr2 c)
-    (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl conseq tid delayed_f join_id pos pid (rename_f,to_string,f))
+    (fun _ _ -> heap_entail_failesc_prefix_init_x prog is_folding has_post cl
+        conseq tid delayed_f join_id pos pid (rename_f,to_string,f))
     cl conseq
 
-and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_failesc_context)
-    (conseq : 'a) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
-                                                                                                                                         (f: prog_decl->bool->bool->context->'a -> CP.spec_var option -> MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id->(list_context * proof))
-                                                                                                                                        ) : (list_failesc_context * proof) =
-  if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n")
+and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)
+    (has_post: bool)(cl : list_failesc_context) (conseq : 'a)
+    (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option)
+    (join_id: CP.spec_var option) pos (pid:control_path_id)
+    ((rename_f: 'a->'a), (to_string:'a->string)
+    , (f: prog_decl->bool->bool->context->'a -> CP.spec_var option ->
+       MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id
+       ->(list_context * proof))) : (list_failesc_context * proof) =
+  if (List.length cl)<1
+  then report_error pos
+      ("heap_entail_failesc_prefix_init : encountered an empty
+    list_partial_context \n")
   else
     (* TODO : must avoid empty context *)
-    (* if (cl==[]) then ([],UnsatAnte) *)
-    (* else *)
     begin
       reset_formula_point_id();
-      let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+      let rename_es es = {es with es_formula = rename_labels_formula_ante
+                                      es.es_formula} in
       let conseq = rename_f conseq in
-      let rec prepare_ctx es = {es with
-                                es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-                                es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-                                es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-                               }in
-      let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
-      let entail_fct = fun c -> x_add heap_entail_struc_list_failesc_context prog is_folding has_post c conseq tid delayed_f join_id pos pid f to_string in
-      let ctx, prf = heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new in
+      let rec prepare_ctx es =
+        {es with es_success_pts  = ([]: (formula_label * formula_label) list);
+                 es_residue_pts  = residue_labels_in_formula es.es_formula;
+                 es_id = (fst (fresh_formula_label ""));
+        } in
+      let cl_new = transform_list_failesc_context
+          (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es)))
+                   )) cl in
+      let entail_fct = fun c -> x_add heap_entail_struc_list_failesc_context
+          prog is_folding has_post c conseq tid delayed_f join_id pos pid f
+          to_string in
+      let ctx, prf = heap_entail_agressive_prunning entail_fct
+          (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c)
+          cl_new in
       (subs_crt_holes_list_failesc_ctx ctx, prf)
     end
 
-and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
-    (conseq : 'a) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
-                                                                                                                                         (f: prog_decl->bool->bool->context->'a -> CP.spec_var option-> MCP.mix_formula option -> CP.spec_var option -> loc ->control_path_id->(list_context * proof)))
-  : (list_partial_context * proof) = 
+and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post:
+  bool)(cl : list_partial_context) (conseq : 'a) (tid: CP.spec_var option)
+  (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
+  (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string), (f:
+  prog_decl->bool->bool->context->'a -> CP.spec_var option-> MCP.mix_formula
+  option -> CP.spec_var option -> loc ->control_path_id->(list_context *
+  proof))) : (list_partial_context * proof) =
   if (List.length cl)<1 then report_error pos ("heap_entail_prefix_init : encountered an empty list_partial_context \n")
   else
     begin
       reset_formula_point_id();
       let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
       let conseq = rename_f conseq in
-      let rec prepare_ctx es = {es with 
-                                es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-                                es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-                                es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-                                (* es_orig_ante   = es.es_formula; *)
-                                (*es_orig_conseq = conseq ;*)}in
-      let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-      heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq tid delayed_f join_id pos pid f to_string 
+      let rec prepare_ctx es =
+        {es with es_success_pts  = ([]: (formula_label * formula_label) list);
+                 es_residue_pts  = residue_labels_in_formula es.es_formula;
+                 es_id = (fst (fresh_formula_label ""));
+        } in
+      let cl_new = transform_list_partial_context
+          ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
+      heap_entail_struc_list_partial_context prog is_folding  has_post cl_new
+        conseq tid delayed_f join_id pos pid f to_string
     end
 
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
@@ -14619,28 +14639,38 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
   Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3
     (fun _ _ -> wrap_collect_rel_lpc (heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos) pid) cl conseq
 
-let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
-    (cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) = 
+let heap_entail_struc_list_failesc_context_init (prog : prog_decl)
+    (is_folding : bool)  (has_post: bool) (cl : list_failesc_context)
+    (conseq:struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
+    (pid:control_path_id) : (list_failesc_context * proof) =
   let () = set_entail_pos pos in
   x_dinfo_zp (lazy ("heap_entail_init struc_list_failesc_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
-                    ^ "\nconseq:\n"^ (Cprinter.string_of_struc_formula conseq) 
+                    ^ "\nconseq:\n"^ (Cprinter.string_of_struc_formula conseq)
                     ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
                     ^"\n")) pos;
-  let res,prf = x_add heap_entail_failesc_prefix_init 1 prog is_folding  has_post cl conseq tid delayed_f join_id pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(x_add heap_entail_one_context_struc_nth 2)) in
+  let res,prf = x_add heap_entail_failesc_prefix_init 1 prog is_folding
+      has_post cl conseq tid delayed_f join_id pos pid
+      (rename_labels_struc,Cprinter.string_of_struc_formula
+      ,(x_add heap_entail_one_context_struc_nth 2)) in
 
   (CF.list_failesc_context_simplify res,prf)
 
-let heap_entail_struc_list_failesc_context_init i (prog : prog_decl) (is_folding : bool)  (has_post: bool)
-    (cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
-  (* let slk_entail cl conseq = heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid in *)
+let heap_entail_struc_list_failesc_context_init i (prog : prog_decl)
+    (is_folding : bool)  (has_post: bool) (cl : list_failesc_context)
+    (conseq:struc_formula) (tid: CP.spec_var option)
+    (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
+    (pid:control_path_id) : (list_failesc_context * proof) =
   let pr_lfc = Cprinter.string_of_list_failesc_context_short in
   Debug.no_2_num i "heap_entail_struc_list_failesc_context_init"
     pr_lfc
     Cprinter.string_of_struc_formula
     (fun (cl, _) -> pr_lfc cl)
-    (fun _ _ -> wrap_collect_rel_lfc (heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos) pid) cl conseq
+    (fun _ _ -> wrap_collect_rel_lfc
+        (heap_entail_struc_list_failesc_context_init prog is_folding has_post cl
+           conseq tid delayed_f join_id pos) pid) cl conseq
 
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
     (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 

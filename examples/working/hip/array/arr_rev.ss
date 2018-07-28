@@ -4,6 +4,8 @@
  * @author Vu An Hoa
  */
 
+global int[] fff;
+
 relation idexc(int[] a, int[] b, int i, int j) == 
 	forall(k : (i<=k & k<=j | a[k] = b[k])).
 
