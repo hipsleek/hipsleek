@@ -354,8 +354,7 @@ let process_source_full source =
   flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
-  let () = Debug.ninfo_zprint
-      (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
+  let () = x_binfo_hp (add_str "iprog" Iprinter.string_of_program) prog no_pos in
   let () = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.validate || !Globals.cp_prefile) then (
       process_validate prog
@@ -367,11 +366,12 @@ let process_source_full source =
   (* Remove all duplicated declared prelude *)
   let header_files = match !Globals.prelude_file with
     | None -> ["\"prelude.ss\""]
-    | Some s -> ["\""^s^"\""] in 
+    | Some s -> ["\""^s^"\""] in
   let header_files = if (!Globals.allow_inf)
     then "\"prelude_inf.ss\""::header_files else header_files in
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
+  let prims_list = process_primitives new_h_files in
+  (*list of primitives in header files*)
   let () = Debug.ninfo_hprint (add_str "prims_list.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_list no_pos in
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
   let () = Debug.ninfo_hprint (add_str "prims_incls.proc_decl" (pr_list ((fun prog -> pr_list (fun proc -> match proc.Iast.proc_body with Some b -> Iprinter.string_of_proc_decl proc | None -> "None") prog.Iast.prog_proc_decls)))) prims_incls no_pos in
@@ -426,8 +426,8 @@ let process_source_full source =
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
   let tnl = List.sort String.compare tnl in
   let () = Globals.trailer_num_list := tnl in
-  let () = x_ninfo_hp (add_str "trailer_num_list" (pr_list pr_id)) !
-      Globals.trailer_num_list no_pos in
+  let () = x_ninfo_hp (add_str "trailer_num_list" (pr_list pr_id))
+      !Globals.trailer_num_list no_pos in
   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
   let () = if (!Globals.print_input_all)
@@ -463,11 +463,6 @@ let process_source_full source =
   (*END: annotate field*)
   (*used in lemma*)
   let cprog, tiprog = Astsimp.trans_prog intermediate_prog in
-  let l_proc = Cast.list_of_procs cprog in
-  let _, proc_main = List.partition Cast.is_primitive_proc l_proc in
-  let () = x_tinfo_hp (add_str "procs:"
-                                 (pr_list (Cprinter.string_of_proc_decl 1))
-                      ) proc_main no_pos in
   let () = saved_cprog := cprog in
   (* ========= lemma process (normalize, translate, verify) ========= *)
   let () = y_tinfo_hp
