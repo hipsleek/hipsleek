@@ -14,7 +14,6 @@ module CF = Cformula
 
 type cmd_res= {
     cmd_res_infs: infer_type list;
-    (* cmd_res_scc: Cast.proc_decl list; *)
 }
 
 type icmd =
@@ -40,34 +39,36 @@ let rec string_of_icmd (cmd: icmd) =
 and string_of_icmd_wt cmd = pr_pair string_of_int string_of_icmd cmd
 
 let print_infer_scc scc =
-  let rec collect_inf s = 
+  let rec collect_inf s =
     match s with
     | CF.EList lst -> List.concat (List.map (fun (_,s) -> collect_inf s) lst)
-    | CF.EInfer s -> (s.CF.formula_inf_vars, s.CF.formula_inf_obj)::(collect_inf s.CF.formula_inf_continuation)
+    | CF.EInfer s -> (s.CF.formula_inf_vars, s.CF.formula_inf_obj)::
+                     (collect_inf s.CF.formula_inf_continuation)
     | _ -> []
   in
-  let lst = List.map (fun p -> 
+  let lst = List.map (fun p ->
     let lst = p.Cast.proc_stk_of_static_specs # get_stk in
-    (p.proc_name, List.map collect_inf lst)) scc 
+    (p.proc_name, List.map collect_inf lst)) scc
   in
-  pr_list (pr_pair pr_id (pr_list_num 
+  pr_list (pr_pair pr_id (pr_list_num
       (pr_list_n (pr_pair !CP.print_svl (fun iobj -> iobj # string_of))))) lst
 
 let rec compute_cmd cprog scc: icmd =
   let infs = (Iincr.get_infer_const_scc scc) in
   let () = y_tinfo_hp (add_str "infs" (pr_list string_of_inf_const)) infs in
-  let () = y_tinfo_hp (add_str "infer_const_obj" pr_id) (Globals.infer_const_obj # string_of) in
-  let has_infer_shape_prepost_proc = 
+  let () = y_tinfo_hp (add_str "infer_const_obj" pr_id)
+      (Globals.infer_const_obj # string_of) in
+  let has_infer_shape_prepost_proc =
     Globals.infer_const_obj # is_shape_pre_post ||
-    List.exists (fun it -> it = INF_SHAPE_PRE_POST) infs 
+    List.exists (fun it -> it = INF_SHAPE_PRE_POST) infs
   in
   let has_infer_pure_field =
     Globals.infer_const_obj # is_pure_field ||
-    List.exists (fun it -> it = INF_PURE_FIELD) infs 
+    List.exists (fun it -> it = INF_PURE_FIELD) infs
   in
   let has_infer_classic =
     Globals.infer_const_obj # is_classic ||
-    List.exists (fun it -> it = INF_CLASSIC) infs 
+    List.exists (fun it -> it = INF_CLASSIC) infs
   in
   let inf_shape_pre_cmd =
     mk_norm_icmd (
@@ -77,19 +78,24 @@ let rec compute_cmd cprog scc: icmd =
   in
   if has_infer_shape_prepost_proc then
     let post_cmd = mk_norm_icmd [INF_SHAPE_POST] in
-    let snd_cmd = 
-      if Globals.infer_const_obj # is_shape_post || List.exists (fun it -> it != INF_SHAPE_PRE_POST) infs
-      then mk_seq_icmd (1, post_cmd) (mk_norm_icmd_wt 1 (Gen.BList.difference_eq (=) infs [INF_SHAPE_PRE_POST]))
+    let snd_cmd =
+      if Globals.infer_const_obj # is_shape_post ||
+         List.exists (fun it -> it != INF_SHAPE_PRE_POST) infs
+      then mk_seq_icmd (1, post_cmd)
+          (mk_norm_icmd_wt 1 (Gen.BList.difference_eq (=) infs [INF_SHAPE_PRE_POST]))
       else post_cmd
     in
     mk_seq_icmd (1, inf_shape_pre_cmd) (1, snd_cmd)
   else
-    if (Globals.infer_const_obj # is_shape_pre || List.exists (fun it -> it = INF_SHAPE_PRE) infs) && 
-       (Globals.infer_const_obj # is_shape_post || List.exists (fun it -> it = INF_SHAPE_POST) infs) 
+  if (Globals.infer_const_obj # is_shape_pre ||
+      List.exists (fun it -> it = INF_SHAPE_PRE) infs) &&
+     (Globals.infer_const_obj # is_shape_post ||
+      List.exists (fun it -> it = INF_SHAPE_POST) infs)
     then
       let post_cmd = mk_norm_icmd [INF_SHAPE_POST] in
-      let rem = List.filter (fun it -> it!= INF_SHAPE_PRE && it != INF_SHAPE_POST && it != INF_CLASSIC) infs in
-      let snd_cmd = 
+      let rem = List.filter
+          (fun it -> it!= INF_SHAPE_PRE && it != INF_SHAPE_POST && it != INF_CLASSIC) infs in
+      let snd_cmd =
         if rem != [] then mk_seq_icmd (1, post_cmd) (mk_norm_icmd_wt 1 rem)
         else post_cmd
       in
@@ -100,9 +106,6 @@ let rec compute_cmd cprog scc: icmd =
 let compute_cmd cprog scc: icmd =
   let pr1 = print_infer_scc in
   let pr2 = string_of_icmd in
-  Debug.no_2 "compute_cmd" (add_str "inf_scc" pr1) 
-    (add_str "inf_obj" (fun _ -> Globals.infer_const_obj # string_of)) pr2 
+  Debug.no_2 "compute_cmd" (add_str "inf_scc" pr1)
+    (add_str "inf_obj" (fun _ -> Globals.infer_const_obj # string_of)) pr2
     (fun _ _ -> compute_cmd cprog scc) scc ()
-    
-
-  

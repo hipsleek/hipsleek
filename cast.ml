@@ -1821,31 +1821,12 @@ let rec look_up_parent_name pos ddefs name =
   let ddef = look_up_data_def pos ddefs name in
   ddef.data_parent_name
 
-(*
-let rec look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
-  | p :: rest ->
-      if p.proc_name = name then
-		p
-      else
-		look_up_proc_def_raw rest name
-  | [] -> raise Not_found
-*)
-
-let rec look_up_proc_def_raw (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
+let rec look_up_proc_def_raw (procs : (ident, proc_decl) Hashtbl.t)
+    (name : string) =
   Hashtbl.find procs name
 
-(*
-let rec look_up_proc_def pos (procs : proc_decl list) (name : string) = match procs with
-  | p :: rest ->
-      if p.proc_name = name then
-		p
-      else
-		look_up_proc_def pos rest name
-  | [] -> Error.report_error {Error.error_loc = pos;
-							  Error.error_text = "procedure " ^ name ^ " is not found"}
-*)
-
-let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
+let rec look_up_proc_def pos (procs : (ident, proc_decl) Hashtbl.t)
+    (name : string) =
   try Hashtbl.find procs name
   with Not_found -> Error.report_error {
       Error.error_loc = pos;
@@ -1862,38 +1843,32 @@ let look_up_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
 let update_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) hpdefs (name : string) =
   try
     let proc = Hashtbl.find procs name in
-    (* let new_proc = {proc with proc_hpdefs = proc.proc_hpdefs@hpdefs} in *)
     let () = proc.proc_hpdefs <- proc.proc_hpdefs@hpdefs in ()
-  (* Hashtbl.replace procs name proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
       Error.error_text = "update_hpdefs_proc: Procedure " ^ name ^ " is not found."}
 
-let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
-  try
+let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t)
+    (name : string) =
+   try
     let proc = Hashtbl.find procs name in
     proc.proc_callee_hpdefs
   with Not_found -> []
-(* Error.report_error { *)
-(* Error.error_loc = no_pos; *)
-(* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
 
-let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) =
+let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name
+    (callee_name : string) =
   try
     let hpdefs = look_up_hpdefs_proc procs callee_name in
     let proc = Hashtbl.find procs caller_name in
-    (* let new_proc = {proc with proc_callee_hpdefs = proc.proc_callee_hpdefs@hpdefs} in *)
     let () = proc.proc_callee_hpdefs <- proc.proc_callee_hpdefs@hpdefs in ()
-  (* Hashtbl.replace procs name new_proc *)
   with Not_found -> Error.report_error {
       Error.error_loc = no_pos;
-      Error.error_text = "update_callee_hpdefs_proc: Procedure " ^ caller_name ^ " is not found."}
+      Error.error_text = "update_callee_hpdefs_proc: Procedure " ^
+                         caller_name ^ " is not found."}
 
 let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec =
   try
     let proc = Hashtbl.find procs pname in
-    (* let new_proc = {proc with proc_static_specs = spec} in *)
-    (* let () = Hashtbl.replace procs pname new_proc in       *)
     let () = proc.proc_stk_of_static_specs # push_pr x_loc spec in
     let () = Hashtbl.replace procs pname proc in
     procs
@@ -1901,15 +1876,6 @@ let update_sspec_proc (procs : (ident, proc_decl) Hashtbl.t) pname spec =
       Error.error_loc = no_pos;
       Error.error_text = "update_sspec_proc: Procedure " ^ pname ^ " is not found."}
 
-(* Replaced by the new function with Hashtbl *)
-(*
-let rec look_up_proc_def_no_mingling pos (procs : proc_decl list) (name : string) = match procs with
-  | p :: rest ->
-	  if unmingle_name p.proc_name = name then p
-	  else look_up_proc_def_no_mingling pos rest name
-  | [] -> Error.report_error {Error.error_loc = pos;
-							  Error.error_text = "procedure " ^ name ^ " is not found"}
-*)
 let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) (name : string) =
   let proc = Hashtbl.fold (fun i p acc ->
       match acc with
@@ -1918,55 +1884,40 @@ let rec look_up_proc_def_no_mingling pos (procs : (ident, proc_decl) Hashtbl.t) 
     ) procs None in
   match proc with
   | None ->
-    (* Error.report_error {                                                                        *)
-    (*   Error.error_loc = pos;                                                                    *)
-    (*   Error.error_text = "look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found." } *)
     failwith ("look_up_proc_def_no_mingling: Procedure " ^ name ^ " is not found.")
   | Some p -> p
 
-(* takes a class and returns the list of all the methods from that class or from any of the parent classes *)
+(* takes a class and returns the list of all the methods from that class or from
+ * any of the parent classes *)
 and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = match c.data_name with
   | "Object" -> [] (* it does not have a superclass *)
   | _ ->
-    let cparent_decl = List.find (fun t -> (String.compare t.data_name c.data_parent_name) = 0) prog.prog_data_decls in
+    let cparent_decl = List.find (fun t -> (String.compare t.data_name
+                                              c.data_parent_name) = 0)
+        prog.prog_data_decls in
     c.data_methods @ (look_up_all_methods prog cparent_decl)
 
 (*
   coers: a list of coercion rules (proc_coercion must be true)
 *)
-(*
-let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula) list = match coers with
-  | p :: rest -> begin
-	  let rec find_formula coercion_list = match coercion_list with
-		| (pc, (pre, post)) :: rest ->
-			if pc = c then
-			  Some (pre, post)
-			else
-			  find_formula rest
-		| [] -> None
-	  in
-	  let rest_coers = look_up_distributive_def_raw rest c in
-		match find_formula p.proc_coercion_list with
-		  | Some (pre, post) -> (pre, post) :: rest_coers
-		  | None -> rest_coers
-	end
-  | [] -> []
-*)
 let lookup_view_invs rem_br v_def =
   try
-    snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants))
+    snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br)
+               v_def.view_prune_invariants))
   with | Not_found -> []
 
 let lookup_bar_invs_with_subs rem_br b_def zip  =
   try
-    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) b_def.barrier_prune_invariants)) in
+    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1
+                                 rem_br) b_def.barrier_prune_invariants)) in
     List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
 
 let lookup_view_invs_with_subs rem_br v_def zip  =
   try
-    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
+    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1
+                                 rem_br) v_def.view_prune_invariants)) in
     List.map (P.b_apply_subs zip) v
   with | Not_found -> []
 
@@ -1974,7 +1925,8 @@ let lookup_view_invs_with_subs rem_br v_def zip  =
 (*   view_decl -> P.spec_var list -> P.spec_var list -> P.spec_var list *)
 let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
   try
-    let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
+    let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_setequal_eq (=) c1
+                                 rem_br) v_def.view_prune_invariants)) in
     P.subst_var_list_avoid_capture from_v to_v v
   with | Not_found -> []
 
@@ -1983,22 +1935,16 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
 let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
   let pr v = v.view_name in
   let pr2 = !CP.print_svl in
-  Debug.no_3 "lookup_view_baga_with_subs" pr pr2 pr2 pr2 (lookup_view_baga_with_subs rem_br) v_def from_v to_v
+  Debug.no_3 "lookup_view_baga_with_subs" pr pr2 pr2 pr2
+    (lookup_view_baga_with_subs rem_br) v_def from_v to_v
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   List.filter (fun p ->  p.coercion_head_view = c ) coers
 
 let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   let pr1 = !print_coerc_decl_list in
-  (* let pr1 l = string_of_int (List.length l) in *)
-  Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "") look_up_coercion_def_raw coers c
-(* match coers with *)
-(* | p :: rest -> begin *)
-(*     let tmp = look_up_coercion_def_raw rest c in *)
-(*   	if p.coercion_head_view = c then p :: tmp *)
-(*   	else tmp *)
-(*   end *)
-(* | [] -> [] *)
+  Debug.no_2 "look_up_coercion_def_raw" pr1 (fun c-> c) (fun c-> "")
+    look_up_coercion_def_raw coers c
 
 let exist_left_lemma_w_fl coers fl=
   let is_rhs_subsume_flow_ff coer=
@@ -2080,20 +2026,25 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
       else Complex
 
 let case_of_coercion lhs rhs =
-  let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
-  Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs
+  let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" |
+    Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
+  Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula
+    pr1 case_of_coercion_x lhs rhs
 
-let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list =
-  List.filter (fun p ->  p.coercion_head_view = c
-                         && (p.coercion_body_view = t || List.exists (fun x -> x=t) p.coercion_body_pred_list)  ) coers
+let  look_up_coercion_with_target coers (c : ident) (t : ident)
+  : coercion_decl list =
+  List.filter (fun p ->
+      p.coercion_head_view = c
+      && (p.coercion_body_view = t || List.exists (fun x -> x=t)
+            p.coercion_body_pred_list)) coers
 
-let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list =
+let  look_up_coercion_with_target coers (c : ident) (t : ident)
+  : coercion_decl list =
   let pr1 = pr_list !print_coercion in
   Debug.no_3 "look_up_coercion_with_target" (fun x-> x)  (fun x-> x) pr1 pr1
     (fun _ _ _ -> look_up_coercion_with_target coers c t) c t coers
 
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
-  (*let pdef = look_up_proc_def_no_mingling no_pos prog.old_proc_decls name in*)
   let pdef = look_up_proc_def_no_mingling no_pos prog.new_proc_decls name in
   let callees = match pdef.proc_body with
     | Some e -> callees_of_exp e
@@ -2107,15 +2058,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Java _ -> []
   | UnkExp _ -> []
   | Assert _ -> []
-  (* AN HOA *)
-  (*| ArrayAt ({exp_arrayat_type = _;
-    	  exp_arrayat_array_base = _;
-    	  exp_arrayat_index = e;
-    	  exp_arrayat_pos = _; }) -> callees_of_exp e*)
-  (*| ArrayMod ({exp_arraymod_lhs = l;
-    	  exp_arraymod_rhs = r;
-    	  exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)*)
-  (* AN HOA *)
   | Assign ({exp_assign_lhs = _;
              exp_assign_rhs = e;
              exp_assign_pos = _}) -> callees_of_exp e
@@ -2136,19 +2078,18 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
            exp_cond_condition = _;
            exp_cond_then_arm = e1;
            exp_cond_else_arm = e2;
-           exp_cond_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
+           exp_cond_pos = _}) ->
+    Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | Debug _ -> []
   | Dprint _ -> []
   | FConst _ -> []
-  (*| FieldRead _ -> []*)
-  (*| FieldWrite _ -> []*)
   | ICall ({exp_icall_type = _;
             exp_icall_receiver = _;
             exp_icall_method_name = n;
             exp_icall_arguments = _;
-            exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
+            exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n,
+                                                      * go down recursively *)
   | IConst _ -> []
-  (*| ArrayAlloc _ -> []*)
   | New _ -> []
   | Null _ -> []
   | EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
@@ -2161,7 +2102,8 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Seq ({exp_seq_type = _;
           exp_seq_exp1 = e1;
           exp_seq_exp2 = e2;
-          exp_seq_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
+          exp_seq_pos = _}) ->
+    Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | This _ -> []
   | Time _ -> []
   | Var _ -> []
@@ -2171,7 +2113,8 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
             exp_while_body = e;
             exp_while_spec = _;
             exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
-  | Try b -> Gen.BList.remove_dups_eq (=) ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
+  | Try b -> Gen.BList.remove_dups_eq (=)
+               ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
   | Par b ->
     let callees = List.concat (List.map (fun c ->
@@ -2191,7 +2134,8 @@ let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
 
 type ch_node = { ch_node_name : ident;
                  mutable ch_node_class : data_decl option;
-                 mutable ch_node_coercion : proc_decl option (* coercion rule to the parent class *) }
+                 mutable ch_node_coercion : proc_decl option (* coercion rule to
+                                                                the parent class *) }
 
 module CD = struct
   type t = ch_node
@@ -2246,11 +2190,12 @@ let build_hierarchy (prog : prog_decl) =
            extesions
   cdefs: list of class definition, going from super class to sub class
 *)
-let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_formula = match cdefs0 with
+let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc)
+  : F.h_formula =
+  match cdefs0 with
   | cdef1 :: _ -> begin
       (* generate the first node *)
       let sub_tvar = List.hd subnode.F.h_formula_data_arguments in
-      (* let sub_tvar_ann = List.hd subnode.F.h_formula_data_param_imm in *)
       let sub_ext_var = List.hd (List.tl subnode.F.h_formula_data_arguments) in
       (* call gen_exts with sup_ext_var to link the
          		   head node with extensions *)
@@ -2260,7 +2205,6 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
       let ext_name = gen_ext_name subnode.F.h_formula_data_name cdef1.data_name in
       (*--- 09.05.2000 *)
       let fn1 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
-      (*let () = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
       (*09.05.2000 ---*)
       let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
       let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
@@ -2289,14 +2233,17 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                                        F.h_formula_data_name = ext_name;
                                        F.h_formula_data_derv = subnode.F.h_formula_data_derv;
                                        F.h_formula_data_split = subnode.F.h_formula_data_split;
-
                                        F.h_formula_data_imm = subnode.F.h_formula_data_imm;
-                                       F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
-                                       F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
+                                       F.h_formula_data_param_imm
+                                       = subnode.F.h_formula_data_param_imm;
+                                       F.h_formula_data_perm
+                                       = subnode.F.h_formula_data_perm; (*LDK*)
                                        F.h_formula_data_origins = subnode.F.h_formula_data_origins;
-                                       F.h_formula_data_original = subnode.F.h_formula_data_original;
+                                       F.h_formula_data_original
+                                       = subnode.F.h_formula_data_original;
                                        F.h_formula_data_arguments = link_p :: to_ext;
-                                       F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+                                       F.h_formula_data_holes = []; (* An Hoa :
+                                                                       Don't know what to do! *)
                                        F.h_formula_data_label = subnode.F.h_formula_data_label;
                                        F.h_formula_data_remaining_branches = None;
                                        F.h_formula_data_pruning_conditions = [];
@@ -2306,7 +2253,6 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
               let ext_link_name = gen_ext_name cdef2.data_name ((List.hd rest).data_name) in
               (*--- 09.05.2000 *)
               let fn2 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
-              (*let () = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
               (*09.05.2000 ---*)
               let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
               let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
@@ -2315,12 +2261,15 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                                        F.h_formula_data_split = subnode.F.h_formula_data_split;
 
                                        F.h_formula_data_imm = subnode.F.h_formula_data_imm;
-                                       F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
+                                       F.h_formula_data_param_imm
+                                       = subnode.F.h_formula_data_param_imm;
                                        F.h_formula_data_perm = subnode.F.h_formula_data_perm;
                                        F.h_formula_data_origins = subnode.F.h_formula_data_origins;
-                                       F.h_formula_data_original = subnode.F.h_formula_data_original;
+                                       F.h_formula_data_original
+                                       = subnode.F.h_formula_data_original;
                                        F.h_formula_data_arguments = ext_link_p :: to_ext;
-                                       F.h_formula_data_holes = []; (* An Hoa : Don't know what to do! *)
+                                       F.h_formula_data_holes = []; (* An Hoa :
+                                                                       Don't know what to do! *)
                                        F.h_formula_data_label = subnode.F.h_formula_data_label;
                                        F.h_formula_data_remaining_branches = None;
                                        F.h_formula_data_pruning_conditions = [];
@@ -2360,34 +2309,6 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
     | Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
 
-(* let rec sub_type (t1 : typ) (t2 : typ) = match t1 with *)
-(*   | Named c1 -> begin match t2 with *)
-(* 	    | Named c2 -> begin *)
-(* 		    if c1 = c2 then true *)
-(* 		    else if c1 = "" then true (\* t1 is null in this case *\) *)
-(* 		    else  *)
-(* 			  let v1 = CH.V.create {ch_node_name = c1;  *)
-(* 								    ch_node_class = None;  *)
-(* 								    ch_node_coercion = None} in *)
-(* 			  let v2 = CH.V.create {ch_node_name = c2;  *)
-(* 								    ch_node_class = None;  *)
-(* 								    ch_node_coercion = None} in *)
-(* 			  try *)
-(* 				  let () = PathCH.shortest_path class_hierarchy v1 v2 in *)
-(* 				  true *)
-(* 			  with *)
-(* 				| Not_found -> false *)
-(*         end *)
-(*         | Array _ | _ -> false (\* An Hoa add P.Array _ *\) *)
-(*   end *)
-(* 	(\* An Hoa *\) *)
-(*   | Array (et1, _) -> begin *)
-(* 	  match t2 with *)
-(* 		| Array (et2, _) -> (sub_type et1 et2) *)
-(* 		| _ -> false *)
-(*   end *)
-(*   |  _ -> t1 = t2 *)
-
 let sub_type (t1 : typ) (t2 : typ) = sub_type t1 t2
 
 and exp_to_check (e:exp) :bool = match e with
@@ -2414,8 +2335,6 @@ and exp_to_check (e:exp) :bool = match e with
   | Par _
   | Barrier _
   | BConst _
-  (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
-  (*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
   | Assign _
   | ICall _
   | IConst _
@@ -2424,7 +2343,6 @@ and exp_to_check (e:exp) :bool = match e with
   | Var _
   | Null _
   | EmptyArray _ (* An Hoa : NO IDEA *)
-  (*| ArrayAlloc _*) (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _
@@ -2433,8 +2351,6 @@ and exp_to_check (e:exp) :bool = match e with
 
 
 let rec pos_of_exp (e:exp) :loc = match e with
-  (*| ArrayAt b -> b.exp_arrayat_pos (* An Hoa *)*)
-  (*| ArrayMod b -> b.exp_arraymod_pos (* An Hoa *)*)
   | CheckRef b -> b.exp_check_ref_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos
@@ -2474,10 +2390,6 @@ let get_catch_of_exp e = match e with
   | Catch e -> e
   | _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
 
-(* let get_catch_of_exp e = *)
-(*   let pr = !print_prog_exp in *)
-(*   Debug.no_1 "get_catch_of_exp" pr pr_no get_catch_of_exp e *)
-
 let check_proper_return cret_type exc_list f =
   let overlap_flow_type fl res_t = match res_t with
     | Named ot -> F.overlapping fl (exlist # get_hash ot)
@@ -2490,7 +2402,8 @@ let check_proper_return cret_type exc_list f =
          && not(F.equal_flow_interval !top_flow_int fl_int) &&
          not(F.equal_flow_interval !mayerror_flow_int fl_int) then
         if not (sub_type res_t cret_type) then
-          Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
+          Err.report_error{Err.error_loc = b.F.formula_base_pos;
+                           Err.error_text ="result type does not correspond with the return type";}
         else ()
       else
         let () = x_tinfo_hp (add_str "fl_int" !print_dflow) fl_int no_pos in
@@ -2501,7 +2414,8 @@ let check_proper_return cret_type exc_list f =
             (* let _ =print_endline_quiet"XX" in *) F.subsume_flow c fl_int) exc_list) then
           let () = Debug.ninfo_pprint "Here:" no_pos in
           let () = Debug.ninfo_hprint (!print_dflow) fl_int no_pos in
-          let () = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l -> string_of_int (List.length l))) exc_list no_pos in
+          let () = Debug.ninfo_hprint (add_str "length(exc_list)" (fun l ->
+              string_of_int (List.length l))) exc_list no_pos in
           if exc_list!= [] then
             Err.report_warning{Err.error_loc = b.F.formula_base_pos;Err.error_text ="the result type "^(!print_dflow fl_int)^" is not covered by the throw list"^(pr_list !print_dflow exc_list);}
             (* WN: exception and result type do not match ..
@@ -2509,9 +2423,6 @@ let check_proper_return cret_type exc_list f =
                		Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type "^(!print_dflow res_t)^" does not correspond (overlap) with the flow type"^(!print_dflow fl_int);}
             *)
           else
-            (* else *)
-            (*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Exc.get_closest fl_int)^
-              		  (string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
           if not(((F.equal_flow_interval !norm_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !norm_flow_int fl_int))) then
             Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normaesl flow"}
           else ()
