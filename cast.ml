@@ -243,7 +243,6 @@ and proc_decl = {
   (* proc_static_specs_with_pre : Cformula.struc_formula; *)
   (* this puts invariant of pre into the post-condition *)
   proc_dynamic_specs : Cformula.struc_formula;
-  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
   (* stack of static specs inferred *)
   proc_stk_of_static_specs : Cformula.struc_formula Gen.stack_pr (* !print_struc_formula (==) *);
   mutable proc_hprel_ass: (Cformula.hprel list * nflow) list;

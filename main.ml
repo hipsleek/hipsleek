@@ -462,7 +462,12 @@ let process_source_full source =
   let () = Iast.annotate_field_pure_ext intermediate_prog in
   (*END: annotate field*)
   (*used in lemma*)
-  let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  let cprog, tiprog = Astsimp.trans_prog intermediate_prog in
+  let l_proc = Cast.list_of_procs cprog in
+  let _, proc_main = List.partition Cast.is_primitive_proc l_proc in
+  let () = x_tinfo_hp (add_str "procs:"
+                                 (pr_list (Cprinter.string_of_proc_decl 1))
+                      ) proc_main no_pos in
   let () = saved_cprog := cprog in
   (* ========= lemma process (normalize, translate, verify) ========= *)
   let () = y_tinfo_hp
