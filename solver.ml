@@ -10541,7 +10541,7 @@ and do_infer_heap_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
       else None in
     begin
       match r with
-      | Some (new_iv,new_rn,dead_iv,done_iv) -> 
+      | Some (new_iv,new_rn,dead_iv,done_iv) ->
         let new_estate =
           let () = x_tinfo_hp (add_str "new_rn" Cprinter.string_of_h_formula) new_rn no_pos in
           {estate with
@@ -10574,12 +10574,14 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
   (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   (* Thai: change back to Infer.infer_pure *)
   begin
-    let (mix_rf,rsvl,mem_rf) = x_add xpure_heap_symbolic 8 prog rhs_b.formula_base_heap rhs_b.formula_base_pure 0 in
+    let (mix_rf,rsvl,mem_rf) = x_add xpure_heap_symbolic 8 prog
+        rhs_b.formula_base_heap rhs_b.formula_base_pure 0 in
     let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
     (*get list of pointers which equal NULL*)
     let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
     let lhs_p = List.fold_left
-        (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
+        (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos)
+        (CP.mkTrue no_pos) lhs_eqs in
     let is_rel,rhs_ptr = CF.get_ptr_from_data_w_hrel rhs in
     let rhs_p = CP.mkNull rhs_ptr no_pos in
     (*all LHS = null |- RHS != null*)
@@ -10668,7 +10670,6 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
   (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 =  Cprinter.string_of_entail_state in
   let pr2 (x,_) = Cprinter.string_of_fail_type x in
-  (*let pr3 = Cprinter.string_of_spec_var_list in*)
   Debug.no_2 "do_unmatched_rhs" Cprinter.string_of_h_formula pr1 pr2
     (fun _ _ ->
        do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
@@ -10685,7 +10686,7 @@ and process_unfold prog estate conseq a is_folding pos has_post pid =
     a estate
 
 and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
-  | DataNode dl, DataNode dr -> 
+  | DataNode dl, DataNode dr ->
     let alias = dl.h_formula_data_node::(CP.EMapSV.find_equiv_all
                                            dl.h_formula_data_node lhs_aset) in
     if List.mem dr.h_formula_data_node alias then

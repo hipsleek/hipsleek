@@ -7289,7 +7289,7 @@ and trans_var_x (ve, pe) (tlist: spec_var_type_list) pos =
 
 and trans_var_safe (ve, pe) et tlist pos =
   (* An Hoa [23/08/2011] Variables with "#" should not be considered.*)
-  if (ve.[0] = '#') 
+  if (ve.[0] = '#')
   then   CP.SpecVar (UNK,"_3_",Unprimed)
   (* if (is_dont_care_var ve) then  *)
   (*   CP.SpecVar (UNK,"_",Unprimed) *)

@@ -1608,7 +1608,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let helper c bd_spec =
               let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
               let pr2 f = Cprinter.string_of_struc_formula f in
-              Debug.no_2(* _loop *) "barrier entail" pr1 pr2 (fun c-> "")
+              Debug.no_2 "barrier entail" pr1 pr2 (fun c-> "")
                 (fun _ _ -> x_add heap_entail_struc_init prog false true
                     (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec
             in
@@ -2445,22 +2445,23 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 let to_print = "Proving precondition in method "
                                ^ proc.proc_name ^ "(" ^ (string_of_loc pos) ^
                                ") Failed (" ^  err_kind_msg ^ ")" in
-                CF.transform_list_failesc_context (idf,idf,
-                                                   (fun es -> CF.Ctx{es with CF.es_formula =
-                                                                               Norm.imm_norm_formula
-                                                                                 prog es.CF.es_formula Solver.unfold_for_abs_merge pos;
-                                                                             CF.es_final_error
-                                                                             = CF.acc_error_msg es.CF.es_final_error to_print})) res
+                CF.transform_list_failesc_context (
+                  idf,idf,
+                  (fun es -> CF.Ctx{es with
+                                    CF.es_formula
+                                    = Norm.imm_norm_formula prog
+                                        es.CF.es_formula
+                                        Solver.unfold_for_abs_merge pos;
+                                    CF.es_final_error
+                                    = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since
                 this will incur overhead if we have many
                 normalization lemmas in the programs*)
               (* Already did in EAssume *)
-              (* let res = normalize_list_failesc_context_w_lemma prog res in *)
               res
             else begin
-              (*   let () = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
               (* get source code position of failed branches *)
               (
                 if (!Globals.web_compile_flag) then
