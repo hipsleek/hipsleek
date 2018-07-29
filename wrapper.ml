@@ -17,11 +17,11 @@ let wrap_infer_inv f a b =
 let wrap_exception ?(msg="") dval f e =
   try
     f e
-  with _ -> 
+  with _ ->
     begin
       if msg!="" then print_endline_quiet ("Exception :"^msg);
       dval
-    end 
+    end
 
 let wrap_exc_as_false ?(msg="") f e = wrap_exception ~msg:msg false f e
 
@@ -41,7 +41,6 @@ let wrap_under_baga f a =
   do_under_baga_approx := true;
   try
     let res = f a in
-    (* restore flag do_classic_frame_rule  *)
     do_under_baga_approx := flag;
     res
   with _ as e ->
@@ -53,7 +52,6 @@ let wrap_reverify_scc f a b c =
   reverify_flag := true;
   try
     let res = f a b c in
-    (* restore flag do_classic_frame_rule  *)
     reverify_flag := flag;
     res
   with _ as e ->
@@ -69,79 +67,33 @@ let wrap_norm flag norm f a =
     raise e
 
 let toggle_local obj f flag =
-  if flag then (* infer_const_ *)obj # set f
-  else (* infer_const_ *)obj # reset f
+  if flag then obj # set f
+  else obj # reset f
 
 let toggle f flag = toggle_local infer_const_obj f flag
-  (* if flag then infer_const_obj # set f *)
-  (* else infer_const_obj # reset f *)
-
-(* let wrap_pure_field et f a = *)
-(*   let old_flag = infer_const_obj # get INF_PURE_FIELD  in *)
-(*   let new_flag = (match et with *)
-(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
-(*       | Some b -> b) in *)
-(*   if new_flag!=old_flag then toggle INF_PURE_FIELD new_flag; *)
-(*   try *)
-(*     let res = f a in *)
-(*     (\* restore flag sa_pure_field *\) *)
-(*     toggle INF_PURE_FIELD old_flag; *)
-(*     res *)
-(*   with _ as e -> *)
-(*     (toggle INF_PURE_FIELD old_flag; *)
-(*      raise e) *)
 
 let wrap_gen_local obj attr et f a =
-  let old_flag = obj (* infer_const_obj *) # get attr  in
+  let old_flag = obj # get attr  in
   let new_flag = (match et with
-      | None -> obj (* infer_const_obj *) # get attr  (* !opt_classic *)
+      | None -> obj # get attr
       | Some b -> b) in
   if new_flag!=old_flag then toggle_local obj attr new_flag;
   try
     let res = f a in
-    (* restore flag sa_pure_field *)
     toggle_local obj attr old_flag;
     res
   with _ as e ->
     (toggle_local obj attr old_flag;
      raise e)
 
-let wrap_gen_global attr et f a = 
-  wrap_gen_local Globals.infer_const_obj attr et f a 
+let wrap_gen_global attr et f a =
+  wrap_gen_local Globals.infer_const_obj attr et f a
 
 let wrap_gen attr et f a = wrap_gen_local infer_const_obj attr et f a
 
 let wrap_pure_field et f a = wrap_gen INF_PURE_FIELD et f a
 
-(* let wrap_pure_field et f a = *)
-(*   let flag = !Globals.sa_pure_field in *)
-(*   sa_pure_field := (match et with *)
-(*       | None -> infer_const_obj # get INF_PURE_FIELD  (\* !opt_classic *\) *)
-(*       | Some b -> b); *)
-(*   try *)
-(*     let res = f a in *)
-(*     (\* restore flag sa_pure_field *\) *)
-(*     Globals.sa_pure_field := flag; *)
-(*     res *)
-(*   with _ as e -> *)
-(*     (Globals.sa_pure_field := flag; *)
-(*      raise e) *)
-
-(* let wrap_classic et f a = *)
-(*   let flag = !do_classic_frame_rule in *)
-(*   do_classic_frame_rule := (match et with *)
-(*       | None -> infer_const_obj # get INF_CLASSIC  (\* !opt_classic *\) *)
-(*       | Some b -> b); *)
-(*   try *)
-(*     let res = f a in *)
-(*     (\* restore flag do_classic_frame_rule  *\) *)
-(*     do_classic_frame_rule := flag; *)
-(*     res *)
-(*   with _ as e -> *)
-(*     (do_classic_frame_rule := flag; *)
-(*      raise e) *)
-
-let wrap_msg msg f a = 
+let wrap_msg msg f a =
   let () = y_binfo_pp ("====WRAP START " ^ msg) in
   try 
     let r = f a in
@@ -151,7 +103,7 @@ let wrap_msg msg f a =
     let () = y_binfo_pp ("====WRAP END (exc) " ^ msg) in
     raise e
 
-let wrap_classic str et f a = 
+let wrap_classic str et f a =
   let r = "wrap_gen" ^ str ^ ((pr_option string_of_bool) et) in
   if !Globals.new_trace_classic then wrap_msg r (wrap_gen INF_CLASSIC et f) a
   else (wrap_gen INF_CLASSIC et f) a
@@ -159,11 +111,6 @@ let wrap_classic str et f a =
 let wrap_classic_local obj et f a = wrap_gen_local obj INF_CLASSIC et f a
 
 let wrap_ana_ni et f a = wrap_gen_global INF_ANA_NI et f a
-
-    (* !do_classic_frame_rule *)
-
-(* let set_classic f  = let () = x_binfo_pp "should use wrap_classic instead" no_pos in *)
-(*                          () *)
 
 (* Some f - set allow_field_imm t f *)
 (* None - use the default option *)
@@ -184,35 +131,6 @@ let wrap_field_imm et f a =
      imm_merge := flag2;
      raise e)
 
-
-
-(* let wrap_efa_exc et f a = *)
-(*   let flag = !enable_error_as_exc in *)
-(*   enable_error_as_exc := (match et with *)
-(*       | None -> infer_const_obj # get INF_DE_EXC  (\* !opt_efa *\) *)
-(*       | Some b -> b); *)
-(*   try *)
-(*     let res = f a in *)
-(*     (\* restore flag enable_error_as_exc  *\) *)
-(*     enable_error_as_exc := flag; *)
-(*     res *)
-(*   with _ as e -> *)
-(*     (enable_error_as_exc := flag; *)
-(*      raise e) *)
-
-(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
-(* !!! **wrapper.ml#94:wrap_inf_obj:@dis_err *)
-(* !!! **wrapper.ml#95:BEFORE:[] *)
-(* !!! **wrapper.ml#98:AFTER:[@dis_err] *)
-(* !!! **wrapper.ml#102:RESTORE:[] *)
-
-
-(* !!! **wrapper.ml#134:Calling wrap_err_pre *)
-(* !!! **wrapper.ml#94:wrap_inf_obj:@err_may *)
-(* !!! **wrapper.ml#95:BEFORE:[@err_must] *)
-(* !!! **wrapper.ml#98:AFTER:[@err_may,@err_must] *)
-(* !!! **wrapper.ml#102:RESTORE:[@err_must] *)
-
 let wrap_inf_obj iobj f a =
   let () = y_tinfo_hp (add_str "wrap_inf_obj" string_of_inf_const) iobj in
   let () = y_tinfo_hp (add_str "BEFORE" pr_id) infer_const_obj#string_of in
@@ -222,12 +140,10 @@ let wrap_inf_obj iobj f a =
   try
     let res = f a in
     if flag then infer_const_obj # reset iobj;
-    (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
     res
   with _ as e ->
     begin
       if flag then infer_const_obj # reset iobj;
-      (* let () = x_binfo_hp (add_str "RESTORE" pr_id) infer_const_obj#string_of no_pos in *)
       raise e
     end
 
@@ -261,22 +177,16 @@ let wrap_err_bind f a =
 
 let wrap_err_assert_assume f a =
   wrap_err_bind f a
-(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
-(* else wrap_err_must f a *)
 
 (* not called? *)
 let wrap_err_pre f a =
-  (* let () = x_binfo_pp "Calling wrap_err_pre" no_pos in *)
   if infer_const_obj # is_dis_err then wrap_err_dis f a
-  (* else if infer_const_obj # is_pre_must then wrap_err_must f a *)
   else if infer_const_obj # is_err_may then wrap_err_may f a
   else if infer_const_obj # is_err_must then wrap_err_may f a
   else  wrap_err_dis f a
 
 let wrap_err_post f a =
   wrap_err_bind f a
-(* if infer_const_obj # is_dis_err then wrap_err_dis f a *)
-(* else wrap_err_must f a *)
 
 let wrap_par_case_check f c =
   let flag = !ho_always_split in
@@ -288,15 +198,11 @@ let wrap_par_case_check f c =
   with _ as e ->
     (ho_always_split := flag;
      raise e)
-    (* 1 *)
-
 let wrap_set_infer_type t f a =
   let flag = infer_const_obj # is_infer_type t in
   let () = Debug.ninfo_hprint (add_str "infer_type" string_of_inf_const) t no_pos in
   let () = Debug.ninfo_hprint (add_str "wrap set(old)" string_of_bool) flag no_pos in
   let () = infer_const_obj # set t in
-  (* let flag2 = infer_const_obj # is_infer_type t in *)
-  (* let () = x_binfo_hp (add_str "wrap set(new)" string_of_bool) flag2 no_pos in *)
   try
     let res = f a in
     (* restore flag do_classic_frame_rule  *)
@@ -312,7 +218,7 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
   (* save old_value *)
   let old_values = save_fn flags in
   let () = set_fn flags in
-  try 
+  try
     let res = f a in
     (* restore old_value *)
     let () = restore_fn old_values in
@@ -322,19 +228,6 @@ let wrap_gen save_fn set_fn restore_fn flags f a =
      raise e)
 
 let wrap_ver_post f a = wrap_set_infer_type INF_VER_POST f a
-
-(* let wrap_arr_as_var f a =  *)
-(*   let () = x_binfo_pp "inside wrap_as_var" no_pos in  *)
-(*   wrap_set_infer_type INF_ARR_AS_VAR f a *)
-
-(* let wrap_arr_as_var f a =  *)
-(*   Debug.no_1 "wrap_arr_as_var" pr_none pr_none (wrap_arr_as_var f) a *)
-
-(* let wrap_ver_post f a = *)
-(*   let save_fn () = infer_const_obj # is_ver_post in *)
-(*   let set_fn () = infer_const_obj # set INF_VER_POST in *)
-(*   let restore_fn f = if f then () else infer_const_obj # reset INF_VER_POST in *)
-(*   wrap_gen save_fn set_fn restore_fn () f a *)
 
 let wrap_one_bool flag new_value f a =
   let save_fn flag = (flag,!flag) in
@@ -350,7 +243,7 @@ let wrap_after code f a =
   with e ->
     let () = code () in
     raise e
-   
+
 let print_header s =
   print_endline_quiet "\n=====================================";
   print_endline_quiet ("   "^s);
@@ -363,7 +256,7 @@ let wrap_dd s f a =
   let s1 = "START -dd "^s in
   let s2 = "END   -dd "^s in
   let () = print_header s1 in
-  wrap_after (fun () -> print_header s2) 
+  wrap_after (fun () -> print_header s2)
     (wrap_one_bool Debug.devel_debug_on true f) a
 
 let wrap_two_bools flag1 flag2 new_value f a =
@@ -373,21 +266,9 @@ let wrap_two_bools flag1 flag2 new_value f a =
   wrap_gen save_fn set_fn restore_fn (flag1,flag2) f a
 
 let wrap_two_bools flag1 flag2 new_value f a =
-  let pr r = string_of_bool !r in 
-  Debug.no_2 "" pr pr (fun _ -> pr_pair pr pr (flag1,flag2)) (fun _ _ -> wrap_two_bools flag1 flag2 new_value f a) flag1 flag2 
-
-(* let wrap_general flag new_value f a = *)
-(*   (\* save old_value *\) *)
-(*   let old_value = !flag in *)
-(*   flag := new_value; *)
-(*   try  *)
-(*     let res = f a in *)
-(*     (\* restore old_value *\) *)
-(*     flag := old_value; *)
-(*     res *)
-(*   with _ as e -> *)
-(*       (flag := old_value; *)
-(*       raise e) *)
+  let pr r = string_of_bool !r in
+  Debug.no_2 "" pr pr (fun _ -> pr_pair pr pr (flag1,flag2)) (fun _ _ ->
+      wrap_two_bools flag1 flag2 new_value f a) flag1 flag2
 
 let wrap_no_filtering f a =
   wrap_one_bool filtering_flag false f a
@@ -404,12 +285,6 @@ let wrap_with_int_to_imm f a =
 let wrap_dis_non_linear f a =
   wrap_two_bools  Globals.non_linear_flag Globals.filtering_flag false f a
 
-(* let wrap_redlog_only f a = *)
-(*   wrap_one_bool Redlog.dis_omega true f a *)
-
-(* let wrap_oc_redlog f a = *)
-(*   wrap_one_bool Redlog.dis_omega false f a *)
-
 let wrap_lbl_dis_aggr f a =
   if !Globals.inv_wrap_flag
   then wrap_two_bools label_aggressive_sat label_aggressive_imply false f a
@@ -420,29 +295,6 @@ let wrap_lemma_safe f a =
 
 let wrap_lemma_unsafe f a =
   wrap_one_bool Globals.check_coercions false f a
-
-(* let proof_no = ref 0 *)
-
-(* let next_proof_no_str () = *)
-(*   proof_no := !proof_no + 1; *)
-(*   string_of_int !proof_no *)
-
-(* let get_proof_no () = !proof_no *)
-
-(* let sleek_proof_no = ref 0 *)
-
-(* let last_sleek_fail_no = ref 0 *)
-
-(* let get_sleek_no () = !sleek_proof_no *)
-
-(* let get_last_sleek_fail () = !last_sleek_fail_no *)
-
-(* let set_last_sleek_fail () =  *)
-(*   last_sleek_fail_no := !sleek_proof_no *)
-
-(* let next_sleek_int () : int = *)
-(*   sleek_proof_no := !sleek_proof_no + 1;  *)
-(*   (!sleek_proof_no) *)
 
 let wrap_arr_as_var f a =
   let () = x_tinfo_pp "Calling wrap_arr_as_var" no_pos in
