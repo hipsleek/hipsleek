@@ -1,0 +1,53 @@
+G(A,B,C,c) == B->A:c(v#v>0) * C->A:c(v#v>5).
+
+/* add quantif vars x,y */
+G(A,B,C,c) == exists x,y . (B->A:c(v#v>0 & x=v) *
+                            C->A:c(v#v>5 & y=v)) ;
+
+Bag = {a,b} st  a>0, b>5
+
+/* " * -> ; " only if same receiver, same message type */
+G(A,B,C,c) == exists x,y . (B->A:c(v#v>0 & x=v)  ;
+                            C->A:c(v#v>5 & y=v)) ;
+                            +(x,y \subset Bag &  x \unionplus y = Bag)_A
+
+G(A,B,C,c)#A#c == exists x,y . ?v#v=x; +(x \in Bag);
+                               ?v#v=y; +(y \in Bag); +({x} \unionplus {y} = Bag)
+
+
+================================================
+int A(channel c)
+ requires Chan(c, G(A,B,C,c)#A#c)
+ ensures  Chan(c, emp) & res>6;
+{
+  // Chan(c, G(A,B,C,c)#A#c)
+  int z = receive(c);
+  // Chan(c,...) & z \in Bag
+  int t = receive(c);
+  // Chan(c,...) & z \in Bag & t \in Bag & {x} \unionplus {y} = Bag
+  return z+t;
+  // Chan(c,-(f(x,y) = f(y,x))) & z>0 & t>5 & res = x+y
+  // |- Chan(c,emp) & res > 6
+}
+
+================================================
+  return 2*z+t;
+  // Chan(c,-(f(x,y) = f(y,x))) & z>0 & t>5 & res = 2*z+t 
+
+================================================
+  if(z>10) then return z;
+  else return z+t;
+  // Chan(c,-(f(x,y) = f(y,x))) & z>0 & t>5 &
+  // (z>10 & res=z) \/ (z<=10 & res=z+t)
+
+================================================
+  if(z+t>10) then return 0;
+  else return t;
+  // Chan(c,-(f(x,y) = f(y,x))) & z>0 & t>5 &
+  // (z+t>10 & res=0) \/ (z+t<=10 & res=t)
+===============================================
+
+
+ 
+
+

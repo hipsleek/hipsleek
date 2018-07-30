@@ -1,10 +1,11 @@
+/******************/
+/*   CALCULATOR   */
+/*   (general)    */
+/******************/
+
 hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
-
-/*
-./hip msess/OOPSLA/ex3a-compl-calc.ss --sess --ann-vp
-*/
 
 relation REQ(int v) == 0<=v & v<=3.
 relation ANS(int v) == 0<=v & v<=3.
@@ -12,9 +13,11 @@ relation ANS(int v) == 0<=v & v<=3.
 pred_sess_prot CALC<C:role,S:role,c:chan> ==
          C->S:c(v#REQ(v)) ;; S->C:c(v#ANS(v));
 
+/*
 //client's view
 pred_sess_prot GG<C:role,S:role,c:chan,c0:chan> ==
          C->S:c(v#v:Channel & v=c0) ;; CALC<C,S,c0> ;
+*/
 
 //client's view
 pred_sess_prot GC<C:role,S:role,c:chan,c0:chan> ==

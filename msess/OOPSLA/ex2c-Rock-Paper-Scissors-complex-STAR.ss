@@ -1,16 +1,11 @@
+/***************************/
+/*   Rock-Paper-Scissors   */
+/* (w complex interaction) */
+/***************************/
+
 hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
-
-data player{
-  int address;
-  int choice;
-}
-
-data msg{
-  int value;
-  int address;
-}
 
 relation CHOICE(int v) == 1<=v & v<=3.
 
@@ -18,7 +13,6 @@ pred_sess_prot G2<C1:role,C2:role,C3:role,S:role,c1:chan,c2:chan,c3:chan> ==
          (C1->S:c1(v#CHOICE(v)) * C2->S:c2(v#CHOICE(v))) ;;
          ((S->C1:c1(v:bool);;S->C3:c3(v:bool)) * S->C2:c2(v:bool));;
          S->C1:c1(v#v=1);
-
 
 void S21(Channel c1, Channel c2, Channel c3, int reward)
  requires c1::Chan{@S G2<C1,C2,C3,S@peer,c1@chan,c2,c3>}<> *

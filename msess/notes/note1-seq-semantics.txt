@@ -1,0 +1,74 @@
+Consider this simple example:
+
+ A1->B1; A2->B2
+
+The three expectations are:
+ (i) receive of B1 must occur before receive of B2
+ (ii) send of A1 must occur before send of A2
+ (iii) receive of B1 must occur before send of A2
+Let us refer to (i) as _{R,R}, (ii) as _{S,S}
+and (iii) as _{S,R}. Then, the composition using
+these semantics would be ordered, as follows:
+     ;_{S,R} <: ;_{R,R}
+     ;_{S,R} <: ;_{S,S}
+where s1 <: s2 denotes, s1 is more precise
+(or more constrained) than s2.
+
+Currently, you agree with (i) but not (ii) and (iii).
+However, let us say we have:
+
+   A1-> C; C->B2
+
+Would this mean that the verified code of C could be:
+
+   data x;
+   send(B2,x);
+   receive(A1,x)
+
+Would this cause a problem if the intension of C is to
+relay what was received from A1 to pass to B2?
+
+Similary for (ii), if we have:
+
+  A->B1; A->B2
+
+This would mean that the code of A could be either:
+  read(x)
+  send(B1,x)
+  read(x)
+  send(B2,x)
+or
+  read(x)
+  send(B2,x)
+  read(x)
+  send(B1,x)
+
+If A was taking its data from a list via read(x)
+to send to B1 and then B2. It seems that not enforcing (ii),
+would have rendered sequential compostion ";"
+to be indistinguishable from A->B1 * A->B2.
+Is this desirable?
+
+Perhaps, we need diff notions of ";".
+The strongest of this is ;_{S,R}, while
+;_{S,S} and ;_{R,R} are weaker versions which
+allow more concurrency. They are based on
+weaker semantics. This notion seem related
+to weak veriants of sequantial consistency?
+
+These weaker notion of sequential composition
+allow more concurrency? But are we ready
+for it yet? Should we aim for something simpler
+first?
+
+
+==================================================
+
+In session types they define a prefix ordering, such that sequencing can be enforced as long as the communication falls into any of the following ordering patterns:
+
+A->B; C->B:  _{R,R} OK
+B->A; B->C:  _{S,S} OK
+A->B; B->C:  _{S,R} OK
+
+but not in this one:
+B->A; C->B:  _{R,S} FAIL

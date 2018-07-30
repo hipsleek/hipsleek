@@ -1,0 +1,26 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+relation REQ(int v) == 0<=v & v<=3.
+relation ANS(int v) == 0<=v & v<=3.
+
+pred_sess_prot CALC<C:role,S:role,c:chan> ==
+         C->S:c(v#REQ(v)) ;; S->C:c(v#ANS(v)) .
+
+//client's view
+pred_sess_prot GG<C:role,S:role,c:chan,c0:chan> ==
+         C->S:c(v#v:Channel & v=c0) ;; CALC<C,S,c0> .
+
+//client's view
+pred_sess_prot GC<C:role,S:role,c:chan,c0:chan> ==
+         C->S:c(v#v::Chan{@S CALC<C,S@peer,c0@chan>}<>
+         // v:Channel
+         & v=c0) ;; CALC<C,S,c0>.
+
+
+checkentail c::Chan{@S GC<C@peer,S,c@chan,c0>}<> *
+           c0::Chan{@S GC<C@peer,S,c,c0@chan>}<> *
+           c0::Chan{@S GC<C,S@peer,c,c0@chan>}<>
+           |-  c::Chan{@S !v# %L(v);;(%R)}<>.
+
+print residue.

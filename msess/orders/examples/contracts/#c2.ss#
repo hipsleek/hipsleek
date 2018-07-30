@@ -1,0 +1,33 @@
+hip_include 'msess/notes/node.ss'
+hip_include 'msess/notes/hodef.ss'
+hip_include 'msess/notes/commprimitives.ss'
+
+/* pred_sess_prot G1<C1,C2,S,k,val> == 
+  (exists x,y: ((B->A:k(v#v>0 & v=x)) *
+                (C->A:j(v#v>5 & v=y))) ;;
+                 A->D:l(v#v=x+y) .
+*/
+
+/*
+pr C1: k!(int) ;; k?(v#v=x) ;; l!(v#v=1 & x=val).
+pr C1#k: !(int) ;; ?(v#v=x)
+pr C1#l: ((!(v#v=1 & x=val) ;; ?(1)) or (!0))
+*/
+void C1(Channel k, Channel l, int val)
+   requires [x]  k::Chan{@S !v#v>0;;?v#v=x}<> * l::Chan{@S ((!v#(v=1 & x=val) ;; ?1) or (?v#(v=0 & x!=val) ))}<>
+   ensures       k::Chan{emp}<> * l::Chan{emp}<>; 
+  
+{
+  send(k,10);
+  int price = receive(k);
+  dprint;
+
+  if(price == val) {
+  assume (price'=val);
+  dprint;
+       send(l,1);
+       int mm = receive(l);
+  } else {
+       send(l,0);
+  }
+}

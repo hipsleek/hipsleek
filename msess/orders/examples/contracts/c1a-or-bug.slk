@@ -1,0 +1,11 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+checkentail l::Chan{@S ((!v#(v=1 & x=val) ;; ?1) or (?v#(v=0 & x!=val) ))}<> & x=val |- 
+            l::Chan{@S !v#(v=1 & x=val) ;; ?1}<>.
+expect Valid.
+
+/* checkentail l::Chan{@S !v#(v=1 & x=val) ;; ?1}<> & x=val |-  */
+/*             l::Chan{@S !v#(v=1 & x=val) ;; ?1}<>. */
+/* expect Valid. */

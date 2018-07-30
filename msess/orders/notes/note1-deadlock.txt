@@ -1,0 +1,125 @@
+================================================
+================= Non-det ======================
+================================================
+
+G(A,B,a,b) = A->B: a(1) * B->A: b(2).
+
+G(A#iA,B#iB,a#ic,b#ib) = A-1->B: a(1) * B-2->A: b(2).
+
+Assumptions:
+===========
+A^1,B^1,A^2,B^2
+A^1 <_CB B^1
+B^2 <_CB A^2
+A^iA <_HB A^1
+A^iA <_HB A^2
+B^iB <_HB B^1
+B^iB <_HB B^2
+
+Guards:
+===========
+S^ic < A^1
+R^ic < B^1
+S^ib < B^2
+R^ib < A^2
+
+
+Buggy implementation:
+======================
+void A(chan a, chan b)
+{
+ int x = receive(b);
+ send(a,1)
+}
+
+void B(chan a, chan b)
+{
+ int x = receive(a);
+ send(b,2)
+}
+
+
+Correct implementation:
+======================
+void A(chan a, chan b)
+{
+ int x = receive(b);
+ send(a,1);
+}
+
+void B(chan a, chan b)
+{
+ send(b,2);
+ int x = receive(a);
+}
+
+
+
+================================================
+=================== SEQ  =======================
+================================================
+
+G(A,B,a,b) = A->B: a(1) ; B->A: b(2).
+
+G(A#iA,B#iB,a#ic,b#ib) = A-1->B: a(1) ; B-2->A: b(2).
+
+Assumptions:
+===========
+1 --> A^1,
+1 --> B^1,
+2 --> A^2,
+2 --> B^2
+1 --> A^1  <_CB B^1
+2 --> B^2  <_CB A^2
+1 --> A^iA <_HB A^1
+2 --> A^iA <_HB A^2
+1 --> B^iB <_HB B^1
+2 --> B^iB <_HB B^2
+2 --> A^1  <_HB A^2
+2 --> B^1  <_HB B^2
+
+Guards:
+===========
+2 --> B^1 (this protects the order of events on B)
+2 --> A^1 (this protects the order of events on A)
+1 --> S^ic < A^1
+1 --> R^ic < B^1
+2 --> S^ib < B^2
+2 --> R^ib < A^2
+
+Buggy implementation:
+======================
+void A(chan a, chan b)
+   requires b::Chan{ ?2;+(A^1)}<> * a::Chan{ -(A^1);!1;+(A^2)}<>
+   ensures  b::Chan{emp}<> * a::Chan{emp}<>;
+{
+ int x = receive(b);
+ send(a,1)
+}
+
+void B(chan a, chan b)
+   requires a::Chan{ ?1;+(B^1)}<> * b::Chan{ -(B^1);!2;+(B^2)}<>
+   ensures  b::Chan{emp}<> * a::Chan{emp}<>;
+{
+ int x = receive(a);
+ send(b,2)
+}
+
+
+Correct implementation:
+======================
+void A(chan a, chan b)
+   requires b::Chan{ ?2;+(A^1)}<> * a::Chan{ -(A^1);!1;+(A^2)}<>
+   ensures  b::Chan{emp}<> * a::Chan{emp}<>;
+{
+ int x = receive(b);
+ send(a,1);
+}
+
+void B(chan a, chan b)
+   requires a::Chan{ ?1;+(B^1)}<> * b::Chan{ -(B^1);!2;+(B^2)}<>
+   ensures  b::Chan{emp}<> * a::Chan{emp}<>;
+{
+ send(b,2);
+ int x = receive(a);
+}

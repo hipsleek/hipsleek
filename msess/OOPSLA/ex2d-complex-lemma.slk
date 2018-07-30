@@ -1,0 +1,40 @@
+sleek_include 'msess/notes/node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+
+
+// lemma_norm "SPLIT_PROJ0" self::Party{  self::PROJP{ %R}<> }<GG,C>
+//                         & C=union({ccc},C1) & (ccc notin C1)
+//                          ->  ccc::Chan{ ccc::PROJC{ %R}<self>}<> *
+//                             self::Party{  self::PROJP{ %R}<> }<GG,C1>.
+
+// lemma_norm "PROJ_CLEAN0" self::Party{  self::PROJP{ %R}<> }<GG,C> & C={}
+//                         -> true.
+
+
+checkentail x::Party{ x::PROJP{emp}<> }<G0,{c1,c2,c3}> * x::Peer<G0>
+  & c1!=c2 & c2!=c3 & c1!=c3
+|-
+  c1::Chan{ c1::PROJC{emp}<x>}<> *
+  c2::Chan{ c2::PROJC{emp}<x>}<> *
+  c3::Chan{ c3::PROJC{emp}<x>}<>.
+print residue.
+expect Valid.
+
+// slk_simplify exists C1_419,C1_476:
+
+// c1!=c2 & c2!=c3 & c1!=c3 &
+//        c2 notin C1_419  &
+//        C_352={c1,c2,c3} &
+//        C1_419=union({c1}, C1_476) &
+//        c1 notin C1_476 &
+//        C_352=union({c3},{c2},C1_419)&
+//        c3 notin union({c2},C1_419).
+// print residue.
+
+// this::Party{@S GLOB{G<_,_,S,c1,c2,c3>}<>}<G,{c1,c2,c3}>
+
+/*
+self::Party{@S GLOB{ %R }<>}<C> & C=union({ccc},C1) & (ccc notin C1)
+->
+ccc::Chan{@S PROJC{ %R }<self>}<> * self::Party{@S GLOB{%R}<> }<C1>.
+*/

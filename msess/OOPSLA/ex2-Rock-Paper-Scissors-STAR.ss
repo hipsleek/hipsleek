@@ -1,16 +1,11 @@
+/***********************/
+/* Rock-Paper-Scissors */
+/*     (w STAR/PAR)    */
+/***********************/
+
 hip_include 'msess/notes/node.ss'
 hip_include 'msess/notes/hodef.ss'
 hip_include 'msess/notes/commprimitives.ss'
-
-data player{
-  int address;
-  int choice;
-}
-
-data msg{
-  int value;
-  int address;
-}
 
 relation CHOICE(int v) == 1<=v & v<=3.
 pred_prim answ<v>;

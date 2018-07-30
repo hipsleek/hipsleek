@@ -1,0 +1,386 @@
+
+!!! **tpdispatcher.ml#496:init_tp by default: 
+!!! **tpdispatcher.ml#391:set_tp z3Starting z3... 
+
+!!! **WARNING****sleek.ml#517:[../../../../prelude.slk,c1a-or-bug.slk]
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+WARNING: _0:0_0:0:Session predicate not set
+
+Last Proving Location: ../../../../msess/notes/hodef.slk_1:10_1:42
+
+ERROR: at _0:0_0:0
+Message: split_components: don't expect OR
+
+Last Proving Location: ../../../../msess/notes/hodef.slk_1:10_1:42
+
+ERROR: at _0:0_0:0
+Message: split_components: don't expect OR
+
+(====)
+match_ho_arg_lhs_disj@6@5@4@3@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E},rhs: : - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@6 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & x=val & v_112=v_97),4:[],5:Some(estate:
+  emp&v_97=1 & x=val & v_112=v_97&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_rhs_eqset: [x:val]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@5@4@3@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E},rhs: : - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@5 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & x=val & v_112=v_97),4:[],5:Some(estate:
+  emp&v_97=1 & x=val & v_112=v_97&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_rhs_eqset: [x:val]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@4@3@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@4 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & x=val & v_112=v_97),4:[],5:Some(estate:
+  emp&v_97=1 & x=val & v_112=v_97&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M
+ es_ante_evars: [v_112; msg_111; v_112]
+ es_subst (from,to): [v_112]:[v_97]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@3@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@3 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & x=val & v_112=v_97),4:[],5:Some(estate:
+  emp&v_97=1 & x=val & v_112=v_97&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M
+ es_ante_evars: [v_112; msg_111; v_112]
+ es_subst (from,to): [v_112]:[v_97]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@12@11@10@9@8@7@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : + emp&msg_96=1&{FLOW,(20,21)=__norm#E},rhs: : + emp&msg_96=1&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@12 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & x=val & msg_111=msg_96),4:[],5:Some(estate:  emp&msg_96=1 & x=val & msg_111=msg_96&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@11@10@9@8@7@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : + emp&msg_96=1&{FLOW,(20,21)=__norm#E},rhs: : + emp&msg_96=1&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@11 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & x=val & msg_111=msg_96),4:[],5:Some(estate:  emp&msg_96=1 & x=val & msg_111=msg_96&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@10@9@8@7@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: :
+ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@10 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & x=val & msg_111=msg_96),4:[],5:Some(estate:  emp&msg_96=1 & x=val & msg_111=msg_96&{FLOW,(20,21)=__norm#E}
+ es_evars: [msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M
+ es_ante_evars: [v_112; msg_111; msg_111]
+ es_subst (from,to): [msg_111]:[msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@9@8@7@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: :
+ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@9 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & x=val & msg_111=msg_96),4:[],5:Some(estate:  emp&msg_96=1 & x=val & msg_111=msg_96&{FLOW,(20,21)=__norm#E}
+ es_evars: [msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M
+ es_ante_evars: [v_112; msg_111; msg_111]
+ es_subst (from,to): [msg_111]:[msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@14@13@8@7@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . emp&{FLOW,(20,21)=__norm#E},rhs: : . emp&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@14 EXIT:[(None,2:None,3:Some(pure residue: x=val),4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@13@8@7@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . emp&{FLOW,(20,21)=__norm#E},rhs: : . emp&{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@13 EXIT:[(None,2:None,3:Some(pure residue: x=val),4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_ante_evars: [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@8@7@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@8 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & msg_111=msg_96 & x=val),4:[],5:Some(estate:  emp&msg_96=1 & msg_111=msg_96 & x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M
+ es_ante_evars: [v_112; msg_111; msg_111]
+ es_subst (from,to): [msg_111]:[msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@7@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@7 EXIT:[(None,2:None,3:Some(pure residue: msg_96=1 & msg_111=msg_96 & x=val),4:[],5:Some(estate:  emp&msg_96=1 & msg_111=msg_96 & x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M
+ es_ante_evars: [v_112; msg_111; msg_111]
+ es_subst (from,to): [msg_111]:[msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@16@15@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . l::R{ + emp&v_95=0 & x!=val&{FLOW,(20,21)=__norm#E}}<v_95>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@16 EXIT:[(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_unsat_flag: false
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@15@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . l::R{ + emp&v_95=0 & x!=val&{FLOW,(20,21)=__norm#E}}<v_95>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@15 EXIT:[(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_unsat_flag: false
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@18@17@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . emp&{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@18 EXIT:[(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: do_unmatched_rhs : l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_unsat_flag: false
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@17@2@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . emp&{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@17 EXIT:[(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: do_unmatched_rhs : l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M(may)
+     fc_current_lhs_flow: {FLOW,(18,22)=__MayError#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  UnmatchedRHSData]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_unsat_flag: false
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj@2@1
+match_ho_arg_lhs_disj inp1 :((lhs: : . l::SOr{ . l::Seq{ . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E}, . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}}<>@M&
+   {FLOW,(20,21)=__norm#E}
+   or l::R{ + emp&v_95=0 & x!=val&{FLOW,(20,21)=__norm#E}}<v_95>@M&
+      {FLOW,(20,21)=__norm#E}
+   }<>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}, . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj@2 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & v_112=v_97 & msg_96=1 & msg_111=msg_96 & x=val),4:[],5:Some(estate:  emp&v_97=1 & v_112=v_97 & msg_96=1 & msg_111=msg_96 & x=val&
+{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::Seq{ . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E}, . l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}}<>@M
+ es_ante_evars: [v_112; msg_111; v_112; msg_111]
+ es_subst (from,to): [v_112; msg_111]:[v_97; msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E}))),(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l)
+ es_conseq_for_unsat_check: Some(emp&{FLOW,(20,21)=__norm#E})))]
+
+(====)
+match_ho_arg_lhs_disj_preprocess@1
+match_ho_arg_lhs_disj_preprocess inp1 :((lhs: : . l::SOr{ . l::Seq{ . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E}, . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}}<>@M&
+   {FLOW,(20,21)=__norm#E}
+   or l::R{ + emp&v_95=0 & x!=val&{FLOW,(20,21)=__norm#E}}<v_95>@M&
+      {FLOW,(20,21)=__norm#E}
+   }<>@M&
+{FLOW,(20,21)=__norm#E},rhs: : . l::Seq{ . l::S{ - emp&v_112=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_112>@M&
+{FLOW,(20,21)=__norm#E}, . l::Seq{ . l::R{ + emp&msg_111=1&{FLOW,(20,21)=__norm#E}}<msg_111>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}),)
+match_ho_arg_lhs_disj_preprocess@1 EXIT:[(None,2:None,3:Some(pure residue: v_97=1 & v_112=v_97 & msg_96=1 & msg_111=msg_96 & x=val),4:[],5:Some(estate:  emp&v_97=1 & v_112=v_97 & msg_96=1 & msg_111=msg_96 & x=val&
+{FLOW,(20,21)=__norm#E}
+ es_evars: [v_112; msg_111]
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_heap: l::Seq{ . l::S{ - emp&v_97=1 & x=val&{FLOW,(20,21)=__norm#E}}<v_97>@M&
+{FLOW,(20,21)=__norm#E}, . l::Seq{ . l::R{ + emp&msg_96=1&{FLOW,(20,21)=__norm#E}}<msg_96>@M&
+{FLOW,(20,21)=__norm#E}, . emp&{FLOW,(20,21)=__norm#E}}<>@M&
+{FLOW,(20,21)=__norm#E}}<>@M
+ es_ante_evars: [v_112; msg_111; v_112; msg_111]
+ es_subst (from,to): [v_112; msg_111]:[v_97; msg_96]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  Match(l,l))),(Some(fail ctx:
+ MaybeErr Context: 
+   fe_kind: MAY
+   fe_name: matching of ho_args failed
+   fe_locs: {
+     fc_message: base_case_unfold failed
+     fc_current_lhs_flow: {FLOW,(20,21)=__norm#E}
+   }
+ [[ SEARCH ==>  COND ==>  Match(l,l) ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]
+ CEX:false),2:None,3:None,4:[],5:Some(estate:
+  emp&x=val&{FLOW,(20,21)=__norm#E}
+ es_gen_impl_vars(E): [v_112; msg_111]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  COND ==>  Match(l,l)))]
+
+Entail 1: Fail.(may) cause:base case unfold failed
+
+Validate 1: Expecting(3)Valid BUT got : Fail_May
+
+
+Unexpected List: [1]
+
+Stop z3... 11 invocations 
+SAT Count   : 25
+SAT % Hit   : 68.%
+IMPLY Count : 12
+IMPLY % Hit : 75.%
+Time(cache overhead) : 0.006342 (seconds)
+
+0 false contexts at: ()
+
+!!! log(small):(0.190747,55)
+Total verification time: 0.310597 second(s)
+	Time spent in main process: 0.293771 second(s)
+	Time spent in child processes: 0.016826 second(s)
+
