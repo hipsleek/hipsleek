@@ -36,7 +36,7 @@ let restore_flags = ref (fun ()->());;
 let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
-let lhs_rhs_to_repair = ref ([], [])
+let repairing_ents = ref []
 let proc_to_repair = ref None
 
 let log_spec = ref ""
@@ -49,7 +49,7 @@ let webserver = ref false
 let proc_used_names = ref ([]:ident list)
 
 let reset_repair_ref =
-  let () = lhs_rhs_to_repair := ([], []) in
+  let () = repairing_ents := [] in
   let () = proc_to_repair := None in
   ()
 
@@ -3006,61 +3006,35 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let s,fk,ets= CF.get_failure_list_partial_context rs in
         (* TODO: handle all list, not just first error *)
         let (trace, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
-        let failed_ctx = match typ with
-          | Basic_Reason (ctx,_, _) -> ctx
+        let rec get_failed_ctx typ = match typ with
+          | CF.Basic_Reason (ctx,_, _) -> [ctx]
+          | CF.Or_Reason (a, b) -> let () = x_binfo_pp "marking \n" no_pos in
+            (get_failed_ctx a) @ (get_failed_ctx b)
           | _ -> Err.report_error {
               Err.error_loc = pos;
               Err.error_text = ("unhandled")
             }
         in
+        let get_entailment ctx =
+          let lhs = ctx.CF.fc_current_lhs.es_formula in
+          let pure_lhs = lhs |> CF.get_pure in
+          let rhs = ctx.CF.fc_orig_conseq in
+          let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure in
+          (pure_lhs, pure_rhs)
+        in
+        let failed_ctx = get_failed_ctx typ in
+        let failed_ctx = List.filter
+            (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
+        let entails = List.map get_entailment failed_ctx in
+        (* let entails = List.filter(fun (_, rhs) -> not(rhs == CP.mkTrue no_pos)) entails in *)
+        let () = x_binfo_hp (add_str "entails: "
+                               (pr_list
+                                  (pr_pair Cprinter.string_of_pure_formula
+                                     Cprinter.string_of_pure_formula)))
+            entails pos in
 
-        let rec get_pure_conseq_from_formula f =
-          match f with
-          | CF.Or fo ->
-            let () = x_tinfo_hp (add_str "formula" Cprinter.string_of_formula) f no_pos in
-            let pfo1 = get_pure_conseq_from_formula fo.CF.formula_or_f1 in
-            let pfo2 = get_pure_conseq_from_formula fo.CF.formula_or_f2 in
-            CP.mkOr pfo1 pfo2 None fo.CF.formula_or_pos
-          | _  ->
-            let () = x_tinfo_hp (add_str "formula1" Cprinter.string_of_formula) f no_pos in
-            let _,p,_,_,_,_ = CF.split_components f in (Mcpure.pure_of_mix p)
-        in
-        let () = x_tinfo_hp (add_str "vheap 3" (Cprinter.string_of_formula)
-                            ) failed_ctx.fc_current_lhs.es_formula pos in
-        let failed_lhs = failed_ctx.fc_current_lhs.es_formula in
-        let pure_failed_lhs = get_pure_conseq_from_formula failed_lhs in
-        let rhs = failed_ctx.fc_orig_conseq in
-        let () = x_dinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
-            rhs pos in
-        let rec get_pure_conseq_from_struc sf =
-          match sf with
-          | CF.EBase eb ->
-            let f1 = get_pure_conseq_from_formula eb.CF.formula_struc_base in
-            let f2 = match eb.CF.formula_struc_continuation with
-              | None -> CP.mkTrue no_pos
-              | Some cont -> get_pure_conseq_from_struc cont
-            in
-            CP.mkAnd f1 f2 no_pos
-          | EInfer ei -> get_pure_conseq_from_struc ei.CF.formula_inf_continuation
-          | EAssume ea -> get_pure_conseq_from_formula ea.CF.formula_assume_simpl
-          | EList el -> List.fold_left (fun acc (_,sf) ->
-              CP.mkOr acc (get_pure_conseq_from_struc sf) None no_pos
-            ) (CP.mkFalse no_pos) el
-          | ECase ec -> List.fold_left (fun acc (pf,sf) ->
-              let new_f = CP.mkAnd pf (get_pure_conseq_from_struc sf) no_pos in
-              CP.mkOr acc new_f None no_pos
-            ) (CP.mkFalse no_pos) ec.CF.formula_case_branches
-        in
-        let pure_rhs = get_pure_conseq_from_struc rhs in
-        let pure_lhs = Cpure.elim_equi_ante pure_failed_lhs pure_rhs in
-        let () = x_tinfo_hp (add_str "pure lhs: " Cprinter.string_of_pure_formula)
-            pure_lhs pos in
-        let () = x_tinfo_hp (add_str "pure rhs: " Cprinter.string_of_pure_formula)
-            pure_rhs pos in
-        let () = x_dinfo_hp (add_str "enable repair: " string_of_bool)
-            (!Globals.enable_repair) pos in
         let () = if (!Globals.enable_repair) then
-            let () = lhs_rhs_to_repair := ([pure_lhs], [pure_rhs]) in
+            let () = repairing_ents := entails in
             let () = proc_to_repair := Some (proc.Cast.proc_name) in
             ()
         in

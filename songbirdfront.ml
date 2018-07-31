@@ -104,7 +104,11 @@ let rec translate_pf (pure_f: CP.formula)  =
   | CP.BForm (b_formula, _) ->
     let (p_formula, _) = b_formula in
     begin
-    match p_formula with
+      match p_formula with
+      | BVar (var, loc) ->
+        (SBCast.BVar (translate_var var, translate_loc loc), [])
+      | BConst (b, loc) ->
+        (SBCast.BConst (b, translate_loc loc), [])
       | Eq (exp1, exp2, loc) ->
         let (sb_exp1, l1) = translate_exp exp1 in
         let (sb_exp2, l2) = translate_exp exp2 in
@@ -145,6 +149,9 @@ let rec translate_pf (pure_f: CP.formula)  =
     let (n_f1, l1) = translate_pf f1 in
     let (n_f2, l2) = translate_pf f2 in
     (SBCast.PDisj ([n_f1; n_f2], translate_loc loc), l1@l2)
+  | Not (f, _, loc) ->
+    let (n_f, l) = translate_pf f in
+    (SBCast.PNeg (n_f, translate_loc loc), l)
   | _ -> Gen.Basic.report_error VarGen.no_pos "this pure formula not handled"
 
 let translate_back_pf (pf : SBCast.pure_form) = match pf with
@@ -170,22 +177,21 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
    Adding template f(args) = ?
    Output: Input for songbird infer_unknown_functions
 *)
-let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
+let create_templ_prog prog ents templ
   =
-  let () = x_tinfo_hp (Gen.Basic.add_str "templ: " (Cprinter.poly_string_of_pr
-                                              Cprinter.pr_formula_exp))
-          (CP.exp_of_template templ) VarGen.no_pos in
-  let () = x_dinfo_hp (Gen.Basic.add_str "templ args: " (Cprinter.string_of_formula_exp_list))
-          (templ.Cpure.templ_args) VarGen.no_pos in
+  (* let () = x_tinfo_hp (Gen.Basic.add_str "templ: " (Cprinter.poly_string_of_pr
+   *                                             Cprinter.pr_formula_exp))
+   *         (CP.exp_of_template templ) VarGen.no_pos in
+   * let () = x_dinfo_hp (Gen.Basic.add_str "templ args: " (Cprinter.string_of_formula_exp_list))
+   *         (templ.Cpure.templ_args) VarGen.no_pos in *)
   let program = SBCast.mk_program "hip_input" in
   let fun_name = CP.name_of_sv templ.CP.templ_id in
   let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in
   let f_defn = SBCast.mk_func_defn_unknown fun_name args in
   let ifr_typ = SBGlobals.IfrStrong in
-  let entail = SBCast.mk_pure_entail lhs rhs in
   let infer_func = {
     SBCast.ifr_typ = ifr_typ;
-    SBCast.ifr_rels = [entail]
+    SBCast.ifr_rels = ents
   }
   in
   let nprog = {program with
@@ -193,16 +199,15 @@ let create_templ_prog prog (lhs: SBCast.pure_form) (rhs: SBCast.pure_form) templ
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = SBDebug.nhprint "prog: " SBCast.pr_program nprog in
-  let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent entail in
+  let () = SBDebug.hprint "prog: " SBCast.pr_program nprog in
+  (* let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent ents in *)
   let (ifds, inferred_prog) =
     Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
-      [entail] in
+      ents in
   let () = SBDebug.hprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
-  let lhs_repaired = SBCast.unfold_func_pf inferred_prog.prog_funcs lhs in
-  (lhs_repaired, inferred_prog.prog_funcs)
+  inferred_prog.prog_funcs
 
 let get_func_exp fun_defs ident =
   try
@@ -214,15 +219,24 @@ let get_func_exp fun_defs ident =
     | SBCast.FuncForm exp -> Some exp
   with Not_found -> None
 
-let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) =
-  let lhs = CP.elim_bvar_f lhs in
-  let () = x_tinfo_hp (Gen.Basic.add_str "after elim bvar lhs: "
-                         Cprinter.string_of_pure_formula) lhs VarGen.no_pos in
+let translate_ent ent =
+  let (lhs, rhs) = ent in
   let (sb_lhs, tmpl_list) = translate_pf lhs in
   let (sb_rhs, _) = translate_pf rhs in
   let templ = List.hd tmpl_list in
-  let (repaired_lhs, fun_defs) = create_templ_prog prog sb_lhs sb_rhs templ in
-  let () = SBDebug.nhprint "repaired pf: " SBCast.pr_pf repaired_lhs in
+  let n_ent = SBCast.mk_pure_entail sb_lhs sb_rhs in
+  (n_ent, templ)
+
+(* let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) = *)
+let get_repair_candidate prog ents =
+  (* let lhs = CP.elim_bvar_f lhs in
+   * let () = x_tinfo_hp (Gen.Basic.add_str "after elim bvar lhs: "
+   *                        Cprinter.string_of_pure_formula) lhs VarGen.no_pos
+   * in *)
+  let sb_ent_and_tmpl_list = List.map translate_ent ents in
+  let (sb_ents, tmpls) = List.split sb_ent_and_tmpl_list in
+  let templ = List.hd tmpls in
+  let fun_defs = create_templ_prog prog sb_ents templ in
   let fun_def_exp = get_func_exp fun_defs (CP.name_of_sv templ.templ_id) in
   match fun_def_exp with
     | Some fun_sb_exp ->

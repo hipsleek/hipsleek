@@ -61,9 +61,7 @@ let output_repaired_iprog src pos repaired_exp =
     ()
 
 let repair_prog_with_templ_main iprog cprog =
-  let (lhs, rhs) = !Typechecker.lhs_rhs_to_repair in
-  let lhs_pf = List.hd lhs in
-  let rhs_pf = List.hd rhs in
+  let ents = !Typechecker.repairing_ents in
   let () = x_tinfo_pp "marking \n" no_pos in
   let contains s1 s2 =
     let re = Str.regexp_string s2
@@ -71,7 +69,7 @@ let repair_prog_with_templ_main iprog cprog =
     try ignore (Str.search_forward re s1 0); true
     with Not_found -> false
   in
-  let sb_res = Songbirdfront.get_repair_candidate cprog lhs_pf rhs_pf in
+  let sb_res = Songbirdfront.get_repair_candidate cprog ents in
   match sb_res with
   | None -> None
   | Some (nprog, _, neg_prog, _) ->
@@ -123,7 +121,7 @@ let repair_prog_with_templ_main iprog cprog =
 
 let repair_prog_with_templ iprog is_cond =
   let () = x_tinfo_pp "marking \n" no_pos in
-  let () = Typechecker.lhs_rhs_to_repair := ([], []) in
+  let () = Typechecker.repairing_ents := [] in
   let () = Typechecker.proc_to_repair := None in
   let contains s1 s2 =
     let re = Str.regexp_string s2
@@ -136,12 +134,10 @@ let repair_prog_with_templ iprog is_cond =
     let () = Typechecker.check_prog_wrapper iprog cprog in
     None
   with _ as e ->
-      let (lhs, rhs) = !Typechecker.lhs_rhs_to_repair in
-      let lhs_pf = List.hd lhs in
-      let rhs_pf = List.hd rhs in
+      let ents = !Typechecker.repairing_ents in
       try
         begin
-          let sb_res = Songbirdfront.get_repair_candidate cprog lhs_pf rhs_pf in
+          let sb_res = Songbirdfront.get_repair_candidate cprog ents in
           match sb_res with
           | None -> None
           | Some (nprog, repaired_exp, neg_prog, neg_exp) ->

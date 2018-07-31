@@ -9886,8 +9886,8 @@ let rec remove_redundant_constraints (f : formula) : formula = match f with
     mkOr g1 g2 l p
   | _ -> f
 
-and remove_redundant_constraints_b f = match f with  
-  | Eq (e1,e2,l) -> 
+and remove_redundant_constraints_b f = match f with
+  | Eq (e1,e2,l) ->
     let r = eqExp_f eq_spec_var e1 e2 in 
     if r then BConst (true,no_pos) else f
   | _ -> f

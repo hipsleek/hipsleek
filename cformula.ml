@@ -133,9 +133,7 @@ and struc_base_formula =
   {
     formula_struc_explicit_inst : Cpure.spec_var list;
     formula_struc_implicit_inst : Cpure.spec_var list;
-        (*
-           vars_free, vars_linking, vars_extracted
-        *)
+   (* vars_free, vars_linking, vars_extracted      *)
     formula_struc_exists : Cpure.spec_var list;
     formula_struc_base : formula;
     (* formula_struc_is_strict_seq: bool; *)
@@ -13408,35 +13406,36 @@ let struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list =
 
 (* proc will convert implicit/explicit vars to existential *)
 let rec struc_to_formula_x (f:struc_formula):formula = match f with
-  | ECase b-> 
-    let r = 
+  | ECase b->
+    let r =
       if (List.length b.formula_case_branches) >0 then
-        List.fold_left (fun a (c1,c2)->  
+        List.fold_left (fun a (c1,c2)->
             if (isConstEFalse c2) then a
             else
               let c1 = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1 in
-              (mkOr a (normalize_combine (mkBase HEmp c1 CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) (struc_to_formula_x c2) b.formula_case_pos) 
-                 b.formula_case_pos) ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches 
+              (mkOr a (normalize_combine (mkBase HEmp c1 CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) (struc_to_formula_x c2) b.formula_case_pos)
+                 b.formula_case_pos) ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches
       else mkTrue (mkTrueFlow ()) b.formula_case_pos in
-    (* push_exists b.formula_case_exists *) r 
-  | EBase b-> 
+    r
+
+  | EBase b->
     let e = match b.formula_struc_continuation with
       | Some e -> normalize_combine b.formula_struc_base (struc_to_formula_x e) b.formula_struc_pos 
       | None -> b.formula_struc_base in
     (* is it necessary to also push the implicit vars? *)
-    push_exists (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) e 
+    push_exists (b.formula_struc_explicit_inst@b.formula_struc_implicit_inst@b.formula_struc_exists) e
   | EAssume b -> b.formula_assume_simpl
   | EInfer b -> struc_to_formula_x b.formula_inf_continuation 
   | EList b -> formula_of_disjuncts (fold_l_snd (fun c-> [struc_to_formula_x c]) b)
 
-and struc_to_formula f0 :formula = 
+and struc_to_formula f0 :formula =
   let pr1 = !print_struc_formula in
   let pr2 = !print_formula in
   Debug.no_1 "struc_to_formula" pr1 pr2 struc_to_formula_x f0
 
 let rec normalize_struc cont base: struc_formula = match cont with
-  | ECase b -> 
-    ECase {b with formula_case_branches = 
+  | ECase b ->
+    ECase {b with formula_case_branches =
                     List.map (fun (p,c) -> (p, normalize_struc c base)) b.formula_case_branches}
   | EBase b ->
     let new_base = normalize_combine base.formula_struc_base b.formula_struc_base base.formula_struc_pos in
