@@ -194,7 +194,7 @@ let repair_prog_with_templ iprog is_cond =
 
 let create_templ_proc proc replaced_exp vars heuristic =
   let var_names = List.map (fun x -> x.I.param_name) vars in
-  let () = x_tinfo_hp (add_str "replaced_exp: " (Iprinter.string_of_exp))
+  let () = x_binfo_hp (add_str "replaced_exp: " (Iprinter.string_of_exp))
       (replaced_exp) no_pos in
   let (n_exp, replaced_vars, replaced_pos_list) =
     I.replace_assign_exp replaced_exp var_names heuristic in
@@ -236,21 +236,20 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     let () = x_binfo_hp (add_str "exp_decl: " (Iprinter.string_of_exp_decl))
         unk_exp no_pos in
     let input_repair_proc = {n_iprog with I.prog_exp_decls = [unk_exp]} in
-
-    None
-    (* let repair_res = repair_prog_with_templ input_repair_proc is_cond in
-     * match repair_res with
-     * | None -> None
-     * | Some (res_iprog, repaired_exp) ->
-     *   let repaired_proc = List.find (fun x -> x.I.proc_name = proc.proc_name)
-     *     res_iprog.I.prog_proc_decls in
-     *   let () = x_binfo_hp (add_str "repaired proc" (Iprinter.string_of_proc_decl
-     *                                                )) repaired_proc no_pos in
-     *   let exp_pos = I.get_exp_pos exp in
-     *   let score = 100 * (10 - (List.length vars))
-     *               + exp_pos.VarGen.start_pos.Lexing.pos_lnum in
-     *   let () = x_dinfo_hp (add_str "score:" (string_of_int)) score no_pos in
-     *   Some (score, res_iprog, replaced_pos, repaired_exp) *)
+    (* None *)
+    let repair_res = repair_prog_with_templ input_repair_proc is_cond in
+    match repair_res with
+    | None -> None
+    | Some (res_iprog, repaired_exp) ->
+      let repaired_proc = List.find (fun x -> x.I.proc_name = proc.proc_name)
+        res_iprog.I.prog_proc_decls in
+      let () = x_binfo_hp (add_str "repaired proc" (Iprinter.string_of_proc_decl
+                                                   )) repaired_proc no_pos in
+      let exp_pos = I.get_exp_pos exp in
+      let score = 100 * (10 - (List.length vars))
+                  + exp_pos.VarGen.start_pos.Lexing.pos_lnum in
+      let () = x_dinfo_hp (add_str "score:" (string_of_int)) score no_pos in
+      Some (score, res_iprog, replaced_pos, repaired_exp)
 
 let get_best_repair repair_list =
   try
@@ -291,12 +290,15 @@ let start_repair iprog =
       List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
                    (snd stmt) vars false) candidate_exp_list in
     let repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-    let h_repair_res_list = if (repair_res_list == []) then
-        List.map (fun stmt -> repair_one_statement iprog proc_to_repair
-                     (fst stmt) (snd stmt) vars true) candidate_exp_list
-      else repair_res_list
-    in
-    let h_repair_res_list = List.filter(fun x -> x != None) h_repair_res_list in
+
+    (* let h_repair_res_list = if (repair_res_list == []) then
+     *     List.map (fun stmt -> repair_one_statement iprog proc_to_repair
+     *                  (fst stmt) (snd stmt) vars true) candidate_exp_list
+     *   else repair_res_list
+     * in *)
+    (* let h_repair_res_list = List.filter(fun x -> x != None) h_repair_res_list in *)
+
+    let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
     let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
     let best_res = get_best_repair h_repair_res_list in
     match best_res with

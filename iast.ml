@@ -4142,24 +4142,44 @@ let replace_assign_exp exp vars heuristic =
     let vars = List.rev (aux exp []) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
   in
-
+  let is_cond exp = match exp with
+    | Binary e ->
+      begin
+        match e.exp_binary_op with
+        | OpEq
+        | OpNeq
+        | OpLt
+        | OpLte
+        | OpGte
+        | OpGt ->
+          true
+        | _ -> false
+      end
+    | _ -> false
+  in
   let rec replace exp vars =
     let exp_vars = simple_collect_vars exp in
     let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos in
     if (exp_vars == []) then (exp, [], [])
-    else if sublist exp_vars vars then
+    else if (sublist exp_vars vars & not (is_cond exp)) then
       if not(heuristic) then
         (mk_unk_exp exp_vars (get_exp_pos exp), exp_vars, [get_exp_pos exp])
-      else (mk_unk_exp vars (get_exp_pos exp), vars, [get_exp_pos exp])
+      else
+        failwith "not allowed heuristics now."
+        (* (mk_unk_exp vars (get_exp_pos exp), vars, [get_exp_pos exp]) *)
     else
       match exp with
       | Binary b ->
-        let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
-        let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
-        (Binary {
-          b with exp_binary_oper1 = a1;
-                 exp_binary_oper2 = a2;
-        }, b1 @ b2, c1@c2)
+        if is_cond exp then
+          let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
+          (Binary { b with exp_binary_oper1 = a1}, b1, c1)
+        else
+          let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
+          let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
+          (Binary {
+              b with exp_binary_oper1 = a1;
+                     exp_binary_oper2 = a2;
+            }, b1 @ b2, c1@c2)
       | _ -> (exp, [], [])
 
   in replace exp vars
@@ -4296,19 +4316,6 @@ let rec normalize_exp exp = match exp with
     While {e with exp_while_condition = normalize_exp e.exp_while_condition;
                   exp_while_body = normalize_exp e.exp_while_body}
   | _ -> exp
-
-  (*
-   * | Bind of exp_bind
-   * | CallRecv of exp_call_recv
-   * | CallNRecv of exp_call_nrecv
-   * | UnkExp of unk_exp
-   * | Cast of exp_cast
-   * | Finally of exp_finally
-   * | Java of exp_java
-   * | Member of exp_member
-   * | New of exp_new
-   * | Unfold of exp_unfold
-  *)
 
 let normalize_proc proc_decl =
   let n_proc_body = match proc_decl.proc_body with
