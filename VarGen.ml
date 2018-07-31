@@ -204,5 +204,5 @@ let buildA s i = s^"#"^(string_of_int i);;
 let build_loc_str s i = "**"^(buildA s i)^":";;
 let store_loc_str s i =
   if !z_debug_flag then
-    let n = buildA s i 
+    let n = buildA s i
     in last_posn # set_posn n;;

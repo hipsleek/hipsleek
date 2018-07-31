@@ -227,12 +227,7 @@ let translate_ent ent =
   let n_ent = SBCast.mk_pure_entail sb_lhs sb_rhs in
   (n_ent, templ)
 
-(* let get_repair_candidate prog (lhs: CP.formula) (rhs: CP.formula) = *)
 let get_repair_candidate prog ents =
-  (* let lhs = CP.elim_bvar_f lhs in
-   * let () = x_tinfo_hp (Gen.Basic.add_str "after elim bvar lhs: "
-   *                        Cprinter.string_of_pure_formula) lhs VarGen.no_pos
-   * in *)
   let sb_ent_and_tmpl_list = List.map translate_ent ents in
   let (sb_ents, tmpls) = List.split sb_ent_and_tmpl_list in
   let templ = List.hd tmpls in
@@ -241,7 +236,7 @@ let get_repair_candidate prog ents =
   match fun_def_exp with
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in
-      let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
+      let () = x_binfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
                                                         Cprinter.pr_formula_exp)
                           ) fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in

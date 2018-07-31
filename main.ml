@@ -718,8 +718,7 @@ let process_source_full source =
                  *   with e2 -> raise e2
                  * else raise e *)
               else
-                let repaired_iprog = Repair.start_repair intermediate_prog cprog
-                in
+                let repaired_iprog = Repair.start_repair intermediate_prog in
                 match repaired_iprog with
                 | None -> raise e
                 | Some (r_iprog, pos, repaired_exp) ->

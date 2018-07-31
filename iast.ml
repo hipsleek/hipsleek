@@ -4262,3 +4262,59 @@ let rec replace_exp_with_loc exp n_exp loc =
                   exp_while_body = r_body}
   | Par _ -> exp
   | UnkExp unk -> exp
+
+let rec normalize_exp exp = match exp with
+  | Binary e ->
+    begin
+      match e.exp_binary_op with
+      | OpEq
+      | OpNeq
+      | OpLt
+      | OpLte
+      | OpGt
+      | OpGte
+        -> Binary {
+            e with
+            exp_binary_oper1 = mkBinary OpMinus e.exp_binary_oper1
+                e.exp_binary_oper2 None e.exp_binary_pos;
+            exp_binary_oper2 = mkIntLit 0 no_pos;
+          }
+      | _ -> exp
+    end
+  | Assign e -> Assign {e with exp_assign_lhs = normalize_exp e.exp_assign_lhs;
+                               exp_assign_rhs = normalize_exp e.exp_assign_rhs}
+  | Block b -> Block {b with exp_block_body = normalize_exp b.exp_block_body}
+  | Cond e ->
+    Cond {e with exp_cond_condition = normalize_exp e.exp_cond_condition;
+                 exp_cond_then_arm = normalize_exp e.exp_cond_then_arm;
+                 exp_cond_else_arm = normalize_exp e.exp_cond_else_arm}
+  | Label (a, e) -> Label (a, normalize_exp e)
+  | Seq e -> Seq {e with exp_seq_exp1 = normalize_exp e.exp_seq_exp1;
+                         exp_seq_exp2 = normalize_exp e.exp_seq_exp2}
+  | Unary e -> Unary {e with exp_unary_exp = normalize_exp e.exp_unary_exp}
+  | While e ->
+    While {e with exp_while_condition = normalize_exp e.exp_while_condition;
+                  exp_while_body = normalize_exp e.exp_while_body}
+  | _ -> exp
+
+  (*
+   * | Bind of exp_bind
+   * | CallRecv of exp_call_recv
+   * | CallNRecv of exp_call_nrecv
+   * | UnkExp of unk_exp
+   * | Cast of exp_cast
+   * | Finally of exp_finally
+   * | Java of exp_java
+   * | Member of exp_member
+   * | New of exp_new
+   * | Unfold of exp_unfold
+  *)
+
+let normalize_proc proc_decl =
+  let n_proc_body = match proc_decl.proc_body with
+    | None -> None
+    | Some body_exp -> Some (normalize_exp body_exp)
+  in {proc_decl with proc_body = n_proc_body}
+
+let normalize_prog iprog =
+  {iprog with prog_proc_decls = List.map normalize_proc iprog.prog_proc_decls}

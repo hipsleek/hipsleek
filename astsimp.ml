@@ -5173,13 +5173,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         (match aop with
          | I.OpAssign ->
            (match lhs with
-            | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
+            | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } ->
               let (ce1, te1) = x_add trans_exp prog proc lhs in
-              (* let () = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
               let (ce2, te2) = x_add trans_exp prog proc rhs in
-              (* let () = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
-              (* let () = print_string ("trans_exp :: te2 = " ^  Typeinfer.string_of_spec_var_kind te2 ^ "\n") in *)
-              (* let () = print_string ("trans_exp :: te1 = " ^  Typeinfer.string_of_spec_var_kind te1 ^ "\n") in *)
               if not (sub_type te2 te1) then  Err.report_error {
                   Err.error_loc = pos;
                   Err.error_text = "OpAssign : lhs and rhs do not match 2";  }
@@ -5190,8 +5186,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      C.exp_assign_rhs = ce2;
                      C.exp_assign_pos = pos;} in
                  if C.is_var ce1 then
-                   (* let vsv = CP.SpecVar (te1, v, Primed) in
-                      let () = proc.I.proc_important_vars <- proc.I.proc_important_vars @ [vsv] in*)
                    (assign_e, C.void_type)
                  else
                    (let seq_e = C.Seq{
@@ -5199,8 +5193,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         C.exp_seq_exp1 = ce1;
                         C.exp_seq_exp2 = assign_e;
                         C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
-            (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
-            (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
+            (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO
+               VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
+            (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>
+               (Cast) Scall {a = update___(a,i,v)} *)
             | I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
               (* Array variable *)
               (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
@@ -5220,13 +5216,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_assign_path_id = pid;
                   I.exp_assign_pos = pos_a; } in
               helper new_e
-            (* let (ce1, te1) = helper lhs in
-               let (ce2, te2) = helper rhs in
-               if not (sub_type te2 te1) then  Err.report_error {
-               Err.error_loc = pos;
-               Err.error_text = "lhs and rhs do not match";  }
-               else
-               (C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
             (* AN HOA END *)
             | I.Member {
                 I.exp_member_base = base_e;
