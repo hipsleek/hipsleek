@@ -200,7 +200,7 @@ let create_templ_proc proc replaced_exp vars heuristic =
     I.replace_assign_exp replaced_exp var_names heuristic in
   let () = x_tinfo_hp (add_str "replaced_vars: " (pr_list pr_id))
       replaced_vars no_pos in
-  let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
+  let () = x_binfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
   in
   if n_exp = replaced_exp then None
   else if (List.length replaced_pos_list > 1) then None
@@ -274,7 +274,7 @@ let start_repair iprog =
   match !Typechecker.proc_to_repair with
   | None -> None
   | Some proc_name_to_repair ->
-    let () = x_binfo_pp "marking \n" no_pos in
+    let () = x_tinfo_pp "marking \n" no_pos in
     let proc_to_repair = List.find (fun x ->
         let params = x.I.proc_args in
         let typs = List.map (fun x -> x.I.param_type) params in
@@ -283,7 +283,7 @@ let start_repair iprog =
         iprog.I.prog_proc_decls in
     let candidate_exp_list =
       I.list_of_candidate_exp (Gen.unsome proc_to_repair.proc_body) in
-    let () = x_binfo_hp (add_str "replaced_exp: " (pr_list Iprinter.string_of_exp))
+    let () = x_binfo_hp (add_str "candidate exps: " (pr_list Iprinter.string_of_exp))
         (candidate_exp_list |> List.map fst) no_pos in
     let vars = proc_to_repair.I.proc_args in
     let repair_res_list =

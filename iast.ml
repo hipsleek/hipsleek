@@ -4022,11 +4022,7 @@ let repair_proc proc exp_decls =
 let list_of_candidate_exp (exp: exp) =
   let rec aux exp list =
     match exp with
-    | ArrayAt _ -> report_error no_pos "simple_collect_vars: ArrayAt is not supported"
-    | ArrayAlloc _ -> report_error no_pos "simple_collect_vars: ArrayAlloc is not supported"
-    | Assert _ -> report_error no_pos "simple_collect_vars: Assert is not supported"
-    | Assign exp_assign -> [(exp_assign.exp_assign_rhs, false)] @ list
-    | Bind _ -> report_error no_pos "simple_collect_vars: Bind is not supported"
+    | Assign e -> aux e.exp_assign_rhs list
     | Binary exp_binary ->
       begin
         match exp_binary.exp_binary_op with
@@ -4041,45 +4037,19 @@ let list_of_candidate_exp (exp: exp) =
       end
     | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
       aux block.exp_block_body list
-    | BoolLit _ -> report_error no_pos "simple_collect_vars: BoolLit is not supported"
-    | Break _ -> report_error no_pos "simple_collect_vars: Break is not supported"
-    | Barrier _ -> report_error no_pos "simple_collect_vars: Barrier is not supported"
-    | CallRecv _ -> report_error no_pos "simple_collect_vars: CallRec is not supported"
-    | CallNRecv _ -> report_error no_pos "simple_collect_vars: CallNRec is not supported"
-    | UnkExp _ -> report_error no_pos "simple_collect_vars: Unkexp is not supported"
-    | Cast _ -> report_error no_pos "simple_collect_vars: Cast is not supported"
+    | CallRecv _ -> list
+    | CallNRecv _ -> list
     | Cond exp_cond ->
       let exp1_list = aux exp_cond.exp_cond_condition list in
       let exp1_list = aux exp_cond.exp_cond_then_arm exp1_list in
       aux exp_cond.exp_cond_else_arm exp1_list
-    | ConstDecl _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
-    | Continue _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
-    | Catch _ -> report_error no_pos "simple_collect_vars: Catch is not supported"
-    | Debug _ -> report_error no_pos "simple_collect_vars: Debug is not supported"
-    | Dprint _ -> report_error no_pos "simple_collect_vars: Dprint is not supported"
-    | Empty _ -> report_error no_pos "simple_collect_vars: Empty is not supported"
-    | FloatLit _ -> report_error no_pos "simple_collect_vars: flit is not supported"
-    | Finally _ -> report_error no_pos "simple_collect_vars: finally is not supported"
-    | IntLit _ -> report_error no_pos "simple_collect_vars: finally is not supported"
-    | Java _ -> report_error no_pos "simple_collect_vars: Java is not supported"
-    | Label (_, l_exp) -> aux l_exp list
-    | Member _ -> report_error no_pos "simple_collect_vars: Member is not supported"
-    | New _ -> report_error no_pos "simple_collect_vars: New is not supported"
-    | Null _ -> report_error no_pos "simple_collect_vars: Null is not supported"
-    | Raise _ -> report_error no_pos "simple_collect_vars: Raise is not supported"
     | Return _ -> list
     | Seq exp_seq ->
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
-    | This _ -> report_error no_pos "simple_collect_vars: This is not supported"
-    | Time _ -> report_error no_pos "simple_collect_vars: Time is not supported"
-    | Try _ -> report_error no_pos "simple_collect_vars: Try is not supported"
-    | Unary _ -> report_error no_pos "simple_collect_vars: Unary is not supported"
-    | Unfold _ -> report_error no_pos "simple_collect_vars: Unfold is not supported"
-    | Var _ -> report_error no_pos "simple_collect_vars: Var is not supported"
+    | Var _ -> list
     | VarDecl _ -> list
-    | While _ -> report_error no_pos "simple_collect_vars: While is not supported"
-    | Par _ -> report_error no_pos "simple_collect_vars: Par is not supported"
+    | _ -> report_error no_pos "simple_collect_vars: Par is not supported"
   in List.rev(aux exp [])
 
 let replace_assign_exp exp vars heuristic =
@@ -4102,41 +4072,7 @@ let replace_assign_exp exp vars heuristic =
       | Cast cast -> aux cast.exp_cast_body list
       | Var var -> [var.exp_var_name] @ list
       | IntLit _ -> list
-      | ArrayAt _ -> report_error no_pos "simple_collect_vars: ArrayAt is not supported"
-      | ArrayAlloc _ -> report_error no_pos "simple_collect_vars: ArrayAlloc is not supported"
-      | Assert _ -> report_error no_pos "simple_collect_vars: Assert is not supported"
-      | Assign _ -> report_error no_pos "simple_collect_vars: Assign is not supported"
-      | Bind _ -> report_error no_pos "simple_collect_vars: Bind is not supported"
-      | BoolLit _ -> report_error no_pos "simple_collect_vars: BoolLit is not supported"
-      | Break _ -> report_error no_pos "simple_collect_vars: Break is not supported"
-      | Barrier _ -> report_error no_pos "simple_collect_vars: Barrier is not supported"
-      | CallRecv _ -> report_error no_pos "simple_collect_vars: CallRec is not supported"
-      | CallNRecv _ -> report_error no_pos "simple_collect_vars: CallNRec is not supported"
-      | UnkExp _ -> report_error no_pos "simple_collect_vars: Unkexp is not supported"
-      | Cond _ -> report_error no_pos "simple_collect_vars: Cond is not supported"
-      | ConstDecl _ -> report_error no_pos "simple_collect_vars: ConstDecl is not supported"
-      | Catch _ -> report_error no_pos "simple_collect_vars: Catch is not supported"
-      | Debug _ -> report_error no_pos "simple_collect_vars: Debug is not supported"
-      | Dprint _ -> report_error no_pos "simple_collect_vars: Dprint is not supported"
-      | Empty _ -> report_error no_pos "simple_collect_vars: Empty is not supported"
-      | FloatLit _ -> report_error no_pos "simple_collect_vars: flit is not supported"
-      | Finally _ -> report_error no_pos "simple_collect_vars: finally is not supported"
-      | Java _ -> report_error no_pos "simple_collect_vars: Java is not supported"
-      | Label _ -> report_error no_pos "simple_collect_vars: Label is not supported"
-      | Member _ -> report_error no_pos "simple_collect_vars: Member is not supported"
-      | New _ -> report_error no_pos "simple_collect_vars: New is not supported"
-      | Null _ -> report_error no_pos "simple_collect_vars: Null is not supported"
-      | Raise _ -> report_error no_pos "simple_collect_vars: Raise is not supported"
-      | Return _ -> report_error no_pos "simple_collect_vars: Return is not supported"
-      | Seq _ -> report_error no_pos "simple_collect_vars: Seq is not supported"
-      | This _ -> report_error no_pos "simple_collect_vars: This is not supported"
-      | Time _ -> report_error no_pos "simple_collect_vars: Time is not supported"
-      | Try _ -> report_error no_pos "simple_collect_vars: Try is not supported"
-      | Unary _ -> report_error no_pos "simple_collect_vars: Unary is not supported"
-      | Unfold _ -> report_error no_pos "simple_collect_vars: Unfold is not supported"
-      | VarDecl _ -> report_error no_pos "simple_collect_vars: VarDecl is not supported"
-      | While _ -> report_error no_pos "simple_collect_vars: While is not supported"
-      | Par _ -> report_error no_pos "simple_collect_vars: Par is not supported"
+      | CallNRecv _ -> list
       |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported"
     in
     let vars = List.rev (aux exp []) in
@@ -4186,9 +4122,6 @@ let replace_assign_exp exp vars heuristic =
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
-  | ArrayAt _ -> exp
-  | ArrayAlloc _ -> exp
-  | Assert _ -> exp
   | Assign e ->
     if (e.exp_assign_pos = loc) then n_exp else
       let r_exp1 = replace_exp_with_loc e.exp_assign_lhs n_exp loc in
@@ -4210,17 +4143,6 @@ let rec replace_exp_with_loc exp n_exp loc =
     else
       let r_exp = replace_exp_with_loc e.exp_block_body n_exp loc in
       Block {e with exp_block_body = r_exp}
-  | BoolLit _ -> exp
-  | Break _ -> exp
-  | Barrier _ -> exp
-  | CallNRecv e  ->
-    let r_args = List.map (fun x -> replace_exp_with_loc x n_exp loc) e.exp_call_nrecv_arguments in
-    CallNRecv {e with exp_call_nrecv_arguments = r_args}
-  | CallRecv e  ->
-    let n_receiver = replace_exp_with_loc e.exp_call_recv_receiver n_exp loc in
-    let r_args = List.map (fun x -> replace_exp_with_loc x n_exp loc) e.exp_call_recv_arguments in
-    CallRecv {e with exp_call_recv_receiver = n_receiver;
-              exp_call_recv_arguments = r_args}
   | Cast e -> Cast {e with
                     exp_cast_body = replace_exp_with_loc e.exp_cast_body n_exp loc}
   | Cond e ->
@@ -4230,18 +4152,8 @@ let rec replace_exp_with_loc exp n_exp loc =
     Cond {e with exp_cond_condition = r_cond;
                  exp_cond_then_arm = r_then_branch;
                  exp_cond_else_arm = r_else_branch}
-  | ConstDecl _ -> exp
-  | Continue _ -> exp
   | Catch e ->
     Catch { e with exp_catch_body = replace_exp_with_loc e.exp_catch_body n_exp loc}
-  | Debug _ -> exp
-  | Dprint _ -> exp
-  | Empty _ -> exp
-  | FloatLit _ -> exp
-  | Finally e  ->
-    Finally { e with exp_finally_body = replace_exp_with_loc e.exp_finally_body n_exp loc}
-  | IntLit _ -> exp
-  | Java _ -> exp
   | Label (a, body) -> Label (a, replace_exp_with_loc body n_exp loc)
   | Member e ->
     Member {e with exp_member_base = replace_exp_with_loc e.exp_member_base n_exp loc}
@@ -4249,8 +4161,6 @@ let rec replace_exp_with_loc exp n_exp loc =
     exp
     (* let r_args = List.map (fun x -> repair_exp x exp_decls) e.exp_new_arguments in
      * New { e with exp_new_arguments = r_args} *)
-  | Null _ -> exp
-  | Raise _ -> exp
   | Return e -> exp
     (* let r_val = match e.exp_return_val with
      *   | None -> None
@@ -4261,27 +4171,10 @@ let rec replace_exp_with_loc exp n_exp loc =
     let r_e2 = replace_exp_with_loc e.exp_seq_exp2 n_exp loc in
     Seq {e with exp_seq_exp1 = r_e1;
                 exp_seq_exp2 = r_e2}
-  | This _ -> exp
-  | Time _ -> exp
-  | Try e -> exp
-    (* let r_body = repair_exp e.exp_try_block exp_decls in
-     * let r_c_block = List.map (fun x -> repair_exp x  exp_decls) e.exp_catch_clauses in
-     * let r_f_block = List.map (fun x -> repair_exp x  exp_decls) e.exp_finally_clause in
-     * Try { e with exp_try_block = r_body;
-     *              exp_catch_clauses = r_c_block;
-     *              exp_finally_clause = r_f_block} *)
   | Unary e -> exp
     (* Unary {e with exp_unary_exp = repair_exp e.exp_unary_exp exp_decls} *)
-  | Unfold _ -> exp
-  | Var _ -> exp
-  | VarDecl _ -> exp
-  | While e ->
-    let r_cond = replace_exp_with_loc e.exp_while_condition n_exp loc in
-    let r_body = replace_exp_with_loc e.exp_while_body n_exp loc in
-    While {e with exp_while_condition = r_cond;
-                  exp_while_body = r_body}
-  | Par _ -> exp
-  | UnkExp unk -> exp
+  | Var v -> if (v.exp_var_pos = loc) then n_exp else exp
+  | _ -> exp
 
 let rec normalize_exp exp = match exp with
   | Binary e ->
