@@ -7,8 +7,10 @@ data Transfer {
 }
 
 // This condition did not go through somehow
+/*
 transfer<from,rcv,amount,n> == self::Transfer<from,rcv,amount,n>
 	inv n >= 0 & n <= 2 & amount >= 0;
+*/
 
 // Money
 data Wallet {
@@ -101,6 +103,93 @@ int size(ref Node l)
         }
 }
 
+// Map Structure
+data map_Node {
+        int key;
+        int value;
+        map_Node next;
+}
+
+bmap<n,elem,value,b> == self = null & n = 0 & b = 0
+        or self::map_Node<elem,value,q> * q::bmap<n-1,elem,value1,0> & b = 1
+        or self::map_Node<key,value1,q> * q::bmap<n-1,elem,value,b> & key != elem
+        inv n >= 0 & 0 <= b <= 1;
+
+//lemma "extend" self::map_Node<key,value1,q> * q::bmap<n,elem,value,b> & key != elem -> self::bmap<n+1,elem,value,b>;
+
+int get(map_Node m, int key)
+        requires m::bmap<n,key,value,b>@L
+        case {
+                b = 1 -> ensures res = value;
+                b != 1 -> ensures res = 0;
+        }
+{
+        if (m == null) {
+                return 0;
+        }
+        else {
+                if (m.key == key) {
+                        return m.value;
+                }
+                else {
+                        return get(m.next,key);
+                }
+        }
+}
+
+map_Node update(map_Node m, int key, int value)
+        requires m::bmap<n,key,value1,b>
+        case {
+                b = 1 -> ensures res::bmap<n,key,value,1>;
+                b != 1 -> ensures res::bmap<n,key,value1,b>;
+        }
+{
+        if (m == null) {
+                return m;
+        }
+        else {
+                if (m.key == key) {
+                        m.value = value;
+                        return m;
+                }
+                else {
+                        m.next = update(m.next,key,value);
+                        return m;
+                }
+        }
+}
+
+map_Node delete(map_Node m, int key)
+        requires m::bmap<n,key,value,b>
+        case {
+                b = 1 -> ensures res::bmap<n-1,key,value1,0>;
+                b != 1 -> ensures res::bmap<n,key,value,b>;
+        }
+{
+        if (m == null) {
+                return m;
+        }
+        else {
+                if (m.key == key) {
+                        return m.next;
+                }
+                else {
+                        m.next = delete(m.next,key);
+                        return m;
+                }
+        }
+}
+
+map_Node insert(map_Node m, int key, int value)
+        requires m::bmap<n,key,value1,0>
+        ensures res::bmap<n+1,key,value,1>;
+{
+        map_Node temp = new map_Node(key,value,m);
+        return temp;
+}
+
+	
+/*
 // Contract
 data Storage {
 	STOR_PARAMS
@@ -135,4 +224,4 @@ void contract(Parameter p, Transfer t, ref Storage s, ref User u1, ref User u2)
 	}
         return;
 }
-
+*/
