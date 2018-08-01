@@ -3058,6 +3058,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
 
         let () = if (!Globals.enable_repair) then
             let () = repairing_ents := entails in
+            (* let () = repairing_ents := [List.hd entails] in *)
             let () = proc_to_repair := Some (proc.Cast.proc_name) in
             ()
         in
