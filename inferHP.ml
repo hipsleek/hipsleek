@@ -1315,10 +1315,12 @@ let update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps lsele
         let new_h = DataNode {hd with CF.h_formula_data_imm = (CP.ConstAnn(Mutable));
                                       CF.h_formula_data_param_imm = n_param_imm} in
         (*generate new hole*)
-        let nf, nholes = if Immutable.produces_hole (hd.CF.h_formula_data_imm) then
+        let nf, nholes = if (* not(!Globals.adhoc_flag_3) && *) Immutable.produces_hole (hd.CF.h_formula_data_imm) then
             let hole_no = Globals.fresh_int() in
             let h_hole = CF.Hole hole_no  in
-            (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)])
+            let () = y_tinfo_hp (add_str "adding new hole" (pr_pair Cprinter.string_of_h_formula string_of_int)) (new_h, hole_no) in
+            (* (CF.mkAnd_f_hf f h_hole pos,[(new_h, hole_no)]) *)
+            (f,[(new_h, hole_no)])
           else (f,[])
         in
         (nf , new_h, nholes)
@@ -2176,7 +2178,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
                     in
                     let l_aset = CP.EMapSV.mkEmpty in
                     let all_aset = CP.add_equiv_list_eqs l_aset (leqs@reqs_orig@es.CF.es_rhs_eqset) in
-                    let new_es,_ = update_es prog es lhds lhvs lhs_b1 rhs rhs_rest [] [] lselected_hpargs1
+                    let new_es,_ = x_add update_es prog es lhds lhvs lhs_b1 rhs rhs_rest [] [] lselected_hpargs1
                         [] leqs all_aset [] post_hps [] [] pos in
                     (CF.Base ass_lhs1, new_es)
                   else
@@ -2266,7 +2268,7 @@ let infer_collect_hp_rel ?(caller="") prog iact (es0:entail_state) lhs_node rhs0
               let hds = lhds@rhds in
               let hvs = lhvs@rhvs in
               let () = y_tinfo_hp (add_str "hp_rel_list" (pr_list Cprinter.string_of_hprel_short)) hp_rel_list in
-              let new_es, new_lhs = update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
+              let new_es, new_lhs = x_add update_es prog es hds hvs ass_lhs_b rhs rhs_rest r_new_hfs defined_hps1 lselected_hpargs2
                   rvhp_rels (leqs) all_aset m new_post_hps unk_map hp_rel_list pos in
               let n_es_heap = match rhs with
                 | CF.HRel _ ->  n_es_heap_opt

@@ -1870,7 +1870,7 @@ and unfold_baref_x prog (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_set
   let asets = Csvutil.alias_nth 6 (MCP.ptr_equations_with_null p) in
   let aset' = x_add Csvutil.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
-  let unfolded_h = unfold_heap prog h aset v fl uf ~lem_unfold:lem_unfold pos in
+  let unfolded_h = (x_add_1 unfold_heap prog) h aset v fl uf ~lem_unfold:lem_unfold pos in
   (* let () = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
   let pure_f = mkBase HEmp p vp TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
@@ -3984,7 +3984,7 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     (* Do compaction for field annotations *)
     (* let () = print_string("\ncl:"^(pr_list_ln (Cprinter.string_of_context) cl)^"\n") in *)
     let conseq = Norm.imm_norm_struc prog conseq true unfold_for_abs_merge  pos in
-    let unfold_fun fl h aset v uf =  unfold_heap (prog, None) h aset v fl uf pos in
+    let unfold_fun fl h aset v uf =  (x_add_1 unfold_heap (prog, None)) h aset v fl uf pos in
     let cl = List.map (fun c -> CF.transform_context (fun es ->
         CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula prog es.CF.es_formula unfold_for_abs_merge pos; }
       ) c) cl
@@ -13225,7 +13225,7 @@ and solver_infer_lhs_contra_list prog estate lhs_xpure pos msg =
   Debug.no_2 "solver_infer_lhs_contra_list" pr_estate Cprinter.string_of_mix_formula
     (pr_pair (pr_list pr_es) (pr_list pr_3)) (fun _ _ -> solver_infer_lhs_contra_list_x prog estate lhs_xpure pos msg ) estate lhs_xpure
 
-and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+and process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
     lhs_node lhs_rest rhs_node rhs_rest holes=
   let () = x_tinfo_zp (lazy ("before_do_match rhs_b" ^ (Cprinter.string_of_formula_base rhs_b))) pos in
   let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
@@ -13249,11 +13249,23 @@ and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_s
     let rhs_p = if new_p==[] then rhs_p
       else MCP.memoise_add_pure rhs_p (CP.join_conjunctions new_p) in
     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-    x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos;
+    let () = x_tinfo_hp (add_str "new_estate(M_match)" (Cprinter.string_of_entail_state)) new_estate pos in
     let () = y_tinfo_hp (add_str "n_rhs_b" !CF.print_formula) n_rhs_b in
     let res_es0, prf0 = x_add do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
     (* let () = Debug.info_zprint  (lazy  ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0))) no_pos in *)
     (res_es0,prf0)
+
+and process_before_do_match new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos
+    lhs_node lhs_rest rhs_node rhs_rest holes =
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  let pr4 = Cprinter.string_of_entail_state in
+  let pr_h = Cprinter.string_of_h_formula in
+  Debug.no_4 "process_before_do_match"
+    (add_str "lhs node" pr_h)
+    (add_str "rhs node" pr_h)
+    (add_str "lhs rest" pr_h)
+    pr4
+    pr (fun _ _ _ _ -> process_before_do_match_x new_p prog estate conseq lhs_b rhs_b rhs_h_matched_set is_folding pos lhs_node lhs_rest rhs_node rhs_rest holes) lhs_node rhs_node lhs_rest estate
 
 and process_action ?(caller="") i cont_act prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos
   : (Cformula.list_context * Prooftracer.proof) =
@@ -13319,9 +13331,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
       x_tinfo_hp (add_str "rhs_rest" (Cprinter.string_of_h_formula)) rhs_rest pos;
       x_tinfo_hp (add_str "holes" (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) holes pos;
       let estate = update_es_univ_rhs estate univ_rhs in
-      let lhs_rest = List.fold_left (fun f (_,h) -> CF.mkStarH f (CF.Hole h) pos
-                                    ) lhs_rest holes
-      in
+      x_tinfo_hp (add_str "lhs_rest (after adding the nodes)" (Cprinter.string_of_h_formula)) lhs_rest pos;
       let pure_to_add = match infer_opt with
         | Some f ->
           let () = y_winfo_pp "TODO : make lhs_node=rhs_node inference with MATCH" in
@@ -14042,7 +14052,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-} ->
+      } ->
       (* let () = print_string ("xxxx do_coercion: M_rd_lemma \n") in *)
       let r1,r2 = x_add_1 (do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding) pos in
       (r1,Search r2)
@@ -14051,7 +14061,7 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
         Context.match_res_lhs_rest = lhs_rest;
         Context.match_res_rhs_node = rhs_node;
         Context.match_res_rhs_rest = rhs_rest;
-} ->
+      } ->
       (*let _ = print_string ("!!!do_coercion: M_ramify_lemma \n") in *)
       let ctx0 = Ctx estate in
       (* let ((coer_l,coer_r),univ_coers) =
@@ -14438,7 +14448,8 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                     if !Globals.warn_do_match_infer_heap then
                       failwith "do_match during infer_heap"
                     else
-                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_estate.es_crt_holes Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
+                      let new_holes = Gen.BList.difference_eq (fun (_,id1) (_, id2) -> id1 = id2) new_estate.es_crt_holes estate.es_crt_holes in
+                      let match_act = Context.M_match (x_add (Context.mk_match_res ~holes:new_holes(* new_estate.es_crt_holes *) Root) n_lhs (List.hd (CF.heap_of new_estate.CF.es_formula)) rhs n_rhs_rest) in
                       (* let new_estate = { new_estate with es_trace =  (Context.string_of_action_name match_act)::new_estate.es_trace } in *)
                       (* x_add do_match prog new_estate n_lhs rhs n_rhs_b rhs_h_matched_set is_folding pos                                  *)
                       (* Below causes a problem with str-inf/ex10a2-str-while.ss *)
@@ -14561,10 +14572,10 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a (rhs
                       let hv = match l_h with
                         (* TODO:WN:HVar *)
                         | HVar (v,hvar_vs) ->
-                              let gen_impl_vars = estate.es_gen_impl_vars in
-                              let () = y_tinfo_hp (add_str "HVar v" !CF.print_sv) v in
-                              let () = y_tinfo_hp (add_str "gen_impl_vars" !CF.print_svl) gen_impl_vars in
-                                  if (is_mem v gen_impl_vars) || !Globals.contra_ho_flag
+                          let gen_impl_vars = estate.es_gen_impl_vars in
+                          let () = y_tinfo_hp (add_str "HVar v" !CF.print_sv) v in
+                          let () = y_tinfo_hp (add_str "gen_impl_vars" !CF.print_svl) gen_impl_vars in
+                          if (is_mem v gen_impl_vars) || !Globals.contra_ho_flag
                                   then Some (v,hvar_vs) else None
                         | _ -> None
                       in

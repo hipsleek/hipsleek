@@ -1553,8 +1553,10 @@ and bfv (bf : b_formula) =
     let fv2 = afv a2 in
     fv1 @ fv2
   | RelForm (r, args, _) ->
+    (* RelForm are assumed global *)
+    let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
     let vid = r in
-    vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+    (* vid:: *)remove_dups_svl (List.fold_left List.append [] (List.map afv args))
   | ImmRel (r, cond, _) ->
     let fvr = bfv (r, sl) in
     fvr
