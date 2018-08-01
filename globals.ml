@@ -126,12 +126,11 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann = 
+and vp_ann =
   | VP_Zero | VP_Full | VP_Value
-  | VP_Lend | VP_Frac of Frac.frac 
-  (* | VP_Ref * *)
+  | VP_Lend | VP_Frac of Frac.frac
 
-let eq_vp_ann a1 a2 = 
+let eq_vp_ann a1 a2 =
   match a1, a2 with
   | VP_Zero, VP_Zero -> true
   | VP_Full, VP_Full -> true
@@ -155,15 +154,6 @@ let print_arg_kind i= match i with
 let string_of_arg_kind i= match i with
   | I -> "@I"
   | NI -> "@NI"
-
-(* and prim_type =  *)
-(*   | TVar of int *)
-(*   | Bool *)
-(*   | Float *)
-(*   | Int *)
-(*   | Void *)
-(*   | BagT of prim_type *)
-(*   | List *)
 
 type view_kind =
   | View_PRIM

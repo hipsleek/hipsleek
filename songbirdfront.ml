@@ -31,7 +31,8 @@ let translate_type (typ: Globals.typ) : SBGlobals.typ =
   | Bool -> TInt
   | UNK -> TUnk
   | Void -> TVoid
-  | _ -> Gen.Basic.report_error VarGen.no_pos "translate_type: this type is not handled"
+  | _ -> Gen.Basic.report_error VarGen.no_pos
+           ("translate_type:" ^ (Globals.string_of_typ typ) ^ " is not handled")
 
 let translate_back_type (typ) = match typ with
   | SBGlobals.TInt -> Globals.Int
@@ -179,11 +180,6 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
 *)
 let create_templ_prog prog ents templ
   =
-  (* let () = x_tinfo_hp (Gen.Basic.add_str "templ: " (Cprinter.poly_string_of_pr
-   *                                             Cprinter.pr_formula_exp))
-   *         (CP.exp_of_template templ) VarGen.no_pos in
-   * let () = x_dinfo_hp (Gen.Basic.add_str "templ args: " (Cprinter.string_of_formula_exp_list))
-   *         (templ.Cpure.templ_args) VarGen.no_pos in *)
   let program = SBCast.mk_program "hip_input" in
   let fun_name = CP.name_of_sv templ.CP.templ_id in
   let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in
@@ -221,8 +217,21 @@ let get_func_exp fun_defs ident =
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
+  let lhs = CP.normalize_bvar_f lhs in
+  let rhs = CP.normalize_bvar_f rhs in
+
+  let () = x_binfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
+      lhs VarGen.no_pos in
+  let () = x_binfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
+      rhs VarGen.no_pos in
+
   let (sb_lhs, tmpl_list) = translate_pf lhs in
   let (sb_rhs, _) = translate_pf rhs in
+  let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (SBCast.pr_pure_form))
+      sb_lhs VarGen.no_pos in
+  let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (SBCast.pr_pure_form))
+      sb_rhs VarGen.no_pos in
+
   let templ = List.hd tmpl_list in
   let n_ent = SBCast.mk_pure_entail sb_lhs sb_rhs in
   (n_ent, templ)

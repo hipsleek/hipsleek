@@ -1,26 +1,17 @@
-func int tf(int z) == ?.
+global int var_x;
+global int var_y;
 
-int sum(int x, int y)
-requires true ensures res = x + y;
+int sum()
+requires true ensures res = var_x + var_y;
 {
-   return x + y;
+   return var_x + var_y;
 }
 
-bool foo(int x, int y, int z)
-requires z >= x + y ensures res = true;
+bool foo(int z)
+requires z >= var_x + var_y ensures res = true;
 {
   bool r;
   int a;
-  a = sum(x,y);
-  r = z > a;
+  r = (z > sum());
   return r;
 }
-
-
-// bool foo(int x, int y)
-// requires x - y > 0 ensures res = true;
-// {
-//      bool r;
-//      r = (2*x > y);
-//      return r;
-// } 

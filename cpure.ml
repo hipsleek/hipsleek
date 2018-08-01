@@ -227,17 +227,17 @@ and uid = {
   tu_fname: ident;
   tu_call_num: int;
   tu_args: exp list;
-  tu_cond: formula; 
+  tu_cond: formula;
   tu_icond: formula;
   tu_sol: (term_ann * exp list) option; (* Term Ann. with Ranking Function *)
   tu_pos: loc;
 }
 
 and term_cex = {
-  tcex_trace: tcex_cmd list; 
+  tcex_trace: tcex_cmd list;
 }
 
-and tcex_cmd = 
+and tcex_cmd =
   | TAssume of formula
   | TCall of loc
 
@@ -1402,9 +1402,9 @@ and fv_preserved_order (f : formula) : spec_var list =
   let res = Gen.BList.remove_dups_eq_reserved_order eq_spec_var tmp in
   res
 
-and check_dups_svl ls = 
+and check_dups_svl ls =
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
-  (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
+  (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b
 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
@@ -2960,7 +2960,7 @@ and split_conjunctions_x =  function
   (* Gen.fold_l_snd split_conjunctions_x l *)
   | z -> [z]
 
-and split_conjunctions f =  
+and split_conjunctions f =
   let pr = !print_formula in
   (* Debug.no_1 "split_conjunctions" pr (pr_list pr) *) split_conjunctions_x f 
 
@@ -3004,16 +3004,8 @@ and disj_of_list (xs : formula list) pos : formula =
 and list_of_conjs_x (f0 : formula) : formula list = split_conjunctions f0
 
 and list_of_conjs (f0 : formula) : formula list =
-  Debug.DebugEmpty.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula) split_conjunctions f0
-(*let rec helper f conjs = match f with
-  | And (f1, f2, pos) ->
-  let tmp1 = helper f2 conjs in
-  let tmp2 = helper f1 tmp1 in
-  tmp2
-  | _ -> f :: conjs
-  in
-  helper f0 []*)
-
+  Debug.DebugEmpty.no_1 "list_of_conjs"  !print_formula (pr_list !print_formula)
+    split_conjunctions f0
 
 and split_disjunctions =
   (* split_disjuncts *)
@@ -9306,7 +9298,7 @@ let elim_equi_ante ante cons=
     elim_equi_ante_x ante cons
 
 let slice_formula (fl : formula list) : (spec_var list * formula list) list =
-  let repart ac f = 
+  let repart ac f =
     let vs = fv f in
     let (ol,nl) = List.partition (fun (vl,f) -> (Gen.BList.overlap_eq eq_spec_var vs vl)) ac in
     let n_vl = List.fold_left (fun a (v,_) -> a@v) vs ol  in
@@ -15644,40 +15636,36 @@ let rec translate_exp_to_ipure exp = match exp with
   | _ -> report_error no_pos ("translate_exp_to_ipure: not supported exp\n")
 
 
-let is_bvar (pf:p_formula) = match pf with
-  | BVar _ -> true
-  | _ -> false
+(* let is_bvar (pf:p_formula) = match pf with
+ *   | BVar _ -> true
+ *   | _ -> false
+ * 
+ * let is_bvar_bform bf =
+ *   let (pf, annot) = bf in
+ *   is_bvar pf
+ * 
+ * let rec is_bvar_f f = match f with
+ *   | BForm (bf, _) -> is_bvar_bform bf
+ *   | And (f1, f2, _)
+ *   | Or (f1, f2, _, _) -> is_bvar_f f1 or is_bvar_f f2
+ *   | AndList list -> List.exists (fun (_, b) -> is_bvar_f b) list
+ *   | Not (f, _, _)
+ *   | Forall (_, f, _, _)
+ *   | Exists (_, f, _, _) -> is_bvar_f f *)
 
-let is_bvar_bform bf =
-  let (pf, annot) = bf in
-  is_bvar pf
+let rec normalize_bvar_pf pf = match pf with
+  | BVar (_, loc) -> BConst (true, loc)
+  (* | Lt (exp1, exp2, loc) -> Lt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
+   * | Lte (exp1, exp2, loc) -> Lte (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
+   * | Gt (exp1, exp2, loc) -> Gt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
+   * | Gte (exp1, exp2, loc) -> Gte (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc) *)
+  | _ -> pf
 
-let rec is_bvar_f f = match f with
-  | BForm (bf, _) -> is_bvar_bform bf
-  | And (f1, f2, _)
-  | Or (f1, f2, _, _) -> is_bvar_f f1 or is_bvar_f f2
-  | AndList list -> List.exists (fun (_, b) -> is_bvar_f b) list
-  | Not (f, _, _)
-  | Forall (_, f, _, _)
-  | Exists (_, f, _, _) -> is_bvar_f f
-
-let rec elim_bvar_f (f:formula) =
-  let rec is_bform ff = match ff with
-    | BForm _ -> true
-    | Not (f, _, _) -> is_bform f
-    | _ -> false
-  in
-  match f with
-  | AndList list -> let () = x_tinfo_pp "marking \n" no_pos in
-    AndList (List.filter (fun (_, b) -> is_bvar_f b) list)
-  | And (f1, f2, loc) -> let () = x_tinfo_pp "marking \n" no_pos in
-    begin
-      if (is_bvar_f f1) then
-        if is_bform f1 then f2
-        else And (elim_bvar_f f1, f2, loc)
-      else if (is_bvar_f f2) then
-        if is_bform f2 then f1
-        else And(f1, elim_bvar_f f2, loc)
-      else f
-    end
+let rec normalize_bvar_f f = match f with
+  | BForm (bf, a) ->
+    let (pf, b) = bf in
+    BForm ((normalize_bvar_pf pf, b), a)
+  | Not (nf, a, b) -> Not (normalize_bvar_f nf, a, b)
+  | And (f1, f2, loc) -> And (normalize_bvar_f f1, normalize_bvar_f f2, loc)
+  | Or (f1, f2, opt, loc) -> Or (normalize_bvar_f f1, normalize_bvar_f f2, opt, loc)
   | _ -> f

@@ -4049,7 +4049,9 @@ let list_of_candidate_exp (exp: exp) =
       aux exp_seq.exp_seq_exp2 exp1_list
     | Var _ -> list
     | VarDecl _ -> list
-    | _ -> report_error no_pos "simple_collect_vars: Par is not supported"
+    | Unary e -> aux e.exp_unary_exp list
+    | _ -> list
+    (* | _ -> report_error no_pos "list_of_condidate_exp: this exp is not supported" *)
   in List.rev(aux exp [])
 
 let replace_assign_exp exp vars heuristic =
@@ -4095,7 +4097,9 @@ let replace_assign_exp exp vars heuristic =
   in
   let rec replace exp vars =
     let exp_vars = simple_collect_vars exp in
-    let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos in
+    let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos
+    in
+    (* let exp_vars = List.filter (fun x -> List.mem x vars) exp_vars in *)
     if (exp_vars == []) then (exp, [], [])
     else if (sublist exp_vars vars & not (is_cond exp)) then
       if not(heuristic) then
@@ -4129,11 +4133,23 @@ let rec replace_exp_with_loc exp n_exp loc =
       Assign {e with exp_assign_lhs = r_exp1;
                      exp_assign_rhs = r_exp2}
   | Binary e ->
-    if e.exp_binary_pos = loc then n_exp else
-      let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
-      let r_exp2 = replace_exp_with_loc e.exp_binary_oper2 n_exp loc in
-      Binary {e with exp_binary_oper1 = r_exp1;
-                     exp_binary_oper2 = r_exp2}
+    begin
+      match e.exp_binary_op with
+      | OpEq
+      | OpNeq
+      | OpLt
+      | OpLte
+      | OpGt
+      | OpGte ->
+        let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
+        Binary {e with exp_binary_oper1 = r_exp1}
+      | _ ->
+        if e.exp_binary_pos = loc then n_exp else
+          let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
+          let r_exp2 = replace_exp_with_loc e.exp_binary_oper2 n_exp loc in
+          Binary {e with exp_binary_oper1 = r_exp1;
+                         exp_binary_oper2 = r_exp2}
+            end
   | Bind e ->
     if e.exp_bind_pos = loc then n_exp else
       let r_exp = replace_exp_with_loc e.exp_bind_body n_exp loc in
@@ -4191,6 +4207,7 @@ let rec normalize_exp exp = match exp with
             exp_binary_oper1 = mkBinary OpMinus e.exp_binary_oper1
                 e.exp_binary_oper2 None e.exp_binary_pos;
             exp_binary_oper2 = mkIntLit 0 no_pos;
+            exp_binary_pos = no_pos
           }
       | _ -> exp
     end
@@ -4205,16 +4222,91 @@ let rec normalize_exp exp = match exp with
   | Seq e -> Seq {e with exp_seq_exp1 = normalize_exp e.exp_seq_exp1;
                          exp_seq_exp2 = normalize_exp e.exp_seq_exp2}
   | Unary e -> Unary {e with exp_unary_exp = normalize_exp e.exp_unary_exp}
-  | While e ->
-    While {e with exp_while_condition = normalize_exp e.exp_while_condition;
-                  exp_while_body = normalize_exp e.exp_while_body}
   | _ -> exp
 
-let normalize_proc proc_decl =
+let rec normalize_call exp = match exp with
+  | CallNRecv call -> let n_name = "nv_" ^ call.exp_call_nrecv_method in
+    let var = Var {
+        exp_var_name = n_name;
+        exp_var_pos = no_pos;
+      }
+    in (var, [(n_name, call)])
+  | Assign e ->
+    let (e1, l1) = normalize_call e.exp_assign_lhs in
+    let (e2, l2) = normalize_call e.exp_assign_rhs in
+    (Assign {e with exp_assign_lhs = e1; exp_assign_rhs = e2}, l1@l2)
+  | Binary e ->
+    let (e1, l1) = normalize_call e.exp_binary_oper1 in
+    let (e2, l2) = normalize_call e.exp_binary_oper2 in
+    (Binary{e with exp_binary_oper1 = e1; exp_binary_oper2 = e2}, l1@l2)
+  | Block b ->
+    let (e1, l1) = normalize_call b.exp_block_body in
+    (Block {b with exp_block_body = e1}, l1)
+  | Cond e ->
+    let (e1, l1) = normalize_call e.exp_cond_condition in
+    let (e2, l2) = normalize_call e.exp_cond_then_arm in
+    let (e3, l3) = normalize_call e.exp_cond_else_arm in
+    (Cond {e with exp_cond_condition = e1;
+                  exp_cond_then_arm = e2;
+                  exp_cond_else_arm = e3}, l1@l2@l3)
+  | Label (a, e) ->
+    let (e1, l1) = normalize_call e in
+    (Label (a, e1), l1)
+  | Seq e ->
+    let (e1, l1) = normalize_call e.exp_seq_exp1 in
+    let (e2, l2) = normalize_call e.exp_seq_exp2 in
+    (Seq {e with exp_seq_exp1 = e1; exp_seq_exp2 = e2}, l1@l2)
+  | Unary e ->
+    let (e1, l1) = normalize_call e.exp_unary_exp in
+    (Unary {e with exp_unary_exp = e1}, l1)
+  | _ -> (exp, [])
+
+let normalize_call_wrapper iprog exp =
+  let (n_exp, assign_list) = normalize_call exp in
+  let assign_list = Gen.BList.remove_dups_eq (fun a b ->
+      String.compare (fst a) (fst b) == 0) assign_list in
+  let attached_exp = List.fold_left(fun a (b, c) ->
+      let meth = List.find (fun x -> x.proc_name = c.exp_call_nrecv_method)
+          iprog.prog_proc_decls in
+      let var_decl = VarDecl {
+          exp_var_decl_type = meth.proc_return;
+          exp_var_decl_decls = [(b, None, no_pos)];
+          exp_var_decl_pos = no_pos
+        }
+      in
+      let assign = Assign {
+          exp_assign_op = OpAssign;
+          exp_assign_lhs = Var {
+              exp_var_name = b;
+              exp_var_pos = no_pos;
+            };
+          exp_assign_rhs = CallNRecv c;
+          exp_assign_path_id = None;
+          exp_assign_pos = no_pos
+        } in
+      let seq = Seq {
+          exp_seq_exp1 = var_decl;
+          exp_seq_exp2 = assign;
+          exp_seq_pos = no_pos
+        }
+      in
+      Seq {
+        exp_seq_exp1 = seq;
+        exp_seq_exp2 = a;
+        exp_seq_pos = no_pos
+      }
+    ) n_exp assign_list in
+  attached_exp
+
+let normalize_proc iprog proc_decl =
   let n_proc_body = match proc_decl.proc_body with
     | None -> None
-    | Some body_exp -> Some (normalize_exp body_exp)
-  in {proc_decl with proc_body = n_proc_body}
+    | Some body_exp ->
+      let n_exp = normalize_exp body_exp in
+      Some (normalize_call_wrapper iprog n_exp)
+  in
+  let nprog = {proc_decl with proc_body = n_proc_body} in
+  nprog
 
 let normalize_prog iprog =
-  {iprog with prog_proc_decls = List.map normalize_proc iprog.prog_proc_decls}
+  {iprog with prog_proc_decls = List.map (fun x -> normalize_proc iprog x) iprog.prog_proc_decls}

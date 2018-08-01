@@ -3017,17 +3017,40 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         in
         let get_entailment ctx =
           let lhs = ctx.CF.fc_current_lhs.es_formula in
-          let pure_lhs = lhs |> CF.get_pure in
           let rhs = ctx.CF.fc_orig_conseq in
-          let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure in
+          let () = x_binfo_hp (add_str "lhs: " Cprinter.string_of_formula)
+              lhs pos in
+          let () = x_binfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
+              rhs pos in
+
+          let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
+                         |> CP.elim_idents in
+          let pure_lhs = lhs |> CF.get_pure in
+          let pure_lhs = CP.elim_equi_ante pure_lhs pure_rhs in
+          let pure_lhs = CP.elim_idents pure_lhs in
+          let filter x =
+              let svs = CP.fv x in
+              let typs = List.map CP.typ_of_sv svs in
+              let () = x_tinfo_hp (add_str "entails: "
+                                     (pr_list Globals.string_of_typ)) typs pos in
+              try
+                let _ = List.find (fun t -> t != Globals.Int
+                                            && t != Globals.Bool &&
+                                  t != Globals.UNK) typs in
+                false
+              with _ -> true
+          in
+          let pure_lhs = pure_lhs |> CP.list_of_conjs |> List.filter filter
+                         |> CP.join_conjunctions in
+          let pure_rhs = pure_rhs |> CP.list_of_conjs |> List.filter filter
+                         |> CP.join_conjunctions in
           (pure_lhs, pure_rhs)
         in
         let failed_ctx = get_failed_ctx typ in
         let failed_ctx = List.filter
             (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
         let entails = List.map get_entailment failed_ctx in
-        (* let entails = List.filter(fun (_, rhs) -> not(rhs == CP.mkTrue no_pos)) entails in *)
-        let () = x_binfo_hp (add_str "entails: "
+        let () = x_tinfo_hp (add_str "entails: "
                                (pr_list
                                   (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
@@ -3043,7 +3066,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in
+        (* let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in *)
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")

@@ -5049,22 +5049,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
           I.exp_call_nrecv_pos = pos;} in 
       helper new_e
-    (* (try *)
-    (*   let vinfo_tmp = E.look_up a in (\* look up the array variable *\) *)
-    (*   let ci,_ = helper i in (\* translate the index exp *\) *)
-    (*   match vinfo_tmp with *)
-    (*   | E.VarInfo vi -> *)
-    (*   let ct = trans_type prog vi.E.var_type pos in *)
-    (*   begin match ct with *)
-    (*   | CP.Array et -> ((C.ArrayAt { *)
-    (*   C.exp_arrayat_type = et; *)
-    (*   C.exp_arrayat_array_base = a; *)
-    (*   C.exp_arrayat_index = ci; *)
-    (*   C.exp_arrayat_pos = pos; }),et) *)
-    (*   | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; } *)
-    (*   end  *)
-    (*   | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; } *)
-    (*   with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; }) *)
     (* An Hoa END *)
     | I.Assert { 
         I.exp_assert_asserted_formula = assert_f_o;
@@ -10608,7 +10592,7 @@ and find_scc_group (cp: C.prog_decl) (pname: Globals.ident) (scc_list: C.IG.V.t 
   try List.find (fun scc -> is_found cp pname scc) scc_list
   with _ -> []
 
-and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_decl = 
+and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_decl =
   { cp with
     C.new_proc_decls = C.proc_decls_map (fun proc ->
         irf_traverse_proc cp proc (find_scc_group cp proc.C.proc_name scc_list)
