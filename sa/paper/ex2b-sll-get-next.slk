@@ -1,0 +1,61 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+
+//infer [H] H(x) |- x::node<a,b>@L.
+//infer []  x::node<1,nil> |- x::node<a,b>@L.
+infer []  x::node<1,nil> |- x::node<a,b>@M.
+//print residue.
+
+
+print residue.
+
+/*
+# ex2b.slk
+
+# why did we have a hole before a match?
+infer []  x::node<1,nil> |- x::node<a,b>@L.
+
+(==solver.ml#12856==)
+do_match@1
+do_match inp1 : x::node<flted_9_14,nil>@M
+do_match inp2 : x::node<a,b>@L
+do_match inp3 :  Hole[23]&flted_9_14=1&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [a; b]
+ es_crt_holes: [x::node<flted_9_14,nil>@M:23]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  Match(x,x)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ x::node<flted_9_14,nil>@M&flted_9_14=1 & a=flted_9_14 & b=nil&
+{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_crt_holes: [x::node<flted_9_14,nil>@M:23]
+  es_subst (from,to): []:[]
+  es_trace:  SEARCH ==>  Match(x,x)]
+
+# why isn't the hole introduced here?
+
+infer []  x::node<1,nil> |- x::node<a,b>@M.
+
+(==solver.ml#12856==)
+do_match@1
+do_match inp1 : x::node<flted_10_14,nil>@M
+do_match inp2 : x::node<a,b>@M
+do_match inp3 :  emp&flted_10_14=1&{FLOW,(20,21)=__norm#E}[]
+ es_gen_impl_vars(E): [a; b]
+ es_subst (from,to): []:[]
+ es_trace:  SEARCH ==>  Match(x,x)
+do_match inp4 : emp&{FLOW,(20,21)=__norm#E}[]
+do_match inp5 :[]
+do_match@1 EXIT: [ emp&flted_10_14=1 & a=flted_10_14 & b=nil&{FLOW,(20,21)=__norm#E}[]
+  es_gen_impl_vars(E): []
+  es_heap: x::node<flted_10_14,nil>@M
+  es_subst (from,to): []:[]
+  es_trace:  SEARCH ==>  Match(x,x)]
+
+*/
+

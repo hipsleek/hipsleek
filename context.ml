@@ -141,7 +141,8 @@ let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(m
 
 let mk_match_res ?(holes=[]) ?(alias=[]) ?(root_inst=None) ?(imprecise=None) ?(match_res_reason=None) mt lhs_node lhs_rest rhs_node rhs_rest =
   let pr = pr_option pr_none in
-  Debug.no_2 "mk_match_res" pr pr_none pr_none (fun _ _ -> mk_match_res ~holes:holes ~alias:alias ~root_inst:root_inst ~imprecise:imprecise ~match_res_reason:match_res_reason mt lhs_node lhs_rest rhs_node rhs_rest) root_inst 1
+  let pr_holes =  (add_str "adding holes: " (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int))) in
+  Debug.no_3 "mk_match_res" pr pr_none pr_holes pr_none (fun _ _ _ -> mk_match_res ~holes:holes ~alias:alias ~root_inst:root_inst ~imprecise:imprecise ~match_res_reason:match_res_reason mt lhs_node lhs_rest rhs_node rhs_rest) root_inst 1 holes
 
 (*
 (* return a list of nodes from heap f that appears in *)

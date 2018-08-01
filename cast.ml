@@ -1793,8 +1793,8 @@ let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var li
 
 
 let get_spec_baga epure prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
-  Debug.no_3 "get_spec_baga" !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl
-    (fun _ r a ->  get_spec_baga epure prog c r a) epure root args
+  Debug.no_4 "get_spec_baga" pr_id !P.print_formula (fun v -> !print_svl [v]) !print_svl !print_svl
+    (fun _ _ r a ->  get_spec_baga epure prog c r a) c epure root args
 
 let look_up_view_baga ?(epure=None) prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list =
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
@@ -2296,6 +2296,7 @@ module TraverseCH = Graph.Traverse.Dfs(CH)
 
 module W = struct
   type label = CH.E.label
+  type edge = CH.E.t
   type t = int
   let weight x = 1
   let zero = 0
