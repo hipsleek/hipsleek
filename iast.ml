@@ -4024,7 +4024,7 @@ let list_of_candidate_exp (exp: exp) =
     match exp with
     | Assign e -> aux e.exp_assign_rhs list
     | Binary exp_binary ->
-      let () = x_binfo_pp ("marking binary") no_pos in
+      let () = x_tinfo_pp ("marking binary") no_pos in
       begin
         match exp_binary.exp_binary_op with
         | OpEq
@@ -4039,6 +4039,9 @@ let list_of_candidate_exp (exp: exp) =
         | OpMult
         | OpDiv
         | OpMod -> [(exp, false)] @ list
+        | OpLogicalAnd
+        | OpLogicalOr -> let exp1_list = aux exp_binary.exp_binary_oper1 list in
+          aux exp_binary.exp_binary_oper2 exp1_list
         | _ -> list
       end
     | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
@@ -4216,6 +4219,11 @@ let rec normalize_exp exp = match exp with
             exp_binary_oper2 = mkIntLit 0 no_pos;
             exp_binary_pos = no_pos
           }
+      | OpLogicalAnd
+      | OpLogicalOr -> Binary {
+          e with exp_binary_oper1 = normalize_exp e.exp_binary_oper1;
+                 exp_binary_oper2 = normalize_exp e.exp_binary_oper2;
+        }
       | _ -> exp
     end
   | Assign e -> Assign {e with exp_assign_lhs = normalize_exp e.exp_assign_lhs;

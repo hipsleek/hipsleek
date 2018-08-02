@@ -3008,7 +3008,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let (trace, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
         let rec get_failed_ctx typ = match typ with
           | CF.Basic_Reason (ctx,_, _) -> [ctx]
-          | CF.Or_Reason (a, b) -> let () = x_binfo_pp "marking \n" no_pos in
+          | CF.Or_Reason (a, b) -> let () = x_tinfo_pp "marking \n" no_pos in
             (get_failed_ctx a) @ (get_failed_ctx b)
           | _ -> Err.report_error {
               Err.error_loc = pos;
@@ -3018,9 +3018,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let get_entailment ctx =
           let lhs = ctx.CF.fc_current_lhs.es_formula in
           let rhs = ctx.CF.fc_orig_conseq in
-          let () = x_binfo_hp (add_str "lhs: " Cprinter.string_of_formula)
+          let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_formula)
               lhs pos in
-          let () = x_binfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
+          let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
               rhs pos in
 
           let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure

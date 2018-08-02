@@ -293,6 +293,7 @@ let start_repair iprog =
       I.list_of_candidate_exp (Gen.unsome proc_to_repair.proc_body) in
     let () = x_binfo_hp (add_str "candidate exps: " (pr_list Iprinter.string_of_exp))
         (candidate_exp_list |> List.map fst) no_pos in
+    (* None *)
     let vars = proc_to_repair.I.proc_args in
     let repair_res_list =
       List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
