@@ -4024,6 +4024,7 @@ let list_of_candidate_exp (exp: exp) =
     match exp with
     | Assign e -> aux e.exp_assign_rhs list
     | Binary exp_binary ->
+      let () = x_binfo_pp ("marking binary") no_pos in
       begin
         match exp_binary.exp_binary_op with
         | OpEq
@@ -4033,6 +4034,11 @@ let list_of_candidate_exp (exp: exp) =
         | OpGte
         | OpGt ->
           [(exp_binary.exp_binary_oper1, true)] @ list
+        | OpPlus
+        | OpMinus
+        | OpMult
+        | OpDiv
+        | OpMod -> [(exp, false)] @ list
         | _ -> list
       end
     | Block block -> let () = x_dinfo_pp ("marking block") no_pos in
@@ -4041,13 +4047,14 @@ let list_of_candidate_exp (exp: exp) =
     | CallNRecv _ -> list
     | Cond exp_cond ->
       let exp1_list = aux exp_cond.exp_cond_condition list in
-      let exp1_list = aux exp_cond.exp_cond_then_arm exp1_list in
-      aux exp_cond.exp_cond_else_arm exp1_list
+      let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
+      aux exp_cond.exp_cond_else_arm exp2_list
+    | Label (a, lexp) -> aux lexp list
     | Return _ -> list
     | Seq exp_seq ->
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
-    | Var _ -> list
+    | Var _ -> [(exp, false)] @ list
     | VarDecl _ -> list
     | Unary e -> aux e.exp_unary_exp list
     | _ -> list

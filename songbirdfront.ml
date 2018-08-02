@@ -220,9 +220,9 @@ let translate_ent ent =
   let lhs = CP.normalize_bvar_f lhs in
   let rhs = CP.normalize_bvar_f rhs in
 
-  let () = x_binfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
+  let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
       lhs VarGen.no_pos in
-  let () = x_binfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
+  let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
       rhs VarGen.no_pos in
 
   let (sb_lhs, tmpl_list) = translate_pf lhs in

@@ -3026,7 +3026,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
           let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
                          |> CP.elim_idents in
           let pure_lhs = lhs |> CF.get_pure in
-          let pure_lhs = CP.elim_equi_ante pure_lhs pure_rhs in
           let pure_lhs = CP.elim_idents pure_lhs in
           let filter x =
               let svs = CP.fv x in
@@ -3058,7 +3057,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
 
         let () = if (!Globals.enable_repair) then
             let () = repairing_ents := entails in
-            (* let () = repairing_ents := [List.hd entails] in *)
             let () = proc_to_repair := Some (proc.Cast.proc_name) in
             ()
         in

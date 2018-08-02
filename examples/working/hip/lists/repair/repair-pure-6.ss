@@ -1,5 +1,4 @@
-//func int tf(int m, int n) == ?.
-//func int tf3(int m) == ?.
+// repair in the condition
 
 int foo(int x, int y)
    requires x > y ensures res = x + 2;
