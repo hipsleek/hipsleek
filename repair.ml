@@ -153,8 +153,8 @@ let repair_prog_with_templ iprog is_cond =
                   n_iprog.I.prog_proc_decls in
               let n_iproc = I.repair_proc proc_to_repair
                   n_iprog.I.prog_exp_decls in
-              let () = x_tinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
-                  n_iproc no_pos in
+              let () = x_binfo_hp (add_str "new proc_body:" (Iprinter.string_of_exp))
+                  (Gen.unsome n_iproc.I.proc_body) no_pos in
               let n_proc_decls =
                 List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
                            then n_iproc else x) iprog.prog_proc_decls in
@@ -176,7 +176,7 @@ let repair_prog_with_templ iprog is_cond =
                         n_iprog.I.prog_proc_decls in
                     let n_iproc = I.repair_proc proc_to_repair
                         n_iprog.I.prog_exp_decls in
-                    let () = x_binfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
+                    let () = x_tinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
                         n_iproc no_pos in
                     let n_proc_decls =
                       List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
