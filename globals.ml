@@ -26,13 +26,13 @@ type formula_type =
   | Simple
   | Complex
 
-type aliasing_scenario = 
+type aliasing_scenario =
   | Not_Aliased
   | May_Aliased
   | Must_Aliased
   | Partial_Aliased
 
-type ('a,'b) twoAns = 
+type ('a,'b) twoAns =
   | FstAns of 'a
   | SndAns of 'b
 

@@ -37,6 +37,7 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
 let repairing_ents = ref []
+let verified_procs = ref ([]: ident list)
 let proc_to_repair = ref None
 
 let log_spec = ref ""
@@ -3392,7 +3393,8 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
                    && not (List.mem unmin_name !Inliner.inlined_procs)
   in
-  if check_flag then
+  if List.mem proc0.proc_name (!verified_procs) then true
+  else if check_flag then
     begin
       match proc.proc_body with
       | None -> true (* sanity checks have been done by the translation *)
@@ -3593,12 +3595,15 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           if pr_flag then
             begin
               if pp then
+                let () = if (!Globals.enable_repair) then
+                    let () = verified_procs := [proc0.proc_name] @(!verified_procs) in
+                    () else () in
                 if !Globals.web_compile_flag then
                   print_string_quiet ("\nProcedure <b>"^proc.proc_name
                                       ^"</b> <font
               color=\"blue\">SUCCESS</font>.\n")
                 else
-                  print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                  print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS333.\n")
               else
                 let () = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                 if !Globals.web_compile_flag then
@@ -3896,11 +3901,11 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
   let () = x_tinfo_hp (add_str "prog"
-                                 (pr_list (Cprinter.string_of_proc_decl 1))
+                         (pr_list (Cprinter.string_of_proc_decl 1))
                       ) proc_main no_pos in
   let sorted_proc_main = Cast.sort_proc_decls proc_main in
   let () = x_tinfo_hp (add_str "sorted_proc_main"
-                                 (pr_list Astsimp.pr_proc_call_order)
+                         (pr_list Astsimp.pr_proc_call_order)
                       ) sorted_proc_main no_pos in
   (* this computes a list of scc mutual-recursive methods for processing *)
   let proc_scc = List.fold_left (fun a x -> match a with
@@ -4149,12 +4154,12 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
       let no_verified_sccs = List.map (fun scc -> List.map (fun proc ->
           let spec = proc.proc_stk_of_static_specs # top in
           let () = x_tinfo_hp (add_str "spec: "
-                                Cprinter.string_of_struc_formula
+                                 Cprinter.string_of_struc_formula
                               ) spec no_pos in
           let new_spec = CF.remove_inf_cmd_spec spec in
           let () = x_tinfo_hp (add_str "new spec: "
-                                Cprinter.string_of_struc_formula
-                             ) new_spec no_pos in
+                                 Cprinter.string_of_struc_formula
+                              ) new_spec no_pos in
           let () = proc.proc_stk_of_static_specs # push_pr (x_loc ^ "after_cmd") new_spec in
           proc
         ) scc ) n_verified_sccs in
