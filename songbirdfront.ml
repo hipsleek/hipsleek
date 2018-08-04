@@ -195,8 +195,7 @@ let create_templ_prog prog ents templ
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = SBDebug.hprint "prog: " SBCast.pr_program nprog in
-  (* let () = SBDebug.nhprint "pure entails: " SBCast.pr_pent ents in *)
+  let () = SBDebug.nhprint "nprog: " SBCast.pr_program nprog in
   let (ifds, inferred_prog) =
     Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
       ents in

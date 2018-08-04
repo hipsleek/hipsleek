@@ -42,7 +42,7 @@ bool Own_Below_Threat()
 {
   return (Own_Tracked_Alt < Other_Tracked_Alt);
 }
-
+nn
 bool Own_Above_Threat()
      requires true ensures res = (Other_Tracked_Alt < Own_Tracked_Alt);
 {

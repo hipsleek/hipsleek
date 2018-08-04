@@ -3066,7 +3066,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        (* let () = print_string_quiet ("\n"^failure_str ^ ":\n" ^s^"\n") in *)
+        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")

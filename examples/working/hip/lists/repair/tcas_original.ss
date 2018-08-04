@@ -64,14 +64,35 @@ bool Non_Crossing_Biased_Climb()
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation) &
-  res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | !(Down_Separation >= a));
+  res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | !(Down_Separation > a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation) &
+  // res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | !(Down_Separation > a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation) &
+  // res = ((Cur_Vertical_Sep >= 300) & (Own_Tracked_Alt > Other_Tracked_Alt)
+  //               & (Up_Separation >= a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation) &
+  // res = ((Cur_Vertical_Sep >= 300) & (Own_Tracked_Alt > Other_Tracked_Alt)
+  //               & (Up_Separation >= a));
+
 
 {
     bool result;
 
     if (Inhibit_Biased_Climb() > Down_Separation){
        result = (!Own_Below_Threat() ||
-          (Own_Below_Threat() && !(Down_Separation >= ALIM())));
+          (Own_Below_Threat() && !(Down_Separation > ALIM())));
     } else {	
        result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) && (Up_Separation >= ALIM());
     }
@@ -85,6 +106,25 @@ bool Non_Crossing_Biased_Descend()
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation) &
   res = ((Cur_Vertical_Sep >= 300) & (Other_Tracked_Alt > Own_Tracked_Alt)
                 & (Down_Separation >= a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation) &
+  // res = ((Cur_Vertical_Sep >= 300) & (Other_Tracked_Alt > Own_Tracked_Alt)
+  //               & (Down_Separation >= a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation) &
+  // res = (!(Own_Tracked_Alt > Other_Tracked_Alt) | (Up_Separation >= a));
+
+  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation)
+  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation) &
+  // res = (!(Own_Tracked_Alt > Other_Tracked_Alt) | (Up_Separation >= a));
 {
     bool result;
 
@@ -100,7 +140,7 @@ int alt_sep_test()
   requires
   Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)  &
-      (Own_Tracked_Alt < Other_Tracked_Alt) & !(Down_Separation >= a) &
+      (Own_Tracked_Alt < Other_Tracked_Alt) & !(Down_Separation > a) &
 
   High_Confidence & (Own_Tracked_Alt_Rate <= 600) &
       (Cur_Vertical_Sep > 600) & ((Two_of_Three_Reports_Valid & Other_RAC = 0) |
@@ -109,7 +149,7 @@ int alt_sep_test()
   ensures
   Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation) &
-      (Own_Tracked_Alt < Other_Tracked_Alt) & !(Down_Separation >= a) &
+      (Own_Tracked_Alt < Other_Tracked_Alt) & !(Down_Separation > a) &
 
   High_Confidence & (Own_Tracked_Alt_Rate <= 600) &
       (Cur_Vertical_Sep > 600) & ((Two_of_Three_Reports_Valid & Other_RAC = 0) |
