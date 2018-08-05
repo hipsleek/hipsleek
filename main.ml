@@ -722,8 +722,8 @@ let process_source_full source =
                 match repaired_iprog with
                 | None -> raise e
                 | Some (r_iprog, pos, repaired_exp) ->
-                  let () = Repair.output_repaired_iprog source pos repaired_exp
-                  in
+                  (* let () = Repair.output_repaired_iprog source pos repaired_exp
+                   * in *)
                   let () = Typechecker.verified_procs := [] in
                   ()
             else

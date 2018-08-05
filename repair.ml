@@ -222,7 +222,7 @@ let create_templ_proc proc replaced_exp vars heuristic =
     Some (n_proc, unk_exp, replaced_pos)
 
 let repair_one_statement iprog proc exp is_cond vars heuristic =
-  let () = x_binfo_hp (add_str "exp candidate: " (Iprinter.string_of_exp))
+  let () = x_tinfo_hp (add_str "exp candidate: " (Iprinter.string_of_exp))
       exp no_pos in
   if !stop then None else
     let n_proc_exp = create_templ_proc proc exp vars heuristic
@@ -232,7 +232,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     match n_proc_exp with
     | None -> None
     | Some (templ_proc, unk_exp, replaced_pos) ->
-      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
+      let () = x_tinfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
           (Gen.unsome templ_proc.I.proc_body) no_pos in
       (* None *)
 
@@ -298,23 +298,28 @@ let start_repair iprog =
         iprog.I.prog_proc_decls in
     let candidate_exp_list =
       I.list_of_candidate_exp (Gen.unsome proc_to_repair.proc_body) in
-    let () = x_binfo_hp (add_str "candidate exps: " (pr_list Iprinter.string_of_exp))
+    let var_decls = I.list_vars (Gen.unsome proc_to_repair.proc_body) iprog in
+    let () = x_tinfo_hp (add_str "var decls: " (pr_list (pr_pair pr_id Globals.string_of_typ)))
+        var_decls no_pos in
+    let filter_candidate (x, y) =
+      match x with
+      | I.Var var ->
+        let (v, typ) = List.find (fun (x, _) ->
+            contains var.I.exp_var_name x) var_decls in
+        if typ == Globals.Int then true
+        else false
+      | _ -> true
+    in
+    let candidate_exp_list = List.filter filter_candidate candidate_exp_list in
+    let () = x_tinfo_hp (add_str "candidate exps: " (pr_list Iprinter.string_of_exp))
         (candidate_exp_list |> List.map fst) no_pos in
     (* None *)
+
     let vars = proc_to_repair.I.proc_args in
     let repair_res_list =
       List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
                    (snd stmt) vars false) candidate_exp_list in
     let repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-    (* None *)
-
-    (* let h_repair_res_list = if (repair_res_list == []) then
-     *     List.map (fun stmt -> repair_one_statement iprog proc_to_repair
-     *                  (fst stmt) (snd stmt) vars true) candidate_exp_list
-     *   else repair_res_list
-     * in *)
-    (* let h_repair_res_list = List.filter(fun x -> x != None) h_repair_res_list in *)
-
     let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
     let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
     let best_res = get_best_repair h_repair_res_list in

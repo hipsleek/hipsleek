@@ -4017,6 +4017,27 @@ let repair_proc proc exp_decls =
   | None -> proc
   | Some exp -> {proc with proc_body = Some (repair_exp exp exp_decls)}
 
+(* Find all var declarations *)
+let list_vars exp iprog =
+  let rec aux exp list = match exp with
+    | Block b -> aux b.exp_block_body list
+    | Label (a, lexp) -> aux lexp list
+    | Seq exp_seq ->
+      let exp1_list = aux exp_seq.exp_seq_exp1 list in
+      aux exp_seq.exp_seq_exp2 exp1_list
+    | VarDecl e ->
+      let vars = List.map (fun (a, _, _) -> a) e.exp_var_decl_decls in
+      let decls = List.map (fun x -> (x, e.exp_var_decl_type)) vars in
+      decls@list
+    | _ -> list
+  in
+  let globals = iprog.prog_global_var_decls in
+  let global_decls = List.map (fun x ->
+      let vars = List.map (fun (a, _, _) -> a) x.exp_var_decl_decls in
+      List.map (fun y -> (y, x.exp_var_decl_type)) vars
+    ) globals
+  in (aux exp [])@(List.concat global_decls)
+
 (* find exp to be replaced by template, e.g. f(x, y) or f(x) *)
 (* current exp: rhs of the assign and lhs of the condition *)
 let list_of_candidate_exp (exp: exp) =
@@ -4049,11 +4070,23 @@ let list_of_candidate_exp (exp: exp) =
     | CallRecv _ -> list
     | CallNRecv _ -> list
     | Cond exp_cond ->
+      (* let exp1_list =
+       *   begin
+       *     match exp_cond.exp_cond_condition with
+       *     | Var _ -> list
+       *     | _ ->  aux exp_cond.exp_cond_condition list
+       *   end
+       * in *)
       let exp1_list = aux exp_cond.exp_cond_condition list in
       let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
       aux exp_cond.exp_cond_else_arm exp2_list
     | Label (a, lexp) -> aux lexp list
-    | Return _ -> list
+    | Return res ->
+      begin
+        match res.exp_return_val with
+        | None -> list
+        | Some e -> aux e list
+      end
     | Seq exp_seq ->
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
@@ -4187,11 +4220,12 @@ let rec replace_exp_with_loc exp n_exp loc =
     exp
     (* let r_args = List.map (fun x -> repair_exp x exp_decls) e.exp_new_arguments in
      * New { e with exp_new_arguments = r_args} *)
-  | Return e -> exp
-    (* let r_val = match e.exp_return_val with
-     *   | None -> None
-     *   | Some e -> Some (repair_exp e exp_decls)
-     * in Return {e with exp_return_val = r_val} *)
+  | Return e ->
+    (* exp *)
+    let r_val = match e.exp_return_val with
+      | None -> None
+      | Some e -> Some (replace_exp_with_loc e n_exp loc)
+    in Return {e with exp_return_val = r_val}
   | Seq e ->
     let r_e1 = replace_exp_with_loc e.exp_seq_exp1 n_exp loc in
     let r_e2 = replace_exp_with_loc e.exp_seq_exp2 n_exp loc in
