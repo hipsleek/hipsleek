@@ -195,9 +195,9 @@ let create_templ_prog prog ents templ
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = SBDebug.nhprint "nprog: " SBCast.pr_program nprog in
+  let () = x_binfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
   let (ifds, inferred_prog) =
-    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
+    Libsongbird.Prover.infer_unknown_functions ifr_typ nprog
       ents in
   let () = SBDebug.hprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
       ifds in

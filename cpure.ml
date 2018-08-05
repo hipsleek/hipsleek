@@ -15654,7 +15654,10 @@ let rec translate_exp_to_ipure exp = match exp with
  *   | Exists (_, f, _, _) -> is_bvar_f f *)
 
 let rec normalize_bvar_pf pf = match pf with
-  | BVar (_, loc) -> BConst (true, loc)
+  | BVar (sv, loc) ->
+    if (String.compare (name_of_sv sv) "res" == 0) then
+      BConst (true, loc)
+    else pf
   (* | Lt (exp1, exp2, loc) -> Lt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
    * | Lte (exp1, exp2, loc) -> Lte (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
    * | Gt (exp1, exp2, loc) -> Gt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)

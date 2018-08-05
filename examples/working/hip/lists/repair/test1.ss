@@ -42,7 +42,7 @@ bool Own_Below_Threat()
 {
   return (Own_Tracked_Alt < Other_Tracked_Alt);
 }
-nn
+
 bool Own_Above_Threat()
      requires true ensures res = (Other_Tracked_Alt < Own_Tracked_Alt);
 {
@@ -52,6 +52,7 @@ bool Own_Above_Threat()
 bool Non_Crossing_Biased_Climb()
  requires Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)
+          &   (Own_Tracked_Alt < Other_Tracked_Alt)
 
 ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
       & (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation) &
@@ -62,13 +63,10 @@ ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
 
     upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
     if (upward_preferred) {
-       result =  (Down_Separation <= ALIM());
+       result = (!(Own_Below_Threat()) || (Down_Separation <= ALIM()) );
+//       result = (Down_Separation <= ALIM());
     } else  {
       result = Own_Above_Threat();
     }
     return result;
 }
-
-Down_Separation_32-a_7914<=0 & 0<v_int_63_7943 &
-v_int_63_7943+fff(Down_Separation_32)=Up_Separation_36+100 &
-Other_Tracked_Alt_33<Own_Tracked_Alt_34 |- Down_Separation_32<a_7914
