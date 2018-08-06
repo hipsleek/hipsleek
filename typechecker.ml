@@ -3050,10 +3050,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let failed_ctx = List.filter
             (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
         let entails = List.map get_entailment failed_ctx in
-        let () = x_tinfo_hp (add_str "entails: "
-                               (pr_list
-                                  (pr_pair Cprinter.string_of_pure_formula
-                                     Cprinter.string_of_pure_formula)))
+        let () = x_binfo_hp (add_str "entails: "
+                               (pr_list (pr_pair Cprinter.string_of_pure_formula
+                                           Cprinter.string_of_pure_formula)))
             entails pos in
 
         let () = if (!Globals.enable_repair) then
@@ -3066,7 +3065,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        let () = x_binfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
