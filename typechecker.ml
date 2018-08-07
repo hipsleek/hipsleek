@@ -61,6 +61,7 @@ let update_iprog_exp_defns iprog cprog_exp_defns =
         let c_exp_defn = List.find (fun c_exp_defn ->
             String.compare c_exp_defn.Cast.exp_name i_exp_defn.Iast.exp_name == 0)
             cprog_exp_defns in
+        (* let vars = c_exp_defn.Cast.exp_params in *)
         {i_exp_defn with Iast.exp_body =
                            Iast.ExpForm (Cpure.translate_exp_to_ipure c_exp_defn.exp_body)}
       with Not_found -> i_exp_defn

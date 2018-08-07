@@ -1,0 +1,14 @@
+func int tf(int m) == ?.
+
+int sum(int n)
+  requires n >= 0 ensures res = n * (n+1);
+
+{
+  if (n ==0) return n;
+  else {
+       int m, k;
+       m = sum(n-1);
+       k = tf(m);
+       return 2 * n + k;
+  }
+}

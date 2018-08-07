@@ -200,7 +200,7 @@ let create_templ_prog prog ents templ
     Libsongbird.Prover.infer_unknown_functions ifr_typ nprog
       ents in
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
-  missing_exp
+  inferred_prog.SBCast.prog_funcs
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
@@ -226,11 +226,32 @@ let get_repair_candidate prog ents =
   let sb_ent_and_tmpl_list = List.map translate_ent ents in
   let (sb_ents, tmpls) = List.split sb_ent_and_tmpl_list in
   let templ = List.hd tmpls in
-  let fun_def_exp = create_templ_prog prog sb_ents templ in
+  let fun_defs = create_templ_prog prog sb_ents templ in
+  let get_func_exp fun_defs exp_decls =
+    let exp_decl = List.hd exp_decls in
+    let ident = exp_decl.Cast.exp_name in
+    let vars = exp_decl.Cast.exp_params in
+    try
+      let fun_def = List.find (fun fun_def -> String.compare ident fun_def.SBCast.func_name == 0)
+          fun_defs in
+      match fun_def.SBCast.func_body with
+      | SBCast.FuncTemplate _
+      | SBCast.FuncUnknown -> None
+      | SBCast.FuncForm exp ->
+        let sb_vars = fun_def.SBCast.func_params in
+        let translated_vars = List.map translate_back_var sb_vars in
+        let translated_exp = translate_back_exp exp in
+        (* let exp_vars = List.map Cpure.mk_exp_var vars in *)
+        let substs = List.combine translated_vars vars in
+        let n_exp = Cpure.e_apply_subs substs translated_exp in
+        Some n_exp
+    with Not_found -> None
+  in
+  let fun_def_exp = get_func_exp fun_defs prog.Cast.prog_exp_decls in
   match fun_def_exp with
-    | Some fun_sb_exp ->
-      let fun_def_cexp = translate_back_exp fun_sb_exp in
-      let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
+    | Some fun_def_cexp ->
+      (* let fun_def_cexp = translate_back_exp fun_sb_exp in *)
+      let () = x_binfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
                                                         Cprinter.pr_formula_exp)
                           ) fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in

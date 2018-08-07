@@ -4004,6 +4004,7 @@ let rec repair_exp exp exp_decls =
       try
         let exp_decl = List.find (fun x -> String.compare x.exp_name
                                      unk.unk_exp_name == 0) exp_decls in
+        let () = x_binfo_pp "marking \n" no_pos in
         match exp_decl.exp_body with
         | ExpUnk -> exp
         | ExpForm e ->

@@ -8088,19 +8088,19 @@ let check_imply_neq eq lhs e1 e2 =
 
 (* type: (spec_var -> spec_var -> bool) -> p_formula list -> exp -> exp -> int *)
 
-let check_imply_neq_debug eq lhs e1 e2 = 
-  Debug.no_3 
-    "check_imply_neq" 
+let check_imply_neq_debug eq lhs e1 e2 =
+  Debug.no_3
+    "check_imply_neq"
     (fun c-> String.concat "&" (List.map !print_p_formula c))
-    !print_exp 
-    !print_exp 
+    !print_exp
+    !print_exp
     string_of_int (check_imply_neq eq ) lhs e1 e2
 
-let check_eq_bform eq lhs rhs failval = 
+let check_eq_bform eq lhs rhs failval =
   if List.exists (equalBFormula_f eq rhs) lhs then 1
   else failval
 
-(* assume b_formula has been normalized 
+(* assume b_formula has been normalized
      1 - true
      0 - dont know
      -1 - likely false
@@ -8133,7 +8133,7 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
       | Eq(e1,e2,_) -> check_imply_eq eq plhs e1 e2
       | Neq(e1,e2,_) -> check_imply_neq eq plhs e1 e2
       | EqMin _ | EqMax _ (* min/max *) -> 0
-      | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *) 
+      | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *)
         let () = print_string "warning fast_imply : not normalised"
         in 0
       | _ -> (* use just syntactic checking *) 0 in
