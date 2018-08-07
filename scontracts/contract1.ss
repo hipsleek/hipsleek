@@ -67,9 +67,8 @@ pred USERBALANCES<userid,b1,b2> == self=null or
                             self::bnode<id,val,t> * t::USERBALANCES<userid,b1,b2> & id=userid & b1<=val & (val<=b2 & 0<=b2 | b2<0) or
                             self::bnode<id,val,t> * t::USERBALANCES<userid,b1,b2> & id!=userid;
 
-void withdrawBalance(// message msg
-)
-   requires  msg::message<_,_,id,_,_>@L //* userbal::USERBALANCES<id,0,0>
+void withdrawBalance()
+   requires  msg::message<_,_,id,_,_> //* userbal::USERBALANCES<id,0,0>
    ensures   true;
 {
   dprint;

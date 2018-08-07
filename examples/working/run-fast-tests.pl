@@ -1846,7 +1846,13 @@ $output_file = "log";
         # ["ex17c-2B1S-manual-fence.ss", 4, " -tp z3 ", "Buyer1","SUCCESS","Buyer2","SUCCESS","Seller","SUCCESS","Buyer1_fail","FAIL"]
         ["ex1-A-Rock-Paper-Scissors.ss", 2, " --sess ", "C","SUCCESS","S","SUCCESS"],
         ["ex1-B-Rock-Paper-Scissors.ss", 2, " --sess ", "C","SUCCESS","S","SUCCESS"],
-        ["ex2-Rock-Paper-Scissors-STAR.ss", 3, " --sess ", "S1","SUCCESS","S2","SUCCESS","S_fail1","FAIL"]
+        ["ex2-Rock-Paper-Scissors-STAR.ss", 5, " --sess --ann-vp ", "S1","SUCCESS","S2","SUCCESS","S3","SUCCESS","S4","SUCCESS","S_fail1","FAIL"],
+        ["ex2c-Rock-Paper-Scissors-complex-STAR.ss", 3, " --sess --ann-vp ", "S21","SUCCESS","S22","SUCCESS","S23","SUCCESS"],
+        ["ex3-Calc.ss", 3, " --sess --ann-vp ", "C","SUCCESS","S","SUCCESS","S_complex","SUCCESS"],
+        ["ex3a-compl-calc.ss", 3, " --sess --ann-vp ", "C","SUCCESS","Server","SUCCESS","S_complex","SUCCESS"],
+        ["ex4-audio-cloud.ss", 8, " --sess --ann-vp ", "Server_helper","SUCCESS","Server_helper1","SUCCESS","Server_helper2","SUCCESS","Server_helper22","SUCCESS","Server_helper3","SUCCESS","Server","SUCCESS","Server_par","SUCCESS","Client","SUCCESS"],
+        ["ex4a-audio-cloud-SS-RR-par.ss", 13, " --sess --ann-vp ", "Server_helper","SUCCESS","Server_helper_seq1","SUCCESS","Server_helper_seq2","SUCCESS","Server_helper_seq3","SUCCESS","Server_helper_seq4","SUCCESS","Server_helper_seq_fail","FAIL","Server_helper_par1","SUCCESS","Server_helper_par2","SUCCESS","Server_helper_par3","SUCCESS","Server_seq1","SUCCESS","Server_seq2","SUCCESS","Server_par1","SUCCESS","Client","SUCCESS"],
+        ["ex4b-audio-cloud-SR-SR-par.ss", 13, " --sess --ann-vp ", "Server_helper","SUCCESS","Server_helper_seq1","SUCCESS","Server_helper_seq2","SUCCESS","Server_helper_seq3","SUCCESS","Server_helper_seq4","SUCCESS","Server_helper_seq_fail","FAIL","Server_helper_par1","SUCCESS","Server_helper_par2","SUCCESS","Server_helper_par3","SUCCESS","Server_seq1","SUCCESS","Server_seq2","SUCCESS","Server_par1","SUCCESS","Client","SUCCESS"],
     ],
     # "lemmas"=>[
     #     # ["lemma_check01.ss", " --elp ", "Valid.Valid.Fail.",""],
