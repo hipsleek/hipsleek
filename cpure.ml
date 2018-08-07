@@ -4369,10 +4369,10 @@ and b_apply_subs_x sst bf =
               | Frm (fv, pos) -> Frm (subs_one sst fv, pos)
               | BConst _ -> pf
               | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
-              | XPure x -> XPure {x with 
+              | XPure x -> XPure {x with
                                   xpure_view_node=map_opt (subs_one sst) x.xpure_view_node;
                                   xpure_view_arguments=List.map (subs_one sst) x.xpure_view_arguments;
-                                 } 
+                                 }
               | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -4521,9 +4521,12 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
   (* Template: Do not substitute into unknowns *)
-  | Template t -> Template { t with 
-                             templ_args = List.map (e_apply_subs sst) t.templ_args; 
-                             templ_body = map_opt (e_apply_subs sst) t.templ_body; }
+  | Template t -> e
+    (* if (!Globals.enable_repair) then e
+     * else
+     *   Template { t with
+     *              templ_args = List.map (e_apply_subs sst) t.templ_args;
+     *              templ_body = map_opt (e_apply_subs sst) t.templ_body; } *)
 
 and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
 
@@ -4681,12 +4684,12 @@ and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq
 
 and a_apply_par_term (sst : (spec_var * exp) list) e =
   match e with
-  | Null _ 
-  | IConst _ 
+  | Null _
+  | IConst _
   | InfConst _
   | NegInfConst _
-  | FConst _ 
-  | AConst _ 
+  | FConst _
+  | AConst _
   | Bptriple _ (*TOCHECK*)
   | Tsconst _ -> e
   | Tup2 ((a1,a2),pos) -> Tup2 ((a_apply_par_term sst a1,a_apply_par_term sst a2),pos)

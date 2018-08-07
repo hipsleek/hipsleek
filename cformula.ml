@@ -3282,7 +3282,7 @@ and subst_struc_x sst (f : struc_formula) = match sst with
   | s :: rest -> subst_struc_x rest (apply_one_struc s f)
   | [] -> f
 
-and subst_struc_pre sst (f : struc_formula) = 
+and subst_struc_pre sst (f : struc_formula) =
   (* apply_par_struc_pre s f *)
   match sst with
   | s :: rest -> subst_struc_pre rest (apply_one_struc_pre s f)
@@ -3290,7 +3290,7 @@ and subst_struc_pre sst (f : struc_formula) =
 
 
 and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula = match f with
-  | ECase b -> ECase {b with 
+  | ECase b -> ECase {b with
                       formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc_pre s c2)) ) b.formula_case_branches;}
   | EBase b -> EBase {
       formula_struc_explicit_inst = List.map (subst_var s)  b.formula_struc_explicit_inst;
@@ -3380,17 +3380,17 @@ and one_formula_subst sst (f : one_formula) =
 
 (** An Hoa : replace the function subst above by substituting f in parallel **)
 
-and subst sst (f : formula) = 
+and subst sst (f : formula) =
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
-  Debug.no_2 "subst" pr1 pr2 pr2 subst_x sst f 
+  Debug.no_2 "subst_formula" pr1 pr2 pr2 subst_x sst f
 
 and subst_x sst (f : formula) =
   let rec helper f =
     match f with
-    | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) -> 
+    | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos }) ->
       Or ({ formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos })
-    | Base b -> Base ({ b with 
+    | Base b -> Base ({ b with
                         formula_base_heap = h_subst sst b.formula_base_heap;
                         formula_base_pure = MCP.regroup_memo_group (MCP.m_apply_par sst b.formula_base_pure);
                         (* formula_base_vperm = CVP.subst_par sst b.formula_base_vperm; *)

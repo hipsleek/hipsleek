@@ -196,29 +196,16 @@ let create_templ_prog prog ents templ
             }
   in
   let () = x_binfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
-  let (ifds, inferred_prog) =
+  let (ifds, inferred_prog, missing_exp) =
     Libsongbird.Prover.infer_unknown_functions ifr_typ nprog
       ents in
-  let () = SBDebug.hprint " ==> Result: \n" Libsongbird.Proof.pr_ifds
-      ifds in
   let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
-  inferred_prog.prog_funcs
-
-let get_func_exp fun_defs ident =
-  try
-    let fun_def = List.find (fun fun_def -> String.compare ident fun_def.SBCast.func_name == 0)
-        fun_defs in
-    match fun_def.SBCast.func_body with
-    | SBCast.FuncTemplate _
-    | SBCast.FuncUnknown -> None
-    | SBCast.FuncForm exp -> Some exp
-  with Not_found -> None
+  missing_exp
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
   let lhs = CP.normalize_bvar_f lhs in
   let rhs = CP.normalize_bvar_f rhs in
-
   let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
       lhs VarGen.no_pos in
   let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
@@ -239,8 +226,7 @@ let get_repair_candidate prog ents =
   let sb_ent_and_tmpl_list = List.map translate_ent ents in
   let (sb_ents, tmpls) = List.split sb_ent_and_tmpl_list in
   let templ = List.hd tmpls in
-  let fun_defs = create_templ_prog prog sb_ents templ in
-  let fun_def_exp = get_func_exp fun_defs (CP.name_of_sv templ.templ_id) in
+  let fun_def_exp = create_templ_prog prog sb_ents templ in
   match fun_def_exp with
     | Some fun_sb_exp ->
       let fun_def_cexp = translate_back_exp fun_sb_exp in

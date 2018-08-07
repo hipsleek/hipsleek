@@ -585,6 +585,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       ((exp_fv e0)@spec_names@(List.map snd proc.proc_args));
                   print_string_quiet ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
                 else () in
+              let () = x_tinfo_hp (add_str "e0: "
+                                     (Cprinter.string_of_exp))
+                  e0 no_pos in
               let res_ctx = x_add check_exp prog proc lfe e0 post_label in
               let () = x_tinfo_hp (add_str "res_ctx 0: "
                                      (Cprinter.string_of_list_failesc_context))
@@ -1741,7 +1744,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let c = string_of_typ v_t in
           let fresh_perm_exp,perm_vars = 
             (match !Globals.perm with
-             | Bperm ->  
+             | Bperm ->
                let c_name = x_add_1 Cpure.fresh_old_name "cbperm" in
                let t_name = x_add_1 Cpure.fresh_old_name "tbperm" in
                let a_name = x_add_1 Cpure.fresh_old_name "abperm" in
@@ -1979,7 +1982,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let () = CF.must_consistent_list_failesc_context "assign final" res_ctx  in
           res_ctx
         ) in
-        Gen.Profiling.push_time "[check_exp] Cast";  
+        Gen.Profiling.push_time "[check_exp] Cast";
         let res = wrap_proving_kind PK_Cast casting_op () in
         Gen.Profiling.pop_time "[check_exp] Cast";
         res
@@ -2368,7 +2371,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
-              let () = x_dinfo_hp (add_str "new rs:"
+              let () = x_tinfo_hp (add_str "new rs:"
                                      Cprinter.string_of_list_failesc_context)
                   rs no_pos in
               rs
@@ -2467,14 +2470,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               (
                 if (!Globals.web_compile_flag) then
                   let to_print = "\nProving precondition in method "
-                                 ^ proc.proc_name ^ " Failed.\n" in
+                                 ^ proc.proc_name ^ " Failedss.\n" in
                   let s,_,_= CF.get_failure_list_failesc_context res in
                   let () = print_string_quiet (to_print ^s^"\n") in
                   res
                 else
                   (*FAILURE explaining*)
                   let to_print = "\nProving precondition in method "
-                                 ^ proc.proc_name ^ " Failed.\n" in
+                                 ^ proc.proc_name ^ " Failed88.\n" in
                   let _ =
                     if not !Globals.disable_failure_explaining then
                       let s,fk,_= CF.get_failure_list_failesc_context res
@@ -2722,7 +2725,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         unk_exp_arguments = args;
         unk_exp_pos = pos;
       } ->
-      let () = x_tinfo_hp (add_str "old ctx:" Cprinter.string_of_list_failesc_context) ctx no_pos in
+      let () = x_binfo_hp (add_str "old ctx:" Cprinter.string_of_list_failesc_context) ctx no_pos in
       let exp_defs = prog.prog_exp_decls in
       begin
         try
@@ -2747,7 +2750,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
           let n_ctx =
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
-          let () = x_dinfo_hp (add_str "n_ctx:"
+          let () = x_binfo_hp (add_str "n_ctx:"
                                  Cprinter.string_of_list_failesc_context) n_ctx
               no_pos in
           n_ctx
@@ -2981,7 +2984,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
       rs_struc, prf
   in
   let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_tinfo_hp (add_str "rs: " pr1) rs pos in
+  let () = x_binfo_hp (add_str "rs: " pr1) rs pos in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
       begin
@@ -3065,7 +3068,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = x_binfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
