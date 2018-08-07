@@ -274,7 +274,7 @@ void Server_par(Channel c)
        send(c,fd)[file];
  ||
   case {c1',video} c1'::Chan{@S %R3}<> ->
-       Server_par(c)
+       Server_par(c);
  }
 }
 

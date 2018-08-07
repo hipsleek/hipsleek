@@ -33,21 +33,25 @@ void S(Channel c)
 }
 
 
+pred_sess_prot GR<C:role,S:role,c:chan> ==
+         C->S:c(v#v::Chan{@S G<_,S@peer,v@chan>}<>) ;; GR<C,S,c>;
+
 void S_complex(Channel c)
- requires c::Chan{@S G<_,S@peer,c@chan>}<>
+ requires c::Chan{@S GR<_,S@peer,c@chan>}<>
           * @full[c]
- ensures  c::Chan{emp}<>;
+ ensures  true;
 {
- Channel c0 = receive(c)[int];
+ Channel c0 = receive(c)[Channel];
+ dprint;
  int req    = receive(c0)[int];
  // compute....
  dprint;
- par{c}
+ par{c,c0'}
  {
-  case {c} c0::Chan{@S %R}<> ->
+  case {c0'} c0'::Chan{@S %R1}<> ->
        send(c0,1)[int];
   ||
-  case {} emp ->
+  case {c}  c::Chan{@S %R2}<> ->
        S_complex(c);
  }
 }
