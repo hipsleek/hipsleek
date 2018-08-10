@@ -92,14 +92,14 @@ let rec read_till_prompt (channel: in_channel) : string =
   if match_prompt then ""
   else line ^ (read_till_prompt channel)
 
-(* 
+(*
  * send cmd to reduce
  * for some weird i/o reasons, the reduce's prompt for this cmd
  * can only be read after we send this cmd, thus after send the cmd
  * to reduce, we read till the prompt (of this cmd) is found to discard it
  *)
 let send_cmd cmd =
-  if !is_reduce_running then 
+  if !is_reduce_running then
     let cmd = cmd ^ ";\n" in
     let () = output_string !process.outchannel cmd in
     let () = flush !process.outchannel in
@@ -118,29 +118,31 @@ let set_rl_mode mode =
 (* start Reduce system in a separated process and load redlog package *)
 let start () =
   if not !is_reduce_running then begin
-    let prelude () =    
+    let prelude () =
       is_reduce_running := true;
       send_cmd "off nat";
       send_cmd "linelength 10000";
       send_cmd "load_package redlog";
       send_cmd "rlset ofsf";
       send_cmd "on rlnzden";
-      send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
-      send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
+      (* send_cmd "off varopt"; (\* An Hoa : turn off variable rearrangement *\)
+       * send_cmd "off arbvars"; (\* An Hoa : do not introduce arbcomplex(_) *\) *)
     in
     rl_current_mode := OFSF;
     let set_process proc = process := proc in
-    let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
+    let rl_bin = if !Globals.web_compile_flag
+      then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
     (* let rl_bin = "redcsl" in *)
+    let () = x_tinfo_hp (add_str "rl_bin:" pr_id) rl_bin no_pos in
     let () = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
     print_endline_quiet "Starting Reduce... ";
     flush stdout
   end
 
 (* stop Reduce system *)
-let stop () = 
+let stop () =
   if !is_reduce_running then begin
-    let ending_fnc () = 
+    let ending_fnc () =
       let outchannel = !process.outchannel in
       output_string outchannel "quit;\n"; flush outchannel;
       if not !Globals.web_compile_flag then print_endline_quiet "Halting Reduce... "; flush stdout;
@@ -206,7 +208,7 @@ let send_and_receive f =
 
 
 let send_and_receive f =
-  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s) 
+  Debug.no_1 "send_and_receive" (fun s -> s) (fun s -> s)
     send_and_receive f
 
 let check_formula f =

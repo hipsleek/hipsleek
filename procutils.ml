@@ -37,7 +37,7 @@ let open_process_full cmd args =
 
 let open_proc cmd args out_file:int  =
   match Unix.fork() with
-  |  0 -> begin 
+  |  0 -> begin
       let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
       Unix.dup2 output Unix.stdout; Unix.close output;
       try Unix.execvp cmd args with _ -> exit 127 end
@@ -45,7 +45,7 @@ let open_proc cmd args out_file:int  =
 ;;
 
 (* provers common methods *)
-module PrvComms = 
+module PrvComms =
 struct
 
   open Globals
@@ -57,7 +57,7 @@ struct
   let set_timer tsecs =
     ignore (Unix.setitimer Unix.ITIMER_REAL { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
-  (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
+  (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised.
     Otherwise, this method returns the result given by fnc. *)
 
   let maybe_raise_timeout (fn: 'a -> 'b) (arg: 'a) (limit:float) : 'b =
@@ -66,7 +66,8 @@ struct
     let () = set_timer limit in
     let proof_no = get_proof_no_str () in
     try
-      let () = if !Globals.enable_time_stats then Timelog.logtime # timer_start proof_no limit else () in
+      let () = if !Globals.enable_time_stats
+        then Timelog.logtime # timer_start proof_no limit else () in
       let res = fn arg in
       let x = Unix.getitimer Unix.ITIMER_REAL in
       (* let nt = limit -. x.Unix.it_value in *)
@@ -83,9 +84,8 @@ struct
         raise e
       end
 
-
   let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
-    Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
+    Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec
 
   (* same as maybe_raise_timoeut just that it treats the timeout exception with the with_timeout function *)
   let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
@@ -121,8 +121,8 @@ struct
     | exc -> raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
-    Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
-      (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
+    Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool
+      (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
@@ -145,23 +145,31 @@ struct
     if flag then
       output_string file_descr str
 
-  (* Starts a specific prover (creating new process using pipes). Parameters have the following meaning:
+  (* Starts a specific prover (creating new process using pipes). Parameters
+     have the following meaning:
    ** log_all_flag - flag which tells whether to log proofs
    ** log-all - descriptor of the file where the log is written
-   ** prover - 3tuple: (name of the prover, command to start the prover, process arguments as an array of strings)
-   ** set_process - method that assigns the newly created process to the process ref used in <prover_name>.ml 
-   ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
-  let start (log_all_flag: bool) (log_file: out_channel) (prover: string * string * string array) set_process prelude= 
+   ** prover - 3tuple: (name of the prover, command to start the prover, process
+     arguments as an array of strings)
+   ** set_process - method that assigns the newly created process to the process
+     ref used in <prover_name>.ml
+   ** prelude - method which prepares the prover for interactive use (first
+     commands sent, first lines printed, etc)*)
+  let start (log_all_flag: bool) (log_file: out_channel)
+      (prover: string * string * string array) set_process prelude=
     let (prover_name, prover_proc, prover_arg_array) = prover in
-    let () = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
+    let () = log_to_file log_all_flag log_file
+        ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
     try
-      let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
-      let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
+      let inchn, outchn, errchn, npid =
+        open_process_full prover_proc prover_arg_array in
+      let process = {name = prover_name; pid = npid; inchannel = inchn;
+                     outchannel = outchn; errchannel = errchn} in
       set_process process;
       prelude ()
     with
     | e -> begin
-        print_endline_quiet ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name);
+        print_endline_quiet ("\n["^prover_name^".ml164 ]Unexpected exception while starting prover "^ prover_name);
         flush stdout; flush stderr;
         log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
         raise e

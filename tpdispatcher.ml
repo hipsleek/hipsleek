@@ -342,14 +342,15 @@ let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
   | [] -> ()
   | "log"::rest -> check_prover_existence rest
-  | prover::rest -> 
-    let _ = x_dinfo_hp (add_str "check prover" pr_id) prover no_pos in
+  | prover::rest ->
+    let _ = x_binfo_hp (add_str "check prover" pr_id) prover no_pos in
     (* let exit_code = Sys.command ("which "^prover) in *)
     (* Do not display system info in the website *)
     (* let () = print_endline ("prover:" ^ prover) in *)
-    let prover = 
-      if String.compare prover "z3n" = 0 then "z3-4.2" 
-      else if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter" 
+    let prover =
+      if String.compare prover "z3n" = 0 then "z3-4.2"
+      else if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter"
+      else if String.compare prover "redcsl" = 0 then "/usr/bin/reduce"
       else prover
     in
     let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
