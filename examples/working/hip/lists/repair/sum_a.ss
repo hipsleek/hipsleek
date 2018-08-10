@@ -1,7 +1,7 @@
 func int tf(int m) == ?.
 
 int sum(int n)
-  requires n >= 0 ensures res = n * (n+1);
+  requires n >= 0 ensures 2 * res = n * (n+1);
 
 {
   if (n ==0) return n;
@@ -9,6 +9,6 @@ int sum(int n)
        int m, k;
        m = sum(n-1);
        k = tf(m);
-       return 2 * n + k;
+       return n + k;
   }
 }

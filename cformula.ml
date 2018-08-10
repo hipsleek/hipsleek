@@ -9915,7 +9915,7 @@ and failesc_context = (branch_fail list) * esc_stack * (branch_ctx list)
 (* conjunct of context in the form of /\(f1|f2 ..s1|s2|s3) *)
 and list_partial_context = partial_context list
 
-and list_failesc_context = failesc_context list 
+and list_failesc_context = failesc_context list
 (* conjunct of contexts *)
 
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
