@@ -131,7 +131,7 @@ let start () =
     rl_current_mode := OFSF;
     let set_process proc = process := proc in
     let rl_bin = if !Globals.web_compile_flag
-      then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
+      then "/usr/local/etc/reduce/bin/redcsl" else "/usr/local/etc/reduce/bin/redcsl" in
     (* let rl_bin = "redcsl" in *)
     let () = x_tinfo_hp (add_str "rl_bin:" pr_id) rl_bin no_pos in
     let () = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in

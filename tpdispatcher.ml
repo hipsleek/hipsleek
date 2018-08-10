@@ -350,7 +350,7 @@ let rec check_prover_existence prover_cmd_str =
     let prover =
       if String.compare prover "z3n" = 0 then "z3-4.2"
       else if String.compare prover "mona" = 0 then "/usr/local/bin/mona_inter"
-      else if String.compare prover "redcsl" = 0 then "/usr/bin/reduce"
+      else if String.compare prover "redcsl" = 0 then "/usr/local/etc/reduce/bin/redcsl"
       else prover
     in
     let exit_code = Sys.command ("which "^prover^" > /dev/null 2>&1") in
