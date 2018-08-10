@@ -1323,17 +1323,6 @@ and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
   | _ -> false
 
-(* let rec name_of_type (t : typ) = match t with *)
-(*   | Prim Int -> "int" *)
-(*   | Prim Bool -> "bool" *)
-(*   | Prim Void -> "void" *)
-(*   | Prim Float -> "float" *)
-(*   | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")" *)
-(*   | Prim (TVar i) -> "TVar["^(string_of_int i)^"]" *)
-(*   | Prim List -> "list" *)
-(*   | Named c -> c *)
-(*   | Array (et, _) -> (name_of_type et) ^ "[]" (\* An hoa *\)  *)
-
 let mingle_name (m : ident) (targs : typ list) =
   let param_tnames = String.concat "~" (List.map string_of_typ targs) in
   m ^ "$" ^ param_tnames
@@ -1353,8 +1342,6 @@ let rec look_up_view_def_raw loc (defs : view_decl list) (name : ident) = match 
     let msg = ("Cannot find definition of cview " ^ name) in
     let () = y_tinfo_pp (loc^msg) in
     raise Not_found
-    (* let msg = ("Cannot find definition of view " ^ name) in *)
-    (* failwith (x_loc^msg) *)
 
 let look_up_view_def_raw loc (defs : view_decl list) (name : ident) =
   let pr = fun x -> x in

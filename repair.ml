@@ -278,24 +278,19 @@ let start_repair iprog =
   let () = x_tinfo_hp (add_str "normalized procs: " (pr_list Iprinter.string_of_proc_decl))
           iprog.I.prog_proc_decls no_pos in
   let cprog, _ = Astsimp.trans_prog iprog in
-  let contains s1 s2 =
-    let re = Str.regexp_string s2
-    in
-    try ignore (Str.search_forward re s1 0); true
-    with Not_found -> false
-  in
-  (* None *)
 
   match !Typechecker.proc_to_repair with
   | None -> None
   | Some proc_name_to_repair ->
     let () = x_tinfo_pp "marking \n" no_pos in
-    let proc_to_repair = List.find (fun x ->
-        let params = x.I.proc_args in
-        let typs = List.map (fun x -> x.I.param_type) params in
-        let mingled_name = Cast.mingle_name x.I.proc_name typs in
-        contains proc_name_to_repair mingled_name)
+    let proc_name_to_repair = Cast.unmingle_name proc_name_to_repair in
+    let () = x_tinfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
+        no_pos in
+    let proc_to_repair = List.find (fun x -> String.compare (x.I.proc_name)
+                                       proc_name_to_repair == 0)
         iprog.I.prog_proc_decls in
+    let () = x_tinfo_hp (add_str "proc: " (Iprinter.string_of_proc_decl))
+          proc_to_repair no_pos in
     let candidate_exp_list =
       I.list_of_candidate_exp (Gen.unsome proc_to_repair.proc_body) in
     let var_decls = I.list_vars (Gen.unsome proc_to_repair.proc_body) iprog in
@@ -304,10 +299,14 @@ let start_repair iprog =
     let filter_candidate (x, y) =
       match x with
       | I.Var var ->
-        let (v, typ) = List.find (fun (x, _) ->
-            contains var.I.exp_var_name x) var_decls in
-        if typ == Globals.Int then true
-        else false
+        begin
+          try
+            let (v, typ) = List.find (fun (x, _) ->
+                ExtLib.String.exists var.I.exp_var_name x) var_decls in
+            if typ == Globals.Int then true
+            else false
+          with _ -> true
+        end
       | _ -> true
     in
     let candidate_exp_list = List.filter filter_candidate candidate_exp_list in
