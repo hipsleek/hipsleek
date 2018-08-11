@@ -31,6 +31,7 @@ let translate_type (typ: Globals.typ) : SBGlobals.typ =
   | Bool -> TInt
   | UNK -> TUnk
   | Void -> TVoid
+  | Named str -> TData str
   | _ -> Gen.Basic.report_error VarGen.no_pos
            ("translate_type:" ^ (Globals.string_of_typ typ) ^ " is not handled")
 
@@ -95,7 +96,7 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
                translate_back_pos pos)
     end
   | SBCast.LTerm (lterm, pos) ->
-    let n_exp = SBCast.convert_lterm_to_exp lterm in
+    let n_exp = SBCast.convert_lterm_to_exp pos lterm in
     translate_back_exp n_exp
   | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
            ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")

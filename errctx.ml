@@ -7,7 +7,6 @@ let mkFailCtx_may ?(conseq=None) ln s estate pos =
   let conseq = match conseq with
     | None -> (formula_of_heap HFalse pos)
     | Some f -> f in
-  (* let fail_ctx = mkFailContext mem_leak estate_orig1 conseq None pos in *)
   let err_msg = ln^s in
   mkFailCtx_in (Basic_Reason (mkFailContext err_msg estate conseq None pos, 
                                   mk_failure_may ln Globals.sl_error, estate.es_trace)) 

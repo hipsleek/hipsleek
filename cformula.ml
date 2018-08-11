@@ -5881,7 +5881,7 @@ let look_up_first_reachable_unfold_ptr prog hd_nodes hv_nodes ?(hr_sigs = []) ro
   in
   (*check onl_ptrs are unfold points - view*)
   if List.exists (fun sv -> is_unfold_ptr hv_nodes hr_sigs sv) roots 
-  then roots 
+  then roots
   else helper roots roots
 
 let extract_HRel_orig hf=
@@ -8071,6 +8071,27 @@ let xpure_for_hnodes_f f0=
   Debug.no_1 "xpure_for_hnodes_f" pr1 pr2
     (fun _ -> xpure_for_hnodes_f_x f0) f0
 
+let get_pure_hnodes (f0: formula) =
+  let rec helper f=
+    match f with
+    | Base fb ->
+      MCP.pure_of_mix (xpure_for_hnodes fb.formula_base_heap)
+    | Exists fe ->
+      let qvars, base1 = split_quantifiers f in
+      let p = helper base1 in
+      CP.mkExists qvars p None fe.formula_exists_pos
+    | Or orf ->
+      let p1 = helper orf.formula_or_f1 in
+      let p2 = helper orf.formula_or_f2 in
+      CP.Or (p1, p2, None , orf.formula_or_pos)
+  in
+  helper f0
+
+let get_pure_heap_and_base (f0: formula) =
+  let pure_base = get_pure f0 in
+  let pure_hp = get_pure_hnodes f0 in
+  Cpure.mkAnd pure_base pure_hp no_pos
+
 (*check the form: hp(x,y) = x!=null & y !=null*)
 let is_only_neqNull_pure p args=
   let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) args in
@@ -9882,6 +9903,7 @@ and fail_context = {
   fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
   fc_failure_pts : Globals.formula_label list;     (* failure points in conseq *)
   fc_current_conseq : formula;
+  fc_current_ents: (CP.formula * CP.formula) list;
 }
 
 and fail_type =
@@ -10898,7 +10920,6 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
   let rec helper ft =
     match ft with
     | Basic_Reason (fc,fe,ft) ->
-      (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
       let f = get_failure_fe fe in
       if (is_must_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
       else if (is_may_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
@@ -10908,7 +10929,6 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
     | Union_Reason (f1,f2) -> gen_ror (helper f1) (helper f2)
     | ContinuationErr _ -> (Failure_May "Continuation_Err", "Continuation", None)
     | Or_Continuation (f1,f2) -> gen_lor (helper f1) (helper f2)
-    (* report_error no_pos "get_must_failure : or continuation encountered" *)
     | Trivial_Reason (fe,ft) -> (fe.fe_kind, fe.fe_name, None)
   in
   let (f, _, oes) = helper ft in (f, oes)
@@ -10922,7 +10942,7 @@ let get_failure_es_ft (ft:fail_type) : (failure_kind * (entail_state option)) =
   Debug.no_1 "get_failure_es_ft" !print_fail_type pr1 (fun x -> get_failure_es_ft_x x) ft
 
 let rec get_failure_ctx_ft (ft:fail_type) : (failure_kind * (context option)) =
-  let rec helper ft = 
+  let rec helper ft =
     match ft with
     | Basic_Reason (fc,fe,ft) ->
       (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
@@ -11121,13 +11141,14 @@ and combine_helper op los rs=
       combine_helper_x op los rs
     )
 
-and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx list)): (string option)=
+and get_must_failure_partial_context
+    ((bfl:branch_fail list), (bctxl: branch_ctx list)) : (string option) =
   let helper (pt, ft)=
     let os = get_must_failure_ft ft in
     match os with
     | None -> None
-    | Some (s) ->  (* let spt = !print_path_trace pt in *)
-      Some ((*"  path trace: " ^spt ^ "\nlocs: " ^ (!print_list_int ll) ^*) "cause: " ^s)
+    | Some (s) ->
+      Some ("cause: " ^s)
   in
   match bfl with
   | [] -> None
@@ -11139,16 +11160,18 @@ and get_must_failure_partial_context ((bfl:branch_fail list), (bctxl: branch_ctx
 
 (*currently, we do not use lor to combine traces,
   so just call get_may_falure_list_partial_context*)
-let rec get_failure_list_partial_context_x (ls:list_partial_context): (string*failure_kind*error_type list)=
+let rec get_failure_list_partial_context_x (ls:list_partial_context)
+  : (string*failure_kind*error_type list)=
   (*may use lor to combine the list first*)
   (*return failure of 1 lemma is enough*)
   if ls==[] then ("Empty list_partial_contex", Failure_May "empty lpc", [Heap])
   else
-    let (los, fk, ls_ets)= split3 (List.map get_failure_partial_context [(List.hd ls)]) in
+    let (los, fk, ls_ets) = split3 (List.map get_failure_partial_context [(List.hd ls)]) in
     (*los contains path traces*)
     (combine_helper "UnionR" [List.hd los] "", List.hd fk, List.concat ls_ets)
 
-and get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind*error_type list)=
+and get_failure_list_partial_context (ls:list_partial_context)
+  : (string*failure_kind*error_type list)=
   let pr1 = !print_list_partial_context in
   let pr2 (a,_,_) = a in
   Debug.no_1 "get_failure_list_partial_context" pr1 pr2
@@ -11156,16 +11179,15 @@ and get_failure_list_partial_context (ls:list_partial_context): (string*failure_
 
 and get_failure_branch bfl=
   let helper (pt, ft)=
-    (* let spt = !print_path_trace pt in *)
     let et = match ft with
       | Basic_Reason (fc,_,_) -> if string_eq fc.fc_message mem_leak then (Mem 1) else (Heap)
       | _ -> Heap
     in
-    match  (get_failure_ft ft) with
-    | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m, et)
-    | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m, et)
+    match (get_failure_ft ft) with
+    | Failure_Must m -> (Some ("  (must) cause: " ^ m),  Failure_Must m, et)
+    | Failure_May m -> (Some ("  (may) cause: " ^ m),  Failure_May m, et)
     | Failure_Valid -> (None, Failure_Valid, et)
-    | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m, et)
+    | Failure_Bot m -> (Some ("  unreachable: " ^ m), Failure_Bot m, et)
   in
   match bfl with
   | [] -> (None, Failure_Valid,[])
@@ -11175,7 +11197,8 @@ and get_failure_branch bfl=
       | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks), ets
     )
 
-and get_failure_partial_context_x ((bfl:branch_fail list), succs): (string option*failure_kind*error_type list)=
+and get_failure_partial_context_x ((bfl:branch_fail list), succs)
+  : (string option * failure_kind * error_type list) =
   let ((s_opt, ft, e) as r) = get_failure_branch bfl in
   if !bug_detect then r else
     match s_opt with
@@ -11187,7 +11210,8 @@ and get_failure_partial_context_x ((bfl:branch_fail list), succs): (string optio
         |  _ -> r
       end
 
-and get_failure_partial_context a: (string option*failure_kind*error_type list)=
+and get_failure_partial_context a
+  : (string option * failure_kind * error_type list) =
   let pr1 = !print_partial_context in
   let pr2 (a,_,_) = match a  with | None -> "" | Some s -> s in
   Debug.no_1 "get_failure_partial_context" pr1 ( pr2)
@@ -11924,6 +11948,7 @@ let mk_not_a_failure es =
   Basic_Reason ({
       fc_prior_steps = [];
       fc_message = "Success";
+      fc_current_ents = [];
       fc_current_lhs =  es;(* empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos; *)
       fc_orig_conseq =  mkETrue  (mkTrueFlow ()) no_pos;
       fc_failure_pts = [];
@@ -11941,6 +11966,7 @@ let invert ls =
       fc_message = "INCONSISTENCY : expected failure but success instead";
       fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled  no_pos;
       fc_prior_steps = [];
+      fc_current_ents = [];
       fc_orig_conseq  = es.es_orig_conseq;
       fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
       fc_failure_pts =  []} in
@@ -11979,6 +12005,7 @@ let invert_ctx_branch_must_fail (pt, ctx, oft):(branch_fail)=
       fc_message = "INCONSISTENCY : expected failure but success instead";
       fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
       fc_prior_steps = [];
+      fc_current_ents = [];
       fc_orig_conseq  = es.es_orig_conseq;
       fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
       fc_failure_pts =  []} in
@@ -12098,6 +12125,7 @@ let or_context_list cl10 cl20 =
 let mkFailContext msg estate conseq pid pos = {
   fc_prior_steps = estate.es_prior_steps ;
   fc_message = msg ;
+  fc_current_ents = [];
   fc_current_lhs = estate;
   fc_orig_conseq = estate.es_orig_conseq;
   fc_failure_pts = (match pid with | Some s-> [s] | _ -> []);
@@ -12108,10 +12136,11 @@ let mkFailCtx_in (ft:fail_type) (es, msg,fk) cex =
   FailCtx (ft, Ctx {es with es_final_error = es.es_final_error@[(msg, ft, fk)]}, cex)
 
 (*simple concurrency*)
-let mkFailCtx_simple msg estate conseq cex pos = 
+let mkFailCtx_simple msg estate conseq cex pos =
   let fail_ctx = {
     fc_message = msg;
     fc_current_lhs  = estate;
+    fc_current_ents = [];
     fc_prior_steps = estate.es_prior_steps;
     fc_orig_conseq  = struc_formula_of_formula conseq pos;
     fc_current_conseq = formula_of_heap HFalse pos;
@@ -12877,6 +12906,7 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
           fc_message = "INCONSISTENCY : expected failure but success instead";
           fc_current_lhs  =  empty_es (mkTrueFlow ()) Lab2_List.unlabelled no_pos;
           fc_prior_steps = [];
+          fc_current_ents = [];
           fc_orig_conseq  = conseq;
           fc_current_conseq = mkTrue (mkTrueFlow()) no_pos;
           fc_failure_pts =  []} in

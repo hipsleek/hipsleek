@@ -3876,15 +3876,14 @@ let pr_fail_estate (es:fail_context) =
   fmt_string "{";
   fmt_break 0 4;
   fmt_open_vbox 0;
-  (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;*)
-  (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)(* prior steps in reverse order *)
   pr_hwrap "fc_message: "  fmt_string es.fc_message; fmt_cut ();
   pr_add_str "fc_current_lhs_flow: " fmt_string (string_of_flow_formula "FLOW"
-                                                 (flow_formula_of_formula es.fc_current_lhs.es_formula)) ;
-  (*pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;  (* LHS context with success points *)*)
-  (*   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq; (* RHS conseq at the point of failure *)*)
-  (*   pr_vwrap "fc_current_conseq: " pr_formula es.fc_current_conseq; *)
-  (*pr_wrap_test "fc_failure_pts: "Gen.is_empty (pr_seq "" pr_formula_label) es.fc_failure_pts; *)  (* failure points in conseq *)
+                                                   (flow_formula_of_formula
+                                                      es.fc_current_lhs.es_formula));
+  fmt_cut();
+  pr_add_str "fc_current_ents: "
+    fmt_string
+    ((pr_list (pr_pair string_of_pure_formula string_of_pure_formula)) es.fc_current_ents) ;
   fmt_close ();
   fmt_cut_and_indent ();
   fmt_string "}"
@@ -4237,24 +4236,14 @@ let pr_list_failesc_context ?(nshort=true) (lc : list_failesc_context) =
 
 
 let pr_list_partial_context ?(nshort=true) (lc : list_partial_context) =
-  (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
   fmt_open_vbox 0;
   if nshort then fmt_string_cut ("List of Partial Context: " ^(summary_list_partial_context lc));
   match lc with [] -> () | _ -> fmt_cut ();
   pr_list_none (pr_partial_context ~nshort) lc;
   fmt_close_box ()
 
-(* let pr_list_partial_context_short (lc : list_partial_context) = *)
-(*   (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
-(*   (\* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *\) *)
-(*   fmt_cut (); pr_list_none (pr_partial_context ~nshort:false) lc *)
-
-(* let pr_list_partial_context_short (lc : list_partial_context) = *)
-(*     (\* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *\) *)
-(*    (\* fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) ); *\) *)
-(*    fmt_cut (); pr_list_none pr_partial_context_short lc *)
-
-let string_of_list_partial_context (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context lc
+let string_of_list_partial_context (lc: list_partial_context) =
+  poly_string_of_pr pr_list_partial_context lc
 
 let string_of_list_partial_context_short (lc: list_partial_context) =  poly_string_of_pr (pr_list_partial_context ~nshort:false) lc
 

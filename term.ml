@@ -459,6 +459,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
                 let fctx = {
                   fc_message = "Error in termination proving";
                   fc_current_lhs = estate;
+                  fc_current_ents = [];
                   fc_prior_steps = estate.es_prior_steps;
                   fc_orig_conseq = struc_formula_of_formula conseq_f pos;
                   fc_current_conseq = conseq_f;
@@ -497,10 +498,10 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
           (* Assumming Inference will be successed *)
           Some (t_ann, ml, il),
           (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
-          None, 
-          Some rank_formula  
+          None,
+          Some rank_formula
       in
-      let n_estate = 
+      let n_estate =
         let is_err, err_msg = match term_err_msg with Some msg -> true, msg | None -> false, "" in
         if is_en_error_exc estate && is_err then 
           let conseq_f = formula_of_mix_formula rhs_p pos in
@@ -508,6 +509,7 @@ let check_term_measures prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv
           let fctx = {
             fc_message = "Error in termination proving";
             fc_current_lhs = estate;
+            fc_current_ents = [];
             fc_prior_steps = estate.es_prior_steps;
             fc_orig_conseq = struc_formula_of_formula conseq_f pos;
             fc_current_conseq = conseq_f;
@@ -640,18 +642,19 @@ let check_term_rhs prog estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           | Fail TermErr_May -> 
             Some (Fail TermErr_May, src_lv, src_il), Failure_May term_msg
           | _ -> failwith "unexpected Term/TermU in check_term_rhs"
-        in 
-        let n_estate = 
-          if is_en_error_exc estate then 
+        in
+        let n_estate =
+          if is_en_error_exc estate then
             let conseq_f = formula_of_mix_formula rhs_p pos in
             let fctx = {
               fc_message = "Error in termination proving";
               fc_current_lhs = estate;
+              fc_current_ents = [];
               fc_prior_steps = estate.es_prior_steps;
               fc_orig_conseq = struc_formula_of_formula conseq_f pos;
               fc_current_conseq = conseq_f;
               fc_failure_pts = []; } in
-            let f_exp = { fe_kind = f_kind; fe_name = ""; fe_locs = []; } in 
+            let f_exp = { fe_kind = f_kind; fe_name = ""; fe_locs = []; } in
             let f_type = Basic_Reason (fctx, f_exp, []) in
             { estate with 
               es_formula =

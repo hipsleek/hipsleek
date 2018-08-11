@@ -383,7 +383,6 @@ let read_last_line_from_in_channel chn : string =
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
   (*  try*)
-  print_string "dflfdf";
   begin
     (* let () = x_binfo_pp f no_pos in *)
     if not !is_omega_running then start_prover ()

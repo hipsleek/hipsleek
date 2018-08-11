@@ -55,7 +55,9 @@ let reset_repair_ref =
   ()
 
 let get_repair_ents rs proc =
-  let (trace, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
+  let pr1 = Cprinter.string_of_list_partial_context in
+  let () = x_tinfo_hp (add_str "rs: " pr1) rs no_pos in
+  let (_, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
   let rec get_failed_ctx typ = match typ with
     | CF.Basic_Reason (ctx,_, _) -> [ctx]
     | CF.Or_Reason (a, b) -> let () = x_tinfo_pp "marking \n" no_pos in
@@ -65,40 +67,42 @@ let get_repair_ents rs proc =
         Err.error_text = ("unhandled")
       }
   in
-  let get_entailment ctx =
-    let lhs = ctx.CF.fc_current_lhs.es_formula in
-    let rhs = ctx.CF.fc_orig_conseq in
-    let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_formula)
-        lhs no_pos in
-    let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
-        rhs no_pos in
-
-    let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
-                   |> CP.elim_idents in
-    let pure_lhs = lhs |> CF.get_pure in
-    let pure_lhs = CP.elim_idents pure_lhs in
-    let filter x =
-      let svs = CP.fv x in
-      let typs = List.map CP.typ_of_sv svs in
-      let () = x_tinfo_hp (add_str "entails: "
-                             (pr_list Globals.string_of_typ)) typs no_pos in
-      try
-        let _ = List.find (fun t -> t != Globals.Int
-                                    && t != Globals.Bool &&
-                                    t != Globals.UNK) typs in
-        false
-      with _ -> true
-    in
-    let pure_lhs = pure_lhs |> CP.list_of_conjs |> List.filter filter
-                   |> CP.join_conjunctions in
-    let pure_rhs = pure_rhs |> CP.list_of_conjs |> List.filter filter
-                   |> CP.join_conjunctions in
-    (pure_lhs, pure_rhs)
-  in
+  let get_entailment ctx = ctx.CF.fc_current_ents in
+    (* let lhs = ctx.CF.fc_current_lhs.es_formula in
+     * let rhs = ctx.CF.fc_orig_conseq in
+     * let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_formula)
+     *     lhs no_pos in
+     * let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
+     *     rhs no_pos in
+     *
+     * let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
+     *                |> CP.elim_idents in
+     * let pure_lhs = lhs |> CF.get_pure_heap_and_base in
+     * let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_pure_formula)
+     *     pure_lhs no_pos in
+     * let pure_lhs = CP.elim_idents pure_lhs in
+     * let filter x =
+     *   let svs = CP.fv x in
+     *   let typs = List.map CP.typ_of_sv svs in
+     *   let () = x_tinfo_hp (add_str "entails: "
+     *                          (pr_list Globals.string_of_typ)) typs no_pos in
+     *   try
+     *     let _ = List.find (fun t -> t != Globals.Int
+     *                                 && t != Globals.Bool &&
+     *                                 t != Globals.UNK) typs in
+     *     false
+     *   with _ -> true
+     * in
+     * let pure_lhs = pure_lhs |> CP.list_of_conjs |> List.filter filter
+     *                |> CP.join_conjunctions in
+     * let pure_rhs = pure_rhs |> CP.list_of_conjs |> List.filter filter
+     *                |> CP.join_conjunctions in
+     * (pure_lhs, pure_rhs) *)
+  (* in *)
   let failed_ctx = get_failed_ctx typ in
   let failed_ctx = List.filter
       (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
-  let entails = List.map get_entailment failed_ctx in
+  let entails = failed_ctx |> List.map get_entailment |> List.concat in
   let () = x_binfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
@@ -2811,7 +2815,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
           let n_ctx =
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
-          let () = x_binfo_hp (add_str "n_ctx:"
+          let () = x_tinfo_hp (add_str "n_ctx:"
                                  Cprinter.string_of_list_failesc_context) n_ctx
               no_pos in
           n_ctx
@@ -3044,8 +3048,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
           prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf
   in
-  let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_tinfo_hp (add_str "rs: " pr1) rs pos in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
       begin
@@ -3075,7 +3077,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = x_binfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
