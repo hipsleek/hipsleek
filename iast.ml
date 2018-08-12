@@ -4094,6 +4094,7 @@ let list_of_candidate_exp (exp: exp) =
     | Var _ -> [(exp, false)] @ list
     | VarDecl _ -> list
     | Unary e -> aux e.exp_unary_exp list
+    | IntLit _ -> [(exp, false)]@ list
     | _ -> list
     (* | _ -> report_error no_pos "list_of_condidate_exp: this exp is not supported" *)
   in List.rev(aux exp [])
@@ -4118,8 +4119,13 @@ let replace_assign_exp exp vars heuristic =
       | Cast cast -> aux cast.exp_cast_body list
       | Var var -> [var.exp_var_name] @ list
       | IntLit _ -> list
-      | CallNRecv _ -> list
-      |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported"
+      | CallNRecv call ->
+        let n_list = [(call.exp_call_nrecv_method)] @ list in
+        let arguments = List.map (fun x -> aux x [])
+            call.exp_call_nrecv_arguments in
+        (List.concat arguments) @ n_list
+      | _ -> list
+      (* |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported" *)
     in
     let vars = List.rev (aux exp []) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
@@ -4143,14 +4149,8 @@ let replace_assign_exp exp vars heuristic =
     let exp_vars = simple_collect_vars exp in
     let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos
     in
-    (* let exp_vars = List.filter (fun x -> List.mem x vars) exp_vars in *)
-    if (exp_vars == []) then (exp, [], [])
-    else if (sublist exp_vars vars & not (is_cond exp)) then
-      if not(heuristic) then
-        (mk_unk_exp exp_vars (get_exp_pos exp), exp_vars, [get_exp_pos exp])
-      else
-        failwith "not allowed heuristics now."
-        (* (mk_unk_exp vars (get_exp_pos exp), vars, [get_exp_pos exp]) *)
+    if (sublist exp_vars vars & not (is_cond exp)) then
+      (mk_unk_exp exp_vars (get_exp_pos exp), exp_vars, [get_exp_pos exp])
     else
       match exp with
       | Binary b ->
@@ -4166,7 +4166,12 @@ let replace_assign_exp exp vars heuristic =
             }, b1 @ b2, c1@c2)
       | _ -> (exp, [], [])
 
-  in replace exp vars
+  in
+  let () = x_tinfo_hp (add_str "vars: " (pr_list pr_id)) vars no_pos in
+  let exp_vars = simple_collect_vars exp in
+  if (exp_vars == []) then
+    (mk_unk_exp [] (get_exp_pos exp), [], [get_exp_pos exp])
+  else replace exp vars
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
@@ -4213,14 +4218,14 @@ let rec replace_exp_with_loc exp n_exp loc =
                  exp_cond_then_arm = r_then_branch;
                  exp_cond_else_arm = r_else_branch}
   | Catch e ->
-    Catch { e with exp_catch_body = replace_exp_with_loc e.exp_catch_body n_exp loc}
+    Catch {
+      e with exp_catch_body = replace_exp_with_loc e.exp_catch_body n_exp loc }
+  | IntLit e -> if (e.exp_int_lit_pos = loc) then n_exp else exp
   | Label (a, body) -> Label (a, replace_exp_with_loc body n_exp loc)
   | Member e ->
     Member {e with exp_member_base = replace_exp_with_loc e.exp_member_base n_exp loc}
   | New e ->
     exp
-    (* let r_args = List.map (fun x -> repair_exp x exp_decls) e.exp_new_arguments in
-     * New { e with exp_new_arguments = r_args} *)
   | Return e ->
     (* exp *)
     let r_val = match e.exp_return_val with
@@ -4233,7 +4238,6 @@ let rec replace_exp_with_loc exp n_exp loc =
     Seq {e with exp_seq_exp1 = r_e1;
                 exp_seq_exp2 = r_e2}
   | Unary e -> exp
-    (* Unary {e with exp_unary_exp = repair_exp e.exp_unary_exp exp_decls} *)
   | Var v -> if (v.exp_var_pos = loc) then n_exp else exp
   | _ -> exp
 
@@ -4241,8 +4245,8 @@ let rec normalize_exp exp = match exp with
   | Binary e ->
     begin
       match e.exp_binary_op with
-      | OpEq
-      | OpNeq
+      (* | OpEq
+       * | OpNeq *)
       | OpLt
       | OpLte
       | OpGt
