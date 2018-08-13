@@ -56,7 +56,7 @@ let reset_repair_ref =
 
 let get_repair_ents rs proc =
   let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_tinfo_hp (add_str "rs: " pr1) rs no_pos in
+  let () = x_binfo_hp (add_str "rs: " pr1) rs no_pos in
   let (_, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
   let rec get_failed_ctx typ = match typ with
     | CF.Basic_Reason (ctx,_, _) -> [ctx]
@@ -72,7 +72,7 @@ let get_repair_ents rs proc =
   let failed_ctx = List.filter
       (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
   let entails = failed_ctx |> List.map get_entailment |> List.concat in
-  let () = x_binfo_hp (add_str "entails: "
+  let () = x_tinfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in
@@ -3040,7 +3040,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
-        (* TODO: handle all list, not just first error *)
         let () = get_repair_ents rs proc in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else

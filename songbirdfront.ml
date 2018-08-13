@@ -183,7 +183,9 @@ let create_templ_prog prog ents templ
   =
   let program = SBCast.mk_program "hip_input" in
   let fun_name = CP.name_of_sv templ.CP.templ_id in
-  let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in
+  let exp_decl = List.hd (prog.Cast.prog_exp_decls) in
+  let args = exp_decl.Cast.exp_params |> List.map translate_var in
+  (* let args = templ.templ_args |> List.map CP.afv |> List.concat |> List.map translate_var in *)
   let f_defn = SBCast.mk_func_defn_unknown fun_name args in
   let ifr_typ = SBGlobals.IfrStrong in
   let infer_func = {
