@@ -1040,20 +1040,29 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
       (*   else []                                                          *)
       (* ) in                                                               *)
 
+      let () = y_tinfo_pp "paset not empty" in
+
       (* create a distinct match for each possible alias insted of          *)
       (* creating one single match comprising  each possible alias          *)
+      let spatial_ctx_extract_helper paset = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
       let mt_res =
-        List.map (fun (alias,_,univ) ->
-            let paset = alias::paset in
-            let mt_res = x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in
-            match univ with
-            | None    -> mt_res
-            | Some un ->
-              List.map (fun mt_res ->
-                  {mt_res with match_res_univ_rhs = un::mt_res.match_res_univ_rhs}
-                ) mt_res
-          ) lst in
+        match lst with
+        | [] -> [spatial_ctx_extract_helper paset]
+        | _  ->
+          List.map (fun (alias,_,univ) ->
+              let paset = alias::paset in
+              let mt_res = spatial_ctx_extract_helper paset in
+              match univ with
+              | None    -> mt_res
+              | Some un ->
+                List.map (fun mt_res ->
+                    {mt_res with match_res_univ_rhs = un::mt_res.match_res_univ_rhs}
+                  ) mt_res
+            ) lst
+      in
       let mt_res = List.flatten mt_res in
+      let pr2 l = pr_list string_of_match_res l in
+      let () = y_tinfo_hp (add_str "mt_res" pr2) mt_res in
       (* x_add (spatial_ctx_extract ~impr_lst:(impr_stk # get_stk) ~view_roots:root_lst ~rhs_root:view_root_rhs) prog lhs_rhs_pure estate lhs_h paset imm pimm rhs_node rhs_rest emap in *)
       (* let mt_res = *)
       (*   match rhs_inst_eq with *)

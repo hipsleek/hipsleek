@@ -193,7 +193,7 @@ file Server_helper_seq3(file fd)
 }
 
 //below is OK to fail
-file Server_helper_seq4(file fd)
+file Server_helper_seq4_fail(file fd)
      requires fd::MEDIA_FILE<vid,aud> * @full[fd]
      ensures  res::EFF_MEDIA_FILE<fd> ;
 {
