@@ -1778,8 +1778,7 @@ and elim_exists_pure_branch_x ?(revflag=false) (w : CP.spec_var list) (f0 :
   {FLOW,(19,20)=__norm}[]
 *)
 (* --- added 11.05.2008 *)
-and entail_state_elim_exists_x es = 
-  (* let f_prim = elim_exists es.es_formula in *)
+and entail_state_elim_exists_x es =
   let pr_f = Cprinter.string_of_formula in
   let pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
@@ -1787,9 +1786,9 @@ and entail_state_elim_exists_x es =
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (* EXAMPLE
-     @5! f(b4 elim_exists_es_his): 
+     @5! f(b4 elim_exists_es_his):
      (exists mi_15: x::cell<mi_15>@M[Orig]&mi_15=v&{FLOW,(19,20)=__norm})[]
-     @5! f(b4 elim_exists_es_his): 
+     @5! f(b4 elim_exists_es_his):
      x::cell<v>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
   *)
   (* x_tinfo_hp (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos; *)
@@ -1833,11 +1832,11 @@ and elim_exists_ctx_list (ctx0 : list_context) =
 and elim_exists_partial_ctx_list (ctx0 : list_partial_context) = 
   transform_list_partial_context (entail_state_elim_exists, (fun c-> c)) ctx0
 
-and elim_exists_failesc_ctx_list_x (ctx0 : list_failesc_context) = 
+and elim_exists_failesc_ctx_list_x (ctx0 : list_failesc_context) =
   transform_list_failesc_context (idf,idf,entail_state_elim_exists) ctx0
 
 and elim_exists_failesc_ctx_list (ctx0 : list_failesc_context) =
-  Gen.Profiling.do_1 "elim_exists_failesc_ctx_list" 
+  Gen.Profiling.do_1 "elim_exists_failesc_ctx_list"
     elim_exists_failesc_ctx_list_x ctx0
 
 and elim_exists_ctx_x (ctx0:context) =
@@ -1860,7 +1859,7 @@ and elim_ante_evars (es:entail_state) : context =
       no_pos in
   let () = x_tinfo_hp (add_str "elim evars" Cprinter.string_of_spec_var_list) es.es_evars no_pos in
   if es.es_evars==[] then Ctx es
-  else 
+  else
     let f = push_exists es.es_evars es.es_formula in
     let ef = elim_exists f in
     Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
@@ -4574,7 +4573,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               let fc_template = mkFailContext "" new_estate conseq None pos in
               let lc = x_add Musterr.build_and_failures 5 "early contra detect: " fc
                   Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
-              let () = Debug.tinfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
+              let () = Debug.binfo_hprint  (add_str "lc457" Cprinter.string_of_list_context) lc no_pos  in
               (lc,prf)
           else
             match (r1,prf) with
@@ -7548,7 +7547,7 @@ type: bool *
         let cex = x_add Slsat.check_sat_empty_rhs_with_uo estate_orig lhs (MCP.pure_of_mix rhs_p) rhs_matched_set in
         let is_sat = CF.is_sat_fail cex in
         if not !disable_failure_explaining then
-          let new_estate = if (* !Globals.enable_error_as_exc || *)
+          let new_estate = if
             CF.is_en_error_exc estate then {
               estate with es_formula =
                             match fc_kind with
@@ -7576,7 +7575,8 @@ type: bool *
             else
               (must_list, may_list, contra_list)
           in
-          let () = x_tinfo_zp (lazy ("new estate: " ^ (Cprinter.string_of_entail_state new_estate))) pos in
+          let pr_es = Cprinter.string_of_entail_state in
+          let () = x_dinfo_zp (lazy ("new estate: " ^ (pr_es new_estate))) pos in
           let lc0 = x_add Musterr.build_and_failures 1 "213" fc_kind Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
           (lc0, prf)
         else

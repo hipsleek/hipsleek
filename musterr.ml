@@ -161,7 +161,8 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string)
                              fc_current_ents = failure_list;
                             }, fe, ft))
     in
-    let contra_fail_type = build_and_one_kind_failures "RHS: contradiction" (Failure_Must "") contra_list in
+    let contra_fail_type = build_and_one_kind_failures "RHS: contradiction"
+        (Failure_Must "") contra_list in
     let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in
     let may_fail_type = build_and_one_kind_failures "may-bug" (Failure_May "") may_list in
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in

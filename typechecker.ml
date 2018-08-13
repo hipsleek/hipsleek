@@ -56,7 +56,7 @@ let reset_repair_ref =
 
 let get_repair_ents rs proc =
   let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_binfo_hp (add_str "rs: " pr1) rs no_pos in
+  let () = x_tinfo_hp (add_str "rs: " pr1) rs no_pos in
   let (_, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
   let rec get_failed_ctx typ = match typ with
     | CF.Basic_Reason (ctx,_, _) -> [ctx]
@@ -714,7 +714,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                 x_dinfo_pp ("Post Vars :"^(Cprinter.string_of_spec_var_list posts)) pos;
                 x_dinfo_pp ("Extra Implicit Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                 x_dinfo_pp ("Extra Explicit Vars :"^(Cprinter.string_of_spec_var_list expl_vs)) pos;
-                x_tinfo_pp ("Res ctx:" ^ (Cprinter.string_of_list_partial_context res_ctx)) pos;
+                x_dinfo_pp ("Res ctx:" ^ (Cprinter.string_of_list_partial_context res_ctx)) pos;
                 (* TODO: Timing *)
                 let res_ctx = Infer.add_impl_expl_vars_list_partial_context
                     impl_vs expl_vs res_ctx in
@@ -1302,7 +1302,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         } in
       List.map (CF.transform_failesc_context (idf,idf,f)) ctx
     else ctx in
-  if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
+  if (exp_to_check e0) then CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
   let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     match e0 with
@@ -1537,9 +1537,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_assign_rhs = rhs;
         exp_assign_pos = pos }) ->
       let pr = Cprinter.string_of_exp in
-      (* let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void")
-       *     (fun rhs -> x_add check_exp prog proc ctx rhs post_start_label) rhs
-       * in *)
       let () = x_tinfo_hp (add_str "ctx before rhs: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos
       in
@@ -1601,10 +1598,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   compose_ctx
                 else (CF.Ctx c1) in
-              res 
+              res
             in
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
-            let () = CF.must_consistent_list_failesc_context "assign final" res  in
+            let () = CF.must_consistent_list_failesc_context "assign final" res
+            in
+            let () = x_tinfo_hp (add_str "ctx final: "
+                             Cprinter.string_of_list_failesc_context) res no_pos
+            in
             res
         end
       in
@@ -1971,6 +1972,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           stk_vars # push_list vss;
           let () = x_tinfo_hp (add_str "block" pr_id) (stk_vars # string_of_no_ln) no_pos in
           let ctx1 = x_add check_exp prog proc ctx e post_start_label in
+          let () = x_tinfo_hp (add_str "CTX1: "
+                                 Cprinter.string_of_list_failesc_context) ctx1
+              no_pos in
           stk_vars # pop_list vss;
           let ctx1 = VP.clear_vperm_sets_list_failesc_ctx [(VP_Full, vss)] ctx1 in
           let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
@@ -1978,8 +1982,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let nd_vars = CF.collect_nondet_vars_list_failesc_context ctx1 in
           let svars = Gen.BList.difference_eq CP.eq_spec_var svars nd_vars in
           let ctx2 = x_add CF.push_exists_list_failesc_context svars ctx1 in
+          let () = x_tinfo_hp (add_str "CTX2: "
+                                 Cprinter.string_of_list_failesc_context) ctx2
+              no_pos in
           let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
           Gen.Profiling.pop_time "[check_exp] Block";
+          let () = x_tinfo_hp (add_str "res: "
+                                 Cprinter.string_of_list_failesc_context) res
+              no_pos in
           res
         with ex -> Gen.Profiling.pop_time "[check_exp] Block"; raise ex
       end
@@ -2063,6 +2073,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
     | Dprint ({exp_dprint_string = str;
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
+        let pr1 = Cprinter.string_of_list_failesc_context in
+        let () = x_binfo_hp (add_str "ctx: " pr1) ctx no_pos in
         let curr_svl = stk_vars # get_stk in
         let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         let ctx2 = list_failesc_context_and_unsat_now prog ctx in
@@ -2088,7 +2100,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)
                     ^ ": ctx: " ^ str1 ^ "\n" in
              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-             let tmp2 = 
+             let tmp2 =
                if !Globals.simplify_dprint then
                  "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
@@ -2647,6 +2659,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               exp_sharp_path_id = pid;
               exp_sharp_pos = pos})	->
       (**********INTERNAL************)
+      let () = x_tinfo_hp (add_str "sharp start: "
+                             Cprinter.string_of_list_failesc_context) ctx no_pos
+      in
       let look_up_typ_first_fld obj_name=
         let dclr = x_add Cast.look_up_data_def_raw prog.Cast.prog_data_decls obj_name in
         let (t,_),_ = (List.hd dclr.Cast.data_fields) in
@@ -2736,7 +2751,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     CF.set_flow_in_formula (CF.get_flow_from_stack v !flow_store
                                               pos)
                       es.CF.es_formula})) nctx in
-      CF.add_path_id_ctx_failesc_list r (pid,0) (-1)
+      let res = CF.add_path_id_ctx_failesc_list r (pid,0) (-1) in
+      let () = x_tinfo_hp (add_str "ctx sharp after: "
+                               Cprinter.string_of_list_failesc_context) res no_pos
+      in
+      res
     | Try ({exp_try_body = body;
             exp_catch_clause = cc;
             exp_try_path_id = pid;
@@ -2830,11 +2849,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
 
     | _ ->
       failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
+
   let check_exp1_a (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     let pr = Cprinter.string_of_list_failesc_context in
     Debug.no_1 "check_exp1" pr pr check_exp1 ctx in
+
   let check_exp1_x (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     Gen.Profiling.do_1 "check_exp1" (x_add_1 check_exp1_a) ctx in
+
   let ctx = if (not !Globals.failure_analysis)
     then List.filter (fun (f,s,c)-> Gen.is_empty f ) ctx
     else ctx in
@@ -2845,9 +2867,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
   (* fl denote all failed states *)
   let (fl,cl) = List.partition (fun (_,s,c) -> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
   let failesc = x_add CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-  x_tinfo_hp (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
-  x_tinfo_hp (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
-  x_tinfo_hp (add_str "check_exp1:out(failesc):"
+  x_dinfo_hp (add_str "check_exp1:failed?(fl):"Cprinter.string_of_list_failesc_context) fl no_pos;
+  x_dinfo_hp (add_str "check_exp1:inp(cl):"Cprinter.string_of_list_failesc_context) cl no_pos;
+  x_dinfo_hp (add_str "check_exp1:out(failesc):"
                 Cprinter.string_of_list_failesc_context_short) failesc no_pos;
   ((check_exp1_x failesc) @ fl)
 

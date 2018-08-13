@@ -4290,11 +4290,8 @@ and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula)
   with _ -> failwith (x_loc ^ "[subst_avoid_capture]: Cannot combine fr and t")
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_subs sst f
-(* match sst with *)
-(* | s::ss -> subst ss (apply_one s f) 				(\* applies one substitution at a time *\) *)
-(* | [] -> f *)
 
-(*LDK ???*) 
+(*LDK ???*)
 and subst_var (fr, t) (o : spec_var) = 
   if eq_spec_var fr o then t
   else o
@@ -4359,7 +4356,7 @@ and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr || (eq_s
 (*subst everything excluding VarPerm*)
 and b_apply_subs sst bf =
   let pr = !print_b_formula in
-  Debug.no_1 "b_apply_subs" pr 
+  Debug.no_1 "b_apply_subs" pr
     pr (fun _ -> b_apply_subs_x sst bf) bf
 
 and b_apply_subs_x sst bf =
@@ -4521,12 +4518,10 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
   (* Template: Do not substitute into unknowns *)
-  | Template t -> e
-    (* if (!Globals.enable_repair) then e
-     * else
-     *   Template { t with
-     *              templ_args = List.map (e_apply_subs sst) t.templ_args;
-     *              templ_body = map_opt (e_apply_subs sst) t.templ_body; } *)
+  | Template t ->
+    Template { t with
+               templ_args = List.map (e_apply_subs sst) t.templ_args;
+               templ_body = map_opt (e_apply_subs sst) t.templ_body; }
 
 and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
 

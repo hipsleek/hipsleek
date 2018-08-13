@@ -4577,13 +4577,12 @@ and formula_of_disjuncts (f:formula list) : formula=
   | x::xs -> List.fold_left (fun a c-> mkOr a c no_pos) x xs
 
 and rename_struc_bound_vars ?(stk=None) (f:struc_formula):struc_formula = match f with
-  | ECase b-> 
-    (* let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_case_exists in *)
-    let f = ECase {b with (* formula_case_exists = (snd (List.split sst3)); *)
+  | ECase b->
+    let f = ECase {b with
                    formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.rename_top_level_bound_vars c1),(rename_struc_bound_vars ~stk:stk c2))) b.formula_case_branches;} in
     (* subst_struc  sst3  f *)
     f
-  | EBase b-> 
+  | EBase b->
     let sst1 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_explicit_inst in
     let sst2 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_implicit_inst in
     let sst3 = List.map (fun v -> (v,(CP.fresh_spec_var v))) b.formula_struc_exists in
@@ -4591,7 +4590,7 @@ and rename_struc_bound_vars ?(stk=None) (f:struc_formula):struc_formula = match 
       | None -> ()
       | Some stk -> stk # push_list sst2 in
     let sst = sst1@sst2@sst3 in
-    let f = EBase {b with 
+    let f = EBase {b with
                    formula_struc_implicit_inst = (snd (List.split sst2));
                    formula_struc_explicit_inst = (snd (List.split sst1));
                    formula_struc_exists = (snd (List.split sst3));
@@ -13592,12 +13591,12 @@ and find_false_ctx ctx pos =
       false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
-  if (List.exists isAnyFalseFailescCtx ctx) then 
+  if (List.exists isAnyFalseFailescCtx ctx) then
     false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
   else ()
 
 
-and guard_vars (f:struc_formula) = 
+and guard_vars (f:struc_formula) =
   let rdv = Gen.BList.remove_dups_eq (=) in
   match f with
   | ECase b-> rdv (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
@@ -14548,7 +14547,7 @@ let trans_list_partial_context (c: list_partial_context)
   let n_c, acc = List.split (List.map (fun ctx -> trans_partial_context ctx arg f_c f_c_arg f_comb) c) in
   (n_c, f_comb acc)
 
-let rec transform_fail_ctx f (c:fail_type) : fail_type = 
+let rec transform_fail_ctx f (c:fail_type) : fail_type =
   match c with
   | Trivial_Reason _ -> c
   | Basic_Reason (br,fe,ft) -> Basic_Reason ((f br), fe, ft)
@@ -14558,7 +14557,7 @@ let rec transform_fail_ctx f (c:fail_type) : fail_type =
   | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
   | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
 
-let transform_list_context f (c:list_context):list_context = 
+let transform_list_context f (c:list_context):list_context =
   let f_c,f_f = f in
   match c with
   | FailCtx (fc, c, cex) -> FailCtx ((transform_fail_ctx f_f fc), c, cex) (* Loc: to check cex here *)
@@ -14574,20 +14573,19 @@ let transform_branch_ctx f_es (ls:branch_ctx list): branch_ctx list =
   let rs = List.map (fun (lbl, ctx, oft) -> (lbl, transform_context f_es ctx, oft) ) ls in
   rs
 
-let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
+let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context =
   let ff,fe,fs = f in
   let rf = List.map (fun (lbl, ctx) -> (lbl, transform_fail_ctx ff ctx) ) fail_c in
   let re = fe esc_c in
-  (* let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in *)
   let rs = transform_branch_ctx fs succ_c in
   (rf, re,rs)
 
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c
 
-let transform_list_failesc_context 
+let transform_list_failesc_context
     (f:(fail_context -> fail_context) * (esc_stack -> esc_stack) * (entail_state -> context))
-    (c:list_failesc_context): list_failesc_context = 
+    (c:list_failesc_context): list_failesc_context =
   List.map (transform_failesc_context f) c
 
 
