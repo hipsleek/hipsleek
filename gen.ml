@@ -2144,7 +2144,7 @@ struct
     | None -> a
 
   (** removing 'option' types *)
-  let unsome : 'a option -> 'a = 
+  let unsome : 'a option -> 'a =
     function
     | Some x -> x
     | None   -> failwith "[util] tried to deoptionify None"

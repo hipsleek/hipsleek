@@ -4102,6 +4102,45 @@ let list_of_candidate_exp (exp: exp) =
     (* | _ -> report_error no_pos "list_of_condidate_exp: this exp is not supported" *)
   in List.rev(aux exp [])
 
+(* Find AND/OR position to mutate *)
+let collect_logical_locs (exp: exp) =
+  let rec aux exp list =
+    match exp with
+    | Assign e -> aux e.exp_assign_rhs list
+    | Binary exp_binary ->
+      begin
+        match exp_binary.exp_binary_op with
+        | OpLogicalAnd
+        | OpLogicalOr ->
+          let list1 = [(exp_binary.exp_binary_pos)] @list in
+          let list2 = aux exp_binary.exp_binary_oper1 list1 in
+          aux exp_binary.exp_binary_oper2 list2
+        | _ ->
+          let n_list = aux exp_binary.exp_binary_oper1 list in
+          aux exp_binary.exp_binary_oper2 n_list
+      end
+    | Block block ->
+      aux block.exp_block_body list
+    | CallRecv _ -> list
+    | CallNRecv _ -> list
+    | Cond exp_cond ->
+      let exp1_list = aux exp_cond.exp_cond_condition list in
+      let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
+      aux exp_cond.exp_cond_else_arm exp2_list
+    | Label (a, lexp) -> aux lexp list
+    | Return res ->
+      begin
+        match res.exp_return_val with
+        | None -> list
+        | Some e -> aux e list
+      end
+    | Seq exp_seq ->
+      let exp1_list = aux exp_seq.exp_seq_exp1 list in
+      aux exp_seq.exp_seq_exp2 exp1_list
+    | Unary e -> aux e.exp_unary_exp list
+    | _ -> list
+  in List.rev(aux exp [])
+
 let replace_assign_exp exp vars heuristic =
   let rec prelist a b = match a, b with
     | [], _ -> true
@@ -4370,3 +4409,65 @@ let normalize_proc iprog proc_decl =
 
 let normalize_prog iprog =
   {iprog with prog_proc_decls = List.map (fun x -> normalize_proc iprog x) iprog.prog_proc_decls}
+
+let rec mutate_exp loc exp = match exp with
+  | Assign e ->
+    let () = x_tinfo_pp "marking \n" no_pos in
+    Assign { e with exp_assign_rhs = mutate_exp loc e.exp_assign_rhs}
+  | Binary e ->
+    begin
+      match e.exp_binary_op with
+      | OpLogicalAnd ->
+        if (VarGen.eq_loc e.exp_binary_pos loc) then
+          Binary {e with exp_binary_op = OpLogicalOr}
+        else
+          let exp1 = mutate_exp loc e.exp_binary_oper1 in
+          let exp2 = mutate_exp loc e.exp_binary_oper2 in
+          Binary {e with exp_binary_oper1 = exp1;
+                         exp_binary_oper2 = exp2;}
+      | OpLogicalOr ->
+        if (VarGen.eq_loc e.exp_binary_pos loc) then
+          let () = x_tinfo_pp "marking \n" no_pos in
+          Binary {e with exp_binary_op = OpLogicalAnd}
+        else
+          let exp1 = mutate_exp loc e.exp_binary_oper1 in
+          let exp2 = mutate_exp loc e.exp_binary_oper2 in
+          Binary {e with exp_binary_oper1 = exp1;
+                         exp_binary_oper2 = exp2;}
+      | _ ->
+        let exp1 = mutate_exp loc e.exp_binary_oper1 in
+        let exp2 = mutate_exp loc e.exp_binary_oper2 in
+        Binary {e with exp_binary_oper1 = exp1;
+                       exp_binary_oper2 = exp2;}
+    end
+  | Block b ->
+    let () = x_tinfo_pp "marking \n" no_pos in
+    Block {b with exp_block_body = mutate_exp loc b.exp_block_body }
+  | Cond exp_cond ->
+    let () = x_tinfo_pp "marking \n" no_pos in
+    let exp1 = mutate_exp loc exp_cond.exp_cond_condition in
+    let exp2 = mutate_exp loc exp_cond.exp_cond_then_arm in
+    let exp3 = mutate_exp loc exp_cond.exp_cond_else_arm in
+    Cond {exp_cond with exp_cond_condition = exp1;
+                        exp_cond_then_arm = exp2;
+                        exp_cond_else_arm = exp3}
+  | Label (a, lexp) -> Label (a, mutate_exp loc lexp)
+  | Return res ->
+    begin
+      match res.exp_return_val with
+      | None -> exp
+      | Some e -> Return {res with exp_return_val = Some (mutate_exp loc e)}
+    end
+  | Seq e ->
+    let exp1 = mutate_exp loc e.exp_seq_exp1 in
+    let exp2 = mutate_exp loc e.exp_seq_exp2 in
+    Seq {e with exp_seq_exp1 = exp1;
+                exp_seq_exp2 = exp2}
+  | Unary e -> Unary {e with exp_unary_exp = mutate_exp loc e.exp_unary_exp}
+  | _ -> exp
+
+
+
+let mutate_prog loc iprog =
+  let () = x_tinfo_hp (add_str "loc" (VarGen.string_of_loc)) loc no_pos in
+  {iprog with proc_body = Some (mutate_exp loc (Gen.unsome iprog.proc_body))}
