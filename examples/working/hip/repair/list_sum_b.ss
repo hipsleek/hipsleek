@@ -1,3 +1,5 @@
+func int tf(int k) == ?.
+
 data node {
 	int val;
 	node next
@@ -14,7 +16,7 @@ requires x::ll<n> ensures res = n;
   else {
        int k;
        k = sum(x.next);
-       return x.val - k;
+       return x.val - tf(k);
   }
 }
 

@@ -4030,6 +4030,9 @@ let list_vars exp iprog =
       let vars = List.map (fun (a, _, _) -> a) e.exp_var_decl_decls in
       let decls = List.map (fun x -> (x, e.exp_var_decl_type)) vars in
       decls@list
+    | Cond e ->
+      let n_list = aux e.exp_cond_then_arm list in
+      aux e.exp_cond_else_arm n_list
     | _ -> list
   in
   let globals = iprog.prog_global_var_decls in
@@ -4124,6 +4127,9 @@ let replace_assign_exp exp vars heuristic =
         let arguments = List.map (fun x -> aux x [])
             call.exp_call_nrecv_arguments in
         (List.concat arguments) @ n_list
+      | Member e ->
+        let n_list = aux e.exp_member_base list in
+        e.exp_member_fields @ list
       | _ -> list
       (* |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported" *)
     in
