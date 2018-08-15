@@ -249,8 +249,7 @@ let get_repair_candidate prog ents cond_op =
   let fun_def_exp = get_func_exp fun_defs prog.Cast.prog_exp_decls in
   match fun_def_exp with
     | Some fun_def_cexp ->
-      (* let fun_def_cexp = translate_back_exp fun_sb_exp in *)
-      let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
+      let () = x_binfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
                                                         Cprinter.pr_formula_exp)
                           ) fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in

@@ -87,7 +87,7 @@ let repair_prog_with_templ_main iprog cprog =
           let mingled_name = Cast.mingle_name x.I.proc_name typs in
           contains proc_name_to_repair mingled_name)
           iprog.I.prog_proc_decls in
-      let () = x_binfo_hp (add_str "old proc: " (Iprinter.string_of_proc_decl))
+      let () = x_tinfo_hp (add_str "old proc: " (Iprinter.string_of_proc_decl))
           proc_to_repair no_pos in
       let n_iproc = I.repair_proc proc_to_repair n_iprog.I.prog_exp_decls in
 
@@ -142,10 +142,8 @@ let repair_prog_with_templ iprog cond_op =
         begin
           let sb_res = Songbirdfront.get_repair_candidate cprog ents cond_op in
           match sb_res with
-          | None
-          | Some (_, _, None, _)
-          | Some (_, _, _, None) -> None
-          | Some (nprog, repaired_exp, Some neg_prog, Some neg_exp) ->
+          | None -> None
+          | Some (nprog, repaired_exp, _, _) ->
             match !Typechecker.proc_to_repair with
             | None -> None
             | Some proc_name_to_repair ->
@@ -205,7 +203,7 @@ let create_templ_proc proc replaced_exp vars heuristic =
   let () = x_tinfo_hp (add_str "exp_vars input: " (pr_list pr_id)) var_names no_pos in
   let (n_exp, replaced_vars, _) =
     I.replace_assign_exp replaced_exp var_names heuristic in
-  let () = x_binfo_hp (add_str "replaced_vars: " (pr_list pr_id))
+  let () = x_tinfo_hp (add_str "replaced_vars: " (pr_list pr_id))
       replaced_vars no_pos in
   let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
   in
