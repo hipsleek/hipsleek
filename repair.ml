@@ -71,10 +71,11 @@ let repair_prog_with_templ_main iprog cprog =
     try ignore (Str.search_forward re s1 0); true
     with Not_found -> false
   in
-  let sb_res = Songbirdfront.get_repair_candidate cprog ents in
+  let sb_res = Songbirdfront.get_repair_candidate cprog ents None in
   match sb_res with
   | None -> None
-  | Some (nprog, _, neg_prog, _) ->
+  | Some (_, _, None, _) -> None
+  | Some (nprog, _, Some neg_prog, _) ->
     match !Typechecker.proc_to_repair with
     | None -> None
     | Some proc_name_to_repair ->
@@ -86,13 +87,13 @@ let repair_prog_with_templ_main iprog cprog =
           let mingled_name = Cast.mingle_name x.I.proc_name typs in
           contains proc_name_to_repair mingled_name)
           iprog.I.prog_proc_decls in
-      let () = x_tinfo_hp (add_str "old proc: " (Iprinter.string_of_proc_decl))
+      let () = x_binfo_hp (add_str "old proc: " (Iprinter.string_of_proc_decl))
           proc_to_repair no_pos in
       let n_iproc = I.repair_proc proc_to_repair n_iprog.I.prog_exp_decls in
 
       let () = x_tinfo_hp (add_str "exp_decls: " (Iprinter.string_of_exp_decl_list))
       n_iprog.I.prog_exp_decls no_pos in
-      let () = x_tinfo_hp (add_str "new proc: " (Iprinter.string_of_proc_decl))
+      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_proc_decl))
           n_iproc no_pos in
       let n_proc_decls =
         List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
@@ -121,7 +122,7 @@ let repair_prog_with_templ_main iprog cprog =
         end
 
 
-let repair_prog_with_templ iprog is_cond =
+let repair_prog_with_templ iprog cond_op =
   let () = Typechecker.repairing_ents := [] in
   let () = Typechecker.proc_to_repair := None in
   let contains s1 s2 =
@@ -139,14 +140,17 @@ let repair_prog_with_templ iprog is_cond =
       let ents = !Typechecker.repairing_ents in
       try
         begin
-          let sb_res = Songbirdfront.get_repair_candidate cprog ents in
+          let sb_res = Songbirdfront.get_repair_candidate cprog ents cond_op in
           match sb_res with
-          | None -> None
-          | Some (nprog, repaired_exp, neg_prog, neg_exp) ->
+          | None
+          | Some (_, _, None, _)
+          | Some (_, _, _, None) -> None
+          | Some (nprog, repaired_exp, Some neg_prog, Some neg_exp) ->
             match !Typechecker.proc_to_repair with
             | None -> None
             | Some proc_name_to_repair ->
-              let n_iprog = Typechecker.update_iprog_exp_defns iprog nprog.Cast.prog_exp_decls in
+              let exp_decls = nprog.Cast.prog_exp_decls in
+              let n_iprog = Typechecker.update_iprog_exp_defns iprog exp_decls in
               let proc_to_repair = List.find (fun x ->
                   let params = x.I.proc_args in
                   let typs = List.map (fun x -> x.I.param_type) params in
@@ -155,7 +159,7 @@ let repair_prog_with_templ iprog is_cond =
                   n_iprog.I.prog_proc_decls in
               let n_iproc = I.repair_proc proc_to_repair
                   n_iprog.I.prog_exp_decls in
-              let () = x_tinfo_hp (add_str "new proc_body:" (Iprinter.string_of_exp))
+              let () = x_binfo_hp (add_str "new proc_body:" (Iprinter.string_of_exp))
                   (Gen.unsome n_iproc.I.proc_body) no_pos in
               let n_proc_decls =
                 List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
@@ -165,32 +169,32 @@ let repair_prog_with_templ iprog is_cond =
               try
                 let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog in
                 Some (nn_iprog, repaired_exp)
-              with _ ->
-                if is_cond then
-                  begin
-                    let n_iprog = Typechecker.update_iprog_exp_defns iprog
-                        neg_prog.Cast.prog_exp_decls in
-                    let proc_to_repair = List.find (fun x ->
-                        let params = x.I.proc_args in
-                        let typs = List.map (fun x -> x.I.param_type) params in
-                        let mingled_name = Cast.mingle_name x.I.proc_name typs in
-                        contains proc_name_to_repair mingled_name)
-                        n_iprog.I.prog_proc_decls in
-                    let n_iproc = I.repair_proc proc_to_repair
-                        n_iprog.I.prog_exp_decls in
-                    let () = x_tinfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
-                        n_iproc no_pos in
-                    let n_proc_decls =
-                      List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
-                                 then n_iproc else x) iprog.prog_proc_decls in
-                    let nn_iprog = {iprog with prog_proc_decls = n_proc_decls} in
-                    let nn_cprog, _ = Astsimp.trans_prog nn_iprog in
-                    try
-                      let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog in
-                      Some (nn_iprog, repaired_exp)
-                    with _ -> None
-                  end
-                else None
+              with _ -> None
+                (* if cond_op == None then None
+                 * else
+                 *   begin
+                 *     let n_iprog = Typechecker.update_iprog_exp_defns iprog
+                 *         neg_prog.Cast.prog_exp_decls in
+                 *     let proc_to_repair = List.find (fun x ->
+                 *         let params = x.I.proc_args in
+                 *         let typs = List.map (fun x -> x.I.param_type) params in
+                 *         let mingled_name = Cast.mingle_name x.I.proc_name typs in
+                 *         contains proc_name_to_repair mingled_name)
+                 *         n_iprog.I.prog_proc_decls in
+                 *     let n_iproc = I.repair_proc proc_to_repair
+                 *         n_iprog.I.prog_exp_decls in
+                 *     let () = x_binfo_hp (add_str "new proc:" (Iprinter.string_of_proc_decl))
+                 *         n_iproc no_pos in
+                 *     let n_proc_decls =
+                 *       List.map (fun x -> if (x.I.proc_name = n_iproc.proc_name)
+                 *                  then n_iproc else x) iprog.prog_proc_decls in
+                 *     let nn_iprog = {iprog with prog_proc_decls = n_proc_decls} in
+                 *     let nn_cprog, _ = Astsimp.trans_prog nn_iprog in
+                 *     try
+                 *       let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog in
+                 *       Some (nn_iprog, repaired_exp)
+                 *     with _ -> None
+                 *   end *)
         end
       with _ -> None
 
@@ -201,7 +205,7 @@ let create_templ_proc proc replaced_exp vars heuristic =
   let () = x_tinfo_hp (add_str "exp_vars input: " (pr_list pr_id)) var_names no_pos in
   let (n_exp, replaced_vars, _) =
     I.replace_assign_exp replaced_exp var_names heuristic in
-  let () = x_tinfo_hp (add_str "replaced_vars: " (pr_list pr_id))
+  let () = x_binfo_hp (add_str "replaced_vars: " (pr_list pr_id))
       replaced_vars no_pos in
   let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
   in
@@ -210,8 +214,10 @@ let create_templ_proc proc replaced_exp vars heuristic =
   (* else if (List.length replaced_pos_list > 1) then None *)
   else
     let exp_loc = I.get_exp_pos replaced_exp in
-    let unk_vars = List.filter (fun (x,y) -> List.mem x replaced_vars) vars in
-    let unk_vars = List.map (fun (x,y) -> (y,x)) unk_vars in
+    (* let unk_vars = List.filter (fun (x,y) -> List.mem x replaced_vars) vars in *)
+    (* let unk_vars = List.map (fun (x,y) -> (y,x)) unk_vars in *)
+
+    let unk_vars = List.map (fun x -> (Globals.Int, x)) replaced_vars in
     (* let is_user_defined_type unk_vars =
      *   List.exists (fun (x, y) -> match x with
      *       | Int -> false
@@ -237,7 +243,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     match n_proc_exp with
     | None -> None
     | Some (templ_proc, unk_exp, replaced_pos) ->
-      let () = x_tinfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
+      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
           (Gen.unsome templ_proc.I.proc_body) no_pos in
       (* None *)
 

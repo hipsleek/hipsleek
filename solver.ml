@@ -7548,7 +7548,7 @@ type: bool *
         let is_sat = CF.is_sat_fail cex in
         if not !disable_failure_explaining then
           let new_estate = if
-            CF.is_en_error_exc estate then {
+            (CF.is_en_error_exc estate) then {
               estate with es_formula =
                             match fc_kind with
                             | CF.Failure_Must _ -> if estate.es_infer_obj # is_err_may_all then
@@ -7576,7 +7576,7 @@ type: bool *
               (must_list, may_list, contra_list)
           in
           let pr_es = Cprinter.string_of_entail_state in
-          let () = x_dinfo_zp (lazy ("new estate: " ^ (pr_es new_estate))) pos in
+          let () = x_tinfo_zp (lazy ("ndldlfew estate: " ^ (pr_es new_estate))) pos in
           let lc0 = x_add Musterr.build_and_failures 1 "213" fc_kind Globals.logical_error (contra_list1, must_list1, may_list1) fc_template cex new_estate.es_trace in
           (lc0, prf)
         else
@@ -7593,16 +7593,17 @@ type: bool *
                {fe_kind = fc_kind; fe_name = Globals.logical_error ;fe_locs=[]}, estate.es_trace)) ((convert_to_may_es estate), err_msg, Failure_May err_msg) cex, prf)
       end in
   (ctx, prf)
-(****************************************************************)  
-(* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
-(****************************************************************)  
-(* 
+(****************************************************************)
+(* utilities for splitting the disjunctions in the antecedent and the
+            conjunctions in the consequent *)
+(****************************************************************)
+(*
 try to solve the inequalities from the rhs by making queries to the memory set:
 - if the inequality cannot be solved -> leave it in the conseq
-- if the equality is solved -> remove it from conseq 
+- if the equality is solved -> remove it from conseq
         *)
 
-and post_process_result ctx prf = 
+and post_process_result ctx prf =
   let ctx = Immutable.imm_post_process_for_entail_empty_rhs ctx in
   (ctx,prf)
 

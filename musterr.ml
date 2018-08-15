@@ -166,7 +166,8 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string)
     let must_fail_type = build_and_one_kind_failures "must-bug" (Failure_Must "") must_list in
     let may_fail_type = build_and_one_kind_failures "may-bug" (Failure_May "") may_list in
     let oft = List.fold_left CF.mkAnd_Reason contra_fail_type [must_fail_type; may_fail_type] in
-    let es = {fail_ctx_template.fc_current_lhs  with es_formula = (* CF.substitute_flow_into_f !error_flow_int *) fail_ctx_template.fc_current_lhs.es_formula} in
+    let es = {fail_ctx_template.fc_current_lhs
+              with es_formula = fail_ctx_template.fc_current_lhs.es_formula} in
     match oft with
     | Some ft -> let final_error = (match gfk with
         | Failure_Must _ -> ( match (get_must_ctx_msg_ft ft) with
@@ -181,7 +182,7 @@ let build_and_failures_x (failure_code:string) gfk(failure_name:string)
       )
       in
       FailCtx (ft, Ctx (x_add add_opt_to_estate final_error es),cex)
-    | None -> (*report_error no_pos "Solver.build_and_failures: should be a failure here"*)
+    | None ->
       let msg =  "use different strategies in proof searching (slicing)" in
       let fe =  mk_failure_may msg failure_name in
       FailCtx ((Basic_Reason ({fail_ctx_template with fc_message = msg }, fe, ft)),(Ctx es), cex)

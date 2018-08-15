@@ -9713,7 +9713,7 @@ class infer_acc =
   end;;
 
 type entail_state = {
-  es_formula : formula; (* can be any formula ; 
+  es_formula : formula; (* can be any formula ;
                            !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
   es_ho_vars_map :  ( CP.spec_var * formula) list; (* map: HVar -> its formula *)

@@ -3885,6 +3885,16 @@ let mk_unk_exp vars loc =
     unk_exp_pos = loc
   }
 
+let combine_unk_exp exp1 exp2 loc =
+  match (exp1, exp2) with
+  | (UnkExp e1, UnkExp e2) ->
+    UnkExp {
+      unk_exp_name = "fff";
+      unk_exp_arguments = e1.unk_exp_arguments @ e2.unk_exp_arguments;
+      unk_exp_pos = loc
+    }
+  | _ -> failwith "cannot combine these two expressions"
+
 let mk_exp_decl params =
   {
     exp_name = "fff";
@@ -4058,12 +4068,12 @@ let list_of_candidate_exp (exp: exp) =
         | OpLte
         | OpGte
         | OpGt ->
-          [(exp_binary.exp_binary_oper1, true)] @ list
+          [(exp_binary.exp_binary_oper1, Some exp_binary.exp_binary_op)] @ list
         | OpPlus
         | OpMinus
         | OpMult
         | OpDiv
-        | OpMod -> [(exp, false)] @ list
+        | OpMod -> [(exp, None)] @ list
         | OpLogicalAnd
         | OpLogicalOr -> let exp1_list = aux exp_binary.exp_binary_oper1 list in
           aux exp_binary.exp_binary_oper2 exp1_list
@@ -4074,13 +4084,6 @@ let list_of_candidate_exp (exp: exp) =
     | CallRecv _ -> list
     | CallNRecv _ -> list
     | Cond exp_cond ->
-      (* let exp1_list =
-       *   begin
-       *     match exp_cond.exp_cond_condition with
-       *     | Var _ -> list
-       *     | _ ->  aux exp_cond.exp_cond_condition list
-       *   end
-       * in *)
       let exp1_list = aux exp_cond.exp_cond_condition list in
       let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
       aux exp_cond.exp_cond_else_arm exp2_list
@@ -4094,12 +4097,11 @@ let list_of_candidate_exp (exp: exp) =
     | Seq exp_seq ->
       let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
-    | Var _ -> [(exp, false)] @ list
+    | Var _ -> [(exp, None)] @ list
     | VarDecl _ -> list
     | Unary e -> aux e.exp_unary_exp list
-    | IntLit _ -> [(exp, false)]@ list
+    | IntLit _ -> [(exp, None)]@ list
     | _ -> list
-    (* | _ -> report_error no_pos "list_of_condidate_exp: this exp is not supported" *)
   in List.rev(aux exp [])
 
 (* Find AND/OR position to mutate *)
@@ -4190,6 +4192,10 @@ let replace_assign_exp exp vars heuristic =
       end
     | _ -> false
   in
+  let is_unk_exp exp = match exp with
+    | UnkExp _ -> true
+    | _ -> false
+  in
   let rec replace exp vars =
     let exp_vars = simple_collect_vars exp in
     let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos
@@ -4205,10 +4211,13 @@ let replace_assign_exp exp vars heuristic =
         else
           let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
           let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
-          (Binary {
-              b with exp_binary_oper1 = a1;
-                     exp_binary_oper2 = a2;
-            }, b1 @ b2, c1@c2)
+          if (is_unk_exp a1 && is_unk_exp a2) then
+            (combine_unk_exp a1 a2 b.exp_binary_pos, b1@b2, c1@c2)
+          else
+            (Binary {
+                b with exp_binary_oper1 = a1;
+                       exp_binary_oper2 = a2;
+              }, b1 @ b2, c1@c2)
       | _ -> (exp, [], [])
 
   in

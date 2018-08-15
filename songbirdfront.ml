@@ -197,11 +197,12 @@ let create_templ_prog prog ents
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = x_tinfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
-  let (ifds, inferred_prog, missing_exp) =
-    Libsongbird.Prover.infer_unknown_functions ifr_typ nprog
+  let () = x_binfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
+  let (_, inferred_prog) =
+    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
       ents in
-  let () = SBDebug.nhprint "inferred prog: " SBCast.pr_program inferred_prog in
+  let () = x_tinfo_hp (Gen.Basic.add_str "inferred prog: " SBCast.pr_program)
+      inferred_prog VarGen.no_pos in
   inferred_prog.SBCast.prog_funcs
 
 let translate_ent ent =
@@ -222,7 +223,7 @@ let translate_ent ent =
 
   SBCast.mk_pure_entail sb_lhs sb_rhs
 
-let get_repair_candidate prog ents =
+let get_repair_candidate prog ents cond_op =
   let sb_ents = List.map translate_ent ents in
   let fun_defs = create_templ_prog prog sb_ents in
   let get_func_exp fun_defs exp_decls =
@@ -255,11 +256,31 @@ let get_repair_candidate prog ents =
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
-      let neg_cexp = CP.mkMult_minus_one fun_def_cexp in
-      let neg_cexp = CP.simp_mult neg_cexp in
-      let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
-      let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
-      Some (n_prog, fun_def_cexp, neg_prog, neg_cexp)
+        begin
+          match cond_op with
+          | Some cond ->
+            let neg_cexp =
+              begin
+                match cond with
+                | Iast.OpGt
+                | Iast.OpLte ->
+                  let n_exp = CP.mkMult_minus_one fun_def_cexp in
+                  CP.mkAdd n_exp (CP.mkIConst 2 VarGen.no_pos) VarGen.no_pos
+                | Iast.OpGte
+                | Iast.OpLt ->
+                  let n_exp = CP.mkMult_minus_one fun_def_cexp in
+                  CP.mkSubtract n_exp (CP.mkIConst 1 VarGen.no_pos)
+                    VarGen.no_pos
+                | _ -> fun_def_cexp
+              end
+            in
+            (* let n_exp = CP.mkMult_minus_one fun_def_cexp in
+             * let neg_cexp = CP.simp_mult n_exp in *)
+            let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
+            let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
+            Some (n_prog, fun_def_cexp, Some neg_prog, Some neg_cexp)
+          | None -> Some (n_prog, fun_def_cexp, None, None)
+      end
     | None ->
       let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None
