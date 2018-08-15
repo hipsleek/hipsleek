@@ -13,5 +13,5 @@ bool Own_Above_Threat()
      requires (Other_Tracked_Alt >= Own_Tracked_Alt) ensures res = false;
 
 {
-    return (Other_Tracked_Alt - Own_Tracked_Alt < 0);
+    return (Other_Tracked_Alt - Own_Tracked_Alt <= 0);
 }

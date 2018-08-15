@@ -9,6 +9,7 @@ module C = Cast
 module CP = Cpure
 
 let stop = ref false
+let next_proc = ref false
 
 let output_repaired_iprog src pos repaired_exp =
   let file_name = Filename.basename src in
@@ -135,6 +136,7 @@ let repair_prog_with_templ iprog cond_op =
   let cprog, _ = Astsimp.trans_prog iprog in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in
+    let () = next_proc := false in
     None
   with _ as e ->
       let ents = !Typechecker.repairing_ents in
@@ -142,10 +144,12 @@ let repair_prog_with_templ iprog cond_op =
         begin
           let sb_res = Songbirdfront.get_repair_candidate cprog ents cond_op in
           match sb_res with
-          | None -> None
+          | None -> let () = next_proc := false in
+            None
           | Some (nprog, repaired_exp, _, _) ->
             match !Typechecker.proc_to_repair with
-            | None -> None
+            | None -> let () = next_proc := false in
+              None
             | Some proc_name_to_repair ->
               let exp_decls = nprog.Cast.prog_exp_decls in
               let n_iprog = Typechecker.update_iprog_exp_defns iprog exp_decls in
@@ -164,10 +168,22 @@ let repair_prog_with_templ iprog cond_op =
                            then n_iproc else x) iprog.prog_proc_decls in
               let nn_iprog = {iprog with prog_proc_decls = n_proc_decls} in
               let nn_cprog, _ = Astsimp.trans_prog nn_iprog in
+              let current_proc = !Typechecker.proc_to_repair in
               try
-                let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog in
+                let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog
+                in
+                let () = next_proc := false in
                 Some (nn_iprog, repaired_exp)
-              with _ -> None
+              with _ ->
+                let () = x_tinfo_pp "marking \n" no_pos in
+                let next_proc_name = !Typechecker.proc_to_repair in
+                if (String.compare (Gen.unsome current_proc)
+                      (Gen.unsome next_proc_name) != 0) then
+                  let () = next_proc := true in
+                  Some (nn_iprog, repaired_exp)
+                else
+                  let () = next_proc := false in
+                  None
                 (* if cond_op == None then None
                  * else
                  *   begin
@@ -194,7 +210,9 @@ let repair_prog_with_templ iprog cond_op =
                  *     with _ -> None
                  *   end *)
         end
-      with _ -> None
+      with _ ->
+        let () = next_proc := false in
+        None
 
 let create_templ_proc proc replaced_exp vars heuristic =
   let var_names = List.map fst vars in
@@ -208,7 +226,9 @@ let create_templ_proc proc replaced_exp vars heuristic =
   let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
   in
   (* None *)
-  if n_exp = replaced_exp then None
+  if n_exp = replaced_exp then
+    let () = next_proc := false in
+    None
   (* else if (List.length replaced_pos_list > 1) then None *)
   else
     let exp_loc = I.get_exp_pos replaced_exp in
@@ -233,15 +253,19 @@ let create_templ_proc proc replaced_exp vars heuristic =
 let repair_one_statement iprog proc exp is_cond vars heuristic =
   let () = x_tinfo_hp (add_str "exp candidate: " (Iprinter.string_of_exp))
       exp no_pos in
-  if !stop then None else
+  if !stop then
+    let () = next_proc := false in
+    None
+  else
     let n_proc_exp = create_templ_proc proc exp vars heuristic
     in
     (* None *)
     let () = x_dinfo_pp "marking \n" no_pos in
     match n_proc_exp with
-    | None -> None
+    | None -> let () = next_proc := false in
+      None
     | Some (templ_proc, unk_exp, replaced_pos) ->
-      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
+      let () = x_tinfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
           (Gen.unsome templ_proc.I.proc_body) no_pos in
       (* None *)
 
@@ -272,7 +296,9 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
           let () = x_dinfo_hp (add_str "score:" (string_of_int)) score no_pos in
           let () = stop := true in
           Some (score, res_iprog, replaced_pos, repaired_exp)
-      with _ -> None
+      with _ ->
+        let () = next_proc := false in
+        None
 
 let get_best_repair repair_list =
   try
@@ -292,7 +318,7 @@ let repair_by_mutation iprog repairing_proc =
   let candidate_procs = List.map (fun x -> I.mutate_prog x repairing_proc)
       logical_locs in
   let check_candidate iprog mutated_proc =
-    let () = x_binfo_hp
+    let () = x_tinfo_hp
         (add_str "candidate proc" (Iprinter.string_of_exp))
         (Gen.unsome mutated_proc.I.proc_body) no_pos in
     if (!stop) then None
@@ -320,7 +346,9 @@ let start_repair iprog =
   let cprog, _ = Astsimp.trans_prog iprog in
 
   match !Typechecker.proc_to_repair with
-  | None -> None
+  | None ->
+    let () = next_proc := false in
+    None
   | Some proc_name_to_repair ->
     let () = x_tinfo_pp "marking \n" no_pos in
     let proc_name_to_repair = Cast.unmingle_name proc_name_to_repair in
@@ -371,7 +399,9 @@ let start_repair iprog =
       let mutated_res = repair_by_mutation iprog proc_to_repair in
       let mutated_res = List.filter(fun x -> x != None) mutated_res in
       let mutated_res = List.map Gen.unsome mutated_res in
-      if mutated_res = [] then None
+      if mutated_res = [] then
+        let () = next_proc := false in
+        None
       else Some (List.hd mutated_res)
     | Some (_, best_r_prog, pos, repaired_exp) ->
       let repaired_proc = List.find (fun x -> x.I.proc_name = proc_to_repair.proc_name)
@@ -385,3 +415,11 @@ let start_repair iprog =
           repaired_exp no_pos in
       Some best_r_prog
       (* Some (best_r_prog, pos, repaired_exp) *)
+
+let rec start_repair_wrapper iprog =
+  let tmp = start_repair iprog in
+  let () = x_tinfo_hp (add_str "next_proc: " string_of_bool) (!next_proc) no_pos in
+  if (!next_proc) then
+    let () = stop := false in
+    start_repair_wrapper iprog
+  else tmp
