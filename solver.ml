@@ -11864,9 +11864,9 @@ and process_action_x ?(caller="") cont_act prog estate conseq lhs_b rhs_b a
       begin
         let lhs_xpure,_,_ = x_add xpure 12 prog estate.es_formula in
         (* Thai: change back to Infer.infer_pure *)
-        let () = x_tinfo_hp (add_str "unmatched rhs" Cprinter.string_of_h_formula) rhs no_pos in
-        let () = x_tinfo_hp (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
-        let () = y_tinfo_hp (add_str "lhs formula" Cprinter.string_of_formula) estate.es_formula in
+        let () = x_binfo_hp (add_str "unmatched rhs" Cprinter.string_of_h_formula) rhs no_pos in
+        let () = x_binfo_hp (add_str "rhs_rest" Cprinter.string_of_h_formula) rhs_rest no_pos in
+        let () = y_binfo_hp (add_str "lhs formula" Cprinter.string_of_formula) estate.es_formula in
         let lhs_vp_set = CF.get_vperm_set estate.es_formula in
         let () = y_tinfo_hp (add_str "lhs_vp_set" Cprinter.string_of_vperm_sets) lhs_vp_set in
         let () = x_tinfo_hp (add_str "vp_set" Cprinter.string_of_vperm_sets) vp_set no_pos in
