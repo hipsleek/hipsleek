@@ -265,7 +265,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     | None -> let () = next_proc := false in
       None
     | Some (templ_proc, unk_exp, replaced_pos) ->
-      let () = x_tinfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
+      let () = x_binfo_hp (add_str "new proc: " (Iprinter.string_of_exp))
           (Gen.unsome templ_proc.I.proc_body) no_pos in
       (* None *)
 
@@ -312,13 +312,16 @@ let get_best_repair repair_list =
   with Failure _ -> None
 
 let repair_by_mutation iprog repairing_proc =
-  let () = x_tinfo_pp "marking \n" no_pos in
+  let () = x_binfo_pp "marking \n" no_pos in
   let proc_body = Gen.unsome repairing_proc.I.proc_body in
   let logical_locs = I.collect_logical_locs proc_body in
   let candidate_procs = List.map (fun x -> I.mutate_prog x repairing_proc)
       logical_locs in
+  let constant_candidates =
+    List.map (fun x -> I.mk_constant x repairing_proc) logical_locs in
+  let candidates = candidate_procs @ constant_candidates in
   let check_candidate iprog mutated_proc =
-    let () = x_tinfo_hp
+    let () = x_binfo_hp
         (add_str "candidate proc" (Iprinter.string_of_exp))
         (Gen.unsome mutated_proc.I.proc_body) no_pos in
     if (!stop) then None
@@ -337,7 +340,7 @@ let repair_by_mutation iprog repairing_proc =
         Some n_iprog
       with _ -> None
   in
-  List.map (fun x -> check_candidate iprog x) candidate_procs
+  List.map (fun x -> check_candidate iprog x) candidates
 
 let start_repair iprog =
   (* let iprog = I.normalize_prog iprog in

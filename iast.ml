@@ -4126,7 +4126,8 @@ let collect_logical_locs (exp: exp) =
     | CallRecv _ -> list
     | CallNRecv _ -> list
     | Cond exp_cond ->
-      let exp1_list = aux exp_cond.exp_cond_condition list in
+      let n_list = [(exp_cond.exp_cond_pos)] @ list in
+      let exp1_list = aux exp_cond.exp_cond_condition n_list in
       let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
       aux exp_cond.exp_cond_else_arm exp2_list
     | Label (a, lexp) -> aux lexp list
@@ -4454,12 +4455,22 @@ let rec mutate_exp loc exp = match exp with
     Block {b with exp_block_body = mutate_exp loc b.exp_block_body }
   | Cond exp_cond ->
     let () = x_tinfo_pp "marking \n" no_pos in
-    let exp1 = mutate_exp loc exp_cond.exp_cond_condition in
-    let exp2 = mutate_exp loc exp_cond.exp_cond_then_arm in
-    let exp3 = mutate_exp loc exp_cond.exp_cond_else_arm in
-    Cond {exp_cond with exp_cond_condition = exp1;
-                        exp_cond_then_arm = exp2;
-                        exp_cond_else_arm = exp3}
+    if (VarGen.eq_loc exp_cond.exp_cond_pos loc) then
+      let n_cond =
+        Unary {
+          exp_unary_op = OpNot;
+          exp_unary_exp = exp_cond.exp_cond_condition;
+          exp_unary_path_id = None;
+          exp_unary_pos = no_pos;
+        }
+      in Cond {exp_cond with exp_cond_condition = n_cond}
+    else
+      let exp1 = mutate_exp loc exp_cond.exp_cond_condition in
+      let exp2 = mutate_exp loc exp_cond.exp_cond_then_arm in
+      let exp3 = mutate_exp loc exp_cond.exp_cond_else_arm in
+      Cond {exp_cond with exp_cond_condition = exp1;
+                          exp_cond_then_arm = exp2;
+                          exp_cond_else_arm = exp3}
   | Label (a, lexp) -> Label (a, mutate_exp loc lexp)
   | Return res ->
     begin
@@ -4475,8 +4486,79 @@ let rec mutate_exp loc exp = match exp with
   | Unary e -> Unary {e with exp_unary_exp = mutate_exp loc e.exp_unary_exp}
   | _ -> exp
 
-
+let rec mk_constant_exp loc exp = match exp with
+  | Assign e ->
+    Assign { e with exp_assign_rhs = mk_constant_exp loc e.exp_assign_rhs}
+  | Binary e ->
+    begin
+      match e.exp_binary_op with
+      | OpLogicalAnd ->
+        if (VarGen.eq_loc e.exp_binary_pos loc) then
+          let n_bool = BoolLit {
+              exp_bool_lit_val = false;
+              exp_bool_lit_pos = get_exp_pos e.exp_binary_oper1;
+            } in
+          Binary {e with exp_binary_oper1 = n_bool}
+        else
+          let exp1 = mk_constant_exp loc e.exp_binary_oper1 in
+          let exp2 = mk_constant_exp loc e.exp_binary_oper2 in
+          Binary {e with exp_binary_oper1 = exp1;
+                         exp_binary_oper2 = exp2;}
+      | OpLogicalOr ->
+        if (VarGen.eq_loc e.exp_binary_pos loc) then
+          let n_bool = BoolLit {
+              exp_bool_lit_val = true;
+              exp_bool_lit_pos = get_exp_pos e.exp_binary_oper1;
+            } in
+          Binary {e with exp_binary_oper1 = n_bool}
+        else
+          let exp1 = mk_constant_exp loc e.exp_binary_oper1 in
+          let exp2 = mk_constant_exp loc e.exp_binary_oper2 in
+          Binary {e with exp_binary_oper1 = exp1;
+                         exp_binary_oper2 = exp2;}
+      | _ ->
+        let exp1 = mk_constant_exp loc e.exp_binary_oper1 in
+        let exp2 = mk_constant_exp loc e.exp_binary_oper2 in
+        Binary {e with exp_binary_oper1 = exp1;
+                       exp_binary_oper2 = exp2;}
+    end
+  | Block b ->
+    let () = x_tinfo_pp "marking \n" no_pos in
+    Block {b with exp_block_body = mk_constant_exp loc b.exp_block_body }
+  | Cond exp_cond ->
+    let () = x_tinfo_pp "marking \n" no_pos in
+    if (VarGen.eq_loc exp_cond.exp_cond_pos loc) then
+      let n_bool = BoolLit {
+          exp_bool_lit_val = true;
+          exp_bool_lit_pos = get_exp_pos exp_cond.exp_cond_condition;
+        }
+      in Cond {exp_cond with exp_cond_condition = n_bool}
+    else
+      let exp1 = mk_constant_exp loc exp_cond.exp_cond_condition in
+      let exp2 = mk_constant_exp loc exp_cond.exp_cond_then_arm in
+      let exp3 = mk_constant_exp loc exp_cond.exp_cond_else_arm in
+      Cond {exp_cond with exp_cond_condition = exp1;
+                          exp_cond_then_arm = exp2;
+                          exp_cond_else_arm = exp3}
+  | Label (a, lexp) -> Label (a, mk_constant_exp loc lexp)
+  | Return res ->
+    begin
+      match res.exp_return_val with
+      | None -> exp
+      | Some e -> Return {res with exp_return_val = Some (mk_constant_exp loc e)}
+    end
+  | Seq e ->
+    let exp1 = mk_constant_exp loc e.exp_seq_exp1 in
+    let exp2 = mk_constant_exp loc e.exp_seq_exp2 in
+    Seq {e with exp_seq_exp1 = exp1;
+                exp_seq_exp2 = exp2}
+  | Unary e -> Unary {e with exp_unary_exp = mk_constant_exp loc e.exp_unary_exp}
+  | _ -> exp
 
 let mutate_prog loc iprog =
   let () = x_tinfo_hp (add_str "loc" (VarGen.string_of_loc)) loc no_pos in
   {iprog with proc_body = Some (mutate_exp loc (Gen.unsome iprog.proc_body))}
+
+let mk_constant loc iprog =
+  let () = x_tinfo_hp (add_str "loc" (VarGen.string_of_loc)) loc no_pos in
+  {iprog with proc_body = Some (mk_constant_exp loc (Gen.unsome iprog.proc_body))}
