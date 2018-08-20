@@ -59,19 +59,19 @@ let rec translate_exp (exp: CP.exp) =
   | CP.Add (exp1, exp2, loc) ->
         let t_exp1 = translate_exp exp1 in
         let t_exp2 = translate_exp exp2 in
-        SBCast.BinOp (Add, t_exp1, t_exp2, translate_loc loc)
+        SBCast.BinExp (Add, t_exp1, t_exp2, translate_loc loc)
   | CP.Subtract (exp1, exp2, loc) ->
         let t_exp1 = translate_exp exp1 in
         let t_exp2 = translate_exp exp2 in
-        SBCast.BinOp (Sub, t_exp1, t_exp2, translate_loc loc)
+        SBCast.BinExp (Sub, t_exp1, t_exp2, translate_loc loc)
   | CP.Mult (exp1, exp2, loc) ->
         let t_exp1 = translate_exp exp1 in
         let t_exp2 = translate_exp exp2 in
-        SBCast.BinOp (Mul, t_exp1, t_exp2, translate_loc loc)
+        SBCast.BinExp (Mul, t_exp1, t_exp2, translate_loc loc)
   | CP.Div (exp1, exp2, loc) ->
         let t_exp1 = translate_exp exp1 in
         let t_exp2 = translate_exp exp2 in
-        SBCast.BinOp (Div, t_exp1, t_exp2, translate_loc loc)
+        SBCast.BinExp (Div, t_exp1, t_exp2, translate_loc loc)
   | CP.Template templ ->
     let fun_name = CP.name_of_sv templ.templ_id in
     let args = templ.templ_args |> List.map translate_exp in
@@ -83,7 +83,7 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Var (var, pos) -> CP.Var (translate_back_var var, translate_back_pos
                                       pos)
   | SBCast.IConst (num, pos) -> CP.IConst (num, translate_back_pos pos)
-  | SBCast.BinOp (bin_op, exp1, exp2, pos) ->
+  | SBCast.BinExp (bin_op, exp1, exp2, pos) ->
     begin
       match bin_op with
       | SBCast.Add -> CP.Add (translate_back_exp exp1, translate_back_exp exp2,
@@ -96,10 +96,12 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
                translate_back_pos pos)
     end
   | SBCast.LTerm (lterm, pos) ->
-    let n_exp = SBCast.convert_lterm_to_exp pos lterm in
+    let n_exp = SBCast.convert_lterm_to_binary_exp pos lterm in
     translate_back_exp n_exp
   | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
-           ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
+                       ("translate_back_exp:" ^ (SBCast.pr_exp exp)
+                        ^ " this Func is not handled")
+  | _ -> Gen.Basic.report_error VarGen.no_pos "this pure formula not handled"
 
 let rec translate_pf (pure_f: CP.formula)  =
   match pure_f with
@@ -189,7 +191,7 @@ let create_templ_prog prog ents
   let ifr_typ = SBGlobals.IfrStrong in
   let infer_func = {
     SBCast.ifr_typ = ifr_typ;
-    SBCast.ifr_rels = ents
+    SBCast.ifr_pents = ents
   }
   in
   let nprog = {program with
