@@ -685,7 +685,7 @@ and string_of_h_formula_repair = function
   | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> ""
   | F.HFalse -> ""
-  | F.HEmp -> "emp"
+  | F.HEmp -> ""
   | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
 and string_of_one_formula (f:F.one_formula) =
@@ -824,11 +824,10 @@ and string_of_struc_formula c = match c with
     (* let ps = ps ^ (if itnt then "@term " else "") in *)
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = string_of_struc_formula continuation in
-    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
+  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)->
       let l_s = (string_of_spec_label_def l) ^": " in
       a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
-  (*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 
 and string_of_struc_formula_repair c = match c with
   | F.ECase {
@@ -867,26 +866,20 @@ and string_of_struc_formula_repair c = match c with
     let ps = ps ^ (inf_o # string_of_raw) in
     let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
     let string_of_continuation = string_of_struc_formula continuation in
-    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
-      let l_s = (string_of_spec_label_def l) ^": " in
-      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
+  | F.EList b -> List.fold_left (fun a (l,c) -> a ^ "\n" ^ (string_of_struc_formula_repair c)) "" b
 
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with 
   | []               -> ""
   | (f1, f2)::[]      -> let s = (string_of_formula f1) in
-    (match s with 
+    (match s with
      | ""  -> "   ensures " ^ (string_of_formula f2) ^ "\n"
      | _   -> "   requires " ^ s ^ "\n   ensures " ^ (string_of_formula f2) ^ "\n" )
   | (f1, f2)::t      -> let s = (string_of_formula f1) in
-    (match s with 
+    (match s with
      | ""  -> (string_of_form_list t)
-     | _   -> "   requires " ^ s ^ "\n   ensures " ^ (string_of_formula f2) ^ ";\n" ^ (string_of_form_list t) )  
-;;
-
-(*  | Assert of F.formula * F.formula option * loc
-    | While of exp * exp * F.formula * F.formula * loc *)
+     | _   -> "   requires " ^ s ^ "\n   ensures " ^ (string_of_formula f2) ^ ";\n" ^ (string_of_form_list t) )
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis2 = function
@@ -912,11 +905,11 @@ let rec string_of_exp = function
         exp_block_body = e;
         exp_block_pos = p;
       })->
-    "{" ^(match lv with
+    (match lv with
         | [] -> ""
         | _ -> "local: "^
                (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-    ^ (string_of_exp e) ^ "}"
+    ^ (string_of_exp e)
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
@@ -927,11 +920,11 @@ let rec string_of_exp = function
   | Unary ({exp_unary_op = o;
     exp_unary_exp = e;
     exp_unary_pos = l})-> 
-        (match o with 
-          | OpPostInc | OpPostDec -> 
+        (match o with
+          | OpPostInc | OpPostDec ->
                 (if need_parenthesis2 e then (parenthesis (string_of_exp e)) ^ (string_of_unary_op o)
                 else (string_of_exp e) ^ (string_of_unary_op o))
-          | _ -> 
+          | _ ->
                 (if need_parenthesis2 e then (string_of_unary_op o) ^ (parenthesis (string_of_exp e))
                 else (string_of_unary_op o) ^ (string_of_exp e)))
   | Binary ({exp_binary_op = o;
@@ -962,9 +955,8 @@ let rec string_of_exp = function
   | CallRecv ({exp_call_recv_receiver = recv;
     exp_call_recv_method = id;
     exp_call_recv_path_id = pid;
-    exp_call_recv_arguments = el})-> 
+    exp_call_recv_arguments = el})->
         string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
-            (* An Hoa *)
   | ArrayAlloc ({exp_aalloc_etype_name = elm_type;
     exp_aalloc_dimensions = dims})  -> "new " ^ elm_type ^ "[" ^ (string_of_exp_list dims ",") ^ "]"
   | New ({exp_new_class_name = id;
@@ -985,12 +977,13 @@ let rec string_of_exp = function
         newexp
   | Assign ({exp_assign_op = op;
     exp_assign_lhs = e1;
-    exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
+    exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^
+      (string_of_exp e2) ^ ";"
   | Cond ({exp_cond_condition = e1;
     exp_cond_then_arm = e2;
     exp_cond_path_id = pid;
     exp_cond_else_arm = e3}) ->
-        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^
+        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ "\n}" ^
             (match e3 with
               | Empty ll -> ""
               | _        -> " else { \n  " ^ (string_of_exp e3) ^ "\n}"))
@@ -999,25 +992,24 @@ let rec string_of_exp = function
     exp_while_jump_label = lb;
     exp_while_specs = li}) ->
         (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ (string_of_struc_formula li)^" \n"^ "{\n"^ (string_of_exp e2) ^ "\n}"
-  | Return ({exp_return_val = v; exp_return_path_id = pid})  ->
-    string_of_control_path_id_opt pid ("return " ^
-                                       (match v with
+  | Return ({exp_return_val = v})  ->
+    "return " ^  (match v with
                                         | None   -> ""
-                                        | Some e -> (string_of_exp e) ^ "") )
+                                        | Some e -> (string_of_exp e) ^ "") ^ ";"
   | Seq (
       {
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2
         })->
-        (string_of_exp e1) ^ "\n" ^ (string_of_exp e2)   
+        (string_of_exp e1) ^ "\n" ^ (string_of_exp e2)
   | VarDecl ({exp_var_decl_type = t;
     exp_var_decl_decls = l})
-      -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l);
+      -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
   | ConstDecl ({exp_const_decl_type = t;
-    exp_const_decl_decls = l}) 
+    exp_const_decl_decls = l})
       -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_cassigning_list l)
   | BoolLit ({exp_bool_lit_val = b})
-      -> string_of_bool b 
+      -> string_of_bool b
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
   | FloatLit ({exp_float_lit_val = f})
       -> string_of_float f
@@ -1027,12 +1019,12 @@ let rec string_of_exp = function
             (match l.exp_assert_type with
               | None -> " :assert "
               | Some true -> " :assert_exact "
-              | Some false -> " :assert_inexact ") ^ 
+              | Some false -> " :assert_inexact ") ^
             (match l.exp_assert_asserted_formula with
               | None -> (" assume: ")
               | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
             (match l.exp_assert_assumed_formula with
-              | None ->  
+              | None ->
                     let vs = l.exp_assert_infer_vars in
                     if vs==[] then ""
                     else ("infer:"^(pr_list pr_id vs))
@@ -1043,12 +1035,12 @@ let rec string_of_exp = function
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Raise ({exp_raise_type = tb;
     exp_raise_path_id = pid;
-    exp_raise_val = b;}) -> 
-        let ft = match tb with 
+    exp_raise_val = b;}) ->
+        let ft = match tb with
           | Const_flow cf-> "CF:"^cf
           | Var_flow cf -> "VF:"^cf in
-        string_of_control_path_id_opt pid 
-            ("raise "^(match b with 
+        string_of_control_path_id_opt pid
+            ("raise "^(match b with
               | None -> ft
               | Some bs-> "EXPR:"^ft^(string_of_exp bs))^ "\n")
   | Try ({	exp_try_block = bl;
@@ -1070,55 +1062,12 @@ let rec string_of_exp = function
         "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^ 
             "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 
-(* (* pretty printing for expressions *)                                                                       *)
-(* and string_of_exp e = match e with                                                                          *)
-(*   | ArrayAt ({exp_arrayat_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayat:" ^ (string_of_loc p)^">"        *)
-(*   | Unfold ({exp_unfold_pos = p}) -> (string_of_exp_x e) ^ "<loc_unfold:" ^ (string_of_loc p)^">"           *)
-(*   | Java ({exp_java_pos = p}) -> (string_of_exp_x e) ^ "<loc_java:" ^ (string_of_loc p)^">"                 *)
-(*   | Label (_, e) -> string_of_exp e                                                                         *)
-(*   | Bind ({exp_bind_pos = p}) -> (string_of_exp_x e) ^ "<loc_bind:" ^ (string_of_loc p)^">"                 *)
-(*   | Block ({exp_block_pos = p}) -> (string_of_exp_x e) ^ "<loc_block:" ^ (string_of_loc p)^">"              *)
-(*   | Break ({exp_break_pos = p}) -> (string_of_exp_x e) ^ "<loc_break:" ^ (string_of_loc p)^">"              *)
-(*   | Barrier ({exp_barrier_pos = p}) -> (string_of_exp_x e) ^ "<loc_barrier:" ^ (string_of_loc p)^">"        *)
-(*   | Cast ({exp_cast_pos = p}) -> (string_of_exp_x e) ^ "<loc_cast:" ^ (string_of_loc p)^">"                 *)
-(*   | Continue ({exp_continue_pos = p}) -> (string_of_exp_x e) ^ "<loc_continue:" ^ (string_of_loc p)^">"     *)
-(*   | Catch ({exp_catch_pos = p}) -> (string_of_exp_x e) ^ "<loc_catch:" ^ (string_of_loc p)^">"              *)
-(*   | Empty p -> (string_of_exp_x e) ^ "<loc_empty:" ^ (string_of_loc p)^">"                                  *)
-(*   | Finally ({exp_finally_pos = p}) -> (string_of_exp_x e) ^ "<loc_finally:" ^ (string_of_loc p)^">"        *)
-(*   | Unary ({exp_unary_pos = p}) -> (string_of_exp_x e) ^ "<loc_unary:" ^ (string_of_loc p)^">"              *)
-(*   | Binary ({exp_binary_pos = p}) -> (string_of_exp_x e) ^ "<loc_binary:" ^ (string_of_loc p)^">"           *)
-(*   | CallNRecv ({exp_call_nrecv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callnrecv:" ^ (string_of_loc p)^">" *)
-(*   | CallRecv ({exp_call_recv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callrecv:" ^ (string_of_loc p)^">"    *)
-(*   | ArrayAlloc ({exp_aalloc_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayalloc:" ^ (string_of_loc p)^">"   *)
-(*   | New ({exp_new_pos = p}) -> (string_of_exp_x e) ^ "<loc_new:" ^ (string_of_loc p)^">"                    *)
-(*   | Var ({exp_var_pos = p}) -> (string_of_exp_x e) ^ "<loc_var:" ^ (string_of_loc p)^">"                    *)
-(*   | Member ({exp_member_pos = p}) -> (string_of_exp_x e) ^ "<loc_member:" ^ (string_of_loc p)^">"           *)
-(*   | Assign ({exp_assign_pos = p}) -> (string_of_exp_x e) ^ "<loc_assign:" ^ (string_of_loc p)^">"           *)
-(*   | Cond ({exp_cond_pos = p}) -> (string_of_exp_x e) ^ "<loc_cond:" ^ (string_of_loc p)^">"                 *)
-(*   | While ({exp_while_pos = p}) -> (string_of_exp_x e) ^ "<loc_while:" ^ (string_of_loc p)^">"              *)
-(*   | Return ({exp_return_pos = p}) -> (string_of_exp_x e) ^ "<loc_return:" ^ (string_of_loc p)^">"           *)
-(*   | Seq ({exp_seq_pos = p}) -> (string_of_exp_x e) ^ "<loc_seq:" ^ (string_of_loc p)^">"                    *)
-(*   | VarDecl ({exp_var_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_vardecl:" ^ (string_of_loc p)^">"       *)
-(*   | ConstDecl ({exp_const_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_constdecl:" ^ (string_of_loc p)^">" *)
-(*   | BoolLit ({exp_bool_lit_pos = p})  -> (string_of_exp_x e) ^ "<loc_boollit:" ^ (string_of_loc p)^">"      *)
-(*   | IntLit ({exp_int_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_intlit:" ^ (string_of_loc p)^">"          *)
-(*   | FloatLit ({exp_float_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_floatlit:" ^ (string_of_loc p)^">"    *)
-(*   | Null p -> (string_of_exp_x e) ^ "<loc_null:" ^ (string_of_loc p)^">"                                    *)
-(*   | Assert ({exp_assert_pos = p}) -> (string_of_exp_x e) ^ "<loc_assert:" ^ (string_of_loc p)^">"           *)
-(*   | Dprint ({exp_dprint_pos = p})  -> (string_of_exp_x e) ^ "<loc_dprint:" ^ (string_of_loc p)^">"          *)
-(*   | Debug ({exp_debug_pos = p}) -> (string_of_exp_x e) ^ "<loc_debug:" ^ (string_of_loc p)^">"              *)
-(*   | This ({exp_this_pos = p}) -> (string_of_exp_x e) ^ "<loc_this:" ^ (string_of_loc p)^">"                 *)
-(*   | Time (_,_,p) -> (string_of_exp_x e) ^ "<loc_time:" ^ (string_of_loc p)^">"                              *)
-(*   | Raise ({exp_raise_pos = p}) -> (string_of_exp_x e) ^ "<loc_raise:" ^ (string_of_loc p)^">"              *)
-(*   | Try ({exp_try_pos = p}) -> (string_of_exp_x e) ^ "<loc_try:" ^ (string_of_loc p)^">"                    *)
-
-and 
+and
       (* function to transform a list of expression in a string *)
-      string_of_exp_list l c = match l with  
+      string_of_exp_list l c = match l with
         | []                          -> ""
         | h::[]                       -> string_of_exp h
-        | h::t 	                   -> (string_of_exp h) ^ c ^ " " ^ (string_of_exp_list t c)			    
-              
+        | h::t 	                   -> (string_of_exp h) ^ c ^ " " ^ (string_of_exp_list t c)
 and string_of_exp_var_decl e = match e with
     {exp_var_decl_type = t;
     exp_var_decl_decls = l}
@@ -1177,9 +1126,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 ;;
 
 (* pretty printing for a global variable declaration *)
-let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d)) ^ ";"
-;;
-
+let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 
 let string_of_barrier_decl b = 
   let pr_trans (s,d,l) = 
@@ -1276,7 +1223,7 @@ let string_of_proc_decl_repair p =
   ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
   ^ "\n"
   ^ ( (string_of_struc_formula_repair p.proc_static_specs)
-      ^ "\n" ^ "{\n" ^ body ^ "\n}")
+      ^ "\n" ^ body)
 
 
 let string_of_rel_decl p =
@@ -1461,7 +1408,7 @@ let string_of_program_repair p =
   let compare x = String.compare x "Object" != 0
                   && String.compare x "String" != 0 in
   let cdefs = List.filter(fun x -> compare x.data_name) cdefs in
-  let procs = p.prog_proc_decls in
+  let procs = List.rev p.prog_proc_decls in
   let procs = List.filter (fun x -> String.compare x.proc_name "free" != 0)
       procs in
   (String.concat "\n\n" (List.map string_of_data_repair cdefs))

@@ -554,7 +554,7 @@ let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
-  | Bool          -> "boolean"
+  | Bool          -> "bool"
   | Float         -> "float"
   | Int           -> "int"
   | INFInt        -> "INFint"

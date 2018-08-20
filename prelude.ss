@@ -1,4 +1,5 @@
 relation Univ(int x).
+relation BasePtr(Object x).
 
 //class __cflow extends __Exc {}
 class __DivByZeroErr extends __Error {}
@@ -8,20 +9,20 @@ class __ArrBoundErr extends __Error {}
 class __RET extends __Exc {}
 
 int add___(int a, int b)
-  requires true
+  requires emp
   ensures res = a + b;
 
 int minus___(int a, int b)
-  requires true
+  requires emp
   ensures res = a - b;
 
 int mult___(int a, int b) 
-  requires true 
+  requires emp
   ensures res = a * b;
 
 
 int mults___(int a, int b)
-  requires true 
+  requires emp & true 
   ensures res = a * b;
 /*
   case {
@@ -231,8 +232,8 @@ bool lte___(float a, float b) case {
     a >  b -> ensures !res;}
 */
 bool gt___(int a, int b) case {
-    a >  b -> ensures  res;
-    a <= b -> ensures !res;}
+    a >  b  -> ensures   res;
+    a <= b  -> ensures !res;}
 /*
 bool gt___(float a, float b) case {
     a >  b -> ensures  res;
@@ -611,3 +612,43 @@ char_star alloc_str (int n)
 void finalize_str (char_star s, int n)
   requires s::WFSegN<p, m> & 0 <= n & n < m & Term
   ensures s::WSSN<q, n+1>;
+
+
+/* Array verification */
+/* class void_star extends Object {void value} */
+ /* class int_star extends Object {int value} */
+
+pred_prim Aseg<start:int, end:int>;
+pred_prim AsegNE<start:int, end:int>;
+pred_prim Elem<start:int,value:int>;
+
+data arrI {
+  int val;
+}
+
+
+void_star __builtin_alloca(int size)
+ case {
+  size <= 0 | size>=2147483647 -> requires emp & true ensures res = null;
+  size > 0 & size<2147483647  -> requires emp & true ensures res::AsegNE<0, size> & res!=null;
+ }
+
+int_star __cast_void_pointer_to_int_star__(void_star ptr)
+  requires emp & true
+  ensures res = ptr;
+
+int __read_arr(int_star ptr)
+   requires base::Elem<i,v> & ptr = base + i
+   ensures base::Elem<i,v> & res = v;
+
+void __write_arr(int_star ptr, int v)
+  requires base::Elem<i,_> & ptr = base + i
+  ensures base::Elem<i,v>;
+
+int_star __pointer_add__int_star__int__(int_star ptr, int index)
+  requires emp & true
+  ensures res = ptr + index;
+
+int_star __pointer_minus__int_star__int__(int_star ptr, int index)
+  requires emp & true
+  ensures res = ptr - index;
