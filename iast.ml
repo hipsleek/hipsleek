@@ -4296,6 +4296,10 @@ let rec replace_exp_with_loc exp n_exp loc =
   | Var v -> if (v.exp_var_pos = loc) then n_exp else exp
   | _ -> exp
 
+let is_zero exp = match exp with
+  | IntLit e -> e.exp_int_lit_val == 0
+  | _ -> false
+
 let rec normalize_exp exp = match exp with
   | Binary e ->
     begin
@@ -4304,13 +4308,15 @@ let rec normalize_exp exp = match exp with
       | OpLte
       | OpGt
       | OpGte
-        -> Binary {
+        -> if not(is_zero e.exp_binary_oper2) then
+        Binary {
             e with
             exp_binary_oper1 = mkBinary OpMinus e.exp_binary_oper1
                 e.exp_binary_oper2 None e.exp_binary_pos;
             exp_binary_oper2 = mkIntLit 0 no_pos;
             exp_binary_pos = no_pos
           }
+        else exp
       | OpLogicalAnd
       | OpLogicalOr -> Binary {
           e with exp_binary_oper1 = normalize_exp e.exp_binary_oper1;

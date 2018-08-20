@@ -348,161 +348,34 @@ let replace_with_user_include
 let saved_cprog = Cast.cprog (* ref None *)
 let saved_prim_names = ref None
 
-(* (\*Working*\)
- * let process_source_full source =
- *   if (not !Globals.web_compile_flag) then flush stdout;
- *   let () = Gen.Profiling.push_time "Preprocessing" in
- *   let prog = parse_file_full source false in
- * 
- *   (\* ---------------------------------------------- *\)
- *   let pr_prog = Iprinter.string_of_program in
- *   let pr_prog_repair = Iprinter.string_of_program_repair in
- *   let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
- *   (\* let prog = if (!Globals.enable_repair) then
- *    *     let normalized_prog = Iast.normalize_prog prog in
- *    *     let file_name = Filename.basename source in
- *    *     let normalized_file = "normalized_" ^ file_name in
- *    *     let dir = Filename.dirname source in
- *    *     let to_saved_file = dir ^ Filename.dir_sep ^ normalized_file in
- *    *     let oc = open_out to_saved_file in
- *    *     fprintf oc "%s\n" (pr_prog_repair normalized_prog);
- *    *     close_out oc;
- *    *     parse_file_full to_saved_file false
- *    *   else prog in *\)
- *   let () = x_tinfo_hp (add_str "prog normalized: " pr_prog_repair) prog no_pos in
- *   (\* ---------------------------------------------- *\)
- * 
- *   let () = Gen.Profiling.push_time "Process compare file" in
- *   let prog = if(!Globals.validate || !Globals.cp_prefile) then
- *       process_validate prog else prog
- *   in
- *   let prog = process_lib_file prog in
- *   let () = Gen.Profiling.pop_time "Process compare file" in
- *   (\* Remove all duplicated declared prelude *\)
- *   let header_files = match !Globals.prelude_file with
- *     | None -> ["\"prelude.ss\""]
- *     | Some s -> ["\""^s^"\""] in
- * 
- *   let header_files = if (!Globals.allow_inf)
- *     then "\"prelude_inf.ss\""::header_files
- *     else header_files in
- *   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
- *   let prims_list = process_primitives new_h_files in
- * 
- *   (\*list of primitives in header files*\)
- *   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
- *   let prims_list = replace_with_user_include prims_list prims_incls in
- * 
- *   if !to_java then begin
- *     print_string ("Converting to Java..."); flush stdout;
- *     let tmp = Filename.chop_extension (Filename.basename source) in
- *     let main_class = Gen.replace_minus_with_uscore tmp in
- *     let java_str = Java.convert_to_java prog main_class in
- *     let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
- *     let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
- *     output_string jfile java_str;
- *     close_out jfile;
- *     exit 0
- *   end;
- *   (\* Dump prog into ss file  *\)
- *   if (!Scriptarguments.dump_ss) then (
- *     let dump_file = "logs/" ^ (Filename.basename source) ^ ".gen-ss" in
- *     let oc = open_out dump_file in
- *     Printf.fprintf  oc "%s\n" (Iprinter.string_of_program prog);
- *     close_out oc;
- *   );
- * 
- *   if (!Scriptarguments.parse_only) then
- *     let () = Gen.Profiling.pop_time "Preprocessing" in
- *     print_string (Iprinter.string_of_program prog)
- *   else
- *   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
- * 
- *   (\* Global variables translating *\)
- *   let () = Gen.Profiling.push_time "Translating global var" in
- *   let iprims_list = process_intermediate_prims prims_list in
- *   let iprims = Iast.append_iprims_list_head iprims_list in
- * 
- *   let prim_names =
- *     (List.map (fun d -> d.Iast.data_name) iprims.Iast.prog_data_decls) @
- *     (List.map (fun v -> v.Iast.view_name) iprims.Iast.prog_view_decls) @
- *     ["__Exc"; "__Fail"; "__Error"; "__MayError";"__RET"]
- *   in
- *   let () = saved_prim_names := Some prim_names in
- *   let prog = Iast.append_iprims_list_head ([prog]@prims_incls) in
- * 
- *   let prog, _ = Hashtbl.fold
- *       (fun id _ (prog, acc) ->
- *          if List.exists (fun p -> String.compare p id == 0) acc then (prog, acc)
- *          else
- *            let prog = Parser.add_tnt_prim_proc prog id in
- *            (prog, acc @ [id]))
- *       Iast.tnt_prim_proc_tbl (prog, [])
- *   in
- * 
- *   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
- *   let tnl = Iast.find_all_num_trailer prog in
- *   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
- *   let tnl = List.sort String.compare tnl in
- *   let () = Globals.trailer_num_list := tnl in
- * 
- *   let () = x_ninfo_hp (add_str "trailer_num_list" (pr_list pr_id))
- *       !Globals.trailer_num_list no_pos in
- * 
- *   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
- *   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
- * 
- *   let () = if (!Globals.print_input_all)
- *     then print_string (Iprinter.string_of_program intermediate_prog)
- *     else if(!Globals.print_input) then
- *       print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
- *     else () in
- * 
- *   let () = Gen.Profiling.pop_time "Translating global var" in
- *   let () = Gen.Profiling.push_time "Translating to Core" in
- * 
- *   (\**************************************\)
- *   (\*Simple heuristic for ParaHIP website*\)
- *   (\*Heuristic: check if waitlevel and locklevels have been used for verification
- *     If not detect waitlevel or locklevel -> set allow_locklevel==faslse
- *     Note: this is used in ParaHIP website for demonstration only.
- *     We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
- *     and waitlevel.
- *   *\)
- *   let search_for_locklevel proc =
- *     if (not !Globals.allow_locklevel) then
- *       let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
- *       let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
- *       if b then
- *         Globals.allow_locklevel := true
- *   in
- *   let () = if !Globals.web_compile_flag then
- *       let todo_unk = List.map search_for_locklevel prog.Iast.prog_proc_decls in
- *       ()
- *   in
- * 
- *   (\**************************************\)
- *   (\*to improve: annotate field*\)
- *   let () = Iast.annotate_field_pure_ext intermediate_prog in
- *   (\*END: annotate field*\)
- *   (\*used in lemma*\)
- *   let cprog, tiprog = Astsimp.trans_prog intermediate_prog in
- *   let () = x_binfo_hp (add_str "intermediate " pr_prog_repair) intermediate_prog no_pos in
- *   let () = saved_cprog := cprog in *)
-
 (*Working*)
 let process_source_full source =
-  if (not !Globals.web_compile_flag) then
-    Debug.info_zprint (lazy (("Full processing file \"" ^ source ^ "\"\n"))) no_pos;
-  flush stdout;
+  if (not !Globals.web_compile_flag) then flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
-  let () = Debug.ninfo_zprint (lazy (("       iprog:" ^ (Iprinter.string_of_program prog)))) no_pos in
+
+  (* ---------------------------------------------- *)
+  let pr_prog = Iprinter.string_of_program in
+  let pr_prog_repair = Iprinter.string_of_program_repair in
+  let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
+  let prog = if (!Globals.enable_repair) then
+      let normalized_prog = Iast.normalize_prog prog in
+      let file_name = Filename.basename source in
+      let normalized_file = "normalized_" ^ file_name in
+      let dir = Filename.dirname source in
+      let to_saved_file = dir ^ Filename.dir_sep ^ normalized_file in
+      let oc = open_out to_saved_file in
+      fprintf oc "%s\n" (pr_prog_repair normalized_prog);
+      close_out oc;
+      (* prog *)
+      parse_file_full to_saved_file false
+    else prog in
+  let () = x_tinfo_hp (add_str "prog normalized: " pr_prog_repair) prog no_pos in
+  (* ---------------------------------------------- *)
+
   let () = Gen.Profiling.push_time "Process compare file" in
-  let prog = if(!Globals.validate || !Globals.cp_prefile) then (
-      process_validate prog
-    )
-    else prog
+  let prog = if(!Globals.validate || !Globals.cp_prefile) then
+      process_validate prog else prog
   in
   let prog = process_lib_file prog in
   let () = Gen.Profiling.pop_time "Process compare file" in
@@ -510,11 +383,14 @@ let process_source_full source =
   let header_files = match !Globals.prelude_file with
     | None -> ["\"prelude.ss\""]
     | Some s -> ["\""^s^"\""] in
-  let header_files = if (!Globals.allow_inf) then "\"prelude_inf.ss\""::header_files else header_files in
-  let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-  let prims_list = process_primitives new_h_files in (*list of primitives in
-                                                      *header files*)
 
+  let header_files = if (!Globals.allow_inf)
+    then "\"prelude_inf.ss\""::header_files
+    else header_files in
+  let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
+  let prims_list = process_primitives new_h_files in
+
+  (*list of primitives in header files*)
   let prims_incls = process_include_files prog.Iast.prog_include_decls source in
   let prims_list = replace_with_user_include prims_list prims_incls in
 
@@ -527,7 +403,6 @@ let process_source_full source =
     let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
     output_string jfile java_str;
     close_out jfile;
-    (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
   (* Dump prog into ss file  *)
@@ -572,6 +447,9 @@ let process_source_full source =
   let tnl = List.sort String.compare tnl in
   let () = Globals.trailer_num_list := tnl in
 
+  let () = x_ninfo_hp (add_str "trailer_num_list" (pr_list pr_id))
+      !Globals.trailer_num_list no_pos in
+
   let intermediate_prog = IastUtil.pre_process_of_iprog iprims intermediate_prog in
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
 
@@ -584,6 +462,14 @@ let process_source_full source =
   let () = Gen.Profiling.pop_time "Translating global var" in
   let () = Gen.Profiling.push_time "Translating to Core" in
 
+  (**************************************)
+  (*Simple heuristic for ParaHIP website*)
+  (*Heuristic: check if waitlevel and locklevels have been used for verification
+    If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+    Note: this is used in ParaHIP website for demonstration only.
+    We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+    and waitlevel.
+  *)
   let search_for_locklevel proc =
     if (not !Globals.allow_locklevel) then
       let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
@@ -596,8 +482,12 @@ let process_source_full source =
       ()
   in
 
+  (**************************************)
+  (*to improve: annotate field*)
   let () = Iast.annotate_field_pure_ext intermediate_prog in
-  let cprog, tiprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+  (*END: annotate field*)
+  (*used in lemma*)
+  let cprog, tiprog = Astsimp.trans_prog intermediate_prog in
   let () = saved_cprog := cprog in
 
   (* ========= lemma process (normalize, translate, verify) ========= *)

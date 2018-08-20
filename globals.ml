@@ -554,6 +554,34 @@ let rec string_of_typ (x:typ) : string = match x with
   (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | INFInt        -> "INFint"
+  | Void          -> "void"
+  | NUM          -> "NUM"
+  | AnnT          -> "AnnT"
+  | Tup2 (t1,t2)  -> "tup2("^(string_of_typ t1) ^ "," ^(string_of_typ t2) ^")"
+  | BagT t        -> "bag("^(string_of_typ t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
+  | List t        -> "list("^(string_of_typ t)^")"
+  | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
+  | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
+  | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
+  | HpT        -> "HpT"
+  (* | SLTyp -> "SLTyp" *)
+  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Array (et, r) -> (* An Hoa *)
+    let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
+    (string_of_typ et) ^ (repeat r)
+
+let rec string_of_typ_repair (x:typ) : string = match x with
+  (* may be based on types used !! *)
+  | FORM          -> "Formula"
+  | UNK          -> "Unknown"
   | Bool          -> "bool"
   | Float         -> "float"
   | Int           -> "int"
@@ -577,7 +605,6 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
-;;
 
 let string_of_typed_ident (typ,id) =
   "("^(string_of_typ typ)^","^id^")"
