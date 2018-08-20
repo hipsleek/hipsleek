@@ -354,6 +354,12 @@ let process_source_full source =
   flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
+  let pr_prog = Iprinter.string_of_program in
+  let pr_prog_repair = Iprinter.string_of_program_repair in
+  let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
+  let prog = if (!Globals.enable_repair) then Iast.normalize_prog prog
+        else prog in
+  let () = x_binfo_hp (add_str "prog normalized: " pr_prog_repair) prog no_pos in
   let () = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.validate || !Globals.cp_prefile) then (
       process_validate prog
@@ -419,8 +425,9 @@ let process_source_full source =
            (prog, acc @ [id]))
       Iast.tnt_prim_proc_tbl (prog, [])
   in
-
+  let () = x_tinfo_hp (add_str "prog before: " pr_prog) prog no_pos in
   let intermediate_prog = x_add_1 Globalvars.trans_global_to_param prog in
+  let () = x_tinfo_hp (add_str "prog after: " pr_prog) intermediate_prog no_pos in
   let tnl = Iast.find_all_num_trailer prog in
   let tnl = Gen.BList.remove_dups_eq (fun a b -> a = b) tnl in
   let tnl = List.sort String.compare tnl in
@@ -717,16 +724,16 @@ let process_source_full source =
                  *   try Typechecker.check_prog_wrapper n_iprog n_cprog
                  *   with e2 -> raise e2
                  * else raise e *)
-              else
-                let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
-                match repaired_iprog with
-                | None -> raise e
-                (* | Some (r_iprog, pos, repaired_exp) -> *)
-                | Some _ ->
-                  (* let () = Repair.output_repaired_iprog source pos repaired_exp
-                   * in *)
-                  let () = Typechecker.verified_procs := [] in
-                  ()
+              else raise e
+                (* let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
+                 * match repaired_iprog with
+                 * | None -> raise e
+                 * (\* | Some (r_iprog, pos, repaired_exp) -> *\)
+                 * | Some _ ->
+                 *   (\* let () = Repair.output_repaired_iprog source pos repaired_exp
+                 *    * in *\)
+                 *   let () = Typechecker.verified_procs := [] in
+                 *   () *)
             else
               let () = print_string_quiet
                   ("\nException MAIN"

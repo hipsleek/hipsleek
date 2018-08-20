@@ -4300,8 +4300,6 @@ let rec normalize_exp exp = match exp with
   | Binary e ->
     begin
       match e.exp_binary_op with
-      (* | OpEq
-       * | OpNeq *)
       | OpLt
       | OpLte
       | OpGt

@@ -167,7 +167,7 @@ let string_of_typed_var (t,id) = "(" ^ (string_of_typ t) ^ "," ^  id  ^ ")";;
 
 let rec string_of_typed_var_list l = match l with 
   | [] -> ""
-  | h::[] -> (string_of_typed_var h) 
+  | h::[] -> (string_of_typed_var h)
   | h::t -> (string_of_typed_var h) ^ ";" ^ (string_of_typed_var_list t)
 
 let string_of_imm imm = match imm with
@@ -475,7 +475,7 @@ let string_of_iperm perm =
 ;;
 
 (* pretty printing for a heap formula *)
-let rec string_of_h_formula = function 
+let rec string_of_h_formula = function
   | F.Star ({F.h_formula_star_h1 = f1;
              F.h_formula_star_h2 = f2;
              F.h_formula_star_pos = l} ) ->
@@ -582,7 +582,111 @@ let rec string_of_h_formula = function
   | F.HEmp -> "emp"
   | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
-(* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
+and string_of_h_formula_repair = function
+  | F.Star ({F.h_formula_star_h1 = f1;
+             F.h_formula_star_h2 = f2;
+             F.h_formula_star_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
+      else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")"
+    else
+      "(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"
+  | F.StarMinus ({F.h_formula_starminus_h1 = f1;
+                  F.h_formula_starminus_h2 = f2;
+                  F.h_formula_starminus_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then (string_of_h_formula f2) ^ " -* " ^ (string_of_h_formula f1)
+      else (string_of_h_formula f2) ^ " -* (" ^ (string_of_h_formula f1) ^ ")"
+    else
+      "(" ^ (string_of_h_formula f2) ^ ") -* (" ^ (string_of_h_formula f1) ^ ")"
+  | F.Conj ({F.h_formula_conj_h1 = f1;
+             F.h_formula_conj_h2 = f2;
+             F.h_formula_conj_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then (string_of_h_formula f1) ^ " U* " ^ (string_of_h_formula f2)
+      else (string_of_h_formula f1) ^ " U* (" ^ (string_of_h_formula f2) ^ ")"
+    else
+      "(" ^ (string_of_h_formula f1) ^ ") U* (" ^ (string_of_h_formula f2) ^ ")"
+  | F.ConjStar ({F.h_formula_conjstar_h1 = f1;
+                 F.h_formula_conjstar_h2 = f2;
+                 F.h_formula_conjstar_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then (string_of_h_formula f1) ^ " &* " ^ (string_of_h_formula f2)
+      else (string_of_h_formula f1) ^ " &* (" ^ (string_of_h_formula f2) ^ ")"
+    else
+      "(" ^ (string_of_h_formula f1) ^ ") &* (" ^ (string_of_h_formula f2) ^ ")"
+  | F.ConjConj ({F.h_formula_conjconj_h1 = f1;
+                 F.h_formula_conjconj_h2 = f2;
+                 F.h_formula_conjconj_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+      else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
+    else
+      "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
+  | F.Phase ({F.h_formula_phase_rd = f1;
+              F.h_formula_phase_rw = f2;
+              F.h_formula_phase_pos = l} ) ->
+    if is_bool_f f1 then
+      if is_bool_f f2 then ""
+      else string_of_h_formula_repair f2
+    else
+    if is_bool_f f2 then string_of_h_formula_repair f1
+    else
+      "(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"
+  | F.HeapNode ({F.h_formula_heap_node = x;
+                 F.h_formula_heap_name = id;
+                 F.h_formula_heap_deref = deref;
+                 F.h_formula_heap_perm = perm; (*LDK*)
+                 F.h_formula_heap_arguments = pl;
+                 F.h_formula_heap_ho_arguments = ho_pl;
+                 F.h_formula_heap_imm = imm;
+                 F.h_formula_heap_imm_param = ann_param;
+                 F.h_formula_heap_label = pi;
+                 F.h_formula_heap_pos = l}) ->
+    let perm_str = string_of_iperm perm in
+    let deref_str = ref "" in
+    for i = 1 to deref do
+      deref_str := !deref_str ^ "^";
+    done;
+    ((string_of_id x) ^ "::" ^ id ^ !deref_str ^ perm_str
+     ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm))
+  | F.HeapNode2 ({F.h_formula_heap2_node = xid;
+                  F.h_formula_heap2_name = id;
+                  F.h_formula_heap2_deref = deref;
+                  F.h_formula_heap2_label = pi;
+                  F.h_formula_heap2_imm = imm;
+                  F.h_formula_heap2_imm_param = ann_param;
+                  F.h_formula_heap2_perm = perm; (*LDK*)
+                  F.h_formula_heap2_arguments = args;
+                  F.h_formula_heap2_ho_arguments = ho_args
+                 }) ->
+    let ho_str = "{" ^ (String.concat "," (List.map string_of_rflow_formula ho_args)) ^ "}" in
+    let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
+    let tmp2 = String.concat ", " tmp1 in
+    let perm_str = string_of_iperm perm in
+    let deref_str = ref "" in
+    for i = 1 to deref do
+      deref_str := !deref_str ^ "^";
+    done;
+    string_of_formula_label_opt pi
+      ((string_of_id xid) ^ "::" ^ id ^ho_str^ !deref_str ^ perm_str
+       ^ "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.ThreadNode ({F.h_formula_thread_node = x;
+                   F.h_formula_thread_name = id;
+                   F.h_formula_thread_resource = rsr;
+                   F.h_formula_thread_delayed = dl;
+                   F.h_formula_thread_label = pi;
+                   F.h_formula_thread_perm = perm;
+                   F.h_formula_thread_pos = l}) ->
+    let perm_str = string_of_iperm perm in
+    let rsr_str = string_of_formula rsr in
+    ((string_of_id x) ^ "::" ^ id ^ perm_str 
+     ^ "<" ^ (string_of_pure_formula dl) ^ " --> " ^ rsr_str ^ ">" ^ "[ThreadNode]")
+  | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
+  | F.HTrue -> ""
+  | F.HFalse -> ""
+  | F.HEmp -> "emp"
+  | F.HVar (v,vs) -> "HVar "^v^(pr_list pr_id vs)
 
 and string_of_one_formula (f:F.one_formula) =
   let h,p,dl,th,pos = F.split_one_formula f in
@@ -605,7 +709,7 @@ and string_of_rflow_formula ff =
   (string_of_formula ff.F.rflow_base)
 
 (* pretty printing for formulae *) 
-and string_of_formula = function 
+and string_of_formula = function
   | Iast.F.Base ({F.formula_base_heap = hf;
                   F.formula_base_pure = pf;
                   F.formula_base_vperm = vp;
@@ -642,10 +746,48 @@ and string_of_formula = function
             ^ ")"
     in rs^sa
 
-and  string_of_struc_formula c = match c with 
+and string_of_formula_repair = function
+  | Iast.F.Base ({F.formula_base_heap = hf;
+                  F.formula_base_pure = pf;
+                  F.formula_base_vperm = vp;
+                  F.formula_base_flow = fl;
+                  F.formula_base_and = a;
+                  F.formula_base_pos = l}) ->
+    let sa = if a == [] then "" else "\nAND " in
+    let sa = sa ^ (string_of_one_formula_list a) in
+    let rs =
+      let s = string_of_pure_formula pf in
+      let hf_str = string_of_h_formula_repair hf in
+      let hf_str = if String.compare hf_str "" == 0 then hf_str
+        else "(" ^ hf_str ^ ")" in
+      (if hf_str = "" then  s
+       else hf_str ^ " & (" ^ s ^ ")")
+    in rs ^ sa
+  | Iast.F.Or ({F.formula_or_f1 = f1;
+                F.formula_or_f2 = f2;
+                F.formula_or_pos = l}) ->
+    (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
+  | Iast.F.Exists ({F.formula_exists_qvars = qvars;
+                    F.formula_exists_heap = hf;
+                    F.formula_exists_vperm = vp;
+                    F.formula_exists_flow = fl;
+                    F.formula_exists_and = a;
+                    F.formula_exists_pure = pf}) ->
+    let sa = if a==[] then "" else "\nAND " in
+    let sa = sa ^ string_of_one_formula_list a in
+    let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
+            ^ (let s = string_of_pure_formula pf in
+               let svp = string_of_vperm_sets vp in
+               let s = if svp = "" then s else svp ^ " & " ^ s in
+               if s = "" then  (string_of_h_formula hf)
+               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s ^ ")")
+            ^ ")"
+    in rs^sa
+
+and string_of_struc_formula c = match c with 
   | F.ECase {
       F.formula_case_branches  =  case_list ;
-    } -> 
+    } ->
     let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^(string_of_struc_formula c2)^"\n") "ECase:\n" case_list in
     ("case{"^impl^"}")
   |F.EBase {
@@ -653,7 +795,7 @@ and  string_of_struc_formula c = match c with
       F.formula_struc_explicit_inst = ei;
       F.formula_struc_base = fb;
       F.formula_struc_continuation = cont;	
-    } -> 
+    } ->
     let l1 = List.fold_left (fun a c-> a^" "^ string_of_var c) "" ii in
     let l2 = List.fold_left (fun a c -> a^" "^ string_of_var c) "" ei in
     let b = string_of_formula fb in
@@ -688,8 +830,47 @@ and  string_of_struc_formula c = match c with
       a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
   (*let sl = if b then "("^(string_of_int (fst l))^",\""^(snd l)^"\"): " else "" in*)
 
-
-;;
+and string_of_struc_formula_repair c = match c with
+  | F.ECase {
+      F.formula_case_branches  =  case_list ;
+    } ->
+    let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^(string_of_struc_formula c2)^"\n") "ECase:\n" case_list in
+    ("case{"^impl^"}")
+  | F.EBase {
+      F.formula_struc_implicit_inst = ii;
+      F.formula_struc_explicit_inst = ei;
+      F.formula_struc_base = fb;
+      F.formula_struc_continuation = cont;
+    } ->
+    let b = string_of_formula_repair fb in
+    let c = match cont with
+      | None -> ""
+      | Some l -> string_of_struc_formula_repair l in
+    "requires " ^b ^ "\n" ^ c ^ ";"
+  | F.EAssume {
+      F.formula_assume_simpl = b;
+      F.formula_assume_struc = s;
+      F.formula_assume_lbl = (n1,n2);
+      F.formula_assume_ensures_type = t;} ->
+    let assume_str = match t with
+      | None -> "ensures "
+      | Some true -> "EAssume_exact: "
+      | Some false -> "EAssume_inexact: " in
+    let l1 = assume_str ^ (string_of_formula_repair b) in
+    l1
+  | F.EInfer{F.formula_inf_vars = lvars;
+             F.formula_inf_obj = inf_o;
+             F.formula_inf_post = postf;
+             F.formula_inf_xpost = postxf;
+             F.formula_inf_continuation = continuation;} ->
+    let ps =if (lvars==[] && postf) then "@post " else "" in
+    let ps = ps ^ (inf_o # string_of_raw) in
+    let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
+    let string_of_continuation = string_of_struc_formula continuation in
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
+  | F.EList b -> "EList" ^ (List.fold_left  (fun a (l,c)-> 
+      let l_s = (string_of_spec_label_def l) ^": " in
+      a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
 
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with 
@@ -796,7 +977,10 @@ let rec string_of_exp = function
         ) in
         let newexp = (
           match idl with
-            | _ -> "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
+          | _ ->
+            if (!Globals.enable_repair) then
+              base_str ^ "." ^ (concatenate_string_list idl "~~>")
+            else "member access " ^ base_str ^ "~~>" ^ (concatenate_string_list idl "~~>")
         ) in
         newexp
   | Assign ({exp_assign_op = op;
@@ -969,10 +1153,15 @@ let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add in
   | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i ^ (string_of_field_ann ann)
 ;;
 
-(* function to print a list of typed _ident *) 
-let rec string_of_decl_list l c = match l with 
+let string_of_decl_repair (d, pos, il,ann) = match d with
+  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t)
+                          ^ " " ^ i ^ ";"
+;;
+
+(* function to print a list of typed _ident *)
+let rec string_of_decl_list l c = match l with
   | []               -> ""
-  | h::[]            -> "  " ^ string_of_decl h 
+  | h::[]            -> "  " ^ string_of_decl h
   | h::t             -> "  " ^ (string_of_decl h) ^ ";" ^ c ^ (string_of_decl_list t c)
 ;;
 
@@ -988,7 +1177,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 ;;
 
 (* pretty printing for a global variable declaration *)
-let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
+let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d)) ^ ";"
 ;;
 
 
@@ -1078,18 +1267,32 @@ let string_of_proc_decl p =
       ^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n"
       ^ body)
 
+let string_of_proc_decl_repair p =
+  let body = match p.proc_body with
+    | None     -> ""
+    | Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" in
+  (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
+  ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
+  ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
+  ^ "\n"
+  ^ ( (string_of_struc_formula_repair p.proc_static_specs)
+      ^ "\n" ^ "{\n" ^ body ^ "\n}")
+
+
 let string_of_rel_decl p =
   let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
   p.rel_name ^ "(" ^ (pr p.rel_typed_vars) ^ ")"
 ;;
 
 let string_of_exp_decl exp_decl =
-  let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
+  let pr = pr_list (fun (x, y) -> (string_of_typ x) ^ " " ^ y) in
   let body = match exp_decl.exp_body with
     | ExpForm e -> string_of_formula_exp e
-    | ExpUnk -> "ExpUnk"
+    | ExpUnk -> "?."
   in
-  exp_decl.exp_name ^ "(" ^ (pr exp_decl.exp_typed_params) ^ ") = " ^ body
+  let exp_name = exp_decl.exp_name in
+  let typ_str = string_of_typ exp_decl.exp_ret_typ in
+  "func " ^ typ_str ^ " " ^ exp_name ^ "(" ^ (pr exp_decl.exp_typed_params) ^ ") == " ^ body
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
@@ -1103,8 +1306,14 @@ let rec string_of_data_decl_list l = match l with
 (* pretty printing for a list of proc_decl *)
 let rec string_of_proc_decl_list l = match l with
   | []        -> ""
-  | h::[]     -> (string_of_proc_decl h) 
+  | h::[]     -> (string_of_proc_decl h)
   | h::t      -> (string_of_proc_decl h) ^ "\n" ^ (string_of_proc_decl_list t)
+;;
+
+let rec string_of_proc_decl_list_repair l = match l with
+  | []        -> ""
+  | h::[]     -> (string_of_proc_decl_repair h)
+  | h::t      -> (string_of_proc_decl_repair h) ^ "\n" ^ (string_of_proc_decl_list_repair t)
 ;;
 
 (* pretty printing for a list of view_decl *)
@@ -1186,7 +1395,7 @@ let rec string_of_enum_decl_list l = match l with
 ;;   
 
 (* pretty printing for a list of global variable declarations *)
-let rec string_of_global_var_decl_list l = 
+let rec string_of_global_var_decl_list l =
   match l with
   | []    -> ""
   | h::[] -> string_of_global_var_decl h
@@ -1210,7 +1419,7 @@ let string_of_hp_decl hpdecl =
 
 
 (* An Hoa : print axioms *)
-let string_of_axiom_decl_list adecls = 
+let string_of_axiom_decl_list adecls =
   String.concat "\n" (List.map (fun a -> "axiom " ^ (string_of_pure_formula a.axiom_hypothesis) ^ " |- " ^ (string_of_pure_formula a.axiom_conclusion)) adecls)
 
 
@@ -1219,7 +1428,7 @@ let string_of_data cdef =
     let dd=cdef.data_methods in
     if dd==[] then ""
     else "\n"^(String.concat "\n" (List.map string_of_proc_decl dd)) in
-  let field_str = String.concat ";\n" 
+  let field_str = String.concat ";\n"
       (List.map (fun f -> string_of_decl f) cdef.data_fields) in
   let inv_str =
     let dd=cdef.data_invs in
@@ -1229,8 +1438,40 @@ let string_of_data cdef =
   ^ field_str ^ inv_str ^ meth_str ^ "\n}"
   ^(string_of_data_pure_inv cdef.data_pure_inv)
 
+let string_of_data_repair cdef =
+  let meth_str =
+    let dd=cdef.data_methods in
+    if dd==[] then ""
+    else "\n"^(String.concat "\n" (List.map string_of_proc_decl dd)) in
+  let field_str = String.concat "\n"
+      (List.map (fun f -> string_of_decl_repair f) cdef.data_fields) in
+  let inv_str =
+    let dd=cdef.data_invs in
+    if dd==[] then ""
+    else "\n"^(String.concat ";\n"
+                 (List.map (fun i -> "inv " ^ (string_of_formula i))
+                    cdef.data_invs)) in
+  "data " ^ cdef.data_name ^ " {\n"
+  ^ field_str ^ inv_str ^ meth_str ^ "\n}"
+  ^(string_of_data_pure_inv cdef.data_pure_inv)
+
+(* pretty printing for program in repair case*)
+let string_of_program_repair p =
+  let cdefs = p.prog_data_decls in
+  let compare x = String.compare x "Object" != 0
+                  && String.compare x "String" != 0 in
+  let cdefs = List.filter(fun x -> compare x.data_name) cdefs in
+  let procs = p.prog_proc_decls in
+  let procs = List.filter (fun x -> String.compare x.proc_name "free" != 0)
+      procs in
+  (String.concat "\n\n" (List.map string_of_data_repair cdefs))
+  ^ "\n\n" ^
+  (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
+  (string_of_proc_decl_list_repair procs) ^ "\n"
+;;
+
 (* pretty printing for program *)
-let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
+let string_of_program p =
   (String.concat "\n\n" (List.map string_of_data p.prog_data_decls)) ^ "\n\n" ^
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^

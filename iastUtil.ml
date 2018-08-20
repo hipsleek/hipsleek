@@ -1022,7 +1022,7 @@ let rename_proc gvs proc : proc_decl =
 (*   let prog = float_var_decl_prog prog in *)
 (*   map_proc prog (rename_proc gvs)  *)
 
-let rename_prog prog : prog_decl = 
+let rename_prog prog : prog_decl =
   (*find var idents*)
   let var_idents =  (List.concat (
       let fun0 (a,b,c) = a in 
@@ -1422,7 +1422,7 @@ let add_globalv_to_mth_prog prog =
   Debug.no_1 "add_globalv_to_mth_prog" pr pr add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
-  prog: current program*)  
+  prog: current program*)
 let pre_process_of_iprog iprims prog =
   let prog =
     { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
@@ -1435,14 +1435,12 @@ let pre_process_of_iprog iprims prog =
                 prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
     } in
   let prog = float_var_decl_prog prog in
-  (* let () = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
-  let prog = rename_prog prog in
-  (* let () = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
-  let prog = add_globalv_to_mth_prog prog in 
+  let prog = if (!Globals.enable_repair) then prog
+        else rename_prog prog in
+  let prog = add_globalv_to_mth_prog prog in
   prog
 
-let pre_process_of_iprog iprims prog = 
-  (* let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in *)
+let pre_process_of_iprog iprims prog =
   let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
   Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog
 

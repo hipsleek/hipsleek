@@ -51,13 +51,13 @@ int Inhibit_Biased_Climb ()
 bool Own_Above_Threat()
      requires true ensures res = (Other_Tracked_Alt < Own_Tracked_Alt);
 {
-    return (Other_Tracked_Alt < Own_Tracked_Alt) && true;
+    return (Other_Tracked_Alt - Own_Tracked_Alt < 0) && true;
 }
 
 bool Own_Below_Threat()
   requires true ensures res = (Other_Tracked_Alt > Own_Tracked_Alt);
 {
-  return (Own_Tracked_Alt < Other_Tracked_Alt) && true;
+  return (Own_Tracked_Alt - Other_Tracked_Alt < 0) && true;
 }
 
 bool Non_Crossing_Biased_Climb()
@@ -65,38 +65,18 @@ bool Non_Crossing_Biased_Climb()
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation) &
-  res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | (Down_Separation > a));
-//  res = (Down_Separation < a);
-
-  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation)
-  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = false)  & (Up_Separation > Down_Separation) &
-  // res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | !(Down_Separation >= a));
-
-  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation)
-  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation) &
-  // res = ((Cur_Vertical_Sep >= 300) & (Own_Tracked_Alt > Other_Tracked_Alt)
-  //               & (Up_Separation >= a));
-
-  // requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation)
-  // ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  //     (Climb_Inhibit = false)  & (Up_Separation <= Down_Separation) &
-  // res = ((Cur_Vertical_Sep >= 300) & (Own_Tracked_Alt > Other_Tracked_Alt)
-  //               & (Up_Separation >= a));
+  res = (!(Own_Tracked_Alt < Other_Tracked_Alt) | (Down_Separation >= a));
 
 {
     bool result;
+    int k;
+    k = ALIM();
 
     if (Inhibit_Biased_Climb() > Down_Separation){
-       //result = (!Own_Below_Threat() && (tf(Down_Separation) >= ALIM()));
-       result = (!Own_Below_Threat() || (Down_Separation > ALIM()));
-       //result = (tf(Down_Separation) - ALIM() <= 0);
+       result = (!Own_Below_Threat() || (Down_Separation - k > 0));
     } else {	
-       result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) && (Up_Separation >= ALIM());
+       //result = Own_Above_Threat() && (Cur_Vertical_Sep >= 300) && (Up_Separation - ALIM() >= 0);
+       result = true;
     }
     return result;
 }

@@ -98,10 +98,14 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.LTerm (lterm, pos) ->
     let n_exp = SBCast.convert_lterm_to_binary_exp pos lterm in
     translate_back_exp n_exp
+  | SBCast.PTerm (pterm, pos) ->
+    let n_exp = SBCast.convert_pterm_to_binary_exp pos pterm in
+    translate_back_exp n_exp
   | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
                        ("translate_back_exp:" ^ (SBCast.pr_exp exp)
                         ^ " this Func is not handled")
-  | _ -> Gen.Basic.report_error VarGen.no_pos "this pure formula not handled"
+  | _ -> Gen.Basic.report_error VarGen.no_pos ("this exp formula not handled: "
+         ^ (SBCast.pr_exp exp))
 
 let rec translate_pf (pure_f: CP.formula)  =
   match pure_f with
