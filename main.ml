@@ -744,16 +744,15 @@ let process_source_full source =
                  *   try Typechecker.check_prog_wrapper n_iprog n_cprog
                  *   with e2 -> raise e2
                  * else raise e *)
-              else raise e
-                (* let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
-                 * match repaired_iprog with
-                 * | None -> raise e
-                 * (\* | Some (r_iprog, pos, repaired_exp) -> *\)
-                 * | Some _ ->
-                 *   (\* let () = Repair.output_repaired_iprog source pos repaired_exp
-                 *    * in *\)
-                 *   let () = Typechecker.verified_procs := [] in
-                 *   () *)
+              else
+                let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
+                match repaired_iprog with
+                | None -> raise e
+                | Some _ ->
+                  (* let () = Repair.output_repaired_iprog source pos repaired_exp
+                   * in *)
+                  let () = Typechecker.verified_procs := [] in
+                  ()
             else
               let () = print_string_quiet
                   ("\nException MAIN"
