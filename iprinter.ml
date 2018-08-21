@@ -943,9 +943,8 @@ let rec string_of_exp = function
     exp_call_nrecv_lock = lock;
     exp_call_nrecv_path_id = pid;
     exp_call_nrecv_arguments = el;
-    exp_call_nrecv_ho_arg = ha })-> 
-        let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
-        string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
+    exp_call_nrecv_ho_arg = ha })->
+        string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")" ^ 
             (match ha with | None -> "" | Some f -> string_of_formula f))
 
   | UnkExp ({
@@ -1083,13 +1082,14 @@ and string_of_exp_repair = function
     (match lv with
         | [] -> ""
         | _ ->
-          let str_typ x = string_of_typ_repair x in
           "local: "^
-               (String.concat "," (List.map (fun (c1,c2,c3)->(str_typ c2)^" "^c1) lv))^"\n")
-    ^ (string_of_exp_repair e)
+               (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ_repair c2)^" "^c1) lv))^"\n")
+    ^ (string_of_exp e)
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
-  | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
+  | Cast e ->
+    let str_typ = string_of_typ_repair e.exp_cast_target_type in
+    "(" ^ str_typ ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
   | Empty l -> ""
@@ -1120,9 +1120,8 @@ and string_of_exp_repair = function
     exp_call_nrecv_lock = lock;
     exp_call_nrecv_path_id = pid;
     exp_call_nrecv_arguments = el;
-    exp_call_nrecv_ho_arg = ha })-> 
-        let lock_info = match lock with |None -> "" | Some id -> ("[" ^ id ^ "]") in
-        string_of_control_path_id_opt pid (id ^ lock_info ^"(" ^ (string_of_exp_list el ",") ^ ")" ^ 
+    exp_call_nrecv_ho_arg = ha })->
+        string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")" ^ 
             (match ha with | None -> "" | Some f -> string_of_formula f))
 
   | UnkExp ({
@@ -1181,10 +1180,10 @@ and string_of_exp_repair = function
         (string_of_exp e1) ^ "\n" ^ (string_of_exp e2)
   | VarDecl ({exp_var_decl_type = t;
     exp_var_decl_decls = l})
-      -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
+      -> (string_of_typ_repair t) ^ " " ^ (string_of_assigning_list l) ^ ";";
   | ConstDecl ({exp_const_decl_type = t;
     exp_const_decl_decls = l})
-      -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_cassigning_list l)
+      -> "const " ^ (string_of_typ_repair t) ^ " " ^ (string_of_cassigning_list l)
   | BoolLit ({exp_bool_lit_val = b})
       -> string_of_bool b
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
@@ -1236,9 +1235,8 @@ and string_of_exp_repair = function
           in
           cond_str ^ (string_of_exp c.exp_par_case_body)
         in
-        "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^
-            "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }"
-
+        "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^ 
+            "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }" 
 and
       (* function to transform a list of expression in a string *)
       string_of_exp_list l c = match l with
@@ -1582,6 +1580,17 @@ let string_of_program_repair p =
   let procs = List.rev p.prog_proc_decls in
   let procs = List.filter (fun x -> String.compare x.proc_name "free" != 0)
       procs in
+  let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+        try ignore (Str.search_forward re s1 0); true
+        with Not_found -> false
+  in
+  let procs = if (!Globals.repaired) then
+      List.filter (fun x ->
+          let name = x.proc_name in
+          List.exists (fun y -> contains y name) !Globals.verified_procs) procs
+      else procs in
   (String.concat "\n\n" (List.map string_of_data_repair cdefs))
   ^ "\n\n" ^
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^

@@ -5,6 +5,7 @@ open VarGen
 (* module Lb = Label_only *)
 (* circular with Lb *)
 
+let repaired = ref false
 let sleek_num_to_verify = ref (-1)
 let sleek_print_residue = ref true
 let ramification_entailments = ref 0
@@ -48,7 +49,7 @@ exception NOT_HANDLE_YET
 let reverify_flag = ref false
 let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
-
+let verified_procs = ref ([]: ident list)
 let ptr_arith_flag = ref true (* false *)
 
 let illegal_format s = raise (Illegal_Prover_Format s)

@@ -37,7 +37,6 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
 let repairing_ents = ref []
-let verified_procs = ref ([]: ident list)
 let proc_to_repair = ref None
 
 let log_spec = ref ""
@@ -3436,7 +3435,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
                    && not (List.mem unmin_name !Inliner.inlined_procs)
   in
-  if List.mem proc0.proc_name (!verified_procs) then true
+  if List.mem proc0.proc_name (!Globals.verified_procs) then true
   else if check_flag then
     begin
       match proc.proc_body with

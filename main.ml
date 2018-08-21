@@ -15,7 +15,6 @@ module CF = Cformula
 module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
-
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 let set_source_file arg =
@@ -358,7 +357,7 @@ let process_source_full source =
   let pr_prog = Iprinter.string_of_program in
   let pr_prog_repair = Iprinter.string_of_program_repair in
   let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
-  let prog = if (!Globals.enable_repair) then
+  let repair_input_prog = if (!Globals.enable_repair) then
       let normalized_prog = Iast.normalize_prog prog in
       let file_name = Filename.basename source in
       let normalized_file = "normalized_" ^ file_name in
@@ -375,7 +374,7 @@ let process_source_full source =
 
   let () = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.validate || !Globals.cp_prefile) then
-      process_validate prog else prog
+      process_validate repair_input_prog else repair_input_prog
   in
   let prog = process_lib_file prog in
   let () = Gen.Profiling.pop_time "Process compare file" in
@@ -749,10 +748,14 @@ let process_source_full source =
                 let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
                 match repaired_iprog with
                 | None -> raise e
-                | Some _ ->
-                  (* let () = Repair.output_repaired_iprog source pos repaired_exp
-                   * in *)
-                  let () = Typechecker.verified_procs := [] in
+                | Some n_prog ->
+                  let n_prog = {repair_input_prog with
+                                prog_proc_decls = n_prog.Iast.prog_proc_decls} in
+                  let () = repaired := true in
+                  let () = x_binfo_hp (add_str "verifed procs" (pr_list pr_id))
+                      !Globals.verified_procs no_pos in
+                  let () = x_binfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
+                  let () = Globals.verified_procs := [] in
                   ()
             else
               let () = print_string_quiet
