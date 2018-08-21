@@ -4411,12 +4411,115 @@ let normalize_call_wrapper iprog exp =
     ) n_exp assign_list in
   attached_exp
 
+let normalize_arith_exp exp =
+  let rec is_compose_exp exp = match exp with
+    | Binary e -> true
+    | Unary e -> is_compose_exp e.exp_unary_exp
+    | Block e -> is_compose_exp e.exp_block_body
+    | _ -> false
+  in
+  let rec aux exp = match exp with
+    | Binary e ->
+      begin
+        match e.exp_binary_op with
+        | OpLogicalAnd
+        | OpLogicalOr ->
+          let (e1, list1) =
+            if (is_compose_exp e.exp_binary_oper1) then
+              aux e.exp_binary_oper1
+            else (e.exp_binary_oper1, []) in
+          let (e2, list2) =
+            if (is_compose_exp e.exp_binary_oper2) then
+              aux e.exp_binary_oper2
+            else (e.exp_binary_oper2, []) in
+          let n_exp = Binary {e with exp_binary_oper1 = e1;
+                                     exp_binary_oper2 = e2}
+          in (n_exp, list1@list2)
+        | OpEq
+        | OpNeq
+        | OpLt
+        | OpLte
+        | OpGt
+        | OpGte -> if (is_compose_exp e.exp_binary_oper1) then
+            let loc = get_exp_pos e.exp_binary_oper1 in
+            let n_name = "exp_" ^ (VarGen.string_of_loc_repair loc) in
+            let var = Var {
+                exp_var_name = n_name;
+                exp_var_pos = loc;
+              } in
+            let n_exp = Binary {e with exp_binary_oper1 = var} in
+            (n_exp, [(n_name, e.exp_binary_oper1)])
+          else (exp, [])
+        | _ -> (exp, [])
+    end
+    | Assign e ->
+      let (e1, list1) = aux e.exp_assign_rhs in
+      (Assign {e with exp_assign_rhs = e1}, list1)
+    | Block b ->
+      let (e1, l1) = aux b.exp_block_body in
+      (Block {b with exp_block_body = e1}, l1)
+    | Cond e ->
+      let (e1, l1) = aux e.exp_cond_condition in
+      let (e2, l2) = aux e.exp_cond_then_arm in
+      let (e3, l3) = aux e.exp_cond_else_arm in
+      (Cond {e with exp_cond_condition = e1;
+                    exp_cond_then_arm = e2;
+                    exp_cond_else_arm = e3}, l1@l2@l3)
+    | Label (a, e) ->
+      let (e1, l1) = aux e in
+      (Label (a, e1), l1)
+    | Seq e ->
+      let (e1, l1) = aux e.exp_seq_exp1 in
+      let (e2, l2) = aux e.exp_seq_exp2 in
+      (Seq {e with exp_seq_exp1 = e1; exp_seq_exp2 = e2}, l1@l2)
+    | Unary e ->
+      let (e1, l1) = aux e.exp_unary_exp in
+      (Unary {e with exp_unary_exp = e1}, l1)
+    | _ -> (exp, [])
+  in
+  let (n_exp, assign_list) = aux exp in
+  let assign_list = Gen.BList.remove_dups_eq (fun a b ->
+      String.compare (fst a) (fst b) == 0) assign_list in
+  let attached_exp = List.fold_left(fun a (b, c) ->
+      let var_decl = VarDecl {
+          exp_var_decl_type = int_type;
+          exp_var_decl_decls = [(b, None, no_pos)];
+          exp_var_decl_pos = no_pos
+        }
+      in
+      let assign = Assign {
+          exp_assign_op = OpAssign;
+          exp_assign_lhs = Var {
+              exp_var_name = b;
+              exp_var_pos = no_pos;
+            };
+          exp_assign_rhs = c;
+          exp_assign_path_id = None;
+          exp_assign_pos = no_pos
+        } in
+      let seq = Seq {
+          exp_seq_exp1 = var_decl;
+          exp_seq_exp2 = assign;
+          exp_seq_pos = no_pos
+        }
+      in
+      Seq {
+        exp_seq_exp1 = seq;
+        exp_seq_exp2 = a;
+        exp_seq_pos = no_pos
+      }
+    ) n_exp assign_list in
+  attached_exp
+
+
 let normalize_proc iprog proc_decl =
   let n_proc_body = match proc_decl.proc_body with
     | None -> None
     | Some body_exp ->
       let n_exp = normalize_exp body_exp in
-      Some (normalize_call_wrapper iprog n_exp)
+      let n_exp = normalize_arith_exp n_exp in
+      let n_exp = normalize_call_wrapper iprog n_exp in
+      Some n_exp
   in
   let nprog = {proc_decl with proc_body = n_proc_body} in
   nprog

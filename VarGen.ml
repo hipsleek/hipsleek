@@ -72,11 +72,17 @@ let record_backtrace_quite () =
   else
     Printexc.record_backtrace !trace_failure
 
-let string_of_loc (p : loc) = 
-  p.start_pos.Lexing.pos_fname ^ "_" ^ 
+let string_of_loc (p : loc) =
+  p.start_pos.Lexing.pos_fname ^ "_" ^
   (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
   (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
   (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
+
+let string_of_loc_repair (p : loc) =
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ "_" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
+  (string_of_int p.end_pos.Lexing.pos_lnum) ^ "_" ^
   (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
