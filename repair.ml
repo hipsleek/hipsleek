@@ -72,7 +72,7 @@ let repair_prog_with_templ_main iprog cprog =
     try ignore (Str.search_forward re s1 0); true
     with Not_found -> false
   in
-  let sb_res = Songbirdfront.get_repair_candidate cprog ents None in
+  let sb_res = Songbird.get_repair_candidate cprog ents None in
   match sb_res with
   | None -> None
   | Some (_, _, None, _) -> None
@@ -142,7 +142,7 @@ let repair_prog_with_templ iprog cond_op =
       let ents = !Typechecker.repairing_ents in
       try
         begin
-          let sb_res = Songbirdfront.get_repair_candidate cprog ents cond_op in
+          let sb_res = Songbird.get_repair_candidate cprog ents cond_op in
           match sb_res with
           | None -> let () = next_proc := false in
             None
