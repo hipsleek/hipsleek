@@ -20,6 +20,8 @@ global int DOWNWARD_RA = 2;
 
 global int Cur_Vertical_Sep;
 global bool High_Confidence;
+global bool Two_of_Three_Reports_Valid;
+
 global int Own_Tracked_Alt_Rate;
 global int Own_Tracked_Alt;
 global int Other_Tracked_Alt;
@@ -27,7 +29,6 @@ global node Positive_RA_Alt_Thresh;
 global int Alt_Layer_Value;
 global int Up_Separation;
 global int Down_Separation;
-global bool Two_of_Three_Reports_Valid;
 
 //state variables
 global int Other_RAC;			// NO_INTENT, DO_NOT_CLIMB, DO_NOT_DESCEND

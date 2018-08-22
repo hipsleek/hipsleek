@@ -1168,11 +1168,10 @@ and translate_location (loc: Cil.location) : VarGen.loc =
 (* ) *)
 
 and translate_typ_x (t: Cil.typ) pos : Globals.typ =
-  let newtype = 
+  let newtype =
     match t with
     | Cil.TVoid _ -> Globals.Void
     | Cil.TInt (Cil.IBool, _) -> Globals.Bool
-    (*| Cil.TInt (Cil.IChar, _) -> Globals.Named "char"*)
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
@@ -1466,13 +1465,6 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
             | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
             | _ -> translate_typ t pos
           ) in
-        (* match new_t with                                      *)
-        (*   | Globals.Bool -> (                                 *)
-        (*       let not_proc = create_logical_not_proc new_t in *)
-        (*       let proc_name = not_proc.Iast.proc_name in      *)
-        (*       Iast.mkCallNRecv proc_name None [e] None pos    *)
-        (*     )                                                 *)
-        (*   | _ -> Iast.mkUnary o e None pos                    *)
         match op with
         | Cil.LNot ->
           let not_proc = create_logical_not_proc new_t in
@@ -1502,7 +1494,6 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       ) in
       let input_typ = (
         let ity = typ_of_cil_exp exp in
-        (* let () = Debug.info_hprint (add_str "ity: " string_of_cil_typ) ity pos in *)
         match ity with
         | Cil.TPtr (t, _) when (is_cil_struct_pointer ity) -> translate_typ t pos
         | _ -> translate_typ ity pos
@@ -1512,9 +1503,6 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           | _ -> translate_typ ty pos
         ) in
       let input_exp = translate_exp exp in
-(*      let () = Debug.info_hprint (add_str "output_ty: " string_of_typ) output_typ pos in *)
-(*      let () = Debug.info_hprint (add_str "input_ty: " string_of_typ) input_typ pos in *)
-(*      let _ = Debug.binfo_hprint (add_str "new_base" Iprinter.string_of_exp) input_exp no_pos in*)
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp
@@ -1534,13 +1522,11 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           let cast_proc = create_int_to_pointer_casting_proc otyp_name in
           Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None None pos
         | Globals.Int, Globals.Named ityp_name ->
-          (* let cast_proc = create_pointer_to_int_casting_proc ityp_name in *)
-          (* Iast.mkCallNRecv cast_proc.Iast.proc_name None [input_exp] None pos *)
           (*Loc: should have a systematic way to handle deep data structures (e.g cll) with arith *)
           input_exp
         | _ ->
-          report_error pos ("translate_exp: couldn't cast type 2: " 
-                            ^ (Globals.string_of_typ input_typ) 
+          report_error pos ("translate_exp: couldn't cast type 222: "
+                            ^ (Globals.string_of_typ input_typ)
                             ^ " to " ^ (Globals.string_of_typ output_typ))
       )
     )
@@ -1635,9 +1621,11 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   | _, _ ->
     let o = translate_binary_operator op pos in
     let binexp = Iast.mkBinary o e1 e2 None pos in
-    let target_typ = translate_typ expected_typ pos in
-    let newexp = Iast.mkCast target_typ binexp pos in 
-    newexp
+    if (!Globals.enable_repair) then binexp
+    else
+      let target_typ = translate_typ expected_typ pos in
+      let newexp = Iast.mkCast target_typ binexp pos in 
+      newexp
 
 and translate_instr (instr: Cil.instr) : Iast.exp =
   (* detect address-of operator *)
@@ -2367,14 +2355,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
               | Cil.TComp (comp, _) ->
                 (Globals.Named comp.Cil.cname, Iast.CopyMod)
               | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) -> begin
-                  (* let _ = Debug.info_hprint (add_str "name" pr_id) "2" no_pos in *)
                   let ityp = translate_typ ty1 no_pos in
-                  (* let _ = Debug.info_hprint (add_str "ityp" string_of_typ) ityp no_pos in *)
-                  (* to convet to _star for pointer arimetic *)
-                  (* let ityp2 = match ityp with *)
-                  (*   | Named id -> Named (id ^ "_star") *)
-                  (*   | _ -> ityp *)
-                  (* in *)
                   (ityp, Iast.NoMod)
                 end
               | _ -> (translate_typ ty no_pos, Iast.NoMod)
@@ -2572,22 +2553,6 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
       | Cil.GHipProgSpec (hipprog, _) ->
         aux_progs := !aux_progs @ [hipprog]
     ) globals;
-  (* let obj_def = {Iast.data_name = "Object"; *)
-  (*                Iast.data_fields = []; *)
-  (*                Iast.data_pos = no_pos; *)
-  (*                Iast.data_parent_name = ""; *)
-  (*                Iast.data_invs = []; *)
-  (*                Iast.data_is_template = false; *)
-   (*              Iast.data_pure_inv = None;*)
-  (*                Iast.data_methods = []} in *)
-  (* let string_def = {Iast.data_name = "String"; *)
-  (*                   Iast.data_pos = no_pos; *)
-  (*                   Iast.data_fields = []; *)
-  (*                   Iast.data_parent_name = "Object"; *)
-  (*                   Iast.data_invs = []; *)
-  (*                   Iast.data_is_template = false; *)
-(*                    Iast.data_pure_inv = None;*)
-  (*                   Iast.data_methods = []} in *)
   (* update some global settings *)
   Hashtbl.iter (fun _ data -> if ((String.compare  data.Iast.data_name "char_star")!=0) (*&& ((String.compare  data.Iast.data_name "int_star")!=0)*)  then data_decls := data::!data_decls) tbl_data_decl;
   (* aux procs *)
@@ -2655,7 +2620,7 @@ let process_one_file (cil: Cil.file) : unit =
   let () = print_endline_quiet (Iprinter.string_of_program prog) in 
   ()
 
-let parse_prep (filename: string): Iast.prog_decl = 
+let parse_prep (filename: string): Iast.prog_decl =
   let cil = parse_one_file filename in
   if !Cilutil.doCheck then (
     ignore (Errormsg.log "First CIL check\n");
@@ -2688,29 +2653,8 @@ let parse_hip (filename: string) : Iast.prog_decl =
   let exit_code = Sys.command cmd in
   if (exit_code != 0) then
     report_error no_pos "GCC Preprocessing failed!";
-  (* then use CIL to parse the preprocessed file *)
-  (* let cil = parse_one_file prep_filename in                            *)
-  (* if !Cilutil.doCheck then (                                           *)
-  (*   ignore (Errormsg.log "First CIL check\n");                         *)
-  (*   if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (  *)
-  (*     Errormsg.bug ("CIL's internal data structures are inconsistent " *)
-  (*                   ^^ "(see the warnings above).  This may be a bug " *)
-  (*                   ^^ "in CIL.\n")                                    *)
-  (*   )                                                                  *)
-  (* );                                                                   *)
-  (* if (!Globals.print_cil_input) then (                                 *)
-  (*   print_endline "";                                                  *)
-  (*   print_endline ("***********************************");             *)
-  (*   print_endline ("********* input cil file **********");             *)
-  (*   print_endline (string_of_cil_file cil);                            *)
-  (*   print_endline ("******** end of cil file **********");             *)
-  (*   print_endline "";                                                  *)
-  (* );                                                                   *)
-  (* (* finally, translate cil to iast *)                                 *)
-  (* let prog = translate_file cil in                                     *)
   let prog = parse_prep prep_filename in
   (* and clean temp files *)
   let cmd = ("rm " ^ prep_filename) in
   let todo_unk = Sys.command cmd in
-  (* return *)
   prog

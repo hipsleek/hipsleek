@@ -907,9 +907,7 @@ let rec string_of_exp_repair = function
 
   | Break b -> ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
-  | Cast e ->
-    let str_typ = string_of_typ_repair e.exp_cast_target_type in
-    "(" ^ str_typ ^ ")" ^ (string_of_exp_repair e.exp_cast_body)
+  | Cast e -> (string_of_exp_repair e.exp_cast_body)
   | Continue b ->
     ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c ->
@@ -1090,7 +1088,7 @@ and string_of_exp_list l c = match l with
 and string_of_exp_var_decl e = match e with
     {exp_var_decl_type = t;
     exp_var_decl_decls = l}
-    -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l)
+    -> (string_of_typ_repair t) ^ " " ^ (string_of_assigning_list l)
 
 (* function to transform in a string such a list : ((ident * exp option * loc) list *)
 and string_of_assigning_list l = match l with
@@ -1130,12 +1128,12 @@ let rec string_of_exp = function
         | [] -> ""
         | _ ->
           "local: "^
-               (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ_repair c2)^" "^c1) lv))^"\n")
+               (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
     ^ (string_of_exp e)
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e ->
-    let str_typ = string_of_typ_repair e.exp_cast_target_type in
+    let str_typ = string_of_typ e.exp_cast_target_type in
     "(" ^ str_typ ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
@@ -1227,10 +1225,10 @@ let rec string_of_exp = function
         (string_of_exp e1) ^ "\n" ^ (string_of_exp e2)
   | VarDecl ({exp_var_decl_type = t;
     exp_var_decl_decls = l})
-      -> (string_of_typ_repair t) ^ " " ^ (string_of_assigning_list l) ^ ";";
+      -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
   | ConstDecl ({exp_const_decl_type = t;
     exp_const_decl_decls = l})
-      -> "const " ^ (string_of_typ_repair t) ^ " " ^ (string_of_cassigning_list l)
+      -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_cassigning_list l)
   | BoolLit ({exp_bool_lit_val = b})
       -> string_of_bool b
   | IntLit ({exp_int_lit_val = i}) -> string_of_int i
@@ -1341,6 +1339,8 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 
 (* pretty printing for a global variable declaration *)
 let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
+
+let string_of_global_var_decl_repair d = "global " ^ (string_of_exp_repair (VarDecl d))
 
 let string_of_barrier_decl b =
   let pr_trans (s,d,l) =
@@ -1560,7 +1560,13 @@ let rec string_of_global_var_decl_list l =
   | []    -> ""
   | h::[] -> string_of_global_var_decl h
   | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
-;;
+
+let rec string_of_global_var_decl_list_repair l =
+  match l with
+  | []    -> ""
+  | h::[] -> string_of_global_var_decl_repair h
+  | h::t  -> (string_of_global_var_decl_repair h) ^ "\n"
+             ^ (string_of_global_var_decl_list_repair t)
 
 (* An Hoa : print relations *)
 let string_of_rel_decl_list rdecls =
@@ -1637,7 +1643,7 @@ let string_of_program_repair p =
       else procs in
   (String.concat "\n\n" (List.map string_of_data_repair cdefs))
   ^ "\n\n" ^
-  (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
+  (string_of_global_var_decl_list_repair p.prog_global_var_decls) ^ "\n" ^
   (string_of_proc_decl_list_repair procs) ^ "\n"
 ;;
 

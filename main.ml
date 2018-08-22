@@ -360,12 +360,13 @@ let process_source_full source =
   let repair_input_prog = if (!Globals.enable_repair) then
       let normalized_prog = Iast.normalize_prog prog in
       let file_name = Filename.basename source in
-      let file_name =
-        try
-          let n_name = Filename.chop_suffix ".c" file_name in
-          n_name ^ ".ss"
-        with _ -> file_name
-      in
+      (* let file_name =
+       *   try
+       *     let () = x_binfo_hp (add_str "prog name" pr_id) file_name no_pos in
+       *     let n_name = Filename.chop_suffix ".c" file_name in
+       *     n_name ^ ".ss"
+       *   with _ -> file_name
+       * in *)
       let normalized_file = "normalized_" ^ file_name in
       let dir = Filename.dirname source in
       let to_saved_file = dir ^ Filename.dir_sep ^ normalized_file in
@@ -376,7 +377,7 @@ let process_source_full source =
       (* prog *)
       parse_file_full to_saved_file false
     else prog in
-  let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
+  let () = x_binfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
   (* ---------------------------------------------- *)
 
   let () = Gen.Profiling.push_time "Process compare file" in
