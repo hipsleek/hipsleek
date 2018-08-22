@@ -360,10 +360,17 @@ let process_source_full source =
   let repair_input_prog = if (!Globals.enable_repair) then
       let normalized_prog = Iast.normalize_prog prog in
       let file_name = Filename.basename source in
+      let file_name =
+        try
+          let n_name = Filename.chop_suffix ".c" file_name in
+          n_name ^ ".ss"
+        with _ -> file_name
+      in
       let normalized_file = "normalized_" ^ file_name in
       let dir = Filename.dirname source in
       let to_saved_file = dir ^ Filename.dir_sep ^ normalized_file in
       let oc = open_out to_saved_file in
+      let () = Parser.parser_name := "default" in
       fprintf oc "%s\n" (pr_prog_repair normalized_prog);
       close_out oc;
       (* prog *)
