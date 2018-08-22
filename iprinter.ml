@@ -1351,14 +1351,14 @@ let string_of_barrier_decl b =
 
 let string_of_baga_list =
   let pr_exp = string_of_formula_exp in
-  pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) 
+  pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp)))
 
-let string_of_opt_baga = 
+let string_of_opt_baga =
   pr_opt (pr_list (pr_pair string_of_baga_list string_of_pure_formula))
 
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = 
+let string_of_view_decl v =
   let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
   let extn_str =
     match v.view_derv_from with

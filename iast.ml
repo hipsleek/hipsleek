@@ -4511,14 +4511,74 @@ let normalize_arith_exp exp =
     ) n_exp assign_list in
   attached_exp
 
+let rec normalize_global_vars exp decls = match exp with
+  | Assign e ->
+    let e1 = normalize_global_vars e.exp_assign_rhs decls in
+    Assign { e with exp_assign_rhs = e1}
+  | Block e ->
+    let e1 = normalize_global_vars e.exp_block_body decls in
+    Block {e with exp_block_body = e1}
+  | Binary e ->
+    let e1 = normalize_global_vars e.exp_binary_oper1 decls in
+    let e2 = normalize_global_vars e.exp_binary_oper2 decls in
+    Binary {e with exp_binary_oper1 = e1;
+            exp_binary_oper2 = e2}
+  | Cond e ->
+    let e1 = normalize_global_vars e.exp_cond_condition decls in
+    let e2 = normalize_global_vars e.exp_cond_then_arm decls in
+    let e3 = normalize_global_vars e.exp_cond_else_arm decls in
+    Cond {e with exp_cond_condition = e1;
+                 exp_cond_then_arm = e2;
+                 exp_cond_else_arm = e3}
+  | Label (a, e) ->
+    let e1 = normalize_global_vars e decls in
+    Label (a, e1)
+  | Return e ->
+    begin
+      match e.exp_return_val with
+      | None -> exp
+      | Some e1 ->
+        let n_e1 = normalize_global_vars e1 decls in
+        Return {e with exp_return_val = Some n_e1}
+    end
+  | Seq e ->
+    let e1 = normalize_global_vars e.exp_seq_exp1 decls in
+    let e2 = normalize_global_vars e.exp_seq_exp2 decls in
+    Seq {e with exp_seq_exp1 = e1; exp_seq_exp2 = e2}
+  | Unary e ->
+    let e1 = normalize_global_vars e.exp_unary_exp decls in
+    Unary {e with exp_unary_exp = e1}
+  | Var e -> let name = e.exp_var_name in
+    (* let () = x_binfo_hp (add_str "var" pr_id) name no_pos in *)
+    (* let () = x_binfo_hp (add_str "vars" (pr_list pr_id)) (List.map fst decls) no_pos in *)
+    begin
+      try
+        let decl = List.find (fun (x, y) -> String.compare x name = 0) decls in
+        (* let () = x_binfo_hp (add_str "var" pr_id) (fst decl) no_pos in *)
+        let (_, n_exp) = decl in
+        begin
+          match n_exp with
+          | None -> exp
+          | Some var_exp ->
+            let () = x_binfo_hp (add_str "var" pr_id) (fst decl) no_pos in
+            var_exp
+        end
+      with _ -> exp
+    end
+  | _ -> exp
 
 let normalize_proc iprog proc_decl =
   let n_proc_body = match proc_decl.proc_body with
     | None -> None
     | Some body_exp ->
+      let global_vars = iprog.prog_global_var_decls in
+      let global_vars = List.map (fun x -> x.exp_var_decl_decls) global_vars in
+      let global_vars = List.concat global_vars in
+      let global_vars = List.map (fun (a, b, _) -> (a,b)) global_vars in
       let n_exp = normalize_exp body_exp in
       let n_exp = normalize_arith_exp n_exp in
       let n_exp = normalize_call_wrapper iprog n_exp in
+      let n_exp = normalize_global_vars n_exp global_vars in
       Some n_exp
   in
   let nprog = {proc_decl with proc_body = n_proc_body} in

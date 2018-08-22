@@ -1,5 +1,8 @@
 data node {
 	int fst;
+  int snd;
+  int third;
+  int fourth;
 }
 
 global int OLEV = 600;
@@ -34,9 +37,21 @@ global bool Climb_Inhibit;
 // error() when index is out of array bound
 int int_error() requires true ensures false;
 
+void initialize()
+  requires Positive_RA_Alt_Thresh::node<_,_,_,_>
+  ensures Positive_RA_Alt_Thresh::node<a2,b2,c2,d2> &
+  a2 = 400 & b2 = 500 & c2 = 640 & d2 = 740;
+
+{
+    Positive_RA_Alt_Thresh.fst = 400;
+    Positive_RA_Alt_Thresh.snd = 500;
+    Positive_RA_Alt_Thresh.third = 640;
+    Positive_RA_Alt_Thresh.fourth = 740;
+}
+
 int ALIM()
-  requires Positive_RA_Alt_Thresh::node<a> & Alt_Layer_Value = 0
-  ensures Positive_RA_Alt_Thresh::node<a> & Alt_Layer_Value = 0 & res = a;
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d> & Alt_Layer_Value = 0
+  ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & Alt_Layer_Value = 0 & res = a;
 {
   if (Alt_Layer_Value == 0) return Positive_RA_Alt_Thresh.fst;
   return int_error();
@@ -65,17 +80,17 @@ bool Own_Above_Threat()
 }
 
 bool Non_Crossing_Biased_Climb()
-requires Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0) &
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS > Down_Separation)
 
-ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
       & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS > Down_Separation)
        & res = (((Own_Tracked_Alt >= Other_Tracked_Alt)) | (Down_Separation < a));
 
-requires Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0) &
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
 
-ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
    & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
    & res = (Own_Tracked_Alt > Other_Tracked_Alt & Cur_Vertical_Sep >= MINSEP & Up_Separation >= a);
 
@@ -93,17 +108,17 @@ ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
 }
 
 bool Non_Crossing_Biased_Descend()
-requires Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0) &
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS > Down_Separation)
 
-ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
  & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS > Down_Separation)
  & res = (Own_Tracked_Alt < Other_Tracked_Alt & Cur_Vertical_Sep >= MINSEP & Down_Separation >= a);
 
-requires Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0) &
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
       (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
 
-ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
       & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
       & res = ( (Own_Tracked_Alt <= Other_Tracked_Alt) | (Up_Separation >= a));
 
@@ -121,14 +136,14 @@ ensures Positive_RA_Alt_Thresh::node<a> & (Alt_Layer_Value = 0)
 }
 
 int alt_sep_test()
-requires Positive_RA_Alt_Thresh::node<a>
+requires Positive_RA_Alt_Thresh::node<a,b,c,d>
    & High_Confidence & (Own_Tracked_Alt_Rate <= OLEV) & (Cur_Vertical_Sep > MAXALTDIFF)
    & ((Two_of_Three_Reports_Valid & Other_RAC = NO_INTENT) | !(Other_Capability = TCAS_TA))
    & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
    & (Alt_Layer_Value = 0)
    & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
    
-ensures Positive_RA_Alt_Thresh::node<a>
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
    & High_Confidence & (Own_Tracked_Alt_Rate <= OLEV) & (Cur_Vertical_Sep > MAXALTDIFF)
    & ((Two_of_Three_Reports_Valid & Other_RAC = NO_INTENT) | !(Other_Capability = TCAS_TA))
    &  (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS <= Down_Separation)
@@ -136,14 +151,14 @@ ensures Positive_RA_Alt_Thresh::node<a>
    & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
    & res = DOWNWARD_RA;
 
-requires Positive_RA_Alt_Thresh::node<a> 
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> 
    & High_Confidence & (Own_Tracked_Alt_Rate <= OLEV) & (Cur_Vertical_Sep > MAXALTDIFF)
    & ((Two_of_Three_Reports_Valid & Other_RAC = NO_INTENT) | !(Other_Capability = TCAS_TA))
    & (Alt_Layer_Value = 0)
    & (Climb_Inhibit = true)  & (Up_Separation + NOZCROSS > Down_Separation)
    & (Own_Tracked_Alt < Other_Tracked_Alt) & (Down_Separation < a)
 
-ensures Positive_RA_Alt_Thresh::node<a> 
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> 
    & High_Confidence & (Own_Tracked_Alt_Rate <= OLEV) & (Cur_Vertical_Sep > MAXALTDIFF)
    & ((Two_of_Three_Reports_Valid & Other_RAC = NO_INTENT) | !(Other_Capability = TCAS_TA))
    & (Alt_Layer_Value = 0)
