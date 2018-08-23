@@ -4575,14 +4575,31 @@ let normalize_proc iprog proc_decl =
       let global_vars = List.map (fun x -> x.exp_var_decl_decls) global_vars in
       let global_vars = List.concat global_vars in
       let global_vars = List.map (fun (a, b, _) -> (a,b)) global_vars in
-      let n_exp = normalize_exp body_exp in
-      let n_exp = normalize_arith_exp n_exp in
-      let n_exp = normalize_call_wrapper iprog n_exp in
-      let n_exp = normalize_global_vars n_exp global_vars in
+      let n_exp = body_exp in
+      (* let n_exp = normalize_exp body_exp in *)
+      (* let n_exp = normalize_arith_exp n_exp in *)
+      (* let n_exp = normalize_call_wrapper iprog n_exp in *)
+      (* let n_exp = normalize_global_vars n_exp global_vars in *)
       Some n_exp
   in
   let nprog = {proc_decl with proc_body = n_proc_body} in
   nprog
+
+let is_bool_exp exp = match exp with
+  | Binary e ->
+    begin
+      match e.exp_binary_op with
+      | OpEq
+      | OpNeq
+      | OpLt
+      | OpLte
+      | OpGt
+      | OpGte
+      | OpLogicalAnd
+      | OpLogicalOr -> true
+      | _ -> false
+    end
+  | _ -> false
 
 let normalize_prog iprog =
   {iprog with prog_proc_decls = List.map (fun x -> normalize_proc iprog x) iprog.prog_proc_decls}

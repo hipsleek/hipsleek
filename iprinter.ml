@@ -781,12 +781,11 @@ and string_of_formula_repair = function
             ^ ")"
     in rs^sa
 
-and string_of_struc_formula c = match c with 
-  | F.ECase {
-      F.formula_case_branches  =  case_list ;
-    } ->
+and string_of_struc_formula c = match c with
+  | F.ECase { F.formula_case_branches  =  case_list} ->
     let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^(string_of_struc_formula c2)^"\n") "ECase:\n" case_list in
     ("case{"^impl^"}")
+
   |F.EBase {
       F.formula_struc_implicit_inst = ii;
       F.formula_struc_explicit_inst = ei;
@@ -827,11 +826,14 @@ and string_of_struc_formula c = match c with
       a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b)
 
 and string_of_struc_formula_repair c = match c with
-  | F.ECase {
-      F.formula_case_branches  =  case_list ;
-    } ->
-    let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^(string_of_struc_formula c2)^"\n") "ECase:\n" case_list in
-    ("case{"^impl^"}")
+  | F.ECase { F.formula_case_branches = case_list} ->
+    let pr_c1 = string_of_pure_formula in
+    let pr_c2 = string_of_struc_formula_repair in
+    let impl = List.fold_left
+        (fun a (c1,c2) -> a ^ "requires " ^ (pr_c1 c1) ^ " " ^ (pr_c2 c2) ^ ";\n")
+        "" case_list
+    in impl
+
   | F.EBase {
       F.formula_struc_implicit_inst = ii;
       F.formula_struc_explicit_inst = ei;
@@ -907,7 +909,9 @@ let rec string_of_exp_repair = function
 
   | Break b -> ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
-  | Cast e -> (string_of_exp_repair e.exp_cast_body)
+  | Cast e ->
+    "(" ^ (string_of_typ_repair e.exp_cast_target_type) ^ ")" ^
+    (string_of_exp_repair e.exp_cast_body)
   | Continue b ->
     ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c ->
@@ -953,10 +957,12 @@ let rec string_of_exp_repair = function
     exp_call_nrecv_lock = lock;
     exp_call_nrecv_path_id = pid;
     exp_call_nrecv_arguments = el;
-    exp_call_nrecv_ho_arg = ha }) ->
-        (id ^ "(" ^ (string_of_exp_list el ",") ^ ")" ^
-            (match ha with | None -> "" | Some f -> string_of_formula f))
-
+                exp_call_nrecv_ho_arg = ha }) ->
+    if (id = "__bool_of_int___") then
+      let arg = List.hd el in
+      if (is_bool_exp arg) then (string_of_exp_list el ",")
+      else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+    else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
   | UnkExp ({
       unk_exp_name = id;
       unk_exp_arguments = el;
@@ -996,7 +1002,7 @@ let rec string_of_exp_repair = function
            exp_cond_path_id = pid;
            exp_cond_else_arm = e3} ->
     ("if " ^ (parenthesis (string_of_exp_repair e1))
-     ^ " { \n  " ^ (string_of_exp_repair e2) ^ "\n}" ^
+     ^ " {\n  " ^ (string_of_exp_repair e2) ^ "\n}" ^
      (match e3 with
       | Empty ll -> ""
       | _ ->
@@ -1470,10 +1476,10 @@ let rec string_of_proc_decl_list l = match l with
   | h::t      -> (string_of_proc_decl h) ^ "\n" ^ (string_of_proc_decl_list t)
 ;;
 
-let rec string_of_proc_decl_list_repair l = match l with
+let rec string_of_proc_decls_repair l = match l with
   | []        -> ""
   | h::[]     -> (string_of_proc_decl_repair h)
-  | h::t      -> (string_of_proc_decl_repair h) ^ "\n" ^ (string_of_proc_decl_list_repair t)
+  | h::t      -> (string_of_proc_decl_repair h) ^ "\n" ^ (string_of_proc_decls_repair t)
 ;;
 
 (* pretty printing for a list of view_decl *)
@@ -1561,12 +1567,12 @@ let rec string_of_global_var_decl_list l =
   | h::[] -> string_of_global_var_decl h
   | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
 
-let rec string_of_global_var_decl_list_repair l =
+let rec string_of_global_var_decls_repair l =
   match l with
   | []    -> ""
   | h::[] -> string_of_global_var_decl_repair h
   | h::t  -> (string_of_global_var_decl_repair h) ^ "\n"
-             ^ (string_of_global_var_decl_list_repair t)
+             ^ (string_of_global_var_decls_repair t)
 
 (* An Hoa : print relations *)
 let string_of_rel_decl_list rdecls =
@@ -1624,27 +1630,30 @@ let string_of_data_repair cdef =
 (* pretty printing for program in repair case*)
 let string_of_program_repair p =
   let cdefs = p.prog_data_decls in
-  let compare x = String.compare x "Object" != 0
-                  && String.compare x "String" != 0 in
+  let str_compare x = String.compare x in
+  let compare x = str_compare x "Object" != 0 && str_compare x "String" != 0 in
   let cdefs = List.filter(fun x -> compare x.data_name) cdefs in
   let procs = List.rev p.prog_proc_decls in
-  let procs = List.filter (fun x -> String.compare x.proc_name "free" != 0)
-      procs in
+  let filter_y x = String.compare x.proc_name "free" != 0 in
+  let procs = List.filter filter_y procs in
   let contains s1 s2 =
     let re = Str.regexp_string s2
     in
         try ignore (Str.search_forward re s1 0); true
         with Not_found -> false
   in
+  (* let filter_x x = String.compare x "__bool_of_int___" != 0 in *)
+  (* let procs = List.filter (fun x -> filter_x x.proc_name) procs in *)
+  let filter_z x = let name = x.proc_name in
+    List.exists (fun y -> contains y name) !Globals.verified_procs
+  in
   let procs = if (!Globals.repaired) then
-      List.filter (fun x ->
-          let name = x.proc_name in
-          List.exists (fun y -> contains y name) !Globals.verified_procs) procs
-      else procs in
-  (String.concat "\n\n" (List.map string_of_data_repair cdefs))
-  ^ "\n\n" ^
-  (string_of_global_var_decl_list_repair p.prog_global_var_decls) ^ "\n" ^
-  (string_of_proc_decl_list_repair procs) ^ "\n"
+      List.filter filter_z procs
+    else procs in
+  let data_str = String.concat "\n\n" (List.map string_of_data_repair cdefs) in
+  let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
+  let procs_str = string_of_proc_decls_repair procs in
+  data_str ^ "\n\n" ^ global_str ^ "\n" ^ procs_str ^ "\n"
 ;;
 
 (* pretty printing for program *)
