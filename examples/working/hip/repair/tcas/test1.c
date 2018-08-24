@@ -40,25 +40,25 @@ int Down_Separation;
 int Other_RAC;			/* NO_INTENT, DO_NOT_CLIMB, DO_NOT_DESCEND */
 int Other_Capability;		/* TCAS_TA, OTHER */
 
-bool Climb_Inhibit;		/* true/false */
+int Climb_Inhibit;		/* true/false */
 
 // error() when index is out of array bound
 int int_error()
 /*@requires true ensures false;*/
 {}
 
-/* void initialize() */
-/* /\*@ */
-/*   requires Positive_RA_Alt_Thresh::node<a,b,c,d> */
-/*   ensures Positive_RA_Alt_Thresh::node<a2,b2,c2,d2> & */
-/*   a2 = 400 & b2 = 500 & c2 = 640 & d2 = 740; */
-/* *\/ */
-/* { */
-/*   Positive_RA_Alt_Thresh.fst = 400; */
-/*   Positive_RA_Alt_Thresh.snd = 500; */
-/*   Positive_RA_Alt_Thresh.third = 640; */
-/*   Positive_RA_Alt_Thresh.fourth = 700; */
-/* } */
+void initialize()
+/*@
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d>
+  ensures Positive_RA_Alt_Thresh::node<a2,b2,c2,d2> &
+  a2 = 400 & b2 = 500 & c2 = 640 & d2 = 740;
+*/
+{
+  Positive_RA_Alt_Thresh.fst = 400;
+  Positive_RA_Alt_Thresh.snd = 500;
+  Positive_RA_Alt_Thresh.third = 640;
+  Positive_RA_Alt_Thresh.fourth = 740;
+}
 
 int ALIM()
 /*@
@@ -75,10 +75,10 @@ int ALIM()
 
 int Inhibit_Biased_Climb ()
 /*@
-  requires Climb_Inhibit = true
-  ensures Climb_Inhibit = true & res = Up_Separation + 100;
-  requires Climb_Inhibit = false
-  ensures Climb_Inhibit = false & res = Up_Separation;
+  requires Climb_Inhibit = 1
+  ensures Climb_Inhibit = 1 & res = Up_Separation + 100;
+  requires Climb_Inhibit = 0
+  ensures Climb_Inhibit = 0 & res = Up_Separation;
  */
 {
   return (Climb_Inhibit ? Up_Separation + NOZCROSS : Up_Separation);
@@ -103,17 +103,17 @@ bool Own_Below_Threat()
 bool Non_Crossing_Biased_Climb()
 /*@
   requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
 
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
-  & (Climb_Inhibit = true)  & (Up_Separation + 100 > Down_Separation)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
   & res = (((Own_Tracked_Alt >= Other_Tracked_Alt)) | (Down_Separation < a));
 
   requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
-  (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation)
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
 
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
-  & (Climb_Inhibit = true)  & (Up_Separation + 100 <= Down_Separation)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
   & res = (Own_Tracked_Alt > Other_Tracked_Alt & Cur_Vertical_Sep >= 300 & Up_Separation >= a);
  */
 {
@@ -122,7 +122,7 @@ bool Non_Crossing_Biased_Climb()
 
   upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
   if (upward_preferred){
-      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
+      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM())));
   } else {
       result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
   }

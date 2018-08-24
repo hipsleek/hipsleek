@@ -962,7 +962,8 @@ let rec string_of_exp_repair = function
       let arg = List.hd el in
       if (is_bool_exp arg) then (string_of_exp_list el ",")
       else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
-    else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+    else
+      id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
   | UnkExp ({
       unk_exp_name = id;
       unk_exp_arguments = el;
@@ -1652,7 +1653,7 @@ let string_of_program_repair p =
     else procs in
   let data_str = String.concat "\n\n" (List.map string_of_data_repair cdefs) in
   let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
-  let procs_str = string_of_proc_decls_repair procs in
+  let procs_str = string_of_proc_decls_repair (List.rev procs) in
   data_str ^ "\n\n" ^ global_str ^ "\n" ^ procs_str ^ "\n"
 ;;
 
