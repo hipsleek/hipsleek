@@ -358,9 +358,9 @@ let process_source_full source =
   let pr_prog_repair = Iprinter.string_of_program_repair in
   let () = x_binfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
   let repair_input_prog = if (!Globals.enable_repair) then
-      let normalized_prog = Iast.normalize_prog prog in
+      let normalized_prog = Repair.normalize_prog prog in
       let file_name = Filename.basename source in
-      let normalized_name = "normalized_" ^ file_name in
+      let normalized_name = "normalized_" ^ file_name ^ ".ss" in
       let dir = Filename.dirname source in
       let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
       let oc = open_out normalized_file in
@@ -747,17 +747,17 @@ let process_source_full source =
                  *   with e2 -> raise e2
                  * else raise e *)
               else
-                raise e
-                (* let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
-                 * match repaired_iprog with
-                 * | None -> raise e
-                 * | Some n_prog ->
-                 *   let n_prog = {repair_input_prog with
-                 *                 prog_proc_decls = n_prog.Iast.prog_proc_decls} in
-                 *   let () = repaired := true in
-                 *   let () = x_tinfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
-                 *   let () = Globals.verified_procs := [] in
-                 *   () *)
+                (* raise e *)
+                let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
+                match repaired_iprog with
+                | None -> raise e
+                | Some n_prog ->
+                  let n_prog = {repair_input_prog with
+                                prog_proc_decls = n_prog.Iast.prog_proc_decls} in
+                  let () = repaired := true in
+                  let () = x_tinfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
+                  let () = Globals.verified_procs := [] in
+                  ()
             else
               let () = print_string_quiet
                   ("\nException MAIN"

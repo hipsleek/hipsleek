@@ -81,7 +81,7 @@ int Inhibit_Biased_Climb ()
   ensures Climb_Inhibit = false & res = Up_Separation;
  */
 {
-  return (Climb_Inhibit ? Up_Separation + MINSEP : Up_Separation);
+  return (Climb_Inhibit ? Up_Separation + NOZCROSS : Up_Separation);
 }
 
 bool Own_Above_Threat()
@@ -122,7 +122,7 @@ bool Non_Crossing_Biased_Climb()
 
   upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
   if (upward_preferred){
-      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM())));
+      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
   } else {
       result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
   }

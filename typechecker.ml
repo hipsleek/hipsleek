@@ -107,7 +107,7 @@ let get_repair_ents_x rs proc =
       (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
   (* let entails = failed_ctx |> List.map get_entailment in *)
   let entails = failed_ctx |> List.map get_entailment |> List.concat in
-  let () = x_tinfo_hp (add_str "entails: "
+  let () = x_binfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in
@@ -3108,7 +3108,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        let () = x_binfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")
