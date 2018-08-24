@@ -39,29 +39,6 @@ data message{
        int value;
        }
 
-int getUserBalance(int userid)
-   /*requires  userbal::USERBALANCES<id,n,b1,b2>@L
-   ensures   userbal=userbal' & res=n;*/
-   requires  userbal::USERBALANCES<userid,n>@L & Term
-   ensures   userbal=userbal' & res=n;
-
-void setUserBalance(int userid, int amount)
-   /*requires  userbal::USERBALANCES<id,_,_,_>
-   ensures   userbal'::USERBALANCES<id,amount,amount,amount>;*/
-   requires  userbal::USERBALANCES<userid,_> & Term
-   ensures   userbal'::USERBALANCES<userid,amount>;
-
-/*******************************/
-/**      generic fallback     **/
-/*******************************/
-void fallback(int userid, int arg)
-   requires  true //bal>=arg
-   ensures   bal'=bal-arg;
-
-void call(int userid, int arg)
-   requires  arg>0 & Term
-   ensures   bal'=bal-arg;
-
 /*********************/
 /** contract Wallet **/
 /*********************/
@@ -77,42 +54,81 @@ pred USERBALANCES<userid,n> == self=null or
                             self::bnode<id,val,t> * t::USERBALANCES<userid,n> & id!=userid
                             inv n>=0.
 
-void withdrawBalance()
-   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> //& bal>=n
-    case
-     {
-      n>0  -> requires Term[n,0] ensures  userbal'::USERBALANCES<id,0> ; //& bal'=bal-n;
-      n<=0 -> requires Term[n,0] ensures  userbal::USERBALANCES<id,n> //& bal'=bal
-      & userbal=userbal';
-     }
-   // ensures   userbal'::USERBALANCES<id,0> & bal'=bal-n; //(bal'=bal & n=0) | (bal'=bal-n & n>0);
-{
-  dprint;
-  int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
-  if (amountToWithdraw > 0) {
-     setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
-     call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
-     withdrawBalance();
-  }
-}
+
+int getUserBalance(int userid)
+   requires  userbal::USERBALANCES<userid,n>@L & Term
+   ensures   userbal=userbal' & res=n;
+
+void setUserBalance(int userid, int amount)
+   requires  userbal::USERBALANCES<userid,_> & Term
+   ensures   userbal'::USERBALANCES<userid,amount>;
+
+/*******************************/
+/**      generic fallback     **/
+/*******************************/
+void fallback(int userid, int arg)
+   requires  true //bal>=arg
+   ensures   bal'=bal-arg;
+
+void call(int userid, int arg)
+   requires  arg>0 & Term
+   ensures   bal'=bal-arg;
 
 
 //susceptible to re-entrancy
 void withdrawBalance_buggy()
-   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> //& bal>=n
-    case
-     {
-      n>0  -> requires Term[n,0] ensures  userbal'::USERBALANCES<id,0> ; //& bal'=bal-n;
-      n<=0 -> requires Term[n,0] ensures  userbal::USERBALANCES<id,n> //& bal'=bal
-      & userbal=userbal';
-     }
-   // ensures   userbal'::USERBALANCES<id,0> & bal'=bal-n; //(bal'=bal & n=0) | (bal'=bal-n & n>0);
+     requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & Term[n]
+     ensures   userbal'::USERBALANCES<id,0>;
 {
-  dprint;
   int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
   if (amountToWithdraw > 0) {
      call(msg.sender,getUserBalance(msg.sender));        // call(msg.sender,arg)             <- msg.sender.call(arg)
      withdrawBalance_buggy();
      setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
+  }
+}
+
+data nnode{ int val;}
+
+// prim_pred GLOB{%P}<>.
+
+void ccall(int userid, int arg)
+   requires  arg>0 & Term
+   ensures   bal'=bal-arg;
+// {
+//    withdrawBalance();
+// }
+
+
+//fixed version
+void withdrawBalance()
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & Term[n] & n>=0
+   ensures   userbal'::USERBALANCES<id,0>;
+{
+  int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
+  if (amountToWithdraw > 0) {
+     setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
+     ccall(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
+  }
+}
+
+// ########################################################
+
+void call0(int userid, int arg)
+   requires  arg>0
+   ensures   bal'=bal-arg;
+{
+   foo();
+}
+
+//fixed version
+void foo()
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0
+   ensures   userbal'::USERBALANCES<id,0>;
+{
+  int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
+  if (amountToWithdraw > 0) {
+     setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
+     call0(msg.sender,amountToWithdraw);                 // call(msg.sender,arg)             <- msg.sender.call(arg)
   }
 }
