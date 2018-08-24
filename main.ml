@@ -356,7 +356,7 @@ let process_source_full source =
   (* ---------------------------------------------- *)
   let pr_prog = Iprinter.string_of_program in
   let pr_prog_repair = Iprinter.string_of_program_repair in
-  let () = x_binfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
+  let () = x_tinfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
   let repair_input_prog = if (!Globals.enable_repair) then
       let normalized_prog = Repair.normalize_prog prog in
       let file_name = Filename.basename source in

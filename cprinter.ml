@@ -621,16 +621,6 @@ let string_of_ho_var (fk,x,sk) =
 
 let string_of_spec_var x =
   CP.string_of_spec_var ~print_typ:!print_type x
-(* string_of_typed_spec_var x *)
-(* match x with *)
-(* | P.SpecVar (t, id, p) -> *)
-(*   (\* An Hoa : handle printing of holes *\) *)
-(*   let ts = if !print_type then ":"^(string_of_typ t) else "" in *)
-(*   (\* let real_id = if (id.[0] = '#') then "#" else id *\) *)
-(*   (\* in  *\) *)
-(*   (id ^(match p with *)
-(*        | Primed -> "##'" *)
-(*        | Unprimed -> "" )^ts) *)
 
 let string_of_spec_var_list xs =
   "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"

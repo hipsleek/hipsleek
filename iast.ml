@@ -4144,18 +4144,7 @@ let collect_logical_locs (exp: exp) =
     | _ -> list
   in List.rev(aux exp [])
 
-let replace_assign_exp exp vars heuristic =
-  let rec prelist a b = match a, b with
-    | [], _ -> true
-    | _, [] -> false
-    | h::t, h'::t' -> h = h' && prelist t t'
-  in
-  let rec sublist a b = match a, b with
-    | [], _ -> true
-    | _, [] -> false
-    | h::_, h'::t' -> (h = h' && prelist a b) || sublist a t'
-  in
-  let simple_collect_vars exp =
+let collect_vars_exp exp =
     let rec aux exp list = match exp with
       | Binary bin ->
         let tmp = aux bin.exp_binary_oper1 list in
@@ -4173,10 +4162,20 @@ let replace_assign_exp exp vars heuristic =
         let n_list = aux e.exp_member_base list in
         e.exp_member_fields @ list
       | _ -> list
-      (* |  _ -> report_error no_pos "simple_collect_vars: this exp is not supported" *)
     in
     let vars = List.rev (aux exp []) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
+
+let replace_assign_exp exp vars heuristic =
+  let rec prelist a b = match a, b with
+    | [], _ -> true
+    | _, [] -> false
+    | h::t, h'::t' -> h = h' && prelist t t'
+  in
+  let rec sublist a b = match a, b with
+    | [], _ -> true
+    | _, [] -> false
+    | h::_, h'::t' -> (h = h' && prelist a b) || sublist a t'
   in
   let is_cond exp = match exp with
     | Binary e ->
@@ -4198,7 +4197,7 @@ let replace_assign_exp exp vars heuristic =
     | _ -> false
   in
   let rec replace exp vars =
-    let exp_vars = simple_collect_vars exp in
+    let exp_vars = collect_vars_exp exp in
     let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos
     in
     if (sublist exp_vars vars & not (is_cond exp)) then
@@ -4223,7 +4222,7 @@ let replace_assign_exp exp vars heuristic =
 
   in
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_id)) vars no_pos in
-  let exp_vars = simple_collect_vars exp in
+  let exp_vars = collect_vars_exp exp in
   if (exp_vars == []) then
     (mk_unk_exp [] (get_exp_pos exp), [], [get_exp_pos exp])
   else replace exp vars
