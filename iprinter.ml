@@ -910,7 +910,7 @@ let rec string_of_exp_repair = function
   | Break b -> ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e ->
-    "(" ^ (string_of_typ_repair e.exp_cast_target_type) ^ ")" ^
+    (* "(" ^ (string_of_typ_repair e.exp_cast_target_type) ^ ")" ^ *)
     (string_of_exp_repair e.exp_cast_body)
   | Continue b ->
     ("continue "^(string_of_label b.exp_continue_jump_label))

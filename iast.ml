@@ -4248,6 +4248,7 @@ let is_bool_exp exp = match exp with
       | OpLogicalOr -> true
       | _ -> false
     end
+  | Cast _ -> true
   | _ -> false
 
 let rec mutate_exp loc exp = match exp with

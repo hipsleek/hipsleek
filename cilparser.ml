@@ -762,7 +762,13 @@ and create_logical_not_proc (typ: Globals.typ) : Iast.proc_decl =
             "  case { param =  0. -> ensures res != 0.;\n" ^
             "         param != 0. -> ensures res = 0.; }\n"
           )
-        | _ -> report_error no_pos "create_logical_not_proc: Invalid type"
+        (* | Globals.Bool -> (
+         *     "bool " ^ proc_name ^ "(bool param)\n" ^
+         *     "  case { param =  true. -> ensures res = false.;\n" ^
+         *     "         param != false. -> ensures res = true.; }\n"
+         *   ) *)
+        | _ -> report_error no_pos ("create_logical_not_proc: Invalid type"
+                                    ^ (string_of_typ typ))
       ) in
       let proc_decl = Parser.parse_c_aux_proc "inter_logical_not_proc" proc in
       Hashtbl.add tbl_aux_proc proc_name proc_decl;
@@ -1437,9 +1443,12 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           ) in
         match op with
         | Cil.LNot ->
-          let not_proc = create_logical_not_proc new_t in
-          let proc_name = not_proc.Iast.proc_name in
-          Iast.mkCallNRecv proc_name None [e] None None pos
+          if (new_t = Globals.Bool && o == OpNot)
+          then Iast.mkUnary o e None pos
+          else
+            let not_proc = create_logical_not_proc new_t in
+            let proc_name = not_proc.Iast.proc_name in
+            Iast.mkCallNRecv proc_name None [e] None None pos
         | _ -> Iast.mkUnary o e None pos
       ) in
       let target_typ = translate_typ ty pos in
@@ -2338,7 +2347,6 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
   ) in
   let filename = pos.start_pos.Lexing.pos_fname in
   let has_shape_args = List.exists (fun p ->
-      (* let () = print_endline (string_of_typ p.Iast.param_type) in *)
       is_node_typ p.Iast.param_type
     ) (funargs) in
   let static_specs1, hp_decls, args_wi =

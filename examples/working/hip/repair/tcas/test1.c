@@ -120,12 +120,98 @@ bool Non_Crossing_Biased_Climb()
   bool upward_preferred;
   bool result;
 
-  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
-  if (upward_preferred){
-      result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM())));
+  //  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+  if (Inhibit_Biased_Climb() > Down_Separation){
+    // >= -> >
+    result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
   } else {
-      result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
+    result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
   }
 
   return result;
 }
+
+bool Non_Crossing_Biased_Descend()
+/*@
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+
+  ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+  & res = (Own_Tracked_Alt < Other_Tracked_Alt & Cur_Vertical_Sep >= 300 & Down_Separation >= a);
+
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+
+  ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+  & res = ( (Own_Tracked_Alt <= Other_Tracked_Alt) | (Up_Separation >= a));
+ */
+{
+  bool upward_preferred;
+  bool result;
+
+  //upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+  if (Inhibit_Biased_Climb() > Down_Separation){
+    result = Own_Below_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Down_Separation >= ALIM());
+  } else {
+    result = !(Own_Above_Threat()) || ((Own_Above_Threat()) && (Up_Separation >= ALIM()));
+  }
+  return result;
+}
+
+int alt_sep_test()
+/*@
+requires Positive_RA_Alt_Thresh::node<a,b,c,d>
+   & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+   & ((Two_of_Three_Reports_Valid & Other_RAC = 0) | !(Other_Capability = 1))
+   & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+   & (Alt_Layer_Value = 0)
+   & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
+
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
+   & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+   & ((Two_of_Three_Reports_Valid & Other_RAC = 0) | !(Other_Capability = 1))
+   &  (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+   & (Alt_Layer_Value = 0)
+   & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
+   & res = 2;
+
+requires Positive_RA_Alt_Thresh::node<a,b,c,d>
+   & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+   & ((Two_of_Three_Reports_Valid & Other_RAC = 0) | !(Other_Capability = 1))
+   & (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+   & (Alt_Layer_Value = 0)
+   & (Own_Tracked_Alt < Other_Tracked_Alt) & (Down_Separation < a)
+
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
+   & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+   & ((Two_of_Three_Reports_Valid & Other_RAC = 0) | !(Other_Capability = 1))
+   & (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+   & (Alt_Layer_Value = 0)
+   & (Own_Tracked_Alt < Other_Tracked_Alt) & (Down_Separation < a)
+   & res = 1;
+*/
+{
+  bool enabled, tcas_equipped, intent_not_known;
+  bool need_upward_RA, need_downward_RA;
+  int alt_sep;
+
+  alt_sep = UNRESOLVED;
+  enabled = High_Confidence && (Own_Tracked_Alt_Rate <= OLEV) && (Cur_Vertical_Sep > MAXALTDIFF);
+  tcas_equipped = Other_Capability == TCAS_TA;
+  intent_not_known = Two_of_Three_Reports_Valid && Other_RAC == NO_INTENT;
+
+  need_upward_RA = Non_Crossing_Biased_Climb() && Own_Below_Threat();
+  need_downward_RA = Non_Crossing_Biased_Descend() && Own_Above_Threat();
+
+  if (enabled && ((tcas_equipped && intent_not_known) || !tcas_equipped)){
+       if (need_upward_RA && need_downward_RA)	    alt_sep = UNRESOLVED;
+	     else if (need_upward_RA)	    alt_sep = UPWARD_RA;
+	     else if (need_downward_RA)   alt_sep = DOWNWARD_RA;
+	     else	    alt_sep = UNRESOLVED;
+  }
+  return alt_sep;
+}
+
+
