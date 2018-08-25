@@ -1146,24 +1146,21 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
         let core_type = get_core_cil_typ ty in
-        (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
+        (* create a new Globals.typ and a new Iast.data_decl to
+           represent the pointer data structure *)
         let newt = (
-          (* find if this pointer was handled before or not *)
+          (* find if this pointer was handled before *)
           try
             Hashtbl.find tbl_pointer_typ core_type
           with Not_found -> (
               (* create new Globals.typ and Iast.data_decl update to hash tables *)
               let value_typ = translate_typ core_type pos in
-              let value_field = ((value_typ, str_value), no_pos, false, (gen_field_ann value_typ) (* Iast.F_NO_ANN *)) in
+              let value_field = (value_typ, str_value), no_pos, false, (gen_field_ann value_typ)  in
               let dname = match ty with
-		| Cil.TInt(Cil.IChar, _) -> "char_star"
+		            | Cil.TInt(Cil.IChar, _) -> "char_star"
                 | _ -> (Globals.string_of_typ value_typ) ^ "_star"
               in
               let dtype = Globals.Named dname in
-(*              let offset_field = match ty with*)
-(*                | Cil.TInt(Cil.IChar, _) -> ((dtype, str_offset), no_pos, false, (gen_field_ann dtype))*)
-(*                | _ -> ((Int, str_offset), no_pos, false, (gen_field_ann Int)) (*other types have an integer offset*)*)
-(*              in*)
               let dfields = match ty with
                 | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
                 | _ -> [value_field(*; offset_field*)]
@@ -1184,10 +1181,10 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
       Globals.Array (arrayty, 1)
     | Cil.TFun _ ->
       report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
-    | Cil.TNamed _ ->                                          (* typedef type *)
+    | Cil.TNamed _ ->
       let ty = get_core_cil_typ t in
       translate_typ ty pos
-    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
+    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname      (* struct/union*)
     | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
     | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
