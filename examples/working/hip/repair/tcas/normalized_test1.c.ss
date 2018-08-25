@@ -66,11 +66,11 @@ ensures (Climb_Inhibit = 1) & (res = Up_Separation+100);
 requires Climb_Inhibit = 0
 ensures (Climb_Inhibit = 0) & (res = Up_Separation);
 {
-return if (Climb_Inhibit) {
-  Up_Separation + 100
+if (__bool_of_int___(Climb_Inhibit)) {
+  return Up_Separation + 100;
 } else {
-Up_Separation
-};
+return Up_Separation;
+}
 }
 bool Own_Above_Threat()
 requires true
@@ -103,83 +103,12 @@ if (tmp___4 > Down_Separation) {
   tmp = Own_Below_Threat();
 tmp___0 = Own_Below_Threat();
 tmp___1 = ALIM();
-result = (!tmp) || (tmp___0 && (__make_not_of_int__(Down_Separation > tmp___1)));
+result = (!tmp) || (tmp___0 && (Down_Separation >= tmp___1));
 } else {
 tmp___2 = Own_Above_Threat();
 tmp___3 = ALIM();
 result = (tmp___2 && (Cur_Vertical_Sep >= 300)) && (Up_Separation >= tmp___3);
 }
 return result;
-}
-bool Non_Crossing_Biased_Descend()
-
-requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & ((Up_Separation+100) > Down_Separation))
-ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & (((Up_Separation+100) > Down_Separation) & (((res) & ((Own_Tracked_Alt < Other_Tracked_Alt) & ((Cur_Vertical_Sep >= 300) & (Down_Separation >= a)))) | ((!(res)) & (!((Own_Tracked_Alt < Other_Tracked_Alt) & ((Cur_Vertical_Sep >= 300) & (Down_Separation >= a))))))));
-requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & ((Up_Separation+100) <= Down_Separation))
-ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & (((res) & ((Own_Tracked_Alt <= Other_Tracked_Alt) | (Up_Separation >= a))) | ((!(res)) & (!((Own_Tracked_Alt <= Other_Tracked_Alt) | (Up_Separation >= a)))))));
-{
-bool result;
-bool tmp;
-int tmp___0;
-bool tmp___1;
-bool tmp___2;
-int tmp___3;
-int tmp___4;
-tmp___4 = Inhibit_Biased_Climb();
-if (tmp___4 > Down_Separation) {
-  tmp = Own_Below_Threat();
-tmp___0 = ALIM();
-result = (tmp && (Cur_Vertical_Sep >= 300)) && (Down_Separation >= tmp___0);
-} else {
-tmp___1 = Own_Above_Threat();
-tmp___2 = Own_Above_Threat();
-tmp___3 = ALIM();
-result = (!tmp___1) || (tmp___2 && (Up_Separation >= tmp___3));
-}
-return result;
-}
-int alt_sep_test()
-
-requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a))))))))
-ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & ((Up_Separation >= a) & (res = 2)))))))));
-requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) > Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt < Other_Tracked_Alt) & (Down_Separation < a))))))))
-ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) > Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt < Other_Tracked_Alt) & ((Down_Separation < a) & (res = 1)))))))));
-{
-bool enabled;
-bool tcas_equipped;
-bool intent_not_known;
-bool need_upward_RA;
-bool need_downward_RA;
-int alt_sep;
-bool tmp;
-bool tmp___0;
-bool tmp___1;
-bool tmp___2;
-alt_sep = 0;
-enabled = (High_Confidence && (Own_Tracked_Alt_Rate <= 600)) && (Cur_Vertical_Sep > 600);
-tcas_equipped = Other_Capability == 1;
-intent_not_known = Two_of_Three_Reports_Valid && (Other_RAC == 0);
-tmp = Non_Crossing_Biased_Climb();
-tmp___0 = Own_Below_Threat();
-need_upward_RA = tmp && tmp___0;
-tmp___1 = Non_Crossing_Biased_Descend();
-tmp___2 = Own_Above_Threat();
-need_downward_RA = tmp___1 && tmp___2;
-if (enabled && ((tcas_equipped && intent_not_known) || (!tcas_equipped))) {
-  if (need_upward_RA && need_downward_RA) {
-  alt_sep = 0;
-} else {
-if (need_upward_RA) {
-  alt_sep = 1;
-} else {
-if (need_downward_RA) {
-  alt_sep = 2;
-} else {
-alt_sep = 0;
-}
-}
-}
-}
-return alt_sep;
 }
 

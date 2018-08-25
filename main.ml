@@ -356,7 +356,7 @@ let process_source_full source =
   (* ---------------------------------------------- *)
   let pr_prog = Iprinter.string_of_program in
   let pr_prog_repair = Iprinter.string_of_program_repair in
-  let () = x_binfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
+  let () = x_tinfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
 
   (* let repair_input_prog = prog in *)
   let repair_input_prog = if (!Globals.enable_repair) then
@@ -369,11 +369,11 @@ let process_source_full source =
       fprintf oc "%s\n" (pr_prog_repair prog);
       close_out oc;
       let nprog = parse_file_full normalized_file false in
-      (* let normalized_prog = Repair.normalize_prog nprog in *)
-      let cmd = ("rm " ^ normalized_file) in
-      let _ = Sys.command cmd in
-      (* normalized_prog *)
-      nprog
+      let normalized_prog = Repair.normalize_prog nprog in
+      (* let cmd = ("rm " ^ normalized_file) in
+       * let _ = Sys.command cmd in *)
+      normalized_prog
+      (* nprog *)
     else prog in
   let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
   (* ---------------------------------------------- *)

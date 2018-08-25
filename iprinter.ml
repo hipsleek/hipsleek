@@ -958,7 +958,7 @@ let rec string_of_exp_repair = function
     exp_call_nrecv_path_id = pid;
     exp_call_nrecv_arguments = el;
                 exp_call_nrecv_ho_arg = ha }) ->
-    if (id = "__bool_of_int___") then
+    if (id = "__bool_of_int___" || id = "__make_not_of_int__") then
       let arg = List.hd el in
       if (is_bool_exp arg) then (string_of_exp_list el ",")
       else  id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
@@ -1019,8 +1019,8 @@ let rec string_of_exp_repair = function
 
   | Return ({exp_return_val = v})  ->
     "return " ^  (match v with
-        | None   -> ""
-        | Some e -> (string_of_exp_repair e) ^ "") ^ ";"
+        | None   -> ";"
+        | Some e -> string_of_return e)
   | Seq {
       exp_seq_exp1 = e1;
       exp_seq_exp2 = e2
@@ -1086,6 +1086,17 @@ let rec string_of_exp_repair = function
         in
         "par " ^ (string_of_vperm_sets vps) ^ " * " ^ (string_of_formula lh) ^
             "{\n" ^ (String.concat "\n|| " (List.map string_of_par_case cl)) ^ " }"
+
+and string_of_return exp = match exp with
+  | Cond {exp_cond_condition = e1;
+          exp_cond_then_arm = e2;
+          exp_cond_path_id = pid;
+          exp_cond_else_arm = e3} ->
+    parenthesis((string_of_exp_repair e1)) ^ " ? " ^
+    (string_of_exp_repair e2) ^ " : " ^ (string_of_exp_repair e3) ^ ";"
+  | Label (_, e) -> string_of_return e
+  | Cast e -> (string_of_return e.exp_cast_body)
+  | _ -> string_of_exp_repair exp ^ ";"
 
 and string_of_exp_list l c = match l with
         | []                          -> ""
