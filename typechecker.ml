@@ -76,10 +76,10 @@ let get_repair_ents_x rs proc =
 
     let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
                    |> CP.elim_idents in
-    let () = x_binfo_hp (add_str "rhs: " Cprinter.string_of_pure_formula)
+    let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_pure_formula)
         pure_rhs no_pos in
     let pure_lhs = lhs |> CF.get_pure in
-    let () = x_binfo_hp (add_str "lhs: " Cprinter.string_of_pure_formula)
+    let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_pure_formula)
         pure_lhs no_pos in
     let pure_lhs = CP.elim_idents pure_lhs in
     let filter x =
@@ -3108,7 +3108,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived"
         in
-        let () = x_binfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")

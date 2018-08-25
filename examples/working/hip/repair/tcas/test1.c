@@ -127,7 +127,7 @@ bool Non_Crossing_Biased_Climb()
   //  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
   if (Inhibit_Biased_Climb() > Down_Separation){
     // >= -> >
-    result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation >= ALIM())));
+    result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
   } else {
     result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
   }

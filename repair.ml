@@ -73,6 +73,163 @@ let replace_assign_exp exp vars heuristic =
     (mk_unk_exp [] (get_exp_pos exp), [], [get_exp_pos exp])
   else replace exp vars
 
+(* Normalize arithmetic expression *)
+let normalize_arith_exp exp =
+  let rec is_compose_exp exp = match exp with
+    | Binary e -> true
+    | Unary e -> is_compose_exp e.exp_unary_exp
+    | Block e -> is_compose_exp e.exp_block_body
+    | _ -> false
+  in
+  let rec aux exp = match exp with
+    | Binary e ->
+      begin
+        match e.exp_binary_op with
+        | OpLogicalAnd
+        | OpLogicalOr ->
+          let (e1, list1) =
+            if (is_compose_exp e.exp_binary_oper1) then
+              aux e.exp_binary_oper1
+            else (e.exp_binary_oper1, []) in
+          let (e2, list2) =
+            if (is_compose_exp e.exp_binary_oper2) then
+              aux e.exp_binary_oper2
+            else (e.exp_binary_oper2, []) in
+          let n_exp = Binary {e with exp_binary_oper1 = e1;
+                                     exp_binary_oper2 = e2}
+          in (n_exp, list1@list2)
+        | OpEq
+        | OpNeq
+        | OpLt
+        | OpLte
+        | OpGt
+        | OpGte -> if (is_compose_exp e.exp_binary_oper1) then
+            let loc = get_exp_pos e.exp_binary_oper1 in
+            let n_name = "exp_" ^ (VarGen.string_of_loc_repair loc) in
+            let var = Var {
+                exp_var_name = n_name;
+                exp_var_pos = loc;
+              } in
+            let n_exp = Binary {e with exp_binary_oper1 = var} in
+            (n_exp, [(n_name, e.exp_binary_oper1)])
+          else (exp, [])
+        | _ -> (exp, [])
+    end
+    | Assign e ->
+      let (e1, list1) = aux e.exp_assign_rhs in
+      (Assign {e with exp_assign_rhs = e1}, list1)
+    | Block b ->
+      let (e1, l1) = aux b.exp_block_body in
+      (Block {b with exp_block_body = e1}, l1)
+    | Cond e ->
+      let (e1, l1) = aux e.exp_cond_condition in
+      let (e2, l2) = aux e.exp_cond_then_arm in
+      let (e3, l3) = aux e.exp_cond_else_arm in
+      (Cond {e with exp_cond_condition = e1;
+                    exp_cond_then_arm = e2;
+                    exp_cond_else_arm = e3}, l1@l2@l3)
+    | Label (a, e) ->
+      let (e1, l1) = aux e in
+      (Label (a, e1), l1)
+    | Seq e ->
+      let (e1, l1) = aux e.exp_seq_exp1 in
+      let (e2, l2) = aux e.exp_seq_exp2 in
+      (Seq {e with exp_seq_exp1 = e1; exp_seq_exp2 = e2}, l1@l2)
+    | Unary e ->
+      let (e1, l1) = aux e.exp_unary_exp in
+      (Unary {e with exp_unary_exp = e1}, l1)
+    | _ -> (exp, [])
+  in
+  let (n_exp, assign_list) = aux exp in
+
+  let collect_local_var_decls exp =
+    let rec aux exp list = match exp with
+      | Block e -> aux e.exp_block_body list
+      | Seq e ->
+        let list1 = aux e.exp_seq_exp1 list in
+        aux e.exp_seq_exp2 list1
+      | VarDecl _ -> [exp] @ list
+      | Label (_, e) -> aux e list
+      | _ -> list
+    in aux exp []
+  in
+  let collect_main exp =
+    let rec aux exp list = match exp with
+      | Block e -> aux e.exp_block_body list
+      | Seq e ->
+        let list1 = aux e.exp_seq_exp1 list in
+        aux e.exp_seq_exp2 list1
+      | VarDecl _ -> list
+      | Label (_, e) -> aux e list
+      | _ -> [exp] @ list
+    in aux exp []
+  in
+  let var_decls = collect_local_var_decls n_exp in
+  let pr_exps = pr_list Iprinter.string_of_exp in
+  let pr_exp = Iprinter.string_of_exp in
+
+  let () = x_tinfo_hp (add_str "n_exp: " pr_exp) n_exp no_pos in
+  let () = x_tinfo_hp (add_str "var decls: " pr_exps) var_decls no_pos in
+
+  let rec find_main exp vars = match exp with
+    | Block e -> find_main e.exp_block_body vars
+    | Label (_, el) -> find_main el vars
+    | Seq e ->
+      if (List.mem e.exp_seq_exp1 vars) then e.exp_seq_exp2
+      else if (List.mem e.exp_seq_exp2 vars) then e.exp_seq_exp1
+      else
+        let e1 = find_main e.exp_seq_exp1 vars in
+        let e2 = find_main e.exp_seq_exp2 vars in
+        Seq {e with exp_seq_exp1 = e1;
+                    exp_seq_exp2 = e2}
+    | _ -> exp
+  in
+  (* let main_exp = find_main n_exp var_decls in *)
+  let rec sequencing_exp exp_list = match exp_list with
+    | [] -> report_error no_pos "cannot sequencing empty list"
+    | [x] -> x
+    | h::t -> mkSeq h (sequencing_exp t) no_pos
+  in
+  let main_exp = sequencing_exp (collect_main n_exp) in
+  let () = x_tinfo_hp (add_str "main: " pr_exp) main_exp no_pos in
+  let assign_list = Gen.BList.remove_dups_eq (fun a b ->
+      String.compare (fst a) (fst b) == 0) assign_list in
+  let attached_exp = List.fold_left(fun a (b, c) ->
+      let var_decl = VarDecl {
+          exp_var_decl_type = int_type;
+          exp_var_decl_decls = [(b, None, no_pos)];
+          exp_var_decl_pos = no_pos
+        }
+      in
+      let assign = Assign {
+          exp_assign_op = OpAssign;
+          exp_assign_lhs = Var {
+              exp_var_name = b;
+              exp_var_pos = no_pos;
+            };
+          exp_assign_rhs = c;
+          exp_assign_path_id = None;
+          exp_assign_pos = no_pos
+        } in
+      let seq = Seq {
+          exp_seq_exp1 = var_decl;
+          exp_seq_exp2 = assign;
+          exp_seq_pos = no_pos
+        }
+      in
+      Seq {
+        exp_seq_exp1 = seq;
+        exp_seq_exp2 = a;
+        exp_seq_pos = no_pos
+      }
+    ) main_exp assign_list in
+  let attached_exp = if (var_decls = []) then attached_exp
+    else
+      let var_decls = sequencing_exp var_decls in
+      mkSeq var_decls attached_exp no_pos
+  in
+  attached_exp
+
 (* Normalize logical exp *)
 (* e.g x < y <-> x - y < 0 *)
 let rec normalize_logical_exp exp = match exp with
@@ -139,6 +296,7 @@ let normalize_proc iprog proc_decl =
     | Some body_exp ->
       let n_exp = body_exp in
       let n_exp = normalize_logical_exp body_exp in
+      let n_exp = normalize_arith_exp n_exp in
       Some n_exp
   in
   let nprog = {proc_decl with proc_body = n_proc_body} in

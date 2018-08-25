@@ -19,11 +19,6 @@ global int Down_Separation;
 global int Other_RAC;
 global int Other_Capability;
 global int Climb_Inhibit;
-int __make_not_of_int__(int param)
-requires param != 0 ensures res = 0;
-requires param = 0 ensures res != 0;
-
-
 bool __bool_of_int___(int param)
 requires param = 0 ensures !(res);
 requires param != 0 ensures res;
@@ -37,10 +32,10 @@ void initialize()
 requires Positive_RA_Alt_Thresh::node<a,b,c,d> & true
 ensures Positive_RA_Alt_Thresh::node<a2,b2,c2,d2> & (a2 = 400) & ((b2 = 500) & ((c2 = 640) & (d2 = 740)));
 {
-Positive_RA_Alt_Thresh.fst = 400;
-Positive_RA_Alt_Thresh.snd = 500;
-Positive_RA_Alt_Thresh.third = 640;
 Positive_RA_Alt_Thresh.fourth = 740;
+Positive_RA_Alt_Thresh.third = 640;
+Positive_RA_Alt_Thresh.snd = 500;
+Positive_RA_Alt_Thresh.fst = 400;
 }
 int ALIM()
 
@@ -50,14 +45,14 @@ requires Positive_RA_Alt_Thresh::node<a,b,c,d> & Alt_Layer_Value = 1
 ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 1) & (res = b);
 {
 int tmp;
-if (Alt_Layer_Value == 0) {
-  return Positive_RA_Alt_Thresh.fst;
-}
+return tmp;
+tmp = int_error();
 if (Alt_Layer_Value == 1) {
   return Positive_RA_Alt_Thresh.snd;
 }
-tmp = int_error();
-return tmp;
+if (Alt_Layer_Value == 0) {
+  return Positive_RA_Alt_Thresh.fst;
+}
 }
 int Inhibit_Biased_Climb()
 
@@ -91,24 +86,32 @@ ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_
 requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & ((Up_Separation+100) <= Down_Separation))
 ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & (((res) & ((Own_Tracked_Alt > Other_Tracked_Alt) & ((Cur_Vertical_Sep >= 300) & (Up_Separation >= a)))) | ((!(res)) & (!((Own_Tracked_Alt > Other_Tracked_Alt) & ((Cur_Vertical_Sep >= 300) & (Up_Separation >= a))))))));
 {
-bool result;
-bool tmp;
-bool tmp___0;
-int tmp___1;
-bool tmp___2;
-int tmp___3;
 int tmp___4;
-tmp___4 = Inhibit_Biased_Climb();
-if (tmp___4 > Down_Separation) {
+int tmp___3;
+bool tmp___2;
+int tmp___1;
+bool tmp___0;
+bool tmp;
+bool result;
+int exp_132_65_132_88;
+exp_132_65_132_88 = Up_Separation - tmp___3;
+int exp_132_36_132_59;
+exp_132_36_132_59 = Cur_Vertical_Sep - 300;
+int exp_130_66_130_90;
+exp_130_66_130_90 = Down_Separation - tmp___1;
+int exp_128_6_128_46;
+exp_128_6_128_46 = tmp___4 - Down_Separation;
+return result;
+if (exp_128_6_128_46 > 0) {
   tmp = Own_Below_Threat();
 tmp___0 = Own_Below_Threat();
 tmp___1 = ALIM();
-result = (!tmp) || (tmp___0 && (Down_Separation >= tmp___1));
+result = (!tmp) || (tmp___0 && (!(exp_130_66_130_90 > 0)));
 } else {
 tmp___2 = Own_Above_Threat();
 tmp___3 = ALIM();
-result = (tmp___2 && (Cur_Vertical_Sep >= 300)) && (Up_Separation >= tmp___3);
+result = (tmp___2 && (exp_132_36_132_59 >= 0)) && (exp_132_65_132_88 >= 0);
 }
-return result;
+tmp___4 = Inhibit_Biased_Climb();
 }
 
