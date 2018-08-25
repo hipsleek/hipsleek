@@ -357,25 +357,25 @@ let process_source_full source =
   let pr_prog = Iprinter.string_of_program in
   let pr_prog_repair = Iprinter.string_of_program_repair in
   let () = x_binfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
-  
-  let repair_input_prog = prog in
-  (* let repair_input_prog = if (!Globals.enable_repair) then
-   *     let file_name = Filename.basename source in
-   *     let normalized_name = "normalized_" ^ file_name ^ ".ss" in
-   *     let dir = Filename.dirname source in
-   *     let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
-   *     let oc = open_out normalized_file in
-   *     let () = Parser.parser_name := "default" in
-   *     fprintf oc "%s\n" (pr_prog_repair prog);
-   *     close_out oc;
-   *     let nprog = parse_file_full normalized_file false in
-   *     (\* let normalized_prog = Repair.normalize_prog nprog in *\)
-   *     let cmd = ("rm " ^ normalized_file) in
-   *     let _ = Sys.command cmd in
-   *     (\* normalized_prog *\)
-   *     nprog
-   *   else prog in
-   * let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in *)
+
+  (* let repair_input_prog = prog in *)
+  let repair_input_prog = if (!Globals.enable_repair) then
+      let file_name = Filename.basename source in
+      let normalized_name = "normalized_" ^ file_name ^ ".ss" in
+      let dir = Filename.dirname source in
+      let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
+      let oc = open_out normalized_file in
+      let () = Parser.parser_name := "default" in
+      fprintf oc "%s\n" (pr_prog_repair prog);
+      close_out oc;
+      let nprog = parse_file_full normalized_file false in
+      (* let normalized_prog = Repair.normalize_prog nprog in *)
+      let cmd = ("rm " ^ normalized_file) in
+      let _ = Sys.command cmd in
+      (* normalized_prog *)
+      nprog
+    else prog in
+  let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
   (* ---------------------------------------------- *)
 
   let () = Gen.Profiling.push_time "Process compare file" in
