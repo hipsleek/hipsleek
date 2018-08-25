@@ -151,7 +151,7 @@ let normalize_arith_exp exp =
       | VarDecl _ -> [exp] @ list
       | Label (_, e) -> aux e list
       | _ -> list
-    in aux exp []
+    in List.rev (aux exp [])
   in
   let collect_main exp =
     let rec aux exp list = match exp with
@@ -162,7 +162,7 @@ let normalize_arith_exp exp =
       | VarDecl _ -> list
       | Label (_, e) -> aux e list
       | _ -> [exp] @ list
-    in aux exp []
+    in List.rev (aux exp [])
   in
   let var_decls = collect_local_var_decls n_exp in
   let pr_exps = pr_list Iprinter.string_of_exp in
@@ -666,7 +666,7 @@ let start_repair iprog =
     let () = x_tinfo_hp (add_str "var decls: " (pr_list (pr_pair pr_id Globals.string_of_typ)))
         var_decls no_pos in
     let cand_exps = List.map fst candidates in
-    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
+    let () = x_binfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
     let filter_candidate exp =
       let exp_vars = collect_vars_exp exp in
       (* if exp_vars = [] then true
@@ -677,9 +677,9 @@ let start_repair iprog =
       if vars = [] then false
       else true
     in
-    let candidates = List.filter (fun (x, y) -> filter_candidate x) candidates in
-    let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
-        (candidates |> List.map fst) no_pos in
+    (* let candidates = List.filter (fun (x, y) -> filter_candidate x) candidates in
+     * let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
+     *     (candidates |> List.map fst) no_pos in *)
 
     (* None *)
     let candidates = List.rev candidates in
