@@ -185,6 +185,8 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
    Adding template f(args) = ?
    Output: Input for songbird infer_unknown_functions
 *)
+
+
 let create_templ_prog prog ents
   =
   let program = SBCast.mk_program "hip_input" in
@@ -213,8 +215,6 @@ let create_templ_prog prog ents
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
-  let lhs = CP.normalize_bvar_f lhs in
-  let rhs = CP.normalize_bvar_f rhs in
   let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
       lhs VarGen.no_pos in
   let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
@@ -228,6 +228,12 @@ let translate_ent ent =
       sb_rhs VarGen.no_pos in
 
   SBCast.mk_pure_entail sb_lhs sb_rhs
+
+let get_vars_in_fault_ents ents =
+  let sb_ents = List.map translate_ent ents in
+  let sb_vars = List.map Libsongbird.Prover.norm_entail sb_ents |> List.concat in
+  let vars = List.map translate_back_var sb_vars in
+  vars
 
 let get_repair_candidate prog ents cond_op =
   let sb_ents = List.map translate_ent ents in

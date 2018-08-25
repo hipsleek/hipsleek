@@ -672,7 +672,7 @@ let const_prefix_len = String.length(const_prefix)
 (* is string a int const, n is prefix length *)
 let is_int_str_aux (n:int) (s:string) : bool =
   if (n<= const_prefix_len) then false
-  else 
+  else
     let p = String.sub s 0 const_prefix_len in
     if (p=const_prefix) then true
     else false

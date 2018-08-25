@@ -356,28 +356,26 @@ let process_source_full source =
   (* ---------------------------------------------- *)
   let pr_prog = Iprinter.string_of_program in
   let pr_prog_repair = Iprinter.string_of_program_repair in
-  let () = x_tinfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
-  let repair_input_prog = if (!Globals.enable_repair) then
-      let normalized_prog = Iast.normalize_prog prog in
-      let file_name = Filename.basename source in
-      (* let file_name =
-       *   try
-       *     let () = x_binfo_hp (add_str "prog name" pr_id) file_name no_pos in
-       *     let n_name = Filename.chop_suffix ".c" file_name in
-       *     n_name ^ ".ss"
-       *   with _ -> file_name
-       * in *)
-      let normalized_file = "normalized_" ^ file_name in
-      let dir = Filename.dirname source in
-      let to_saved_file = dir ^ Filename.dir_sep ^ normalized_file in
-      let oc = open_out to_saved_file in
-      let () = Parser.parser_name := "default" in
-      fprintf oc "%s\n" (pr_prog_repair normalized_prog);
-      close_out oc;
-      (* prog *)
-      parse_file_full to_saved_file false
-    else prog in
-  let () = x_binfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
+  let () = x_binfo_hp (add_str "prog parsed: " pr_prog_repair) prog no_pos in
+  
+  let repair_input_prog = prog in
+  (* let repair_input_prog = if (!Globals.enable_repair) then
+   *     let file_name = Filename.basename source in
+   *     let normalized_name = "normalized_" ^ file_name ^ ".ss" in
+   *     let dir = Filename.dirname source in
+   *     let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
+   *     let oc = open_out normalized_file in
+   *     let () = Parser.parser_name := "default" in
+   *     fprintf oc "%s\n" (pr_prog_repair prog);
+   *     close_out oc;
+   *     let nprog = parse_file_full normalized_file false in
+   *     (\* let normalized_prog = Repair.normalize_prog nprog in *\)
+   *     let cmd = ("rm " ^ normalized_file) in
+   *     let _ = Sys.command cmd in
+   *     (\* normalized_prog *\)
+   *     nprog
+   *   else prog in
+   * let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in *)
   (* ---------------------------------------------- *)
 
   let () = Gen.Profiling.push_time "Process compare file" in
@@ -760,9 +758,7 @@ let process_source_full source =
                   let n_prog = {repair_input_prog with
                                 prog_proc_decls = n_prog.Iast.prog_proc_decls} in
                   let () = repaired := true in
-                  let () = x_binfo_hp (add_str "verifed procs" (pr_list pr_id))
-                      !Globals.verified_procs no_pos in
-                  let () = x_binfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
+                  let () = x_tinfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
                   let () = Globals.verified_procs := [] in
                   ()
             else

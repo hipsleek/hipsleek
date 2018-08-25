@@ -4562,11 +4562,11 @@ let parse_c_statement_spec (fname: string) (spec: string) (base_loc: file_offset
 (* int __VERIFIER_nondet_int() *)
 (*   requires true             *)
 (*   ensures true;             *)
-  
+
 (* int __VERIFIER_error()      *)
 (*   requires true             *)
 (*   ensures res = 0;          *)
-      
+
 let create_tnt_prim_proc id : Iast.proc_decl option =
   let proc_source = 
     if String.compare id Globals.nondet_int_proc_name == 0 then 
@@ -4609,7 +4609,7 @@ let add_tnt_prim_proc prog id =
     let proc_decl = parse_c_aux_proc "tnt_prim_proc" proc_src in
     { prog with Iast.prog_proc_decls = prog.Iast.prog_proc_decls @ [proc_decl]; }
   else prog
-  
+
 let create_tnt_stdlib_proc () : Iast.proc_decl list =
   let alloca_proc =
     "void_star __builtin_alloca(int size)\n" ^
@@ -4617,14 +4617,14 @@ let create_tnt_stdlib_proc () : Iast.proc_decl list =
     "    size <= 0 -> requires true ensures res = null;\n" ^
     "    size >  0 -> requires true ensures res::memLoc<h,s> & (res != null) & h; }\n" 
   in
-  let lt_proc = 
+  let lt_proc =
     "int lt___(int_star p, int_star q)\n" ^
     "  requires p::int_star<vp, op> * q::int_star<vq, oq>\n" ^
     "  case {\n" ^
     "    op <  oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res > 0;\n" ^
     "    op >= oq -> ensures p::int_star<vp, op> * q::int_star<vq, oq> & res <= 0; }\n"
-  in List.map (parse_c_aux_proc "tnt_stdlib_proc") [alloca_proc; lt_proc]  
-  
+  in List.map (parse_c_aux_proc "tnt_stdlib_proc") [alloca_proc; lt_proc]
+
 let create_tnt_prim_proc_list ids : Iast.proc_decl list =
   List.concat (List.map (fun id -> 
     match (create_tnt_prim_proc id) with
