@@ -167,6 +167,61 @@ let rec loc_of_iast_exp (e: Iast.exp) : VarGen.loc =
   | Iast.While e -> e.Iast.exp_while_pos
   | Iast.Par e -> e.Iast.exp_par_pos
 
+let typ_of_bin_op = function
+  | Iast.OpEq | Iast.OpNeq | Iast.OpLt | Iast.OpLte
+  | Iast.OpGt | Iast.OpGte
+  | Iast.OpLogicalAnd | Iast.OpLogicalOr
+  | Iast.OpIsNull | Iast.OpIsNotNull -> Globals.Bool
+  | Iast.OpPlus | Iast.OpMinus
+  | Iast.OpMult | Iast.OpDiv | Iast.OpMod -> Globals.Int
+
+let typ_of_unary_op = function
+  | Iast.OpUMinus | Iast.OpPreInc | Iast.OpPreDec
+  | Iast.OpPostInc | Iast.OpPostDec -> Globals.Int
+  | Iast.OpNot -> Globals.Bool
+  | Iast.OpVal | Iast.OpAddr -> Globals.UNK
+
+
+let rec typ_of_iast_exp (exp: Iast.exp) : Globals.typ =
+  match exp with
+  | Iast.Binary {Iast.exp_binary_op = op} -> typ_of_bin_op op
+  | Iast.Unary {Iast.exp_unary_op = op} -> typ_of_unary_op op
+  | Iast.CallRecv { exp_call_recv_method = mname }
+  | Iast.CallNRecv { exp_call_nrecv_method = mname } ->
+    if String.compare mname "eq___" = 0 ||
+       String.compare mname "neq___" = 0 ||
+       String.compare mname "lt___" = 0 ||
+       String.compare mname "lte___" = 0 ||
+       String.compare mname "gte___" = 0 ||
+       String.compare mname "gte___" = 0 ||
+       String.compare mname "land___" = 0 ||
+       String.compare mname "lor___" = 0 ||
+       String.compare mname "not___" = 0 then
+      Globals.Bool
+    else Globals.UNK (* TRUNG: could be improved *)
+  | Iast.Cast e -> e.Iast.exp_cast_target_type
+  | Iast.Cond e -> typ_of_iast_exp e.Iast.exp_cond_then_arm
+  | Iast.ConstDecl e -> e.Iast.exp_const_decl_type
+  | Iast.VarDecl e -> e.Iast.exp_var_decl_type
+  | Iast.Seq e -> typ_of_iast_exp e.Iast.exp_seq_exp2
+  | Iast.FloatLit _ -> Globals.Float
+  | Iast.IntLit _ -> Globals.Int
+  | Iast.Var _
+  | Iast.ArrayAt _ | Iast.ArrayAlloc _
+  | Iast.Assert _ | Iast.Assign _
+  | Iast.Bind _ | Iast.Block _
+  | Iast.BoolLit _ | Iast.Break _
+  | Iast.Barrier _ | Iast.UnkExp _
+  | Iast.Catch _ | Iast.Debug _
+  | Iast.Dprint _ | Iast.Empty _
+  | Iast.Continue _ | Iast.Finally _
+  | Iast.Java _ | Iast.Label _
+  | Iast.Member _ | Iast.New _
+  | Iast.Null _ | Iast.Raise _
+  | Iast.Return _ | Iast.This _
+  | Iast.Time _ | Iast.Try _
+  | Iast.Unfold _ | Iast.While _ | Iast.Par _ -> Globals.UNK
+
 let loc_of_cil_exp (exp: Cil.exp) : Cil.location =
   match exp with
   | Cil.Const (_, l)
@@ -214,8 +269,8 @@ let rec get_core_cil_typ (t: Cil.typ) : Cil.typ = (
     | Cil.TInt (Cil.IUChar, _)
     | Cil.TInt (Cil.ISChar, _)
     | Cil.TInt (Cil.IChar, _) -> Cil.TInt(Cil.IChar, [])
-    | Cil.TInt (ik, _) -> Cil.TInt (Cil.IInt, [])
-    | Cil.TFloat (fk, _) -> Cil.TFloat (Cil.FFloat, [])
+    | Cil.TInt (ik, _) -> Cil.TInt (ik, [])
+    | Cil.TFloat (fk, _) -> Cil.TFloat (fk, [])
     | Cil.TPtr (ty, _) -> Cil.TPtr (get_core_cil_typ ty, [])
     | Cil.TArray (ty, e, _) -> Cil.TArray (get_core_cil_typ ty, e, [])
     | Cil.TFun (ty, ids_opt, b, _) ->
@@ -1431,34 +1486,51 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
   | Cil.UnOp (op, exp, ty, l) -> (
       let pos = translate_location l in
       let o = translate_unary_operator op pos in
+      let typ_op = typ_of_unary_op o in
       let e = translate_exp exp in
+      let e = match e with
+        | Iast.Cast e when typ_of_iast_exp e.Iast.exp_cast_body = typ_op ->
+          e.Iast.exp_cast_body
+        | _ -> e in
       let unexp = (
         let t = typ_of_cil_exp exp in
         let new_t = (match t with
             | Cil.TPtr (t1, _) when (is_cil_struct_pointer t) -> translate_typ t1 pos
             | _ -> translate_typ t pos
           ) in
-        match op with
-        | Cil.LNot ->
-          if (new_t = Globals.Bool && o == OpNot)
-          then Iast.mkUnary o e None pos
-          else
-            let not_proc = create_logical_not_proc new_t in
-            let proc_name = not_proc.Iast.proc_name in
-            Iast.mkCallNRecv proc_name None [e] None None pos
-        | _ -> Iast.mkUnary o e None pos
+        Iast.mkUnary o e None pos
+        (* match op with
+         * | Cil.LNot ->
+         *   if (new_t = Globals.Bool && o == OpNot)
+         *   then Iast.mkUnary o e None pos
+         *   else
+         *     let not_proc = create_logical_not_proc new_t in
+         *     let proc_name = not_proc.Iast.proc_name in
+         *     Iast.mkCallNRecv proc_name None [e] None None pos
+         * | _ -> Iast.mkUnary o e None pos *)
       ) in
       let target_typ = translate_typ ty pos in
-      let newexp = Iast.mkCast target_typ unexp pos in
-      newexp
+      if target_typ = typ_op then unexp
+      else Iast.mkCast target_typ unexp pos
     )
   | Cil.BinOp (op, e1, e2, ty, l) ->
     translate_exp_binary op e1 e2 ty l
   | Cil.Question (exp1, exp2, exp3, ty, l) ->
-    let e1 = translate_exp exp1 in
+    let pos = translate_location l in
+    let e1 =
+      let e1 = translate_exp exp1 in
+      let e1_ty = typ_of_iast_exp e1 in
+      let old_e1_ty =
+        let ty = typ_of_cil_exp exp1 in
+        match ty with
+        | Cil.TPtr (t, _) when is_cil_struct_pointer ty -> translate_typ t pos
+        | _ -> translate_typ ty pos in
+      match e1_ty, old_e1_ty with
+      | Globals.Bool, _ -> e1
+      | _, Globals.Bool  -> e1
+      | _ -> cast_exp_to_bool_type e1 old_e1_ty pos in
     let e2 = translate_exp exp2 in
     let e3 = translate_exp exp3 in
-    let pos = translate_location l in
     let qexp = Iast.mkCond e1 e2 e3 None pos in
     let target_typ = translate_typ ty pos in
     let newexp = Iast.mkCast target_typ qexp pos in
@@ -1467,15 +1539,11 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
       let pos =
         if (l != Cil.locUnknown) then translate_location l
         else translate_location (loc_of_cil_exp exp) in
-      let input_typ =
-        let ity = typ_of_cil_exp exp in
-        match ity with
-        | Cil.TPtr (t, _) when is_cil_struct_pointer ity -> translate_typ t pos
-        | _ -> translate_typ ity pos in
+      let input_exp = translate_exp exp in
+      let input_typ = typ_of_iast_exp input_exp in
       let output_typ = match ty with
         | Cil.TPtr (t, _) when is_cil_struct_pointer ty -> translate_typ t pos
         | _ -> translate_typ ty pos in
-      let input_exp = translate_exp exp in
       if (input_typ = output_typ) then
         (* no need casting *)
         input_exp
@@ -1494,9 +1562,18 @@ and translate_exp_x (e: Cil.exp) : Iast.exp =
           Iast.mkCallNRecv proc.Iast.proc_name None [input_exp] None None pos
         | Globals.Int, Globals.Named ityp_name ->
           input_exp
-        | Globals.Bool, _ -> cast_exp_to_bool_type input_exp input_typ pos
+        | Globals.Bool, _ ->
+          let res = match input_exp with
+            | Iast.Cast expc ->
+              let orig_typ = typ_of_iast_exp expc.Iast.exp_cast_body in
+              if (orig_typ = Globals.Bool) then expc.Iast.exp_cast_body
+              else cast_exp_to_bool_type input_exp input_typ pos
+            | _ ->
+              let orig_typ = typ_of_iast_exp input_exp in
+              if (orig_typ = Globals.Bool) then input_exp
+              else cast_exp_to_bool_type input_exp input_typ pos in
+          res
         | _ ->
-          Debug.info_hprint (add_str "INPUT EXP:" string_of_cil_exp) exp no_pos;
           report_error pos ("translate_exp: couldn't cast type: "
                             ^ (Globals.string_of_typ input_typ)
                             ^ " to " ^ (Globals.string_of_typ output_typ))
@@ -1549,37 +1626,37 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
     Iast.mkCallNRecv proc_name None [e2] None None pos
   | Cil.TPtr(Cil.TInt(Cil.IChar, _), _) , _ ->(
       match exp2 with
-       | Cil.Const(Cil.CInt64 (i, _, _),_) -> (*Muoi: char_star+1 = plus_plus_char()*)
-         let pointer_arith_proc = create_string_proc t1 t2 in
-         let proc_name = pointer_arith_proc.Iast.proc_name in
-         let _ =  Debug.binfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
-         Iast.mkCallNRecv proc_name None [e1] None None pos
-       | _ -> (*Muoi: For finalization string*)
-         let coretyp1 = get_core_cil_typ t1 in
-         let coretyp2 = get_core_cil_typ t2 in
-         let typ1 = translate_typ coretyp1 no_pos in
-         let typ2 = translate_typ coretyp2 no_pos in
-         let typ1_name = string_of_typ typ1 in
-         let typ2_name = string_of_typ typ2 in
-         let pname = "__finalize_string" in
-         let proc_decl =
-         try
-           Hashtbl.find tbl_aux_proc pname
-         with Not_found -> (
-           let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
-                          ^ "requires x::WFSegN<p, m> & 0 <= n & n < m & Term \n"
-                          (* ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n" *)
-                          ^ "ensures x::WSSN<q, n+1>;\n"
-           in
-           let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
-           let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
-           Hashtbl.add tbl_aux_proc pname proc_decl;
-           proc_decl
-         ) in
-         let proc_name = proc_decl.Iast.proc_name in
-         let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
-         Iast.mkCallNRecv proc_name None [e1;e2] None None pos
-      )
+      | Cil.Const(Cil.CInt64 (i, _, _),_) -> (*Muoi: char_star+1 = plus_plus_char()*)
+        let pointer_arith_proc = create_string_proc t1 t2 in
+        let proc_name = pointer_arith_proc.Iast.proc_name in
+        let _ =  Debug.binfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+        Iast.mkCallNRecv proc_name None [e1] None None pos
+      | _ -> (*Muoi: For finalization string*)
+        let coretyp1 = get_core_cil_typ t1 in
+        let coretyp2 = get_core_cil_typ t2 in
+        let typ1 = translate_typ coretyp1 no_pos in
+        let typ2 = translate_typ coretyp2 no_pos in
+        let typ1_name = string_of_typ typ1 in
+        let typ2_name = string_of_typ typ2 in
+        let pname = "__finalize_string" in
+        let proc_decl =
+          try
+            Hashtbl.find tbl_aux_proc pname
+          with Not_found -> (
+              let proc_str = typ1_name ^ " " ^ pname ^ " (" ^ typ1_name ^ " x, " ^ typ2_name ^ " n)\n"
+                             ^ "requires x::WFSegN<p, m> & 0 <= n & n < m & Term \n"
+                             (* ^ "ensures x::WFSeg<q,n>*q::char_star<0,r>*r::WFSeg<p,m-n-1> ;\n" *)
+                             ^ "ensures x::WSSN<q, n+1>;\n"
+              in
+              let proc_decl = Parser.parse_c_aux_proc "pointer_arithmetic_proc" proc_str in
+              let _ = Debug.binfo_hprint (add_str "proc_decl" pr_id) proc_decl.Iast.proc_name no_pos in
+              Hashtbl.add tbl_aux_proc pname proc_decl;
+              proc_decl
+            ) in
+        let proc_name = proc_decl.Iast.proc_name in
+        let _ =  Debug.ninfo_hprint (add_str "proc_name" (pr_id)) proc_name no_pos in
+        Iast.mkCallNRecv proc_name None [e1;e2] None None pos
+    )
   | Cil.TPtr _, Cil.TInt _
   | Cil.TInt _, Cil.TPtr _ ->
     (* | Cil.TPtr _, Cil.TPtr _ -> *)
@@ -1592,12 +1669,20 @@ and translate_exp_binary (op: Cil.binop) (exp1: Cil.exp) (exp2: Cil.exp)
   (* not pointer arithmetic *)
   | _, _ ->
     let o = translate_binary_operator op pos in
+    let typ_op = typ_of_bin_op o in
+    let e1 = match e1 with
+      | Iast.Cast e when typ_of_iast_exp e.Iast.exp_cast_body = typ_op ->
+        e.Iast.exp_cast_body
+      | _ -> e1 in
+    let e2 = match e2 with
+      | Iast.Cast e when typ_of_iast_exp e.Iast.exp_cast_body = typ_op ->
+        e.Iast.exp_cast_body
+      | _ -> e2 in
     let binexp = Iast.mkBinary o e1 e2 None pos in
-    if (!Globals.enable_repair) then binexp
-    else
-      let target_typ = translate_typ expected_typ pos in
-      let newexp = Iast.mkCast target_typ binexp pos in
-      newexp
+    let target_typ = translate_typ expected_typ pos in
+    if target_typ = typ_op then binexp
+    else if typ_op = Globals.Bool && target_typ = Globals.Int then binexp
+    else Iast.mkCast target_typ binexp pos
 
 and translate_instr (instr: Cil.instr) : Iast.exp =
   (* detect address-of operator *)
@@ -1750,36 +1835,18 @@ and translate_stmt (s: Cil.stmt) : Iast.exp =
     newexp
   | Cil.If (exp, blk1, blk2, l) ->
     let pos = translate_location l in
-    let cond = (
-      let ty = typ_of_cil_exp exp in
-      let new_ty = match ty with
+    let cond =
+      let econd = translate_exp exp in
+      let econd_ty = typ_of_iast_exp econd in
+      let old_econd_ty =
+        let ty = typ_of_cil_exp exp in
+        match ty with
         | Cil.TPtr (t, _) when is_cil_struct_pointer ty -> translate_typ t pos
         | _ -> translate_typ ty pos in
-      match new_ty with
-      | Globals.Bool -> translate_exp exp
-      | _ -> (
-          match exp with
-          | Cil.BinOp (op, exp1, exp2, ty, l)
-            when (is_arith_comparison_op op) ->
-            let e1 = translate_exp exp1 in
-            let e2 = translate_exp exp2 in
-            let o = translate_binary_operator op pos in
-            Iast.mkBinary o e1 e2 None pos
-          | _ ->
-            let e = translate_exp exp in
-            let e_vars = get_vars_exp e in
-            if (Gen.BList.overlap_eq eq_str e_vars !nondet_vars) then
-              match new_ty with
-              | Globals.Int ->
-                let zero = Iast.mkIntLit 0 pos in
-                Iast.mkBinary Iast.OpGt e zero None pos
-              | Globals.Float ->
-                let zero = Iast.mkFloatLit 0.0 pos in
-                Iast.mkBinary Iast.OpGt e zero None pos
-              | _ -> cast_exp_to_bool_type e new_ty pos
-            else cast_exp_to_bool_type e new_ty pos
-        )
-    ) in
+      match econd_ty, old_econd_ty with
+      | Globals.Bool, _ -> econd
+      | _, Globals.Bool  -> econd
+      | _ -> cast_exp_to_bool_type econd old_econd_ty pos in
     let e1 = translate_block blk1 in
     let e2 = translate_block blk2 in
     let ifexp = Iast.mkCond cond e1 e2 None pos in
