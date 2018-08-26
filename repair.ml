@@ -727,13 +727,13 @@ let start_repair iprog =
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
     let filter_candidate exp =
       let exp_vars = collect_vars_exp exp in
-      (* if exp_vars = [] then true
-       * else *)
-      let str_compare x y = String.compare x y == 0 in
-      let intersect = Gen.BList.intersect_eq in
-      let vars = intersect str_compare exp_vars sv_names in
-      if vars = [] then false
-      else true
+      if exp_vars = [] then true
+      else
+        let str_compare x y = String.compare x y == 0 in
+        let intersect = Gen.BList.intersect_eq in
+        let vars = intersect str_compare exp_vars sv_names in
+        if vars = [] then false
+        else true
     in
     let candidates = List.filter (fun (x, y) -> filter_candidate x) candidates in
     let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
@@ -759,14 +759,14 @@ let start_repair iprog =
     begin
       match best_res with
       | None ->
-        (* None *)
-        let mutated_res = repair_by_mutation iprog proc_to_repair in
-        let mutated_res = List.filter(fun x -> x != None) mutated_res in
-        let mutated_res = List.map Gen.unsome mutated_res in
-        if mutated_res = [] then
-          let () = next_proc := false in
-          None
-        else Some (List.hd mutated_res)
+        None
+        (* let mutated_res = repair_by_mutation iprog proc_to_repair in
+         * let mutated_res = List.filter(fun x -> x != None) mutated_res in
+         * let mutated_res = List.map Gen.unsome mutated_res in
+         * if mutated_res = [] then
+         *   let () = next_proc := false in
+         *   None
+         * else Some (List.hd mutated_res) *)
       | Some (_, best_r_prog, pos, repaired_exp) ->
         let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
             best_r_prog.prog_proc_decls in
