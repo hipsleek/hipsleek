@@ -1,4 +1,5 @@
 #include "xdebug.cppo"
+open Globals
 
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
@@ -233,7 +234,11 @@ let translate_ent ent =
   SBCast.mk_pure_entail sb_lhs sb_rhs
 
 let get_vars_in_fault_ents ents =
+  let pr_pf = Cprinter.string_of_pure_formula in
+  let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
+  let () = x_tinfo_hp (Gen.Basic.add_str "entails: " pr_ents) ents VarGen.no_pos in
   let sb_ents = List.map translate_ent ents in
+  let () = x_tinfo_pp "marking \n" VarGen.no_pos in
   let sb_vars = List.map Libsongbird.Prover.norm_entail sb_ents |> List.concat in
   let vars = List.map translate_back_var sb_vars in
   vars
