@@ -101,12 +101,16 @@ let get_repair_ents_x rs proc =
     (pure_lhs, pure_rhs)
   in
 
-  (* let get_entailment ctx = ctx.CF.fc_current_ents in *)
   let failed_ctx = get_failed_ctx typ in
   let failed_ctx = List.filter
       (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
-  let entails = failed_ctx |> List.map get_entailment in
-  (* let entails = failed_ctx |> List.map get_entailment |> List.concat in *)
+
+  let entails = if not(!Globals.start_repair) then
+      failed_ctx |> List.map get_entailment
+    else
+      let get_entailment ctx = ctx.CF.fc_current_ents in
+      failed_ctx |> List.map get_entailment |> List.concat
+  in
   let () = x_tinfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))

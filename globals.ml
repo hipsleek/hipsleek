@@ -11,6 +11,7 @@ let sleek_print_residue = ref true
 let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
+let start_repair = ref false
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 

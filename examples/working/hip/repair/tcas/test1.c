@@ -62,3 +62,67 @@ int ALIM()
   return int_error();
 }
 
+int Inhibit_Biased_Climb ()
+/*@
+  requires Climb_Inhibit = 1
+  ensures Climb_Inhibit = 1 & res = Up_Separation + 100;
+  requires Climb_Inhibit = 0
+  ensures Climb_Inhibit = 0 & res = Up_Separation;
+*/
+{
+  if (Climb_Inhibit) {
+    return Up_Separation + NOZCROSS;
+  } else {
+    return Up_Separation;
+  }
+}
+
+bool Own_Above_Threat()
+/*@
+  requires true ensures res = (Other_Tracked_Alt < Own_Tracked_Alt);
+*/
+{
+  return (Other_Tracked_Alt < Own_Tracked_Alt);
+}
+
+bool Own_Below_Threat()
+/*@
+  requires true ensures res = (Other_Tracked_Alt > Own_Tracked_Alt);
+*/
+{
+  return (Own_Tracked_Alt < Other_Tracked_Alt);
+}
+
+bool Non_Crossing_Biased_Climb()
+/*@
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+
+  ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 > Down_Separation)
+  & res = (((Own_Tracked_Alt >= Other_Tracked_Alt)) | (Down_Separation < a));
+
+  requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0) &
+  (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+
+  ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+  & res = (Own_Tracked_Alt > Other_Tracked_Alt & Cur_Vertical_Sep >= 300 & Up_Separation >= a);
+ */
+{
+  bool upward_preferred;
+  bool result;
+
+  //  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
+  if (Inhibit_Biased_Climb() > Down_Separation){
+    // >= -> >
+    result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
+  } else {
+    result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
+  }
+
+  return result;
+}
+
+
+
