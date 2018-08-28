@@ -77,8 +77,8 @@ void call(int userid, int arg)
 
 //susceptible to re-entrancy
 void withdrawBalance_buggy()
-     requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & Term[n] & n>=0
-     ensures   userbal'::USERBALANCES<id,0>;
+     requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 & bal>=n
+     ensures   userbal'::USERBALANCES<id,0> & bal'=bal-n;
 {
   int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
   if (amountToWithdraw > 0) {
@@ -102,34 +102,13 @@ void ccall(int userid, int arg)
 
 //fixed version
 void withdrawBalance()
-   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & Term[n] & n>=0
-   ensures   userbal'::USERBALANCES<id,0>;
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 & bal>=n
+   ensures   userbal'::USERBALANCES<id,0>  & bal'=bal-n;
 {
   int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
   if (amountToWithdraw > 0) {
      setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
      ccall(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
-  }
-}
-
-// ########################################################
-
-void call0(int userid, int arg)
-   requires  arg>0
-   ensures   bal'=bal-arg;
-// {
-//    foo();
-// }
-
-//fixed version
-void foo()
-   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0
-   ensures   userbal'::USERBALANCES<id,0>;
-{
-  int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
-  if (amountToWithdraw > 0) {
-     setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
-     call0(msg.sender,amountToWithdraw);                 // call(msg.sender,arg)             <- msg.sender.call(arg)
-     foo();
+     withdrawBalance();
   }
 }

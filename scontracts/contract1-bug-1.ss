@@ -1,10 +1,10 @@
 data message {int val;}
 
-void call0(int arg)
+void call(int arg,ref message msg)
    requires  true
-   ensures   true;
+   ensures   msg=msg';
 {
-   foo();
+   foo(msg);
 }
 
 //fixed version
@@ -14,6 +14,8 @@ void foo(ref message msg)
 {
   if (msg.val > 0) {
      msg.val = 0;
-     call0(msg.val);
+     dprint;
+     call(msg.val,msg);
+     dprint;
   }
 }
