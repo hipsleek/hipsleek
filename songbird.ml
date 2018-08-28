@@ -206,7 +206,7 @@ let create_templ_prog prog ents
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = x_tinfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
+  let () = x_binfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
   let sb_res =
     Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
       ents in
@@ -235,12 +235,13 @@ let translate_ent ent =
 
 let get_vars_in_fault_ents ents =
   let pr_pf = Cprinter.string_of_pure_formula in
+  let pr_vars = Cprinter.string_of_spec_var_list in
   let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
-  let () = x_tinfo_hp (Gen.Basic.add_str "entails: " pr_ents) ents VarGen.no_pos in
   let sb_ents = List.map translate_ent ents in
-  let () = x_tinfo_pp "marking \n" VarGen.no_pos in
+  let () = x_tinfo_hp (Gen.Basic.add_str "entails: " (pr_list SBCast.pr_pent)) sb_ents VarGen.no_pos in
   let sb_vars = List.map Libsongbird.Prover.norm_entail sb_ents |> List.concat in
   let vars = List.map translate_back_var sb_vars in
+  let () = x_tinfo_hp (Gen.Basic.add_str "vars: " pr_vars) vars VarGen.no_pos in
   vars
 
 let get_repair_candidate prog ents cond_op =

@@ -105,13 +105,14 @@ let get_repair_ents_x rs proc =
   let failed_ctx = List.filter
       (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
 
-  let entails = if not(!Globals.start_repair) then
+  let entails =
+    if not(!Globals.start_repair) then
       failed_ctx |> List.map get_entailment
     else
       let get_entailment ctx = ctx.CF.fc_current_ents in
       failed_ctx |> List.map get_entailment |> List.concat
   in
-  let () = x_binfo_hp (add_str "entails: "
+  let () = x_tinfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in

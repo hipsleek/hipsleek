@@ -26,7 +26,6 @@ struct node {
 struct node Positive_RA_Alt_Thresh;
 int Alt_Layer_Value;		/* 0, 1, 2, 3 */
 
-int Cur_Vertical_Sep;
 bool High_Confidence;
 bool Two_of_Three_Reports_Valid;
 
@@ -39,6 +38,7 @@ int Down_Separation;
 
 int Other_RAC;			/* NO_INTENT, DO_NOT_CLIMB, DO_NOT_DESCEND */
 int Other_Capability;		/* TCAS_TA, OTHER */
+int Cur_Vertical_Sep;
 
 int Climb_Inhibit;		/* true/false */
 
@@ -128,7 +128,6 @@ bool Non_Crossing_Biased_Climb()
 
   //  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
   if (Inhibit_Biased_Climb() > Down_Separation){
-    // >= -> >
     result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
   } else {
     result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
@@ -168,6 +167,21 @@ bool Non_Crossing_Biased_Descend()
 
 int alt_sep_test()
 /*@
+requires Positive_RA_Alt_Thresh::node<a,b,c,d>
+  & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+  & (!Two_of_Three_Reports_Valid & (Other_Capability = 1))
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+  & (Alt_Layer_Value = 0)
+  & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
+
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
+  & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
+  & (!Two_of_Three_Reports_Valid & (Other_Capability = 1))
+  & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
+  & (Alt_Layer_Value = 0)
+  & (Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a)
+  & res = 0;
+
 requires Positive_RA_Alt_Thresh::node<a,b,c,d>
    & High_Confidence & (Own_Tracked_Alt_Rate <= 600) & (Cur_Vertical_Sep > 600)
    & ((Two_of_Three_Reports_Valid & Other_RAC = 0) | !(Other_Capability = 1))
@@ -219,5 +233,3 @@ ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
   }
   return alt_sep;
 }
-
-

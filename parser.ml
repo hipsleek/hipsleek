@@ -1193,22 +1193,14 @@ field_list2:[[
 	      report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 	    else
 	      ((t1, n), get_pos_camlp4 _loc 3, true, (gen_field_ann t1) (*F_NO_ANN*)) :: fl )]];
-
-(* one_field:   *)
-(*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
-(*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos_camlp4 _loc 1)  *)
-(*    ]];  *)
-
  (********** Views **********)
- 
+
 barrier_decl:
 	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
 		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
-  
 
-  
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
-  
+
 b_trans : [[`OPAREN; fs= integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
 
 derv_view:

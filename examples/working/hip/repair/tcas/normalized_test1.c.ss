@@ -8,7 +8,6 @@ int fourth;
 
 global node Positive_RA_Alt_Thresh;
 global int Alt_Layer_Value;
-global int Cur_Vertical_Sep;
 global bool High_Confidence;
 global bool Two_of_Three_Reports_Valid;
 global int Own_Tracked_Alt;
@@ -18,6 +17,7 @@ global int Up_Separation;
 global int Down_Separation;
 global int Other_RAC;
 global int Other_Capability;
+global int Cur_Vertical_Sep;
 global int Climb_Inhibit;
 bool __bool_of_int___(int param)
 requires param = 0 ensures !(res);
@@ -141,6 +141,8 @@ return result;
 }
 int alt_sep_test()
 
+requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & (((!(Two_of_Three_Reports_Valid)) & (Other_Capability = 1)) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a))))))))
+ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & (((!(Two_of_Three_Reports_Valid)) & (Other_Capability = 1)) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & ((Up_Separation >= a) & (res = 0)))))))));
 requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & (Up_Separation >= a))))))))
 ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) <= Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt > Other_Tracked_Alt) & ((Up_Separation >= a) & (res = 2)))))))));
 requires Positive_RA_Alt_Thresh::node<a,b,c,d> & (High_Confidence) & ((Own_Tracked_Alt_Rate <= 600) & ((Cur_Vertical_Sep > 600) & ((((Two_of_Three_Reports_Valid) & (Other_RAC = 0)) | (!(Other_Capability = 1))) & ((Climb_Inhibit = 1) & (((Up_Separation+100) > Down_Separation) & ((Alt_Layer_Value = 0) & ((Own_Tracked_Alt < Other_Tracked_Alt) & (Down_Separation < a))))))))
