@@ -372,10 +372,8 @@ let process_source_full source =
       fprintf oc "%s\n" (pr_prog_repair normalized_prog);
       close_out oc;
       let nprog = parse_file_full normalized_file false in
-      (* let cmd = ("rm " ^ normalized_file) in
-       * let _ = Sys.command cmd in *)
-
-      (* normalized_prog *)
+      let cmd = ("rm " ^ normalized_file) in
+      let _ = Sys.command cmd in
       nprog
     else prog in
   let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in

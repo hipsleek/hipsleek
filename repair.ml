@@ -735,7 +735,7 @@ let start_repair iprog =
         if vars = [] then false
         else true
     in
-    let candidates = List.filter (fun (x, y) -> filter_candidate x) candidates in
+    let candidates, filtered = List.partition (fun (x, y) -> filter_candidate x) candidates in
     let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
         (candidates |> List.map fst) no_pos in
 
@@ -765,8 +765,22 @@ let start_repair iprog =
         let mutated_res = List.filter(fun x -> x != None) mutated_res in
         let mutated_res = List.map Gen.unsome mutated_res in
         if mutated_res = [] then
-          let () = next_proc := false in
-          None
+          let repair_res_list =
+            List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
+                         (snd stmt) vars false) filtered in
+          let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
+          let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
+          let best_res = get_best_repair h_repair_res_list in
+          begin
+            match best_res with
+            | None ->
+              let () = next_proc := false in
+              None
+            | Some (_, best_r_prog, pos, repaired_exp) ->
+              let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
+                  best_r_prog.prog_proc_decls in
+              Some best_r_prog
+          end
         else Some (List.hd mutated_res)
       | Some (_, best_r_prog, pos, repaired_exp) ->
         let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
