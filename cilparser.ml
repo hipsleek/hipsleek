@@ -1133,9 +1133,8 @@ and translate_location (loc: Cil.location) : VarGen.loc =
                  Lexing.pos_bol = cilep.Cil.line_begin;
                  Lexing.pos_cnum = cilep.Cil.byte - 1;} in
   let newloc = {VarGen.start_pos = start_pos;
-                VarGen.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
-                VarGen.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
-  (* return *)
+                VarGen.mid_pos = end_pos;
+                VarGen.end_pos = end_pos;} in
   newloc
 
 and translate_typ_x (t: Cil.typ) pos : Globals.typ =
@@ -1149,46 +1148,43 @@ and translate_typ_x (t: Cil.typ) pos : Globals.typ =
         let core_type = get_core_cil_typ ty in
         (* create a new Globals.typ and a new Iast.data_decl to
            represent the pointer data structure *)
-        let newt = (
-          (* find if this pointer was handled before *)
+        let newt =
           try
+            (* find if this pointer was handled before *)
             Hashtbl.find tbl_pointer_typ core_type
-          with Not_found -> (
-              (* create new Globals.typ and Iast.data_decl update to hash tables *)
-              let value_typ = translate_typ core_type pos in
-              let value_field = (value_typ, str_value), no_pos, false, (gen_field_ann value_typ)  in
-              let dname = match ty with
-		            | Cil.TInt(Cil.IChar, _) -> "char_star"
-                | _ -> (Globals.string_of_typ value_typ) ^ "_star"
-              in
-              let dtype = Globals.Named dname in
-              let dfields = match ty with
-                | Cil.TInt(Cil.IInt, _) -> [value_field] (* int_star type stores only one value *)
-                | _ -> [value_field(*; offset_field*)]
-              in
-              Hashtbl.add tbl_pointer_typ core_type dtype;
-              let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
-              let  _ = print_endline ("Data: " ^ dname) in
-              x_ninfo_hp (add_str "core_type" string_of_cil_typ) core_type no_pos;
-              x_ninfo_hp (add_str "new ddecl for pointer type" !Iast.print_data_decl) ddecl no_pos;
-              Hashtbl.add tbl_data_decl dtype ddecl;
-              (* return new type*)
-              dtype
-            )
-        ) in
+          with Not_found ->
+            (* create new data_decl update to hash tables *)
+            let value_typ = translate_typ core_type pos in
+            let value_field = ((value_typ, str_value), no_pos, false,
+                               (gen_field_ann value_typ))  in
+            let dname = match ty with
+		          | Cil.TInt(Cil.IChar, _) -> "char_star"
+              | _ -> (Globals.string_of_typ value_typ) ^ "_star"
+            in
+            let dtype = Globals.Named dname in
+            let dfields = match ty with
+              (* int_star type stores only one value *)
+              | Cil.TInt(Cil.IInt, _) -> [value_field]
+              | _ -> [value_field(*; offset_field*)]
+            in
+            Hashtbl.add tbl_pointer_typ core_type dtype;
+            let ddecl = Iast.mkDataDecl dname dfields "Object" [] false [] in
+            let  _ = print_endline ("Data: " ^ dname) in
+            Hashtbl.add tbl_data_decl dtype ddecl;
+            (* return new type*)
+            dtype in
         newt
       )
     | Cil.TArray (ty, _, _) ->
       let arrayty = translate_typ ty pos in
       Globals.Array (arrayty, 1)
-    | Cil.TFun _ ->
-      report_error pos "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
+    | Cil.TFun _ -> report_error pos "unhandled TFun"
     | Cil.TNamed _ ->
       let ty = get_core_cil_typ t in
       translate_typ ty pos
-    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname      (* struct/union*)
-    | Cil.TEnum _ -> report_error pos "TRUNG TODO: handle TEnum later!"
-    | Cil.TBuiltin_va_list _ -> report_error pos "TRUNG TODO: handle TBuiltin_va_list later!" in
+    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname   (* struct/union*)
+    | Cil.TEnum _ -> report_error pos "unhandled TEnum!"
+    | Cil.TBuiltin_va_list _ -> report_error pos "unhandled TBuiltin!" in
   (* return *)
   newtype
 
@@ -1215,8 +1211,8 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let ty = vinfo.Cil.vtype in
   let (new_ty, need_init) = (match ty with
       | Cil.TPtr (ty1, _) when (is_cil_struct_pointer ty) ->
-        (translate_typ ty1 pos, false)                 (* heap allocated data *)
-      | Cil.TComp _ -> (translate_typ ty pos, true)      (* stack allocated data *)
+        (translate_typ ty1 pos, false)                (* heap allocated data *)
+      | Cil.TComp _ -> (translate_typ ty pos, true)   (* stack allocated data *)
       | Cil.TNamed _ -> (translate_typ ty pos, true)
       | _ -> (translate_typ ty pos, false)
     ) in
@@ -1228,14 +1224,13 @@ and translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
     | Globals.Float
     | Globals.Array _
     | Globals.Named "void_star" -> Iast.mkVarDecl new_ty [(name, None, pos)] pos
-    | Globals.Named typ_name -> (
-        if (need_init) then (
-          let init_data = Iast.mkNew typ_name [] pos in
-          Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
-        )
-        else Iast.mkVarDecl new_ty [(name, None, pos)] pos
-      )
-    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^ (Globals.string_of_typ new_ty))
+    | Globals.Named typ_name ->
+      if (need_init) then
+        let init_data = Iast.mkNew typ_name [] pos in
+        Iast.mkVarDecl new_ty [(name, Some init_data, pos)] pos
+      else Iast.mkVarDecl new_ty [(name, None, pos)] pos
+    | _ -> report_error pos ("translate_var_decl: Unexpected typ 2 - " ^
+                             (Globals.string_of_typ new_ty))
   ) in
   newexp
 
@@ -1244,12 +1239,11 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i, _, _) -> Iast.mkIntLit (Int64.to_int i) pos
-  | Cil.CStr s -> report_error pos "TRUNG TODO: Handle Cil.CStr later!"
-  | Cil.CWStr _ -> report_error pos "TRUNG TODO: Handle Cil.CWStr later!"
-  (*| Cil.CChr _ -> report_error pos "TRUNG TODO: Handle Cil.CChr later!"*)
+  | Cil.CStr s -> report_error pos "unhandled Cil.CStr!"
+  | Cil.CWStr _ -> report_error pos "unhandled Cil.CWStr!"
   | Cil.CChr c -> Iast.mkIntLit (Char.code c) pos
   | Cil.CReal (f, _, _) -> Iast.mkFloatLit f pos
-  | Cil.CEnum _ -> report_error pos "TRUNG TODO: Handle Cil.CEnum later!"
+  | Cil.CEnum _ -> report_error pos "unhandled Cil.CEnum!"
 
 
 (* translate a field of a struct                       *)
@@ -1262,7 +1256,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   match ftyp with
   | Cil.TComp (comp, _) ->
     let ty = Globals.Named comp.Cil.cname in
-    ((ty, name), pos, true, (gen_field_ann ty) (* Iast.F_NO_ANN *))                     (* struct ~~> inline data *)
+    ((ty, name), pos, true, (gen_field_ann ty))  (* struct ~~> inline data *)
   | Cil.TPtr (ty, _) ->
     let _ = Debug.ninfo_hprint (add_str "ftyp" string_of_cil_typ) ftyp no_pos in
     let _ = Debug.ninfo_hprint (add_str "ty" string_of_cil_typ) ty no_pos in
@@ -1273,17 +1267,18 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
       else
         translate_typ ftyp pos
     ) in
-    ((new_ty, name), pos, false, (gen_field_ann new_ty) (* Iast.F_NO_ANN *))
+    ((new_ty, name), pos, false, (gen_field_ann new_ty))
   | _ ->
     let ty = translate_typ ftyp pos in
-    ((ty, name), pos, false, (gen_field_ann ty) (* Iast.F_NO_ANN *))
+    ((ty, name), pos, false, (gen_field_ann ty))
 
 
 and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
   let name = comp.Cil.cname in
   let  _ = print_endline ("COMP INFOR: " ^ name) in
   let _ = Debug.ninfo_hprint (add_str "name" pr_id) name no_pos in
-  let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
+  let fields = List.map (fun x ->
+      translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = Iast.mkDataDecl name fields "Object" [] false [] in
   Hashtbl.add tbl_data_decl (Globals.Named name) datadecl;
 
@@ -1291,7 +1286,7 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : unit =
 and translate_unary_operator (op : Cil.unop) pos : Iast.uni_op =
   match op with
   | Cil.Neg -> Iast.OpUMinus
-  | Cil.BNot -> report_error pos "Error!!! Iast doesn't support BNot operator!"
+  | Cil.BNot -> report_error pos "unsupported BNot operator!"
   | Cil.LNot -> Iast.OpNot
 
 
@@ -1306,17 +1301,17 @@ and translate_binary_operator (op : Cil.binop) pos : Iast.bin_op =
   | Cil.Mult -> Iast.OpMult
   | Cil.Div -> Iast.OpDiv
   | Cil.Mod -> Iast.OpMod
-  | Cil.Shiftlt -> report_error pos "Error!!! Iast doesn't support Shiftlf!"
-  | Cil.Shiftrt -> report_error pos "Error!!! Iast doesn't support Shiftrt!"
+  | Cil.Shiftlt -> report_error pos "unsupported Shiftlf!"
+  | Cil.Shiftrt -> report_error pos "unsupported Shiftrt!"
   | Cil.Lt -> Iast.OpLt
   | Cil.Gt -> Iast.OpGt
   | Cil.Le -> Iast.OpLte
   | Cil.Ge -> Iast.OpGte
   | Cil.Eq -> Iast.OpEq
   | Cil.Ne -> Iast.OpNeq
-  | Cil.BAnd -> report_error pos "Error!!! Iast doesn't support BAnd!"
-  | Cil.BXor -> report_error pos "Error!!! Iast doesn't support BXor!"
-  | Cil.BOr -> report_error pos "Error!!! Iast doesn't support BOr!"
+  | Cil.BAnd -> report_error pos "unsupported BAnd!"
+  | Cil.BXor -> report_error pos "unsupported BXor!"
+  | Cil.BOr -> report_error pos "unsupported BOr!"
   | Cil.LAnd -> Iast.OpLogicalAnd
   | Cil.LOr -> Iast.OpLogicalOr
 
@@ -1348,8 +1343,7 @@ and translate_lval_x (lv: Cil.lval) : Iast.exp =
             let p = makeLocation (startPos pos) (endPos (translate_location l1)) in
             let b = Iast.mkMember base found_fields None p in
             Iast.mkArrayAt b [(translate_exp e)] p in
-        create_complex_exp new_base off [] pos
-    in
+        create_complex_exp new_base off [] pos in
     match lhost with
     | Cil.Var (v, l) ->
       let base = translate_var v (Some l) in
