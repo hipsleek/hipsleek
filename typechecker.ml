@@ -137,9 +137,14 @@ let update_iprog_exp_defns iprog cprog_exp_defns =
         let c_exp_defn = List.find (fun c_exp_defn ->
             String.compare c_exp_defn.Cast.exp_name i_exp_defn.Iast.exp_name == 0)
             cprog_exp_defns in
-        (* let vars = c_exp_defn.Cast.exp_params in *)
-        {i_exp_defn with Iast.exp_body =
-                           Iast.ExpForm (Cpure.translate_exp_to_ipure c_exp_defn.exp_body)}
+        let exp_body = c_exp_defn.exp_body in
+        let () = x_binfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
+            exp_body no_pos in
+        let exp_body = Cpure.norm_exp exp_body in
+        let () = x_binfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
+            exp_body no_pos in
+        let n_exp = Cpure.translate_exp_to_ipure exp_body in
+        {i_exp_defn with Iast.exp_body = Iast.ExpForm n_exp}
       with Not_found -> i_exp_defn
   in
   let n_iprog_exp_dfs = List.map n_iprog_exp_dfs iprog_exp_defns in

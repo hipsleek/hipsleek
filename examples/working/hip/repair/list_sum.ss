@@ -10,11 +10,11 @@ ll<sum> == self=null & sum = 0
 int sum(node x)
 requires x::ll<n> ensures res = n;
 {
-  if (x == null) return 0;
+  if (x == null) return 2;
   else {
        int k;
        k = sum(x.next);
-       return x.val - k;
+       return x.val + k;
   }
 }
 

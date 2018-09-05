@@ -454,13 +454,10 @@ and string_of_pure_formula f = match f with
                                          ^ " (" ^ (string_of_pure_formula f) ^ ")"
   | P.Exists (x, f,lbl, l)            -> "ex " ^ (string_of_id x)
                                          ^ " (" ^ (string_of_pure_formula f) ^ ")"
-;;
-
 (* TOCHECK : what is the purpose? *)
 let is_bool_f = function 
   | F.HTrue | F.HFalse | F.HEmp -> true 
   | _                  -> false 
-;;
 
 (*can not put this in perm.ml 
   because we do not have separate printer
@@ -585,11 +582,17 @@ and string_of_h_formula_repair = function
   | F.Star ({F.h_formula_star_h1 = f1;
              F.h_formula_star_h2 = f2;
              F.h_formula_star_pos = l} ) ->
-    if is_bool_f f1 then
-      if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
-      else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")"
-    else
-      "(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"
+    (* if is_bool_f f1 then *)
+    (* if is_bool_f f2 then *)
+      (string_of_h_formula_repair f1)
+                           ^ " * "
+                           ^ (string_of_h_formula_repair f2)
+      (* else (string_of_h_formula_repair f1)
+     *        ^ " * (" ^ (string_of_h_formula_repair f2) ^ ")"
+     * else
+     *   "(" ^ (string_of_h_formula_repair f1)
+     *   ^ ") * ("
+     *   ^ (string_of_h_formula_repair f2) ^ ")" *)
   | F.StarMinus ({F.h_formula_starminus_h1 = f1;
                   F.h_formula_starminus_h2 = f2;
                   F.h_formula_starminus_pos = l} ) ->
@@ -868,6 +871,56 @@ and string_of_struc_formula_repair c = match c with
     "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
   | F.EList b -> List.fold_left (fun a (l,c) -> a ^ "\n" ^ (string_of_struc_formula_repair c)) "" b
 
+and string_of_struc_formula_view c = match c with
+  | F.ECase { F.formula_case_branches = case_list} ->
+    let pr_c1 = string_of_pure_formula in
+    let pr_c2 = string_of_struc_formula_view in
+    let impl = List.fold_left
+        (fun a (c1,c2) -> a ^ (pr_c1 c1) ^ " " ^ (pr_c2 c2) ^ ";\n")
+        "" case_list
+    in impl
+
+  | F.EBase {
+      F.formula_struc_implicit_inst = ii;
+      F.formula_struc_explicit_inst = ei;
+      F.formula_struc_base = fb;
+      F.formula_struc_continuation = cont;
+    } ->
+    let b = string_of_formula_repair fb in
+    let c = match cont with
+      | None -> ""
+      | Some l -> string_of_struc_formula_view l in
+    b ^ "\n" ^ c
+  | F.EAssume {
+      F.formula_assume_simpl = b;
+      F.formula_assume_struc = s;
+      F.formula_assume_lbl = (n1,n2);
+      F.formula_assume_ensures_type = t;} ->
+    let assume_str = match t with
+      | None -> ""
+      | Some true -> "EAssume_exact: "
+      | Some false -> "EAssume_inexact: " in
+    let l1 = assume_str ^ (string_of_formula_repair b) in
+    l1
+  | F.EInfer{F.formula_inf_vars = lvars;
+             F.formula_inf_obj = inf_o;
+             F.formula_inf_post = postf;
+             F.formula_inf_xpost = postxf;
+             F.formula_inf_continuation = continuation;} ->
+    let ps =if (lvars==[] && postf) then "@post " else "" in
+    let ps = ps ^ (inf_o # string_of_raw) in
+    let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
+    let string_of_continuation = string_of_struc_formula continuation in
+    "EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation
+  | F.EList b ->
+    let strs = List.map (fun (l,c) -> string_of_struc_formula_view c) b in
+    let rec aux_str strs =
+      match strs with
+      | [] -> ""
+      | [h] -> h
+      | h::t -> h ^ " or " ^ (aux_str t)
+    in (aux_str strs) ^ ";"
+
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with 
   | []               -> ""
@@ -878,7 +931,7 @@ let rec string_of_form_list l = match l with
   | (f1, f2)::t      -> let s = (string_of_formula f1) in
     (match s with
      | ""  -> (string_of_form_list t)
-     | _   -> "   requires " ^ s ^ "\n   ensures " ^ (string_of_formula f2) ^ ";\n" ^ (string_of_form_list t) )
+     | _   -> "   requires " ^ s ^ "\n   ensures " ^ (string_of_formula f2) ^ " ;\n" ^ (string_of_form_list t) )
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis2 = function
@@ -1394,7 +1447,17 @@ let string_of_view_decl v =
   ^ "\nview_imm_map: " ^ (pr_list (pr_pair string_of_imm string_of_int) v.view_imm_map)           (* incomplete *)
   ^ "\nview_baga_over_inv: " ^ (pr_opt (pr_list (pr_pair pr_baga string_of_pure_formula)) v.view_baga_over_inv)           (* incomplete *)
   ^ "\nextends" ^ extn_str
-;;
+
+let string_of_view_decl_repair v =
+  let extn_str =
+    match v.view_derv_from with
+    | None -> ""
+    | Some regex_ids -> string_of_regex_id_star_list regex_ids
+  in
+  let pr_exp = string_of_formula_exp in
+  let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
+  v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^
+  (string_of_struc_formula_view v.view_formula)
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
@@ -1499,7 +1562,11 @@ let rec string_of_view_decl_list l = match l with
   | []        -> ""
   | h::[]     -> (string_of_view_decl h) 
   | h::t      -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
-;;
+
+let rec string_of_view_decl_list_repair l = match l with
+  | []        -> ""
+  | h::[]     -> (string_of_view_decl_repair h)
+  | h::t      -> (string_of_view_decl_repair h) ^ "\n" ^ (string_of_view_decl_list_repair t)
 
 (* pretty printing for a list of barrier_decl *)
 let rec string_of_barrier_decl_list l = match l with 
@@ -1665,8 +1732,9 @@ let string_of_program_repair p =
   let data_str = String.concat "\n\n" (List.map string_of_data_repair cdefs) in
   let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
   let procs_str = string_of_proc_decls_repair (List.rev procs) in
-  data_str ^ "\n\n" ^ global_str ^ "\n" ^ procs_str ^ "\n"
-;;
+  data_str ^ "\n\n"  ^ global_str ^ "\n" ^
+  (string_of_view_decl_list_repair p.prog_view_decls) ^"\n" ^
+  procs_str ^ "\n"
 
 (* pretty printing for program *)
 let string_of_program p =

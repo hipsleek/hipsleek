@@ -7452,54 +7452,64 @@ let rec simp_addsub e1 e2 loc =
 (* add to take a v->c eq_map *)
 (* and norm_exp_aux (e:exp) = match e with  *)
 
-and norm_exp (e:exp) = 
-  (* let () = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
+and norm_exp (e:exp) =
   let rec helper e = match e with
-    | Var _ 
-    | Null _ | IConst _ | InfConst _ | NegInfConst _ | FConst _ | AConst _ | Tsconst _ 
+    | Var _
+    | Null _ | IConst _ | InfConst _ | NegInfConst _ | FConst _ | AConst _ | Tsconst _
     | Bptriple _
     | Level _ -> e
-    | Tup2 ((e1,e2),l) -> Tup2 ((helper e1,helper e2),l) 
-    | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
-    | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
-    | Mult (e1,e2,l) -> 
-      let e1=helper e1 in 
+    | Tup2 ((e1,e2),l) -> Tup2 ((helper e1,helper e2),l)
+    | Add (e1,e2,l) ->
+      let e1=helper e1 in
       let e2=helper e2 in
+      if (is_zero e1) then e2
+      else if is_zero e2 then e1
+        else Add (e1, e2, l)
+      (* simp_addsub e (IConst(0,no_pos)) l *)
+    | Subtract (e1,e2,l) -> simp_addsub e1 e2 l
+    | Mult (e1,e2,l) ->
+      let e1=helper e1 in
+      let e2=helper e2 in
+      let () = x_tinfo_hp (add_str "e1: " !print_exp) e1 no_pos in
+      let () = x_tinfo_hp (add_str "e2: " !print_exp) e2 no_pos in
       if (is_zero_int e1 || is_zero_int e2) then IConst(0,l)
       else if (is_zero_float e1 || is_zero_float e2) then FConst(0.0,l)
-      else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
+      else if (is_one e1) then e2
+      else if (is_one e2) then e1
+      else Mult (e1, e2, l)
+        (* two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l *)
     | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
     | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
     | Min (e1,e2,l) -> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Min x) l
     | TypeCast (ty, e1, l) -> TypeCast (ty, helper e1, l)
-    | Bag (e,l)-> Bag ( List.sort e_cmp (List.map helper e), l)    
-    | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map helper e), l)    
-    | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map helper e), l)    
+    | Bag (e,l)-> Bag ( List.sort e_cmp (List.map helper e), l)
+    | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map helper e), l)
+    | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map helper e), l)
     | BagDiff (e1,e2,l) -> BagDiff (helper e1, helper e2, l)
-    | List (e,l)-> List (List.sort e_cmp (List.map helper e), l)    
-    | ListCons (e1,e2,l)-> ListCons(helper e1, helper e2,l)      
-    | ListHead (e,l)-> ListHead(helper e, l)      
-    | ListTail (e,l)-> ListTail(helper e, l)      
+    | List (e,l)-> List (List.sort e_cmp (List.map helper e), l)
+    | ListCons (e1,e2,l)-> ListCons(helper e1, helper e2,l)
+    | ListHead (e,l)-> ListHead(helper e, l)
+    | ListTail (e,l)-> ListTail(helper e, l)
     | ListLength (e,l)-> ListLength(helper e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
     | ListReverse (e,l)-> ListReverse(helper e, l) 
     | ArrayAt (a, i, l) -> ArrayAt (a, List.map helper i, l) (* An Hoa *) 
     | Func (id, es, l) -> Func (id, List.map helper es, l)
-    | Template t -> Template { t with 
+    | Template t -> Template { t with
                                templ_args = List.map helper t.templ_args; 
                                templ_body = map_opt helper t.templ_body; }
   in helper e
 
-(* if v->c, replace v by the constant whenever encountered 
+(* if v->c, replace v by the constant whenever encountered
    normalise each sub-expresion only once please.
 *)
 (* normalise add/subtract on both lhs (e1) and rhs (e2) *)
 and norm_two_sides (e1:exp) (e2:exp)   =
   let rec help_add e s pa sa c  = match e with
     | Subtract (e1,e2,l) -> help_add e1 (Add(e2,s,l)) pa sa c
-    | IConst(i,_)  -> help_sub s pa sa (c+i) 
+    | IConst(i,_)  -> help_sub s pa sa (c+i)
     | Add (Add(e1,e2,l1),e3,l2) -> help_add (Add(e1,Add(e2,e3,no_pos),l2)) s pa sa c
-    | Add (IConst(i,l1),e,l2) -> help_add e s pa sa (c+i) 
+    | Add (IConst(i,l1),e,l2) -> help_add e s pa sa (c+i)
     | Add (Subtract(e1,e2,l1),e3,l2) -> help_add (Add(e1,e3,l2)) (Add(e2,s,no_pos)) pa sa c
     | Add (e1,e2,l1) -> help_add e2 s (e1::pa) sa c (* normalise e1, is e1=c? *)
     | e1 -> help_sub s (e1::pa) sa c (* normalise e1, is e1=c? *)
@@ -7507,12 +7517,11 @@ and norm_two_sides (e1:exp) (e2:exp)   =
     | IConst(i,_)  -> (pa, sa,c-i)
     | Subtract (e1,e2,l)  -> help_add e2 e1 pa sa c
     | Add (Add(e1,e2,l1),e3,l2) -> help_sub (Add(e1,Add(e2,e3,no_pos),l2)) pa sa c
-    | Add (IConst(i,l1),e,l2) -> help_sub e pa sa (c-i) 
+    | Add (IConst(i,l1),e,l2) -> help_sub e pa sa (c-i)
     | Add (Subtract(e1,e2,l1),e3,l2) -> help_add e2 (Add(e1,e3,l2))  pa sa c
     | Add (e1,e2,l1) -> help_sub e2 pa (e1::sa) c (* normalise e1, is e1=c? *)
-    | e1 -> (pa, e1::sa, c) in (* normalise e1, is e1=c? *)
+    | e1 -> (pa, e1::sa, c) in
   let (lhs,rhs,i) = help_add e1 e2 [] [] 0 in
-  (* let (lhs,rhs) = (List.map norm_exp lhs, List.map norm_exp rhs) in *)
   if (lhs==[]) then (IConst(i,no_pos),addlist_to_exp rhs)
   else if (rhs==[]) then  (addlist_to_exp lhs, IConst(-i,no_pos))
   else if (i==0) then (addlist_to_exp lhs, addlist_to_exp rhs)

@@ -644,7 +644,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
           let repaired_proc = List.find (fun x -> x.proc_name = proc.proc_name)
               res_iprog.prog_proc_decls in
           let () = x_binfo_hp
-              (add_str "best repaired proc" (Iprinter.string_of_exp))
+              (add_str "best repaired proc" (Iprinter.string_of_exp_repair))
               (Gen.unsome repaired_proc.proc_body) no_pos in
           let exp_pos = get_exp_pos exp in
           let score = 100 * (10 - (List.length vars))
@@ -691,7 +691,7 @@ let repair_by_mutation iprog repairing_proc =
         let () = Typechecker.check_prog_wrapper n_iprog n_cprog in
         let () = stop := true in
         let () = x_binfo_hp
-            (add_str "best repaired proc" (Iprinter.string_of_exp))
+            (add_str "best repaired proc" (Iprinter.string_of_exp_repair))
             (Gen.unsome mutated_proc.proc_body) no_pos in
         Some n_iprog
       with _ -> None

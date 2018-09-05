@@ -19,6 +19,7 @@ global int Other_RAC;
 global int Other_Capability;
 global int Cur_Vertical_Sep;
 global int Climb_Inhibit;
+
 bool __bool_of_int___(int param)
 requires param = 0 ensures !(res);
 requires param != 0 ensures res;
