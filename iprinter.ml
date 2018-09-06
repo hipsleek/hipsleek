@@ -775,12 +775,13 @@ and string_of_formula_repair = function
                     F.formula_exists_pure = pf}) ->
     let sa = if a==[] then "" else "\nAND " in
     let sa = sa ^ string_of_one_formula_list a in
-    let rs= "(EX " ^ (string_of_var_list qvars) ^ " . "
+    let rs= "(exists " ^ (string_of_var_list qvars) ^ " : "
             ^ (let s = string_of_pure_formula pf in
-               let svp = string_of_vperm_sets vp in
-               let s = if svp = "" then s else svp ^ " & " ^ s in
-               if s = "" then  (string_of_h_formula hf)
-               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ s ^ ")")
+               if s = "" then  (string_of_h_formula_repair hf)
+               else
+                 let hf_str = string_of_h_formula_repair hf in
+                 if hf_str = "" then s
+                 else "(" ^ hf_str ^ ")*(" ^ s ^ ")")
             ^ ")"
     in rs^sa
 
@@ -922,7 +923,7 @@ and string_of_struc_formula_view c = match c with
     in (aux_str strs) ^ ";"
 
 (* pretty printing for a list of formulae (f * f) list *)
-let rec string_of_form_list l = match l with 
+let rec string_of_form_list l = match l with
   | []               -> ""
   | (f1, f2)::[]      -> let s = (string_of_formula f1) in
     (match s with
@@ -1513,12 +1514,13 @@ let string_of_proc_decl_repair p =
   let body = match p.proc_body with
     | None     -> ""
     | Some e   -> "{\n" ^ (string_of_exp_repair e) ^ "\n}" in
+  let specs = (string_of_struc_formula_repair p.proc_static_specs) in
+  let specs = if (!Globals.repaired) then "/*@\n" ^ specs ^ "\n*/"
+    else specs in
   (if p.proc_constructor then "" else (string_of_typ_repair p.proc_return) ^ " ")
   ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
   ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
-  ^ "\n"
-  ^ ( (string_of_struc_formula_repair p.proc_static_specs)
-      ^ "\n" ^ body)
+  ^ "\n" ^ specs  ^ "\n" ^ body
 
 
 let string_of_rel_decl p =
@@ -1569,11 +1571,10 @@ let rec string_of_view_decl_list_repair l = match l with
   | h::t      -> (string_of_view_decl_repair h) ^ "\n" ^ (string_of_view_decl_list_repair t)
 
 (* pretty printing for a list of barrier_decl *)
-let rec string_of_barrier_decl_list l = match l with 
+let rec string_of_barrier_decl_list l = match l with
   | []        -> ""
   | h::[]     -> (string_of_barrier_decl h) 
   | h::t      -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
-;;
 
 let string_of_lem_kind l =
   match l with
@@ -1710,7 +1711,9 @@ let string_of_data_repair cdef =
 let string_of_program_repair p =
   let cdefs = p.prog_data_decls in
   let str_compare x = String.compare x in
-  let compare x = str_compare x "Object" != 0 && str_compare x "String" != 0 in
+  let compare x = str_compare x "Object" != 0 && str_compare x "String" != 0
+                  && str_compare x "node_star" != 0
+                  && str_compare x "void_star" != 0  in
   let cdefs = List.filter(fun x -> compare x.data_name) cdefs in
   let procs = List.rev p.prog_proc_decls in
   let filter_y x = String.compare x.proc_name "free" != 0 in
@@ -1732,9 +1735,10 @@ let string_of_program_repair p =
   let data_str = String.concat "\n\n" (List.map string_of_data_repair cdefs) in
   let global_str = string_of_global_var_decls_repair p.prog_global_var_decls in
   let procs_str = string_of_proc_decls_repair (List.rev procs) in
-  data_str ^ "\n\n"  ^ global_str ^ "\n" ^
-  (string_of_view_decl_list_repair p.prog_view_decls) ^"\n" ^
-  procs_str ^ "\n"
+  let views = string_of_view_decl_list_repair p.prog_view_decls in
+  let views = if (!Globals.repaired) then "/*@\n" ^ views ^ "\n*/"
+    else views in
+  data_str ^ "\n\n"  ^ global_str ^ "\n" ^ views  ^"\n" ^  procs_str ^ "\n"
 
 (* pretty printing for program *)
 let string_of_program p =

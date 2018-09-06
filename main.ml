@@ -759,7 +759,7 @@ let process_source_full source =
                   let n_prog = {repair_input_prog with
                                 prog_proc_decls = n_prog.Iast.prog_proc_decls} in
                   let () = repaired := true in
-                  let () = x_tinfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
+                  let () = x_binfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
                   let () = Globals.verified_procs := [] in
                   ()
             else

@@ -6,8 +6,8 @@ int sum(int n)
   if (n == 0) return 0;
   //if (n ==0) return 0;
   else {
-    /* int m; */
-    /* m = sum(n-1); */
-    return 2*n - 3*sum(n-1);
+    int m;
+    m = n - 2;
+    return n + sum (m);
   }
 }

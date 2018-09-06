@@ -4099,7 +4099,22 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
       (SuccCtx [ctx], UnsatAnte)
     else
       let () = x_tinfo_pp "heap_entail_after_sat \n" no_pos in
-      heap_entail_after_sat prog is_folding ctx conseq pos ([])
+      let sleek_res = heap_entail_after_sat prog is_folding ctx conseq pos ([])
+      in
+      (* sleek_res *)
+      match (fst sleek_res) with
+      | SuccCtx _ -> sleek_res
+      | FailCtx _ ->
+          begin
+            match ctx with
+            | Ctx es ->
+              let ctx_f = es.CF.es_formula in
+              let sb_res = Songbird.checkEntail ctx_f conseq in
+              let () = if sb_res then x_binfo_pp "true!!!!!!!!!!" no_pos
+                else ()
+              in sleek_res
+            | _ -> sleek_res
+          end
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
     (ss:CF.steps) : (list_context * proof) =
@@ -4206,7 +4221,7 @@ and early_hp_contra_detection_x hec_num prog estate conseq pos =
             let rele_rhs_xpure = CP.subst rele_sst p_rhs_xpure in
             (CP.join_conjunctions l_ps1, rele_rhs_xpure)
         in
-        let res_ctx_opt = 
+        let res_ctx_opt =
           (* if CP.is_neq_null_exp pf then None else *)
           let p_contr_lhs = (CP.join_conjunctions ([lhs_p;pf])) in
           let () = Debug.ninfo_hprint (add_str "p_contr_lhs"  (!CP.print_formula)) p_contr_lhs pos in
@@ -4348,7 +4363,7 @@ and early_pure_contra_detection hec_num prog estate conseq pos msg is_folding =
                                     | None ->     ("\n estate: " ^ (pr_option Cprinter.string_of_entail_state_short es))  in
   let f = wrap_proving_kind PK_Contra_Detect_Pure (early_pure_contra_detection_x hec_num prog estate conseq pos msg) in
   Debug.no_1_num hec_num "early_pure_contra_detection" Cprinter.string_of_entail_state_short pr_res
-    (fun _ -> f is_folding) estate 
+    (fun _ -> f is_folding) estate
 
 and heap_entail_conjunct_lhs hec_num prog is_folding  (ctx:context) conseq pos : (list_context * proof) =
   let pr1 = (fun _ -> "prog_decl") in
@@ -4481,8 +4496,8 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
   (* Call the internal function to do the unfolding and do the checking *)
   (* Check duplication only when there are no permissions*)
   let temp,dup = if !unfold_duplicated_pointers && not (Perm.allow_perm ()) then
-      match ctx with 
-      | Ctx es -> x_add_1 process_entail_state es 
+      match ctx with
+      | Ctx es -> x_add_1 process_entail_state es
       | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"
     else
       (* Dummy result & set dup = false to do the usual checking. *)
@@ -14006,7 +14021,7 @@ and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl
         end
 
 and normalize_estate_w_coers prog estate (coers: coercion_decl list) pos:
-  CF.entail_state = 
+  CF.entail_state =
   if !Globals.eager_coercions then
     let es, f = normalize_es_formula_w_coers prog estate estate.CF.es_formula
         coers pos in

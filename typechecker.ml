@@ -8,13 +8,14 @@ open Stat_global
 open Global_var
 (* open Exc.ETABLE_NFLOW *)
 open Exc.GTable
-open Solver
 open Cast
 open Gen.Basic
 open Perm
 (* open Label_only *)
 open Label
 module CF = Cformula
+module MCP = Mcpure
+module SV = Solver
 module CP = Cpure
 module CVP = CvpermUtils
 module VP = Vperm
@@ -138,10 +139,10 @@ let update_iprog_exp_defns iprog cprog_exp_defns =
             String.compare c_exp_defn.Cast.exp_name i_exp_defn.Iast.exp_name == 0)
             cprog_exp_defns in
         let exp_body = c_exp_defn.exp_body in
-        let () = x_binfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
+        let () = x_tinfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
             exp_body no_pos in
         let exp_body = Cpure.norm_exp exp_body in
-        let () = x_binfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
+        let () = x_tinfo_hp (add_str "exp: " Cprinter.string_of_formula_exp)
             exp_body no_pos in
         let n_exp = Cpure.translate_exp_to_ipure exp_body in
         {i_exp_defn with Iast.exp_body = Iast.ExpForm n_exp}
@@ -199,7 +200,7 @@ let check_var_read_perm_type msg prog ctx pos v t perm_ty =
     let lend_f = CF.set_flow_in_formula_override
         { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
     in
-    let vperm_res, _ = heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
+    let vperm_res, _ = SV.heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
     if not (CF.isSuccessListFailescCtx_new vperm_res) then
       let msg = (v ^ " does not have @lend/@full permission to read "^msg) in
       (Debug.print_info ("(" ^ (Cprinter.string_of_label_list_failesc_context vperm_res) ^ ") ") msg pos;
@@ -234,20 +235,20 @@ and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =
     (* Termination: filter the exp of phase variables 
      * (their value non-negative numbers in default) *)
-    let m = List.filter (fun e -> 
+    let m = List.filter (fun e ->
         not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
     if m == [] then (es, CF.SuccCtx [(CF.Ctx es)])
     else begin
       let m_pos = match m with
         | [] -> no_pos
-        | e::_ -> CP.pos_of_exp e 
+        | e::_ -> CP.pos_of_exp e
       in
       let ctx = CF.Ctx es in
       let bnd_formula_l = List.map (fun e ->
           CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
       let bnd_formula = CF.formula_of_pure_formula
           (CP.join_conjunctions bnd_formula_l) m_pos in
-      let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
+      let rs, _ = SV.heap_entail_one_context 12 prog false ctx bnd_formula None None None post_pos in
       let () = x_tinfo_hp (add_str "Result context" !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
@@ -355,7 +356,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       x_binfo_zp (lazy ("check_specs: EBase: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
       let r =
         List.map (fun (c1, c2) ->
-            let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
+            let nctx = CF.transform_context (SV.combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
             let (new_c2,pre,rel,hprel, sel_hps,sel_post_hps, unk_map,f) = helper nctx c2 in
             (* Thai: Need to generate EBase from pre if necessary *)
             let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre
@@ -631,7 +632,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
         x_tinfo_zp (lazy ("check_specs: EAssume: "
                           ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
         let ctx1 = if !Globals.disable_pre_sat then ctx
-          else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
+          else CF.transform_context (SV.elim_unsat_es 2 prog (ref 1)) ctx in
         if (CF.isAnyFalseCtx ctx1) then
           let () = x_ninfo_zp
               (lazy ("\nFalse precondition detected in procedure "
@@ -793,7 +794,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                   else
                     let () = x_ninfo_hp (add_str "es_unsat_flag" string_of_bool)
                         already_unsat_flag no_pos in
-                    let (b,_,e) = elim_unsat_estate prog e in
+                    let (b,_,e) = SV.elim_unsat_estate prog e in
                     if b then tmp_false_cnt # inc;
                     let () = x_ninfo_hp (add_str "elim_unsat(b)" string_of_bool) b no_pos in
                     e
@@ -1112,7 +1113,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock
 
       (*Call heap_entail... to prove the precondition and add the post condition into thread id*)
       let tid = CP.fresh_thread_var () in
-      let rs, prf = x_add heap_entail_struc_list_failesc_context_init 1 prog
+      let rs, prf = x_add SV.heap_entail_struc_list_failesc_context_init 1 prog
           false true sctx pre2 (Some tid) None None pos pid in
       let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
       let () = PTracer.log_proof prf in
@@ -1190,7 +1191,7 @@ and check_scall_join prog ctx e0 (post_start_label:formula_label) ret_t mn lock
     in
     let empty_struc = CF.mkETrue (CF.mkTrueFlow ()) pos in
     (*Perform Delay lockset checking and join at Solver.heap_entail_conjunct_lhs_struc*)
-    let rs, prf = x_add heap_entail_struc_list_failesc_context_init 2 prog false
+    let rs, prf = x_add SV.heap_entail_struc_list_failesc_context_init 2 prog false
         true ctx empty_struc None None (Some tid) pos pid in
     (*This is done after join inside Solver.ml*)
     if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
@@ -1280,7 +1281,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn
     let ctx =
       if (mn_str=Globals.finalize_name) then
         (*try to combine fractional permission before finalize*)
-        normalize_list_failesc_context_w_lemma prog ctx
+        SV.normalize_list_failesc_context_w_lemma prog ctx
       else ctx
     in
     let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n"
@@ -1289,7 +1290,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn
     x_dinfo_zp (lazy (to_print^"\n")) pos;
     (*TO CHECK: clear_entailment can effect reasoning??? *)
     let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
-    let rs, prf = x_add heap_entail_struc_list_failesc_context_init 3 prog false
+    let rs, prf = x_add SV.heap_entail_struc_list_failesc_context_init 3 prog false
         true ctx prepost None None None pos pid in
     if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
       if (!Globals.web_compile_flag) then
@@ -1298,13 +1299,13 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn
       else
         Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
     (*NORMALIZE after acquiring some new states*)
-    let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+    let tmp_res = SV.normalize_list_failesc_context_w_lemma prog rs in
     let tmp_res2 =
       if (mn_str=Globals.acquire_name) then
         (*acquire() an invariant may cause UNSAT*)
         let unsat_check_fct es =
           let new_es = {es with CF.es_unsat_flag = false} in (*trigger unsat_check*)
-          elim_unsat_es 12 prog (ref 1) new_es
+          SV.elim_unsat_es 12 prog (ref 1) new_es
         in
         let tmp_res2 = CF.transform_list_failesc_context (idf,idf,unsat_check_fct) tmp_res in
         tmp_res2
@@ -1364,7 +1365,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       (x_add check_exp prog proc ctx e.exp_label_exp post_start_label)
     | Unfold ({exp_unfold_var = sv;
                exp_unfold_pos = pos}) ->
-      unfold_failesc_context (prog,None) ctx sv true pos
+      SV.unfold_failesc_context (prog,None) ctx sv true pos
     (* for code *)
     | Assert ({ exp_assert_asserted_formula = c_assert_opt;
                 exp_assert_assumed_formula = c_assume_opt;
@@ -1417,7 +1418,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                  ^ proc.proc_name ^ " for spec: \n"
                                  ^ assert_assume_msg ^ "\n" in
                   x_binfo_pp (*print_info "assert"*) to_print pos;
-                  let rs,prf = x_add heap_entail_struc_list_failesc_context_init
+                  let rs,prf = x_add SV.heap_entail_struc_list_failesc_context_init
                       4 prog false false ts c1 None None None pos None in
                   let () = PTracer.log_proof prf in
 
@@ -1507,7 +1508,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx
                     else
                       CF.transform_list_failesc_context
-                        (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
+                        (idf,idf,(SV.elim_unsat_es 4 prog (ref 1))) assumed_ctx in
                   let res = List.map (x_add_1 CF.remove_dupl_false_fe) r in
                   match assert_failed_msg with
                   | None -> res
@@ -1606,7 +1607,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               let full_f = CF.set_flow_in_formula_override
                   { CF.formula_flow_interval = !norm_flow_int;
                     CF.formula_flow_link = None } full_f in
-              let vperm_res, _ = heap_entail_list_failesc_context_init prog
+              let vperm_res, _ = SV.heap_entail_list_failesc_context_init prog
                   false ctx full_f None None None pos None in
               if not (CF.isSuccessListFailescCtx_new vperm_res) then
                 let msg = (v ^ " does not have @full permission to write.") in
@@ -1696,7 +1697,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
               let pr2 f = Cprinter.string_of_struc_formula f in
               Debug.no_2 "barrier entail" pr1 pr2 (fun c-> "")
-                (fun _ _ -> x_add heap_entail_struc_init prog false true
+                (fun _ _ -> x_add SV.heap_entail_struc_init prog false true
                     (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec
             in
             helper c bd_spec in
@@ -1806,7 +1807,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
             else ctx in
           let () = CF.must_consistent_list_failesc_context "bind 1" ctx  in
-          let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+          let unfolded = SV.unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
           let unfolded =  CF.transform_list_failesc_context
               (idf,idf, (fun es -> CF.Ctx (CF.clear_entailment_es_pure es)))
               unfolded in
@@ -1912,7 +1913,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let () = x_tinfo_hp (add_str "struc_vheap"
                                    Cprinter.string_of_struc_formula) struc_vheap
                 no_pos in
-            let fn = heap_entail_struc_list_failesc_context_init 5 prog false
+            let fn = SV.heap_entail_struc_list_failesc_context_init 5 prog false
                 true unfolded struc_vheap None None None pos in
             let rs_prim, prf = x_add Wrapper.wrap_classic x_loc (Some false) fn (Some pid) in
             (* recover classic_frame for mem leak detection at post proving*)
@@ -1991,11 +1992,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                            pos;}))
                     tmp_res2
                 in
-                let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
+                let tmp_res2 = SV.prune_ctx_failesc_list prog tmp_res2 in
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff
-                  then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                  then SV.elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
                 x_tinfo_hp (add_str "bind:tmp_res2"
                               (pr_list Cprinter.string_of_failesc_context))
@@ -2036,7 +2037,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let () = x_tinfo_hp (add_str "CTX2: "
                                  Cprinter.string_of_list_failesc_context) ctx2
               no_pos in
-          let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
+          let res = if !Globals.elim_exists_ff then SV.elim_exists_failesc_ctx_list ctx2 else ctx2 in
           Gen.Profiling.pop_time "[check_exp] Block";
           let () = x_tinfo_hp (add_str "res: "
                                  Cprinter.string_of_list_failesc_context) res
@@ -2096,14 +2097,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let then_cond_prim = MCP.mix_of_pure pure_cond in
           let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
           let then_ctx =
-            if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
-            else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+            if !Globals.delay_if_sat then SV.combine_list_failesc_context prog ctx then_cond_prim
+            else  SV.combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
           x_dinfo_zp (lazy ("conditional: then_delta:\n"
                             ^ (Cprinter.string_of_list_failesc_context then_ctx)
                            )) pos;
           let else_ctx =
-            if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
-            else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+            if !Globals.delay_if_sat then SV.combine_list_failesc_context prog ctx else_cond_prim
+            else SV.combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
           x_dinfo_zp (lazy ("conditional: else_delta:\n"
                             ^ (Cprinter.string_of_list_failesc_context else_ctx)
                            )) pos;
@@ -2128,7 +2129,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         let () = x_binfo_hp (add_str "ctx: " pr1) ctx no_pos in
         let curr_svl = stk_vars # get_stk in
         let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
-        let ctx2 = list_failesc_context_and_unsat_now prog ctx in
+        let ctx2 = SV.list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
         let ctx_simp =
           if !Globals.simplify_dprint
@@ -2150,14 +2151,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                else "\ndprint(orig): " ^ pos.start_pos.Lexing.pos_fname
                     ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)
                     ^ ": ctx: " ^ str1 ^ "\n" in
-             let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
+             let tmp1 = if (SV.previous_failure()) then ("failesc context: "^tmp1) else tmp1 in
              let tmp2 =
                if !Globals.simplify_dprint then
                  "\ndprint(simpl): " ^ pos.start_pos.Lexing.pos_fname
                  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str2 ^ "\n"
                else ""
              in
-             let tmp2 = if (previous_failure ()) then ("failesc context: "^tmp2) else tmp2 in
+             let tmp2 = if (SV.previous_failure()) then ("failesc context: "^tmp2) else tmp2 in
              print_string_quiet (tmp1 ^ tmp2));
           ctx
         end else begin
@@ -2461,7 +2462,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               let () = x_dinfo_hp (add_str "old rs:"
                                      Cprinter.string_of_list_failesc_context)
                   sctx no_pos in
-              let rs, prf = x_add heap_entail_struc_list_failesc_context_init 6
+              let rs, prf = x_add SV.heap_entail_struc_list_failesc_context_init 6
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
@@ -2820,7 +2821,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       (*Decide which to escape, and which to be caught.
         Caught exceptions become normal flows*)
       let ctx4 = x_add CF.splitter_failesc_context (cc.exp_catch_flow_type) (cc.exp_catch_var)
-          (fun c -> CF.add_path_id c (Some pid,0) (-1)) elim_exists_ctx ctx3 in
+          (fun c -> CF.add_path_id c (Some pid,0) (-1)) SV.elim_exists_ctx ctx3 in
       let ctx5 = x_add check_exp prog proc ctx4 cc.exp_catch_body post_start_label in
       CF.pop_esc_level_list ctx5 pid
 
@@ -2869,7 +2870,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         enabled.") pos;
          ctx)
       else
-        let f_ent ctx f = heap_entail_list_failesc_context_init prog false ctx f
+        let f_ent ctx f = SV.heap_entail_list_failesc_context_init prog false ctx f
             None None None pos None in
         let par_pre_ctx, rem_ctx = VP.prepare_list_failesc_ctx_for_par f_ent vp lh ctx pos in
         let no_vp_par_pre_ctx =
@@ -2954,7 +2955,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
       (* Remaining context for the other cases *)
       let rem_ctx =
         let ctx = VP.set_inf_par_list_failesc_ctx ctx in
-        let res, _ = heap_entail_list_failesc_context_init prog false ctx pre
+        let res, _ = SV.heap_entail_list_failesc_context_init prog false ctx pre
             None None None pos None in
         if (CF.isSuccessListFailescCtx_new res) then 
           VP.clear_inf_par_list_failesc_ctx res
@@ -2973,7 +2974,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
       let pre_ctx =
         if !Globals.disable_pre_sat then pre_ctx
-        else CF.transform_context (elim_unsat_es 10 prog (ref 1)) pre_ctx
+        else CF.transform_context (SV.elim_unsat_es 10 prog (ref 1)) pre_ctx
       in
       let () = flow_store := [] in
       let pre_ctx = CF.set_flow_in_context_override
@@ -3049,7 +3050,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let todo_unk =
     if !Globals.dis_term_chk || !Globals.dis_post_chk then true
     else
-      let check_falsify ctx = heap_entail_one_context 17 prog false ctx
+      let check_falsify ctx = SV.heap_entail_one_context 17 prog false ctx
           (CF.mkFalse_nf pos) None None None pos in
       Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid
   in
@@ -3071,7 +3072,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
         let _ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
         (*possibly change to flat post here as well??*)
-        let (ans,prf) = heap_entail_list_partial_context_init prog false
+        let (ans,prf) = SV.heap_entail_list_partial_context_init prog false
             fn_state flat_post None None None pos (Some pid) in
         let () =  DD.ninfo_hprint
             (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
@@ -3086,7 +3087,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     else
       let () = x_dinfo_hp (add_str "do_classic_frame_rule" string_of_bool)
           (check_is_classic ()) pos in
-      let rs_struc , prf = x_add heap_entail_struc_list_partial_context_init
+      let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
           prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf
   in

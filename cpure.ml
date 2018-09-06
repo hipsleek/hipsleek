@@ -592,7 +592,7 @@ let is_bool_res_var = function
 (*   | SpecVar (t, _, p) -> t  *)
 
 let primed_of_spec_var (sv : spec_var) : primed = match sv with
-  | SpecVar (_, _, p) -> p 
+  | SpecVar (_, _, p) -> p
 
 let name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v

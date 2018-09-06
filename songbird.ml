@@ -5,6 +5,7 @@ module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
 module SBDebug = Libsongbird.Debug
 module CP = Cpure
+module CF = Cformula
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
@@ -46,8 +47,12 @@ let translate_back_type (typ) = match typ with
 
 let translate_var (var: CP.spec_var): SBGlobals.var =
   match var with
-  | SpecVar (typ, ident, primed) -> (ident, translate_type typ)
-
+  | SpecVar (typ, ident, primed) ->
+    begin
+      match primed with
+      | VarGen.Primed -> (ident ^ "'", translate_type typ)
+      | _ -> (ident, translate_type typ)
+    end
 let translate_back_var (var : SBGlobals.var) =
   let (str, typ) = var in
   CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
@@ -161,7 +166,16 @@ let rec translate_pf (pure_f: CP.formula)  =
   | Not (f, _, loc) ->
     let n_f = translate_pf f in
     SBCast.PNeg (n_f, translate_loc loc)
-  | _ -> Gen.Basic.report_error VarGen.no_pos "this pure formula not handled"
+  | Exists (sv, pf, _, loc) ->
+    let sb_var = translate_var sv in
+    let sb_pf = translate_pf pf in
+    let sb_loc = translate_loc loc in
+    SBCast.mk_pexists ~pos:sb_loc [sb_var] sb_pf
+  | _ ->
+    Gen.Basic.report_error
+      VarGen.no_pos
+      ("this pure formula not handled"
+       ^ (Cprinter.string_of_pure_formula pure_f))
 
 let translate_back_pf (pf : SBCast.pure_form) = match pf with
   | SBCast.BConst (b, pos)
@@ -180,6 +194,66 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
       | SBCast.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
     end
   | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
+
+(* translate heap formula from Cformula to songbird CAST *)
+let translate_hf hf = match hf with
+  | CF.HEmp -> SBCast.HEmp (translate_loc VarGen.no_pos)
+  | CF.DataNode dnode ->
+    let root = dnode.CF.h_formula_data_node in
+    let sb_root_var = translate_var root in
+    let sb_no_pos = translate_loc VarGen.no_pos in
+    let sb_root = SBCast.Var (sb_root_var, sb_no_pos) in
+    let name = dnode.CF.h_formula_data_name in
+    let args = dnode.CF.h_formula_data_arguments in
+    let sb_arg_vars = List.map translate_var args in
+    let sb_args = List.map (fun x -> SBCast.Var (x, sb_no_pos)) sb_arg_vars in
+    let data_form = SBCast.mk_data_form sb_root name sb_args in
+    SBCast.mk_hform_df data_form
+  | _ -> Gen.Basic.report_error VarGen.no_pos ("this hf is not supported: "
+         ^ (Cprinter.string_of_h_formula hf))
+
+let translate_formula formula = match formula with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let sb_hf = translate_hf hf in
+    let pf = CF.get_pure formula in
+    let sb_pf = translate_pf pf in
+    SBCast.mk_fbase sb_hf sb_pf
+  | CF.Exists ef ->
+    let hf = ef.CF.formula_exists_heap in
+    let sb_hf = translate_hf hf in
+    let pf = CF.get_pure formula in
+    let sb_pf = translate_pf pf in
+    let vars = ef.CF.formula_exists_qvars in
+    let sb_vars = List.map translate_var vars in
+    let sb_f = SBCast.mk_fbase sb_hf sb_pf in
+    SBCast.mk_fexists sb_vars sb_f
+
+  | _ -> Gen.Basic.report_error VarGen.no_pos ("this formula is not supported: "
+         ^ (Cprinter.string_of_formula formula))
+
+let checkEntail lhs rhs =
+  let sb_lhs = translate_formula lhs in
+  let sb_rhs = translate_formula rhs in
+  let program = SBCast.mk_program "checkentail" in
+  let ent = SBCast.mk_entailment sb_lhs sb_rhs in
+  (* let sts = SBGlobals.StsValid in *)
+  let () = x_binfo_hp (Gen.Basic.add_str "ent: " SBCast.pr_ent)
+      ent VarGen.no_pos in
+  let sb_res = Libsongbird.Prover.check_entailment program ent in
+  let () = match sb_res with
+    | SBGlobals.MvlTrue ->
+      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "true" VarGen.no_pos
+    | SBGlobals.MvlFalse ->
+      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "false" VarGen.no_pos
+    | SBGlobals.MvlUnkn ->
+      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "unknown" VarGen.no_pos
+    | SBGlobals.MvlInfer ->
+      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "infer" VarGen.no_pos
+  in
+  match sb_res with
+  | SBGlobals.MvlTrue -> true
+  | _ -> false
 
 (* Input: lhs and rhs
    Create template for lhs

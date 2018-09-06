@@ -216,8 +216,6 @@ and flow_treatment =
 
 and h_formula = (* heap formula *)
   | Star of h_formula_star
-  (* guard as magic wand? *)
-  (* | Wand of h_formula * h_formula *)
   | StarMinus of h_formula_starminus
   | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
@@ -227,9 +225,7 @@ and h_formula = (* heap formula *)
   | ViewNode of h_formula_view
   | ThreadNode of h_formula_thread
   | Hole of int | FrmHole of int
-  (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * ((CP.exp) list) * loc) (*place holder for unknown heap predicates*)
-  (* | HRel of ((CP.spec_var * cond_path_type) * ((CP.exp) list) * loc) (\*placeh older for heap predicates*\) *)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)
@@ -9734,7 +9730,7 @@ type entail_state = {
   es_pure : MCP.mix_formula;
   es_folding_conseq_pure : MCP.mix_formula option; (* while folding, pure of current conseq has not been fwded. pass this pure to guide strategy *)
   (*used by universal LEMMAS for instantiation? *)
-  es_ivars : CP.spec_var list; 
+  es_ivars : CP.spec_var list;
   (* ivars are the variables to be instantiated (for the universal lemma application)  *)
   (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
   es_ante_evars : CP.spec_var list;
@@ -9862,7 +9858,7 @@ type entail_state = {
   es_group_lbl: spec_label_def;
 }
 
-and context = 
+and context =
   | Ctx of entail_state
   | OCtx of (context * context) (* disjunctive context *)
 (*| FailCtx of (fail_context list)*)
