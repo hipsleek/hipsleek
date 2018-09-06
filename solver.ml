@@ -4110,15 +4110,17 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
             | Ctx es ->
               let ctx_f = es.CF.es_formula in
               let sb_res = Songbird.checkEntail ctx_f conseq in
-              let () = if sb_res then x_binfo_pp "true!!!!!!!!!!" no_pos
-                else ()
-              in sleek_res
+              if sb_res then (SuccCtx[ctx], TrueConseq)
+              else sleek_res
+              (* let () = if sb_res then x_binfo_pp "true!!!!!!!!!!" no_pos
+               *   else ()
+               * in sleek_res *)
             | _ -> sleek_res
           end
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
     (ss:CF.steps) : (list_context * proof) =
-  Debug.no_2(* _loop *) "heap_entail_after_sat"
+  Debug.no_2 "heap_entail_after_sat"
     (Cprinter.string_of_context)
     (Cprinter.string_of_formula)
     (fun (l,p) -> Cprinter.string_of_list_context l)
