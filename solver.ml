@@ -4112,9 +4112,6 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
               let sb_res = Songbird.checkEntail ctx_f conseq in
               if sb_res then (SuccCtx[ctx], TrueConseq)
               else sleek_res
-              (* let () = if sb_res then x_binfo_pp "true!!!!!!!!!!" no_pos
-               *   else ()
-               * in sleek_res *)
             | _ -> sleek_res
           end
 

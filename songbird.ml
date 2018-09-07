@@ -79,9 +79,11 @@ let rec translate_exp (exp: CP.exp) =
         let t_exp2 = translate_exp exp2 in
         SBCast.BinExp (Div, t_exp1, t_exp2, translate_loc loc)
   | CP.Template templ ->
-    let fun_name = CP.name_of_sv templ.templ_id in
-    let args = templ.templ_args |> List.map translate_exp in
-    SBCast.mk_func (SBCast.FuncName fun_name) args
+    if (!Globals.translate_funcs) then
+      let fun_name = CP.name_of_sv templ.templ_id in
+      let args = templ.templ_args |> List.map translate_exp in
+      SBCast.mk_func (SBCast.FuncName fun_name) args
+    else Gen.Basic.report_error VarGen.no_pos "translate_funcs not activated"
   | _ -> Gen.Basic.report_error VarGen.no_pos "this exp is not handled"
 
 let rec translate_back_exp (exp: SBCast.exp) = match exp with
@@ -153,7 +155,10 @@ let rec translate_pf (pure_f: CP.formula)  =
         let sb_exp2 = translate_exp exp2 in
         let sb_loc = translate_loc loc in
         SBCast.BinRel (Le, sb_exp1, sb_exp2, sb_loc)
-      | _ -> Gen.Basic.report_error VarGen.no_pos "this p_formula is not handled"
+      | _ ->
+        Gen.Basic.report_error
+          VarGen.no_pos ("this p_formula is not handled" ^
+                         (Cprinter.string_of_p_formula p_formula))
     end
   | And (f1, f2, loc) ->
     let n_f1 = translate_pf f1 in
@@ -233,27 +238,23 @@ let translate_formula formula = match formula with
          ^ (Cprinter.string_of_formula formula))
 
 let checkEntail lhs rhs =
-  let sb_lhs = translate_formula lhs in
-  let sb_rhs = translate_formula rhs in
-  let program = SBCast.mk_program "checkentail" in
-  let ent = SBCast.mk_entailment sb_lhs sb_rhs in
-  (* let sts = SBGlobals.StsValid in *)
-  let () = x_binfo_hp (Gen.Basic.add_str "ent: " SBCast.pr_ent)
-      ent VarGen.no_pos in
-  let sb_res = Libsongbird.Prover.check_entailment program ent in
-  let () = match sb_res with
-    | SBGlobals.MvlTrue ->
-      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "true" VarGen.no_pos
-    | SBGlobals.MvlFalse ->
-      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "false" VarGen.no_pos
-    | SBGlobals.MvlUnkn ->
-      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "unknown" VarGen.no_pos
-    | SBGlobals.MvlInfer ->
-      x_binfo_hp (Gen.Basic.add_str "ent: " Gen.Basic.pr_id) "infer" VarGen.no_pos
-  in
-  match sb_res with
-  | SBGlobals.MvlTrue -> true
-  | _ -> false
+  try
+    let () = Globals.translate_funcs := false in
+    let sb_lhs = translate_formula lhs in
+    let sb_rhs = translate_formula rhs in
+    let program = SBCast.mk_program "checkentail" in
+    let ent = SBCast.mk_entailment sb_lhs sb_rhs in
+    (* let sts = SBGlobals.StsValid in *)
+    let () = x_tinfo_hp (Gen.Basic.add_str "ent: " SBCast.pr_ent)
+        ent VarGen.no_pos in
+    let sb_res = Libsongbird.Prover.check_entailment_wrapper program ent in
+    let () = Globals.translate_funcs := true in
+    match sb_res with
+    | SBGlobals.MvlTrue -> true
+    | _ -> false
+  with _ ->
+    let () = Globals.translate_funcs := true in
+    false
 
 (* Input: lhs and rhs
    Create template for lhs

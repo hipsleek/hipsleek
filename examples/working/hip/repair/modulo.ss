@@ -9,6 +9,6 @@ int modulo(int x)
     requires x >= 0
     ensures exists r: res = x - r * 10 & 0 <= res < 10 & r >= 0;
 {
-  if (x < 10) return x;
+  if (x < 10) return x + 2;
   else return modulo(x - 10);
 }

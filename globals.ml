@@ -9,6 +9,7 @@ let repaired = ref false
 let sleek_num_to_verify = ref (-1)
 let sleek_print_residue = ref true
 let ramification_entailments = ref 0
+let translate_funcs = ref true
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 let start_repair = ref false
