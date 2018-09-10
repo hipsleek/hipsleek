@@ -56,11 +56,11 @@ pred USERBALANCES<userid,n> == self=null or
 
 
 int getUserBalance(int userid)
-   requires  userbal::USERBALANCES<userid,n>@L & Term
+   requires  userbal::USERBALANCES<userid,n>@L
    ensures   userbal=userbal' & res=n;
 
 void setUserBalance(int userid, int amount)
-   requires  userbal::USERBALANCES<userid,_> & Term
+   requires  userbal::USERBALANCES<userid,_>
    ensures   userbal'::USERBALANCES<userid,amount>;
 
 /*******************************/
@@ -71,13 +71,14 @@ void fallback(int userid, int arg)
    ensures   bal'=bal-arg;
 
 void call(int userid, int arg)
-   requires  arg>0 & Term
+   requires  arg>0
    ensures   bal'=bal-arg;
 
 
-//susceptible to re-entrancy
+// susceptible to re-entrancy
+// should fail because of postcondition
 void withdrawBalance_buggy()
-     requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 & bal>=n
+     requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 //& bal>=n
      ensures   userbal'::USERBALANCES<id,0> & bal'=bal-n;
 {
   int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
@@ -88,27 +89,33 @@ void withdrawBalance_buggy()
   }
 }
 
-data nnode{ int val;}
 
-// prim_pred GLOB{%P}<>.
+/**
+ for the reentrancy check we should
+ 1. replace every occurrence of call with a call to all of the existing methods which adjust the current global state
+            a. what should the parameters be instantiated to?
+            b. how to identify the block that changes the program state? / or the specs which assert the state change
+ 2. (i)  a method is SAFE from reentrancy if verification fails for all cases in 1.
+    (ii) a method is UNSAFE, susceptible to reentrancy, if at least one of the calls in 1 verifies.
+*/
 
-void ccall(int userid, int arg)
-   requires  arg>0 & Term
-   ensures   bal'=bal-arg;
-// {
-//    withdrawBalance();
-// }
-
-
-//fixed version
+// fixed version
+// should fail because of the recursive call
 void withdrawBalance()
-   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 & bal>=n
+   //infer [@reentrancy]
+   /*
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 //& bal>=n
    ensures   userbal'::USERBALANCES<id,0>  & bal'=bal-n;
+   */
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>0 & bal>=n
+   ensures   userbal'::USERBALANCES<id,0>  & bal'=bal-n;
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n>@L & n=0 & bal>=n
+   ensures   bal'=bal & userbal'=userbal;
 {
   int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
   if (amountToWithdraw > 0) {
      setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
-     ccall(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
+     call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
      withdrawBalance();
   }
 }
