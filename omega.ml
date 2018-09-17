@@ -1015,7 +1015,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Debug.no_1 "Omega.simplify" pf pf (fun pe ->Trans_arr.translate_back_array_in_one_formula (simplify pe)) pe
+  Debug.no_1 "Omega.simplify" pf pf (fun pe ->Trans_arr.translate_back_array_in_one_formula (Trans_sec.rev_translate_sec_from_infer (simplify pe))) pe
 ;;
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)

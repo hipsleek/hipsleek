@@ -2261,6 +2261,11 @@ let simplify (f : CP.formula) : CP.formula =
     in
     (*      let redlog_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Redlog.simplify f in
             let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in *)
+    (* let () = y_binfo_hp (add_str "f" !CP.print_formula) f in *)
+    (* let f = CP.translate_security_formula f in *)
+    (* let () = y_binfo_hp (add_str "translated f" !CP.print_formula) f in *)
+    let translated_f, bound_f = CP.translate_security_formula_for_infer !Security.current_lattice f in
+    let f = List.fold_left (fun f f_all -> CP.mkAnd f_all f no_pos) translated_f bound_f in
     if !external_prover then
       match Netprover.call_prover (Simplify f) with
       | Some res -> res

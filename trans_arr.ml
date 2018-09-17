@@ -1804,7 +1804,8 @@ let collect_free_array_index f:exp list =
     | Frm _
     | XPure _
     | LexVar _
-    | RelForm _ ->
+    | RelForm _
+    | Security _ ->
       []
     | Lt (e1,e2,loc)
     | Lte (e1,e2,loc)
@@ -2101,7 +2102,8 @@ let rec contain_array_element f arr_sv index_sv:bool =
       | Frm _
       | XPure _
       | LexVar _
-      | RelForm _ ->
+      | RelForm _
+      | Security _ ->
             false
       | Lt (e1,e2,loc)
       | Lte (e1,e2,loc)
@@ -2261,7 +2263,8 @@ let rec extend_env old_env (nfv:not_free_var) f:arr2index_env =
       | Frm _
       | XPure _
       | LexVar _
-      | RelForm _ ->
+      | RelForm _
+      | Security _ ->
             old_env
       | Lt (e1,e2,loc)
       | Lte (e1,e2,loc)
