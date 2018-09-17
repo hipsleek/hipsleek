@@ -38,7 +38,8 @@ type lattice =
     bottom : Label.t;
     labels : Label.t list;
     label_representations : int list RepresentationMap.t;
-    reverse_label_representations : Label.t ReverseRepresentationMap.t
+    reverse_label_representations : Label.t ReverseRepresentationMap.t;
+    representation_tuple_length : int
   }
 
 let compute_lub l1 l2 lattice =
@@ -105,6 +106,16 @@ let compute_all_glb lattice =
     []
   |> List.flatten
 
+let normalise_lattice_representations lattice reps =
+  let top_lbl, top_rep = List.find (fun (label, rep) -> G.out_degree lattice label = 0) reps in
+  let min_rep_length = BatList.take_while ((=) 1) top_rep |> List.length in
+  let normalised_reps =
+    List.map
+      (fun (label, rep) -> (label, BatList.take min_rep_length rep))
+      reps
+  in
+  normalised_reps, min_rep_length
+
 let make_sec_lattice_representation lattice =
   let size = G.nb_vertex lattice in
   let path_checker = PathG.create lattice in
@@ -117,7 +128,7 @@ let make_sec_lattice_representation lattice =
   | (_ :: r1, _ :: r2)   -> 1 :: (lub r1 r2)
   | ([], _) | (_, []) -> []
   in
-  let rp =
+  (* let rp =
     TopoG.fold
       (fun v (map, reverse_map) ->
         if RepresentationMap.is_empty map then
@@ -139,14 +150,45 @@ let make_sec_lattice_representation lattice =
           RepresentationMap.add v rep map, ReverseRepresentationMap.add rep v reverse_map
       )
       lattice
-      (RepresentationMap.empty, ReverseRepresentationMap.empty) in
+      (RepresentationMap.empty, ReverseRepresentationMap.empty) in *)
+  let rp =
+    TopoG.fold
+      (fun current_label reps ->
+        if reps = [] then
+          (current_label, empty_label size) :: reps
+        else
+          let index = List.length reps - 1 in
+          let label_rep =
+            List.fold_left
+              (fun curr_label_rep (lbl, rep) ->
+                if exists_path lbl current_label then
+                  lub curr_label_rep rep
+                else
+                  curr_label_rep
+              )
+              (empty_label size)
+              reps in
+          (current_label, next_label label_rep index) :: reps
+      )
+      lattice
+      [] in
+  let () = y_binfo_hp (Gen.add_str "reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) rp in
+  let normalised_rp, rep_length = normalise_lattice_representations lattice rp in
+  let () = y_binfo_hp (Gen.add_str "normalised reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) normalised_rp in
+  let rp_map, rev_rp_map =
+    List.fold_left
+      (fun (map, reverse_map) (label, rep) ->
+        RepresentationMap.add label rep map, ReverseRepresentationMap.add rep label reverse_map
+      )
+      (RepresentationMap.empty, ReverseRepresentationMap.empty)
+      normalised_rp in
   (* let rp = TopoG.fold (fun v a ->
     if a = [] then [(v, empty_label size)] else
       let idx = (List.length a) - 1 in
       let lb  = List.fold_left (fun acc (vl,r) -> if exists_path vl v then (lub acc r) else acc) (empty_label size) a in
       (v, next_label lb idx) :: a
     ) lattice [] in *)
-  rp
+  rp_map, rev_rp_map, rep_length
 
 let make_lattice labels relations =
   if labels = [] then
@@ -165,7 +207,7 @@ let make_lattice labels relations =
     let glb_map =
       compute_all_glb lattice
       |> List.fold_left (fun glbs (l1, l2, glb) -> BoundsMap.add (l1, l2) glb glbs) BoundsMap.empty in
-    let representation_map, reverse_representation_map = make_sec_lattice_representation lattice in
+    let representation_map, reverse_representation_map, rep_length = make_sec_lattice_representation lattice in
     {
       lattice = lattice;
       least_upper_bounds = lub_map;
@@ -174,7 +216,8 @@ let make_lattice labels relations =
       top = List.fold_left (fun acc v -> if G.out_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
       bottom = List.fold_left (fun acc v -> if G.in_degree lattice v = 0 then v else acc) (List.hd labels) (List.tl labels);
       label_representations = representation_map;
-      reverse_label_representations = reverse_representation_map
+      reverse_label_representations = reverse_representation_map;
+      representation_tuple_length = rep_length
     }
 
 let default_lattice =
@@ -191,8 +234,27 @@ let get_bottom lattice = lattice.bottom
 let get_representation { label_representations } label =
   RepresentationMap.find label label_representations
 
-let representation_to_label { reverse_label_representations } representation =
-  ReverseRepresentationMap.find representation reverse_label_representations
+let representation_to_label ({ reverse_label_representations } as lattice) representation =
+  let representations_queue = Queue.create () in
+  let () = Queue.add representation representations_queue in
+  let all_zero_pts representation =
+    List.combine representation (BatList.init (List.length representation) (fun i -> i))
+    |> List.filter (fun (x, i) -> x = 0)
+    |> List.map snd in
+  let next_nodes rep =
+    all_zero_pts rep
+    |> List.map (fun i -> BatList.modify_at i (fun _ -> 1) rep) in
+  let rec bfs () =
+    let curr_node = Queue.take representations_queue in
+    let () = List.iter (fun rep -> Queue.add rep representations_queue) (next_nodes curr_node) in
+    try
+      ReverseRepresentationMap.find curr_node reverse_label_representations
+    with
+    | Not_found ->
+        bfs ()
+  in
+  bfs ()
+
 
 let least_upper_bound { least_upper_bounds } l1 l2 = BoundsMap.find (l1, l2) least_upper_bounds
 
@@ -201,3 +263,5 @@ let greatest_lower_bound { greatest_lower_bounds } l1 l2 = BoundsMap.find (l1, l
 let current_lattice = ref default_lattice
 
 let lattice_size { lattice } = G.nb_vertex lattice
+
+let representation_tuple_length { representation_tuple_length } = representation_tuple_length

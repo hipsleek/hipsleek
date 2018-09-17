@@ -22,3 +22,4 @@ val representation_to_label : lattice -> int list -> Label.t
 val least_upper_bound : lattice -> Label.t -> Label.t -> Label.t
 val greatest_lower_bound : lattice -> Label.t -> Label.t -> Label.t
 val lattice_size : lattice -> int
+val representation_tuple_length : lattice -> int
