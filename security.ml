@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 module Label = struct
   type t =
     | L of string

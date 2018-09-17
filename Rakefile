@@ -12,7 +12,8 @@ OCAMLFIND_DEPS = [
   "ocamlgraph",
   "camlp4",
   "camlp4.lib",
-  "xml-light"
+  "xml-light",
+  "ppx_deriving.std"
 ]
 
 SRC_DIRS = [
@@ -139,7 +140,7 @@ namespace :dependencies do
   end
 end
 
-task :test_info_flow do
+def test_flow(folder)
   data_regex = "Procedure\|Stop\|Total verification\|Time spent\|Z3 Prover\|lemma"
 
   proc_regex_false_negative = /Procedure [a-zA-Z0-9_]*fail[$][a-zA-Z0-9_]* SUCCESS/
@@ -147,33 +148,38 @@ task :test_info_flow do
   lemma_regex_false_negative = /Entailing lemma [a-zA-Z0-9_>-]*fail[:] Valid/
   lemma_regex_false_positive = /Entailing lemma [a-zA-Z0-9_>-]*safe[:] Fail/
 
-  puts "Testing eximpf..."
-  Dir.glob("info-test/eximpf/*.ss").each do |f|
-    puts "- Testing #{f}"
-    res = `./hip #{f} | grep "Procedure\\\|Stop\\\|Total verification\\\|Time spent\\\|Z3 Prover\\\|lemma"`
+  test_folder = "info-test/#{folder}"
+  if Dir.exist? test_folder
+    puts "Testing #{folder}..."
+    Dir.glob("#{test_folder}/*.ss").each do |f|
+      puts "- Testing #{f}"
+      res = `./hip #{f} | grep "Procedure\\\|Stop\\\|Total verification\\\|Time spent\\\|Z3 Prover\\\|lemma"`
 
-    res.split("\n").map do |line|
-      puts "#{line} :: (-)" if line.match(proc_regex_false_negative)
-      puts "#{line} :: (+)" if line.match(proc_regex_false_positive)
-      puts "#{line} :: (-)" if line.match(lemma_regex_false_negative)
-      puts "#{line} :: (+)" if line.match(lemma_regex_false_positive)
+      res.split("\n").map do |line|
+        puts "#{line} :: (-)" if line.match(proc_regex_false_negative)
+        puts "#{line} :: (+)" if line.match(proc_regex_false_positive)
+        puts "#{line} :: (-)" if line.match(lemma_regex_false_negative)
+        puts "#{line} :: (+)" if line.match(lemma_regex_false_positive)
+      end
     end
-  end
-
-  puts "Testing hip..."
-  Dir.glob("info-test/hip/*.ss").each do |f|
-    puts "- Testing #{f}"
-    res = `./hip #{f} | grep "Procedure\\\|Stop\\\|Total verification\\\|Time spent\\\|Z3 Prover\\\|lemma"`
-
-    res.split("\n").map do |line|
-      puts "#{line} :: (-)" if line.match(proc_regex_false_negative)
-      puts "#{line} :: (+)" if line.match(proc_regex_false_positive)
-      puts "#{line} :: (-)" if line.match(lemma_regex_false_negative)
-      puts "#{line} :: (+)" if line.match(lemma_regex_false_positive)
-    end
+  else
+    fail IOError, "Folder #{test_folder} does not exist"
   end
 end
 
+namespace :test do
+  namespace :info_flow do
+    task :vmcai do
+      test_flow "hip"
+    end
+
+    task :eximpf do
+      test_flow "eximpf"
+    end
+  end
+
+  task info_flow: %w[info_flow:vmcai info_flow:eximpf]
+end
 
 # Useful Ocamlbuild rules
 
@@ -200,7 +206,7 @@ task ".merlin" do |task|
   merlin_file = task.name
 
   src_lines_comment = ["# Source directories"]
-  src_lines = src_lines_comment + SRC_DIRS.map { |dir| "S #{dir}/**" }
+  src_lines = src_lines_comment + SRC_DIRS.map { |dir| "S #{dir}/" }
   src_lines = src_lines.join("\n") + "\n\n"
 
   build_line_comment = ["# Build directories"]
