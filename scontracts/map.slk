@@ -1,0 +1,29 @@
+data bnode{ int userid; int val; bnode next;}.
+
+data message{
+       int data_;
+       int gas;
+       int sender;
+       int sig;
+       int value;
+       }.
+
+// mapping(address => uint) private userBalances;
+ pred Map<w> == self=w or
+               self::bnode<_,_,t> * t::Map<w> & self!=t.
+
+ pred_prim Entry<val,map>.
+
+ pred MapE<key,val,q> == self::Map<q> * key::Entry<val,self>.
+
+checkentail x::MapE<k,v,q> |- x::MapE<k,v,q>.
+
+checkentail x::MapE<k,v,q> |- x::Map<q> * k::Entry<v,x>.
+
+checkentail x::Map<q> * k::Entry<v,x> |- x::MapE<kk,vv,qq>.
+
+checkentail x::Map<q> * k::Entry<v,x> |- x::Map<qq> * kk::Entry<vv,x>.
+
+checkentail userBalances_44'::Map<q_2204>@M *
+ id::Entry<v_int_83_2220,userBalances_44'>@M
+ |- userBalances_44'::MapE<id_146,n_2238,q_2239>@L .

@@ -33,7 +33,6 @@ int foo1(int x)
   }
 }
 
-
 /*
  case {
    1<=y_22 -> requires emp & Term[40,3,1+(0*x)+(2*y_22)]
@@ -56,3 +55,12 @@ int foo(int x)
 {
     return foo1(x+1);
 }
+
+
+{(int v_int_57_1851 ;
+(v_int_57_1851 = {((int v_int_57_1850;
+v_int_57_1850 = {((int v_int_57_1847;
+v_int_57_1847 = 1);
+add___$int~int(x,v_int_57_1847))});
+foo1$int~int(v_int_57_1850,y_22) rec)};
+ret# v_int_57_1851))}

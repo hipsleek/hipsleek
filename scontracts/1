@@ -1,0 +1,373 @@
+
+!!! **tpdispatcher.ml#502:init_tp by default: 
+!!! **tpdispatcher.ml#395:set_tp z3
+!!!Full processing file "test2.ss"
+Parsing file "test2.ss" by default parser...
+
+
+!!! processing primitives "["prelude.ss"]
+
+Starting z3... 
+starting translation
+
+!!! **WARNING****astsimp.ml#9434:Post-condition has existentially quantified free vars, error position: ../prelude.ss_613:10_613:25:[(q,)]
+!!! **WARNING****astsimp.ml#9434:Post-condition has existentially quantified free vars, error position: ../prelude.ss_608:22_608:39:[(p,)]
+Starting Omega.../usr/local/bin/oc
+
+data __Exc {
+;
+}is_rec:false
+
+data __Error {
+;
+}is_rec:false
+
+data __MayError {
+;
+}is_rec:false
+
+data __Fail {
+;
+}is_rec:false
+
+
+ view WFSegN{}[]<p:char_star,n:int>= 
+  view_domains: 
+   view WFSegN<p:char_star,n:int>= 
+    EList
+      :EBase 
+         (* lbl: *){235}->emp&self=p & n=0&{FLOW,(1,28)=__flow#E}
+      || :EBase 
+            exists (Impl)[v; q](* lbl: *){236}->(exists p_25,
+            flted_568_24: (* lbl: *){236}->self::char_star<v,q>@M * 
+                                           q::WFSegN<p_25,flted_568_24>@M&
+            flted_568_24+1=n & v!=0 & p_25=p&{FLOW,(1,28)=__flow#E})
+      
+  view vars: p,n
+  session info: 
+  session: 
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: p
+  unstructured formula: 
+    (* lbl: *){235}->emp&self=p & n=0&{FLOW,(1,28)=__flow#E}
+    || (* lbl: *){236}->(exists p_25,flted_568_24,v,
+       q: (* lbl: *){236}->self::char_star<v,q>@M * 
+                           q::WFSegN<p_25,flted_568_24>@M&
+       flted_568_24+1=n & v!=0 & p_25=p&{FLOW,(1,28)=__flow#E})
+  inv: 0<=n
+  
+  baga over inv: [([], 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n),([], self=p & n=0)]
+  
+  xform: ((self!=null & 1<=n) | (p=self & n=0))
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: char_star
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  Nonematerialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){235}->emp&self=p & n=0&{FLOW,(1,28)=__flow#E}base case: n=0->self=p & 
+                                                                    n=0
+  
+  
+ view WFSeg{}[]<p:char_star>= 
+  view_domains: 
+   view WFSeg<p:char_star>= 
+    EList
+      :EBase 
+         (* lbl: *){237}->emp&self=p&{FLOW,(1,28)=__flow#E}
+      || :EBase 
+            exists (Impl)[v; 
+            q](* lbl: *){238}->(exists p_31: (* lbl: *){238}->self::char_star<v,q>@M * 
+                                                              q::WFSeg<p_31>@M&
+            v!=0 & p_31=p&{FLOW,(1,28)=__flow#E})
+      
+  view vars: p
+  session info: 
+  session: 
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: p
+  unstructured formula: 
+    (* lbl: *){237}->emp&self=p&{FLOW,(1,28)=__flow#E}
+    || (* lbl: *){238}->(exists p_31,v,
+       q: (* lbl: *){238}->self::char_star<v,q>@M * q::WFSeg<p_31>@M&
+       v!=0 & p_31=p&{FLOW,(1,28)=__flow#E})
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),([], self=p)]
+  
+  xform: (self!=null | p=self)
+  is_recursive?: true
+  same_xpure?: NO
+  view_data_name: char_star
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  Nonematerialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){237}->emp&self=p&{FLOW,(1,28)=__flow#E}
+  
+ view_extn size{}[R:size]<k:int>= 
+  view_domains: 
+   view_extn size<k:int>= 
+    EList
+      :EBase 
+         (* lbl: *){239}->emp&k=0&{FLOW,(1,28)=__flow#E}
+      || :EBase 
+            exists (Impl)[R; i](* lbl: *){240}->R::size<i>@M&k=i+1&
+            {FLOW,(1,28)=__flow#E}
+      
+  view vars: k
+  session info: 
+  session: 
+  cont vars: 
+  unstructured formula: 
+    (* lbl: *){239}->emp&k=0&{FLOW,(1,28)=__flow#E}
+    || (* lbl: *){240}->(exists R,i: (* lbl: *){240}->R::size<i>@M&k=
+       i+1&{FLOW,(1,28)=__flow#E})
+  inv: 0<=k
+  
+  baga over inv: [([], 0<=k)]
+  baga over inv (unfolded): [([], 0<=k)]
+  
+  xform: (1<=k | k=0)
+  is_recursive?: true
+  same_xpure?: YES
+  view_data_name: size
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  None
+  raw base case: 
+  (* lbl: *){239}->emp&k=0&{FLOW,(1,28)=__flow#E}base case: k=0->k=0
+  
+  
+ view WSSN{}[]<p:char_star,n:int>= 
+  view_domains: 
+   view WSSN<p:char_star,n:int>= 
+    EBase 
+      exists (Impl)[q](* lbl: *){241}->(exists p_30,flted_563_28,
+      flted_563_29: (* lbl: *){241}->self::WFSegN<q,flted_563_29>@M * 
+                                     q::char_star<flted_563_28,p_30>@M&
+      flted_563_29+1=n & flted_563_28=0 & p_30=p&{FLOW,(1,28)=__flow#E})
+  view vars: p,n
+  session info: 
+  session: 
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: 
+  unstructured formula: 
+    (* lbl: *){241}->(exists p_30,flted_563_28,flted_563_29,
+    q: (* lbl: *){241}->self::WFSegN<q,flted_563_29>@M * 
+                        q::char_star<flted_563_28,p_30>@M&
+    flted_563_29+1=n & flted_563_28=0 & p_30=p&{FLOW,(1,28)=__flow#E})
+  inv: self!=null & 0<=n
+  
+  baga over inv: [([], self!=null & 0<=n)]
+  baga over inv (unfolded): [([self], 1<=n)]
+  
+  xform: self!=null & 1<=n
+  same_xpure?: NO
+  view_data_name: char_star
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  Noneself preds: [WFSegN]
+  materialized vars: [(self,full,[WFSegN])]
+  
+  
+ view WSS{}[]<p:char_star>= 
+  view_domains: 
+   view WSS<p:char_star>= 
+    EBase 
+      exists (Impl)[q](* lbl: *){242}->(exists p_34,
+      flted_554_33: (* lbl: *){242}->self::WFSeg<q>@M * 
+                                     q::char_star<flted_554_33,p_34>@M&
+      flted_554_33=0 & p_34=p&{FLOW,(1,28)=__flow#E})
+  view vars: p
+  session info: 
+  session: 
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: 
+  unstructured formula: 
+    (* lbl: *){242}->(exists p_34,flted_554_33,
+    q: (* lbl: *){242}->self::WFSeg<q>@M * q::char_star<flted_554_33,p_34>@M&
+    flted_554_33=0 & p_34=p&{FLOW,(1,28)=__flow#E})
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true)]
+  
+  xform: self!=null
+  same_xpure?: NO
+  view_data_name: char_star
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  Noneself preds: [WFSeg]
+  materialized vars: [(self,full,[WFSeg])]
+  
+  
+ view MEM{}[]<>= 
+  view_domains: 
+   view MEM<>= 
+    EList
+      :EBase 
+         (* lbl: *){243}->emp&self=null&{FLOW,(1,28)=__flow#E}
+      || :EBase 
+            exists (Impl)[Anon_14; 
+            p](* lbl: *){244}->self::char_star<Anon_14,p>@M * p::MEM<>@M&
+            {FLOW,(1,28)=__flow#E}
+      
+  session info: 
+  session: 
+  ann vars (0 - not a posn): (@M,0),(@M,0)
+  cont vars: 
+  unstructured formula: 
+    (* lbl: *){243}->emp&self=null&{FLOW,(1,28)=__flow#E}
+    || (* lbl: *){244}->(exists Anon_14,
+       p: (* lbl: *){244}->self::char_star<Anon_14,p>@M * p::MEM<>@M&
+       {FLOW,(1,28)=__flow#E})
+  inv: true
+  
+  baga over inv: [([], true)]
+  baga over inv (unfolded): [([self], true),([], self=null)]
+  
+  xform: (self!=null | self=null)
+  is_recursive?: true
+  same_xpure?: YES
+  view_data_name: char_star
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  Nonematerialized vars: [(self,partial,[])]
+  addr vars: self
+  
+  raw base case: 
+  (* lbl: *){243}->emp&self=null&{FLOW,(1,28)=__flow#E}base case: self=null->self=null
+  
+  
+ view_prim memLoc{}[]<heap:boolean,size:int>= 
+  view_domains: 
+   view_prim memLoc<heap:boolean,size:int>= 
+    EBase 
+      (* lbl: *){245}->emp&{FLOW,(1,28)=__flow#E}
+  view vars: heap,size
+  session info: 
+  session: 
+  cont vars: 
+  unstructured formula: (* lbl: *){245}->emp&{FLOW,(1,28)=__flow#E}
+  inv: 0<size
+  
+  baga over inv: [([], 0<size)]
+  baga over inv (unfolded): [([], 0<size)]
+  
+  xform: 0<size
+  is_primitive?: true
+  same_xpure?: NO
+  view_data_name: memLoc
+  
+  type_of_self: 
+  Some()
+  actual_root: 
+  None
+  
+
+int foo$int~int(  int x,  int y_22)
+@ref y_22
+ rec
+static (stk) EBase 
+   emp&Term[40,pv_1846]&{FLOW,(4,5)=__norm#E}
+   EAssume 
+     ref [y_22]
+     htrue&{FLOW,(4,5)=__norm#E}
+     struct:EBase 
+              htrue&{FLOW,(4,5)=__norm#E}
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}
+{(int v_int_27_1843;
+(v_int_27_1843 = {((int v_int_27_1842;
+v_int_27_1842 = {((int v_int_27_1839;
+v_int_27_1839 = 1);
+add___$int~int(x,v_int_27_1839))});
+foo1$int~int(v_int_27_1842,y_22) rec)};
+ret# v_int_27_1843))}
+
+{(23,0),(0,-1)}
+
+int foo1$int~int(  int x,  int y_21)
+@ref y_21
+ rec
+static (stk) EBase 
+   emp&Term[40,pv_1844]&{FLOW,(4,5)=__norm#E}
+   EAssume 
+     ref [y_21]
+     htrue&{FLOW,(4,5)=__norm#E}
+     struct:EBase 
+              htrue&{FLOW,(4,5)=__norm#E}
+dynamic  EBase 
+   hfalse&false&{FLOW,(4,5)=__norm#E}
+{(boolean v_bool_15_1832;
+(v_bool_15_1832 = {((int v_int_15_1820;
+v_int_15_1820 = 0);
+lte___$int~int(y_21,v_int_15_1820))};
+if (v_bool_15_1832) [LABEL! 104,0: (int v_int_15_1821;
+(v_int_15_1821 = 0;
+ret# v_int_15_1821))]
+else [LABEL! 104,1: {(y_21 = {((int v_int_17_1824;
+v_int_17_1824 = 1);
+minus___$int~int(y_21,v_int_17_1824))};
+(int v_int_18_1831;
+(v_int_18_1831 = {((int v_int_18_1830;
+v_int_18_1830 = {((int v_int_18_1827;
+v_int_18_1827 = 1);
+add___$int~int(x,v_int_18_1827))});
+foo$int~int(v_int_18_1830,y_21) rec)};
+ret# v_int_18_1831)))}]
+))}
+
+{(11,0),(0,-1)}
+
+
+
+
+!!! Inferred constraints:[ (1+pv_1846)<=pv_1844]
+!!! Inferred constraints:[ (1+pv_1844)<=pv_1846]
+
+Checking procedure foo1$int~int...
+
+Procedure foo1$int~int SUCCESS.
+
+
+
+Checking procedure foo$int~int...
+
+Procedure foo$int~int SUCCESS.
+
+
+Termination checking result: 
+(25)->(27) (MayTerm ERR: not decreasing)  Term[40; y_22] ->  Term[40; y_22']
+(25)->(27) (MayTerm ERR: not bounded)[y_22]
+
+
+!!! **typechecker.ml#4772:Errors in TNT verificationStop z3... 161 invocations 
+Stop Omega... 136 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.240437,672)
+Total verification time: 0.939317 second(s)
+	Time spent in main process: 0.806376 second(s)
+	Time spent in child processes: 0.132941 second(s)
+	Z3 Prover Time: 0.001131 second(s)

@@ -1,0 +1,2595 @@
+ 
+ id: 1<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_568_49: (exists (v:((flted_568_49 + 1 = n) & (v != 0)))) )) )};
+ raw result:{[n]}
+ Simplify:  exists(flted_568_49:exists(v:flted_568_49+1=n & v!=0))
+ res:  true
+ -------------------- 
+ id: 2<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 3<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_568_49: (exists (v:((flted_568_49 + 1 = n) & (v != 0)))) )) )};
+ raw result:{[n]}
+ Simplify:  exists(flted_568_49:exists(v:flted_568_49+1=n & v!=0))
+ res:  true
+ -------------------- 
+ id: 4<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 5<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(v != 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:v!=0)
+ res:  true
+ -------------------- 
+ id: 6<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 7<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(v != 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:v!=0)
+ res:  true
+ -------------------- 
+ id: 8<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 9<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:(k = i + 1))) )};
+ raw result:{[k]}
+ Simplify:  exists(i:k=i+1)
+ res:  true
+ -------------------- 
+ id: 10<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 11<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_563_54:(flted_563_54 + 1 = n))) )};
+ raw result:{[n]}
+ Simplify:  exists(flted_563_54:flted_563_54+1=n)
+ res:  true
+ -------------------- 
+ id: 12<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 13<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_563_54:(flted_563_54 + 1 = n))) )};
+ raw result:{[n]}
+ Simplify:  exists(flted_563_54:flted_563_54+1=n)
+ res:  true
+ -------------------- 
+ id: 14<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 15<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[userid] : ( (exists (id:(id != userid))) )};
+ raw result:{[userid]}
+ Simplify:  exists(id:id!=userid)
+ res:  true
+ -------------------- 
+ id: 16<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 17<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:SIMPLIFY:{[userid] : ( (exists (id:(id != userid))) )};
+ raw result:{[userid]}
+ Simplify:  exists(id:id!=userid)
+ res:  true
+ -------------------- 
+ id: 18<-1; prover: OMEGA CALCULATOR; loc: _0:0_0:0; kind: UNKNOWN
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 243<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 244<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 245<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_568_49: (exists (v:(((flted_568_49 + 1 = n) & (v != 0)) & (0 <= flted_568_49)))) )) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_568_49:exists(v:flted_568_49+1=n & v!=0 & 0<=flted_568_49))
+ res:  1<=n
+ -------------------- 
+ id: 246<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 247<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 248<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 249<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_568_49: (exists (v:(((flted_568_49 + 1 = n) & (v != 0)) & (0 <= flted_568_49)))) )) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_568_49:exists(v:flted_568_49+1=n & v!=0 & 0<=flted_568_49))
+ res:  1<=n
+ -------------------- 
+ id: 250<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 251<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 252<0; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 253<0; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 254<0; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 255<0; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 256<0; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 257<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ((0 <= n))};
+ raw result:{[n]: 0 <= n}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 258<1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 259<1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 260<1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 261<1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 262<1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 263<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 264<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 265<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ( (exists (flted_568_49: (exists (v:(((flted_568_49 + 1 = n) & (v != 0)) & (0 <= flted_568_49)))) )) )};
+ raw result:{[n]: 1 <= n}
+ Simplify:  exists(flted_568_49:exists(v:flted_568_49+1=n & v!=0 & 0<=flted_568_49))
+ res:  1<=n
+ -------------------- 
+ id: 266<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((1 <= n))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  1<=n
+ res:  1<=n
+ -------------------- 
+ id: 267<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ Simplify:  self=p & n=0
+ res:  p=self & n=0
+ -------------------- 
+ id: 268<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[p, self, n] : (((p = self) & (n = 0)))};
+ raw result:{[p,p,0]}
+ PairWise:  p=self & n=0
+ res:  self=p & n=0
+ -------------------- 
+ id: 269<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, p, n] : (((self = p) & (n = 0)))};
+ raw result:{[self,self,0]}
+ PairWise:  self=p & n=0
+ res:  p=self & n=0
+ -------------------- 
+ id: 270<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ Simplify:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 271<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 272<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 273<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 274<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_568_49+1=n & v!=0 & p_50=p
+ res: SAT
+ -------------------- 
+ id: 275<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 276<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_568_49+1=n & v!=0 & p_50=p & 0<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 277<-1; prover : CACHED ; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, p] : ( (exists (p_50: (exists (flted_568_49: (exists (v:((((flted_568_49 + 1 = n) & (v != 0)) & (p_50 = p)) & (0 <= flted_568_49)))) )) )) )};
+ raw result:{[n,p]: 1 <= n}
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 278<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & 1<=n
+ res: SAT
+ -------------------- 
+ id: 279<-1; prover: Z3; loc: ../prelude.ss_567:2_567:18; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=n
+	     conseq:  ((self!=null & 1<=n) | (p=self & n=0))
+ res: false
+ -------------------- 
+ id: 280<-1; prover: Z3; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 281<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 282<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(v != 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:v!=0)
+ res:  true
+ -------------------- 
+ id: 283<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 284<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 285<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 286<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(v != 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:v!=0)
+ res:  true
+ -------------------- 
+ id: 287<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 288<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : (((1=1)))};
+ raw result:{ TRUE }
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 289<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 290<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : ( (exists (v:(v != 0))) )};
+ raw result:{ TRUE }
+ Simplify:  exists(v:v!=0)
+ res:  true
+ -------------------- 
+ id: 291<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 292<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, p] : ((self = p))};
+ raw result:{[self,self]}
+ Simplify:  self=p
+ res:  p=self
+ -------------------- 
+ id: 293<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[p, self] : ((p = self))};
+ raw result:{[p,p]}
+ PairWise:  p=self
+ res:  self=p
+ -------------------- 
+ id: 294<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, p] : ((self = p))};
+ raw result:{[self,self]}
+ PairWise:  self=p
+ res:  p=self
+ -------------------- 
+ id: 295<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ Simplify:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 296<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 297<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 298<-1; prover: Z3; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=p
+ res: SAT
+ -------------------- 
+ id: 299<-1; prover: Z3; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 300<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 301<-1; prover : CACHED ; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[p] : ( (exists (p_56: (exists (v:((v != 0) & (p_56 = p)))) )) )};
+ raw result:{[p]}
+ Sat:  self=p
+ res: SAT
+ -------------------- 
+ id: 302<-1; prover: Z3; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 303<-1; prover: Z3; loc: ../prelude.ss_558:2_558:10; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  (self!=null | p=self)
+ res: false
+ -------------------- 
+ id: 304<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 305<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 306<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:((k = i + 1) & (0 <= i)))) )};
+ raw result:{[k]: 1 <= k}
+ Simplify:  exists(i:k=i+1 & 0<=i)
+ res:  1<=k
+ -------------------- 
+ id: 307<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 308<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 309<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 310<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:((k = i + 1) & (0 <= i)))) )};
+ raw result:{[k]: 1 <= k}
+ Simplify:  exists(i:k=i+1 & 0<=i)
+ res:  1<=k
+ -------------------- 
+ id: 311<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 312<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 313<2; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 314<2; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & 1<=k
+ res: SAT
+ -------------------- 
+ id: 315<2; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: k=0
+	     conseq:  0<=k
+ res: true
+ -------------------- 
+ id: 316<2; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=k
+	     conseq:  0<=k
+ res: true
+ -------------------- 
+ id: 317<2; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 318<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ((0 <= k))};
+ raw result:{[k]: 0 <= k}
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 319<3; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 320<3; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & 1<=k
+ res: SAT
+ -------------------- 
+ id: 321<3; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: k=0
+	     conseq:  0<=k
+ res: true
+ -------------------- 
+ id: 322<3; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=k
+	     conseq:  0<=k
+ res: true
+ -------------------- 
+ id: 323<3; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null & k=0
+ res: SAT
+ -------------------- 
+ id: 324<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 325<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 326<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:((k = i + 1) & (0 <= i)))) )};
+ raw result:{[k]: 1 <= k}
+ Simplify:  exists(i:k=i+1 & 0<=i)
+ res:  1<=k
+ -------------------- 
+ id: 327<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 328<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ((k = 0))};
+ raw result:{[0]}
+ Simplify:  k=0
+ res:  k=0
+ -------------------- 
+ id: 329<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((k = 0))};
+ raw result:{[0]}
+ PairWise:  k=0
+ res:  k=0
+ -------------------- 
+ id: 330<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((k = 0))};
+ raw result:{[0]}
+ PairWise:  k=0
+ res:  k=0
+ -------------------- 
+ id: 331<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ Simplify:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 332<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 333<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 334<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=0
+ res: SAT
+ -------------------- 
+ id: 335<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=i
+ res: SAT
+ -------------------- 
+ id: 336<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 337<-1; prover : CACHED ; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:((k = i + 1) & (0 <= i)))) )};
+ raw result:{[k]: 1 <= k}
+ Sat:  k=0
+ res: SAT
+ -------------------- 
+ id: 338<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  1<=k
+ res: SAT
+ -------------------- 
+ id: 339<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  k=0 & !(1<=k)
+ res: SAT
+ -------------------- 
+ id: 340<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck ({[k] : ((k = 0))} union {[k] : ((1 <= k))});
+ raw result:{[k]: 0 <= k}
+ PairWise:  (k=0 | 1<=k)
+ res:  0<=k
+ -------------------- 
+ id: 341<-1; prover: Z3; loc: ../prelude.ss_576:3_576:6; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=k
+	     conseq:  (1<=k | k=0)
+ res: true
+ -------------------- 
+ id: 342<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 343<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 344<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 345<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 346<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, self] : ( (exists (flted_563_54: (exists (q:(((flted_563_54 + 1 = n) & (((self > 0) & (1 <= flted_563_54)) | ((q = self) & (flted_563_54 = 0)))) & (q > 0)))) )) )};
+ raw result:{[n,self]: 2 <= n && 1 <= self} union {[1,self]: 1 <= self}
+ Simplify:  exists(flted_563_54:exists(q:flted_563_54+1=n & 
+                              (((self!=null & 1<=flted_563_54) | 
+                                (q=self & flted_563_54=0))) & 
+                              q!=null))
+ res:  self!=null & ((n=1 | 2<=n))
+ -------------------- 
+ id: 347<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : ((((self > 0) & (n = 1)) | ((self > 0) & (2 <= n))))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & ((n=1 | 2<=n))
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 348<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 349<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 350<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 351<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 352<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, self] : ( (exists (flted_563_54: (exists (q:(((flted_563_54 + 1 = n) & (((self > 0) & (1 <= flted_563_54)) | ((q = self) & (flted_563_54 = 0)))) & (q > 0)))) )) )};
+ raw result:{[n,self]: 2 <= n && 1 <= self} union {[1,self]: 1 <= self}
+ Simplify:  exists(flted_563_54:exists(q:flted_563_54+1=n & 
+                              (((self!=null & 1<=flted_563_54) | 
+                                (q=self & flted_563_54=0))) & 
+                              q!=null))
+ res:  self!=null & ((n=1 | 2<=n))
+ -------------------- 
+ id: 353<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : ((((self > 0) & (n = 1)) | ((self > 0) & (2 <= n))))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & ((n=1 | 2<=n))
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 354<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 355<4; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 356<4; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: self!=null
+	     conseq:  self!=null
+ res: true
+ -------------------- 
+ id: 357<4; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 358<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, n] : (((self > 0) & (0 <= n)))};
+ raw result:{[self,n]: 1 <= self && 0 <= n}
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 359<5; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: 1<=n
+	     conseq:  0<=n
+ res: true
+ -------------------- 
+ id: 360<5; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: self!=null
+	     conseq:  self!=null
+ res: true
+ -------------------- 
+ id: 361<5; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 362<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 363<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 364<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 365<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 366<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, self] : ( (exists (flted_563_54: (exists (q:(((flted_563_54 + 1 = n) & (((self > 0) & (1 <= flted_563_54)) | ((q = self) & (flted_563_54 = 0)))) & (q > 0)))) )) )};
+ raw result:{[n,self]: 2 <= n && 1 <= self} union {[1,self]: 1 <= self}
+ Simplify:  exists(flted_563_54:exists(q:flted_563_54+1=n & 
+                              (((self!=null & 1<=flted_563_54) | 
+                                (q=self & flted_563_54=0))) & 
+                              q!=null))
+ res:  self!=null & ((n=1 | 2<=n))
+ -------------------- 
+ id: 367<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : ((((self > 0) & (n = 1)) | ((self > 0) & (2 <= n))))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & ((n=1 | 2<=n))
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 368<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ Simplify:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 369<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 370<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : (((self > 0) & (1 <= n)))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & 1<=n
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 371<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 372<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 373<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 374<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 375<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & self=2 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 376<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 377<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n, p, self] : ( (exists (p_55: (exists (flted_563_53: (exists (flted_563_54: (exists (q:((((flted_563_54 + 1 = n) & (flted_563_53 = 0)) & (p_55 = p)) & ((self = q) & (flted_563_54 = 0))))) )) )) )) )};
+ raw result:{[1,p,self]}
+ Sat:  self=1 & 2<=n
+ res: SAT
+ -------------------- 
+ id: 378<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & n=1
+ res: SAT
+ -------------------- 
+ id: 379<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & 2<=n & !(n=1)
+ res: SAT
+ -------------------- 
+ id: 380<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck ({[n] : ((2 <= n))} union {[n] : ((n = 1))});
+ raw result:{[n]: 1 <= n}
+ PairWise:  (2<=n | n=1)
+ res:  1<=n
+ -------------------- 
+ id: 381<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: self!=null & 0<=n
+	     conseq:  self!=null & 1<=n
+ res: false
+ -------------------- 
+ id: 382<-1; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 383<-1; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 384<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 385<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 386<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[userid, n] : ( (exists (id:((id != userid) & (0 <= n)))) )};
+ raw result:{[userid,n]: 0 <= n}
+ Simplify:  exists(id:id!=userid & 0<=n)
+ res:  0<=n
+ -------------------- 
+ id: 387<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((0 <= n))};
+ raw result:{[n]: 0 <= n}
+ PairWise:  0<=n
+ res:  0<=n
+ -------------------- 
+ id: 388<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 389<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 390<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 391<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 392<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[userid, n] : ( (exists (id:((id != userid) & (0 <= n)))) )};
+ raw result:{[userid,n]: 0 <= n}
+ Simplify:  exists(id:id!=userid & 0<=n)
+ res:  0<=n
+ -------------------- 
+ id: 393<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((0 <= n))};
+ raw result:{[n]: 0 <= n}
+ PairWise:  0<=n
+ res:  0<=n
+ -------------------- 
+ id: 394<-1; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 395<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 396<6; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 397<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 398<6; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  0<=n
+ res: false
+ -------------------- 
+ id: 399<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 400<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 401<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 402<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  0<=n
+ res: false
+ -------------------- 
+ id: 403<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n
+ res: SAT
+ -------------------- 
+ id: 404<6; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & self=null
+ res: SAT
+ -------------------- 
+ id: 405<6; prover: Z3; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  !(0<=n) & self=null
+ res: SAT
+ -------------------- 
+ id: 406<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n
+ res: SAT
+ -------------------- 
+ id: 407<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & self=null
+ res: SAT
+ -------------------- 
+ id: 408<6; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  !(0<=n) & self=null
+ res: SAT
+ -------------------- 
+ id: 409<-1; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[n] : ((0 <= n))};
+ raw result:{[n]: 0 <= n}
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 410<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 411<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 412<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 413<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  0<=n
+ res: false
+ -------------------- 
+ id: 414<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 415<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 416<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 417<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  0<=n
+ res: false
+ -------------------- 
+ id: 418<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n
+ res: SAT
+ -------------------- 
+ id: 419<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & self=null
+ res: SAT
+ -------------------- 
+ id: 420<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  !(0<=n) & self=null
+ res: SAT
+ -------------------- 
+ id: 421<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n
+ res: SAT
+ -------------------- 
+ id: 422<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & self=null
+ res: SAT
+ -------------------- 
+ id: 423<7; prover : CACHED ; loc: contract1_ss_79:31_79:40; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  !(0<=n) & self=null
+ res: SAT
+ -------------------- 
+ id: 424<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 425<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 426<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 427<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 428<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ( (exists (q:(((self > 0) | (q = self)) & (q > 0)))) )};
+ raw result:{[self]: 1 <= self}
+ Simplify:  exists(q:((self!=null | q=self)) & q!=null)
+ res:  self!=null
+ -------------------- 
+ id: 429<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 430<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 431<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 432<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 433<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 434<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ( (exists (q:(((self > 0) | (q = self)) & (q > 0)))) )};
+ raw result:{[self]: 1 <= self}
+ Simplify:  exists(q:((self!=null | q=self)) & q!=null)
+ res:  self!=null
+ -------------------- 
+ id: 435<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 436<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : (((1=1)))};
+ raw result:{ TRUE }
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 437<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 438<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 439<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 440<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ( (exists (q:(((self > 0) | (q = self)) & (q > 0)))) )};
+ raw result:{[self]: 1 <= self}
+ Simplify:  exists(q:((self!=null | q=self)) & q!=null)
+ res:  self!=null
+ -------------------- 
+ id: 441<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 442<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ Simplify:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 443<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 444<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 445<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 446<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=q
+ res: SAT
+ -------------------- 
+ id: 447<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 448<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 449<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & self=2 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 450<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 451<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[p, self] : ( (exists (p_59: (exists (flted_554_58: (exists (q:(((flted_554_58 = 0) & (p_59 = p)) & (self = q)))) )) )) )};
+ raw result:{[p,self]}
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 452<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 453<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & !(true)
+ res: UNSAT
+ -------------------- 
+ id: 454<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & !(true)
+ res: UNSAT
+ -------------------- 
+ id: 455<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  self!=null
+ res: false
+ -------------------- 
+ id: 456<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ((self = 0))};
+ raw result:{[0]}
+ Simplify:  self=null
+ res:  self=null
+ -------------------- 
+ id: 457<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self = 0))};
+ raw result:{[0]}
+ PairWise:  self=null
+ res:  self=null
+ -------------------- 
+ id: 458<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self = 0))};
+ raw result:{[0]}
+ PairWise:  self=null
+ res:  self=null
+ -------------------- 
+ id: 459<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ Simplify:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 460<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 461<-1; prover: OMEGA CALCULATOR; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 462<-1; prover : CACHED ; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 463<-1; prover : CACHED ; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 464<-1; prover : CACHED ; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 465<-1; prover : CACHED ; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:SIMPLIFY:{[] : (((1=1)))};
+ raw result:{ TRUE }
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 466<-1; prover : CACHED ; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Sat:  self=1
+ res: SAT
+ -------------------- 
+ id: 467<-1; prover: Z3; loc: ../prelude.ss_572:2_572:13; kind: Pred_Check_Inv
+ raw proof:no proof raw result:no result
+ Imply: ante: true
+	     conseq:  (self!=null | self=null)
+ res: true
+ -------------------- 
+ id: 468<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 469<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 470<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 471<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 472<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[n, p] : ( (exists (flted_568_49: (exists (v: (exists (q:(((flted_568_49 + 1 = n) & (v != 0)) & (((q > 0) & (1 <= flted_568_49)) | ((p = q) & (flted_568_49 = 0)))))) )) )) )};
+ raw result:{[n,p]: 2 <= n} union {[1,p]}
+ Simplify:  exists(flted_568_49:exists(v:exists(q:flted_568_49+1=n & v!=0 & 
+                                       (((q!=null & 1<=flted_568_49) | 
+                                         (p=q & flted_568_49=0))))))
+ res:  (n=1 | 2<=n)
+ -------------------- 
+ id: 473<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[n] : (((n = 1) | (2 <= n)))};
+ raw result:{[n]: 1 <= n}
+ PairWise:  (n=1 | 2<=n)
+ res:  1<=n
+ -------------------- 
+ id: 474<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: self=p
+	     conseq:  self=p
+ res: true
+ -------------------- 
+ id: 475<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=p & self!=null & 1<=n
+ res: SAT
+ -------------------- 
+ id: 476<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: n=0
+	     conseq:  n=0
+ res: true
+ -------------------- 
+ id: 477<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  n=0 & self!=null & 1<=n
+ res: UNSAT
+ -------------------- 
+ id: 478<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 479<-1; prover: Z3; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 480<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 481<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 482<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[p] : ( (exists (v: (exists (q:((v != 0) & ((q > 0) | (p = q))))) )) )};
+ raw result:{[p]}
+ Simplify:  exists(v:exists(q:v!=0 & ((q!=null | p=q))))
+ res:  true
+ -------------------- 
+ id: 483<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[] : (((1=1)))};
+ raw result:{ TRUE }
+ PairWise:  true
+ res:  true
+ -------------------- 
+ id: 484<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: self=p
+	     conseq:  self=p
+ res: true
+ -------------------- 
+ id: 485<-1; prover: Z3; loc: ../prelude.ss_559:5_559:47; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=p & self!=null
+ res: SAT
+ -------------------- 
+ id: 486<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 487<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 488<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[k] : ( (exists (i:((k = i + 1) & (0 <= i)))) )};
+ raw result:{[k]: 1 <= k}
+ Simplify:  exists(i:k=i+1 & 0<=i)
+ res:  1<=k
+ -------------------- 
+ id: 489<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[k] : ((1 <= k))};
+ raw result:{[k]: 1 <= k}
+ PairWise:  1<=k
+ res:  1<=k
+ -------------------- 
+ id: 490<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: k=0
+	     conseq:  k=0
+ res: true
+ -------------------- 
+ id: 491<-1; prover: Z3; loc: ../prelude.ss_577:6_577:24; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  k=0 & 1<=k
+ res: UNSAT
+ -------------------- 
+ id: 492<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 493<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 494<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 495<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 496<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[n, self] : ( (exists (flted_563_54: (exists (q:(((flted_563_54 + 1 = n) & (((self > 0) & (1 <= flted_563_54)) | ((q = self) & (flted_563_54 = 0)))) & (q > 0)))) )) )};
+ raw result:{[n,self]: 2 <= n && 1 <= self} union {[1,self]: 1 <= self}
+ Simplify:  exists(flted_563_54:exists(q:flted_563_54+1=n & 
+                              (((self!=null & 1<=flted_563_54) | 
+                                (q=self & flted_563_54=0))) & 
+                              q!=null))
+ res:  self!=null & ((n=1 | 2<=n))
+ -------------------- 
+ id: 497<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[self, n] : ((((self > 0) & (n = 1)) | ((self > 0) & (2 <= n))))};
+ raw result:{[self,n]: 1 <= self && 1 <= n}
+ PairWise:  self!=null & ((n=1 | 2<=n))
+ res:  self!=null & 1<=n
+ -------------------- 
+ id: 498<-1; prover : CACHED ; loc: contract1_ss_80:28_80:97; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 499<-1; prover : CACHED ; loc: contract1_ss_80:28_80:97; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 500<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 501<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 502<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[userid, n] : ( (exists (id:((id != userid) & (0 <= n)))) )};
+ raw result:{[userid,n]: 0 <= n}
+ Simplify:  exists(id:id!=userid & 0<=n)
+ res:  0<=n
+ -------------------- 
+ id: 503<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[n] : ((0 <= n))};
+ raw result:{[n]: 0 <= n}
+ PairWise:  0<=n
+ res:  0<=n
+ -------------------- 
+ id: 504<-1; prover: Z3; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: self=null
+	     conseq:  self=null
+ res: true
+ -------------------- 
+ id: 505<-1; prover: Z3; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=null & self!=null & 0<=n
+ res: UNSAT
+ -------------------- 
+ id: 506<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=null & self!=null & 0<=n
+ res: UNSAT
+ -------------------- 
+ id: 507<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 508<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 509<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 510<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 511<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:SIMPLIFY:{[self] : ( (exists (q:(((self > 0) | (q = self)) & (q > 0)))) )};
+ raw result:{[self]: 1 <= self}
+ Simplify:  exists(q:((self!=null | q=self)) & q!=null)
+ res:  self!=null
+ -------------------- 
+ id: 512<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Compute_Base_Case
+ raw proof:PAIRWISE:pairwisecheck {[self] : ((self > 0))};
+ raw result:{[self]: 1 <= self}
+ PairWise:  self!=null
+ res:  self!=null
+ -------------------- 
+ id: 513<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 514<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 515<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 516<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 517<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Imply: ante: self=null
+	     conseq:  self=null
+ res: true
+ -------------------- 
+ id: 518<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Compute_Base_Case
+ raw proof:no proof raw result:no result
+ Sat:  self=null & self!=null
+ res: UNSAT
+ -------------------- 
+ id: 519<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 520<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 521<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 522<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 523<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 
+ exists(flted_568_49:exists(v:exists(q:flted_568_49+1=n & v!=0 & 
+                                       (((q!=null & 1<=flted_568_49) | 
+                                         (p=q & flted_568_49=0))))))
+ res: SAT
+ -------------------- 
+ id: 524<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=p & n=0
+ res: SAT
+ -------------------- 
+ id: 525<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 526<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 527<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & flted_568_49+1=n & v!=0 & p_50=p & 1<=flted_568_49
+ res: SAT
+ -------------------- 
+ id: 528<-1; prover : CACHED ; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_568_49+1=n & v!=0 & p_50=p & q=p_50 & flted_568_49=0
+ res: SAT
+ -------------------- 
+ id: 529<-1; prover: Z3; loc: ../prelude.ss_568:5_568:53; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & self!=null & 
+ exists(flted_568_49:flted_568_49+1=n & 
+                     (((q!=null & 1<=flted_568_49) | (p=q & flted_568_49=0))))
+ res: SAT
+ -------------------- 
+ id: 530<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 531<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 532<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 533<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 534<-1; prover: Z3; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & exists(v:exists(q:v!=0 & ((q!=null | p=q))))
+ res: SAT
+ -------------------- 
+ id: 535<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=p
+ res: SAT
+ -------------------- 
+ id: 536<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 537<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 538<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q=1 & v!=0 & p_56=p
+ res: SAT
+ -------------------- 
+ id: 539<-1; prover : CACHED ; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & p_56=p & q=p_56
+ res: SAT
+ -------------------- 
+ id: 540<-1; prover: Z3; loc: ../prelude.ss_559:5_559:47; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  v!=0 & self!=null & q!=null
+ res: SAT
+ -------------------- 
+ id: 541<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 542<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 543<-1; prover: Z3; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  exists(i:k=i+1 & ((1<=i | i=0)))
+ res: SAT
+ -------------------- 
+ id: 544<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=0
+ res: SAT
+ -------------------- 
+ id: 545<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 546<-1; prover : CACHED ; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 0<=i
+ res: SAT
+ -------------------- 
+ id: 547<-1; prover: Z3; loc: ../prelude.ss_577:6_577:24; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  k=i+1 & 1<=i
+ res: SAT
+ -------------------- 
+ id: 548<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 549<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 550<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 551<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 552<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  exists(flted_563_54:exists(q:flted_563_54+1=n & 
+                              (((self!=null & 1<=flted_563_54) | 
+                                (q=self & flted_563_54=0))) & 
+                              q!=null))
+ res: SAT
+ -------------------- 
+ id: 553<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 554<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 555<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_563_54+1=n & flted_563_53=0 & p_55=p & 1<=flted_563_54
+ res: SAT
+ -------------------- 
+ id: 556<-1; prover : CACHED ; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_563_54+1=n & flted_563_53=0 & p_55=p & self=q & flted_563_54=0
+ res: SAT
+ -------------------- 
+ id: 557<-1; prover: Z3; loc: ../prelude.ss_563:2_563:43; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q!=null & 
+ exists(flted_563_54:flted_563_54+1=n & 
+                     (((self!=null & 1<=flted_563_54) | 
+                       (q=self & flted_563_54=0))))
+ res: SAT
+ -------------------- 
+ id: 558<-1; prover : CACHED ; loc: contract1_ss_80:28_80:97; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 559<-1; prover : CACHED ; loc: contract1_ss_80:28_80:97; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id=userid & n=val & userid_60=userid & n_61=n & 0<=n_61
+ res: SAT
+ -------------------- 
+ id: 560<-1; prover : CACHED ; loc: contract1_ss_80:28_80:97; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 561<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 562<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 563<-1; prover: Z3; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & exists(id:id!=userid & 0<=n)
+ res: SAT
+ -------------------- 
+ id: 564<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 565<-1; prover : CACHED ; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & userid_62=userid & n_63=n & 0<=n_63
+ res: SAT
+ -------------------- 
+ id: 566<-1; prover: Z3; loc: contract1_ss_81:28_81:90; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  id!=userid & self!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 567<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 568<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 569<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 570<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 571<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  exists(q:((self!=null | q=self)) & q!=null)
+ res: SAT
+ -------------------- 
+ id: 572<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 573<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 574<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=1 & flted_554_58=0 & p_59=p
+ res: SAT
+ -------------------- 
+ id: 575<-1; prover : CACHED ; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  flted_554_58=0 & p_59=p & self=q
+ res: SAT
+ -------------------- 
+ id: 576<-1; prover: Z3; loc: ../prelude.ss_554:2_554:37; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  q!=null & self!=null
+ res: SAT
+ -------------------- 
+ id: 577<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 578<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 579<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 580<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 581<-1; prover: Z3; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  exists(p:self!=null & ((p!=null | p=null)))
+ res: SAT
+ -------------------- 
+ id: 582<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self=null
+ res: SAT
+ -------------------- 
+ id: 583<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 584<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 585<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=1
+ res: SAT
+ -------------------- 
+ id: 586<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  p=null
+ res: SAT
+ -------------------- 
+ id: 587<-1; prover : CACHED ; loc: ../prelude.ss_573:2_573:34; kind: Sat_Warning
+ raw proof:no proof raw result:no result
+ Sat:  self!=null & p!=null
+ res: SAT
+ -------------------- 
+ id: 588<-1; prover: Z3; loc: contract1_ss_86:14_86:55; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ Term[128] & id_141=id & 0<=n
+ res: SAT
+ -------------------- 
+ id: 589<-1; prover: Z3; loc: contract1_ss_86:14_86:55; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ Term[128] & id_141=id & msg_43!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 590<8; prover: Z3; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & 0<=n
+ res: SAT
+ -------------------- 
+ id: 591<8; prover: Z3; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & msg_43!=null & 0<=n
+	     conseq:  userbal_44=msg_43'
+ res: false
+ -------------------- 
+ id: 592<8; prover: Z3; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & msg_43!=null & 0<=n
+	     conseq:  msg_43!=msg_43'
+ res: false
+ -------------------- 
+ id: 593<9; prover: Z3; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & 
+ sender_89_2112'=id & sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 
+ data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & sender_89_2112'=id & 
+ sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 594<9; prover : CACHED ; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & 
+ sender_89_2112'=id & sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 
+ data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & sender_89_2112'=id & 
+ sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 595<9; prover : CACHED ; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & 
+ sender_89_2112'=id & sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 
+ data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & sender_89_2112'=id & 
+ sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 596<9; prover : CACHED ; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & 
+ sender_89_2112'=id & sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 
+ data__89_2110'=Anon_12 & gas_89_2111'=Anon_13 & sender_89_2112'=id & 
+ sig_89_2113'=Anon_14 & value_89_2114'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 597<9; prover: Z3; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_89_2114'=Anon_15 & sig_89_2113'=Anon_14 & sender_89_2112'=id & 
+ gas_89_2111'=Anon_13 & data__89_2110'=Anon_12 & id_2204=id & 0<n & 
+ userbal_44'=userbal_44 & bal_42'=bal_42 & msg_43'=msg_43 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 598<9; prover : CACHED ; loc: contract1_ss_89:10_89:20; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_89_2114'=Anon_15 & sig_89_2113'=Anon_14 & sender_89_2112'=id & 
+ gas_89_2111'=Anon_13 & data__89_2110'=Anon_12 & id_2204=id & 0<n & 
+ userbal_44'=userbal_44 & bal_42'=bal_42 & msg_43'=msg_43 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 599<10; prover: Z3; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & 0<=n
+ res: SAT
+ -------------------- 
+ id: 600<10; prover: Z3; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & 0<=n & msg_43!=null
+	     conseq:  msg_43!=msg_43'
+ res: false
+ -------------------- 
+ id: 601<10; prover: Z3; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & 0<=n & msg_43!=null
+	     conseq:  userbal_44=msg_43'
+ res: false
+ -------------------- 
+ id: 602<11; prover: Z3; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & data__89_2115'=Anon_12 & 
+ gas_89_2116'=Anon_13 & sender_89_2117'=id & sig_89_2118'=Anon_14 & 
+ value_89_2119'=Anon_15 & data__89_2115'=Anon_12 & gas_89_2116'=Anon_13 & 
+ sender_89_2117'=id & sig_89_2118'=Anon_14 & value_89_2119'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 603<11; prover : CACHED ; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & data__89_2115'=Anon_12 & 
+ gas_89_2116'=Anon_13 & sender_89_2117'=id & sig_89_2118'=Anon_14 & 
+ value_89_2119'=Anon_15 & data__89_2115'=Anon_12 & gas_89_2116'=Anon_13 & 
+ sender_89_2117'=id & sig_89_2118'=Anon_14 & value_89_2119'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 604<11; prover : CACHED ; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & data__89_2115'=Anon_12 & 
+ gas_89_2116'=Anon_13 & sender_89_2117'=id & sig_89_2118'=Anon_14 & 
+ value_89_2119'=Anon_15 & data__89_2115'=Anon_12 & gas_89_2116'=Anon_13 & 
+ sender_89_2117'=id & sig_89_2118'=Anon_14 & value_89_2119'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 605<11; prover : CACHED ; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & data__89_2115'=Anon_12 & 
+ gas_89_2116'=Anon_13 & sender_89_2117'=id & sig_89_2118'=Anon_14 & 
+ value_89_2119'=Anon_15 & data__89_2115'=Anon_12 & gas_89_2116'=Anon_13 & 
+ sender_89_2117'=id & sig_89_2118'=Anon_14 & value_89_2119'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 606<11; prover: Z3; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_89_2119'=Anon_15 & sig_89_2118'=Anon_14 & sender_89_2117'=id & 
+ gas_89_2116'=Anon_13 & data__89_2115'=Anon_12 & v_int_89_2128'=id & 
+ id_2204=id & 0<n & userbal_44'=userbal_44 & bal_42'=bal_42 & 
+ msg_43'=msg_43 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 607<11; prover : CACHED ; loc: contract1_ss_89:36_89:46; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_89_2119'=Anon_15 & sig_89_2118'=Anon_14 & sender_89_2117'=id & 
+ gas_89_2116'=Anon_13 & data__89_2115'=Anon_12 & v_int_89_2128'=id & 
+ id_2204=id & 0<n & userbal_44'=userbal_44 & bal_42'=bal_42 & 
+ msg_43'=msg_43 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 608<12; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & 0<=n
+ res: SAT
+ -------------------- 
+ id: 609<12; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & 0<=n & msg_43!=null
+	     conseq:  msg_43=userbal_44'
+ res: false
+ -------------------- 
+ id: 610<12; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & 0<=n & msg_43!=null
+	     conseq:  userbal_44!=userbal_44'
+ res: false
+ -------------------- 
+ id: 611<13; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & n_2211=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 612<13; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & n_2211=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 613<13; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & n_2211=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 614<13; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & n_2211=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 615<13; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: v_int_89_2128'=id & id_2204=id & v_int_89_2123'=id
+	     conseq:  id_2204=v_int_89_2123'
+ res: true
+ -------------------- 
+ id: 616<13; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  n_2211=n & v_int_89_2123'=id & v_int_89_2128'=id & id_2204=id & 0<n & 
+ userbal_44'=userbal_44 & bal_42'=bal_42 & msg_43'=msg_43 & msg_43!=null
+ res: SAT
+ -------------------- 
+ id: 617<14; prover: Z3; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 618<14; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 619<14; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 620<14; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_44'=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 621<14; prover : CACHED ; loc: contract1_ss_89:21_89:47; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  n_2211=n & v_int_89_2123'=id & v_int_89_2128'=id & id_2204=id & 0<n & 
+ userbal_44'=userbal_44 & bal_42'=bal_42 & msg_43'=msg_43 & msg_43!=null
+ res: SAT
+ -------------------- 
+ id: 622<-1; prover: Z3; loc: contract1_ss_89:21_89:47; kind: Lemma_Prop
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & userbal_2219=userbal_44 & 0<n & 
+ id_2204=id & v_int_89_2128'=id & v_int_89_2123'=id & n_2211=n & 
+ userbal_2219=userbal_44' & res=n_2211 & msg_43!=null
+ res: SAT
+ -------------------- 
+ id: 623<15; prover: Z3; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 624<15; prover : CACHED ; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 625<15; prover : CACHED ; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 626<15; prover : CACHED ; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_42'=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 627<15; prover: Z3; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<n & 0<=n & n_2211=n & v_int_89_2127'=n_2211
+	     conseq:  0<v_int_89_2127'
+ res: true
+ -------------------- 
+ id: 628<15; prover: Z3; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_89_2127'=n_2211 & userbal_44=userbal_44' & n_2211=n & 
+ v_int_89_2128'=id & id_2204=id & 0<n & bal_42'=bal_42 & msg_43'=msg_43 & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 629<15; prover: Z3; loc: contract1_ss_89:5_89:48; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  v_int_89_2127'=n_2211 & userbal_44=userbal_44' & n_2211=n & 
+ v_int_89_2128'=id & id_2204=id & 0<n & bal_42'=bal_42 & msg_43'=msg_43 & 
+ msg_43!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 630<-1; prover: Z3; loc: contract1_ss_89:5_89:48; kind: Lemma_Prop
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_2227=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 
+ bal_42'+v_int_89_2127'=bal_2227 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 631<-1; prover: Z3; loc: contract1_ss_89:5_89:48; kind: Lemma_Prop
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & bal_2227=bal_42 & 0<n & id_2204=id & v_int_89_2128'=id & 
+ n_2211=n & userbal_44=userbal_44' & v_int_89_2127'=n_2211 & 
+ bal_42'+v_int_89_2127'=bal_2227 & msg_43!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 632<-1; prover: Z3; loc: contract1_ss_89:5_89:48; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & 0<n & id_2204=id & n_2211=n & userbal_44=userbal_44' & 
+ bal_42'+n_2211=bal_42 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 633<-1; prover: Z3; loc: contract1_ss_89:5_89:48; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  msg_43'=msg_43 & 0<n & id_2204=id & n_2211=n & userbal_44=userbal_44' & 
+ bal_42'+n_2211=bal_42 & msg_43!=null & 0<=n
+ res: SAT
+ -------------------- 
+ id: 634<-1; prover: OMEGA CALCULATOR; loc: contract1_ss_89:5_89:48; kind: Check_Specs
+ raw proof:SIMPLIFY:{[bal_42PRMD, bal_42, userbal_44, userbal_44PRMD, id, n, msg_43PRMD, msg_43] : (((((((bal_42PRMD + n = bal_42) & (userbal_44 = userbal_44PRMD)) & (n = n)) & (id = id)) & (0 < n)) & (msg_43PRMD = msg_43)))};
+ raw result:{[bal_42PRMD,bal_42,userbal_44,userbal_44,id,bal_42-bal_42PRMD,msg_43PRMD,msg_43PRMD]: bal_42PRMD < bal_42}
+ Simplify:  bal_42'+n=bal_42 & userbal_44=userbal_44' & n=n & id=id & 0<n & 
+ msg_43'=msg_43
+ res:  userbal_44'=userbal_44 & n+bal_42'=bal_42 & msg_43=msg_43' & bal_42'<bal_42
+ -------------------- 
+ id: 635<-1; prover: OMEGA CALCULATOR; loc: contract1_ss_89:5_89:48; kind: Check_Specs
+ raw proof:PAIRWISE:pairwisecheck {[userbal_44PRMD, userbal_44, n, msg_43, msg_43PRMD, bal_42PRMD, bal_42] : (((((userbal_44PRMD = userbal_44) & (n + bal_42PRMD = bal_42)) & (msg_43 = msg_43PRMD)) & (bal_42PRMD < bal_42)))};
+ raw result:{[userbal_44PRMD,userbal_44PRMD,n,msg_43,msg_43,bal_42PRMD,bal_42PRMD+n]: 1 <= n}
+ PairWise:  userbal_44'=userbal_44 & n+bal_42'=bal_42 & msg_43=msg_43' & bal_42'<bal_42
+ res:  userbal_44=userbal_44' & msg_43'=msg_43 & bal_42=bal_42'+n & 1<=n
+ -------------------- 
+ id: 636<16; prover: Z3; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 637<16; prover: Z3; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & msg_43!=null & 0<=n
+	     conseq:  userbal_44=msg_43'
+ res: false
+ -------------------- 
+ id: 638<16; prover: Z3; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Imply: ante: bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & msg_43!=null & 0<=n
+	     conseq:  msg_43!=msg_43'
+ res: false
+ -------------------- 
+ id: 639<17; prover: Z3; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & 
+ sender_91_2131'=id & sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 
+ data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & sender_91_2131'=id & 
+ sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 640<17; prover : CACHED ; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & 
+ sender_91_2131'=id & sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 
+ data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & sender_91_2131'=id & 
+ sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 641<17; prover : CACHED ; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & 
+ sender_91_2131'=id & sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 
+ data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & sender_91_2131'=id & 
+ sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 642<17; prover : CACHED ; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & 
+ sender_91_2131'=id & sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 
+ data__91_2129'=Anon_12 & gas_91_2130'=Anon_13 & sender_91_2131'=id & 
+ sig_91_2132'=Anon_14 & value_91_2133'=Anon_15 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 643<17; prover: Z3; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_91_2133'=Anon_15 & sig_91_2132'=Anon_14 & sender_91_2131'=id & 
+ gas_91_2130'=Anon_13 & data__91_2129'=Anon_12 & msg_43'=msg_43 & 0<n & 
+ id_2204=id & n_2211=n & userbal_44=userbal_44' & bal_42'+n_2211=bal_42 & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 644<17; prover : CACHED ; loc: contract1_ss_91:20_91:30; kind: BIND
+ raw proof:no proof raw result:no result
+ Sat:  value_91_2133'=Anon_15 & sig_91_2132'=Anon_14 & sender_91_2131'=id & 
+ gas_91_2130'=Anon_13 & data__91_2129'=Anon_12 & msg_43'=msg_43 & 0<n & 
+ id_2204=id & n_2211=n & userbal_44=userbal_44' & bal_42'+n_2211=bal_42 & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 645<18; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & 0<=n
+ res: SAT
+ -------------------- 
+ id: 646<18; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & 0<=n & 
+ msg_43!=null
+	     conseq:  msg_43=userbal_44'
+ res: false
+ -------------------- 
+ id: 647<18; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & 0<=n & 
+ msg_43!=null
+	     conseq:  userbal_44!=userbal_44'
+ res: false
+ -------------------- 
+ id: 648<19; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ Anon_11=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 649<19; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ Anon_11=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 650<19; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ Anon_11=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 651<19; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ Anon_11=n & 0<=n
+ res: SAT
+ -------------------- 
+ id: 652<19; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Imply: ante: id_2204=id & v_int_91_2138'=id
+	     conseq:  id_2204=v_int_91_2138'
+ res: true
+ -------------------- 
+ id: 653<19; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  Anon_11=n & v_int_91_2137'=0 & v_int_91_2138'=id & msg_43'=msg_43 & 0<n & 
+ id_2204=id & n_2211=n & userbal_44=userbal_44' & bal_42'+n_2211=bal_42 & 
+ msg_43!=null
+ res: SAT
+ -------------------- 
+ id: 654<20; prover: Z3; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 655<20; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 656<20; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 657<20; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_44' & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n
+ res: SAT
+ -------------------- 
+ id: 658<20; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  Anon_11=n & v_int_91_2137'=0 & v_int_91_2138'=id & msg_43'=msg_43 & 0<n & 
+ id_2204=id & n_2211=n & userbal_44=userbal_44' & bal_42'+n_2211=bal_42 & 
+ msg_43!=null
+ res: SAT
+ -------------------- 
+ id: 659<-1; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: PRE
+ raw proof:no proof raw result:no result
+ Sat:  0<=n
+ res: SAT
+ -------------------- 
+ id: 660<-1; prover: Z3; loc: contract1_ss_91:5_91:33; kind: Lemma_Prop
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_2241 & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n & userid_2242=v_int_91_2138' & amount_2243=v_int_91_2137' & 
+ 0<=amount_2243
+ res: SAT
+ -------------------- 
+ id: 661<-1; prover: Z3; loc: contract1_ss_91:5_91:33; kind: Lemma_Prop
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & userbal_44=userbal_2241 & n_2211=n & id_2204=id & 
+ 0<n & msg_43'=msg_43 & v_int_91_2138'=id & v_int_91_2137'=0 & Anon_11=n & 
+ 0<=n & userid_2242=v_int_91_2138' & amount_2243=v_int_91_2137' & 
+ msg_43!=null & 0<=amount_2243
+ res: SAT
+ -------------------- 
+ id: 662<-1; prover: Z3; loc: contract1_ss_91:5_91:33; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & n_2211=n & id_2204=id & 0<n & msg_43'=msg_43 & 
+ v_int_91_2137'=0 & Anon_11=n & 0<=n & 0<=v_int_91_2137'
+ res: SAT
+ -------------------- 
+ id: 663<-1; prover: Z3; loc: contract1_ss_91:5_91:33; kind: Check_Specs
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & n_2211=n & id_2204=id & 0<n & msg_43'=msg_43 & 
+ v_int_91_2137'=0 & Anon_11=n & 0<=n & msg_43!=null & 0<=v_int_91_2137'
+ res: SAT
+ -------------------- 
+ id: 664<-1; prover: OMEGA CALCULATOR; loc: contract1_ss_91:5_91:33; kind: Check_Specs
+ raw proof:SIMPLIFY:{[v_int_91_2137PRMD, msg_43PRMD, msg_43, id, bal_42PRMD, n, bal_42] : (((((((((0 <= n) & (n = n)) & (v_int_91_2137PRMD = 0)) & (msg_43PRMD = msg_43)) & (0 < n)) & (id = id)) & (n = n)) & (bal_42PRMD + n = bal_42)))};
+ raw result:{[0,msg_43PRMD,msg_43PRMD,id,bal_42PRMD,n,bal_42PRMD+n]: 1 <= n}
+ Simplify:  0<=n & n=n & v_int_91_2137'=0 & msg_43'=msg_43 & 0<n & id=id & n=n & 
+ bal_42'+n=bal_42
+ res:  v_int_91_2137'=0 & msg_43=msg_43' & bal_42=n+bal_42' & 1<=n
+ -------------------- 
+ id: 665<-1; prover: OMEGA CALCULATOR; loc: contract1_ss_91:5_91:33; kind: Check_Specs
+ raw proof:PAIRWISE:pairwisecheck {[v_int_91_2137PRMD, msg_43, msg_43PRMD, bal_42, bal_42PRMD, n] : (((((v_int_91_2137PRMD = 0) & (msg_43 = msg_43PRMD)) & (bal_42 = n + bal_42PRMD)) & (1 <= n)))};
+ raw result:{[0,msg_43,msg_43,bal_42,bal_42PRMD,bal_42-bal_42PRMD]: bal_42PRMD < bal_42}
+ PairWise:  v_int_91_2137'=0 & msg_43=msg_43' & bal_42=n+bal_42' & 1<=n
+ res:  v_int_91_2137'=0 & msg_43'=msg_43 & n=bal_42-bal_42' & bal_42'<bal_42
+ -------------------- 
+ id: 666<21; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & 0<=v_int_91_2244
+ res: SAT
+ -------------------- 
+ id: 667<21; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & msg_43!=null & 0<=v_int_91_2244
+	     conseq:  false
+ res: false
+ -------------------- 
+ id: 668<21; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & msg_43!=null & 0<=v_int_91_2244
+	     conseq:  msg_43=userbal_44'
+ res: false
+ -------------------- 
+ id: 669<22; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & 0<=v_int_91_2244
+ res: SAT
+ -------------------- 
+ id: 670<22; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & 0<=v_int_91_2244
+ res: SAT
+ -------------------- 
+ id: 671<22; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & 0<=v_int_91_2244
+ res: SAT
+ -------------------- 
+ id: 672<22; prover : CACHED ; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  0<=n & Anon_11=n & v_int_91_2244=0 & msg_43'=msg_43 & 0<n & id_2204=id & 
+ n_2211=n & bal_42'+n_2211=bal_42 & 0<=v_int_91_2244
+ res: SAT
+ -------------------- 
+ id: 673<22; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: id_2204=id
+	     conseq:  id=id
+ res: true
+ -------------------- 
+ id: 674<22; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: 0<=n & Anon_11=n & 0<n & n_2211=n & bal_42'+n_2211=bal_42
+	     conseq:  n+bal_42'=bal_42
+ res: true
+ -------------------- 
+ id: 675<22; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Imply: ante: v_int_91_2244=0 & 0<=v_int_91_2244
+	     conseq:  v_int_91_2244=0
+ res: true
+ -------------------- 
+ id: 676<22; prover: Z3; loc: contract1_ss_91:5_91:33; kind: POST
+ raw proof:no proof raw result:no result
+ Sat:  bal_42'+n_2211=bal_42 & n_2211=n & id_2204=id & 0<n & msg_43'=msg_43 & 
+ v_int_91_2244=0 & Anon_11=n & 0<=n & msg_43!=null
+ res: SAT
+ --------------------

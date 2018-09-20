@@ -1,0 +1,542 @@
+
+!!! **tpdispatcher.ml#502:init_tp by default: 
+!!! **tpdispatcher.ml#395:set_tp z3spatial_ctx_extract
+Trace
+choose_context
+Trace
+process_one_match
+Trace
+compute_actions
+Trace
+
+!!!Full processing file "../examples/working/hip/append-tail.ss"
+Parsing file "../examples/working/hip/append-tail.ss" by default parser...
+
+
+!!! processing primitives "["prelude.ss"]
+
+Starting z3... 
+starting translation
+
+!!! **WARNING****astsimp.ml#9434:Post-condition has existentially quantified free vars, error position: ../prelude.ss_613:10_613:25:[(q,)]
+!!! **WARNING****astsimp.ml#9434:Post-condition has existentially quantified free vars, error position: ../prelude.ss_608:22_608:39:[(p,)]
+Starting Omega.../usr/local/bin/oc
+
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+!!! **WARNING****astsimp.ml#2047:TODO: fix replacement of rec view with inv
+
+Checking procedure append$node~node~node~node...
+
+@1! **cpure.ml#15361:annot: 2
+@1! **cpure.ml#15362:annot: :[0,0]
+@1! **cpure.ml#15363:hargs: :[tx_2051,n]
+@1! **cpure.ml#15371:view_args_pos: 2
+@1! **cpure.ml#15375:to_be_updated: :2
+@1! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@1! **cpure.ml#15361:annot: 2
+@1! **cpure.ml#15362:annot: :[0,0]
+@1! **cpure.ml#15363:hargs: :[ty_2052,m]
+@1! **cpure.ml#15371:view_args_pos: 2
+@1! **cpure.ml#15375:to_be_updated: :2
+@1! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **cvutil.ml#1749:elim_abs (b4): x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2!:0: 0: [entail:41][post:37]**cvutil.ml#1756:elim_abs (af): x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M
+@2!:0: 0: [entail:41][post:37]**cvutil.ml#1757:elim_abs (pure): true
+@2! **cvutil.ml#575:pure f: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x
+@2! **cvutil.ml#576:evars:[]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cvutil.ml#862:f:#VN2# x::ll_tail2<tx_2051,n>@M
+@2! **cast.ml#1756:c= :ll_tail2
+@2! **cast.ml#1769:look_up_view_baga: baga= :Some([([self], ((2<=n & 1<=tx) | (tx<=(0-1) & 2<=n) | (n=1 & tx=self)))])
+@2! **cast.ml#1770:baga ex vars= :[]
+@2! **cast.ml#1774:from_svs:[self,tx,n]
+@2! **cast.ml#1775:to_svs:[x,tx_2051,n]
+@2! **cast.ml#1784:baga (subst)= :[([x], ((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x)))]
+@2! **cast.ml#1742:add_epure(1) = :[([x], ((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x)))]
+@2! **excore.ml#722:Omega mk_star_disj:start 155 invocations
+@2! **excore.ml#726:Omega mk_star_disj:end 155 invocations
+@2! **cast.ml#1744:add_epure(2) = :[([x], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x))))]
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#2251:SAT #732
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#2252: x=1 & ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 2<=n & 
+ 1<=tx_2051
+@2! **cpure.ml#11531:var_info [(x,1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(ty_2052,1),(ty,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(tx_2051,1),(tx,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(ty',1),(ty,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(y',1),(y,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(tx',1),(tx,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(x',1),(x,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11559:res_list[(2,1),(3,1)]
+@2! **cpure.ml#11712:em emap[{__CONST_Int_1,x,x'};{tx,tx',tx_2051};{ty,ty',ty_2052};{y,y'}]
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x=1
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty'=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y'=y
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx'=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x'=x
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 2<=n
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=tx_2051
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): false
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2! **cast.ml#1747:add_epure (res) = :[([x], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x))))]
+@2! **cast.ml#1786:baga (filtered)= :[([x], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x))))]
+@2! **cast.ml#1789:baga (hulled)= :[x]
+@2! **cvutil.ml#924:baga(view_node):[x]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **cvutil.ml#862:f:#VN2# y::ll_tail2<ty_2052,m>@M
+@2! **cast.ml#1756:c= :ll_tail2
+@2! **cast.ml#1769:look_up_view_baga: baga= :Some([([self], ((2<=n & 1<=tx) | (tx<=(0-1) & 2<=n) | (n=1 & tx=self)))])
+@2! **cast.ml#1770:baga ex vars= :[]
+@2! **cast.ml#1774:from_svs:[self,tx,n]
+@2! **cast.ml#1775:to_svs:[y,ty_2052,m]
+@2! **cast.ml#1784:baga (subst)= :[([y], ((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y)))]
+@2! **cast.ml#1742:add_epure(1) = :[([y], ((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y)))]
+@2! **excore.ml#722:Omega mk_star_disj:start 155 invocations
+@2! **excore.ml#726:Omega mk_star_disj:end 155 invocations
+@2! **cast.ml#1744:add_epure(2) = :[([y], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y))))]
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#2251:SAT #733
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#2252: y=1 & ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 2<=m & 
+ 1<=ty_2052
+@2! **cpure.ml#11531:var_info [(y,1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(ty_2052,1),(ty,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(tx_2051,1),(tx,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(ty',1),(ty,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(y',1),(y,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(tx',1),(tx,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11531:var_info [(x',1),(x,-1)]
+@2! **cpure.ml#11532:sv_list [y',y,x',x,ty_2052,ty',ty,tx_2051,tx',tx]
+@2! **cpure.ml#11559:res_list[(0,1),(1,1)]
+@2! **cpure.ml#11712:em emap[{__CONST_Int_1,y,y'};{tx,tx',tx_2051};{ty,ty',ty_2052};{x,x'}]
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y=1
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty'=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y'=y
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx'=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x'=x
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 2<=m
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=ty_2052
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): false
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2! **cast.ml#1747:add_epure (res) = :[([y], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y))))]
+@2! **cast.ml#1786:baga (filtered)= :[([y], ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & 
+ (((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y))))]
+@2! **cast.ml#1789:baga (hulled)= :[y]
+@2! **cvutil.ml#924:baga(view_node):[y]
+@2! **cast.ml#1802:look_up_view_baga: baga= :[self]
+@2! **cast.ml#1805:look_up_view_baga: baga= :Some([([self], ((2<=n & 1<=tx) | (tx<=(0-1) & 2<=n) | (n=1 & tx=self)))])
+@2! **cast.ml#1808:from_svs:[self,tx,n]
+@2! **cast.ml#1809:to_svs:[x,tx_2051,n]
+@2! **cast.ml#1816:baga (subst)= :[([x], ((2<=n & 1<=tx_2051) | (tx_2051<=(0-1) & 2<=n) | (n=1 & tx_2051=x)))]
+@2! **cast.ml#1825:baga (filtered)= :[]
+@2! **cvutil.ml#1893:view_name:ll_tail2
+@2! **cvutil.ml#1894:diff_flag:true
+@2! **cvutil.ml#1895:xp_no:0
+@2! **cvutil.ml#1897:vinv: self!=null & tx!=null & 1<=n
+@2! **cvutil.ml#1898:vinv_exists:[]
+@2! **cvutil.ml#1905:vinv1: x!=null & tx_2051!=null & 1<=n
+@2! **cast.ml#1802:look_up_view_baga: baga= :[self]
+@2! **cast.ml#1805:look_up_view_baga: baga= :Some([([self], ((2<=n & 1<=tx) | (tx<=(0-1) & 2<=n) | (n=1 & tx=self)))])
+@2! **cast.ml#1808:from_svs:[self,tx,n]
+@2! **cast.ml#1809:to_svs:[y,ty_2052,m]
+@2! **cast.ml#1816:baga (subst)= :[([y], ((2<=m & 1<=ty_2052) | (ty_2052<=(0-1) & 2<=m) | (m=1 & ty_2052=y)))]
+@2! **cast.ml#1825:baga (filtered)= :[]
+@2! **cvutil.ml#1893:view_name:ll_tail2
+@2! **cvutil.ml#1894:diff_flag:true
+@2! **cvutil.ml#1895:xp_no:0
+@2! **cvutil.ml#1897:vinv: self!=null & tx!=null & 1<=n
+@2! **cvutil.ml#1898:vinv_exists:[]
+@2! **cvutil.ml#1905:vinv1: y!=null & ty_2052!=null & 1<=m
+@2! **cvutil.ml#1921:ph1: x!=null & tx_2051!=null & 1<=n
+@2! **cvutil.ml#1922:ph2: y!=null & ty_2052!=null & 1<=m
+@2! **cvutil.ml#1923:addrs1:[x]
+@2! **cvutil.ml#1924:addrs2:[y]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **context.ml#665:lhs_h: x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M
+@2! **context.ml#666:lhs_pure: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x
+@2! **context.ml#668:mf: x!=null & tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2! **context.ml#717:view_root_rhs:None
+@2! **context.ml#733:eqns:[(ty_2052,ty),(tx_2051,tx),(ty',ty),(y',y),(tx',tx),(x',x)]
+@2! **context.ml#734:r_eqns:[]
+@2! **context.ml#738:rhs_pure, before same_base_rhs: true
+@2! **context.ml#743:same_base:[]
+@2! **context.ml#744:same_base_rhs:[]
+@2! **context.ml#745:lhs_pp: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x
+@2! **context.ml#746:other_eqn:[ x'=x, tx'=tx, y'=y, ty'=ty, tx_2051=tx, ty_2052=ty]
+@2! **context.ml#747:emap:emap[{tx,tx',tx_2051};{ty,ty',ty_2052};{x,x'};{y,y'}]
+@2! **context.ml#753:paset:1:[tx_2051,tx',tx]
+@2! **cast.ml#1720:actual root:None
+@2! **cast.ml#1721:sst:[(self,x),(tx,tx_2051),(n,n)]
+@2! **cast.ml#1720:actual root:None
+@2! **cast.ml#1721:sst:[(self,y),(tx,ty_2052),(n,m)]
+@2! **context.ml#639:get_data_and_views:[(y,None),(x,None)]
+@2! **context.ml#792:heap_ptrs:[x,y]
+@2! **context.ml#793:pasets:[tx_2051,tx',tx]
+@2! **context.ml#801:lhs_nodes(b4):[y,x]
+@2! **context.ml#802:lhs_nodes(b4):[(y,None),(x,None)]
+@2! **context.ml#804:lhs_nodes(ptr_arith):[y,x]
+@2! **context.ml#815:rhs_inst_eq:[]
+@2! **context.ml#816:rhs_ptr:tx'
+@2! **context.ml#821:view_root(rhs):None
+@2! **context.ml#825:view_root(lhs):None
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **context.ml#895:estate:
+  x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M&
+ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x&{FLOW,(4,5)=__norm#E}
+ es_gen_impl_vars(E): [val_41_1958'; next_41_1959']
+ es_ante_evars: [tx_2051; ty_2052]
+ es_subst (from,to): []:[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ 
+@2! **context.ml#897:rhs: y=tx'
+@2! **context.ml#905:same_base:false
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3711:ante 1: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3717:ante 3: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3719:ante 4: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3487:IMP #734
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3488:imply_timeout: ante:  ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3489:imply_timeout: conseq:  y=tx'
+@2! **tpdispatcher.ml#1462:Ann Vars:[]
+@2! **tpdispatcher.ml#1463:Inv: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty'=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y'=y
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx'=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x'=x
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=n
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=m
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y=tx'
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3746:res: :false
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3929:univ var:[]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **context.ml#916:estate:
+  x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M&
+ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x&{FLOW,(4,5)=__norm#E}
+ es_gen_impl_vars(E): [val_41_1958'; next_41_1959']
+ es_ante_evars: [tx_2051; ty_2052]
+ es_subst (from,to): []:[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ 
+@2! **context.ml#917:lhs_w_rhs_inst: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2! **context.ml#918:rhs: y=tx'
+@2! **context.ml#919:r:false
+@2! **context.ml#825:view_root(lhs):None
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **context.ml#895:estate:
+  x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M&
+ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x&{FLOW,(4,5)=__norm#E}
+ es_gen_impl_vars(E): [val_41_1958'; next_41_1959']
+ es_ante_evars: [tx_2051; ty_2052]
+ es_subst (from,to): []:[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ 
+@2! **context.ml#897:rhs: x=tx'
+@2! **context.ml#905:same_base:false
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3711:ante 1: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3717:ante 3: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3719:ante 4: : ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3487:IMP #735
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3488:imply_timeout: ante:  ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3489:imply_timeout: conseq:  x=tx'
+@2! **tpdispatcher.ml#1462:Ann Vars:[]
+@2! **tpdispatcher.ml#1463:Inv: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty'=ty
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y'=y
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx'=tx
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x'=x
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): tx_2051>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=n
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): y>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): ty_2052>0
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): 1<=m
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#227:f(smt): x=tx'
+@2!:0: 0: [entail:41][post:37]**smtsolver.ml#232:NONE #
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3746:res: :false
+@2!:0: 0: [entail:41][post:37]**tpdispatcher.ml#3929:univ var:[]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[tx_2051,n]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg tx_118,0),1),tx_2051),(((SVArg n,0),2),n)]
+@2! **cpure.ml#15361:annot: 2
+@2! **cpure.ml#15362:annot: :[0,0]
+@2! **cpure.ml#15363:hargs: :[ty_2052,m]
+@2! **cpure.ml#15371:view_args_pos: 2
+@2! **cpure.ml#15375:to_be_updated: :2
+@2! **cpure.ml#15380:new_com:[(((SVArg ty_119,0),1),ty_2052),(((SVArg m,0),2),m)]
+@2! **context.ml#916:estate:
+  x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M&
+ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x&{FLOW,(4,5)=__norm#E}
+ es_gen_impl_vars(E): [val_41_1958'; next_41_1959']
+ es_ante_evars: [tx_2051; ty_2052]
+ es_subst (from,to): []:[]
+ es_cond_path: [0]
+ es_var_measures 1: Some(MayLoop[]{})
+ 
+@2! **context.ml#917:lhs_w_rhs_inst: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x & x!=null & 
+ tx_2051!=null & 1<=n & y!=null & ty_2052!=null & 1<=m
+@2! **context.ml#918:rhs: x=tx'
+@2! **context.ml#919:r:false
+@2! **context.ml#1001:paset_old:[tx_2051,tx',tx]
+@2! **context.ml#1002:paset:[tx_2051,tx',tx]
+@2! **context.ml#1004:lst:[]
+@2! **context.ml#1005:same_base_lst:[]
+@2! **context.ml#1006:view_root_rhs:None
+@2! **context.ml#1022:paset:2:[tx_2051,tx',tx]
+@2! **context.ml#1023:same_base_aset:2:[tx_2051,tx',tx]
+@2! **context.ml#1043:paset not empty
+@2! **context.ml#1060:mt_res:[]
+(==context.ml#3971==)
+choose_context@2@1
+choose_context inp1 :LHS node: x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M
+choose_context inp2 :RHS node: tx'::node<val_41_1958',next_41_1959'>@M
+choose_context inp3 :LHS pure: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x
+choose_context inp4 :RHS pure: true
+choose_context inp5 :right alias:[]
+choose_context@2 EXIT:[]
+
+@1! **context.ml#3983:r_xxx:[([],?)]
+@1! **context.ml#3635:**** sel_hp_rel **********************
+@1! **context.ml#3636:hp_rel:[]
+@1! **context.ml#3637:sel_hp_rel:[]
+@1! **context.ml#3638:sel_post_hp_rel:[]
+@1! **context.ml#4055:weighted action:
+[
+(1): Prio:5
+ UnmatchedRHSData =>  tx'::node<val_41_1958',next_41_1959'>@M]
+@1! **context.ml#3815:ls, after recalibrate weight: :
+[ Prio:5
+ UnmatchedRHSData =>  tx'::node<val_41_1958',next_41_1959'>@M]
+@1! **context.ml#3829:eq_lst == []
+@1! **context.ml#4062:sorted action:
+[
+(1): Prio:5
+ UnmatchedRHSData =>  tx'::node<val_41_1958',next_41_1959'>@M]
+@1! **context.ml#4065:after drop low:
+[
+(1): UnmatchedRHSData =>  tx'::node<val_41_1958',next_41_1959'>@M]
+(==solver.ml#11999==)
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: x::ll_tail2<tx_2051,n>@M * y::ll_tail2<ty_2052,m>@M
+compute_actions inp3 :LHS pure: ty_2052=ty & tx_2051=tx & ty'=ty & y'=y & tx'=tx & x'=x
+compute_actions inp4 :RHS cand:[ tx'::node<val_41_1958',next_41_1959'>@M]
+compute_actions inp5 :RHS pure: true
+compute_actions inp6 :right alias:[val_41_1958',next_41_1959']
+compute_actions@1 EXIT: SEARCH =>[
+  Prio:5
+  UnmatchedRHSData =>  tx'::node<val_41_1958',next_41_1959'>@M
+  ]
+Proving binding in method append$node~node~node~node for spec  EAssume 
+   (exists ty_120,flted_37_117: x::ll_tail2<ty_120,flted_37_117>@M&
+   flted_37_117=n+m & ty_120=ty&{FLOW,(4,5)=__norm#E})
+   struct:EBase 
+            (exists ty_120,flted_37_117: x::ll_tail2<ty_120,flted_37_117>@M&
+            flted_37_117=n+m & ty_120=ty&{FLOW,(4,5)=__norm#E}), Line 37
+
+( []) bind: node  tx'::node<val_41_1958',next_41_1959'>@M&{FLOW,(1,28)=__flow#E} cannot be derived from context
+1 File "../examples/working/hip/append-tail.ss",Line:41,Col:1
+
+(Cause of Bind Failure) List of Failesc Context: [FEC(1, 0, 0 )]
+ Failed States:
+ [
+  Label: []
+  State:
+    fe_kind: MAY
+    fe_name: separation entailment
+    fe_locs: {
+        fc_message: do_unmatched_rhs : tx'::node<val_41_1958',next_41_1959'>@M(may)
+        fc_current_lhs_flow: {FLOW,(4,11)=__MayError#E}
+      }
+    [[ SEARCH ==>  UnmatchedRHSData]]
+  ]1 File "../examples/working/hip/append-tail.ss",Line:41,Col:1
+
+Context of Verification Failure: ../examples/working/hip/append-tail.ss_37:16_37:36
+
+Last Proving Location: ../examples/working/hip/append-tail.ss_41:1_41:8
+
+Procedure append$node~node~node~node FAIL.(2)
+
+
+Exception Failure("bind failure exception") Occurred!
+
+
+Error(s) detected when checking procedure append$node~node~node~node
+Stop z3... 148 invocations 
+Stop Omega... 155 invocations 
+0 false contexts at: ()
+
+!!! log(small):(0.240455,751)
+Total verification time: 1.010912 second(s)
+	Time spent in main process: 0.866925 second(s)
+	Time spent in child processes: 0.143987 second(s)
+	Z3 Prover Time: 0.00315 second(s)

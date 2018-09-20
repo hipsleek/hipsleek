@@ -1,0 +1,317 @@
+ 
+id: 0; caller: []; line: 567; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&((self=p & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}
+ |-  emp&0<=n&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=p & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 1; caller: []; line: 567; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&((self=p & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}
+ |-  emp&0<=n&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&((self=p & n=0) | (self!=null & 1<=n))&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 2; caller: []; line: 576; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow#E}
+ |-  emp&0<=k&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 3; caller: []; line: 576; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow#E}
+ |-  emp&0<=k&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&self=null & ((k=0 | 1<=k))&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 4; caller: []; line: 563; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&1<=n & self!=null&{FLOW,(1,28)=__flow#E}
+ |-  emp&self!=null & 0<=n&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&1<=n & self!=null&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 5; caller: []; line: 563; classic: false; kind: Pred_Check_Inv; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail emp&1<=n & self!=null&{FLOW,(1,28)=__flow#E}
+ |-  emp&self!=null & 0<=n&{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    emp&1<=n & self!=null&{FLOW,(1,28)=__flow#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 6; caller: []; line: 81; classic: false; kind: BIND; hec_num: 1; evars: []; impl_vars: [data__81_2115',gas_81_2116',sender_81_2117',sig_81_2118',value_81_2119']; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail (exists id_2157: msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * 
+                  userBalances_44::MapE<id_2157,n,q>@M&
+id_2157=id & n<=bal_42 & 0<n & userBalances_44'=userBalances_44 & 
+bal_42'=bal_42 & msg_43'=msg_43 & MayLoop[]&{FLOW,(4,5)=__norm#E})
+ |-  msg_43'::message<data__81_2115',gas_81_2116',sender_81_2117',sig_81_2118',value_81_2119'>@L&
+{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    userBalances_44::MapE<id_2159,n,q>@M * (Hole[2160])&
+id_2159=id & n<=bal_42 & 0<n & userBalances_44'=userBalances_44 & 
+bal_42'=bal_42 & msg_43'=msg_43 & data__81_2115'=Anon_13 & 
+gas_81_2116'=Anon_14 & sender_81_2117'=id & sig_81_2118'=Anon_15 & 
+value_81_2119'=Anon_16&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 8; caller: []; line: 81; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: [q_2162,n_2163]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail userBalances_44::MapE<id_2159,n,q>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+id_2159=id & n<=bal_42 & 0<n & userBalances_44'=userBalances_44 & 
+bal_42'=bal_42 & msg_43'=msg_43 & v_int_81_2124'=id & MayLoop[]&
+{FLOW,(4,5)=__norm#E}
+ |-  (exists userBalances_129: userBalances_44'::Map<q_2162>@L * 
+                           v_int_81_2124'::Entry<n_2163,userBalances_129>@L&
+userBalances_129=userBalances_44'&{FLOW,(4,5)=__norm#E}). 
+ho_vars: nothing?
+res:  1[
+    msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * (Hole[2188]) * 
+ (Hole[2190])&
+v_int_81_2124'=id & msg_43'=msg_43 & bal_42'=bal_42 & 
+userBalances_44'=userBalances_44 & 0<n & n<=bal_42 & id_2159=id & 
+self_2185=userBalances_44 & val_2184=n & q_2183=q & n_2163=val_2184 & 
+q_2162=q_2183&{FLOW,(4,5)=__norm#E}
+   es_evars: [userBalances_2168]
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 12; caller: []; line: 81; classic: false; kind: PRE; hec_num: 1; evars: [userBalances_2168]; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * (Hole[2188]) * 
+ (Hole[2190])&
+v_int_81_2124'=id & msg_43'=msg_43 & bal_42'=bal_42 & 
+userBalances_44'=userBalances_44 & 0<n & n<=bal_42 & id_2159=id & 
+self_2185=userBalances_44 & val_2184=n & q_2183=q & n_2163=val_2184 & 
+q_2162=q_2183 & MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  1[
+    msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * (Hole[2188]) * 
+ (Hole[2190])&
+v_int_81_2124'=id & msg_43'=msg_43 & bal_42'=bal_42 & 
+userBalances_44'=userBalances_44 & 0<n & n<=bal_42 & id_2159=id & 
+self_2185=userBalances_44 & val_2184=n & q_2183=q & n_2163=val_2184 & 
+q_2162=q_2183&{FLOW,(4,5)=__norm#E}
+   es_evars: [userBalances_2168]
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 13; caller: []; line: 82; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * 
+ id_2159::Entry<val_2184,self_2185>@M * userBalances_44::Map<q_2183>@M&
+v_int_82_2129'<amountToWithdraw' & v_int_82_2129'=0 & 
+amountToWithdraw'=n_2163 & userBalances_44=userBalances_44' & 
+q_2162=q_2183 & n_2163=val_2184 & q_2183=q & val_2184=n & 
+self_2185=userBalances_44 & id_2159=id & n<=bal_42 & 0<n & bal_42'=bal_42 & 
+msg_43'=msg_43 & MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  emp&Term[]&{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  1[
+    msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * 
+ id_2159::Entry<val_2184,self_2185>@M * userBalances_44::Map<q_2183>@M&
+v_int_82_2129'<amountToWithdraw' & v_int_82_2129'=0 & 
+amountToWithdraw'=n_2163 & userBalances_44=userBalances_44' & 
+q_2162=q_2183 & n_2163=val_2184 & q_2183=q & val_2184=n & 
+self_2185=userBalances_44 & id_2159=id & n<=bal_42 & 0<n & bal_42'=bal_42 & 
+msg_43'=msg_43&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 14; caller: []; line: 83; classic: false; kind: BIND; hec_num: 1; evars: []; impl_vars: [data__83_2130',gas_83_2131',sender_83_2132',sig_83_2133',value_83_2134']; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * 
+ id_2159::Entry<val_2184,self_2185>@M * userBalances_44::Map<q_2183>@M&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & MayLoop[]&
+{FLOW,(4,5)=__norm#E}
+ |-  msg_43'::message<data__83_2130',gas_83_2131',sender_83_2132',sig_83_2133',value_83_2134'>@L&
+{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    id_2159::Entry<val_2184,self_2185>@M * userBalances_44::Map<q_2183>@M * 
+ (Hole[2201])&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & data__83_2130'=Anon_13 & 
+gas_83_2131'=Anon_14 & sender_83_2132'=id & sig_83_2133'=Anon_15 & 
+value_83_2134'=Anon_16&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 16; caller: []; line: 83; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: [q_2204,n_2205]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail id_2159::Entry<val_2184,self_2185>@M * userBalances_44::Map<q_2183>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2140'=id & 
+v_int_83_2139'=0 & MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  (exists userBalances_130: userBalances_44'::Map<q_2204>@M * 
+                           v_int_83_2140'::Entry<n_2205,userBalances_130>@M&
+userBalances_130=userBalances_44'&{FLOW,(4,5)=__norm#E}). 
+ho_vars: nothing?
+res:  1[
+    msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2140'=id & 
+v_int_83_2139'=0 & n_2205=val_2184 & q_2204=q_2183&{FLOW,(4,5)=__norm#E}
+   es_evars: [userBalances_2212]
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 19; caller: []; line: 83; classic: false; kind: PRE; hec_num: 1; evars: [userBalances_2212]; impl_vars: []; infer_vars: [ ]; c_heap: userBalances_44::Map<q_2183>@M * id_2159::Entry<val_2184,self_2185>@M; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2140'=id & 
+v_int_83_2139'=0 & n_2205=val_2184 & q_2204=q_2183 & MayLoop[]&
+{FLOW,(4,5)=__norm#E}
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  1[
+    msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2140'=id & 
+v_int_83_2139'=0 & n_2205=val_2184 & q_2204=q_2183&{FLOW,(4,5)=__norm#E}
+   es_evars: [userBalances_2212]
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 20; caller: []; line: 84; classic: false; kind: BIND; hec_num: 1; evars: []; impl_vars: [data__84_2141',gas_84_2142',sender_84_2143',sig_84_2144',value_84_2145']; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail (exists v_int_83_2218: msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L * 
+                        userBalances_44'::Map<q_2204>@M * 
+                        id::Entry<v_int_83_2218,userBalances_44'>@M&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2218=0 & 
+n_2205=val_2184 & q_2204=q_2183 & MayLoop[]&{FLOW,(4,5)=__norm#E})
+ |-  msg_43'::message<data__84_2141',gas_84_2142',sender_84_2143',sig_84_2144',value_84_2145'>@L&
+{FLOW,(1,28)=__flow#E}. 
+ho_vars: nothing?
+res:  1[
+    userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * (Hole[2221])&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & data__84_2141'=Anon_13 & 
+gas_84_2142'=Anon_14 & sender_84_2143'=id & sig_84_2144'=Anon_15 & 
+value_84_2145'=Anon_16&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 22; caller: []; line: 84; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & v_int_84_2150'=id & MayLoop[]&
+{FLOW,(4,5)=__norm#E}
+ |-  emp&0<amountToWithdraw'&{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  1[
+    userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & v_int_84_2150'=id&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 23; caller: []; line: 84; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & v_int_84_2150'=id & MayLoop[]&
+{FLOW,(4,5)=__norm#E}
+ |-  emp&MayLoop[]&{FLOW,(4,5)=__norm#E}. 
+ho_vars: nothing?
+res:  1[
+    userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & bal_42'=bal_42 & 0<n & n<=bal_42 & 
+id_2159=id & self_2185=userBalances_44 & val_2184=n & q_2183=q & 
+n_2163=val_2184 & q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & v_int_84_2150'=id&{FLOW,(4,5)=__norm#E}
+   es_gen_impl_vars(E): []
+   ]
+ 
+id: 24; caller: []; line: 85; classic: false; kind: PRE_REC; hec_num: 1; evars: []; impl_vars: [Anon_2230,Anon_2231,Anon_2232,Anon_2233,id_2234,n_2235,q_2236]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & 0<n & n<=bal_42 & id_2159=id & 
+self_2185=userBalances_44 & val_2184=n & q_2183=q & n_2163=val_2184 & 
+q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & bal_42'+amountToWithdraw'=bal_42 & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  (exists id_141: msg_43'::message<Anon_2230,Anon_2231,id_2234,Anon_2232,Anon_2233>@L * 
+                 userBalances_44'::MapE<id_141,n_2235,q_2236>@M&
+0<n_2235 & n_2235<=bal_42' & id_141=id_2234&{FLOW,(4,5)=__norm#E}). 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: base_case_unfold failed
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ SEARCH ==>  Fold ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]false
+ 
+id: 29; caller: []; line: 85; classic: false; kind: PRE_REC; hec_num: 1; evars: []; impl_vars: [Anon_17,Anon_18,Anon_19,Anon_20,id_2237,n_2238,q_2239]; infer_vars: [ ]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail userBalances_44'::Map<q_2204>@M * 
+ id::Entry<v_int_83_2220,userBalances_44'>@M * 
+ msg_43::message<Anon_13,Anon_14,id,Anon_15,Anon_16>@L&
+v_bool_82_2155' & msg_43'=msg_43 & 0<n & n<=bal_42 & id_2159=id & 
+self_2185=userBalances_44 & val_2184=n & q_2183=q & n_2163=val_2184 & 
+q_2162=q_2183 & userBalances_44=userBalances_44' & 
+amountToWithdraw'=n_2163 & 0<amountToWithdraw' & v_int_83_2220=0 & 
+n_2205=val_2184 & q_2204=q_2183 & bal_42'+amountToWithdraw'=bal_42 & 
+MayLoop[]&{FLOW,(4,5)=__norm#E}
+ |-  (exists id_146: msg_43'::message<Anon_17,Anon_18,id_2237,Anon_19,Anon_20>@L * 
+                 userBalances_44'::MapE<id_146,n_2238,q_2239>@L&
+n_2238=0 & n_2238<=bal_42' & id_146=id_2237&{FLOW,(4,5)=__norm#E}). 
+ho_vars: nothing?
+res:  failctxfe_kind: MAY
+        fe_name: separation entailment
+        fe_locs: {
+    fc_message: base_case_unfold failed
+    fc_current_lhs_flow: {FLOW,(4,5)=__norm#E}
+  }
+[[ SEARCH ==>  Fold ==>  SEARCH ==>  COND ==>  BaseCaseUnfold]]false

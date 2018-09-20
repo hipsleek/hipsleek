@@ -117,5 +117,34 @@ void withdrawBalance()
      setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
      call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
      withdrawBalance();
+
+}
+}
+
+
+
+ pred Map<w> == self=w or
+               self::bnode<_,_,t> * t::Map<w> & self!=t;
+
+ pred_prim Entry<val,map>;
+
+// fixed version
+// should fail because of the recursive call
+void withdrawBalance_a()
+   //infer [@reentrancy]
+   /*
+   requires  msg::message<_,_,id,_,_>@L * userbal::USERBALANCES<id,n> & n>=0 //& bal>=n
+   ensures   userbal'::USERBALANCES<id,0>  & bal'=bal-n;
+   */
+   requires  msg::message<_,_,id,_,_>@L * userBalances::Map<q> * id::Entry<n,userBalances> & n>0 & bal>=n
+   ensures   userBalances::Map<q> * id::Entry<0,userBalances>  & bal'=bal-n;
+   requires  msg::message<_,_,id,_,_>@L * userBalances::Map<q>@L * id::Entry<n,userBalances>@L & n=0 & bal>=n
+   ensures   bal'=bal & userbal'=userbal;
+{
+  int amountToWithdraw = getUserBalance(msg.sender);     // getUserBalance(msg.sender)       <- userBalances[msg.sender];
+  if (amountToWithdraw > 0) {
+     setUserBalance(msg.sender,0);                       // setUserBalance(msg.sender,0)     <- userBalances[msg.sender] = 0;
+     call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
+     withdrawBalance_a();
   }
 }
