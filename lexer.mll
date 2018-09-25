@@ -323,6 +323,8 @@ module Make (Token : SleekTokenS)
    ("par", PAR);
    (";;", SEMICOLONSEMICOLON);
    ("?", QUERY);
+   ("mapping", MAPPING);
+   ("=>", MASSIGN);
    (* ("skip", SKIP) *)
   ]
 }
@@ -527,6 +529,7 @@ rule tokenizer file_name = parse
   | '*' { STAR }
   | "<:" { SUBANN }
   | '/' { DIV }
+  | "=>" { MASSIGN }
   | ident as idstr
 	  {
 		if idstr = "_" then

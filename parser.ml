@@ -923,6 +923,15 @@ let peek_array_type =
              (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
              | _ -> raise Stream.Failure)
 
+
+let peek_mapping_type =
+  SHGram.Entry.of_parser "peek_mapping_type"
+      (fun strm ->
+         match Stream.npeek 2 strm with
+           |[MAPPING,_;OPAREN,_] -> let () = print_endline "Mapping found!" in ()
+           | _ -> raise Stream.Failure)
+
+
 let peek_poly_type =
    SHGram.Entry.of_parser "peek_poly_type"
        (fun strm ->
@@ -3467,7 +3476,13 @@ typ:
   [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
+   | peek_mapping_type; t = parse_mapping_type -> report_error (get_pos_camlp4 _loc 1) ("MAPPING TODO") 
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
+
+parse_mapping_type:
+  [[ `MAPPING; `OPAREN; t1 = typ; `MASSIGN; t2 = typ; `CPAREN
+      -> (t1, t2)]];
+
 
 non_array_type:
   [[ `VOID               -> void_type

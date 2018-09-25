@@ -128,6 +128,8 @@ type sleek_token =
   | SEMICOLONSEMICOLON
   | QUERY
   | ARGOPTION of string
+  | MAPPING
+  | MASSIGN   
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -286,6 +288,8 @@ module Token = struct
     | SEMICOLONSEMICOLON -> ";;"
     | QUERY -> "?"
     | ARGOPTION arg -> "##OPTION "^arg
+    | MAPPING -> "mapping"
+    | MASSIGN -> "=>" 
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

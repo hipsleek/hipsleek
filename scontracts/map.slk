@@ -1,4 +1,4 @@
-// mapping(int => int) map;
+mapping(int => int) map;
 
 checkentail mp[i]=n & n=m |- mp[i]=m.
 expect Valid.
