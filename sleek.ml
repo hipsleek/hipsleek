@@ -263,6 +263,7 @@ let parse_file (parse) (source_file : string) =
     | HpDef hpdef -> process_hp_def hpdef
     | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
     (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
+    | SecurityLabelsDef lattice -> process_sec_labels lattice
     | LemmaDef _ | InferCmd _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | CheckNorm _ | PrintCmd _ | CmpCmd _
     | RelAssume _ | RelDefn _ | ShapeInfer _ | Validate _ | ShapeDivide _ | ShapeConquer _ | ShapeLFP _ | ShapeRec _
     | ShapePostObl _ | ShapeInferProp _ | ShapeSplitBase _ | ShapeElim _

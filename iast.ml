@@ -46,7 +46,7 @@ type prog_decl = {
   prog_barrier_decls : barrier_decl list;
   mutable prog_coercion_decls : coercion_decl_list list;
   prog_test_comps: (ident*test_comps) list;
-  prog_sec_labels : Security.lattice
+  mutable prog_sec_labels : Security.lattice
 }
 
 and data_field_ann =

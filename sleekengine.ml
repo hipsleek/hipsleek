@@ -369,6 +369,9 @@ let silenced_print f s = if !Gen.silence_output then () else f s
 (*   else *)
 (*     report_error pdef.I.view_pos (pdef.I.view_name ^ " is already defined.") *)
 
+let process_sec_labels lattice =
+  iprog.I.prog_sec_labels <- lattice
+
 let process_pred_def_4_iast pdef =
   (* let pr = Iprinter.string_of_view_decl in *)
   (* Debug.no_1 "process_pred_def_4_iast" pr pr_no process_pred_def_4_iast pdef *)
