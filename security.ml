@@ -44,6 +44,9 @@ type lattice =
     representation_tuple_length : int
   }
 
+let string_of_lattice lattice =
+  Gen.pr_list Label.to_string lattice.labels
+
 let compute_lub l1 l2 lattice =
   let path_checker = PathG.create lattice in
   let exists_path = PathG.check_path path_checker in

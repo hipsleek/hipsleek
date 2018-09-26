@@ -10,6 +10,8 @@ module Label :
 
 type lattice
 
+val string_of_lattice : lattice -> string
+
 val current_lattice : lattice ref
 
 val default_lattice : lattice
