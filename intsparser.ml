@@ -148,7 +148,7 @@ let trans_ints_block (blk: ints_block): I.exp =
 let trans_ints_block_lst fn (fr_lbl: ints_loc) (blks: ints_block list): I.proc_decl =
   let pos = pos_of_ints_loc fr_lbl in
   let proc_name = name_of_ints_loc fr_lbl in
-  let blks = partition_by_key init_conditions_of_block (is_equivalent_condition Security.default_lattice) blks in
+  let blks = partition_by_key init_conditions_of_block (is_equivalent_condition !Security.current_lattice) blks in
   (* Take blocks with equivalent starting conditions
    * and form into sequence of if/else with nondet() condition. *)
   let nondet_seq_for_blocks cond blks =

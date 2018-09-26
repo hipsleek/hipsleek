@@ -1016,7 +1016,7 @@ expect_infer:
 non_empty_command:
     [ [ t=data_decl           -> DataDef t
       | c=class_decl -> DataDef c
-      | l = sec_label_decl -> EmptyCmd
+      | l = sec_label_decl -> SecurityLabelsDef l
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
       | `PRED_PRIM;t=prim_view_decl     -> PredDef t

@@ -16821,10 +16821,11 @@ type sec_p_formula_trans_res =
     translated_p_formula : p_formula list
   }
 
-let mk_sec_vars num root_name =
+let mk_sec_vars num root_name primed =
   List.map
     (fun i ->
       mk_spec_var (Printf.sprintf "sec_%s_%i" root_name i)
+      |> (fun v -> sp_add_prime v primed)
     )
     (Array.to_list @@ Array.init num succ)
 
@@ -16835,14 +16836,10 @@ let rec translate_sec_label lattice = function
           (fun i -> mkIConst i no_pos)
           (Security.get_representation lattice l) in
       { extra_p_formulas = []; new_existential_vars = []; translated_expr = consts }
-  | SecVar (SpecVar(typ, var_name, _)) ->
+  | SecVar (SpecVar(typ, var_name, primed)) ->
       let vars =
-        List.map
-          (fun i ->
-            let var = mk_spec_var (Printf.sprintf "sec_%s_%i" var_name i) in
-            Var (var, no_pos)
-          )
-          (Array.to_list @@ Array.init (Security.lattice_size lattice) succ) in
+        mk_sec_vars (Security.representation_tuple_length lattice) var_name primed
+        |> List.map (fun v -> mkVar v no_pos) in
       { extra_p_formulas = []; new_existential_vars = []; translated_expr = vars }
   | Lub (l1, l2) ->
       let { extra_p_formulas = epf1;
@@ -16852,7 +16849,7 @@ let rec translate_sec_label lattice = function
             new_existential_vars = nexv2;
             translated_expr = exps2 } = translate_sec_label lattice l2 in
       let max_var_root = fresh_name () in
-      let max_vars = mk_sec_vars (Security.lattice_size lattice) max_var_root in
+      let max_vars = mk_sec_vars (Security.representation_tuple_length lattice) max_var_root Unprimed in
       let max_var_exps = List.map (fun v -> Var (v, no_pos)) max_vars in
       let max_p_forms =
         Gen.map3
@@ -16871,7 +16868,7 @@ let rec translate_sec_label lattice = function
             new_existential_vars = nexv2;
             translated_expr = exps2 } = translate_sec_label lattice l2 in
       let min_var_root = fresh_name () in
-      let min_vars = mk_sec_vars (Security.lattice_size lattice) min_var_root in
+      let min_vars = mk_sec_vars (Security.representation_tuple_length lattice) min_var_root Unprimed in
       let min_var_exps = List.map (fun v -> Var (v, no_pos)) min_vars in
       let min_p_forms =
         Gen.map3
@@ -16884,11 +16881,11 @@ let rec translate_sec_label lattice = function
         translated_expr = min_var_exps }
 
 let translate_security_p_formula lattice = function
-  | Security (SpecVar (typ, var_name, _), lbl, pos) ->
+  | Security (SpecVar (typ, var_name, primed), lbl, pos) ->
       let { extra_p_formulas = epf;
             new_existential_vars = nexv;
             translated_expr = exps } = translate_sec_label lattice lbl in
-      let lte_vars = mk_sec_vars (Security.lattice_size lattice) var_name in
+      let lte_vars = mk_sec_vars (Security.representation_tuple_length lattice) var_name primed in
       let lte_p_forms =
         List.map2
           (fun v expr ->
