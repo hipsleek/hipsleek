@@ -8707,7 +8707,7 @@ and trans_sec_label lattice tlist pos = function
       if Security.is_valid_security_label lattice l then
         CP.SecLabel l
       else
-        report_error pos (Security.Label.to_string l ^ " is not a valid security label")
+        report_error pos (Security.Label.to_string l ^ " is not a valid security label in lattice with labels: " ^ Security.string_of_lattice lattice)
   | IP.Lub (l1, l2) -> CP.Lub (trans_sec_label lattice tlist pos l1, trans_sec_label lattice tlist pos l2)
   | IP.Glb (l1, l2) -> CP.Glb (trans_sec_label lattice tlist pos l1, trans_sec_label lattice tlist pos l2)
   | IP.SecVar var -> CP.SecVar (trans_var var tlist pos)
