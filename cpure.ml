@@ -16902,6 +16902,48 @@ let translate_security_p_formula lattice = function
         translated_p_formula = lte_p_forms }
     | pf -> { extra_p_formulas = []; new_existential_vars = []; new_free_vars = []; translated_p_formula = [pf] }
 
+let rec translate_security_formula_for_infer lattice = function
+  | BForm ((pf, bf_ann), flbl) ->
+      let { extra_p_formulas = epf;
+            new_existential_vars = nexv;
+            new_free_vars = nfv;
+            translated_p_formula = npf } = translate_security_p_formula lattice pf in
+      let extra_forms = List.map mk_bform epf in
+      let all_sv = nexv @ nfv in
+      let bound_forms = List.map (fun sv -> mkSecBnd sv no_pos) all_sv in
+      let b_forms = List.map mk_bform npf in
+      let combined_b_forms = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) (List.hd b_forms) (List.tl b_forms) in
+      let full_f = List.fold_left (fun acc_f f -> mkAnd acc_f f no_pos) combined_b_forms extra_forms in
+      mkExists nexv full_f None no_pos, bound_forms
+  | And (f1, f2, loc) ->
+      let new_f1, bound_f1 = translate_security_formula_for_infer lattice f1 in
+      let new_f2, bound_f2 = translate_security_formula_for_infer lattice f2 in
+      And (new_f1, new_f2, loc), (bound_f1 @ bound_f2)
+  | AndList formulas ->
+      let new_formulas, bounds =
+        List.fold_left
+          (fun (new_fs, bound_fs) (lbl, f) ->
+            let new_f, bound_f = translate_security_formula_for_infer lattice f in
+            ((lbl, new_f) :: new_fs), (bound_f @ bound_fs)
+          ) ([], []) formulas in
+      (AndList new_formulas), bounds
+  | Or (f1, f2, flbl, loc) ->
+      let new_f1, bound_f1 = translate_security_formula_for_infer lattice f1 in
+      let new_f2, bound_f2 = translate_security_formula_for_infer lattice f2 in
+      Or (new_f1, new_f2, flbl, loc), (bound_f1 @ bound_f2)
+  | Not (f, lbl, loc) ->
+      let new_f, bound_f = translate_security_formula_for_infer lattice f in
+      Not (new_f, lbl, loc), bound_f
+  | Forall (SpecVar (typ, var_name, primed) as v, f, lbl, loc) ->
+      let forall_vars = mk_sec_vars (Security.representation_tuple_length lattice) var_name primed in
+      let new_f, bound_f = translate_security_formula_for_infer lattice f in
+      mkForall (v :: forall_vars) new_f lbl loc, bound_f
+  | Exists (SpecVar (typ, var_name, primed) as v, f, lbl, loc) ->
+      let exists_vars = mk_sec_vars (Security.representation_tuple_length lattice) var_name primed in
+      let new_f, bound_f = translate_security_formula_for_infer lattice f in
+      mkExists (v :: exists_vars) new_f lbl loc, bound_f
+  | others -> others, []
+
 let rec translate_security_formula_only lattice = function
   | BForm ((pf, bf_ann), flbl) ->
       let { extra_p_formulas = epf;
@@ -16922,6 +16964,7 @@ let rec translate_security_formula_only lattice = function
   | Or (f1, f2, flbl, loc) ->
       Or (translate_security_formula_only lattice f1, translate_security_formula_only lattice f2, flbl, loc)
   | Not (f, lbl, loc) -> Not (translate_security_formula_only lattice f, lbl, loc)
+  | Forall (v, f, lbl, loc) -> Forall (v, translate_security_formula_only lattice f, lbl, loc)
   | others -> others
 
 and simpl_eximpf_form orig =
