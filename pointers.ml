@@ -95,6 +95,8 @@ let default_value (t :typ) pos : exp =
   | Pointer ptr -> Null pos
   | Array (t, d) ->
     failwith "default_value: Array not supported"
+  | Mapping (t1, t2) ->
+    failwith "default_value: mapping not supported"
   | FuncT _ -> failwith "default_value: FuncT not supported"
   | UtT _ -> failwith "default_value: UtT not supported"
   | HpT | Tree_sh ->

@@ -331,6 +331,8 @@ type typ =
   | Bptyp
   | Pointer of typ (* base type and dimension *)
   | Poly of ident
+  | Mapping of (typ * typ)
+
 (* | SLTyp (* type of ho formula *) *)
 
 (* let eq_typegen t1 t2 = match *)
@@ -524,6 +526,7 @@ let rec cmp_typ t1 t2=
   | List t11, List t22 -> cmp_typ t11 t22
   | Named s1, Named s2 -> String.compare s1 s2 = 0
   | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
+  | Mapping (t11,t12), Mapping (t21,t22) ->cmp_typ t11 t21 && cmp_typ t12 t22
   | RelT lst1, RelT lst2 ->(
       try
         List.for_all (fun (t11,t22) -> cmp_typ t11 t22) (List.combine lst1 lst2)
@@ -837,6 +840,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Mapping (t1,t2) -> "mapping(" ^(string_of_typ t1) ^ "," ^ (string_of_typ t2) ^ ")"
   | Poly t    -> ("`" ^ t)
 ;;
 
@@ -892,6 +896,7 @@ let rec string_of_typ_alpha = function
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Mapping (t1,t2) -> "mapping(" ^(string_of_typ t1) ^ "," ^ (string_of_typ t2) ^ ")"
   | Poly t    -> ("`" ^ t)
 ;;
 
@@ -901,6 +906,7 @@ let subs_tvar_in_typ t (i:int) nt =
     | BagT et -> BagT (helper et)
     | List et -> List (helper et)
     | Array (et,d) -> Array (helper et,d)
+    | Mapping (t1,t2) -> Mapping (helper t1, helper t2)
     | _ -> t
   in helper t
 ;;

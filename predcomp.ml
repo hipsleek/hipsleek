@@ -133,6 +133,7 @@ and aug_class_name (t : typ) = match t with
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
+  | Mapping (t1, t2) -> failwith x_tbi
   | Poly _ -> failwith x_tbi
 
 (*

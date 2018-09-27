@@ -119,6 +119,7 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
+  | Mapping (t1, t2) -> "(Array " ^ (string_of_typ t1) ^ " " ^ (string_of_typ t2) ^ ")"
   | Poly t -> ("`" ^ t)
 ;;
 
@@ -6993,6 +6994,7 @@ and default_value (t :typ) pos : C.exp =
     C.EmptyArray { C.exp_emparray_type = t;
                    C.exp_emparray_dim = d;
                    C.exp_emparray_pos = pos}
+  | Mapping (t1,t2) -> failwith x_tbi
   | Bptyp ->
     failwith "default_value: Bptyp can only be used for constraints"
   | Poly _ -> failwith x_tbi

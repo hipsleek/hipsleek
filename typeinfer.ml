@@ -744,7 +744,7 @@ and gather_type_info_exp_x prog a0 tlist et =
       match id_list with
       | [] -> type_list
       | hd::tl ->
-        let (n_tl,n_typ) = gather_type_info_exp_x prog hd type_list Int in
+        let (n_tl,n_typ) = gather_type_info_exp_x prog hd type_list Int in (* forces the array indexes to be Int *)
         aux tl n_tl
     in
     let n_tlist = aux idx n_tl in

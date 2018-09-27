@@ -1,7 +1,39 @@
-mapping(int => int) map;
+// mapping(int => int) map;
+// global int i;
 
-checkentail mp[i]=n & n=m |- mp[i]=m.
+/*
+data mapping{
+  int key;
+  int val;
+}.
+*/
+
+//data mapping(int => int) map;
+/*
+program structure:
+ data declaration : mapping(int => int) map;
+ usage : map[key] -->
+
+specification
+*/
+//
+
+data node{int val;}.
+
+checkentail mp[j]=3 & mp[i]=n & n=m |- mp[i]=m.
 expect Valid.
 
 checkentail mp[i]=5 |- mp[i]>0.
+expect Valid.
+
+checkentail p::node<3> & mp[i]=p & p=q |- mp[i]=q.
+expect Valid.
+
+checkentail p::node<3> & mp[i]=p & p!=q |- mp[i]=q.
+expect Fail.
+
+checkentail p::node<3> * q::node<3> & mp[i]=p |- mp[i]=q.
+expect Fail.
+
+checkentail p::node<3> * q::node<3> & mp[i]=p |- mp[i]!=q.
 expect Valid.
