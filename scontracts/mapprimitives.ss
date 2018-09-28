@@ -1,10 +1,4 @@
-
-void select [T1,T2] (ref mapping( `T1 => `T2) map, `T1 key, `T2 val)
-   requires true
-   ensures  map'[key]=val;
-
-/*
-void select [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key, `T2 val)
+void update [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key, `T2 val)
    requires true
    ensures  map'[key]=val;
 
@@ -15,4 +9,3 @@ void select [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key, `T2 val)
 void delete [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key)
    requires true
    ensures  map'[key]=ZERO;
-*/

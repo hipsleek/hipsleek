@@ -911,13 +911,14 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
-let subs_one_poly_typ poly_types target_ty =
+let rec subs_one_poly_typ poly_types target_ty =
     match target_ty with
      | Poly t ->
         begin
          try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
          with _ ->  target_ty
-        end
+       end
+     (* | Mapping (t1, t2) -> Mapping (subs_one_poly_typ ) *)
      | _ -> target_ty
 
 let subs_poly_typ poly_vars poly_args args_types =
