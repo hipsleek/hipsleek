@@ -829,6 +829,7 @@ struct
     | Array (et1,d1), Array (et2,d2) ->
       if (d1 = d2) then sub_type et1 et2
       else false
+    | Mapping (t11,t12), Mapping (t21,t22) -> (sub_type t11 t21) && (sub_type t12 t22)
     | BagT et1, BagT et2 -> sub_type et1 et2
     | List et1, List et2 -> sub_type et1 et2
     | Int, NUM        -> true

@@ -432,6 +432,7 @@ and get_type_entire tlist t =
     | BagT et -> BagT (helper et)
     | List et -> List (helper et)
     | Array (et,d) -> Array (helper et,d)
+    | Mapping (t1,t2) -> Mapping (helper t1,helper t2)
     | _ -> t
   in helper t
 
@@ -499,12 +500,14 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
                    Named c (* Store this temporarily *)*)
           )))
   | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
+  | Mapping (t1, t2) -> Mapping (trans_type prog t1 pos, trans_type prog t2 pos)
   | p -> p
 
 and trans_type_back (te : typ) : typ =
   match te with
   | Named n -> Named n
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *)
+  | Mapping (t1, t2) -> Mapping (trans_type_back t1, trans_type_back t2)
   | p -> p
 
 and sub_type_x (t1 : typ) (t2 : typ) =

@@ -5685,11 +5685,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (****** replace poly vars *****)
             let subs     = Hashtbl.create 5 in
             let subs_lst = List.combine pargs proc_decl.I.proc_poly_vars in
-            let ()       = List.iter (fun (a,b) -> Hashtbl.add subs (Poly b) a) subs_lst in
-            let proc_args_typ = List.map (fun p1 ->
-                try Hashtbl.find subs p1.I.param_type
-                with Not_found -> p1.I.param_type
-              ) proc_decl.I.proc_args in
+            let ()       = List.iter (fun (a,b) -> Hashtbl.add subs b a) subs_lst in
+            let proc_args_typ = List.map (fun p1 -> Globals.hsubs_one_poly_typ subs p1.I.param_type) proc_decl.I.proc_args in
             (****** end - replace poly vars *****)
             List.map2 (fun p1 t2 ->
                 let t1 = p1.I.param_type in

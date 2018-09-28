@@ -911,40 +911,77 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
-let rec subs_one_poly_typ poly_types target_ty =
-    match target_ty with
-     | Poly t ->
-        begin
-         try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
-         with _ ->  target_ty
-       end
-     (* | Mapping (t1, t2) -> Mapping (subs_one_poly_typ ) *)
-     | _ -> target_ty
+(* DEPRECATED - to be deleted *)
+(* let rec subs_one_poly_typ poly_types target_ty =
+ *     match target_ty with
+ *      | Poly t ->
+ *         begin
+ *          try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
+ *          with _ ->  target_ty
+ *        end
+ *      (\* | Mapping (t1, t2) -> Mapping (subs_one_poly_typ ) *\)
+ *      | _ -> target_ty
+ * 
+ * let subs_poly_typ poly_vars poly_args args_types =
+ *   try
+ *    let poly_types = List.combine poly_vars poly_args in
+ *    let args_types = List.map (fun farg -> subs_one_poly_typ poly_types farg) args_types in
+ *    args_types
+ *   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+ * 
+ * let subs_one_poly_typ poly_vars poly_args target_ty =
+ *   try
+ *    let poly_types = List.combine poly_vars poly_args in
+ *    let target_ty  = subs_one_poly_typ poly_types target_ty in
+ *    target_ty
+ *   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments" *)
 
-let subs_poly_typ poly_vars poly_args args_types =
-  try
-   let poly_types = List.combine poly_vars poly_args in
-   let args_types = List.map (fun farg -> subs_one_poly_typ poly_types farg) args_types in
-   args_types
-  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
-
-let subs_one_poly_typ poly_vars poly_args target_ty =
-  try
-   let poly_types = List.combine poly_vars poly_args in
-   let target_ty  = subs_one_poly_typ poly_types target_ty in
-   target_ty
-  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+(* DEPRECATED - to be deleted *)
+(* let hsubs_one_poly_typ poly_hash target_ty =
+ *   match target_ty with
+ *    | Poly t ->
+ *       begin
+ *         try  Hashtbl.find poly_hash t  with _ ->  target_ty
+ *       end
+ *    | _ -> target_ty *)
 
 let hsubs_one_poly_typ poly_hash target_ty =
-  match target_ty with
-   | Poly t ->
-      begin
-        try  Hashtbl.find poly_hash t  with _ ->  target_ty
-      end
-   | _ -> target_ty
+  let rec helper ptype =
+    match ptype with
+    | Poly a          -> (try Hashtbl.find poly_hash a with Not_found -> ptype)
+    | Tup2 (t1,t2)    -> Tup2 ((helper t1),(helper t2))
+    | List t          -> List (helper t)
+    | BagT t          -> BagT (helper t)
+    | Array (t1,d)    -> Array ((helper t1),d)
+    | RelT  tlist     -> RelT (List.map helper tlist)
+    | FuncT (t1,t2)   -> FuncT ((helper t1),(helper t2))
+    | Pointer t       -> Pointer (helper t)
+    | Mapping (t1,t2) -> Mapping ((helper t1),(helper t2))
+    | _ -> ptype
+  in
+  helper target_ty
 
 let hsubs_poly_typ poly_hash args_types =
    List.map (fun farg -> hsubs_one_poly_typ poly_hash farg) args_types
+
+let subs_one_poly_typ poly_vars poly_args target_ty =
+  try
+   let subs       = Hashtbl.create 5 in
+   let poly_types = List.combine poly_vars poly_args in
+   let ()         = List.iter (fun (a,b) -> Hashtbl.add subs a b) poly_types in
+   (* let target_ty  = subs_one_poly_typ poly_types target_ty in *)
+   let target_ty = hsubs_one_poly_typ subs target_ty in
+   target_ty
+  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+
+let subs_poly_typ poly_vars poly_args args_types =  
+  try
+    let subs       = Hashtbl.create 5 in
+    let poly_types = List.combine poly_vars poly_args in
+    let ()         = List.iter (fun (a,b) -> Hashtbl.add subs a b) poly_types in
+    let args_types = hsubs_poly_typ subs args_types in
+    args_types
+  with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
 
 
 (* let null_type = Named "" *)
