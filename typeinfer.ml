@@ -245,8 +245,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
         else
           begin
             match t1,t2 with
-            | TVar i1,_ -> repl_tlist i1 k2 tl
-            | _,TVar i2 -> repl_tlist i2 k1 tl
+            | TVar i1, _ -> repl_tlist i1 k2 tl
+            | _, TVar i2 -> repl_tlist i2 k1 tl
             | BagT x1,BagT x2 ->
               (match (unify x1 x2 tl) with
                | (n_tl,Some t) -> (n_tl,Some (BagT t))
@@ -259,6 +259,19 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
               (match (dim_unify d1 d2), (unify x1 x2 tl) with
                | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
                | _,(n_tl,_) -> (n_tl,None))
+            | Mapping (t1,t2), Mapping (t3,t4) ->
+              (
+                let n_tl, t5 = unify t1 t3 tl in
+                let n_tl2, t6 = unify t2 t4 n_tl in
+                match t5,t6 with
+                | Some d1, Some d2 -> (n_tl2,Some (Mapping (d1,d2)))
+                | _ -> (n_tl2,None))
+            | Mapping (t1,t2), Array (x1,d1)
+            | Array (x1,d1), Mapping (t1,t2) ->
+              let n_tl, t3 = unify x1 t2 tl in
+              (match t3 with
+               | Some t3 -> (n_tl, Some (Mapping (t1,t2)))
+               | _ -> (n_tl, None))
             | Tup2 (t1,t2),Tup2 (t3,t4) -> (
                 let n_tl, t5 = unify t1 t3 tl in
                 let n_tl2, t6 = unify t2 t4 n_tl in
@@ -341,6 +354,18 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
               | Some d, (n_tl,Some t)  -> (n_tl,Some (Array (t,d)))
               | _,(n_tl,_)-> (n_tl,None)
             )
+          | Mapping (t1,t2), Mapping (t3,t4) -> (
+              let n_tl, t5 = unify t1 t3 tl in
+              let n_tl2, t6 = unify t2 t4 n_tl in
+              match t5,t6 with
+              | Some d1, Some d2 -> (n_tl2,Some (Mapping (d1,d2)))
+              | _ -> (n_tl2,None))
+          | Mapping (t1,t2), Array (x1,d1)
+          | Array (x1,d1), Mapping (t1,t2) ->
+            let n_tl, t3 = unify x1 t2 tl in
+            (match t3 with
+             | Some t3 -> (n_tl, Some (Mapping (t1,t2)))
+             | _ -> (n_tl, None))
           | _,_ -> (tlist,None)
         end
   in unify k1 k2 tlist
@@ -374,7 +399,7 @@ and repl_tvar_in_x unify flag tlist i k =
           | t -> (unify t t1 _tl)
     ) tlist (tlist, Some new_k) in
   match res_t with
-  | (n_tl,None) -> (n_tl,None)
+  | (n_tl,None) ->    (n_tl,None)
   | (n_tl,Some ut) ->
     let ut = match ut with
       | UNK -> k
@@ -739,6 +764,7 @@ and gather_type_info_exp_x prog a0 tlist et =
   | IP.ArrayAt ((a,p),idx,pos) ->
     let dim = List.length idx in
     let new_et = Array (et, dim) in
+    let () = y_ninfo_hp (add_str "new_et" string_of_typ) new_et in
     let (n_tl,lt) = x_add gather_type_info_var a tlist new_et pos in
     let rec aux id_list type_list =
       match id_list with
@@ -749,7 +775,8 @@ and gather_type_info_exp_x prog a0 tlist et =
     in
     let n_tlist = aux idx n_tl in
     (match lt with
-     | Array (r,_) -> (n_tlist,r)
+     | Array (r,_) -> (n_tlist, r)
+     | Mapping (t1,t2)   -> (n_tlist, t2)
      | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in

@@ -840,7 +840,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
-  | Mapping (t1,t2) -> "mapping(" ^(string_of_typ t1) ^ "," ^ (string_of_typ t2) ^ ")"
+  | Mapping (t1,t2) -> "mapping(" ^(string_of_typ t1) ^ " => " ^ (string_of_typ t2) ^ ")"
   | Poly t    -> ("`" ^ t)
 ;;
 
