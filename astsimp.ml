@@ -6991,7 +6991,7 @@ and default_value (t :typ) pos : C.exp =
     C.EmptyArray { C.exp_emparray_type = t;
                    C.exp_emparray_dim = d;
                    C.exp_emparray_pos = pos}
-  | Mapping (t1,t2) -> failwith x_tbi
+  | Mapping (t1,t2) -> C.Null pos
   | Bptyp ->
     failwith "default_value: Bptyp can only be used for constraints"
   | Poly _ -> failwith x_tbi

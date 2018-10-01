@@ -603,6 +603,7 @@ let peek_try =
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> ()
           | [INT,_;OSQUARE,_] -> ()
+          | [MAPPING,_;OPAREN,_] -> ()
           (* | [INFINT_TYPE,_;OSQUARE,_] -> () *)
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
@@ -3473,10 +3474,10 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
+  [[ peek_mapping_type; t = parse_mapping_type -> t
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
-   | peek_mapping_type; t = parse_mapping_type -> t
+   | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
 parse_mapping_type:
