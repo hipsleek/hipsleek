@@ -5,6 +5,8 @@ int foo(mapping(int => int) mp)
    ensures  res=n;
 {
    int x = select(mp,0)[int,int];// mp[0];
+   int y ;
+   y = mp[0];
   //int x = 9;
   dprint;
   update(mp,0,9)[int,int];
