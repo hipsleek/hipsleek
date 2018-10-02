@@ -13,3 +13,17 @@ int foo(mapping(int => int) mp)
   //dprint;
   return x;
 }
+
+
+data node{
+  int val;
+}
+
+int goo(mapping(int => int) mp)
+   requires [n,m] mp[0]=n & mp[1]=m
+   ensures  res=n+m;
+{
+  int x = mp[0]; // => select(mp,0)[int,int];
+  int y = mp[1];
+  return x+y;
+}

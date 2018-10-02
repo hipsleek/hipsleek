@@ -4418,6 +4418,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                let constant_flow = "ret_"^(new_string_of_typ proc.I.proc_return) in
                let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
                let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
+               let n_tl = n_tl in
                let new_body = fst (x_add trans_exp prog proc new_body_e) in
                (*let () = print_endline ("[final result] = "^Cprinter.string_of_exp new_body) in*)
                Some new_body
@@ -5180,7 +5181,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       let new_e =
         let name, poly_args =
           match x_add_1 helper a with
-        | _, Mapping (t1,t2) -> mapping_at, [t1;t2]
+        | _, Mapping (t1,t2) -> mapping_at, [t1;t2] (* assuming that the map if formed with the poly types *)
         | _, _ ->  array_access_call ^ (string_of_int r) ^ "d", (* Update call *)
                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                    I.def_exp_call_nrecv_poly_args;
@@ -5189,7 +5190,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           I.exp_call_nrecv_method     = name;
           I.exp_call_nrecv_lock       = None;
           I.exp_call_nrecv_arguments  = a :: index;
-          I.exp_call_nrecv_poly_args  =  poly_args;
+          I.exp_call_nrecv_poly_args  = poly_args;
           I.exp_call_nrecv_ho_arg     = I.def_exp_call_nrecv_ho_arg;
           I.exp_call_nrecv_extra_arg  = I.def_exp_call_nrecv_extra_arg;
           I.exp_call_nrecv_path_id    = None; (* No path_id is necessary because there is only one path *)
