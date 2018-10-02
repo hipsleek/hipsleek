@@ -30,15 +30,20 @@ let rev_translate_sec_from_infer f =
   let is_valid_translated_sec_p_formula f =
     let open Cpure in
     match f with
-      | Gte (IConst (i, _), Var (SpecVar (_, id, _), _), _) | Gte (Var (SpecVar (_, id, _), _), IConst (i, _), _) ->
+      | Gte (IConst (i, _), Var (SpecVar (_, id, _), _), _)
+      | Gte (Var (SpecVar (_, id, _), _), IConst (i, _), _) ->
           (i = 0 || i = 1) && BatString.starts_with id "sec_"
-      | Eq (Var (SpecVar (_, id, _), _), IConst (i, _), _) -> (i = 0 || i = 1) && BatString.starts_with id "sec_"
-      | Lte (IConst (i, _), Var (SpecVar (_, id, _), _), _) | Lte (Var (SpecVar (_, id, _), _), IConst (i, _), _) ->
+      | Eq (Var (SpecVar (_, id, _), _), IConst (i, _), _) ->
           (i = 0 || i = 1) && BatString.starts_with id "sec_"
-      | Lte (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _) ->
+      | Lte (IConst (i, _), Var (SpecVar (_, id, _), _), _)
+      | Lte (Var (SpecVar (_, id, _), _), IConst (i, _), _) ->
+          (i = 0 || i = 1) && BatString.starts_with id "sec_"
+      | Lt (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _)
+      | Lte (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _)
+      | Eq (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _) ->
           BatString.starts_with id1 "sec_" && BatString.starts_with id2 "sec_"
       | _ ->
-          let () = y_binfo_hp (add_str "Not valid translated p formula" !Cpure.print_p_formula) f in
+          let () = y_binfo_hp (add_str "Not valid translated p formula: " !Cpure.print_p_formula) f in
           false
   in
   let rec is_valid_translated_sec_formula f =
@@ -61,6 +66,9 @@ let rev_translate_sec_from_infer f =
             mkLte (mkVar v pos2) (mkIConst i pos1) pos3
         | Gte (Var (v, pos1), IConst (i, pos2), pos3) ->
             mkLte (mkIConst i pos2) (mkVar v pos1) pos3
+        | Eq (Var (v1, pos1), Var (v2, pos2), pos3)
+        | Lt (Var (v1, pos1), Var (v2, pos2), pos3) ->
+            mkLte (mkVar v1 pos1) (mkVar v2 pos2) pos3
         | f -> f)
       formulas
     |> List.filter
@@ -92,25 +100,31 @@ let rev_translate_sec_from_infer f =
           (* let () = y_binfo_hp (add_str "f list" (pr_list !Cpure.print_p_formula)) f_list in *)
           match List.hd f_list with
             | Eq (Var v1, IConst (i1, _), _) ->
-                if (List.length f_list) mod (Security.representation_tuple_length !Security.current_lattice) <> 0 then
-                  Cpure.mkFalse no_pos :: acc
-                else
-                  let label =
-                    List.map
-                      (function
-                        | Eq (Var v1, IConst (i1, _), _) -> i1
-                        | f -> report_error no_pos (__LOC__ ^ "Unexpected formula when creating security label: " ^ !Cpure.print_p_formula f))
-                      f_list
-                    |> Security.representation_to_label !Security.current_lattice
-                    |> Cpure.sec_label in
-                  let spec_var =
-                    match List.hd f_list with
-                    | Eq (Var (v1, _), IConst (i1, _), _) ->
-                        extract_spec_var_name v1
-                        |> Cpure.mk_spec_var
-                        |> spec_var_add_prime (Cpure.primed_of_spec_var v1)
-                    | f -> report_error no_pos (__LOC__ ^ "Unexpected formula when creating security formula: " ^ !Cpure.print_p_formula f) in
-                  Cpure.mk_sec_bform spec_var label no_pos :: acc
+                let id_val_pairs =
+                  List.map
+                    (function
+                      | Eq (Var (v1, _), IConst (i, _), _) -> (extract_sec_var_id v1, i)
+                      | f -> report_error no_pos (__LOC__ ^ "Unexpected formula when creating security formula: " ^ !Cpure.print_p_formula f))
+                    f_list in
+                let label =
+                  BatList.init (Security.representation_tuple_length !Security.current_lattice) ((+) 1)
+                  |> fold_right
+                      (fun i acc ->
+                        match BatList.find_opt (fun (id, v) -> id = i) id_val_pairs with
+                        | Some (id, v) -> v :: acc
+                        | None -> 1 :: acc
+                      )
+                      []
+                  |> Security.representation_to_label !Security.current_lattice
+                  |> Cpure.sec_label in
+                let spec_var =
+                  match List.hd f_list with
+                  | Eq (Var (v1, _), IConst (i, _), _) ->
+                    extract_spec_var_name v1
+                    |> Cpure.mk_spec_var
+                    |> spec_var_add_prime (Cpure.primed_of_spec_var v1)
+                  | f -> report_error no_pos (__LOC__ ^ "Unexpected formula when creating security formula: " ^ !Cpure.print_p_formula f) in
+                Cpure.mk_sec_bform spec_var label no_pos :: acc
             | Lte (Var v1, IConst (i, _), _) ->
                 let id_val_pairs =
                   List.map
