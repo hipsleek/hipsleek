@@ -5349,27 +5349,43 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
             (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
             (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
-            | I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
+            | I.ArrayAt { I.exp_arrayat_array_base = a;
+                          I.exp_arrayat_index = index;
+                          I.exp_arrayat_pos = pos_lhs } ->
               (* Array variable *)
               (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
               let r = List.length index in
-              let () = y_binfo_pp "Updated: I.ArrayAt -> I.CallNRecv" in
-              let new_rhs = I.CallNRecv {
-                  I.exp_call_nrecv_method = array_update_call ^ (string_of_int r) ^ "d"; (* Update call *)
-                  (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-                  I.exp_call_nrecv_lock = None;
-                  I.exp_call_nrecv_arguments = rhs :: a :: index;
-                  I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
-                  I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
-                  I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
-                  I.exp_call_nrecv_path_id = pid;
-                  I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in
-              let new_e = I.Assign {
-                  I.exp_assign_op = I.OpAssign;
-                  I.exp_assign_lhs = a; (* new_lhs; *)
-                  I.exp_assign_rhs = new_rhs;
-                  I.exp_assign_path_id = pid;
-                  I.exp_assign_pos = pos_a; } in
+              (*Mapping and Array update*)
+              let new_e =
+                let new_rhs =
+                  let name, arguments, poly_args, p_id =
+                    match x_add_1 helper a with
+                    | _, Mapping (t1,t2) -> "update",  a :: rhs :: index, [t1;t2], None
+                    | _, _ -> array_update_call ^ (string_of_int r) ^ "d",
+                              rhs :: a :: index,
+                              I.def_exp_call_nrecv_poly_args,
+                              pid;
+                  in
+                  I.CallNRecv {
+                    I.exp_call_nrecv_method = name;     (* Mapping update call *)
+                    I.exp_call_nrecv_lock = None;
+                    I.exp_call_nrecv_arguments = arguments;
+                    I.exp_call_nrecv_poly_args = poly_args;
+                    I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
+                    I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
+                    I.exp_call_nrecv_path_id = p_id;
+                    I.exp_call_nrecv_pos = I.get_exp_pos rhs; }
+                in
+                  match x_add_1 helper a with
+                    | _, Mapping (t1,t2) -> new_rhs
+                    | _, _ ->
+                      I.Assign {
+                        I.exp_assign_op = I.OpAssign;
+                        I.exp_assign_lhs = a; (* new_lhs; *)
+                        I.exp_assign_rhs = new_rhs;
+                        I.exp_assign_path_id = pid;
+                        I.exp_assign_pos = pos_a; }
+              in
               x_add_1 helper new_e
             (* let (ce1, te1) = helper lhs in
                let (ce2, te2) = helper rhs in
