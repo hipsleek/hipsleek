@@ -929,7 +929,7 @@ let peek_mapping_type =
   SHGram.Entry.of_parser "peek_mapping_type"
       (fun strm ->
          match Stream.npeek 2 strm with
-           |[MAPPING,_;OPAREN,_] -> let () = print_endline "Mapping found!" in ()
+           |[MAPPING,_;OPAREN,_] -> ()
            | _ -> raise Stream.Failure)
 
 

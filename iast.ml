@@ -2699,6 +2699,11 @@ and mkArrayAt base index pos =
             exp_arrayat_index = index;
             exp_arrayat_pos = pos; }
 
+(*and mkMappingKey base index pos =
+  MappingAt { exp_mappingat_map_base = base;
+              exp_mappingat_index = index;
+              exp_mappingat_pos = pos }*)
+
 and mkMember base fields path_id pos =
   Member { exp_member_base = base;
            exp_member_fields = fields;

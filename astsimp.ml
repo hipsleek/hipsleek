@@ -243,6 +243,7 @@ let _ =
 let array_update_call = "update___"
 let array_access_call = "array_get_elm_at___"
 let array_allocate_call = "aalloc___"
+let mapping_at = "select"
 
 let get_binop_call_safe_int (bop : I.bin_op) : ident =
   match bop with
@@ -5176,16 +5177,24 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                   I.exp_arrayat_index = index;
                   I.exp_arrayat_pos = pos } ->
       let r = List.length index in
-      let () = y_binfo_pp "Access: I.ArrayAt -> I.CallNRecv" in
-      let new_e = I.CallNRecv {
-          I.exp_call_nrecv_method = array_access_call ^ (string_of_int r) ^ "d"; (* Update call *)                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-          I.exp_call_nrecv_lock = None;
-          I.exp_call_nrecv_arguments = a :: index;
-          I.exp_call_nrecv_poly_args = I.def_exp_call_nrecv_poly_args;
-          I.exp_call_nrecv_ho_arg = I.def_exp_call_nrecv_ho_arg;
-          I.exp_call_nrecv_extra_arg = I.def_exp_call_nrecv_extra_arg;
-          I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
-          I.exp_call_nrecv_pos = pos;} in
+      let new_e =
+        let name, poly_args =
+          match x_add_1 helper a with
+        | _, Mapping (t1,t2) -> mapping_at, [t1;t2]
+        | _, _ ->  array_access_call ^ (string_of_int r) ^ "d", (* Update call *)
+                   (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+                   I.def_exp_call_nrecv_poly_args;
+        in
+        I.CallNRecv {
+          I.exp_call_nrecv_method     = name;
+          I.exp_call_nrecv_lock       = None;
+          I.exp_call_nrecv_arguments  = a :: index;
+          I.exp_call_nrecv_poly_args  =  poly_args;
+          I.exp_call_nrecv_ho_arg     = I.def_exp_call_nrecv_ho_arg;
+          I.exp_call_nrecv_extra_arg  = I.def_exp_call_nrecv_extra_arg;
+          I.exp_call_nrecv_path_id    = None; (* No path_id is necessary because there is only one path *)
+          I.exp_call_nrecv_pos        = pos;}
+      in
       x_add_1 helper new_e
     (* (try *)
     (*   let vinfo_tmp = E.look_up a in (\* look up the array variable *\) *)

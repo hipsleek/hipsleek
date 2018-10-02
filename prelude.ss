@@ -15,13 +15,13 @@ int minus___(int a, int b)
   requires true
   ensures res = a - b;
 
-int mult___(int a, int b) 
-  requires true 
+int mult___(int a, int b)
+  requires true
   ensures res = a * b;
 
 
 int mults___(int a, int b)
-  requires true 
+  requires true
   ensures res = a * b;
 /*
   case {
@@ -41,11 +41,11 @@ int mults___(int a, int b)
 /*
 r=a*b & b=c*d
 -->  (a=0 & r=0 | b=0 & r=0 |
-      a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b 
+      a>0&b>0&r>a&r>b | a>0&b<0&r<-a&r<b | a<0&b>0&r<a&r<-b
       | a<0&b<0&r>-a,r>-b)
 */
 
-int div___(int a, int b) 
+int div___(int a, int b)
  case {
   a >= 0 -> case {
     b >= 1 -> ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
@@ -61,7 +61,7 @@ int div___(int a, int b)
     }
 }
 
-int divs___(int a, int b) 
+int divs___(int a, int b)
   case {
     a = 0 -> case {
       b >= 1 -> ensures res = 0;
@@ -94,20 +94,20 @@ int divs___(int a, int b)
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
- requires true 
+ requires true
  case {
   b != 0 -> ensures true;
-  b = 0 -> ensures true & flow __DivByZeroErr; 
+  b = 0 -> ensures true & flow __DivByZeroErr;
  }
 
-int div3(int a, int b) 
+int div3(int a, int b)
  case {
   b = 0 -> requires false ensures false;
   b != 0 -> ensures true;
  }
 
-int div4(int a, int b) 
-  requires b != 0 
+int div4(int a, int b)
+  requires b != 0
   ensures true;
 
 int mod___(int a, int b) case {
@@ -131,42 +131,42 @@ int mod___(int a, int b) case {
   }
 }
 
-float add___(int a, float b) 
-  requires true 
+float add___(int a, float b)
+  requires true
   ensures res = a + b;
 
-float add___(float a, int b) 
-  requires true 
+float add___(float a, int b)
+  requires true
   ensures res = a + b;
 
-float add___(float a, float b) 
-  requires true 
+float add___(float a, float b)
+  requires true
   ensures res = a + b;
 
 
-float minus___(int a, float b) 
-  requires true 
+float minus___(int a, float b)
+  requires true
   ensures res = a - b;
 
-float minus___(float a, int b) 
-  requires true 
+float minus___(float a, int b)
+  requires true
   ensures res = a - b;
 
-float minus___(float a, float b) 
-  requires true 
+float minus___(float a, float b)
+  requires true
   ensures res = a - b;
 
 
-float mult___(int a, float b) 
-  requires true 
+float mult___(int a, float b)
+  requires true
   ensures res = a * b;
 
-float mult___(float a, int b) 
-  requires true 
+float mult___(float a, int b)
+  requires true
   ensures res = a * b;
 
-float mult___(float a, float b) 
-  requires true 
+float mult___(float a, float b)
+  requires true
   ensures res = a * b;
 
 
@@ -190,18 +190,18 @@ float div___(float a, float b)
  }
 */
 
-bool eq___(int a, int b) 
+bool eq___(int a, int b)
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
 
 /*
-bool eq___(float a, float b) 
+bool eq___(float a, float b)
   case {
     a = b -> ensures res;
     a != b -> ensures !res;}
 */
-bool neq___(int a, int b) 
+bool neq___(int a, int b)
   case {
     a = b -> ensures !res;
     a != b -> ensures res;}
@@ -247,21 +247,21 @@ bool gte___(float a, float b) case {
     a <  b -> ensures !res;}
 */
 bool land___(bool a, bool b) case {
-  a -> case { b -> ensures res; 
+  a -> case { b -> ensures res;
               !b -> ensures !res;}
  !a -> ensures !res;}
 
 bool lor___(bool a, bool b) case {
   a -> requires true ensures res;
-  !a -> case { b -> ensures res; 
+  !a -> case { b -> ensures res;
                 !b -> ensures !res;}}
 
-bool not___(bool a) 
-   case { a -> ensures !res; 
+bool not___(bool a)
+   case { a -> ensures !res;
           !a -> ensures res;}
 
-int pow___(int a, int b) 
-   requires true 
+int pow___(int a, int b)
+   requires true
    ensures true;
 
 //////////////////////////////////////////////////////////////////
@@ -270,12 +270,12 @@ int pow___(int a, int b)
 //
 //relation update_array(int[] a, int i, int v, int[] r) == true.
 //
-//int array_get_elm_at___(int[] a, int i) 
-//   requires true 
+//int array_get_elm_at___(int[] a, int i)
+//   requires true
 //   ensures res = a[i];
 //
-//int[] update___(int[] a, int i, int v) 
-//   requires true 
+//int[] update___(int[] a, int i, int v)
+//   requires true
 //   ensures update_array(a,i,v,res);
 //
 //////////////////////////////////////////////////////////////////
@@ -305,11 +305,11 @@ relation update_array_1d(int[] a, int[] r, int val, int i).
 
 relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
 
-relation amodr(int[] a, int[] b, int i, int j) == 
+relation amodr(int[] a, int[] b, int i, int j) ==
     forall(k : (i<=k & k<=j | a[k] = b[k])).
 
 /*
-relation bnd(int[] a, int i, int j, int low, int high) == 
+relation bnd(int[] a, int i, int j, int low, int high) ==
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
 */
 
@@ -321,32 +321,32 @@ relation bnd(int[] a, int i, int j, int low, int high) ==
 // <NEW> PRIMITIVE FUNCTIONS
 //////////////////////////////////////////////////////////////////
 
-int array_get_elm_at___1d(int[] a, int i) 
+int array_get_elm_at___1d(int[] a, int i)
   requires true
   ensures res = a[i];
   /* requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
+				dom(a,ahalb,ahaub)
+				& ahalb <= i
 				& i <= ahaub
   ensures true;
   requires true
   ensures res = a[i];
 	*/
   /*	requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
+				dom(a,ahalb,ahaub)
+				& ahalb <= i
 				& i <= ahaub
                                 ensures res = a[i];*/
-	
-bool array_get_elm_at___1d(bool[] a, int i) 
+
+bool array_get_elm_at___1d(bool[] a, int i)
 	requires [ahalb,ahaub]
-				domb(a,ahalb,ahaub) 
-				& ahalb <= i 
+				domb(a,ahalb,ahaub)
+				& ahalb <= i
 				& i <= ahaub
 	ensures res = a[i];
 
 // 2D array access
-int array_get_elm_at___2d(int[,] a, int i, int j) 
+int array_get_elm_at___2d(int[,] a, int i, int j)
 	requires true
 	ensures res = a[i,j];
 
@@ -416,7 +416,7 @@ void delete_ptr(int_ptr_ptr@R x)
   requires x::int_ptr_ptr<v>
   ensures true;
 
-/* Muoi updated: We can generate int_star from cilparser. 
+/* Muoi updated: We can generate int_star from cilparser.
 data int_star{
   int value;
 }
@@ -434,25 +434,25 @@ int[] update___1d(int v, ref int[] a, int i)
   requires true
 //ensures a'[i]=v;
 ensures update_array_1d(a,res,v,i);
-//void update___(ref int[] a, int i, int v) 
+//void update___(ref int[] a, int i, int v)
 	/* requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
+				dom(a,ahalb,ahaub)
+				& ahalb <= i
 				& i <= ahaub
      ensures dom(res,ahalb,ahaub);//'
      requires true
-	 ensures  update_array(a,i,v,res);//' 
+	 ensures  update_array(a,i,v,res);//'
 	*/
      /* requires [s,b,low,high] bnd(a,s,b,low,high) & s<=i<=b & low<=v<=high */
      /* ensures bnd(res,s,b,low,high); */
 /*	requires [ahalb,ahaub]
-				dom(a,ahalb,ahaub) 
-				& ahalb <= i 
+				dom(a,ahalb,ahaub)
+				& ahalb <= i
 				& i <= ahaub
-	ensures dom(res,ahalb,ahaub) 
+	ensures dom(res,ahalb,ahaub)
         & update_array_1d(a,res,v,i);*/
-		  	
-			       
+
+
 bool[] update___1d(bool v, bool[] a, int i)
 	requires [ahalb,ahaub] domb(a,ahalb,ahaub) & ahalb <= i & i <= ahaub
 	ensures domb(res,ahalb,ahaub) & update_array_1d_b(a,res,v,i);
@@ -461,8 +461,8 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 	requires true
 	ensures update_array_2d(a,res,v,i,j);
 
-int[] aalloc___(int dim) 
-	requires true 
+int[] aalloc___(int dim)
+	requires true
 	ensures dom(res,0,dim-1);
 
 pred_prim memLoc<heap:bool,size:int> inv size>0;
@@ -483,7 +483,7 @@ RS_mem malloc(int n)
 item cast_to_ptr(RS_mem p)
  case {
   p=null -> ensures res=null;
-  p!=null -> 
+  p!=null ->
     requires p::RS_mem<a> & a>=size(item)
     ensures res::item<_>
  }
@@ -491,7 +491,7 @@ item cast_to_ptr(RS_mem p)
 item cast_to_ptr(RS_mem p)
  case {
   p=null -> ensures res=null;
-  p!=null -> 
+  p!=null ->
     requires p::RS_mem<a> //& a>=size(item)
     ensures res::item<_>;
  }
@@ -551,9 +551,9 @@ data char_star {
 }
 
 WSS<p> ==
-  self::WFSeg<q> * q::char_star<0, p> // * p::MEM<> 
+  self::WFSeg<q> * q::char_star<0, p> // * p::MEM<>
   inv true;
-  
+
 WFSeg<p> ==
   self = p
   or self::char_star<v, q> * q::WFSeg<p> & v!=0
@@ -562,7 +562,7 @@ WFSeg<p> ==
 WSSN<p, n> ==
   self::WFSegN<q, n-1> * q::char_star<0, p> // * p::MEM<>
   inv self!=null & n>=0;
-  
+
 WFSegN<p, n> ==
   self = p & n = 0
   or self::char_star<v, q> * q::WFSegN<p, n-1> & v!=0
@@ -578,7 +578,7 @@ pred_extn size[R]<k> ==
    inv k>=0;
 
 char_star __plus_plus_char(char_star x)
-  requires x::char_star<_,q>@L & Term[] 
+  requires x::char_star<_,q>@L & Term[]
   ensures  res=q ;
 
 int __get_char(char_star x)
@@ -590,7 +590,7 @@ void __write_char(char_star x, int v)
   ensures x::char_star<v,q>;
 
 char_star plus_plus_char(char_star x)
-requires x::char_star<_,q>@L & Term[] 
+requires x::char_star<_,q>@L & Term[]
 ensures  res=q ;
 
 int get_char(char_star x)
@@ -600,15 +600,14 @@ int get_char(char_star x)
 void write_char(char_star x, int v)
   requires x::char_star<_,q> & Term[]
   ensures x::char_star<v,q>;
-  
+
 char_star alloc_str (int n)
   requires Term
   case {
     n < 0 -> ensures res = null;
-    n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>; 
+    n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>;
   }
-  
+
 void finalize_str (char_star s, int n)
   requires s::WFSegN<p, m> & 0 <= n & n < m & Term
   ensures s::WSSN<q, n+1>;
-
