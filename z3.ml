@@ -214,6 +214,14 @@ let rec smt_of_b_formula b =
       let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
       let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
       "(= " ^ new_array ^ " " ^ result ^ ")"
+    else if Cpure.is_update_map_relation rn then
+      match smt_args with
+      | map1 :: map2 :: key :: value :: [] ->
+        let new_map = map1 in
+        let store   = "(store " ^ map2 ^ " " ^ key ^ " " ^ value ^ ")" in
+        "(= " ^ new_map ^ " " ^ store ^ ")"
+      | _ ->
+        "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)
@@ -365,7 +373,7 @@ let add_axiom h dir c =
 (* Interface function to add a new relation *)
 let add_relation (rname1:string) rargs rform =
   let rname = CP.SpecVar(RelT[],rname1,Unprimed) in
-  if (Cpure.is_update_array_relation rname1) then
+  if (Cpure.is_update_array_relation rname1) || (Cpure.is_update_map_relation rname1) then
     ()
   else (
     (* let rname1 = CP.name_of_spec_var rname in *)

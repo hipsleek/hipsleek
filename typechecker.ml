@@ -1448,6 +1448,9 @@ and subs_poly_vars_struc_x spec poly_hash =
         | Poly _ -> let ty0 = hsubs_one_poly_typ poly_hash ty in
           let ()  = y_tinfo_hp (add_str "changing to" string_of_typ) ty0 in
           Some (CP.SpecVar(ty0,id,prmd))
+        | Mapping (t1,t2) ->
+          let new_typ = Mapping (hsubs_one_poly_typ poly_hash t1,hsubs_one_poly_typ poly_hash t2) in
+          Some (CP.SpecVar(new_typ,id,prmd))
         | _      -> None
       end
   in
@@ -2489,6 +2492,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           (**  poly vars substitution **)
           (*****************************)
           (*** creates a hash to store the poly vars substitutions ***)
+          (* TODO ANDREEA use one of the predefined functions from globals *)
           let poly_hash = Hashtbl.create 5 in
           let poly_types = List.combine proc.proc_poly_vars pargs in
           let () = List.iter (fun (poly_var,poly_arg) -> Hashtbl.add poly_hash  poly_var poly_arg) poly_types in
@@ -2546,6 +2550,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                * org_spec if the call is not a recursive call *)
               (*let stripped_spec = if ir then org_spec else CF.strip_variance org_spec in*)
               (* let () = x_binfo_hp (add_str "org_spec 1" Cprinter.string_of_struc_formula) org_spec no_pos in *)
+              let org_spec = (* REPLACE the poly types here *) org_spec in
               let org_spec = if !Globals.change_flow then CF.change_spec_flow org_spec else org_spec in
               (* let () = x_binfo_hp (add_str "org_spec 2" Cprinter.string_of_struc_formula) org_spec no_pos in *)
               let lbl_ctx = store_label # get in

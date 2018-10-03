@@ -11167,12 +11167,19 @@ let is_update_array_relation (r:string) =
   let udl = String.length udrel in
   (String.length r) >= udl && (String.sub r 0 udl) = udrel
 
+let is_update_map_relation (r:string) =
+  (* match r with CP.SpecVar(_,r,_) -> *)
+  let udrel = "Store" in
+  let udl = String.length udrel in
+  (String.length r) >= udl && (String.sub r 0 udl) = udrel
+
+
 let drop_complex_ops =
   let pr_weak b = match b with
     | LexVar t_info -> Some (mkTrue t_info.lex_loc)
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
-      if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
+      if (v="dom") || (v="amodr") || (is_update_array_relation v) || (is_update_map_relation v) then None
       else Some (mkTrue p)
     | _ -> if has_template_b_formula (b, None)
       then Some (mkTrue (pos_of_b_formula (b, None))) else None in
@@ -11180,7 +11187,7 @@ let drop_complex_ops =
     | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
     | RelForm (SpecVar (_, v, _),_,p) ->
       (*provers which can not handle relation => throw exception*)
-      if (v="dom") || (v="amodr") || (is_update_array_relation v) then None
+      if (v="dom") || (v="amodr") || (is_update_array_relation v)  || (is_update_map_relation v) then None
       else Some (mkFalse p)
     | _ -> if has_template_b_formula (b, None)
       then Some (mkFalse (pos_of_b_formula (b, None))) else None in

@@ -3404,8 +3404,10 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   in
   (* Forward the relation to the smt solver. *)
   (* in-used *)
-  let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
-  let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+  let () = if not (Cpure.is_update_map_relation crdef.Cast.rel_name) then begin
+      let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+      let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in
+      () end  in
   crdef
 
 and trans_templ (prog: I.prog_decl) (tdef: I.templ_decl): C.templ_decl =
@@ -5177,6 +5179,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
     | I.ArrayAt { I.exp_arrayat_array_base = a;
                   I.exp_arrayat_index = index;
                   I.exp_arrayat_pos = pos } ->
+      (* below translates an array/mapping access to its corresponding method call *)
       let r = List.length index in
       let new_e =
         let name, poly_args =
@@ -5360,7 +5363,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 let new_rhs =
                   let name, arguments, poly_args, p_id =
                     match x_add_1 helper a with
-                    | _, Mapping (t1,t2) -> "update",  a :: rhs :: index, [t1;t2], None
+                    | _, Mapping (t1,t2) -> "update",
+                                            (a :: index) @ [rhs], (* assumes index is of length 1*)
+                                            [t1;t2],
+                                            None
                     | _, _ -> array_update_call ^ (string_of_int r) ^ "d",
                               rhs :: a :: index,
                               I.def_exp_call_nrecv_poly_args,
@@ -8810,7 +8816,9 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_remaining_branches = brs;
                            CP.xpure_view_pos = pos
                           }
-               | IP.TVar (var,typ,pos) -> CP.TVar( (trans_pure_exp var tlist), typ, pos)
+               | IP.TVar (var,typ,pos) ->
+                 let () = y_binfo_pp ("TVar"^ (!Ipure.print_exp var)) in
+                 CP.TVar( (trans_pure_exp var tlist), typ, pos)
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
