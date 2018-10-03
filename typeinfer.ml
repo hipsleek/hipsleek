@@ -235,13 +235,13 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
     | t1, Poly _  | Poly _, t1 -> (tl, Some t1)
     | t1, t2  -> (
-        let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
-        let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+        let () = Debug.binfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+        let () = Debug.binfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
         if is_null_type t1 then (tlist, Some k2)
         else if is_null_type t2 then (tlist, Some k1)
         else
-        if sub_type t1 t2 then (tlist, Some k2)  (* found t1, but expecting t2 *)
-        else if sub_type t2 t1 then (tlist,Some k1)
+        if sub_type t1 t2 && not(Globals.contains_poly t2) then (tlist, Some k2)  (* found t1, but expecting t2 *)
+        else if sub_type t2 t1 && not(Globals.contains_poly t1) then (tlist,Some k1)
         else
           begin
             match t1,t2 with
@@ -261,8 +261,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                | _,(n_tl,_) -> (n_tl,None))
             | Mapping (t1,t2), Mapping (t3,t4) ->
               (
-                let n_tl, t5 = unify t1 t3 tl in
-                let n_tl2, t6 = unify t2 t4 n_tl in
+                let n_tl, t5 = unify_type t1 t3 tl in
+                let n_tl2, t6 = unify_type t2 t4 n_tl in
                 match t5,t6 with
                 | Some d1, Some d2 -> (n_tl2,Some (Mapping (d1,d2)))
                 | _ -> (n_tl2,None))

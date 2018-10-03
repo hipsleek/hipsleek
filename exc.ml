@@ -834,7 +834,8 @@ struct
     | List et1, List et2 -> sub_type et1 et2
     | Int, NUM        -> true
     | Float, NUM        -> true
-    (* | NUM, Poly _  | Int, Poly _ | Float, Poly _ | Named _, Poly _ *) | _, Poly _ -> true
+    (* | NUM, Poly _  | Int, Poly _ | Float, Poly _ | Named _, Poly _ *)
+    | _, Poly _ -> true
     | p1, p2 -> p1=p2
   ;;
 end;;

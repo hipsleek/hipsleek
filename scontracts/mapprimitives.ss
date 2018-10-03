@@ -1,7 +1,11 @@
 pred_prim Map<mp1:mapping(int => int), mp2:mapping(int => int)>;
-relation  Store(mapping(int => int) mapppp1,
+relation  Store_int(mapping(int => int) mapppp1,
                 mapping(int => int) mapppp2,
                 int key, int val).
+relation  Store(mapping(`T1 => `T2) mapppp1,
+                mapping(`T1 => `T2) mapppp2,
+                `T1 key, `T2 val).
+
 
 void update [T1,T2] (ref mapping(int => int) map, int key, int val)
    requires  map::Map<map1,map2>

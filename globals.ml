@@ -911,40 +911,6 @@ let subs_tvar_in_typ t (i:int) nt =
   in helper t
 ;;
 
-(* DEPRECATED - to be deleted *)
-(* let rec subs_one_poly_typ poly_types target_ty =
- *     match target_ty with
- *      | Poly t ->
- *         begin
- *          try  let (_, actualtyp) = (List.find (fun (polytyp, _) -> String.equal polytyp t) poly_types) in actualtyp
- *          with _ ->  target_ty
- *        end
- *      (\* | Mapping (t1, t2) -> Mapping (subs_one_poly_typ ) *\)
- *      | _ -> target_ty
- * 
- * let subs_poly_typ poly_vars poly_args args_types =
- *   try
- *    let poly_types = List.combine poly_vars poly_args in
- *    let args_types = List.map (fun farg -> subs_one_poly_typ poly_types farg) args_types in
- *    args_types
- *   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
- * 
- * let subs_one_poly_typ poly_vars poly_args target_ty =
- *   try
- *    let poly_types = List.combine poly_vars poly_args in
- *    let target_ty  = subs_one_poly_typ poly_types target_ty in
- *    target_ty
- *   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments" *)
-
-(* DEPRECATED - to be deleted *)
-(* let hsubs_one_poly_typ poly_hash target_ty =
- *   match target_ty with
- *    | Poly t ->
- *       begin
- *         try  Hashtbl.find poly_hash t  with _ ->  target_ty
- *       end
- *    | _ -> target_ty *)
-
 let hsubs_one_poly_typ poly_hash target_ty =
   let rec helper ptype =
     match ptype with
@@ -974,7 +940,7 @@ let subs_one_poly_typ poly_vars poly_args target_ty =
    target_ty
   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
 
-let subs_poly_typ poly_vars poly_args args_types =  
+let subs_poly_typ poly_vars poly_args args_types =
   try
     let subs       = Hashtbl.create 5 in
     let poly_types = List.combine poly_vars poly_args in
@@ -983,6 +949,20 @@ let subs_poly_typ poly_vars poly_args args_types =
     args_types
   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
 
+let contains_poly typ =
+  let rec helper typ =
+    match typ with
+    | Poly a          -> true
+    | Tup2 (t1,t2)    -> (helper t1) || (helper t2)
+    | List t          -> helper t
+    | BagT t          -> helper t
+    | Array (t1,d)    -> helper t1
+    | RelT  tlist     -> List.fold_left (fun a x -> a || (helper x) ) false tlist
+    | FuncT (t1,t2)   -> (helper t1) || (helper t2)
+    | Pointer t       -> (helper t)
+    | Mapping (t1,t2) -> ((helper t1) || (helper t2))
+    | _ -> false
+  in helper typ
 
 (* let null_type = Named "" *)
 (* ;;                       *)
