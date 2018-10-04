@@ -233,10 +233,25 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       (tl, Some (Named n1))
     | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
-    | t1, Poly _  | Poly _, t1 -> (tl, Some t1)
+    | ty, Poly id  | Poly id, ty ->
+            begin
+        (* if id in the list already must unify  - otherwise just add *)
+        try
+          let t0 = List.assoc id tl in
+          let n_tl, t2 = unify t0.sv_info_kind ty tl in
+          match t2 with
+          | Some t2 ->
+            let new_tl = type_list_add id {sv_info_kind = t2; id = fresh_int()} n_tl in
+            (new_tl, Some t2)
+          | None -> (tl, None)
+        with Not_found ->
+          let new_tl =  (id,{sv_info_kind=ty; id=fresh_int()})::tl in
+          (new_tl, Some ty)
+      end
+      (* (tl, Some t1) *)
     | t1, t2  -> (
-        let () = Debug.binfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
-        let () = Debug.binfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
+        let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
+        let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
         if is_null_type t1 then (tlist, Some k2)
         else if is_null_type t2 then (tlist, Some k1)
         else
@@ -308,7 +323,7 @@ and subtype_expect_test _ _ = true
 
 and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
   let pr = string_of_typ in
-  Debug.no_2 "unify_expect_modify" pr pr string_of_tlist_type_option (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 tlist) k1 k2
+  Debug.no_2 "unify_expect_modify" pr (add_str "expected" pr) string_of_tlist_type_option (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 tlist) k1 k2
 
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
@@ -318,8 +333,24 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl, Some k1)
-    | Poly _, _ -> (tl ,Some k2)
-    | _, Poly _  -> (tl, Some k1)
+    | Poly id, ty (* ->
+       * let new_tl = type_list_add id {sv_info_kind=k2; id=fresh_int()} tl in
+       * (new_tl ,Some k2) *)
+    | ty, Poly id  ->
+      begin
+        (* if id in the list already must unify  - otherwise just add *)
+        try
+          let t0 = List.assoc id tl in
+          let n_tl, t2 = unify t0.sv_info_kind ty tl in
+          match t2 with
+          | Some t2 ->
+            let new_tl = type_list_add id {sv_info_kind = t2; id = fresh_int()} n_tl in
+            (new_tl, Some t2)
+          | None -> (tl, None)
+        with Not_found ->
+          let new_tl =  (id,{sv_info_kind=ty; id=fresh_int()})::tl in
+          (new_tl, Some ty)
+      end
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)
@@ -522,7 +553,7 @@ and sub_type (t1 : typ) (t2 : typ) =
   Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2
 
 and gather_type_info_var (var : ident) tlist (ex_t : typ) pos : (spec_var_type_list*typ) =
-  let pr = string_of_typ in
+  let pr = (add_str "expected type" string_of_typ) in
   Debug.no_3 "gather_type_info_var" (* [false;true] *) (fun x -> ("ident: "^x)) string_of_tlist pr string_of_tlist_type
     (fun _ _ _ -> gather_type_info_var_x var tlist ex_t pos) var tlist ex_t
 
@@ -1035,9 +1066,36 @@ and gather_type_info_b_formula prog b0 tlist =
     Iprinter.string_of_b_formula string_of_tlist string_of_tlist
     (fun _ _ -> gather_type_info_b_formula_x prog b0 tlist) b0 tlist
 
+(************************************************************************)
+(* substitute the poly types with the actual type if it exists in tlist *)
+(*    eg: [T1:1:int, TVar__2:2:`T1] ==> [T1:1:int, TVar__2:2:int]       *)
+(************************************************************************)
+and poly_wrapper_type_gather tlist =
+  let substituted_tlist = List.map (fun (id,svi) ->
+      if Globals.contains_poly svi.sv_info_kind then
+        try
+          let poly_typ_lst = Globals.get_poly_ids svi.sv_info_kind in
+          (* associate each poly type in svi with its corresponding type from tlist *)
+          (* eg: [T1:1:int, TVar__2:2:`T1] ==> [(T1,int)] *)
+          let poly_typ_lst = List.map (fun a ->
+              try let sv = List.assoc a tlist in Some (a,sv.sv_info_kind)
+              with Not_found -> None
+            ) poly_typ_lst in
+          (* remove Nones *)
+          let subs = List.fold_left (fun a ty -> a@(opt_to_list ty)) [] poly_typ_lst in
+          let tfrom, tto = List.split subs in
+          (* apply the substitution in the actual svi type *)
+          let new_sv_info_kind = Globals.subs_one_poly_typ tfrom tto svi.sv_info_kind in
+          (id,{svi with sv_info_kind = new_sv_info_kind;})
+        with Not_found -> (id,svi)
+      else (id,svi)
+    ) tlist in
+  substituted_tlist
+
 and gather_type_info_b_formula_x prog b0 tlist =
   let (pf,_) = b0 in
-  gather_type_info_p_formula prog pf tlist
+  poly_wrapper_type_gather
+    (gather_type_info_p_formula prog pf tlist)
 (* match pf with *)
 (*   | IP.Frm _ -> tlist *)
 (* | IP.BConst _ -> tlist *)

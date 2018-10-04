@@ -1,0 +1,64 @@
+
+/*
+checkentail map::Map<idx+2> & map[key][idx][idx+1]:=0  &  map[key][idx+1][idx+2]:=1
+                       |- map[key][idx+2]=1.
+expect Valid.
+
+checkentail map::Map<idx+1> & map[key][idx][idx+1]:=0
+                       |- map[key][idx+1]=0.
+expect Valid.
+
+checkentail map::Map<idx+1> & map[key][idx][idx+1]:=0
+                       |- map[key]=0.
+expect Valid.
+
+
+checkentail map::Map<idx+2> & map[key][idx][idx+1]:=0  & map[key][idx+1][idx+2]:=1
+                       |- map[key][idx+2]=0.
+expect Fail.
+
+====================================================================================
+*/
+
+relation Tst(`T1 i1, `T1 i2).
+//pred Map<p1,p2,p3> == p1=p2 & p2=p3.
+
+checkentail //x::Map<1,2,3> &
+     Tst(iiiii,5) |- true.
+
+/*
+pred_prim Map<idx>.
+relation Store(mapping(`T3 => `T4) map, int idx1, int idx2, `T3 key, `T4 value).
+relation Access(mapping(`T5 => `T6) map, int idx, `T5 key, `T6 value).
+*/
+/*
+checkentail map::Map<idx+2> & key=8 & Store(map,idx,idx+1,key,0) & Store(map,idx+1,idx+2,key,1)
+                       |- Access(map,idx+2,key,1).
+expect Valid.
+*/
+/*
+checkentail map::Map<idx+1> & Store(map,idx,idx+1,key,0)
+                       |- true. //Access(map,idx+1,key,0).
+expect Valid.
+*/
+/*
+checkentail map::Map<idx+2> & Store(map,idx,idx+1,key,0) & Store(map,idx+1,idx+2,key,1)
+                       |- Access(map,idx+2,key,0).
+expect Valid.
+*/
+
+
+/*
+pred_prim Map<idx>;
+
+relation  Store(mapping(`T3 => `T4) map,int idx1,int idx2,`T3 key,`T4 val).
+
+void update [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key, `T2 val)
+   requires  map::Map<idx>
+   ensures  map'::Map<idx+1> & Store(map',idx,idx+1,key,val);
+
+`T2 select [T1,T2] (mapping(`T1 => `T2) map, `T1 key)
+   requires [val] map::Map<idx>@L & map[key][idx]=val
+   ensures  res = val;
+
+*/

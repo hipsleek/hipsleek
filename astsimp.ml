@@ -3404,7 +3404,10 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   in
   (* Forward the relation to the smt solver. *)
   (* in-used *)
-  let () = if not (Cpure.is_update_map_relation crdef.Cast.rel_name) then begin
+  let contains_poly_list lst = List.fold_left
+      (fun a (_,svi) -> a || (Globals.contains_poly svi.sv_info_kind))
+      false n_tl in
+  let () = if not (contains_poly_list n_tl) then begin
       let _ = Smtsolver.add_relation crdef.Cast.rel_name rel_sv_vars crf in
       let _ = Z3.add_relation crdef.Cast.rel_name rel_sv_vars crf in
       () end  in
