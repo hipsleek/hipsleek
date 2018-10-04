@@ -37,6 +37,7 @@ let type_list_add v en (tlist:spec_var_type_list) =
   let  n_tl = List.remove_assoc v tlist in
   (v,en)::n_tl
 
+let mk_spec_var_info t = { sv_info_kind =t; id = fresh_int (); }
 
 (************************************************************
    Primitives handling stuff
@@ -233,22 +234,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       (tl, Some (Named n1))
     | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
-    | ty, Poly id  | Poly id, ty ->
-            begin
-        (* if id in the list already must unify  - otherwise just add *)
-        try
-          let t0 = List.assoc id tl in
-          let n_tl, t2 = unify t0.sv_info_kind ty tl in
-          match t2 with
-          | Some t2 ->
-            let new_tl = type_list_add id {sv_info_kind = t2; id = fresh_int()} n_tl in
-            (new_tl, Some t2)
-          | None -> (tl, None)
-        with Not_found ->
-          let new_tl =  (id,{sv_info_kind=ty; id=fresh_int()})::tl in
-          (new_tl, Some ty)
-      end
-      (* (tl, Some t1) *)
+    | ty, Poly id  | Poly id, ty -> unify_poly unify id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
@@ -325,6 +311,26 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
   let pr = string_of_typ in
   Debug.no_2 "unify_expect_modify" pr (add_str "expected" pr) string_of_tlist_type_option (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 tlist) k1 k2
 
+(* unifies a poly type with any other type    *)
+(* eg.   unify_poly T1 int [T1:1:TVar[1], ..] *)
+(*           ==> ([T1:1:int, ..], int)        *)
+and unify_poly unify id ty tlist =
+  (* if id in the list already must unify  - otherwise just add *)
+  try
+    (* check if poly id is in tl already *)
+    let t0 = List.assoc id tlist in
+    (* unify the existing poly with the expected ty (eg unify TVar[1] int)*)
+    let n_tl, t2 = unify t0.sv_info_kind ty tlist in
+    match t2 with
+    | Some t2 ->
+      (* if unification is possible update n_tl to map id to the unified type *)
+      let new_tl = type_list_add id (mk_spec_var_info t2) n_tl in
+      (new_tl, Some t2)
+    | None -> (tlist, None)
+  with Not_found ->
+    let new_tl =  (id, (mk_spec_var_info ty))::tlist in
+    (new_tl, Some ty)
+
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
   let bal_unify k1 k2 tl= unify_type_modify modify_flag k1 k2 tl in
@@ -333,24 +339,8 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl, Some k1)
-    | Poly id, ty (* ->
-       * let new_tl = type_list_add id {sv_info_kind=k2; id=fresh_int()} tl in
-       * (new_tl ,Some k2) *)
-    | ty, Poly id  ->
-      begin
-        (* if id in the list already must unify  - otherwise just add *)
-        try
-          let t0 = List.assoc id tl in
-          let n_tl, t2 = unify t0.sv_info_kind ty tl in
-          match t2 with
-          | Some t2 ->
-            let new_tl = type_list_add id {sv_info_kind = t2; id = fresh_int()} n_tl in
-            (new_tl, Some t2)
-          | None -> (tl, None)
-        with Not_found ->
-          let new_tl =  (id,{sv_info_kind=ty; id=fresh_int()})::tl in
-          (new_tl, Some ty)
-      end
+    | Poly id, ty
+    | ty, Poly id -> unify_poly unify id ty tl
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)
@@ -1814,8 +1804,6 @@ let trans_view : (I.prog_decl -> ident list -> Cast.view_decl list ->   (ident *
   ref (fun _ _ _ _ _ -> failwith "TBI")
 
 (* and spec_var_type_list = (( ident*spec_var_info)  list) *)
-
-let mk_spec_var_info t = { sv_info_kind =t; id = fresh_int (); }
 
 let sv_to_typ sv = match sv with
   | CP.SpecVar(t,i,p) ->(i, mk_spec_var_info t)

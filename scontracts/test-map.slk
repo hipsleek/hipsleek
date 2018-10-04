@@ -21,10 +21,10 @@ expect Fail.
 */
 
 relation Tst(`T1 i1, `T1 i2).
-//pred Map<p1,p2,p3> == p1=p2 & p2=p3.
+pred Map<p1,p2,p3> == p1=p2 & p2=p3.
 
 checkentail //x::Map<1,2,3> &
-     Tst(iiiii,5) |- true.
+    Tst(iiiii,5) |- true.
 
 /*
 pred_prim Map<idx>.
