@@ -216,10 +216,9 @@ let rec smt_of_b_formula b =
       "(= " ^ new_array ^ " " ^ result ^ ")"
     else if Cpure.is_update_map_relation rn then
       match smt_args with
-      | map1 :: map2 :: key :: value :: [] ->
-        let new_map = map1 in
-        let store   = "(store " ^ map2 ^ " " ^ key ^ " " ^ value ^ ")" in
-        "(= " ^ new_map ^ " " ^ store ^ ")"
+      | idx1 :: idx2 :: key :: value :: [] ->
+        let store   = "(store " ^ idx1 ^ " " ^ key ^ " " ^ value ^ ")" in
+        "(= " ^ idx2 ^ " " ^ store ^ ")"
       | _ ->
         "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
     else

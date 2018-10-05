@@ -1645,6 +1645,35 @@ let wrapper_enable_ord2sleek ?extrafv:(efv=[]) f =
   let contains_ords = List.exists (fun rel -> Session.is_rel_orders rel) rels in
   Wrapper.wrap_one_bool ord2sleek contains_ords (preprocess_ord2sleek efv) f
 
+let translate_store_int_to_store_map f =
+  let f_b bf =
+    match (fst bf) with
+     | CP.RelForm (CP.SpecVar(typ,id,primed),args,pos_rel) ->
+       if (CP.is_update_map_int_relation id) then
+         match args with
+         | CP.Var(CP.SpecVar(typ,map,pos_sv),pos_var)::idx1::idx2::key::val0::[] ->
+           let mk_map_var_helper map idx =
+             let map = CP.mk_map_var map (String.trim (!CP.print_exp idx)) in
+             CP.Var (CP.SpecVar(typ,map,pos_sv), pos_var) in
+           let map1 = mk_map_var_helper map idx1 in
+           let map2 = mk_map_var_helper map idx2 in
+           let args = map1::map2::key::val0::[] in
+           let rel  = CP.SpecVar(typ,update_map_relation,pos_sv) in
+           Some (CP.RelForm(rel,args,pos_rel) , snd bf)
+         | _ -> None
+       else None
+     | _ -> None
+  in
+  let fnc = (nonef, nonef, nonef, f_b, somef) in
+  let f   = transform_formula fnc f in
+  f
+
+let wrapper_trans_store_int_to_store_map f =
+  let rels         = CP.get_rels_from_formula f in
+  let contains_map = List.exists (fun (CP.SpecVar (_,rel,_)) -> CP.is_update_map_int_relation rel) rels in
+  let f = translate_store_int_to_store_map f in
+  f
+
 let tp_supports_chr () =
   match !pure_tp with
   | CHR
@@ -1678,6 +1707,7 @@ let sat_label_filter fct f =
     if no_andl f1 then
       let f1 = wrapper_remove_tvar ~sat:true f1 in
       let (chr, chr_formula, residue_formula) = wrapper_enable_ord2sleek f1 in
+      let residue_formula = wrapper_trans_store_int_to_store_map residue_formula in
       if chr && (tp_supports_chr ()) then
         let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct chr_formula in
         let res = fct residue_formula in
@@ -3504,8 +3534,10 @@ let tp_imply ante conseq old_imp_no timeout process =
 let tp_imply ante conseq old_imp_no timeout process =
   let (chr1, chr_ante, residue_ante) = wrapper_enable_ord2sleek ante in
   let residue_ante = wrapper_remove_tvar ~sat:false residue_ante in
+  let residue_ante = wrapper_trans_store_int_to_store_map residue_ante in
   let (chr2, chr_conseq, residue_conseq) = wrapper_enable_ord2sleek ~extrafv:(CP.fv chr_ante) conseq in
   let residue_conseq = wrapper_remove_tvar ~sat:false residue_conseq in
+  let residue_conseq = wrapper_trans_store_int_to_store_map residue_conseq in
   let fct (ante,conseq) = tp_imply ante conseq old_imp_no timeout process in
   if (chr1 || chr2) && (tp_supports_chr ()) then
     let chr_res = Wrapper.wrap_one_bool pure_tp CHR fct (chr_ante, chr_conseq) in

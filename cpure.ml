@@ -11167,12 +11167,29 @@ let is_update_array_relation (r:string) =
   let udl = String.length udrel in
   (String.length r) >= udl && (String.sub r 0 udl) = udrel
 
+let map_var_suffix = "_map_"
+
+let mk_map_var id idx = id ^ map_var_suffix ^ idx
+
+let update_map_relation = "Store"
+let update_map_int_relation = "StoreInt"
+let access_map_relation = "Access"
+
 let is_update_map_relation (r:string) =
+  let udl1  = String.length update_map_relation in
+  let flag1 = (String.length r) >= udl1 && String.equal (String.sub r 0 udl1) update_map_relation in
+  flag1
+
+let is_update_map_int_relation (r:string) =
+  let udl2  = String.length update_map_int_relation in
+  let flag2 = (String.length r) >= udl2 && String.equal (String.sub r 0 udl2) update_map_int_relation in
+  flag2
+
+let is_access_map_relation (r:string) =
   (* match r with CP.SpecVar(_,r,_) -> *)
-  let udrel = "Store" in
+  let udrel = update_map_relation in
   let udl = String.length udrel in
   (String.length r) >= udl && (String.sub r 0 udl) = udrel
-
 
 let drop_complex_ops =
   let pr_weak b = match b with
