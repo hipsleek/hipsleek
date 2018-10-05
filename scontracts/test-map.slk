@@ -28,9 +28,9 @@ expect Fail.
 
 
 pred_prim Map<idx>.
-relation StoreInt(mapping(`T3 => `T4) mp, int idx1, int idx2, `T3 key, `T4 value).
-relation Store(mapping(`T3 => `T4) mp, mapping(`T3 => `T4) idx1, mapping(`T3 => `T4) idx2, `T3 key, `T4 value).
-//relation Access(mapping(`T5 => `T6) map, int idx, `T5 key, `T6 value).
+relation StoreInt(mapping(`T1 => `T1) mp, int idx1, int idx2, `T1 key, `T2 value).
+relation Store( mapping(`T3 => `T4) idx1, mapping(`T3 => `T4) idx2, `T3 key, `T4 value).
+relation AccessInt(mapping(`T5 => `T6) map, int idx, `T5 key, `T6 value).
 
 /*
 checkentail map::Map<idx+2> & key=8 & Store(map,idx,idx+1,key,0) & Store(map,idx+1,idx+2,key,1)
@@ -38,9 +38,14 @@ checkentail map::Map<idx+2> & key=8 & Store(map,idx,idx+1,key,0) & Store(map,idx
 expect Valid.
 */
 
-checkentail mp::Map<2> & key=8 &  StoreInt(mp,0,2,key,0)
-                       |- true. //Access(map,idx+1,key,0).
+checkentail mp::Map<2> & key=8 & StoreInt(mp,1,2,key,0)
+                       |- AccessInt(mp,2,key,0).
 expect Valid.
+
+checkentail mp::Map<2> & key=8 & StoreInt(mp,1,2,key,0)
+                       |- AccessInt(mp,2,key,5).
+expect Fail.
+
 
 /*
 checkentail map::Map<idx+2> & Store(map,idx,idx+1,key,0) & Store(map,idx+1,idx+2,key,1)

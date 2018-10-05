@@ -11171,25 +11171,27 @@ let map_var_suffix = "_map_"
 
 let mk_map_var id idx = id ^ map_var_suffix ^ idx
 
-let update_map_relation = "Store"
 let update_map_int_relation = "StoreInt"
-let access_map_relation = "Access"
+let update_map_relation     = "Store"
+let access_map_int_relation = "AccessInt"
+let access_map_relation     = "Access"
 
-let is_update_map_relation (r:string) =
-  let udl1  = String.length update_map_relation in
-  let flag1 = (String.length r) >= udl1 && String.equal (String.sub r 0 udl1) update_map_relation in
-  flag1
 
-let is_update_map_int_relation (r:string) =
-  let udl2  = String.length update_map_int_relation in
-  let flag2 = (String.length r) >= udl2 && String.equal (String.sub r 0 udl2) update_map_int_relation in
-  flag2
-
-let is_access_map_relation (r:string) =
-  (* match r with CP.SpecVar(_,r,_) -> *)
-  let udrel = update_map_relation in
+let is_map_relation (rel:string) (predefined_rel:string) =
+  let udrel = predefined_rel in
   let udl = String.length udrel in
-  (String.length r) >= udl && (String.sub r 0 udl) = udrel
+  (String.length rel) >= udl && String.equal (String.sub rel 0 udl) udrel
+
+let is_update_map_relation (r:string)     = is_map_relation r update_map_relation
+
+let is_update_map_int_relation (r:string) = is_map_relation r update_map_int_relation
+
+let is_access_map_relation (r:string) = is_map_relation r access_map_relation
+
+let is_access_map_int_relation (r:string) = is_map_relation r access_map_int_relation
+
+
+let is_map_related_relation (r:string) = (is_access_map_int_relation r) || (is_access_map_relation r) || (is_update_map_relation r) || (is_update_map_int_relation r)
 
 let drop_complex_ops =
   let pr_weak b = match b with

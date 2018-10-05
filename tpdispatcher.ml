@@ -1661,6 +1661,18 @@ let translate_store_int_to_store_map f =
            let rel  = CP.SpecVar(typ,update_map_relation,pos_sv) in
            Some (CP.RelForm(rel,args,pos_rel) , snd bf)
          | _ -> None
+       else if (CP.is_access_map_relation id) then
+         match args with
+         | CP.Var(CP.SpecVar(typ,map,pos_sv),pos_var)::idx::key::val0::[] ->
+           let mk_map_var_helper map idx =
+             let map = CP.mk_map_var map (String.trim (!CP.print_exp idx)) in
+             CP.SpecVar(typ,map,pos_sv) in
+           let map1 = mk_map_var_helper map idx in
+           (* let args = map1::key::val0::[] in *)
+           let rel  = CP.SpecVar(typ,access_map_relation,pos_sv) in
+           Some (CP.mkEq_b (CP.ArrayAt(map1,[key],pos_rel)) (val0) pos_rel)
+           (* Some (CP.RelForm(rel,args,pos_rel), snd bf) *)
+         | _ -> None
        else None
      | _ -> None
   in
