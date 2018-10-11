@@ -227,6 +227,8 @@ let rec smt_of_b_formula b =
         "(= " ^ idx2 ^ " " ^ store ^ ")"
       | _ ->
         "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
+    else if Cpure.is_type_relation rn then
+      "true"
     else
       "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
 (* | CP.XPure _ -> Error.report_no_pattern () *)

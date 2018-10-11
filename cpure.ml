@@ -11175,6 +11175,7 @@ let update_map_int_relation = "StoreInt"
 let update_map_relation     = "Store"
 let access_map_int_relation = "AccessInt"
 let access_map_relation     = "Access"
+let type_relation           = "Type"
 
 
 let is_map_relation (rel:string) (predefined_rel:string) =
@@ -11190,8 +11191,10 @@ let is_access_map_relation (r:string) = is_map_relation r access_map_relation
 
 let is_access_map_int_relation (r:string) = is_map_relation r access_map_int_relation
 
+let is_type_relation (r:string) = is_map_relation r type_relation
 
-let is_map_related_relation (r:string) = (is_access_map_int_relation r) || (is_access_map_relation r) || (is_update_map_relation r) || (is_update_map_int_relation r)
+
+let is_map_related_relation (r:string) = (is_access_map_int_relation r) || (is_access_map_relation r) || (is_update_map_relation r) || (is_update_map_int_relation r) || (is_type_relation r)
 
 let drop_complex_ops =
   let pr_weak b = match b with

@@ -323,8 +323,9 @@ and unify_poly unify id ty tlist =
     let n_tl, t2 =
       (* need to recheck how to unify two poly types *)
       match ty with
-      | Poly _ -> tlist, Some ty
-      | _      -> unify t0.sv_info_kind ty tlist in
+      | Poly _  -> tlist, Some ty
+      | TVar _  -> tlist, Some (Poly id)
+      | _       -> unify t0.sv_info_kind ty tlist in
     match t2 with
     | Some t2 ->
       (* if unification is possible update n_tl to map id to the unified type *)
@@ -343,6 +344,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl, Some k1)
+    (* | ty, Poly id -> unify_poly unify id ty tl *)
     | Poly id, ty
     | ty, Poly id -> unify_poly unify id ty tl
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
