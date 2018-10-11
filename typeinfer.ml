@@ -234,7 +234,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       (tl, Some (Named n1))
     | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
-    | ty, Poly id  | Poly id, ty -> unify_poly unify id ty tl
+    | ty, Poly id  | Poly id, ty -> unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
@@ -314,7 +314,7 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
 (* unifies a poly type with any other type    *)
 (* eg.   unify_poly T1 int [T1:1:TVar[1], ..] *)
 (*           ==> ([T1:1:int, ..], int)        *)
-and unify_poly unify id ty tlist =
+and unify_poly unify repl id ty tlist =
   (* if id in the list already must unify  - otherwise just add *)
   try
     (* check if poly id is in tl already *)
@@ -324,7 +324,7 @@ and unify_poly unify id ty tlist =
       (* need to recheck how to unify two poly types *)
       match ty with
       | Poly _  -> tlist, Some ty
-      | TVar _  -> tlist, Some (Poly id)
+      | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
       | _       -> unify t0.sv_info_kind ty tlist in
     match t2 with
     | Some t2 ->
@@ -346,7 +346,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     | _, UNK -> (tl, Some k1)
     (* | ty, Poly id -> unify_poly unify id ty tl *)
     | Poly id, ty
-    | ty, Poly id -> unify_poly unify id ty tl
+    | ty, Poly id -> unify_poly unify repl_tlist id ty tl
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)

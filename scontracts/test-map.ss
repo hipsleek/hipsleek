@@ -1,5 +1,6 @@
 hip_include 'scontracts/mapprimitives.ss'
 
+
 int foo(mapping(int => int) mp) // , mapping(int => int) mp9)
    requires [mp9] mp::Map<mp9> & Type(mp,mp9)
    ensures  res=9;
