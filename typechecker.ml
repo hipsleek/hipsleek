@@ -1465,7 +1465,7 @@ and subs_poly_vars_struc_x spec poly_hash =
    *   | _ -> None
    * in *)
   let svl_from = CF.struc_all_vars spec in
-  let () = y_binfo_hp (add_str "svl from" !CP.print_svl) svl_from in
+  let () = y_ninfo_hp (add_str "svl from" !CP.print_svl) svl_from in
   let svl_to   = List.map (fun sv ->
       match sv with
       | CP.SpecVar(typ,var,prm) ->
