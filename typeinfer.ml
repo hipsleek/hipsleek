@@ -805,8 +805,8 @@ and gather_type_info_exp_x prog a0 tlist et =
     in
     let n_tlist = aux idx n_tl in
     (match lt with
-     | Array (r,_) -> (n_tlist, r)
-     | Mapping (t1,t2)   -> (n_tlist, t2)
+     | Array (r,_)     -> (n_tlist, r)
+     | Mapping (t1,t2) -> (n_tl, t2)
      | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in
