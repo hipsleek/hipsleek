@@ -2972,8 +2972,9 @@ and all_vars (f:formula): Cpure.spec_var list = match f with
         formula_base_label = lbl;
         formula_base_pos = pos }))
     in
-    let vars = List.concat (List.map one_formula_fv a) in
-    let fvars = CP.remove_dups_svl (vars@fvars) in
+    let vars0 = List.concat (List.map one_formula_fv a) in
+    let vars1 = (List.concat (List.map (fun refl-> refl.formula_ref_vars) a) ) in
+    let fvars = CP.remove_dups_svl (vars0@vars1@fvars) in
     (* let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in *)
     fvars
 
@@ -2982,7 +2983,7 @@ and struc_all_vars (f:struc_formula): Cpure.spec_var list =
   match f with
   | ECase b -> (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_all_vars c2)) b.formula_case_branches)) (* rdv (fold_l_snd struc_all_vars b.formula_case_branches) *)
   | EBase b -> (fold_opt struc_all_vars b.formula_struc_continuation)@(all_vars b.formula_struc_base) (* rdv (fold_opt struc_all_vars b.formula_struc_continuation) *)
-  | EAssume b -> all_vars b.formula_assume_simpl
+  | EAssume b -> (all_vars b.formula_assume_simpl) @ b.formula_assume_vars
   | EInfer b -> rdv (struc_all_vars b.formula_inf_continuation)
   | EList b -> rdv (fold_l_snd struc_all_vars b)
 

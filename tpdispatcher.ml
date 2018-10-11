@@ -1661,7 +1661,7 @@ let translate_store_int_to_store_map f =
            let rel  = CP.SpecVar(typ,update_map_relation,pos_sv) in
            Some (CP.RelForm(rel,args,pos_rel) , snd bf)
          | _ -> None
-       else if (CP.is_access_map_relation id) then
+       else if (CP.is_access_map_int_relation id) then
          match args with
          | CP.Var(CP.SpecVar(typ,map,pos_sv),pos_var)::idx::key::val0::[] ->
            let mk_map_var_helper map idx =
@@ -1681,10 +1681,12 @@ let translate_store_int_to_store_map f =
   f
 
 let wrapper_trans_store_int_to_store_map f =
-  let rels         = CP.get_rels_from_formula f in
-  let contains_map = List.exists (fun (CP.SpecVar (_,rel,_)) -> CP.is_update_map_int_relation rel) rels in
-  let f = translate_store_int_to_store_map f in
-  f
+  if (true) then f
+  else
+    let rels         = CP.get_rels_from_formula f in
+    let contains_map = List.exists (fun (CP.SpecVar (_,rel,_)) -> CP.is_update_map_int_relation rel) rels in
+    let f = translate_store_int_to_store_map f in
+    f
 
 let tp_supports_chr () =
   match !pure_tp with

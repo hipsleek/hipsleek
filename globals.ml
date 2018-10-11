@@ -940,14 +940,19 @@ let subs_one_poly_typ poly_vars poly_args target_ty =
    target_ty
   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
 
-let subs_poly_typ poly_vars poly_args args_types =
-  try
+let create_poly_hash poly_vars poly_args =
+try
     let subs       = Hashtbl.create 5 in
     let poly_types = List.combine poly_vars poly_args in
     let ()         = List.iter (fun (a,b) -> Hashtbl.add subs a b) poly_types in
-    let args_types = hsubs_poly_typ subs args_types in
-    args_types
+    subs
   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
+
+
+let subs_poly_typ poly_vars poly_args args_types =
+  let subs       = create_poly_hash poly_vars poly_args in
+  let args_types = hsubs_poly_typ subs args_types in
+  args_types
 
 let contains_poly typ =
   let rec helper typ =
@@ -3082,3 +3087,7 @@ let eq_mingled_name mingled_name name = (* (mingled_name = name) *)
        with _ -> false
      else false
    | _, _ -> false
+
+
+let map_update_primitive = "update"
+let map_access_primitive = "select"

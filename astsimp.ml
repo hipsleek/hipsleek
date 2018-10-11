@@ -5187,7 +5187,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
       let new_e =
         let name, poly_args =
           match x_add_1 helper a with
-        | _, Mapping (t1,t2) -> mapping_at, [t1;t2] (* assuming that the map if formed with the poly types *)
+        | _, Mapping (t1,t2) -> map_access_primitive, [t1;t2] (* assuming that the map if formed with the poly types *)
         | _, _ ->  array_access_call ^ (string_of_int r) ^ "d", (* Update call *)
                    (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
                    I.def_exp_call_nrecv_poly_args;
@@ -5366,7 +5366,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                 let new_rhs =
                   let name, arguments, poly_args, p_id =
                     match x_add_1 helper a with
-                    | _, Mapping (t1,t2) -> "update",
+                    | _, Mapping (t1,t2) -> map_update_primitive,
                                             (a :: index) @ [rhs], (* assumes index is of length 1*)
                                             [t1;t2],
                                             None
@@ -5720,10 +5720,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             report_error pos ("trans_exp :: case CallNRecv :: procedure call " ^ mn ^ " has invalid number of polymorphic type arguments")
           else
             (****** replace poly vars *****)
-            let subs     = Hashtbl.create 5 in
-            let subs_lst = List.combine pargs proc_decl.I.proc_poly_vars in
-            let ()       = List.iter (fun (a,b) -> Hashtbl.add subs b a) subs_lst in
-            let proc_args_typ = List.map (fun p1 -> Globals.hsubs_one_poly_typ subs p1.I.param_type) proc_decl.I.proc_args in
+            let proc_args_typ = Globals.subs_poly_typ
+                proc_decl.I.proc_poly_vars
+                pargs
+                (List.map (fun arg -> arg.I.param_type) proc_decl.I.proc_args) in
             (****** end - replace poly vars *****)
             List.map2 (fun p1 t2 ->
                 let t1 = p1.I.param_type in

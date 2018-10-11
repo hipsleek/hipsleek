@@ -1,5 +1,6 @@
+/*
 pred_prim Map_int<mp1:mapping(int => int), mp2:mapping(int => int)>;
-pred_prim Map<mp1, mp2>;
+pred_prim Map<int>;
 
 relation  Store_int(mapping(int => int) mapppp1,
                 mapping(int => int) mapppp2,
@@ -7,18 +8,47 @@ relation  Store_int(mapping(int => int) mapppp1,
 relation  Store(mapping(`T3 => `T4) mapppp1,
                 mapping(`T3 => `T4) mapppp2,
                 `T1 key, `T2 val).
+*/
+pred_prim Map<idx>;
+/*
+relation StoreInt(mapping(`T1 => `T2) mp, int idx1, int idx2, `T1 key, `T2 value).
+relation Store( mapping(`T3 => `T4) idx1, mapping(`T3 => `T4) idx2, `T3 key, `T4 value).
+relation AccessInt(mapping(`T5 => `T6) map, int idx, `T5 key, `T6 value).
+*/
+relation StoreInt(mapping(`T1 => `T2) mp1,
+                  mapping(`T1 => `T2) mp2,
+                  `T1 key, `T2 value).
+relation Store( mapping(`T3 => `T4) idx1, mapping(`T3 => `T4) idx2, `T3 key, `T4 value).
+relation AccessInt(mapping(`T5 => `T6) map, `T5 key, `T6 value).
 
 
-void update [T1,T2] (ref mapping(`T1 => `T2) map, `T1 key, `T2 val)
-   requires  map::Map<map1:mapping(`T1 => `T2),map2>
-   ensures  map'::Map<map2,map3>
-            & Store(map3,
-                    map2,
-                    key,val);
+void update [T7,T8] (ref mapping(`T7 => `T8) mp, `T7 key, `T8 val)
+   requires  mp::Map<mp1>
+   ensures  mp'::Map<mp2>
+            & Store(mp1,mp2,key,val);
 
-`T2 select [T1,T2] (mapping(`T1 => `T2) map, `T1 key)
-   requires [val] map::Map<map1,map2>@L & map2[key]=val
+`T10 select [T9,T10] (mapping(`T9 => `T10) mp, `T9 key)
+   requires mp::Map<mp1>@L & mp1[key] = val //AccessInt(mp1,n,key,val)
    ensures  res = val;
+
+/*
+
+TODO We loose the fact that res should be of type `T10 :
+
+`T10 select$mapping(`T9 => `T10)~`T9 [T9,T10](  mapping(`T9 => `T10) mp,  `T9 key)
+static (stk) EBase
+   exists (Impl)[mp1:TVar[1840][]]mp:mapping(int => TVar[1840])::Map<mp1:TVar[1840][]>@L&
+   mp1:int[][key:int]=val:TVar[1840]&{FLOW,(4,5)=__norm#E}
+   EBase
+     emp&MayLoop[]&{FLOW,(4,5)=__norm#E}
+     EAssume
+       emp&res:TVar[1838]=val:TVar[1838]&{FLOW,(4,5)=__norm#E}
+       struct:EBase
+                emp&res:TVar[1840]=val:TVar[1840]&{FLOW,(4,5)=__norm#E}
+dynamic  EBase
+   hfalse&false&{FLOW,(4,5)=__norm#E}
+{(30,0),(32,22)}
+*/
 
 /*
 

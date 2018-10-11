@@ -46,6 +46,18 @@ checkentail mp::Map<2> & key=8 & StoreInt(mp,1,2,key,0)
                        |- AccessInt(mp,2,key,5).
 expect Fail.
 
+checkentail mp::Map<2> & key=8 & StoreInt(mp,1,2,key,0) & StoreInt(mp,1,2,key,5)
+                       |- AccessInt(mp,2,key,0).
+print residue.
+expect Valid. //due to false context
+
+
+checkentail mp::Map<2> & key=8 & StoreInt(mp,1,2,key,0)
+                       |- StoreInt(mp,1,2,key,5) & AccessInt(mp,2,key,0).
+print residue.
+expect Fail.
+
+
 
 /*
 checkentail map::Map<idx+2> & Store(map,idx,idx+1,key,0) & Store(map,idx+1,idx+2,key,1)
