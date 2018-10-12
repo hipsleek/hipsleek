@@ -1440,30 +1440,6 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*============================================================*)
 
 and subs_poly_vars_struc_x spec poly_hash =
-  (* let fsv sv  =
-   *   match sv with
-   *   | CP.SpecVar(ty,id,prmd) ->
-   *     begin
-   *       match ty with
-   *       | Poly _ -> let ty0 = hsubs_one_poly_typ poly_hash ty in
-   *         let ()  = y_tinfo_hp (add_str "changing to" string_of_typ) ty0 in
-   *         Some (CP.SpecVar(ty0,id,prmd))
-   *       | Mapping (t1,t2) ->
-   *         let new_typ = Mapping (hsubs_one_poly_typ poly_hash t1,hsubs_one_poly_typ poly_hash t2) in
-   *         Some (CP.SpecVar(new_typ,id,prmd))
-   *       | _      -> None
-   *     end
-   * in
-   * let fexp exp = match exp with
-   *   | CP.Var(sv,loc) -> let sv = fsv sv in map_opt (fun sv -> CP.Var(sv,loc)) sv
-   *   | _ -> None in
-   * let fh hform =
-   *   match hform with
-   *   | CF.ViewNode _    -> None  (\* TODO incomplete *\)
-   *   | CF.DataNode _    -> None  (\* TODO incomplete *\)
-   *   | CF.HVar (cv,cvl) -> let cvl = List.map (fun sv -> un_option (fsv sv) sv) cvl in Some (CF.HVar (cv,cvl))
-   *   | _ -> None
-   * in *)
   let svl_from = CF.struc_all_vars spec in
   let () = y_ninfo_hp (add_str "svl from" !CP.print_svl) svl_from in
   let svl_to   = List.map (fun sv ->
