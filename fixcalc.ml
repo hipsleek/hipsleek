@@ -163,6 +163,9 @@ let rec fixcalc_of_b_formula b =
         else
           (fixcalc_of_spec_var id) ^ "(" ^
               (string_of_elems args fixcalc_of_exp ",") ^ ")"
+  | CP.Security _ ->
+      let translated_form, bounds_formulas = CP.translate_security_formula_for_infer !Security.current_lattice (CP.mk_bform pf) in
+      fixcalc_of_pure_formula translated_form
   | _ ->
     let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
     illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
