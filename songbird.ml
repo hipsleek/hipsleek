@@ -50,7 +50,8 @@ let translate_var (var: CP.spec_var): SBGlobals.var =
   | SpecVar (typ, ident, primed) ->
     begin
       match primed with
-      | VarGen.Primed -> (ident ^ "'", translate_type typ)
+      (* | VarGen.Primed -> (ident ^ "'", translate_type typ) *)
+      | VarGen.Primed -> (ident, translate_type typ)
       | _ -> (ident, translate_type typ)
     end
 let translate_back_var (var : SBGlobals.var) =
@@ -281,7 +282,7 @@ let create_templ_prog prog ents
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = x_binfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
+  let () = x_tinfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
   let sb_res =
     Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
       ents in

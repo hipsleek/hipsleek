@@ -121,13 +121,14 @@ bool Non_Crossing_Biased_Climb()
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
   & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
   & res = (Own_Tracked_Alt > Other_Tracked_Alt & Cur_Vertical_Sep >= 300 & Up_Separation >= a);
- */
+*/
 {
   bool upward_preferred;
   bool result;
 
   //  upward_preferred = Inhibit_Biased_Climb() > Down_Separation;
   if (Inhibit_Biased_Climb() > Down_Separation){
+    /* ERROR: >= is replaced by > */
     result = !(Own_Below_Threat()) || ((Own_Below_Threat()) && (!(Down_Separation > ALIM())));
   } else {
     result = Own_Above_Threat() && (Cur_Vertical_Sep >= MINSEP) && (Up_Separation >= ALIM());
@@ -151,7 +152,7 @@ bool Non_Crossing_Biased_Descend()
   ensures Positive_RA_Alt_Thresh::node<a,b,c,d> & (Alt_Layer_Value = 0)
   & (Climb_Inhibit = 1)  & (Up_Separation + 100 <= Down_Separation)
   & res = ( (Own_Tracked_Alt <= Other_Tracked_Alt) | (Up_Separation >= a));
- */
+*/
 {
   bool upward_preferred;
   bool result;

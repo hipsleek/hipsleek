@@ -621,7 +621,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     | None -> let () = next_proc := false in
       None
     | Some (templ_proc, unk_exp, replaced_pos) ->
-      let () = x_binfo_hp (add_str "new proc: " pr_exp)
+      let () = x_tinfo_hp (add_str "new proc: " pr_exp)
           (Gen.unsome templ_proc.proc_body) no_pos in
       (* None *)
 
@@ -643,7 +643,7 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
         | Some (res_iprog, repaired_exp) ->
           let repaired_proc = List.find (fun x -> x.proc_name = proc.proc_name)
               res_iprog.prog_proc_decls in
-          let () = x_binfo_hp
+          let () = x_tinfo_hp
               (add_str "best repaired proc" (Iprinter.string_of_exp_repair))
               (Gen.unsome repaired_proc.proc_body) no_pos in
           let exp_pos = get_exp_pos exp in
@@ -690,7 +690,7 @@ let repair_by_mutation iprog repairing_proc =
       try
         let () = Typechecker.check_prog_wrapper n_iprog n_cprog in
         let () = stop := true in
-        let () = x_binfo_hp
+        let () = x_tinfo_hp
             (add_str "best repaired proc" (Iprinter.string_of_exp_repair))
             (Gen.unsome mutated_proc.proc_body) no_pos in
         Some n_iprog
@@ -708,7 +708,7 @@ let start_repair iprog =
     let ent_vars = Songbird.get_vars_in_fault_ents ents in
     let pr_svs = Cprinter.string_of_spec_var_list in
     let sv_names = List.map CP.name_of_spec_var ent_vars in
-    let () = x_binfo_hp (add_str "vars " (pr_list pr_id)) sv_names no_pos in
+    let () = x_tinfo_hp (add_str "vars " (pr_list pr_id)) sv_names no_pos in
 
     let proc_name_to_repair = Cast.unmingle_name proc_name_to_repair in
     let () = x_tinfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
@@ -724,7 +724,7 @@ let start_repair iprog =
     let () = x_tinfo_hp (add_str "var decls: " (pr_list (pr_pair pr_id Globals.string_of_typ)))
         var_decls no_pos in
     let cand_exps = List.map fst candidates in
-    let () = x_binfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
+    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
     let filter_candidate exp =
       let exp_vars = collect_vars_exp exp in
       if exp_vars = [] then true
@@ -736,7 +736,7 @@ let start_repair iprog =
         else true
     in
     let candidates, filtered = List.partition (fun (x, y) -> filter_candidate x) candidates in
-    let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
+    let () = x_tinfo_hp (add_str "filtered exps: " pr_exps)
         (candidates |> List.map fst) no_pos in
 
     (* None *)
@@ -785,7 +785,7 @@ let start_repair iprog =
       | Some (_, best_r_prog, pos, repaired_exp) ->
         let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
             best_r_prog.prog_proc_decls in
-        let () = x_binfo_hp
+        let () = x_tinfo_hp
             (add_str "best repaired proc" (Iprinter.string_of_exp))
             (Gen.unsome repaired_proc.proc_body) no_pos in
         let () =

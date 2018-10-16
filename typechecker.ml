@@ -113,7 +113,7 @@ let get_repair_ents_x rs proc =
       let get_entailment ctx = ctx.CF.fc_current_ents in
       failed_ctx |> List.map get_entailment |> List.concat
   in
-  let () = x_binfo_hp (add_str "entails: "
+  let () = x_tinfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in

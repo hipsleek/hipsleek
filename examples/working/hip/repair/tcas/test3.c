@@ -220,6 +220,7 @@ ensures Positive_RA_Alt_Thresh::node<a,b,c,d>
   alt_sep = UNRESOLVED;
   enabled = High_Confidence && (Own_Tracked_Alt_Rate <= OLEV) && (Cur_Vertical_Sep > MAXALTDIFF);
   tcas_equipped = Other_Capability == TCAS_TA;
+  /* ERROR: && is replaced by || */
   intent_not_known = Two_of_Three_Reports_Valid || Other_RAC == NO_INTENT;
 
   need_upward_RA = Non_Crossing_Biased_Climb() && Own_Below_Threat();
