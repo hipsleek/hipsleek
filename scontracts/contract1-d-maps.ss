@@ -58,7 +58,7 @@ void call(int userid, int arg)
 // fixed version
 // should fail because of the recursive call
 void withdrawBalance_a()
-   //infer [@reentrancy]
+   infer [@reentrancy]
    requires  msg::message<_,_,id,_,_>@L & userBalances[id]=n & n>0 & bal>=n
    ensures   userBalances'[id]=0 & bal'=bal-n;
    requires  msg::message<_,_,id,_,_>@L & userBalances[id]=n & n=0 & bal>=n
@@ -69,5 +69,22 @@ void withdrawBalance_a()
      userBalances[msg.sender] = 0;
      call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
      withdrawBalance_a();
+  }
+}
+
+// buggy version
+// should fail because of the recursive call
+void withdrawBalance_b()
+   infer [@reentrancy]
+   requires  msg::message<_,_,id,_,_>@L & userBalances[id]=n & n>0 & bal>=n
+   ensures   userBalances'[id]=0 & bal'=bal-n;
+   requires  msg::message<_,_,id,_,_>@L & userBalances[id]=n & n=0 & bal>=n
+   ensures   bal'=bal & userBalances'=userBalances;
+{
+  int amountToWithdraw = userBalances[msg.sender];
+  if (amountToWithdraw > 0) {
+     withdrawBalance_b();
+     userBalances[msg.sender] = 0;
+     call(msg.sender,amountToWithdraw);                  // call(msg.sender,arg)             <- msg.sender.call(arg)
   }
 }

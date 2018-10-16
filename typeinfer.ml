@@ -314,7 +314,8 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
 (* unifies a poly type with any other type    *)
 (* eg.   unify_poly T1 int [T1:1:TVar[1], ..] *)
 (*           ==> ([T1:1:int, ..], int)        *)
-and unify_poly unify repl id ty tlist =
+and unify_poly_x unify repl id ty tlist =
+  (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
   try
     (* check if poly id is in tl already *)
@@ -333,8 +334,17 @@ and unify_poly unify repl id ty tlist =
       (new_tl, Some t2)
     | None -> (tlist, None)
   with Not_found ->
-    let new_tl =  (id, (mk_spec_var_info ty))::tlist in
-    (new_tl, Some ty)
+    let new_tl =  (id, (mk_spec_var_info (Poly id)))::tlist in
+    match ty with
+      | Poly _  -> new_tl, Some ty
+      | TVar i1 -> repl i1 (Poly id) new_tl  (* tlist, Some (Poly id) *)
+      | _       -> (new_tl, Some ty)
+
+and unify_poly unify repl id ty tlist =
+  let pr = string_of_spec_var_kind in
+  let pr2 = pr_pair string_of_tlist (pr_option pr) in
+  Debug.no_2 "unify_poly" pr pr pr2 (fun _ _ -> unify_poly_x unify repl id ty tlist) (Poly id) ty
+
 
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
@@ -344,7 +354,6 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     match k1,k2 with
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl, Some k1)
-    (* | ty, Poly id -> unify_poly unify id ty tl *)
     | Poly id, ty
     | ty, Poly id -> unify_poly unify repl_tlist id ty tl
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
@@ -1408,14 +1417,14 @@ and fill_view_param_types (vdef : I.view_decl) =
   (* report_warning no_pos ("data names of " ^ vdef.I.view_name ^ " is empty") *)
   else ()
 
-and try_unify_view_type_args prog c vdef v deref ies hoa tlist pos =
+and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
   let pr1 = add_str "is_prim_pred" string_of_bool in
   let pr2 = add_str "name,var" (pr_pair pr_id pr_id) in
   let pr3 = string_of_tlist in
   let pr4 = pr_list Iprinter.string_of_formula_exp in
   Debug.no_4 "try_unify_view_type_args" pr1 pr2 pr3 pr4 pr3
-    (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos)
-    vdef.I.view_is_prim (c,v) tlist ies
+    (fun _ _ _ _ -> try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos)
+    vdef.I.view_is_prim (c,self_ptr) tlist ies
       (*
         type: I.prog_decl ->
         c: view_name : Globals.ident ->
@@ -1426,7 +1435,7 @@ and try_unify_view_type_args prog c vdef v deref ies hoa tlist pos =
         spec_var_type_list -> VarGen.loc -> spec_var_type_list
       *)
 (* ident, args, table *)
-and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
+and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
   let n_tl = (
     if (String.compare dname "" = 0) then tlist
@@ -1435,7 +1444,7 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
         match vdef.I.view_type_of_self with
         | None -> tlist
         | Some self_typ ->
-          let (n_tl,_) = x_add gather_type_info_var v tlist self_typ pos in
+          let (n_tl,_) = x_add gather_type_info_var self_ptr tlist self_typ pos in
           n_tl
       end
     else
@@ -1446,7 +1455,7 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
         done;
         dname ^ !s
       ) in
-      let (n_tl,_) = x_add gather_type_info_var v tlist ((Named expect_dname)) pos in
+      let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((Named expect_dname)) pos in
       n_tl
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
@@ -1484,6 +1493,28 @@ and try_unify_view_type_args_x prog c vdef v deref ies hoa tlist pos =
             (c ^ " does not match");
         } in
   let tmp_r = helper ies vt in
+  (***********************************************)
+  (**********replace poly vars with tvars*********)
+  (***********************************************)
+  (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
+  let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) (ty,_) ->
+      let poly_ids = Globals.get_poly_ids ty in
+      List.fold_left (fun (acc,n_tl) id ->
+          if List.exists (fun (pid,_) -> id = pid) acc then acc,n_tl
+          else let (fv,n_tl) = fresh_tvar n_tl in
+            ( (id,fv)::acc,n_tl)
+        ) (acc,n_tl) poly_ids
+    ) ([], n_tl) tmp_r in
+  (* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
+  let tmp_r,tmp_p = List.split tmp_r in
+  let poly_from, poly_to = List.split poly_lst in
+  let () = y_ninfo_hp (add_str "poly_from" (pr_list pr_id)) poly_from in
+  let () = y_ninfo_hp (add_str "poly_to" (pr_list string_of_typ)) poly_to in
+  let tmp_r = Globals.subs_poly_typ poly_from poly_to tmp_r in
+  let tmp_r = List.combine tmp_r tmp_p in
+  (***********************************************)
+  (*****(end)replace poly vars with tvars*********)
+  (***********************************************)
   let (vt_u,tmp_r) = List.partition (fun (ty,_) -> ty==UNK) tmp_r in
   (* WN : fixed poly type for view parameter *)
   if (Gen.is_empty vt_u || true)
@@ -1613,7 +1644,7 @@ and get_spec_var_type_list_infer_x d_tt ((v, p) : ident * primed) fvs pos =
 
 and gather_type_info_heap prog (h0 : IF.h_formula) tlist =
   Debug.no_eff_2 "gather_type_info_heap" [false;true]
-    Iprinter.string_of_h_formula string_of_tlist (fun _ -> "()")
+    Iprinter.string_of_h_formula string_of_tlist string_of_tlist (* (fun _ -> "()") *)
     (fun _ _ -> gather_type_info_heap_x prog h0 tlist) h0 tlist
 
 and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
