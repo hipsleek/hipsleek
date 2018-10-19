@@ -349,6 +349,8 @@ let saved_prim_names = ref None
 
 (*Working*)
 let process_source_full source =
+  let en_repair = !Globals.enable_repair in
+  let en_repair_templ = !Globals.enable_repair_template in
   if (not !Globals.web_compile_flag) then flush stdout;
   let () = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
@@ -359,7 +361,7 @@ let process_source_full source =
   let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
 
   (* let repair_input_prog = prog in *)
-  let repair_input_prog = if (!Globals.enable_repair) then
+  let repair_input_prog = if (en_repair && not(en_repair_templ)) then
       let normalized_prog = Repair.normalize_prog prog in
 
       let file_name = Filename.basename source in

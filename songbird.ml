@@ -321,6 +321,11 @@ let get_vars_in_fault_ents ents =
   vars
 
 let get_repair_candidate prog ents cond_op =
+  let add_str = Gen.Basic.add_str in
+  let no_pos = VarGen.no_pos in
+  let pr_pf = Cprinter.string_of_pure_formula in
+  let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
+  let () = x_binfo_hp (add_str "entails: " pr_ents) ents VarGen.no_pos in
   let sb_ents = List.map translate_ent ents in
   let fun_defs = create_templ_prog prog sb_ents in
   let get_func_exp fun_defs exp_decls =
@@ -346,7 +351,7 @@ let get_repair_candidate prog ents cond_op =
   let fun_def_exp = get_func_exp fun_defs prog.Cast.prog_exp_decls in
   match fun_def_exp with
     | Some fun_def_cexp ->
-      let () = x_tinfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
+      let () = x_binfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
                                                         Cprinter.pr_formula_exp)
                           ) fun_def_cexp VarGen.no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
@@ -370,8 +375,6 @@ let get_repair_candidate prog ents cond_op =
                 | _ -> fun_def_cexp
               end
             in
-            (* let n_exp = CP.mkMult_minus_one fun_def_cexp in
-             * let neg_cexp = CP.simp_mult n_exp in *)
             let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
             let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
             Some (n_prog, fun_def_cexp, Some neg_prog, Some neg_cexp)

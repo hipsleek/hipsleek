@@ -1,7 +1,10 @@
+func int tf(node x) == ?.
+
 data node {
 	int val;
 	node next
 }
+
 
 /* view for a singly linked list */
 ll<sum> == self=null & sum = 0
