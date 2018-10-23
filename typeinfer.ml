@@ -1436,27 +1436,40 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
       *)
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
+  let () = y_binfo_pp "Andreea TODO: need to add self to the list of args so that the self type gets propagated to the args" in
   let dname = vdef.I.view_data_name in
   let n_tl = (
-    if (String.compare dname "" = 0) then tlist
-    else if vdef.I.view_is_prim then
-      begin
-        match vdef.I.view_type_of_self with
-        | None -> tlist
-        | Some self_typ ->
-          let (n_tl,_) = x_add gather_type_info_var self_ptr tlist self_typ pos in
-          n_tl
-      end
-    else
-      let expect_dname = (
-        let s = ref "" in
-        for i = 1 to deref do
-          s := !s ^ "_star";
-        done;
-        dname ^ !s
-      ) in
-      let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((Named expect_dname)) pos in
-      n_tl
+    match vdef.I.view_type_of_self with
+    | Some (Mapping _  as ty) ->
+      let () = y_binfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
+      let ntlist,_ = x_add gather_type_info_var self_ptr tlist ty pos in
+      let () = y_binfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
+      ntlist
+    | _ ->
+      let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+      if (String.compare dname "" = 0) then
+        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        tlist
+      else if vdef.I.view_is_prim then
+        begin
+          match vdef.I.view_type_of_self with
+          | None -> let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in tlist
+          | Some self_typ ->
+            let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+            let (n_tl,_) = x_add gather_type_info_var self_ptr tlist self_typ pos in
+            n_tl
+        end
+      else
+        let expect_dname = (
+          let s = ref "" in
+          for i = 1 to deref do
+            s := !s ^ "_star";
+          done;
+          dname ^ !s
+        ) in
+        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((Named expect_dname)) pos in
+        n_tl
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
   (* Check type consistency for rho *)

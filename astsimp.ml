@@ -2498,6 +2498,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
+    let () = y_binfo_hp (add_str "self_ty" string_of_typ) self_ty in
     let data_name = match self_ty with
       | Named s -> s
       | _ -> "" in
@@ -2878,6 +2879,19 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
 
       (* transform session_formulae from I (input formula) to C (core formula) *)
       let sess_formulae = x_add_1 (trans_I2C_session_formulae prog free_vars n_tl) vdef.I.view_session in
+      let type_of_self =
+        (* why not self_ty? *)
+        let () = y_tinfo_hp (add_str "data name" pr_id) data_name in
+        let r = vdef.I.view_type_of_self in
+        if r==None && not(data_name="") then Some(Named data_name)
+        else if r==None then
+          match self_ty with
+          | Mapping x -> Some self_ty
+          | _ -> None
+        else None
+      in
+      let () = y_binfo_hp (add_str "n_tl"  Typeinfer.string_of_tlist) n_tl in
+      let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -2895,12 +2909,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_kind = view_kind;
         C.view_session_info = view_session_info;
         C.view_session = sess_formulae;
-        C.view_type_of_self =
-          (let () = y_tinfo_hp (add_str "data name" pr_id) data_name in
-           let r = vdef.I.view_type_of_self in
-           if r==None && not(data_name="") then Some(Named data_name)
-           else None
-          );
+        C.view_type_of_self = (
+          (* let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in *)
+          type_of_self);
         C.view_actual_root =
           (
             let pr_sv = !CP.print_sv in

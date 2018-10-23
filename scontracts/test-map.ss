@@ -2,7 +2,7 @@ hip_include 'scontracts/mapprimitives.ss'
 
 
 int foo(mapping(int => int) mp) // , mapping(int => int) mp9)
-   requires [mp9] mp::Map<mp,mp9>
+   requires [mp9] mp::Map<mp9>
    ensures  res=9;
 {
   mp[0] = 9; // => update(mp,0,9)[int,int];
@@ -12,11 +12,12 @@ int foo(mapping(int => int) mp) // , mapping(int => int) mp9)
 }
 
 int foo1(mapping(int => int) mp)
-   requires mp::Map<mp8,mp>
+   requires mp::Map<mp8>
    ensures  res=14;
 {
   mp[0] = 9; // => update(mp,0,9)[int,int];
   int x = mp[0];
+  mp[0] = 2;
   mp[0] = 5;
   dprint;
   return x + mp[0];

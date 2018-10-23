@@ -4506,7 +4506,7 @@ let pr_view_decl v =
   pr_add_str_cut  "same_xpure?: " fmt_string
     (if v.view_xpure_flag then "YES" else "NO");
   pr_add_str_cut  "view_data_name: " fmt_string v.view_data_name;
-  pr_vwrap  "type_of_self: " (pr_opt string_of_typ) v.view_type_of_self;
+  pr_add_str_cut  "type_of_self: " fmt_string ((pr_option string_of_typ) v.view_type_of_self);
   pr_vwrap  "actual_root: " fmt_string ((pr_option (pr_pair !CP.print_sv !CP.print_formula)) v.view_actual_root);
   pr_add_str_cut ~emp_test:Gen.is_empty  "self preds: " pr_list_id v.view_pt_by_self;
   pr_add_str_cut ~emp_test:Gen.is_empty "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
