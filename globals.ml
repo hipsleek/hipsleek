@@ -984,6 +984,22 @@ let get_poly_ids typ =
     | _ -> []
   in helper typ
 
+let get_tvar typ =
+  let rec helper typ =
+    match typ with
+    | Poly a          -> []
+    | TVar _          -> [typ]
+    | Tup2 (t1,t2)    -> (helper t1) @ (helper t2)
+    | List t          -> helper t
+    | BagT t          -> helper t
+    | Array (t1,d)    -> helper t1
+    | RelT  tlist     -> List.fold_left (fun a x -> a @ (helper x) ) [] tlist
+    | FuncT (t1,t2)   -> (helper t1) @ (helper t2)
+    | Pointer t       -> (helper t)
+    | Mapping (t1,t2) -> ((helper t1) @ (helper t2))
+    | _ -> []
+  in helper typ
+
 
 (* let null_type = Named "" *)
 (* ;;                       *)

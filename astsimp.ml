@@ -2498,7 +2498,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
-    let () = y_binfo_hp (add_str "self_ty" string_of_typ) self_ty in
+    let () = y_ninfo_hp (add_str "self_ty" string_of_typ) self_ty in
     let data_name = match self_ty with
       | Named s -> s
       | _ -> "" in
@@ -2596,7 +2596,10 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         else allow_ex_vs
       in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
+      let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(before)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
+      let () = vdef.I.view_type_of_self <- (Some self_ty) in
+      let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let mvars =  List.filter
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
       let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
@@ -2890,8 +2893,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
           | _ -> None
         else None
       in
-      let () = y_binfo_hp (add_str "n_tl"  Typeinfer.string_of_tlist) n_tl in
-      let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
+      let () = y_ninfo_hp (add_str "n_tl"  Typeinfer.string_of_tlist) n_tl in
+      let () = y_ninfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
       let cvdef = {
         C.view_name = vn;
         C.view_pos = vdef.I.view_pos;
@@ -2910,7 +2913,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_session_info = view_session_info;
         C.view_session = sess_formulae;
         C.view_type_of_self = (
-          (* let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in *)
+          (* let () = y_ninfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in *)
           type_of_self);
         C.view_actual_root =
           (
@@ -5908,8 +5911,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
           else
             (let parg_types = List.map (fun p -> x_add trans_type prog p.I.param_type p.I.param_loc) proc_args in
              if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-               let () = y_binfo_hp (add_str "t1" (pr_list string_of_typ)) cts in
-               let () = y_binfo_hp (add_str "t2" (pr_list string_of_typ)) parg_types in
+               let () = y_ninfo_hp (add_str "t1" (pr_list string_of_typ)) cts in
+               let () = y_ninfo_hp (add_str "t2" (pr_list string_of_typ)) parg_types in
                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match 3"; }
              else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in x_add_1 helper inlined_exp)
              else
@@ -8831,7 +8834,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) (tlist:spec_var_type_list) : CP.b
                            CP.xpure_view_pos = pos
                           }
                | IP.TVar (var,typ,pos) ->
-                 let () = y_binfo_pp ("TVar"^ (!Ipure.print_exp var)) in
+                 let () = y_ninfo_pp ("TVar"^ (!Ipure.print_exp var)) in
                  CP.TVar( (trans_pure_exp var tlist), typ, pos)
     in helper pf in
   (*let () = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)

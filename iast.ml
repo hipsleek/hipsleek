@@ -123,7 +123,7 @@ and view_decl =
     mutable view_typed_vars : (typ * ident) list;
     view_parent_name: (ident) option;
     mutable view_derv: bool;
-    view_type_of_self : typ option;
+    mutable view_type_of_self : typ option;
     (* view_actual_root : P.exp option; *)
     view_kind : view_kind;
     view_session_info : view_session_info option;

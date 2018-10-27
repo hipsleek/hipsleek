@@ -314,18 +314,23 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
 (* unifies a poly type with any other type    *)
 (* eg.   unify_poly T1 int [T1:1:TVar[1], ..] *)
 (*           ==> ([T1:1:int, ..], int)        *)
-and unify_poly_x unify repl id ty tlist =
+and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
+  let () = y_ninfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
+    let () = y_ninfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in
+    let () = y_ninfo_hp (add_str "tlist" string_of_tlist) tlist in
     (* unify the existing poly with the expected ty (eg unify TVar[1] int)*)
     let n_tl, t2 =
       (* need to recheck how to unify two poly types *)
       match ty with
       | Poly _  -> tlist, Some ty
       | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
+      | Int | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _
+          -> tlist, Some ty
       | _       -> unify t0.sv_info_kind ty tlist in
     match t2 with
     | Some t2 ->
@@ -567,12 +572,13 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
     (tlist, UNK) (* for vars such as _ and # *)
   else
     try
-      let (ident, k) = List.find (fun (a,b) -> a = var )tlist in
+      let (ident, k) = List.find (fun (a,b) -> a = var) tlist in
       let (n_tlist,tmp) = x_add must_unify k.sv_info_kind ex_t tlist pos in
       let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
       (n_tlist, tmp )
     with
     | Not_found ->
+      let ex_t = get_type_entire tlist ex_t in
       let vk = fresh_proc_var_kind tlist ex_t in
       ((var,vk)::tlist, vk.sv_info_kind)
     | ex ->
@@ -1436,28 +1442,27 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
       *)
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
-  let () = y_binfo_pp "Andreea TODO: need to add self to the list of args so that the self type gets propagated to the args" in
   let dname = vdef.I.view_data_name in
-  let n_tl = (
+  let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
-      let () = y_binfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
+      let () = y_ninfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
       let ntlist,_ = x_add gather_type_info_var self_ptr tlist ty pos in
-      let () = y_binfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
-      ntlist
+      let () = y_ninfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
+      ntlist, ty
     | _ ->
-      let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+      let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
       if (String.compare dname "" = 0) then
-        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
-        tlist
+        let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        tlist, UNK
       else if vdef.I.view_is_prim then
         begin
           match vdef.I.view_type_of_self with
-          | None -> let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in tlist
+          | None -> let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in tlist, UNK
           | Some self_typ ->
-            let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+            let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
             let (n_tl,_) = x_add gather_type_info_var self_ptr tlist self_typ pos in
-            n_tl
+            n_tl, UNK
         end
       else
         let expect_dname = (
@@ -1467,9 +1472,9 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
           done;
           dname ^ !s
         ) in
-        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
         let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((Named expect_dname)) pos in
-        n_tl
+        n_tl, UNK
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
   (* Check type consistency for rho *)
@@ -1487,6 +1492,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
+  let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
   let rec helper exps tvars =
     match (exps, tvars) with
     | ([], []) -> []
@@ -1509,6 +1515,8 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   (***********************************************)
   (**********replace poly vars with tvars*********)
   (***********************************************)
+  let tmp_r =  (self_ty,self_ptr)::tmp_r in
+  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
   (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
   let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) (ty,_) ->
       let poly_ids = Globals.get_poly_ids ty in
@@ -1525,6 +1533,8 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = y_ninfo_hp (add_str "poly_to" (pr_list string_of_typ)) poly_to in
   let tmp_r = Globals.subs_poly_typ poly_from poly_to tmp_r in
   let tmp_r = List.combine tmp_r tmp_p in
+  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
+  (* let tmp_r = List.tl tmp_r in *)
   (***********************************************)
   (*****(end)replace poly vars with tvars*********)
   (***********************************************)
