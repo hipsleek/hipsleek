@@ -1,8 +1,8 @@
 hip_include 'scontracts/mapprimitives.ss'
 
 
-int foo(mapping(int => int) mp) // , mapping(int => int) mp9)
-   requires [mp9] mp::Map<mp9>
+int foo(mapping(int => int) mp)
+   requires [mp9] mp::Map<mp9>@L
    ensures  res=9;
 {
   mp[0] = 9; // => update(mp,0,9)[int,int];
@@ -12,8 +12,8 @@ int foo(mapping(int => int) mp) // , mapping(int => int) mp9)
 }
 
 int foo1(mapping(int => int) mp)
-   requires mp::Map<mp8>
-   ensures  res=14;
+   requires  [mp9] mp::Map<mp8>
+   ensures   mp::Map<mp9> & res=14;
 {
   mp[0] = 9; // => update(mp,0,9)[int,int];
   int x = mp[0];
@@ -21,6 +21,15 @@ int foo1(mapping(int => int) mp)
   mp[0] = 5;
   dprint;
   return x + mp[0];
+}
+
+
+void foo2(ref mapping(int => int) mp)
+   requires  [mp9] mp::Map<mp8>
+   ensures   mp'::Map<mp9> & mp9[0]=5;
+{
+  mp[0] = 5;
+  dprint;
 }
 
 

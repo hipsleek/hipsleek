@@ -175,6 +175,101 @@ let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
     (fun f -> Iprinter.string_of_h_formula (IF.HeapNode f))
     (fun _ -> node2_to_node_x prog h0) h0
 
+(********************)
+(* helper functions *)
+(********************)
+
+(* should create entry in tlist *)
+let rec fresh_tvar_rec tlist =
+  let i = fresh_int() in
+  let key = "TVar__"^(string_of_int i) in
+  let t2 = TVar i in
+  let en={ sv_info_kind = t2; id = i} in
+  (en, (key,en)::tlist)
+
+let fresh_tvar tlist =
+  let (en, n_tlist) = fresh_tvar_rec tlist in
+  (en.sv_info_kind,n_tlist)
+
+let fresh_int_en en =
+  match en with
+  | TVar i -> i
+  | _ -> fresh_int()
+
+let introduce_fresh_tvar_for_each_unique_poly_aux tlist args =
+  let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) ty ->
+      let poly_ids = Globals.get_poly_ids ty in
+      List.fold_left (fun (acc,n_tl) id ->
+          if List.exists (fun (pid,_) -> id = pid) acc then acc,n_tl
+          else let (fv,n_tl) = fresh_tvar n_tl in
+            ( (id,fv)::acc,n_tl)
+        ) (acc,n_tl) poly_ids
+    ) ([], tlist) args in
+  poly_lst, n_tl
+
+let introduce_fresh_tvar_for_each_unique_poly tlist args =
+  let args = List.map fst args in
+  introduce_fresh_tvar_for_each_unique_poly_aux tlist args
+
+(* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
+let subst_all_poly_w_tvar_aux poly_lst args =
+  let poly_from, poly_to = List.split poly_lst in
+  let () = y_ninfo_hp (add_str "poly_from" (pr_list pr_id)) poly_from in
+  let () = y_ninfo_hp (add_str "poly_to" (pr_list string_of_typ)) poly_to in
+  let args = Globals.subs_poly_typ poly_from poly_to args in
+  args
+
+let subst_all_poly_w_tvar poly_lst args =
+  let tmp_r,tmp_p = List.split args in
+  let tmp_r = subst_all_poly_w_tvar_aux poly_lst tmp_r in
+  let tmp_r = List.combine tmp_r tmp_p in
+  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
+  tmp_r
+
+
+(* should create entry in tlist *)
+let rec fresh_tvar_rec tlist =
+  let i = fresh_int() in
+  let key = "TVar__"^(string_of_int i) in
+  let t2 = TVar i in
+  let en={ sv_info_kind = t2; id = i} in
+  (en, (key,en)::tlist)
+
+let fresh_tvar tlist =
+  let (en, n_tlist) = fresh_tvar_rec tlist in
+  (en.sv_info_kind,n_tlist)
+
+let fresh_int_en en =
+  match en with
+  | TVar i -> i
+  | _ -> fresh_int()
+
+let fresh_poly_tlist tlist =
+  let i              = fresh_int () in
+  let fresh_poly     = poly_name i  in
+  let fresh_poly_typ = Poly fresh_poly in
+  let en = { sv_info_kind = fresh_poly_typ; id = i} in
+  (fresh_poly_typ, (fresh_poly,en)::tlist)
+
+let introduce_fresh_poly_for_each_unique_poly tlist args =
+  let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) ty ->
+      let poly_ids = Globals.get_poly_ids ty in
+      List.fold_left (fun (acc,n_tl) id ->
+          if List.exists (fun (pid,_) -> id = pid) acc then acc,n_tl
+          else let (fv,n_tl) = fresh_poly_tlist n_tl in
+            ( (id,fv)::acc,n_tl)
+        ) (acc,n_tl) poly_ids
+    ) ([], tlist) args in
+  poly_lst, n_tl
+
+(* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
+let subst_all_poly_w_poly poly_lst args =
+  let poly_from, poly_to = List.split poly_lst in
+  let () = y_ninfo_hp (add_str "poly_from" (pr_list pr_id)) poly_from in
+  let () = y_ninfo_hp (add_str "poly_to" (pr_list string_of_typ)) poly_to in
+  let args = Globals.subs_poly_typ poly_from poly_to args in
+  args
+
 let rec dim_unify d1 d2 = if (d1 = d2) then Some d1 else None
 
 and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
@@ -330,7 +425,16 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
       | Poly _  -> tlist, Some ty
       | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
       | Int | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _
-          -> tlist, Some ty
+        ->
+        begin
+          match t0.sv_info_kind with
+          | Poly poly_id -> if (String.equal id poly_id) then tlist, Some ty
+            else unify t0.sv_info_kind ty tlist
+          | _ -> unify t0.sv_info_kind ty tlist
+        end
+        (* if id in associaed list corresponds to then just return updated tlist
+           otherwise call unify  <<unify t0.sv_info_kind ty tlist>>
+        *)
       | _       -> unify t0.sv_info_kind ty tlist in
     match t2 with
     | Some t2 ->
@@ -491,23 +595,6 @@ and fresh_proc_var_kind tlist et =
   match et with
   | TVar i -> { sv_info_kind = et; id = i}
   | _ -> { sv_info_kind = et; id = fresh_int ()}
-
-(* should create entry in tlist *)
-and fresh_tvar_rec tlist =
-  let i = fresh_int() in
-  let key = "TVar__"^(string_of_int i) in
-  let t2 = TVar i in
-  let en={ sv_info_kind = t2; id = i} in
-  (en, (key,en)::tlist)
-
-and fresh_tvar tlist =
-  let (en, n_tlist) = fresh_tvar_rec tlist in
-  (en.sv_info_kind,n_tlist)
-
-and fresh_int_en en =
-  match en with
-  | TVar i -> i
-  | _ -> fresh_int()
 
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
@@ -1014,6 +1101,11 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
       let helper rdef =
         let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
         let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+        (* let () = y_binfo_hp (add_str "args_exp_types" (pr_list string_of_typ))  args_exp_types in *)
+        let poly_lst, tlist = introduce_fresh_poly_for_each_unique_poly tlist args_exp_types in
+        let args_exp_types = subst_all_poly_w_poly poly_lst args_exp_types in
+        (* let () = y_binfo_hp (add_str "args_exp_types" (pr_list string_of_typ))  args_exp_types in
+         * let () = y_binfo_hp (add_str "tlist" (string_of_tlist)) tlist in *)
         let (n_tl,n_typ) = x_add gather_type_info_var r tlist (RelT []) pos in (*Need to consider about pos*)
         let tmp_list = List.combine args args_exp_types in
         let n_tlist = List.fold_left (fun tl (arg,et) ->
@@ -1518,23 +1610,10 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let tmp_r =  (self_ty,self_ptr)::tmp_r in
   let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
   (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
-  let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) (ty,_) ->
-      let poly_ids = Globals.get_poly_ids ty in
-      List.fold_left (fun (acc,n_tl) id ->
-          if List.exists (fun (pid,_) -> id = pid) acc then acc,n_tl
-          else let (fv,n_tl) = fresh_tvar n_tl in
-            ( (id,fv)::acc,n_tl)
-        ) (acc,n_tl) poly_ids
-    ) ([], n_tl) tmp_r in
+  let poly_lst,n_tl = introduce_fresh_tvar_for_each_unique_poly n_tl tmp_r in
   (* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
-  let tmp_r,tmp_p = List.split tmp_r in
-  let poly_from, poly_to = List.split poly_lst in
-  let () = y_ninfo_hp (add_str "poly_from" (pr_list pr_id)) poly_from in
-  let () = y_ninfo_hp (add_str "poly_to" (pr_list string_of_typ)) poly_to in
-  let tmp_r = Globals.subs_poly_typ poly_from poly_to tmp_r in
-  let tmp_r = List.combine tmp_r tmp_p in
-  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
-  (* let tmp_r = List.tl tmp_r in *)
+  let tmp_r = subst_all_poly_w_tvar poly_lst tmp_r in
+    (* let tmp_r = List.tl tmp_r in *)
   (***********************************************)
   (*****(end)replace poly vars with tvars*********)
   (***********************************************)

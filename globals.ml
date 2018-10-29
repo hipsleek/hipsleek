@@ -22,6 +22,8 @@ let lend_int = ref 2
 let imm_int = ref 1
 let mut_int = ref 0
 
+let poly_typ_id = "T"
+
 type formula_type =
   | Simple
   | Complex
@@ -2740,6 +2742,11 @@ let fresh_any_name (any:string) =
 let fresh_name () =
   let str = string_of_int (fresh_int ()) in
   "f_r_" ^ str
+
+let fresh_poly_name () = (fresh_any_name poly_typ_id)
+let poly_name id = poly_typ_id ^ (string_of_int id)
+
+let fresh_poly_typ () = Poly (fresh_poly_name () )
 
 let fresh_label pos =
   (* let str = string_of_int (fresh_int ()) in*)
