@@ -898,17 +898,17 @@ and gather_type_info_exp_x prog a0 tlist et =
     let new_et = Array (et, dim) in
     let () = y_ninfo_hp (add_str "new_et" string_of_typ) new_et in
     let (n_tl,lt) = x_add gather_type_info_var a tlist new_et pos in
-    let rec aux id_list type_list =
+    let rec aux id_list type_list expected =
       match id_list with
       | [] -> type_list
       | hd::tl ->
-        let (n_tl,n_typ) = gather_type_info_exp_x prog hd type_list Int in (* forces the array indexes to be Int *)
-        aux tl n_tl
+        let (n_tl,n_typ) = gather_type_info_exp_x prog hd type_list expected in (* forces the array indexes to be Int *)
+        aux tl n_tl expected
     in
-    let n_tlist = aux idx n_tl in
+    let n_tlist = aux idx n_tl Int in
     (match lt with
      | Array (r,_)     -> (n_tlist, r)
-     | Mapping (t1,t2) -> (n_tl, t2)
+     | Mapping (t1,t2) ->  let tl  = aux idx n_tl t1 in (tl, t2)
      | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in

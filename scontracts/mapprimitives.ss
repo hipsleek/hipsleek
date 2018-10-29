@@ -9,8 +9,8 @@ pred Map<idx2> == Type(self,idx2);
 
 
 void update [T7,T8] (ref mapping(`T7 => `T8) mp, `T7 key, `T8 val)
-   requires [mp2] mp::Map<mp1>
-   ensures       mp'::Map<mp2> & Store(mp1,mp2,key,val);
+   requires  mp::Map<mp1>
+   ensures   (exists mp2: mp'::Map<mp2> & Store(mp1,mp2,key,val));
 
 `T10 select [T9,T10] (mapping(`T9 => `T10) mp, `T9 key)
    requires [val] mp::Map<mp1>@L  & mp1[key] = val
