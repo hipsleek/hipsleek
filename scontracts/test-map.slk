@@ -8,4 +8,20 @@ relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
 pred Map<idx2> == Type(self,idx2).
 
 
-checkentail mp::Map<mp8> & Store(mp8,mp33,0,5) |- mp::Map<mp55> & mp55[0]=5.
+checkentail mp::Map<mp8> & Store(mp33,mp8,0,5) |- mp::Map<mp55> & mp55[0]=5.
+
+checkentail mp::Map<mp8> & Store(mp33,mp8,0,5) |- (exists mp55: mp::Map<mp55> & mp55[0]=5).
+
+ checkentail mp'::Map<mp2> & Store(mp1,mp2,0,5) & mp1=mp8
+ |-  (exists mp9_91: mp'::Map<mp9_91> & mp9[0]=5 & mp9_91=mp9 ).
+
+checkentail mp'::Map<mp2> & Store(mp1,mp2,0,5) & mp1=mp8
+ |-  (exists mp9_91: mp'::Map<mp9_91> & mp9_91[0]=5 ).
+
+checkentail  Store(mp1,mp2,0,5)
+ |-  (exists mp9_91:  mp9[0]=5 & mp9_91=mp9 & mp2=mp9_91).
+
+checkentail  Store(mp1,mp2,0,5)
+ |-  (exists mp9_91:  mp9_91[0]=5 & mp2=mp9_91).
+
+checkentail x = 0 |- (exists y: y = 0 & x = y).

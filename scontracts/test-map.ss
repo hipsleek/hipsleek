@@ -23,7 +23,9 @@ int foo1(mapping(int => int) mp)
   return x + mp[0];
 }
 
-
+/**
+below fails as the instantiations can't discover mp9
+*/
 void foo2(ref mapping(int => int) mp)
    requires  [mp9] mp::Map<mp8>
    ensures   mp'::Map<mp9> & mp9[0]=5;
@@ -31,6 +33,17 @@ void foo2(ref mapping(int => int) mp)
   mp[0] = 5;
   dprint;
 }
+
+
+/* below succeeds */
+void foo3(ref mapping(int => int) mp)
+   requires   mp::Map<mp8>
+   ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=5);
+{
+  mp[0] = 5;
+  dprint;
+}
+
 
 
 /*
