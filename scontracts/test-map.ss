@@ -38,6 +38,19 @@ int foo11(ref mapping(int => int) mp)
   return x + mp[0];
 }
 
+/* Below should fail!! because of mp9[0]=9*/
+int foo12(ref mapping(int => int) mp)
+   requires  mp::Map<mp8>
+   ensures   (exists mp9: mp'::Map<mp9> & res=14 & mp9[0]=9);
+{
+  mp[0] = 9; // => update(mp,0,9)[int,int];
+  int x = mp[0];
+  mp[0] = 2;
+  mp[0] = 5;
+  dprint;
+  return x + mp[0];
+}
+
 /**
 below fails as the instantiations can't discover mp9
 */
@@ -62,7 +75,7 @@ void foo3(ref mapping(int => int) mp)
 /* below succeeds */
 void foo4(ref mapping(int => int) mp)
    requires   mp::Map<mp8>
-   ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=5);
+   ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=2);
 {
   mp[0] = 2;
   mp[0] = 5;

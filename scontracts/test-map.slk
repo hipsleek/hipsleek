@@ -5,7 +5,7 @@ relation Store(mapping(`T3 => `T4) idx1,
 /* relates the type of the two relation parameters*/
 relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
 
-pred Map<idx2> == Type(self,idx2).
+pred_prim Map<idx2> inv Type(self,idx2).
 
 checkentail mp::Map<mp8> & Store(mp33,mp8,0,5) |- mp::Map<mp55> & mp55[0]=5.
 expect Valid.
@@ -40,3 +40,23 @@ expect Valid. //false ctx
  checkentail mp'::Map<mp2>  & Store(mp01,mp0,0,9) & Store(mp0,mp1,0,6) & Store(mp1,mp2,0,5) & mp1=mp8
  |-  (exists mp9_91: mp'::Map<mp9_91> & mp9_91[0]=5 ).
  expect Valid.
+
+//Entailment 10
+ checkentail mp'::Map<mp2> & Store(mp1,mp2,0,5) & mp1=mp8
+ |-  (exists mp9: mp'::Map<mp9> & mp9[0]=5 ).
+ expect Valid.
+
+//Entailment 11
+ checkentail mp'::Map<mp3> & Store(mp1,mp2,0,5) & Store(mp2,mp3,0,8)
+ |-  (exists mp9: mp'::Map<mp9> & mp9[0]=8 ).
+ expect Valid.
+
+//Entailment 12
+ checkentail mp'::Map<mp3> & Store(mp1,mp2,0,5) & Store(mp2,mp3,0,8)
+ |-  (exists mp9: mp'::Map<mp9> & mp9[0]=5 ).
+ expect Fail.
+
+//Entailment 13
+ checkentail mp'::Map<mp3> & Store(mp1,mp2,0,5) & Store(mp2,mp3,0,8)
+ |-  (exists mp9: mp'::Map<mp9> & mp9[0]=3 ).
+ expect Fail.
