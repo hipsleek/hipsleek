@@ -1,8 +1,10 @@
+/*
 relation Store(mapping(`T3 => `T4) idx1,
                mapping(`T3 => `T4) idx2,
                `T3 key, `T4 value).
-
+*/
 /* relates the type of the two relation parameters*/
+
 relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
 
 /*
@@ -13,25 +15,22 @@ data mapping (`T11 => `T12){
 }.
 */
 
-pred Map<idx2> == /*self::mapping(`T11 => `T12)<key, val, nxt> * nxt::Map<idx2>
-                  & */
-                  Type(self,idx2).
+pred_prim Map<idx2> inv Type(self,idx2).
 
-pred_prim Mapp<idx> inv true.
+// pred_prim Mapp<idx> inv Type(self,idx).
 
 
 // @L <: @M ---> false has no effect on predicates which have empty heap
+/*
 checkentail mp::Map<Anon_11>@L&v_int_9_2159'=9 & v_int_9_2160'=0 & mp'=mp & mp[aaa]=0 & aaa=0
  |-  mp'::Map<mp1>@M.
  print residue.
  expect Fail.
-
+*/
 // @L <: @M ---> false has no effect on predicates which have empty heap
-checkentail mp::Mapp<_>@L&v_int_9_2159'=9 & v_int_9_2160'=0 & mp'=mp & mp[aaa]=0 & aaa=0
- |-  mp'::Mapp<_>@M.
+checkentail mp::Map<_>@L & mp'=mp |-  mp'::Map<_>@M.
  print residue.
  expect Fail.
-
 
 /*
 data node{

@@ -23,6 +23,7 @@ let imm_int = ref 1
 let mut_int = ref 0
 
 let poly_typ_id = "T"
+let map_pred_name = "Map"
 
 type formula_type =
   | Simple

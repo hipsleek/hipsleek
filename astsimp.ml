@@ -2480,6 +2480,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   let free_vars = dedicated_ids @ vdef.I.view_vars in
+  let () = y_ninfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       if not(!Globals.adhoc_flag_1) then ""
@@ -2487,6 +2488,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     else vdef.I.view_data_name in
   (
     (* let () = x_tinfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in  *)
+    let () = y_ninfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     vdef.I.view_data_name <- data_name;
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
@@ -2498,11 +2500,13 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
-    let () = y_ninfo_hp (add_str "self_ty" string_of_typ) self_ty in
+    let () = y_tinfo_hp (add_str "self_ty" string_of_typ) self_ty in
+    let () = y_tinfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let data_name = match self_ty with
       | Named s -> s
       | _ -> "" in
     let () = vdef.I.view_data_name <- data_name in
+    let () = y_ninfo_hp (add_str "data_name" pr_id) data_name in
     let () = y_tinfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
     let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
@@ -2513,7 +2517,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
        | None -> (n_tl, None)
        | Some f ->
          let (n_tl_tmp,new_f) = x_add trans_formula prog true free_vars true f (ann_typs@n_tl) false in
-         (*find existential variables*)
+         (* find existential variables *)
          let fvars = CF.fv new_f in
          let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) free_vars)) fvars in
          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
@@ -2884,7 +2888,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let sess_formulae = x_add_1 (trans_I2C_session_formulae prog free_vars n_tl) vdef.I.view_session in
       let type_of_self =
         (* why not self_ty? *)
-        let () = y_tinfo_hp (add_str "data name" pr_id) data_name in
+        let () = y_ninfo_hp (add_str "data name" pr_id) data_name in
         let r = vdef.I.view_type_of_self in
         if r==None && not(data_name="") then Some(Named data_name)
         else if r==None then
