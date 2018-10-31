@@ -1826,6 +1826,9 @@ $output_file = "log";
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
     ],
+    "maps" => [
+        ["test-map-3.ss", 4,  " -tp z3 ", "foo1", "SUCCESS", "foo2", "FAIL", "foo3", "FAIL", "foo4", "FAIL", "foo5", "SUCCESS", "foo6", "FAIL"],
+        ],
     "session" => [
         ["ex9-simple-prog.ss", 10, "", "buyer1", "SUCCESS", "buyer2", "SUCCESS", "buyer3", "FAIL", "buyer4", "SUCCESS", "buyer5", "SUCCESS", "buyer6", "SUCCESS","buyer7", "SUCCESS", "buyer8", "FAIL", "buyer9", "SUCCESS","buyer10", "SUCCESS"],
         ["ex9b-sor.ss", 8, "", "sor1", "SUCCESS", "sor2", "SUCCESS", "sor3", "SUCCESS", "sor4", "SUCCESS", "sor5", "FAIL", "sor6", "SUCCESS","sor7", "FAIL","sor8", "SUCCESS"],
