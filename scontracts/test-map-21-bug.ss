@@ -1,6 +1,6 @@
 hip_include 'scontracts/mapprimitives.ss'
 
-global mapping(int => int) mp;
+global mapping(int => int) mpp;
 
 global int x;
 
@@ -16,7 +16,7 @@ int goo()
 /** why goo works fine while for foo HIP complains about not finding mp? */
 /** !! see the error below !! */
 
-int foo()
+int foo() //(ref mapping(int => int) mp)
    requires mp::Map<mp9>@L
    ensures  res=9;
 {
@@ -50,5 +50,8 @@ Stop Omega... 14 invocations caught
 
 Exception occurred: Failure("Var mp is not defined")
 Error3(s) detected at main
+
+
+
 
 */

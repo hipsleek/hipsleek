@@ -687,6 +687,7 @@ and gather_type_info_exp prog a0 tlist et =
     string_of_tlist_type
     (fun _ _ _ -> gather_type_info_exp_x prog a0 tlist et) a0 tlist et
 
+(* et - expected type *)
 and gather_type_info_exp_x prog a0 tlist et =
   (* let () = y_tinfo_pp "info_exp" in *)
   match a0 with
@@ -910,13 +911,13 @@ and gather_type_info_exp_x prog a0 tlist et =
       match id_list with
       | [] -> type_list
       | hd::tl ->
-        let (n_tl,n_typ) = gather_type_info_exp_x prog hd type_list expected in (* forces the array indexes to be Int *)
+        let (n_tl,n_typ) = x_add gather_type_info_exp prog hd type_list expected in (* forces the array indexes to be Int *)
         aux tl n_tl expected
     in
     let n_tlist = aux idx n_tl Int in
     (match lt with
      | Array (r,_)     -> (n_tlist, r)
-     | Mapping (t1,t2) ->  let tl  = aux idx n_tl t1 in (tl, t2)
+     | Mapping (t1,t2) ->  let tl  = aux idx tlist t1 in (tl, t2)
      | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
     let (fv,n_tl) = fresh_tvar tlist in
@@ -2045,6 +2046,12 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
 let get_type_of_self ntl =
   try
     let v = snd(List.find (fun (v,_) -> v=self) ntl) in
+    v.sv_info_kind
+  with _ -> UNK
+
+let get_type_of_var ntl var_id =
+  try
+    let v = snd (List.find (fun (v,_) -> v = var_id) ntl) in
     v.sv_info_kind
   with _ -> UNK
 ;;

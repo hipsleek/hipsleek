@@ -1440,16 +1440,21 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
 (*============================================================*)
 
 and subs_poly_vars_struc_x spec poly_hash =
+  (* retrieving all variables from spec *)
   let svl_from = CF.struc_all_vars spec in
   let () = y_ninfo_hp (add_str "svl from" !CP.print_svl) svl_from in
+  (* replace the poly type of each var with its corresponding type given in poly_hash *)
   let svl_to   = List.map (fun sv ->
       match sv with
       | CP.SpecVar(typ,var,prm) ->
         if Globals.contains_poly typ then
+          let () = y_ninfo_hp (add_str "sv" Cprinter.string_of_spec_var) sv in
           CP.SpecVar(hsubs_one_poly_typ poly_hash typ,var,prm)
         else sv) svl_from in
-  let subs = List.combine svl_from svl_to in
   (* keep only those pair which contain a poly typ *)
+  let subs = List.combine svl_from svl_to in
+  let () = y_ninfo_hp (add_str "svl from" !CP.print_svl) svl_from in
+  let () = y_ninfo_hp (add_str "svl from" !CP.print_svl) svl_to in
   let subs = List.filter (fun (sv1,sv2) -> Globals.contains_poly (CP.typ_of_sv sv1) ) subs in
   let subst_from, subst_to = List.split subs in
   let renamed_spec = CF.subst_struc_avoid_capture subst_from subst_to spec in
@@ -2543,7 +2548,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* let () = x_binfo_hp (add_str "org_spec 1" Cprinter.string_of_struc_formula) org_spec no_pos in *)
               let org_spec = (* REPLACE the poly types here *) org_spec in
               let org_spec = if !Globals.change_flow then CF.change_spec_flow org_spec else org_spec in
-              (* let () = x_binfo_hp (add_str "org_spec 2" Cprinter.string_of_struc_formula) org_spec no_pos in *)
+              (* let () = x_binfo_hp (add_str "org_spec 2 Cprinter.string_of_struc_formula) org_spec no_pos in *)
               let lbl_ctx = store_label # get in
               let org_spec2 =
                 if is_rec_flag && !auto_number then match org_spec with

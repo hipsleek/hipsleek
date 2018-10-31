@@ -63,7 +63,7 @@ void foo6(ref mapping(int => int) mp)
 }
 
 
-/* below fails - OK*/
+/* below succeeds - OK*/
 void foo7(ref mapping(int => int) mp)
    requires   mp::Map<mp9>
    ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=5);
@@ -74,10 +74,50 @@ void foo7(ref mapping(int => int) mp)
 }
 
 
-/* below fails - OK*/
+/* below fails - not OK*/
 void foo8(ref mapping(int => int) mp)
-   requires   [n] mp::Map<mp5> & mp5[0]=n & n>0
+   requires   [n] mp::Map<mp1> & mp1[0]=n & n>0
    ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=n+1);
 {
   mp[0] = mp[0] + 1;
 }
+
+
+/* below succeeds - OK*/
+void foo9(ref mapping(int => int) mp)
+   requires   mp::Map<mp8>
+   ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=22);
+{
+  int i = 1;
+  /*for(i; i<20; i++){
+     mp[0] = i;
+  }*/
+  if(i == 0){
+    mp[0] = 1;
+  }else{
+    mp[0] = 22;
+  }
+  dprint;
+}
+
+
+/* below fails - not OK*/
+void foo10(ref mapping(int => int) mp)
+   requires   mp::Map<mp1> & mp1[0]=1
+   ensures   (exists mp9: mp'::Map<mp9> & mp9[0]=3);
+{
+  mp[0] = mp[0] + 2;
+  dprint;
+}
+
+
+/*
+void foo11(ref mapping(int => int) mp)
+   requires   mp::Map<mp5> & mp2::Map<mp6>
+   ensures    (exists mp9, mp10: mp'::Map<mp9> * mp2'::Map<mp10> & mp9[0]=3  & mp10[0]=4);
+{
+  mp[0] = 3;
+  mp2[0] = 4;
+  dprint;
+}
+*/
