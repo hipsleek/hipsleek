@@ -2,17 +2,17 @@ hip_include 'scontracts/mapprimitives.ss'
 
 global mapping(int => int) mpp;
 
-global int x;
-
+global int yyy;
+/*
 int goo()
-    requires x>0
-    ensures  x'=0;
+    requires yyy>0
+    ensures  yyy'=0;
 {
- x = 0;
+ yyy = 0;
  return 0;
 }
 
-
+*/
 /** why goo works fine while for foo HIP complains about not finding mp? */
 /** !! see the error below !! */
 
@@ -23,35 +23,34 @@ int foo() //(ref mapping(int => int) mp)
   mp[0] = 9; // => update(mp,0,9)[int,int];
   int x = mp[0];
   dprint;
-  return x;
+  return x+yyy;
 }
 
 
 /**
 
-Last Proving Location: test-map-21-bug.ss_15:0_0:-1
+../hip test-map-21-bug.ss -dre "trans_proc\|rename_exp\|subid"
 
-ERROR: at test-map-21-bug.ss_19:2_19:4
-Message: Var mp is not defined
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(trans_exp):Failure("Var mp is not defined")
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(trans_exp):Failure("Var mp is not defined")
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(trans_exp):Failure("Var mp is not defined")
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(helper_trans_exp):Failure("Var mp is not defined")
-Exception(trans_exp):Failure("Var mp is not defined")
-Exception(trans_proc):Failure("Var mp is not defined")
-Exception(trans_prog):Failure("Var mp is not defined")
-Stop z3... 48 invocations
-Stop Omega... 14 invocations caught
+!!!! below mp should have been changed to mp_21
 
-Exception occurred: Failure("Var mp is not defined")
-Error3(s) detected at main
-
-
-
+(==iastUtil.ml#997==)
+rename_exp(IastUtil)@13
+rename_exp(IastUtil) inp1 :{local: int x
+mp[0] = 9
+int x = mp[0]
+dprint
+return x + yyy}
+rename_exp(IastUtil) inp2 :({ __get_char, __plus_plus_char, __write_char, aalloc___,
+acquire, add___, alloc_str, array_get_elm_at___1d, array_get_elm_at___2d, delete_ptr,
+ div2, div3, div4, div___, divs___, eq___, finalize, finalize_str, foo, fork, get_cha
+r, gt___, gte___, init, join, land___, lor___, lt___, lte___, max, min, minus___, mod
+___, mp, mp_21, mult___, mults___, neq___, not___, plus_plus_char, pow___, rand_bool,
+ rand_int, release, res, select, update, update___1d, update___2d, write_char, yyy,yy
+_22 },[(mp,mp_21),(yyy,yyy_22)])
+rename_exp(IastUtil)@13 EXIT:{local: int x
+mp[0] = 9
+int x = mp[0]
+dprint
+return x + yyy_22}
 
 */

@@ -14,7 +14,7 @@ pred_prim Map<idx2> inv Type(self,idx2);
 // Store(mp1,mp2,key,val)  ==> (assert (= mp2 (store mp1 key val)))
 
 void update [T7,T8] (ref mapping(`T7 => `T8) mp, `T7 key, `T8 val)
-   requires  mp::Map<mp1>
+   requires  [mp1] mp::Map<mp1>
    ensures   (exists mp2: mp'::Map<mp2> & Store(mp1,mp2,key,val));
 
 `T10 select [T9,T10] (mapping(`T9 => `T10) mp, `T9 key)

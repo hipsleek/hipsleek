@@ -9749,10 +9749,13 @@ and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*
   let fl2 = fst (List.split l2) in
   let nl1 = List.filter (fun (c1,c2)-> not (List.mem c1 fl2)) l1 in (nl1@l2)
 
-and subid (ren:(ident*ident) list) (i:ident) :ident =
+and subid_x (ren:(ident*ident) list) (i:ident) :ident =
   let nl = List.filter (fun (c1,c2)-> (String.compare c1 i)==0) ren in
   if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
   else i
+
+and subid (ren:(ident*ident) list) (i:ident) :ident =
+  Debug.no_2 "subid" (pr_list (pr_pair pr_id pr_id)) pr_id pr_id subid_x ren i
 
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
   let pr1 = pr_list (pr_pair pr_id pr_id) in
@@ -9783,6 +9786,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                                                                let () = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in
                                                                r*)
     | Iast.ArrayAt b->
+      let () = y_binfo_hp (add_str "rename Iast.ArrayAt" (Iprinter.string_of_exp)) b.Iast.exp_arrayat_array_base in
       Iast.ArrayAt  {  Iast.exp_arrayat_array_base = helper ren b.Iast.exp_arrayat_array_base; (* substitute the new name for array name if it is in ren *)
                        Iast.exp_arrayat_index = List.map (helper ren) b.Iast.exp_arrayat_index;
                        Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos}
@@ -9862,7 +9866,9 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                         Iast.exp_seq_pos = b.Iast.exp_seq_pos }
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = x_add rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
-    | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
+    | Iast.Var b ->
+      let () = y_binfo_hp (add_str "Var" Iprinter.string_of_exp) (Iast.Var b) in
+      Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
     | Iast.While b->
       let nw = match b.Iast.exp_while_wrappings with
         | None -> None

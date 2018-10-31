@@ -1464,7 +1464,7 @@ and subs_poly_vars_struc_x spec poly_hash =
 and subs_poly_vars_struc spec poly_hash =
   let pr1 =  Cprinter.string_of_struc_formula in
   let pr2 hash =  pr_id (Hashtbl.fold ( fun a b c -> c ^ "\n" ^ (pr_id a) ^ " >> " ^ (string_of_typ b)) hash "") in
-  Debug.no_2 "subs_poly_vars_struc" pr1 (add_str "poly_hash" pr2) pr1 subs_poly_vars_struc_x spec poly_hash
+  Debug.no_2 "" pr1 (add_str "poly_hash" pr2) pr1 subs_poly_vars_struc_x spec poly_hash
 
 (* and check_exp prog proc ctx (e0:exp) label =                          *)
 (*   Gen.Profiling.do_1 "check_exp" (check_exp_d prog proc ctx e0) label *)
