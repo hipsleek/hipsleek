@@ -1,7 +1,18 @@
 hip_include 'scontracts/mapprimitives.ss'
 
-global mapping(int => int) mp.
+global mapping(int => int) mp;
 
+global int x;
+
+int goo()
+    requires x>0
+    ensures  x'=0;
+{
+ x = 0;
+ return 0;
+}
+
+/*
 int foo()
    requires mp::Map<mp9>@L
    ensures  res=9;
@@ -11,6 +22,7 @@ int foo()
   dprint;
   return x;
 }
+*/
 
 int foo1(mapping(int => int) mp)
    requires  mp::Map<mp8>
