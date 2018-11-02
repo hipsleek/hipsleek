@@ -9786,7 +9786,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                                                                let () = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in
                                                                r*)
     | Iast.ArrayAt b->
-      let () = y_binfo_hp (add_str "rename Iast.ArrayAt" (Iprinter.string_of_exp)) b.Iast.exp_arrayat_array_base in
+      let () = y_ninfo_hp (add_str "rename Iast.ArrayAt" (Iprinter.string_of_exp)) b.Iast.exp_arrayat_array_base in
       Iast.ArrayAt  {  Iast.exp_arrayat_array_base = helper ren b.Iast.exp_arrayat_array_base; (* substitute the new name for array name if it is in ren *)
                        Iast.exp_arrayat_index = List.map (helper ren) b.Iast.exp_arrayat_index;
                        Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos}
@@ -9867,7 +9867,7 @@ and rename_exp_x (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = x_add rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b ->
-      let () = y_binfo_hp (add_str "Var" Iprinter.string_of_exp) (Iast.Var b) in
+      let () = y_ninfo_hp (add_str "Var" Iprinter.string_of_exp) (Iast.Var b) in
       Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
     | Iast.While b->
       let nw = match b.Iast.exp_while_wrappings with

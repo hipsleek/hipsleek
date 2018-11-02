@@ -17,10 +17,10 @@ int goo()
 /** !! see the error below !! */
 
 int foo() //(ref mapping(int => int) mp)
-   requires mp::Map<mp9>@L
-   ensures  res=9;
+   requires mp::Map<mp9>@L & mp9[0]=9
+   ensures  res = 9 + yyy;
 {
-  mp[0] = 9; // => update(mp,0,9)[int,int];
+   // => update(mp,0,9)[int,int];
   int x = mp[0];
   dprint;
   return x+yyy;
