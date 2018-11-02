@@ -44,8 +44,11 @@ let transform_exp
       | Barrier _
       | Var _ -> (e,zero)
       | ArrayAt b -> (* An Hoa *)
-        let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
-        (ArrayAt { b with exp_arrayat_index = il;},(comb_f rl))
+        let base, r = helper n_arg b.exp_arrayat_array_base in
+        let il, rl  = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+        (ArrayAt { b with
+                   exp_arrayat_array_base = base;
+                   exp_arrayat_index = il;},(comb_f (r::rl)))
       | Assign b ->
         let e1,r1 = helper n_arg b.exp_assign_lhs  in
         let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -710,6 +713,10 @@ let subst_of_ident_with_bool (subs:(ident *ident) list) (id:ident)
     List.assoc id subs, true
   with
     Not_found -> id, false
+
+let subst_of_ident_with_bool (subs:(ident *ident) list) (id:ident)
+  : ident * bool =
+  Debug.no_2 "subst_of_ident_with_bool" (pr_list (pr_pair pr_id pr_id)) pr_id (pr_pair pr_id string_of_bool)  subst_of_ident_with_bool (subs:(ident *ident) list) (id:ident)
 
 (* intersection of two lists of ids *)
 let intersect (lst1:'a list) (lst2:'a list) : 'a list =

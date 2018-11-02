@@ -1,6 +1,6 @@
 hip_include 'scontracts/mapprimitives.ss'
 
-global mapping(int => int) mpp;
+global mapping(int => int) mp;
 
 global int yyy;
 /*
