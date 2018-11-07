@@ -928,8 +928,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
           (* let () = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
           let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-          (* x_binfo_hp (add_str "(simplify) input f" !print_formula) pe no_pos; *)
-          (* x_binfo_hp (add_str "(simplify) fomega" pr_id) fomega no_pos;       *)
+          x_binfo_hp (add_str "(simplify) input f" !print_formula) pe no_pos;
+          x_binfo_hp (add_str "(simplify) fomega" pr_id) fomega no_pos;
           (*test*)
           (*print_endline (Gen.break_lines fomega);*)
           (* for simplify/hull/pairwise *)
@@ -952,6 +952,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 let () = is_complex_form := false in
                 (* let () = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
                 let r = Cpure.subst ss2 (match_vars sv_list rel) in
+                let () = y_binfo_hp (add_str "simplified f" !Cpure.print_formula) r in
                 (* trans_bool *) r
               end
             with
@@ -1141,6 +1142,7 @@ let pairwisecheck (pe : formula) : formula =
   begin
     omega_subst_lst := [];
     (* let pe = drop_varperm_formula pe in *)
+    let pe, _ = translate_security_formula_for_infer !Security.current_lattice pe in
 
 
     match (omega_of_formula_old 21 pe) with
@@ -1160,6 +1162,7 @@ let pairwisecheck (pe : formula) : formula =
         end;
         let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
+      let r = Trans_sec.rev_translate_sec_from_infer r in
       (* trans_bool *) r
       with
       | End_of_file ->
@@ -1222,18 +1225,20 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
     omega_subst_lst := [];
     (* let pe1 = drop_varperm_formula pe1 in *)
     let () = if no_andl pe1 && no_andl pe2 then () else report_warning no_pos "trying to do hull over labels!" in
-    let fstr1 = omega_of_formula_old 23 pe1 in
-    let fstr2 = omega_of_formula_old 24 pe2 in
+    let pe1_translated, _ = Cpure.translate_security_formula_for_infer !Security.current_lattice pe1 in
+    let pe2_translated, _ = Cpure.translate_security_formula_for_infer !Security.current_lattice pe2 in
+    let fstr1 = omega_of_formula_old 23 pe1_translated in
+    let fstr2 = omega_of_formula_old 24 pe2_translated in
     match fstr1,fstr2 with
     | Some fstr1, Some fstr2 ->
       begin
-        let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in
+        let vars_list = remove_dups_svl (fv pe1_translated @ fv pe2_translated) in
         let l1 = List.map omega_of_spec_var vars_list  in
         let vstr = String.concat "," l1  in
         let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                       ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
         (* gist not properly logged *)
-        let () = x_tinfo_pp ("fomega = " ^ fomega) no_pos in
+        let () = x_binfo_pp ("fomega = " ^ fomega) no_pos in
         let () = set_proof_string ("GIST(not properly logged yet):"^fomega) in
         if !log_all_flag then begin
           output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
@@ -1241,7 +1246,8 @@ let gist_x (pe1 : formula) (pe2 : formula) : formula =
           flush log_all;
         end;
         let rel = send_and_receive fomega !in_timeout (* 0.  *)in
-        match_vars vars_list rel
+        let res = match_vars vars_list rel in
+        Trans_sec.rev_translate_sec_from_infer res
       end
     | _, _ -> pe1
   end

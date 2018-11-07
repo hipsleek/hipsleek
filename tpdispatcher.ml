@@ -2415,6 +2415,7 @@ let tp_pairwisecheck2 f1 (f2 : CP.formula) : CP.formula =
 
 let tp_pairwisecheck (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
+  (* let f, _ = CP.translate_security_formula_for_infer !Security.current_lattice f in *)
   let simpl_num = next_proof_no () in
   let simpl_no = (string_of_int simpl_num) in
   let cmd = PT_PAIRWISE f in
@@ -2460,6 +2461,7 @@ let tp_pairwisecheck (f : CP.formula) : CP.formula =
     (tp,simpl_no)
   in
   let res = Timelog.log_wrapper "pairwise" logger fn f in
+  (* let res = Trans_sec.rev_translate_sec_from_infer res in *)
   if not !tp_batch_mode then stop_prover ();
   res
 

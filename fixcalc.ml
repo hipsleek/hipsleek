@@ -119,7 +119,7 @@ let fixcalc_of_bool b =
   | true -> "1=1"
   | false -> "1=0"
 
-let rec fixcalc_of_b_formula b =
+let rec fixcalc_of_b_formula' b =
   let (pf, _) = b in
   match pf with
   | CP.BConst (b,_) -> fixcalc_of_bool b
@@ -170,11 +170,10 @@ let rec fixcalc_of_b_formula b =
     let () = x_binfo_hp (add_str "fixcalc trans error :" Cprinter.string_of_b_formula) b no_pos in
     illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
-let fixcalc_of_b_formula f=
-  DD.no_1 "fixcalc_of_b_formula" !CP.print_b_formula (fun s->s) (fun f-> fixcalc_of_b_formula f) f
-;;
+and fixcalc_of_b_formula f=
+  DD.no_1 "fixcalc_of_b_formula" !CP.print_b_formula (fun s->s) (fun f-> fixcalc_of_b_formula' f) f
 
-let rec fixcalc_of_pure_formula f = match f with
+and fixcalc_of_pure_formula' f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
@@ -206,11 +205,10 @@ let rec fixcalc_of_pure_formula f = match f with
     " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^
     fixcalc_of_pure_formula p ^ ")) "
   | CP.SecurityForm (_, f, _) -> fixcalc_of_pure_formula f
-;;
 
-let fixcalc_of_pure_formula f=
+and fixcalc_of_pure_formula f=
   (* let f = Omega.simplify f in *)
-  DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula f) f
+  DD.no_1 "fixcalc_of_pure_formula(really called)" !CP.print_formula (fun s->s) (fun f-> fixcalc_of_pure_formula' f) f
 ;;
 
 let fixcalc_of_pure_formula f=
@@ -1523,29 +1521,47 @@ let fixc_preprocess_x pairs0 =
   helper pairs0 []
 
 let gfp_preprocess_x pairs0 =
+  let rec norm_helper pairs =
+    match pairs with
+    | [] -> []
+    | (r1, r2)::rs ->
+        if CP.is_RelForm r1 then
+          (r1, r2) :: norm_helper rs
+        else
+          (r2, r1) :: norm_helper rs
+  in
   let rec helper pairs res=
     match pairs with
     | [] -> res
     | r::rs ->
-      let rel = fst r in
-      let name = CP.name_of_rel_form rel in
-      let same_rels, diff_rels =
-        List.partition (fun r0 ->
-            CP.eq_spec_var (CP.name_of_rel_form (fst r0)) name) rs in
-      let unified_rels =
-        if same_rels == [] then [(fst r, [snd r])]
+      (* try *)
+        let rel = fst r in
+        y_binfo_hp (add_str "rel" !CP.print_formula) rel;
+        let name = CP.name_of_rel_form rel in
+        y_binfo_hp (add_str "name" CP.string_of_spec_var) name;
+        let same_rels, diff_rels =
+          List.partition (fun r0 ->
+              CP.eq_spec_var (CP.name_of_rel_form (fst r0)) name) rs in
+        let unified_rels =
+          if same_rels == [] then [(fst r, [snd r])]
+          else
+            let res = List.map (fun r0 ->
+                if CP.equalFormula rel (fst r0) then (snd r0)
+                else unify_rels r r0) same_rels in
+            let unified_oblgs = (fst r, (snd r) :: res) in
+            (*reduce number of disj*)
+            let red_pairs = fixc_reduce_disj_one_rel unified_oblgs in
+            [red_pairs]
+        in
+        helper diff_rels (res@unified_rels)
+      (* with
+      | Not_found ->
+        if CP.is_RelForm (fst r) then
+          raise Not_found
         else
-          let res = List.map (fun r0 ->
-              if CP.equalFormula rel (fst r0) then (snd r0)
-              else unify_rels r r0) same_rels in
-          let unified_oblgs = (fst r, (snd r) :: res) in
-          (*reduce number of disj*)
-          let red_pairs = fixc_reduce_disj_one_rel unified_oblgs in
-          [red_pairs]
-      in
-      helper diff_rels (res@unified_rels)
+          helper ((snd r, fst r)::rs) res *)
   in
-  helper pairs0 []
+  helper (norm_helper pairs0) []
 
 let fixc_preprocess pairs0 =
   let pr1 = !CP.print_formula in
@@ -1981,7 +1997,9 @@ let compute_gfp_xx input_pairs_num ante_vars specs=
   x_binfo_hp (add_str "non_rec_defs "  (pr_list
                                            (pr_triple !CP.print_formula !CP.print_formula string_of_int)) ) non_rec_defs no_pos;
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
+  let () = y_binfo_hp (add_str "true const" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) true_const in
   let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
+  let () = y_binfo_hp (add_str "non rec defs" (pr_list (pr_pair !CP.print_formula !CP.print_formula))) non_rec_defs in
   if rec_rel_defs==[] then
     let () = x_binfo_pp ("compute_fixpoint_xx:then branch") no_pos in
     true_const @ non_rec_defs
