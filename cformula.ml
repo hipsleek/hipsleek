@@ -20771,10 +20771,11 @@ let simpl_sec_form lattice sfl =
    *     | _                      -> x_report_error no_pos "helper : not security formula"
    *   end *)
   in
-  let rec fixpoint sfl =
-    let next = helper sfl sfl in
+  let rec fixpoint sfl n =
+    if (n=0) then sfl
+    else let next = helper sfl sfl in
     (* let () = print_endline ("SFL: " ^ List.fold_left (fun acc x -> acc ^ " " ^ ((!CP.print_formula) (CP.BForm((x,None),None)))) "" sfl) in *)
-    if next = sfl then next else fixpoint next
+    if next = sfl then next else fixpoint next (n-1)
   in
   let is_trivial sf =
     match sf with
@@ -20809,7 +20810,7 @@ let simpl_sec_form lattice sfl =
   in
   let sfl = List.filter (fun x -> not (is_trivial x)) sfl in
   let sfl = atomize sfl in
-  fixpoint sfl
+  fixpoint sfl !Globals.ifa_fp
 (* fixpoint (helper,sfl) *)
 
 (* NOTE: Combine security formula *)

@@ -1710,9 +1710,9 @@ and is_max_min e =
 
 and string_of_relation (e:relation) : string =
   match e with
-  | ConstRel b -> if b then "True" else "False"
-  | BaseRel (el,f) -> pr_pair (pr_list !print_exp) !print_formula (el,f)
-  | UnionRel (r1,r2) -> (string_of_relation r1)^"\n"^(string_of_relation r2)^"\n"
+  | ConstRel b -> "ConstRel: " ^ (if b then "True" else "False")
+  | BaseRel (el,f) -> "BaseRel: " ^ pr_pair (pr_list !print_exp) !print_formula (el,f)
+  | UnionRel (r1,r2) -> (string_of_relation r1)^" \/ \n"^(string_of_relation r2)^"\n"
 
 and isConstTrue_debug (p:formula) =
   Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
