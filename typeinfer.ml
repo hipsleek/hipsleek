@@ -914,9 +914,8 @@ and gather_type_info_exp_x prog a0 tlist et =
         let (n_tl,n_typ) = x_add gather_type_info_exp prog hd type_list expected in (* forces the array indexes to be Int *)
         aux tl n_tl expected
     in
-    let n_tlist = aux idx n_tl Int in
     (match lt with
-     | Array (r,_)     -> (n_tlist, r)
+     | Array (r,_)     ->  let n_tlist = aux idx n_tl Int in (n_tlist, r)
      | Mapping (t1,t2) ->  let tl  = aux idx tlist t1 in (tl, t2)
      | _ ->  failwith ("gather_type_info_exp: expecting type Array of dimension " ^ (string_of_int dim) ^ " but given " ^ (string_of_typ lt)))
   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) ->
