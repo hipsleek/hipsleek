@@ -1574,6 +1574,13 @@ let rec pr_h_formula h =
   | HVar (v,ls) -> fmt_string ("HVar "^ (string_of_hvar (v,ls)))
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
+  | HSubs hs -> fmt_string ("(["
+                            ^(string_of_spec_var_list hs.h_formula_subs_to)
+                            ^ "/"
+                            ^(string_of_spec_var_list hs.h_formula_subs_from)
+                            ^"] "
+                            ^ (string_of_h_formula hs.h_formula_subs_form)
+                            ^ " )")
 
 and pr_hrel_formula hf=
   match hf with
@@ -1767,6 +1774,8 @@ and prtt_pr_h_formula h =
   | HEmp -> fmt_string (texify "\emp" "emp")
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
+  | HSubs hs -> failwith x_tbi
+
 
 and prtt_pr_h_formula_inst prog h =
   let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst prog) e
@@ -1941,7 +1950,7 @@ and prtt_pr_h_formula_inst prog h =
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
-
+  | HSubs hs -> failwith x_tbi
 
 and prtt_pr_h_formula_inst_html prog post_hps h =
   let f_b e =  pr_bracket h_formula_wo_paren (prtt_pr_h_formula_inst_html prog post_hps) e
@@ -2115,6 +2124,7 @@ and prtt_pr_h_formula_inst_html prog post_hps h =
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
   | HVar _ -> ()
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
+  | HSubs _ -> failwith x_tbi
 
 and pr_h_formula_for_spec h =
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula_for_spec e in
@@ -2246,6 +2256,7 @@ and pr_h_formula_for_spec h =
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | FrmHole m -> fmt_string ("FrmHole[" ^ (string_of_int m) ^ "]")
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
+  | HSubs hs -> failwith x_tbi
 
 and pr_vperm_sets vps =
   let pr_elem vpa svl =
@@ -5547,6 +5558,7 @@ let rec html_of_h_formula h = match h with
       | arg_first::arg_rest -> List.fold_left (fun a x -> a ^ "," ^ (html_of_formula_exp x)) (html_of_formula_exp arg_first) arg_rest) ^ ")"
   | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
   | FrmHole m ->  ("FrmHole[" ^ (string_of_int m) ^ "]")
+  | HSubs _ -> failwith x_tbi
 
 and html_of_formula e = match e with
   | Or ({formula_or_f1 = f1;

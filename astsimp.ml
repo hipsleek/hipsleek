@@ -461,6 +461,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   | IF.HRel _
   | IF.ThreadNode _
   | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ | IF.HVar _ -> h0
+  | IF.HSubs hf -> HSubs {hf with h_formula_subs_form = convert_heap2_heap prog hf.h_formula_subs_form}
 
 and convert_heap2_x prog (f0 : IF.formula) : IF.formula =
   match f0 with
@@ -3704,7 +3705,9 @@ and find_m_prop_heap_x params eq_f h =
     | CF.HTrue
     | CF.HFalse
     (* | CF.HRel _ *)
-    | CF.HEmp | CF.HVar _ -> [] in
+    | CF.HEmp | CF.HVar _ -> []
+    | CF.HSubs _ -> failwith x_tbi
+  in
   helper h
 
 and find_trans_view_name_x ff self pos =
@@ -3774,7 +3777,9 @@ and find_node_vars_x eq_f h =
     | CF.Hole _ | CF.FrmHole _
     | CF.HTrue
     | CF.HFalse
-    | CF.HEmp | CF.HVar _  -> ([],[]) in
+    | CF.HEmp | CF.HVar _  -> ([],[])
+    | CF.HSubs _ -> failwith x_tbi
+  in
   (* let helper h =  *)
   (*   let pr1 = Cprinter.string_of_h_formula in *)
   (*   let pr2 = Cprinter.string_of_spec_var_list in *)
@@ -5165,6 +5170,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
          let vs = List.concat (List.map (CP.afv) args) in
          if List.exists (fun i -> CP.name_of_spec_var i = v) vs then (CP.name_of_spec_var n)
          else ""
+       | CF.HSubs _ -> failwith x_tbi
        | CF.HTrue | CF.HFalse | CF.HEmp | CF.HVar _ | CF.Hole _ | CF.FrmHole _ -> "")
     in find_view_heap h
   | CF.Or _ ->
@@ -8543,6 +8549,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let vs = List.map (fun (v,p) -> trans_var (v,p) tl pos
             (* (CP.SpecVar (FORM, v, p)) *)) hvar_vs in
         (CF.HVar (CP.SpecVar (FORM, v, Unprimed),vs), CF.TypeTrue, [], tl)
+      | IF.HSubs hf -> failwith x_tbi
     ) in
     res
   ) in
@@ -9334,6 +9341,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       (* let hvars = List.flatten (List.map IP.afv hvars) in *)
       (* (new_used_names, evars, IF.HVar (v,hvars), link_f)  *)
       (used_names, [], IF.HVar (v,hvar_vs), IP.mkTrue no_pos)
+    | IF.HSubs hf ->
+      let res1, res2, new_hf, res4 = linearize_heap used_names hf.h_formula_subs_form in
+      (res1, res2, IF.HSubs {hf with h_formula_subs_form = new_hf}, res4)
+
   in
 
   (* added to filter out global relation from implicit quantification *)

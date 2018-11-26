@@ -4223,6 +4223,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
   | HEmp | HVar _
   | HRel _ | FrmHole _
   | HTrue | HFalse | StarMinus _ -> frame
+  | CF.HSubs _ -> failwith x_tbi
 
 and update_ctx_es_formula ctx0 f =
   match ctx0 with

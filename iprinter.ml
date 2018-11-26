@@ -605,6 +605,9 @@ let rec string_of_h_formula = function
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
   | F.HVar (v,vs) -> "HVar "^v^"["^(string_of_var_list vs)^"]"
+  | F.HSubs hf -> "("^ (string_of_var_list hf.h_formula_subs_to) ^ "/" ^
+                    (string_of_var_list hf.h_formula_subs_from) ^ ")" ^
+                    (string_of_h_formula hf.h_formula_subs_form)
 
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 

@@ -1120,7 +1120,7 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | HTrue -> []
   | HEmp | HVar _-> []
   | HFalse -> [] (* what to do here? *)
-
+  | HSubs _ -> failwith x_tbi
 (*
    compiling logical constructs to executable code based on the generated bindings.
 
@@ -1653,6 +1653,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
     Empty no_pos
   | HFalse ->
     return_false no_pos
+  | HSubs _ -> failwith x_tbi
 
 (*
   Compiling disjunct:

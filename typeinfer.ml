@@ -1781,6 +1781,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     let n_tl = gather_type_info_heap_x prog h1 tlist in
     let n_tl = gather_type_info_heap_x prog h2 n_tl in
     n_tl
+  | IF.HSubs hf -> gather_type_info_heap_x prog hf.h_formula_subs_form tlist
   | IF.HeapNode2 h2 ->
     let h = node2_to_node 2 prog h2 in
     let fh = IF.HeapNode h in

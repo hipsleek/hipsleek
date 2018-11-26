@@ -20,11 +20,11 @@ let diff = Gen.BList.difference_eq CP.eq_spec_var
 let remove_dups = Gen.BList.remove_dups_eq CP.eq_spec_var
 let intersect = Gen.BList.intersect_eq CP.eq_spec_var
 
-let is_pre_hprel (hpr: CF.hprel) = 
+let is_pre_hprel (hpr: CF.hprel) =
   match hpr.hprel_type with
   | INFER_UNFOLD -> true
   | _ -> false
-  
+
 let is_post_hprel (hpr: CF.hprel) =
   match hpr.hprel_type with
   | INFER_FOLD -> true
@@ -35,10 +35,10 @@ let sig_of_hrel (h: CF.h_formula) =
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args h)
   | _ -> x_fail ("Expected a HRel h_formula instead of " ^ (!CF.print_h_formula h))
 
-let name_of_hrel (h: CF.h_formula) = 
-  fst (sig_of_hrel h) 
+let name_of_hrel (h: CF.h_formula) =
+  fst (sig_of_hrel h)
 
-let args_of_hrel (h: CF.h_formula) = 
+let args_of_hrel (h: CF.h_formula) =
   snd (sig_of_hrel h)
 
 let sig_of_hprel (hpr: CF.hprel) =
@@ -47,15 +47,15 @@ let sig_of_hprel (hpr: CF.hprel) =
   let f_h, _, _, _, _, _ = x_add_1 CF.split_components hpr_f in
   match f_h with
   | HRel (hr_sv, hr_args, _) -> (hr_sv, CF.get_node_args f_h)
-  | _ -> x_fail ("Unexpected formula in the " ^ 
+  | _ -> x_fail ("Unexpected formula in the " ^
                    (if is_pre then "LHS" else "RHS") ^ " of a " ^
-                   (if is_pre then "pre-" else "post-") ^ "hprel " ^ 
+                   (if is_pre then "pre-" else "post-") ^ "hprel " ^
                    (Cprinter.string_of_hprel_short hpr))
 
-let name_of_hprel (hpr: CF.hprel) = 
-  fst (sig_of_hprel hpr) 
+let name_of_hprel (hpr: CF.hprel) =
+  fst (sig_of_hprel hpr)
 
-let args_of_hprel (hpr: CF.hprel) = 
+let args_of_hprel (hpr: CF.hprel) =
   snd (sig_of_hprel hpr)
 
 let body_of_hprel (hpr: CF.hprel) =
@@ -73,7 +73,7 @@ let is_non_inst_hrel prog (hrel: CF.h_formula) =
   let hrel_inst = hrel_def.Cast.hp_vars_inst in
   List.for_all (fun (_, i) -> i = Globals.NI) hrel_inst
 
-let get_non_inst_args_hprel_id prog id args = 
+let get_non_inst_args_hprel_id prog id args =
   let hprel_def = Cast.look_up_hp_def_raw prog.Cast.prog_hp_decls id in
   let hprel_inst = hprel_def.Cast.hp_vars_inst in
   let () = y_tinfo_hp (add_str "args" !CP.print_svl) args in
@@ -105,7 +105,7 @@ let get_node_var_args prog (h: h_formula) =
     begin try
         let hrel_var, hrel_params = C.get_root_args_hp prog hrel_id hrel_args in
         hrel_var, hrel_params
-      with _ -> 
+      with _ ->
         let all_hrel_args = CF.get_node_args h in
         List.hd all_hrel_args, List.tl all_hrel_args
     end
@@ -119,9 +119,9 @@ let get_node_var prog (h: h_formula) =
     (fun _ -> get_node_var prog h) h
 
 let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
-  let rec helper root hs = 
+  let rec helper root hs =
     if is_empty hs then [], []
-    else 
+    else
       let root_aliases = CP.EMapSV.find_equiv_all_new root aset in
       let root_nodes, rest_nodes = List.partition (fun h ->
         let pt = get_node_var prog h in
@@ -138,18 +138,18 @@ let complx_sig_of_h_formula_list prog aset root (hs: h_formula list) =
         in
         (* NOTE: Adding dupl_rest into rem_nodes might cause helper going into a loop *)
         root_node::sig_of_root_args, (* dupl_rest @ *) rem_nodes
-      | root_node::_ -> 
+      | root_node::_ ->
             (* need to account for vector with same bases *)
         let () = y_tinfo_pp ("Found duplicate star nodes in " ^ (pr_list !CF.print_h_formula root_nodes)) in
         [root_node], rest_nodes
-  in 
+  in
   let sig_hs, rem_nodes = helper root hs in
   let () = if not (is_empty rem_nodes) then
       y_tinfo_hp (add_str "The signature does not cover remaining heap nodes" (pr_list !CF.print_h_formula)) rem_nodes
   in
   sig_hs
 
-let rec complx_sig_of_formula prog root (f: CF.formula) = 
+let rec complx_sig_of_formula prog root (f: CF.formula) =
   match f with
   | CF.Base ({ formula_base_heap = h; formula_base_pure = p; })
   | CF.Exists ({ formula_exists_heap = h; formula_exists_pure = p; }) ->
@@ -159,10 +159,10 @@ let rec complx_sig_of_formula prog root (f: CF.formula) =
   | CF.Or ({ formula_or_f1 = f1; formula_or_f2 = f2; }) ->
     (complx_sig_of_formula prog root f1) @ (complx_sig_of_formula prog root f2)
 
-let sig_of_formula prog root (f: CF.formula) = 
+let sig_of_formula prog root (f: CF.formula) =
   List.map (CF.get_node_name 30) (complx_sig_of_formula prog root f)
 
-let sig_of_formula prog root (f: CF.formula) = 
+let sig_of_formula prog root (f: CF.formula) =
   let pr1 = !CP.print_sv in
   let pr2 = !CF.print_formula in
   let pr3 = pr_list pr_id in
@@ -170,23 +170,23 @@ let sig_of_formula prog root (f: CF.formula) =
 
 let sig_of_lem prog (lem: C.coercion_decl) =
   let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem.C.coercion_head) in
-  sig_of_formula prog self_var lem.C.coercion_head, 
+  sig_of_formula prog self_var lem.C.coercion_head,
   sig_of_formula prog self_var lem.C.coercion_body
 
 let sig_of_lem_formula prog case f =
   match case with
-  | C.Complex -> 
+  | C.Complex ->
     let self_var = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv f) in
     Some (sig_of_formula prog self_var f)
-  | _ -> None 
+  | _ -> None
 
-let is_compatible_sig ?(strict=true) prog sig1 sig2 = 
+let is_compatible_sig ?(strict=true) prog sig1 sig2 =
   let rec helper ss1 ss2 =
     match ss1, ss2 with
     | _, [] -> true
     | [], _ -> not strict
     | s1::ss1, s2::ss2 ->
-      if (eq_str s1 s2) || 
+      if (eq_str s1 s2) ||
          (C.is_hp_name prog s1 && C.is_hp_name prog s2)
       then helper ss1 ss2
       else false
@@ -195,23 +195,23 @@ let is_compatible_sig ?(strict=true) prog sig1 sig2 =
   in helper sig1 sig2
 
 let is_compatible_lem prog lhs_sig rhs_root_sig lem =
-  let lem_ante, lem_conseq = 
+  let lem_ante, lem_conseq =
     match lem.C.coercion_type with
     | Right -> lem.C.coercion_body, lem.C.coercion_head
     | _ -> lem.C.coercion_head, lem.C.coercion_body
   in
-  let lem_self = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem_ante) in 
+  let lem_self = List.find (fun sv -> eq_str (CP.name_of_spec_var sv) Globals.self) (fv lem_ante) in
   let lem_ante_sig = sig_of_formula prog lem_self lem_ante in
   let lem_conseq_sig = sig_of_formula prog lem_self lem_conseq in
   (is_compatible_sig prog lhs_sig lem_ante_sig) &&
   (is_compatible_sig ~strict:false prog rhs_root_sig lem_conseq_sig)
 
-let find_all_compatible_lem prog lhs_sig rhs_root_sig lems = 
+let find_all_compatible_lem prog lhs_sig rhs_root_sig lems =
   List.find_all (is_compatible_lem prog lhs_sig rhs_root_sig) lems
 
 (* first_ptr = true: stop at the first *)
 let look_up_reachable_ptrs_f prog f roots ptr_only first_ptr =
-  let search_fnc prog hds hvs hrs roots = 
+  let search_fnc prog hds hvs hrs roots =
     if first_ptr then CF.look_up_first_reachable_unfold_ptr prog hds hvs ~hr_sigs:hrs roots
     else CF.look_up_reachable_ptr_args prog hds hvs ~hr_sigs:hrs roots
   in
@@ -314,13 +314,13 @@ let look_up_reachable_ptrs_sf prog sf roots ptr_only first_ptr=
 let base_unfold_formula_of_hrel hrel_root hrel_args =
   let pos = no_pos in
   let ptr_hrel_args = List.filter CP.is_node_typ hrel_args in
-  let base_p = 
+  let base_p =
     if is_empty hrel_args then CP.mk_eq_null hrel_root
     else CP.gen_cl_eqs pos (CP.remove_dups_svl (hrel_root::ptr_hrel_args)) (CP.mkTrue pos)
   in
   CF.Base (CF.formula_base_of_pure (MCP.mix_of_pure base_p) pos)
 
-let rec_unfold_formula_of_hrel prog hrel_root hrel_args = 
+let rec_unfold_formula_of_hrel prog hrel_root hrel_args =
   let pos = no_pos in
   let root_typ = CP.type_of_spec_var hrel_root in
   match root_typ with
@@ -483,7 +483,7 @@ let fresh_data_v_x f0=
   (* let fr_v_sps2 = CP.fresh_spec_vars v_sps3 in *)
   (* let sst = List.combine v_sps3 fr_v_sps2 in *)
   (* subst sst f0 *)
-  if not (Globals.infer_const_obj # is_pure_field) 
+  if not (Globals.infer_const_obj # is_pure_field)
   (* !Globals.sa_pure_field *) then
     formula_trans_heap_node fresh_hf f0
   else f0
@@ -549,6 +549,7 @@ let simplify_htrue_x hf0=
     | HRel _ | DataNode _ |  ViewNode _ | ThreadNode _
     | HFalse | Hole _ | FrmHole _ | HTrue | HEmp | HVar _
     | Conj _ | ConjStar _|ConjConj _|StarMinus _ -> hf
+    | CF.HSubs _ -> failwith x_tbi
   in
   (*********INTERNAL***************)
   dfs_elim_dups_htrue_emp hf0
@@ -650,6 +651,7 @@ let rec collect_baga_models_heap prog hf0=
         ) [] fs
     | ThreadNode _ | Hole _ | FrmHole _ | HRel _ | HTrue | HFalse| HEmp | HVar _ -> []
     | StarMinus _ | Conj _ | ConjStar _ | ConjConj _ | Phase _ -> raise NOT_HANDLE_YET
+    | CF.HSubs _ -> failwith x_tbi
   in
   let r = helper hf0 in
   r
@@ -914,7 +916,7 @@ let classify_equiv_hp_defs defs=
     (fun _ -> classify_equiv_hp_defs_x defs) defs
 
 (*
-(i) build emap for LHS/RHS 
+(i) build emap for LHS/RHS
   - eqnull -> make closure. do not subst
   - cycle nodes: DO NOT subst
   - inside one preds, do not subst
@@ -1180,7 +1182,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
   let rec helper f=
     match f with
     | HRel _
-    | DataNode _ | ViewNode _ 
+    | DataNode _ | ViewNode _
     | HTrue | HFalse | HEmp | HVar _ | Hole _ | FrmHole _ |  ThreadNode _ -> f
     | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd;
                                h_formula_phase_rw = helper b.h_formula_phase_rw}
@@ -1210,6 +1212,7 @@ let elim_dangling_conj_star_hf unk_hps f0 =
           Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
       end
     | ConjStar _|ConjConj _|StarMinus _ -> f
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper f0
 
@@ -2318,6 +2321,7 @@ let slice_framing_heaps_x hf0 framing_svl =
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -2425,6 +2429,7 @@ let elim_emp hf0 svl =
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | CF.HSubs _ -> failwith x_tbi
   in
   if svl = [] then hf0 else helper hf0
 

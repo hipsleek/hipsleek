@@ -47,7 +47,7 @@ let is_rec_pardef (hp,_,f,_)=
   let hps = CF.get_hp_rel_name_formula f in
   (CP.mem_svl hp hps)
 
-let string_of_hp_rel_def = Cprinter.string_of_hp_rel_def 
+let string_of_hp_rel_def = Cprinter.string_of_hp_rel_def
 
 let string_of_par_def_w_name pd=
   let pr1 = !CP.print_sv in
@@ -85,7 +85,7 @@ let close_def defs (v1,v2) =
   let pr = !CP.print_sv in
   let pr_pair = pr_pair pr pr in
   let p_svl = !CP.print_svl in
-  Debug.no_2 "SAU:close_def" p_svl pr_pair p_svl close_def defs (v1,v2) 
+  Debug.no_2 "SAU:close_def" p_svl pr_pair p_svl close_def defs (v1,v2)
 
 (* else *)
 (*   let b1 = CP.mem_svl v1 defs in *)
@@ -292,7 +292,7 @@ let check_simp_hp_eq (hp1, _) (hp2, _)=
 (*     (hf, CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)) *)
 (*   else report_error pos "sau.add_raw_hp_rel: args should be not empty" *)
 
-let add_raw_hp_rel ?(caller="") prog is_pre is_unknown unknown_args pos = 
+let add_raw_hp_rel ?(caller="") prog is_pre is_unknown unknown_args pos =
   x_add (Cast.add_raw_hp_rel ~caller:caller) prog is_pre is_unknown unknown_args pos
 (*   let pr1 = pr_list (pr_pair !CP.print_sv print_arg_kind) in *)
 (*   let pr2 = Cprinter.string_of_h_formula in *)
@@ -426,14 +426,14 @@ let rec get_hdnodes (f: CF.formula)=
   | _ -> report_error no_pos "SAU. get_hdnodes: not handle yet"
 
 and get_hdnodes_hf (hf: CF.h_formula) =
-  let pr = Cprinter.string_of_h_formula in 
+  let pr = Cprinter.string_of_h_formula in
   Debug.no_1 "get_hdnodes_hf" pr (pr_list pr_none) get_hdnodes_hf_x hf
 
 and get_hdnodes_hf_x (hf: CF.h_formula) = match hf with
   | CF.DataNode hd -> [hd]
-  | CF.Conj {CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2} 
-  | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2} 
-  | CF.Phase {CF.h_formula_phase_rd = h1; CF.h_formula_phase_rw = h2} 
+  | CF.Conj {CF.h_formula_conj_h1 = h1; CF.h_formula_conj_h2 = h2}
+  | CF.Star {CF.h_formula_star_h1 = h1; CF.h_formula_star_h2 = h2}
+  | CF.Phase {CF.h_formula_phase_rd = h1; CF.h_formula_phase_rw = h2}
     -> (get_hdnodes_hf h1)@(get_hdnodes_hf h2)
   | _ -> []
 
@@ -493,6 +493,7 @@ and get_data_view_hrel_vars_h_formula hf=
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> []
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf
 
@@ -561,6 +562,7 @@ and drop_get_hrel_h_formula hf=
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> (hf0,[])
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf
 
@@ -626,6 +628,7 @@ and drop_data_hrel_except_hf dn_names hpargs hf=
     | CF.HFalse
     | CF.HEmp  | CF.HVar _ -> hf0
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "CF.drop_data_hrel_except_hf: not handle yet"
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf
 
@@ -783,6 +786,7 @@ and drop_hrel_match_args_hf hf0 args=
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> (hf)
     | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "SAU.drop_hrel_match_args_hf: not handle yet"
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -1182,7 +1186,7 @@ let smart_subst nf1 nf2 hpargs eqs reqs unk_svl prog_vars=
 
 (*moved to CFU*)
 (*
-(i) build emap for LHS/RHS 
+(i) build emap for LHS/RHS
   - eqnull -> make closure. do not subst
   - cycle nodes: DO NOT subst
   - inside one preds, do not subst
@@ -1596,7 +1600,7 @@ let do_simpl_nodes_match_x lhs rhs =
     if matched_svl = [] then (lhs, rhs)
     else
       let rhs1 = x_add CF.subst ss rhs in
-      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs, 
+      (CF.formula_trans_heap_node (hn_drop_matched matched_svl) lhs,
 
        CF.formula_trans_heap_node (hn_drop_matched matched_svl) rhs1)
   in
@@ -1930,7 +1934,7 @@ let find_well_defined_hp_x prog hds hvs r_hps prog_vars post_hps (hp,args) def_p
   split_spatial: during assumption generating,
  do not do split_spatial, we need capture link_hps
 *)
-let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps 
+let find_well_defined_hp prog hds hvs ls_r_hpargs prog_vars post_hps
     (hp,args) def_ptrs lhsb split_spatial pos=
   let pr1 = !CP.print_sv in
   let pr2 = !CP.print_svl in
@@ -2101,7 +2105,7 @@ let find_well_eq_defined_hp prog hds hvs lhsb eqs (hp,args)=
   let pr2 = !CP.print_svl in
   let pr3 = pr_triple pr1 pr2 Cprinter.string_of_formula_base in
   let pr4 = (pr_pair pr1 pr2) in
-  Debug.no_3 "find_well_eq_defined_hp" Cprinter.string_of_formula_base pr4 
+  Debug.no_3 "find_well_eq_defined_hp" Cprinter.string_of_formula_base pr4
     (pr_list (pr_pair pr1 pr1)) (pr_pair (pr_list_ln pr3) (pr_list pr4))
     (fun _ _ _ -> find_well_eq_defined_hp_x prog hds hvs lhsb eqs (hp,args))
     lhsb (hp,args) eqs
@@ -3775,7 +3779,7 @@ let norm_two_hnodes_wrapper args sh_dns0 matched0 rest_dns2 ss0 =
     |  hn::sh_ls ->
       let new_ss, n_matcheds2,n_rest2 = helper hn rest_dns2 matched2 [] in
       norm_hnodes_two_hns sh_ls n_matcheds2 n_rest2 (ss@new_ss)
-  in 
+  in
   norm_hnodes_two_hns sh_dns0 matched0 rest_dns2 ss0
 
 let norm_hnodes_wg_x args fs_wg=
@@ -5062,7 +5066,7 @@ let extract_common prog hp r other_args args sh_ldns com_hprels=
         in
         let ss = List.concat ssl in
         let matched_hn =
-          if ss <> [] then 
+          if ss <> [] then
             let r =(CF.h_subst ss (CF.DataNode hd)) in
             match r with
             | CF.DataNode hd -> hd
@@ -5551,7 +5555,7 @@ let get_sharing_x prog unk_hps r other_args args sh_ldns sh_lvns eqNulls eqPures
         in
         let ss = List.concat ssl in
         let matched_hn =
-          if ss <> [] then 
+          if ss <> [] then
             let r =(CF.h_subst ss (CF.DataNode node)) in
             match r with
             | CF.DataNode hd -> hd

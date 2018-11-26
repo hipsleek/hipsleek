@@ -23,7 +23,10 @@ let imm_int = ref 1
 let mut_int = ref 0
 
 let poly_typ_id = "T"
-let map_pred_name = "Map"
+let map_pred_name       = "Map"
+let same_type_pred_name = "SameType"
+let mapp_pred_name      = "Mappp"
+let map_related_names   = map_pred_name :: (same_type_pred_name :: [mapp_pred_name; "Map_i"])
 
 type formula_type =
   | Simple
