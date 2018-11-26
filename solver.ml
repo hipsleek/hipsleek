@@ -1363,7 +1363,9 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | ConjConj h ->splitter h.h_formula_conjconj_h1 h.h_formula_conjconj_h2 mkConjConjH h.h_formula_conjconj_pos
     | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
     | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 (fun a b c -> mkStarH a b c) h.h_formula_star_pos
-    | StarMinus  h-> splitter h.h_formula_starminus_h1 h.h_formula_starminus_h2 (fun a b c -> mkStarMinusH a b h.h_formula_starminus_aliasing c 20) h.h_formula_starminus_pos in
+    | StarMinus  h-> splitter h.h_formula_starminus_h1 h.h_formula_starminus_h2 (fun a b c -> mkStarMinusH a b h.h_formula_starminus_aliasing c 20) h.h_formula_starminus_pos
+    | HSubs _ -> failwith x_tbi
+  in
 
   let l = sln_helper h in
   List.filter (fun (c1,_)-> Cformula.is_complex_heap c1) l
@@ -1578,6 +1580,7 @@ and find_pred_roots_heap h0 =
   | ViewNode ({h_formula_view_node = p}) -> [p]
   | ThreadNode _
   | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ | FrmHole _ | HVar _ -> []
+  | HSubs _ -> failwith x_tbi
 
 (* unfold then unsat *)
 and unfold_context_unsat_now_x prog0 (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (pos : loc) : list_context =
@@ -5991,6 +5994,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
     | DataNode _ | ViewNode _ -> [f]
     | ThreadNode _ -> [f]
     | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HVar _ | HRel _ -> []
+    | HSubs _ -> failwith x_tbi
   in (* End of function collect_data_view *)
 
   (** [Internal] Generate the action based on the list of node and its tail **)
@@ -10280,6 +10284,7 @@ and do_unfold_for_classic_reasoning_x prog (f: CF.formula) (pos : loc) =
     | CF.HTrue -> []
     | CF.HFalse -> []
     | CF.HEmp  | CF.HVar _ -> []
+    | CF.HSubs _ -> failwith x_tbi
   ) in
   let view_hvars = collect_view_hvars_formula f in
   let unfolded_f = List.fold_left (fun old_f v ->

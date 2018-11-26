@@ -4,4 +4,6 @@
 #spatial_ctx_extract,Trace
 #do_match,Trace
 #check_pre_post(2),Trace
-subs_poly_vars_struc
+#subs_poly_vars_struc
+trans_view,Trace
+unify_type

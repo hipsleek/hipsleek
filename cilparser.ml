@@ -2080,6 +2080,7 @@ and translate_hip_exp_x (exp: Iast.exp) pos : Iast.exp =
       end
     | IF.ThreadNode _
     | IF.HRel _ | IF.HTrue | IF.HFalse | IF.HEmp | IF.HVar _ -> h
+    | IF.HSubs hf -> HSubs {hf with h_formula_subs_form = helper_h_formula_x hf.h_formula_subs_form}
   )
   and helper_pure_formula (p : Ipure.formula) : Ipure.formula = (
     match p with

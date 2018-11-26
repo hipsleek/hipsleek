@@ -238,6 +238,12 @@ and h_formula = (* heap formula *)
   | HFalse
   | HEmp (* emp for classical logic *)
   | HVar of hvar
+  | HSubs of h_formula_subs
+
+and h_formula_subs = { h_formula_subs_to   : CP.spec_var list;
+                       h_formula_subs_from : CP.spec_var list;
+                       h_formula_subs_form : h_formula;
+                     }
 
 
 and hvar = CP.spec_var * (CP.spec_var list)
@@ -791,6 +797,7 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
       | HTrue
       | HFalse
       | HEmp | HVar _ -> e
+      | HSubs s -> HSubs {s with h_formula_subs_form = transform_h_formula f s.h_formula_subs_form }
     )
 
 and transform_formula_x f (e:formula):formula =
@@ -2224,6 +2231,7 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   | Hole _ | FrmHole _
   | HFalse
   | HEmp | HVar _ -> false
+  | HSubs { h_formula_subs_form = h} -> is_hformula_contain_htrue h
 
 and is_formula_contain_htrue (h: formula) : bool =
   match h with
@@ -2839,6 +2847,7 @@ and pos_of_h_formula (hf: h_formula) : loc = match hf with
   | HRel (_,_,pos) -> pos
   | Hole _ | FrmHole _ -> no_pos
   | HTrue | HFalse | HEmp | HVar _ -> no_pos
+  | HSubs {h_formula_subs_form = h} -> pos_of_h_formula h
 
 and list_pos_of_formula (f : formula) : (loc list)= match f with
   | Base ({formula_base_heap = h;
@@ -3296,6 +3305,7 @@ and h_fv_x ?(vartype=Global_var.var_with_none) (h : h_formula) : CP.spec_var lis
       else old_vs
     | HTrue | HFalse | HEmp | Hole _ | FrmHole _ -> []
     | HVar (v,ls) -> v::ls
+    | HSubs hf -> hf.h_formula_subs_to @ hf.h_formula_subs_from @ (aux hf.h_formula_subs_form)
   in aux h
 
 (*and br_fv br init_l: CP.spec_var list =
@@ -3343,6 +3353,7 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | ViewNode ({h_formula_view_node = v}) -> [v]
   | HRel (r, agrs,  pos) -> [r] (*vp*)
   | HTrue | HFalse | HEmp | Hole _ | FrmHole _ | HVar _ -> []
+  | HSubs hf -> top_level_vars hf.h_formula_subs_form
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -3780,6 +3791,11 @@ and h_subst ?incl_ho:(incl_ho=false) sst (f : h_formula) =
   | HFalse -> f
   | HEmp -> f
   | Hole _ | FrmHole _ -> f
+  | HSubs hf -> HSubs {
+      h_formula_subs_to   = List.map (CP.subst_var_par sst) hf.h_formula_subs_to;
+      h_formula_subs_from   = List.map (CP.subst_var_par sst) hf.h_formula_subs_from;
+      h_formula_subs_form = helper hf.h_formula_subs_form;
+    }
   in helper f
 (** An Hoa : End of heap formula substitution **)
 
@@ -4047,6 +4063,11 @@ and h_apply_one ?incl_ho:(incl_ho=false) ((fr, t) as s : (CP.spec_var * CP.spec_
   | HFalse -> f
   | HEmp -> f
   | Hole _ | FrmHole _ -> f
+  | HSubs hf -> HSubs {
+      h_formula_subs_to   = List.map (CP.subst_var s) hf.h_formula_subs_to;
+      h_formula_subs_from = List.map (CP.subst_var s) hf.h_formula_subs_from;
+      h_formula_subs_form = h_apply_one s hf.h_formula_subs_form;
+    }
   in helper s f
 
 (* normalization *)
@@ -6418,6 +6439,7 @@ let rec heap_trans_heap_node fct f0 =
           Star {b with h_formula_star_h2 = hf2; h_formula_star_h1 = hf1}
       end
     | ConjStar _|ConjConj _|StarMinus _ -> f
+    | HSubs _ -> failwith x_tbi
     (*report_error no_pos "CF.heap_trans_heap_node: not handle yet"*)
   in
   helper f0
@@ -6567,6 +6589,7 @@ let rec get_ptrs_group_hf hf0=
     | HTrue
     | HFalse
     | HEmp | HVar _ ->[]
+    | HSubs hf -> helper hf.h_formula_subs_form
   in helper hf0
 
 and get_node_args hf0 =
@@ -6601,6 +6624,7 @@ and get_node_args hf0 =
     | HTrue
     | HFalse
     | HEmp | HVar _ -> []
+    | HSubs hf -> helper hf.h_formula_subs_form
   in helper hf0
 
 and get_ptrs_group f0=
@@ -6635,6 +6659,7 @@ and get_data_node_ptrs_group_hf hf0=
     | HTrue
     | HFalse
     | HEmp | HVar _->[]
+    | HSubs hf -> helper hf.h_formula_subs_form
   in helper hf0
 
 let rec get_hp_rel_formula (f:formula) =
@@ -6686,6 +6711,7 @@ and get_hp_rel_h_formula hf=
   | HTrue
   | HFalse
   | HEmp | HVar _-> ([],[],[])
+  | HSubs hf -> get_hp_rel_h_formula hf.h_formula_subs_form
 
 (*******************)
 (* Moved to Cfutil *)
@@ -6838,6 +6864,7 @@ and get_hprel_h_formula hf0=
     | HTrue
     | HFalse
     | HEmp | HVar _ -> ([])
+    | HSubs hf -> helper hf.h_formula_subs_form
   in
   helper hf0
 
@@ -6921,6 +6948,8 @@ let partition_heap_consj_hf hf0=
     | DataNode _  | ViewNode _ | HRel _ | Hole _ | FrmHole _
     | ThreadNode _
     | HTrue  | HFalse | HEmp | HVar _ -> ([], hf)
+    | HSubs hf ->  let res1,res2 = helper hf.h_formula_subs_form in
+      res1, HSubs {hf with h_formula_subs_form = res2}
   in
   helper hf0
 
@@ -6995,6 +7024,7 @@ let rec get_one_kind_heap_h fn hf0=
     | HTrue
     | HFalse
     | HEmp | HVar _ -> fn hf
+    | HSubs hf -> helper hf.h_formula_subs_form
   in
   helper hf0
 
@@ -7036,6 +7066,7 @@ let rec get_hp_rel_name_h_formula hf=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> []
+  | HSubs hf -> get_hp_rel_name_h_formula hf.h_formula_subs_form
 
 let rec get_hp_rel_name_formula_x (f0: formula) =
   (* let rec helper f= *)
@@ -7320,6 +7351,9 @@ let do_unfold_view_hf cprog pr_views hf0 =
     | ThreadNode _
     | DataNode _  | HRel _ | Hole _ | FrmHole _
     | HTrue  | HFalse | HEmp | HVar _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+    | HSubs hf -> failwith x_tbi
+
+      (* HSubs {hf with h_formula_subs_form = helper hf.h_formula_subs_form} *)
   in
   helper hf0
 
@@ -7556,6 +7590,7 @@ let do_unfold_hp_def_hf cprog pr_hp_defs hf0 =
     | DataNode _  | ViewNode _ | Hole _ | FrmHole _
     | ThreadNode _
     | HTrue  | HFalse | HEmp | HVar _ -> [(hf, MCP.mix_of_pure (CP.mkTrue no_pos))]
+    | HSubs hf -> failwith x_tbi (* HSubs { hf with h_formula_subs_form = helper hf.h_formula_subs_form} *)
   in
   helper hf0
 
@@ -7624,6 +7659,7 @@ and get_hp_rel_vars_h_formula_x hf=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> []
+  | HSubs hf -> get_hp_rel_vars_h_formula_x hf.h_formula_subs_form
 
 and get_hp_rel_vars_h_formula hf=
   let pr1= !print_h_formula in
@@ -7701,6 +7737,7 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> hf
+  | HSubs hf -> HSubs { hf with h_formula_subs_form = filter_irr_hp_lhs_hf hf.h_formula_subs_form relevant_vars}
 
 and filter_vars_hf hf rvs=
   match hf with
@@ -7770,7 +7807,7 @@ and filter_vars_hf hf rvs=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> hf
-
+  | HSubs hf -> HSubs { hf with h_formula_subs_form = filter_vars_hf hf.h_formula_subs_form rvs}
 
 
 
@@ -7869,6 +7906,7 @@ let annotate_dl_hf hf0 unk_hps=
     | HFalse
     | HEmp | HVar _ -> (hf,[])
     | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "annotate_dl_hf: not handle yet"
+    | HSubs _ -> failwith x_tbi
 
   in
   helper hf0
@@ -7985,6 +8023,7 @@ and subst_hprel_hf hf0 from_hps to_hp=
     | HTrue
     | HFalse
     | HEmp | HVar _-> hf
+    | HSubs _ -> failwith x_tbi
   in
   if from_hps = [] then hf0 else helper hf0
 
@@ -8037,6 +8076,7 @@ let drop_views_h_formula hf0 views=
     | HFalse
     | HEmp | HVar _ -> hf
     | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "drop_views_h_formula: not handle yet"
+    | HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -8148,6 +8188,7 @@ let drop_view_paras_h_formula hf0 ls_view_pos=
     | HFalse
     | HEmp | HVar _ -> hf
     | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "drop_view_paras_h_formula: not handle yet"
+    | HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -8637,6 +8678,7 @@ and drop_hrel_hf hf hp_names=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> (hf,[])
+  | HSubs _ -> failwith x_tbi
 
 (* formula -> CP.spec_var list -> formula * CP.exp list list *)
 let drop_hrel_f f0 hp_names =
@@ -8740,6 +8782,7 @@ and drop_exact_hrel_hf hf0 unk_hpargs=
     | HFalse
     | HEmp | HVar _ -> (hf)
     | StarMinus _ | ConjStar _ | ConjConj _ -> report_error no_pos "CF.drop_exact_hrel_hf: not handle yet"
+    | HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -8862,6 +8905,7 @@ and drop_hnodes_hf hf0 hn_names=
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | HSubs _ -> failwith x_tbi
   in
   if hn_names = [] then hf0 else
     helper hf0
@@ -9054,6 +9098,7 @@ and drop_data_view_hrel_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_selec
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -9130,6 +9175,7 @@ and drop_data_view_hpargs_nodes_hf hf0 fn_data_select fn_view_select fn_hrel_sel
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -9262,6 +9308,7 @@ let rec subst_hrel_hf hf hprel_subst=
   | HTrue
   | HFalse
   | HEmp | HVar _ -> hf
+  | HSubs hf -> HSubs {hf with h_formula_subs_form = subst_hrel_hf hf.h_formula_subs_form hprel_subst}
 
 let rec subst_hrel_f_x f0 hprel_subst=
   let rec helper f=
@@ -9364,6 +9411,7 @@ let subst_hrel_hview_hf hf0 subst=
     | HTrue
     | HFalse
     | HEmp | HVar _ -> hf
+    | HSubs hf -> HSubs { hf with h_formula_subs_form = helper2 hf.h_formula_subs_form}
   in
   helper2 hf0
 
@@ -9480,6 +9528,7 @@ let extract_rec_extn_h hf0 v_name v_args inv=
     | HFalse
     | HEmp | HVar _-> []
     | StarMinus _ | ConjStar _| ConjConj _ -> []
+    | HSubs hf -> helper hf.h_formula_subs_form
   in
   helper hf0
 
@@ -13776,7 +13825,7 @@ and filter_heap (f:formula):formula option = match f with
       | ViewNode _
       | ThreadNode _
       | HRel _ (*vp*)
-      | Hole _ | FrmHole _ -> None
+      | Hole _ | FrmHole _ | HSubs _ -> None
       | HTrue
       | HFalse
       | HEmp | HVar _ (* TODO;HO *)
@@ -13795,7 +13844,7 @@ and filter_heap (f:formula):formula option = match f with
       | ViewNode _
       | ThreadNode _
       | HRel _ (*vp*)
-      | Hole _ | FrmHole _ -> None
+      | Hole _ | FrmHole _ | HSubs _ -> None
       | HTrue
       | HFalse
       | HEmp | HVar _-> Some f
@@ -13888,6 +13937,7 @@ let rec replace_heap_formula_label nl f = match f with
   | HFalse
   | HEmp
   | Hole _ | FrmHole _ | HVar _ -> f
+  | HSubs hf -> HSubs { hf with h_formula_subs_form = replace_heap_formula_label nl hf.h_formula_subs_form}
 
 and replace_formula_label1 nl f = match f with
   | Base b->Base {b with
@@ -13938,6 +13988,7 @@ and residue_labels_in_formula f =
     | HFalse
     | HEmp
     | Hole _ | FrmHole _ | HVar _ -> []
+    | HSubs _ -> []
   in match f with
   | Base b-> residue_labels_in_heap b.formula_base_heap
   | Exists b->residue_labels_in_heap b.formula_exists_heap
@@ -14008,6 +14059,8 @@ let trans_h_formula (e2:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) o
       | HTrue
       | HFalse
       | HEmp | HVar _ -> (e, f_comb [])
+      | HSubs hf -> let re1,res2 = helper hf.h_formula_subs_form new_arg in
+        HSubs {hf with h_formula_subs_form = re1}, res2
   in (helper e2 arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
@@ -14373,6 +14426,7 @@ let foldheap (h:h_formula -> 'a) (f_comb: 'a list -> 'a)  (e:h_formula) : 'a =
     | HTrue
     | HFalse
     | HEmp | HVar _ -> h e
+    | HSubs hf -> helper hf.h_formula_subs_form
   in helper e
 
 
@@ -14808,7 +14862,8 @@ let rename_labels transformer e =
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
-    | HEmp | HVar _-> Some e in
+    | HEmp | HVar _-> Some e
+    | HSubs _ -> failwith x_tbi  in
   let f_m e = None in
   let f_a e = None in
   let f_b e = Some e in
@@ -14847,7 +14902,8 @@ let rename_labels_formula_ante  e=
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
-    | HEmp | HVar _ -> Some e in
+    | HEmp | HVar _ -> Some e
+    | HSubs _ -> failwith x_tbi in
   let f_m e = None in
   let f_a e = None in
   let f_b e = Some e in
@@ -16192,7 +16248,9 @@ let mark_derv_self name f =
                         h_formula_phase_rw =  h_h p.h_formula_phase_rw;}
     | DataNode _
     | ThreadNode _
-    | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HRel _ | HVar _ -> f in
+    | Hole _ | FrmHole _ | HTrue | HFalse | HEmp | HRel _ | HVar _ -> f
+    | HSubs hf -> HSubs { hf with h_formula_subs_form = h_h hf.h_formula_subs_form}
+  in
   let rec h_f f = match f with
     | Or b -> Or {b with formula_or_f1 = h_f b.formula_or_f1; formula_or_f2 = h_f b.formula_or_f2; }
     | Base b-> Base {b with formula_base_heap = h_h b.formula_base_heap; }
@@ -17929,6 +17987,7 @@ and no_of_cnts_heap heap = match heap with
   | HTrue -> 1
   | HFalse -> 1
   | HEmp | HVar _ -> 0
+  | HSubs hf -> no_of_cnts_heap hf.h_formula_subs_form
 
 and no_of_cnts_fml fml = match fml with
   | Or f -> no_of_cnts_fml f.formula_or_f1 + no_of_cnts_fml f.formula_or_f2
@@ -18659,7 +18718,8 @@ let rec find_barr bln v f =
         Some d (*(d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)*)
       else None
     | ThreadNode _ (*TOCHECK*)
-    | ViewNode _ | Hole _ | FrmHole _ | HTrue | HEmp | HFalse | HRel _ | HVar _ -> None in
+    | ViewNode _ | Hole _ | FrmHole _ | HTrue | HEmp | HFalse | HRel _ | HVar _ -> None
+    | HSubs hf -> failwith x_tbi in
 
   match f with
   | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap
@@ -18840,7 +18900,8 @@ let elim_prm e =
     | Hole _ | FrmHole _
     | HTrue
     | HFalse
-    | HEmp | HVar _ -> Some e in
+    | HEmp | HVar _ -> Some e
+    | HSubs hf -> failwith x_tbi in
   transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 
 let convert_hf_to_mut f =

@@ -20,9 +20,9 @@ open Cformula
 let dot_of_partial_context_file prog ctx visib_names file0 = ()
 
 let rec dot_of_context_file prog ctx visib_names file0 =
-  let file = 
+  let file =
     if Filename.check_suffix file0 "_ps" then Filename.chop_suffix file0 "_ps"
-    else file0 
+    else file0
   in
   if Sys.file_exists file then
     ignore (print_string ("\ndprint: File " ^ file ^ " exists.\n"))
@@ -65,7 +65,7 @@ and dot_of_form prog (n : int) (f0 : formula) visib_names buffer = match f0 with
 (*
   Each conjunct is a subgraph
 *)
-and dot_of_conjunct prog n h p visib_names buffer = 
+and dot_of_conjunct prog n h p visib_names buffer =
   let sgraph = fresh_name () in
   let () = Buffer.add_string buffer ("\nsubgraph " ^ sgraph ^ " {\n") in
   let nodes = gen_nodes prog n h buffer in
@@ -85,15 +85,15 @@ and dot_of_conjunct prog n h p visib_names buffer =
 *)
 and gen_nodes prog n h0 buffer = match h0 with
   | Star ({h_formula_star_h1 = h1;
-           h_formula_star_h2 = h2}) 
+           h_formula_star_h2 = h2})
   | StarMinus ({h_formula_starminus_h1 = h1;
-                h_formula_starminus_h2 = h2}) 	   
+                h_formula_starminus_h2 = h2})
   | Phase ({h_formula_phase_rd = h1;
-            h_formula_phase_rw = h2}) 
+            h_formula_phase_rw = h2})
   | Conj ({h_formula_conj_h1 = h1;
            h_formula_conj_h2 = h2})
   | ConjStar ({h_formula_conjstar_h1 = h1;
-               h_formula_conjstar_h2 = h2})	   	    
+               h_formula_conjstar_h2 = h2})
   | ConjConj ({h_formula_conjconj_h1 = h1;
                h_formula_conjconj_h2 = h2}) ->
     let nodes1 = gen_nodes prog n h1 buffer in
@@ -113,7 +113,7 @@ and gen_nodes prog n h0 buffer = match h0 with
                h_formula_view_arguments = args;
                h_formula_view_name = c}) ->
     let vdef = x_add Cast.look_up_view_def no_pos prog.Cast.prog_view_decls c in
-    let mvars = subst_var_list_avoid_capture vdef.Cast.view_vars args 
+    let mvars = subst_var_list_avoid_capture vdef.Cast.view_vars args
         (Cast.mater_props_to_sv_list vdef.Cast.view_materialized_vars) in
     let pname = (dot_of_spec_var p) ^ "__" ^ (string_of_int n) in
  (*
@@ -126,9 +126,10 @@ and gen_nodes prog n h0 buffer = match h0 with
     Buffer.add_string buffer (pname ^ " [shape=box,style=dashed,label=\"" ^ c ^ "\"];\n");
     (dot_of_spec_var p, pname) :: tmp
   | HTrue | HFalse | HEmp | HVar _ |HRel _ |  Hole _ |  FrmHole _ -> []
+  | HSubs _ -> failwith x_tbi
 
 
-and gen_edges prog n h0 p nodes buffer = 
+and gen_edges prog n h0 p nodes buffer =
   let hvars = h_fv h0 in
   let heqs = List.map (fun hv -> (hv, hv)) hvars in
   let asets = Csvutil.alias_nth 4 ((MCP.ptr_equations_with_null p) @ heqs) in
@@ -138,7 +139,7 @@ and gen_edges prog n h0 p nodes buffer =
     let aset = List.map dot_of_spec_var aset' in
     (* find out nodes that are aliased with finish *)
     let dest = List.filter (fun (a, b) -> List.mem a aset) nodes in
-    let edges = List.map (fun (_, b) -> 
+    let edges = List.map (fun (_, b) ->
         ((dot_of_spec_var start) ^ "__" ^ (string_of_int n))
         ^ " -> " ^ b ^ " [label=" ^ lbl ^ "];\n") dest in
     List.map (fun e -> Buffer.add_string buffer e) edges
@@ -147,13 +148,13 @@ and gen_edges prog n h0 p nodes buffer =
   | Star ({h_formula_star_h1 = h1;
            h_formula_star_h2 = h2})
   | StarMinus ({h_formula_starminus_h1 = h1;
-                h_formula_starminus_h2 = h2}) 
+                h_formula_starminus_h2 = h2})
   | Conj ({h_formula_conj_h1 = h1;
-           h_formula_conj_h2 = h2}) 
+           h_formula_conj_h2 = h2})
   | ConjStar ({h_formula_conjstar_h1 = h1;
-               h_formula_conjstar_h2 = h2}) 
+               h_formula_conjstar_h2 = h2})
   | ConjConj ({h_formula_conjconj_h1 = h1;
-               h_formula_conjconj_h2 = h2}) 	       	       
+               h_formula_conjconj_h2 = h2})
   | Phase ({h_formula_phase_rd = h1;
             h_formula_phase_rw = h2}) ->
     gen_edges prog n h1 p nodes buffer;
@@ -175,6 +176,7 @@ and gen_edges prog n h0 p nodes buffer =
       ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) args param_names)
     end
   | HTrue | HFalse | HEmp | HVar _ | HRel _ | Hole _ |  FrmHole _  -> ()
+  | HSubs _ -> failwith x_tbi
 
 and gen_edges_visib_names n visib_names p nodes buffer =
   let visib_names = List.map (fun v -> SpecVar (Globals.null_type, v, Primed)) visib_names in

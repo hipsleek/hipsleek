@@ -461,6 +461,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   | IF.HRel _
   | IF.ThreadNode _
   | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ | IF.HVar _ -> h0
+  | IF.HSubs hf -> HSubs {hf with h_formula_subs_form = convert_heap2_heap prog hf.h_formula_subs_form}
 
 and convert_heap2_x prog (f0 : IF.formula) : IF.formula =
   match f0 with
@@ -2545,7 +2546,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in
     let inv_pf = x_add trans_pure_formula inv n_tl in
+    let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     (* Thai : pf - user given invariant in core form *)
+    let n_tl, self_ty_opt = Typeinfer.unify_type self_ty (Typeinfer.get_type_of_self n_tl) n_tl in
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
     let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
     let inv_lock_fv = match inv_lock with
@@ -2602,7 +2605,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(before)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
-      let () = vdef.I.view_type_of_self <- (Some self_ty) in
+      let () = vdef.I.view_type_of_self <- self_ty_opt (* (Some self_ty) *) in
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let mvars =  List.filter
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
@@ -3702,7 +3705,9 @@ and find_m_prop_heap_x params eq_f h =
     | CF.HTrue
     | CF.HFalse
     (* | CF.HRel _ *)
-    | CF.HEmp | CF.HVar _ -> [] in
+    | CF.HEmp | CF.HVar _ -> []
+    | CF.HSubs _ -> failwith x_tbi
+  in
   helper h
 
 and find_trans_view_name_x ff self pos =
@@ -3772,7 +3777,9 @@ and find_node_vars_x eq_f h =
     | CF.Hole _ | CF.FrmHole _
     | CF.HTrue
     | CF.HFalse
-    | CF.HEmp | CF.HVar _  -> ([],[]) in
+    | CF.HEmp | CF.HVar _  -> ([],[])
+    | CF.HSubs _ -> failwith x_tbi
+  in
   (* let helper h =  *)
   (*   let pr1 = Cprinter.string_of_h_formula in *)
   (*   let pr2 = Cprinter.string_of_spec_var_list in *)
@@ -5163,6 +5170,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
          let vs = List.concat (List.map (CP.afv) args) in
          if List.exists (fun i -> CP.name_of_spec_var i = v) vs then (CP.name_of_spec_var n)
          else ""
+       | CF.HSubs _ -> failwith x_tbi
        | CF.HTrue | CF.HFalse | CF.HEmp | CF.HVar _ | CF.Hole _ | CF.FrmHole _ -> "")
     in find_view_heap h
   | CF.Or _ ->
@@ -8541,6 +8549,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
         let vs = List.map (fun (v,p) -> trans_var (v,p) tl pos
             (* (CP.SpecVar (FORM, v, p)) *)) hvar_vs in
         (CF.HVar (CP.SpecVar (FORM, v, Unprimed),vs), CF.TypeTrue, [], tl)
+      | IF.HSubs hf -> failwith x_tbi
     ) in
     res
   ) in
@@ -9332,6 +9341,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       (* let hvars = List.flatten (List.map IP.afv hvars) in *)
       (* (new_used_names, evars, IF.HVar (v,hvars), link_f)  *)
       (used_names, [], IF.HVar (v,hvar_vs), IP.mkTrue no_pos)
+    | IF.HSubs hf ->
+      let res1, res2, new_hf, res4 = linearize_heap used_names hf.h_formula_subs_form in
+      (res1, res2, IF.HSubs {hf with h_formula_subs_form = new_hf}, res4)
+
   in
 
   (* added to filter out global relation from implicit quantification *)

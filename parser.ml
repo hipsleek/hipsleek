@@ -630,6 +630,13 @@ SHGram.Entry.of_parser "peek_print"
              | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
 
+let peek_subs =
+  SHGram.Entry.of_parser "peek_subs"
+    (fun strm ->
+       match Stream.npeek 3 strm with
+       | [STAR,_;OPAREN,_;OSQUARE,_] -> ()
+       | _ -> raise Stream.Failure)
+
  let peek_pure =
    SHGram.Entry.of_parser "peek_pure"
        (fun strm ->
@@ -915,6 +922,19 @@ let peek_heap_starminus =
              |[STARMINUS,_;THIS t,_; COLONCOLON,_; _,_] -> ()
              |[STARMINUS,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)
+
+let peek_heap_star =
+  SHGram.Entry.of_parser "peek_heap_star"
+    (fun strm ->
+       match Stream.npeek 4 strm with
+       | [STAR,_ ;OPAREN,_;IDENTIFIER id,_; COLONCOLON,_] -> ()
+       | [STAR,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+       | [STAR,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+       | [STAR,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+       | [STAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
+       | [STAR,_ ;OPAREN,_;OSQUARE,_; _,_] -> raise Stream.Failure
+       | _ -> raise Stream.Failure)
+
 
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
@@ -2314,9 +2334,14 @@ opt_heap_constr: [[ t = heap_constr -> t]];
 (*   ]];  *)
 
 heap_constr:
-  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
-   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]];
+  [[
+     (* peek_subs; `OPAREN ; `OSQUARE ; `CSQUARE ; `DIV ; `OSQUARE ; `CSQUARE ;  hp = heap_constr; `CPAREN -> hp *)
+   `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw ->
+     F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
+   | `OPAREN; hrd=heap_rd; `CPAREN                          ->
+     F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
+   | hrw = heap_rw                                          ->
+     F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]];
 
 heap_rd:
   [[ shi= simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
@@ -2325,7 +2350,10 @@ heap_rd:
 
 
 heap_rw:
-  [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+  [[
+    hrd=heap_wr; peek_subs; `STAR;`OPAREN ; `OSQUARE ; cl1 = LIST0 cid SEP `COMMA ; `CSQUARE ; `DIV ; `OSQUARE ; cl2 = LIST0 cid SEP `COMMA; `CSQUARE ;  hp = heap_constr; `CPAREN ->
+    F.mkStar hrd (F.mkHSubs cl1 cl2 hp) (get_pos_camlp4 _loc 2)
+   | hrd=heap_wr; peek_heap_star; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
    | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hc hrd (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
@@ -2510,6 +2538,7 @@ simple_heap_constr:
      else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
+   | `OPAREN ; `OSQUARE ; `CSQUARE ; `DIV ; `OSQUARE ; `CSQUARE ;  hp = simple_heap_constr; `CPAREN -> hp (* failwith "HERE" *)
   ]];
 
 (* (* HO Resource variables' annotation *)  *)
@@ -3452,6 +3481,7 @@ coerc_decl_aux:
       (* | `LEMMA TLEM_INFER; `OSQUARE; t = infer_coercion_decl_list; `CSQUARE ->  *)
       (*     { t with coercion_list_kind = LEM_INFER } *)
         | `LEMMA kind; prio = OPT coerc_prio ; t = coercion_decl ->
+          let () = print_endline "LEMMA" in
             let k = convert_lem_kind kind in
             let t = {t with coercion_kind = k;
                             coercion_prio = un_option prio def_coerc_prio;

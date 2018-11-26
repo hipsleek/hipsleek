@@ -168,6 +168,7 @@ let generate_framing_holes_x hf0 framing_svl =
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> (hf,[])
+    | CF.HSubs _ -> failwith x_tbi
   in
   if framing_svl = [] then (hf0,[]) else
     helper hf0
@@ -253,6 +254,7 @@ let prune_framing_heaps_x hf0 framing_svl =
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> (hf,[])
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -337,6 +339,7 @@ let subst_framing_heaps hf0 framing_map =
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp | CF.HVar _  -> hf
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -408,6 +411,7 @@ let recover_framing_heaps hf0 framing_map =
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> hf
     | CF.FrmHole n -> look_up framing_map n
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
@@ -643,6 +647,7 @@ let get_p_view_data_h_formula hf0=
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp | CF.HVar _ -> ([],[])
+    | CF.HSubs _ -> failwith x_tbi
   in
   helper hf0
 
