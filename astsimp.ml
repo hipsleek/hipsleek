@@ -2545,7 +2545,9 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in
     let inv_pf = x_add trans_pure_formula inv n_tl in
+    let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     (* Thai : pf - user given invariant in core form *)
+    let n_tl, self_ty_opt = Typeinfer.unify_type self_ty (Typeinfer.get_type_of_self n_tl) n_tl in
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
     let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
     let inv_lock_fv = match inv_lock with
@@ -2602,7 +2604,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(before)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
-      let () = vdef.I.view_type_of_self <- (Some self_ty) in
+      let () = vdef.I.view_type_of_self <- self_ty_opt (* (Some self_ty) *) in
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let mvars =  List.filter
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in

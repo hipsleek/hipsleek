@@ -323,20 +323,20 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    (* ************************** *)
-    (* ******* temp hack ******** *)
-    (* hack to make the mapping unify when part of a primitive predicate *)
-    (* need to find a long term solution *)
-    | Mapping _, Named n when n = map_pred_name -> (tl, Some k1)
-    | Named n, Mapping _ when n = map_pred_name -> (tl, Some k2)
-    (* ******* end - temp hack ******** *)
-    (* ******************************** *)
     | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
       (tl, Some (Named n2))
     | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (tl, Some (Named n1))
     | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
     | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
+    (* ************************** *)
+    (* ******* temp hack ******** *)
+    (* hack to make the mapping unify when part of a primitive predicate *)
+    (* need to find a long term solution *)
+    | _, Named n when List.mem n map_related_names -> (tl, Some k1)
+    | Named n, _ when List.mem n map_related_names -> (tl, Some k2)
+    (* ******* end - temp hack ******** *)
+    (* ******************************** *)
     | ty, Poly id  | Poly id, ty -> unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
@@ -432,7 +432,7 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
       match ty with
       | Poly _  -> tlist, Some ty
       | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
-      | Int | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _
+      | Int | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _ | Named _
         ->
         begin
           match t0.sv_info_kind with
@@ -1593,7 +1593,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
-  let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
+  let () = y_binfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
   let rec helper exps tvars =
     match (exps, tvars) with
     | ([], []) -> []
@@ -1617,7 +1617,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   (**********replace poly vars with tvars*********)
   (***********************************************)
   let tmp_r =  (self_ty,self_ptr)::tmp_r in
-  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
+  let ()    = y_binfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
   (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
   let poly_lst,n_tl = introduce_fresh_tvar_for_each_unique_poly n_tl tmp_r in
   (* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
