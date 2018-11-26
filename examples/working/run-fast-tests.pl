@@ -1828,6 +1828,7 @@ $output_file = "log";
     ],
     "maps" => [
         ["test-map-3.ss", 4,  " -tp z3 ", "foo1", "SUCCESS", "foo2", "FAIL", "foo3", "FAIL", "foo4", "FAIL", "foo5", "SUCCESS", "foo6", "FAIL"],
+        ["test-map-4.ss", 21, " -tp z3", "foo", "FAIL", "foo1", "SUCCESS", "foo11", "SUCCESS", "foo2", "FAIL", "foo3", "SUCCESS", "foo4", "SUCCESS", "foo5", "FAIL", "foo6", "SUCCESS", "foo7", "SUCCESS", "foo8", "SUCCESS", "foo9", "SUCCESS", "foo10", "SUCCESS", "foo13", "SUCCESS", "foo14", "FAIL", "foo12", "FAIL", "foo16", "SUCCESS", "foo17", "FAIL", "foo18", "SUCCESS", "foo19", "SUCCESS", "foo20", "SUCCESS", "foo21", "FAIL"]
         ],
     "session" => [
         ["ex9-simple-prog.ss", 10, "", "buyer1", "SUCCESS", "buyer2", "SUCCESS", "buyer3", "FAIL", "buyer4", "SUCCESS", "buyer5", "SUCCESS", "buyer6", "SUCCESS","buyer7", "SUCCESS", "buyer8", "FAIL", "buyer9", "SUCCESS","buyer10", "SUCCESS"],
