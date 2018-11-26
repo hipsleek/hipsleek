@@ -1592,7 +1592,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
-  let () = y_binfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
+  let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
   let rec helper exps tvars =
     match (exps, tvars) with
     | ([], []) -> []
@@ -1616,7 +1616,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   (**********replace poly vars with tvars*********)
   (***********************************************)
   let tmp_r =  (self_ty,self_ptr)::tmp_r in
-  let ()    = y_binfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
+  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
   (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
   let poly_lst,n_tl = introduce_fresh_tvar_for_each_unique_poly n_tl tmp_r in
   (* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
