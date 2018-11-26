@@ -2450,6 +2450,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_scall_path_id = pid;
         exp_scall_pos = pos}) ->
       begin
+        let () =
+          if (CF.is_inf_reentrancy_list_failesc_context ctx) then
+            let () = y_binfo_pp "REENTRANCY" in ()
+          else let () = y_binfo_pp "NO REENTRANCY" in ()
+        in
         Gen.Profiling.push_time "[check_exp] SCall";
         let () = proving_loc#set pos in
         let mn_str = Cast.unmingle_name mn in

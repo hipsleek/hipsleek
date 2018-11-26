@@ -78,7 +78,7 @@ type sleek_token =
   | TERM_INFER
   (* | TREL_INFER  change to  INFER_AT_TERM *)
   | TREL_ASSUME
-  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
+  | INFER_AT_EFA | INFER_AT_DFA | INFER_AT_CLASSIC | INFER_AT_REENTRANCY |  INFER_AT_PAR | INFER_AT_ERRMUST | INFER_AT_ERRMUST_ONLY | INFER_AT_ERRMAY | INFER_AT_DE_EXC | INFER_AT_PREMUST
   | INFER_AT_VER_POST
   | INFER_AT_TERM | INFER_AT_TERM_WO_POST | INFER_AT_FIELD_IMM
   | INFER_AT_PRE | INFER_AT_POST | INFER_AT_IMM | INFER_AT_SHAPE | INFER_AT_SHAPE_PRE | INFER_AT_SHAPE_POST | INFER_AT_SHAPE_PRE_POST
@@ -129,7 +129,7 @@ type sleek_token =
   | QUERY
   | ARGOPTION of string
   | MAPPING
-  | MASSIGN   
+  | MASSIGN
   (* | SKIP - should be an identifier! *)
 (* | IN_RFLOW | OUT_RFLOW (* For HO resource reasoning *) *)
 
@@ -264,6 +264,7 @@ module Token = struct
     | INFER_AT_POST -> "@post_n"
     | INFER_AT_VER_POST -> "@ver_post"
     | INFER_AT_CLASSIC -> "@leak"
+    | INFER_AT_REENTRANCY -> "@reentrancy"
     | INFER_AT_PAR -> "@par"
     | INFER_AT_IMM -> "@imm"
     | INFER_AT_PURE_FIELD -> "@pure_field"
@@ -289,7 +290,7 @@ module Token = struct
     | QUERY -> "?"
     | ARGOPTION arg -> "##OPTION "^arg
     | MAPPING -> "mapping"
-    | MASSIGN -> "=>" 
+    | MASSIGN -> "=>"
   (* | SKIP -> "skip" *)
   (* | IN_RFLOW -> "-%" | OUT_RFLOW -> "+%" *)
 

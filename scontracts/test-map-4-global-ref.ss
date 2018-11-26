@@ -269,15 +269,27 @@ int foo20(address id)
   }
 }
 
+/*
+pred_prim Map0<>;
+pred_prim Map0<ub> inv Type(self,ub);
+
+lemma_norm self::Map0<> * %P -> self::Map1<ub> * ([ub/self] %P)
+*/
 
 /**FAIL - ok*/
 int foo21(address id)
-   requires   [ub] userBalances::Map<ub>
+   requires   [ub] userBalances::Map<ub> & ub=0
    ensures   (exists ub0: userBalances'::Map<ub0> & res>0 & res = ub0[id]);
+/*
+   requires  userBalances::Map<> & userBalances=0
+   ensures   userBalances'::Map<> & userBalances'[id]=res & res>0;
+*/
+
 {
   if (userBalances[id] > 0 ) return userBalances[id];
   else {
     userBalances[id] = 0;
     return userBalances[id];
   }
+  dprint;
 }

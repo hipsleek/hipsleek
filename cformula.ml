@@ -10343,6 +10343,17 @@ let rec is_inf_term_ctx ctx =
   | Ctx es -> es.es_infer_obj # is_term
   | OCtx (ctx1, ctx2) -> (is_inf_term_ctx ctx1) || (is_inf_term_ctx ctx2)
 
+let rec is_inf_reentrancy_ctx ctx =
+  match ctx with
+  | Ctx es -> es.es_infer_obj # is_reentrancy
+  | OCtx (ctx1, ctx2) -> (is_inf_reentrancy_ctx ctx1) || (is_inf_reentrancy_ctx ctx2)
+
+let is_inf_reentrancy_list_failesc_context ls =
+  if List.length ls == 0 then false
+  else List.fold_left (fun acc1 (_, _ , ctx_list) ->
+      acc1 ||
+      (List.fold_left (fun acc (_,ctx,_) -> acc || (is_inf_reentrancy_ctx ctx)) false ctx_list)) false ls
+
 let rec is_inf_term_struc f =
   match f with
   | EInfer ei -> (ei.formula_inf_obj # is_term) || (ei.formula_inf_obj # is_term_wo_post)

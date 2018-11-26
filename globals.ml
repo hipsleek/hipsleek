@@ -2025,6 +2025,7 @@ type infer_type =
   | INF_IMM_PRE (* For infer [@imm_pre] for inferring imm annotation on pre *)
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
   | INF_EXTN of infer_extn list
+  | INF_REENTRANCY (* checks for reentrancy *)
   | INF_NEG
 
 let eq_infer_type i1 i2 =
@@ -2074,6 +2075,8 @@ let string_of_inf_const x =
   | INF_IMM_POST -> "@imm_post"
   | INF_EXTN lst -> "@extn" ^ (pr_list string_of_infer_extn lst)
   | INF_NEG -> "@neg"
+  | INF_REENTRANCY -> "@reentrancy"
+
 
 let inf_const_of_string s =
   match s with
@@ -2106,6 +2109,7 @@ let inf_const_of_string s =
   | "@imm_pre" -> INF_IMM_PRE
   | "@imm_post" -> INF_IMM_POST
   | "@neg" -> INF_NEG
+  | "@reentrancy" -> INF_REENTRANCY
   | _ -> failwith (s ^ " is not supported in command line.")
 
 (* let inf_const_to_int x = *)
@@ -2297,6 +2301,7 @@ class inf_obj  =
     method is_neg  = self # get INF_NEG
     method is_par  = self # get INF_PAR
     method is_add_flow  = self # get INF_FLOW
+    method is_reentrancy  = self # get INF_REENTRANCY
     method is_extn =
       List.exists (fun inf ->
         match inf with | INF_EXTN _ -> true | _ -> false) arr
