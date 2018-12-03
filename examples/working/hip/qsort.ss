@@ -14,34 +14,34 @@ sll<n, sm, lg> ==
   or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
-node partition(node@R xs, int c)
-  requires xs::bnd<n, sm, bg> & sm <= c <= bg
-    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;//'
-{
-	node tmp1;
-	int v; 
+// node partition(node@R xs, int c)
+//   requires xs::bnd<n, sm, bg> & sm <= c <= bg
+//     ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;//'
+// {
+// 	node tmp1;
+// 	int v; 
 
-	if (xs == null)
-		return null;
-	else
-	{
-		if (xs.val >= c)
-		{
-            v = xs.val;
-			bind xs to (xsval, xsnext) in {
-				tmp1 = partition(xsnext, c);
-			}
-			xs = xs.next;
-			return new node(v, tmp1);
-		}
-		else {
-			bind xs to (xsval, xsnext) in {
-				tmp1 = partition(xsnext, c);
-			}
-			return tmp1;
-		}
-	}
-}
+// 	if (xs == null)
+// 		return null;
+// 	else
+// 	{
+// 		if (xs.val >= c)
+// 		{
+//             v = xs.val;
+// 			bind xs to (xsval, xsnext) in {
+// 				tmp1 = partition(xsnext, c);
+// 			}
+// 			xs = xs.next;
+// 			return new node(v, tmp1);
+// 		}
+// 		else {
+// 			bind xs to (xsval, xsnext) in {
+// 				tmp1 = partition(xsnext, c);
+// 			}
+// 			return tmp1;
+// 		}
+// 	}
+// }
 
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
@@ -55,44 +55,45 @@ node append_bll(node x, node y)
         if (x==null) return y; /* segmentation bug when returning null */
         else {
          xn = append_bll(x.next,y);
-         x.next = xn;
+         // x.next = xn;
+         x = xn;
          return x;
         }
 }
 
 
-void qsort(node@R xs)
-    requires xs=null
-	ensures  xs'=null;
-	requires xs::bnd<n, sm, bg> & n>0 
-	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
-{
-	node tmp;
-        int v;
-	bool b;
+// void qsort(node@R xs)
+//     requires xs=null
+// 	ensures  xs'=null;
+// 	requires xs::bnd<n, sm, bg> & n>0 
+// 	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
+// {
+// 	node tmp;
+//         int v;
+// 	bool b;
 
-	if (xs != null)
-	{
-        v = xs.val;
-		bind xs to (xsval, xsnext) in {
-			tmp = partition(xsnext, v);
-		}
-        b = (xs.next == null);
-		if (tmp != null)
-      {
-			qsort(tmp);}
+// 	if (xs != null)
+// 	{
+//         v = xs.val;
+// 		bind xs to (xsval, xsnext) in {
+// 			tmp = partition(xsnext, v);
+// 		}
+//         b = (xs.next == null);
+// 		if (tmp != null)
+//       {
+// 			qsort(tmp);}
 
-		tmp = new node(v, tmp);
-		if (b)
-			xs = tmp;
-		else
-		{
-			bind xs to (xsval, xsnext) in {
-				qsort(xsnext);
-			}
-			//dprint;
-			xs = append_bll(xs.next, tmp);
-		}
-	}
+// 		tmp = new node(v, tmp);
+// 		if (b)
+// 			xs = tmp;
+// 		else
+// 		{
+// 			bind xs to (xsval, xsnext) in {
+// 				qsort(xsnext);
+// 			}
+// 			//dprint;
+// 			xs = append_bll(xs.next, tmp);
+// 		}
+// 	}
 
-}
+// }

@@ -51,44 +51,43 @@ void id3(node x)
 }
 
 
-bool bubble(node xs)
-	requires xs::ll<n> & n>0
-	ensures xs::sll<n, s, l> & !res
-		or  xs::ll<n> & res;
-{
-	int aux, tmp1;
-	bool tmp, flag; 
+// bool bubble(node xs)
+// 	requires xs::ll<n> & n>0
+// 	ensures xs::sll<n, s, l> & !res
+// 		or  xs::ll<n> & res;
+// {
+// 	int aux, tmp1;
+// 	bool tmp, flag; 
 
-	if (xs.next == null) {
-          return false;
-	}
-	else {
-          tmp = bubble(xs.next);
-          int xv = xs.val;
-          int xnv = xs.next.val;
-          if (xv <= xnv) 
-            flag = false;
-          else {
-            xs.val = xnv;
-            xs.next.val = xv; //ERROR: lhs and rhs do not match
-            flag = true; 
-          }
-          return (flag || tmp);	
-	}
-}
-
+// 	if (xs.next == null) {
+//       return false;
+// 	}	else {
+//        tmp = bubble(xs.next);
+//        int xv = xs.val;
+//        int xnv = xs.next.val;
+//        if (xv <= xnv) 
+//             flag = false;
+//        else {
+//             xs.val = xnv;
+//             xs.next.val = xv; //ERROR: lhs and rhs do not match
+//             flag = true; 
+//         }
+//         return (flag || tmp);	
+// 	}
+// }
 
 
-void bsort(node xs)
-	requires xs::ll<n> & n>0
-	ensures xs::sll<n, _, _>;
-{
-	bool b;
 
-	b = bubble(xs);
-	if (b) {
-		bsort(xs);
-	}
-}
+// void bsort(node xs)
+// 	requires xs::ll<n> & n>0
+// 	ensures xs::sll<n, _, _>;
+// {
+// 	bool b;
+
+// 	b = bubble(xs);
+// 	if (b) {
+// 		bsort(xs);
+// 	}
+// }
 
 // void skip(); // do we need this skip?

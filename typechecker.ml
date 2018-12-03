@@ -3109,44 +3109,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
   let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
   if (is_reachable_succ) then
-    let check_memory_leak rs =
-      let ctxss = List.map (fun x -> snd x) rs in
-      let ctxs = List.concat ctxss in
-      let contexts = List.map (fun (_,x,_) -> x) ctxs in
-      let pr = Cprinter.string_of_context_list in
-      let pr2 = Cprinter.string_of_h_formula in
-      let pr3 = Cprinter.string_of_entail_state in
-      let pr4 = Cprinter.string_of_formula in
-      let () = x_tinfo_hp (add_str "ctxs: " pr) contexts no_pos in
-      let rec is_not_empty_heap_in_ctx ctx = match ctx with
-        | CF.Ctx es ->
-          let formula = es.es_formula in
-          let () = x_tinfo_hp (add_str "formula: " pr4) es.es_formula no_pos in
-          begin
-            let rec check_formula formula =
-              match formula with
-                | CF.Base bf -> not(CF.is_empty_heap bf.CF.formula_base_heap)
-                | CF.Or or_formula -> (check_formula or_formula.CF.formula_or_f1) ||
-                                      (check_formula or_formula.CF.formula_or_f2)
-                | CF.Exists _ -> failwith "is_not_empty_heap_in_ctx Exists case"
-            in
-            check_formula formula
-          end
-        | CF.OCtx (c1, c2) -> (is_not_empty_heap_in_ctx c1) || (is_not_empty_heap_in_ctx c2)
-
-      in
-      let res_list = List.map is_not_empty_heap_in_ctx contexts in
-      List.exists (fun x -> x == true) res_list
-    in
-    let rs = if check_memory_leak rs then
-        let failure_str = "memory leak failure" in
-        Err.report_error {
-          Err.error_loc = pos;
-          Err.error_text = (failure_str ^".")
-        }
-
-        rs else rs
-    in
     rs
   else begin
     let _ =
