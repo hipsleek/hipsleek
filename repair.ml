@@ -439,8 +439,6 @@ let repair_prog_with_templ_main iprog cprog =
   let sb_res = Songbird.get_repair_candidate cprog ents None in
   match sb_res with
   | None -> None
-  (* | Some (_, _, None, _) -> None
-   * | Some (nprog, _, Some neg_prog, _) -> *)
   | Some (nprog, _, _, _) ->
     match !Typechecker.proc_to_repair with
     | None -> None

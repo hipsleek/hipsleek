@@ -6,10 +6,14 @@ module SBGlobals = Libsongbird.Globals
 module SBDebug = Libsongbird.Debug
 module CP = Cpure
 module CF = Cformula
+module CPR = Cprinter
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
 
+let add_str = Gen.Basic.add_str
+let no_pos = VarGen.no_pos
+let report_error = Gen.Basic.report_error
 
 let translate_loc (location:VarGen.loc) : SBGlobals.pos =
   {
@@ -34,7 +38,7 @@ let translate_type (typ: Globals.typ) : SBGlobals.typ =
   | UNK -> TUnk
   | Void -> TVoid
   | Named str -> TData str
-  | _ -> Gen.Basic.report_error VarGen.no_pos
+  | _ -> report_error no_pos
            ("translate_type:" ^ (Globals.string_of_typ typ) ^ " is not handled")
 
 let translate_back_type (typ) = match typ with
@@ -42,7 +46,7 @@ let translate_back_type (typ) = match typ with
   | SBGlobals.TBool -> Globals.Bool
   | SBGlobals.TUnk -> Globals.UNK
   | SBGlobals.TVoid -> Globals.Void
-  | _ -> Gen.Basic.report_error VarGen.no_pos "translate_back_type: this type is not handled"
+  | _ -> report_error no_pos "translate_back_type: this type is not handled"
 
 
 let translate_var (var: CP.spec_var): SBGlobals.var =
@@ -84,8 +88,8 @@ let rec translate_exp (exp: CP.exp) =
       let fun_name = CP.name_of_sv templ.templ_id in
       let args = templ.templ_args |> List.map translate_exp in
       SBCast.mk_func (SBCast.FuncName fun_name) args
-    else Gen.Basic.report_error VarGen.no_pos "translate_funcs not activated"
-  | _ -> Gen.Basic.report_error VarGen.no_pos "this exp is not handled"
+    else report_error no_pos "translate_funcs not activated"
+  | _ -> report_error no_pos "this exp is not handled"
 
 let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Null pos -> CP.Null (translate_back_pos pos)
@@ -110,11 +114,11 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.PTerm (pterm, pos) ->
     let n_exp = SBCast.convert_pterm_to_binary_exp pos pterm in
     translate_back_exp n_exp
-  | SBCast.Func _ -> Gen.Basic.report_error VarGen.no_pos
-                       ("translate_back_exp:" ^ (SBCast.pr_exp exp)
-                        ^ " this Func is not handled")
-  | _ -> Gen.Basic.report_error VarGen.no_pos ("this exp formula not handled: "
-         ^ (SBCast.pr_exp exp))
+  | SBCast.Func _ ->
+    report_error no_pos
+      ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
+  | _ -> report_error no_pos
+           ("this exp formula not handled: " ^ (SBCast.pr_exp exp))
 
 let rec translate_pf (pure_f: CP.formula)  =
   match pure_f with
@@ -156,10 +160,8 @@ let rec translate_pf (pure_f: CP.formula)  =
         let sb_exp2 = translate_exp exp2 in
         let sb_loc = translate_loc loc in
         SBCast.BinRel (Le, sb_exp1, sb_exp2, sb_loc)
-      | _ ->
-        Gen.Basic.report_error
-          VarGen.no_pos ("this p_formula is not handled" ^
-                         (Cprinter.string_of_p_formula p_formula))
+      | _ -> report_error no_pos
+               ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
     end
   | And (f1, f2, loc) ->
     let n_f1 = translate_pf f1 in
@@ -177,11 +179,8 @@ let rec translate_pf (pure_f: CP.formula)  =
     let sb_pf = translate_pf pf in
     let sb_loc = translate_loc loc in
     SBCast.mk_pexists ~pos:sb_loc [sb_var] sb_pf
-  | _ ->
-    Gen.Basic.report_error
-      VarGen.no_pos
-      ("this pure formula not handled"
-       ^ (Cprinter.string_of_pure_formula pure_f))
+  | _ -> report_error no_pos
+      ("this pure formula not handled" ^ (CPR.string_of_pure_formula pure_f))
 
 let translate_back_pf (pf : SBCast.pure_form) = match pf with
   | SBCast.BConst (b, pos)
@@ -199,7 +198,7 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
       | SBCast.Eq -> CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
       | SBCast.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
     end
-  | _ -> Gen.Basic.report_error VarGen.no_pos "this type of lhs not handled"
+  | _ -> report_error no_pos "this type of lhs not handled"
 
 (* translate heap formula from Cformula to songbird CAST *)
 let translate_hf hf = match hf with
@@ -215,7 +214,7 @@ let translate_hf hf = match hf with
     let sb_args = List.map (fun x -> SBCast.Var (x, sb_no_pos)) sb_arg_vars in
     let data_form = SBCast.mk_data_form sb_root name sb_args in
     SBCast.mk_hform_df data_form
-  | _ -> Gen.Basic.report_error VarGen.no_pos ("this hf is not supported: "
+  | _ -> report_error no_pos ("this hf is not supported: "
          ^ (Cprinter.string_of_h_formula hf))
 
 let translate_formula formula = match formula with
@@ -235,8 +234,8 @@ let translate_formula formula = match formula with
     let sb_f = SBCast.mk_fbase sb_hf sb_pf in
     SBCast.mk_fexists sb_vars sb_f
 
-  | _ -> Gen.Basic.report_error VarGen.no_pos ("this formula is not supported: "
-         ^ (Cprinter.string_of_formula formula))
+  | _ -> report_error no_pos
+           ("this formula is not supported: " ^ (CPR.string_of_formula formula))
 
 let checkEntail lhs rhs =
   try
@@ -246,8 +245,7 @@ let checkEntail lhs rhs =
     let program = SBCast.mk_program "checkentail" in
     let ent = SBCast.mk_entailment sb_lhs sb_rhs in
     (* let sts = SBGlobals.StsValid in *)
-    let () = x_tinfo_hp (Gen.Basic.add_str "ent: " SBCast.pr_ent)
-        ent VarGen.no_pos in
+    let () = x_tinfo_hp (add_str "ent: " SBCast.pr_ent) ent no_pos in
     let sb_res = Libsongbird.Prover.check_entailment_wrapper program ent in
     let () = Globals.translate_funcs := true in
     match sb_res with
@@ -262,7 +260,6 @@ let checkEntail lhs rhs =
    Adding template f(args) = ?
    Output: Input for songbird infer_unknown_functions
 *)
-
 
 let create_templ_prog prog ents
   =
@@ -282,30 +279,26 @@ let create_templ_prog prog ents
              prog_commands = [SBCast.InferFuncs infer_func]
             }
   in
-  let () = x_tinfo_hp (Gen.Basic.add_str "nprog: " SBCast.pr_program) nprog VarGen.no_pos in
+  let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
   let sb_res =
     Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
       ents in
   let inferred_prog = if sb_res = [] then nprog
       else snd (List.hd sb_res)
   in
-  let () = x_tinfo_hp (Gen.Basic.add_str "inferred prog: " SBCast.pr_program)
-      inferred_prog VarGen.no_pos in
+  let () = x_tinfo_hp (add_str "inferred prog: " SBCast.pr_program) inferred_prog no_pos in
   inferred_prog.SBCast.prog_funcs
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
-  let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (Cprinter.string_of_pure_formula))
-      lhs VarGen.no_pos in
-  let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (Cprinter.string_of_pure_formula))
-      rhs VarGen.no_pos in
+  let pr = Cprinter.string_of_pure_formula in
+  let () = x_tinfo_hp (add_str "lhs: " pr) lhs no_pos in
+  let () = x_tinfo_hp (add_str "rhs: " pr) rhs no_pos in
 
   let sb_lhs = translate_pf lhs in
   let sb_rhs = translate_pf  rhs in
-  let () = x_tinfo_hp (Gen.Basic.add_str "lhs: " (SBCast.pr_pure_form))
-      sb_lhs VarGen.no_pos in
-  let () = x_tinfo_hp (Gen.Basic.add_str "rhs: " (SBCast.pr_pure_form))
-      sb_rhs VarGen.no_pos in
+  let () = x_tinfo_hp (add_str "lhs: " (SBCast.pr_pure_form)) sb_lhs no_pos in
+  let () = x_tinfo_hp (add_str "rhs: " (SBCast.pr_pure_form)) sb_rhs no_pos in
 
   SBCast.mk_pure_entail sb_lhs sb_rhs
 
@@ -314,10 +307,10 @@ let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
   let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
   let sb_ents = List.map translate_ent ents in
-  let () = x_tinfo_hp (Gen.Basic.add_str "entails: " (pr_list SBCast.pr_pent)) sb_ents VarGen.no_pos in
+  let () = x_tinfo_hp (add_str "entails: " (pr_list SBCast.pr_pent)) sb_ents no_pos in
   let sb_vars = List.map Libsongbird.Prover.norm_entail sb_ents |> List.concat in
   let vars = List.map translate_back_var sb_vars in
-  let () = x_tinfo_hp (Gen.Basic.add_str "vars: " pr_vars) vars VarGen.no_pos in
+  let () = x_tinfo_hp (add_str "vars: " pr_vars) vars no_pos in
   vars
 
 let get_repair_candidate prog ents cond_op =
@@ -325,7 +318,7 @@ let get_repair_candidate prog ents cond_op =
   let no_pos = VarGen.no_pos in
   let pr_pf = Cprinter.string_of_pure_formula in
   let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
-  let () = x_binfo_hp (add_str "entails: " pr_ents) ents VarGen.no_pos in
+  let () = x_binfo_hp (add_str "entails: " pr_ents) ents no_pos in
   let sb_ents = List.map translate_ent ents in
   let fun_defs = create_templ_prog prog sb_ents in
   let get_func_exp fun_defs exp_decls =
@@ -350,10 +343,9 @@ let get_repair_candidate prog ents cond_op =
   in
   let fun_def_exp = get_func_exp fun_defs prog.Cast.prog_exp_decls in
   match fun_def_exp with
-    | Some fun_def_cexp ->
-      let () = x_binfo_hp (Gen.Basic.add_str "exp: " (Cprinter.poly_string_of_pr
-                                                        Cprinter.pr_formula_exp)
-                          ) fun_def_cexp VarGen.no_pos in
+  | Some fun_def_cexp ->
+    let pr_exp = Cprinter.poly_string_of_pr Cprinter.pr_formula_exp in
+      let () = x_binfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
@@ -383,3 +375,21 @@ let get_repair_candidate prog ents cond_op =
     | None ->
       let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None
+
+let verify_pre_is_sat prog (fml:Cformula.formula) =
+  let sb_fml = translate_formula fml in
+  let datas = prog.Cast.prog_data_decls in
+  let pr_data_list = Cprinter.string_of_data_decl_list in
+  let () = x_binfo_hp (add_str "data list" pr_data_list) datas no_pos in
+
+  false
+
+let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
+    (cl : CF.list_partial_context) (conseq:CF.formula) =
+  let ante_formula_list = CF.list_formula_of_list_partial_context cl in
+  let ante_sb_formula_list = List.map translate_formula ante_formula_list in
+  let sb_conseq = translate_formula conseq in
+  
+  cl
+
+

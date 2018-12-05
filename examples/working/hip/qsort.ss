@@ -55,8 +55,8 @@ node append_bll(node x, node y)
         if (x==null) return y; /* segmentation bug when returning null */
         else {
          xn = append_bll(x.next,y);
-         // x.next = xn;
-         x = xn;
+         x.next = xn;
+         // x = xn;
          return x;
         }
 }

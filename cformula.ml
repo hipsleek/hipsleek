@@ -13122,7 +13122,7 @@ and list_formula_trace_of_list_context (ctx : list_context) : (context * (formul
   | SuccCtx ls -> List.map (fun c -> (c,formula_trace_of_context c)) ls
 
 (* filter out partial failure first *)
-and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =  
+and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =
   let ls = List.filter (fun (f,s) -> Gen.is_empty f) ls in
   List.map (formula_of_partial_context) ls
 

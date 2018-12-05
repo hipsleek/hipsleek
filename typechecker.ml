@@ -113,7 +113,7 @@ let get_repair_ents_x rs proc =
       let get_entailment ctx = ctx.CF.fc_current_ents in
       failed_ctx |> List.map get_entailment |> List.concat
   in
-  let () = x_tinfo_hp (add_str "entails: "
+  let () = x_binfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in
@@ -326,7 +326,7 @@ and check_specs_infer_a0 (prog : prog_decl) (proc : proc_decl)
   (* CLASSIC: Set classic reasoning for hip with infer[@classic] spec *)
   let fn x = if classic_flag then wrap_classic x_loc (Some true) ck_sp x else ck_sp x in
   let fn x =
-    if field_imm_flag then wrap_field_imm (Some true) fn x 
+    if field_imm_flag then wrap_field_imm (Some true) fn x
     else fn x in
   let fn x =
     if arr_as_var_flag then wrap_arr_as_var fn x
@@ -888,7 +888,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             (CF.formula_of_pure_formula
                                (CP.arith_simplify_new
                                   (CP.conj_of_list lp no_pos)) no_pos) no_pos in
-                        if Solver.verify_pre_is_sat prog fml then [fml] else []
+                        let check_sat = if (!Globals.songbird)
+                          then Songbird.verify_pre_is_sat prog fml
+                          else Solver.verify_pre_is_sat prog fml
+                        in
+                        if check_sat then [fml] else []
                       )
                       else
                         []
@@ -1255,9 +1259,9 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn
     let to_vars = lock_var::new_args in
     (*init/finalize does not need invariant*)
     let inv_lock = match vdef.view_inv_lock with
-      | None -> 
+      | None ->
         (CF.mkTrue (CF.mkTrueFlow ()) pos)
-      | Some f -> f 
+      | Some f -> f
     in
     let renamed_inv = CF.subst_avoid_capture fr_vars to_vars inv_lock in
     let prepost =
@@ -2684,7 +2688,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           (* else                                                          *)
           if not b then ctx (* Unreachable branch *)
           else
-            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
+            let tmp = CF.formula_of_mix_formula
+                (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t)
+                                    (CP.SpecVar (t, v, Primed)) pos)) pos in
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx
         in
         Gen.Profiling.pop_time "[check_exp] Var";
@@ -2855,7 +2861,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let tmp = CF.formula_of_mix_formula (MCP.mix_of_pure pure_f) pos in
           let n_ctx =
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
-          let () = x_tinfo_hp (add_str "n_ctx:"
+          let () = x_binfo_hp (add_str "n_ctx:"
                                  Cprinter.string_of_list_failesc_context) n_ctx
               no_pos in
           n_ctx
@@ -3108,6 +3114,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   in
   let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
   let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
+  let pr = Cprinter.string_of_list_partial_context in
+  let () = x_tinfo_hp (add_str "rs" pr) rs no_pos in
   if (is_reachable_succ) then
     rs
   else begin
