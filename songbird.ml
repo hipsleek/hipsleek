@@ -202,7 +202,7 @@ let translate_back_pf (pf : SBCast.pure_form) = match pf with
   | _ -> report_error no_pos "this type of lhs not handled"
 
 (* translate heap formula from Cformula to songbird CAST *)
-let translate_hf hf = match hf with
+let rec translate_hf hf = match hf with
   | CF.HEmp -> SBCast.HEmp (translate_loc VarGen.no_pos)
   | CF.DataNode dnode ->
     let root = dnode.CF.h_formula_data_node in
@@ -215,6 +215,29 @@ let translate_hf hf = match hf with
     let sb_args = List.map (fun x -> SBCast.Var (x, sb_no_pos)) sb_arg_vars in
     let data_form = SBCast.mk_data_form sb_root name sb_args in
     SBCast.mk_hform_df data_form
+  | CF.Star star_hf ->
+    let hf1 = star_hf.h_formula_star_h1 in
+    let hf2 = star_hf.h_formula_star_h2 in
+    let loc = star_hf.h_formula_star_pos in
+    let pos = translate_loc loc in
+    let sb_hf1 = translate_hf hf1 in
+    let sb_hf2 = translate_hf hf2 in
+    SBCast.mk_hstar ~pos:pos sb_hf1 sb_hf2
+  | CF.StarMinus _ -> report_error no_pos "StarMinus is not supported"
+  | CF.Conj _ -> report_error no_pos "conj is not supported"
+  | CF.ConjStar _ -> report_error no_pos "ConStar is not supported"
+  | CF.ConjConj _ -> report_error no_pos "Conconj is not supported"
+  | CF.Phase _ -> report_error no_pos "Phase is not supported"
+  | CF.ViewNode view ->
+    let name = view.h_formula_view_name in
+    let args = view.h_formula_view_arguments in
+    let typed_vars = List.map (fun x -> (CP.name_of_sv x, CP.typ_of_sv x)) args in
+    let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
+    let sb_exps = List.map SBCast.mk_exp_var sb_vars in
+    let loc = view.h_formula_view_pos in
+    let pos = translate_loc loc in
+    let view_form = SBCast.mk_view_form ~pos:pos name sb_exps in
+    SBCast.mk_hform_vf view_form
   | _ -> report_error no_pos ("this hf is not supported: "
          ^ (Cprinter.string_of_h_formula hf))
 
@@ -386,7 +409,7 @@ let translate_data_decl (data:Cast.data_decl) =
   let sb_fields = List.map (fun (a,b) -> (translate_type a, b)) fields in
   SBCast.mk_data_defn ident sb_fields sb_pos
 
-let translate_view (view:Cast.view_decl) =
+let translate_view_decl (view:Cast.view_decl) =
   let ident = view.Cast.view_name in
   let loc = view.Cast.view_pos in
   let sb_pos = translate_loc loc in
@@ -396,13 +419,7 @@ let translate_view (view:Cast.view_decl) =
   let formulas = view.Cast.view_un_struc_formula in
   let formulas = List.map (fun (x,y) -> x) formulas in
   let sb_formula = List.map translate_formula formulas in
-  let view_defn_cases = List.map (fun x ->
-      {
-        SBCast.vdc_id = -1;
-        SBCast.vdc_form = x;
-        SBCast.vdc_base_case = false
-      }
-    ) sb_formula in
+  let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
   SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
 
 let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
@@ -447,6 +464,14 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
   let view_decls = prog.Cast.prog_view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
+  let sb_view_decls = List.map translate_view_decl view_decls in
+  let prog = SBCast.mk_program "heap_entail" in
+  let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
+                        SBCast.prog_views = sb_view_decls}
+  in
+  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
+  let pr3 = SBCast.pr_program in
+  let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
 
   (* need to normalize after mk_prog *)
   (* normalize_prog prog *)
