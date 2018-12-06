@@ -40,9 +40,9 @@ let get_unprime (SpecVar(_,id,_)) = id
 let view_args_map:(string,spec_var list) Hashtbl.t 
   = Hashtbl.create 10
 (* immutability annotations *)
-type ann = ConstAnn of heap_ann 
+type ann = ConstAnn of heap_ann
          | PolyAnn of spec_var
-         | TempAnn of ann 
+         | TempAnn of ann
          | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
          | NoAnn
 

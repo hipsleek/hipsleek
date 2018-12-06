@@ -888,9 +888,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             (CF.formula_of_pure_formula
                                (CP.arith_simplify_new
                                   (CP.conj_of_list lp no_pos)) no_pos) no_pos in
-                        let check_sat = if (!Globals.songbird)
-                          then Songbird.verify_pre_is_sat prog fml
-                          else Solver.verify_pre_is_sat prog fml
+                        let check_sat = Solver.verify_pre_is_sat prog fml
                         in
                         if check_sat then [fml] else []
                       )
@@ -3078,8 +3076,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
         let _ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
         (*possibly change to flat post here as well??*)
-        let (ans,prf) = SV.heap_entail_list_partial_context_init prog false
-            fn_state flat_post None None None pos (Some pid) in
+        let ans, prf = if !Globals.songbird then
+            Songbird.heap_entail_list_partial_context_init prog fn_state flat_post
+        else SV.heap_entail_list_partial_context_init prog false
+            fn_state flat_post None None None pos (Some pid)
+        in
         let () =  DD.ninfo_hprint
             (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
         in
@@ -3087,14 +3088,21 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             Soutil.detect_mem_leak prog proc ans
           else ans
         in
+        let () = x_binfo_hp (add_str "proof" Prooftracer.string_of_proof)
+          prf pos in
         (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail
-           CF.invert_fail_branch_must_fail ans1,prf)
+           CF.invert_fail_branch_must_fail ans1, prf)
       end
     else
       let () = x_dinfo_hp (add_str "do_classic_frame_rule" string_of_bool)
           (check_is_classic ()) pos in
-      let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
-          prog false false fn_state (snd posts) None None None pos (Some pid) in
+      let rs_struc , prf = if !Globals.songbird then
+          Songbird.heap_entail_struc_list_partial_context_init prog fn_state
+            (snd posts)
+        else
+          x_add SV.heap_entail_struc_list_partial_context_init
+            prog false false fn_state (snd posts) None None None pos (Some pid)
+      in
       rs_struc, prf
   in
   let () = PTracer.log_proof prf in

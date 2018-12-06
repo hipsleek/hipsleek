@@ -3,6 +3,7 @@ open Globals
 
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
+module SBProver = Libsongbird.Prover
 module SBDebug = Libsongbird.Debug
 module CP = Cpure
 module CF = Cformula
@@ -376,20 +377,90 @@ let get_repair_candidate prog ents cond_op =
       let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None
 
-let verify_pre_is_sat prog (fml:Cformula.formula) =
-  let sb_fml = translate_formula fml in
-  let datas = prog.Cast.prog_data_decls in
-  let pr_data_list = Cprinter.string_of_data_decl_list in
-  let () = x_binfo_hp (add_str "data list" pr_data_list) datas no_pos in
+let translate_data_decl (data:Cast.data_decl) =
+  let ident = data.Cast.data_name in
+  let loc = data.Cast.data_pos in
+  let fields = data.Cast.data_fields in
+  let fields = List.map (fun (x, y) -> x) fields in
+  let sb_pos = translate_loc loc in
+  let sb_fields = List.map (fun (a,b) -> (translate_type a, b)) fields in
+  SBCast.mk_data_defn ident sb_fields sb_pos
 
-  false
+let translate_view (view:Cast.view_decl) =
+  let ident = view.Cast.view_name in
+  let loc = view.Cast.view_pos in
+  let sb_pos = translate_loc loc in
+  let vars = view.Cast.view_vars in
+  let typed_vars = List.map (fun x -> (Cpure.name_of_sv x, Cpure.typ_of_sv x)) vars in
+  let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
+  let formulas = view.Cast.view_un_struc_formula in
+  let formulas = List.map (fun (x,y) -> x) formulas in
+  let sb_formula = List.map translate_formula formulas in
+  let view_defn_cases = List.map (fun x ->
+      {
+        SBCast.vdc_id = -1;
+        SBCast.vdc_form = x;
+        SBCast.vdc_base_case = false
+      }
+    ) sb_formula in
+  SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
 
-let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
+let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
     (cl : CF.list_partial_context) (conseq:CF.formula) =
+  let data_decls = prog.Cast.prog_data_decls in
   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
   let sb_conseq = translate_formula conseq in
-  
-  cl
+  let check_entail lhs rhs =
+    let prog = SBCast.mk_program "check_entail" in
+    let entail = SBCast.mk_entailment lhs rhs in
+    let res = SBProver.check_entailment prog entail in
+    match res with
+    | SBGlobals.MvlTrue -> true
+    | _ -> false
+  in
+  report_error no_pos "incomplete procedure"
+
+(* 2 no *)
+let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
+    (cl : CF.list_partial_context) (conseq:CF.formula) =
+  let pr1 = CPR.string_of_list_partial_context in
+  let pr2 = CPR.string_of_formula in
+  let pr3 (a,_)= pr1 a in
+  Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
+    (fun _ _ -> heap_entail_list_partial_context_init_x prog  cl conseq) cl conseq
 
 
+(* 6 yes *)
+(* check how to do this *)
+
+(* list all typechecker calls for solver *)
+let heap_entail_one_context = false
+(* 2 yes *)
+
+let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
+    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+  let data_decls = prog.Cast.prog_data_decls in
+  let pr1 = CPR.string_of_data_decl_list in
+  let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
+  let sb_data_decls = List.map translate_data_decl data_decls in
+  let view_decls = prog.Cast.prog_view_decls in
+  let pr2 = CPR.string_of_view_decl_list in
+  let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
+
+  (* need to normalize after mk_prog *)
+  (* normalize_prog prog *)
+  report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
+(* 1 yes *)
+
+let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
+    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+  let pr1 = CPR.string_of_list_partial_context in
+  let pr2 = CPR.string_of_struc_formula in
+  let pr3 (a,_)= pr1 a in
+  Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
+    (fun _ _ -> heap_entail_struc_list_partial_context_init_x prog  cl conseq) cl conseq
+
+
+let heap_entail_list_failesc_context_init = false
+(* 4 no *)

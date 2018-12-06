@@ -2788,6 +2788,7 @@ and heap_entail_one_context_struc i p i1 hp cl cs (tid: CP.spec_var option)
     (fun cs cl _ _ -> heap_entail_one_context_struc_x p i1 hp cl cs tid
         delayed_f join_id pos pid) cs cl i1 hp
 
+(* should notice this function *)
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
   has_post (ctx : context) (conseq : struc_formula) (tid: CP.spec_var option)
   (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid :
