@@ -472,9 +472,6 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let pr3 = SBCast.pr_program in
   let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
-
-  (* need to normalize after mk_prog *)
-  (* normalize_prog prog *)
   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
 (* 1 yes *)
 
