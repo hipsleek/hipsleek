@@ -399,7 +399,8 @@ let translate_view_decl (view:Cast.view_decl) =
   let ident = view.Cast.view_name in
   let loc = view.Cast.view_pos in
   let sb_pos = translate_loc loc in
-  let vars = view.Cast.view_vars in
+  let vars = [Cpure.SpecVar (Named view.view_data_name, "self", VarGen.Unprimed)]
+             @ view.Cast.view_vars in
   let typed_vars = List.map (fun x -> (Cpure.name_of_sv x, Cpure.typ_of_sv x)) vars in
   let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
   let formulas = view.Cast.view_un_struc_formula in
