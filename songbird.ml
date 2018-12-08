@@ -55,8 +55,7 @@ let translate_var (var: CP.spec_var): SBGlobals.var =
   | SpecVar (typ, ident, primed) ->
     begin
       match primed with
-      (* | VarGen.Primed -> (ident ^ "'", translate_type typ) *)
-      | VarGen.Primed -> (ident, translate_type typ)
+      | VarGen.Primed -> (ident ^ "'", translate_type typ)
       | _ -> (ident, translate_type typ)
     end
 let translate_back_var (var : SBGlobals.var) =
@@ -229,8 +228,12 @@ let rec translate_hf hf = match hf with
   | CF.ConjConj _ -> report_error no_pos "Conconj is not supported"
   | CF.Phase _ -> report_error no_pos "Phase is not supported"
   | CF.ViewNode view ->
+    let root = view.h_formula_view_node in
     let name = view.h_formula_view_name in
     let args = view.h_formula_view_arguments in
+    let () = x_tinfo_hp (add_str "root: " CP.string_of_spec_var) root no_pos in
+    let () = x_tinfo_hp (add_str "args: " (pr_list CP.string_of_spec_var)) args no_pos in
+    let args = [root] @ args in
     let typed_vars = List.map (fun x -> (CP.name_of_sv x, CP.typ_of_sv x)) args in
     let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
     let sb_exps = List.map SBCast.mk_exp_var sb_vars in
@@ -409,10 +412,13 @@ let translate_view_decl (view:Cast.view_decl) =
 let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
   let data_decls = prog.Cast.prog_data_decls in
+  (* Now only accept node declaration *)
+  let data_decls = List.filter (fun x -> x.Cast.data_name == "node") data_decls in
   let pr1 = CPR.string_of_data_decl_list in
   let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
   let sb_data_decls = List.map translate_data_decl data_decls in
   let view_decls = prog.Cast.prog_view_decls in
+  let view_decls = List.filter (fun x -> x.Cast.view_name == "ll") view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
   let sb_view_decls = List.concat (List.map translate_view_decl view_decls) in
@@ -429,7 +435,8 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
   let sb_conseq = translate_formula conseq in
   let pr4 = SBCast.pr_formula in
   let () = x_binfo_hp (add_str "conseq" (pr_list pr4)) sb_conseq no_pos in
-  let () = x_binfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in
+  let () = x_binfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
+  (* let () = x_binfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in *)
   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
 
 let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
