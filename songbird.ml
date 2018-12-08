@@ -413,12 +413,14 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
   let data_decls = prog.Cast.prog_data_decls in
   (* Now only accept node declaration *)
-  let data_decls = List.filter (fun x -> x.Cast.data_name == "node") data_decls in
+  let data_decls = List.filter
+      (fun x -> String.compare x.Cast.data_name "node" = 0) data_decls in
   let pr1 = CPR.string_of_data_decl_list in
   let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
   let sb_data_decls = List.map translate_data_decl data_decls in
   let view_decls = prog.Cast.prog_view_decls in
-  let view_decls = List.filter (fun x -> x.Cast.view_name == "ll") view_decls in
+  let view_decls = List.filter
+      (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
   let sb_view_decls = List.concat (List.map translate_view_decl view_decls) in
@@ -426,17 +428,30 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
                         SBCast.prog_views = sb_view_decls}
   in
-  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let pr3 = SBCast.pr_program in
-  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+  let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
+  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
   let (_, conseq) = CF.base_formula_of_struc_formula conseq in
   let sb_conseq = translate_formula conseq in
   let pr4 = SBCast.pr_formula in
-  let () = x_binfo_hp (add_str "conseq" (pr_list pr4)) sb_conseq no_pos in
   let () = x_binfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
-  (* let () = x_binfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in *)
+  let () = x_binfo_hp (add_str "sb_conseq" (pr_list pr4)) sb_conseq no_pos in
+  let () = x_tinfo_hp (add_str "ante" (pr_list (pr_list pr4)))
+      ante_sb_formula_list no_pos in
+  let checkentail_one lhs rhs =
+    let lhs = List.hd lhs in
+    let rhs = List.hd rhs in
+    let ent = SBCast.mk_entailment ~mode:PrfEntailResidue lhs rhs in
+    let ptree = SBProver.check_entailment n_prog ent in
+    let validity = Libsongbird.Proof.get_ptree_validity ptree in
+    let residues = Libsongbird.Proof.get_ptree_residues ptree in
+    (validity, residues)
+  in
+  let residues = List.map (fun x -> checkentail_one x sb_conseq)
+      ante_sb_formula_list in
+
   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
 
 let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
@@ -453,14 +468,14 @@ let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
   let sb_conseq = translate_formula conseq in
-  let check_entail lhs rhs =
-    let prog = SBCast.mk_program "check_entail" in
-    let entail = SBCast.mk_entailment lhs rhs in
-    let res = SBProver.check_entailment prog entail in
-    match res with
-    | SBGlobals.MvlTrue -> true
-    | _ -> false
-  in
+  (* let check_entail lhs rhs =
+   *   let prog = SBCast.mk_program "check_entail" in
+   *   let entail = SBCast.mk_entailment lhs rhs in
+   *   let res = SBProver.check_entailment prog entail in
+   *   match res with
+   *   | SBGlobals.MvlTrue -> true
+   *   | _ -> false
+   * in *)
   report_error no_pos "incomplete procedure"
 
 let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
