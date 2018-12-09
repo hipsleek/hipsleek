@@ -16,6 +16,12 @@ let add_str = Gen.Basic.add_str
 let no_pos = VarGen.no_pos
 let report_error = Gen.Basic.report_error
 
+let pr_validity tvl = match tvl with
+  | SBGlobals.MvlFalse -> "Invalid"
+  | SBGlobals.MvlTrue -> "Valid"
+  | SBGlobals.MvlUnkn -> "Unknown"
+  | SBGlobals.MvlInfer -> "Infer"
+
 let translate_loc (location:VarGen.loc) : SBGlobals.pos =
   {
     pos_begin = location.start_pos;
@@ -406,9 +412,9 @@ let translate_view_decl (view:Cast.view_decl) =
   let formulas = view.Cast.view_un_struc_formula in
   let formulas = List.map (fun (x,y) -> x) formulas in
   let sb_formula = List.map translate_formula formulas in
-  let view_defn_cases = List.map (fun x -> List.map SBCast.mk_view_defn_case x)
-      sb_formula in
-  List.map (fun x -> SBCast.mk_view_defn ident sb_vars x sb_pos) view_defn_cases
+  let sb_formula = List.concat sb_formula in
+  let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
+  SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
 
 let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
@@ -424,7 +430,7 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
       (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
-  let sb_view_decls = List.concat (List.map translate_view_decl view_decls) in
+  let sb_view_decls = List.map translate_view_decl view_decls in
   let prog = SBCast.mk_program "heap_entail" in
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
                         SBCast.prog_views = sb_view_decls}
@@ -437,17 +443,20 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
   let (_, conseq) = CF.base_formula_of_struc_formula conseq in
   let sb_conseq = translate_formula conseq in
   let pr4 = SBCast.pr_formula in
-  let () = x_binfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
-  let () = x_binfo_hp (add_str "sb_conseq" (pr_list pr4)) sb_conseq no_pos in
+  let () = x_tinfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
   let () = x_tinfo_hp (add_str "ante" (pr_list (pr_list pr4)))
       ante_sb_formula_list no_pos in
-  let checkentail_one lhs rhs =
-    let lhs = List.hd lhs in
-    let rhs = List.hd rhs in
-    let ent = SBCast.mk_entailment ~mode:PrfEntailResidue lhs rhs in
+  let checkentail_one ante conseq =
+    let ante = List.hd ante in
+    let conseq = List.hd conseq in
+    let () = x_binfo_hp (add_str "sb_ante" pr4) ante no_pos in
+    let () = x_binfo_hp (add_str "sb_conseq" pr4) conseq no_pos in
+    let ent = SBCast.mk_entailment ~mode:PrfEntailResidue ante conseq in
     let ptree = SBProver.check_entailment n_prog ent in
     let validity = Libsongbird.Proof.get_ptree_validity ptree in
     let residues = Libsongbird.Proof.get_ptree_residues ptree in
+    let () = x_binfo_hp (add_str "res" pr_validity) validity no_pos in
+    let () = x_binfo_hp (add_str "res" SBCast.pr_fs) residues no_pos in
     (validity, residues)
   in
   let residues = List.map (fun x -> checkentail_one x sb_conseq)
