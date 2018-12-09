@@ -260,7 +260,7 @@ let rec translate_formula formula = match formula with
   | CF.Exists ef ->
     let hf = ef.CF.formula_exists_heap in
     let sb_hf = translate_hf hf in
-    let pf = CF.get_pure formula in
+    let pf = (Mcpure.pure_of_mix ef.CF.formula_exists_pure) in
     let sb_pf = translate_pf pf in
     let vars = ef.CF.formula_exists_qvars in
     let sb_vars = List.map translate_var vars in
