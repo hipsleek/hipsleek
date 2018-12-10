@@ -860,7 +860,7 @@ let find_close svl0 eqs0 =
   in
   loop_helper svl0 eqs0
 
-let rec formula_of_heap h pos = 
+let rec formula_of_heap h pos =
   mkBase h (MCP.mkMTrue pos) CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_base_of_heap h pos = {
@@ -889,26 +889,28 @@ and formula_of_heap_w_normal_flow h pos =
 and formula_of_heap_fl h fl pos = 
   mkBase h (MCP.mkMTrue pos) CVP.empty_vperm_sets TypeTrue fl [] pos
 
-and struc_formula_of_heap h pos = 
-  EBase { 
-    formula_struc_explicit_inst = [];	 
-    formula_struc_implicit_inst = []; 
+and struc_formula_of_heap h pos =
+  EBase {
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
     formula_struc_exists = [];
     formula_struc_base = formula_of_heap h pos;
     formula_struc_is_requires = false;
     formula_struc_continuation = None;
     formula_struc_pos = pos }
 
-and struc_formula_of_heap_fl h fl pos = EBase { 
-    formula_struc_explicit_inst = [];	 
-    formula_struc_implicit_inst = []; 
+and struc_formula_of_heap_fl h fl pos =
+  EBase {
+    formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
     formula_struc_exists = [];
     formula_struc_base = formula_of_heap_fl h fl pos;
     formula_struc_is_requires = false;
     formula_struc_continuation = None;
     formula_struc_pos = pos}
 
-and struc_formula_of_formula f pos = EBase {
+and struc_formula_of_formula f pos =
+  EBase {
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
     formula_struc_exists = [];
@@ -1635,7 +1637,7 @@ and disj_of_list (xs : formula list) pos : formula =
 and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
     (t : t_formula) (fl : flow_formula) (a : one_formula list) (pos : loc) lbl: formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval) then mkFalse fl pos
-  else 
+  else
     Base ({
         formula_base_heap = h;
         formula_base_vperm = vp;
@@ -1999,7 +2001,7 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp:
     (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p vp t fl a pos None
 
-and ex_formula_of_heap svl h pos = 
+and ex_formula_of_heap svl h pos =
   mkExists svl h (MCP.mkMTrue pos) CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos
 
 and is_view (h : h_formula) = match h with

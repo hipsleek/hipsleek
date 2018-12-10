@@ -2507,7 +2507,7 @@ and mkAnd_x f1 f2 (*b*) pos =
   else if (isConstTrue f1) then f2
   else if (isConstFalse f2) then f2
   else if (isConstTrue f2) then f1
-  else 
+  else
     let rec helper fal fnl = match fal with 
       | Or _ -> join_disjunctions (List.map (fun d->helper d fnl) (split_disjunctions fal))
       | AndList b ->  mkAndList (Label_Pure.merge b [(LO.unlabelled,fnl)])
@@ -2835,10 +2835,10 @@ and mkExists_gfp (vs : spec_var list) (f : formula) lbl pos =
       if mem v (fv ef) then
         Exists (v, ef, lbl, pos)
       else
-        ef 
+        ef
   in
-  if vs==[] then f 
-  else 
+  if vs==[] then f
+  else
     aux vs f lbl pos
 
 and mkExists vs f lbel pos =
