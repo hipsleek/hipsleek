@@ -5,6 +5,7 @@ module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
 module SBProver = Libsongbird.Prover
 module SBDebug = Libsongbird.Debug
+module SBProof = Libsongbird.Proof
 module CP = Cpure
 module CF = Cformula
 module CPR = Cprinter
@@ -15,6 +16,9 @@ module CPR = Cprinter
 let add_str = Gen.Basic.add_str
 let no_pos = VarGen.no_pos
 let report_error = Gen.Basic.report_error
+let pr_formula = CPR.string_of_formula
+let pr_struc_f = CPR.string_of_struc_formula
+let pr_svs = CPR.string_of_spec_var_list
 
 let pr_validity tvl = match tvl with
   | SBGlobals.MvlFalse -> "Invalid"
@@ -167,6 +171,8 @@ let rec translate_pf (pure_f: CP.formula)  =
         let sb_exp2 = translate_exp exp2 in
         let sb_loc = translate_loc loc in
         SBCast.BinRel (Le, sb_exp1, sb_exp2, sb_loc)
+      | LexVar lex ->
+        SBCast.BConst (true, translate_loc lex.lex_loc)
       | _ -> report_error no_pos
                ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
     end
@@ -282,7 +288,7 @@ let rec translate_hf hf = match hf with
 
 let exp_to_var sb_exp_var = match sb_exp_var with
   | CP.Var (sv, _) -> sv
-  | _ -> report_error no_pos "DataNode/ViewNode root/args has to be a Var"
+  | _ -> report_error no_pos (CPR.string_of_formula_exp sb_exp_var)
 
 let translate_back_df df =
   let root = translate_back_exp df.SBCast.dataf_root in
@@ -507,8 +513,7 @@ let translate_view_decl (view:Cast.view_decl) =
   let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
   SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
 
-let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
-    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
   let data_decls = List.filter
       (fun x -> String.compare x.Cast.data_name "node" = 0) data_decls in
@@ -526,9 +531,63 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
                         SBCast.prog_views = sb_view_decls}
   in
   let pr3 = SBCast.pr_program in
-  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+  let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
+  n_prog
+
+let heap_entail_after_sat_struc (prog:Cast.prog_decl)
+    (ctx:CF.context) (conseq:CF.struc_formula) =
+  match ctx with
+  | Ctx es ->
+    let n_prog = translate_prog prog in
+    let () = x_binfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
+    (
+      match conseq with
+      | CF.EBase bf ->
+        let evars = bf.CF.formula_struc_implicit_inst
+                    @ bf.CF.formula_struc_explicit_inst
+                        @ bf.CF.formula_struc_exists in
+        let () = x_binfo_hp (add_str "exists var" pr_svs) evars no_pos in
+        let conseqs = if Gen.is_empty evars
+          then translate_formula bf.CF.formula_struc_base
+          else
+            let sb_f = translate_formula bf.CF.formula_struc_base in
+            let pos = translate_loc bf.CF.formula_struc_pos in
+            let sb_vars = List.map translate_var evars in
+            List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f in
+        let formula = es.CF.es_formula in
+        let sb_ante = translate_formula formula in
+        let sb_conseq = List.hd conseqs in
+        let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailResidue x sb_conseq)
+            sb_ante in
+        let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+        let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
+        let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
+                                      ptree) ptrees in
+        if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
+        then
+          let residues = List.map (fun ptree ->
+              let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
+              let pr_rsd = SBCast.pr_fs in
+              let () = x_binfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
+
+              List.hd residue_fs
+            ) ptrees in
+          let residue = translate_back_fs residues in
+          let () = x_binfo_hp (add_str "residue" pr_formula) residue no_pos in
+          let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
+          (CF.SuccCtx [ctx], Prooftracer.TrueConseq)
+        else report_error no_pos "No residue not handled"
+      | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
+    )
+  | OCtx _ -> report_error no_pos "OCtx not handled"
+
+let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
+    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+  let n_prog = translate_prog prog in
   let pr5 = pr_list CPR.string_of_formula in
+  (* let bctxs = List.map (fun x -> snd x) cl in
+   * let ctxs = List.map (fun (_, x, _) -> x) bctxs in *)
   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
   let () = x_binfo_hp (add_str "cl formulas" pr5) ante_formula_list no_pos in
   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
@@ -556,14 +615,15 @@ let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
         ) ptrees in
       let residue = translate_back_fs residues in
       let () = x_tinfo_hp (add_str "residue" CPR.string_of_formula) residue no_pos in
-      (true, Some residue)
-    else (false, None) in
+      Some residue
+    else None in
   let residues = List.map (fun x -> checkentail_one x sb_conseq)
       ante_sb_formula_list in
   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
 
 let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+   (* : (list_partial_context * proof) = *)
   let pr1 = CPR.string_of_list_partial_context in
   let pr2 = CPR.string_of_struc_formula in
   let pr3 (a,_)= pr1 a in

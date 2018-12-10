@@ -34,14 +34,15 @@ module CF = Cformula
   one of the leaves of a proof is successful node
   all leaves of a disproof are failures
 *)
-type proof = 
+type proof =
   | ExLeft of ex_step
   | ExRight of ex_step
   | OrLeft of or_left
   | OrStrucLeft of or_struc_left
   | OrRight of or_right
   | Match of match_step
-  | MMatch of mmatch_step (* if one node from the consequent matches multiple nodes from antecedent *)
+  | MMatch of mmatch_step (* if one node from the consequent matches multiple
+                           * nodes from antecedent *)
   | Fold of fold_step
   | Unfold of unfold_step
   | Pure of pure_step
@@ -53,7 +54,7 @@ type proof =
   | UnsatAnte
   | UnsatConseq
   | TrueConseq
-  | Failure 
+  | Failure
   | PECase of case_step
   | PEBase of base_step
   | PEAssume of assume_step

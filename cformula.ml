@@ -13066,13 +13066,13 @@ and formula_of_context_x ctx0 = match ctx0 with
     let f1 = formula_of_context_x c1 in
     let f2 = formula_of_context_x c2 in
     mkOr f1 f2 no_pos
-  | Ctx es -> 
+  | Ctx es ->
     (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)
     (* let mix_f = x_add MCP.merge_mems es.es_pure (MCP.mix_of_pure m) true in *)
     let mix_f = es.es_pure in
     add_mix_formula_to_formula mix_f es.es_formula
 
-and formula_of_context ctx0 = 
+and formula_of_context ctx0 =
   let pr = !print_context_short in
   Debug.no_1 "formula_of_context" pr !print_formula formula_of_context_x ctx0
 
@@ -13146,7 +13146,7 @@ and formula_of_failesc_context ((_,_,sl) : failesc_context) : formula =
   List.fold_left (fun a (_,c, _)-> mkOr (formula_of_context c) a no_pos)
     (mkFalse (mkTrueFlow ()) no_pos) sl
 
-and formula_of_partial_context ((fl,sl) : partial_context) : formula =  
+and formula_of_partial_context ((fl,sl) : partial_context) : formula =
   List.fold_left (fun a (_,c,_)-> mkOr (formula_of_context c) a no_pos)
     (mkFalse (mkTrueFlow ()) no_pos) sl
 

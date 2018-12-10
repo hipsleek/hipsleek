@@ -3250,9 +3250,9 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
                           match pf with
                           | Frm _
                           | BConst _
-                          | BVar _ 
-                          | XPure _ 
-                          | BagMin _ 
+                          | BVar _
+                          | XPure _
+                          | BagMin _
                           (* | VarPerm _ (*TO CHECK*) *)
                           | BagMax _ -> (pf,f_comb [])
                           | SubAnn (e1,e2,l) ->

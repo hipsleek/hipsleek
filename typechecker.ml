@@ -3096,10 +3096,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     else
       let () = x_dinfo_hp (add_str "do_classic_frame_rule" string_of_bool)
           (check_is_classic ()) pos in
-      let rs_struc , prf = if !Globals.songbird then
-          Songbird.heap_entail_struc_list_partial_context_init prog fn_state
-            (snd posts)
-        else
+      let rs_struc , prf =
+        (* if !Globals.songbird then
+         *   Songbird.heap_entail_struc_list_partial_context_init prog fn_state
+         *     (snd posts)
+         * else *)
           x_add SV.heap_entail_struc_list_partial_context_init
             prog false false fn_state (snd posts) None None None pos (Some pid)
       in

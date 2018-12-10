@@ -2857,7 +2857,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
     ((SuccCtx [ctx]), TrueConseq)
   else
     let () = Debug.dinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
-    let result, prf = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx conseq tid delayed_f join_id pos pid []  in
+    let result, prf = if !Globals.songbird
+      then Songbird.heap_entail_after_sat_struc prog ctx conseq
+      else x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx
+          conseq tid delayed_f join_id pos pid []  in
     let result = subs_crt_holes_list_ctx result in
     let () = Debug.dinfo_hprint (add_str "result 2766: " Cprinter.string_of_list_context) result no_pos in
     (result, prf)
@@ -3444,7 +3447,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                        (* always do nonclassical reasoning whenever there is continuation in struct formula *)
                        (* let saved_classic_setting = !do_classic_frame_rule in *)
                        let n_ctx_list, prf, new_delayed_f =
-                         if (CF.is_pre_post_cont formula_cont) 
+                         if (CF.is_pre_post_cont formula_cont)
                          then Wrapper.wrap_classic x_loc (Some false) cont_fn ()
                          else cont_fn ()
                        in
