@@ -79,7 +79,7 @@ and match_type =
   | WArg (* indirect matching with other parameter *)
   | Wand
 
-and action = 
+and action =
   | M_match of match_res
   | M_split_match of match_res
   | M_fold of match_res
@@ -479,7 +479,7 @@ let action_get_holes a = match a with
   | M_base_case_fold e -> Some e.match_res_holes
   | Seq_action _
   | Cond_action _
-  | M_Nothing_to_do _  
+  | M_Nothing_to_do _
   | M_unmatched_rhs_data_node _
   | M_infer_heap _
   | Search_action _ ->None

@@ -9,6 +9,7 @@ module SBProof = Libsongbird.Proof
 module CP = Cpure
 module CF = Cformula
 module CPR = Cprinter
+module MCP = Mcpure
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
@@ -19,6 +20,7 @@ let report_error = Gen.Basic.report_error
 let pr_formula = CPR.string_of_formula
 let pr_struc_f = CPR.string_of_struc_formula
 let pr_svs = CPR.string_of_spec_var_list
+let pr_pf = Cprinter.string_of_pure_formula
 
 let pr_validity tvl = match tvl with
   | SBGlobals.MvlFalse -> "Invalid"
@@ -61,14 +63,18 @@ let translate_back_type (typ) = match typ with
   | _ -> report_error no_pos "translate_back_type: this type is not handled"
 
 
-let translate_var (var: CP.spec_var): SBGlobals.var =
-  match var with
-  | SpecVar (typ, ident, primed) ->
-    begin
-      match primed with
-      | VarGen.Primed -> (ident ^ "'", translate_type typ)
-      | _ -> (ident, translate_type typ)
-    end
+let translate_var_x (var: CP.spec_var): SBGlobals.var =
+  let CP.SpecVar (typ, ident, primed) = var in
+  match primed with
+  | VarGen.Primed -> (ident ^ "'", translate_type typ)
+  | _ -> (ident, translate_type typ)
+
+let translate_var var =
+  let pr1 = CPR.string_of_spec_var in
+  let pr2 = SBCast.pr_var in
+  Debug.no_1 "translate_var" pr1 pr2
+    (fun _ -> translate_var_x var) var
+
 let translate_back_var (var : SBGlobals.var) =
   let (str, typ) = var in
   CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
@@ -244,8 +250,13 @@ let rec translate_back_pf (pf : SBCast.pure_form) = match pf with
   | _ -> report_error no_pos "translate_back_pf: this type of lhs not handled"
 
 let rec translate_hf hf = match hf with
-  | CF.HEmp -> SBCast.HEmp (translate_loc VarGen.no_pos)
+  | CF.HTrue
+  | CF.HEmp -> (SBCast.HEmp (translate_loc VarGen.no_pos), [])
   | CF.DataNode dnode ->
+    let ann = dnode.CF.h_formula_data_imm in
+    let holes = match ann with
+      | CP.ConstAnn Lend -> [hf]
+      | _ -> [] in
     let root = dnode.CF.h_formula_data_node in
     let sb_root_var = translate_var root in
     let sb_no_pos = translate_loc VarGen.no_pos in
@@ -255,21 +266,25 @@ let rec translate_hf hf = match hf with
     let sb_arg_vars = List.map translate_var args in
     let sb_args = List.map (fun x -> SBCast.Var (x, sb_no_pos)) sb_arg_vars in
     let data_form = SBCast.mk_data_form sb_root name sb_args in
-    SBCast.mk_hform_df data_form
+    (SBCast.mk_hform_df data_form, holes)
   | CF.Star star_hf ->
     let hf1 = star_hf.h_formula_star_h1 in
     let hf2 = star_hf.h_formula_star_h2 in
     let loc = star_hf.h_formula_star_pos in
     let pos = translate_loc loc in
-    let sb_hf1 = translate_hf hf1 in
-    let sb_hf2 = translate_hf hf2 in
-    SBCast.mk_hstar ~pos:pos sb_hf1 sb_hf2
+    let (sb_hf1, hole1) = translate_hf hf1 in
+    let (sb_hf2, hole2) = translate_hf hf2 in
+    (SBCast.mk_hstar ~pos:pos sb_hf1 sb_hf2, hole1@hole2)
   | CF.StarMinus _ -> report_error no_pos "StarMinus is not supported"
   | CF.Conj _ -> report_error no_pos "conj is not supported"
   | CF.ConjStar _ -> report_error no_pos "ConStar is not supported"
   | CF.ConjConj _ -> report_error no_pos "Conconj is not supported"
   | CF.Phase _ -> report_error no_pos "Phase is not supported"
   | CF.ViewNode view ->
+    let ann = view.CF.h_formula_view_imm in
+    let holes = match ann with
+      | CP.ConstAnn Lend -> [hf]
+      | _ -> [] in
     let root = view.h_formula_view_node in
     let name = view.h_formula_view_name in
     let args = view.h_formula_view_arguments in
@@ -282,7 +297,7 @@ let rec translate_hf hf = match hf with
     let loc = view.h_formula_view_pos in
     let pos = translate_loc loc in
     let view_form = SBCast.mk_view_form ~pos:pos name sb_exps in
-    SBCast.mk_hform_vf view_form
+    (SBCast.mk_hform_vf view_form, holes)
   | _ -> report_error no_pos ("this hf is not supported: "
                               ^ (Cprinter.string_of_h_formula hf))
 
@@ -308,70 +323,74 @@ let translate_back_vf vf =
   let loc = translate_back_pos vf.SBCast.viewf_pos in
   CF.mkViewNode hip_root hip_name hip_args loc
 
-let rec translate_back_hf sb_hf = match sb_hf with
-  | SBCast.HEmp _ -> CF.HEmp
-  | SBCast.HAtom (dfs, vfs, pos) ->
-    let loc = translate_back_pos pos in
-    let hip_dfs = List.map translate_back_df dfs in
-    let hip_vfs = List.map translate_back_vf vfs in
-    (match hip_dfs, hip_vfs with
-     | [], [] -> CF.HEmp
-     | [], _ -> List.hd hip_vfs
-     | _, [] -> List.hd hip_dfs
-     | _, _ ->
-       let hip_df = List.hd hip_dfs in
-       let hip_vf = List.hd hip_vfs in
-       CF.mkStarH hip_df hip_vf no_pos
-    )
-  | SBCast.HStar (hf1, hf2, pos) ->
-    let hip_hf1 = translate_back_hf hf1 in
-    let hip_hf2 = translate_back_hf hf2 in
-    let loc = translate_back_pos pos in
-    CF.mkStarH hip_hf1 hip_hf2 loc
-  | _ -> report_error no_pos "un-handled cases"
+let translate_back_hf sb_hf holes =
+  let rec mkStarHList list = match list with
+    | [] -> CF.HEmp
+    | [h] -> h
+    | h::t ->
+      let tail = mkStarHList t in
+      CF.mkStarH h tail no_pos in
+  let rec helper sb_hf =
+    match sb_hf with
+    | SBCast.HEmp _ -> CF.HEmp
+    | SBCast.HAtom (dfs, vfs, pos) ->
+      let loc = translate_back_pos pos in
+      let hip_dfs = List.map translate_back_df dfs in
+      let hip_vfs = List.map translate_back_vf vfs in
+      let h_formulas = hip_dfs @ hip_vfs in
+      mkStarHList h_formulas
+    | SBCast.HStar (hf1, hf2, pos) ->
+      let hip_hf1 = helper hf1 in
+      let hip_hf2 = helper hf2 in
+      let loc = translate_back_pos pos in
+      CF.mkStarH hip_hf1 hip_hf2 loc
+    | _ -> report_error no_pos "un-handled cases"
+  in
+  let hip_hf = helper sb_hf in
+  mkStarHList ([hip_hf]@holes)
 
-
-let rec translate_formula formula = match formula with
+let rec translate_formula formula =
+  match formula with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
-    let sb_hf = translate_hf hf in
+    let (sb_hf, holes) = translate_hf hf in
     let pf = CF.get_pure formula in
     let sb_pf = translate_pf pf in
-    [SBCast.mk_fbase sb_hf sb_pf]
+    ([SBCast.mk_fbase sb_hf sb_pf], holes)
   | CF.Exists ef ->
     let hf = ef.CF.formula_exists_heap in
-    let sb_hf = translate_hf hf in
+    let (sb_hf, holes) = translate_hf hf in
     let pf = (Mcpure.pure_of_mix ef.CF.formula_exists_pure) in
     let sb_pf = translate_pf pf in
     let vars = ef.CF.formula_exists_qvars in
     let sb_vars = List.map translate_var vars in
     let sb_f = SBCast.mk_fbase sb_hf sb_pf in
-    [SBCast.mk_fexists sb_vars sb_f]
+    ([SBCast.mk_fexists sb_vars sb_f], holes)
   | CF.Or f ->
-    let sb_f1 = translate_formula f.CF.formula_or_f1 in
-    let sb_f2 = translate_formula f.CF.formula_or_f2 in
-    sb_f1@ sb_f2
+    let (sb_f1, hole1) = translate_formula f.CF.formula_or_f1 in
+    let (sb_f2, hole2) = translate_formula f.CF.formula_or_f2 in
+    (sb_f1@ sb_f2, hole1@hole2)
 
-let rec translate_back_formula sb_f = match sb_f with
+let rec translate_back_formula sb_f holes = match sb_f with
   | SBCast.FBase (hf, pf, pos) ->
-    let hip_hf = translate_back_hf hf in
+    let hip_hf = translate_back_hf hf holes in
     let loc = translate_back_pos pos in
     let hip_pf = translate_back_pf pf in
     CF.mkBase_w_lbl hip_hf (Mcpure.mix_of_pure hip_pf)
       CvpermUtils.empty_vperm_sets CF.TypeTrue (CF.mkNormalFlow()) [] loc None
   | SBCast.FExists (vars, f, pos) ->
     let loc = translate_back_pos pos in
-    let hip_f = translate_back_formula f in
+    let hip_f = translate_back_formula f holes in
     let hip_vars = List.map translate_back_var vars in
     CF.add_quantifiers hip_vars hip_f
   | _ -> report_error no_pos "un-handled case in translate_back_formula"
 
-let rec translate_back_fs (fs: SBCast.formula list) =
+let rec translate_back_fs (fs: SBCast.formula list) holes =
   match fs with
   | [] -> report_error no_pos "songbird.ml cannot be empty list"
-  | [h] -> translate_back_formula h
-  | h::t -> let hip_h = translate_back_formula h in
-    let hip_t = translate_back_fs t in
+  | [h] -> translate_back_formula h holes
+  | h::t -> let hip_h = translate_back_formula h holes in
+    let hip_t = translate_back_fs t holes in
     CF.mkOr hip_h hip_t no_pos
 
 let create_templ_prog prog ents
@@ -404,9 +423,8 @@ let create_templ_prog prog ents
 
 let translate_ent ent =
   let (lhs, rhs) = ent in
-  let pr = Cprinter.string_of_pure_formula in
-  let () = x_tinfo_hp (add_str "lhs: " pr) lhs no_pos in
-  let () = x_tinfo_hp (add_str "rhs: " pr) rhs no_pos in
+  let () = x_tinfo_hp (add_str "lhs: " pr_pf) lhs no_pos in
+  let () = x_tinfo_hp (add_str "rhs: " pr_pf) rhs no_pos in
 
   let sb_lhs = translate_pf lhs in
   let sb_rhs = translate_pf  rhs in
@@ -416,7 +434,6 @@ let translate_ent ent =
   SBCast.mk_pure_entail sb_lhs sb_rhs
 
 let get_vars_in_fault_ents ents =
-  let pr_pf = Cprinter.string_of_pure_formula in
   let pr_vars = Cprinter.string_of_spec_var_list in
   let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
   let sb_ents = List.map translate_ent ents in
@@ -427,11 +444,8 @@ let get_vars_in_fault_ents ents =
   vars
 
 let get_repair_candidate prog ents cond_op =
-  let add_str = Gen.Basic.add_str in
-  let no_pos = VarGen.no_pos in
-  let pr_pf = Cprinter.string_of_pure_formula in
   let pr_ents = pr_list (pr_pair pr_pf pr_pf) in
-  let () = x_binfo_hp (add_str "entails: " pr_ents) ents no_pos in
+  let () = x_tinfo_hp (add_str "entails: " pr_ents) ents no_pos in
   let sb_ents = List.map translate_ent ents in
   let fun_defs = create_templ_prog prog sb_ents in
   let get_func_exp fun_defs exp_decls =
@@ -458,7 +472,7 @@ let get_repair_candidate prog ents cond_op =
   match fun_def_exp with
   | Some fun_def_cexp ->
     let pr_exp = Cprinter.poly_string_of_pr Cprinter.pr_formula_exp in
-      let () = x_binfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
+      let () = x_tinfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
       let exp_decl = List.hd prog.Cast.prog_exp_decls in
       let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
       let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
@@ -508,7 +522,7 @@ let translate_view_decl (view:Cast.view_decl) =
   let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
   let formulas = view.Cast.view_un_struc_formula in
   let formulas = List.map (fun (x,y) -> x) formulas in
-  let sb_formula = List.map translate_formula formulas in
+  let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
   let sb_formula = List.concat sb_formula in
   let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
   SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
@@ -531,134 +545,86 @@ let translate_prog (prog:Cast.prog_decl) =
                         SBCast.prog_views = sb_view_decls}
   in
   let pr3 = SBCast.pr_program in
-  let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
+  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   n_prog
 
-let heap_entail_after_sat_struc (prog:Cast.prog_decl)
-    (ctx:CF.context) (conseq:CF.struc_formula) =
+let hentail_after_sat_ebase prog ctx es bf ?(pf=None)=
+  let n_prog = translate_prog prog in
+  let evars = bf.CF.formula_struc_implicit_inst
+              @ bf.CF.formula_struc_explicit_inst
+              @ bf.CF.formula_struc_exists
+              @ es.CF.es_evars in
+  let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
+  let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
+  let conseqs, holes = if Gen.is_empty evars
+    then translate_formula bf.CF.formula_struc_base
+    else
+      let sb_f, holes = translate_formula bf.CF.formula_struc_base in
+      let pos = translate_loc bf.CF.formula_struc_pos in
+      let sb_vars = List.map translate_var evars in
+      (List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
+  let formula = es.CF.es_formula in
+  let formula = match pf with
+    | None -> formula
+    | Some pf -> CF.add_pure_formula_to_formula pf formula in
+  let sb_ante, _ = translate_formula formula in
+  let sb_conseq = List.hd conseqs in
+  let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
+      sb_ante in
+  let () = x_dinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+  let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
+  let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
+                                ptree) ptrees in
+  if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
+  then
+    let residues = List.map (fun ptree ->
+        let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
+        let pr_rsd = SBCast.pr_fs in
+        let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
+        List.hd residue_fs
+      ) ptrees in
+    let residue = translate_back_fs residues holes in
+    let () = x_dinfo_hp (add_str "residue" pr_formula) residue no_pos in
+    let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
+
+    (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+  else
+    let error_msg = "Entailment EBase unsat by sb" in
+    let fe = CF.mk_failure_must error_msg "Entailment Failed." in
+    (* CF.mkFailCtx_in (CF.Basic_Reason ) *)
+    report_error no_pos "No residue not handled"
+
+let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
+    (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
+  let () = x_dinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
+  let () = x_dinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
   match ctx with
   | Ctx es ->
-    let n_prog = translate_prog prog in
-    let () = x_binfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
     (
       match conseq with
-      | CF.EBase bf ->
-        let evars = bf.CF.formula_struc_implicit_inst
-                    @ bf.CF.formula_struc_explicit_inst
-                        @ bf.CF.formula_struc_exists in
-        let () = x_binfo_hp (add_str "exists var" pr_svs) evars no_pos in
-        let conseqs = if Gen.is_empty evars
-          then translate_formula bf.CF.formula_struc_base
-          else
-            let sb_f = translate_formula bf.CF.formula_struc_base in
-            let pos = translate_loc bf.CF.formula_struc_pos in
-            let sb_vars = List.map translate_var evars in
-            List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f in
-        let formula = es.CF.es_formula in
-        let sb_ante = translate_formula formula in
-        let sb_conseq = List.hd conseqs in
-        let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailResidue x sb_conseq)
-            sb_ante in
-        let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-        let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
-        let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
-                                      ptree) ptrees in
-        if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
-        then
-          let residues = List.map (fun ptree ->
-              let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
-              let pr_rsd = SBCast.pr_fs in
-              let () = x_binfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
-
-              List.hd residue_fs
-            ) ptrees in
-          let residue = translate_back_fs residues in
-          let () = x_binfo_hp (add_str "residue" pr_formula) residue no_pos in
-          let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
-          (CF.SuccCtx [ctx], Prooftracer.TrueConseq)
-        else report_error no_pos "No residue not handled"
+      | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf ~pf:pf
+      | CF.ECase cases ->
+        let branches = cases.CF.formula_case_branches in
+        let results = List.map (fun (pf, struc) ->
+            heap_entail_after_sat_struc_x prog ctx struc ~pf:(Some pf)) branches
+        in
+        let rez1, _ = List.split results in
+        let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
+            (List.hd rez1) (List.tl rez1) in
+        (rez1, Prooftracer.TrueConseq)
+      | EList b ->
+        (* fold_context_left 42 l1 *)
+        report_error no_pos "Elist unhandled"
       | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
     )
-  | OCtx _ -> report_error no_pos "OCtx not handled"
+  | OCtx (c1, c2) ->
+    let rs1, proof1 = heap_entail_after_sat_struc_x prog c1 conseq ~pf:None in
+    let rs2, proof2 = heap_entail_after_sat_struc_x prog c2 conseq ~pf:None in
+    (CF.or_list_context rs1 rs2, Prooftracer.TrueConseq)
 
-let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
-    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
-  let n_prog = translate_prog prog in
-  let pr5 = pr_list CPR.string_of_formula in
-  (* let bctxs = List.map (fun x -> snd x) cl in
-   * let ctxs = List.map (fun (_, x, _) -> x) bctxs in *)
-  let ante_formula_list = CF.list_formula_of_list_partial_context cl in
-  let () = x_binfo_hp (add_str "cl formulas" pr5) ante_formula_list no_pos in
-  let ante_sb_formula_list = List.map translate_formula ante_formula_list in
-  let (_, conseq) = CF.base_formula_of_struc_formula conseq in
-  let sb_conseq = translate_formula conseq in
-  let pr4 = SBCast.pr_formula in
-  let () = x_tinfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
-  let () = x_tinfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in
-  let sb_conseq = List.hd sb_conseq in
-  let checkentail_one ante conseq =
-    let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailResidue x conseq)
-        ante in
-    let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-    let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
-    let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
-                                  ptree) ptrees in
-    if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
-    then
-      let residues = List.map (fun ptree ->
-          let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
-          let pr_rsd = SBCast.pr_fs in
-          let () = x_binfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
-
-          List.hd residue_fs
-        ) ptrees in
-      let residue = translate_back_fs residues in
-      let () = x_tinfo_hp (add_str "residue" CPR.string_of_formula) residue no_pos in
-      Some residue
-    else None in
-  let residues = List.map (fun x -> checkentail_one x sb_conseq)
-      ante_sb_formula_list in
-  report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
-
-let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
-    (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
-   (* : (list_partial_context * proof) = *)
-  let pr1 = CPR.string_of_list_partial_context in
-  let pr2 = CPR.string_of_struc_formula in
-  let pr3 (a,_)= pr1 a in
-  Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
-    (fun _ _ -> heap_entail_struc_list_partial_context_init_x prog  cl conseq) cl conseq
-
-let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
-    (cl : CF.list_partial_context) (conseq:CF.formula) =
-  let data_decls = prog.Cast.prog_data_decls in
-  let ante_formula_list = CF.list_formula_of_list_partial_context cl in
-  let ante_sb_formula_list = List.map translate_formula ante_formula_list in
-  let sb_conseq = translate_formula conseq in
-  (* let check_entail lhs rhs =
-   *   let prog = SBCast.mk_program "check_entail" in
-   *   let entail = SBCast.mk_entailment lhs rhs in
-   *   let res = SBProver.check_entailment prog entail in
-   *   match res with
-   *   | SBGlobals.MvlTrue -> true
-   *   | _ -> false
-   * in *)
-  report_error no_pos "incomplete procedure"
-
-let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
-    (cl : CF.list_partial_context) (conseq:CF.formula) =
-  (* Currently no calls *)
-  let pr1 = CPR.string_of_list_partial_context in
-  let pr2 = CPR.string_of_formula in
-  let pr3 (a,_)= pr1 a in
-  Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
-    (fun _ _ -> heap_entail_list_partial_context_init_x prog  cl conseq) cl conseq
-
-(* list all typechecker calls for solver *)
-let heap_entail_one_context = false
-(* 2 yes *)
-
-
-let heap_entail_list_failesc_context_init = false
-(* 4 no *)
+let heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
+  Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
+    Cprinter.string_of_struc_formula
+    (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
+    (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq ~pf:None) ctx conseq

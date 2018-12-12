@@ -551,8 +551,8 @@ let isAnyConstFalse f = match f with
         formula_base_heap = h;
         formula_base_vperm = vp;
         formula_base_pure = p;
-        formula_base_flow = fl; }) -> 
-    h = HFalse || MCP.isConstMFalse p || 
+        formula_base_flow = fl; }) ->
+    h = HFalse || MCP.isConstMFalse p ||
     is_false_flow fl.formula_flow_interval || CVP.is_false_vperm_sets vp
   | _ -> false
 (* TODO:WN : could we ensure vperm is normalized *)
@@ -12132,8 +12132,8 @@ let mkFailContext msg estate conseq pid pos = {
 let mkFailCtx_in (ft:fail_type) (es, msg,fk) cex =
   FailCtx (ft, Ctx {es with es_final_error = es.es_final_error@[(msg, ft, fk)]}, cex)
 
-(*simple concurrency*)
 let mkFailCtx_simple msg estate conseq cex pos =
+(*simple concurrency*)
   let fail_ctx = {
     fc_message = msg;
     fc_current_lhs  = estate;
@@ -12311,7 +12311,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
   Debug.no_2 "simplify_ctx_elim_false_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
 (*context set union*)
-let list_context_union_x c1 c2 = 
+let list_context_union_x c1 c2 =
   let simplify x = (* context_list_simplify *) x in
   match c1,c2 with
   | FailCtx (t1, c1, cex1), FailCtx (t2, c2, cex2) -> (*FailCtx (Or_Reason (t1,t2))*)
@@ -12377,7 +12377,7 @@ and isMayFailCtx cl = match cl with
   | FailCtx (fc,_, cex) -> (* Loc: to check cex here*) isMayFail fc
   | SuccCtx _ -> false
 
-and fold_context_left i c_l = 
+and fold_context_left i c_l =
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
   Debug.no_1_num i "fold_context_left" pr1 pr fold_context_left_x c_l
@@ -14478,16 +14478,16 @@ let conv3 f a e = let (r,x) = f a e in r
 (*   let f_comb _ = () in *)
 (*   let (e,_) = trans_struc_formula e arg f_conv f_arg f_comb in *)
 (*   e *)
+let rec transform_context f (c:context):context =
 
-let rec transform_context f (c:context):context = 
   match c with
-  | Ctx e -> 
+  | Ctx e ->
     (f e)
-  | OCtx (c1,c2) -> 
+  | OCtx (c1,c2) ->
     mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 
-let trans_context (c: context) (arg: 'a) 
-    (f: 'a -> context -> (context * 'b) option) 
+let trans_context (c: context) (arg: 'a)
+    (f: 'a -> context -> (context * 'b) option)
     (f_arg: 'a -> context -> 'a)
     (f_comb: 'b list -> 'b)
   : (context * 'b) =

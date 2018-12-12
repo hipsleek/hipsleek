@@ -1565,7 +1565,7 @@ and pop_holes_es (es : Cformula.entail_state) : Cformula.entail_state =
                }
 
 (* substitute *)
-and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 
+and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
   match ctx with
   | FailCtx _ -> ctx
   | SuccCtx(cl) ->

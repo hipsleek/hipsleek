@@ -77,7 +77,7 @@ type ho_flow_kind =
   | NEUTRAL
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
-type flags = 
+type flags =
     Flag_str of string
   | Flag_int of int
   | Flag_float of float

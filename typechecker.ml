@@ -1770,7 +1770,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_bind_param_imm = pimm; (* imm annotation for each field *)
         exp_bind_read_only = read_only;
         exp_bind_path_id = pid;
-        exp_bind_pos = pos }) -> 
+        exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
       let ctx = CF.transform_list_failesc_context
@@ -3076,9 +3076,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
         let _ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
         (*possibly change to flat post here as well??*)
-        let ans, prf = if !Globals.songbird then
-            Songbird.heap_entail_list_partial_context_init prog fn_state flat_post
-        else SV.heap_entail_list_partial_context_init prog false
+        let ans, prf =
+          (* if !Globals.songbird then
+           *   Songbird.heap_entail_list_partial_context_init prog fn_state flat_post
+           * else *)
+            SV.heap_entail_list_partial_context_init prog false
             fn_state flat_post None None None pos (Some pid)
         in
         let () =  DD.ninfo_hprint

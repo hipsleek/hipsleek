@@ -809,3 +809,82 @@ let rec start_repair_wrapper iprog =
     start_repair_wrapper iprog
   else tmp
 
+(* let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
+ *     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+ *   let n_prog = translate_prog prog in
+ *   let pr5 = pr_list CPR.string_of_formula in
+ *   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
+ *   let () = x_tinfo_hp (add_str "cl formulas" pr5) ante_formula_list no_pos in
+ *   let ante_sb_formula_list, _ = ante_formula_list |> List.map translate_formula
+ *                               |> List.split in
+ *   let (_, conseq) = CF.base_formula_of_struc_formula conseq in
+ *   let sb_conseq, _ = translate_formula conseq in
+ *   let pr4 = SBCast.pr_formula in
+ *   let () = x_tinfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
+ *   let () = x_tinfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in
+ *   let sb_conseq = List.hd sb_conseq in
+ *   let checkentail_one ante conseq =
+ *     let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailResidue x conseq)
+ *         ante in
+ *     let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+ *     let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
+ *     let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
+ *                                   ptree) ptrees in
+ *     if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
+ *     then
+ *       let residues = List.map (fun ptree ->
+ *           let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
+ *           let pr_rsd = SBCast.pr_fs in
+ *           let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
+ * 
+ *           List.hd residue_fs
+ *         ) ptrees in
+ *       let residue = translate_back_fs residues [] in
+ *       let () = x_tinfo_hp (add_str "residue" CPR.string_of_formula) residue no_pos in
+ *       Some residue
+ *     else None in
+ *   let residues = List.map (fun x -> checkentail_one x sb_conseq)
+ *       ante_sb_formula_list in
+ *   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
+ * 
+ * let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
+ *     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
+ *    (\* : (list_partial_context * proof) = *\)
+ *   let pr1 = CPR.string_of_list_partial_context in
+ *   let pr2 = CPR.string_of_struc_formula in
+ *   let pr3 (a,_)= pr1 a in
+ *   Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
+ *     (fun _ _ -> heap_entail_struc_list_partial_context_init_x prog  cl conseq) cl conseq *)
+
+(* let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
+ *     (cl : CF.list_partial_context) (conseq:CF.formula) =
+ *   let data_decls = prog.Cast.prog_data_decls in
+ *   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
+ *   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
+ *   let sb_conseq = translate_formula conseq in
+ *   (\* let check_entail lhs rhs =
+ *    *   let prog = SBCast.mk_program "check_entail" in
+ *    *   let entail = SBCast.mk_entailment lhs rhs in
+ *    *   let res = SBProver.check_entailment prog entail in
+ *    *   match res with
+ *    *   | SBGlobals.MvlTrue -> true
+ *    *   | _ -> false
+ *    * in *\)
+ *   report_error no_pos "incomplete procedure"
+ * 
+ * let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
+ *     (cl : CF.list_partial_context) (conseq:CF.formula) =
+ *   (\* Currently no calls *\)
+ *   let pr1 = CPR.string_of_list_partial_context in
+ *   let pr2 = CPR.string_of_formula in
+ *   let pr3 (a,_)= pr1 a in
+ *   Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
+ *     (fun _ _ -> heap_entail_list_partial_context_init_x prog  cl conseq) cl conseq
+ * 
+ * (\* list all typechecker calls for solver *\)
+ * let heap_entail_one_context = false
+ * (\* 2 yes *\)
+ * 
+ * 
+ * let heap_entail_list_failesc_context_init = false
+ * (\* 4 no *\) *)
