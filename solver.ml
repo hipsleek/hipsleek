@@ -118,41 +118,6 @@ let subst_eqset s e =
   let pr = pr_list (pr_pair pr_sv pr_sv) in
   Debug.no_2 "subst_eqset" pr pr pr subst_eqset s e
 
-let count_br_specialized prog cl =
-  let helper prog h_node = match h_node with
-    | ViewNode v ->
-      Gen.Profiling.inc_counter "consumed_nodes_counter";
-      let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls
-          v.h_formula_view_name in
-      let i = match v.h_formula_view_remaining_branches with
-        | None -> 0
-        | Some s -> (List.length vdef.view_prune_branches)-(List.length s) in
-      if i>0 then  Gen.Profiling.inc_counter "consumed_specialized_nodes" else ();
-      Some h_node
-    | _  -> None in
-  let f_e_f e = None in
-  let f_f e = None in
-  let f_h_f e =  helper prog e in
-  let f_memo e =  Some e in
-  let f_aset e = Some e in
-  let f_formula e = Some e in
-  let f_b_formula e = Some e in
-  let f_exp e = Some e in
-  (*let f_fail e = e in*)
-  let f_ctx e =
-    let f = e.es_formula in
-    let todo_unk = transform_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula,
-                                                       f_b_formula, f_exp)) f in
-    Ctx e in
-  let todo_unk = transform_context f_ctx cl in
-  ()
-
-(*
-  - count how many int constants are contained in one expression
-  - if there are more than 1 --> means that we can simplify further (by performing the operation)
-*)
-
-
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume_x prog lhs_node rhs_node:
@@ -312,21 +277,6 @@ let rec pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos 
       res
     | [] -> CP.mkTrue pos
 
-and prune_ctx prog ctx = match ctx with
-  | OCtx (c1,c2)-> mkOCtx (prune_ctx prog c1) (prune_ctx prog c2) no_pos
-  | Ctx es -> Ctx {es with es_formula = prune_preds prog false es.es_formula}
-
-and prune_branch_ctx prog (pt,bctx,oft) =
-  let r = prune_ctx prog bctx in
-  let () = count_br_specialized prog r in
-  (pt,r, oft)
-
-and prune_list_ctx prog ctx = match ctx with
-  | SuccCtx c -> SuccCtx (List.map (prune_ctx prog) c)
-  | _ -> ctx
-
-and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
-
 and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)->
     let rc3 = List.map (prune_branch_ctx prog) c3 in
     (c1,c2,rc3))  ctx
@@ -345,59 +295,6 @@ and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)->
   rem_br: remaining branch to prune
 *)
 (********************************************************)
-
-and split_linear_node (h : h_formula) : (h_formula * h_formula) list =
-  split_linear_node_guided [] h
-
-(*
- * Trung, delete later:
- *   - This function is used to split the RHS. The split results will be used
- *     to compute actions
- *   - To do acc-fold, maybe need to interfere here
- *)
-and split_linear_node_guided (vars : CP.spec_var list) (h : h_formula) :
-  (h_formula * h_formula) list =
-  let prh = Cprinter.string_of_h_formula in
-  let pr l= String.concat "," (List.map (fun (h1,h2)->"("^(prh h1)^","^(prh h2)
-                                                      ^")") l) in
-  Debug.no_2 "split_linear_node_guided" Cprinter.string_of_spec_var_list
-    Cprinter.string_of_h_formula pr split_linear_node_guided_x vars h
-
-(* split h into (h1,h2) with one node from h1 and the rest in h2 *)
-
-and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) :
-  (h_formula * h_formula) list =
-  let rec splitter h1 h2 constr pos =
-    let l1 = sln_helper h1 in
-    let l2 = sln_helper h2 in
-    let l1r = List.map (fun (c1,c2)->(c1,constr c2 h2 pos)) l1 in
-    let l2r = List.map (fun (c1,c2)->(c1,constr h1 c2 pos)) l2 in
-    l1r@l2r
-  and sln_helper h = match h with
-    | HTrue -> [(HTrue, HEmp)]
-    | HFalse -> [(HFalse, HFalse)]
-    | HEmp -> [(HEmp,HEmp)]
-    | Hole _ | FrmHole _ -> report_error no_pos "[solver.ml]: Immutability hole
-  annotation encountered\n"
-    | HRel _
-    | ThreadNode _
-    | DataNode _
-    | ViewNode _  | HVar _ -> [(h,HEmp)] (* TODO:HO *)
-    | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
-    | ConjStar h -> splitter h.h_formula_conjstar_h1 h.h_formula_conjstar_h2
-                      mkConjStarH h.h_formula_conjstar_pos
-    | ConjConj h ->splitter h.h_formula_conjconj_h1 h.h_formula_conjconj_h2
-                     mkConjConjH h.h_formula_conjconj_pos 
-    | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
-    | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 (fun a b c ->
-        mkStarH a b c) h.h_formula_star_pos
-    | StarMinus  h-> splitter h.h_formula_starminus_h1 h.h_formula_starminus_h2
-                       (fun a b c -> mkStarMinusH a b h.h_formula_starminus_aliasing c 20)
-                       h.h_formula_starminus_pos in
-
-  let l = sln_helper h in
-  List.filter (fun (c1,_)-> Cformula.is_complex_heap c1) l
-
 and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_state) : context =
   let r1,r2 = combine_and es.es_formula f in
   if (reset_flag) then if r2 then (Ctx {es with es_formula = r1;es_unsat_flag =false;})
@@ -1270,20 +1167,6 @@ and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f 
   (discard_uninteresting_constraint f vvars) only maintains those vars containing vvars, which are vars of interest
 *)
 
-and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list)
-  : CP.formula =
-  match f with
-  | CP.BForm _ ->
-    if CP.disjoint (CP.fv f) vvars then (CP.mkTrue no_pos)
-    else f
-  | CP.And(f1, f2, l) -> CP.mkAnd (discard_uninteresting_constraint f1 vvars)
-                           (discard_uninteresting_constraint f2 vvars) l
-  | CP.AndList b -> CP.AndList (map_l_snd (fun c-> discard_uninteresting_constraint c vvars) b)
-  | CP.Or(f1, f2, lbl, l) -> CP.mkOr (discard_uninteresting_constraint f1 vvars)
-                               (discard_uninteresting_constraint f2 vvars) lbl  l
-  | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
-  | _ -> f
-
 and contra_wrapper f rhs_p =
   let rs0, fold_prf =
     (*Loc: why smart_lem_search?? append_sll_cll_slk-15.smt2.slk from must failure to may failure?? *)
@@ -1693,15 +1576,6 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
     let t1 = fold_context_left 1 t1 in
     (t1,p1)
 
-(*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue*)
-and redundant_existential_check (svs : CP.spec_var list) (ctx0 : context) =
-  match ctx0 with
-  | Ctx es -> let free_var_list = (fv es.es_formula) in
-    begin if (not ( CP.disjoint svs free_var_list)) then
-        x_dinfo_zp (lazy ("Some variable introduced by existential elimination where found in the residue")) no_pos end
-  | OCtx (c1, c2) ->
-    let () = redundant_existential_check svs c1 in
-    (redundant_existential_check svs c2)
 
 and elim_exists_pure w f lump pos = elim_exists_mix_formula w f pos
 
@@ -1725,107 +1599,6 @@ and elim_exists_memo_pure(* _debug *) w f0 pos =
     Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
     (fun w f0 -> elim_exists_memo_pure_x w f0 pos) w f0
 
-and elim_exists_pure_formula (f0:CP.formula) =
-  match f0 with
-  | CP.Exists _ ->
-    let sf= x_add TP.simplify_a 11 f0 in
-    sf
-  | _ -> f0
-
-and elim_exists_pure_formula_debug (f0:CP.formula) =
-  Debug.no_1_opt (fun r -> not(r==f0)) "elim_exists_pure_formula" 
-    Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
-    elim_exists_pure_formula f0
-
-
-(* this method will lift out free conjuncts prior to an elimination
-   of existential variables w that were newly introduced;
-   r denotes that free variables from f0 that overlaps with w 
-*)
-and elim_exists_pure_branch (i:int) (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
-  let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
-    (fun w f0 -> elim_exists_pure_branch_x w f0 pos) w f0
-
-and elim_exists_pure_branch_x ?(revflag=false) (w : CP.spec_var list) (f0 :
-  CP.formula) pos : CP.formula =
-  let r=if (w==[]) then [] else CP.intersect w (CP.fv f0) in
-  if (r==[]) then f0
-  else
-    let lc = CP.split_conjunctions f0 in
-    let (fl,bl)=List.partition (fun e -> CP.intersect r (CP.fv e)==[]) lc in
-    let be = CP.join_conjunctions bl in 
-    let f = CP.mkExists r be None pos in
-    let sf = x_add TP.simplify_a 2 f  in
-    (*remove true constraints, i.e. v=v*)
-    let sf = CF.remove_true_conj_pure sf in
-    (*remove duplicated conjs*)
-    let sf = CF.remove_dupl_conj_eq_pure sf in
-    let simplified_f = List.fold_left (fun be e -> CP.mkAnd e be no_pos) sf fl in
-    simplified_f
-
-(*
-  PROBLEM : exists_elim NOT deep enough
-  entail_state_elim_exists@1
-  entail_state_elim_exists inp1 : es_formula: 
-  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
-  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
-  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
-  {FLOW,(19,20)=__norm}[]
-  entail_state_elim_exists@1 EXIT out : es_formula: 
-  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
-  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
-  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
-  {FLOW,(19,20)=__norm}[]
-*)
-(* --- added 11.05.2008 *)
-and entail_state_elim_exists_x es =
-  let pr_f = Cprinter.string_of_formula in
-  let pr_h = Cprinter.string_of_h_formula in
-  let ff = es.es_formula in
-  let f_prim(* ,new_his *)  = elim_exists_es_his ff (* es.es_history *) in
-  (* 05.06.08 *)
-  (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
-  (* EXAMPLE
-     @5! f(b4 elim_exists_es_his):
-     (exists mi_15: x::cell<mi_15>@M[Orig]&mi_15=v&{FLOW,(19,20)=__norm})[]
-     @5! f(b4 elim_exists_es_his):
-     x::cell<v>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-  *)
-  (* x_tinfo_hp (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos; *)
-  x_tinfo_hp (add_str "XXX f(before) elim_exists_es_his)" pr_f) ff no_pos;
-  x_tinfo_hp (add_str "XXX f(after) elim_exists_es_his)" pr_f) f_prim no_pos;
-  let f =
-    (* TNT: Do not eliminate exists when doing TNT inference *)
-    if es.es_infer_obj # is_term then
-      let tuid_fv = collect_term_ann_fv f_prim in
-      let ex_tuid_fv = Gen.BList.difference_eq CP.eq_spec_var tuid_fv (fv f_prim) in
-      let nf = pop_exists ex_tuid_fv f_prim in
-      let elim_ex_nf = elim_exists_exp nf in
-      push_exists ex_tuid_fv elim_ex_nf
-    else elim_exists_exp f_prim 
-  in
-  (*let () = print_string("f :" ^ (Cprinter.string_of_formula f) ^ "\n") in*)
-  let qvar, base = CF.split_quantifiers f in
-  let h, p, vp, fl, t, a = CF.split_components base in
-  let simpl_p =	
-    if !Globals.simplify_pure then 
-      MCP.simpl_memo_pure_formula simpl_b_formula simpl_pure_formula p (x_add TP.simplify_a 1)
-    else p in
-  let simpl_fl = fl (*flows have nothing to simplify to*)in
-  let simpl_f = CF.mkExists qvar h simpl_p vp t simpl_fl
-      (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
-  Ctx{es with es_formula = simpl_f;
-              (* es_history = new_his; *)
-              (* es_subst_ref = n_ss_ref; *)
-     }   (*assuming no change in cache formula*)
-
-and entail_state_elim_exists es =
-  let pr1 = Cprinter.string_of_formula in
-  let pr2 es = pr1 es.CF.es_formula in
-  let pr3 = Cprinter.string_of_context in
-  Debug.no_1 "entail_state_elim_exists" pr2 pr3
-    (fun _ -> entail_state_elim_exists_x es) es
 
 and elim_exists_ctx_list (ctx0 : list_context) = 
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0
@@ -1845,25 +1618,8 @@ and elim_exists_ctx_x (ctx0:context) =
     transform_context entail_state_elim_exists ctx0
   else ctx0
 
-
-
-
 and elim_exists_ctx (ctx0:context) =
   Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
-
-and elim_ante_evars (es:entail_state) : context = 
-  let () = x_tinfo_hp (add_str "elim ante_evars"
-                         Cprinter.string_of_spec_var_list) es.es_ante_evars
-      no_pos in
-  let () = x_tinfo_hp (add_str "elim gen_expl_vars"
-                         Cprinter.string_of_spec_var_list) es.es_gen_expl_vars
-      no_pos in
-  let () = x_tinfo_hp (add_str "elim evars" Cprinter.string_of_spec_var_list) es.es_evars no_pos in
-  if es.es_evars==[] then Ctx es
-  else
-    let f = push_exists es.es_evars es.es_formula in
-    let ef = elim_exists f in
-    Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 (*used for finding the unsat in the original pred defs formulas*)
 and find_unsat_x (prog : prog_decl) (f : formula):formula list*formula list =  
@@ -1889,6 +1645,20 @@ and find_unsat prog f =
   let pr_f =  Cprinter.string_of_formula in
   let pr_l = pr_list pr_f in
   Debug.no_1 "find_unsat" pr_f (pr_pair pr_l pr_l) (find_unsat_x prog) f
+
+and elim_ante_evars (es:entail_state) : context =
+  let () = x_tinfo_hp (add_str "elim ante_evars"
+                         Cprinter.string_of_spec_var_list) es.es_ante_evars
+      no_pos in
+  let () = x_tinfo_hp (add_str "elim gen_expl_vars"
+                         Cprinter.string_of_spec_var_list) es.es_gen_expl_vars
+      no_pos in
+  let () = x_tinfo_hp (add_str "elim evars" Cprinter.string_of_spec_var_list) es.es_evars no_pos in
+  if es.es_evars==[] then Ctx es
+  else
+    let f = push_exists es.es_evars es.es_formula in
+    let ef = elim_exists f in
+    Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
@@ -13703,27 +13473,6 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
     process_one_h h_lst
   in
   helper estate h p vp fl (*start*)
-
-and normalize_frac_heap prog h p vp =  (*used after adding back the consumed heap*)
-  if !perm=NoPerm then (h, p)
-  else if !perm=Bperm then (h, p) (*TODO: this is not applicable to BPERM*)
-  else
-    let f = normalize_base_perm prog (mkBase h p vp TypeTrue (mkTrueFlow ()) []
-                                        no_pos) in
-    match f with
-    | Or _ -> Error.report_error {Err.error_loc = no_pos;
-                                  Err.error_text
-                                  = "normalize_frac_heap: adding the consumed
-  heap should not yield OR"}
-    | _ ->
-      let (_, h, p, _, _, _, _, _, _) = all_components f in
-      (h,p)
-
-and normalize_context_perm prog ctx = match ctx with
-  | OCtx (c1,c2)-> mkOCtx (normalize_context_perm prog c1)
-                     (normalize_context_perm prog c2) no_pos
-  | Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog
-                               es.es_formula;}
 
 and normalize_es_formula_w_coers prog estate (f: formula) (coers: coercion_decl
   list) pos: CF.entail_state * formula =
