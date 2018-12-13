@@ -2333,7 +2333,9 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
 
   let heap_entail_one_branch unk_map (lbl,c2,oft)=
     let c20 = CF.update_hp_unk_map c2 unk_map in
-    let list_context_res,prf = f prog is_folding has_post c20 conseq tid delayed_f join_id pos pid in
+    let list_context_res,prf = f prog is_folding has_post c20 conseq tid
+        delayed_f join_id pos pid in
+    let () = x_tinfo_hp (add_str "ctx" Cprinter.string_of_list_context) list_context_res no_pos in
     let res,new_unk_map = match list_context_res with
       | FailCtx (t,c,_) ->  begin 
           if CF.is_en_error_exc_ctx c

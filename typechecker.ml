@@ -668,7 +668,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       ((exp_fv e0)@spec_names@(List.map snd proc.proc_args));
                   print_string_quiet ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
                 else () in
-              let () = x_tinfo_hp (add_str "e0: "
+              let () = x_binfo_hp (add_str "e0: "
                                      (Cprinter.string_of_exp))
                   e0 no_pos in
               let res_ctx = x_add check_exp prog proc lfe e0 post_label in
@@ -681,7 +681,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               let res_ctx = CF.list_failesc_to_partial res_ctx in
               let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
               let pos = CF.pos_of_formula post_cond in
-              let () = x_ninfo_pp ("\n WN 2 : "
+              let () = x_tinfo_pp ("\n WN 2 : "
                                    ^(Cprinter.string_of_list_partial_context
                                        res_ctx)) pos in
               if (CF.isFailListPartialCtx_new res_ctx)
@@ -1441,9 +1441,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       Debug.print_info "assert"
                         (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n"
                              else ": unreachable\n")) pos;
-                      x_dinfo_pp (*print_info "assert"*) (
-                        "Residual:\n" ^ (Cprinter.string_of_list_failesc_context
-                                           rs)) pos;
+                      x_tinfo_pp ("Residual:\n"
+                                  ^ (Cprinter.string_of_list_failesc_context rs)) pos;
                       (* WN_2_Loc: put xpure of asserted by fn below  *)
                       let xp = get_xpure_of_formula c_assert_opt in
                       (rs,Some xp,None)
@@ -1773,6 +1772,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
+      let () = x_tinfo_hp (add_str "ctx bind start: "
+                             Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let ctx = CF.transform_list_failesc_context
           (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
       let bind_op () =
@@ -1924,10 +1925,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let () = PTracer.log_proof prf in
             let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
             let () = CF.must_consistent_list_failesc_context "bind 4" rs  in
-            if (CF.isSuccessListFailescCtx_new unfolded)
-            && (not(CF.isSuccessListFailescCtx_new rs))then
+            if (CF.isSuccessListFailescCtx_new unfolded) &&
+               (not(CF.isSuccessListFailescCtx_new rs))
+            then
               begin
-                if Globals.is_en_efa_exc () && (Globals.global_efa_exc ()) then
+                if Globals.is_en_efa_exc () && (Globals.global_efa_exc ())
+                then
                   let to_print = ("bind 3: node " ^ (Cprinter.string_of_formula
                                                        vheap ) ^
                                   " cannot be derived from context (")
@@ -2092,15 +2095,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
+      let () = x_binfo_hp (add_str "ctx cond start: "
+                             Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let cond_op () =
         begin
           let () = proving_loc#set pos in
           let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
           let then_cond_prim = MCP.mix_of_pure pure_cond in
           let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-          let then_ctx =
-            if !Globals.delay_if_sat then SV.combine_list_failesc_context prog ctx then_cond_prim
-            else  SV.combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+          let then_ctx = if !Globals.delay_if_sat
+            then SV.combine_list_failesc_context prog ctx then_cond_prim
+            else  SV.combine_list_failesc_context_and_unsat_now prog ctx
+                then_cond_prim in
+          let () = x_tinfo_hp (add_str "then ctx: "
+                                 Cprinter.string_of_list_failesc_context) then_ctx no_pos  in
           x_dinfo_zp (lazy ("conditional: then_delta:\n"
                             ^ (Cprinter.string_of_list_failesc_context then_ctx)
                            )) pos;
@@ -2111,8 +2119,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                             ^ (Cprinter.string_of_list_failesc_context else_ctx)
                            )) pos;
           let then_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 1 then_ctx in
+          let () = x_tinfo_hp (add_str "then ctx: "
+                             Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
+          let () = x_tinfo_hp (add_str "then ctx: "
+                             Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
           let then_ctx2 = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
@@ -2123,7 +2135,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       let res = wrap_proving_kind PK_If_Stmt cond_op () in
       Gen.Profiling.pop_time "[check_exp] Cond";
       res
-      ;
     | Dprint ({exp_dprint_string = str;
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
@@ -2313,7 +2324,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         let proc0 = proc in
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
-        let () = x_tinfo_hp (add_str "ctx scall start: "
+        let () = x_binfo_hp (add_str "mn: " pr_id) mn no_pos in
+        let () = x_dinfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx
@@ -2536,8 +2548,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             Gen.Profiling.pop_time "[check_exp] SCall";
             (*Loc: error as exception *)
             (* move must, may flow into esc_stack *)
-            let () = x_tinfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
-                res no_pos in
             if (Globals.global_efa_exc () || (CF.isSuccessListFailescCtx_new res)) then
               let res =
                 let () = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
@@ -2558,6 +2568,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                     CF.es_final_error
                                     = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
+              let () = x_binfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
+                res no_pos in
+
               (*Exhausively apply normalization lemma after each SCall.
                 Need to devise a smart way since
                 this will incur overhead if we have many
