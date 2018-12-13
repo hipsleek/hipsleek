@@ -564,6 +564,7 @@ let hentail_after_sat_ebase prog ctx es bf ?(pf=None)=
       let pos = translate_loc bf.CF.formula_struc_pos in
       let sb_vars = List.map translate_var evars in
       (List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
+  let holes = List.map CF.disable_imm_h_formula holes in
   let formula = es.CF.es_formula in
   let formula = match pf with
     | None -> formula
@@ -614,8 +615,13 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
             (List.hd rez1) (List.tl rez1) in
         (rez1, Prooftracer.TrueConseq)
       | EList b ->
-        (* fold_context_left 42 l1 *)
-        report_error no_pos "Elist unhandled"
+        let _, struc_list = List.split b in
+        let res_list =
+          List.map (fun x -> heap_entail_after_sat_struc_x prog ctx x ~pf:pf)
+            struc_list in
+        let ctx_lists = res_list |> List.split |> fst in
+        let res = CF.fold_context_left 41 ctx_lists in
+        (res, Prooftracer.TrueConseq)
       | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
     )
   | OCtx (c1, c2) ->

@@ -96,7 +96,7 @@ and struc_formula =
   | EList of (spec_label_def * struc_formula) list
   | ECase of struc_case_formula
   | EBase of struc_base_formula
-  | EAssume of assume_formula (*((Cpure.spec_var list) * formula * formula_label * ensures_type)*)
+  | EAssume of assume_formula
   | EInfer of struc_infer_formula
 
 and assume_formula =
@@ -20658,3 +20658,21 @@ let normalize_struc nb b =
   let pr_f = !print_formula in
   let pr_sf = !print_struc_formula in
   Debug.no_2 "normalize_struc" pr_sf pr_none pr_sf normalize_struc nb b
+
+let rec disable_imm_h_formula hf = match hf with
+  | HTrue
+  | HFalse
+  | HEmp
+  | HVar _
+  | HRel _
+  | Hole _
+  | FrmHole _ -> hf
+  | DataNode dnode ->
+    DataNode {dnode with h_formula_data_imm = CP.ConstAnn Mutable}
+  | ViewNode vnode ->
+    ViewNode {vnode with h_formula_view_imm = CP.ConstAnn Mutable}
+  | Star st ->
+    Star {st with h_formula_star_h1 = disable_imm_h_formula st.h_formula_star_h1;
+                  h_formula_star_h2 = disable_imm_h_formula st.h_formula_star_h2}
+  | _ -> report_error no_pos "disable_imm_h_formula not handled case"
+
