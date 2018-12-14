@@ -917,10 +917,6 @@ let rec exp_contains_spec_var (e : exp) : bool =
   | ArrayAt _ -> true
   | _ -> false
 
-
-
-
-
 let eq_spec_var_rec (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
     (* translation has ensured well-typedness.
@@ -4281,18 +4277,17 @@ and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
     subst_avoid_capture_x fr t f
 
 and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula) =
-  try 
+  try
     let st1 = List.combine fr t in
-    (* let f2 = subst st1 f in *) 
     (* changing to a parallel substitution below *)
-    let f2 = par_subst st1 f in 
+    let f2 = par_subst st1 f in
     f2
   with _ -> failwith (x_loc ^ "[subst_avoid_capture]: Cannot combine fr and t")
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_subs sst f
 
 (*LDK ???*)
-and subst_var (fr, t) (o : spec_var) = 
+and subst_var (fr, t) (o : spec_var) =
   if eq_spec_var fr o then t
   else o
 
@@ -4377,9 +4372,9 @@ and b_apply_subs_x sst bf =
               | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
               | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-              | EqMax (a1, a2, a3, pos) -> 
+              | EqMax (a1, a2, a3, pos) ->
                 EqMax (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
-              | EqMin (a1, a2, a3, pos) -> 
+              | EqMin (a1, a2, a3, pos) ->
                 EqMin (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
               | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
               | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
@@ -4480,7 +4475,7 @@ and b_apply_subs_x sst bf =
 
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
-and subs_one sst v = 
+and subs_one sst v =
   let rec helper sst v = match sst with
     | [] -> v
     | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)

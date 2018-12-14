@@ -1579,7 +1579,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate
 
 and elim_exists_pure w f lump pos = elim_exists_mix_formula w f pos
 
-and elim_exists_mix_formula w f pos = 
+and elim_exists_mix_formula w f pos =
   let pr = Cprinter.string_of_mix_formula in
   Debug.no_2 "elim_exists_mix_formula" pr !CP.print_svl pr
     (fun _ _ -> elim_exists_mix_formula_x w f pos) f w
@@ -1594,16 +1594,16 @@ and elim_exists_memo_pure_x (w : CP.spec_var list) (f0 : memo_pure) pos =
     Gen.Profiling.pop_time "elim_exists"; f_s in
   MCP.memo_pure_push_exists_all (f_simp,true) w f0 pos
 
-and elim_exists_memo_pure(* _debug *) w f0 pos = 
+and elim_exists_memo_pure(* _debug *) w f0 pos =
   Debug.no_2 "elim_exists_memo_pure" Cprinter.string_of_spec_var_list
     Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
     (fun w f0 -> elim_exists_memo_pure_x w f0 pos) w f0
 
 
-and elim_exists_ctx_list (ctx0 : list_context) = 
+and elim_exists_ctx_list (ctx0 : list_context) =
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0
 
-and elim_exists_partial_ctx_list (ctx0 : list_partial_context) = 
+and elim_exists_partial_ctx_list (ctx0 : list_partial_context) =
   transform_list_partial_context (entail_state_elim_exists, (fun c-> c)) ctx0
 
 and elim_exists_failesc_ctx_list_x (ctx0 : list_failesc_context) =

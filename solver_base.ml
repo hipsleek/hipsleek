@@ -499,8 +499,9 @@ let entail_state_elim_exists_x es =
   let pr_f = Cprinter.string_of_formula in
   let pr_h = Cprinter.string_of_h_formula in
   let ff = es.es_formula in
-  let f_prim(* ,new_his *)  = elim_exists_es_his ff (* es.es_history *) in
-  (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
+  let f_prim = elim_exists_es_his ff in
+  (* we also try to eliminate exist vars for which a find a substitution of the
+  form v = exp from the pure part *)
   (* EXAMPLE
      @5! f(b4 elim_exists_es_his):
      (exists mi_15: x::cell<mi_15>@M[Orig]&mi_15=v&{FLOW,(19,20)=__norm})[]
@@ -517,7 +518,7 @@ let entail_state_elim_exists_x es =
       let nf = pop_exists ex_tuid_fv f_prim in
       let elim_ex_nf = elim_exists_exp nf in
       push_exists ex_tuid_fv elim_ex_nf
-    else elim_exists_exp f_prim 
+    else elim_exists_exp f_prim
   in
   let qvar, base = CF.split_quantifiers f in
   let h, p, vp, fl, t, a = CF.split_components base in
@@ -525,7 +526,7 @@ let entail_state_elim_exists_x es =
     if !Globals.simplify_pure then
       MCP.simpl_memo_pure_formula simpl_b_formula simpl_pure_formula p (x_add TP.simplify_a 1)
     else p in
-  let simpl_fl = fl (*flows have nothing to simplify to*)in
+  let simpl_fl = fl in
   let simpl_f = CF.mkExists qvar h simpl_p vp t simpl_fl
       (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
   Ctx{es with es_formula = simpl_f;}   (*assuming no change in cache formula*)

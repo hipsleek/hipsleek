@@ -1653,10 +1653,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else (CF.Ctx c1) in
               res
             in
+            let () = x_binfo_hp (add_str "ctx Assign before: "
+                             Cprinter.string_of_list_failesc_context) ctx1 no_pos
+            in
+            let () = x_binfo_hp (add_str "rhs: "
+                                     (Cprinter.string_of_exp))
+                  rhs no_pos in
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let () = CF.must_consistent_list_failesc_context "assign final" res
             in
-            let () = x_tinfo_hp (add_str "ctx final: "
+            let () = x_binfo_hp (add_str "ctx Assign final: "
                              Cprinter.string_of_list_failesc_context) res no_pos
             in
             res
@@ -1979,9 +1985,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 x_tinfo_hp (add_str "bind:tmp_res1"
                               (pr_list Cprinter.string_of_failesc_context))
                   tmp_res1 no_pos;
-                x_tinfo_hp (add_str "bind:tmp_res2"
-                              (pr_list Cprinter.string_of_failesc_context))
-                  tmp_res2 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                 let bind_field = CF.mk_bind_fields_struc vs_prim in
                 let tmp_res2 =
@@ -1998,14 +2001,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     tmp_res2
                 in
                 let tmp_res2 = SV.prune_ctx_failesc_list prog tmp_res2 in
+                x_tinfo_hp (add_str "bind:tmp_res2"
+                              (pr_list Cprinter.string_of_failesc_context))
+                  tmp_res2 no_pos;
                 let tmp_res3 = x_add CF.push_exists_list_failesc_context vs_prim tmp_res2 in
+                x_tinfo_hp (add_str "bind:tmp_res3"
+                              (pr_list Cprinter.string_of_failesc_context))
+                  tmp_res3 no_pos;
                 let () = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
                 let res = if !Globals.elim_exists_ff
                   then SV.elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
-                x_tinfo_hp (add_str "bind:tmp_res2"
+                x_binfo_hp (add_str "bind:tmp_res2"
                               (pr_list Cprinter.string_of_failesc_context))
-                  tmp_res2 no_pos;
+                  res no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)
                 CF.pop_esc_level_list res pid
               end
@@ -2044,7 +2053,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               no_pos in
           let res = if !Globals.elim_exists_ff then SV.elim_exists_failesc_ctx_list ctx2 else ctx2 in
           Gen.Profiling.pop_time "[check_exp] Block";
-          let () = x_tinfo_hp (add_str "res: "
+          let () = x_binfo_hp (add_str "check_exp block res: "
                                  Cprinter.string_of_list_failesc_context) res
               no_pos in
           res
@@ -2095,7 +2104,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
-      let () = x_binfo_hp (add_str "ctx cond start: "
+      let () = x_tinfo_hp (add_str "ctx cond start: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let cond_op () =
         begin
@@ -2325,7 +2334,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_binfo_hp (add_str "mn: " pr_id) mn no_pos in
-        let () = x_dinfo_hp (add_str "ctx scall start: "
+        let () = x_binfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx

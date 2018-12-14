@@ -77,7 +77,17 @@ let translate_var var =
 
 let translate_back_var (var : SBGlobals.var) =
   let (str, typ) = var in
-  CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
+  if String.length str = 0 then
+    CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
+  else
+    let len = String.length str in
+    let last_char = String.sub str (len - 1) 1 in
+    if String.compare last_char "'" == 0
+    then
+      let str2 = String.sub str 0 (len - 1)  in
+      CP.SpecVar (translate_back_type typ, str2, VarGen.Primed)
+    else
+      CP.SpecVar (translate_back_type typ, str, VarGen.Unprimed)
 
 let rec translate_exp (exp: CP.exp) =
   match exp with
@@ -587,7 +597,10 @@ let hentail_after_sat_ebase prog ctx es bf ?(pf=None)=
       ) ptrees in
     let residue = translate_back_fs residues holes in
     let () = x_dinfo_hp (add_str "residue" pr_formula) residue no_pos in
-    let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
+    let n_ctx = CF.Ctx {es with
+                        CF.es_evars = CF.get_exists es.CF.es_formula;
+                        CF.es_formula = residue;
+                       } in
 
     (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
   else

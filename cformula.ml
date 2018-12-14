@@ -4521,17 +4521,17 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
 and elim_exists_es_his_x (f0 : formula) (* (his:h_formula list) *) : formula(* *h_formula list *) =
-  let rec helper f0 (* hfs *) (* ss_ref *)=
+  let rec helper f0 =
     match f0 with
-    | Or ({ 
+    | Or ({
         formula_or_f1 = f1;
         formula_or_f2 = f2;
         formula_or_pos = pos }) ->
-      let ef1(* , hfs1 *)(* ,ss_ref1 *) = helper f1 (* hfs *) (* ss_ref *) in
-      let ef2(* ,hfs2 *) (* ,ss_ref2 *) = helper f2 (* hfs1 *) (* ss_ref1 *) in
-      (mkOr ef1 ef2 pos (*, hfs2 *)(* ,ss_ref2 *))
-    | Base _ -> (f0(* , hfs *))
-    | Exists ({ 
+      let ef1 = helper f1 in
+      let ef2 = helper f2 in
+      (mkOr ef1 ef2 pos)
+    | Base _ -> (f0)
+    | Exists ({
         formula_exists_qvars = qvar :: rest_qvars;
         formula_exists_heap = h;
         formula_exists_vperm = vp;
@@ -4541,29 +4541,25 @@ and elim_exists_es_his_x (f0 : formula) (* (his:h_formula list) *) : formula(* *
         formula_exists_and = a;
         formula_exists_pos = pos }) ->
       let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
-      let r(* ,n_hfs *) = 
+      let r =
         if List.length st = 1 then
           let tmp = mkBase h pp1 vp t fl a pos in (*TO CHECK*)
           let new_baref = x_add subst st tmp in
-          (* let new_hfs = List.map (h_subst st) hfs in *)
-          (* let n_ss_ref = List.map (fun (sv1,sv2) -> (sv1, CP.subs_one st sv2)) ss_ref in *)
           let tmp2 = add_quantifiers rest_qvars new_baref in
-          let tmp3(* ,new_hfs1 *)(* ,n_ss_ref1 *) = helper tmp2 (* new_hfs *) (* n_ss_ref *) in
-          (tmp3(* ,new_hfs1 *)(* ,n_ss_ref1 *))
+          let tmp3 = helper tmp2 in
+          tmp3
         else (* if qvar is not equated to any variables, try the next one *)
           let tmp1 = mkExists rest_qvars h p vp t fl a pos in (*TO CHECK*)
-          let tmp2(* ,hfs1 *)(* ,ss_ref1 *) = helper tmp1 (* hfs *) (* ss_ref *) in
+          let tmp2 = helper tmp1 in
           let tmp3 = add_quantifiers [qvar] tmp2 in
-          (tmp3(* ,hfs1 *)(* ,ss_ref1 *))
-      in
-      (r(* ,n_hfs *)(* ,n_ss_ref *))
+          tmp3
+      in r
     | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
   in
   helper f0 (* his *) (* subst_ref *)
 
-and elim_exists_es_his (f0 : formula) (* (his:h_formula list) *) (* ss_ref *) : formula(* *h_formula list *) =
+and elim_exists_es_his (f0 : formula) : formula=
   let pr1 = pr_list !print_h_formula in
-  (* let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
   let pr_out = (* (pr_pair !print_formula pr1) *) !print_formula in
   Debug.no_1 "elim_exists_es_his"
     !print_formula  pr_out
@@ -9708,7 +9704,7 @@ class infer_acc =
           let () = y_dinfo_hp (add_str "previously inferred" !CP.print_formula) p1 in
           let () = y_dinfo_hp (add_str "false contra with" !CP.print_formula) p in
           false
-  end;;
+  end
 
 type entail_state = {
   es_formula : formula; (* can be any formula ;
@@ -12203,8 +12199,7 @@ let or_fail_type_opt oft1 oft2=
   | _ -> None
 
 let rec merge_success s1 s2 = match s1,s2 with
-  | [],xs | xs,[] -> xs   
-  (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
+  | [],xs | xs,[] -> xs
   | (l1,b1,ft1)::z1,(l2,b2,ft2)::z2 -> 
     if path_trace_eq l1 l2 then 
       let res = merge_success z1 z2 in
@@ -14755,7 +14750,7 @@ and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context =
 and get_exists_context (ctx : context) : CP.spec_var list =
   let rec helper ctx =
     match ctx with
-    | Ctx e -> 
+    | Ctx e ->
       get_exists e.es_formula
     | OCtx (c1,c2) ->
       let evars1 = helper c1 in

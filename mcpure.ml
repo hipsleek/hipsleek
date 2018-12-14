@@ -2390,7 +2390,7 @@ let subst_avoid_capture_memo from t f = match f with
 
 let memo_subst s f = match f with
   | MemoF f -> MemoF (memo_subst s f)
-  | OnePF f -> OnePF (subst s f)  
+  | OnePF f -> OnePF (subst s f)
 
 let list_pos_of_mix_formula mf=
   match mf with
