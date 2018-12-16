@@ -301,8 +301,7 @@ let rec translate_hf hf = match hf with
     let () = x_tinfo_hp (add_str "root: " CP.string_of_spec_var) root no_pos in
     let () = x_tinfo_hp (add_str "args: " (pr_list CP.string_of_spec_var)) args no_pos in
     let args = [root] @ args in
-    let typed_vars = List.map (fun x -> (CP.name_of_sv x, CP.typ_of_sv x)) args in
-    let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
+    let sb_vars = List.map translate_var args in
     let sb_exps = List.map SBCast.mk_exp_var sb_vars in
     let loc = view.h_formula_view_pos in
     let pos = translate_loc loc in
@@ -557,14 +556,14 @@ let translate_prog (prog:Cast.prog_decl) =
   in
   let pr3 = SBCast.pr_program in
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-  let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
+  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
 
 
 let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
-  let () = x_binfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
-  let () = x_binfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
+  let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
+  let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
   match ctx with
   | Ctx es ->
     (
@@ -642,11 +641,11 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
       sb_ante in
-  let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+  let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:false n_prog ent) ents in
   let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
                                 ptree) ptrees in
-  let () = x_binfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
+  let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
   then
     let residues = List.map (fun ptree ->
@@ -656,7 +655,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         List.hd residue_fs
       ) ptrees in
     let residue = translate_back_fs residues holes in
-    let () = x_binfo_hp (add_str "residue" pr_formula) residue no_pos in
+    let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
     let n_ctx = CF.Ctx {es with
                         CF.es_evars = CF.get_exists es.CF.es_formula;
                         CF.es_formula = residue;

@@ -668,7 +668,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       ((exp_fv e0)@spec_names@(List.map snd proc.proc_args));
                   print_string_quiet ("bai-used:   "^(String.concat "," !proc_used_names)^"\n")
                 else () in
-              let () = x_binfo_hp (add_str "e0: "
+              let () = x_tinfo_hp (add_str "e0: "
                                      (Cprinter.string_of_exp))
                   e0 no_pos in
               let res_ctx = x_add check_exp prog proc lfe e0 post_label in
@@ -2104,7 +2104,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
-      let () = x_binfo_hp (add_str "ctx cond start: "
+      let () = x_tinfo_hp (add_str "ctx cond start: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let cond_op () =
         begin
@@ -2333,7 +2333,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         let proc0 = proc in
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
-        let () = x_binfo_hp (add_str "mn: " pr_id) mn no_pos in
+        let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
         let () = x_tinfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
@@ -2489,7 +2489,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
-              let () = x_binfo_hp (add_str "new rs:"
+              let () = x_tinfo_hp (add_str "new rs:"
                                      Cprinter.string_of_list_failesc_context)
                   rs no_pos in
               rs
@@ -2547,7 +2547,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     (proc.proc_stk_of_static_specs#top) no_pos in
                 check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
             in
-            let () = x_binfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
+            let () = x_tinfo_hp (add_str "res " Cprinter.string_of_list_failesc_context)
                 res no_pos in
             let () = if !print_proof then Prooftracer.add_pre e0 in
             let () = if !print_proof && scall_pre_cond_pushed then
