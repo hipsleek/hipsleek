@@ -2798,7 +2798,7 @@ and find_thread_delayed_resource es es_f id pos =
          let error_msg = "Thrd node " ^ (Cprinter.string_of_spec_var id) ^ "not found when join" in
          let rs = (CF.mkFailCtx_in (Basic_Reason (mkFailContext error_msg es (CF.formula_of_heap HFalse pos) None pos, CF.mk_failure_must ("101 : "^ error_msg)  Globals.sl_error, es.es_trace)) ({es with es_formula = CF.substitute_flow_into_f !error_flow_int es.es_formula}, error_msg, Failure_Must error_msg) (mk_cex true), NoAlias) in
          (None, Some rs)
-       else 
+       else
          let tn = List.hd t_heaps in
          let dl,rsr =
            match tn with

@@ -603,8 +603,6 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
         let new_ctx = CF.Ctx {es with CF.es_formula = new_f} in
         let new_conseq = assume.CF.formula_assume_struc in
         heap_entail_after_sat_struc_x prog new_ctx new_conseq ~pf:None
-
-        (* report_error no_pos "unhandle EAssume" *)
       | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
     )
   | OCtx (c1, c2) ->
@@ -666,6 +664,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else
-    (* let error_msg = "Entailment EBase unsat by sb" in
-     * let fe = CF.mk_failure_must error_msg "Entailment Failed." in *)
-    report_error no_pos "No residue not handled"
+    let msg = "songbird result is Failed." in
+    (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+     , Prooftracer.Failure)
+    (* report_error no_pos "No residue not handled" *)

@@ -923,14 +923,14 @@ and mkNormalFlow () = { formula_flow_interval = !norm_flow_int; formula_flow_lin
 
 and mkErrorFlow () = { formula_flow_interval = !error_flow_int; formula_flow_link = None;}
 
-and formula_of_mix_formula (p: MCP.mix_formula) (pos:loc) : formula = 
+and formula_of_mix_formula (p: MCP.mix_formula) (pos:loc) : formula =
   mkBase HEmp p CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos
 
-and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula = 
-  let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
-  formula_of_mix_formula mix_f pos 
+and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula =
+  let mix_f = MCP.mix_of_pure p in
+  formula_of_mix_formula mix_f pos
 
-and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula =  
+and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula =
   mkBase_w_lbl h p CVP.empty_vperm_sets TypeTrue (mkNormalFlow()) [] no_pos None
 
 and mkEBase_w_vars ee ei ii f ct pos = EBase{
@@ -12111,7 +12111,7 @@ let mkFailCtx_simple msg estate conseq cex pos =
     fc_prior_steps = estate.es_prior_steps;
     fc_orig_conseq  = struc_formula_of_formula conseq pos;
     fc_current_conseq = formula_of_heap HFalse pos;
-    fc_failure_pts = [];} 
+    fc_failure_pts = [];}
   in
   let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error ;fe_locs=[]} in
   (*temporary no failure explaining*)
