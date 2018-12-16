@@ -2054,15 +2054,14 @@ let convert_tail_vdefs_to_linear prog =
 
 let imm_abs_norm_formula (f:CF.formula) prog unfold_fun : CF.formula  = 
   x_add Immutable.merge_alias_nodes_formula prog f [] (x_add Cvutil.xpure_heap_symbolic 13 prog) unfold_fun
-(* Cvutil.crop_h_formula f svl *)
 
 let imm_abs_norm_struc_formula (f:CF.struc_formula) conseq prog  unfold_fun: CF.struc_formula  = 
   x_add Immutable.merge_alias_nodes_struc_formula prog f (x_add Cvutil.xpure_heap_symbolic 14 prog) conseq  unfold_fun
 (* Cvutil.crop_h_formula f svl *)
 
-let imm_norm_formula prog f unfold_fun pos = 
+let imm_norm_formula prog f unfold_fun pos =
   (* imm_abs_norm_formula modifies f only when Globals.imm_merge is set *)
-  let f = imm_abs_norm_formula f prog (unfold_fun prog pos) in 
+  let f = imm_abs_norm_formula f prog (unfold_fun prog pos) in
   let f = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_formula f else f in
   f
 

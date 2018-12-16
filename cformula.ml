@@ -955,51 +955,31 @@ and mkBase_rec f ct pos = {
 and mkEBase f ct pos = EBase (mkBase_rec f ct pos)
 
 and mkEAssume vars post struc_post lbl ensure = EAssume {
-    formula_assume_simpl = post; 
+    formula_assume_simpl = post;
     formula_assume_struc = struc_post;
     formula_assume_lbl = lbl;
     formula_assume_ensures_type = ensure;
     formula_assume_vars = vars;}
 
 and mkEAssume_simp vars post struc_post lbl = EAssume {
-    formula_assume_simpl = post; 
+    formula_assume_simpl = post;
     formula_assume_struc = struc_post;
     formula_assume_lbl = lbl;
     formula_assume_ensures_type = None;
     formula_assume_vars = vars;}
 
-and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp h (MCP.mix_of_pure p)) ct no_pos 
+and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp h (MCP.mix_of_pure p)) ct no_pos
 
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status > 0) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
-    else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p 
+    else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p
   in mkBase HEmp mp CVP.empty_vperm_sets TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_of_pure_P (p:CP.formula) (pos:loc) :formula = formula_of_pure_aux p (-1) pos
 
 and formula_of_pure_N (p:CP.formula) (pos:loc) :formula = formula_of_pure_aux p 1 pos
 
-(* and formula_of_pure_with_branches_aux p br status pos =                                                    *)
-(*   let mp = if status>0 then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p                                     *)
-(*   else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p in                                                       *)
-(*   mkBase HTrue mp TypeTrue (mkTrueFlow ()) br [] pos                                                       *)
-
-(* and formula_of_pure_with_branches_N p br pos = formula_of_pure_with_branches_aux p br 1 pos                *)
-
-(* and formula_of_pure_with_branches_P p br pos = formula_of_pure_with_branches_aux p br (-1) pos             *)
-
-(* and formula_of_mix_formula_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos         *)
-
-(* and formula_of_pure_with_branches_fl_aux p br fl status pos =                                              *)
-(*   let mp = if status>0 then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p                                     *)
-(*   else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p in                                                       *)
-(*   mkBase HTrue mp TypeTrue fl br [] pos                                                                    *)
-
-(* and formula_of_pure_with_branches_fl_N p br fl pos = formula_of_pure_with_branches_fl_aux p br fl 1 pos    *)
-
-(* and formula_of_pure_with_branches_fl_P p br fl pos = formula_of_pure_with_branches_fl_aux p br fl (-1) pos *)
-
-and formula_of_mix_formula_with_fl (p:MCP.mix_formula) fl pos = 
+and formula_of_mix_formula_with_fl (p:MCP.mix_formula) fl pos =
   mkBase HEmp p CVP.empty_vperm_sets TypeTrue fl pos
 
 and formula_of_base base = Base(base)
@@ -1648,7 +1628,7 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
         formula_base_label = lbl;
         formula_base_pos = pos })
 
-and mkBase (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
+and mkBase (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (t : t_formula) (fl : flow_formula) (a: one_formula list) (pos : loc) : formula= 
   mkBase_w_lbl h p vp t fl a pos None
 
@@ -10240,12 +10220,6 @@ let repl_heap_formula h f =
   in aux f
 
 let mkEmp_formula f = repl_heap_formula HEmp f
-  (* let rec aux f = match f with *)
-  (*   | Base e -> Base {e with formula_base_heap = HEmp} *)
-  (*   | Exists e -> Exists {e with formula_exists_heap = HEmp} *)
-  (*   | Or ({formula_or_f1=f1; formula_or_f2=f2} as b) -> *)
-  (*     Or {b with formula_or_f1=aux f1; formula_or_f2=aux f2} *)
-  (* in aux f *)
 
 let mkEmp_es es =
   let emp_f = mkEmp_formula es.es_formula in
@@ -13079,7 +13053,7 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
     let f = mkOr f1 f2 no_pos in
     let trace = trace1@["||OR||"]@trace2 in
     (f,trace)
-  | Ctx es -> 
+  | Ctx es ->
     let orig_f = es.es_formula in
     let esvm = es.es_var_measures in  (* (term_ann * CP.exp list * CP.exp list) option;  *)
     (* let m = CP.mk_varperm_zero es.es_var_zero_perm no_pos in          *)

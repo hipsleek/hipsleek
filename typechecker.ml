@@ -1653,16 +1653,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else (CF.Ctx c1) in
               res
             in
-            let () = x_binfo_hp (add_str "ctx Assign before: "
+            let () = x_tinfo_hp (add_str "ctx Assign before: "
                              Cprinter.string_of_list_failesc_context) ctx1 no_pos
             in
-            let () = x_binfo_hp (add_str "rhs: "
+            let () = x_tinfo_hp (add_str "rhs: "
                                      (Cprinter.string_of_exp))
                   rhs no_pos in
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let () = CF.must_consistent_list_failesc_context "assign final" res
             in
-            let () = x_binfo_hp (add_str "ctx Assign final: "
+            let () = x_tinfo_hp (add_str "ctx Assign final: "
                              Cprinter.string_of_list_failesc_context) res no_pos
             in
             res
@@ -2012,7 +2012,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 let res = if !Globals.elim_exists_ff
                   then SV.elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                 let () = CF.must_consistent_list_failesc_context "bind 8" res  in
-                x_binfo_hp (add_str "bind:tmp_res2"
+                x_tinfo_hp (add_str "bind:tmp_res2"
                               (pr_list Cprinter.string_of_failesc_context))
                   res no_pos;
                 (* normalize_list_failesc_context_w_lemma prog res *)
@@ -2053,7 +2053,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               no_pos in
           let res = if !Globals.elim_exists_ff then SV.elim_exists_failesc_ctx_list ctx2 else ctx2 in
           Gen.Profiling.pop_time "[check_exp] Block";
-          let () = x_binfo_hp (add_str "check_exp block res: "
+          let () = x_tinfo_hp (add_str "check_exp block res: "
                                  Cprinter.string_of_list_failesc_context) res
               no_pos in
           res
@@ -2104,7 +2104,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               exp_cond_else_arm = e2;
               exp_cond_path_id = pid;
               exp_cond_pos = pos}) ->
-      let () = x_tinfo_hp (add_str "ctx cond start: "
+      let () = x_binfo_hp (add_str "ctx cond start: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let cond_op () =
         begin
@@ -2334,7 +2334,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_binfo_hp (add_str "mn: " pr_id) mn no_pos in
-        let () = x_binfo_hp (add_str "ctx scall start: "
+        let () = x_tinfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx
@@ -2489,7 +2489,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
-              let () = x_tinfo_hp (add_str "new rs:"
+              let () = x_binfo_hp (add_str "new rs:"
                                      Cprinter.string_of_list_failesc_context)
                   rs no_pos in
               rs
@@ -2547,6 +2547,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                     (proc.proc_stk_of_static_specs#top) no_pos in
                 check_pre_post is_rec_flag pre_with_new_pos ctx scall_pre_cond_pushed
             in
+            let () = x_binfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
+                res no_pos in
             let () = if !print_proof then Prooftracer.add_pre e0 in
             let () = if !print_proof && scall_pre_cond_pushed then
                 begin
@@ -2577,7 +2579,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                     CF.es_final_error
                                     = CF.acc_error_msg es.CF.es_final_error to_print})) res
               in
-              let () = x_binfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
+              let () = x_tinfo_hp (add_str "res: " Cprinter.string_of_list_failesc_context)
                 res no_pos in
 
               (*Exhausively apply normalization lemma after each SCall.

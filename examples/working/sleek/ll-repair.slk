@@ -1,1 +1,2 @@
 infer[k] x = m + k & y = m + 1 |- x = y.
+

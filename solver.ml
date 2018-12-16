@@ -1291,11 +1291,11 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd
         let to_fold_view = MCP.find_rel_constraints rhs_p new_uni_vars in
         x_tinfo_zp (lazy ("new_univ_vars" ^ (!CP.print_svl new_uni_vars))) pos;
         x_tinfo_zp (lazy ("to_fold_view" ^ (Cprinter.string_of_mix_formula to_fold_view))) pos;
-        let view_form = 
+        let view_form =
           if not(!Globals.old_univ_vars) then view_form 
           else add_mix_formula_to_struc_formula to_fold_view view_form in
         (*propagate*)
-        let view_form = 
+        let view_form =
           if (Perm.allow_perm ()) then (
             match perm with
             | None -> view_form
@@ -3125,7 +3125,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                                                 fc_current_conseq = CF.formula_of_heap HFalse pos;
                                                                 fc_failure_pts =  [];}, fe, es.es_trace)) (es, err_msg, Failure_Bot err_msg) (mk_cex true), UnsatAnte)
                              else
-                               x_add helper_inner 2 (prune_ctx prog n_ctx) c2) case_brs (* b.formula_case_branches *) 
+                               x_add helper_inner 2 (prune_ctx prog n_ctx) c2) case_brs
                        end
                      | Some (p, e) -> begin
                          [x_add helper_inner 3 ctx e] end in
@@ -3867,7 +3867,7 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     let ctx =
       if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
       else
-      if !Globals.delay_proving_sat 
+      if !Globals.delay_proving_sat
       then ctx
       else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
     in
@@ -3879,18 +3879,6 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
       let sleek_res = heap_entail_after_sat prog is_folding ctx conseq pos ([])
       in
       sleek_res
-      (* match (fst sleek_res) with
-       * | SuccCtx _ -> sleek_res
-       * | FailCtx _ ->
-       *     begin
-       *       match ctx with
-       *       | Ctx es ->
-       *         let ctx_f = es.CF.es_formula in
-       *         let sb_res = Songbird.checkEntail ctx_f conseq in
-       *         if sb_res then (SuccCtx[ctx], TrueConseq)
-       *         else sleek_res
-       *       | _ -> sleek_res
-       *     end *)
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
     (ss:CF.steps) : (list_context * proof) =
@@ -4211,7 +4199,7 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
 
   and compare_sv_old xn yn eset =
     if CP.eq_spec_var_aset eset xn yn then 0
-    else -1 
+    else -1
 
   (* comparing with previous method compare_sv_old *)
   and compare_sv xn yn eset =
@@ -5239,7 +5227,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
       (* check if there is need for another entailment that uses the continuation h3 *)
       let (final_ctx, final_prf) = 
         match with_wr_ctx with
-        | SuccCtx(cl) -> 
+        | SuccCtx(cl) ->
           (* h2 was enough, no need to use h3 *)
           (* substitute the holes due to the temporary removal of matched immutable nodes *) 
           (* let () = print_string("Substitute the holes \n") in *)
@@ -5248,7 +5236,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
           (* put back the frame consisting of h1 and h3 *)
           (* first add the frame []*h3 *) 
           let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH f h3 pos)) cl in
-          let cl = 
+          let cl =
             if not(consume_heap conseq) && not(drop_read_phase) then
               (* next add the frame h1;[]*)
               List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
@@ -5278,8 +5266,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 
       in
       (* union of states *)
-      (*	let () = print_string("compute final answer\n") in*)
-      ((fold_context_left 10 [with_rd_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_rd_prf; final_prf]))		
+      ((fold_context_left 10 [with_rd_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_rd_prf; final_prf]))
   (*  end of helper method *)
 
   and heap_entail_with_cont (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula)
@@ -5303,12 +5290,12 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
           (* no continuation *)
           (* ---TODO:  need to enable folding --- *)
           (with_wr_ctx, with_wr_prf)
-        else 
+        else
           (* pop the continuation record *)
           (* the cont record contains (actual continuation to be used on the lhs, the failing lhs) *)
           (* actually, we already know the continuation is h3 *)
           let _, lhs = pop_cont_es lhs in
-          (* retrieve the current conseq from the failed context *)				    
+          (* retrieve the current conseq from the failed context *)
           let conseq = fc.fc_current_conseq in
           (* swap the current lhs heap (keep it as frame) and the continuation h3 *)
           let new_f, h2_rest = swap_heap lhs.es_formula h3 pos in

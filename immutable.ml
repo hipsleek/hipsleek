@@ -1468,35 +1468,6 @@ and restore_tmp_ann (ann_lst: CP.ann list) (pure0: MCP.mix_formula): CP.ann list
   let pr = pr_list Cprinter.string_of_imm in 
   Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
 
-(* and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list)  impl_vars evars: h_formula =  *)
-(*   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in *)
-(*   Debug.no_3 "update_field_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_field_ann_x f pimm1 pimm impl_vars evars) f pimm1 pimm *)
-
-(* and update_field_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) impl_vars evars: h_formula =  *)
-(*   let new_field_ann_lnode = replace_list_ann pimm1 pimm impl_vars evars in *)
-(*   (\* asankhs: If node has all field annotations as @A make it HEmp *\) *)
-(*   if (isAccsList new_field_ann_lnode) then HEmp else (\*andreea temporarily allow nodes only with @A fields*\) *)
-(*   let updated_f = match f with  *)
-(*     | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} ) *)
-(*     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n") *)
-(*   in *)
-(*   updated_f *)
-
-(* and update_ann (f : h_formula) (ann_l: ann) (ann_r: ann) impl_vars evars: h_formula =  *)
-(*   let pr = Cprinter.string_of_imm in *)
-(*   Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f ann_l ann_r impl_vars evars) f ann_l ann_r *)
-
-(* and update_ann_x (f : h_formula) (ann_l: ann) (ann_r: ann) impl_vars evars : h_formula =  *)
-(*   let new_ann_lnode = remaining_ann ann_l ann_r impl_vars evars in *)
-(*   (\* asankhs: If node has all field annotations as @A make it HEmp *\) *)
-(*   if (isAccs new_ann_lnode) then HEmp else  *)
-(*   let updated_f = match f with  *)
-(*     | DataNode d -> DataNode ( {d with h_formula_data_imm = new_ann_lnode} ) *)
-(*     | ViewNode v -> ViewNode ( {v with h_formula_view_imm = new_ann_lnode} ) *)
-(*     | _          -> report_error no_pos ("[context.ml] : only data node or view node should allow annotations \n") *)
-(*   in *)
-(*   updated_f *)
-
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
   match ctx with
@@ -1509,7 +1480,7 @@ and push_cont_es (cont : h_formula) (es : entail_state) : entail_state =
      es_cont = cont::es.es_cont;
   }
 
-and pop_cont_es (es : entail_state) : (h_formula * entail_state) =  
+and pop_cont_es (es : entail_state) : (h_formula * entail_state) = 
   let cont = es.es_cont in
   let crt_cont, cont =
     match cont with

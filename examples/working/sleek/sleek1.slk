@@ -6,9 +6,9 @@ pred ll<n> == self = null & n = 0
 
 
 
-checkentail x::node<_,q> * q::ll<n> & n > 1 |- (exists m: x::ll<m> & m > 3).
-
-
+// checkentail x::node<_,q> * q::ll<n> & n > 1 |- (exists m: x::ll<m> & m > 3).
+// print residue.
+checkentail x::node<_,q> * q::ll<n> & n > 1 |- emp & n > 1.
 print residue.
 
 
