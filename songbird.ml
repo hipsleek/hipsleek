@@ -261,7 +261,7 @@ let rec translate_back_pf (pf : SBCast.pure_form) = match pf with
 
 let rec translate_hf hf = match hf with
   | CF.HTrue
-  | CF.HEmp -> (SBCast.HEmp (translate_loc VarGen.no_pos), [])
+  | CF.HEmp -> (SBCast.HEmp (translate_loc no_pos), [], [])
   | CF.DataNode dnode ->
     let ann = dnode.CF.h_formula_data_imm in
     let holes = match ann with
@@ -269,27 +269,22 @@ let rec translate_hf hf = match hf with
       | _ -> [] in
     let root = dnode.CF.h_formula_data_node in
     let sb_root_var = translate_var root in
-    let sb_no_pos = translate_loc VarGen.no_pos in
+    let sb_no_pos = translate_loc no_pos in
     let sb_root = SBCast.Var (sb_root_var, sb_no_pos) in
     let name = dnode.CF.h_formula_data_name in
     let args = dnode.CF.h_formula_data_arguments in
     let sb_arg_vars = List.map translate_var args in
     let sb_args = List.map (fun x -> SBCast.Var (x, sb_no_pos)) sb_arg_vars in
     let data_form = SBCast.mk_data_form sb_root name sb_args in
-    (SBCast.mk_hform_df data_form, holes)
+    (SBCast.mk_hform_df data_form, [], holes)
   | CF.Star star_hf ->
     let hf1 = star_hf.h_formula_star_h1 in
     let hf2 = star_hf.h_formula_star_h2 in
     let loc = star_hf.h_formula_star_pos in
     let pos = translate_loc loc in
-    let (sb_hf1, hole1) = translate_hf hf1 in
-    let (sb_hf2, hole2) = translate_hf hf2 in
-    (SBCast.mk_hstar ~pos:pos sb_hf1 sb_hf2, hole1@hole2)
-  | CF.StarMinus _ -> report_error no_pos "StarMinus is not supported"
-  | CF.Conj _ -> report_error no_pos "conj is not supported"
-  | CF.ConjStar _ -> report_error no_pos "ConStar is not supported"
-  | CF.ConjConj _ -> report_error no_pos "Conconj is not supported"
-  | CF.Phase _ -> report_error no_pos "Phase is not supported"
+    let (sb_hf1, sb_pf1, hole1) = translate_hf hf1 in
+    let (sb_hf2, sb_pf2, hole2) = translate_hf hf2 in
+    (SBCast.mk_hstar ~pos:pos sb_hf1 sb_hf2, sb_pf1@sb_pf2, hole1@hole2)
   | CF.ViewNode view ->
     let ann = view.CF.h_formula_view_imm in
     let holes = match ann with
@@ -306,7 +301,11 @@ let rec translate_hf hf = match hf with
     let loc = view.h_formula_view_pos in
     let pos = translate_loc loc in
     let view_form = SBCast.mk_view_form ~pos:pos name sb_exps in
-    (SBCast.mk_hform_vf view_form, holes)
+    (SBCast.mk_hform_vf view_form, [], holes)
+  | CF.HFalse ->
+    let sb_no_pos = translate_loc no_pos in
+    let sb_false = SBCast.mk_false sb_no_pos in
+    (SBCast.HEmp sb_no_pos, [sb_false], [])
   | _ -> report_error no_pos ("this hf is not supported: "
                               ^ (Cprinter.string_of_h_formula hf))
 
@@ -363,15 +362,17 @@ let rec translate_formula formula =
   match formula with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
-    let (sb_hf, holes) = translate_hf hf in
+    let (sb_hf, sb_pf1, holes) = translate_hf hf in
     let pf = CF.get_pure formula in
-    let sb_pf = translate_pf pf in
+    let sb_pf2 = translate_pf pf in
+    let sb_pf = SBCast.mk_pconj (sb_pf1@[sb_pf2]) in
     ([SBCast.mk_fbase sb_hf sb_pf], holes)
   | CF.Exists ef ->
     let hf = ef.CF.formula_exists_heap in
-    let (sb_hf, holes) = translate_hf hf in
+    let (sb_hf, sb_pf1, holes) = translate_hf hf in
     let pf = (Mcpure.pure_of_mix ef.CF.formula_exists_pure) in
-    let sb_pf = translate_pf pf in
+    let sb_pf2 = translate_pf pf in
+    let sb_pf = SBCast.mk_pconj (sb_pf1@[sb_pf2]) in
     let vars = ef.CF.formula_exists_qvars in
     let sb_vars = List.map translate_var vars in
     let sb_f = SBCast.mk_fbase sb_hf sb_pf in
