@@ -281,3 +281,61 @@ int foo21(address id)
     return userBalances[id];
   }
 }
+
+
+/**SUCCESS - should be ok*/
+int foo22(address id)
+   requires   [ub] userBalances::Map<ub> & ub[id] = value
+   ensures   (exists ub0: userBalances'::Map<ub0> & ub0[id] = value + yyy);
+{
+    int x;
+    x = userBalances[id];
+    userBalances[id] = x + yyy;
+    return userBalances[id];
+}
+
+global int org;
+
+/**SUCCESS - should be ok*/
+int foo23(address id)
+   requires   [ub] userBalances::Map<ub> & ub[id] = org
+   ensures   (exists ub0: userBalances'::Map<ub0> & ub0[id] = org + yyy);
+{
+    int x;
+    x = userBalances[id];
+    userBalances[id] = x + yyy;
+    return userBalances[id];
+}
+
+/** SUCCESS - should be ok*/
+int foo24(int amount)
+   requires mp::Map<mp9> & mp9[0]=org
+   ensures  (exists mp1: mp'::Map<mp1> & mp1[0]=org+amount);
+{
+  mp[0] = mp[0] + amount;
+  return mp[0];
+}
+
+/**SUCCESS - not ok*/
+int foo25(address id)
+   requires   [ub] userBalances::Map<ub>
+   ensures   (exists ub0: userBalances'::Map<ub0> & ub0[id] = ub[id] + yyy);
+{
+    int x;
+    x = userBalances[id];
+    userBalances[id] = x + yyy;
+    return userBalances[id];
+}
+
+/** SUCCESS - not ok*/
+int foo26(int amount)
+   requires mp::Map<mp9> & mp9[0]=org
+   ensures  (exists mp1: mp'::Map<mp1> & mp1[0]=mp9[0]+amount);
+{
+  mp[0] = mp[0] + 1;
+  mp[0] = mp[0] - 1;
+  mp[0] = mp[0] + 1;
+  mp[0] = mp[0] - 1;
+  mp[0] = mp[0] + amount;
+  return mp[0];
+}
