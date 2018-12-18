@@ -306,6 +306,12 @@ let rec translate_hf hf = match hf with
     let sb_no_pos = translate_loc no_pos in
     let sb_false = SBCast.mk_false sb_no_pos in
     (SBCast.HEmp sb_no_pos, [sb_false], [])
+  | CF.HRel (sv, exps, loc) ->
+    let sb_pos = translate_loc loc in
+    let sb_args = List.map translate_exp exps in
+    let name = CP.name_of_sv sv in
+    let view_form = SBCast.mk_view_form ~pos:sb_pos name sb_args in
+    (SBCast.mk_hform_vf view_form, [], [])
   | _ -> report_error no_pos ("this hf is not supported: "
                               ^ (Cprinter.string_of_h_formula hf))
 
@@ -640,7 +646,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
       sb_ante in
-  let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+  let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:false n_prog ent) ents in
   let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
                                 ptree) ptrees in

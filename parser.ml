@@ -1140,7 +1140,7 @@ data_body:
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
       | `OBRACE; `CBRACE                   -> []] ];
- 
+
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
 
@@ -3564,11 +3564,11 @@ spec_list_grp:
 
 disj_or_extn_constr:
   [[
-      dc= disjunctive_constr -> 
+      dc= disjunctive_constr ->
 	  let f = F.subst_stub_flow n_flow dc in
 	  let sf = F.mkEBase [] [] [] f None no_pos in
           (f,sf)
-    | dc= extended_constr -> 
+    | dc= extended_constr ->
           let dc = F.subst_stub_flow_struc n_flow dc in
 	  let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
 	  (f,dc)
