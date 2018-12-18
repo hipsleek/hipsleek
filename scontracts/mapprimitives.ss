@@ -5,12 +5,14 @@ relation Store(mapping(`T3 => `T4) idx1,
 /* relates the type of the two relation parameters*/
 relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
 
+/*
 pred Maaaap<idx2> == Type(self,idx2).
-
+*/
 pred_prim Map<idx2> inv Type(self,idx2);
+/*
 pred_prim Mappp<>;
 pred_prim SameType<idx2> inv Type(self,idx2);
-
+*/
 
 // (assert (= dest (store src key val)))
 // Store(mp1,mp2,key,val)  ==> (assert (= mp2 (store mp1 key val)))

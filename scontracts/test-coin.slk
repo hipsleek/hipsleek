@@ -1,0 +1,18 @@
+relation Store(mapping(`T3 => `T4) idx1,
+               mapping(`T3 => `T4) idx2,
+               `T3 key, `T4 value).
+
+/* relates the type of the two relation parameters*/
+relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
+
+/*
+pred Maaaap<idx2> == Type(self,idx2).
+*/
+pred_prim Map<idx2> inv Type(self,idx2).
+
+
+
+checkentail Type(balances_31,mp1_2206) & Type(balances_31,mp2_2239) &
+ ub0[tmp]=v_int_54_2217+amount & Type(balances_31,ub0) &
+ Store(ub0,mp1_2206,tmp,v_int_54_2217) &
+ Store(mp1_2206,mp2_2239,receiver,amount+(mp1_2206[receiver])) |-  mp2_2239[receiver]=(ub0[receiver])+ amount.
