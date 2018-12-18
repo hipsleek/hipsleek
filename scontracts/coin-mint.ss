@@ -37,10 +37,10 @@ global address minter;
 
 
       void mint(address receiver, int amount)
-             requires [ub0] balances::Map<ub0> //& msg.sender != minter
+             requires [ub0] balances::Map<ub0> * msg::message<_,sender,_> & receiver!=sender & sender = minter
              ensures (exists ub1: balances'::Map<ub1> & ub1[receiver] = ub0[receiver] + amount);
       {
-            //if(msg.sender != minter) return;
+            if(msg.sender != minter) return;
             //int b = balances[receiver];
             balances[receiver] += amount;
       }
@@ -55,6 +55,19 @@ global address minter;
             //int b1 = balances[tmp];
             //balances[tmp] = b1 - amount;
             balances[receiver] = balances[receiver] + amount;
+            //int b2 = balances[receiver];
+            //balances[receiver] = b2 + amount;
+      }
+
+      void send0(address receiver, int amount)
+             requires [ub0] balances::Map<ub0> * msg::message<_,sender,_> & receiver!=sender
+             ensures (exists ub1: balances'::Map<ub1> & ub1[receiver] = ub0[receiver] + amount & ub1[sender] = ub0[sender] - amount);
+      {
+            //if(balances[sender] < amount) return;
+            balances[msg.sender] -= amount;
+            //int b1 = balances[sender];
+            //balances[sender] = b1 - amount;
+            balances[receiver] += amount;
             //int b2 = balances[receiver];
             //balances[receiver] = b2 + amount;
       }
