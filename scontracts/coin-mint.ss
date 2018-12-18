@@ -28,8 +28,8 @@ global address minter;
 
 
       void coin()
-             requires true
-             ensures  true;
+             requires msg::message<_,sender,_>@L
+             ensures  minter' = sender;
 
       {
              minter = msg.sender;
