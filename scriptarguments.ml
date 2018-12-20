@@ -805,6 +805,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant,
    "enable strong predicate invariant");
   ("--en-repair", Arg.Set Globals.enable_repair,"enable repair process");
+  ("--en-sb-i", Arg.Set Globals.enable_sb_interactive,"enable songbird interactive");
   ("--en-repair-templ", Arg.Set Globals.enable_repair_template,"enable repair process");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
@@ -1396,9 +1397,9 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "compare set of constraints");
                                ("-lib", Arg.String set_lib_file,
                                 "lib");
-                             ] 
+                             ]
 
-(* arguments/flags used only by sleek *)	
+(* arguments/flags used only by sleek *)
 let sleek_specific_arguments = [
   ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
    "Choose frontend:\n\tnative: Native (default)\n\txml: XML");

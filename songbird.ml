@@ -535,14 +535,20 @@ let translate_view_decl (view:Cast.view_decl) =
   let sb_pos = translate_loc loc in
   let vars = [Cpure.SpecVar (Named view.view_data_name, "self", VarGen.Unprimed)]
              @ view.Cast.view_vars in
-  let typed_vars = List.map (fun x -> (Cpure.name_of_sv x, Cpure.typ_of_sv x)) vars in
-  let sb_vars = List.map (fun (x,y) -> (x, translate_type y)) typed_vars in
+  let sb_vars = List.map translate_var vars in
   let formulas = view.Cast.view_un_struc_formula in
   let formulas = List.map (fun (x,y) -> x) formulas in
   let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
   let sb_formula = List.concat sb_formula in
   let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
-  SBCast.mk_view_defn ident sb_vars view_defn_cases sb_pos
+  SBCast.mk_view_defn ident sb_vars (SBCast.ViewDefnCases view_defn_cases) sb_pos
+
+let translate_hp hp =
+  let ident = hp.Cast.hp_name in
+  let sb_pos = translate_loc no_pos in
+  let vars = List.map fst hp.Cast.hp_vars_inst in
+  let sb_vars = List.map translate_var vars in
+  SBCast.mk_view_defn ident sb_vars SBCast.ViewDefnUnkn sb_pos
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
@@ -556,7 +562,12 @@ let translate_prog (prog:Cast.prog_decl) =
       (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
+  let hps = prog.Cast.prog_hp_decls in
+  let sb_hp_views = List.map translate_hp hps in
   let sb_view_decls = List.map translate_view_decl view_decls in
+  let pr_hps = pr_list SBCast.pr_view_defn in
+  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_hp_views no_pos in
+  let sb_view_decls = sb_view_decls @ sb_hp_views in
   let prog = SBCast.mk_program "heap_entail" in
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
                         SBCast.prog_views = sb_view_decls}
@@ -565,7 +576,6 @@ let translate_prog (prog:Cast.prog_decl) =
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
-
 
 let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
@@ -596,19 +606,11 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
       | EAssume assume ->
         let assume_f = assume.CF.formula_assume_simpl in
         let f = es.CF.es_formula in
-        let combine_f f1 f2 =
-          let heaps_f1 = CF.heap_of f1 in
-          let pure_f1 = CF.get_pure f1 in
-          let heaps_f2 = CF.heap_of f2 in
-          let pure_f2 = CF.get_pure f2 in
-          let pure = CP.mkAnd pure_f1 pure_f2 no_pos in
-          let heap = mkStarHList (heaps_f1 @ heaps_f2) in
-          let mix = Mcpure.mix_of_pure pure in
-          CF.mkBase_simp heap mix in
-        let new_f = combine_f f assume_f in
-        let new_ctx = CF.Ctx {es with CF.es_formula = new_f} in
-        let new_conseq = assume.CF.formula_assume_struc in
-        heap_entail_after_sat_struc_x prog new_ctx new_conseq ~pf:None
+        let es_hf = CF.xpure_for_hnodes es.CF.es_heap in
+        let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
+        let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
+        let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
+        (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
       | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
     )
   | OCtx (c1, c2) ->
@@ -647,7 +649,8 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
       sb_ante in
   let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-  let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:false n_prog ent) ents in
+  let interact = if !Globals.enable_sb_interactive then true else false in
+  let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:interact n_prog ent) ents in
   let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
                                 ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
@@ -657,7 +660,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
         let pr_rsd = SBCast.pr_fs in
         let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
-        List.hd residue_fs
+        residue_fs |> List.rev |> List.hd
       ) ptrees in
     let residue = translate_back_fs residues holes in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
@@ -668,9 +671,20 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let conti = bf.CF.formula_struc_continuation in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+    | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
   else
-    let msg = "songbird result is Failed." in
-    (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-     , Prooftracer.Failure)
-    (* report_error no_pos "No residue not handled" *)
+    let hps = prog.Cast.prog_hp_decls in
+    let pr_hps = pr_list CPR.string_of_hp_decl in
+    let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
+    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let hp_in_conseq = CF.check_conseq_hp hp_names bf.CF.formula_struc_base in
+    let () = x_tinfo_hp (add_str "hps" string_of_bool) hp_in_conseq no_pos in
+    if hp_in_conseq then
+      let conti = bf.CF.formula_struc_continuation in
+      match conti with
+      | None -> (CF.SuccCtx [ctx], Prooftracer.TrueConseq)
+      | Some struc -> heap_entail_after_sat_struc prog ctx struc ~pf:None
+    else
+      let msg = "songbird result is Failed." in
+      (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+      , Prooftracer.Failure)
