@@ -2452,10 +2452,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       begin
         let () =
           if (CF.is_inf_reentrancy_list_failesc_context ctx) then
-            let () = y_binfo_pp "REENTRANCY" in ()
+            let () = y_binfo_pp "REENTRANCY" in
             (* check if this is a call to the "call" method *)
-            (* retrieve all methods which alter the state *)
-            (* check if the pre of those methods creates a contradiction with the current state - quatifies over all possible arguments *)
+            if (compare mn Globals.contract_call_method == 0 ) then
+              (* retrieve all methods which alter the state *)
+              let procs = Cast.list_of_procs prog in
+              (* TODO: filter methods that do not alter the state *)
+
+              ()
+            else ()
+
+
+  (* check if the pre of those methods creates a contradiction with the current state - quatifies over all possible arguments *)
             (* reentrancy-free if all methods create a contradictions *)
           else let () = y_binfo_pp "NO REENTRANCY" in ()
         in

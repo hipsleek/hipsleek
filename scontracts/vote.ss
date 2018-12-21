@@ -188,9 +188,9 @@ global mapping(address => Voter) voters;
 global Proposal[] proposals;
 
 /// Create a new ballot to choose one of `proposalNames`.
-void Ballot(char proposalNames[][32])
-     chairperson = msg.sender;
-     voters[chairperson].weight = 1;
+void Ballot(char[,32] proposalNames)
+     // chairperson = msg.sender;
+     // voters[chairperson].weight = 1;
 {
      int n;
      n = sizeof(proposalNames[]);

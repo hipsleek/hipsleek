@@ -27,6 +27,8 @@ let map_pred_name       = "Map"
 let same_type_pred_name = "SameType"
 let mapp_pred_name      = "Mappp"
 let map_related_names   = map_pred_name :: (same_type_pred_name :: [mapp_pred_name; "Map_i"])
+let contract_call_method = "call"
+
 
 type formula_type =
   | Simple
