@@ -28,6 +28,90 @@ let pr_validity tvl = match tvl with
   | SBGlobals.MvlUnkn -> "Unknown"
   | SBGlobals.MvlInfer -> "Infer"
 
+let rec get_hf_hp hp_names hf = match hf with
+  | CF.HVar _
+  | CF.DataNode _
+  | CF.ViewNode _
+  | CF.HEmp
+  | CF.HTrue
+  | CF.HFalse -> []
+  | CF.HRel (sv, args, _) ->
+    let sv_name = CP.name_of_sv sv in
+    if List.exists (fun x -> String.compare x sv_name == 0) hp_names
+    then args else []
+  | CF.Star sf -> (get_hf_hp hp_names sf.h_formula_star_h1) @
+               (get_hf_hp hp_names sf.h_formula_star_h2)
+  | _ -> report_error no_pos "unhandled case of check_conseq_hp"
+
+let rec get_conseq_hp hp_names formula = match formula with
+  | CF.Base bf -> get_hf_hp hp_names bf.formula_base_heap
+  | CF.Exists ef -> get_hf_hp hp_names ef.formula_exists_heap
+  | CF.Or f -> (get_conseq_hp hp_names f.formula_or_f1) @
+            (get_conseq_hp hp_names f.formula_or_f2)
+
+let rec var_closure_hf hf vars = match hf with
+  | CF.HTrue
+  | CF.HFalse
+  | CF.HEmp -> hf
+  | CF.Star shf ->
+    let svars = CF.get_all_sv hf in
+    if not(List.exists (fun x -> List.mem x vars) svars) then HEmp
+    else
+      let h1 = shf.h_formula_star_h1 in
+      let h2 = shf.h_formula_star_h2 in
+      Star {shf with h_formula_star_h1 = var_closure_hf h1 vars;
+                     h_formula_star_h2 = var_closure_hf h2 vars}
+  | DataNode dnode ->
+    let svs = [dnode.CF.h_formula_data_node]@dnode.h_formula_data_arguments in
+    let svs = CP.remove_dups_svl svs in
+    if not(List.exists (fun x -> List.mem x vars) svs) then HEmp
+    else hf
+  | _ -> report_error no_pos "var_closure_hf: unhandled"
+
+let rec var_closure_pf puref vars =
+  match puref with
+  | CP.BForm (bf, label) ->
+    let bf_vars = CP.bfv bf in
+    if List.exists (fun x -> List.mem x vars) bf_vars
+    then puref
+    else CP.mkTrue no_pos
+  | CP.And (f1, f2, loc) ->
+    let n_f1 = var_closure_pf f1 vars in
+    let n_f2 = var_closure_pf f2 vars in
+    CP.And (n_f1, n_f2, loc)
+  | CP.Or (f1, f2, ops, loc) ->
+    let n_f1 = var_closure_pf f1 vars in
+    let n_f2 = var_closure_pf f2 vars in
+    CP.Or (n_f1, n_f2, ops, loc)
+  | _ -> report_error no_pos ("var_closure_pf unhandled"
+                              ^ (pr_pf puref))
+
+let rec var_closure f vars =
+  let rec helper f vars = match f with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+    CF.Base {bf with CF.formula_base_heap = var_closure_hf hf vars;
+                  formula_base_pure = Mcpure.mix_of_pure (var_closure_pf pf vars)}
+  | CF.Exists ef ->
+    let n_hf = var_closure_hf ef.CF.formula_exists_heap vars in
+    let pf =  ef.CF.formula_exists_pure in
+    let n_pf = var_closure_pf (Mcpure.pure_of_mix pf) vars in
+    CF.Exists {ef with formula_exists_heap = n_hf;
+                       formula_exists_pure = Mcpure.mix_of_pure n_pf}
+  | CF.Or df ->
+    let f1 = df.CF.formula_or_f1 in
+    let f2 = df.CF.formula_or_f2 in
+    let n_f1 = helper f1 vars in
+    let n_f2 = helper f2 vars in
+    CF.Or {df with formula_or_f1 = n_f1;
+                   formula_or_f2 = n_f2} in
+  let n_f = helper f vars in
+  let n_vars = n_f |> CF.all_vars in
+  if List.length n_vars = List.length vars then n_f
+  else var_closure f n_vars
+
+
 let translate_loc (location:VarGen.loc) : SBGlobals.pos =
   {
     pos_begin = location.start_pos;
@@ -674,16 +758,18 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
   else
     let hps = prog.Cast.prog_hp_decls in
-    let pr_hps = pr_list CPR.string_of_hp_decl in
     let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
-    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
-    let hp_in_conseq = CF.check_conseq_hp hp_names bf.CF.formula_struc_base in
-    let () = x_tinfo_hp (add_str "hps" string_of_bool) hp_in_conseq no_pos in
-    if hp_in_conseq then
-      let conti = bf.CF.formula_struc_continuation in
-      match conti with
-      | None -> (CF.SuccCtx [ctx], Prooftracer.TrueConseq)
-      | Some struc -> heap_entail_after_sat_struc prog ctx struc ~pf:None
+    let conseq_hps = get_conseq_hp hp_names bf.CF.formula_struc_base in
+    if List.length conseq_hps > 0 then
+      let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
+                    CP.remove_dups_svl in
+      let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in
+      let pre_pred = var_closure es.CF.es_formula hp_args in
+      let () = x_binfo_hp (add_str "Pre-cond:" pr_formula) pre_pred no_pos in
+      let n_bf = {bf with CF.formula_struc_base = pre_pred} in
+      let n_conseq = CF.EBase n_bf in
+      heap_entail_after_sat_struc prog ctx n_conseq ~pf:None
+      (* report_error no_pos "infer pre-cond testing" *)
     else
       let msg = "songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos

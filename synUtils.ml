@@ -51,10 +51,10 @@ let simplify f args =
     else simpl_f
   in
   let bnd_vars = bnd_vars_of_formula (CP.fv) f args in
-  let () = y_binfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
-  if bnd_vars == [] then 
+  let () = y_tinfo_hp (add_str "bnd_vars" !CP.print_svl) bnd_vars in
+  if bnd_vars == [] then
     if CP.contains_neq f then f
-    else simplify_f f 
+    else simplify_f f
   else
     CP.mkExists_with_simpl simplify_f bnd_vars f None (CP.pos_of_formula f)
 
@@ -526,11 +526,11 @@ let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.sp
       (helper f1) @ (helper f2)
   in helper f
 
-let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.spec_var list = 
+let collect_feasible_heap_args_formula prog null_aliases (f: CF.formula) : CP.spec_var list =
   Debug.no_2 "collect_feasible_heap_args_formula" !CP.print_svl !CF.print_formula !CP.print_svl
     (collect_feasible_heap_args_formula prog) null_aliases f
 
-let rec ctx_of_formula (f: CF.formula) = 
+let rec ctx_of_formula (f: CF.formula) =
   let empty_es = CF.empty_es (CF.mkNormalFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let empty_ctx = CF.Ctx empty_es in
   CF.build_context empty_ctx f no_pos
@@ -541,12 +541,12 @@ let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let residue_f = CF.formula_of_list_context rs in
   match rs with
   | CF.FailCtx _ -> (false, residue_f)
-  | CF.SuccCtx lst -> (true, residue_f) 
+  | CF.SuccCtx lst -> (true, residue_f)
 
 let heap_entail_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = pr_pair string_of_bool pr1 in
-  Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2 
+  Debug.no_2 "Syn.heap_entail_formula" pr1 pr1 pr2
     (fun _ _ -> heap_entail_formula prog ante conseq) ante conseq
 
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
@@ -555,7 +555,7 @@ let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
 let heap_entail_exact_formula prog (ante: CF.formula) (conseq: CF.formula) =
   let pr1 = !CF.print_formula in
   let pr2 = string_of_bool in
-  Debug.no_2 "Syn.heap_entail_exact_formula" pr1 pr1 pr2 
+  Debug.no_2 "Syn.heap_entail_exact_formula" pr1 pr1 pr2
     (fun _ _ -> heap_entail_exact_formula prog ante conseq) ante conseq
 
 let get_equiv_pred prog vid =
@@ -568,8 +568,8 @@ let get_equiv_pred prog vid =
       subs_vid
   with _ -> vid
 
-let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) = 
-  let f_h_f _ hf = 
+let trans_hrel_to_view_formula ?(for_spec=false) prog (f: CF.formula) =
+  let f_h_f _ hf =
     match hf with
     | CF.HRel _ ->
       let hrel_name, hrel_args = sig_of_hrel hf in
@@ -705,7 +705,6 @@ let trans_spec_proc trans_f cprog proc =
   let () = y_tinfo_hp (add_str "nspec" pr_spec) nspec in
   let () = proc.C.proc_stk_of_static_specs # push_pr x_loc nspec in
   let nproc = { proc with
-    (* C.proc_static_specs = nspec; *)
     C.proc_dynamic_specs = trans_f proc.C.proc_dynamic_specs; }
   in
   nproc
@@ -721,10 +720,10 @@ let trans_spec_scc trans_f cprog scc_procs =
 let trans_hrel_to_view_spec_scc cprog scc_procs =
   trans_spec_scc (x_add_1 (trans_hrel_to_view_struc_formula ~for_spec:true) cprog) cprog scc_procs
 
-let remove_inf_vars_spec_scc cprog scc_procs inf_vars = 
+let remove_inf_vars_spec_scc cprog scc_procs inf_vars =
   trans_spec_scc (remove_inf_vars_struc_formula inf_vars) cprog scc_procs
 
-let rec get_inf_pred_extn_struc_formula f = 
+let rec get_inf_pred_extn_struc_formula f =
   match f with
   | CF.EInfer ei -> ei.formula_inf_obj # get_infer_extn_lst
   | CF.EBase eb -> begin
@@ -733,7 +732,7 @@ let rec get_inf_pred_extn_struc_formula f =
       | Some c -> get_inf_pred_extn_struc_formula c
     end 
   | CF.EAssume _ -> []
-  | CF.ECase ec -> List.concat (List.map 
+  | CF.ECase ec -> List.concat (List.map
       (fun (_, c) -> get_inf_pred_extn_struc_formula c) ec.formula_case_branches)
   | CF.EList el -> List.concat (List.map (fun (_, c) -> get_inf_pred_extn_struc_formula c) el)
 
@@ -752,10 +751,10 @@ let find_heap_node root (f: CF.formula) =
   let n_f, root_node = CF.trans_heap_formula f_h_f f in
   n_f, root_node
 
-let is_consistent_node_list nodes = 
+let is_consistent_node_list nodes =
   match nodes with
   | [] -> true
-  | n::ns -> List.for_all (fun d -> 
+  | n::ns -> List.for_all (fun d ->
       (eq_str d.CF.h_formula_data_name n.CF.h_formula_data_name) &&
       (List.length n.CF.h_formula_data_arguments == List.length d.CF.h_formula_data_arguments)) ns
 
@@ -767,7 +766,7 @@ let norm_node_list nodes =
     let sst_list = List.map (fun n -> List.combine n.CF.h_formula_data_arguments n_args) nodes in
     let norm_root = { n with CF.h_formula_data_arguments = n_args; } in
     norm_root, sst_list
-  
+
 let rec find_common_node_chain root (fs: CF.formula list) =
   let residue_fs, root_node_list = List.split (List.map (find_heap_node root) fs) in
   if List.exists is_empty root_node_list then (fs, [])
@@ -782,12 +781,11 @@ let rec find_common_node_chain root (fs: CF.formula list) =
       let root_node = { root_node with CF.h_formula_data_node = root } in
       let norm_fs = List.map (fun (f, sst) ->
           let fr, t = List.split sst in
-          CF.subst_avoid_capture fr t f 
-          (* x_add CF.subst_all sst f *)
+          CF.subst_avoid_capture fr t f
         ) (List.combine residue_fs sst_list) in
-      List.fold_left (fun (fs, node_chain) arg -> 
+      List.fold_left (fun (fs, node_chain) arg ->
           let n_fs, arg_node_chain = find_common_node_chain arg fs in
-          n_fs, (node_chain @ arg_node_chain)) 
+          n_fs, (node_chain @ arg_node_chain))
         (norm_fs, [CF.DataNode root_node]) (List.filter CP.is_node_typ root_node.CF.h_formula_data_arguments)
 
 let find_common_node_chain root (fs: CF.formula list) =
@@ -846,7 +844,7 @@ let find_pred_base_case (pred: C.view_decl): CF.formula list =
 (******************)
 (* UTILS FOR VIEW *)
 (******************)
-let rec norm_pred_list f_norm preds = 
+let rec norm_pred_list f_norm preds =
   (* List.map (elim_head_pred iprog cprog) preds *)
   match preds with
   | [] -> []
@@ -860,7 +858,7 @@ let rec norm_pred_list f_norm preds =
       let () = x_warn ("Cannot normalize the view " ^ p.C.view_name) in
       p::(Lazy.force lazy_ps)
 
-let norm_one_derived_view iprog cprog derived_view = 
+let norm_one_derived_view iprog cprog derived_view =
   try
     (* The iprog.I.prog_view_decls are also normalized by SleekUtils.process_selective_iview_decls *)
     let () = y_tinfo_hp (add_str "derived_view" Cprinter.string_of_view_decl) derived_view in
@@ -879,7 +877,7 @@ let norm_one_derived_view iprog cprog derived_view =
 
 let norm_one_derived_view iprog cprog derived_view =
   let pr = Cprinter.string_of_view_decl in
-  Debug.no_1 "norm_one_derived_view" pr pr 
+  Debug.no_1 "norm_one_derived_view" pr pr
     (norm_one_derived_view iprog cprog) derived_view
 
 let rec norm_derived_views iprog cprog derived_views = 
@@ -949,25 +947,16 @@ let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
   let vbody, _ = x_add trans_hrel_to_view_formula prog vbody in
   let vbody = CF.subst [(hprel_self, vself)] vbody in
   (* (* Set flow for view *)                                                        *)
-  (* let vbody = CF.set_flow_in_formula_override                                    *)
-  (*     { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None }  *)
-  (*     vbody in                                                                   *)
   let hprel_str = CP.name_of_spec_var hprel_name in
   let vdecl = Cast.mk_view_decl_for_hp_rel hprel_str vargs false pos in
-  (* let v_sf, v_un_str = norm_view_formula hprel_str vbody in *)
   let v_data_name =
     match (CP.type_of_spec_var vself) with 
     | Named n -> n
     | _ -> ""
   in
-  let vdecl_w_def = { vdecl with 
-      (* Cast.view_formula = v_sf; (* CF.formula_to_struc_formula vbody; *)          *)
-      (* Cast.view_un_struc_formula = v_un_str; (* [(vbody, (fresh_int (), ""))]; *) *)
-      Cast.view_kind = View_NORM; 
+  let vdecl_w_def = { vdecl with
+      Cast.view_kind = View_NORM;
       Cast.view_data_name = v_data_name; } in
-  (* let () = Cast.update_view_decl prog vdecl_w_def in *)
-  (* let () =  x_add Astsimp.compute_view_x_formula cprog vdecl_w_def !Globals.n_xpure in *)
-  (* let () =  Astsimp.set_materialized_prop vdecl_w_def in                               *)
   x_add update_view_content iprog prog vdecl_w_def vbody
 
 let view_decl_of_hprel iprog prog (hprel: CF.hprel) =
@@ -1006,15 +995,8 @@ let unfolding_view iprog cprog view =
   let view_branches = List.map (fun f -> unfolding_formula cprog f_unfold f) view_branches in
   let unfold_view_f = CF.formula_of_disjuncts view_branches in
   let self_node = mk_self_node view.C.view_name unfold_view_f in
-  let unfold_view_f = Typeinfer.case_normalize_renamed_formula iprog 
+  let unfold_view_f = Typeinfer.case_normalize_renamed_formula iprog
       (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f in
-  (* let v_sf, v_un_str = norm_view_formula view.C.view_name unfold_view_f in                                                         *)
-  (* let () =                                                                                                                         *)
-  (*   view.C.view_formula <- v_sf;                                                                                                   *)
-  (*     (* CF.formula_to_struc_formula                                                                                            *) *)
-  (*     (*   (Typeinfer.case_normalize_renamed_formula iprog (self_node::(elim_useless_vars view.C.view_vars)) [] unfold_view_f); *) *)
-  (*   view.C.view_un_struc_formula <- v_un_str; (* [(unfold_view_f, (fresh_int (), ""))]; *)                                         *)
-  (* in                                                                                                                               *)
   x_add update_view_content iprog cprog view unfold_view_f
 
 let unfolding_view iprog cprog view =
@@ -1027,32 +1009,32 @@ let unfolding_view iprog cprog view =
 (*******************)
 let is_not_global_hp_def prog i =
   try
-    let todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i 
+    let todo_unk = C.look_up_hp_def_raw prog.C.prog_hp_decls i
     in false
   with _ -> true
 
 let is_not_global_rel prog i =
   try
-    let todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i 
+    let todo_unk = C.look_up_rel_def_raw (prog.C.prog_rel_decls # get_stk) i
     in false
   with _ -> true
 
-let univ_vars_of_lemma l_head = 
+let univ_vars_of_lemma l_head =
   let h, p, vp, _, _,_ = CF.split_components l_head in
   let pvars = MCP.mfv p in
-  let pvars = List.filter (fun (CP.SpecVar (_,id,_)) -> 
-    not (id = Globals.cyclic_name || 
-         id = Globals.acyclic_name || 
-         id = Globals.concrete_name || 
+  let pvars = List.filter (fun (CP.SpecVar (_,id,_)) ->
+    not (id = Globals.cyclic_name ||
+         id = Globals.acyclic_name ||
+         id = Globals.concrete_name ||
          id = Globals.set_comp_name)) pvars in (* ignore cyclic & acyclic rels *)
   let hvars = CF.h_fv h in
-  let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+  let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in
   Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
 
-let mater_vars_of_lemma prog l_head l_body = 
-  let args = CF.fv_simple_formula l_head in 
+let mater_vars_of_lemma prog l_head l_body =
+  let args = CF.fv_simple_formula l_head in
   let m_vars = Astsimp.find_materialized_prop args [] l_body in
-  let m_vars = List.map (fun m -> 
+  let m_vars = List.map (fun m ->
     let vs = m.C.mater_target_view in
     let vs2 = List.filter (fun v -> (is_not_global_rel prog v) && (is_not_global_hp_def prog v)) vs in
     (m, vs, vs2)) m_vars in
@@ -1069,9 +1051,9 @@ let mk_lemma prog l_name l_is_classic l_ivars l_itypes l_kind l_type l_head l_bo
     C.coercion_exact = l_is_classic;
     C.coercion_name = l_name;
     C.coercion_head = l_head;
-    C.coercion_head_norm = l_head (* CF.mkTrue (CF.mkNormalFlow ()) pos *);
-    C.coercion_body = l_body; 
-    C.coercion_body_norm = CF.struc_formula_of_formula l_body (* (CF.mkTrue (CF.mkNormalFlow ()) pos) *) pos;
+    C.coercion_head_norm = l_head;
+    C.coercion_body = l_body;
+    C.coercion_body_norm = CF.struc_formula_of_formula l_body pos;
     C.coercion_impl_vars = [];
     C.coercion_univ_vars = univ_vars_of_lemma l_head;
     C.coercion_infer_vars = l_ivars;

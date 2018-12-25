@@ -3489,6 +3489,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
                    && not (List.mem unmin_name !Inliner.inlined_procs)
   in
+  let () = if !Globals.enable_repair then
+      Globals.verified_procs := (!Globals.verified_procs) @ ["fcode"]
+  in
   if List.mem proc0.proc_name (!Globals.verified_procs) then true
   else if check_flag then
     begin

@@ -30,6 +30,7 @@ void append(node x, node y)
 	      //x.next = y.next; // x.next = y;
         // F |- P(y)
         //x.next = fcode(y);
+
         x.next = y;
 
         // F & Q(y, x.next) |- post(append)
@@ -41,7 +42,7 @@ void append(node x, node y)
 }
 
 // (1) x::node<q> * y::ll<n2> & n1 > 0 & x!=null & q = null & n1=1 |- P(y)
-// (2) x::node<q> * y::ll<n2> & n1 > 0 & x!=null & q = null & n1=1 & Q(y,x.next) |- x::ll<n1+n2>
+// (2) x::node<q> * y::ll<n2> & x!=null & q = null & n1=1 & Q(y,x.next) |- x::ll<n1+n2>
 
 // (1) x::node<q> * y::ll<n2> & q = null |- P(y)
 // P(y) is a pre-condition

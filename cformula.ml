@@ -5043,7 +5043,7 @@ and hp_rel_def_old = CP.rel_cat * h_formula * (formula option) * formula
 and hp_rel_def = {
   def_cat : CP.rel_cat;
   def_lhs : h_formula;
-  def_rhs : ((* cond_path_type * *) formula_guard) list;
+  def_rhs : formula_guard list;
   def_flow: nflow option;
 }
 (*  SHAPE ANALYSIS stages *)
@@ -20645,22 +20645,3 @@ let rec disable_imm_h_formula hf = match hf with
                   h_formula_star_h2 = disable_imm_h_formula st.h_formula_star_h2}
   | _ -> report_error no_pos "disable_imm_h_formula not handled case"
 
-let rec check_hf_hp hp_names hf = match hf with
-  | HVar _
-  | DataNode _
-  | ViewNode _
-  | HEmp
-  | HTrue
-  | HFalse -> false
-  | HRel (sv, _, _) ->
-    let sv_name = CP.name_of_sv sv in
-    List.exists (fun x -> String.compare x sv_name == 0) hp_names
-  | Star sf -> (check_hf_hp hp_names sf.h_formula_star_h1) ||
-               (check_hf_hp hp_names sf.h_formula_star_h2)
-  | _ -> report_error no_pos "unhandled case of check_conseq_hp"
-
-let rec check_conseq_hp hp_names formula = match formula with
-  | Base bf -> check_hf_hp hp_names bf.formula_base_heap
-  | Exists ef -> check_hf_hp hp_names ef.formula_exists_heap
-  | Or f -> (check_conseq_hp hp_names f.formula_or_f1) ||
-            (check_conseq_hp hp_names f.formula_or_f2)

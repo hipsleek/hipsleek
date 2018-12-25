@@ -3753,7 +3753,7 @@ let update_view_decl prog vdecl =
   let () =
     if not (is_empty same_vdecls) then
       y_winfo_pp ("Updating an available view decl (" ^ vdecl_id ^ ") in iprog")
-    else y_binfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")
+    else y_tinfo_pp ("adding the view " ^ vdecl_id ^ " into iprog.")
   in
   prog.prog_view_decls <- others @ [vdecl]
 
