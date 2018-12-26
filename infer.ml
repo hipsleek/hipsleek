@@ -463,9 +463,9 @@ let is_elem_of conj conjs =
 (* let aux_test2 () = *)
 (*       Debug.no_1_num 13 "aux_test2" pr_no pr_no aux_test2 () *)
 
-let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos = 
+let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
   if no_infer_pure es then None
-  else 
+  else
     let iv = es.es_infer_vars in
     let dead_iv = es.es_infer_vars_dead in
     let lhs_als = get_alias_formula es.es_formula in

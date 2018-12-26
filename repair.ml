@@ -10,6 +10,7 @@ module CP = Cpure
 
 let stop = ref false
 let next_proc = ref false
+let pr_proc = Iprinter.string_of_proc_decl
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
@@ -702,100 +703,86 @@ let start_repair iprog =
   let cprog, _ = Astsimp.trans_prog iprog in
   let pr_exps = pr_list Iprinter.string_of_exp in
 
-  match (!Typechecker.proc_to_repair, !Typechecker.repairing_ents) with
-  | (Some proc_name_to_repair, ents) ->
-    let () = Globals.start_repair := true in
-    let ent_vars = Songbird.get_vars_in_fault_ents ents in
-    let pr_svs = Cprinter.string_of_spec_var_list in
-    let sv_names = List.map CP.name_of_spec_var ent_vars in
-    let () = x_tinfo_hp (add_str "vars " (pr_list pr_id)) sv_names no_pos in
-
+  match (!Typechecker.proc_to_repair) with
+  | (Some proc_name_to_repair) ->
     let proc_name_to_repair = Cast.unmingle_name proc_name_to_repair in
-    let () = x_tinfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
+    let () = x_binfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
         no_pos in
+    let () = Globals.start_repair := true in
     let proc_to_repair = List.find (fun x -> String.compare (x.proc_name)
                                        proc_name_to_repair == 0)
         iprog.prog_proc_decls in
-    let () = x_tinfo_hp (add_str "proc: " (Iprinter.string_of_proc_decl))
-        proc_to_repair no_pos in
-    let candidates =
-      list_of_candidate_exp (Gen.unsome proc_to_repair.proc_body) in
-    let var_decls = list_vars (Gen.unsome proc_to_repair.proc_body) iprog in
-    let () = x_tinfo_hp (add_str "var decls: " (pr_list (pr_pair pr_id Globals.string_of_typ)))
-        var_decls no_pos in
-    let cand_exps = List.map fst candidates in
-    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
-    let filter_candidate exp =
-      let exp_vars = collect_vars_exp exp in
-      if exp_vars = [] then true
-      else
-        let str_compare x y = String.compare x y == 0 in
-        let intersect = Gen.BList.intersect_eq in
-        let vars = intersect str_compare exp_vars sv_names in
-        if vars = [] then false
-        else true
-    in
-    let candidates, filtered = List.partition (fun (x, y) -> filter_candidate x) candidates in
-    let () = x_tinfo_hp (add_str "filtered exps: " pr_exps)
-        (candidates |> List.map fst) no_pos in
-
-    (* None *)
-
-    let vars = proc_to_repair.proc_args in
-    let vars = List.map (fun x -> (x.param_name, x.param_type)) vars in
-    let vars = vars @ var_decls in
-    let vars = List.filter (fun (x, y) -> match y with
-        | Int -> true
-        | _ -> false) vars in
-    let dedup a b = String.compare (fst a) (fst b) == 0 in
-    let vars = Gen.BList.remove_dups_eq dedup vars in
-    let repair_res_list =
-      List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
-                   (snd stmt) vars false) candidates in
-    let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-    let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-    let best_res = get_best_repair h_repair_res_list in
-
-    (* let best_res = None in *)
-    begin
-      match best_res with
-      | None ->
-        (* None *)
-        let mutated_res = repair_by_mutation iprog proc_to_repair in
-        let mutated_res = List.filter(fun x -> x != None) mutated_res in
-        let mutated_res = List.map Gen.unsome mutated_res in
-        if mutated_res = [] then
-          let repair_res_list =
-            List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
-                         (snd stmt) vars false) filtered in
-          let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-          let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-          let best_res = get_best_repair h_repair_res_list in
-          begin
-            match best_res with
-            | None ->
-              let () = next_proc := false in
-              None
-            | Some (_, best_r_prog, pos, repaired_exp) ->
-              let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
-                  best_r_prog.prog_proc_decls in
-              Some best_r_prog
-          end
-        else Some (List.hd mutated_res)
-      | Some (_, best_r_prog, pos, repaired_exp) ->
-        let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
-            best_r_prog.prog_proc_decls in
-        let () = x_tinfo_hp
-            (add_str "best repaired proc" (Iprinter.string_of_exp))
-            (Gen.unsome repaired_proc.proc_body) no_pos in
-        let () =
-          x_tinfo_hp (add_str "templ: "
-                        (Cprinter.poly_string_of_pr Cprinter.pr_formula_exp))
-            repaired_exp no_pos in
-        Some best_r_prog
-        (* Some (best_r_prog, pos, repaired_exp) *)
-    end
-
+    let () = x_tinfo_hp (add_str "proc: " pr_proc) proc_to_repair no_pos in
+    let candidates = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
+    let cand_exps = candidates in
+    let () = x_binfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
+    (* let filter_candidate exp =
+     *   let exp_vars = collect_vars_exp exp in
+     *   if exp_vars = [] then true
+     *   else
+     *     let str_compare x y = String.compare x y == 0 in
+     *     let intersect = Gen.BList.intersect_eq in
+     *     let vars = intersect str_compare exp_vars sv_names in
+     *     if vars = [] then false
+     *     else true
+     * in
+     * let candidates, filtered = List.partition (fun (x, y) -> filter_candidate x) candidates in
+     * let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
+     *     (candidates |> List.map fst) no_pos in
+     * let vars = proc_to_repair.proc_args in
+     * let vars = List.map (fun x -> (x.param_name, x.param_type)) vars in
+     * let vars = vars @ var_decls in
+     * let vars = List.filter (fun (x, y) -> match y with
+     *     | Int -> true
+     *     | _ -> false) vars in
+     * let dedup a b = String.compare (fst a) (fst b) == 0 in
+     * let vars = Gen.BList.remove_dups_eq dedup vars in *)
+    None
+    (* let repair_res_list =
+     *   List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
+     *                (snd stmt) vars false) candidates in
+     * let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
+     * let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
+     * let best_res = get_best_repair h_repair_res_list in
+     *
+     * begin
+     *   match best_res with
+     *   | None ->
+     *     (\* None *\)
+     *     let mutated_res = repair_by_mutation iprog proc_to_repair in
+     *     let mutated_res = List.filter(fun x -> x != None) mutated_res in
+     *     let mutated_res = List.map Gen.unsome mutated_res in
+     *     if mutated_res = [] then
+     *       let repair_res_list =
+     *         List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
+     *                      (snd stmt) vars false) filtered in
+     *       let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
+     *       let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
+     *       let best_res = get_best_repair h_repair_res_list in
+     *       begin
+     *         match best_res with
+     *         | None ->
+     *           let () = next_proc := false in
+     *           None
+     *         | Some (_, best_r_prog, pos, repaired_exp) ->
+     *           let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
+     *               best_r_prog.prog_proc_decls in
+     *           Some best_r_prog
+     *       end
+     *     else Some (List.hd mutated_res)
+     *   | Some (_, best_r_prog, pos, repaired_exp) ->
+     *     let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
+     *         best_r_prog.prog_proc_decls in
+     *     let () = x_tinfo_hp
+     *         (add_str "best repaired proc" (Iprinter.string_of_exp))
+     *         (Gen.unsome repaired_proc.proc_body) no_pos in
+     *     let () =
+     *       x_tinfo_hp (add_str "templ: "
+     *                     (Cprinter.poly_string_of_pr Cprinter.pr_formula_exp))
+     *         repaired_exp no_pos in
+     *     Some best_r_prog
+     *     (\* Some (best_r_prog, pos, repaired_exp) *\)
+     * end *)
   | _ ->
     let () = next_proc := false in
     None

@@ -1835,7 +1835,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               unfolded
           in
           let c = string_of_typ v_t in
-          let fresh_perm_exp,perm_vars = 
+          let fresh_perm_exp,perm_vars =
             (match !Globals.perm with
              | Bperm ->
                let c_name = x_add_1 Cpure.fresh_old_name "cbperm" in
@@ -1871,7 +1871,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
-          let vheap = 
+          let vheap =
             if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
 
           let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
@@ -1912,7 +1912,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let to_print = "Proving binding in method " ^ proc.proc_name
                          ^ " for spec " ^ !log_spec ^ "\n" in
           x_tinfo_pp to_print pos;
-
+          let () = proc_to_repair := Some (proc.Cast.proc_name) in
           if (Gen.is_empty unfolded) then
             let () = y_tinfo_pp "unfolded body is empty" in
             unfolded
