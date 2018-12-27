@@ -4513,11 +4513,9 @@ let create_tmpl_hproc proc stmt =
       let n_block = aux block.exp_block_body in
       Block {block with exp_block_body = n_block}
     | Cond exp_cond ->
-      let n_cond = aux exp_cond.exp_cond_condition in
       let n_then = aux exp_cond.exp_cond_then_arm in
       let n_else = aux exp_cond.exp_cond_else_arm in
-      Cond {exp_cond with exp_cond_condition = n_cond;
-                          exp_cond_then_arm = n_then;
+      Cond {exp_cond with exp_cond_then_arm = n_then;
                           exp_cond_else_arm = n_else;}
     | Label (a, lexp) -> Label (a, aux lexp)
     | Return res ->
