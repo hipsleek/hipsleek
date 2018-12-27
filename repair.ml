@@ -579,7 +579,7 @@ let repair_prog_with_templ iprog cond_op =
         let () = next_proc := false in
         None
 
-let create_templ_proc proc replaced_exp vars heuristic =
+let create_tmpl_proc proc replaced_exp vars heuristic =
   let var_names = List.map fst vars in
   let pr_exp = Iprinter.string_of_exp_repair in
   let () = x_tinfo_hp (add_str "exp input: " pr_exp) (replaced_exp) no_pos in
@@ -601,9 +601,6 @@ let create_templ_proc proc replaced_exp vars heuristic =
     let n_proc_body = Some (replace_exp_with_loc (Gen.unsome proc.proc_body)
                               n_exp exp_loc) in
     let n_proc = {proc with proc_body = n_proc_body} in
-    (* let replaced_pos = List.hd replaced_pos_list in *)
-
-    (* Some (n_proc, n_exp, exp_loc) *)
     Some (n_proc, unk_exp, exp_loc)
 
 let repair_one_statement iprog proc exp is_cond vars heuristic =
@@ -614,9 +611,8 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     let () = next_proc := false in
     None
   else
-    let n_proc_exp = create_templ_proc proc exp vars heuristic
+    let n_proc_exp = create_tmpl_proc proc exp vars heuristic
     in
-    (* None *)
     let () = x_dinfo_pp "marking \n" no_pos in
     match n_proc_exp with
     | None -> let () = next_proc := false in
@@ -624,8 +620,6 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
     | Some (templ_proc, unk_exp, replaced_pos) ->
       let () = x_tinfo_hp (add_str "new proc: " pr_exp)
           (Gen.unsome templ_proc.proc_body) no_pos in
-      (* None *)
-
       let var_names = List.map fst vars in
       let var_typs = List.map snd vars in
       let n_proc_decls =
@@ -635,7 +629,6 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
       let () = x_tinfo_hp (add_str "exp_decl: " (Iprinter.string_of_exp_decl))
           unk_exp no_pos in
       let input_repair_proc = {n_iprog with prog_exp_decls = [unk_exp]} in
-      (* None *)
       try
         let _ = Astsimp.trans_prog input_repair_proc in
         let repair_res = repair_prog_with_templ input_repair_proc is_cond in
@@ -656,6 +649,12 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
       with _ ->
         let () = next_proc := false in
         None
+
+let repair_one_heap_stmt iprog proc stmt =
+  let n_proc = create_tmpl_hproc proc stmt in
+  let pr_exp = Iprinter.string_of_exp_repair in
+  let () = x_binfo_hp (add_str "n_proc" pr_exp) (Gen.unsome n_proc.proc_body) no_pos in
+  None
 
 let get_best_repair repair_list =
   try
@@ -713,39 +712,15 @@ let start_repair iprog =
                                        proc_name_to_repair == 0)
         iprog.prog_proc_decls in
     let () = x_tinfo_hp (add_str "proc: " pr_proc) proc_to_repair no_pos in
-    let candidates = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
-    let cand_exps = candidates in
-    let () = x_binfo_hp (add_str "candidates: " pr_exps) cand_exps no_pos in
-    (* let filter_candidate exp =
-     *   let exp_vars = collect_vars_exp exp in
-     *   if exp_vars = [] then true
-     *   else
-     *     let str_compare x y = String.compare x y == 0 in
-     *     let intersect = Gen.BList.intersect_eq in
-     *     let vars = intersect str_compare exp_vars sv_names in
-     *     if vars = [] then false
-     *     else true
-     * in
-     * let candidates, filtered = List.partition (fun (x, y) -> filter_candidate x) candidates in
-     * let () = x_binfo_hp (add_str "filtered exps: " pr_exps)
-     *     (candidates |> List.map fst) no_pos in
-     * let vars = proc_to_repair.proc_args in
-     * let vars = List.map (fun x -> (x.param_name, x.param_type)) vars in
-     * let vars = vars @ var_decls in
-     * let vars = List.filter (fun (x, y) -> match y with
-     *     | Int -> true
-     *     | _ -> false) vars in
-     * let dedup a b = String.compare (fst a) (fst b) == 0 in
-     * let vars = Gen.BList.remove_dups_eq dedup vars in *)
-    None
-    (* let repair_res_list =
-     *   List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
-     *                (snd stmt) vars false) candidates in
-     * let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
+    let cands = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
+    let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+    let repair_res_list =
+      List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in
+    (* let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
      * let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-     * let best_res = get_best_repair h_repair_res_list in
-     *
-     * begin
+     * let best_res = get_best_repair h_repair_res_list in *)
+    None
+    (* begin
      *   match best_res with
      *   | None ->
      *     (\* None *\)
@@ -795,83 +770,3 @@ let rec start_repair_wrapper iprog =
     let () = Globals.start_repair := false in
     start_repair_wrapper iprog
   else tmp
-
-(* let heap_entail_struc_list_partial_context_init_x (prog:Cast.prog_decl)
- *     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
- *   let n_prog = translate_prog prog in
- *   let pr5 = pr_list CPR.string_of_formula in
- *   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
- *   let () = x_tinfo_hp (add_str "cl formulas" pr5) ante_formula_list no_pos in
- *   let ante_sb_formula_list, _ = ante_formula_list |> List.map translate_formula
- *                               |> List.split in
- *   let (_, conseq) = CF.base_formula_of_struc_formula conseq in
- *   let sb_conseq, _ = translate_formula conseq in
- *   let pr4 = SBCast.pr_formula in
- *   let () = x_tinfo_hp (add_str "conseq" CPR.string_of_formula) conseq no_pos in
- *   let () = x_tinfo_hp (add_str "ante" (pr_list (pr_list pr4))) ante_sb_formula_list no_pos in
- *   let sb_conseq = List.hd sb_conseq in
- *   let checkentail_one ante conseq =
- *     let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailResidue x conseq)
- *         ante in
- *     let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
- *     let ptrees = List.map (fun ent -> SBProver.check_entailment n_prog ent) ents in
- *     let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
- *                                   ptree) ptrees in
- *     if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
- *     then
- *       let residues = List.map (fun ptree ->
- *           let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
- *           let pr_rsd = SBCast.pr_fs in
- *           let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
- * 
- *           List.hd residue_fs
- *         ) ptrees in
- *       let residue = translate_back_fs residues [] in
- *       let () = x_tinfo_hp (add_str "residue" CPR.string_of_formula) residue no_pos in
- *       Some residue
- *     else None in
- *   let residues = List.map (fun x -> checkentail_one x sb_conseq)
- *       ante_sb_formula_list in
- *   report_error no_pos "incomplete heap_entail_struc_list_partial_context_init"
- * 
- * let heap_entail_struc_list_partial_context_init (prog:Cast.prog_decl)
- *     (cl:CF.list_partial_context) (conseq:CF.struc_formula) =
- *    (\* : (list_partial_context * proof) = *\)
- *   let pr1 = CPR.string_of_list_partial_context in
- *   let pr2 = CPR.string_of_struc_formula in
- *   let pr3 (a,_)= pr1 a in
- *   Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
- *     (fun _ _ -> heap_entail_struc_list_partial_context_init_x prog  cl conseq) cl conseq *)
-
-(* let heap_entail_list_partial_context_init_x (prog : Cast.prog_decl)
- *     (cl : CF.list_partial_context) (conseq:CF.formula) =
- *   let data_decls = prog.Cast.prog_data_decls in
- *   let ante_formula_list = CF.list_formula_of_list_partial_context cl in
- *   let ante_sb_formula_list = List.map translate_formula ante_formula_list in
- *   let sb_conseq = translate_formula conseq in
- *   (\* let check_entail lhs rhs =
- *    *   let prog = SBCast.mk_program "check_entail" in
- *    *   let entail = SBCast.mk_entailment lhs rhs in
- *    *   let res = SBProver.check_entailment prog entail in
- *    *   match res with
- *    *   | SBGlobals.MvlTrue -> true
- *    *   | _ -> false
- *    * in *\)
- *   report_error no_pos "incomplete procedure"
- * 
- * let heap_entail_list_partial_context_init (prog : Cast.prog_decl)
- *     (cl : CF.list_partial_context) (conseq:CF.formula) =
- *   (\* Currently no calls *\)
- *   let pr1 = CPR.string_of_list_partial_context in
- *   let pr2 = CPR.string_of_formula in
- *   let pr3 (a,_)= pr1 a in
- *   Debug.no_2 "heap_entail_list_partial_context_init" pr1 pr2 pr3
- *     (fun _ _ -> heap_entail_list_partial_context_init_x prog  cl conseq) cl conseq
- * 
- * (\* list all typechecker calls for solver *\)
- * let heap_entail_one_context = false
- * (\* 2 yes *\)
- * 
- * 
- * let heap_entail_list_failesc_context_init = false
- * (\* 4 no *\) *)

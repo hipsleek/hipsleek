@@ -1527,22 +1527,6 @@ let genESpec_wNI body_header body_opt args ret pos=
     }
 
 let mkProc sfile id flgs n dd c ot ags r ho_param ss ds pos bd =
-  (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
-  (* let ni_name = match bd with *)
-  (*   | None -> [] *)
-  (*   | Some bd -> get_ni_name bd *)
-  (* in *)
-  (*move this to body parsing step. we know which parameter is mut or imm*)
-  (* let ss, n_hp_dcls = match ss with *)
-  (*   | F.EList [] -> *)
-  (*         let ss, hps = genESpec bd ags r pos in *)
-  (*         let () = Debug.ninfo_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *)
-  (*         (ss,hps) *)
-  (*             (\* F.mkETrueTrueF ()  *\) *)
-  (*   | _ -> *)
-  (*         (\* let () = Debug.info_hprint (add_str "ss" !F.print_struc_formula) ss no_pos in *\) *)
-  (*         ss,[] *)
-  (* in *)
   { proc_name = id;
     proc_source =sfile;
     proc_flags = flgs;
@@ -4194,6 +4178,25 @@ let collect_vars_exp exp =
     let vars = List.rev (aux exp []) in
     Gen.BList.remove_dups_eq (fun s1 s2 -> String.compare s1 s2 = 0) vars
 
+let collect_exp_vars exp =
+    let rec aux exp list = match exp with
+      | Binary bin ->
+        let tmp = aux bin.exp_binary_oper1 list in
+        aux bin.exp_binary_oper2 tmp
+      | Block block -> aux block.exp_block_body list
+      | Cast cast -> aux cast.exp_cast_body list
+      | Var var -> [var] @ list
+      | IntLit _ -> list
+      | CallNRecv call ->
+        let arguments = List.map (fun x -> aux x [])
+            call.exp_call_nrecv_arguments in
+        List.concat arguments
+      | Member e ->
+        aux e.exp_member_base list
+      | _ -> list
+    in
+    List.rev (aux exp [])
+
 let is_bool_exp exp = match exp with
   | Binary e ->
     begin
@@ -4485,3 +4488,51 @@ let normalize_call_wrapper iprog exp =
       }
     ) n_exp assign_list in
   attached_exp
+
+let create_tmpl_hproc proc stmt =
+  let pos = get_exp_pos stmt in
+  let body = Gen.unsome proc.proc_body in
+  let vars = collect_exp_vars stmt in
+  let var_names = List.map (fun x -> x.exp_var_name) vars in
+  let args = proc.proc_args in
+  let args = List.filter (fun x -> List.mem x.param_name var_names) args in
+  let arg_names = List.map (fun x -> x.param_name) args in
+  let vars = List.filter (fun x -> List.mem x.exp_var_name arg_names) vars in
+  let rec aux exp =
+    match exp with
+    | CallRecv _
+    | CallNRecv _
+    | Assign _
+    | Binary _ ->
+      if exp = stmt
+      then
+        let vars = List.map (fun x -> Var x) vars in
+        mkCallNRecv "fcode" None vars None None pos
+      else exp
+    | Block block ->
+      let n_block = aux block.exp_block_body in
+      Block {block with exp_block_body = n_block}
+    | Cond exp_cond ->
+      let n_cond = aux exp_cond.exp_cond_condition in
+      let n_then = aux exp_cond.exp_cond_then_arm in
+      let n_else = aux exp_cond.exp_cond_else_arm in
+      Cond {exp_cond with exp_cond_condition = n_cond;
+                          exp_cond_then_arm = n_then;
+                          exp_cond_else_arm = n_else;}
+    | Label (a, lexp) -> Label (a, aux lexp)
+    | Return res ->
+      begin
+        match res.exp_return_val with
+        | None -> exp
+        | Some e -> Return {res with exp_return_val = Some (aux e)}
+      end
+    | Seq exp_seq ->
+      let n_exp1 = aux exp_seq.exp_seq_exp1 in
+      let n_exp2 = aux exp_seq.exp_seq_exp2 in
+      Seq {exp_seq with exp_seq_exp1 = n_exp1;
+                        exp_seq_exp2 = n_exp2}
+    | Unary e -> Unary {e with exp_unary_exp = aux e.exp_unary_exp}
+    | _ -> exp
+  in
+  let n_body = aux body in
+  {proc with proc_body = Some n_body}

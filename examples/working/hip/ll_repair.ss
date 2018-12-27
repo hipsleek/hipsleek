@@ -2,13 +2,12 @@ data node {
 	node next;
 }
 
-// HeapPred P(node y).
-// HeapPred Q(node y).
+HeapPred P(node y).
+HeapPred Q(node y).
 
-// node fcode(node y)
-//   // infer[P,Q]
-//   requires P(y)
-//   ensures Q(y);
+node fcode(node y)
+  requires P(y)
+  ensures Q(y);
 
 ll<n> == self = null & n = 0
 	or self::node<q> * q::ll<n-1>
