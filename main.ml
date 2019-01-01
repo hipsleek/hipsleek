@@ -144,7 +144,7 @@ let rec process_header_with_pragma hlist plist =
 
 let process_include_files incl_files ref_file =
   if(List.length incl_files >0) then
-    let header_files = Gen.BList.remove_dups_eq (=) incl_files in 
+    let header_files = Gen.BList.remove_dups_eq (=) incl_files in
     let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
     try
       let (curdir,_)=BatString.rsplit ref_file "/" in
@@ -274,7 +274,7 @@ let print_spec cprog =
                                           (p.Cast.proc_stk_of_static_specs # top
                                           )) in
           ("Procedure " ^ p.Cast.proc_name ^ "\n") ^
-          Cprinter.string_of_struc_formula_for_spec 
+          Cprinter.string_of_struc_formula_for_spec
             (replace_struc_formula (p.Cast.proc_stk_of_static_specs # top) cprog)
       ) ^ (helper pl)
     | [] -> ""
@@ -363,14 +363,14 @@ let process_source_full source =
   let repair_input_prog = prog in
   (* let repair_input_prog = if (en_repair && not(en_repair_templ)) then
    *     let normalized_prog = Repair.normalize_prog prog in
-   * 
+   *
    *     let file_name = Filename.basename source in
    *     let normalized_name = "normalized_" ^ file_name ^ ".ss" in
    *     let dir = Filename.dirname source in
    *     let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
    *     let oc = open_out normalized_file in
    *     let () = Parser.parser_name := "default" in
-   * 
+   *
    *     fprintf oc "%s\n" (pr_prog_repair normalized_prog);
    *     close_out oc;
    *     let nprog = parse_file_full normalized_file false in
@@ -526,12 +526,12 @@ let process_source_full source =
       let parameter_formula = "  Parameter formula : Type.\n" in
       let parameter_valid = "  Parameter valid : formula -> Prop.\n" in
       let ptto_list = List.map (fun dd ->
-          if(List.length dd.C.data_fields > 0 
+          if(List.length dd.C.data_fields > 0
              && not(ExtString.String.starts_with dd.C.data_name "int_ptr")
              && not(ExtString.String.starts_with dd.C.data_name "barrier")) then
             let param_name = "  Parameter "^dd.C.data_name^" : Type.\n" in
             let param_null = "  Parameter null_"^dd.C.data_name^" : "
-                             ^dd.C.data_name^".\n" in 
+                             ^dd.C.data_name^".\n" in
             let param_ptto = "  Parameter ptto_"^dd.C.data_name
                              ^" : "^dd.C.data_name^" -> " in
             let types_list = List.map (fun ((t,_),_) -> match t with
@@ -545,7 +545,7 @@ let process_source_full source =
           else ""
         ) c.C.prog_data_decls in
       let parameter_ptto = String.concat "" ptto_list in
-      let view_list = List.map (fun vd -> 
+      let view_list = List.map (fun vd ->
           if not(vd.C.view_is_prim) then
             let view_params = String.concat "" (List.map (fun sv ->
                 match (CP.type_of_spec_var sv) with
@@ -565,13 +565,13 @@ let process_source_full source =
           else ""
         ) c.C.prog_view_decls in
       let parameter_views = String.concat "" view_list in
-      let parameter_formulas = 
+      let parameter_formulas =
         "  Parameter star : formula -> formula -> formula.\n"^
         "  Parameter and : formula -> formula -> formula.\n"^
         "  Parameter imp : formula -> formula -> formula.\n"^
         "  Parameter not : formula -> formula.\n"^
         "  Parameter eq : node -> node -> formula.\n"^
-        (if !Globals.allow_ramify then 
+        (if !Globals.allow_ramify then
            "  Parameter mwand : formula -> formula -> formula.\n"^
            "  Parameter union : formula -> formula -> formula.\n"^
            "  Parameter neq : Z -> Z -> formula.\n"
@@ -594,7 +594,7 @@ let process_source_full source =
         ) (c.C.prog_rel_decls # get_stk) in
       let parameter_relations = String.concat "" relation_list in
       let rec convert_cp_formula f = match f with
-        | CP.BForm((pf,_),_) -> (match pf with 
+        | CP.BForm((pf,_),_) -> (match pf with
             | CP.Eq(e1,e2,_) -> "(eq " ^ (CP.exp_to_name_spec_var e1)
                                 ^ " " ^ (CP.exp_to_name_spec_var e2) ^ ")"
             | CP.Neq(e1,e2,_) ->
@@ -630,8 +630,8 @@ let process_source_full source =
              then " valid " ^ (convert_cp_formula axd.C.axiom_conclusion) ^ ".\n"
              else " valid (imp "^(convert_cp_formula axd.C.axiom_hypothesis)
                   ^ " " ^ (convert_cp_formula axd.C.axiom_conclusion) ^ ").\n")
-        ) (List.filter (fun a -> 
-          if List.length (CP.fv a.C.axiom_hypothesis) > 0 then 
+        ) (List.filter (fun a ->
+          if List.length (CP.fv a.C.axiom_hypothesis) > 0 then
             if ExtString.String.starts_with (CP.name_of_spec_var
                                                (List.hd (CP.fv a.C.axiom_hypothesis))) "dom"
             then false
@@ -928,7 +928,7 @@ let process_source_full_after_parser source (prog, prims_list) =
 
   (* Forward axioms and relations declarations to SMT solver module *)
   (* L2: not-in-used *)
-  let todo_unk = List.map (fun crdef -> 
+  let todo_unk = List.map (fun crdef ->
       let () = Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars
           crdef.Cast.rel_formula in
       Z3.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula
@@ -1008,7 +1008,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime
            +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-  if (not !Globals.web_compile_flag) then 
+  if (not !Globals.web_compile_flag) then
     print_string_quiet
       ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))
        ^" false contexts at: ("
@@ -1104,6 +1104,7 @@ let old_main () =
     end
 
 let () =
+  let _ = Synthesizer.foo in
   if not(!Globals.do_infer_inc) then
     let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()

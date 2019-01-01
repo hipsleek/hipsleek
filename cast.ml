@@ -562,7 +562,7 @@ and exp = (* expressions keep their types *)
   | IConst of exp_iconst
   | New of exp_new
   | Null of loc
-  | EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
+  | EmptyArray of exp_emparray
   | Print of (int * loc)
   | SCall of exp_scall
   | Seq of exp_seq
