@@ -97,3 +97,37 @@ let mk_synthesis_tree_derive goal rule sub_trees status : synthesis_tree =
     std_rule = rule;
     std_sub_trees = sub_trees;
     std_status = status; }
+
+let mk_synthesis_tree_core goal rule sub_trees : synthesis_tree_core =
+  { stc_goal = goal;
+    stc_rule = rule;
+    stc_sub_trees = sub_trees; }
+
+let mk_synthesis_tree_success goal rule : synthesis_tree =
+  let stcore = mk_synthesis_tree_core goal rule [] in
+  StDerive {
+    std_goal = goal;
+    std_rule = rule;
+    std_sub_trees = [];
+    std_status = StValid stcore; }
+
+let mk_synthesis_tree_fail goal msg : synthesis_tree =
+  StSearch {
+    sts_goal = goal;
+    sts_sub_trees = [];
+    sts_status = StUnkn msg; }
+
+(*********************************************************************
+ * Queries
+ *********************************************************************)
+
+let get_synthesis_tree_status stree : synthesis_tree_status =
+  match stree with
+  | StDerive std -> std.std_status
+  | StSearch sts -> sts.sts_status
+
+let is_synthesis_tree_success stree : bool =
+  let status = get_synthesis_tree_status stree in
+  match status with
+  | StValid _ -> true
+  | StUnkn _ -> false
