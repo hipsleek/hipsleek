@@ -501,23 +501,18 @@ let create_templ_prog prog ents
   let fun_name = exp_decl.Cast.exp_name in
   let args = exp_decl.Cast.exp_params |> List.map translate_var in
   let f_defn = SBCast.mk_func_defn_unknown fun_name args in
-  let ifr_typ = SBGlobals.IfrStrong in
-  let infer_func = {
-    SBCast.ifr_typ = ifr_typ;
-    SBCast.ifr_pents = ents
-  }
-  in
+  let ifp_typ = SBGlobals.IfrStrong in
+  let infer_func = {SBCast.ifp_typ = ifp_typ;
+                    SBCast.ifp_ents = ents} in
   let nprog = {program with
-             prog_funcs = [f_defn];
-             prog_commands = [SBCast.InferFuncs infer_func]
-            }
-  in
+               prog_funcs = [f_defn];
+               prog_commands = [SBCast.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
   let sb_res =
-    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifr_typ nprog
+    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifp_typ nprog
       ents in
   let inferred_prog = if sb_res = [] then nprog
-      else snd (List.hd sb_res)
+    else snd (List.hd sb_res)
   in
   let () = x_tinfo_hp (add_str "inferred prog: " SBCast.pr_program) inferred_prog no_pos in
   inferred_prog.SBCast.prog_funcs
@@ -557,9 +552,9 @@ let get_repair_candidate prog ents cond_op =
       let fun_def = List.find (fun fun_def -> String.compare ident fun_def.SBCast.func_name == 0)
           fun_defs in
       match fun_def.SBCast.func_body with
-      | SBCast.FuncTemplate _
-      | SBCast.FuncUnknown -> None
-      | SBCast.FuncForm exp ->
+      | SBCast.FbTemplate _
+      | SBCast.FbUnknown -> None
+      | SBCast.FbForm exp ->
         let sb_vars = fun_def.SBCast.func_params in
         let translated_vars = List.map translate_back_var sb_vars in
         let translated_exp = translate_back_exp exp in
@@ -625,14 +620,14 @@ let translate_view_decl (view:Cast.view_decl) =
   let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
   let sb_formula = List.concat sb_formula in
   let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
-  SBCast.mk_view_defn ident sb_vars (SBCast.ViewDefnCases view_defn_cases) sb_pos
+  SBCast.mk_view_defn ident sb_vars (SBCast.VbDefnCases view_defn_cases)
 
 let translate_hp hp =
   let ident = hp.Cast.hp_name in
   let sb_pos = translate_loc no_pos in
   let vars = List.map fst hp.Cast.hp_vars_inst in
   let sb_vars = List.map translate_var vars in
-  SBCast.mk_view_defn ident sb_vars SBCast.ViewDefnUnkn sb_pos
+  SBCast.mk_view_defn ident sb_vars SBCast.VbUnknown
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in

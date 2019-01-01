@@ -35,7 +35,7 @@ let process_one_rule goal rule : derivation =
  * The search procedure
  *********************************************************************)
 
-let synthesize_one_goal goal : synthesis_tree =
+let synthesize_one_goal goal (* : synthesis_tree *) =
   let rules = choose_synthesis_rules goal in
   ()
 
