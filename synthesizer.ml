@@ -26,13 +26,35 @@ let raise_stree st = raise (EStree st)
 let choose_rule_func_call goal : rule list =
   []
 
-let extract_hf_var hf var =
+let rec extract_hf_var hf var =
+  let pr_hf = Cprinter.string_of_h_formula in
+  let () = x_binfo_hp (add_str "hf: " pr_hf) hf no_pos in
   match hf with
   | CF.DataNode dnode ->
     let dn_var = dnode.CF.h_formula_data_node in
     if dn_var = var then Some hf
     else None
+  | CF.Star sf ->
+    let f1 = extract_hf_var sf.CF.h_formula_star_h1 var in
+    let f2 = extract_hf_var sf.CF.h_formula_star_h2 var in
+    (match f1, f2 with
+     | Some _, Some _
+     | None, None -> None
+     | None, Some hf2 -> Some hf2
+     | Some hf1, None -> Some hf1)
+  | CF.ViewNode vnode ->
+    let vnode_var = vnode.CF.h_formula_view_node in
+    if vnode_var = var then Some hf else None
   | _ -> None
+
+  let extract_var_f f var = match f with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      let hf_var = extract_hf_var hf var in
+      (match hf_var with
+       | Some hf -> Some (CF.formula_of_heap hf no_pos)
+       | None -> None)
+    | _ -> None
 
 (* implement simple rules first *)
 (* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
@@ -41,12 +63,14 @@ let choose_rule_assign goal : rule list =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let var = List.hd vars in
-  let extract_var_f f var = match f with
-    | CF.Base bf ->
-      let hf = bf.CF.formula_base_heap in
-      None
-    | _ -> None
-  in
+  let f_var1 = extract_var_f pre var in
+  let f_var2 = extract_var_f post var in
+  let pr_formula = Cprinter.string_of_formula in
+  let pr_sv = Cprinter.string_of_spec_var in
+  let () = x_binfo_hp (add_str "var: " pr_sv) var no_pos in
+  let () = x_binfo_hp (add_str "f_var1: " pr_formula) (Gen.unsome f_var1) no_pos in
+  let () = x_binfo_hp (add_str "f_var2: " pr_formula) (Gen.unsome f_var2) no_pos in
+
   (* compare pre/post conds *)
   []
 
