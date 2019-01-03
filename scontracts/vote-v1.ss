@@ -147,6 +147,7 @@ contract Ballot {
 /********************/
 /*Translated Version*/
 /********************/
+hip_include 'scontracts/mapprimitives.ss'
 
 //This file should be named as Ballot.ss -> contract
 data address {
@@ -187,99 +188,15 @@ global mapping(address => Voter) voters;
 // A dynamically-sized array of `Proposal` structures.
 global Proposal[] proposals;
 
-/*
-/// Create a new ballot to choose one of `proposalNames`.
-void Ballot(char[,32] proposalNames)
-     // chairperson = msg.sender;
-     // voters[chairperson].weight = 1;
-{
-     int n;
-     n = sizeof(proposalNames[]);
-     for(int i = 0; i < n; i++) {
-             proposals[i].name = proposalNames[i];
-             proposals[i].voteCount = 0;
-     }
-}
-*/
 
 // Give `voter` the right to vote on this ballot.
 // May only be called by `chairperson`.
 void giveRightToVote(address voter)
-   requires true
-   ensures  true;
-/*   requires  [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
-     ensures   (exists vt1: voters'::Map<vt1> * vtr1::Voter<1,_,_,_> & vt1[voter] = vtr1);
-*/
+   requires  [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
+   ensures   (exists vt1: voters'::Map<vt1> * vtr1::Voter<1,_,_,_> & vt1[voter] = vtr1);
+
 {
      Voter v = voters[voter];
      v.weight = 1;
 
 }
-
-
-/*
-// Delegate your vote to the voter `to`.
-void delegate(address to)
-     requires msg::message<_,sender,_> & to != sender & !sender.voted
-     ensures true;
-{
-     Voter* sender =  voters[msg.sender];
-
-     while (voters[to].delegate != address(0))
-     {
-           requires msg::message<_,sender,_> & to != msg.sender
-           ensures true;
-
-           to = voters[to].delegate;
-     }
-
-     voters[msg.sender].voted = true;
-     voters[msg.sender].delegate = to;
-     Voter* delegate_ = voters[to];
-
-     if(voters[to].voted){
-         int voteNum = (*delegate_).vote;
-         proposals[voteNum].voteCount += (*sender).weight;
-     } else {
-         (*delegate_).weight += (*sender).weight;
-     }
-}
-
-// Give your vote (including votes delegated to you)
-// to proposal `proposals[proposal].name`.
-void vote(int proposal)
-     requires msg::message<_,sender,_> & !voters[sender].voted
-     ensures  true;
-{
-     Voter* sender = voters[msg.sender];
-     (*sender).voted = true;
-     (*sender).vote = proposal;
-     proposals[proposal].voteCount += sender.weight;
-}
-
-int winningProposal()
-{
-    int winningVoteCount = 0;
-    int winningProposal_ = p;
-
-    int n;
-    n = sizeof(proposalNames[]);
-    for(int p = 0; p < n; p++) {
-        if (proposals[p].voteCount > winningVoteCount){
-           winningVoteCount = proposals[p].voteCount;
-           winningProposal_ = p;
-        }
-    }
-    return winningProposal_;
-}
-
-// Calls winningProposal() function to get the index
-// of the winner contained in the proposals array and then
-// returns the name of the winner
-char[] winnerName()
-{
-    char[] winnerName_;
-    winnerName_ = proposals[winningProposal()].name;
-    return winnerName_;
-}
-*/
