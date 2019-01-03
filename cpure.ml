@@ -2467,7 +2467,6 @@ and mkGte a1 a2 pos =
     failwith ("max/min can only be used in equality")
   else
     Gte (a1, a2, pos)
-
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 
 and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
@@ -5736,36 +5735,36 @@ struct
     |_,_ -> false
 end;;
 
-let mk_bform pf = BForm((pf,None),None) 
+let mk_bform pf = BForm((pf,None),None)
 
-let mk_geq v i = 
+let mk_geq v i =
   let lhs = mkVar v no_pos in
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 
-let mk_exp_var v = 
+let mk_exp_var v =
   (* let lhs = mkVar v no_pos in *)
   let e = mkVar v no_pos in
   e
 
-let mk_exp_geq lhs i = 
+let mk_exp_geq lhs i =
   (* let lhs = mkVar v no_pos in *)
   let e = Gte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 
-let mk_exp_leq lhs i = 
+let mk_exp_leq lhs i =
   (* let lhs = mkVar v no_pos in *)
   let e = Lte(lhs,(mkIConst i no_pos),no_pos) in
   mk_bform e
 
-let mk_exp_neq_null lhs = 
+let mk_exp_neq_null lhs =
   (* let lhs = mkVar v no_pos in *)
   let e = Neq(lhs,(Null no_pos),no_pos) in
   mk_bform e
 
 (*
    [a,b,(e,base,offset)]
-    ==> a>0 & b>0 & a!=b  
+    ==> a>0 & b>0 & a!=b
 *)
 (* to capture element as (sv, sv option) for both variable and interval *)
 (*   (sv,None) denotes an address sv *)
@@ -15341,7 +15340,7 @@ let mk_eq_vars v1 v2 =
   let v2 = mkVar v2 no_pos in
   mk_bform (Eq (v1, v2, no_pos))
 
-let mk_eq_exp v1 v2 = 
+let mk_eq_exp v1 v2 =
   mk_bform (Eq (v1, v2, no_pos))
 
 let mk_max a a1 a2 = 

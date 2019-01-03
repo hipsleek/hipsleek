@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open Globals
 open VarGen
 open Gen
@@ -13,17 +15,23 @@ open Cformula
 type goal = {
   gl_pre_cond : formula;
   gl_post_cond : formula;
+  gl_vars: CP.spec_var list;
 }
 
 (* Synthesis rules
  * TODO: add more synthesis rules here *)
 type rule =
   | RlFuncCall of rule_func_call
-
+  | RlAssign of rule_assign
 
 and rule_func_call = {
   rfc_func_name : string;
   rfc_params : exp list;
+}
+
+and rule_assign = {
+  ra_lhs : ident;
+  ra_rhs : exp;
 }
 
 (* Atomic derivation *)
@@ -69,6 +77,11 @@ and synthesis_tree_status =
 (*********************************************************************
  * Constructors
  *********************************************************************)
+
+let mk_goal pre post vars =
+  { gl_pre_cond = pre;
+    gl_post_cond = post;
+    gl_vars = vars;  }
 
 let mk_derivation_sub_goals goal rule subgoals =
   { drv_kind = DrvSubgoals subgoals;

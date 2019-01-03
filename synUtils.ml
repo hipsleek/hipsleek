@@ -900,7 +900,7 @@ let restore_view iprog cprog view =
   let () = x_add (C.update_view_decl ~caller:x_loc) cprog view in
   let () = x_add I.update_view_decl iprog iview in
   ()
-  
+
 let norm_view_formula vname f = 
   (* Set flow for view *)
   let f = CF.set_flow_in_formula_override

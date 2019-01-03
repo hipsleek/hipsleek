@@ -7,6 +7,7 @@ open Iast
 
 module C = Cast
 module CP = Cpure
+module CF = Cformula
 
 let stop = ref false
 let next_proc = ref false
@@ -698,6 +699,14 @@ let repair_by_mutation iprog repairing_proc =
   in
   List.map (fun x -> check_candidate iprog x) candidates
 
+let synthesize (pre:CF.formula) (post:CF.formula) (vars:CP.spec_var list) =
+  let pr_formula = Cprinter.string_of_formula in
+  let () = x_binfo_hp (add_str "pre: " pr_formula) pre no_pos in
+  let () = x_binfo_hp (add_str "post: " pr_formula) post no_pos in
+  let goal = Synthesis.mk_goal pre post vars in
+  let _ = Synthesizer.synthesize_one_goal goal in
+  None
+
 let start_repair iprog =
   let cprog, _ = Astsimp.trans_prog iprog in
   let pr_exps = pr_list Iprinter.string_of_exp in
@@ -714,8 +723,55 @@ let start_repair iprog =
     let () = x_tinfo_hp (add_str "proc: " pr_proc) proc_to_repair no_pos in
     let cands = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let repair_res_list =
-      List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in
+    let var_x = CP.SpecVar (Named "node", "x", VarGen.Unprimed) in
+    let var_y = CP.SpecVar (Named "node", "y", VarGen.Unprimed) in
+    let var_q = CP.SpecVar (Named "node", "q", VarGen.Unprimed) in
+    let var_n1 = CP.SpecVar (Int, "n1", VarGen.Unprimed) in
+    let var_n2 = CP.SpecVar (Int, "n2", VarGen.Unprimed) in
+    let one = CP.mkIConst 1 no_pos in
+    (* let pre =
+     *   let node_x = CF.mkDataNode var_x "node" [var_q] no_pos in
+     *   let pure_eq1 = CP.mkNull var_q no_pos in
+     *   let pure_eq2 = CP.mkEqExp (CP.mkVar var_n1 no_pos) one no_pos in
+     *   (\* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in *\)
+     *   let node_y = CF.mkViewNode var_y "ll" [var_n2] no_pos in
+     *   let pure = CP.mkAnd pure_eq1 pure_eq2 no_pos in
+     *   let ante_h = CF.mkStarH node_x node_y no_pos in
+     *   CF.mkBase_simp ante_h (Mcpure.mix_of_pure pure)
+     * in
+     * let post =
+     *   let var_n = CP.SpecVar (Int, "n", VarGen.Unprimed) in
+     *   let n1_plus_n2 = CP.mkAdd (CP.mkVar var_n1 no_pos) (CP.mkVar var_n2 no_pos) no_pos in
+     *   let pure = CP.mkEqExp (CP.mkVar var_n no_pos) n1_plus_n2 no_pos in
+     *   let node_x = CF.mkViewNode var_x "ll" [var_n] no_pos in
+     *   CF.mkBase_simp node_x (Mcpure.mix_of_pure pure)
+     * in *)
+    (* pre: : x::node<q>@M * y::ll<n2>@M&q=null & n1=1 *)
+    (* post: : x::ll<n>@M&n=n1+n2&{FLOW,(4,5)=__norm#E}[] *)
+
+    let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
+    let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
+    let pre =
+      let node_x = CF.mkDataNode var_x "node" [var_a] no_pos in
+      let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    let post =
+      let node_x = CF.mkDataNode var_x "node" [var_y] no_pos in
+      let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+
+    let _ = synthesize pre post [var_x; var_y] in
+    (* let ante = CF.mkBase_simp node_a (Mcpure.mix_of_pure pure_eq) in *)
+
+    (* let repair_res_list =
+     *   List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in *)
+    (* pre = x::node<a> *)
+    (* post = x::node<b> *)
+      (* | SpecVar of (typ * ident * primed) *)
+
+
     (* let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
      * let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
      * let best_res = get_best_repair h_repair_res_list in *)
@@ -723,7 +779,7 @@ let start_repair iprog =
     (* begin
      *   match best_res with
      *   | None ->
-     *     (\* None *\)
+     *     (* None *)
      *     let mutated_res = repair_by_mutation iprog proc_to_repair in
      *     let mutated_res = List.filter(fun x -> x != None) mutated_res in
      *     let mutated_res = List.map Gen.unsome mutated_res in
@@ -756,7 +812,7 @@ let start_repair iprog =
      *                     (Cprinter.poly_string_of_pr Cprinter.pr_formula_exp))
      *         repaired_exp no_pos in
      *     Some best_r_prog
-     *     (\* Some (best_r_prog, pos, repaired_exp) *\)
+     *     (* Some (best_r_prog, pos, repaired_exp) *)
      * end *)
   | _ ->
     let () = next_proc := false in

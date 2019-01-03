@@ -1,3 +1,5 @@
+#include "xdebug.cppo"
+
 open Globals
 open VarGen
 open Gen
@@ -7,7 +9,7 @@ open Cformula
 open Synthesis
 
 module CA = Cast
-
+module CF = Cformula
 
 (*********************************************************************
  * Data structures and exceptions
@@ -24,8 +26,33 @@ let raise_stree st = raise (EStree st)
 let choose_rule_func_call goal : rule list =
   []
 
+let extract_hf_var hf var =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if dn_var = var then Some hf
+    else None
+  | _ -> None
+
+(* implement simple rules first *)
+(* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
+let choose_rule_assign goal : rule list =
+  let vars = goal.gl_vars in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let var = List.hd vars in
+  let extract_var_f f var = match f with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      None
+    | _ -> None
+  in
+  (* compare pre/post conds *)
+  []
+
 let choose_synthesis_rules goal : rule list =
   let rs = choose_rule_func_call goal in
+  let rs2 = choose_rule_assign goal in
   rs
 
 (*********************************************************************
@@ -35,10 +62,12 @@ let choose_synthesis_rules goal : rule list =
 let process_rule_func_call goal rcore : derivation =
   mk_derivation_sub_goals goal (RlFuncCall rcore) []
 
+(* let process_rule_assign goal rassign : derivation = *)
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
+  | RlAssign rassign -> report_error no_pos "rassign not handled"
 
 
 (*********************************************************************

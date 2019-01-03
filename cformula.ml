@@ -16999,7 +16999,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
   (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
   let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post (mkEBase post None no_pos) lbl in
   let pre = formula_of_heap_w_normal_flow data_node pos in
-  EBase { 
+  EBase {
     formula_struc_explicit_inst = [];
     formula_struc_implicit_inst = [];
     formula_struc_exists = [];
@@ -18152,8 +18152,8 @@ let trans_flow_struc_formula sf =
   let pr = !print_struc_formula in
   Debug.no_1 "trans_flow_struc_formula" pr pr (fun _ -> trans_flow_struc_formula sf) sf
 
-let mkViewNode view_node view_name view_args (* view_args_orig *) pos = 
-  ViewNode { 
+let mkViewNode view_node view_name view_args pos =
+  ViewNode {
       h_formula_view_node = view_node;
       h_formula_view_name = view_name;
       h_formula_view_derv = false;
