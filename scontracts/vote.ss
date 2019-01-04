@@ -147,7 +147,8 @@ contract Ballot {
 /********************/
 /*Translated Version*/
 /********************/
-
+hip_include 'scontracts/mapprimitives.ss'
+//#include<stdio.h>  -> for sizeof
 //This file should be named as Ballot.ss -> contract
 data address {
      int id;
@@ -177,109 +178,166 @@ data Voter {
 }
 
 data Proposal {
-     char[] name;
+     int num;
+     //char[] name;
      int voteCount;
 }
 
+data string {
+     int length;
+}
+
 global address chairperson;
+
+//votes are mapping type but proposals are not
 global mapping(address => Voter) voters;
 
 // A dynamically-sized array of `Proposal` structures.
 global Proposal[] proposals;
 
-/*
-/// Create a new ballot to choose one of `proposalNames`.
-void Ballot(char[,32] proposalNames)
-     // chairperson = msg.sender;
-     // voters[chairperson].weight = 1;
+
+void for_loop_ballot(ref int i, int n, int[] proNums)
+     requires i <= n
+     ensures  i' = i+1;
 {
-     int n;
-     n = sizeof(proposalNames[]);
+     if(i < n){
+         Proposal tmp_p = proposals[i];
+         tmp_p.num = proNums[i];
+         tmp_p.voteCount = 0;
+         for_loop_ballot(i, n, proNums);
+     }
+
+}
+
+
+/// Create a new ballot to choose one of `proposalNames`.
+void Ballot(int[] proposalNums)
+     requires [vt0] voters::Map<vt0>@L * vtr::Voter<w0,_,_,_> * msg::message<_,sender,_> & vtr = vt0[sender]
+     ensures  vtr'::Voter<1,_,_,_> & sender = chairperson;
+{
+     chairperson = msg.sender;
+     Voter v = voters[chairperson];
+     v.weight = 1;
+
+     //size_t n_ = sizeof(proposalNums)/sizeof(proposalNums[0]);
+     int n_ = 10;
+
+     int i_ = 0;
+     for_loop_ballot(i_, n_, proposalNums);
+     /*
      for(int i = 0; i < n; i++) {
-             proposals[i].name = proposalNames[i];
+             proposals[i].num = proposalNums[i];
              proposals[i].voteCount = 0;
      }
+     */
 }
-*/
+
 
 // Give `voter` the right to vote on this ballot.
 // May only be called by `chairperson`.
 void giveRightToVote(address voter)
-   requires true
-   ensures  true;
-/*   requires  [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
-     ensures   (exists vt1: voters'::Map<vt1> * vtr1::Voter<1,_,_,_> & vt1[voter] = vtr1);
-*/
+   requires  [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
+   ensures   (exists vt1: voters'::Map<vt1> * vtr1::Voter<1,_,_,_> & vt1[voter] = vtr1);
 {
      Voter v = voters[voter];
      v.weight = 1;
-
-}
-
-
-/*
-// Delegate your vote to the voter `to`.
-void delegate(address to)
-     requires msg::message<_,sender,_> & to != sender & !sender.voted
-     ensures true;
-{
-     Voter* sender =  voters[msg.sender];
-
-     while (voters[to].delegate != address(0))
-     {
-           requires msg::message<_,sender,_> & to != msg.sender
-           ensures true;
-
-           to = voters[to].delegate;
-     }
-
-     voters[msg.sender].voted = true;
-     voters[msg.sender].delegate = to;
-     Voter* delegate_ = voters[to];
-
-     if(voters[to].voted){
-         int voteNum = (*delegate_).vote;
-         proposals[voteNum].voteCount += (*sender).weight;
-     } else {
-         (*delegate_).weight += (*sender).weight;
-     }
 }
 
 // Give your vote (including votes delegated to you)
 // to proposal `proposals[proposal].name`.
 void vote(int proposal)
-     requires msg::message<_,sender,_> & !voters[sender].voted
-     ensures  true;
+     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_> * vtr::Voter<w0,false,_,_> * prp::Proposal<_,vc> & vtr= vt0[sender] //& !vtr.voted
+     ensures  vtr'::Voter<w0,true,_,_> * prp'::Proposal<_,vc+w0> & prps[proposal] = prp & prp.vc;//prps::Proposal<>[]
+{
+     //The one written in Solidity has 'storage', so I don't know whether to use the pointer or not
+     Voter sender = voters[msg.sender];
+     sender.voted = true;
+     sender.vote = proposal;
+     Proposal tmp_p;
+     tmp_p = proposals[proposal];
+     tmp_p.voteCount += sender.weight;
+}
+
+// Give your vote (including votes delegated to you)
+// to proposal `proposals[proposal].name`.
+/*
+void vote(int proposal)
+     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_> * vtr::Voter<w0,false,_,_> * prp::Proposal<_,vc> & vtr= vt0[sender] //& !vtr.voted
+     ensures  vtr'::Voter<w0,true,_,_> * prps::Proposals[] * prp'::Proposal<_,vc+w0> & prps[proposal] = prp & prp.vc;
 {
      Voter* sender = voters[msg.sender];
      (*sender).voted = true;
      (*sender).vote = proposal;
-     proposals[proposal].voteCount += sender.weight;
+     Proposal tmp_p;
+     tmp_p = proposals[proposal]
+     tmp_p.voteCount += sender.weight;
+}
+*/
+
+
+void for_loop_winning(ref int p, int n, ref int winningVoteCount, ref int winningProposal_)
+     requires p<=n
+     ensures  p' = p+1;
+{
+  if(p < n){
+      Proposal tmp_p = proposals[p];
+      if (tmp_p.voteCount > winningVoteCount){
+           winningVoteCount = tmp_p.voteCount;
+           winningProposal_ = p;
+      }
+      for_loop_winning(p+1, n, winningVoteCount, winningProposal_);
+  }
 }
 
 int winningProposal()
 {
     int winningVoteCount = 0;
-    int winningProposal_ = p;
+    int winningProposal_ = 0;
 
-    int n;
-    n = sizeof(proposalNames[]);
-    for(int p = 0; p < n; p++) {
-        if (proposals[p].voteCount > winningVoteCount){
-           winningVoteCount = proposals[p].voteCount;
-           winningProposal_ = p;
-        }
-    }
+    //size_t n = sizeof(proposals)/sizeof(proposals[0]);
+    int n = 10;
+    int p = 0;
+    for_loop_winning(p, n, winningVoteCount, winningProposal_);
     return winningProposal_;
 }
 
 // Calls winningProposal() function to get the index
 // of the winner contained in the proposals array and then
 // returns the name of the winner
-char[] winnerName()
+int winnerNum()
 {
-    char[] winnerName_;
-    winnerName_ = proposals[winningProposal()].name;
-    return winnerName_;
+    int winnerNum_;
+    int num_of_win = winningProposal();
+    int winner_proposal = proposals[num_of_win];
+    winnerNum_ = winner_proposal.num;
+    return winnerNum_;
+}
+
+/*
+// Delegate your vote to the voter `to`.
+void delegate(address toWhom)
+     requires msg::message<_,sender,_> & toWhom != sender & !sender.voted
+     ensures  true;
+{
+     Voter* sender =  voters[msg.sender];
+     address init_addr;
+     init_addr.id = 0;
+     while (voters[toWhom].delegate != init_addr)
+           requires msg::message<_,sender,_> & toWhom != msg.sender
+           ensures true;
+     {
+           toWhom = voters[toWhom].delegate;
+     }
+
+     voters[msg.sender].voted = true;
+     voters[msg.sender].delegate = toWhom;
+     Voter* delegate_ = voters[toWhom];
+
+     if(voters[toWhom].voted){
+         int voteNum = (*delegate_).vote;
+         proposals[voteNum].voteCount += (*sender).weight;
+     } else {
+         (*delegate_).weight += (*sender).weight;
+     }
 }
 */
