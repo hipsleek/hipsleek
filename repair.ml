@@ -699,11 +699,11 @@ let repair_by_mutation iprog repairing_proc =
   in
   List.map (fun x -> check_candidate iprog x) candidates
 
-let synthesize (pre:CF.formula) (post:CF.formula) (vars:CP.spec_var list) =
+let synthesize cprog (pre:CF.formula) (post:CF.formula) (vars:CP.spec_var list) =
   let pr_formula = Cprinter.string_of_formula in
   let () = x_binfo_hp (add_str "pre: " pr_formula) pre no_pos in
   let () = x_binfo_hp (add_str "post: " pr_formula) post no_pos in
-  let goal = Synthesis.mk_goal pre post vars in
+  let goal = Synthesis.mk_goal cprog pre post vars in
   let _ = Synthesizer.synthesize_one_goal goal in
   None
 
@@ -752,17 +752,17 @@ let start_repair iprog =
     let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
     let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
     let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_a] no_pos in
-      let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
+      (* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+       * let hf = CF.mkStarH node_x node_y no_pos in *)
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
     let post =
-      let node_x = CF.mkDataNode var_x "node" [var_y] no_pos in
-      let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
+      (* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+       * let hf = CF.mkStarH node_x node_y no_pos in *)
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
 
-    let _ = synthesize pre post [var_x; var_y] in
+    let _ = synthesize cprog pre post [var_x; var_y] in
     (* let ante = CF.mkBase_simp node_a (Mcpure.mix_of_pure pure_eq) in *)
 
     (* let repair_res_list =

@@ -13,6 +13,7 @@ open Cformula
 
 (* goal *)
 type goal = {
+  gl_prog : Cast.prog_decl;
   gl_pre_cond : formula;
   gl_post_cond : formula;
   gl_vars: CP.spec_var list;
@@ -78,8 +79,9 @@ and synthesis_tree_status =
  * Constructors
  *********************************************************************)
 
-let mk_goal pre post vars =
-  { gl_pre_cond = pre;
+let mk_goal cprog pre post vars =
+  { gl_prog = cprog;
+    gl_pre_cond = pre;
     gl_post_cond = post;
     gl_vars = vars;  }
 
