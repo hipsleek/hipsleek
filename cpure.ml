@@ -618,9 +618,9 @@ let check_is_field x =
 let check_is_field_sv x =
   check_is_field (name_of_spec_var x)
 
-let exp_to_name_spec_var e = 
+let exp_to_name_spec_var e =
   match e with
-  | Var(sv,_) -> name_of_spec_var sv 
+  | Var(sv,_) -> name_of_spec_var sv
   | Null _ -> "null_node"
   | IConst(i,_) -> (string_of_int i)
   | _ -> ""
@@ -633,7 +633,7 @@ let type_of_spec_var (sv : spec_var) : typ =
   | SpecVar (t, _, _) -> t
 
 let type_of_sv sv = type_of_spec_var sv
-    
+
 let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spec_var sv
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)

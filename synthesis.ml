@@ -16,6 +16,7 @@ type goal = {
   gl_prog : Cast.prog_decl;
   gl_pre_cond : formula;
   gl_post_cond : formula;
+  gl_framed_heaps : h_formula list;
   gl_vars: CP.spec_var list;
 }
 
@@ -24,10 +25,15 @@ type goal = {
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
+  | RlBind of rule_bind
 
 and rule_func_call = {
   rfc_func_name : string;
   rfc_params : exp list;
+}
+
+and rule_bind = {
+  rb_exp: Cast.exp_bind;
 }
 
 and rule_assign = {
@@ -88,6 +94,7 @@ let mk_goal cprog pre post vars =
   { gl_prog = cprog;
     gl_pre_cond = pre;
     gl_post_cond = post;
+    gl_framed_heaps = [];
     gl_vars = vars;  }
 
 let mk_derivation_sub_goals goal rule subgoals =
@@ -157,10 +164,15 @@ let is_synthesis_tree_success stree : bool =
  * Printing
  *********************************************************************)
 
-let pr_assign_rule rule =
+let pr_rule_assign rule =
   let exp = rule.ra_exp in
   Cprinter.string_of_exp (Cast.Assign exp)
 
+let pr_rule_bind rule =
+  let exp = rule.rb_exp in
+  Cprinter.string_of_exp (Cast.Bind exp)
+
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
-  | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_assign_rule rule) ^ ")"
+  | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
+  | RlBind rule -> "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ ")"

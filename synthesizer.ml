@@ -29,7 +29,7 @@ let choose_rule_func_call goal : rule list =
 
 let rec extract_hf_var hf var =
   let pr_hf = Cprinter.string_of_h_formula in
-  let () = x_binfo_hp (add_str "hf: " pr_hf) hf no_pos in
+  let () = x_tinfo_hp (add_str "hf: " pr_hf) hf no_pos in
   match hf with
   | CF.DataNode dnode ->
     let dn_var = dnode.CF.h_formula_data_node in
@@ -59,7 +59,7 @@ let extract_var_f f var = match f with
        *  | None -> None) *)
     | _ -> []
 
-let extract_var_pf (f: CP.formula) var = match f with
+let rec extract_var_pf (f: CP.formula) var = match f with
   | BForm (bf, _) ->
     let (pf, _) = bf in
     (match pf with
@@ -71,37 +71,158 @@ let extract_var_pf (f: CP.formula) var = match f with
        end
      | _ -> None
     )
+  | And (f1, f2, _) ->
+    let res1 = extract_var_pf f1 var in
+    if res1 = None then extract_var_pf f2 var
+    else res1
+  | _ -> None
+
+let rec find_sub_var sv cur_vars pre_pf =
+  match pre_pf with
+  | CP.BForm (b, _) ->
+    let bvars = CP.bfv b in
+    if List.mem sv bvars then
+      let (pf, _) = b in
+      (match pf with
+       | Eq (e1, e2, _) ->
+         begin
+           match e1, e2 with
+           | Var (sv1, _), Var (sv2, _) ->
+             if sv1 = sv && List.mem sv2 cur_vars then Some sv2
+             else if sv2 = sv && List.mem sv1 cur_vars then Some sv1
+             else None
+           | _ -> None
+         end
+       | _ -> None
+      )
+    else None
+  | CP.And (f1, f2, _) ->
+    let res1 = find_sub_var sv cur_vars f1 in
+    if res1 = None then find_sub_var sv cur_vars f2
+        else res1
   | _ -> None
 
 (* implement simple rules first *)
 (* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
-
-let choose_assign_pure var pre post : rule list =
+let choose_rassign_pure var cur_vars pre post : rule list =
   let pre_pf = CF.get_pure pre in
   let post_pf = CF.get_pure post in
   let pre_f = extract_var_pf pre_pf var in
   let post_f = extract_var_pf post_pf var in
+  let pr_exp = Cprinter.string_of_formula_exp in
   match pre_f, post_f with
   | Some e1, Some e2 ->
-    (match e2 with
-     | Var (sv, _) ->
-       let rhs = Cast.Var {
-           exp_var_type = CP.type_of_sv sv;
-           exp_var_name = CP.name_of_sv sv;
-           exp_var_pos = no_pos;
-         } in
-       let assign_exp = {
+    (match e2, e1 with
+     | Var (sv, _), Var (sv2, _) ->
+       if List.mem sv cur_vars then
+         let () = x_binfo_pp "marking \n" no_pos in
+         let rhs = Cast.Var {
+             exp_var_type = CP.type_of_sv sv;
+             exp_var_name = CP.name_of_sv sv;
+             exp_var_pos = no_pos;
+           } in
+         let assign_exp = {
            Cast.exp_assign_lhs = CP.name_of_sv var;
            Cast.exp_assign_rhs = rhs;
            Cast.exp_assign_pos = no_pos;
          } in
-       let rule = RlAssign {
-         ra_exp = assign_exp;
-       } in
-       [rule]
+         let rule = RlAssign {
+             ra_exp = assign_exp;
+           } in
+         [rule]
+       else
+         let () = x_binfo_pp "marking \n" no_pos in
+         let cur_vars = List.filter (fun x -> x != var) cur_vars in
+         let pr_var = Cprinter.string_of_spec_var in
+         let pr_vars = pr_list pr_var in
+         let () = x_binfo_hp (add_str "vars: " pr_vars) cur_vars no_pos in
+         let () = x_binfo_hp (add_str "var: " pr_var) sv no_pos in
+         let find_var = find_sub_var sv2 cur_vars pre_pf in
+         begin
+           match find_var with
+           | None -> []
+           | Some sub_var ->
+             let rhs = Cast.Var {
+                 exp_var_type = CP.type_of_sv sub_var;
+                 exp_var_name = CP.name_of_sv sub_var;
+                 exp_var_pos = no_pos;
+               } in
+             let assign_exp = {
+               Cast.exp_assign_lhs = CP.name_of_sv var;
+               Cast.exp_assign_rhs = rhs;
+               Cast.exp_assign_pos = no_pos;
+             } in
+             let rule = RlAssign {
+                 ra_exp = assign_exp;
+               } in
+             [rule]
+         end
      | _ -> []
     )
   | _ -> []
+
+let choose_rassign_data var cur_vars datas pre post =
+  let f_var1 = extract_var_f pre var in
+  let f_var2 = extract_var_f post var in
+  let pr_hf = Cprinter.string_of_h_formula in
+  let () = x_tinfo_hp (add_str "fvar1" (pr_list pr_hf))
+      (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
+  let () = x_tinfo_hp (add_str "fvar2" (pr_list pr_hf))
+      (List.map (fun x -> CF.DataNode x) f_var2) no_pos in
+  if f_var1 != [] && f_var2 != [] then
+    let bef_node = List.hd f_var1 in
+    let aft_node = List.hd f_var2 in
+    if bef_node != aft_node then
+      let () = x_binfo_pp "marking \n" no_pos in
+      let bef_args = bef_node.CF.h_formula_data_arguments in
+      let aft_args = aft_node.CF.h_formula_data_arguments in
+      let name = bef_node.CF.h_formula_data_name in
+      let data = List.find (fun x -> x.Cast.data_name = name) datas in
+      let () = x_binfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
+      let pre_post = List.combine bef_args aft_args in
+      let fields = data.Cast.data_fields in
+      let triple = List.combine pre_post fields in
+      let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
+      (* let compared_fields = List.map (fun (_, field) -> field) triple in *)
+      let dif_field = if List.length triple = 1 then
+          List.hd triple
+        else report_error no_pos "more then 1 diff fields"
+      in
+      let dif_field_name = dif_field |> snd |> fst in
+      let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
+      let new_field = (fst dif_field_name, new_field_name) in
+      let dif_field_val = dif_field |> fst |> snd in
+      let n_var = Cast.Var {
+          exp_var_type = Cpure.type_of_spec_var dif_field_val;
+          exp_var_name = Cpure.name_of_sv dif_field_val;
+          exp_var_pos = no_pos;
+        }
+      in
+      let assign_exp = Cast.Assign {
+          exp_assign_lhs = new_field_name;
+          exp_assign_rhs = n_var;
+          exp_assign_pos = no_pos;
+        } in
+
+      let bind = {
+            Cast.exp_bind_type = Void;
+            Cast.exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
+            Cast.exp_bind_fields = [new_field];
+            Cast.exp_bind_body = assign_exp;
+            Cast.exp_bind_imm = Cpure.NoAnn;
+            Cast.exp_bind_param_imm = [];
+            Cast.exp_bind_read_only = false;
+            Cast.exp_bind_path_id = (1, "new");
+            Cast.exp_bind_pos = no_pos
+          } in
+      let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) (Cast.Bind bind) no_pos in
+      let rule = RlBind {
+          rb_exp = bind;
+        } in
+      [rule]
+    else []
+  else
+  []
 
 let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
@@ -109,69 +230,15 @@ let choose_rule_assign goal : rule list =
   let post = goal.gl_post_cond in
   let prog = goal.gl_prog in
   let datas = prog.Cast.prog_data_decls in
-  let var = List.hd vars in
-  let f_var1 = extract_var_f pre var in
-  let f_var2 = extract_var_f post var in
   let pr_formula = Cprinter.string_of_formula in
-  let pr_hf = Cprinter.string_of_h_formula in
   let pr_sv = Cprinter.string_of_spec_var in
-  let () = x_binfo_hp (add_str "var: " pr_sv) var no_pos in
-  let () = x_binfo_hp (add_str "fvar1" (pr_list pr_hf))
-      (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
-  let () = x_binfo_hp (add_str "fvar2" (pr_list pr_hf))
-      (List.map (fun x -> CF.DataNode x) f_var2) no_pos in
-  choose_assign_pure var pre post
-  (* if f_var1 != [] && f_var2 != [] then
-   *   let bef_node = List.hd f_var1 in
-   *   let aft_node = List.hd f_var2 in
-   *   if bef_node != aft_node then
-   *     let () = x_binfo_pp "marking \n" no_pos in
-   *     let bef_args = bef_node.CF.h_formula_data_arguments in
-   *     let aft_args = aft_node.CF.h_formula_data_arguments in
-   *     let name = bef_node.CF.h_formula_data_name in
-   *     let data = List.find (fun x -> x.Cast.data_name = name) datas in
-   *     let () = x_binfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
-   *     let pre_post = List.combine bef_args aft_args in
-   *     let fields = data.Cast.data_fields in
-   *     let triple = List.combine pre_post fields in
-   *     let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
-   *     (\* let compared_fields = List.map (fun (_, field) -> field) triple in *\)
-   *     let dif_field = if List.length triple = 1 then
-   *         List.hd triple
-   *       else report_error no_pos "more then 1 diff fields"
-   *     in
-   *     let dif_field_name = dif_field |> snd |> fst in
-   *     let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
-   *     let new_field = (fst dif_field_name, new_field_name) in
-   *     let dif_field_val = dif_field |> fst |> snd in
-   *     let n_var = Cast.Var {
-   *         exp_var_type = Cpure.type_of_spec_var dif_field_val;
-   *         exp_var_name = Cpure.name_of_sv dif_field_val;
-   *         exp_var_pos = no_pos;
-   *       }
-   *     in
-   *     let assign_exp = Cast.Assign {
-   *         exp_assign_lhs = new_field_name;
-   *         exp_assign_rhs = n_var;
-   *         exp_assign_pos = no_pos;
-   *       } in
-   * 
-   *     let bind = Cast.Bind {
-   *           exp_bind_type = Void;
-   *           exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
-   *           exp_bind_fields = [new_field];
-   *           exp_bind_body = assign_exp;
-   *           exp_bind_imm = Cpure.NoAnn;
-   *           exp_bind_param_imm = [];
-   *           exp_bind_read_only = false;
-   *           exp_bind_path_id = (1, "new");
-   *           exp_bind_pos = no_pos
-   *         } in
-   *     let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) bind no_pos in
-   *       []
-   *   else []
-   * else
-   * [] *)
+  let () = x_binfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
+  let choose_rule var = match CP.type_of_sv var with
+    | Int -> choose_rassign_pure var vars pre post
+    | Named _ -> choose_rassign_data var vars datas pre post
+    | _ -> []  in
+  let rules = List.map choose_rule vars in
+  List.concat rules
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_func_call goal in *)
@@ -186,12 +253,17 @@ let choose_synthesis_rules goal : rule list =
 let process_rule_func_call goal rcore : derivation =
   mk_derivation_sub_goals goal (RlFuncCall rcore) []
 
-(* let process_rule_assign goal rassign : derivation = *)
+let process_rule_assign goal rassign =
+  mk_derivation_sub_goals goal (RlAssign rassign) []
+
+let process_rule_bind goal rbind =
+  mk_derivation_sub_goals goal (RlBind rbind) []
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
-  | RlAssign rassign -> report_error no_pos "rassign not handled"
+  | RlAssign rassign -> process_rule_assign goal rassign
+  | RlBind rbind -> process_rule_bind goal rbind
 
 (*********************************************************************
  * The search procedure

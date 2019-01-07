@@ -707,6 +707,57 @@ let synthesize cprog (pre:CF.formula) (post:CF.formula) (vars:CP.spec_var list) 
   let _ = Synthesizer.synthesize_one_goal goal in
   None
 
+let testing cprog =
+  let var_x = CP.SpecVar (Named "node", "x", VarGen.Unprimed) in
+  let var_y = CP.SpecVar (Named "node", "y", VarGen.Unprimed) in
+  let var_q = CP.SpecVar (Named "node", "q", VarGen.Unprimed) in
+  let var_n1 = CP.SpecVar (Int, "n1", VarGen.Unprimed) in
+  let var_n2 = CP.SpecVar (Int, "n2", VarGen.Unprimed) in
+  let var_n3 = CP.SpecVar (Int, "n3", VarGen.Unprimed) in
+  let var_t = CP.SpecVar (Int, "t", VarGen.Unprimed) in
+  let one = CP.mkIConst 1 no_pos in
+  let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
+  let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
+
+  let test1 =
+    let pre =
+      let emp = CF.HEmp in
+      let pure1 = CP.mkEqn var_n1 var_n2 no_pos in
+      let pure2 = CP.mkEqn var_t var_n2 no_pos in
+      let pure = CP.mkAnd pure1 pure2 no_pos in
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
+    let post =
+      let emp = CF.HEmp in
+      let pure1 = CP.mkEqn var_n1 var_n3 no_pos in
+      let pure2 = CP.mkEqn var_t var_n2 no_pos in
+      let pure = CP.mkAnd pure1 pure2 no_pos in
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
+    synthesize cprog pre post [var_n1; var_t] in
+  let test2 =
+    let pre =
+      let emp = CF.HEmp in
+      let pure = CP.mkEqn var_n1 var_n2 no_pos in
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
+    let post =
+      let emp = CF.HEmp in
+      let pure = CP.mkEqn var_n1 var_n3 no_pos in
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
+    synthesize cprog pre post [var_n1; var_n3] in
+  let test3 =
+    let pre =
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
+      (* let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
+       * let hf = CF.mkStarH node_x node_y no_pos in *)
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    let post =
+      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
+      (* let node_y = CF.mkDataNode var_y "node" [var_n3; var_b] no_pos in
+       * let hf = CF.mkStarH node_x node_y no_pos in *)
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    synthesize cprog pre post [var_x; var_n2] in
+  ()
+
+
 let start_repair iprog =
   let cprog, _ = Astsimp.trans_prog iprog in
   let pr_exps = pr_list Iprinter.string_of_exp in
@@ -723,34 +774,7 @@ let start_repair iprog =
     let () = x_tinfo_hp (add_str "proc: " pr_proc) proc_to_repair no_pos in
     let cands = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let var_x = CP.SpecVar (Named "node", "x", VarGen.Unprimed) in
-    let var_y = CP.SpecVar (Named "node", "y", VarGen.Unprimed) in
-    let var_q = CP.SpecVar (Named "node", "q", VarGen.Unprimed) in
-    let var_n1 = CP.SpecVar (Int, "n1", VarGen.Unprimed) in
-    let var_n2 = CP.SpecVar (Int, "n2", VarGen.Unprimed) in
-    let var_n3 = CP.SpecVar (Int, "n3", VarGen.Unprimed) in
-    let one = CP.mkIConst 1 no_pos in
-    let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
-    let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
-    let pre =
-      (* let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in *)
-      (* let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-       * let hf = CF.mkStarH node_x node_y no_pos in *)
-      let emp = CF.HEmp in
-      let pure = CP.mkEqn var_n1 var_n2 no_pos in
-      (* CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in *)
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-    let post =
-      (* let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in *)
-      (* let node_y = CF.mkDataNode var_y "node" [var_n3; var_b] no_pos in
-       * let hf = CF.mkStarH node_x node_y no_pos in *)
-      let emp = CF.HEmp in
-      let pure = CP.mkEqn var_n1 var_n3 no_pos in
-      (* CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in *)
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-
-    let _ = synthesize cprog pre post [var_n1; var_n3] in
-    (* let ante = CF.mkBase_simp node_a (Mcpure.mix_of_pure pure_eq) in *)
+    let () = testing cprog in
 
     (* let repair_res_list =
      *   List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in *)
