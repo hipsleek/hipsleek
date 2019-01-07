@@ -31,9 +31,14 @@ and rule_func_call = {
 }
 
 and rule_assign = {
-  ra_lhs : ident;
-  ra_rhs : exp;
+  ra_exp : Cast.exp_assign;
 }
+
+(* AssignPure *)
+(* {x = a} {x = b} --> {x = b} if b \in varSet*)
+
+(* AssignPureSymb *)
+(* {x = a & b = t} {x = b} --> x = t when varSet = {x, t} *)
 
 (* Atomic derivation *)
 type derivation = {
@@ -146,3 +151,16 @@ let is_synthesis_tree_success stree : bool =
   match status with
   | StValid _ -> true
   | StUnkn _ -> false
+
+
+(*********************************************************************
+ * Printing
+ *********************************************************************)
+
+let pr_assign_rule rule =
+  let exp = rule.ra_exp in
+  Cprinter.string_of_exp (Cast.Assign exp)
+
+let pr_rule rule = match rule with
+  | RlFuncCall fc -> "RlFuncCal"
+  | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_assign_rule rule) ^ ")"

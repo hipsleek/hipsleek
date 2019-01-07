@@ -632,6 +632,8 @@ let type_of_spec_var (sv : spec_var) : typ =
   match sv with
   | SpecVar (t, _, _) -> t
 
+let type_of_sv sv = type_of_spec_var sv
+    
 let type_of_spec_var_list (sv : spec_var list) : typ list = List.map type_of_spec_var sv
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
@@ -2414,7 +2416,7 @@ and mkPtrEqn v1 v2 pos =
   let v2 = mkVarNull v2 pos in
   mkEqExp v1 v2 pos
 
-and mkEqn v1 v2 pos = 
+and mkEqn v1 v2 pos =
   let v1 = mkVar v1 pos in
   let v2 = mkVar v2 pos in
   mkEqExp v1 v2 pos

@@ -10,6 +10,7 @@ open Synthesis
 
 module CA = Cast
 module CF = Cformula
+module CP = Cpure
 
 (*********************************************************************
  * Data structures and exceptions
@@ -48,7 +49,7 @@ let rec extract_hf_var hf var =
    *   if vnode_var = var then Some hf else None *)
   | _ -> []
 
-  let extract_var_f f var = match f with
+let extract_var_f f var = match f with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
       let hf_var = extract_hf_var hf var in
@@ -58,8 +59,50 @@ let rec extract_hf_var hf var =
        *  | None -> None) *)
     | _ -> []
 
+let extract_var_pf (f: CP.formula) var = match f with
+  | BForm (bf, _) ->
+    let (pf, _) = bf in
+    (match pf with
+     | Eq (e1, e2, _) ->
+       begin
+         match e1 with
+         | Var (sv, _) -> if sv = var then Some e2 else None
+         | _ -> None
+       end
+     | _ -> None
+    )
+  | _ -> None
+
 (* implement simple rules first *)
 (* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
+
+let choose_assign_pure var pre post : rule list =
+  let pre_pf = CF.get_pure pre in
+  let post_pf = CF.get_pure post in
+  let pre_f = extract_var_pf pre_pf var in
+  let post_f = extract_var_pf post_pf var in
+  match pre_f, post_f with
+  | Some e1, Some e2 ->
+    (match e2 with
+     | Var (sv, _) ->
+       let rhs = Cast.Var {
+           exp_var_type = CP.type_of_sv sv;
+           exp_var_name = CP.name_of_sv sv;
+           exp_var_pos = no_pos;
+         } in
+       let assign_exp = {
+           Cast.exp_assign_lhs = CP.name_of_sv var;
+           Cast.exp_assign_rhs = rhs;
+           Cast.exp_assign_pos = no_pos;
+         } in
+       let rule = RlAssign {
+         ra_exp = assign_exp;
+       } in
+       [rule]
+     | _ -> []
+    )
+  | _ -> []
+
 let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
   let pre = goal.gl_pre_cond in
@@ -77,67 +120,64 @@ let choose_rule_assign goal : rule list =
       (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
   let () = x_binfo_hp (add_str "fvar2" (pr_list pr_hf))
       (List.map (fun x -> CF.DataNode x) f_var2) no_pos in
-  if f_var1 != [] && f_var2 != [] then
-    let bef_node = List.hd f_var1 in
-    let aft_node = List.hd f_var2 in
-    if bef_node != aft_node then
-      let () = x_binfo_pp "marking \n" no_pos in
-      let bef_args = bef_node.CF.h_formula_data_arguments in
-      let aft_args = aft_node.CF.h_formula_data_arguments in
-      let name = bef_node.CF.h_formula_data_name in
-      let data = List.find (fun x -> x.Cast.data_name = name) datas in
-      let () = x_binfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
-      let pre_post = List.combine bef_args aft_args in
-      let fields = data.Cast.data_fields in
-      let triple = List.combine pre_post fields in
-      let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
-      (* let compared_fields = List.map (fun (_, field) -> field) triple in *)
-      let dif_field = if List.length triple = 1 then
-          List.hd triple
-        else report_error no_pos "more then 1 diff fields"
-      in
-      let dif_field_name = dif_field |> snd |> fst in
-      let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
-      let new_field = (fst dif_field_name, new_field_name) in
-      let dif_field_val = dif_field |> fst |> snd in
-      let n_var = Cast.Var {
-          exp_var_type = Cpure.type_of_spec_var dif_field_val;
-          exp_var_name = Cpure.name_of_sv dif_field_val;
-          exp_var_pos = no_pos;
-        }
-      in
-      let assign_exp = Cast.Assign {
-          exp_assign_lhs = new_field_name;
-          exp_assign_rhs = n_var;
-          exp_assign_pos = no_pos;
-        } in
-
-      let bind = Cast.Bind {
-            exp_bind_type = Void;
-            exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
-            exp_bind_fields = [new_field];
-            exp_bind_body = assign_exp;
-            exp_bind_imm = Cpure.NoAnn;
-            exp_bind_param_imm = [];
-            exp_bind_read_only = false;
-            exp_bind_path_id = (1, "new");
-            exp_bind_pos = no_pos
-          } in
-      let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) bind no_pos in
-
-        []
-    else []
-  else
-  (* let () = x_binfo_hp (add_str "f_var1: " pr_formula) (Gen.unsome f_var1) no_pos in
-   * let () = x_binfo_hp (add_str "f_var2: " pr_formula) (Gen.unsome f_var2) no_pos in *)
-
-  (* compare pre/post conds *)
-  []
+  choose_assign_pure var pre post
+  (* if f_var1 != [] && f_var2 != [] then
+   *   let bef_node = List.hd f_var1 in
+   *   let aft_node = List.hd f_var2 in
+   *   if bef_node != aft_node then
+   *     let () = x_binfo_pp "marking \n" no_pos in
+   *     let bef_args = bef_node.CF.h_formula_data_arguments in
+   *     let aft_args = aft_node.CF.h_formula_data_arguments in
+   *     let name = bef_node.CF.h_formula_data_name in
+   *     let data = List.find (fun x -> x.Cast.data_name = name) datas in
+   *     let () = x_binfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
+   *     let pre_post = List.combine bef_args aft_args in
+   *     let fields = data.Cast.data_fields in
+   *     let triple = List.combine pre_post fields in
+   *     let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
+   *     (\* let compared_fields = List.map (fun (_, field) -> field) triple in *\)
+   *     let dif_field = if List.length triple = 1 then
+   *         List.hd triple
+   *       else report_error no_pos "more then 1 diff fields"
+   *     in
+   *     let dif_field_name = dif_field |> snd |> fst in
+   *     let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
+   *     let new_field = (fst dif_field_name, new_field_name) in
+   *     let dif_field_val = dif_field |> fst |> snd in
+   *     let n_var = Cast.Var {
+   *         exp_var_type = Cpure.type_of_spec_var dif_field_val;
+   *         exp_var_name = Cpure.name_of_sv dif_field_val;
+   *         exp_var_pos = no_pos;
+   *       }
+   *     in
+   *     let assign_exp = Cast.Assign {
+   *         exp_assign_lhs = new_field_name;
+   *         exp_assign_rhs = n_var;
+   *         exp_assign_pos = no_pos;
+   *       } in
+   * 
+   *     let bind = Cast.Bind {
+   *           exp_bind_type = Void;
+   *           exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
+   *           exp_bind_fields = [new_field];
+   *           exp_bind_body = assign_exp;
+   *           exp_bind_imm = Cpure.NoAnn;
+   *           exp_bind_param_imm = [];
+   *           exp_bind_read_only = false;
+   *           exp_bind_path_id = (1, "new");
+   *           exp_bind_pos = no_pos
+   *         } in
+   *     let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) bind no_pos in
+   *       []
+   *   else []
+   * else
+   * [] *)
 
 let choose_synthesis_rules goal : rule list =
-  let rs = choose_rule_func_call goal in
+  (* let rs = choose_rule_func_call goal in *)
   let rs2 = choose_rule_assign goal in
-  rs
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs2 no_pos in
+  rs2
 
 (*********************************************************************
  * Processing rules
@@ -152,7 +192,6 @@ let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> report_error no_pos "rassign not handled"
-
 
 (*********************************************************************
  * The search procedure

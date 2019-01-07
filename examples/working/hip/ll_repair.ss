@@ -48,8 +48,15 @@ void append(node x, node y)
 // {bind x to (next_24_1892) [write] in 
 // next_24_1892 = y}]
 
+
+
 // pre: : x::node<n1,a>@M&{FLOW,(4,5)=__norm#E}[]
 // x::node<n2,a>@M&{FLOW,(4,5)=__norm#E}[]
 // bind x to (val_4390) [write] in 
 // val_4390 = n2Stop z3... 155 invocations 
 
+// pre: x::node<n1, a> * y :: node<n2, b>
+// post: x:node<n1, a> * y :: node<n3, b>
+
+// pre: x =a ; vars = {x, b}
+// post: x = b; 

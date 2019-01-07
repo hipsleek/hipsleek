@@ -728,41 +728,28 @@ let start_repair iprog =
     let var_q = CP.SpecVar (Named "node", "q", VarGen.Unprimed) in
     let var_n1 = CP.SpecVar (Int, "n1", VarGen.Unprimed) in
     let var_n2 = CP.SpecVar (Int, "n2", VarGen.Unprimed) in
+    let var_n3 = CP.SpecVar (Int, "n3", VarGen.Unprimed) in
     let one = CP.mkIConst 1 no_pos in
-    (* let pre =
-     *   let node_x = CF.mkDataNode var_x "node" [var_q] no_pos in
-     *   let pure_eq1 = CP.mkNull var_q no_pos in
-     *   let pure_eq2 = CP.mkEqExp (CP.mkVar var_n1 no_pos) one no_pos in
-     *   (\* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in *\)
-     *   let node_y = CF.mkViewNode var_y "ll" [var_n2] no_pos in
-     *   let pure = CP.mkAnd pure_eq1 pure_eq2 no_pos in
-     *   let ante_h = CF.mkStarH node_x node_y no_pos in
-     *   CF.mkBase_simp ante_h (Mcpure.mix_of_pure pure)
-     * in
-     * let post =
-     *   let var_n = CP.SpecVar (Int, "n", VarGen.Unprimed) in
-     *   let n1_plus_n2 = CP.mkAdd (CP.mkVar var_n1 no_pos) (CP.mkVar var_n2 no_pos) no_pos in
-     *   let pure = CP.mkEqExp (CP.mkVar var_n no_pos) n1_plus_n2 no_pos in
-     *   let node_x = CF.mkViewNode var_x "ll" [var_n] no_pos in
-     *   CF.mkBase_simp node_x (Mcpure.mix_of_pure pure)
-     * in *)
-    (* pre: : x::node<q>@M * y::ll<n2>@M&q=null & n1=1 *)
-    (* post: : x::ll<n>@M&n=n1+n2&{FLOW,(4,5)=__norm#E}[] *)
-
     let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
     let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
     let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      (* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+      (* let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in *)
+      (* let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
        * let hf = CF.mkStarH node_x node_y no_pos in *)
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+      let emp = CF.HEmp in
+      let pure = CP.mkEqn var_n1 var_n2 no_pos in
+      (* CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in *)
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
     let post =
-      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
-      (* let node_y = CF.mkDataNode var_y "node" [var_b] no_pos in
+      (* let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in *)
+      (* let node_y = CF.mkDataNode var_y "node" [var_n3; var_b] no_pos in
        * let hf = CF.mkStarH node_x node_y no_pos in *)
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+      let emp = CF.HEmp in
+      let pure = CP.mkEqn var_n1 var_n3 no_pos in
+      (* CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in *)
+      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
 
-    let _ = synthesize cprog pre post [var_x; var_y] in
+    let _ = synthesize cprog pre post [var_n1; var_n3] in
     (* let ante = CF.mkBase_simp node_a (Mcpure.mix_of_pure pure_eq) in *)
 
     (* let repair_res_list =
