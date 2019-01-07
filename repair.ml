@@ -746,15 +746,47 @@ let testing cprog =
   let test3 =
     let pre =
       let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      (* let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-       * let hf = CF.mkStarH node_x node_y no_pos in *)
       CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
     let post =
       let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
-      (* let node_y = CF.mkDataNode var_y "node" [var_n3; var_b] no_pos in
-       * let hf = CF.mkStarH node_x node_y no_pos in *)
       CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
     synthesize cprog pre post [var_x; var_n2] in
+  let test4 =
+    let pre =
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
+      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    let post =
+      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
+      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    synthesize cprog pre post [var_x; var_n2; var_y] in
+  let test5 =
+    let pre =
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    let post =
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_b] no_pos in
+      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    synthesize cprog pre post [var_x; var_b] in
+  (* Test6: test framming *)
+  let test6 =
+    let pre =
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
+      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    let post =
+      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
+      let node_x = CF.mkDataNode var_x "node" [var_n1; var_y] no_pos in
+      let hf = CF.mkStarH node_x node_y no_pos in
+      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
+    synthesize cprog pre post [var_x; var_y] in
+  (* test7: test View *)
+  (* x->node{q} * y :: ll<n2> & q = null; x ::ll<1+n2>*)
+
   ()
 
 

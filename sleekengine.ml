@@ -2888,14 +2888,14 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
   let nn = (sleek_proof_counter#inc_and_get) in
   let pnum = !Globals.sleek_num_to_verify in
   let () = Globals.sleek_print_residue := true in
-  if pnum>0 & pnum!=nn then 
+  if pnum>0 & pnum!=nn then
     (CF.residues:=None; Globals.sleek_print_residue := false; false)
-  else 
+  else
     let num_id = "\nEntail "^(string_of_int nn) in
     try
-      let valid, rs, _(*sel_hps*) =
+      let valid, rs, _=
         wrap_proving_kind (PK_Sleek_Entail nn) (run_entail_check iante iconseq) etype in
-      print_entail_result [] (*sel_hps*) valid rs num_id false
+      print_entail_result [] valid rs num_id false
     with ex ->
       let exs = (Printexc.to_string ex) in
       let _ = print_exception_result exs (*sel_hps*) num_id in
@@ -2993,7 +2993,7 @@ let print_cf_result f m =
 
 let process_simplify (f : meta_formula) =
   let num_id = "Simplify  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
-  try 
+  try
     let rs = run_simplify f in
     let (hf,pf,_,_,_,_) = CF.split_components rs in
     let () = x_tinfo_hp (add_str "heap" Cprinter.string_of_h_formula) hf no_pos in 
@@ -3001,9 +3001,21 @@ let process_simplify (f : meta_formula) =
     else print_cf_result rs num_id
   with _ -> print_exc num_id
 
+let process_synthesize typed_vars pre post =
+  let () = x_binfo_pp "marking \n" no_pos in
+  let (_, pre_f) = x_add meta_to_formula pre false [] [] in
+  let pr_formula = Cprinter.string_of_formula in
+  let () = x_binfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
+  let (_, post_f) = x_add meta_to_formula post false [] [] in
+  let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
+  let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
+  let goal = Synthesis.mk_goal !cprog pre_f post_f svs in
+  let _ = Synthesizer.synthesize_one_goal goal in
+  ()
+
 let process_hull (f : meta_formula) =
   let num_id = "Hull  ("^(string_of_int (sleek_proof_counter#inc_and_get))^")" in  
-  try 
+  try
     let rs = run_hull f in
     print_result rs num_id
   with _ -> print_exc num_id

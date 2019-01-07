@@ -1,2 +1,6 @@
-infer[k] x = m + k & y = m + 1 |- x = y.
+
+
+// synthesize [vars] pre ~> post;
+
+synthesize [int x, int a, int b] x = a ~> x = b.
 

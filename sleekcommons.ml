@@ -48,6 +48,7 @@ type command =
   | LemmaDef of I.coercion_decl_list
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula list * meta_formula * entail_type)
+  | Synthesize of ((typ * ident) list * meta_formula * meta_formula)
   | SatCheck of (meta_formula)
   | NonDetCheck of (ident * meta_formula)
   | Simplify of (meta_formula)
@@ -107,7 +108,7 @@ type command =
   | EmptyCmd
 
 and print_cmd =
-  | PVar of ident 
+  | PVar of ident
   | PCmd of ident * (((ident * bool) regex_list) option)
 
 and meta_formula =
@@ -159,6 +160,7 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | Synthesize _ -> "Synthesize"
   | SatCheck _ -> "SatCheck"
   | NonDetCheck _ -> "NonDetCheck"
   | Simplify _ -> "Simplify"

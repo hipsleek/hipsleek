@@ -19,6 +19,7 @@ module CP = Cpure
 exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
+let pr_hf = Cprinter.string_of_h_formula
 
 (*********************************************************************
  * Choosing rules
@@ -28,7 +29,6 @@ let choose_rule_func_call goal : rule list =
   []
 
 let rec extract_hf_var hf var =
-  let pr_hf = Cprinter.string_of_h_formula in
   let () = x_tinfo_hp (add_str "hf: " pr_hf) hf no_pos in
   match hf with
   | CF.DataNode dnode ->
@@ -164,7 +164,6 @@ let choose_rassign_pure var cur_vars pre post : rule list =
 let choose_rassign_data var cur_vars datas pre post =
   let f_var1 = extract_var_f pre var in
   let f_var2 = extract_var_f post var in
-  let pr_hf = Cprinter.string_of_h_formula in
   let () = x_tinfo_hp (add_str "fvar1" (pr_list pr_hf))
       (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
   let () = x_tinfo_hp (add_str "fvar2" (pr_list pr_hf))
@@ -183,46 +182,44 @@ let choose_rassign_data var cur_vars datas pre post =
       let fields = data.Cast.data_fields in
       let triple = List.combine pre_post fields in
       let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
-      (* let compared_fields = List.map (fun (_, field) -> field) triple in *)
-      let dif_field = if List.length triple = 1 then
-          List.hd triple
-        else report_error no_pos "more then 1 diff fields"
-      in
-      let dif_field_name = dif_field |> snd |> fst in
-      let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
-      let new_field = (fst dif_field_name, new_field_name) in
-      let dif_field_val = dif_field |> fst |> snd in
-      let n_var = Cast.Var {
-          exp_var_type = Cpure.type_of_spec_var dif_field_val;
-          exp_var_name = Cpure.name_of_sv dif_field_val;
-          exp_var_pos = no_pos;
-        }
-      in
-      let assign_exp = Cast.Assign {
-          exp_assign_lhs = new_field_name;
-          exp_assign_rhs = n_var;
-          exp_assign_pos = no_pos;
-        } in
-
-      let bind = {
-            Cast.exp_bind_type = Void;
-            Cast.exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
-            Cast.exp_bind_fields = [new_field];
-            Cast.exp_bind_body = assign_exp;
-            Cast.exp_bind_imm = Cpure.NoAnn;
-            Cast.exp_bind_param_imm = [];
-            Cast.exp_bind_read_only = false;
-            Cast.exp_bind_path_id = (1, "new");
-            Cast.exp_bind_pos = no_pos
+      if List.length triple = 1 then
+        let dif_field = List.hd triple
+        in
+        let dif_field_name = dif_field |> snd |> fst in
+        let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
+        let new_field = (fst dif_field_name, new_field_name) in
+        let dif_field_val = dif_field |> fst |> snd in
+        let n_var = Cast.Var {
+            exp_var_type = Cpure.type_of_spec_var dif_field_val;
+            exp_var_name = Cpure.name_of_sv dif_field_val;
+            exp_var_pos = no_pos;
+          }
+        in
+        let assign_exp = Cast.Assign {
+            exp_assign_lhs = new_field_name;
+            exp_assign_rhs = n_var;
+            exp_assign_pos = no_pos;
           } in
-      let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) (Cast.Bind bind) no_pos in
-      let rule = RlBind {
-          rb_exp = bind;
+
+        let bind = {
+          Cast.exp_bind_type = Void;
+          Cast.exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
+          Cast.exp_bind_fields = [new_field];
+          Cast.exp_bind_body = assign_exp;
+          Cast.exp_bind_imm = Cpure.NoAnn;
+          Cast.exp_bind_param_imm = [];
+          Cast.exp_bind_read_only = false;
+          Cast.exp_bind_path_id = (1, "new");
+          Cast.exp_bind_pos = no_pos
         } in
-      [rule]
+        let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) (Cast.Bind bind) no_pos in
+        let rule = RlBind {
+            rb_exp = bind;
+          } in
+        [rule]
+      else []
     else []
-  else
-  []
+  else []
 
 let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
@@ -245,6 +242,33 @@ let choose_synthesis_rules goal : rule list =
   let rs2 = choose_rule_assign goal in
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs2 no_pos in
   rs2
+
+let split_hf (f: CF.formula) = match f with
+  | Base bf -> let hf = bf.CF.formula_base_heap in
+    let rec helper hf =
+      match hf with
+      | CF.DataNode dnode ->
+        [(dnode.CF.h_formula_data_node, hf)]
+      | CF.ViewNode vnode ->
+        [(vnode.CF.h_formula_view_node, hf)]
+      | CF.Star sf ->
+        let f1 = helper sf.CF.h_formula_star_h1 in
+        let f2 = helper sf.CF.h_formula_star_h2 in
+        f1@f2
+      | _ -> []
+    in helper hf
+  | _ -> []
+
+let choose_framing goal : goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let pre_hfs = split_hf pre in
+  let post_hfs = split_hf post in
+  let framing_heaps = List.filter (fun x -> List.mem x post_hfs) pre_hfs in
+  let remaining_heaps = List.map snd framing_heaps in
+  let n_hf = CF.join_star_conjunctions remaining_heaps in
+  let () = x_binfo_hp (add_str "hf: " pr_hf) n_hf no_pos in
+  goal
 
 (*********************************************************************
  * Processing rules
@@ -270,6 +294,7 @@ let process_one_rule goal rule : derivation =
  *********************************************************************)
 
 let rec synthesize_one_goal goal : synthesis_tree =
+  let goal = choose_framing goal in
   let rules = choose_synthesis_rules goal in
   process_all_rules goal rules
 

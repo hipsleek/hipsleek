@@ -18,11 +18,11 @@ type sleek_token =
   (*keywords*)
   | ANDLIST| ABSTRACT
   | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | INFER_ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
-  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER 
+  | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER
   | PASS_COPY
   | SLK_HULL | SLK_PAIRWISE
   | CASE | SIMPLIFY | CAPTURERESIDUE | CLASS | COMPOSE | CONST | CONTINUE
-  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET 
+  | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET | SYNTHESIZE
   | CHECKENTAIL |  CHECKENTAIL_EXACT | CHECKENTAIL_INEXACT
   | DATA | DDEBUG | DIFF | DYNAMIC 
   | RELASSUME | RELDEFN 
@@ -91,15 +91,16 @@ type sleek_token =
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
-  (*operators*)  
-  | CARET 
+  (*operators*)
+  | CARET | TILDEGT
   | DOTDOT | ATPOS
   | ACCS | AND | ANDSTAR | ANDAND | UNIONSTAR | STARMINUS | AT | ATATSQ | ATAT | LEND | IMM | MUT | MAT | DERV | SPLIT1Ann | SPLIT2Ann | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR  (* | VAL | REC *)
   (* TermInf: Token for Termination Inference *)
   | TEMPLATE | TEMPL_SOLVE
   | NI | RO
   | DOT | DOUBLEQUOTE | EQ | EQEQ | RIGHTARROW | EQUIV | GT | GTE | HASH | REL_GUARD | HEAD | INLIST | LEFTARROW | LENGTH
-  | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
+  | LT | LTE | MINUS | MEM | MEME | NEQ | NOT | NOTINLIST | OBRACE |OLIST
+  | OPAREN | OP_ADD_ASSIGN | OP_DEC | OP_DIV_ASSIGN 
   | OP_INC | OP_MOD_ASSIGN | OP_MULT_ASSIGN | OP_SUB_ASSIGN | OR | OROR | PERM | DERIVE | EQV | CONSTR | OSQUARE  | REVERSE | SET | TAIL 
   (* | TOPAREN | TCPAREN *)
   | PERCENT | PMACRO | QMARK
@@ -149,7 +150,7 @@ module Token = struct
     | CASE ->"case" | CHECKNORM -> "check_normalize" | CHECKEQ -> "checkeq" | CHECKENTAIL ->"checkentail" | CAPTURERESIDUE ->"capture_residue" | CLASS ->"class" | CLIST -> "|]" | PASS_COPY -> "@C"(* | COERCION ->"coercion" *)
     | CHECKENTAIL_EXACT -> "checkentail_exact" | CHECKENTAIL_INEXACT -> "checkentail_inexact"
     | CHECK_NONDET -> "check_nondet"
-    | CHECKSAT -> "checksat"
+    | CHECKSAT -> "checksat" | SYNTHESIZE -> "synthesize"
     | RELASSUME -> "relAssume" | RELDEFN -> "relDefn"    | SHAPE_INFER -> "shape_infer" |  SHAPE_INFER_PROP -> "shape_infer_proper" | SHAPE_POST_OBL -> "shape_post_obligation" | SHAPE_DIVIDE -> "shape_divide" | SHAPE_CONQUER -> "shape_conquer" |  SHAPE_LFP -> "shape_lfp" |  SHAPE_REC -> "shape_rec"
     | SHAPE_SPLIT_BASE -> "shape_split_base" 
     | SHAPE_EXTRACT -> "shape_extract"
@@ -209,7 +210,9 @@ module Token = struct
     | TEMPLATE -> "template" | TEMPL_SOLVE -> "template_solve"
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" | REL_GUARD -> "|#|"
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
-    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||"
+    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%="
+    | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||"
+    | TILDEGT -> "~>"
     | DERIVE -> "|-" | EQV -> "-|-" | CONSTR -> "-->" |  OSQUARE -> "[" |
       PERCENT ->"%" | PMACRO -> "PMACRO" | PLUS -> "+" | PRIME -> "'" |
       SEMICOLON -> ";" | STAR -> "*" | QMARK -> "?"

@@ -134,6 +134,7 @@ module Make (Token : SleekTokenS)
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
    ("checksat", CHECKSAT);
+   ("synthesize", SYNTHESIZE);
    ("check_nondet", CHECK_NONDET);
    ("slk_hull", SLK_HULL);
    ("slk_pairwise", SLK_PAIRWISE);
@@ -475,6 +476,7 @@ rule tokenizer file_name = parse
   | "~\\inf" {NEGINFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
+  | "~>" { TILDEGT }
   | "==>" { ESCAPE }
   | "<-" { RIGHTARROW }
   | "<->" { EQUIV }

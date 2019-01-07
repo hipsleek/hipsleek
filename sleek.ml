@@ -88,7 +88,7 @@ module M = Lexer.Make(Token.Token)
 (*       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ())); *)
 (*       raise t) *)
 
-  let proc_one_cmd c = 
+  let proc_one_cmd c =
     match c with
     | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
@@ -99,6 +99,7 @@ module M = Lexer.Make(Token.Token)
     | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
     | RelDefn (id, ilhs, irhs, extn_info) -> process_rel_defn id ilhs irhs extn_info
     | Simplify f -> process_simplify f
+    | Synthesize (vars, pre, post) -> process_synthesize vars pre post
     | Slk_Hull f -> process_hull f
     | Slk_PairWise f -> process_pairwise f
     | ShapeInfer (pre_hps, post_hps) -> process_shape_infer pre_hps post_hps

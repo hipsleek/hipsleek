@@ -62,7 +62,7 @@ type decl =
   | Ui of ui_decl
 
 
-type member = 
+type member =
   | Field of (typed_ident * loc)
   | Inv of F.formula
   | Method of proc_decl
@@ -1033,6 +1033,7 @@ non_empty_command:
       | t= checknorm_cmd         -> CheckNorm t
       | t= checkeq_cmd         -> EqCheck t
       | t= checkentail_cmd     -> EntailCheck t
+      | t= synthesize_cmd     -> Synthesize t
       | t= checksat_cmd     -> SatCheck t
       | t= checknondet_cmd     -> NonDetCheck t
       | t= validate_cmd     -> Validate t
@@ -1196,7 +1197,7 @@ field_list2:[[
  (********** Views **********)
 
 barrier_decl:
-	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
+	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr ->
 		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
 
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
@@ -1485,7 +1486,7 @@ view_header:
       let pos = get_pos_camlp4 _loc 1 in
       Iast.mk_view_header vn opt1 cids mvs modes pos
 ]];
-                                          
+
 id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
 
 (* form_list_opt: [[ t = LIST0 disjunctive_constr SEP `COMMA -> t ]]; *)
@@ -2434,6 +2435,12 @@ checkentail_cmd:
 
 checksat_cmd:
   [[ `CHECKSAT; t=meta_constr -> t
+  ]];
+
+synthesize_cmd:
+  [[ `SYNTHESIZE; `OSQUARE; vars = LIST1 typed_id_list SEP `COMMA; `CSQUARE;
+     pre = meta_constr; `TILDEGT;
+     post=meta_constr -> (vars, pre, post)
   ]];
 
 checknondet_cmd: 
