@@ -2439,8 +2439,7 @@ checksat_cmd:
 
 synthesize_cmd:
   [[ `SYNTHESIZE; `OSQUARE; vars = LIST1 typed_id_list SEP `COMMA; `CSQUARE;
-     pre = meta_constr; `TILDEGT;
-     post=meta_constr -> (vars, pre, post)
+     pre=meta_constr; `TILDEGT; post=meta_constr -> (vars, pre, post)
   ]];
 
 checknondet_cmd: 

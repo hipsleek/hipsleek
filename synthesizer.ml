@@ -62,7 +62,6 @@ let extract_var_f f var = match f with
 
 let rec extract_var_pf (f: CP.formula) var = match f with
   | BForm (bf, _) ->
-    let () = x_binfo_pp "BForm \n" no_pos in
     let (pf, _) = bf in
     (match pf with
      | Eq (e1, e2, _) ->
@@ -90,9 +89,11 @@ let rec find_sub_var sv cur_vars pre_pf =
          begin
            match e1, e2 with
            | Var (sv1, _), Var (sv2, _) ->
-             if sv1 = sv && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
+             if CP.eq_spec_var sv1 sv
+             && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
              then Some sv2
-             else if sv2 = sv && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
+             else if CP.eq_spec_var sv2 sv
+                  && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
              then Some sv1
              else None
            | _ -> None
@@ -119,8 +120,8 @@ let choose_rassign_pure var cur_vars pre post : rule list =
   let post_f = extract_var_pf post_pf var in
   match pre_f, post_f with
   | Some e1, Some e2 ->
-    (match e2, e1 with
-     | Var (sv, _), Var (sv2, _) ->
+    (match e2 with
+     | Var (sv, _) ->
        if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
          let () = x_binfo_pp "marking \n" no_pos in
          let rhs = Cast.Var {
@@ -144,11 +145,12 @@ let choose_rassign_pure var cur_vars pre post : rule list =
          let pr_vars = pr_list pr_var in
          let () = x_binfo_hp (add_str "vars: " pr_vars) cur_vars no_pos in
          let () = x_binfo_hp (add_str "var: " pr_var) sv no_pos in
-         let find_var = find_sub_var sv2 cur_vars pre_pf in
+         let find_var = find_sub_var sv cur_vars pre_pf in
          begin
            match find_var with
            | None -> []
            | Some sub_var ->
+             let () = x_binfo_pp "find_var success \n" no_pos in
              let rhs = Cast.Var {
                  exp_var_type = CP.type_of_sv sub_var;
                  exp_var_name = CP.name_of_sv sub_var;

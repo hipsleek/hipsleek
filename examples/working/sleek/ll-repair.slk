@@ -1,7 +1,19 @@
+// data node {
+//      int val;
+//      node next
+// }.
 
+data node {
+     node next;
+}.
 
 // synthesize [vars] pre ~> post;
 
-synthesize [int x, int a, int b] x = a ~> x = b.
-// checksat x = a.
+// synthesize [int x, int b] x = a ~> x = b.
+// synthesize [int x, int t] x = a & t = b ~> x = b & t = b.
 
+synthesize [node x, node a] x::node<a> & true ~> x::node<a>.
+
+// checkentail x::node<a> & a != null |- x::node<a> & a != null.
+
+// checksat x = a.
