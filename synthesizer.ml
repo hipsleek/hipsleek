@@ -20,7 +20,8 @@ exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
 let pr_hf = Cprinter.string_of_h_formula
-
+let pr_pf = Cprinter.string_of_pure_formula
+  
 (*********************************************************************
  * Choosing rules
  *********************************************************************)
@@ -61,12 +62,13 @@ let extract_var_f f var = match f with
 
 let rec extract_var_pf (f: CP.formula) var = match f with
   | BForm (bf, _) ->
+    let () = x_binfo_pp "BForm \n" no_pos in
     let (pf, _) = bf in
     (match pf with
      | Eq (e1, e2, _) ->
        begin
          match e1 with
-         | Var (sv, _) -> if sv = var then Some e2 else None
+         | Var (sv, _) -> if CP.eq_spec_var sv var then Some e2 else None
          | _ -> None
        end
      | _ -> None
@@ -81,15 +83,17 @@ let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
   | CP.BForm (b, _) ->
     let bvars = CP.bfv b in
-    if List.mem sv bvars then
+    if List.exists (fun x -> CP.eq_spec_var x sv) bvars then
       let (pf, _) = b in
       (match pf with
        | Eq (e1, e2, _) ->
          begin
            match e1, e2 with
            | Var (sv1, _), Var (sv2, _) ->
-             if sv1 = sv && List.mem sv2 cur_vars then Some sv2
-             else if sv2 = sv && List.mem sv1 cur_vars then Some sv1
+             if sv1 = sv && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
+             then Some sv2
+             else if sv2 = sv && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
+             then Some sv1
              else None
            | _ -> None
          end
@@ -105,16 +109,19 @@ let rec find_sub_var sv cur_vars pre_pf =
 (* implement simple rules first *)
 (* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
 let choose_rassign_pure var cur_vars pre post : rule list =
+  let () = x_binfo_pp "marking \n" no_pos in
   let pre_pf = CF.get_pure pre in
+  let () = x_binfo_hp (add_str "pre_pf" pr_pf) pre_pf no_pos in
   let post_pf = CF.get_pure post in
   let pre_f = extract_var_pf pre_pf var in
-  let post_f = extract_var_pf post_pf var in
   let pr_exp = Cprinter.string_of_formula_exp in
+  (* let () = x_binfo_hp (add_str "pre_f" pr_exp) (Gen.unsome pre_f) no_pos in *)
+  let post_f = extract_var_pf post_pf var in
   match pre_f, post_f with
   | Some e1, Some e2 ->
     (match e2, e1 with
      | Var (sv, _), Var (sv2, _) ->
-       if List.mem sv cur_vars then
+       if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
          let () = x_binfo_pp "marking \n" no_pos in
          let rhs = Cast.Var {
              exp_var_type = CP.type_of_sv sv;
@@ -233,7 +240,8 @@ let choose_rule_assign goal : rule list =
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var vars pre post
     | Named _ -> choose_rassign_data var vars datas pre post
-    | _ -> []  in
+    | _ -> let () = x_binfo_pp "marking \n" no_pos in
+      []  in
   let rules = List.map choose_rule vars in
   List.concat rules
 
