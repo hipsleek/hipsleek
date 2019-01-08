@@ -3,9 +3,10 @@
 open Globals
 open VarGen
 open Gen
-open Cpure
 open Mcpure
-open Cformula
+
+module CF = Cformula
+module CP = Cpure
 
 (*********************************************************************
  * Data structures
@@ -14,9 +15,9 @@ open Cformula
 (* goal *)
 type goal = {
   gl_prog : Cast.prog_decl;
-  gl_pre_cond : formula;
-  gl_post_cond : formula;
-  gl_framed_heaps : h_formula list;
+  gl_pre_cond : CF.formula;
+  gl_post_cond : CF.formula;
+  gl_framed_heaps : CF.h_formula list;
   gl_vars: CP.spec_var list;
 }
 
@@ -29,7 +30,7 @@ type rule =
 
 and rule_func_call = {
   rfc_func_name : string;
-  rfc_params : exp list;
+  rfc_params : CP.exp list;
 }
 
 and rule_bind = {
@@ -37,7 +38,8 @@ and rule_bind = {
 }
 
 and rule_assign = {
-  ra_exp : Cast.exp_assign;
+  ra_lhs : CP.spec_var;
+  ra_rhs : CP.exp;
 }
 
 (* AssignPure *)
@@ -138,10 +140,10 @@ let mk_synthesis_tree_success goal rule : synthesis_tree =
     std_sub_trees = [];
     std_status = StValid stcore; }
 
-let mk_synthesis_tree_fail goal msg : synthesis_tree =
+let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
   StSearch {
     sts_goal = goal;
-    sts_sub_trees = [];
+    sts_sub_trees = sub_trees;
     sts_status = StUnkn msg; }
 
 (*********************************************************************
@@ -164,9 +166,22 @@ let is_synthesis_tree_success stree : bool =
  * Printing
  *********************************************************************)
 
+let pr_exp_opt exp = match exp with
+  | None -> "None"
+  | Some e -> Cprinter.string_of_exp e
+
+let pr_goal goal =
+  let pr_formula = Cprinter.string_of_formula in
+  let vars = goal.gl_vars in
+  let pr_svs = Cprinter.string_of_spec_var_list in
+  "goal (" ^ "vars:" ^ (pr_svs vars) ^ "\n" ^
+  "pre: " ^ (pr_formula goal.gl_pre_cond) ^ "\n" ^
+  "post: " ^ (pr_formula goal.gl_post_cond) ^ ")"
+
 let pr_rule_assign rule =
-  let exp = rule.ra_exp in
-  Cprinter.string_of_exp (Cast.Assign exp)
+  let lhs = rule.ra_lhs in
+  let rhs = rule.ra_rhs in
+  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
 
 let pr_rule_bind rule =
   let exp = rule.rb_exp in
@@ -176,3 +191,30 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBind rule -> "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ ")"
+
+let rec pr_st st = match st with
+  | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
+  | StDerive st_derive -> "StDerive [" ^ (pr_st_derive st_derive) ^ "]"
+
+and pr_st_search st =
+  let goal = st.sts_goal in
+  let sub_trees = st.sts_sub_trees in
+  let st_str = (pr_list pr_st) sub_trees in
+  (pr_goal goal) ^ st_str
+
+and pr_st_derive st =
+  (pr_goal st.std_goal) ^ "\n" ^
+  (pr_rule st.std_rule) ^ "\n" ^
+  ((pr_list pr_st) st.std_sub_trees)
+  (* ^ "\n" ^  (pr_st_status st.std_status) *)
+
+and pr_st_status st_status = match st_status with
+  | StUnkn str -> "StUnkn " ^ str
+  | StValid st_core -> pr_st_core st_core
+
+and pr_st_core st =
+  let goal = st.stc_goal in
+  let sub_trees = st.stc_sub_trees in
+  (pr_goal goal) ^ "=n" ^
+  (pr_rule st.stc_rule) ^
+  ((pr_list pr_st_core) sub_trees)

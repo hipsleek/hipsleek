@@ -15638,33 +15638,11 @@ let rec translate_exp_to_ipure exp = match exp with
                                           translate_exp_to_ipure exp2, loc)
   | _ -> report_error no_pos ("translate_exp_to_ipure: not supported exp\n")
 
-
-(* let is_bvar (pf:p_formula) = match pf with
- *   | BVar _ -> true
- *   | _ -> false
- * 
- * let is_bvar_bform bf =
- *   let (pf, annot) = bf in
- *   is_bvar pf
- * 
- * let rec is_bvar_f f = match f with
- *   | BForm (bf, _) -> is_bvar_bform bf
- *   | And (f1, f2, _)
- *   | Or (f1, f2, _, _) -> is_bvar_f f1 or is_bvar_f f2
- *   | AndList list -> List.exists (fun (_, b) -> is_bvar_f b) list
- *   | Not (f, _, _)
- *   | Forall (_, f, _, _)
- *   | Exists (_, f, _, _) -> is_bvar_f f *)
-
 let rec normalize_bvar_pf pf = match pf with
   | BVar (sv, loc) ->
     if (String.compare (name_of_sv sv) "res" == 0) then
       BConst (true, loc)
     else pf
-  (* | Lt (exp1, exp2, loc) -> Lt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
-   * | Lte (exp1, exp2, loc) -> Lte (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
-   * | Gt (exp1, exp2, loc) -> Gt (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc)
-   * | Gte (exp1, exp2, loc) -> Gte (normalize_bvar_pf exp1, normalize_bvar_pf exp2, loc) *)
   | _ -> pf
 
 let rec normalize_bvar_f f = match f with

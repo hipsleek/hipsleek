@@ -3010,7 +3010,7 @@ let process_synthesize typed_vars pre post =
   let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
   let goal = Synthesis.mk_goal !cprog pre_f post_f svs in
-  let _ = Synthesizer.synthesize_one_goal goal in
+  let _ = Synthesizer.synthesize_program goal in
   ()
 
 let process_hull (f : meta_formula) =

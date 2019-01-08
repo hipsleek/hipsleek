@@ -1104,7 +1104,6 @@ let old_main () =
     end
 
 let () =
-  let _ = Synthesizer.foo in
   if not(!Globals.do_infer_inc) then
     let () = x_dinfo_pp "Executing old_main() " no_pos in
     old_main ()

@@ -1653,7 +1653,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else (CF.Ctx c1) in
               res
             in
-            let () = x_tinfo_hp (add_str "ctx Assign before: "
+            let () = x_binfo_hp (add_str "ctx Assign before: "
                              Cprinter.string_of_list_failesc_context) ctx1 no_pos
             in
             let () = x_tinfo_hp (add_str "rhs: "
@@ -1662,7 +1662,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let () = CF.must_consistent_list_failesc_context "assign final" res
             in
-            let () = x_tinfo_hp (add_str "ctx Assign final: "
+            let () = x_binfo_hp (add_str "ctx Assign final: "
                              Cprinter.string_of_list_failesc_context) res no_pos
             in
             res

@@ -131,6 +131,7 @@ let translate_back_pos (pos:SBGlobals.pos) : VarGen.loc =
 let translate_type (typ: Globals.typ) : SBGlobals.typ =
   match typ with
   | Int -> TInt
+  | TVar num -> TVar num
   | Bool -> TBool
   | UNK -> TUnk
   | Void -> TVoid
@@ -509,7 +510,7 @@ let create_templ_prog prog ents
                prog_commands = [SBCast.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
   let sb_res =
-    Libsongbird.Prover.infer_unknown_functions_with_false_rhs ifp_typ nprog
+    SBProver.infer_unknown_functions_with_false_rhs ifp_typ nprog
       ents in
   let inferred_prog = if sb_res = [] then nprog
     else snd (List.hd sb_res)
@@ -656,6 +657,22 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
 
+let check_entail prog ante conseq =
+  let sb_prog = translate_prog prog in
+  let sb_ante, _ = translate_formula ante in
+  let sb_conseq, _ = translate_formula conseq in
+  if List.length sb_ante != 1 && List.length sb_conseq != 1 then
+    report_error no_pos "more than one constraint in ante/conseq"
+  else
+    let sb_ante = List.hd sb_ante in
+    let sb_conseq = List.hd sb_conseq in
+    let ent = SBCast.mk_entailment sb_ante sb_conseq in
+    let ptree = SBProver.check_entailment sb_prog ent in
+    let res = SBProof.get_ptree_validity ptree in
+    match res with
+    | SBGlobals.MvlTrue -> true
+    | _ -> false
+
 let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
   let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
@@ -730,13 +747,12 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let interact = if !Globals.enable_sb_interactive then true else false in
   let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:interact n_prog ent) ents in
-  let validities = List.map (fun ptree -> Libsongbird.Proof.get_ptree_validity
-                                ptree) ptrees in
+  let validities = List.map (fun ptree -> SBProof.get_ptree_validity ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
   then
     let residues = List.map (fun ptree ->
-        let residue_fs = Libsongbird.Proof.get_ptree_residues ptree in
+        let residue_fs = SBProof.get_ptree_residues ptree in
         let pr_rsd = SBCast.pr_fs in
         let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
         residue_fs |> List.rev |> List.hd

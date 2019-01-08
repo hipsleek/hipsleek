@@ -3382,7 +3382,7 @@ and subst_x sst (f : formula) =
         formula_exists_and = a; (*TO CHECK*)
         formula_exists_flow = fl;
         formula_exists_label = lbl;
-        formula_exists_pos = pos }) -> 
+        formula_exists_pos = pos }) ->
       (* Variable under this existential quantification should NOT be substituted! *)
       (* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
       let qsvnames = (List.map CP.name_of_spec_var qsv) in

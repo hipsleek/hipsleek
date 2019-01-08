@@ -21,7 +21,7 @@ exception EStree of synthesis_tree
 let raise_stree st = raise (EStree st)
 let pr_hf = Cprinter.string_of_h_formula
 let pr_pf = Cprinter.string_of_pure_formula
-  
+
 (*********************************************************************
  * Choosing rules
  *********************************************************************)
@@ -91,10 +91,10 @@ let rec find_sub_var sv cur_vars pre_pf =
            | Var (sv1, _), Var (sv2, _) ->
              if CP.eq_spec_var sv1 sv
              && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
-             then Some sv2
+             then Some e2
              else if CP.eq_spec_var sv2 sv
                   && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
-             then Some sv1
+             then Some e1
              else None
            | _ -> None
          end
@@ -123,19 +123,9 @@ let choose_rassign_pure var cur_vars pre post : rule list =
     (match e2 with
      | Var (sv, _) ->
        if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
-         let () = x_binfo_pp "marking \n" no_pos in
-         let rhs = Cast.Var {
-             exp_var_type = CP.type_of_sv sv;
-             exp_var_name = CP.name_of_sv sv;
-             exp_var_pos = no_pos;
-           } in
-         let assign_exp = {
-           Cast.exp_assign_lhs = CP.name_of_sv var;
-           Cast.exp_assign_rhs = rhs;
-           Cast.exp_assign_pos = no_pos;
-         } in
          let rule = RlAssign {
-             ra_exp = assign_exp;
+             ra_lhs = var;
+             ra_rhs = e2;
            } in
          [rule]
        else
@@ -150,19 +140,9 @@ let choose_rassign_pure var cur_vars pre post : rule list =
            match find_var with
            | None -> []
            | Some sub_var ->
-             let () = x_binfo_pp "find_var success \n" no_pos in
-             let rhs = Cast.Var {
-                 exp_var_type = CP.type_of_sv sub_var;
-                 exp_var_name = CP.name_of_sv sub_var;
-                 exp_var_pos = no_pos;
-               } in
-             let assign_exp = {
-               Cast.exp_assign_lhs = CP.name_of_sv var;
-               Cast.exp_assign_rhs = rhs;
-               Cast.exp_assign_pos = no_pos;
-             } in
              let rule = RlAssign {
-                 ra_exp = assign_exp;
+                 ra_lhs = var;
+                 ra_rhs = sub_var;
                } in
              [rule]
          end
@@ -288,7 +268,23 @@ let process_rule_func_call goal rcore : derivation =
   mk_derivation_sub_goals goal (RlFuncCall rcore) []
 
 let process_rule_assign goal rassign =
-  mk_derivation_sub_goals goal (RlAssign rassign) []
+  let pre = goal.gl_pre_cond in
+  let lhs = rassign.ra_lhs in
+  let rhs = rassign.ra_rhs in
+  let res_var = CP.mkRes (CP.type_of_sv lhs) in
+  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) rhs no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_rhs pre in
+  let tmp_lhs = CP.fresh_spec_var lhs in
+  let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
+  let pr_formula = Cprinter.string_of_formula in
+  let () = x_binfo_hp (add_str "post_cond " pr_formula) n_post no_pos in
+  let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  match ent_check with
+  | true -> mk_derivation_success goal (RlAssign rassign)
+  | false ->
+    let post = goal.gl_post_cond in
+    let sub_goal = mk_goal goal.gl_prog n_post post goal.gl_vars in
+    mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal]
 
 let process_rule_bind goal rbind =
   mk_derivation_sub_goals goal (RlBind rbind) []
@@ -309,15 +305,18 @@ let rec synthesize_one_goal goal : synthesis_tree =
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
-  try
-    List.iter (fun rule ->
+  let rec process atrees rules =
+    match rules with
+    | rule::other_rules ->
       let drv = process_one_rule goal rule in
       let stree = process_one_derivation drv in
-      if is_synthesis_tree_success stree then raise_stree stree
-    ) rules;
-    (* no rule can be applied *)
-    mk_synthesis_tree_fail goal "no rule"
-  with EStree st -> st
+      let atrees = atrees @ [stree] in
+      if is_synthesis_tree_success stree then
+        let pts = get_synthesis_tree_status stree in
+        mk_synthesis_tree_search goal atrees pts
+      else process atrees other_rules
+    | [] -> mk_synthesis_tree_fail goal atrees "no rule can be applied" in
+  process [] rules
 
 and process_conjunctive_subgoals goal rule sub_goals : synthesis_tree =
   (* TODO *)
@@ -326,7 +325,7 @@ and process_conjunctive_subgoals goal rule sub_goals : synthesis_tree =
 and process_one_derivation drv : synthesis_tree =
   let goal, rule = drv.drv_goal, drv.drv_rule in
   match drv.drv_kind with
-  | DrvStatus false -> mk_synthesis_tree_fail goal "unknown"
+  | DrvStatus false -> mk_synthesis_tree_fail goal [] "unknown"
   | DrvStatus true -> mk_synthesis_tree_success goal rule
   | DrvSubgoals gs -> process_conjunctive_subgoals goal rule gs
 
@@ -334,8 +333,44 @@ and process_one_derivation drv : synthesis_tree =
 (*********************************************************************
  * The main synthesis algorithm
  *********************************************************************)
+let exp_to_cast (exp: CP.exp) = match exp with
+  | Var (sv, loc) ->
+    Cast.Var {
+      exp_var_type = CP.type_of_sv sv;
+      exp_var_name = CP.name_of_sv sv;
+      exp_var_pos = loc
+    }
+  | IConst (num, loc) ->
+    Cast.IConst {
+      exp_iconst_val = num;
+      exp_iconst_pos = loc;
+    }
+  (* | Add (e1, e2, loc) -> *)
+  | _ -> report_error no_pos "exp_to_cast: not handled"
+
+
+let synthesize_st_core st =
+  let rule = st.stc_rule in
+  match rule with
+  | RlAssign rassign->
+    let lhs = rassign.ra_lhs in
+    let rhs = rassign.ra_rhs in
+    let c_exp = exp_to_cast rhs in
+    let assign = Cast.Assign {
+        exp_assign_lhs = CP.name_of_sv lhs;
+        exp_assign_rhs = c_exp;
+        exp_assign_pos = no_pos;
+      }
+    in Some assign
+  | _ -> None
 
 let synthesize_program goal : CA.exp option =
-  None
-
-let foo = ()
+  let st = synthesize_one_goal goal in
+  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let st_status = get_synthesis_tree_status st in
+  match st_status with
+  | StValid st_core ->
+    let res = synthesize_st_core st_core in
+    let () = x_binfo_hp (add_str "res" pr_exp_opt) res no_pos in
+    res
+  | StUnkn _ -> None
