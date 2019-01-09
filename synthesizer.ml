@@ -153,15 +153,14 @@ let choose_rassign_pure var cur_vars pre post : rule list =
 let choose_rassign_data var cur_vars datas pre post =
   let f_var1 = extract_var_f pre var in
   let f_var2 = extract_var_f post var in
-  let () = x_tinfo_hp (add_str "fvar1" (pr_list pr_hf))
+  let () = x_binfo_hp (add_str "fvar1" (pr_list pr_hf))
       (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
-  let () = x_tinfo_hp (add_str "fvar2" (pr_list pr_hf))
+  let () = x_binfo_hp (add_str "fvar2" (pr_list pr_hf))
       (List.map (fun x -> CF.DataNode x) f_var2) no_pos in
   if f_var1 != [] && f_var2 != [] then
     let bef_node = List.hd f_var1 in
     let aft_node = List.hd f_var2 in
     if bef_node != aft_node then
-      let () = x_binfo_pp "marking \n" no_pos in
       let bef_args = bef_node.CF.h_formula_data_arguments in
       let aft_args = aft_node.CF.h_formula_data_arguments in
       let name = bef_node.CF.h_formula_data_name in
@@ -170,42 +169,37 @@ let choose_rassign_data var cur_vars datas pre post =
       let pre_post = List.combine bef_args aft_args in
       let fields = data.Cast.data_fields in
       let triple = List.combine pre_post fields in
-      let triple = List.filter (fun ((pre,post),_) -> pre!=post) triple in
+      let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
       if List.length triple = 1 then
-        let dif_field = List.hd triple
-        in
-        let dif_field_name = dif_field |> snd |> fst in
-        let new_field_name = Cpure.fresh_old_name (snd dif_field_name) in
-        let new_field = (fst dif_field_name, new_field_name) in
-        let dif_field_val = dif_field |> fst |> snd in
-        let n_var = Cast.Var {
-            exp_var_type = Cpure.type_of_spec_var dif_field_val;
-            exp_var_name = Cpure.name_of_sv dif_field_val;
-            exp_var_pos = no_pos;
-          }
-        in
-        let assign_exp = Cast.Assign {
-            exp_assign_lhs = new_field_name;
-            exp_assign_rhs = n_var;
-            exp_assign_pos = no_pos;
-          } in
-
-        let bind = {
-          Cast.exp_bind_type = Void;
-          Cast.exp_bind_bound_var = (Cpure.type_of_spec_var var, Cpure.name_of_sv var);
-          Cast.exp_bind_fields = [new_field];
-          Cast.exp_bind_body = assign_exp;
-          Cast.exp_bind_imm = Cpure.NoAnn;
-          Cast.exp_bind_param_imm = [];
-          Cast.exp_bind_read_only = false;
-          Cast.exp_bind_path_id = (1, "new");
-          Cast.exp_bind_pos = no_pos
-        } in
-        let () = x_binfo_hp (add_str "data" Cprinter.string_of_exp) (Cast.Bind bind) no_pos in
-        let rule = RlBind {
-            rb_exp = bind;
-          } in
-        [rule]
+        let dif_field = List.hd triple in
+        let df_name = dif_field |> snd |> fst in
+        (* let rule = RlBind {
+         *     rb_var = var;
+         *     rb_field = (fst df_name, CP.fresh_old_name (snd df_name));
+         *   } in *)
+        (* let n_name = CP.fresh_old_name (snd df_name) in *)
+        let n_name = snd df_name in
+        let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
+        let cur_vars = cur_vars @ [n_var] in
+        let pre_val = dif_field |> fst |> fst in
+        let post_val = dif_field |> fst |> snd in
+        let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
+        let n_post_pure = CP.mkEqVar n_var post_val no_pos in
+        let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
+        let n_post = CF.add_pure_formula_to_formula n_post_pure post in
+        let n_rule = choose_rassign_pure n_var cur_vars n_pre n_post in
+        if n_rule = [] then []
+        else
+          let eq_rule = List.hd n_rule in
+          match eq_rule with
+          | RlAssign rassgn ->
+            let rule = RlBindWrite {
+                rb_var = var;
+                rb_field = (fst df_name, n_name);
+                rb_rhs = rassgn.ra_rhs;
+              }
+            in [rule]
+          | _ -> []
       else []
     else []
   else []
@@ -287,13 +281,13 @@ let process_rule_assign goal rassign =
     mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal]
 
 let process_rule_bind goal rbind =
-  mk_derivation_sub_goals goal (RlBind rbind) []
+  mk_derivation_sub_goals goal (RlBindWrite rbind) []
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
-  | RlBind rbind -> process_rule_bind goal rbind
+  | RlBindWrite rbind -> process_rule_bind goal rbind
 
 (*********************************************************************
  * The search procedure

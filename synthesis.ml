@@ -26,15 +26,19 @@ type goal = {
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
-  | RlBind of rule_bind
+  | RlBindWrite of rule_bind
+  (* | RlBindRead *)
 
 and rule_func_call = {
   rfc_func_name : string;
   rfc_params : CP.exp list;
 }
 
+(* TODO: should we rename variables?? *)
 and rule_bind = {
-  rb_exp: Cast.exp_bind;
+  rb_var: CP.spec_var;
+  rb_field: typed_ident;
+  rb_rhs: CP.exp;
 }
 
 and rule_assign = {
@@ -184,13 +188,14 @@ let pr_rule_assign rule =
   (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
 
 let pr_rule_bind rule =
-  let exp = rule.rb_exp in
-  Cprinter.string_of_exp (Cast.Bind exp)
+  let exp = rule.rb_var in
+  (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
+  ^ (Cprinter.string_of_formula_exp rule.rb_rhs)
 
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBind rule -> "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ ")"
+  | RlBindWrite rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
