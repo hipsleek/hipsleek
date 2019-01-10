@@ -125,7 +125,6 @@ and struc_infer_formula =
 and struc_case_formula =
   {
     formula_case_branches : (Cpure.formula * struc_formula ) list;
-    (* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
     formula_case_pos : loc
   }
 
@@ -149,14 +148,11 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: (* struc_ *)formula;
-  (* rflow_global_vars: CP.spec_var list; *)
+  rflow_base: formula;
 }
 
 and rflow_struc_formula = {
-  (* rflow_kind: ho_flow_kind; *)
   rflow_struc_base: struc_formula;
-  (* rflow_global_vars: CP.spec_var list; *)
 }
 
 and list_formula = formula list
