@@ -228,6 +228,7 @@ and pr_st_core st =
   * Atomic functions
 ********************************************************)
 
+(* Get the value of a field *)
 let get_field var access_field data_decls =
   let name = var.CF.h_formula_data_name in
   try
@@ -240,15 +241,17 @@ let get_field var access_field data_decls =
     else Some (snd (List.hd result))
   with Not_found -> None
 
+(* Update a data node with a new value to the field *)
 let set_field var access_field new_val data_decls = 
   let name = var.CF.h_formula_data_name in
   try
     let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in
     let fields = var.CF.h_formula_data_arguments in
-    (* let data_fields = List.map fst data.Cast.data_fields in
-     * let pairs = List.combine data_fields fields in
-     * let result = List.filter (fun (x,y) -> x = access_field) pairs in
-     * if result = [] then None
-     * else Some (snd (List.hd result)) *)
-    None
-  with Not_found -> None
+    let data_fields = List.map fst data.Cast.data_fields in
+    let pairs = List.combine data_fields fields in
+    let update_field (field, old_val) =
+      if field = access_field then new_val
+      else old_val in
+    let new_fields = List.map update_field pairs in
+    {var with CF.h_formula_data_arguments = new_fields}
+  with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
