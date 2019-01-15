@@ -285,7 +285,12 @@ let subs_bind_write formula var field data_decls =
     | Base bf ->
       let hf = bf.CF.formula_base_heap in
       (match hf with
-       | DataNode dnode -> None
+       | DataNode dnode ->
+         let data_var = dnode.h_formula_data_node in
+         if CP.eq_spec_var data_var var then
+           
+           None
+         else None
        | _ -> None
       )
     | _ -> None
@@ -299,6 +304,7 @@ let process_rule_bind goal rbind =
   let rhs = rbind.rb_rhs in
   let prog = goal.gl_prog in
   let data_decls = prog.prog_data_decls in
+  let _ = subs_bind_write pre var field data_decls in
   mk_derivation_sub_goals goal (RlBindWrite rbind) []
 
 let process_one_rule goal rule : derivation =

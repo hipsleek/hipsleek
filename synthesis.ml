@@ -223,3 +223,32 @@ and pr_st_core st =
   (pr_goal goal) ^ "=n" ^
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
+
+(*****************************************************
+  * Atomic functions
+********************************************************)
+
+let get_field var access_field data_decls =
+  let name = var.CF.h_formula_data_name in
+  try
+    let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in
+    let fields = var.CF.h_formula_data_arguments in
+    let data_fields = List.map fst data.Cast.data_fields in
+    let pairs = List.combine data_fields fields in
+    let result = List.filter (fun (x,y) -> x = access_field) pairs in
+    if result = [] then None
+    else Some (snd (List.hd result))
+  with Not_found -> None
+
+let set_field var access_field new_val data_decls = 
+  let name = var.CF.h_formula_data_name in
+  try
+    let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in
+    let fields = var.CF.h_formula_data_arguments in
+    (* let data_fields = List.map fst data.Cast.data_fields in
+     * let pairs = List.combine data_fields fields in
+     * let result = List.filter (fun (x,y) -> x = access_field) pairs in
+     * if result = [] then None
+     * else Some (snd (List.hd result)) *)
+    None
+  with Not_found -> None
