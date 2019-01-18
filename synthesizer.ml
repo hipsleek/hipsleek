@@ -280,7 +280,7 @@ let process_rule_assign goal rassign =
     let sub_goal = mk_goal goal.gl_prog n_post post goal.gl_vars in
     mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal]
 
-let subs_bind_write formula var field data_decls =
+let subs_bind_write formula var field new_val data_decls =
   let helper formula = match formula with
     | Base bf ->
       let hf = bf.CF.formula_base_heap in
@@ -288,7 +288,7 @@ let subs_bind_write formula var field data_decls =
        | DataNode dnode ->
          let data_var = dnode.h_formula_data_node in
          if CP.eq_spec_var data_var var then
-           
+           let _ = set_field dnode field new_val data_decls in
            None
          else None
        | _ -> None
@@ -304,7 +304,7 @@ let process_rule_bind goal rbind =
   let rhs = rbind.rb_rhs in
   let prog = goal.gl_prog in
   let data_decls = prog.prog_data_decls in
-  let _ = subs_bind_write pre var field data_decls in
+  let _ = subs_bind_write pre var field rhs data_decls in
   mk_derivation_sub_goals goal (RlBindWrite rbind) []
 
 let process_one_rule goal rule : derivation =
