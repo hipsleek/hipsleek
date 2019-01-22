@@ -172,6 +172,8 @@ global mapping(address => int) balances;
 */
 
 void SimpleAuction(int _biddingTime, address _beneficiary)
+     requires _biddingTime > 0
+     ensures  auctionEnd' = now + _biddingTime & beneficiary' = _beneficiary;
 {
   beneficiary = _beneficiary;
   auctionEnd = now + _biddingTime;
@@ -183,12 +185,14 @@ void SimpleAuction(int _biddingTime, address _beneficiary)
 // Revert the call if the bidding
 // period is over.
 void bid()
-     requires msg::message<_,sender,value,_> & now <= auctionEnd & value > highestBid
-     ensures  highestBidder = sender & highestBid = value;
+     requires [pd0] pendingReturns::Map<pd0> * msg::message<_,sender,value,_>@L & now <= auctionEnd & value > highestBid
+     ensures  (exists pd1: pendingReturns'::Map<pd1> & pd1[highestBidder] = pd0[highestBidder] + highestBid & highestBidder' = sender & highestBid' = value);
 {
   if (highestBid != 0)
   {
-    pendingReturns[highestBidder] += highestBid;
+    int tmp_pending;
+    tmp_pending = pendingReturns[highestBidder];
+    pendingReturns[highestBidder] = tmp_pending + highestBid;
   }
   highestBidder = msg.sender;
   highestBid = msg.value;
@@ -196,8 +200,8 @@ void bid()
 
 //Withdraw a bid that was overbid.
 bool withdraw()
-     requires [ub0] balances::Map<ub0> * msg::message<_,sender,value,_>
-     ensures  true;
+     requires [ub0,pd0] balances::Map<ub0> * pendingReturns::Map<pd0> * msg::message<_,sender,value,_>@L & pd0[sender] != 0
+     ensures  (exists ub1,pd1: balances'::Map<ub1> * pendingReturns'::Map<pd1> & pd1[sender] = 0 & ub1[sender] = ub0[sender] + pd0[sender]);
 {
   address sender;
   sender = msg.sender;
@@ -205,8 +209,7 @@ bool withdraw()
   // It is important to set this to zero because the recipient
   // can call this function again as part of the receiving call
   // before `send` returns.
-  if(amount > 0)
-  {
+
     pendingReturns[sender] = 0;
     //msg.sender.send(amount)
     // 'send' process
@@ -220,7 +223,6 @@ bool withdraw()
       pendingReturns[sender] = amount;
       return false;
     }
-  }
   return true;
 }
 

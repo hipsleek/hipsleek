@@ -197,17 +197,16 @@ global Proposal[] proposals;
 
 
 void for_loop_ballot(ref int i, int n, int[] proNums)
-     requires i <= n
+     requires tmp::Proposal<_,_> & i <= n & proposals[0]=tmp
      ensures  i' = i+1;
 {
      if(i < n){
          Proposal tmp_p;
-         tmp_p = proposals[i];
+         tmp_p = proposals[0];
          tmp_p.num = proNums[i];
          tmp_p.voteCount = 0;
          for_loop_ballot(i, n, proNums);
      }
-
 }
 
 // Create a new ballot to choose one of `proposalNames`.
@@ -347,10 +346,12 @@ void delegate(address toWhom)
 // Give your vote (including votes delegated to you)
 // to proposal `proposals[proposal].name`.
 void vote(int proposal)
-     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_> * vtr::Voter<w0,false,_,_> * prp::Proposal<_,vc> & vtr= vt0[sender] //& !vtr.voted
-
+     requires [vt0,prp]
+           voters::Map<vt0> * msg::message<_,sender,_>
+           * vtr::Voter<w0,false,_,_> * prp::Proposal<_,vc>
+           & vtr= vt0[sender] & proposals[proposal] = prp //& !vtr.voted
 //*************************************\\
-     ensures  proposals::Array<prps> * vtr::Voter<w0,true,_,_> * prp::Proposal<_,vc+w0> & prps[proposal] = prp;
+     ensures  vtr::Voter<w0,true,_,_> * prp::Proposal<_,vc+w0>;
 //*************************************\\
 
 //vtr'::Voter<w0,true,_,_> * prp'::Proposal<_,vc+w0> & prps[proposal] = prp & prp.vc;//prps::Proposal<>[]

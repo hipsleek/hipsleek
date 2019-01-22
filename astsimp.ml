@@ -5761,8 +5761,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             proc_args_typ
         )
       in
-      let mingled_mn     = C.mingle_name mn cts in       (* signature of the function based on the types of the method's arguments*)
-      let mingled_mn_def = C.mingle_name mn cts_mndef in (* signature of the function based on the method definition types with instantiated poly types*)
+      let mingled_mn     = C.mingle_name mn cts in       (* signature of the function based on the types of the method's arguments *)
+      let mingled_mn_def = C.mingle_name mn cts_mndef in (* signature of the function based on the method definition types with instantiated poly types *)
       let () = y_tinfo_hp (add_str "mingled_mn" pr_id) mingled_mn in
       let () = y_tinfo_hp (add_str "mingled_mn_def" pr_id) mingled_mn_def in
       let this_recv =
@@ -5887,7 +5887,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             if (mingled_mn = mingled_mn_def) then proc_decl else
             if (List.length pargs != 0) then raise Not_found
             else
-              let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
+              let () = y_binfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
               let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
               I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
           in
