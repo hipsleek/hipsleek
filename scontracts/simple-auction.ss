@@ -256,4 +256,4 @@ ensures  (exists ub1: balances'::Map<ub1> & ub1[beneficiary] = ub0[beneficiary] 
         // 3. Interaction
 //        beneficiary.transfer(highestBid);
         balances[beneficiary] += highestBid;
-    }
+}
