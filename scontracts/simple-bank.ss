@@ -1,5 +1,106 @@
-pragma solidity ^0.4.13;
-contract SimpleBank {
+
+/********************/
+/*Translated Version*/
+/********************/
+hip_include 'scontracts/mapprimitives.ss'
+//This file should be named as SimpleAuction.ss -> contract
+data address {
+     int id;
+}
+
+data message{
+     //int data_;
+     int     gas;
+     address sender;
+     //int sig;
+     int     value;
+     address receiver;
+}
+
+global message msg;
+//global bnode   userbal;
+//global int     bal;
+
+/* Fill in the keyword. Hint: We want to protect our users balance from other contracts*/
+// mapping (address => uint) private balances;
+global mapping(address => int) balances;
+global mapping(address => int) localBalances;
+
+/* Let's make sure everyone knows who owns the bank. Use the appropriate keyword for this*/
+global address owner;
+
+// Events - publicize actions to external listeners
+/* Add 2 arguments for this event, an accountAddress and an amount */
+// event LogDepositMade(address accountAddress, uint amount);
+
+// Constructor, can receive one or many variables here; only one allowed
+void SimpleBank()
+    requires msg::message<_,sender,_,_>@L
+    ensures  owner' = sender;
+{
+/* Set the owner to the creator of this contract */
+    owner = msg.sender;
+}
+
+// Enroll a customer with the bank, giving them 1000 tokens for free
+// Return The balance of the user after enrolling
+int enroll()
+    requires [bb0] balances::Map<bb0> * msg::message<_,sender,_,_>@L
+    ensures  (exists bb1: balances'::Map<bb1> & bb1[sender] = 0);
+{
+    address user = msg.sender;
+
+    balances[user] = 0;
+    return balances[user];
+}
+
+// Deposit ether into bank
+// Return The balance of the user after the deposit is made
+int deposit()
+    requires [bb0] balances::Map<bb0> * msg::message<_,sender,value,_>@L
+    ensures  (exists bb1: balances'::Map<bb1> & bb1[sender] = bb0[sender] + value);
+{
+/* Add the amount to the user's balance, call the event associated with a deposit,
+          then return the balance of the user */
+    address user = msg.sender;
+
+    balances[user] += msg.value;
+
+    //emit LogDepositMade(user, msg.value);
+
+    return balances[user];
+}
+
+// Withdraw ether from bank
+// Return The balance remaining for the user
+int withdraw(int withdrawAmount)
+    requires [bb0,lb0] balances::Map<bb0> * localBalances::Map<lb0> * msg::message<_,sender,value,_>@L & balances[user] >= withdrawAmount
+    ensures  (exists bb1,lb1: balances'::Map<bb1> * localBalances'::Map<lb1> & bb1[sender] = bb0[sender] - withdrawAmount & lb1[sender] = lb0[sender] + withdrawAmount);
+{
+    address user = msg.sender;
+    balances[user] -= withdrawAmount;
+
+    //user.transfer(withdrawAmount);
+    localBalances[user] += withdrawAmount;
+
+    return balances[user];
+}
+
+
+// Return The balance of the user
+// allows function to run locally/off blockchain
+int balance()
+{
+    address user = msg.sender;
+
+    return balances[user];
+}
+
+
+
+/*pragma solidity ^0.4.13;
+contract SimpleBank
+{
 
     /* Fill in the keyword. Hint: We want to protect our users balance from other contracts*/
     mapping (address => uint) private balances;
@@ -84,3 +185,4 @@ contract SimpleBank {
         revert();
     }
 }
+*/
