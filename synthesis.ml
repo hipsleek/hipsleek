@@ -38,12 +38,12 @@ and rule_func_call = {
 and rule_bind = {
   rb_var: CP.spec_var;
   rb_field: typed_ident;
-  rb_rhs: CP.exp;
+  rb_rhs: CP.spec_var;
 }
 
 and rule_assign = {
   ra_lhs : CP.spec_var;
-  ra_rhs : CP.exp;
+  ra_rhs : CP.spec_var;
 }
 
 (* AssignPure *)
@@ -185,12 +185,12 @@ let pr_goal goal =
 let pr_rule_assign rule =
   let lhs = rule.ra_lhs in
   let rhs = rule.ra_rhs in
-  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
+  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_spec_var rhs)
 
 let pr_rule_bind rule =
   let exp = rule.rb_var in
   (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
-  ^ (Cprinter.string_of_formula_exp rule.rb_rhs)
+  ^ (Cprinter.string_of_spec_var rule.rb_rhs)
 
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
@@ -242,7 +242,7 @@ let get_field var access_field data_decls =
   with Not_found -> None
 
 (* Update a data node with a new value to the field *)
-let set_field var access_field new_val data_decls = 
+let set_field var access_field (new_val:CP.spec_var) data_decls =
   let name = var.CF.h_formula_data_name in
   try
     let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in

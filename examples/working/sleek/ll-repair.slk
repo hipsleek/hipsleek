@@ -15,6 +15,7 @@ data node {
 synthesize [node x, int n2, node y]
 x::node<n1, a> * y::node<n2, b> & true ~>
            x::node<n2, a> * y::node<n2, b>.
+
 // x.val = n2;
 // checkentail x::node<a> & a != null |- x::node<a> & a != null.
 

@@ -91,10 +91,10 @@ let rec find_sub_var sv cur_vars pre_pf =
            | Var (sv1, _), Var (sv2, _) ->
              if CP.eq_spec_var sv1 sv
              && List.exists (fun x -> CP.eq_spec_var x sv2) cur_vars
-             then Some e2
+             then Some sv2
              else if CP.eq_spec_var sv2 sv
                   && List.exists (fun x -> CP.eq_spec_var x sv1) cur_vars
-             then Some e1
+             then Some sv1
              else None
            | _ -> None
          end
@@ -125,7 +125,7 @@ let choose_rassign_pure var cur_vars pre post : rule list =
        if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
          let rule = RlAssign {
              ra_lhs = var;
-             ra_rhs = e2;
+             ra_rhs = sv;
            } in
          [rule]
        else
@@ -266,7 +266,7 @@ let process_rule_assign goal rassign =
   let lhs = rassign.ra_lhs in
   let rhs = rassign.ra_rhs in
   let res_var = CP.mkRes (CP.type_of_sv lhs) in
-  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) rhs no_pos in
+  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) (CP.mkVar rhs no_pos) no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_rhs pre in
   let tmp_lhs = CP.fresh_spec_var lhs in
   let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
@@ -370,16 +370,50 @@ let exp_to_cast (exp: CP.exp) = match exp with
 let synthesize_st_core st =
   let rule = st.stc_rule in
   match rule with
-  | RlAssign rassign->
+  | RlAssign rassign ->
     let lhs = rassign.ra_lhs in
     let rhs = rassign.ra_rhs in
-    let c_exp = exp_to_cast rhs in
+    let c_exp = exp_to_cast (CP.mkVar rhs no_pos) in
     let assign = Cast.Assign {
         exp_assign_lhs = CP.name_of_sv lhs;
         exp_assign_rhs = c_exp;
         exp_assign_pos = no_pos;
       }
     in Some assign
+  | RlBindWrite rbind ->
+    let bvar = rbind.rb_var in
+    let bfield = rbind.rb_field in
+    let rhs = rbind.rb_rhs in
+    let typ = CP.type_of_sv rhs in
+    let rhs_var = Cast.Var {
+        Cast.exp_var_type = CP.type_of_sv rhs;
+        Cast.exp_var_name = CP.name_of_sv rhs;
+        Cast.exp_var_pos = no_pos;
+      } in
+    let (typ, f_name) = bfield in
+    (* let field_sv = CP.mk_typed_spec_var typ var in *)
+    (* let lhs_var = Cast.Var {
+     *     Cast.exp_var_type = typ;
+     *     Cast.exp_var_name = f_name;
+     *     Cast.exp_var_pos = no_pos;
+     *   } in *)
+    let body = Cast.Assign {
+        Cast.exp_assign_lhs = f_name;
+        Cast.exp_assign_rhs = rhs_var;
+        Cast.exp_assign_pos = no_pos;
+      } in
+    let bexp = Cast.Bind {
+        exp_bind_type = typ;
+        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
+        exp_bind_fields = [bfield];
+        exp_bind_body = body;
+        exp_bind_imm = CP.NoAnn;
+        exp_bind_param_imm = [];
+        exp_bind_read_only = false;
+        exp_bind_path_id = (-1, "bind");
+        exp_bind_pos = no_pos;
+      } in
+    Some bexp
   | _ -> None
 
 let synthesize_program goal : CA.exp option =
