@@ -27,7 +27,7 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBindWrite of rule_bind
-  (* | RlBindRead *)
+  | RlBindRead of rule_bindread
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -39,6 +39,12 @@ and rule_bind = {
   rb_var: CP.spec_var;
   rb_field: typed_ident;
   rb_rhs: CP.spec_var;
+}
+
+and rule_bindread = {
+  rb_var: CP.spec_var;
+  rb_field: typed_ident;
+  rb_lhs: CP.spec_var;
 }
 
 and rule_assign = {
@@ -196,6 +202,7 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBindWrite rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
+  | RlBindRead rule -> "RlBindRead"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"

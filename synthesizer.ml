@@ -19,6 +19,7 @@ module CP = Cpure
 exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
+let pr_formula = Cprinter.string_of_formula
 let pr_hf = Cprinter.string_of_h_formula
 let pr_pf = Cprinter.string_of_pure_formula
 
@@ -210,9 +211,8 @@ let choose_rule_assign goal : rule list =
   let post = goal.gl_post_cond in
   let prog = goal.gl_prog in
   let datas = prog.Cast.prog_data_decls in
-  let pr_formula = Cprinter.string_of_formula in
   let pr_sv = Cprinter.string_of_spec_var in
-  let () = x_binfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
+  let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var vars pre post
     | Named _ -> choose_rassign_data var vars datas pre post
@@ -251,7 +251,7 @@ let choose_framing goal : goal =
   let framing_heaps = List.filter (fun x -> List.mem x post_hfs) pre_hfs in
   let remaining_heaps = List.map snd framing_heaps in
   let n_hf = CF.join_star_conjunctions remaining_heaps in
-  let () = x_binfo_hp (add_str "hf: " pr_hf) n_hf no_pos in
+  let () = x_tinfo_hp (add_str "hf: " pr_hf) n_hf no_pos in
   goal
 
 (*********************************************************************
@@ -270,7 +270,6 @@ let process_rule_assign goal rassign =
   let n_pre = CF.add_pure_formula_to_formula n_rhs pre in
   let tmp_lhs = CP.fresh_spec_var lhs in
   let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
-  let pr_formula = Cprinter.string_of_formula in
   let () = x_binfo_hp (add_str "post_cond " pr_formula) n_post no_pos in
   let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
@@ -281,37 +280,51 @@ let process_rule_assign goal rassign =
     mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal]
 
 let subs_bind_write formula var field new_val data_decls =
-  let helper formula = match formula with
-    | Base bf ->
-      let hf = bf.CF.formula_base_heap in
-      (match hf with
-       | DataNode dnode ->
-         let data_var = dnode.h_formula_data_node in
-         if CP.eq_spec_var data_var var then
-           let _ = set_field dnode field new_val data_decls in
-           None
-         else None
-       | _ -> None
-      )
-    | _ -> None
-  in
-  None
+  match formula with
+  | Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
+    let rec helper hf =
+      match hf with
+      | DataNode dnode ->
+        let data_var = dnode.h_formula_data_node in
+        let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf
+            no_pos in
+        if CP.eq_spec_var data_var var then
+          let n_dnode = set_field dnode field new_val data_decls in
+          (DataNode n_dnode)
+        else hf
+      | Star sf ->
+        let n_h1 = helper sf.CF.h_formula_star_h1 in
+        let n_h2 = helper sf.CF.h_formula_star_h2 in
+        Star {sf with h_formula_star_h1 = n_h1;
+                      h_formula_star_h2 = n_h2}
+      | _ -> hf
+    in Base {bf with formula_base_heap = helper hf}
+  | _ -> formula
 
-let process_rule_bind goal rbind =
+let process_rule_wbind goal (wbind:rule_bind) =
   let pre = goal.gl_pre_cond in
-  let var = rbind.rb_var in
-  let field = rbind.rb_field in
-  let rhs = rbind.rb_rhs in
+  let var = wbind.rb_var in
+  let field = wbind.rb_field in
+  let rhs = wbind.rb_rhs in
   let prog = goal.gl_prog in
   let data_decls = prog.prog_data_decls in
-  let _ = subs_bind_write pre var field rhs data_decls in
-  mk_derivation_sub_goals goal (RlBindWrite rbind) []
+  let sub_pre = subs_bind_write pre var field rhs data_decls in
+  let () = x_binfo_hp (add_str "after applied:" pr_formula) sub_pre no_pos in
+  (* check sub_pre |- post  *)
+  (* mk_derivation_fail goal (RlBindWrite wbind) *)
+  mk_derivation_sub_goals goal (RlBindWrite wbind) []
+
+let process_rule_rbind goal (rbind:rule_bindread) =
+  mk_derivation_sub_goals goal (RlBindRead rbind) []
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
-  | RlBindWrite rbind -> process_rule_bind goal rbind
+  | RlBindWrite wbind -> process_rule_wbind goal wbind
+  | RlBindRead rbind -> process_rule_rbind goal rbind
 
 (*********************************************************************
  * The search procedure
@@ -363,7 +376,6 @@ let exp_to_cast (exp: CP.exp) = match exp with
       exp_iconst_val = num;
       exp_iconst_pos = loc;
     }
-  (* | Add (e1, e2, loc) -> *)
   | _ -> report_error no_pos "exp_to_cast: not handled"
 
 
@@ -391,12 +403,6 @@ let synthesize_st_core st =
         Cast.exp_var_pos = no_pos;
       } in
     let (typ, f_name) = bfield in
-    (* let field_sv = CP.mk_typed_spec_var typ var in *)
-    (* let lhs_var = Cast.Var {
-     *     Cast.exp_var_type = typ;
-     *     Cast.exp_var_name = f_name;
-     *     Cast.exp_var_pos = no_pos;
-     *   } in *)
     let body = Cast.Assign {
         Cast.exp_assign_lhs = f_name;
         Cast.exp_assign_rhs = rhs_var;
