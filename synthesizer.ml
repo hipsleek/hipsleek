@@ -274,10 +274,10 @@ let process_rule_assign goal rassign =
   let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
   | true -> mk_derivation_success goal (RlAssign rassign)
-  | false ->
-    let post = goal.gl_post_cond in
-    let sub_goal = mk_goal goal.gl_prog n_post post goal.gl_vars in
-    mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal]
+  | false -> mk_derivation_fail goal (RlAssign rassign)
+    (* let post = goal.gl_post_cond in
+     * let sub_goal = mk_goal goal.gl_prog n_post post goal.gl_vars in
+     * mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal] *)
 
 let subs_bind_write formula var field new_val data_decls =
   match formula with
@@ -310,11 +310,12 @@ let process_rule_wbind goal (wbind:rule_bind) =
   let rhs = wbind.rb_rhs in
   let prog = goal.gl_prog in
   let data_decls = prog.prog_data_decls in
-  let sub_pre = subs_bind_write pre var field rhs data_decls in
-  let () = x_binfo_hp (add_str "after applied:" pr_formula) sub_pre no_pos in
-  (* check sub_pre |- post  *)
-  (* mk_derivation_fail goal (RlBindWrite wbind) *)
-  mk_derivation_sub_goals goal (RlBindWrite wbind) []
+  let n_post = subs_bind_write pre var field rhs data_decls in
+  let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
+  let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  match ent_check with
+  | true -> mk_derivation_success goal (RlBindWrite wbind)
+  | false -> mk_derivation_fail goal (RlBindWrite wbind)
 
 let process_rule_rbind goal (rbind:rule_bindread) =
   mk_derivation_sub_goals goal (RlBindRead rbind) []
