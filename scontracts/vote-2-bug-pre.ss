@@ -35,29 +35,6 @@ void update(ref node x)
 }
 */
 
-/*
-//global int i = 0;
-global mapping(int => int) index;
-global int n;
-
-void foorec(int i)
-     case {
-       i<n  ->
-           requires [mp0] index::Map<mp0>
-           ensures  (exists mp1: index::Map<mp1> & Store(mp0,mp1,i,0));
-       i>=n ->
-           requires true
-           ensures  true;
-     }
-{
-  if(i >= n) return;
-  else{
-    index[i] = 0;
-    foorec(i+1);
-  }
-}
-*/
-
 
 data address {
      int id;
@@ -202,7 +179,7 @@ void update(ref node x)
      case {
       x!=null ->
         requires x::ll<>
-        ensures  x'::node<0,t> * t::ll<>;
+        ensures  x::node<0,t> * t::ll<>;
       x=null ->
         requires true
         ensures  true;
