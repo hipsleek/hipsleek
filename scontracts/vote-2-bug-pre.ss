@@ -2,10 +2,63 @@
 /********************/
 /*Translated Version*/
 /********************/
+hip_include 'scontracts/mapprimitives.ss'
 
-//#include<stdio.h>  ->  sizeof
-//This file should be named as Ballot.ss -> contract
 /*
+data node{
+   int val;
+   node next;
+}
+
+pred ll<n> == self = null & n = 0 or
+             self::node<_,zz> * zz::ll<n-1>.
+
+XSglobal node lns;
+
+void update(ref node x)
+     case {
+      x!=null ->
+        requires x::ll<m> //& x!=null
+        ensures  x::node<0,tt> * tt::ll<m-1>;
+      x=null ->
+        requires true
+        ensures  true;
+     }
+{
+ if(x == null) return;
+ else {
+    x.val = 0;
+    dprint;
+    update(x.next);
+ }
+ dprint;
+}
+*/
+
+/*
+//global int i = 0;
+global mapping(int => int) index;
+global int n;
+
+void foorec(int i)
+     case {
+       i<n  ->
+           requires [mp0] index::Map<mp0>
+           ensures  (exists mp1: index::Map<mp1> & Store(mp0,mp1,i,0));
+       i>=n ->
+           requires true
+           ensures  true;
+     }
+{
+  if(i >= n) return;
+  else{
+    index[i] = 0;
+    foorec(i+1);
+  }
+}
+*/
+
+
 data address {
      int id;
 }
@@ -55,47 +108,65 @@ Proposal new_proposal()
    requires true
    ensures  res::Proposal<_,_>;
 
-
+/*
 void for_loop_ballot(int i, int n, int[] proNums)
-   // case
-   // { i<n ->
+    case {
+     i<n ->
        requires [prps0] proposals::Map<prps0> //& i < n //& proposals[0]=tmp
-       ensures  (exists prps1: proposals'::Map<prps1> * tmp1::Proposal<proNums[i],0>
-               & Store(prps0,prps1,i,tmp1) // prps1[i] = tmp1
-               );
-   //   i>=n -> ensures true;
-   // }
+       ensures  tmp1::Proposal<proNums[i],0>
+                 & prps0[i] = tmp1;
+               //& Store(prps0,prps1,i,tmp1 // prps1[i] = tmp1
+               //);
+     i>=n ->
+       requires true
+       ensures  true;
+    }
 {
-//     if(i < n){
+     //if(i < n){
          Proposal tmp = new_proposal();
          tmp.num = proNums[i];
          tmp.voteCount = 0;
          proposals[i] = tmp;
-         dprint;
+         //dprint;
          for_loop_ballot(i+1, n, proNums);
-         dprint;
-//     }
+        // dprint;
+     //}
 }
+*/
 
+//(exists prps1: proposals::Map<prps1> * tmmmp::Proposal<7,0> & prps1[i] = tmmmp);
+          //(exists prps1: proposals::Map<prps0> * tmmmp::Proposal<7,0> & Store(prps0,prps1,i,tmmmp));
+          //proposals'::Map<prps0> * tmmmp::Proposal<7,0> & prps0[i] = tmmmp;
+          //proposals::Map<prps0> * tmmmp::Proposal<7,0> & prps0[i] = tmmmp;
 
-
-
-void goo(int i)
-       requires [prps0] proposals::Map<prps0>
-       ensures  (exists prps1: proposals'::Map<prps1> * tmp1::Proposal<7,0>
-               & Store(prps0,prps1,i,tmp1) );
+void goo(int i, int n)
+     case {
+       i<n  ->
+          requires [prps0] proposals::Map<prps0> //* tmp::Proposal<_,_> // * tmp::Proposal<_,_>
+          ensures  (exists prps1: proposals::Map<prps1> * tmmmp::Proposal<7,0>); //& Store(prps0,prps1,i,tmmmp));
+       i>=n ->
+          requires true
+          ensures  true;
+     }
 {
+     if(i>=n) return;
+     else {
          Proposal tmp = new_proposal();
+         //Proposal tmp = proposals[i];
          tmp.num = 7;
          tmp.voteCount = 0;
          proposals[i] = tmp;
-         dprint;
-         goo(i+1);
-         dprint;
+         //dprint;
+         goo(i+1, n);
+         //dprint;
+     }
 }
 
-*/
 
+
+// (exists prps1: proposals::Map<prps1> * tmp1::Proposal<7,0> & Store(prps0,prps1,i,tmp1) );
+
+/*
 data node{
    int val;
    node next;
@@ -104,13 +175,13 @@ data node{
 pred ll<n> == self = null & n = 0 or
              self::node<_,zz> * zz::ll<n-1>.
 
-global node lns;
+XSglobal node lns;
 
 void update(ref node x)
      case {
       x!=null ->
         requires x::ll<m> //& x!=null
-        ensures  x'::node<0,tt> * tt::ll<m-1>;
+        ensures  x::node<0,tt> * tt::ll<m-1>;
       x=null ->
         requires true
         ensures  true;
@@ -124,6 +195,7 @@ void update(ref node x)
  }
  dprint;
 }
+*/
 
 /*
 void update(ref node x)

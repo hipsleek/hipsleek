@@ -939,9 +939,10 @@ let peek_heap_star =
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
-           match Stream.npeek 2 strm with
-             |[_;OSQUARE,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+           match Stream.npeek 3 strm with
+             |[_;OSQUARE,_;_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
              (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
+             |[_;_;OSQUARE,_] -> ()
              | _ -> raise Stream.Failure)
 
 
@@ -956,8 +957,9 @@ let peek_mapping_type =
 let peek_poly_type =
    SHGram.Entry.of_parser "peek_poly_type"
        (fun strm ->
-           match Stream.npeek 2 strm with
-             |[ACUTE,_; IDENTIFIER id,_] ->  ()
+         match Stream.npeek 3 strm with
+             |[ACUTE,_; IDENTIFIER id,_;OSQUARE,_] -> raise Stream.Failure
+             |[ACUTE,_; IDENTIFIER id,_;_] ->  ()
              | _ -> raise Stream.Failure)
 
 (* let peek_poly_invocation =
@@ -3551,7 +3553,9 @@ star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
-  | *) t=non_array_type; r=rank_specifier -> Array (t, r)]];
+        | *) t=non_array_type; r=rank_specifier -> Array (t, r)
+        |    t=parse_poly_type; r=rank_specifier -> Array (t, r)
+  ]];
 
 rank_specifier:
   [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];

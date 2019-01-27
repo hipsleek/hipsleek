@@ -192,20 +192,20 @@ int foo14()
 
 
 //lemma_norm self::Mappp<> & self[x]=y -> self::Map<mp111> & mp111[x]=y.
-lemma_norm self::Mappp<> -> self::Map<mp111> & mp111=self.
+// lemma_norm self::Mappp<> -> self::Map<mp111> & mp111=self.
 
-/** FAIL - not ok*/
-void foo12()
-   // requires mp::Map<mp9> & mp9[0]=0
-   // ensures  (exists mp1: mp'::Map<mp1> & mp1[0]=9 );
-   requires mp::Mappp<> & mp[0]=0
-   ensures  mp'::Mappp<> & mp'[0]=9;
-{
-  int x;
-  dprint;
-  mp[0] = 9;
-  dprint;
-}
+// /** FAIL - not ok*/
+// void foo12()
+//    // requires mp::Map<mp9> & mp9[0]=0
+//    // ensures  (exists mp1: mp'::Map<mp1> & mp1[0]=9 );
+//    requires mp::Mappp<> & mp[0]=0
+//    ensures  mp'::Mappp<> & mp'[0]=9;
+// {
+//   int x;
+//   dprint;
+//   mp[0] = 9;
+//   dprint;
+// }
 
 
 /***************************************/

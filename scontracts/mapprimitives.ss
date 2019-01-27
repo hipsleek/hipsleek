@@ -19,7 +19,7 @@ pred_prim SameType<idx2> inv Type(self,idx2);
 
 void update [T7,T8] (ref mapping(`T7 => `T8) mp, `T7 key, `T8 val)
    requires  [mp1111] mp::Map<mp1111>
-   ensures   (exists mp2: mp'::Map<mp2> & Store(mp1111,mp2,key,val));
+   ensures   (exists mp2: mp::Map<mp2> & Store(mp1111,mp2,key,val) & mp=mp');
 
 `T10 select [T9,T10] (mapping(`T9 => `T10) mp, `T9 key)
    requires [val] mp::Map<mp1>@L  & mp1[key] = val

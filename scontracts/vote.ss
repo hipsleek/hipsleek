@@ -193,18 +193,22 @@ global address chairperson;
 global mapping(address => Voter) voters;
 
 // A dynamically-sized array of `Proposal` structures.
-global Proposal[] proposals;
+global mapping(int => Proposal) proposals;
 
 
 void for_loop_ballot(ref int i, int n, int[] proNums)
-     requires tmp::Proposal<_,_> & i <= n & proposals[0]=tmp
-     ensures  i' = i+1;
+     requires [prps0] proposals::Map<prps0> * tmp2::Proposal<_,_> & prps0[i] = tmp2 & i <= n //& proposals[0]=tmp
+     ensures  [prps0] proposals::Map<prps0> * tmp2::Proposal<proNums[i],0> & prps1[i] = tmp2 & i' = i+1;
+     //(exists prps1: proposals'::Map<prps1> * tmp1::Proposal<proNums[i],0> & prps1[i] = tmp1 & i' = i+1);
 {
      if(i < n){
-         Proposal tmp_p;
-         tmp_p = proposals[0];
-         tmp_p.num = proNums[i];
-         tmp_p.voteCount = 0;
+         Proposal tmp = proposals[i];
+         //int pronum = proNums[i];
+         //tmp.num = pronum;
+         tmp.num = proNums[i];
+         tmp.voteCount = 0;
+         proposals[i] = tmp;
+         i += 1;
          for_loop_ballot(i, n, proNums);
      }
 }
@@ -229,13 +233,14 @@ void Ballot(int[] proposalNums)
 // Give `voter` the right to vote on this ballot.
 // Only be called by `chairperson`.
 void giveRightToVote(address voter)
-   requires  [vt0] voters::Map<vt0>@L * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
-   ensures   vtr::Voter<1,_,_,_> & vtr = vt0[voter];
+   requires  [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> & vtr=vt0[voter] & sender = chairperson & !v0 & w0 = 0
+   ensures   (exists vt1: voters'::Map<vt1> * vtr::Voter<1,_,_,_> & vt1[voter] = vtr);
 //(exists vt1: voters'::Map<vt1> * vtr::Voter<1,_,_,_> & vtr = vt1[voter]);
 //(exists vt1: voters'::Map<vt1> * vtr'::Voter<1,_,_,_>) & vt1[voter] = vtr1);
 {
      Voter v = voters[voter];
      v.weight = 1;
+     voters[voter] = v;
 }
 
 void for_loop_winning(ref int p, int n, ref int winningVoteCount, ref int winningProposal_)
@@ -271,7 +276,8 @@ int winnerNum()
 {
     int winnerNum_;
     int num_of_win = winningProposal();
-    int winner_proposal = proposals[num_of_win];
+    Proposal winner_proposal;
+    winner_proposal = proposals[num_of_win];
     winnerNum_ = winner_proposal.num;
     return winnerNum_;
 }
