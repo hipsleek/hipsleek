@@ -166,7 +166,9 @@ let choose_rassign_pure var cur_vars pre post : rule list =
     )
   | _ -> []
 
-let choose_rule_dnode dn1 dn2 data_decls cur_vars pre post var =
+let choose_rule_dnode dn1 dn2 data_decls var_list pre post var =
+  let () = x_binfo_hp (add_str "pre-dnode" pr_formula) pre no_pos in
+  let () = x_binfo_hp (add_str "post-dnode" pr_formula) post no_pos in
   let bef_args = dn1.CF.h_formula_data_arguments in
   let aft_args = dn2.CF.h_formula_data_arguments in
   let name = dn1.CF.h_formula_data_name in
@@ -181,14 +183,14 @@ let choose_rule_dnode dn1 dn2 data_decls cur_vars pre post var =
     let df_name = dif_field |> snd |> fst in
     let n_name = snd df_name in
     let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
-    let cur_vars = cur_vars @ [n_var] in
+    let var_list = var_list @ [n_var] in
     let pre_val = dif_field |> fst |> fst in
     let post_val = dif_field |> fst |> snd in
     let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
     let n_post_pure = CP.mkEqVar n_var post_val no_pos in
     let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
     let n_post = CF.add_pure_formula_to_formula n_post_pure post in
-    let n_rule = choose_rassign_pure n_var cur_vars n_pre n_post in
+    let n_rule = choose_rassign_pure n_var var_list n_pre n_post in
     if n_rule = [] then []
     else
       let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) n_rule no_pos in
@@ -204,20 +206,35 @@ let choose_rule_dnode dn1 dn2 data_decls cur_vars pre post var =
       | _ -> []
   else []
 
-let choose_rule_heap f1 f2 data_decls cur_vars pre post var =
+let rec choose_rule_heap f1 f2 data_decls var_list pre post cur_var prog =
   match f1, f2 with
   | CF.Base bf1, CF.Base bf2 ->
     let hf1 = bf1.CF.formula_base_heap in
     let hf2 = bf2.CF.formula_base_heap in
+    let () = x_binfo_hp (add_str "f1" pr_formula) f1 no_pos in
+    let () = x_binfo_hp (add_str "f2" pr_formula) f2 no_pos in
     begin
       match hf1, hf2 with
       | CF.DataNode dnode1, CF.DataNode dnode2 ->
-        choose_rule_dnode dnode1 dnode2 data_decls cur_vars pre post var
+        choose_rule_dnode dnode1 dnode2 data_decls var_list pre post cur_var
+      | CF.DataNode dnode, CF.ViewNode vnode ->
+        let view_name = vnode.CF.h_formula_view_name in
+        let views = prog.Cast.prog_view_decls in
+        let n_f2 = Lemma.do_unfold_view_hf prog hf2 in
+        let n_f2_list = List.map (fun (x, y) -> CF.mkBase_simp x y) n_f2 in
+        let () = x_binfo_hp (add_str "n_f2_list" (pr_list pr_formula)) n_f2_list
+            no_pos in
+        (* let n_post_list = List.map (fun x -> extract_var_f x cur_var) n_f2_list in
+         * let n_post_list = List.filter (fun x -> x != None) n_post_list in
+         * let n_post_list = List.map Gen.unsome n_post_list in *)
+        let rule_list = List.map (fun x -> choose_rule_heap f1 x data_decls
+                                     var_list pre post cur_var prog) n_f2_list in
+        List.concat rule_list
       | _ -> []
     end
   | _ -> []
 
-let choose_rassign_data var cur_vars datas pre post =
+let choose_rassign_data var cur_vars datas pre post prog =
   let f_var1 = extract_var_f pre var in
   let f_var2 = extract_var_f post var in
   (* unfolding view node *)
@@ -226,7 +243,7 @@ let choose_rassign_data var cur_vars datas pre post =
     let f_var2 = Gen.unsome f_var2 in
     let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
     let () = x_binfo_hp (add_str "fvar2" pr_formula) f_var2 no_pos in
-    choose_rule_heap f_var1 f_var2 datas cur_vars pre post var
+    choose_rule_heap f_var1 f_var2 datas cur_vars pre post var prog
   else []
 
 let choose_rule_assign goal : rule list =
@@ -239,7 +256,7 @@ let choose_rule_assign goal : rule list =
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var vars pre post
-    | Named _ -> choose_rassign_data var vars datas pre post
+    | Named _ -> choose_rassign_data var vars datas pre post prog
     | _ -> let () = x_binfo_pp "marking \n" no_pos in
       []  in
   let rules = List.map choose_rule vars in
