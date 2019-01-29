@@ -3,6 +3,9 @@ data node {
      node next
 }.
 
+pred ll<n> == self = null & n = 0
+	or self::node<_, q> * q::ll<n-1>.
+
 // data node {
 //      node next;
 // }.
@@ -12,11 +15,15 @@ data node {
 // synthesize [int x, int b] x = a ~> x = b.
 // synthesize [int x, int t] x = a & t = b ~> x = b & t = b.
 
-synthesize [node x, int n2, node y]
-x::node<n1, a> * y::node<n3, b> & true ~>
-           x::node<n2, a> * y::node<n3, b>.
+// synthesize [node x, int n2, node y]
+// x::node<n1, a> * y::node<n3, b> & true ~>
+//            x::node<n2, a> * y::node<n3, b>.
 
-// x.val = n2;
-// checkentail x::node<a> & a != null |- x::node<a> & a != null.
+// synthesize [node x, node y]
+// x::node<n1, q> * y::ll<n2> & q = null ~> x::node<n1, y> * y::ll<n2> & true.
 
-// checksat x = a.
+// Pre-process step
+synthesize [node x, node y]
+x::node<n1, q> * y::ll<n2> & q = null
+~>
+x::ll<1+n2> & true.

@@ -28,38 +28,50 @@ let pr_pf = Cprinter.string_of_pure_formula
  *********************************************************************)
 
 let choose_rule_func_call goal : rule list =
+  (* step 1: unfolding views *)
+
   []
 
 let rec extract_hf_var hf var =
-  let () = x_tinfo_hp (add_str "hf: " pr_hf) hf no_pos in
   match hf with
   | CF.DataNode dnode ->
     let dn_var = dnode.CF.h_formula_data_node in
-    if dn_var = var then [dnode]
-    else []
+    if dn_var = var then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if vn_var = var then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [var] @ args)
+    else None
   | CF.Star sf ->
-    let f1 = extract_hf_var sf.CF.h_formula_star_h1 var in
-    let f2 = extract_hf_var sf.CF.h_formula_star_h2 var in
-    f1 @ f2
-    (* (match f1, f2 with
-     *  | Some _, Some _
-     *  | None, None -> None
-     *  | None, Some hf2 -> Some hf2
-     *  | Some hf1, None -> Some hf1) *)
-  (* | CF.ViewNode vnode ->
-   *   let vnode_var = vnode.CF.h_formula_view_node in
-   *   if vnode_var = var then Some hf else None *)
-  | _ -> []
+    let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
+    let vf2 = extract_hf_var sf.CF.h_formula_star_h2 var in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some (f1, vars1), Some (f2, vars2) ->
+        report_error no_pos "one var cannot appear in two heap fragments"
+    end
+  | _ -> None
 
 let extract_var_f f var = match f with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
-      let hf_var = extract_hf_var hf var in
-      hf_var
-      (* (match hf_var with
-       *  | Some hf -> Some (CF.formula_of_heap hf no_pos)
-       *  | None -> None) *)
-    | _ -> []
+      let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None -> None
+        | Some (hf, vars) ->
+          let pf_var = pf_of_vars vars pf in
+          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+      end
+    | _ -> None
 
 let rec extract_var_pf (f: CP.formula) var = match f with
   | BForm (bf, _) ->
@@ -111,18 +123,21 @@ let rec find_sub_var sv cur_vars pre_pf =
 (* implement simple rules first *)
 (* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
 let choose_rassign_pure var cur_vars pre post : rule list =
-  let () = x_binfo_pp "marking \n" no_pos in
+  let pr_sv = Cprinter.string_of_spec_var in
+  let () = x_binfo_hp (add_str "var" pr_sv) var no_pos in
+  let () = x_binfo_hp (add_str "vars" (pr_list pr_sv)) cur_vars no_pos in
   let pre_pf = CF.get_pure pre in
   let () = x_binfo_hp (add_str "pre_pf" pr_pf) pre_pf no_pos in
   let post_pf = CF.get_pure post in
+  let () = x_binfo_hp (add_str "post_pf" pr_pf) post_pf no_pos in
   let pre_f = extract_var_pf pre_pf var in
   let pr_exp = Cprinter.string_of_formula_exp in
-  (* let () = x_binfo_hp (add_str "pre_f" pr_exp) (Gen.unsome pre_f) no_pos in *)
   let post_f = extract_var_pf post_pf var in
   match pre_f, post_f with
   | Some e1, Some e2 ->
     (match e2 with
      | Var (sv, _) ->
+       let () = x_binfo_pp "marking" no_pos in
        if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
          let rule = RlAssign {
              ra_lhs = var;
@@ -151,58 +166,67 @@ let choose_rassign_pure var cur_vars pre post : rule list =
     )
   | _ -> []
 
+let choose_rule_dnode dn1 dn2 data_decls cur_vars pre post var =
+  let bef_args = dn1.CF.h_formula_data_arguments in
+  let aft_args = dn2.CF.h_formula_data_arguments in
+  let name = dn1.CF.h_formula_data_name in
+  let data = List.find (fun x -> x.Cast.data_name = name) data_decls in
+  let () = x_tinfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
+  let pre_post = List.combine bef_args aft_args in
+  let fields = data.Cast.data_fields in
+  let triple = List.combine pre_post fields in
+  let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
+  if List.length triple = 1 then
+    let dif_field = List.hd triple in
+    let df_name = dif_field |> snd |> fst in
+    let n_name = snd df_name in
+    let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
+    let cur_vars = cur_vars @ [n_var] in
+    let pre_val = dif_field |> fst |> fst in
+    let post_val = dif_field |> fst |> snd in
+    let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
+    let n_post_pure = CP.mkEqVar n_var post_val no_pos in
+    let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
+    let n_post = CF.add_pure_formula_to_formula n_post_pure post in
+    let n_rule = choose_rassign_pure n_var cur_vars n_pre n_post in
+    if n_rule = [] then []
+    else
+      let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) n_rule no_pos in
+      let eq_rule = List.hd n_rule in
+      match eq_rule with
+      | RlAssign rassgn ->
+        let rule = RlBindWrite {
+            rb_var = var;
+            rb_field = (fst df_name, n_name);
+            rb_rhs = rassgn.ra_rhs;
+          }
+        in [rule]
+      | _ -> []
+  else []
+
+let choose_rule_heap f1 f2 data_decls cur_vars pre post var =
+  match f1, f2 with
+  | CF.Base bf1, CF.Base bf2 ->
+    let hf1 = bf1.CF.formula_base_heap in
+    let hf2 = bf2.CF.formula_base_heap in
+    begin
+      match hf1, hf2 with
+      | CF.DataNode dnode1, CF.DataNode dnode2 ->
+        choose_rule_dnode dnode1 dnode2 data_decls cur_vars pre post var
+      | _ -> []
+    end
+  | _ -> []
+
 let choose_rassign_data var cur_vars datas pre post =
   let f_var1 = extract_var_f pre var in
   let f_var2 = extract_var_f post var in
-  let () = x_binfo_hp (add_str "fvar1" (pr_list pr_hf))
-      (List.map (fun x -> CF.DataNode x) f_var1) no_pos in
-  let () = x_binfo_hp (add_str "fvar2" (pr_list pr_hf))
-      (List.map (fun x -> CF.DataNode x) f_var2) no_pos in
-  if f_var1 != [] && f_var2 != [] then
-    let bef_node = List.hd f_var1 in
-    let aft_node = List.hd f_var2 in
-    if bef_node != aft_node then
-      let bef_args = bef_node.CF.h_formula_data_arguments in
-      let aft_args = aft_node.CF.h_formula_data_arguments in
-      let name = bef_node.CF.h_formula_data_name in
-      let data = List.find (fun x -> x.Cast.data_name = name) datas in
-      let () = x_binfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
-      let pre_post = List.combine bef_args aft_args in
-      let fields = data.Cast.data_fields in
-      let triple = List.combine pre_post fields in
-      let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
-      if List.length triple = 1 then
-        let dif_field = List.hd triple in
-        let df_name = dif_field |> snd |> fst in
-        (* let rule = RlBind {
-         *     rb_var = var;
-         *     rb_field = (fst df_name, CP.fresh_old_name (snd df_name));
-         *   } in *)
-        (* let n_name = CP.fresh_old_name (snd df_name) in *)
-        let n_name = snd df_name in
-        let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
-        let cur_vars = cur_vars @ [n_var] in
-        let pre_val = dif_field |> fst |> fst in
-        let post_val = dif_field |> fst |> snd in
-        let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
-        let n_post_pure = CP.mkEqVar n_var post_val no_pos in
-        let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
-        let n_post = CF.add_pure_formula_to_formula n_post_pure post in
-        let n_rule = choose_rassign_pure n_var cur_vars n_pre n_post in
-        if n_rule = [] then []
-        else
-          let eq_rule = List.hd n_rule in
-          match eq_rule with
-          | RlAssign rassgn ->
-            let rule = RlBindWrite {
-                rb_var = var;
-                rb_field = (fst df_name, n_name);
-                rb_rhs = rassgn.ra_rhs;
-              }
-            in [rule]
-          | _ -> []
-      else []
-    else []
+  (* unfolding view node *)
+  if f_var1 != None && f_var2 != None then
+    let f_var1 = Gen.unsome f_var1 in
+    let f_var2 = Gen.unsome f_var2 in
+    let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
+    let () = x_binfo_hp (add_str "fvar2" pr_formula) f_var2 no_pos in
+    choose_rule_heap f_var1 f_var2 datas cur_vars pre post var
   else []
 
 let choose_rule_assign goal : rule list =
@@ -224,6 +248,7 @@ let choose_rule_assign goal : rule list =
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_func_call goal in *)
   let rs2 = choose_rule_assign goal in
+  (* let _ =  choose_rule_func_call goal in *)
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs2 no_pos in
   rs2
 
@@ -293,7 +318,7 @@ let subs_bind_write formula var field new_val data_decls =
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
           (DataNode n_dnode)
-        else hf
+        else hf 
       | Star sf ->
         let n_h1 = helper sf.CF.h_formula_star_h1 in
         let n_h2 = helper sf.CF.h_formula_star_h2 in
@@ -317,15 +342,15 @@ let process_rule_wbind goal (wbind:rule_bind) =
   | true -> mk_derivation_success goal (RlBindWrite wbind)
   | false -> mk_derivation_fail goal (RlBindWrite wbind)
 
-let process_rule_rbind goal (rbind:rule_bindread) =
-  mk_derivation_sub_goals goal (RlBindRead rbind) []
+(* let process_rule_rbind goal (rbind:rule_bindread) =
+ *   mk_derivation_sub_goals goal (RlBindRead rbind) [] *)
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBindWrite wbind -> process_rule_wbind goal wbind
-  | RlBindRead rbind -> process_rule_rbind goal rbind
+  (* | RlBindRead rbind -> process_rule_rbind goal rbind *)
 
 (*********************************************************************
  * The search procedure

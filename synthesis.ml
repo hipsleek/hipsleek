@@ -27,7 +27,7 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBindWrite of rule_bind
-  | RlBindRead of rule_bindread
+  (* | RlBindRead of rule_bindread *)
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -41,11 +41,11 @@ and rule_bind = {
   rb_rhs: CP.spec_var;
 }
 
-and rule_bindread = {
-  rb_var: CP.spec_var;
-  rb_field: typed_ident;
-  rb_lhs: CP.spec_var;
-}
+(* and rule_bindread = {
+ *   rb_var: CP.spec_var;
+ *   rb_field: typed_ident;
+ *   rb_lhs: CP.spec_var;
+ * } *)
 
 and rule_assign = {
   ra_lhs : CP.spec_var;
@@ -202,7 +202,7 @@ let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCal"
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBindWrite rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
-  | RlBindRead rule -> "RlBindRead"
+  (* | RlBindRead rule -> "RlBindRead" *)
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -262,3 +262,23 @@ let set_field var access_field (new_val:CP.spec_var) data_decls =
     let new_fields = List.map update_field pairs in
     {var with CF.h_formula_data_arguments = new_fields}
   with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
+
+(* get a "fix-point" pure formula for a list of vars *)
+let pf_of_vars vars (pf:CP.formula) = match pf with
+  | CP.BForm (bf, opt) ->
+    let pform, opt2 = bf in
+    let rec aux pform = match pform with
+      | CP.BVar (sv, bvar_loc) ->
+        if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
+        else BConst (true, bvar_loc)
+      | CP.Lt (exp1, exp2, loc) ->
+        let sv1 = CP.afv exp1 in
+        let sv2 = CP.afv exp2 in
+        let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
+        if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
+        else BConst (true, loc)
+      | _ -> pform
+    in
+    let n_pform = aux pform in
+    CP.BForm ((n_pform, opt2), opt)
+  | _ -> pf
