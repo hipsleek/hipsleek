@@ -13,7 +13,7 @@ data node{
 pred ll<n> == self = null & n = 0 or
              self::node<_,zz> * zz::ll<n-1>.
 
-XSglobal node lns;
+global node lns;
 
 void update(ref node x)
      case {
@@ -152,7 +152,7 @@ data node{
 pred ll<n> == self = null & n = 0 or
              self::node<_,zz> * zz::ll<n-1>.
 
-XSglobal node lns;
+global node lns;
 
 void update(ref node x)
      case {
