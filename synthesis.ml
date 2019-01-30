@@ -17,7 +17,7 @@ type goal = {
   gl_prog : Cast.prog_decl;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
-  gl_framed_heaps : CF.h_formula list;
+  gl_equiv_vars : (CP.spec_var * CP.spec_var) list;
   gl_vars: CP.spec_var list;
 }
 
@@ -106,7 +106,7 @@ let mk_goal cprog pre post vars =
   { gl_prog = cprog;
     gl_pre_cond = pre;
     gl_post_cond = post;
-    gl_framed_heaps = [];
+    gl_equiv_vars = [];
     gl_vars = vars;  }
 
 let mk_derivation_sub_goals goal rule subgoals =
