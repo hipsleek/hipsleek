@@ -207,7 +207,7 @@ and one_formula = {
 }
 
 and flow_treatment =
-  | Flow_combine
+  | Flow_combine 
   | Flow_replace
 
 and h_formula = (* heap formula *)
