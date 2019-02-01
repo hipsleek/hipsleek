@@ -23,6 +23,8 @@ let pr_formula = Cprinter.string_of_formula
 let pr_hf = Cprinter.string_of_h_formula
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
+let pr_var = Cprinter.string_of_spec_var
+let pr_vars = pr_list pr_var
 
 (*********************************************************************
  * Choosing rules
@@ -69,7 +71,7 @@ let extract_var_f f var = match f with
         match heap_extract with
         | None ->
           let pf_var = pf_of_vars [var] pf in
-          Some (CF.mkBase_simp CF.HTrue (Mcpure.mix_of_pure pf_var))
+          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
         | Some (hf, vars) ->
           let pf_var = pf_of_vars vars pf in
           Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
@@ -152,8 +154,6 @@ let choose_rassign_pure var goal : rule list =
        else
          let () = x_binfo_pp "marking \n" no_pos in
          let cur_vars = List.filter (fun x -> x != var) cur_vars in
-         let pr_var = Cprinter.string_of_spec_var in
-         let pr_vars = pr_list pr_var in
          let () = x_binfo_hp (add_str "vars: " pr_vars) cur_vars no_pos in
          let () = x_binfo_hp (add_str "var: " pr_var) sv no_pos in
          let find_var = find_sub_var sv cur_vars pre_pf in
@@ -237,32 +237,10 @@ let subtract_var var formula = match formula with
     CF.Base {bf with formula_base_heap = n_hf}
   | _ -> formula
 
-let get_equiv_node var_f goal =
-
-  []
-
 let choose_rule_dnode dn1 dn2 var goal =
   let field_rules = choose_rule_field_dnode dn1 dn2 var goal in
   if field_rules != [] then field_rules
   else []
-    (* let pre = goal.gl_pre_cond in
-     * let post = goal.gl_post_cond in
-     * let var_f_opt = extract_var_f pre var in
-     * match var_f_opt with
-     * | Some var_f ->
-     *   let () = x_binfo_hp (add_str "var_f" pr_formula) var_f no_pos in
-     *   let _ = get_equiv_node var_f goal in
-     *   let _ = subtract_var var pre in
-     *   []
-     * | None -> [] *)
-
-(* matching rule *)
-let choose_rule_match cur_var goal =
-  []
-
-let choose_rule_shape var pre_fvar post_fvar goal =
-
-  []
 
 let rec choose_rassign_data cur_var goal =
   let pre = goal.gl_pre_cond in
@@ -289,8 +267,16 @@ let rec choose_rassign_data cur_var goal =
         if similar_var then Some vnode.CF.h_formula_view_node
         else None
       else None
-    | _ -> None
-  in
+    | CF.Star sf ->
+      let f1 = sf.CF.h_formula_star_h1 in
+      begin
+        match helper f1 name args with
+        | None ->
+          let f2 = sf.CF.h_formula_star_h2 in
+          helper f2 name args
+        | Some sv -> Some sv
+      end
+    | _ -> None in
   let find_similar_shape_var fvar formula = match fvar, formula with
     | CF.Base bf_var, CF.Base bf ->
       let hf_var = bf_var.CF.formula_base_heap in
@@ -330,9 +316,6 @@ let rec choose_rassign_data cur_var goal =
             match hf1, hf2 with
             | CF.DataNode dnode1, CF.DataNode dnode2 ->
               choose_rule_dnode dnode1 dnode2 cur_var goal
-            (* if field_rules = [] then
-             *   choose_rule_match cur_var goal
-             * else field_rules *)
             | CF.DataNode dnode, CF.ViewNode vnode ->
               let view_name = vnode.CF.h_formula_view_name in
               let views = prog.Cast.prog_view_decls in
@@ -367,6 +350,63 @@ let rec choose_rassign_data cur_var goal =
     rule1@rule2
   | _ -> []
 
+let frame_var var formula prog = match formula with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let rec helper hf = match hf with
+      | CF.DataNode dnode ->
+        let dnode_var = dnode.CF.h_formula_data_node in
+        if CP.eq_spec_var dnode_var var then
+          let args = dnode.CF.h_formula_data_arguments in
+          let data_name = dnode.CF.h_formula_data_name in
+          let data_decls = prog.Cast.prog_data_decls in
+          let data = List.find (fun x -> x.Cast.data_name = data_name)
+              data_decls in
+          let data_fields = data.Cast.data_fields |> List.split |> fst in
+          let args_w_fields = List.combine args data_fields in
+          let args_w_fields = List.filter (fun (x,y) -> is_named_type_var x)
+              args_w_fields in
+          (CF.HEmp, args_w_fields)
+        else (hf, [])
+      | CF.Star sf ->
+        let n_f1, vars1 = helper sf.CF.h_formula_star_h1 in
+        let n_f2, vars2 = helper sf.CF.h_formula_star_h2 in
+        (Star {sf with h_formula_star_h1 = n_f1;
+                      h_formula_star_h2 = n_f2}, vars1@vars2)
+      | _ -> (hf, []) in
+    let n_hf, vars = helper hf in
+    (CF.Base {bf with formula_base_heap = n_hf}, vars)
+  | _ -> (formula, [])
+
+let choose_framing_rule var goal : rule list =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let framed_pre, vars_w_fields = frame_var var pre goal.gl_prog in
+  let framed_post, _ = frame_var var post goal.gl_prog in
+  let aux cur_var field_var field goal =
+    let rules = choose_rassign_data field_var goal in
+    if rules != [] then
+      let rule = List.hd rules in
+      match rule with
+      | RlAssign assign_rule ->
+        let final_rule = RlBindWrite {
+            rb_var = cur_var;
+            rb_field = field;
+            rb_rhs = assign_rule.ra_rhs;
+          }
+        in [final_rule]
+      | _ -> []
+    else [] in
+  if vars_w_fields != [] then
+    let () = x_binfo_hp (add_str "framed_pre" pr_formula) framed_pre no_pos in
+    let () = x_binfo_hp (add_str "framed_post" pr_formula) framed_post no_pos in
+    let field_vars = vars_w_fields |> List.split |> fst in
+    let n_vars = goal.gl_vars @ field_vars |> CP.remove_dups_svl in
+    let n_goal = mk_goal goal.gl_prog framed_pre framed_post n_vars in
+    let rules = List.map (fun (x,y) -> aux var x y n_goal) vars_w_fields in
+    List.concat rules
+  else []
+
 let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
   let pr_sv = Cprinter.string_of_spec_var in
@@ -374,17 +414,16 @@ let choose_rule_assign goal : rule list =
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ ->
-      (* let _ = choose_rule_shape var goal in *)
-      choose_rassign_data var goal
+      let framing_rules = choose_framing_rule var goal in
+      let assign_rules = choose_rassign_data var goal in
+      framing_rules @ assign_rules
     | _ -> let () = x_binfo_pp "marking \n" no_pos in
       []  in
   let rules = List.map choose_rule vars in
   List.concat rules
 
 let choose_synthesis_rules goal : rule list =
-  (* let rs = choose_rule_func_call goal in *)
   let rs2 = choose_rule_assign goal in
-  (* let _ =  choose_rule_func_call goal in *)
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs2 no_pos in
   rs2
 
@@ -403,17 +442,6 @@ let split_hf (f: CF.formula) = match f with
       | _ -> []
     in helper hf
   | _ -> []
-
-let choose_framing goal : goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let pre_hfs = split_hf pre in
-  let post_hfs = split_hf post in
-  let framing_heaps = List.filter (fun x -> List.mem x post_hfs) pre_hfs in
-  let remaining_heaps = List.map snd framing_heaps in
-  let n_hf = CF.join_star_conjunctions remaining_heaps in
-  let () = x_binfo_hp (add_str "hf: " pr_hf) n_hf no_pos in
-  goal
 
 (*********************************************************************
  * Processing rules
@@ -493,7 +521,6 @@ let process_one_rule goal rule : derivation =
  *********************************************************************)
 
 let rec synthesize_one_goal goal : synthesis_tree =
-  let goal = choose_framing goal in
   let rules = choose_synthesis_rules goal in
   process_all_rules goal rules
 

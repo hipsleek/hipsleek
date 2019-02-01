@@ -40,4 +40,4 @@ pred ll<n> == self = null & n = 0
 synthesize [node x, node y]
 x::node<n1, m> * y::ll<n2> & m = null
 ~>
-x::node<n2, h> * h::ll<n2>.
+x::node<n1, m> * m::ll<n2>.

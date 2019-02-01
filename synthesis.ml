@@ -41,12 +41,6 @@ and rule_bind = {
   rb_rhs: CP.spec_var;
 }
 
-(* and rule_bindread = {
- *   rb_var: CP.spec_var;
- *   rb_field: typed_ident;
- *   rb_lhs: CP.spec_var;
- * } *)
-
 and rule_assign = {
   ra_lhs : CP.spec_var;
   ra_rhs : CP.spec_var;
@@ -282,3 +276,9 @@ let pf_of_vars vars (pf:CP.formula) = match pf with
     let n_pform = aux pform in
     CP.BForm ((n_pform, opt2), opt)
   | _ -> pf
+
+let is_named_type_var var =
+  let typ = CP.type_of_sv var in
+  match typ with
+  | Named _ -> true
+  | _ -> false
