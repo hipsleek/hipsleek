@@ -24,3 +24,12 @@ void update [T7,T8] (ref mapping(`T7 => `T8) mp, `T7 key, `T8 val)
 `T10 select [T9,T10] (mapping(`T9 => `T10) mp, `T9 key)
    requires [val] mp::Map<mp1>@L  & mp1[key] = val
    ensures  res = val;
+
+
+// mapseg<i, n, x> == map[i]=x & i=n
+//            or map[i]=x * mapseg<i+1, n, x> & i<n
+//   inv true
+
+// lseg_x<p, n, x> == self=p & n=0
+//            or self::node<x, q> * q::lseg_x<p, n-1, x>
+//   inv n>=0;

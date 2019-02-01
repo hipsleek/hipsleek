@@ -8,7 +8,7 @@ void foorec1()
      case {
        i<n  ->
            requires [ts0] test::Map<ts0>
-           ensures  (exists ts1: test::Map<ts1> & ts1[i] = 0 & i' = i+1); //& Store(ts0,ts1,i,0));
+           ensures  (exists ts1: test::Map<ts1> & ts1[i] = 0 & i < n); //& Store(ts0,ts1,i,0));
        i>=n ->
            requires true
            ensures  true;
@@ -16,10 +16,11 @@ void foorec1()
 {
   if(i >= n) return;
   else{
-    //dprint;
+    dprint;
     test[i] = 0;
     //dprint;
     i = i + 1;
+    dprint;
     foorec1();
   }
 }
@@ -28,7 +29,7 @@ void foorec2(int m)
      case {
        m<n  ->
            requires [ts0] test::Map<ts0>
-           ensures  (exists ts1: test::Map<ts1> & ts1[m] = 0); //& Store(ts0,ts1,i,0));
+           ensures  (exists ts1: test::Map<ts1> & ts1[m] = 0 & m<n); //& Store(ts0,ts1,i,0));
        m>=n ->
            requires true
            ensures  true;
