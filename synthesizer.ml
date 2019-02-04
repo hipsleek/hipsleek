@@ -76,6 +76,19 @@ let extract_var_f f var = match f with
           let pf_var = pf_of_vars vars pf in
           Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
       end
+    | CF.Exists exists_f ->
+      let hf = exists_f.CF.formula_exists_heap in
+      let pf = Mcpure.pure_of_mix exists_f.CF.formula_exists_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = pf_of_vars [var] pf in
+          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+        | Some (hf, vars) ->
+          let pf_var = pf_of_vars vars pf in
+          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+      end
     | _ -> None
 
 let rec extract_var_pf (f: CP.formula) var = match f with
@@ -295,20 +308,36 @@ let process_exists_var pre_cond post_cond =
   | CF.Exists exists_f ->
     let exists_vars = exists_f.CF.formula_exists_qvars in
     let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
-    let aux_process exist_var =
+    let aux_process exist_var post_cond =
       let fvar = extract_var_f post_cond exist_var in
       match fvar with
       | Some f_var1 ->
+        let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
         let similar_var = find_similar_shape_var f_var1 pre_cond in
         if (similar_var != None) then
-          let () = x_binfo_hp (add_str "similar_v" pr_var) (Gen.unsome similar_var) no_pos in
-          exist_var
-        else exist_var
-      | None -> exist_var
+          let s_var = Gen.unsome similar_var in
+          let () = x_binfo_hp (add_str "similar_v" pr_var) s_var no_pos in
+          let pf = exists_f.CF.formula_exists_pure in
+          let hf = exists_f.CF.formula_exists_heap in
+          let sst = [(exist_var, s_var)] in
+          let n_hf = CF.h_subst sst hf in
+          let n_pf = Mcpure.regroup_memo_group (Mcpure.m_apply_par sst pf) in
+          let vars = (CF.h_fv n_hf) @ (CP.fv (Mcpure.pure_of_mix n_pf)) in
+          let n_post =
+            if List.exists (fun x -> CP.eq_spec_var x exist_var) vars
+            then
+              CF.Exists {exists_f with formula_exists_heap = n_hf;
+                                       formula_exists_pure = n_pf;}
+            else CF.mkBase_simp n_hf n_pf
+          in
+          let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+          n_post
+        else post_cond
+      | None -> post_cond
     in
-    let _ = List.map aux_process exists_vars in
-    (pre_cond, post_cond)
-  | _ -> (pre_cond, post_cond)
+    let n_post = List.fold_left (fun f var -> aux_process var f) post_cond exists_vars in
+    n_post
+  | _ -> post_cond
 
 let rec choose_rassign_data cur_var goal =
   let pre = goal.gl_pre_cond in
@@ -434,7 +463,8 @@ let choose_rule_assign goal : rule list =
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  let n_pre, n_post = process_exists_var pre post in
+  let n_post = process_exists_var pre post in
+  let goal = {goal with gl_post_cond = n_post} in
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ ->
