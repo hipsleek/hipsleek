@@ -8,6 +8,7 @@ open Mcpure
 module CF = Cformula
 module CP = Cpure
 
+let pr_hf = Cprinter.string_of_h_formula
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -288,3 +289,34 @@ let not_identity_assign_rule rule = match rule with
     if CP.eq_spec_var arule.ra_lhs arule.ra_rhs then false
     else true
   | _ -> true
+
+let rec rm_emp_formula formula:CF.formula =
+  let rec aux_heap hf = match hf with
+    | CF.Star sf ->
+      let n_f1 = aux_heap sf.CF.h_formula_star_h1 in
+      let n_f2 = aux_heap sf.CF.h_formula_star_h2 in
+      if CF.is_empty_heap n_f1 then n_f2
+      else if CF.is_empty_heap n_f2 then n_f1
+      else hf
+    | CF.Phase pf ->
+      let n_f1 = aux_heap pf.CF.h_formula_phase_rd in
+      let n_f2 = aux_heap pf.CF.h_formula_phase_rw in
+      if CF.is_empty_heap n_f1 then n_f2
+      else if CF.is_empty_heap n_f2 then n_f1
+      else hf
+    | _ -> hf in
+  match formula with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let () = x_tinfo_hp (add_str "hf" pr_hf) hf no_pos in
+    let n_hf = aux_heap hf in
+    let () = x_tinfo_hp (add_str "n_hf" pr_hf) n_hf no_pos in
+    CF.Base {bf with formula_base_heap = n_hf}
+  | CF.Or disjs ->
+    let n_f1 = rm_emp_formula disjs.CF.formula_or_f1 in
+    let n_f2 = rm_emp_formula disjs.CF.formula_or_f2 in
+    CF.Or {disjs with formula_or_f1 = n_f1;
+                      formula_or_f2 = n_f2; }
+  | CF.Exists exists_f ->
+    let hf = exists_f.CF.formula_exists_heap in
+    Exists {exists_f with formula_exists_heap = aux_heap hf}

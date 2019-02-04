@@ -242,12 +242,7 @@ let choose_rule_dnode dn1 dn2 var goal =
   if field_rules != [] then field_rules
   else []
 
-let rec choose_rassign_data cur_var goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
-  let () = x_binfo_hp (add_str "PRE" pr_formula) pre no_pos in
-  let () = x_binfo_hp (add_str "POST" pr_formula) post no_pos in
+let find_similar_shape_var fvar formula =
   let rec helper hf name args = match hf with
     | CF.DataNode f_dnode ->
       let f_name = f_dnode.CF.h_formula_data_name in
@@ -277,7 +272,7 @@ let rec choose_rassign_data cur_var goal =
         | Some sv -> Some sv
       end
     | _ -> None in
-  let find_similar_shape_var fvar formula = match fvar, formula with
+  match fvar, formula with
     | CF.Base bf_var, CF.Base bf ->
       let hf_var = bf_var.CF.formula_base_heap in
       let hf_f = bf.CF.formula_base_heap in
@@ -294,7 +289,33 @@ let rec choose_rassign_data cur_var goal =
         | _ -> None
       end
     | _ -> None
-  in
+
+let process_exists_var pre_cond post_cond =
+  match post_cond with
+  | CF.Exists exists_f ->
+    let exists_vars = exists_f.CF.formula_exists_qvars in
+    let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+    let aux_process exist_var =
+      let fvar = extract_var_f post_cond exist_var in
+      match fvar with
+      | Some f_var1 ->
+        let similar_var = find_similar_shape_var f_var1 pre_cond in
+        if (similar_var != None) then
+          let () = x_binfo_hp (add_str "similar_v" pr_var) (Gen.unsome similar_var) no_pos in
+          exist_var
+        else exist_var
+      | None -> exist_var
+    in
+    let _ = List.map aux_process exists_vars in
+    (pre_cond, post_cond)
+  | _ -> (pre_cond, post_cond)
+
+let rec choose_rassign_data cur_var goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
+  let () = x_binfo_hp (add_str "PRE" pr_formula) pre no_pos in
+  let () = x_binfo_hp (add_str "POST" pr_formula) post no_pos in
   match pre, post with
   | CF.Base bf1, CF.Base bf2 ->
     let var_list = goal.gl_vars in
@@ -411,10 +432,14 @@ let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
   let pr_sv = Cprinter.string_of_spec_var in
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let n_pre, n_post = process_exists_var pre post in
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ ->
-      let framing_rules = choose_framing_rule var goal in
+      (* let framing_rules = choose_framing_rule var goal in *)
+      let framing_rules = [] in
       let assign_rules = choose_rassign_data var goal in
       framing_rules @ assign_rules
     | _ -> let () = x_binfo_pp "marking \n" no_pos in

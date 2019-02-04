@@ -3002,11 +3002,12 @@ let process_simplify (f : meta_formula) =
   with _ -> print_exc num_id
 
 let process_synthesize typed_vars pre post =
-  let () = x_binfo_pp "marking \n" no_pos in
-  let (_, pre_f) = x_add meta_to_formula pre false [] [] in
+  let _, pre_f = meta_to_formula_not_rename pre false [] [] in
+  let pre_f = Synthesis.rm_emp_formula pre_f in
   let pr_formula = Cprinter.string_of_formula in
   let () = x_binfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
-  let (_, post_f) = x_add meta_to_formula post false [] [] in
+  let (_, post_f) = x_add meta_to_formula_not_rename post false [] [] in
+  let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
   let goal = Synthesis.mk_goal !cprog pre_f post_f svs in
@@ -3228,7 +3229,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
     | Some (ls_ctx, print) ->(
         if (print) then (
           if(List.length fl = 2) then (
-            let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in	    
+            let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in
             let (n_tl,cf11) = meta_to_formula_not_rename f1 false [] []  in
             let (n_tl,cf12) = meta_to_formula_not_rename f2 false [] n_tl  in
             let _ = Debug.info_zprint  (lazy  ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n")) no_pos in
