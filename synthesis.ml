@@ -282,3 +282,9 @@ let is_named_type_var var =
   match typ with
   | Named _ -> true
   | _ -> false
+
+let not_identity_assign_rule rule = match rule with
+  | RlAssign arule ->
+    if CP.eq_spec_var arule.ra_lhs arule.ra_rhs then false
+    else true
+  | _ -> true

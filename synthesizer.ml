@@ -423,9 +423,10 @@ let choose_rule_assign goal : rule list =
   List.concat rules
 
 let choose_synthesis_rules goal : rule list =
-  let rs2 = choose_rule_assign goal in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs2 no_pos in
-  rs2
+  let rs = choose_rule_assign goal in
+  let rs = List.filter not_identity_assign_rule rs in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs no_pos in
+  rs
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in

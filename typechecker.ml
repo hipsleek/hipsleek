@@ -1653,7 +1653,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else (CF.Ctx c1) in
               res
             in
-            let () = x_binfo_hp (add_str "ctx Assign before: "
+            let () = x_tinfo_hp (add_str "ctx Assign before: "
                              Cprinter.string_of_list_failesc_context) ctx1 no_pos
             in
             let () = x_tinfo_hp (add_str "rhs: "
@@ -1662,7 +1662,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let () = CF.must_consistent_list_failesc_context "assign final" res
             in
-            let () = x_binfo_hp (add_str "ctx Assign final: "
+            let () = x_tinfo_hp (add_str "ctx Assign final: "
                              Cprinter.string_of_list_failesc_context) res no_pos
             in
             res
@@ -2148,9 +2148,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                exp_dprint_visible_names = visib_names;
                exp_dprint_pos = pos}) -> begin
         let pr1 = Cprinter.string_of_list_failesc_context in
-        let () = x_binfo_hp (add_str "ctx: " pr1) ctx no_pos in
+        let () = x_tinfo_hp (add_str "ctx: " pr1) ctx no_pos in
         let curr_svl = stk_vars # get_stk in
-        let () = x_binfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
+        let () = x_tinfo_hp (add_str "Dprint" !Cpure.print_svl) curr_svl no_pos in
         let ctx2 = SV.list_failesc_context_and_unsat_now prog ctx in
         let ctx = ctx2 in
         let ctx_simp =
