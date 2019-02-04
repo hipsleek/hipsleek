@@ -1973,8 +1973,8 @@ and is_empty_f f0=
   in
   helper f0
 
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
-    (t : t_formula) (fl:flow_formula) a (pos : loc) = 
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
+    (t : t_formula) (fl:flow_formula) a (pos : loc) =
   mkExists_w_lbl svs h p vp t fl a pos None
 
 and ex_formula_of_heap svl h pos =

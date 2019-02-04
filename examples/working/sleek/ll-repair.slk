@@ -28,17 +28,16 @@ pred ll<n> == self = null & n = 0
 // m::ll<n2>.
 // PASS
 
-// synthesize [node x, node y]
-// x::node<n1, q> * y::ll<n2> & q = null ~> x::node<n1, y> * y::ll<n2> & true.
-
-// Pre-process step
+// Exists Rule
 // synthesize [node x, node y]
 // x::node<n1, m> * y::ll<n2> & m = null
 // ~>
-// x::ll<1+n2> & true.
+// (exists u: x::node<n1, u> * u::ll<n2>).
+// PASS
 
-// Exists Rule
+// Pre-process step
 synthesize [node x, node y]
 x::node<n1, m> * y::ll<n2> & m = null
 ~>
-(exists u: x::node<n1, u> * u::ll<n2>).
+x::ll<1+n2> & true.
+
