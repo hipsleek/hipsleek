@@ -4585,6 +4585,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            C.proc_file = proc.I.proc_file;
            C.proc_loc = proc.I.proc_loc;
            C.proc_poly_vars = proc.I.proc_poly_vars;
+           C.proc_global_params = proc.I.proc_global_params;
            (* C.proc_while_with_return = None; *)
            C.proc_test_comps = x_add trans_test_comps prog proc.I.proc_test_comps } in
          let () = cproc.C.proc_stk_of_static_specs # push_pr (x_loc ^ "init of proc_stk_of_static_specs") final_static_specs_list in
@@ -5887,7 +5888,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             if (mingled_mn = mingled_mn_def) then proc_decl else
             if (List.length pargs != 0) then raise Not_found
             else
-              let () = y_binfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
+              let () = y_ninfo_hp (add_str "mingled_mn" pr_id) mingled_mn  in
               let _ = Debug.ninfo_hprint (add_str "mingled_mn" pr_id) mingled_mn no_pos in
               I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn
           in
@@ -6673,6 +6674,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
         I.proc_file = proc.I.proc_file;
         I.proc_loc = pos;
         I.proc_poly_vars = proc.I.proc_poly_vars;
+        I.proc_global_params = proc.I.proc_global_params;
         I.proc_test_comps = if not !Globals.validate then None else
             I.look_up_test_comps prog.I.prog_test_comps w_name} in
       let () = Debug.ninfo_hprint (add_str "w_proc.I.proc_static_specs" Iprinter.string_of_struc_formula)  w_proc.I.proc_static_specs no_pos in

@@ -2472,6 +2472,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option) : Iast.pro
     Iast.proc_loc = pos;
     Iast.proc_test_comps = None;
     Iast.proc_poly_vars = [];
+    Iast.proc_global_params = [];
   } in
   newproc
 

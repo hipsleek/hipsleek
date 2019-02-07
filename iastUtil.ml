@@ -982,7 +982,7 @@ let rename_proc gvs proc : proc_decl =
   let pv v = v.param_name in
   let pargs = to_IS (List.map pv proc.proc_args) in
   let clash_vars = IS.inter pargs gvs in
-  (* let () = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
+  let () = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in
   let clash_subs = new_naming (from_IS clash_vars) in
   let () = add_renamed_vars clash_subs proc.proc_loc in
 
@@ -1011,6 +1011,7 @@ let rename_proc gvs proc : proc_decl =
     proc_static_specs = nsps1;
     proc_dynamic_specs = nspd1;
     proc_body = ne;
+    proc_global_params = clash_subs;
   }
 
 let rename_proc gvs proc : proc_decl =

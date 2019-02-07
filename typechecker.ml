@@ -2458,7 +2458,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               (* retrieve all methods which alter the state *)
               let procs = Cast.list_of_procs prog in
               (* TODO: filter methods that do not alter the state *)
-
+              (* intersect on the first element of the pair *)
+              let intersect proc_i =
+                List.fold_left (fun acc (global_var,ref_param) ->
+                    try let curr_proc_ref_param = List.find (fun (a,b) -> String.equal global_var a) proc.proc_global_params in
+                      (curr_proc_ref_param, ref_param)::acc
+                    with Not_found ->
+                      acc
+                  ) [] proc_i.proc_global_params in
+              let detect_contra proc_i =
+                let pre_proc_i = proc_i.proc_stk_of_static_specs in
+                ()
+              in
               ()
             else ()
 

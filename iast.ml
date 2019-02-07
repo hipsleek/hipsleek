@@ -300,6 +300,7 @@ and proc_decl = {
   proc_loc : loc;
   proc_test_comps: test_comps option;
   proc_poly_vars: ident list;
+  proc_global_params: (ident * ident) list;
 }
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -1753,6 +1754,7 @@ let mkProc sfile id flgs n dd c ot ags r
     ?ho_param:(ho_param = [])
     ?extra_param:(extra_param = [])
     ?poly_vars:(poly_vars = [])
+    ?global_hash:(global_hash = [])
      ss ds pos bd =
   (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
   (* let ni_name = match bd with *)
@@ -1796,6 +1798,7 @@ let mkProc sfile id flgs n dd c ot ags r
     proc_body = bd;
     proc_test_comps = None;
     proc_poly_vars = poly_vars;
+    proc_global_params = global_hash;
 }
 
 let mkAssert ?(inf_vars = []) asrtf assmf pid atype pos =
@@ -3425,6 +3428,7 @@ let add_bar_inits prog =
         proc_loc = no_pos;
         proc_test_comps = None;
         proc_poly_vars = [];
+        proc_global_params = [];
       }) prog.prog_barrier_decls in
   {prog with
    prog_data_decls = prog.prog_data_decls@b_data_def;
