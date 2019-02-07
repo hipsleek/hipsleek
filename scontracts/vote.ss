@@ -245,9 +245,10 @@ global   int i_ = 0;
 global   int m_ = 5;
 
 // Create a new ballot to choose one of `proposalNames`.
+// In the pre, vtr=vt0[sender] tells us that this voter should exist (not null), otherwise in line 256, the dereference will have an error
 // @L means unchanged
 void Ballot()
-     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> //& vtr = vt0[sender]
+     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,_,_,_> & vtr=vt0[sender]
      ensures (exists vt1: voters'::Map<vt1> * vtr::Voter<1,_,_,_> & chairperson' = sender & vt1[sender] = vtr);
 {
      chairperson = msg.sender;
@@ -270,9 +271,7 @@ void giveRightToVote(address voter)
      voters[voter] = v;
 }
 
-void for_loop_winning(int p, int n, int winningVoteCount, int winningProposal_)
-     requires p<=n
-     ensures  true;
+void for_loop_winning(int p, int n, ref int winningVoteCount, ref int winningProposal_)
 {
   if(p < n){
        int tmp_p = proposals[p];
@@ -310,12 +309,12 @@ int winnerNum()
 }
 
 void while_loop_delegate(ref address toWhom, address initAddress)
-     requires msg::message<_,sender,_> & toWhom != msg.sender
+     requires [vt0] voters::Map<vt0>@L * msg::message<_,sender,_> * vtr::Voter<_,_,_,_> & toWhom != msg.sender & vt0[toWhom] = vtr
      ensures true;
 {
     Voter tmp_voter;
     tmp_voter = voters[toWhom];
-    if(tmp_voter.delegate != initAddress)
+    if(tmp_voter.delegate != initAddress || tmp_voter.delegate != null)
     {
         toWhom = tmp_voter.delegate;
         while_loop_delegate(toWhom, initAddress);
@@ -323,61 +322,28 @@ void while_loop_delegate(ref address toWhom, address initAddress)
 }
 
 // Delegate your vote to the voter `to`.
-void delegate(address toWhom)
-     requires msg::message<_,sender,_> & toWhom != sender & !sender.voted
-     ensures  true;
-{
-     Voter sender =  voters[msg.sender];
-     address init_addr;
-     init_addr.id = 0;
+// void delegate(address toWhom)
+//      requires msg::message<_,sender,_> & toWhom != sender & !sender.voted
+//      ensures  true;
+// {
+//     Voter tmp_voter_1 = voters[msg.sender];
+//      tmp_voter_1.voted = true;
+//      tmp_voter_1.delegate = toWhom;
+//      Voter delegate_ = voters[toWhom];
 
-     while_loop_delegate(toWhom, init_addr);
-
-     Voter tmp_voter_1 = voters[msg.sender];
-     tmp_voter_1.voted = true;
-     tmp_voter_1.delegate = toWhom;
-     Voter delegate_ = voters[toWhom];
-
-     Voter tmp_voter_2 = voters[toWhom];
-     if(tmp_voter_2.voted){
-         int voteNum = delegate_.vote;
-         // Proposal tmp_prp;
-         // tmp_prp = proposals[voteNum];
-         // tmp_prp.voteCount += sender.weight;
-         int tmp_prp = proposals[voteNum];
-         tmp_prp += sender.weight;
-         proposals[voteNum] = tmp_prp;
-     } else {
-         delegate_.weight += sender.weight;
-     }
-}
-
-// Delegate your vote to the voter `to`.
-/*void delegate(address toWhom)
-     requires msg::message<_,sender,_> & toWhom != sender & !sender.voted
-     ensures  true;
-{
-     Voter* sender =  voters[msg.sender];
-     address init_addr;
-     init_addr.id = 0;
-
-     while_loop_delegate(toWhom, init_addr);
-
-     Voter tmp_voter_1 = voters[msg.sender];
-     tmp_voter.voted = true;
-     tmp_voter.delegate = toWhom;
-     Voter* delegate_ = voters[toWhom];
-
-     Voter tmp_voter_2 = voters[toWhom];
-     if(tmp_voter_2.voted){
-         int voteNum = (*delegate_).vote;
-         Proposal tmp_prp;
-         tmp_prp = proposals[voteNum];
-         tmp_prp.voteCount += (*sender).weight;
-     } else {
-         (*deleg  ate_).weight += (*sender).weight;
-     }
-}*/
+//      Voter tmp_voter_2 = voters[toWhom];
+//      if(tmp_voter_2.voted){
+//          int voteNum = delegate_.vote;
+//          // Proposal tmp_prp;
+//          // tmp_prp = proposals[voteNum];
+//          // tmp_prp.voteCount += sender.weight;
+//          int tmp_prp = proposals[voteNum];
+//          tmp_prp += sender.weight;
+//          proposals[voteNum] = tmp_prp;
+//      } else {
+//          delegate_.weight += sender.weight;
+//      }
+// }
 
 // Give your vote (including votes delegated to you)
 // to proposal `proposals[proposal].name`.
