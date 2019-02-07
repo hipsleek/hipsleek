@@ -6,9 +6,9 @@ data node{
 }
 
 
-pred list<n> == self=null & n=0 or
-                self::node<_,t> * t::list<n-1>
-                inv n>=0;
+// pred list<n> == self=null & n=0 or
+//                 self::node<_,t> * t::list<n-1>
+//                 inv n>=0;
 
 // i - iterator
 // m - length of proposals
@@ -36,17 +36,52 @@ void for_loop(mapping(int => int) proposals, int i, int m, int n)
  }
 }
 
-int get_length(node x)
-   requires x::list<nnn>@L
-   ensures  res = nnn;
+// i - iterator
+// m - length of proposals
+// ll - length of proposalNames
+void for_loop_ballot(mapping(int => int) proposals, int i, int ll, int m)
+     case {
+       i<0         ->
+          requires true
+          ensures  true;
+       i>=ll & i>=0 ->
+          requires [prps0] proposals::Map<prps0> * tmp1::Proposal<xxx,0>
+                     & forall(j: !(m<=j & j<m+ll) | (prps0[j]=tmp1 & xxx=j))
+          ensures  (exists prps1: proposals::Map<prps1> * tmp1::Proposal<xxx,0>
+                     & forall(j: !(m<=j & j<m+ll) | prps1[j]=tmp1 & xxx=j));
+       i<ll & i>=0  ->
+          requires [prps0] proposals::Map<prps0> * tmp1::Proposal<yyy,0>
+                     & forall(j: !(m<=j & j<m+i) | prps0[j]=tmp1 & yyy=j)
+          ensures  (exists prps1: proposals::Map<prps1> * tmp1::Proposal<yyy,0>
+                     & forall(j: !(m<=j & j<=m+i) | prps1[j]=tmp1 & yyy=j));
+     //(exists prps1: proposals'::Map<prps1> * tmp1::Proposal<proNums[i],0> & prps1[i] = tmp1 & i' = i+1);
+     }
 {
- if (x==null) return 0;
- else return (1 + (get_length(x.next)));
+     if(0<=i && i<ll){
+         dprint;
+         Proposal tmp = new_proposal();
+         //int pronum = proNums[i];
+         //tmp.num = pronum;
+         // int nnnn = i + m;
+         tmp.num = i+m;//proNums[i];
+         tmp.voteCount = 0;
+         proposals[i+m] = tmp;
+         dprint;
+         for_loop_ballot(proposals, i+1, ll, m);
+     }
 }
+
+// int get_length(node x)
+//    requires x::list<nnn>@L
+//    ensures  res = nnn;
+// {
+//  if (x==null) return 0;
+//  else return (1 + (get_length(x.next)));
+// }
 
 // assume that the length of proposals is m
 void ballot(node proposalNames, mapping(int => int) proposals, int m)
-  requires proposalNames::list<n> & m>=0
+  requires true//proposalNames::list<n> & m>=0
   ensures  true;
 {
  int x;

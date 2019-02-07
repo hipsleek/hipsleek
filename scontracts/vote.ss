@@ -179,7 +179,6 @@ data Voter {
 
 data Proposal {
      int num;
-     //char[] name;
      int voteCount;
 }
 
@@ -193,41 +192,69 @@ global address chairperson;
 global mapping(address => Voter) voters;
 
 // A dynamically-sized array of `Proposal` structures.
-global mapping(int => Proposal) proposals;
+global mapping(int => int) proposals;
+// global mapping(int => int) proposals_int;
 
 
-void for_loop_ballot(ref int i, int n, int[] proNums)
-     requires [prps0] proposals::Map<prps0> * tmp2::Proposal<_,_> & prps0[i] = tmp2 & i <= n //& proposals[0]=tmp
-     ensures  [prps0] proposals::Map<prps0> * tmp2::Proposal<proNums[i],0> & prps1[i] = tmp2 & i' = i+1;
+Proposal new_proposal()
+   requires true
+   ensures  res::Proposal<_,_>;
+
+data node{
+   int val;
+   node next;
+}
+
+// i - iterator
+// m - length of proposals
+// ll - length of proposalNames
+void for_loop_ballot(mapping(int => int) propos, int i, int ll, int m)
+     case {
+       i<0         ->
+          requires true
+          ensures  true;
+       i>=ll & i>=0 ->
+          requires [prps0] propos::Map<prps0>
+                     & forall(j: !(m<=j & j<m+ll) | prps0[j]=0)
+          ensures  (exists prps1: propos::Map<prps1>
+                     & forall(j: !(m<=j & j<m+ll) | prps1[j]=0));
+       i<ll & i>=0  ->
+          requires [prps0] propos::Map<prps0>
+                     & forall(j: !(m<=j & j<m+i) | prps0[j]=0)
+          ensures  (exists prps1: propos::Map<prps1>
+                     & forall(j: !(m<=j & j<=m+i) | prps1[j]=0));
      //(exists prps1: proposals'::Map<prps1> * tmp1::Proposal<proNums[i],0> & prps1[i] = tmp1 & i' = i+1);
+     }
 {
-     if(i < n){
-         Proposal tmp = proposals[i];
+     if(0<=i && i<ll){
+         // dprint;
+         // Proposal tmp = new_proposal();
          //int pronum = proNums[i];
          //tmp.num = pronum;
-         tmp.num = proNums[i];
-         tmp.voteCount = 0;
-         proposals[i] = tmp;
-         i += 1;
-         for_loop_ballot(i, n, proNums);
+         // int nnnn = i + m;
+         // tmp.num = i+m;//proNums[i];
+         // tmp.voteCount = 0;
+         propos[i+m] = 0;
+         // dprint;
+         for_loop_ballot(propos, i+1, ll, m);
      }
 }
 
+global   int n_ = 10;
+global   int i_ = 0;
+global   int m_ = 5;
+
 // Create a new ballot to choose one of `proposalNames`.
 // @L means unchanged
-void Ballot(int[] proposalNums)
-     requires [vt0] voters::Map<vt0>@L * vtr::Voter<w0,_,_,_> * msg::message<_,sender,_> //& vtr = vt0[sender]
-     ensures  vtr::Voter<1,_,_,_> & vtr = vt0[sender] & sender = chairperson;
+void Ballot()
+     requires [vt0] voters::Map<vt0> * msg::message<_,sender,_>@L * vtr::Voter<w0,v0,_,_> //& vtr = vt0[sender]
+     ensures (exists vt1: voters'::Map<vt1> * vtr::Voter<1,_,_,_> & chairperson' = sender & vt1[sender] = vtr);
 {
      chairperson = msg.sender;
      Voter v = voters[chairperson];
      v.weight = 1;
-
-     //size_t n_ = sizeof(proposalNums)/sizeof(proposalNums[0]);
-     int n_ = 10;
-
-     int i_ = 0;
-     for_loop_ballot(i_, n_, proposalNums);
+     voters[chairperson] = v;
+     // for_loop_ballot(proposals, i_, n_, m_);
 }
 
 // Give `voter` the right to vote on this ballot.
@@ -243,14 +270,14 @@ void giveRightToVote(address voter)
      voters[voter] = v;
 }
 
-void for_loop_winning(ref int p, int n, ref int winningVoteCount, ref int winningProposal_)
+void for_loop_winning(int p, int n, int winningVoteCount, int winningProposal_)
      requires p<=n
-     ensures  p' = p+1;
+     ensures  true;
 {
   if(p < n){
-      Proposal tmp_p = proposals[p];
-      if (tmp_p.voteCount > winningVoteCount){
-           winningVoteCount = tmp_p.voteCount;
+       int tmp_p = proposals[p];
+      if (tmp_p > winningVoteCount){
+           winningVoteCount = tmp_p;
            winningProposal_ = p;
       }
       for_loop_winning(p+1, n, winningVoteCount, winningProposal_);
@@ -276,10 +303,10 @@ int winnerNum()
 {
     int winnerNum_;
     int num_of_win = winningProposal();
-    Proposal winner_proposal;
-    winner_proposal = proposals[num_of_win];
-    winnerNum_ = winner_proposal.num;
-    return winnerNum_;
+    // Proposal winner_proposal;
+    // winner_proposal = proposals[num_of_win];
+    // winnerNum_ = winner_proposal.num;
+    return num_of_win;
 }
 
 void while_loop_delegate(ref address toWhom, address initAddress)
@@ -314,9 +341,12 @@ void delegate(address toWhom)
      Voter tmp_voter_2 = voters[toWhom];
      if(tmp_voter_2.voted){
          int voteNum = delegate_.vote;
-         Proposal tmp_prp;
-         tmp_prp = proposals[voteNum];
-         tmp_prp.voteCount += sender.weight;
+         // Proposal tmp_prp;
+         // tmp_prp = proposals[voteNum];
+         // tmp_prp.voteCount += sender.weight;
+         int tmp_prp = proposals[voteNum];
+         tmp_prp += sender.weight;
+         proposals[voteNum] = tmp_prp;
      } else {
          delegate_.weight += sender.weight;
      }
@@ -354,10 +384,10 @@ void delegate(address toWhom)
 void vote(int proposal)
      requires [vt0,prp]
            voters::Map<vt0> * msg::message<_,sender,_>
-           * vtr::Voter<w0,false,_,_> * prp::Proposal<_,vc>
-           & vtr= vt0[sender] & proposals[proposal] = prp //& !vtr.voted
+           * vtr::Voter<w0,false,_,_> //* prp::Proposal<_,vc>
+           & vtr= vt0[sender] //& proposals[proposal] = prp //& !vtr.voted
 //*************************************\\
-     ensures  vtr::Voter<w0,true,_,_> * prp::Proposal<_,vc+w0>;
+     ensures  vtr::Voter<w0,true,_,_> & proposals[proposal] = vc+w0;//* prp::Proposal<_,vc+w0>;
 //*************************************\\
 
 //vtr'::Voter<w0,true,_,_> * prp'::Proposal<_,vc+w0> & prps[proposal] = prp & prp.vc;//prps::Proposal<>[]
@@ -365,9 +395,10 @@ void vote(int proposal)
      Voter sender = voters[msg.sender];
      sender.voted = true;
      sender.vote = proposal;
-     Proposal tmp_p;
-     tmp_p = proposals[proposal];
-     tmp_p.voteCount += sender.weight;
+     // Proposal tmp_p;
+     // tmp_p = proposals[proposal];
+     // tmp_p.voteCount += sender.weight;
+     proposals[proposal] += sender.weight;
 }
 
 // Give your vote (including votes delegated to you)
