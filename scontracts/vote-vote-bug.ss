@@ -1,65 +1,19 @@
 hip_include 'scontracts/mapprimitives.ss'
 //#include<stdio.h>  ->  sizeof
 //This file should be named as Ballot.ss -> contract
-data address {
-     int id;
-}
 
-data message{
-     //int data_;
-     int gas;
-     address sender;
-     //int sig;
-     //int vxalue;
-     address receiver;
-}
-
-global message msg;
-global bnode   userbal;
-global int     bal;
-
-// This declares a new complex type which will
-// be used for variables later.
-// It will represent a single voter.
-data Voter {
-     int weight;
-     bool voted;
-     address delegate;
-     int vote;
-}
-
-data Proposal {
-     int num;
-     int voteCount;
-}
-
-global address chairperson;
-
-// votes are mapping type but proposals are not
-global mapping(address => Voter) voters;
-
-// A dynamically-sized array of `Proposal` structures.
-global mapping(int => int) pros;
-
+data dat{int x;}
 
 // Give your vote (including votes delegated to you)
 // to proposal `proposals[proposal].name`.  ,vt1:    & fv=prps1[voteFor]
 // don't have a smart inference?
-void vote(int voteFor)
-     requires [prps0,vt0] pros::Map<prps0> * voters::Map<vt0>
-              * msg::message<_,sender,_>@L * vtr::Voter<w0,false,_,_>
-              & vtr=vt0[sender]
-     ensures  (exists vt1,prps1: voters::Map<vt1> * props::Map<prps1>
-              * vtr::Voter<w0,true,_,_> & vtr=vt1[sender] & prps1[voteFor]=prps0[voteFor]+w0);
+void vote(mapping(int => int) pros, mapping(dat => int) voters)
+     requires [prps0]
+            pros::Map<prps0>
+        * voters::Map<_>
+     ensures  (exists prps1: pros::Map<prps1>);
 {
-     address tmp_sender = msg.sender;
-     Voter sender = voters[tmp_sender];
-     sender.voted = true;
-     sender.vote = voteFor;
-     voters[tmp_sender] = sender;
-     int tmpv = pros[voteFor];
-     tmpv += sender.weight;
-     pros[voteFor] = tmpv;
+  int x = 0 ;
 }
 
 

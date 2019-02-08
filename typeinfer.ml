@@ -1543,12 +1543,13 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
+  let () = y_binfo_pp "intro fresh types for poly ty" in
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
-      let () = y_ninfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
+      let () = y_binfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
       let ntlist,_ = x_add gather_type_info_var self_ptr tlist ty pos in
-      let () = y_ninfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
+      let () = y_binfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
       ntlist, ty
     | _ ->
       let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
@@ -1592,7 +1593,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
-  let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
+  let () = y_binfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
   let rec helper exps tvars =
     match (exps, tvars) with
     | ([], []) -> []
