@@ -125,6 +125,7 @@ and struc_infer_formula =
 and struc_case_formula =
   {
     formula_case_branches : (Cpure.formula * struc_formula ) list;
+    (* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
     formula_case_pos : loc
   }
 
@@ -148,11 +149,14 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: formula;
+  rflow_base: (* struc_ *)formula;
+  (* rflow_global_vars: CP.spec_var list; *)
 }
 
 and rflow_struc_formula = {
+  (* rflow_kind: ho_flow_kind; *)
   rflow_struc_base: struc_formula;
+  (* rflow_global_vars: CP.spec_var list; *)
 }
 
 and list_formula = formula list
@@ -1973,8 +1977,8 @@ and is_empty_f f0=
   in
   helper f0
 
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
-    (t : t_formula) (fl:flow_formula) a (pos : loc) =
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
+    (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p vp t fl a pos None
 
 and ex_formula_of_heap svl h pos =
@@ -2166,11 +2170,11 @@ and get_node_var_x (h : h_formula) = match h with
   | HVar (v,hvar_vs) -> v
   | HRel (hrel, el, _) ->
     (match el with
-     | (CP.Var (sv, _))::_ -> sv
-     | _ -> failwith ("Cannot find suitable root node of the HRel " ^ (CP.name_of_spec_var hrel)) 
+    | (CP.Var (sv, _))::_ -> sv
+    | _ -> failwith ("Cannot find suitable root node of the HRel " ^ (CP.name_of_spec_var hrel)) 
     )
   | _ -> CP.null_var 
-(* failwith ("get_node_var: invalid argument"^(!print_h_formula h)) *)
+           (* failwith ("get_node_var: invalid argument"^(!print_h_formula h)) *)
 
 and get_node_var (h : h_formula) =
   Debug.no_1 "get_node_var" !print_h_formula !print_sv
@@ -2943,7 +2947,7 @@ and one_formula_fv (f:one_formula) : CP.spec_var list =
   let tid = f.formula_thread in
   (tid::vars)
 
-and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
+and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list = 
   let rec aux f =
     match f with
     | Or ({
@@ -2956,8 +2960,8 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
         formula_base_vperm = vp;
         formula_base_and = a;
         formula_base_type = t }) ->
-      let vars = if vartype # is_heap_only then []
-        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)
+      let vars = if vartype # is_heap_only then [] 
+        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)   
       in
       CP.remove_dups_svl ((h_fv ~vartype:vartype h) @ vars)
     | Exists ({
@@ -2987,6 +2991,11 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
       res
   in aux f
 
+(* and is_absent imm = *)
+(*   match imm with *)
+(*   | CP.ConstAnn(Accs) -> true *)
+(*   | _ -> false *)
+
 and remove_absent ann vs =
   if List.length ann = List.length vs then
     let com_ls = List.combine ann vs in
@@ -3014,11 +3023,11 @@ and h_fv_node_x ?(vartype=Global_var.var_with_none) vv perm ann param_ann
       if (CP.mem_svl p vs) 
       then [] 
       else
-      if !Globals.warn_nonempty_perm_vars then 
-        let msg = "NON-EMPTY PERM VARS"^(!CP.print_svl pvars) in
-        failwith msg
-      else 
-        pvars
+        if !Globals.warn_nonempty_perm_vars then 
+          let msg = "NON-EMPTY PERM VARS"^(!CP.print_svl pvars) in
+          failwith msg
+        else 
+          pvars
   in
   let hvars = Gen.BList.remove_dups_eq CP.eq_spec_var (List.concat (List.map rf_fv ho_vs)) in
   let vs = vs@pvars in
@@ -4123,7 +4132,7 @@ and split_components_exist ?(rename_flag=false) (f : formula) =
   let lst = split_components_all_exist ~rename_flag:rename_flag f in
   match lst with
   | [] -> ([],(HFalse, (MCP.mkMFalse no_pos), CVP.empty_vperm_sets, 
-               (flow_formula_of_formula f), TypeFalse, []))
+           (flow_formula_of_formula f), TypeFalse, []))
   | [r] -> r
   | _ -> let () = x_tinfo_hp (add_str "f" !print_formula) f no_pos in
     Err.report_error {
@@ -20190,7 +20199,7 @@ let rev_trans_formula = ref (fun (f:formula) -> Iformula.mkTrue n_flow no_pos )
 (* type: HipUtil.NG.V.label -> h_formula_view -> *)
 (*   CP.spec_var list -> formula -> h_formula * CP.spec_var list * Cpure.formula *)
 let get_view_unfold_g vd_name vl to_args f =
-    let args = vl.h_formula_view_arguments in
+    let args = vl.h_formula_view_arguments in 
     let vv = vl.h_formula_view_name in
     let () = y_tinfo_hp (add_str "unfolding vv" pr_id) vv in
     let () = y_tinfo_hp (add_str "inside" pr_id) vd_name in

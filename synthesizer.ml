@@ -351,28 +351,35 @@ let rec choose_rassign_data cur_var goal =
   let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
   let () = x_binfo_hp (add_str "PRE" pr_formula) pre no_pos in
   let () = x_binfo_hp (add_str "POST" pr_formula) post no_pos in
-  let aux f_var1 f_var2 goal =
+  let aux_bf hf1 hf2 goal f_var1 =
     let var_list = goal.gl_vars in
     let prog = goal.gl_prog in
-    let data_decls = prog.Cast.prog_data_decls in
+    match hf1, hf2 with
+    | CF.DataNode dnode1, CF.DataNode dnode2 ->
+      choose_rule_dnode dnode1 dnode2 cur_var goal
+    | CF.DataNode dnode, CF.ViewNode vnode ->
+      let () = x_binfo_pp "ViewNode case" no_pos in
+      let view_name = vnode.CF.h_formula_view_name in
+      let views = prog.Cast.prog_view_decls in
+      let n_f2 = do_unfold_view_vnode prog vnode in
+      (* let () = x_binfo_hp (add_str "n_f2" (pr_list pr_formula)) n_f2 no_pos in *)
+      let case_rules case =
+        let n_goal = {goal with gl_post_cond = case} in
+        choose_rassign_data cur_var n_goal in
+      (* [] *)
+      n_f2 |> List.map case_rules |> List.concat
+    | _ -> [] in
+  let aux f_var1 f_var2 goal =
+    let var_list = goal.gl_vars in
     let field_rules = match f_var1, f_var2 with
       | CF.Base bf1, CF.Base bf2 ->
         let hf1 = bf1.CF.formula_base_heap in
         let hf2 = bf2.CF.formula_base_heap in
-        begin
-          match hf1, hf2 with
-          | CF.DataNode dnode1, CF.DataNode dnode2 ->
-            choose_rule_dnode dnode1 dnode2 cur_var goal
-          | CF.DataNode dnode, CF.ViewNode vnode ->
-            let view_name = vnode.CF.h_formula_view_name in
-            let views = prog.Cast.prog_view_decls in
-            let n_f2 = Lemma.do_unfold_view prog post in
-            let n_f2 = process_exists_var f_var1 n_f2 in
-            let () = x_binfo_hp (add_str "n_f2" (pr_formula)) n_f2 no_pos in
-            let n_goal = mk_goal prog f_var1 n_f2 var_list in
-            choose_rassign_data cur_var n_goal
-          | _ -> []
-        end
+        aux_bf hf1 hf2 goal f_var1
+      | CF.Base bf1, CF.Exists bf2 ->
+        let hf1 = bf1.CF.formula_base_heap in
+        let hf2 = bf2.CF.formula_exists_heap in
+        aux_bf hf1 hf2 goal f_var1
       | _ -> [] in
     let similar_var = find_similar_shape_var f_var2 pre in
     let shape_rule = match similar_var with

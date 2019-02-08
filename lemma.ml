@@ -1039,6 +1039,9 @@ let do_unfold_view_x cprog (f0: CF.formula) =
     | CF.Exists _ ->
       let qvars, base1 = CF.split_quantifiers f in
       let nf = helper base1 in
+      let pr_formula = Cprinter.string_of_formula in
+      let () = x_binfo_hp (add_str "f" pr_formula) f no_pos in
+      let () = x_binfo_hp (add_str "nf" pr_formula) nf no_pos in
       CF.add_quantifiers qvars nf
     | CF.Or orf  ->
       CF.Or { orf with CF.formula_or_f1 = helper orf.CF.formula_or_f1;

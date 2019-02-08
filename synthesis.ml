@@ -9,6 +9,10 @@ module CF = Cformula
 module CP = Cpure
 
 let pr_hf = Cprinter.string_of_h_formula
+let pr_formula = Cprinter.string_of_formula
+let pr_var = Cprinter.string_of_spec_var
+let pr_vars = Cprinter.string_of_spec_var_list
+
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -176,7 +180,6 @@ let pr_exp_opt exp = match exp with
   | Some e -> Cprinter.string_of_exp e
 
 let pr_goal goal =
-  let pr_formula = Cprinter.string_of_formula in
   let vars = goal.gl_vars in
   let pr_svs = Cprinter.string_of_spec_var_list in
   "goal (" ^ "vars:" ^ (pr_svs vars) ^ "\n" ^
@@ -320,3 +323,33 @@ let rec rm_emp_formula formula:CF.formula =
   | CF.Exists exists_f ->
     let hf = exists_f.CF.formula_exists_heap in
     Exists {exists_f with formula_exists_heap = aux_heap hf}
+
+let do_unfold_view_vnode cprog vnode =
+  let view_decls = cprog.Cast.prog_view_decls in
+  let vnode_name = vnode.CF.h_formula_view_name in
+  let view_decl = List.find (fun x -> String.compare x.Cast.view_name vnode_name == 0)
+      view_decls in
+  let view_f = view_decl.Cast.view_formula in
+  let pr_struc = Cprinter.string_of_struc_formula in
+  let () = x_tinfo_hp (add_str "view_f" pr_struc) view_f no_pos in
+  let v_args = vnode.CF.h_formula_view_arguments in
+  let rec helper vf = match vf with
+    | CF.EBase bf ->
+      let base_f = bf.CF.formula_struc_base in
+      let vars_f = CF.fv base_f in
+      let () = x_tinfo_hp (add_str "base_f" pr_formula) base_f no_pos in
+      let () = x_tinfo_hp (add_str "base_vars" pr_vars) vars_f no_pos in
+      let v_args = [vnode.CF.h_formula_view_node]@v_args in
+      let () = x_tinfo_hp (add_str "vnode_vars" pr_vars) v_args no_pos in
+      let sst = List.combine vars_f v_args in
+      let n_formula = CF.subst sst base_f in
+      let () = x_tinfo_hp (add_str "n_f" pr_formula) n_formula no_pos in
+      [n_formula]
+    | CF.EList list ->
+      let cases = List.map snd list in
+      cases |> List.map helper |> List.concat
+    | _ -> report_error no_pos
+             "Synthesis.do_unfold_view_vnode: not handled cases"
+  in
+  helper view_f
+

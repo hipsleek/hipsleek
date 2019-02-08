@@ -4,7 +4,7 @@ data node {
 }.
 
 pred ll<n> == self = null & n = 0
-	or (exists q: self::node<_, q> * q::ll<n-1>).
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
 
 // data node {
 //      node next;
@@ -37,7 +37,7 @@ pred ll<n> == self = null & n = 0
 
 // Pre-process step
 synthesize [node x, node y]
-x::node<n1, m> * y::ll<n2> & m = null
+x::node<v1, m> * y::ll<n2> & m = null & n1 = 1
 ~>
-x::ll<1+n2> & true.
+x::ll<n1+n2> & true.
 
