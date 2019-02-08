@@ -255,7 +255,7 @@ void Ballot()
      Voter v = voters[chairperson];
      v.weight = 1;
      voters[chairperson] = v;
-     // for_loop_ballot(proposals, i_, n_, m_);
+     for_loop_ballot(proposals, i_, n_, m_);
 }
 
 // Give `voter` the right to vote on this ballot.
@@ -321,50 +321,74 @@ void while_loop_delegate(ref address toWhom, address initAddress)
     }
 }
 
-// Delegate your vote to the voter `to`.
+//Delegate your vote to the voter `to`.
 // void delegate(address toWhom)
 //      requires msg::message<_,sender,_> & toWhom != sender & !sender.voted
 //      ensures  true;
 // {
-//     Voter tmp_voter_1 = voters[msg.sender];
+//      Voter tmp_voter_1 = voters[msg.sender];
 //      tmp_voter_1.voted = true;
 //      tmp_voter_1.delegate = toWhom;
-//      Voter delegate_ = voters[toWhom];
+
 
 //      Voter tmp_voter_2 = voters[toWhom];
 //      if(tmp_voter_2.voted){
 //          int voteNum = delegate_.vote;
-//          // Proposal tmp_prp;
-//          // tmp_prp = proposals[voteNum];
-//          // tmp_prp.voteCount += sender.weight;
 //          int tmp_prp = proposals[voteNum];
-//          tmp_prp += sender.weight;
+//          tmp_prp += rmp_voter_1.weight;
 //          proposals[voteNum] = tmp_prp;
 //      } else {
-//          delegate_.weight += sender.weight;
+//          tmp_voter_2.weight += sender.weight;
 //      }
 // }
 
-// Give your vote (including votes delegated to you)
-// to proposal `proposals[proposal].name`.
-void vote(int proposal)
-     requires [vt0,prp]
-           voters::Map<vt0> * msg::message<_,sender,_>
-           * vtr::Voter<w0,false,_,_> //* prp::Proposal<_,vc>
-           & vtr= vt0[sender] //& proposals[proposal] = prp //& !vtr.voted
-//*************************************\\
-     ensures  vtr::Voter<w0,true,_,_> & proposals[proposal] = vc+w0;//* prp::Proposal<_,vc+w0>;
-//*************************************\\
+ // function delegate(address to) public {
+ //        // assigns reference
+ //        Voter storage sender = voters[msg.sender];
+ //        require(!sender.voted);
 
-//vtr'::Voter<w0,true,_,_> * prp'::Proposal<_,vc+w0> & prps[proposal] = prp & prp.vc;//prps::Proposal<>[]
+ //        // Self-delegation is not allowed.
+ //        require(to != msg.sender);
+ //        while (voters[to].delegate != address(0)) {
+ //            to = voters[to].delegate;
+
+ //            // We found a loop in the delegation, not allowed.
+ //            require(to != msg.sender);
+ //        }
+
+ //        // Since `sender` is a reference, this
+ //        // modifies `voters[msg.sender].voted`
+ //        sender.voted = true;
+ //        sender.delegate = to;
+ //        Voter storage delegate_ = voters[to];
+ //        if (delegate_.voted) {
+ //            // If the delegate already voted,
+ //            // directly add to the number of votes
+ //            proposals[delegate_.vote].voteCount += sender.weight;
+ //        } else {
+ //            // If the delegate did not vote yet,
+ //            // add to her weight.
+ //            delegate_.weight += sender.weight;
+ //        }
+
+
+
+// Give your vote (including votes delegated to you)
+// to proposal `proposals[proposal].name`.  ,vt1:    & fv=prps1[voteFor]
+void vote(int voteFor)
+     requires [prps,vt0] proposals::Map<prps> * voters::Map<vt0>
+              * msg::message<_,sender,_> * vtr::Voter<w0,false,_,_>
+              //& vtr=vt0[sender] & vc=prps[voteFor]
+     ensures  (exists prps1,vt1: voters'::Map<vt1> * proposals'::Map<prps1>
+              * vtr::Voter<w0,true,_,_> & vtr=vt1[sender] & fv=vc+w0);
 {
-     Voter sender = voters[msg.sender];
+     address tmp_sender = msg.sender;
+     Voter sender = voters[tmp_sender];
      sender.voted = true;
-     sender.vote = proposal;
-     // Proposal tmp_p;
-     // tmp_p = proposals[proposal];
-     // tmp_p.voteCount += sender.weight;
-     proposals[proposal] += sender.weight;
+     sender.vote = voteFor;
+     int tmpv = proposals[voteFor];
+     tmpv += sender.weight;
+     proposals[voteFor] = tmpv;
 }
 
 // Give your vote (including votes delegated to you)
