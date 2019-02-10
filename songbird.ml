@@ -527,7 +527,6 @@ let translate_ent ent =
   let sb_rhs = translate_pf  rhs in
   let () = x_tinfo_hp (add_str "lhs: " (SBCast.pr_pure_form)) sb_lhs no_pos in
   let () = x_tinfo_hp (add_str "rhs: " (SBCast.pr_pure_form)) sb_rhs no_pos in
-
   SBCast.mk_pure_entail sb_lhs sb_rhs
 
 let get_vars_in_fault_ents ents =
@@ -669,6 +668,19 @@ let check_entail prog ante conseq =
     let ent = SBCast.mk_entailment sb_ante sb_conseq in
     let ptree = SBProver.check_entailment sb_prog ent in
     let res = SBProof.get_ptree_validity ptree in
+    match res with
+    | SBGlobals.MvlTrue -> true
+    | _ -> false
+
+let check_pure_entail ante conseq =
+  let sb_ante = translate_pf ante in
+  let sb_conseq = translate_pf conseq in
+  let sb_ante_f = SBCast.mk_fpure sb_ante in
+  let sb_conseq_f = SBCast.mk_fpure sb_conseq in
+  let sb_prog = SBCast.mk_program "check_pure_entail" in
+  let ent = SBCast.mk_entailment sb_ante_f sb_conseq_f in
+  let ptree = SBProver.check_entailment sb_prog ent in
+  let res = SBProof.get_ptree_validity ptree in
     match res with
     | SBGlobals.MvlTrue -> true
     | _ -> false

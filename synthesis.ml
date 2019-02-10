@@ -229,6 +229,8 @@ and pr_st_core st =
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
 
+let pr_rules = pr_list pr_rule
+
 (*****************************************************
   * Atomic functions
 ********************************************************)
@@ -324,18 +326,11 @@ let rec rm_emp_formula formula:CF.formula =
     let hf = exists_f.CF.formula_exists_heap in
     Exists {exists_f with formula_exists_heap = aux_heap hf}
 
-let do_unfold_view_vnode cprog vnode =
-  let view_decls = cprog.Cast.prog_view_decls in
-  let vnode_name = vnode.CF.h_formula_view_name in
-  let view_decl = List.find (fun x -> String.compare x.Cast.view_name vnode_name == 0)
-      view_decls in
-  let view_f = view_decl.Cast.view_formula in
-  let pr_struc = Cprinter.string_of_struc_formula in
-  let () = x_tinfo_hp (add_str "view_f" pr_struc) view_f no_pos in
-  let v_args = vnode.CF.h_formula_view_arguments in
-  let rec helper vf = match vf with
+let do_unfold_view_vnode cprog fvar =
+  let rec helper_vnode vnode vf = match vf with
     | CF.EBase bf ->
       let base_f = bf.CF.formula_struc_base in
+      let v_args = vnode.CF.h_formula_view_arguments in
       let vars_f = CF.fv base_f in
       let () = x_tinfo_hp (add_str "base_f" pr_formula) base_f no_pos in
       let () = x_tinfo_hp (add_str "base_vars" pr_vars) vars_f no_pos in
@@ -347,9 +342,71 @@ let do_unfold_view_vnode cprog vnode =
       [n_formula]
     | CF.EList list ->
       let cases = List.map snd list in
-      cases |> List.map helper |> List.concat
+      cases |> List.map (helper_vnode vnode) |> List.concat
     | _ -> report_error no_pos
              "Synthesis.do_unfold_view_vnode: not handled cases"
   in
-  helper view_f
+  let helper_hf hf = match hf with
+    | CF.ViewNode vnode ->
+      let view_decls = cprog.Cast.prog_view_decls in
+      let vnode_name = vnode.CF.h_formula_view_name in
+      let view_decl = List.find (fun x -> String.compare x.Cast.view_name vnode_name == 0)
+          view_decls in
+      let view_f = view_decl.Cast.view_formula in
+      let pr_struc = Cprinter.string_of_struc_formula in
+      let () = x_tinfo_hp (add_str "view_f" pr_struc) view_f no_pos in
+      helper_vnode vnode view_f
+    | _ -> report_error no_pos "n_hf not handled"
+  in
+
+  match fvar with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    helper_hf hf
+  | CF.Exists exists_f ->
+    let hf = exists_f.CF.formula_exists_heap in
+    let n_hf = helper_hf hf in
+    let exists_vars = exists_f.CF.formula_exists_qvars in
+    let n_formulas = List.map (CF.add_quantifiers exists_vars) n_hf in
+    let pure_f = exists_f.CF.formula_exists_pure in
+    List.map (CF.add_mix_formula_to_formula pure_f) n_formulas
+  | _ -> report_error no_pos
+           "Synthesis.do_unfold_view_vnode(formula) not handled case"
+  (* helper view_f *)
+
+(* let process_exists_var pre_cond post_cond =
+ *   match post_cond with
+ *   | CF.Exists exists_f ->
+ *     let exists_vars = exists_f.CF.formula_exists_qvars in
+ *     let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+ *     let aux_process exist_var post_cond =
+ *       let fvar = extract_var_f post_cond exist_var in
+ *       match fvar with
+ *       | Some f_var1 ->
+ *         let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
+ *         let similar_var = find_similar_shape_var f_var1 pre_cond in
+ *         if (similar_var != None) then
+ *           let s_var = Gen.unsome similar_var in
+ *           let () = x_binfo_hp (add_str "similar_v" pr_var) s_var no_pos in
+ *           let pf = exists_f.CF.formula_exists_pure in
+ *           let hf = exists_f.CF.formula_exists_heap in
+ *           let sst = [(exist_var, s_var)] in
+ *           let n_hf = CF.h_subst sst hf in
+ *           let n_pf = Mcpure.regroup_memo_group (Mcpure.m_apply_par sst pf) in
+ *           let vars = (CF.h_fv n_hf) @ (CP.fv (Mcpure.pure_of_mix n_pf)) in
+ *           let n_post =
+ *             if List.exists (fun x -> CP.eq_spec_var x exist_var) vars
+ *             then
+ *               CF.Exists {exists_f with formula_exists_heap = n_hf;
+ *                                        formula_exists_pure = n_pf;}
+ *             else CF.mkBase_simp n_hf n_pf
+ *           in
+ *           let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+ *           n_post
+ *         else post_cond
+ *       | None -> post_cond
+ *     in
+ *     let n_post = List.fold_left (fun f var -> aux_process var f) post_cond exists_vars in
+ *     n_post
+ *   | _ -> post_cond *)
 

@@ -190,6 +190,50 @@ let choose_rassign_pure var goal : rule list =
     )
   | _ -> []
 
+let find_equal_var var goal cur_var =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let helper_pure var1 var2 exists_vars pf1 pf2 =
+    let n_formula = CP.mkAnd pf1 pf2 no_pos in
+    let ante = n_formula in
+    (* let ante = if exists_vars = [] then n_formula
+     *   else CP.mkExists exists_vars n_formula None no_pos in *)
+    let conseq = CP.mkEqVar var1 var2 no_pos in
+    let () = x_binfo_hp (add_str "ante" pr_pf) ante no_pos in
+    let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
+    Songbird.check_pure_entail ante conseq in
+  let helper f1 f2 = match f1, f2 with
+    | CF.Exists bf1, CF.Base bf2 ->
+      let hf1 = bf1.CF.formula_exists_heap in
+      let hf2 = bf2.CF.formula_base_heap in
+      let exists_vars = bf1.CF.formula_exists_qvars in
+      let pf1 = Mcpure.pure_of_mix bf1.CF.formula_exists_pure in
+      let pf2 = Mcpure.pure_of_mix bf2.CF.formula_base_pure in
+      begin
+        match hf1, hf2 with
+        | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
+          let args1 = vnode1.CF.h_formula_view_arguments in
+          let args2 = vnode2.CF.h_formula_view_arguments in
+          List.for_all2 (fun x y -> helper_pure x y exists_vars pf1 pf2) args1 args2
+        | _ -> false
+      end
+    | _ -> false in
+  let compare_two_vars var1 var2 pre post =
+    let var1_f = extract_var_f post var1 in
+    let var2_f = extract_var_f pre var2 in
+    match var1_f, var2_f with
+    | Some f1, Some f2 ->
+      let () = x_binfo_hp (add_str "equal-var f1" pr_formula) f1 no_pos in
+      let () = x_binfo_hp (add_str "equal-var f2" pr_formula) f2 no_pos in
+      helper f1 f2
+    | _ -> false
+  in
+  let all_vars = List.filter (fun x -> not(CP.eq_spec_var x cur_var)) all_vars in
+  let () = x_binfo_hp (add_str "equal-var vars" pr_vars) all_vars no_pos in
+  let equal_vars = List.filter (fun x -> compare_two_vars var x pre post) all_vars in
+  equal_vars
+
 let choose_rule_field_dnode dn1 dn2 var goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
@@ -204,37 +248,57 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let data = List.find (fun x -> x.Cast.data_name = name) data_decls in
   let () = x_tinfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
   let pre_post = List.combine bef_args aft_args in
-  let fields = data.Cast.data_fields in
+  let fields = List.map fst data.Cast.data_fields in
   let triple = List.combine pre_post fields in
   let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
-  if List.length triple = 1 then
-    let dif_field = List.hd triple in
-    let df_name = dif_field |> snd |> fst in
-    let n_name = snd df_name in
-    let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
-    let var_list = var_list @ [n_var] in
-    let pre_val = dif_field |> fst |> fst in
-    let post_val = dif_field |> fst |> snd in
-    let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
-    let n_post_pure = CP.mkEqVar n_var post_val no_pos in
-    let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
-    let n_post = CF.add_pure_formula_to_formula n_post_pure post in
-    let n_goal = mk_goal prog n_pre n_post var_list in
-    let n_rule = choose_rassign_pure n_var n_goal in
-    if n_rule = [] then []
-    else
-      let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) n_rule no_pos in
-      let eq_rule = List.hd n_rule in
-      match eq_rule with
-      | RlAssign rassgn ->
-        let rule = RlBindWrite {
-            rb_var = var;
-            rb_field = (fst df_name, n_name);
-            rb_rhs = rassgn.ra_rhs;
-          }
-        in [rule]
-      | _ -> []
-  else []
+  let () = x_binfo_hp (add_str "triple" string_of_int) (List.length triple)
+      no_pos in
+  let helper dif_field =
+    let pre_post = fst dif_field in
+    let post_val_var = snd pre_post in
+    let found_eq_vars = find_equal_var post_val_var goal var in
+    if found_eq_vars != [] then
+      let eq_var = List.hd found_eq_vars in
+      let field = snd dif_field in
+      let () = x_binfo_hp (add_str "eq_var" pr_var) eq_var no_pos in
+      let rule = RlBindWrite {
+          rb_var = var;
+          rb_field = field;
+          rb_rhs = eq_var;
+        } in
+      [rule]
+    else []
+  in triple |> List.map helper |> List.concat
+
+(* let pure_rules dif_field =
+ *   let df_name = dif_field |> snd |> fst in
+ *   let n_name = snd df_name in
+ *   let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
+ *   let var_list = var_list @ [n_var] in
+ *   let pre_val = dif_field |> fst |> fst in
+ *   let post_val = dif_field |> fst |> snd in
+ *   let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
+ *   let n_post_pure = CP.mkEqVar n_var post_val no_pos in
+ *   let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
+ *   let n_post = CF.add_pure_formula_to_formula n_post_pure post in
+ *   let n_goal = mk_goal prog n_pre n_post var_list in
+ *   let n_rule = choose_rassign_pure n_var n_goal in
+ *   if n_rule = [] then []
+ *   else
+ *     let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) n_rule no_pos in
+ *     let eq_rule = List.hd n_rule in
+ *     match eq_rule with
+ *     | RlAssign rassgn ->
+ *       let rule = RlBindWrite {
+ *           rb_var = var;
+ *           rb_field = (fst df_name, n_name);
+ *           rb_rhs = rassgn.ra_rhs;
+ *         }
+ *       in [rule]
+ *     | _ -> []
+ * in
+ * let pure_rules = pure_rules n_var n_goal in
+ * pure_rules *)
 
 let subtract_var var formula = match formula with
   | CF.Base bf ->
@@ -262,6 +326,9 @@ let choose_rule_dnode dn1 dn2 var goal =
   else []
 
 let find_similar_shape_var fvar formula =
+  let () = x_binfo_hp (add_str "similar-shape fvar" pr_formula) fvar no_pos in
+  let () = x_binfo_hp (add_str "similar-shape formula" pr_formula) formula no_pos in
+
   let rec helper hf name args = match hf with
     | CF.DataNode f_dnode ->
       let f_name = f_dnode.CF.h_formula_data_name in
@@ -309,49 +376,13 @@ let find_similar_shape_var fvar formula =
       end
     | _ -> None
 
-let process_exists_var pre_cond post_cond =
-  match post_cond with
-  | CF.Exists exists_f ->
-    let exists_vars = exists_f.CF.formula_exists_qvars in
-    let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
-    let aux_process exist_var post_cond =
-      let fvar = extract_var_f post_cond exist_var in
-      match fvar with
-      | Some f_var1 ->
-        let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
-        let similar_var = find_similar_shape_var f_var1 pre_cond in
-        if (similar_var != None) then
-          let s_var = Gen.unsome similar_var in
-          let () = x_binfo_hp (add_str "similar_v" pr_var) s_var no_pos in
-          let pf = exists_f.CF.formula_exists_pure in
-          let hf = exists_f.CF.formula_exists_heap in
-          let sst = [(exist_var, s_var)] in
-          let n_hf = CF.h_subst sst hf in
-          let n_pf = Mcpure.regroup_memo_group (Mcpure.m_apply_par sst pf) in
-          let vars = (CF.h_fv n_hf) @ (CP.fv (Mcpure.pure_of_mix n_pf)) in
-          let n_post =
-            if List.exists (fun x -> CP.eq_spec_var x exist_var) vars
-            then
-              CF.Exists {exists_f with formula_exists_heap = n_hf;
-                                       formula_exists_pure = n_pf;}
-            else CF.mkBase_simp n_hf n_pf
-          in
-          let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
-          n_post
-        else post_cond
-      | None -> post_cond
-    in
-    let n_post = List.fold_left (fun f var -> aux_process var f) post_cond exists_vars in
-    n_post
-  | _ -> post_cond
-
 let rec choose_rassign_data cur_var goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
   let () = x_binfo_hp (add_str "PRE" pr_formula) pre no_pos in
   let () = x_binfo_hp (add_str "POST" pr_formula) post no_pos in
-  let aux_bf hf1 hf2 goal f_var1 =
+  let aux_bf hf1 hf2 goal f_var1 f_var2 =
     let var_list = goal.gl_vars in
     let prog = goal.gl_prog in
     match hf1, hf2 with
@@ -361,13 +392,14 @@ let rec choose_rassign_data cur_var goal =
       let () = x_binfo_pp "ViewNode case" no_pos in
       let view_name = vnode.CF.h_formula_view_name in
       let views = prog.Cast.prog_view_decls in
-      let n_f2 = do_unfold_view_vnode prog vnode in
-      (* let () = x_binfo_hp (add_str "n_f2" (pr_list pr_formula)) n_f2 no_pos in *)
+      let n_f2 = do_unfold_view_vnode prog f_var2 in
+      let () = x_binfo_hp (add_str "n_f2" (pr_list pr_formula)) n_f2 no_pos in
       let case_rules case =
         let n_goal = {goal with gl_post_cond = case} in
         choose_rassign_data cur_var n_goal in
-      (* [] *)
-      n_f2 |> List.map case_rules |> List.concat
+      let rules = n_f2 |> List.map case_rules |> List.concat in
+      let () = x_binfo_hp (add_str "cases rules" pr_rules) rules no_pos in
+      rules
     | _ -> [] in
   let aux f_var1 f_var2 goal =
     let var_list = goal.gl_vars in
@@ -375,25 +407,26 @@ let rec choose_rassign_data cur_var goal =
       | CF.Base bf1, CF.Base bf2 ->
         let hf1 = bf1.CF.formula_base_heap in
         let hf2 = bf2.CF.formula_base_heap in
-        aux_bf hf1 hf2 goal f_var1
+        aux_bf hf1 hf2 goal f_var1 f_var2
       | CF.Base bf1, CF.Exists bf2 ->
         let hf1 = bf1.CF.formula_base_heap in
         let hf2 = bf2.CF.formula_exists_heap in
-        aux_bf hf1 hf2 goal f_var1
+        aux_bf hf1 hf2 goal f_var1 f_var2
       | _ -> [] in
-    let similar_var = find_similar_shape_var f_var2 pre in
-    let shape_rule = match similar_var with
-      | Some eq_var ->
-        if List.exists (fun x -> CP.eq_spec_var x eq_var) var_list then
-          let rule = RlAssign {
-              ra_lhs = cur_var;
-              ra_rhs = eq_var;
-            } in
-          [rule]
-        else []
-      | None -> []
-    in
-    field_rules @ shape_rule in
+    (* let similar_var = find_similar_shape_var f_var2 pre in
+     * let shape_rule = match similar_var with
+     *   | Some eq_var ->
+     *     if List.exists (fun x -> CP.eq_spec_var x eq_var) var_list then
+     *       let rule = RlAssign {
+     *           ra_lhs = cur_var;
+     *           ra_rhs = eq_var;
+     *         } in
+     *       [rule]
+     *     else []
+     *   | None -> []
+     * in *)
+    (* field_rules @ shape_rule in *)
+    field_rules in
   match pre, post with
   | CF.Base _, CF.Base _
   | CF.Base _, CF.Exists _
@@ -481,8 +514,8 @@ let choose_rule_assign goal : rule list =
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  let n_post = process_exists_var pre post in
-  let goal = {goal with gl_post_cond = n_post} in
+  (* let n_post = process_exists_var pre post in *)
+  (* let goal = {goal with gl_post_cond = n_post} in *)
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ ->
@@ -556,7 +589,7 @@ let subs_bind_write formula var field new_val data_decls =
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
           (DataNode n_dnode)
-        else hf 
+        else hf
       | Star sf ->
         let n_h1 = helper sf.CF.h_formula_star_h1 in
         let n_h2 = helper sf.CF.h_formula_star_h2 in
