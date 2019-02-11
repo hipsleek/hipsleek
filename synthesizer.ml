@@ -553,7 +553,6 @@ and process_one_derivation drv : synthesis_tree =
   | DrvStatus true -> mk_synthesis_tree_success goal rule
   | DrvSubgoals gs -> process_conjunctive_subgoals goal rule gs
 
-
 (*********************************************************************
  * The main synthesis algorithm
  *********************************************************************)
@@ -570,7 +569,6 @@ let exp_to_cast (exp: CP.exp) = match exp with
       exp_iconst_pos = loc;
     }
   | _ -> report_error no_pos "exp_to_cast: not handled"
-
 
 let synthesize_st_core st =
   let rule = st.stc_rule in

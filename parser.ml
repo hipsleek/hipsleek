@@ -966,7 +966,7 @@ let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 let opt_spec_list = SHGram.Entry.mk "opt_spec_list"
 let statement = SHGram.Entry.mk "statement"
-let cp_file = SHGram.Entry.mk "cp_file" 
+let cp_file = SHGram.Entry.mk "cp_file"
 
 EXTEND SHGram
   GLOBAL:  hip_with_option sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
@@ -1050,7 +1050,8 @@ non_empty_command:
       | t=shapeElim_cmd     -> ShapeElim t
       | t=shapeReuseSubs_cmd     -> ShapeReuseSubs t
       | t=shapeReuse_cmd     -> ShapeReuse t
-      | t=predUnfold_cmd     -> 
+      | t=sleek_proc_header         -> ProcDef t
+      | t=predUnfold_cmd     ->
         let check_qualifier q =
           begin
            match q with
@@ -1092,7 +1093,7 @@ non_empty_command:
       | t= captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
       | t=cmp_cmd           ->  CmpCmd t
-      | t=time_cmd            -> t 
+      | t=time_cmd            -> t
       | t = ui_decl         -> UiDef t
       (* TermInf: Command for Termination Inference *)
       | t = templ_decl -> TemplDef t
@@ -3312,7 +3313,7 @@ hp_decl:[[
 
  (*end of sleek part*)   
  (*start of hip part*)
-hprogn: 
+hprogn:
   [[ t = opt_decl_list ->
 		  let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
@@ -3381,7 +3382,7 @@ hprogn:
     let ui_lst = ui_defs # get_stk in
     let exp_lst = exp_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
-    let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in 
+    let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in
     (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
@@ -3698,8 +3699,7 @@ proc_decl:
 
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
-    (*let static_specs, dynamic_specs = split_specs osl in*)
-      let cur_file = proc_files # top in
+     let cur_file = proc_files # top in
      mkProc cur_file id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
 
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
@@ -3707,7 +3707,14 @@ proc_header:
     let cur_file = proc_files # top in
     mkProc cur_file id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
-constructor_decl: 
+sleek_proc_header:
+  [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; hparam = opt_resource_param; ot=opt_throws; osl= opt_spec_list ->
+     mkProc "sleek_header.slk" id [] "" None false ot fpl t hparam osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+
+  | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+    mkProc "sleek_header.slk" id [] "" None false ot fpl void_type None osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+
+constructor_decl:
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
    | h=constructor_header -> h]];
 

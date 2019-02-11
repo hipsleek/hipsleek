@@ -2,15 +2,16 @@ data node {
      int val;
      node next
 }.
-
-pred ll<n> == self = null & n = 0
-	or (exists v, q: self::node<v, q> * q::ll<n-1>).
-
 // data node {
 //      node next;
 // }.
 
-// synthesize [vars] pre ~> post;
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void append(node x, node y)
+  requires x::ll<n1> * y::ll<n2> & x!=null 
+ensures x::ll<n1+n2>;.
 
 // synthesize [int x, int b] x = a ~> x = b.
 // PASS

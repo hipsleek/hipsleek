@@ -413,7 +413,7 @@ let do_unfold_view_vnode cprog fvar =
 (* let find_similar_shape_var fvar formula =
  *   let () = x_binfo_hp (add_str "similar-shape fvar" pr_formula) fvar no_pos in
  *   let () = x_binfo_hp (add_str "similar-shape formula" pr_formula) formula no_pos in
- * 
+ *
  *   let rec helper hf name args = match hf with
  *     | CF.DataNode f_dnode ->
  *       let f_name = f_dnode.CF.h_formula_data_name in

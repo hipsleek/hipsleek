@@ -21,26 +21,9 @@ module MP = Mcpure
 module CVP = CvpermUtils
 
 let cprog = Cast.cprog
-(* ref {  *)
-(*     Cast.prog_data_decls = []; *)
-(*     Cast.prog_view_decls = []; *)
-(*     Cast.prog_logical_vars = []; *)
-(*     Cast.prog_rel_decls = (let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in s); *)
-(*     Cast.prog_templ_decls = []; *)
-(*     Cast.prog_ui_decls = []; *)
-(*     Cast.prog_ut_decls = []; *)
-(*     Cast.prog_hp_decls = []; *)
-(*     Cast.prog_view_equiv = []; *)
-(*     Cast.prog_axiom_decls = [];  *)
-(*     (\* [4/10/2011] An Hoa *\) *)
-(*     (\*Cast.old_proc_decls = [];*\) *)
-(*     Cast.new_proc_decls = Hashtbl.create 1; (\* no need for proc *\) *)
-(*     (\*Cast.prog_left_coercions = []; *)
-(*       Cast.prog_right_coercions = [];*\) *)
-(*     Cast. prog_barrier_decls = []} ;; *)
 
 let () =
-  let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in 
+  let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in
   Cast.set_prog {!cprog with prog_rel_decls = s}
 
 (* let get_sorted_view_decls () =                                   *)
@@ -49,7 +32,7 @@ let () =
 (*   vdefs                                                          *)
 let get_sorted_view_decls () = Cast.get_sorted_view_decls !cprog
 
-let update_view_decl_cprog vdef = 
+let update_view_decl_cprog vdef =
   x_add (Cast.update_view_decl ~caller:x_loc) !cprog vdef
 
 let update_view_decl_iprog_g update_scc upd_flag vdef = 

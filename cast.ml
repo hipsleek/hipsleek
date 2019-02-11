@@ -598,7 +598,7 @@ let cprog = ref {
     new_proc_decls = Hashtbl.create 1; (* no need for proc *)
     (*prog_left_coercions = [];
       prog_right_coercions = [];*)
-     prog_barrier_decls = []} ;;
+    prog_barrier_decls = []}
 
 let global_prog = cprog
 (* ref (None : prog_decl option) *)
@@ -606,6 +606,7 @@ let global_prog = cprog
 (* let cprog:(prog_decl option) ref = ref None *)
 let cprog = global_prog
 
+let prog_proc_decls = ref ([]: proc_decl list)
 let get_cprog () = !cprog
 
 let set_prog cp =

@@ -36,6 +36,7 @@ module H = Hashtbl
 exception SLEEK_Exception
 
 type command =
+  | ProcDef of I.proc_decl
   | DataDef of I.data_decl
   | PredDef of I.view_decl
   | FuncDef of I.func_decl
@@ -150,15 +151,16 @@ let var_tab : var_table_t = H.create 10240
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
   | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
-  | FuncDef  _ -> "FuncDef"  
-  | RelDef  _ -> "RelDef" 
+  | FuncDef  _ -> "FuncDef"
+  | RelDef  _ -> "RelDef"
+  | ProcDef _ -> "ProcDef"
   | TemplDef _ -> "TemplDef"
   | UtDef _ -> "UtDef"
   | UiDef _ -> "UiDef"
-  | HpDef  _ -> "HpDef"  
-  | AxiomDef  _ -> "AxiomDef"  
+  | HpDef  _ -> "HpDef"
+  | AxiomDef  _ -> "AxiomDef"
   | LemmaDef  _ -> "LemmaDef"
-  | LetDef  _ -> "LetDef"   
+  | LetDef  _ -> "LetDef"
   | EntailCheck _ -> "EntailCheck"
   | Synthesize _ -> "Synthesize"
   | SatCheck _ -> "SatCheck"

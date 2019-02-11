@@ -92,8 +92,6 @@ module M = Lexer.Make(Token.Token)
     match c with
     | UiDef uidef -> process_ui_def uidef
     | EntailCheck (iante, iconseq, etype) -> (process_entail_check iante iconseq etype; ())
-    (* let pr_op () = process_entail_check_common iante iconseq in  *)
-    (* Log.wrap_calculate_time pr_op !Globals.source_files ()               *)
     | SatCheck f -> (process_sat_check f; ())
     | NonDetCheck (v, f) -> (process_nondet_check v f)
     | RelAssume (id, ilhs, iguard, irhs) -> x_add process_rel_assume id ilhs iguard irhs
@@ -131,7 +129,7 @@ module M = Lexer.Make(Token.Token)
     | ShapeDeriveView ids -> process_shape_derive_view ids
     | ShapeExtnView (ids, extn) -> process_shape_extn_view ids extn
     | ShapeNormalize ids -> process_shape_normalize ids
-    | DataMarkRec ids -> process_data_mark_rec ids 
+    | DataMarkRec ids -> process_data_mark_rec ids
     | PredElimHead ids -> process_pred_elim_head ids
     | PredElimTail ids -> process_pred_elim_tail ids
     | PredUnifyDisj ids -> process_pred_unify_disj ids
@@ -140,15 +138,8 @@ module M = Lexer.Make(Token.Token)
     | PredNormDisj (pred_ids) -> process_pred_norm_disj pred_ids
     | RelInfer (pre_ids, post_ids) -> process_rel_infer pre_ids post_ids
     | CheckNorm f -> process_check_norm f
-    | EqCheck (lv, if1, if2) ->
-      (* let () = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-      process_eq_check lv if1 if2
-    | InferCmd (itype, ivars, iante, iconseq, etype) -> 
-      (* None  -> look for presence of @leak
-         Some true
-         Some false
-      *)
-
+    | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
+    | InferCmd (itype, ivars, iante, iconseq, etype) ->
       let () = print_endline "InferCmd2" in
       let change_etype x f = 
         if f then match x with 
@@ -166,17 +157,18 @@ module M = Lexer.Make(Token.Token)
     | CmpCmd ccmd -> process_cmp_command ccmd
     | LetDef (lvar, lbody) -> put_var lvar lbody
     | BarrierCheck bdef -> process_barrier_def bdef
-    | Time (b,s,_) -> 
+    | Time (b,s,_) ->
       if b then Gen.Profiling.push_time s 
       else Gen.Profiling.pop_time s
     | LemmaDef ldef -> if not(I.is_lemma_decl_ahead ldef) then process_list_lemma ldef
     | TemplSolv idl -> process_templ_solve idl
     | TermInfer -> process_term_infer ()
     | TermAssume (iante, iconseq) -> process_term_assume iante iconseq
-    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) (* | LemmaDef _ *) 
+    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _
+    | ProcDef _
     | TemplDef _ | UtDef _ -> ()
     | ExpectInfer (t, e) -> process_validate_infer t e
-    | EmptyCmd -> () 
+    | EmptyCmd -> ()
 
 (* TODO : This is a repetition of proc_one_cmd *)
 let proc_gen_cmd cmd = proc_one_cmd cmd
