@@ -39,7 +39,7 @@ let cprog = Cast.cprog
 (*       Cast.prog_right_coercions = [];*\) *)
 (*     Cast. prog_barrier_decls = []} ;; *)
 
-let () = 
+let () =
   let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in 
   Cast.set_prog {!cprog with prog_rel_decls = s}
 

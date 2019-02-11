@@ -410,3 +410,83 @@ let do_unfold_view_vnode cprog fvar =
  *     n_post
  *   | _ -> post_cond *)
 
+(* let find_similar_shape_var fvar formula =
+ *   let () = x_binfo_hp (add_str "similar-shape fvar" pr_formula) fvar no_pos in
+ *   let () = x_binfo_hp (add_str "similar-shape formula" pr_formula) formula no_pos in
+ * 
+ *   let rec helper hf name args = match hf with
+ *     | CF.DataNode f_dnode ->
+ *       let f_name = f_dnode.CF.h_formula_data_name in
+ *       let f_args = f_dnode.CF.h_formula_data_arguments in
+ *       if List.length f_args = List.length args then
+ *         let similar_var = (String.compare f_name name == 0) &&
+ *                           List.for_all2 (fun x y -> CP.eq_spec_var x y) f_args args in
+ *         if similar_var then Some f_dnode.CF.h_formula_data_node
+ *         else None
+ *       else None
+ *     | CF.ViewNode vnode ->
+ *       let v_name = vnode.CF.h_formula_view_name in
+ *       let v_args = vnode.CF.h_formula_view_arguments in
+ *       if List.length v_args = List.length args then
+ *         let similar_var = (String.compare v_name name == 0) &&
+ *                           List.for_all2 (fun x y -> CP.eq_spec_var x y) v_args args in
+ *         if similar_var then Some vnode.CF.h_formula_view_node
+ *         else None
+ *       else None
+ *     | CF.Star sf ->
+ *       let f1 = sf.CF.h_formula_star_h1 in
+ *       begin
+ *         match helper f1 name args with
+ *         | None ->
+ *           let f2 = sf.CF.h_formula_star_h2 in
+ *           helper f2 name args
+ *         | Some sv -> Some sv
+ *       end
+ *     | _ -> None in
+ *   match fvar, formula with
+ *     | CF.Base bf_var, CF.Base bf ->
+ *       let hf_var = bf_var.CF.formula_base_heap in
+ *       let hf_f = bf.CF.formula_base_heap in
+ *       begin
+ *         match hf_var with
+ *         | DataNode dnode ->
+ *           let name = dnode.CF.h_formula_data_name in
+ *           let args = dnode.CF.h_formula_data_arguments in
+ *           helper hf_f name args
+ *         | ViewNode vnode ->
+ *           let name = vnode.CF.h_formula_view_name in
+ *           let args = vnode.CF.h_formula_view_arguments in
+ *           helper hf_f name args
+ *         | _ -> None
+ *       end
+ *     | _ -> None *)
+
+(* let choose_framing_rule var goal : rule list =
+ *   let pre = goal.gl_pre_cond in
+ *   let post = goal.gl_post_cond in
+ *   let framed_pre, vars_w_fields = frame_var var pre goal.gl_prog in
+ *   let framed_post, _ = frame_var var post goal.gl_prog in
+ *   let aux cur_var field_var field goal =
+ *     let rules = choose_rassign_data field_var goal in
+ *     if rules != [] then
+ *       let rule = List.hd rules in
+ *       match rule with
+ *       | RlAssign assign_rule ->
+ *         let final_rule = RlBindWrite {
+ *             rb_var = cur_var;
+ *             rb_field = field;
+ *             rb_rhs = assign_rule.ra_rhs;
+ *           }
+ *         in [final_rule]
+ *       | _ -> []
+ *     else [] in
+ *   if vars_w_fields != [] then
+ *     let () = x_binfo_hp (add_str "framed_pre" pr_formula) framed_pre no_pos in
+ *     let () = x_binfo_hp (add_str "framed_post" pr_formula) framed_post no_pos in
+ *     let field_vars = vars_w_fields |> List.split |> fst in
+ *     let n_vars = goal.gl_vars @ field_vars |> CP.remove_dups_svl in
+ *     let n_goal = mk_goal goal.gl_prog framed_pre framed_post n_vars in
+ *     let rules = List.map (fun (x,y) -> aux var x y n_goal) vars_w_fields in
+ *     List.concat rules
+ *   else [] *)
+

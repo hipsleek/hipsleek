@@ -28,16 +28,19 @@ pred ll<n> == self = null & n = 0
 // m::ll<n2>.
 // PASS
 
-// Exists Rule
+// x.next = y
 // synthesize [node x, node y]
-// x::node<n1, m> * y::ll<n2> & m = null
+// x::node<v1, m> * y::ll<n2> & m = null & n1 = 1
 // ~>
-// (exists u: x::node<n1, u> * u::ll<n2>).
+// x::ll<n1+n2> & true.
 // PASS
 
-// Pre-process step
+// function call f(x.next, y);
+// requires x::ll<n1> * y::ll<n2> & x!=null 
+// ensures x::ll<n1+n2>;
 synthesize [node x, node y]
-x::node<v1, m> * y::ll<n2> & m = null & n1 = 1
+x::node<v1, m> * m::ll<n3> * y::ll<n2> & m != null & n1 = n3 + 1
 ~>
 x::ll<n1+n2> & true.
 
+// How to declare pre/post?
