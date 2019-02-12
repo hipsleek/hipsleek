@@ -42,6 +42,7 @@ let proc_to_repair = ref None
 let repair_loc = ref None
 let repair_pre_ctx = ref None
 let repair_proc = ref None
+let repair_prog = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -1353,6 +1354,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label):
   CF.list_failesc_context =
   let () = repair_proc := Some proc in
+  let () = repair_prog := Some prog in
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{
           es with

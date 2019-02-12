@@ -740,23 +740,20 @@ let start_repair iprog =
     let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx in
     let cproc = !Typechecker.repair_proc |> Gen.unsome in
     let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
-    (* let () = x_binfo_hp (add_str "specs" pr_struc_f) specs no_pos in *)
     let post_cond = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
     let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
-    (* let tmpl_procs = List.map (create_tmpl_proc repairing_proc) cands in *)
+    let cprog = !Typechecker.repair_prog |> Gen.unsome in
+    let args = cproc.Cast.proc_args |>
+               List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let vars = args in
+    if pre_cond = None then None
+    else
+      let pre = pre_cond |> Gen.unsome in
+      let goal = Syn.mk_goal_w_procs cprog [cproc] pre post_cond vars in
+      let _ = Synthesizer.synthesize_program goal in
+      None
 
-    (* let repair_res_list =
-     *   List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in *)
-    (* pre = x::node<a> *)
-    (* post = x::node<b> *)
-      (* | SpecVar of (typ * ident * primed) *)
-
-
-    (* let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-     * let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-     * let best_res = get_best_repair h_repair_res_list in *)
-    None
-    (* begin
+  (* begin
      *   match best_res with
      *   | None ->
      *     (* None *)

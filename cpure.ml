@@ -29,6 +29,8 @@ let unknown_spec_var = mk_spec_var "__UNKNOWN"
 
 let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
 
+let mk_typed_sv = mk_typed_spec_var
+
 let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
 
 let is_zero s = s==mk_zero
