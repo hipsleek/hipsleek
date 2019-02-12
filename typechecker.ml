@@ -39,6 +39,9 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 let phase_infer_ind = ref false
 let repairing_ents = ref []
 let proc_to_repair = ref None
+let repair_loc = ref None
+let repair_pre_ctx = ref None
+let repair_proc = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -1349,6 +1352,7 @@ and get_xpure_of_formula f = 1
 and check_exp_a (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label):
   CF.list_failesc_context =
+  let () = repair_proc := Some proc in
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{
           es with
@@ -1778,6 +1782,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
+      let () = repair_pre_ctx := Some ctx in
       let () = x_tinfo_hp (add_str "ctx bind start: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let ctx = CF.transform_list_failesc_context
@@ -1950,9 +1955,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                       }))
                     rs
                 else
+                  let () = repair_loc := Some pos in
                   (*delay pritinting to check post*)
                   let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^
-                           ("bind: node " ^ (Cprinter.string_of_formula vheap) ^
+                           ("bindxxx: node " ^ (Cprinter.string_of_formula vheap) ^
                             " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n"
                            (* add branch info *)
                            ^ ("(Cause of Bind Failure)") ^

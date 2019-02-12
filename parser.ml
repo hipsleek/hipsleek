@@ -1055,7 +1055,7 @@ non_empty_command:
         let check_qualifier q =
           begin
            match q with
-           | Some id -> 
+           | Some id ->
              if id="disj" then () else failwith ("found "^id^" qbut expecting disj")
            | None -> ()
           end in

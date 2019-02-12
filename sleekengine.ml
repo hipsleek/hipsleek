@@ -176,8 +176,9 @@ let iprog = { I.prog_include_decls =[];
               I.prog_test_comps = [];
             }
 
-let () = Iast.set_iprog iprog 
+let () = Iast.set_iprog iprog
 
+let iprog_proc_decls = ref ([] : Iast.proc_decl list)
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
                  Cast.data_fields_new = [];
@@ -189,6 +190,7 @@ let cobj_def = { Cast.data_name = "Object";
                  Cast.data_methods = [] }
 
 let cprog = Cprog_sleek.cprog
+let cprog_proc_decls = Cast.prog_proc_decls
  (* ref {  *)
  (*    Cast.prog_data_decls = []; *)
  (*    Cast.prog_view_decls = []; *)
@@ -738,7 +740,7 @@ let process_list_lemma ldef_lst =
 
 let process_data_def ddef =
   if Astsimp.check_data_pred_name iprog ddef.I.data_name then
-    (* let tmp = iprog.I.prog_data_decls in *)
+    let () = x_binfo_pp "marking \n" no_pos in
     let _ = iprog.I.prog_data_decls <- ddef :: (List.filter (fun dd -> not(string_eq dd.I.data_name raisable_class)) iprog.I.prog_data_decls) in
     let _ = if (!Globals.perm = Globals.Dperm || !Globals.perm = Globals.Bperm) then () else
         let _ = Iast.build_exc_hierarchy true iprog in
@@ -747,10 +749,12 @@ let process_data_def ddef =
         ()
     in ()
   else begin
-    (* dummy_exception() ; *)
-    (* print_string (ddef.I.data_name ^ " is already defined.\n") *)
     report_error ddef.I.data_pos (ddef.I.data_name ^ " is already defined.")
   end
+
+let process_proc_def pdef =
+  let () = iprog_proc_decls := [pdef]@(!iprog_proc_decls) in
+  ()
 
 let process_data_def ddef =
   Debug.no_1 "process_data_def" pr_none pr_none process_data_def ddef
@@ -933,12 +937,18 @@ let convert_data_and_pred_to_cast_x () =
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog6) else () in
   cprog := cprog6
 
-let convert_data_and_pred_to_cast () = 
+let convert_data_and_pred_to_cast () =
   let pr _ = pr_list Iprinter.string_of_view_decl iprog.I.prog_view_decls in
-  let pr2 _ = pr_list Cprinter.string_of_view_decl !cprog.Cast.prog_view_decls in
-  Debug.no_1 "convert_data_and_pred_to_cast" pr pr2 convert_data_and_pred_to_cast_x ()
+  let pr2 _ = pr_list Cprinter.string_of_view_decl !cprog.Cast.prog_view_decls
+  in Debug.no_1 "convert_data_and_pred_to_cast" pr pr2
+    convert_data_and_pred_to_cast_x ()
 
-let process_barrier_def bd = 
+let convert_proc_decls_to_cast () =
+  let cproc_decls = List.map (Astsimp.trans_proc iprog) !iprog_proc_decls in
+  cprog_proc_decls := cproc_decls
+
+
+let process_barrier_def bd =
   if !Globals.print_core || !Globals.print_core_all then print_string (Iprinter.string_of_barrier_decl bd) else () ;
   try
     let bd = Astsimp.case_normalize_barrier iprog bd in
@@ -946,10 +956,10 @@ let process_barrier_def bd =
     (*let cbd = Astsimp.normalize_barr_decl !cprog cbd in*)
     Astsimp.check_barrier_wf !cprog cbd;
     print_string ("Barrrier "^bd.I.barrier_name^" Success\n")
-  with 
+  with
   | Error.Malformed_barrier s -> print_string ("Barrrier "^bd.I.barrier_name^" Fail: "^s^"\n")
 
-let process_barrier_def bd = 
+let process_barrier_def bd =
   Debug.no_1 "process_barrier" (fun _ -> "") (fun _ -> "done") process_barrier_def bd
 
 (** An Hoa : Second stage of parsing : iprog already contains the whole input.
@@ -3010,7 +3020,7 @@ let process_synthesize typed_vars pre post =
   let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
-  let goal = Synthesis.mk_goal !cprog pre_f post_f svs in
+  let goal = Synthesis.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
   let _ = Synthesizer.synthesize_program goal in
   ()
 

@@ -20,6 +20,7 @@ let pr_vars = Cprinter.string_of_spec_var_list
 (* goal *)
 type goal = {
   gl_prog : Cast.prog_decl;
+  gl_proc_decls: Cast.proc_decl list;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
   gl_equiv_vars : (CP.spec_var * CP.spec_var) list;
@@ -103,6 +104,15 @@ and synthesis_tree_status =
 
 let mk_goal cprog pre post vars =
   { gl_prog = cprog;
+    gl_proc_decls = [];
+    gl_pre_cond = pre;
+    gl_post_cond = post;
+    gl_equiv_vars = [];
+    gl_vars = vars;  }
+
+let mk_goal_w_procs cprog proc_decls pre post vars =
+  { gl_prog = cprog;
+    gl_proc_decls = proc_decls;
     gl_pre_cond = pre;
     gl_post_cond = post;
     gl_equiv_vars = [];
@@ -372,7 +382,48 @@ let do_unfold_view_vnode cprog fvar =
     List.map (CF.add_mix_formula_to_formula pure_f) n_formulas
   | _ -> report_error no_pos
            "Synthesis.do_unfold_view_vnode(formula) not handled case"
-  (* helper view_f *)
+
+let get_pre_cond (struc_f: CF.struc_formula) = match struc_f with
+  | CF.EBase bf ->
+    let pre_cond = bf.CF.formula_struc_base in
+    pre_cond
+  | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
+
+let get_post_cond (struc_f: CF.struc_formula) =
+  let rec helper sf = match sf with
+    | CF.EBase bf ->
+      let f = bf.formula_struc_base in
+      if CF.is_emp_formula f then
+        bf.CF.formula_struc_continuation |> Gen.unsome |> helper
+      else f
+    | EAssume assume_f ->
+      assume_f.formula_assume_struc |> helper
+    | _ -> report_error no_pos "Synthesis.get_pre_post.helper unhandled cases"
+  in
+  match struc_f with
+  | CF.EBase bf ->
+    bf.formula_struc_continuation |> Gen.unsome |> helper
+  | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
+
+let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula with
+  | Base bf ->
+    let pf = bf.formula_base_pure |> Mcpure.pure_of_mix in
+    let eq_vars = CP.pure_ptr_equations_aux false pf in
+    let () = x_binfo_hp (add_str "eq_vars" (pr_list (pr_pair pr_var pr_var))) eq_vars no_pos in
+    let n_f = CF.subst eq_vars formula in
+    let () = x_binfo_hp (add_str "n_f" pr_formula) n_f no_pos in
+    n_f
+  | Or bf -> let f1 = bf.formula_or_f1 in
+    let f2 = bf.formula_or_f2 in
+    let n_f1 = simplify_equal_vars f1 in
+    let n_f2 = simplify_equal_vars f2 in
+    Or {bf with formula_or_f1 = n_f1;
+                formula_or_f2 = n_f2}
+  | Exists bf ->
+    let pf = bf.formula_exists_pure |> Mcpure.pure_of_mix in
+    let eq_vars = CP.pure_ptr_equations_aux false pf in
+    let n_f = CF.subst eq_vars formula in
+    n_f
 
 (* let process_exists_var pre_cond post_cond =
  *   match post_cond with

@@ -11,7 +11,7 @@ pred ll<n> == self = null & n = 0
 
 void append(node x, node y)
   requires x::ll<n1> * y::ll<n2> & x!=null 
-ensures x::ll<n1+n2>;.
+  ensures exists n3: x::ll<n3> & n3 = n1 + n2;.
 
 // synthesize [int x, int b] x = a ~> x = b.
 // PASS
@@ -40,8 +40,8 @@ ensures x::ll<n1+n2>;.
 // requires x::ll<n1> * y::ll<n2> & x!=null 
 // ensures x::ll<n1+n2>;
 synthesize [node x, node y]
-x::node<v1, m> * m::ll<n3> * y::ll<n2> & m != null & n1 = n3 + 1
+a::node<v1, m> * m::ll<n3> * b::ll<n2> & m != null & n1 = n3 + 1
 ~>
-x::ll<n1+n2> & true.
+a::ll<n1+n2> & true.
 
 // How to declare pre/post?

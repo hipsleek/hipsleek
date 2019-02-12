@@ -8,10 +8,14 @@ open Iast
 module C = Cast
 module CP = Cpure
 module CF = Cformula
+module Syn = Synthesis
 
 let stop = ref false
 let next_proc = ref false
 let pr_proc = Iprinter.string_of_proc_decl
+let pr_ctx = Cprinter.string_of_list_failesc_context
+let pr_formula = Cprinter.string_of_formula
+let pr_struc_f = Cprinter.string_of_struc_formula
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
@@ -589,9 +593,7 @@ let create_tmpl_proc proc replaced_exp vars heuristic =
     replace_assign_exp replaced_exp var_names heuristic in
   let () = x_tinfo_hp (add_str "replaced_vars: " (pr_list pr_id))
       replaced_vars no_pos in
-  let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos
-  in
-  (* None *)
+  let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos in
   if n_exp = replaced_exp then
     let () = next_proc := false in
     None
@@ -699,98 +701,27 @@ let repair_by_mutation iprog repairing_proc =
   in
   List.map (fun x -> check_candidate iprog x) candidates
 
-let synthesize cprog (pre:CF.formula) (post:CF.formula) (vars:CP.spec_var list) =
-  let pr_formula = Cprinter.string_of_formula in
-  let () = x_binfo_hp (add_str "pre: " pr_formula) pre no_pos in
-  let () = x_binfo_hp (add_str "post: " pr_formula) post no_pos in
-  let goal = Synthesis.mk_goal cprog pre post vars in
-  let _ = Synthesizer.synthesize_one_goal goal in
-  None
+let filter_cand buggy_loc cand =
+  match buggy_loc with
+  | Some b_loc ->
+    let cand_pos = Iast.get_exp_pos cand in
+    let () = x_tinfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc no_pos in
+    let () = x_tinfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos no_pos in
+    let b_lnum = b_loc.start_pos.Lexing.pos_lnum in
+    let cand_lnum = cand_pos.start_pos.Lexing.pos_lnum in
+    b_lnum = cand_lnum
+  | None -> true
 
-let testing cprog =
-  let var_x = CP.SpecVar (Named "node", "x", VarGen.Unprimed) in
-  let var_y = CP.SpecVar (Named "node", "y", VarGen.Unprimed) in
-  let var_q = CP.SpecVar (Named "node", "q", VarGen.Unprimed) in
-  let var_n1 = CP.SpecVar (Int, "n1", VarGen.Unprimed) in
-  let var_n2 = CP.SpecVar (Int, "n2", VarGen.Unprimed) in
-  let var_n3 = CP.SpecVar (Int, "n3", VarGen.Unprimed) in
-  let var_t = CP.SpecVar (Int, "t", VarGen.Unprimed) in
-  let one = CP.mkIConst 1 no_pos in
-  let var_a = CP.SpecVar (Named "node", "a", VarGen.Unprimed) in
-  let var_b = CP.SpecVar (Named "node", "b", VarGen.Unprimed) in
-
-  let test1 =
-    let pre =
-      let emp = CF.HEmp in
-      let pure1 = CP.mkEqn var_n1 var_n2 no_pos in
-      let pure2 = CP.mkEqn var_t var_n2 no_pos in
-      let pure = CP.mkAnd pure1 pure2 no_pos in
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-    let post =
-      let emp = CF.HEmp in
-      let pure1 = CP.mkEqn var_n1 var_n3 no_pos in
-      let pure2 = CP.mkEqn var_t var_n2 no_pos in
-      let pure = CP.mkAnd pure1 pure2 no_pos in
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-    synthesize cprog pre post [var_n1; var_t] in
-  let test2 =
-    let pre =
-      let emp = CF.HEmp in
-      let pure = CP.mkEqn var_n1 var_n2 no_pos in
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-    let post =
-      let emp = CF.HEmp in
-      let pure = CP.mkEqn var_n1 var_n3 no_pos in
-      CF.mkBase_simp emp (Mcpure.mix_of_pure pure)  in
-    synthesize cprog pre post [var_n1; var_n3] in
-  let test3 =
-    let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    let post =
-      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    synthesize cprog pre post [var_x; var_n2] in
-  let test4 =
-    let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    let post =
-      let node_x = CF.mkDataNode var_x "node" [var_n2; var_a] no_pos in
-      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    synthesize cprog pre post [var_x; var_n2; var_y] in
-  let test5 =
-    let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    let post =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_b] no_pos in
-      CF.mkBase_simp node_x (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    synthesize cprog pre post [var_x; var_b] in
-  (* Test6: test framming *)
-  let test6 =
-    let pre =
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_a] no_pos in
-      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    let post =
-      let node_y = CF.mkDataNode var_y "node" [var_n2; var_b] no_pos in
-      let node_x = CF.mkDataNode var_x "node" [var_n1; var_y] no_pos in
-      let hf = CF.mkStarH node_x node_y no_pos in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure (CP.mkTrue no_pos)) in
-    synthesize cprog pre post [var_x; var_y] in
-  (* test7: test View *)
-  (* x->node{q} * y :: ll<n2> & q = null; x ::ll<1+n2>*)
-
-  ()
+let find_pre_cond ctx = match ctx with
+  | Some r_ctx ->
+    let () = x_tinfo_hp (add_str "ctx" pr_ctx) r_ctx no_pos in
+    let ctx_f = CF.formula_of_list_failesc_context r_ctx in
+    let () = x_binfo_hp (add_str "ctx_f" pr_formula) ctx_f no_pos in
+    let ctx_f = Synthesis.simplify_equal_vars ctx_f in
+    Some ctx_f
+  | None -> None
 
 let start_repair iprog =
-  let cprog, _ = Astsimp.trans_prog iprog in
   let pr_exps = pr_list Iprinter.string_of_exp in
 
   match (!Typechecker.proc_to_repair) with
@@ -799,13 +730,20 @@ let start_repair iprog =
     let () = x_binfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
         no_pos in
     let () = Globals.start_repair := true in
-    let proc_to_repair = List.find (fun x -> String.compare (x.proc_name)
+    let repairing_iproc = List.find (fun x -> String.compare (x.proc_name)
                                        proc_name_to_repair == 0)
         iprog.prog_proc_decls in
-    let () = x_tinfo_hp (add_str "proc: " pr_proc) proc_to_repair no_pos in
-    let cands = get_stmt_candidates (Gen.unsome proc_to_repair.proc_body) in
+    let () = x_tinfo_hp (add_str "proc: " pr_proc) repairing_iproc no_pos in
+    let cands = get_stmt_candidates (Gen.unsome repairing_iproc.proc_body) in
+    let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let () = testing cprog in
+    let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx in
+    let cproc = !Typechecker.repair_proc |> Gen.unsome in
+    let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
+    (* let () = x_binfo_hp (add_str "specs" pr_struc_f) specs no_pos in *)
+    let post_cond = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+    let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+    (* let tmpl_procs = List.map (create_tmpl_proc repairing_proc) cands in *)
 
     (* let repair_res_list =
      *   List.map (fun stmt -> repair_one_heap_stmt iprog proc_to_repair stmt) cands in *)

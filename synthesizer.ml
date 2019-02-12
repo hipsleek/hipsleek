@@ -20,6 +20,7 @@ exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
 let pr_formula = Cprinter.string_of_formula
+let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_hf = Cprinter.string_of_h_formula
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
@@ -422,7 +423,20 @@ let choose_rule_assign goal : rule list =
 (*********************************************************************
  * Choose function call rules
  *********************************************************************)
-let choose_func_call goal = []
+let choose_func_call goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_post_cond in
+  let procs = goal.gl_proc_decls in
+  if procs = [] then []
+  else
+    let proc_decl = List.hd procs in
+    let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+    let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
+    let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
+    let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
+    let post_cond = specs |> get_post_cond |> rm_emp_formula in
+    let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+    []
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in

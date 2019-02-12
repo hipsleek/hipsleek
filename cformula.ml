@@ -108,39 +108,31 @@ and assume_formula =
     formula_assume_vars : Cpure.spec_var list;
   }
 
-and struc_infer_formula =
-  {
-    (* formula_inf_tnt: bool; (\* true if termination to be inferred *\) *)
-    formula_inf_obj: Globals.inf_obj_sub; (* local infer object *)
-    formula_inf_post : bool; (* true if post to be inferred *)
-    formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
-    formula_inf_transpec : (ident * ident) option;
-    formula_inf_vars : Cpure.spec_var list;
-    formula_inf_continuation : struc_formula;
-    (* TODO : can we change this to struc_formula instead *)
-    (* formula_inf_continuation : struc_formula; *)
-    formula_inf_pos : loc
-  }
+and struc_infer_formula =  {
+  formula_inf_obj: Globals.inf_obj_sub; (* local infer object *)
+  formula_inf_post : bool; (* true if post to be inferred *)
+  formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
+  formula_inf_transpec : (ident * ident) option;
+  formula_inf_vars : Cpure.spec_var list;
+  formula_inf_continuation : struc_formula;
+  (* TODO : can we change this to struc_formula instead *)
+  formula_inf_pos : loc
+}
 
-and struc_case_formula =
-  {
-    formula_case_branches : (Cpure.formula * struc_formula ) list;
-    (* formula_case_exists : Cpure.spec_var list; *) (*should be absolete, to be removed *)
-    formula_case_pos : loc
-  }
+and struc_case_formula = {
+  formula_case_branches : (Cpure.formula * struc_formula ) list;
+  formula_case_pos : loc
+}
 
-and struc_base_formula =
-  {
-    formula_struc_explicit_inst : Cpure.spec_var list;
-    formula_struc_implicit_inst : Cpure.spec_var list;
-   (* vars_free, vars_linking, vars_extracted      *)
-    formula_struc_exists : Cpure.spec_var list;
-    formula_struc_base : formula;
-    (* formula_struc_is_strict_seq: bool; *)
-    formula_struc_is_requires: bool;
-    formula_struc_continuation : struc_formula option;
-    formula_struc_pos : loc
-  }
+and struc_base_formula = {
+  formula_struc_explicit_inst : Cpure.spec_var list;
+  formula_struc_implicit_inst : Cpure.spec_var list;
+  formula_struc_exists : Cpure.spec_var list;
+  formula_struc_base : formula;
+  formula_struc_is_requires: bool;
+  formula_struc_continuation : struc_formula option;
+  formula_struc_pos : loc
+}
 
 and formula =
   | Base of formula_base
@@ -149,14 +141,11 @@ and formula =
 
 and rflow_formula = {
   rflow_kind: ho_flow_kind;
-  rflow_base: (* struc_ *)formula;
-  (* rflow_global_vars: CP.spec_var list; *)
+  rflow_base: formula;
 }
 
 and rflow_struc_formula = {
-  (* rflow_kind: ho_flow_kind; *)
   rflow_struc_base: struc_formula;
-  (* rflow_global_vars: CP.spec_var list; *)
 }
 
 and list_formula = formula list
@@ -3400,7 +3389,7 @@ and subst_x sst (f : formula) =
           formula_exists_pos = pos })
   in helper f
 
-and subst_all sst (f : formula) = 
+and subst_all sst (f : formula) =
   let pr1 = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_formula in
   let loc = VarGen.last_posn # get "subst_all" in

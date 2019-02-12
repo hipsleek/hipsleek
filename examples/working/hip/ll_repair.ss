@@ -27,8 +27,7 @@ node fcode(node y)
 //         // try first: x is different in pre and post ->
 //         // x.sth = sth
 //    }
-// 	else {
-// 	 	append(x.next, y);
+// 	else {// 	 	append(x.next, y);
 //     }
 // }
 

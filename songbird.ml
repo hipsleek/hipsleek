@@ -756,7 +756,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
       sb_ante in
-  let () = x_binfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+  let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let interact = if !Globals.enable_sb_interactive then true else false in
   let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:interact n_prog ent) ents in
   let validities = List.map (fun ptree -> SBProof.get_ptree_validity ptree) ptrees in

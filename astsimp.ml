@@ -1729,6 +1729,7 @@ and trans_prog (prog : I.prog_decl) : C.prog_decl * I.prog_decl=
   let pr_in = Iprinter.string_of_program in
   let pr_out (cprog,iprog) = Cprinter.string_of_program cprog in
   let tp p = let (cp,_) as res = trans_prog_x p in
+    let () = x_binfo_pp "marking \n" no_pos in
     let () = Cast.global_prog := cp in
     res in
   Debug.no_1 "trans_prog" pr_in pr_out (fun x -> tp prog) prog
@@ -4089,9 +4090,9 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
             let assume_struc = helper (Some(true,post_perm)) f.CF.formula_assume_struc in (* need to add vperm if we have classic/exact post *)
             let () = Debug.tinfo_hprint (add_str "assume_simpl" Cprinter.string_of_formula) assume_simpl no_pos in
             let () = Debug.tinfo_hprint (add_str "assume_struc" Cprinter.string_of_struc_formula) assume_struc no_pos in
-            Some (CF.EAssume 
+            Some (CF.EAssume
                     {f with CF.formula_assume_struc=assume_struc;
-                            CF.formula_assume_simpl=assume_simpl},None) 
+                            CF.formula_assume_simpl=assume_simpl},None)
 
         end
       | _ -> None in
@@ -7682,7 +7683,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_
     prR linearize_formula_x prog f0 tlist
 
 and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
-  let pos = no_pos in 
+  let pos = no_pos in
   (* IF.pos_of_formula f0 in *)
   let rec aux hargs =
     match hargs with
@@ -7691,22 +7692,21 @@ and match_exp tlist (hargs : (IP.exp * LO.t) list) : (CP.view_arg list) =
       let e_hvars = match e with
         | IP.Var ((ve, pe), pos_e) ->   [CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)]
         | IP.AConst (a, pos_e )    -> [CP.imm_to_view_arg a]
-        (* | IP.Ann_Exp (IP.AConst ((ve, pe), pos_e ), t, _) -> CP *)
         | IP.Ann_Exp (IP.Var ((ve, pe), pos_e ), t, l) -> [CP.sv_to_view_arg (trans_var_safe (ve, pe) t tlist pos_e)] (*annotated self*)
         | IP.Bptriple ((ec,et,ea), pos_e) ->
           (* WN: what is Bptriple? *)
           let apply_one e =
             (match e with
              | IP.Var ((ve, pe), pos_e) -> CP.sv_to_view_arg (trans_var_safe (ve, pe) UNK tlist pos_e)
-             | _ -> report_error (* (IF.pos_of_formula f0) *) pos ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str(* Iprinter.string_of_formula f0 *))))
+             | _ -> report_error pos
+                      ("linearize_formula : match_exp : Expecting Var in Bptriple "^(str)))
           in
           List.map apply_one [ec;et;ea]
-        | _ ->  x_fail (* (IF.pos_of_formula f0) *) ("malfunction with float out exp: "^str) in
-      (* (Iprinter.string_of_formula f0))in *)
+        | _ ->  x_fail ("malfunction with float out exp: "^str) in
       let rest_hvars = aux rest in
       let hvars = e_hvars @ rest_hvars in
       hvars
-    | [] -> [] in 
+    | [] -> [] in
   aux hargs
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_var_type_list) 

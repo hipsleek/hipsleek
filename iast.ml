@@ -2583,7 +2583,6 @@ let inbuilt_build_exc_hierarchy () =
   let () = (exlist # add_edge cont_top "__others") in
   let () = (exlist # add_edge brk_top "__others") in
   let () = (exlist # add_edge spec_flow "__others") in
-  (*  let () = (exlist # add_edge error_flow top_flow) in *)
   let () = (exlist # add_edge mayerror_flow top_flow) in
   let () = (exlist # add_edge error_flow mayerror_flow) in
   let () = (exlist # add_edge n_flow mayerror_flow) in
@@ -4098,8 +4097,8 @@ let get_stmt_candidates (exp: exp) =
     | Block block ->
       aux block.exp_block_body list
     | Cond exp_cond ->
-      let exp1_list = aux exp_cond.exp_cond_condition list in
-      let exp2_list = aux exp_cond.exp_cond_then_arm exp1_list in
+      (* let exp1_list = aux exp_cond.exp_cond_condition list in *)
+      let exp2_list = aux exp_cond.exp_cond_then_arm list in
       aux exp_cond.exp_cond_else_arm exp2_list
     | Label (a, lexp) -> aux lexp list
     | Return res ->

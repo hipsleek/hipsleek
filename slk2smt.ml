@@ -421,10 +421,10 @@ let trans_smt slk_fname iprog cprog cmds =
     "(set-logic QF_S)\n" ^ 
     "(set-info :source |" ^
     "  Sleek solver\n" ^
-    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^  
-    "|)\n\n" ^ 
+    "  http://loris-7.ddns.comp.nus.edu.sg/~project/s2/beta/\n" ^
+    "|)\n\n" ^
     "(set-info :smt-lib-version 2.0)\n" ^
-    "(set-info :category \"crafted\")\n" 
+    "(set-info :category \"crafted\")\n"
   in
   (*declaration*)
   let decl_s0 = List.fold_left (fun s cmd -> s ^ (process_cmd cmd iprog cprog)) "" other_cmds in
