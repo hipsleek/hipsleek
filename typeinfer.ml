@@ -1544,6 +1544,17 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
   let () = y_binfo_pp "intro fresh types for poly ty" in
+  (* poly_types = get_all_poly_types  vdef *)
+  let get_all_poly_types vd ls =
+    match vd.I.view_type_of_self with
+    | Poly -> vd::ls
+    | _    -> ls
+
+  let poly_types = get_all_poly_types vdef [] in
+
+
+  let poly_types_hmap = fresh_poly_tlist poly_types in
+  (* vdef = replace_poly hmap  vdef *)
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->

@@ -7,10 +7,8 @@ data dat{int x;}
 // Give your vote (including votes delegated to you)
 // to proposal `proposals[proposal].name`.  ,vt1:    & fv=prps1[voteFor]
 // don't have a smart inference?
-void vote(mapping(int => int) pros, mapping(dat => int) voters)
-     requires [prps0]
-            pros::Map<prps0>
-        * voters::Map<_>
+void vote(mapping(int => int) pros, mapping(dat => int) voters, int y)
+     requires [prps0] pros::Map<prps0> * voters::Map<_>
      ensures  (exists prps1: pros::Map<prps1>);
 {
   int x = 0 ;
