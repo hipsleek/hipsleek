@@ -234,7 +234,7 @@ and proc_decl = {
   proc_ho_arg : typed_ident option;
   proc_args_wi: (ident*hp_arg_kind) list;
   proc_imm_args : (ident * bool) list;
-  proc_source : ident; (* source file *)
+  proc_source : ident;
   proc_return : typ;
   proc_flags : (ident*ident*(flags option)) list;
   mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)

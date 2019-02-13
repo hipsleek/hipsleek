@@ -444,6 +444,41 @@ let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula wi
     let n_f = CF.subst eq_vars formula in
     n_f
 
+let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
+  | IConst iconst -> Iast.IntLit
+                       { exp_int_lit_val = iconst.exp_iconst_val;
+                         exp_int_lit_pos = iconst.exp_iconst_pos; }
+  | Var var ->
+    Var { exp_var_name = var.exp_var_name;
+          exp_var_pos = var.exp_var_pos;}
+  | Bind bv -> let var = Iast.Var
+                   { exp_var_name = bv.exp_bind_bound_var |> snd;
+                     exp_var_pos = no_pos; } in
+    let lhs = Iast.Member
+        { exp_member_base = var;
+          exp_member_fields = bv.exp_bind_fields |> List.map snd;
+          exp_member_path_id = None;
+          exp_member_pos = no_pos;} in
+    let rhs = match c2iast_exp bv.exp_bind_body with
+      | Assign a_exp -> a_exp.Iast.exp_assign_rhs
+      | _ -> report_error no_pos "c2iast_exp not handled" in
+    Iast.Assign
+      { exp_assign_op = OpAssign;
+        exp_assign_lhs = lhs;
+        exp_assign_rhs = rhs;
+        exp_assign_path_id = None;
+        exp_assign_pos = bv.exp_bind_pos;}
+  | Assign var -> Assign
+                    { exp_assign_op = OpAssign;
+                      exp_assign_lhs = Iast.Var
+                          { exp_var_name = var.exp_assign_lhs;
+                            exp_var_pos = no_pos};
+                      exp_assign_rhs = c2iast_exp var.exp_assign_rhs;
+                      exp_assign_path_id = None;
+                      exp_assign_pos = var.exp_assign_pos;
+                    }
+  | _ -> report_error no_pos "cast_to_iast_exp not handled"
+
 (* let process_exists_var pre_cond post_cond =
  *   match post_cond with
  *   | CF.Exists exists_f ->

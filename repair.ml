@@ -730,6 +730,22 @@ let find_pre_cond ctx prog = match ctx with
     Some n_ctx_f
   | None -> None
 
+let mk_candidate_iproc iproc n_exp candidates =
+  match n_exp with
+  | Some i_exp ->
+    if candidates = [] then None
+    else let candidate = List.hd candidates in
+      let loc = Iast.get_exp_pos candidate in
+      let n_body = match iproc.Iast.proc_body with
+        | None -> None
+        | Some exp_body ->
+          let n_exp = replace_exp_with_loc exp_body i_exp loc in
+          let () = x_binfo_hp (add_str "n_body" Iprinter.string_of_exp) n_exp no_pos in
+          Some n_exp in
+      let n_iproc = {iproc with Iast.proc_body = n_body} in
+      None
+  | None -> None
+
 let start_repair iprog =
   let pr_exps = pr_list Iprinter.string_of_exp in
 
@@ -759,47 +775,15 @@ let start_repair iprog =
     else
       let pre = pre_cond |> Gen.unsome in
       let goal = Syn.mk_goal_w_procs cprog [cproc] pre post_cond vars in
-      let _ = Synthesizer.synthesize_program goal in
+      let c_exp = Synthesizer.synthesize_program goal in
+      let a_exp = match c_exp with
+        | None -> None
+        | Some exp ->
+          let i_exp = Syn.c2iast_exp exp in
+          let () = x_tinfo_hp (add_str "iast_exp" Iprinter.string_of_exp) i_exp no_pos in
+          Some i_exp in
+      let n_iproc = mk_candidate_iproc repairing_iproc a_exp cands in
       None
-
-  (* begin
-     *   match best_res with
-     *   | None ->
-     *     (* None *)
-     *     let mutated_res = repair_by_mutation iprog proc_to_repair in
-     *     let mutated_res = List.filter(fun x -> x != None) mutated_res in
-     *     let mutated_res = List.map Gen.unsome mutated_res in
-     *     if mutated_res = [] then
-     *       let repair_res_list =
-     *         List.map (fun stmt -> repair_one_statement iprog proc_to_repair (fst stmt)
-     *                      (snd stmt) vars false) filtered in
-     *       let h_repair_res_list = List.filter(fun x -> x != None) repair_res_list in
-     *       let h_repair_res_list = List.map Gen.unsome h_repair_res_list in
-     *       let best_res = get_best_repair h_repair_res_list in
-     *       begin
-     *         match best_res with
-     *         | None ->
-     *           let () = next_proc := false in
-     *           None
-     *         | Some (_, best_r_prog, pos, repaired_exp) ->
-     *           let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
-     *               best_r_prog.prog_proc_decls in
-     *           Some best_r_prog
-     *       end
-     *     else Some (List.hd mutated_res)
-     *   | Some (_, best_r_prog, pos, repaired_exp) ->
-     *     let repaired_proc = List.find (fun x -> x.proc_name = proc_to_repair.proc_name)
-     *         best_r_prog.prog_proc_decls in
-     *     let () = x_tinfo_hp
-     *         (add_str "best repaired proc" (Iprinter.string_of_exp))
-     *         (Gen.unsome repaired_proc.proc_body) no_pos in
-     *     let () =
-     *       x_tinfo_hp (add_str "templ: "
-     *                     (Cprinter.poly_string_of_pr Cprinter.pr_formula_exp))
-     *         repaired_exp no_pos in
-     *     Some best_r_prog
-     *     (* Some (best_r_prog, pos, repaired_exp) *)
-     * end *)
   | _ ->
     let () = next_proc := false in
     None
