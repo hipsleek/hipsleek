@@ -1850,7 +1850,7 @@ and b_f_ptr_equations_aux with_null f =
   | Eq (e1, e2, _) ->
     let b = can_be_aliased_aux with_null e1 && can_be_aliased_aux with_null e2 in
     if not b then [] else [(get_alias e1, get_alias e2)]
-  | _ -> [] 
+  | _ -> []
 
 and b_f_ptr_equations f = b_f_ptr_equations_aux true f
 
@@ -1885,14 +1885,14 @@ and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list 
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
     | AndList b -> fold_l_snd prep_f b
     | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
-    | _ -> [] in 
+    | _ -> [] in
   prep_f f
 
-and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list = 
+and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
   let pr1 = string_of_bool in
   let pr2 = !print_formula in
   let pr3 = pr_list (pr_pair !print_sv !print_sv) in
-  Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+  Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f
 
 and get_int_equality_aux f = []
 

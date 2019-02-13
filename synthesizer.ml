@@ -288,7 +288,8 @@ let choose_rule_field_dnode dn1 dn2 var goal =
         in [rule]
       | _ -> []
   in
-  let pure_rules = triple |> List.map pure_rules |> List.concat in
+  (* let pure_rules = triple |> List.map pure_rules |> List.concat in *)
+  let pure_rules = [] in
   let eq_var_rules = triple |> List.map helper |> List.concat in
   pure_rules @ eq_var_rules
 
@@ -439,9 +440,9 @@ let choose_func_call goal =
     []
 
 let choose_synthesis_rules goal : rule list =
-  (* let rs = choose_rule_assign goal in
-   * let rs = List.filter not_identity_assign_rule rs in *)
-  let rs = choose_func_call goal in
+  let rs = choose_rule_assign goal in
+  let rs = List.filter not_identity_assign_rule rs in
+  (* let rs = choose_func_call goal in *)
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs no_pos in
   rs
 

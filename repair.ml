@@ -712,13 +712,22 @@ let filter_cand buggy_loc cand =
     b_lnum = cand_lnum
   | None -> true
 
-let find_pre_cond ctx = match ctx with
+let find_pre_cond ctx prog = match ctx with
   | Some r_ctx ->
     let () = x_tinfo_hp (add_str "ctx" pr_ctx) r_ctx no_pos in
     let ctx_f = CF.formula_of_list_failesc_context r_ctx in
-    let () = x_binfo_hp (add_str "ctx_f" pr_formula) ctx_f no_pos in
-    let ctx_f = Synthesis.simplify_equal_vars ctx_f in
-    Some ctx_f
+    let pf = CF.get_pure ctx_f in
+    let eq_vars = CP.pure_ptr_equations_aux false pf in
+    let eq_vars_w_null = CP.pure_ptr_equations_aux true pf in
+    let eq_null = List.filter (fun x -> not(List.mem x eq_vars)) eq_vars_w_null in
+    let unfold_vars = List.map fst eq_null in
+    let n_ctx = List.fold_left (fun ctx var ->
+        Solver.unfold_failesc_context (prog, None) ctx var true no_pos
+      ) r_ctx unfold_vars in
+    let () = x_binfo_hp (add_str "n_ctx" pr_ctx) n_ctx no_pos in
+    let n_ctx_f = CF.formula_of_list_failesc_context n_ctx in
+    let n_ctx_f = Synthesis.simplify_equal_vars n_ctx_f in
+    Some n_ctx_f
   | None -> None
 
 let start_repair iprog =
@@ -737,12 +746,12 @@ let start_repair iprog =
     let cands = get_stmt_candidates (Gen.unsome repairing_iproc.proc_body) in
     let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx in
+    let cprog = !Typechecker.repair_prog |> Gen.unsome in
+    let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx cprog in
     let cproc = !Typechecker.repair_proc |> Gen.unsome in
     let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
     let post_cond = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
     let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
-    let cprog = !Typechecker.repair_prog |> Gen.unsome in
     let args = cproc.Cast.proc_args |>
                List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let vars = args in

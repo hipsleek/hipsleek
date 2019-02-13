@@ -336,27 +336,37 @@ let rec rm_emp_formula formula:CF.formula =
     let hf = exists_f.CF.formula_exists_heap in
     Exists {exists_f with formula_exists_heap = aux_heap hf}
 
-let do_unfold_view_vnode cprog fvar =
-  let rec helper_vnode vnode vf = match vf with
+let do_unfold_view_vnode ?(unfold_vars) cprog fvar =
+  let rec helper_vnode subst vf = match vf with
     | CF.EBase bf ->
       let base_f = bf.CF.formula_struc_base in
-      let v_args = vnode.CF.h_formula_view_arguments in
       let vars_f = CF.fv base_f in
       let () = x_tinfo_hp (add_str "base_f" pr_formula) base_f no_pos in
-      let () = x_tinfo_hp (add_str "base_vars" pr_vars) vars_f no_pos in
-      let v_args = [vnode.CF.h_formula_view_node]@v_args in
-      let () = x_tinfo_hp (add_str "vnode_vars" pr_vars) v_args no_pos in
-      let sst = List.combine vars_f v_args in
-      let n_formula = CF.subst sst base_f in
+      let n_formula = CF.subst subst base_f in
       let () = x_tinfo_hp (add_str "n_f" pr_formula) n_formula no_pos in
       [n_formula]
     | CF.EList list ->
       let cases = List.map snd list in
-      cases |> List.map (helper_vnode vnode) |> List.concat
+      cases |> List.map (helper_vnode subst) |> List.concat
     | _ -> report_error no_pos
-             "Synthesis.do_unfold_view_vnode: not handled cases"
-  in
-  let helper_hf hf = match hf with
+             "Synthesis.do_unfold_view_vnode: not handled cases"  in
+  let rec find_subst vnode vf = match vf with
+    | CF.EBase bf ->
+      let base_f = bf.CF.formula_struc_base in
+      let v_args = vnode.CF.h_formula_view_arguments in
+      let vars_f = CF.fv base_f in
+      let v_args = [vnode.CF.h_formula_view_node]@v_args in
+      if List.length vars_f = List.length v_args then
+        List.combine vars_f v_args
+      else []
+    | CF.EList list ->
+      let cases = List.map snd list in
+      cases |> List.map (find_subst vnode) |> List.concat
+      |> Gen.BList.remove_dups_eq (fun x y -> CP.eq_spec_var (fst x) (fst y) &&
+                                  CP.eq_spec_var (snd x) (snd y))
+    | _ -> report_error no_pos
+             "Synthesis.do_unfold_view_vnode.find_subst: not handled cases"  in
+  let rec helper_hf hf = match (hf:CF.h_formula) with
     | CF.ViewNode vnode ->
       let view_decls = cprog.Cast.prog_view_decls in
       let vnode_name = vnode.CF.h_formula_view_name in
@@ -364,9 +374,15 @@ let do_unfold_view_vnode cprog fvar =
           view_decls in
       let view_f = view_decl.Cast.view_formula in
       let pr_struc = Cprinter.string_of_struc_formula in
-      let () = x_tinfo_hp (add_str "view_f" pr_struc) view_f no_pos in
-      helper_vnode vnode view_f
-    | _ -> report_error no_pos "n_hf not handled"
+      let v_args = vnode.CF.h_formula_view_arguments in
+      let v_args = [vnode.CF.h_formula_view_node]@v_args in
+      let subst = find_subst vnode view_f in
+      helper_vnode subst view_f
+    (* | CF.Star sf -> let h1 = sf.h_formula_star_h1 in
+     *   let h2 = sf.h_formula_star_h2 in
+     *   CF.Star {sf with h_formula_star_h1 = helper_hf f1;
+     *                    h_formula_star_h2 = helper_hf f2} *)
+    | _ -> []
   in
 
   match fvar with
@@ -409,7 +425,10 @@ let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula wi
   | Base bf ->
     let pf = bf.formula_base_pure |> Mcpure.pure_of_mix in
     let eq_vars = CP.pure_ptr_equations_aux false pf in
+    let eq_vars_w_null = CP.pure_ptr_equations_aux true pf in
+    let eq_null = List.filter (fun x -> not(List.mem x eq_vars)) eq_vars_w_null in
     let () = x_binfo_hp (add_str "eq_vars" (pr_list (pr_pair pr_var pr_var))) eq_vars no_pos in
+    let () = x_binfo_hp (add_str "eq_null" (pr_list (pr_pair pr_var pr_var))) eq_null no_pos in
     let n_f = CF.subst eq_vars formula in
     let () = x_binfo_hp (add_str "n_f" pr_formula) n_f no_pos in
     n_f
