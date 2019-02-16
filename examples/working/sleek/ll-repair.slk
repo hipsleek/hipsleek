@@ -30,18 +30,21 @@ void append(node x, node y)
 // PASS
 
 // x.next = y
-synthesize [node x, node y]
-x::node<v1, m> * y::ll<n2> & m = null & n1 = 1
-~>
-x::ll<n1+n2> & true.
+// synthesize [node x, node y]
+// x::node<v1, m> * y::ll<n2> & m = null & n1 = 1
+// ~>
+// x::ll<n1+n2> & true.
 // PASS
 
 // function call f(x.next, y);
-// requires x::ll<n1> * y::ll<n2> & x!=null 
-// ensures x::ll<n1+n2>;
 // synthesize [node x, node y]
 // a::node<v1, m> * m::ll<n3> * b::ll<n2> & m != null & n1 = n3 + 1
 // ~>
 // a::ll<n1+n2> & true.
 
-// How to declare pre/post?
+// function call f(x.next, y);
+synthesize [node x, node y]
+// m::ll<a3> * b:ll<a2> & a!= null
+m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
+~>
+m::ll<a4> & m4 = a1 + a2 -1.

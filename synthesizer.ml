@@ -424,6 +424,79 @@ let choose_rule_assign goal : rule list =
 (*********************************************************************
  * Choose function call rules
  *********************************************************************)
+let get_hf (f:CF.formula) = match f with
+  | Base bf -> bf.formula_base_heap
+  | Exists bf -> bf.formula_exists_heap
+  | Or _ -> report_error no_pos "get_hf unhandled"
+
+let check_same_shape_pair (pre_f, post_f) (pre_proc, post_proc) =
+  let check_same_shape (f1:CF.formula) (f2:CF.formula) =
+    let check_hf hf1 hf2 =
+      match hf1, hf2 with
+      | HEmp, HEmp
+      | DataNode _, DataNode _
+      | ViewNode _, ViewNode _ -> true
+      | _ -> false in
+    let hf1,hf2 = get_hf f1, get_hf f2 in
+    check_hf hf1 hf2 in
+  (check_same_shape pre_f pre_proc) && (check_same_shape post_f post_proc)
+
+let find_substs (f1:CF.formula) (f2:CF.formula) =
+  let () = x_binfo_hp (add_str "f1" pr_formula) f1 no_pos in
+  let () = x_binfo_hp (add_str "f2 " pr_formula) f2 no_pos in
+  let hf1, hf2 = f1 |> get_hf, f2 |> get_hf in
+  match hf1, hf2 with
+  | DataNode dn1, DataNode dn2 ->
+    let args1 = dn1.h_formula_data_arguments in
+    let args2 = dn2.h_formula_data_arguments in
+    begin
+      try List.combine args1 args2
+      with _ -> []
+    end
+  | ViewNode vn1, ViewNode vn2 ->
+    let args1 = vn1.h_formula_view_arguments in
+    let args2 = vn2.h_formula_view_arguments in
+    begin
+      try List.combine args1 args2
+      with _ -> []
+    end
+  | _ -> []
+
+let unify_pair arg lvar goal proc_decl =
+  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+  let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+  let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
+  let post_proc = specs |> get_post_cond |> rm_emp_formula in
+  let a_pre, a_post = arg |> extract_var_f pre_proc,
+                      arg |> extract_var_f post_proc in
+  let l_pre, l_post = lvar |> extract_var_f pre_cond,
+                      lvar |> extract_var_f post_cond in
+  match a_pre, a_post, l_pre, l_post with
+  | Some apre_f, Some apost_f, Some lpre_f, Some lpost_f ->
+    let checking = check_same_shape_pair (apre_f, apost_f) (lpre_f, lpost_f) in
+    if checking then
+      (* to find substitution *)
+      let arg_substs = find_substs apre_f lpre_f in
+      let () = x_binfo_hp (add_str "substs " (pr_list (pr_pair pr_var pr_var))) arg_substs no_pos in
+      checking
+    else checking
+  | _ -> false
+
+let unify (pre_proc, post_proc) goal =
+  let proc_decl = goal.gl_proc_decls |> List.hd in
+  let args = proc_decl.Cast.proc_args |>
+             List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+  let unify_var arg goal =
+    let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+    let arg_typ = CP.type_of_sv arg in
+    let l_vars = CF.fv pre_cond |>
+                       List.filter (fun x -> CP.type_of_sv x = arg_typ) in
+    let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
+    let () = x_binfo_hp (add_str "arg" pr_var) arg no_pos in
+    let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
+    (arg, ss_vars) in
+  args |> List.map (fun arg -> unify_var arg goal)
+
 let choose_func_call goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
@@ -437,12 +510,13 @@ let choose_func_call goal =
     let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
     let post_cond = specs |> get_post_cond |> rm_emp_formula in
     let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+    let pairs = unify (pre_cond, post_cond) goal in
     []
 
 let choose_synthesis_rules goal : rule list =
-  let rs = choose_rule_assign goal in
-  let rs = List.filter not_identity_assign_rule rs in
-  (* let rs = choose_func_call goal in *)
+  (* let rs = choose_rule_assign goal in
+   * let rs = List.filter not_identity_assign_rule rs in *)
+  let rs = choose_func_call goal in
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs no_pos in
   rs
 

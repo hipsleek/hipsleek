@@ -2342,7 +2342,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
-        let () = x_tinfo_hp (add_str "ctx scall start: "
+        let () = x_binfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx
@@ -2466,7 +2466,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                      Cprinter.string_of_struc_formula)
                   renamed_spec no_pos in
               let pre2 = CF.subst_struc_pre st3 renamed_spec in
-              let () = x_tinfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
+              let () = x_binfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
               (* Termination: Store unreachable state *)
               let _ =

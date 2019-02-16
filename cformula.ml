@@ -19399,7 +19399,7 @@ let subst_hvar_struc f subst =
 
 (* Utils for Vperm reasoning *)
 
-let mkEmp_list_failesc_context pos = 
+let mkEmp_list_failesc_context pos =
   let ctx = empty_ctx (mkTrueFlow ()) Label_only.Lab2_List.unlabelled pos in
   let ctx = build_context ctx (mkTrue_nf pos) pos in
   let ctx = add_path_id ctx (None, 0) 0 in
@@ -19410,8 +19410,8 @@ let mkEmp_list_failesc_context pos =
   let fctx = [mk_failesc_context ctx [] init_esc] in
   fctx
 
-let set_imm_ann_formula ann_list f = 
-  let f_h_f hf = 
+let set_imm_ann_formula ann_list f =
+  let f_h_f hf =
     match hf with
     | DataNode ({ h_formula_data_node = sv; } as d) ->
       (try
