@@ -36,27 +36,30 @@ void swap(node x, node y)
 
 /* Round 1: original constraints
 
-  x::node<a> * y::node<b> & t = a |- P(x,y) ~> R(x,y,a,b)
+  x::node<a> * y::node<b> & t=a |- P(x,y) ~> R(x,y,a,b)
   R(x,y,a,b) * Q(x,y) & t=a |- exists k. y::node<k>   ~> T(x,y,a,b)
   T(x,y,a,b) * y::node<t> & t=a |- x::node<b> * y::node<a>  ~> emp.
 */
 
 /* Round 2: classic entailments with empty residue
 
-  x::node<a> * y::node<b> & t = a |- P(x,y) * R(x,y,a,b)
+  x::node<a> * y::node<b> & t=a |- P(x,y) * R(x,y,a,b)
   R(x,y,a,b) * Q(x,y) & t=a |- exists k. y::node<k> * T(x,y,a,b)
   T(x,y,a,b) * y::node<t> & t=a |- x::node<b> * y::node<a>
 */
 
 /* Round 3: finding T(x,y,a,b)
 
-  x::node<a> * y::node<b> & t = a |- P(x,y) * R(x,y,a,b)
+  x::node<a> * y::node<b> & t=a |- P(x,y) * R(x,y,a,b)
   R(x,y,a,b) * Q(x,y) & t=a |- exists k. y::node<k> * T(x,y,a,b)
   T(x,y,a,b) |- x::node<b>   ==>  solution: T(x,y,a,b) := x::node<b>
 */ 
 
 /* Round 3: replace T(x,y,a,b) by its solution
 
-  x::node<a> * y::node<b> & t = a |- P(x,y) * R(x,y,a,b)
+  x::node<a> * y::node<b> & t=a |- P(x,y) * R(x,y,a,b)
   R(x,y,a,b) * Q(x,y) & t=a |- exists k. y::node<k> * x::node<b>
-*/ 
+
+  Heuristics: P(x,y), Q(x,y) are specification, and they should be
+  as big as possible.
+*/
