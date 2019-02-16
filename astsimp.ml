@@ -4392,8 +4392,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
            else proc.Iast.proc_args_wi
          in
+         let proc_name = if proc.I.proc_mingled_name = ""
+           then let arg_types = List.map fst args in
+             Cast.mingle_name proc.I.proc_name arg_types
+               else proc.I.proc_mingled_name in
          let cproc = {
-           C.proc_name = proc.I.proc_mingled_name;
+           C.proc_name = proc_name;
            C.proc_source = proc.I.proc_source;
            C.proc_flags = proc.I.proc_flags;
            C.proc_args = args;

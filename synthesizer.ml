@@ -494,8 +494,16 @@ let unify (pre_proc, post_proc) goal =
     let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
     let () = x_binfo_hp (add_str "arg" pr_var) arg no_pos in
     let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
-    (arg, ss_vars) in
-  args |> List.map (fun arg -> unify_var arg goal)
+    ss_vars in
+  let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
+  if List.for_all (fun x -> List.length x > 0) ss_args then
+    let rule_args = List.map List.hd ss_args in
+    let fc_rule = RlFuncCall {
+        rfc_func_name = proc_decl.Cast.proc_name;
+        rfc_params = rule_args;
+      } in
+    [fc_rule]
+  else []
 
 let choose_func_call goal =
   let pre = goal.gl_pre_cond in
@@ -510,8 +518,8 @@ let choose_func_call goal =
     let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
     let post_cond = specs |> get_post_cond |> rm_emp_formula in
     let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
-    let pairs = unify (pre_cond, post_cond) goal in
-    []
+    let rules = unify (pre_cond, post_cond) goal in
+    rules
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in

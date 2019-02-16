@@ -37,7 +37,7 @@ type rule =
 
 and rule_func_call = {
   rfc_func_name : string;
-  rfc_params : CP.exp list;
+  rfc_params : CP.spec_var list;
 }
 
 (* TODO: should we rename variables?? *)
@@ -51,12 +51,6 @@ and rule_assign = {
   ra_lhs : CP.spec_var;
   ra_rhs : CP.spec_var;
 }
-
-(* AssignPure *)
-(* {x = a} {x = b} --> {x = b} if b \in varSet*)
-
-(* AssignPureSymb *)
-(* {x = a & b = t} {x = b} --> x = t when varSet = {x, t} *)
 
 (* Atomic derivation *)
 type derivation = {
@@ -201,13 +195,18 @@ let pr_rule_assign rule =
   let rhs = rule.ra_rhs in
   (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_spec_var rhs)
 
+let pr_func_call rule =
+  let fc_name = rule.rfc_func_name in
+  let args = rule.rfc_params |> (pr_list Cprinter.string_of_sv) in
+  fc_name ^ "(" ^ args ^ ")"
+
 let pr_rule_bind rule =
   let exp = rule.rb_var in
   (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
   ^ (Cprinter.string_of_spec_var rule.rb_rhs)
 
 let pr_rule rule = match rule with
-  | RlFuncCall fc -> "RlFuncCal"
+  | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBindWrite rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
   (* | RlBindRead rule -> "RlBindRead" *)

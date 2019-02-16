@@ -944,6 +944,8 @@ let convert_data_and_pred_to_cast () =
     convert_data_and_pred_to_cast_x ()
 
 let convert_proc_decls_to_cast () =
+  let pr_proc = Iprinter.string_of_proc_decl in
+  let () = x_tinfo_hp (add_str "proc_name" (pr_list pr_proc)) !iprog_proc_decls no_pos in
   let cproc_decls = List.map (Astsimp.trans_proc iprog) !iprog_proc_decls in
   cprog_proc_decls := cproc_decls
 
@@ -3020,7 +3022,12 @@ let process_synthesize typed_vars pre post =
   let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
-  let goal = Synthesis.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
+  let goal = Synthesis.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs
+  in
+  let proc_decl = !cprog_proc_decls |> List.hd in
+  (* let pr_proc = Cprinter.string_of_proc_decl 1 in
+   * let () = x_binfo_hp (add_str "proc_name" pr_proc) proc_decl no_pos in *)
+
   let _ = Synthesizer.synthesize_program goal in
   ()
 

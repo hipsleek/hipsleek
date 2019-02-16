@@ -622,6 +622,8 @@ let string_of_ho_var (fk,x,sk) =
 let string_of_spec_var x =
   CP.string_of_spec_var ~print_typ:!print_type x
 
+let string_of_sv = string_of_spec_var
+
 let string_of_spec_var_list xs =
   "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"
 
