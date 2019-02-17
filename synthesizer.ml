@@ -547,10 +547,6 @@ let split_hf (f: CF.formula) = match f with
 (*********************************************************************
  * Processing rules
  *********************************************************************)
-
-let process_rule_func_call goal rcore : derivation =
-  mk_derivation_sub_goals goal (RlFuncCall rcore) []
-
 let process_rule_assign goal rassign =
   let pre = goal.gl_pre_cond in
   let lhs = rassign.ra_lhs in
@@ -607,15 +603,37 @@ let process_rule_wbind goal (wbind:rule_bind) =
   | true -> mk_derivation_success goal (RlBindWrite wbind)
   | false -> mk_derivation_fail goal (RlBindWrite wbind)
 
-(* let process_rule_rbind goal (rbind:rule_bindread) =
- *   mk_derivation_sub_goals goal (RlBindRead rbind) [] *)
+let process_rule_func_call goal rcore : derivation =
+  let fname = rcore.rfc_func_name in
+  let proc_decl = goal.gl_proc_decls |> List.find (fun x -> x.Cast.proc_name = fname) in
+  let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+  let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
+  let post_proc = specs |> get_post_cond |> rm_emp_formula in
+  let () = x_binfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
+  let () = x_binfo_hp (add_str "post proc" pr_formula) post_proc no_pos in
+  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+  let fun_args = proc_decl.Cast.proc_args
+                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+  let substs = List.combine fun_args rcore.rfc_params in
+  let n_pre_proc = CF.subst substs pre_proc in
+  let pre_vars = CF.fv n_pre_proc |> List.filter (fun x ->
+      not(List.exists (fun y -> CP.eq_spec_var x y) rcore.rfc_params)) in
+  let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
+  let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
+  let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let ent_check = Songbird.check_entail goal.gl_prog pre_cond n_pre_proc in
+  match ent_check with
+  | true ->
+    let () = x_binfo_pp "checking pre_cond successfully" no_pos in
+    mk_derivation_sub_goals goal (RlFuncCall rcore) []
+  | false ->
+    mk_derivation_sub_goals goal (RlFuncCall rcore) []
 
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBindWrite wbind -> process_rule_wbind goal wbind
-  (* | RlBindRead rbind -> process_rule_rbind goal rbind *)
 
 (*********************************************************************
  * The search procedure

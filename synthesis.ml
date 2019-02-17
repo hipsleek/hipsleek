@@ -27,13 +27,10 @@ type goal = {
   gl_vars: CP.spec_var list;
 }
 
-(* Synthesis rules
- * TODO: add more synthesis rules here *)
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBindWrite of rule_bind
-  (* | RlBindRead of rule_bindread *)
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -52,7 +49,6 @@ and rule_assign = {
   ra_rhs : CP.spec_var;
 }
 
-(* Atomic derivation *)
 type derivation = {
   drv_kind : derivation_kind;
   drv_rule : rule;
@@ -477,120 +473,3 @@ let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
                       exp_assign_pos = var.exp_assign_pos;
                     }
   | _ -> report_error no_pos "cast_to_iast_exp not handled"
-
-(* let process_exists_var pre_cond post_cond =
- *   match post_cond with
- *   | CF.Exists exists_f ->
- *     let exists_vars = exists_f.CF.formula_exists_qvars in
- *     let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
- *     let aux_process exist_var post_cond =
- *       let fvar = extract_var_f post_cond exist_var in
- *       match fvar with
- *       | Some f_var1 ->
- *         let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
- *         let similar_var = find_similar_shape_var f_var1 pre_cond in
- *         if (similar_var != None) then
- *           let s_var = Gen.unsome similar_var in
- *           let () = x_binfo_hp (add_str "similar_v" pr_var) s_var no_pos in
- *           let pf = exists_f.CF.formula_exists_pure in
- *           let hf = exists_f.CF.formula_exists_heap in
- *           let sst = [(exist_var, s_var)] in
- *           let n_hf = CF.h_subst sst hf in
- *           let n_pf = Mcpure.regroup_memo_group (Mcpure.m_apply_par sst pf) in
- *           let vars = (CF.h_fv n_hf) @ (CP.fv (Mcpure.pure_of_mix n_pf)) in
- *           let n_post =
- *             if List.exists (fun x -> CP.eq_spec_var x exist_var) vars
- *             then
- *               CF.Exists {exists_f with formula_exists_heap = n_hf;
- *                                        formula_exists_pure = n_pf;}
- *             else CF.mkBase_simp n_hf n_pf
- *           in
- *           let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
- *           n_post
- *         else post_cond
- *       | None -> post_cond
- *     in
- *     let n_post = List.fold_left (fun f var -> aux_process var f) post_cond exists_vars in
- *     n_post
- *   | _ -> post_cond *)
-
-(* let find_similar_shape_var fvar formula =
- *   let () = x_binfo_hp (add_str "similar-shape fvar" pr_formula) fvar no_pos in
- *   let () = x_binfo_hp (add_str "similar-shape formula" pr_formula) formula no_pos in
- *
- *   let rec helper hf name args = match hf with
- *     | CF.DataNode f_dnode ->
- *       let f_name = f_dnode.CF.h_formula_data_name in
- *       let f_args = f_dnode.CF.h_formula_data_arguments in
- *       if List.length f_args = List.length args then
- *         let similar_var = (String.compare f_name name == 0) &&
- *                           List.for_all2 (fun x y -> CP.eq_spec_var x y) f_args args in
- *         if similar_var then Some f_dnode.CF.h_formula_data_node
- *         else None
- *       else None
- *     | CF.ViewNode vnode ->
- *       let v_name = vnode.CF.h_formula_view_name in
- *       let v_args = vnode.CF.h_formula_view_arguments in
- *       if List.length v_args = List.length args then
- *         let similar_var = (String.compare v_name name == 0) &&
- *                           List.for_all2 (fun x y -> CP.eq_spec_var x y) v_args args in
- *         if similar_var then Some vnode.CF.h_formula_view_node
- *         else None
- *       else None
- *     | CF.Star sf ->
- *       let f1 = sf.CF.h_formula_star_h1 in
- *       begin
- *         match helper f1 name args with
- *         | None ->
- *           let f2 = sf.CF.h_formula_star_h2 in
- *           helper f2 name args
- *         | Some sv -> Some sv
- *       end
- *     | _ -> None in
- *   match fvar, formula with
- *     | CF.Base bf_var, CF.Base bf ->
- *       let hf_var = bf_var.CF.formula_base_heap in
- *       let hf_f = bf.CF.formula_base_heap in
- *       begin
- *         match hf_var with
- *         | DataNode dnode ->
- *           let name = dnode.CF.h_formula_data_name in
- *           let args = dnode.CF.h_formula_data_arguments in
- *           helper hf_f name args
- *         | ViewNode vnode ->
- *           let name = vnode.CF.h_formula_view_name in
- *           let args = vnode.CF.h_formula_view_arguments in
- *           helper hf_f name args
- *         | _ -> None
- *       end
- *     | _ -> None *)
-
-(* let choose_framing_rule var goal : rule list =
- *   let pre = goal.gl_pre_cond in
- *   let post = goal.gl_post_cond in
- *   let framed_pre, vars_w_fields = frame_var var pre goal.gl_prog in
- *   let framed_post, _ = frame_var var post goal.gl_prog in
- *   let aux cur_var field_var field goal =
- *     let rules = choose_rassign_data field_var goal in
- *     if rules != [] then
- *       let rule = List.hd rules in
- *       match rule with
- *       | RlAssign assign_rule ->
- *         let final_rule = RlBindWrite {
- *             rb_var = cur_var;
- *             rb_field = field;
- *             rb_rhs = assign_rule.ra_rhs;
- *           }
- *         in [final_rule]
- *       | _ -> []
- *     else [] in
- *   if vars_w_fields != [] then
- *     let () = x_binfo_hp (add_str "framed_pre" pr_formula) framed_pre no_pos in
- *     let () = x_binfo_hp (add_str "framed_post" pr_formula) framed_post no_pos in
- *     let field_vars = vars_w_fields |> List.split |> fst in
- *     let n_vars = goal.gl_vars @ field_vars |> CP.remove_dups_svl in
- *     let n_goal = mk_goal goal.gl_prog framed_pre framed_post n_vars in
- *     let rules = List.map (fun (x,y) -> aux var x y n_goal) vars_w_fields in
- *     List.concat rules
- *   else [] *)
-
