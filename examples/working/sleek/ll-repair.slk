@@ -47,4 +47,4 @@ synthesize [node x, node y]
 // m::ll<a3> * b:ll<a2> & a!= null
 m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
 ~>
-m::ll<a4> & m4 = a1 + a2 -1.
+(exists a4: m::ll<a4> & a4 = a1 + a2 -1).

@@ -557,7 +557,7 @@ let process_rule_assign goal rassign =
   let tmp_lhs = CP.fresh_spec_var lhs in
   let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
   let () = x_binfo_hp (add_str "post_cond " pr_formula) n_post no_pos in
-  let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  let ent_check, _ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
   | true -> mk_derivation_success goal (RlAssign rassign)
   | false -> mk_derivation_fail goal (RlAssign rassign)
@@ -598,7 +598,7 @@ let process_rule_wbind goal (wbind:rule_bind) =
   let data_decls = prog.prog_data_decls in
   let n_post = subs_bind_write pre var field rhs data_decls in
   let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
-  let ent_check = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  let ent_check,_ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
   | true -> mk_derivation_success goal (RlBindWrite wbind)
   | false -> mk_derivation_fail goal (RlBindWrite wbind)
@@ -621,12 +621,22 @@ let process_rule_func_call goal rcore : derivation =
   let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
   let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
   let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
-  let ent_check = Songbird.check_entail goal.gl_prog pre_cond n_pre_proc in
-  match ent_check with
-  | true ->
+  let ent_check, residue = Songbird.check_entail ~residue:true goal.gl_prog
+      pre_cond n_pre_proc in
+  match ent_check, residue with
+  | true, Some red ->
     let () = x_binfo_pp "checking pre_cond successfully" no_pos in
-    mk_derivation_sub_goals goal (RlFuncCall rcore) []
-  | false ->
+    let () = x_binfo_hp (add_str "residue" pr_formula) red no_pos in
+    let n_post_proc = CF.subst substs post_proc in
+    let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in
+    let () = x_binfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
+    let () = x_binfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
+    let post_check, _ = Songbird.check_entail goal.gl_prog n_post_state post_cond in
+    if post_check then
+      let () = x_binfo_pp "checking post_cond successfully" no_pos in
+      mk_derivation_success goal (RlFuncCall rcore)
+    else mk_derivation_sub_goals goal (RlFuncCall rcore) []
+  | _ ->
     mk_derivation_sub_goals goal (RlFuncCall rcore) []
 
 let process_one_rule goal rule : derivation =

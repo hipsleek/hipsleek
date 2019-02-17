@@ -656,7 +656,7 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
 
-let check_entail prog ante conseq =
+let check_entail ?(residue=false) prog ante conseq =
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq, _ = translate_formula conseq in
@@ -665,12 +665,25 @@ let check_entail prog ante conseq =
   else
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
-    let ent = SBCast.mk_entailment sb_ante sb_conseq in
-    let ptree = SBProver.check_entailment sb_prog ent in
-    let res = SBProof.get_ptree_validity ptree in
-    match res with
-    | SBGlobals.MvlTrue -> true
-    | _ -> false
+    if not(residue) then
+      let ent = SBCast.mk_entailment sb_ante sb_conseq in
+      let ptree = SBProver.check_entailment sb_prog ent in
+      let res = SBProof.get_ptree_validity ptree in
+      match res with
+      | SBGlobals.MvlTrue -> true, None
+      | _ -> false, None
+    else let ent = SBCast.mk_entailment ~mode:PrfEntailHip sb_ante sb_conseq in
+      let ptree = SBProver.check_entailment sb_prog ent in
+      let res = SBProof.get_ptree_validity ptree in
+      match res with
+      | SBGlobals.MvlTrue ->
+        let residue_fs = SBProof.get_ptree_residues ptree in
+        let red = residue_fs |> List.rev |> List.hd in
+        let hip_red = translate_back_formula red [] in
+        true, Some hip_red
+      | _ -> false, None
+
+
 
 let check_pure_entail ante conseq =
   let sb_ante = translate_pf ante in

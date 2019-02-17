@@ -2497,7 +2497,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
-              let () = x_tinfo_hp (add_str "new rs:"
+              let () = x_binfo_hp (add_str "new rs:"
                                      Cprinter.string_of_list_failesc_context)
                   rs no_pos in
               rs
