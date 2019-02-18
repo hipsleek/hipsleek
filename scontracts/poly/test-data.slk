@@ -1,0 +1,31 @@
+data node{
+   int val;
+   node next;
+}.
+
+// polymorphic node
+data nodep{
+   `T val;
+   nodep next;
+}.
+
+checkentail x::node<_,t> |- x::node<_,t>.
+print residue.
+expect Valid.
+
+checkentail x::nodep<3,t> |- x::nodep<3,t>.
+print residue.
+expect Valid.
+
+checkentail x::nodep<3,t> |- x::nodep<a,t>.
+print residue.
+expect Valid.
+
+checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t> * z2::node<cc,dd>.
+print residue.
+expect Valid.
+
+// Below should raise a type exception: node and int cannot be unified?
+checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<3,t>.
+print residue.
+expect Fail.

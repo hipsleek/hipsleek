@@ -1,0 +1,24 @@
+data node{
+   int val;
+   node next;
+}.
+
+// polymorphic node
+data nodep{
+   `T val;
+   nodep next;
+}.
+
+pred ll<a:int> == self=null or
+          self::node<a,r> * r::ll<a>.
+
+pred llp<a:`T> == self=null or
+          self::nodep<a,r> * r::llp<a>.
+
+checkentail x::ll<2> |- x::ll<2>.
+print residue.
+expect Valid.
+
+checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
+print residue.
+expect Valid.
