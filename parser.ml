@@ -3218,7 +3218,7 @@ exp_decl: [[
     exp_ret_typ = t;
     exp_typed_params = tl;
     exp_body = ExpUnk;
-    exp_pos = get_pos_camlp4 _loc 1; } in 
+    exp_pos = get_pos_camlp4 _loc 1; } in
   tdef
            ]];
 
@@ -3418,14 +3418,14 @@ hprogn:
     prog_func_decls = func_defs # get_stk ;
     prog_ui_decls = ui_lst;
     prog_exp_decls = exp_lst;
+    prog_unk_preds = unkpred_lst;
     prog_rel_decls = rel_lst@extra_rels; (* An Hoa *)
     prog_rel_ids = List.map (fun x ->
         let tl,_ = List.split x.rel_typed_vars in
         (RelT tl,x.rel_name)) (rel_lst@extra_rels); (* WN *)
     prog_templ_decls = templ_lst;
     prog_ut_decls = ut_lst;
-      prog_hp_decls = hp_lst ;
-      prog_unk_preds = unkpred_lst;
+    prog_hp_decls = hp_lst ;
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
     prog_proc_decls = !proc_defs;

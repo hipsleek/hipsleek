@@ -949,8 +949,6 @@ and gather_type_info_p_formula prog pf tlist =  match pf with
               let n_tlist = List.fold_left (fun tl (arg,et) ->
                   fst(x_add gather_type_info_exp prog arg tl et )) [] tmp_list in
               n_tlist in
-            let () = x_binfo_hp (add_str "unk_preds" string_of_int)
-                (List.length prog.I.prog_unk_preds) no_pos in
             let unkpred = I.look_up_unk_pred prog.I.prog_unk_preds r in
             helper2 unkpred
           with
