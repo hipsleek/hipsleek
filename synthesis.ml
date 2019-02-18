@@ -416,28 +416,28 @@ let get_post_cond (struc_f: CF.struc_formula) =
     bf.formula_struc_continuation |> Gen.unsome |> helper
   | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
 
-let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula with
-  | Base bf ->
-    let pf = bf.formula_base_pure |> Mcpure.pure_of_mix in
-    let eq_vars = CP.pure_ptr_equations_aux false pf in
-    let eq_vars_w_null = CP.pure_ptr_equations_aux true pf in
-    let eq_null = List.filter (fun x -> not(List.mem x eq_vars)) eq_vars_w_null in
-    let () = x_binfo_hp (add_str "eq_vars" (pr_list (pr_pair pr_var pr_var))) eq_vars no_pos in
-    let () = x_binfo_hp (add_str "eq_null" (pr_list (pr_pair pr_var pr_var))) eq_null no_pos in
-    let n_f = CF.subst eq_vars formula in
-    let () = x_binfo_hp (add_str "n_f" pr_formula) n_f no_pos in
-    n_f
-  | Or bf -> let f1 = bf.formula_or_f1 in
-    let f2 = bf.formula_or_f2 in
-    let n_f1 = simplify_equal_vars f1 in
-    let n_f2 = simplify_equal_vars f2 in
-    Or {bf with formula_or_f1 = n_f1;
-                formula_or_f2 = n_f2}
-  | Exists bf ->
-    let pf = bf.formula_exists_pure |> Mcpure.pure_of_mix in
-    let eq_vars = CP.pure_ptr_equations_aux false pf in
-    let n_f = CF.subst eq_vars formula in
-    n_f
+(* let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula with
+ *   | Base bf ->
+ *     let pf = bf.formula_base_pure |> Mcpure.pure_of_mix in
+ *     let eq_vars = CP.pure_ptr_equations_aux false pf in
+ *     let n_hf = CF.h_subst eq_vars bf.formula_base_heap in
+ *     let h_vars = CF.h_fv bf.formula_base_heap in
+ *     let n_pf = pf |> CP.subst eq_vars |> CP.elim_idents in
+ *     Base {bf with formula_base_heap = n_hf;
+ *                   formula_base_pure = mix_of_pure n_pf}
+ *   | Or bf -> let f1 = bf.formula_or_f1 in
+ *     let f2 = bf.formula_or_f2 in
+ *     let n_f1 = simplify_equal_vars f1 in
+ *     let n_f2 = simplify_equal_vars f2 in
+ *     Or {bf with formula_or_f1 = n_f1;
+ *                 formula_or_f2 = n_f2}
+ *   | Exists bf ->
+ *     let pf = bf.formula_exists_pure |> Mcpure.pure_of_mix in
+ *     let eq_vars = CP.pure_ptr_equations_aux false pf in
+ *     let n_hf = CF.h_subst eq_vars bf.formula_exists_heap in
+ *     let n_pf = pf |> CP.subst eq_vars |> CP.elim_idents in
+ *     Exists {bf with formula_exists_heap = n_hf;
+ *                   formula_exists_pure = mix_of_pure n_pf} *)
 
 let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
   | IConst iconst -> Iast.IntLit
@@ -473,3 +473,25 @@ let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
                       exp_assign_pos = var.exp_assign_pos;
                     }
   | _ -> report_error no_pos "cast_to_iast_exp not handled"
+
+let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
+  let collect_pred (f2:CF.formula) = match f2 with
+    | Base bf -> bf.formula_base_heap
+    | _ -> report_error no_pos "unhandled case" in
+  let hf2 = collect_pred f2 in
+  let add_hf hf1 hf2 = CF.Star {
+      h_formula_star_h1 = hf1;
+      h_formula_star_h2 = hf2;
+      h_formula_star_pos = no_pos;
+    } in
+  let rec helper (f1:CF.formula):CF.formula = match f1 with
+    | Base bf -> let hf = bf.formula_base_heap in
+      let n_hf = add_hf hf hf2 in
+      Base {bf with formula_base_heap = n_hf}
+    | Exists bf -> let hf = bf.formula_exists_heap in
+      let n_hf = add_hf hf hf2 in
+      Exists {bf with formula_exists_heap = n_hf}
+    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+      Or {bf with formula_or_f1 = helper f1;
+                  formula_or_f2 = helper f2} in
+  helper f1

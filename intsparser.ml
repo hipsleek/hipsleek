@@ -266,6 +266,7 @@ let trans_ints_prog fn (iprog: ints_prog): I.prog_decl =
     prog_ui_decls = [];
     prog_exp_decls = [];
     prog_hp_decls = [];
+    prog_unk_preds = [];
     prog_hp_ids = [];
     prog_axiom_decls = [];
     prog_proc_decls = proc_decls;

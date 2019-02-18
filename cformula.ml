@@ -2949,8 +2949,8 @@ and fv ?(vartype=Global_var.var_with_none) (f : formula) : CP.spec_var list =
         formula_base_vperm = vp;
         formula_base_and = a;
         formula_base_type = t }) ->
-      let vars = if vartype # is_heap_only then [] 
-        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)   
+      let vars = if vartype # is_heap_only then []
+        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)
       in
       CP.remove_dups_svl ((h_fv ~vartype:vartype h) @ vars)
     | Exists ({
@@ -16855,7 +16855,7 @@ let update_ctx_label sctx l =
   let rec helper c = match c with 
     | Ctx es -> Ctx {es with es_group_lbl = l}
     | OCtx (c1,c2) -> OCtx (helper c1,helper c2) 
-  in 
+  in
   if Lab2_List.is_unlabelled l then sctx
   else helper sctx
 

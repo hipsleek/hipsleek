@@ -9,12 +9,12 @@ data node {
 // requires P(x,y) ensures Q(x,y)
 // ;
 
-// HeapPred P(node x).
-// HeapPred Q(node x).
+HeapPred P(node x).
+HeapPred Q(node x).
 
-// void fcode(node x, node y)
-// requires P(x) ensures Q(x)
-// ;
+void fcode(node x, node y)
+requires P(x) ensures Q(x)
+;
 
 void swap(node x, node y)
 requires x::node<a> * y::node<b>
@@ -27,8 +27,10 @@ ensures x::node<b> * y::node<a>;
   // -> x::node<a> * y::node<b> & t = a |- x::node<a> * y::node<b> & t = a
   // match (x,x) (y, y) -> t = a |- t = a
   // residue t = a
-  //fcode(x,y);
-  x.val = y.val;
+  fcode(x,y);
+
+  //x.val = y.val;
+
   //Q(x,y) & t = a
   // Q(x,y) & t = a |- exists k. y -> node<k>
   // --> Q(x,y) = exists k. y -> node<k> * Q'(x,y)
@@ -45,7 +47,7 @@ ensures x::node<b> * y::node<a>;
 
 // {exists k. y -> node<k>} y.val = t {y -> node<t>}
 
-// Key observation: consider all as Hooare triple
+// Key observation: consider all as Hoare triple
 
 // {(((int t;
 // t = bind x to (val_24_1873) [read] in 

@@ -2364,6 +2364,8 @@ and merge_iast_prog (main_prog: Iast.prog_decl) (aux_prog: Iast.prog_decl)
                                aux_prog.Iast.prog_coercion_decls;
     Iast.prog_hp_decls = main_prog.Iast.prog_hp_decls @
                          aux_prog.Iast.prog_hp_decls;
+    Iast.prog_unk_preds = main_prog.Iast.prog_unk_preds @
+                         aux_prog.Iast.prog_unk_preds;
     Iast.prog_hp_ids = main_prog.Iast.prog_hp_ids @
                        aux_prog.Iast.prog_hp_ids;
     Iast.prog_templ_decls = main_prog.Iast.prog_templ_decls @
@@ -2464,6 +2466,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_proc_decls = !proc_decls;
     Iast.prog_barrier_decls = !barrier_decls;
     Iast.prog_coercion_decls = !coercion_decls;
+    Iast.prog_unk_preds = [];
     Iast.prog_hp_decls = List.fold_left (fun r proc ->r@proc.Iast.proc_hp_decls) [] !proc_decls;
     Iast.prog_hp_ids = [];
     Iast.prog_test_comps = []

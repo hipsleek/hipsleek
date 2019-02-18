@@ -167,6 +167,7 @@ let iprog = { I.prog_include_decls =[];
               I.prog_ui_decls = [];
               I.prog_exp_decls = [];
               I.prog_hp_decls = [];
+              I.prog_unk_preds = [];
               I.prog_hp_ids = [];
               I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
               I.prog_proc_decls = [];

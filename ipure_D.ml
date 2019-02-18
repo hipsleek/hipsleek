@@ -58,7 +58,7 @@ type formula =
 and b_formula = p_formula * ((bool * int * (exp list)) option)
 (* (is_linking, label, list of linking expressions in b_formula) *)
 
-and p_formula = 
+and p_formula =
   | Frm of ((ident * primed) * loc)
   | XPure of xpure_view
   | BConst of (bool * loc)

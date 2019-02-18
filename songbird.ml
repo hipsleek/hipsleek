@@ -18,6 +18,8 @@ let add_str = Gen.Basic.add_str
 let no_pos = VarGen.no_pos
 let report_error = Gen.Basic.report_error
 let pr_formula = CPR.string_of_formula
+let pr_vars = CPR.string_of_spec_var_list
+let pr_hps = pr_list CPR.string_of_hp_decl
 let pr_struc_f = CPR.string_of_struc_formula
 let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
@@ -747,10 +749,8 @@ and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
 
 and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let n_prog = translate_prog prog in
-  let evars = bf.CF.formula_struc_implicit_inst
-              @ bf.CF.formula_struc_explicit_inst
-              @ bf.CF.formula_struc_exists
-              @ es.CF.es_evars in
+  let evars = bf.CF.formula_struc_implicit_inst @ bf.CF.formula_struc_explicit_inst
+              @ bf.CF.formula_struc_exists @ es.CF.es_evars in
   let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
   let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
   let conseqs, holes = if Gen.is_empty evars
@@ -761,11 +761,10 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       let sb_vars = List.map translate_var evars in
       (List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
   let holes = List.map CF.disable_imm_h_formula holes in
-  let formula = es.CF.es_formula in
-  let formula = match pf with
-    | None -> formula
-    | Some pf -> CF.add_pure_formula_to_formula pf formula in
-  let sb_ante, _ = translate_formula formula in
+  let ante = match pf with
+    | None -> es.CF.es_formula
+    | Some pf -> CF.add_pure_formula_to_formula pf es.CF.es_formula in
+  let sb_ante, _ = translate_formula ante in
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:PrfEntailHip x sb_conseq)
       sb_ante in
@@ -791,22 +790,37 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let conti = bf.CF.formula_struc_continuation in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
+    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else
     let hps = prog.Cast.prog_hp_decls in
+    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
+    let () = x_binfo_hp (add_str "formulas" (pr_list pr_formula)) formulas no_pos in
     let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
     let conseq_hps = get_conseq_hp hp_names bf.CF.formula_struc_base in
     if List.length conseq_hps > 0 then
-      let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
-                    CP.remove_dups_svl in
-      let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in
-      let pre_pred = var_closure es.CF.es_formula hp_args in
-      let () = x_binfo_hp (add_str "Pre-cond:" pr_formula) pre_pred no_pos in
-      let n_bf = {bf with CF.formula_struc_base = pre_pred} in
-      let n_conseq = CF.EBase n_bf in
-      heap_entail_after_sat_struc prog ctx n_conseq ~pf:None
-      (* report_error no_pos "infer pre-cond testing" *)
+      let () = x_binfo_hp (add_str "ante" pr_formula) ante no_pos in
+      let ante_vars = CF.fv ante in
+      let () = x_binfo_hp (add_str "ante" pr_vars) ante_vars no_pos in
+      (CF.mkFailCtx_simple "to find residue" es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+      , Prooftracer.Failure)
+      (* let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
+       *               CP.remove_dups_svl in
+       * let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in
+       * let pre_pred = var_closure es.CF.es_formula hp_args in
+       * let () = x_binfo_hp (add_str "Pre-cond:" pr_formula) pre_pred no_pos in
+       * let n_bf = {bf with CF.formula_struc_base = pre_pred} in
+       * let n_conseq = CF.EBase n_bf in
+       * let () = x_binfo_hp (add_str "n_conseq" pr_struc_f) n_conseq no_pos in
+       * heap_entail_after_sat_struc_x prog ctx n_conseq ~pf:None *)
+    (* else *)
+      (* let ante_hps = get_conseq_hp hp_names es.CF.es_formula in
+       * if ante_hps = [] then
+       *   let msg = "songbird result is Failed." in
+       *   (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+       *   , Prooftracer.Failure) *)
     else
-      let msg = "songbird result is Failed." in
+      let msg = "To collect post-cond predicates. songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
+

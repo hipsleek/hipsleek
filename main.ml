@@ -747,13 +747,7 @@ let process_source_full source =
                 with
                 | None -> raise e
                 | _ -> ()
-                (* if repaired then
-                 *   let n_cprog, _ = Astsimp.trans_prog n_iprog in
-                 *   try Typechecker.check_prog_wrapper n_iprog n_cprog
-                 *   with e2 -> raise e2
-                 * else raise e *)
               else
-                (* raise e *)
                 let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
                 match repaired_iprog with
                 | None -> raise e

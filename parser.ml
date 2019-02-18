@@ -49,11 +49,11 @@ type decl =
   | Func of func_decl
   | Rel of rel_decl (* An Hoa *)
   | Hp of hp_decl
+  | UnkPred of unk_pred
   | Axm of axiom_decl (* An Hoa *)
   | Global_var of exp_var_decl
   | Logical_var of exp_var_decl (* Globally logical vars *)
   | Proc of proc_decl
-  (* | Coercion of coercion_decl *)
   | Coercion_list of coercion_decl_list
   | Include of string
   | Template of templ_decl
@@ -128,6 +128,7 @@ let ut_names = new Gen.stack (* List of declared unknown temporal' names *)
 let ui_names = new Gen.stack (* List of declared unknown imm rel *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
+let unkpred_names = new Gen.stack (* list of names of heap preds declared *)
 (* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
 let  conv_ivars_icmd il_w_itype =
@@ -1138,7 +1139,7 @@ data_header:
 template_data_header:
     [[ `TEMPL; `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
 
-data_body: 
+data_body:
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
       | `OBRACE; `CBRACE                   -> []] ];
@@ -3091,9 +3092,7 @@ opt_fct_list:[[ t = OPT fct_list -> []]];
 
 (*** Function declaration ***)
 func_decl:
-  [[ fh=func_header -> fh
-   (* | fh=func_header; `EQ; `QMARK -> FuncUnknown fh *)
-  ]];
+  [[ fh=func_header -> fh  ]];
 
 func_typed_id_list_opt: [[ t = LIST1 typed_id_list SEP `COMMA -> t ]];
 
@@ -3104,6 +3103,14 @@ func_header:
         func_typed_vars = tl;
       }
   ]];
+
+(* unkpred_header:
+ *   [[ `UNKPRED; `IDENTIFIER id; `OPAREN; tl= func_typed_id_list_opt; `CPAREN ->
+ *       let () = func_names # push id in
+ *       { func_name = id;
+ *         func_typed_vars = tl;
+ *       }
+ *   ]]; *)
 
 (************ An Hoa :: Relations ************)
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
@@ -3272,6 +3279,17 @@ axiom_decl:[[
 		  axiom_conclusion = rhs; }
 ]];
 
+unk_pred : [[
+    `UNKPRED; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; `CPAREN  ->
+    let () = unkpred_names # push id in
+    let tl, _ = pred_get_args_partition tl0 in
+    {
+      unkpred_name = id;
+      unkpred_args = List.map (fun (x,y,_) -> (x,y)) tl;
+      unkpred_formula = None;
+    }
+  ]];
+
 hp_decl:[[
 `HP; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     let () = hp_names # push id in
@@ -3311,7 +3329,7 @@ hp_decl:[[
     (* } *)
 ]];
 
- (*end of sleek part*)   
+ (*end of sleek part*)
  (*start of hip part*)
 hprogn:
   [[ t = opt_decl_list ->
@@ -3330,6 +3348,7 @@ hprogn:
       let ut_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let ui_defs = new Gen.stack in (* List of unknown temporal definitions *)
       let hp_defs = new Gen.stack in(* list of heap predicate relations *)
+      let unkpreds = new Gen.stack in
       let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl_list list) in
@@ -3350,7 +3369,8 @@ hprogn:
         | ExpDecl exp_def -> exp_defs # push exp_def
         | Ut utdef -> ut_defs # push utdef
         | Ui uidef -> ui_defs # push uidef
-        | Hp hpdef -> hp_defs # push hpdef 
+        | Hp hpdef -> hp_defs # push hpdef
+        | UnkPred unkpred -> unkpreds # push unkpred
         | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
@@ -3382,14 +3402,15 @@ hprogn:
     let ui_lst = ui_defs # get_stk in
     let exp_lst = exp_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
+    let unkpred_lst = unkpreds # get_stk in
     let extra_rels = List.map (fun u -> u.Iast.ui_rel) ui_lst in
     (* WN : how come not executed for loop2.slk? *)
     (* PURE_RELATION_OF_HEAP_PRED *)
     (* to create __pure_of_relation from hp_lst to add to rel_lst *)
     (* rel_lst = rel_lst @ List.map (pure_relation_of_hp_pred) hp_lst *)
     { prog_include_decls = !include_defs;
-    prog_data_decls = obj_def :: string_def :: !data_defs;
-    prog_global_var_decls = !global_var_defs;
+      prog_data_decls = obj_def :: string_def :: !data_defs;
+      prog_global_var_decls = !global_var_defs;
     prog_logical_var_decls = !logical_var_defs;
     prog_enum_decls = !enum_defs;
     (* prog_rel_decls = [];  TODO : new field for array parsing *)
@@ -3403,7 +3424,8 @@ hprogn:
         (RelT tl,x.rel_name)) (rel_lst@extra_rels); (* WN *)
     prog_templ_decls = templ_lst;
     prog_ut_decls = ut_lst;
-    prog_hp_decls = hp_lst ;
+      prog_hp_decls = hp_lst ;
+      prog_unk_preds = unkpred_lst;
     prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
     prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
     prog_proc_decls = !proc_defs;
@@ -3429,6 +3451,7 @@ decl:
   |  r=ut_decl; `DOT -> Ut r
   |  r=ui_decl; `DOT -> Ui r
   |  r=hp_decl; `DOT -> Hp r
+  |  r=unk_pred; `DOT -> UnkPred r
   |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l

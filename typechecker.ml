@@ -28,6 +28,7 @@ module I = Iast
 module CEQ = Checkeq
 module M = Lexer.Make(Token.Token)
 module H = Hashtbl
+module Synt = Synthesis
 module LO2 = Label_only.Lab2_List
 (* module FP = Fixpoint *)
 
@@ -57,6 +58,9 @@ let reset_repair_ref =
   let () = repairing_ents := [] in
   let () = proc_to_repair := None in
   ()
+
+let pr_ctx = Cprinter.string_of_list_failesc_context
+let pr_formula = Cprinter.string_of_formula
 
 let get_repair_ents_x rs proc =
   let pr1 = Cprinter.string_of_list_partial_context in
@@ -2336,13 +2340,33 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_scall_pos = pos}) ->
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
+        let () = x_binfo_hp (add_str "scall name" pr_id) mn no_pos in
+        (* if contains mn "fcode" then
+         *   let proc_decl = look_up_proc_def pos prog.new_proc_decls mn in
+         *   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+         *   let pre_proc = specs |> Synt.get_pre_cond |> Synt.rm_emp_formula in
+         *   let post_proc = specs |> Synt.get_post_cond |> Synt.rm_emp_formula in
+         *   let () = x_binfo_hp (add_str "pre" pr_formula) pre_proc no_pos in
+         *   let () = x_binfo_hp (add_str "post" pr_formula) post_proc no_pos in
+         *   let ctx_f = CF.formula_of_list_failesc_context ctx in
+         *   let proc_args = proc_decl.Cast.proc_args
+         *              |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+         *   let pre_proc_f = Synthesizer.extract_vars_f ctx_f proc_args in
+         *   let pre_f = pre_proc_f |> Gen.unsome in
+         *   let () = x_binfo_hp (add_str "ctx_f" pr_formula) ctx_f no_pos in
+         *   let () = x_binfo_hp (add_str "pre_f" pr_formula) pre_f no_pos in
+         *   let _, resid = Songbird.check_entail ~residue:true prog ctx_f pre_f in
+         *   let resid = resid |> Gen.unsome in
+         *   let () = x_binfo_hp (add_str "residue" pr_formula) resid no_pos in
+         *   report_error no_pos "template program"
+         * else *)
         let () = proving_loc#set pos in
         let mn_str = Cast.unmingle_name mn in
         let proc0 = proc in
         (*clear history*)
         let farg_types, _ (* farg_names *) = List.split proc.proc_args in
         let () = x_tinfo_hp (add_str "mn: " pr_id) mn no_pos in
-        let () = x_binfo_hp (add_str "ctx scall start: "
+        let () = x_tinfo_hp (add_str "ctx scall start: "
                                Cprinter.string_of_list_failesc_context) ctx no_pos
         in
         let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx
@@ -2466,7 +2490,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                      Cprinter.string_of_struc_formula)
                   renamed_spec no_pos in
               let pre2 = CF.subst_struc_pre st3 renamed_spec in
-              let () = x_binfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
+              let () = x_tinfo_hp (add_str "pre2" Cprinter.string_of_struc_formula) pre2 no_pos in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
               (* Termination: Store unreachable state *)
               let _ =
@@ -2497,7 +2521,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   prog false true sctx pre2 None None None pos pid in
               let () = if !print_proof && should_output_html then Prooftracer.pop_div () in
               let () = PTracer.log_proof prf in
-              let () = x_binfo_hp (add_str "new rs:"
+              let () = x_tinfo_hp (add_str "new rs:"
                                      Cprinter.string_of_list_failesc_context)
                   rs no_pos in
               rs

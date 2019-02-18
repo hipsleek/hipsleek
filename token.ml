@@ -19,7 +19,7 @@ type sleek_token =
   | ANDLIST| ABSTRACT
   | ASSERT | ASSERT_EXACT | ASSERT_INEXACT | ASSUME | INFER_ASSUME | ALLN | APPEND | AXIOM (* [4/10/2011] An Hoa *)
   | BIND | BOOL | BREAK | BAGMAX | BAGMIN | BAG | BARRIER
-  | PASS_COPY
+  | PASS_COPY | UNKPRED
   | SLK_HULL | SLK_PAIRWISE
   | CASE | SIMPLIFY | CAPTURERESIDUE | CLASS | COMPOSE | CONST | CONTINUE
   | CHECKNORM | CHECKEQ | CHECKSAT | CHECK_NONDET | SYNTHESIZE
@@ -144,6 +144,7 @@ module Token = struct
     | EOF -> ""
     | JAVA s-> s
     | AXIOM -> "axiom" (* [4/10/2011] An Hoa *)
+    | UNKPRED -> "UnkPred"
     | ANDLIST -> "AndList" | ATPOS -> "at"
     | ASSERT -> "assert" | ASSERT_EXACT -> "assert_exact" | ASSERT_INEXACT -> "assert_inexact" | ASSUME -> "assume" | INFER_ASSUME -> "infer_assume" | ALLN-> "alln" | APPEND -> "app" | ABSTRACT -> "abstract"
     | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin" | BAG->"bag" | BARRIER ->"barrier"

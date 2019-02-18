@@ -38,6 +38,7 @@ type prog_decl = {
   mutable prog_ui_decls: ui_decl list;
   mutable prog_exp_decls: exp_decl list;
   mutable prog_hp_decls : hp_decl list;
+  mutable prog_unk_preds : unk_pred list;
   mutable prog_rel_ids : (typ * ident) list;
   mutable prog_hp_ids : (typ * ident) list;
   mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
@@ -168,6 +169,11 @@ and hp_decl = { hp_name : ident;
                 mutable hp_root_pos: int option;
                 hp_is_pre : bool;
                 hp_formula : Iformula.formula ;
+              }
+
+and unk_pred = { unkpred_name : ident;
+                mutable unkpred_args : (typ * ident) list;
+                unkpred_formula : Iformula.formula option;
               }
 
 and hopred_decl = {
@@ -1647,9 +1653,11 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
-  | d :: rest ->
-    (* let () = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
-    if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | [] -> raise Not_found
+
+and look_up_unk_pred (unk_preds : unk_pred list) (name : ident) = match unk_preds with
+  | d :: rest -> if d.unkpred_name = name then d else look_up_unk_pred rest name
   | [] -> raise Not_found
 
 and look_up_templ_def_raw (defs: templ_decl list) (name : ident) =
@@ -2929,6 +2937,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
       prog_ui_decls = hd.prog_ui_decls @ iprims.prog_ui_decls;
       prog_exp_decls = hd.prog_exp_decls @ iprims.prog_exp_decls;
       prog_hp_decls = hd.prog_hp_decls @ iprims.prog_hp_decls;
+      prog_unk_preds = hd.prog_unk_preds @ iprims.prog_unk_preds;
       prog_hp_ids = hd.prog_hp_ids @ iprims.prog_hp_ids;
       prog_axiom_decls = hd.prog_axiom_decls @ iprims.prog_axiom_decls; (* [4/10/2011] An Hoa *)
       prog_hopred_decls = hd.prog_hopred_decls @ iprims.prog_hopred_decls;
@@ -2950,6 +2959,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
       prog_enum_decls = [];
       prog_view_decls = [];
       prog_func_decls = [];
+      prog_unk_preds = [];
       prog_rel_decls = [];
       prog_rel_ids = [];
       prog_templ_decls = [];

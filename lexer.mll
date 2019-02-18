@@ -114,6 +114,7 @@ module Make (Token : SleekTokenS)
    ("assume", ASSUME);
    ("infer_assume", INFER_ASSUME);
    ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
+   ("UnkPred", UNKPRED);
    ("alln", ALLN);
    ("app", APPEND);
    ("ann", ANN_KEY);

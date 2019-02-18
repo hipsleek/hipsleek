@@ -397,6 +397,7 @@ let main () =
   print_string "\nmain line 401\n";
   let () = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
+                I.prog_unk_preds = [];
                 I.prog_data_decls = [iobj_def;ithrd_def];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];

@@ -147,6 +147,12 @@ let eq_vp_ann a1 a2 =
 let imm_top = Accs
 let imm_bot = Mutable
 
+let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+    try ignore (Str.search_forward re s1 0); true
+    with Not_found -> false
+
 type hp_arg_kind=
   | I
   | NI
