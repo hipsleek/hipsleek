@@ -240,7 +240,7 @@ let rec translate_pf (pure_f: CP.formula)  =
     let (p_formula, _) = b_formula in
     begin
       match p_formula with
-      | BVar (var, loc) ->
+      | CP.BVar (var, loc) ->
         SBCast.BVar (translate_var var, translate_loc loc)
       | BConst (b, loc) ->
         SBCast.BConst (b, translate_loc loc)
@@ -452,6 +452,7 @@ let translate_back_hf sb_hf holes =
   mkStarHList ([hip_hf]@holes)
 
 let rec translate_formula formula =
+  let () = x_binfo_hp (add_str "formula" pr_formula) formula no_pos in
   match formula with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
@@ -524,7 +525,6 @@ let translate_ent ent =
   let (lhs, rhs) = ent in
   let () = x_tinfo_hp (add_str "lhs: " pr_pf) lhs no_pos in
   let () = x_tinfo_hp (add_str "rhs: " pr_pf) rhs no_pos in
-
   let sb_lhs = translate_pf lhs in
   let sb_rhs = translate_pf  rhs in
   let () = x_tinfo_hp (add_str "lhs: " (SBCast.pr_pure_form)) sb_lhs no_pos in

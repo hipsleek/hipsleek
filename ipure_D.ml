@@ -45,7 +45,7 @@ type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc) | NoAnn
 let imm_ann_top = ConstAnn imm_top
 let imm_ann_bot = ConstAnn imm_bot
 
-type formula = 
+type formula =
   | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
   | AndList of (LO.t * formula) list

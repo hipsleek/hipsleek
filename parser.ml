@@ -650,7 +650,8 @@ SHGram.Entry.of_parser "peek_print"
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
-             | [IDENTIFIER id,_;OPAREN,_;_] ->  if hp_names # mem id then raise Stream.Failure else ()
+             | [IDENTIFIER id,_;OPAREN,_;_] ->
+               if hp_names # mem id || unkpred_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
@@ -1401,11 +1402,6 @@ baga_inv:
         let il = List.map (fun ((name,p),s)-> 
           let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in
           (name,s)
-          (* match s with *)
-          (* | Some(n2,p) ->  *)
-          (*   let () = if p==Primed then print_endline_quiet "WARNING: primed variable disallowed" in *)
-          (*   (name,Some(n2)) *)
-          (* | None -> (name,None) *)
         ) il in
         (il,p)]];
 
@@ -1738,7 +1734,7 @@ disjunctive_constr:
     ]
   ];
 
-core_constr_and : [[ 
+core_constr_and : [[
     f1 = core_constr; `ANDWORD; ls=core_constr_conjunctions ->
       let main = F.add_formula_and ls f1 in
       main
@@ -1820,9 +1816,9 @@ opt_heap_constr: [[ t = heap_constr -> t]];
 heap_constr:
   [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
-   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]]; 
+   | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]];
 
-heap_rd: 
+heap_rd:
   [[ shi= simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
    | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos_camlp4 _loc 2)
    | shi=simple_heap_constr_imm                  -> shi]];
@@ -1841,7 +1837,7 @@ heap_rw:
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
-  [[   
+  [[
      shc=SELF; peek_star; `STAR; hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
@@ -1914,7 +1910,6 @@ non_thread_args2:
 (*LDK: add frac for fractional permission*)
 simple_heap_constr:
     [[ peek_heap; c=cid; `COLONCOLON;  hid = heap_id; opt1 = OPT rflow_form_list ; (* simple2 ; *) frac= opt_perm;
- (*  peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT ; *)
     a=thread_args;
  ofl = opt_formula_label ->
      (*For threads as resource*)
@@ -2001,19 +1996,14 @@ simple_heap_constr:
    | `PERCENT; `IDENTIFIER id -> F.HVar (id,[])
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
      let pos = get_pos_camlp4 _loc 2 in
-     if hp_names # mem id then
-       if !Globals.hrel_as_view_flag then
-         (* report_error (get_pos 1) "hrel_as_view : to be implemented (1)" *)
-         F.mk_hrel id cl pos 
-       else
-         F.mk_hrel id cl pos 
-           (* F.HRel(id, cl, (get_pos_camlp4 _loc 2)) *)
-         (*P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))*)
+     if hp_names # mem id || unkpred_names # mem id then
+       let () = print_string "\n hp name\n" in
+       F.mk_hrel id cl pos
      else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
   ]];
-  
+
 (* (* HO Resource variables' annotation *)  *)
 (* rflow_ann: [[ `IN_RFLOW | `OUT_RFLOW ]]; *)
 
@@ -2172,7 +2162,7 @@ cexp_w:
           let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
           set_slicing_utils_pure_double f false
     end
-    ]  
+    ]
   | "bconstr" 
     [ lc=SELF; `LTE; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -2277,12 +2267,11 @@ cexp_w:
         (* Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1))) *)
         mk_purec_absent (P.Var (("Anon"^fresh_trailer(),Unprimed),(get_pos_camlp4 _loc 1)))
     | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN ->
-      if hp_names # mem id then 
-        if !Globals.hrel_as_view_flag then
-          (* report_error (get_pos 1) "hrel_as_view : to be implemented (2)" *)
+      if hp_names # mem id then
+        let () = print_string "\n hp name222222\n" in
           Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
-        else
-          Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+      (* else if unkpred_names # mem id
+       * then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None)) *)
       else
         begin
           if not(rel_names # mem id) then print_endline_quiet ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
@@ -2296,12 +2285,13 @@ cexp_w:
        * s(x,1,x+1), s(x,y,x+y), ...
        * in our formula.
        *)
-        if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-        else if templ_names # mem id then
-          let () = print_string "\n template name\n" in
-          Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
-        else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
-          report_error (get_pos 1) ("should be a pure relation, and not a heap pred here")
+      if func_names # mem id
+      then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+      else if templ_names # mem id then
+        let () = print_string "\n template name\n" in
+        Pure_c (P.mkTemplate id cl (get_pos_camlp4 _loc 1))
+      else if hp_names # mem id then (* Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) *)
+        report_error (get_pos 1) ("should be a pure relation, and not a heap pred here")
         else if ui_names # mem_eq (fun (id1, _) (id2, _) ->  id1 = id2 ) (id, true) then
           begin
             let _, is_pre = ui_names # find (fun (name,  _) -> name = id) in
@@ -2317,9 +2307,9 @@ cexp_w:
             (* let nid = un_option nid 0 in *)
             let ann = P.mkUtAnn 0 id is_pre fname (P.mkTrue pos) cl pos in
             Pure_f (P.BForm ((P.LexVar (ann, [], [], pos), None), None))
-          with Not_found -> 
-            if not (rel_names # mem id ) then 
-              if not !Globals.web_compile_flag then 
+          with Not_found ->
+            if not (rel_names # mem id ) then
+              if not !Globals.web_compile_flag then
                 print_endline_quiet ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
             Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         end
@@ -2379,7 +2369,7 @@ cexp_w:
     ]
   ];
 
-	  
+
 tree_const:[[
 	 `OPAREN;`COMMA;`CPAREN->Ts.bot
 	| `HASH -> Ts.top 
@@ -2387,7 +2377,7 @@ tree_const:[[
 	|`OPAREN;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode Ts.bot r
 	|`OPAREN;l=tree_const;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode l r
 ]];
-	  
+
 (* [[ *)
 (*     il=OPT measures2 -> un_option il [] *)
 (* ]]; *)
@@ -3298,35 +3288,17 @@ hp_decl:[[
     let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
      if !Globals.hrel_as_view_flag then
-       mk_hp_decl_w_view id tl (Some root_pos) parts pos1 
-         (* report_error (get_pos 1) "hrel_as_view : to be implemented (3)" *)
+       mk_hp_decl_w_view id tl (Some root_pos) parts pos1
      else mk_hp_decl id tl (Some root_pos) parts pos1
-    (*  { *)
-    (*     hp_name = id; *)
-    (*     hp_typed_inst_vars = tl; *)
-    (*     hp_root_pos = root_pos; *)
-    (*     hp_part_vars = parts; *)
-    (*     hp_is_pre = true; *)
-    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
-    (* } *)
-  | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  | `HPPOST; `IDENTIFIER id; `OPAREN; tl0= typed_id_inst_list_opt; `CPAREN  ->
     let () = hp_names # push id in
     let tl, parts = pred_get_args_partition tl0 in
     let root_pos =  pred_get_root_pos !pred_root_id tl in
     let pos1 = get_pos_camlp4 _loc 1 in
     let () = pred_root_id := "" in
      if !Globals.hrel_as_view_flag then
-       mk_hp_decl_w_view ~is_pre:false id tl (Some root_pos) parts pos1 
-       (* report_error (get_pos 1) "hrel_as_view : to be implemented (4)" *)
+       mk_hp_decl_w_view ~is_pre:false id tl (Some root_pos) parts pos1
      else mk_hp_decl ~is_pre:false id tl (Some root_pos) parts pos1
-    (* { *)
-    (*     hp_name = id; *)
-    (*     hp_typed_inst_vars = tl; *)
-    (*     hp_part_vars = parts; *)
-    (*     hp_root_pos = root_pos; *)
-    (*     hp_is_pre = false; *)
-    (*     hp_formula =  F.mkBase F.HEmp (P.mkTrue (get_pos_camlp4 _loc 1)) VP.empty_vperm_sets top_flow [] (get_pos_camlp4 _loc 1); *)
-    (* } *)
 ]];
 
  (*end of sleek part*)
