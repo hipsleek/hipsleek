@@ -7,12 +7,13 @@ open Mcpure
 
 module CF = Cformula
 module CP = Cpure
+module MCP = Mcpure
 
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
-
+let rel_num = ref 0
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -587,7 +588,7 @@ let extract_var_f f var = match f with
       end
     | _ -> None
 
-let extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
+let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
     let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
@@ -596,7 +597,8 @@ let extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
       match heap_extract with
       | None ->
         let pf_var = pf_of_vars vars pf in
-        Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+        let n_f = (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var)) in
+        Some n_f
       | Some (hf, vars) ->
         let pf_var = pf_of_vars vars pf in
         Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
@@ -621,3 +623,11 @@ let rec extract_var_pf (f: CP.formula) var = match f with
     else res1
   | _ -> None
 
+
+let create_residue vars =
+  let hl_name = CP.mk_spec_var ("T" ^ (string_of_int !rel_num)) in
+  let () = rel_num := !rel_num + 1 in
+  let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
+  let hrel = CF.HRel (hl_name, args, no_pos) in
+  let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+  hrel_f

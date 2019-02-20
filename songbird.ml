@@ -452,7 +452,7 @@ let translate_back_hf sb_hf holes =
   mkStarHList ([hip_hf]@holes)
 
 let rec translate_formula formula =
-  let () = x_binfo_hp (add_str "formula" pr_formula) formula no_pos in
+  let () = x_tinfo_hp (add_str "formula" pr_formula) formula no_pos in
   match formula with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
@@ -798,6 +798,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let () = x_binfo_hp (add_str "formulas" (pr_list pr_formula)) formulas no_pos in
     let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
     let conseq_hps = get_conseq_hp hp_names bf.CF.formula_struc_base in
+    let ante_hps = get_conseq_hp hp_names ante in
     if List.length conseq_hps > 0 then
       let () = x_binfo_hp (add_str "ante" pr_formula) ante no_pos in
       let ante_vars = CF.fv ante in
@@ -807,14 +808,25 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       | None -> (CF.mkFailCtx_simple "to find residue" es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
       | Some struc ->
-        let hp_vars = conseq_hps |> List.map CP.afv |> List.concat |> CP.remove_dups_svl in
-        let hf_f = Synthesis.extract_vars_f ante hp_vars in
-        let _, resid = check_entail ~residue:true prog ante (Gen.unsome hf_f) in
+        let _, resid = check_entail ~residue:true prog ante ante in
         let n_es_formula = Gen.unsome resid in
         let n_ctx = CF.Ctx {es with CF.es_formula = n_es_formula;} in
         heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+    else if ante_hps != [] then
+      let vars = CF.fv ante |> CP.remove_dups_svl in
+      let vars = vars |> List.filter (fun x -> match CP.type_of_sv x with
+          | Int
+          | Named _ -> true
+          | _ -> false) in
+      let n_es_f = Synthesis.create_residue vars in
+      let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
+      (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+    else
+            let msg = "songbird result is Failed." in
+      (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+      , Prooftracer.Failure)
 
-      (* let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
+(* let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
        *               CP.remove_dups_svl in
        * let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in
        * let pre_pred = var_closure es.CF.es_formula hp_args in
@@ -829,8 +841,3 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
        *   let msg = "songbird result is Failed." in
        *   (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
        *   , Prooftracer.Failure) *)
-    else
-      let msg = "To collect post-cond predicates. songbird result is Failed." in
-      (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-      , Prooftracer.Failure)
-
