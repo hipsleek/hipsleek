@@ -4108,7 +4108,7 @@ and add_perm_to_spec_x p_ref p_val (expr : CF.struc_formula) : CF.struc_formula 
     a
   in helper None expr
 
-and add_perm_proc  p = 
+and add_perm_proc  p =
   if not(!Globals.ann_vp) then p
   else
     let p_ref = p.C.proc_by_name_params in
@@ -4389,13 +4389,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
              Debug.info_zprint (lazy (("WARNING : uninterpreted free variables "
                                        ^str^" in specification."))) no_pos
          in
-         let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
-           else proc.Iast.proc_args_wi
-         in
          let proc_name = if proc.I.proc_mingled_name = ""
            then let arg_types = List.map fst args in
              Cast.mingle_name proc.I.proc_name arg_types
-               else proc.I.proc_mingled_name in
+           else proc.I.proc_mingled_name in
+         let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
+           else proc.Iast.proc_args_wi
+         in
          let cproc = {
            C.proc_name = proc_name;
            C.proc_source = proc.I.proc_source;

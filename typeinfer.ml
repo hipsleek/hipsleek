@@ -1285,7 +1285,9 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
                            ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
         }
     )
-    with Not_found -> raise Not_found
+    with Not_found ->
+      let () = print_string "try unify data type args" in
+      raise Not_found
   )
   else (
     (* dereference cases *)
@@ -1318,7 +1320,9 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
                            ^ " does not match"^(pr_list (fun c->c)(List.map Iprinter.string_of_formula_exp ies));
         }
     )
-    with Not_found -> raise Not_found
+    with Not_found ->
+      let () = print_string "try unify data type args else" in
+      raise Not_found
   )
 
 (* TODO WN : this is not doing anything *)
@@ -1712,7 +1716,26 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
        else
          Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
      with
-     | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
+     | Not_found ->
+       begin
+         try
+           let helper2 unkpred =
+             let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos)
+                 unkpred.I.unkpred_args in
+             let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+             let tmp_list = List.combine args args_exp_types in
+             let n_tlist = List.fold_left (fun tl (arg,et) ->
+                 fst(x_add gather_type_info_exp prog arg tl et )) [] tmp_list in
+             n_tlist in
+           let unkpred = I.look_up_unk_pred prog.I.prog_unk_preds r in
+           let n_list = helper2 unkpred in
+           let () = y_binfo_hp (add_str "ntl" string_of_tlist) n_list in
+           n_list
+         with
+         | Not_found -> failwith ("gather_type_info_b_formula: relation "^r
+                                  ^" cannot be found")
+         | e -> raise e;
+       end
      | Failure s -> failwith s
      | _ -> print_endline_quiet ("gather_type_info_heap: relation " ^ r);tlist
     )

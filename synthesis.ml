@@ -495,3 +495,129 @@ let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
       Or {bf with formula_or_f1 = helper f1;
                   formula_or_f2 = helper f2} in
   helper f1
+
+let rec extract_hf_var hf var =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if dn_var = var then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if vn_var = var then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | CF.Star sf ->
+    let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
+    let vf2 = extract_hf_var sf.CF.h_formula_star_h2 var in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some (f1, vars1), Some (f2, vars2) ->
+        report_error no_pos "one var cannot appear in two heap fragments"
+    end
+  | _ -> None
+
+let rec extract_hf_vars hf vars =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if List.exists (fun x -> CP.eq_spec_var dn_var x) vars then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [dn_var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if List.exists (fun x -> CP.eq_spec_var vn_var x) vars then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [vn_var] @ args)
+    else None
+  | CF.Star sf ->
+    let vf1 = extract_hf_vars sf.CF.h_formula_star_h1 vars in
+    let vf2 = extract_hf_vars sf.CF.h_formula_star_h2 vars in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some (f1, vars1), Some (f2, vars2) ->
+        let n_hf = CF.Star {sf with h_formula_star_h1 = f1;
+                                    h_formula_star_h2 = f2;} in
+        Some (n_hf, vars1 @ vars2)
+    end
+  | _ -> None
+
+let extract_var_f f var = match f with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = pf_of_vars [var] pf in
+          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+        | Some (hf, vars) ->
+          let pf_var = pf_of_vars vars pf in
+          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+      end
+    | CF.Exists exists_f ->
+      let hf = exists_f.CF.formula_exists_heap in
+      let e_vars = exists_f.CF.formula_exists_qvars in
+      let vperms = exists_f.CF.formula_exists_vperm in
+      let e_typ = exists_f.CF.formula_exists_type in
+      let e_flow = exists_f.CF.formula_exists_flow in
+      let pf = Mcpure.pure_of_mix exists_f.CF.formula_exists_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = pf_of_vars [var] pf in
+          Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+        | Some (hf, vars) ->
+          let pf_var = pf_of_vars vars pf in
+          Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+      end
+    | _ -> None
+
+let extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
+  | CF.Base bf ->
+    let hf = bf.CF.formula_base_heap in
+    let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+    let heap_extract = extract_hf_vars hf vars in
+    begin
+      match heap_extract with
+      | None ->
+        let pf_var = pf_of_vars vars pf in
+        Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+      | Some (hf, vars) ->
+        let pf_var = pf_of_vars vars pf in
+        Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+    end
+  | _ -> None
+
+let rec extract_var_pf (f: CP.formula) var = match f with
+  | BForm (bf, _) ->
+    let (pf, _) = bf in
+    (match pf with
+     | Eq (e1, e2, _) ->
+       begin
+         match e1 with
+         | Var (sv, _) -> if CP.eq_spec_var sv var then Some e2 else None
+         | _ -> None
+       end
+     | _ -> None
+    )
+  | And (f1, f2, _) ->
+    let res1 = extract_var_pf f1 var in
+    if res1 = None then extract_var_pf f2 var
+    else res1
+  | _ -> None
+

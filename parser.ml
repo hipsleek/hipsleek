@@ -1997,7 +1997,6 @@ simple_heap_constr:
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
      let pos = get_pos_camlp4 _loc 2 in
      if hp_names # mem id || unkpred_names # mem id then
-       let () = print_string "\n hp name\n" in
        F.mk_hrel id cl pos
      else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue

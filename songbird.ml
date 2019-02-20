@@ -793,7 +793,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else
     let hps = prog.Cast.prog_hp_decls in
-    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
     let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
     let () = x_binfo_hp (add_str "formulas" (pr_list pr_formula)) formulas no_pos in
     let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
@@ -802,8 +802,18 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       let () = x_binfo_hp (add_str "ante" pr_formula) ante no_pos in
       let ante_vars = CF.fv ante in
       let () = x_binfo_hp (add_str "ante" pr_vars) ante_vars no_pos in
-      (CF.mkFailCtx_simple "to find residue" es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+      let conti = bf.CF.formula_struc_continuation in
+      match conti with
+      | None -> (CF.mkFailCtx_simple "to find residue" es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
+      | Some struc ->
+        let hp_vars = conseq_hps |> List.map CP.afv |> List.concat |> CP.remove_dups_svl in
+        let hf_f = Synthesis.extract_vars_f ante hp_vars in
+        let _, resid = check_entail ~residue:true prog ante (Gen.unsome hf_f) in
+        let n_es_formula = Gen.unsome resid in
+        let n_ctx = CF.Ctx {es with CF.es_formula = n_es_formula;} in
+        heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+
       (* let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
        *               CP.remove_dups_svl in
        * let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in

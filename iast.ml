@@ -1195,6 +1195,10 @@ let rec look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs wit
   | d :: rest -> if d.hp_name = name then d else look_up_hp_def_raw rest name
   | [] -> raise Not_found
 
+let rec look_up_unk_pred (unk_preds : unk_pred list) (name : ident) = match unk_preds with
+  | d :: rest -> if d.unkpred_name = name then d else look_up_unk_pred rest name
+  | [] -> raise Not_found
+
 let get_proot_hp_def_raw defs name =
   let hpdclr = look_up_hp_def_raw defs name in
   match hpdclr.hp_root_pos with
@@ -1448,9 +1452,15 @@ let extract_mut_args_x prog proc=
   let hp_decls = prog.prog_hp_decls in
   let hpargs = Iformula.struc_formula_collect_pre_hprel proc.proc_static_specs in
   let args_wi = List.fold_left (fun r (hp,args) ->
-      let hp_decl = look_up_hp_def_raw hp_decls hp in
-      let pr_hp_args_wi = List.combine hp_decl.hp_typed_inst_vars args in
-      r@(List.map (fun ((_,_, info), a) -> (a, info) ) pr_hp_args_wi)
+      try
+        let hp_decl = look_up_hp_def_raw hp_decls hp in
+        let pr_hp_args_wi = List.combine hp_decl.hp_typed_inst_vars args in
+        r@(List.map (fun ((_,_, info), a) -> (a, info) ) pr_hp_args_wi)
+      with _ ->
+        let unkpred = look_up_unk_pred prog.prog_unk_preds hp in
+        let unkpred_args = List.map (fun (x,y) -> (x,y, I)) unkpred.unkpred_args in
+        let pr_hp_args_wi = List.combine unkpred_args args in
+        r@(List.map (fun ((_,_, info), a) -> (a, info) ) pr_hp_args_wi)
     ) [] hpargs in
   List.map (fun p ->
       try
@@ -1654,10 +1664,6 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
   | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
-  | [] -> raise Not_found
-
-and look_up_unk_pred (unk_preds : unk_pred list) (name : ident) = match unk_preds with
-  | d :: rest -> if d.unkpred_name = name then d else look_up_unk_pred rest name
   | [] -> raise Not_found
 
 and look_up_templ_def_raw (defs: templ_decl list) (name : ident) =
