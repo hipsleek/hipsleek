@@ -556,7 +556,7 @@ let get_repair_candidate prog ents cond_op =
           fun_defs in
       match fun_def.SBCast.func_body with
       | SBCast.FbTemplate _
-      | SBCast.FbUnknown -> None
+      | SBCast.FbUnkn -> None
       | SBCast.FbForm exp ->
         let sb_vars = fun_def.SBCast.func_params in
         let translated_vars = List.map translate_back_var sb_vars in
@@ -644,12 +644,12 @@ let translate_prog (prog:Cast.prog_decl) =
       (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
-  let hps = prog.Cast.prog_hp_decls in
+  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
   let sb_hp_views = List.map translate_hp hps in
   let sb_view_decls = List.map translate_view_decl view_decls in
   let pr_hps = pr_list SBCast.pr_view_defn in
-  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_hp_views no_pos in
   let sb_view_decls = sb_view_decls @ sb_hp_views in
+  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_view_decls no_pos in
   let prog = SBCast.mk_program "heap_entail" in
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
                         SBCast.prog_views = sb_view_decls}
@@ -806,7 +806,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       let conti = bf.CF.formula_struc_continuation in
       match conti with
       | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-      | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+      | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
     else
       let msg = "songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
@@ -818,11 +818,12 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         | Named _ -> true
         | _ -> false) in
     let n_es_f = Synthesis.create_residue vars in
+    let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
     let conti = bf.CF.formula_struc_continuation in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+    | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
 
     (* let msg = "songbird result is Failed." in
    *   (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos

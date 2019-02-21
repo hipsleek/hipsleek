@@ -14,6 +14,7 @@ let pr_formula = Cprinter.string_of_formula
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
 let rel_num = ref 0
+let unk_hps = ref ([] : Cast.hp_decl list)
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -625,9 +626,20 @@ let rec extract_var_pf (f: CP.formula) var = match f with
 
 
 let create_residue vars =
-  let hl_name = CP.mk_spec_var ("T" ^ (string_of_int !rel_num)) in
+  let name = "T" ^ (string_of_int !rel_num) in
+  let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in
   let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
+  let hp_decl = {
+    Cast.hp_name = name;
+    Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
+    Cast.hp_part_vars = [];
+    Cast.hp_root_pos = None;
+    Cast.hp_is_pre = false;
+    Cast.hp_view = None;
+    Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+  } in
+  let () = unk_hps := [hp_decl] @ !unk_hps in
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f
