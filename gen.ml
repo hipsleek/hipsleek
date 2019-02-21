@@ -440,7 +440,7 @@ struct
 
   let mem_eq eq x l = List.exists (eq x) l
 
-  let rec remove_dups_eq eq n = 
+  let rec remove_dups_eq eq n =
     match n with
       [] -> []
     | q::qs -> if (mem_eq eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)

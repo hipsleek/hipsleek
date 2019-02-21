@@ -417,13 +417,20 @@ let translate_back_df df =
   CF.mkDataNode hip_root hip_name hip_args loc
 
 let translate_back_vf vf =
-  let hip_args = List.map translate_back_exp vf.SBCast.viewf_args in
-  let hip_args = List.map exp_to_var hip_args in
-  let hip_root = List.hd hip_args in
-  let hip_args = List.tl hip_args in
-  let hip_name = vf.SBCast.viewf_name in
-  let loc = translate_back_pos vf.SBCast.viewf_pos in
-  CF.mkViewNode hip_root hip_name hip_args loc
+  let hp_name = vf.SBCast.viewf_name in
+  let hp_names = !Synthesis.unk_hps |> List.map (fun x -> x.Cast.hp_name) in
+  if List.mem hp_name hp_names then
+    let hp_name = CP.mk_spec_var hp_name in
+    let hp_args = List.map translate_back_exp vf.SBCast.viewf_args in
+    let loc = translate_back_pos vf.SBCast.viewf_pos in
+    CF.HRel (hp_name, hp_args, loc)
+  else
+    let hip_args = List.map translate_back_exp vf.SBCast.viewf_args in
+    let hip_args = List.map exp_to_var hip_args in
+    let hip_root = List.hd hip_args in
+    let hip_args = List.tl hip_args in
+    let loc = translate_back_pos vf.SBCast.viewf_pos in
+    CF.mkViewNode hip_root hp_name hip_args loc
 
 let rec mkStarHList list = match list with
     | [] -> CF.HEmp
@@ -645,6 +652,7 @@ let translate_prog (prog:Cast.prog_decl) =
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
   let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
   let sb_hp_views = List.map translate_hp hps in
   let sb_view_decls = List.map translate_view_decl view_decls in
   let pr_hps = pr_list SBCast.pr_view_defn in
@@ -817,7 +825,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         | Int
         | Named _ -> true
         | _ -> false) in
-    let n_es_f = Synthesis.create_residue vars in
+    let n_es_f = Synthesis.create_residue vars prog in
     let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
     let conti = bf.CF.formula_struc_continuation in

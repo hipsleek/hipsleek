@@ -625,8 +625,11 @@ let rec extract_var_pf (f: CP.formula) var = match f with
   | _ -> None
 
 
-let create_residue vars =
+let create_residue vars prog =
   let name = "T" ^ (string_of_int !rel_num) in
+  let () = if !rel_num = 0 then
+      unk_hps := prog.Cast.prog_hp_decls @ !unk_hps
+    else () in
   let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in
   let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
@@ -643,3 +646,12 @@ let create_residue vars =
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f
+
+let eq_hp_decl hp1 hp2 =
+  let hp1_name,hp2_name = hp1.Cast.hp_name, hp2.Cast.hp_name in
+  let hp1_args = hp1.Cast.hp_vars_inst |> List.map (fun (x,y) -> x) in
+  let hp2_args = hp2.Cast.hp_vars_inst |> List.map (fun (x,y) -> x) in
+  if List.length hp1_args = List.length hp2_args && hp1_name = hp2_name then
+    let args = List.combine hp1_args hp2_args in
+    List.for_all (fun (x,y) -> CP.eq_spec_var x y) args
+  else false
