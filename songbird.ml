@@ -23,6 +23,7 @@ let pr_hps = pr_list CPR.string_of_hp_decl
 let pr_struc_f = CPR.string_of_struc_formula
 let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
+let pr_entail = SBCast.pr_entailment
 
 let pr_validity tvl = match tvl with
   | SBGlobals.MvlFalse -> "Invalid"
@@ -669,12 +670,18 @@ let check_entail ?(residue=false) prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     if not(residue) then
       let ent = SBCast.mk_entailment sb_ante sb_conseq in
+      let () = if !Globals.pr_songbird then
+          x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
+        else () in
       let ptree = SBProver.check_entailment sb_prog ent in
       let res = SBProof.get_ptree_validity ptree in
       match res with
       | SBGlobals.MvlTrue -> true, None
       | _ -> false, None
     else let ent = SBCast.mk_entailment ~mode:PrfEntailHip sb_ante sb_conseq in
+      let () = if !Globals.pr_songbird then
+          x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
+        else () in
       let ptree = SBProver.check_entailment sb_prog ent in
       let res = SBProof.get_ptree_validity ptree in
       match res with
@@ -781,6 +788,9 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         sb_ante in
     let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
     let interact = if !Globals.enable_sb_interactive then true else false in
+    let () = if !Globals.pr_songbird then
+          x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos
+        else () in
     let ptrees = List.map (fun ent -> SBProver.check_entailment ~interact:interact n_prog ent) ents in
     let validities = List.map (fun ptree -> SBProof.get_ptree_validity ptree) ptrees in
     let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in

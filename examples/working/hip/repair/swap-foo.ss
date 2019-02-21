@@ -5,8 +5,8 @@ data node {
 // HeapPred P(node x,node y).
 // HeapPred Q(node x,node y).
 
-void foo(node x, node y)
-  requires P(x,y) ensures Q(x,y);
+// void foo(node x, node y)
+//   requires P(x,y) ensures Q(x,y);
 
 void swap(node x, node y)
   requires x::node<a> * y::node<b>
@@ -19,7 +19,8 @@ void swap(node x, node y)
   // -> x::node<a> * y::node<b> & t = a |- x::node<a> * y::node<b> & t = a
   // match (x,x) (y, y) -> t = a |- t = a
   // residue emp & t=a
-  foo(x,y);   // need to synthesize foo(x,y)
+  // foo(x,y);   // need to synthesize foo(x,y)
+  x.val = y.val;
   //Q(x,y) & t=a
   // Q(x,y) & t=a |- exists k. y::node<k>
   //++++ (1)  Q(x,y) = exists k. y -> node<k> * Q'(x,y)
