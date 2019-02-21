@@ -768,7 +768,8 @@ and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
     (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq ~pf:None) ctx conseq
 
 and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
-  let hps = prog.Cast.prog_hp_decls in
+  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
   let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
   let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
   let conseq_hps = get_conseq_hp hp_names bf.CF.formula_struc_base in
@@ -832,36 +833,3 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:None
-
-    (* let msg = "songbird result is Failed." in
-   *   (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-   *   , Prooftracer.Failure)
-   * 
-   * if List.length conseq_hps > 0 then
-   *   let () = x_binfo_hp (add_str "ante" pr_vars) ante_vars no_pos in
-   *     let conti = bf.CF.formula_struc_continuation in
-   *     match conti with
-   *     | None -> (CF.mkFailCtx_simple "to find residue" es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-   *               , Prooftracer.Failure)
-   *     | Some struc ->
-   *       let _, resid = check_entail ~residue:true prog ante ante in
-   *       let n_es_formula = Gen.unsome resid in
-   *       let n_ctx = CF.Ctx {es with CF.es_formula = n_es_formula;} in
-   *       heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
-   *   else if ante_hps != [] then *)
-
-(* let hp_args = conseq_hps |> List.map CP.afv |> List.concat |>
-       *               CP.remove_dups_svl in
-       * let () = x_binfo_hp (add_str "ante" pr_formula) es.CF.es_formula no_pos in
-       * let pre_pred = var_closure es.CF.es_formula hp_args in
-       * let () = x_binfo_hp (add_str "Pre-cond:" pr_formula) pre_pred no_pos in
-       * let n_bf = {bf with CF.formula_struc_base = pre_pred} in
-       * let n_conseq = CF.EBase n_bf in
-       * let () = x_binfo_hp (add_str "n_conseq" pr_struc_f) n_conseq no_pos in
-       * heap_entail_after_sat_struc_x prog ctx n_conseq ~pf:None *)
-    (* else *)
-      (* let ante_hps = get_conseq_hp hp_names es.CF.es_formula in
-       * if ante_hps = [] then
-       *   let msg = "songbird result is Failed." in
-       *   (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-       *   , Prooftracer.Failure) *)
