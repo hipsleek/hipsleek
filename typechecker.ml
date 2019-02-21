@@ -3078,6 +3078,7 @@ and check_post (prog : prog_decl) (proc : proc_decl)
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = pr_pair Cprinter.string_of_formula Cprinter.string_of_struc_formula in
   (* WN : why do we have wrap_ad_flow here *)
+  let () = Globals.check_post := true in
   let post_op_wrapper f a =
     wrap_err_post f a
   in
@@ -3510,6 +3511,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
     (mutual_grp : proc_decl list) : bool =
   Debug.vv_debug ("check_proc:"^proc0.proc_name);
   let unmin_name = unmingle_name proc0.proc_name in
+  let () = Globals.check_post := false in
   let () =  Debug.tinfo_hprint (add_str "in check_proc proc0"
                                   (Cprinter.string_of_struc_formula_for_spec_inst prog))
       (proc0.Cast.proc_stk_of_static_specs # top) no_pos in

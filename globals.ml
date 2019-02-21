@@ -15,7 +15,8 @@ let translate_funcs = ref true
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 let start_repair = ref false
-
+let check_post = ref false
+    
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
 
 let trailer_num_list = ref []
