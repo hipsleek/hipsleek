@@ -724,44 +724,44 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
   let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
-  if !Globals.check_post then report_error no_pos "to infer relations"
-  else
-    match ctx with
-    | Ctx es ->
-      (
-        match conseq with
-        | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf ~pf:pf
-        | CF.ECase cases ->
-          let branches = cases.CF.formula_case_branches in
-          let results = List.map (fun (pf, struc) ->
-              heap_entail_after_sat_struc_x prog ctx struc ~pf:(Some pf)) branches
-          in
-          let rez1, _ = List.split results in
-          let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
-              (List.hd rez1) (List.tl rez1) in
-          (rez1, Prooftracer.TrueConseq)
-        | EList b ->
-          let _, struc_list = List.split b in
-          let res_list =
-            List.map (fun x -> heap_entail_after_sat_struc_x prog ctx x ~pf:pf)
-              struc_list in
-          let ctx_lists = res_list |> List.split |> fst in
-          let res = CF.fold_context_left 41 ctx_lists in
-          (res, Prooftracer.TrueConseq)
-        | EAssume assume ->
-          let assume_f = assume.CF.formula_assume_simpl in
-          let f = es.CF.es_formula in
-          let es_hf = CF.xpure_for_hnodes es.CF.es_heap in
-          let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
-          let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
-          let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
-          (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-        | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
-      )
-    | OCtx (c1, c2) ->
-      let rs1, proof1 = heap_entail_after_sat_struc_x prog c1 conseq ~pf:None in
-      let rs2, proof2 = heap_entail_after_sat_struc_x prog c2 conseq ~pf:None in
-      (CF.or_list_context rs1 rs2, Prooftracer.TrueConseq)
+  (* if !Globals.check_post then report_error no_pos "to infer relations"
+   * else *)
+  match ctx with
+  | Ctx es ->
+    (
+      match conseq with
+      | CF.EBase bf -> hentail_after_sat_ebase prog ctx es bf ~pf:pf
+      | CF.ECase cases ->
+        let branches = cases.CF.formula_case_branches in
+        let results = List.map (fun (pf, struc) ->
+            heap_entail_after_sat_struc_x prog ctx struc ~pf:(Some pf)) branches
+        in
+        let rez1, _ = List.split results in
+        let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
+            (List.hd rez1) (List.tl rez1) in
+        (rez1, Prooftracer.TrueConseq)
+      | EList b ->
+        let _, struc_list = List.split b in
+        let res_list =
+          List.map (fun x -> heap_entail_after_sat_struc_x prog ctx x ~pf:pf)
+            struc_list in
+        let ctx_lists = res_list |> List.split |> fst in
+        let res = CF.fold_context_left 41 ctx_lists in
+        (res, Prooftracer.TrueConseq)
+      | EAssume assume ->
+        let assume_f = assume.CF.formula_assume_simpl in
+        let f = es.CF.es_formula in
+        let es_hf = CF.xpure_for_hnodes es.CF.es_heap in
+        let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
+        let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
+        let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
+        (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+      | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
+    )
+  | OCtx (c1, c2) ->
+    let rs1, proof1 = heap_entail_after_sat_struc_x prog c1 conseq ~pf:None in
+    let rs2, proof2 = heap_entail_after_sat_struc_x prog c2 conseq ~pf:None in
+    (CF.or_list_context rs1 rs2, Prooftracer.TrueConseq)
 
 and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
   Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context

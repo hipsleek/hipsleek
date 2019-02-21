@@ -106,7 +106,7 @@ let choose_rassign_pure var goal : rule list =
     )
   | _ -> []
 
-let find_equal_var var goal cur_var =
+let find_equal_var var goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let all_vars = goal.gl_vars in
@@ -142,7 +142,6 @@ let find_equal_var var goal cur_var =
       helper f1 f2
     | _ -> false
   in
-  let all_vars = List.filter (fun x -> not(CP.eq_spec_var x cur_var)) all_vars in
   let () = x_binfo_hp (add_str "equal-var vars" pr_vars) all_vars no_pos in
   let equal_vars = List.filter (fun x -> compare_two_vars var x pre post) all_vars in
   equal_vars
@@ -169,15 +168,17 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let helper dif_field =
     let pre_post = fst dif_field in
     let post_val_var = snd pre_post in
-    let found_eq_vars = find_equal_var post_val_var goal var in
-    if found_eq_vars != [] then
-      let eq_var = List.hd found_eq_vars in
+    let eq_vars = find_equal_var post_val_var goal in
+    let eq_vars = List.filter (fun x -> not(CP.eq_spec_var x var)) eq_vars in
+    if eq_vars != [] then
+      let eq_var = List.hd eq_vars in
       let field = snd dif_field in
       let () = x_binfo_hp (add_str "eq_var" pr_var) eq_var no_pos in
-      let rule = RlBindWrite {
+      let rule = RlBind {
           rb_var = var;
           rb_field = field;
           rb_rhs = eq_var;
+          rb_write = false;
         } in
       [rule]
     else [] in
@@ -200,10 +201,11 @@ let choose_rule_field_dnode dn1 dn2 var goal =
       let eq_rule = List.hd n_rule in
       match eq_rule with
       | RlAssign rassgn ->
-        let rule = RlBindWrite {
+        let rule = RlBind {
             rb_var = var;
             rb_field = (fst df_name, n_name);
             rb_rhs = rassgn.ra_rhs;
+            rb_write = true;
           }
         in [rule]
       | _ -> []
@@ -402,6 +404,12 @@ let unify_pair arg lvar goal proc_decl =
     else checking
   | _ -> false
 
+
+let find_var_field var goal =
+  let all_vars = goal.gl_vars in
+  if List.exists (fun x -> CP.eq_spec_var x var) all_vars then var
+  else var
+
 let unify (pre_proc, post_proc) goal =
   let proc_decl = goal.gl_proc_decls |> List.hd in
   let args = proc_decl.Cast.proc_args |>
@@ -418,11 +426,18 @@ let unify (pre_proc, post_proc) goal =
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
   if List.for_all (fun x -> List.length x > 0) ss_args then
     let rule_args = List.map List.hd ss_args in
-    let fc_rule = RlFuncCall {
-        rfc_func_name = proc_decl.Cast.proc_name;
-        rfc_params = rule_args;
-      } in
-    [fc_rule]
+    (* let equal_var_list = rule_args |> List.map (fun x -> find_equal_var x
+       goal) in *)
+    let _ = rule_args |> List.map (fun x -> find_var_field x goal) in
+    (* let equal_var_list = [] in
+     * if List.for_all (fun x -> List.length x > 0) equal_var_list then *)
+      (* let rule_args = List.map List.hd equal_var_list in *)
+      let fc_rule = RlFuncCall {
+          rfc_func_name = proc_decl.Cast.proc_name;
+          rfc_params = rule_args;
+        } in
+      [fc_rule]
+    (* else [] *)
   else []
 
 let choose_func_call goal =
@@ -520,8 +535,8 @@ let process_rule_wbind goal (wbind:rule_bind) =
   let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
   let ent_check,_ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
-  | true -> mk_derivation_success goal (RlBindWrite wbind)
-  | false -> mk_derivation_fail goal (RlBindWrite wbind)
+  | true -> mk_derivation_success goal (RlBind wbind)
+  | false -> mk_derivation_fail goal (RlBind wbind)
 
 let process_rule_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
@@ -563,7 +578,7 @@ let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
-  | RlBindWrite wbind -> process_rule_wbind goal wbind
+  | RlBind wbind -> process_rule_wbind goal wbind
 
 (*********************************************************************
  * The search procedure
@@ -628,7 +643,7 @@ let synthesize_st_core st =
         exp_assign_pos = no_pos;
       }
     in Some assign
-  | RlBindWrite rbind ->
+  | RlBind rbind ->
     let bvar = rbind.rb_var in
     let bfield = rbind.rb_field in
     let rhs = rbind.rb_rhs in

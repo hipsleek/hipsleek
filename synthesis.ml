@@ -32,7 +32,7 @@ type goal = {
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
-  | RlBindWrite of rule_bind
+  | RlBind of rule_bind
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -44,6 +44,7 @@ and rule_bind = {
   rb_var: CP.spec_var;
   rb_field: typed_ident;
   rb_rhs: CP.spec_var;
+  rb_write: bool;
 }
 
 and rule_assign = {
@@ -206,8 +207,7 @@ let pr_rule_bind rule =
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBindWrite rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
-  (* | RlBindRead rule -> "RlBindRead" *)
+  | RlBind rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"

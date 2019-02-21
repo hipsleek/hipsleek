@@ -43,8 +43,15 @@ void append(node x, node y)
 // a::ll<n1+n2> & true.
 
 // function call f(x.next, y);
+// synthesize [node x, node y]
+// append(x,y)
+// m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
+// ~>
+// (exists a4: m::ll<a4> & a4 = a1 + a2 -1).
+
+
 synthesize [node x, node y]
-// m::ll<a3> * b:ll<a2> & a!= null
-m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
+// append(x.next, y)
+x::node<v1, m> * m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
 ~>
-(exists a4: m::ll<a4> & a4 = a1 + a2 -1).
+(exists a4: x::ll<a4> & a4 = a1 + a2).
