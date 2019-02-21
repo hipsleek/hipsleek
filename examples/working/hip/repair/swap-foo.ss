@@ -64,3 +64,18 @@ void swap(node x, node y)
   Heuristics: P(x,y), Q(x,y) are specification, and they should be
   as big as possible.
 */
+
+/* HIP-generated constraints
+inp1:     y::node<b>@M * x'::node<a>@M&x'=x & y'=y & t'=a
+inp2:     P(x',y')
+residue:  T0(b,x',x,y',y,t',a)
+
+inp1:     T0(b,x',x,y',y,t',a) * Q(x',y')
+inp2:     exists val_31_1885'. y'::node<val_31_1885'>
+residue:  T1(b,x,y,t',a,x',y')
+
+inp1:     exists t': T1(b,x,y,t',a,x',y') * y'::node<t'>
+inp2:     exists b_89,a_90: x::node<b_89>@M * y::node<a_90>@M&b_89=b & a_90=a
+residue:  emp
+
+*/
