@@ -421,12 +421,12 @@ let unify (pre_proc, post_proc) goal =
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
   let () = x_binfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
-  let ss_args2 = filter_args_input ss_args in
-  let ss_args2 = List.filter(fun list ->
+  let ss_args = filter_args_input ss_args in
+  let ss_args = List.filter(fun list ->
       let n_list = CP.remove_dups_svl list in
       List.length n_list = List.length list
-    ) ss_args2 in
-  let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args2 no_pos in
+    ) ss_args in
+  let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
   if ss_args != [] then
     ss_args |> List.map (fun args ->
         let fc_rule = RlFuncCall {
@@ -456,7 +456,6 @@ let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
   let rs = choose_func_call goal in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rs no_pos in
   rs
 
 let split_hf (f: CF.formula) = match f with
@@ -566,9 +565,9 @@ let process_rule_func_call goal rcore : derivation =
     if post_check then
       let () = x_binfo_pp "checking post_cond successfully" no_pos in
       mk_derivation_success goal (RlFuncCall rcore)
-    else mk_derivation_sub_goals goal (RlFuncCall rcore) []
+    else mk_derivation_fail goal (RlFuncCall rcore)
   | _ ->
-    mk_derivation_sub_goals goal (RlFuncCall rcore) []
+    mk_derivation_fail goal (RlFuncCall rcore)
 
 let process_one_rule goal rule : derivation =
   match rule with
@@ -582,6 +581,7 @@ let process_one_rule goal rule : derivation =
 
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -596,6 +596,7 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> mk_synthesis_tree_fail goal atrees "no rule can be applied" in
+  let () = x_binfo_hp (add_str "rules" string_of_int) (List.length rules) no_pos in
   process [] rules
 
 and process_conjunctive_subgoals goal rule sub_goals : synthesis_tree =
