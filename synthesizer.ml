@@ -456,7 +456,8 @@ let unify (pre_proc, post_proc) goal =
             rfc_func_name = proc_decl.Cast.proc_name;
             rfc_params = args;
           } in
-        [fc_rule]) |> List.concat
+        [fc_rule]
+      ) |> List.concat
   else []
 
 let choose_func_call goal =
