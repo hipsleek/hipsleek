@@ -1,4 +1,4 @@
- 
+
 #include "xdebug.cppo"
 (*
   Created 21-Feb-2006
@@ -42,10 +42,10 @@ let process_heap_prop_extn p_tab (* pname vns *) (* mutual-rec *) (* nnn_sv *) h
         let name = vl.h_formula_view_name in
         let ptr = vl.h_formula_view_node in
         let vs = vl.h_formula_view_arguments in
-        let n_hf = 
-          try 
+        let n_hf =
+          try
             let (new_vn, new_sv) = p_tab # proc_view (Some ptr) name vs  in
-            (ViewNode {vl with h_formula_view_name = new_vn; 
+            (ViewNode {vl with h_formula_view_name = new_vn;
                                h_formula_view_arguments = vs@[new_sv]})
           with _ -> hf
         in Some n_hf
@@ -76,11 +76,11 @@ class data_table =
       try
         snd(List.find (fun (n,_) -> n=dn) lst)
       with _ -> failwith (x_loc^"does not exist :"^dn)
-    method get_tag_mask dn (t:string) = 
-      try 
+    method get_tag_mask dn (t:string) =
+      try
         let tags = self # find_tags dn in
         List.map (fun ls -> List.mem t ls) tags
-      with _ -> 
+      with _ ->
         failwith (x_loc^"tag cannot be found")
         (*   if dn="node" then [false;true] *)
         (* else [false;true;true] *)
@@ -99,7 +99,7 @@ let add_data_tags_to_obj cdata =
       (* let () = data_decl_obj # add_fields dn flds in *)
       let fields = List.map (fun ((t,id),_) -> t) fields in
       let fields = List.filter (fun t -> Globals.is_node_typ t ) fields in
-      let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+      let fields = List.map (fun t -> match t with Named (id, _) -> id | _ -> failwith ("impossible"^x_loc)) fields in
       let () = HipUtil.data_scc_obj # replace x_loc dn fields in
       ()
     ) cdata in
@@ -112,26 +112,26 @@ let add_data_tags_to_obj cdata =
       ()
     ) cdata in
   ()
-  
+
 let is_data_rec id =
   HipUtil.data_scc_obj # is_rec id
 
 let compute_raw_base_case is_prim_v n_un_str =
   (* let is_prim_v = vdef.I.view_is_prim in *)
-  let rec f_tr_base f = 
+  let rec f_tr_base f =
     let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
     match f with
     | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
     | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
     | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
-  let rbc = 
+  let rbc =
     if is_prim_v then None
-    else List.fold_left (fun a (c,l)-> 
+    else List.fold_left (fun a (c,l)->
         let fc = f_tr_base c in
-        if (CF.isAnyConstFalse fc) then a 
-        else match a with 
+        if (CF.isAnyConstFalse fc) then a
+        else match a with
           | Some f1  -> Some (CF.mkOr f1 fc no_pos)
-          | None -> Some fc) None n_un_str 
+          | None -> Some fc) None n_un_str
   in rbc
 
 (* type: Excore.EPureI.epure list option -> *)
@@ -163,7 +163,7 @@ let compute_baga_invs (* t_v t_pf n_tl *) vbc_i vbc_o vbc_u new_pf pos =
   (*     Some rr *)
   (* in *)
   let vbc_o = match vbc_o with
-    | None -> Some (Excore.EPureI.mk_epure new_pf) 
+    | None -> Some (Excore.EPureI.mk_epure new_pf)
     | Some _ -> vbc_o in
   let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
   let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
@@ -228,5 +228,3 @@ module EState =
       ()
 
   end
-
-

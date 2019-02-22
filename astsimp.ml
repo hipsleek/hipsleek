@@ -115,7 +115,9 @@ let rec new_string_of_typ (x:typ) : string = match x with
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Named (ot,tl) -> if ((String.compare ot "") ==0) then "null_type"
+    else if tl = [] then ot
+    else ot ^ (pr_list string_of_typ tl)
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
@@ -1053,7 +1055,7 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
         (*let return  = I.Return { I.exp_return_val = Some (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos}); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in*)
         let return  = I.Return { I.exp_return_val = Some (return_target); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
         (*let catch = I.mkCatch (Some vn) (Some ret_type) loop_ret_flow None return pos in*)
-        let catch = I.mkCatch (Some vn) (Some (Named ("ret_"^(new_string_of_typ ret_type)))) loop_ret_flow  None return pos in
+        let catch = I.mkCatch (Some vn) (Some (mkNamedTyp ("ret_"^(new_string_of_typ ret_type)))) loop_ret_flow  None return pos in
 
         (* Modified by Zhuohong*)
         (*let () = exlist # add_edge (string_of_typ ret_type) c_flow in*)
@@ -1419,7 +1421,7 @@ and view_case_inference_x cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.
     let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
     if (iv.Iast.try_case_inference) then
       let () = Debug.ninfo_pprint "perform view case_infer" no_pos in
-      let sf = (CP.SpecVar (Named cv.Cast.view_data_name, self, Unprimed)) in
+      let sf = (CP.SpecVar (mkNamedTyp cv.Cast.view_data_name, self, Unprimed)) in
       let vp = cv.Cast.view_vars in
       let () = x_tinfo_hp (add_str "view params" Cprinter.string_of_spec_var_list) vp no_pos in
       (*TODO: disallow variables that are not instantiated in the case guards, more specifically,
@@ -2496,7 +2498,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let (s_t,tlist) = if data_name="" then
         let (new_et, n_tl) = fresh_tvar tlist in
         (new_et,n_tl)
-      else (Named data_name,tlist) in
+      else (mkNamedTyp data_name,tlist) in
     let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
@@ -2504,7 +2506,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let () = y_tinfo_hp (add_str "self_ty" string_of_typ) self_ty in
     let () = y_tinfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let data_name = match self_ty with
-      | Named s -> s
+      | Named (s, _) -> s
       | _ -> "" in
     let () = vdef.I.view_data_name <- data_name in
     let () = y_ninfo_hp (add_str "data_name" pr_id) data_name in
@@ -2563,7 +2565,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_vars in
       let view_prop_extns =  List.map (fun (t,c)-> x_add trans_var (c,Unprimed) n_tl pos) vdef.I.view_prop_extns in
-      let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
+      let self_c_var = Cpure.SpecVar ((mkNamedTyp data_name), self, Unprimed) in
       let null_c_var = Cpure.null_var in
       let extr_exist_vars f vs =
         let vs = CP.diff_svl (CP.fv f) vs in
@@ -2893,7 +2895,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         (* why not self_ty? *)
         let () = y_ninfo_hp (add_str "data name" pr_id) data_name in
         let r = vdef.I.view_type_of_self in
-        if r==None && not(data_name="") then Some(Named data_name)
+        if r==None && not(data_name="") then Some(mkNamedTyp data_name)
         else if r==None then
           match self_ty with
           | Mapping x -> Some self_ty
@@ -3403,7 +3405,7 @@ and fill_one_base_case_x prog vd =
                  (* else *)
                  if !Globals.dis_baga_inv_check then None
                  else
-                   compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
+                   compute_base_case prog vd.C.view_name vd.C.view_un_struc_formula (Cpure.SpecVar ((mkNamedTyp vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)
       }
     end
 
@@ -3648,7 +3650,7 @@ and compute_base_case_x prog vn cf vars = (*flatten_base_case cf s self_c_var *)
   wrap_proving_kind PK_Compute_Base_Case compute_base_case_x_op ()
 
 and set_materialized_prop_x cdef =
-  let args = (CP.SpecVar (Named cdef.C.view_data_name, self, Unprimed))::cdef.C.view_vars in
+  let args = (CP.SpecVar (mkNamedTyp cdef.C.view_data_name, self, Unprimed))::cdef.C.view_vars in
   let mvars = find_materialized_prop args cdef.C.view_materialized_vars (C.formula_of_unstruc_view_f cdef) in
   (cdef.C.view_materialized_vars <- mvars; cdef)
 
@@ -4256,7 +4258,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            if Gen.is_some proc.I.proc_data_decl then
              (let cdef = Gen.unsome proc.I.proc_data_decl in
               let this_arg ={
-                I.param_type = Named cdef.I.data_name;
+                I.param_type = mkNamedTyp cdef.I.data_name;
                 I.param_name = this;
                 I.param_mod = I.NoMod;
                 I.param_loc = proc.I.proc_loc;} in
@@ -4446,7 +4448,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                  | _ -> "__RET"
                in
                let constant_flow = "ret_"^(new_string_of_typ proc.I.proc_return) in
-               let catch_clause = I.mkCatch (Some vn) (Some (Named (constant_flow))) constant_flow None return_exp pos in
+               let catch_clause = I.mkCatch (Some vn) (Some (mkNamedTyp (constant_flow))) constant_flow None return_exp pos in
                let new_body_e = I.mkTry e [catch_clause] [] nl2 pos in
                let n_tl = n_tl in
                let new_body = fst (x_add trans_exp prog proc new_body_e) in
@@ -4539,7 +4541,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
            let waitlevel_var = (waitlevel_typ,waitlevel_name) in
            let lock_vars = [waitlevel_var;lsmu_var;ls_var] in
            (**************************)
-           let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(Named raisable_class,eres_name)::args2)) in
+           let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lock_vars@((cret_type,res_name)::(mkNamedTyp raisable_class,eres_name)::args2)) in
            let ffv = List.filter (fun v -> not (CP.is_form_typ v)) ffv in
            let str = Cprinter.string_of_spec_var_list ffv in
            if (ffv!=[]) then
@@ -5313,7 +5315,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog lhst fl in
             if (remf = "") then []
             else I.look_up_all_fields prog (match remt with
-                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named (c, _) -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else if (is_member_exp rhs) then
@@ -5327,7 +5329,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             let fs,remf,remt = compact_field_access_sequence prog rhst fr in
             if (remf = "") then []
             else I.look_up_all_fields prog (match remt with
-                | Named c -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
+                | Named (c, _) -> x_add I.look_up_data_def_raw prog.I.prog_data_decls c
                 | _ -> failwith "ERror!")
           | _ -> failwith "expand_field_list: unexpected pattern"
         else []
@@ -5601,7 +5603,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
          match vinfo_tmp with
          | E.VarInfo vi ->
            (match vi.E.var_type with
-            | Named c ->
+            | Named (c, _) ->
               let ddef = I.look_up_data_def 5 pos prog.I.prog_data_decls c in
               if ( != ) (List.length vs) (List.length ddef.I.data_fields) then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "bind " ^ (v ^ ": different number of variables");}
@@ -5754,7 +5756,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             List.map2 (fun p1 t2 ->
                 let t1 = p1.I.param_type in
                 match t1, t2 with
-                | Globals.Named _, Globals.Named "" -> t1  (* null case *)
+                | Globals.Named _, Globals.Named ("", _) -> t1  (* null case *)
                 | _ -> t2
               ) proc_decl.I.proc_args cts
             ,
@@ -6012,7 +6014,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             (*Need to add info about cv*)
             (*TO CHECK: diffrent between then and else ??? *)
             let alpha = E.alpha_name x in
-            let () = E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (Named cvt)}) in
+            let () = E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (mkNamedTyp cvt)}) in
             let new_bd, ct2 = x_add_1 helper cb in
             E.pop_scope();
             ( C.Catch{C.exp_catch_flow_type = (exlist # get_hash c_flow);
@@ -6021,17 +6023,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                       C.exp_catch_body = new_bd;
                       C.exp_catch_pos = pos;},ct2) end
           else begin
-            let cvt_rev = match alt_cvt with | None -> Named cvt | Some t -> t in
+            let cvt_rev = match alt_cvt with | None -> mkNamedTyp cvt | Some t -> t in
             E.push_scope();
             let alpha = E.alpha_name x in
             E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = cvt_rev});
             (*let () = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
             let new_bd, ct2 = x_add_1 helper cb in
             (*let () = print_string ("\n rrr2 -> \n") in*)
-            let ct = if (exlist # sub_type_obj cvt raisable_class) then trans_type prog (Named cvt) pos else Named cvt in
+            let ct = if (exlist # sub_type_obj cvt raisable_class) then trans_type prog (mkNamedTyp cvt) pos else mkNamedTyp cvt in
             E.pop_scope();
             let r = C.Catch {C.exp_catch_flow_type = (match ct with
-                | Named ot-> (exlist # get_hash ot)
+                | Named (ot, _) -> (exlist # get_hash ot)
                 | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
                C.exp_catch_flow_var = cfv;
                C.exp_catch_var = Some (ct,alpha);
@@ -6188,7 +6190,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
             C.exp_new_parent_name = data_def.I.data_parent_name;
             C.exp_new_arguments = [arg];
             C.exp_new_pos = pos;} in
-        let new_t = Named c in
+        let new_t = mkNamedTyp c in
         let seq_e = C.mkSeq new_t fn_decl new_e pos in
         ((C.Block {
              C.exp_block_type = new_t;
@@ -6234,7 +6236,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                      C.exp_new_parent_name = data_def.I.data_parent_name;
                      C.exp_new_arguments = List.combine parg_types arg_vars;
                      C.exp_new_pos = pos;} in
-                 let new_t = Named c in
+                 let new_t = mkNamedTyp c in
                  let seq_e = C.mkSeq new_t init_seq new_e pos in
                  ((C.Block {
                       C.exp_block_type = new_t;
@@ -6341,7 +6343,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
     | I.This { I.exp_this_pos = pos } ->
       if Gen.is_some proc.I.proc_data_decl then
         (let cdef = Gen.unsome proc.I.proc_data_decl in
-         let ct = Named cdef.I.data_name in
+         let ct = mkNamedTyp cdef.I.data_name in
          ((C.This { C.exp_this_type = ct; C.exp_this_pos = pos; }), ct))
       else
         Err.report_error { Err.error_loc = pos; Err.error_text = "\"this\" can only be used in members of a class";}
@@ -6833,7 +6835,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_e
                         | I.Const_flow fl -> {CF.formula_flow_interval = (exlist # get_hash fl); CF.formula_flow_link = None}
                         | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("expecting constant flow")}
                       else  match ct with
-                        | Named v_t ->  {CF.formula_flow_interval = (exlist # get_hash v_t); CF.formula_flow_link = None}
+                        | Named (v_t, _) ->  {CF.formula_flow_interval = (exlist # get_hash v_t); CF.formula_flow_link = None}
                         | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
                   C.exp_sharp_unpack = false;
                   C.exp_sharp_val = Cast.Sharp_var (ct,fn);
@@ -7189,7 +7191,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
        (* let bind_e = create_bind_exp bind_type ((Named dname), fn)  bind_fields  bind_body read_only pos pid_s in *)
        let bind_e = C.Bind {
            C.exp_bind_type = bind_type;
-           C.exp_bind_bound_var = ((Named dname), fn);
+           C.exp_bind_bound_var = ((mkNamedTyp dname), fn);
            C.exp_bind_fields = List.combine field_types fresh_names;
            C.exp_bind_body = bind_body;
            C.exp_bind_imm = imm;
@@ -7269,7 +7271,7 @@ and trans_args_gen (args : ((C.exp option) * typ * loc) list) :
 
 and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
   match t with
-  | Named c ->
+  | Named (c, _) ->
     (try let todo_unk = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
      with | Not_found -> c)
   |t -> string_of_typ t
@@ -8260,7 +8262,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             let rpsi = snd(List.find(fun (v,en)->v=rootptr) tl) in
             let rootptr_type = rpsi.sv_info_kind in
             let rootptr_type_name = match rootptr_type with
-              | Named c1 ->
+              | Named (c1, _) ->
                 (* if String.compare c1 "" = 0 then c else  *)c1
               | _ -> failwith ("[linearize_heap] " ^ rootptr ^ " must be a pointer.")
             in
@@ -8378,8 +8380,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   if (vdef.I.view_is_prim) then UNK
                   else if vdef.I.view_data_name = "" then
                     (fill_view_param_types vdef;
-                     Named vdef.I.view_data_name)
-                  else Named vdef.I.view_data_name
+                     mkNamedTyp vdef.I.view_data_name)
+                  else mkNamedTyp vdef.I.view_data_name
               ) in
               let new_v = CP.SpecVar (typ, v, p) in
               (*LDK: linearize perm permission as a spec var*)
@@ -8429,7 +8431,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             with Not_found ->
               let labels = List.map (fun _ -> LO.unlabelled) exps in
               let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
-              let new_v = CP.SpecVar (Named c, v, p) in
+              let new_v = CP.SpecVar (mkNamedTyp c, v, p) in
               (* An Hoa : find the holes here! *)
               let rec collect_holes vars n = (match vars with
                   | [] -> []
@@ -10785,7 +10787,7 @@ and view_prune_inv_inference cp vd =
     (fun _ -> view_prune_inv_inference_x cp vd) vd
 
 and view_prune_inv_inference_x cp vd =
-  let sf  = CP.SpecVar (Named vd.C.view_data_name, self, Unprimed) in
+  let sf  = CP.SpecVar (mkNamedTyp vd.C.view_data_name, self, Unprimed) in
   let f_branches = CF.get_view_branches  vd.C.view_formula in
   if ((List.length f_branches) == 1) && (CF.isAnyConstFalse (fst (List.hd f_branches))) then
     let def_lbl = snd (List.hd f_branches) in
@@ -11269,7 +11271,7 @@ and check_barrier_wf prog bd =
   let f_gen_base st v perm =
     let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
     let h = CF.DataNode {
-        CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
+        CF.h_formula_data_node = CP.SpecVar (mkNamedTyp bd.C.barrier_name, self,Unprimed);
         CF.h_formula_data_name = bd.C.barrier_name;
         CF.h_formula_data_imm = CP.ConstAnn Mutable;
         CF.h_formula_data_param_imm = [];
@@ -11418,7 +11420,7 @@ and trans_bdecl_x prog bd =
                 raise  (Err.Malformed_barrier (" eroneous thread specification pre/post cond bar states do not match : "^(string_of_int fs)^"->"^(string_of_int ts)))
               else ()) bd.I.barrier_tr_list;
   let n_tl = [] in
-  let n_tl = type_list_add self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () } n_tl in
+  let n_tl = type_list_add self { sv_info_kind = (mkNamedTyp bd.I.barrier_name);id = fresh_int () } n_tl in
   let n_tl = List.fold_left (fun tl (t,c)-> type_list_add c {sv_info_kind = t;id = fresh_int ()} tl) n_tl bd.I.barrier_shared_vars in
   (*let vl = self::(List.map snd bd.I.barrier_shared_vars) in*)
   let vl = [self] in

@@ -216,7 +216,7 @@ let rec build_ef_heap_formula_x is_shape (cf0 : Cformula.h_formula) (all_views :
     let efpd = EPureI.from_cpure_disj efpd in
     (* need substitue variable *)
     let view = List.find (fun vc -> vnf.Cformula.h_formula_view_name = vc.Cast.view_name) all_views in
-    let self_var = Cpure.SpecVar (Named view.Cast.view_data_name, self, Unprimed) in
+    let self_var = Cpure.SpecVar (mkNamedTyp view.Cast.view_data_name, self, Unprimed) in
     let view_args = self_var::view.Cast.view_vars in
     let () = Debug.ninfo_hprint (add_str "view_args" (pr_list Cprinter.string_of_typed_spec_var)) view_args no_pos in
     let () = Debug.ninfo_hprint (add_str "svl" (pr_list Cprinter.string_of_typed_spec_var)) svl no_pos in

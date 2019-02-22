@@ -49,11 +49,11 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
           in
           (*mkExist*)
           let data_name,r  = match CP.type_of_spec_var r with
-            | Named id -> if String.compare id "" = 0  then
+            | Named (id, _) -> if String.compare id "" = 0  then
                 let n_id = C.get_root_typ_hprel cprog.C.prog_hp_decls (CP.name_of_spec_var v) in
                 let () = Debug.ninfo_hprint (add_str "n_id: " pr_id) n_id  no_pos in
                 let () = report_warning no_pos "sao: why is self's type null?" in
-                (n_id, (CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r)))
+                (n_id, (CP.SpecVar (mkNamedTyp n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r)))
               else
                 id,r
             | _ -> report_error no_pos "should be a data name"
@@ -581,7 +581,7 @@ let rec case_struc_formula_trans_x prog dang_hps to_unfold_hps pre_hps post_hps 
               [(parts, iflow, f2)]
             end
           else
-            pr_fs 
+            pr_fs
             (* match pr_fs with *)
             (*   | [] -> begin *)
             (*       let f1,_ = CF.drop_hrel_f f0 [hp] in *)
@@ -1023,7 +1023,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
       (* ) proc_stk_of_static_specs # get_stk in *)
       (* let () = proc_stk_of_static_specs # reset in *)
       (* let () = proc_stk_of_static_specs # push_list n_proc_stk_of_static_specs in *)
-      let proc1 = { proc with 
+      let proc1 = { proc with
           (* C.proc_static_specs = n_stk_spec (* n_static_spec *); *)
           C.proc_dynamic_specs=  n_dynamic_spec;
           (* C.proc_stk_of_static_specs = n_stk_specs; *)
@@ -1047,7 +1047,7 @@ let trans_specs_hprel_2_cview iprog cprog proc_name unk_hps
   (* let () = List.iter (fun (i,p) -> Hashtbl.add old_procs i p) proc_decls in *)
   (* { cprog with C.new_proc_decls = old_procs; }                              *)
   let n_tbl = Cast.proc_decls_map (fun p ->
-    if eq_str p.C.proc_name proc_name then plug_views_proc p else p) cprog.Cast.new_proc_decls 
+    if eq_str p.C.proc_name proc_name then plug_views_proc p else p) cprog.Cast.new_proc_decls
   in ()
 
 (*******************************)

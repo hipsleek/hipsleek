@@ -44,7 +44,7 @@ module OS = Sess_order_summary
 
 (* let check_is_classic = Wrapper.check_is_classic *)
 
-let self_var vdn = CP.SpecVar (Named vdn (* v_def.view_data_name *), self, Unprimed)
+let self_var vdn = CP.SpecVar (mkNamedTyp vdn (* v_def.view_data_name *), self, Unprimed)
 
 (*used for classic*)
 let rhs_rest_emp = ref true
@@ -1794,7 +1794,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.
         with _ -> renamed_view_formula
       in
       (* let forms = Immutable.propagate_imm_struc_formula renamed_view_formula lhs_name imm mpa in *)
-      let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
+      let fr_vars = (CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed))::  vdef.view_vars in
       let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
       let res_form = subst_struc_avoid_capture fr_vars (v::vs) renamed_view_formula in
       (* let () = Debug.info_hprint (add_str "fr_vars"  (Cprinter.string_of_spec_var_list)) (fr_vars) pos in *)
@@ -2046,7 +2046,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           else renamed_view_formula
         in
         (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
-        let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
+        let fr_vars = (CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed))
                       :: (* fr_rem *) vdef.view_vars in
         let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
         let to_vars = v :: (* to_rem *) vs in
@@ -2507,7 +2507,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           else renamed_view_formula
         in
         let () = Debug.ninfo_hprint (add_str "do_fold: renamed_view_formula 2" Cprinter.string_of_struc_formula) renamed_view_formula no_pos in
-        let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
+        let fr_vars = (CP.SpecVar (mkNamedTyp vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
         let to_vars = p :: vs in
         (* adding actual root parameter inst *)
         let (fr_vars,to_vars) = match new_inst with
@@ -10173,7 +10173,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
              CF.mk_failure_must "9999" Globals.sl_error, estate.es_trace)) ((convert_to_must_es estate), err_msg, Failure_Must err_msg) (mk_cex true), UnsatConseq)
       | Some (bc1,base1) ->
         begin
-          let fr_vars = (CP.SpecVar (Named lhs_vd.Cast.view_data_name, self, Unprimed)) :: lhs_vd.view_vars in
+          let fr_vars = (CP.SpecVar (mkNamedTyp lhs_vd.Cast.view_data_name, self, Unprimed)) :: lhs_vd.view_vars in
           let to_vars = lhs_var :: lhs_arg in
           let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
           let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
@@ -10329,7 +10329,7 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
      |  Some (bc1,base1) ->
        (*Turn off lhs_case flag to disable further case analysis *)
        let new_ante = CF.set_lhs_case_of_a_view ante c1 false in
-       let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in
+       let fr_vars = (CP.SpecVar (mkNamedTyp vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in
        let to_vars = p1 :: v1 in
        let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
        let not_bc1 = x_add_1 Cpure.mkNot bc1 None no_pos in
@@ -12083,7 +12083,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   try
     let vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls c2 in
     let subs_vars = List.combine vdef.view_vars v2 in
-    let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
+    let sf = (CP.SpecVar (mkNamedTyp vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in
     let vars_of_int = List.fold_left (fun a (c1,c2)-> if (List.exists (comparator c1) vdef.view_case_vars) then  c2::a else a) [] subs_vars in
     let vars_of_int = Gen.BList.intersect_eq comparator estate.es_gen_expl_vars vars_of_int in

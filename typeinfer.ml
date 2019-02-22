@@ -281,7 +281,7 @@ and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   let (n_tlist,k) = unify_type k1 k2 tlist in
   match k with
-  | Some r -> (n_tlist,r)
+  | Some r -> (n_tlist,r)      (* unification succeeds -- return an option type *)
   | None -> let msg = ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
                        ^" types "^(string_of_typ (get_type_entire tlist k1))
                        ^" and "^(string_of_typ (get_type_entire tlist k2))^" are inconsistent") in
@@ -323,18 +323,18 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    | Named n1, Named n2 when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
-      (tl, Some (Named n2))
-    | Named n1, Named n2 when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
-      (tl, Some (Named n1))
-    | Named n1, Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
-    | Int, Named n2 when (cmp_typ k2 role_typ) -> (tl, Some Int)
+    | Named (n1, _), Named (n2, _) when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
+      (tl, Some (mkNamedTyp n2))
+    | Named (n1, _), Named (n2, _) when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
+      (tl, Some (mkNamedTyp n1))
+    | Named (n1, []), Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
+    | Int, Named (n2, []) when (cmp_typ k2 role_typ) -> (tl, Some Int)
     (* ************************** *)
     (* ******* temp hack ******** *)
     (* hack to make the mapping unify when part of a primitive predicate *)
     (* need to find a long term solution *)
-    | _, Named n when List.mem n map_related_names -> (tl, Some k1)
-    | Named n, _ when List.mem n map_related_names -> (tl, Some k2)
+    | _, Named (n, _) when List.mem n map_related_names -> (tl, Some k1)
+    | Named (n, _), _ when List.mem n map_related_names -> (tl, Some k2)
     (* ******* end - temp hack ******** *)
     (* ******************************** *)
     | ty, Poly id  | Poly id, ty -> unify_poly unify repl_tlist id ty tl
@@ -586,6 +586,7 @@ and get_type_entire tlist t =
     | List et -> List (helper et)
     | Array (et,d) -> Array (helper et,d)
     | Mapping (t1,t2) -> Mapping (helper t1,helper t2)
+    (* | Named tn -> Named (tn^"11111") (\* if it is a pointer with poly type field, then change the type to tn[`T], question is, how to know its field *\) *)
     | _ -> t
   in helper t
 
@@ -604,18 +605,19 @@ and fresh_proc_var_kind tlist et =
   | TVar i -> { sv_info_kind = et; id = i}
   | _ -> { sv_info_kind = et; id = fresh_int ()}
 
+
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
-  | Named c ->
+  | Named (c, _) ->
     (try
        let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c
-       in Named c
+       in mkNamedTyp c
      with
      | Not_found ->
        (try
           let todo_unk = I.look_up_view_def_raw x_loc prog.I.prog_view_decls c
-          in Named c
+          in mkNamedTyp c
         with
         | Not_found ->
           (try
@@ -623,7 +625,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
              in Int
            with
            | Not_found -> (* An Hoa : cannot find the type, just keep the name. *)
-             if CF.view_prim_lst # mem c then Named c
+             if CF.view_prim_lst # mem c then mkNamedTyp c
              else
                (* if !inter then*)
                Err.report_error
@@ -641,7 +643,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 
 and trans_type_back (te : typ) : typ =
   match te with
-  | Named n -> Named n
+  | Named (n, tl) -> Named (n, tl)
   | Array (t, d) -> Array (trans_type_back t, d) (* An Hoa *)
   | Mapping (t1, t2) -> Mapping (trans_type_back t1, trans_type_back t2)
   | p -> p
@@ -667,10 +669,10 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
     (tlist, UNK) (* for vars such as _ and # *)
   else
     try
-      let (ident, k) = List.find (fun (a,b) -> a = var) tlist in
+      let (ident, k) = List.find (fun (a,b) -> a = var) tlist in  (* higher order func, return the first ele in the tlist *)
       let (n_tlist,tmp) = x_add must_unify k.sv_info_kind ex_t tlist pos in
       let n_tlist = type_list_add ident {sv_info_kind = tmp;id=k.id} n_tlist in
-      (n_tlist, tmp )
+      (n_tlist, tmp)
     with
     | Not_found ->
       let ex_t = get_type_entire tlist ex_t in
@@ -1464,7 +1466,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
   if (deref = 0) then (
     try (
       let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls c in
-      let (n_tl,_) = x_add gather_type_info_var v tlist ((Named c)) pos in
+      let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
       try
         (*fields may contain offset field and not-in-used*)
@@ -1501,7 +1503,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
         done;
         c ^ !deref_str
       ) in
-      let (n_tl,_) = x_add gather_type_info_var v tlist ((Named holder_name)) pos in
+      let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp holder_name)) pos in
       let fields = x_add_1 I.look_up_all_fields prog base_ddecl in
       try
         let f tl arg ((ty,_),_,_,_)=
@@ -1545,15 +1547,15 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
   let () = y_binfo_pp "intro fresh types for poly ty" in
   (* poly_types = get_all_poly_types  vdef *)
-  let get_all_poly_types vd ls =
-    match vd.I.view_type_of_self with
-    | Poly -> vd::ls
-    | _    -> ls
-
-  let poly_types = get_all_poly_types vdef [] in
-
-
-  let poly_types_hmap = fresh_poly_tlist poly_types in
+  (* let get_all_poly_types vd ls =
+   *   match vd.I.view_type_of_self with
+   *   | Poly -> vd::ls
+   *   | _    -> ls
+   *
+   * let poly_types = get_all_poly_types vdef [] in
+   *
+   *
+   * let poly_types_hmap = fresh_poly_tlist poly_types in *)
   (* vdef = replace_poly hmap  vdef *)
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
@@ -1585,7 +1587,7 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
           dname ^ !s
         ) in
         let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
-        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((Named expect_dname)) pos in
+        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((mkNamedTyp expect_dname)) pos in
         n_tl, UNK
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
@@ -1862,7 +1864,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           (* Good user provides type for [rootptr] ==> done! *)
           let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls s in
           (* let () = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
-          (true, Named ddef.I.data_name)
+          (true, mkNamedTyp ddef.I.data_name)
         with
         | Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
       (* After this, if type_found = false then we know that
@@ -1882,7 +1884,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           if (List.length dts = 1) then
             (* the field uniquely determines the data type ==> done! *)
             (* let () = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
-            (true,Named (List.hd dts))
+            (true,mkNamedTyp (List.hd dts))
           else
             (false,UNK) in
       (* Step 3: Collect the remaining type information *)

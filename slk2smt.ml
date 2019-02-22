@@ -354,14 +354,14 @@ let process_entail_new cprog iprog start_pred_abs_num
     let used_data = List.fold_left (fun r sv ->
         let t = Cpure.type_of_spec_var sv in
         match t with
-        | Named id -> r@[id]
+        | Named (id, _) -> r@[id]
         | _ -> r
       ) [] all_svl0 in
     List.hd (used_data@(List.map (fun d -> d.Cast.data_name) cprog.Cast.prog_data_decls)) in
   let all_svl = List.fold_left (fun r ((Cpure.SpecVar (t, id, p)) as sv) ->
       match t with
       | Bool -> r
-      | TVar _ -> r@[(Cpure.SpecVar (Named data_name, id, p))]
+      | TVar _ -> r@[(Cpure.SpecVar (mkNamedTyp data_name, id, p))]
       | _ -> r@[sv]
     )  [] all_svl0 in
   (* let all_svl = List.filter (fun sv -> let t = CP.type_of_spec_var sv in *)

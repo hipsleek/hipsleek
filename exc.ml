@@ -818,12 +818,12 @@ struct
   let rec sub_type (t1 : typ) (t2 : typ) =
     match t1,t2 with
     | UNK, _ -> true
-    | Named c1, Named c2 ->
-      if c1=c2 then true
+    | Named (c1, tl1), Named (c2, tl2) ->
+      if cmp_typ t1 t2 then true
       else if c1="" then true
       else
         begin
-          Debug.ninfo_zprint (lazy (exlist#string_of)) no_pos ;
+          Debug.ninfo_zprint (lazy (exlist#string_of)) no_pos;
           exlist # sub_type_obj c1 c2
         end
     | Array (et1,d1), Array (et2,d2) ->
@@ -1171,10 +1171,10 @@ struct
   let rec sub_type (t1 : typ) (t2 : typ) =
     match t1,t2 with
     | UNK, _ -> true
-    | Named c1, Named c2 ->
+    | Named (c1, tl1), Named (c2, tl2) ->
       let () = Debug.ninfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
       let () = Debug.ninfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
-      if c1=c2 then true
+      if cmp_typ t1 t2 then true
       else if c1="" then true
       else exlist # sub_type_obj c1 c2
     | Array (et1,d1), Array (et2,d2) ->

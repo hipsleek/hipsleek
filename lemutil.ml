@@ -109,7 +109,7 @@ let checkeq_sem  ?(force_pr=false) iprog cprog f1 f2 ?(lemtyp=I.Equiv) hpdefs to
 let norm_checkeq_views_x iprog cprog cviews0 =
   (************************************************)
   let gen_view_formula vdcl=
-    let self_sv = CP.SpecVar (Named vdcl.Cast.view_data_name ,self, Unprimed) in
+    let self_sv = CP.SpecVar (mkNamedTyp vdcl.Cast.view_data_name ,self, Unprimed) in
     let vnode = Cformula.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
     Cformula.formula_of_heap vnode no_pos
   in

@@ -2151,7 +2151,7 @@ and collect_data_view_from_h_formula_x (h0 : F.h_formula) (data_decls: data_decl
           else ([], [])
         ) in
         let vtyp, henv = get_heap_type henv v in
-        let henv = x_add subs_heap_type_env no_pos henv  vtyp (Named c) in
+        let henv = x_add subs_heap_type_env no_pos henv  vtyp (mkNamedTyp c) in
         let henv = List.fold_left2 (fun henv1 arg field ->
             let ((t1,_), _, _, _) = field in
             match arg with
@@ -3229,7 +3229,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
  * An Hoa : Find the field with field_name of compound data structure with name data_name
  **)
 let get_field_from_typ ddefs data_typ field_name = match data_typ with
-  | Named data_name ->
+  | Named (data_name, _) ->
     (* let () = print_endline ("1: " ^ data_name) in *)
     (* let () = print_endline ("2: " ^ field_name) in *)
     let ddef = x_add look_up_data_def_raw ddefs data_name in
@@ -3262,7 +3262,7 @@ let rec get_type_of_field_seq ddefs root_type field_seq =
   match field_seq with
   | [] -> root_type
   | f::t -> (match root_type with
-      | Named c -> (try
+      | Named (c, _) -> (try
                       let ddef = x_add look_up_data_def_raw ddefs c in
                       let ft = get_type_of_field ddef f in
                       (match ft with
@@ -3294,7 +3294,7 @@ let is_not_data_type_identifier (ddefs : data_decl list) id =
 let rec compute_typ_size ddefs t =
   (* let () = print_endline ("[compute_typ_size] input = " ^ (string_of_typ t)) in *)
   let res = match t with
-    | Named data_name -> (try
+    | Named (data_name, _) -> (try
                             let ddef = x_add look_up_data_def_raw ddefs data_name in
                             List.fold_left (fun a f ->
                                 let fs = if (is_inline_field f) then

@@ -7340,7 +7340,7 @@ let do_unfold_view_hf cprog pr_views hf0 =
     | ViewNode hv -> begin
         try
           let (v_name,v_un_struc_formula, v_vars) = look_up_vdef pr_views hv.h_formula_view_name in
-          let f_args = (CP.SpecVar (Named v_name,self, Unprimed))::v_vars in
+          let f_args = (CP.SpecVar (mkNamedTyp v_name,self, Unprimed))::v_vars in
           let fs = List.map (fun (f,_) -> fresh_var f_args f) v_un_struc_formula in
           let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in

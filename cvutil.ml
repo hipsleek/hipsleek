@@ -455,12 +455,12 @@ let process_vis_x prog term_first_sat (vname,p_root,p_args,p_eqs,p_neqs,p_null_s
   (*********************************)
   let vdecl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls vname in
   let self_sv = if String.compare vdecl.Cast.view_data_name "" != 0 then
-      CP.SpecVar (Named vdecl.Cast.view_data_name,self,Unprimed)
+      CP.SpecVar (mkNamedTyp vdecl.Cast.view_data_name,self,Unprimed)
     else
       let st = CP.type_of_spec_var p_root in
       try
         match st with
-        | Named tname ->
+        | Named (tname, _) ->
           if String.compare tname "" != 0 then
             CP.SpecVar (st,self,Unprimed)
           else raise Not_found
@@ -757,7 +757,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
       x_binfo_hp (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
       let ba = x_add look_up_view_baga prog c p vs in
       let vdef = look_up_view_def pos prog.prog_view_decls c in
-      let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+      let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
       let to_svs = p :: vs in
       (* let from_svs_ann = vdef.view_ann_params in *)
       (* let to_svs_ann = anns in *)
@@ -882,7 +882,7 @@ let h_formula_2_mem_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_var li
         (* get specialized baga based on pure_f *)
         let ba = x_add get_spec_baga pure_f prog c p vs in
         let vdef = look_up_view_def pos prog.prog_view_decls c in
-        let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+        let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in
         (*TO DO: Temporarily ignore LOCK*)
         let new_mset =
@@ -1062,7 +1062,7 @@ and aux_xpure_for_view_x prog memset which_xpure c p vs perm rm_br pos =
   let () = Debug.ninfo_hprint (add_str "which_xpure" string_of_int) (which_xpure) no_pos in
   (*LDK: ??? be careful to handle frac var properly.
     Currently, no fracvar in view definition*)
-  let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
   let to_svs = p :: vs in
   let res =
     (match inv_opt with
@@ -1883,7 +1883,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) p0 xp_no: (MCP.m
       let vdef = look_up_view_def pos prog.prog_view_decls c in
       let diff_flag = not(vdef.view_xpure_flag) in
       let () = if diff_flag then smart_same_flag := false in
-      let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+      let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
       let to_svs = p :: vs in
       let helper () =
         (*--imm only*)
@@ -2054,7 +2054,7 @@ let rec xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula
                 h_formula_view_pos = pos}) ->
     let vdef = look_up_view_def pos prog.prog_view_decls c in(* views have been ordered such that this dependency is respected *)
     let vinv = MCP.fold_mem_lst (CP.mkTrue no_pos) false true vdef.view_user_inv in
-    let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+    let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
     let to_svs = p :: vs in
     CP.subst_avoid_capture from_svs to_svs vinv
   | Conj ({ h_formula_conj_h1 = h1;
@@ -2112,7 +2112,7 @@ let heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
        | None -> x_add look_up_view_baga prog c p vs
        | Some ls ->
          let vdef = look_up_view_def pos prog.prog_view_decls c in
-         let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+         let from_svs = CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
          let to_svs = p :: vs in
          lookup_view_baga_with_subs ls vdef from_svs to_svs )
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
@@ -2300,7 +2300,7 @@ let rec heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_
   | HSubs _ -> failwith x_tbi
   | ViewNode v ->
     let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
-    let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
+    let fr_vars = (CP.SpecVar (mkNamedTyp v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
     let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
     let zip = List.combine fr_vars to_vars in
     let new_ho_agrs = List.map (trans_rflow_formula (prune_preds prog true)) v.h_formula_view_ho_arguments in

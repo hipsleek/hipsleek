@@ -85,7 +85,7 @@ let norm_elim_useless vdefs sel_vns=
       let new_vname, view_sv_vars, ss = norm_elim_useless_para useless_stk vdef.Cast.view_name vdef.Cast.view_formula  vdef.Cast.view_vars in
       (*push it back*)
       if ss = [] then ([vdef],rem_vdefs) else
-        let vn = CF.mkViewNode (CP.SpecVar (Named new_vname, self, Unprimed))
+        let vn = CF.mkViewNode (CP.SpecVar (mkNamedTyp new_vname, self, Unprimed))
             new_vname view_sv_vars no_pos in
         let f = CF.formula_of_heap vn no_pos in
         let cf = CF.struc_formula_of_heap vn no_pos in
@@ -196,7 +196,7 @@ let norm_reuse_one_frm_view iprog prog ?(all=true)
       if frm_vdcl.view_equiv_set # is_avail then []
       else
         let () = x_tinfo_hp (add_str "to_vdcl.Cast.view_name:" pr_id) to_vdcl.Cast.view_name no_pos in
-        let self_t = (Named frm_vdcl.Cast.view_data_name) in
+        let self_t = (mkNamedTyp frm_vdcl.Cast.view_data_name) in
         let self_sv = CP.SpecVar (self_t ,self, Unprimed) in
         let frm_args = frm_vdcl.Cast.view_vars in
         let to_args = to_vdcl.Cast.view_vars in
@@ -297,7 +297,7 @@ let norm_reuse_mk_eq iprog prog edefs =
         let () = y_ninfo_hp (add_str "TBI: view" Cprinter.string_of_view_decl_short) e in
         let () = y_ninfo_hp (add_str "TBI: from" (pr_pair pr_id !CP.print_svl)) (name,args) in
         let () = y_ninfo_hp (add_str "TBI: to" (pr_pair pr_id !CP.print_svl)) (to_n,new_args) in
-        let self_node = CP.SpecVar (Named name, Globals.self, Unprimed) in
+        let self_node = CP.SpecVar (mkNamedTyp name, Globals.self, Unprimed) in
         let view_node = CF.mkViewNode self_node to_n new_args no_pos in
         let view_body = CF.set_flow_in_formula_override
             { CF.formula_flow_interval = !top_flow_int; CF.formula_flow_link = None }
@@ -760,7 +760,7 @@ let view_split_cands_one_branch_x prog vdecl f=
   let eqs = (MCP.ptr_equations_without_null mf) in
   let eqNulls = CP.remove_dups_svl (MCP.get_null_ptrs mf) in
   let hns, hvs, hrs = CF.get_hp_rel_formula f1 in
-  let self_sv = (CP.SpecVar (Named (vdecl.Cast.view_data_name),self, Unprimed)) in
+  let self_sv = (CP.SpecVar (mkNamedTyp (vdecl.Cast.view_data_name),self, Unprimed)) in
   let cands0 = (vdecl.Cast.view_name, self_sv::vdecl.Cast.view_vars, vdecl.C.view_pos)::
     (List.map (fun vnode -> (vnode.CF.h_formula_view_name, vnode.CF.h_formula_view_node::vnode.CF.h_formula_view_arguments, vnode.CF.h_formula_view_pos)) hvs) in
   let cands1 = List.filter (fun (_,args,_) -> (List.length args) >= 2) cands0 in
@@ -979,7 +979,7 @@ let update_scc_view_args prog vdecl=
         let inter_svl = CP.intersect_svl v_args part2a in
         if inter_svl != [] then
           let vdecl1 = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls hv.CF.h_formula_view_name in
-          let self_sv = CP.SpecVar ((Named vdecl1.Cast.view_data_name) ,self, Unprimed) in
+          let self_sv = CP.SpecVar ((mkNamedTyp vdecl1.Cast.view_data_name) ,self, Unprimed) in
           let sst = List.combine v_args (self_sv::vdecl1.Cast.view_vars) in
           let inter_rename = CP.subst_var_list sst inter_svl in
           let ids = List.map (fun sv ->
@@ -1020,7 +1020,7 @@ let update_scc_view_args prog vdecl=
     ()
   in
   (******************)
-  let self_sv = (CP.SpecVar (Named (vdecl.Cast.view_data_name),self, Unprimed)) in
+  let self_sv = (CP.SpecVar (mkNamedTyp (vdecl.Cast.view_data_name),self, Unprimed)) in
   let args = self_sv::vdecl.Cast.view_vars in
   if List.length args < 2 then ()
   else
@@ -1060,7 +1060,7 @@ let norm_split_x iprog prog vdefs sel_vns=
   in
   let add_view_args (vn, parts)=
     let vdecl = C.look_up_view_def_raw x_loc vdefs vn in
-    let self_sv = CP.SpecVar ((Named vdecl.Cast.view_data_name) ,self, Unprimed) in
+    let self_sv = CP.SpecVar ((mkNamedTyp vdecl.Cast.view_data_name) ,self, Unprimed) in
     let args = self_sv::vdecl.C.view_vars in
     let sv_parts = List.map (fun ids ->
         List.map (fun id -> List.find (fun sv ->
@@ -1391,7 +1391,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
     | CF.ViewNode hv -> hv.CF.h_formula_view_name
     | _ -> report_error no_pos "Norm.norm_extract_common_one_view: hf must be a hv node"
   in
-  let self_var = Cpure.SpecVar ((Named vdecl.C.view_data_name), self, Unprimed) in
+  let self_var = Cpure.SpecVar ((mkNamedTyp vdecl.C.view_data_name), self, Unprimed) in
   let hp = CP.SpecVar (HpT, vdecl.C.view_name, Unprimed) in
   let args = self_var::vdecl.C.view_vars in
   let unk_hps = [] in let unk_svl = [] in
@@ -1423,7 +1423,7 @@ let norm_extract_common_one_view_x iprog cprog cur_m cviews vdecl=
         let () = Debug.info_zprint  (lazy  ("  DO SYNTHESIZE view: "^ (!CP.print_sv hp2) ^ "\n")) no_pos in
         let _,args2 = CF.extract_HRel def2.CF.def_lhs in
         let vname2 = (CP.name_of_spec_var hp2) in
-        let self_var2 = Cpure.SpecVar ((Named vname2), self, Unprimed) in
+        let self_var2 = Cpure.SpecVar ((mkNamedTyp vname2), self, Unprimed) in
         let ss = [(List.hd args2, self_var2)] in
         let n_f21 = hprel_to_view f2 in
         let n_f22 = x_add CF.subst ss n_f21 in
@@ -1482,7 +1482,7 @@ let cont_para_analysis_view cprog vdef other_vds=
         + the "not defined" condition is incorrect for tail predicate, eg. tail-dll
         + relax to not_null condition? )
   *)
-  let self_sv = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) in
+  let self_sv = CP.SpecVar (mkNamedTyp vdef.Cast.view_data_name, self, Unprimed) in
   let process_branch_x vname args f=
     let _, vns, _ = CF.get_hp_rel_formula f in
     if vns = [] then args else
@@ -1907,7 +1907,7 @@ let convert_h_formula_to_linear_base_helper (head: CF.h_formula) (p: MCP.mix_for
   ((CF.h_formula * MCP.mix_formula * ( CP.spec_var list)) *  ((ident * (CP.spec_var list) * MCP.mix_formula) option) ) =
   let pos = CF.pos_of_h_formula orig_f in
   let name_new_view =  vdef.C.view_name ^ "_A" ^ (string_of_int (Globals.fresh_int())) in
-  let fresh_sv = CP.SpecVar(Named name_new_view, "u",Unprimed) in
+  let fresh_sv = CP.SpecVar(mkNamedTyp name_new_view, "u",Unprimed) in
   let fresh_sv = CP.fresh_spec_var fresh_sv in
   let new_node = CF.mkViewNode fresh_sv name_new_view vdef.C.view_vars no_pos in
   let fwd_ptrs_vdef = vdef.C.view_forward_ptrs in
@@ -2091,7 +2091,7 @@ let find_rec_data iprog cprog ids =
       let () = y_tinfo_hp (add_str "name" pr_id) n in
       let fields = List.map (fun ((t,id),_) -> t) d.Cast.data_fields in
       let fields = List.filter (fun t -> is_node_typ t) fields in
-      let fields = List.map (fun t -> match t with Named id -> id | _ -> failwith ("impossible"^x_loc)) fields in
+      let fields = List.map (fun t -> match t with Named (id, _) -> id | _ -> failwith ("impossible"^x_loc)) fields in
       (* let () = y_tinfo_hp (add_str "fields" (pr_list (pr_pair CF.string_of_typed_ident (pr_list pr_id)))) d.Cast.data_fields in *)
       let () = y_tinfo_hp (add_str "fields" (pr_list pr_id)) fields in
       let () = HipUtil.data_scc_obj # replace x_loc n fields in

@@ -324,7 +324,7 @@ let rec_unfold_formula_of_hrel prog hrel_root hrel_args =
   let pos = no_pos in
   let root_typ = CP.type_of_spec_var hrel_root in
   match root_typ with
-  | Named d_name ->
+  | Named (d_name, _) ->
     let d_decl = C.look_up_data_def_prog prog d_name in
     let d_args = List.map (fun (v, _) -> CP.fresh_spec_var v) d_decl.C.data_fields_new in
     let ptr_d_args = List.filter CP.is_node_typ d_args in
@@ -640,7 +640,7 @@ let rec collect_baga_models_heap prog hf0=
                 h_formula_view_pos = pos
                } ->
       let vdef = x_add Cast.look_up_view_def pos prog.Cast.prog_view_decls c in
-      let from_svs = CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
+      let from_svs = CP.SpecVar (mkNamedTyp vdef.Cast.view_data_name, self, Unprimed) :: vdef.Cast.view_vars in
       let to_svs = p :: vs in
       let ss = List.combine from_svs to_svs in
       let fs = List.map (fun (f,_) -> x_add subst ss f) vdef.Cast.view_un_struc_formula in
@@ -1403,7 +1403,7 @@ let check_tail_rec_rec_lemma_x prog lhs rhs l_reach_dns l_reach_vns r_reach_dns 
     match r_reach_vns with
     | [rvn] ->
       let rvdcl = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvn.h_formula_view_name in
-      let self_sv =  CP.SpecVar (Named rvdcl.Cast.view_data_name, self, Unprimed) in
+      let self_sv =  CP.SpecVar (mkNamedTyp rvdcl.Cast.view_data_name, self, Unprimed) in
       let sst = List.combine (self_sv::rvdcl.Cast.view_vars) (rvn.h_formula_view_node::rvn.h_formula_view_arguments) in
       let rec_def_heaps = List.fold_left (fun r (f,_) ->
           let views = Cformula.get_views f in
@@ -1736,7 +1736,7 @@ let is_seg_view_br_fold_form_x prog ldnode lhs0 rvnode rhs0 remap conseq_pure_op
   in
   let exist_full_fold lhs rvnode=
     let vdecl = Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls rvnode.h_formula_view_name in
-    let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
+    let self_sv =  CP.SpecVar (mkNamedTyp vdecl.Cast.view_data_name, self, Unprimed) in
     let sst = [(self_sv,rvnode.h_formula_view_node)] in
     let ivars = [CP.name_of_spec_var rvnode.h_formula_view_node] in
     let init_mtl = [[]] in
@@ -1896,7 +1896,7 @@ let seg_fold_view_br_x prog ldnode rvnode ante conseq rhs_b=
   let cont_args_pos = List.map (fun sv -> get_pos vdecl.Cast.view_vars 0 sv)
       fwd_seg_args in
   (* fwd *)
-  let self_sv =  CP.SpecVar (Named vdecl.Cast.view_data_name, self, Unprimed) in
+  let self_sv =  CP.SpecVar (mkNamedTyp vdecl.Cast.view_data_name, self, Unprimed) in
   let sst = [(self_sv,rvnode.h_formula_view_node)] in
   let rhs_fs = List.fold_left (fun r (f,_) ->
       let dns = get_datas f in

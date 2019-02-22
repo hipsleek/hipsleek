@@ -1360,7 +1360,7 @@ let rec type_of_exp (e : exp) = match e with
      		  exp_aalloc_pos = _}) -> Some (P.Array t) *)
   | New ({exp_new_class_name = c;
           exp_new_arguments = _;
-          exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
+          exp_new_pos = _}) -> Some (mkNamedTyp c) (*---- ok? *)
   | Null _ -> Some (Globals.null_type (* Named "" *))
   | EmptyArray b -> Some (Array (b.exp_emparray_type, b.exp_emparray_dim)) (* An Hoa *)
   | Print _ -> None
@@ -1448,17 +1448,17 @@ let extract_view_x_invs transed_views=
         if Cpure.isConstTrue (MP.pure_of_mix vdcl.view_user_inv) then r
         else
           r@[(vdcl.view_name,
-              ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+              ((Cpure.SpecVar (mkNamedTyp vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
                vdcl.view_user_inv))]
       else
         r@[(vdcl.view_name,
-            ((Cpure.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
+            ((Cpure.SpecVar (mkNamedTyp vdcl.view_data_name, self, Unprimed))::vdcl.view_vars,
              vdcl.view_x_formula))]
     ) [] transed_views
 
 let look_up_view_inv defs act_args name inv_compute_fnc =
   let vdcl = look_up_view_def_raw x_loc defs name in
-  let ss = List.combine ((P.SpecVar (Named vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
+  let ss = List.combine ((P.SpecVar (mkNamedTyp vdcl.view_data_name, self, Unprimed))::vdcl.view_vars) act_args in
   let inv =
     let p1 = MP.pure_of_mix vdcl.view_user_inv in
     if P.isConstTrue p1 then
@@ -1533,7 +1533,7 @@ let look_up_hp_decl_data_name_x decls hp arg_pos=
     | [] -> report_error no_pos "Cast.look_up_hp_decl_data_name 1"
     | (sv,_)::rest ->( if n = arg_pos then
                          match Cpure.type_of_spec_var sv with
-                         | Named id -> id
+                         | Named (id, _) -> id
                          | _ -> report_error no_pos "Cast.look_up_hp_decl_data_name: only pure-extend for pointer"
                        else look_up_data_name rest (n+1)
                      )
@@ -1657,7 +1657,7 @@ let get_root_typ_hprel hprels hp_name=
     let rpos = x_add get_proot_hp_def_raw hprels hp_name in
     let r,_ = part_sv_from_pos (List.map fst hpdclr.hp_vars_inst) 0 rpos [] in
     match Cpure.type_of_spec_var r with
-    | Named id -> id
+    | Named (id, _) -> id
     | _ -> ""
   in
   retrieve_root hp_name
@@ -1735,7 +1735,7 @@ let is_lock_inv prog (name : ident) : bool =
   | None -> false
   | Some f -> true
 
-let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed)
+let self_param vdef = P.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed)
 
 let add_epure pf lst =
   let ep = Excore.EPureI.mk_epure pf in
@@ -1860,7 +1860,7 @@ let look_up_extn_info_rec_field_x ddefs dname=
     match fields with
     | ((t,_), extns)::rest -> begin
         match t with
-        | Named id1 -> if String.compare id1 dname = 0 then
+        | Named (id1, _) -> if String.compare id1 dname = 0 then
             extns
           else look_up_helper rest
         | _ -> look_up_helper rest
@@ -2353,7 +2353,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
       let fn1 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
       (*let () = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
       (*09.05.2000 ---*)
-      let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
+      let sup_ext_var = P.SpecVar (mkNamedTyp ext_name, fn1, Unprimed) in
       let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
                                F.h_formula_data_name = cdef1.data_name;
                                F.h_formula_data_derv = subnode.F.h_formula_data_derv;
@@ -2399,7 +2399,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
               let fn2 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
               (*let () = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
               (*09.05.2000 ---*)
-              let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
+              let ext_link_p = P.SpecVar (mkNamedTyp ext_link_name, fn2, Unprimed) in
               let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
                                        F.h_formula_data_name = ext_name;
                                        F.h_formula_data_derv = subnode.F.h_formula_data_derv;
@@ -2569,7 +2569,7 @@ let get_catch_of_exp e = match e with
 
 let check_proper_return cret_type exc_list f =
   let overlap_flow_type fl res_t = match res_t with
-    | Named ot -> F.overlapping fl (exlist # get_hash ot)
+    | Named (ot, _) -> F.overlapping fl (exlist # get_hash ot)
     | _ -> false in
   let rec check_proper_return_f f0 = match f0 with
     | F.Base b->
@@ -3227,7 +3227,7 @@ let get_emp_map_x cprog=
               Some p
           end
     in
-    (vdef.view_name, P.SpecVar (Named vdef.view_data_name, self, Unprimed)::vdef.view_vars, o_base)
+    (vdef.view_name, P.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed)::vdef.view_vars, o_base)
   in
   List.map helper cprog.prog_view_decls
 
@@ -3317,7 +3317,7 @@ let is_touching_view_x (vdecl: view_decl) : bool =
   let forward_ptrs = vdecl.view_forward_ptrs in
   let is_touching_branch branch = (
     let (_,mf,_,_,_,_) = F.split_components branch in
-    let self_sv = P.SpecVar (Named vdecl.view_data_name, self, Unprimed) in
+    let self_sv = P.SpecVar (mkNamedTyp vdecl.view_data_name, self, Unprimed) in
     let nontouching_cond = (
       let conds = List.map (fun y -> P.mkNeqVar self_sv y pos) forward_ptrs in
       List.fold_left (fun x1 x2 -> P.mkAnd x1 x2 pos ) (P.mkTrue pos) conds
@@ -3529,7 +3529,7 @@ let is_tail_recursive_view (vd: view_decl) : bool =
 
 let collect_subs_from_view_node_x (vn: F.h_formula_view) (vd: view_decl)
   : (P.spec_var * P.spec_var) list =
-  let view_type = Named vd.view_data_name in
+  let view_type = mkNamedTyp vd.view_data_name in
   let self_var = P.SpecVar (view_type, self, Unprimed) in
   let subs = [(self_var, vn.F.h_formula_view_node)] in
   let subs = List.fold_left2 (fun subs sv1 sv2 ->
@@ -3670,7 +3670,7 @@ let unfold_base_case_formula (f: F.formula) (vd: view_decl) (base_f: F.formula) 
 let compute_view_residents_x (vd: view_decl) : P.spec_var list =
   let vname = vd.view_name in
   let dname = vd.view_data_name in
-  let self_var = P.SpecVar (Named dname, self, Unprimed) in
+  let self_var = P.SpecVar (mkNamedTyp dname, self, Unprimed) in
   let branches, _ = List.split vd.view_un_struc_formula in
   let base_fs, induct_fs = split_view_branches vd in
   if (List.length base_fs != 1) then []
@@ -3717,7 +3717,7 @@ let collect_forward_backward_from_formula (f: F.formula) vdecl ddecl fwp fwf bwp
   let eqs = MP.ptr_equations_without_null pf in
   let dname = ddecl.data_name in
   let vname = vdecl.view_name in
-  let self_var = P.SpecVar (Named dname, self, Unprimed) in
+  let self_var = P.SpecVar (mkNamedTyp dname, self, Unprimed) in
   let self_closure = F.find_close [self_var] eqs in
   let is_core_dnode node = eq_str (F.get_node_name 3 node) dname in
   let is_core_vnode node = eq_str (F.get_node_name 4 node) vname in
@@ -3863,7 +3863,7 @@ let compute_view_forward_backward_info_x (vdecl: view_decl) (prog: prog_decl)
     let pos = vdecl.view_pos in
     let vname = vdecl.view_name in
     let dname = vdecl.view_data_name in
-    let self_sv = P.SpecVar (Named dname, self, Unprimed) in
+    let self_sv = P.SpecVar (mkNamedTyp dname, self, Unprimed) in
     let () = if (eq_str dname "") then (
         report_warning pos "compute_view_fw_bw: data name in view is empty";
       ) in
@@ -4547,7 +4547,7 @@ let is_segmented_view vd =
   let self = vd.view_type_of_self in
   let dn = vd.view_data_name in
   let self = if dn="" then self
-    else Some(Named dn) in
+    else Some(mkNamedTyp dn) in
   let () = y_tinfo_hp (add_str "data_name" pr_id) dn in
   match self with
   | None ->

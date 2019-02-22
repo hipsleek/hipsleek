@@ -4997,7 +4997,7 @@ let mk_hprel_def_wprocess_x prog is_pre (cdefs:(CP.spec_var *CF.hp_rel_def) list
         let n_id = C.get_root_typ_hprel prog.C.prog_hp_decls (CP.name_of_spec_var hp) in
         let () = DD.ninfo_hprint (add_str "n_id: " pr_id) n_id no_pos in
         let defs_wg = if String.compare n_id "" ==0 then defs1 else
-            let ss = [(r,CP.SpecVar (Named n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] in
+            let ss = [(r,CP.SpecVar (mkNamedTyp n_id, CP.name_of_spec_var r, CP.primed_of_spec_var r))] in
             List.map (fun (f, og) -> (x_add CF.subst ss f ,og)) defs1
         in
         let () = DD.ninfo_zprint (lazy (((!CP.print_sv hp)^"(" ^(!CP.print_svl new_args) ^ ")"))) pos in
@@ -7593,7 +7593,7 @@ let gen_slk_file is_proper prog file_name sel_pre_hps sel_post_hps rel_assumps u
       let ptrs = CP.remove_dups_svl ((CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_lhs)@(CF.get_ptrs_w_args_f ~en_pure_field:false cs.CF.hprel_rhs)) in
       let ptrs_node_used = List.fold_left (fun r t ->
           match t with
-          | Named ot -> if ((String.compare ot "") ==0) then r else r@[ot]
+          | Named (ot, _) -> if ((String.compare ot "") ==0) then r else r@[ot]
           | _ -> r
         ) [] (List.map CP.type_of_spec_var ptrs) in
       let nr1 = r1@(List.map (fun (hp,_,_) -> hp) (lhps@rhps)) in

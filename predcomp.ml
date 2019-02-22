@@ -112,7 +112,7 @@ and aug_class_name (t : typ) = match t with
     Error.report_error {Error.error_loc = no_pos;
                         Error.error_text = "unexpected UNKNOWN type"}
   | Pointer _ -> "Pointer"
-  | Named c -> c ^ "Aug"
+  | Named (c, _) -> c ^ "Aug"
   | Int -> "IntAug"
   | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
@@ -162,7 +162,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
         let rest_result = helper rest1 in
         (* An Hoa MARKED *)
         let rec ityp_of_ctyp ct = match ct with
-          | Named c -> Named c
+          | Named (c, tl) -> Named (c, tl)
           | Array (et, _) -> ityp_of_ctyp et
           | p -> p in
         let t = ityp_of_ctyp (CP.type_of_spec_var var) in
@@ -174,7 +174,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   (* generator for partially bound out parameters *)
   let rec helper2 (CP.SpecVar (t, v, p)) =
     let cls_name = aug_class_name t in
-    let atype = Named cls_name in
+    let atype = mkNamedTyp cls_name in
     ((atype, v), pos, false,(gen_field_ann atype) (* F_NO_ANN *))  (* An Hoa : Add [false] for inline record. TODO revise *) in
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
@@ -972,7 +972,7 @@ let return_false pos = Return ({exp_return_val = Some
                                 exp_return_path_id = stub_branch_point_id "pred_comp_generated";
                                 exp_return_pos = pos})
 
-let cur_color pos = { param_type = Named "long";
+let cur_color pos = { param_type = mkNamedTyp "long";
                       param_name = "curColor";
                       param_mod = NoMod;
                       param_loc = pos }
@@ -1595,7 +1595,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let new_checker_name = CP.name_of_spec_var p in
       let new_checker_var = Var ({exp_var_name = new_checker_name;
                                   exp_var_pos = pos}) in
-      let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;
+      let new_checker_decl = VarDecl ({exp_var_decl_type = mkNamedTyp cls;
                                        exp_var_decl_decls =
                                          [(new_checker_name, Some new_checker, pos)];
                                        exp_var_decl_pos = no_pos}) in
@@ -1639,7 +1639,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
         | [], [], [] -> []
         | _ -> failwith ("gen_heap: params and modes are supposed to be lists with the same length.") in
       (* gen inputs *)
-      let self_var = CP.SpecVar (Named vdef.C.view_data_name, self, Unprimed) in
+      let self_var = CP.SpecVar (mkNamedTyp vdef.C.view_data_name, self, Unprimed) in
       let tmp1 = helper (self_var :: vdef.C.view_vars) (p :: vs) (ModeIn :: vdef.C.view_modes) in
       let helper2 e1 e2 = mkSeq e2 e1 pos in
       let init_inputs = List.fold_left helper2 call_cond tmp1 in
@@ -1890,7 +1890,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let combined_exp, disj_procs, pbvars =
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos, false, (gen_field_ann (Named vdef.C.view_data_name))(* F_NO_ANN *)) (* An Hoa : add [false] for inline record. TODO revise *)
+  let fields = ((mkNamedTyp vdef.C.view_data_name, self), pos, false, (gen_field_ann (mkNamedTyp vdef.C.view_data_name))(* F_NO_ANN *)) (* An Hoa : add [false] for inline record. TODO revise *)
                :: (gen_fields vdef.C.view_vars pbvars pos) in
   (* parameters for traverse *)
   let check_proc =
@@ -2025,10 +2025,10 @@ and gen_partially_bound_types (pbvars : CP.spec_var list) pos : data_decl list =
   tmp2
 
 and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_decl list = match t with
-  | Named c ->
+  | Named (c, _) ->
     let cls_aug = c ^ "Aug" in
     (* An Hoa : Add [false] for inline record. TODO revise *)
-    let fields = [((Bool, "bound"), pos, false, (gen_field_ann Bool) (*F_NO_ANN*)); ((Named (string_of_typ t), "val"), pos, false,[] (* F_NO_ANN *))] in
+    let fields = [((Bool, "bound"), pos, false, (gen_field_ann Bool) (*F_NO_ANN*)); ((mkNamedTyp (string_of_typ t), "val"), pos, false,[] (* F_NO_ANN *))] in
     let ddef = { data_name = cls_aug;
                  data_fields = fields;
                  data_pos = no_pos;

@@ -3201,7 +3201,7 @@ and process_one_match_x prog estate lhs_h lhs_p rhs is_normalizing (m_res:match_
                   let t = CP.type_of_spec_var v in
                   begin
                     match t with
-                    | Named n ->
+                    | Named (n, _) ->
                       if Cf_ext.is_data_rec n then
                         if prev_nm="" then (n::acc,n)
                         else arg

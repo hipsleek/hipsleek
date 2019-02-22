@@ -25,6 +25,126 @@ checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t> * z2::node<cc,dd>
 print residue.
 expect Valid.
 
+//
+//checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t>.
+//checkentail x::nodep<z1:node,t> |- x::nodep<z2,t>.
+checkentail x::nodep<z1,t> & z1=1 |- x::nodep<z2,t>.
+print residue.
+expect Fail.
+
+/*
+x:nodep[`T1] , T1:`T1, z1:`T1
+z1:int
+
+===> unify(T1, int) = int
+
+x:nodep[`T1] , T1:int, z1:`T1
+
+x:nodep[`T2], `T2:`T1
+
+
+*/
+
+checkentail x::nodep<z1,t> & z1=1 & x=y |- x::nodep<z2,t>.
+
+/*
+x:nodep[`T1] , T1:int, z1:`T1
+
+x:nodep[`T1] , T1:int, z1:`T1, y:nodep[`T1]
+
+*/
+/*
+
+`T below should be node
+
+ x:nodep::nodep<z1:node,t:nodep>@M * z1:node::node<aa:int,bb:node>@M&
+{FLOW,(4,5)=__norm#E} [] |-  EBase
+   exists (Impl)[z2:`T](exists t_74:nodep: x:nodep::nodep<z2:`T,t_74:nodep>@M&
+   t_74:nodep=t:nodep&{FLOW,(4,5)=__norm#E})
+
+
+INPUT 0: [][]
+ ### ante =  x:nodep::nodep<z1:node,t:nodep>@M * z1:node::node<aa:int,bb:node>@M&
+{FLOW,(4,5)=__norm#E}
+ ### conseq =  EBase
+   exists (Impl)[z2:`T](exists t_74:nodep: x:nodep::nodep<z2:`T,t_74:nodep>@M&
+   t_74:nodep=t:nodep&{FLOW,(4,5)=__norm#E})
+
+run_infer:
+ x:nodep::nodep<z1:node,t:nodep>@M * z1:node::node<aa:int,bb:node>@M&
+{FLOW,(4,5)=__norm#E} [] |-  EBase
+   exists (Impl)[z2:`T](exists t_74:nodep: x:nodep::nodep<z2:`T,t_74:nodep>@M&
+   t_74:nodep=t:nodep&{FLOW,(4,5)=__norm#E})
+
+!!! WARNING logtime exception (SAT):0.000531
+!!! WARNING logtime exception (sleek-hec):0.001262
+!!! WARNING logtime exception (sleek-hec):0.003796
+Entail 4: EXCast. Failure("**smtsolver.ml#105:TBI")
+: no residue
+Validate 4: Expecting1 FailBUT got no residue
+
+
+
+
+(==typeinfer.ml#1915==)
+try_unify_data_type_args@55
+try_unify_data_type_args inp1 :nodep
+try_unify_data_type_args inp2 :ies:[z1,t]
+try_unify_data_type_args inp3 :[]
+try_unify_data_type_args@55 EXIT:[(t:69:nodep)(z1:68:`T)(x:67:nodep)]
+
+(====)
+unify_poly@59@58@57@56
+unify_poly inp1 :`T
+unify_poly inp2 :node
+unify_poly@59 EXIT:([(T:70:`T)(t:69:nodep)      (z1:68:`T)(x:67:nodep)],Some(node))
+
+(====)
+unify_type@58@57@56
+unify_type inp1 :`T
+unify_type inp2 :node
+unify_type@58 EXIT:([(T:70:`T)(t:69:nodep)(z1:68:`T)(x:67:nodep)],Some(node))
+
+(==typeinfer.ml#671==)
+must_unify@57@56
+must_unify inp1 :`T
+must_unify inp2 :node
+must_unify inp3 :[(t:69:nodep)(z1:68:`T)(x:67:nodep)]
+must_unify@57 EXIT:([(T:70:`T)(t:69:nodep)(z1:68:`T)(x:67:nodep)],node)
+
+(==typeinfer.ml#1915==)
+try_unify_data_type_args@56
+try_unify_data_type_args inp1 :node
+try_unify_data_type_args inp2 :ies:[aa,bb]
+try_unify_data_type_args inp3 :[(t:69:nodep)(z1:68:`T)(x:67:nodep)]
+try_unify_data_type_args@56 EXIT:[(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)(x:67:nodep)]
+
+
+
+(====)
+unify_type@62@61@60
+unify_type inp1 :nodep
+unify_type inp2 :nodep
+unify_type@62 EXIT:([(Anon_full_perm:73:float)(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)(x:67:nodep)],Some(nodep))
+
+(==typeinfer.ml#671==)
+must_unify@61@60
+must_unify inp1 :nodep
+must_unify inp2 :nodep
+must_unify inp3 :[(Anon_full_perm:73:float)(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)(x:67:nodep)]
+must_unify@61 EXIT:([(Anon_full_perm:73:float)(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)(x:67:nodep)],nodep)
+
+(==typeinfer.ml#1915==)
+try_unify_data_type_args@60
+try_unify_data_type_args inp1 :nodep
+try_unify_data_type_args inp2 :ies:[z2,t_74] **********************************
+try_unify_data_type_args inp3 :[(Anon_full_perm:73:float)(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)(x:67:nodep)]  -------privious tlist
+try_unify_data_type_args@60 EXIT:[   (t_74:76:nodep)(z2:75:`T)   (x:67:nodep)(Anon_full_perm:73:float)(bb:72:node)(aa:71:int)(z1:68:node)(T:70:`T)(t:69:nodep)]  ---------updated tlist
+
+*/
+
+
+
 // Below should raise a type exception: node and int cannot be unified?
 checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<3,t>.
 print residue.

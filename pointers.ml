@@ -109,7 +109,7 @@ let default_value (t :typ) pos : exp =
 (*similar to that in Astsimp.ml*)
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
   match t with
-  | Named c ->
+  | Named (c, _) ->
     (try let todo_unk = look_up_enum_def_raw prog.prog_enum_decls c in "int"
      with | Not_found -> c)
   |t -> string_of_typ t
@@ -877,7 +877,7 @@ let rec trans_specs_x specs new_params flags pos =
   let post_h,post_p,ex_vars = List.fold_left (fun (h,p,ex_vars) (param,flag) ->
       if (flag) then
         let typ_name = match param.param_type with
-          | Named t -> t
+          | Named (t, _) -> t
           | _ -> Error.report_error
                    {Err.error_loc = pos;
                     Err.error_text = "Expecting Named t"}
@@ -898,7 +898,7 @@ let rec trans_specs_x specs new_params flags pos =
             (* pass-by-value*)
             (* y::int_ptr<old_y> *)
             let typ_name = match param.param_type with
-              | Named t -> t
+              | Named (t, _) -> t
               | _ -> Error.report_error
                        {Err.error_loc = pos;
                         Err.error_text = "Expecting Named t"}
@@ -1127,7 +1127,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
         let new_t = convert_prim_to_obj org_t in
         let func (id,eo,pos) =
           let nm = match new_t with
-            | Named id -> id
+            | Named (id, _) -> id
             | _ -> Error.report_error
                      {Err.error_loc = pos;
                       Err.error_text = "Expecting (Named ident) after convert_typ"}
@@ -1184,7 +1184,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
         let new_t = convert_prim_to_obj org_t in
         let func (id,eo,pos) =
           let nm = match new_t with
-            | Named id -> id
+            | Named (id, _) -> id
             | _ -> Error.report_error
                      {Err.error_loc = pos;
                       Err.error_text = "Expecting (Named ident) after convert_typ"}
@@ -1781,7 +1781,7 @@ and add_code_val e (x,ptrx) =
   *)
   let pos = x.param_loc in
   let nm = match ptrx.param_type with
-    | Named id -> id (*Name int_ptr -> int_ptr*)
+    | Named (id, _) -> id (*Name int_ptr -> int_ptr*)
     | _ -> Error.report_error
              {Err.error_loc = pos;
               Err.error_text = "Expecting (Named ident) of ptrx"}
@@ -1815,7 +1815,7 @@ and add_code_ref e (x,ptrx) =
   *)
   let pos = x.param_loc in
   let nm = match ptrx.param_type with
-    | Named id -> id (*Name int_ptr -> int_ptr*)
+    | Named (id, _) -> id (*Name int_ptr -> int_ptr*)
     | _ -> Error.report_error
              {Err.error_loc = pos;
               Err.error_text = "Expecting (Named ident) of ptrx"}
@@ -1903,7 +1903,7 @@ and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
        if Gen.is_some proc.proc_data_decl then
          (let cdef = Gen.unsome proc.proc_data_decl in
           let this_arg ={
-            param_type = Named cdef.data_name;
+            param_type = mkNamedTyp cdef.data_name;
             param_name = this;
             param_mod = NoMod;
             param_loc = proc.proc_loc;} in

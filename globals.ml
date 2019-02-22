@@ -328,7 +328,7 @@ type typ =
   | List of typ
   | BagT of typ
   (* | Prim of prim_type *)
-  | Named of ident (* named type, could be enumerated or object *)
+  | Named of ident * (typ list)  (* named type, could be enumerated or object *)
   (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT of (typ list) (* relation type *)
@@ -340,6 +340,8 @@ type typ =
   | Pointer of typ (* base type and dimension *)
   | Poly of ident
   | Mapping of (typ * typ)
+
+let mkNamedTyp ?args: (args0 = []) name = Named (name,args0)
 
 (* | SLTyp (* type of ho formula *) *)
 
@@ -374,8 +376,8 @@ type typ =
 
 type typed_ident = (typ * ident)
 
-let role_typ = Named "role"
-let chan_typ = Named "chan"
+let role_typ = mkNamedTyp "role"
+let chan_typ = mkNamedTyp "chan"
 
 (* ------ Helpful print functions ------ *)
 (* ------------------------------------- *)
@@ -486,18 +488,18 @@ let is_undef_typ t =
 
 let is_ptr_arith t =
   match t with
-  | Named id -> true (* String.compare id "" != 0 *)
+  | Named (id,_) -> true (* String.compare id "" != 0 *)
   | Array _ -> true
   | _ -> false
 
 let is_node_typ t =
   match t with
-  | Named id -> true (* String.compare id "" != 0 *)
+  | Named (id,_) -> true (* String.compare id "" != 0 *)
   | _ -> false
 
 let is_possible_node_typ t =
   match t with
-  | Named id -> true (* String.compare id "" != 0 *)
+  | Named (id,_) -> true (* String.compare id "" != 0 *)
   | TVar _ -> true
    (* Unknown can also be a node *)
   | UNK -> true
@@ -518,6 +520,12 @@ let rec param_typ_of_FuncT typ =
   | FuncT (p_typ, r_typ) -> p_typ::(param_typ_of_FuncT r_typ)
   | _ -> []
 
+let rec cmp_typ_x v1 v2 =
+  match v1, v2 with
+  | [], []        -> true
+  | x::xs, y::ys  -> x = y && cmp_typ_x xs ys
+  | _, _          -> false
+
 let rec cmp_typ t1 t2=
   match t1,t2 with
   | FORM, FORM
@@ -532,7 +540,8 @@ let rec cmp_typ t1 t2=
   | TVar i1, TVar i2 -> i1=i2
   | BagT t11, BagT t22
   | List t11, List t22 -> cmp_typ t11 t22
-  | Named s1, Named s2 -> String.compare s1 s2 = 0
+  | Named (s1,tl1), Named (s2, tl2) ->
+               (String.compare s1 s2 = 0) && (cmp_typ_x tl1 tl2)
   | Array (t11, i1), Array (t22, i2) -> i1=i2 && cmp_typ t11 t22
   | Mapping (t11,t12), Mapping (t21,t22) ->cmp_typ t11 t21 && cmp_typ t12 t22
   | RelT lst1, RelT lst2 ->(
@@ -580,10 +589,10 @@ let convert_typ (t:typ) : typ =
   match t with
   | Pointer t1 ->
     (match t1 with
-     | Int -> Named "int_ptr"
+     | Int -> mkNamedTyp "int_ptr"
      | Pointer t2 ->
        (match t2 with
-        | Int -> Named "int_ptr_ptr"
+        | Int -> mkNamedTyp "int_ptr_ptr"
         | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
        )
      | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
@@ -592,16 +601,16 @@ let convert_typ (t:typ) : typ =
 
 let revert_typ (t:typ) : typ =
   (match t with
-   | Named t1 ->
+   | Named (t1,_) ->
      (match t1 with
       | "int_ptr" -> Int
-      | "int_ptr_ptr" -> Named "int_ptr"
-      | _ -> Named "Not_Support")
-   | _ -> Named "Not_Support")
+      | "int_ptr_ptr" -> mkNamedTyp "int_ptr"
+      | _ -> mkNamedTyp "Not_Support")
+   | _ -> mkNamedTyp "Not_Support")
 
 let name_of_typ (t:typ) : string =
   (match t with
-   | Named t1 ->
+   | Named (t1,_) ->
      t1
    | _ ->
      "Not_Support")
@@ -611,14 +620,14 @@ let is_pointer t=
   | Named _ -> true
   | _ -> false
 
-let barrierT = Named "barrier"
+let barrierT = mkNamedTyp "barrier"
 
 let convert_prim_to_obj (t:typ) : typ =
   (match t with
-   | Int -> Named "int_ptr"
-   | Named t1 ->
+   | Int -> mkNamedTyp "int_ptr"
+   | Named (t1,_) ->
      (match t1 with
-      | "int_ptr" -> Named "int_ptr_ptr"
+      | "int_ptr" -> mkNamedTyp "int_ptr_ptr"
       | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
      )
    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
@@ -844,7 +853,9 @@ let rec string_of_typ (x:typ) : string = match x with
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Named (ot,tl) -> if ((String.compare ot "") ==0) then "null_type"
+    else if tl = [] then ot
+    else ot ^ (pr_list string_of_typ tl)
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
@@ -900,7 +911,9 @@ let rec string_of_typ_alpha = function
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
-  | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
+  | Named (ot,tl) -> if ((String.compare ot "") ==0) then "null_type"
+    else if tl = [] then ot
+    else ot ^ "[" ^ (String.concat ", " (List.map string_of_typ tl)) ^ "]"
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
@@ -1054,12 +1067,14 @@ let string_of_primed_ident_list l = "["^(s_p_i_list l ",")^"]"
 let is_substr s id =
   let len_s = String.length s in
   try
+    (* produce a fresh substring of id, actually it is a character *)
     let s_id = String.sub id 0 len_s in
     if (s = s_id) then true
     else false
   with _ -> false
 ;;
 
+(* whether the head of the id is # or not *)
 let is_dont_care_var id =
   if is_substr "#" id
   then true
@@ -1098,14 +1113,14 @@ let no_pos1 = { Lexing.pos_fname = "";
 let res_name = "res"
 (* let null_name = "null" *)
 let null_name = "_null"
-let null_type = Named ""
+let null_type = mkNamedTyp ""
 
 let is_null name =
   name == null_name
 
 let is_null_type t  =
   match t with
-  | Named "" -> true
+  | Named ("", _) -> true
   | _ -> false
 
 let inline_field_expand = "_"
@@ -1159,7 +1174,7 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
-let lock_typ = Named "lock"
+let lock_typ = mkNamedTyp "lock"
 
 let ls_name = "LS"
 let lsmu_name = "LSMU"
@@ -1171,11 +1186,11 @@ let waitlevel_typ = Int
 let level_pred = "level"
 let level_name = "mu"
 let level_data_typ = Int
-let ls_typ = BagT (Named ls_data_typ)
+let ls_typ = BagT (mkNamedTyp ls_data_typ)
 let lsmu_typ = BagT (Int)
 
 let thrd_name = "thrd"
-let thrd_typ = Named "thrd"
+let thrd_typ = mkNamedTyp "thrd"
 
 (* ============== session ============= *)
 let session_self = (self, Unprimed)
@@ -3116,7 +3131,7 @@ let eq_mingled_name mingled_name name = (* (mingled_name = name) *)
        try
          let args  = List.combine args1 args2 in
          List.fold_left (fun acc (a1,a2) -> acc &&
-                  ((String.contains a1 '`') or
+                  ((String.contains a1 '`') ||
                    (String.equal a1 a2))) true args
        with _ -> false
      else false

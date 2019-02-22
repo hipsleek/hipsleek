@@ -400,7 +400,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
          				 	let () = print_string("Arg List :" ^
          				 	(String.concat "," (List.map string_of_spec_var argl)) ^"\n") in*)
        let sbst_self = (*mexp in*)
-         CP.e_apply_subs (List.combine [Cpure.SpecVar ((Named vdef.C.view_data_name), self, Unprimed)] [vn]) mexp in
+         CP.e_apply_subs (List.combine [Cpure.SpecVar ((mkNamedTyp vdef.C.view_data_name), self, Unprimed)] [vn]) mexp in
        let new_mem_exp = CP.e_apply_subs (List.combine vdef.C.view_vars argl) sbst_self in
        (*let () = print_string("Bag Exp :" ^ (string_of_formula_exp new_mem_exp) ^"\n") in*)
        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)

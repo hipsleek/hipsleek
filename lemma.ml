@@ -137,12 +137,12 @@ let check_view_subsume iprog cprog view1 view2 need_cont_ana=
   let ihf1 = IF.mkHeapNode (self, Unprimed) (view1.C.view_name) [] (* TODO:HO *)
       0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
       (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view1.C.view_vars) []  None pos1 in
-  let chf1 = CF.mkViewNode (CP.SpecVar (Named view1.C.view_name,self, Unprimed)) view1.C.view_name
+  let chf1 = CF.mkViewNode (CP.SpecVar (mkNamedTyp view1.C.view_name,self, Unprimed)) view1.C.view_name
       view1.C.view_vars no_pos in
   let ihf2 = IF.mkHeapNode (self, Unprimed) (view2.C.view_name) [] (* TODO:HO *)
       0  false SPLIT0 (IP.ConstAnn Mutable) false false false None
       (List.map (fun (CP.SpecVar (_,id,p)) -> IP.Var ((id,p), pos1)) view2.C.view_vars) [] None pos2 in
-  let chf2 = CF.mkViewNode (CP.SpecVar (Named view2.C.view_name,self, Unprimed)) view2.C.view_name
+  let chf2 = CF.mkViewNode (CP.SpecVar (mkNamedTyp view2.C.view_name,self, Unprimed)) view2.C.view_name
       view2.C.view_vars no_pos in
   let v_f1, v_f2, iform_hf1, cform_hf1, iform_hf2, cform_hf2=
     if not need_cont_ana then
@@ -1011,7 +1011,7 @@ let do_unfold_view_hf cprog hf0 =
         try
           let vdcl = x_add C.look_up_view_def_raw x_loc cprog.C.prog_view_decls hv.CF.h_formula_view_name in
           let fs = List.map fst vdcl.C.view_un_struc_formula in
-          let f_args = (CP.SpecVar (Named vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
+          let f_args = (CP.SpecVar (mkNamedTyp vdcl.C.view_name,self, Unprimed))::vdcl.C.view_vars in
           let a_args = hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments in
           let ss = List.combine f_args  a_args in
           let fs1 = List.map (x_add CF.subst ss) fs in
@@ -1818,7 +1818,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
       | _ -> hf
     in
     let gen_view_formula vdcl=
-      let self_sv = CP.SpecVar (Named vdcl.Cast.view_data_name ,self, Unprimed) in
+      let self_sv = CP.SpecVar (mkNamedTyp vdcl.Cast.view_data_name ,self, Unprimed) in
       let vnode = CF.mkViewNode (self_sv ) vdcl.Cast.view_name (vdcl.Cast.view_vars) no_pos in
       CF.formula_of_heap vnode no_pos
     in
@@ -1829,7 +1829,7 @@ let generate_view_rev_rec_lemmas_x (vd: C.view_decl) (iprog: I.prog_decl) (cprog
           ((List.combine args2 args1)) in
       (sst_root, sst_args)
     in
-    let self_sv = CP.SpecVar (Named vd.Cast.view_data_name ,self, Unprimed) in
+    let self_sv = CP.SpecVar (mkNamedTyp vd.Cast.view_data_name ,self, Unprimed) in
     let view_f =  gen_view_formula vd in
     let rev_order pr_fwd_ptrs_pos (f,p)=
       let () = Debug.ninfo_hprint (add_str "f" Cprinter.prtt_string_of_formula) f no_pos in

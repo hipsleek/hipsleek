@@ -3528,7 +3528,7 @@ non_array_type:
    | `BAG                -> bag_type
    | `ABSTRACT           -> void_type
    | `BAG; `OPAREN; t = non_array_type ; `CPAREN -> BagT t
-   | `IDENTIFIER id      -> Named id
+   | `IDENTIFIER id      -> mkNamedTyp id
    | `OPAREN; t1=non_array_type; `COMMA; t2=non_array_type; `CPAREN -> Tup2 (t1,t2)
    | t=rel_header_view   -> let tl,_ = List.split t.Iast.rel_typed_vars in RelT tl ]];
 
@@ -4268,7 +4268,7 @@ constructor_header:
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
     let cur_file = proc_files # top in
-      mkProc cur_file id flgs "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc cur_file id flgs "" None true ot fpl (mkNamedTyp id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 
@@ -4801,7 +4801,7 @@ postfix_expression:
 cast_expression:
  [[ `OPAREN; e=expression; `CPAREN; ue=unary_expression_not_plusminus ->
 	  (match e with
-		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
+		| Var v -> Cast { exp_cast_target_type = mkNamedTyp v.exp_var_name; (*TODO: fix this *)
                       exp_cast_body = ue;
                       exp_cast_pos = get_pos_camlp4 _loc 1 }
 		| _ -> report_error (get_pos_camlp4 _loc 2) ("Expecting a type"))

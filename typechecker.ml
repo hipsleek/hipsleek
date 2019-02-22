@@ -1356,7 +1356,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
     let vdef = look_up_view_def_raw x_loc prog.prog_view_decls lock_sort in
     let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
     let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
-    let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
+    let self_var =  CP.SpecVar (mkNamedTyp vdef.view_data_name, self, Unprimed) in
     let fr_vars = self_var::vdef.view_vars in
     let to_vars = lock_var::new_args in
     (*init/finalize does not need invariant*)
@@ -1810,7 +1810,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           | Some bar_dn ->
             let bn,args,branches = bar_dn.CF.h_formula_data_name,bar_dn.CF.h_formula_data_node::bar_dn.CF.h_formula_data_arguments,bar_dn.CF.h_formula_data_remaining_branches in
             let bd = try List.find (fun c-> bn=c.barrier_name) prog.prog_barrier_decls with | _ -> failwith "error in barr find " in
-            let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
+            let from_v = CP.SpecVar(mkNamedTyp bn,self, Unprimed)::bd.barrier_shared_vars in
             let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in
             let helper c bd_spec =
               let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
@@ -2378,7 +2378,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             nheap_args,perm,perm_vars,cta_f
           else heap_args,None,[],(Cpure.mkTrue pos)
         in
-        let res_var =  CP.SpecVar (Named c, res_name, Unprimed) in
+        let res_var =  CP.SpecVar (mkNamedTyp c, res_name, Unprimed) in
         let new_heap_args,level_f = if (!Globals.allow_locklevel && c=lock_name) then
             (*If this is a lock, astsimpl ensures that it has a single argument*)
             (*Bring locklevel out to form a new expression*)
@@ -2401,7 +2401,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           else (heap_args,MCP.mkMTrue pos)
         in
         let heap_node = CF.DataNode ({
-            CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
+            CF.h_formula_data_node = CP.SpecVar (mkNamedTyp c, res_name, Unprimed);
             CF.h_formula_data_name = c;
             CF.h_formula_data_derv = false;
             CF.h_formula_data_split = SPLIT0;
@@ -2964,7 +2964,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if is_subset_flow t1 !raisable_flow_int || is_subset_flow t1 !loop_ret_flow_int then
               let () = x_tinfo_pp ("inside sharp flow capture") no_pos in
               match t with
-              | Named objn ->(
+              | Named (objn, _) ->(
                   let ft = (look_up_typ_first_fld objn) in
                   let res_inside_exc = (CP.mkRes ft) in
                   try
