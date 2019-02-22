@@ -351,16 +351,17 @@ let get_hf (f:CF.formula) = match f with
   | Exists bf -> bf.formula_exists_heap
   | Or _ -> report_error no_pos "get_hf unhandled"
 
+let check_same_shape (f1:CF.formula) (f2:CF.formula) =
+  let check_hf hf1 hf2 =
+    match hf1, hf2 with
+    | HEmp, HEmp
+    | DataNode _, DataNode _
+    | ViewNode _, ViewNode _ -> true
+    | _ -> false in
+  let hf1,hf2 = get_hf f1, get_hf f2 in
+  check_hf hf1 hf2
+
 let check_same_shape_pair (pre_f, post_f) (pre_proc, post_proc) =
-  let check_same_shape (f1:CF.formula) (f2:CF.formula) =
-    let check_hf hf1 hf2 =
-      match hf1, hf2 with
-      | HEmp, HEmp
-      | DataNode _, DataNode _
-      | ViewNode _, ViewNode _ -> true
-      | _ -> false in
-    let hf1,hf2 = get_hf f1, get_hf f2 in
-    check_hf hf1 hf2 in
   (check_same_shape pre_f pre_proc) && (check_same_shape post_f post_proc)
 
 let find_substs (f1:CF.formula) (f2:CF.formula) =
@@ -393,22 +394,17 @@ let unify_pair arg lvar goal proc_decl =
                       arg |> extract_var_f post_proc in
   let l_pre, l_post = lvar |> extract_var_f pre_cond,
                       lvar |> extract_var_f post_cond in
-  match a_pre, a_post, l_pre, l_post with
-  | Some apre_f, Some apost_f, Some lpre_f, Some lpost_f ->
-    let checking = check_same_shape_pair (apre_f, apost_f) (lpre_f, lpost_f) in
-    if checking then
-      (* to find substitution *)
-      let arg_substs = find_substs apre_f lpre_f in
-      let () = x_binfo_hp (add_str "substs " (pr_list (pr_pair pr_var pr_var))) arg_substs no_pos in
-      checking
-    else checking
+  match a_pre, l_pre with
+  | Some apre_f, Some lpre_f ->
+    check_same_shape apre_f lpre_f
   | _ -> false
 
-
-let find_var_field var goal =
-  let all_vars = goal.gl_vars in
-  if List.exists (fun x -> CP.eq_spec_var x var) all_vars then var
-  else var
+let rec filter_args_input (args:CP.spec_var list list) = match args with
+  | [] -> []
+  | [h] -> List.map (fun x -> [x]) h
+  | h::t -> let tmp = filter_args_input t in
+    let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
+    List.concat head_added
 
 let unify (pre_proc, post_proc) goal =
   let proc_decl = goal.gl_proc_decls |> List.hd in
@@ -418,26 +414,26 @@ let unify (pre_proc, post_proc) goal =
     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
     let arg_typ = CP.type_of_sv arg in
     let l_vars = CF.fv pre_cond |>
-                       List.filter (fun x -> CP.type_of_sv x = arg_typ) in
+                 List.filter (fun x -> CP.type_of_sv x = arg_typ) in
     let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
     let () = x_binfo_hp (add_str "arg" pr_var) arg no_pos in
     let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
-  if List.for_all (fun x -> List.length x > 0) ss_args then
-    let rule_args = List.map List.hd ss_args in
-    (* let equal_var_list = rule_args |> List.map (fun x -> find_equal_var x
-       goal) in *)
-    let _ = rule_args |> List.map (fun x -> find_var_field x goal) in
-    (* let equal_var_list = [] in
-     * if List.for_all (fun x -> List.length x > 0) equal_var_list then *)
-      (* let rule_args = List.map List.hd equal_var_list in *)
-      let fc_rule = RlFuncCall {
-          rfc_func_name = proc_decl.Cast.proc_name;
-          rfc_params = rule_args;
-        } in
-      [fc_rule]
-    (* else [] *)
+  let () = x_binfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
+  let ss_args2 = filter_args_input ss_args in
+  let ss_args2 = List.filter(fun list ->
+      let n_list = CP.remove_dups_svl list in
+      List.length n_list = List.length list
+    ) ss_args2 in
+  let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args2 no_pos in
+  if ss_args != [] then
+    ss_args |> List.map (fun args ->
+        let fc_rule = RlFuncCall {
+            rfc_func_name = proc_decl.Cast.proc_name;
+            rfc_params = args;
+          } in
+        [fc_rule]) |> List.concat
   else []
 
 let choose_func_call goal =

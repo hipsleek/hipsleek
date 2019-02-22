@@ -50,8 +50,12 @@ void append(node x, node y)
 // (exists a4: m::ll<a4> & a4 = a1 + a2 -1).
 
 
-synthesize [node x, node y]
 // append(x.next, y)
-x::node<v1, m> * m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
+synthesize [node x, node y]
+n::node<v1, m> * m::ll<a3> * b::ll<a2> & m != null & a1 = a3 + 1
 ~>
-(exists a4: x::ll<a4> & a4 = a1 + a2).
+(exists a4: n::ll<a4> & a4 = a1 + a2).
+
+// ([m,b], [m,b])
+// [(m,b), (b, m)
+// no need to have only one rule
