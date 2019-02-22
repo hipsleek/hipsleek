@@ -175,9 +175,9 @@ let choose_rule_field_dnode dn1 dn2 var goal =
       let field = snd dif_field in
       let () = x_binfo_hp (add_str "eq_var" pr_var) eq_var no_pos in
       let rule = RlBind {
-          rb_var = var;
+          rb_bound_var = var;
           rb_field = field;
-          rb_rhs = eq_var;
+          rb_other_var = eq_var;
           rb_write = false;
         } in
       [rule]
@@ -202,9 +202,9 @@ let choose_rule_field_dnode dn1 dn2 var goal =
       match eq_rule with
       | RlAssign rassgn ->
         let rule = RlBind {
-            rb_var = var;
+            rb_bound_var = var;
             rb_field = (fst df_name, n_name);
-            rb_rhs = rassgn.ra_rhs;
+            rb_other_var = rassgn.ra_rhs;
             rb_write = true;
           }
         in [rule]
@@ -476,10 +476,52 @@ let choose_func_call goal =
     let rules = unify (pre_cond, post_cond) goal in
     rules
 
+let choose_rule_rbind goal =
+  let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
+  let rec helper_hf (hf:CF.h_formula) = match hf with
+    | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
+      if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
+        let dn_name = dnode.CF.h_formula_data_name in
+        let dn_args = dnode.CF.h_formula_data_arguments in
+        [(dn_var, dn_name, dn_args)]
+      else []
+    | Star sf -> let hf1, hf2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+      (helper_hf hf1) @ (helper_hf hf2)
+    | _ -> [] in
+  let rec helper_f (f:CF.formula) = match f with
+    | Base bf -> helper_hf bf.CF.formula_base_heap
+    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+      (helper_f f1) @ (helper_f f2)
+    | Exists bf -> helper_hf bf.formula_exists_heap in
+  let triples = helper_f pre_cond in
+  let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
+  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let helper_triple (var, data, args) =
+    let prog = goal.gl_prog in
+    let data = List.find (fun x -> x.Cast.data_name = data)
+        prog.Cast.prog_data_decls in
+    let d_args = data.Cast.data_fields |> List.map fst in
+    let d_arg_pairs = List.combine args d_args in
+    let helper_arg (arg, field) = let arg_f = extract_var_f pre_cond arg in
+      match arg_f with
+      | None -> []
+      | Some arg_f -> if CF.is_emp_formula arg_f then []
+        else let rbind = RlBind {
+            rb_bound_var = var;
+            rb_field = field;
+            rb_other_var = arg;
+            rb_write = false;
+          } in [rbind] in
+    d_arg_pairs |> List.map helper_arg |> List.concat in
+  let rules = List.map helper_triple triples |> List.concat in
+  let () = x_tinfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
+  rules
+
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  let rs = choose_func_call goal in
+  (* let rs = choose_func_call goal in *)
+  let rs = choose_rule_rbind goal in
   rs
 
 let split_hf (f: CF.formula) = match f with
@@ -545,9 +587,9 @@ let subs_bind_write formula var field new_val data_decls =
 
 let process_rule_wbind goal (wbind:rule_bind) =
   let pre = goal.gl_pre_cond in
-  let var = wbind.rb_var in
+  let var = wbind.rb_bound_var in
   let field = wbind.rb_field in
-  let rhs = wbind.rb_rhs in
+  let rhs = wbind.rb_other_var in
   let prog = goal.gl_prog in
   let data_decls = prog.prog_data_decls in
   let n_post = subs_bind_write pre var field rhs data_decls in
@@ -607,15 +649,15 @@ let process_one_rule goal rule : derivation =
 
 let is_rule_func_call_useless r =
   (* TODO *)
-  true
+  false
 
 let is_rule_asign_useless r =
   (* TODO *)
-  true
+  false
 
 let is_rule_wbind_useless r =
   (* TODO *)
-  true
+  false
 
 let eliminate_useless_rules goal rules =
   List.filter (fun rule ->
@@ -722,7 +764,6 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> mk_synthesis_tree_fail goal atrees "no rule can be applied" in
-  let () = x_binfo_hp (add_str "rules" string_of_int) (List.length rules) no_pos in
   process [] rules
 
 and process_conjunctive_subgoals goal rule sub_goals : synthesis_tree =
@@ -767,9 +808,9 @@ let synthesize_st_core st =
       }
     in Some assign
   | RlBind rbind ->
-    let bvar = rbind.rb_var in
+    let bvar = rbind.rb_bound_var in
     let bfield = rbind.rb_field in
-    let rhs = rbind.rb_rhs in
+    let rhs = rbind.rb_other_var in
     let typ = CP.type_of_sv rhs in
     let rhs_var = Cast.Var {
         Cast.exp_var_type = CP.type_of_sv rhs;

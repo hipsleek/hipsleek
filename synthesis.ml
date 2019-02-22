@@ -48,9 +48,9 @@ and rule_func_call = {
 
 (* TODO: should we rename variables?? *)
 and rule_bind = {
-  rb_var: CP.spec_var;
+  rb_bound_var: CP.spec_var;
   rb_field: typed_ident;
-  rb_rhs: CP.spec_var;
+  rb_other_var: CP.spec_var;
   rb_write: bool;
 }
 
@@ -213,9 +213,9 @@ let pr_func_call rule =
   fc_name ^ "(" ^ args ^ ")"
 
 let pr_rule_bind rule =
-  let exp = rule.rb_var in
+  let exp = rule.rb_bound_var in
   (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
-  ^ (Cprinter.string_of_spec_var rule.rb_rhs)
+  ^ (Cprinter.string_of_spec_var rule.rb_other_var)
 
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
