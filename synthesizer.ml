@@ -600,11 +600,113 @@ let process_one_rule goal rule : derivation =
   | RlBind wbind -> process_rule_wbind goal wbind
 
 (*********************************************************************
+ * Rule utilities
+ *********************************************************************)
+
+(* check useless *)
+
+let is_rule_func_call_useless r =
+  (* TODO *)
+  true
+
+let is_rule_asign_useless r =
+  (* TODO *)
+  true
+
+let is_rule_wbind_useless r =
+  (* TODO *)
+  true
+
+let eliminate_useless_rules goal rules =
+  List.filter (fun rule ->
+    match rule with
+    | RlFuncCall r -> is_rule_func_call_useless r
+    | RlAssign r -> is_rule_asign_useless r
+    | RlBind r -> is_rule_wbind_useless r) rules
+
+(* compare func_call with others *)
+
+let compare_rule_func_call_vs_func_call r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
+
+(* compare assign with others *)
+
+let compare_rule_assign_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_assign r2 r1)
+
+let compare_rule_assign_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+
+(* compare wbind with others *)
+
+let compare_rule_wbind_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_assign r1 r2 =
+  negate_priority (compare_rule_assign_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_wbind_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
+
+(* reordering rules *)
+
+let compare_rule r1 r2 =
+  match r1 with
+  | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
+  | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
+  | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
+
+let reorder_rules goal rules =
+  let cmp_rule r1 r2 =
+    let prio = compare_rule r1 r2 in
+    match prio with
+    | PriEqual -> 0
+    | PriLow -> -1
+    | PriHigh -> +1 in
+  List.sort cmp_rule rules
+
+(*********************************************************************
  * The search procedure
  *********************************************************************)
 
+
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
+  let rules = eliminate_useless_rules goal rules in
+  let rules = reorder_rules goal rules in
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 

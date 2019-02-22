@@ -29,6 +29,13 @@ type goal = {
   gl_vars: CP.spec_var list;
 }
 
+type priority =
+  | PriHigh
+  | PriLow
+  | PriEqual
+
+exception EPrio of priority
+
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
@@ -95,6 +102,11 @@ and synthesis_tree_status =
  * Constructors
  *********************************************************************)
 
+let negate_priority prio = match prio with
+  | PriLow -> PriHigh
+  | PriEqual -> PriEqual
+  | PriHigh -> PriLow
+
 let mk_goal cprog pre post vars =
   { gl_prog = cprog;
     gl_proc_decls = [];
@@ -157,6 +169,7 @@ let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
     sts_goal = goal;
     sts_sub_trees = sub_trees;
     sts_status = StUnkn msg; }
+
 
 (*********************************************************************
  * Queries
