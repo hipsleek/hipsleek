@@ -25,7 +25,7 @@ type goal = {
   gl_proc_decls: Cast.proc_decl list;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
-  gl_equiv_vars : (CP.spec_var * CP.spec_var) list;
+  (* gl_equiv_vars : (CP.spec_var * CP.spec_var) list; *)
   gl_vars: CP.spec_var list;
 }
 
@@ -100,7 +100,7 @@ let mk_goal cprog pre post vars =
     gl_proc_decls = [];
     gl_pre_cond = pre;
     gl_post_cond = post;
-    gl_equiv_vars = [];
+    (* gl_equiv_vars = []; *)
     gl_vars = vars;  }
 
 let mk_goal_w_procs cprog proc_decls pre post vars =
@@ -108,7 +108,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
     gl_proc_decls = proc_decls;
     gl_pre_cond = pre;
     gl_post_cond = post;
-    gl_equiv_vars = [];
+    (* gl_equiv_vars = []; *)
     gl_vars = vars;  }
 
 let mk_derivation_sub_goals goal rule subgoals =

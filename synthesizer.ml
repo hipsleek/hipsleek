@@ -399,6 +399,29 @@ let unify_pair arg lvar goal proc_decl =
     check_same_shape apre_f lpre_f
   | _ -> false
 
+let find_var_field var goal =
+  let pre_cond, cprog = goal.gl_pre_cond, goal.gl_prog in
+  let rec extract_hf (hf:CF.h_formula) = match hf with
+    | DataNode dnode -> let args = dnode.CF.h_formula_data_arguments in
+      if List.exists (fun x -> CP.eq_spec_var x var) args then
+        let data_decl = List.find
+            (fun x -> x.Cast.data_name = dnode.CF.h_formula_data_name)
+            cprog.Cast.prog_data_decls in
+        let data_args = data_decl.Cast.data_fields |> List.map fst in
+        let pairs = List.combine args data_args in
+        let field = List.find (fun (x,y) -> CP.eq_spec_var x var) pairs in
+        [snd field]
+      else []
+    | Star sf -> (extract_hf sf.CF.h_formula_star_h1)
+                 @ (extract_hf sf.CF.h_formula_star_h2)
+    | _ -> [] in
+  let rec helper f = match (f:CF.formula) with
+  | Base bf -> extract_hf bf.CF.formula_base_heap
+  | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+    (helper f1) @ helper f2
+  | Exists bf -> extract_hf bf.CF.formula_exists_heap
+  in helper pre_cond
+
 let rec filter_args_input (args:CP.spec_var list list) = match args with
   | [] -> []
   | [h] -> List.map (fun x -> [x]) h
