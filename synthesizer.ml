@@ -452,11 +452,13 @@ let unify (pre_proc, post_proc) goal =
   let () = x_tinfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
   if ss_args != [] then
     ss_args |> List.map (fun args ->
-        let fc_rule = RlFuncCall {
-            rfc_func_name = proc_decl.Cast.proc_name;
-            rfc_params = args;
-          } in
-        [fc_rule]
+        if List.for_all (fun x -> List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args then
+          let fc_rule = RlFuncCall {
+              rfc_func_name = proc_decl.Cast.proc_name;
+              rfc_params = args;
+            } in
+          [fc_rule]
+        else []
       ) |> List.concat
   else []
 
@@ -524,8 +526,8 @@ let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
   let rs = choose_func_call goal in
-  let rs2 = [] in
-  (* let rs2 = choose_rule_rbind goal in *)
+  (* let rs2 = [] in *)
+  let rs2 = choose_rule_rbind goal in
   rs @ rs2
 
 let split_hf (f: CF.formula) = match f with
