@@ -220,7 +220,9 @@ let pr_rule_bind rule =
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBind rule -> "RlBindWrite " ^ "(" ^ (pr_rule_bind rule) ^ ")"
+  | RlBind rule -> if rule.rb_write then
+      "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Write)"
+    else "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Read)"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"

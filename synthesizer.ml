@@ -439,17 +439,17 @@ let unify (pre_proc, post_proc) goal =
     let l_vars = CF.fv pre_cond |>
                  List.filter (fun x -> CP.type_of_sv x = arg_typ) in
     let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
-    let () = x_binfo_hp (add_str "arg" pr_var) arg no_pos in
-    let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
+    let () = x_tinfo_hp (add_str "arg" pr_var) arg no_pos in
+    let () = x_tinfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
-  let () = x_binfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
+  let () = x_tinfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
   let ss_args = filter_args_input ss_args in
   let ss_args = List.filter(fun list ->
       let n_list = CP.remove_dups_svl list in
       List.length n_list = List.length list
     ) ss_args in
-  let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
+  let () = x_tinfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
   if ss_args != [] then
     ss_args |> List.map (fun args ->
         let fc_rule = RlFuncCall {
@@ -495,14 +495,17 @@ let choose_rule_rbind goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
         prog.Cast.prog_data_decls in
     let d_args = data.Cast.data_fields |> List.map fst in
     let d_arg_pairs = List.combine args d_args in
-    let helper_arg (arg, field) = let arg_f = extract_var_f pre_cond arg in
+    let d_arg_pairs = List.filter
+        (fun (x,_) -> not(List.exists (fun y -> CP.eq_spec_var x y) vars)) d_arg_pairs in
+    let helper_arg (arg, field) =
+      let arg_f = extract_var_f pre_cond arg in
       match arg_f with
       | None -> []
       | Some arg_f -> if CF.is_emp_formula arg_f then []
@@ -514,15 +517,16 @@ let choose_rule_rbind goal =
           } in [rbind] in
     d_arg_pairs |> List.map helper_arg |> List.concat in
   let rules = List.map helper_triple triples |> List.concat in
-  let () = x_tinfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_binfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
   rules
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  (* let rs = choose_func_call goal in *)
-  let rs = choose_rule_rbind goal in
-  rs
+  let rs = choose_func_call goal in
+  let rs2 = [] in
+  (* let rs2 = choose_rule_rbind goal in *)
+  rs @ rs2
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -585,19 +589,24 @@ let subs_bind_write formula var field new_val data_decls =
     in Base {bf with formula_base_heap = helper hf}
   | _ -> formula
 
-let process_rule_wbind goal (wbind:rule_bind) =
-  let pre = goal.gl_pre_cond in
-  let var = wbind.rb_bound_var in
-  let field = wbind.rb_field in
-  let rhs = wbind.rb_other_var in
-  let prog = goal.gl_prog in
-  let data_decls = prog.prog_data_decls in
-  let n_post = subs_bind_write pre var field rhs data_decls in
-  let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
-  let ent_check,_ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
-  match ent_check with
-  | true -> mk_derivation_success goal (RlBind wbind)
-  | false -> mk_derivation_fail goal (RlBind wbind)
+let process_rule_bind goal (bind:rule_bind) =
+  if (bind.rb_write) then
+    let pre = goal.gl_pre_cond in
+    let var = bind.rb_bound_var in
+    let field = bind.rb_field in
+    let rhs = bind.rb_other_var in
+    let prog = goal.gl_prog in
+    let data_decls = prog.prog_data_decls in
+    let n_post = subs_bind_write pre var field rhs data_decls in
+    let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
+    let ent_check,_ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+    match ent_check with
+    | true -> mk_derivation_success goal (RlBind bind)
+    | false -> mk_derivation_fail goal (RlBind bind)
+  else
+    let vars = [bind.rb_other_var] @ goal.gl_vars |> CP.remove_dups_svl in
+    let n_goal = {goal with gl_vars = vars} in
+    mk_derivation_sub_goals goal (RlBind bind) [n_goal]
 
 let process_rule_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
@@ -621,12 +630,12 @@ let process_rule_func_call goal rcore : derivation =
       pre_cond n_pre_proc in
   match ent_check, residue with
   | true, Some red ->
-    let () = x_binfo_pp "checking pre_cond successfully" no_pos in
-    let () = x_binfo_hp (add_str "residue" pr_formula) red no_pos in
+    let () = x_tinfo_pp "checking pre_cond successfully" no_pos in
+    let () = x_tinfo_hp (add_str "residue" pr_formula) red no_pos in
     let n_post_proc = CF.subst substs post_proc in
     let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in
-    let () = x_binfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
-    let () = x_binfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
+    let () = x_tinfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
+    let () = x_tinfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
     let post_check, _ = Songbird.check_entail goal.gl_prog n_post_state post_cond in
     if post_check then
       let () = x_binfo_pp "checking post_cond successfully" no_pos in
@@ -639,7 +648,7 @@ let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
-  | RlBind wbind -> process_rule_wbind goal wbind
+  | RlBind bind -> process_rule_bind goal bind
 
 (*********************************************************************
  * Rule utilities
@@ -649,22 +658,22 @@ let process_one_rule goal rule : derivation =
 
 let is_rule_func_call_useless r =
   (* TODO *)
-  false
+  true
 
 let is_rule_asign_useless r =
   (* TODO *)
-  false
+  true
 
-let is_rule_wbind_useless r =
+let is_rule_bind_useless r =
   (* TODO *)
-  false
+  true
 
 let eliminate_useless_rules goal rules =
   List.filter (fun rule ->
     match rule with
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
-    | RlBind r -> is_rule_wbind_useless r) rules
+    | RlBind r -> is_rule_bind_useless r) rules
 
 (* compare func_call with others *)
 
@@ -744,7 +753,6 @@ let reorder_rules goal rules =
  * The search procedure
  *********************************************************************)
 
-
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
@@ -766,9 +774,20 @@ and process_all_rules goal rules : synthesis_tree =
     | [] -> mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 
-and process_conjunctive_subgoals goal rule sub_goals : synthesis_tree =
+and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   (* TODO *)
-  mk_synthesis_tree_success goal rule
+  let rec helper goals =
+    match goals with
+    | sub_goal::other_goals ->
+      let syn_tree = synthesize_one_goal sub_goal in
+      let status = get_synthesis_tree_status syn_tree in
+      begin
+        match status with
+        | StUnkn _ -> mk_synthesis_tree_fail goal [] "one of subgoals failed"
+        | _ -> helper other_goals
+      end
+    | [] -> mk_synthesis_tree_success goal rule
+  in helper sub_goals
 
 and process_one_derivation drv : synthesis_tree =
   let goal, rule = drv.drv_goal, drv.drv_rule in
@@ -808,33 +827,35 @@ let synthesize_st_core st =
       }
     in Some assign
   | RlBind rbind ->
-    let bvar = rbind.rb_bound_var in
-    let bfield = rbind.rb_field in
-    let rhs = rbind.rb_other_var in
-    let typ = CP.type_of_sv rhs in
-    let rhs_var = Cast.Var {
-        Cast.exp_var_type = CP.type_of_sv rhs;
-        Cast.exp_var_name = CP.name_of_sv rhs;
-        Cast.exp_var_pos = no_pos;
-      } in
-    let (typ, f_name) = bfield in
-    let body = Cast.Assign {
-        Cast.exp_assign_lhs = f_name;
-        Cast.exp_assign_rhs = rhs_var;
-        Cast.exp_assign_pos = no_pos;
-      } in
-    let bexp = Cast.Bind {
-        exp_bind_type = typ;
-        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
-        exp_bind_fields = [bfield];
-        exp_bind_body = body;
-        exp_bind_imm = CP.NoAnn;
-        exp_bind_param_imm = [];
-        exp_bind_read_only = false;
-        exp_bind_path_id = (-1, "bind");
-        exp_bind_pos = no_pos;
-      } in
-    Some bexp
+    if rbind.rb_write then
+      let bvar = rbind.rb_bound_var in
+      let bfield = rbind.rb_field in
+      let rhs = rbind.rb_other_var in
+      let typ = CP.type_of_sv rhs in
+      let rhs_var = Cast.Var {
+          Cast.exp_var_type = CP.type_of_sv rhs;
+          Cast.exp_var_name = CP.name_of_sv rhs;
+          Cast.exp_var_pos = no_pos;
+        } in
+      let (typ, f_name) = bfield in
+      let body = Cast.Assign {
+          Cast.exp_assign_lhs = f_name;
+          Cast.exp_assign_rhs = rhs_var;
+          Cast.exp_assign_pos = no_pos;
+        } in
+      let bexp = Cast.Bind {
+          exp_bind_type = typ;
+          exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
+          exp_bind_fields = [bfield];
+          exp_bind_body = body;
+          exp_bind_imm = CP.NoAnn;
+          exp_bind_param_imm = [];
+          exp_bind_read_only = false;
+          exp_bind_path_id = (-1, "bind");
+          exp_bind_pos = no_pos;
+        } in
+      Some bexp
+    else None
   | _ -> None
 
 let synthesize_program goal : CA.exp option =
