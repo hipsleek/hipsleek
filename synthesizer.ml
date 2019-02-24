@@ -777,8 +777,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
-  (* TODO *)
-  let rec helper goals =
+  let rec helper goals subtrees st_cores =
     match goals with
     | sub_goal::other_goals ->
       let syn_tree = synthesize_one_goal sub_goal in
@@ -786,10 +785,13 @@ and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tr
       begin
         match status with
         | StUnkn _ -> mk_synthesis_tree_fail goal [] "one of subgoals failed"
-        | _ -> helper other_goals
+        | StValid st_core ->
+          helper other_goals (subtrees@[syn_tree]) (st_cores@[st_core])
       end
-    | [] -> mk_synthesis_tree_success goal rule
-  in helper sub_goals
+    | [] ->
+      let st_core = mk_synthesis_tree_core goal rule st_cores in
+      mk_synthesis_tree_derive goal rule subtrees (StValid st_core)
+  in helper sub_goals [] []
 
 and process_one_derivation drv : synthesis_tree =
   let goal, rule = drv.drv_goal, drv.drv_rule in
