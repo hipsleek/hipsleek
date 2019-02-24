@@ -2089,7 +2089,7 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
     match c with
     | Ipure.AConst _
     | Ipure.Var _ -> (c,[])
-    | Ipure.Ann_Exp (e ,_,_) -> float_ann_var l e
+    | Ipure.Ann_Exp (e,_,_) -> float_ann_var l e
     | _ ->
       let nn = (("flted_"^(string_of_int l.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
       let nv = Ipure.Var (nn,l) in

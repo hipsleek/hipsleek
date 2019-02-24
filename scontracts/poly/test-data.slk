@@ -21,7 +21,8 @@ checkentail x::nodep<3,t> |- x::nodep<a,t>.
 print residue.
 expect Valid.
 
-checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t> * z2::node<cc,dd>.
+// checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t> * z2::node<cc,dd>.
+checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t>.
 print residue.
 expect Valid.
 

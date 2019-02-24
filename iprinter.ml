@@ -196,7 +196,7 @@ let string_of_loc p =
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
-  | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":"^(string_of_typ t) ^ ")"
+  | P.Ann_Exp (e,t,l) -> "(" ^ (string_of_formula_exp e)^":Anntyp:"^(string_of_typ t) ^ ")"
   | P.Var (x, l)        -> string_of_id x
   | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
@@ -338,7 +338,7 @@ and string_of_p_formula pf =
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
-  | P.TVar (var,typ,pos) -> (string_of_formula_exp var) ^ ":" ^ (Globals.string_of_typ typ)
+  | P.TVar (var,typ,pos) -> (string_of_formula_exp var) ^ ":tvar:" ^ (Globals.string_of_typ typ)
 
 and string_of_vperm_sets vps =
   let pr_elem vpa svl =

@@ -691,14 +691,17 @@ and gather_type_info_exp prog a0 tlist et =
 
 (* et - expected type *)
 and gather_type_info_exp_x prog a0 tlist et =
-  (* let () = y_tinfo_pp "info_exp" in *)
+  let () = y_binfo_hp (add_str "a0" Iprinter.string_of_pure_exp) a0 in
   match a0 with
   | IP.Null pos ->
     let (new_et,n_tl) = fresh_tvar tlist in
     (n_tl, new_et)
-  | IP.Ann_Exp (e,t, _) ->
-    (* TODO WN : check if t<:et *)
+  | IP.Ann_Exp (e,t, pos) ->
+    (* TODO WN : check if t<:e *)
+    let () = y_binfo_pp "inside Ann_Exp" in
     let (n_tl,n_typ) = gather_type_info_exp_x prog e tlist t in
+    let () = y_binfo_hp (add_str "Ann_Exp" (pr_pair string_of_typ string_of_typ)) (t,n_typ) in
+    let (n_tl,n_typ) = x_add must_unify_expect n_typ t n_tl pos in
     (n_tl,n_typ)
   | IP.Var ((sv, sp), pos) ->
     let () = y_tinfo_pp "here1" in

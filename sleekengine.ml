@@ -980,9 +980,10 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaForm mf ->
       let h,p = (* List.map (fun c-> (c,Unprimed)) *) List.partition (fun (_,p) -> p==Unprimed) fv_idents in
       (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
+      let n_tl  = x_add Typeinfer.gather_type_info_formula iprog mf tl false in
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true
           true (*allow_post_vars*) true [] in
-      Astsimp.trans_I2C_struc_formula 8 ~idpl:fv_idents iprog false quant [] wf tl false (*(Cpure.Prim Void) []*) false (*check_pre*)
+      Astsimp.trans_I2C_struc_formula 8 ~idpl:fv_idents iprog false quant [] wf n_tl false (*(Cpure.Prim Void) []*) false (*check_pre*)
     | MetaVar mvar ->
       begin
         try
@@ -1005,6 +1006,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (tlist:Typein
     | MetaEForm b ->
       let h,p = List.partition (fun (c,p) -> p==Unprimed) fv_idents in
       (* let p = List.map (fun c-> (c,Primed)) fv_idents in *)
+      let tl  = x_add Typeinfer.gather_type_info_struc_f iprog b tl in
       let wf,_ = x_add Astsimp.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *)
           true (*allow_post_vars*) true [] in
       let (n_tl,res) = Astsimp.trans_I2C_struc_formula 9 ~idpl:fv_idents iprog false quant  [] wf tl false
@@ -1064,9 +1066,11 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
   | MetaForm mf ->
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-    (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
+    let () = y_binfo_pp (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in
+    let n_tl  = x_add Typeinfer.gather_type_info_formula iprog mf tlist false in
+    (* this type inference has been done twice, because annotated exp was dropped *)
     let wf = x_add Astsimp.case_normalize_formula iprog h mf in
-    let n_tl  = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
+    (* let n_tl  = x_add Typeinfer.gather_type_info_formula iprog wf n_tl false in *)
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
     (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -1138,8 +1142,9 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents (tlist:T
   | MetaFormLCF mf -> (tlist,(List.hd mf))
   | MetaForm mf ->
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+    let n_tl  = x_add Typeinfer.gather_type_info_formula iprog mf tlist false in
     let wf = Astsimp.case_normalize_formula_not_rename iprog h mf in
-    let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in
+    (* let n_tl = x_add Typeinfer.gather_type_info_formula iprog wf tlist false in *)
     (*let () = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
     let (n_tl,r) = x_add Astsimp.trans_formula iprog quant fv_idents false wf n_tl false in
     (* let () = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
