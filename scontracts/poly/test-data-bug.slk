@@ -12,10 +12,10 @@ data nodep{
 // checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t> * z2::node<cc,dd>.
 // checkentail x::nodep<z1,t> * z1::node<aa,bb> |- x::nodep<z2,t>.
 // checkentail x::nodep<1,t> |- x::nodep<z2,t>.
-checkentail x::nodep<z1:int,t> |- x::nodep<z2:int,t>.
+// checkentail x::nodep<z1:int,t> |- x::nodep<z2:int,t>.
 // checkentail x::nodep<1111:int,t> |- x::nodep<z2,t>.
 // checkentail x::node<z1:int,t> |- x::node<z2,t>.
-// checkentail x::node<(1+2):bool,t> |- x::node<z2,t>.
+checkentail x::node<(1+2):bool,t> |- x::node<z2,t>.
 // checkentail x::node<1:bool,t> |- x::node<1,t>.
 // checkentail x::node<z1,t> |- x::node<z2,t>.
 // checkentail x::nodep<z1,t> & z1=2 |- x::nodep<z2,t>.
