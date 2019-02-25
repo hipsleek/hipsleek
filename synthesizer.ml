@@ -474,9 +474,9 @@ let choose_func_call goal =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
     let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
-    let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
+    let () = x_tinfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
     let post_cond = specs |> get_post_cond |> rm_emp_formula in
-    let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+    let () = x_tinfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
     let rules = unify (pre_cond, post_cond) goal in
     rules
 
@@ -525,12 +525,54 @@ let choose_rule_rbind goal =
   let () = x_binfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
   rules
 
+let check_res_var post_cond =
+  let all_vars = CF.fv post_cond in
+  let vars_types = all_vars |> List.map CP.type_of_sv
+                   |> Gen.BList.remove_dups_eq (fun x y -> x = y) in
+  let res_vars = vars_types |> List.map CP.mkRes in
+  if List.exists (fun x -> List.exists (fun y -> CP.eq_spec_var x y) all_vars)
+      res_vars then true else false
+
+let check_one_var goal var =
+  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+  let res_var = CF.fv post_cond
+                |> List.filter (fun x -> (CP.name_of_sv x) = res_name)
+              |> List.hd in
+  let res_f = extract_var_f post_cond res_var in
+  let var_f = extract_var_f pre_cond var in
+  match res_f, var_f with
+  | Some f1, Some f2 ->
+    let () = x_binfo_hp (add_str "f1 " pr_formula) f1 no_pos in
+    let () = x_binfo_hp (add_str "f2 " pr_formula) f2 no_pos in
+    let conseq_pf = CP.mkEqVar res_var var no_pos in
+    let conseq = CF.mkBase_simp (CF.HEmp) (mix_of_pure conseq_pf) in
+    let ante = add_formula_to_formula f1 f2 in
+    let res, _ = Songbird.check_entail goal.gl_prog ante conseq in
+    res
+  | _ -> false
+
+let choose_rule_return goal =
+  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+  let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
+  let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+  let vars = goal.gl_vars in
+  if check_res_var post_cond then
+    let candidates = vars |> List.filter (check_one_var goal) in
+    let () = x_binfo_hp (add_str "candidates " pr_vars) candidates no_pos in
+    let mk_return_rule var =
+      RlReturn {
+        return_var = var
+      } in
+    candidates |> List.map mk_return_rule
+  else []
+
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  let rs = choose_func_call goal in
-  (* let rs2 = [] in *)
-  let rs2 = choose_rule_rbind goal in
+  (* let rs = choose_func_call goal in *)
+  let rs = [] in
+  (* let rs2 = choose_rule_rbind goal in *)
+  let rs2 = choose_rule_return goal in
   rs @ rs2
 
 let split_hf (f: CF.formula) = match f with
@@ -649,11 +691,25 @@ let process_rule_func_call goal rcore : derivation =
   | _ ->
     mk_derivation_fail goal (RlFuncCall rcore)
 
+let process_rule_return goal rule =
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let var = rule.return_var in
+  let res_typ = CP.type_of_sv var in
+  let res = CP.mkRes res_typ in
+  let n_pf = CP.mkEqVar res var no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+  let ent_check, _ = Songbird.check_entail goal.gl_prog n_pre post in
+  if ent_check then
+    let () = x_binfo_pp "marking \n" no_pos in
+    mk_derivation_success goal (RlReturn rule)
+  else mk_derivation_fail goal (RlReturn rule)
+
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
+  | RlReturn rule -> process_rule_return goal rule
 
 (*********************************************************************
  * Rule utilities
@@ -678,7 +734,8 @@ let eliminate_useless_rules goal rules =
     match rule with
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
-    | RlBind r -> is_rule_bind_useless r) rules
+    | RlBind r -> is_rule_bind_useless r
+    | RlReturn _ -> true) rules
 
 (* compare func_call with others *)
 
@@ -699,6 +756,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
   | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
+  | RlReturn _ -> PriEqual
 
 (* compare assign with others *)
 
@@ -718,6 +776,7 @@ let compare_rule_assign_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
   | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+  | RlReturn _ -> PriEqual
 
 (* compare wbind with others *)
 
@@ -736,6 +795,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
+  | RlReturn _ -> PriEqual
 
 (* reordering rules *)
 
@@ -744,6 +804,7 @@ let compare_rule r1 r2 =
   | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
   | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
+  | RlReturn _ -> PriEqual
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =

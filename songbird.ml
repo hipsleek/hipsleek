@@ -667,7 +667,7 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
 
-let check_entail ?(residue=false) prog ante conseq =
+let check_entail_x ?(residue=false) prog ante conseq =
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq, _ = translate_formula conseq in
@@ -699,6 +699,11 @@ let check_entail ?(residue=false) prog ante conseq =
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
       | _ -> false, None
+
+let check_entail ?(residue=false) prog ante conseq =
+  Debug.no_2 "check_entail_songbird" pr_formula pr_formula
+    (fun (x, _) -> string_of_bool x)
+    (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
 
 let check_pure_entail ante conseq =
   let sb_ante = translate_pf ante in

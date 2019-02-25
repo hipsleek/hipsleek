@@ -40,6 +40,11 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBind of rule_bind
+  | RlReturn of rule_return
+
+and rule_return = {
+  return_var: CP.spec_var;
+}
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -223,6 +228,7 @@ let pr_rule rule = match rule with
   | RlBind rule -> if rule.rb_write then
       "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Write)"
     else "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Read)"
+  | RlReturn rule -> "RlReturn"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -238,7 +244,6 @@ and pr_st_derive st =
   (pr_goal st.std_goal) ^ "\n" ^
   (pr_rule st.std_rule) ^ "\n" ^
   ((pr_list pr_st) st.std_sub_trees)
-  (* ^ "\n" ^  (pr_st_status st.std_status) *)
 
 and pr_st_status st_status = match st_status with
   | StUnkn str -> "StUnkn " ^ str
@@ -422,7 +427,9 @@ let get_post_cond (struc_f: CF.struc_formula) =
     | CF.EBase bf ->
       let f = bf.formula_struc_base in
       if CF.is_emp_formula f then
-        bf.CF.formula_struc_continuation |> Gen.unsome |> helper
+        match bf.CF.formula_struc_continuation with
+        | None -> CF.mkBase_simp CF.HEmp (mix_of_pure (CP.mkTrue no_pos))
+        | Some conti_f -> conti_f |> helper
       else f
     | EAssume assume_f ->
       assume_f.formula_assume_struc |> helper
@@ -670,3 +677,10 @@ let eq_hp_decl hp1 hp2 =
     let args = List.combine hp1_args hp2_args in
     List.for_all (fun (x,y) -> CP.eq_spec_var x y) args
   else false
+
+let add_formula_to_formula f1 f2 =
+  let hf, pf, _, _, _,_ = CF.split_components f1 in
+  let hf2, pf2, _, _, _,_ = CF.split_components f2 in
+  let n_pf = mix_of_pure (CP.mkAnd (pure_of_mix pf) (pure_of_mix pf2) no_pos) in
+  let n_hf = CF.mkStarH hf hf2 no_pos in
+  CF.mkBase_simp n_hf n_pf
