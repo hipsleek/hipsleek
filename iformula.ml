@@ -2190,7 +2190,10 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
           if ( List.exists (fun (a,p) -> (id + 1) == p) (annot_getter b.h_formula_heap_name)) then (c,[])
           else prep_one_arg_helper (id,c)
         | Ipure.Var _ -> (c,[])
-        (* | Ipure.Ann_Exp (e ,_,_) -> prep_one_arg  (id,c) (\* (id, e) *\) *)
+        | Ipure.Ann_Exp ((Ipure.Var v),_,_) ->
+          let _, eq_pair = prep_one_arg_helper (id,c) in
+          ((Ipure.Var v), eq_pair)
+          (* prep_one_arg (id,c) *)
         | _ ->  prep_one_arg_helper (id,c) in
       let na,ls = List.split (List.map prep_one_arg (Gen.BList.add_index b.h_formula_heap_arguments)) in
       let ho_na = List.map (fun ff -> float_out_exps_rflow ff) b.h_formula_heap_ho_arguments in
