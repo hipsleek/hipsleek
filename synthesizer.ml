@@ -436,11 +436,13 @@ let unify (pre_proc, post_proc) goal =
   let unify_var arg goal =
     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
     let arg_typ = CP.type_of_sv arg in
+    let () = x_binfo_hp (add_str "all vars" (pr_list Cprinter.string_of_typed_spec_var)) (CF.fv pre_cond) no_pos in
     let l_vars = CF.fv pre_cond |>
                  List.filter (fun x -> CP.type_of_sv x = arg_typ) in
+    let () = x_binfo_hp (add_str "vars" pr_vars) l_vars no_pos in
     let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
-    let () = x_tinfo_hp (add_str "arg" pr_var) arg no_pos in
-    let () = x_tinfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
+    let () = x_binfo_hp (add_str "arg" Cprinter.string_of_typed_spec_var) arg no_pos in
+    let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
   let () = x_tinfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
@@ -480,6 +482,7 @@ let choose_func_call goal =
 
 let choose_rule_rbind goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
+  let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
   let rec helper_hf (hf:CF.h_formula) = match hf with
     | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
       if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
@@ -497,7 +500,7 @@ let choose_rule_rbind goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
