@@ -1,0 +1,20 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<sum> == self=null & sum = 0
+  or self::node<v, r> * r::ll<sum2> & sum = v + sum2.
+
+int sum(node n)
+  requires n::ll<m> ensures res = m;.
+
+// append(x.next, y)
+synthesize [node x, int k]
+x::node<v_1917,r_1918> * r_1918::ll<n_1926> &
+n_1926= n - v_1917 & k=n & x !=null
+~>
+x::ll<n> & res = n.
+
+// To implement f1 & f2 |> var1 = var2
+// 

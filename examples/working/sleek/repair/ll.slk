@@ -1,0 +1,24 @@
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void insert(node x, int a)
+	requires x::ll<n> & n > 0 
+	ensures exists k: x::ll<k> & k = n + 1;.
+
+// append(x.next, y)
+synthesize [node n, int b]
+n::node<v1, m> * m::ll<a3> & m != null & a1 = a3 + 1 & b' = b
+~>
+(exists a4: n::ll<a4> & a4 =  a1 +1).
+
+// ([m,b], [m,b])
+// [(m,b), (b, m)
+// m = n.next
+//  [[m = n.next, append(m, b)], append(b, m)]
+// no need to have only one rule
+ 
