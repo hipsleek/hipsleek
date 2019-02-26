@@ -68,6 +68,7 @@ and data_field_ann =
   | REC
   | F_NO_ANN
 
+
 and data_decl = {
   data_name : ident;
   mutable data_fields : (typed_ident * loc * bool * (ident list)(*data_field_ann *)) list;
@@ -4069,3 +4070,12 @@ let swap_dir ct =
   | Left -> Right
   | Right -> Left
   | Equiv -> Equiv
+
+let get_type_of_field field =
+  let typed_ident,_,_,_ = field in
+  fst typed_ident
+
+let set_type_of_field field typ =
+  let typed_ident, a, b, c = field in
+  let _, id = typed_ident in
+  (typ,id),a,b,c

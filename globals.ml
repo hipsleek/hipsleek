@@ -944,6 +944,7 @@ let hsubs_one_poly_typ poly_hash target_ty =
     | FuncT (t1,t2)   -> FuncT ((helper t1),(helper t2))
     | Pointer t       -> Pointer (helper t)
     | Mapping (t1,t2) -> Mapping ((helper t1),(helper t2))
+    | Named  (n,plist)-> Named (n, List.map helper plist)
     | _ -> ptype
   in
   helper target_ty
@@ -987,6 +988,7 @@ let contains_poly typ =
     | FuncT (t1,t2)   -> (helper t1) || (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) || (helper t2))
+    | Named  (n,plist)-> List.map helper plist
     | _ -> false
   in helper typ
 
@@ -1002,6 +1004,7 @@ let get_poly_ids typ =
     | FuncT (t1,t2)   -> (helper t1) @ (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) @ (helper t2))
+    | Named  (n,plist)-> List.map helper plist
     | _ -> []
   in helper typ
 
@@ -1018,6 +1021,7 @@ let get_tvar typ =
     | FuncT (t1,t2)   -> (helper t1) @ (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) @ (helper t2))
+    | Named  (n,plist)-> List.map helper plist
     | _ -> []
   in helper typ
 

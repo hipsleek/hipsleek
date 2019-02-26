@@ -251,14 +251,23 @@ let fresh_poly_tlist tlist =
   let en = { sv_info_kind = fresh_poly_typ; id = i} in
   (fresh_poly_typ, (fresh_poly,en)::tlist)
 
+(* introduces a fresh poly type for id, if id not in poly_lst *)
+let update_tlist_w_fresh_poly_for_id poly_lst tlist id =
+  if List.exists (fun (pid,_) -> id = pid) poly_lst then poly_lst,tlist
+  else let (fv,n_tlist) = fresh_poly_tlist tlist in
+    ( (id,fv)::poly_lst,n_tlist)
+
+(* introduces a fresh poly type for each id in id_lst, if id not in poly_lst *)
+let update_tlist_w_fresh_poly_for_id_list poly_lst tlist id_lst =
+  List.fold_left (fun (acc,n_tl) id ->
+      update_tlist_w_fresh_poly_for_id acc n_tl id
+    ) (poly_lst,tlist) id_lst
+
+(* returns the list of freshly introduced poly types and the updated tlist *)
 let introduce_fresh_poly_for_each_unique_poly tlist args =
   let poly_lst,n_tl = List.fold_left ( fun (acc,n_tl) ty ->
       let poly_ids = Globals.get_poly_ids ty in
-      List.fold_left (fun (acc,n_tl) id ->
-          if List.exists (fun (pid,_) -> id = pid) acc then acc,n_tl
-          else let (fv,n_tl) = fresh_poly_tlist n_tl in
-            ( (id,fv)::acc,n_tl)
-        ) (acc,n_tl) poly_ids
+      update_tlist_w_fresh_poly_for_id_list acc n_tl poly_ids
     ) ([], tlist) args in
   poly_lst, n_tl
 
@@ -1460,8 +1469,19 @@ and add_last_diff ls1 ls2 res=
 
 and try_unify_data_type_args prog c v deref ies tlist pos =
   let pr_tl =  string_of_tlist in
-  let pr = add_str "ies" (pr_list Iprinter.string_of_formula_exp) in
-  Debug.no_3 "try_unify_data_type_args" pr_id pr pr_tl pr_tl (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) c ies tlist
+  let pr1 = add_str "name,var" (pr_pair pr_id pr_id) in
+  let pr2 = add_str "args" (pr_list Iprinter.string_of_formula_exp) in
+  Debug.no_3 "try_unify_data_type_args"
+    pr1 pr2
+    (add_str "type list" pr_tl)
+    pr_tl
+    (fun _ _ _ -> try_unify_data_type_args_x prog c v deref ies tlist pos) (c,v) ies tlist
+
+and freshed_poly_typ p_typ =
+  let i              = fresh_int () in
+  let fresh_poly     = poly_name i  in
+  let fresh_poly_typ = Poly fresh_poly in
+  fresh_poly_typ
 
 and try_unify_data_type_args_x prog c v deref ies tlist pos =
   (* An Hoa : problem detected - have to expand the inline fields as well, fix in look_up_all_fields. *)
@@ -1469,7 +1489,51 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
   if (deref = 0) then (
     try (
       let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls c in
-      let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp c)) pos in
+      (* 1. let poly_types =  collect the poly types from ddef (unique types) *)
+      (* let field_names = List.map I.get_field_name ddef.I.data_fields in *)
+      let fld_typs = List.map I.get_field_typ ddef.I.data_fields in
+      let poly_typ_list = List.filter (fun t -> match t with
+          | Poly _ -> true
+          | _ -> false) fld_typs in
+      let () = y_binfo_hp (add_str "types of fields" (pr_list string_of_typ)) poly_typ_list in
+      (* 2. let fresh_pt   = List.map fresh poly_types  *)
+      (* keep the non-poly value because we need to update the ddef which needs all the fields *)
+      (* let only_fresh_poly_typ_in_fldls ele =
+       *      (match ele with
+       *         | Poly _ -> freshed_poly_typ ele
+       *         | _      -> ele) in
+       * let fldls_w_freshed_poly_typs = List.map only_fresh_poly_typ_in_fldls fld_typs in
+       * let subs = List.combine fldls_w_freshed_poly_typs fld_typs in *)
+      (* let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fldls_w_freshed_poly_typs in *)
+      (* ****************** *)
+      let fldls_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist fld_typs in
+      let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs in
+      (* let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fldls_w_freshed_poly_typs in *)
+      (* let fld_typs = subst_all_poly_w_poly fldls_w_freshed_poly_typs fld_typs in *)
+      (* ****************** *)
+
+      (* remove the duplicated poly types *)
+      (* let uniq_cons x xs = if List.mem x xs then xs else x :: xs in
+       * let remove_from_right xs = List.fold_right uniq_cons xs [] in *)
+      (* let fresh_poly_typ_list = List.map freshed_poly_typ poly_typ_list in *)
+      (* let fresh_poly_typ_list_unique = List.map freshed_poly_typ (remove_from_right poly_typ_list) in *)
+      (* let () = y_binfo_hp (add_str "types of poly fields (removed duplicates)" (pr_list string_of_typ)) fresh_poly_typ_list_unique in *)
+      (* 3. let ddef       = [fresh_pt/poly_types] ddef -- substitute the fst ele of the field list *)
+      (* let subs_ddef_fields_w_fesh_poly_typ = List.mapi (fun i fd -> match fd with
+       *     | ((Poly typ, p2),p3,p4,p5) -> (((List.nth fldls_w_freshed_poly_typs i),p2),p3,p4,p5)
+       *     | ((_,_),_,_,_)         -> fd) ddef.I.data_fields in *)
+      (* let ddef_tmp = { ddef with I.data_fields = subs_ddef_fields_w_fesh_poly_typ; } in *)
+      let updated_fields = List.map (fun field ->
+          let typ  = I.get_type_of_field field in
+          (* update the type *)
+          let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in
+          let nfield = I.set_type_of_field field ntyp in
+          nfield
+        ) ddef.I.data_fields in
+      let ddef_tmp = { ddef with I.data_fields = updated_fields; } in
+      let ddef = ddef_tmp in
+      (* 4. mkNamedTyp c fresh_pt *)
+      let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp ~args:(fresh_poly_typs) c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
       try
         (*fields may contain offset field and not-in-used*)
@@ -1479,6 +1543,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
         let f tl arg ((ty,_),_,_,_)=
           (let (n_tl,_) = x_add gather_type_info_exp prog arg tl ty in n_tl)
         in (List.fold_left2 f n_tl ies fields)
+      (* normalize to replace the poly types with their instantiation *)
       with | Invalid_argument _ ->
         Err.report_error {
           Err.error_loc = pos;

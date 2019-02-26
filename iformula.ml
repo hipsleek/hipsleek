@@ -2192,8 +2192,9 @@ and float_out_exps_from_heap_x lbl_getter annot_getter (f:formula ) :formula =
         | Ipure.Var _ -> (c,[])
         | Ipure.Ann_Exp ((Ipure.Var v),_,_) ->
           let _, eq_pair = prep_one_arg_helper (id,c) in
-          (* do not float out types vars, hence return (Ipure.Var v) as leftover arg *)
-          (* to keep the type information within the formula, add a fresh var which binds the typed expression in the formula *)
+          (* (i)  do not float out types vars, hence return (Ipure.Var v) as leftover arg *)
+          (* (ii) to keep the type information within the formula, add a fresh var which
+                  binds the typed expression in the formula *)
           (* eg. x::cell<var:int>  ===> exists fresh_var: x::cell<var> & fresh_var=(var:int) *)
           ((Ipure.Var v), eq_pair)
           (* prep_one_arg (id,c) *)
