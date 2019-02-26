@@ -988,7 +988,7 @@ let contains_poly typ =
     | FuncT (t1,t2)   -> (helper t1) || (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) || (helper t2))
-    | Named  (n,plist)-> List.map helper plist
+    | Named  (n,plist)-> List.fold_left (fun a x -> a || (helper x) ) false plist
     | _ -> false
   in helper typ
 
@@ -1004,7 +1004,7 @@ let get_poly_ids typ =
     | FuncT (t1,t2)   -> (helper t1) @ (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) @ (helper t2))
-    | Named  (n,plist)-> List.map helper plist
+    | Named  (n,plist)-> List.fold_left (fun a x -> a @ (helper x) ) [] plist
     | _ -> []
   in helper typ
 
@@ -1021,7 +1021,7 @@ let get_tvar typ =
     | FuncT (t1,t2)   -> (helper t1) @ (helper t2)
     | Pointer t       -> (helper t)
     | Mapping (t1,t2) -> ((helper t1) @ (helper t2))
-    | Named  (n,plist)-> List.map helper plist
+    | Named  (n,plist)-> List.fold_left (fun a x -> a @ (helper x) ) [] plist
     | _ -> []
   in helper typ
 
