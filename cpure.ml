@@ -467,7 +467,7 @@ let is_False cp = match cp with
   | _ -> false
 
 let is_True cp = match cp with
-  | BForm (p,_) -> 
+  | BForm (p,_) ->
     begin
       match p with
       | (BConst (b,_),_) -> b
@@ -937,6 +937,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
     (* translation has ensured well-typedness.
        We need only to compare names and primedness *)
     (String.compare v1 v2 = 0) && (p1 = p2)
+
+let eq_sv = eq_spec_var
 
 let eq_ident_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (_, v1, p1), SpecVar (_, v2, p2)) ->
@@ -7328,7 +7330,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 (* a+a    --> 2*a
    1+3    --> 4
    1+x>-2 --> 3+x>0
-*)  
+*)
 
 and arith_simplify (i:int) (pf : formula) :  formula =
   Debug.no_1 ("arith_simplify LHS") !print_formula !print_formula

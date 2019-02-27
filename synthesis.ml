@@ -43,6 +43,7 @@ type rule =
   | RlReturn of rule_return
   | RlUnfoldPre of rule_unfold_pre (* Currently assume unfold pre-cond *)
 
+
 and rule_unfold_pre = {
   n_goals: goal list;
 }
@@ -66,7 +67,7 @@ and rule_bind = {
 
 and rule_assign = {
   ra_lhs : CP.spec_var;
-  ra_rhs : CP.spec_var;
+  ra_rhs : CP.exp;
 }
 
 type derivation = {
@@ -215,7 +216,7 @@ let pr_goal goal =
 let pr_rule_assign rule =
   let lhs = rule.ra_lhs in
   let rhs = rule.ra_rhs in
-  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_spec_var rhs)
+  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
 
 let pr_func_call rule =
   let fc_name = rule.rfc_func_name in
@@ -297,23 +298,33 @@ let set_field var access_field (new_val:CP.spec_var) data_decls =
   with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
 
 (* get a "fix-point" pure formula for a list of vars *)
-let pf_of_vars vars (pf:CP.formula) = match pf with
+let rec pf_of_vars vars (pf:CP.formula) = match pf with
   | CP.BForm (bf, opt) ->
     let pform, opt2 = bf in
     let rec aux pform = match pform with
-      | CP.BVar (sv, bvar_loc) ->
-        if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
-        else BConst (true, bvar_loc)
-      | CP.Lt (exp1, exp2, loc) ->
+      | CP.Eq (exp1, exp2, loc)
+      | CP.Neq (exp1, exp2, loc)
+      | CP.Lt (exp1, exp2, loc)
+      | CP.Lte (exp1, exp2, loc)
+      | CP.Gt (exp1, exp2, loc) ->
         let sv1 = CP.afv exp1 in
         let sv2 = CP.afv exp2 in
         let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
         if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
         else BConst (true, loc)
+      | CP.BVar (sv, bvar_loc) ->
+        if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
+        else BConst (true, bvar_loc)
       | _ -> pform
     in
     let n_pform = aux pform in
     CP.BForm ((n_pform, opt2), opt)
+  | And (f1, f2, loc) ->
+    let n_f1, n_f2 = pf_of_vars vars f1, pf_of_vars vars f2 in
+    if CP.is_True n_f1 then n_f2
+    else if CP.is_True n_f2 then n_f1
+    else And (n_f1, n_f2, loc)
+  | AndList list -> AndList (List.map (fun (x,y) -> (x, pf_of_vars vars y)) list)
   | _ -> pf
 
 let is_named_type_var var =
@@ -324,8 +335,13 @@ let is_named_type_var var =
 
 let not_identity_assign_rule rule = match rule with
   | RlAssign arule ->
-    if CP.eq_spec_var arule.ra_lhs arule.ra_rhs then false
-    else true
+    begin
+      match arule.ra_rhs with
+      | CP.Var (sv, _) ->
+          if CP.eq_spec_var arule.ra_lhs sv then false
+          else true
+      | _ -> false
+    end
   | _ -> true
 
 let rec rm_emp_formula formula:CF.formula =
@@ -578,7 +594,7 @@ let rec extract_hf_vars hf vars =
     end
   | _ -> None
 
-let extract_var_f f var = match f with
+let extract_var_f_x f var = match f with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
       let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
@@ -586,10 +602,10 @@ let extract_var_f f var = match f with
       begin
         match heap_extract with
         | None ->
-          let pf_var = pf_of_vars [var] pf in
+          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
         | Some (hf, vars) ->
-          let pf_var = pf_of_vars vars pf in
+          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
       end
     | CF.Exists exists_f ->
@@ -603,15 +619,22 @@ let extract_var_f f var = match f with
       begin
         match heap_extract with
         | None ->
-          let pf_var = pf_of_vars [var] pf in
+          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
           Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
         | Some (hf, vars) ->
-          let pf_var = pf_of_vars vars pf in
+          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
           Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
       end
     | _ -> None
+
+let extract_var_f formula var =
+  Debug.no_2 "extract_var_f" pr_formula pr_var
+    (fun x -> match x with
+       | None -> "None"
+       | Some varf -> pr_formula varf)
+    (fun _ _ -> extract_var_f_x formula var) formula var
 
 let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
   | CF.Base bf ->
@@ -621,11 +644,11 @@ let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
     begin
       match heap_extract with
       | None ->
-        let pf_var = pf_of_vars vars pf in
+        let pf_var = pf_of_vars vars pf |> CP.arith_simplify 1 in
         let n_f = (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var)) in
         Some n_f
       | Some (hf, vars) ->
-        let pf_var = pf_of_vars vars pf in
+        let pf_var = pf_of_vars vars pf |> CP.arith_simplify 1 in
         Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
     end
   | _ -> None

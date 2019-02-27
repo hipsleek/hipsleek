@@ -25,6 +25,9 @@ let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_entail = SBCast.pr_entailment
 
+(*********************************************************************
+ * Translate Formulas
+ *********************************************************************)
 let pr_validity tvl = match tvl with
   | SBGlobals.MvlFalse -> "Invalid"
   | SBGlobals.MvlTrue -> "Valid"
@@ -204,7 +207,8 @@ let rec translate_exp (exp: CP.exp) =
       let args = templ.templ_args |> List.map translate_exp in
       SBCast.mk_func (SBCast.FuncName fun_name) args
     else report_error no_pos "translate_funcs not activated"
-  | _ -> report_error no_pos "this exp is not handled"
+  | _ -> report_error no_pos ("this exp is not handled"
+                              ^ (Cprinter.string_of_formula_exp exp))
 
 let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.Null pos -> CP.Null (translate_back_pos pos)
@@ -506,8 +510,7 @@ let rec translate_back_fs (fs: SBCast.formula list) holes =
     let hip_t = translate_back_fs t holes in
     CF.mkOr hip_h hip_t no_pos
 
-let create_templ_prog prog ents
-  =
+let create_templ_prog prog ents =
   let program = SBCast.mk_program "hip_input" in
   let exp_decl = List.hd (prog.Cast.prog_exp_decls) in
   let fun_name = exp_decl.Cast.exp_name in
@@ -538,6 +541,65 @@ let translate_ent ent =
   let () = x_tinfo_hp (add_str "lhs: " (SBCast.pr_pure_form)) sb_lhs no_pos in
   let () = x_tinfo_hp (add_str "rhs: " (SBCast.pr_pure_form)) sb_rhs no_pos in
   SBCast.mk_pure_entail sb_lhs sb_rhs
+
+
+let translate_data_decl (data:Cast.data_decl) =
+  let ident = data.Cast.data_name in
+  let loc = data.Cast.data_pos in
+  let fields = data.Cast.data_fields in
+  let fields = List.map (fun (x, y) -> x) fields in
+  let sb_pos = translate_loc loc in
+  let sb_fields = List.map (fun (a,b) -> (translate_type a, b)) fields in
+  SBCast.mk_data_defn ident sb_fields sb_pos
+
+let translate_view_decl (view:Cast.view_decl) =
+  let ident = view.Cast.view_name in
+  let loc = view.Cast.view_pos in
+  let sb_pos = translate_loc loc in
+  let vars = [Cpure.SpecVar (Named view.view_data_name, "self", VarGen.Unprimed)]
+             @ view.Cast.view_vars in
+  let sb_vars = List.map translate_var vars in
+  let formulas = view.Cast.view_un_struc_formula in
+  let formulas = List.map (fun (x,y) -> x) formulas in
+  let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
+  let sb_formula = List.concat sb_formula in
+  let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
+  SBCast.mk_view_defn ident sb_vars (SBCast.VbDefnCases view_defn_cases)
+
+let translate_hp hp =
+  let ident = hp.Cast.hp_name in
+  let sb_pos = translate_loc no_pos in
+  let vars = List.map fst hp.Cast.hp_vars_inst in
+  let sb_vars = List.map translate_var vars in
+  SBCast.mk_view_defn ident sb_vars SBCast.VbUnknown
+
+let translate_prog (prog:Cast.prog_decl) =
+  let data_decls = prog.Cast.prog_data_decls in
+  let data_decls = List.filter
+      (fun x -> String.compare x.Cast.data_name "node" = 0) data_decls in
+  let pr1 = CPR.string_of_data_decl_list in
+  let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
+  let sb_data_decls = List.map translate_data_decl data_decls in
+  let view_decls = prog.Cast.prog_view_decls in
+  let view_decls = List.filter
+      (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
+  let pr2 = CPR.string_of_view_decl_list in
+  let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
+  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+  let sb_hp_views = List.map translate_hp hps in
+  let sb_view_decls = List.map translate_view_decl view_decls in
+  let pr_hps = pr_list SBCast.pr_view_defn in
+  let sb_view_decls = sb_view_decls @ sb_hp_views in
+  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_view_decls no_pos in
+  let prog = SBCast.mk_program "heap_entail" in
+  let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
+                        SBCast.prog_views = sb_view_decls}
+  in
+  let pr3 = SBCast.pr_program in
+  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
+  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+  n_prog
 
 let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
@@ -608,64 +670,6 @@ let get_repair_candidate prog ents cond_op =
     | None ->
       let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
       None
-
-let translate_data_decl (data:Cast.data_decl) =
-  let ident = data.Cast.data_name in
-  let loc = data.Cast.data_pos in
-  let fields = data.Cast.data_fields in
-  let fields = List.map (fun (x, y) -> x) fields in
-  let sb_pos = translate_loc loc in
-  let sb_fields = List.map (fun (a,b) -> (translate_type a, b)) fields in
-  SBCast.mk_data_defn ident sb_fields sb_pos
-
-let translate_view_decl (view:Cast.view_decl) =
-  let ident = view.Cast.view_name in
-  let loc = view.Cast.view_pos in
-  let sb_pos = translate_loc loc in
-  let vars = [Cpure.SpecVar (Named view.view_data_name, "self", VarGen.Unprimed)]
-             @ view.Cast.view_vars in
-  let sb_vars = List.map translate_var vars in
-  let formulas = view.Cast.view_un_struc_formula in
-  let formulas = List.map (fun (x,y) -> x) formulas in
-  let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
-  let sb_formula = List.concat sb_formula in
-  let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
-  SBCast.mk_view_defn ident sb_vars (SBCast.VbDefnCases view_defn_cases)
-
-let translate_hp hp =
-  let ident = hp.Cast.hp_name in
-  let sb_pos = translate_loc no_pos in
-  let vars = List.map fst hp.Cast.hp_vars_inst in
-  let sb_vars = List.map translate_var vars in
-  SBCast.mk_view_defn ident sb_vars SBCast.VbUnknown
-
-let translate_prog (prog:Cast.prog_decl) =
-  let data_decls = prog.Cast.prog_data_decls in
-  let data_decls = List.filter
-      (fun x -> String.compare x.Cast.data_name "node" = 0) data_decls in
-  let pr1 = CPR.string_of_data_decl_list in
-  let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
-  let sb_data_decls = List.map translate_data_decl data_decls in
-  let view_decls = prog.Cast.prog_view_decls in
-  let view_decls = List.filter
-      (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
-  let pr2 = CPR.string_of_view_decl_list in
-  let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
-  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
-  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-  let sb_hp_views = List.map translate_hp hps in
-  let sb_view_decls = List.map translate_view_decl view_decls in
-  let pr_hps = pr_list SBCast.pr_view_defn in
-  let sb_view_decls = sb_view_decls @ sb_hp_views in
-  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_view_decls no_pos in
-  let prog = SBCast.mk_program "heap_entail" in
-  let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
-                        SBCast.prog_views = sb_view_decls}
-  in
-  let pr3 = SBCast.pr_program in
-  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
-  n_prog
 
 let check_entail_x ?(residue=false) prog ante conseq =
   let sb_prog = translate_prog prog in
@@ -867,3 +871,21 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let msg = "songbird result is Failed." in
     (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
     , Prooftracer.Failure)
+
+let infer_templ_defn prog pre post fun_name args =
+  let sb_prog = translate_prog prog in
+  let sb_args = List.map translate_var args in
+  let f_defn = SBCast.mk_func_defn_unknown fun_name sb_args in
+  let ifp_typ = SBGlobals.IfrStrong in
+  let sb_pre, sb_post = translate_pf pre, translate_pf post in
+  let ent = SBCast.mk_pure_entail sb_pre sb_post in
+  let infer_func = {SBCast.ifp_typ = ifp_typ;
+                    SBCast.ifp_ents = [ent]} in
+  let nprog = {sb_prog with
+               prog_funcs = [f_defn];
+               prog_commands = [SBCast.InferFuncs infer_func]} in
+  let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
+  let sb_res = SBProver.infer_unknown_functions ifp_typ nprog ent in
+  let ifd = fst sb_res in
+  let () = x_binfo_hp (add_str "re" SBProof.pr_ifds) ifd no_pos in
+  None

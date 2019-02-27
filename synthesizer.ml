@@ -85,7 +85,7 @@ let choose_rassign_pure var goal : rule list =
        if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
          let rule = RlAssign {
              ra_lhs = var;
-             ra_rhs = sv;
+             ra_rhs = CP.mkVar sv no_pos;
            } in
          [rule]
        else
@@ -100,7 +100,7 @@ let choose_rassign_pure var goal : rule list =
            | Some sub_var ->
              let rule = RlAssign {
                  ra_lhs = var;
-                 ra_rhs = sub_var;
+                 ra_rhs = CP.mkVar sub_var no_pos;
                } in
              [rule]
          end
@@ -203,13 +203,17 @@ let choose_rule_field_dnode dn1 dn2 var goal =
       let eq_rule = List.hd n_rule in
       match eq_rule with
       | RlAssign rassgn ->
-        let rule = RlBind {
-            rb_bound_var = var;
-            rb_field = (fst df_name, n_name);
-            rb_other_var = rassgn.ra_rhs;
-            rb_write = true;
-          }
-        in [rule]
+        begin
+          match rassgn.ra_rhs with
+          | CP.Var (sv, _) -> 
+            let rule = RlBind {
+                rb_bound_var = var;
+                rb_field = (fst df_name, n_name);
+                rb_other_var = sv;
+                rb_write = true;
+              } in [rule]
+          | _ -> []
+        end
       | _ -> []
   in
   (* let pure_rules = triple |> List.map pure_rules |> List.concat in *)
@@ -601,17 +605,51 @@ let choose_rule_unfold_pre goal =
       in [rule]
     | None -> []
 
+let choose_rule_numeric goal =
+  let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
+      | Int -> true
+      | _ -> false) in
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+  let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+  let pre_vars, post_vars = CF.fv pre, CF.fv post in
+  let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
+  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+  let vars_lhs = vars |> List.filter (fun x ->
+      not(List.exists (fun y -> CP.eq_sv x y) pre_vars)) in
+  let vars_lhs = List.filter (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars_lhs in
+  let () = x_binfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
+  let create_templ all_vars cur_var =
+    let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
+    let var_formula = extract_var_f post cur_var in
+    match var_formula with
+    | Some var_f ->
+      let () = x_binfo_hp (add_str "nf" pr_formula) var_f no_pos in
+      let pure_pre, var_pf = CF.get_pure pre, CF.get_pure var_f in
+      let tmpl_args = List.map (fun x -> CP.mkVar x no_pos) other_vars in
+      let templ = CP.Template (CP.mkTemplate "tmplVar" tmpl_args no_pos) in
+      let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
+      let n_pre = CP.mkAnd pure_pre n_pf no_pos in
+      let () = x_binfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
+      let () = x_binfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
+      let _ = SB.infer_templ_defn goal.gl_prog n_pre var_pf "tmplVar" other_vars in
+      None
+    | None -> None in
+  let _ = vars_lhs |> List.map (fun x -> create_templ vars x) in
+  []
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  let rs1 = choose_func_call goal in
+  (* let rs1 = choose_func_call goal in *)
   (* let rs2 = choose_rule_rbind goal in *)
   (* let rs2 = choose_rule_return goal in *)
   (* let rs3 = choose_rule_unfold_pre goal in *)
+  let rs4 = choose_rule_numeric goal in
+  rs4
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  rs1
+  (* rs1 *)
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -637,7 +675,7 @@ let process_rule_assign goal rassign =
   let lhs = rassign.ra_lhs in
   let rhs = rassign.ra_rhs in
   let res_var = CP.mkRes (CP.type_of_sv lhs) in
-  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) (CP.mkVar rhs no_pos) no_pos in
+  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) rhs no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_rhs pre in
   let tmp_lhs = CP.fresh_spec_var lhs in
   let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
@@ -949,7 +987,7 @@ let synthesize_st_core st =
   | RlAssign rassign ->
     let lhs = rassign.ra_lhs in
     let rhs = rassign.ra_rhs in
-    let c_exp = exp_to_cast (CP.mkVar rhs no_pos) in
+    let c_exp = exp_to_cast rhs in
     let assign = Cast.Assign {
         exp_assign_lhs = CP.name_of_sv lhs;
         exp_assign_rhs = c_exp;
