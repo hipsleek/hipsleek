@@ -566,14 +566,20 @@ let choose_rule_return goal =
     candidates |> List.map mk_return_rule
   else []
 
+let choose_rule_unfold_pre goal =
+  let vars = goal.gl_vars in
+  vars |> List.map (check_unfold_pre goal)
+
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
   (* let rs = choose_func_call goal in *)
   let rs = [] in
   (* let rs2 = choose_rule_rbind goal in *)
-  let rs2 = choose_rule_return goal in
-  rs @ rs2
+  (* let rs2 = choose_rule_return goal in *)
+  (* rs @ rs2 *)
+  let rule = choose_rule_unfold_pre goal in
+  []
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -710,6 +716,7 @@ let process_one_rule goal rule : derivation =
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
   | RlReturn rule -> process_rule_return goal rule
+  | RlUnfoldPre _ -> report_error no_pos "unhandled"
 
 (*********************************************************************
  * Rule utilities
@@ -735,7 +742,8 @@ let eliminate_useless_rules goal rules =
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
-    | RlReturn _ -> true) rules
+    | RlReturn _ -> true
+    | RlUnfoldPre _ -> true) rules
 
 (* compare func_call with others *)
 
@@ -757,6 +765,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
   | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
   | RlReturn _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
 
 (* compare assign with others *)
 
@@ -777,6 +786,7 @@ let compare_rule_assign_vs_other r1 r2 =
   | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
   | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
   | RlReturn _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
 
 (* compare wbind with others *)
 
@@ -796,6 +806,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
   | RlReturn _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
 
 (* reordering rules *)
 
@@ -805,6 +816,7 @@ let compare_rule r1 r2 =
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
   | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
   | RlReturn _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =

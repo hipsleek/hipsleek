@@ -25,7 +25,6 @@ type goal = {
   gl_proc_decls: Cast.proc_decl list;
   gl_pre_cond : CF.formula;
   gl_post_cond : CF.formula;
-  (* gl_equiv_vars : (CP.spec_var * CP.spec_var) list; *)
   gl_vars: CP.spec_var list;
 }
 
@@ -41,6 +40,11 @@ type rule =
   | RlAssign of rule_assign
   | RlBind of rule_bind
   | RlReturn of rule_return
+  | RlUnfoldPre of rule_unfold_pre (* Currently assume unfold pre-cond *)
+
+and rule_unfold_pre = {
+  n_goals: goal list;
+}
 
 and rule_return = {
   return_var: CP.spec_var;
@@ -229,6 +233,7 @@ let pr_rule rule = match rule with
       "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Write)"
     else "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Read)"
   | RlReturn rule -> "RlReturn"
+  | RlUnfoldPre _ -> "RlUnfoldPre"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -395,17 +400,13 @@ let do_unfold_view_vnode ?(unfold_vars) cprog fvar =
       let v_args = [vnode.CF.h_formula_view_node]@v_args in
       let subst = find_subst vnode view_f in
       helper_vnode subst view_f
-    (* | CF.Star sf -> let h1 = sf.h_formula_star_h1 in
-     *   let h2 = sf.h_formula_star_h2 in
-     *   CF.Star {sf with h_formula_star_h1 = helper_hf f1;
-     *                    h_formula_star_h2 = helper_hf f2} *)
     | _ -> []
   in
-
   match fvar with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
-    helper_hf hf
+    let pf = bf.CF.formula_base_pure in
+    hf |> helper_hf |> List.map (CF.add_mix_formula_to_formula pf)
   | CF.Exists exists_f ->
     let hf = exists_f.CF.formula_exists_heap in
     let n_hf = helper_hf hf in
@@ -684,3 +685,46 @@ let add_formula_to_formula f1 f2 =
   let n_pf = mix_of_pure (CP.mkAnd (pure_of_mix pf) (pure_of_mix pf2) no_pos) in
   let n_hf = CF.mkStarH hf hf2 no_pos in
   CF.mkBase_simp n_hf n_pf
+
+let need_unfold_rhs prog vn=
+  let rec look_up_view vn0=
+    let vdef = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls
+        vn0.CF.h_formula_view_name in
+    let fs = List.map fst vdef.view_un_struc_formula in
+    let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
+    match hv_opt with
+    | Some vn1 -> look_up_view vn1
+    | None -> vdef
+  in
+  let vdef = look_up_view vn in
+  [(vn.CF.h_formula_view_name,vdef.Cast.view_un_struc_formula, vdef.Cast.view_vars)]
+
+let check_unfold_pre goal var =
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let rec check_unfold_hf (hf1:CF.h_formula) = match hf1 with
+    | CF.ViewNode vnode -> Some vnode
+    | CF.Star sf -> let f1,f2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+      let check_hf1 = check_unfold_hf f1 in
+      if check_hf1 = None then check_unfold_hf f2
+      else check_hf1
+    | _ -> None in
+  let check_unfold (f1:CF.formula) = match f1 with
+    | CF.Base bf1 -> check_unfold_hf bf1.formula_base_heap
+    | CF.Exists bf -> check_unfold_hf bf.formula_exists_heap
+    | _ -> None in
+  let vnode_opt = check_unfold pre in
+  let rec simpl_f (f:CF.formula) = match f with
+    | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
+    | _ -> [f]
+  in
+  match vnode_opt with
+  | Some vnode -> let pr_views = need_unfold_rhs goal.gl_prog vnode in
+    let nf = CF.do_unfold_view goal.gl_prog pr_views pre in
+    let () = x_binfo_hp (add_str "nf" pr_formula) nf no_pos in
+    let pre_list = simpl_f nf in
+    let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
+    let rule = RlUnfoldPre {
+        n_goals = n_goals;
+      }
+    in [rule]
+  | None -> []

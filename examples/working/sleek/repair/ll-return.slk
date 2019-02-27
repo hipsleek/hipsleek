@@ -10,11 +10,16 @@ int sum(node n)
   requires n::ll<m> ensures res = m;.
 
 // append(x.next, y)
-synthesize [node x, int k]
-x::node<v_1917,r_1918> * r_1918::ll<n_1926> &
-n_1926= n - v_1917 & k=n & x !=null
-~>
-x::ll<n> & res = n.
+// synthesize [node x, int k]
+// x::node<v_1917,r_1918> * r_1918::ll<n_1926> &
+// n_1926= n - v_1917 & k=n & x !=null
+// ~>
+// x::ll<n> & res = n.
 
-// To implement f1 & f2 |> var1 = var2
+synthesize [node x, int k]
+x::ll<n> & x != null
+~>
+x::node<v_1917,r_1918> * r_1918::ll<n_1926> &
+n_1926= n - v_1917 & k=n & x !=null.
+
 // 
