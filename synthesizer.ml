@@ -27,7 +27,7 @@ let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = pr_list pr_var
-let calls_num = ref 0
+let fc_args = ref ([]: CP.spec_var list list)
 
 (*********************************************************************
  * Choosing rules
@@ -710,8 +710,8 @@ let process_rule_func_call goal rcore : derivation =
   let pre_vars = CF.fv n_pre_proc |> List.filter (fun x ->
       not(List.exists (fun y -> CP.eq_spec_var x y) rcore.rfc_params)) in
   let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
-  let () = x_tinfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
-  let () = x_tinfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
+  let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
   let ent_check, residue = SB.check_entail ~residue:true goal.gl_prog
       pre_cond n_pre_proc in
   match ent_check, residue with
@@ -727,14 +727,21 @@ let process_rule_func_call goal rcore : derivation =
       let () = x_binfo_pp "checking post_cond successfully" no_pos in
       mk_derivation_success goal (RlFuncCall rcore)
     else
-      let () = calls_num := !calls_num + 1 in
-      if !calls_num > 1 then
+      let params = rcore.rfc_params in
+      let already_call = List.exists (fun x ->
+          if (List.length x = List.length params) then
+            let combine = List.combine x params in
+            List.for_all (fun (x,y) -> CP.eq_spec_var x y) combine
+          else false
+        ) !fc_args in
+      let eq_heap = SB.eq_h_formula goal.gl_prog pre_proc post_proc in
+      if already_call && eq_heap then
             mk_derivation_fail goal (RlFuncCall rcore)
       else
+        let () = fc_args := [params] @ !fc_args in
         let sub_goal = {goal with gl_pre_cond = n_post_state} in
         mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
-  | _ ->
-    mk_derivation_fail goal (RlFuncCall rcore)
+  | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
 let process_rule_return goal rule =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in

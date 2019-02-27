@@ -705,6 +705,18 @@ let check_entail ?(residue=false) prog ante conseq =
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
 
+let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
+  let get_h_formula (f:CF.formula) = match f with
+    | Base bf -> bf.formula_base_heap
+    | Exists bf -> bf.formula_exists_heap
+    | Or _ -> report_error no_pos "get_h_formula: unhandled" in
+  let h1, h2 = get_h_formula f1, get_h_formula f2 in
+  let n_f1 = CF.mkBase_simp h1 (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+  let n_f2 = CF.mkBase_simp h2 (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+  let res1, _ = check_entail prog n_f1 n_f2 in
+  let res2, _ = check_entail prog n_f2 n_f1 in
+  res1 && res2
+
 let check_sat_x prog (f:CF.formula) =
   let sb_prog = translate_prog prog in
   let sb_f,_ = translate_formula f in

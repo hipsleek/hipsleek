@@ -6,8 +6,8 @@ data node {
 pred ll<n> == self=null & n = 0
   or self::node<v, r> * r::ll<n2> & n = 1 + n2.
 
-int sum(node n)
-  requires n::ll<m> ensures n::ll<m> & res = m;.
+int sum(node a)
+  requires a::ll<m> ensures a::ll<m> & res = m;.
 
 // append(x.next, y)
 // synthesize [node x, int k]
@@ -24,8 +24,8 @@ int sum(node n)
 
 
 synthesize [node x, int k, node r_57]
-x::node<v_56,r_57>@M * r_57::ll<n2_58> & exists(n2_58:n=n2_58+1) & x!=null
+x::node<v_56,r_57> * r_57::ll<n2> & n2 = n1 + 1 & x!=null
 ~>
-x::node<v_1917,r_1918> * r_1918::ll<n_1926> & n_1926= n - 1 & k=n & x !=null.
+x::node<v_1917,r_1918> * r_1918::ll<n3> & n3= n - 1 & k=n & x !=null.
 
 
