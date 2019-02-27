@@ -11,6 +11,7 @@ open Synthesis
 module CA = Cast
 module CF = Cformula
 module CP = Cpure
+module SB = Songbird
 
 (*********************************************************************
  * Data structures and exceptions
@@ -26,6 +27,7 @@ let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = pr_list pr_var
+let calls_num = ref 0
 
 (*********************************************************************
  * Choosing rules
@@ -115,7 +117,7 @@ let find_equal_var var goal =
     let conseq = CP.mkEqVar var1 var2 no_pos in
     let () = x_binfo_hp (add_str "ante" pr_pf) ante no_pos in
     let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
-    Songbird.check_pure_entail ante conseq in
+    SB.check_pure_entail ante conseq in
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
       let hf1 = bf1.CF.formula_exists_heap in
@@ -436,13 +438,13 @@ let unify (pre_proc, post_proc) goal =
   let unify_var arg goal =
     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
     let arg_typ = CP.type_of_sv arg in
-    let () = x_binfo_hp (add_str "all vars" (pr_list Cprinter.string_of_typed_spec_var)) (CF.fv pre_cond) no_pos in
+    let () = x_tinfo_hp (add_str "all vars" (pr_list Cprinter.string_of_typed_spec_var)) (CF.fv pre_cond) no_pos in
     let l_vars = CF.fv pre_cond |>
                  List.filter (fun x -> CP.type_of_sv x = arg_typ) in
-    let () = x_binfo_hp (add_str "vars" pr_vars) l_vars no_pos in
+    let () = x_tinfo_hp (add_str "vars" pr_vars) l_vars no_pos in
     let ss_vars = List.filter (fun lvar -> unify_pair arg lvar goal proc_decl) l_vars in
-    let () = x_binfo_hp (add_str "arg" Cprinter.string_of_typed_spec_var) arg no_pos in
-    let () = x_binfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
+    let () = x_tinfo_hp (add_str "arg" Cprinter.string_of_typed_spec_var) arg no_pos in
+    let () = x_tinfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
   let () = x_tinfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
@@ -547,7 +549,7 @@ let check_one_var goal var =
     let conseq_pf = CP.mkEqVar res_var var no_pos in
     let conseq = CF.mkBase_simp (CF.HEmp) (mix_of_pure conseq_pf) in
     let ante = add_formula_to_formula f1 f2 in
-    let res, _ = Songbird.check_entail goal.gl_prog ante conseq in
+    let res, _ = SB.check_entail goal.gl_prog ante conseq in
     res
   | _ -> false
 
@@ -567,19 +569,49 @@ let choose_rule_return goal =
   else []
 
 let choose_rule_unfold_pre goal =
-  let vars = goal.gl_vars in
-  vars |> List.map (check_unfold_pre goal)
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let rec check_unfold_hf (hf1:CF.h_formula) = match hf1 with
+    | CF.ViewNode vnode -> Some vnode
+    | CF.Star sf -> let f1,f2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+      let check_hf1 = check_unfold_hf f1 in
+      if check_hf1 = None then check_unfold_hf f2
+      else check_hf1
+    | _ -> None in
+  let check_unfold (f1:CF.formula) = match f1 with
+    | CF.Base bf1 -> check_unfold_hf bf1.formula_base_heap
+    | CF.Exists bf -> check_unfold_hf bf.formula_exists_heap
+    | _ -> None in
+  let vnode_opt = check_unfold pre in
+  let rec simpl_f (f:CF.formula) = match f with
+    | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
+    | _ -> [f]
+  in
+  if (!unfold_num >= 1) then []
+  else
+    match vnode_opt with
+    | Some vnode -> let pr_views = need_unfold_rhs goal.gl_prog vnode in
+      let nf = CF.do_unfold_view goal.gl_prog pr_views pre in
+      let pre_list = simpl_f nf |> List.filter (SB.check_sat goal.gl_prog) in
+      let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list  no_pos in
+      let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
+      let () = unfold_num := !unfold_num + 1 in
+      let rule = RlUnfoldPre {
+          n_goals = n_goals;
+        }
+      in [rule]
+    | None -> []
+
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  (* let rs = choose_func_call goal in *)
-  let rs = [] in
+  let rs1 = choose_func_call goal in
   (* let rs2 = choose_rule_rbind goal in *)
   (* let rs2 = choose_rule_return goal in *)
-  (* rs @ rs2 *)
-  let rule = choose_rule_unfold_pre goal in
-  []
+  (* let rs3 = choose_rule_unfold_pre goal in *)
+  (* rs @ rs1 @ rs2 @ rs3 *)
+  (* rs2 @ rs1 *)
+  rs1
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -610,7 +642,7 @@ let process_rule_assign goal rassign =
   let tmp_lhs = CP.fresh_spec_var lhs in
   let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
   let () = x_binfo_hp (add_str "post_cond " pr_formula) n_post no_pos in
-  let ent_check, _ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  let ent_check, _ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
   | true -> mk_derivation_success goal (RlAssign rassign)
   | false -> mk_derivation_fail goal (RlAssign rassign)
@@ -652,23 +684,24 @@ let process_rule_bind goal (bind:rule_bind) =
     let data_decls = prog.prog_data_decls in
     let n_post = subs_bind_write pre var field rhs data_decls in
     let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
-    let ent_check,_ = Songbird.check_entail goal.gl_prog n_post goal.gl_post_cond in
+    let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
     match ent_check with
     | true -> mk_derivation_success goal (RlBind bind)
     | false -> mk_derivation_fail goal (RlBind bind)
   else
     let vars = [bind.rb_other_var] @ goal.gl_vars |> CP.remove_dups_svl in
     let n_goal = {goal with gl_vars = vars} in
-    mk_derivation_sub_goals goal (RlBind bind) [n_goal]
+    mk_derivation_subgoals goal (RlBind bind) [n_goal]
 
 let process_rule_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
   let proc_decl = goal.gl_proc_decls |> List.find (fun x -> x.Cast.proc_name = fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
+  let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
-  let () = x_binfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
-  let () = x_binfo_hp (add_str "post proc" pr_formula) post_proc no_pos in
+  let () = x_tinfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
+  let () = x_tinfo_hp (add_str "post proc" pr_formula) post_proc no_pos in
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
@@ -677,23 +710,29 @@ let process_rule_func_call goal rcore : derivation =
   let pre_vars = CF.fv n_pre_proc |> List.filter (fun x ->
       not(List.exists (fun y -> CP.eq_spec_var x y) rcore.rfc_params)) in
   let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
-  let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
-  let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
-  let ent_check, residue = Songbird.check_entail ~residue:true goal.gl_prog
+  let () = x_tinfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
+  let () = x_tinfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let ent_check, residue = SB.check_entail ~residue:true goal.gl_prog
       pre_cond n_pre_proc in
   match ent_check, residue with
   | true, Some red ->
-    let () = x_tinfo_pp "checking pre_cond successfully" no_pos in
+    let () = x_binfo_pp "checking pre_cond successfully" no_pos in
     let () = x_tinfo_hp (add_str "residue" pr_formula) red no_pos in
     let n_post_proc = CF.subst substs post_proc in
     let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in
-    let () = x_tinfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
-    let () = x_tinfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
-    let post_check, _ = Songbird.check_entail goal.gl_prog n_post_state post_cond in
+    let () = x_binfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
+    let () = x_binfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
+    let post_check, _ = SB.check_entail goal.gl_prog n_post_state post_cond in
     if post_check then
       let () = x_binfo_pp "checking post_cond successfully" no_pos in
       mk_derivation_success goal (RlFuncCall rcore)
-    else mk_derivation_fail goal (RlFuncCall rcore)
+    else
+      let () = calls_num := !calls_num + 1 in
+      if !calls_num > 1 then
+            mk_derivation_fail goal (RlFuncCall rcore)
+      else
+        let sub_goal = {goal with gl_pre_cond = n_post_state} in
+        mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ ->
     mk_derivation_fail goal (RlFuncCall rcore)
 
@@ -704,11 +743,15 @@ let process_rule_return goal rule =
   let res = CP.mkRes res_typ in
   let n_pf = CP.mkEqVar res var no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check, _ = Songbird.check_entail goal.gl_prog n_pre post in
+  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
   if ent_check then
     let () = x_binfo_pp "marking \n" no_pos in
     mk_derivation_success goal (RlReturn rule)
   else mk_derivation_fail goal (RlReturn rule)
+
+let process_rule_unfold_pre goal rule =
+  let sub_goals = rule.n_goals in
+  mk_derivation_subgoals goal (RlUnfoldPre rule) sub_goals
 
 let process_one_rule goal rule : derivation =
   match rule with
@@ -716,7 +759,7 @@ let process_one_rule goal rule : derivation =
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
   | RlReturn rule -> process_rule_return goal rule
-  | RlUnfoldPre _ -> report_error no_pos "unhandled"
+  | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
 
 (*********************************************************************
  * Rule utilities

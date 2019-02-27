@@ -14,6 +14,7 @@ let pr_formula = Cprinter.string_of_formula
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
 let rel_num = ref 0
+let unfold_num = ref 0
 let unk_hps = ref ([] : Cast.hp_decl list)
 (*********************************************************************
  * Data structures
@@ -132,7 +133,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
     (* gl_equiv_vars = []; *)
     gl_vars = vars;  }
 
-let mk_derivation_sub_goals goal rule subgoals =
+let mk_derivation_subgoals goal rule subgoals =
   { drv_kind = DrvSubgoals subgoals;
     drv_rule = rule;
     drv_goal = goal; }
@@ -240,10 +241,10 @@ let rec pr_st st = match st with
   | StDerive st_derive -> "StDerive [" ^ (pr_st_derive st_derive) ^ "]"
 
 and pr_st_search st =
-  let goal = st.sts_goal in
-  let sub_trees = st.sts_sub_trees in
+  let goal, sub_trees = st.sts_goal, st.sts_sub_trees in
   let st_str = (pr_list pr_st) sub_trees in
-  (pr_goal goal) ^ st_str
+  (* "Goal: " ^ (pr_goal goal) ^ "\n" ^ *)
+  "Subtrees: " ^  st_str
 
 and pr_st_derive st =
   (pr_goal st.std_goal) ^ "\n" ^
@@ -699,32 +700,3 @@ let need_unfold_rhs prog vn=
   let vdef = look_up_view vn in
   [(vn.CF.h_formula_view_name,vdef.Cast.view_un_struc_formula, vdef.Cast.view_vars)]
 
-let check_unfold_pre goal var =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let rec check_unfold_hf (hf1:CF.h_formula) = match hf1 with
-    | CF.ViewNode vnode -> Some vnode
-    | CF.Star sf -> let f1,f2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
-      let check_hf1 = check_unfold_hf f1 in
-      if check_hf1 = None then check_unfold_hf f2
-      else check_hf1
-    | _ -> None in
-  let check_unfold (f1:CF.formula) = match f1 with
-    | CF.Base bf1 -> check_unfold_hf bf1.formula_base_heap
-    | CF.Exists bf -> check_unfold_hf bf.formula_exists_heap
-    | _ -> None in
-  let vnode_opt = check_unfold pre in
-  let rec simpl_f (f:CF.formula) = match f with
-    | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
-    | _ -> [f]
-  in
-  match vnode_opt with
-  | Some vnode -> let pr_views = need_unfold_rhs goal.gl_prog vnode in
-    let nf = CF.do_unfold_view goal.gl_prog pr_views pre in
-    let () = x_binfo_hp (add_str "nf" pr_formula) nf no_pos in
-    let pre_list = simpl_f nf in
-    let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
-    let rule = RlUnfoldPre {
-        n_goals = n_goals;
-      }
-    in [rule]
-  | None -> []

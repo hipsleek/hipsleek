@@ -701,9 +701,25 @@ let check_entail_x ?(residue=false) prog ante conseq =
       | _ -> false, None
 
 let check_entail ?(residue=false) prog ante conseq =
-  Debug.no_2 "check_entail_songbird" pr_formula pr_formula
+  Debug.no_2 "SB.check_entail" pr_formula pr_formula
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
+
+let check_sat_x prog (f:CF.formula) =
+  let sb_prog = translate_prog prog in
+  let sb_f,_ = translate_formula f in
+  if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
+  else
+    let sb_formula = List.hd sb_f in
+    let sb_res = SBProver.check_unsat_approx sb_prog sb_formula in
+    match sb_res with
+    | MvlTrue -> true
+    | _ -> false
+
+let check_sat prog (formula:CF.formula) =
+  Debug.no_1 "SB.check_sat" pr_formula string_of_bool
+    (fun _ -> check_sat_x prog formula) formula
+
 
 let check_pure_entail ante conseq =
   let sb_ante = translate_pf ante in
