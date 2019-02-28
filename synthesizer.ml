@@ -626,9 +626,16 @@ let choose_rule_numeric goal =
   let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
       | Int -> true
       | _ -> false) in
+  let post_vars = CF.fv goal.gl_post_cond in
+  let containt_res = List.exists (fun x -> CP.name_of_sv x = res_name &&
+                                           CP.type_of_sv x = Int) post_vars in
+  let vars = if containt_res then
+      let res = CP.mk_typed_sv Int res_name in
+      vars @ [res]
+    else vars in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
-  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
+  let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+  let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
   let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
@@ -641,7 +648,7 @@ let choose_rule_numeric goal =
     let var_formula = extract_var_f post cur_var in
     match var_formula with
     | Some var_f ->
-      let () = x_tinfo_hp (add_str "nf" pr_formula) var_f no_pos in
+      let () = x_binfo_hp (add_str "nf" pr_formula) var_f no_pos in
       let pure_pre, var_pf = CF.get_pure pre, CF.get_pure var_f in
       let tmpl_args = List.map (fun x -> CP.mkVar x no_pos) other_vars in
       let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
@@ -663,17 +670,19 @@ let choose_rule_numeric goal =
   rules |> List.concat
 
 let choose_synthesis_rules goal : rule list =
-  (* let rs = choose_rule_assign goal in
-   * let rs = List.filter not_identity_assign_rule rs in *)
-  let rs1 = choose_func_call goal in
-  let rs2 = choose_rule_rbind goal in
+  (* let rs = choose_rule_assign goal in *)
+  (* let rs = List.filter not_identity_assign_rule rs in *)
+  (* rs *)
+  (* let rs1 = choose_func_call goal in
+   * let rs2 = choose_rule_rbind goal in *)
   (* let rs2 = choose_rule_return goal in *)
-  let rs3 = choose_rule_unfold_pre goal in
+  (* let rs3 = choose_rule_unfold_pre goal in *)
   let rs4 = choose_rule_numeric goal in
-  rs1 @ rs2 @ rs3 @ rs4
+  rs4
+  (* rs1 @ rs2 @ rs3 @ rs4 *)
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  (* rs1 *)
+  (* rs2 *)
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
