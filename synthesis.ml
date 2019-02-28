@@ -14,6 +14,7 @@ let pr_formula = Cprinter.string_of_formula
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
 let rel_num = ref 0
+let res_num = ref 0
 let unfold_num = ref 0
 let unk_hps = ref ([] : Cast.hp_decl list)
 (*********************************************************************

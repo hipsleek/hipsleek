@@ -613,6 +613,7 @@ let choose_rule_numeric goal =
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
+  let () = x_binfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter
@@ -629,8 +630,8 @@ let choose_rule_numeric goal =
       let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
       let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
       let n_pre = CP.mkAnd pure_pre n_pf no_pos in
-      let () = x_tinfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
-      let () = x_tinfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
+      let () = x_binfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
+      let () = x_binfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
       let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
       begin
         match defn with
@@ -651,11 +652,11 @@ let choose_synthesis_rules goal : rule list =
   (* let rs2 = choose_rule_rbind goal in *)
   (* let rs2 = choose_rule_return goal in *)
   (* let rs3 = choose_rule_unfold_pre goal in *)
-  (* let rs4 = choose_rule_numeric goal in
-   * rs1 @ rs4 *)
+  let rs4 = choose_rule_numeric goal in
+  rs1 @ rs4
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  rs1
+  (* rs1 *)
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -783,7 +784,20 @@ let process_func_call goal rcore : derivation =
             mk_derivation_fail goal (RlFuncCall rcore)
       else
         let () = fc_args := [params] @ !fc_args in
-        let sub_goal = {goal with gl_pre_cond = n_post_state} in
+        let np_vars = CF.fv n_post_state in
+        let containt_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
+                           |> List.exists (fun x -> x = res_name) in
+        let n_post_state, n_vars = if containt_res then
+            let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
+            let n_var = CP.mk_typed_sv (CP.type_of_sv res)
+                ("rs" ^ (string_of_int !res_num)) in
+            let () = res_num := !res_num + 1 in
+            let n_f = CF.subst [(res, n_var)] n_post_state in
+            (n_f, goal.gl_vars @ [n_var])
+          else n_post_state, goal.gl_vars in
+        let () = x_binfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
+        let sub_goal = {goal with gl_vars = n_vars;
+                        gl_pre_cond = n_post_state} in
         mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
