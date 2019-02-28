@@ -770,6 +770,7 @@ let no_pos1 = { Lexing.pos_fname = "";
                 Lexing.pos_cnum = 0 } 
 
 let res_name = "res"
+let tmpl_name = "tmpl"
 (* let null_name = "null" *)
 let null_name = "_null"
 let null_type = Named ""

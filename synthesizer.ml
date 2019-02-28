@@ -615,28 +615,34 @@ let choose_rule_numeric goal =
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
   let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
-  let vars_lhs = vars |> List.filter (fun x ->
-      not(List.exists (fun y -> CP.eq_sv x y) pre_vars)) in
-  let vars_lhs = List.filter (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars_lhs in
+  let vars_lhs = List.filter
+      (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars in
   let () = x_binfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     let var_formula = extract_var_f post cur_var in
     match var_formula with
     | Some var_f ->
-      let () = x_binfo_hp (add_str "nf" pr_formula) var_f no_pos in
+      let () = x_tinfo_hp (add_str "nf" pr_formula) var_f no_pos in
       let pure_pre, var_pf = CF.get_pure pre, CF.get_pure var_f in
       let tmpl_args = List.map (fun x -> CP.mkVar x no_pos) other_vars in
-      let templ = CP.Template (CP.mkTemplate "tmplVar" tmpl_args no_pos) in
+      let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
       let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
       let n_pre = CP.mkAnd pure_pre n_pf no_pos in
-      let () = x_binfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
-      let () = x_binfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
-      let _ = SB.infer_templ_defn goal.gl_prog n_pre var_pf "tmplVar" other_vars in
-      None
-    | None -> None in
-  let _ = vars_lhs |> List.map (fun x -> create_templ vars x) in
-  []
+      let () = x_tinfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
+      let () = x_tinfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
+      let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
+      begin
+        match defn with
+        | Some def -> let rule = RlAssign {
+            ra_lhs = cur_var;
+            ra_rhs = def;
+          } in [rule]
+        | _ -> []
+      end
+    | None -> [] in
+  let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
+  rules |> List.concat
 
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
