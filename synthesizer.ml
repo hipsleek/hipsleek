@@ -437,7 +437,7 @@ let rec filter_args_input (args:CP.spec_var list list) = match args with
 
 let unify (pre_proc, post_proc) goal =
   let proc_decl = goal.gl_proc_decls |> List.hd in
-  let args = proc_decl.Cast.proc_args |>
+  let proc_args = proc_decl.Cast.proc_args |>
              List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let unify_var arg goal =
     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
@@ -450,7 +450,7 @@ let unify (pre_proc, post_proc) goal =
     let () = x_tinfo_hp (add_str "arg" Cprinter.string_of_typed_spec_var) arg no_pos in
     let () = x_tinfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
-  let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
+  let ss_args = proc_args |> List.map (fun arg -> unify_var arg goal) in
   let () = x_binfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
   let ss_args = filter_args_input ss_args in
   let ss_args = List.filter(fun list ->
@@ -460,12 +460,17 @@ let unify (pre_proc, post_proc) goal =
   let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
   if ss_args != [] then
     ss_args |> List.map (fun args ->
-        if List.for_all (fun x -> List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args then
-          let fc_rule = RlFuncCall {
-              rfc_func_name = proc_decl.Cast.proc_name;
-              rfc_params = args;
-            } in
-          [fc_rule]
+        let is_cur_vars = List.for_all (fun x ->
+            List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
+        if is_cur_vars then
+          let combine_args = List.combine args proc_args in
+          let eq_args = List.for_all (fun (x,y) -> CP.eq_sv x y) combine_args in
+          if not eq_args then
+            let fc_rule = RlFuncCall {
+                rfc_func_name = proc_decl.Cast.proc_name;
+                rfc_params = args;
+              } in
+            [fc_rule] else []
         else []
       ) |> List.concat
   else []
@@ -613,12 +618,12 @@ let choose_rule_numeric goal =
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
-  let () = x_binfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
-  let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
+  let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
+  let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter
       (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars in
-  let () = x_binfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
+  let () = x_tinfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     let var_formula = extract_var_f post cur_var in
@@ -649,11 +654,11 @@ let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
   let rs1 = choose_func_call goal in
-  (* let rs2 = choose_rule_rbind goal in *)
+  let rs2 = choose_rule_rbind goal in
   (* let rs2 = choose_rule_return goal in *)
-  (* let rs3 = choose_rule_unfold_pre goal in *)
+  let rs3 = choose_rule_unfold_pre goal in
   let rs4 = choose_rule_numeric goal in
-  rs1 @ rs4
+  rs1 @ rs2 @ rs3 @ rs4
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
   (* rs1 *)
