@@ -574,20 +574,20 @@ let check_one_var goal var =
     res
   | _ -> false
 
-let choose_rule_return goal =
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
-  let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
-  let vars = goal.gl_vars in
-  if check_res_var post_cond then
-    let candidates = vars |> List.filter (check_one_var goal) in
-    let () = x_binfo_hp (add_str "candidates " pr_vars) candidates no_pos in
-    let mk_return_rule var =
-      RlReturn {
-        return_var = var
-      } in
-    candidates |> List.map mk_return_rule
-  else []
+(* let choose_rule_return goal =
+ *   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
+ *   let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
+ *   let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+ *   let vars = goal.gl_vars in
+ *   if check_res_var post_cond then
+ *     let candidates = vars |> List.filter (check_one_var goal) in
+ *     let () = x_binfo_hp (add_str "candidates " pr_vars) candidates no_pos in
+ *     let mk_return_rule var =
+ *       RlReturn {
+ *         return_var = var
+ *       } in
+ *     candidates |> List.map mk_return_rule
+ *   else [] *)
 
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -670,16 +670,14 @@ let choose_rule_numeric goal =
   rules |> List.concat
 
 let choose_synthesis_rules goal : rule list =
-  (* let rs = choose_rule_assign goal in *)
-  (* let rs = List.filter not_identity_assign_rule rs in *)
-  (* rs *)
-  (* let rs1 = choose_func_call goal in
-   * let rs2 = choose_rule_rbind goal in *)
-  (* let rs2 = choose_rule_return goal in *)
-  (* let rs3 = choose_rule_unfold_pre goal in *)
+  let rs = choose_rule_assign goal in
+  let rs = List.filter not_identity_assign_rule rs in
+  let rs1 = choose_func_call goal in
+  let rs2 = choose_rule_rbind goal in
+  (* let rs3 = choose_rule_return goal in *)
+  let rs3 = choose_rule_unfold_pre goal in
   let rs4 = choose_rule_numeric goal in
-  rs4
-  (* rs1 @ rs2 @ rs3 @ rs4 *)
+  rs @ rs1 @ rs2 @ rs3 @ rs4
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
   (* rs2 *)
@@ -704,22 +702,16 @@ let split_hf (f: CF.formula) = match f with
  * Processing rules
  *********************************************************************)
 let process_rule_assign goal rassign =
-  let pre = goal.gl_pre_cond in
-  let lhs = rassign.ra_lhs in
-  let rhs = rassign.ra_rhs in
-  let res_var = CP.mkRes (CP.type_of_sv lhs) in
-  let n_rhs = CP.mkEqExp (CP.mkVar res_var no_pos) rhs no_pos in
-  let n_pre = CF.add_pure_formula_to_formula n_rhs pre in
-  let tmp_lhs = CP.fresh_spec_var lhs in
-  let n_post = CF.subst [(lhs, tmp_lhs); (res_var, lhs)] n_pre in
-  let () = x_binfo_hp (add_str "post_cond " pr_formula) n_post no_pos in
-  let ent_check, _ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
+  let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rhs no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+  let () = x_binfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
+  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
   match ent_check with
   | true -> mk_derivation_success goal (RlAssign rassign)
-  | false -> mk_derivation_fail goal (RlAssign rassign)
-    (* let post = goal.gl_post_cond in
-     * let sub_goal = mk_goal goal.gl_prog n_post post goal.gl_vars in
-     * mk_derivation_sub_goals goal (RlAssign rassign) [sub_goal] *)
+  | false -> let sub_goal = {goal with gl_pre_cond = n_pre} in
+    mk_derivation_subgoals goal (RlAssign rassign) [sub_goal]
 
 let subs_bind_write formula var field new_val data_decls =
   match formula with
@@ -829,18 +821,18 @@ let process_func_call goal rcore : derivation =
         mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
-let process_rule_return goal rule =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let var = rule.return_var in
-  let res_typ = CP.type_of_sv var in
-  let res = CP.mkRes res_typ in
-  let n_pf = CP.mkEqVar res var no_pos in
-  let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
-  if ent_check then
-    let () = x_binfo_pp "marking \n" no_pos in
-    mk_derivation_success goal (RlReturn rule)
-  else mk_derivation_fail goal (RlReturn rule)
+(* let process_rule_return goal rule =
+ *   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+ *   let var = rule.return_var in
+ *   let res_typ = CP.type_of_sv var in
+ *   let res = CP.mkRes res_typ in
+ *   let n_pf = CP.mkEqVar res var no_pos in
+ *   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+ *   let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+ *   if ent_check then
+ *     let () = x_binfo_pp "marking \n" no_pos in
+ *     mk_derivation_success goal (RlReturn rule)
+ *   else mk_derivation_fail goal (RlReturn rule) *)
 
 let process_rule_unfold_pre goal rule =
   let sub_goals = rule.n_goals in
@@ -851,7 +843,6 @@ let process_one_rule goal rule : derivation =
   | RlFuncCall rcore -> process_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
-  | RlReturn rule -> process_rule_return goal rule
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
 
 (*********************************************************************
@@ -878,7 +869,7 @@ let eliminate_useless_rules goal rules =
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
-    | RlReturn _ -> true
+    (* | RlReturn _ -> true *)
     | RlUnfoldPre _ -> true) rules
 
 (* compare func_call with others *)
@@ -900,7 +891,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
   | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
-  | RlReturn _ -> PriEqual
+  (* | RlReturn _ -> PriEqual *)
   | RlUnfoldPre _ -> PriEqual
 
 (* compare assign with others *)
@@ -921,7 +912,7 @@ let compare_rule_assign_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
   | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
-  | RlReturn _ -> PriEqual
+  (* | RlReturn _ -> PriEqual *)
   | RlUnfoldPre _ -> PriEqual
 
 (* compare wbind with others *)
@@ -941,7 +932,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
-  | RlReturn _ -> PriEqual
+  (* | RlReturn _ -> PriEqual *)
   | RlUnfoldPre _ -> PriEqual
 
 (* reordering rules *)
@@ -951,7 +942,7 @@ let compare_rule r1 r2 =
   | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
   | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
-  | RlReturn _ -> PriEqual
+  (* | RlReturn _ -> PriEqual *)
   | RlUnfoldPre _ -> PriEqual
 
 let reorder_rules goal rules =

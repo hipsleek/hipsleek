@@ -41,7 +41,7 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBind of rule_bind
-  | RlReturn of rule_return
+  (* | RlReturn of rule_return *)
   | RlUnfoldPre of rule_unfold_pre (* Currently assume unfold pre-cond *)
 
 
@@ -49,9 +49,9 @@ and rule_unfold_pre = {
   n_goals: goal list;
 }
 
-and rule_return = {
-  return_var: CP.spec_var;
-}
+(* and rule_return = {
+ *   return_var: CP.spec_var;
+ * } *)
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -236,7 +236,7 @@ let pr_rule rule = match rule with
   | RlBind rule -> if rule.rb_write then
       "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Write)"
     else "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Read)"
-  | RlReturn rule -> "RlReturn"
+  (* | RlReturn rule -> "RlReturn" *)
   | RlUnfoldPre _ -> "RlUnfoldPre"
 
 let rec pr_st st = match st with
