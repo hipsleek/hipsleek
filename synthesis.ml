@@ -56,6 +56,7 @@ and rule_return = {
 and rule_func_call = {
   rfc_func_name : string;
   rfc_params : CP.spec_var list;
+  rfc_substs : (CP.spec_var * CP.spec_var) list;
 }
 
 (* TODO: should we rename variables?? *)
