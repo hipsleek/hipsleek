@@ -451,13 +451,13 @@ let unify (pre_proc, post_proc) goal =
     let () = x_tinfo_hp (add_str "arg vars" pr_vars) ss_vars no_pos in
     ss_vars in
   let ss_args = args |> List.map (fun arg -> unify_var arg goal) in
-  let () = x_tinfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
+  let () = x_binfo_hp (add_str "tuple before" (pr_list pr_vars)) ss_args no_pos in
   let ss_args = filter_args_input ss_args in
   let ss_args = List.filter(fun list ->
       let n_list = CP.remove_dups_svl list in
       List.length n_list = List.length list
     ) ss_args in
-  let () = x_tinfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
+  let () = x_binfo_hp (add_str "tuple" (pr_list pr_vars)) ss_args no_pos in
   if ss_args != [] then
     ss_args |> List.map (fun args ->
         if List.for_all (fun x -> List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args then
@@ -480,9 +480,9 @@ let choose_func_call goal =
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
     let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
     let pre_cond = specs |> get_pre_cond |> rm_emp_formula in
-    let () = x_tinfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
+    let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
     let post_cond = specs |> get_post_cond |> rm_emp_formula in
-    let () = x_tinfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+    let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
     let rules = unify (pre_cond, post_cond) goal in
     rules
 
@@ -610,8 +610,8 @@ let choose_rule_numeric goal =
       | Int -> true
       | _ -> false) in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
-  let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
+  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
   let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
@@ -647,15 +647,15 @@ let choose_rule_numeric goal =
 let choose_synthesis_rules goal : rule list =
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
-  (* let rs1 = choose_func_call goal in *)
+  let rs1 = choose_func_call goal in
   (* let rs2 = choose_rule_rbind goal in *)
   (* let rs2 = choose_rule_return goal in *)
   (* let rs3 = choose_rule_unfold_pre goal in *)
-  let rs4 = choose_rule_numeric goal in
-  rs4
+  (* let rs4 = choose_rule_numeric goal in
+   * rs1 @ rs4 *)
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  (* rs1 *)
+  rs1
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -737,7 +737,7 @@ let process_rule_bind goal (bind:rule_bind) =
     let n_goal = {goal with gl_vars = vars} in
     mk_derivation_subgoals goal (RlBind bind) [n_goal]
 
-let process_rule_func_call goal rcore : derivation =
+let process_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
   let proc_decl = goal.gl_proc_decls |> List.find (fun x -> x.Cast.proc_name = fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -806,7 +806,7 @@ let process_rule_unfold_pre goal rule =
 
 let process_one_rule goal rule : derivation =
   match rule with
-  | RlFuncCall rcore -> process_rule_func_call goal rcore
+  | RlFuncCall rcore -> process_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
   | RlReturn rule -> process_rule_return goal rule
@@ -1036,9 +1036,10 @@ let synthesize_program goal : CA.exp option =
   let st = synthesize_one_goal goal in
   let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
-  match st_status with
-  | StValid st_core ->
-    let res = synthesize_st_core st_core in
-    let () = x_binfo_hp (add_str "res" pr_exp_opt) res no_pos in
-    res
-  | StUnkn _ -> None
+  None                          (* Leave synthesis the CAST code later *)
+  (* match st_status with
+   * | StValid st_core ->
+   *   let res = synthesize_st_core st_core in
+   *   let () = x_binfo_hp (add_str "res" pr_exp_opt) res no_pos in
+   *   res
+   * | StUnkn _ -> None *)

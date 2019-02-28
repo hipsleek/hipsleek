@@ -890,12 +890,14 @@ let infer_templ_defn prog pre post fun_name args =
   let () = x_tinfo_hp (add_str "re" SBProof.pr_ifds) ifd no_pos in
   let func_defns = ifd |> List.map (fun x -> x.SBProof.ifd_fdefns)
                    |> List.concat in
-  let func_defn = func_defns
-                  |> List.find (fun x -> x.SBCast.func_name = tmpl_name) in
-  let fdefn_body = match func_defn.SBCast.func_body with
-    | SBCast.FbForm e ->
-      let hip_exp = translate_back_exp e in
-      let () = x_tinfo_hp (add_str "hip_exp" Cprinter.string_of_formula_exp) hip_exp no_pos in
-      Some hip_exp
-    | _ -> None in
-  fdefn_body
+  try
+    let func_defn = func_defns
+                    |> List.find (fun x -> x.SBCast.func_name = tmpl_name) in
+    let fdefn_body = match func_defn.SBCast.func_body with
+      | SBCast.FbForm e ->
+        let hip_exp = translate_back_exp e in
+        let () = x_tinfo_hp (add_str "hip_exp" Cprinter.string_of_formula_exp) hip_exp no_pos in
+        Some hip_exp
+      | _ -> None in
+    fdefn_body
+  with _ -> None

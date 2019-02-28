@@ -33,8 +33,15 @@ int sum(node a)
 // ~>
 // x::node<v_1917,r_1918> * r_1918::ll<n3> & n3= n - 1 & k=n & x !=null.
 
-synthesize [node x, int k, node r, int y]
-x::node<v1,r2> * r2::ll<n2> & n = n2 + 1 & x!=null & y = n2
+// synthesize [node x, int k, node r, int y]
+// x::node<v1,r2> * r2::ll<n2> & n = n2 + 1 & x!=null & y = n2
+// ~>
+// x::ll<n> & x != null & k = n.
+// k = y + 1
+
+
+synthesize [node x, int k, node r2]
+x::node<v1,r2> * r2::ll<n2> & n = n2 + 1 & x!=null
 ~>
 x::ll<n> & x != null & k = n.
 // k = y + 1
