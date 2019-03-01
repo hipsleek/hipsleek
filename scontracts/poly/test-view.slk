@@ -22,3 +22,4 @@ expect Valid.
 checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
 print residue.
 expect Valid.
+expect Valid.

@@ -311,8 +311,9 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * 
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type_list * (typ option)) =
   let pr = string_of_spec_var_kind in
-  let pr2 = pr_pair string_of_tlist (pr_option pr) in
-  Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 tlist) k1 k2
+  let pr1 = string_of_tlist in
+  let pr2 = pr_pair pr1 (pr_option pr) in
+  Debug.no_3 "unify_type" pr pr pr1 pr2 unify_type_x k1 k2 tlist
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
   unify_type_modify true k1 k2 tlist
@@ -332,9 +333,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    | Named (n1, ls1), Named (n2, ls2) when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
-
-      (tl, Some (mkNamedTyp ~args:ls2 n2 ))
+    (* Need to unify the param list for polymorphic Named *)
+    | Named (n1, _), Named (n2, _) when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
+      (tl, Some (mkNamedTyp n2 ))
     | Named (n1, ls1), Named (n2, _) when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (tl, Some (mkNamedTyp ~args:ls1 n1))
     | Named (n1, []), Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
@@ -345,6 +346,24 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     (* need to find a long term solution *)
     | _, Named (n, _) when List.mem n map_related_names -> (tl, Some k1)
     | Named (n, _), _ when List.mem n map_related_names -> (tl, Some k2)
+    | Named (n1, ((t1::_) as tl1)), Named (n2, ((t2::_) as tl2)) ->
+      (* unify the type parameters. if the unification of
+         parameters is successful return (Some tk) along with
+         the updated type list.
+      *)
+      let rec unify_param tl1 tl2 tlist tk =
+        match tl1, tl2 with
+        | [], [] -> (tlist, Some tk)
+        | t1::_, [] | [], t1::_        -> (tl, None)
+        | t1::tl1, t2::tl2 ->
+          let n_tl, _ = unify_type t1 t2 tlist in
+          (n_tl, Some tk)
+      in
+      if sub_type (mkNamedTyp n1) (mkNamedTyp n2) then
+        unify_param tl1 tl2 tl k2
+      else if sub_type (mkNamedTyp n2) (mkNamedTyp n1) then
+        unify_param tl1 tl2 tl k1
+      else (tl, None)
     (* ******* end - temp hack ******** *)
     (* ******************************** *)
     | ty, Poly id  | Poly id, ty -> unify_poly unify repl_tlist id ty tl
@@ -625,7 +644,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   | Named (c, tl) ->
     (try
        let todo_unk = x_add I.look_up_data_def_raw prog.I.prog_data_decls c
-       in mkNamedTyp ~args:tl c
+       in mkNamedTyp ~args:(List.map (fun t0 -> trans_type prog t0 pos) tl) c
      with
      | Not_found ->
        (try

@@ -5,6 +5,6 @@ data nodep{
 }.
 
 
-checkentail x::nodep<3,t> |- x::nodep<3,t>.
+checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
 print residue.
 expect Valid.

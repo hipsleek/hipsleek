@@ -819,7 +819,14 @@ struct
     match t1,t2 with
     | UNK, _ -> true
     | Named (c1, tl1), Named (c2, tl2) ->
-      if cmp_typ t1 t2 then true
+      if (cmp_typ t1 t2) then (* true *)
+        let rec check_named_param tl1 tl2 =
+          match tl1, tl2 with
+          | [], t::_
+          | t::_, [] -> false
+          | [], []   -> true
+          | t1::tail1, t2::tail2 -> (cmp_typ t1 t2) && (check_named_param tail1 tail2) in
+        check_named_param tl1 tl2
       else if c1="" then true
       else
         begin
