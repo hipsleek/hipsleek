@@ -1,0 +1,10 @@
+// polymorphic node
+data nodep[T]{
+   `T val;
+   nodep[`T] next;
+}.
+
+
+checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
