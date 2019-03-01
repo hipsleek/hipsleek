@@ -709,6 +709,11 @@ let check_entail ?(residue=false) prog ante conseq =
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
 
+let check_equal prog first second =
+  let forward, _ = check_entail prog first second in
+  let backward, _ = check_entail prog second first in
+  forward && backward
+
 let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
   let get_h_formula (f:CF.formula) = match f with
     | Base bf -> bf.formula_base_heap
