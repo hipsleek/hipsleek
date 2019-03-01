@@ -7344,6 +7344,13 @@ and insert_dummy_vars_x (ce : C.exp) (pos : loc) : C.exp =
               C.exp_block_pos = pos; }
           in block_e))
 
+and set_typ tlist dname vname =
+  try
+    let vtyp_info = snd (List.find (fun (vv, _) -> eq_str vv vname) tlist) in
+    let vtyp      = vtyp_info.sv_info_kind in
+    vtyp
+  with _ -> mkNamedTyp dname
+
 (* and case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): bool = *)
 (*   Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_typed_spec_var)   *)
 (*       Cprinter.string_of_struc_formula string_of_bool *)
@@ -8431,7 +8438,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
             with Not_found ->
               let labels = List.map (fun _ -> LO.unlabelled) exps in
               let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
-              let new_v = CP.SpecVar (mkNamedTyp c, v, p) in
+              let new_v = CP.SpecVar (set_typ tl c v, v, p) in
+              let () = y_binfo_hp (add_str "new_v typ" Cprinter.string_of_spec_var) new_v in
               (* An Hoa : find the holes here! *)
               let rec collect_holes vars n = (match vars with
                   | [] -> []
