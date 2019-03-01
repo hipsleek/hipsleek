@@ -108,7 +108,7 @@ let choose_rassign_pure var goal : rule list =
     )
   | _ -> []
 
-let find_equal_var var goal =
+let find_equal_var goal var =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let all_vars = goal.gl_vars in
@@ -616,9 +616,21 @@ let framing_rule goal =
   let n_goal = List.fold_left (fun x y -> framing_var_goal x y) goal eq_vars in
   n_goal
 
+let choose_rule_instantiate goal =
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+  let exists_vars = CF.get_exists post |> List.filter is_node_var in
+  let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+  let helper var = let eq_vars = find_equal_var goal var in
+    eq_vars |> List.map (fun x -> RlInstantiate {
+        rli_lhs = var;    rli_rhs = x;
+      }) in
+  exists_vars |> List.map helper |> List.concat
+
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let rs = choose_rule_f_write goal in
+  let rs = choose_rule_instantiate goal in
+  let rs2 = choose_rule_f_write goal in
   (* let rs = choose_rule_assign goal in
    * let rs = List.filter not_identity_assign_rule rs in *)
   (* let rs1 = choose_func_call goal in *)
@@ -629,7 +641,7 @@ let choose_synthesis_rules goal : rule list =
   (* rs @ rs1 @ rs2 @ rs3 @ rs4 *)
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  rs
+  rs @ rs2
 
 (*********************************************************************
  * Processing rules
@@ -752,6 +764,15 @@ let process_rule_unfold_pre goal rule =
   let sub_goals = rule.n_goals in
   mk_derivation_subgoals goal (RlUnfoldPre rule) sub_goals
 
+let process_rule_instantiate goal rule =
+  let subst = [(rule.rli_lhs, rule.rli_rhs)] in
+  let n_post = CF.subst_all subst goal.gl_post_cond in
+  let n_post = remove_exists_var n_post rule.rli_rhs in
+  let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  (* report_error no_pos "incomplet" *)
+  let subgoal = {goal with gl_post_cond = n_post} in
+  mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
+
 let process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_func_call goal rcore
@@ -759,6 +780,7 @@ let process_one_rule goal rule : derivation =
   | RlBind bind -> process_rule_bind goal bind
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
   | RlFRead rule -> process_rule_f_read goal rule
+  | RlInstantiate rule -> process_rule_instantiate goal rule
 
 (*********************************************************************
  * Rule utilities
@@ -785,6 +807,7 @@ let eliminate_useless_rules goal rules =
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
     | RlFRead _ -> true
+    | RlInstantiate _ -> true
     | RlUnfoldPre _ -> true) rules
 
 (* compare func_call with others *)
@@ -808,6 +831,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
 
 (* compare assign with others *)
 
@@ -829,6 +853,7 @@ let compare_rule_assign_vs_other r1 r2 =
   | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
 
 (* compare wbind with others *)
 
@@ -849,6 +874,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
 
 (* reordering rules *)
 
@@ -859,6 +885,7 @@ let compare_rule r1 r2 =
   | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =

@@ -1603,7 +1603,7 @@ and disj_of_list (xs : formula list) pos : formula =
   | x::xs -> helper xs x
 
 
-and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets) 
+and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (vp: CVP.vperm_sets)
     (t : t_formula) (fl : flow_formula) (a : one_formula list) (pos : loc) lbl: formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval) then mkFalse fl pos
   else
@@ -4309,7 +4309,7 @@ and elim_exists_x (f0 : formula) : formula = match f0 with
     let ef2 = elim_exists_x f2 in
     mkOr ef1 ef2 pos
   | Base _ -> f0
-  | Exists ({ 
+  | Exists ({
       formula_exists_qvars = qvar :: rest_qvars;
       formula_exists_heap = h;
       formula_exists_vperm = vp;
@@ -20633,4 +20633,3 @@ let rec disable_imm_h_formula hf = match hf with
     Star {st with h_formula_star_h1 = disable_imm_h_formula st.h_formula_star_h1;
                   h_formula_star_h2 = disable_imm_h_formula st.h_formula_star_h2}
   | _ -> report_error no_pos "disable_imm_h_formula not handled case"
-

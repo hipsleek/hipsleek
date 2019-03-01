@@ -42,7 +42,13 @@ type rule =
   | RlAssign of rule_assign
   | RlBind of rule_bind
   | RlFRead of rule_bind_read
-  | RlUnfoldPre of rule_unfold_pre (* Currently assume unfold pre-cond *)
+  | RlUnfoldPre of rule_unfold_pre
+  | RlInstantiate of rule_instantiate
+
+and rule_instantiate = {
+  rli_lhs: CP.spec_var;
+  rli_rhs: CP.spec_var;
+}
 
 and rule_unfold_pre = {
   n_goals: goal list;
@@ -235,6 +241,7 @@ let pr_rule rule = match rule with
   | RlBind rule -> "RlBind: " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead"
   | RlUnfoldPre _ -> "RlUnfoldPre"
+  | RlInstantiate _ -> "RlInstantiate"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -457,29 +464,6 @@ let get_post_cond (struc_f: CF.struc_formula) =
     bf.formula_struc_continuation |> Gen.unsome |> helper
   | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
 
-(* let rec simplify_equal_vars (formula:CF.formula) : CF.formula = match formula with
- *   | Base bf ->
- *     let pf = bf.formula_base_pure |> Mcpure.pure_of_mix in
- *     let eq_vars = CP.pure_ptr_equations_aux false pf in
- *     let n_hf = CF.h_subst eq_vars bf.formula_base_heap in
- *     let h_vars = CF.h_fv bf.formula_base_heap in
- *     let n_pf = pf |> CP.subst eq_vars |> CP.elim_idents in
- *     Base {bf with formula_base_heap = n_hf;
- *                   formula_base_pure = mix_of_pure n_pf}
- *   | Or bf -> let f1 = bf.formula_or_f1 in
- *     let f2 = bf.formula_or_f2 in
- *     let n_f1 = simplify_equal_vars f1 in
- *     let n_f2 = simplify_equal_vars f2 in
- *     Or {bf with formula_or_f1 = n_f1;
- *                 formula_or_f2 = n_f2}
- *   | Exists bf ->
- *     let pf = bf.formula_exists_pure |> Mcpure.pure_of_mix in
- *     let eq_vars = CP.pure_ptr_equations_aux false pf in
- *     let n_hf = CF.h_subst eq_vars bf.formula_exists_heap in
- *     let n_pf = pf |> CP.subst eq_vars |> CP.elim_idents in
- *     Exists {bf with formula_exists_heap = n_hf;
- *                   formula_exists_pure = mix_of_pure n_pf} *)
-
 let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
   | IConst iconst -> Iast.IntLit
                        { exp_int_lit_val = iconst.exp_iconst_val;
@@ -670,7 +654,6 @@ let rec extract_var_pf (f: CP.formula) var = match f with
     else res1
   | _ -> None
 
-
 let create_residue vars prog =
   let name = "T" ^ (string_of_int !rel_num) in
   let () = if !rel_num = 0 then
@@ -722,3 +705,28 @@ let need_unfold_rhs prog vn=
   let vdef = look_up_view vn in
   [(vn.CF.h_formula_view_name,vdef.Cast.view_un_struc_formula, vdef.Cast.view_vars)]
 
+let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | Named _ -> true
+  | _ -> false
+
+let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | Int -> true
+  | _ -> false
+
+let rec remove_exists_var (formula:CF.formula) var = match formula with
+  | Base _ -> formula
+  | Exists ({formula_exists_qvars = qvars;
+             formula_exists_heap =  h;
+             formula_exists_vperm = vp;
+             formula_exists_pure = p;
+             formula_exists_type = t;
+             formula_exists_and = a;
+             formula_exists_flow = fl;
+             formula_exists_label = lbl;
+             formula_exists_pos = pos } as bf) ->
+    let n_qvars = List.filter (fun x -> not(CP.eq_sv x var)) qvars in
+    if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
+    else Exists {bf with CF.formula_exists_qvars = n_qvars}
+  | Or bf -> let n_f1 = remove_exists_var bf.formula_or_f1 var in
+    let n_f2 = remove_exists_var bf.formula_or_f2 var in
+    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
