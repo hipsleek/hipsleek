@@ -149,10 +149,8 @@ let find_equal_var var goal =
   equal_vars
 
 let choose_rule_field_dnode dn1 dn2 var goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let var_list = goal.gl_vars in
-  let prog = goal.gl_prog in
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let var_list, prog = goal.gl_vars, goal.gl_prog in
   let data_decls = prog.Cast.prog_data_decls in
   let () = x_binfo_hp (add_str "pre-dnode" pr_formula) pre no_pos in
   let () = x_binfo_hp (add_str "post-dnode" pr_formula) post no_pos in
@@ -165,61 +163,21 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let fields = List.map fst data.Cast.data_fields in
   let triple = List.combine pre_post fields in
   let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
-  let () = x_binfo_hp (add_str "triple" string_of_int) (List.length triple)
+  let () = x_tinfo_hp (add_str "triple" string_of_int) (List.length triple)
       no_pos in
   let helper dif_field =
     let pre_post = fst dif_field in
-    let post_val_var = snd pre_post in
-    let eq_vars = find_equal_var post_val_var goal in
-    let eq_vars = List.filter (fun x -> not(CP.eq_spec_var x var)) eq_vars in
-    if eq_vars != [] then
-      let eq_var = List.hd eq_vars in
-      let field = snd dif_field in
-      let () = x_binfo_hp (add_str "eq_var" pr_var) eq_var no_pos in
-      let rule = RlBind {
-          rb_bound_var = var;
-          rb_field = field;
-          rb_other_var = eq_var;
-          rb_write = false;
-        } in
-      [rule]
+    let n_var = snd pre_post in
+    let () = x_binfo_hp (add_str "var" (pr_pair pr_var pr_var)) pre_post no_pos in
+    let field = snd dif_field in
+    if List.exists (fun x -> CP.eq_sv x n_var) goal.gl_vars then
+      let rule = RlBind { rb_bound_var = var;
+                          rb_field = field;
+                          rb_other_var = n_var;
+                        } in [rule]
     else [] in
-  let pure_rules dif_field =
-    let df_name = dif_field |> snd in
-    let n_name = snd df_name in
-    let n_var = CP.mk_typed_spec_var (fst df_name) n_name in
-    let var_list = var_list @ [n_var] in
-    let pre_val = dif_field |> fst |> fst in
-    let post_val = dif_field |> fst |> snd in
-    let n_pre_pure = CP.mkEqVar n_var pre_val no_pos in
-    let n_post_pure = CP.mkEqVar n_var post_val no_pos in
-    let n_pre = CF.add_pure_formula_to_formula n_pre_pure pre in
-    let n_post = CF.add_pure_formula_to_formula n_post_pure post in
-    let n_goal = mk_goal prog n_pre n_post var_list in
-    let n_rule = choose_rassign_pure n_var n_goal in
-    if n_rule = [] then []
-    else
-      let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) n_rule no_pos in
-      let eq_rule = List.hd n_rule in
-      match eq_rule with
-      | RlAssign rassgn ->
-        begin
-          match rassgn.ra_rhs with
-          | CP.Var (sv, _) -> 
-            let rule = RlBind {
-                rb_bound_var = var;
-                rb_field = (fst df_name, n_name);
-                rb_other_var = sv;
-                rb_write = true;
-              } in [rule]
-          | _ -> []
-        end
-      | _ -> []
-  in
-  (* let pure_rules = triple |> List.map pure_rules |> List.concat in *)
-  let pure_rules = [] in
   let eq_var_rules = triple |> List.map helper |> List.concat in
-  pure_rules @ eq_var_rules
+  eq_var_rules
 
 
 let subtract_var var formula = match formula with
@@ -242,71 +200,63 @@ let subtract_var var formula = match formula with
     CF.Base {bf with formula_base_heap = n_hf}
   | _ -> formula
 
-let rec choose_rassign_data cur_var goal =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
+let rec choose_rassign_data goal cur_var =
+  let pre,post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
-  let () = x_binfo_hp (add_str "PRE" pr_formula) pre no_pos in
-  let () = x_binfo_hp (add_str "POST" pr_formula) post no_pos in
+  let () = x_tinfo_hp (add_str "PRE" pr_formula) pre no_pos in
+  let () = x_tinfo_hp (add_str "POST" pr_formula) post no_pos in
   let aux_bf hf1 hf2 goal f_var1 f_var2 =
     let var_list = goal.gl_vars in
     let prog = goal.gl_prog in
     match hf1, hf2 with
     | CF.DataNode dnode1, CF.DataNode dnode2 ->
       choose_rule_field_dnode dnode1 dnode2 cur_var goal
-    | CF.DataNode dnode, CF.ViewNode vnode ->
-      let () = x_binfo_pp "ViewNode case" no_pos in
-      let view_name = vnode.CF.h_formula_view_name in
-      let views = prog.Cast.prog_view_decls in
-      let n_f2 = do_unfold_view_vnode prog f_var2 in
-      let () = x_binfo_hp (add_str "n_f2" (pr_list pr_formula)) n_f2 no_pos in
-      let case_rules case =
-        let n_goal = {goal with gl_post_cond = case} in
-        choose_rassign_data cur_var n_goal in
-      let rules = n_f2 |> List.map case_rules |> List.concat in
-      let () = x_binfo_hp (add_str "cases rules" pr_rules) rules no_pos in
-      rules
+    (* | CF.DataNode dnode, CF.ViewNode vnode ->
+     *   let () = x_binfo_pp "ViewNode case" no_pos in
+     *   let view_name = vnode.CF.h_formula_view_name in
+     *   let views = prog.Cast.prog_view_decls in
+     *   let n_f2 = do_unfold_view_vnode prog f_var2 in
+     *   let () = x_binfo_hp (add_str "n_f2" (pr_list pr_formula)) n_f2 no_pos in
+     *   let case_rules case =
+     *     let n_goal = {goal with gl_post_cond = case} in
+     *     choose_rassign_data n_goal cur_var in
+     *   let rules = n_f2 |> List.map case_rules |> List.concat in
+     *   let () = x_binfo_hp (add_str "cases rules" pr_rules) rules no_pos in
+     *   rules *)
     | _ -> [] in
   let aux f_var1 f_var2 goal =
     let var_list = goal.gl_vars in
     let field_rules = match f_var1, f_var2 with
       | CF.Base bf1, CF.Base bf2 ->
-        let hf1 = bf1.CF.formula_base_heap in
-        let hf2 = bf2.CF.formula_base_heap in
+        let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_base_heap in
         aux_bf hf1 hf2 goal f_var1 f_var2
       | CF.Base bf1, CF.Exists bf2 ->
-        let hf1 = bf1.CF.formula_base_heap in
-        let hf2 = bf2.CF.formula_exists_heap in
+        let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_exists_heap in
         aux_bf hf1 hf2 goal f_var1 f_var2
       | _ -> [] in
     field_rules in
   match pre, post with
-  | CF.Base _, CF.Base _
-  | CF.Base _, CF.Exists _
-  | CF.Exists _, CF.Base _
-  | CF.Exists _, CF.Exists _ ->
+  | CF.Base _, CF.Base _    | CF.Base _, CF.Exists _
+  | CF.Exists _, CF.Base _  | CF.Exists _, CF.Exists _ ->
     let f_var1 = extract_var_f pre cur_var in
     let f_var2 = extract_var_f post cur_var in
     if f_var1 != None && f_var2 != None then
-      let f_var1 = Gen.unsome f_var1 in
-      let f_var2 = Gen.unsome f_var2 in
-      let () = x_binfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
-      let () = x_binfo_hp (add_str "fvar2" pr_formula) f_var2 no_pos in
+      let f_var1, f_var2 = Gen.unsome f_var1, Gen.unsome f_var2 in
+      let () = x_tinfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
+      let () = x_tinfo_hp (add_str "fvar2" pr_formula) f_var2 no_pos in
       aux f_var1 f_var2 goal
     else []
   | CF.Base _, CF.Or disjs ->
-    let f1 = disjs.CF.formula_or_f1 in
-    let f2 = disjs.CF.formula_or_f2 in
+    let f1, f2 = disjs.CF.formula_or_f1, disjs.CF.formula_or_f2 in
     let goal1 = {goal with gl_post_cond = f1} in
     let goal2 = {goal with gl_post_cond = f2} in
-    let rule1 = choose_rassign_data cur_var goal1 in
-    let rule2 = choose_rassign_data cur_var goal2 in
+    let rule1 = choose_rassign_data goal1 cur_var in
+    let rule2 = choose_rassign_data goal2 cur_var in
     rule1@rule2
   | _ -> []
 
 let frame_var var formula prog = match formula with
-  | CF.Base bf ->
-    let hf = bf.CF.formula_base_heap in
+  | CF.Base bf -> let hf = bf.CF.formula_base_heap in
     let rec helper hf = match hf with
       | CF.DataNode dnode ->
         let dnode_var = dnode.CF.h_formula_data_node in
@@ -322,15 +272,21 @@ let frame_var var formula prog = match formula with
               args_w_fields in
           (CF.HEmp, args_w_fields)
         else (hf, [])
-      | CF.Star sf ->
-        let n_f1, vars1 = helper sf.CF.h_formula_star_h1 in
+      | CF.Star sf -> let n_f1, vars1 = helper sf.CF.h_formula_star_h1 in
         let n_f2, vars2 = helper sf.CF.h_formula_star_h2 in
         (Star {sf with h_formula_star_h1 = n_f1;
-                      h_formula_star_h2 = n_f2}, vars1@vars2)
+                       h_formula_star_h2 = n_f2}, vars1@vars2)
       | _ -> (hf, []) in
     let n_hf, vars = helper hf in
     (CF.Base {bf with formula_base_heap = n_hf}, vars)
   | _ -> (formula, [])
+
+let choose_rule_f_write goal : rule list =
+  let vars = List.filter (fun x -> match CP.type_of_sv x with
+      | Named _ -> true
+      | _ -> false) goal.gl_vars in
+  let rules = vars |> List.map (choose_rassign_data goal) in
+  rules |> List.concat
 
 let choose_rule_assign goal : rule list =
   let vars = goal.gl_vars in
@@ -343,7 +299,7 @@ let choose_rule_assign goal : rule list =
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ ->
-      choose_rassign_data var goal
+      choose_rassign_data goal var
     | _ -> let () = x_binfo_pp "marking \n" no_pos in
       []  in
   let rules = List.map choose_rule vars in
@@ -503,7 +459,7 @@ let choose_func_call goal =
     let rules = unify (pre_cond, post_cond) goal in
     rules
 
-let choose_rule_rbind goal =
+let choose_rule_f_read goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
   let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
   let rec helper_hf (hf:CF.h_formula) = match hf with
@@ -537,57 +493,33 @@ let choose_rule_rbind goal =
       match arg_f with
       | None -> []
       | Some arg_f -> if CF.is_emp_formula arg_f then []
-        else let rbind = RlBind {
-            rb_bound_var = var;
-            rb_field = field;
-            rb_other_var = arg;
-            rb_write = false;
+        else let rbind = RlFRead {
+            rbr_bound_var = var;
+            rbr_field = field;
+            rbr_value = arg;
           } in [rbind] in
     d_arg_pairs |> List.map helper_arg |> List.concat in
   let rules = List.map helper_triple triples |> List.concat in
   let () = x_binfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
   rules
 
-let check_res_var post_cond =
-  let all_vars = CF.fv post_cond in
-  let vars_types = all_vars |> List.map CP.type_of_sv
-                   |> Gen.BList.remove_dups_eq (fun x y -> x = y) in
-  let res_vars = vars_types |> List.map CP.mkRes in
-  if List.exists (fun x -> List.exists (fun y -> CP.eq_spec_var x y) all_vars)
-      res_vars then true else false
-
-let check_one_var goal var =
-  let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
-  let res_var = CF.fv post_cond
-                |> List.filter (fun x -> (CP.name_of_sv x) = res_name)
-              |> List.hd in
-  let res_f = extract_var_f post_cond res_var in
-  let var_f = extract_var_f pre_cond var in
-  match res_f, var_f with
-  | Some f1, Some f2 ->
-    let () = x_binfo_hp (add_str "f1 " pr_formula) f1 no_pos in
-    let () = x_binfo_hp (add_str "f2 " pr_formula) f2 no_pos in
-    let conseq_pf = CP.mkEqVar res_var var no_pos in
-    let conseq = CF.mkBase_simp (CF.HEmp) (mix_of_pure conseq_pf) in
-    let ante = add_formula_to_formula f1 f2 in
-    let res, _ = SB.check_entail goal.gl_prog ante conseq in
-    res
-  | _ -> false
-
-(* let choose_rule_return goal =
+(* let check_one_var goal var =
  *   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
- *   let () = x_binfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
- *   let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
- *   let vars = goal.gl_vars in
- *   if check_res_var post_cond then
- *     let candidates = vars |> List.filter (check_one_var goal) in
- *     let () = x_binfo_hp (add_str "candidates " pr_vars) candidates no_pos in
- *     let mk_return_rule var =
- *       RlReturn {
- *         return_var = var
- *       } in
- *     candidates |> List.map mk_return_rule
- *   else [] *)
+ *   let res_var = CF.fv post_cond
+ *                 |> List.filter (fun x -> (CP.name_of_sv x) = res_name)
+ *               |> List.hd in
+ *   let res_f = extract_var_f post_cond res_var in
+ *   let var_f = extract_var_f pre_cond var in
+ *   match res_f, var_f with
+ *   | Some f1, Some f2 ->
+ *     let () = x_binfo_hp (add_str "f1 " pr_formula) f1 no_pos in
+ *     let () = x_binfo_hp (add_str "f2 " pr_formula) f2 no_pos in
+ *     let conseq_pf = CP.mkEqVar res_var var no_pos in
+ *     let conseq = CF.mkBase_simp (CF.HEmp) (mix_of_pure conseq_pf) in
+ *     let ante = add_formula_to_formula f1 f2 in
+ *     let res, _ = SB.check_entail goal.gl_prog ante conseq in
+ *     res
+ *   | _ -> false *)
 
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -642,7 +574,7 @@ let choose_rule_numeric goal =
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter
       (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars in
-  let () = x_tinfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
+  let () = x_binfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
     let var_formula = extract_var_f post cur_var in
@@ -670,17 +602,18 @@ let choose_rule_numeric goal =
   rules |> List.concat
 
 let choose_synthesis_rules goal : rule list =
-  let rs = choose_rule_assign goal in
-  let rs = List.filter not_identity_assign_rule rs in
-  let rs1 = choose_func_call goal in
-  let rs2 = choose_rule_rbind goal in
-  (* let rs3 = choose_rule_return goal in *)
-  let rs3 = choose_rule_unfold_pre goal in
-  let rs4 = choose_rule_numeric goal in
-  rs @ rs1 @ rs2 @ rs3 @ rs4
+  let rs = choose_rule_f_write goal in
+  (* let rs = choose_rule_assign goal in
+   * let rs = List.filter not_identity_assign_rule rs in *)
+  (* let rs1 = choose_func_call goal in *)
+  (* let rs2 = choose_rule_f_read goal in
+   * let rs3 = choose_rule_return goal in *)
+  (* let rs3 = choose_rule_unfold_pre goal in *)
+  (* let rs4 = choose_rule_numeric goal in *)
+  (* rs @ rs1 @ rs2 @ rs3 @ rs4 *)
   (* rs @ rs1 @ rs2 @ rs3 *)
   (* rs2 @ rs1 *)
-  (* rs2 *)
+  rs
 
 let split_hf (f: CF.formula) = match f with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -718,18 +651,15 @@ let subs_bind_write formula var field new_val data_decls =
   | Base bf ->
     let hf = bf.CF.formula_base_heap in
     let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
-    let rec helper hf =
-      match hf with
-      | DataNode dnode ->
-        let data_var = dnode.h_formula_data_node in
+    let rec helper hf = match hf with
+      | DataNode dnode -> let data_var = dnode.h_formula_data_node in
         let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf
             no_pos in
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
           (DataNode n_dnode)
         else hf
-      | Star sf ->
-        let n_h1 = helper sf.CF.h_formula_star_h1 in
+      | Star sf -> let n_h1 = helper sf.CF.h_formula_star_h1 in
         let n_h2 = helper sf.CF.h_formula_star_h2 in
         Star {sf with h_formula_star_h1 = n_h1;
                       h_formula_star_h2 = n_h2}
@@ -738,23 +668,20 @@ let subs_bind_write formula var field new_val data_decls =
   | _ -> formula
 
 let process_rule_bind goal (bind:rule_bind) =
-  if (bind.rb_write) then
-    let pre = goal.gl_pre_cond in
-    let var = bind.rb_bound_var in
-    let field = bind.rb_field in
-    let rhs = bind.rb_other_var in
-    let prog = goal.gl_prog in
-    let data_decls = prog.prog_data_decls in
-    let n_post = subs_bind_write pre var field rhs data_decls in
-    let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
-    let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
-    match ent_check with
-    | true -> mk_derivation_success goal (RlBind bind)
-    | false -> mk_derivation_fail goal (RlBind bind)
-  else
-    let vars = [bind.rb_other_var] @ goal.gl_vars |> CP.remove_dups_svl in
+  let pre, var = goal.gl_pre_cond, bind.rb_bound_var in
+  let field, prog = bind.rb_field, goal.gl_prog in
+  let rhs, data_decls = bind.rb_other_var, prog.prog_data_decls in
+  let n_post = subs_bind_write pre var field rhs data_decls in
+  let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
+  let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
+  match ent_check with
+  | true -> mk_derivation_success goal (RlBind bind)
+  | false -> mk_derivation_fail goal (RlBind bind)
+
+let process_rule_f_read goal (rule:rule_bind_read) =
+    let vars = [rule.rbr_value] @ goal.gl_vars |> CP.remove_dups_svl in
     let n_goal = {goal with gl_vars = vars} in
-    mk_derivation_subgoals goal (RlBind bind) [n_goal]
+    mk_derivation_subgoals goal (RlFRead rule) [n_goal]
 
 let process_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
@@ -821,19 +748,6 @@ let process_func_call goal rcore : derivation =
         mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
-(* let process_rule_return goal rule =
- *   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
- *   let var = rule.return_var in
- *   let res_typ = CP.type_of_sv var in
- *   let res = CP.mkRes res_typ in
- *   let n_pf = CP.mkEqVar res var no_pos in
- *   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
- *   let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
- *   if ent_check then
- *     let () = x_binfo_pp "marking \n" no_pos in
- *     mk_derivation_success goal (RlReturn rule)
- *   else mk_derivation_fail goal (RlReturn rule) *)
-
 let process_rule_unfold_pre goal rule =
   let sub_goals = rule.n_goals in
   mk_derivation_subgoals goal (RlUnfoldPre rule) sub_goals
@@ -844,6 +758,7 @@ let process_one_rule goal rule : derivation =
   | RlAssign rassign -> process_rule_assign goal rassign
   | RlBind bind -> process_rule_bind goal bind
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
+  | RlFRead rule -> process_rule_f_read goal rule
 
 (*********************************************************************
  * Rule utilities
@@ -869,7 +784,7 @@ let eliminate_useless_rules goal rules =
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
-    (* | RlReturn _ -> true *)
+    | RlFRead _ -> true
     | RlUnfoldPre _ -> true) rules
 
 (* compare func_call with others *)
@@ -891,7 +806,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
   | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
-  (* | RlReturn _ -> PriEqual *)
+  | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
 
 (* compare assign with others *)
@@ -912,7 +827,7 @@ let compare_rule_assign_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
   | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
-  (* | RlReturn _ -> PriEqual *)
+  | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
 
 (* compare wbind with others *)
@@ -932,7 +847,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
-  (* | RlReturn _ -> PriEqual *)
+  | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
 
 (* reordering rules *)
@@ -942,7 +857,7 @@ let compare_rule r1 r2 =
   | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
   | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
-  (* | RlReturn _ -> PriEqual *)
+  | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
 
 let reorder_rules goal rules =
@@ -1034,35 +949,32 @@ let synthesize_st_core st =
       }
     in Some assign
   | RlBind rbind ->
-    if rbind.rb_write then
-      let bvar = rbind.rb_bound_var in
-      let bfield = rbind.rb_field in
-      let rhs = rbind.rb_other_var in
-      let typ = CP.type_of_sv rhs in
-      let rhs_var = Cast.Var {
-          Cast.exp_var_type = CP.type_of_sv rhs;
-          Cast.exp_var_name = CP.name_of_sv rhs;
-          Cast.exp_var_pos = no_pos;
-        } in
-      let (typ, f_name) = bfield in
-      let body = Cast.Assign {
-          Cast.exp_assign_lhs = f_name;
-          Cast.exp_assign_rhs = rhs_var;
-          Cast.exp_assign_pos = no_pos;
-        } in
-      let bexp = Cast.Bind {
-          exp_bind_type = typ;
-          exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
-          exp_bind_fields = [bfield];
-          exp_bind_body = body;
-          exp_bind_imm = CP.NoAnn;
-          exp_bind_param_imm = [];
-          exp_bind_read_only = false;
-          exp_bind_path_id = (-1, "bind");
-          exp_bind_pos = no_pos;
-        } in
-      Some bexp
-    else None
+    let bvar = rbind.rb_bound_var in
+    let bfield = rbind.rb_field in
+    let rhs = rbind.rb_other_var in
+    let typ = CP.type_of_sv rhs in
+    let rhs_var = Cast.Var {
+        Cast.exp_var_type = CP.type_of_sv rhs;
+        Cast.exp_var_name = CP.name_of_sv rhs;
+        Cast.exp_var_pos = no_pos;
+      } in
+    let (typ, f_name) = bfield in
+    let body = Cast.Assign {
+        Cast.exp_assign_lhs = f_name;
+        Cast.exp_assign_rhs = rhs_var;
+        Cast.exp_assign_pos = no_pos;
+      } in
+    let bexp = Cast.Bind {
+        exp_bind_type = typ;
+        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
+        exp_bind_fields = [bfield];
+        exp_bind_body = body;
+        exp_bind_imm = CP.NoAnn;
+        exp_bind_param_imm = [];
+        exp_bind_read_only = false;
+        exp_bind_path_id = (-1, "bind");
+        exp_bind_pos = no_pos;
+      } in Some bexp
   | _ -> None
 
 let synthesize_program goal : CA.exp option =

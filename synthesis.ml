@@ -41,17 +41,12 @@ type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
   | RlBind of rule_bind
-  (* | RlReturn of rule_return *)
+  | RlFRead of rule_bind_read
   | RlUnfoldPre of rule_unfold_pre (* Currently assume unfold pre-cond *)
-
 
 and rule_unfold_pre = {
   n_goals: goal list;
 }
-
-(* and rule_return = {
- *   return_var: CP.spec_var;
- * } *)
 
 and rule_func_call = {
   rfc_func_name : string;
@@ -59,12 +54,16 @@ and rule_func_call = {
   rfc_substs : (CP.spec_var * CP.spec_var) list;
 }
 
-(* TODO: should we rename variables?? *)
 and rule_bind = {
   rb_bound_var: CP.spec_var;
   rb_field: typed_ident;
   rb_other_var: CP.spec_var;
-  rb_write: bool;
+}
+
+and rule_bind_read = {
+  rbr_bound_var: CP.spec_var;
+  rbr_field: typed_ident;
+  rbr_value: CP.spec_var;
 }
 
 and rule_assign = {
@@ -233,10 +232,8 @@ let pr_rule_bind rule =
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBind rule -> if rule.rb_write then
-      "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Write)"
-    else "RlBind " ^ "(" ^ (pr_rule_bind rule) ^ "," ^ "Read)"
-  (* | RlReturn rule -> "RlReturn" *)
+  | RlBind rule -> "RlBind: " ^ (pr_rule_bind rule)
+  | RlFRead rule -> "RlFRead"
   | RlUnfoldPre _ -> "RlUnfoldPre"
 
 let rec pr_st st = match st with
