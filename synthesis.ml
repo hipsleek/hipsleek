@@ -13,9 +13,11 @@ let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
+let pr_pf = Cprinter.string_of_pure_formula
 let rel_num = ref 0
 let res_num = ref 0
 let unfold_num = ref 0
+let unfold_post_num = ref 0
 let unk_hps = ref ([] : Cast.hp_decl list)
 (*********************************************************************
  * Data structures
@@ -43,6 +45,7 @@ type rule =
   | RlBind of rule_bind
   | RlFRead of rule_bind_read
   | RlUnfoldPre of rule_unfold_pre
+  | RlUnfoldPost of rule_unfold_post
   | RlInstantiate of rule_instantiate
 
 and rule_instantiate = {
@@ -51,7 +54,11 @@ and rule_instantiate = {
 }
 
 and rule_unfold_pre = {
-  n_goals: goal list;
+  n_pre_goals: goal list;
+}
+
+and rule_unfold_post = {
+  rp_case_goal: goal;
 }
 
 and rule_func_call = {
@@ -240,7 +247,8 @@ let pr_rule rule = match rule with
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBind rule -> "RlBind: " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead"
-  | RlUnfoldPre _ -> "RlUnfoldPre"
+  | RlUnfoldPre rule -> "RlUnfoldPre" ^ (rule.n_pre_goals |> pr_list pr_goal)
+  | RlUnfoldPost rule -> "RlUnfoldPost" ^ (rule.rp_case_goal |> pr_goal)
   | RlInstantiate _ -> "RlInstantiate"
 
 let rec pr_st st = match st with
@@ -270,6 +278,126 @@ and pr_st_core st =
   ((pr_list pr_st_core) sub_trees)
 
 let pr_rules = pr_list pr_rule
+
+(*********************************************************************
+ * Rule utilities
+ *********************************************************************)
+
+(* check useless *)
+
+let is_rule_func_call_useless r =
+  (* TODO *)
+  true
+
+let is_rule_asign_useless r =
+  (* TODO *)
+  true
+
+let is_rule_bind_useless r =
+  (* TODO *)
+  true
+
+let eliminate_useless_rules goal rules =
+  List.filter (fun rule ->
+    match rule with
+    | RlFuncCall r -> is_rule_func_call_useless r
+    | RlAssign r -> is_rule_asign_useless r
+    | RlBind r -> is_rule_bind_useless r
+    | RlFRead _ -> true
+    | RlInstantiate _ -> true
+    | RlUnfoldPost _ -> true
+    | RlUnfoldPre _ -> true) rules
+
+(* compare func_call with others *)
+
+let compare_rule_func_call_vs_func_call r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+
+(* compare assign with others *)
+
+let compare_rule_assign_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_assign r2 r1)
+
+let compare_rule_assign_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+
+(* compare wbind with others *)
+
+let compare_rule_wbind_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_assign r1 r2 =
+  negate_priority (compare_rule_assign_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_wbind_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+
+(* reordering rules *)
+
+let compare_rule r1 r2 =
+  match r1 with
+  | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
+  | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
+  | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+
+let reorder_rules goal rules =
+  let cmp_rule r1 r2 =
+    let prio = compare_rule r1 r2 in
+    match prio with
+    | PriEqual -> 0
+    | PriLow -> -1
+    | PriHigh -> +1 in
+  List.sort cmp_rule rules
+
 
 (*****************************************************
   * Atomic functions
@@ -304,34 +432,43 @@ let set_field var access_field (new_val:CP.spec_var) data_decls =
   with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
 
 (* get a "fix-point" pure formula for a list of vars *)
-let rec pf_of_vars vars (pf:CP.formula) = match pf with
-  | CP.BForm (bf, opt) ->
-    let pform, opt2 = bf in
-    let rec aux pform = match pform with
-      | CP.Eq (exp1, exp2, loc)
-      | CP.Neq (exp1, exp2, loc)
-      | CP.Lt (exp1, exp2, loc)
-      | CP.Lte (exp1, exp2, loc)
-      | CP.Gt (exp1, exp2, loc) ->
-        let sv1 = CP.afv exp1 in
-        let sv2 = CP.afv exp2 in
-        let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
-        if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
-        else BConst (true, loc)
-      | CP.BVar (sv, bvar_loc) ->
-        if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
-        else BConst (true, bvar_loc)
-      | _ -> pform
-    in
-    let n_pform = aux pform in
-    CP.BForm ((n_pform, opt2), opt)
-  | And (f1, f2, loc) ->
-    let n_f1, n_f2 = pf_of_vars vars f1, pf_of_vars vars f2 in
-    if CP.is_True n_f1 then n_f2
-    else if CP.is_True n_f2 then n_f1
-    else And (n_f1, n_f2, loc)
-  | AndList list -> AndList (List.map (fun (x,y) -> (x, pf_of_vars vars y)) list)
-  | _ -> pf
+let extract_var_pf_x (pf:CP.formula) vars =
+  let rec helper pf vars = match pf with
+    | CP.BForm (bf, opt) ->
+      let pform, opt2 = bf in
+      let rec aux pform = match pform with
+        | CP.Eq (exp1, exp2, loc)
+        | CP.Neq (exp1, exp2, loc)
+        | CP.Lt (exp1, exp2, loc)
+        | CP.Lte (exp1, exp2, loc)
+        | CP.Gt (exp1, exp2, loc) ->
+          let sv1 = CP.afv exp1 in
+          let sv2 = CP.afv exp2 in
+          let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
+          if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
+          else BConst (true, loc)
+        | CP.BVar (sv, bvar_loc) ->
+          if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
+          else BConst (true, bvar_loc)
+        | _ -> pform
+      in
+      let n_pform = aux pform in
+      CP.BForm ((n_pform, opt2), opt)
+    | And (f1, f2, loc) ->
+      let n_f1, n_f2 = helper f1 vars, helper f2 vars in
+      if CP.is_True n_f1 then n_f2
+      else if CP.is_True n_f2 then n_f1
+      else And (n_f1, n_f2, loc)
+    | AndList list -> AndList (List.map (fun (x,y) -> (x, helper y vars)) list)
+    | _ -> pf in
+  let n_pf = helper pf vars in
+  let n_vars = CP.fv n_pf in
+  if Gen.BList.list_equiv_eq CP.eq_sv vars n_vars then n_pf
+  else helper pf n_vars
+
+let extract_var_pf pf vars =
+  Debug.no_2 "extract_var_pf" pr_pf pr_vars pr_pf
+    (fun _ _ -> extract_var_pf_x pf vars) pf vars
 
 let is_named_type_var var =
   let typ = CP.type_of_sv var in
@@ -381,17 +518,15 @@ let rec rm_emp_formula formula:CF.formula =
     let hf = exists_f.CF.formula_exists_heap in
     Exists {exists_f with formula_exists_heap = aux_heap hf}
 
-let do_unfold_view_vnode ?(unfold_vars) cprog fvar =
+let do_unfold_view_vnode cprog fvar =
   let rec helper_vnode subst vf = match vf with
-    | CF.EBase bf ->
-      let base_f = bf.CF.formula_struc_base in
+    | CF.EBase bf -> let base_f = bf.CF.formula_struc_base in
       let vars_f = CF.fv base_f in
       let () = x_tinfo_hp (add_str "base_f" pr_formula) base_f no_pos in
       let n_formula = CF.subst subst base_f in
       let () = x_tinfo_hp (add_str "n_f" pr_formula) n_formula no_pos in
       [n_formula]
-    | CF.EList list ->
-      let cases = List.map snd list in
+    | CF.EList list -> let cases = List.map snd list in
       cases |> List.map (helper_vnode subst) |> List.concat
     | _ -> report_error no_pos
              "Synthesis.do_unfold_view_vnode: not handled cases"  in
@@ -412,8 +547,7 @@ let do_unfold_view_vnode ?(unfold_vars) cprog fvar =
     | _ -> report_error no_pos
              "Synthesis.do_unfold_view_vnode.find_subst: not handled cases"  in
   let rec helper_hf hf = match (hf:CF.h_formula) with
-    | CF.ViewNode vnode ->
-      let view_decls = cprog.Cast.prog_view_decls in
+    | CF.ViewNode vnode -> let view_decls = cprog.Cast.prog_view_decls in
       let vnode_name = vnode.CF.h_formula_view_name in
       let view_decl = List.find (fun x -> String.compare x.Cast.view_name vnode_name == 0)
           view_decls in
@@ -424,8 +558,7 @@ let do_unfold_view_vnode ?(unfold_vars) cprog fvar =
       let subst = find_subst vnode view_f in
       helper_vnode subst view_f
     | _ -> []
-  in
-  match fvar with
+  in match fvar with
   | CF.Base bf ->
     let hf = bf.CF.formula_base_heap in
     let pf = bf.CF.formula_base_pure in
@@ -585,10 +718,12 @@ let extract_var_f_x f var = match f with
       begin
         match heap_extract with
         | None ->
-          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
+          let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
         | Some (hf, vars) ->
-          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
+          let h_vars = CF.h_fv hf in
+          let vars = [var] @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
       end
     | CF.Exists exists_f ->
@@ -602,11 +737,13 @@ let extract_var_f_x f var = match f with
       begin
         match heap_extract with
         | None ->
-          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
+          let pf_var = extract_var_pf pf [var] in
           Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
         | Some (hf, vars) ->
-          let pf_var = pf_of_vars [var] pf |> CP.arith_simplify 1 in
+          let h_vars = CF.h_fv hf in
+          let vars = vars @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars in
           Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
       end
@@ -619,40 +756,24 @@ let extract_var_f formula var =
        | Some varf -> pr_formula varf)
     (fun _ _ -> extract_var_f_x formula var) formula var
 
-let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
-  | CF.Base bf ->
-    let hf = bf.CF.formula_base_heap in
-    let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
-    let heap_extract = extract_hf_vars hf vars in
-    begin
-      match heap_extract with
-      | None ->
-        let pf_var = pf_of_vars vars pf |> CP.arith_simplify 1 in
-        let n_f = (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var)) in
-        Some n_f
-      | Some (hf, vars) ->
-        let pf_var = pf_of_vars vars pf |> CP.arith_simplify 1 in
-        Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
-    end
-  | _ -> None
-
-let rec extract_var_pf (f: CP.formula) var = match f with
-  | BForm (bf, _) ->
-    let (pf, _) = bf in
-    (match pf with
-     | Eq (e1, e2, _) ->
-       begin
-         match e1 with
-         | Var (sv, _) -> if CP.eq_spec_var sv var then Some e2 else None
-         | _ -> None
-       end
-     | _ -> None
-    )
-  | And (f1, f2, _) ->
-    let res1 = extract_var_pf f1 var in
-    if res1 = None then extract_var_pf f2 var
-    else res1
-  | _ -> None
+(* let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
+ *   | CF.Base bf ->
+ *     let hf = bf.CF.formula_base_heap in
+ *     let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+ *     let heap_extract = extract_hf_vars hf vars in
+ *     begin
+ *       match heap_extract with
+ *       | None ->
+ *         let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
+ *         let n_f = (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var)) in
+ *         Some n_f
+ *       | Some (hf, vars) ->
+ *         let h_vars = CF.h_fv hf in
+ *         let vars = vars @ h_vars |> CP.remove_dups_svl in
+ *         let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
+ *         Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+ *     end
+ *   | _ -> None *)
 
 let create_residue vars prog =
   let name = "T" ^ (string_of_int !rel_num) in
@@ -730,3 +851,20 @@ let rec remove_exists_var (formula:CF.formula) var = match formula with
   | Or bf -> let n_f1 = remove_exists_var bf.formula_or_f1 var in
     let n_f2 = remove_exists_var bf.formula_or_f2 var in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
+let rec check_unfold_hf (hf1:CF.h_formula) = match hf1 with
+  | CF.ViewNode vnode -> Some vnode
+  | CF.Star sf -> let f1,f2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
+    let check_hf1 = check_unfold_hf f1 in
+    if check_hf1 = None then check_unfold_hf f2
+    else check_hf1
+  | _ -> None
+
+let check_unfold (f1:CF.formula) = match f1 with
+  | CF.Base bf1 -> check_unfold_hf bf1.formula_base_heap
+  | CF.Exists bf -> check_unfold_hf bf.formula_exists_heap
+  | _ -> None
+
+let rec simpl_f (f:CF.formula) = match f with
+  | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
+  | _ -> [f]

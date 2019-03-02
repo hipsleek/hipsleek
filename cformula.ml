@@ -7256,7 +7256,7 @@ let do_unfold_view_x cprog pr_views (f0: formula) =
     | Exists _ ->
       let qvars, base1 = split_quantifiers f in
       let nf = helper base1 in
-      add_quantifiers qvars ( nf)
+      add_quantifiers qvars (nf)
     | Or orf  ->
       Or { orf with formula_or_f1 = helper orf.formula_or_f1;
                     formula_or_f2 = helper orf.formula_or_f2 }
