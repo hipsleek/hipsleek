@@ -766,8 +766,8 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
   let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
-  (* if !Globals.check_post then report_error no_pos "to infer relations"
-   * else *)
+  if !Globals.check_post then report_error no_pos "to infer relations"
+  else
   match ctx with
   | Ctx es ->
     (
