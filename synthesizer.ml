@@ -471,7 +471,7 @@ let choose_rule_unfold_pre goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-    let pre_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
+    let pre_list = simpl_f nf |> List.filter (SB.check_sat goal.gl_prog) in
     let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
     let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
     let rule = RlUnfoldPre { n_pre_goals = n_goals } in
@@ -488,7 +488,7 @@ let choose_rule_unfold_post goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let post_list = nf |> List.map simpl_f |> List.concat
+    let post_list = nf |> simpl_f
                     |> List.filter (SB.check_sat goal.gl_prog) in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
     let n_goals = post_list |> List.map (fun x -> {goal with gl_post_cond = x}) in

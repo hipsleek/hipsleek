@@ -572,69 +572,31 @@ let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
       in
       fold_fnc ls_hf_p1 ls_hf_p2 star_fnc
     | _ -> [(hf, mix_of_pure (CP.mkTrue no_pos))] in
-  helper
+  helper hf
 
-let do_unfold_view_vnode cprog pr_views args (formula:CF.formula) =
-  let rec helper (f:CF.formula) = match f with
-    | Base bf ->
-      f
-    | _ -> f in
-  let res = helper formula in [res]
+let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
+    let rec helper (f:CF.formula) = match f with
+    | Base fb ->
+      let ls_hf_pure = do_unfold_view_hf_vn cprog pr_views args fb.formula_base_heap in
+      let fs = List.map (fun (hf, p) ->
+          CF.Base {fb with formula_base_heap = hf;
+                        formula_base_pure = x_add MCP.merge_mems p
+                            fb.formula_base_pure true;}
+        ) ls_hf_pure in
+      CF.disj_of_list fs fb.formula_base_pos
+    | Exists _ ->
+      let qvars, base1 = CF.split_quantifiers f in
+      let nf = helper base1 in
+      CF.add_quantifiers qvars (nf)
+    | Or orf  ->
+      Or { orf with formula_or_f1 = helper orf.formula_or_f1;
+                    formula_or_f2 = helper orf.formula_or_f2 }  in
+  if pr_views = [] then formula else helper formula
 
-(* let do_unfold_view_vnode cprog pr_views fvar =
- *   let rec helper_vnode subst vf = match vf with
- *     | CF.EBase bf -> let base_f = bf.CF.formula_struc_base in
- *       let vars_f = CF.fv base_f in
- *       let () = x_tinfo_hp (add_str "base_f" pr_formula) base_f no_pos in
- *       let n_formula = CF.subst subst base_f in
- *       let () = x_tinfo_hp (add_str "n_f" pr_formula) n_formula no_pos in
- *       [n_formula]
- *     | CF.EList list -> let cases = List.map snd list in
- *       cases |> List.map (helper_vnode subst) |> List.concat
- *     | _ -> report_error no_pos
- *              "Synthesis.do_unfold_view_vnode: not handled cases"  in
- *   let rec find_subst vnode vf = match vf with
- *     | CF.EBase bf ->
- *       let base_f = bf.CF.formula_struc_base in
- *       let v_args = vnode.CF.h_formula_view_arguments in
- *       let vars_f = CF.fv base_f in
- *       let v_args = [vnode.CF.h_formula_view_node]@v_args in
- *       if List.length vars_f = List.length v_args then
- *         List.combine vars_f v_args
- *       else []
- *     | CF.EList list ->
- *       let cases = List.map snd list in
- *       cases |> List.map (find_subst vnode) |> List.concat
- *       |> Gen.BList.remove_dups_eq (fun x y -> CP.eq_spec_var (fst x) (fst y) &&
- *                                   CP.eq_spec_var (snd x) (snd y))
- *     | _ -> report_error no_pos
- *              "Synthesis.do_unfold_view_vnode.find_subst: not handled cases"  in
- *   let rec helper_hf hf = match (hf:CF.h_formula) with
- *     | CF.ViewNode vnode -> let view_decls = cprog.Cast.prog_view_decls in
- *       let vnode_name = vnode.CF.h_formula_view_name in
- *       let view_decl = List.find (fun x -> String.compare x.Cast.view_name vnode_name == 0)
- *           view_decls in
- *       let view_f = view_decl.Cast.view_formula in
- *       let pr_struc = Cprinter.string_of_struc_formula in
- *       let v_args = vnode.CF.h_formula_view_arguments in
- *       let v_args = [vnode.CF.h_formula_view_node]@v_args in
- *       let subst = find_subst vnode view_f in
- *       helper_vnode subst view_f
- *     | _ -> []
- *   in match fvar with
- *   | CF.Base bf ->
- *     let hf = bf.CF.formula_base_heap in
- *     let pf = bf.CF.formula_base_pure in
- *     hf |> helper_hf |> List.map (CF.add_mix_formula_to_formula pf)
- *   | CF.Exists exists_f ->
- *     let hf = exists_f.CF.formula_exists_heap in
- *     let n_hf = helper_hf hf in
- *     let exists_vars = exists_f.CF.formula_exists_qvars in
- *     let n_formulas = List.map (CF.add_quantifiers exists_vars) n_hf in
- *     let pure_f = exists_f.CF.formula_exists_pure in
- *     List.map (CF.add_mix_formula_to_formula pure_f) n_formulas
- *   | _ -> report_error no_pos
- *            "Synthesis.do_unfold_view_vnode(formula) not handled case" *)
+let do_unfold_view_vnode cprog pr_views args (f0: CF.formula) =
+  let pr1 = pr_formula in
+  Debug.no_2 "do_unfold_view_vnode" pr1 pr_vars pr1
+    (fun _ _ -> do_unfold_view_vnode_x cprog pr_views args f0) f0 args
 
 let get_pre_cond (struc_f: CF.struc_formula) = match struc_f with
   | CF.EBase bf ->
