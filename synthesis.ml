@@ -16,23 +16,12 @@ let pr_vars = Cprinter.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let rel_num = ref 0
 let res_num = ref 0
-let unfold_num = ref 0
-let unfold_post_num = ref 0
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 (*********************************************************************
  * Data structures
  *********************************************************************)
-
-(* goal *)
-type goal = {
-  gl_prog : Cast.prog_decl;
-  gl_proc_decls: Cast.proc_decl list;
-  gl_pre_cond : CF.formula;
-  gl_post_cond : CF.formula;
-  gl_vars: CP.spec_var list;
-}
 
 type priority =
   | PriHigh
@@ -56,11 +45,11 @@ and rule_instantiate = {
 }
 
 and rule_unfold_pre = {
-  n_pre_goals: goal list;
+  n_pre_formulas: CF.formula list;
 }
 
 and rule_unfold_post = {
-  rp_case_goal: goal;
+  rp_case_formula: CF.formula;
 }
 
 and rule_func_call = {
@@ -84,6 +73,15 @@ and rule_bind_read = {
 and rule_assign = {
   ra_lhs : CP.spec_var;
   ra_rhs : CP.exp;
+}
+
+type goal = {
+  gl_prog : Cast.prog_decl;
+  gl_proc_decls: Cast.proc_decl list;
+  gl_pre_cond : CF.formula;
+  gl_post_cond : CF.formula;
+  gl_vars: CP.spec_var list;
+  gl_trace: rule list;
 }
 
 type derivation = {
@@ -139,7 +137,7 @@ let mk_goal cprog pre post vars =
     gl_proc_decls = [];
     gl_pre_cond = pre;
     gl_post_cond = post;
-    (* gl_equiv_vars = []; *)
+    gl_trace = [];
     gl_vars = vars;  }
 
 let mk_goal_w_procs cprog proc_decls pre post vars =
@@ -147,7 +145,7 @@ let mk_goal_w_procs cprog proc_decls pre post vars =
     gl_proc_decls = proc_decls;
     gl_pre_cond = pre;
     gl_post_cond = post;
-    (* gl_equiv_vars = []; *)
+    gl_trace = [];
     gl_vars = vars;  }
 
 let mk_derivation_subgoals goal rule subgoals =
@@ -249,8 +247,8 @@ let pr_rule rule = match rule with
   | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBind rule -> "RlBind: " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead"
-  | RlUnfoldPre rule -> "RlUnfoldPre" ^ (rule.n_pre_goals |> pr_list pr_goal)
-  | RlUnfoldPost rule -> "RlUnfoldPost" ^ (rule.rp_case_goal |> pr_goal)
+  | RlUnfoldPre rule -> "RlUnfoldPre" ^ (rule.n_pre_formulas |> pr_list pr_formula)
+  | RlUnfoldPost rule -> "RlUnfoldPost" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate _ -> "RlInstantiate"
 
 let rec pr_st st = match st with
@@ -918,3 +916,19 @@ let unprime_formula (formula:CF.formula) =
   let vars = CF.fv formula |> List.filter CP.is_primed in
   let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
   CF.subst substs formula
+
+let rec has_unfold_pre trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlUnfoldPre _ -> true
+      | _ -> has_unfold_pre t
+    end
+
+let rec has_unfold_post trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlUnfoldPost _ -> true
+      | _ -> has_unfold_post t
+    end

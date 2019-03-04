@@ -471,15 +471,12 @@ let choose_rule_unfold_pre goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-    let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) nf no_pos in
     let pre_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
-    let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
-    let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
-    let rule = RlUnfoldPre { n_pre_goals = n_goals } in
+    let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
+    let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
     [rule] in
-  if !unfold_num >= 1 then []
-  else  let () = unfold_num := !unfold_num + 1 in
-    vnodes |> List.map helper |> List.concat
+  if has_unfold_pre goal.gl_trace then []
+  else vnodes |> List.map helper |> List.concat
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -488,13 +485,11 @@ let choose_rule_unfold_post goal =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
     let post_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
-    let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
-    let n_goals = post_list |> List.map (fun x -> {goal with gl_post_cond = x}) in
-    let rules = n_goals |> List.map (fun goal -> RlUnfoldPost { rp_case_goal = goal}) in
+    let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
+    let rules = post_list |> List.map (fun f -> RlUnfoldPost { rp_case_formula = f}) in
     rules in
-  if !unfold_post_num >= 1 then []
-  else  let () = unfold_post_num := !unfold_post_num + 1 in
-  vnodes |> List.map helper |> List.concat
+  if has_unfold_post goal.gl_trace then []
+  else vnodes |> List.map helper |> List.concat
 
 let choose_rule_numeric goal =
   let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
@@ -598,17 +593,17 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   (* let goal = framing_rule goal in *)
-  (* let rs = choose_rule_unfold_post goal in *)
-  (* let rs2 = choose_rule_instantiate goal in *)
-  (* let rs3 = choose_rule_f_write goal in *)
+  let rs = choose_rule_unfold_post goal in
+  let rs2 = choose_rule_instantiate goal in
+  let rs3 = choose_rule_f_write goal in
   let rs4 = choose_rule_unfold_pre goal in
 
   (* let rs = choose_rule_assign goal in *)
   (* let rs1 = choose_func_call goal in *)
   (* let rs4 = choose_rule_f_read goal in *)
   (* let rs4 = choose_rule_numeric goal in *)
-  (* rs @ rs2 @ rs3 @ rs4 *)
-  rs4
+  rs @ rs2 @ rs3 @ rs4
+  (* rs4 *)
 
 (*********************************************************************
  * Processing rules
@@ -728,8 +723,12 @@ let process_func_call goal rcore : derivation =
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
 and process_rule_unfold_pre goal rule =
-  let sub_goals = rule.n_pre_goals in
-  mk_derivation_subgoals goal (RlUnfoldPre rule) sub_goals
+  let n_pres = rule.n_pre_formulas in
+  let create_new_rule n_pre =
+    {goal with gl_pre_cond = n_pre;
+               gl_trace = goal.gl_trace @ [RlUnfoldPre rule]} in
+  let n_goals = n_pres |> List.map create_new_rule in
+  mk_derivation_subgoals goal (RlUnfoldPre rule) n_goals
 
 let process_rule_instantiate goal rule =
   let subst = [(rule.rli_lhs, rule.rli_rhs)] in
@@ -737,11 +736,14 @@ let process_rule_instantiate goal rule =
   let n_post = remove_exists_var n_post rule.rli_rhs in
   let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
 
-  let subgoal = {goal with gl_post_cond = n_post} in
+  let subgoal = {goal with gl_post_cond = n_post;
+                           gl_trace = (RlInstantiate rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
 
 and process_rule_unfold_post goal rule =
-  mk_derivation_subgoals goal (RlUnfoldPost rule) [rule.rp_case_goal]
+  let n_goal = {goal with gl_post_cond = rule.rp_case_formula;
+                          gl_trace = (RlUnfoldPost rule)::goal.gl_trace} in
+  mk_derivation_subgoals goal (RlUnfoldPost rule) [n_goal]
 
 (*********************************************************************
  * The search procedure
