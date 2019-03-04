@@ -10,6 +10,7 @@ module CP = Cpure
 module CF = Cformula
 module CPR = Cprinter
 module MCP = Mcpure
+module Syn = Synthesis
 
 (* translation of HIP's data structures to Songbird's data structures
    will be done here *)
@@ -24,7 +25,7 @@ let pr_struc_f = CPR.string_of_struc_formula
 let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_entail = SBCast.pr_entailment
-
+let pre_list = ref ([] : CF.formula list)
 (*********************************************************************
  * Translate Formulas
  *********************************************************************)
@@ -766,8 +767,6 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
     (ctx:CF.context) (conseq:CF.struc_formula) ?(pf=None)=
   let () = x_tinfo_hp (add_str "ctx" CPR.string_of_context) ctx no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_struc_f) conseq no_pos in
-  if !Globals.check_post then report_error no_pos "to infer relations"
-  else
   match ctx with
   | Ctx es ->
     (
@@ -851,6 +850,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let residues = get_residues ptrees in
     let residue = translate_back_fs residues holes in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
+    let () = pre_list := [es.CF.es_formula] @ !pre_list in
     let n_ctx = CF.Ctx {es with
                         CF.es_evars = CF.get_exists es.CF.es_formula;
                         CF.es_formula = residue;
@@ -865,7 +865,9 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
         | Int
         | Named _ -> true
         | _ -> false) in
-    let n_es_f = Synthesis.create_residue vars prog in
+    let conseq = bf.CF.formula_struc_base in
+    let n_es_f, n_conseq = Synthesis.create_residue vars prog conseq in
+    let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
     let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
     let conti = bf.CF.formula_struc_continuation in

@@ -25,7 +25,6 @@ open Cformula
 
 (*used in Predicate*)
 let pure_hprel_map = ref ([]: (ident * ident) list)
-
 (* type typed_ident = (typ * ident) *)
 
 type prog_decl = {

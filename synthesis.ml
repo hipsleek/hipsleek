@@ -19,6 +19,8 @@ let res_num = ref 0
 let unfold_num = ref 0
 let unfold_post_num = ref 0
 let unk_hps = ref ([] : Cast.hp_decl list)
+let repair_proc = ref (None : Cast.proc_decl option)
+let entailments = ref ([] : (CF.formula * CF.formula) list)
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -775,27 +777,44 @@ let extract_var_f formula var =
  *     end
  *   | _ -> None *)
 
-let create_residue vars prog =
-  let name = "T" ^ (string_of_int !rel_num) in
-  let () = if !rel_num = 0 then
-      unk_hps := prog.Cast.prog_hp_decls @ !unk_hps
-    else () in
-  let hl_name = CP.mk_spec_var name in
-  let () = rel_num := !rel_num + 1 in
-  let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
-  let hp_decl = {
-    Cast.hp_name = name;
-    Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
-    Cast.hp_part_vars = [];
-    Cast.hp_root_pos = None;
-    Cast.hp_is_pre = false;
-    Cast.hp_view = None;
-    Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
-  } in
-  let () = unk_hps := [hp_decl] @ !unk_hps in
-  let hrel = CF.HRel (hl_name, args, no_pos) in
-  let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
-  hrel_f
+let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
+  match formula with
+  | Base bf -> let hf = bf.formula_base_heap in
+    let n_hf = CF.mkStarH hf added_hf no_pos in
+    CF.Base {bf with formula_base_heap = n_hf}
+  | Exists bf -> let hf = bf.formula_exists_heap in
+    let n_hf = CF.mkStarH hf added_hf no_pos in
+    Exists {bf with formula_exists_heap = n_hf}
+  | Or bf -> let n_f1 = add_h_formula_to_formula added_hf bf.formula_or_f1 in
+    let n_f2 = add_h_formula_to_formula added_hf bf.formula_or_f2 in
+    Or {bf with formula_or_f1 = n_f1;
+                formula_or_f2 = n_f2}
+
+let create_residue vars prog conseq =
+  if !Globals.check_post then
+    let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
+    residue, conseq
+  else
+    let name = "T" ^ (string_of_int !rel_num) in
+    let () = if !rel_num = 0 then unk_hps := prog.Cast.prog_hp_decls @ !unk_hps
+      else () in
+    let hl_name = CP.mk_spec_var name in
+    let () = rel_num := !rel_num + 1 in
+    let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
+    let hp_decl = {
+      Cast.hp_name = name;
+      Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
+      Cast.hp_part_vars = [];
+      Cast.hp_root_pos = None;
+      Cast.hp_is_pre = false;
+      Cast.hp_view = None;
+      Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+    } in
+    let () = unk_hps := [hp_decl] @ !unk_hps in
+    let hrel = CF.HRel (hl_name, args, no_pos) in
+    let n_conseq = add_h_formula_to_formula hrel conseq in
+    let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+    hrel_f, n_conseq
 
 let eq_hp_decl hp1 hp2 =
   let hp1_name,hp2_name = hp1.Cast.hp_name, hp2.Cast.hp_name in
@@ -868,3 +887,8 @@ let check_unfold (f1:CF.formula) = match f1 with
 let rec simpl_f (f:CF.formula) = match f with
   | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
   | _ -> [f]
+
+let unprime_formula (formula:CF.formula) =
+  let vars = CF.fv formula |> List.filter CP.is_primed in
+  let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
+  CF.subst substs formula

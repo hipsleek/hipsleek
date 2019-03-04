@@ -42,7 +42,6 @@ let repairing_ents = ref []
 let proc_to_repair = ref None
 let repair_loc = ref None
 let repair_pre_ctx = ref None
-let repair_proc = ref None
 let repair_prog = ref None
 
 let log_spec = ref ""
@@ -1357,7 +1356,7 @@ and get_xpure_of_formula f = 1
 and check_exp_a (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label):
   CF.list_failesc_context =
-  let () = repair_proc := Some proc in
+  let () = Synthesis.repair_proc := Some proc in
   let () = repair_prog := Some prog in
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{
@@ -3185,6 +3184,22 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let pr = Cprinter.string_of_list_partial_context in
   let () = x_tinfo_hp (add_str "rs" pr) rs no_pos in
   if (is_reachable_succ) then
+    let entailments = !Synthesis.entailments |> List.rev in
+    let () = x_tinfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
+    let () = if List.length entailments = 2 then
+        let pre_cond = entailments |> List.hd |> fst
+                       |> Synthesis.unprime_formula in
+        let post_cond = entailments |> List.tl |> List.hd |> snd
+                        |> Synthesis.unprime_formula in
+        let syn_vars = proc.Cast.proc_args
+                       |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+        let () = x_binfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
+        let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
+        let goal = Synthesis.mk_goal_w_procs prog [proc] pre_cond post_cond syn_vars in
+        let () = x_binfo_hp (add_str "goal" Synthesis.pr_goal) goal no_pos in
+        let _ = Synthesizer.synthesize_program goal in
+        ()
+      else () in
     rs
   else begin
     let _ =
