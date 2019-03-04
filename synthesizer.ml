@@ -4,7 +4,6 @@ open Globals
 open VarGen
 open Gen
 open Mcpure
-open Cformula
 
 open Synthesis
 
@@ -186,7 +185,7 @@ let subtract_var var formula = match formula with
     let rec helper hf = match hf with
       | CF.DataNode dnode ->
         let dnode_var = dnode.CF.h_formula_data_node in
-        if CP.eq_spec_var dnode_var var then HEmp
+        if CP.eq_spec_var dnode_var var then CF.HEmp
         else hf
       | Star sf ->
         let f1 = sf.CF.h_formula_star_h1 in
@@ -275,9 +274,9 @@ let get_hf (f:CF.formula) = match f with
   | Or _ -> report_error no_pos "get_hf unhandled"
 
 let check_same_shape (f1:CF.formula) (f2:CF.formula) =
-  let check_hf hf1 hf2 =
+  let check_hf (hf1:CF.h_formula) (hf2:CF.h_formula) =
     match hf1, hf2 with
-    | HEmp, HEmp -> (true, [])
+    | CF.HEmp, HEmp -> (true, [])
     | DataNode dn1, DataNode dn2 ->
       let arg1 = dn1.h_formula_data_arguments in
       let arg2 = dn2.h_formula_data_arguments in
@@ -466,34 +465,38 @@ let choose_rule_f_read goal =
 
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let vnode_opt = check_unfold pre in
-  if (!unfold_num >= 1) then []
-  else match vnode_opt with
-    | Some vnode -> let pr_views = need_unfold_rhs goal.gl_prog vnode in
-      let nf = CF.do_unfold_view goal.gl_prog pr_views pre in
-      let pre_list = simpl_f nf |> List.filter (SB.check_sat goal.gl_prog) in
-      let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list  no_pos in
-      let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
-      let () = unfold_num := !unfold_num + 1 in
-      let rule = RlUnfoldPre { n_pre_goals = n_goals }
-      in [rule]
-    | None -> []
+  let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+  let vnodes = get_unfold_view pre in
+  let () = x_binfo_hp (add_str "vnode" (pr_list pr_hf)) (vnodes |> List.map (fun x -> CF.ViewNode x)) no_pos in
+  let helper vnode =
+    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+    let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
+    let pre_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
+    let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
+    let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
+    let rule = RlUnfoldPre { n_pre_goals = n_goals } in
+    [rule] in
+  let _ = vnodes |> List.map helper in
+  []
+  (* if !unfold_num >= 1 then []
+   * else  let () = unfold_num := !unfold_num + 1 in
+   *   vnodes |> List.map helper |> List.concat *)
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let vnode_opt = check_unfold post in
-  if (!unfold_post_num >= 1) then []
-  else match vnode_opt with
-    | Some vnode -> let pr_views = need_unfold_rhs goal.gl_prog vnode in
-      let nf = do_unfold_view_vnode goal.gl_prog post in
-      let post_list = nf |> List.map simpl_f |> List.concat
-                      |> List.filter (SB.check_sat goal.gl_prog) in
-      let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
-      let n_goals = post_list |> List.map (fun x -> {goal with gl_post_cond = x}) in
-      let () = unfold_post_num := !unfold_post_num + 1 in
-      let rules = n_goals |> List.map (fun goal -> RlUnfoldPost { rp_case_goal = goal}) in
-      rules
-    | None -> []
+  let vnodes = get_unfold_view post in
+  let helper vnode =
+    let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
+    let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
+    let post_list = nf |> List.map simpl_f |> List.concat
+                    |> List.filter (SB.check_sat goal.gl_prog) in
+    let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
+    let n_goals = post_list |> List.map (fun x -> {goal with gl_post_cond = x}) in
+    let rules = n_goals |> List.map (fun goal -> RlUnfoldPost { rp_case_goal = goal}) in
+    rules in
+  if !unfold_post_num >= 1 then []
+  else  let () = unfold_post_num := !unfold_post_num + 1 in
+  vnodes |> List.map helper |> List.concat
 
 let choose_rule_numeric goal =
   let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
@@ -597,15 +600,16 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   (* let goal = framing_rule goal in *)
-  let rs = choose_rule_unfold_post goal in
-  let rs2 = choose_rule_instantiate goal in
-  let rs3 = choose_rule_f_write goal in
+  (* let rs = choose_rule_unfold_post goal in
+   * let rs2 = choose_rule_instantiate goal in
+   * let rs3 = choose_rule_f_write goal in *)
   (* let rs = choose_rule_assign goal in *)
   (* let rs1 = choose_func_call goal in *)
   (* let rs4 = choose_rule_f_read goal in *)
-  (* let rs3 = choose_rule_unfold_pre goal in *)
+  let rs4 = choose_rule_unfold_pre goal in
   (* let rs4 = choose_rule_numeric goal in *)
-  rs @ rs2 @ rs3
+  (* rs @ rs2 @ rs3 @ rs4 *)
+  rs4
 
 (*********************************************************************
  * Processing rules
@@ -623,24 +627,24 @@ let process_rule_assign goal rassign =
     mk_derivation_subgoals goal (RlAssign rassign) [sub_goal]
 
 let subs_bind_write formula var field new_val data_decls =
-  match formula with
+  match (formula:CF.formula) with
   | Base bf ->
     let hf = bf.CF.formula_base_heap in
     let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
-    let rec helper hf = match hf with
+    let rec helper (hf:CF.h_formula) = match hf with
       | DataNode dnode -> let data_var = dnode.h_formula_data_node in
         let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf
             no_pos in
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
-          (DataNode n_dnode)
+          (CF.DataNode n_dnode)
         else hf
       | Star sf -> let n_h1 = helper sf.CF.h_formula_star_h1 in
         let n_h2 = helper sf.CF.h_formula_star_h2 in
         Star {sf with h_formula_star_h1 = n_h1;
                       h_formula_star_h2 = n_h2}
       | _ -> hf
-    in Base {bf with formula_base_heap = helper hf}
+    in CF.Base {bf with formula_base_heap = helper hf}
   | _ -> formula
 
 let process_rule_bind goal (bind:rule_bind) =
