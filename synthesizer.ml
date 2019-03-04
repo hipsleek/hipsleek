@@ -106,41 +106,39 @@ let choose_rassign_pure var goal : rule list =
 
 
 let find_equal_var_x goal var =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let all_vars = CF.fv pre |> List.filter is_node_var in
-  let helper_pure var1 var2 pf1 pf2 =
-    let ante = CP.mkAnd pf1 pf2 no_pos in
+  let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
+  let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars in
+  let () = x_binfo_hp (add_str "ante" pr_pf) ante no_pos in
+  let helper_pure var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
-    let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
-    let () = x_tinfo_hp (add_str "conseq" pr_pf) conseq no_pos in
+    let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
     SB.check_pure_entail ante conseq in
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
       let hf1 = bf1.CF.formula_exists_heap in
       let hf2 = bf2.CF.formula_base_heap in
-      let pf1 = Mcpure.pure_of_mix bf1.CF.formula_exists_pure in
-      let pf2 = Mcpure.pure_of_mix bf2.CF.formula_base_pure in
       begin
         match hf1, hf2 with
         | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
           let args1 = vnode1.CF.h_formula_view_arguments in
           let args2 = vnode2.CF.h_formula_view_arguments in
-          List.for_all2 (fun x y -> helper_pure x y pf1 pf2) args1 args2
+          List.for_all2 (fun x y -> helper_pure x y) args1 args2
         | _ -> false
       end
     | _ -> false in
-  let compare_two_vars var1 var2 pre post =
+  let compare_two_vars var1 var2 =
     let var1_f = extract_var_f post var1 in
     let var2_f = extract_var_f pre var2 in
     match var1_f, var2_f with
     | Some f1, Some f2 ->
-      let () = x_tinfo_hp (add_str "equal-var f1" pr_formula) f1 no_pos in
-      let () = x_tinfo_hp (add_str "equal-var f2" pr_formula) f2 no_pos in
+      let () = x_binfo_hp (add_str "eq-v f1" pr_formula) f1 no_pos in
+      let () = x_binfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
       helper f1 f2
     | _ -> false in
-  let () = x_binfo_hp (add_str "equal-var vars" pr_vars) all_vars no_pos in
-  let equal_vars = List.filter (fun x -> compare_two_vars var x pre post) all_vars in
+  let () = x_binfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
+  let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
 
 let find_equal_var goal var =
@@ -585,7 +583,8 @@ let choose_rule_instantiate goal =
   let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
   let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
-  let helper var = let eq_vars = find_equal_var goal var in
+  let helper var =
+    let eq_vars = find_equal_var goal var in
     eq_vars |> List.map (fun x -> RlInstantiate {
         rli_lhs = var;    rli_rhs = x;
       }) in
@@ -595,15 +594,15 @@ let choose_synthesis_rules goal : rule list =
   (* let goal = framing_rule goal in *)
   let rs = choose_rule_unfold_post goal in
   let rs2 = choose_rule_instantiate goal in
-  (* let rs3 = choose_rule_f_write goal in *)
-  (* let rs4 = choose_rule_unfold_pre goal in *)
+  let rs3 = choose_rule_f_write goal in
+  let rs4 = choose_rule_unfold_pre goal in
 
   (* let rs = choose_rule_assign goal in *)
   (* let rs1 = choose_func_call goal in *)
   (* let rs4 = choose_rule_f_read goal in *)
   (* let rs4 = choose_rule_numeric goal in *)
-  (* rs @ rs2 @ rs3 @ rs4 *)
-  rs @ rs2
+  rs @ rs2 @ rs3 @ rs4
+  (* rs2@rs3 *)
 
 (*********************************************************************
  * Processing rules

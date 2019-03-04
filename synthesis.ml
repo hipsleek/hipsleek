@@ -930,3 +930,18 @@ let rec has_unfold_post trace = match trace with
       | RlUnfoldPost _ -> true
       | _ -> has_unfold_post t
     end
+
+let rec remove_exists_vars (formula:CP.formula) = match formula with
+  | Exists (_, x,_,_) -> remove_exists_vars x
+  | BForm _ -> formula
+  | And (f1, f2, loc) -> let nf1 = remove_exists_vars f1 in
+    let nf2 = remove_exists_vars f2 in
+    And (nf1, nf2, loc)
+  | AndList list ->
+    let nlist = List.map (fun (x,y) -> (x, remove_exists_vars y)) list in
+    AndList nlist
+  | Not (f, opt, loc) -> Not (remove_exists_vars f, opt, loc)
+  | Or (f1, f2, opt, loc) -> let nf1 = remove_exists_vars f1 in
+    let nf2 = remove_exists_vars f2 in
+    Or (nf1, nf2, opt, loc)
+  | Forall (_, f, _, _) -> remove_exists_vars f
