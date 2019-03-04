@@ -404,6 +404,9 @@ let reorder_rules goal rules =
 (*****************************************************
   * Atomic functions
 ********************************************************)
+let rec simpl_f (f:CF.formula) = match f with
+  | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
+  | _ -> [f]
 
 let check_var_mem mem list = List.exists (fun x -> CP.eq_sv x mem) list
 
@@ -542,7 +545,7 @@ let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
     let fr_qvars = CP.fresh_spec_vars qvars in
     let ss = List.combine qvars fr_qvars in
     let nf = x_add CF.subst ss base1 in
-    CF.add_quantifiers fr_qvars ( nf) in
+    CF.add_quantifiers fr_qvars nf in
   let helper_vnode (hv:CF.h_formula_view) =
     try
       let (v_name,v_un_struc_formula, v_vars) =
@@ -583,19 +586,22 @@ let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
                         formula_base_pure = x_add MCP.merge_mems p
                             fb.formula_base_pure true;}
         ) ls_hf_pure in
-      CF.disj_of_list fs fb.formula_base_pos
+      let tmp = CF.disj_of_list fs fb.formula_base_pos in
+      simpl_f tmp
     | Exists _ ->
       let qvars, base1 = CF.split_quantifiers f in
-      let nf = helper base1 in
-      CF.add_quantifiers qvars (nf)
+      let nf = helper base1 |> List.map simpl_f |> List.concat in
+      let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) nf no_pos in
+      nf |> List.map (CF.add_quantifiers qvars)
     | Or orf  ->
-      Or { orf with formula_or_f1 = helper orf.formula_or_f1;
-                    formula_or_f2 = helper orf.formula_or_f2 }  in
-  if pr_views = [] then formula else helper formula
+      let nf1 = helper orf.formula_or_f1 in
+      let nf2 = helper orf.formula_or_f2 in
+      nf1 @ nf2 in
+  if pr_views = [] then [formula] else helper formula
 
 let do_unfold_view_vnode cprog pr_views args (f0: CF.formula) =
   let pr1 = pr_formula in
-  Debug.no_2 "do_unfold_view_vnode" pr1 pr_vars pr1
+  Debug.no_2 "do_unfold_view_vnode" pr1 pr_vars (pr_list pr1)
     (fun _ _ -> do_unfold_view_vnode_x cprog pr_views args f0) f0 args
 
 let get_pre_cond (struc_f: CF.struc_formula) = match struc_f with
@@ -907,10 +913,6 @@ let get_unfold_view (f1:CF.formula) = match f1 with
   | CF.Base bf1 -> get_unfold_view_hf bf1.formula_base_heap
   | CF.Exists bf -> get_unfold_view_hf bf.formula_exists_heap
   | _ -> []
-
-let rec simpl_f (f:CF.formula) = match f with
-  | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
-  | _ -> [f]
 
 let unprime_formula (formula:CF.formula) =
   let vars = CF.fv formula |> List.filter CP.is_primed in
