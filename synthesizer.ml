@@ -465,22 +465,20 @@ let choose_rule_f_read goal =
 
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+  let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let vnodes = get_unfold_view pre in
-  let () = x_binfo_hp (add_str "vnode" (pr_list pr_hf)) (vnodes |> List.map (fun x -> CF.ViewNode x)) no_pos in
+  let () = x_tinfo_hp (add_str "vnode" (pr_list pr_hf)) (vnodes |> List.map (fun x -> CF.ViewNode x)) no_pos in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
     let pre_list = simpl_f nf |> List.filter (SB.check_sat goal.gl_prog) in
-    let () = x_binfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
+    let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
     let n_goals = pre_list |> List.map (fun x -> {goal with gl_pre_cond = x}) in
     let rule = RlUnfoldPre { n_pre_goals = n_goals } in
     [rule] in
-  let _ = vnodes |> List.map helper in
-  []
-  (* if !unfold_num >= 1 then []
-   * else  let () = unfold_num := !unfold_num + 1 in
-   *   vnodes |> List.map helper |> List.concat *)
+  if !unfold_num >= 1 then []
+  else  let () = unfold_num := !unfold_num + 1 in
+    vnodes |> List.map helper |> List.concat
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -600,16 +598,16 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   (* let goal = framing_rule goal in *)
-  (* let rs = choose_rule_unfold_post goal in
-   * let rs2 = choose_rule_instantiate goal in
+  let rs = choose_rule_unfold_post goal in
+  (* let rs2 = choose_rule_instantiate goal in
    * let rs3 = choose_rule_f_write goal in *)
   (* let rs = choose_rule_assign goal in *)
   (* let rs1 = choose_func_call goal in *)
   (* let rs4 = choose_rule_f_read goal in *)
-  let rs4 = choose_rule_unfold_pre goal in
+  (* let rs4 = choose_rule_unfold_pre goal in *)
   (* let rs4 = choose_rule_numeric goal in *)
   (* rs @ rs2 @ rs3 @ rs4 *)
-  rs4
+  rs
 
 (*********************************************************************
  * Processing rules
