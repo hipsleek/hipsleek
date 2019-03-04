@@ -402,6 +402,19 @@ let reorder_rules goal rules =
 (*****************************************************
   * Atomic functions
 ********************************************************)
+let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
+  match formula with
+  | Base bf -> let hf = bf.formula_base_heap in
+    let n_hf = CF.mkStarH hf added_hf no_pos in
+    CF.Base {bf with formula_base_heap = n_hf}
+  | Exists bf -> let hf = bf.formula_exists_heap in
+    let n_hf = CF.mkStarH hf added_hf no_pos in
+    Exists {bf with formula_exists_heap = n_hf}
+  | Or bf -> let n_f1 = add_h_formula_to_formula added_hf bf.formula_or_f1 in
+    let n_f2 = add_h_formula_to_formula added_hf bf.formula_or_f2 in
+    Or {bf with formula_or_f1 = n_f1;
+                formula_or_f2 = n_f2}
+
 let rec simpl_f (f:CF.formula) = match f with
   | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
   | _ -> [f]
@@ -523,15 +536,7 @@ let rec rm_emp_formula formula:CF.formula =
     let hf = exists_f.CF.formula_exists_heap in
     Exists {exists_f with formula_exists_heap = aux_heap hf}
 
-let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
-  let fold_fnc ls1 ls2 aux_fnc = List.fold_left (fun r (hf2, p2) ->
-      let in_r = List.map (fun (hf1, p1) ->
-          let nh = aux_fnc hf1 hf2 in
-          let np = x_add MCP.merge_mems p1 p2 true in
-          (nh, np)
-        ) ls1 in
-      r@in_r
-    ) [] ls2 in
+let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
   let rec look_up_vdef ls_pr_views vname =
     match ls_pr_views with
     | [] -> raise Not_found
@@ -553,39 +558,45 @@ let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
       let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
       let ss = List.combine f_args  a_args in
       let fs1 = List.map (x_add CF.subst ss) fs in
-      List.map (fun f -> (List.hd (CF.heap_of f), MCP.mix_of_pure (CF.get_pure f))) fs1
+      fs1
     with _ -> report_error no_pos ("SYN.do_unfold_view_hf: can not find view "
                                    ^ hv.h_formula_view_name) in
   let rec helper (hf:CF.h_formula) = match hf with
     | ViewNode hv ->
       if check_var_mem hv.h_formula_view_node args then
-        helper_vnode hv
-      else [(hf, mix_of_pure (CP.mkTrue no_pos))]
+        Some (helper_vnode hv)
+      else None
     | Star { h_formula_star_h1 = hf1;
              h_formula_star_h2 = hf2;
              h_formula_star_pos = pos} ->
-      let ls_hf_p1 = helper hf1 in
-      let ls_hf_p2 = helper hf2 in
-      let star_fnc h1 h2 =
-        CF.Star {h_formula_star_h1 = h1;
-              h_formula_star_h2 = h2;
-              h_formula_star_pos = pos}
-      in
-      fold_fnc ls_hf_p1 ls_hf_p2 star_fnc
-    | _ -> [(hf, mix_of_pure (CP.mkTrue no_pos))] in
-  helper hf
+      let unfold1 = helper hf1 in
+      let unfold2 = helper hf2 in
+      begin
+        match unfold1, unfold2 with
+        | Some l1, Some l2 -> report_error no_pos "only unfold once"
+        | Some l1, None -> Some (List.map (add_h_formula_to_formula hf2) l1)
+        | None, Some l2 -> Some (List.map (add_h_formula_to_formula hf1) l2)
+        | None, None -> Some [(CF.mkBase_simp hf (MCP.mkMTrue no_pos))]
+      end
+    | _ -> None in
+  match helper hf with
+  | None -> [(CF.mkBase_simp hf (MCP.mkMTrue no_pos))]
+  | Some list -> list
+
+let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
+  let pr1 = pr_formula in
+  Debug.no_2 "do_unfold_view_hf_vn" pr_hf pr_vars
+    (fun x -> x |> pr_list pr1)
+    (fun _ _ -> do_unfold_view_hf_vn_x cprog pr_views args hf) hf args
+
 
 let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
     let rec helper (f:CF.formula) = match f with
-    | Base fb ->
-      let ls_hf_pure = do_unfold_view_hf_vn cprog pr_views args fb.formula_base_heap in
-      let fs = List.map (fun (hf, p) ->
-          CF.Base {fb with formula_base_heap = hf;
-                        formula_base_pure = x_add MCP.merge_mems p
-                            fb.formula_base_pure true;}
-        ) ls_hf_pure in
-      let tmp = CF.disj_of_list fs fb.formula_base_pos in
-      simpl_f tmp
+      | Base fb ->
+        let unfold_hf = do_unfold_view_hf_vn cprog pr_views args fb.CF.formula_base_heap in
+        let pf = fb.CF.formula_base_pure in
+        let tmp = List.map (CF.add_mix_formula_to_formula pf) unfold_hf in
+        tmp |> List.map simpl_f |> List.concat
     | Exists _ ->
       let qvars, base1 = CF.split_quantifiers f in
       let nf = helper base1 |> List.map simpl_f |> List.concat in
@@ -803,19 +814,6 @@ let extract_var_f formula var =
  *         Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
  *     end
  *   | _ -> None *)
-
-let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
-  match formula with
-  | Base bf -> let hf = bf.formula_base_heap in
-    let n_hf = CF.mkStarH hf added_hf no_pos in
-    CF.Base {bf with formula_base_heap = n_hf}
-  | Exists bf -> let hf = bf.formula_exists_heap in
-    let n_hf = CF.mkStarH hf added_hf no_pos in
-    Exists {bf with formula_exists_heap = n_hf}
-  | Or bf -> let n_f1 = add_h_formula_to_formula added_hf bf.formula_or_f1 in
-    let n_f2 = add_h_formula_to_formula added_hf bf.formula_or_f2 in
-    Or {bf with formula_or_f1 = n_f1;
-                formula_or_f2 = n_f2}
 
 let create_residue vars prog conseq =
   if !Globals.check_post then

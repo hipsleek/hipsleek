@@ -595,15 +595,15 @@ let choose_synthesis_rules goal : rule list =
   (* let goal = framing_rule goal in *)
   let rs = choose_rule_unfold_post goal in
   let rs2 = choose_rule_instantiate goal in
-  let rs3 = choose_rule_f_write goal in
-  let rs4 = choose_rule_unfold_pre goal in
+  (* let rs3 = choose_rule_f_write goal in *)
+  (* let rs4 = choose_rule_unfold_pre goal in *)
 
   (* let rs = choose_rule_assign goal in *)
   (* let rs1 = choose_func_call goal in *)
   (* let rs4 = choose_rule_f_read goal in *)
   (* let rs4 = choose_rule_numeric goal in *)
-  rs @ rs2 @ rs3 @ rs4
-  (* rs4 *)
+  (* rs @ rs2 @ rs3 @ rs4 *)
+  rs @ rs2
 
 (*********************************************************************
  * Processing rules
