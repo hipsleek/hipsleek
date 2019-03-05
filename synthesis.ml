@@ -673,7 +673,7 @@ let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
         exp_var_name = x;
         exp_var_pos = no_pos;}) in
     I.CallNRecv {
-      exp_call_nrecv_method = sc.exp_scall_method_name;
+      exp_call_nrecv_method = sc.exp_scall_method_name |> Cast.unmingle_name;
       exp_call_nrecv_lock = None;
       exp_call_nrecv_ho_arg = None;
       exp_call_nrecv_arguments = arg_vars;

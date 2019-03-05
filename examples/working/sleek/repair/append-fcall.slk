@@ -1,0 +1,19 @@
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void insert(node x, node y)
+	requires x::ll<n1> * y::ll<n2> & x != null
+	ensures exists k: x::ll<k> & k = n1 + n2;.
+
+synthesize [node x, node y]
+x::node<v1, t> * t::ll<n3> * y::ll<n2> &
+!(v_bool) & x != null & n3 + 1 = n1 & t != null
+// fread
+
+~>
+x::ll<n1+n2>.
