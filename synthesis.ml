@@ -651,25 +651,34 @@ let get_post_cond (struc_f: CF.struc_formula) =
     bf.formula_struc_continuation |> Gen.unsome |> helper
   | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
 
+
+
 let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
   | IConst iconst -> Iast.IntLit{ exp_int_lit_val = iconst.exp_iconst_val;
                                   exp_int_lit_pos = iconst.exp_iconst_pos}
   | Var var -> Var { exp_var_name = var.exp_var_name;
                      exp_var_pos = var.exp_var_pos}
-  | Bind bv -> let var = Iast.Var{ exp_var_name = bv.exp_bind_bound_var |> snd;
-                                   exp_var_pos = no_pos} in
-    let lhs = Iast.Member{ exp_member_base = var;
-                           exp_member_fields = bv.exp_bind_fields |> List.map snd;
-                           exp_member_path_id = None;
-                           exp_member_pos = no_pos;} in
-    let rhs = match c2iast_exp bv.exp_bind_body with
-      | Assign a_exp -> a_exp.Iast.exp_assign_rhs
-      | _ -> report_error no_pos "c2iast_exp not handled" in
-    Iast.Assign{ exp_assign_op = OpAssign;
-                 exp_assign_lhs = lhs;
-                 exp_assign_rhs = rhs;
-                 exp_assign_path_id = None;
-                 exp_assign_pos = bv.exp_bind_pos;}
+  | Bind bv -> c2iast_bind bv bv.exp_bind_read_only
+
+  | Seq seq -> I.Seq { exp_seq_exp1 = c2iast_exp seq.exp_seq_exp1;
+                       exp_seq_exp2 = c2iast_exp seq.exp_seq_exp2;
+                       exp_seq_pos = seq.exp_seq_pos}
+  | VarDecl vd -> let id = vd.exp_var_decl_name in
+    I.VarDecl { exp_var_decl_type = vd.exp_var_decl_type;
+                exp_var_decl_decls = [(id, None, no_pos)];
+                exp_var_decl_pos = vd.exp_var_decl_pos}
+  | SCall sc ->
+    let args = sc.exp_scall_arguments in
+    let arg_vars = args |> List.map (fun x -> I.Var {
+        exp_var_name = x;
+        exp_var_pos = no_pos;}) in
+    I.CallNRecv {
+      exp_call_nrecv_method = sc.exp_scall_method_name;
+      exp_call_nrecv_lock = None;
+      exp_call_nrecv_ho_arg = None;
+      exp_call_nrecv_arguments = arg_vars;
+      exp_call_nrecv_path_id = None;
+      exp_call_nrecv_pos = sc.exp_scall_pos}
   | Assign var ->
     let lhs = Iast.Var  { exp_var_name = var.exp_assign_lhs;
                           exp_var_pos = no_pos} in
@@ -679,6 +688,32 @@ let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
             exp_assign_path_id = None;
             exp_assign_pos = var.exp_assign_pos}
   | _ -> report_error no_pos "cast_to_iast_exp not handled"
+
+and c2iast_bind bv read =
+  let var = Iast.Var{ exp_var_name = bv.exp_bind_bound_var |> snd;
+                      exp_var_pos = no_pos} in
+  let node = Iast.Member{ exp_member_base = var;
+                         exp_member_fields = bv.exp_bind_fields |> List.map snd;
+                         exp_member_path_id = None;
+                         exp_member_pos = no_pos;} in
+  if not read then
+    let rhs = match c2iast_exp bv.exp_bind_body with
+      | Assign a_exp -> a_exp.Iast.exp_assign_rhs
+      | _ -> report_error no_pos "c2iast_exp not handled" in
+    Iast.Assign{ exp_assign_op = OpAssign;
+                 exp_assign_lhs = node;
+                 exp_assign_rhs = rhs;
+                 exp_assign_path_id = None;
+                 exp_assign_pos = bv.exp_bind_pos;}
+  else
+    let lhs = match c2iast_exp bv.exp_bind_body with
+      | Assign a_exp -> a_exp.Iast.exp_assign_lhs
+      | _ -> report_error no_pos "c2iast_exp not handled" in
+    Iast.Assign { exp_assign_op = OpAssign;
+                  exp_assign_lhs = lhs;
+                  exp_assign_rhs = node;
+                  exp_assign_path_id = None;
+                  exp_assign_pos = bv.exp_bind_pos}
 
 let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
   let collect_pred (f2:CF.formula) = match f2 with
