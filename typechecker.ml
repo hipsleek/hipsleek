@@ -3184,22 +3184,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let pr = Cprinter.string_of_list_partial_context in
   let () = x_tinfo_hp (add_str "rs" pr) rs no_pos in
   if (is_reachable_succ) then
-    let entailments = !Synthesis.entailments |> List.rev in
-    let () = x_tinfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
-    let () = if List.length entailments = 2 then
-        let pre_cond = entailments |> List.hd |> fst
-                       |> Synthesis.unprime_formula in
-        let post_cond = entailments |> List.tl |> List.hd |> snd
-                        |> Synthesis.unprime_formula in
-        let syn_vars = proc.Cast.proc_args
-                       |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-        let () = x_binfo_hp (add_str "pre" pr_formula) pre_cond no_pos in
-        let () = x_binfo_hp (add_str "post" pr_formula) post_cond no_pos in
-        let goal = Synthesis.mk_goal_w_procs prog [proc] pre_cond post_cond syn_vars in
-        let () = x_binfo_hp (add_str "goal" Synthesis.pr_goal) goal no_pos in
-        let _ = Synthesizer.synthesize_program goal in
-        ()
-      else () in
     rs
   else begin
     let _ =
@@ -3767,6 +3751,16 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
                 else
                   print_web_mode ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
             end;
+          let entailments = !Synthesis.entailments |> List.rev in
+          let () = x_tinfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
+          let () = if List.length entailments = 2 then
+              let pre = entailments |> List.hd |> fst |> Synthesis.unprime_formula in
+              let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in
+              let syn_vars = proc.Cast.proc_args
+                             |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+              let _ = Synthesizer.synthesize_wrapper iprog prog proc pre post syn_vars in
+              ()
+            else () in
           pp
         end
     end else true

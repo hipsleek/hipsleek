@@ -110,10 +110,10 @@ let find_equal_var_x goal var =
   let all_vars = CF.fv pre |> List.filter is_node_var in
   let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
   let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars in
-  let () = x_binfo_hp (add_str "ante" pr_pf) ante no_pos in
+  let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
   let helper_pure var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
-    let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
+    let () = x_tinfo_hp (add_str "conseq" pr_pf) conseq no_pos in
     SB.check_pure_entail ante conseq in
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
@@ -133,11 +133,11 @@ let find_equal_var_x goal var =
     let var2_f = extract_var_f pre var2 in
     match var1_f, var2_f with
     | Some f1, Some f2 ->
-      let () = x_binfo_hp (add_str "eq-v f1" pr_formula) f1 no_pos in
-      let () = x_binfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
+      let () = x_tinfo_hp (add_str "eq-v f1" pr_formula) f1 no_pos in
+      let () = x_tinfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
       helper f1 f2
     | _ -> false in
-  let () = x_binfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
+  let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
   let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
 
@@ -149,8 +149,8 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let var_list, prog = goal.gl_vars, goal.gl_prog in
   let data_decls = prog.Cast.prog_data_decls in
-  let () = x_binfo_hp (add_str "pre-dnode" pr_formula) pre no_pos in
-  let () = x_binfo_hp (add_str "post-dnode" pr_formula) post no_pos in
+  let () = x_tinfo_hp (add_str "pre-dnode" pr_formula) pre no_pos in
+  let () = x_tinfo_hp (add_str "post-dnode" pr_formula) post no_pos in
   let bef_args = dn1.CF.h_formula_data_arguments in
   let aft_args = dn2.CF.h_formula_data_arguments in
   let name = dn1.CF.h_formula_data_name in
@@ -165,7 +165,7 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let helper dif_field =
     let pre_post = fst dif_field in
     let n_var = snd pre_post in
-    let () = x_binfo_hp (add_str "var" (pr_pair pr_var pr_var)) pre_post no_pos in
+    let () = x_tinfo_hp (add_str "var" (pr_pair pr_var pr_var)) pre_post no_pos in
     let field = snd dif_field in
     if List.exists (fun x -> CP.eq_sv x n_var) goal.gl_vars then
       let rule = RlBind { rb_bound_var = var;
@@ -199,7 +199,7 @@ let subtract_var var formula = match formula with
 
 let rec choose_rassign_data goal cur_var =
   let pre,post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "var" pr_sv) cur_var no_pos in
+  let () = x_tinfo_hp (add_str "var" pr_sv) cur_var no_pos in
   let () = x_tinfo_hp (add_str "PRE" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "POST" pr_formula) post no_pos in
   let aux_bf hf1 hf2 goal f_var1 f_var2 =
@@ -580,9 +580,9 @@ let framing_rule goal =
 
 let choose_rule_instantiate goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
-  let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+  let () = x_tinfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
   let helper var =
     let eq_vars = find_equal_var goal var in
     eq_vars |> List.map (fun x -> RlInstantiate {
@@ -612,7 +612,7 @@ let process_rule_assign goal rassign =
   let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rhs no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let () = x_binfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
+  let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
   let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
   match ent_check with
   | true -> mk_derivation_success goal (RlAssign rassign)
@@ -623,10 +623,10 @@ let subs_bind_write formula var field new_val data_decls =
   match (formula:CF.formula) with
   | Base bf ->
     let hf = bf.CF.formula_base_heap in
-    let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
+    let () = x_tinfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf no_pos in
     let rec helper (hf:CF.h_formula) = match hf with
       | DataNode dnode -> let data_var = dnode.h_formula_data_node in
-        let () = x_binfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf
+        let () = x_tinfo_hp (add_str "hf" Cprinter.string_of_h_formula) hf
             no_pos in
         if CP.eq_spec_var data_var var then
           let n_dnode = set_field dnode field new_val data_decls in
@@ -645,7 +645,7 @@ let process_rule_bind goal (bind:rule_bind) =
   let field, prog = bind.rb_field, goal.gl_prog in
   let rhs, data_decls = bind.rb_other_var, prog.prog_data_decls in
   let n_post = subs_bind_write pre var field rhs data_decls in
-  let () = x_binfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
   let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
   | true -> mk_derivation_success goal (RlBind bind)
@@ -733,7 +733,7 @@ let process_rule_instantiate goal rule =
   let subst = [(rule.rli_lhs, rule.rli_rhs)] in
   let n_post = CF.subst_all subst goal.gl_post_cond in
   let n_post = remove_exists_var n_post rule.rli_rhs in
-  let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
 
   let subgoal = {goal with gl_post_cond = n_post;
                            gl_trace = (RlInstantiate rule)::goal.gl_trace} in
@@ -752,7 +752,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -806,70 +806,30 @@ and process_one_derivation drv : synthesis_tree =
 (*********************************************************************
  * The main synthesis algorithm
  *********************************************************************)
-let exp_to_cast (exp: CP.exp) = match exp with
-  | Var (sv, loc) ->
-    Cast.Var {
-      exp_var_type = CP.type_of_sv sv;
-      exp_var_name = CP.name_of_sv sv;
-      exp_var_pos = loc
-    }
-  | IConst (num, loc) ->
-    Cast.IConst {
-      exp_iconst_val = num;
-      exp_iconst_pos = loc;
-    }
-  | _ -> report_error no_pos "exp_to_cast: not handled"
-
-let synthesize_st_core st =
-  let rule = st.stc_rule in
-  match rule with
-  | RlAssign rassign ->
-    let lhs = rassign.ra_lhs in
-    let rhs = rassign.ra_rhs in
-    let c_exp = exp_to_cast rhs in
-    let assign = Cast.Assign {
-        exp_assign_lhs = CP.name_of_sv lhs;
-        exp_assign_rhs = c_exp;
-        exp_assign_pos = no_pos;
-      }
-    in Some assign
-  | RlBind rbind ->
-    let bvar = rbind.rb_bound_var in
-    let bfield = rbind.rb_field in
-    let rhs = rbind.rb_other_var in
-    let typ = CP.type_of_sv rhs in
-    let rhs_var = Cast.Var {
-        Cast.exp_var_type = CP.type_of_sv rhs;
-        Cast.exp_var_name = CP.name_of_sv rhs;
-        Cast.exp_var_pos = no_pos;
-      } in
-    let (typ, f_name) = bfield in
-    let body = Cast.Assign {
-        Cast.exp_assign_lhs = f_name;
-        Cast.exp_assign_rhs = rhs_var;
-        Cast.exp_assign_pos = no_pos;
-      } in
-    let bexp = Cast.Bind {
-        exp_bind_type = typ;
-        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
-        exp_bind_fields = [bfield];
-        exp_bind_body = body;
-        exp_bind_imm = CP.NoAnn;
-        exp_bind_param_imm = [];
-        exp_bind_read_only = false;
-        exp_bind_path_id = (-1, "bind");
-        exp_bind_pos = no_pos;
-      } in Some bexp
-  | _ -> None
-
-let synthesize_program goal : CA.exp option =
+let synthesize_program goal =
+  let synthesize_cast_exp cast_exp = match cast_exp with
+    | Some exp -> Some (c2iast_exp exp)
+    | None -> None in
   let st = synthesize_one_goal goal in
-  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
-  None                          (* Leave synthesis the CAST code later *)
-  (* match st_status with
-   * | StValid st_core ->
-   *   let res = synthesize_st_core st_core in
-   *   let () = x_binfo_hp (add_str "res" pr_exp_opt) res no_pos in
-   *   res
-   * | StUnkn _ -> None *)
+  match st_status with
+  | StValid st_core ->
+    let cast_exp = synthesize_st_core st_core in
+    let iast_exp = synthesize_cast_exp cast_exp in
+    let () = x_binfo_hp (add_str "iast exp" pr_iast_exp_opt) iast_exp no_pos in
+    iast_exp
+  | StUnkn _ -> None
+
+let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
+  let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
+  let iast_exp = synthesize_program goal in
+  let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
+  let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
+  let n_proc = match iast_exp with
+    | None -> i_proc
+    | Some exp0 -> replace_exp_proc exp0 i_proc in
+  let n_iprocs = List.map (fun x -> if contains pname x.Iast.proc_name
+                            then n_proc else x) i_procs in
+  {iprog with I.prog_proc_decls = n_iprocs}
+

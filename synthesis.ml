@@ -8,6 +8,7 @@ open Mcpure
 module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
+module I = Iast
 
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
@@ -115,7 +116,7 @@ and synthesis_tree_derive = {
 and synthesis_tree_core = {
   stc_goal : goal;
   stc_rule : rule;
-  stc_sub_trees : synthesis_tree_core list;
+  stc_subtrees : synthesis_tree_core list;
 }
 
 and synthesis_tree_status =
@@ -179,7 +180,7 @@ let mk_synthesis_tree_derive goal rule sub_trees status : synthesis_tree =
 let mk_synthesis_tree_core goal rule sub_trees : synthesis_tree_core =
   { stc_goal = goal;
     stc_rule = rule;
-    stc_sub_trees = sub_trees; }
+    stc_subtrees = sub_trees; }
 
 let mk_synthesis_tree_success goal rule : synthesis_tree =
   let stcore = mk_synthesis_tree_core goal rule [] in
@@ -216,9 +217,15 @@ let is_synthesis_tree_success stree : bool =
  * Printing
  *********************************************************************)
 
-let pr_exp_opt exp = match exp with
+let pr_cast_exp_opt exp = match exp with
   | None -> "None"
   | Some e -> Cprinter.string_of_exp e
+
+let pr_iast_exp = Iprinter.string_of_exp_repair
+
+let pr_iast_exp_opt exp = match exp with
+  | None -> "None"
+  | Some e -> Iprinter.string_of_exp_repair e
 
 let pr_goal goal =
   let vars = goal.gl_vars in
@@ -272,7 +279,7 @@ and pr_st_status st_status = match st_status with
 
 and pr_st_core st =
   let goal = st.stc_goal in
-  let sub_trees = st.stc_sub_trees in
+  let sub_trees = st.stc_subtrees in
   (pr_goal goal) ^ "=n" ^
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
@@ -401,7 +408,13 @@ let reorder_rules goal rules =
 
 (*****************************************************
   * Atomic functions
-********************************************************)
+ ********************************************************)
+let contains s1 s2 =
+    let re = Str.regexp_string s2
+    in
+        try ignore (Str.search_forward re s1 0); true
+        with Not_found -> false
+
 let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
   match formula with
   | Base bf -> let hf = bf.formula_base_heap in
@@ -796,25 +809,6 @@ let extract_var_f formula var =
        | Some varf -> pr_formula varf)
     (fun _ _ -> extract_var_f_x formula var) formula var
 
-(* let rec extract_vars_f (f:CF.formula) (vars:CP.spec_var list) = match f with
- *   | CF.Base bf ->
- *     let hf = bf.CF.formula_base_heap in
- *     let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
- *     let heap_extract = extract_hf_vars hf vars in
- *     begin
- *       match heap_extract with
- *       | None ->
- *         let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
- *         let n_f = (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var)) in
- *         Some n_f
- *       | Some (hf, vars) ->
- *         let h_vars = CF.h_fv hf in
- *         let vars = vars @ h_vars |> CP.remove_dups_svl in
- *         let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
- *         Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
- *     end
- *   | _ -> None *)
-
 let create_residue vars prog conseq =
   if !Globals.check_post then
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
@@ -945,3 +939,104 @@ let rec remove_exists_vars (formula:CP.formula) = match formula with
     let nf2 = remove_exists_vars f2 in
     Or (nf1, nf2, opt, loc)
   | Forall (_, f, _, _) -> remove_exists_vars f
+
+(*****************************************************
+  * Synthesize CAST and IAST exp
+ ********************************************************)
+let exp_to_cast (exp: CP.exp) = match exp with
+  | Var (sv, loc) ->
+    Cast.Var {
+      exp_var_type = CP.type_of_sv sv;
+      exp_var_name = CP.name_of_sv sv;
+      exp_var_pos = loc
+    }
+  | IConst (num, loc) ->
+    Cast.IConst {
+      exp_iconst_val = num;
+      exp_iconst_pos = loc;
+    }
+  | _ -> report_error no_pos "exp_to_cast: not handled"
+
+let rec synthesize_st_core st : Cast.exp option =
+  match st.stc_rule with
+  | RlUnfoldPost _
+  | RlInstantiate _
+  | RlUnfoldPre _ ->
+    if st.stc_subtrees = [] then None
+    else st.stc_subtrees |> List.hd |> synthesize_st_core
+  | RlAssign rassign ->
+    let lhs = rassign.ra_lhs in
+    let rhs = rassign.ra_rhs in
+    let c_exp = exp_to_cast rhs in
+    let assign = Cast.Assign {
+        exp_assign_lhs = CP.name_of_sv lhs;
+        exp_assign_rhs = c_exp;
+        exp_assign_pos = no_pos;
+      }
+    in Some assign
+  | RlBind rbind ->
+    let bvar = rbind.rb_bound_var in
+    let bfield = rbind.rb_field in
+    let rhs = rbind.rb_other_var in
+    let typ = CP.type_of_sv rhs in
+    let rhs_var = Cast.Var {
+        Cast.exp_var_type = CP.type_of_sv rhs;
+        Cast.exp_var_name = CP.name_of_sv rhs;
+        Cast.exp_var_pos = no_pos;
+      } in
+    let (typ, f_name) = bfield in
+    let body = Cast.Assign {
+        Cast.exp_assign_lhs = f_name;
+        Cast.exp_assign_rhs = rhs_var;
+        Cast.exp_assign_pos = no_pos;
+      } in
+    let bexp = Cast.Bind {
+        exp_bind_type = typ;
+        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
+        exp_bind_fields = [bfield];
+        exp_bind_body = body;
+        exp_bind_imm = CP.NoAnn;
+        exp_bind_param_imm = [];
+        exp_bind_read_only = false;
+        exp_bind_path_id = (-1, "bind");
+        exp_bind_pos = no_pos;
+      } in Some bexp
+  | _ -> None
+
+let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
+  | Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
+    let n_e2 = replace_exp_aux nexp e.I.exp_assign_rhs in
+    Assign {e with exp_assign_lhs = n_e1;
+                   exp_assign_rhs = n_e2}
+  | Bind e -> let n_body = replace_exp_aux nexp e.I.exp_bind_body in
+    Bind {e with exp_bind_body = n_body}
+  | Block e -> let n_body = replace_exp_aux nexp e.I.exp_block_body in
+    Block {e with exp_block_body = n_body}
+  | Cast e -> let n_body = replace_exp_aux nexp e.I.exp_cast_body in
+    Cast {e with exp_cast_body = n_body;}
+  | CallNRecv e -> let name = e.I.exp_call_nrecv_method in
+    let () = x_tinfo_hp (add_str "name" pr_id) name no_pos in
+    if name = "fcode" then nexp
+    else exp
+  | UnkExp _ -> let () = x_tinfo_pp "marking" no_pos in
+    exp
+  | Cond e ->
+    let () = x_tinfo_pp "marking" no_pos in
+    let r1 = replace_exp_aux nexp e.exp_cond_then_arm in
+    let r2 = replace_exp_aux nexp e.exp_cond_else_arm in
+    Cond {e with exp_cond_then_arm = r1;
+                 exp_cond_else_arm = r2}
+  | Label (a, body) -> Label (a, replace_exp_aux nexp body)
+  | Seq e -> let n_e1 = replace_exp_aux nexp e.I.exp_seq_exp1 in
+    let n_e2 = replace_exp_aux nexp e.I.exp_seq_exp2 in
+    Seq {e with exp_seq_exp1 = n_e1;
+                exp_seq_exp2 = n_e2}
+  | _ -> exp
+
+let replace_exp_proc n_exp proc =
+  let n_body = match proc.Iast.proc_body with
+    | None -> None
+    | Some exp -> Some (replace_exp_aux n_exp exp) in
+  let () = x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos in
+  let () = x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos in
+  {proc with I.proc_body = n_body}

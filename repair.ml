@@ -753,13 +753,13 @@ let start_repair iprog =
       let pre = pre_cond |> Gen.unsome in
       let goal = Syn.mk_goal_w_procs cprog [cproc] pre post_cond vars in
       let c_exp = Synthesizer.synthesize_program goal in
-      let a_exp = match c_exp with
-        | None -> None
-        | Some exp ->
-          let i_exp = Syn.c2iast_exp exp in
-          let () = x_tinfo_hp (add_str "iast_exp" Iprinter.string_of_exp) i_exp no_pos in
-          Some i_exp in
-      let n_iproc = mk_candidate_iproc repairing_iproc a_exp cands in
+      (* let a_exp = match c_exp with
+       *   | None -> None
+       *   | Some exp ->
+       *     let i_exp = Syn.c2iast_exp exp in
+       *     let () = x_tinfo_hp (add_str "iast_exp" Iprinter.string_of_exp) i_exp no_pos in
+       *     Some i_exp in
+       * let n_iproc = mk_candidate_iproc repairing_iproc a_exp cands in *)
       None
   | _ ->
     let () = next_proc := false in
