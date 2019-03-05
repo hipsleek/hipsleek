@@ -589,7 +589,7 @@ let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
         | Some l1, Some l2 -> report_error no_pos "only unfold once"
         | Some l1, None -> Some (List.map (add_h_formula_to_formula hf2) l1)
         | None, Some l2 -> Some (List.map (add_h_formula_to_formula hf1) l2)
-        | None, None -> Some [(CF.mkBase_simp hf (MCP.mkMTrue no_pos))]
+        | None, None -> None
       end
     | _ -> None in
   match helper hf with

@@ -19,10 +19,11 @@ void append(node x, node y)
   ensures x::ll<n1+n2>;
 {
 	if (x.next == null){
-        fcode(x,y);
-        //x.next = y;
+        // fcode(x,y);k
+        x.next = y;
    } else {
-       append(x.next, y);
+       fcode(x,y);
+       //append(x.next, y);
     }
 }
 
