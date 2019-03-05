@@ -806,18 +806,16 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
-  let synthesize_cast_exp cast_exp = match cast_exp with
-    | Some exp -> Some (c2iast_exp exp)
-    | None -> None in
   let st = synthesize_one_goal goal in
   let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
     let cast_exp = synthesize_st_core st_core in
-    let iast_exp = synthesize_cast_exp cast_exp in
-    let () = x_binfo_hp (add_str "iast exp" pr_iast_exp_opt) iast_exp no_pos in
-    iast_exp
+    let () = x_binfo_hp (add_str "cast exp" pr_cast_exp) cast_exp no_pos in
+    let iast_exp = c2iast_exp cast_exp in
+    let () = x_binfo_hp (add_str "iast exp" pr_iast_exp) iast_exp no_pos in
+    Some iast_exp
   | StUnkn _ -> None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
