@@ -19,8 +19,7 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 
 let rec replace_exp_with_loc exp n_exp loc =
   match exp with
-  | Assign e ->
-    if (e.exp_assign_pos = loc) then n_exp else
+  | Assign e -> if (e.exp_assign_pos = loc) then n_exp else
       let r_exp1 = replace_exp_with_loc e.exp_assign_lhs n_exp loc in
       let r_exp2 = replace_exp_with_loc e.exp_assign_rhs n_exp loc in
       Assign {e with exp_assign_lhs = r_exp1;
@@ -28,120 +27,85 @@ let rec replace_exp_with_loc exp n_exp loc =
   | Binary e ->
     begin
       match e.exp_binary_op with
-      | OpEq
-      | OpNeq
-      | OpLt
-      | OpLte
-      | OpGt
-      | OpGte ->
+      | OpEq | OpNeq | OpLt | OpLte | OpGt | OpGte ->
         let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
         Binary {e with exp_binary_oper1 = r_exp1}
-      | _ ->
-        if e.exp_binary_pos = loc then n_exp else
+      | _ -> if e.exp_binary_pos = loc then n_exp else
           let r_exp1 = replace_exp_with_loc e.exp_binary_oper1 n_exp loc in
           let r_exp2 = replace_exp_with_loc e.exp_binary_oper2 n_exp loc in
           Binary {e with exp_binary_oper1 = r_exp1;
                          exp_binary_oper2 = r_exp2}
-            end
+    end
   | Bind e ->
     if e.exp_bind_pos = loc then n_exp else
       let r_exp = replace_exp_with_loc e.exp_bind_body n_exp loc in
       Bind {e with exp_bind_body = r_exp}
   | Block e ->
     if e.exp_block_pos = loc then n_exp
-    else
-      let r_exp = replace_exp_with_loc e.exp_block_body n_exp loc in
+    else let r_exp = replace_exp_with_loc e.exp_block_body n_exp loc in
       Block {e with exp_block_body = r_exp}
-  | Cast e -> Cast {e with
-                    exp_cast_body = replace_exp_with_loc e.exp_cast_body n_exp loc}
-  | Cond e ->
-    let r_cond = replace_exp_with_loc e.exp_cond_condition n_exp loc in
+  | Cast e ->
+    Cast {e with exp_cast_body = replace_exp_with_loc e.exp_cast_body n_exp loc}
+  | Cond e -> let r_cond = replace_exp_with_loc e.exp_cond_condition n_exp loc in
     let r_then_branch = replace_exp_with_loc e.exp_cond_then_arm n_exp loc in
     let r_else_branch = replace_exp_with_loc e.exp_cond_else_arm n_exp loc in
     Cond {e with exp_cond_condition = r_cond;
                  exp_cond_then_arm = r_then_branch;
                  exp_cond_else_arm = r_else_branch}
-  | Catch e ->
-    Catch {
+  | Catch e -> Catch {
       e with exp_catch_body = replace_exp_with_loc e.exp_catch_body n_exp loc }
   | IntLit e -> if (e.exp_int_lit_pos = loc) then n_exp else exp
   | Label (a, body) -> Label (a, replace_exp_with_loc body n_exp loc)
   | Member e ->
     Member {e with exp_member_base = replace_exp_with_loc e.exp_member_base n_exp loc}
-  | New e ->
-    exp
-  | Return e ->
-    (* exp *)
-    let r_val = match e.exp_return_val with
+  | New e -> exp
+  | Return e -> let r_val = match e.exp_return_val with
       | None -> None
-      | Some e -> Some (replace_exp_with_loc e n_exp loc)
-    in Return {e with exp_return_val = r_val}
-  | Seq e ->
-    let r_e1 = replace_exp_with_loc e.exp_seq_exp1 n_exp loc in
+      | Some e -> Some (replace_exp_with_loc e n_exp loc) in
+    Return {e with exp_return_val = r_val}
+  | Seq e -> let r_e1 = replace_exp_with_loc e.exp_seq_exp1 n_exp loc in
     let r_e2 = replace_exp_with_loc e.exp_seq_exp2 n_exp loc in
     Seq {e with exp_seq_exp1 = r_e1;
                 exp_seq_exp2 = r_e2}
-  | Unary e ->
-    let n_e = replace_exp_with_loc e.exp_unary_exp n_exp loc in
+  | Unary e -> let n_e = replace_exp_with_loc e.exp_unary_exp n_exp loc in
     Unary {e with exp_unary_exp = n_e}
   | Var v -> if (v.exp_var_pos = loc) then n_exp else exp
   | _ -> exp
 
 let replace_assign_exp exp vars heuristic =
   let rec prelist a b = match a, b with
-    | [], _ -> true
-    | _, [] -> false
-    | h::t, h'::t' -> h = h' && prelist t t'
-  in
+    | [], _ -> true      | _, [] -> false
+    | h::t, h'::t' -> h = h' && prelist t t' in
   let rec sublist a b = match a, b with
-    | [], _ -> true
-    | _, [] -> false
-    | h::_, h'::t' -> (h = h' && prelist a b) || sublist a t'
-  in
+    | [], _ -> true      | _, [] -> false
+    | h::_, h'::t' -> (h = h' && prelist a b) || sublist a t' in
   let is_cond exp = match exp with
     | Binary e ->
       begin
         match e.exp_binary_op with
-        | OpEq
-        | OpNeq
-        | OpLt
-        | OpLte
-        | OpGte
-        | OpGt ->
-          true
+        | OpEq | OpNeq | OpLt | OpLte | OpGte | OpGt -> true
         | _ -> false
       end
-    | _ -> false
-  in
+    | _ -> false in
   let is_unk_exp exp = match exp with
-    | UnkExp _ -> true
-    | _ -> false
-  in
+    | UnkExp _ -> true      | _ -> false in
   let rec replace exp vars =
     let exp_vars = collect_vars_exp exp in
-    let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos
-    in
+    let () = x_tinfo_hp (add_str "exp_vars: " (pr_list pr_id)) exp_vars no_pos in
     if (sublist exp_vars vars & not (is_cond exp)) then
       (mk_unk_exp exp_vars (get_exp_pos exp), exp_vars, [get_exp_pos exp])
-    else
-      match exp with
+    else match exp with
       | Binary b ->
         if is_cond exp then
           let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
           (Binary { b with exp_binary_oper1 = a1}, b1, c1)
-        else
-          let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
+        else let (a1, b1, c1) = replace b.exp_binary_oper1 vars in
           let (a2, b2, c2) = replace b.exp_binary_oper2 vars in
           if (is_unk_exp a1 && is_unk_exp a2) then
             (combine_unk_exp a1 a2 b.exp_binary_pos, b1@b2, c1@c2)
-          else
-            (Binary {
-                b with exp_binary_oper1 = a1;
-                       exp_binary_oper2 = a2;
-              }, b1 @ b2, c1@c2)
-      | _ -> (exp, [], [])
-
-  in
+          else (Binary { b with exp_binary_oper1 = a1;
+                                exp_binary_oper2 = a2}, b1 @ b2, c1@c2)
+      | _ -> (exp, [], []) in
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_id)) vars no_pos in
   let exp_vars = collect_vars_exp exp in
   if (exp_vars == []) then
@@ -160,8 +124,7 @@ let normalize_arith_exp exp =
     | Binary e ->
       begin
         match e.exp_binary_op with
-        | OpLogicalAnd
-        | OpLogicalOr ->
+        | OpLogicalAnd      | OpLogicalOr ->
           let (e1, list1) =
             if (is_compose_exp e.exp_binary_oper1) then
               aux e.exp_binary_oper1
@@ -171,52 +134,37 @@ let normalize_arith_exp exp =
               aux e.exp_binary_oper2
             else (e.exp_binary_oper2, []) in
           let n_exp = Binary {e with exp_binary_oper1 = e1;
-                                     exp_binary_oper2 = e2}
-          in (n_exp, list1@list2)
-        | OpEq
-        | OpNeq
-        | OpLt
-        | OpLte
-        | OpGt
-        | OpGte -> if (is_compose_exp e.exp_binary_oper1) then
+                                     exp_binary_oper2 = e2} in
+          (n_exp, list1@list2)
+        | OpEq | OpNeq | OpLt | OpLte | OpGt | OpGte ->
+          if (is_compose_exp e.exp_binary_oper1) then
             let loc = get_exp_pos e.exp_binary_oper1 in
             let n_name = "exp_" ^ (VarGen.string_of_loc_repair loc) in
-            let var = Var {
-                exp_var_name = n_name;
-                exp_var_pos = loc;
-              } in
+            let var = Var { exp_var_name = n_name;
+                            exp_var_pos = loc} in
             let n_exp = Binary {e with exp_binary_oper1 = var} in
             (n_exp, [(n_name, e.exp_binary_oper1)])
           else (exp, [])
         | _ -> (exp, [])
     end
-    | Assign e ->
-      let (e1, list1) = aux e.exp_assign_rhs in
+    | Assign e -> let (e1, list1) = aux e.exp_assign_rhs in
       (Assign {e with exp_assign_rhs = e1}, list1)
-    | Block b ->
-      let (e1, l1) = aux b.exp_block_body in
+    | Block b -> let (e1, l1) = aux b.exp_block_body in
       (Block {b with exp_block_body = e1}, l1)
-    | Cond e ->
-      let (e1, l1) = aux e.exp_cond_condition in
+    | Cond e -> let (e1, l1) = aux e.exp_cond_condition in
       let (e2, l2) = aux e.exp_cond_then_arm in
       let (e3, l3) = aux e.exp_cond_else_arm in
       (Cond {e with exp_cond_condition = e1;
                     exp_cond_then_arm = e2;
                     exp_cond_else_arm = e3}, l1@l2@l3)
-    | Label (a, e) ->
-      let (e1, l1) = aux e in
-      (Label (a, e1), l1)
-    | Seq e ->
-      let (e1, l1) = aux e.exp_seq_exp1 in
+    | Label (a, e) -> let (e1, l1) = aux e in (Label (a, e1), l1)
+    | Seq e -> let (e1, l1) = aux e.exp_seq_exp1 in
       let (e2, l2) = aux e.exp_seq_exp2 in
       (Seq {e with exp_seq_exp1 = e1; exp_seq_exp2 = e2}, l1@l2)
-    | Unary e ->
-      let (e1, l1) = aux e.exp_unary_exp in
+    | Unary e -> let (e1, l1) = aux e.exp_unary_exp in
       (Unary {e with exp_unary_exp = e1}, l1)
-    | _ -> (exp, [])
-  in
+    | _ -> (exp, []) in
   let (n_exp, assign_list) = aux exp in
-
   let collect_local_var_decls exp =
     let rec aux exp list = match exp with
       | Block e -> aux e.exp_block_body list
@@ -225,84 +173,64 @@ let normalize_arith_exp exp =
         aux e.exp_seq_exp2 list1
       | VarDecl _ -> [exp] @ list
       | Label (_, e) -> aux e list
-      | _ -> list
-    in List.rev (aux exp [])
-  in
+      | _ -> list in
+    List.rev (aux exp []) in
   let collect_main exp =
     let rec aux exp list = match exp with
       | Block e -> aux e.exp_block_body list
-      | Seq e ->
-        let list1 = aux e.exp_seq_exp1 list in
+      | Seq e -> let list1 = aux e.exp_seq_exp1 list in
         aux e.exp_seq_exp2 list1
       | VarDecl _ -> list
       | Label (_, e) -> aux e list
-      | _ -> [exp] @ list
-    in List.rev (aux exp [])
-  in
+      | _ -> [exp] @ list in
+    List.rev (aux exp []) in
   let var_decls = collect_local_var_decls n_exp in
   let pr_exps = pr_list Iprinter.string_of_exp in
   let pr_exp = Iprinter.string_of_exp in
-
   let () = x_tinfo_hp (add_str "n_exp: " pr_exp) n_exp no_pos in
   let () = x_tinfo_hp (add_str "var decls: " pr_exps) var_decls no_pos in
-
   let rec find_main exp vars = match exp with
     | Block e -> find_main e.exp_block_body vars
     | Label (_, el) -> find_main el vars
-    | Seq e ->
-      if (List.mem e.exp_seq_exp1 vars) then e.exp_seq_exp2
+    | Seq e -> if (List.mem e.exp_seq_exp1 vars) then e.exp_seq_exp2
       else if (List.mem e.exp_seq_exp2 vars) then e.exp_seq_exp1
-      else
-        let e1 = find_main e.exp_seq_exp1 vars in
+      else let e1 = find_main e.exp_seq_exp1 vars in
         let e2 = find_main e.exp_seq_exp2 vars in
         Seq {e with exp_seq_exp1 = e1;
                     exp_seq_exp2 = e2}
-    | _ -> exp
-  in
-  (* let main_exp = find_main n_exp var_decls in *)
+    | _ -> exp in
   let rec sequencing_exp exp_list = match exp_list with
     | [] -> report_error no_pos "cannot sequencing empty list"
     | [x] -> x
-    | h::t -> mkSeq h (sequencing_exp t) no_pos
-  in
+    | h::t -> mkSeq h (sequencing_exp t) no_pos in
   let main_exp = sequencing_exp (collect_main n_exp) in
   let () = x_tinfo_hp (add_str "main: " pr_exp) main_exp no_pos in
   let assign_list = Gen.BList.remove_dups_eq (fun a b ->
       String.compare (fst a) (fst b) == 0) assign_list in
   let attached_exp = List.fold_left(fun a (b, c) ->
-      let var_decl = VarDecl {
-          exp_var_decl_type = int_type;
-          exp_var_decl_decls = [(b, None, no_pos)];
-          exp_var_decl_pos = no_pos
-        }
-      in
-      let assign = Assign {
-          exp_assign_op = OpAssign;
-          exp_assign_lhs = Var {
-              exp_var_name = b;
-              exp_var_pos = no_pos;
-            };
-          exp_assign_rhs = c;
-          exp_assign_path_id = None;
-          exp_assign_pos = no_pos
-        } in
-      let seq = Seq {
-          exp_seq_exp1 = var_decl;
-          exp_seq_exp2 = assign;
-          exp_seq_pos = no_pos
-        }
-      in
-      Seq {
-        exp_seq_exp1 = seq;
-        exp_seq_exp2 = a;
-        exp_seq_pos = no_pos
-      }
+      let var_decl = VarDecl { exp_var_decl_type = int_type;
+                               exp_var_decl_decls = [(b, None, no_pos)];
+                               exp_var_decl_pos = no_pos} in
+      let assign = Assign { exp_assign_op = OpAssign;
+                            exp_assign_lhs = Var {
+                                exp_var_name = b;
+                                exp_var_pos = no_pos;
+                              };
+                            exp_assign_rhs = c;
+                            exp_assign_path_id = None;
+                            exp_assign_pos = no_pos
+                          } in
+      let seq = Seq { exp_seq_exp1 = var_decl;
+                      exp_seq_exp2 = assign;
+                      exp_seq_pos = no_pos} in
+      Seq { exp_seq_exp1 = seq;
+            exp_seq_exp2 = a;
+            exp_seq_pos = no_pos
+          }
     ) main_exp assign_list in
   let attached_exp = if (var_decls = []) then attached_exp
-    else
-      let var_decls = sequencing_exp var_decls in
-      mkSeq var_decls attached_exp no_pos
-  in
+    else let var_decls = sequencing_exp var_decls in
+      mkSeq var_decls attached_exp no_pos in
   attached_exp
 
 (* Normalize logical exp *)
@@ -311,10 +239,7 @@ let rec normalize_logical_exp exp = match exp with
   | Binary e ->
     begin
       match e.exp_binary_op with
-      | OpLt
-      | OpLte
-      | OpGt
-      | OpGte ->
+      | OpLt | OpLte | OpGt | OpGte ->
         if not(is_zero_exp e.exp_binary_oper2) then
           let e_oper1 = e.exp_binary_oper1 in
           let e_oper2 = e.exp_binary_oper2 in
@@ -324,42 +249,36 @@ let rec normalize_logical_exp exp = match exp with
                           exp_binary_oper2 = mkIntLit 0 no_pos;
                           exp_binary_pos = no_pos }
         else exp
-      | OpLogicalAnd
-      | OpLogicalOr ->
+      | OpLogicalAnd | OpLogicalOr ->
         let e_1 = normalize_logical_exp e.exp_binary_oper1 in
         let e_2 = normalize_logical_exp e.exp_binary_oper2 in
         Binary { e with exp_binary_oper1 = e_1;
                         exp_binary_oper2 = e_2 }
       | _ -> exp
     end
-  | Assign e ->
-    let rhs_e = normalize_logical_exp e.exp_assign_rhs in
+  | Assign e -> let rhs_e = normalize_logical_exp e.exp_assign_rhs in
     let pr_exp = Iprinter.string_of_exp in
     let () = x_tinfo_hp (add_str "rhs: " pr_exp) e.exp_assign_rhs no_pos in
     Assign {e with exp_assign_rhs = rhs_e}
-  | Block b -> Block {b with exp_block_body = normalize_logical_exp b.exp_block_body}
-  | Cond e ->
-    let e_cond = normalize_logical_exp e.exp_cond_condition in
+  | Block b ->
+    Block {b with exp_block_body = normalize_logical_exp b.exp_block_body}
+  | Cond e -> let e_cond = normalize_logical_exp e.exp_cond_condition in
     let e_then = normalize_logical_exp e.exp_cond_then_arm in
     let e_else = normalize_logical_exp e.exp_cond_else_arm in
     Cond {e with exp_cond_condition = e_cond;
                  exp_cond_then_arm = e_then;
                  exp_cond_else_arm = e_else}
   | Label (a, e) -> Label (a, normalize_logical_exp e)
-  | Seq e ->
-    let e_1 = normalize_logical_exp e.exp_seq_exp1 in
+  | Seq e -> let e_1 = normalize_logical_exp e.exp_seq_exp1 in
     let e_2 = normalize_logical_exp e.exp_seq_exp2 in
     Seq {e with exp_seq_exp1 = e_1;
                 exp_seq_exp2 = e_2}
-  | Unary e ->
-    let e1 = normalize_logical_exp e.exp_unary_exp in
+  | Unary e -> let e1 = normalize_logical_exp e.exp_unary_exp in
     Unary {e with exp_unary_exp = e1}
-  | CallNRecv e ->
-    let args = e.exp_call_nrecv_arguments in
+  | CallNRecv e -> let args = e.exp_call_nrecv_arguments in
     let n_args = List.map normalize_logical_exp args in
     CallNRecv {e with exp_call_nrecv_arguments = n_args}
-  | CallRecv e ->
-    let args = e.exp_call_recv_arguments in
+  | CallRecv e -> let args = e.exp_call_recv_arguments in
     let n_args = List.map normalize_logical_exp args in
     CallRecv {e with exp_call_recv_arguments = n_args}
   | _ -> exp
@@ -368,12 +287,9 @@ let rec normalize_logical_exp exp = match exp with
 let normalize_proc iprog proc_decl =
   let n_proc_body = match proc_decl.proc_body with
     | None -> None
-    | Some body_exp ->
-      let n_exp = body_exp in
+    | Some body_exp -> let n_exp = body_exp in
       let n_exp = normalize_logical_exp body_exp in
-      (* let n_exp = normalize_arith_exp n_exp in *)
-      Some n_exp
-  in
+      Some n_exp in
   let nprog = {proc_decl with proc_body = n_proc_body} in
   nprog
 
@@ -382,24 +298,18 @@ let normalize_prog iprog =
   {iprog with prog_proc_decls = List.map (fun x -> normalize_proc iprog x) iprog.prog_proc_decls}
 
 let output_repaired_iprog src pos repaired_exp =
-  let file_name = Filename.basename src in
+  let file_name, dir = Filename.basename src, Filename.dirname src in
   let r_file = "repaired_" ^ file_name in
-  let dir = Filename.dirname src in
   let to_saved_file = dir ^ Filename.dir_sep ^ r_file in
-  let () = x_tinfo_pp dir no_pos in
-  let read_file filename =
-    let lines = ref [] in
+  let read_file filename = let lines = ref [] in
     let chan = open_in filename in
     try
       while true; do
         lines := input_line chan :: !lines
       done; []
-    with End_of_file ->
-      close_in chan;
-      List.rev !lines
-  in
-  let lines = read_file src in
-  let count = ref 0 in
+    with End_of_file -> close_in chan;
+      List.rev !lines in
+  let lines, count = read_file src, ref 0 in
   let lines_with_lnums = List.map (fun x ->
       let () = count := 1 + !count in
       (x, !count)) lines in
@@ -411,14 +321,12 @@ let output_repaired_iprog src pos repaired_exp =
                               - pos.VarGen.end_pos.Lexing.pos_bol) in
   if (start_lnum != end_lnum) then
     report_error no_pos "repaired expression has to be in one line"
-  else
-    let exp_str = repaired_exp |> (Cprinter.poly_string_of_pr
+  else let exp_str = repaired_exp |> (Cprinter.poly_string_of_pr
                                      Cprinter.pr_formula_exp) in
     let () = x_tinfo_hp (add_str "pos" VarGen.string_of_loc) pos no_pos in
     let output_lines = List.map (fun (x,y) ->
         if (y != start_lnum) then x
-        else
-          let () = x_tinfo_hp (add_str "x" pr_id) x no_pos in
+        else let () = x_tinfo_hp (add_str "x" pr_id) x no_pos in
           let () = x_tinfo_hp (add_str "start" string_of_int) (start_cnum -1) no_pos in
           let () = x_tinfo_hp (add_str "end" string_of_int)
               (end_cnum - start_cnum + 1) no_pos in
@@ -428,8 +336,7 @@ let output_repaired_iprog src pos repaired_exp =
     let output = String.concat "\n" output_lines in
     let () = x_tinfo_hp (add_str "output_prog:" pr_id) output no_pos in
     let oc = open_out to_saved_file in
-    fprintf oc "%s\n" output;
-    close_out oc;
+    fprintf oc "%s\n" output; close_out oc;
     let () = x_binfo_pp "\n\n \n" no_pos in
     ()
 
@@ -474,12 +381,9 @@ let repair_prog_with_templ_main iprog cprog =
 let repair_prog_with_templ iprog cond_op =
   let () = Typechecker.repairing_ents := [] in
   let () = Typechecker.proc_to_repair := None in
-  let contains s1 s2 =
-    let re = Str.regexp_string s2
-    in
+  let contains s1 s2 = let re = Str.regexp_string s2 in
     try ignore (Str.search_forward re s1 0); true
-    with Not_found -> false
-  in
+    with Not_found -> false in
   let () = x_tinfo_pp "marking \n" no_pos in
   let cprog, _ = Astsimp.trans_prog iprog in
   try
@@ -496,8 +400,7 @@ let repair_prog_with_templ iprog cond_op =
             None
           | Some (nprog, repaired_exp, _, _) ->
             match !Typechecker.proc_to_repair with
-            | None -> let () = next_proc := false in
-              None
+            | None -> let () = next_proc := false in None
             | Some proc_name_to_repair ->
               let exp_decls = nprog.Cast.prog_exp_decls in
               let n_iprog = Typechecker.update_iprog_exp_defns iprog exp_decls in
@@ -518,20 +421,17 @@ let repair_prog_with_templ iprog cond_op =
               let nn_cprog, _ = Astsimp.trans_prog nn_iprog in
               let current_proc = !Typechecker.proc_to_repair in
               try
-                let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog
-                in
+                let () = Typechecker.check_prog_wrapper nn_iprog nn_cprog in
                 let () = next_proc := false in
                 Some (nn_iprog, repaired_exp)
-              with _ ->
-                let () = x_tinfo_pp "marking \n" no_pos in
+              with _ -> let () = x_tinfo_pp "marking \n" no_pos in
                 let next_proc_name = !Typechecker.proc_to_repair in
                 if (String.compare (Gen.unsome current_proc)
                       (Gen.unsome next_proc_name) != 0) then
                   let () = next_proc := true in
                   Some (nn_iprog, repaired_exp)
                 else
-                  let () = next_proc := false in
-                  None
+                  let () = next_proc := false in None
                 (* if cond_op == None then None
                  * else
                  *   begin
@@ -573,10 +473,8 @@ let create_tmpl_proc proc replaced_exp vars heuristic =
       replaced_vars no_pos in
   let () = x_tinfo_hp (add_str "n_exp: " (Iprinter.string_of_exp)) n_exp no_pos in
   if n_exp = replaced_exp then
-    let () = next_proc := false in
-    None
-  else
-    let exp_loc = get_exp_pos replaced_exp in
+    let () = next_proc := false in None
+  else let exp_loc = get_exp_pos replaced_exp in
     let unk_vars = List.map (fun x -> (Globals.Int, x)) replaced_vars in
     let unk_exp = mk_exp_decl unk_vars in
     let n_proc_body = Some (replace_exp_with_loc (Gen.unsome proc.proc_body)
@@ -586,18 +484,12 @@ let create_tmpl_proc proc replaced_exp vars heuristic =
 
 let repair_one_statement iprog proc exp is_cond vars heuristic =
   let pr_exp = Iprinter.string_of_exp_repair in
-  let () = x_tinfo_hp (add_str "exp candidate: " pr_exp)
-      exp no_pos in
-  if !stop then
-    let () = next_proc := false in
-    None
-  else
-    let n_proc_exp = create_tmpl_proc proc exp vars heuristic
-    in
+  let () = x_tinfo_hp (add_str "exp candidate: " pr_exp) exp no_pos in
+  if !stop then let () = next_proc := false in None
+  else let n_proc_exp = create_tmpl_proc proc exp vars heuristic in
     let () = x_dinfo_pp "marking \n" no_pos in
     match n_proc_exp with
-    | None -> let () = next_proc := false in
-      None
+    | None -> let () = next_proc := false in None
     | Some (templ_proc, unk_exp, replaced_pos) ->
       let () = x_tinfo_hp (add_str "new proc: " pr_exp)
           (Gen.unsome templ_proc.proc_body) no_pos in
@@ -631,15 +523,8 @@ let repair_one_statement iprog proc exp is_cond vars heuristic =
         let () = next_proc := false in
         None
 
-let repair_one_heap_stmt iprog proc stmt =
-  let n_proc = create_tmpl_hproc proc stmt in
-  let pr_exp = Iprinter.string_of_exp_repair in
-  let () = x_binfo_hp (add_str "n_proc" pr_exp) (Gen.unsome n_proc.proc_body) no_pos in
-  None
-
 let get_best_repair repair_list =
-  try
-    let max_candidate = List.hd repair_list in
+  try let max_candidate = List.hd repair_list in
     let res = List.fold_left (fun x y ->
         let (a1, b1, c1, d3) = x in
         let (a2, b2, c2, d2) = y in
@@ -707,69 +592,54 @@ let find_pre_cond ctx prog = match ctx with
     Some n_ctx_f
   | None -> None
 
-let mk_candidate_iproc iproc n_exp candidates =
-  match n_exp with
-  | Some i_exp ->
-    if candidates = [] then None
-    else let candidate = List.hd candidates in
-      let loc = Iast.get_exp_pos candidate in
-      let n_body = match iproc.Iast.proc_body with
-        | None -> None
-        | Some exp_body ->
-          let n_exp = replace_exp_with_loc exp_body i_exp loc in
-          let () = x_binfo_hp (add_str "n_body" Iprinter.string_of_exp) n_exp no_pos in
-          Some n_exp in
-      let n_iproc = {iproc with Iast.proc_body = n_body} in
-      None
-  | None -> None
+let mk_candidate_iproc iproc candidate =
+  iproc
 
 let start_repair iprog =
   let pr_exps = pr_list Iprinter.string_of_exp in
-
   match (!Typechecker.proc_to_repair) with
-  | (Some proc_name_to_repair) ->
-    let proc_name_to_repair = Cast.unmingle_name proc_name_to_repair in
-    let () = x_binfo_hp (add_str "proc_name: " pr_id) (proc_name_to_repair)
-        no_pos in
+  | (Some repair_proc) ->
+    let repair_proc = Cast.unmingle_name repair_proc in
+    let () = x_binfo_hp (add_str "proc_name: " pr_id) repair_proc no_pos in
     let () = Globals.start_repair := true in
-    let repairing_iproc = List.find (fun x -> String.compare (x.proc_name)
-                                       proc_name_to_repair == 0)
-        iprog.prog_proc_decls in
-    let () = x_tinfo_hp (add_str "proc: " pr_proc) repairing_iproc no_pos in
-    let cands = get_stmt_candidates (Gen.unsome repairing_iproc.proc_body) in
+    let r_iproc = List.find (fun x -> eq_str (x.proc_name) repair_proc) iprog.prog_proc_decls in
+    let () = x_tinfo_hp (add_str "proc: " pr_proc) r_iproc no_pos in
+    let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let cprog = !Typechecker.repair_prog |> Gen.unsome in
-    let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx cprog in
-    let cproc = !Syn.repair_proc |> Gen.unsome in
-    let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
-    let post_cond = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
-    let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
-    let args = cproc.Cast.proc_args |>
-               List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-    let vars = args in
-    if pre_cond = None then None
-    else
-      let pre = pre_cond |> Gen.unsome in
-      let goal = Syn.mk_goal_w_procs cprog [cproc] pre post_cond vars in
-      let c_exp = Synthesizer.synthesize_program goal in
-      (* let a_exp = match c_exp with
-       *   | None -> None
-       *   | Some exp ->
-       *     let i_exp = Syn.c2iast_exp exp in
-       *     let () = x_tinfo_hp (add_str "iast_exp" Iprinter.string_of_exp) i_exp no_pos in
-       *     Some i_exp in
-       * let n_iproc = mk_candidate_iproc repairing_iproc a_exp cands in *)
-      None
+    let n_iprocs = cands |> List.map (fun x -> mk_candidate_iproc r_iproc x) in
+    (* let cprog = !Typechecker.repair_prog |> Gen.unsome in
+     * let pre_cond = find_pre_cond !Typechecker.repair_pre_ctx cprog in
+     * let cproc = !Syn.repair_proc |> Gen.unsome in
+     * let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
+     * let post_cond = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+     * let () = x_binfo_hp (add_str "post_cond " pr_formula) post_cond no_pos in
+     * let args = cproc.Cast.proc_args |>
+     *            List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+     * let vars = args in
+     * if pre_cond = None then None
+     * else
+     *   let pre = pre_cond |> Gen.unsome in
+     *   let goal = Syn.mk_goal_w_procs cprog [cproc] pre post_cond vars in
+     *   let c_exp = Synthesizer.synthesize_program goal in
+     *   let a_exp = match c_exp with
+     *     | None -> None
+     *     | Some exp ->
+     *       let i_exp = Syn.c2iast_exp exp in
+     *       let () = x_tinfo_hp (add_str "iast_exp" Iprinter.string_of_exp) i_exp no_pos in
+     *       Some i_exp in
+     *   let n_iproc = mk_candidate_iproc repairing_iproc a_exp cands in *)
+    None
   | _ ->
     let () = next_proc := false in
     None
 
 let rec start_repair_wrapper iprog =
   let tmp = start_repair iprog in
-  let () = x_tinfo_hp (add_str "next_proc: " string_of_bool) (!next_proc) no_pos in
-  if (!next_proc) then
-    let () = stop := false in
-    let () = Globals.start_repair := false in
-    start_repair_wrapper iprog
-  else tmp
+  tmp
+  (* let () = x_tinfo_hp (add_str "next_proc: " string_of_bool) (!next_proc) no_pos in
+   * if (!next_proc) then
+   *   let () = stop := false in
+   *   let () = Globals.start_repair := false in
+   *   start_repair_wrapper iprog
+   * else tmp *)

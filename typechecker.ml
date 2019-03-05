@@ -2339,7 +2339,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_scall_pos = pos}) ->
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
-        let () = x_binfo_hp (add_str "scall name" pr_id) mn no_pos in
+        let () = x_tinfo_hp (add_str "scall name" pr_id) mn no_pos in
         (* if contains mn "fcode" then
          *   let proc_decl = look_up_proc_def pos prog.new_proc_decls mn in
          *   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
