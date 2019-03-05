@@ -26,6 +26,7 @@ void append(node x, node y)
 // x::node<v1, m> * m::ll<n1+n2-1>
    }
 	else {
+  // current-state |- pre-condition -> SLEEK
       append(x.next, y);
        //fcode(x,y);
     }
