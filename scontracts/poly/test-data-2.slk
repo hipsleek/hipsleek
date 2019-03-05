@@ -2,6 +2,13 @@
 data nodep[T]{
    `T val;
    nodep[`T] next;
+   /*arrays:
+   nodep[,]
+   nodep[]
+
+   poly data struct:
+   nodep[typ]
+   */
 }.
 
 
