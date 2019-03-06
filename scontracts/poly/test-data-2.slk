@@ -2,6 +2,7 @@
 data nodep[T]{
    `T val;
    nodep[`T] next;
+
    /*arrays:
    nodep[,]
    nodep[]

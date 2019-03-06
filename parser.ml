@@ -962,6 +962,13 @@ let peek_poly_type =
              |[ACUTE,_; IDENTIFIER id,_;_] ->  ()
              | _ -> raise Stream.Failure)
 
+let peek_poly_data_struc_type =
+   SHGram.Entry.of_parser "peek_poly_data_struc"
+       (fun strm ->
+         match Stream.npeek 2 strm with
+             |[IDENTIFIER id,_;OSQUARE,_;ACUTE,_;_] -> ()
+             | _ -> raise Stream.Failure)
+
 (* let peek_poly_invocation =
  *    SHGram.Entry.of_parser "peek_poly_type"
  *        (fun strm ->
@@ -1333,7 +1340,7 @@ template_data_decl:
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
-    [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
+    [[ `DATA; `IDENTIFIER t; polyt = OPT parse_poly_var; OPT with_typed_var -> t ]];
 
 template_data_header:
     [[ `TEMPL; `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
@@ -3512,13 +3519,13 @@ typ:
   [[ peek_mapping_type; t = parse_mapping_type -> t
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
-   | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
+   | peek_poly_data_struc_type; t = poly_data_struc_type -> t
+   (* | peek_array_type; t=array_type     -> (\* An Hoa *\) (\* let () = print_endline "Parsed array type" in *\) t *)
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
 parse_mapping_type:
   [[ `MAPPING; `OPAREN; t1 = typ; `MASSIGN; t2 = typ; `CPAREN
       -> Mapping (t1, t2)]];
-
 
 non_array_type:
   [[ `VOID               -> void_type
@@ -3561,6 +3568,11 @@ array_type:
 
 rank_specifier:
   [[`OSQUARE; c = OPT comma_list; `CSQUARE -> un_option c 1]];
+
+poly_data_struc_type:
+  [[`IDENTIFIER id; `OSQUARE; ids = typ_list; `CSQUARE ->
+                                          mkNamedTyp ~args:ids id
+  ]];
 
 comma_list: [[`COMMA; s = OPT SELF -> 1 + (un_option s 1)]];
 
