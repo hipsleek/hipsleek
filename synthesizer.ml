@@ -824,10 +824,10 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
-  let n_proc = match iast_exp with
-    | None -> i_proc
-    | Some exp0 -> replace_exp_proc exp0 i_proc in
+  let n_proc, res = match iast_exp with
+    | None -> (i_proc, false)
+    | Some exp0 -> (replace_exp_proc exp0 i_proc, true) in
   let n_iprocs = List.map (fun x -> if contains pname x.Iast.proc_name
                             then n_proc else x) i_procs in
-  {iprog with I.prog_proc_decls = n_iprocs}
+  ({iprog with I.prog_proc_decls = n_iprocs}, res)
 

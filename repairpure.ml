@@ -17,6 +17,64 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 let next_proc = ref false
 let stop = ref false
 
+let create_fcode_exp (vars: typed_ident list) =
+  let args = vars |> List.map snd
+             |> List.map (fun x -> I.Var {
+                 exp_var_name = x;
+                 exp_var_pos = no_pos}) in
+  I.CallNRecv { exp_call_nrecv_method = "fcode";
+                exp_call_nrecv_lock = None;
+                exp_call_nrecv_ho_arg = None;
+                exp_call_nrecv_arguments = args;
+                exp_call_nrecv_path_id = None;
+                exp_call_nrecv_pos = no_pos}
+
+
+let rec replace_exp exp n_exp old_exp : I.exp =
+  match (exp: I.exp) with
+  | Assign e -> if exp = old_exp then n_exp else
+      let r_exp1 = replace_exp e.exp_assign_lhs n_exp old_exp in
+      let r_exp2 = replace_exp e.exp_assign_rhs n_exp old_exp in
+      Assign {e with exp_assign_lhs = r_exp1;
+                     exp_assign_rhs = r_exp2}
+  | Binary e -> if exp = old_exp then n_exp else
+      let r_exp1 = replace_exp e.exp_binary_oper1 n_exp old_exp in
+      let r_exp2 = replace_exp e.exp_binary_oper2 n_exp old_exp in
+      Binary {e with exp_binary_oper1 = r_exp1;
+                     exp_binary_oper2 = r_exp2}
+  | Bind e -> if exp = old_exp then n_exp else
+      let r_exp = replace_exp e.exp_bind_body n_exp n_exp in
+      Bind {e with exp_bind_body = r_exp}
+  | Block e -> if exp = old_exp then n_exp
+    else let r_exp = replace_exp e.exp_block_body n_exp old_exp in
+      Block {e with exp_block_body = r_exp}
+  | Cast e ->
+    Cast {e with exp_cast_body = replace_exp e.exp_cast_body n_exp old_exp}
+  | Cond e -> let r_cond = replace_exp e.exp_cond_condition n_exp old_exp in
+    let r_then_branch = replace_exp e.exp_cond_then_arm n_exp old_exp in
+    let r_else_branch = replace_exp e.exp_cond_else_arm n_exp old_exp in
+    Cond {e with exp_cond_condition = r_cond;
+                 exp_cond_then_arm = r_then_branch;
+                 exp_cond_else_arm = r_else_branch}
+  | Catch e -> Catch {
+      e with exp_catch_body = replace_exp e.exp_catch_body n_exp old_exp }
+  | IntLit e -> if exp = old_exp then n_exp else exp
+  | Label (a, body) -> Label (a, replace_exp body n_exp old_exp)
+  | Member e ->
+    Member {e with exp_member_base = replace_exp e.exp_member_base n_exp old_exp}
+  | New e -> exp
+  | Return e -> let r_val = match e.exp_return_val with
+      | None -> None
+      | Some e -> Some (replace_exp e n_exp old_exp) in
+    Return {e with exp_return_val = r_val}
+  | Seq e -> let r_e1 = replace_exp e.exp_seq_exp1 n_exp old_exp in
+    let r_e2 = replace_exp e.exp_seq_exp2 n_exp old_exp in
+    Seq {e with exp_seq_exp1 = r_e1; exp_seq_exp2 = r_e2}
+  | Unary e -> let n_e = replace_exp e.exp_unary_exp n_exp old_exp in
+    Unary {e with exp_unary_exp = n_e}
+  | Var v -> if exp = old_exp then n_exp else exp
+  | _ -> exp
+
 let rec replace_exp_with_loc exp n_exp loc : I.exp =
   match (exp:I.exp) with
   | Assign e -> if (e.exp_assign_pos = loc) then n_exp else

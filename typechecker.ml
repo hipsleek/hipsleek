@@ -41,8 +41,6 @@ let phase_infer_ind = ref false
 let repairing_ents = ref []
 let proc_to_repair = ref None
 let repair_loc = ref None
-let repair_pre_ctx = ref None
-let repair_prog = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -1357,7 +1355,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label):
   CF.list_failesc_context =
   let () = Synthesis.repair_proc := Some proc in
-  let () = repair_prog := Some prog in
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{
           es with
@@ -1787,7 +1784,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_bind_pos = pos }) ->
       (* this creates a new esc_level for the bind construct to capture all
          exceptions from this construct *)
-      let () = repair_pre_ctx := Some ctx in
       let () = x_tinfo_hp (add_str "ctx bind start: "
                              Cprinter.string_of_list_failesc_context) ctx no_pos  in
       let ctx = CF.transform_list_failesc_context

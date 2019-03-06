@@ -4521,7 +4521,7 @@ let parse_c_function_spec (fname: string) (spec: string) (base_loc: file_offset)
   (* return *)
   res
 
-let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset) 
+let parse_c_program_spec (fname: string) (spec: string) (base_loc: file_offset)
                          : Iast.prog_decl =
   (* save states of current parser *)
   let old_parser_mode = !is_cparser_mode in
