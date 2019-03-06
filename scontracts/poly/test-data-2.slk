@@ -2,6 +2,8 @@
 data nodep[T]{
    `T val;
    nodep[`T] next;
+   int[] f1;
+   int[,] f2;
 
    /*arrays:
    nodep[,]
@@ -13,6 +15,6 @@ data nodep[T]{
 }.
 
 
-checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+checkentail x::nodep<3,t,_,_> |- x::nodep<aaa,t,_,_>.
 print residue.
 expect Valid.

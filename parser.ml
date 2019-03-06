@@ -940,9 +940,10 @@ let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 3 strm with
-             |[_;OSQUARE,_;_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
-             (* |[_;OSQUARE,_;COMMA,_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
-             |[_;_;OSQUARE,_] -> ()
+             (* |[_;OSQUARE,_;_] -> (\* An Hoa*\) (\* let () = print_endline "Array found!" in *\) () *)
+             |[_;OSQUARE,_;CSQUARE,_] -> ()
+             |[_;OSQUARE,_;COMMA,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+             (*|[_;_;OSQUARE,_] -> () *)
              | _ -> raise Stream.Failure)
 
 
@@ -963,11 +964,12 @@ let peek_poly_type =
              | _ -> raise Stream.Failure)
 
 let peek_poly_data_struc_type =
-   SHGram.Entry.of_parser "peek_poly_data_struc"
+   SHGram.Entry.of_parser "peek_poly_data_struc_type"
        (fun strm ->
-         match Stream.npeek 2 strm with
-             |[IDENTIFIER id,_;OSQUARE,_;ACUTE,_;_] -> ()
-             | _ -> raise Stream.Failure)
+         match Stream.npeek 3 strm with
+         |[_;OSQUARE,_;ACUTE,_]        -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+         |[_;OSQUARE,_;IDENTIFIER _,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+         | _ -> raise Stream.Failure)
 
 (* let peek_poly_invocation =
  *    SHGram.Entry.of_parser "peek_poly_type"
@@ -3520,7 +3522,7 @@ typ:
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
    | peek_poly_data_struc_type; t = poly_data_struc_type -> t
-   (* | peek_array_type; t=array_type     -> (\* An Hoa *\) (\* let () = print_endline "Parsed array type" in *\) t *)
+   | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
 parse_mapping_type:
