@@ -81,12 +81,12 @@ let repair_one_candidate (iprog: I.prog_decl) =
   let cprog, _ = Astsimp.trans_prog iprog in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in
-    None
+    !Typechecker.repair_res
   with _ -> None
 
 let start_repair (iprog:I.prog_decl) =
   let pr_exps = pr_list Iprinter.string_of_exp in
-  match (!Typechecker.proc_to_repair) with
+  match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
     let () = x_binfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
@@ -100,11 +100,12 @@ let start_repair (iprog:I.prog_decl) =
     let args = cproc.C.proc_args in
     let n_iprogs = cands |>
                    List.map (fun x -> mk_candidate_iprog iprog r_iproc args x) in
-    let _ = n_iprogs |> List.map repair_one_candidate in
-    None
-  | _ ->
-    let () = next_proc := false in
-    None
+    let r_progs = n_iprogs |> List.map repair_one_candidate
+                  |> List.filter (fun x -> x != None) in
+    if r_progs = [] then None
+    else let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+      List.hd r_progs
+  | _ -> None
 
 let rec start_repair_wrapper iprog =
   let tmp = start_repair iprog in

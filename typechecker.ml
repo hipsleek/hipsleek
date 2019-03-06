@@ -39,8 +39,9 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
 let repairing_ents = ref []
-let proc_to_repair = ref None
+let repair_proc = ref None
 let repair_loc = ref None
+let repair_res = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -53,7 +54,7 @@ let proc_used_names = ref ([]:ident list)
 
 let reset_repair_ref =
   let () = repairing_ents := [] in
-  let () = proc_to_repair := None in
+  let () = repair_proc := None in
   ()
 
 let pr_ctx = Cprinter.string_of_list_failesc_context
@@ -125,7 +126,7 @@ let get_repair_ents_x rs proc =
 
   let () = if (!Globals.enable_repair) then
       let () = repairing_ents := entails in
-      let () = proc_to_repair := Some (proc.Cast.proc_name) in
+      let () = repair_proc := Some (proc.Cast.proc_name) in
       ()
   in
   entails
@@ -1918,7 +1919,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           let to_print = "Proving binding in method " ^ proc.proc_name
                          ^ " for spec " ^ !log_spec ^ "\n" in
           x_tinfo_pp to_print pos;
-          let () = proc_to_repair := Some (proc.Cast.proc_name) in
+          let () = repair_proc := Some (proc.Cast.proc_name) in
           if (Gen.is_empty unfolded) then
             let () = y_tinfo_pp "unfolded body is empty" in
             unfolded
@@ -3754,8 +3755,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
               let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in
               let syn_vars = proc.Cast.proc_args
                              |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-              let _ = Synthesizer.synthesize_wrapper iprog prog proc pre post syn_vars in
-              ()
+              let (n_iprog, res) = Synthesizer.synthesize_wrapper iprog prog
+                  proc pre post syn_vars in
+              if res then repair_res := Some n_iprog else ()
             else () in
           pp
         end

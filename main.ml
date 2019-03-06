@@ -742,37 +742,23 @@ let process_source_full source =
           begin
             if (!Globals.enable_repair) then
               let () = print_endline "!!!! REPAIR: starting repair process" in
-              (* if (!Globals.enable_repair_template) then
-               *   match Repair.repair_prog_with_templ_main intermediate_prog cprog
-               *   with
-               *   | None -> raise e
-               *   | _ -> ()
-               * else *)
               let repaired_iprog = Repair.start_repair_wrapper intermediate_prog in
               match repaired_iprog with
               | None -> raise e
-              | Some n_prog ->
-                let n_prog = {repair_input_prog with
-                              prog_proc_decls = n_prog.Iast.prog_proc_decls} in
-                let () = repaired := true in
-                let () = x_binfo_hp (add_str "repaired prog" pr_prog_repair) n_prog no_pos in
-                let () = Globals.verified_procs := [] in
-                ()
-            else
-              let () = print_string_quiet
-                  ("\nException MAIN"
+              | Some n_prog -> let () = repaired := true in
+                let () = Globals.verified_procs := [] in ()
+            else let () = print_string_quiet
+                     ("\nException MAIN"
                    ^(Printexc.to_string e)^"Occurred!\n") in
               let () = print_string_quiet
                   ("\nError1(s) detected at main "^"\n") in
               let () = Log.process_proof_logging !Globals.source_files cprog prim_names in
               raise e
-          end
-       );
+          end);
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
-  then
-    let () = y_binfo_pp "RE-VERIFICATION\n" in
+  then let () = y_binfo_pp "RE-VERIFICATION\n" in
     let () = Globals.infer_const_obj # reset_all in
-    reverify_with_hp_rel cprog intermediate_prog(*_reverif *)
+    reverify_with_hp_rel cprog intermediate_prog
   else ();
 
   (* Stopping the prover *)

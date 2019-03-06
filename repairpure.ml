@@ -405,7 +405,7 @@ let repair_prog_with_templ_main iprog cprog =
 
 let repair_prog_with_templ iprog cond_op =
   let () = Typechecker.repairing_ents := [] in
-  let () = Typechecker.proc_to_repair := None in
+  let () = Typechecker.repair_proc := None in
   let contains s1 s2 = let re = Str.regexp_string s2 in
     try ignore (Str.search_forward re s1 0); true
     with Not_found -> false in
