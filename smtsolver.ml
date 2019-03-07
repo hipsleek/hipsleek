@@ -102,7 +102,7 @@ let rec smt_of_typ t =
   | INFInt
   | Pointer _ -> Error.report_no_pattern ()
   | Bptyp -> "int-triple"
-  | Poly _ -> failwith x_tbi
+  | Poly _ -> "Int" (* failwith x_tbi *)
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ idf smt_of_typ t

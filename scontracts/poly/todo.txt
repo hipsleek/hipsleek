@@ -14,7 +14,7 @@ run_infer:
  qq:node::node<Anon_14:int,Anon_15:node>@M&
 p:nodep[node]=t:nodep[node]&{FLOW,(4,5)=__norm#E} [] |-  EBase
    (exists t_149:nodep[int],
-   flted_30_148:int: x:nodep[int]::nodep<flted_30_148:int,t_149:nodep[int]>@M&
+   flteds_30_148:int: x:nodep[int]::nodep<flted_30_148:int,t_149:nodep[int]>@M&
    flted_30_148:int=3 & t_149:nodep[int]=t:nodep[node]&{FLOW,(4,5)=__norm#E})
 
 ////// above t_149:nodep[int]=t:nodep[node] should have thrown type-mismatch.
@@ -26,7 +26,17 @@ l |-  qq:node=3. LOCS:[0;30] (may-bug)
 
 ===========================================================
 ===========================================================
+(FIXED) To fix error message
 
+ERROR: at scontracts/poly/test-data-bug.slk_17:21_17:24
+Message: TYPE ERROR 2 : Found boolean but expecting Tsh
+
+Entail 1: EXCast. Failure("TYPE ERROR 2 : Found boolean but expecting Tsh")
+: no residue
+
+checkentail x::node<(1+2):bool,t> |- x::node<z2,t>.
+print residue.
+expect Valid.
 
 ===========================================================
 ===========================================================

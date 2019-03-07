@@ -333,12 +333,15 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Int, Float -> (tl,Some Float) (*LDK: support floating point*)
     | Float, Int -> (tl,Some Float) (*LDK*)
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
-    (* Need to unify the param list for polymorphic Named *)
+    (*TODO: Need to unify the param list for polymorphic Named *)
     | Named (n1, _), Named (n2, _) when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
       (tl, Some (mkNamedTyp n2 ))
-    | Named (n1, ls1), Named (n2, _) when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
-      (tl, Some (mkNamedTyp ~args:ls1 n1))
-    | Named (n1, []), Int when (cmp_typ k1 role_typ) -> (tl, Some Int)
+    | Named (n1, _), Named (n2, _) when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
+      (* let () = y_binfo_pp "unify Named typ with inttttttttttttt 11111111111" in *)
+      (tl, Some (mkNamedTyp n1))
+    | Named (n1, []), Int when (cmp_typ k1 role_typ) ->
+      (* let () = y_binfo_pp "unify Named typ with inttttttttttttt 22222222222" in *)
+      (tl, Some Int)
     | Int, Named (n2, []) when (cmp_typ k2 role_typ) -> (tl, Some Int)
     (* ************************** *)
     (* ******* temp hack ******** *)
@@ -351,6 +354,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
          parameters is successful return (Some tk) along with
          the updated type list.
       *)
+      let () = y_binfo_pp "unify Named typ and Named typ pppppppppppppppppppp" in
       let rec unify_param tl1 tl2 tlist tk =
         match tl1, tl2 with
         | [], [] -> (tlist, Some tk)
@@ -366,7 +370,9 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
       else (tl, None)
     (* ******* end - temp hack ******** *)
     (* ******************************** *)
-    | ty, Poly id  | Poly id, ty -> unify_poly unify repl_tlist id ty tl
+    | ty, Poly id  | Poly id, ty ->
+      let () = y_binfo_pp "unify Named typ with poooooooooooolllllllllllllyyyyyy" in
+      unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in

@@ -3,17 +3,17 @@ data node{
    node next;
 }.
 
-// polymorphic node
-data nodep{
+data nodep[T]{
    `T val;
-   nodep next;
+   nodep[`T] next;
 }.
 
 pred ll<a:int> == self=null or
           self::node<a,r> * r::ll<a>.
 
-pred llp<a:`T> == self=null or
-          self::nodep<a,r> * r::llp<a>.
+pred llp<a>[`T] == self=null or
+          self::nodep<a,r>[`T] * r::llp<a>[`T].
+
 
 checkentail x::ll<2> |- x::ll<2>.
 print residue.
