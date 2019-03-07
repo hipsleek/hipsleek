@@ -29,40 +29,41 @@ let create_fcode_exp (vars: typed_ident list) =
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = no_pos}
 
+let eq_exp e1 e2 = let loc1 = I.get_exp_pos e1 in
+  let loc2 = I.get_exp_pos e2 in
+  loc1 = loc2
 
 let rec replace_exp exp n_exp old_exp : I.exp =
   match (exp: I.exp) with
-  | Assign e -> if exp = old_exp then n_exp else
-      let r_exp1 = replace_exp e.exp_assign_lhs n_exp old_exp in
-      let r_exp2 = replace_exp e.exp_assign_rhs n_exp old_exp in
-      Assign {e with exp_assign_lhs = r_exp1;
-                     exp_assign_rhs = r_exp2}
-  | Binary e -> if exp = old_exp then n_exp else
-      let r_exp1 = replace_exp e.exp_binary_oper1 n_exp old_exp in
-      let r_exp2 = replace_exp e.exp_binary_oper2 n_exp old_exp in
-      Binary {e with exp_binary_oper1 = r_exp1;
-                     exp_binary_oper2 = r_exp2}
-  | Bind e -> if exp = old_exp then n_exp else
+  | Assign e -> if eq_exp exp old_exp then n_exp else
+      let r1 = replace_exp e.exp_assign_lhs n_exp old_exp in
+      let r2 = replace_exp e.exp_assign_rhs n_exp old_exp in
+      Assign {e with exp_assign_lhs = r1;
+                     exp_assign_rhs = r2}
+  | Binary e -> if eq_exp exp old_exp then n_exp else
+      let r1 = replace_exp e.exp_binary_oper1 n_exp old_exp in
+      let r2 = replace_exp e.exp_binary_oper2 n_exp old_exp in
+      Binary {e with exp_binary_oper1 = r1;
+                     exp_binary_oper2 = r2}
+  | Bind e -> if eq_exp exp old_exp then n_exp else
       let r_exp = replace_exp e.exp_bind_body n_exp n_exp in
       Bind {e with exp_bind_body = r_exp}
-  | Block e -> if exp = old_exp then n_exp
-    else let r_exp = replace_exp e.exp_block_body n_exp old_exp in
+  | Block e -> let r_exp = replace_exp e.exp_block_body n_exp old_exp in
       Block {e with exp_block_body = r_exp}
   | Cast e ->
     Cast {e with exp_cast_body = replace_exp e.exp_cast_body n_exp old_exp}
-  | Cond e -> let r_cond = replace_exp e.exp_cond_condition n_exp old_exp in
-    let r_then_branch = replace_exp e.exp_cond_then_arm n_exp old_exp in
-    let r_else_branch = replace_exp e.exp_cond_else_arm n_exp old_exp in
-    Cond {e with exp_cond_condition = r_cond;
-                 exp_cond_then_arm = r_then_branch;
-                 exp_cond_else_arm = r_else_branch}
+  | Cond e -> let r1 = replace_exp e.exp_cond_condition n_exp old_exp in
+    let r2 = replace_exp e.exp_cond_then_arm n_exp old_exp in
+    let r3 = replace_exp e.exp_cond_else_arm n_exp old_exp in
+    Cond {e with exp_cond_condition = r1;
+                 exp_cond_then_arm = r2;
+                 exp_cond_else_arm = r3}
   | Catch e -> Catch {
       e with exp_catch_body = replace_exp e.exp_catch_body n_exp old_exp }
-  | IntLit e -> if exp = old_exp then n_exp else exp
+  | IntLit e -> if eq_exp exp old_exp then n_exp else exp
   | Label (a, body) -> Label (a, replace_exp body n_exp old_exp)
   | Member e ->
     Member {e with exp_member_base = replace_exp e.exp_member_base n_exp old_exp}
-  | New e -> exp
   | Return e -> let r_val = match e.exp_return_val with
       | None -> None
       | Some e -> Some (replace_exp e n_exp old_exp) in
@@ -72,7 +73,8 @@ let rec replace_exp exp n_exp old_exp : I.exp =
     Seq {e with exp_seq_exp1 = r_e1; exp_seq_exp2 = r_e2}
   | Unary e -> let n_e = replace_exp e.exp_unary_exp n_exp old_exp in
     Unary {e with exp_unary_exp = n_e}
-  | Var v -> if exp = old_exp then n_exp else exp
+  | CallRecv _
+  | CallNRecv _ -> if eq_exp exp old_exp then n_exp else exp
   | _ -> exp
 
 let rec replace_exp_with_loc exp n_exp loc : I.exp =

@@ -46,13 +46,17 @@ let find_pre_cond ctx prog = match ctx with
 
 let mk_candidate_iproc (iproc:I.proc_decl) args candidate =
   let fcode = create_fcode_exp args in
+  let loc = I.get_exp_pos candidate in
   let n_body = match iproc.proc_body with
     | None -> None
     | Some exp -> Some (replace_exp exp fcode candidate) in
   {iproc with proc_body = n_body}
 
 let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
+  let pr_proc = Iprinter.string_of_proc_decl in
+  let pr_procs = pr_list pr_proc in
   let n_iproc = mk_candidate_iproc iproc args candidate in
+  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
     | h::t -> let tail = helper t in
@@ -73,7 +77,7 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
   let n_procs = List.map (fun x -> if x.I.proc_name = iproc.I.proc_name
                            then n_iproc else x) iprog.prog_proc_decls in
   let n_procs = n_prog.I.prog_proc_decls @ n_procs in
-  let n_hps = iprog.I.prog_hp_decls @ n_prog.I.prog_hp_decls in
+  let n_hps = n_prog.I.prog_hp_decls @ iprog.I.prog_hp_decls in
   {iprog with prog_hp_decls = n_hps;
               prog_proc_decls = n_procs}
 
