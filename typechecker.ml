@@ -3749,7 +3749,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
                   print_web_mode ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
             end;
           let entailments = !Synthesis.entailments |> List.rev in
-          let () = x_tinfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
           let () = if List.length entailments = 2 then
               let pre = entailments |> List.hd |> fst |> Synthesis.unprime_formula in
               let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in

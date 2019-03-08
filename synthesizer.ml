@@ -253,8 +253,6 @@ let choose_rule_assign goal : rule list =
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
-  (* let n_post = process_exists_var pre post in *)
-  (* let goal = {goal with gl_post_cond = n_post} in *)
   let choose_rule var = match CP.type_of_sv var with
     | Int -> choose_rassign_pure var goal
     | Named _ -> choose_rassign_data goal var
@@ -471,8 +469,9 @@ let choose_rule_unfold_pre goal =
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
     let pre_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
-    let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
-    [rule] in
+    if pre_list = [] then []
+    else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
+      [rule] in
   if has_unfold_pre goal.gl_trace then []
   else vnodes |> List.map helper |> List.concat
 
@@ -591,7 +590,7 @@ let choose_rule_instantiate goal =
   exists_vars |> List.map helper |> List.concat
 
 let choose_synthesis_rules goal : rule list =
-  let goal = framing_rule goal in
+  (* let goal = framing_rule goal in *)
   let rs = choose_rule_unfold_post goal in
   let rs2 = choose_rule_instantiate goal in
   let rs3 = choose_rule_f_write goal in
@@ -602,7 +601,6 @@ let choose_synthesis_rules goal : rule list =
   let rs7 = choose_rule_numeric goal in
   let rs8 = choose_rule_assign goal in
   rs @ rs2 @ rs3 @ rs4 @ rs5 @ rs6 @ rs7 @ rs8
-
 
 (*********************************************************************
  * Processing rules
@@ -751,7 +749,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -790,8 +788,7 @@ and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tr
         | StValid st_core ->
           helper other_goals (subtrees@[syn_tree]) (st_cores@[st_core])
       end
-    | [] ->
-      let st_core = mk_synthesis_tree_core goal rule st_cores in
+    | [] -> let st_core = mk_synthesis_tree_core goal rule st_cores in
       mk_synthesis_tree_derive goal rule subtrees (StValid st_core)
   in helper sub_goals [] []
 
@@ -807,7 +804,7 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let st = synthesize_one_goal goal in
-  let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
@@ -831,3 +828,14 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
 
+let synthesize_entailments iprog prog proc =
+  let entailments = !Synthesis.entailments |> List.rev in
+  let () = x_binfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
+let syn_vars = proc.Cast.proc_args
+                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+  if List.length entailments = 2 then
+    let pre = entailments |> List.hd |> fst |> Synthesis.unprime_formula in
+    let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in
+    let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
+    if res then repair_res := Some n_iprog else ()
+  else ()

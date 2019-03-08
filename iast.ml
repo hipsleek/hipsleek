@@ -4103,34 +4103,6 @@ let list_of_candidate_exp (exp: exp) =
     | _ -> list
   in List.rev(aux exp [])
 
-let get_stmt_candidates (exp: exp) =
-  let rec aux exp list =
-    match exp with
-    | CallRecv _
-    | CallNRecv _
-    | Assign _
-    | Binary _ -> [exp]@list
-    | Block block ->
-      aux block.exp_block_body list
-    | Cond exp_cond ->
-      (* let exp1_list = aux exp_cond.exp_cond_condition list in *)
-      let exp2_list = aux exp_cond.exp_cond_then_arm list in
-      aux exp_cond.exp_cond_else_arm exp2_list
-    | Label (a, lexp) -> aux lexp list
-    | Return res ->
-      begin
-        match res.exp_return_val with
-        | None -> list
-        | Some e -> aux e list
-      end
-    | Seq exp_seq ->
-      let exp1_list = aux exp_seq.exp_seq_exp1 list in
-      aux exp_seq.exp_seq_exp2 exp1_list
-    | VarDecl _ -> list
-    | Unary e -> aux e.exp_unary_exp list
-    | _ -> list
-  in List.rev(aux exp [])
-
 (* Find AND/OR position to mutate *)
 let collect_logical_locs (exp: exp) =
   let rec aux exp list =

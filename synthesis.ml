@@ -17,6 +17,7 @@ let pr_vars = Cprinter.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let rel_num = ref 0
 let res_num = ref 0
+let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
@@ -184,18 +185,15 @@ let mk_synthesis_tree_core goal rule sub_trees : synthesis_tree_core =
 
 let mk_synthesis_tree_success goal rule : synthesis_tree =
   let stcore = mk_synthesis_tree_core goal rule [] in
-  StDerive {
-    std_goal = goal;
-    std_rule = rule;
-    std_sub_trees = [];
-    std_status = StValid stcore; }
+  StDerive { std_goal = goal;
+             std_rule = rule;
+             std_sub_trees = [];
+             std_status = StValid stcore; }
 
 let mk_synthesis_tree_fail goal sub_trees msg : synthesis_tree =
-  StSearch {
-    sts_goal = goal;
-    sts_sub_trees = sub_trees;
-    sts_status = StUnkn msg; }
-
+  StSearch { sts_goal = goal;
+             sts_sub_trees = sub_trees;
+             sts_status = StUnkn msg; }
 
 (*********************************************************************
  * Queries
@@ -1065,7 +1063,7 @@ let rec synthesize_st_core st : Cast.exp = match st.stc_rule with
       exp_scall_pos = no_pos}
 
 and synthesize_subtrees subtrees = match subtrees with
-  | [] -> report_error no_pos "couldn't be empty"
+  | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
   | [h] -> synthesize_st_core h
   | h::t -> let fst = synthesize_st_core h in
     let snd = synthesize_subtrees t in

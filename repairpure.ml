@@ -17,11 +17,31 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 let next_proc = ref false
 let stop = ref false
 
+let get_stmt_candidates (exp: I.exp) =
+  let rec aux (exp:I.exp) list =
+    match exp with
+    | I.CallRecv _ | I.CallNRecv _ | I.Assign _ | I.Binary _ -> [exp]@list
+    | I.Block block -> aux block.exp_block_body list
+    | I.Cond exp_cond -> let exp2_list = aux exp_cond.exp_cond_then_arm list in
+      aux exp_cond.exp_cond_else_arm exp2_list
+    | I.Label (a, lexp) -> aux lexp list
+    | I.Return res ->
+      begin
+        match res.exp_return_val with
+        | None -> list
+        | Some e -> aux e list
+      end
+    | I.Seq exp_seq -> let exp1_list = aux exp_seq.exp_seq_exp1 list in
+      aux exp_seq.exp_seq_exp2 exp1_list
+    | I.Var _ | I.VarDecl _ -> list
+    | I.Unary e -> aux e.exp_unary_exp list
+    | _ -> [exp] @ list in
+  List.rev(aux exp [])
+
 let create_fcode_exp (vars: typed_ident list) =
   let args = vars |> List.map snd
-             |> List.map (fun x -> I.Var {
-                 exp_var_name = x;
-                 exp_var_pos = no_pos}) in
+             |> List.map (fun x -> I.Var { exp_var_name = x;
+                                           exp_var_pos = no_pos}) in
   I.CallNRecv { exp_call_nrecv_method = "fcode";
                 exp_call_nrecv_lock = None;
                 exp_call_nrecv_ho_arg = None;

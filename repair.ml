@@ -85,7 +85,7 @@ let repair_one_candidate (iprog: I.prog_decl) =
   let cprog, _ = Astsimp.trans_prog iprog in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in
-    !Typechecker.repair_res
+    !Synthesis.repair_res
   with _ -> None
 
 let start_repair (iprog:I.prog_decl) =
@@ -97,7 +97,8 @@ let start_repair (iprog:I.prog_decl) =
     let () = Globals.start_repair := true in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) iprog.prog_proc_decls in
     let () = x_tinfo_hp (add_str "proc: " pr_proc) r_iproc no_pos in
-    let cands = I.get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
+    let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
+    let () = x_binfo_hp (add_str "candidates" pr_exps) cands no_pos in
     let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
     let cproc = !Syn.repair_proc |> Gen.unsome in
