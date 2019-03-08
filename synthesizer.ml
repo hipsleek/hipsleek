@@ -467,7 +467,7 @@ let choose_rule_unfold_pre goal =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-    let pre_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
+    let pre_list = List.filter (fun x -> not(SB.check_unsat goal.gl_prog x)) nf in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
     if pre_list = [] then []
     else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
@@ -481,9 +481,9 @@ let choose_rule_unfold_post goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let post_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
-    let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in
-    let rules = post_list |> List.map (fun f -> RlUnfoldPost { rp_case_formula = f}) in
+    (* let post_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
+     * let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in *)
+    let rules = nf |> List.map (fun f -> RlUnfoldPost { rp_case_formula = f}) in
     rules in
   if has_unfold_post goal.gl_trace then []
   else vnodes |> List.map helper |> List.concat
@@ -590,17 +590,17 @@ let choose_rule_instantiate goal =
   exists_vars |> List.map helper |> List.concat
 
 let choose_synthesis_rules goal : rule list =
-  (* let goal = framing_rule goal in *)
-  let rs = choose_rule_unfold_post goal in
-  let rs2 = choose_rule_instantiate goal in
-  let rs3 = choose_rule_f_write goal in
-  let rs4 = choose_rule_unfold_pre goal in
-
-  let rs5 = choose_func_call goal in
-  let rs6 = choose_rule_f_read goal in
-  let rs7 = choose_rule_numeric goal in
-  let rs8 = choose_rule_assign goal in
-  rs @ rs2 @ rs3 @ rs4 @ rs5 @ rs6 @ rs7 @ rs8
+  let goal = framing_rule goal in
+  let rs = [] in
+  let rs = rs @ (choose_rule_unfold_post goal) in
+  let rs = rs @ (choose_rule_instantiate goal) in
+  let rs = rs @ (choose_rule_f_write goal) in
+  let rs = rs @ (choose_rule_unfold_pre goal) in
+  let rs = rs @ (choose_func_call goal) in
+  let rs = rs @ (choose_rule_f_read goal) in
+  let rs = rs @ (choose_rule_numeric goal) in
+  let rs = rs @ (choose_rule_assign goal) in
+  rs
 
 (*********************************************************************
  * Processing rules
@@ -749,7 +749,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -804,7 +804,7 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let st = synthesize_one_goal goal in
-  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->

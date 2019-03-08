@@ -704,7 +704,7 @@ let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
   let res2, _ = check_entail prog n_f2 n_f1 in
   res1 && res2
 
-let check_sat_x prog (f:CF.formula) =
+let check_unsat_x prog (f:CF.formula) =
   let sb_prog = translate_prog prog in
   let sb_f,_ = translate_formula f in
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
@@ -712,12 +712,12 @@ let check_sat_x prog (f:CF.formula) =
     let sb_formula = List.hd sb_f in
     let sb_res = SBProverE.check_sat sb_prog sb_formula in
     match sb_res with
-    | MvlTrue -> true
+    | MvlFalse -> true
     | _ -> false
 
-let check_sat prog (formula:CF.formula) =
-  Debug.no_1 "SB.check_sat" pr_formula string_of_bool
-    (fun _ -> check_sat_x prog formula) formula
+let check_unsat prog (formula:CF.formula) =
+  Debug.no_1 "SB.check_unsat" pr_formula string_of_bool
+    (fun _ -> check_unsat_x prog formula) formula
 
 
 let check_pure_entail ante conseq =
