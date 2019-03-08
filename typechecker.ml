@@ -41,7 +41,6 @@ let phase_infer_ind = ref false
 let repairing_ents = ref []
 let repair_proc = ref None
 let repair_loc = ref None
-let repair_res = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -3719,8 +3718,9 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           in
           let () = match exc with
             | Some e -> raise e
-            | None -> ()
-          in
+            | None -> () in
+          let () = x_binfo_pp "start synthesis process" no_pos in
+          let () = Synthesizer.synthesize_entailments iprog prog proc in
           if pr_flag then
             begin
               if pp then
@@ -3748,16 +3748,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
                 else
                   print_web_mode ("\nProcedure "^proc.proc_name^" result FAIL.(1)\n")
             end;
-          let entailments = !Synthesis.entailments |> List.rev in
-          let () = if List.length entailments = 2 then
-              let pre = entailments |> List.hd |> fst |> Synthesis.unprime_formula in
-              let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in
-              let syn_vars = proc.Cast.proc_args
-                             |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-              let (n_iprog, res) = Synthesizer.synthesize_wrapper iprog prog
-                  proc pre post syn_vars in
-              if res then repair_res := Some n_iprog else ()
-            else () in
           pp
         end
     end else true

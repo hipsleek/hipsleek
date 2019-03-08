@@ -1,5 +1,6 @@
 #include "xdebug.cppo"
 open Globals
+open Gen.Basic
 
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
@@ -20,6 +21,7 @@ let add_str = Gen.Basic.add_str
 let no_pos = VarGen.no_pos
 let report_error = Gen.Basic.report_error
 let pr_formula = CPR.string_of_formula
+let pr_hf = CPR.string_of_h_formula
 let pr_vars = CPR.string_of_spec_var_list
 let pr_hps = pr_list CPR.string_of_hp_decl
 let pr_struc_f = CPR.string_of_struc_formula
@@ -37,26 +39,31 @@ let pr_validity tvl = match tvl with
   | SBGlobals.MvlUnkn -> "Unknown"
   | SBGlobals.MvlInfer -> "Infer"
 
-let rec get_hf_hp hp_names hf = match hf with
-  | CF.HVar _
-  | CF.DataNode _
-  | CF.ViewNode _
-  | CF.HEmp
-  | CF.HTrue
-  | CF.HFalse -> []
-  | CF.HRel (sv, args, _) ->
-    let sv_name = CP.name_of_sv sv in
-    if List.exists (fun x -> String.compare x sv_name == 0) hp_names
-    then args else []
-  | CF.Star sf -> (get_hf_hp hp_names sf.CF.h_formula_star_h1) @
-               (get_hf_hp hp_names sf.CF.h_formula_star_h2)
+let rec check_hp_hf_x hp_names hf = match hf with
+  | CF.HVar _ | CF.DataNode _ | CF.ViewNode _ | CF.HEmp | CF.HTrue
+  | CF.HFalse -> false
+  | CF.HRel (sv, args, _) -> let sv_name = CP.name_of_sv sv in
+    if List.exists (fun x -> eq_str x sv_name) hp_names
+    then true else false
+  | CF.Star sf -> (check_hp_hf_x hp_names sf.CF.h_formula_star_h1) ||
+               (check_hp_hf_x hp_names sf.CF.h_formula_star_h2)
   | _ -> report_error no_pos "unhandled case of check_conseq_hp"
 
-let rec get_conseq_hp hp_names formula = match (formula:CF.formula) with
-  | CF.Base bf -> get_hf_hp hp_names bf.CF.formula_base_heap
-  | CF.Exists ef -> get_hf_hp hp_names ef.CF.formula_exists_heap
-  | CF.Or f -> (get_conseq_hp hp_names f.CF.formula_or_f1) @
-            (get_conseq_hp hp_names f.CF.formula_or_f2)
+let check_hp_hf hp_names hf =
+  let pr_exp = Cprinter.string_of_formula_exp in
+  Debug.no_1 "check_hp_hf" pr_hf string_of_bool
+    (fun _ -> check_hp_hf_x hp_names hf) hf
+
+let rec check_hp_formula_x hp_names formula = match (formula:CF.formula) with
+  | CF.Base bf -> check_hp_hf hp_names bf.CF.formula_base_heap
+  | CF.Exists ef -> check_hp_hf hp_names ef.CF.formula_exists_heap
+  | CF.Or f -> (check_hp_formula_x hp_names f.CF.formula_or_f1) ||
+               (check_hp_formula_x hp_names f.CF.formula_or_f2)
+
+let check_hp_formula hp_names formula =
+  let pr_exp = Cprinter.string_of_formula_exp in
+  Debug.no_1 "check_hp_formula" pr_formula string_of_bool
+    (fun _ -> check_hp_formula_x hp_names formula) formula
 
 let rec var_closure_hf hf vars = match (hf:CF.h_formula) with
   | CF.HTrue  | CF.HFalse | CF.HEmp -> hf
@@ -791,8 +798,9 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
   let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
   let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
-  let conseq_hps = get_conseq_hp hp_names bf.CF.formula_struc_base in
-  let ante_hps = get_conseq_hp hp_names es.CF.es_formula in
+  let () = x_binfo_hp (add_str "hp names" (pr_list pr_id)) hp_names no_pos in
+  let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
+  let ante_hps = check_hp_formula hp_names es.CF.es_formula in
   let n_prog = translate_prog prog in
   let evars = bf.CF.formula_struc_implicit_inst @ bf.CF.formula_struc_explicit_inst
               @ bf.CF.formula_struc_exists @ es.CF.es_evars in
@@ -835,11 +843,10 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
-  else if ante_hps != [] || conseq_hps != [] then
+  else if ante_hps || conseq_hps then
     let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in
     let vars = vars |> List.filter (fun x -> match CP.type_of_sv x with
-        | Int
-        | Named _ -> true
+        | Int | Named _ -> true
         | _ -> false) in
     let conseq = bf.CF.formula_struc_base in
     let n_es_f, n_conseq = Synthesis.create_residue vars prog conseq in
