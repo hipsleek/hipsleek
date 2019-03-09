@@ -811,7 +811,7 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -831,12 +831,11 @@ let synthesize_entailments iprog prog proc =
   | Some hps ->
     let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
     let () = x_binfo_hp (add_str "hps" (pr_list pr_formula)) formulas no_pos in
-    ()
-  (* let syn_vars = proc.Cast.proc_args
-   *                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-   * if List.length entailments = 1 && !syn_pre != None then
-   *   let pre = !syn_pre |> Gen.unsome |> unprime_formula in
-   *   let post = entailments |> List.hd |> snd |> unprime_formula in
-   *   let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
-   *   if res then repair_res := Some n_iprog else ()
-   * else () *)
+    let syn_vars = proc.Cast.proc_args
+                   |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    if !syn_pre != None && formulas != [] then
+      let pre = !syn_pre |> Gen.unsome |> unprime_formula in
+      let post = List.hd formulas in
+      let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
+      if res then repair_res := Some n_iprog else ()
+    else ()

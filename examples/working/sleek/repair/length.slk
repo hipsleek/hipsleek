@@ -25,7 +25,12 @@ int length(node x)
 // ~>
 // (exists v2, m, n2, n4: x::node<v2, m> * m::ll<n4> & z = n & n2=n & n4 + 1 = n2).
 
+// synthesize[node x]
+// x::ll<n> & !(v_bool_20_1893) & x!=null
+// ~>
+// (exists n_94: x::ll<n_94> &res=n & n_94=n).
+
 synthesize[node x]
 x::ll<n> & !(v_bool_20_1893) & x!=null
 ~>
-(exists n_94: x::ll<n_94> &res=n & n_94=n).
+x::ll<n_94> & k=n .

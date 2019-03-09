@@ -1,0 +1,75 @@
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void insert(node x, node y)
+	requires x::ll<n> * y::ll<m> & x != null
+	ensures exists k: x::ll<k> & k = n + m;.
+
+synthesize [node x, node y]
+x::node<Anon_4393,q_4394> * q_4394::ll<flted_7_4392> * y::ll<n2> &
+v_bool_14_4377 & y=y & x=x & x!=null & flted_7_4392+1=n1 & q_4394=null
+~>
+(exists flted_12_2020: x::ll<flted_12_2020> & flted_12_2020=n2+n1).
+// x.next = y; unfold_post, instantiate
+
+
+// synthesize [node x, node y, node z]
+// x::node<v1, y> * z::ll<n2> & true
+// ~>
+// x::ll<n2+1>.
+
+// unfold_pre
+// unfold_post
+// instantiate
+// rlbind write
+// x.next = y
+// synthesize [node x, node y]
+// x::node<v1, q> * q::ll<n3> * y::ll<n2> & x!= null & n3 + 1 = n1 & q = null
+// ~>
+// (exists n4: x::ll<n4> & n4 = n2 + n1).
+// unfoldPre
+
+//  synthesize [node x, node y]
+// x::node<v1,q> * y::ll<n2> & q=null & n3=0 & x!=null & 1+n3=n1 & q=null
+// ~>
+// (exists flted_7_73,v_74,q_75,n4_66: x::node<v_74,q_75> * q_75::ll<flted_7_73> &
+// n4_66=n2+n1 & flted_7_73+1=n4_66).
+
+// (exists n4: x::ll<n4> & n4 = n1+n2).
+// (exists n4_66, flted_7_73: x::node<v_74,q_75> * q_75::ll<flted_7_73> &
+// flted_7_73+1=n4_66 & n4_66=n2+n1).
+// q=null & n3=0 & x!=null & n3+1=n1 & q=null & n4_69=n1+n2 & 
+// 1+flted_7_66=n4_69
+// f7_66 = n4 - 1 = n1 + n2 -1
+
+// -------------------------------------------------------------------------
+// goal (vars:[x,y]
+// pre:  x::node<Anon_1929,q_1930>@M * q_1930::ll<flted_10_1928>@M * y::ll<n2>@M&
+// v_bool_21_1907 & y=y & x=x & x!=null & flted_10_1928+1=n1 & q_1930=null&
+// {FLOW,(4,5)=__norm#E}[]
+// post:  (exists flted_19_99: x::ll<flted_19_99>@M&flted_19_99=n2+n1&
+// x.next = y
+
+// append(x.next, y)
+// synthesize [node x, node y, node m]
+// x::node<v1, m> * m::ll<n3> * y:: ll<n2> & m = null & x != null & n1 = n3 + 1
+// ~>
+// (exists a4: n::ll<a4> & a4 = n1 + n2).
+
+
+// synthesize [node x, node y, node z]
+// x::node<v1, y> * z::ll<n2> & true
+// ~>
+// (exists t: x::node<v1, t> * t::ll<n2>).
+
+// synthesize [node x, node y, node z]
+// x::node<v1, y> * z::ll<n2> & true
+// ~>
+// (exists flted_7_13,v_14,q_15,
+// flted_28_54: x::node<v_14,q_15> * q_15::ll<flted_7_13>&
+// flted_28_54=1+n2 & flted_7_13+1=flted_28_54).

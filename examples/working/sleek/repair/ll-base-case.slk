@@ -1,0 +1,22 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self=null & n = 0
+  or self::node<v, r> * r::ll<n2> & n = 1 + n2.
+
+int sum(node x)
+  requires x::ll<n> ensures x::ll<n> & res = n;.
+
+// x::ll<n> & x = null
+// synthesize[node x]
+// x = null & n = 0
+// ~>
+// x::ll<n> & res = n.
+
+// test rule bind read
+synthesize [node x, int k]
+x::node<v1,r2> * r2::ll<n2> & n = n2 + 1 & x!=null
+~>
+x::ll<n> & x != null & k = n.
