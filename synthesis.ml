@@ -952,6 +952,14 @@ let rec has_unfold_pre trace = match trace with
       | _ -> has_unfold_pre t
     end
 
+let rec has_fcall_trace trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlFuncCall _ -> true
+      | _ -> has_unfold_pre t
+    end
+
 let rec has_unfold_post trace = match trace with
   | [] -> false
   | h::t -> begin

@@ -402,7 +402,7 @@ let choose_func_call goal =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let procs = goal.gl_proc_decls in
-  if procs = [] then []
+  if procs = [] || has_fcall_trace goal.gl_trace then []
   else
     let proc_decl = List.hd procs in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -590,12 +590,12 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
+  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_f_read goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -714,7 +714,8 @@ let process_func_call goal rcore : derivation =
       else
         let () = fc_args := [params] @ !fc_args in
         let sub_goal = {goal with gl_vars = n_vars;
-                        gl_pre_cond = n_post_state} in
+                                  gl_trace = (RlFuncCall rcore)::goal.gl_trace;
+                                  gl_pre_cond = n_post_state} in
         mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 

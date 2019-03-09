@@ -1,0 +1,26 @@
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+int length(node x)
+  requires x::ll<n>
+  ensures x::ll<n> & res = n;.
+
+// synthesize [node x]
+// x::ll<n> & x!=null
+// ~>
+// (exists n2: x::ll<n2> & n2=n & k = n).
+
+// synthesize [node x, node k]
+// x::ll<n> & x!=null
+// ~>
+// (exists n2, n4: x::node<v2, m> * m::ll<n4> & res=n & n2=n & n4 + 1 = n2).
+
+synthesize [node x, node k, int z]
+x::node<v1, k> * k::ll<n3> & n3 + 1 = n & x!=null
+~>
+(exists v2, m, n2, n4: x::node<v2, m> * m::ll<n4> & z = n & n2=n & n4 + 1 = n2).
