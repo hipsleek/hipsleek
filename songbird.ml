@@ -7,7 +7,8 @@ module SBGlobals = Libsongbird.Globals
 module SBProverP = Libsongbird.Prover_pure
 module SBProverE = Libsongbird.Prover_entail
 module SBDebug = Libsongbird.Debug
-module SBProofE = Libsongbird.Proof_entail
+module SBPFE = Libsongbird.Proof_entail
+module SBPU = Libsongbird.Prover_unkentail
 module CP = Cpure
 module CF = Cformula
 module CPR = Cprinter
@@ -474,6 +475,16 @@ let rec translate_formula formula =
     let (sb_f2, hole2) = translate_formula f.CF.formula_or_f2 in
     (sb_f1@ sb_f2, hole1@hole2)
 
+let translate_entailment entailment =
+  let ante, conseq = fst entailment, snd entailment in
+  let sb_ante, _ = translate_formula ante in
+  let sb_conseq, _ = translate_formula conseq in
+  if List.length sb_ante = 1 && List.length sb_conseq = 1 then
+    let sb_ante = List.hd sb_ante in
+    let sb_conseq = List.hd sb_conseq in
+    SBCast.mk_entailment sb_ante sb_conseq
+  else report_error no_pos "disjunctive formulas not allowed"
+
 let rec translate_back_formula sb_f holes = match sb_f with
   | SBCast.FBase (hf, pf, pos) ->
     let hip_hf = translate_back_hf hf holes in
@@ -540,8 +551,6 @@ let translate_data_decl (data:Cast.data_decl) =
 
 let translate_view_decl (view:Cast.view_decl) =
   let ident = view.Cast.view_name in
-  (* let loc = view.Cast.view_pos in *)
-  (* let sb_pos = translate_loc loc in *)
   let vars = [Cpure.SpecVar (Named view.view_data_name, "self", VarGen.Unprimed)]
              @ view.Cast.view_vars in
   let sb_vars = List.map translate_var vars in
@@ -554,10 +563,13 @@ let translate_view_decl (view:Cast.view_decl) =
 
 let translate_hp hp =
   let ident = hp.Cast.hp_name in
-  (* let sb_pos = translate_loc no_pos in *)
   let vars = List.map fst hp.Cast.hp_vars_inst in
   let sb_vars = List.map translate_var vars in
   SBCast.mk_view_defn ident sb_vars SBCast.VbUnknown
+
+let translate_back_vdefns (vdefn: SBCast.view_defn) =
+  (* to translate back view defn *)
+  None
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
@@ -586,6 +598,16 @@ let translate_prog (prog:Cast.prog_decl) =
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
   n_prog
+
+let solve_entailments prog entailments =
+  let sb_entailments = List.map translate_entailment entailments in
+  let sb_prog = translate_prog prog in
+  let ptree = SBPU.solve_entailments sb_prog sb_entailments in
+  let res = SBPU.get_ptree_validity ptree in
+  if res = SBGlobals.MvlTrue then
+    let vdefns = SBPU.get_solved_vdefns ptree in
+    Some vdefns
+  else None
 
 let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
@@ -671,7 +693,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
           x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
         else () in
       let ptree = SBProverE.check_entailment sb_prog ent in
-      let res = SBProofE.get_ptree_validity ptree in
+      let res = SBPFE.get_ptree_validity ptree in
       match res with
       | SBGlobals.MvlTrue -> true, None
       | _ -> false, None
@@ -680,10 +702,10 @@ let check_entail_x ?(residue=false) prog ante conseq =
           x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
         else () in
       let ptree = SBProverE.check_entailment sb_prog ent in
-      let res = SBProofE.get_ptree_validity ptree in
+      let res = SBPFE.get_ptree_validity ptree in
       match res with
       | SBGlobals.MvlTrue ->
-        let residue_fs = SBProofE.get_ptree_residues ptree in
+        let residue_fs = SBPFE.get_ptree_residues ptree in
         let red = residue_fs |> List.rev |> List.hd in
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
@@ -735,13 +757,13 @@ let check_pure_entail ante conseq =
   let sb_prog = SBCast.mk_program "check_pure_entail" in
   let ent = SBCast.mk_entailment sb_ante_f sb_conseq_f in
   let ptree = SBProverE.check_entailment sb_prog ent in
-  let res = SBProofE.get_ptree_validity ptree in
+  let res = SBPFE.get_ptree_validity ptree in
     match res with
     | SBGlobals.MvlTrue -> true
     | _ -> false
 
 let get_residues ptrees =     List.map (fun ptree ->
-    let residue_fs = SBProofE.get_ptree_residues ptree in
+    let residue_fs = SBPFE.get_ptree_residues ptree in
     let pr_rsd = SBCast.pr_fs in
     let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
     residue_fs |> List.rev |> List.hd
@@ -827,7 +849,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos
     else () in
   let ptrees = List.map (fun ent -> SBProverE.check_entailment ~interact:interact n_prog ent) ents in
-  let validities = List.map (fun ptree -> SBProofE.get_ptree_validity ptree) ptrees in
+  let validities = List.map (fun ptree -> SBPFE.get_ptree_validity ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   let conti = bf.CF.formula_struc_continuation in
   if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
@@ -844,6 +866,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else if conseq_hps then
     let () = Syn.syn_pre := Some es.CF.es_formula in
+    let () = x_binfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
     let n_ante = CF.get_pure es.CF.es_formula in
     let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in

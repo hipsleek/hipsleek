@@ -590,12 +590,12 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
+  let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
-  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_f_read goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -750,7 +750,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -805,7 +805,7 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let st = synthesize_one_goal goal in
-  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
@@ -818,7 +818,7 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -832,11 +832,14 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
 let synthesize_entailments iprog prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
   let () = x_binfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
-   let syn_vars = proc.Cast.proc_args
-                 |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  if List.length entailments = 1 && !syn_pre != None then
-    let pre = !syn_pre |> Gen.unsome |> unprime_formula in
-    let post = entailments |> List.hd |> snd |> unprime_formula in
-    let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
-    if res then repair_res := Some n_iprog else ()
-  else ()
+
+  let _ = SB.solve_entailments prog entailments in
+  ()
+  (* let syn_vars = proc.Cast.proc_args
+   *                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+   * if List.length entailments = 1 && !syn_pre != None then
+   *   let pre = !syn_pre |> Gen.unsome |> unprime_formula in
+   *   let post = entailments |> List.hd |> snd |> unprime_formula in
+   *   let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
+   *   if res then repair_res := Some n_iprog else ()
+   * else () *)
