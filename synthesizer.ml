@@ -109,7 +109,7 @@ let find_equal_var_x goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let all_vars = CF.fv pre |> List.filter is_node_var in
   let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
-  let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars in
+  let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars_pf in
   let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
   let helper_pure var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
@@ -468,6 +468,7 @@ let choose_rule_unfold_pre goal =
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
     let pre_list = List.filter (fun x -> not(SB.check_unsat goal.gl_prog x)) nf in
+    let pre_list = pre_list |> List.map remove_exists in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
     if pre_list = [] then []
     else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
@@ -481,8 +482,6 @@ let choose_rule_unfold_post goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    (* let post_list = nf |> List.filter (SB.check_sat goal.gl_prog) in
-     * let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) post_list  no_pos in *)
     let rules = nf |> List.map (fun f -> RlUnfoldPost { rp_case_formula = f}) in
     rules in
   if has_unfold_post goal.gl_trace then []
@@ -591,6 +590,7 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
@@ -729,7 +729,7 @@ and process_rule_unfold_pre goal rule =
 let process_rule_instantiate goal rule =
   let subst = [(rule.rli_lhs, rule.rli_rhs)] in
   let n_post = CF.subst_all subst goal.gl_post_cond in
-  let n_post = remove_exists_var n_post rule.rli_rhs in
+  let n_post = remove_exists_vars n_post [rule.rli_rhs] in
   let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
 
   let subgoal = {goal with gl_post_cond = n_post;
@@ -749,7 +749,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -804,7 +804,7 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let st = synthesize_one_goal goal in
-  let () = x_tinfo_hp (add_str "syn_tree: " pr_st) st no_pos in
+  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
@@ -831,11 +831,11 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
 let synthesize_entailments iprog prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
   let () = x_binfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
-let syn_vars = proc.Cast.proc_args
+   let syn_vars = proc.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  if List.length entailments = 2 then
-    let pre = entailments |> List.hd |> fst |> Synthesis.unprime_formula in
-    let post = entailments |> List.tl |> List.hd |> snd |> Synthesis.unprime_formula in
+  if List.length entailments = 1 && !syn_pre != None then
+    let pre = !syn_pre |> Gen.unsome |> unprime_formula in
+    let post = entailments |> List.hd |> snd |> unprime_formula in
     let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
     if res then repair_res := Some n_iprog else ()
   else ()

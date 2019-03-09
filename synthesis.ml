@@ -21,6 +21,7 @@ let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
+let syn_pre = ref (None : CF.formula option)
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -268,7 +269,7 @@ and pr_st_search st =
   "Subtrees: " ^  st_str
 
 and pr_st_derive st =
-  (pr_goal st.std_goal) ^ "\n" ^
+  (* (pr_goal st.std_goal) ^ "\n" ^ *)
   (pr_rule st.std_rule) ^ "\n" ^
   ((pr_list pr_st) st.std_sub_trees)
 
@@ -902,7 +903,8 @@ let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
   | _ -> false
 
-let rec remove_exists_var (formula:CF.formula) var = match formula with
+let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
+  match formula with
   | Base _ -> formula
   | Exists ({formula_exists_qvars = qvars;
              formula_exists_heap =  h;
@@ -913,12 +915,17 @@ let rec remove_exists_var (formula:CF.formula) var = match formula with
              formula_exists_flow = fl;
              formula_exists_label = lbl;
              formula_exists_pos = pos } as bf) ->
-    let n_qvars = List.filter (fun x -> not(CP.eq_sv x var)) qvars in
+    let n_qvars = List.filter
+        (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) qvars in
     if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
     else Exists {bf with CF.formula_exists_qvars = n_qvars}
-  | Or bf -> let n_f1 = remove_exists_var bf.formula_or_f1 var in
-    let n_f2 = remove_exists_var bf.formula_or_f2 var in
+  | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
+    let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
+let remove_exists (formula:CF.formula) =
+  let vars = CF.get_exists formula in
+  remove_exists_vars formula vars
 
 let rec get_unfold_view_hf (hf1:CF.h_formula) = match hf1 with
   | CF.ViewNode vnode -> [vnode]
@@ -953,20 +960,20 @@ let rec has_unfold_post trace = match trace with
       | _ -> has_unfold_post t
     end
 
-let rec remove_exists_vars (formula:CP.formula) = match formula with
-  | Exists (_, x,_,_) -> remove_exists_vars x
+let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
+  | Exists (_, x,_,_) -> remove_exists_vars_pf x
   | BForm _ -> formula
-  | And (f1, f2, loc) -> let nf1 = remove_exists_vars f1 in
-    let nf2 = remove_exists_vars f2 in
+  | And (f1, f2, loc) -> let nf1 = remove_exists_vars_pf f1 in
+    let nf2 = remove_exists_vars_pf f2 in
     And (nf1, nf2, loc)
   | AndList list ->
-    let nlist = List.map (fun (x,y) -> (x, remove_exists_vars y)) list in
+    let nlist = List.map (fun (x,y) -> (x, remove_exists_vars_pf y)) list in
     AndList nlist
-  | Not (f, opt, loc) -> Not (remove_exists_vars f, opt, loc)
-  | Or (f1, f2, opt, loc) -> let nf1 = remove_exists_vars f1 in
-    let nf2 = remove_exists_vars f2 in
+  | Not (f, opt, loc) -> Not (remove_exists_vars_pf f, opt, loc)
+  | Or (f1, f2, opt, loc) -> let nf1 = remove_exists_vars_pf f1 in
+    let nf2 = remove_exists_vars_pf f2 in
     Or (nf1, nf2, opt, loc)
-  | Forall (_, f, _, _) -> remove_exists_vars f
+  | Forall (_, f, _, _) -> remove_exists_vars_pf f
 
 (*****************************************************
   * Synthesize CAST and IAST exp

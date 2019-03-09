@@ -798,7 +798,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
   let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
   let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
-  let () = x_binfo_hp (add_str "hp names" (pr_list pr_id)) hp_names no_pos in
+  let () = x_tinfo_hp (add_str "hp names" (pr_list pr_id)) hp_names no_pos in
   let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
   let ante_hps = check_hp_formula hp_names es.CF.es_formula in
   let n_prog = translate_prog prog in
@@ -829,31 +829,37 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let ptrees = List.map (fun ent -> SBProverE.check_entailment ~interact:interact n_prog ent) ents in
   let validities = List.map (fun ptree -> SBProofE.get_ptree_validity ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
+  let conti = bf.CF.formula_struc_continuation in
   if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
   then
     let residues = get_residues ptrees in
     let residue = translate_back_fs residues holes in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
     let () = pre_list := [es.CF.es_formula] @ !pre_list in
-    let n_ctx = CF.Ctx {es with
-                        CF.es_evars = CF.get_exists es.CF.es_formula;
-                        CF.es_formula = residue;
-                       } in
+    let n_ctx = CF.Ctx {es with CF.es_evars = CF.get_exists es.CF.es_formula;
+                                CF.es_formula = residue} in
     let conti = bf.CF.formula_struc_continuation in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
-  else if ante_hps || conseq_hps then
+  else if conseq_hps then
+    let () = Syn.syn_pre := Some es.CF.es_formula in
+    let n_ante = CF.get_pure es.CF.es_formula in
+    let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
+    let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
+    match conti with
+    | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+  else if ante_hps then
     let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in
     let vars = vars |> List.filter (fun x -> match CP.type_of_sv x with
         | Int | Named _ -> true
         | _ -> false) in
     let conseq = bf.CF.formula_struc_base in
-    let n_es_f, n_conseq = Synthesis.create_residue vars prog conseq in
+    let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
     let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
     let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
-    let conti = bf.CF.formula_struc_continuation in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
