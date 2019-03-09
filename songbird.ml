@@ -8,6 +8,7 @@ module SBProverP = Libsongbird.Prover_pure
 module SBProverE = Libsongbird.Prover_entail
 module SBDebug = Libsongbird.Debug
 module SBPFE = Libsongbird.Proof_entail
+module SBPFU = Libsongbird.Proof_unkentail
 module SBPU = Libsongbird.Prover_unkentail
 module CP = Cpure
 module CF = Cformula
@@ -567,9 +568,30 @@ let translate_hp hp =
   let sb_vars = List.map translate_var vars in
   SBCast.mk_view_defn ident sb_vars SBCast.VbUnknown
 
-let translate_back_vdefns (vdefn: SBCast.view_defn) =
-  (* to translate back view defn *)
-  None
+let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
+  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps
+            |> Gen.BList.remove_dups_eq Synthesis.eq_hp_decl in
+  let hp_names = hps |> List.map (fun x ->  x.Cast.hp_name) in
+  let rec helper_f formulas = match formulas with
+    | [] -> report_error no_pos "could not be applied"
+    | [h] -> h
+    | h::t -> CF.mkOr h (helper_f t) no_pos in
+  let vdefns = List.filter (fun x ->
+      List.exists (fun y -> eq_str x.SBCast.view_name y) hp_names) vdefns in
+  let helper hps vdefn =
+    let hp = List.find (fun x -> x.Cast.hp_name = vdefn.SBCast.view_name) hps in
+    let body = vdefn.SBCast.view_body in
+    let args = List.map translate_back_var vdefn.SBCast.view_params in
+    let hip_args = hp.Cast.hp_vars_inst |> List.map fst in
+    let body = match body with
+      | SBCast.VbUnknown -> CF.mkBase_simp (CF.HEmp) (MCP.mkMTrue no_pos)
+      | SBCast.VbDefnCases cases ->
+        let formulas = List.map (fun x ->
+            translate_back_formula x.SBCast.vdc_form []) cases in
+        helper_f formulas in
+    let body = body |> CF.subst (List.combine args hip_args) in
+    {hp with Cast.hp_formula = body} in
+  vdefns |> List.map (helper hps)
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
@@ -592,8 +614,7 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_view_decls no_pos in
   let prog = SBCast.mk_program "heap_entail" in
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
-                        SBCast.prog_views = sb_view_decls}
-  in
+                        SBCast.prog_views = sb_view_decls} in
   let pr3 = SBCast.pr_program in
   let n_prog = Libsongbird.Transform.normalize_prog n_prog in
   let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
@@ -603,10 +624,11 @@ let solve_entailments prog entailments =
   let sb_entailments = List.map translate_entailment entailments in
   let sb_prog = translate_prog prog in
   let ptree = SBPU.solve_entailments sb_prog sb_entailments in
-  let res = SBPU.get_ptree_validity ptree in
+  let res = SBPFU.get_ptree_validity ptree in
   if res = SBGlobals.MvlTrue then
-    let vdefns = SBPU.get_solved_vdefns ptree in
-    Some vdefns
+    let vdefns = SBPFU.get_solved_vdefns ptree in
+    let hps = translate_back_vdefns prog vdefns in
+    Some hps
   else None
 
 let get_vars_in_fault_ents ents =

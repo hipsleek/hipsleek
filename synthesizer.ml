@@ -19,13 +19,6 @@ module SB = Songbird
 exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
-let pr_formula = Cprinter.string_of_formula
-let pr_struc_f = Cprinter.string_of_struc_formula
-let pr_hf = Cprinter.string_of_h_formula
-let pr_pf = Cprinter.string_of_pure_formula
-let pr_sv = Cprinter.string_of_spec_var
-let pr_var = Cprinter.string_of_spec_var
-let pr_vars = pr_list pr_var
 let fc_args = ref ([]: CP.spec_var list list)
 
 (*********************************************************************
@@ -832,9 +825,13 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
 let synthesize_entailments iprog prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
   let () = x_binfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
-
-  let _ = SB.solve_entailments prog entailments in
-  ()
+  let hps = SB.solve_entailments prog entailments in
+  match hps with
+  | None -> ()
+  | Some hps ->
+    let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
+    let () = x_binfo_hp (add_str "hps" (pr_list pr_formula)) formulas no_pos in
+    ()
   (* let syn_vars = proc.Cast.proc_args
    *                |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
    * if List.length entailments = 1 && !syn_pre != None then
