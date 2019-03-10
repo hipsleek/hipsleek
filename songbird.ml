@@ -622,10 +622,10 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
             translate_back_formula x.SBCast.vdc_form []) cases in
         helper_f formulas in
     let () = x_binfo_hp (add_str "body" pr_formula) body no_pos in
-    report_error no_pos "to add exists var"
-    (* let body = body |> CF.subst (List.combine args hip_args) in
-     * {hp with Cast.hp_formula = body} in *)
-  in vdefns |> List.map (helper hps)
+    (* report_error no_pos "to add exists var" *)
+    let body = body |> CF.subst (List.combine args hip_args) in
+    {hp with Cast.hp_formula = body} in
+  vdefns |> List.map (helper hps)
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
