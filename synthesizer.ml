@@ -8,6 +8,7 @@ open Mcpure
 open Synthesis
 
 module CA = Cast
+module IA = Iast
 module CF = Cformula
 module CP = Cpure
 module SB = Songbird
@@ -594,7 +595,7 @@ let choose_rule_instantiate goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
@@ -752,7 +753,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -838,8 +839,14 @@ let synthesize_entailments iprog prog proc =
   | Some hps ->
     let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
     let () = x_binfo_hp (add_str "hps" (pr_list pr_formula)) formulas no_pos in
+    let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
+        iprog.IA.prog_proc_decls in
+    let decl_vars = match iproc.IA.proc_body with
+      | None -> []
+      | Some exp -> get_var_decls exp in
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
+    let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     if !syn_pre != None && formulas != [] then
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
       let post = List.hd formulas in

@@ -9,6 +9,7 @@ module CF = Cformula
 module CP = Cpure
 module MCP = Mcpure
 module I = Iast
+module C = Cast
 
 (** Printing  **********)
 let pr_hf = Cprinter.string_of_h_formula
@@ -1031,6 +1032,23 @@ let rec exp_to_iast (exp: CP.exp) = match exp with
                I.exp_binary_path_id = None;
                I.exp_binary_pos = loc}
   | _ -> report_error no_pos "exp_to_iast: not handled"
+
+let rec get_var_decls_x (exp:I.exp) = match exp with
+  | I.VarDecl var -> let typ = var.I.exp_var_decl_type in
+    var.I.exp_var_decl_decls |> List.map (fun (x, _, _) -> x)
+    |> List.map (CP.mk_typed_sv typ)
+  | I.Seq seq -> (get_var_decls_x seq.I.exp_seq_exp1) @
+                 (get_var_decls_x seq.I.exp_seq_exp2)
+  | I.Cond cond -> (get_var_decls_x cond.I.exp_cond_then_arm) @
+                   (get_var_decls_x cond.I.exp_cond_else_arm)
+  | I.Block b -> get_var_decls_x b.I.exp_block_body
+  | I.Label (_, e) -> get_var_decls_x e
+  | _ -> []
+
+let get_var_decls (exp:I.exp) : CP.spec_var list =
+  Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
+    get_var_decls_x exp
+
 
 let aux_rbind rbind =
   let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
