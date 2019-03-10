@@ -405,24 +405,25 @@ let rec translate_hf hf = match hf with
                               ^ (Cprinter.string_of_h_formula hf))
 
 let exp_to_var exp = match exp with
-  | CP.Var (sv, _) -> (sv, [])
+  | CP.Var (sv, _) -> (sv, [], [])
   | CP.Add _ | CP.Subtract _ | CP.Mult _ | CP.Div _ ->
     let name = fresh_name() in
     let var = CP.mk_typed_sv Int name in
     let var_exp = CP.mkVar var no_pos in
     let pf = CP.mkEqExp var_exp exp no_pos in
-    (var, [pf])
+    (var, [pf], [var])
   | _ -> report_error no_pos (CPR.string_of_formula_exp exp)
 
 let translate_back_df df =
-  let h_root, pf1 = translate_back_exp df.SBCast.dataf_root |> exp_to_var in
-  let pairs = List.map translate_back_exp df.SBCast.dataf_args
+  let h_root, pf1, e_var = translate_back_exp df.SBCast.dataf_root |> exp_to_var in
+  let triples = List.map translate_back_exp df.SBCast.dataf_args
                     |> List.map exp_to_var in
-  let h_args = pairs |> List.map fst in
-  let pf2 = pairs |> List.map snd |> List.concat in
+  let h_args = triples |> List.map (fun (x,_,_) -> x) in
+  let pf2 = triples |> List.map (fun (_, x,_) -> x) |> List.concat in
+  let e_var2 = triples |> List.map (fun (_,_, x) -> x) |> List.concat in
   let h_name = df.SBCast.dataf_name in
   let loc = translate_back_pos df.SBCast.dataf_pos in
-  (CF.mkDataNode h_root h_name h_args loc, pf1 @ pf2)
+  (CF.mkDataNode h_root h_name h_args loc, pf1 @ pf2, e_var@e_var2)
 
 let translate_back_vf vf =
   let hp_name = vf.SBCast.viewf_name in
@@ -431,14 +432,15 @@ let translate_back_vf vf =
     let hp_name = CP.mk_spec_var hp_name in
     let hp_args = List.map translate_back_exp vf.SBCast.viewf_args in
     let loc = translate_back_pos vf.SBCast.viewf_pos in
-    (CF.HRel (hp_name, hp_args, loc), [])
-  else let h_pairs = List.map translate_back_exp vf.SBCast.viewf_args
+    (CF.HRel (hp_name, hp_args, loc), [], [])
+  else let h_triples = List.map translate_back_exp vf.SBCast.viewf_args
                      |> List.map exp_to_var in
-    let h_all_args = h_pairs |> List.map fst in
-    let pfs = h_pairs |> List.map snd |> List.concat in
+    let h_all_args = h_triples |> List.map (fun (x,_,_) -> x) in
+    let e_vars = h_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
+    let pfs = h_triples |> List.map (fun (_,x,_) -> x) |> List.concat in
     let h_root, h_args = List.hd h_all_args, List.tl h_all_args in
     let loc = translate_back_pos vf.SBCast.viewf_pos in
-    (CF.mkViewNode h_root hp_name h_args loc, pfs)
+    (CF.mkViewNode h_root hp_name h_args loc, pfs, e_vars)
 
 let rec mkStarHList list = match list with
     | [] -> CF.HEmp    | [h] -> h
@@ -448,23 +450,25 @@ let rec mkStarHList list = match list with
 let translate_back_hf sb_hf holes =
   let rec helper sb_hf =
     match sb_hf with
-    | SBCast.HEmp _ -> (CF.HEmp, [])
+    | SBCast.HEmp _ -> (CF.HEmp, [], [])
     | SBCast.HAtom (dfs, vfs, pos) ->
-      let df_pairs = List.map translate_back_df dfs in
-      let h_dfs = List.map fst df_pairs in
-      let df_pf = df_pairs |> List.map snd |> List.concat in
-      let vf_pairs = List.map translate_back_vf vfs in
-      let h_vfs = vf_pairs |> List.map fst in
-      let vf_pf = vf_pairs |> List.map snd |> List.concat in
+      let df_triples = List.map translate_back_df dfs in
+      let h_dfs = List.map (fun (x,_,_) -> x) df_triples in
+      let df_pf = df_triples |> List.map (fun (_,x,_) -> x) |> List.concat in
+      let df_evars = df_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
+      let vf_triples = List.map translate_back_vf vfs in
+      let h_vfs = vf_triples |> List.map (fun (x,_,_) -> x) in
+      let vf_pf = vf_triples |> List.map (fun (_,x,_) -> x) |> List.concat in
+      let vf_evars = vf_triples |> List.map (fun (_,_,x) -> x) |> List.concat in
       let h_formulas = h_dfs @ h_vfs in
-      (mkStarHList h_formulas, df_pf @ vf_pf)
+      (mkStarHList h_formulas, df_pf @ vf_pf, df_evars@vf_evars)
     | SBCast.HStar (hf1, hf2, pos) ->
-      let h_hf1, pf1 = helper hf1 in
-      let h_hf2, pf2 = helper hf2 in
+      let h_hf1, pf1, evars1 = helper hf1 in
+      let h_hf2, pf2, evars2 = helper hf2 in
       let loc = translate_back_pos pos in
-      (CF.mkStarH h_hf1 h_hf2 loc, pf1@pf2) in
-  let h_hf, pf = helper sb_hf in
-  (mkStarHList ([h_hf]@holes), pf)
+      (CF.mkStarH h_hf1 h_hf2 loc, pf1@pf2, evars1@evars2) in
+  let h_hf, pf, evars = helper sb_hf in
+  (mkStarHList ([h_hf]@holes), pf, evars)
 
 let rec translate_formula formula =
   let () = x_tinfo_hp (add_str "formula" pr_formula) formula no_pos in
@@ -508,14 +512,15 @@ let rec translate_back_formula_x sb_f holes = match sb_f with
       | [h] -> h
       | h::t -> let t_pf = helper t in
         CP.mkAnd h t_pf no_pos in
-    let h_hf, pfs = translate_back_hf hf holes in
+    let h_hf, pfs, evars = translate_back_hf hf holes in
     let loc = translate_back_pos pos in
     let h_pf = translate_back_pf pf in
     let n_pf = match pfs with
       | [] -> h_pf
       | _ -> let n_pf = helper pfs in
         CP.mkAnd h_pf n_pf no_pos in
-    CF.mkBase_simp h_hf (Mcpure.mix_of_pure n_pf)
+    let base = CF.mkBase_simp h_hf (Mcpure.mix_of_pure n_pf) in
+    CF.add_quantifiers evars base
   | SBCast.FExists (vars, f, pos) ->
     let loc = translate_back_pos pos in
     let hip_f = translate_back_formula_x f holes in
