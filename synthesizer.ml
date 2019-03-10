@@ -366,6 +366,8 @@ let unify (pre_proc, post_proc) goal =
     ss_vars in
   let ss_args = proc_args |> List.map (fun arg -> unify_var arg goal) in
   let ss_args = filter_args_input ss_args in
+  let containt_res = CF.fv post_proc |> List.map (fun x -> CP.name_of_sv x)
+                     |> List.exists (fun x -> x = res_name) in
   let ss_args = List.filter(fun list_and_subst ->
       let list = List.map fst list_and_subst in
       let n_list = CP.remove_dups_svl list in
@@ -381,10 +383,19 @@ let unify (pre_proc, post_proc) goal =
           let combine_args = List.combine args proc_args in
           let eq_args = List.for_all (fun (x,y) -> CP.eq_sv x y) combine_args in
           if not eq_args then
+            let r_var = if containt_res then
+                let res = List.find (fun x -> CP.name_of_sv x = res_name)
+                    (CF.fv post_proc) in
+                let n_var = CP.mk_typed_sv (CP.type_of_sv res)
+                    ("rs" ^ (string_of_int !res_num)) in
+                let () = res_num := !res_num + 1 in
+                Some n_var
+              else None in
             let fc_rule = RlFuncCall {
                 rfc_func_name = proc_decl.Cast.proc_name;
                 rfc_params = args;
                 rfc_substs = substs;
+                rfc_return = r_var;
               } in
             [fc_rule] else []
         else []
@@ -679,11 +690,9 @@ let process_func_call goal rcore : derivation =
     let np_vars = CF.fv n_post_state in
     let containt_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                        |> List.exists (fun x -> x = res_name) in
-    let n_post_state, n_vars = if containt_res then
+    let n_post_state, n_vars = if rcore.rfc_return != None then
         let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
-        let n_var = CP.mk_typed_sv (CP.type_of_sv res)
-            ("rs" ^ (string_of_int !res_num)) in
-        let () = res_num := !res_num + 1 in
+        let n_var = Gen.unsome rcore.rfc_return in
         let n_f = CF.subst [(res, n_var)] n_post_state in
         (n_f, goal.gl_vars @ [n_var])
       else n_post_state, goal.gl_vars in
@@ -798,15 +807,13 @@ and process_one_derivation drv : synthesis_tree =
  *********************************************************************)
 let synthesize_program goal =
   let st = synthesize_one_goal goal in
-  let () = x_binfo_hp (add_str "syn_tree: " pr_st) st no_pos in
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let cast_exp = synthesize_st_core st_core in
-    let () = x_binfo_hp (add_str "cast exp" pr_cast_exp) cast_exp no_pos in
-    let iast_exp = c2iast_exp cast_exp in
-    let () = x_binfo_hp (add_str "iast exp" pr_iast_exp) iast_exp no_pos in
-    Some iast_exp
+    let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
+    let i_exp = synthesize_st_core st_core in
+    let () = x_binfo_hp (add_str "iast exp" pr_iast_exp) i_exp no_pos in
+    Some i_exp
   | StUnkn _ -> None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =

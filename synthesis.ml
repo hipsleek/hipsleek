@@ -65,6 +65,7 @@ and rule_func_call = {
   rfc_func_name : string;
   rfc_params : CP.spec_var list;
   rfc_substs : (CP.spec_var * CP.spec_var) list;
+  rfc_return : CP.spec_var option;
 }
 
 and rule_bind = {
@@ -656,8 +657,6 @@ let get_post_cond (struc_f: CF.struc_formula) =
     bf.formula_struc_continuation |> Gen.unsome |> helper
   | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
 
-
-
 let rec c2iast_exp (exp:Cast.exp) : Iast.exp = match exp with
   | IConst iconst -> Iast.IntLit{ exp_int_lit_val = iconst.exp_iconst_val;
                                   exp_int_lit_pos = iconst.exp_iconst_pos}
@@ -992,107 +991,152 @@ let rec remove_exists_vars_pf (formula:CP.formula) = match formula with
 (*****************************************************
   * Synthesize CAST and IAST exp
  ********************************************************)
-let exp_to_cast (exp: CP.exp) = match exp with
-  | Var (sv, loc) ->  Cast.Var { exp_var_type = CP.type_of_sv sv;
-                                 exp_var_name = CP.name_of_sv sv;
-                                 exp_var_pos = loc }
-  | IConst (num, loc) ->  Cast.IConst { exp_iconst_val = num;
-                                        exp_iconst_pos = loc}
-  | _ -> report_error no_pos "exp_to_cast: not handled"
+let var_to_cast sv loc =
+  Iast.Var { exp_var_name = CP.name_of_sv sv;
+             exp_var_pos = loc }
+
+let num_to_cast num loc =
+  Iast.IntLit { exp_int_lit_val = num;
+                exp_int_lit_pos = loc}
+
+let rec exp_to_iast (exp: CP.exp) = match exp with
+  | CP.Var (sv, loc) ->  var_to_cast sv loc
+  | CP.IConst (num, loc) -> num_to_cast num loc
+  | CP.Add (e1, e2, loc) ->
+    let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.Binary { I.exp_binary_op = I.OpPlus;
+               I.exp_binary_oper1 = n_e1;
+               I.exp_binary_oper2 = n_e2;
+               I.exp_binary_path_id = None;
+               I.exp_binary_pos = loc}
+  | CP.Subtract (e1, e2, loc) ->
+    let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.Binary { I.exp_binary_op = I.OpMinus;
+               I.exp_binary_oper1 = n_e1;
+               I.exp_binary_oper2 = n_e2;
+               I.exp_binary_path_id = None;
+               I.exp_binary_pos = loc}
+  | CP.Mult (e1, e2, loc) ->
+    let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.Binary { I.exp_binary_op = I.OpMult;
+               I.exp_binary_oper1 = n_e1;
+               I.exp_binary_oper2 = n_e2;
+               I.exp_binary_path_id = None;
+               I.exp_binary_pos = loc}
+  | CP.Div (e1, e2, loc) ->
+    let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.Binary { I.exp_binary_op = I.OpDiv;
+               I.exp_binary_oper1 = n_e1;
+               I.exp_binary_oper2 = n_e2;
+               I.exp_binary_path_id = None;
+               I.exp_binary_pos = loc}
+  | _ -> report_error no_pos "exp_to_iast: not handled"
 
 let aux_rbind rbind =
   let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
   let rhs = rbind.rb_other_var in
-  let rhs_var = Cast.Var {
-      Cast.exp_var_type = CP.type_of_sv rhs;
-      Cast.exp_var_name = CP.name_of_sv rhs;
-      Cast.exp_var_pos = no_pos} in
-  let body = Cast.Assign {
-      Cast.exp_assign_lhs = f_name;
-      Cast.exp_assign_rhs = rhs_var;
-      Cast.exp_assign_pos = no_pos} in
-  let bexp = Cast.Bind {
-      exp_bind_type = typ;
-      exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
-      exp_bind_fields = [(typ, f_name)];
+  let rhs_var = Iast.Var {
+      Iast.exp_var_name = CP.name_of_sv rhs;
+      Iast.exp_var_pos = no_pos} in
+  let lhs_var = Iast.Var {
+      Iast.exp_var_name = f_name;
+      Iast.exp_var_pos = no_pos} in
+  let body = Iast.Assign {
+      Iast.exp_assign_op = Iast.OpAssign;
+      Iast.exp_assign_lhs = lhs_var;
+      Iast.exp_assign_rhs = rhs_var;
+      Iast.exp_assign_path_id = None;
+      Iast.exp_assign_pos = no_pos} in
+  let bexp = Iast.Bind {
+      exp_bind_bound_var = CP.name_of_sv bvar;
+      exp_bind_fields = [f_name];
       exp_bind_body = body;
-      exp_bind_imm = CP.NoAnn;
-      exp_bind_param_imm = [];
-      exp_bind_read_only = false;
-      exp_bind_path_id = (-1, "bind");
+      exp_bind_path_id = None;
       exp_bind_pos = no_pos;
     } in bexp
 
-let rec synthesize_st_core st : Cast.exp = match st.stc_rule with
+let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
+                       I.exp_var_pos = no_pos}
+
+let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
   | RlUnfoldPost _
   | RlInstantiate _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign -> let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
-    let c_exp = exp_to_cast rhs in
-    let assign = Cast.Assign { exp_assign_lhs = CP.name_of_sv lhs;
-                               exp_assign_rhs = c_exp;
-                               exp_assign_pos = no_pos} in
+    let c_exp = exp_to_iast rhs in
+    let lhs = mkVar lhs in
+    let assign = I.Assign { I.exp_assign_op = I.OpAssign;
+                            I.exp_assign_lhs = lhs;
+                            I.exp_assign_rhs = c_exp;
+                            I.exp_assign_path_id = None;
+                            I.exp_assign_pos = no_pos} in
     assign
   | RlBind rbind -> aux_rbind rbind   (* Bind write *)
   | RlFRead rule -> let lhs = rule.rbr_value in
     let bvar, (typ, f_name) = rule.rbr_bound_var, rule.rbr_field in
-    let exp_decl = Cast.VarDecl {
+    let exp_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_name = CP.name_of_sv lhs;
+        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
         exp_var_decl_pos = no_pos;
       } in
-    let rhs_var = Cast.Var {
-        Cast.exp_var_type = typ;
-        Cast.exp_var_name = f_name;
-        Cast.exp_var_pos = no_pos} in
-    let body = Cast.Assign { Cast.exp_assign_lhs = CP.name_of_sv lhs;
-                             Cast.exp_assign_rhs = rhs_var;
-                             Cast.exp_assign_pos = no_pos
-                           } in
-    let bind = Cast.Bind {
-        exp_bind_type = typ;
-        exp_bind_bound_var = (CP.type_of_sv bvar, CP.name_of_sv bvar);
-        exp_bind_fields = [(typ, f_name)];
-        exp_bind_body = body;
-        exp_bind_imm = CP.NoAnn;
-        exp_bind_param_imm = [];
-        exp_bind_read_only = true;
-        exp_bind_path_id = (-1, "bind");
-        exp_bind_pos = no_pos} in
-    let seq = Cast.Seq {
-        exp_seq_type = UNK;
-        exp_seq_exp1 = exp_decl;
-        exp_seq_exp2 = bind;
-        exp_seq_pos = no_pos} in
+    let rhs_var = Iast.Var { I.exp_var_name = f_name;
+                             I.exp_var_pos = no_pos} in
+    let lhs = mkVar lhs in
+    let body = Iast.Assign { I.exp_assign_lhs = lhs;
+                             I.exp_assign_op = I.OpAssign;
+                             I.exp_assign_rhs = rhs_var;
+                             I.exp_assign_path_id = None;
+                             I.exp_assign_pos = no_pos } in
+    let bind = Iast.Bind { exp_bind_bound_var = CP.name_of_sv bvar;
+                           exp_bind_fields = [f_name];
+                           exp_bind_body = body;
+                           exp_bind_path_id = None;
+                           exp_bind_pos = no_pos} in
+    let seq = I.Seq { exp_seq_exp1 = exp_decl;
+                      exp_seq_exp2 = bind;
+                      exp_seq_pos = no_pos} in
     let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
     if st_code = None then seq
     else let st_code = Gen.unsome st_code in
-      Seq {
-        exp_seq_type = UNK;
-        exp_seq_exp1 = seq;
-        exp_seq_exp2 = st_code;
-        exp_seq_pos = no_pos}
+      I.Seq { exp_seq_exp1 = seq;
+              exp_seq_exp2 = st_code;
+              exp_seq_pos = no_pos}
   | RlFuncCall rule ->
-    SCall{
-      exp_scall_type = UNK;
-      exp_scall_method_name = rule.rfc_func_name;
-      exp_scall_lock = None;
-      exp_scall_arguments = rule.rfc_params |> List.map CP.name_of_sv;
-      exp_scall_ho_arg = None;
-      exp_scall_is_rec = false;
-      exp_scall_path_id = None;
-      exp_scall_pos = no_pos}
+    let args = rule.rfc_params |> List.map mkVar in
+    let fcall = Iast.CallNRecv {
+        exp_call_nrecv_method = rule.rfc_func_name;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_arguments = args;
+        exp_call_nrecv_path_id = None;
+        exp_call_nrecv_pos = no_pos} in
+    if rule.rfc_return = None then fcall
+    else let rvar = Gen.unsome rule.rfc_return in
+      let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
+                          I.exp_var_pos = no_pos} in
+      let asgn = I.Assign { exp_assign_lhs = mkVar rvar;
+                            exp_assign_rhs = fcall;
+                            exp_assign_op = I.OpAssign;
+                            exp_assign_path_id = None;
+                            exp_assign_pos = no_pos} in
+      let seq = I.Seq { exp_seq_exp1 = r_var;
+                        exp_seq_exp2 = asgn;
+                        exp_seq_pos = no_pos} in
+      let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
+      if st_code = None then seq
+      else let st_code = Gen.unsome st_code in
+        I.Seq { exp_seq_exp1 = seq;
+                exp_seq_exp2 = st_code;
+                exp_seq_pos = no_pos}
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
   | [h] -> synthesize_st_core h
   | h::t -> let fst = synthesize_st_core h in
     let snd = synthesize_subtrees t in
-    Cast.Seq {
-      exp_seq_type = UNK;
-      exp_seq_exp1 = fst;
-      exp_seq_exp2 = snd;
-      exp_seq_pos = no_pos}
+    Iast.Seq { I.exp_seq_exp1 = fst;
+               I.exp_seq_exp2 = snd;
+               I.exp_seq_pos = no_pos}
 
 and synthesize_subtrees_wrapper subtrees = match subtrees with
   | [] -> None
