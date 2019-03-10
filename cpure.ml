@@ -608,7 +608,7 @@ let name_of_sv (sv : spec_var) : ident = match sv with
 let typ_of_sv (sv : spec_var)  = match sv with
   | SpecVar (t, v, _) -> t
 
-let rename_spec_var (sv: spec_var) new_name = 
+let rename_spec_var (sv: spec_var) new_name =
   match sv with
   | SpecVar (t, _, p) -> SpecVar (t, new_name, p)
 
@@ -3981,20 +3981,16 @@ and subst_pos_formula p f = match f with
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
   let slen = (String.length s) in
-  let ri = 
-    try  
+  let ri =
+    try
       let n = (String.rindex s '_') in
-      (* let () = print_endline ((string_of_int n)) in *)
       let l = (slen-(n+1)) in
       if (l==0) then slen-1
-      else 
+      else
         let tr = String.sub s (n+1) (slen-(n+1)) in
-        (* let () = int_of_string tr in *)
-        (* let () = print_endline ((string_of_int n)^tr^"##") in *)
         n
     with  _ -> slen in
   let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-  (*let () = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
   n
 
 and fresh_old_name s =
