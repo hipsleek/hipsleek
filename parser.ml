@@ -2362,9 +2362,10 @@ heap_rd:
 
 heap_rw:
   [[
-    hrd=heap_wr; peek_subs; `STAR;`OPAREN ; `OSQUARE ; cl1 = LIST0 cid SEP `COMMA ; `CSQUARE ; `DIV ; `OSQUARE ; cl2 = LIST0 cid SEP `COMMA; `CSQUARE ;  hp = heap_constr; `CPAREN ->
-    F.mkStar hrd (F.mkHSubs cl1 cl2 hp) (get_pos_camlp4 _loc 2)
-   | hrd=heap_wr; peek_heap_star; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+    (* hrd=heap_wr; peek_subs; `STAR;`OPAREN ; `OSQUARE ; cl1 = LIST0 cid SEP `COMMA ;
+     * `CSQUARE ; `DIV ; `OSQUARE ; cl2 = LIST0 cid SEP `COMMA; `CSQUARE ;  hp = heap_constr; `CPAREN ->
+     * F.mkStar hrd (F.mkHSubs cl1 cl2 hp) (get_pos_camlp4 _loc 2) *)
+     hrd=heap_wr; (* peek_heap_star; *) `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
    | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hc hrd (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)

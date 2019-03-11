@@ -354,7 +354,6 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
          if the unification of parameters is successful
          return (Some tk) along with the updated type list.
       *)
-      let () = y_binfo_pp "unify Named typ and Named typ pppppppppppppppppppp" in
       let rec unify_param tl1 tl2 tlist tk =
         match tl1, tl2 with
         | [], []                -> (tlist, Some tk)
@@ -373,7 +372,6 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     (* ******* end - temp hack ******** *)
     (* ******************************** *)
     | ty, Poly id  | Poly id, ty ->
-      let () = y_binfo_pp "unify Named typ with poooooooooooolllllllllllllyyyyyy" in
       unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
@@ -731,7 +729,6 @@ and gather_type_info_exp prog a0 tlist et =
 
 (* et - expected type *)
 and gather_type_info_exp_x prog a0 tlist et =
-  let () = y_binfo_hp (add_str "a0" Iprinter.string_of_pure_exp) a0 in
   match a0 with
   | IP.Null pos ->
     let (new_et,n_tl) = fresh_tvar tlist in
@@ -1627,7 +1624,6 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
-  let () = y_binfo_pp "intro fresh types for poly ty" in
   (* poly_types = get_all_poly_types  vdef *)
   (* let get_all_poly_types vd ls =
    *   match vd.I.view_type_of_self with
@@ -1685,7 +1681,6 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let () = ho_helper ho_flow_kinds_view ho_flow_kinds_args in
   (**********************************)
   let vt = vdef.I.view_typed_vars in
-  let () = y_binfo_hp (add_str "vdef.I.view_typed_vars" (pr_list (pr_pair string_of_typ pr_id))) vt in
   let rec helper exps tvars =
     match (exps, tvars) with
     | ([], []) -> []
