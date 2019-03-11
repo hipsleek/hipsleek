@@ -1,0 +1,22 @@
+
+data RefNLL_lvl1_t {
+	RefNLL_lvl1_t next1;
+}.
+
+data RefNLL_lvl2_t {
+	RefNLL_lvl2_t next2;
+	RefNLL_lvl1_t down;
+}.
+
+pred nell<out> ==  self::RefNLL_lvl1_t<out:next1>
+	or  exists u: self::RefNLL_lvl1_t<u:next1> * u::nell<out>
+.
+
+pred ncll<out> ==   emp & self=out
+	or  exists u,h: self::RefNLL_lvl2_t<u:next2,h:down> * h::nell<h> * u::ncll<out>
+.
+
+
+checkentail x0::ncll<nil>
+	 |- false
+.

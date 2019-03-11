@@ -1,0 +1,10 @@
+(set-info :source | 
+  R. Iosif, A. Rogalewicz and T. Vojnar. 
+  Deciding Entailments in Inductive Separation Logic with Tree Automata arXiv:1402.2127. 
+  http://www.fit.vutbr.cz/research/groups/verifit/tools/slide/ 
+|)
+
+(set-info :smt-lib-version 2.0)
+(set-info :category "crafted")
+(set-info :status sat)
+

@@ -1,0 +1,34 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred one<> ==   emp & null!=self
+.
+
+pred zero<> ==   emp & null=self
+.
+
+pred succ3rec<x2,x3,y1,y2,y3> ==  self::zero<> * y1::one<> & x2=y2 & x3=y3
+	or  x2::succ2rec<x3,y2,y3> * self::one<> * y1::zero<>
+.
+
+pred Q<y2,y3> ==  self::zero<> * y2::zero<> * y3::zero<>
+	or  exists x1,x2,x3: x1::succ3rec<x2,x3,self,y2,y3> * x1::Q<x2,x3>
+.
+
+pred P<x2,x3> ==  self::one<> * x2::one<> * x3::one<> * self::Q<x2,x3>
+.
+
+pred succ2rec<x2,y1,y2> ==  self::zero<> * y1::one<> & x2=y2
+	or  x2::succ1rec<y2> * self::one<> * y1::zero<>
+.
+
+pred succ1rec<y1> ==  self::zero<> * y1::one<>
+.
+
+
+checkentail x0::P<x1,x2>
+	 |- false
+.

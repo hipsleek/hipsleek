@@ -1,0 +1,28 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred ll<> ==   emp & null=self
+	or  exists q_20: self::Refnode<q_20:next> * q_20::ll<>
+.
+
+pred lseg<p> ==   emp & self=p
+	or  exists p_19,q_18: self::Refnode<q_18:next> * q_18::lseg<p_19> & p=p_19
+.
+
+pred ll_e1<> ==  exists q: self::Refnode<q:next> * q::ll<>
+.
+
+pred ll_e2<> ==  exists p,q: self::Refnode<p:next> * q::ll<> & p=q
+.
+
+pred node_e1<q> ==  exists p: self::Refnode<p:next> & q=p
+.
+
+pred lseg_e1<p> ==  exists q: self::lseg<p> & p=q
+.
+
+
+checkentail q::ll<> * xprm::Refnode<q:next> & nil!=vprm & vprm=q & xprm=x & yprm=y & nil!=x
+	 |- q::ll<> * xprm::Refnode<q:next> & nil!=vprm & vprm=q & xprm=x & yprm=y & nil!=x.

@@ -1,0 +1,12 @@
+
+data RefSll_t {
+	RefSll_t next;
+}.
+
+pred ls<out> ==   emp & self=out
+	or  exists u: self::RefSll_t<u:next> * u::ls<out> & self!=out
+.
+
+
+checkentail nil=nil & nil!=x1 & nil!=x3 & nil!=x5 & nil!=x7 & nil!=x9 & nil!=x11 & nil!=x13 & nil!=x15 & nil!=x17 & nil!=x19
+	 |-  emp .

@@ -1,0 +1,17 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred ls<y_3> ==   emp & self=y_3
+	or  exists u_4: self::Refnode<u_4:next> * u_4::ls<y_3>
+.
+
+pred ls_nonrec<y_6> ==   emp & self=y_6
+	or  exists u_7: self::Refnode<u_7:next> * u_7::ls<y_6>
+	or  exists u_8,v_9: u_8::Refnode<v_9:next> * self::Refnode<u_8:next> * v_9::ls<y_6>
+.
+
+
+checkentail x::ls_nonrec<x1> * x1::ls_nonrec<x2> * x2::ls_nonrec<x3> * x3::ls_nonrec<x4> * x4::ls_nonrec<x5> * x5::ls_nonrec<x6> * x6::ls_nonrec<x7>
+	 |- x::ls<x7>.

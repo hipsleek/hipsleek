@@ -1,0 +1,63 @@
+(set-logic QF_BSL)
+(set-info :source | CVC4 - Andrew Reynolds |)
+(set-info :smt-lib-version 2.6)
+(set-info :category "crafted")
+(set-info :status unsat)
+
+(declare-sort Loc 0)
+
+(declare-heap (Loc Loc))
+
+(declare-const loc0 Loc)
+
+(declare-const w Loc)
+(declare-const u1 Loc)
+(declare-const u2 Loc)
+(declare-const u3 Loc)
+(declare-const u4 Loc)
+(declare-const u5 Loc)
+(declare-const u6 Loc)
+(declare-const u7 Loc)
+
+(declare-const w1 Loc)
+(declare-const w2 Loc)
+(declare-const w3 Loc)
+(declare-const w4 Loc)
+(declare-const w5 Loc)
+(declare-const w6 Loc)
+(declare-const w7 Loc)
+(declare-const w8 Loc)
+(declare-const w9 Loc)
+(declare-const w10 Loc)
+(declare-const w11 Loc)
+(declare-const w12 Loc)
+(declare-const w13 Loc)
+(declare-const w14 Loc)
+(declare-const w15 Loc)
+(declare-const w16 Loc)
+
+;------- f -------
+(assert (= w1 (as nil Loc)))
+(assert (= w2 (as nil Loc)))
+(assert (= w3 u7))
+(assert (= w4 u7))
+(assert (= w5 u6))
+(assert (= w6 u6))
+(assert (= w7 u5))
+(assert (= w8 u5))
+(assert (= w9 u4))
+(assert (= w10 u4))
+(assert (= w11 u3))
+(assert (= w12 u3))
+(assert (= w13 u2))
+(assert (= w14 u2))
+(assert (= w15 u1))
+(assert (= w16 u1))
+;-----------------
+
+(assert (sep (pto w u1) (pto u1 u2) (pto u2 u3) (pto u3 u4) (pto u4 u5) (pto u5 u6) (pto u6 u7)(pto u7 (as nil Loc))))
+
+(assert (not (and (sep (and (sep (and (sep (and (sep (and (sep (and (sep (and (sep (and (sep (and (_ emp Loc Loc) (= w2 (as nil Loc))) (pto w4 w1)) (sep (pto w4 w2) true)) (pto w6 w3)) (sep (pto w6 w4) true)) (pto w8 w5)) (sep (pto w8 w6) true)) (pto w10 w7)) (sep (pto w10 w8) true)) (pto w12 w9)) (sep (pto w12 w10) true)) (pto w14 w11)) (sep (pto w14 w12) true)) (pto w16 w13)) (sep (pto w16 w14) true)) (pto w w15)) (sep (pto w w16) true))))
+
+(check-sat)
+;(get-model)

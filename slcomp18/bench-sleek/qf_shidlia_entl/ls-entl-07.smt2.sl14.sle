@@ -1,0 +1,13 @@
+
+data RefSll_t {
+	RefSll_t next;
+	int data_slk;
+}.
+
+pred lsls<dt1,len1,out,dt2,len2> ==   emp & self=out & dt1=dt2 & len1=len2
+	or  exists u,dt3,len3: self::RefSll_t<u:next,dt1:data_slk> * u::lsls<dt3,len3,out,dt2,len2> & dt1<dt3+0 & len1=len3+1
+.
+
+
+checkentail X::lsls<d1,n1,Y,d2,n2> * Y::RefSll_t<Z:next,d3:data_slk> * Z::lsls<d4,n3,U,d5,n4> & d1!=d2 & d2=d3 & n3=n4+2 & n2=n3+1 & d3<d4
+	 |- X::lsls<d1,n1,U,d5,n4> & d1<d5 & n1>n4+3.

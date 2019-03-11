@@ -1,0 +1,15 @@
+
+data RefAtll_t {
+	RefAtll_t lson;
+	RefAtll_t rson;
+	RefAtll_t next;
+}.
+
+pred atll<ll,rl> ==  self::RefAtll_t<null:lson,null:rson,rl:next> & self!=rl & self=ll
+	or  exists ls,rs,z: self::RefAtll_t<ls:lson,rs:rson,null:next> * ls::atll<ll,z> * rs::atll<z,rl> & self!=ll & self!=rl
+.
+
+
+checkentail x0::atll<nil,x0>
+	 |- false
+.

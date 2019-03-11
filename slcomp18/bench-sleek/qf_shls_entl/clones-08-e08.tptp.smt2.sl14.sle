@@ -1,0 +1,12 @@
+
+data RefSll_t {
+	RefSll_t next;
+}.
+
+pred ls<out> ==   emp & self=out
+	or  exists u: self::RefSll_t<u:next> * u::ls<out> & self!=out
+.
+
+
+checkentail x30::ls<x29> * x31::RefSll_t<x30:next> * x29::RefSll_t<x31:next> * x26::ls<x25> * x27::RefSll_t<x26:next> * x25::RefSll_t<x27:next> * x22::ls<x21> * x23::RefSll_t<x22:next> * x21::RefSll_t<x23:next> * x18::ls<x17> * x19::RefSll_t<x18:next> * x17::RefSll_t<x19:next> * x14::ls<x13> * x15::RefSll_t<x14:next> * x13::RefSll_t<x15:next> * x10::ls<x9> * x11::RefSll_t<x10:next> * x9::RefSll_t<x11:next> * x6::ls<x5> * x7::RefSll_t<x6:next> * x5::RefSll_t<x7:next> * x2::ls<x1> * x3::RefSll_t<x2:next> * x1::RefSll_t<x3:next> & nil=nil & nil!=x1 & nil!=x2 & nil!=x3 & x1!=x3 & x2!=x3 & nil!=x5 & nil!=x6 & nil!=x7 & x5!=x7 & x6!=x7 & nil!=x9 & nil!=x10 & nil!=x11 & x9!=x11 & x10!=x11 & nil!=x13 & nil!=x14 & nil!=x15 & x13!=x15 & x14!=x15 & nil!=x17 & nil!=x18 & nil!=x19 & x17!=x19 & x18!=x19 & nil!=x21 & nil!=x22 & nil!=x23 & x21!=x23 & x22!=x23 & nil!=x25 & nil!=x26 & nil!=x27 & x25!=x27 & x26!=x27 & nil!=x29 & nil!=x30 & nil!=x31 & x29!=x31 & x30!=x31
+	 |- x32::RefSll_t<x31:next> * x30::ls<x32> * x31::RefSll_t<x30:next> * x28::RefSll_t<x27:next> * x26::ls<x28> * x27::RefSll_t<x26:next> * x24::RefSll_t<x23:next> * x22::ls<x24> * x23::RefSll_t<x22:next> * x20::RefSll_t<x19:next> * x18::ls<x20> * x19::RefSll_t<x18:next> * x16::RefSll_t<x15:next> * x14::ls<x16> * x15::RefSll_t<x14:next> * x12::RefSll_t<x11:next> * x10::ls<x12> * x11::RefSll_t<x10:next> * x8::RefSll_t<x7:next> * x6::ls<x8> * x7::RefSll_t<x6:next> * x4::RefSll_t<x3:next> * x2::ls<x4> * x3::RefSll_t<x2:next>.

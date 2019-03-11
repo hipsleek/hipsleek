@@ -1,0 +1,15 @@
+
+data RefTll_t {
+	RefTll_t lson;
+	RefTll_t rson;
+	RefTll_t next;
+}.
+
+pred tll<ll,rl> ==  self::RefTll_t<null:lson,null:rson,rl:next> & self=ll
+	or  exists ls,rs,z: self::RefTll_t<ls:lson,rs:rson,null:next> * ls::tll<ll,z> * rs::tll<z,rl>
+.
+
+
+checkentail x0::tll<x1,x2> * x2::tll<x3,x4> * x4::tll<x5,x6> * x6::tll<x7,x8> * y0::tll<y1,y2> * y2::tll<y3,y4> * y4::tll<y5,y6> * y6::tll<y7,y8> * z0::tll<z1,z2> * z2::tll<z3,z4> * z4::tll<z5,z6> * z6::tll<z7,z8> & x0=x1 & x2!=x3 & x4=x5 & x6!=x7 & x8=x0 & y0=y1 & y2!=y3 & y4=y5 & y6!=y7 & y8=y0 & z0=z1 & z2!=z3 & z4=z5 & z6!=z7 & z8=z0
+	 |- false
+.

@@ -1,0 +1,21 @@
+
+data RefNLL_lvl1_t {
+	RefNLL_lvl1_t next1;
+}.
+
+data RefNLL_lvl2_t {
+	RefNLL_lvl2_t next2;
+	RefNLL_lvl1_t down;
+}.
+
+pred lso<out> ==   emp & self=out
+	or  exists u: self::RefNLL_lvl1_t<u:next1> * u::lso<out> & self!=out
+.
+
+pred nll<out,boundary> ==   emp & self=out
+	or  exists u,Z1: self::RefNLL_lvl2_t<u:next2,Z1:down> * Z1::lso<boundary> * u::nll<out,boundary> & self!=out
+.
+
+
+checkentail x1::nll<x2,nil> * x2::RefNLL_lvl2_t<x3:next2,x2_1:down> * x2_1::RefNLL_lvl1_t<x2_2:next1> * x2_2::RefNLL_lvl1_t<x2_1:next1> * x3::nll<nil,nil>
+	 |- x1::nll<nil,nil>.

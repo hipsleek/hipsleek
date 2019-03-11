@@ -1,0 +1,12 @@
+
+data RefSll_t {
+	RefSll_t next;
+}.
+
+pred ls<out> ==   emp & self=out
+	or  exists u: self::RefSll_t<u:next> * u::ls<out> & self!=out
+.
+
+
+checkentail x4::RefSll_t<x12:next> * x10::RefSll_t<x6:next> * x1::ls<x11> * x18::ls<x8> * x13::RefSll_t<x9:next> * x14::ls<x10> * x15::RefSll_t<x12:next> * x7::ls<x16> * x3::RefSll_t<x11:next> * x16::ls<x11> * x12::RefSll_t<x10:next> * x2::RefSll_t<x6:next> * x9::RefSll_t<x6:next> * x5::ls<x9> * x6::RefSll_t<x1:next> * x17::ls<x6> * x8::RefSll_t<x4:next> * x11::RefSll_t<x7:next> & nil=nil
+	 |- x16::ls<x11> * x15::ls<x12> * x17::ls<x6> * x13::ls<x9> * x14::ls<x10> * x3::ls<x11> * x5::ls<x6> * x2::ls<x6> * x18::ls<x6> * x6::ls<x16>.

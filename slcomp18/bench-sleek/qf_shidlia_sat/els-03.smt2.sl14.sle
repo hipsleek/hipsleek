@@ -1,0 +1,13 @@
+
+data RefSll_t {
+	RefSll_t next;
+}.
+
+pred els<len1> ==   emp & self=null & len1=0
+	or  exists u1,u2,len3: self::RefSll_t<u1:next> * u1::RefSll_t<u2:next> * u2::els<len3> & len1=len3+2
+.
+
+
+checkentail u_emp::els<n1> * t_emp::els<n2> & n1=n2+n2+1
+	 |- false
+.

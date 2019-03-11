@@ -1,0 +1,20 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred ls<y_2> ==   emp & self=y_2
+	or  exists u_3: self::Refnode<u_3:next> * u_3::ls<y_2>
+.
+
+pred lodd<y_8> ==  self::Refnode<y_8:next>
+	or  exists u_9: self::Refnode<u_9:next> * u_9::leven<y_8>
+.
+
+pred leven<y_5> ==   emp & self=y_5
+	or  exists u_6: self::Refnode<u_6:next> * u_6::lodd<y_5>
+.
+
+
+checkentail z::Refnode<t:next> * x::leven<z>
+	 |- x::ls<t>.

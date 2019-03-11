@@ -1,0 +1,12 @@
+
+data RefGTyp {
+	RefGTyp f0;
+}.
+
+pred RList<y> ==  self::RefGTyp<y> & null!=self
+	or  exists xp: xp::RefGTyp<y> * self::RList<xp> & null!=xp
+.
+
+
+checkentail x::RList<y> * y::RList<z>
+	 |- x::RList<z>.

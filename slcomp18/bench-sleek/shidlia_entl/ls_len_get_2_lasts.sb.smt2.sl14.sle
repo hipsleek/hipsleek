@@ -1,0 +1,12 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred ls<y_2,n_3> ==   emp & n_3=0 & self=y_2
+	or  exists u_4,k: self::Refnode<u_4:next> * u_4::ls<y_2,k> & k=n_3-1 & 0<=n_3-1
+.
+
+
+checkentail x::ls<y,k1000> & k1000=1000 & k998=998
+	 |- (exists u,v: u::Refnode<v:next> * v::Refnode<y:next> * x::ls<u,k998> ) .

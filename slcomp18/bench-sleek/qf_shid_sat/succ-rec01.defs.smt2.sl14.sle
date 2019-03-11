@@ -1,0 +1,26 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred one<> ==   emp & null!=self
+.
+
+pred zero<> ==   emp & null=self
+.
+
+pred succ1rec<y1> ==  self::zero<> * y1::one<>
+.
+
+pred Q<> ==  self::zero<>
+	or  exists x1: x1::succ1rec<self> * x1::Q<>
+.
+
+pred P<> ==  self::one<> * self::Q<>
+.
+
+
+checkentail x0::P<>
+	 |- false
+.

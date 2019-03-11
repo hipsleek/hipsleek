@@ -1,0 +1,18 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred BinTree<> ==  emp
+	or  exists yp,xp: self::RefGTyp<yp:f0,xp:f1> * yp::BinTree<> * xp::BinTree<> & null!=self
+.
+
+pred BinTreeSeg<y> ==   emp & self=y
+	or  exists xp,yp: self::RefGTyp<xp:f0,yp:f1> * xp::BinTreeSeg<y> * yp::BinTree<> & null!=self
+	or  exists xp,yp: self::RefGTyp<xp:f0,yp:f1> * xp::BinTree<> * yp::BinTreeSeg<y> & null!=self
+.
+
+
+checkentail x::BinTreeSeg<z> * z::BinTreeSeg<y>
+	 |- x::BinTreeSeg<y>.

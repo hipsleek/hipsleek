@@ -1,0 +1,17 @@
+
+data Refnode {
+	Refnode next;
+	Refnode prev;
+}.
+
+pred dll<p_2,tl_3,n_4,l_5> ==  self::Refnode<n_4:next,p_2:prev> & l_5+(- 1)=0 & self=tl_3
+	or  exists x_6,k: self::Refnode<x_6:next,p_2:prev> * x_6::dll<self,tl_3,n_4,k> & k=l_5+(- 1) & 1<=l_5+(- 1)
+.
+
+pred lsrev<y_9,len_10> ==   emp & len_10=0 & self=y_9
+	or  exists anon_11,u_12,k: u_12::Refnode<y_9:next,anon_11:prev> * self::lsrev<u_12,k> & k=len_10-1 & 0<=len_10-1
+.
+
+
+checkentail x::dll<y,z,t,n> & 100<=n
+	 |- (exists m,u: x::Refnode<u:next,y:prev> * u::lsrev<t,m> & 99<=m ) .

@@ -1,0 +1,15 @@
+
+data RefDltree_t {
+	RefDltree_t lson;
+	RefDltree_t rson;
+	RefDltree_t parent;
+}.
+
+pred dltree<p> ==  self::RefDltree_t<null:lson,null:rson,p:parent>
+	or  exists ls,rs: self::RefDltree_t<ls:lson,rs:rson,p:parent> * ls::dltree<self> * rs::dltree<self> & ls!=rs & self!=ls & self!=rs
+.
+
+
+checkentail x0::dltree<nil>
+	 |- false
+.

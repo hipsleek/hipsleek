@@ -1,0 +1,18 @@
+
+data Refnode {
+	Refnode left;
+	Refnode right;
+}.
+
+pred tree<s_6> ==   emp & null=self & s_6=0
+	or  exists l_7,r_8,s2_10,k: self::Refnode<l_7:left,r_8:right> * l_7::tree<k> * r_8::tree<s2_10> & k=s_6-s2_10-1 & 0<=s2_10 & 0<=k
+.
+
+pred tseg<y_12,s_13> ==   emp & s_13=0 & self=y_12
+	or  exists l_14,r_15,s2_17,k: self::Refnode<l_14:left,r_15:right> * l_14::tree<k> * r_15::tseg<y_12,s2_17> & k=s_13-s2_17-1 & 0<=k
+	or  exists l_18,r_19,s2_21,k: self::Refnode<l_18:left,r_19:right> * r_19::tree<s2_21> * l_18::tseg<y_12,k> & k=s_13-s2_21-1 & 0<=s2_21
+.
+
+
+checkentail x::tree<n> & 10<=n
+	 |- (exists u,m,l: u::tree<l> * x::tseg<u,m> & 1<=m & l<=8 ) .

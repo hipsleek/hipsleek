@@ -1,0 +1,14 @@
+
+data RefSll_t {
+	RefSll_t left;
+	RefSll_t right;
+}.
+
+pred lss<y,len1> ==  self::RefSll_t<null:left,y:right> & y=null & len1=1
+	or  exists x1,y1,n1: y::RefSll_t<x1:left,y1:right> * self::lss<y1,n1> & len1=n1+2
+.
+
+
+checkentail x::lss<y,n1> & n1>320001 & x=y
+	 |- false
+.

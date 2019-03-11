@@ -1,0 +1,24 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred ls<y_2> ==   emp & self=y_2
+	or  exists u_3: self::Refnode<u_3:next> * u_3::ls<y_2>
+.
+
+pred ls_odd<y_8> ==  self::Refnode<y_8:next>
+	or  exists u_9: self::Refnode<u_9:next> * u_9::ls_even<y_8>
+.
+
+pred ls_even<y_5> ==   emp & self=y_5
+	or  exists u_6: self::Refnode<u_6:next> * u_6::ls_odd<y_5>
+.
+
+pred ls_all<y_11> ==  self::ls_even<y_11>
+	or  self::ls_odd<y_11>
+.
+
+
+checkentail x::ls_even<y> * y::ls_odd<z>
+	 |- (exists x1: x1::Refnode<z:next> * x::ls_even<x1> ) .

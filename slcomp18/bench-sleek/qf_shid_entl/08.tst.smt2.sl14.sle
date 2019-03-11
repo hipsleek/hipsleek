@@ -1,0 +1,17 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred BSLL<y> ==   emp & self=y
+	or  exists xp,yp: xp::RefGTyp<yp:f0,y:f1> * self::BSLL<xp> & null!=xp
+.
+
+pred DLL<y,z,w> ==   emp & self=y & z=w
+	or  exists zp: self::RefGTyp<zp:f0,w:f1> * zp::DLL<y,z,self> & null!=self
+.
+
+
+checkentail x::DLL<y,z,w>
+	 |- z::BSLL<w>.

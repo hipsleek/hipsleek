@@ -1,0 +1,17 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred BinListFirst<> ==  emp
+	or  exists yp,xp: self::RefGTyp<yp:f0,xp:f1> * yp::BinListFirst<> & null!=self
+.
+
+pred BinTree<> ==  emp
+	or  exists yp,xp: self::RefGTyp<yp:f0,xp:f1> * yp::BinTree<> * xp::BinTree<> & null!=self
+.
+
+
+checkentail x::BinListFirst<>
+	 |- x::BinTree<>.

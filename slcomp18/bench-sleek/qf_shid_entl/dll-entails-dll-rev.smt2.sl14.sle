@@ -1,0 +1,17 @@
+
+data RefDLL_t {
+	RefDLL_t prev;
+	RefDLL_t next;
+}.
+
+pred DLL_plus<p,tl,n> ==  self::RefDLL_t<p:prev,n:next> & self=tl
+	or  exists x: self::RefDLL_t<p:prev,x:next> * x::DLL_plus<self,tl,n>
+.
+
+pred DLL_plus_rev<p,tl,n> ==  self::RefDLL_t<p:prev,n:next> & self=tl
+	or  exists x: tl::RefDLL_t<x:prev,n:next> * self::DLL_plus_rev<p,x,tl>
+.
+
+
+checkentail x::DLL_plus<nil,y,nil>
+	 |- x::DLL_plus_rev<nil,y,nil>.

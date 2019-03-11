@@ -1,0 +1,13 @@
+
+data Refnode {
+	Refnode next;
+	int val;
+}.
+
+pred sls<y_2,l_3,u_4> ==  self::Refnode<y_2:next,l_3:val> & l_3=u_4
+	or  exists t_5,a_6: self::Refnode<t_5:next,l_3:val> * t_5::sls<y_2,a_6,u_4> & a_6<=u_4 & l_3<=a_6
+.
+
+
+checkentail x::Refnode<h:next,v:val> * h::sls<y,l,u> & v<=l
+	 |- (exists t,r: t::Refnode<y:next,u:val> * x::sls<t,v,r> & r<=u ) .

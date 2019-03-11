@@ -1,0 +1,23 @@
+
+data RefTLL_t {
+	RefTLL_t left;
+	RefTLL_t right;
+	RefTLL_t next;
+	RefTLL_t parent;
+}.
+
+pred TLL_plus<pra,ll,lr> ==  self::RefTLL_t<null:left,null:right,lr:next,pra:parent> & self=ll
+	or  exists l,r,z: self::RefTLL_t<l:left,r:right,null:next,pra:parent> * l::TLL_plus<self,ll,z> * r::TLL_plus<self,z,lr>
+.
+
+pred TLL_aux<p,z,back,top,mright> ==  exists up,r,lr: self::RefTLL_t<back:left,r:right,null:next,up:parent> * up::TLL_aux<p,lr,self,top,mright> * r::TLL_plus<self,z,lr>
+	or  exists r: self::RefTLL_t<back:left,r:right,null:next,p:parent> * r::TLL_plus<self,z,mright> & self=top
+.
+
+pred TLL_plus_rev<p,mleft,mright> ==  self::RefTLL_t<null:left,null:right,mright:next,p:parent> & self=mleft
+	or  exists x,up,lr: x::RefTLL_t<null:left,null:right,lr:next,up:parent> * up::TLL_aux<p,lr,x,self,mright> & mleft=x
+.
+
+
+checkentail x::TLL_plus<y,u,v>
+	 |- x::TLL_plus_rev<y,u,v>.

@@ -1,0 +1,1299 @@
+Category,Benchmark,Expected,Result,Remark
+bsl_sat,dispose-iter-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+bsl_sat,test-dispose-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+bsl_sat,test-dispose-iter-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-iter-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-iter-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,dispose-iter-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-1-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-2-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-3-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-4-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-8-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-iter-1-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-iter-2-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-iter-3-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-iter-4-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,rev-iter-8-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-iter-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-iter-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-iter-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-dispose-iter-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-1-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-2-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-3-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-4-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-8-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-iter-1-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-iter-2-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-iter-3-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-iter-4-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,test-rev-iter-8-0.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tree-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tree-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tree-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tree-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tree-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tseg-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tseg-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tseg-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tseg-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsl_sat,tseg-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-sat-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-sat-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-sat-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-sat-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-sat-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-unsat-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-unsat-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-unsat-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,chain-unsat-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,lseg-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,lseg-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,lseg-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,lseg-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,lseg-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-sat-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-sat-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-sat-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-sat-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-sat-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-unsat-1.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-unsat-2.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-unsat-3.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-unsat-4.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_bsllia_sat,unfold-unsat-8.cvc4.smt2,unsat,sat,Failed,"Parse error: Stream.Error(""OBRACE or [meta_constr] expected after CHECKENTAIL (in [checkentail_cmd])"")"
+qf_shid_entl,01.tst.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,02.tst.smt2,unsat,SAT,Failed,"Parse error: Stream.Error(""CPAREN expected after [heap_constr] (in [heap_rw])"")"
+qf_shid_entl,03.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,04.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,05.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,06.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,07.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,08.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?a Type: WArg
+qf_shid_entl,09.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,10.tst.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,11.tst.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,12.tst.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,13.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,14.tst.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,15.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,16.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,17.tst.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,18.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,19.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,20.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,21.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,22.tst.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-10.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-11.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-12.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-4.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-5.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-6.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-8.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_dll_slk-9.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-10.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-11.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-12.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-13.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-14.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-15.smt2,sat,SAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-16.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-17.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-18.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-4.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-5.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-6.smt2,sat,SAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-8.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_cll_slk-9.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-4.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-5.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-6.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_ls_slk-8.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-4.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-5.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-6.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,append_sll_slk-8.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-entails-dll-rev.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,dll-entails-dll0+.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,dll-mid-entails-dll-rev.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,dll-rev-entails-dll-mid.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,dll-rev-entails-dll.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,dll-spaghetti.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+qf_shid_entl,dll-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc04.smt2,sat,SAT,Passed,""
+qf_shid_entl,dll-vc05.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll-vc06.smt2,sat,Timeout,Failed,""
+qf_shid_entl,dll-vc07.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc08.smt2,sat,Timeout,Failed,""
+qf_shid_entl,dll-vc09.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc10.smt2,sat,UNSAT,Failed,Valid.
+qf_shid_entl,dll-vc11.smt2,unsat,SAT,Failed,Fail.(must) cause: x_emp!=null & x_emp!=y_emp & y_emp!=null |-  y_emp=null. LOCS:[0;12;13] (must-bug)
+qf_shid_entl,dll-vc12.smt2,sat,Timeout,Failed,""
+qf_shid_entl,dll-vc13.smt2,sat,SAT,Passed,""
+qf_shid_entl,dll-vc14.smt2,sat,SAT,Passed,""
+qf_shid_entl,dll-vc15.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll-vc16.smt2,sat,Timeout,Failed,""
+qf_shid_entl,dll-vc17.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll2-entails-dll2-rev.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll2-rev-entails-dll2.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll2-spaghetti.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+qf_shid_entl,dll_append_dllnull_entails_dllnull.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_append_tail_entails_dll.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_append_tail_entails_dllnull.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[base case unfold failed,UnionR[UnionR[UnionR[UnionR[UnionR[OrL["
+qf_shid_entl,dll_append_tail_entails_dllnull_nil.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll_append_tail_entails_dllrev.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_concat.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_concat_dllrev.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_entails_dllrev.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dll_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dll_entails_lspre.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shid_entl,dll_entails_lsrev.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: x!=null |-  x=t. LOCS:[7;17] (may-bug)
+qf_shid_entl,dll_nil_tl_entails_dllnull.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,dllrev_append_dll_dll_entails_dll.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,dllrev_append_dll_dll_entails_dllrev.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dllrev_append_dllrev_dll_entails_dll.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,dllrev_append_dllrev_dll_entails_dllrev.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,dllrev_append_head_entails_dll.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[base case unfold failed,base case unfold failed],base case unfold failed]"
+qf_shid_entl,dllrev_append_head_entails_dllrev.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dllrev_concat.sb.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+qf_shid_entl,dllrev_concat_dll_entails_dll.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,dllrev_concat_dll_entails_dllrev.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,dllrev_entails_dll.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-3.smt2,sat,SAT,Passed,""
+qf_shid_entl,elseg4_slk-4.smt2,sat,SAT,Passed,""
+qf_shid_entl,elseg4_slk-5.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,elseg4_slk-6.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-8.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,elseg4_slk-9.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,eolseg_01.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,eolseg_02.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,eolseg_05.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,eolseg_06.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,eolseg_07.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,eolseg_09.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[ ((u!=null | u=v)) & ((v!=null | v=y)) & x!=null |-  x=y. LOCS:[1;0;23;24] (may-bug),OrL["
+qf_shid_entl,eolseg_12.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,eolseg_15.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls2_entail_ls_01.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls2_entail_ls_04.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_entail_ls2_02.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_entail_ls2_04.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_entail_ls2_05.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_entail_ls2_06.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_entail_ls_nonrec_01.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[ x1!=null & ((x!=null | x1=x)) |-  x=x2. LOCS:[16;1;0;17] (may-bug), x!=null & y_112!=x & y_112!=null & ((u_113!=null | y_112=u_113)) |-  y_112=x2. LOCS:[16;1;0;7;17] (may-bug)]"
+qf_shid_entl,ls_entail_ls_nonrec_02.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[UnionR[ x2!=null & x1!=x2 & x1!=null & ((x!=null | x1=x)) |-  x=x3. LOCS:[16;1;0;17] (may-bug),OrL["
+qf_shid_entl,ls_entail_ls_nonrec_03.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[ x2!=null & ((x1!=null | x2=x1)) & ((x!=null | x1=x)) |-  x=x3. LOCS:[16;1;0;17] (may-bug),OrL["
+qf_shid_entl,ls_entail_ls_nonrec_04.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[ x2!=null & ((x1!=null | x2=x1)) & ((x3!=null | x4=x3)) & ((x!=null | x1=x)) |-  x=x4. LOCS:[16;1;0;17] (may-bug),OrL["
+qf_shid_entl,ls_entail_ls_nonrec_05.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[ x3!=null & ((x2!=null | x3=x2)) & ((x1!=null | x2=x1)) & ((x!=null | x1=x)) |-  x=x4. LOCS:[16;1;0;17] (may-bug),OrL["
+qf_shid_entl,ls_entail_ls_nonrec_06.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[ ((x1!=null | x2=x1)) & x2!=null & x!=x2 & ((x3!=null | x4=x3)) & x!=null |-  x=x4. LOCS:[1;0;16;17] (may-bug), x!=null & x2!=x & ((x1!=null | x2=x1)) & ((x3!=null | x4=x3)) & x2!=null |-  x2=x4. LOCS:[1;0;16;17] (may-bug)], x1!=null & x!=null & x1!=x & y_112!=x1 & y_112!=x & y_112!=null &"
+qf_shid_entl,ls_entail_ls_nonrec_07.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: ((x3!=null | x4=x3)) & ((x2!=null | x3=x2)) & ((x1!=null | x2=x1)) &
+qf_shid_entl,ls_entail_ls_nonrec_08.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:UnionR[ ((x2!=null | x3=x2)) & ((x3!=null | x4=x3)) & x1!=null &
+qf_shid_entl,ls_entail_ls_nonrec_09.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:UnionR[ x2!=null & ((x3!=null | x4=x3)) & ((x1!=null | x2=x1)) &
+qf_shid_entl,ls_entail_ls_nonrec_10.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:UnionR[ x3!=null & ((x2!=null | x3=x2)) & ((x1!=null | x2=x1)) &
+qf_shid_entl,ls_entail_ls_nonrec_11.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: ((x4!=null | x5=x4)) & ((x3!=null | x4=x3)) & ((x2!=null | x3=x2)) &
+qf_shid_entl,ls_entail_ls_nonrec_12.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: ((x5!=null | x6=x5)) & ((x4!=null | x5=x4)) & ((x3!=null | x4=x3)) &
+qf_shid_entl,ls_entail_ls_nonrec_13.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: ((x6!=null | x7=x6)) & ((x5!=null | x6=x5)) & ((x4!=null | x5=x4)) &
+qf_shid_entl,ls_entail_ls_nonrec_14.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_entail_ls_nonrec_15.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_entail_ls_nonrec_16.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_even_append_tl_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_even_append_tl_entails_ls_odd.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_even_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_even_join_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_even_join_entails_ls_even.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_even_join_ls_entails_ls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_even_odd_join_entails_ls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_even_odd_join_entails_ls_odd.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_join_entails_ls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_lsrev_concat_entail_ls_1.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,Nothing_to_do?cond action is empty]"
+qf_shid_entl,ls_lsrev_concat_entail_ls_2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,Nothing_to_do?cond action is empty]"
+qf_shid_entl,ls_lsrev_concat_entail_ls_3.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,Nothing_to_do?cond action is empty]"
+qf_shid_entl,ls_lsrev_concat_entail_ls_4.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,Nothing_to_do?cond action is empty]"
+qf_shid_entl,ls_lsrev_concat_entail_lsrev_1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_lsrev_concat_entail_lsrev_2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_lsrev_concat_entail_lsrev_3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_lsrev_concat_entail_lsrev_4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,ls_nonrec_entail_ls_01.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_02.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_04.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_05.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_06.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_07.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_08.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_nonrec_entail_ls_09.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_10.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_11.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_12.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_13.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_14.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_nonrec_entail_ls_15.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_nonrec_entail_ls_16.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_odd_append_tl_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_odd_append_tl_entails_ls_even.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_odd_entails_ls.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,ls_odd_join_entails_ls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,ls_odd_join_entails_ls_even.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,ls_odd_join_ls_entails_ls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsegex4_slk-1.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsegex4_slk-2.smt2,sat,SAT,Passed,""
+qf_shid_entl,lsegex4_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsegex4_slk-4.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsegex4_slk-5.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsegex4_slk-6.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_01.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_02.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsevenodd_04.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_09.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_11.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_14.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsevenodd_15.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsevenodd_16.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_ls2_01.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsevenodd_ls2_02.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_ls2_05.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_ls2_06.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsevenodd_ls2_09.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_ls2_13.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,lsevenodd_ls2_14.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,lsevenodd_ls2_15.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsevenodd_ls2_16.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,lsleftright_01.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsleftright_02.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsleftright_04.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: u_183!=null |-  u_183=y. LOCS:[11;25] (may-bug)
+qf_shid_entl,lsleftright_05.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsleftright_06.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: x!=null |-  x=y. LOCS:[7;25] (may-bug)
+qf_shid_entl,lsleftright_07.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: ((u_185!=null | x1=u_185)) & ((x1!=null | y=x1)) & x!=null |-  x=y. LOCS:[1;0;7;25] (may-bug)
+qf_shid_entl,lsleftright_08.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsleftright_09.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsleftright_10.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: u_183!=null |-  u_183=y. LOCS:[11;25] (may-bug)
+qf_shid_entl,lsleftright_11.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsleftright_12.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsleftright_13.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsleftright_14.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lsleftright_15.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+qf_shid_entl,lsleftright_16.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+qf_shid_entl,lsleftright_17.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,lsleftright_18.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: x!=null |-  x=y. LOCS:[7;25] (may-bug)
+qf_shid_entl,lsleftright_19.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[ x!=null |-  x=y. LOCS:[24;25] (may-bug), (x1!=null | x2=x1) |-  x2=y. LOCS:[1;0;25] (may-bug)]"
+qf_shid_entl,lsleftright_20.sb.smt2,unsat,SAT,Failed,Fail.(may) cause: x!=null |-  x=y. LOCS:[24;25] (may-bug)
+qf_shid_entl,lss-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lss-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,lss-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc03.smt2,unsat,SAT,Failed,Fail.(must) cause:UnionR[UnionR[ x2_1!=x2_2 & x2!=x2_1 & x2!=x2_2 & x1_3!=x2 & x1_3!=x2_1 & x1_3!=x2_2 &
+qf_shid_entl,nll-vc04.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,nll-vc05.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc06.smt2,sat,UNSAT,Failed,Valid.
+qf_shid_entl,nll-vc07.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,nll-vc08.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,nll-vc09.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,nll-vc10.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,nll-vc11.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc12.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,nll-vc13.smt2,sat,SAT,Passed,""
+qf_shid_entl,nll-vc14.smt2,sat,SAT,Passed,""
+qf_shid_entl,nll-vc15.smt2,sat,Timeout,Failed,""
+qf_shid_entl,nll-vc16.smt2,sat,Timeout,Failed,""
+qf_shid_entl,nll-vc17.smt2,sat,Timeout,Failed,""
+qf_shid_entl,nll-vc18.smt2,sat,Timeout,Failed,""
+qf_shid_entl,nll-vc19.smt2,sat,Timeout,Failed,""
+qf_shid_entl,node-dll-rev-dll-entails-dll.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+qf_shid_entl,node-node-dll-entails-dll.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,node-tll-tll-entails-tll.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,odd-lseg3_slk-1.smt2,sat,SAT,Passed,""
+qf_shid_entl,odd-lseg3_slk-2.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,odd-lseg3_slk-3.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,odd-lseg3_slk-4.smt2,sat,SAT,Passed,""
+qf_shid_entl,odd-lseg3_slk-5.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shid_entl,odd-lseg3_slk-6.smt2,sat,UNSAT,Failed,Valid.
+qf_shid_entl,odd-lseg3_slk-7.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,skl2-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,skl2-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,skl2-vc03.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl2-vc04.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl2-vc05.smt2,sat,Timeout,Failed,""
+qf_shid_entl,skl2-vc06.smt2,sat,Timeout,Failed,""
+qf_shid_entl,skl2-vc07.smt2,sat,Timeout,Failed,""
+qf_shid_entl,skl3-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,skl3-vc02.smt2,sat,Timeout,Failed,""
+qf_shid_entl,skl3-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,skl3-vc04.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc05.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc06.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc07.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc08.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc09.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc10.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,skl3-vc11.smt2,sat,Timeout,Failed,""
+qf_shid_entl,skl3-vc12.smt2,sat,Timeout,Failed,""
+qf_shid_entl,sll-vc01.smt2,sat,SAT,Passed,""
+qf_shid_entl,sll-vc02.smt2,sat,SAT,Passed,""
+qf_shid_entl,tll-pp-entails-tll-pp-rev.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[Nothing_to_do?Search empty list of actions,base case unfold failed]"
+qf_shid_entl,tll-pp-rev-entails-tll-pp.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shid_entl,tll-ravioli.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+qf_shid_entl,tll_slk-1.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-10.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-11.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-12.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-13.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-2.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-3.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-4.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-5.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-6.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-7.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-8.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tll_slk-9.smt2,unsat,unsat,Passed,""
+qf_shid_entl,tree-pp-entails-tree-pp-rev.smt2,unsat,SAT,Failed,Fail.(may) cause:UnionR[OrL[
+qf_shid_entl,tree-pp-rev-entails-tree-pp.smt2,unsat,SAT,Failed,Fail.(may) cause:UnionR[OrL[
+qf_shid_entl,tseg_join_2.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,tseg_join_2_entail_tree.sb.smt2,unsat,UNSAT,Passed,""
+qf_shid_entl,tseg_join_tree.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_entl,tseg_join_tree_entail_tseg.sb.smt2,unsat,Timeout,Failed,""
+qf_shid_sat,abduced00.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced01.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced02.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced03.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced04.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced05.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced06.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced07.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced08.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced09.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced10.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced11.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced12.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced13.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced14.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced15.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced16.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced17.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced18.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,abduced19.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,atll-01.smt2,sat,sat,Passed,""
+qf_shid_sat,atll-02.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,atll-03.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,dll-01.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,dll-02.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shid_sat,dll-03.smt2,sat,sat,Passed,""
+qf_shid_sat,dll-04.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shid_sat,dll-05.smt2,sat,sat,Passed,""
+qf_shid_sat,dll-06.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shid_sat,dltree-01.smt2,sat,sat,Passed,""
+qf_shid_sat,inconsistent-ls-of-ls.defs.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lasso-01.smt2,sat,sat,Passed,""
+qf_shid_sat,lasso-02.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lasso-03.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lasso-04.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lasso-05.smt2,sat,sat,Passed,""
+qf_shid_sat,lss-03-01.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lss-03-02.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,lss-03-03.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,lss-04-01.smt2,sat,sat,Passed,""
+qf_shid_sat,lss-04-02.smt2,sat,sat,Passed,""
+qf_shid_sat,lss-04-03.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,lss-05-01.smt2,sat,sat,Passed,""
+qf_shid_sat,lss-05-02.smt2,sat,sat,Passed,""
+qf_shid_sat,lss-05-03.smt2,sat,sat,Passed,""
+qf_shid_sat,ncll-01.smt2,sat,sat,Passed,""
+qf_shid_sat,nll-01.smt2,sat,sat,Passed,""
+qf_shid_sat,sll2h-01.smt2,sat,sat,Passed,"Parse error: Stream.Error(""[ann_cid] expected after COMMA (in [opt_ann_cid_list])"")"
+qf_shid_sat,succ-circuit01.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-circuit02.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-circuit03.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-circuit04.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-circuit05.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit06.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit07.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit08.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit09.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit10.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit11.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit12.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit13.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit14.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit15.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit16.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit17.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit18.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit19.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-circuit20.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec01.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-rec02.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-rec03.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-rec04.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-rec05.defs.smt2,sat,sat,Passed,""
+qf_shid_sat,succ-rec06.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec07.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec08.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec09.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec10.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec11.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec12.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec13.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec14.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec15.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec16.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec17.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec18.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec19.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,succ-rec20.defs.smt2,sat,Timeout,Failed,""
+qf_shid_sat,tll-01.smt2,sat,sat,Passed,""
+qf_shid_sat,tll-02.smt2,unsat,sat,Failed,Fail.
+qf_shid_sat,tll-03.smt2,sat,sat,Passed,""
+qf_shid_sat,tll-04.smt2,sat,sat,Passed,""
+qf_shid_sat,tll-05.smt2,sat,sat,Passed,""
+qf_shid_sat,tll-06.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,tll-07.smt2,sat,sat,Passed,""
+qf_shid_sat,tll-08.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,tll-09.smt2,unsat,sat,Failed,Valid.
+qf_shid_sat,tll-10.smt2,sat,sat,Passed,""
+qf_shid_sat,tree-01.smt2,sat,sat,Passed,""
+qf_shidlia_entl,dll-entl-01.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-02.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-03.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-04.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-05.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-06.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-07.smt2,unsat,UNSAT,Passed,""
+qf_shidlia_entl,dll-entl-08.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-09.smt2,unsat,UNSAT,Passed,""
+qf_shidlia_entl,dll-entl-10.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-11.smt2,sat,SAT,Passed,""
+qf_shidlia_entl,dll-entl-12.smt2,unsat,UNSAT,Passed,""
+qf_shidlia_entl,dll-entl-13.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-14.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll-entl-15.smt2,sat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_dllnull_len_entails_dllnull_len.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_dllnull_len_entails_dllnull_len_num-1.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_dllnull_len_entails_dllnull_len_num-2.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_dllnull_len_entails_dllnull_len_num-3.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_tail_entails_dllnull.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_tail_entails_dllnull_num-1.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_append_tail_entails_dllnull_num-2.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_entails_ls_len.sb.smt2,unsat,UNSAT,Passed,""
+qf_shidlia_entl,dll_len_entails_ls_len_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,dll_len_entails_ls_len_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,dll_len_entails_lspre_len.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,dll_len_entails_lspre_len_num-1.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,dll_len_entails_lspre_len_num-2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,dll_len_entails_lsrev_len.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_entl,dll_len_entails_lsrev_len_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,dll_len_entails_lsrev_len_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,dll_len_nil_tl_entails_dllnull_len.sb.smt2,unsat,UNSAT,Passed,""
+qf_shidlia_entl,dll_len_nil_tl_entails_dllnull_len_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,dll_len_nil_tl_entails_dllnull_len_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,ls-entl-01.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shidlia_entl,ls-entl-02.smt2,sat,SAT,Passed,""
+qf_shidlia_entl,ls-entl-03.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,ls-entl-04.smt2,sat,SAT,Passed,""
+qf_shidlia_entl,ls-entl-05.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,ls-entl-06.smt2,sat,SAT,Passed,""
+qf_shidlia_entl,ls-entl-07.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,ls_append_node.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,ls_combine_ls.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_2_known_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_2_no_cond.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_2_unk_lower_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_2_unk_upper_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_3.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_3_2_cond.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_3_no_cond.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_3_unk_lower_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_3_unk_upper_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_1_cond_unk_both.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_1_cond_unk_lower_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_1_cond_unk_upper_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_2_cond_unk_lower_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_2_cond_unk_upper_bnd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_3_cond.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,sls_join_4_no_cond.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+qf_shidlia_entl,tseg_size_join_tree_size_entail_tree.sb.smt2,unsat,Timeout,Failed,""
+qf_shidlia_sat,btree-01.smt2,sat,sat,Passed,""
+qf_shidlia_sat,btree-02.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,btree-03.smt2,sat,sat,Passed,""
+qf_shidlia_sat,dll-sat-01.smt2,sat,sat,Passed,""
+qf_shidlia_sat,dll-sat-02.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,dll-sat-03.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,dll-sat-04.smt2,sat,sat,Passed,""
+qf_shidlia_sat,dll-sat-05.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,dll-sat-06.smt2,sat,sat,Passed,""
+qf_shidlia_sat,dll-sat-07.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,dll-sat-08.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,dll-sat-09.smt2,sat,Timeout,Failed,""
+qf_shidlia_sat,dll-sat-10.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,dll-sat-11.smt2,sat,Timeout,Failed,""
+qf_shidlia_sat,dll-sat-12.smt2,sat,sat,Passed,""
+qf_shidlia_sat,dll-sat-13.smt2,sat,sat,Passed,""
+qf_shidlia_sat,els-01.smt2,sat,sat,Passed,""
+qf_shidlia_sat,els-02.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,els-03.smt2,unsat,sat,Failed,Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+qf_shidlia_sat,els-04.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,ls-08.smt2,sat,sat,Passed,""
+qf_shidlia_sat,ls-09.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,ls-sat-01.smt2,sat,sat,Passed,""
+qf_shidlia_sat,ls-sat-02.smt2,unsat,sat,Failed,Valid.
+qf_shidlia_sat,ls-sat-03.smt2,sat,sat,Passed,""
+qf_shidlia_sat,ls-sat-04.smt2,unsat,sat,Failed,Valid.
+qf_shidlia_sat,ls-sat-05.smt2,unsat,sat,Failed,Valid.
+qf_shidlia_sat,ls-sat-06.smt2,sat,sat,Passed,""
+qf_shidlia_sat,ls-sat-07.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,lss-01.smt2,sat,sat,Passed,""
+qf_shidlia_sat,lss-02.smt2,unsat,sat,Failed,Valid.
+qf_shidlia_sat,lss-03.smt2,unsat,sat,Failed,Fail.
+qf_shidlia_sat,lss-04.smt2,unsat,sat,Failed,Fail.
+qf_shlid_entl,dll-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc04.smt2,sat,SAT,Passed,""
+qf_shlid_entl,dll-vc05.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,dll-vc06.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,dll-vc07.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc08.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,dll-vc09.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc10.smt2,sat,UNSAT,Failed,Valid.
+qf_shlid_entl,dll-vc11.smt2,unsat,SAT,Failed,Fail.(must) cause: x_emp!=null & x_emp!=y_emp & y_emp!=null |-  y_emp=null. LOCS:[0;12;13] (must-bug)
+qf_shlid_entl,dll-vc12.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,dll-vc13.smt2,sat,SAT,Passed,""
+qf_shlid_entl,dll-vc14.smt2,sat,SAT,Passed,""
+qf_shlid_entl,dll-vc15.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,dll-vc16.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,dll-vc17.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,lss-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,lss-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,lss-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc03.smt2,unsat,SAT,Failed,Fail.(must) cause:UnionR[UnionR[ x2_1!=x2_2 & x2!=x2_1 & x2!=x2_2 & x1_3!=x2 & x1_3!=x2_1 & x1_3!=x2_2 &
+qf_shlid_entl,nll-vc04.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,nll-vc05.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc06.smt2,sat,UNSAT,Failed,Valid.
+qf_shlid_entl,nll-vc07.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,nll-vc08.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,nll-vc09.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,nll-vc10.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,nll-vc11.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc12.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,nll-vc13.smt2,sat,SAT,Passed,""
+qf_shlid_entl,nll-vc14.smt2,sat,SAT,Passed,""
+qf_shlid_entl,nll-vc15.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,nll-vc16.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,nll-vc17.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,nll-vc18.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,nll-vc19.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl2-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,skl2-vc02.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,skl2-vc03.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl2-vc04.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl2-vc05.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl2-vc06.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl2-vc07.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc01.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,skl3-vc02.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc03.smt2,unsat,UNSAT,Passed,""
+qf_shlid_entl,skl3-vc04.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc05.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc06.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc07.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc08.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc09.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc10.smt2,unsat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc11.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,skl3-vc12.smt2,sat,Timeout,Failed,""
+qf_shlid_entl,sll-vc01.smt2,sat,SAT,Passed,""
+qf_shlid_entl,sll-vc02.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e01.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e02.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-10-e03.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-10-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e06.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-10-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e02.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e03.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e04.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-11-e06.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-11-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e09.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-11-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-12-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-12-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-12-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-12-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-12-e05.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-12-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-12-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-12-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-12-e09.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-12-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-13-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-13-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-13-e03.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-13-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-13-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-13-e06.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-13-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-13-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-13-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-13-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-14-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e02.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e03.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e04.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-14-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e09.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-14-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-15-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e02.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-15-e04.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e05.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-15-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-15-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-15-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-16-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-16-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-16-e05.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e06.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-16-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e09.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-16-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-17-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-17-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-17-e04.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e05.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-17-e09.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-17-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-18-e01.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-18-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e06.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-18-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-19-e01.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e05.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-19-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-19-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-19-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-19-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-20-e01.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e02.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e03.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e04.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e05.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e06.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-20-e07.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-20-e08.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,bolognesa-20-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,bolognesa-20-e10.tptp.smt2,unsat,SAT,Failed,Fail.
+qf_shls_entl,clones-01-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-01-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-01-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-01-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-01-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-02-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-02-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-02-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-02-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-02-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-03-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-03-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-03-e08.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-03-e09.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-03-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-04-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-04-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-04-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-04-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-04-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-05-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-05-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-05-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-05-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-05-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-06-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-06-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-06-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-06-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-06-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-07-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-07-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-07-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-07-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-07-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-08-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-08-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-08-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-08-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-08-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-09-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-09-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-09-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-09-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-09-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-10-e01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,clones-10-e07.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,clones-10-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-10-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_entl,clones-10-e10.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,ls-vc01.smt2,sat,SAT,Passed,""
+qf_shls_entl,ls-vc02.smt2,sat,Timeout,Failed,""
+qf_shls_entl,ls-vc03.smt2,sat,Timeout,Failed,""
+qf_shls_entl,ls-vc04.smt2,sat,SAT,Passed,""
+qf_shls_entl,ls-vc05.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,ls-vc06.smt2,sat,SAT,Passed,""
+qf_shls_entl,ls-vc07.smt2,sat,SAT,Passed,""
+qf_shls_entl,ls-vc08.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,ls-vc09.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shls_entl,smallfoot-vc01.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc02.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc03.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc04.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc05.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc06.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc07.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc08.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc09.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc10.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc11.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc12.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc13.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc14.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc15.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc16.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc17.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc18.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc19.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc20.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc21.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc22.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc23.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc24.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc25.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc26.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc27.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc28.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc29.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc30.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc31.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc32.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc33.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc34.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc35.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc36.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc37.tptp.smt2,sat,SAT,Passed,""
+qf_shls_entl,smallfoot-vc38.tptp.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+qf_shls_entl,smallfoot-vc39.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc40.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc41.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc42.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc43.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc44.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc45.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc46.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc47.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc48.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc49.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc50.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc51.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc52.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc53.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc54.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc55.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc56.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc57.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc58.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc59.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc60.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc61.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc62.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc63.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc64.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc65.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc66.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc67.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc68.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc69.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc70.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc71.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc72.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc73.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc74.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc75.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_entl,smallfoot-vc76.tptp.smt2,sat,UNSAT,Failed,Valid.
+qf_shls_entl,smallfoot-vc77.tptp.smt2,unsat,UNSAT,Passed,""
+qf_shls_sat,spaguetti-10-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e02.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e03.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e04.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e05.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e06.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-10-e07.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-10-e08.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-10-e10.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-11-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e02.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e03.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-11-e04.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e05.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-11-e06.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-11-e07.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-11-e10.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-12-e01.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-12-e02.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-12-e03.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-12-e04.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-12-e05.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-12-e06.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-12-e07.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-12-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-12-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-12-e10.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-13-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-13-e02.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-13-e03.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-13-e04.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-13-e05.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-13-e06.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-13-e07.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-13-e08.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-13-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-13-e10.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e01.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-14-e02.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-14-e03.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e04.tptp.smt2,sat,sat,Passed,""
+qf_shls_sat,spaguetti-14-e05.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e06.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e07.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e08.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-14-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-14-e10.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e01.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e02.tptp.smt2,unsat,sat,Failed,Valid.
+qf_shls_sat,spaguetti-15-e03.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e04.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e05.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e06.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e07.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e08.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-15-e10.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e02.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e03.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e04.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e05.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e06.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e07.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e08.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-16-e10.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e01.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e02.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e03.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e04.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e05.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e06.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e07.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e08.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-17-e10.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e01.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e02.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e03.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e04.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e05.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e06.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e07.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e08.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-18-e10.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e02.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e03.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e04.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e05.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e06.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e07.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e09.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-19-e10.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e01.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e02.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e03.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e04.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e05.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e06.tptp.smt2,unsat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e07.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e08.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e09.tptp.smt2,sat,Timeout,Failed,""
+qf_shls_sat,spaguetti-20-e10.tptp.smt2,unsat,Timeout,Failed,""
+shid_entl,dll-entails-node-dll-rev.smt2,sat,SAT,Passed,""
+shid_entl,dll-entails-node-node-dll.smt2,sat,SAT,Passed,""
+shid_entl,dll-spaghetti-existential.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+shid_entl,dll2-spaghetti-existential.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+shid_entl,dll_concat_dllrev_get_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shid_entl,dll_entails_ls_node.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shid_entl,dll_entails_node_lsrev.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,dllnull_entails_dll.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,dllnull_entails_dllrev.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,eolseg_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,eolseg_04.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,eolseg_08.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,eolseg_10.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,eolseg_11.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,eolseg_13.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,eolseg_14.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,eolseg_16.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,ls2_entail_ls_02.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[ (x2!=null | x3=x2) |-  x2=x3. LOCS:[1;0;17] (may-bug),OrL["
+shid_entl,ls2_entail_ls_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls2_entail_ls_05.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[ x!=null & x2!=x & ((x3!=null | x4=x3)) & x2!=null |-  x2=x4. LOCS:[10;1;0;16;17] (may-bug), (x3!=null | x4=x3) |-  x3=x4. LOCS:[1;0;17] (may-bug)],OrL["
+shid_entl,ls2_entail_ls_06.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[UnionR[UnionR[ x!=null & x2!=x & ((x3!=null | x4=x3)) & x2!=null |-  x2=x4. LOCS:[10;1;0;16;17] (may-bug), (x3!=null | x4=x3) |-  x3=x4. LOCS:[1;0;17] (may-bug)],do_unmatched_rhs : v_121::Refnode<x4_119>@M(may)],UnionR[ (x3!=null | x4=x3) |-  x3=x4. LOCS:[1;0;17] (may-bug),do_unmatched_rhs : v_121::Refnode<x4_119>@M(may)]],OrL["
+shid_entl,ls_entail_ls2_01.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[ (x2!=null | x3=x2) |-  x2=x3. LOCS:[1;0;17] (may-bug),OrL["
+shid_entl,ls_entail_ls2_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_even_split_ls_even.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,ls_lsrev_concat_entail_split_1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_concat_entail_split_2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_concat_entail_split_3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_concat_entail_split_4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_node_concat_entail_split_1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_node_concat_entail_split_2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_node_concat_entail_split_3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_lsrev_node_concat_entail_split_4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,ls_odd_split_ls_even_node.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,ls_odd_split_ls_even_odd.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,ls_split_ls.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,lsevenodd_05.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,lsevenodd_06.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_07.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_08.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,lsevenodd_10.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[UnionR[ z!=x & x!=null & z!=null & y!=x & z!=y & y!=null & ((t!=null | w=t)) |-  y=w. LOCS:[23;1;0;24] (may-bug),OrL["
+shid_entl,lsevenodd_12.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,lsevenodd_13.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,lsevenodd_17.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,lsevenodd_18.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[UnionR[ ((u_297!=null | y=u_297)) & ((y!=null | z=y)) |-  u_297=z. LOCS:[11;1;0;24] (may-bug),do_unmatched_rhs : x1_100::Refnode<z_99>@M(may)],base case unfold failed]"
+shid_entl,lsevenodd_19.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,lsevenodd_20.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_ls2_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_ls2_04.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_ls2_07.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,lsevenodd_ls2_08.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_ls2_10.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,lsevenodd_ls2_11.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsevenodd_ls2_12.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shid_entl,lsleftright_03.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shid_entl,node-dll-rev-dll-entails-dll.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+shid_entl,node-node-dll-entails-dll.smt2,unsat,UNSAT,Passed,""
+shid_entl,node-tll-tll-entails-tll.smt2,unsat,UNSAT,Passed,""
+shid_entl,tll-entails-node-tll-tll.smt2,sat,SAT,Passed,""
+shid_entl,tll-ravioli-existential.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+shid_entl,tree_2_entail_tseg_2_unk-1.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_2_entail_tseg_2_unk-2.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_2_entail_tseg_2_unk-3.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_entail_tseg_unk-1.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_entail_tseg_unk-2.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_split_tseg-1.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tree_split_tseg-2.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_2_entail_tree_unk.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_2_entail_unk_tseg-1.sb.smt2,unsat,Timeout,Failed,""
+shid_entl,tseg_join_2_entail_unk_tseg-2.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_tree_entail_unk_tree-1.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_tree_entail_unk_tree-2.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_tree_entail_unk_tseg-1.sb.smt2,unsat,UNSAT,Passed,""
+shid_entl,tseg_join_tree_entail_unk_tseg-2.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,dll_len_append_tail_entails_dllnull_num-3.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,dll_len_concat_dllrev_len_get_last-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_concat_dllrev_len_get_last-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_concat_dllrev_len_get_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_concat_dllrev_len_get_last_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_concat_dllrev_len_get_last_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_entails_ls_len_node.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_entails_ls_len_node_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_entails_ls_len_node_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_entails_node_lsrev_len.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,dll_len_entails_node_lsrev_len_num-1.sb.smt2,unsat,sat,Failed,"Fail.(may) cause:UnionR[univ guard not satisfied,base case unfold failed]"
+shidlia_entl,dll_len_entails_node_lsrev_len_num-2.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,dll_len_get_1_hd_4_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_1_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_2_hd_3_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_2_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_3_hd_2_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_3_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_4_hd_1_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_4_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_get_5_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_len_split.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dll_len_split_dll_dllrev.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dll_len_split_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dll_len_split_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dll_ubnd_len_get_1_hd_4_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_1_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_2_hd_3_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_2_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_3_hd_2_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_3_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_4_hd_1_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_4_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dll_ubnd_len_get_5_lasts.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dllnull_len_entails_dll_len.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,dllnull_len_entails_dll_len_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_entails_dll_len_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_entails_dllrev_len.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,dllnull_len_entails_dllrev_len_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_entails_dllrev_len_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_split_dll_dllrev.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_dllrev_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_dllrev_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_dllrev_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_dllrev_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_dllrev_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_len_last-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_split_dll_len_last-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_split_dll_node_dllrev.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_node_dllrev_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_node_dllrev_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_node_dllrev_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_node_dllrev_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dll_node_dllrev_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_node_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_dll_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrev_len_last-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_split_dllrev_len_last-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,dllnull_len_split_dllrevs.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrevs_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrevs_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrevs_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrevs_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dllrevs_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls_num-3.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls_num-4.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_dlls_num-5.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?cond action is empty
+shidlia_entl,dllnull_len_split_hd_dll_len-1.sb.smt2,unsat,sat,Failed,"Fail.(may) cause:UnionR[univ guard not satisfied,base case unfold failed]"
+shidlia_entl,dllnull_len_split_hd_dll_len-2.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,dllnull_len_split_hd_dllrev_len-1.sb.smt2,unsat,sat,Failed,"Fail.(may) cause:UnionR[univ guard not satisfied,base case unfold failed]"
+shidlia_entl,dllnull_len_split_hd_dllrev_len-2.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,dllrev_len_concat_dll_len_get_first.sb.smt2,unsat,UNKNOWN,Failed,EXCast. Stack overflow
+shidlia_entl,dllrev_len_concat_dll_len_get_first_last.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dllrev_len_concat_dll_len_get_first_num-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:OrL[
+shidlia_entl,dllrev_len_concat_dll_len_get_first_num-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?matching data with deriv self-rec LHS node  Type: Root
+shidlia_entl,dllrev_len_concat_dll_len_get_last-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,dllrev_len_concat_dll_len_get_last-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:Nothing_to_do?Search empty list of actions
+shidlia_entl,ls_dlen_get_last.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_get_last_unk_rem.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_get_two_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_get_two_lasts_unk_rem.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_split_mid_node.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_split_mid_node_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_split_mid_node_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_split_mid_node_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_split_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_triple_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_triple_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_triple_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_dlen_triple_split_unk_mid.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_dlen_triple_split_unk_tl.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_1_hd_4_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_2_hd_3_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_2_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_3_hd_2_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_3_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_4_hd_1_lasts.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_get_4_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_5_hd.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_get_5_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_6_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_get_last.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_get_last_unk_rem.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_get_two_lasts_unk_rem.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_split_mid_node.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_split_mid_node_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_split_mid_node_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_split_mid_node_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_split_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_triple_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_triple_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_triple_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_len_triple_split_unk_mid.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_len_triple_split_unk_tl.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_get_last.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_get_last_unk_rem.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_get_two_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_get_two_lasts_unk_rem.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_split_mid_node.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_split_mid_node_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_split_mid_node_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_split_mid_node_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_split_unk_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_triple_split.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_triple_split_unk_hd.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_triple_split_unk_hd_tl.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_plen_triple_split_unk_mid.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_plen_triple_split_unk_tl.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_dlen_get_last.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_ubnd_len_get_1_hd_4_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_2_hd_3_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_2_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_3_hd_2_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_3_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_4_hd_1_lasts.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_ubnd_len_get_4_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_5_hd.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,ls_ubnd_len_get_5_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_6_lasts.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,ls_ubnd_len_get_last.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,sls_get_last_node.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,sls_get_last_node_ls.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,sls_get_last_node_sls-1.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,sls_get_last_node_sls-2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:do_unmatched_rhs : t_152::Refnode<y_148,u_149>@M(may)"
+shidlia_entl,sls_join_2_get_last-1.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,sls_join_2_get_last-2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:do_unmatched_rhs : t_157::Refnode<y_155,u_160>@M(may)"
+shidlia_entl,sls_join_3_get_last-1.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:UnionR[base case unfold failed,base case unfold failed]"
+shidlia_entl,sls_join_3_get_last-2.sb.smt2,unsat,SAT,Failed,"Fail.(may) cause:do_unmatched_rhs : s_158::Refnode<t_156,l5_161>@M(may)"
+shidlia_entl,tree_size_entail_tseg-1.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tree_size_entail_tseg-2.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tree_size_split-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,tree_size_split-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,tree_tseg_mix_entail_tree_tseg_mix-1.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tree_tseg_mix_entail_tree_tseg_mix-2.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tree_tseg_mix_entail_tree_tseg_mix-3.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tseg_size_join_tree_size_entail_tree_unk-1.sb.smt2,unsat,Timeout,Failed,""
+shidlia_entl,tseg_size_join_tree_size_entail_tree_unk-2.sb.smt2,unsat,UNSAT,Passed,""
+shidlia_entl,tseg_size_split-1.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed
+shidlia_entl,tseg_size_split-2.sb.smt2,unsat,SAT,Failed,Fail.(may) cause:base case unfold failed

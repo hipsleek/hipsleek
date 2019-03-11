@@ -1,0 +1,22 @@
+
+data RefSL3_t {
+	RefSL3_t n1;
+	RefSL3_t n2;
+	RefSL3_t n3;
+}.
+
+pred skl1<ex> ==   emp & self=ex
+	or  exists tl: self::RefSL3_t<tl:n1,null:n2,null:n3> * tl::skl1<ex> & self!=ex
+.
+
+pred skl2<ex> ==   emp & self=ex
+	or  exists tl,Z1: self::RefSL3_t<Z1:n1,tl:n2,null:n3> * Z1::skl1<tl> * tl::skl2<ex> & self!=ex
+.
+
+pred skl3<ex> ==   emp & self=ex
+	or  exists tl,Z1,Z2: self::RefSL3_t<Z1:n1,Z2:n2,tl:n3> * Z1::skl1<Z2> * Z2::skl2<tl> * tl::skl3<ex> & self!=ex
+.
+
+
+checkentail x1::skl3<x2> * x2::RefSL3_t<x2_0_1:n1,x2_1:n2,x3:n3> * x2_0_1::skl1<x2_1> * x2_1::skl2<x2_2> * x2_2::RefSL3_t<x2_2_1:n1,x3:n2,nil:n3> * x2_2_1::skl1<x2_2_2> * x2_2_2::RefSL3_t<x3:n1,nil:n2,nil:n3> * x3::RefSL3_t<x3_0_1:n1,x3_1:n2,x4:n3> * x3_0_1::skl1<x3_1> * x3_1::skl2<x4> * x4::skl3<nil>
+	 |- x1::skl3<nil>.

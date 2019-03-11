@@ -1,0 +1,21 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred Q<y> ==  exists d,c: self::RefGTyp<d:f0,c:f1> * d::P<> & null=y & null!=self
+	or  exists d,c: y::RefGTyp<d:f0,c:f1> * self::Q<c> & null!=y
+.
+
+pred P<> ==   emp & null=self
+	or  self::Q<self> & null!=self
+.
+
+pred R<> ==  self::P<> & null!=self
+.
+
+
+checkentail x0::R<>
+	 |- false
+.

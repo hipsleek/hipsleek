@@ -1,0 +1,13 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred DLL<y,z,w> ==   emp & self=y & z=w
+	or  exists zp: self::RefGTyp<zp:f0,w:f1> * zp::DLL<y,z,self> & null!=self
+.
+
+
+checkentail x::DLL<y,z,w> * a::DLL<x,w,b>
+	 |- a::DLL<y,z,b>.

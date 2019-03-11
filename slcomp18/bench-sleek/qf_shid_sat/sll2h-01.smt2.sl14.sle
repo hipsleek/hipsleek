@@ -1,0 +1,17 @@
+
+data RefSll2h_t {
+	RefSll2h_t next;
+	RefSll2h_t head_slk;
+}.
+
+pred sllpf<out,head> ==   emp & self=out
+	or  exists u: self::RefSll2h_t<u:next,head:head_slk> * u::sllpf<out,head>
+.
+
+pred sllh<out> ==  self::sllpf<out,self>
+.
+
+
+checkentail x0::sllh<nil>
+	 |- false
+.

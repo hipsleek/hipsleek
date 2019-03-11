@@ -1,0 +1,15 @@
+
+data RefGTyp {
+	RefGTyp f0;
+}.
+
+pred ListO<y> ==  self::RefGTyp<y:f0> & null!=self
+	or  exists xp: self::RefGTyp<xp:f0> * xp::ListE<y> & null!=self
+.
+
+pred ListE<y> ==  exists xp: self::RefGTyp<xp:f0> * xp::ListO<y> & null!=self
+.
+
+
+checkentail x::ListE<y> * y::ListE<z>
+	 |- x::ListE<z>.

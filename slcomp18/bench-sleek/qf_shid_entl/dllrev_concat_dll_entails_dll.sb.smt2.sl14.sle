@@ -1,0 +1,17 @@
+
+data Refnode {
+	Refnode next;
+	Refnode prev;
+}.
+
+pred dll<p_2,tl_3,n_4> ==  self::Refnode<n_4:next,p_2:prev> & self=tl_3
+	or  exists x_5: self::Refnode<x_5:next,p_2:prev> * x_5::dll<self,tl_3,n_4>
+.
+
+pred dll_rev<p_7,tl_8,n_9> ==  self::Refnode<n_9:next,p_7:prev> & self=tl_8
+	or  exists x_10: tl_8::Refnode<n_9:next,x_10:prev> * self::dll_rev<p_7,x_10,tl_8>
+.
+
+
+checkentail t::dll<z,r,s> * x::dll_rev<y,z,t>
+	 |- x::dll<y,r,s>.

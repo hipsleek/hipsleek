@@ -1,0 +1,17 @@
+
+data RefSll_t {
+	RefSll_t next;
+}.
+
+pred sll<y> ==   emp & self=y
+	or  exists u: self::RefSll_t<u:next> * u::sll<y> & self!=y
+.
+
+pred lasso<> ==  exists y: self::RefSll_t<y:next> * y::lasso<>
+	or  exists y: self::RefSll_t<y:next> * y::sll<self>
+.
+
+
+checkentail x0::sll<nil> * x0::lasso<> * x1::sll<nil> * x1::lasso<> * x2::sll<nil> * x2::lasso<> * x3::sll<nil> * x3::lasso<> * x4::sll<nil> * x4::lasso<>
+	 |- false
+.

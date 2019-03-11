@@ -1,0 +1,14 @@
+
+data RefSll_t {
+	RefSll_t next;
+	int data_slk;
+}.
+
+pred sls<dt1,out,dt2> ==   emp & self=out & dt1=dt2
+	or  exists u,dt3: self::RefSll_t<u:next,dt1:data_slk> * u::sls<dt3,out,dt2> & dt1<dt3+0
+.
+
+
+checkentail x_emp::sls<d0,z_emp,d1> * z_emp::RefSll_t<y_emp:next,d1:data_slk> * y_emp::sls<d1,w_emp,d2> & d0!=d1 & d1!=d2
+	 |- false
+.

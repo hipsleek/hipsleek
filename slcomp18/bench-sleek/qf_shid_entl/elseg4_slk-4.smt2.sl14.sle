@@ -1,0 +1,15 @@
+
+data Refnode {
+	Refnode nxt;
+}.
+
+pred elseg<p> ==   emp & self=p
+	or  exists a,b: self::Refnode<a:nxt> * a::Refnode<b:nxt> * b::elseg<p>
+.
+
+pred right<p> ==  exists u: self::elseg<u> * u::elseg<p>
+.
+
+
+checkentail x::Refnode<a:nxt> * a::Refnode<b:nxt> * b::Refnode<p:nxt>
+	 |- x::elseg<p>.

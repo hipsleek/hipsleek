@@ -1,0 +1,14 @@
+
+data RefTree_t {
+	RefTree_t left;
+	RefTree_t right;
+}.
+
+pred btree<len1> ==   emp & self=null & len1=0
+	or  exists l,r,n1,n2: self::RefTree_t<l:left,r:right> * l::btree<n1> * r::btree<n2> & len1=n1+n2+1
+.
+
+
+checkentail x::btree<n1> & n1<0
+	 |- false
+.

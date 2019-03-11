@@ -1,0 +1,15 @@
+
+data RefTLL_t {
+	RefTLL_t left;
+	RefTLL_t right;
+	RefTLL_t next;
+	RefTLL_t parent;
+}.
+
+pred TLL_plus<pra,ll,lr> ==  self::RefTLL_t<null:left,null:right,lr:next,pra:parent> & self=ll
+	or  exists l,r,z: self::RefTLL_t<l:left,r:right,null:next,pra:parent> * l::TLL_plus<self,ll,z> * r::TLL_plus<self,z,lr>
+.
+
+
+checkentail a::TLL_plus<nil,c,nil>
+	 |- (exists l,r,z: a::RefTLL_t<l:left,r:right,nil:next,nil:parent> * l::TLL_plus<a,c,z> * r::TLL_plus<a,z,nil> ) .

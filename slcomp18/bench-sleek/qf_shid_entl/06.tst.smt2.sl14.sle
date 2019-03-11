@@ -1,0 +1,12 @@
+
+data RefGTyp {
+	RefGTyp f0;
+}.
+
+pred PeList<y> ==   emp & self=y
+	or  exists xp: self::RefGTyp<xp:f0> * xp::PeList<y> & null!=self
+.
+
+
+checkentail x::PeList<y> * y::PeList<z>
+	 |- x::PeList<z>.

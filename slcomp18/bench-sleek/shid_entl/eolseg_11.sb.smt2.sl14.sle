@@ -1,0 +1,24 @@
+
+data Refnode {
+	Refnode next;
+}.
+
+pred elseg<y_2> ==   emp & self=y_2
+	or  exists u_3,v_4: u_3::Refnode<v_4:next> * self::Refnode<u_3:next> * v_4::elseg<y_2>
+.
+
+pred olseg<y_6> ==  self::Refnode<y_6:next>
+	or  exists u_7,v_8: u_7::Refnode<v_8:next> * self::Refnode<u_7:next> * v_8::olseg<y_6>
+.
+
+pred ls<y_10> ==   emp & self=y_10
+	or  exists u_11: self::Refnode<u_11:next> * u_11::ls<y_10>
+.
+
+pred ls_all<y_13> ==  self::elseg<y_13>
+	or  self::olseg<y_13>
+.
+
+
+checkentail u::Refnode<v:next> * v::ls<y> * x::ls_all<u>
+	 |- (exists x1: x1::Refnode<y:next> * x::ls<x1> ) .

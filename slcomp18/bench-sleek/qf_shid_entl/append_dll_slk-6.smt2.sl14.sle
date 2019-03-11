@@ -1,0 +1,25 @@
+
+data Refnode2 {
+	Refnode2 prev;
+	Refnode2 next;
+}.
+
+pred dll<p> ==   emp & null=self
+	or  exists p_20,self_21,q_19: self::Refnode2<p_20:prev,q_19:next> * q_19::dll<self_21> & p=p_20 & self=self_21
+.
+
+pred dll_e1<q> ==  exists p1,s,q1: q1::dll<s> * self::Refnode2<p1:prev,q1:next> & self=s & q=p1
+.
+
+pred dll_e2<q> ==  exists s,p1,p2,n,q1: self::Refnode2<p1:prev,n:next> * q1::dll<s> & n=q1 & p1=p2 & self=s & q=p2
+.
+
+pred node2_e1<p,q> ==  exists p1,n1: self::Refnode2<p1:prev,n1:next> & p=p1 & q=n1
+.
+
+pred dll_e3<p> ==  exists q: self::dll<q> & p=q
+.
+
+
+checkentail q::dll<self> * y::dll<p> * xprm::Refnode2<p1:prev,yprm:next> & nil!=yprm & next0=q & nil=q & xprm=x & yprm=y & nil!=x & xprm=self & q1=p1
+	 |- q::dll<self> * y::dll<p> * xprm::Refnode2<p1:prev,yprm:next> & nil!=yprm & next0=q & nil=q & xprm=x & yprm=y & nil!=x & xprm=self & q1=p1.

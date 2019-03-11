@@ -1,0 +1,13 @@
+
+data RefDll_t {
+	RefDll_t next;
+	RefDll_t prev;
+}.
+
+pred ldll<P,len1,F,L,len2> ==   emp & self=F & P=L & len1=len2
+	or  exists u,len3: self::RefDll_t<u:next,P:prev> * u::ldll<self,len3,F,L,len2> & len1=len3+1
+.
+
+
+checkentail E1::ldll<E1_p,x1,E2,E2_p,x2_1> * E2::ldll<E2_p,x2_2,E3,E3_p,x3> & x2_1=x2_2
+	 |- E1::ldll<E1_p,x1,E3,E3_p,x3>.

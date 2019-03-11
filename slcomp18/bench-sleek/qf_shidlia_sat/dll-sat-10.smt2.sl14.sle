@@ -1,0 +1,15 @@
+
+data RefDll_t {
+	RefDll_t next;
+	RefDll_t prev;
+	int data_slk;
+}.
+
+pred lsdll<P,dt1,len1,F,L,dt2,len2> ==   emp & self=F & P=L & dt1=dt2 & len1=len2
+	or  exists u,dt3,len3: self::RefDll_t<u:next,P:prev,dt1:data_slk> * u::lsdll<self,dt3,len3,F,L,dt2,len2> & dt1>dt3+1 & len1=len3+1
+.
+
+
+checkentail E1::lsdll<F1,x1,u1,E3,F3,x3,u3> * E2::lsdll<F2,x2,u2,E4,F4,x4,u4> * E3::lsdll<F3,x3,u3,E4,F4,x4,u4> * E4::lsdll<F4,y4,u4,E3,F3,y3,u3> * E3::lsdll<F3,x3,u3,E5,F5,x5,u5> * E5::lsdll<F5,y5,u5,E3,F3,y3,u3> * E4::lsdll<F4,x5,u4,E6,F6,x6,u4> & x4=x5 & E3!=E5 & E4=E3
+	 |- false
+.

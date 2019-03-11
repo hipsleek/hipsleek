@@ -1,0 +1,15 @@
+
+data RefDll_t {
+	RefDll_t next;
+	RefDll_t prev;
+	int data_slk;
+}.
+
+pred sdll<P,dt1,F,L,dt2> ==   emp & self=F & P=L & dt1=dt2
+	or  exists u,dt3: self::RefDll_t<u:next,P:prev,dt1:data_slk> * u::sdll<self,dt3,F,L,dt2> & dt1>dt3+1
+.
+
+
+checkentail y2::RefDll_t<x1:next,y0:prev,d2:data_slk> * x1::sdll<x2,d1,y1,y2,d2> & d1>d2+3
+	 |- false
+.

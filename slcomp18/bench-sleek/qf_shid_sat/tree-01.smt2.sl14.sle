@@ -1,0 +1,15 @@
+
+data RefBtree_t {
+	RefBtree_t lson;
+	RefBtree_t rson;
+}.
+
+pred tree<> ==   emp & self=null
+	or  self::RefBtree_t<null:lson,null:rson>
+	or  exists ls,rs: self::RefBtree_t<ls:lson,rs:rson> * ls::tree<> * rs::tree<>
+.
+
+
+checkentail x0::tree<>
+	 |- false
+.

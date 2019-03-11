@@ -1,0 +1,24 @@
+
+data RefTPP_t {
+	RefTPP_t left;
+	RefTPP_t right;
+	RefTPP_t parent;
+}.
+
+pred TPP_plus<back> ==  self::RefTPP_t<null:left,null:right,back:parent>
+	or  exists y,z: self::RefTPP_t<y:left,z:right,back:parent> * y::TPP_plus<self> * z::TPP_plus<self>
+.
+
+pred TPP_aux<down,top,b> ==  exists up,right: self::RefTPP_t<down:left,right:right,up:parent> * right::TPP_plus<self> * up::TPP_aux<self,top,b>
+	or  exists up,left: self::RefTPP_t<left:left,down:right,up:parent> * left::TPP_plus<self> * up::TPP_aux<self,top,b>
+	or  exists right: self::RefTPP_t<down:left,right:right,b:parent> * right::TPP_plus<self> & self=top
+	or  exists left: self::RefTPP_t<left:left,down:right,b:parent> * left::TPP_plus<self> & self=top
+.
+
+pred TPP_plus_rev<b> ==  self::RefTPP_t<null:left,null:right,b:parent>
+	or  exists x,up: x::RefTPP_t<null:left,null:right,up:parent> * up::TPP_aux<x,self,b>
+.
+
+
+checkentail x::TPP_plus_rev<y>
+	 |- x::TPP_plus<y>.

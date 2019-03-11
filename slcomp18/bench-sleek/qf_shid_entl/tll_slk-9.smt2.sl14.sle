@@ -1,0 +1,40 @@
+
+data Refnode {
+	Refnode parent;
+	Refnode left;
+	Refnode right;
+	Refnode next;
+}.
+
+pred tree<> ==  exists p_35,D1_36,r_37,n_38: self::Refnode<p_35:parent,D1_36:left,r_37:right,n_38:next> & null=r_37
+	or  exists p_39,l_40,r_41,D2_42: self::Refnode<p_39:parent,l_40:left,r_41:right,D2_42:next> * l_40::tree<> * r_41::tree<> & null!=r_41
+.
+
+pred tll<p,ll,lr> ==  exists lr_28,p_21,D1_22,l_23: self::Refnode<p_21:parent,D1_22:left,l_23:right,lr_28:next> & null=l_23 & self=ll & lr=lr_28
+	or  exists p_29,self_30,ll_31,self_32,z_33,lr_34,l_24,r_25,D2_26,z_27: self::Refnode<p_29:parent,l_24:left,r_25:right,D2_26:next> * l_24::tll<self_30,ll_31,z_27> * r_25::tll<self_32,z_33,lr_34> & null!=r_25 & p=p_29 & self=self_30 & ll=ll_31 & self=self_32 & z_33=z_27 & lr=lr_34
+.
+
+pred right_nil<> ==  exists p,l,r,n: self::Refnode<p:parent,l:left,r:right,n:next> & null=r
+.
+
+pred eright_nil<> ==  exists p0,l0,r0,n0,p1,l1,r1,n1: self::Refnode<p0:parent,l0:left,r0:right,n0:next> & p0=p1 & l0=l1 & r0=r1 & n0=n1 & null=r1
+.
+
+pred right_nnil<> ==  exists p,l,r,n: self::Refnode<p:parent,l:left,r:right,n:next> * l::tree<> * r::tree<> & null!=r
+.
+
+pred eright_nnil<> ==  exists p0,l0,r0,n0,p1,l1,r1,n1: self::Refnode<p0:parent,l0:left,r0:right,n0:next> * l1::tree<> * r1::tree<> & p0=p1 & l0=l1 & r0=r1 & n0=n1 & null=r1
+.
+
+pred enode<p,l,r,n> ==  exists p0,l0,r0,n0: self::Refnode<p0:parent,l0:left,r0:right,n0:next> & p=p0 & l=l0 & r=r0 & n=n0
+.
+
+pred etll<p,t,r> ==  exists p1,t1: self::tll<p1,r,t1> & p=p1 & t=t1
+.
+
+pred ltll<p,l,r,D,v,t> ==  exists l1: self::Refnode<p:parent,l:left,r:right,D:next> * l::tll<self,v,l1> * r::tll<self,l1,t>
+.
+
+
+checkentail l::tree<> * r::tree<> * xprm::Refnode<pprm:parent,l:left,r:right,D:next> & vprm=r & nil!=r & parent0=p & pprm=p1 & xprm=x & tprm=t
+	 |- l::tree<> * vprm::tree<> * xprm::Refnode<pprm:parent,l:left,r:right,D:next> & vprm=r & nil!=r & parent0=p & pprm=p1 & xprm=x & tprm=t.

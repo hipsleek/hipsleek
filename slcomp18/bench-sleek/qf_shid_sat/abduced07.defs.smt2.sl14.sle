@@ -1,0 +1,135 @@
+
+data RefGTyp {
+	RefGTyp f0;
+	RefGTyp f1;
+}.
+
+pred I003<b> ==  self::I008<b> & null=b
+	or  self::I007<b> & null!=b
+.
+
+pred I001<> ==  exists a00: self::RefGTyp<a00:f0,null:f1> * self::I003<a00> & null!=self
+.
+
+pred ls<> ==   emp & null=self
+	or  self::I001<> & null!=self
+.
+
+pred I34811<b,c,d,e,f,g,h> ==   emp & null=self
+	or  self::I34842<b,c,d,e,f,g,h> & null!=self
+.
+
+pred I34810<b,c,d,e,f,g,h> ==  exists a00: h::RefGTyp<a00:f0,null:f1> * self::I185929<b,c,d,e,f,g,h,a00> & null!=h
+.
+
+pred I34748<b,c,d,e,f,g,h> ==  self::I34811<b,c,d,e,f,g,h> & null=h
+	or  self::I34810<b,c,d,e,f,g,h> & null!=h
+.
+
+pred I186018<b,c,d,e,f,g,h,i,j> ==  self::I34748<b,c,d,e,f,g,j>
+.
+
+pred I185962<b,c,d,e,f,g,h,i> ==  exists a00: i::RefGTyp<a00:f0,null:f1> * self::I186018<b,c,d,e,f,g,h,i,a00> & null!=i
+.
+
+pred I34842<b,c,d,e,f,g,h> ==  exists a00: self::RefGTyp<a00:f0,null:f1> * self::I58461<b,c,d,e,f,g,h,a00> & null!=self
+.
+
+pred I185963<b,c,d,e,f,g,h,i> ==  self::I34811<b,c,d,e,f,g,i>
+.
+
+pred I185929<b,c,d,e,f,g,h,i> ==  self::I185963<b,c,d,e,f,g,h,i> & null=i
+	or  self::I185962<b,c,d,e,f,g,h,i> & null!=i
+.
+
+pred I58461<b,c,d,e,f,g,h,i> ==  i::I34811<b,c,d,e,f,g,h>
+.
+
+pred I34629<b,c,d,e,f,g> ==  exists a00: g::RefGTyp<a00:f0,null:f1> * self::I34748<b,c,d,e,f,g,a00> & null!=g
+.
+
+pred I34694<b,c,d,e,f,g> ==  exists a00: self::RefGTyp<a00:f0,null:f1> * self::I34705<b,c,d,e,f,g,a00> & null!=self
+.
+
+pred I34630<b,c,d,e,f,g> ==   emp & self=g
+	or  self::I34694<b,c,d,e,f,g> & self!=g
+.
+
+pred I34705<b,c,d,e,f,g,h> ==  h::I34630<b,c,d,e,f,g>
+.
+
+pred I34605<b,c,d,e,f,g> ==  self::I34630<b,c,d,e,f,g> & null=g
+	or  self::I34629<b,c,d,e,f,g> & null!=g
+.
+
+pred I989<b,c,d,e,f> ==  exists a00: f::RefGTyp<a00:f0,null:f1> * self::I34605<b,c,d,e,f,a00> & null!=f
+.
+
+pred I5875<b,c,d,e,f> ==  exists a00: b::RefGTyp<a00:f0,null:f1> * self::I11058<b,c,d,e,f,a00> & null!=b
+.
+
+pred I990<b,c,d,e,f> ==   emp & null=b
+	or  self::I5875<b,c,d,e,f> & null!=b
+.
+
+pred I11058<b,c,d,e,f,g> ==  self::I990<g,c,d,e,f>
+.
+
+pred I969<b,c,d,e,f> ==  self::I990<b,c,d,e,f> & null=f
+	or  self::I989<b,c,d,e,f> & null!=f
+.
+
+pred I122<b,c,d,e> ==  exists a00: e::RefGTyp<a00:f0,null:f1> * self::I969<b,c,d,e,a00> & null!=e
+.
+
+pred I134<b,c,d,e> ==  exists a00: self::RefGTyp<a00:f0,null:f1> * self::I349<b,c,d,e,a00> & null!=self
+.
+
+pred I123<b,c,d,e> ==   emp & self=e
+	or  self::I134<b,c,d,e> & self!=e
+.
+
+pred I349<b,c,d,e,f> ==  f::I123<b,c,d,e>
+.
+
+pred I106<b,c,d,e> ==  self::I123<b,c,d,e> & null=e
+	or  self::I122<b,c,d,e> & null!=e
+.
+
+pred I046<b,c,d> ==  exists a00: d::RefGTyp<a00:f0,null:f1> * self::I106<b,c,d,a00> & null!=d
+.
+
+pred I056<b,c,d> ==  exists a00: self::RefGTyp<a00:f0,null:f1> * self::I060<b,c,d,a00> & null!=self
+.
+
+pred I047<b,c,d> ==   emp & self=d
+	or  self::I056<b,c,d> & self!=d
+.
+
+pred I060<b,c,d,e> ==  e::I047<b,c,d>
+.
+
+pred I034<b,c,d> ==  self::I047<b,c,d> & null=d
+	or  self::I046<b,c,d> & null!=d
+.
+
+pred I021<b,c> ==  exists a00: c::RefGTyp<a00:f0,null:f1> * self::I034<b,c,a00> & null!=c
+.
+
+pred I008<b> ==  emp
+.
+
+pred I022<b,c> ==  b::I008<c>
+.
+
+pred I013<b,c> ==  self::I022<b,c> & null=c
+	or  self::I021<b,c> & null!=c
+.
+
+pred I007<b> ==  exists a00: b::RefGTyp<a00:f0,null:f1> * self::I013<b,a00> & null!=b
+.
+
+
+checkentail x0::ls<>
+	 |- false
+.

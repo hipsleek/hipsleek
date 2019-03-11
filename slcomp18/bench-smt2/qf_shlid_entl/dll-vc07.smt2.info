@@ -1,0 +1,10 @@
+(set-info :source |
+C. Enea, O. Lengal, M. Sighireanu, and T. Vojnar
+[Compositional Entailment Checking for a Fragment of Separation Logic]
+http://www.liafa.univ-paris-diderot.fr/spen
+|)
+(set-info :smt-lib-version 2.0)
+(set-info :category "crafted")
+(set-info :status unsat)
+(set-info :version "2014-06-09")
+

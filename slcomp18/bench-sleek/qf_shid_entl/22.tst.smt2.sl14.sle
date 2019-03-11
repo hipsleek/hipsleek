@@ -1,0 +1,12 @@
+
+data RefGTyp {
+	RefGTyp f0;
+}.
+
+pred ls<y> ==   emp & self=y
+	or  exists xp: self::RefGTyp<xp:f0> * xp::ls<y> & null!=self & self!=y
+.
+
+
+checkentail x::ls<y> * y::RefGTyp<z:f0> * z::ls<nil>
+	 |- x::ls<z> * z::ls<nil>.

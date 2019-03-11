@@ -1,0 +1,18 @@
+
+data Refnode {
+	Refnode left;
+	Refnode right;
+}.
+
+pred tree<> ==   emp & null=self
+	or  exists l_4,r_5: self::Refnode<l_4:left,r_5:right> * l_4::tree<> * r_5::tree<>
+.
+
+pred tseg<y_7> ==   emp & self=y_7
+	or  exists l_8,r_9: self::Refnode<l_8:left,r_9:right> * l_8::tree<> * r_9::tseg<y_7>
+	or  exists l_10,r_11: self::Refnode<l_10:left,r_11:right> * r_11::tree<> * l_10::tseg<y_7>
+.
+
+
+checkentail x::tseg<y> * y::tseg<z>
+	 |- x::tseg<z>.

@@ -1,0 +1,13 @@
+
+data RefDll_t {
+	RefDll_t next;
+	RefDll_t prev;
+}.
+
+pred dll<bk,pr,nx> ==   emp & self=nx & bk=pr
+	or  exists u: self::RefDll_t<u:next,pr:prev> * u::dll<bk,self,nx> & self!=nx & bk!=pr
+.
+
+
+checkentail x::RefDll_t<x1:next,nil:prev> * x1::RefDll_t<x2:next,x:prev> * x2::RefDll_t<x3:next,x1:prev> * x3::RefDll_t<x4:next,x2:prev> * x4::RefDll_t<y:next,x3:prev> * y::RefDll_t<z:next,x4:prev> & x!=z & z!=x1 & z!=x2 & z!=x3 & z!=x4 & y!=z
+	 |- x::dll<y,nil,z>.

@@ -1,0 +1,10 @@
+(set-info :source |
+  James Brotherston, Carsten Fuhs, Nikos Gorogiannis, and Juan Navarro Perez.
+  A decision procedure for satisfiability in ssssseparation logic with inductive
+  predicates. CSL-LICS, 2014.
+  https://github.com/ngorogiannis/cyclist
+|)
+(set-info :smt-lib-version 2.0)
+(set-info :category "crafted")
+(set-info :status unsat)
+

@@ -1,0 +1,13 @@
+
+data RefSll_t {
+	RefSll_t next1;
+	RefSll_t next2;
+}.
+
+pred lsso<out> ==   emp & self=out
+	or  exists u: self::RefSll_t<u:next1,u:next2> * u::lsso<out>
+.
+
+
+checkentail x_emp::RefSll_t<y_emp:next1,y_emp:next2> * y_emp::RefSll_t<z_emp:next1,z_emp:next2>
+	 |- x_emp::lsso<z_emp>.

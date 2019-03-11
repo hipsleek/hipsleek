@@ -1,0 +1,12 @@
+
+data Refnode {
+	Refnode nxt;
+}.
+
+pred olseg<p> ==  self::Refnode<p:nxt>
+	or  exists a,b: self::Refnode<a:nxt> * a::Refnode<b:nxt> * b::olseg<p>
+.
+
+
+checkentail x::Refnode<p:nxt>
+	 |- x::olseg<p>.
