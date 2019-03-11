@@ -118,6 +118,8 @@ and view_decl =
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
     mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
 
+    view_poly_vars: ident list;
+
     mutable view_inst_vars: (inst * ident) list;
     mutable view_imm_map: (P.ann * int) list;
     view_modes : mode list;
@@ -694,6 +696,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           view_vars = (* List.map fst *) vs;
           view_inst_vars = List.map (fun v -> (IP_not_set,v)) vs;
           view_ho_vars = [];
+          view_poly_vars = [];
           view_derv = false;
           view_parent_name = None;
           view_labels = [],false;
@@ -721,7 +724,7 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           try_case_inference = false;
 			}
 
-let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
+let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) ?poly_params:(pp=[]) modes pos =
   (* let mvs = get_mater_vars l in *)
   (* let modes = get_modes anns in *)
   (* let pos = get_pos_camlp4 _loc 1 *)
@@ -741,6 +744,7 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) modes pos =
     view_imm_map = [];
     view_vars = (* List.map fst *) cids;
     view_inst_vars = ip;
+    view_poly_vars = pp;
     view_ho_vars = un_option opt1 [];
     view_derv = false;
     view_parent_name = None;

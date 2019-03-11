@@ -971,6 +971,15 @@ let peek_poly_data_struc_type =
          |[_;OSQUARE,_;IDENTIFIER _,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
          | _ -> raise Stream.Failure)
 
+let peek_poly_args =
+   SHGram.Entry.of_parser "peek_poly_data_struc_type"
+       (fun strm ->
+         match Stream.npeek 3 strm with
+         |[OSQUARE,_;INT,_]        -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+         |[OSQUARE,_;IDENTIFIER _,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
+         | _ -> raise Stream.Failure)
+
+
 (* let peek_poly_invocation =
  *    SHGram.Entry.of_parser "peek_poly_type"
  *        (fun strm ->
@@ -2096,6 +2105,7 @@ view_header_ext:
 	  view_materialized_vars = get_mater_vars l;
           view_classic = true;
           try_case_inference = false;
+          view_poly_vars = [];
 			}]];
 
 (** An Hoa : Modify the rules to capture the extensional identifiers **)
@@ -2138,7 +2148,7 @@ opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
 
-opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> t]];
+opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> let () = print_endline ("This is the procccc of opt_heap_data_arg_listttttttttttttttttttt") in t]];
 
 opt_heap_data_arg_list2:[[t=LIST1 heap_arg2_data SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1) == (fst n2)) t (get_pos_camlp4 _loc 1)]];
 
@@ -2457,51 +2467,64 @@ simple_heap_constr:
      let (dl,rsr) = a in
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm; (*`LT; hl= opt_general_h_args; `GT;*)
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
+     polyt = OPT parse_poly_args;
+     frac= opt_perm; (*`LT; hl= opt_general_h_args; `GT;*)
      hl = non_thread_args1;
-     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
+       -> (
        (*ignore permission if applicable*)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
+       let poly_args = un_option polyt [] in
        match hl with
        (* WN : HeapNode2 is for d<field=v*> *)
        (*  p<> can be either node or predicate *)
-       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;
+     | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
+     frac= opt_perm;
+
      (* `LT; hl= opt_data_h_args; `GT;*)
      hl = non_thread_args2;
-     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+     polyt = OPT parse_poly_args;
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
+     -> (
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
         let (c, hid, deref) = get_heap_id_info c hid in
         let ho_args = un_option opt1 [] in
+        let poly_args = un_option polyt [] in
         match hl with
-        | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+        | ([],[]) -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
         | ([], t) ->
             let t11, t12 = List.split t in
             let t21, t22 = List.split t12 in
             let t3 = List.combine t11 t21 in
-            F.mkHeapNode2 c hid ho_args deref dr split imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
+            F.mkHeapNode2 c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t3 t22 ofl (get_pos_camlp4 _loc 2)
         | (t, _)  ->
             let t1, t2 = List.split t in
-            F.mkHeapNode c hid ho_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
+            F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *); frac= opt_perm;
+     | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
+     polyt = OPT parse_poly_args;
+     frac= opt_perm;
      (* `LT; hal=opt_general_h_args; `GT; *)
      hal = non_thread_args1;
-     dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+     dr=opt_derv; split= opt_split; ofl = opt_formula_label
+     -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
+       let poly_args = un_option polyt [] in
        match hal with
-       | ([],[]) -> F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c hid ho_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[]) -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c hid ho_args ~poly:poly_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | t = ho_fct_header -> (
        let frac = (
@@ -2513,25 +2536,33 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ; frac= opt_perm;
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ;
+     polyt = OPT parse_poly_args;
+     frac= opt_perm;
          (* `LT; hl= opt_general_h_args; `GT;*)
          hl = non_thread_args1;
-         annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label -> (
+     annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
+      -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
+       let poly_args = un_option polyt [] in
        match hl with
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
+    | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*);
+     polyt = OPT parse_poly_args;
+     frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
          hal = non_thread_args1;
-         dr=opt_derv; split= opt_split; ofl = opt_formula_label -> (
+     dr=opt_derv; split= opt_split; ofl = opt_formula_label
+      -> (
        let ho_args = un_option opt1 [] in
+       let poly_args = un_option polyt [] in
        match hal with
-       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
-       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
-       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args  0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
+       | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
+       | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
      (* High-order variables, e.g. %P*)
        | `PERCENT; `IDENTIFIER id; args = OPT opt_cid_list_bracket ->
@@ -2550,7 +2581,7 @@ simple_heap_constr:
      else report_error (get_pos 1) ("should be a heap pred, not pure a relation here")
    | `HTRUE -> F.HTrue
    | `EMPTY -> F.HEmp
-   | `OPAREN ; `OSQUARE ; `CSQUARE ; `DIV ; `OSQUARE ; `CSQUARE ;  hp = simple_heap_constr; `CPAREN -> hp (* failwith "HERE" *)
+   (* | `OPAREN ; `OSQUARE ; `CSQUARE ; `DIV ; `OSQUARE ; `CSQUARE ;  hp = simple_heap_constr; `CPAREN -> hp (\* failwith "HERE" *\) *)
   ]];
 
 (* (* HO Resource variables' annotation *)  *)
@@ -2591,7 +2622,7 @@ perm_aux: [[
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
 
-opt_data_h_args: [[t = OPT data_h_args -> un_option t ([],[])]];
+opt_data_h_args: [[t = OPT data_h_args -> let () = print_endline ("This is the procccc of opt_data_h_args") in un_option t ([],[])]];
 
 (*general_h_args:
   [
@@ -2605,7 +2636,7 @@ general_h_args:
 
 data_h_args:
   [[ t= opt_heap_data_arg_list2 -> ([],t)
-  | t= opt_heap_data_arg_list -> (t,[])]];
+  | t= opt_heap_data_arg_list -> let () = print_endline ("This is the procccc of data_h_args") in (t,[])]];
 
 opt_delayed_constr:[[t = OPT delayed_constr -> un_option t (P.mkTrue no_pos) ]];
 
@@ -2670,7 +2701,8 @@ cexp :
     ];
 
 cexp_data_p:
-    [[t = cexp_w -> match t with
+  [[t = cexp_w -> let () = print_endline "This is the procccc of cexp_data_p" in
+     match t with
       | Pure_c f -> (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
       (* | _ -> report_error (get_pos_camlp4 _loc 1) "3 expected cexp, found pure_constr" *)
@@ -3523,6 +3555,7 @@ typ:
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
    | peek_poly_data_struc_type; t = poly_data_struc_type -> t
+   (* | peek_poly_args; t = parse_poly_args -> t *)
    | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
@@ -3558,7 +3591,10 @@ typ_list: [[ tl = LIST1 typ SEP `COMMA -> tl]];
 
 parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
 parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
-parse_poly_args:    [[`OSQUARE; ids = typ_list;`CSQUARE -> ids]];
+parse_poly_args:    [[ `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
+
+parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]];
+
 parse_poly_args_opt:[[ ids = OPT parse_poly_args        -> ids]];
 
 star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];

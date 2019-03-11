@@ -76,6 +76,7 @@ let transform_hp_rels_to_iviews iprog cprog (hp_rels:( CF.hp_rel_def) list):((id
                            I.view_inst_vars = [](* inst_vars *);
                            I.view_ho_vars = []; (* TODO:HO *)
                            (* I.view_imm_map = fst (List.fold_left (fun (r,n) _ -> (r@[(IP.ConstAnn Mutable, n)], n+1)) ([],0) vars); this serves as a bridge between the data field imm and the view param *)
+                           I.view_poly_vars = [];
                            I.view_imm_map = imm_map;
                            I.view_labels = List.map (fun _ -> LO.unlabelled) vars, false;
                            I.view_modes = List.map (fun _ -> ModeOut) vars ;
@@ -169,6 +170,7 @@ let hn_trans cprog vnames hn = match hn with
             IF.h_formula_heap_perm = None;
             IF.h_formula_heap_arguments = args;
             IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
+            IF.h_formula_heap_poly_arguments = [];
             IF.h_formula_heap_pseudo_data = false;
             IF.h_formula_heap_label = None;
             IF.h_formula_heap_session_info = None;

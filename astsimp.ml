@@ -11994,6 +11994,7 @@ let plugin_inferred_iviews views iprog cprog=
           IF.h_formula_heap_perm = None;
           IF.h_formula_heap_arguments = tl;
           IF.h_formula_heap_ho_arguments = []; (* TODO:HO *)
+          IF.h_formula_heap_poly_arguments = [];
           IF.h_formula_heap_pseudo_data = false;
           IF.h_formula_heap_label = None;
           IF.h_formula_heap_session_info = None;

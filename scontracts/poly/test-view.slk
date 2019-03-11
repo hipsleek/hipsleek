@@ -11,7 +11,7 @@ data nodep[T]{
 pred ll<a:int> == self=null or
           self::node<a,r> * r::ll<a>.
 
-pred llp<a>[`T] == self=null or
+pred llp<a>[T] == self=null or
           self::nodep<a,r>[`T] * r::llp<a>[`T].
 
 

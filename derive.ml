@@ -1115,6 +1115,7 @@ let expose_pure_extn_one_view iprog cprog rev_formula_fnc trans_view_fnc lower_m
       	  Iast.view_inst_vars = [](* inst_vars *);
           Iast.view_vars = vars;
           Iast.view_ho_vars = [];
+          Iast.view_poly_vars = [];
           Iast.view_derv = true;
           Iast.view_derv_from = None;
           Iast.view_derv_extns = [];
