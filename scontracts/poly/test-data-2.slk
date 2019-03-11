@@ -27,7 +27,7 @@ data node{
 // expect Valid.
 
 //should throw exception because of type mismatch
-checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>.
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t> &  a=3.
 print residue.
 expect Fail.
 
@@ -36,6 +36,8 @@ expect Fail.
 // print residue.
 // expect Fail.
 
+/*
 checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
 print residue.
 expect Valid.
+*/

@@ -350,18 +350,20 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | _, Named (n, _) when List.mem n map_related_names -> (tl, Some k1)
     | Named (n, _), _ when List.mem n map_related_names -> (tl, Some k2)
     | Named (n1, ((t1::_) as tl1)), Named (n2, ((t2::_) as tl2)) ->
-      (* unify the type parameters. if the unification of
-         parameters is successful return (Some tk) along with
-         the updated type list.
+      (* unify the type parameters.
+         if the unification of parameters is successful
+         return (Some tk) along with the updated type list.
       *)
       let () = y_binfo_pp "unify Named typ and Named typ pppppppppppppppppppp" in
       let rec unify_param tl1 tl2 tlist tk =
         match tl1, tl2 with
-        | [], [] -> (tlist, Some tk)
-        | t1::_, [] | [], t1::_        -> (tl, None)
-        | t1::tl1, t2::tl2 ->
-          let n_tl, _ = unify_type t1 t2 tlist in
-          (n_tl, Some tk)
+        | [], []                -> (tlist, Some tk)
+        | t1::_, [] | [], t1::_ -> (tl, None)
+        | t1::tl1, t2::tl2      ->
+          let n_tl, res_opt = unify_type t1 t2 tlist in
+          match res_opt with
+          | Some _ -> unify_param tl1 tl2 n_tl tk
+          | None   -> (n_tl, None)
       in
       if sub_type (mkNamedTyp n1) (mkNamedTyp n2) then
         unify_param tl1 tl2 tl k2

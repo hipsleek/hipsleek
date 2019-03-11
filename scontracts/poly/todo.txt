@@ -19,7 +19,7 @@ p:nodep[node]=t:nodep[node]&{FLOW,(4,5)=__norm#E} [] |-  EBase
 
 ////// above t_149:nodep[int]=t:nodep[node] should have thrown type-mismatch.
 
-////// and return failure due do:
+////// and return failure due to:
 Entail 5: Fail.(may) cause: x:nodep[int]!=null & qq:node!=x:nodep[int] & qq:node!=nul
 l |-  qq:node=3. LOCS:[0;30] (may-bug)
 
