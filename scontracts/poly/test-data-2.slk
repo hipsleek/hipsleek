@@ -5,7 +5,7 @@ data nodep[T]{
 }.
 
 data node{
-   int val;
+   bool val;
    node next;
 }.
 
@@ -36,6 +36,10 @@ data node{
 // print residue.
 // expect Fail.
 
-checkentail x::nodep<a,t>[`int] |- x::nodep<aaa,t>.
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
 print residue.
 expect Valid.
+
+// checkentail x::node<a>0,t> |- x::node<aaa,t>.
+// print residue.
+// expect Valid.

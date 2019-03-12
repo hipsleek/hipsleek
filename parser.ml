@@ -506,7 +506,8 @@ let peek_try =
        match Stream.npeek 2 strm with
          | [_;IN_T,_]  -> ()
          | [_;NOTIN,_] -> ()
-	 | [GT,_; CBRACE,_] -> raise Stream.Failure (*vp*)
+	       | [GT,_; CBRACE,_] -> raise Stream.Failure (*vp*)
+         | [GT,_; OSQUARE,_] -> raise Stream.Failure (*poly type args*)
          | [SEMICOLON,_; CBRACE,_] -> raise Stream.Failure
          | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure
@@ -653,20 +654,21 @@ let peek_subs =
 
  let peek_pure_out =
    SHGram.Entry.of_parser "peek_pure_out"
-       (fun strm ->
+     (fun strm ->
+        let () = print_endline "This is the procccc of peek_pure_out" in
            match Stream.npeek 3 strm with
-             | [FORALL,_;OPAREN,_;_] -> ()
-             | [EXISTS,_;OPAREN,_;_] -> ()
-             | [UNION,_;OPAREN,_;_] -> ()
+             | [FORALL,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure9" in ()
+             | [EXISTS,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure8" in ()
+             | [UNION,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure7" in ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
-             | [IDENTIFIER id,_;OPAREN,_;_] ->  if hp_names # mem id then raise Stream.Failure else ()
-             | [_;COLONCOLON,_;_] -> raise Stream.Failure
-             | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
-             | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
-             | [OSQUARE,_;_;COLONCOLON,_] -> raise Stream.Failure
-             | [OSQUARE,_;DOUBLEQUOTE,_;_]-> raise Stream.Failure
+             | [IDENTIFIER id,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure6" in if hp_names # mem id then raise Stream.Failure else ()
+             | [_;COLONCOLON,_;_] -> let () = print_endline "This is the procccc of pure5" in raise Stream.Failure
+             | [_;PRIME,_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure4" in raise Stream.Failure
+             | [OPAREN,_;_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure3" in raise Stream.Failure
+             | [OSQUARE,_;_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure2" in raise Stream.Failure
+             | [OSQUARE,_;DOUBLEQUOTE,_;_]-> let () = print_endline "This is the procccc of pure1" in raise Stream.Failure
              (* | [i,_;j,_;k,_]-> print_string("start here: i:" ^ (Token.to_string i)^" j:"^(Token.to_string j)^" k:"^(Token.to_string k)^" end here \n");() *)
-             | _ -> ())
+             | _ -> let () = print_endline "This is the procccc of peek_pure_out last branch" in ())
 
  let peek_typecast =
    SHGram.Entry.of_parser "peek_typecast"
@@ -973,12 +975,22 @@ let peek_poly_data_struc_type =
 
 let peek_poly_args =
    SHGram.Entry.of_parser "peek_poly_data_struc_type"
-       (fun strm ->
-         match Stream.npeek 3 strm with
-         |[OSQUARE,_;INT,_]        -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
-         |[OSQUARE,_;IDENTIFIER _,_] -> (* An Hoa*) (* let () = print_endline "Array found!" in *) ()
-         | _ -> raise Stream.Failure)
+     (fun strm ->
+        let () = print_endline "This is Peek poly argsssssss" in
+         match Stream.npeek 2 strm with
+         |[OSQUARE,_;INT,_]        -> let () = print_endline "Peek poly argsssssss 11" in ()
+         |[OSQUARE,_;IDENTIFIER _,_] -> let () = print_endline "Peek poly argsssssss 22" in ()
+         | _ -> let () = print_endline "Peek poly argsssssss 33" in raise Stream.Failure)
 
+
+(* let peek_poly_args =
+ *    SHGram.Entry.of_parser "peek_poly_data_struc_type"
+ *      (fun strm ->
+ *         let () = print_endline "This is Peek poly argsssssss" in
+ *          match Stream.npeek 2 strm with
+ *          |[OSQUARE,_;INT,_]        -> let () = print_endline "Peek poly argsssssss 11" in raise Stream.Failure
+ *          |[OSQUARE,_;IDENTIFIER _,_] -> let () = print_endline "Peek poly argsssssss 22" in raise Stream.Failure
+ *          | _ -> let () = print_endline "Peek poly argsssssss 33" in ()) *)
 
 (* let peek_poly_invocation =
  *    SHGram.Entry.of_parser "peek_poly_type"
@@ -2124,6 +2136,7 @@ cid:
 cid_or_pair:
   [[
     `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN ->
+    let () = print_endline "This is the procccc of cid_or_pair" in
     let pe1 = get_pure_exp e1 no_pos in
     let pe2 = get_pure_exp e2 no_pos in
     (("_",Unprimed),(Some(pe1,pe2)))
@@ -2447,14 +2460,16 @@ simple_heap_constr_imm:
 thread_args:
    [[peek_hash_thread;(* `TOPAREN *)`LT; `HASH ; dl = opt_delayed_constr; rsr = disjunctive_constr; (* `TCPAREN *) `HASH; `GT -> (dl,rsr) ]];
 
+(* peek_non_thread_args *)
+
 non_thread_args1:
   [[
-    `LT; hl= opt_general_h_args; `GT -> hl
+    `LT; hl= opt_general_h_args; `GT -> let () = print_endline "This is the non_thread_args 1" in hl
   ]];
 
 non_thread_args2:
   [[
-    `LT; hl= opt_data_h_args; `GT -> hl
+    `LT; hl= opt_data_h_args; `GT -> let () = print_endline "This is the non_thread_args 2" in hl
   ]];
 
 (*LDK: add frac for fractional permission*)
@@ -2468,17 +2483,25 @@ simple_heap_constr:
      let (c, hid, deref) = get_heap_id_info c hid in
      F.mkThreadNode c hid (F.subst_stub_flow n_flow rsr) dl frac ofl (get_pos_camlp4 _loc 2)
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
-     polyt = OPT parse_poly_args;
+
+     (* B 2 *)
      frac= opt_perm; (*`LT; hl= opt_general_h_args; `GT;*)
+
      hl = non_thread_args1;
+
+     polyt = OPT parse_poly_args;
+
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
        -> (
-       (*ignore permission if applicable*)
+         (*ignore permission if applicable*)
+       let () = print_endline "BBB 222" in
+
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        let poly_args = un_option polyt [] in
+       (* let poly_args = [] in *)
        match hl with
        (* WN : HeapNode2 is for d<field=v*> *)
        (*  p<> can be either node or predicate *)
@@ -2486,12 +2509,15 @@ simple_heap_constr:
        | ([],t) -> F.mkHeapNode2 c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-     | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
-     frac= opt_perm;
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
 
+     (* B 3 *)
+
+     frac= opt_perm;
      (* `LT; hl= opt_data_h_args; `GT;*)
      hl = non_thread_args2;
      polyt = OPT parse_poly_args;
+
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
      -> (
         (*ignore permission if applicable*)
@@ -2500,6 +2526,7 @@ simple_heap_constr:
         let (c, hid, deref) = get_heap_id_info c hid in
         let ho_args = un_option opt1 [] in
         let poly_args = un_option polyt [] in
+        (* let poly_args = [] in *)
         match hl with
         | ([],[]) -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
         | ([], t) ->
@@ -2511,16 +2538,18 @@ simple_heap_constr:
             let t1, t2 = List.split t in
             F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t1 t2 ofl (get_pos_camlp4 _loc 2)
      )
-     | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
-     polyt = OPT parse_poly_args;
+   | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
+     (* B 4 *)
      frac= opt_perm;
      (* `LT; hal=opt_general_h_args; `GT; *)
      hal = non_thread_args1;
+     polyt = OPT parse_poly_args;
      dr=opt_derv; split= opt_split; ofl = opt_formula_label
      -> (
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        let poly_args = un_option polyt [] in
+       (* let poly_args = [] in *)
        match hal with
        | ([],[]) -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> F.mkHeapNode2 c hid ho_args ~poly:poly_args deref dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
@@ -2536,29 +2565,31 @@ simple_heap_constr:
        F.mkHeapNode ("",Primed) "" [] 0 false (*dr*) SPLIT0 (P.ConstAnn(Mutable)) false false false frac [] [] None  (get_pos_camlp4 _loc 1)
      )
      (* An Hoa : Abbreviated syntax. We translate into an empty type "" which will be filled up later. *)
-   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ;
-     polyt = OPT parse_poly_args;
+   | peek_heap; c=cid; `COLONCOLON;  opt1 = OPT rflow_form_list (* simple2*) ;  (* WITHOUT HEAP ID *)
      frac= opt_perm;
          (* `LT; hl= opt_general_h_args; `GT;*)
-         hl = non_thread_args1;
+     hl = non_thread_args1;
+     polyt = OPT parse_poly_args;
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
       -> (
        let frac = if (Perm.allow_perm ()) then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let ho_args = un_option opt1 [] in
        let poly_args = un_option polyt [] in
+       (* let poly_args = [] in *)
        match hl with
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
-    | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*);
-     polyt = OPT parse_poly_args;
+   | peek_heap; c=cid; `COLONCOLON; opt1 = OPT rflow_form_list  (*simple2*); (* WITHOUT HEAP ID *)
      frac= opt_perm; (* `LT; hal=opt_general_h_args; `GT; *)
-         hal = non_thread_args1;
+     hal = non_thread_args1;
+     polyt = OPT parse_poly_args;
      dr=opt_derv; split= opt_split; ofl = opt_formula_label
       -> (
        let ho_args = un_option opt1 [] in
        let poly_args = un_option polyt [] in
+       (* let poly_args = [] in *)
        match hal with
        | ([],[])  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac [] [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
@@ -2588,10 +2619,10 @@ simple_heap_constr:
 (* rflow_ann: [[ `IN_RFLOW | `OUT_RFLOW ]]; *)
 
 (*LDK: parse optional fractional permission, default = 1.0*)
-opt_perm: [[t = OPT perm -> t ]];
+opt_perm: [[t = OPT perm ->  let () = print_endline "This is the opt_perm " in t ]];
 
 perm: [[
-    `OPAREN; t = perm_aux; `CPAREN -> t
+    `OPAREN; t = perm_aux; `CPAREN -> let () = print_endline "This is the perm " in t
 ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
@@ -2602,7 +2633,7 @@ perm_aux: [[
      (* let () = x_binfo_hp pr_id "hello campl4" no_pos in *)
        Ipure.Div (Ipure.IConst(t1,get_pos_camlp4 _loc 2),
        Ipure.IConst(t2,get_pos_camlp4 _loc 4),get_pos_camlp4 _loc 3)
-  | (* peek_print; *)
+   | (* peek_print; *)
     t = LIST1 cexp SEP `COMMA ->
           begin
           match !Globals.perm with
@@ -2696,14 +2727,15 @@ ann_term:
      ]];
 
 cexp :
-    [[t = cexp_data_p -> match t with
+  [[ t = cexp_data_p -> let () = print_endline "This is the procccc of cexp" in
+    match t with
       | f, _ ->  f ]
     ];
 
 cexp_data_p:
   [[t = cexp_w -> let () = print_endline "This is the procccc of cexp_data_p" in
      match t with
-      | Pure_c f -> (f, None)
+      | Pure_c f -> let () = print_endline "This is the procccc of inside cexp_data_p" in (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
       (* | _ -> report_error (get_pos_camlp4 _loc 1) "3 expected cexp, found pure_constr" *)
       | Pure_f f -> (BExpr f, None)
@@ -2731,7 +2763,7 @@ cexp_w:
   | "pure_and" RIGHTA
     [ pc1=SELF; peek_and; `AND; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_exclusive" RIGHTA
-    [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
+    [ (*peek_poly_args;*) `OSQUARE; t=exl_pure; `CSQUARE -> t]
   |"bconstrp" RIGHTA
     [ lc=SELF; `NEQ; cl=SELF ->
         let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
@@ -3555,7 +3587,6 @@ typ:
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
    | peek_poly_data_struc_type; t = poly_data_struc_type -> t
-   (* | peek_poly_args; t = parse_poly_args -> t *)
    | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
    | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
 
@@ -3591,7 +3622,7 @@ typ_list: [[ tl = LIST1 typ SEP `COMMA -> tl]];
 
 parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
 parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
-parse_poly_args:    [[ `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
+parse_poly_args:    [[ peek_poly_args; `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
 
 parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]];
 
