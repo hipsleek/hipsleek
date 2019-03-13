@@ -1340,7 +1340,7 @@ opt_pure_inv: [[t=OPT pure_inv -> t ]];
 
 data_decl:
     [[ dh=data_header ; db = data_body ; dinv = opt_pure_inv
-        -> {data_name = dh;
+       -> { data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
             data_parent_name="Object"; (* Object; *)

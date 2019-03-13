@@ -4952,7 +4952,18 @@ let string_of_data_pure_inv inv =
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^
+let string_of_data_decl d =
+   let dd = d in
+   let fld_typs = List.map get_field_typ dd.data_fields in
+   let poly_typ_list = List.filter (fun t -> match t with
+          | Poly _ -> true
+          | _ -> false) fld_typs in
+   let poly_typ_list_string = (
+    match poly_typ_list with
+     | [] -> ""
+     | _  -> pr_list string_of_typ poly_typ_list
+   ) in
+  "data " ^ d.data_name ^ poly_typ_list_string ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^
                             ((add_str "is_rec" string_of_bool) d.data_is_rec) ^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 
