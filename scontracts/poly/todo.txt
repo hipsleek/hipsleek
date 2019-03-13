@@ -42,6 +42,27 @@ expect Valid.
 ===========================================================
 
 
+modify printer to print data args below (cprinter & iprinter):
+
+data nodep {
+  `T val@;
+  nodep[`T] next@;
+}is_rec:true
+
+to:
+
+data nodep[`T] {
+
+*******************
+
+ x::nodep<a,t>@M&{FLOW,(4,5)=__norm#E} [] |-  EBase
+   exists (Impl)[aaa](exists t_18: x::nodep<aaa,t_18>@M&t_18=t&
+   {FLOW,(4,5)=__norm#E})
+
+to:
+
+ x::nodep<a,t>@M[int]
+
 ===========================================================
 ===========================================================
 

@@ -84,14 +84,14 @@ lemma_norm "GLOB_INIT"  self::GLOB{@S %R}<P,C> & P={}
    Party(P,{c1...cm},(G)|P) * Peer(P) -> Chan(c1,P,(G)|P,c1) *...* Chan(cm,P,(G)|P,cm)
    only release the per-channel spec when in the abstract state of a peer
    ########################################################################## */
-lemma_norm "PROJ_BIND " self::Party{ %R }<GG,C> * self::Peer<GG>
-                        -> self::Party{  %R }<GG,C> *
-                           self::BIND<GG,C> & PeerRel(self,GG).
+// lemma_norm "PROJ_BIND " self::Party{ %R }<GG,C> * self::Peer<GG>
+//                         -> self::Party{  %R }<GG,C> *
+//                            self::BIND<GG,C> & PeerRel(self,GG).
 
-lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{@S %R}<> }<GG,C>
-                        & C=union({ccc},C1) & (ccc notin C1) & PeerRel(self,GG)
-                         -> ccc::Chan{ ccc::PROJC{@S %R}<self>}<> *
-                            self::Party{ self::PROJP{@S %R}<> }<GG,C1>.
+// lemma_norm "SPLIT_PROJ" self::Party{  self::PROJP{@S %R}<> }<GG,C>
+//                         & C=union({ccc},C1) & (ccc notin C1) & PeerRel(self,GG)
+//                          -> ccc::Chan{ ccc::PROJC{@S %R}<self>}<> *
+//                             self::Party{ self::PROJP{@S %R}<> }<GG,C1>.
 
-lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{@S %R}<> }<GG,C> & C={}
-                        -> true.
+// lemma_norm "PROJ_CLEAN" self::Party{  self::PROJP{@S %R}<> }<GG,C> & C={}
+//                         -> true.

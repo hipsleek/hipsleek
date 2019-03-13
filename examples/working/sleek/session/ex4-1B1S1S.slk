@@ -1,5 +1,5 @@
-sleek_include 'hodef.slk'.
-sleek_include 'node.slk'.
+sleek_include 'msess/notes/hodef.slk'.
+sleek_include 'msess/notes/node.slk'.
 
 //1
 checkentail x=0 |- 0<=x.
@@ -10,19 +10,19 @@ checkentail 0<=x |- x=0.
 expect Fail.
 
 //3
-checkentail x::S{- 0<=x}<msg> |- x::S{- x=0}<msg>.
+checkentail x::S{- 0<=msg}<msg> |- x::S{- msg=0}<msg>.
 expect Valid.
 
 //4
-checkentail x::S{- x=0}<msg> |- x::S{- 0<=x}<msg>.
+checkentail x::S{- msg=0}<msg> |- x::S{- 0<=msg}<msg>.
 expect Fail.
 
 //5
-checkentail x::R{+ 0<=x}<msg> |- x::R{+ x=0}<msg>.
+checkentail x::R{+ 0<=msg}<msg> |- x::R{+ msg=0}<msg>.
 expect Fail.
 
 //6
-checkentail x::R{+ x=0}<msg> |- x::R{+ 0<=x}<msg>.
+checkentail x::R{+ msg=0}<msg> |- x::R{+ 0<=msg}<msg>.
 expect Valid.
 
 pred_sess_tpproj pp1<> == ?0.

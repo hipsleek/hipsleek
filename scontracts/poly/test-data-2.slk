@@ -9,37 +9,48 @@ data node{
    node next;
 }.
 
+//1
+checkentail x::nodep<3,t> |- x::nodep<3,t>.
+print residue.
+expect Valid.
 
-// checkentail x::nodep<3,t> |- x::nodep<3,t>.
-// print residue.
-// expect Valid.
+//2
+checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
-// checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
+//3
+checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
-// checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
+//4
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
-
+//5
 //should throw exception because of type mismatch
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
-// print residue.
-// expect Fail.
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
+print residue.
+expect Fail.
 
-//should throw exception because of type mismatch
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
-// print residue.
-// expect Fail.
+//6
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
+print residue.
+expect Valid.
 
+//7
 checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
 print residue.
 expect Valid.
 
-// checkentail x::node<a>0,t> |- x::node<aaa,t>.
-// print residue.
-// expect Valid.
+//8
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[bool].
+print residue.
+expect Fail.
+
+//9
+checkentail x::node<a>0,t> |- x::node<aaa,t>.
+print residue.
+expect Valid.

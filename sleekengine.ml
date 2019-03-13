@@ -1068,7 +1068,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents (tlist:Typeinfer.sp
   | MetaFormLCF mf ->	(tlist,(List.hd mf))
   | MetaForm mf ->
     let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-    let () = y_binfo_pp (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in
+    let () = y_ninfo_pp (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in
     (* let n_tl  = x_add Typeinfer.gather_type_info_formula iprog mf tlist false in *)
     (* this type inference has been done twice, because annotated exp was dropped *)
     let wf = x_add Astsimp.case_normalize_formula iprog h mf in
