@@ -974,7 +974,7 @@ let peek_poly_data_struc_type =
          | _ -> raise Stream.Failure)
 
 let peek_poly_args =
-   SHGram.Entry.of_parser "peek_poly_data_struc_type"
+   SHGram.Entry.of_parser "peek_poly_args"
      (fun strm ->
         let () = print_endline "This is Peek poly argsssssss" in
          match Stream.npeek 2 strm with
@@ -2520,6 +2520,7 @@ simple_heap_constr:
 
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
      -> (
+        let () = print_endline "BBB 333" in
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
@@ -2546,6 +2547,7 @@ simple_heap_constr:
      polyt = OPT parse_poly_args;
      dr=opt_derv; split= opt_split; ofl = opt_formula_label
      -> (
+       let () = print_endline "BBB 444" in
        let (c, hid, deref) = get_heap_id_info c hid in
        let ho_args = un_option opt1 [] in
        let poly_args = un_option polyt [] in
@@ -3622,7 +3624,7 @@ typ_list: [[ tl = LIST1 typ SEP `COMMA -> tl]];
 
 parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
 parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
-parse_poly_args:    [[ peek_poly_args; `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
+parse_poly_args:    [[ (* peek_poly_args; *) `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
 
 parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]];
 

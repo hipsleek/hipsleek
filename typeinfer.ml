@@ -1879,6 +1879,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
                   IF.h_formula_heap_ho_arguments = hoa; (* rho arguments *)
+                  IF.h_formula_heap_poly_arguments = poly;
                   IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
                   IF.h_formula_heap_name = v_name; (* data/pred name *)
@@ -1912,11 +1913,20 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | None -> tl
       | Some e -> let (n_tl,_) = x_add gather_type_info_exp prog e tl ft in n_tl
     ) in
+    let gather_type_info_poly vname tname lst tl = (
+      match lst with
+      | [] -> tl
+      | _  ->    (* step1: add the pointer typ to the tlist *)
+        let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
+                 (* step2: add the parameter of the pointer to the tlist *)
+        n_tl
+    ) in
     let n_tl = x_add gather_type_info_perm perm tlist in
     let n_tl = x_add gather_type_info_ann ann n_tl in
     let n_tl = (* if (!Globals.allow_field_ann) then *) x_add gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
     let n_tl = x_add gather_type_info_ho_args hoa n_tl in
-    (*Deal with the generic pointer! *)
+    let n_tl = x_add gather_type_info_poly v v_name poly n_tl in
+    (* Deal with the generic pointer! *)
     if (v_name = Parser.generic_pointer_type_name) then
       (* Assumptions:
        * (i)  ies to contain a single argument, namely the value of the pointer
