@@ -1449,6 +1449,7 @@ let mk_new_return_data_decl_from_typ (t:typ):(I.data_decl) =
   {
     I.data_name = "ret_"^type_name;
     I.data_fields = new_data_fields;
+    I.data_poly_para = [];
     I.data_parent_name = "__RET";
     I.data_invs = [];
     I.data_pure_inv = None;
@@ -1517,10 +1518,10 @@ let rec trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_de
 
   (*let () = print_endline ("@@prog3\n"^Iprinter.string_of_program prog3^"@@prog3\n") in*)
   let prog2 = { prog3 with I.prog_data_decls =
-                             ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = mayerror_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
-                             ::({I.data_name = bfail_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ({I.data_name = raisable_class;I.data_fields = [];data_poly_para = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = error_flow;I.data_fields = [];data_poly_para = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = mayerror_flow;I.data_fields = [];data_poly_para = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
+                             ::({I.data_name = bfail_flow;I.data_fields = [];data_poly_para = [];I.data_parent_name = "Object";I.data_pure_inv = None;I.data_invs = [];I.data_is_template = false;I.data_methods = []; I.data_pos = no_pos; })
                              :: prog3.I.prog_data_decls;} in
   (* let () = print_endline (exlist # string_of ) in *)
   (* let () = I.find_empty_static_specs prog2 in *)
@@ -1878,6 +1879,7 @@ and trans_data_x (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
     C.data_name = ddef.I.data_name;
     C.data_pos = ddef.I.data_pos;
     C.data_fields = fields; (* to be made obsolete later *)
+    C.data_poly_para = ddef.I.data_poly_para;
     C.data_fields_new = List.map (fun ((t,i),v) -> (CP.mk_typed_spec_var t i,v)) fields;
     C.data_parent_name = ddef.I.data_parent_name;
     C.data_pure_inv = inv_pf;

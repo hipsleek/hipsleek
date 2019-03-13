@@ -75,6 +75,7 @@ and data_decl = {
   (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
   (* TODO design revision on how to make this more extensible; for instance:                 *)
   (* use a record instead of a bool to capture additional information on the field?          *)
+  data_poly_para : typ list;
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
@@ -2587,9 +2588,10 @@ and contains_field_ho (e:exp) : bool =
 (* smart constructors *)
 
 (* WN : may want to add pos info *)
-let mkDataDecl ?(pure_inv=None) name fields parent_name invs is_template methods =
+let mkDataDecl ?(pure_inv=None) ?(poly=[]) name fields parent_name invs is_template methods =
   { data_name = name;
     data_fields = fields;
+    data_poly_para = poly;
     data_parent_name = parent_name;
     data_invs = invs;
     data_pure_inv = pure_inv;
@@ -3376,6 +3378,7 @@ let b_data_constr bn larg=
     { data_name = bn;
       data_pos = no_pos;
       data_fields = List.map (fun c-> c,no_pos,false,[] (*F_NO_ANN *)) larg ;
+      data_poly_para = [];
       data_parent_name = if bn = b_datan then "Object" else b_datan;
       data_invs =[];
       data_pure_inv = None;

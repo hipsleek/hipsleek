@@ -1339,10 +1339,11 @@ pure_inv: [[`INV; pf=pure_constr -> pf]];
 opt_pure_inv: [[t=OPT pure_inv -> t ]];
 
 data_decl:
-    [[ dh=data_header ; db = data_body ; dinv = opt_pure_inv
+    [[ (dh, polyl) = data_header ; db = data_body ; dinv = opt_pure_inv
        -> { data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
+            data_poly_para = polyl;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
             data_pure_inv = dinv;
@@ -1350,10 +1351,11 @@ data_decl:
             data_methods = [];} ]];
 
 template_data_decl:
-    [[ dh=template_data_header ; db = data_body
+    [[ (dh, polyl) = template_data_header ; db = data_body
         -> {data_name = dh;
             data_pos = get_pos_camlp4 _loc 1;
             data_fields = db;
+            data_poly_para = polyl;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
             data_pure_inv = None;
@@ -1363,10 +1365,10 @@ template_data_decl:
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
-    [[ `DATA; `IDENTIFIER t; polyt = OPT parse_poly_var; OPT with_typed_var -> t ]];
+    [[ `DATA; `IDENTIFIER t; polyt = OPT parse_poly_args; OPT with_typed_var -> (t, (un_option polyt [])) ]];
 
 template_data_header:
-    [[ `TEMPL; `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
+    [[ `TEMPL; `DATA; `IDENTIFIER t; polyt = OPT parse_poly_args; OPT with_typed_var -> (t, (un_option polyt [])) ]];
 
 data_body:
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
@@ -3626,7 +3628,7 @@ parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
 parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
 parse_poly_args:    [[ (* peek_poly_args; *) `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
 
-parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]];
+(* parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]]; *)
 
 parse_poly_args_opt:[[ ids = OPT parse_poly_args        -> ids]];
 
@@ -3974,6 +3976,7 @@ hprogn:
     let obj_def = { data_name = "Object";
                     data_pos = no_pos;
                     data_fields = [];
+                    data_poly_para = [];
                     data_parent_name = "";
                     data_invs = []; (* F.mkTrue no_pos; *)
                     data_pure_inv = None;
@@ -3981,6 +3984,7 @@ hprogn:
                     data_methods = [] } in
     let string_def = { data_name = "String";
                        data_fields = [];
+                       data_poly_para = [];
                        data_pos = no_pos;
                        data_parent_name = "Object";
                        data_pure_inv = None;
@@ -4119,6 +4123,7 @@ class_decl:
                    data_pos = get_pos_camlp4 _loc 2;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
+                   data_poly_para = [];
                    data_invs = t2;
                    data_pure_inv = None;
                    data_is_template = false;

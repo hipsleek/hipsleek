@@ -128,6 +128,7 @@ let unexpected_cmd = new Gen.stack_pr "unexpected-cmd" pr_id (=)
 *)
 let iobj_def =  {I.data_name = "Object";
                  I.data_fields = [];
+                 I.data_poly_para = [];
                  I.data_pos = no_pos;
                  I.data_parent_name = "";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
@@ -137,6 +138,7 @@ let iobj_def =  {I.data_name = "Object";
 
 let iexc_def =  {I.data_name = raisable_class;
                  I.data_fields = [];
+                 I.data_poly_para = [];
                  I.data_pos = no_pos;
                  I.data_parent_name = "Object";
                  I.data_invs = []; (* F.mkTrue no_pos; *)
@@ -146,6 +148,7 @@ let iexc_def =  {I.data_name = raisable_class;
 
 let ithrd_def =  {I.data_name = Globals.thrd_name ;
                   I.data_fields = [];
+                  I.data_poly_para = [];
                   I.data_pos = no_pos;
                   I.data_parent_name = "Object";
                   I.data_invs = []; (* F.mkTrue no_pos; *)
@@ -179,6 +182,7 @@ let () = Iast.set_iprog iprog
 
 let cobj_def = { Cast.data_name = "Object";
                  Cast.data_fields = [];
+                 Cast.data_poly_para = [];
                  Cast.data_fields_new = [];
                  Cast.data_pos = no_pos;
                  Cast.data_parent_name = "";

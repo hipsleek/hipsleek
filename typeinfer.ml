@@ -461,8 +461,8 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
-    let () = y_binfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in
-    let () = y_binfo_hp (add_str "tlist" string_of_tlist) tlist in
+    (* let () = y_binfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in *)
+    (* let () = y_binfo_hp (add_str "tlist" string_of_tlist) tlist in *)
     (* unify the existing poly with the expected ty (eg unify TVar[1] int)*)
     let n_tl, t2 =
       (* need to recheck how to unify two poly types *)
@@ -474,8 +474,8 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
         begin
           match t0.sv_info_kind with
           | Poly poly_id -> if (String.equal id poly_id) then
-              let () = y_binfo_pp ("idddd" ^ id) in
-              let () = y_binfo_pp ("poly_id" ^ poly_id) in
+              (* let () = y_binfo_pp ("idddd" ^ id) in *)
+              (* let () = y_binfo_pp ("poly_id" ^ poly_id) in *)
               tlist, Some ty
             else unify t0.sv_info_kind ty tlist
           | _ -> unify t0.sv_info_kind ty tlist
@@ -1525,7 +1525,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let poly_typ_list = List.filter (fun t -> match t with
           | Poly _ -> true
           | _ -> false) fld_typs in
-      let () = y_binfo_hp (add_str "types of fields" (pr_list string_of_typ)) poly_typ_list in
+      (* let () = y_binfo_hp (add_str "types of fields" (pr_list string_of_typ)) poly_typ_list in *)
       (* 2. let fresh_pt   = List.map fresh poly_types  *)
       (* keep the non-poly value because we need to update the ddef which needs all the fields *)
       (* ****************** *)
