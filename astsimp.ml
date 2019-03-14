@@ -8441,7 +8441,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
               let labels = List.map (fun _ -> LO.unlabelled) exps in
               let hvars = CP.view_arg_to_sv_list (match_exp (List.combine exps labels)) in
               let new_v = CP.SpecVar (set_typ tl c v, v, p) in
-              let () = y_binfo_hp (add_str "new_v typ" Cprinter.string_of_spec_var) new_v in
+              let () = y_ninfo_hp (add_str "new_v typ" Cprinter.string_of_spec_var) new_v in
               (* An Hoa : find the holes here! *)
               let rec collect_holes vars n = (match vars with
                   | [] -> []

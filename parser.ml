@@ -655,18 +655,18 @@ let peek_subs =
  let peek_pure_out =
    SHGram.Entry.of_parser "peek_pure_out"
      (fun strm ->
-        let () = print_endline "This is the procccc of peek_pure_out" in
+        (* let () = print_endline "This is the procccc of peek_pure_out" in *)
            match Stream.npeek 3 strm with
-             | [FORALL,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure9" in ()
-             | [EXISTS,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure8" in ()
-             | [UNION,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure7" in ()
+             | [FORALL,_;OPAREN,_;_] -> ()
+             | [EXISTS,_;OPAREN,_;_] -> ()
+             | [UNION,_;OPAREN,_;_] ->  ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
-             | [IDENTIFIER id,_;OPAREN,_;_] -> let () = print_endline "This is the procccc of pure6" in if hp_names # mem id then raise Stream.Failure else ()
-             | [_;COLONCOLON,_;_] -> let () = print_endline "This is the procccc of pure5" in raise Stream.Failure
-             | [_;PRIME,_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure4" in raise Stream.Failure
-             | [OPAREN,_;_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure3" in raise Stream.Failure
-             | [OSQUARE,_;_;COLONCOLON,_] -> let () = print_endline "This is the procccc of pure2" in raise Stream.Failure
-             | [OSQUARE,_;DOUBLEQUOTE,_;_]-> let () = print_endline "This is the procccc of pure1" in raise Stream.Failure
+             | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
+             | [_;COLONCOLON,_;_] -> (* let () = print_endline "This is the procccc of pure5" in *) raise Stream.Failure
+             | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
+             | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | [OSQUARE,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | [OSQUARE,_;DOUBLEQUOTE,_;_]-> raise Stream.Failure
              (* | [i,_;j,_;k,_]-> print_string("start here: i:" ^ (Token.to_string i)^" j:"^(Token.to_string j)^" k:"^(Token.to_string k)^" end here \n");() *)
              | _ -> let () = print_endline "This is the procccc of peek_pure_out last branch" in ())
 
@@ -2163,7 +2163,7 @@ opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
 
-opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> let () = print_endline ("This is the procccc of opt_heap_data_arg_listttttttttttttttttttt") in t]];
+opt_heap_data_arg_list: [[t=LIST1 cexp_data_p SEP `COMMA -> t]];
 
 opt_heap_data_arg_list2:[[t=LIST1 heap_arg2_data SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1) == (fst n2)) t (get_pos_camlp4 _loc 1)]];
 
@@ -2466,12 +2466,12 @@ thread_args:
 
 non_thread_args1:
   [[
-    `LT; hl= opt_general_h_args; `GT -> let () = print_endline "This is the non_thread_args 1" in hl
+    `LT; hl= opt_general_h_args; `GT -> (* let () = print_endline "This is the non_thread_args 1" in *) hl
   ]];
 
 non_thread_args2:
   [[
-    `LT; hl= opt_data_h_args; `GT -> let () = print_endline "This is the non_thread_args 2" in hl
+    `LT; hl= opt_data_h_args; `GT -> (* let () = print_endline "This is the non_thread_args 2" in *) hl
   ]];
 
 (*LDK: add frac for fractional permission*)
@@ -2496,8 +2496,7 @@ simple_heap_constr:
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
        -> (
          (*ignore permission if applicable*)
-       let () = print_endline "BBB 222" in
-
+       (* let () = print_endline "BBB 222" in *)
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        let imm_opt = get_heap_ann annl in
        let (c, hid, deref) = get_heap_id_info c hid in
@@ -2512,9 +2511,7 @@ simple_heap_constr:
        | (t,_)  -> F.mkHeapNode c hid ho_args ~poly:poly_args deref dr split imm_opt false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
    | peek_heap; c=cid; `COLONCOLON; hid = heap_id; opt1 = OPT rflow_form_list (* simple2 *);
-
      (* B 3 *)
-
      frac= opt_perm;
      (* `LT; hl= opt_data_h_args; `GT;*)
      hl = non_thread_args2;
@@ -2522,7 +2519,7 @@ simple_heap_constr:
 
      annl = ann_heap_list; dr=opt_derv; split= opt_split; ofl= opt_formula_label
      -> (
-        let () = print_endline "BBB 333" in
+        (* let () = print_endline "BBB 333" in *)
         (*ignore permission if applicable*)
         let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
         let imm_opt = get_heap_ann annl in
@@ -2623,10 +2620,10 @@ simple_heap_constr:
 (* rflow_ann: [[ `IN_RFLOW | `OUT_RFLOW ]]; *)
 
 (*LDK: parse optional fractional permission, default = 1.0*)
-opt_perm: [[t = OPT perm ->  let () = print_endline "This is the opt_perm " in t ]];
+opt_perm: [[t = OPT perm -> t ]];
 
 perm: [[
-    `OPAREN; t = perm_aux; `CPAREN -> let () = print_endline "This is the perm " in t
+    `OPAREN; t = perm_aux; `CPAREN -> t
 ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
@@ -2657,7 +2654,7 @@ perm_aux: [[
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
 
-opt_data_h_args: [[t = OPT data_h_args -> let () = print_endline ("This is the procccc of opt_data_h_args") in un_option t ([],[])]];
+opt_data_h_args: [[t = OPT data_h_args -> un_option t ([],[])]];
 
 (*general_h_args:
   [
@@ -2671,7 +2668,7 @@ general_h_args:
 
 data_h_args:
   [[ t= opt_heap_data_arg_list2 -> ([],t)
-  | t= opt_heap_data_arg_list -> let () = print_endline ("This is the procccc of data_h_args") in (t,[])]];
+  | t= opt_heap_data_arg_list -> (t,[])]];
 
 opt_delayed_constr:[[t = OPT delayed_constr -> un_option t (P.mkTrue no_pos) ]];
 
@@ -2737,9 +2734,9 @@ cexp :
     ];
 
 cexp_data_p:
-  [[t = cexp_w -> let () = print_endline "This is the procccc of cexp_data_p" in
+  [[t = cexp_w -> (* let () = print_endline "This is the procccc of cexp_data_p" in *)
      match t with
-      | Pure_c f -> let () = print_endline "This is the procccc of inside cexp_data_p" in (f, None)
+      | Pure_c f -> (* let () = print_endline "This is the procccc of inside cexp_data_p" in *) (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
       (* | _ -> report_error (get_pos_camlp4 _loc 1) "3 expected cexp, found pure_constr" *)
       | Pure_f f -> (BExpr f, None)

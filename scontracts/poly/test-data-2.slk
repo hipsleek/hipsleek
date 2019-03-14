@@ -41,7 +41,7 @@ data node{
 // expect Valid.
 
 //7
-checkentail x::nodep<a,t>[int, bool] |- x::nodep<aaa,t>.
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
 print residue.
 expect Valid.
 
