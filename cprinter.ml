@@ -4958,12 +4958,12 @@ let string_of_data_decl d =
     * let poly_typ_list = List.filter (fun t -> match t with
     *        | Poly _ -> true
     *        | _ -> false) fld_typs in *)
-   let poly_typ_list_string = (
+   let poly_var_list_string = (
     match d.data_poly_para with
      | [] -> ""
-     | _  -> pr_list string_of_typ d.data_poly_para
+     | _  -> pr_list string_of_ident d.data_poly_para
    ) in
-  "data " ^ d.data_name ^ poly_typ_list_string ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^
+  "data " ^ d.data_name ^ poly_var_list_string ^ " {\n" ^ (string_of_data_decl_list d.data_fields ";\n") ^ ";\n}"^
                             ((add_str "is_rec" string_of_bool) d.data_is_rec) ^(string_of_data_pure_inv d.data_pure_inv)
 ;;
 

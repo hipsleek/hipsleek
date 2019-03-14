@@ -1918,7 +1918,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | [] -> tl
       | _  ->    (* step1: add the pointer typ to the tlist *)
         let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
-                 (* step2: add the parameter of the pointer to the tlist *)
+                 (* step2: check whether the number of this one is equal to the previous data declaration's. Should this be in the parser part? *)
+
         n_tl
     ) in
     let n_tl = x_add gather_type_info_perm perm tlist in

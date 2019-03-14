@@ -1365,10 +1365,10 @@ template_data_decl:
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
-    [[ `DATA; `IDENTIFIER t; polyt = OPT parse_poly_args; OPT with_typed_var -> (t, (un_option polyt [])) ]];
+    [[ `DATA; `IDENTIFIER t; poly_vars = OPT parse_poly_var; OPT with_typed_var -> (t, (un_option poly_vars [])) ]];
 
 template_data_header:
-    [[ `TEMPL; `DATA; `IDENTIFIER t; polyt = OPT parse_poly_args; OPT with_typed_var -> (t, (un_option polyt [])) ]];
+    [[ `TEMPL; `DATA; `IDENTIFIER t; poly_vars = OPT parse_poly_var; OPT with_typed_var -> (t, (un_option poly_vars [])) ]];
 
 data_body:
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl

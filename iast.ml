@@ -75,7 +75,7 @@ and data_decl = {
   (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. *)
   (* TODO design revision on how to make this more extensible; for instance:                 *)
   (* use a record instead of a bool to capture additional information on the field?          *)
-  data_poly_para : typ list;
+  data_poly_para : ident list;
   data_parent_name : ident;
   data_invs : F.formula list;
   data_pos : loc;
