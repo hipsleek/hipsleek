@@ -1913,23 +1913,24 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | None -> tl
       | Some e -> let (n_tl,_) = x_add gather_type_info_exp prog e tl ft in n_tl
     ) in
+    let num_poly_args = List.length poly in
+    let data_def =
+        (try
+          let data_d = I.look_up_data_def_raw prog.I.prog_data_decls v_name in
+          data_d
+         with
+            | Not_found -> report_error pos (" cannot find the heap name in data decls! ")) in
+    let num_poly_vars = List.length data_def.data_poly_para in
     let gather_type_info_poly vname tname lst tl = (
       match lst with
-      | [] -> tl
+      | [] ->
+        if (num_poly_args = num_poly_vars) then tl else report_error pos (" the number of this heap poly arguments is not equal to the previous data declaration poly vars! ")
       | _  ->    (* step1: add the pointer typ to the tlist *)
         let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
         (* step2: check whether the number of this one is equal to the previous data declaration's. Should this be in the parser part? *)
-        let num_poly_args = List.length poly in
-        let data_def =
-          (try
-            let data_d = I.look_up_data_def_raw prog.I.prog_data_decls tname in
-            data_d
-           with
-            | Not_found -> report_error pos (" cannot find the heap name in data decls! ")) in
-        let num_poly_vars = List.length data_def.data_poly_para in
-        match (num_poly_args == num_poly_vars) with
-        | true -> n_tl
-        | _    -> report_error pos (" the number of this heap poly arguments is not equal to the previous data declaration poly vars! ")
+        match (num_poly_args = num_poly_vars) with
+         | true -> n_tl
+         | _    -> report_error pos (" the number of this heap poly arguments is not equal to the previous data declaration poly vars! ")
     ) in
     let n_tl = x_add gather_type_info_perm perm tlist in
     let n_tl = x_add gather_type_info_ann ann n_tl in
