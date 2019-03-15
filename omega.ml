@@ -19,7 +19,7 @@ let set_proof_result str = Others.last_proof_result # set str
 let omega_call_count: int ref = ref 0
 let omega_call_count_for_infer: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 600.0 (* default timeout is 15 seconds *)
 let is_complex_form = ref false
 let varLength = 48
 
@@ -1137,21 +1137,46 @@ let pairwisecheck2 (pe1 : formula) (pe2 : formula) : formula =
     | _ -> Cpure.mkOr pe1 pe2 None no_pos
   end
 
+(* let normalise_max f =
+  let disjuncts = Cpure.split_disjunctions_deep f in
+  let disjuncts_of_conjuncts = List.map Cpure.split_conjunctions disjuncts in
+  List.map
+    (fun conjuncts ->
+      let all_eq = List.filter (function | Eq _ -> true | _ -> false ) conjuncts in
+
+      )
+    disjuncts_of_conjuncts *)
+
+
 let pairwisecheck (pe : formula) : formula =
   (* print_endline "LOCLE: pairwisecheck"; *)
   begin
     omega_subst_lst := [];
     (* let pe = drop_varperm_formula pe in *)
-    let pe, _ = translate_security_formula_for_infer !Security.current_lattice pe in
+    let pe, sec_bounds = translate_security_formula_for_infer !Security.current_lattice pe in
+    let inv_bounds =
+      match sec_bounds with
+      | [] -> Cpure.mkTrue no_pos
+      | x :: xs -> List.fold_left (fun acc elem -> mkAnd acc elem no_pos) x xs in
+    let exist_v = Gen.BList.difference_eq Cpure.eq_spec_var (fv inv_bounds) (fv pe) in
+    let inv_bounds = Cpure.mkExists exist_v inv_bounds None no_pos in
+    let inv_bounds_vars = get_vars_formula inv_bounds in
+    let inv_bounds_vars_str = omega_of_var_list (Gen.BList.remove_dups_eq (=) inv_bounds_vars) in
 
 
-    match (omega_of_formula_old 21 pe) with
-    | None -> pe
-    | Some fstr ->
+    match (omega_of_formula_old 21 pe, omega_of_formula_old 25 inv_bounds) with
+    | None, None | Some _, None | None, Some _ -> pe
+    | Some fstr, Some inv_bounds_str ->
       try
         let vars_list = get_vars_formula pe in
         let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
-        let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+        let fomega =
+          if !Globals.ifa then
+            "pairwisecheck (gist {[" ^ vstr ^ "] : (" ^ fstr ^ ")} given {[" ^ vstr ^ "] : (" ^ inv_bounds_str ^ ")});" ^ Gen.new_line_str
+            (* "gist (pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")}) given {[" ^ vstr ^ "] : (" ^ inv_bounds_str ^ ")};" ^ Gen.new_line_str *)
+          else
+            "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+        let () = y_binfo_pp ("pairwise check fomega: " ^ fomega) in
         let () = set_proof_string ("PAIRWISE:"^fomega) in
         (*test*)
         (*print_endline (Gen.break_lines fomega);*)
@@ -1162,6 +1187,7 @@ let pairwisecheck (pe : formula) : formula =
         end;
         let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
+      let () = y_binfo_hp (add_str "after pairwise check: " !Cpure.print_formula) r in
       let r = Trans_sec.rev_translate_sec_from_infer r in
       (* trans_bool *) r
       with

@@ -2681,7 +2681,23 @@ let parse_prep (filename: string): Iast.prog_decl =
 let parse_hip (filename: string) : Iast.prog_decl =
   (* do the preprocess by GCC first *)
   let prep_filename = filename ^ ".prep" in
-  let cmd = "gcc " ^ "-I ../ " ^ " -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/  "^ " -C -E " ^ filename ^ " -o " ^ prep_filename in
+  let cmd = "gcc " ^ !Scriptarguments.gcc_args ^ " -C -E " ^ filename ^ " -o " ^ prep_filename in
+  (* let cmd = "gcc -E " ^ filename ^ " -c " ^
+    "-std=gnu11 -fgnu89-inline  -g -O2 -Wall -Wwrite-strings -Wundef -Werror -fmerge-all-constants -frounding-math " ^
+    "-fno-stack-protector -Wstrict-prototypes -Wold-style-definition -fmath-errno    -DMORECORE_CLEARS=2 " ^
+    "-ftls-model=initial-exec      -I../include -I/home/benedict/tmp/glibc-build/malloc " ^
+    "-I/home/benedict/tmp/glibc-build  -I../sysdeps/unix/sysv/linux/x86_64/64  -I../sysdeps/unix/sysv/linux/x86_64 " ^
+    "-I../sysdeps/unix/sysv/linux/x86/include -I../sysdeps/unix/sysv/linux/x86  -I../sysdeps/x86/nptl " ^
+    "-I../sysdeps/unix/sysv/linux/wordsize-64  -I../sysdeps/x86_64/nptl  -I../sysdeps/unix/sysv/linux/include " ^
+    "-I../sysdeps/unix/sysv/linux  -I../sysdeps/nptl  -I../sysdeps/pthread  -I../sysdeps/gnu  -I../sysdeps/unix/inet " ^
+    "-I../sysdeps/unix/sysv  -I../sysdeps/unix/x86_64  -I../sysdeps/unix  -I../sysdeps/posix  -I../sysdeps/x86_64/64 " ^
+    "-I../sysdeps/x86_64/fpu/multiarch  -I../sysdeps/x86_64/fpu  -I../sysdeps/x86/fpu/include -I../sysdeps/x86/fpu " ^
+    "-I../sysdeps/x86_64/multiarch  -I../sysdeps/x86_64  -I../sysdeps/x86  -I../sysdeps/ieee754/float128 " ^
+    "-I../sysdeps/ieee754/ldbl-96/include -I../sysdeps/ieee754/ldbl-96  -I../sysdeps/ieee754/dbl-64/wordsize-64 " ^
+    "-I../sysdeps/ieee754/dbl-64  -I../sysdeps/ieee754/flt-32  -I../sysdeps/wordsize-64  -I../sysdeps/ieee754 " ^
+    "-I../sysdeps/generic  -I.. -I../libio -I.   -D_LIBC_REENTRANT -include /home/benedict/tmp/glibc-build/libc-modules.h " ^
+    "-DMODULE_NAME=libc -include ../include/libc-symbols.h  -DPIC  -DUSE_TCACHE=1   -DTOP_NAMESPACE=glibc " ^
+    "-o " ^ prep_filename in *)
   if not !compete_mode then (
     print_endline_quiet ("GCC Preprocessing...");
     print_endline_quiet cmd;

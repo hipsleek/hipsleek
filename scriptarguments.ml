@@ -1363,6 +1363,9 @@ let common_arguments = [
   ("-ifa",Arg.Set Globals.ifa,"perform information flow analysis")
 ]
 
+let gcc_args = ref "-I ../ -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/"
+let set_gcc_args args = gcc_args := args
+
 (* arguments/flags used only by hip *)
 let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "Compile specified predicate to Java.");
@@ -1394,6 +1397,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
                                 "compare set of constraints");
                                ("-lib", Arg.String set_lib_file,
                                 "lib");
+                               ("--gcc-args", Arg.String set_gcc_args,
+                                "Set arguments for gcc preprocessing")
                              ]
 
 (* arguments/flags used only by sleek *)

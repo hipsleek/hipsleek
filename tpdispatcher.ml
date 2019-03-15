@@ -2263,10 +2263,9 @@ let simplify (f : CP.formula) : CP.formula =
             let mona_simplify f =  wrap_pre_post norm_pure_input norm_pure_result Mona.simplify f in *)
     (* let () = y_binfo_hp (add_str "f" !CP.print_formula) f in *)
     (* let f = CP.translate_security_formula f in *)
-    let translated_f, bound_f = CP.translate_security_formula_for_infer !Security.current_lattice f in
     (* let () = y_binfo_hp (add_str "translated f" !CP.print_formula) translated_f in *)
     (* let f = List.fold_left (fun f f_all -> CP.mkAnd f_all f no_pos) translated_f bound_f in *)
-    let f = translated_f in
+    (* let f = translated_f in *)
     if !external_prover then
       match Netprover.call_prover (Simplify f) with
       | Some res -> res
@@ -2295,6 +2294,15 @@ let simplify (f : CP.formula) : CP.formula =
                 x_add CP.arith_simplify 12 f
             | OM ->
               if (is_bag_constraint f) then (Mona.simplify f)
+              else if !Globals.ifa then
+                let translated_f, bound_f = CP.translate_security_formula_for_infer !Security.current_lattice f in
+                let inv_bounds =
+                  match bound_f with
+                  | [] -> CP.mkTrue no_pos
+                  | x :: xs -> List.fold_left (fun acc elem -> mkAnd acc elem no_pos) x xs in
+                (* let omega_security_simplify f = x_add_1 Omega.gist f (CP.mkTrue no_pos) in *)
+                let omega_security_simplify f = x_add_1 Omega.gist f inv_bounds in
+                x_add CP.arith_simplify 12 (omega_security_simplify translated_f)
               else
                 let f=(omega_simplify f) in
                 x_add CP.arith_simplify 12 f

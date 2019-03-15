@@ -21,6 +21,47 @@ let extract_sec_var_id (Cpure.SpecVar (_, id, _)) =
   with
   | _ -> report_error no_pos ("Unexpected spec var name for sec formula: " ^ id)
 
+let rec norm_quant_sec_form f =
+  let open Cpure in
+  match f with
+    | BForm _ -> f
+    | And (f1, f2, loc) -> mkAnd (norm_quant_sec_form f1) (norm_quant_sec_form f2) loc
+    | AndList _ ->  f
+    | Or (f1, f2, flbl, loc) -> mkOr (norm_quant_sec_form f1) (norm_quant_sec_form f2) flbl loc
+    | Not (f, lbl, loc) -> mkNot (norm_quant_sec_form f) lbl loc
+    | Forall (v, f, lbl, loc) -> if is_sec_spec_var v then (norm_quant_sec_form f) else mkForall [v] (norm_quant_sec_form f) lbl loc
+    | Exists (v, f, lbl, loc) -> if is_sec_spec_var v then (norm_quant_sec_form f) else mkExists [v] (norm_quant_sec_form f) lbl loc
+    | SecurityForm _ -> f
+
+let norm_disj_sec_form : Cpure.formula -> Cpure.formula list list =
+  fun f ->
+  let open Cpure in
+  let df  = split_disjunctions f in
+  let cdf = List.map split_conjunctions df in
+  y_binfo_hp (add_str "cdf: " (pr_list (pr_list !Cpure.print_formula))) cdf;
+  let rec helper_conj cf df : (formula list) list =
+    match df with
+    | [] -> []
+    | f::rf ->
+      match f with
+      | Or (f1, f2, flbl, loc) ->
+        let nf = List.filter (fun x -> x <> f) cf in
+        [f1::nf; f2::nf]
+      | _ ->
+        let res_f = helper_conj cf rf in
+        List.map (fun x -> f::x) res_f
+  in
+  let rec helper_disj cdf : (formula list) list =
+    match cdf with
+    | [] -> []
+    | df::rdf -> (helper_conj df df)@(helper_disj rdf)
+  in
+  let rec fix x =
+    let cdf = helper_disj x in
+    if x = cdf then x else fix cdf
+  in
+  fix cdf
+
 let rev_translate_sec_from_infer f =
   let fold_right f acc xs = List.fold_right f xs acc in
   let is_translated_sec_formula f =
@@ -42,6 +83,7 @@ let rev_translate_sec_from_infer f =
       | Lte (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _)
       | Eq (Var (SpecVar (_, id1, _), _), Var (SpecVar (_, id2, _), _), _) ->
           BatString.starts_with id1 "sec_" && BatString.starts_with id2 "sec_"
+      | LexVar _ -> true
       | _ ->
           let () = y_binfo_hp (add_str "Not valid translated p formula: " !Cpure.print_p_formula) f in
           false
@@ -55,7 +97,13 @@ let rev_translate_sec_from_infer f =
       | Or (f1, f2, flbl, loc) -> is_valid_translated_sec_formula f1 && is_valid_translated_sec_formula f2
       | Not (f, lbl, loc) -> is_valid_translated_sec_formula f
       | Forall (v, f, lbl, loc) -> is_valid_translated_sec_formula f
-      | Exists (v, f, lbl, loc) -> is_valid_translated_sec_formula f
+      | Exists (v, f', lbl, loc) ->
+          let () = y_binfo_hp (add_str "unnormalised: " !print_formula) f in
+          let norm = norm_quant_sec_form f in
+          let () = y_binfo_hp (add_str "normalised: " !print_formula) norm in
+          let res = is_valid_translated_sec_formula norm in
+          let () = y_binfo_hp (add_str "exists valid? " string_of_bool) res in
+          res
       | SecurityForm (lbl, f, loc) -> is_valid_translated_sec_formula f
   in
   let create_security_formula formulas =
@@ -165,12 +213,17 @@ let rev_translate_sec_from_infer f =
         )
         []
   in
+  (* let () = y_binfo_hp (add_str "f: " !Cpure.print_formula) f in *)
+  (* let f = norm_quant_sec_form f in
+  let disjunctions_of_conjunctions = norm_disj_sec_form f in *)
   let disjunctions = Cpure.split_disjunctions f in
   let disjunctions_of_conjunctions = List.map Cpure.split_conjunctions disjunctions in
+  y_binfo_hp (add_str "disjunctions_of_conjunctions: " (pr_list (pr_list !Cpure.print_formula))) disjunctions_of_conjunctions;
   let res =
     List.map (List.partition is_translated_sec_formula) disjunctions_of_conjunctions
     |> fold_right
         (fun (sec_formulas, other_formulas) acc ->
+          y_binfo_hp (add_str "sec forms: " (pr_list !Cpure.print_formula)) sec_formulas;
           if List.for_all is_valid_translated_sec_formula sec_formulas then
             let p_formulas =
               List.map

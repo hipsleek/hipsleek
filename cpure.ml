@@ -16941,6 +16941,10 @@ let rec translate_security_formula_for_infer lattice = function
       mkExists (v :: exists_vars) new_f lbl loc, bound_f
   | others -> others, []
 
+(* let translate_security_formula_for_infer lattice formula =
+  let tf,bf = translate_security_formula_for_infer lattice formula in
+  (List.fold_left (fun f b -> mkAnd f b no_pos) tf bf), bf *)
+
 let rec translate_security_formula_only lattice = function
   | BForm ((pf, bf_ann), flbl) ->
       let { extra_p_formulas = epf;

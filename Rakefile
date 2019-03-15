@@ -198,6 +198,10 @@ rule ".native" do |task|
   sh "#{ocamlbuild} #{task.name}"
 end
 
+rule ".depends" do |task|
+  sh "#{ocamlbuild} #{task.name}"
+end
+
 
 # Support file generation
 

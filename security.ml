@@ -3,6 +3,7 @@
 module Label = struct
   type t =
     | L of string
+  [@@deriving show]
 
   let compare = compare
 
@@ -260,8 +261,23 @@ let representation_to_label ({ reverse_label_representations } as lattice) repre
   in
   bfs ()
 
-
 let least_upper_bound { least_upper_bounds } l1 l2 = BoundsMap.find (l1, l2) least_upper_bounds
+
+let less_than lattice l1 l2 = (least_upper_bound lattice l1 l2) = l2
+
+let representation_to_label ({ reverse_label_representations } as lattice) representation =
+  let all_zero_pts representation =
+    List.combine representation (BatList.init (List.length representation) (fun i -> i))
+    |> List.filter (fun (x, i) -> x = 0)
+    |> List.map snd in
+  let next_nodes rep =
+    all_zero_pts rep
+    |> List.map (fun i -> BatList.modify_at i (fun _ -> 1) rep) in
+  try
+    ReverseRepresentationMap.find representation reverse_label_representations
+  with
+  | Not_found ->
+      List.fold_left (fun a b -> let bb = (representation_to_label lattice b) in if (less_than lattice a bb) then a else bb) lattice.top (next_nodes representation)
 
 let greatest_lower_bound { greatest_lower_bounds } l1 l2 = BoundsMap.find (l1, l2) greatest_lower_bounds
 
