@@ -289,7 +289,7 @@ and proc_decl = {
   proc_file : string;
   proc_loc : loc;
   proc_poly_vars : (* P.spec_var *) ident list;
-  proc_global_params: (ident * ident) list;
+  proc_global_params: (typed_ident * typed_ident) list;
   (* none - not while, Some(true) : while with ret *)
   (* proc_while_with_return : bool option;  *)
   proc_test_comps :  test_comps option}

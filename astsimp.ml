@@ -4551,6 +4551,10 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
          let args_wi = if proc.Iast.proc_is_main then Iast.extract_mut_args prog proc
            else proc.Iast.proc_args_wi
          in
+         let global_params = List.fold_left (fun acc (typ,id) ->
+             if List.exists (fun global_param -> String.equal global_param id) proc.I.proc_global_params then (typ,id)::acc
+             else acc
+           ) [] args in
          let cproc = {
            C.proc_name = proc.I.proc_mingled_name;
            C.proc_source = proc.I.proc_source;

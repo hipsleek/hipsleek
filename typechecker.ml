@@ -2451,14 +2451,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         exp_scall_pos = pos}) ->
       begin
         let () =
+          (*=========================*)
+          (*======= REENTRANCY ======*)
+          (*=========================*)
           if (CF.is_inf_reentrancy_list_failesc_context ctx) then
             let () = y_binfo_pp "REENTRANCY" in
             (* check if this is a call to the "call" method *)
-            if (compare mn Globals.contract_call_method == 0 ) then
+            if (compare (Cast.unmingle_name mn) Globals.contract_call_method == 0 ) then
               (* retrieve all methods which alter the state *)
+              let () = y_binfo_pp "REENTRANCY - 2" in
               let procs = Cast.list_of_procs prog in
               (* TODO: filter methods that do not alter the state *)
               (* intersect on the first element of the pair *)
+              let () = y_binfo_pp "===================================" in
+              let () = y_binfo_hp (add_str "check reentrancy for " pr_id) proc.proc_name in
+              let () = y_binfo_hp (add_str "spec" Cprinter.string_of_struc_formula_for_spec) (proc.proc_stk_of_static_specs # top) in
+              let () = y_binfo_pp "===================================" in
               let intersect proc_i =
                 List.fold_left (fun acc (global_var,ref_param) ->
                     try let curr_proc_ref_param = List.find (fun (a,b) -> String.equal global_var a) proc.proc_global_params in
@@ -2466,10 +2474,34 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     with Not_found ->
                       acc
                   ) [] proc_i.proc_global_params in
+              let rename_spec proc_i =
+                let subs = intersect proc_i in
+                let subs = List.fold_left (fun acc ((t,a),b) ->
+                    let (sv_b, sv_a) = ((CP.mk_spec_var b), (CP.mk_spec_var a)) in
+                    let (sv_b_prmd, sv_a_prmd) = (CP.sp_add_prime sv_b Primed, CP.sp_add_prime sv_a Primed) in
+                    (sv_b_prmd,sv_a_prmd)::(sv_b,sv_a)::acc
+                  ) [] subs in
+                let ()   = y_binfo_hp (add_str "subs" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) subs in
+                let from_lst, to_lst = List.split subs in
+                let fvars   = Cformula.struc_fv (proc_i.proc_stk_of_static_specs # top) in
+                let proc_i_specs = Cformula.subst_struc_avoid_capture
+                    from_lst to_lst
+                    proc_i.proc_stk_of_static_specs # top in
+                proc_i_specs
+              in
+              let rename_spec proc_i =
+                let pr_spec = Cprinter.string_of_struc_formula_for_spec in
+                let pr proc = pr_pair
+                    (add_str "name:" pr_id)
+                    (add_str "spec" pr_spec)
+                    (proc_i.proc_name, (proc_i.proc_stk_of_static_specs # top)) in
+                Debug.no_1 "rename_spec" pr pr_spec rename_spec proc_i in
               let detect_contra proc_i =
-                let pre_proc_i = proc_i.proc_stk_of_static_specs in
+                let pre_proc_i = rename_spec proc_i in
                 ()
               in
+              let procs_altering_data = List.filter (fun proc -> List.length (intersect proc) > 0) procs in
+              let () = List.iter detect_contra procs_altering_data in
               ()
             else ()
 

@@ -1,0 +1,49 @@
+relation Store(mapping(`T3 => `T4) idx1,
+               mapping(`T3 => `T4) idx2,
+               `T3 key, `T4 value).
+
+/* relates the type of the two relation parameters*/
+relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
+
+/*
+pred Maaaap<idx2> == Type(self,idx2).
+*/
+pred_prim Map<idx2> inv Type(self,idx2);
+
+
+relation Store(mapping(`T3 => `T4) idx1,
+               mapping(`T3 => `T4) idx2,
+               `T3 key, `T4 value).
+
+/* relates the type of the two relation parameters*/
+relation Type(mapping(`T11 => `T12) mppp1, mapping(`T11 => `T12) mppp2).
+
+// pred Map<idx2> == Type(self,idx2).
+
+pred_prim Map<idx2> inv Type(self,idx2).
+pred_prim Map_i<idx2> inv Type(self,idx2).
+pred_prim Mappp<>.
+pred_prim SameType<idx2> inv Type(self,idx2).
+
+lemma_norm@1 self::Mappp<> * %P <->
+             self::Map_i<mp111>
+             *
+             ([a]/[b] %P).
+
+             // @R[self[x]=y / mp111[x]=y] %P.
+             //([self]/[mp111] %P).
+
+
+checkentail (exists mp2_2390: mp_39'::Map<mp2_2390>@M&
+Store(mp1,mp2_2390,0,9) & Type(mp_39,mp111_2388) & mp111_2388=mp_39 &
+ mp_39[0]=0 & mp1=mp111_2388)
+ |-  mp_39'::Mappp<>@M&mp_39'[0]=9.
+
+checkentail x::Map<_> * y::Map<z> & z[0]=0 |- x::Map<_> * %P.
+print residue.
+
+
+Type(balances_31,mp1_2206) & Type(balances_31,mp2_2239) &
+ ub0[tmp]=v_int_54_2217+amount & Type(balances_31,ub0) &
+ Store(ub0,mp1_2206,tmp,v_int_54_2217) &
+ Store(mp1_2206,mp2_2239,receiver,amount+(mp1_2206[receiver])) |-  mp2_2239[receiver]=(ub0[receiver])+amount.
