@@ -400,7 +400,7 @@ void vote(int proposal)
 {
      //The one written in Solidity has 'storage', so I don't know whether to use the pointer or not
      Voter* sender = voters[msg.sender];
-     (*sender).voted = true;
+     (*sender).voted = true; /*test*/
      (*sender).vote = proposal;
      Proposal tmp_p;
      tmp_p = proposals[proposal]
