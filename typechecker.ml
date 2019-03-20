@@ -3719,8 +3719,10 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           let () = match exc with
             | Some e -> raise e
             | None -> () in
-          let () = x_binfo_pp "start synthesis process" no_pos in
-          let () = Synthesizer.synthesize_entailments iprog prog proc in
+          let () = if !enable_repair then
+              let () = x_binfo_pp "start synthesis process" no_pos in
+              Synthesizer.synthesize_entailments iprog prog proc
+            else () in
           if pr_flag then
             begin
               if pp then

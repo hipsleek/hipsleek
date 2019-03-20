@@ -1053,8 +1053,7 @@ let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
                        I.exp_var_pos = no_pos}
 
 let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
-  | RlUnfoldPost _
-  | RlInstantiate _
+  | RlUnfoldPost _  | RlInstantiate _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign -> let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
