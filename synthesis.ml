@@ -1049,30 +1049,6 @@ let get_var_decls (exp:I.exp) : CP.spec_var list =
   Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
     get_var_decls_x exp
 
-
-let aux_rbind rbind =
-  let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
-  let rhs = rbind.rb_other_var in
-  let rhs_var = Iast.Var {
-      Iast.exp_var_name = CP.name_of_sv rhs;
-      Iast.exp_var_pos = no_pos} in
-  let lhs_var = Iast.Var {
-      Iast.exp_var_name = f_name;
-      Iast.exp_var_pos = no_pos} in
-  let body = Iast.Assign {
-      Iast.exp_assign_op = Iast.OpAssign;
-      Iast.exp_assign_lhs = lhs_var;
-      Iast.exp_assign_rhs = rhs_var;
-      Iast.exp_assign_path_id = None;
-      Iast.exp_assign_pos = no_pos} in
-  let bexp = Iast.Bind {
-      exp_bind_bound_var = CP.name_of_sv bvar;
-      exp_bind_fields = [f_name];
-      exp_bind_body = body;
-      exp_bind_path_id = None;
-      exp_bind_pos = no_pos;
-    } in bexp
-
 let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
                        I.exp_var_pos = no_pos}
 
@@ -1089,7 +1065,28 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
                             I.exp_assign_path_id = None;
                             I.exp_assign_pos = no_pos} in
     assign
-  | RlBind rbind -> aux_rbind rbind   (* Bind write *)
+  | RlBind rbind ->
+    let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
+    let rhs = rbind.rb_other_var in
+    let rhs_var = I.Var {
+        I.exp_var_name = CP.name_of_sv rhs;
+        I.exp_var_pos = no_pos} in
+    let mem_var = Iast.Var {
+        I.exp_var_name = CP.name_of_sv bvar;
+        I.exp_var_pos = no_pos} in
+    let exp_mem = I.Member {
+        exp_member_base = mem_var;
+        exp_member_fields = [f_name];
+        exp_member_path_id = None;
+        exp_member_pos = no_pos
+      } in
+    Iast.Assign {
+      I.exp_assign_op = Iast.OpAssign;
+      I.exp_assign_lhs = exp_mem;
+      I.exp_assign_rhs = rhs_var;
+      I.exp_assign_path_id = None;
+      I.exp_assign_pos = no_pos}
+
   | RlFRead rule -> let lhs = rule.rbr_value in
     let bvar, (typ, f_name) = rule.rbr_bound_var, rule.rbr_field in
     let exp_decl = I.VarDecl {
@@ -1104,7 +1101,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
                              I.exp_assign_op = I.OpAssign;
                              I.exp_assign_rhs = rhs_var;
                              I.exp_assign_path_id = None;
-                             I.exp_assign_pos = no_pos } in
+                              I.exp_assign_pos = no_pos } in
     let bind = Iast.Bind { exp_bind_bound_var = CP.name_of_sv bvar;
                            exp_bind_fields = [f_name];
                            exp_bind_body = body;
