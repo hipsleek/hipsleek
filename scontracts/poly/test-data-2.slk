@@ -1,8 +1,38 @@
 // polymorphic node
-data nodep[T]{
-   `T val;
-   nodep[`T] next;
+// data nodep[T]{
+//    `T val;
+//    nodep[`T] next;
+// }.
+
+data nodep[T1,T2]{
+   `T1 val1;
+   `T2 val2;
+   nodep[`T1,`T2] next;
 }.
+
+// data nodep[T1,T2,T3]{
+//    `T1 val1;
+//    `T2 val2;
+//    `T3 val3;
+//    nodep[`T1,`T2] next;
+// }.
+
+// data nodep[T1,T2,T3]{
+//    `T1 val1;
+//    `T2 val2;
+//    `T3 val3;
+//    nodep[`T1,`T2,`T3] next;
+// }.
+
+// x::nodep<3,true,_>  [val2:int,val1:bool]
+
+// 1. infer type of data arguments (int, bool, nodep[bool,int]) ==> the ones after the heap nodes
+// 2. match against the data parameter T1 T2 ==> after the data declaration
+// 3. create a map from data parameter to data argument (T1->int, T2->bool)
+// 4. use the map from 3 to construct the list of data poly arguments "subst map [T2,T1]" => (bool,int)
+
+
+// [int,bool] [bool,int]
 
 data node{
    bool val;
@@ -10,52 +40,76 @@ data node{
 }.
 
 //1
-checkentail x::nodep<3,t> |- x::nodep<3,t>.
+checkentail x::nodep<3,true,t>[int,bool] |- x::nodep<3,true,t>[int,bool].
 print residue.
 expect Valid.
 
-//2
-checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
-print residue.
-expect Valid.
+// checkentail x::nodep<true,t>[int] |- x::nodep<true,t>[int].
+// print residue.
+// expect Valid.
 
-//3
-checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
-print residue.
-expect Valid.
+// checkentail x::nodep<3,t>[bool] |- x::nodep<3,t>[bool].
+// print residue.
+// expect Valid.
 
-//4
-checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
-print residue.
-expect Valid.
+// checkentail x::nodep<3,4,t>[int,int] |- x::nodep<3,_,t>[int,int].
+// print residue.
+// expect Valid.
 
-//5
-//should throw exception because of type mismatch
-checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
-print residue.
-expect Fail.
+// checkentail x::nodep<true,t>[bool] |- x::nodep<true,t>[bool].
+// print residue.
+// expect Valid.
 
-//6
-checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
-print residue.
-expect Valid.
+// checkentail x::node<true,_> |- x::node<true,_>.
 
-//7
-checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
-print residue.
-expect Fail.
+// checkentail x::nodep<3,4,5,t>[int,int,int] |- x::nodep<3,_,_,t>[int,int,int].
+// print residue.
+// expect Valid.
 
-//8
-checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[bool].
-print residue.
-expect Fail.
 
-//9
-checkentail x::node<a>0,t> |- x::node<aaa,t>.
-print residue.
-expect Valid.
+// //2
+// checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+// print residue.
+// expect Valid.
 
-//10
-checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[int].
-print residue.
-expect Valid.
+// //3
+// checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
+// print residue.
+// expect Valid.
+
+
+// //4
+// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
+// print residue.
+// expect Valid.
+
+// //5
+// //should throw exception because of type mismatch
+// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
+// print residue.
+// expect Fail.
+
+// //6
+// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
+// print residue.
+// expect Valid.
+
+// //7
+// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
+// print residue.
+// expect Fail.
+
+// //8
+// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[bool].
+// print residue.
+// expect Fail.
+
+// //9
+// checkentail x::node<a>0,t> |- x::node<aaa,t>.
+// print residue.
+// expect Valid.
+
+// //10
+// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[int].
+// print residue.
+// expect Valid.

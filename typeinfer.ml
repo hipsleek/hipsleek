@@ -457,7 +457,7 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
 and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
-  let () = y_ninfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
+  let () = y_binfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
@@ -469,7 +469,7 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
       match ty with
       | Poly _  -> tlist, Some ty
       | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
-      | Int | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _ | Named _
+      | Int | Bool | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _ | Named _
         ->
         begin
           match t0.sv_info_kind with
@@ -708,6 +708,7 @@ and gather_type_info_var_x (var : ident) tlist (ex_t : spec_var_kind) pos : (spe
   if (is_dont_care_var var) then
     (tlist, UNK) (* for vars such as _ and # *)
   else
+
     try
       let (ident, k) = List.find (fun (a,b) -> a = var) tlist in  (* higher order func, return the first ele in the tlist *)
       let (n_tlist,tmp) = x_add must_unify k.sv_info_kind ex_t tlist pos in
@@ -1879,7 +1880,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
   | IF.HeapNode { IF.h_formula_heap_node = (v, p); (* ident, primed *)
                   IF.h_formula_heap_arguments = ies; (* arguments *)
                   IF.h_formula_heap_ho_arguments = hoa; (* rho arguments *)
-                  IF.h_formula_heap_poly_arguments = poly;
+                  IF.h_formula_heap_poly_arguments = poly; (* heap poly args *)
                   IF.h_formula_heap_deref = deref;
                   IF.h_formula_heap_perm = perm;
                   IF.h_formula_heap_name = v_name; (* data/pred name *)
@@ -1913,14 +1914,19 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | None -> tl
       | Some e -> let (n_tl,_) = x_add gather_type_info_exp prog e tl ft in n_tl
     ) in
+    (* open square and close square after the heap node *)
+    (* the problem is how to access and infer the type of the poly data args *)
     let num_poly_args = List.length poly in
+    x_binfo_hp (add_str "num of poly args" (pr_list string_of_typ)) poly no_pos;
     let data_def =
         (try
           let data_d = I.look_up_data_def_raw prog.I.prog_data_decls v_name in
           data_d
          with
-            | Not_found -> report_error pos (" cannot find the heap name in data decls! ")) in
+         | Not_found -> report_error pos (" cannot find the heap name in data decls! ")) in
+    (* poly parameters after the data declaration *)
     let num_poly_vars = List.length data_def.data_poly_para in
+    x_binfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident))data_def.data_poly_para no_pos;
     let gather_type_info_poly vname tname lst tl = (
       match lst with
       | [] ->
@@ -1936,7 +1942,11 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     let n_tl = x_add gather_type_info_ann ann n_tl in
     let n_tl = (* if (!Globals.allow_field_ann) then *) x_add gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
     let n_tl = x_add gather_type_info_ho_args hoa n_tl in
+    let (ntl1, _) = List.split n_tl in
+    x_binfo_hp (add_str "type list1:" (pr_list Cprinter.string_of_ident)) ntl1 no_pos;
     let n_tl = x_add gather_type_info_poly v v_name poly n_tl in
+    let (ntl2, _) = List.split n_tl in
+    x_binfo_hp (add_str "type list2:" (pr_list Cprinter.string_of_ident)) ntl2 no_pos;
     (* Deal with the generic pointer! *)
     if (v_name = Parser.generic_pointer_type_name) then
       (* Assumptions:
@@ -2010,6 +2020,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
          | Not_found ->
            (try
               let n_tl = x_add try_unify_data_type_args prog v_name v deref ies n_tl pos in
+              (* collect poly types corresponding to the data poly param, and then populate the poly args list *)
               n_tl
             with
             | Not_found ->
