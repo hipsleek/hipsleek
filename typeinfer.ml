@@ -1531,8 +1531,9 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       (* keep the non-poly value because we need to update the ddef which needs all the fields *)
       (* ****************** *)
       let fldls_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist fld_typs in
-      let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs in
-      (* let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fldls_w_freshed_poly_typs in *)
+      let fldls_w_freshed_poly_typs_rev = List.rev fldls_w_freshed_poly_typs in
+      let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs_rev in
+      let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
       (* let fld_typs = subst_all_poly_w_poly fldls_w_freshed_poly_typs fld_typs in *)
       (* ****************** *)
       (* remove the duplicated poly types *)
