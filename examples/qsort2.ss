@@ -53,7 +53,7 @@ void test3(node x)
 
 void qsort(ref node x, ref node tx)
 	requires x::bnd_tail<n, tx, sm, lg> & n>0
-	ensures x'::ll_tail<m, tx', sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n ;
+	ensures x'::ll_tail<m, tx', snm1, lg1> & sm <= sm1 & lg1 <= lg & m = n ;
 {
 	if (x == null) return; // not needed
 	else if (x.next == null) {

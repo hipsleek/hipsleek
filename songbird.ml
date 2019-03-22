@@ -144,6 +144,7 @@ let translate_back_pos (pos:SBGlobals.pos) : VarGen.loc =
 
 let translate_type (typ: Globals.typ) : SBGlobals.typ =
   match typ with
+  | NUM
   | Int -> SBGlobals.TInt
   | TVar num -> SBGlobals.TVar num
   | Bool -> SBGlobals.TBool
@@ -635,8 +636,6 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
   let sb_data_decls = List.map translate_data_decl data_decls in
   let view_decls = prog.Cast.prog_view_decls in
-  let view_decls = List.filter
-      (fun x -> String.compare x.Cast.view_name "ll" = 0) view_decls in
   let pr2 = CPR.string_of_view_decl_list in
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
   let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
@@ -820,7 +819,8 @@ let check_pure_entail ante conseq =
     | SBGlobals.MvlTrue -> true
     | _ -> false
 
-let get_residues ptrees =     List.map (fun ptree ->
+let get_residues ptrees =
+  List.map (fun ptree ->
     let residue_fs = SBPFE.get_ptree_residues ptree in
     let pr_rsd = SBCast.pr_fs in
     let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in

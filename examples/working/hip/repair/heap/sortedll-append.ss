@@ -20,3 +20,5 @@ void append(node x, node y)
     }
 
 }
+
+// x::node<s0, fl> * y::sll

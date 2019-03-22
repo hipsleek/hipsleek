@@ -12,6 +12,7 @@ module Syn = Synthesis
 module I = Iast
 
 let pr_proc = Iprinter.string_of_proc_decl
+let pr_iprog = Iprinter.string_of_program
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 let pr_struc_f = Cprinter.string_of_struc_formula

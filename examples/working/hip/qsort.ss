@@ -21,7 +21,7 @@ sll<n, sm, lg> ==
 // 	node tmp1;
 // 	int v; 
 
-// 	if (xs == null)
+// 	if (xs == null) 
 // 		return null;
 // 	else
 // 	{
