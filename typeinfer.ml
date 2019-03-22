@@ -1534,6 +1534,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let fldls_w_freshed_poly_typs_rev = List.rev fldls_w_freshed_poly_typs in
       let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs_rev in
       let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
+      let () = y_binfo_hp (add_str "ids: " (pr_list Cprinter.string_of_ident)) ids in
       (* let fld_typs = subst_all_poly_w_poly fldls_w_freshed_poly_typs fld_typs in *)
       (* ****************** *)
       (* remove the duplicated poly types *)
@@ -1551,7 +1552,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp ~args:(fresh_poly_typs) c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
       try
-        (*fields may contain offset field and not-in-used*)
+        (* fields may contain offset field and not-in-used *)
         let () = x_tinfo_hp (add_str "ies(1)" pr_args) ies no_pos in
         (* let ies = add_last_diff ies fields ([]) in *)
         let () = x_tinfo_hp (add_str "ies(2)" pr_args) ies no_pos in
@@ -1930,8 +1931,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     x_binfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident))data_def.data_poly_para no_pos;
     let gather_type_info_poly vname tname lst tl = (
       match lst with
-      | [] ->
-        if (num_poly_args = num_poly_vars) then tl else report_error pos (" the number of this heap poly arguments is not equal to the previous data declaration poly vars! ")
+      | [] -> tl
+        (* if (num_poly_args = num_poly_vars) then tl else report_error pos (" the number of this heap poly arguments is not equal to the previous data declaration poly vars! ") *)
       | _  ->    (* step1: add the pointer typ to the tlist *)
         let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
         (* step2: check whether the number of this one is equal to the previous data declaration's. Should this be in the parser part? *)
@@ -2022,6 +2023,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
            (try
               let n_tl = x_add try_unify_data_type_args prog v_name v deref ies n_tl pos in
               (* collect poly types corresponding to the data poly param, and then populate the poly args list *)
+
               n_tl
             with
             | Not_found ->

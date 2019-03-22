@@ -1,28 +1,30 @@
 // polymorphic node
-// data nodep[T]{
-//    `T val;
-//    nodep[`T] next;
-// }.
-
-data nodep[T1,T2]{
-   `T1 val1;
-   `T2 val2;
-   nodep[`T1,`T2] next;
+data nodep[T]{
+   `T val;
+   nodep[`T] next;
 }.
 
-// data nodep[T1,T2,T3]{
+data nodep2[T1,T2]{
+   `T1 val1;
+   `T2 val2;
+   nodep2[`T1,`T2] next;
+}.
+
+
+// todo
+// data nodep3[T1,T2,T3]{
 //    `T1 val1;
 //    `T2 val2;
 //    `T3 val3;
 //    nodep[`T1,`T2] next;
 // }.
 
-// data nodep[T1,T2,T3]{
-//    `T1 val1;
-//    `T2 val2;
-//    `T3 val3;
-//    nodep[`T1,`T2,`T3] next;
-// }.
+data nodep3[T1,T2,T3]{
+   `T1 val1;
+   `T2 val2;
+   `T3 val3;
+   nodep[`T1,`T2,`T3] next;
+}.
 
 // x::nodep<3,true,_>  [val2:int,val1:bool]
 
@@ -40,76 +42,104 @@ data node{
 }.
 
 //1
-checkentail x::nodep<3,true,t>[int,bool] |- x::nodep<3,true,t>[int,bool].
+checkentail x::nodep2<3,true,t>[int,bool] |- x::nodep2<3,true,t>[int,int].
+print residue.
+expect Fail.
+
+//2
+checkentail x::nodep2<3,true,t>[int] |- x::nodep2<3,true,t>[int,int].
+print residue.
+expect Fail.
+
+//3
+checkentail x::nodep2<3,true,t> |- x::nodep2<3,true,t>.
 print residue.
 expect Valid.
 
-// checkentail x::nodep<true,t>[int] |- x::nodep<true,t>[int].
-// print residue.
-// expect Valid.
+//4
+checkentail x::nodep2<3,true,t>[int,int] |- x::nodep2<3,true,t>[int,int].
+print residue.
+expect Fail.
 
-// checkentail x::nodep<3,t>[bool] |- x::nodep<3,t>[bool].
-// print residue.
-// expect Valid.
+//5
+checkentail x::nodep2<3,2,t>[int,bool] |- x::nodep2<3,2,t>[int,bool].
+print residue.
+expect Fail.
 
-// checkentail x::nodep<3,4,t>[int,int] |- x::nodep<3,_,t>[int,int].
-// print residue.
-// expect Valid.
+//6
+checkentail x::nodep2<3,2,t>[int,bool,int] |- x::nodep2<3,2,t>[int,bool,int].
+print residue.
+expect Fail.
 
-// checkentail x::nodep<true,t>[bool] |- x::nodep<true,t>[bool].
-// print residue.
-// expect Valid.
+//7
+checkentail x::nodep2<3,false,t>[int,bool] |- x::nodep2<3,false,t>[int,bool].
+print residue.
+expect Valid.
+
+//8
+checkentail x::nodep<true,t>[int] |- x::nodep<true,t>[int].
+print residue.
+expect Fail.
+
+//9
+checkentail x::nodep<3,t>[bool] |- x::nodep<3,t>[bool].
+print residue.
+expect Fail.
+
+//10
+checkentail x::nodep<true,t>[bool] |- x::nodep<true,t>[bool].
+print residue.
+expect Valid.
 
 // checkentail x::node<true,_> |- x::node<true,_>.
 
-// checkentail x::nodep<3,4,5,t>[int,int,int] |- x::nodep<3,_,_,t>[int,int,int].
-// print residue.
-// expect Valid.
+//11
+checkentail x::nodep3<3,4,5,t>[int,int,int] |- x::nodep3<3,_,_,t>[int,int,int].
+print residue.
+expect Valid.
 
+//12
+checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
-// //2
-// checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
+//13
+checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
-// //3
-// checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
+//14
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
+print residue.
+expect Valid.
 
+//15
+//should throw exception because of type mismatch
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
+print residue.
+expect Fail.
 
-// //4
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<aaa,t>.
-// print residue.
-// expect Valid.
+//16
+checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
+print residue.
+expect Valid.
 
-// //5
-// //should throw exception because of type mismatch
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<3,t>. //=> x::nodep<aaa,t> & aaa=3
-// print residue.
-// expect Fail.
+//17 ---  ??? Fail or Valid?
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
+print residue.
+expect Fail.
 
-// //6
-// checkentail x::nodep<qq,p> * qq::node<_,_> & p=t |- x::nodep<a,t>.
-// print residue.
-// expect Valid.
+//18
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[bool].
+print residue.
+expect Fail.
 
-// //7
-// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>.
-// print residue.
-// expect Fail.
+//19  --- ???
+checkentail x::node<a>0,t> |- x::node<aaa,t>.
+print residue.
+expect Valid.
 
-// //8
-// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[bool].
-// print residue.
-// expect Fail.
-
-// //9
-// checkentail x::node<a>0,t> |- x::node<aaa,t>.
-// print residue.
-// expect Valid.
-
-// //10
-// checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[int].
-// print residue.
-// expect Valid.
+//20
+checkentail x::nodep<a,t>[int] |- x::nodep<aaa,t>[int].
+print residue.
+expect Valid.
