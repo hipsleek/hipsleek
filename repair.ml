@@ -21,8 +21,8 @@ let filter_cand buggy_loc cand =
   match buggy_loc with
   | Some b_loc ->
     let cand_pos = Iast.get_exp_pos cand in
-    let () = x_tinfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc no_pos in
-    let () = x_tinfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos no_pos in
+    let () = x_binfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc no_pos in
+    let () = x_binfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos no_pos in
     let b_lnum = b_loc.start_pos.Lexing.pos_lnum in
     let cand_lnum = cand_pos.start_pos.Lexing.pos_lnum in
     b_lnum = cand_lnum
@@ -112,7 +112,7 @@ let start_repair (iprog:I.prog_decl) =
     else let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
       List.hd r_progs
   | _ -> None
-
+ 
 let rec start_repair_wrapper iprog =
   let tmp = start_repair iprog in
   tmp

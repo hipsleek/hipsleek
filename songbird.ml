@@ -630,8 +630,6 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
 
 let translate_prog (prog:Cast.prog_decl) =
   let data_decls = prog.Cast.prog_data_decls in
-  let data_decls = List.filter
-      (fun x -> String.compare x.Cast.data_name "node" = 0) data_decls in
   let pr1 = CPR.string_of_data_decl_list in
   let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
   let sb_data_decls = List.map translate_data_decl data_decls in
@@ -640,11 +638,11 @@ let translate_prog (prog:Cast.prog_decl) =
   let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
   let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
   let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+  let () = x_tinfo_hp (add_str "hp decls" pr_hps) hps no_pos in
   let sb_hp_views = List.map translate_hp hps in
   let sb_view_decls = List.map translate_view_decl view_decls in
   let pr_hps = pr_list SBCast.pr_view_defn in
   let sb_view_decls = sb_view_decls @ sb_hp_views in
-  let () = x_tinfo_hp (add_str "hp view decls" pr_hps) sb_view_decls no_pos in
   let prog = SBCast.mk_program "heap_entail" in
   let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
                         SBCast.prog_views = sb_view_decls} in
@@ -654,10 +652,14 @@ let translate_prog (prog:Cast.prog_decl) =
   n_prog
 
 let solve_entailments prog entailments =
-  let sb_entailments = List.map translate_entailment entailments in
+  let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
+  let () = x_binfo_hp (add_str "entailments" pr_ents) entailments no_pos in
+  let sb_ents = List.map translate_entailment entailments in
+  let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
-  let ptree = SBPU.solve_entailments sb_prog sb_entailments in
+  let ptree = SBPU.solve_entailments sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
+  let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBGlobals.MvlTrue then
     let vdefns = SBPFU.get_solved_vdefns ptree in
     let () = x_binfo_hp (add_str "vdefns" SBCast.pr_vdfs) vdefns no_pos in
@@ -936,8 +938,15 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     let vars = vars |> List.filter (fun x -> match CP.type_of_sv x with
         | Int | Named _ -> true
         | _ -> false) in
-    let conseq = bf.CF.formula_struc_base in
+    let exists_vars = bf.CF.formula_struc_exists
+                      @ bf.CF.formula_struc_explicit_inst
+                      @ bf.CF.formula_struc_implicit_inst
+                    |> CP.remove_dups_svl in
+    let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
+    let () = x_binfo_hp (add_str "conseq" pr_struc_f) (CF.EBase bf) no_pos in
+    let () = x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos in
     let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
+    let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in
     let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
     let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in

@@ -423,7 +423,7 @@ let contains s1 s2 =
         try ignore (Str.search_forward re s1 0); true
         with Not_found -> false
 
-let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
+let rec add_h_formula_to_formula_x added_hf (formula:CF.formula) : CF.formula =
   match formula with
   | Base bf -> let hf = bf.formula_base_heap in
     let n_hf = CF.mkStarH hf added_hf no_pos in
@@ -431,10 +431,15 @@ let rec add_h_formula_to_formula added_hf (formula:CF.formula) : CF.formula =
   | Exists bf -> let hf = bf.formula_exists_heap in
     let n_hf = CF.mkStarH hf added_hf no_pos in
     Exists {bf with formula_exists_heap = n_hf}
-  | Or bf -> let n_f1 = add_h_formula_to_formula added_hf bf.formula_or_f1 in
-    let n_f2 = add_h_formula_to_formula added_hf bf.formula_or_f2 in
+  | Or bf -> let n_f1 = add_h_formula_to_formula_x added_hf bf.formula_or_f1 in
+    let n_f2 = add_h_formula_to_formula_x added_hf bf.formula_or_f2 in
     Or {bf with formula_or_f1 = n_f1;
                 formula_or_f2 = n_f2}
+
+let add_h_formula_to_formula added_hf formula =
+  Debug.no_2 "add_h_formula_to_formula" pr_hf pr_formula pr_formula
+    (fun _ _ -> add_h_formula_to_formula_x added_hf formula) added_hf formula
+
 
 let rec simpl_f (f:CF.formula) = match f with
   | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
@@ -927,6 +932,33 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
     else Exists {bf with CF.formula_exists_qvars = n_qvars}
   | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
     let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
+    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
+let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
+  match formula with
+  | Base {
+      formula_base_heap = heap;
+      formula_base_vperm = vp;
+      formula_base_pure = pure;
+      formula_base_type = t;
+      formula_base_and = a;
+      formula_base_flow = fl;
+      formula_base_label = lbl;
+      formula_base_pos = pos } ->
+    CF.mkExists_w_lbl vars heap pure vp t fl a pos lbl
+  | Exists ({formula_exists_qvars = qvars;
+             formula_exists_heap =  h;
+             formula_exists_vperm = vp;
+             formula_exists_pure = p;
+             formula_exists_type = t;
+             formula_exists_and = a;
+             formula_exists_flow = fl;
+             formula_exists_label = lbl;
+             formula_exists_pos = pos } as bf) ->
+    let n_qvars = CP.remove_dups_svl (qvars @ vars) in
+    CF.mkExists_w_lbl n_qvars h p vp t fl a pos lbl
+  | Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
+    let n_f2 = add_exists_vars bf.formula_or_f2 vars in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
 let remove_exists (formula:CF.formula) =

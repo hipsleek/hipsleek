@@ -832,7 +832,6 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
 
 let synthesize_entailments iprog prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
-  let () = x_binfo_hp (add_str "all collected entailments: \n" (pr_list (pr_pair pr_formula pr_formula))) entailments no_pos in
   let hps = SB.solve_entailments prog entailments in
   match hps with
   | None -> ()

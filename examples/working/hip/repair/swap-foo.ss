@@ -34,6 +34,9 @@ void swap(node x, node y)
   // -> {x::node<a> * y::node<b> & t = a} fcode(x,y) {exists k.y-> node<k> * x->node<b>}
   // x::node<b> * y::node<a>
 }
+// x::node<a> * y ::node<b> & t = a
+// x.val = y.val
+// x::node<b> * y::node<val_11> 
 
 /* Round 1: original constraints
 

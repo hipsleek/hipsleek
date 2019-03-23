@@ -3182,6 +3182,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   if (is_reachable_succ) then
     rs
   else begin
+    (* let () = repair_loc := Some pos in *)
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
