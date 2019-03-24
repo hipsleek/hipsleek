@@ -30,10 +30,10 @@ int length(node x)
 // ~>
 // (exists n_94: x::ll<n_94> &res=n & n_94=n).
  
-synthesize[node x, int k]
-x::ll<n> & !(v_bool_20_1893) & x!=null
-~>
-x::ll<n> & k=n .
+// synthesize[node x, int k]
+// x::ll<n> & !(v_bool_20_1893) & x!=null
+// ~>
+// x::ll<n> & k=n .
 
 // synthesize[node x]
 // x::ll<n> & !(v_bool_20_1893) & x!=null
@@ -47,3 +47,13 @@ x::ll<n> & k=n .
 // (exists flted_7_52,v_53,q_54: x::node<v_53,q_54> * q_54::ll<flted_7_52> &
 // k=n & flted_7_52+1=n_94).
 
+
+// synthesize [node x, int k]
+// x::ll<n> & x = null
+// ~>
+// x = null & res = n.
+
+synthesize [node x, int k]
+x = null & n = 0
+~>
+x = null & res = n.

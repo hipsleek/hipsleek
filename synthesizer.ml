@@ -241,7 +241,7 @@ let choose_rule_f_write goal : rule list =
   let rules = vars |> List.map (choose_rassign_data goal) in
   rules |> List.concat
 
-let choose_rule_assign goal : rule list =
+let choose_rule_assign_x goal : rule list =
   let vars = goal.gl_vars in
   let pr_sv = Cprinter.string_of_spec_var in
   let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
@@ -254,6 +254,10 @@ let choose_rule_assign goal : rule list =
       []  in
   let rules = List.map choose_rule vars in
   List.concat rules
+
+let choose_rule_assign goal =
+  Debug.no_1 "choose_rule_assign" pr_goal pr_rules
+    (fun _ -> choose_rule_assign_x goal) goal
 
 (*********************************************************************
  * Choose function call rules
@@ -461,7 +465,6 @@ let choose_rule_fread goal =
   Debug.no_1 "choose_rule_fread" pr_goal pr_rules
     (fun _ -> choose_rule_fread_x goal) goal
 
-
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
@@ -592,10 +595,59 @@ let choose_rule_instantiate goal =
       }) in
   exists_vars |> List.map helper |> List.concat
 
+let choose_rule_var_init goal =
+  let vars, pre = goal.gl_vars, goal.gl_pre_cond in
+  let pre_vars = CF.fv pre |> List.filter
+                   (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) in
+  let rec find_eq_var var (formula:CP.formula) = match formula with
+    | CP.BForm (bf, _) -> let pf, _ = bf in
+      begin
+        match pf with
+        | CP.Eq (e1, e2, _) ->
+          (match e1 with
+           | CP.Var (sv,_) -> if CP.eq_sv sv var then [e2] else []
+           | _ -> [])
+        | _ -> []
+      end
+    | CP.Or (f1, f2, _,_)
+    | CP.And (f1, f2, _) -> (find_eq_var var f1) @ (find_eq_var var f2)
+    | CP.AndList list ->
+      list |> List.map snd |> List.map (find_eq_var var) |> List.concat
+    | Not (f, _, _)   | Forall (_, f, _, _)
+    | Exists (_, f,_,_) -> find_eq_var var f in
+  let create_init_rule var exp = RlVarInit {
+      rvi_var = var;
+      rvi_rhs = exp;
+    } in
+  let aux var = let var_f = extract_var_f pre var in
+    match var_f with
+    | None -> []
+    | Some varf -> if CF.is_emp_formula varf then
+        let pf = CF.get_pure varf in
+        let eq_vars = find_eq_var var pf in
+        List.map (create_init_rule var) eq_vars
+      else [] in
+  List.map aux pre_vars |> List.concat
+
+let choose_rule_return goal =
+  let post = goal.gl_post_cond in
+  let post_vars = CF.fv post |> List.map CP.name_of_sv in
+  if List.exists (fun x -> eq_str x "res") post_vars then
+    let res = List.find (fun x -> eq_str (CP.name_of_sv x) "res") (CF.fv post) in
+    let is_return rule = match rule with
+      | RlAssign rl -> CP.eq_sv res rl.ra_lhs
+      | _ -> false in
+    let n_goal = {goal with gl_vars = res::goal.gl_vars} in
+    let rules = choose_rule_assign n_goal in
+    let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+    rules |> List.filter is_return
+  else []
+
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
+  let rs = rs @ (choose_rule_var_init goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
@@ -604,6 +656,7 @@ let choose_synthesis_rules goal : rule list =
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_return goal) in
   rs
 
 (*********************************************************************
@@ -744,6 +797,11 @@ and process_rule_unfold_post goal rule =
                           gl_trace = (RlUnfoldPost rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlUnfoldPost rule) [n_goal]
 
+let process_rule_vinit goal rule =
+  let vars = goal.gl_vars @ [rule.rvi_var] in
+  let n_goal = {goal with gl_vars = vars} in
+  mk_derivation_subgoals goal (RlVarInit rule) [n_goal]
+
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -778,6 +836,7 @@ and process_one_rule goal rule : derivation =
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
   | RlFRead rule -> process_rule_f_read goal rule
   | RlInstantiate rule -> process_rule_instantiate goal rule
+  | RlVarInit rule -> process_rule_vinit goal rule
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =

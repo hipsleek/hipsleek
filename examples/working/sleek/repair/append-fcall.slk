@@ -26,3 +26,5 @@ x::node<Anon_4396,q_4397> * q_4397::ll<flted_7_4395> * y::ll<n2> &
 x!=null & flted_7_4395+1=n1 & q_4397!=null
 ~>
 (exists f_r_4411: x::ll<f_r_4411> & f_r_4411=flted_7_4395+n2+1).
+
+// pre: x::ll<n> & x = null

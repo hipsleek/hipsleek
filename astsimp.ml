@@ -4142,7 +4142,9 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
        Err.report_error{
          Err.error_loc = p.I.param_loc;
          Err.error_text = "parameter " ^ (p.I.param_name ^ " is duplicated");})
-    else if (not check_return_res) && (String.compare proc.I.proc_name "main" != 0) then
+    else if (not check_return_res)
+         && (String.compare proc.I.proc_name "main" != 0)
+         && not(!Globals.enable_repair)then
       Err.report_error {
         Err.error_loc = proc.I.proc_loc;
         Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }

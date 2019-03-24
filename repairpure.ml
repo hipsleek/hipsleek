@@ -25,12 +25,12 @@ let get_stmt_candidates (exp: I.exp) =
     | I.Cond exp_cond -> let exp2_list = aux exp_cond.exp_cond_then_arm list in
       aux exp_cond.exp_cond_else_arm exp2_list
     | I.Label (a, lexp) -> aux lexp list
-    | I.Return res ->
-      begin
-        match res.exp_return_val with
-        | None -> list
-        | Some e -> aux e list
-      end
+    (* | I.Return res ->
+     *   begin
+     *     match res.exp_return_val with
+     *     | None -> list
+     *     | Some e -> aux e list
+     *   end *)
     | I.Seq exp_seq -> let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
     | I.Var _ | I.VarDecl _ -> list
@@ -95,10 +95,7 @@ let rec replace_exp exp n_exp old_exp : I.exp =
   | Label (a, body) -> Label (a, replace_exp body n_exp old_exp)
   | Member e ->
     Member {e with exp_member_base = replace_exp e.exp_member_base n_exp old_exp}
-  | Return e -> let r_val = match e.exp_return_val with
-      | None -> None
-      | Some e -> Some (replace_exp e n_exp old_exp) in
-    Return {e with exp_return_val = r_val}
+  | Return e -> if eq_exp exp old_exp then n_exp else exp
   | Seq e -> let r_e1 = replace_exp e.exp_seq_exp1 n_exp old_exp in
     let r_e2 = replace_exp e.exp_seq_exp2 n_exp old_exp in
     Seq {e with exp_seq_exp1 = r_e1; exp_seq_exp2 = r_e2}

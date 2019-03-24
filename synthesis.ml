@@ -43,11 +43,17 @@ exception EPrio of priority
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
+  | RlVarInit of rule_vinit
   | RlBind of rule_bind
   | RlFRead of rule_bind_read
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlInstantiate of rule_instantiate
+
+and rule_vinit = {
+  rvi_var: CP.spec_var;
+  rvi_rhs: CP.exp;
+}
 
 and rule_instantiate = {
   rli_lhs: CP.spec_var;
@@ -265,6 +271,7 @@ let pr_rule rule = match rule with
   | RlUnfoldPre rule -> "RlUnfoldPre" ^ (rule.n_pre_formulas |> pr_list pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate _ -> "RlInstantiate"
+  | RlVarInit _ -> "RlVarInit"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -435,137 +442,6 @@ let extract_var_f formula var =
        | None -> "None"
        | Some varf -> pr_formula varf)
     (fun _ _ -> extract_var_f_x formula var) formula var
-
-
-(*********************************************************************
- * Rule utilities
- *********************************************************************)
-
-(* check useless *)
-
-let is_rule_func_call_useless r =
-  (* TODO *)
-  true
-
-let is_rule_asign_useless r =
-  (* TODO *)
-  true
-
-let is_rule_bind_useless r =
-  (* TODO *)
-  true
-
-let is_rule_fread_useless goal r =
-  let var = r.rbr_value in
-  let post_vars = CF.fv goal.gl_post_cond in
-  if List.exists (fun x -> CP.eq_sv x var) post_vars then true
-  else
-    let arg_f = extract_var_f goal.gl_pre_cond var in
-      match arg_f with
-      | None -> false
-      | Some arg_f -> if CF.is_emp_formula arg_f then false
-        else true
-
-let eliminate_useless_rules goal rules =
-  List.filter (fun rule ->
-    match rule with
-    | RlFuncCall r -> is_rule_func_call_useless r
-    | RlAssign r -> is_rule_asign_useless r
-    | RlBind r -> is_rule_bind_useless r
-    | RlFRead r -> (* true *) is_rule_fread_useless goal r
-    | RlInstantiate _ -> true
-    | RlUnfoldPost _ -> true
-    | RlUnfoldPre _ -> true) rules
-
-(* compare func_call with others *)
-
-let compare_rule_func_call_vs_func_call r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_func_call_vs_assign r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_func_call_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_func_call_vs_other r1 r2 =
-  match r2 with
-  | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-(* compare assign with others *)
-
-let compare_rule_assign_vs_func_call r1 r2 =
-  negate_priority (compare_rule_func_call_vs_assign r2 r1)
-
-let compare_rule_assign_vs_assign r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_assign_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_assign_vs_other r1 r2 =
-  match r2 with
-  | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-(* compare wbind with others *)
-
-let compare_rule_wbind_vs_func_call r1 r2 =
-  negate_priority (compare_rule_func_call_vs_wbind r2 r1)
-
-let compare_rule_wbind_vs_assign r1 r2 =
-  negate_priority (compare_rule_assign_vs_wbind r2 r1)
-
-let compare_rule_wbind_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_wbind_vs_other r1 r2 =
-  match r2 with
-  | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-(* reordering rules *)
-
-let compare_rule r1 r2 =
-  match r1 with
-  | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
-  | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
-  | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-let reorder_rules goal rules =
-  let cmp_rule r1 r2 =
-    let prio = compare_rule r1 r2 in
-    match prio with
-    | PriEqual -> 0
-    | PriLow -> -1
-    | PriHigh -> +1 in
-  List.sort cmp_rule rules
 
 
 (*****************************************************
@@ -1197,6 +1073,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         I.Seq { exp_seq_exp1 = seq;
                 exp_seq_exp2 = st_code;
                 exp_seq_pos = no_pos}
+  | _ -> report_error no_pos "this case unhandled"
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
@@ -1248,3 +1125,143 @@ let replace_exp_proc n_exp proc =
   let () = x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos in
   let () = x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
+
+let rec get_heap (formula:CF.formula) = match formula with
+  | Base bf -> [bf.CF.formula_base_heap]
+  | Exists bf -> [bf.CF.formula_exists_heap]
+  | Or bf -> (get_heap bf.CF.formula_or_f1) @ (get_heap bf.CF.formula_or_f2)
+
+(*********************************************************************
+ * Rule utilities
+ *********************************************************************)
+
+(* check useless *)
+
+let is_rule_func_call_useless r =
+  (* TODO *)
+  true
+
+let is_rule_asign_useless r =
+  (* TODO *)
+  true
+
+let is_rule_bind_useless r =
+  (* TODO *)
+  true
+
+let is_rule_fread_useless goal r =
+  let var = r.rbr_value in
+  let post_vars = CF.fv goal.gl_post_cond in
+  if List.exists (fun x -> CP.eq_sv x var) post_vars then true
+  else
+    let arg_f = extract_var_f goal.gl_pre_cond var in
+      match arg_f with
+      | None -> false
+      | Some arg_f -> if CF.is_emp_formula arg_f then false
+        else true
+
+let eliminate_useless_rules goal rules =
+  List.filter (fun rule ->
+    match rule with
+    | RlFuncCall r -> is_rule_func_call_useless r
+    | RlAssign r -> is_rule_asign_useless r
+    | RlBind r -> is_rule_bind_useless r
+    | RlFRead r -> is_rule_fread_useless goal r
+    | RlInstantiate _ -> true
+    | RlVarInit _ -> true
+    | RlUnfoldPost _ -> true
+    | RlUnfoldPre _ -> true) rules
+
+(* compare func_call with others *)
+
+let compare_rule_func_call_vs_func_call r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_func_call_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+  | RlVarInit _ -> PriEqual
+
+(* compare assign with others *)
+
+let compare_rule_assign_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_assign r2 r1)
+
+let compare_rule_assign_vs_assign r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_assign_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+  | RlVarInit _ -> PriEqual
+
+(* compare wbind with others *)
+
+let compare_rule_wbind_vs_func_call r1 r2 =
+  negate_priority (compare_rule_func_call_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_assign r1 r2 =
+  negate_priority (compare_rule_assign_vs_wbind r2 r1)
+
+let compare_rule_wbind_vs_wbind r1 r2 =
+  (* TODO *)
+  PriEqual
+
+let compare_rule_wbind_vs_other r1 r2 =
+  match r2 with
+  | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
+  | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
+  | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
+  | RlFRead _ -> PriEqual
+  | RlVarInit _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+
+(* reordering rules *)
+
+let compare_rule r1 r2 =
+  match r1 with
+  | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
+  | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
+  | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
+  | RlFRead _ -> PriEqual
+  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPost _ -> PriEqual
+  | RlInstantiate _ -> PriEqual
+  | RlVarInit _ -> PriEqual
+
+let reorder_rules goal rules =
+  let cmp_rule r1 r2 =
+    let prio = compare_rule r1 r2 in
+    match prio with
+    | PriEqual -> 0
+    | PriLow -> -1
+    | PriHigh -> +1 in
+  List.sort cmp_rule rules
