@@ -419,7 +419,7 @@ let choose_func_call goal =
     let rules = unify (pre_cond, post_cond) goal in
     rules
 
-let choose_rule_f_read goal =
+let choose_rule_fread_x goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
   let () = x_tinfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
   let rec helper_hf (hf:CF.h_formula) = match hf with
@@ -439,7 +439,7 @@ let choose_rule_f_read goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
@@ -449,19 +449,18 @@ let choose_rule_f_read goal =
     let d_arg_pairs = List.filter
         (fun (x,_) -> not(List.exists (fun y -> CP.eq_spec_var x y) vars)) d_arg_pairs in
     let helper_arg (arg, field) =
-      let arg_f = extract_var_f pre_cond arg in
-      match arg_f with
-      | None -> []
-      | Some arg_f -> if CF.is_emp_formula arg_f then []
-        else let rbind = RlFRead {
-            rbr_bound_var = var;
-            rbr_field = field;
-            rbr_value = arg;
-          } in [rbind] in
+      let rbind = RlFRead {
+          rbr_bound_var = var;
+          rbr_field = field;
+          rbr_value = arg;
+        } in [rbind] in
     d_arg_pairs |> List.map helper_arg |> List.concat in
-  let rules = List.map helper_triple triples |> List.concat in
-  let () = x_tinfo_hp (add_str "rbind rules" (pr_list pr_rule)) rules no_pos in
-  rules
+  List.map helper_triple triples |> List.concat
+
+let choose_rule_fread goal =
+  Debug.no_1 "choose_rule_fread" pr_goal pr_rules
+    (fun _ -> choose_rule_fread_x goal) goal
+
 
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -602,7 +601,7 @@ let choose_synthesis_rules goal : rule list =
   let rs = rs @ (choose_rule_f_write goal) in
   let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
-  let rs = rs @ (choose_rule_f_read goal) in
+  let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
   rs
