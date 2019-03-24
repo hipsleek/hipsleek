@@ -652,7 +652,7 @@ let translate_prog (prog:Cast.prog_decl) =
 
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  let () = x_binfo_hp (add_str "entailments" pr_ents) entailments no_pos in
+  let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
   let sb_ents = List.map translate_entailment entailments in
   let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
@@ -695,7 +695,6 @@ let get_repair_candidate prog ents cond_op =
         let sb_vars = fun_def.SBCast.func_params in
         let translated_vars = List.map translate_back_var sb_vars in
         let translated_exp = translate_back_exp exp in
-        (* let exp_vars = List.map Cpure.mk_exp_var vars in *)
         let substs = List.combine translated_vars vars in
         let n_exp = Cpure.e_apply_subs substs translated_exp in
         Some n_exp

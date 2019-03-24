@@ -294,6 +294,149 @@ and pr_st_core st =
 
 let pr_rules = pr_list pr_rule
 
+(* Basic functions  *)
+(* get a "fix-point" pure formula for a list of vars *)
+let extract_var_pf_x (pf:CP.formula) vars =
+  let rec helper pf vars = match pf with
+    | CP.BForm (bf, opt) ->
+      let pform, opt2 = bf in
+      let rec aux pform = match pform with
+        | CP.Eq (exp1, exp2, loc)
+        | CP.Neq (exp1, exp2, loc)
+        | CP.Lt (exp1, exp2, loc)
+        | CP.Lte (exp1, exp2, loc)
+        | CP.Gt (exp1, exp2, loc) ->
+          let sv1 = CP.afv exp1 in
+          let sv2 = CP.afv exp2 in
+          let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
+          if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
+          else BConst (true, loc)
+        | CP.BVar (sv, bvar_loc) ->
+          if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
+          else BConst (true, bvar_loc)
+        | _ -> pform
+      in
+      let n_pform = aux pform in
+      CP.BForm ((n_pform, opt2), opt)
+    | And (f1, f2, loc) ->
+      let n_f1, n_f2 = helper f1 vars, helper f2 vars in
+      if CP.is_True n_f1 then n_f2
+      else if CP.is_True n_f2 then n_f1
+      else And (n_f1, n_f2, loc)
+    | AndList list -> AndList (List.map (fun (x,y) -> (x, helper y vars)) list)
+    | _ -> pf in
+  let n_pf = helper pf vars in
+  let n_vars = CP.fv n_pf in
+  if Gen.BList.list_equiv_eq CP.eq_sv vars n_vars then n_pf
+  else helper pf n_vars
+
+let extract_var_pf pf vars =
+  Debug.no_2 "extract_var_pf" pr_pf pr_vars pr_pf
+    (fun _ _ -> extract_var_pf_x pf vars) pf vars
+
+let rec extract_hf_var hf var =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if dn_var = var then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if vn_var = var then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | CF.Star sf ->
+    let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
+    let vf2 = extract_hf_var sf.CF.h_formula_star_h2 var in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some (f1, vars1), Some (f2, vars2) ->
+        report_error no_pos "one var cannot appear in two heap fragments"
+    end
+  | _ -> None
+
+let rec extract_hf_vars hf vars =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if List.exists (fun x -> CP.eq_spec_var dn_var x) vars then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [dn_var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if List.exists (fun x -> CP.eq_spec_var vn_var x) vars then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [vn_var] @ args)
+    else None
+  | CF.Star sf ->
+    let vf1 = extract_hf_vars sf.CF.h_formula_star_h1 vars in
+    let vf2 = extract_hf_vars sf.CF.h_formula_star_h2 vars in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some (f1, vars1), Some (f2, vars2) ->
+        let n_hf = CF.Star {sf with h_formula_star_h1 = f1;
+                                    h_formula_star_h2 = f2;} in
+        Some (n_hf, vars1 @ vars2)
+    end
+  | _ -> None
+
+let extract_var_f_x f var = match f with
+    | CF.Base bf ->
+      let hf = bf.CF.formula_base_heap in
+      let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
+          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+        | Some (hf, vars) ->
+          let h_vars = CF.h_fv hf in
+          let vars = [var] @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
+          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+      end
+    | CF.Exists exists_f ->
+      let hf = exists_f.CF.formula_exists_heap in
+      let e_vars = exists_f.CF.formula_exists_qvars in
+      let vperms = exists_f.CF.formula_exists_vperm in
+      let e_typ = exists_f.CF.formula_exists_type in
+      let e_flow = exists_f.CF.formula_exists_flow in
+      let pf = Mcpure.pure_of_mix exists_f.CF.formula_exists_pure in
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = extract_var_pf pf [var] in
+          Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+        | Some (hf, vars) ->
+          let h_vars = CF.h_fv hf in
+          let vars = vars @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars in
+          Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+      end
+    | _ -> None
+
+let extract_var_f formula var =
+  Debug.no_2 "extract_var_f" pr_formula pr_var
+    (fun x -> match x with
+       | None -> "None"
+       | Some varf -> pr_formula varf)
+    (fun _ _ -> extract_var_f_x formula var) formula var
+
+
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
@@ -316,7 +459,12 @@ let is_rule_fread_useless goal r =
   let var = r.rbr_value in
   let post_vars = CF.fv goal.gl_post_cond in
   if List.exists (fun x -> CP.eq_sv x var) post_vars then true
-  else false
+  else
+    let arg_f = extract_var_f goal.gl_pre_cond var in
+      match arg_f with
+      | None -> false
+      | Some arg_f -> if CF.is_emp_formula arg_f then false
+        else true
 
 let eliminate_useless_rules goal rules =
   List.filter (fun rule ->
@@ -324,7 +472,7 @@ let eliminate_useless_rules goal rules =
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
-    | RlFRead r -> is_rule_fread_useless goal r
+    | RlFRead r -> (* true *) is_rule_fread_useless goal r
     | RlInstantiate _ -> true
     | RlUnfoldPost _ -> true
     | RlUnfoldPre _ -> true) rules
@@ -480,45 +628,6 @@ let set_field var access_field (new_val:CP.spec_var) data_decls =
     let new_fields = List.map update_field pairs in
     {var with CF.h_formula_data_arguments = new_fields}
   with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
-
-(* get a "fix-point" pure formula for a list of vars *)
-let extract_var_pf_x (pf:CP.formula) vars =
-  let rec helper pf vars = match pf with
-    | CP.BForm (bf, opt) ->
-      let pform, opt2 = bf in
-      let rec aux pform = match pform with
-        | CP.Eq (exp1, exp2, loc)
-        | CP.Neq (exp1, exp2, loc)
-        | CP.Lt (exp1, exp2, loc)
-        | CP.Lte (exp1, exp2, loc)
-        | CP.Gt (exp1, exp2, loc) ->
-          let sv1 = CP.afv exp1 in
-          let sv2 = CP.afv exp2 in
-          let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
-          if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
-          else BConst (true, loc)
-        | CP.BVar (sv, bvar_loc) ->
-          if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
-          else BConst (true, bvar_loc)
-        | _ -> pform
-      in
-      let n_pform = aux pform in
-      CP.BForm ((n_pform, opt2), opt)
-    | And (f1, f2, loc) ->
-      let n_f1, n_f2 = helper f1 vars, helper f2 vars in
-      if CP.is_True n_f1 then n_f2
-      else if CP.is_True n_f2 then n_f1
-      else And (n_f1, n_f2, loc)
-    | AndList list -> AndList (List.map (fun (x,y) -> (x, helper y vars)) list)
-    | _ -> pf in
-  let n_pf = helper pf vars in
-  let n_vars = CP.fv n_pf in
-  if Gen.BList.list_equiv_eq CP.eq_sv vars n_vars then n_pf
-  else helper pf n_vars
-
-let extract_var_pf pf vars =
-  Debug.no_2 "extract_var_pf" pr_pf pr_vars pr_pf
-    (fun _ _ -> extract_var_pf_x pf vars) pf vars
 
 let is_named_type_var var =
   let typ = CP.type_of_sv var in
@@ -752,108 +861,6 @@ let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
       Or {bf with formula_or_f1 = helper f1;
                   formula_or_f2 = helper f2} in
   helper f1
-
-let rec extract_hf_var hf var =
-  match hf with
-  | CF.DataNode dnode ->
-    let dn_var = dnode.CF.h_formula_data_node in
-    if dn_var = var then
-      let args = dnode.CF.h_formula_data_arguments in
-      Some (hf, [var] @ args)
-    else None
-  | ViewNode vnode ->
-    let vn_var = vnode.CF.h_formula_view_node in
-    if vn_var = var then
-      let args = vnode.CF.h_formula_view_arguments in
-      Some (hf, [var] @ args)
-    else None
-  | CF.Star sf ->
-    let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
-    let vf2 = extract_hf_var sf.CF.h_formula_star_h2 var in
-    begin
-      match vf1, vf2 with
-      | None, None -> None
-      | Some _, None -> vf1
-      | None, Some _ -> vf2
-      | Some (f1, vars1), Some (f2, vars2) ->
-        report_error no_pos "one var cannot appear in two heap fragments"
-    end
-  | _ -> None
-
-let rec extract_hf_vars hf vars =
-  match hf with
-  | CF.DataNode dnode ->
-    let dn_var = dnode.CF.h_formula_data_node in
-    if List.exists (fun x -> CP.eq_spec_var dn_var x) vars then
-      let args = dnode.CF.h_formula_data_arguments in
-      Some (hf, [dn_var] @ args)
-    else None
-  | ViewNode vnode ->
-    let vn_var = vnode.CF.h_formula_view_node in
-    if List.exists (fun x -> CP.eq_spec_var vn_var x) vars then
-      let args = vnode.CF.h_formula_view_arguments in
-      Some (hf, [vn_var] @ args)
-    else None
-  | CF.Star sf ->
-    let vf1 = extract_hf_vars sf.CF.h_formula_star_h1 vars in
-    let vf2 = extract_hf_vars sf.CF.h_formula_star_h2 vars in
-    begin
-      match vf1, vf2 with
-      | None, None -> None
-      | Some _, None -> vf1
-      | None, Some _ -> vf2
-      | Some (f1, vars1), Some (f2, vars2) ->
-        let n_hf = CF.Star {sf with h_formula_star_h1 = f1;
-                                    h_formula_star_h2 = f2;} in
-        Some (n_hf, vars1 @ vars2)
-    end
-  | _ -> None
-
-let extract_var_f_x f var = match f with
-    | CF.Base bf ->
-      let hf = bf.CF.formula_base_heap in
-      let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
-      let heap_extract = extract_hf_var hf var in
-      begin
-        match heap_extract with
-        | None ->
-          let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
-          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
-        | Some (hf, vars) ->
-          let h_vars = CF.h_fv hf in
-          let vars = [var] @ h_vars |> CP.remove_dups_svl in
-          let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
-          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
-      end
-    | CF.Exists exists_f ->
-      let hf = exists_f.CF.formula_exists_heap in
-      let e_vars = exists_f.CF.formula_exists_qvars in
-      let vperms = exists_f.CF.formula_exists_vperm in
-      let e_typ = exists_f.CF.formula_exists_type in
-      let e_flow = exists_f.CF.formula_exists_flow in
-      let pf = Mcpure.pure_of_mix exists_f.CF.formula_exists_pure in
-      let heap_extract = extract_hf_var hf var in
-      begin
-        match heap_extract with
-        | None ->
-          let pf_var = extract_var_pf pf [var] in
-          Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
-                  e_typ e_flow [] no_pos)
-        | Some (hf, vars) ->
-          let h_vars = CF.h_fv hf in
-          let vars = vars @ h_vars |> CP.remove_dups_svl in
-          let pf_var = extract_var_pf pf vars in
-          Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
-                  e_typ e_flow [] no_pos)
-      end
-    | _ -> None
-
-let extract_var_f formula var =
-  Debug.no_2 "extract_var_f" pr_formula pr_var
-    (fun x -> match x with
-       | None -> "None"
-       | Some varf -> pr_formula varf)
-    (fun _ _ -> extract_var_f_x formula var) formula var
 
 let create_residue vars prog conseq =
   if !Globals.check_post then
