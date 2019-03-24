@@ -439,7 +439,7 @@ let choose_rule_fread_x goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
@@ -806,7 +806,7 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
-  let () = x_binfo_pp "marking" no_pos in
+  let () = x_tinfo_pp "marking" no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   match st_status with

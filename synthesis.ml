@@ -312,13 +312,19 @@ let is_rule_bind_useless r =
   (* TODO *)
   true
 
+let is_rule_fread_useless goal r =
+  let var = r.rbr_value in
+  let post_vars = CF.fv goal.gl_post_cond in
+  if List.exists (fun x -> CP.eq_sv x var) post_vars then true
+  else false
+
 let eliminate_useless_rules goal rules =
   List.filter (fun rule ->
     match rule with
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
     | RlBind r -> is_rule_bind_useless r
-    | RlFRead _ -> true
+    | RlFRead r -> is_rule_fread_useless goal r
     | RlInstantiate _ -> true
     | RlUnfoldPost _ -> true
     | RlUnfoldPre _ -> true) rules
@@ -1087,9 +1093,9 @@ let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
 let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
   | RlUnfoldPost _  | RlInstantiate _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
-  | RlAssign rassign -> let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
-    let c_exp = exp_to_iast rhs in
-    let lhs = mkVar lhs in
+  | RlAssign rassign ->
+    let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
+    let c_exp, lhs = exp_to_iast rhs, mkVar lhs in
     let assign = I.Assign { I.exp_assign_op = I.OpAssign;
                             I.exp_assign_lhs = lhs;
                             I.exp_assign_rhs = c_exp;
@@ -1125,22 +1131,32 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
         exp_var_decl_pos = no_pos;
       } in
-    let rhs_var = Iast.Var { I.exp_var_name = f_name;
-                             I.exp_var_pos = no_pos} in
+    let bound_var = Iast.Var {
+        I.exp_var_name = CP.name_of_sv bvar;
+        I.exp_var_pos = no_pos} in
+    let mem_var = Iast.Member {
+        exp_member_base = bound_var;
+        exp_member_fields = [f_name];
+        exp_member_path_id = None;
+        exp_member_pos = no_pos;
+      } in
     let lhs = mkVar lhs in
-    let body = Iast.Assign { I.exp_assign_lhs = lhs;
-                             I.exp_assign_op = I.OpAssign;
-                             I.exp_assign_rhs = rhs_var;
-                             I.exp_assign_path_id = None;
-                              I.exp_assign_pos = no_pos } in
-    let bind = Iast.Bind { exp_bind_bound_var = CP.name_of_sv bvar;
-                           exp_bind_fields = [f_name];
-                           exp_bind_body = body;
-                           exp_bind_path_id = None;
-                           exp_bind_pos = no_pos} in
-    let seq = I.Seq { exp_seq_exp1 = exp_decl;
-                      exp_seq_exp2 = bind;
-                      exp_seq_pos = no_pos} in
+    let body = Iast.Assign {
+        I.exp_assign_lhs = lhs;
+        I.exp_assign_op = I.OpAssign;
+        I.exp_assign_rhs = mem_var;
+        I.exp_assign_path_id = None;
+        I.exp_assign_pos = no_pos } in
+    let bind = Iast.Bind {
+        exp_bind_bound_var = CP.name_of_sv bvar;
+        exp_bind_fields = [f_name];
+        exp_bind_body = body;
+        exp_bind_path_id = None;
+        exp_bind_pos = no_pos} in
+    let seq = I.Seq {
+        exp_seq_exp1 = exp_decl;
+        exp_seq_exp2 = bind;
+        exp_seq_pos = no_pos} in
     let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
     if st_code = None then seq
     else let st_code = Gen.unsome st_code in
