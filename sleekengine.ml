@@ -14,6 +14,7 @@ open Exc.GTable
 open Perm
 open Label_only
 open Cprog_sleek
+module Synt = Synthesis
 
 let last_entail_lhs_xpure = ref None
 
@@ -3020,17 +3021,12 @@ let process_synthesize typed_vars pre post =
   let _, pre_f = meta_to_formula_not_rename pre false [] type_env in
   let pre_f = Synthesis.rm_emp_formula pre_f in
   let pr_formula = Cprinter.string_of_formula in
-  let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
+  let () = x_binfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
   let (_, post_f) = x_add meta_to_formula_not_rename post false [] [] in
   let post_f = Synthesis.rm_emp_formula post_f in
-  let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
+  let () = x_binfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
-  let goal = Synthesis.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs
-  in
-  let proc_decl = !cprog_proc_decls |> List.hd in
-  (* let pr_proc = Cprinter.string_of_proc_decl 1 in
-   * let () = x_binfo_hp (add_str "proc_name" pr_proc) proc_decl no_pos in *)
-
+  let goal = Synt.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
   let _ = Synthesizer.synthesize_program goal in
   ()
 
