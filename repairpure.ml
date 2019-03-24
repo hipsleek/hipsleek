@@ -38,6 +38,17 @@ let get_stmt_candidates (exp: I.exp) =
     | _ -> [exp] @ list in
   List.rev(aux exp [])
 
+let type_of_exp (exp:I.exp) : typ = match exp with
+  | IntLit _ -> Int
+  | Binary bexp ->
+    begin
+      match bexp.I.exp_binary_op with
+      | OpPlus | OpMinus | OpMult | OpDiv | OpMod | OpEq | OpNeq | OpLt
+      | OpLte | OpGt | OpGte -> Int
+      | _ -> Bool
+    end
+  | _ -> Void
+
 let create_fcode_exp (vars: typed_ident list) =
   let args = vars |> List.map snd
              |> List.map (fun x -> I.Var { exp_var_name = x;

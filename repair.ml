@@ -65,9 +65,10 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
       head ^ "," ^ tail in
   let names, arg_str = args |> List.map snd, helper args in
   let arg_names = s_i_list names "," in
+  let typ = type_of_exp candidate in
   let fcode = "HeapPred P(" ^ arg_str ^ ").\n"
               ^ "HeapPred Q(" ^ arg_str ^ ").\n"
-              ^ "void fcode(" ^ arg_str ^ ")\n"
+              ^ (string_of_typ typ) ^ " fcode(" ^ arg_str ^ ")\n"
               ^ "requires P(" ^ arg_names ^ ")\n"
               ^ "ensures Q(" ^ arg_names ^ ");" in
   let () = x_binfo_hp (add_str "fcode" pr_id) fcode no_pos in
