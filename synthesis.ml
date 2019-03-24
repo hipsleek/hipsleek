@@ -243,7 +243,8 @@ let pr_iast_exp_opt exp = match exp with
 
 let pr_goal goal =
   let vars = goal.gl_vars in
-  let pr_svs = Cprinter.string_of_spec_var_list in
+  (* let pr_svs = Cprinter.string_of_spec_var_list in *)
+  let pr_svs = pr_list Cprinter.string_of_typed_spec_var in
   "goal (" ^ "vars:" ^ (pr_svs vars) ^ "\n" ^
   "pre: " ^ (pr_formula goal.gl_pre_cond) ^ "\n" ^
   "post: " ^ (pr_formula goal.gl_post_cond) ^ ")"
@@ -1073,7 +1074,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         I.Seq { exp_seq_exp1 = seq;
                 exp_seq_exp2 = st_code;
                 exp_seq_pos = no_pos}
-  | _ -> report_error no_pos "this case unhandled"
+  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"

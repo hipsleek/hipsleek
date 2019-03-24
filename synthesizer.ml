@@ -56,12 +56,50 @@ let rec find_sub_var sv cur_vars pre_pf =
   | _ -> None
 
 (* implement simple rules first *)
-(* {x -> node{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
-let choose_rassign_pure var goal : rule list =
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let cur_vars = goal.gl_vars in
-  []
+(* {x -> enode{a} * y -> node{b}}{x -> node{y} * y -> node{b}} --> x.next = b *)
+let rec find_eq_var var (formula:CP.formula) = match formula with
+  | CP.BForm (bf, _) -> let pf, _ = bf in
+    begin
+      match pf with
+      | CP.Eq (e1, e2, _) ->
+        (match e1 with
+         | CP.Var (sv,_) -> if CP.eq_sv sv var then [e2] else []
+         | _ -> [])
+      | _ -> []
+    end
+  | CP.Or (f1, f2, _,_)
+  | CP.And (f1, f2, _) -> (find_eq_var var f1) @ (find_eq_var var f2)
+  | CP.AndList list ->
+    list |> List.map snd |> List.map (find_eq_var var) |> List.concat
+  | Not (f, _, _)   | Forall (_, f, _, _)
+  | Exists (_, f,_,_) -> find_eq_var var f
+
+let choose_rassign_pure_x var goal : rule list =
+  let pre_vars = goal.gl_pre_cond |> CF.fv in
+  if List.exists (CP.eq_sv var) pre_vars then []
+  else
+    let varf = extract_var_f goal.gl_post_cond var in
+    match varf with
+    | None -> []
+    | Some var_f -> if CF.is_emp_formula var_f then
+        let pf = CF.get_pure var_f in
+        let eq_vars = find_eq_var var pf in
+        if List.length eq_vars = 1 then
+          let rhs = List.hd eq_vars in
+          let rhs_vars = CP.afv rhs in
+          if CP.subset rhs_vars goal.gl_vars then
+            let rule = RlAssign {
+                ra_lhs = var;
+                ra_rhs = rhs;
+              } in [rule]
+          else []
+        else []
+      else []
+
+let choose_rassign_pure var goal =
+  Debug.no_2 "choose_rassign_pure" pr_var pr_goal pr_rules
+    (fun _ _ -> choose_rassign_pure_x var goal) var goal
+
   (* let () = x_binfo_hp (add_str "var" pr_sv) var no_pos in
    * let () = x_binfo_hp (add_str "vars" (pr_list pr_sv)) cur_vars no_pos in
    * let pre_pf = CF.get_pure pre in
@@ -97,7 +135,6 @@ let choose_rassign_pure var goal : rule list =
    *         [rule]
    *     end
    * | _ -> [] *)
-
 
 let find_equal_var_x goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -248,12 +285,11 @@ let choose_rule_assign_x goal : rule list =
   let pre = goal.gl_pre_cond in
   let post = goal.gl_post_cond in
   let choose_rule var = match CP.type_of_sv var with
-    | Int -> choose_rassign_pure var goal
+    | TVar _ | Int -> choose_rassign_pure var goal
     | Named _ -> choose_rassign_data goal var
-    | _ -> let () = x_tinfo_pp "marking \n" no_pos in
+    | _ -> let () = x_tinfo_pp "marking" no_pos in
       []  in
-  let rules = List.map choose_rule vars in
-  List.concat rules
+  vars |> List.map choose_rule |> List.concat
 
 let choose_rule_assign goal =
   Debug.no_1 "choose_rule_assign" pr_goal pr_rules
@@ -599,22 +635,6 @@ let choose_rule_var_init goal =
   let vars, pre = goal.gl_vars, goal.gl_pre_cond in
   let pre_vars = CF.fv pre |> List.filter
                    (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) in
-  let rec find_eq_var var (formula:CP.formula) = match formula with
-    | CP.BForm (bf, _) -> let pf, _ = bf in
-      begin
-        match pf with
-        | CP.Eq (e1, e2, _) ->
-          (match e1 with
-           | CP.Var (sv,_) -> if CP.eq_sv sv var then [e2] else []
-           | _ -> [])
-        | _ -> []
-      end
-    | CP.Or (f1, f2, _,_)
-    | CP.And (f1, f2, _) -> (find_eq_var var f1) @ (find_eq_var var f2)
-    | CP.AndList list ->
-      list |> List.map snd |> List.map (find_eq_var var) |> List.concat
-    | Not (f, _, _)   | Forall (_, f, _, _)
-    | Exists (_, f,_,_) -> find_eq_var var f in
   let create_init_rule var exp = RlVarInit {
       rvi_var = var;
       rvi_rhs = exp;
