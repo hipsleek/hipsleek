@@ -1,0 +1,8 @@
+data node {
+     int val
+}.
+
+synthesize [node x, node y]
+x::node<a> * y::node<b> & true
+~>
+x::node<b> * y::node<b> & true.
