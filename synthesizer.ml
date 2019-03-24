@@ -820,6 +820,7 @@ let synthesize_program goal =
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  (* report_error no_pos "to debug goal" *)
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -836,8 +837,6 @@ let synthesize_entailments iprog prog proc =
   match hps with
   | None -> ()
   | Some hps ->
-    let formulas = List.map (fun x -> x.Cast.hp_formula) hps in
-    let () = x_binfo_hp (add_str "hps" (pr_list pr_formula)) formulas no_pos in
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
@@ -846,9 +845,11 @@ let synthesize_entailments iprog prog proc =
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-    if !syn_pre != None && formulas != [] then
+    if !syn_pre != None && hps != [] then
+      let post_hp = List.find (fun x -> x.Cast.hp_name = "Q") hps in
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
-      let post = List.hd formulas in
+      let post = post_hp.Cast.hp_formula in
+      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
       if res then repair_res := Some n_iprog else ()
     else ()

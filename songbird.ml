@@ -622,8 +622,7 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
         let formulas = List.map (fun x ->
             translate_back_formula x.SBCast.vdc_form []) cases in
         helper_f formulas in
-    let () = x_binfo_hp (add_str "body" pr_formula) body no_pos in
-    (* report_error no_pos "to add exists var" *)
+    let () = x_tinfo_hp (add_str "body" pr_formula) body no_pos in
     let body = body |> CF.subst (List.combine args hip_args) in
     {hp with Cast.hp_formula = body} in
   vdefns |> List.map (helper hps)
@@ -664,7 +663,7 @@ let solve_entailments prog entailments =
     let vdefns = SBPFU.get_solved_vdefns ptree in
     let () = x_binfo_hp (add_str "vdefns" SBCast.pr_vdfs) vdefns no_pos in
     let hps = translate_back_vdefns prog vdefns in
-    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
     Some hps
   else None
 
@@ -926,7 +925,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else if conseq_hps then
     let () = Syn.syn_pre := Some es.CF.es_formula in
-    let () = x_binfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
+    let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
     let n_ante = CF.get_pure es.CF.es_formula in
     let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
@@ -943,12 +942,12 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
                       @ bf.CF.formula_struc_implicit_inst
                     |> CP.remove_dups_svl in
     let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
-    let () = x_binfo_hp (add_str "conseq" pr_struc_f) (CF.EBase bf) no_pos in
-    let () = x_binfo_hp (add_str "conseq" pr_formula) conseq no_pos in
+    let () = x_tinfo_hp (add_str "conseq" pr_struc_f) (CF.EBase bf) no_pos in
+    let () = x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos in
     let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
     let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in
     let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
-    let () = x_binfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
+    let () = x_tinfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
     let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
     match conti with
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
