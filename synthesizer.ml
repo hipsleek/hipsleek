@@ -62,9 +62,13 @@ let rec find_eq_var var (formula:CP.formula) = match formula with
     begin
       match pf with
       | CP.Eq (e1, e2, _) ->
-        (match e1 with
+        let eq_e1 = match e1 with
          | CP.Var (sv,_) -> if CP.eq_sv sv var then [e2] else []
-         | _ -> [])
+         | _ -> [] in
+        let eq_e2 = match e2 with
+         | CP.Var (sv,_) -> if CP.eq_sv sv var then [e1] else []
+         | _ -> [] in
+        eq_e1@eq_e2
       | _ -> []
     end
   | CP.Or (f1, f2, _,_)
@@ -99,42 +103,6 @@ let choose_rassign_pure_x var goal : rule list =
 let choose_rassign_pure var goal =
   Debug.no_2 "choose_rassign_pure" pr_var pr_goal pr_rules
     (fun _ _ -> choose_rassign_pure_x var goal) var goal
-
-  (* let () = x_binfo_hp (add_str "var" pr_sv) var no_pos in
-   * let () = x_binfo_hp (add_str "vars" (pr_list pr_sv)) cur_vars no_pos in
-   * let pre_pf = CF.get_pure pre in
-   * let () = x_binfo_hp (add_str "pre_pf" pr_pf) pre_pf no_pos in
-   * let post_pf = CF.get_pure post in
-   * let () = x_binfo_hp (add_str "post_pf" pr_pf) post_pf no_pos in
-   * let pre_f = extract_var_pf pre_pf [var] in
-   * let pr_exp = Cprinter.string_of_formula_exp in
-   * let e2 = extract_var_pf post_pf [var] in
-   * match e2 with
-   * | Var (sv, _) ->
-   *   let () = x_binfo_pp "marking" no_pos in
-   *   if List.exists (fun x -> CP.eq_spec_var x sv) cur_vars then
-   *     let rule = RlAssign {
-   *         ra_lhs = var;
-   *         ra_rhs = CP.mkVar sv no_pos;
-   *       } in
-   *     [rule]
-   *   else
-   *     let () = x_binfo_pp "marking \n" no_pos in
-   *     let cur_vars = List.filter (fun x -> x != var) cur_vars in
-   *     let () = x_binfo_hp (add_str "vars: " pr_vars) cur_vars no_pos in
-   *     let () = x_binfo_hp (add_str "var: " pr_var) sv no_pos in
-   *     let find_var = find_sub_var sv cur_vars pre_pf in
-   *     begin
-   *       match find_var with
-   *       | None -> []
-   *       | Some sub_var ->
-   *         let rule = RlAssign {
-   *             ra_lhs = var;
-   *             ra_rhs = CP.mkVar sub_var no_pos;
-   *           } in
-   *         [rule]
-   *     end
-   * | _ -> [] *)
 
 let find_equal_var_x goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
