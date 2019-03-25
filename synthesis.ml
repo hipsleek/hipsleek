@@ -974,40 +974,64 @@ let get_var_decls (exp:I.exp) : CP.spec_var list =
 let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
                        I.exp_var_pos = no_pos}
 
+let mkSeq exp1 exp2 = I.Seq {
+    exp_seq_exp1 = exp1;
+    exp_seq_exp2 = exp2;
+    exp_seq_pos = no_pos}
+
+let mkAssign exp1 exp2 = I.Assign {
+    I.exp_assign_op = I.OpAssign;
+    I.exp_assign_lhs = exp1;
+    I.exp_assign_rhs = exp2;
+    I.exp_assign_path_id = None;
+    I.exp_assign_pos = no_pos}
+
 let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
   | RlUnfoldPost _  | RlInstantiate _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
-    let c_exp, lhs = exp_to_iast rhs, mkVar lhs in
-    let assign = I.Assign { I.exp_assign_op = I.OpAssign;
-                            I.exp_assign_lhs = lhs;
-                            I.exp_assign_rhs = c_exp;
-                            I.exp_assign_path_id = None;
-                            I.exp_assign_pos = no_pos} in
-    assign
+    let c_exp = exp_to_iast rhs in
+    if CP.is_res_spec_var lhs then
+      I.Return {
+        exp_return_val = Some c_exp;
+        exp_return_path_id = None;
+        exp_return_pos = no_pos
+      }
+    else
+      let assgn = mkAssign (mkVar lhs) c_exp in
+      let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
+      if st_code = None then assgn
+      else let st_code = Gen.unsome st_code in
+        mkSeq assgn st_code
   | RlBind rbind ->
     let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
     let rhs = rbind.rb_other_var in
-    let rhs_var = I.Var {
-        I.exp_var_name = CP.name_of_sv rhs;
-        I.exp_var_pos = no_pos} in
-    let mem_var = Iast.Var {
-        I.exp_var_name = CP.name_of_sv bvar;
-        I.exp_var_pos = no_pos} in
+    let rhs_var, mem_var = mkVar rhs,  mkVar bvar in
     let exp_mem = I.Member {
         exp_member_base = mem_var;
         exp_member_fields = [f_name];
         exp_member_path_id = None;
         exp_member_pos = no_pos
       } in
-    Iast.Assign {
-      I.exp_assign_op = Iast.OpAssign;
-      I.exp_assign_lhs = exp_mem;
-      I.exp_assign_rhs = rhs_var;
-      I.exp_assign_path_id = None;
-      I.exp_assign_pos = no_pos}
-
+    let bind = mkAssign exp_mem rhs_var in
+    let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
+    if st_code = None then bind
+    else let st_code = Gen.unsome st_code in
+      mkSeq bind st_code
+  | RlVarInit rule ->
+    let lhs, rhs = rule.rvi_var, rule.rvi_rhs in
+    let decl = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv lhs;
+        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
+        exp_var_decl_pos = no_pos} in
+    let c_exp, lhs = exp_to_iast rhs, mkVar lhs in
+    let assign = mkAssign lhs c_exp in
+    let init = mkSeq decl assign in
+    let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
+    if st_code = None then init
+    else let st_code = Gen.unsome st_code in
+      mkSeq init st_code
   | RlFRead rule -> let lhs = rule.rbr_value in
     let bvar, (typ, f_name) = rule.rbr_bound_var, rule.rbr_field in
     let exp_decl = I.VarDecl {
@@ -1015,9 +1039,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
         exp_var_decl_pos = no_pos;
       } in
-    let bound_var = Iast.Var {
-        I.exp_var_name = CP.name_of_sv bvar;
-        I.exp_var_pos = no_pos} in
+    let bound_var = mkVar bvar in
     let mem_var = Iast.Member {
         exp_member_base = bound_var;
         exp_member_fields = [f_name];
@@ -1025,28 +1047,18 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         exp_member_pos = no_pos;
       } in
     let lhs = mkVar lhs in
-    let body = Iast.Assign {
-        I.exp_assign_lhs = lhs;
-        I.exp_assign_op = I.OpAssign;
-        I.exp_assign_rhs = mem_var;
-        I.exp_assign_path_id = None;
-        I.exp_assign_pos = no_pos } in
-    let bind = Iast.Bind {
+    let body = mkAssign lhs mem_var in
+    let bind = I.Bind {
         exp_bind_bound_var = CP.name_of_sv bvar;
         exp_bind_fields = [f_name];
         exp_bind_body = body;
         exp_bind_path_id = None;
         exp_bind_pos = no_pos} in
-    let seq = I.Seq {
-        exp_seq_exp1 = exp_decl;
-        exp_seq_exp2 = bind;
-        exp_seq_pos = no_pos} in
+    let seq = mkSeq exp_decl bind in
     let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
     if st_code = None then seq
     else let st_code = Gen.unsome st_code in
-      I.Seq { exp_seq_exp1 = seq;
-              exp_seq_exp2 = st_code;
-              exp_seq_pos = no_pos}
+      mkSeq seq st_code
   | RlFuncCall rule ->
     let args = rule.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
@@ -1060,30 +1072,20 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
     else let rvar = Gen.unsome rule.rfc_return in
       let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
                           I.exp_var_pos = no_pos} in
-      let asgn = I.Assign { exp_assign_lhs = mkVar rvar;
-                            exp_assign_rhs = fcall;
-                            exp_assign_op = I.OpAssign;
-                            exp_assign_path_id = None;
-                            exp_assign_pos = no_pos} in
-      let seq = I.Seq { exp_seq_exp1 = r_var;
-                        exp_seq_exp2 = asgn;
-                        exp_seq_pos = no_pos} in
+      let asgn = mkAssign (mkVar rvar) fcall in
+      let seq = mkSeq r_var asgn in
       let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
       if st_code = None then seq
       else let st_code = Gen.unsome st_code in
-        I.Seq { exp_seq_exp1 = seq;
-                exp_seq_exp2 = st_code;
-                exp_seq_pos = no_pos}
-  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
+        mkSeq seq st_code
+  (* | _ -> report_error no_pos "synthesize_st_core: this case unhandled" *)
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
   | [h] -> synthesize_st_core h
   | h::t -> let fst = synthesize_st_core h in
     let snd = synthesize_subtrees t in
-    Iast.Seq { I.exp_seq_exp1 = fst;
-               I.exp_seq_exp2 = snd;
-               I.exp_seq_pos = no_pos}
+    mkSeq fst snd
 
 and synthesize_subtrees_wrapper subtrees = match subtrees with
   | [] -> None
