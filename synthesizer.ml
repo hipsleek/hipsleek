@@ -512,7 +512,8 @@ let choose_rule_numeric_x goal =
   let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
-  let vars_lhs = List.filter (fun x -> CP.mem x post_vars) vars in
+  let vars_lhs = List.filter (fun x -> CP.mem x vars
+                                     || CP.is_res_spec_var x) post_vars in
   let () = x_tinfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
@@ -603,8 +604,8 @@ let choose_rule_var_init_x goal =
   let vars, pre, post = goal.gl_vars, goal.gl_pre_cond, goal.gl_post_cond in
   let h_pre, _, _, _, _, _ = CF.split_components pre in
   let pre_vars = CF.fv pre |> List.filter (fun x -> not(CP.mem x vars))
-                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre)))
-                 |> List.filter (fun x -> not (CP.mem x (CF.fv post))) in
+                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre))) in
+                 (* |> List.filter (fun x -> not (CP.mem x (CF.fv post))) in *)
   let create_init_rule var exp = RlVarInit {
       rvi_var = var;
       rvi_rhs = exp;
@@ -643,10 +644,10 @@ let choose_synthesis_rules goal : rule list =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_var_init goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
+  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in

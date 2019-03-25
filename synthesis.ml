@@ -265,12 +265,12 @@ let pr_rule_bind rule =
   ^ (Cprinter.string_of_spec_var rule.rb_other_var)
 
 let pr_rule rule = match rule with
-  | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
-  | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBind rule -> "RlBind: " ^ (pr_rule_bind rule)
+  | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
+  | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
+  | RlBind rule -> "RlBind\n" ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead"
-  | RlUnfoldPre rule -> "RlUnfoldPre" ^ (rule.n_pre_formulas |> pr_list pr_formula)
-  | RlUnfoldPost rule -> "RlUnfoldPost" ^ (rule.rp_case_formula |> pr_formula)
+  | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
+  | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate _ -> "RlInstantiate"
   | RlVarInit _ -> "RlVarInit"
 

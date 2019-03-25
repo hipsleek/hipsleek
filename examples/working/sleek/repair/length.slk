@@ -10,6 +10,20 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;.
 
+// func_call -> numeric
+// synthesize [node q_63,node x]
+// x::node<v_62,q_63> * q_63::ll<flted_7_61> &
+// !(v_bool_20_1893) & x!=null & flted_7_61+1=n
+// ~>
+// (exists flted_7_52,v_53,q_54: x::node<v_53,q_54> * q_54::ll<flted_7_52> &
+// k=n & flted_7_52+1=n_94).
+
+// numeric
+// synthesize [node q_63,node x, int rs]
+// rs = fl
+// ~>
+// res = fl+1.
+
 // synthesize [node x]
 // x::ll<n> & x!=null
 // ~>
@@ -29,7 +43,8 @@ int length(node x)
 // x::ll<n> & !(v_bool_20_1893) & x!=null
 // ~>
 // (exists n_94: x::ll<n_94> &res=n & n_94=n).
- 
+
+// return 1 + length(x.next)
 // synthesize[node x, int k]
 // x::ll<n> & !(v_bool_20_1893) & x!=null
 // ~>
@@ -40,12 +55,12 @@ int length(node x)
 // ~>
 // x::ll<n> & res=n .
 
-// synthesize [node q_63,node x]
-// x::node<v_62,q_63> * q_63::ll<flted_7_61> &
-// !(v_bool_20_1893) & x!=null & flted_7_61+1=n
-// ~>
-// (exists flted_7_52,v_53,q_54: x::node<v_53,q_54> * q_54::ll<flted_7_52> &
-// k=n & flted_7_52+1=n_94).
+synthesize [node q_63,node x]
+x::node<v_62,q_63> * q_63::ll<flted_7_61> &
+!(v_bool_20_1893) & x!=null & flted_7_61+1=n
+~>
+(exists flted_7_52,v_53,q_54: x::node<v_53,q_54> * q_54::ll<flted_7_52> &
+res=n & flted_7_52+1=n_94).
 
 
 // synthesize [node x, int k]
@@ -63,7 +78,14 @@ int length(node x)
 // ~>
 // x = null & n = res.
 
-synthesize [node x, int k]
-x = null & n = 0
-~>
-x = null & n = res.
+// synthesize [node x, int k]
+// x = null & n = 0
+// ~>
+// x = null & n = res.
+
+// !!! **synthesizer.ml#643:goal:
+// goal (vars:[x:node,y:node]
+// pre:  x::node<Anon_4393,q_4394>@M * q_4394::ll<flted_7_4392>@M * y::ll<n2>@M&
+// x!=null & fl = 0 &  1+flted_7_4392=n1 & q_4394=null&{FLOW,(20,21)=__norm#E}[]
+// post:  (exists fr_62: x::ll<fr_62>@M&fr_62=1+flted_7_4392+n2&
+// {FLOW,(20,21)=__norm#E}[]))
