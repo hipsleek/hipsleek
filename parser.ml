@@ -3657,6 +3657,8 @@ id_star_list:[[t=LIST1 id_star SEP `COMMA -> t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
+(* poly_id_list:[[t=LIST1 parse_poly_type SEP `COMMA -> t]]; *)
+
 id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
 
 id:[[`IDENTIFIER id-> id]];

@@ -1530,17 +1530,23 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       (* 2. let fresh_pt   = List.map fresh poly_types  *)
       (* keep the non-poly value because we need to update the ddef which needs all the fields *)
       (* ****************** *)
-      let fldls_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist fld_typs in
-      let fldls_w_freshed_poly_typs_rev = List.rev fldls_w_freshed_poly_typs in
-      let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs_rev in
+      (* let () = y_binfo_hp (add_str "poly_typ_list " (pr_list string_of_typ)) poly_typ_list in
+       * let fldls_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist fld_typs in
+       * let fldls_w_freshed_poly_typs_rev = List.rev fldls_w_freshed_poly_typs in
+       * let ids, fresh_poly_typs  = List.split fldls_w_freshed_poly_typs_rev in *)
+      let id_to_poly_typ_list = List.map (fun identity -> Poly identity) ddef.I.data_poly_para in
+      let data_para_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
+      let data_para_w_freshed_poly_typs_rev = List.rev data_para_w_freshed_poly_typs in
+      let ids, fresh_poly_typs  = List.split data_para_w_freshed_poly_typs_rev in
       let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
-      let () = y_binfo_hp (add_str "ids: " (pr_list Cprinter.string_of_ident)) ids in
+      let () = y_binfo_hp (add_str "ids " (pr_list Cprinter.string_of_ident)) ids in
       (* let fld_typs = subst_all_poly_w_poly fldls_w_freshed_poly_typs fld_typs in *)
       (* ****************** *)
       (* remove the duplicated poly types *)
       (* 3. let ddef       = [fresh_pt/poly_types] ddef -- substitute the fst ele of the field list *)
       let updated_fields = List.map (fun field ->
           let typ  = I.get_type_of_field field in
+          let () = y_binfo_hp (add_str "field typ "  string_of_typ) typ in
           (* update the type *)
           let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in
           let nfield = I.set_type_of_field field ntyp in
@@ -1549,6 +1555,8 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let ddef_tmp = { ddef with I.data_fields = updated_fields; } in
       let ddef = ddef_tmp in
       (* 4. mkNamedTyp c fresh_pt *)
+      let () = y_binfo_hp (add_str "fields with freshed poly types before mkNamedTyp" (pr_list string_of_typ)) fresh_poly_typs in
+      (* This ~args should not be the fresh_poly_typs, this one should be corresponding to the poly para *)
       let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp ~args:(fresh_poly_typs) c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
       try
