@@ -472,7 +472,7 @@ let choose_rule_fread goal =
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
-  let vnodes = get_unfold_view pre in
+  let vnodes = get_unfold_view goal.gl_vars pre in
   let () = x_tinfo_hp (add_str "vnode" (pr_list pr_hf)) (vnodes |> List.map (fun x -> CF.ViewNode x)) no_pos in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
@@ -489,7 +489,7 @@ let choose_rule_unfold_pre goal =
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let vnodes = get_unfold_view post in
+  let vnodes = get_unfold_view goal.gl_vars post in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
@@ -599,11 +599,12 @@ let choose_rule_instantiate goal =
       }) in
   exists_vars |> List.map helper |> List.concat
 
-let choose_rule_var_init goal =
-  let vars, pre = goal.gl_vars, goal.gl_pre_cond in
+let choose_rule_var_init_x goal =
+  let vars, pre, post = goal.gl_vars, goal.gl_pre_cond, goal.gl_post_cond in
   let h_pre, _, _, _, _, _ = CF.split_components pre in
   let pre_vars = CF.fv pre |> List.filter (fun x -> not(CP.mem x vars))
-                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre))) in
+                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre)))
+                 |> List.filter (fun x -> not (CP.mem x (CF.fv post))) in
   let create_init_rule var exp = RlVarInit {
       rvi_var = var;
       rvi_rhs = exp;
@@ -618,6 +619,10 @@ let choose_rule_var_init goal =
         List.map (create_init_rule var) eq_vars
       else [] in
   List.map aux pre_vars |> List.concat
+
+let choose_rule_var_init goal =
+  Debug.no_1 "choose_rule_var_init" pr_goal pr_rules
+    (fun _ -> choose_rule_var_init_x goal) goal
 
 let choose_rule_return goal =
   let post = goal.gl_post_cond in
@@ -873,7 +878,6 @@ let synthesize_program goal =
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-  (* report_error no_pos "to debug goal" *)
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in

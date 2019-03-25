@@ -855,16 +855,17 @@ let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in
   remove_exists_vars formula vars
 
-let rec get_unfold_view_hf (hf1:CF.h_formula) = match hf1 with
-  | CF.ViewNode vnode -> [vnode]
+let rec get_unfold_view_hf vars (hf1:CF.h_formula) = match hf1 with
+  | CF.ViewNode vnode -> let var = vnode.CF.h_formula_view_node in
+    if CP.mem var vars then [vnode] else []
   | CF.Star sf -> let f1, f2 = sf.h_formula_star_h1, sf.h_formula_star_h2 in
-    let vn1,vn2 = get_unfold_view_hf f1, get_unfold_view_hf f2 in
+    let vn1,vn2 = get_unfold_view_hf vars f1, get_unfold_view_hf vars f2 in
     vn1@vn2
   | _ -> []
 
-let get_unfold_view (f1:CF.formula) = match f1 with
-  | CF.Base bf1 -> get_unfold_view_hf bf1.formula_base_heap
-  | CF.Exists bf -> get_unfold_view_hf bf.formula_exists_heap
+let get_unfold_view vars (f1:CF.formula) = match f1 with
+  | CF.Base bf1 -> get_unfold_view_hf vars bf1.formula_base_heap
+  | CF.Exists bf -> get_unfold_view_hf vars bf.formula_exists_heap
   | _ -> []
 
 let unprime_formula (formula:CF.formula) =
