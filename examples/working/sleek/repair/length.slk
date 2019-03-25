@@ -53,7 +53,17 @@ int length(node x)
 // ~>
 // x = null & res = n.
 
+// synthesize [node x, int k]
+// x = null & n = 0
+// ~>
+// x = null & res = n.
+
+// synthesize [node x, int k]
+// x::ll<n> & x = null
+// ~>
+// x = null & n = res.
+
 synthesize [node x, int k]
 x = null & n = 0
 ~>
-x = null & res = n.
+x = null & n = res.

@@ -530,16 +530,13 @@ let choose_rule_unfold_post goal =
   if has_unfold_post goal.gl_trace then []
   else vnodes |> List.map helper |> List.concat
 
-let choose_rule_numeric goal =
+let choose_rule_numeric_x goal =
   let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
       | Int -> true
       | _ -> false) in
   let post_vars = CF.fv goal.gl_post_cond in
   let containt_res = List.exists (fun x -> CP.name_of_sv x = res_name &&
                                            CP.type_of_sv x = Int) post_vars in
-  let vars = if containt_res then
-      let res = CP.mk_typed_sv Int res_name in
-      vars @ [res] else vars in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
@@ -575,6 +572,10 @@ let choose_rule_numeric goal =
     | None -> [] in
   let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
   rules |> List.concat
+
+let choose_rule_numeric goal =
+  Debug.no_1 "choose_rule_numeric" pr_goal pr_rules
+    (fun _ -> choose_rule_numeric_x goal) goal
 
 let check_eq_pre_post prog (pre:CF.formula) (post:CF.formula) var =
   let pre_f, post_f = extract_var_f pre var, extract_var_f post var in
@@ -659,7 +660,7 @@ let choose_rule_return goal =
       | _ -> false in
     let n_goal = {goal with gl_vars = res::goal.gl_vars} in
     let rules = choose_rule_assign n_goal in
-    let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+    let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
     rules |> List.filter is_return
   else []
 

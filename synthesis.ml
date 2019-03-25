@@ -250,9 +250,8 @@ let pr_goal goal =
   "post: " ^ (pr_formula goal.gl_post_cond) ^ ")"
 
 let pr_rule_assign rule =
-  let lhs = rule.ra_lhs in
-  let rhs = rule.ra_rhs in
-  (Cprinter.string_of_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
+  let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
+  (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
 
 let pr_func_call rule =
   let fc_name = rule.rfc_func_name in
@@ -1206,7 +1205,8 @@ let compare_rule_assign_vs_func_call r1 r2 =
   negate_priority (compare_rule_func_call_vs_assign r2 r1)
 
 let compare_rule_assign_vs_assign r1 r2 =
-  (* TODO *)
+  (* if CP.is_res_spec_var r1.ra_lhs then PriHigh
+   * else if CP.is_res_spec_var r2.ra_lhs then PriLow *)
   PriEqual
 
 let compare_rule_assign_vs_wbind r1 r2 =
@@ -1214,15 +1214,17 @@ let compare_rule_assign_vs_wbind r1 r2 =
   PriEqual
 
 let compare_rule_assign_vs_other r1 r2 =
-  match r2 with
-  | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-  | RlVarInit _ -> PriEqual
+  if CP.is_res_spec_var r1.ra_lhs then PriHigh
+  else
+    match r2 with
+    | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
+    | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
+    | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+    | RlFRead _ -> PriEqual
+    | RlUnfoldPre _ -> PriEqual
+    | RlUnfoldPost _ -> PriEqual
+    | RlInstantiate _ -> PriEqual
+    | RlVarInit _ -> PriEqual
 
 (* compare wbind with others *)
 
