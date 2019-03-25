@@ -614,6 +614,7 @@ let choose_rule_var_init goal =
     | Some varf -> if CF.is_emp_formula varf then
         let pf = CF.get_pure varf in
         let eq_vars = find_eq_var var pf in
+        let eq_vars = List.filter (fun x -> CP.subset (CP.afv x) vars) eq_vars in
         List.map (create_init_rule var) eq_vars
       else [] in
   List.map aux pre_vars |> List.concat

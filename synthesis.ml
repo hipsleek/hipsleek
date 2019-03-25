@@ -14,6 +14,7 @@ module C = Cast
 (** Printing  **********)
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
+let pr_exp = Cprinter.string_of_formula_exp
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
@@ -923,6 +924,7 @@ let num_to_cast num loc =
 
 let rec exp_to_iast (exp: CP.exp) = match exp with
   | CP.Var (sv, loc) ->  var_to_cast sv loc
+  | CP.Null loc -> I.Null loc
   | CP.IConst (num, loc) -> num_to_cast num loc
   | CP.Add (e1, e2, loc) ->
     let n_e1, n_e2 = exp_to_iast e1, exp_to_iast e2 in
@@ -952,7 +954,7 @@ let rec exp_to_iast (exp: CP.exp) = match exp with
                I.exp_binary_oper2 = n_e2;
                I.exp_binary_path_id = None;
                I.exp_binary_pos = loc}
-  | _ -> report_error no_pos "exp_to_iast: not handled"
+  | _ -> report_error no_pos ("exp_to_iast:" ^ (pr_exp exp) ^"not handled")
 
 let rec get_var_decls_x (exp:I.exp) = match exp with
   | I.VarDecl var -> let typ = var.I.exp_var_decl_type in
