@@ -80,7 +80,7 @@ let rec find_eq_var var (formula:CP.formula) = match formula with
 
 let choose_rassign_pure_x var goal : rule list =
   let pre_vars = goal.gl_pre_cond |> CF.fv in
-  if List.exists (CP.eq_sv var) pre_vars then []
+  if CP.mem var pre_vars then []
   else
     let varf = extract_var_f goal.gl_post_cond var in
     match varf with
@@ -512,8 +512,7 @@ let choose_rule_numeric_x goal =
   let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
   let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
-  let vars_lhs = List.filter
-      (fun x -> List.exists (fun y -> CP.eq_sv x y) post_vars) vars in
+  let vars_lhs = List.filter (fun x -> CP.mem x post_vars) vars in
   let () = x_tinfo_hp (add_str "vars lhs" pr_vars) vars_lhs no_pos in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
@@ -602,8 +601,9 @@ let choose_rule_instantiate goal =
 
 let choose_rule_var_init goal =
   let vars, pre = goal.gl_vars, goal.gl_pre_cond in
-  let pre_vars = CF.fv pre |> List.filter
-                   (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) in
+  let h_pre, _, _, _, _, _ = CF.split_components pre in
+  let pre_vars = CF.fv pre |> List.filter (fun x -> not(CP.mem x vars))
+                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre))) in
   let create_init_rule var exp = RlVarInit {
       rvi_var = var;
       rvi_rhs = exp;
