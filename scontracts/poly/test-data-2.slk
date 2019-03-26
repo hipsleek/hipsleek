@@ -1,10 +1,10 @@
 // polymorphic node
-data nodep[T]{
+data nodep[`T]{
    `T val;
    nodep[`T] next;
 }.
 
-data nodep2[T1,T2]{
+data nodep2[`T1,`T2]{
    `T1 val1;
    `T2 val2;
    nodep2[`T1,`T2] next;
@@ -15,11 +15,11 @@ data nodep2[T1,T2]{
 // data nodep3[T1,T2,T3]{
 //    `T1 val1;
 //    `T2 val2;
-//    `T3 val3;
+q//    `T3 val3;
 //    nodep[`T1,`T2] next;
 // }.
 
-data nodep3[T1,T2,T3]{
+data nodep3[`T1,`T2,`T3]{
    `T1 val1;
    `T2 val2;
    `T3 val3;

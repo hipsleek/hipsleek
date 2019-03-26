@@ -1522,10 +1522,10 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls c in
       (* 1. let poly_types =  collect the poly types from ddef (unique types) *)
       (* let field_names = List.map I.get_field_name ddef.I.data_fields in *)
-      let fld_typs = List.map I.get_field_typ ddef.I.data_fields in
-      let poly_typ_list = List.filter (fun t -> match t with
-          | Poly _ -> true
-          | _ -> false) fld_typs in
+      (* let fld_typs = List.map I.get_field_typ ddef.I.data_fields in
+       * let poly_typ_list = List.filter (fun t -> match t with
+       *     | Poly _ -> true
+       *     | _ -> false) fld_typs in *)
       (* let () = y_binfo_hp (add_str "types of fields" (pr_list string_of_typ)) poly_typ_list in *)
       (* 2. let fresh_pt   = List.map fresh poly_types  *)
       (* keep the non-poly value because we need to update the ddef which needs all the fields *)
@@ -1638,6 +1638,7 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
   (* poly_types = get_all_poly_types  vdef *)
+  let id_to_poly_typ_list = List.map (fun identity -> Poly identity) vdef.I.view_poly_vars in
   (* let get_all_poly_types vd ls =
    *   match vd.I.view_type_of_self with
    *   | Poly -> vd::ls
@@ -1645,6 +1646,18 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
    * let poly_types = get_all_poly_types vdef [] in
    * let poly_types_hmap = fresh_poly_tlist poly_types in *)
   (* vdef = replace_poly hmap  vdef *)
+  (* let view_pvar_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
+   * let view_pvar_w_freshed_poly_typs_rev = List.rev view_pvar_w_freshed_poly_typs in
+   * let ids, fresh_poly_typs  = List.split view_pvar_w_freshed_poly_typs_rev in
+   * let updated_fields = List.map (fun field ->
+   *         let typ  = I.get_type_of_field field in
+   *         let () = y_binfo_hp (add_str "field typ "  string_of_typ) typ in
+   *         (\* update the type *\)
+   *         let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in
+   *         let nfield = I.set_type_of_field field ntyp in
+   *         nfield
+   *       ) ddef.I.data_fields in *)
+  let () = y_binfo_hp (add_str "view varssssssssssssssssssssssssss" (pr_list Cprinter.string_of_ident)) vdef.I.view_vars in
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
@@ -1926,17 +1939,27 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     ) in
     (* open square and close square after the heap node *)
     (* the problem is how to access and infer the type of the poly data args *)
+    (* except for the data type, we also need to deal with the view type *)
+    (* we doesn't use the data_def. we return the data_poly_para, if Not_found -> return the number of view_poly_para *)
     let num_poly_args = List.length poly in
     x_binfo_hp (add_str "num of poly args" (pr_list string_of_typ)) poly no_pos;
-    let data_def =
+    let view_or_data_poly_para =
         (try
           let data_d = I.look_up_data_def_raw prog.I.prog_data_decls v_name in
-          data_d
+          let data_poly_para = data_d.data_poly_para in
+          data_poly_para
          with
-         | Not_found -> report_error pos (" cannot find the heap name in data decls! ")) in
+         | Not_found ->
+           try
+             let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
+             let view_poly_para = view_d.view_poly_vars in
+             view_poly_para
+           with
+           | Not_found ->
+               report_error pos (" cannot find the heap name in data decls or view decls! ")) in
     (* poly parameters after the data declaration *)
-    let num_poly_vars = List.length data_def.data_poly_para in
-    x_binfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident))data_def.data_poly_para no_pos;
+    let num_poly_vars = List.length view_or_data_poly_para in
+    x_binfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident))view_or_data_poly_para no_pos;
     let gather_type_info_poly vname tname lst tl = (
       match lst with
       | [] -> tl

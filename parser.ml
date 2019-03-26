@@ -1973,7 +1973,7 @@ at_non_classic: [[ `AT; `IDENTIFIER "nonclassic" -> false ]];
 
 (* e.g. G<A:role,B:role,k:chan> *)
 view_header:
-    [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l = opt_ann_cid_list; `GT ->
+    [[ `IDENTIFIER vn; non_classic = OPT at_non_classic; opt1 = OPT opt_brace_vars; `LT; l = opt_ann_cid_list; `GT; polyt = OPT parse_poly_var ->
      let nkind = get_pred_node_kind vn in
      let sess_info = match nkind with
      | Some nk ->
@@ -1987,10 +1987,11 @@ view_header:
      let cids, anns = List.split l in
      let modes = get_modes anns in
      let pos = get_pos_camlp4 _loc 1 in
-     let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars modes pos in
+     let poly_vars = un_option polyt [] in
+     let vh = Iast.mk_view_header vn opt1 cids mvs ~inst_params:inst_vars ~poly_params:poly_vars modes pos in
      {vh with
         view_session_info = sess_info;
-        view_classic = Gen.map_opt_def true (fun x -> x) non_classic
+        view_classic = Gen.map_opt_def true (fun x -> x) non_classic;
      }
 ]];
 
@@ -3621,8 +3622,9 @@ pointer_type:
 
 typ_list: [[ tl = LIST1 typ SEP `COMMA -> tl]];
 
-parse_poly_type:    [[ `ACUTE; `IDENTIFIER id -> poly_type id ]];
-parse_poly_var:     [[`OSQUARE; ids = id_list; `CSQUARE -> ids]];
+parse_poly_id:      [[ `ACUTE; `IDENTIFIER id -> id ]];
+parse_poly_type:    [[ id = parse_poly_id -> poly_type id ]];
+parse_poly_var:     [[`OSQUARE; ids = poly_id_list; `CSQUARE -> ids]];
 parse_poly_args:    [[ (* peek_poly_args; *) `OSQUARE; ids = typ_list;`CSQUARE -> ids]];
 
 (* parse_poly_args_2:    [[`EQV; ids = typ_list;`EQV -> ids]]; *)
@@ -3657,7 +3659,7 @@ id_star_list:[[t=LIST1 id_star SEP `COMMA -> t]];
 
 id_list:[[t=LIST1 id SEP `COMMA -> t]];
 
-(* poly_id_list:[[t=LIST1 parse_poly_type SEP `COMMA -> t]]; *)
+poly_id_list:[[t=LIST1 parse_poly_id SEP `COMMA -> t]];
 
 id_list_w_brace: [[`OBRACE; t=id_list; `CBRACE -> t]];
 
