@@ -84,6 +84,13 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
               prog_proc_decls = n_procs}
 
 let repair_one_candidate (iprog: I.prog_decl) =
+  let () = x_binfo_pp "marking" no_pos in
+  let () = Syn.entailments := [] in
+  let () = Syn.rel_num := 0 in
+  let () = Syn.res_num := 0 in
+  let () = Syn.repair_res := None in
+  let () = Syn.unk_hps := [] in
+  let () = Syn.syn_pre := None in
   let cprog, _ = Astsimp.trans_prog iprog in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in

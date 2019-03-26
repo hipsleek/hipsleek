@@ -632,7 +632,7 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
         let formulas = List.map (fun x ->
             translate_back_formula x.SBCast.vdc_form []) cases in
         helper_f formulas in
-    let () = x_binfo_hp (add_str "body" pr_formula) body no_pos in
+    let () = x_tinfo_hp (add_str "body" pr_formula) body no_pos in
     let body = body |> CF.subst (List.combine args hip_args) in
     {hp with Cast.hp_formula = body} in
   vdefns |> List.map (helper hps)
@@ -662,7 +662,7 @@ let translate_prog (prog:Cast.prog_decl) =
 
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
+  let () = x_binfo_hp (add_str "entailments" pr_ents) entailments no_pos in
   let sb_ents = List.map translate_entailment entailments in
   let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
@@ -673,7 +673,7 @@ let solve_entailments prog entailments =
     let vdefns = SBPFU.get_solved_vdefns ptree in
     let () = x_binfo_hp (add_str "vdefns" SBCast.pr_vdfs) vdefns no_pos in
     let hps = translate_back_vdefns prog vdefns in
-    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
     Some hps
   else None
 
@@ -708,42 +708,33 @@ let get_repair_candidate prog ents cond_op =
         let substs = List.combine translated_vars vars in
         let n_exp = Cpure.e_apply_subs substs translated_exp in
         Some n_exp
-    with Not_found -> None
-  in
+    with Not_found -> None in
   let fun_def_exp = get_func_exp fun_defs prog.Cast.prog_exp_decls in
   match fun_def_exp with
   | Some fun_def_cexp ->
     let pr_exp = Cprinter.poly_string_of_pr Cprinter.pr_formula_exp in
-      let () = x_tinfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
-      let exp_decl = List.hd prog.Cast.prog_exp_decls in
-      let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
-      let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
-        begin
-          match cond_op with
-          | Some cond ->
-            let neg_cexp =
-              begin
-                match cond with
-                | Iast.OpGt
-                | Iast.OpLte ->
-                  let n_exp = CP.mkMult_minus_one fun_def_cexp in
-                  CP.mkAdd n_exp (CP.mkIConst 2 VarGen.no_pos) VarGen.no_pos
-                | Iast.OpGte
-                | Iast.OpLt ->
-                  let n_exp = CP.mkMult_minus_one fun_def_cexp in
-                  CP.mkSubtract n_exp (CP.mkIConst 1 VarGen.no_pos)
-                    VarGen.no_pos
-                | _ -> fun_def_cexp
-              end
-            in
-            let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
-            let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
-            Some (n_prog, fun_def_cexp, Some neg_prog, Some neg_cexp)
-          | None -> Some (n_prog, fun_def_cexp, None, None)
-      end
-    | None ->
-      let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
-      None
+    let () = x_tinfo_hp (add_str "exp: " pr_exp) fun_def_cexp no_pos in
+    let exp_decl = List.hd prog.Cast.prog_exp_decls in
+    let n_exp_decl = {exp_decl with exp_body = fun_def_cexp} in
+    let n_prog = {prog with prog_exp_decls = [n_exp_decl]} in
+    begin
+      match cond_op with
+      | Some cond ->
+        let neg_cexp = match cond with
+          | Iast.OpGt | Iast.OpLte ->
+            let n_exp = CP.mkMult_minus_one fun_def_cexp in
+            CP.mkAdd n_exp (CP.mkIConst 2 VarGen.no_pos) VarGen.no_pos
+          | Iast.OpGte | Iast.OpLt ->
+            let n_exp = CP.mkMult_minus_one fun_def_cexp in
+            CP.mkSubtract n_exp (CP.mkIConst 1 VarGen.no_pos) VarGen.no_pos
+          | _ -> fun_def_cexp in
+        let neg_exp_decl = {exp_decl with exp_body = neg_cexp} in
+        let neg_prog = {prog with prog_exp_decls = [neg_exp_decl]} in
+        Some (n_prog, fun_def_cexp, Some neg_prog, Some neg_cexp)
+      | None -> Some (n_prog, fun_def_cexp, None, None)
+    end
+  | None -> let () = x_tinfo_pp "No expression \n" VarGen.no_pos in
+    None
 
 let check_entail_x ?(residue=false) prog ante conseq =
   let sb_prog = translate_prog prog in
@@ -952,6 +943,7 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
                     |> CP.remove_dups_svl in
     let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
     let () = x_tinfo_hp (add_str "conseq" pr_struc_f) (CF.EBase bf) no_pos in
+    let () = x_tinfo_hp (add_str "ante" pr_formula) (es.CF.es_formula) no_pos in
     let () = x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos in
     let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
     let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in

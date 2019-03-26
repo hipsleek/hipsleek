@@ -641,13 +641,13 @@ let choose_rule_return goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_var_init goal) in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
+  let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
-  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -663,13 +663,24 @@ let process_rule_assign goal rassign =
   let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rhs no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+  let post_vars = CF.fv post in
   let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
-  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
-  match ent_check with
-  | true -> mk_derivation_success goal (RlAssign rassign)
-  | false ->
+  if List.exists CP.is_res_spec_var post_vars then
     if CP.is_res_spec_var lhs then
-      mk_derivation_fail goal (RlAssign rassign)
+      let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+      match ent_check with
+      | true -> mk_derivation_success goal (RlAssign rassign)
+      | false -> mk_derivation_fail goal (RlAssign rassign)
+    else
+      let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+      match ent_check with
+      | true -> mk_derivation_fail goal (RlAssign rassign)
+      | false ->
+        let sub_goal = {goal with gl_pre_cond = n_pre} in
+        mk_derivation_subgoals goal (RlAssign rassign) [sub_goal]
+  else
+    let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+    if ent_check then mk_derivation_success goal (RlAssign rassign)
     else
       let sub_goal = {goal with gl_pre_cond = n_pre} in
       mk_derivation_subgoals goal (RlAssign rassign) [sub_goal]
@@ -810,7 +821,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -878,7 +889,7 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -907,7 +918,7 @@ let synthesize_entailments iprog prog proc =
       let post_hp = List.find (fun x -> x.Cast.hp_name = "Q") hps in
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
       let post = post_hp.Cast.hp_formula in
-      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
+      let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
       if res then repair_res := Some n_iprog else ()
     else ()
