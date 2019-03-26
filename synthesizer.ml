@@ -375,7 +375,7 @@ let unify (pre_proc, post_proc) goal =
     ss_vars in
   let ss_args = proc_args |> List.map (fun arg -> unify_var arg goal) in
   let ss_args = filter_args_input ss_args in
-  let containt_res = CF.fv post_proc |> List.map (fun x -> CP.name_of_sv x)
+  let contain_res = CF.fv post_proc |> List.map (fun x -> CP.name_of_sv x)
                      |> List.exists (fun x -> x = res_name) in
   let ss_args = List.filter(fun list_and_subst ->
       let list = List.map fst list_and_subst in
@@ -392,7 +392,7 @@ let unify (pre_proc, post_proc) goal =
           let combine_args = List.combine args proc_args in
           let eq_args = List.for_all (fun (x,y) -> CP.eq_sv x y) combine_args in
           if not eq_args then
-            let r_var = if containt_res then
+            let r_var = if contain_res then
                 let res = List.find (fun x -> CP.name_of_sv x = res_name)
                     (CF.fv post_proc) in
                 let n_var = CP.mk_typed_sv (CP.type_of_sv res)
@@ -499,12 +499,8 @@ let choose_rule_unfold_post goal =
   else vnodes |> List.map helper |> List.concat
 
 let choose_rule_numeric_x goal =
-  let vars = goal.gl_vars |> List.filter (fun x -> match CP.type_of_sv x with
-      | Int -> true
-      | _ -> false) in
+  let vars = goal.gl_vars |> List.filter is_int_var in
   let post_vars = CF.fv goal.gl_post_cond in
-  let containt_res = List.exists (fun x -> CP.name_of_sv x = res_name &&
-                                           CP.type_of_sv x = Int) post_vars in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
@@ -643,7 +639,6 @@ let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  let rs = rs @ (choose_rule_var_init goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
   let rs = rs @ (choose_rule_f_write goal) in
@@ -653,6 +648,7 @@ let choose_synthesis_rules goal : rule list =
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_return goal) in
+  (* let rs = rs @ (choose_rule_var_init goal) in *)
   rs
 
 (*********************************************************************
@@ -752,7 +748,7 @@ let process_func_call goal rcore : derivation =
     let n_post_proc = CF.subst substs post_proc in
     let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in
     let np_vars = CF.fv n_post_state in
-    let containt_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
+    let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                        |> List.exists (fun x -> x = res_name) in
     let n_post_state, n_vars = if rcore.rfc_return != None then
         let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
@@ -889,7 +885,7 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in
@@ -910,7 +906,7 @@ let synthesize_entailments iprog prog proc =
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
       | None -> []
-      | Some exp -> get_var_decls exp in
+      | Some exp -> get_var_decls (Gen.unsome !repair_pos) exp in
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in

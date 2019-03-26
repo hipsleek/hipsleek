@@ -25,6 +25,7 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 (*** Reference variable***********)
 let rel_num = ref 0
 let res_num = ref 0
+let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
@@ -264,15 +265,25 @@ let pr_rule_bind rule =
   (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
   ^ (Cprinter.string_of_spec_var rule.rb_other_var)
 
+let pr_fread rule =
+  "(" ^ (pr_var rule.rbr_bound_var) ^ "." ^ (snd rule.rbr_field) ^ ", "
+  ^ (pr_var rule.rbr_value) ^ ")"
+
+let pr_instantiate rule =
+  "(" ^ (pr_var rule.rli_lhs) ^ ", " ^ (pr_var rule.rli_rhs) ^ ")"
+
+let pr_var_init rule =
+  "(" ^ (pr_var rule.rvi_var) ^ ", " ^ (pr_exp rule.rvi_rhs) ^ ")"
+
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlBind rule -> "RlBind\n" ^ (pr_rule_bind rule)
-  | RlFRead rule -> "RlFRead"
+  | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
-  | RlInstantiate _ -> "RlInstantiate"
-  | RlVarInit _ -> "RlVarInit"
+  | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
+  | RlVarInit rule -> "RlVarInit" ^ (pr_var_init rule)
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -296,7 +307,7 @@ and pr_st_status st_status = match st_status with
 and pr_st_core st =
   let goal = st.stc_goal in
   let sub_trees = st.stc_subtrees in
-  (pr_goal goal) ^ "=n" ^
+  (* (pr_goal goal) ^ *)
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
 
@@ -957,21 +968,27 @@ let rec exp_to_iast (exp: CP.exp) = match exp with
                I.exp_binary_pos = loc}
   | _ -> report_error no_pos ("exp_to_iast:" ^ (pr_exp exp) ^"not handled")
 
-let rec get_var_decls_x (exp:I.exp) = match exp with
-  | I.VarDecl var -> let typ = var.I.exp_var_decl_type in
-    var.I.exp_var_decl_decls |> List.map (fun (x, _, _) -> x)
-    |> List.map (CP.mk_typed_sv typ)
-  | I.Seq seq -> (get_var_decls_x seq.I.exp_seq_exp1) @
-                 (get_var_decls_x seq.I.exp_seq_exp2)
-  | I.Cond cond -> (get_var_decls_x cond.I.exp_cond_then_arm) @
-                   (get_var_decls_x cond.I.exp_cond_else_arm)
-  | I.Block b -> get_var_decls_x b.I.exp_block_body
-  | I.Label (_, e) -> get_var_decls_x e
+let get_start_lnum pos = pos.VarGen.start_pos.Lexing.pos_lnum
+
+let rec get_var_decls_x pos (exp:I.exp) = match exp with
+  | I.VarDecl var ->
+    let v_pos = var.I.exp_var_decl_pos in
+    if get_start_lnum v_pos <= get_start_lnum pos then
+      let typ = var.I.exp_var_decl_type in
+      var.I.exp_var_decl_decls |> List.map (fun (x, _, _) -> x)
+      |> List.map (CP.mk_typed_sv typ)
+    else []
+  | I.Seq seq -> (get_var_decls_x pos seq.I.exp_seq_exp1) @
+                 (get_var_decls_x pos seq.I.exp_seq_exp2)
+  | I.Cond cond -> (get_var_decls_x pos cond.I.exp_cond_then_arm) @
+                   (get_var_decls_x pos cond.I.exp_cond_else_arm)
+  | I.Block b -> get_var_decls_x pos b.I.exp_block_body
+  | I.Label (_, e) -> get_var_decls_x pos e
   | _ -> []
 
-let get_var_decls (exp:I.exp) : CP.spec_var list =
+let get_var_decls pos (exp:I.exp) : CP.spec_var list =
   Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
-    get_var_decls_x exp
+    (fun _ -> get_var_decls_x pos exp) exp
 
 let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
                        I.exp_var_pos = no_pos}
@@ -1263,7 +1280,7 @@ let compare_rule r1 r2 =
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | RlVarInit _ -> PriEqual
+  | RlVarInit _ -> PriLow
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =

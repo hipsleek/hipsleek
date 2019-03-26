@@ -646,9 +646,7 @@ let rec string_of_imm_helper imm =
   | CP.PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 (* WN :why not just print all the time? *)
-let rec string_of_imm imm =
-  (* if not !print_ann then "" *)
-  (* else *) string_of_imm_helper imm
+let rec string_of_imm imm = string_of_imm_helper imm
 
 let rec string_of_imm_ann imm =
   match imm with
@@ -2303,10 +2301,11 @@ and pr_formula_base e =
     pr_h_formula h;
     (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp));
     (if not(MP.isConstMTrue p) then
-       (pr_cut_after "&" ; pr_mix_formula p))
-    ;pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
-    (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
-    ;if (a==[]) then ()
+       (pr_cut_after "&" ; pr_mix_formula p));
+    if not(!enable_repair)
+    then let () = pr_cut_after  "&" in
+      fmt_string (string_of_flow_formula "FLOW" fl);
+    if (a==[]) then ()
     else
       fmt_string ("\nAND "); pr_one_formula_list a
     ;
@@ -2394,7 +2393,7 @@ and pr_formula_1 e =
              formula_exists_and = a;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
-    (match lbl with | None -> fmt_string ((* "lbl: None" *)""); | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (match lbl with | None -> fmt_string ""; | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
     let flag = not(svs==[]) in
     if flag then fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
     pr_formula_base ({
@@ -2407,20 +2406,9 @@ and pr_formula_1 e =
         formula_base_label = lbl;
         formula_base_pos = pos; });
     if flag then fmt_string ")"
-(* pr_h_formula h;                                        *)
-(* (if not(MP.isConstMTrue p) then                        *)
-(*   (pr_cut_after "&" ; pr_mix_formula p))               *)
-(* ; pr_cut_after  "&" ;                                  *)
-(* fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") *)
-(* (*;fmt_string (" LOC: " ^ (string_of_loc pos))*)       *)
-(* ;if (a==[]) then ()                                    *)
-(* else                                                   *)
-(*   fmt_string ("\nAND "); pr_one_formula_list a         *)
 
 and pr_formula e =
   let e = Cfout.tidy_print e  in
-  (* if (!Globals.print_en_tidy) then (Cfout.shorten_formula e) *)
-  (* else e in *)
   pr_formula_1 e
 
 and pr_rflow_formula f =
