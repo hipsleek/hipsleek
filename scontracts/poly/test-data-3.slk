@@ -1,0 +1,65 @@
+// polymorphic node
+data nodep[`T]{
+   `T val;
+   nodep[`T] next;
+}.
+
+data nodep2[`T2,`T1]{
+   `T1 val1;
+   `T2 val2;
+   `T1 val3;
+   nodep2[`T2,`T1] next;
+}.
+
+
+// todo
+// data nodep3[T1,T2,T3]{
+//    `T1 val1;
+//    `T2 val2;
+//    `T3 val3;
+//    nodep[`T1,`T2] next;
+// }.
+
+data nodep3[`T1,`T2,`T3]{
+   `T1 val1;
+   `T2 val2;
+   `T3 val3;
+   nodep[`T1,`T2,`T3] next;
+}.
+
+data node{
+   bool val;
+   node next;
+}.
+
+//1
+checkentail x::nodep2<3,true,4,t>[bool,int] |- x::nodep2<3,true,4,t>[bool,int].
+print residue.
+expect Valid.
+
+//1
+checkentail x::nodep<a,_> |- x::nodep<b,_>.
+print residue.
+expect Valid.
+
+//1
+/*
+checkentail x::nodep2<3,true,4,t>[bool,int] |- x::nodep2<a,_,_,_>.
+print residue.
+expect Valid.
+*/
+
+//1
+checkentail x::nodep<a,_> & a=2 |- x::nodep<b,_>[`t].
+print residue.
+expect Valid.
+
+//1
+checkentail x::nodep<a,_> * q::nodep<true,_> & a=2 |- x::nodep<b,_>[`t].
+print residue.
+expect Valid.
+
+//1
+checkentail x::nodep<a,q> * q::nodep<true,_> & a=2 |- x::nodep<b,_>[`t].
+print residue.
+expect Valid.
