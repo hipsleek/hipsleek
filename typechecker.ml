@@ -69,7 +69,7 @@ let get_repair_ents_x rs proc =
       (get_failed_ctx a) @ (get_failed_ctx b)
     | _ -> Err.report_error {
         Err.error_loc = no_pos;
-        Err.error_text = ("unhandled")
+        Err.error_text = ("get_repair_ents: unhandled")
       }
   in
   let get_entailment ctx =
@@ -2628,7 +2628,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   (*FAILURE explaining*)
                   let to_print = "\nProving precondition in method "
                                  ^ proc.proc_name ^ " Failed88.\n" in
-                  let _ = get_repair_ents (CF.list_failesc_to_partial res) proc in
+                  let _ = if !enable_repair then
+                      get_repair_ents (CF.list_failesc_to_partial res) proc
+                    else [] in
                   let _ =
                     if not !Globals.disable_failure_explaining then
                       let s,fk,_= CF.get_failure_list_failesc_context res
@@ -3186,7 +3188,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
-        let _ = get_repair_ents rs proc in
+        let _ = if !enable_repair then get_repair_ents rs proc
+        else [] in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derived"

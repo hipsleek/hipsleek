@@ -637,7 +637,7 @@ let choose_rule_return goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
@@ -648,7 +648,6 @@ let choose_synthesis_rules goal : rule list =
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_return goal) in
-  (* let rs = rs @ (choose_rule_var_init goal) in *)
   rs
 
 (*********************************************************************
@@ -817,7 +816,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
