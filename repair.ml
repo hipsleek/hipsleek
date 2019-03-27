@@ -57,7 +57,7 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
   let pr_proc = Iprinter.string_of_proc_decl in
   let pr_procs = pr_list pr_proc in
   let n_iproc = mk_candidate_iproc iproc args candidate in
-  let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
     let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
@@ -115,7 +115,8 @@ let start_repair (iprog:I.prog_decl) =
     let args = cproc.C.proc_args in
     let helper cand =
       let n_iprog = mk_candidate_iprog iprog r_iproc args cand in
-      repair_one_candidate n_iprog in
+      report_error no_pos "to debug fcode" in
+      (* repair_one_candidate n_iprog in *)
     let res = cands |> List.map helper
                      |> List.filter (fun x -> x != None) in
     if res = [] then None
