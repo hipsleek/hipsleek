@@ -4086,3 +4086,7 @@ let set_type_of_field field typ =
   let typed_ident, a, b, c = field in
   let _, id = typed_ident in
   (typ,id),a,b,c
+
+let set_type_of_view_var var typ =
+  let _, id = var in
+  (typ,id)

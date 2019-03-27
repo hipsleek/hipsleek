@@ -1637,27 +1637,37 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let dname = vdef.I.view_data_name in
-  (* poly_types = get_all_poly_types  vdef *)
-  let id_to_poly_typ_list = List.map (fun identity -> Poly identity) vdef.I.view_poly_vars in
+  let id_to_poly_typ_list = (
+    match vdef.I.view_poly_vars with
+    | [] -> []
+    | _  -> List.map (fun identity -> Poly identity) vdef.I.view_poly_vars
+  ) in
+  let view_pvar_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
+  let view_pvar_w_freshed_poly_typs_rev = List.rev view_pvar_w_freshed_poly_typs in
+  let ids, fresh_poly_typs  = List.split view_pvar_w_freshed_poly_typs_rev in
+  let () = y_binfo_hp (add_str "view --- fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
+  let () = y_binfo_hp (add_str "view --- ids " (pr_list Cprinter.string_of_ident)) ids in
+  let () = y_binfo_hp (add_str "view before --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
+  let updated_vars = (
+    match (List.length fresh_poly_typs) = (List.length vdef.I.view_typed_vars) with
+    | true  ->
+        List.map2 (fun var freshp ->
+          (* let typ  =  I.get_type_of_view_var var in *)
+          (* let () = y_binfo_hp (add_str "view var typ "  string_of_typ) typ in *)
+          (* update the type *)
+          (* let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in *)
+          let ntvar = I.set_type_of_view_var var freshp in
+          ntvar
+        ) vdef.I.view_typed_vars fresh_poly_typs
+    | false -> vdef.I.view_typed_vars
+  ) in
+    let () = y_binfo_hp (add_str "view after --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) updated_vars in
+    let vdef_tmp = { vdef with I.view_typed_vars = updated_vars; } in
+    let vdef = vdef_tmp in
   (* let get_all_poly_types vd ls =
-   *   match vd.I.view_type_of_self with
-   *   | Poly -> vd::ls
-   *   | _    -> ls
    * let poly_types = get_all_poly_types vdef [] in
    * let poly_types_hmap = fresh_poly_tlist poly_types in *)
   (* vdef = replace_poly hmap  vdef *)
-  (* let view_pvar_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
-   * let view_pvar_w_freshed_poly_typs_rev = List.rev view_pvar_w_freshed_poly_typs in
-   * let ids, fresh_poly_typs  = List.split view_pvar_w_freshed_poly_typs_rev in
-   * let updated_fields = List.map (fun field ->
-   *         let typ  = I.get_type_of_field field in
-   *         let () = y_binfo_hp (add_str "field typ "  string_of_typ) typ in
-   *         (\* update the type *\)
-   *         let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in
-   *         let nfield = I.set_type_of_field field ntyp in
-   *         nfield
-   *       ) ddef.I.data_fields in *)
-  let () = y_binfo_hp (add_str "view varssssssssssssssssssssssssss" (pr_list Cprinter.string_of_ident)) vdef.I.view_vars in
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
@@ -1730,11 +1740,12 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   (**********replace poly vars with tvars*********)
   (***********************************************)
   let tmp_r =  (self_ty,self_ptr)::tmp_r in
-  let ()    = y_ninfo_hp (add_str "tmp_r" (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
+  let ()    = y_binfo_hp (add_str "tmp_r1 " (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
   (* 1. for each unique poly typ introduce a fresh tvar in n_tl *)
   let poly_lst,n_tl = introduce_fresh_tvar_for_each_unique_poly n_tl tmp_r in
   (* 2. substitute all poly typ with their corresponding tvar (created at 1.) *)
   let tmp_r = subst_all_poly_w_tvar poly_lst tmp_r in
+  let ()    = y_binfo_hp (add_str "tmp_r2 " (pr_list (pr_pair string_of_typ pr_id))) tmp_r in
     (* let tmp_r = List.tl tmp_r in *)
   (***********************************************)
   (*****(end)replace poly vars with tvars*********)

@@ -14,14 +14,16 @@ pred ll<a:int> == self=null or
 pred llp<a>[`T] == self=null or
           self::nodep<a,r>[`T] * r::llp<a>[`T].
 
+// pred llp<a,b,c>[`T1,`T2] == self=null or
+//           self::nodep<a,r>[`T] * r::llp<a>[`T].
 
-checkentail x::ll<2> |- x::ll<2>.
-print residue.
-expect Valid.
+// checkentail x::ll<2> |- x::ll<2>.
+// print residue.
+// expect Valid.
 
-checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
-print residue.
-expect Valid.
+// checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
+// print residue.
+// expect Valid.
 
 checkentail x::llp<2>[int] & x!=null |- x::node<2,r> * r::llp<2>[int].
 print residue.
