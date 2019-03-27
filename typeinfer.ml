@@ -1652,10 +1652,6 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
     match (List.length fresh_poly_typs) = (List.length vdef.I.view_typed_vars) with
     | true  ->
         List.map2 (fun var freshp ->
-          (* let typ  =  I.get_type_of_view_var var in *)
-          (* let () = y_binfo_hp (add_str "view var typ "  string_of_typ) typ in *)
-          (* update the type *)
-          (* let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in *)
           let ntvar = I.set_type_of_view_var var freshp in
           ntvar
         ) vdef.I.view_typed_vars fresh_poly_typs
