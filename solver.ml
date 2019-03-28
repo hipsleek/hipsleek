@@ -142,6 +142,7 @@ let prune_branches_subsume_x prog lhs_node rhs_node:
        let need_prunning = Gen.BList.difference_eq (=) l1 l2 in
        if (List.length need_prunning)<=0 then (true,None) (* *)
        else
+         let () = x_binfo_pp "looking view_def here" no_pos in
          let v_def = look_up_view_def no_pos prog.prog_view_decls
              vn2.h_formula_view_name in
          let to_vars = vn2.h_formula_view_node:: vn2.h_formula_view_arguments in
@@ -322,7 +323,7 @@ and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context)
   (f : MCP.mix_formula) : list_failesc_context =
   let pr = Cprinter.string_of_list_failesc_context in
   let pr2 = Cprinter.string_of_mix_formula in
-  Debug.no_2 " combine_list_failesc_context_and_unsat_now" pr pr2 pr (fun _ _ ->
+  Debug.no_2 "combine_list_failesc_context_and_unsat_now" pr pr2 pr (fun _ _ ->
       combine_list_failesc_context_and_unsat_now_x prog ctx f) ctx f
 
 and combine_list_failesc_context prog (ctx : list_failesc_context) (f :
@@ -616,6 +617,7 @@ and struc_unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset :
              h_formula_view_annot_arg = anns
            } ->
       let uf = old_uf+uf in
+      let () = x_binfo_pp "looking view_def here" no_pos in
       let vdef = x_add Cast.look_up_view_def pos (fst prog).prog_view_decls lhs_name in
       (* check to see if vdef case vars are quantif. Is so use unstruc view formula *)
       let vs_vdef = List.combine ((self_var vdef.view_data_name)::vdef.view_vars) (p::vs) in
@@ -697,7 +699,7 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var)
         formula_base_vperm = vp;
         formula_base_flow = fl;
         formula_base_and = a;
-        formula_base_pos = pos}) ->  
+        formula_base_pos = pos}) ->
       let new_f = unfold_baref prog h p vp a fl v pos [] ~lem_unfold:lem_unfold already_unsat uf in
       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
       (normalize_formula_w_coers 1 (fst prog) tmp_es new_f
@@ -762,8 +764,8 @@ and unfold_heap (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_var
   let pr2 = Cprinter.string_of_spec_var in
   let pr3 = pr_list pr2 in
   let pr_out = Cprinter.string_of_formula in
-  Debug.no_5 "unfold_heap" 
-    (add_str "lhs heap:" pr1) 
+  Debug.no_5 "unfold_heap"
+    (add_str "lhs heap:" pr1)
     (add_str "lhs var:" pr2)
     (add_str "lhs aset:" pr3)
     (add_str "lem_unfold" string_of_bool)
@@ -1662,7 +1664,7 @@ and elim_ante_evars (es:entail_state) : context =
 
 and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   let tp_call_wrapper npf =
-    (* else  *)if !Globals.simpl_unfold2 then
+    if !Globals.simpl_unfold2 then
       let r =
         let sat,npf = MCP.check_pointer_dis_sat npf in
         if  sat then
@@ -1685,7 +1687,6 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     let t1 = Expure.build_ef_heap_formula is_shape2 h views in
     let t2 = Expure.build_ef_pure_formula ~shape:is_shape1 p1 in
     let d = Excore.EPureI.mk_star_disj t1 t2 in
-    (* let d = Excore.EPureI.elim_unsat_disj d in *)
     let res = (Excore.EPureI.is_false_disj (is_shape1 && is_shape2) d) in
     let () = x_tinfo_pp ("Omega unsat:end " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
     res
@@ -1698,7 +1699,6 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
   in
   let tp_sem fh fp =
     let () = x_tinfo_pp ("Omega unsat:start " ^ (string_of_int !Omega.omega_call_count) ^ " invocations") no_pos in
-    (* let _ = unsat_count_sem := !unsat_count_sem + 1 in *)
     let fp = MCP.translate_level_mix_formula fp in
     let fh, fp = Norm.imm_norm_h_formula prog fh fp unfold_for_abs_merge no_pos in
     let ph,_,_ = x_add xpure_heap 1 prog fh fp 1 in
@@ -1732,7 +1732,8 @@ and unsat_base_a prog (sat_subno:  int ref) f  : bool=
 and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool =
   Debug.no_2_num n "unsat_base_nth"
     Cprinter.string_of_formula string_of_int string_of_bool
-    (fun _ _ -> unsat_base_a prog sat_subno f) f n
+    (fun _ _ -> if !enable_repair then Songbird.check_unsat prog f
+          else unsat_base_a prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
@@ -1761,8 +1762,8 @@ and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_estate ?(sat_subno=vv_ref) prog es =
-  let temp_f = if !Globals.unsat_consumed_heap then 
-      CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos 
+  let temp_f = if !Globals.unsat_consumed_heap then
+      CF.mkStar_combine_heap es.es_formula es.es_heap CF.Flow_combine no_pos
     else es.es_formula
   in
   (* added consumed heap for unsat_now checking *)
@@ -2640,7 +2641,9 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
 
 and need_unfold_rhs prog vn=
   let rec look_up_view vn0=
+    let () = x_binfo_pp "marking" no_pos in
     let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vn0.CF.h_formula_view_name in
+    let () = x_binfo_pp "marking" no_pos in
     let fs = List.map fst vdef.view_un_struc_formula in
     let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
     match hv_opt with
@@ -7705,7 +7708,9 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let () = Gen.Profiling.push_time "empty_predicate_testing" in
+    let () = x_binfo_pp "marking" no_pos in
     let lhs_vd = (look_up_view_def_raw x_loc prog.prog_view_decls lhs_name) in
+    let () = x_binfo_pp "marking" no_pos in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
                         es_formula = ante;
                         es_heap = estate.es_heap;
@@ -7898,7 +7903,9 @@ and do_lhs_case prog ante conseq estate lhs_node rhs_node is_folding pos =
 
 and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
   let c1,v1,p1 = get_node_name 20 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
+  let () = x_binfo_pp "marking" no_pos in
   let vd = (look_up_view_def_raw x_loc prog.prog_view_decls c1) in
+  let () = x_binfo_pp "marking" no_pos in
   let na,prf =
     (match vd.view_base_case with
      | None ->
@@ -9046,8 +9053,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* If not high-order, do nothing *)
               (None, new_ante, new_conseq, new_exist_vars, [])
             else
-              (* DONE: check for (List.length l_ho_args != List.length r_ho_args) in: #ho_args in astsimp *)
+              (* DONE: check for (List.length l_ho_args != List.length
+                 r_ho_args) in: #ho_args in astsimp *)
+              let () = x_binfo_pp "marking" no_pos in
               let l_vdef = x_add Cast.look_up_view_def_raw x_loc prog.prog_view_decls l_node_name in
+              let () = x_binfo_pp "marking" no_pos in
               let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
@@ -9448,7 +9458,9 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
   let asets = Csvutil.alias_nth 9 ptr_eq in
   try
+    let () = x_binfo_pp "marking" no_pos in
     let vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls c2 in
+    let () = x_binfo_pp "marking" no_pos in
     let subs_vars = List.combine vdef.view_vars v2 in
     let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in

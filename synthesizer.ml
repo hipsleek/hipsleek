@@ -447,15 +447,14 @@ let choose_rule_fread_x goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
         prog.Cast.prog_data_decls in
     let d_args = data.Cast.data_fields |> List.map fst in
     let d_arg_pairs = List.combine args d_args in
-    let d_arg_pairs = List.filter
-        (fun (x,_) -> not(List.exists (fun y -> CP.eq_spec_var x y) vars)) d_arg_pairs in
+    let d_arg_pairs = List.filter (fun (x,_) -> not(CP.mem x vars)) d_arg_pairs in
     let helper_arg (arg, field) =
       let rbind = RlFRead {
           rbr_bound_var = var;
@@ -639,15 +638,15 @@ let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  let rs = rs @ (choose_rule_instantiate goal) in
-  let rs = rs @ (choose_rule_f_write goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_func_call goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in
+   * let rs = rs @ (choose_rule_instantiate goal) in
+   * let rs = rs @ (choose_rule_f_write goal) in
+   * let rs = rs @ (choose_rule_unfold_pre goal) in
+   * let rs = rs @ (choose_func_call goal) in *)
   let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_return goal) in
+  (* let rs = rs @ (choose_rule_numeric goal) in
+   * let rs = rs @ (choose_rule_assign goal) in
+   * let rs = rs @ (choose_rule_return goal) in *)
   rs
 
 (*********************************************************************

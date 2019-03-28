@@ -434,6 +434,8 @@ let translate_back_df df =
 let translate_back_vf vf =
   let hp_name = vf.SBCast.viewf_name in
   let hp_names = !Synthesis.unk_hps |> List.map (fun x -> x.Cast.hp_name) in
+  let () = x_tinfo_hp (add_str "hp_name" pr_id) hp_name no_pos in
+  let () = x_tinfo_hp (add_str "hp_names" (pr_list pr_id)) hp_names no_pos in
   if List.mem hp_name hp_names then
     let hp_name = CP.mk_spec_var hp_name in
     let hp_args = List.map translate_back_exp vf.SBCast.viewf_args in
@@ -666,6 +668,7 @@ let solve_entailments prog entailments =
   let sb_ents = List.map translate_entailment entailments in
   let () = x_tinfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
+  let () = x_tinfo_hp (add_str "sb_prog" SBCast.pr_prog) sb_prog no_pos in
   let ptree = SBPU.solve_entailments sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in

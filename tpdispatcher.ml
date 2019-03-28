@@ -3723,7 +3723,7 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 
 let is_sat_sub_no_c i (f : CP.formula) sat_subno do_cache : bool =
   Debug.no_1_num i "is_sat_sub_no_c" Cprinter.string_of_pure_formula string_of_bool (fun f -> is_sat_sub_no_c f sat_subno do_cache) f
-;;
+
 
 let is_sat_sub_no_with_slicing_orig (f:CP.formula) sat_subno : bool =  
   let rec group_conj l = match l with
@@ -3813,7 +3813,6 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   if !is_sat_slicing then is_sat_sub_no_slicing f sat_subno
-  (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
   else is_sat_sub_no_c 3 f sat_subno false
 
 let is_sat_sub_no i (f : CP.formula) sat_subno : bool =

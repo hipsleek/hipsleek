@@ -5731,14 +5731,14 @@ let rec look_up_view_node ls node_name=
   match ls with
   | [] -> []
   | vn::vs -> if CP.eq_spec_var node_name vn.h_formula_view_node then
-      (* List.filter CP.is_node_typ *) vn.h_formula_view_arguments
+      vn.h_formula_view_arguments
     else look_up_view_node vs node_name
 
 let rec look_up_rev_view_node ls node_name=
   match ls with
   | [] -> []
-  | vn::vs -> if CP.mem_svl node_name vn.h_formula_view_arguments then
-      (* List.filter CP.is_node_typ *) [vn.h_formula_view_node]
+  | vn::vs -> if CP.mem_svl node_name vn.h_formula_view_arguments
+    then [vn.h_formula_view_node]
     else look_up_rev_view_node vs node_name
 
 let rec look_up_hrel_sig ls node_name = 
@@ -11505,7 +11505,7 @@ let remove_dupl_false (sl:branch_ctx list) =
     else [List.hd(fl)]
   else nl
 
-let remove_dupl_false (sl:branch_ctx list) = 
+let remove_dupl_false (sl:branch_ctx list) =
   let pr n = string_of_int(List.length n) in
   let pr l = pr_list !print_context (List.map (fun (_,c,_) -> c) l) in
   Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
@@ -14437,7 +14437,6 @@ let conv3 f a e = let (r,x) = f a e in r
 (*   let (e,_) = trans_struc_formula e arg f_conv f_arg f_comb in *)
 (*   e *)
 let rec transform_context f (c:context):context =
-
   match c with
   | Ctx e ->
     (f e)
@@ -14543,7 +14542,6 @@ let transform_list_failesc_context
     (f:(fail_context -> fail_context) * (esc_stack -> esc_stack) * (entail_state -> context))
     (c:list_failesc_context): list_failesc_context =
   List.map (transform_failesc_context f) c
-
 
 let push_esc_level_list (l:list_failesc_context) idf lbl : list_failesc_context =
   transform_list_failesc_context (idf,(fun c-> push_esc_level c lbl),(fun x-> Ctx x)) l

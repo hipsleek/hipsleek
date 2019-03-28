@@ -443,10 +443,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
           match b.CF.formula_inf_transpec with
           | None -> b.CF.formula_inf_continuation,[]
           | Some (old_view_name, new_view_name) ->
+            let () = x_binfo_pp "looking view_def here" no_pos in
             let old_view = look_up_view_def b.CF.formula_inf_pos
                 prog.prog_view_decls old_view_name in
             let new_view = look_up_view_def b.CF.formula_inf_pos
                 prog.prog_view_decls new_view_name in
+            let () = x_binfo_pp "after looking view_def" no_pos in
             let sub_pair = ((old_view_name,old_view.view_vars),(new_view_name,new_view.view_vars)) in
             let new_spec,new_args = CF.tran_spec b.CF.formula_inf_continuation sub_pair in
             x_tinfo_hp (add_str "TEMP SPECS" pr_spec) new_spec no_pos;
@@ -1252,9 +1254,9 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn
         (lock_sort,lock_args)
       else
         (*we infer automatically from ctx*)
-        infer_lock_invariant lock_var ctx pos
-    in
+        infer_lock_invariant lock_var ctx pos in
     let vdef = look_up_view_def_raw x_loc prog.prog_view_decls lock_sort in
+
     let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
     let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
     let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in

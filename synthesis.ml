@@ -756,8 +756,6 @@ let create_residue vars prog conseq =
     residue, conseq
   else
     let name = "T" ^ (string_of_int !rel_num) in
-    let () = if !rel_num = 0 then unk_hps := prog.Cast.prog_hp_decls @ !unk_hps
-      else () in
     let hl_name = CP.mk_spec_var name in
     let () = rel_num := !rel_num + 1 in
     let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
@@ -770,7 +768,7 @@ let create_residue vars prog conseq =
       Cast.hp_view = None;
       Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
     } in
-    let () = unk_hps := [hp_decl] @ !unk_hps in
+    let () = unk_hps := hp_decl::(!unk_hps) in
     let hrel = CF.HRel (hl_name, args, no_pos) in
     let n_conseq = add_h_formula_to_formula hrel conseq in
     let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in

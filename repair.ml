@@ -90,9 +90,9 @@ let repair_one_candidate (iprog: I.prog_decl) =
   let () = Syn.rel_num := 0 in
   let () = Syn.res_num := 0 in
   let () = Syn.repair_res := None in
-  let () = Syn.unk_hps := [] in
   let () = Syn.syn_pre := None in
   let cprog, _ = Astsimp.trans_prog iprog in
+  let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
   try
     let () = Typechecker.check_prog_wrapper iprog cprog in
     !Synthesis.repair_res
@@ -115,8 +115,8 @@ let start_repair (iprog:I.prog_decl) =
     let args = cproc.C.proc_args in
     let helper cand =
       let n_iprog = mk_candidate_iprog iprog r_iproc args cand in
-      report_error no_pos "to debug fcode" in
-      (* repair_one_candidate n_iprog in *)
+      (* report_error no_pos "to debug fcode" in *)
+      repair_one_candidate n_iprog in
     let res = cands |> List.map helper
                      |> List.filter (fun x -> x != None) in
     if res = [] then None
