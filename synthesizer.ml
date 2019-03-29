@@ -447,7 +447,7 @@ let choose_rule_fread_x goal =
     | Exists bf -> helper_hf bf.formula_exists_heap in
   let triples = helper_f pre_cond in
   let pr_triples = pr_list (pr_triple pr_var pr_id pr_vars) in
-  let () = x_binfo_hp (add_str "triples" pr_triples) triples no_pos in
+  let () = x_tinfo_hp (add_str "triples" pr_triples) triples no_pos in
   let helper_triple (var, data, args) =
     let prog = goal.gl_prog in
     let data = List.find (fun x -> x.Cast.data_name = data)
@@ -636,17 +636,16 @@ let choose_rule_return goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in
-   * let rs = rs @ (choose_rule_instantiate goal) in
-   * let rs = rs @ (choose_rule_f_write goal) in
-   * let rs = rs @ (choose_rule_unfold_pre goal) in
-   * let rs = rs @ (choose_func_call goal) in *)
+  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
+  let rs = rs @ (choose_rule_instantiate goal) in
+  let rs = rs @ (choose_rule_f_write goal) in
+  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
-  (* let rs = rs @ (choose_rule_numeric goal) in
-   * let rs = rs @ (choose_rule_assign goal) in
-   * let rs = rs @ (choose_rule_return goal) in *)
+  let rs = rs @ (choose_rule_numeric goal) in
+  let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_return goal) in
   rs
 
 (*********************************************************************
@@ -810,12 +809,29 @@ let process_rule_vinit goal rule =
 (*********************************************************************
  * The search procedure
  *********************************************************************)
+let rec choose_rule_interact goal rules =
+  let str = pr_list pr_rule rules in
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
+  let choice = String.uppercase_ascii (String.trim (read_line ())) in
+  let rule_id = int_of_string (choice) in
+  let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
+  let chosen_rules, other_rules =
+    List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
+  if chosen_rules = [] then
+    let err_str = "Wrong choose, please choose again" in
+    let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+    choose_rule_interact goal rules
+  else
+    let rules = chosen_rules @ other_rules in
+    List.map snd rules
 
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
+  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = eliminate_useless_rules goal rules in
-  let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let rules = if !enable_sb_i then choose_rule_interact goal rules
+      else reorder_rules goal rules in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -870,7 +886,6 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
-  let () = x_tinfo_pp "marking" no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   match st_status with
@@ -879,7 +894,8 @@ let synthesize_program goal =
     let i_exp = synthesize_st_core st_core in
     let () = x_binfo_hp (add_str "iast exp" pr_iast_exp) i_exp no_pos in
     Some i_exp
-  | StUnkn _ -> None
+  | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
+    None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in

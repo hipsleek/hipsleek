@@ -1505,7 +1505,7 @@ let disable_failure_explaining = ref false
 
 let enable_repair = ref false
 
-let enable_sb_interactive = ref false
+let enable_sb_i = ref false
 
 let enable_repair_template = ref false
 

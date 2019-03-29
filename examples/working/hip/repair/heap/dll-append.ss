@@ -10,16 +10,16 @@ dll<p,n> == self = null & n = 0
 	inv n >= 0;
 
 void append2(node2 x, node2 y)
-	requires x::dll<q, m> * y::dll<p, n> & m>0
+	requires x::dll<q, m> * y::dll<p, n> & m>0 & n > 0
 	ensures x::dll<q, m+n>;
 
 {
 	if (x.next == null) {
-		x.next = y.next;
-    // x.next = y;
-		if (y != null) {
-			y.prev = x;
-		}		
+		// x.next = y.next;
+    dprint;
+    x.next = y;
+    dprint;
+		y.prev = x;
 	}
 	else {
 		append2(x.next, y);

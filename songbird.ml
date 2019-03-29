@@ -5,7 +5,7 @@ open Gen.Basic
 module SBCast = Libsongbird.Cast
 module SBGlobals = Libsongbird.Globals
 module SBProverP = Libsongbird.Prover_pure
-module SBProverE = Libsongbird.Prover_entail
+module SBProverH = Libsongbird.Prover_hip
 module SBDebug = Libsongbird.Debug
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
@@ -567,7 +567,7 @@ let create_templ_prog prog ents =
                prog_commands = [SBCast.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
   let sb_res =
-    SBProverP.infer_unknown_functions_with_false_rhs ifp_typ nprog
+    SBProverH.infer_unknown_functions_w_false_rhs ifp_typ nprog
       ents in
   let inferred_prog = if sb_res = [] then nprog
     else snd (List.hd sb_res)
@@ -665,8 +665,9 @@ let translate_prog (prog:Cast.prog_decl) =
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
   let () = x_binfo_hp (add_str "entailments" pr_ents) entailments no_pos in
+  (* report_error no_pos "to debug entailments" *)
   let sb_ents = List.map translate_entailment entailments in
-  let () = x_tinfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
+  let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBCast.pr_prog) sb_prog no_pos in
   let ptree = SBPU.solve_entailments sb_prog sb_ents in
@@ -684,7 +685,7 @@ let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
   let sb_ents = List.map translate_ent ents in
   let () = x_tinfo_hp (add_str "entails: " (pr_list SBCast.pr_pent)) sb_ents no_pos in
-  let sb_vars = List.map SBProverE.norm_entail sb_ents |> List.concat in
+  let sb_vars = List.map SBProverH.norm_entail sb_ents |> List.concat in
   let vars = List.map translate_back_var sb_vars in
   let () = x_tinfo_hp (add_str "vars: " pr_vars) vars no_pos in
   vars
@@ -753,7 +754,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       let () = if !Globals.pr_songbird then
           x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
         else () in
-      let ptree = SBProverE.check_entailment sb_prog ent in
+      let ptree = SBProverH.check_entailment sb_prog ent in
       let res = SBPFE.get_ptree_validity ptree in
       match res with
       | SBGlobals.MvlTrue -> true, None
@@ -762,7 +763,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       let () = if !Globals.pr_songbird then
           x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
         else () in
-      let ptree = SBProverE.check_entailment sb_prog ent in
+      let ptree = SBProverH.check_entailment sb_prog ent in
       let res = SBPFE.get_ptree_validity ptree in
       match res with
       | SBGlobals.MvlTrue ->
@@ -800,7 +801,7 @@ let check_unsat_x prog (f:CF.formula) =
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
   else
     let sb_formula = List.hd sb_f in
-    let sb_res = SBProverE.check_sat sb_prog sb_formula in
+    let sb_res = SBProverH.check_sat sb_prog sb_formula in
     match sb_res with
     | MvlFalse -> true
     | _ -> false
@@ -817,7 +818,7 @@ let check_pure_entail ante conseq =
   let sb_conseq_f = SBCast.mk_fpure sb_conseq in
   let sb_prog = SBCast.mk_program "check_pure_entail" in
   let ent = SBCast.mk_entailment sb_ante_f sb_conseq_f in
-  let ptree = SBProverE.check_entailment sb_prog ent in
+  let ptree = SBProverH.check_entailment sb_prog ent in
   let res = SBPFE.get_ptree_validity ptree in
     match res with
     | SBGlobals.MvlTrue -> true
@@ -906,11 +907,11 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailHip x sb_conseq)
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-  let interact = if !Globals.enable_sb_interactive then true else false in
+  (* let interact = if !Globals.enable_sb_i then true else false in *)
   let () = if !Globals.pr_songbird then
       x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos
     else () in
-  let ptrees = List.map (fun ent -> SBProverE.check_entailment ~interact:interact n_prog ent) ents in
+  let ptrees = List.map (fun ent -> SBProverH.check_entailment n_prog ent) ents in
   let validities = List.map (fun ptree -> SBPFE.get_ptree_validity ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   let conti = bf.CF.formula_struc_continuation in
@@ -974,7 +975,7 @@ let infer_templ_defn prog pre post fun_name args =
                SBCast.prog_funcs = [f_defn];
                SBCast.prog_commands = [SBCast.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
-  let sb_res = SBProverP.infer_unknown_functions ifp_typ nprog ent in
+  let sb_res = SBProverH.infer_unknown_functions ifp_typ nprog ent in
   let ifd = fst sb_res in
   let () = x_tinfo_hp (add_str "re" SBProverP.pr_ifds) ifd no_pos in
   let func_defns = ifd |> List.map (fun x -> x.SBProverP.ifd_fdefns)
