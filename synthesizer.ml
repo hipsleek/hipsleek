@@ -161,20 +161,24 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
   let () = x_tinfo_hp (add_str "triple" string_of_int) (List.length triple)
       no_pos in
+  let mkRlBind (var, field, n_var) = RlBind {
+      rb_bound_var = var;
+      rb_field = field;
+      rb_other_var = n_var;
+    } in
   let helper dif_field =
     let pre_post = fst dif_field in
     let n_var = snd pre_post in
     let () = x_tinfo_hp (add_str "var" (pr_pair pr_var pr_var)) pre_post no_pos in
     let field = snd dif_field in
     if List.exists (fun x -> CP.eq_sv x n_var) goal.gl_vars then
-      let rule = RlBind { rb_bound_var = var;
-                          rb_field = field;
-                          rb_other_var = n_var;
-                        } in [rule]
+      [(var,field, n_var)]
     else [] in
+  let eq_triple (v1, f1, nv1) (v2, f2, nv2) =
+    CP.eq_sv v1 v2 && CP.eq_sv nv1 nv2 && f1 = f2 in
   let eq_var_rules = triple |> List.map helper |> List.concat in
-  eq_var_rules
-
+  eq_var_rules |> (Gen.BList.remove_dups_eq eq_triple)
+  |> List.map mkRlBind
 
 let subtract_var var formula = match formula with
   | CF.Base bf ->
@@ -238,13 +242,6 @@ let rec choose_rassign_data goal cur_var =
     let rule2 = choose_rassign_data goal2 cur_var in
     rule1@rule2
   | _ -> []
-
-let choose_rule_f_write goal : rule list =
-  let vars = List.filter (fun x -> match CP.type_of_sv x with
-      | Named _ -> true
-      | _ -> false) goal.gl_vars in
-  let rules = vars |> List.map (choose_rassign_data goal) in
-  rules |> List.concat
 
 let choose_rule_assign_x goal : rule list =
   let vars = goal.gl_vars in
@@ -637,10 +634,9 @@ let choose_rule_return goal =
 let choose_synthesis_rules goal : rule list =
   let goal = framing_rule goal in
   let rs = [] in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in *)
+  let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_instantiate goal) in
-  let rs = rs @ (choose_rule_f_write goal) in
-  (* let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -810,28 +806,33 @@ let process_rule_vinit goal rule =
  * The search procedure
  *********************************************************************)
 let rec choose_rule_interact goal rules =
-  let str = pr_list pr_rule rules in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-  let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
-  let choice = String.uppercase_ascii (String.trim (read_line ())) in
-  let rule_id = int_of_string (choice) in
-  let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
-  let chosen_rules, other_rules =
-    List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
-  if chosen_rules = [] then
-    let err_str = "Wrong choose, please choose again" in
-    let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
-    choose_rule_interact goal rules
+  if rules = [] then
+    let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+    rules
   else
-    let rules = chosen_rules @ other_rules in
-    List.map snd rules
+    let str = pr_list_ln pr_rule rules in
+    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
+    let choice = String.uppercase_ascii (String.trim (read_line ())) in
+    let rule_id = int_of_string (choice) in
+    let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
+    let chosen_rules, other_rules =
+      List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
+    if chosen_rules = [] then
+      let err_str = "Wrong choose, please choose again" in
+      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+      choose_rule_interact goal rules
+    else
+      let rules = chosen_rules @ other_rules in
+      List.map snd rules
 
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = eliminate_useless_rules goal rules in
+  let rules = reorder_rules goal rules in
   let rules = if !enable_sb_i then choose_rule_interact goal rules
-      else reorder_rules goal rules in
+    else rules in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =

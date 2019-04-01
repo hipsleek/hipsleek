@@ -2297,18 +2297,18 @@ and pr_formula_base e =
       formula_base_and = a;
       formula_base_label = lbl;
       formula_base_pos = pos}) ->
-    (match lbl with | None -> fmt_string ( (* "<NoLabel>" *)"" ) | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (* (match lbl with | None -> fmt_string ( (\* "<NoLabel>" *\)"" ) | Some l -> fmt_string ("(\* lbl: *\){"^(string_of_int (fst l))^"}->")); *)
     pr_h_formula h;
-    (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp));
+    (* (if !Globals.ann_vp && not (CVP.is_empty_vperm_sets vp) then (pr_cut_after "*"; pr_vperm_sets vp)); *)
     (if not(MP.isConstMTrue p) then
        (pr_cut_after "&" ; pr_mix_formula p));
-    if not(!enable_repair)
-    then let () = pr_cut_after  "&" in
-      fmt_string (string_of_flow_formula "FLOW" fl);
-    if (a==[]) then ()
-    else
-      fmt_string ("\nAND "); pr_one_formula_list a
-    ;
+    (* if not(!songbird)
+     * then let () = pr_cut_after  "&" in
+     *   fmt_string (string_of_flow_formula "FLOW" fl); *)
+    (* if (a==[]) then ()
+     * else
+     *   fmt_string ("\nAND "); pr_one_formula_list a
+     * ; *)
 
 and slk_formula_base e =
   match e with
@@ -2393,7 +2393,7 @@ and pr_formula_1 e =
              formula_exists_and = a;
              formula_exists_label = lbl;
              formula_exists_pos = pos}) ->
-    (match lbl with | None -> fmt_string ""; | Some l -> fmt_string ("(* lbl: *){"^(string_of_int (fst l))^"}->"));
+    (* (match lbl with | None -> fmt_string ""; | Some l -> fmt_string ("(\* lbl: *\){"^(string_of_int (fst l))^"}->")); *)
     let flag = not(svs==[]) in
     if flag then fmt_string "(exists "; pr_list_of_spec_var svs; fmt_string ": ";
     pr_formula_base ({
@@ -2414,7 +2414,6 @@ and pr_formula e =
 and pr_rflow_formula f =
   fmt_string ((string_of_ho_flow_kind f.rflow_kind) ^ " ");
   pr_formula f.rflow_base
-(* fmt_string "[|"; pr_list_of_spec_var f.rflow_global_vars; fmt_string "|]" *)
 
 and slk_formula e =
   let f_b e =  pr_bracket formula_wo_paren slk_formula e in

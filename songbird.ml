@@ -3,13 +3,13 @@ open Globals
 open Gen.Basic
 
 module SBCast = Libsongbird.Cast
+module SBDebug = Libsongbird.Debug
 module SBGlobals = Libsongbird.Globals
 module SBProverP = Libsongbird.Prover_pure
 module SBProverH = Libsongbird.Prover_hip
-module SBDebug = Libsongbird.Debug
+module SBProverE = Libsongbird.Prover_entail
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
-module SBPU = Libsongbird.Prover_unkentail
 module CP = Cpure
 module CF = Cformula
 module CPR = Cprinter
@@ -670,7 +670,7 @@ let solve_entailments prog entailments =
   let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBCast.pr_prog) sb_prog no_pos in
-  let ptree = SBPU.solve_entailments sb_prog sb_ents in
+  let ptree = SBProverH.solve_entailments sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBGlobals.MvlTrue then
@@ -759,7 +759,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       match res with
       | SBGlobals.MvlTrue -> true, None
       | _ -> false, None
-    else let ent = SBCast.mk_entailment ~mode:PrfEntailHip sb_ante sb_conseq in
+    else let ent = SBCast.mk_entailment ~mode:PrfEntailResidue sb_ante sb_conseq in
       let () = if !Globals.pr_songbird then
           x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
         else () in
@@ -904,13 +904,9 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | Some pf -> CF.add_pure_formula_to_formula pf es.CF.es_formula in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq = List.hd conseqs in
-  let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailHip x sb_conseq)
+  let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailResidue x sb_conseq)
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-  (* let interact = if !Globals.enable_sb_i then true else false in *)
-  let () = if !Globals.pr_songbird then
-      x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos
-    else () in
   let ptrees = List.map (fun ent -> SBProverH.check_entailment n_prog ent) ents in
   let validities = List.map (fun ptree -> SBPFE.get_ptree_validity ptree) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
@@ -958,6 +954,8 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
     | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
     | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
   else
+    let () = x_tinfo_hp (add_str "prog" SBCast.pr_program) n_prog no_pos in
+    let () = x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos in
     let msg = "songbird result is Failed." in
     (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
     , Prooftracer.Failure)

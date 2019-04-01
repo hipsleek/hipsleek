@@ -116,13 +116,11 @@ let get_repair_ents_x rs proc =
       failed_ctx |> List.map get_entailment
     else
       let get_entailment ctx = ctx.CF.fc_current_ents in
-      failed_ctx |> List.map get_entailment |> List.concat
-  in
-  let () = x_binfo_hp (add_str "entails: "
+      failed_ctx |> List.map get_entailment |> List.concat in
+  let () = x_tinfo_hp (add_str "entails: "
                          (pr_list (pr_pair Cprinter.string_of_pure_formula
                                      Cprinter.string_of_pure_formula)))
       entails no_pos in
-
   let () = if (!Globals.enable_repair) then
       let () = repairing_ents := entails in
       let () = repair_proc := Some (proc.Cast.proc_name) in

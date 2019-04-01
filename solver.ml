@@ -2641,9 +2641,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
 
 and need_unfold_rhs prog vn=
   let rec look_up_view vn0=
-    let () = x_binfo_pp "marking" no_pos in
     let vdef = x_add C.look_up_view_def_raw x_loc prog.C.prog_view_decls vn0.CF.h_formula_view_name in
-    let () = x_binfo_pp "marking" no_pos in
     let fs = List.map fst vdef.view_un_struc_formula in
     let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
     match hv_opt with
@@ -9458,9 +9456,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
   let asets = Csvutil.alias_nth 9 ptr_eq in
   try
-    let () = x_binfo_pp "marking" no_pos in
     let vdef = look_up_view_def_raw x_loc prog.Cast.prog_view_decls c2 in
-    let () = x_binfo_pp "marking" no_pos in
     let subs_vars = List.combine vdef.view_vars v2 in
     let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
     let subs_vars = (sf,var_to_fold)::subs_vars in
