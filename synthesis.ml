@@ -45,7 +45,6 @@ exception EPrio of priority
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
-  | RlVarInit of rule_vinit
   | RlBind of rule_bind
   | RlFRead of rule_bind_read
   | RlUnfoldPre of rule_unfold_pre
@@ -289,7 +288,6 @@ let pr_rule rule = match rule with
   | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
-  | RlVarInit rule -> "RlVarInit" ^ (pr_var_init rule)
   | _ -> "RlOthers"
 
 let rec pr_st st = match st with
@@ -1067,19 +1065,6 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
     if st_code = None then bind
     else let st_code = Gen.unsome st_code in
       mkSeq bind st_code
-  | RlVarInit rule ->
-    let lhs, rhs = rule.rvi_var, rule.rvi_rhs in
-    let decl = I.VarDecl {
-        exp_var_decl_type = CP.type_of_sv lhs;
-        exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-        exp_var_decl_pos = no_pos} in
-    let c_exp, lhs = exp_to_iast rhs, mkVar lhs in
-    let assign = mkAssign lhs c_exp in
-    let init = mkSeq decl assign in
-    let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-    if st_code = None then init
-    else let st_code = Gen.unsome st_code in
-      mkSeq init st_code
   | RlFRead rule -> let lhs = rule.rbr_value in
     let bvar, (typ, f_name) = rule.rbr_bound_var, rule.rbr_field in
     let exp_decl = I.VarDecl {
@@ -1219,7 +1204,6 @@ let eliminate_useless_rules goal rules =
     | RlBind r -> is_rule_bind_useless r
     | RlFRead r -> is_rule_fread_useless goal r
     | RlInstantiate _ -> true
-    | RlVarInit _ -> true
     | RlUnfoldPost _ -> true
     | RlUnfoldPre _ -> true
     | _ -> true) rules
@@ -1247,7 +1231,6 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | RlVarInit _ -> PriEqual
   | _ -> PriEqual
 
 (* compare assign with others *)
@@ -1275,7 +1258,6 @@ let compare_rule_assign_vs_other r1 r2 =
     | RlUnfoldPre _ -> PriEqual
     | RlUnfoldPost _ -> PriEqual
     | RlInstantiate _ -> PriEqual
-    | RlVarInit _ -> PriEqual
     | _ -> PriEqual
 
 (* compare wbind with others *)
@@ -1296,7 +1278,6 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
   | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
-  | RlVarInit _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
@@ -1313,7 +1294,6 @@ let compare_rule r1 r2 =
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | RlVarInit _ -> PriLow
   | _ -> PriEqual
 
 let reorder_rules goal rules =

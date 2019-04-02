@@ -592,30 +592,6 @@ let choose_rule_instantiate goal =
       }) in
   exists_vars |> List.map helper |> List.concat
 
-let choose_rule_var_init_x goal =
-  let vars, pre, post = goal.gl_vars, goal.gl_pre_cond, goal.gl_post_cond in
-  let h_pre, _, _, _, _, _ = CF.split_components pre in
-  let pre_vars = CF.fv pre |> List.filter (fun x -> not(CP.mem x vars))
-                 |> List.filter (fun x -> not(CP.mem x (CF.h_fv h_pre))) in
-  let create_init_rule var exp = RlVarInit {
-      rvi_var = var;
-      rvi_rhs = exp;
-    } in
-  let aux var = let var_f = extract_var_f pre var in
-    match var_f with
-    | None -> []
-    | Some varf -> if CF.is_emp_formula varf then
-        let pf = CF.get_pure varf in
-        let eq_vars = find_eq_var var pf in
-        let eq_vars = List.filter (fun x -> CP.subset (CP.afv x) vars) eq_vars in
-        List.map (create_init_rule var) eq_vars
-      else [] in
-  List.map aux pre_vars |> List.concat
-
-let choose_rule_var_init goal =
-  Debug.no_1 "choose_rule_var_init" pr_goal pr_rules
-    (fun _ -> choose_rule_var_init_x goal) goal
-
 let extract_frame_info var (formula:CF.formula) =
   match formula with
   | CF.Base bf -> let hf = bf.CF.formula_base_heap in
@@ -841,11 +817,6 @@ and process_rule_unfold_post goal rule =
                           gl_trace = (RlUnfoldPost rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlUnfoldPost rule) [n_goal]
 
-let process_rule_vinit goal rule =
-  let vars = goal.gl_vars @ [rule.rvi_var] in
-  let n_goal = {goal with gl_vars = vars} in
-  mk_derivation_subgoals goal (RlVarInit rule) [n_goal]
-
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -902,7 +873,6 @@ and process_one_rule goal rule : derivation =
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
   | RlFRead rule -> process_rule_f_read goal rule
   | RlInstantiate rule -> process_rule_instantiate goal rule
-  | RlVarInit rule -> process_rule_vinit goal rule
   | RlFraming rule -> report_error no_pos "unhandled"
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
