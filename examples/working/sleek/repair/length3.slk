@@ -38,3 +38,15 @@ x::node<q_54> * q_54::ll<f3> & 1+f3=n & x!=null & rs0=f3
 ~> 
 (exists flted_6_57,q_58,n2_50: x::node<q_58>@M * q_58::ll<flted_6_57>@M&
 n2_50=n & res=n & flted_6_57+1=n2_50).
+
+// framing
+// q_54::ll<f3> & 1+f3=n & x!=null & rs0=f3
+// ~> 
+// (exists flted_6_57,q_58,n2_50: q_58::ll<flted_6_57>@M&
+// n2_50=n & res=n & flted_6_57+1=n2_50 & q_54 = q_58).
+
+// framing with OR: f1 \/ f2 |- framming
+// side condition: No or formulas??
+// Just do it.
+// node variables appear in the precondition
+// match with a variable in the postcondition

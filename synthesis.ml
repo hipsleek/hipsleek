@@ -51,6 +51,12 @@ type rule =
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlInstantiate of rule_instantiate
+  | RlFraming of rule_framing
+
+and rule_framing = {
+  rf_n_pre: CF.formula;
+  rf_n_post: CF.formula
+}
 
 and rule_vinit = {
   rvi_var: CP.spec_var;
@@ -284,6 +290,7 @@ let pr_rule rule = match rule with
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
   | RlVarInit rule -> "RlVarInit" ^ (pr_var_init rule)
+  | _ -> "RlOthers"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -359,13 +366,13 @@ let rec extract_hf_var hf var =
     let dn_var = dnode.CF.h_formula_data_node in
     if dn_var = var then
       let args = dnode.CF.h_formula_data_arguments in
-      Some (hf, [var] @ args)
+      Some (hf, [var] @ args, dnode.CF.h_formula_data_name)
     else None
   | ViewNode vnode ->
     let vn_var = vnode.CF.h_formula_view_node in
     if vn_var = var then
       let args = vnode.CF.h_formula_view_arguments in
-      Some (hf, [var] @ args)
+      Some (hf, [var] @ args, vnode.CF.h_formula_view_name)
     else None
   | CF.Star sf ->
     let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
@@ -375,7 +382,7 @@ let rec extract_hf_var hf var =
       | None, None -> None
       | Some _, None -> vf1
       | None, Some _ -> vf2
-      | Some (f1, vars1), Some (f2, vars2) ->
+      | Some _, Some _ ->
         report_error no_pos "one var cannot appear in two heap fragments"
     end
   | _ -> None
@@ -419,7 +426,7 @@ let extract_var_f_x f var = match f with
         | None ->
           let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
-        | Some (hf, vars) ->
+        | Some (hf, vars, _) ->
           let h_vars = CF.h_fv hf in
           let vars = [var] @ h_vars |> CP.remove_dups_svl in
           let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
@@ -439,7 +446,7 @@ let extract_var_f_x f var = match f with
           let pf_var = extract_var_pf pf [var] in
           Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
-        | Some (hf, vars) ->
+        | Some (hf, vars, _) ->
           let h_vars = CF.h_fv hf in
           let vars = vars @ h_vars |> CP.remove_dups_svl in
           let pf_var = extract_var_pf pf vars in
@@ -539,9 +546,10 @@ let rec rm_emp_formula formula:CF.formula =
     | CF.Star sf ->
       let n_f1 = aux_heap sf.CF.h_formula_star_h1 in
       let n_f2 = aux_heap sf.CF.h_formula_star_h2 in
-      if CF.is_empty_heap n_f1 then n_f2
-      else if CF.is_empty_heap n_f2 then n_f1
-      else hf
+      if CF.is_empty_heap n_f1 then aux_heap n_f2
+      else if CF.is_empty_heap n_f2 then aux_heap n_f1
+      else Star {sf with h_formula_star_h1 = aux_heap n_f1;
+                         h_formula_star_h2 = aux_heap n_f2}
     | CF.Phase pf ->
       let n_f1 = aux_heap pf.CF.h_formula_phase_rd in
       let n_f2 = aux_heap pf.CF.h_formula_phase_rw in
@@ -618,6 +626,29 @@ let do_unfold_view_hf_vn cprog pr_views args (hf:CF.h_formula) =
     (fun x -> x |> pr_list pr1)
     (fun _ _ -> do_unfold_view_hf_vn_x cprog pr_views args hf) hf args
 
+let rec remove_heap_var var hf = match hf with
+  | CF.DataNode dn -> if CP.eq_sv var dn.CF.h_formula_data_node then
+      CF.HEmp else hf
+  | CF.ViewNode vn -> if CP.eq_sv var vn.CF.h_formula_view_node then
+      CF.HEmp else hf
+  | CF.Star sf -> let hf1 = remove_heap_var var sf.CF.h_formula_star_h1 in
+    let hf2 = remove_heap_var var sf.CF.h_formula_star_h2 in
+    CF.Star {sf with h_formula_star_h1 = hf1;
+                     h_formula_star_h2 = hf2}
+  | _ -> hf
+
+let rec remove_heap_var_f var formula = match formula with
+  | CF.Base bf -> let hf = bf.CF.formula_base_heap in
+    let nf = CF.Base {bf with formula_base_heap = remove_heap_var var hf} in
+    rm_emp_formula nf
+  | CF.Exists bf -> let hf = bf.CF.formula_exists_heap in
+    let nf = CF.Exists {bf with formula_exists_heap = remove_heap_var var hf} in
+    rm_emp_formula nf
+  | CF.Or bf -> let n_f1 = remove_heap_var_f var bf.CF.formula_or_f1 in
+    let n_f2 = remove_heap_var_f var bf.CF.formula_or_f2 in
+    let nf = CF.Or {bf with formula_or_f1 = n_f1;
+                            formula_or_f2 = n_f2} in
+    rm_emp_formula nf
 
 let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
     let rec helper (f:CF.formula) = match f with
@@ -1095,7 +1126,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
       if st_code = None then seq
       else let st_code = Gen.unsome st_code in
         mkSeq seq st_code
-  (* | _ -> report_error no_pos "synthesize_st_core: this case unhandled" *)
+  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
@@ -1190,7 +1221,8 @@ let eliminate_useless_rules goal rules =
     | RlInstantiate _ -> true
     | RlVarInit _ -> true
     | RlUnfoldPost _ -> true
-    | RlUnfoldPre _ -> true) rules
+    | RlUnfoldPre _ -> true
+    | _ -> true) rules
 
 (* compare func_call with others *)
 
@@ -1216,6 +1248,7 @@ let compare_rule_func_call_vs_other r1 r2 =
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
   | RlVarInit _ -> PriEqual
+  | _ -> PriEqual
 
 (* compare assign with others *)
 
@@ -1243,6 +1276,7 @@ let compare_rule_assign_vs_other r1 r2 =
     | RlUnfoldPost _ -> PriEqual
     | RlInstantiate _ -> PriEqual
     | RlVarInit _ -> PriEqual
+    | _ -> PriEqual
 
 (* compare wbind with others *)
 
@@ -1266,6 +1300,7 @@ let compare_rule_wbind_vs_other r1 r2 =
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
+  | _ -> PriEqual
 
 (* reordering rules *)
 
@@ -1279,6 +1314,7 @@ let compare_rule r1 r2 =
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
   | RlVarInit _ -> PriLow
+  | _ -> PriEqual
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =
