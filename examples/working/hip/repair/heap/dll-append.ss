@@ -17,7 +17,6 @@ void append2(node2 x, node2 y)
 		x.next = y.next;
     // x.next = y;
     y.prev = x;
-
 	}
 	else {
 		append2(x.next, y);

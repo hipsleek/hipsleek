@@ -23,11 +23,11 @@ void insert(node x, node y)
 // v_bool_14_4377 & y=y & x=x & x!=null & flted_7_4392+1=n1 & q_4394=null
 // post:  (exists f_r_4414: x::ll<f_r_4414>@M&f_r_4414=flted_7_4392+n2+1))
 
-// synthesize [node x, node y]
-// x::node<A3,q4> * q4::ll<fl2> * y::ll<n2> &
-// x!=null & fl2+1=n1 & q4=null
-// ~>
-// (exists fl: x::ll<fl> & fl = fl2 + n2 + 1).
+synthesize [node x, node y]
+x::node<A3,q4> * q4::ll<fl2> * y::ll<n2> &
+x!=null & fl2+1=n1 & q4=null
+~>
+(exists fl: x::ll<fl> & fl = fl2 + n2 + 1).
 
 // x.next = q4
 // synthesize [node q4, node x, node y]
@@ -43,15 +43,15 @@ void insert(node x, node y)
 // (exists fl: x::ll<fl> & fl = 1 + fl2 + n2).
 
 // unfold-post
-synthesize [node q4, node x, node y]
-x::node<A3,q4> * y::ll<n2> & x!=null & 1+fl2=n1 & q4=null & fl2=0
-~>
-(exists f4,v5,q6, fl_62:
-x::node<v5,q6> * q6::ll<f4> & fl_62=1+fl2+n2 & f4+1=fl_62).
+// synthesize [node q4, node x, node y]
+// x::node<A3,q4> * y::ll<n2> & x!=null & 1+fl2=n1 & q4=null & fl2=0
+// ~>
+// (exists f4,v5,q6, fl_62:
+// x::node<v5,q6> * q6::ll<f4> & fl_62=1+fl2+n2 & f4+1=fl_62).
 
 // instantiate
-synthesize [node q4, node x, node y]
-x::node<A3,q4>@M&x!=null & fl2+1=n1 & q4=null & fl2=0
-~>
-(exists f4_64,v5_65,fl_67: x::node<v5_65,y> & n2=f4_64 & fl_67=n2+1+fl2 & 1+f4_64=fl_67).
+// synthesize [node q4, node x, node y]
+// x::node<A3,q4>@M&x!=null & fl2+1=n1 & q4=null & fl2=0
+// ~>
+// (exists f4_64,v5_65,fl_67: x::node<v5_65,y> & n2=f4_64 & fl_67=n2+1+fl2 & 1+f4_64=fl_67).
 // end x.next = y

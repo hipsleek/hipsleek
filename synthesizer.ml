@@ -649,8 +649,8 @@ let choose_rule_return goal =
 let choose_synthesis_rules goal : rule list =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in
-   * let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_rule_unfold_post goal) in
+  let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
@@ -848,9 +848,9 @@ let rec choose_rule_interact goal rules =
 
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = if !enable_sb_i then choose_rule_interact goal rules
     else rules in
   process_all_rules goal rules
@@ -907,7 +907,7 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   match st_status with
