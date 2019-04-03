@@ -112,7 +112,7 @@ let find_equal_var_x goal var =
   let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
   let helper_pure var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
-    let () = x_tinfo_hp (add_str "conseq" pr_pf) conseq no_pos in
+    let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
     SB.check_pure_entail ante conseq in
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
@@ -123,11 +123,11 @@ let find_equal_var_x goal var =
         | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
           let args1 = vnode1.CF.h_formula_view_arguments in
           let args2 = vnode2.CF.h_formula_view_arguments in
-          List.for_all2 (fun x y -> helper_pure x y) args1 args2
+          List.exists2 (fun x y -> helper_pure x y) args1 args2
         | _ -> false
       end
     | _ -> false in
-  let compare_two_vars var1 var2 =
+  let compare_two_vars_x var1 var2 =
     let var1_f = extract_var_f post var1 in
     let var2_f = extract_var_f pre var2 in
     match var1_f, var2_f with
@@ -136,6 +136,9 @@ let find_equal_var_x goal var =
       let () = x_tinfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
       helper f1 f2
     | _ -> false in
+  let compare_two_vars var1 var2 =
+    Debug.no_4 "compare_two_vars" pr_var pr_var pr_formula pr_formula string_of_bool
+      (fun _ _ _ _ -> compare_two_vars_x var1 var2) var1 var2 pre post in
   let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
   let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
@@ -584,7 +587,7 @@ let choose_rule_instantiate goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
-  let () = x_tinfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+  let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
   let helper var =
     let eq_vars = find_equal_var goal var in
     eq_vars |> List.map (fun x -> RlInstantiate {
@@ -618,24 +621,29 @@ let is_frame_var goal post_var pre_var =
       let () = x_binfo_hp (add_str "var1" pr_vars) vars1 no_pos in
       let () = x_binfo_hp (add_str "var2" pr_vars) vars2 no_pos in
       let n_pre = remove_heap_var_f pre_var goal.gl_pre_cond in
-      let n_pre = add_eq_vars n_pre (List.combine vars1 vars2) in
       let n_post = remove_heap_var_f post_var goal.gl_post_cond in
-      let () = x_binfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
-      let () = x_binfo_hp (add_str "n_post" pr_formula) n_post no_pos in
-      (true, List.combine vars1 vars2)
-    else (false, [])
-  | _ -> (false, [])
+      let n_post = add_eq_vars n_post (List.combine vars1 vars2) in
+      let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
+      let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+      let rule = RlFraming {
+          rf_n_pre = n_pre;
+          rf_n_post = n_post;
+        } in
+      [rule]
+    else []
+  | _ -> []
 
 let find_framing_vars goal var =
-  let pre_vars = goal.gl_pre_cond |> CF.fv |> List.filter is_node_var in
-  let pre_matches = pre_vars |> List.map (is_frame_var goal var)
-                    |> List.filter (fun (x, _) -> x) in
-  List.map snd pre_matches
+  let pre = goal.gl_pre_cond in
+  let pre_vars = (CF.fv pre) @ (CF.get_exists pre)|> List.filter is_node_var in
+  pre_vars |> List.map (is_frame_var goal var)
+                    |> List.concat
 
 let choose_rule_framing goal =
-  let vars = goal.gl_post_cond |> CF.fv |> List.filter is_node_var in
-  let _ = vars |> List.map (find_framing_vars goal) in
-  []
+  let post = goal.gl_post_cond in
+  let vars = (CF.fv post) @ (CF.get_exists post) |> List.filter is_node_var in
+  let () = x_tinfo_hp (add_str "vars" (pr_list Cprinter.string_of_typed_spec_var)) vars no_pos in
+  vars |> List.map (find_framing_vars goal) |> List.concat
 
 let choose_rule_return goal =
   let post = goal.gl_post_cond in
@@ -652,9 +660,8 @@ let choose_rule_return goal =
   else []
 
 let choose_synthesis_rules goal : rule list =
-  (* let goal = framing_rule goal in *)
   let rs = [] in
-  let rs = choose_rule_framing goal in
+  (* let rs = choose_rule_framing goal in *)
   (* let rs = rs @ (choose_rule_unfold_post goal) in
    * let rs = rs @ (choose_rule_unfold_pre goal) in
    * let rs = rs @ (choose_func_call goal) in
@@ -662,6 +669,7 @@ let choose_synthesis_rules goal : rule list =
    * let rs = rs @ (choose_rule_numeric goal) in
    * let rs = rs @ (choose_rule_assign goal) in
    * let rs = rs @ (choose_rule_return goal) in *)
+  let rs = choose_rule_instantiate goal in
   rs
 
 (*********************************************************************
@@ -817,6 +825,11 @@ and process_rule_unfold_post goal rule =
                           gl_trace = (RlUnfoldPost rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlUnfoldPost rule) [n_goal]
 
+let process_rule_framing goal rule =
+  let n_goal = {goal with gl_pre_cond = rule.rf_n_pre;
+                          gl_post_cond = rule.rf_n_post} in
+  mk_derivation_subgoals goal (RlFraming rule) [n_goal]
+
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -873,7 +886,7 @@ and process_one_rule goal rule : derivation =
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
   | RlFRead rule -> process_rule_f_read goal rule
   | RlInstantiate rule -> process_rule_instantiate goal rule
-  | RlFraming rule -> report_error no_pos "unhandled"
+  | RlFraming rule -> process_rule_framing goal rule
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =
@@ -902,6 +915,7 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
   match st_status with

@@ -288,7 +288,8 @@ let pr_rule rule = match rule with
   | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
-  | _ -> "RlOthers"
+  | RlFraming rule -> "RlFraming(" ^ (pr_formula rule.rf_n_pre) ^ ", "
+                      ^ (pr_formula rule.rf_n_post) ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"

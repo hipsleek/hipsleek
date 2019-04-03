@@ -2702,7 +2702,7 @@ and struc_fv ?(vartype=Global_var.var_with_none) (f: struc_formula) : CP.spec_va
   let rec aux f =
     match f with
     | ECase b -> (* dsvl *)
-      (List.concat (List.map (fun (c1,c2) -> 
+      (List.concat (List.map (fun (c1,c2) ->
            let vars = if vartype # is_heap_only then [] else CP.fv c1 in
            vars@(aux c2) ) b.formula_case_branches)) (* b.formula_case_exists *)
     | EBase b -> 
