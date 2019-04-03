@@ -664,10 +664,10 @@ let translate_prog (prog:Cast.prog_decl) =
 
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  let () = x_binfo_hp (add_str "entailments" pr_ents) entailments no_pos in
+  let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
   (* report_error no_pos "to debug entailments" *)
   let sb_ents = List.map translate_entailment entailments in
-  let () = x_binfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
+  let () = x_tinfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBCast.pr_prog) sb_prog no_pos in
   let ptree = SBProverH.solve_entailments sb_prog sb_ents in
@@ -675,7 +675,7 @@ let solve_entailments prog entailments =
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBGlobals.MvlTrue then
     let vdefns = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" SBCast.pr_vdfs) vdefns no_pos in
+    let () = x_tinfo_hp (add_str "vdefns" SBCast.pr_vdfs) vdefns no_pos in
     let hps = translate_back_vdefns prog vdefns in
     let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
     Some hps
@@ -976,11 +976,11 @@ let infer_templ_defn prog pre post fun_name args =
   let nprog = {sb_prog with
                SBCast.prog_funcs = [f_defn];
                SBCast.prog_commands = [SBCast.InferFuncs infer_func]} in
-  let () = x_tinfo_hp (add_str "nprog: " SBCast.pr_program) nprog no_pos in
-  let sb_res = SBProverH.infer_unknown_functions ifp_typ nprog ent in
-  let ifd = fst sb_res in
-  let () = x_tinfo_hp (add_str "re" SBProverP.pr_ifds) ifd no_pos in
-  let func_defns = ifd |> List.map (fun x -> x.SBProverP.ifd_fdefns)
+  let () = x_tinfo_hp (add_str "ent" SBCast.pr_pure_entail) ent no_pos in
+  let sb_res = SBProverP.infer_unknown_functions ifp_typ nprog ent in
+  let ifds = fst sb_res in
+  let () = x_tinfo_hp (add_str "re" (SBProverP.pr_ifds)) ifds no_pos in
+  let func_defns = ifds |> List.map (fun x -> x.SBProverP.ifd_fdefns)
                    |> List.concat in
   try
     let func_defn = func_defns

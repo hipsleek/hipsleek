@@ -112,7 +112,7 @@ let find_equal_var_x goal var =
   let () = x_tinfo_hp (add_str "ante" pr_pf) ante no_pos in
   let helper_pure var1 var2 =
     let conseq = CP.mkEqVar var1 var2 no_pos in
-    let () = x_binfo_hp (add_str "conseq" pr_pf) conseq no_pos in
+    let () = x_tinfo_hp (add_str "conseq" pr_pf) conseq no_pos in
     SB.check_pure_entail ante conseq in
   let helper f1 f2 = match f1, f2 with
     | CF.Exists bf1, CF.Base bf2 ->
@@ -549,29 +549,11 @@ let check_eq_pre_post prog (pre:CF.formula) (post:CF.formula) var =
     (SB.check_equal prog pre_f post_f) && (CF.isEmpFormula pre_f)
   | _ -> false
 
-let frame_var_formula formula var = match formula with
-  | CF.Base bf -> let hf = bf.CF.formula_base_heap in
-    let rec helper hf = match hf with
-      | CF.DataNode dnode ->
-        let dnode_var = dnode.CF.h_formula_data_node in
-        if CP.eq_spec_var dnode_var var then CF.HEmp
-        else hf
-      | CF.Star sf -> let n_f1 = helper sf.CF.h_formula_star_h1 in
-        let n_f2 = helper sf.CF.h_formula_star_h2 in
-        if n_f1 = CF.HEmp then n_f2
-        else if n_f2 = CF.HEmp then n_f1
-        else Star {sf with h_formula_star_h1 = n_f1;
-                           h_formula_star_h2 = n_f2}
-      | _ -> hf in
-    let n_hf = helper hf in
-    CF.Base {bf with formula_base_heap = n_hf}
-  | _ -> formula
-
 let framing_var_goal goal (var:CP.spec_var) : goal =
   let n_pre = frame_var_formula goal.gl_pre_cond var in
   let n_post = frame_var_formula goal.gl_post_cond var in
-  {goal with gl_pre_cond = n_pre;
-             gl_post_cond = n_post;}
+  {goal with gl_pre_cond = fst n_pre;
+             gl_post_cond = fst n_post;}
 
 let framing_rule goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -587,7 +569,7 @@ let choose_rule_instantiate goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
-  let () = x_binfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
+  let () = x_tinfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
   let helper var =
     let eq_vars = find_equal_var goal var in
     eq_vars |> List.map (fun x -> RlInstantiate {
@@ -618,8 +600,8 @@ let is_frame_var goal post_var pre_var =
   match pre_info, post_info with
   | Some (_, vars1, name1), Some (_, vars2, name2) ->
     if eq_str name1 name2 then
-      let () = x_binfo_hp (add_str "var1" pr_vars) vars1 no_pos in
-      let () = x_binfo_hp (add_str "var2" pr_vars) vars2 no_pos in
+      let () = x_tinfo_hp (add_str "var1" pr_vars) vars1 no_pos in
+      let () = x_tinfo_hp (add_str "var2" pr_vars) vars2 no_pos in
       let n_pre = remove_heap_var_f pre_var goal.gl_pre_cond in
       let n_post = remove_heap_var_f post_var goal.gl_post_cond in
       let n_post = add_eq_vars n_post (List.combine vars1 vars2) in
@@ -645,7 +627,7 @@ let choose_rule_framing goal =
   let () = x_tinfo_hp (add_str "vars" (pr_list Cprinter.string_of_typed_spec_var)) vars no_pos in
   vars |> List.map (find_framing_vars goal) |> List.concat
 
-let choose_rule_return goal =
+let choose_rule_return_x goal =
   let post = goal.gl_post_cond in
   let post_vars = CF.fv post |> List.map CP.name_of_sv in
   if List.exists (fun x -> eq_str x "res") post_vars then
@@ -659,17 +641,22 @@ let choose_rule_return goal =
     rules |> List.filter is_return
   else []
 
+let choose_rule_return goal =
+  Debug.no_1 "choose_rule_return" pr_goal pr_rules
+    (fun _ -> choose_rule_return_x goal) goal
+
+
 let choose_synthesis_rules goal : rule list =
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  (* let rs = choose_rule_framing goal in *)
   (* let rs = rs @ (choose_rule_unfold_post goal) in
-   * let rs = rs @ (choose_rule_unfold_pre goal) in
-   * let rs = rs @ (choose_func_call goal) in
-   * let rs = rs @ (choose_rule_fread goal) in
-   * let rs = rs @ (choose_rule_numeric goal) in
-   * let rs = rs @ (choose_rule_assign goal) in
-   * let rs = rs @ (choose_rule_return goal) in *)
-  let rs = choose_rule_instantiate goal in
+   * let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_func_call goal) in
+  let rs = rs @ (choose_rule_fread goal) in
+  let rs = rs @ (choose_rule_numeric goal) in
+  let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_return goal) in
+  let rs = rs @ choose_rule_instantiate goal in
   rs
 
 (*********************************************************************
@@ -811,14 +798,19 @@ and process_rule_unfold_pre goal rule =
   mk_derivation_subgoals goal (RlUnfoldPre rule) n_goals
 
 let process_rule_instantiate goal rule =
-  let subst = [(rule.rli_lhs, rule.rli_rhs)] in
-  let n_post = CF.subst_all subst goal.gl_post_cond in
-  let n_post = remove_exists_vars n_post [rule.rli_rhs] in
-  let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
-
-  let subgoal = {goal with gl_post_cond = n_post;
-                           gl_trace = (RlInstantiate rule)::goal.gl_trace} in
-  mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
+  let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rule.rli_rhs in
+  let n_post, post_vars = frame_var_formula goal.gl_post_cond rule.rli_lhs in
+  if List.length pre_vars = List.length post_vars then
+    let n_post = add_eq_vars n_post (List.combine pre_vars post_vars) in
+    let n_post = CF.subst [(rule.rli_lhs, rule.rli_rhs)] n_post in
+    let () = x_tinfo_hp (add_str "lhs_var" pr_var) rule.rli_lhs no_pos in
+    let () = x_tinfo_hp (add_str "rhs_var" pr_var) rule.rli_rhs no_pos in
+    let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
+    let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+    let subgoal = {goal with gl_post_cond = n_post;
+                             gl_pre_cond = n_pre} in
+    mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
+  else mk_derivation_fail goal (RlInstantiate rule)
 
 and process_rule_unfold_post goal rule =
   let n_goal = {goal with gl_post_cond = rule.rp_case_formula;
@@ -856,7 +848,7 @@ let rec choose_rule_interact goal rules =
 
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
-  let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
   let rules = if !enable_sb_i then choose_rule_interact goal rules

@@ -1168,6 +1168,38 @@ let rec get_heap (formula:CF.formula) = match formula with
   | Exists bf -> [bf.CF.formula_exists_heap]
   | Or bf -> (get_heap bf.CF.formula_or_f1) @ (get_heap bf.CF.formula_or_f2)
 
+let frame_var_formula formula var =
+  let rec helper hf = match hf with
+    | CF.DataNode dnode ->
+      let dnode_var = dnode.CF.h_formula_data_node in
+      if CP.eq_spec_var dnode_var var
+      then (CF.HEmp, dnode.CF.h_formula_data_arguments)
+      else (hf, [])
+    | CF.ViewNode vn ->
+      let vn_var = vn.CF.h_formula_view_node in
+      if CP.eq_spec_var vn_var var
+      then (CF.HEmp, vn.CF.h_formula_view_arguments)
+      else (hf, [])
+    | CF.Star sf -> let n_f1 = helper sf.CF.h_formula_star_h1 in
+      let n_f2 = helper sf.CF.h_formula_star_h2 in
+      let n_hf = if fst n_f1 = CF.HEmp then fst n_f2
+        else if fst n_f2 = CF.HEmp then fst n_f1
+        else Star {sf with h_formula_star_h1 = fst n_f1;
+                           h_formula_star_h2 = fst n_f2} in
+      (n_hf, (snd n_f1)@(snd n_f2))
+    | _ -> (hf,[]) in
+  match formula with
+  | CF.Base bf -> let hf = bf.CF.formula_base_heap in
+    let n_hf = helper hf in
+    (CF.Base {bf with formula_base_heap = fst n_hf}, snd n_hf)
+  | CF.Exists bf -> let hf = bf.CF.formula_exists_heap in
+    let n_hf, vars = helper hf in
+    let exists_vars = bf.CF.formula_exists_qvars
+                      |> List.filter (fun x -> not (CP.eq_sv var x)) in
+    (CF.Exists {bf with formula_exists_heap = n_hf;
+                        formula_exists_qvars = exists_vars}, vars)
+  | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
+
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
