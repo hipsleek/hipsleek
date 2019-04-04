@@ -5,8 +5,7 @@ data node2 {
 
 /* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
-  or self::node2<p , q> * q::dll<self, n-1> & n > 0;
-	// inv n >= 0;
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0);
 
 void append2(node2 x, node2 y)
 	requires x::dll<q, m> * y::dll<p, n> & m>0 & n > 0

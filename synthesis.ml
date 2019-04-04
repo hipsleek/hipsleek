@@ -21,7 +21,7 @@ let pr_pf = Cprinter.string_of_pure_formula
 let pr_sv = Cprinter.string_of_spec_var
 let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
-
+let pr_substs = pr_list (pr_pair pr_var pr_var)
 (*** Reference variable***********)
 let rel_num = ref 0
 let res_num = ref 0

@@ -317,10 +317,8 @@ let unify_pair arg lvar goal proc_decl =
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
-  let a_pre, a_post = arg |> extract_var_f pre_proc,
-                      arg |> extract_var_f post_proc in
-  let l_pre, l_post = lvar |> extract_var_f pre_cond,
-                      lvar |> extract_var_f post_cond in
+  let a_pre = arg |> extract_var_f pre_proc in
+  let l_pre = lvar |> extract_var_f pre_cond in
   match a_pre, l_pre with
   | Some apre_f, Some lpre_f ->
     check_same_shape apre_f lpre_f
@@ -349,13 +347,6 @@ let find_var_field var goal =
   | Exists bf -> extract_hf bf.CF.formula_exists_heap
   in helper pre_cond
 
-let rec filter_args_input args = match args with
-  | [] -> []
-  | [h] -> List.map (fun x -> [x]) h
-  | h::t -> let tmp = filter_args_input t in
-    let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
-    List.concat head_added
-
 let unify (pre_proc, post_proc) goal =
   let proc_decl = goal.gl_proc_decls |> List.hd in
   let proc_args = proc_decl.Cast.proc_args |>
@@ -363,9 +354,8 @@ let unify (pre_proc, post_proc) goal =
   let unify_var arg goal =
     let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
     let arg_typ = CP.type_of_sv arg in
-    let () = x_tinfo_hp (add_str "all vars" (pr_list Cprinter.string_of_typed_spec_var)) (CF.fv pre_cond) no_pos in
-    let l_vars = CF.fv pre_cond |>
-                 List.filter (fun x -> CP.type_of_sv x = arg_typ) in
+    let () = x_tinfo_hp (add_str "all vars" pr_vars) (CF.fv pre_cond) no_pos in
+    let l_vars = CF.fv pre_cond |> List.filter (fun x -> CP.type_of_sv x = arg_typ) in
     let () = x_tinfo_hp (add_str "vars" pr_vars) l_vars no_pos in
     let ss_vars = List.map (fun lvar ->
         let (x,y) = unify_pair arg lvar goal proc_decl in
@@ -374,7 +364,13 @@ let unify (pre_proc, post_proc) goal =
     let ss_vars = List.map (fun (x,_,y) -> (x,y)) ss_vars in
     ss_vars in
   let ss_args = proc_args |> List.map (fun arg -> unify_var arg goal) in
-  let ss_args = filter_args_input ss_args in
+  let rec mk_args_input args = match args with
+    | [] -> []
+    | [h] -> List.map (fun x -> [x]) h
+    | h::t -> let tmp = mk_args_input t in
+      let head_added = List.map (fun x -> List.map (fun y -> [x]@y) tmp) h in
+      List.concat head_added in
+  let ss_args = mk_args_input ss_args in
   let contain_res = CF.fv post_proc |> List.map (fun x -> CP.name_of_sv x)
                      |> List.exists (fun x -> x = res_name) in
   let ss_args = List.filter(fun list_and_subst ->
@@ -400,7 +396,7 @@ let unify (pre_proc, post_proc) goal =
                 let () = res_num := !res_num + 1 in
                 Some n_var
               else None in
-            let fc_rule = RlFuncCall {
+            let fc_rule = (* RlFuncCall *) {
                 rfc_func_name = proc_decl.Cast.proc_name;
                 rfc_params = args;
                 rfc_substs = substs;
@@ -409,6 +405,9 @@ let unify (pre_proc, post_proc) goal =
             [fc_rule] else []
         else []
       ) |> List.concat
+    |> Gen.BList.remove_dups_eq
+      (fun r1 r2 -> CP.eq_spec_var_list r1.rfc_params r2.rfc_params)
+    |> List.map (fun x -> RlFuncCall x)
   else []
 
 let choose_func_call goal =
@@ -649,14 +648,14 @@ let choose_rule_return goal =
 let choose_synthesis_rules goal : rule list =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  let rs = rs @ (choose_rule_unfold_post goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
+  (* let rs = rs @ (choose_rule_unfold_post goal) in
+   * let rs = rs @ (choose_rule_unfold_pre goal) in *)
   let rs = rs @ (choose_func_call goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
-  let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_return goal) in
-  let rs = rs @ choose_rule_instantiate goal in
+  (* let rs = rs @ (choose_rule_fread goal) in
+   * let rs = rs @ (choose_rule_numeric goal) in
+   * let rs = rs @ (choose_rule_assign goal) in
+   * let rs = rs @ (choose_rule_return goal) in
+   * let rs = rs @ choose_rule_instantiate goal in *)
   rs
 
 (*********************************************************************
@@ -728,30 +727,31 @@ let process_rule_f_read goal (rule:rule_bind_read) =
 
 let process_func_call goal rcore : derivation =
   let fname = rcore.rfc_func_name in
-  let proc_decl = goal.gl_proc_decls |> List.find (fun x -> x.Cast.proc_name = fname) in
+  let proc_decl = goal.gl_proc_decls
+                  |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
   let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
-  let () = x_tinfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
+  let () = x_binfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
   let () = x_tinfo_hp (add_str "post proc" pr_formula) post_proc no_pos in
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
   let substs = List.combine fun_args rcore.rfc_params in
   let substs = substs @ rcore.rfc_substs in
-  let () = x_tinfo_hp (add_str "subst" (pr_list (pr_pair pr_var pr_var))) substs no_pos in
+  let () = x_tinfo_hp (add_str "subst" pr_substs) substs no_pos in
   let n_pre_proc = CF.subst substs pre_proc in
   let pre_vars = CF.fv n_pre_proc |> List.filter (fun x ->
       not(List.exists (fun y -> CP.eq_spec_var x y) rcore.rfc_params)) in
   let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
-  let () = x_tinfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
-  let () = x_tinfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
   let ent_check, residue = SB.check_entail ~residue:true goal.gl_prog
       pre_cond n_pre_proc in
   match ent_check, residue with
   | true, Some red ->
-    let () = x_tinfo_pp "checking pre_cond successfully" no_pos in
+    let () = x_binfo_pp "checking pre_cond successfully" no_pos in
     let () = x_tinfo_hp (add_str "residue" pr_formula) red no_pos in
     let n_post_proc = CF.subst substs post_proc in
     let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in

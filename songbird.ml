@@ -8,6 +8,7 @@ module SBGlobals = Libsongbird.Globals
 module SBProverP = Libsongbird.Prover_pure
 module SBProverH = Libsongbird.Prover_hip
 module SBProverE = Libsongbird.Prover_entail
+module SBProverA = Libsongbird.Prover_all
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
 module CP = Cpure
@@ -751,23 +752,21 @@ let check_entail_x ?(residue=false) prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     if not(residue) then
       let ent = SBCast.mk_entailment sb_ante sb_conseq in
-      let () = if !Globals.pr_songbird then
-          x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
-        else () in
       let ptree = SBProverH.check_entailment sb_prog ent in
-      let res = SBPFE.get_ptree_validity ptree in
+      (* let res = SBPFE.get_ptree_validity ptree in *)
+      let res = ptree.SBProverA.enr_validity in
       match res with
       | SBGlobals.MvlTrue -> true, None
       | _ -> false, None
-    else let ent = SBCast.mk_entailment ~mode:PrfEntailResidue sb_ante sb_conseq in
-      let () = if !Globals.pr_songbird then
-          x_binfo_hp (add_str "entailment" pr_entail) ent no_pos
-        else () in
+    else
+      let ent = SBCast.mk_entailment ~mode:PrfEntailResidue sb_ante sb_conseq in
+      let () = x_binfo_hp (add_str "ent" SBCast.pr_ent) ent no_pos in
+      let () = x_tinfo_hp (add_str "prog" SBCast.pr_program) sb_prog no_pos in
       let ptree = SBProverH.check_entailment sb_prog ent in
-      let res = SBPFE.get_ptree_validity ptree in
+      let res = ptree.SBProverA.enr_validity in
       match res with
       | SBGlobals.MvlTrue ->
-        let residue_fs = SBPFE.get_ptree_residues ptree in
+        let residue_fs = ptree.SBProverA.enr_residues in
         let red = residue_fs |> List.rev |> List.hd in
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
@@ -819,7 +818,7 @@ let check_pure_entail_x ante conseq =
   let sb_prog = SBCast.mk_program "check_pure_entail" in
   let ent = SBCast.mk_entailment sb_ante_f sb_conseq_f in
   let ptree = SBProverH.check_entailment sb_prog ent in
-  let res = SBPFE.get_ptree_validity ptree in
+  let res = ptree.SBProverA.enr_validity in
     match res with
     | SBGlobals.MvlTrue -> true
     | _ -> false
@@ -912,12 +911,12 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let ptrees = List.map (fun ent -> SBProverH.check_entailment n_prog ent) ents in
-  let validities = List.map (fun ptree -> SBPFE.get_ptree_validity ptree) ptrees in
+  let validities = List.map (fun ptree -> ptree.SBProverA.enr_validity) ptrees in
   let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   let conti = bf.CF.formula_struc_continuation in
   if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
   then
-    let residues = get_residues ptrees in
+    let residues = List.map (fun x -> List.hd x.SBProverA.enr_residues) ptrees in
     let residue = translate_back_fs residues holes in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
     let () = pre_list := [es.CF.es_formula] @ !pre_list in
