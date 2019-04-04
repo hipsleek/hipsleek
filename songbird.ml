@@ -777,6 +777,58 @@ let check_entail ?(residue=false) prog ante conseq =
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
 
+let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=None) =
+  let ante = match pf with
+    | None -> es.CF.es_formula
+    | Some pf -> CF.add_pure_formula_to_formula pf es.CF.es_formula in
+  let n_prog = translate_prog prog in
+  let evars = bf.CF.formula_struc_implicit_inst @ bf.CF.formula_struc_explicit_inst
+              @ bf.CF.formula_struc_exists @ es.CF.es_evars in
+  let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
+  let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
+  let conseqs, holes = if Gen.is_empty evars
+    then translate_formula bf.CF.formula_struc_base
+    else
+      let sb_f, holes = translate_formula bf.CF.formula_struc_base in
+      let pos = translate_loc bf.CF.formula_struc_pos in
+      let sb_vars = List.map translate_var evars in
+      (List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
+  let holes = List.map CF.disable_imm_h_formula holes in
+  let sb_ante, _ = translate_formula ante in
+  let sb_conseq = List.hd conseqs in
+  let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailResidue x sb_conseq)
+      sb_ante in
+  let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
+  let check_fun = if !disproof then SBProverH.check_entailment_disproof
+    else SBProverH.check_entailment in
+  let ptrees = List.map (fun ent -> check_fun n_prog ent) ents in
+  let is_valid x = x.SBProverA.enr_validity = SBGlobals.MvlTrue in
+  if List.for_all is_valid ptrees
+  then
+    let () = if !disproof then
+        valid_num := !valid_num + (List.length ents)
+      else () in
+    let residues = List.map (fun x -> List.hd x.SBProverA.enr_residues) ptrees in
+    let residue = translate_back_fs residues holes in
+    (true, Some residue)
+  else
+    let is_valid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlFalse in
+    let is_invalid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlFalse in
+    let is_unkn (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlUnkn in
+    let pairs = List.combine ents ptrees in
+    let invalid_ents = pairs |> List.filter is_invalid
+                     |> List.map fst in
+    let unkn_ents = pairs |> List.filter is_unkn
+                    |> List.map fst in
+    let valid_ents = pairs |> List.filter is_valid
+                    |> List.map fst in
+    let () = if !disproof then
+        let () = invalid_num := !invalid_num + (List.length invalid_ents) in
+        let () = unkn_num := !unkn_num + (List.length unkn_ents) in
+        valid_num := !valid_num + (List.length valid_ents)
+      else () in
+    false, None
+
 let check_equal prog first second =
   let forward, _ = check_entail prog first second in
   let backward, _ = check_entail prog second first in
@@ -883,85 +935,50 @@ and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
     (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq ~pf:None) ctx conseq
 
 and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
-  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
-  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-  let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
-  let () = x_tinfo_hp (add_str "hp names" (pr_list pr_id)) hp_names no_pos in
-  let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
-  let ante_hps = check_hp_formula hp_names es.CF.es_formula in
-  let n_prog = translate_prog prog in
-  let evars = bf.CF.formula_struc_implicit_inst @ bf.CF.formula_struc_explicit_inst
-              @ bf.CF.formula_struc_exists @ es.CF.es_evars in
-  let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
-  let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
-  let conseqs, holes = if Gen.is_empty evars
-    then translate_formula bf.CF.formula_struc_base
-    else
-      let sb_f, holes = translate_formula bf.CF.formula_struc_base in
-      let pos = translate_loc bf.CF.formula_struc_pos in
-      let sb_vars = List.map translate_var evars in
-      (List.map (fun x -> SBCast.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
-  let holes = List.map CF.disable_imm_h_formula holes in
-  let ante = match pf with
-    | None -> es.CF.es_formula
-    | Some pf -> CF.add_pure_formula_to_formula pf es.CF.es_formula in
-  let sb_ante, _ = translate_formula ante in
-  let sb_conseq = List.hd conseqs in
-  let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailResidue x sb_conseq)
-      sb_ante in
-  let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-  let ptrees = List.map (fun ent -> SBProverH.check_entailment n_prog ent) ents in
-  let validities = List.map (fun ptree -> ptree.SBProverA.enr_validity) ptrees in
-  let () = x_tinfo_hp (add_str "validities" (pr_list pr_validity)) validities no_pos in
   let conti = bf.CF.formula_struc_continuation in
-  if List.for_all (fun x -> x = SBGlobals.MvlTrue) validities
-  then
-    let residues = List.map (fun x -> List.hd x.SBProverA.enr_residues) ptrees in
-    let residue = translate_back_fs residues holes in
+  let ent_res, residue = check_entail_es prog es bf ~pf:pf in
+  let aux_conti n_ctx = match conti with
+      | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
+      | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None in
+  if ent_res then
+    let residue = Gen.unsome residue in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
     let () = pre_list := [es.CF.es_formula] @ !pre_list in
     let n_ctx = CF.Ctx {es with CF.es_evars = CF.get_exists es.CF.es_formula;
                                 CF.es_formula = residue} in
-    let conti = bf.CF.formula_struc_continuation in
-    match conti with
-    | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
-  else if conseq_hps then
-    let () = Syn.syn_pre := Some es.CF.es_formula in
-    let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
-    let n_ante = CF.get_pure es.CF.es_formula in
-    let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
-    let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
-    match conti with
-    | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
-  else if ante_hps then
-    let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in
-    let vars = vars |> List.filter (fun x -> match CP.type_of_sv x with
-        | Int | Named _ -> true
-        | _ -> false) in
-    let exists_vars = bf.CF.formula_struc_exists
-                      @ bf.CF.formula_struc_explicit_inst
-                      @ bf.CF.formula_struc_implicit_inst
-                    |> CP.remove_dups_svl in
-    let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
-    let () = x_tinfo_hp (add_str "conseq" pr_struc_f) (CF.EBase bf) no_pos in
-    let () = x_tinfo_hp (add_str "ante" pr_formula) (es.CF.es_formula) no_pos in
-    let () = x_tinfo_hp (add_str "conseq" pr_formula) conseq no_pos in
-    let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
-    let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in
-    let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
-    let () = x_tinfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
-    let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
-    match conti with
-    | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-    | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None
+    aux_conti n_ctx
   else
-    let () = x_tinfo_hp (add_str "prog" SBCast.pr_program) n_prog no_pos in
-    let () = x_binfo_hp (add_str "entailment" (pr_list pr_entail)) ents no_pos in
-    let msg = "songbird result is Failed." in
-    (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
-    , Prooftracer.Failure)
+    let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
+    let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+    let hp_names = List.map (fun x -> x.Cast.hp_name) hps in
+    let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
+    let ante_hps = check_hp_formula hp_names es.CF.es_formula in
+    if conseq_hps then
+      let () = Syn.syn_pre := Some es.CF.es_formula in
+      let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
+      let n_ante = CF.get_pure es.CF.es_formula in
+      let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
+      let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
+      aux_conti n_ctx
+    else if ante_hps then
+      let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in
+      let vars = vars |> List.filter
+                   (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+      let exists_vars = bf.CF.formula_struc_exists
+                        @ bf.CF.formula_struc_explicit_inst
+                        @ bf.CF.formula_struc_implicit_inst
+                        |> CP.remove_dups_svl in
+      let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
+      let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
+      let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in
+      let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
+      let () = x_tinfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
+      let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
+      aux_conti n_ctx
+    else
+      let msg = "songbird result is Failed." in
+      (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
+      , Prooftracer.Failure)
 
 let infer_templ_defn prog pre post fun_name args =
   let sb_prog = translate_prog prog in

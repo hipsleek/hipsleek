@@ -747,7 +747,13 @@ let process_source_full source =
               | None -> raise e
               | Some n_prog -> let () = repaired := true in
                 let () = Globals.verified_procs := [] in ()
-            else let () = print_string_quiet
+            else
+              let () = if !disproof then
+                  let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
+                  let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
+                  x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos
+                else () in
+              let () = print_string_quiet
                      ("\nException MAIN"
                    ^(Printexc.to_string e)^"Occurred!\n") in
               let () = print_string_quiet
@@ -755,6 +761,11 @@ let process_source_full source =
               let () = Log.process_proof_logging !Globals.source_files cprog prim_names in
               raise e
           end);
+  let () = if !disproof then
+      let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
+      let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
+      x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos
+    else () in
   if (!Globals.reverify_all_flag || !Globals.reverify_flag)
   then let () = y_binfo_pp "RE-VERIFICATION\n" in
     let () = Globals.infer_const_obj # reset_all in

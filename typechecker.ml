@@ -4311,5 +4311,9 @@ let check_prog iprog (prog : prog_decl) =
   Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog iprog prog
 
 let check_prog_wrapper iprog prog =
-  try check_prog iprog prog
+  try
+    let () = invalid_num := 0 in
+    let () = unkn_num := 0 in
+    let () = valid_num := 0 in
+    check_prog iprog prog
   with _ as e -> raise e

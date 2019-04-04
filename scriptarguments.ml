@@ -585,6 +585,7 @@ let common_arguments = [
   ("--unsat-consumed", Arg.Set Globals.unsat_consumed_heap,
    "Add consumed heap for unsat checking");
   ("--songbird", Arg.Set Globals.songbird,"set songbird as the main prover");
+  ("--disproof", Arg.Set Globals.disproof,"set disproof mode in songbird");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");
   ("--dis-comp-xp0", Arg.Clear Globals.compute_xpure_0,
