@@ -8,23 +8,128 @@ data nodep[`T]{
    nodep[`T] next;
 }.
 
+data nodep2[`T1,`T2]{
+   `T1 val1;
+   `T2 val2;
+   nodep2[`T1,`T2] next;
+}.
+
+data nodep3[`T1,`T2,`T3]{
+   `T1 val1;
+   `T2 val2;
+   `T3 val3;
+   nodep3[`T1,`T2,`T3] next;
+}.
+
 pred ll<a:int> == self=null or
           self::node<a,r> * r::ll<a>.
 
 pred llp<a>[`T] == self=null or
           self::nodep<a,r>[`T] * r::llp<a>[`T].
 
+pred llp2<a,b>[`T1,`T2] == self=null or
+          self::nodep2<a,b,r>[`T1,`T2] * r::llp2<a,b>[`T1,`T2].
+
 // pred llp<a,b,c>[`T1,`T2] == self=null or
 //           self::nodep<a,r>[`T] * r::llp<a>[`T].
 
-// checkentail x::ll<2> |- x::ll<2>.
-// print residue.
-// expect Valid.
 
-// checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
-// print residue.
-// expect Valid.
-
+// 1
 checkentail x::llp<2>[int] & x!=null |- x::nodep<2,r>[int] * r::llp<2>[int].
 print residue.
 expect Valid.
+
+// 2
+checkentail x::llp<100>[int] & x!=null |- x::nodep<99,r>[int] * r::llp<2>[int].
+print residue.
+expect Fail.
+
+// 3
+checkentail x::ll<2> & x!=null |- x::node<2,r> * r::ll<2>.
+print residue.
+expect Valid.
+
+// 4
+checkentail x::ll<2> |- x::ll<2>.
+print residue.
+expect Valid.
+
+// 5
+checkentail x::llp<100>[bool] & x!=null |- x::nodep<99,r>[int] * r::llp<2>[int].
+print residue.
+expect Fail.
+
+// 6
+checkentail x::llp<100>[bool] & x!=null |- x::nodep<100,r>[int] * r::llp<2>[int].
+print residue.
+expect Fail.
+
+// 7
+checkentail x::llp<true>[bool] & x!=null |- x::nodep<true,r>[bool] * r::llp<true>[bool].
+print residue.
+expect Valid.
+
+// 8
+checkentail x::llp<false>[bool] & x!=null |- x::nodep<false,r>[bool] * r::llp<false>[bool].
+print residue.
+expect Valid.
+
+// 9
+checkentail x::llp<false>[bool] & x!=null |- x::nodep<false,r>[bool] * r::llp<true>[bool].
+print residue.
+expect Fail.
+
+// 10
+checkentail x::llp<true>[bool] & x!=null |- x::nodep<false,r>[bool] * r::llp<false>[bool].
+print residue.
+expect Fail.
+
+// 11 -- problem
+checkentail x::llp<false>[int] & x!=null |- x::nodep<false,r>[bool] * r::llp<false>[bool].
+print residue.
+expect Fail.
+
+// 12
+checkentail x::llp<false>[bool] & x!=null |- x::nodep<false,r>[int] * r::llp<false>[bool].
+print residue.
+expect Fail.
+
+// 13
+checkentail x::llp<false>[bool] & x!=null |- x::nodep<false,r>[bool] * r::llp<false>[int].
+print residue.
+expect Fail.
+
+// 14
+checkentail x::llp2<1,false>[int,bool] & x!=null |- x::nodep2<1,false,r>[int,bool] * r::llp2<1,false>[int,bool].
+print residue.
+expect Valid.
+
+// 15
+checkentail x::llp2<100,false>[int,bool] & x!=null |- x::nodep2<1,false,r>[int,bool] * r::llp2<1,false>[int,bool].
+print residue.
+expect Fail.
+
+// 16
+checkentail x::llp2<1,false>[int,bool] & x!=null |- x::nodep2<1,true,r>[int,bool] * r::llp2<1,false>[int,bool].
+print residue.
+expect Fail.
+
+// 17
+checkentail x::llp2<1,false>[int,bool] & x!=null |- x::nodep2<1,false,r>[int,bool] * r::llp2<100,false>[int,bool].
+print residue.
+expect Fail.
+
+// 18
+checkentail x::llp2<1,false>[int,bool] & x!=null |- x::nodep2<1,false,r>[bool,int] * r::llp2<1,false>[int,bool].
+print residue.
+expect Fail.
+
+// 19 -- Guess should be the same problem
+checkentail x::llp2<1,false>[bool,int] & x!=null |- x::nodep2<1,false,r>[int,bool] * r::llp2<1,false>[int,bool].
+print residue.
+expect Fail.
+
+// 20
+checkentail x::llp2<1,false>[int,bool] & x!=null |- x::nodep2<1,false,r>[int,bool] * r::llp2<1,false>[bool,int].
+print residue.
+expect Fail.
