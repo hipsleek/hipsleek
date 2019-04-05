@@ -806,7 +806,7 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant,
    "enable strong predicate invariant");
   ("--en-repair", Arg.Set Globals.enable_repair,"enable repair process");
-  ("--en-sb-i", Arg.Set Globals.enable_sb_i,"enable songbird interactive");
+  ("--en-i", Arg.Set Globals.enable_i,"enable interactive mode");
   ("--en-repair-templ", Arg.Set Globals.enable_repair_template,"enable repair process");
   ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");

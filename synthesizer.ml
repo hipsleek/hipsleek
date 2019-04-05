@@ -130,6 +130,8 @@ let find_equal_var_x goal var =
     let var2_f = extract_var_f pre var2 in
     match var1_f, var2_f with
     | Some f1, Some f2 ->
+      let () = x_tinfo_hp (add_str "var1" pr_var) var1 no_pos in
+      let () = x_tinfo_hp (add_str "var2" pr_var) var2 no_pos in
       let () = x_tinfo_hp (add_str "eq-v f1" pr_formula) f1 no_pos in
       let () = x_tinfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
       helper f1 f2
@@ -835,7 +837,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
   let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
-  let rules = if !enable_sb_i then choose_rule_interact goal rules
+  let rules = if !enable_i then choose_rule_interact goal rules
     else rules in
   process_all_rules goal rules
 
