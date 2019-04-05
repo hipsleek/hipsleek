@@ -20,8 +20,6 @@ module SB = Songbird
 exception EStree of synthesis_tree
 
 let raise_stree st = raise (EStree st)
-let fc_args = ref ([]: CP.spec_var list list)
-
 (*********************************************************************
  * Choosing rules
  *********************************************************************)
@@ -648,14 +646,14 @@ let choose_rule_return goal =
 let choose_synthesis_rules goal : rule list =
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
-  (* let rs = rs @ (choose_rule_unfold_post goal) in
-   * let rs = rs @ (choose_rule_unfold_pre goal) in *)
+  let rs = rs @ (choose_rule_unfold_post goal) in
+  let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_func_call goal) in
-  (* let rs = rs @ (choose_rule_fread goal) in
-   * let rs = rs @ (choose_rule_numeric goal) in
-   * let rs = rs @ (choose_rule_assign goal) in
-   * let rs = rs @ (choose_rule_return goal) in
-   * let rs = rs @ choose_rule_instantiate goal in *)
+  let rs = rs @ (choose_rule_fread goal) in
+  let rs = rs @ (choose_rule_numeric goal) in
+  let rs = rs @ (choose_rule_assign goal) in
+  let rs = rs @ (choose_rule_return goal) in
+  let rs = rs @ choose_rule_instantiate goal in
   rs
 
 (*********************************************************************
@@ -726,67 +724,53 @@ let process_rule_f_read goal (rule:rule_bind_read) =
     mk_derivation_subgoals goal (RlFRead rule) [n_goal]
 
 let process_func_call goal rcore : derivation =
-  let fname = rcore.rfc_func_name in
+  let fun_name, params = rcore.rfc_func_name, rcore.rfc_params in
   let proc_decl = goal.gl_proc_decls
-                  |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
+                  |> List.find (fun x -> eq_str x.Cast.proc_name fun_name) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-  let () = x_tinfo_hp (add_str "specs" pr_struc_f) specs no_pos in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
-  let () = x_binfo_hp (add_str "pre_proc" pr_formula) pre_proc no_pos in
-  let () = x_tinfo_hp (add_str "post proc" pr_formula) post_proc no_pos in
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let substs = List.combine fun_args rcore.rfc_params in
+  let substs = List.combine fun_args params in
   let substs = substs @ rcore.rfc_substs in
   let () = x_tinfo_hp (add_str "subst" pr_substs) substs no_pos in
-  let n_pre_proc = CF.subst substs pre_proc in
-  let pre_vars = CF.fv n_pre_proc |> List.filter (fun x ->
-      not(List.exists (fun y -> CP.eq_spec_var x y) rcore.rfc_params)) in
-  let n_pre_proc = CF.wrap_exists pre_vars n_pre_proc in
-  let () = x_binfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
-  let () = x_binfo_hp (add_str "n_pre_proc" pr_formula) n_pre_proc no_pos in
+  let params_pre = CF.subst substs pre_proc in
+  let exists_vars = CF.fv params_pre
+                    |> List.filter (fun x -> CP.not_mem x params) in
+  let fresh_evars = List.map CP.mk_fresh_sv exists_vars in
+  let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
+  let params_pre = CF.wrap_exists fresh_evars params_pre in
+  let () = x_tinfo_hp (add_str "pre_cond" pr_formula) pre_cond no_pos in
+  let () = x_tinfo_hp (add_str "params_pre" pr_formula) params_pre no_pos in
   let ent_check, residue = SB.check_entail ~residue:true goal.gl_prog
-      pre_cond n_pre_proc in
+      pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
-    let () = x_binfo_pp "checking pre_cond successfully" no_pos in
-    let () = x_tinfo_hp (add_str "residue" pr_formula) red no_pos in
-    let n_post_proc = CF.subst substs post_proc in
-    let n_post_state = CF.mkStar red n_post_proc CF.Flow_combine no_pos in
-    let np_vars = CF.fv n_post_state in
+    let params_post = CF.subst substs post_proc in
+    let evars = CF.get_exists params_post in
+    let post_state = add_formula_to_formula red params_post in
+    let np_vars = CF.fv post_state in
     let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                        |> List.exists (fun x -> x = res_name) in
-    let n_post_state, n_vars = if rcore.rfc_return != None then
+    let post_state, n_vars = if rcore.rfc_return != None then
         let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
         let n_var = Gen.unsome rcore.rfc_return in
-        let n_f = CF.subst [(res, n_var)] n_post_state in
+        let n_f = CF.subst [(res, n_var)] post_state in
         (n_f, goal.gl_vars @ [n_var])
-      else n_post_state, goal.gl_vars in
-    let () = x_tinfo_hp (add_str "post_state" pr_formula) n_post_state no_pos in
+      else post_state, goal.gl_vars in
+    let () = x_tinfo_hp (add_str "post_state" pr_formula) post_state no_pos in
     let () = x_tinfo_hp (add_str "post_cond" pr_formula) post_cond no_pos in
-    let post_check, _ = SB.check_entail goal.gl_prog n_post_state post_cond in
+    let post_check, _ = SB.check_entail goal.gl_prog post_state post_cond in
     if post_check then
-      let () = x_tinfo_pp "checking post_cond successfully" no_pos in
       mk_derivation_success goal (RlFuncCall rcore)
     else
-      let params = rcore.rfc_params in
-      let already_call = List.exists (fun x ->
-          if (List.length x = List.length params) then
-            let combine = List.combine x params in
-            List.for_all (fun (x,y) -> CP.eq_spec_var x y) combine
-          else false
-        ) !fc_args in
-      let eq_heap = SB.eq_h_formula goal.gl_prog pre_proc post_proc in
-      if already_call && eq_heap then
-            mk_derivation_fail goal (RlFuncCall rcore)
-      else
-        let () = fc_args := [params] @ !fc_args in
-        let sub_goal = {goal with gl_vars = n_vars;
-                                  gl_trace = (RlFuncCall rcore)::goal.gl_trace;
-                                  gl_pre_cond = n_post_state} in
-        mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
+      (* Currently allow ONLY ONE func_call *)
+      let sub_goal = {goal with gl_vars = n_vars;
+                                gl_trace = (RlFuncCall rcore)::goal.gl_trace;
+                                gl_pre_cond = post_state} in
+      mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
 and process_rule_unfold_pre goal rule =

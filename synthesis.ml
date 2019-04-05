@@ -813,13 +813,6 @@ let eq_hp_decl hp1 hp2 =
     List.for_all (fun (x,y) -> CP.eq_spec_var x y) args
   else false
 
-let add_formula_to_formula f1 f2 =
-  let hf, pf, _, _, _,_ = CF.split_components f1 in
-  let hf2, pf2, _, _, _,_ = CF.split_components f2 in
-  let n_pf = mix_of_pure (CP.mkAnd (pure_of_mix pf) (pure_of_mix pf2) no_pos) in
-  let n_hf = CF.mkStarH hf hf2 no_pos in
-  CF.mkBase_simp n_hf n_pf
-
 let need_unfold_rhs prog vn=
   let rec look_up_view vn0=
     let vdef = x_add Cast.look_up_view_def_raw x_loc prog.Cast.prog_view_decls
@@ -889,6 +882,12 @@ let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   | Or bf -> let n_f1 = add_exists_vars bf.formula_or_f1 vars in
     let n_f2 = add_exists_vars bf.formula_or_f2 vars in
     Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
+let add_formula_to_formula f1 f2 =
+  let bf = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+  let evars = (CF.get_exists f1) @ (CF.get_exists f2) |> CP.remove_dups_svl in
+  if evars = [] then bf
+    else add_exists_vars bf evars
 
 let remove_exists (formula:CF.formula) =
   let vars = CF.get_exists formula in

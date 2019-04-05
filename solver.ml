@@ -7706,9 +7706,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
     (* c1,v1,p1 *)
     let lhs_name,lhs_arg,lhs_var = get_node_name 19 lhs_node, get_node_args lhs_node , get_node_var lhs_node in
     let () = Gen.Profiling.push_time "empty_predicate_testing" in
-    let () = x_binfo_pp "marking" no_pos in
     let lhs_vd = (look_up_view_def_raw x_loc prog.prog_view_decls lhs_name) in
-    let () = x_binfo_pp "marking" no_pos in
     let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) estate.es_group_lbl pos) with 
                         es_formula = ante;
                         es_heap = estate.es_heap;

@@ -11,22 +11,24 @@ void insert(node x, node y)
 	ensures exists k: x::ll<k> & k = n1 + n2;.
 
 // synthesize [node x, node y]
-// x::node<v1, t> * t::ll<n3> * y::ll<n2> &
-// !(v_bool) & x != null & n3 + 1 = n1 & t != null
-// // fread
-
+// x::node<Anon_4396,q_4397> * q_4397::ll<flted_7_4395> * y::ll<n2> &
+// x!=null & flted_7_4395=n1-1 & q_4397!=null
 // ~>
-// x::ll<n1+n2>.
-// append(x.next, y)
-// fread t = x.next
-// fcall(t, y)
+// (exists f_r_4411: x::ll<f_r_4411> & f_r_4411=flted_7_4395+n2+1).
+// unfoldpost
 
-synthesize [node x, node y]
-x::node<Anon_4396,q_4397> * q_4397::ll<flted_7_4395> * y::ll<n2> &
-x!=null & flted_7_4395=n1-1 & q_4397!=null
+// synthesize [node x, node y]
+// x::node<Anon_4396,q_4397> * q_4397::ll<flted_7_4395> * y::ll<n2> &
+// x!=null & flted_7_4395=n1-1 & q_4397!=null
+// ~>
+// (exists flted_7_71,v_72,q_73,f_r_64:
+// x::node<v_72,q_73> * q_73::ll<flted_7_71>&
+// f_r_64=1+flted_7_4395+n2 & flted_7_71+1=f_r_64).
+
+synthesize [node q_4397, node x, node y]
+x::node<Anon_4396,q_4397>@M * q_4397::ll<flted_7_4395>@M * y::ll<n2>@M&
+x!=null & flted_7_4395+1=n1 & q_4397!=null
 ~>
-// node t = x.next
-// unfold t
-(exists f_r_4411: x::ll<f_r_4411> & f_r_4411=flted_7_4395+n2+1).
-
-// pre: x::ll<n> & x = null
+(exists flted_7_71,v_72,q_73,
+f_r_64: x::node<v_72,q_73>@M * q_73::ll<flted_7_71>@M&
+f_r_64=1+flted_7_4395+n2 & flted_7_71+1=f_r_64).

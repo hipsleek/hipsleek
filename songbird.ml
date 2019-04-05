@@ -753,14 +753,13 @@ let check_entail_x ?(residue=false) prog ante conseq =
     if not(residue) then
       let ent = SBCast.mk_entailment sb_ante sb_conseq in
       let ptree = SBProverH.check_entailment sb_prog ent in
-      (* let res = SBPFE.get_ptree_validity ptree in *)
       let res = ptree.SBProverA.enr_validity in
       match res with
       | SBGlobals.MvlTrue -> true, None
       | _ -> false, None
     else
       let ent = SBCast.mk_entailment ~mode:PrfEntailResidue sb_ante sb_conseq in
-      let () = x_binfo_hp (add_str "ent" SBCast.pr_ent) ent no_pos in
+      let () = x_tinfo_hp (add_str "ent" SBCast.pr_ent) ent no_pos in
       let () = x_tinfo_hp (add_str "prog" SBCast.pr_program) sb_prog no_pos in
       let ptree = SBProverH.check_entailment sb_prog ent in
       let res = ptree.SBProverA.enr_validity in

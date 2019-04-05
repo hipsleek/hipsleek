@@ -2934,6 +2934,8 @@ and mem (sv : spec_var) (svs : spec_var list) : bool =
 and mem_x fun_eq (sv : spec_var) (svs : spec_var list) : bool =
   List.exists (fun v -> fun_eq sv v) svs
 
+and not_mem sv svs = not (mem sv svs)
+
 and disjoint (svs1 : spec_var list) (svs2 : spec_var list) =
   List.for_all (fun sv -> not (mem sv svs2)) svs1
 
@@ -15378,7 +15380,7 @@ let is_AndList f =
 
 let tmp_mult_var = mk_spec_var "_mult_var"
 
-let mk_fresh_sv v = 
+let mk_fresh_sv v =
   match v with
   | SpecVar (t, i, p) ->
     SpecVar (t, fresh_old_name i, p) 
