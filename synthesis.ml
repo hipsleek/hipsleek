@@ -25,6 +25,7 @@ let pr_substs = pr_list (pr_pair pr_var pr_var)
 (*** Reference variable***********)
 let rel_num = ref 0
 let res_num = ref 0
+let fc_args = ref ([]: CP.spec_var list list)
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
@@ -577,9 +578,9 @@ let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
     match ls_pr_views with
     | [] -> raise Not_found
     | (vname1, def, vars)::rest ->
-      if String.compare vname vname1 = 0 then (vname, def, vars) else
+      if eq_str vname vname1 then (vname, def, vars) else
         look_up_vdef rest vname in
-    let fresh_var args f=
+  let fresh_var args f =
     let qvars, base1 = CF.split_quantifiers f in
     let fr_qvars = CP.fresh_spec_vars qvars in
     let ss = List.combine qvars fr_qvars in
@@ -592,7 +593,7 @@ let do_unfold_view_hf_vn_x cprog pr_views args (hf:CF.h_formula) =
       let f_args = (CP.SpecVar (Named v_name,self, Unprimed))::v_vars in
       let fs = List.map (fun (f,_) -> fresh_var f_args f) v_un_struc_formula in
       let a_args = hv.h_formula_view_node::hv.h_formula_view_arguments in
-      let ss = List.combine f_args  a_args in
+      let ss = List.combine f_args a_args in
       let fs1 = List.map (x_add CF.subst ss) fs in
       fs1
     with _ -> report_error no_pos ("SYN.do_unfold_view_hf: can not find view "
@@ -821,12 +822,10 @@ let need_unfold_rhs prog vn=
     let hv_opt = CF.is_only_viewnode false (CF.formula_of_disjuncts fs) in
     match hv_opt with
     | Some vn1 -> look_up_view vn1
-    | None -> vdef
-  in
+    | None -> vdef in
   let vdef = look_up_view vn in
   [(vn.CF.h_formula_view_name,vdef.Cast.view_un_struc_formula,
     vdef.Cast.view_vars)], [(vn.CF.h_formula_view_node)]
-
 
 let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Named _ -> true
@@ -1199,6 +1198,13 @@ let frame_var_formula formula var =
                         formula_exists_qvars = exists_vars}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
+let simplify_goal goal =
+  let vars = goal.gl_vars in
+  let n_pre = CF.simplify_formula goal.gl_pre_cond vars in
+  let n_post = CF.simplify_formula goal.gl_post_cond vars in
+  {goal with gl_pre_cond = n_pre;
+             gl_post_cond = n_post}
+
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
@@ -1293,7 +1299,6 @@ let compare_rule_assign_vs_other r1 r2 =
     | _ -> PriEqual
 
 (* compare wbind with others *)
-
 let compare_rule_wbind_vs_func_call r1 r2 =
   negate_priority (compare_rule_func_call_vs_wbind r2 r1)
 

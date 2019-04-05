@@ -1732,8 +1732,7 @@ and unsat_base_a prog (sat_subno:  int ref) f  : bool=
 and unsat_base_nth (n:int) prog (sat_subno:  int ref) f  : bool =
   Debug.no_2_num n "unsat_base_nth"
     Cprinter.string_of_formula string_of_int string_of_bool
-    (fun _ _ -> if !enable_repair then Songbird.check_unsat prog f
-          else unsat_base_a prog sat_subno f) f n
+    (fun _ _ -> unsat_base_a prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in

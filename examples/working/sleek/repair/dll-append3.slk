@@ -1,0 +1,47 @@
+data node2 {
+	node2 prev;
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<p,n> == self = null & n = 0 
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
+
+void append(node2 a, node2 b)
+	requires a::dll<q, m> * b::dll<p, n> & m > 0 & n > 0
+	ensures a::dll<q, k2> & k2 = m + n;.
+
+// synthesize [node2 x, node2 y]
+// x::node2<q,k>@M * k::dll<x,h>@M * y::dll<p,n>@M&
+// self_4472=x & p_4471=q & 0<m & 0<n & 1+h=m & k=null
+// ~>
+// (exists fr_82,prev_83,next_84,a_85:
+// x::node2<q,a_85>@M * y::node2<prev_83,next_84> *
+// next_84::dll<a_85,fr_82>
+// // & (1+0)<=(0+n+h) & (((next_84=null & h+n=0+1) | (1+0)<(0+n+h)))
+// // & (((n+h=0 & a_85=null) | 0<(0+h+n)))
+// & fr_82+1=h+n).
+
+synthesize [node2 k, node2 x, node2 y]
+x::node2<q,k> * k::dll<x,h> * y::dll<p,n>& 0<m & 0<n & 1+h=m & k=null
+~>
+(exists fr_82,prev_83,next_84,a_85:
+x::node2<q,a_85> * y::node2<prev_83,next_84> *
+next_84::dll<a_85,fr_82>
+& fr_82+1=h+n).
+
+// synthesize [node2 k, node2 x, node2 y]
+// x::node2<q,k> * y::dll<p,n> & 0<m & 0<n & 1+h=m & k=null & h = 0
+// ~>
+// (exists fr_82,prev_83,next_84,a_85:
+// x::node2<q,a_85> * y::node2<prev_83,next_84> *
+// next_84::dll<a_85,fr_82>
+// & fr_82+1=h+n).
+// unfold y -> instantitate
+
+// synthesize [node2 x, node2 y]
+// y::node2<p_95,q_98>@M * x::node2<q,k> &
+// 0<m & 0<n & h+1=m & k=null & h=0 & flted_8_97+1=n & 0<n & p_95=p & self_96=y
+// ~>
+// (exists prev_81: x::node2<q,self_96>@M * y::node2<prev_81,q_98>@M&
+// 1+flted_8_97=n+h).

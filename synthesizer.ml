@@ -477,7 +477,8 @@ let choose_rule_unfold_pre goal =
     let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
     let pre_list = List.filter (fun x -> not(SB.check_unsat goal.gl_prog x)) nf in
-    let pre_list = pre_list |> List.map remove_exists in
+    let pre_list = pre_list |> List.map remove_exists
+                 |> List. map (fun x -> CF.simplify_formula x goal.gl_vars)in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
     if pre_list = [] then []
     else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
@@ -572,8 +573,8 @@ let choose_rule_instantiate goal =
   let helper var =
     let eq_vars = find_equal_var goal var in
     eq_vars |> List.map (fun x -> RlInstantiate {
-        rli_lhs = var;    rli_rhs = x;
-      }) in
+        rli_lhs = var;
+        rli_rhs = x}) in
   exists_vars |> List.map helper |> List.concat
 
 let extract_frame_info var (formula:CF.formula) =
@@ -644,18 +645,18 @@ let choose_rule_return goal =
   Debug.no_1 "choose_rule_return" pr_goal pr_rules
     (fun _ -> choose_rule_return_x goal) goal
 
-
 let choose_synthesis_rules goal : rule list =
+  let goal = simplify_goal goal in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_func_call goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ choose_rule_instantiate goal in
+  let rs = rs @ (choose_func_call goal) in
   rs
 
 (*********************************************************************
@@ -755,7 +756,7 @@ let process_func_call goal rcore : derivation =
     let post_state = add_formula_to_formula red params_post in
     let np_vars = CF.fv post_state in
     let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
-                       |> List.exists (fun x -> x = res_name) in
+                      |> List.exists (fun x -> x = res_name) in
     let post_state, n_vars = if rcore.rfc_return != None then
         let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
         let n_var = Gen.unsome rcore.rfc_return in
@@ -767,12 +768,22 @@ let process_func_call goal rcore : derivation =
     let post_check, _ = SB.check_entail goal.gl_prog post_state post_cond in
     if post_check then
       mk_derivation_success goal (RlFuncCall rcore)
-    else
-      (* Currently allow ONLY ONE func_call *)
-      let sub_goal = {goal with gl_vars = n_vars;
-                                gl_trace = (RlFuncCall rcore)::goal.gl_trace;
-                                gl_pre_cond = post_state} in
-      mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
+    else let eq_heap = SB.eq_h_formula goal.gl_prog pre_proc post_proc in
+      let already_call = List.exists (fun args ->
+          if (List.length args = List.length params) then
+            List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
+          else false
+        ) !fc_args in
+      (* if already_call && eq_heap then *)
+      if already_call then
+        mk_derivation_fail goal (RlFuncCall rcore)
+      else
+        let () = x_binfo_hp (add_str "fc_args" (pr_list pr_vars)) (!fc_args) no_pos in
+        let () = fc_args := params::(!fc_args) in
+        let sub_goal = {goal with gl_vars = n_vars;
+                                     gl_trace = (RlFuncCall rcore)::goal.gl_trace;
+                                     gl_pre_cond = post_state} in
+        mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
 and process_rule_unfold_pre goal rule =
@@ -787,13 +798,18 @@ let process_rule_instantiate goal rule =
   let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rule.rli_rhs in
   let n_post, post_vars = frame_var_formula goal.gl_post_cond rule.rli_lhs in
   if List.length pre_vars = List.length post_vars then
-    let n_post = add_eq_vars n_post (List.combine pre_vars post_vars) in
-    let n_post = CF.subst [(rule.rli_lhs, rule.rli_rhs)] n_post in
-    let () = x_tinfo_hp (add_str "lhs_var" pr_var) rule.rli_lhs no_pos in
-    let () = x_tinfo_hp (add_str "rhs_var" pr_var) rule.rli_rhs no_pos in
-    let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
-    let () = x_tinfo_hp (add_str "n_post" pr_formula) n_post no_pos in
+    let qvars, post_bf = CF.split_quantifiers n_post in
+    let pre_vars = rule.rli_rhs::pre_vars in
+    let post_vars = rule.rli_lhs::post_vars in
+    let () = x_tinfo_hp (add_str "pre vars" pr_vars) pre_vars no_pos in
+    let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+    let n_post = CF.subst (List.combine post_vars pre_vars) post_bf in
+    let qvars = qvars |> List.filter (fun x -> not(CP.mem x post_vars)) in
+    let n_post = CF.add_quantifiers qvars n_post in
+    (* let rm_vars = [rule.rli_lhs; rule.rli_rhs] in
+     * let n_vars = goal.gl_vars |> List.filter (fun x-> not(CP.mem x rm_vars)) in *)
     let subgoal = {goal with gl_post_cond = n_post;
+                             (* gl_vars = n_vars; *)
                              gl_pre_cond = n_pre} in
     mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
   else mk_derivation_fail goal (RlInstantiate rule)
@@ -893,6 +909,7 @@ and process_one_derivation drv : synthesis_tree =
  * The main synthesis algorithm
  *********************************************************************)
 let synthesize_program goal =
+  let () = fc_args := [] in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
