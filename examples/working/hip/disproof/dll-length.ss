@@ -14,6 +14,6 @@ int length(node2 x)
 
   if (x==null) return 2;
   else {
-     return 1 + length(x.next);
+     return 3 + length(x.next);
   }
 }

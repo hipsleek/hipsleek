@@ -13,7 +13,7 @@ int length(node x)
   if (x == null) return 2;
   else {
     int k;
-    k = 1 + length(x.next);
+    k = 1 + 2 * length(x.next);
     return k;
   }
 }
