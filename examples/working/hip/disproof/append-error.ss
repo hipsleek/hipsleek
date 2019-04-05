@@ -13,8 +13,7 @@ void append(node x, node y)
 {
 	if (x.next == null){
        x.next = y.next;
-       // x.next = y;
    } else {
-       append(x.next, y);
+       append(x.next, y.next);
     }
 }

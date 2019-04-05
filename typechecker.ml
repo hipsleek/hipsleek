@@ -1367,10 +1367,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
   let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context =
     match e0 with
     | Label e ->
-      let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
-      let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id)
-          (snd e.exp_label_path_id) ctx in
-      (x_add check_exp prog proc ctx e.exp_label_exp post_start_label)
+      begin
+        let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id (-1) in
+        let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id)
+            (snd e.exp_label_path_id) ctx in
+        (x_add check_exp prog proc ctx e.exp_label_exp post_start_label)
+      end
     | Unfold ({exp_unfold_var = sv;
                exp_unfold_pos = pos}) ->
       SV.unfold_failesc_context (prog,None) ctx sv true pos
@@ -1626,8 +1628,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                    pos;
                  Err.report_error { Err.error_loc = pos; Err.error_text = msg })
               else true
-            else true
-          in
+            else true in
           if not b then ctx
           else
             let ctx1 = check_rhs_exp rhs in
@@ -1643,12 +1644,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       let svl = CF.fv c1.CF.es_formula in
                       try
                         let orig_sv = List.find (fun sv ->
-                            String.compare (CP.name_of_spec_var sv) v = 0) svl
-                        in
+                            String.compare (CP.name_of_spec_var sv) v = 0) svl in
                         CP.type_of_spec_var orig_sv
                       with _ -> t0
-                    else t0
-                  in
+                    else t0 in
                   let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                   let tmp_vsv = CP.fresh_spec_var vsv in
                   let compose_es =
@@ -1657,20 +1656,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
                   compose_ctx
                 else (CF.Ctx c1) in
-              res
-            in
+              res in
             let () = x_tinfo_hp (add_str "ctx Assign before: "
-                             Cprinter.string_of_list_failesc_context) ctx1 no_pos
-            in
+                             Cprinter.string_of_list_failesc_context) ctx1 no_pos in
             let () = x_tinfo_hp (add_str "rhs: "
                                      (Cprinter.string_of_exp))
                   rhs no_pos in
             let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
-            let () = CF.must_consistent_list_failesc_context "assign final" res
-            in
+            let () = CF.must_consistent_list_failesc_context "assign final" res in
             let () = x_tinfo_hp (add_str "ctx Assign final: "
-                             Cprinter.string_of_list_failesc_context) res no_pos
-            in
+                             Cprinter.string_of_list_failesc_context) res no_pos in
             res
         end
       in
@@ -1969,6 +1964,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       Err.error_loc = pos;
                       Err.error_text = (to_print ^ s)
                     }, 1, 0))
+                  raise (Err.Ppf ({
+                      Err.error_loc = pos;
+                      Err.error_text = (to_print ^ s)
+                    }, 1, 0))
               end
             else
               begin
@@ -2139,10 +2138,17 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                              Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
           let else_ctx1 = CF.add_cond_label_strict_list_failesc_context pid 2 else_ctx in
           let then_ctx1 = CF.add_path_id_ctx_failesc_list then_ctx1 (None,-1) 1 in
-          let () = x_tinfo_hp (add_str "then ctx: "
-                             Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
           let else_ctx1 = CF.add_path_id_ctx_failesc_list else_ctx1 (None,-1) 2 in
-          let then_ctx2 = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
+          let then_ctx2 = if not(!disproof) then
+              (x_add check_exp prog proc then_ctx1 e1) post_start_label
+            else
+              try
+                (x_add check_exp prog proc then_ctx1 e1) post_start_label
+              with _ as e ->
+                let () = x_binfo_hp (add_str "then ctx: "
+                                       Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
+                (x_add check_exp prog proc else_ctx1 e2) post_start_label;
+                raise e in
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
           let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
           res
@@ -2336,25 +2342,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
         let () = x_tinfo_hp (add_str "scall name" pr_id) mn no_pos in
-        (* if contains mn "fcode" then
-         *   let proc_decl = look_up_proc_def pos prog.new_proc_decls mn in
-         *   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
-         *   let pre_proc = specs |> Synt.get_pre_cond |> Synt.rm_emp_formula in
-         *   let post_proc = specs |> Synt.get_post_cond |> Synt.rm_emp_formula in
-         *   let () = x_binfo_hp (add_str "pre" pr_formula) pre_proc no_pos in
-         *   let () = x_binfo_hp (add_str "post" pr_formula) post_proc no_pos in
-         *   let ctx_f = CF.formula_of_list_failesc_context ctx in
-         *   let proc_args = proc_decl.Cast.proc_args
-         *              |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-         *   let pre_proc_f = Synthesizer.extract_vars_f ctx_f proc_args in
-         *   let pre_f = pre_proc_f |> Gen.unsome in
-         *   let () = x_binfo_hp (add_str "ctx_f" pr_formula) ctx_f no_pos in
-         *   let () = x_binfo_hp (add_str "pre_f" pr_formula) pre_f no_pos in
-         *   let _, resid = Songbird.check_entail ~residue:true prog ctx_f pre_f in
-         *   let resid = resid |> Gen.unsome in
-         *   let () = x_binfo_hp (add_str "residue" pr_formula) resid no_pos in
-         *   report_error no_pos "template program"
-         * else *)
         let () = proving_loc#set pos in
         let mn_str = Cast.unmingle_name mn in
         let proc0 = proc in
@@ -4029,8 +4016,7 @@ let ext_pure_check_procs iprog prog proc_names error_traces=
   []
 
 let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
-  let cout_option = None
-  in
+  let cout_option = None in
   let () = I.set_iprog iprog in
   ignore(List.map (check_data iprog prog) prog.prog_data_decls);
   let l_proc = Cast.list_of_procs prog in
