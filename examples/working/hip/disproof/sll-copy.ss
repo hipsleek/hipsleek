@@ -22,6 +22,6 @@ ensures x::ll<n> * res::ll<n>;
   else {
       node tmp = copy(x.next);
       node n = new node(x.val, tmp);
-      return n.next;
+      return n;
   }
 }
