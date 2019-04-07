@@ -219,6 +219,16 @@ let rec translate_exp (exp: CP.exp) =
       let args = templ.CP.templ_args |> List.map translate_exp in
       SBCast.mk_func (SBCast.FuncName fun_name) args
     else report_error no_pos "translate_funcs not activated"
+  | CP.Max (e1, e2, loc) ->
+    let sb_e1 = translate_exp e1 in
+    let sb_e2 = translate_exp e2 in
+    let pos = translate_loc loc in
+    SBCast.mk_func ~pos:pos SBCast.Max [sb_e1; sb_e2]
+  | CP.Min (e1, e2, loc) ->
+    let sb_e1 = translate_exp e1 in
+    let sb_e2 = translate_exp e2 in
+    let pos = translate_loc loc in
+    SBCast.mk_func ~pos:pos SBCast.Min [sb_e1; sb_e2]
   | _ -> report_error no_pos ("this exp is not handled"
                               ^ (Cprinter.string_of_formula_exp exp))
 
@@ -245,9 +255,28 @@ let rec translate_back_exp (exp: SBCast.exp) = match exp with
   | SBCast.PTerm (pterm, pos) ->
     let n_exp = SBCast.convert_pterm_to_binary_exp pos pterm in
     translate_back_exp n_exp
-  | SBCast.Func _ ->
-    report_error no_pos
-      ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " this Func is not handled")
+  | SBCast.Func (func, exps, pos) ->
+    begin
+      match func with
+      | SBCast.Max ->
+        let args = List.map translate_back_exp exps in
+        if List.length args = 2 then
+          let exp1 = List.hd args in
+          let exp2 = args |> List.tl |> List.hd in
+          let loc = translate_back_pos pos in
+          CP.Max (exp1, exp2, loc)
+        else report_error no_pos "number of args in max wrong"
+      | SBCast.Min ->
+        let args = List.map translate_back_exp exps in
+        if List.length args = 2 then
+          let exp1 = List.hd args in
+          let exp2 = args |> List.tl |> List.hd in
+          let loc = translate_back_pos pos in
+          CP.Min (exp1, exp2, loc)
+        else report_error no_pos "number of args in min wrong"
+      | _ -> report_error no_pos
+        ("translate_back_exp:" ^ (SBCast.pr_exp exp) ^ " is not handled")
+    end
   | _ -> report_error no_pos
            ("this exp formula not handled: " ^ (SBCast.pr_exp exp))
 
@@ -291,8 +320,23 @@ let rec translate_pf (pure_f: CP.formula)  =
         let sb_exp2 = translate_exp exp2 in
         let sb_loc = translate_loc loc in
         SBCast.BinRel (SBCast.Le, sb_exp1, sb_exp2, sb_loc)
+      | CP.EqMax (e1, e2, e3, loc) ->
+        let sb_exp1 = translate_exp e1 in
+        let sb_exp2 = translate_exp e2 in
+        let sb_exp3 = translate_exp e3 in
+        let sb_loc = translate_loc loc in
+        let max = SBCast.mk_func SBCast.Max [sb_exp2; sb_exp3] in
+        SBCast.BinRel (SBCast.Eq, sb_exp1, max, sb_loc)
+      | EqMin (e1, e2, e3, loc) ->
+        let sb_exp1 = translate_exp e1 in
+        let sb_exp2 = translate_exp e2 in
+        let sb_exp3 = translate_exp e3 in
+        let sb_loc = translate_loc loc in
+        let max = SBCast.mk_func SBCast.Min [sb_exp2; sb_exp3] in
+        SBCast.BinRel (SBCast.Eq, sb_exp1, max, sb_loc)
       | CP.LexVar lex ->
         SBCast.BConst (true, translate_loc lex.lex_loc)
+
       | _ -> report_error no_pos
                ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
     end
