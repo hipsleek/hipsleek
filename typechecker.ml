@@ -2143,10 +2143,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               (x_add check_exp prog proc then_ctx1 e1) post_start_label
             else
               try
-                (x_add check_exp prog proc then_ctx1 e1) post_start_label
-              with _ as e ->
+                let res = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
                 let () = x_binfo_hp (add_str "then ctx: "
-                                       Cprinter.string_of_list_failesc_context) then_ctx1 no_pos  in
+                                       Cprinter.string_of_list_failesc_context) res no_pos  in
+                res
+              with _ as e ->
+                let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in
+                let () = x_binfo_hp (add_str "unkn_ent" string_of_int) !unkn_num no_pos in
+                x_binfo_hp (add_str "valid_ent" string_of_int) !valid_num no_pos;
                 (x_add check_exp prog proc else_ctx1 e2) post_start_label;
                 raise e in
           let else_ctx2 = (x_add check_exp prog proc else_ctx1 e2) post_start_label in
@@ -3097,8 +3101,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     else
       let check_falsify ctx = SV.heap_entail_one_context 17 prog false ctx
           (CF.mkFalse_nf pos) None None None pos in
-      Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid
-  in
+      Term.check_loop_safety prog proc check_falsify ctx (fst posts) pos pid in
 
   (* Rho: print conc err, if any *)
   let _ =
@@ -3107,8 +3110,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     else
       let str_conc_err = pr_list
           (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
-      print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n")
-  in
+      print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n") in
   let fn_state = ctx in
   let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
   let rs, prf =
@@ -3122,15 +3124,13 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
            *   Songbird.heap_entail_list_partial_context_init prog fn_state flat_post
            * else *)
             SV.heap_entail_list_partial_context_init prog false
-            fn_state flat_post None None None pos (Some pid)
-        in
+            fn_state flat_post None None None pos (Some pid) in
         let () =  DD.ninfo_hprint
             (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
         in
         let ans1 = if !mem_leak_detect then
             Soutil.detect_mem_leak prog proc ans
-          else ans
-        in
+          else ans in
         let () = x_binfo_hp (add_str "proof" Prooftracer.string_of_proof)
           prf pos in
         (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail
@@ -3145,10 +3145,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
          *     (snd posts)
          * else *)
           x_add SV.heap_entail_struc_list_partial_context_init
-            prog false false fn_state (snd posts) None None None pos (Some pid)
-      in
-      rs_struc, prf
-  in
+            prog false false fn_state (snd posts) None None None pos (Some pid) in
+      rs_struc, prf in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
       begin
@@ -3162,8 +3160,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   let is_reachable_succ = if not f1 then
       is_succ
     else
-      is_succ && (CF.exist_reachable_states rs)
-  in
+      is_succ && (CF.exist_reachable_states rs) in
   let () =  DD.ninfo_hprint (add_str "is_succ" string_of_bool) is_succ no_pos in
   let () =  DD.ninfo_hprint (add_str "is_reachable_succ" string_of_bool) is_reachable_succ no_pos in
   let pr = Cprinter.string_of_list_partial_context in
@@ -3179,8 +3176,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         else [] in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
-            "Post condition cannot be derived"
-        in
+            "Post condition cannot be derived" in
         let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
         Err.report_error {
           Err.error_loc = pos;
@@ -4298,8 +4294,8 @@ let check_prog iprog (prog : prog_decl) =
 
 let check_prog_wrapper iprog prog =
   try
-    let () = invalid_num := 0 in
-    let () = unkn_num := 0 in
-    let () = valid_num := 0 in
+    (* let () = invalid_num := 0 in
+     * let () = unkn_num := 0 in
+     * let () = valid_num := 0 in *)
     check_prog iprog prog
   with _ as e -> raise e
