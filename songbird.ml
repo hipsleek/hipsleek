@@ -846,8 +846,7 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
     else SBProverH.check_entailment in
   let ptrees = List.map (fun ent -> check_fun n_prog ent) ents in
   let is_valid x = x.SBProverA.enr_validity = SBGlobals.MvlTrue in
-  if List.for_all is_valid ptrees
-  then
+  if List.for_all is_valid ptrees then
     let () = if !disproof then
         valid_num := !valid_num + (List.length ents)
       else () in
@@ -865,6 +864,8 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
                     |> List.map fst in
     let valid_ents = pairs |> List.filter is_valid
                     |> List.map fst in
+    let () = x_binfo_hp (add_str "invalid" SBCast.pr_ents) invalid_ents no_pos in
+    let () = x_binfo_hp (add_str "unknown" SBCast.pr_ents) unkn_ents no_pos in
     let () = if !disproof then
         let () = invalid_num := !invalid_num + (List.length invalid_ents) in
         let () = unkn_num := !unkn_num + (List.length unkn_ents) in

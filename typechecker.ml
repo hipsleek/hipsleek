@@ -3119,11 +3119,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
         let _ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in
         (*possibly change to flat post here as well??*)
-        let ans, prf =
-          (* if !Globals.songbird then
-           *   Songbird.heap_entail_list_partial_context_init prog fn_state flat_post
-           * else *)
-            SV.heap_entail_list_partial_context_init prog false
+        let ans, prf = SV.heap_entail_list_partial_context_init prog false
             fn_state flat_post None None None pos (Some pid) in
         let () =  DD.ninfo_hprint
             (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
@@ -3137,14 +3133,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
            CF.invert_fail_branch_must_fail ans1, prf)
       end
     else
-      let () = x_dinfo_hp (add_str "do_classic_frame_rule" string_of_bool)
+      let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool)
           (check_is_classic ()) pos in
-      let rs_struc , prf =
-        (* if !Globals.songbird then
-         *   Songbird.heap_entail_struc_list_partial_context_init prog fn_state
-         *     (snd posts)
-         * else *)
-          x_add SV.heap_entail_struc_list_partial_context_init
+      let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
             prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf in
   let () = PTracer.log_proof prf in
@@ -3168,7 +3159,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   if (is_reachable_succ) then
     rs
   else begin
-    (* let () = repair_loc := Some pos in *)
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
@@ -3200,8 +3190,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
           Err.error_loc = pos;
           Err.error_text = Printf.sprintf
               "Post condition cannot be derived by the system."
-        }
-    in
+        } in
     rs
   end
 

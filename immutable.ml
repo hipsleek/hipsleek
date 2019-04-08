@@ -1540,7 +1540,7 @@ and subs_crt_holes_list_ctx (ctx : list_context) : list_context =
   match ctx with
   | FailCtx _ -> ctx
   | SuccCtx(cl) ->
-    SuccCtx(List.map (subs_crt_holes_ctx 12 ) cl)
+    SuccCtx(List.map (subs_crt_holes_ctx 12) cl)
 
 and subs_crt_holes_list_failesc_ctx ctx =
   transform_list_failesc_context (idf, idf, (fun es -> Ctx (subs_holes_es es))) ctx

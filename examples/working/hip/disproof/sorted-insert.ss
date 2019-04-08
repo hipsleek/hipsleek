@@ -1,5 +1,3 @@
-/* sorted lists */
-
 /* representation of a node */
 data node {
 	int val; 
@@ -17,47 +15,49 @@ sll<n, sm, lg> == self = null & n = 0 & sm <= lg
 	inv n >= 0 & sm <= lg;
 
 /* insert an element in a sorted list */
-node insert(node x, int v)
+// node insert(node x, int v)
 
-	requires x::sll<n, sm, lg>
-	ensures res::sll<n + 1, mi, ma> & mi = min(v, sm) & ma = max(v, lg); 
-
-{
-	node tmp;
-
-	if (x == null)
-		return new node(v, null);
-	else
-	{
-		if (v <= x.val)
-			return new node(v, x);
-		else
-		{
-			tmp = x.next;
-			x.next = insert(tmp, v);
-			return x;
-		}
-	}
-}
-
-
-// node insert2(node x, node vn)
-// 	requires x::sll<n, sm, lg> *  vn::node<v, _>
-// 	ensures res::sll<n+1, mi, ma> & mi=min(v, sm) & ma=max(v, lg);
+// 	requires x::sll<n, sm, lg>
+// 	ensures res::sll<n + 1, mi, ma> & mi = min(v, sm) & ma = max(v, lg); 
 // {
-// 	if (x==null) {
-// 		vn.next = null;
-// 		return vn;
-// 	}
-// 	else if (vn.val <= x.val) {
-// 		vn.next = x;
-// 		return vn;
-// 	}
-// 	else {
-// 		x.next = insert2(x.next, vn);
-// 		return x;
+// 	node tmp;
+
+// 	if (x == null)
+// 		return new node(v, null);
+// 	else
+// 	{
+// 		if (v <= x.val)
+// 			return new node(v, x);
+// 		else
+// 		{
+// 			tmp = x.next;
+// 			x.next = insert(tmp, v);
+// 			return x;
+// 		}
 // 	}
 // }
+
+
+node insert2(node x, node vn)
+	requires x::sll<n, sm, lg> *  vn::node<v, _>
+	ensures res::sll<n+1, mi, ma> & mi=min(v, sm) & ma=max(v, lg);
+{
+	if (x==null) {
+		vn.next = null;
+		// return vn;
+    return vn.next;
+	}
+	else if (vn.val <= x.val) {
+		vn.next = x;
+		// return vn;
+    return vn.next;
+	}
+	else {
+		x.next = insert2(x.next, vn);
+		// return x;
+    return x.next;
+	}
+}
 
 // /* delete a node from a sorted list */
 // node delete(node x, int v)

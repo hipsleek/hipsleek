@@ -1,15 +1,11 @@
-/* doubly linked lists */
-
-/* representation of a node */
 data node2 {
-	int val; 
 	node2 prev;
 	node2 next;	
 }
 
 /* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
-  or self::node2<_ ,p , q> * q::dll<self, n-1> & n > 0;
+  or self::node2<p , q> * q::dll<self, n-1> & n > 0;
 
 void reverse(node2@R xs, node2@R ys)
 	requires xs::dll<p, n> * ys::dll<q, m>

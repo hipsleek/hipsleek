@@ -2324,7 +2324,6 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
                            CP.spec_var option -> loc ->control_path_id
                            ->(list_context * proof)) to_string
   : (list_partial_context * proof) =
-  (* print_string "\nbach:calling struct_partial_context .."; *)
    x_tinfo_zp (lazy ("heap_entail_struc_partial_context:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
@@ -14135,7 +14134,6 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl)
     (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos
     (pid:control_path_id) : (list_partial_context * proof) =
   let () = set_entail_pos pos in
-  (* marking  *)
   x_dinfo_zp (lazy ("heap_entail_init struc_list_partial_context_init:"
                     ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
                     ^ "\ndelayed_f:" ^ (pr_opt Cprinter.string_of_mix_formula delayed_f)
