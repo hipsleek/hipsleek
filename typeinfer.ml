@@ -460,17 +460,23 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
   let () = y_binfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
+
+  let () = y_binfo_hp (add_str "tlist" (string_of_tlist)) tlist  in
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
-    (* let () = y_binfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in *)
-    (* let () = y_binfo_hp (add_str "tlist" string_of_tlist) tlist in *)
+    let () = y_binfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in
+    let () = y_binfo_hp (add_str "tlist" string_of_tlist) tlist in
     (* unify the existing poly with the expected ty (eg unify TVar[1] int)*)
     let n_tl, t2 =
       (* need to recheck how to unify two poly types *)
       match ty with
       | Poly _  -> tlist, Some ty
-      | TVar i1 -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
+      | TVar i1 -> begin
+          match t0.sv_info_kind with
+        | Poly _ -> repl i1 (Poly id) tlist  (* tlist, Some (Poly id) *)
+        | _ -> repl i1 t0.sv_info_kind tlist
+          end
       | Int | Bool | NUM | Float | BagT _ | List _ | Tup2 _ | Array _ | Mapping _ | Named _
         ->
         begin
@@ -502,7 +508,7 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
 and unify_poly unify repl id ty tlist =
   let pr = string_of_spec_var_kind in
   let pr2 = pr_pair string_of_tlist (pr_option pr) in
-  Debug.no_2 "unify_poly" pr pr pr2 (fun _ _ -> unify_poly_x unify repl id ty tlist) (Poly id) ty
+  Debug.no_3 "unify_poly" pr pr string_of_tlist pr2 (fun _ _ _ -> unify_poly_x unify repl id ty tlist) (Poly id) ty tlist
 
 
 (* k2 is expected type *)

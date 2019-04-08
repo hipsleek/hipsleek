@@ -27,6 +27,17 @@ print residue.
 expect Valid.
 
 
+//12
+//checkentail x::nodep<3,t> |- x::nodep<aaa,t>.
+//print residue.
+//expect Valid.
+
+//13
+//checkentail x::nodep<3,p> & p=t |- x::nodep<aaa,t>.
+//print residue.
+//expect Valid.
+
+
 
 /*
 A.
