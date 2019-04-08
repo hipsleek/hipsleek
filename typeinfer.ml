@@ -376,7 +376,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     (* | Int, Poly id  | Poly id, Int -> (tl,Some Int)
      * | Bool, Poly id  | Poly id, Bool -> (tl,Some Bool) *)
     | ty, Poly id  | Poly id, ty ->
-      unify_poly unify repl_tlist id ty tl
+      x_add unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
@@ -514,7 +514,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
     | UNK, _ -> (tl ,Some k2)
     | _, UNK -> (tl, Some k1)
     | Poly id, ty
-    | ty, Poly id -> unify_poly unify repl_tlist id ty tl
+    | ty, Poly id -> x_add unify_poly unify repl_tlist id ty tl
     | Int, NUM   | Float, NUM -> (tl,Some k1) (* give refined type *)
     | NUM, Float | NUM,Int -> (tl,Some k2) (* give refined type *)
     | Int , Float -> (tl,Some Float) (*LDK*)
