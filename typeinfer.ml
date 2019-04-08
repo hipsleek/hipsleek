@@ -290,7 +290,7 @@ and must_unify (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
   Debug.no_3 "must_unify" pr pr pr_tl pr_out (fun _ _ _ -> must_unify_x k1 k2 tlist pos) k1 k2 tlist
 
 and must_unify_x (k1 : typ) (k2 : typ) tlist pos : (spec_var_type_list * typ) =
-  let (n_tlist,k) = unify_type k1 k2 tlist in
+  let (n_tlist,k) = x_add unify_type k1 k2 tlist in
   match k with
   | Some r -> (n_tlist,r)      (* unification succeeds -- return an option type *)
   | None -> let msg = ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
@@ -318,7 +318,7 @@ and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind)  tlist : (spec_var_type
   Debug.no_3 "unify_type" pr pr pr1 pr2 unify_type_x k1 k2 tlist
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list * (typ option)) =
-  unify_type_modify true k1 k2 tlist
+  x_add unify_type_modify true k1 k2 tlist
 
 and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
   let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k
@@ -361,7 +361,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
         | [], []                -> (tlist, Some tk)
         | t1::_, [] | [], t1::_ -> (tl, None)
         | t1::tl1, t2::tl2      ->
-          let n_tl, res_opt = unify_type t1 t2 tlist in
+          let n_tl, res_opt = x_add unify_type t1 t2 tlist in
           match res_opt with
           | Some _ -> unify_param tl1 tl2 n_tl tk
           | None   -> (n_tl, None)
@@ -404,8 +404,8 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
                | _,(n_tl,_) -> (n_tl,None))
             | Mapping (t1,t2), Mapping (t3,t4) ->
               (
-                let n_tl, t5 = unify_type t1 t3 tl in
-                let n_tl2, t6 = unify_type t2 t4 n_tl in
+                let n_tl, t5 = x_add unify_type t1 t3 tl in
+                let n_tl2, t6 = x_add unify_type t2 t4 n_tl in
                 match t5,t6 with
                 | Some d1, Some d2 -> (n_tl2,Some (Mapping (d1,d2)))
                 | _ -> (n_tl2,None))
@@ -507,7 +507,7 @@ and unify_poly unify repl id ty tlist =
 
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
-  let bal_unify k1 k2 tl= unify_type_modify modify_flag k1 k2 tl in
+  let bal_unify k1 k2 tl= x_add unify_type_modify modify_flag k1 k2 tl in
   let repl_tlist i k tl = repl_tvar_in bal_unify modify_flag tl i k in
   let rec unify k1 k2 tl =
     match k1,k2 with

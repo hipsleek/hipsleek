@@ -2556,7 +2556,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let inv_pf = x_add trans_pure_formula inv n_tl in
     let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     (* Thai : pf - user given invariant in core form *)
-    let n_tl, self_ty_opt = Typeinfer.unify_type self_ty (Typeinfer.get_type_of_self n_tl) n_tl in
+    let n_tl, self_ty_opt = x_add Typeinfer.unify_type self_ty (Typeinfer.get_type_of_self n_tl) n_tl in
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
     let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
     let inv_lock_fv = match inv_lock with
