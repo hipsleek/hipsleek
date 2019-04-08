@@ -2485,30 +2485,34 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   let free_vars = dedicated_ids @ vdef.I.view_vars in
-  let () = y_ninfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
+  let () = y_binfo_hp (add_str "vdef.I.view_data_name1111111111111" pr_id) vdef.I.view_data_name in
   (*let recs = rec_grp prog in*)
+
+
   let data_name = if (String.length vdef.I.view_data_name) = 0  then
       if not(!Globals.adhoc_flag_1) then ""
       else I.incr_fixpt_view prog  prog.I.prog_data_decls prog.I.prog_view_decls
     else vdef.I.view_data_name in
   (
     (* let () = x_tinfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in  *)
-    let () = y_ninfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
+    let () = y_binfo_hp (add_str "data_name222222222222" pr_id) data_name in
     vdef.I.view_data_name <- data_name;
+    let () = y_binfo_hp (add_str "vdef.I.view_data_name33333333333" pr_id) vdef.I.view_data_name in
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
     let (s_t,tlist) = if data_name="" then
         let (new_et, n_tl) = fresh_tvar tlist in
         (new_et,n_tl)
-      else (mkNamedTyp data_name,tlist) in
-    let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
+      else (mkNamedTyp (*~args:fresh_poly_typs*) data_name,tlist) in
+    (* let tlist = ([(self,{ sv_info_kind = s_t (\* (Named data_name) *\);id = fresh_int_en s_t })]@tlist) in *)
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
-    let () = y_tinfo_hp (add_str "self_ty" string_of_typ) self_ty in
-    let () = y_tinfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
+    let () = y_binfo_hp (add_str "self_ty1111" string_of_typ) self_ty in
+    let () = y_binfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let data_name = match self_ty with
-      | Named (s, _) -> s
+      | Named (s, []) -> s
+      | Named (s, l)  -> s ^ ((pr_list string_of_typ) l)
       | _ -> "" in
     let () = vdef.I.view_data_name <- data_name in
     let () = y_ninfo_hp (add_str "data_name" pr_id) data_name in
@@ -2610,6 +2614,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(before)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
       let () = vdef.I.view_type_of_self <- self_ty_opt (* (Some self_ty) *) in
+      let () = y_binfo_hp (add_str "view_type_of_self"  (pr_opt string_of_typ)) vdef.I.view_type_of_self in
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let mvars =  List.filter
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
@@ -2895,7 +2900,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let sess_formulae = x_add_1 (trans_I2C_session_formulae prog free_vars n_tl) vdef.I.view_session in
       let type_of_self =
         (* why not self_ty? *)
-        let () = y_ninfo_hp (add_str "data name" pr_id) data_name in
+        let () = y_binfo_hp (add_str "data name00000000000000000" pr_id) data_name in
         let r = vdef.I.view_type_of_self in
         if r==None && not(data_name="") then Some(mkNamedTyp data_name)
         else if r==None then
@@ -2924,7 +2929,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_session_info = view_session_info;
         C.view_session = sess_formulae;
         C.view_type_of_self = (
-          (* let () = y_ninfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in *)
+         let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
           type_of_self);
         C.view_actual_root =
           (
