@@ -32,6 +32,7 @@ let pr_svs = CPR.string_of_spec_var_list
 let pr_pf = Cprinter.string_of_pure_formula
 let pr_entail = SBCast.pr_entailment
 let pre_list = ref ([] : CF.formula list)
+let sb_program = ref (None: SBCast.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
 (*********************************************************************
  * Translate Formulas
@@ -685,27 +686,31 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
   vdefns |> List.map (helper hps)
 
 let translate_prog (prog:Cast.prog_decl) =
-  let data_decls = prog.Cast.prog_data_decls in
-  let pr1 = CPR.string_of_data_decl_list in
-  let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
-  let sb_data_decls = List.map translate_data_decl data_decls in
-  let view_decls = prog.Cast.prog_view_decls in
-  let pr2 = CPR.string_of_view_decl_list in
-  let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
-  let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
-  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-  let () = x_tinfo_hp (add_str "hp decls" pr_hps) hps no_pos in
-  let sb_hp_views = List.map translate_hp hps in
-  let sb_view_decls = List.map translate_view_decl view_decls in
-  let pr_hps = pr_list SBCast.pr_view_defn in
-  let sb_view_decls = sb_view_decls @ sb_hp_views in
-  let prog = SBCast.mk_program "heap_entail" in
-  let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
-                        SBCast.prog_views = sb_view_decls} in
-  let pr3 = SBCast.pr_program in
-  let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-  let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
-  n_prog
+  match !sb_program with
+  | None ->
+    let data_decls = prog.Cast.prog_data_decls in
+    let pr1 = CPR.string_of_data_decl_list in
+    let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
+    let sb_data_decls = List.map translate_data_decl data_decls in
+    let view_decls = prog.Cast.prog_view_decls in
+    let pr2 = CPR.string_of_view_decl_list in
+    let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
+    let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
+    let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+    let () = x_tinfo_hp (add_str "hp decls" pr_hps) hps no_pos in
+    let sb_hp_views = List.map translate_hp hps in
+    let sb_view_decls = List.map translate_view_decl view_decls in
+    let pr_hps = pr_list SBCast.pr_view_defn in
+    let sb_view_decls = sb_view_decls @ sb_hp_views in
+    let prog = SBCast.mk_program "heap_entail" in
+    let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
+                            SBCast.prog_views = sb_view_decls} in
+    let pr3 = SBCast.pr_program in
+    let n_prog = Libsongbird.Transform.normalize_prog n_prog in
+    let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+    let () = sb_program := Some n_prog in
+    n_prog
+  | Some prog -> prog
 
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in

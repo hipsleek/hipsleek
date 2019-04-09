@@ -23,16 +23,11 @@ tree<m, n> == self = null & m = 0 & n = 0
 	or self::node2<_, p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & n = 1 + n & n2 >= n1
 	inv m >= 0 & n >= 0;
 
-/*tree_1<S> == self = null & S = {}
-	or self::node2<v, p, q> * p::tree_1<S1> * q::tree_1<S2> & S = union(S1, S2, {v});*/
 
 /* view for a doubly linked list with size */
 dll<p, n> == self = null & n = 0 
 	or self::node2<_, p, q> * q::dll<self, n1> & n = n1+1
 	inv n >= 0;
-
-/*dll1<p, S> == self = null & S = {}
-	or self::node2<v, p, q> * q::dll1<self, S1> & S = union(S1, {v});*/
 
 /* function to append 2 doubly linked lists */
 node2 append(node2 x, node2 y)
@@ -56,144 +51,22 @@ node2 append(node2 x, node2 y)
 	}
 }
 
-
-/* function to count the number of nodes in a tree */
-// int count(node2 z)
-
-// 	requires z::tree1<m>
-// 	ensures z::tree1<m> & res = m & res >= 0;
-
-// {
-// 	int cleft, cright;
-
-// 	if (z == null)
-// 		return 0;
-// 	else
-// 	{
-// 		cleft = count(z.left);
-// 		cright = count(z.right);
-// 		return (1 + cleft + cright);
-// 	}
-// }
-
 /* function to transform a tree in a doubly linked list */
-// void flatten(node2 x)
-// 	requires x::tree<m, n> 
-// 	ensures (exists q : x::dll<q, m> & q=null);
-// {
-// 	node2 tmp;
-// 	if (x != null)
-// 	{
-// 		flatten(x.left);
-// 		flatten(x.right);
-// 		tmp = append(x.left, x.right);
-// 		x.left = null;
-// 		x.right = tmp;
-// 		if (tmp != null)
-// 			tmp.left = x;
-// 	}
-// }
-
-
-/* binary search trees */
-
-/* view for binary search trees */
-bst <sm, lg> == self = null & sm <= lg 
-	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
-	inv sm <= lg;
-
-/*bst1 <S> == self = null & S = {} 
-or self::node2<v, p, q> * p::bst1<S1> * q::bst1<S2> & S3 = union(S1, S2) & S = union(S3, {v}) 
-& forall (a: (a notin S1 | a<=v)) & forall (b: (b notin S2 | v<=b));*/
-
-/* insert a node in a bst */
-// node2 insert(node2 x, int a)
-
-// 	requires x::bst<sm, lg> 
-// 	ensures res::bst<mi, ma> & res != null & mi = min(sm, a) & ma = max(lg, a);
-	
-// {
-// 	node2 tmp;
-//         node2 tmp_null = null;
-
-// 	if (x == null)
-// 		return new node2(a, null, null);
-// 	else
-// 	{
-// 		if (a <= x.val)
-// 		{
-// 			tmp = x.left;
-// 			x.left = insert(tmp, a);
-// 		}
-// 		else
-// 		{ 
-// 			//tmp = x.right;
-// 			x.right = insert(x.right, a);
-// 		}
-
-// 		return x;
-// 	} 
-// }
-
-/* delete a node from a bst */
-
-int remove_min(node2@R x)
-
-	requires x::bst<s, b> & x != null 
-	ensures x'::bst<s1, b> & s <= res <= s1;
-
+void flatten(node2 x)
+	requires x::tree<m, n> 
+	ensures (exists q : x::dll<q, m> & q=null);
 {
-	int tmp, a; 
-
-	if (x.left == null)
-	{
-		tmp = x.val;
-		x = x.right;
-
-		return tmp; 
-	}
-	else {
-		int tmp;
-		bind x to (_, xleft, _) in { 
-			tmp = remove_min(xleft);
-		}
-
-		return tmp;
-	}
-}
-
-
-void delete(node2@R x, int a)
-	requires x::bst<sm, lg> 
-	ensures x'::bst<s, l> & sm <= s & l <= lg;
-
-{
-	int tmp; 
-
+	node2 tmp;
 	if (x != null)
 	{
-		bind x to (xval, xleft, xright) in 
-		{
-			if (xval == a) 
-			{
-				if (xright == null) {
-                    assert true;
-					x = xleft; 
-				}
-				else
-				{
-					tmp = remove_min(xright);
-					xval = tmp;
-				}
-			}
-			else
-			{
-				if (xval < a)
-					delete(xright, a);
-				else
-					delete(xleft, a);
-			}
-		}
+		flatten(x.left);
+		flatten(x.right);
+		tmp = append(x.left, x.right);
+		x.left = null;
+		// x.right = tmp.left;
+		// x.right = tmp;
+		if (tmp != null)
+			// tmp.left = x;
+      tmp.left = x.right;
 	}
 }
-

@@ -14,11 +14,14 @@ void reverse(node2@R xs, node2@R ys)
 	if (xs != null) {
 		node2 tmp;
 		tmp = xs.next;
-    if (tmp != null)  tmp.prev = null;
+    // if (tmp != null)  tmp.prev = null;
+    if (tmp != null)  tmp.next = null;
 		xs.next = ys;
-    if (ys != null) ys.prev = xs;
+    // if (ys != null) ys.prev = xs;
+    if (ys != null) ys.prev = xs.next;
 		ys = xs;
 		xs = tmp;
-		reverse(xs, ys);
+		// reverse(xs, ys);
+    reverse(xs, ys.next);
 	}
 }
