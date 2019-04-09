@@ -121,22 +121,22 @@ let rec smt_of_exp a =
   | CP.Var (sv, _) -> smt_of_spec_var sv
   | CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
-  | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
-  | CP.FConst (f, _) -> string_of_float f 
+  | CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)
+  | CP.FConst (f, _) -> string_of_float f
   | CP.Add (a1, a2, _) -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
   | CP.Mult (a1, a2, _) -> "(* " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(/ " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Max _
   | CP.Min _ -> illegal_format ("z3.smt_of_exp: min/max should not appear here")
-  | CP.TypeCast (_, e1, _) -> smt_of_exp e1 (* illegal_format ("z3.smt_of_exp: TypeCast should not appear here") *)
+  | CP.TypeCast (_, e1, _) -> smt_of_exp e1
   | CP.Bag ([], _)
-  | CP.Tup2 _ 
+  | CP.Tup2 _
   | CP.Bag _
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set/tup2) should not appear here : "  ^ str)
-  | CP.List _ 
+  | CP.List _
   | CP.ListCons _
   | CP.ListHead _
   | CP.ListTail _
@@ -251,7 +251,7 @@ let smt_of_formula pr_w pr_s f =
   (* Debug.no_1 "smt_of_formula" !print_pure pr_id *) (fun _ -> smt_of_formula pr_w pr_s f) f
 
 (***************************************************************
-                       FORMULA INFORMATION                      
+                       FORMULA INFORMATION
  **************************************************************)
 
 (* Default info, returned in most cases *)

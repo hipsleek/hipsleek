@@ -376,7 +376,14 @@ let rec translate_back_pf (pf : SBCast.pure_form) = match pf with
       | SBCast.Le -> CP.BForm((CP.Lte (exp1_hip, exp2_hip, loc), None), None)
       | SBCast.Gt -> CP.BForm((CP.Gt (exp1_hip, exp2_hip, loc), None), None)
       | SBCast.Ge -> CP.BForm((CP.Gte (exp1_hip, exp2_hip, loc), None), None)
-      | SBCast.Eq -> CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
+      | SBCast.Eq ->
+        begin
+          match exp2_hip with
+          | CP.Max (max1, max2, _) ->
+            CP.BForm((CP.EqMax (exp1_hip, max1, max2, loc), None), None)
+          | _ ->
+            CP.BForm((CP.Eq (exp1_hip, exp2_hip, loc), None), None)
+        end
       | SBCast.Ne -> CP.BForm((CP.Neq (exp1_hip, exp2_hip, loc), None), None)
     end
   | SBCast.PNeg (pf, pos) -> let loc = translate_back_pos pos in
@@ -707,7 +714,7 @@ let translate_prog (prog:Cast.prog_decl) =
                             SBCast.prog_views = sb_view_decls} in
     let pr3 = SBCast.pr_program in
     let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-    let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+    let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
     let () = sb_program := Some n_prog in
     n_prog
   | Some prog -> prog
