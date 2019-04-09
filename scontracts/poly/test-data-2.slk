@@ -149,7 +149,7 @@ checkentail x::nodep<false,t>[int] |- x::nodep<aaa,t>[int].
 print residue.
 expect Fail.
 
-//22 -- problem
+//22
 checkentail x::nodep<false,t>[int] |- true.
 print residue.
 expect Fail.

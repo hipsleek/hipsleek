@@ -460,8 +460,7 @@ and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
   let () = y_binfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
-
-  let () = y_binfo_hp (add_str "tlist" (string_of_tlist)) tlist  in
+  (* let () = y_binfo_hp (add_str "tlist" (string_of_tlist)) tlist  in *)
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
@@ -1644,7 +1643,6 @@ and try_unify_view_type_args prog c vdef self_ptr deref ies hoa tlist pos =
       *)
 (* ident, args, table *)
 and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
-  let dname = vdef.I.view_data_name in
   let id_to_poly_typ_list = (
     match vdef.I.view_poly_vars with
     | [] -> []
@@ -1674,6 +1672,8 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
    * let poly_types = get_all_poly_types vdef [] in
    * let poly_types_hmap = fresh_poly_tlist poly_types in *)
   (* vdef = replace_poly hmap  vdef *)
+  let dname = vdef.I.view_data_name in
+  let () = y_binfo_hp (add_str "dnameeeeeeeeeee" (pr_id)) dname in
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
@@ -1682,9 +1682,9 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
       let () = y_binfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
       ntlist, ty
     | _ ->
-      let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
+      let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
       if (String.compare dname "" = 0) then
-        let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
         tlist, UNK
       else if vdef.I.view_is_prim then
         begin
@@ -1703,8 +1703,8 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
           done;
           dname ^ !s
         ) in
-        let () = y_ninfo_hp (add_str "self_ptr" pr_id) self_ptr in
-        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((mkNamedTyp expect_dname)) pos in
+        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((mkNamedTyp ~args:fresh_poly_typs expect_dname)) pos in
         n_tl, UNK
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
@@ -2009,7 +2009,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
         (* am I supposed to make a flag for the view -> if it is a view, then the flag is 1, else the flag is 0, which means it should be data typ *)
         let () = y_binfo_hp (add_str "flag" string_of_int) flag in
         let tname = if flag = 1 then (string_of_typ unopted_self_typ) else tname in
-        (* let self_ty = get_type_of_self n_tl in *)
+        let () = y_binfo_hp (add_str "tname" (pr_id)) tname in
+
         let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
         let () = y_binfo_hp (add_str "type n_tl"  (string_of_tlist)) n_tl in
         (* step2: check whether the number of this one is equal to the previous data declaration's. Should this be in the parser part? *)
@@ -2024,6 +2025,25 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     (* let (ntl1, _) = List.split n_tl in *)
     x_binfo_hp (add_str "type list1"  (string_of_tlist)) n_tl no_pos;
     let n_tl = x_add gather_type_info_poly v v_name poly n_tl in
+
+
+
+    (* let flag =
+     *   (try
+     *      let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
+     *      let new_data_name = string_of_typ ((mkNamedTyp ~args:(poly) (string_of_typ unopted_self_typ))) (\* vdef.I.view_data_name ^ ((pr_list string_of_typ) fresh_poly_typs) *\) in
+     *      let () = y_binfo_hp (add_str "new_data_name" (pr_id)) new_data_name in
+     *      let view_modified = I.set_view_data_name_raw x_loc prog.I.prog_view_decls v_name new_data_name in
+     *      1
+     *    with
+     *    | Not_found -> 0
+     *   ) in *)
+
+
+    let () = y_binfo_hp (add_str "flag" string_of_int) flag in
+
+
+
     (* let (ntl2, _) = List.split n_tl in *)
     x_binfo_hp (add_str "type list2"  (string_of_tlist)) n_tl no_pos;
     (* Deal with the generic pointer! *)
@@ -2050,6 +2070,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           (* Good user provides type for [rootptr] ==> done! *)
           let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls s in
           (* let () = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
+          x_binfo_hp (add_str "type list3"  (string_of_tlist)) n_tl no_pos;
           (true, mkNamedTyp ddef.I.data_name)
 
         with
@@ -2068,6 +2089,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
         else (* inferring the type from the name of the field *)
           let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
+          x_binfo_hp (add_str "type list4"  (string_of_tlist)) n_tl no_pos;
           if (List.length dts = 1) then
             (* the field uniquely determines the data type ==> done! *)
             (* let () = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)

@@ -2504,15 +2504,16 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         let (new_et, n_tl) = fresh_tvar tlist in
         (new_et,n_tl)
       else (mkNamedTyp (*~args:fresh_poly_typs*) data_name,tlist) in
-    (* let tlist = ([(self,{ sv_info_kind = s_t (\* (Named data_name) *\);id = fresh_int_en s_t })]@tlist) in *)
+    let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
     let orig_tl = ann_typs@tlist in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
     let () = y_binfo_hp (add_str "self_ty1111" string_of_typ) self_ty in
     let () = y_binfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let data_name = match self_ty with
-      | Named (s, []) -> s
-      | Named (s, l)  -> s ^ ((pr_list string_of_typ) l)
+      (* | Named (s, []) -> s *)
+      (* | Named (s, l)  -> s ^ ((pr_list string_of_typ) l) *)
+      | Named (s, _) -> s
       | _ -> "" in
     let () = vdef.I.view_data_name <- data_name in
     let () = y_ninfo_hp (add_str "data_name" pr_id) data_name in
