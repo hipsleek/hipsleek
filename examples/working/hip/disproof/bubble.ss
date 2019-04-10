@@ -19,37 +19,8 @@ ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
-//lemma self::sll<n, sm, lg> <- self::ll<n>;
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
-
-
-node id2(node xs)
-	requires xs::sll<n, sm, lg>
-	ensures res::ll<n>;
-{
-
-	if (xs.next != null) {
-		node tmp = xs.next;
-		xs.next = id2(tmp);
-	}
-	return xs;
-}
-
-void id3(node x)
-	requires x::sll<n, sm, lg> //& n=1
-	ensures x::ll<n>;
-{
-  node y = x.next;  
-	if (y != null) {    
-   // dprint;
-   // assert y'::sll<_,_,_>; 
-	//	assume false;
-    id3(y);
-	}  
-  //assume false;  
-}
-
 
 bool bubble(node xs)
 	requires xs::ll<n> & n>0
@@ -77,17 +48,14 @@ bool bubble(node xs)
 }
 
 
+// void bsort(node xs)
+// 	requires xs::ll<n> & n>0
+// 	ensures xs::sll<n, _, _>;
+// {
+// 	bool b;
 
-void bsort(node xs)
-	requires xs::ll<n> & n>0
-	ensures xs::sll<n, _, _>;
-{
-	bool b;
-
-	b = bubble(xs);
-	if (b) {
-		bsort(xs);
-	}
-}
-
-// void skip(); // do we need this skip?
+// 	b = bubble(xs);
+// 	if (b) {
+// 		bsort(xs);
+// 	}
+// }

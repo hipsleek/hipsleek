@@ -1,11 +1,5 @@
 /* trees & binary search trees */
 
-/* representation of a node */
-data node {
-	int val; 
-	node next;	
-}
-
 data node2 {
 	int val;
 	node2 left;
@@ -25,12 +19,12 @@ int count(node2 z)
 	int cleft, cright;
 
 	if (z == null)
-		return 2;
+		return 0;
 	else
 	{
 		cleft = count(z.left);
 		cright = count(z.right);
-		return (2 + cleft + cright);
+		return (1 + cleft + cright);
 	}
 }
 

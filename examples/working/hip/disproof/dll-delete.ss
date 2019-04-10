@@ -16,15 +16,13 @@ void delete(node2 x, int a)
 		if (x.next.next != null)	{
 			x.next.next.prev = x;
 			tmp = x.next.next;
-			// x.next = tmp;
-      x.next = tmp.next;
+			x.next = tmp;
 		}
 		else      
-			// x.next = null;
-      x = null;
+			x.next = null;
 	}
 	else {
-		// delete(x.next, a-1);
-    delete(x.next, a - 1);
+		delete(x.next, a-1);
+    // delete(x.next, a - 1);
 	}
 }

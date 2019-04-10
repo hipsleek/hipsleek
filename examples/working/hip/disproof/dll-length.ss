@@ -12,8 +12,8 @@ int length(node2 x)
   ensures res = n;
 {
 
-  if (x==null) return 2;
+  if (x==null) return 0;
   else {
-     return 3 + length(x.next);
+     return 1 + length(x.next);
   }
 }

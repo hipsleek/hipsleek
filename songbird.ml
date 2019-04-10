@@ -693,13 +693,20 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
   vdefns |> List.map (helper hps)
 
 let translate_prog (prog:Cast.prog_decl) =
-  match !sb_program with
-  | None ->
+  if !sb_program = None || !enable_repair then
     let data_decls = prog.Cast.prog_data_decls in
+    let prelude = ["__Exc"; "__Error"; "__MayError"; "__Fail"; "char_star";
+                   "int_ptr"; "int_ptr_ptr"; "lock"; "barrier"; "thrd"; "__RET";
+                   "__ArrBoundErr"; "__DivByZeroErr"; "Object"; "String"] in
+    let data_decls = data_decls |> List.filter (fun x ->
+        not(Gen.BList.mem_eq eq_str x.Cast.data_name prelude)) in
     let pr1 = CPR.string_of_data_decl_list in
     let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
     let sb_data_decls = List.map translate_data_decl data_decls in
     let view_decls = prog.Cast.prog_view_decls in
+    let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"] in
+    let view_decls = view_decls |> List.filter (fun x ->
+        not(Gen.BList.mem_eq eq_str x.Cast.view_name pre_views)) in
     let pr2 = CPR.string_of_view_decl_list in
     let () = x_tinfo_hp (add_str "view decls" pr2) view_decls no_pos in
     let hps = prog.Cast.prog_hp_decls @ !Synthesis.unk_hps in
@@ -714,10 +721,10 @@ let translate_prog (prog:Cast.prog_decl) =
                             SBCast.prog_views = sb_view_decls} in
     let pr3 = SBCast.pr_program in
     let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-    let () = x_binfo_hp (add_str "prog" pr3) n_prog no_pos in
+    let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
     let () = sb_program := Some n_prog in
     n_prog
-  | Some prog -> prog
+  else Gen.unsome !sb_program
 
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
@@ -832,6 +839,21 @@ let check_entail ?(residue=false) prog ante conseq =
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_x ~residue:residue prog ante conseq) ante conseq
 
+let output_sb_ent sb_prog sb_ent =
+  let file = List.hd !source_files in
+  let () = x_binfo_hp (add_str "source" pr_id) file no_pos in
+  let file_name, dir = Filename.basename file, Filename.dirname file in
+  let dir = dir ^ "/songbird" in
+  let filename = file_name ^ (string_of_int !Synthesis.sb_num) ^ ".sb" in
+  let filename = dir ^ Filename.dir_sep ^ filename in
+  let oc = open_out filename in
+  let str = (SBCast.pr_program sb_prog) ^ "\n"
+            ^ "checkentail[residue]\n"
+            ^ (SBCast.pr_ent sb_ent) ^ ";" in
+  let () = Synthesis.sb_num := !Synthesis.sb_num + 1 in
+  Printf.fprintf oc "%s\n" str;
+  close_out oc
+
 let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=None) =
   let ante = match pf with
     | None -> es.CF.es_formula
@@ -866,7 +888,7 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
-    let is_valid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlFalse in
+    let is_valid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlTrue in
     let is_invalid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlFalse in
     let is_unkn (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlUnkn in
     let pairs = List.combine ents ptrees in
@@ -877,6 +899,10 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
     let valid_ents = pairs |> List.filter is_valid
                     |> List.map fst in
     let () = x_binfo_hp (add_str "invalid" SBCast.pr_ents) invalid_ents no_pos in
+    let () = if !output_sb then
+        let _ = List.map (output_sb_ent n_prog) invalid_ents in
+        let _ = List.map (output_sb_ent n_prog) unkn_ents in
+        () else () in
     let () = x_binfo_hp (add_str "unknown" SBCast.pr_ents) unkn_ents no_pos in
     let () = if !disproof then
         let () = invalid_num := !invalid_num + (List.length invalid_ents) in

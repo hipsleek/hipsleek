@@ -2144,8 +2144,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             else
               try
                 let res = (x_add check_exp prog proc then_ctx1 e1) post_start_label in
-                let () = x_binfo_hp (add_str "then ctx: "
-                                       Cprinter.string_of_list_failesc_context) res no_pos  in
                 res
               with _ as e ->
                 let () = x_binfo_hp (add_str "invalid_ent" string_of_int) !invalid_num no_pos in

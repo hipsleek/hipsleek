@@ -14,9 +14,6 @@ void insert(node x, int a)
 {
   node tmp = null;
 	if (x.next == null)
-		x.next.next = new node(a, tmp);
-    // x.next = new node(a, tmp);
-	else 
-		insert(x.next.next, a);
-    // insert(x.next.next, a); 
+		x.next = new node(a, tmp);
+	else insert(x.next, a); 
 } 

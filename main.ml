@@ -361,23 +361,6 @@ let process_source_full source =
   let () = x_tinfo_hp (add_str "prog parsed: " pr_prog) prog no_pos in
 
   let repair_input_prog = prog in
-  (* let repair_input_prog = if (en_repair && not(en_repair_templ)) then
-   *     let normalized_prog = Repair.normalize_prog prog in
-   *
-   *     let file_name = Filename.basename source in
-   *     let normalized_name = "normalized_" ^ file_name ^ ".ss" in
-   *     let dir = Filename.dirname source in
-   *     let normalized_file = dir ^ Filename.dir_sep ^ normalized_name in
-   *     let oc = open_out normalized_file in
-   *     let () = Parser.parser_name := "default" in
-   *
-   *     fprintf oc "%s\n" (pr_prog_repair normalized_prog);
-   *     close_out oc;
-   *     let nprog = parse_file_full normalized_file false in
-   *     (\* let cmd = ("rm " ^ normalized_file) in
-   *      * let _ = Sys.command cmd in *\)
-   *     nprog
-   *   else prog in *)
   let () = x_tinfo_hp (add_str "normalized" pr_prog_repair) repair_input_prog no_pos in
   (* ---------------------------------------------- *)
 

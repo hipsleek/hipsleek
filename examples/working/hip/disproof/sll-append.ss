@@ -12,9 +12,9 @@ void append(node x, node y)
   ensures x::ll<n1+n2>;
 {
 	if (x.next == null){
-       x.next = y.next;
+       x.next = y;
    } else {
-       append(x.next, y.next);
+       append(x.next, y);
     }
 
 }

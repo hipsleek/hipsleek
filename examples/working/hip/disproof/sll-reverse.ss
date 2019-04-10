@@ -14,7 +14,7 @@ void reverse(node@R xs, node@R ys)
 	if (xs != null) {
 		node tmp;
 		tmp = xs.next;
-		xs.next = ys.next;
+		xs.next = ys;
 		ys = xs;
 		xs = tmp;
 		reverse(xs, ys);

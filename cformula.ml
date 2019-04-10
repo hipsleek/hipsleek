@@ -4123,7 +4123,7 @@ and split_components_exist ?(rename_flag=false) (f : formula) =
   | [] -> ([],(HFalse, (MCP.mkMFalse no_pos), CVP.empty_vperm_sets, 
            (flow_formula_of_formula f), TypeFalse, []))
   | [r] -> r
-  | _ -> let () = x_tinfo_hp (add_str "f" !print_formula) f no_pos in
+  | _ -> let () = x_binfo_hp (add_str "f" !print_formula) f no_pos in
     Err.report_error {
       Err.error_loc = no_pos;
       Err.error_text = "split_components: don't expect OR" }

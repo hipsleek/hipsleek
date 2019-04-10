@@ -25,6 +25,7 @@ let pr_substs = pr_list (pr_pair pr_var pr_var)
 (*** Reference variable***********)
 let rel_num = ref 0
 let res_num = ref 0
+let sb_num = ref 0
 let fc_args = ref ([]: CP.spec_var list list)
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)

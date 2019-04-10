@@ -13,8 +13,7 @@ void delete(node x, int a)
 {
         if (a == 1)
 	{
-      // x.next = x.next.next;
-      x = x.next.next;
+      x.next = x.next.next;
 	}
 	else
 	{
