@@ -53,7 +53,7 @@ node split_func(ref node x, int a)
 	}
 }
 
-int div2(int c) requires true ensures res + res = c;
+int div22(int c) requires true ensures res + res = c;
 
 /* merge sort */
 node merge_sort(node xs)
@@ -66,7 +66,7 @@ node merge_sort(node xs)
 	if (xs.next != null) 
 	{
 		c = count(xs);
-		middle = div2(c);
+		middle = div22(c);
 		s1 = split_func(xs, middle);
 		s2 = merge_sort(s1);
 		s3 = merge_sort(xs);
@@ -135,7 +135,7 @@ node merge_sort_1(node xs)
 	c = count(xs);
 	if (c > 1) 
 	{
-		middle = div2(c);
+		middle = div22(c);
 		s1 = split_func(xs, middle);
 		s2 = merge_sort(s1);
 		s3 = merge_sort(xs);

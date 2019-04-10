@@ -3131,8 +3131,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
            CF.invert_fail_branch_must_fail ans1, prf)
       end
     else
-      let () = x_binfo_hp (add_str "do_classic_frame_rule" string_of_bool)
-          (check_is_classic ()) pos in
       let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
             prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf in

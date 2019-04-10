@@ -7,7 +7,6 @@ module SBDebug = Libsongbird.Debug
 module SBGlobals = Libsongbird.Globals
 module SBProverP = Libsongbird.Prover_pure
 module SBProverH = Libsongbird.Prover_hip
-module SBProverE = Libsongbird.Prover_entail
 module SBProverA = Libsongbird.Prover_all
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
@@ -561,6 +560,12 @@ let rec translate_formula formula =
     let (sb_f2, hole2) = translate_formula f.CF.formula_or_f2 in
     (sb_f1@ sb_f2, hole1@hole2)
 
+let translate_single_formula formula =
+  let formula_list,_ = translate_formula formula in
+  if List.length formula_list = 1 then
+    List.hd formula_list
+  else report_error no_pos "translate_formula: multiple return formula"
+
 let translate_entailment entailment =
   let ante, conseq = fst entailment, snd entailment in
   let sb_ante, _ = translate_formula ante in
@@ -692,8 +697,23 @@ let translate_back_vdefns prog (vdefns: SBCast.view_defn list) =
     {hp with Cast.hp_formula = body} in
   vdefns |> List.map (helper hps)
 
+let translate_lemma lemma =
+  let status = SBGlobals.LmsValid in
+  let origin = SBCast.LorgUser in
+  let name = lemma.Cast.coercion_name in
+  let lhs = lemma.Cast.coercion_head in
+  let rhs = lemma.Cast.coercion_body in
+  (* let () = x_binfo_hp (add_str "lhs" pr_formula) lhs no_pos in
+   * let () = x_binfo_hp (add_str "rhs" pr_formula) rhs no_pos in *)
+  let sb_lhs = translate_single_formula lhs in
+  let sb_rhs = translate_single_formula rhs in
+  SBCast.mk_lemma name sb_lhs sb_rhs status origin
+
 let translate_prog (prog:Cast.prog_decl) =
   if !sb_program = None || !enable_repair then
+    let lemmas = (Lem_store.all_lemma # get_left_coercion) @
+                 (Lem_store.all_lemma # get_right_coercion) in
+    let sb_lemmas = List.map translate_lemma lemmas in
     let data_decls = prog.Cast.prog_data_decls in
     let prelude = ["__Exc"; "__Error"; "__MayError"; "__Fail"; "char_star";
                    "int_ptr"; "int_ptr_ptr"; "lock"; "barrier"; "thrd"; "__RET";
@@ -718,6 +738,7 @@ let translate_prog (prog:Cast.prog_decl) =
     let sb_view_decls = sb_view_decls @ sb_hp_views in
     let prog = SBCast.mk_program "heap_entail" in
     let n_prog = {prog with SBCast.prog_datas = sb_data_decls;
+                            SBCast.prog_lemmas = sb_lemmas;
                             SBCast.prog_views = sb_view_decls} in
     let pr3 = SBCast.pr_program in
     let n_prog = Libsongbird.Transform.normalize_prog n_prog in
@@ -876,9 +897,14 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
   let ents = List.map (fun x -> SBCast.mk_entailment ~mode:SBGlobals.PrfEntailResidue x sb_conseq)
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
-  let check_fun = if !disproof then SBProverH.check_entailment_disproof
-    else SBProverH.check_entailment in
-  let ptrees = List.map (fun ent -> check_fun n_prog ent) ents in
+  let check_fun = if !disproof then (SBProverH.check_entailment_disproof n_prog)
+    else SBProverH.check_entailment ~interact:true n_prog in
+  let ptrees = List.map (fun ent ->
+      let res = check_fun ent in
+      let () = x_binfo_hp (add_str "prog" SBCast.pr_program) n_prog no_pos in
+      res
+    ) ents in
+
   let is_valid x = x.SBProverA.enr_validity = SBGlobals.MvlTrue in
   if List.for_all is_valid ptrees then
     let () = if !disproof then
@@ -974,6 +1000,36 @@ let check_pure_entail_x ante conseq =
 let check_pure_entail ante conseq =
   Debug.no_2 "check_pure_entail" pr_pf pr_pf string_of_bool
     (fun _ _ -> check_pure_entail_x ante conseq) ante conseq
+
+let infer_templ_defn prog pre post fun_name args =
+  let sb_prog = translate_prog prog in
+  let sb_args = List.map translate_var args in
+  let f_defn = SBCast.mk_func_defn_unknown fun_name sb_args in
+  let ifp_typ = SBGlobals.IfrStrong in
+  let sb_pre, sb_post = translate_pf pre, translate_pf post in
+  let ent = SBCast.mk_pure_entail sb_pre sb_post in
+  let infer_func = {SBCast.ifp_typ = ifp_typ;
+                    SBCast.ifp_ents = [ent]} in
+  let nprog = {sb_prog with
+               SBCast.prog_funcs = [f_defn];
+               SBCast.prog_commands = [SBCast.InferFuncs infer_func]} in
+  let () = x_tinfo_hp (add_str "ent" SBCast.pr_pure_entail) ent no_pos in
+  let sb_res = SBProverP.infer_unknown_functions ifp_typ nprog ent in
+  let ifds = fst sb_res in
+  let () = x_tinfo_hp (add_str "re" (SBProverP.pr_ifds)) ifds no_pos in
+  let func_defns = ifds |> List.map (fun x -> x.SBProverP.ifd_fdefns)
+                   |> List.concat in
+  try
+    let func_defn = func_defns
+                    |> List.find (fun x -> x.SBCast.func_name = tmpl_name) in
+    let fdefn_body = match func_defn.SBCast.func_body with
+      | SBCast.FbForm e ->
+        let hip_exp = translate_back_exp e in
+        let () = x_tinfo_hp (add_str "hip_exp" Cprinter.string_of_formula_exp) hip_exp no_pos in
+        Some hip_exp
+      | _ -> None in
+    fdefn_body
+  with _ -> None
 
 let get_residues ptrees =
   List.map (fun ptree ->
@@ -1076,32 +1132,3 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
 
-let infer_templ_defn prog pre post fun_name args =
-  let sb_prog = translate_prog prog in
-  let sb_args = List.map translate_var args in
-  let f_defn = SBCast.mk_func_defn_unknown fun_name sb_args in
-  let ifp_typ = SBGlobals.IfrStrong in
-  let sb_pre, sb_post = translate_pf pre, translate_pf post in
-  let ent = SBCast.mk_pure_entail sb_pre sb_post in
-  let infer_func = {SBCast.ifp_typ = ifp_typ;
-                    SBCast.ifp_ents = [ent]} in
-  let nprog = {sb_prog with
-               SBCast.prog_funcs = [f_defn];
-               SBCast.prog_commands = [SBCast.InferFuncs infer_func]} in
-  let () = x_tinfo_hp (add_str "ent" SBCast.pr_pure_entail) ent no_pos in
-  let sb_res = SBProverP.infer_unknown_functions ifp_typ nprog ent in
-  let ifds = fst sb_res in
-  let () = x_tinfo_hp (add_str "re" (SBProverP.pr_ifds)) ifds no_pos in
-  let func_defns = ifds |> List.map (fun x -> x.SBProverP.ifd_fdefns)
-                   |> List.concat in
-  try
-    let func_defn = func_defns
-                    |> List.find (fun x -> x.SBCast.func_name = tmpl_name) in
-    let fdefn_body = match func_defn.SBCast.func_body with
-      | SBCast.FbForm e ->
-        let hip_exp = translate_back_exp e in
-        let () = x_tinfo_hp (add_str "hip_exp" Cprinter.string_of_formula_exp) hip_exp no_pos in
-        Some hip_exp
-      | _ -> None in
-    fdefn_body
-  with _ -> None

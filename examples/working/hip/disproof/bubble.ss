@@ -22,6 +22,7 @@ ll<n> == self=null & n=0
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
 
+
 bool bubble(node xs)
 	requires xs::ll<n> & n>0
 	ensures xs::sll<n, s, l> & !res

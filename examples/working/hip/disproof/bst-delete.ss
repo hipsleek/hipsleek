@@ -42,8 +42,8 @@ int remove_min(node2@R x)
 	}
 }
 
-
 void delete(node2@R x, int a)
+
 	requires x::bst<sm, lg> 
 	ensures x'::bst<s, l> & sm <= s & l <= lg;
 
@@ -57,14 +57,12 @@ void delete(node2@R x, int a)
 			if (xval == a) 
 			{
 				if (xright == null) {
-           // assert true;
-					x = xleft;
-          x.left = xleft;
+                    assert true;
+					x = xleft; 
 				}
 				else
 				{
-					// tmp = remove_min(xright);
-					tmp = remove_min(xleft);
+					tmp = remove_min(xright);
 					xval = tmp;
 				}
 			}
@@ -72,12 +70,9 @@ void delete(node2@R x, int a)
 			{
 				if (xval < a)
 					delete(xright, a);
-          // delete(xleft, a);
 				else
-          delete(xright, a);
-					// delete(xleft, a);
+					delete(xleft, a);
 			}
 		}
 	}
 }
-

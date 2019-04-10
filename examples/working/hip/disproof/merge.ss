@@ -1,5 +1,3 @@
-/* merge sort */
-
 data node {
 	int val; 
 	node next; 
@@ -8,15 +6,6 @@ data node {
 bnd<n, sm, bg> == self = null & n = 0 or
                   self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d <= bg 
                inv n >= 0; 
-
-/*
-
-bnd<n, sm, bg> == self = null & n = 0 or
-                  self::node<d, null> & n = 1 & sm <= d <= bg or 
-                  self::node<d, p> * p::bnd<n-1, sm, bg> & p != null & sm <= d <= bg 
-               inv n >= 0; 
-*/
-
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
                   self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs

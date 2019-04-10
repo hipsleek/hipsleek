@@ -41,22 +41,17 @@ void delete_min(node@R x, int a)
 	ensures x'=null & n=1 & s<=mi<l;
 	requires x::bnd1<n,s,l,mi> & n>1 & a=mi
 	ensures x'::bnd1<n-1,s,l,mi1> & mi1>=mi & x'!=nulll;
-
-
 {
 	if (x.val == a)
 		x = x.next;
 	else {
-		bind x to (_, xnext) in {
-			delete_min(xnext, a);
-		}
+     if (x.next != null) delete_min(x.next, a);
 	}
 }
 
 node selection_sort(node@R x)
 	requires x::bnd1<n, sm, lg, mi> & n > 0 
 	ensures res::sll<n, mi, l> & l < lg & x' = null;
-
 {
 	int minimum;
 	node tmp, tmp_null = null;	
