@@ -837,7 +837,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
   if List.length sb_ante != 1 && List.length sb_conseq != 1 then
     report_error no_pos "more than one constraint in ante/conseq"
   else
-    let _ = SBProverH.disable_hip_debug () in
+    (* let _ = SBProverH.disable_hip_debug () in *)
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
     if not(residue) then
@@ -874,7 +874,7 @@ let output_sb_ent sb_prog sb_ent =
   let filename = file_name ^ (string_of_int !Synthesis.sb_num) ^ ".sb" in
   let filename = dir ^ Filename.dir_sep ^ filename in
   let oc = open_out filename in
-  let str = (SBCast.pr_program sb_prog) ^ "\n"
+  let str = (SBCast.pr_program sb_prog) ^ "\n\n"
             ^ "checkentail[residue]\n"
             ^ (SBCast.pr_ent sb_ent) ^ ";" in
   let () = Synthesis.sb_num := !Synthesis.sb_num + 1 in
