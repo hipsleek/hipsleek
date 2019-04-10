@@ -660,6 +660,8 @@ let translate_view_decl (view:Cast.view_decl) =
   let sb_vars = List.map translate_var vars in
   let formulas = view.Cast.view_un_struc_formula in
   let formulas = List.map (fun (x,y) -> x) formulas in
+  let invariant = view.Cast.view_user_inv |> Mcpure.pure_of_mix in
+  let formulas = List.map (CF.add_pure_formula_to_formula invariant) formulas in
   let sb_formula, _ = formulas |> List.map translate_formula |> List.split in
   let sb_formula = List.concat sb_formula in
   let view_defn_cases = List.map SBCast.mk_view_defn_case sb_formula in
@@ -724,7 +726,7 @@ let translate_prog (prog:Cast.prog_decl) =
     let () = x_tinfo_hp (add_str "data decls" pr1) data_decls no_pos in
     let sb_data_decls = List.map translate_data_decl data_decls in
     let view_decls = prog.Cast.prog_view_decls in
-    let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"] in
+    let pre_views = ["WFSegN"; "WFSeg"; "WSSN"; "WSS"; "MEM"; "memLoc"; "size"] in
     let view_decls = view_decls |> List.filter (fun x ->
         not(Gen.BList.mem_eq eq_str x.Cast.view_name pre_views)) in
     let pr2 = CPR.string_of_view_decl_list in
@@ -832,6 +834,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
   if List.length sb_ante != 1 && List.length sb_conseq != 1 then
     report_error no_pos "more than one constraint in ante/conseq"
   else
+    let _ = SBProverH.disable_hip_debug () in
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
     if not(residue) then
@@ -898,13 +901,8 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBCast.pr_ents) ents no_pos in
   let check_fun = if !disproof then (SBProverH.check_entailment_disproof n_prog)
-    else SBProverH.check_entailment ~interact:true n_prog in
-  let ptrees = List.map (fun ent ->
-      let res = check_fun ent in
-      let () = x_binfo_hp (add_str "prog" SBCast.pr_program) n_prog no_pos in
-      res
-    ) ents in
-
+    else SBProverH.check_entailment ~interact:false n_prog in
+  let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBProverA.enr_validity = SBGlobals.MvlTrue in
   if List.for_all is_valid ptrees then
     let () = if !disproof then

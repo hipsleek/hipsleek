@@ -22,41 +22,30 @@ ll<n> == self=null & n=0
 
 lemma self::sll<n, sm, lg> -> self::ll<n>;
 
-
-bool bubble(node xs)
+void bsort(node xs)
 	requires xs::ll<n> & n>0
-	ensures xs::sll<n, s, l> & !res
-		or  xs::ll<n> & res;
+	ensures xs::sll<n, _, _>;
 {
-	int aux, tmp1;
+	bool b;
+  int aux, tmp1;
 	bool tmp, flag; 
 
 	if (xs.next == null) {
-      return false;
+      b = false;
 	}	else {
-       tmp = bubble(xs.next);
+       bsort(xs.next);
        int xv = xs.val;
        int xnv = xs.next.val;
        if (xv <= xnv) 
             flag = false;
        else {
             xs.val = xnv;
-            xs.next.val = xv; //ERROR: lhs and rhs do not match
+            xs.next.val = xv;
             flag = true; 
         }
-        return (flag || tmp);	
+        b = flag;	
+	}
+	if (b) {
+		bsort(xs);
 	}
 }
-
-
-// void bsort(node xs)
-// 	requires xs::ll<n> & n>0
-// 	ensures xs::sll<n, _, _>;
-// {
-// 	bool b;
-
-// 	b = bubble(xs);
-// 	if (b) {
-// 		bsort(xs);
-// 	}
-// }
