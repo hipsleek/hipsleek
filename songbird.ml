@@ -336,7 +336,6 @@ let rec translate_pf (pure_f: CP.formula)  =
         SBCast.BinRel (SBCast.Eq, sb_exp1, max, sb_loc)
       | CP.LexVar lex ->
         SBCast.BConst (true, translate_loc lex.lex_loc)
-
       | _ -> report_error no_pos
                ("this p_formula is not handled" ^ (CPR.string_of_p_formula p_formula))
     end
@@ -357,7 +356,11 @@ let rec translate_pf (pure_f: CP.formula)  =
     let sb_loc = translate_loc loc in
     SBCast.mk_pexists ~pos:sb_loc [sb_var] sb_pf
   | _ -> report_error no_pos
-      ("this pure formula not handled" ^ (CPR.string_of_pure_formula pure_f))
+           ("this pure formula not handled" ^ (CPR.string_of_pure_formula pure_f))
+
+let translate_pf_wrapper pf =
+  Debug.no_1 "translate_pf" pr_pf (SBCast.pr_pf)
+    (fun _ -> translate_pf pf) pf
 
 let rec translate_back_pf (pf : SBCast.pure_form) = match pf with
   | SBCast.BConst (b, pos)
@@ -542,14 +545,14 @@ let rec translate_formula formula =
     let hf = bf.CF.formula_base_heap in
     let (sb_hf, sb_pf1, holes) = translate_hf hf in
     let pf = CF.get_pure formula in
-    let sb_pf2 = translate_pf pf in
+    let sb_pf2 = translate_pf_wrapper pf in
     let sb_pf = SBCast.mk_pconj (sb_pf1@[sb_pf2]) in
     ([SBCast.mk_fbase sb_hf sb_pf], holes)
   | CF.Exists ef ->
     let hf = ef.CF.formula_exists_heap in
     let (sb_hf, sb_pf1, holes) = translate_hf hf in
     let pf = (Mcpure.pure_of_mix ef.CF.formula_exists_pure) in
-    let sb_pf2 = translate_pf pf in
+    let sb_pf2 = translate_pf_wrapper pf in
     let sb_pf = SBCast.mk_pconj (sb_pf1@[sb_pf2]) in
     let vars = ef.CF.formula_exists_qvars in
     let sb_vars = List.map translate_var vars in
@@ -637,8 +640,8 @@ let translate_ent ent =
   let (lhs, rhs) = ent in
   let () = x_tinfo_hp (add_str "lhs: " pr_pf) lhs no_pos in
   let () = x_tinfo_hp (add_str "rhs: " pr_pf) rhs no_pos in
-  let sb_lhs = translate_pf lhs in
-  let sb_rhs = translate_pf  rhs in
+  let sb_lhs = translate_pf_wrapper lhs in
+  let sb_rhs = translate_pf_wrapper rhs in
   let () = x_tinfo_hp (add_str "lhs: " (SBCast.pr_pure_form)) sb_lhs no_pos in
   let () = x_tinfo_hp (add_str "rhs: " (SBCast.pr_pure_form)) sb_rhs no_pos in
   SBCast.mk_pure_entail sb_lhs sb_rhs
@@ -887,6 +890,7 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
               @ bf.CF.formula_struc_exists @ es.CF.es_evars in
   let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
   let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
+  let () = x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos in
   let conseqs, holes = if Gen.is_empty evars
     then translate_formula bf.CF.formula_struc_base
     else
@@ -1049,8 +1053,7 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
       | CF.ECase cases ->
         let branches = cases.CF.formula_case_branches in
         let results = List.map (fun (pf, struc) ->
-            heap_entail_after_sat_struc_x prog ctx struc ~pf:(Some pf)) branches
-        in
+            heap_entail_after_sat_struc prog ctx struc ~pf:(Some pf)) branches in
         let rez1, _ = List.split results in
         let rez1 = List.fold_left (fun a c -> CF.or_list_context a c)
             (List.hd rez1) (List.tl rez1) in
@@ -1058,15 +1061,15 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
       | EList b ->
         let _, struc_list = List.split b in
         let res_list =
-          List.map (fun x -> heap_entail_after_sat_struc_x prog ctx x ~pf:pf)
+          List.map (fun x -> heap_entail_after_sat_struc prog ctx x ~pf:pf)
             struc_list in
         let ctx_lists = res_list |> List.split |> fst in
         let res = CF.fold_context_left 41 ctx_lists in
         (res, Prooftracer.TrueConseq)
       | EAssume assume ->
         let assume_f = assume.CF.formula_assume_simpl in
+        let assume_f = CF.rename_bound_vars assume_f in
         let f = es.CF.es_formula in
-        (* let es_hf = CF.xpure_for_hnodes es.CF.es_heap in *)
         let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
         let () = x_tinfo_hp (add_str "new_f" CPR.string_of_formula) new_f no_pos in
         let n_ctx = CF.Ctx {es with CF.es_formula = new_f} in
@@ -1074,22 +1077,16 @@ let rec heap_entail_after_sat_struc_x (prog:Cast.prog_decl)
       | _ -> report_error no_pos ("unhandle " ^ (pr_struc_f conseq))
     )
   | OCtx (c1, c2) ->
-    let rs1, proof1 = heap_entail_after_sat_struc_x prog c1 conseq ~pf:None in
-    let rs2, proof2 = heap_entail_after_sat_struc_x prog c2 conseq ~pf:None in
+    let rs1, proof1 = heap_entail_after_sat_struc prog c1 conseq ~pf:pf in
+    let rs2, proof2 = heap_entail_after_sat_struc prog c2 conseq ~pf:pf in
     (CF.or_list_context rs1 rs2, Prooftracer.TrueConseq)
-
-and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
-  Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
-    Cprinter.string_of_struc_formula
-    (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-    (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq ~pf:None) ctx conseq
 
 and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
   let conti = bf.CF.formula_struc_continuation in
   let ent_res, residue = check_entail_es prog es bf ~pf:pf in
   let aux_conti n_ctx = match conti with
       | None -> (CF.SuccCtx [n_ctx], Prooftracer.TrueConseq)
-      | Some struc -> heap_entail_after_sat_struc_x prog n_ctx struc ~pf:None in
+      | Some struc -> heap_entail_after_sat_struc prog n_ctx struc ~pf:pf in
   if ent_res then
     let residue = Gen.unsome residue in
     let () = x_tinfo_hp (add_str "residue" pr_formula) residue no_pos in
@@ -1130,3 +1127,8 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)
 
+and heap_entail_after_sat_struc prog ctx conseq ?(pf=None) =
+  Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
+    Cprinter.string_of_struc_formula
+    (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
+    (fun _ _ -> heap_entail_after_sat_struc_x prog ctx conseq ~pf:pf) ctx conseq

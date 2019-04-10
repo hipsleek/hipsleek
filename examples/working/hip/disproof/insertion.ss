@@ -5,7 +5,7 @@ data node {
 	node next; 
 }
 
-sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
+  sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
                   self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
                inv n >= 1 & sm <= lg; 
 
