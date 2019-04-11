@@ -548,6 +548,7 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
+                 F.h_formula_heap_poly_arguments =poly;
                  F.h_formula_heap_ho_arguments = ho_pl;
                  F.h_formula_heap_imm = imm;
                  F.h_formula_heap_imm_param = ann_param;
@@ -567,7 +568,7 @@ let rec string_of_h_formula = function
         deref_str := !deref_str ^ "^";
       done;
       ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str
-       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
+       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]" ^ (pr_list_empty string_of_typ poly))
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_deref = deref;
@@ -1061,7 +1062,7 @@ let string_of_opt_baga =
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v =
-  let ho_str = "{"^(String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v^(string_of_ho_split_kind sk)) v.view_ho_vars))^"}" in
+  let ho_str = "{" ^ (String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v ^ (string_of_ho_split_kind sk)) v.view_ho_vars)) ^ "}" in
   let extn_str =
     match v.view_derv_from with
     | None -> ""
@@ -1070,7 +1071,7 @@ let string_of_view_decl v =
   (* let pr_baga = pr_list (pr_pair pr_id (pr_opt pr_id)) in *)
   let pr_exp = string_of_formula_exp in
   let pr_baga = pr_list (pr_pair pr_id (pr_opt (pr_pair pr_exp pr_exp))) in
-  v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^
+  v.view_name ^ho_str^"[" ^ (String.concat ","  (List.map (fun (t,i) -> i ^":" ^(string_of_typ t)) v.view_prop_extns)) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ ">" ^ "[" ^ (concatenate_string_list v.view_poly_vars ",") ^ "]" ^ "==" ^
   (string_of_struc_formula v.view_formula)
   ^ "\ninv " ^ (string_of_pure_formula v.view_invariant)
   ^ "\ninv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock)

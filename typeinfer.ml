@@ -39,6 +39,13 @@ let type_list_add v en (tlist:spec_var_type_list) =
 
 let mk_spec_var_info t = { sv_info_kind =t; id = fresh_int (); }
 
+(* finding the type of self *)
+let get_type_of_self ntl =
+  try
+    let v = snd(List.find (fun (v,_) -> v=self) ntl) in
+    v.sv_info_kind
+  with _ -> UNK
+
 (************************************************************
    Primitives handling stuff
  ************************************************************)
@@ -323,6 +330,8 @@ and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_typ
 and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) tlist : (spec_var_type_list*(typ option)) =
   let rec repl_tlist i k tl = repl_tvar_in unify modify_flag tl i k
   and unify k1 k2 tl =
+    (* let () = y_binfo_hp (add_str "k111111" (string_of_typ)) k1 in *)
+    (* let () = y_binfo_hp (add_str "k222222" (string_of_typ)) k2 in *)
     match k1,k2 with
     | UNK, _ -> (tl,Some k2)
     | _, UNK -> (tl,Some k1)
@@ -337,6 +346,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | Tree_sh, Tree_sh -> (tl,Some Tree_sh)
     (*TODO: Need to unify the param list for polymorphic Named *)
     | Named (n1, _), Named (n2, _) when (String.compare n1 "memLoc" = 0) || n1="" ->   (* k1 is primitive memory predicate *)
+      (* let () = y_binfo_pp  "memloc comparison1" in *)
       (tl, Some (mkNamedTyp n2 ))
     | Named (n1, _), Named (n2, _) when (String.compare n2 "memLoc" = 0) || n2=""  ->   (* k2 is primitive memory predicate *)
       (* let () = y_binfo_pp "unify Named typ with inttttttttttttt 11111111111" in *)
@@ -351,15 +361,19 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     (* need to find a long term solution *)
     | _, Named (n, _) when List.mem n map_related_names -> (tl, Some k1)
     | Named (n, _), _ when List.mem n map_related_names -> (tl, Some k2)
+    | Named (n1, ([] as tl1)), Named (n2, ((_::_) as tl2))
+    | Named (n1, ((_::_) as tl1) ), Named (n2, ([] as tl2)) -> (tl, None)
     | Named (n1, ((t1::_) as tl1)), Named (n2, ((t2::_) as tl2)) ->
       (* unify the type parameters.
          if the unification of parameters is successful
          return (Some tk) along with the updated type list.
       *)
+      let () = y_tinfo_hp (add_str "tl1111111111111" (pr_list string_of_typ)) tl1 in
+      let () = y_tinfo_hp (add_str "tl2222222222222" (pr_list string_of_typ)) tl2 in
       let rec unify_param tl1 tl2 tlist tk =
         match tl1, tl2 with
         | [], []                -> (tlist, Some tk)
-        | t1::_, [] | [], t1::_ -> (tl, None)
+        | t1::_, [] | [], t1::_ -> (tlist, None)
         | t1::tl1, t2::tl2      ->
           let n_tl, res_opt = x_add unify_type t1 t2 tlist in
           match res_opt with
@@ -378,6 +392,7 @@ and unify_type_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kin
     | ty, Poly id  | Poly id, ty ->
       x_add unify_poly unify repl_tlist id ty tl
     | t1, t2  -> (
+        let () = y_tinfo_pp  "else" in
         let () = Debug.tinfo_hprint (add_str  "t1 " (string_of_typ)) t1 no_pos in
         let () = Debug.tinfo_hprint (add_str  "t2 " (string_of_typ)) t2 no_pos in
         if is_null_type t1 then (tlist, Some k2)
@@ -459,13 +474,13 @@ and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_k
 and unify_poly_x unify repl id ty tlist = (* if true then tlist, Some ty else *)
   (* let helper *)
   (* if id in the list already must unify  - otherwise just add *)
-  let () = y_binfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
-  (* let () = y_binfo_hp (add_str "tlist" (string_of_tlist)) tlist  in *)
+  let () = y_tinfo_hp (add_str "unify_poly" (pr_pair pr_id string_of_typ)) (id,ty)  in
+  (* let () = y_tinfo_hp (add_str "tlist" (string_of_tlist)) tlist  in *)
   try
     (* check if poly id is in tl already *)
     let t0 = List.assoc id tlist in
-    let () = y_binfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in
-    let () = y_binfo_hp (add_str "tlist" string_of_tlist) tlist in
+    let () = y_tinfo_hp (add_str "t0 typ" string_of_typ) t0.sv_info_kind in
+    let () = y_tinfo_hp (add_str "tlist" string_of_tlist) tlist in
     (* unify the existing poly with the expected ty (eg unify TVar[1] int)*)
     let n_tl, t2 =
       (* need to recheck how to unify two poly types *)
@@ -745,9 +760,9 @@ and gather_type_info_exp_x prog a0 tlist et =
     (n_tl, new_et)
   | IP.Ann_Exp (e,t, pos) ->
     (* TODO WN : check if t<:e *)
-    let () = y_binfo_pp "inside Ann_Exp" in
+    let () = y_tinfo_pp "inside Ann_Exp" in
     let (n_tl,n_typ) = gather_type_info_exp_x prog e tlist t in
-    let () = y_binfo_hp (add_str "Ann_Exp" (pr_pair string_of_typ string_of_typ)) (t,n_typ) in
+    let () = y_tinfo_hp (add_str "Ann_Exp" (pr_pair string_of_typ string_of_typ)) (t,n_typ) in
     let (n_tl,n_typ) = x_add must_unify_expect n_typ t n_tl pos in
     (n_tl,n_typ)
   | IP.Var ((sv, sp), pos) ->
@@ -1545,15 +1560,15 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let data_para_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
       let data_para_w_freshed_poly_typs_rev = List.rev data_para_w_freshed_poly_typs in
       let ids, fresh_poly_typs  = List.split data_para_w_freshed_poly_typs_rev in
-      let () = y_binfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
-      let () = y_binfo_hp (add_str "ids " (pr_list Cprinter.string_of_ident)) ids in
+      let () = y_tinfo_hp (add_str "fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
+      let () = y_tinfo_hp (add_str "ids " (pr_list Cprinter.string_of_ident)) ids in
       (* let fld_typs = subst_all_poly_w_poly fldls_w_freshed_poly_typs fld_typs in *)
       (* ****************** *)
       (* remove the duplicated poly types *)
       (* 3. let ddef       = [fresh_pt/poly_types] ddef -- substitute the fst ele of the field list *)
       let updated_fields = List.map (fun field ->
           let typ  = I.get_type_of_field field in
-          let () = y_binfo_hp (add_str "field typ "  string_of_typ) typ in
+          let () = y_tinfo_hp (add_str "field typ "  string_of_typ) typ in
           (* update the type *)
           let ntyp = Globals.subs_one_poly_typ ids fresh_poly_typs typ in
           let nfield = I.set_type_of_field field ntyp in
@@ -1562,7 +1577,7 @@ and try_unify_data_type_args_x prog c v deref ies tlist pos =
       let ddef_tmp = { ddef with I.data_fields = updated_fields; } in
       let ddef = ddef_tmp in
       (* 4. mkNamedTyp c fresh_pt *)
-      let () = y_binfo_hp (add_str "fields with freshed poly types before mkNamedTyp" (pr_list string_of_typ)) fresh_poly_typs in
+      let () = y_tinfo_hp (add_str "fields with freshed poly types before mkNamedTyp" (pr_list string_of_typ)) fresh_poly_typs in
       (* This ~args should not be the fresh_poly_typs, this one should be corresponding to the poly para *)
       let (n_tl,_) = x_add gather_type_info_var v tlist ((mkNamedTyp ~args:(fresh_poly_typs) c)) pos in
       let fields = x_add_1 I.look_up_all_fields prog ddef in
@@ -1651,9 +1666,9 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
   let view_pvar_w_freshed_poly_typs, tlist = introduce_fresh_poly_for_each_unique_poly tlist id_to_poly_typ_list in
   let view_pvar_w_freshed_poly_typs_rev = List.rev view_pvar_w_freshed_poly_typs in
   let ids, fresh_poly_typs  = List.split view_pvar_w_freshed_poly_typs_rev in
-  let () = y_binfo_hp (add_str "view --- fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
-  let () = y_binfo_hp (add_str "view --- ids " (pr_list Cprinter.string_of_ident)) ids in
-  let () = y_binfo_hp (add_str "view before --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
+  let () = y_tinfo_hp (add_str "view --- fields with freshed poly types inside" (pr_list string_of_typ)) fresh_poly_typs in
+  let () = y_tinfo_hp (add_str "view --- ids " (pr_list Cprinter.string_of_ident)) ids in
+  let () = y_tinfo_hp (add_str "view before --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
   let updated_vars = (
     match (List.length fresh_poly_typs) = (List.length vdef.I.view_typed_vars) with
     | true  ->
@@ -1663,28 +1678,27 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
         ) vdef.I.view_typed_vars fresh_poly_typs
     | false -> vdef.I.view_typed_vars
   ) in
-  let () = y_binfo_hp (add_str "view after --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) updated_vars in
+  let () = y_tinfo_hp (add_str "view after --- typed vars " (pr_list (pr_pair string_of_typ pr_id))) updated_vars in
   (* let new_data_name = vdef.I.view_data_name ^ ((pr_list string_of_typ) fresh_poly_typs) in *)
   let vdef_tmp = { vdef with I.view_typed_vars = updated_vars; (* I.view_data_name = new_data_name *) } in
-    (* let () = y_binfo_hp (add_str "view after --- new_data_name "pr_id) new_data_name in *)
   let vdef = vdef_tmp in
   (* let get_all_poly_types vd ls =
    * let poly_types = get_all_poly_types vdef [] in
    * let poly_types_hmap = fresh_poly_tlist poly_types in *)
   (* vdef = replace_poly hmap  vdef *)
   let dname = vdef.I.view_data_name in
-  let () = y_binfo_hp (add_str "dnameeeeeeeeeee" (pr_id)) dname in
+  let () = y_tinfo_hp (add_str "dnameeeeeeeeeee" (pr_id)) dname in
   let n_tl, self_ty = (
     match vdef.I.view_type_of_self with
     | Some (Mapping _  as ty) ->
-      let () = y_binfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
+      let () = y_tinfo_hp (add_str "tlist before" (string_of_tlist)) tlist in
       let ntlist,_ = x_add gather_type_info_var self_ptr tlist ty pos in
-      let () = y_binfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
+      let () = y_tinfo_hp (add_str "tlist after" (string_of_tlist)) ntlist in
       ntlist, ty
     | _ ->
-      let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+      let () = y_tinfo_hp (add_str "self_ptr" pr_id) self_ptr in
       if (String.compare dname "" = 0) then
-        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let () = y_tinfo_hp (add_str "self_ptr" pr_id) self_ptr in
         tlist, UNK
       else if vdef.I.view_is_prim then
         begin
@@ -1703,8 +1717,26 @@ and try_unify_view_type_args_x prog c vdef self_ptr deref ies hoa tlist pos =
           done;
           dname ^ !s
         ) in
-        let () = y_binfo_hp (add_str "self_ptr" pr_id) self_ptr in
-        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((mkNamedTyp ~args:fresh_poly_typs expect_dname)) pos in
+        let () = y_tinfo_hp (add_str "self_ptr" pr_id) self_ptr in
+        let selftyp = get_type_of_self tlist in
+        let () = y_tinfo_hp (add_str "self_ptr_typ" string_of_typ) selftyp in
+        let typls =
+          match selftyp with
+          | Named (nam,[]) -> []
+          | Named (nm, ls) ->
+               let rec helper current acc comls = (
+                 match current with
+                 | []   -> acc
+                 | h::t ->
+                   let (_,ele_b) = List.find (fun (a,b) -> a = (string_of_typ h)) comls in
+                   helper t (ele_b::acc) comls
+               )
+               in
+               let new_ls = List.rev (helper ls [] view_pvar_w_freshed_poly_typs_rev) in
+               new_ls
+          | _ -> []
+        in
+        let (n_tl,_) = x_add gather_type_info_var self_ptr tlist ((mkNamedTyp ~args:typls expect_dname)) pos in
         n_tl, UNK
   ) in
   let () = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types vdef in
@@ -1960,12 +1992,13 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     (* except for the data type, we also need to deal with the view type *)
     (* we doesn't use the data_def. we return the data_poly_para, if Not_found -> return the number of view_poly_para *)
     let num_poly_args = List.length poly in
-    x_binfo_hp (add_str "num of poly args" (pr_list string_of_typ)) poly no_pos;
+    x_tinfo_hp (add_str "num of poly args" (pr_list string_of_typ)) poly no_pos;
+    let () = y_tinfo_hp (add_str "type tlist"  (string_of_tlist)) tlist in
     (* how to get the instances' type? if we know the instances' type, we could make a comparison between the poly paras and instances' types*)
     let flag =
       (try
          let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
-         let tmp = un_option view_d.view_type_of_self UNK in
+         (* let tmp = un_option view_d.view_type_of_self UNK in *)
          1
        with
        | Not_found ->
@@ -1975,12 +2008,12 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       (try
          let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
          let tmp = un_option view_d.view_type_of_self UNK in
-         let () = y_binfo_hp (add_str "view_type_of_self000" string_of_typ) tmp in
+         let () = y_tinfo_hp (add_str "view_type_of_self000" string_of_typ) tmp in
          tmp
        with
        | Not_found -> UNK
       ) in
-    let () = y_binfo_hp (add_str "view_type_of_self" string_of_typ) unopted_self_typ in
+    let () = y_tinfo_hp (add_str "view_type_of_self567765" string_of_typ) unopted_self_typ in
     let view_or_data_poly_para =
         (try
           let data_d = I.look_up_data_def_raw prog.I.prog_data_decls v_name in
@@ -1992,14 +2025,14 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
              let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
              let view_poly_para = view_d.view_poly_vars in
              let unopted_self_typ = un_option view_d.view_type_of_self UNK in
-             let () = y_binfo_hp (add_str "view_type_of_self111" string_of_typ) unopted_self_typ in
+             let () = y_tinfo_hp (add_str "view_type_of_self111" string_of_typ) unopted_self_typ in
              view_poly_para
            with
            | Not_found ->
                report_error pos (" cannot find the heap name in data decls or view decls! ")) in
     (* poly parameters after the data declaration *)
     let num_poly_vars = List.length view_or_data_poly_para in
-    x_binfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident)) view_or_data_poly_para no_pos;
+    x_tinfo_hp (add_str "num of poly vars" (pr_list Cprinter.string_of_ident)) view_or_data_poly_para no_pos;
     let gather_type_info_poly vname tname lst tl = (
       match lst with
       | [] -> tl
@@ -2007,12 +2040,69 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       | _  ->    (* step1: add the pointer typ to the tlist *)
         (* how to know whether the vname, say the x, is a self typ or not? *)
         (* am I supposed to make a flag for the view -> if it is a view, then the flag is 1, else the flag is 0, which means it should be data typ *)
-        let () = y_binfo_hp (add_str "flag" string_of_int) flag in
+        let () = y_tinfo_hp (add_str "flag" string_of_int) flag in
         let tname = if flag = 1 then (string_of_typ unopted_self_typ) else tname in
-        let () = y_binfo_hp (add_str "tname" (pr_id)) tname in
+        let () = y_tinfo_hp (add_str "tname" (pr_id)) tname in
 
-        let (n_tl,_) = x_add gather_type_info_var vname tl ((mkNamedTyp ~args:(poly) tname)) pos in
-        let () = y_binfo_hp (add_str "type n_tl"  (string_of_tlist)) n_tl in
+        (* if it is a view, we should do the poly parameters adding corresponding to the declaration and instantiation *)
+        (* e.g.*)
+        (* decl:
+           llp<a>[`T1,`T2] == self=null or
+               self::nodep<a,r>[`T2] *  t::llp<a>[`T1,`T2].
+             ==> This tells us that the self type is nodep[`T2] *) (* which is fine for now *)
+        (* inst:
+           x::llp<>[int, bool]
+             ==> This tells us that  T1 -> int, T2 -> bool *)
+
+        (* find the index of the elements in the list and return the value of the *)
+        (* let nameMade = if flag = 1 then
+         *     let combined_lt =
+         *       (try
+         *          let tmp = List.combine view_or_data_poly_para poly in
+         *          tmp
+         *        with
+         *        | _ ->
+         *          report_error pos ("These two lists have different lengths!"))
+         *     in
+         *
+         * (\* [(_,_), (_,_), (_,_)] ==> [(T1,bool),(T2,int)] *\)
+         * (\* if found, then replace. *\)
+         *     let (nam,typList) = (
+         *       match unopted_self_typ with
+         *       | Named (tmpnm, [])      -> (tmpnm, [])
+         *       | Named (nm, ls) -> (\* if el is in the one of the combined_lt pairs *\)
+         *            let rec helper current acc comls = (
+         *              match current with
+         *              | []   -> acc
+         *              | h::t ->
+         *                let (_,ele_b) = List.find (fun (a,b) -> a = (string_of_typ h)) comls in
+         *                helper t (ele_b::acc) comls
+         *            )
+         *            in
+         *            let new_ls = List.rev (helper ls [] combined_lt) in
+         *            (nm, new_ls)
+         *       | _ -> (tname, [])
+         *     ) in ((mkNamedTyp ~args:(typList) nam))
+         *   else ((mkNamedTyp ~args:(poly) tname))
+         * in *)
+
+        (* let nameMade = if flag = 1 then
+         *     let selftyp = get_type_of_self tl in
+         *     let (nam,typList) = (
+         *       match selftyp with
+         *       | Named (tmpnm, [])    ->  (tmpnm, [])
+         *       | Named (nm, ls) -> (nm, ls)
+         *       | _ -> (tname, poly)
+         *     ) in ((mkNamedTyp ~args:(typList) nam))
+         *   else ((mkNamedTyp ~args:(poly) tname))
+         * in *)
+
+        (* let (n_tl,_) = x_add gather_type_info_var vname tl nameMade pos in *)
+
+        (* if it is a view, we cannot directly use this 'poly' here, in this regard, we need to make a kind of mapping. ==> we should check the 'unopted_self_typ', check the elements of its list and find out that it is T2, and then replace the T2 with the bool type. In this case, we need to consider the sequence of the parameters inside the list. *)
+
+        let n_tl = tl in
+        let () = y_tinfo_hp (add_str "type n_tl"  (string_of_tlist)) n_tl in
         (* step2: check whether the number of this one is equal to the previous data declaration's. Should this be in the parser part? *)
         match (num_poly_args = num_poly_vars) with
          | true -> n_tl
@@ -2023,29 +2113,12 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
     let n_tl = (* if (!Globals.allow_field_ann) then *) x_add gather_type_info_param_ann ann_param n_tl (* else n_tl *) in
     let n_tl = x_add gather_type_info_ho_args hoa n_tl in
     (* let (ntl1, _) = List.split n_tl in *)
-    x_binfo_hp (add_str "type list1"  (string_of_tlist)) n_tl no_pos;
+    x_tinfo_hp (add_str "type list1"  (string_of_tlist)) n_tl no_pos;
     let n_tl = x_add gather_type_info_poly v v_name poly n_tl in
 
 
-
-    (* let flag =
-     *   (try
-     *      let view_d = I.look_up_view_def_raw x_loc prog.I.prog_view_decls v_name in
-     *      let new_data_name = string_of_typ ((mkNamedTyp ~args:(poly) (string_of_typ unopted_self_typ))) (\* vdef.I.view_data_name ^ ((pr_list string_of_typ) fresh_poly_typs) *\) in
-     *      let () = y_binfo_hp (add_str "new_data_name" (pr_id)) new_data_name in
-     *      let view_modified = I.set_view_data_name_raw x_loc prog.I.prog_view_decls v_name new_data_name in
-     *      1
-     *    with
-     *    | Not_found -> 0
-     *   ) in *)
-
-
-    let () = y_binfo_hp (add_str "flag" string_of_int) flag in
-
-
-
     (* let (ntl2, _) = List.split n_tl in *)
-    x_binfo_hp (add_str "type list2"  (string_of_tlist)) n_tl no_pos;
+    x_tinfo_hp (add_str "type list2"  (string_of_tlist)) n_tl no_pos;
     (* Deal with the generic pointer! *)
     if (v_name = Parser.generic_pointer_type_name) then
       (* Assumptions:
@@ -2070,7 +2143,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
           (* Good user provides type for [rootptr] ==> done! *)
           let ddef = x_add I.look_up_data_def_raw prog.I.prog_data_decls s in
           (* let () = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
-          x_binfo_hp (add_str "type list3"  (string_of_tlist)) n_tl no_pos;
+          x_tinfo_hp (add_str "type list3"  (string_of_tlist)) n_tl no_pos;
           (true, mkNamedTyp ddef.I.data_name)
 
         with
@@ -2089,7 +2162,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) tlist =
       let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
         else (* inferring the type from the name of the field *)
           let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
-          x_binfo_hp (add_str "type list4"  (string_of_tlist)) n_tl no_pos;
+          x_tinfo_hp (add_str "type list4"  (string_of_tlist)) n_tl no_pos;
           if (List.length dts = 1) then
             (* the field uniquely determines the data type ==> done! *)
             (* let () = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
@@ -2266,13 +2339,6 @@ let update_view_new_body ?(base_flag=false) ?(iprog=None) vd view_body_lbl =
   in
   (* (\* let () = C.update_view_raw_base_case (x_add CF.repl_equiv_formula find_f) v in *\) *)
   ()
-
-(* finding the type of self *)
-let get_type_of_self ntl =
-  try
-    let v = snd(List.find (fun (v,_) -> v=self) ntl) in
-    v.sv_info_kind
-  with _ -> UNK
 
 let get_type_of_var ntl var_id =
   try

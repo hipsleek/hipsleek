@@ -343,6 +343,8 @@ type typ =
 
 let mkNamedTyp ?args: (args0 = []) name = Named (name,args0)
 
+let mkPolyTyp name = Poly name
+
 (* | SLTyp (* type of ho formula *) *)
 
 (* let eq_typegen t1 t2 = match *)
@@ -386,6 +388,7 @@ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
 let pr_list f xs = pr_list_brk "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
+let pr_list_empty f xs = match xs with | [] -> "" | _ -> pr_list f xs
 let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 (* ------------------------------------- *)
 
@@ -970,11 +973,15 @@ try
     subs
   with Invalid_argument _ -> failwith "The number of polymorphic type variables of the callee does not match the caller's type arguments"
 
-
 let subs_poly_typ poly_vars poly_args args_types =
   let subs       = create_poly_hash poly_vars poly_args in
   let args_types = hsubs_poly_typ subs args_types in
   args_types
+
+(* let subs_poly_typ poly_vars poly_args args_types =
+ *   let pr1 = pr_list pr_id in
+ *   let pr2 = pr_list string_of_typ in
+ *   Debug.no_2 "subs_poly_typ" pr1 pr2 pr2 pr3 subs_poly_typ poly_vars poly_args args_types *)
 
 let contains_poly typ =
   let rec helper typ =
@@ -2775,6 +2782,7 @@ let fresh_name () =
 
 let fresh_poly_name () = (fresh_any_name poly_typ_id)
 let poly_name id = poly_typ_id ^ (string_of_int id)
+let fresh_poly_name_w_id id = id ^ "_" ^ (string_of_int (fresh_int ()))
 
 let fresh_poly_typ () = Poly (fresh_poly_name () )
 

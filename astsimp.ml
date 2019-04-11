@@ -2481,11 +2481,48 @@ and trans_I2C_session_formulae prog free_vars tlist (sess_form : I.session_formu
   let pr_out = Cprinter.string_of_session in
   Debug.no_1 "trans_I2C_session_formulae" pr pr_out (fun _ -> trans_I2C_session_formulae_x prog free_vars tlist sess_form) sess_form
 
+and trans_fresh_poly_vars vdef =
+    let pr = Iprinter.string_of_view_decl in
+    Debug.no_1 "trans_fresh_poly_vars" pr pr (fun _ -> trans_fresh_poly_vars_x vdef) vdef
+
+and trans_fresh_poly_vars_x vdef =
+  let poly_types          = vdef.I.view_poly_vars in
+  let fresh_poly_types    = List.map Globals.fresh_poly_name_w_id poly_types in
+  let fresh_poly_types_ty = List.map Globals.mkPolyTyp fresh_poly_types in
+  let orig_types,ids      = List.split vdef.I.view_typed_vars in
+  let updated_types       = subs_poly_typ poly_types fresh_poly_types_ty orig_types in
+  let updated_typed_vars  = List.combine updated_types ids in
+  let updated_view_type_of_self = map_opt (subs_one_poly_typ poly_types fresh_poly_types_ty) vdef.I.view_type_of_self in
+  let fheap hform =
+    match hform with
+    | IF.HeapNode hn->
+      let subs_poly_typ poly_vars poly_args args_types = subs_poly_typ poly_vars poly_args args_types in
+      let subs_poly_typ poly_vars poly_args args_types =
+        let pr1 = pr_list pr_id in
+        let pr2 = pr_list string_of_typ in
+        Debug.no_3 "subs_poly_typ" pr1 pr2 pr2 pr2 subs_poly_typ poly_vars poly_args args_types
+      in
+      let updated_poly = subs_poly_typ poly_types fresh_poly_types_ty hn.IF.h_formula_heap_poly_arguments in
+      Some (IF.HeapNode {hn with
+                         IF.h_formula_heap_poly_arguments = updated_poly; }
+           )
+    | _ -> None in
+  let fnc          = (nonef, nonef, fheap, (somef,somef,somef,somef,somef)) in
+  let view_formula = Iformula.transform_struc_formula fnc vdef.I.view_formula in
+  let vdef = { vdef with
+               view_poly_vars    = fresh_poly_types;
+               view_typed_vars   = updated_typed_vars;
+               view_type_of_self = updated_view_type_of_self;
+               view_formula      = view_formula;
+             } in
+  vdef
+
 and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef : I.view_decl): C.view_decl =
+  let vdef = trans_fresh_poly_vars vdef in
   let view_formula1 = vdef.I.view_formula in
   let () = IF.has_top_flow_struc view_formula1 in
   let free_vars = dedicated_ids @ vdef.I.view_vars in
-  let () = y_binfo_hp (add_str "vdef.I.view_data_name1111111111111" pr_id) vdef.I.view_data_name in
+  let () = y_tinfo_hp (add_str "vdef.I.view_data_name1111111111111" pr_id) vdef.I.view_data_name in
   (*let recs = rec_grp prog in*)
 
 
@@ -2495,28 +2532,31 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     else vdef.I.view_data_name in
   (
     (* let () = x_tinfo_hp (add_str "XXX:data_name" pr_id) data_name no_pos in  *)
-    let () = y_binfo_hp (add_str "data_name222222222222" pr_id) data_name in
+    let () = y_tinfo_hp (add_str "data_name222222222222" pr_id) data_name in
     vdef.I.view_data_name <- data_name;
-    let () = y_binfo_hp (add_str "vdef.I.view_data_name33333333333" pr_id) vdef.I.view_data_name in
+    let () = y_tinfo_hp (add_str "vdef.I.view_data_name33333333333" pr_id) vdef.I.view_data_name in
     let vtv = vdef.I.view_typed_vars in
     let tlist = List.map (fun (t,c) -> (c,{sv_info_kind=t; id=fresh_int() })) vtv in
     let (s_t,tlist) = if data_name="" then
         let (new_et, n_tl) = fresh_tvar tlist in
         (new_et,n_tl)
-      else (mkNamedTyp (*~args:fresh_poly_typs*) data_name,tlist) in
-    let tlist = ([(self,{ sv_info_kind = s_t (* (Named data_name) *);id = fresh_int_en s_t })]@tlist) in
+      else
+        (mkNamedTyp (*~args:fresh_poly_typs*) data_name,tlist) in
+    (* let tlist = ([(self,{ sv_info_kind = s_t (\* (Named data_name) *\);id = fresh_int_en s_t })]@tlist) in *)
     let orig_tl = ann_typs@tlist in
+    let () = y_tinfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
     let (n_tl,cf) = x_add_1 (trans_I2C_struc_formula 1 prog false true free_vars vdef.I.view_formula (orig_tl) false) true (*check_pre*) in
     let self_ty = Typeinfer.get_type_of_self n_tl in
-    let () = y_binfo_hp (add_str "self_ty1111" string_of_typ) self_ty in
-    let () = y_binfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
+    let () = y_tinfo_hp (add_str "self_ty1111" string_of_typ) self_ty in
+    let () = y_tinfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let data_name = match self_ty with
       (* | Named (s, []) -> s *)
       (* | Named (s, l)  -> s ^ ((pr_list string_of_typ) l) *)
       | Named (s, _) -> s
       | _ -> "" in
     let () = vdef.I.view_data_name <- data_name in
-    let () = y_ninfo_hp (add_str "data_name" pr_id) data_name in
+    let () = y_tinfo_hp (add_str "data_name" pr_id) data_name in
+    let () = y_tinfo_hp (add_str "vdef.I.view_data_name" pr_id) vdef.I.view_data_name in
     let () = y_tinfo_hp (add_str "orig_tl" string_of_tlist) orig_tl in
     let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
     let () = Debug.tinfo_hprint (add_str "cf 3" Cprinter.string_of_struc_formula) cf no_pos in
@@ -2555,7 +2595,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
     let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
     let n_tl = x_add gather_type_info_pure prog inv n_tl in
     let inv_pf = x_add trans_pure_formula inv n_tl in
-    let () = y_tinfo_hp (add_str "n_tl" string_of_tlist) n_tl in
+    let () = y_tinfo_hp (add_str "n_tl bbbbbbbbbbbbbbb" string_of_tlist) n_tl in
+    let () = y_tinfo_hp (add_str "self_ty bbbbbbbbbbbb" string_of_typ) self_ty in
     (* Thai : pf - user given invariant in core form *)
     let n_tl, self_ty_opt = x_add Typeinfer.unify_type self_ty (Typeinfer.get_type_of_self n_tl) n_tl in
     let inv_pf = x_add Cpure.arith_simplify 1 inv_pf in
@@ -2615,8 +2656,8 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(before)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let () = vdef.I.view_typed_vars <- typed_vars in
       let () = vdef.I.view_type_of_self <- self_ty_opt (* (Some self_ty) *) in
-      let () = y_binfo_hp (add_str "view_type_of_self"  (pr_opt string_of_typ)) vdef.I.view_type_of_self in
-      let () = y_ninfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
+      let () = y_tinfo_hp (add_str "view_type_of_self4444"  (pr_opt string_of_typ)) vdef.I.view_type_of_self in
+      let () = y_tinfo_hp (add_str "vdef.I.view_typed_vars(after)" (pr_list (pr_pair string_of_typ pr_id))) vdef.I.view_typed_vars in
       let mvars =  List.filter
           (fun c-> List.exists (fun v-> String.compare v (CP.name_of_spec_var c) = 0) vdef.I.view_materialized_vars) view_sv_vars in
       let mvars = List.map (fun v -> C.mk_mater_prop v false []) mvars in
@@ -2901,7 +2942,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       let sess_formulae = x_add_1 (trans_I2C_session_formulae prog free_vars n_tl) vdef.I.view_session in
       let type_of_self =
         (* why not self_ty? *)
-        let () = y_binfo_hp (add_str "data name00000000000000000" pr_id) data_name in
+        let () = y_tinfo_hp (add_str "data name00000000000000000" pr_id) data_name in
         let r = vdef.I.view_type_of_self in
         if r==None && not(data_name="") then Some(mkNamedTyp data_name)
         else if r==None then
@@ -2930,7 +2971,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_session_info = view_session_info;
         C.view_session = sess_formulae;
         C.view_type_of_self = (
-         let () = y_binfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
+         let () = y_tinfo_hp (add_str "self_ty"  (pr_opt string_of_typ)) type_of_self in
           type_of_self);
         C.view_actual_root =
           (

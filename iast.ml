@@ -1882,17 +1882,17 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) =
   | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
-and set_view_data_name_raw loc (defs : view_decl list) (name : ident) (new_name : ident) = match defs with
-  | d :: rest -> if d.view_name = name
-    then
-      let tmp = { d with view_data_name = new_name } in
-      let d = tmp in
-      d
-    else set_view_data_name_raw loc rest name new_name
-  | [] ->
-    let msg = ("Cannot find definition of iview " ^ name) in
-    let () = y_tinfo_pp (loc^msg) in
-    raise Not_found
+(* and set_view_data_name_raw loc (defs : view_decl list) (name : ident) (new_name : ident) = match defs with
+ *   | d :: rest -> if d.view_name = name
+ *     then
+ *       let tmp = { d with view_data_name = new_name } in
+ *       let d = tmp in
+ *       d
+ *     else set_view_data_name_raw loc rest name new_name
+ *   | [] ->
+ *     let msg = ("Cannot find definition of iview " ^ name) in
+ *     let () = y_tinfo_pp (loc^msg) in
+ *     raise Not_found *)
 
 and look_up_view_def_raw_x loc (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x loc rest name
