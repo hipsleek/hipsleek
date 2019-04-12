@@ -1503,7 +1503,7 @@ let rec pr_h_formula h =
           (* pr_formula_label_opt pid;  *)
           pr_spec_var sv;
           fmt_string "::"; (* to distinguish pred from data *)
-          pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
+          pr_angle (c^ho_arg_str^perm_str^"33333") pr_view_arg params;
           pr_imm imm;
           if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
           pr_derv dr;
