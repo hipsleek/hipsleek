@@ -26,13 +26,13 @@ type formula_type =
   | Simple
   | Complex
 
-type aliasing_scenario = 
+type aliasing_scenario =
   | Not_Aliased
   | May_Aliased
   | Must_Aliased
   | Partial_Aliased
 
-type ('a,'b) twoAns = 
+type ('a,'b) twoAns =
   | FstAns of 'a
   | SndAns of 'b
 
@@ -73,7 +73,7 @@ type ho_flow_kind =
   | NEUTRAL
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
-type flags = 
+type flags =
     Flag_str of string
   | Flag_int of int
   | Flag_float of float
@@ -89,7 +89,7 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict option
 (*identifier for if, catch, call*)
 
-let eq_ho_flow_kind k1 k2 = 
+let eq_ho_flow_kind k1 k2 =
   match k1, k2 with
   | INFLOW, INFLOW
   | OUTFLOW, OUTFLOW
@@ -107,8 +107,8 @@ let eq_str s1 s2 = String.compare s1 s2 = 0
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
-let combine_lbl (i1,s1)(i2,s2) = match s1 with 
-  | "" -> (match s2 with 
+let combine_lbl (i1,s1)(i2,s2) = match s1 with
+  | "" -> (match s2 with
       | "" -> (i1,s1)
       | _ -> (i2,s2))
   | _ -> (i1,s1)
@@ -137,12 +137,12 @@ and split_ann =
 
 and heap_ann = Lend | Imm | Mutable | Accs
 
-and vp_ann = 
+and vp_ann =
   | VP_Zero | VP_Full | VP_Value
-  | VP_Lend | VP_Frac of Frac.frac 
+  | VP_Lend | VP_Frac of Frac.frac
   (* | VP_Ref * *)
 
-let eq_vp_ann a1 a2 = 
+let eq_vp_ann a1 a2 =
   match a1, a2 with
   | VP_Zero, VP_Zero -> true
   | VP_Full, VP_Full -> true
@@ -255,7 +255,7 @@ let string_of_view_kind k = match k with
 let is_undef_typ t =
   match t with
   | UNK | RelT _ | HpT | UtT _ -> true
-  | _ -> false 
+  | _ -> false
 
 
 let is_ptr_arith t =
@@ -282,14 +282,14 @@ let mkFuncT (param_typ: typ list) (ret_typ: typ): typ =
   | [] -> FuncT (Void, ret_typ)
   | _ -> List.fold_right (fun p_typ r_typ -> FuncT (p_typ, r_typ)) param_typ ret_typ
 
-let rec ret_typ_of_FuncT typ = 
+let rec ret_typ_of_FuncT typ =
   match typ with
   | FuncT (_, r_typ) -> ret_typ_of_FuncT r_typ
   | _ -> typ
 
-let rec param_typ_of_FuncT typ = 
+let rec param_typ_of_FuncT typ =
   match typ with
-  | FuncT (p_typ, r_typ) -> p_typ::(param_typ_of_FuncT r_typ) 
+  | FuncT (p_typ, r_typ) -> p_typ::(param_typ_of_FuncT r_typ)
   | _ -> []
 
 let rec cmp_typ t1 t2=
@@ -328,14 +328,14 @@ let is_type_var t =
 let imm_var_sufix = "_imm"
 let imm_var_prefix = "ann"
 
-let is_program_pointer (name:ident) = 
+let is_program_pointer (name:ident) =
   let slen = (String.length name) in
-  try  
+  try
     let n = (String.rindex name '_') in
     (* let () = print_endline ((string_of_int n)) in *)
     let l = (slen-(n+1)) in
     if (l==0) then (false,name)
-    else 
+    else
       let str = String.sub name (n+1) (slen-(n+1)) in
       if (str = "ptr") then
         let s = String.sub name 0 n in
@@ -351,7 +351,7 @@ let is_pointer_typ (t:typ) : bool =
 
 let convert_typ (t:typ) : typ =
   match t with
-  | Pointer t1 -> 
+  | Pointer t1 ->
     (match t1 with
      | Int -> Named "int_ptr"
      | Pointer t2 ->
@@ -376,7 +376,7 @@ let name_of_typ (t:typ) : string =
   (match t with
    | Named t1 ->
      t1
-   | _ -> 
+   | _ ->
      "Not_Support")
 
 let is_pointer t=
@@ -415,7 +415,7 @@ let field_val_ann = "VAL"
   Data types for code gen
 *)
 
-type mode = 
+type mode =
   | ModeIn
   | ModeOut
 
@@ -477,13 +477,13 @@ let heap_ann_of_int i =
   else if i = !lend_int then Lend
   else Accs
 
-let string_of_vp_ann a =  
+let string_of_vp_ann a =
   (match a with
    | VP_Zero -> "@zero"
    | VP_Full -> "@full"
    | VP_Value -> "@value"
    | VP_Lend -> "@lend"
-   | VP_Frac f -> "@" ^ (Frac.string_of_frac f) 
+   | VP_Frac f -> "@" ^ (Frac.string_of_frac f)
    (* | VP_Ref-> "@p_ref" *)
   )
 
@@ -499,9 +499,9 @@ let string_of_ho_split_kind (k:ho_split_kind) =
   | HO_SPLIT -> "@Split"
   | HO_NONE -> ""
 
-let string_of_loc (p : loc) = 
+let string_of_loc (p : loc) =
   Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
-    p.start_pos.Lexing.pos_fname 
+    p.start_pos.Lexing.pos_fname
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
@@ -510,13 +510,13 @@ let is_valid_loc p=
   (p.start_pos.Lexing.pos_lnum>=0 &&
    p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol>=0)
 
-let string_of_pos (p : Lexing.position) = 
+let string_of_pos (p : Lexing.position) =
   Printf.sprintf "(Line:%d,Col:%d)"
     p.Lexing.pos_lnum
     (p.Lexing.pos_cnum-p.Lexing.pos_bol)
 ;;
 
-let string_of_pos_plain (p : Lexing.position) = 
+let string_of_pos_plain (p : Lexing.position) =
   Printf.sprintf "%d_%d"
     p.Lexing.pos_lnum
     (p.Lexing.pos_cnum-p.Lexing.pos_bol)
@@ -530,7 +530,7 @@ let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
-let string_of_loc_by_char_num (l : loc) = 
+let string_of_loc_by_char_num (l : loc) =
   Printf.sprintf "(%d-%d)"
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
@@ -657,7 +657,7 @@ let is_HpT x =
 ;;
 
 (* aphanumeric name *)
-let rec string_of_typ_alpha = function 
+let rec string_of_typ_alpha = function
   (* may be based on types used !! *)
   | FORM          -> "Formula"
   | UNK          -> "Unknown"
@@ -705,9 +705,9 @@ let subs_tvar_in_typ t (i:int) nt =
 (*     | Named "" -> true   *)
 (*     | _ -> false         *)
 
-let rec s_i_list l c = match l with 
+let rec s_i_list l c = match l with
   | [] -> ""
-  | h::[] -> h 
+  | h::[] -> h
   | h::t -> h ^ c ^ (s_i_list t c)
 ;;
 
@@ -730,7 +730,7 @@ let string_of_primed_ident (id,p) =
 let pr_ident_list = pr_list string_of_primed_ident
 let pr_primed_ident_list = pr_list string_of_primed_ident
 
-let rec s_p_i_list l c = match l with 
+let rec s_p_i_list l c = match l with
   | [] -> ""
   | h::[] -> string_of_primed_ident h
   | h::t -> (string_of_primed_ident h) ^ c ^ (s_p_i_list t c)
@@ -749,14 +749,14 @@ let is_substr s id =
 ;;
 
 let is_dont_care_var id =
-  if is_substr "#" id 
+  if is_substr "#" id
   then true
   (* else if is_substr "Anon_" id then true *)
   else false
 ;;
 
 let idf (x:'a) : 'a = x
-let idf2 v e = v 
+let idf2 v e = v
 let nonef v = None
 let nonef2 e f = None
 let voidf e = ()
@@ -768,7 +768,7 @@ let and_list = List.fold_left (&&) true
 
 let push_opt_void_pair e = match e with
   | None -> None
-  | Some s -> Some (s,()) 
+  | Some s -> Some (s,())
 
 let push_opt_val opt v = match opt with
   | None -> None
@@ -780,8 +780,8 @@ let push_opt_val_rev opt v = match opt with
 
 let no_pos1 = { Lexing.pos_fname = "";
                 Lexing.pos_lnum = 0;
-                Lexing.pos_bol = 0; 
-                Lexing.pos_cnum = 0 } 
+                Lexing.pos_bol = 0;
+                Lexing.pos_cnum = 0 }
 
 let res_name = "res"
 (* let null_name = "null" *)
@@ -871,7 +871,7 @@ let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
 let lib_files = ref ([] : string list)
 
-(*in case the option of saving provers temp files to a different directory is enabled, the value of 
+(*in case the option of saving provers temp files to a different directory is enabled, the value of
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
@@ -1116,7 +1116,7 @@ let cyc_proof_syn = ref true
 
 (* turn off printing during lemma proving? *)
 let lemma_ep = ref true
-let lemma_ep_verbose = ref false 
+let lemma_ep_verbose = ref false
 
 let dis_sem = ref false
 
@@ -1131,14 +1131,14 @@ let pr_option f x = match x with
   | Some v -> "Some("^(f v)^")"
 
 let last_sat_ctx = new store None (pr_option string_of_loc)
-let last_infer_lhs_contra = new store false string_of_bool 
+let last_infer_lhs_contra = new store false string_of_bool
 
 (* let is_last_infer_lhs_contra () =  *)
 (*   !last_infer_lhs_contra *)
 (* let set_last_infer_lhs_contra () =  *)
 (*   last_infer_lhs_contra:=false *)
 
-let add_false_ctx pos = 
+let add_false_ctx pos =
   last_sat_ctx # set None;
   last_infer_lhs_contra # reset;
   false_ctx_line_list := pos::!false_ctx_line_list
@@ -1213,19 +1213,19 @@ let imm_simplif_inst = ref true
 
 let int2imm_conv = ref true
 
-let aggresive_imm_inst = ref false 
+let aggresive_imm_inst = ref false
 
 let imm_add = ref true
 
 let allow_noann = ref false
 
 (* infer imm sequatially: first pre, then post *)
-let imm_seq = ref true 
+let imm_seq = ref true
 
 (* infer imm pre/post simultaneously *)
 let imm_sim = ref false
 
-(*Since this flag is disabled by default if you use this ensure that 
+(*Since this flag is disabled by default if you use this ensure that
   run-fast-test mem test cases pass *)
 (* let allow_field_ann = ref false  *)
 (* disabled by default as it is unstable and
@@ -1330,7 +1330,7 @@ let old_free_var_lhs = ref false (* false *)
 let old_tp_simplify = ref false (* false *)
 let old_univ_lemma = ref false (* false *)
 let old_compute_act = ref false (* false *)
-let new_heap_contra = ref true 
+let new_heap_contra = ref true
 let mkeqn_opt_flag = ref true (* false *)
 let old_view_equiv = ref false (* false *)
   (* false here causes ex21u3e7.slk to go into a loop FIXED *)
@@ -1456,7 +1456,7 @@ let num_self_fold_search = ref 0
 let array_expansion = ref false;;
 let array_translate = ref false;;
 
-let self_fold_search_flag = ref true 
+let self_fold_search_flag = ref true
 (* performance not affected see incr/fix-todo.txt *)
 
 let show_gist = ref false
@@ -1553,11 +1553,11 @@ let disable_multiple_specs =ref false
 
 let perm_prof = ref false
 
-let validate = ref false 
+let validate = ref false
 
-let cp_prefile = ref false 
+let cp_prefile = ref false
 
-let gen_cpfile = ref false 
+let gen_cpfile = ref false
 
 let validate_target = ref ""
 
@@ -1580,6 +1580,7 @@ let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
+let force_print_residue = ref false
 
 (* for Termination *)
 let dis_term_chk = ref false
@@ -1622,7 +1623,7 @@ type infer_extn = {
   mutable extn_props: ident list;
 }
 
-let string_of_infer_extn extn = 
+let string_of_infer_extn extn =
   pr_pair idf (pr_list idf) (extn.extn_pred, extn.extn_props)
 
 let mk_infer_extn id props = {
@@ -1637,7 +1638,7 @@ let add_avai_infer_extn_lst lst extn =
     lst
   with _ -> lst @ [extn]
 
-let rec merge_infer_extn_lsts lsts = 
+let rec merge_infer_extn_lsts lsts =
   match lsts with
   | [] -> []
   | l::ls ->
@@ -1645,7 +1646,7 @@ let rec merge_infer_extn_lsts lsts =
     List.fold_left (fun lst extn -> add_avai_infer_extn_lst lst extn) merged_ls l
 
 let expand_infer_extn_lst lst =
-  List.concat (List.map (fun extn -> 
+  List.concat (List.map (fun extn ->
     List.map (fun prop -> (extn.extn_pred, prop)) extn.extn_props) lst)
 
 type infer_type =
@@ -1679,7 +1680,7 @@ type infer_type =
   | INF_IMM_POST (* For infer [@imm_post] for inferring imm annotation on post *)
   | INF_EXTN of infer_extn list
 
-let eq_infer_type i1 i2 = 
+let eq_infer_type i1 i2 =
   match i1, i2 with
   | INF_EXTN _, INF_EXTN _ -> true
   | INF_EXTN _, _ -> false
@@ -1736,7 +1737,7 @@ let inf_const_of_string s =
   | "@shape" -> INF_SHAPE
   | "@shape_pre" -> INF_SHAPE_PRE
   | "@shape_post" -> INF_SHAPE_POST
-  | "@shape_prepost" -> INF_SHAPE_PRE_POST 
+  | "@shape_prepost" -> INF_SHAPE_PRE_POST
   | "@error" -> INF_ERROR
   | "@dis_err" -> INF_DE_EXC
   | "@err_must" -> INF_ERR_MUST
@@ -1757,7 +1758,7 @@ let inf_const_of_string s =
   | "@imm_pre" -> INF_IMM_PRE
   | "@imm_post" -> INF_IMM_POST
   | _ -> failwith (s ^ " is not supported in command line.")
-  
+
 (* let inf_const_to_int x = *)
 (*   match x with *)
 (*   | INF_TERM -> 0 *)
@@ -1834,7 +1835,7 @@ class inf_obj  =
       if !enable_error_as_exc then self # set INF_ERR_MUST;
       if self # is_field_imm then allow_field_ann:=true;
       if self # get INF_ARR_AS_VAR then array_translate :=true
-    method set_init_arr s = 
+    method set_init_arr s =
       begin
         let inf_cmds = Str.split (Str.regexp "@") s in
         let inf_cmds = List.map (fun cmd -> "@" ^ cmd) inf_cmds in
@@ -1847,7 +1848,7 @@ class inf_obj  =
         in
         let () = arr <- inf_const_lst @ arr in
         let () = print_endline_q ("infer option added: " ^ (pr_list string_of_inf_const inf_const_lst)) in
-      
+
       (* let helper i r c =                                                                                             *)
       (*   let reg = Str.regexp r in                                                                                    *)
       (*   try                                                                                                          *)
@@ -1889,14 +1890,14 @@ class inf_obj  =
       (*   let i = helper i "@imm_pre"       INF_IMM_PRE in                                                             *)
       (*   let i = helper i "@imm_post"      INF_IMM_POST in                                                            *)
       (*   (* let x = Array.fold_right (fun x r -> x || r) arr false in *)                                              *)
-        if arr==[] then failwith  ("empty -infer option :"^s) 
+        if arr==[] then failwith  ("empty -infer option :"^s)
       end
     method is_empty  = arr==[]
     (* method string_at i =  *)
     (*   try *)
     (*     string_of_inf_const (Array.get arr i) *)
     (*   with _ -> "" *)
-    method string_of_raw = 
+    method string_of_raw =
       let lst_a = List.map string_of_inf_const arr in
       String.concat "," lst_a
     method string_of = "["^(self #string_of_raw)^"]"
@@ -1929,15 +1930,15 @@ class inf_obj  =
                          || (not(self # get INF_ERR_MUST)
                              && not(self # get INF_ERR_MAY))
     method is_err_must  = not(self # get INF_DE_EXC)
-                          && not(self # get INF_ERR_MAY) 
+                          && not(self # get INF_ERR_MAY)
                           && self # get INF_ERR_MUST
     method is_pre_must  = not(self # get INF_DE_EXC)
                           && self # get INF_PRE_MUST
     method is_err_must_only  = not(self # get INF_DE_EXC)
-                               && not(self # get INF_ERR_MAY) 
+                               && not(self # get INF_ERR_MAY)
                                && not(self # get INF_ERR_MUST)
                                && self # get INF_ERR_MUST_ONLY
-    method is_err_may  = not(self # get INF_DE_EXC) 
+    method is_err_may  = not(self # get INF_DE_EXC)
                          && self # get INF_ERR_MAY
     method is_size  = self # get INF_SIZE
     method is_ana_ni  = self # get INF_ANA_NI
@@ -1946,10 +1947,10 @@ class inf_obj  =
     method is_classic  = self # get INF_CLASSIC
     method is_par  = self # get INF_PAR
     method is_add_flow  = self # get INF_FLOW
-    method is_extn = 
-      List.exists (fun inf -> 
+    method is_extn =
+      List.exists (fun inf ->
         match inf with | INF_EXTN _ -> true | _ -> false) arr
-    method get_infer_extn_lst = 
+    method get_infer_extn_lst =
       try
         let inf_extn = List.find (fun inf ->
           match inf with | INF_EXTN _ -> true | _ -> false) arr in
@@ -1957,7 +1958,7 @@ class inf_obj  =
         | INF_EXTN lst -> lst
         | _ -> []
       with _ -> []
-    method add_infer_extn_lst pred props = 
+    method add_infer_extn_lst pred props =
       let rec helper inf_obj_lst pred props =
         let inf_extn = mk_infer_extn pred props in
         match inf_obj_lst with
@@ -1974,8 +1975,8 @@ class inf_obj  =
     (* method get_arr  = arr *)
     method is_infer_type t  = self # get t
     method get_lst = arr
-    method get_lst_sel = 
-      let  is_selected e = 
+    method get_lst_sel =
+      let  is_selected e =
         match e with
         | INF_TERM | INF_TERM_WO_POST | INF_PRE | INF_POST -> true
         | _ -> false in
@@ -2047,17 +2048,17 @@ let is_en_efa_exc ()=
 class inf_obj_sub  =
   object (self)
     inherit inf_obj as super
-    method is_arr_as_var_all  = 
+    method is_arr_as_var_all  =
       self # get INF_ARR_AS_VAR
       || infer_const_obj # is_arr_as_var
     method is_dis_err_all  = self # get INF_DE_EXC
-                             || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY) 
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_ERR_MAY)
                                  && infer_const_obj # is_dis_err)
-    method is_err_may_all  = self # get INF_ERR_MAY 
-                             || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC) 
+    method is_err_may_all  = self # get INF_ERR_MAY
+                             || (not(self # get INF_ERR_MUST) && not(self # get INF_DE_EXC)
                                  && infer_const_obj # is_err_may)
-    method is_err_must_all  = self # get INF_ERR_MUST 
-                              || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC) 
+    method is_err_must_all  = self # get INF_ERR_MUST
+                              || (not(self # get INF_ERR_MAY) && not(self # get INF_DE_EXC)
                                   && infer_const_obj # is_err_must)
     method is_classic_all  = super # is_classic || infer_const_obj # is_classic
     method is_imm_all  = super # is_imm || infer_const_obj # is_imm
@@ -2190,7 +2191,7 @@ let do_infer_inc = ref false
 (* Inference *)
 (*let call_graph : ((string list) list) ref = ref [[]]*)
 
-let add_count (t: int ref) = 
+let add_count (t: int ref) =
   t := !t+1
 
 let omega_err = ref false
@@ -2205,8 +2206,8 @@ let dis_provers_timeout = ref false
 let sleek_timeout_limit = ref 5.
 
 
-let dis_inv_baga () = 
-  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen .."; 
+let dis_inv_baga () =
+  if (not !web_compile_flag) then print_endline_q "Disabling baga inv gen ..";
   let () = gen_baga_inv := false in
   ()
 
@@ -2218,7 +2219,7 @@ let dis_bk ()=
   (* let () = en_slc_ps := false in *)
   ()
 
-let dis_pred_sat () = 
+let dis_pred_sat () =
   if (not !web_compile_flag) then print_endline_q "Disabling pred sat ..";
   (* let () = gen_baga_inv := false in *)
   let () = prove_invalid := false in
@@ -2304,7 +2305,7 @@ let locs_of_path_trace (pt: path_trace): loc list =
     let _, _, loc = List.find (fun (_, lbl, _) -> plbl = lbl) ref_list in
     loc
   in
-  let find_loc pid plbl = 
+  let find_loc pid plbl =
     let label_list = path_label_list_of_id pid in
     loc_of_label plbl label_list
   in
@@ -2317,7 +2318,7 @@ let locs_of_partial_context ctx =
   List.flatten loc_list_list
 
 
-let fresh_formula_label (s:string) :formula_label = 
+let fresh_formula_label (s:string) :formula_label =
   branch_point_id := !branch_point_id + 1;
   (!branch_point_id,s)
 
@@ -2374,11 +2375,11 @@ let fresh_int () =
 
 let string_eq s1 s2 =  String.compare s1 s2=0
 
-let fresh_ty_var_name (t:typ)(ln:int):string = 
+let fresh_ty_var_name (t:typ)(ln:int):string =
   let ln = if ln<0 then 0 else ln in
   ("v_"^(string_of_typ_alpha t)^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
-let fresh_var_name (tn:string)(ln:int):string = 
+let fresh_var_name (tn:string)(ln:int):string =
   ("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_trailer () =
@@ -2412,7 +2413,7 @@ let fresh_names (n : int) = (* number of names to be generated *)
 
 let formula_cache_no_series = ref 0
 
-let fresh_formula_cache_no  () = 
+let fresh_formula_cache_no  () =
   formula_cache_no_series := !formula_cache_no_series +1;
   !formula_cache_no_series
 
@@ -2475,13 +2476,13 @@ let bin_op_to_list (op:string)
   let rec helper t =
     match (fn t) with
     | None -> [t]
-    | Some (op2, xs) -> 
-      if (op=op2) then 
+    | Some (op2, xs) ->
+      if (op=op2) then
         List.concat (List.map helper xs)
       else [t]
   in (helper t)
 
-let bin_to_list (fn : 'a -> (string * ('a list)) option) 
+let bin_to_list (fn : 'a -> (string * ('a list)) option)
     (t:'a) : string * ('a list) =
   match (fn t) with
   | None -> "", [t]
@@ -2582,7 +2583,7 @@ let set_sleek_no n = sleek_proof_no:=n
 
 let get_last_sleek_fail () = !last_sleek_fail_no
 
-let set_last_sleek_fail () = 
+let set_last_sleek_fail () =
   last_sleek_fail_no := !sleek_proof_no
 
 (* let next_sleek_int () : int = *)
@@ -2650,7 +2651,7 @@ let un_option opt default_val = match opt with
   | Some v -> v
   | None -> default_val
 
-let rec gcd (a: int) (b: int): int = 
+let rec gcd (a: int) (b: int): int =
   if b == 0 then a
   else gcd b (a mod b)
 
@@ -2696,23 +2697,23 @@ let debug_level = ref Normal
 
 let prim_method_names = [ nondet_int_proc_name ]
 
-let is_prim_method pn = 
+let is_prim_method pn =
   List.exists (fun mn -> String.compare pn mn == 0) prim_method_names
 
-let check_is_classic_local obj = 
+let check_is_classic_local obj =
   let r = obj (* infer_const_obj *) # get INF_CLASSIC in
   if !new_trace_classic then print_endline ("Globals.check_is_classic: " ^ (string_of_bool r));
   r
 
 let check_is_classic () = check_is_classic_local infer_const_obj
 
-let check_is_pure_field_local obj = 
+let check_is_pure_field_local obj =
   let r = obj (* infer_const_obj *) # get INF_PURE_FIELD in
   r
 
 let check_is_pure_field () = check_is_pure_field_local infer_const_obj
 
-type 'a regex_list = 
+type 'a regex_list =
   | REGEX_STAR
   | REGEX_LIST of 'a list
 
@@ -2731,7 +2732,7 @@ let string_of_regex_id_star_list =
   string_of_regex_list (pr_pair idf string_of_bool)
 
 let build_sel_scc scc_lst get_name lst =
-  List.map 
+  List.map
     (fun scc
       -> List.map (fun c ->
           List.find (fun v -> (get_name v)=c) lst

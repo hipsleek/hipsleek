@@ -6,13 +6,13 @@ open Token
 (** A signature for specialized tokens. *)
 module Sig = Camlp4.Sig
 
-module Make (Token : SleekTokenS) 
+module Make (Token : SleekTokenS)
 = struct
   module Loc = Token.Loc
   module Token = Token
 
   open Lexing
-  
+
 
   (* Error report *)
   module Error = struct
@@ -85,7 +85,7 @@ module Make (Token : SleekTokenS)
   let shift n c = { (c) with loc = Loc.move `both n c.loc }
   let store_parse f c = store c ; f c c.lexbuf
   let parse f c = f c c.lexbuf
-  
+
   (* Update the current location with file name and line number. *)
 
   let update_loc c file line absolute chars =
@@ -103,7 +103,7 @@ module Make (Token : SleekTokenS)
   let err error loc = raise(Loc.Exc_located(loc, Error.E error))
 
   let warn error loc = Format.eprintf "Warning: %a: %a@." Loc.print loc Error.print error
-    
+
  let sleek_keywords = Hashtbl.create 100
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
@@ -245,6 +245,7 @@ module Make (Token : SleekTokenS)
    ("notin", NOTIN);
    ("notinlist", NOTINLIST);
    ("null", NULL);
+   ("nil", NULL);
    ("off", OFF);
    ("on", ON);
    ("or", ORWORD);
@@ -319,8 +320,8 @@ module Make (Token : SleekTokenS)
    (* ("skip", SKIP) *)
   ]
 }
-  
-  
+
+
   let newline = ('\010' | '\013' | "\013\010")
   let blank = [' ' '\009' '\012']
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
@@ -339,7 +340,7 @@ module Make (Token : SleekTokenS)
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
   let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
   let frac_literal = int_literal ('/') int_literal
-  
+
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | blank+                                                  { tokenizer file_name lexbuf }
@@ -371,7 +372,7 @@ rule tokenizer file_name = parse
   | "/*" { comment_level := 0; comment file_name lexbuf }
   | "//" { line_comment file_name lexbuf }
   | "/*/"
-        { warn Comment_start (Loc.of_lexbuf lexbuf);   
+        { warn Comment_start (Loc.of_lexbuf lexbuf);
           comment_level := 0;
           comment file_name lexbuf}
   | "*/"
@@ -513,7 +514,7 @@ rule tokenizer file_name = parse
   | '*' { STAR }
   | "<:" { SUBANN }
   | '/' { DIV }
-  | ident as idstr 
+  | ident as idstr
 	  {
 		if idstr = "_" then
 		  IDENTIFIER ("Anon" ^ fresh_trailer ())
@@ -531,18 +532,18 @@ rule tokenizer file_name = parse
   | _ as c                 { err (Illegal_character c) (Loc.of_lexbuf lexbuf) }
 
 (* search for the first open brace following java keyword *)
-and java file_name = parse 
+and java file_name = parse
   | "{"   { store file_name; with_curr_loc java file_name; parse java file_name }
   | "}"                                                         {store file_name}
   | ident                                          { store_parse java file_name }
   | eof                                  { err Unterminated_java (loc file_name)}
   | newline    { update_loc file_name None 1 false 0; store_parse java file_name}
   | _                                              { store_parse java file_name }
-  
+
 and comment file_name = parse
-  | "*/" { 
+  | "*/" {
 	  if !comment_level = 0 then
-		tokenizer file_name lexbuf 
+		tokenizer file_name lexbuf
 	  else begin
 		comment_level := !comment_level - 1;
 		comment file_name lexbuf
@@ -554,10 +555,10 @@ and comment file_name = parse
   | _  { comment file_name lexbuf }
 
 and line_comment file_name = parse
-  | newline 
+  | newline
   | eof { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
   | _ { line_comment file_name lexbuf }
-  
+
 
 and string c = parse
       '"'                                                       { set_start_p c }
@@ -577,11 +578,11 @@ and string c = parse
     | newline
       { update_loc c None 1 false 0; store_parse string c                       }
     | eof                                     { err Unterminated_string (loc c) }
-    | _                                                  { store_parse string c } 
- 
+    | _                                                  { store_parse string c }
+
 
 and preprocess file_name = parse
-  | "import" 
+  | "import"
       {
 		(* processing import *)
 		let _ = rip_ws lexbuf in
@@ -600,21 +601,21 @@ and preprocess file_name = parse
 		  output_string file_name (Buffer.contents in_cont);
 		  preprocess file_name lexbuf
       }
-  | _ as c 
+  | _ as c
       { (* other character, just copy it over *)
 		output_char file_name c;
-		preprocess file_name lexbuf  
+		preprocess file_name lexbuf
       }
-  | eof { EOF } 
+  | eof { EOF }
 
-and rip_ws = parse 
+and rip_ws = parse
   | (' ' | '\t')+ as ws { ws }
   | _  { print_string "There must be whitespace after import directive\n"; exit (-1) }
 
 and get_file_name = parse
   | '\"'([^ '\n' '\"'])+'\"' as fn { fn }
   | _ { print_string "file name following import must be enclosed in double quotes\n"; exit (-1) }
- 
+
 {
 
   let lexing_store s buff max =
