@@ -613,7 +613,9 @@ let pr_op ?(lvl=(!glob_lvl)) (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 
 let string_of_typed_spec_var x =
   match x with
-  | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t))
+  (* | P.SpecVar (t, id, p) -> id ^ (match p with | Primed -> "'" | Unprimed -> "" ) ^ ":" ^ ((string_of_typ t)) *)
+  | P.SpecVar (t, id, p) -> (string_of_typ t) ^ " " ^ id ^
+                            (match p with | Primed -> "'" | Unprimed -> "")
 
 let string_of_ho_var (fk,x,sk) =
   match x with

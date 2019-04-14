@@ -11,37 +11,27 @@ void append(node2 a, node2 b)
 	requires a::dll<q, m> * b::dll<p, n> & m > 0 & n > 0
 	ensures a::dll<q, k2> & k2 = m + n;.
 
-// synthesize [node2 x, node2 y]
-// x::node2<q,k>@M * k::dll<x,h>@M * y::dll<p,n>@M&
-// self_4472=x & p_4471=q & 0<m & 0<n & 1+h=m & k=null
-// ~>
-// (exists fr_82,prev_83,next_84,a_85:
-// x::node2<q,a_85>@M * y::node2<prev_83,next_84> *
-// next_84::dll<a_85,fr_82>
-// // & (1+0)<=(0+n+h) & (((next_84=null & h+n=0+1) | (1+0)<(0+n+h)))
-// // & (((n+h=0 & a_85=null) | 0<(0+h+n)))
-// & fr_82+1=h+n).
+// synthesize [node2 x,node2 y]
+//  x::node2<q,q78>@M * q78::dll<x,f77>@M * y::dll<p,n>@M&
+// v_bool_14_4457 & y=y & x=x & self_4476=x & p_4475=q & 0<m & 0<n & 
+// f77+1=m & q78=null
+// ~> 
+//  (exists f_r_4506,p5,n1,
+// q91: x::node2<q,q91>@M * y::node2<p5,n1>@M * 
+//         n1::dll<q91,f_r_4506>@M&
+// (((-1*n)-f77)-1)<0 & ((-1*n)-f77)<0 & 
+// f_r_4506=(f77+n)-1).
 
-synthesize [node2 k, node2 x, node2 y]
-x::node2<q,k> * k::dll<x,h> * y::dll<p,n>& 0<m & 0<n & 1+h=m & k=null
-~>
-(exists fr_82,prev_83,next_84,a_85:
-x::node2<q,a_85> * y::node2<prev_83,next_84> *
-next_84::dll<a_85,fr_82>
-& fr_82+1=h+n).
+synthesize [node2 x,node2 y]
+ x::node2<q,q78> * q78::dll<x,f77> * y::dll<p,n> &
+0<m & 0<n & f77+1=m & q78=null
+~> 
+ (exists fr,p5,n1,q91: x::node2<q,q91> * y::node2<p5,n1>@M * n1::dll<q91,fr>&
+n+f77>0 & fr=f77+n-1).
 
-// synthesize [node2 k, node2 x, node2 y]
-// x::node2<q,k> * y::dll<p,n> & 0<m & 0<n & 1+h=m & k=null & h = 0
-// ~>
-// (exists fr_82,prev_83,next_84,a_85:
-// x::node2<q,a_85> * y::node2<prev_83,next_84> *
-// next_84::dll<a_85,fr_82>
-// & fr_82+1=h+n).
-// unfold y -> instantitate
-
-// synthesize [node2 x, node2 y]
-// y::node2<p_95,q_98>@M * x::node2<q,k> &
-// 0<m & 0<n & h+1=m & k=null & h=0 & flted_8_97+1=n & 0<n & p_95=p & self_96=y
-// ~>
-// (exists prev_81: x::node2<q,self_96>@M * y::node2<prev_81,q_98>@M&
-// 1+flted_8_97=n+h).
+// synthesize [node2 q78,node2 x,node2 y]
+//  x::node2<q,q78>@M * y::dll<p,n>@M&0<m & 0<n & 1+f77=m & q78=null & f77=0
+// ~> 
+//  (exists fr_78,p5_79,n1_80,
+// q91_81: x::node2<q,q91_81> * y::node2<p5_79,n1_80>@M * n1_80::dll<q91_81,fr_78>&
+// 0<(f77+n) & fr_78+1=f77+n).

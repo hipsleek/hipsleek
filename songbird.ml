@@ -33,6 +33,7 @@ let pr_entail = SBCast.pr_entailment
 let pre_list = ref ([] : CF.formula list)
 let sb_program = ref (None: SBCast.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
+let x_sinfo_hp = if !syn_debug then x_binfo_hp else x_tinfo_hp
 (*********************************************************************
  * Translate Formulas
  *********************************************************************)
@@ -708,8 +709,6 @@ let translate_lemma lemma =
   let name = lemma.Cast.coercion_name in
   let lhs = lemma.Cast.coercion_head in
   let rhs = lemma.Cast.coercion_body in
-  (* let () = x_binfo_hp (add_str "lhs" pr_formula) lhs no_pos in
-   * let () = x_binfo_hp (add_str "rhs" pr_formula) rhs no_pos in *)
   let sb_lhs = translate_single_formula lhs in
   let sb_rhs = translate_single_formula rhs in
   SBCast.mk_lemma name sb_lhs sb_rhs status origin
@@ -868,7 +867,7 @@ let check_entail ?(residue=false) prog ante conseq =
 
 let output_sb_ent sb_prog sb_ent =
   let file = List.hd !source_files in
-  let () = x_binfo_hp (add_str "source" pr_id) file no_pos in
+  let () = x_tinfo_hp (add_str "source" pr_id) file no_pos in
   let file_name, dir = Filename.basename file, Filename.dirname file in
   let dir = dir ^ "/songbird" in
   let filename = file_name ^ (string_of_int !Synthesis.sb_num) ^ ".sb" in
@@ -920,18 +919,15 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
     let is_invalid (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlFalse in
     let is_unkn (x, y) = y.SBProverA.enr_validity = SBGlobals.MvlUnkn in
     let pairs = List.combine ents ptrees in
-    let invalid_ents = pairs |> List.filter is_invalid
-                     |> List.map fst in
-    let unkn_ents = pairs |> List.filter is_unkn
-                    |> List.map fst in
-    let valid_ents = pairs |> List.filter is_valid
-                    |> List.map fst in
-    let () = x_binfo_hp (add_str "invalid" SBCast.pr_ents) invalid_ents no_pos in
+    let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
+    let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
+    let valid_ents = pairs |> List.filter is_valid |> List.map fst in
+    let () = x_sinfo_hp (add_str "invalid" SBCast.pr_ents) invalid_ents no_pos in
+    let () = x_sinfo_hp (add_str "unknown" SBCast.pr_ents) unkn_ents no_pos in
     let () = if !output_sb then
         let _ = List.map (output_sb_ent n_prog) invalid_ents in
         let _ = List.map (output_sb_ent n_prog) unkn_ents in
         () else () in
-    let () = x_binfo_hp (add_str "unknown" SBCast.pr_ents) unkn_ents no_pos in
     let () = if !disproof then
         let () = invalid_num := !invalid_num + (List.length invalid_ents) in
         let () = unkn_num := !unkn_num + (List.length unkn_ents) in

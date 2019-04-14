@@ -23,6 +23,5 @@ void delete(node2 x, int a)
 	}
 	else {
 		delete(x.next, a-1);
-    // delete(x.next, a - 1);
 	}
 }

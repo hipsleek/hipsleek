@@ -647,7 +647,7 @@ let choose_rule_return goal =
 
 let choose_synthesis_rules goal : rule list =
   let goal = simplify_goal goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_sinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_unfold_pre goal) in
@@ -852,7 +852,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
   let rules = eliminate_useless_rules goal rules in
   let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
+  let () = x_sinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
   let rules = if !enable_i then choose_rule_interact goal rules
     else rules in
   process_all_rules goal rules
@@ -868,7 +868,9 @@ and process_all_rules goal rules : synthesis_tree =
         let pts = get_synthesis_tree_status stree in
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
-    | [] -> mk_synthesis_tree_fail goal atrees "no rule can be applied" in
+    | [] ->
+      let () = x_sinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 
 and process_one_rule goal rule : derivation =
@@ -924,7 +926,7 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_sinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in

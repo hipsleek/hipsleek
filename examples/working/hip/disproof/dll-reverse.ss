@@ -9,7 +9,7 @@ dll<p,n> == self = null & n = 0
 
 void reverse(node2@R xs, node2@R ys)
 	requires xs::dll<p, n> * ys::dll<q, m>
-	ensures ys'::dll<_, n+m> & xs' = null;
+	ensures ys'::dll<_, n+m> & xs' = null & ys' = ys & xs' = xs;
 {
 	if (xs != null) {
 		node2 tmp;

@@ -33,6 +33,7 @@ let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
+let x_sinfo_hp = if !syn_debug then x_binfo_hp else x_tinfo_hp
 (*********************************************************************
  * Data structures
  *********************************************************************)
@@ -254,9 +255,9 @@ let pr_goal goal =
   let vars = goal.gl_vars in
   (* let pr_svs = Cprinter.string_of_spec_var_list in *)
   let pr_svs = pr_list Cprinter.string_of_typed_spec_var in
-  "goal (" ^ "vars:" ^ (pr_svs vars) ^ "\n" ^
-  "pre: " ^ (pr_formula goal.gl_pre_cond) ^ "\n" ^
-  "post: " ^ (pr_formula goal.gl_post_cond) ^ ")"
+  "synthesize " ^ (pr_svs vars) ^ "\n" ^
+  (pr_formula goal.gl_pre_cond) ^ "\n" ^
+  "~> \n" ^ (pr_formula goal.gl_post_cond) ^ "."
 
 let pr_rule_assign rule =
   let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
@@ -911,13 +912,18 @@ let unprime_formula (formula:CF.formula) =
   let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
   CF.subst substs formula
 
-let rec has_unfold_pre trace = match trace with
-  | [] -> false
-  | h::t -> begin
-      match h with
-      | RlUnfoldPre _ -> true
-      | _ -> has_unfold_pre t
-    end
+let rec has_unfold_pre trace =
+  let unfold_num = 2 in
+  let rec aux trace num = match trace with
+    | [] -> false
+    | h::t -> begin
+        match h with
+        | RlUnfoldPre _ -> if num = 1 then true
+            else aux t (num-1)
+        | _ -> aux t num
+      end in
+  aux trace unfold_num
+
 
 let rec has_fcall_trace trace = match trace with
   | [] -> false

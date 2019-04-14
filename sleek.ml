@@ -394,7 +394,6 @@ let parse_file (parse) (source_file : string) =
   List.iter proc_one_cmd cmds
 
 let main () =
-  print_string "\nmain line 401\n";
   let () = record_backtrace_quite () in
   let iprog = { I.prog_include_decls =[];
                 I.prog_unk_preds = [];

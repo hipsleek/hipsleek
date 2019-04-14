@@ -21,8 +21,8 @@ let filter_cand buggy_loc cand =
   match buggy_loc with
   | Some b_loc ->
     let cand_pos = Iast.get_exp_pos cand in
-    let () = x_tinfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc no_pos in
-    let () = x_tinfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos no_pos in
+    let () = x_binfo_hp (add_str "buggy pos" (Cprinter.string_of_pos)) b_loc no_pos in
+    let () = x_binfo_hp (add_str "cand pos" (Cprinter.string_of_pos)) cand_pos no_pos in
     let b_lnum = b_loc.start_pos.Lexing.pos_lnum in
     let cand_lnum = cand_pos.start_pos.Lexing.pos_lnum in
     b_lnum = cand_lnum
@@ -57,7 +57,7 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
   let pr_proc = Iprinter.string_of_proc_decl in
   let pr_procs = pr_list pr_proc in
   let n_iproc = mk_candidate_iproc iproc args candidate in
-  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
     let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
@@ -110,7 +110,7 @@ let start_repair (iprog:I.prog_decl) =
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let () = x_tinfo_hp (add_str "candidates" pr_exps) cands no_pos in
     let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in
-    let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let args = cproc.C.proc_args in
     let helper cand =

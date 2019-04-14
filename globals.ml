@@ -9,6 +9,7 @@ let repaired = ref false
 let sleek_num_to_verify = ref (-1)
 let sleek_print_residue = ref true
 let songbird = ref false
+let syn_debug = ref false
 let output_sb = ref false
 let disproof = ref false
 let ramification_entailments = ref 0

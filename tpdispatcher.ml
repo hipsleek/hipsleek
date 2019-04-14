@@ -343,7 +343,6 @@ let rec check_prover_existence prover_cmd_str =
   | [] -> ()
   | "log"::rest -> check_prover_existence rest
   | prover::rest ->
-    let _ = x_binfo_hp (add_str "check prover" pr_id) prover no_pos in
     (* let exit_code = Sys.command ("which "^prover) in *)
     (* Do not display system info in the website *)
     (* let () = print_endline ("prover:" ^ prover) in *)

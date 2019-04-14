@@ -1,6 +1,4 @@
-/* avl trees */
 
-/* representation of a node in an avl tree */
 data node {
 	int val;
 	int height;
@@ -123,34 +121,6 @@ node rotate_double_right(node a, node b, node c, node d, int v1, int v2, int v3)
 
 }
 
-
-/* functions to build avl trees */
-// node build_avl1(node x, node y)
-
-// 	requires x::avl<mx, nx> * y::avl<my, nx> & x != null
-// 	ensures res::avl<1 + mx + my, 1 + nx>;
-
-// {
-// 	int v = 0;
-// 	int tmp;
-
-// 	tmp = x.height;
-// 	tmp = tmp + 1;
-// 	return new node(v, tmp, x, y);	
-// }
-
-// void build_avl2(node x, node y, node z)
-	
-// 	requires y::avl<my, ny> * z::avl<mz, ny> * x::node<_, _, _, _> & y != null
-// 	ensures  x::avl<1 + my + mz, 1 + ny>;
-
-// {
-// 	int tmp;
-
-// 	x.left = y;
-// 	x.right = z;
-// 	x.height = y.height  + 1;
-// }
 
 node node_error() requires true ensures false;
 
