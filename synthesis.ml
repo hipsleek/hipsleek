@@ -22,6 +22,7 @@ let pr_sv = Cprinter.string_of_spec_var
 let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_substs = pr_list (pr_pair pr_var pr_var)
+
 (*** Reference variable***********)
 let rel_num = ref 0
 let res_num = ref 0
@@ -48,17 +49,11 @@ exception EPrio of priority
 type rule =
   | RlFuncCall of rule_func_call
   | RlAssign of rule_assign
-  | RlBind of rule_bind
-  | RlFRead of rule_bind_read
+  | RlFWrite of rule_field_write
+  | RlFRead of rule_field_read
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlInstantiate of rule_instantiate
-  | RlFraming of rule_framing
-
-and rule_framing = {
-  rf_n_pre: CF.formula;
-  rf_n_post: CF.formula
-}
 
 and rule_vinit = {
   rvi_var: CP.spec_var;
@@ -85,16 +80,16 @@ and rule_func_call = {
   rfc_return : CP.spec_var option;
 }
 
-and rule_bind = {
-  rb_bound_var: CP.spec_var;
-  rb_field: typed_ident;
-  rb_other_var: CP.spec_var;
+and rule_field_write = {
+  rfw_bound_var: CP.spec_var;
+  rfw_field: typed_ident;
+  rfw_value: CP.spec_var;
 }
 
-and rule_bind_read = {
-  rbr_bound_var: CP.spec_var;
-  rbr_field: typed_ident;
-  rbr_value: CP.spec_var;
+and rule_field_read = {
+  rfr_bound_var: CP.spec_var;
+  rfr_field: typed_ident;
+  rfr_value: CP.spec_var;
 }
 
 and rule_assign = {
@@ -269,13 +264,13 @@ let pr_func_call rule =
   fc_name ^ "(" ^ args ^ ")"
 
 let pr_rule_bind rule =
-  let exp = rule.rb_bound_var in
-  (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rb_field) ^ ", "
-  ^ (Cprinter.string_of_spec_var rule.rb_other_var)
+  let exp = rule.rfw_bound_var in
+  (Cprinter.string_of_spec_var exp) ^ ", " ^ (snd rule.rfw_field) ^ ", "
+  ^ (Cprinter.string_of_spec_var rule.rfw_value)
 
 let pr_fread rule =
-  "(" ^ (pr_var rule.rbr_bound_var) ^ "." ^ (snd rule.rbr_field) ^ ", "
-  ^ (pr_var rule.rbr_value) ^ ")"
+  "(" ^ (pr_var rule.rfr_bound_var) ^ "." ^ (snd rule.rfr_field) ^ ", "
+  ^ (pr_var rule.rfr_value) ^ ")"
 
 let pr_instantiate rule =
   "(" ^ (pr_var rule.rli_lhs) ^ ", " ^ (pr_var rule.rli_rhs) ^ ")"
@@ -286,13 +281,11 @@ let pr_var_init rule =
 let pr_rule rule = match rule with
   | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlBind rule -> "RlBind\n" ^ (pr_rule_bind rule)
+  | RlFWrite rule -> "RlFWrite\n" ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
-  | RlFraming rule -> "RlFraming(" ^ (pr_formula rule.rf_n_pre) ^ ", "
-                      ^ (pr_formula rule.rf_n_post) ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -314,9 +307,7 @@ and pr_st_status st_status = match st_status with
   | StValid st_core -> pr_st_core st_core
 
 and pr_st_core st =
-  let goal = st.stc_goal in
   let sub_trees = st.stc_subtrees in
-  (* (pr_goal goal) ^ *)
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
 
@@ -835,7 +826,13 @@ let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
 
 let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
+  | TVar _ -> true
   | _ -> false
+
+let equal_type var1 var2 = match CP.type_of_sv var1 with
+  | Int -> is_int_var var2
+  | Named _ -> is_node_var var2
+  | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
 
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
@@ -1056,9 +1053,9 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
       if st_code = None then assgn
       else let st_code = Gen.unsome st_code in
         mkSeq assgn st_code
-  | RlBind rbind ->
-    let bvar, (typ, f_name) = rbind.rb_bound_var, rbind.rb_field in
-    let rhs = rbind.rb_other_var in
+  | RlFWrite rbind ->
+    let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
+    let rhs = rbind.rfw_value in
     let rhs_var, mem_var = mkVar rhs,  mkVar bvar in
     let exp_mem = I.Member {
         exp_member_base = mem_var;
@@ -1071,8 +1068,8 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
     if st_code = None then bind
     else let st_code = Gen.unsome st_code in
       mkSeq bind st_code
-  | RlFRead rule -> let lhs = rule.rbr_value in
-    let bvar, (typ, f_name) = rule.rbr_bound_var, rule.rbr_field in
+  | RlFRead rule -> let lhs = rule.rfr_value in
+    let bvar, (typ, f_name) = rule.rfr_bound_var, rule.rfr_field in
     let exp_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
@@ -1117,7 +1114,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
       if st_code = None then seq
       else let st_code = Gen.unsome st_code in
         mkSeq seq st_code
-  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
+  (* | _ -> report_error no_pos "synthesize_st_core: this case unhandled" *)
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
@@ -1242,11 +1239,10 @@ let is_rule_bind_useless r =
   true
 
 let is_rule_fread_useless goal r =
-  let var = r.rbr_value in
+  let var = r.rfr_value in
   let post_vars = CF.fv goal.gl_post_cond in
   if List.exists (fun x -> CP.eq_sv x var) post_vars then true
-  else
-    let arg_f = extract_var_f goal.gl_pre_cond var in
+  else let arg_f = extract_var_f goal.gl_pre_cond var in
       match arg_f with
       | None -> false
       | Some arg_f -> if CF.is_emp_formula arg_f then false
@@ -1257,12 +1253,11 @@ let eliminate_useless_rules goal rules =
     match rule with
     | RlFuncCall r -> is_rule_func_call_useless r
     | RlAssign r -> is_rule_asign_useless r
-    | RlBind r -> is_rule_bind_useless r
+    | RlFWrite r -> is_rule_bind_useless r
     | RlFRead r -> is_rule_fread_useless goal r
     | RlInstantiate _ -> true
     | RlUnfoldPost _ -> true
-    | RlUnfoldPre _ -> true
-    | _ -> true) rules
+    | RlUnfoldPre _ -> true) rules
 
 (* compare func_call with others *)
 
@@ -1282,12 +1277,11 @@ let compare_rule_func_call_vs_other r1 r2 =
   match r2 with
   | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_func_call_vs_wbind r1 r2
+  | RlFWrite r2 -> compare_rule_func_call_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | _ -> PriEqual
 
 (* compare assign with others *)
 
@@ -1309,12 +1303,11 @@ let compare_rule_assign_vs_other r1 r2 =
     match r2 with
     | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
     | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
-    | RlBind r2 -> compare_rule_assign_vs_wbind r1 r2
+    | RlFWrite r2 -> compare_rule_assign_vs_wbind r1 r2
     | RlFRead _ -> PriEqual
     | RlUnfoldPre _ -> PriEqual
     | RlUnfoldPost _ -> PriEqual
     | RlInstantiate _ -> PriEqual
-    | _ -> PriEqual
 
 (* compare wbind with others *)
 let compare_rule_wbind_vs_func_call r1 r2 =
@@ -1331,12 +1324,11 @@ let compare_rule_wbind_vs_other r1 r2 =
   match r2 with
   | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
   | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
-  | RlBind r2 -> compare_rule_wbind_vs_wbind r1 r2
+  | RlFWrite r2 -> compare_rule_wbind_vs_wbind r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | _ -> PriEqual
 
 (* reordering rules *)
 
@@ -1344,12 +1336,11 @@ let compare_rule r1 r2 =
   match r1 with
   | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
-  | RlBind r1 -> compare_rule_wbind_vs_other r1 r2
+  | RlFWrite r1 -> compare_rule_wbind_vs_other r1 r2
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
-  | _ -> PriEqual
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =

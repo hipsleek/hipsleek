@@ -58,10 +58,11 @@ let is_equal_vars prog ante var1 var2 =
   let conseq = CF.mkBase_simp HEmp (mix_of_pure conseq) in
   SB.check_entail prog ante conseq |> fst
 
-let choose_rassign_pure_x cur_var goal : rule list =
+let choose_rassign_aux goal cur_var : rule list =
   let pre_vars, prog = goal.gl_pre_cond |> CF.fv, goal.gl_prog in
   let vars = goal.gl_vars in
-  let filter x = (CP.mem x vars || CP.is_res_sv x) && (is_int_var x)
+  let filter x = (CP.mem x vars || CP.is_res_sv x)
+                 && (equal_type cur_var x)
                  && not(CP.mem x pre_vars) && not(CP.eq_sv x cur_var) in
   let other_vars = goal.gl_post_cond |> CF.fv
                    |> List.filter filter in
@@ -74,11 +75,15 @@ let choose_rassign_pure_x cur_var goal : rule list =
     } in
   eq_vars |> List.map mkAssign
 
-let choose_rassign_pure var goal =
-  Debug.no_2 "choose_rassign_pure" pr_var pr_goal pr_rules
-    (fun _ _ -> choose_rassign_pure_x var goal) var goal
+let choose_rule_assign_x goal : rule list =
+  let vars = goal.gl_vars in
+  vars |> List.map (choose_rassign_aux goal) |> List.concat
 
-let choose_rule_field_dnode dn1 dn2 var goal =
+let choose_rule_assign goal =
+  Debug.no_1 "choose_rule_assign" pr_goal pr_rules
+    (fun _ -> choose_rule_assign_x goal) goal
+
+let choose_fwrite_dnode dn1 dn2 var goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let var_list, prog = goal.gl_vars, goal.gl_prog in
   let data_decls = prog.Cast.prog_data_decls in
@@ -95,10 +100,10 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
   let () = x_tinfo_hp (add_str "triple" string_of_int) (List.length triple)
       no_pos in
-  let mkRlBind (var, field, n_var) = RlBind {
-      rb_bound_var = var;
-      rb_field = field;
-      rb_other_var = n_var;
+  let mkRlBind (var, field, n_var) = RlFWrite {
+      rfw_bound_var = var;
+      rfw_field = field;
+      rfw_value = n_var;
     } in
   let helper dif_field =
     let pre_post = fst dif_field in
@@ -114,17 +119,14 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   eq_var_rules |> (Gen.BList.remove_dups_eq eq_triple)
   |> List.map mkRlBind
 
-let rec choose_rassign_data goal cur_var =
+let rec choose_fwrite_data goal cur_var =
   let pre,post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "var" pr_sv) cur_var no_pos in
-  let () = x_tinfo_hp (add_str "PRE" pr_formula) pre no_pos in
-  let () = x_tinfo_hp (add_str "POST" pr_formula) post no_pos in
   let aux_bf hf1 hf2 goal f_var1 f_var2 =
     let var_list = goal.gl_vars in
     let prog = goal.gl_prog in
     match hf1, hf2 with
     | CF.DataNode dnode1, CF.DataNode dnode2 ->
-      choose_rule_field_dnode dnode1 dnode2 cur_var goal
+      choose_fwrite_dnode dnode1 dnode2 cur_var goal
     | _ -> [] in
   let aux f_var1 f_var2 goal =
     let var_list = goal.gl_vars in
@@ -152,26 +154,14 @@ let rec choose_rassign_data goal cur_var =
     let f1, f2 = disjs.CF.formula_or_f1, disjs.CF.formula_or_f2 in
     let goal1 = {goal with gl_post_cond = f1} in
     let goal2 = {goal with gl_post_cond = f2} in
-    let rule1 = choose_rassign_data goal1 cur_var in
-    let rule2 = choose_rassign_data goal2 cur_var in
+    let rule1 = choose_fwrite_data goal1 cur_var in
+    let rule2 = choose_fwrite_data goal2 cur_var in
     rule1@rule2
   | _ -> []
 
-let choose_rule_assign_x goal : rule list =
-  let vars = goal.gl_vars in
-  let pr_sv = Cprinter.string_of_spec_var in
-  let () = x_tinfo_hp (add_str "vars: " (pr_list pr_sv)) vars no_pos in
-  let pre = goal.gl_pre_cond in
-  let post = goal.gl_post_cond in
-  let choose_rule var = match CP.type_of_sv var with
-    | TVar _ | Int -> choose_rassign_pure var goal
-    | Named _ -> choose_rassign_data goal var
-    | _ -> []  in
-  vars |> List.map choose_rule |> List.concat
-
-let choose_rule_assign goal =
-  Debug.no_1 "choose_rule_assign" pr_goal pr_rules
-    (fun _ -> choose_rule_assign_x goal) goal
+let choose_rule_fwrite goal =
+  let vars = goal.gl_vars |> List.filter is_node_var in
+  vars |> List.map (choose_fwrite_data goal) |> List.concat
 
 let is_same_shape (f1:CF.formula) (f2:CF.formula) =
   let check_hf (hf1:CF.h_formula) (hf2:CF.h_formula) =
@@ -314,9 +304,9 @@ let choose_rule_fread_x goal =
     let d_arg_pairs = List.filter (fun (x,_) -> not(CP.mem x vars)) d_arg_pairs in
     let helper_arg (arg, field) =
       let rbind = RlFRead {
-          rbr_bound_var = var;
-          rbr_field = field;
-          rbr_value = arg;
+          rfr_bound_var = var;
+          rfr_field = field;
+          rfr_value = arg;
         } in [rbind] in
     d_arg_pairs |> List.map helper_arg |> List.concat in
   List.map helper_triple triples |> List.concat
@@ -482,6 +472,7 @@ let choose_synthesis_rules_x goal : rule list =
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_unfold_pre goal) in
   let rs = rs @ (choose_rule_fread goal) in
+  let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ choose_rule_instantiate goal in
@@ -547,19 +538,19 @@ let subs_bind_write formula var field new_val data_decls =
     in CF.Base {bf with formula_base_heap = helper hf}
   | _ -> formula
 
-let process_rule_bind goal (bind:rule_bind) =
-  let pre, var = goal.gl_pre_cond, bind.rb_bound_var in
-  let field, prog = bind.rb_field, goal.gl_prog in
-  let rhs, data_decls = bind.rb_other_var, prog.prog_data_decls in
+let process_rule_fwrite goal (bind:rule_field_write) =
+  let pre, var = goal.gl_pre_cond, bind.rfw_bound_var in
+  let field, prog = bind.rfw_field, goal.gl_prog in
+  let rhs, data_decls = bind.rfw_value, prog.prog_data_decls in
   let n_post = subs_bind_write pre var field rhs data_decls in
   let () = x_tinfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
   let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
   match ent_check with
-  | true -> mk_derivation_success goal (RlBind bind)
-  | false -> mk_derivation_fail goal (RlBind bind)
+  | true -> mk_derivation_success goal (RlFWrite bind)
+  | false -> mk_derivation_fail goal (RlFWrite bind)
 
-let process_rule_f_read goal (rule:rule_bind_read) =
-    let vars = [rule.rbr_value] @ goal.gl_vars |> CP.remove_dups_svl in
+let process_rule_f_read goal (rule:rule_field_read) =
+    let vars = [rule.rfr_value] @ goal.gl_vars |> CP.remove_dups_svl in
     let n_goal = {goal with gl_vars = vars} in
     mk_derivation_subgoals goal (RlFRead rule) [n_goal]
 
@@ -656,11 +647,6 @@ and process_rule_unfold_post goal rule =
                           gl_trace = (RlUnfoldPost rule)::goal.gl_trace} in
   mk_derivation_subgoals goal (RlUnfoldPost rule) [n_goal]
 
-let process_rule_framing goal rule =
-  let n_goal = {goal with gl_pre_cond = rule.rf_n_pre;
-                          gl_post_cond = rule.rf_n_post} in
-  mk_derivation_subgoals goal (RlFraming rule) [n_goal]
-
 (*********************************************************************
  * The search procedure
  *********************************************************************)
@@ -688,12 +674,11 @@ and process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_func_call goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
-  | RlBind bind -> process_rule_bind goal bind
+  | RlFWrite fwrite -> process_rule_fwrite goal fwrite
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
   | RlFRead rule -> process_rule_f_read goal rule
   | RlInstantiate rule -> process_rule_instantiate goal rule
-  | RlFraming rule -> process_rule_framing goal rule
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =
