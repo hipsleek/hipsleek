@@ -645,9 +645,29 @@ let choose_rule_return goal =
   Debug.no_1 "choose_rule_return" pr_goal pr_rules
     (fun _ -> choose_rule_return_x goal) goal
 
-let choose_synthesis_rules goal : rule list =
+let rec choose_rule_interact goal rules =
+  if rules = [] then
+    let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+    rules
+  else
+    let str = pr_list_ln pr_rule rules in
+    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
+    let choice = String.uppercase_ascii (String.trim (read_line ())) in
+    let rule_id = int_of_string (choice) in
+    let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
+    let chosen_rules, other_rules =
+      List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
+    if chosen_rules = [] then
+      let err_str = "Wrong choose, please choose again" in
+      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
+      choose_rule_interact goal rules
+    else
+      let rules = chosen_rules @ other_rules in
+      List.map snd rules
+
+let choose_synthesis_rules_x goal : rule list =
   let goal = simplify_goal goal in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = rs @ (choose_rule_unfold_pre goal) in
@@ -657,7 +677,15 @@ let choose_synthesis_rules goal : rule list =
   let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ choose_rule_instantiate goal in
   let rs = rs @ (choose_func_call goal) in
+  let rs = eliminate_useless_rules goal rs in
+  let rs = reorder_rules goal rs in
+  let rs = if !enable_i then choose_rule_interact goal rs
+    else rs in
   rs
+
+let choose_synthesis_rules goal =
+  Debug.no_1 "choose_synthesis_rule" pr_goal pr_rules
+    (fun _ -> choose_synthesis_rules_x goal) goal
 
 (*********************************************************************
  * Processing rules
@@ -827,34 +855,8 @@ let process_rule_framing goal rule =
 (*********************************************************************
  * The search procedure
  *********************************************************************)
-let rec choose_rule_interact goal rules =
-  if rules = [] then
-    let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
-    rules
-  else
-    let str = pr_list_ln pr_rule rules in
-    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
-    let choice = String.uppercase_ascii (String.trim (read_line ())) in
-    let rule_id = int_of_string (choice) in
-    let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
-    let chosen_rules, other_rules =
-      List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
-    if chosen_rules = [] then
-      let err_str = "Wrong choose, please choose again" in
-      let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
-      choose_rule_interact goal rules
-    else
-      let rules = chosen_rules @ other_rules in
-      List.map snd rules
-
 let rec synthesize_one_goal goal : synthesis_tree =
   let rules = choose_synthesis_rules goal in
-  let rules = eliminate_useless_rules goal rules in
-  let rules = reorder_rules goal rules in
-  let () = x_binfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
-  let rules = if !enable_i then choose_rule_interact goal rules
-    else rules in
   process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
@@ -869,7 +871,7 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] ->
-      let () = x_sinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 
@@ -917,7 +919,7 @@ let synthesize_program goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let () = x_sinfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
+    let () = x_tinfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
     let () = x_binfo_hp (add_str "iast exp" pr_iast_exp) i_exp no_pos in
     Some i_exp

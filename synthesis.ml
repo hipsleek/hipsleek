@@ -33,7 +33,7 @@ let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
-let x_sinfo_hp = if !syn_debug then x_binfo_hp else x_tinfo_hp
+
 (*********************************************************************
  * Data structures
  *********************************************************************)
