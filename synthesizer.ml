@@ -646,6 +646,7 @@ let choose_rule_return goal =
     (fun _ -> choose_rule_return_x goal) goal
 
 let choose_synthesis_rules goal : rule list =
+  let goal = simplify_goal goal in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rs = [] in
   let rs = rs @ (choose_rule_unfold_post goal) in

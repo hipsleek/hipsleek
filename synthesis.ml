@@ -1207,6 +1207,12 @@ let frame_var_formula formula var =
 
 let simplify_goal goal =
   let vars = goal.gl_vars in
+  let res = (CF.fv goal.gl_pre_cond) @ (CF.fv goal.gl_post_cond)
+            |> List.filter (fun x -> eq_str (CP.name_of_sv x) "res") in
+  let post_pf = CF.get_pure goal.gl_post_cond in
+  let res_pf = extract_var_pf post_pf res in
+  let res_vars = CP.fv res_pf in
+  let vars = vars @ res_vars in
   let n_pre = CF.simplify_formula goal.gl_pre_cond vars in
   let n_post = CF.simplify_formula goal.gl_post_cond vars in
   {goal with gl_pre_cond = n_pre;
