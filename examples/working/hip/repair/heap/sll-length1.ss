@@ -10,10 +10,10 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;
 {
-  if (x == null) return 0;
+  if (x == null) return 5;
   else {
     int k;
-    k = 3 + length(x.next);
+    k = 1 + length(x.next);
     return k;
   }
 }

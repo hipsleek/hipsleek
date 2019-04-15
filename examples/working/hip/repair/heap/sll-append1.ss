@@ -17,4 +17,5 @@ void append(node x, node y)
    } else {
        append(x.next, y);
     }
+
 }
