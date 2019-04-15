@@ -13,9 +13,4 @@ int length(node x)
 synthesize [node x]
 x::ll<n> & v_bool_13_4349 & x=null
 ~>
-emp&x=null & res=n.
-
-// synthesize [node x]
-// vbool & x=null & n = 0
-// ~>
-// x=null & n=res.
+x=null & n = res.
