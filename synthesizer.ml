@@ -114,34 +114,6 @@ let choose_rule_field_dnode dn1 dn2 var goal =
   eq_var_rules |> (Gen.BList.remove_dups_eq eq_triple)
   |> List.map mkRlBind
 
-let subtract_var var formula = match formula with
-  | CF.Base bf ->
-    let hf = bf.CF.formula_base_heap in
-    let rec helper hf = match hf with
-      | CF.DataNode dnode ->
-        let dnode_var = dnode.CF.h_formula_data_node in
-        if CP.eq_spec_var dnode_var var then CF.HEmp
-        else hf
-      | Star sf ->
-        let f1 = sf.CF.h_formula_star_h1 in
-        let f2 = sf.CF.h_formula_star_h2 in
-        let n_f1 = helper f1 in
-        let n_f2 = helper f2 in
-        Star {sf with h_formula_star_h1 = n_f1;
-                      h_formula_star_h2 = n_f2}
-      | _ -> hf in
-    let n_hf = helper hf in
-    CF.Base {bf with formula_base_heap = n_hf}
-  | _ -> formula
-
-(* let choose_assign_node goal cur_var =
- *   let other_vars = CF.fv goal.gl_post_cond
- *                   |> List.filter (fun x -> CP.mem x goal.gl_vars
- *                                            || CP.is_res_spec_var x)
- *                   |> List.filter (fun x -> not(CP.eq_sv x cur_var)) in
- *
- *   [] *)
-
 let rec choose_rassign_data goal cur_var =
   let pre,post = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "var" pr_sv) cur_var no_pos in
@@ -483,24 +455,6 @@ let choose_rule_instantiate goal =
         rli_rhs = x}) in
   exists_vars |> List.map helper |> List.concat
 
-let choose_rule_return_x goal =
-  let post = goal.gl_post_cond in
-  let post_vars = CF.fv post |> List.map CP.name_of_sv in
-  if List.exists (fun x -> eq_str x "res") post_vars then
-    let res = List.find (fun x -> eq_str (CP.name_of_sv x) "res") (CF.fv post) in
-    let is_return rule = match rule with
-      | RlAssign rl -> CP.eq_sv res rl.ra_lhs
-      | _ -> false in
-    let n_goal = {goal with gl_vars = res::goal.gl_vars} in
-    let rules = choose_rule_assign n_goal in
-    let () = x_tinfo_hp (add_str "rules" (pr_list pr_rule)) rules no_pos in
-    rules |> List.filter is_return
-  else []
-
-let choose_rule_return goal =
-  Debug.no_1 "choose_rule_return" pr_goal pr_rules
-    (fun _ -> choose_rule_return_x goal) goal
-
 let rec choose_rule_interact goal rules =
   if rules = [] then
     let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
@@ -530,7 +484,6 @@ let choose_synthesis_rules_x goal : rule list =
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_return goal) in
   let rs = rs @ choose_rule_instantiate goal in
   let rs = rs @ (choose_func_call goal) in
   let rs = eliminate_useless_rules goal rs in
@@ -783,6 +736,8 @@ let synthesize_program goal =
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
+  let res_vars = CF.fv post_cond |> List.filter CP.is_res_sv in
+  let vars = vars @ res_vars in
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
