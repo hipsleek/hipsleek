@@ -92,6 +92,8 @@ let self_sv = mk_spec_var self
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
 
+let is_res_sv = is_res_spec_var
+
 let is_tup2_typ sv = match sv with
   | SpecVar (Globals.Tup2 _,_,_) -> true
   | _ -> false

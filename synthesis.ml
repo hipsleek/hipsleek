@@ -1218,6 +1218,11 @@ let simplify_goal goal =
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
 
+let get_hf (f:CF.formula) = match f with
+  | Base bf -> bf.formula_base_heap
+  | Exists bf -> bf.formula_exists_heap
+  | Or _ -> report_error no_pos "get_hf unhandled"
+
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
