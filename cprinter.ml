@@ -508,7 +508,7 @@ let pr_sharp_angle ?(lvl=(!glob_lvl)) op f xs =
   else
     pr_args ~lvl None (Some "A") op  "<#" "#>" "," f xs
 
-(** print a sequence with cut after separator*)
+(* print a sequence with cut after separator*)
 let pr_seq ?(lvl=(!glob_lvl)) op f xs = pr_args ~lvl None (Some "A") op "[" "]" "; " f xs
 
 let pr_seq_opt ?(lvl=(!glob_lvl)) op f xs =
@@ -529,6 +529,8 @@ let pr_seq_option ?(lvl=(!glob_lvl)) op f xs = pr_args_option ~lvl None (Some "A
 
 (** print a list with cut after separator*)
 let pr_list_none ?(lvl=(!glob_lvl)) f xs = pr_args ~lvl None (Some "A") "" "" "" "," f xs
+
+let pr_list_sqr ?(lvl=(!glob_lvl)) f xs = pr_args ~lvl None (Some "A") "" "[" "]" "," f xs
 
 (** print a set with cut after separator*)
 let pr_set ?(lvl=(!glob_lvl)) f xs = pr_args ~lvl None (Some "A") "" "{" "}" "," f xs
@@ -790,7 +792,11 @@ let pr_list_of_annot_arg_posn ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_annot
 
 let pr_imm ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_imm x)
 
+let pr_typ ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_typ x)
+
 let pr_list_of_imm ?(lvl=(!glob_lvl)) xs = pr_list_none ~lvl pr_imm xs
+
+let pr_list_of_poly ?(lvl=(!glob_lvl)) xs = pr_list_sqr ~lvl pr_typ xs
 
 let pr_derv ?(lvl=(!glob_lvl)) x = wrap_pr_1 lvl fmt_string (string_of_derv x)
 
@@ -1479,6 +1485,7 @@ let rec pr_h_formula h =
                h_formula_view_unfold_num = ufn;
                h_formula_view_session_info = si;
                h_formula_view_sess_ann = sess_ann;
+               h_formula_view_poly = poly;
                h_formula_view_pos = pos} as vn) ->
     let perm_str = string_of_cperm perm in
     if (Session.is_projection si && !Globals.print_compact_projection_formula)
@@ -1503,7 +1510,8 @@ let rec pr_h_formula h =
           (* pr_formula_label_opt pid;  *)
           pr_spec_var sv;
           fmt_string "::"; (* to distinguish pred from data *)
-          pr_angle (c^ho_arg_str^perm_str^"33333") pr_view_arg params;
+          pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
+          pr_list_of_poly poly;
           pr_imm imm;
           if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
           pr_derv dr;

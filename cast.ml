@@ -2369,6 +2369,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                                F.h_formula_data_label = subnode.F.h_formula_data_label;
                                F.h_formula_data_remaining_branches = None;
                                F.h_formula_data_pruning_conditions = [];
+                               F.h_formula_data_poly = [];
                                F.h_formula_data_pos = pos}) in
       (* generate extensions for the rest of the fields *)
       let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
@@ -2392,6 +2393,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                                        F.h_formula_data_label = subnode.F.h_formula_data_label;
                                        F.h_formula_data_remaining_branches = None;
                                        F.h_formula_data_pruning_conditions = [];
+                                       F.h_formula_data_poly = [];
                                        F.h_formula_data_pos = pos}) in
               ext_h
             else
@@ -2416,6 +2418,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
                                        F.h_formula_data_label = subnode.F.h_formula_data_label;
                                        F.h_formula_data_remaining_branches = None;
                                        F.h_formula_data_pruning_conditions = [];
+                                       F.h_formula_data_poly = [];
                                        F.h_formula_data_pos = pos}) in
               let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
               let ext = F.mkStarH ext_h rest_exts pos in

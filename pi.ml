@@ -578,6 +578,7 @@ let trans_res_formula prog f =
             CF.h_formula_data_label = None;
             CF.h_formula_data_remaining_branches = None;
             CF.h_formula_data_pruning_conditions = [];
+            CF.h_formula_data_poly = [];
             CF.h_formula_data_pos = pos }
         in
         let () = Debug.ninfo_hprint (add_str "dnode" Cprinter.string_of_h_formula) dnode no_pos in

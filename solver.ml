@@ -12217,6 +12217,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
                   h_formula_data_label = pid;
                   h_formula_data_remaining_branches =r_rem_brs;
                   h_formula_data_pruning_conditions = r_p_cond;
+                  h_formula_data_poly = poly2;
                   h_formula_data_pos = pos2})
     | ViewNode ({ h_formula_view_node = p2;
                   h_formula_view_name = c2;
@@ -12226,6 +12227,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
                   h_formula_view_label = pid;
                   h_formula_view_remaining_branches = r_rem_brs;
                   h_formula_view_pruning_conditions = r_p_cond;
+                  h_formula_view_poly = poly2;
                   h_formula_view_pos = pos2}) -> (p2,c2,perm,v2,pid,r_rem_brs,r_p_cond,pos2)
     | _ -> report_error no_pos ("do_fold_w_ctx: data/view expected but instead ln2 is "^(Cprinter.string_of_h_formula ln2) ) in
   (* let () = print_string("in do_fold\n") in *)
@@ -12263,6 +12265,7 @@ and do_fold_w_ctx_x ?(root_inst=None) fold_ctx prog estate conseq ln2 vd resth2 
       h_formula_view_session_info = None;
       h_formula_view_remaining_branches = r_rem_brs;
       h_formula_view_pruning_conditions = r_p_cond;
+      h_formula_view_poly = get_node_poly ln2;
       h_formula_view_pos = pos2}) in
   (*instantiation before the fold operation,
     for existential vars:

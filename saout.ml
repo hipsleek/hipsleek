@@ -405,6 +405,7 @@ let trans_formula_hp_2_view_x iprog cprog proc_name chprels_decl hpdefs view_equ
             CF.h_formula_view_session_info = None;
             CF.h_formula_view_pruning_conditions = [];
             CF.h_formula_view_remaining_branches = None;
+            CF.h_formula_view_poly = [];
             CF.h_formula_view_pos = pos}
         | None -> hn
       end

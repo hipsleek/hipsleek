@@ -2005,6 +2005,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               CF.h_formula_data_label = None;
               CF.h_formula_data_remaining_branches = None;
               CF.h_formula_data_pruning_conditions = [];
+              CF.h_formula_data_poly = [];
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
           let vheap =
@@ -2417,6 +2418,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             CF.h_formula_data_remaining_branches = None;
             CF.h_formula_data_pruning_conditions = [];
             CF.h_formula_data_label = None;
+            CF.h_formula_data_poly = [];
             CF.h_formula_data_pos = pos}) in
         (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
         (*If this is not a lock, level_f = true*)

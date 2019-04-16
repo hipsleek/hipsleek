@@ -8283,6 +8283,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                      IF.h_formula_heap_imm_param = ann_param;
 					 IF.h_formula_heap_sess_ann = ann;
                      IF.h_formula_heap_perm = perm; (*LDK*)
+                     IF.h_formula_heap_poly_arguments = poly;
                      IF.h_formula_heap_arguments = exps;
                      IF.h_formula_heap_ho_arguments = ho_exps;
                      IF.h_formula_heap_full = full;
@@ -8413,6 +8414,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                 CF.h_formula_data_label = pi;
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
+                CF.h_formula_data_poly = poly;
                 CF.h_formula_data_pos = pos;}
             in
             (* let result_heap = x_add_1 Immutable.normalize_field_ann_heap_node result_heap in *)
@@ -8481,6 +8483,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                   CF.h_formula_view_session_info = session_info;
                   CF.h_formula_view_pruning_conditions = [];
                   CF.h_formula_view_remaining_branches = None;
+                  CF.h_formula_view_poly = poly;
                   CF.h_formula_view_pos = pos;} in
               (new_h, CF.TypeTrue, [], tl)
             )
@@ -8532,6 +8535,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula) (tlist : spec_va
                              CF.h_formula_data_label = pi;
                              CF.h_formula_data_remaining_branches = None;
                              CF.h_formula_data_pruning_conditions = [];
+                             CF.h_formula_data_poly = [];
                              CF.h_formula_data_pos = pos;} in
               (* let new_h = x_add_1 Immutable.normalize_field_ann_heap_node new_h in *)
               (new_h, CF.TypeTrue, [], tl)
@@ -11342,6 +11346,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_holes =[];
         CF.h_formula_data_derv = false;
         CF.h_formula_data_split = SPLIT0;
+        CF.h_formula_data_poly = [];
         CF.h_formula_data_pos = no_pos } in
     let p2 = CP.mkEqVarInt st_v st no_pos in
     let p = x_add_1 Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
