@@ -4410,7 +4410,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
     (conseq : struc_formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos pid : (list_context * proof) =
   (* let m = "***heap_entail_cnj_lhs_struc** " in *)
   (* let () = lemma_soundness # start_disjunct (m^x_loc) in *)
-  let fv_s = CF.struc_fv ~vartype:Global_var.var_with_heap_only conseq in
+  let fv_s = CF.struc_fv ~vartype:Vartypes.var_with_heap_only conseq in
   let impl_expl_vs = CF.collect_impl_expl_evars_context ctx_00 in
   (* let evars_rhs = CF.collect_evars_context ctx_00 in *)
   let fv_s = CP.diff_svl fv_s (impl_expl_vs(* @evars_rhs *)) in

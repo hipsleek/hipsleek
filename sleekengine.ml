@@ -1310,7 +1310,7 @@ let run_infer_one_pass itype (ivars: ident list) (iante0 : meta_formula) (iconse
   (* let _ = print_endline ("conseq: " ^ (Cprinter.string_of_struc_formula conseq)) in *)
   (* let ante,conseq = transfrom_bexpr ante conseq n_tl in *)
   (* let conseq1 = x_add meta_to_struc_formula iconseq0 false fv_idents stab in *)
-  let conseq_fvs = CF.struc_fv ~vartype:Global_var.var_with_implicit_explicit conseq in
+  let conseq_fvs = CF.struc_fv ~vartype:Vartypes.var_with_implicit_explicit conseq in
   let vs = CP.remove_dups_svl (fvs@conseq_fvs) in
   let () = Global_var.set_stk_vars vs in
   (* let conseq_post_fvs = CF.struc_post_fv conseq in *)

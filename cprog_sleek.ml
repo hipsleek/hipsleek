@@ -39,8 +39,8 @@ let cprog = Cast.cprog
 (*       Cast.prog_right_coercions = [];*\) *)
 (*     Cast. prog_barrier_decls = []} ;; *)
 
-let () = 
-  let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in 
+let () =
+  let s = new Gen.stack_pr "prog_rel_decls(CAST)" Cprinter.string_of_rel_decl (=) in
   Cast.set_prog {!cprog with prog_rel_decls = s}
 
 (* let get_sorted_view_decls () =                                   *)
@@ -49,14 +49,14 @@ let () =
 (*   vdefs                                                          *)
 let get_sorted_view_decls () = Cast.get_sorted_view_decls !cprog
 
-let update_view_decl_cprog vdef = 
+let update_view_decl_cprog vdef =
   x_add (Cast.update_view_decl ~caller:x_loc) !cprog vdef
 
-let update_view_decl_iprog_g update_scc upd_flag vdef = 
+let update_view_decl_iprog_g update_scc upd_flag vdef =
   try
     let iprog = Iast.get_iprog () in
-    let is_data c = 
-      try 
+    let is_data c =
+      try
         let _ = Iast.look_up_data_def_raw iprog.Iast.prog_data_decls c in
         true
       with _ -> false in
@@ -68,7 +68,7 @@ let update_view_decl_iprog_g update_scc upd_flag vdef =
         let body = vdef.Iast.view_formula in
         let () = y_tinfo_hp (add_str "body" Iprinter.string_of_struc_formula) body in
         let () = y_tinfo_hp (add_str "view" Iprinter.string_of_view_decl) vdef in
-        let fvars = Iformula.struc_hp_fv ~vartype:Global_var.var_with_view_only body in
+        let fvars = Iformula.struc_hp_fv ~vartype:Vartypes.var_with_view_only body in
         let fvars = List.map fst fvars in
         let () = y_tinfo_hp (add_str "fvars(view)" (pr_list pr_id)) fvars in
         let fvars2 = List.filter (fun c -> not(is_data c)) fvars in
@@ -80,7 +80,7 @@ let update_view_decl_iprog_g update_scc upd_flag vdef =
     if upd_flag then x_add Iast.update_view_decl iprog vdef
   with _ -> failwith (x_loc^" iprog not found")
 
-let update_view_decl_iprog_g update_scc upd_flag vdef = 
+let update_view_decl_iprog_g update_scc upd_flag vdef =
   let pr = fun v -> v.Iast.view_name in
   let prr = fun () -> "" in
   Debug.no_1 "update_view_decl_iprog_g" pr prr
@@ -90,7 +90,7 @@ let update_view_decl_iprog ?(update_scc=false) vdef =
   let upd_flag = true in
   x_add update_view_decl_iprog_g update_scc upd_flag vdef
 
-let update_view_decl_iprog ?(update_scc=false) vdef = 
+let update_view_decl_iprog ?(update_scc=false) vdef =
   let pr = fun v -> v.Iast.view_name in
   let prr = fun () -> "" in
   Debug.no_1 "update_view_decl_iprog" pr prr
@@ -105,13 +105,13 @@ let update_view_decl_scc_only vdef =
   let prr = fun () -> "" in
   Debug.no_1 "update_view_decl_scc_only" pr prr update_view_decl_scc_only vdef
 
-let update_view_decl_both ?(update_scc=false) vdef = 
+let update_view_decl_both ?(update_scc=false) vdef =
   let () = update_view_decl_cprog vdef in
-  let () = update_view_decl_iprog ~update_scc:update_scc  
+  let () = update_view_decl_iprog ~update_scc:update_scc
       (Rev_ast.rev_trans_view_decl vdef) in
   ()
 
-let update_view_decl_both ?(update_scc=false) vdef = 
+let update_view_decl_both ?(update_scc=false) vdef =
   let pr = fun v -> v.Cast.view_name in
   let prr = fun () -> "" in
   Debug.no_1 "update_view_decl_both" pr prr
