@@ -2965,9 +2965,9 @@ and remove_ann  (f:formula) (annot_lst : ann list) : formula =
   | []       -> f
   | annot::r -> remove_ann (remove_one_ann f annot) r
 
-and one_formula_fv (f:one_formula) : CP.spec_var list =
+and one_formula_fv ?(vartype=Vartypes.var_with_none) (f:one_formula) : CP.spec_var list =
   let base = formula_of_one_formula f in
-  let vars = fv base in
+  let vars = fv ~vartype base in
   let tid = f.formula_thread in
   (tid::vars)
 
@@ -2985,7 +2985,7 @@ and fv' ?(vartype=Vartypes.var_with_none) (f : formula) : CP.spec_var list =
         formula_base_and = a;
         formula_base_type = t }) ->
       let vars = if vartype # is_heap_only then []
-        else List.concat (List.map one_formula_fv a) @ (MCP.mfv p)
+        else List.concat (List.map (one_formula_fv ~vartype) a) @ (MCP.mfv ~vartype p)
       in
       CP.remove_dups_svl ((h_fv ~vartype:vartype h) @ vars)
     | Exists ({
@@ -16216,28 +16216,42 @@ let rec get_grp_post_rel_flag fml = match fml with
   | Or o -> merge_flag (get_grp_post_rel_flag o.formula_or_f1) (get_grp_post_rel_flag o.formula_or_f2)
   | Exists e -> if List.exists CP.is_rel_var (CP.fv (MCP.pure_of_mix e.formula_exists_pure)) then 1 else 0
 
-let rec get_pre_post_vars (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog:
+let rec get_pre_post_vars' ?(vartype=Vartypes.var_with_none) (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog:
   (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list * int) =
   match sp with
   | ECase b ->
-    let res = List.map (fun (p,s)-> add_fst (CP.fv p) (get_pre_post_vars pre_vars xpure_heap s prog)) b.formula_case_branches in
+    let res = List.map (fun (p,s)-> add_fst (CP.fv ~vartype p) (get_pre_post_vars ~vartype pre_vars xpure_heap s prog)) b.formula_case_branches in
     fold_left_6 res
   | EBase b ->
-    let base_vars = fv b.formula_struc_base in
+    let base_vars = fv ~vartype b.formula_struc_base in
     let rel_fmls = get_pre_pure_fml xpure_heap prog b.formula_struc_base in
     (match b.formula_struc_continuation with
      | None -> (base_vars,[],[],[],rel_fmls,0)
-     | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) xpure_heap l prog)))
+     | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars ~vartype (pre_vars@base_vars) xpure_heap l prog)))
   | EAssume b ->
     let f = b.formula_assume_simpl in
     let svl = b.formula_assume_vars in
     let grp_post_rel_flag = get_grp_post_rel_flag f in
     ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f),
-     (List.map CP.to_primed svl) @ (fv f),[],[],grp_post_rel_flag)
-  | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars pre_vars xpure_heap b.formula_inf_continuation prog)
+     (List.map CP.to_primed svl) @ (fv ~vartype f),[],[],grp_post_rel_flag)
+  | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars ~vartype pre_vars xpure_heap b.formula_inf_continuation prog)
   | EList b ->
-    let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars xpure_heap c prog) b in
+    let l = List.map (fun (_,c)-> get_pre_post_vars ~vartype pre_vars xpure_heap c prog) b in
     fold_left_6 l
+
+and get_pre_post_vars ?(vartype=Vartypes.var_with_none) (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog =
+  Debug.no_4
+    "get_pre_post_vars"
+    !print_svl
+    (fun _ -> "xpure_heap")
+    !print_struc_formula
+    (fun _ -> "prog")
+    (pr_hexa !print_svl !print_svl !print_svl !print_svl (pr_list !CP.print_formula) string_of_int)
+    (get_pre_post_vars' ~vartype)
+    pre_vars
+    xpure_heap
+    sp
+    prog
 
 let get_pre_post_invs_x (pre_rel_vars: CP.spec_var list) post_rel_vars get_inv_fn (sp0:struc_formula) =
   let rec helper sp lend_vnodes0=

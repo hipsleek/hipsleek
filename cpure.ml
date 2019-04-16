@@ -1416,8 +1416,8 @@ let full_name_of_spec_var (sv : spec_var) : ident =
 
 let is_void_type t = match t with | Void -> true | _ -> false
 
-let rec fv (f : formula) : spec_var list =
-  let tmp = fv_helper f in
+let rec fv ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  let tmp = fv_helper ~vartype f in
   let res = remove_dups_svl tmp in
   res
 
@@ -1430,28 +1430,28 @@ and check_dups_svl ls =
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b
 
-and fv_helper (f : formula) : spec_var list = match f with
-  | BForm (b,_) -> bfv b
-  | And (p1, p2,_) -> combine_pvars p1 p2 fv_helper
-  | Or (p1, p2, _,_) -> combine_pvars p1 p2 fv_helper
-  | Not (nf, _,_) -> fv_helper nf
+and fv_helper ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list = match f with
+  | BForm (b,_) -> bfv ~vartype b
+  | And (p1, p2,_) -> combine_pvars p1 p2 (fv_helper ~vartype)
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 (fv_helper ~vartype)
+  | Not (nf, _,_) -> fv_helper ~vartype nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
-  | AndList l -> fold_l_snd fv_helper l
+  | AndList l -> fold_l_snd (fv_helper ~vartype) l
 
 and combine_pvars p1 p2 helper = (helper p1) @ (helper p2)
 
-and all_vars_helper (f : formula) : spec_var list = match f with
-  | BForm (b,_) -> bfv b
-  | And (p1, p2,_) -> combine_pvars p1 p2 all_vars_helper
-  | Or (p1, p2, _,_) -> combine_pvars p1 p2 all_vars_helper
-  | Not (nf, _,_) -> all_vars_helper nf
+and all_vars_helper ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list = match f with
+  | BForm (b,_) -> bfv ~vartype b
+  | And (p1, p2,_) -> combine_pvars p1 p2 (all_vars_helper ~vartype)
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 (all_vars_helper ~vartype)
+  | Not (nf, _,_) -> all_vars_helper ~vartype nf
   | Forall (qid, qf, _,_)
-  | Exists (qid, qf, _,_) -> qid::(all_vars_helper qf)
-  | AndList l -> fold_l_snd all_vars_helper l
+  | Exists (qid, qf, _,_) -> qid::(all_vars_helper ~vartype qf)
+  | AndList l -> fold_l_snd (all_vars_helper ~vartype) l
 
-and all_vars (f : formula) : spec_var list =
-  let tmp = all_vars_helper f in
+and all_vars ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  let tmp = all_vars_helper ~vartype f in
   let res = remove_dups_svl tmp in
   res
 (*typ=None => choose all perm vars
@@ -1491,7 +1491,7 @@ and remove_qvar qid qf =
   let qfv = fv_helper qf in
   Gen.BList.difference_eq eq_spec_var qfv [qid]
 
-and bfv' (bf : b_formula) =
+and bfv' ?(vartype=Vartypes.var_with_none) (bf : b_formula) =
   let (pf,sl) = bf in
   match pf with
   | Frm (fv,_) -> [fv]
@@ -1546,9 +1546,12 @@ and bfv' (bf : b_formula) =
     fv1 @ fv2
   | RelForm (r, args, _) ->
     (* RelForm are assumed global *)
-    let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
     let vid = r in
-    (* vid:: *)remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+    if vartype # with_rel then
+      vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+    else
+      let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
+      remove_dups_svl (List.fold_left List.append [] (List.map afv args))
   | ImmRel (r, cond, _) ->
     let fvr = bfv (r, sl) in
     fvr
@@ -1557,11 +1560,12 @@ and bfv' (bf : b_formula) =
   | LexVar l_info ->
     List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
 
-and bfv f =
-  Debug.no_1 "bfv"
+and bfv ?(vartype=Vartypes.var_with_none) f =
+  Debug.no_1
+    "bfv"
     !print_b_formula
     !print_svl
-    bfv
+    (bfv' ~vartype)
     f
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =

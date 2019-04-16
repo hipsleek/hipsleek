@@ -698,7 +698,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
         List.fold_left (fun (pres_acc,posts_wo_rel_acc,all_posts_acc,inf_vars_acc,pre_fmls_acc,grp_post_rel_flag) proc ->
             let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag =
-              CF.get_pre_post_vars [] (x_add Cvutil.xpure_heap) (proc.proc_stk_of_static_specs # top) prog in
+              CF.get_pre_post_vars ~vartype:Vartypes.var_with_rel [] (x_add Cvutil.xpure_heap) (proc.proc_stk_of_static_specs # top) prog in
             (pres_acc@pres,posts_wo_rel_acc@posts_wo_rel,all_posts_acc@all_posts,inf_vars_acc@inf_vars,pre_fmls_acc@pre_fmls,grp_post_rel_flag)) ([],[],[],[],[],0) scc
       in
       let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
@@ -709,6 +709,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
       (*let _ = print_endline ("pre_vars!!!"^(Cprinter.string_of_typed_spec_var_list pre_vars)) in*)
       let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
       let post_vars = CP.remove_dups_svl all_posts in
+      let () = y_binfo_hp (add_str "post_vars" pr_svl) post_vars in
       try
         begin
           let proc_spec = List.hd proc_specs in
@@ -794,7 +795,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
                   (rels,rhs)
               ) pre_rel_df in
             let () = x_binfo_hp (add_str "pre_ref_df" pr_def) pre_rel_df no_pos in
-            (* let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in *)
+            let () = x_binfo_hp (add_str "post_rel_ids" pr_svl) post_rel_ids no_pos in
             (* let () = x_binfo_hp (add_str "reldefns" pr_def) reldefns no_pos in *)
             (* let () = x_binfo_hp (add_str "reldefns_from_oblgs" pr_def) reldefns_from_oblgs no_pos in *)
             (* let () = x_binfo_hp (add_str "initial reloblgs" pr_oblg) reloblgs_init no_pos in *)
