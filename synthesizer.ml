@@ -396,12 +396,10 @@ let choose_rule_numeric_x goal =
   let vars = goal.gl_vars |> List.filter is_int_var in
   let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "pre" pr_formula) pre no_pos in
-  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
   let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
-  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+  let () = x_binfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter (fun x -> (CP.is_res_spec_var x && is_int_var x)
                                      || CP.mem x vars) post_vars in
   let create_templ all_vars cur_var =
@@ -769,10 +767,8 @@ let synthesize_program goal =
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
-  let res_vars = CF.fv post_cond |> List.filter CP.is_res_sv in
-  let vars = vars @ res_vars in
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in
   let pname, i_procs = proc.Cast.proc_name, iprog.Iast.prog_proc_decls in
   let i_proc = List.find (fun x -> contains pname x.Iast.proc_name) i_procs in

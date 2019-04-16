@@ -11,6 +11,6 @@ int length(node x)
   ensures x::ll<n> & res = n;.
 
 synthesize [node x]
-x::ll<n> & v_bool_13_4349 & x=null
+ x::ll<n> & v_bool_13_4350 & x=x & x=null
 ~>
-x=null & n = res.
+ emp&x=null & n=res.
