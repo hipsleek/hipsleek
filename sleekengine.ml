@@ -3015,14 +3015,15 @@ let process_simplify (f : meta_formula) =
   with _ -> print_exc num_id
 
 let process_synthesize typed_vars pre post =
-  let type_env = List.map (fun (typ, id) ->
+  let vars_env = List.map (fun (typ, id) ->
     (id, Typeinfer.mk_spec_var_info typ)) typed_vars in
-  let _, pre_f = meta_to_formula_not_rename pre false [] type_env in
+  let pre_env, pre_f = meta_to_formula_not_rename pre false [] vars_env in
   let pre_f = Synthesis.rm_emp_formula pre_f in
+  let post_env, post_f =
+    meta_to_formula_not_rename post false [] (vars_env @ pre_env) in
+  let post_f = Synthesis.rm_emp_formula post_f in
   let pr_formula = Cprinter.string_of_formula in
   let () = x_tinfo_hp (add_str "pre: " pr_formula) pre_f no_pos in
-  let (_, post_f) = x_add meta_to_formula_not_rename post false [] [] in
-  let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
   let goal = Synt.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
