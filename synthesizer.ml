@@ -375,7 +375,7 @@ let choose_rule_unfold_pre goal =
     let pre_list = pre_list |> List.map remove_exists
                  |> List. map (fun x -> CF.simplify_formula x goal.gl_vars)in
     let () = x_tinfo_hp (add_str "nf" (pr_list pr_formula)) pre_list no_pos in
-    if pre_list = [] then []
+    if List.length pre_list != 1 then []
     else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
       [rule] in
   if has_unfold_pre goal.gl_trace then []
@@ -397,9 +397,8 @@ let choose_rule_numeric_x goal =
   let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
-  let () = x_tinfo_hp (add_str "gl_vars" pr_vars) goal.gl_vars no_pos in
   let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
-  let () = x_binfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
+  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter (fun x -> (CP.is_res_spec_var x && is_int_var x)
                                      || CP.mem x vars) post_vars in
   let create_templ all_vars cur_var =
@@ -509,8 +508,35 @@ let rec choose_rule_interact goal rules =
       let rules = chosen_rules @ other_rules in
       List.map snd rules
 
+let rm_exists_right goal =
+  let exists_vars = CF.get_exists goal.gl_post_cond in
+  let post_pf = CF.get_pure goal.gl_post_cond in
+  let post_vars = CP.fv post_pf in
+  let equal_two_vars var1 var2 =
+    let conseq = CP.mkEqVar var1 var2 no_pos in
+    SB.check_pure_entail post_pf conseq in
+  let find_equal_var var =
+    let others = post_vars |> List.filter (equal_type var) in
+    others |> List.filter (fun x -> equal_two_vars x var) in
+  let aux_fold post var =
+    let eq_vars = find_equal_var var in
+    if eq_vars = [] then post
+    else let eq_var = List.hd eq_vars in
+      let n_post = remove_exists_vars post [var] in
+      CF.subst [(var, eq_var)] n_post in
+  let n_post = List.fold_left aux_fold goal.gl_post_cond exists_vars in
+  {goal with gl_post_cond = n_post}
+
+let normalize_goal goal =
+  let goal = rm_exists_left goal in
+  let goal = rm_exists_right goal in
+
+  (* let goal = remove_redundant_vars goal in *)
+  goal
+
+
 let choose_synthesis_rules_x goal : rule list =
-  let goal = simplify_goal goal in
+  let goal = normalize_goal goal in
   let rs = [] in
   let rs = rs @ choose_rule_instantiate goal in
   let rs = rs @ (choose_rule_assign goal) in

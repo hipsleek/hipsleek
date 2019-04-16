@@ -14,6 +14,7 @@ module C = Cast
 (** Printing  **********)
 let pr_hf = Cprinter.string_of_h_formula
 let pr_formula = Cprinter.string_of_formula
+let pr_formulas = Cprinter.string_of_formula_list_ln
 let pr_exp = Cprinter.string_of_formula_exp
 let pr_var = Cprinter.string_of_spec_var
 let pr_vars = Cprinter.string_of_typed_spec_var_list
@@ -283,7 +284,7 @@ let pr_rule rule = match rule with
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlFWrite rule -> "RlFWrite\n" ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
-  | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_list pr_formula)
+  | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_formulas)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
 
@@ -1207,18 +1208,21 @@ let frame_var_formula formula var =
                         formula_exists_qvars = exists_vars}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
-let simplify_goal goal =
-  let vars = goal.gl_vars in
-  let res = (CF.fv goal.gl_pre_cond) @ (CF.fv goal.gl_post_cond)
-            |> List.filter (fun x -> eq_str (CP.name_of_sv x) "res") in
-  let post_pf = CF.get_pure goal.gl_post_cond in
-  let res_pf = extract_var_pf post_pf res in
-  let res_vars = CP.fv res_pf in
-  let vars = vars @ res_vars in
-  let n_pre = CF.simplify_formula goal.gl_pre_cond vars in
-  let n_post = CF.simplify_formula goal.gl_post_cond vars in
-  {goal with gl_pre_cond = n_pre;
-             gl_post_cond = n_post}
+let rm_exists_left goal =
+  {goal with gl_pre_cond = remove_exists goal.gl_pre_cond}
+
+(* let remove_redundant_vars goal =
+ *   let vars = goal.gl_vars in
+ *   let res = (CF.fv goal.gl_pre_cond) @ (CF.fv goal.gl_post_cond)
+ *             |> List.filter (fun x -> eq_str (CP.name_of_sv x) "res") in
+ *   let post_pf = CF.get_pure goal.gl_post_cond in
+ *   let res_pf = extract_var_pf post_pf res in
+ *   let res_vars = CP.fv res_pf in
+ *   let vars = vars @ res_vars in
+ *   let n_pre = CF.simplify_formula goal.gl_pre_cond vars in
+ *   let n_post = CF.simplify_formula goal.gl_post_cond vars in
+ *   {goal with gl_pre_cond = n_pre;
+ *              gl_post_cond = n_post} *)
 
 let get_hf (f:CF.formula) = match f with
   | Base bf -> bf.formula_base_heap
@@ -1281,25 +1285,10 @@ let compare_rule_func_call_vs_wbind r1 r2 =
   (* TODO *)
   PriEqual
 
-let compare_rule_func_call_vs_other r1 r2 =
-  match r2 with
-  | RlFuncCall r2 -> compare_rule_func_call_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_func_call_vs_assign r1 r2
-  | RlFWrite r2 -> compare_rule_func_call_vs_wbind r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-(* compare assign with others *)
-
 let compare_rule_assign_vs_func_call r1 r2 =
   negate_priority (compare_rule_func_call_vs_assign r2 r1)
 
-let compare_rule_assign_vs_assign r1 r2 =
-  (* if CP.is_res_spec_var r1.ra_lhs then PriHigh
-   * else if CP.is_res_spec_var r2.ra_lhs then PriLow *)
-  PriEqual
+let compare_rule_assign_vs_assign r1 r2 = PriEqual
 
 let compare_rule_assign_vs_wbind r1 r2 =
   (* TODO *)
@@ -1318,21 +1307,11 @@ let compare_rule_assign_vs_other r1 r2 =
     | RlInstantiate _ -> PriEqual
 
 (* compare wbind with others *)
-let compare_rule_wbind_vs_func_call r1 r2 =
-  negate_priority (compare_rule_func_call_vs_wbind r2 r1)
-
-let compare_rule_wbind_vs_assign r1 r2 =
-  negate_priority (compare_rule_assign_vs_wbind r2 r1)
-
-let compare_rule_wbind_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_wbind_vs_other r1 r2 =
+let compare_rule_fwrite_vs_other r1 r2 =
   match r2 with
-  | RlFuncCall r2 -> compare_rule_wbind_vs_func_call r1 r2
-  | RlAssign r2 -> compare_rule_wbind_vs_assign r1 r2
-  | RlFWrite r2 -> compare_rule_wbind_vs_wbind r1 r2
+  | RlFuncCall r2 -> negate_priority (compare_rule_func_call_vs_wbind r2 r1)
+  | RlAssign r2 -> negate_priority (compare_rule_assign_vs_wbind r2 r1)
+  | RlFWrite r2 -> PriEqual
   | RlFRead _ -> PriEqual
   | RlUnfoldPre _ -> PriEqual
   | RlUnfoldPost _ -> PriEqual
@@ -1342,11 +1321,12 @@ let compare_rule_wbind_vs_other r1 r2 =
 
 let compare_rule r1 r2 =
   match r1 with
-  | RlFuncCall r1 -> compare_rule_func_call_vs_other r1 r2
+  | RlFuncCall r1 -> PriEqual
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
-  | RlFWrite r1 -> compare_rule_wbind_vs_other r1 r2
+  | RlFWrite r1 -> compare_rule_fwrite_vs_other r1 r2
   | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
+  | RlUnfoldPre rule -> if List.length rule.n_pre_formulas > 1
+    then PriLow else PriEqual
   | RlUnfoldPost _ -> PriEqual
   | RlInstantiate _ -> PriEqual
 
@@ -1355,6 +1335,7 @@ let reorder_rules goal rules =
     let prio = compare_rule r1 r2 in
     match prio with
     | PriEqual -> 0
-    | PriLow -> -1
-    | PriHigh -> +1 in
+    | PriLow -> +1
+    | PriHigh -> -1 in
   List.sort cmp_rule rules
+(* List.sort sorts list increasing order *)

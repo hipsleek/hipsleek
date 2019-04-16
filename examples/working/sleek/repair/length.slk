@@ -10,7 +10,7 @@ int length(node x)
   requires x::ll<n>
   ensures x::ll<n> & res = n;.
 
-synthesize [node x]
- x::ll<n> & v_bool_13_4350 & x=x & x=null
+synthesize [node x,int k]
+ x::ll<n>@M&!(v_bool_13_7343) & x=x & x!=null
 ~>
- emp&x=null & n=res.
+ x::ll<n>@M&n=res.
