@@ -252,7 +252,7 @@ let pr_goal goal =
   let pr_svs = pr_list Cprinter.string_of_typed_spec_var in
   "synthesize " ^ (pr_svs vars) ^ "\n" ^
   (pr_formula goal.gl_pre_cond) ^ "\n" ^
-  "~> \n" ^ (pr_formula goal.gl_post_cond) ^ "."
+  "~>\n" ^ (pr_formula goal.gl_post_cond) ^ "."
 
 let pr_rule_assign rule =
   let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
@@ -353,7 +353,7 @@ let extract_var_pf pf vars =
   Debug.no_2 "extract_var_pf" pr_pf pr_vars pr_pf
     (fun _ _ -> extract_var_pf_x pf vars) pf vars
 
-let rec extract_hf_var hf var =
+let rec extract_hf_var_x hf var =
   match hf with
   | CF.DataNode dnode ->
     let dn_var = dnode.CF.h_formula_data_node in
@@ -368,17 +368,23 @@ let rec extract_hf_var hf var =
       Some (hf, [var] @ args, vnode.CF.h_formula_view_name)
     else None
   | CF.Star sf ->
-    let vf1 = extract_hf_var sf.CF.h_formula_star_h1 var in
-    let vf2 = extract_hf_var sf.CF.h_formula_star_h2 var in
+    let vf1 = extract_hf_var_x sf.CF.h_formula_star_h1 var in
+    let vf2 = extract_hf_var_x sf.CF.h_formula_star_h2 var in
     begin
       match vf1, vf2 with
       | None, None -> None
       | Some _, None -> vf1
       | None, Some _ -> vf2
       | Some _, Some _ ->
-        report_error no_pos "one var cannot appear in two heap fragments"
+        report_error no_pos "extract_hf_var: one var cannot appear in two heap fragments"
     end
   | _ -> None
+
+let extract_hf_var hf var =
+  Debug.no_2 "extract_hf_var" pr_hf pr_var (fun x -> match x with
+      | None -> "None"
+      | Some (_, vars, _) -> pr_vars vars)
+    (fun x y -> extract_hf_var_x x y) hf var
 
 let rec extract_hf_vars hf vars =
   match hf with
@@ -826,12 +832,11 @@ let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
 
 let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
-  | TVar _ -> true
   | _ -> false
 
 let equal_type var1 var2 = match CP.type_of_sv var1 with
   | Int -> is_int_var var2
-  | Named _ -> is_node_var var2
+  | Named _ | TVar _ -> is_node_var var2
   | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
 
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
@@ -910,7 +915,7 @@ let unprime_formula (formula:CF.formula) =
   CF.subst substs formula
 
 let rec has_unfold_pre trace =
-  let unfold_num = 2 in
+  let unfold_num = 1 in
   let rec aux trace num = match trace with
     | [] -> false
     | h::t -> begin
@@ -1219,6 +1224,9 @@ let get_hf (f:CF.formula) = match f with
   | Base bf -> bf.formula_base_heap
   | Exists bf -> bf.formula_exists_heap
   | Or _ -> report_error no_pos "get_hf unhandled"
+
+let is_res_sv_syn sv = match sv with
+  | CP.SpecVar (_,n,_) -> is_substr "rs" n
 
 (*********************************************************************
  * Rule utilities

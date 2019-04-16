@@ -106,7 +106,6 @@ let start_repair (iprog:I.prog_decl) =
     let () = x_tinfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
     let () = Globals.start_repair := true in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) iprog.prog_proc_decls in
-    let () = x_tinfo_hp (add_str "proc: " pr_proc) r_iproc no_pos in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let () = x_tinfo_hp (add_str "candidates" pr_exps) cands no_pos in
     let cands = List.filter (filter_cand !Typechecker.repair_loc) cands in

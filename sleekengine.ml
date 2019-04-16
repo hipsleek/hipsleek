@@ -3025,8 +3025,6 @@ let process_synthesize typed_vars pre post =
   let post_f = Synthesis.rm_emp_formula post_f in
   let () = x_tinfo_hp (add_str "post: " pr_formula) post_f no_pos in
   let svs = List.map (fun (x, y) -> CP.mk_typed_spec_var x y) typed_vars in
-  let res_vars = CF.fv post_f |> List.filter CP.is_res_sv in
-  let svs = svs @ res_vars in
   let goal = Synt.mk_goal_w_procs !cprog !cprog_proc_decls pre_f post_f svs in
   let _ = Synthesizer.synthesize_program goal in
   ()

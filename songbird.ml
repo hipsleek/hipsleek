@@ -163,9 +163,7 @@ let translate_back_type typ = match typ with
   | SBGlobals.TVoid -> Globals.Void
   | SBGlobals.TData str -> Globals.Named str
   | SBGlobals.TNull -> Globals.Named "null"
-  | _ -> report_error no_pos ("translate_back_type:"
-         ^ (SBGlobals.pr_typ typ) ^ " is not handled")
-
+  | SBGlobals.TVar num -> Globals.TVar num
 
 let translate_var_x (var: CP.spec_var): SBGlobals.var =
   let CP.SpecVar (typ, ident, primed) = var in
@@ -754,7 +752,6 @@ let translate_prog (prog:Cast.prog_decl) =
 let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
-  (* report_error no_pos "to debug entailments" *)
   let sb_ents = List.map translate_entailment entailments in
   let () = x_tinfo_hp (add_str "sb_ents" SBCast.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in

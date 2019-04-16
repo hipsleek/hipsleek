@@ -737,14 +737,12 @@ let is_substr s id =
     if (s = s_id) then true
     else false
   with _ -> false
-;;
 
 let is_dont_care_var id =
-  if is_substr "#" id 
+  if is_substr "#" id
   then true
-  (* else if is_substr "Anon_" id then true *)
   else false
-;;
+
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 

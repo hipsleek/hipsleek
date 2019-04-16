@@ -575,7 +575,6 @@ let get_current_tp_name () = name_of_tp !pure_tp
 let omega_count = ref 0
 
 let start_prover () =
-  (* print_string "\ntpdispatcher start_prover"; *)
   match !pure_tp with
   | Coq -> Coq.start ();
   | Redlog | OCRed | RM -> Redlog.start ();

@@ -87,12 +87,10 @@ let is_void_typ sv = match sv with
 let is_self_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = self
 
-let self_sv = mk_spec_var self 
+let self_sv = mk_spec_var self
 
 let is_res_spec_var sv = match sv with
   | SpecVar (_,n,_) -> n = res_name
-
-let is_res_sv = is_res_spec_var
 
 let is_tup2_typ sv = match sv with
   | SpecVar (Globals.Tup2 _,_,_) -> true
@@ -15657,3 +15655,6 @@ let rec normalize_bvar_f f = match f with
   | And (f1, f2, loc) -> And (normalize_bvar_f f1, normalize_bvar_f f2, loc)
   | Or (f1, f2, opt, loc) -> Or (normalize_bvar_f f1, normalize_bvar_f f2, opt, loc)
   | _ -> f
+
+let is_res_sv = is_res_spec_var
+
