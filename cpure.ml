@@ -2002,7 +2002,7 @@ and is_bool_bform b =
   | BVar _ -> true
   | _ -> false
 
-and is_bool_formula f = 
+and is_bool_formula f =
   match f with
   | BForm (bf, _) -> is_bool_bform bf
   | Not (f, _, _) -> is_bool_formula f

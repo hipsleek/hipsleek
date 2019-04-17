@@ -371,11 +371,14 @@ let choose_rule_unfold_pre goal =
       let vn_var = vnode.CF.h_formula_view_node in
       let base_pf = pre_list |> List.hd |> CF.get_pure in
       let cond = extract_var_pf base_pf [vn_var] in
-      let () = x_tinfo_hp (add_str "cond" pr_pf) cond no_pos in
-      let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
+      let rule = RlBranch { rb_if_pre = List.hd pre_list;
+                            rb_cond = cond;
+                            rb_else_pre = pre_list |> List.tl |> List.hd } in
       [rule]
-    else let rule = RlUnfoldPre { n_pre_formulas = pre_list } in
-      [rule] in
+    else if List.length pre_list = 1 then
+      let rule = RlUnfoldPre {n_pre = List.hd pre_list} in
+      [rule]
+    else [] in
   if has_unfold_pre goal.gl_trace then []
   else vnodes |> List.map helper |> List.concat
 
@@ -665,14 +668,15 @@ let process_func_call goal rcore : derivation =
   | _ -> mk_derivation_fail goal (RlFuncCall rcore)
 
 let process_rule_unfold_pre goal rule =
-  let n_pres = rule.n_pre_formulas in
-  let create_new_rule n_pre =
-    {goal with gl_pre_cond = n_pre;
-               gl_trace = if List.length n_pres = 1 then
-                   goal.gl_trace
-                   else goal.gl_trace @ [RlUnfoldPre rule]} in
-  let n_goals = n_pres |> List.map create_new_rule in
-  mk_derivation_subgoals goal (RlUnfoldPre rule) n_goals
+  let n_pres = rule.n_pre in
+  (* let create_new_rule n_pre =
+   *   {goal with gl_pre_cond = n_pre;
+   *              gl_trace = if List.length n_pres = 1 then
+   *                  goal.gl_trace
+   *                  else goal.gl_trace @ [RlUnfoldPre rule]} in
+   * let n_goals = n_pres |> List.map create_new_rule in *)
+  let n_goal = {goal with gl_pre_cond = rule.n_pre} in
+  mk_derivation_subgoals goal (RlUnfoldPre rule) [n_goal]
 
 let process_rule_instantiate goal rule =
   let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rule.rli_rhs in
@@ -733,6 +737,7 @@ and process_one_rule goal rule : derivation =
   | RlInstantiate rule -> process_rule_instantiate goal rule
   | RlExistsLeft rule -> process_rule_exists_left goal rule
   | RlExistsRight rule -> process_rule_exists_right goal rule
+  | RlBranch rule -> process_rule_branch goal rule
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =

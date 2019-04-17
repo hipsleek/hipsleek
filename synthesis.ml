@@ -57,6 +57,13 @@ type rule =
   | RlInstantiate of rule_instantiate
   | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
+  | RlBranch of rule_branch
+
+and rule_branch = {
+  rb_cond: CP.formula;
+  rb_if_pre: CF.formula;
+  rb_else_pre: CF.formula;
+}
 
 and rule_exists_left = {
   exists_vars : CP.spec_var list;
@@ -77,7 +84,7 @@ and rule_instantiate = {
 }
 
 and rule_unfold_pre = {
-  n_pre_formulas: CF.formula list;
+  n_pre: CF.formula;
 }
 
 and rule_unfold_post = {
@@ -299,11 +306,13 @@ let pr_rule rule = match rule with
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
   | RlFWrite rule -> "RlFWrite\n" ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
-  | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_formulas)
+  | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
   | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
+  | RlBranch rule -> "RlBranch (" ^ (pr_formula rule.rb_if_pre) ^ ", " ^
+                     (pr_formula rule.rb_else_pre)  ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -932,20 +941,13 @@ let unprime_formula (formula:CF.formula) =
   let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
   CF.subst substs formula
 
-let rec has_unfold_pre trace =
-  let unfold_num = 1 in
-  let rec aux trace num = match trace with
-    | [] -> false
-    | h::t -> begin
-        match h with
-        | RlUnfoldPre r ->
-          let num = if List.length r.n_pre_formulas = 2 then
-              num - 1 else num in
-          if num = 0 then true
-            else aux t num
-        | _ -> aux t num
-      end in
-  aux trace unfold_num
+let rec has_unfold_pre trace = match trace with
+  | [] -> false
+  | h::t -> begin
+      match h with
+      | RlUnfoldPre r -> true
+      | _ -> has_unfold_pre t
+    end
 
 let rec has_fcall_trace trace = match trace with
   | [] -> false
@@ -1274,17 +1276,9 @@ let compare_rule_assign_vs_other r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
   else PriEqual
 
-let compare_rule_unfold_pre_vs_other r1 r2 =
-  match r2 with
-  | RlUnfoldPre rule2 -> let n1 = r1.n_pre_formulas in
-    let n2 = rule2.n_pre_formulas in
-    if n1 < n2 then PriHigh else PriEqual
-  | _ -> PriEqual
-
 let compare_rule r1 r2 =
   match r1 with
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
-  | RlUnfoldPre r1 -> compare_rule_unfold_pre_vs_other r1 r2
   | _ -> PriEqual
 
 
@@ -1317,3 +1311,7 @@ let process_rule_exists_right goal rule =
   let n_goal = {goal with gl_post_cond = rule.n_post} in
   mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
 
+let process_rule_branch goal rule =
+  let if_goal = {goal with gl_pre_cond = rule.rb_if_pre} in
+  let else_goal = {goal with gl_pre_cond = rule.rb_else_pre} in
+  mk_derivation_subgoals goal (RlBranch rule) [if_goal; else_goal]
