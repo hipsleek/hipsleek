@@ -106,10 +106,12 @@ let choose_rassign_aux goal cur_var : rule list =
   let other_vars = goal.gl_vars |> List.filter filter in
   let () = x_tinfo_hp (add_str "others" pr_vars) other_vars no_pos in
   let eq_vars = List.filter (is_equal_vars goal cur_var) other_vars in
-  let mkAssign var = RlAssign {
-      ra_lhs = cur_var;
-      ra_rhs = CP.mkVar var no_pos;
-    } in
+  let mkAssign var = if CP.is_res_sv cur_var then
+      RlReturn { r_exp = CP.mkVar var no_pos}
+    else RlAssign {
+        ra_lhs = cur_var;
+        ra_rhs = CP.mkVar var no_pos;
+      } in
   eq_vars |> List.map mkAssign
 
 let choose_rule_assign_x goal : rule list =
@@ -270,37 +272,35 @@ let unify_fcall proc_decl pre_proc post_proc goal =
       let n_list = CP.remove_dups_svl list in
       List.length n_list = List.length list
     ) ss_args in
+  let aux args_substs =
+    let args = List.map fst args_substs in
+    let substs = List.map snd args_substs |> List.concat in
+    let is_cur_vars = List.for_all (fun x ->
+        List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
+    let has_res_arg = List.exists is_res_sv_syn args in
+    if is_cur_vars && not(has_res_arg) then
+      let combine_args = List.combine args proc_args in
+      let eq_args = List.for_all (fun (x,y) -> CP.eq_sv x y) combine_args in
+      if not eq_args then
+        let fc_rule = if contain_res then
+            let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
+                (CF.fv post_proc) in
+            let n_var = CP.mk_typed_sv (CP.type_of_sv res)
+                ("rs" ^ (string_of_int !res_num)) in
+            let () = res_num := !res_num + 1 in
+            RlFuncRes {
+              rfr_fname = proc_decl.Cast.proc_name;
+              rfr_params = args;
+              rfr_return = n_var;
+              rfr_substs = substs}
+          else RlFuncCall {
+            rfc_fname = proc_decl.Cast.proc_name;
+            rfc_params = args;
+            rfc_substs = substs} in
+        [fc_rule] else []
+    else [] in
   if ss_args != [] then
-    ss_args |> List.map (fun args_and_substs ->
-        let args = List.map fst args_and_substs in
-        let substs = List.map snd args_and_substs |> List.concat in
-        let is_cur_vars = List.for_all (fun x ->
-            List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
-        let has_res_arg = List.exists is_res_sv_syn args in
-        if is_cur_vars && not(has_res_arg) then
-          let combine_args = List.combine args proc_args in
-          let eq_args = List.for_all (fun (x,y) -> CP.eq_sv x y) combine_args in
-          if not eq_args then
-            let r_var = if contain_res then
-                let res = List.find (fun x -> CP.name_of_sv x = res_name)
-                    (CF.fv post_proc) in
-                let n_var = CP.mk_typed_sv (CP.type_of_sv res)
-                    ("rs" ^ (string_of_int !res_num)) in
-                let () = res_num := !res_num + 1 in
-                Some n_var
-              else None in
-            let fc_rule = {
-                rfc_func_name = proc_decl.Cast.proc_name;
-                rfc_params = args;
-                rfc_substs = substs;
-                rfc_return = r_var;
-              } in
-            [fc_rule] else []
-        else []
-      ) |> List.concat
-    |> Gen.BList.remove_dups_eq
-      (fun r1 r2 -> CP.eq_spec_var_list r1.rfc_params r2.rfc_params)
-    |> List.map (fun x -> RlFuncCall x)
+    ss_args |> List.map aux |> List.concat
   else []
 
 let choose_func_call goal =
@@ -547,8 +547,14 @@ let choose_main_rules goal =
     else rs in
   rs
 
+let choose_rule_skip goal =
+  let sk,_ = SB.check_entail goal.gl_prog goal.gl_pre_cond goal.gl_post_cond in
+  if sk then let rule = RlSkip in [rule]
+  else []
+
 let choose_synthesis_rules_x goal : rule list =
   try
+    (* let _ = choose_rule_skip goal |> raise_rules in *)
     let _ = choose_rule_exists_left goal |> raise_rules in
     let _ = choose_rule_exists_right goal |> raise_rules in
     let _ = choose_main_rules goal |> raise_rules in
@@ -585,6 +591,16 @@ let process_rule_assign goal rassign =
     else let sub_goal = {goal with gl_pre_cond = n_pre} in
       mk_derivation_subgoals goal (RlAssign rassign) [sub_goal]
 
+let process_rule_return goal rule =
+  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let lhs = goal.gl_post_cond |> CF.fv |> List.find CP.is_res_sv in
+  let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rule.r_exp no_pos in
+  let n_pre = CF.add_pure_formula_to_formula n_pf pre in
+  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+  match ent_check with
+  | true -> mk_derivation_success goal (RlReturn rule)
+  | false -> mk_derivation_fail goal (RlReturn rule)
+
 let subs_bind_write formula var field new_val data_decls =
   match (formula:CF.formula) with
   | Base bf -> let hf = bf.CF.formula_base_heap in
@@ -619,17 +635,16 @@ let process_rule_f_read goal (rule:rule_field_read) =
     let n_goal = {goal with gl_vars = vars} in
     mk_derivation_subgoals goal (RlFRead rule) [n_goal]
 
-let process_func_call goal rcore : derivation =
-  let fun_name, params = rcore.rfc_func_name, rcore.rfc_params in
+let aux_func_call goal rule fname params subst res_var =
   let proc_decl = goal.gl_proc_decls
-                  |> List.find (fun x -> eq_str x.Cast.proc_name fun_name) in
+                  |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
   let pre_proc = specs |> get_pre_cond |> rm_emp_formula in
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let fun_args = proc_decl.Cast.proc_args
                  |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
-  let substs = (List.combine fun_args params) @ rcore.rfc_substs in
+  let substs = (List.combine fun_args params) @ subst in
   let params_pre = CF.subst substs pre_proc in
   let exists_vars = CF.fv params_pre |> List.filter (fun x -> CP.not_mem x params) in
   let fresh_evars = List.map CP.mk_fresh_sv exists_vars in
@@ -644,37 +659,41 @@ let process_func_call goal rcore : derivation =
     let np_vars = CF.fv post_state in
     let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
                       |> List.exists (fun x -> x = res_name) in
-    let post_state, n_vars = if rcore.rfc_return != None then
-        let res = List.find (fun x -> CP.name_of_sv x = res_name) np_vars in
-        let n_var = Gen.unsome rcore.rfc_return in
+    let post_state, n_vars = if res_var != None then
+        let res = List.find (fun x -> eq_str (CP.name_of_sv x) res_name)
+            (CF.fv post_proc) in
+        let n_var = Gen.unsome res_var in
         let n_f = CF.subst [(res, n_var)] post_state in
         (n_f, goal.gl_vars @ [n_var])
       else post_state, goal.gl_vars in
     let post_check, _ = SB.check_entail goal.gl_prog post_state post_cond in
     if post_check then
-      mk_derivation_success goal (RlFuncCall rcore)
+      mk_derivation_success goal rule
     else
       let already_call = List.exists (fun args ->
           if (List.length args = List.length params) then
             List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
           else false
         ) !fc_args in
-      if already_call then mk_derivation_fail goal (RlFuncCall rcore)
+      if already_call then mk_derivation_fail goal rule
       else let () = fc_args := params::(!fc_args) in
         let sub_goal = {goal with gl_vars = n_vars;
-                                  gl_trace = (RlFuncCall rcore)::goal.gl_trace;
+                                  gl_trace = rule::goal.gl_trace;
                                   gl_pre_cond = post_state} in
-        mk_derivation_subgoals goal (RlFuncCall rcore) [sub_goal]
-  | _ -> mk_derivation_fail goal (RlFuncCall rcore)
+        mk_derivation_subgoals goal rule [sub_goal]
+  | _ -> mk_derivation_fail goal rule
+
+let process_func_call goal rule : derivation =
+  let fname, params = rule.rfc_fname, rule.rfc_params in
+  aux_func_call goal (RlFuncCall rule) fname params rule.rfc_substs None
+
+let process_func_res goal rule : derivation =
+  let fname, params = rule.rfr_fname, rule.rfr_params in
+  let res_var = Some rule.rfr_return in
+  aux_func_call goal (RlFuncRes rule) fname params rule.rfr_substs res_var
 
 let process_rule_unfold_pre goal rule =
   let n_pres = rule.n_pre in
-  (* let create_new_rule n_pre =
-   *   {goal with gl_pre_cond = n_pre;
-   *              gl_trace = if List.length n_pres = 1 then
-   *                  goal.gl_trace
-   *                  else goal.gl_trace @ [RlUnfoldPre rule]} in
-   * let n_goals = n_pres |> List.map create_new_rule in *)
   let n_goal = {goal with gl_pre_cond = rule.n_pre} in
   mk_derivation_subgoals goal (RlUnfoldPre rule) [n_goal]
 
@@ -729,7 +748,9 @@ and process_all_rules goal rules : synthesis_tree =
 and process_one_rule goal rule : derivation =
   match rule with
   | RlFuncCall rcore -> process_func_call goal rcore
+  | RlFuncRes rcore -> process_func_res goal rcore
   | RlAssign rassign -> process_rule_assign goal rassign
+  | RlReturn rule -> process_rule_return goal rule
   | RlFWrite fwrite -> process_rule_fwrite goal fwrite
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
@@ -738,6 +759,7 @@ and process_one_rule goal rule : derivation =
   | RlExistsLeft rule -> process_rule_exists_left goal rule
   | RlExistsRight rule -> process_rule_exists_right goal rule
   | RlBranch rule -> process_rule_branch goal rule
+  | RlSkip -> mk_derivation_success goal RlSkip
 
 and process_conjunctive_subgoals goal rule (sub_goals: goal list) : synthesis_tree =
   let rec helper goals subtrees st_cores =

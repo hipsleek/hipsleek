@@ -48,8 +48,11 @@ type priority =
 exception EPrio of priority
 
 type rule =
+  | RlSkip
   | RlFuncCall of rule_func_call
+  | RlFuncRes of rule_func_res
   | RlAssign of rule_assign
+  | RlReturn of rule_return
   | RlFWrite of rule_field_write
   | RlFRead of rule_field_read
   | RlUnfoldPre of rule_unfold_pre
@@ -92,10 +95,16 @@ and rule_unfold_post = {
 }
 
 and rule_func_call = {
-  rfc_func_name : string;
+  rfc_fname : string;
   rfc_params : CP.spec_var list;
   rfc_substs : (CP.spec_var * CP.spec_var) list;
-  rfc_return : CP.spec_var option;
+}
+
+and rule_func_res = {
+  rfr_fname : string;
+  rfr_params : CP.spec_var list;
+  rfr_substs : (CP.spec_var * CP.spec_var) list;
+  rfr_return : CP.spec_var;
 }
 
 and rule_field_write = {
@@ -113,6 +122,10 @@ and rule_field_read = {
 and rule_assign = {
   ra_lhs : CP.spec_var;
   ra_rhs : CP.exp;
+}
+
+and rule_return = {
+  r_exp : CP.exp
 }
 
 type goal = {
@@ -279,11 +292,16 @@ let pr_goal goal =
 
 let pr_rule_assign rule =
   let lhs, rhs = rule.ra_lhs, rule.ra_rhs in
-  (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (Cprinter.string_of_formula_exp rhs)
+  (Cprinter.string_of_typed_spec_var lhs) ^ " = " ^ (pr_exp rhs)
 
 let pr_func_call rule =
-  let fc_name = rule.rfc_func_name in
+  let fc_name = rule.rfc_fname in
   let args = rule.rfc_params |> (pr_list Cprinter.string_of_sv) in
+  fc_name ^ "(" ^ args ^ ")"
+
+let pr_func_res rule =
+  let fc_name = rule.rfr_fname in
+  let args = rule.rfr_params |> (pr_list Cprinter.string_of_sv) in
   fc_name ^ "(" ^ args ^ ")"
 
 let pr_rule_bind rule =
@@ -302,8 +320,11 @@ let pr_var_init rule =
   "(" ^ (pr_var rule.rvi_var) ^ ", " ^ (pr_exp rule.rvi_rhs) ^ ")"
 
 let pr_rule rule = match rule with
+  | RlSkip -> "RlSkip"
   | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
+  | RlFuncRes fc -> "RlFuncRes\n" ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
+  | RlReturn rule -> "RlReturn\n" ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
   | RlFWrite rule -> "RlFWrite\n" ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
@@ -1063,23 +1084,18 @@ let mkAssign exp1 exp2 = I.Assign {
     I.exp_assign_pos = no_pos}
 
 let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
-  | RlUnfoldPost _  | RlInstantiate _
+  | RlUnfoldPost _  | RlInstantiate _ | RlExistsLeft _ | RlExistsRight _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
-    if CP.is_res_spec_var lhs then
-      I.Return {
-        exp_return_val = Some c_exp;
-        exp_return_path_id = None;
-        exp_return_pos = no_pos
-      }
-    else
-      let assgn = mkAssign (mkVar lhs) c_exp in
-      let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-      if st_code = None then assgn
-      else let st_code = Gen.unsome st_code in
-        mkSeq assgn st_code
+    let assgn = mkAssign (mkVar lhs) c_exp in
+      aux_subtrees st assgn
+  | RlReturn rule -> let c_exp = exp_to_iast rule.r_exp in
+    I.Return {
+      exp_return_val = Some c_exp;
+      exp_return_path_id = None;
+      exp_return_pos = no_pos}
   | RlFWrite rbind ->
     let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
     let rhs = rbind.rfw_value in
@@ -1090,11 +1106,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         exp_member_path_id = None;
         exp_member_pos = no_pos
       } in
-    let bind = mkAssign exp_mem rhs_var in
-    let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-    if st_code = None then bind
-    else let st_code = Gen.unsome st_code in
-      mkSeq bind st_code
+    let bind = mkAssign exp_mem rhs_var in aux_subtrees st bind
   | RlFRead rule -> let lhs = rule.rfr_value in
     let bvar, (typ, f_name) = rule.rfr_bound_var, rule.rfr_field in
     let exp_decl = I.VarDecl {
@@ -1117,31 +1129,38 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
         exp_bind_body = body;
         exp_bind_path_id = None;
         exp_bind_pos = no_pos} in
-    let seq = mkSeq exp_decl bind in
-    let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-    if st_code = None then seq
-    else let st_code = Gen.unsome st_code in
-      mkSeq seq st_code
+    let seq = mkSeq exp_decl bind in aux_subtrees st seq
   | RlFuncCall rule ->
     let args = rule.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
-        exp_call_nrecv_method = rule.rfc_func_name;
+        exp_call_nrecv_method = rule.rfc_fname;
         exp_call_nrecv_lock = None;
         exp_call_nrecv_ho_arg = None;
         exp_call_nrecv_arguments = args;
         exp_call_nrecv_path_id = None;
         exp_call_nrecv_pos = no_pos} in
-    if rule.rfc_return = None then fcall
-    else let rvar = Gen.unsome rule.rfc_return in
-      let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
-                          I.exp_var_pos = no_pos} in
-      let asgn = mkAssign (mkVar rvar) fcall in
-      let seq = mkSeq r_var asgn in
-      let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-      if st_code = None then seq
-      else let st_code = Gen.unsome st_code in
-        mkSeq seq st_code
+    aux_subtrees st fcall
+  | RlFuncRes rule ->
+    let args = rule.rfr_params |> List.map mkVar in
+    let fcall = Iast.CallNRecv {
+        exp_call_nrecv_method = rule.rfr_fname;
+        exp_call_nrecv_lock = None;
+        exp_call_nrecv_ho_arg = None;
+        exp_call_nrecv_arguments = args;
+        exp_call_nrecv_path_id = None;
+        exp_call_nrecv_pos = no_pos} in
+    let rvar = rule.rfr_return in
+    let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
+                        I.exp_var_pos = no_pos} in
+    let asgn = mkAssign (mkVar rvar) fcall in
+    let seq = mkSeq r_var asgn in aux_subtrees st seq
   | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
+
+and aux_subtrees st cur_codes =
+  let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
+  if st_code = None then cur_codes
+  else let st_code = Gen.unsome st_code in
+    mkSeq cur_codes st_code
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
@@ -1315,3 +1334,4 @@ let process_rule_branch goal rule =
   let if_goal = {goal with gl_pre_cond = rule.rb_if_pre} in
   let else_goal = {goal with gl_pre_cond = rule.rb_else_pre} in
   mk_derivation_subgoals goal (RlBranch rule) [if_goal; else_goal]
+
