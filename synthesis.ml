@@ -48,20 +48,22 @@ type priority =
 exception EPrio of priority
 
 type rule =
-  | RlSkip
-  | RlFuncCall of rule_func_call
-  | RlFuncRes of rule_func_res
-  | RlAssign of rule_assign
-  | RlReturn of rule_return
-  | RlFWrite of rule_field_write
-  | RlFRead of rule_field_read
-  | RlUnfoldPre of rule_unfold_pre
-  | RlUnfoldPost of rule_unfold_post
-  | RlInstantiate of rule_instantiate
   | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
-  | RlBranch of rule_branch
+  | RlUnfoldPre of rule_unfold_pre
+  | RlUnfoldPost of rule_unfold_post
 
+  | RlInstantiate of rule_instantiate
+
+  | RlSkip
+  | RlAssign of rule_assign
+  | RlReturn of rule_return
+  | RlBranch of rule_branch
+  | RlFRead of rule_field_read
+  | RlFWrite of rule_field_write
+  | RlFuncCall of rule_func_call
+  | RlFuncRes of rule_func_res
+ 
 and rule_branch = {
   rb_cond: CP.formula;
   rb_if_pre: CF.formula;
@@ -72,7 +74,7 @@ and rule_exists_left = {
   exists_vars : CP.spec_var list;
 }
 
-and rule_exists_right = {
+nand rule_exists_right = {
   n_post: CF.formula;
 }
 
