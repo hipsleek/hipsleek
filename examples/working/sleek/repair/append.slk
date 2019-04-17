@@ -11,14 +11,21 @@ void append(node x, node y)
   requires x::ll<n1> * y::ll<n2> & x!=null
   ensures (exists n: x::ll<n> & n = n1 + n2);.
 
-// synthesize [node x,node y]
-//  x::node<Anon_4393,q_4394>@M * q_4394::ll<flted_7_4392>@M * y::ll<n2>@M&
-// v_bool_14_4377 & y=y & x=x & x!=null & flted_7_4392+1=n1 & q_4394=null
+// synthesize [node x, node y]
+// x::ll<n1> * y::ll<n2> & x!=null
 // ~>
-//  (exists f_r_4415: x::ll<f_r_4415>@M&f_r_4415=flted_7_4392+n2+1).
+// x::ll<n1+n2>.
 
-synthesize [node x,node y]
- x::node<Anon_4396,q_4397>@M * q_4397::ll<flted_8_4395>@M * y::ll<n2>@M&
-!(v_bool_15_4380) & y=y & x=x & x!=null & flted_8_4395+1=n1 & q_4397!=null
+// synthesize [node q_63,node x,node y]
+//  x::node<Anon_62,q_63>@M * y::ll<n2>@M&
+// x!=null & flted_7_61+1=n1 & q_63=null & flted_7_61=0
+// ~>
+//  (exists flted_17_57: x::ll<flted_17_57>@M&flted_17_57=n2+n1).
+// okay
+
+synthesize [node q_63,node x,node y]
+ q_63::node<Anon_77,q_78> * q_78::ll<flted_7_76> * 
+ x::node<Anon_62,q_63> * y::ll<n2>&
+x!=null & flted_7_61+1=n1 & flted_7_76+1=flted_7_61
 ~>
- (exists f_r_4411: x::ll<f_r_4411>@M&f_r_4411=flted_8_4395+n2+1).
+ (exists flted_17_57: x::ll<flted_17_57>@M&flted_17_57=n2+n1).

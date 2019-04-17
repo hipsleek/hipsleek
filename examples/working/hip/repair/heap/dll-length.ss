@@ -9,7 +9,7 @@ dll<pr, n> == emp & self=null & n = 0
 
 int length(node2 x)
   requires x::dll<prlnk, n>
-  ensures res = n;
+  ensures x::dll<prlnk, n> & res = n;
 {
 
   if (x==null) return 2;

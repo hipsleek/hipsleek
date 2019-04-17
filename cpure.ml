@@ -31,7 +31,7 @@ let mk_typed_spec_var t id = SpecVar (t,id,Unprimed)
 
 let mk_typed_sv = mk_typed_spec_var
 
-let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name 
+let mk_zero = mk_typed_spec_var Globals.null_type Globals.null_name
 
 let is_zero s = s==mk_zero
 
@@ -39,16 +39,13 @@ let is_zero_sem (SpecVar (_,s,_)) = (s=Globals.null_name)
 
 let get_unprime (SpecVar(_,id,_)) = id
 
-let view_args_map:(string,spec_var list) Hashtbl.t 
-  = Hashtbl.create 10
+let view_args_map:(string,spec_var list) Hashtbl.t = Hashtbl.create 10
 (* immutability annotations *)
 type ann = ConstAnn of heap_ann
          | PolyAnn of spec_var
          | TempAnn of ann
-         | TempRes of (ann * ann) (* | Norm of (ann * ann) *)
+         | TempRes of (ann * ann)
          | NoAnn
-
-(* type view_arg = SVArg of spec_var | AnnArg of ann *)
 
 (* annotation argument type *)
 type annot_arg = ImmAnn of ann
@@ -74,8 +71,6 @@ let is_inter_deference_spec_var sv = match sv with
     			diensional array, but we need to use nested arrays.
     			It seems inefficient to me; but simpler to do!
     	 *)
-(* | Array of typ  *)
-
 let is_arr_typ sv = match sv with
   | SpecVar(Array _,_,_) -> true
   | _ -> false

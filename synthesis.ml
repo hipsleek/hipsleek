@@ -55,6 +55,16 @@ type rule =
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlInstantiate of rule_instantiate
+  | RlExistsLeft of rule_exists_left
+  | RlExistsRight of rule_exists_right
+
+and rule_exists_left = {
+  exists_vars : CP.spec_var list;
+}
+
+and rule_exists_right = {
+  n_post: CF.formula;
+}
 
 and rule_vinit = {
   rvi_var: CP.spec_var;
@@ -145,6 +155,11 @@ and synthesis_tree_status =
   | StValid of synthesis_tree_core
   | StUnkn of string
 
+(*****************************************************************)
+(*******************         Exception         *******************)
+exception ERules of rule list
+
+let raise_rules rs = if rs != [] then raise (ERules rs) else ()
 
 (*********************************************************************
  * Constructors
@@ -287,6 +302,8 @@ let pr_rule rule = match rule with
   | RlUnfoldPre rule -> "RlUnfoldPre\n" ^ (rule.n_pre_formulas |> pr_formulas)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
+  | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
+  | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -921,12 +938,14 @@ let rec has_unfold_pre trace =
     | [] -> false
     | h::t -> begin
         match h with
-        | RlUnfoldPre _ -> if num = 1 then true
-            else aux t (num-1)
+        | RlUnfoldPre r ->
+          let num = if List.length r.n_pre_formulas = 2 then
+              num - 1 else num in
+          if num = 0 then true
+            else aux t num
         | _ -> aux t num
       end in
   aux trace unfold_num
-
 
 let rec has_fcall_trace trace = match trace with
   | [] -> false
@@ -1120,7 +1139,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
       if st_code = None then seq
       else let st_code = Gen.unsome st_code in
         mkSeq seq st_code
-  (* | _ -> report_error no_pos "synthesize_st_core: this case unhandled" *)
+  | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and synthesize_subtrees subtrees = match subtrees with
   | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
@@ -1208,9 +1227,6 @@ let frame_var_formula formula var =
                         formula_exists_qvars = exists_vars}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
-let rm_exists_left goal =
-  {goal with gl_pre_cond = remove_exists goal.gl_pre_cond}
-
 (* let remove_redundant_vars goal =
  *   let vars = goal.gl_vars in
  *   let res = (CF.fv goal.gl_pre_cond) @ (CF.fv goal.gl_post_cond)
@@ -1238,18 +1254,6 @@ let is_res_sv_syn sv = match sv with
 
 (* check useless *)
 
-let is_rule_func_call_useless r =
-  (* TODO *)
-  true
-
-let is_rule_asign_useless r =
-  (* TODO *)
-  true
-
-let is_rule_bind_useless r =
-  (* TODO *)
-  true
-
 let is_rule_fread_useless goal r =
   let var = r.rfr_value in
   let post_vars = CF.fv goal.gl_post_cond in
@@ -1263,72 +1267,26 @@ let is_rule_fread_useless goal r =
 let eliminate_useless_rules goal rules =
   List.filter (fun rule ->
     match rule with
-    | RlFuncCall r -> is_rule_func_call_useless r
-    | RlAssign r -> is_rule_asign_useless r
-    | RlFWrite r -> is_rule_bind_useless r
     | RlFRead r -> is_rule_fread_useless goal r
-    | RlInstantiate _ -> true
-    | RlUnfoldPost _ -> true
-    | RlUnfoldPre _ -> true) rules
-
-(* compare func_call with others *)
-
-let compare_rule_func_call_vs_func_call r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_func_call_vs_assign r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_func_call_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
-
-let compare_rule_assign_vs_func_call r1 r2 =
-  negate_priority (compare_rule_func_call_vs_assign r2 r1)
-
-let compare_rule_assign_vs_assign r1 r2 = PriEqual
-
-let compare_rule_assign_vs_wbind r1 r2 =
-  (* TODO *)
-  PriEqual
+    | _ -> true) rules
 
 let compare_rule_assign_vs_other r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
-  else
-    match r2 with
-    | RlFuncCall r2 -> compare_rule_assign_vs_func_call r1 r2
-    | RlAssign r2 -> compare_rule_assign_vs_assign r1 r2
-    | RlFWrite r2 -> compare_rule_assign_vs_wbind r1 r2
-    | RlFRead _ -> PriEqual
-    | RlUnfoldPre _ -> PriEqual
-    | RlUnfoldPost _ -> PriEqual
-    | RlInstantiate _ -> PriEqual
+  else PriEqual
 
-(* compare wbind with others *)
-let compare_rule_fwrite_vs_other r1 r2 =
+let compare_rule_unfold_pre_vs_other r1 r2 =
   match r2 with
-  | RlFuncCall r2 -> negate_priority (compare_rule_func_call_vs_wbind r2 r1)
-  | RlAssign r2 -> negate_priority (compare_rule_assign_vs_wbind r2 r1)
-  | RlFWrite r2 -> PriEqual
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre _ -> PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
-
-(* reordering rules *)
+  | RlUnfoldPre rule2 -> let n1 = r1.n_pre_formulas in
+    let n2 = rule2.n_pre_formulas in
+    if n1 < n2 then PriHigh else PriEqual
+  | _ -> PriEqual
 
 let compare_rule r1 r2 =
   match r1 with
-  | RlFuncCall r1 -> PriEqual
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
-  | RlFWrite r1 -> compare_rule_fwrite_vs_other r1 r2
-  | RlFRead _ -> PriEqual
-  | RlUnfoldPre rule -> if List.length rule.n_pre_formulas > 1
-    then PriLow else PriEqual
-  | RlUnfoldPost _ -> PriEqual
-  | RlInstantiate _ -> PriEqual
+  | RlUnfoldPre r1 -> compare_rule_unfold_pre_vs_other r1 r2
+  | _ -> PriEqual
+
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =
@@ -1339,3 +1297,23 @@ let reorder_rules goal rules =
     | PriHigh -> -1 in
   List.sort cmp_rule rules
 (* List.sort sorts list increasing order *)
+
+(*********************************************************************
+ * Normalization rules
+ *********************************************************************)
+
+let choose_rule_exists_left goal =
+  let vars = CF.get_exists goal.gl_pre_cond in
+  if vars = [] then []
+  else let rule = RlExistsLeft { exists_vars = vars} in
+    [rule]
+
+let process_rule_exists_left goal rule =
+  let n_pre = remove_exists_vars goal.gl_pre_cond rule.exists_vars in
+  let n_goal = {goal with gl_pre_cond = n_pre} in
+  mk_derivation_subgoals goal (RlExistsLeft rule) [n_goal]
+
+let process_rule_exists_right goal rule =
+  let n_goal = {goal with gl_post_cond = rule.n_post} in
+  mk_derivation_subgoals goal (RlExistsRight rule) [n_goal]
+

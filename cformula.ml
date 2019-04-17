@@ -284,11 +284,9 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_derv : bool;
                         h_formula_view_split : split_ann;
                         h_formula_view_imm : ann;
-                        (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_ho_arguments : rflow_formula list;
-                        (* h_formula_view_ho_arguments : rflow_struc_formula list; *)
                         h_formula_view_annot_arg : (CP.annot_arg * int) list;
                         h_formula_view_args_orig : (CP.view_arg  * int) list; (* serves as a map for view_arguments and view_annot_arg (their initial position) *)
                         h_formula_view_modes : mode list;
@@ -297,11 +295,10 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                            then c is in h_formula_view_origins. Used to avoid loopy coercions *)
                         h_formula_view_origins : ident list;
                         h_formula_view_original : bool;
-                        h_formula_view_lhs_case : bool; (* to allow LHS case analysis prior to unfolding and lemma *)
+                        h_formula_view_lhs_case : bool; (* to allow LHS case
+                        analysis prior to unfolding and lemma *)
                         (* WN : why is this lhs_case analysis needed?? *)
                         h_formula_view_unfold_num : int; (* to prevent infinite unfolding *)
-                        (* h_formula_view_orig_fold_num : int; (\* depth of originality for folding *\) *)
-                        (* used to indicate a specialised view *)
                         h_formula_view_remaining_branches :  (formula_label list) option;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
