@@ -398,8 +398,6 @@ let choose_rule_numeric_x goal =
   let post_vars = CF.fv goal.gl_post_cond in
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
-  let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
-  let () = x_tinfo_hp (add_str "post vars" pr_vars) post_vars no_pos in
   let vars_lhs = List.filter (fun x -> (CP.is_res_spec_var x && is_int_var x)
                                      || CP.mem x vars) post_vars in
   let create_templ all_vars cur_var =
@@ -407,21 +405,21 @@ let choose_rule_numeric_x goal =
     let var_formula = extract_var_f post cur_var in
     match var_formula with
     | Some var_f ->
-      let () = x_tinfo_hp (add_str "nf" pr_formula) var_f no_pos in
       let pure_pre, var_pf = CF.get_pure pre, CF.get_pure var_f in
       let tmpl_args = List.map (fun x -> CP.mkVar x no_pos) other_vars in
       let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
       let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
       let n_pre = CP.mkAnd pure_pre n_pf no_pos in
-      let () = x_tinfo_hp (add_str "n_pre" pr_pf) n_pre no_pos in
-      let () = x_tinfo_hp (add_str "n_post" pr_pf) var_pf no_pos in
       let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
       begin
         match defn with
-        | Some def -> let rule = RlAssign {
-            ra_lhs = cur_var;
-            ra_rhs = def;
-          } in [rule]
+        | Some def ->
+          let rule = if CP.is_res_sv cur_var then
+              RlReturn { r_exp = def}
+            else RlAssign {
+                ra_lhs = cur_var;
+                ra_rhs = def;
+              } in [rule]
         | _ -> []
       end
     | None -> [] in
@@ -563,24 +561,8 @@ let process_rule_assign goal rcore =
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rhs no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
   let post_vars = CF.fv post in
-  let () = x_tinfo_hp (add_str "n_pre" pr_formula) n_pre no_pos in
-  if List.exists CP.is_res_spec_var post_vars then
-    if CP.is_res_spec_var lhs then
-      let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
-      match ent_check with
-      | true -> mk_derivation_success goal (RlAssign rcore)
-      | false -> mk_derivation_fail goal (RlAssign rcore)
-    else
-      let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
-      match ent_check with
-      | true -> mk_derivation_fail goal (RlAssign rcore)
-      | false -> let sub_goal = {goal with gl_pre_cond = n_pre} in
-        mk_derivation_subgoals goal (RlAssign rcore) [sub_goal]
-  else
-    let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
-    if ent_check then mk_derivation_success goal (RlAssign rcore)
-    else let sub_goal = {goal with gl_pre_cond = n_pre} in
-      mk_derivation_subgoals goal (RlAssign rcore) [sub_goal]
+  let sub_goal = {goal with gl_pre_cond = n_pre} in
+  mk_derivation_subgoals goal (RlAssign rcore) [sub_goal]
 
 let process_rule_return goal rcore =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
