@@ -543,7 +543,7 @@ let choose_rule_skip goal =
 
 let choose_synthesis_rules_x goal : rule list =
   try
-    (* let _ = choose_rule_skip goal |> raise_rules in *)
+    let _ = choose_rule_skip goal |> raise_rules in
     let _ = choose_rule_exists_left goal |> raise_rules in
     let _ = choose_rule_exists_right goal |> raise_rules in
     let _ = choose_main_rules goal |> raise_rules in
