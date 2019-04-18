@@ -1288,7 +1288,20 @@ let is_res_sv_syn sv = match sv with
  * Rule utilities
  *********************************************************************)
 
-(* check useless *)
+let rec is_fwrite_called trace rcore = match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlFWrite r ->
+        let (t1, n1) = rcore.rfw_field in
+        let (t2, n2) = r.rfw_field in
+        let compare = CP.eq_sv rcore.rfw_bound_var r.rfw_bound_var &&
+                      t1 = t2 && n1 = n2 in
+        if compare then true
+        else is_fwrite_called tail rcore
+      | _ -> is_fwrite_called tail rcore
+    end
 
 let is_rule_fread_useless goal r =
   let var = r.rfr_value in

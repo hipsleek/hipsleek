@@ -143,7 +143,7 @@ let choose_fwrite_dnode dn1 dn2 var goal =
   let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
   let () = x_tinfo_hp (add_str "triple" string_of_int) (List.length triple)
       no_pos in
-  let mkRlBind (var, field, n_var) = RlFWrite {
+  let mkRlBind (var, field, n_var) = {
       rfw_bound_var = var;
       rfw_field = field;
       rfw_value = n_var;
@@ -189,8 +189,6 @@ let rec choose_fwrite_data goal cur_var =
     let f_var2 = extract_var_f post cur_var in
     if f_var1 != None && f_var2 != None then
       let f_var1, f_var2 = Gen.unsome f_var1, Gen.unsome f_var2 in
-      let () = x_tinfo_hp (add_str "fvar1" pr_formula) f_var1 no_pos in
-      let () = x_tinfo_hp (add_str "fvar2" pr_formula) f_var2 no_pos in
       aux f_var1 f_var2 goal
     else []
   | CF.Base _, CF.Or disjs ->
@@ -205,6 +203,8 @@ let rec choose_fwrite_data goal cur_var =
 let choose_rule_fwrite goal =
   let vars = goal.gl_vars |> List.filter is_node_var in
   vars |> List.map (choose_fwrite_data goal) |> List.concat
+  |> List.filter (fun x -> not(is_fwrite_called goal.gl_trace x))
+  |> List.map (fun x -> RlFWrite x)
 
 let is_same_shape (f1:CF.formula) (f2:CF.formula) =
   let check_hf (hf1:CF.h_formula) (hf2:CF.h_formula) =
@@ -598,16 +598,15 @@ let process_rule_fwrite goal rcore =
   let pre, var = goal.gl_pre_cond, rcore.rfw_bound_var in
   let field, prog = rcore.rfw_field, goal.gl_prog in
   let rhs, data_decls = rcore.rfw_value, prog.prog_data_decls in
-  let n_post = subs_fwrite pre var field rhs data_decls in
-  let () = x_tinfo_hp (add_str "after applied:" pr_formula) n_post no_pos in
-  let ent_check,_ = SB.check_entail goal.gl_prog n_post goal.gl_post_cond in
-  match ent_check with
-  | true -> mk_derivation_success goal (RlFWrite rcore)
-  | false -> mk_derivation_fail goal (RlFWrite rcore)
+  let n_pre = subs_fwrite pre var field rhs data_decls in
+  let n_goal = {goal with gl_pre_cond = n_pre;
+                          gl_trace = (RlFWrite rcore)::goal.gl_trace} in
+  mk_derivation_subgoals goal (RlFWrite rcore) [n_goal]
 
-let process_rule_f_read goal rcore =
+let process_rule_fread goal rcore =
     let vars = [rcore.rfr_value] @ goal.gl_vars |> CP.remove_dups_svl in
-    let n_goal = {goal with gl_vars = vars} in
+    let n_goal = {goal with gl_vars = vars;
+                            gl_trace = (RlFRead rcore)::goal.gl_trace} in
     mk_derivation_subgoals goal (RlFRead rcore) [n_goal]
 
 let aux_func_call goal rule fname params subst res_var =
@@ -724,7 +723,7 @@ and process_one_rule goal rule : derivation =
   | RlFWrite rcore -> process_rule_fwrite goal rcore
   | RlUnfoldPre rcore -> process_rule_unfold_pre goal rcore
   | RlUnfoldPost rcore -> process_rule_unfold_post goal rcore
-  | RlFRead rcore -> process_rule_f_read goal rcore
+  | RlFRead rcore -> process_rule_fread goal rcore
   | RlFramePred rcore -> process_rule_frame_pred goal rcore
   | RlExistsLeft rcore -> process_rule_exists_left goal rcore
   | RlExistsRight rcore -> process_rule_exists_right goal rcore
