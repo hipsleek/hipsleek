@@ -281,7 +281,10 @@ let pr_cast_exp_opt exp = match exp with
   | Some e -> Cprinter.string_of_exp e
 
 let pr_iast_exp = Iprinter.string_of_exp_repair
-let pr_cast_exp = Cprinter.string_of_exp
+let pr_iast_exp_opt = Iprinter.string_of_exp_repair
+let pr_cast_exp exp = match exp with
+  | None -> "None"
+  | Some e -> Cprinter.string_of_exp e
 
 let pr_iast_exp_opt exp = match exp with
   | None -> "None"
@@ -1089,19 +1092,21 @@ let mkAssign exp1 exp2 = I.Assign {
     I.exp_assign_path_id = None;
     I.exp_assign_pos = no_pos}
 
-let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
-  | RlUnfoldPost _  | RlFramePred _ | RlExistsLeft _ | RlExistsRight _
-  | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
+let rec synthesize_st_core st : Iast.exp option=
+  match st.stc_rule with
+  | RlSkip -> None
+  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _
+  | RlUnfoldPost _ | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
     let assgn = mkAssign (mkVar lhs) c_exp in
-      aux_subtrees st assgn
+    aux_subtrees st assgn
   | RlReturn rule -> let c_exp = exp_to_iast rule.r_exp in
-    I.Return {
+    Some (I.Return {
       exp_return_val = Some c_exp;
       exp_return_path_id = None;
-      exp_return_pos = no_pos}
+      exp_return_pos = no_pos})
   | RlFWrite rbind ->
     let bvar, (typ, f_name) = rbind.rfw_bound_var, rbind.rfw_field in
     let rhs = rbind.rfw_value in
@@ -1118,7 +1123,7 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
     let exp_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
-        exp_var_decl_pos = no_pos;
+       exp_var_decl_pos = no_pos;
       } in
     let bound_var = mkVar bvar in
     let mem_var = Iast.Member {
@@ -1163,21 +1168,25 @@ let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
   | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and aux_subtrees st cur_codes =
-  let st_code = synthesize_subtrees_wrapper st.stc_subtrees in
-  if st_code = None then cur_codes
-  else let st_code = Gen.unsome st_code in
-    mkSeq cur_codes st_code
+  let st_code = synthesize_subtrees st.stc_subtrees in
+  match st_code with
+  | None -> Some cur_codes
+  | Some st_code ->
+    let seq = mkSeq cur_codes st_code in
+    Some seq
 
 and synthesize_subtrees subtrees = match subtrees with
-  | [] -> report_error no_pos "couldn't be emptyxxxxxxxxx"
+  | [] -> None
   | [h] -> synthesize_st_core h
   | h::t -> let fst = synthesize_st_core h in
-    let snd = synthesize_subtrees t in
-    mkSeq fst snd
-
-and synthesize_subtrees_wrapper subtrees = match subtrees with
-  | [] -> None
-  | _ -> Some (synthesize_subtrees subtrees)
+    begin
+      match fst with
+      | Some fst ->
+        let snd = synthesize_subtrees t in
+        (match snd with | None -> None
+                        | Some snd -> Some (mkSeq fst snd))
+      | None -> None
+    end
 
 let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
   | Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
