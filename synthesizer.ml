@@ -140,9 +140,8 @@ let choose_fwrite_dnode dn1 dn2 var goal =
   let pre_post = List.combine bef_args aft_args in
   let fields = List.map fst data.Cast.data_fields in
   let triple = List.combine pre_post fields in
-  let triple = List.filter (fun ((pre,post),_) -> not(CP.eq_spec_var pre post)) triple in
-  let () = x_tinfo_hp (add_str "triple" string_of_int) (List.length triple)
-      no_pos in
+  let triple = List.filter (fun ((pre,post),_) -> CP.eq_sv pre post
+                                                |> negate) triple in
   let mkRlBind (var, field, n_var) = {
       rfw_bound_var = var;
       rfw_field = field;
@@ -151,7 +150,6 @@ let choose_fwrite_dnode dn1 dn2 var goal =
   let helper dif_field =
     let pre_post = fst dif_field in
     let n_var = snd pre_post in
-    let () = x_tinfo_hp (add_str "var" (pr_pair pr_var pr_var)) pre_post no_pos in
     let field = snd dif_field in
     if List.exists (fun x -> CP.eq_sv x n_var) goal.gl_vars then
       [(var,field, n_var)]
@@ -203,7 +201,7 @@ let rec choose_fwrite_data goal cur_var =
 let choose_rule_fwrite goal =
   let vars = goal.gl_vars |> List.filter is_node_var in
   vars |> List.map (choose_fwrite_data goal) |> List.concat
-  |> List.filter (fun x -> not(is_fwrite_called goal.gl_trace x))
+  |> List.filter (fun x -> is_fwrite_called goal.gl_trace x |> negate)
   |> List.map (fun x -> RlFWrite x)
 
 let is_same_shape (f1:CF.formula) (f2:CF.formula) =
@@ -319,7 +317,6 @@ let choose_rule_func_call goal =
 
 let choose_rule_fread_x goal =
   let vars, pre_cond = goal.gl_vars, goal.gl_pre_cond in
-  let () = x_tinfo_hp (add_str "pre_cond " pr_formula) pre_cond no_pos in
   let rec helper_hf (hf:CF.h_formula) = match hf with
     | DataNode dnode -> let dn_var = dnode.CF.h_formula_data_node in
       if List.exists (fun x -> CP.eq_spec_var x dn_var) vars then
@@ -346,13 +343,15 @@ let choose_rule_fread_x goal =
     let d_arg_pairs = List.combine args d_args in
     let d_arg_pairs = List.filter (fun (x,_) -> not(CP.mem x vars)) d_arg_pairs in
     let helper_arg (arg, field) =
-      let rbind = RlFRead {
+      let rbind = {
           rfr_bound_var = var;
           rfr_field = field;
           rfr_value = arg;
         } in [rbind] in
     d_arg_pairs |> List.map helper_arg |> List.concat in
   List.map helper_triple triples |> List.concat
+  |> List.filter (fun x -> is_fread_called goal.gl_trace x |> negate)
+  |> List.map (fun x -> RlFRead x)
 
 let choose_rule_fread goal =
   Debug.no_1 "choose_rule_fread" pr_goal pr_rules
@@ -363,9 +362,9 @@ let choose_rule_unfold_pre goal =
   let vnodes = get_unfold_view goal.gl_vars pre in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
-    let () = x_tinfo_hp (add_str "args" pr_vars) args no_pos in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
-    let pre_list = List.filter (fun x -> not(SB.check_unsat goal.gl_prog x)) nf in
+    let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
+                                         |> negate) nf in
     let pre_list = pre_list |> List.map remove_exists
                  |> List. map (fun x -> CF.simplify_formula x goal.gl_vars) in
     if pre_list = [] then []

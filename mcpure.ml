@@ -2640,9 +2640,9 @@ let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)=
 
 (** An Hoa : Simplify the mix formula by removing duplicates and redundant constraints. **)
 let simplify_mix_formula mf =
-  match mf with 		
+  match mf with
   | MemoF _ -> mf
-  | OnePF f -> 
+  | OnePF f ->
     let nf = remove_dup_constraints f in
     let nf = remove_redundant_constraints nf in
     OnePF nf

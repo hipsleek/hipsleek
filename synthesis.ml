@@ -1263,19 +1263,6 @@ let frame_var_formula formula var =
                         formula_exists_qvars = exists_vars}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
-(* let remove_redundant_vars goal =
- *   let vars = goal.gl_vars in
- *   let res = (CF.fv goal.gl_pre_cond) @ (CF.fv goal.gl_post_cond)
- *             |> List.filter (fun x -> eq_str (CP.name_of_sv x) "res") in
- *   let post_pf = CF.get_pure goal.gl_post_cond in
- *   let res_pf = extract_var_pf post_pf res in
- *   let res_vars = CP.fv res_pf in
- *   let vars = vars @ res_vars in
- *   let n_pre = CF.simplify_formula goal.gl_pre_cond vars in
- *   let n_post = CF.simplify_formula goal.gl_post_cond vars in
- *   {goal with gl_pre_cond = n_pre;
- *              gl_post_cond = n_post} *)
-
 let get_hf (f:CF.formula) = match f with
   | Base bf -> bf.formula_base_heap
   | Exists bf -> bf.formula_exists_heap
@@ -1284,11 +1271,14 @@ let get_hf (f:CF.formula) = match f with
 let is_res_sv_syn sv = match sv with
   | CP.SpecVar (_,n,_) -> is_substr "rs" n
 
+let negate b = not b
+
 (*********************************************************************
  * Rule utilities
  *********************************************************************)
 
-let rec is_fwrite_called trace rcore = match trace with
+let rec is_fwrite_called trace rcore : bool  =
+  match trace with
   | [] -> false
   | head::tail ->
     begin
@@ -1303,6 +1293,22 @@ let rec is_fwrite_called trace rcore = match trace with
       | _ -> is_fwrite_called tail rcore
     end
 
+let rec is_fread_called trace rcore : bool  =
+  match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlFRead r ->
+        let (t1, n1) = rcore.rfr_field in
+        let (t2, n2) = r.rfr_field in
+        let compare = CP.eq_sv rcore.rfr_bound_var r.rfr_bound_var &&
+                      t1 = t2 && n1 = n2 in
+        if compare then true
+        else is_fread_called tail rcore
+      | _ -> is_fread_called tail rcore
+    end
+
 let is_rule_fread_useless goal r =
   let var = r.rfr_value in
   let post_vars = CF.fv goal.gl_post_cond in
@@ -1314,10 +1320,9 @@ let is_rule_fread_useless goal r =
         else true
 
 let eliminate_useless_rules goal rules =
-  List.filter (fun rule ->
-    match rule with
-    | RlFRead r -> is_rule_fread_useless goal r
-    | _ -> true) rules
+  List.filter (fun rule -> match rule with
+      | RlFRead r -> is_rule_fread_useless goal r
+      | _ -> true) rules
 
 let compare_rule_assign_vs_other r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh

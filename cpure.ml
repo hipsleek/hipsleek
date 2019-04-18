@@ -9867,7 +9867,7 @@ let remove_primitive should_elim e =
 (* An Hoa : remove redundant identity constraints. *)
 let rec remove_redundant_constraints (f : formula) : formula = match f with
   | BForm ((b,a),l) -> BForm ((remove_redundant_constraints_b b,a),l)
-  | And (f1,f2,l) -> 
+  | And (f1,f2,l) ->
     let g1 = remove_redundant_constraints f1 in
     let g2 = remove_redundant_constraints f2 in
     mkAnd g1 g2 l

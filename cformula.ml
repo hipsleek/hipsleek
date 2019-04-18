@@ -15704,7 +15704,7 @@ and simplify_context (ctx : context) (bv : CP.spec_var list) =
   | Ctx ({ es_formula = esformula} as es) -> 
     let sesfml = simplify_formula esformula bv in
     Ctx { es with es_formula = sesfml }
-  | OCtx (ctx1, ctx2) -> 
+  | OCtx (ctx1, ctx2) ->
     OCtx (simplify_context ctx1 bv, simplify_context ctx2 bv)
 
 and simplify_formula (f : formula) (bv : CP.spec_var list) =
