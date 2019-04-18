@@ -50,11 +50,9 @@ exception EPrio of priority
 type rule =
   | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
+  | RlFramePred of rule_frame_pred
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
-
-  | RlInstantiate of rule_instantiate
-
   | RlSkip
   | RlAssign of rule_assign
   | RlReturn of rule_return
@@ -63,7 +61,7 @@ type rule =
   | RlFWrite of rule_field_write
   | RlFuncCall of rule_func_call
   | RlFuncRes of rule_func_res
- 
+
 and rule_branch = {
   rb_cond: CP.formula;
   rb_if_pre: CF.formula;
@@ -74,7 +72,7 @@ and rule_exists_left = {
   exists_vars : CP.spec_var list;
 }
 
-nand rule_exists_right = {
+and rule_exists_right = {
   n_post: CF.formula;
 }
 
@@ -83,7 +81,7 @@ and rule_vinit = {
   rvi_rhs: CP.exp;
 }
 
-and rule_instantiate = {
+and rule_frame_pred = {
   rli_lhs: CP.spec_var;
   rli_rhs: CP.spec_var;
 }
@@ -331,7 +329,7 @@ let pr_rule rule = match rule with
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
-  | RlInstantiate rule -> "RlInstantiate" ^ (pr_instantiate rule)
+  | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
   | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
   | RlBranch rule -> "RlBranch (" ^ (pr_formula rule.rb_if_pre) ^ ", " ^
@@ -1086,7 +1084,7 @@ let mkAssign exp1 exp2 = I.Assign {
     I.exp_assign_pos = no_pos}
 
 let rec synthesize_st_core st : Iast.exp = match st.stc_rule with
-  | RlUnfoldPost _  | RlInstantiate _ | RlExistsLeft _ | RlExistsRight _
+  | RlUnfoldPost _  | RlFramePred _ | RlExistsLeft _ | RlExistsRight _
   | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in

@@ -454,21 +454,12 @@ let find_instantiate_var_x goal var =
         | _ -> false
       end
     | _ -> false in
-  let compare_two_vars_x var1 var2 =
+  let compare_two_vars var1 var2 =
     let var1_f = extract_var_f post var1 in
     let var2_f = extract_var_f pre var2 in
     match var1_f, var2_f with
-    | Some f1, Some f2 ->
-      let () = x_tinfo_hp (add_str "var1" pr_var) var1 no_pos in
-      let () = x_tinfo_hp (add_str "var2" pr_var) var2 no_pos in
-      let () = x_tinfo_hp (add_str "eq-v f1" pr_formula) f1 no_pos in
-      let () = x_tinfo_hp (add_str "eq-v f2" pr_formula) f2 no_pos in
-      helper f1 f2
+    | Some f1, Some f2 -> helper f1 f2
     | _ -> false in
-  let compare_two_vars var1 var2 =
-    Debug.no_4 "compare_two_vars" pr_var pr_var pr_formula pr_formula string_of_bool
-      (fun _ _ _ _ -> compare_two_vars_x var1 var2) var1 var2 pre post in
-  let () = x_tinfo_hp (add_str "all vars" pr_vars) all_vars no_pos in
   let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
 
@@ -476,14 +467,12 @@ let find_instantiate_var goal var =
   Debug.no_2 "find_instantiate_var" pr_goal pr_var pr_vars
     (fun _ _ -> find_instantiate_var_x goal var) goal var
 
-let choose_rule_instantiate goal =
+let choose_rule_frame_pred goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
-  let () = x_tinfo_hp (add_str "exists_vars" pr_vars) exists_vars no_pos in
   let helper var =
     let eq_vars = find_instantiate_var goal var in
-    eq_vars |> List.map (fun x -> RlInstantiate {
+    eq_vars |> List.map (fun x -> RlFramePred {
         rli_lhs = var;
         rli_rhs = x}) in
   exists_vars |> List.map helper |> List.concat
@@ -533,7 +522,7 @@ let choose_rule_exists_right goal =
 
 let choose_main_rules goal =
   let rs = [] in
-  let rs = rs @ choose_rule_instantiate goal in
+  let rs = rs @ choose_rule_frame_pred goal in
   let rs = rs @ (choose_rule_assign goal) in
   let rs = rs @ (choose_rule_fread goal) in
   let rs = rs @ (choose_rule_fwrite goal) in
@@ -697,7 +686,7 @@ let process_rule_unfold_pre goal rule =
   let n_goal = {goal with gl_pre_cond = rule.n_pre} in
   mk_derivation_subgoals goal (RlUnfoldPre rule) [n_goal]
 
-let process_rule_instantiate goal rule =
+let process_rule_frame_pred goal rule =
   let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rule.rli_rhs in
   let n_post, post_vars = frame_var_formula goal.gl_post_cond rule.rli_lhs in
   if List.length pre_vars = List.length post_vars then
@@ -709,13 +698,10 @@ let process_rule_instantiate goal rule =
     let n_post = CF.subst (List.combine post_vars pre_vars) post_bf in
     let qvars = qvars |> List.filter (fun x -> not(CP.mem x post_vars)) in
     let n_post = CF.add_quantifiers qvars n_post in
-    (* let rm_vars = [rule.rli_lhs; rule.rli_rhs] in
-     * let n_vars = goal.gl_vars |> List.filter (fun x-> not(CP.mem x rm_vars)) in *)
     let subgoal = {goal with gl_post_cond = n_post;
-                             (* gl_vars = n_vars; *)
                              gl_pre_cond = n_pre} in
-    mk_derivation_subgoals goal (RlInstantiate rule) [subgoal]
-  else mk_derivation_fail goal (RlInstantiate rule)
+    mk_derivation_subgoals goal (RlFramePred rule) [subgoal]
+  else mk_derivation_fail goal (RlFramePred rule)
 
 let process_rule_unfold_post goal rule =
   let n_goal = {goal with gl_post_cond = rule.rp_case_formula;
@@ -755,7 +741,7 @@ and process_one_rule goal rule : derivation =
   | RlUnfoldPre rule -> process_rule_unfold_pre goal rule
   | RlUnfoldPost rule -> process_rule_unfold_post goal rule
   | RlFRead rule -> process_rule_f_read goal rule
-  | RlInstantiate rule -> process_rule_instantiate goal rule
+  | RlFramePred rule -> process_rule_frame_pred goal rule
   | RlExistsLeft rule -> process_rule_exists_left goal rule
   | RlExistsRight rule -> process_rule_exists_right goal rule
   | RlBranch rule -> process_rule_branch goal rule
