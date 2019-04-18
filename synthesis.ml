@@ -51,6 +51,7 @@ type rule =
   | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
   | RlFramePred of rule_frame_pred
+  | RlFoldLeft of rule_fold_left
   | RlUnfoldPre of rule_unfold_pre
   | RlUnfoldPost of rule_unfold_post
   | RlSkip
@@ -66,6 +67,10 @@ and rule_branch = {
   rb_cond: CP.formula;
   rb_if_pre: CF.formula;
   rb_else_pre: CF.formula;
+}
+
+and rule_fold_left = {
+  rfl_pre: CF.formula
 }
 
 and rule_exists_left = {
@@ -321,6 +326,7 @@ let pr_var_init rule =
 
 let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
+  | RlFoldLeft r -> "RlFoldLeft " ^ (pr_formula r.rfl_pre)
   | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
   | RlFuncRes fc -> "RlFuncRes\n" ^ (pr_func_res fc)
   | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
