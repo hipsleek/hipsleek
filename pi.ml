@@ -684,7 +684,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
   let lst_assume = List.map (fun (a,b,c) -> (a,b,Immutable.postprocess_pre b c)) lst_assume in
   let pr = Cprinter.string_of_pure_formula in
   let pr_oblg = pr_list (fun (_,a,b) -> pr_pair pr pr (a,b)) in
-  let () = t_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
+  let () = x_binfo_hp (add_str "lst_assume (after norm and postprocess)" pr_oblg) lst_assume no_pos in
   (* =============== END imm rel norm ================== *)
   (* let lst_assume = Gen.Basic.remove_dups lst_assume in *)
   (* let rels = Immutable.norm_rel_list rels in *)
