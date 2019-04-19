@@ -394,6 +394,7 @@ let choose_rule_unfold_pre goal =
         [rule]
     else if List.length pre_list = 1 then
       let n_pre = pre_list |> List.hd |> remove_exists in
+      let n_pre = CF.simplify_formula n_pre vars in
       let rule = RlUnfoldPre {n_pre = n_pre} in
       [rule]
     else [] in

@@ -1078,20 +1078,11 @@ let get_var_decls pos (exp:I.exp) : CP.spec_var list =
   Debug.no_1 "get_var_decls" Iprinter.string_of_exp pr_vars
     (fun _ -> get_var_decls_x pos exp) exp
 
-let mkVar sv = I.Var { I.exp_var_name = CP.name_of_sv sv;
-                       I.exp_var_pos = no_pos}
+let mkVar sv = I.mkVar (CP.name_of_sv sv) no_pos
 
-let mkSeq exp1 exp2 = I.Seq {
-    exp_seq_exp1 = exp1;
-    exp_seq_exp2 = exp2;
-    exp_seq_pos = no_pos}
+let mkAssign exp1 exp2 = I.mkAssign I.OpAssign exp1 exp2 None no_pos
 
-let mkAssign exp1 exp2 = I.Assign {
-    I.exp_assign_op = I.OpAssign;
-    I.exp_assign_lhs = exp1;
-    I.exp_assign_rhs = exp2;
-    I.exp_assign_path_id = None;
-    I.exp_assign_pos = no_pos}
+let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
