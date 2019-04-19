@@ -306,7 +306,7 @@ let unify_fcall proc_decl pre_proc post_proc goal =
 let choose_rule_func_call goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let procs = goal.gl_proc_decls in
-  if procs = [] || has_fcall_trace goal.gl_trace then []
+  if procs = [] then []
   else
     let proc_decl = List.hd procs in
     let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
