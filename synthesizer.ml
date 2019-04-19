@@ -379,19 +379,19 @@ let choose_rule_unfold_pre goal =
     let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
                                          |> negate) nf in
     if pre_list = [] then []
-    else if List.length pre_list = 2 then
-      let vn_var = vnode.CF.h_formula_view_node in
-      let base_pf = pre_list |> List.hd |> CF.get_pure in
-      let cond = extract_var_pf base_pf [vn_var] in
-      let base, recur = List.hd pre_list, pre_list |> List.tl |> List.hd in
-      let cond_exp = get_cond_exp prog pre base recur cond vars in
-      if cond_exp = [] then []
-      else
-        let cond_exp = CP.join_conjunctions cond_exp in
-        let rule = RlBranch { rb_if_pre = base |> remove_exists;
-                              rb_cond = cond_exp;
-                              rb_else_pre = recur |> remove_exists} in
-        [rule]
+    (* else if List.length pre_list = 2 then
+     *   let vn_var = vnode.CF.h_formula_view_node in
+     *   let base_pf = pre_list |> List.hd |> CF.get_pure in
+     *   let cond = extract_var_pf base_pf [vn_var] in
+     *   let base, recur = List.hd pre_list, pre_list |> List.tl |> List.hd in
+     *   let cond_exp = get_cond_exp prog pre base recur cond vars in
+     *   if cond_exp = [] then []
+     *   else
+     *     let cond_exp = CP.join_conjunctions cond_exp in
+     *     let rule = RlBranch { rb_if_pre = base |> remove_exists;
+     *                           rb_cond = cond_exp;
+     *                           rb_else_pre = recur |> remove_exists} in
+     *     [rule] *)
     else if List.length pre_list = 1 then
       let n_pre = pre_list |> List.hd |> remove_exists in
       let n_pre = CF.simplify_formula n_pre vars in
@@ -549,8 +549,6 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_unfold_post goal) in
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
-  let rs = if !enable_i then choose_rule_interact goal rs
-    else rs in
   rs
 
 let choose_rule_skip goal =
@@ -559,13 +557,16 @@ let choose_rule_skip goal =
   else []
 
 let choose_synthesis_rules_x goal : rule list =
-  try
-    let _ = choose_rule_skip goal |> raise_rules in
-    let _ = choose_rule_exists_left goal |> raise_rules in
-    let _ = choose_rule_exists_right goal |> raise_rules in
-    let _ = choose_main_rules goal |> raise_rules in
-    []
-  with ERules rs -> rs
+  let rules =
+    try
+      let _ = choose_rule_skip goal |> raise_rules in
+      let _ = choose_rule_exists_left goal |> raise_rules in
+      let _ = choose_rule_exists_right goal |> raise_rules in
+      let _ = choose_main_rules goal |> raise_rules in
+      []
+    with ERules rs -> rs in
+  if !enable_i then choose_rule_interact goal rules
+  else rules
 
 let choose_synthesis_rules goal =
   Debug.no_1 "choose_synthesis_rules" pr_goal pr_rules
