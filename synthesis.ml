@@ -341,8 +341,9 @@ let pr_rule rule = match rule with
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
   | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
-  | RlBranch rule -> "RlBranch (" ^ (pr_formula rule.rb_if_pre) ^ ", " ^
-                     (pr_formula rule.rb_else_pre)  ^ ")"
+  | RlBranch rule -> "RlBranch (" ^ (pr_pf rule.rb_cond) ^ ", " ^
+                     (pr_formula rule.rb_if_pre) ^ ", "
+                     ^ (pr_formula rule.rb_else_pre)  ^ ")"
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -707,12 +708,12 @@ let rec remove_heap_var_f var formula = match formula with
     rm_emp_formula nf
 
 let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
-    let rec helper (f:CF.formula) = match f with
-      | Base fb ->
-        let unfold_hf = do_unfold_view_hf_vn cprog pr_views args fb.CF.formula_base_heap in
-        let pf = fb.CF.formula_base_pure in
-        let tmp = List.map (CF.add_mix_formula_to_formula pf) unfold_hf in
-        tmp |> List.map simpl_f |> List.concat
+  let rec helper (f:CF.formula) = match f with
+    | Base fb ->
+      let unfold_hf = do_unfold_view_hf_vn cprog pr_views args fb.CF.formula_base_heap in
+      let pf = fb.CF.formula_base_pure in
+      let tmp = List.map (CF.add_mix_formula_to_formula pf) unfold_hf in
+      tmp |> List.map simpl_f |> List.concat
     | Exists _ ->
       let qvars, base1 = CF.split_quantifiers f in
       let nf = helper base1 |> List.map simpl_f |> List.concat in

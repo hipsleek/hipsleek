@@ -357,27 +357,44 @@ let choose_rule_fread goal =
   Debug.no_1 "choose_rule_fread" pr_goal pr_rules
     (fun _ -> choose_rule_fread_x goal) goal
 
+let get_cond_exp prog formula base recursive puref vars =
+  let conjuncs = CP.split_conjunctions puref in
+  let aux pf =
+    let n_bf = CF.add_pure_formula_to_formula pf formula in
+    let n_pf = CP.mkNot_s pf in
+    let n_rc = CF.add_pure_formula_to_formula n_pf formula in
+    let fst,_ = SB.check_entail prog n_bf base in
+    let snd,_ = SB.check_entail prog n_rc recursive in
+    fst && snd in
+  conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
+  |> List.filter aux
+
 let choose_rule_unfold_pre goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
+  let vars, prog = goal.gl_vars, goal.gl_prog in
   let vnodes = get_unfold_view goal.gl_vars pre in
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args pre in
     let pre_list = List.filter (fun x -> SB.check_unsat goal.gl_prog x
                                          |> negate) nf in
-    let pre_list = pre_list |> List.map remove_exists
-                 |> List. map (fun x -> CF.simplify_formula x goal.gl_vars) in
     if pre_list = [] then []
     else if List.length pre_list = 2 then
       let vn_var = vnode.CF.h_formula_view_node in
       let base_pf = pre_list |> List.hd |> CF.get_pure in
       let cond = extract_var_pf base_pf [vn_var] in
-      let rule = RlBranch { rb_if_pre = List.hd pre_list;
-                            rb_cond = cond;
-                            rb_else_pre = pre_list |> List.tl |> List.hd } in
-      [rule]
+      let base, recur = List.hd pre_list, pre_list |> List.tl |> List.hd in
+      let cond_exp = get_cond_exp prog pre base recur cond vars in
+      if cond_exp = [] then []
+      else
+        let cond_exp = CP.join_conjunctions cond_exp in
+        let rule = RlBranch { rb_if_pre = base |> remove_exists;
+                              rb_cond = cond_exp;
+                              rb_else_pre = recur |> remove_exists} in
+        [rule]
     else if List.length pre_list = 1 then
-      let rule = RlUnfoldPre {n_pre = List.hd pre_list} in
+      let n_pre = pre_list |> List.hd |> remove_exists in
+      let rule = RlUnfoldPre {n_pre = n_pre} in
       [rule]
     else [] in
   if has_unfold_pre goal.gl_trace then []
@@ -762,7 +779,7 @@ let synthesize_program goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let () = x_tinfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
+    let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
     let () = x_binfo_hp (add_str "iast exp" pr_iast_exp_opt) i_exp no_pos in
     i_exp
