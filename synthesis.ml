@@ -1056,6 +1056,32 @@ let rec exp_to_iast (exp: CP.exp) = match exp with
                I.exp_binary_pos = loc}
   | _ -> report_error no_pos ("exp_to_iast:" ^ (pr_exp exp) ^"not handled")
 
+let pf_to_iast (pf: CP.p_formula) = match pf with
+  | CP.Eq (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpEq i_e1 i_e2 None loc
+  | CP.Neq (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpNeq i_e1 i_e2 None loc
+  | CP.Lt (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpLt i_e1 i_e2 None loc
+  | CP.Lte (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpLte i_e1 i_e2 None loc
+  | CP.Gt (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpGt i_e1 i_e2 None loc
+  | CP.Gte (e1, e2, loc) ->
+    let i_e1, i_e2 = exp_to_iast e1, exp_to_iast e2 in
+    I.mkBinary I.OpGte i_e1 i_e2 None loc
+  | _ -> report_error no_pos ("pf_to_iast: not handled")
+
+let pure_to_iast (pf:CP.formula) = match pf with
+  | BForm (bf, _) -> let (pf, _) = bf in
+    pf_to_iast pf
+  | _ -> report_error no_pos ("pure_to_iast:" ^ (pr_pf pf) ^"not handled")
+
 let get_start_lnum pos = pos.VarGen.start_pos.Lexing.pos_lnum
 
 let rec get_var_decls_x pos (exp:I.exp) = match exp with
@@ -1088,13 +1114,20 @@ let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
   | RlExistsLeft _ | RlExistsRight _ | RlFramePred _
-  | RlUnfoldPost _ | RlUnfoldPre _ -> synthesize_subtrees st.stc_subtrees
+  | RlUnfoldPost _ | RlUnfoldPre _ ->
+    begin
+      let sts = List.map synthesize_st_core st.stc_subtrees in
+      match sts with
+      | [] -> None
+      | [h] -> h
+      | _ -> report_error no_pos "syn_st_core: no more than one st"
+    end
   | RlAssign rassign ->
     let lhs, rhs = rassign.ra_lhs, rassign.ra_rhs in
     let c_exp = exp_to_iast rhs in
     let assgn = mkAssign (mkVar lhs) c_exp in
     aux_subtrees st assgn
-  | RlReturn rule -> let c_exp = exp_to_iast rule.r_exp in
+  | RlReturn rcore -> let c_exp = exp_to_iast rcore.r_exp in
     Some (I.Return {
       exp_return_val = Some c_exp;
       exp_return_path_id = None;
@@ -1110,8 +1143,8 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_member_pos = no_pos
       } in
     let bind = mkAssign exp_mem rhs_var in aux_subtrees st bind
-  | RlFRead rule -> let lhs = rule.rfr_value in
-    let bvar, (typ, f_name) = rule.rfr_bound_var, rule.rfr_field in
+  | RlFRead rcore -> let lhs = rcore.rfr_value in
+    let bvar, (typ, f_name) = rcore.rfr_bound_var, rcore.rfr_field in
     let exp_decl = I.VarDecl {
         exp_var_decl_type = CP.type_of_sv lhs;
         exp_var_decl_decls = [(CP.name_of_sv lhs, None, no_pos)];
@@ -1132,53 +1165,64 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_bind_body = body;
         exp_bind_path_id = None;
         exp_bind_pos = no_pos} in
-    let seq = mkSeq exp_decl bind in aux_subtrees st seq
-  | RlFuncCall rule ->
-    let args = rule.rfc_params |> List.map mkVar in
+    let seq = I.mkSeq exp_decl bind no_pos in aux_subtrees st seq
+  | RlFuncCall rcore ->
+    let args = rcore.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
-        exp_call_nrecv_method = rule.rfc_fname;
+        exp_call_nrecv_method = rcore.rfc_fname;
         exp_call_nrecv_lock = None;
         exp_call_nrecv_ho_arg = None;
         exp_call_nrecv_arguments = args;
         exp_call_nrecv_path_id = None;
         exp_call_nrecv_pos = no_pos} in
     aux_subtrees st fcall
-  | RlFuncRes rule ->
-    let args = rule.rfr_params |> List.map mkVar in
+  | RlFuncRes rcore ->
+    let args = rcore.rfr_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
-        exp_call_nrecv_method = rule.rfr_fname;
+        exp_call_nrecv_method = rcore.rfr_fname;
         exp_call_nrecv_lock = None;
         exp_call_nrecv_ho_arg = None;
         exp_call_nrecv_arguments = args;
         exp_call_nrecv_path_id = None;
         exp_call_nrecv_pos = no_pos} in
-    let rvar = rule.rfr_return in
+    let rvar = rcore.rfr_return in
     let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
                         I.exp_var_pos = no_pos} in
     let asgn = mkAssign (mkVar rvar) fcall in
-    let seq = mkSeq r_var asgn in aux_subtrees st seq
+    let seq = I.mkSeq r_var asgn no_pos
+    in aux_subtrees st seq
+  | RlBranch rcore ->
+    let cond_e = pure_to_iast rcore.rb_cond in
+    let sts = List.map synthesize_st_core st.stc_subtrees in
+    let if_b = sts |> List.hd |> Gen.unsome in
+    let else_b = sts |> List.tl |> List.hd |> Gen.unsome in
+   Some (I.mkCond cond_e if_b else_b None no_pos)
   | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and aux_subtrees st cur_codes =
-  let st_code = synthesize_subtrees st.stc_subtrees in
-  match st_code with
-  | None -> Some cur_codes
-  | Some st_code ->
-    let seq = mkSeq cur_codes st_code in
-    Some seq
 
-and synthesize_subtrees subtrees = match subtrees with
-  | [] -> None
-  | [h] -> synthesize_st_core h
-  | h::t -> let fst = synthesize_st_core h in
-    begin
-      match fst with
-      | Some fst ->
-        let snd = synthesize_subtrees t in
-        (match snd with | None -> None
-                        | Some snd -> Some (mkSeq fst snd))
-      | None -> None
-    end
+  let st_code = List.map synthesize_st_core st.stc_subtrees in
+  match st_code with
+  | [] -> Some cur_codes
+  | [h] ->
+    if h = None then Some cur_codes
+    else let st_code = Gen.unsome h in
+      let seq = I.mkSeq cur_codes st_code no_pos in
+      Some seq
+  | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
+
+(* and synthesize_subtrees subtrees = match subtrees with
+ *   | [] -> None
+ *   | [h] -> synthesize_st_core h
+ *   | h::t -> let fst = synthesize_st_core h in
+ *     begin
+ *       match fst with
+ *       | Some fst ->
+ *         let snd = synthesize_subtrees t in
+ *         (match snd with | None -> None
+ *                         | Some snd -> Some (mkSeq fst snd))
+ *       | None -> None
+ *     end *)
 
 let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
   | Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
