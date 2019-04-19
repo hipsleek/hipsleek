@@ -1165,7 +1165,7 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_bind_body = body;
         exp_bind_path_id = None;
         exp_bind_pos = no_pos} in
-    let seq = I.mkSeq exp_decl bind no_pos in aux_subtrees st seq
+    let seq = mkSeq exp_decl bind in aux_subtrees st seq
   | RlFuncCall rcore ->
     let args = rcore.rfc_params |> List.map mkVar in
     let fcall = Iast.CallNRecv {
@@ -1189,8 +1189,7 @@ let rec synthesize_st_core st : Iast.exp option=
     let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
                         I.exp_var_pos = no_pos} in
     let asgn = mkAssign (mkVar rvar) fcall in
-    let seq = I.mkSeq r_var asgn no_pos
-    in aux_subtrees st seq
+    let seq = mkSeq r_var asgn in aux_subtrees st seq
   | RlBranch rcore ->
     let cond_e = pure_to_iast rcore.rb_cond in
     let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -1207,22 +1206,8 @@ and aux_subtrees st cur_codes =
   | [h] ->
     if h = None then Some cur_codes
     else let st_code = Gen.unsome h in
-      let seq = I.mkSeq cur_codes st_code no_pos in
-      Some seq
+      let seq = mkSeq cur_codes st_code in Some seq
   | _ -> report_error no_pos "aux_subtrees: not consider more than one subtree"
-
-(* and synthesize_subtrees subtrees = match subtrees with
- *   | [] -> None
- *   | [h] -> synthesize_st_core h
- *   | h::t -> let fst = synthesize_st_core h in
- *     begin
- *       match fst with
- *       | Some fst ->
- *         let snd = synthesize_subtrees t in
- *         (match snd with | None -> None
- *                         | Some snd -> Some (mkSeq fst snd))
- *       | None -> None
- *     end *)
 
 let rec replace_exp_aux nexp exp : I.exp = match (exp:I.exp) with
   | Assign e -> let n_e1 = replace_exp_aux nexp e.I.exp_assign_lhs in
