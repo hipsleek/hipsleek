@@ -46,20 +46,25 @@ let find_pre_cond ctx prog = match ctx with
   | None -> None
 
 let mk_candidate_iproc (iproc:I.proc_decl) args candidate =
-  let fcode = create_fcode_exp args in
-  let loc = I.get_exp_pos candidate in
-  let n_body = match iproc.proc_body with
-    | None -> None
-    | Some exp -> Some (replace_exp exp fcode candidate) in
-  {iproc with proc_body = n_body}
+  match iproc.proc_body with
+    | None -> (iproc, args)
+    | Some exp ->
+      let loc = I.get_exp_pos candidate in
+      let decl_vars = Synthesis.get_var_decls loc exp
+                      |> List.map (fun sv -> let CP.SpecVar (a, b, _) = sv in
+                                    (a,b)) in
+      let args = args @ decl_vars in
+      let fcode = create_fcode_exp args in
+      let n_body = Some (replace_exp exp fcode candidate) in
+      ({iproc with proc_body = n_body}, args)
 
-let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
+let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   let pr_proc = Iprinter.string_of_proc_decl in
   let pr_procs = pr_list pr_proc in
-  let n_iproc = mk_candidate_iproc iproc args candidate in
-  let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  let n_iproc, args = mk_candidate_iproc iproc args candidate in
+  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
-    let rec helper args = match args with
+  let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
     | h::t -> let tail = helper t in
       let head = string_of_typ (fst h) ^ " " ^ (snd h) in
@@ -78,9 +83,10 @@ let mk_candidate_iprog (iprog: I.prog_decl) (iproc:I.proc_decl) args candidate =
   let hps = n_prog.I.prog_hp_decls in
   let () = x_tinfo_hp (add_str "hp" (pr_list Iprinter.string_of_hp_decl)) hps no_pos in
   let n_procs = List.map (fun x -> if x.I.proc_name = iproc.I.proc_name
-                           then n_iproc else x) iprog.prog_proc_decls in
+                           then n_iproc else x) iprog.I.prog_proc_decls in
   let n_procs = n_prog.I.prog_proc_decls @ n_procs in
   let n_hps = n_prog.I.prog_hp_decls @ iprog.I.prog_hp_decls in
+  (* report_error no_pos "to filter the fcode" *)
   {iprog with prog_hp_decls = n_hps;
               prog_proc_decls = n_procs}
 
