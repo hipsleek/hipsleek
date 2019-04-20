@@ -103,7 +103,7 @@ let start_repair (iprog:I.prog_decl) =
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
-    let () = x_tinfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
+    let () = x_binfo_hp (add_str "proc_name: " pr_id) p_name no_pos in
     let () = Globals.start_repair := true in
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) iprog.prog_proc_decls in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
