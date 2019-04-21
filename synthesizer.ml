@@ -63,31 +63,37 @@ let is_equal_vars_node goal var1 var2 =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pf1, pf2 = CF.get_pure pre, CF.get_pure post in
   let ante = CP.mkAnd pf1 pf2 no_pos |> remove_exists_vars_pf in
-  let helper_pure var1 var2 =
-    let conseq = CP.mkEqVar var1 var2 no_pos in
-    SB.check_pure_entail ante conseq in
-  let helper_hf hf1 hf2 = match hf1, hf2 with
-    | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
-      let args1 = vnode1.CF.h_formula_view_arguments in
-      let args2 = vnode2.CF.h_formula_view_arguments in
-      List.for_all2 (fun x y -> helper_pure x y) args1 args2
-    | _ -> false in
-  let helper f1 f2 = match f1, f2 with
-    | CF.Exists bf1, CF.Base bf2 ->
-      let hf1 = bf1.CF.formula_exists_heap in
-      let hf2 = bf2.CF.formula_base_heap in
-      helper_hf hf1 hf2
-    | CF.Base bf1, CF.Base bf2 ->
-      let hf1 = bf1.CF.formula_base_heap in
-      let hf2 = bf2.CF.formula_base_heap in
-      helper_hf hf1 hf2
-    | _ -> false in
+  (* let helper_pure var1 var2 =
+   *   let conseq = CP.mkEqVar var1 var2 no_pos in
+   *   SB.check_pure_entail ante conseq in
+   * let helper_hf hf1 hf2 = match hf1, hf2 with
+   *   | CF.ViewNode vnode1, CF.ViewNode vnode2 ->
+   *     let args1 = vnode1.CF.h_formula_view_arguments in
+   *     let args2 = vnode2.CF.h_formula_view_arguments in
+   *     List.for_all2 (fun x y -> helper_pure x y) args1 args2
+   *   | _ -> false in
+   * let helper f1 f2 = match f1, f2 with
+   *   | CF.Exists bf1, CF.Base bf2 ->
+   *     let hf1 = bf1.CF.formula_exists_heap in
+   *     let hf2 = bf2.CF.formula_base_heap in
+   *     helper_hf hf1 hf2
+   *   | CF.Base bf1, CF.Base bf2 ->
+   *     let hf1 = bf1.CF.formula_base_heap in
+   *     let hf2 = bf2.CF.formula_base_heap in
+   *     helper_hf hf1 hf2
+   *   | _ -> false in *)
+  let helper f1 f2 =
+    let fst, _ = SB.check_entail ~residue:true goal.gl_prog f1 f2 in
+    let snd, _ = SB.check_entail ~residue:true goal.gl_prog f2 f1 in
+    fst && snd in
   let compare_two_vars var1 var2 =
     let var1_f = extract_var_f post var1 in
     let var2_f = extract_var_f pre var2 in
-    match var1_f, var2_f with
-    | Some f1, Some f2 -> helper f1 f2
-    | _ -> false in
+    if CF.is_emp_formula var1_f || CF.is_emp_formula var2_f then false
+    else
+      let () = x_binfo_hp (add_str "f1" pr_formula) var1_f no_pos in
+      let () = x_binfo_hp (add_str "f2" pr_formula) var2_f no_pos in
+      helper var1_f var2_f in
   compare_two_vars var1 var2
 
 let is_equal_vars_x goal var1 var2 =
@@ -119,7 +125,7 @@ let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars
              |> List.filter (fun x -> CP.not_mem x pre_vars) in
-  let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
+  let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
   vars |> List.map (choose_rassign_aux goal) |> List.concat
 
 let choose_rule_assign goal =
@@ -183,12 +189,10 @@ let rec choose_fwrite_data goal cur_var =
   match pre, post with
   | CF.Base _, CF.Base _    | CF.Base _, CF.Exists _
   | CF.Exists _, CF.Base _  | CF.Exists _, CF.Exists _ ->
-    let f_var1 = extract_var_f pre cur_var in
-    let f_var2 = extract_var_f post cur_var in
-    if f_var1 != None && f_var2 != None then
-      let f_var1, f_var2 = Gen.unsome f_var1, Gen.unsome f_var2 in
-      aux f_var1 f_var2 goal
-    else []
+    let var1_f = extract_var_f pre cur_var in
+    let var2_f = extract_var_f post cur_var in
+    if CF.is_emp_formula var1_f || CF.is_emp_formula var2_f then []
+    else aux var1_f var2_f goal
   | CF.Base _, CF.Or disjs ->
     let f1, f2 = disjs.CF.formula_or_f1, disjs.CF.formula_or_f2 in
     let goal1 = {goal with gl_post_cond = f1} in
@@ -231,10 +235,8 @@ let unify_pair goal proc_decl arg pre_var =
   let post_proc = specs |> get_post_cond |> rm_emp_formula in
   let a_pre = arg |> extract_var_f pre_proc in
   let l_pre = pre_var |> extract_var_f pre_cond in
-  match a_pre, l_pre with
-  | Some apre_f, Some lpre_f ->
-    is_same_shape apre_f lpre_f
-  | _ -> false, []
+  if CF.is_emp_formula a_pre || CF.is_emp_formula l_pre then (false, [])
+  else is_same_shape a_pre l_pre
 
 let unify_arg_x goal proc_decl arg =
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
@@ -418,30 +420,27 @@ let choose_rule_numeric_x goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let pre_vars, post_vars = CF.fv pre, CF.fv post in
   let vars_lhs = List.filter (fun x -> (CP.is_res_spec_var x && is_int_var x)
-                                     || CP.mem x vars) post_vars in
+                                       || CP.mem x vars) post_vars in
   let create_templ all_vars cur_var =
     let other_vars = List.filter (fun x -> not(CP.eq_sv x cur_var)) all_vars in
-    let var_formula = extract_var_f post cur_var in
-    match var_formula with
-    | Some var_f ->
+    let var_f = extract_var_f post cur_var in
+    if CF.is_emp_formula var_f then []
+    else
       let pure_pre, var_pf = CF.get_pure pre, CF.get_pure var_f in
       let tmpl_args = List.map (fun x -> CP.mkVar x no_pos) other_vars in
       let templ = CP.Template (CP.mkTemplate tmpl_name tmpl_args no_pos) in
       let n_pf = CP.mkEqExp (CP.mkVar cur_var no_pos) templ no_pos in
       let n_pre = CP.mkAnd pure_pre n_pf no_pos in
       let defn = SB.infer_templ_defn goal.gl_prog n_pre var_pf tmpl_name other_vars in
-      begin
-        match defn with
-        | Some def ->
-          let rule = if CP.is_res_sv cur_var then
-              RlReturn { r_exp = def}
-            else RlAssign {
-                ra_lhs = cur_var;
-                ra_rhs = def;
-              } in [rule]
-        | _ -> []
-      end
-    | None -> [] in
+      match defn with
+      | Some def ->
+        let rule = if CP.is_res_sv cur_var then
+            RlReturn { r_exp = def}
+          else RlAssign {
+              ra_lhs = cur_var;
+              ra_rhs = def;
+            } in [rule]
+      | _ -> [] in
   let rules = vars_lhs |> List.map (fun x -> create_templ vars x) in
   rules |> List.concat
 
@@ -474,9 +473,8 @@ let find_instantiate_var_x goal var =
   let compare_two_vars var1 var2 =
     let var1_f = extract_var_f post var1 in
     let var2_f = extract_var_f pre var2 in
-    match var1_f, var2_f with
-    | Some f1, Some f2 -> helper f1 f2
-    | _ -> false in
+    if CF.is_emp_formula var1_f || CF.is_emp_formula var2_f then false
+    else helper var1_f var2_f in
   let equal_vars = List.filter (fun x -> compare_two_vars var x) all_vars in
   equal_vars
 
@@ -539,14 +537,14 @@ let choose_rule_exists_right goal =
 
 let choose_main_rules goal =
   let rs = [] in
-  let rs = rs @ choose_rule_frame_pred goal in
+  (* let rs = rs @ choose_rule_frame_pred goal in *)
   let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_fwrite goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_fread goal) in
+   * let rs = rs @ (choose_rule_fwrite goal) in
+   * let rs = rs @ (choose_rule_func_call goal) in
+   * let rs = rs @ (choose_rule_numeric goal) in
+   * let rs = rs @ (choose_rule_unfold_pre goal) in
+   * let rs = rs @ (choose_rule_unfold_post goal) in *)
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
   rs
