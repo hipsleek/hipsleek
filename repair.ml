@@ -62,7 +62,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   let pr_proc = Iprinter.string_of_proc_decl in
   let pr_procs = pr_list pr_proc in
   let n_iproc, args = mk_candidate_iproc iproc args candidate in
-  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name

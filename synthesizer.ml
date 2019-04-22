@@ -92,9 +92,10 @@ let is_equal_vars_node goal var1 var2 =
 
 let is_equal_vars_x goal var1 var2 =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  if not(is_equal_vars_pf goal var1 var2) then
-    is_equal_vars_node goal var1 var2
-  else true
+  is_equal_vars_pf goal var1 var2
+  (* if not(is_equal_vars_pf goal var1 var2) then
+   *   is_equal_vars_node goal var1 var2
+   * else true *)
 
 let is_equal_vars goal var1 var2 =
   Debug.no_3 "is_equal_vars" pr_goal pr_var pr_var (string_of_bool)
