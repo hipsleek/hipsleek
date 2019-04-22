@@ -28,7 +28,9 @@ let pr_substs = pr_list (pr_pair pr_var pr_var)
 let rel_num = ref 0
 let res_num = ref 0
 let sb_num = ref 0
-let fc_args = ref ([]: CP.spec_var list list)
+let unfold_pre = ref 0
+let unfold_post = ref 0
+(* let fc_args = ref ([]: CP.spec_var list list) *)
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
@@ -50,6 +52,7 @@ exception EPrio of priority
 type rule =
   | RlExistsLeft of rule_exists_left
   | RlExistsRight of rule_exists_right
+  | RlFrameData of rule_frame_data
   | RlFramePred of rule_frame_pred
   | RlFoldLeft of rule_fold_left
   | RlUnfoldPre of rule_unfold_pre
@@ -89,6 +92,11 @@ and rule_vinit = {
 and rule_frame_pred = {
   rli_lhs: CP.spec_var;
   rli_rhs: CP.spec_var;
+}
+
+and rule_frame_data = {
+  rfd_lhs: CP.spec_var;
+  rfd_rhs: CP.spec_var;
 }
 
 and rule_unfold_pre = {
@@ -324,6 +332,9 @@ let pr_fread rule =
 let pr_instantiate rule =
   "(" ^ (pr_var rule.rli_lhs) ^ ", " ^ (pr_var rule.rli_rhs) ^ ")"
 
+let pr_frame_data rcore =
+  "(" ^ (pr_var rcore.rfd_lhs) ^ ", " ^ (pr_var rcore.rfd_rhs) ^ ")"
+
 let pr_var_init rule =
   "(" ^ (pr_var rule.rvi_var) ^ ", " ^ (pr_exp rule.rvi_rhs) ^ ")"
 
@@ -339,11 +350,14 @@ let pr_rule rule = match rule with
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
   | RlFramePred rule -> "RlFramePred" ^ (pr_instantiate rule)
+  | RlFrameData rcore -> "RlFrameData" ^ (pr_frame_data rcore)
   | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
   | RlBranch rule -> "RlBranch (" ^ (pr_pf rule.rb_cond) ^ ", " ^
                      (pr_formula rule.rb_if_pre) ^ ", "
                      ^ (pr_formula rule.rb_else_pre)  ^ ")"
+
+let pr_trace = pr_list pr_rule
 
 let rec pr_st st = match st with
   | StSearch st_search -> "StSearch [" ^ (pr_st_search st_search) ^ "]"
@@ -372,6 +386,14 @@ and pr_st_core st =
 let pr_rules = pr_list pr_rule
 
 (* Basic functions  *)
+let mkAndList pf_list =
+  let rec aux pf_list = match pf_list with
+  | [] -> CP.mkTrue no_pos
+  | h :: t -> let pf2 = aux t in
+    CP.mkAnd h pf2 no_pos in
+  let pf = aux pf_list in
+  CP.remove_redundant_constraints pf
+
 (* get a "fix-point" pure formula for a list of vars *)
 let extract_var_pf_x (pf:CP.formula) vars =
   let rec helper pf vars = match pf with
@@ -1076,7 +1098,7 @@ let mkSeq exp1 exp2 = I.mkSeq exp1 exp2 no_pos
 let rec synthesize_st_core st : Iast.exp option=
   match st.stc_rule with
   | RlSkip -> None
-  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _
+  | RlExistsLeft _ | RlExistsRight _ | RlFramePred _ | RlFrameData _
   | RlUnfoldPost _ | RlUnfoldPre _ ->
     begin
       let sts = List.map synthesize_st_core st.stc_subtrees in
@@ -1277,6 +1299,38 @@ let rec is_fwrite_called trace rcore : bool  =
       | _ -> is_fwrite_called tail rcore
     end
 
+let rec is_fcall_called trace args : bool =
+  match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlFuncCall rcore ->
+        let params = rcore.rfc_params in
+        if (List.length args = List.length params) then
+          if List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
+          then true
+          else is_fcall_called tail args
+        else is_fcall_called tail args
+      | _ -> is_fcall_called tail args
+    end
+
+let rec is_fres_called trace args : bool =
+  match trace with
+  | [] -> false
+  | head::tail ->
+    begin
+      match head with
+      | RlFuncRes rcore ->
+        let params = rcore.rfr_params in
+        if (List.length args = List.length params) then
+          if List.for_all2 (fun x y -> CP.eq_spec_var x y) args params
+          then true
+          else is_fres_called tail args
+        else is_fres_called tail args
+      | _ -> is_fcall_called tail args
+    end
+
 let rec is_fread_called trace rcore : bool  =
   match trace with
   | [] -> false
@@ -1312,11 +1366,34 @@ let compare_rule_assign_vs_other r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
   else PriEqual
 
+let compare_rule_frame_data_vs_other r1 r2 =
+  match r2 with
+  | RlFramePred _
+  | RlFrameData _ -> if CP.is_res_sv r1.rfd_lhs then PriHigh
+    else PriLow
+  | _ -> PriLow
+
+let compare_rule_frame_pred_vs_other r1 r2 =
+  match r2 with
+  | RlFramePred _
+  | RlFrameData _ -> if CP.is_res_sv r1.rli_lhs then PriHigh
+    else PriLow
+  | _ -> PriLow
+
 let compare_rule r1 r2 =
   match r1 with
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
+  | RlFrameData r -> compare_rule_frame_data_vs_other r r2
+  | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
   | _ -> PriEqual
 
+let is_code_rule trace = match trace with
+  | [] -> false
+  | h::_ ->
+    match h with
+    | RlAssign _ | RlReturn _ | RlFWrite _ | RlFuncRes _
+    | RlFuncCall _ -> true
+    | _ -> false
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =
