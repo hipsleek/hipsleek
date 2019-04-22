@@ -120,7 +120,7 @@ let choose_rule_assign_x goal : rule list =
   let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
   let vars = goal.gl_vars @ res_vars
              |> List.filter (fun x -> CP.not_mem x pre_vars) in
-  let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
+  let () = x_binfo_hp (add_str "vars" pr_vars) vars no_pos in
   vars |> List.map (choose_rassign_aux goal) |> List.concat
 
 let choose_rule_assign goal =
@@ -540,14 +540,14 @@ let choose_rule_exists_right goal =
 
 let choose_main_rules goal =
   let rs = [] in
-  let rs = rs @ choose_rule_frame_pred goal in
+  (* let rs = rs @ choose_rule_frame_pred goal in *)
   let rs = rs @ (choose_rule_assign goal) in
-  let rs = rs @ (choose_rule_fread goal) in
-  let rs = rs @ (choose_rule_fwrite goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
-  let rs = rs @ (choose_rule_numeric goal) in
-  let rs = rs @ (choose_rule_unfold_pre goal) in
-  let rs = rs @ (choose_rule_unfold_post goal) in
+  (* let rs = rs @ (choose_rule_fread goal) in
+   * let rs = rs @ (choose_rule_fwrite goal) in
+   * let rs = rs @ (choose_rule_func_call goal) in
+   * let rs = rs @ (choose_rule_numeric goal) in
+   * let rs = rs @ (choose_rule_unfold_pre goal) in
+   * let rs = rs @ (choose_rule_unfold_post goal) in *)
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
   rs

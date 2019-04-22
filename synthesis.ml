@@ -417,13 +417,13 @@ let rec extract_hf_var_x hf var =
     let dn_var = dnode.CF.h_formula_data_node in
     if dn_var = var then
       let args = dnode.CF.h_formula_data_arguments in
-      Some (hf, [var] @ args, dnode.CF.h_formula_data_name)
+      Some (hf, [var] @ args)
     else None
   | ViewNode vnode ->
     let vn_var = vnode.CF.h_formula_view_node in
     if vn_var = var then
       let args = vnode.CF.h_formula_view_arguments in
-      Some (hf, [var] @ args, vnode.CF.h_formula_view_name)
+      Some (hf, [var] @ args)
     else None
   | CF.Star sf ->
     let vf1 = extract_hf_var_x sf.CF.h_formula_star_h1 var in
@@ -441,37 +441,8 @@ let rec extract_hf_var_x hf var =
 let extract_hf_var hf var =
   Debug.no_2 "extract_hf_var" pr_hf pr_var (fun x -> match x with
       | None -> "None"
-      | Some (_, vars, _) -> pr_vars vars)
+      | Some (_, vars) -> pr_vars vars)
     (fun x y -> extract_hf_var_x x y) hf var
-
-let rec extract_hf_vars hf vars =
-  match hf with
-  | CF.DataNode dnode ->
-    let dn_var = dnode.CF.h_formula_data_node in
-    if List.exists (fun x -> CP.eq_spec_var dn_var x) vars then
-      let args = dnode.CF.h_formula_data_arguments in
-      Some (hf, [dn_var] @ args)
-    else None
-  | ViewNode vnode ->
-    let vn_var = vnode.CF.h_formula_view_node in
-    if List.exists (fun x -> CP.eq_spec_var vn_var x) vars then
-      let args = vnode.CF.h_formula_view_arguments in
-      Some (hf, [vn_var] @ args)
-    else None
-  | CF.Star sf ->
-    let vf1 = extract_hf_vars sf.CF.h_formula_star_h1 vars in
-    let vf2 = extract_hf_vars sf.CF.h_formula_star_h2 vars in
-    begin
-      match vf1, vf2 with
-      | None, None -> None
-      | Some _, None -> vf1
-      | None, Some _ -> vf2
-      | Some (f1, vars1), Some (f2, vars2) ->
-        let n_hf = CF.Star {sf with h_formula_star_h1 = f1;
-                                    h_formula_star_h2 = f2;} in
-        Some (n_hf, vars1 @ vars2)
-    end
-  | _ -> None
 
 let extract_var_f_x f var = match f with
     | CF.Base bf ->
@@ -483,7 +454,7 @@ let extract_var_f_x f var = match f with
         | None ->
           let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
           Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
-        | Some (hf, vars, _) ->
+        | Some (hf, vars) ->
           let h_vars = CF.h_fv hf in
           let vars = [var] @ h_vars |> CP.remove_dups_svl in
           let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
@@ -503,14 +474,14 @@ let extract_var_f_x f var = match f with
           let pf_var = extract_var_pf pf [var] in
           Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
-        | Some (hf, vars, _) ->
+        | Some (hf, vars) ->
           let h_vars = CF.h_fv hf in
           let vars = vars @ h_vars |> CP.remove_dups_svl in
           let pf_var = extract_var_pf pf vars in
           Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
                   e_typ e_flow [] no_pos)
       end
-    | _ -> None
+    | _ -> report_error no_pos "extract_var_f: cannot be OR"
 
 let extract_var_f formula var =
   Debug.no_2 "extract_var_f" pr_formula pr_var
