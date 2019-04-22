@@ -411,77 +411,83 @@ let extract_var_pf pf vars =
   Debug.no_2 "extract_var_pf" pr_pf pr_vars pr_pf
     (fun _ _ -> extract_var_pf_x pf vars) pf vars
 
-let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
-  | Named _ -> true
-  | _ -> false
+let rec extract_hf_var_x hf var =
+  match hf with
+  | CF.DataNode dnode ->
+    let dn_var = dnode.CF.h_formula_data_node in
+    if dn_var = var then
+      let args = dnode.CF.h_formula_data_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | ViewNode vnode ->
+    let vn_var = vnode.CF.h_formula_view_node in
+    if vn_var = var then
+      let args = vnode.CF.h_formula_view_arguments in
+      Some (hf, [var] @ args)
+    else None
+  | CF.Star sf ->
+    let vf1 = extract_hf_var_x sf.CF.h_formula_star_h1 var in
+    let vf2 = extract_hf_var_x sf.CF.h_formula_star_h2 var in
+    begin
+      match vf1, vf2 with
+      | None, None -> None
+      | Some _, None -> vf1
+      | None, Some _ -> vf2
+      | Some _, Some _ ->
+        report_error no_pos "extract_hf_var: one var cannot appear in two heap fragments"
+    end
+  | _ -> None
 
-let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
-  | Int -> true
-  | _ -> false
-
-let equal_type var1 var2 = match CP.type_of_sv var1 with
-  | Int -> is_int_var var2
-  | Named _ | TVar _ -> is_node_var var2
-  | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
-
-let rec extract_hf_vars_x hf vars =
-  let rec aux hf vars =  match hf with
-    | CF.DataNode dnode ->
-      let dn_var = dnode.CF.h_formula_data_node in
-      if CP.mem dn_var vars then
-        let args = dnode.CF.h_formula_data_arguments
-                   |> List.filter is_node_var in
-        let vars = vars @ args |> CP.remove_dups_svl in
-        (hf, vars)
-      else (CF.HEmp, [])
-    | ViewNode vnode ->
-      let vn_var = vnode.CF.h_formula_view_node in
-      if CP.mem vn_var vars then
-        let args = vnode.CF.h_formula_view_arguments
-                   |> List.filter is_node_var in
-        let vars = vars @ args |> CP.remove_dups_svl in
-        (hf, vars)
-      else (CF.HEmp, [])
-    | CF.Star sf ->
-      let hf1, vars1 = aux sf.CF.h_formula_star_h1 vars in
-      let hf2, vars2 = aux sf.CF.h_formula_star_h2 vars in
-      let n_sf = CF.Star {sf with CF.h_formula_star_h1 = hf1;
-                                  CF.h_formula_star_h2 = hf2} in
-      let n_vars = vars1 @ vars2 |> CP.remove_dups_svl in
-      (n_sf, n_vars)
-    | _ -> (CF.HEmp, []) in
-  let (n_hf, n_vars) as res = aux hf vars in
-  if CP.subset n_vars vars && CP.subset vars n_vars then n_hf
-  else extract_hf_vars_x hf n_vars
-
-let extract_hf_vars hf vars =
-  Debug.no_2 "extract_hf_var" pr_hf pr_vars pr_hf
-    (fun x y -> extract_hf_vars_x x y) hf vars
+let extract_hf_var hf var =
+  Debug.no_2 "extract_hf_var" pr_hf pr_var (fun x -> match x with
+      | None -> "None"
+      | Some (_, vars) -> pr_vars vars)
+    (fun x y -> extract_hf_var_x x y) hf var
 
 let extract_var_f_x f var = match f with
     | CF.Base bf ->
       let hf = bf.CF.formula_base_heap in
       let pf = Mcpure.pure_of_mix bf.CF.formula_base_pure in
-      let n_hf = extract_hf_vars hf [var] in
-      let h_vars = CF.h_fv n_hf in
-      let pf_var = extract_var_pf pf h_vars |> CP.arith_simplify 1 in
-      CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var)
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = extract_var_pf pf [var] |> CP.arith_simplify 1 in
+          Some (CF.mkBase_simp CF.HEmp (Mcpure.mix_of_pure pf_var))
+        | Some (hf, vars) ->
+          let h_vars = CF.h_fv hf in
+          let vars = [var] @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars |> CP.arith_simplify 1 in
+          Some (CF.mkBase_simp hf (Mcpure.mix_of_pure pf_var))
+      end
     | CF.Exists exists_f ->
       let hf = exists_f.CF.formula_exists_heap in
-      let e_vars = CF.get_exists f in
+      let e_vars = exists_f.CF.formula_exists_qvars in
       let vperms = exists_f.CF.formula_exists_vperm in
       let e_typ = exists_f.CF.formula_exists_type in
       let e_flow = exists_f.CF.formula_exists_flow in
       let pf = Mcpure.pure_of_mix exists_f.CF.formula_exists_pure in
-      let n_hf = extract_hf_vars hf [var] in
-      let h_vars = CF.h_fv n_hf in
-      let pf_var = extract_var_pf pf h_vars in
-      CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
-                  e_typ e_flow [] no_pos
+      let heap_extract = extract_hf_var hf var in
+      begin
+        match heap_extract with
+        | None ->
+          let pf_var = extract_var_pf pf [var] in
+          Some (CF.mkExists e_vars CF.HEmp (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+        | Some (hf, vars) ->
+          let h_vars = CF.h_fv hf in
+          let vars = vars @ h_vars |> CP.remove_dups_svl in
+          let pf_var = extract_var_pf pf vars in
+          Some (CF.mkExists e_vars hf (Mcpure.mix_of_pure pf_var) vperms
+                  e_typ e_flow [] no_pos)
+      end
     | _ -> report_error no_pos "extract_var_f: cannot be OR"
 
 let extract_var_f formula var =
-  Debug.no_2 "extract_var_f" pr_formula pr_var pr_formula
+  Debug.no_2 "extract_var_f" pr_formula pr_var
+    (fun x -> match x with
+       | None -> "None"
+       | Some varf -> pr_formula varf)
     (fun _ _ -> extract_var_f_x formula var) formula var
 
 
@@ -848,6 +854,19 @@ let need_unfold_rhs prog vn=
   let vdef = look_up_view vn in
   [(vn.CF.h_formula_view_name,vdef.Cast.view_un_struc_formula,
     vdef.Cast.view_vars)], [(vn.CF.h_formula_view_node)]
+
+let is_node_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | Named _ -> true
+  | _ -> false
+
+let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
+  | Int -> true
+  | _ -> false
+
+let equal_type var1 var2 = match CP.type_of_sv var1 with
+  | Int -> is_int_var var2
+  | Named _ | TVar _ -> is_node_var var2
+  | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
 
 let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
@@ -1278,10 +1297,11 @@ let is_rule_fread_useless goal r =
   let var = r.rfr_value in
   let post_vars = CF.fv goal.gl_post_cond in
   if List.exists (fun x -> CP.eq_sv x var) post_vars then true
-  else
-    let arg_f = extract_var_f goal.gl_pre_cond var in
-    if CF.is_emp_formula arg_f then false
-    else true
+  else let arg_f = extract_var_f goal.gl_pre_cond var in
+      match arg_f with
+      | None -> false
+      | Some arg_f -> if CF.is_emp_formula arg_f then false
+        else true
 
 let eliminate_useless_rules goal rules =
   List.filter (fun rule -> match rule with
