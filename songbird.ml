@@ -751,7 +751,7 @@ let solve_entailments prog entailments =
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
   let sb_ents = List.map translate_entailment entailments in
-  let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
+  let () = Syn.binfo "sb_ents" SBC.pr_ents sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let ptree = SBPH.solve_entailments sb_prog sb_ents in
@@ -835,7 +835,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     if not(residue) then
       let ent = SBC.mk_entailment sb_ante sb_conseq in
-      let () = x_binfo_hp (add_str "ent" SBC.pr_ent) ent no_pos in
+      let () = Syn.tinfo "ent" SBC.pr_ent ent no_pos in
       let ptree = SBPH.check_entailment sb_prog ent in
       let res = ptree.SBPA.enr_validity in
       match res with
@@ -843,7 +843,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       | _ -> false, None
     else
       let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
-      let () = x_binfo_hp (add_str "ent" SBC.pr_ent) ent no_pos in
+      let () = Syn.tinfo "ent" SBC.pr_ent ent no_pos in
       let ptree = SBPH.check_entailment sb_prog ent in
       let res = ptree.SBPA.enr_validity in
       match res with

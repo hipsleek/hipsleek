@@ -593,9 +593,8 @@ let choose_main_rules goal =
   rs
 
 let choose_rule_skip goal =
-  let () = x_binfo_pp "marking" no_pos in
+  let () = tinfo_pp "marking" no_pos in
   let sk,_ = SB.check_entail goal.gl_prog goal.gl_pre_cond goal.gl_post_cond in
-  let () = x_binfo_pp "marking" no_pos in
   if sk then let rule = RlSkip in [rule]
   else []
 
@@ -692,7 +691,6 @@ let aux_func_call goal rule fname params subst res_var =
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
     let evars = CF.get_exists params_post in
-    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     let post_state = add_formula_to_formula red params_post in
     let np_vars = CF.fv post_state in
     let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
@@ -707,7 +705,6 @@ let aux_func_call goal rule fname params subst res_var =
     let sub_goal = {goal with gl_vars = n_vars;
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
-    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     mk_derivation_subgoals goal rule [sub_goal]
   | _ -> mk_derivation_fail goal rule
 

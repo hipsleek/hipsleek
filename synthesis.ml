@@ -23,6 +23,10 @@ let pr_sv = Cprinter.string_of_spec_var
 let pr_hps = pr_list Cprinter.string_of_hp_decl
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_substs = pr_list (pr_pair pr_var pr_var)
+let binfo str pr_fun obj pos = x_binfo_hp (add_str str pr_fun) obj pos
+let tinfo str pr_fun obj pos = x_tinfo_hp (add_str str pr_fun) obj pos
+let binfo_pp str pos = x_binfo_pp str pos
+let tinfo_pp str pos = x_tinfo_pp str pos
 
 (*** Reference variable***********)
 let rel_num = ref 0
