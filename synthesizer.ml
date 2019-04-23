@@ -560,7 +560,7 @@ let rec choose_rule_interact goal rules =
   else
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
+    let () = x_binfo_hp (add_str "Choose rule\n" pr_id) str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
     let rule_id = int_of_string (choice) in
     let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
@@ -586,23 +586,25 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
-  (* let rs = rs @ (choose_rule_func_call goal) in *)
+  let rs = rs @ (choose_rule_func_call goal) in
   let rs = rs @ choose_rule_frame_data goal in
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
   rs
 
 let choose_rule_skip goal =
+  let () = x_binfo_pp "marking" no_pos in
   let sk,_ = SB.check_entail goal.gl_prog goal.gl_pre_cond goal.gl_post_cond in
+  let () = x_binfo_pp "marking" no_pos in
   if sk then let rule = RlSkip in [rule]
   else []
 
 let choose_synthesis_rules_x goal : rule list =
   let rules =
     try
-      let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_rule_exists_left goal |> raise_rules in
       let _ = choose_rule_exists_right goal |> raise_rules in
+      let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
       []
     with ERules rs -> rs in
@@ -687,8 +689,10 @@ let aux_func_call goal rule fname params subst res_var =
   let ent_check, residue =
     SB.check_entail ~residue:true goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
-  | true, Some red -> let params_post = CF.subst substs post_proc in
+  | true, Some red ->
+    let params_post = CF.subst substs post_proc in
     let evars = CF.get_exists params_post in
+    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     let post_state = add_formula_to_formula red params_post in
     let np_vars = CF.fv post_state in
     let contain_res = np_vars |> List.map (fun x -> CP.name_of_sv x)
@@ -703,6 +707,7 @@ let aux_func_call goal rule fname params subst res_var =
     let sub_goal = {goal with gl_vars = n_vars;
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
+    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     mk_derivation_subgoals goal rule [sub_goal]
   | _ -> mk_derivation_fail goal rule
 
