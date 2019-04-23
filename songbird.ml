@@ -894,9 +894,9 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
   let holes = List.map CF.disable_imm_h_formula holes in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq = List.hd conseqs in
-  let ents = List.map (fun x -> SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq)
-      sb_ante in
-  let () = x_tinfo_hp (add_str "ents" SBC.pr_ents) ents no_pos in
+  let ents = List.map (fun x ->
+      SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
+  let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
   let check_fun = if !disproof then (SBPH.check_entailment_disproof n_prog)
     else SBPH.check_entailment ~interact:false n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
