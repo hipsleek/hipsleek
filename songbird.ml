@@ -173,7 +173,7 @@ let translate_var_x (var: CP.spec_var): SBGlobals.var =
 
 let translate_var var =
   let pr1 = CPR.string_of_spec_var in
-  let pr2 = SBCast.pr_var in
+  let pr2 = SBGlobals.pr_var in
   Debug.no_1 "translate_var" pr1 pr2
     (fun _ -> translate_var_x var) var
 
