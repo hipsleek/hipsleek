@@ -19,10 +19,8 @@ int length(node x)
 }
 
 node delete_first(node x)
-  // requires x::ll<n> & n<=1 ensures res=null;
-  requires x::node<a,t> * t::ls<null,n>
-  ensures res::ls<null,n>;
-  // requires x::ll<n> ensures res::ll<n>;
+  requires x::ls<null,n> & n<=1 ensures res=null;
+  requires x::node<a,t> * t::ls<null,n> ensures t::ls<null,n> & res=t;
 {
   if (x == null)
     return null;
@@ -55,8 +53,11 @@ void main () {
 
   int n = length(x);
   dprint;
-  assert (n = 3);
+  assert (n' = 3);
 
-  // node y = delete_first(node x);
-  // int m = length(y);
+  dprint;
+  node t = delete_first(x);
+  int m = length(t);
+  dprint;
+  assert (m' = 2);
 }
