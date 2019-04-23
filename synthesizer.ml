@@ -593,7 +593,6 @@ let choose_main_rules goal =
   rs
 
 let choose_rule_skip goal =
-  let () = tinfo_pp "marking" no_pos in
   let sk,_ = SB.check_entail goal.gl_prog goal.gl_pre_cond goal.gl_post_cond in
   if sk then let rule = RlSkip in [rule]
   else []
