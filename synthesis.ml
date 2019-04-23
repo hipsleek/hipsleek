@@ -90,13 +90,19 @@ and rule_vinit = {
 }
 
 and rule_frame_pred = {
-  rli_lhs: CP.spec_var;
-  rli_rhs: CP.spec_var;
+  rfp_lhs: CP.spec_var;
+  rfp_rhs: CP.spec_var;
+  rfp_pairs: (CP.spec_var * CP.spec_var) list;
+  rfp_pre: CF.formula;
+  rfp_post: CF.formula
 }
 
 and rule_frame_data = {
   rfd_lhs: CP.spec_var;
   rfd_rhs: CP.spec_var;
+  rfd_pairs: (CP.spec_var * CP.spec_var) list;
+  rfd_pre: CF.formula;
+  rfd_post: CF.formula
 }
 
 and rule_unfold_pre = {
@@ -330,7 +336,7 @@ let pr_fread rule =
   ^ (pr_var rule.rfr_value) ^ ")"
 
 let pr_instantiate rule =
-  "(" ^ (pr_var rule.rli_lhs) ^ ", " ^ (pr_var rule.rli_rhs) ^ ")"
+  "(" ^ (pr_var rule.rfp_lhs) ^ ", " ^ (pr_var rule.rfp_rhs) ^ ")"
 
 let pr_frame_data rcore =
   "(" ^ (pr_var rcore.rfd_lhs) ^ ", " ^ (pr_var rcore.rfd_rhs) ^ ")"
@@ -341,11 +347,11 @@ let pr_var_init rule =
 let pr_rule rule = match rule with
   | RlSkip -> "RlSkip"
   | RlFoldLeft r -> "RlFoldLeft " ^ (pr_formula r.rfl_pre)
-  | RlFuncCall fc -> "RlFuncCall\n" ^ (pr_func_call fc)
-  | RlFuncRes fc -> "RlFuncRes\n" ^ (pr_func_res fc)
-  | RlAssign rule -> "RlAssign\n" ^ "(" ^ (pr_rule_assign rule) ^ ")"
-  | RlReturn rule -> "RlReturn\n" ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
-  | RlFWrite rule -> "RlFWrite\n" ^ (pr_rule_bind rule)
+  | RlFuncCall fc -> "RlFuncCall " ^ (pr_func_call fc)
+  | RlFuncRes fc -> "RlFuncRes " ^ (pr_func_res fc)
+  | RlAssign rule -> "RlAssign " ^ "(" ^ (pr_rule_assign rule) ^ ")"
+  | RlReturn rule -> "RlReturn " ^ "(" ^ (pr_exp rule.r_exp) ^ ")"
+  | RlFWrite rule -> "RlFWrite " ^ (pr_rule_bind rule)
   | RlFRead rule -> "RlFRead" ^ (pr_fread rule)
   | RlUnfoldPre rule -> "RlUnfoldPre " ^ (rule.n_pre |> pr_formula)
   | RlUnfoldPost rule -> "RlUnfoldPost\n" ^ (rule.rp_case_formula |> pr_formula)
@@ -1263,10 +1269,7 @@ let frame_var_formula formula var =
     (CF.Base {bf with formula_base_heap = fst n_hf}, snd n_hf)
   | CF.Exists bf -> let hf = bf.CF.formula_exists_heap in
     let n_hf, vars = helper hf in
-    let exists_vars = bf.CF.formula_exists_qvars
-                      |> List.filter (fun x -> not (CP.eq_sv var x)) in
-    (CF.Exists {bf with formula_exists_heap = n_hf;
-                        formula_exists_qvars = exists_vars}, vars)
+    (CF.Exists {bf with formula_exists_heap = n_hf}, vars)
   | _ -> report_error no_pos "frame_var_formula: CF.Or unhandled"
 
 let get_hf (f:CF.formula) = match f with
@@ -1376,7 +1379,7 @@ let compare_rule_frame_data_vs_other r1 r2 =
 let compare_rule_frame_pred_vs_other r1 r2 =
   match r2 with
   | RlFramePred _
-  | RlFrameData _ -> if CP.is_res_sv r1.rli_lhs then PriHigh
+  | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
   | _ -> PriLow
 

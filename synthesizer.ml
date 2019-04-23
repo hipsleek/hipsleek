@@ -238,11 +238,8 @@ let unify_fcall proc_decl pre_proc post_proc goal =
     let is_cur_vars = List.for_all (fun x ->
         List.exists (fun y -> CP.eq_spec_var x y) goal.gl_vars) args in
     let has_res_arg = List.exists is_res_sv_syn args in
-    (* let () = x_binfo_hp (add_str "trace" pr_trace) goal.gl_trace no_pos in
-     * let () = x_binfo_hp (add_str "arg" pr_vars) args no_pos in *)
     let called = is_fcall_called goal.gl_trace args ||
                  is_fres_called goal.gl_trace args in
-    (* let () = x_binfo_hp (add_str "called" string_of_bool) called no_pos in *)
     let eq_args = List.for_all2 CP.eq_sv args proc_args in
     if is_cur_vars && (not has_res_arg) && (not called) && not eq_args then
       let fc_rule = if contain_res then
@@ -451,12 +448,33 @@ let find_instantiate_var goal var =
 let choose_rule_frame_pred goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let exists_vars = CF.get_exists post |> List.filter is_node_var in
+  let filter (lhs, rhs) =
+    let n_pre, pre_vars = frame_var_formula pre rhs in
+    let n_post, post_vars = frame_var_formula post lhs in
+    let check_field f field =
+      match extract_var_f f field with
+      | Some var_f -> if CF.is_emp_formula var_f then true
+        else false
+      | _ -> true in
+    let check_pre = List.for_all (check_field pre) pre_vars in
+    let check_post = List.for_all (check_field post) post_vars in
+    if (List.length pre_vars = List.length post_vars) &&
+       check_pre && check_post then
+      let pre_vars = rhs::pre_vars in
+      let post_vars = lhs::post_vars in
+      let rule = RlFramePred {
+          rfp_lhs = lhs;
+          rfp_rhs = rhs;
+          rfp_pairs = List.combine pre_vars post_vars;
+          rfp_pre = n_pre;
+          rfp_post = n_post;
+        } in [rule]
+    else [] in
   let helper var =
     let eq_vars = find_instantiate_var goal var in
-    eq_vars |> List.map (fun x -> RlFramePred {
-        rli_lhs = var;
-        rli_rhs = x}) in
-  exists_vars |> List.map helper |> List.concat
+    eq_vars |> List.map (fun x -> (var, x)) in
+  exists_vars |> List.map helper |> List.concat |> List.map filter
+  |> List.concat
 
 let find_frame_node_var goal var =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -487,11 +505,29 @@ let choose_rule_frame_data goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
   let post_vars = post |> CF.fv |> List.filter is_node_var in
   let pairs = post_vars |> List.map (find_frame_node_var goal) |> List.concat in
-  let mk_rule (lhs, rhs) = RlFrameData {
-      rfd_lhs = lhs;
-      rfd_rhs = rhs
-    } in
-  pairs |> List.map mk_rule
+  let filter (lhs, rhs) =
+    let n_pre, pre_vars = frame_var_formula pre rhs in
+    let n_post, post_vars = frame_var_formula post lhs in
+    let check_field f field =
+      match extract_var_f f field with
+      | Some var_f -> if CF.is_emp_formula var_f then true
+        else false
+      | _ -> true in
+    let check_pre = List.for_all (check_field pre) pre_vars in
+    let check_post = List.for_all (check_field post) post_vars in
+    if (List.length pre_vars = List.length post_vars) &&
+       check_pre && check_post then
+      let pre_vars = rhs::pre_vars in
+      let post_vars = lhs::post_vars in
+      let rule = RlFrameData {
+          rfd_lhs = lhs;
+          rfd_rhs = rhs;
+          rfd_pairs = List.combine pre_vars post_vars;
+          rfd_pre = n_pre;
+          rfd_post = n_post;
+        } in [rule]
+    else [] in
+  pairs |> List.map filter |> List.concat
 
 let choose_rule_exists_right goal =
   let exists_vars = CF.get_exists goal.gl_post_cond in
@@ -527,15 +563,19 @@ let rec choose_rule_interact goal rules =
     let () = x_binfo_hp (add_str "Choose rule" pr_id) str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
     let rule_id = int_of_string (choice) in
-    let rules_w_ids = List.mapi (fun i x -> (i+1, x)) rules in
+    let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
     let chosen_rules, other_rules =
-      List.partition (fun (x, _) -> x = rule_id) rules_w_ids in
+      List.partition (fun (x, _) -> x + 1 = rule_id) rules_w_ids in
     if chosen_rules = [] then
       let err_str = "Wrong choose, please choose again" in
       let () = x_binfo_hp (add_str "Error" pr_id) err_str no_pos in
       choose_rule_interact goal rules
-    else let rules = chosen_rules @ other_rules in
-      List.map snd rules
+    else
+      let chosen_rules = List.map snd chosen_rules in
+      let other_rules = List.map snd other_rules in
+      let () = x_binfo_hp (add_str "You chose" (pr_list_ln pr_rule))
+          chosen_rules no_pos in
+      chosen_rules @ other_rules
 
 let choose_main_rules goal =
   let rs = [] in
@@ -546,7 +586,7 @@ let choose_main_rules goal =
   let rs = rs @ (choose_rule_fwrite goal) in
   let rs = rs @ (choose_rule_numeric goal) in
   let rs = rs @ (choose_rule_unfold_post goal) in
-  let rs = rs @ (choose_rule_func_call goal) in
+  (* let rs = rs @ (choose_rule_func_call goal) in *)
   let rs = rs @ choose_rule_frame_data goal in
   let rs = eliminate_useless_rules goal rs in
   let rs = reorder_rules goal rs in
@@ -687,42 +727,22 @@ let process_rule_unfold_pre goal rcore =
   mk_derivation_subgoals goal (RlUnfoldPre rcore) [n_goal]
 
 let process_rule_frame_pred goal rcore =
-  let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rcore.rli_rhs in
-  let n_post, post_vars = frame_var_formula goal.gl_post_cond rcore.rli_lhs in
-  if List.length pre_vars = List.length post_vars then
-    let pre_vars = rcore.rli_rhs::pre_vars in
-    let post_vars = rcore.rli_lhs::post_vars in
-    let eq_pairs = List.map2 (fun x y -> CP.mkEqVar x y no_pos)
-        pre_vars post_vars in
-    let eq_pf = mkAndList eq_pairs in
-    let n_post = CF.add_pure_formula_to_formula eq_pf n_post in
-    (* let qvars = qvars |> List.filter (fun x -> not(CP.mem x post_vars)) in
-     * let n_post = CF.add_quantifiers qvars n_post in *)
-    let subgoal = {goal with gl_post_cond = n_post;
-                             gl_trace = (RlFramePred rcore)::goal.gl_trace;
-                             gl_pre_cond = n_pre} in
-    mk_derivation_subgoals goal (RlFramePred rcore) [subgoal]
-  else mk_derivation_fail goal (RlFramePred rcore)
+  let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) rcore.rfp_pairs in
+  let eq_pf = mkAndList eq_pairs in
+  let n_post = CF.add_pure_formula_to_formula eq_pf rcore.rfp_post in
+  let subgoal = {goal with gl_post_cond = n_post;
+                           gl_trace = (RlFramePred rcore)::goal.gl_trace;
+                           gl_pre_cond = rcore.rfp_pre} in
+  mk_derivation_subgoals goal (RlFramePred rcore) [subgoal]
 
 let process_rule_frame_data goal rcore =
-  let n_pre, pre_vars = frame_var_formula goal.gl_pre_cond rcore.rfd_rhs in
-  let n_post, post_vars = frame_var_formula goal.gl_post_cond rcore.rfd_lhs in
-  if List.length pre_vars = List.length post_vars then
-    (* let qvars, post_bf = CF.split_quantifiers n_post in *)
-    let pre_vars = rcore.rfd_rhs::pre_vars in
-    let post_vars = rcore.rfd_lhs::post_vars in
-    let eq_pairs = List.map2 (fun x y -> CP.mkEqVar x y no_pos)
-        pre_vars post_vars in
-    let eq_pf = mkAndList eq_pairs in
-    let n_post = CF.add_pure_formula_to_formula eq_pf n_post in
-    (* let n_post = CF.subst (List.combine post_vars pre_vars) post_bf in
-     * let qvars = qvars |> List.filter (fun x -> not(CP.mem x post_vars)) in
-     * let n_post = CF.add_quantifiers qvars n_post in *)
-    let subgoal = {goal with gl_post_cond = n_post;
-                             gl_trace = (RlFrameData rcore)::goal.gl_trace;
-                             gl_pre_cond = n_pre} in
-    mk_derivation_subgoals goal (RlFrameData rcore) [subgoal]
-  else mk_derivation_fail goal (RlFrameData rcore)
+  let eq_pairs = List.map (fun (x, y) -> CP.mkEqVar x y no_pos) rcore.rfd_pairs in
+  let eq_pf = mkAndList eq_pairs in
+  let n_post = CF.add_pure_formula_to_formula eq_pf rcore.rfd_post in
+  let subgoal = {goal with gl_post_cond = n_post;
+                           gl_trace = (RlFrameData rcore)::goal.gl_trace;
+                           gl_pre_cond = rcore.rfd_pre} in
+  mk_derivation_subgoals goal (RlFrameData rcore) [subgoal]
 
 let process_rule_unfold_post goal rcore =
   let n_goal = {goal with gl_post_cond = rcore.rp_case_formula;
