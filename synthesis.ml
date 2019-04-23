@@ -1388,6 +1388,7 @@ let compare_rule r1 r2 =
   | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
+  | RlUnfoldPost _ -> PriLow
   | _ -> PriEqual
 
 let is_code_rule trace = match trace with
