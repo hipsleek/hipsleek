@@ -5,9 +5,9 @@ open Gen.Basic
 module SBC = Libsongbird.Cast
 module SBD = Libsongbird.Debug
 module SBG = Libsongbird.Globals
-module SBProverP = Libsongbird.Prover_pure
-module SBProverH = Libsongbird.Prover_hip
-module SBProverA = Libsongbird.Prover_all
+module SBPP = Libsongbird.Prover_pure
+module SBPH = Libsongbird.Prover_hip
+module SBPA = Libsongbird.Prover_all
 module SBPFE = Libsongbird.Proof_entail
 module SBPFU = Libsongbird.Proof_unkentail
 module CP = Cpure
@@ -33,7 +33,6 @@ let pr_entail = SBC.pr_entailment
 let pre_list = ref ([] : CF.formula list)
 let sb_program = ref (None: SBC.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
-let x_sinfo_hp = if !syn_debug then x_binfo_hp else x_tinfo_hp
 (*********************************************************************
  * Translate Formulas
  *********************************************************************)
@@ -626,7 +625,7 @@ let create_templ_prog prog ents =
                prog_commands = [SBC.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBC.pr_program) nprog no_pos in
   let sb_res =
-    SBProverH.infer_unknown_functions_w_false_rhs ifp_typ nprog
+    SBPH.infer_unknown_functions_w_false_rhs ifp_typ nprog
       ents in
   let inferred_prog = if sb_res = [] then nprog
     else snd (List.hd sb_res)
@@ -755,7 +754,7 @@ let solve_entailments prog entailments =
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
-  let ptree = SBProverH.solve_entailments sb_prog sb_ents in
+  let ptree = SBPH.solve_entailments sb_prog sb_ents in
   let res = SBPFU.get_ptree_validity ptree in
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
@@ -770,7 +769,7 @@ let get_vars_in_fault_ents ents =
   let pr_vars = Cprinter.string_of_spec_var_list in
   let sb_ents = List.map translate_ent ents in
   let () = x_tinfo_hp (add_str "entails: " (pr_list SBC.pr_pent)) sb_ents no_pos in
-  let sb_vars = List.map SBProverH.norm_entail sb_ents |> List.concat in
+  let sb_vars = List.map SBPH.norm_entail sb_ents |> List.concat in
   let vars = List.map translate_back_var sb_vars in
   let () = x_tinfo_hp (add_str "vars: " pr_vars) vars no_pos in
   vars
@@ -837,19 +836,19 @@ let check_entail_x ?(residue=false) prog ante conseq =
     if not(residue) then
       let ent = SBC.mk_entailment sb_ante sb_conseq in
       let () = x_binfo_hp (add_str "ent" SBC.pr_ent) ent no_pos in
-      let ptree = SBProverH.check_entailment sb_prog ent in
-      let res = ptree.SBProverA.enr_validity in
+      let ptree = SBPH.check_entailment sb_prog ent in
+      let res = ptree.SBPA.enr_validity in
       match res with
       | SBG.MvlTrue -> true, None
       | _ -> false, None
     else
       let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
       let () = x_binfo_hp (add_str "ent" SBC.pr_ent) ent no_pos in
-      let ptree = SBProverH.check_entailment sb_prog ent in
-      let res = ptree.SBProverA.enr_validity in
+      let ptree = SBPH.check_entailment sb_prog ent in
+      let res = ptree.SBPA.enr_validity in
       match res with
       | SBG.MvlTrue ->
-        let residue_fs = ptree.SBProverA.enr_residues in
+        let residue_fs = ptree.SBPA.enr_residues in
         let red = residue_fs |> List.rev |> List.hd in
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
@@ -898,27 +897,25 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
   let ents = List.map (fun x -> SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq)
       sb_ante in
   let () = x_tinfo_hp (add_str "ents" SBC.pr_ents) ents no_pos in
-  let check_fun = if !disproof then (SBProverH.check_entailment_disproof n_prog)
-    else SBProverH.check_entailment ~interact:false n_prog in
+  let check_fun = if !disproof then (SBPH.check_entailment_disproof n_prog)
+    else SBPH.check_entailment ~interact:false n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
-  let is_valid x = x.SBProverA.enr_validity = SBG.MvlTrue in
+  let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
     let () = if !disproof then
         valid_num := !valid_num + (List.length ents)
       else () in
-    let residues = List.map (fun x -> List.hd x.SBProverA.enr_residues) ptrees in
+    let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
-    let is_valid (x, y) = y.SBProverA.enr_validity = SBG.MvlTrue in
-    let is_invalid (x, y) = y.SBProverA.enr_validity = SBG.MvlFalse in
-    let is_unkn (x, y) = y.SBProverA.enr_validity = SBG.MvlUnkn in
+    let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
+    let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
+    let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
     let pairs = List.combine ents ptrees in
     let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
     let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
     let valid_ents = pairs |> List.filter is_valid |> List.map fst in
-    let () = x_sinfo_hp (add_str "invalid" SBC.pr_ents) invalid_ents no_pos in
-    let () = x_sinfo_hp (add_str "unknown" SBC.pr_ents) unkn_ents no_pos in
     let () = if !output_sb then
         let _ = List.map (output_sb_ent n_prog) invalid_ents in
         let _ = List.map (output_sb_ent n_prog) unkn_ents in
@@ -953,7 +950,7 @@ let check_sat_x prog (f:CF.formula) =
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
   else
     let sb_formula = List.hd sb_f in
-    let sb_res = SBProverH.check_sat sb_prog sb_formula in
+    let sb_res = SBPH.check_sat sb_prog sb_formula in
     match sb_res with
     | MvlTrue -> true
     | _ -> false
@@ -968,7 +965,7 @@ let check_unsat_x prog (f:CF.formula) =
   if List.length sb_f != 1 then report_error no_pos "SB.check_sat invalid input"
   else
     let sb_formula = List.hd sb_f in
-    let sb_res = SBProverH.check_sat sb_prog sb_formula in
+    let sb_res = SBPH.check_sat sb_prog sb_formula in
     match sb_res with
     | MvlFalse -> true
     | _ -> false
@@ -984,8 +981,8 @@ let check_pure_entail_x ante conseq =
   let sb_conseq_f = SBC.mk_fpure sb_conseq in
   let sb_prog = SBC.mk_program "check_pure_entail" in
   let ent = SBC.mk_entailment sb_ante_f sb_conseq_f in
-  let ptree = SBProverH.check_entailment sb_prog ent in
-  let res = ptree.SBProverA.enr_validity in
+  let ptree = SBPH.check_entailment sb_prog ent in
+  let res = ptree.SBPA.enr_validity in
     match res with
     | SBG.MvlTrue -> true
     | _ -> false
@@ -1007,10 +1004,10 @@ let infer_templ_defn prog pre post fun_name args =
                SBC.prog_funcs = [f_defn];
                SBC.prog_commands = [SBC.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "ent" SBC.pr_pure_entail) ent no_pos in
-  let sb_res = SBProverP.infer_unknown_functions ifp_typ nprog ent in
+  let sb_res = SBPP.infer_unknown_functions ifp_typ nprog ent in
   let ifds = fst sb_res in
-  let () = x_tinfo_hp (add_str "re" (SBProverP.pr_ifds)) ifds no_pos in
-  let func_defns = ifds |> List.map (fun x -> x.SBProverP.ifd_fdefns)
+  let () = x_tinfo_hp (add_str "re" (SBPP.pr_ifds)) ifds no_pos in
+  let func_defns = ifds |> List.map (fun x -> x.SBPP.ifd_fdefns)
                    |> List.concat in
   try
     let func_defn = func_defns
