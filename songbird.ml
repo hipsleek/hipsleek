@@ -625,11 +625,8 @@ let create_templ_prog prog ents =
                prog_commands = [SBC.InferFuncs infer_func]} in
   let () = x_tinfo_hp (add_str "nprog: " SBC.pr_program) nprog no_pos in
   let sb_res =
-    SBPH.infer_unknown_functions_w_false_rhs ifp_typ nprog
-      ents in
-  let inferred_prog = if sb_res = [] then nprog
-    else snd (List.hd sb_res)
-  in
+    SBPH.infer_unknown_functions_w_false_rhs ifp_typ nprog ents in
+  let inferred_prog = if sb_res = [] then nprog else snd (List.hd sb_res) in
   let () = x_tinfo_hp (add_str "inferred prog: " SBC.pr_program) inferred_prog no_pos in
   inferred_prog.SBC.prog_funcs
 
@@ -742,7 +739,7 @@ let translate_prog (prog:Cast.prog_decl) =
                             SBC.prog_views = sb_view_decls} in
     let pr3 = SBC.pr_program in
     let n_prog = Libsongbird.Transform.normalize_prog n_prog in
-    let () = x_tinfo_hp (add_str "prog" pr3) n_prog no_pos in
+    let () = x_info_hp (add_str "prog" pr3) n_prog no_pos in
     let () = sb_program := Some n_prog in
     n_prog
   else Gen.unsome !sb_program
@@ -848,9 +845,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       match res with
       | SBG.MvlTrue ->
         let residue_fs = ptree.SBPA.enr_residues in
-        let _ = print_endline "======== 1A" in
         let red = residue_fs |> List.rev |> List.hd in
-        let _ = print_endline "======== 1B" in
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
       | _ -> false, None
@@ -903,10 +898,10 @@ let check_entail_es prog (es:CF.entail_state) (bf:CF.struc_base_formula) ?(pf=No
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
-    let () = if !disproof then
-        valid_num := !valid_num + (List.length ents)
-      else () in
-    let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
+    let () = if !disproof then valid_num := !valid_num + (List.length ents) in
+    let residues = List.fold_left (fun acc x -> match x.SBPA.enr_residues with
+        | [] -> report_error no_pos "songbird.ml: empty residue"
+        | rsd::_ -> acc @ [rsd]) [] ptrees in
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
@@ -1027,7 +1022,6 @@ let get_residues ptrees =
     let residue_fs = SBPFE.get_ptree_residues ptree in
     let pr_rsd = SBC.pr_fs in
     let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
-
     residue_fs |> List.rev |> List.hd
   ) ptrees
 
