@@ -848,7 +848,9 @@ let check_entail_x ?(residue=false) prog ante conseq =
       match res with
       | SBG.MvlTrue ->
         let residue_fs = ptree.SBPA.enr_residues in
+        let _ = print_endline "======== 1A" in
         let red = residue_fs |> List.rev |> List.hd in
+        let _ = print_endline "======== 1B" in
         let hip_red = translate_back_formula red [] in
         true, Some hip_red
       | _ -> false, None
@@ -1025,6 +1027,7 @@ let get_residues ptrees =
     let residue_fs = SBPFE.get_ptree_residues ptree in
     let pr_rsd = SBC.pr_fs in
     let () = x_tinfo_hp (add_str "residues" pr_rsd) residue_fs no_pos in
+
     residue_fs |> List.rev |> List.hd
   ) ptrees
 
@@ -1115,7 +1118,13 @@ and hentail_after_sat_ebase prog ctx es bf ?(pf=None) =
       , Prooftracer.Failure)
 
 and heap_entail_after_sat_struc ?(pf=None) prog ctx conseq =
-  Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
-    Cprinter.string_of_struc_formula
-    (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
-    (fun _ _ -> heap_entail_after_sat_struc_x  ~pf:pf prog ctx conseq) ctx conseq
+  try
+    Debug.no_2 "heap_entail_after_sat_struc" Cprinter.string_of_context
+      Cprinter.string_of_struc_formula
+      (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
+      (fun _ _ -> heap_entail_after_sat_struc_x  ~pf:pf prog ctx conseq)
+      ctx conseq
+  with e ->
+    let _ = print_endline ("Exception: " ^ (Printexc.to_string e) ^
+                           "\nBacktrace: " ^ (Printexc.get_backtrace ())) in
+    raise e
