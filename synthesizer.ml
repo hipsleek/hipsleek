@@ -201,7 +201,8 @@ let unify_pair goal proc_decl arg pre_var =
 let unify_arg_x goal proc_decl arg =
   let pre_cond, post_cond = goal.gl_pre_cond, goal.gl_post_cond in
   let () = x_tinfo_hp (add_str "all vars" pr_vars) (CF.fv pre_cond) no_pos in
-  let pre_vars = CF.fv pre_cond |> List.filter (equal_type arg) in
+  let pre_vars = CF.fv pre_cond |> List.filter (equal_type arg)
+               |> List.filter (fun x -> CP.mem x goal.gl_vars) in
   let ss_vars = List.map (fun pre_var ->
       let (x,y) = unify_pair goal proc_decl arg pre_var in
       (pre_var, x, y)) pre_vars in
@@ -210,7 +211,7 @@ let unify_arg_x goal proc_decl arg =
   ss_vars
 
 let unify_arg goal proc_decl arg =
-  Debug.no_2 "unfiy_arg" pr_goal pr_var
+  Debug.no_2 "unify_arg" pr_goal pr_var
     (fun x -> List.map fst x |> pr_vars)
     (fun _ _ -> unify_arg_x goal proc_decl arg) goal arg
 
@@ -560,9 +561,9 @@ let rec choose_rule_interact goal rules =
   else
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Rules" pr_rules) rules no_pos in
+    let () = x_binfo_hp (add_str "Rules\n" pr_rules) rules no_pos in
     let choose_str = "Please choose from 1 to "
-                     ^ (string_of_int (List.length rules + 1)) ^ ": " in
+                     ^ (string_of_int (List.length rules)) ^ ": " in
     let () = x_binfo_pp choose_str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
     let rule_id = int_of_string (choice) in
@@ -673,7 +674,6 @@ let process_rule_fread goal rcore =
     mk_derivation_subgoals goal (RlFRead rcore) [n_goal]
 
 let aux_func_call goal rule fname params subst res_var =
-  let () = x_binfo_pp "marking" no_pos in
   let proc_decl = goal.gl_proc_decls
                   |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -692,7 +692,6 @@ let aux_func_call goal rule fname params subst res_var =
     SB.check_entail ~residue:true goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
-    let () = x_binfo_pp "marking" no_pos in
     let params_post = CF.subst substs post_proc in
     let () = x_binfo_hp (add_str "param_post" pr_formula) params_post no_pos in
     let evars = CF.get_exists params_post in
@@ -788,6 +787,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
+  let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore

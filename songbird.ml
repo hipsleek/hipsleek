@@ -844,7 +844,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
     else
       let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
       let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ent) ent no_pos in
-      let ptree = SBPH.check_entailment sb_prog ent in
+      let ptree = SBPH.check_entailment ~interact:true sb_prog ent in
       let res = ptree.SBPA.enr_validity in
       let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
       match res with

@@ -306,7 +306,6 @@ let pr_iast_exp_opt exp = match exp with
 
 let pr_goal goal =
   let vars = goal.gl_vars in
-  (* let pr_svs = Cprinter.string_of_spec_var_list in *)
   let pr_svs = pr_list Cprinter.string_of_typed_spec_var in
   "synthesize " ^ (pr_svs vars) ^ "\n" ^
   (pr_formula goal.gl_pre_cond) ^ "\n" ^
@@ -389,7 +388,7 @@ and pr_st_core st =
   (pr_rule st.stc_rule) ^
   ((pr_list pr_st_core) sub_trees)
 
-let pr_rules = pr_list pr_rule
+let pr_rules = pr_list_ln pr_rule
 
 (* Basic functions  *)
 let mkAndList pf_list =
