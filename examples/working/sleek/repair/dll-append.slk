@@ -1,0 +1,34 @@
+data node2 {
+	node2 prev;
+	node2 next;	
+}.
+
+/* view for a doubly linked list with size */
+pred dll<p,n> == self = null & n = 0 
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
+
+void append(node2 a, node2 b)
+	requires a::dll<q, m> * b::dll<p, n> & m > 0 & n > 0
+	ensures (exists k2: a::dll<q, k2> & k2 = m + n);.
+
+// synthesize [node2 x,node2 y]
+// x::node2<q,q78> * q78::dll<x,fl77> * y::dll<p,n> &
+// 0<m & 0<n & fl77+1=m & q78=null
+// ~>
+// (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
+// -n-fl77 < 0 & fr6=fl77+ n-1 ).
+
+// synthesize [node2 q78, node2 x,node2 y]
+//  y::node2<p,q99> * q99::dll<y,fl98> * x::node2<q,q78> * q78::dll<x,fl77> &
+// 0<m & 1+fl77=m & q78=null & fl98+1=n & 0<n
+// ~>
+// (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
+// -n-fl77 < 0 & fr6=fl77+ n-1 ).
+
+synthesize [node2 x,node2 y]
+ y::node2<p,q99> * q99::dll<y,fl98> * x::node2<q,q78>&
+0<m & fl77+1=m & 1+fl98=n & 0<n & q78=null & fl77=0
+~>
+(exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
+-n-fl77 < 0 & fr6=fl77+ n-1 ).
+

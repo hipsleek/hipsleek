@@ -390,6 +390,44 @@ and pr_st_core st =
 let pr_rules = pr_list_ln pr_rule
 
 (* Basic functions  *)
+let elim_bool_constraint_pf (pf:CP.p_formula) = match pf with
+  | CP.BVar (_, loc) -> (true, CP.BConst (true, loc))
+  | _ -> (false, pf)
+
+let elim_bool_constraint (pf:CP.formula) =
+  let rec aux pf = match pf with
+    | CP.BForm (bf, opt1) as org ->
+      let pf,opt2 = bf in
+      let is_bool, n_pf = elim_bool_constraint_pf pf in
+      if is_bool then (true, CP.BForm ((n_pf, opt2), opt1))
+      else (false, org)
+    | CP.Not (f, _, _) as org ->
+      let is_bool, n_f = aux f in
+      if is_bool then (true, n_f) else (false, org)
+    | CP.And (f1, f2, pos) as org ->
+      let is_b1, n_f1 = aux f1 in
+      let is_b2, n_f2 = aux f2 in
+      (is_b1 && is_b2, CP.And (n_f1, n_f2, pos))
+    | _ -> (false, pf) in
+  aux pf |> snd
+
+let rec elim_idents (f:CF.formula) = match f with
+  | CF.Base bf ->
+    let pf = bf.CF.formula_base_pure |> pure_of_mix in
+    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
+    CF.Base {bf with formula_base_pure = mix_of_pure n_pf}
+  | CF.Exists bf ->
+    let pf = bf.CF.formula_exists_pure |> pure_of_mix in
+    let n_pf = pf |> CP.elim_idents_node (* |> elim_bool_constraint *) in
+    CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
+  | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
+                               formula_or_f2 = elim_idents bf.CF.formula_or_f2}
+let simplify_goal goal =
+  let n_pre = elim_idents goal.gl_pre_cond in
+  let n_post = elim_idents goal.gl_post_cond in
+  {goal with gl_pre_cond = n_pre;
+             gl_post_cond = n_post}
+
 let mkAndList pf_list =
   let rec aux pf_list = match pf_list with
   | [] -> CP.mkTrue no_pos
@@ -1425,6 +1463,16 @@ let choose_rule_exists_left goal =
   if vars = [] then []
   else let rule = RlExistsLeft { exists_vars = vars} in
     [rule]
+
+let rm_redundant_constraint (goal: goal) : goal =
+  let pf_pre = CF.get_pure goal.gl_pre_cond in
+  let n_pf_pre = CP.elim_idents pf_pre in
+  let n_pre = CF.repl_pure_formula n_pf_pre goal.gl_pre_cond in
+  let pf_post = CF.get_pure goal.gl_post_cond in
+  let n_pf_post = CP.elim_idents pf_post in
+  let n_post = CF.repl_pure_formula n_pf_post goal.gl_post_cond in
+  {goal with gl_pre_cond = n_pre;
+             gl_post_cond = n_post}
 
 let process_rule_exists_left goal rule =
   let n_pre = remove_exists_vars goal.gl_pre_cond rule.exists_vars in

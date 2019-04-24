@@ -5989,7 +5989,7 @@ and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
   (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
 *)
 
-let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp EMapSV.mkEmpty e1 e2        
+let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp EMapSV.mkEmpty e1 e2
 
 let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
 
@@ -6450,9 +6450,9 @@ and e_apply_one_list_exp (fr, t) alist = match alist with
    	Utilities for simplifications:
    	- we do some basic simplifications: eliminating identities where the LHS = RHS
  ******************************************************************************************************************)
-and elim_idents (f : formula) : formula = 
+and elim_idents (f : formula) : formula =
   let pr = !print_formula in
-  Debug.no_1 "elim_idents" pr pr elim_idents_x f 
+  Debug.no_1 "elim_idents" pr pr elim_idents_x f
 
 and elim_idents_x (f : formula) : formula = match f with
   | And (f1, f2, pos) -> mkAnd (elim_idents_x f1) (elim_idents_x f2) pos
@@ -6483,13 +6483,39 @@ and elim_idents_b_formula (f : b_formula) : b_formula =
     | _ -> pf
   in (npf,il)
 
-(*
-let combine_branch b (f, l) =
-  match b with 
-  | "" -> f
-  | s -> try And (f, List.assoc b l, no_pos) with Not_found -> f
-;;
+let elim_idents_node_b_formula (f : b_formula) : b_formula =
+  let (pf,il) = f in
+  let is_node_type t = match t with
+    | Named _ -> true
+    | _ -> false in
+  let npf = match pf with
+    | Lte (e1, e2, pos)
+    | Gte (e1, e2, pos)
+    | Eq (e1, e2, pos) ->
+      if (eq_exp_no_aset e1 e2) && is_node_type (get_exp_type e1)
+      then BConst(true, pos)
+      else pf
+    | Neq (e1, e2, pos)
+    | Lt (e1, e2, pos)
+    | Gt (e1, e2, pos) ->
+      if (eq_exp_no_aset e1 e2) && is_node_type (get_exp_type e1)
+      then BConst(false, pos)
+      else pf
+    | _ -> pf in
+  (npf,il)
 
+let elim_idents_node (f:formula) : formula =
+  let rec aux f = match f with
+    | And (f1, f2, pos) -> mkAnd (aux f1) (aux f2) pos
+    | AndList b-> AndList (map_l_snd aux b)
+    | Or (f1, f2, lbl, pos) -> mkOr (aux f1) (aux f2) lbl pos
+    | Not (f1, lbl, pos) -> mkNot (aux f1) lbl pos
+    | Forall (sv, f1, lbl, pos) -> mkForall [sv] (aux f1) lbl pos
+    | Exists (sv, f1, lbl, pos) -> mkExists [sv] (aux f1) lbl pos
+    | BForm (f1,lbl) -> BForm(elim_idents_node_b_formula f1, lbl) in
+  aux f
+
+(*
 let drop_varperm_formula (f0 : formula) : formula =
 Debug.no_1 "drop_varperm_formula" !print_formula !print_formula
 drop_varperm_formula f0
