@@ -1357,8 +1357,7 @@ let rec pr_h_formula h =
           if (List.hd hs = n) then
             CP.SpecVar (t,"-",vp) :: (replace_holes (List.tl svl) (List.tl hs) (n+1))
           else
-            sv :: (replace_holes (List.tl svl) hs (n+1))
-    in
+            sv :: (replace_holes (List.tl svl) hs (n+1)) in
     let svs = replace_holes svs hs 0 in
     fmt_open_hbox ();
     if (!Globals.texify) then
@@ -1372,12 +1371,10 @@ let rec pr_h_formula h =
         (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
         pr_spec_var sv; fmt_string "::";
         try
-          (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
-           else pr_angle (c^perm_str) (fun (x,y) -> 
-               (* prints absent field as "#" *)
-               (* if is_absent y then fmt_string "#" *)
-               (* else  *)(pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
-          (* if (!Globals.allow_imm) then *) pr_imm imm;
+          (if not(!Globals.allow_field_ann) ||(List.length svs != List.length ann_param)  then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs
+           else pr_angle (c^perm_str) (fun (x,y) ->
+               (pr_spec_var x; pr_imm y)) (List.combine svs ann_param) );
+          (* pr_imm imm; *)
         with Invalid_argument _ -> failwith "Cprinter.ml, List.combine svs ann_param in printing view_def";
           pr_derv dr;
           pr_split split;
@@ -1427,7 +1424,7 @@ let rec pr_h_formula h =
         pr_spec_var sv;
         fmt_string "::"; (* to distinguish pred from data *)
         pr_angle (c^ho_arg_str^perm_str) pr_view_arg params;
-        pr_imm imm;
+        (* pr_imm imm; *)
         if (!Globals.allow_field_ann) then begin fmt_string "@IFP["; pr_list_of_imm (get_node_param_imm h); fmt_string "]"; end;
         pr_derv dr;
         pr_split split;
