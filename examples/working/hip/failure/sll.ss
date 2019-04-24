@@ -35,11 +35,54 @@ node delete_first(node x)
   }
 }
 
-// node concat(node x, node y)
-// {
-//   if
+node delete_last(node x)
+  requires x::ls<null,n> & n<=1 ensures res=null;
+  requires x::ls<null,n> & n>1 ensures x::ls<null,n-1>;
+{
+  if (x == null)
+    return null;
+  else if (x.next == null) {
+    free(x);
+    return null;
+  }
+  else if (x.next.next == null)  {
+    free(x.next);
+    x.next = null;
+    return x;
+  }
+  else {
+    delete_last(x.next);
+    return x;
+  }
+}
 
-// }
+node insert_first(node x , int a)
+  requires x::ls<null,n>
+  ensures res::ls<null,n+1>;
+{
+  node u = new node(a, null);
+  u.next = x;
+  return u;
+}
+
+node insert_last(node x , int a)
+  requires x::ls<null,n> & n=0 ensures res::ls<null,1>;
+  requires x::ls<null,n> & n>0 ensures x::ls<null,n+1> & res=x;
+{
+  if (x == null) {
+    node u = new node(a, null);
+    return u;
+  }
+  else if (x.next == null) {
+    node u = new node(a, null);
+    x.next = u;
+    return x;
+  }
+  else {
+    insert_last(x.next, a);
+    return x;
+  }
+}
 
 void main () {
   node x = new node(10, null);
@@ -57,7 +100,12 @@ void main () {
 
   dprint;
   node t = delete_first(x);
+  dprint;
   int m = length(t);
   dprint;
   assert (m' = 2);
+
+  node u = delete_first(t);
+  int l = length(u);
+  assert (l' = 1);
 }
