@@ -7,6 +7,18 @@ lsSum<y,n,s> == self=y & n=0 & s=0
   or self::node<a, r> * r::lsSum<y,n2,s2> & n=1+n2 & s=s2+a
   inv n>=0;
 
+int length(node x)
+  requires x::lsSum<null,n,s>
+  ensures x::lsSum<null,n,s> & res = n;
+{
+  if (x == null) return 0;
+  else {
+    int k;
+    k = 1 + length(x.next);
+    return k;
+  }
+}
+
 int sum(node x)
   requires x::lsSum<null,n,s>
   ensures x::lsSum<null,n,s> & res = s;
@@ -28,6 +40,15 @@ node insert_first(node x , int a)
   return u;
 }
 
+node insert_first2(node x , int a)
+  requires x::lsSum<null,n,s>
+  ensures res::node<a,x> * x::lsSum<null,n,s>;
+{
+  node u = new node(a, null);
+  u.next = x;
+  return u;
+}
+
 node insert_last(node x , int a)
   requires x=null ensures res::lsSum<null,1,a>;
   requires x::lsSum<null,n,s> & n>0 ensures x::lsSum<null,n+1,s+a> & res=x;
@@ -43,6 +64,26 @@ node insert_last(node x , int a)
   }
   else {
     insert_last(x.next, a);
+    return x;
+  }
+}
+
+node insert_last2(node x , int a)
+  requires x=null ensures res::node<a,null>;
+  requires x::lsSum<null,n,s> & n>0
+    ensures x::lsSum<y,n,s> * y::node<a,null> & res=x;
+{
+  if (x == null) {
+    node u = new node(a, null);
+    return u;
+  }
+  else if (x.next == null) {
+    node u = new node(a, null);
+    x.next = u;
+    return x;
+  }
+  else {
+    insert_last2(x.next, a);
     return x;
   }
 }
