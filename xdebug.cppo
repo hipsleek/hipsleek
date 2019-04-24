@@ -90,20 +90,20 @@
   failwith ((VarGen.build_loc_str __FILE__ __LINE__)^s))
 #else
 #define x_binfo_hp Debug.binfo_hprint
-#define x_binfo_pp Debug.binfo_pprint 
-#define x_binfo_zp Debug.binfo_zprint 
-#define x_tinfo_hp Debug.tinfo_hprint 
-#define x_tinfo_pp Debug.tinfo_pprint 
-#define x_tinfo_zp Debug.tinfo_zprint 
-#define x_dinfo_hp Debug.dinfo_hprint 
-#define x_dinfo_pp Debug.dinfo_pprint 
+#define x_binfo_pp Debug.binfo_pprint
+#define x_binfo_zp Debug.binfo_zprint
+#define x_tinfo_hp Debug.tinfo_hprint
+#define x_tinfo_pp Debug.tinfo_pprint
+#define x_tinfo_zp Debug.tinfo_zprint
+#define x_dinfo_hp Debug.dinfo_hprint
+#define x_dinfo_pp Debug.dinfo_pprint
 #define x_dinfo_zp Debug.dinfo_zprint
 #define x_winfo_pp Debug.winfo_pprint
 #define x_winfo_hp Debug.binfo_hprint
-cd inc#define x_winfo_zp Debug.binfo_zprint 
+cd inc#define x_winfo_zp Debug.binfo_zprint
 #define x_ninfo_hp (fun pr s p -> ())
 #define x_ninfo_pp (fun s p -> ())
-#define x_add 
+#define x_add
 #define x_add_1
 #define x_add_3
 #define x_noop

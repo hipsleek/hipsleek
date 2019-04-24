@@ -34,9 +34,11 @@ let pr_entail = SBC.pr_entailment
 let pre_list = ref ([] : CF.formula list)
 let sb_program = ref (None: SBC.program option)
 let pr_ents = pr_list (pr_pair pr_pf pr_pf)
+
 (*********************************************************************
  * Translate Formulas
  *********************************************************************)
+
 let pr_validity tvl = match tvl with
   | SBG.MvlFalse -> "Invalid"
   | SBG.MvlTrue -> "Valid"
@@ -744,11 +746,22 @@ let translate_prog (prog:CA.prog_decl) =
     n_prog
   else Gen.unsome !sb_program
 
-let solve_entailments prog entailments =
-  let entailments = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entailments in
+(*********************************************************************
+ * export
+ *********************************************************************)
+
+(* let export_songbird_entailments prog ents = *)
+
+
+(*********************************************************************
+ * other
+ *********************************************************************)
+
+let solve_entailments prog entails =
+  let entails = List.map (fun (x, y) -> (Syn.remove_exists x, y)) entails in
   let pr_ents = pr_list (pr_pair pr_formula pr_formula) in
-  let () = x_tinfo_hp (add_str "entailments" pr_ents) entailments no_pos in
-  let sb_ents = List.map translate_entailment entailments in
+  let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
+  let sb_ents = List.map translate_entailment entails in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
@@ -831,7 +844,8 @@ let check_entail_exact_x prog ante conseq =
   else
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
-    let ent = SBC.mk_entailment sb_ante sb_conseq in
+    let ent = SBC.mk_entailment ~mode:SBG.PrfEntail sb_ante sb_conseq in
+    let () = x_binfo_hp (add_str "ENT EXACT: " SBC.pr_ent) ent no_pos in
     let ptree = SBPH.check_entailment sb_prog ent in
     let res = ptree.SBPA.enr_validity in
     match res with
@@ -853,10 +867,10 @@ let check_entail_residue_x prog ante conseq =
     let sb_ante = List.hd sb_ante in
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
-    let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ent) ent no_pos in
+    let () = x_binfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
     let ptree = SBPH.check_entailment sb_prog ent in
     let res = ptree.SBPA.enr_validity in
-      let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
+    let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
     match res with
     | SBG.MvlTrue ->
       let residue_fs = ptree.SBPA.enr_residues in
@@ -891,7 +905,8 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     | None -> es.CF.es_formula
     | Some pf -> CF.add_pure_formula_to_formula pf es.CF.es_formula in
   let n_prog = translate_prog prog in
-  let evars = bf.CF.formula_struc_implicit_inst @ bf.CF.formula_struc_explicit_inst
+  let evars = bf.CF.formula_struc_implicit_inst
+              @ bf.CF.formula_struc_explicit_inst
               @ bf.CF.formula_struc_exists @ es.CF.es_evars in
   let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
   let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
@@ -908,7 +923,7 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let () = x_tinfo_hp (add_str "ENTS" SBC.pr_ents) ents no_pos in
+  let () = x_binfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
   let check_fun = if !disproof then (SBPH.check_entailment_disproof n_prog)
     else SBPH.check_entailment ~interact:false n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in

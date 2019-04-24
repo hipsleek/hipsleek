@@ -201,7 +201,7 @@ let check_var_read_perm_type msg prog ctx pos v t perm_ty =
     (* let v = CP.ident_of_spec_var sv in *)
     let lend_f = VP.formula_of_vperm_anns [(perm_ty, [sv])] in
     let lend_f = CF.set_flow_in_formula_override
-        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f 
+        { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } lend_f
     in
     let vperm_res, _ = SV.heap_entail_list_failesc_context_init prog false ctx lend_f None None None pos None in
     if not (CF.isSuccessListFailescCtx_new vperm_res) then
@@ -236,7 +236,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl)
 (* The resulting ctx may contain inferred constraint *)
 and check_bounded_term_x prog ctx post_pos =
   let check_bounded_one_measures m es =
-    (* Termination: filter the exp of phase variables 
+    (* Termination: filter the exp of phase variables
      * (their value non-negative numbers in default) *)
     let m = List.filter (fun e ->
         not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
@@ -256,17 +256,17 @@ and check_bounded_term_x prog ctx post_pos =
       let term_pos = (m_pos, no_pos) in
       let term_res, n_es =
         let f_ctx = CF.formula_of_context ctx in
-        if (CF.isFailCtx rs) then 
+        if (CF.isFailCtx rs) then
           let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m)) in
           let err_msg = Term.string_of_term_res tr in
           let () = Term.add_term_err_stk err_msg in
           tr, { es with CF.es_term_err = Some err_msg }
-        else 
+        else
           (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
           es
       in
       let () = x_tinfo_hp (add_str "New es" !CF.print_entail_state) n_es no_pos in
-      let () = Term.add_term_res_stk term_res in 
+      let () = Term.add_term_res_stk term_res in
       n_es, rs
     end
   in
@@ -277,19 +277,19 @@ and check_bounded_term_x prog ctx post_pos =
   in
 
   (* need to perform boundedness check at recursive call *)
-  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk || !Globals.term_bnd_pre_flag) 
+  if (!Globals.dis_term_chk || !Globals.dis_bnd_chk || !Globals.term_bnd_pre_flag)
   then (ctx, [])
-  else 
+  else
     let ctx = x_add_1 TermUtils.strip_lexvar_lhs ctx in
     match ctx with
-    | CF.Ctx es ->  
+    | CF.Ctx es ->
       let m = match es.CF.es_var_measures with
         | None -> []
         | Some (_, ml, _) -> ml
-      in 
-      let () = x_tinfo_hp (add_str "Measures" 
+      in
+      let () = x_tinfo_hp (add_str "Measures"
                              (pr_list !CP.print_exp)) m no_pos in
-      let () = x_tinfo_hp (add_str "Orig context" 
+      let () = x_tinfo_hp (add_str "Orig context"
                              !CF.print_context) ctx no_pos in
       let n_es, rs = check_bounded_one_measures m es in
       (CF.Ctx n_es, Infer.collect_rel_list_context rs)
@@ -507,7 +507,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       let () = proc.proc_stk_of_static_specs # push_pr "typechecker:629" einfer in
       let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
       let () = x_tinfo_hp (add_str "vars" !print_svl) vars no_pos in
-      let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v -> 
+      let vars_rel, vars_templ, vars_inf = List.fold_left (fun (vr, vt, vi) v ->
           let typ = CP.type_of_spec_var v in
           if is_RelT typ then (vr@[v], vt, vi)
           else if is_UtT typ then (vr@[v], vt, vi)
@@ -841,11 +841,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let () = print_endline_quiet
                         ("\n[UNSOUNDNESS] WARNING : possible new unsatisfiable
                         state from post-proving of "^(post_pos # string_of)) in
-                    if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?" 
+                    if !Globals.assert_unsound_false then failwith "Unsound false in SLEEK?"
                     else ()
                   end;
                 (* Termination: collect error messages from successful states *)
-                let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
+                let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in
                 let () = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
                 let rels = Gen.BList.remove_dups_eq (=)
                     (Infer.collect_rel_list_partial_context tmp_ctx) in
@@ -931,7 +931,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let post_vars = List.filter (fun v ->
                               not(CP.is_res_spec_var v)) post_vars in
                           let post_vars = CP.remove_dups_svl post_vars in
-                          let post_fml = if flist!=[] then 
+                          let post_fml = if flist!=[] then
                               let tmp = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 no_pos)
                                   (List.hd flist) (List.tl flist) in
                               CF.normalize 1 tmp post_cond no_pos
@@ -1491,8 +1491,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       if ivars==[] then ts
                       else (* failwith "to impl" *)
                         List.map (fun (bf,es,bl) ->
-                            (bf,es,List.map (fun (pt,c,fopt) -> 
-                                 (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts 
+                            (bf,es,List.map (fun (pt,c,fopt) ->
+                                 (pt,Infer.add_infer_vars_ctx ivars c,fopt)) bl)) ts
                     | Some p ->
                       (* WN_2_Loc: add p to ts; add new_infer from new_ctx into ts *)
                       CF.add_pure_and_infer_from_asserted p new_ctx ts
@@ -1513,7 +1513,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       new_ctx in
                   let () = Debug.ninfo_hprint (add_str "assumed_ctx"
                                                  Cprinter.string_of_list_failesc_context)
-                      assumed_ctx pos in 
+                      assumed_ctx pos in
                   let r =if !Globals.disable_assume_cmd_sat then assumed_ctx
                     else
                       CF.transform_list_failesc_context
@@ -1542,7 +1542,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                       else
                         begin
                           (*L2: this code fragment may never be reached since we
-                            set is_err_must in the wrapper*) 
+                            set is_err_must in the wrapper*)
                           if not !Globals.disable_failure_explaining then
                             let s,fk,_= CF.get_failure_list_failesc_context new_ctx in
                             raise (Err.Ppf ({
@@ -1688,7 +1688,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           match CF.find_barr (List.map (fun c-> c.barrier_name)
                                 prog.prog_barrier_decls) (snd b) c.CF.es_formula
           with
-          | None -> report_error pos ("context does not contain any info on barrier "^(snd b)) 
+          | None -> report_error pos ("context does not contain any info on barrier "^(snd b))
           | Some bar_dn ->
             let bn,args,branches = bar_dn.CF.h_formula_data_name,
                                    bar_dn.CF.h_formula_data_node
@@ -1712,7 +1712,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
 
       let barr_failesc_context (f,e,n) =
         let esc_skeletal = List.map (fun (l,_) -> (l,[])) e in
-        let res = List.map (fun (lbl,c2, oft)-> 
+        let res = List.map (fun (lbl,c2, oft)->
             let list_context_res,prf =process_ctx c2 in
             match list_context_res with
             | CF.FailCtx (t,c,_) -> begin
@@ -2224,10 +2224,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
       let c_e = CP.IConst (i, pos) in
       let res_v = CP.Var (CP.mkRes int_type, pos) in
       let c = CP.mkEqExp res_v c_e pos in
-      let c = 
-        if !Globals.infer_lvar_slicing then 
+      let c =
+        if !Globals.infer_lvar_slicing then
           CP.set_il_formula c (Some (false, fresh_int(), [res_v]))
-        else c 
+        else c
       in
       let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
       let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
@@ -2301,7 +2301,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             CF.h_formula_data_derv = false;
             CF.h_formula_data_split = SPLIT0;
             CF.h_formula_data_imm = CP.ConstAnn(Mutable);
-            CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) heap_args; 
+            CF.h_formula_data_param_imm = List.map (fun _ -> CP.ConstAnn(Mutable)) heap_args;
             (* (andreeac) to check: too weak *)
             CF.h_formula_data_perm = perm;
             CF.h_formula_data_origins = [];
@@ -2694,7 +2694,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
             exp_seq_exp1 = e1;
             exp_seq_exp2 = e2;
             exp_seq_pos = pos}) -> begin
-        let ctx1 = x_add check_exp prog proc ctx e1 post_start_label (*flow_store*) in 
+        let ctx1 = x_add check_exp prog proc ctx e1 post_start_label (*flow_store*) in
         (* Astsimp ensures that e1 is of type void *)
         let ctx2= x_add check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
         Debug.ninfo_hprint (add_str "WN ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos;
@@ -2996,14 +2996,14 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
         | None ->
           let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
           CF.Base { b with CF.formula_base_vperm = vp; }
-        | Some f -> norm_par_case_pre vp f 
+        | Some f -> norm_par_case_pre vp f
       in
       (* Remaining context for the other cases *)
       let rem_ctx =
         let ctx = VP.set_inf_par_list_failesc_ctx ctx in
         let res, _ = SV.heap_entail_list_failesc_context_init prog false ctx pre
             None None None pos None in
-        if (CF.isSuccessListFailescCtx_new res) then 
+        if (CF.isSuccessListFailescCtx_new res) then
           VP.clear_inf_par_list_failesc_ctx res
         else
           let msg = "Proving condition of a par's case failed." in
@@ -3084,6 +3084,7 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)
     pos (pid:formula_label):  CF.list_partial_context  =
+  let _ = x_binfo_pp "<<<<<<<<<< begin to check post <<<<<<<<<<< " pos in
   let ctx = CF.fresh_view_list_partial_context ctx0 in
   let () = if !print_proof then
       begin
@@ -3134,6 +3135,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
       let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
             prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf in
+  let _ = x_binfo_pp "<<<<<<<<<< finish to check post <<<<<<<<<<< " pos in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
       begin
@@ -3265,7 +3267,7 @@ let proc_mutual_scc_shape_infer iprog prog pure_infer ini_hp_defs scc_procs =
         let _= if !print_html then let () = print_ann:= false in () else () in
         print_endline_quiet (pr1 defs);
         let () = print_ann:=  old_print_imm in
-        if !Globals.testing_flag then print_endline_quiet "<dstop>"; 
+        if !Globals.testing_flag then print_endline_quiet "<dstop>";
         print_endline_quiet "*************************************";
         ()
       end;
@@ -4173,7 +4175,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
         has_infer_post_proc no_pos in
     (* Resume other infer. *)
     let () = print_infer_scc (x_loc^" After infer_pure..") scc in
-    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) && 
+    let scc = if (has_infer_shape_proc || has_infer_post_proc || has_infer_pre_proc) &&
                  not (has_infer_shape_pre_proc || has_infer_shape_post_proc)
       then Pi.resume_infer_obj_scc scc old_specs
       else scc in
