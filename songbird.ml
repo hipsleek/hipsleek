@@ -785,8 +785,8 @@ let export_songbird_entailments prog ents =
       x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos) ents)
   else ()
 
-let export_songbird_entailments_results prog ents results =
-  if !export_songbird_proof then (
+let export_songbird_entailments_results ?(always=false) prog ents results =
+  if !export_songbird_proof || always then (
     List.iter2 (fun ent res ->
       let _ = index_export_ent := !index_export_ent + 1 in
       let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
@@ -795,6 +795,7 @@ let export_songbird_entailments_results prog ents results =
       let sts = match res with
         | SBG.MvlTrue -> SBG.StsValid
         | SBG.MvlFalse -> SBG.StsInvalid
+        | SBG.MvlUnkn -> SBG.StsUnkn
         | _ -> SBG.StsNone in
       let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
       let prog = {prog with SBC.prog_commands = cmds} in
@@ -1011,6 +1012,10 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
+    let _ = List.iter2 (fun ent res ->
+        if res != SBG.MvlTrue then
+          export_songbird_entailments_results ~always:true n_prog [ent] [res]
+        else ()) ents results in
     let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
     let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
     let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
