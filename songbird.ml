@@ -924,8 +924,8 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
   let () = x_binfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
-  let check_fun = if !disproof then (SBPH.check_entailment_disproof n_prog)
-    else SBPH.check_entailment ~interact:false n_prog in
+  let check_fun =
+    SBPH.check_entailment ~interact:false ~disproof:!disproof n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
