@@ -323,8 +323,8 @@ let get_cond_exp prog formula base recursive puref vars =
     let n_bf = CF.add_pure_formula_to_formula pf formula in
     let n_pf = CP.mkNot_s pf in
     let n_rc = CF.add_pure_formula_to_formula n_pf formula in
-    let fst,_ = SB.check_entail prog n_bf base in
-    let snd,_ = SB.check_entail prog n_rc recursive in
+    let fst,_ = SB.check_entail_exact prog n_bf base in
+    let snd,_ = SB.check_entail_exact prog n_rc recursive in
     fst && snd in
   conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
   |> List.filter aux
@@ -597,7 +597,8 @@ let choose_main_rules goal =
   rs
 
 let choose_rule_skip goal =
-  let sk,_ = SB.check_entail goal.gl_prog goal.gl_pre_cond goal.gl_post_cond in
+  let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+  let sk,_ = SB.check_entail_exact prog pre post in
   if sk then let rule = RlSkip in [rule]
   else []
 
@@ -635,7 +636,7 @@ let process_rule_return goal rcore =
   let lhs = goal.gl_post_cond |> CF.fv |> List.find CP.is_res_sv in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rcore.r_exp no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check, _ = SB.check_entail goal.gl_prog n_pre post in
+  let ent_check, _ = SB.check_entail_exact goal.gl_prog n_pre post in
   match ent_check with
   | true -> mk_derivation_success goal (RlReturn rcore)
   | false -> mk_derivation_fail goal (RlReturn rcore)
@@ -689,7 +690,7 @@ let aux_func_call goal rule fname params subst res_var =
   let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
   let params_pre = CF.wrap_exists fresh_evars params_pre in
   let ent_check, residue =
-    SB.check_entail ~residue:true goal.gl_prog pre_cond params_pre in
+    SB.check_entail_residue goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
