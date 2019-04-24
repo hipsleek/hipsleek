@@ -285,7 +285,6 @@ let is_synthesis_tree_success stree : bool =
   | StValid _ -> true
   | StUnkn _ -> false
 
-
 (*********************************************************************
  * Printing
  *********************************************************************)
@@ -1349,7 +1348,7 @@ let rec is_fread_called trace rcore : bool  =
       | _ -> is_fread_called tail rcore
     end
 
-let is_rule_fread_useless goal r =
+let is_rule_fread_usable goal r =
   let var = r.rfr_value in
   let post_vars = CF.fv goal.gl_post_cond in
   if List.exists (fun x -> CP.eq_sv x var) post_vars then true
@@ -1360,9 +1359,18 @@ let is_rule_fread_useless goal r =
         else true
 
 let eliminate_useless_rules goal rules =
-  List.filter (fun rule -> match rule with
-      | RlFRead r -> is_rule_fread_useless goal r
-      | _ -> true) rules
+  let contain_fread rule = match rule with
+    | RlFRead _ -> true
+    | _ -> false in
+  let is_rule_unfold_post_usable rules =
+    not (List.exists contain_fread rules) in
+  let n_rules = List.filter (fun rule -> match rule with
+      | RlFRead r -> is_rule_fread_usable goal r
+      | _ -> true) rules in
+  let n_rules = List.filter (fun rule -> match rule with
+      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+      | _ -> true) n_rules in
+  n_rules
 
 let compare_rule_assign_vs_other r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
