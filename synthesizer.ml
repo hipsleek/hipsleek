@@ -560,7 +560,10 @@ let rec choose_rule_interact goal rules =
   else
     let str = pr_list_ln pr_rule rules in
     let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-    let () = x_binfo_hp (add_str "Choose rule\n" pr_id) str no_pos in
+    let () = x_binfo_hp (add_str "Rules" pr_rules) rules no_pos in
+    let choose_str = "Please choose from 1 to "
+                     ^ (string_of_int (List.length rules + 1)) ^ ": " in
+    let () = x_binfo_pp choose_str no_pos in
     let choice = String.uppercase_ascii (String.trim (read_line ())) in
     let rule_id = int_of_string (choice) in
     let rules_w_ids = List.mapi (fun i x -> (i, x)) rules in
@@ -670,6 +673,7 @@ let process_rule_fread goal rcore =
     mk_derivation_subgoals goal (RlFRead rcore) [n_goal]
 
 let aux_func_call goal rule fname params subst res_var =
+  let () = x_binfo_pp "marking" no_pos in
   let proc_decl = goal.gl_proc_decls
                   |> List.find (fun x -> eq_str x.Cast.proc_name fname) in
   let specs = (proc_decl.Cast.proc_stk_of_static_specs # top) in
@@ -688,7 +692,9 @@ let aux_func_call goal rule fname params subst res_var =
     SB.check_entail ~residue:true goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
+    let () = x_binfo_pp "marking" no_pos in
     let params_post = CF.subst substs post_proc in
+    let () = x_binfo_hp (add_str "param_post" pr_formula) params_post no_pos in
     let evars = CF.get_exists params_post in
     let post_state = add_formula_to_formula red params_post in
     let np_vars = CF.fv post_state in
@@ -701,11 +707,14 @@ let aux_func_call goal rule fname params subst res_var =
         let n_f = CF.subst [(res, n_var)] post_state in
         (n_f, goal.gl_vars @ [n_var])
       else post_state, goal.gl_vars in
+    let () = x_binfo_hp (add_str "post" pr_formula) post_state no_pos in
     let sub_goal = {goal with gl_vars = n_vars;
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
     mk_derivation_subgoals goal rule [sub_goal]
-  | _ -> mk_derivation_fail goal rule
+  | _ ->
+    let () = x_binfo_pp "marking" no_pos in
+    mk_derivation_fail goal rule
 
 let process_rule_func_call goal rcore : derivation =
   let fname, params = rcore.rfc_fname, rcore.rfc_params in

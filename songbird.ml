@@ -846,6 +846,7 @@ let check_entail_x ?(residue=false) prog ante conseq =
       let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ent) ent no_pos in
       let ptree = SBPH.check_entailment sb_prog ent in
       let res = ptree.SBPA.enr_validity in
+      let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
       match res with
       | SBG.MvlTrue ->
         let residue_fs = ptree.SBPA.enr_residues in
