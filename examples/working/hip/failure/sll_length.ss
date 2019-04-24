@@ -35,6 +35,23 @@ node delete_first(node x)
   }
 }
 
+node delete_first2(node x)
+  requires x::ls<null,n> & n<=1 ensures res=null;
+  requires x::ls<null,n> & n>1 ensures res::ls<null,n-1>;
+{
+  if (x == null)
+    return null;
+  else if (x.next == null) {
+    free(x);
+    return null;
+  }
+  else {
+    node y = x.next;
+    free(x);
+    return y;
+  }
+}
+
 node delete_last(node x)
   requires x::ls<null,n> & n<=1 ensures res=null;
   requires x::ls<null,n> & n>1 ensures x::ls<null,n-1>;
@@ -53,6 +70,19 @@ node delete_last(node x)
   else {
     delete_last(x.next);
     return x;
+  }
+}
+
+node delete_all(node x)
+  requires x::ls<null,n> ensures emp & res=null;
+{
+  if (x == null)
+    return null;
+  else {
+    node t = x.next;
+    free(x);
+    delete_all(t);
+    return null;
   }
 }
 
@@ -127,6 +157,23 @@ node concat(node x, node y)
   else {
     concat(x.next, y);
     return x;
+  }
+}
+
+node reverse(node x)
+  requires x=null ensures res=null;
+  requires x::ls<null,n> & x!=null ensures res::ls<null,n> & res!=null;
+{
+  if (x == null)
+    return x;
+  else if (x.next == null)
+    return x;
+  else {
+    node u = x.next;
+    x.next = null;
+    node y = reverse(u);
+    node z = concat(y, x);
+    return z;
   }
 }
 

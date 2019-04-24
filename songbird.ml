@@ -41,7 +41,8 @@ let pr_ents = pr_list (pr_pair pr_pf pr_pf)
  *********************************************************************)
 
 let index_export_ent = ref 0
-let export_songbird_entails = ref false
+let index_export_fml = ref 0
+let export_songbird_proof = ref false
 
 (*********************************************************************
  * Translate Formulas
@@ -760,18 +761,18 @@ let translate_prog (prog:CA.prog_decl) =
 
 let enable_export_entailments () =
   if !songbird_export_all_entails then
-    export_songbird_entails := true
+    export_songbird_proof := true
   else
-    export_songbird_entails := false
+    export_songbird_proof := false
 
 let disable_export_entailments () =
   if !songbird_export_all_entails then
-    export_songbird_entails := false
+    export_songbird_proof := false
   else
-    export_songbird_entails := false
+    export_songbird_proof := false
 
 let export_songbird_entailments prog ents =
-  if !export_songbird_entails then (
+  if !export_songbird_proof then (
     List.iter (fun ent ->
       let _ = index_export_ent := !index_export_ent + 1 in
       let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
@@ -785,7 +786,7 @@ let export_songbird_entailments prog ents =
   else ()
 
 let export_songbird_entailments_results prog ents results =
-  if !export_songbird_entails then (
+  if !export_songbird_proof then (
     List.iter2 (fun ent res ->
       let _ = index_export_ent := !index_export_ent + 1 in
       let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
@@ -801,6 +802,26 @@ let export_songbird_entailments_results prog ents results =
       let _ = close_out file in
       x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos
     ) ents results)
+  else ()
+
+let export_songbird_satisfiability_results prog fs results =
+  if !export_songbird_proof then (
+    List.iter2 (fun f res ->
+        let _ = index_export_ent := !index_export_ent + 1 in
+        let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
+                       "_sat_" ^ (string_of_int !index_export_ent) ^ ".sb" in
+        let file = open_out filename in
+        let sts = match res with
+          | SBG.MvlTrue -> SBG.StsInvalid
+          | SBG.MvlFalse -> SBG.StsValid
+          | _ -> SBG.StsNone in
+        let ent = SBC.mk_entailment f (SBC.mk_ffalse SBG.no_pos) in
+        let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
+        let prog = {prog with SBC.prog_commands = cmds} in
+        let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
+        let _ = close_out file in
+        x_binfo_pp ("Export formula to file: " ^ filename ^ "\n") no_pos
+      ) fs results)
   else ()
 
 (*********************************************************************
@@ -896,9 +917,9 @@ let check_entail_exact_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntail sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT EXACT: " SBC.pr_ent) ent no_pos in
-    let () = export_songbird_entailments sb_prog [ent] in
     let ptree = SBPH.check_entailment sb_prog ent in
     let res = ptree.SBPA.enr_validity in
+    let () = export_songbird_entailments_results sb_prog [ent] [res] in
     match res with
     | SBG.MvlTrue -> true, None
     | _ -> false, None
@@ -919,9 +940,9 @@ let check_entail_residue_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
-    let () = export_songbird_entailments sb_prog [ent] in
     let ptree = SBPH.check_entailment ~interact:false sb_prog ent in
     let res = ptree.SBPA.enr_validity in
+    let () = export_songbird_entailments_results sb_prog [ent] [res] in
     let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
     match res with
     | SBG.MvlTrue ->
@@ -976,10 +997,11 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
   let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
-  let () = export_songbird_entailments n_prog ents in
   let check_fun =
     SBPH.check_entailment ~interact:false ~disproof:!disproof n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
+  let results = List.map (fun p -> p.SBPA.enr_validity) ptrees in
+  let () = export_songbird_entailments_results n_prog ents results in
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
     let () = if !disproof then
