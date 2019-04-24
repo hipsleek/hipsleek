@@ -978,9 +978,15 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
     let valid_ents = pairs |> List.filter is_valid |> List.map fst in
     let () = if invalid_ents != [] then
-      x_binfo_hp (add_str "Invalid Ents: " SBC.pr_ents) invalid_ents no_pos in
+        List.iter (fun ent ->
+          let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+          (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
+          ()) invalid_ents in
     let () = if unkn_ents != [] then
-      x_binfo_hp (add_str "Unkn Ents: " SBC.pr_ents) unkn_ents no_pos in
+        List.iter (fun ent ->
+          let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+          (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
+          ()) unkn_ents in
     let () = if !songbird_export_invalid_entails then
         let _ = List.map (output_sb_ent n_prog) invalid_ents in
         let _ = List.map (output_sb_ent n_prog) unkn_ents in

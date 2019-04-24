@@ -6,9 +6,6 @@ data node {
 ls<y,n> == self=y & n=0
   or self::node<_, r> * r::ls<y,n2> & n=1+n2;
 
-lsSum<y,n,s> == self=y & n=0 & s=0
-  or self::node<a, r> * r::lsSum<y,n2,s2> & n=1+n2 & s=s2+a;
-
 int length(node x)
   requires x::ls<null,n>
   ensures x::ls<null,n> & res = n;
@@ -17,18 +14,6 @@ int length(node x)
   else {
     int k;
     k = 1 + length(x.next);
-    return k;
-  }
-}
-
-int sum(node x)
-  requires x::lsSum<null,n,s>
-  ensures x::lsSum<null,n,s> & res = s;
-{
-  if (x == null) return 0;
-  else {
-    int k;
-    k = x.val + sum(x.next);
     return k;
   }
 }
@@ -89,15 +74,6 @@ node insert_first2(node x , int a)
   return u;
 }
 
-node insert_first3(node x , int a)
-  requires x::lsSum<null,n,s>
-  ensures res::lsSum<null,n+1,s+a>;
-{
-  node u = new node(a, null);
-  u.next = x;
-  return u;
-}
-
 node insert_last(node x , int a)
   requires x::ls<null,n> & n=0 ensures res::ls<null,1>;
   requires x::ls<null,n> & n>0 ensures x::ls<null,n+1> & res=x;
@@ -132,25 +108,6 @@ node insert_last2(node x , int a)
   }
   else {
     insert_last2(x.next, a);
-    return x;
-  }
-}
-
-node insert_last3(node x , int a)
-  requires x::lsSum<null,n,s> & n=0 ensures res::lsSum<null,1,s+a>;
-  requires x::lsSum<null,n,s> & n>0 ensures x::lsSum<null,n+1,s+a> & res=x;
-{
-  if (x == null) {
-    node u = new node(a, null);
-    return u;
-  }
-  else if (x.next == null) {
-    node u = new node(a, null);
-    x.next = u;
-    return x;
-  }
-  else {
-    insert_last3(x.next, a);
     return x;
   }
 }

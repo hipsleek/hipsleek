@@ -4,7 +4,8 @@ data node {
 }
 
 lsSum<y,n,s> == self=y & n=0 & s=0
-  or self::node<a, r> * r::lsSum<y,n2,s2> & n=1+n2 & s=s2+a;
+  or self::node<a, r> * r::lsSum<y,n2,s2> & n=1+n2 & s=s2+a
+  inv n>=0;
 
 int sum(node x)
   requires x::lsSum<null,n,s>
@@ -28,7 +29,7 @@ node insert_first(node x , int a)
 }
 
 node insert_last(node x , int a)
-  requires x::lsSum<null,n,s> & n=0 ensures res::lsSum<null,1,s+a>;
+  requires x=null ensures res::lsSum<null,1,a>;
   requires x::lsSum<null,n,s> & n>0 ensures x::lsSum<null,n+1,s+a> & res=x;
 {
   if (x == null) {
@@ -47,8 +48,8 @@ node insert_last(node x , int a)
 }
 
 node concat(node x, node y)
-  requires x::lsSum<null,n,s1> * y::lsSum<null,m,s2> & n=0
-    ensures res::lsSum<null,m,s1+s2> & res=y;
+  requires y::lsSum<null,m,s2> & x=null
+    ensures res::lsSum<null,m,s2> & res=y;
   requires x::lsSum<null,n,s1> * y::lsSum<null,m,s2> & n>0
     ensures res::lsSum<null,n+m,s1+s2> & res=x;
 {
