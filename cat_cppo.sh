@@ -54,7 +54,6 @@ $EX gsleek.ml
 $EX gui.ml
 $EX hgraph.ml
 $EX hipUtil.ml
-$EX hsprinter.ml
 $EX iast.ml
 $EX iastUtil.ml
 $EX icontext.ml

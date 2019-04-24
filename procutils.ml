@@ -92,7 +92,7 @@ struct
     try
       let res = maybe_raise_timeout fnc arg tsec in
       res
-    with 
+    with
     | Timeout -> (
         print_endline_quiet (" Timeout after " ^ (string_of_float tsec) ^ " secs") ;
         (with_timeout ())
@@ -103,19 +103,19 @@ struct
       )
 
   let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
-    try 
+    try
       if !sleek_timeout_limit > 0. then
         let res = maybe_raise_timeout fnc arg !sleek_timeout_limit in
-        res 
+        res
       else fnc arg
-    with 
-    | Timeout -> 
+    with
+    | Timeout ->
       let no = Global_var.sleek_cnt_timeout_limit # dec_and_get in
       let m = string_of_int no in
-      if no==0 then 
+      if no==0 then
         let m = string_of_int(Global_var.sleek_cnt_timeout_limit # get_orig) in
         failwith ("sleek_cnt_timeout exceeded by "^m)
-      else 
+      else
         let () = print_endline_quiet ("Timeout Count "^m) in
         with_timeout
     | exc -> raise exc
@@ -125,7 +125,7 @@ struct
       (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
-    Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
+    Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool
       (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec arg
 
   (* closes the pipes of the named process *)
@@ -169,7 +169,7 @@ struct
       prelude ()
     with
     | e -> begin
-        print_endline_quiet ("\n["^prover_name^".ml164 ]Unexpected exception while starting prover "^ prover_name);
+        print_endline_quiet ("\n["^prover_name^".ml]Unexpected exception while starting prover "^ prover_name);
         flush stdout; flush stderr;
         log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
         raise e
@@ -191,18 +191,18 @@ struct
       ignore (Unix.waitpid [] process.pid)
       (* ;print_endline "end kill" *)
     in
-    try 
+    try
       (* Timelog.logtime_wrapper "kill" *) fn ()
     with
-    | e -> 
+    | e ->
       (ignore e;
-       log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
+       log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n");
        flush log_file)
 
   (* Restarts the prover. Parameters have the following meaning:
    ** reason - reason for restarting the prover
    ** prover_name - string containing the name of teh prover taht si restarted
-   ** start - start method to be invoked when starting this prover 
+   ** start - start method to be invoked when starting this prover
    ** stop - stop method to be invoked when stoping this prover *)
   let restart (log_all_flag: bool) (log_file: out_channel) (reason:string) (prover_name: string) start stop =
     log_to_file log_all_flag log_file ("[" ^ prover_name ^ ".ml]: >> Restarting " ^ prover_name ^ " because of: " ^ reason) ;

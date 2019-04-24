@@ -1,4 +1,4 @@
-ex="./add_prefix.sh" 
+ex="./add_prefix.sh"
 $ex acc_fold.ml
 $ex astsimp.ml
 $ex bind_inference.ml
@@ -7,7 +7,7 @@ $ex cfutil.ml
 $ex checkeq.ml
 $ex checks.ml
 $ex cilparser.ml
-$ex cjava.ml 
+$ex cjava.ml
 $ex classic.ml
 $ex context.ml
 $ex cpgraph.ml
@@ -33,7 +33,6 @@ $ex gui.ml
 $ex gUtil.ml
 $ex hgraph.ml
 $ex hipUtil.ml
-$ex hsprinter.ml 
 $ex iastUtil.ml
 $ex icontext.ml
 $ex iincr.ml
@@ -50,7 +49,7 @@ $ex lemproving.ml
 $ex lemsyn.ml
 $ex lemutil.ml
 $ex libSleek.ml
-$ex log.ml 
+$ex log.ml
 $ex lp.ml
 $ex main.ml
 $ex mcpure_D.ml

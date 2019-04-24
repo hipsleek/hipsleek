@@ -77,7 +77,6 @@ gbyte: sleek.gbyte hip.gbyte
 
 test: dtest.byte
 
-# hsprinter.byte
 native: hip.native sleek.native
 static: ship.native ssleek.native
 gui: ghip.native gsleek.native
@@ -138,9 +137,6 @@ ship.native: xml
 	@ocamlbuild $(OBNS_FLAGS) main.native
 	cp -u _build/main.native hip
 	cp -u _build/main.native s-hip
-
-hsprinter.byte: xml
-	@ocamlbuild $(OB_FLAGS) hsprinter.byte
 
 sleek.native: xml
 	@ocamlbuild $(OBN_FLAGS) sleek.native
