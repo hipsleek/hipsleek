@@ -784,6 +784,25 @@ let export_songbird_entailments prog ents =
       x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos) ents)
   else ()
 
+let export_songbird_entailments_results prog ents results =
+  if !export_songbird_entails then (
+    List.iter2 (fun ent res ->
+      let _ = index_export_ent := !index_export_ent + 1 in
+      let filename = (Filename.remove_extension prog.SBC.prog_filename) ^
+                     "_ent_" ^ (string_of_int !index_export_ent) ^ ".sb" in
+      let file = open_out filename in
+      let sts = match res with
+        | SBG.MvlTrue -> SBG.StsValid
+        | SBG.MvlFalse -> SBG.StsInvalid
+        | _ -> SBG.StsNone in
+      let cmds = prog.SBC.prog_commands @ [SBC.CheckEntail (ent, sts)] in
+      let prog = {prog with SBC.prog_commands = cmds} in
+      let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
+      let _ = close_out file in
+      x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos
+    ) ents results)
+  else ()
+
 (*********************************************************************
  * other
  *********************************************************************)
