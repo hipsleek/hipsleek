@@ -41,7 +41,7 @@ let pr_ents = pr_list (pr_pair pr_pf pr_pf)
  *********************************************************************)
 
 let index_export_ent = ref 0
-let export_songbird_entails = ref true
+let export_songbird_entails = ref false
 
 (*********************************************************************
  * Translate Formulas
@@ -743,7 +743,7 @@ let translate_prog (prog:CA.prog_decl) =
     let sb_hp_views = List.map translate_hp hps in
     let sb_view_decls = List.map translate_view_decl view_decls in
     let sb_view_decls = sb_view_decls @ sb_hp_views in
-    let prog = SBC.mk_program !input_file_name in
+    let prog = SBC.mk_program (List.hd !source_files) in
     let n_prog = {prog with SBC.prog_datas = sb_data_decls;
                             SBC.prog_lemmas = sb_lemmas;
                             SBC.prog_views = sb_view_decls} in
@@ -759,13 +759,13 @@ let translate_prog (prog:CA.prog_decl) =
  *********************************************************************)
 
 let enable_export_entailments () =
-  if !songbird_export then
+  if !songbird_export_all_entails then
     export_songbird_entails := true
   else
     export_songbird_entails := false
 
 let disable_export_entailments () =
-  if !songbird_export then
+  if !songbird_export_all_entails then
     export_songbird_entails := false
   else
     export_songbird_entails := false
@@ -781,7 +781,7 @@ let export_songbird_entailments prog ents =
       let prog = {prog with SBC.prog_commands = cmds} in
       let _ = Printf.fprintf file "%s\n" (SBE.Songbird.dump_prog prog) in
       let _ = close_out file in
-      x_binfo_pp ("Dump entailment to file: " ^ filename) no_pos) ents)
+      x_binfo_pp ("Export entailment to file: " ^ filename ^ "\n") no_pos) ents)
   else ()
 
 (*********************************************************************
@@ -977,7 +977,7 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
     let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
     let valid_ents = pairs |> List.filter is_valid |> List.map fst in
-    let () = if !songbird_export then
+    let () = if !songbird_export_invalid_entails then
         let _ = List.map (output_sb_ent n_prog) invalid_ents in
         let _ = List.map (output_sb_ent n_prog) unkn_ents in
         () else () in

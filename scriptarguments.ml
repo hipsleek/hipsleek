@@ -586,7 +586,8 @@ let common_arguments = [
    "Add consumed heap for unsat checking");
   ("--songbird", Arg.Set Globals.songbird,"set songbird as the main prover");
   ("--syn-debug", Arg.Set Globals.syn_debug,"set synthesis debugging mode");
-  ("--songbird-export", Arg.Set Globals.songbird_export,"output invalid/unknown songbird entailments");
+  ("--songbird-export-all", Arg.Set Globals.songbird_export_all_entails,"output all songbird entailments");
+  ("--songbird-export-invalid", Arg.Set Globals.songbird_export_all_entails,"output invalid/unknown songbird entailments");
   ("--disproof", Arg.Set Globals.disproof,"set disproof mode in songbird");
   ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
    "Enable re-computation of user-supplied disj. invariant");

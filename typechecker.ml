@@ -3085,6 +3085,7 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)
     pos (pid:formula_label):  CF.list_partial_context  =
+  let _ = x_binfo_pp ">>>>>>>>> begin prove post-cond >>>>>>>" no_pos in
   let _ = SB.enable_export_entailments () in
   let ctx = CF.fresh_view_list_partial_context ctx0 in
   let () = if !print_proof then
@@ -3136,6 +3137,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
       let rs_struc , prf = x_add SV.heap_entail_struc_list_partial_context_init
             prog false false fn_state (snd posts) None None None pos (Some pid) in
       rs_struc, prf in
+  let _ = x_binfo_pp "<<<<<<<<<< finish prove post-cond <<<<<<" no_pos in
   let _ = SB.disable_export_entailments () in
   let () = PTracer.log_proof prf in
   let () = if !print_proof then
