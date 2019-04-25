@@ -25,12 +25,6 @@ let get_stmt_candidates (exp: I.exp) =
     | I.Cond exp_cond -> let exp2_list = aux exp_cond.exp_cond_then_arm list in
       aux exp_cond.exp_cond_else_arm exp2_list
     | I.Label (a, lexp) -> aux lexp list
-    (* | I.Return res ->
-     *   begin
-     *     match res.exp_return_val with
-     *     | None -> list
-     *     | Some e -> aux e list
-     *   end *)
     | I.Seq exp_seq -> let exp1_list = aux exp_seq.exp_seq_exp1 list in
       aux exp_seq.exp_seq_exp2 exp1_list
     | I.Var _ | I.VarDecl _ -> list

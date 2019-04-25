@@ -28,9 +28,9 @@ let pr_substs = pr_list (pr_pair pr_var pr_var)
 let rel_num = ref 0
 let res_num = ref 0
 let sb_num = ref 0
-let unfold_pre = ref 0
-let unfold_post = ref 0
-(* let fc_args = ref ([]: CP.spec_var list list) *)
+let fail_branch_num = ref 0
+let check_entail_num = ref 0
+
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
@@ -110,6 +110,7 @@ and rule_unfold_pre = {
 }
 
 and rule_unfold_post = {
+  rp_var: CP.spec_var;
   rp_case_formula: CF.formula;
 }
 
@@ -1397,22 +1398,30 @@ let is_rule_fread_usable goal r =
         else true
 
 let eliminate_useless_rules goal rules =
-  let contain_fread rule = match rule with
-    | RlFRead _ -> true
-    | _ -> false in
-  let is_rule_unfold_post_usable rules =
-    not (List.exists contain_fread rules) in
+  (* let contain_sym_rules rule = match rule with
+   *   | RlFRead _ -> true
+   *   (\* | RlUnfoldPre _ -> true *\)
+   *   | _ -> false in
+   * let is_rule_unfold_post_usable rules =
+   *   not (List.exists contain_sym_rules rules) in *)
   let n_rules = List.filter (fun rule -> match rule with
       | RlFRead r -> is_rule_fread_usable goal r
       | _ -> true) rules in
-  let n_rules = List.filter (fun rule -> match rule with
-      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-      | _ -> true) n_rules in
+  (* let n_rules = List.filter (fun rule -> match rule with
+   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+   *     | _ -> true) n_rules in *)
   n_rules
 
-let compare_rule_assign_vs_other r1 r2 =
+let compare_rule_assign_vs_assign goal r1 r2 =
   if CP.is_res_spec_var r1.ra_lhs then PriHigh
+  else if CP.is_res_spec_var r2.ra_lhs then PriLow
   else PriEqual
+
+let compare_rule_assign_vs_other goal r1 r2 = match r2 with
+    | RlAssign r2 -> compare_rule_assign_vs_assign goal r1 r2
+    | _ ->
+      if CP.is_res_spec_var r1.ra_lhs then PriHigh
+      else PriEqual
 
 let compare_rule_frame_data_vs_other r1 r2 =
   match r2 with
@@ -1428,12 +1437,29 @@ let compare_rule_frame_pred_vs_other r1 r2 =
     else PriLow
   | _ -> PriLow
 
-let compare_rule r1 r2 =
+let compare_rule_fun_res_vs_other r1 r2 = match r2 with
+  | RlReturn _ -> PriLow
+  | _ -> PriHigh
+
+let compare_rule_fun_call_vs_other r1 r2 = match r2 with
+  | RlReturn _ -> PriLow
+  | _ -> PriHigh
+
+let compare_rule_unfold_post_vs_other r1 r2 = match r2 with
+  | RlUnfoldPost r2 -> if CP.is_res_sv r1.rp_var then PriHigh
+    else if CP.is_res_sv r2.rp_var then PriLow
+    else PriEqual
+  | _ -> PriEqual
+
+let compare_rule goal r1 r2 =
   match r1 with
-  | RlAssign r1 -> compare_rule_assign_vs_other r1 r2
+  | RlAssign r1 -> compare_rule_assign_vs_other goal r1 r2
   | RlFrameData r -> compare_rule_frame_data_vs_other r r2
   | RlFramePred r -> compare_rule_frame_pred_vs_other r r2
-  | RlUnfoldPost _ -> PriLow
+  | RlReturn _ -> PriHigh
+  | RlFuncRes r1 -> compare_rule_fun_res_vs_other r1 r2
+  | RlFuncCall r1 -> compare_rule_fun_call_vs_other r1 r2
+  | RlUnfoldPost r1 -> compare_rule_unfold_post_vs_other r1 r2
   | _ -> PriEqual
 
 let is_code_rule trace = match trace with
@@ -1446,7 +1472,7 @@ let is_code_rule trace = match trace with
 
 let reorder_rules goal rules =
   let cmp_rule r1 r2 =
-    let prio = compare_rule r1 r2 in
+    let prio = compare_rule goal r1 r2 in
     match prio with
     | PriEqual -> 0
     | PriLow -> +1

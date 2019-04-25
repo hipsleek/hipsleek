@@ -908,6 +908,7 @@ let get_repair_candidate prog ents cond_op =
     None
 
 let check_entail_exact_x prog ante conseq =
+  let () = Syn.check_entail_num := !Syn.check_entail_num + 1 in
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq, _ = translate_formula conseq in
@@ -918,9 +919,9 @@ let check_entail_exact_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntail sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT EXACT: " SBC.pr_ent) ent no_pos in
-    let ptree = SBPH.check_entailment sb_prog ent in
+    let ptree = SBPH.check_entailment ~timeout:5 sb_prog ent in
     let res = ptree.SBPA.enr_validity in
-    let () = export_songbird_entailments_results sb_prog [ent] [res] in
+    (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
     match res with
     | SBG.MvlTrue -> true, None
     | _ -> false, None
@@ -931,6 +932,7 @@ let check_entail_exact prog ante conseq =
     (fun _ _ -> check_entail_exact_x prog ante conseq) ante conseq
 
 let check_entail_residue_x prog ante conseq =
+  let () = Syn.check_entail_num := !Syn.check_entail_num + 1 in
   let sb_prog = translate_prog prog in
   let sb_ante, _ = translate_formula ante in
   let sb_conseq, _ = translate_formula conseq in
@@ -941,9 +943,9 @@ let check_entail_residue_x prog ante conseq =
     let sb_conseq = List.hd sb_conseq in
     let ent = SBC.mk_entailment ~mode:SBG.PrfEntailResidue sb_ante sb_conseq in
     let () = x_tinfo_hp (add_str "ENT RESIDUE: " SBC.pr_ent) ent no_pos in
-    let ptree = SBPH.check_entailment ~interact:false sb_prog ent in
+    let ptree = SBPH.check_entailment ~timeout:5 ~interact:false sb_prog ent in
     let res = ptree.SBPA.enr_validity in
-    let () = export_songbird_entailments_results sb_prog [ent] [res] in
+    (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
     let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
     match res with
     | SBG.MvlTrue ->
@@ -1002,7 +1004,7 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     SBPH.check_entailment ~interact:false ~disproof:!disproof n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let results = List.map (fun p -> p.SBPA.enr_validity) ptrees in
-  let () = export_songbird_entailments_results n_prog ents results in
+  (* let () = export_songbird_entailments_results n_prog ents results in *)
   let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
   if List.for_all is_valid ptrees then
     let () = if !disproof then
@@ -1012,10 +1014,10 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
-    let _ = List.iter2 (fun ent res ->
-        if res != SBG.MvlTrue then
-          export_songbird_entailments_results ~always:true n_prog [ent] [res]
-        else ()) ents results in
+    (* let _ = List.iter2 (fun ent res ->
+     *     if res != SBG.MvlTrue then
+     *       export_songbird_entailments_results ~always:true n_prog [ent] [res]
+     *     else ()) ents results in *)
     let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
     let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
     let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
@@ -1098,7 +1100,7 @@ let check_pure_entail_x ante conseq =
   let sb_conseq_f = SBC.mk_fpure sb_conseq in
   let sb_prog = SBC.mk_program "check_pure_entail" in
   let ent = SBC.mk_entailment sb_ante_f sb_conseq_f in
-  let ptree = SBPH.check_entailment sb_prog ent in
+  let ptree = SBPH.check_entailment ~timeout:5 sb_prog ent in
   let res = ptree.SBPA.enr_validity in
     match res with
     | SBG.MvlTrue -> true

@@ -358,8 +358,9 @@ let choose_rule_unfold_pre goal =
       let rule = RlUnfoldPre {n_pre = n_pre} in
       [rule]
     else [] in
-  if has_unfold_pre goal.gl_trace then []
-  else vnodes |> List.map helper |> List.concat
+  (* if has_unfold_pre goal.gl_trace then []
+   * else *)
+  vnodes |> List.map helper |> List.concat
 
 let choose_rule_unfold_post goal =
   let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
@@ -369,7 +370,11 @@ let choose_rule_unfold_post goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    let rules = nf |> List.map (fun f -> RlUnfoldPost { rp_case_formula = f}) in
+    (* let nf = List.filter (fun x -> SB.check_unsat goal.gl_prog x
+     *                                      |> negate) nf in *)
+    let rules = nf |> List.map (fun f -> RlUnfoldPost {
+        rp_var = vnode.CF.h_formula_view_node;
+        rp_case_formula = f}) in
     rules in
   if has_unfold_post goal.gl_trace then []
   else vnodes |> List.map helper |> List.concat
@@ -452,15 +457,15 @@ let choose_rule_frame_pred goal =
   let filter (lhs, rhs) =
     let n_pre, pre_vars = frame_var_formula pre rhs in
     let n_post, post_vars = frame_var_formula post lhs in
-    let check_field f field =
-      match extract_var_f f field with
-      | Some var_f -> if CF.is_emp_formula var_f then true
-        else false
-      | _ -> true in
-    let check_pre = List.for_all (check_field pre) pre_vars in
-    let check_post = List.for_all (check_field post) post_vars in
-    if (List.length pre_vars = List.length post_vars) &&
-       check_pre && check_post then
+    (* let check_field f field =
+     *   match extract_var_f f field with
+     *   | Some var_f -> if CF.is_emp_formula var_f then true
+     *     else false
+     *   | _ -> true in
+     * let check_pre = List.for_all (check_field pre) pre_vars in
+     * let check_post = List.for_all (check_field post) post_vars in *)
+    if (List.length pre_vars = List.length post_vars) (* &&
+        * check_pre && check_post *) then
       let pre_vars = rhs::pre_vars in
       let post_vars = lhs::post_vars in
       let rule = RlFramePred {
@@ -597,9 +602,11 @@ let choose_main_rules goal =
   rs
 
 let choose_rule_skip goal =
-  let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-  let sk,_ = SB.check_entail_exact prog pre post in
-  if sk then let rule = RlSkip in [rule]
+  if is_code_rule goal.gl_trace then
+    let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
+    let sk,_ = SB.check_entail_exact prog pre post in
+    if sk then let rule = RlSkip in [rule]
+    else []
   else []
 
 let choose_synthesis_rules_x goal : rule list =
@@ -783,8 +790,8 @@ and process_all_rules goal rules : synthesis_tree =
         let pts = get_synthesis_tree_status stree in
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
-    | [] ->
-      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+    | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
+      let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 

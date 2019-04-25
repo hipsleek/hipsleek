@@ -1619,6 +1619,8 @@ type infer_extn = {
   mutable extn_props: ident list;
 }
 
+let get_time () = Unix.gettimeofday ()
+    
 let string_of_infer_extn extn =
   pr_pair idf (pr_list idf) (extn.extn_pred, extn.extn_props)
 

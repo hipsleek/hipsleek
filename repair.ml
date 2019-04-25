@@ -105,6 +105,7 @@ let repair_one_candidate (iprog: I.prog_decl) =
   with _ -> None
 
 let start_repair (iprog:I.prog_decl) =
+  let start_time = get_time () in
   let pr_exps = pr_list Iprinter.string_of_exp in
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
@@ -122,7 +123,14 @@ let start_repair (iprog:I.prog_decl) =
       repair_one_candidate n_iprog in
     let res = cands |> List.map helper |> List.filter (fun x -> x != None) in
     if res = [] then let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in None
-    else let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+    else
+      let r_time = get_time() -. start_time in
+      let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
+      let () = x_binfo_hp (add_str "repair time" string_of_float) r_time no_pos in
+      let () = x_binfo_hp (add_str "failed branches" string_of_int)
+          !Syn.fail_branch_num no_pos in
+      let () = x_binfo_hp (add_str "check_entail" string_of_int)
+          !Syn.check_entail_num no_pos in
       List.hd res
   | _ -> None
 
