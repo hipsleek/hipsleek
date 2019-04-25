@@ -4,7 +4,8 @@ data node {
 }
 
 ls<y,n> == self=y & n=0
-  or self::node<_, r> * r::ls<y,n2> & n=1+n2;
+  or self::node<_, r> * r::ls<y,n2> & n=1+n2
+  inv n>=0;
 
 int length(node x)
   requires x::ls<null,n>
@@ -54,7 +55,7 @@ node delete_first2(node x)
 
 node delete_last(node x)
   requires x::ls<null,n> & n<=1 ensures res=null;
-  requires x::ls<null,n> & n>1 ensures x::ls<null,n-1>;
+  requires x::ls<null,n> & n>1 ensures x::ls<null,n-1> & res=x;
 {
   if (x == null)
     return null;
@@ -71,6 +72,19 @@ node delete_last(node x)
     delete_last(x.next);
     return x;
   }
+}
+
+node get_last(node x)
+  requires x=null ensures res=null;
+  requires x::ls<y,n> * y::node<a,null>
+    ensures x::ls<y,n> * y::node<a,null> & res=y;
+{
+  if (x == null)
+    return null;
+  else if (x.next == null)
+    return x;
+  else
+    return get_last(x.next);
 }
 
 node delete_all(node x)
@@ -145,7 +159,7 @@ node insert_last2(node x , int a)
 node concat(node x, node y)
   requires x::ls<null,n> * y::ls<null,m> & n=0
     ensures res::ls<null,m> & res=y;
-  requires x::ls<null,n> * y::ls<null,m> & n>0
+  requires x::ls<null,n> * y::ls<null,m> & x!=null
     ensures res::ls<null,n+m> & res=x;
 {
   if (x == null)
@@ -177,28 +191,33 @@ node reverse(node x)
   }
 }
 
-void main () {
-  node x = new node(10, null);
-  node y = new node(11, null);
-  node z = new node(12, null);
-  x.next = y;
-  y.next = z;
-  z.next = null;
+node main1 ()
+  requires true
+  ensures res::ls<y,n> * y::node<a,null>;
+{
+  node x1 = new node(1, null);
+  node x2 = new node(1, x1);
+  node x3 = new node(1, x2);
+  node x4 = new node(1, x3);
+  node x5 = new node(1, x4);
+  node x6 = new node(1, x5);
+  node x7 = new node(1, x6);
+  node x8 = new node(1, x7);
+  int n = length(x8);
+  return x8;
+}
 
-  // dprint;
+node main2 (node x, node y)
+  requires x::ls<null,10>
+  ensures x::ls<u,9> * u::node<_,null> & res=u;
+{
+  node u = get_last(x);
+  return u;
+}
 
-  // int n = length(x);
-  // dprint;
-  // assert (n' = 3);
-
-  // dprint;
-  // node t = delete_first(x);
-  // dprint;
-  // int m = length(t);
-  // dprint;
-  // assert (m' = 2);
-
-  // node u = delete_first(t);
-  // int l = length(u);
-  // assert (l' = 1);
+node main3 (node x, node y)
+  requires x::ls<y,n> * y::node<1,z> & n>2
+  ensures res::ls<z,n+1> & x=res;
+{
+  return x;
 }
