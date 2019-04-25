@@ -999,7 +999,9 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
   let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
   let check_fun =
-    SBPH.check_entailment ~interact:false ~disproof:!disproof n_prog in
+    (* let interact = !export_songbird_proof in *)
+    let interact = false in
+    SBPH.check_entailment ~interact:interact ~disproof:!disproof n_prog in
   let ptrees = List.map (fun ent -> check_fun ent) ents in
   let results = List.map (fun p -> p.SBPA.enr_validity) ptrees in
   let () = export_songbird_entailments_results n_prog ents results in
@@ -1012,10 +1014,10 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let residue = translate_back_fs residues holes in
     (true, Some residue)
   else
-    let _ = List.iter2 (fun ent res ->
-        if res != SBG.MvlTrue then
-          export_songbird_entailments_results ~always:true n_prog [ent] [res]
-        else ()) ents results in
+    (* let _ = List.iter2 (fun ent res ->
+     *     if res != SBG.MvlTrue then
+     *       export_songbird_entailments_results ~always:true n_prog [ent] [res]
+     *     else ()) ents results in *)
     let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
     let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
     let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
