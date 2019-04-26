@@ -715,7 +715,7 @@ let aux_func_call goal rule fname params subst res_var =
         let n_f = CF.subst [(res, n_var)] post_state in
         (n_f, goal.gl_vars @ [n_var])
       else post_state, goal.gl_vars in
-    let () = x_binfo_hp (add_str "post" pr_formula) post_state no_pos in
+    let () = x_tinfo_hp (add_str "post" pr_formula) post_state no_pos in
     let sub_goal = {goal with gl_vars = n_vars;
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in

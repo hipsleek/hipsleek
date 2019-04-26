@@ -18,24 +18,10 @@ x::node2<q,q78> * q78::dll<x,fl77> * y::dll<p,n> &
 (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
 -n-fl77 < 0 & fr6=fl77+ n-1).
 
-// synthesize [node2 q78,node2 x,node2 y]
-//  y::node2<p,q_99> * q_99::dll<y,flted_8_98> * x::node2<q,q78> * 
-//  q78::dll<x,fl77>&
-// 0<m & 1+fl77=m & q78=null & flted_8_98+1=n & 0<n
-// ~>
-// (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
-//  -n-fl77 < 0 & fr6=fl77+ n-1 ).
 
-// synthesize [node2 q78, node2 x,node2 y]
-//  y::node2<p,q99> * q99::dll<y,fl98> * x::node2<q,q78> * q78::dll<x,fl77> &
-// 0<m & 1+fl77=m & q78=null & fl98+1=n & 0<n
+// synthesize [node2 q_4460,node2 x,node2 y]
+//  x::node2<q,q_4460> * q_4460::dll<x,flted_8_4459> * y::dll<p,n>&
+// v_bool_14_4439 & p_4457=q & self_4458=x & x=x & y=y & 0<m & 
+// flted_8_4459+1=m & q_4460=null
 // ~>
-// (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
-// -n-fl77 < 0 & fr6=fl77+ n-1 ).
-
-// synthesize [node2 x,node2 y]
-//  y::node2<p,q99> * q99::dll<y,fl98> * x::node2<q,q78>&
-// 0<m & fl77+1=m & 1+fl98=n & 0<n & q78=null & fl77=0
-// ~>
-// (exists fr6,p45,n51, q49: x::node2<q,q49> * y::node2<p45,n51> * n51::dll<q49,fr6> &
-// -n-fl77 < 0 & fr6=fl77+ n-1 ).
+//  (exists f_r_4491: x::dll<q,f_r_4491>&y=null & f_r_4491=flted_8_4459+n+1).
