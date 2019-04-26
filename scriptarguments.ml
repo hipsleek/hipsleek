@@ -942,6 +942,11 @@ let common_arguments = [
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true
      ), "Shorthand for --en-slk-logging");
+  ("--esl-all", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_log_all := true
+     ), "Shorthand for --en-slk-logging");
   ("--dump-slk-proof", Arg.Unit (fun _ ->
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true;

@@ -567,6 +567,7 @@ let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let sleek_log_all = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
