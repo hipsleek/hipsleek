@@ -385,10 +385,12 @@ let chan_typ = mkNamedTyp "chan"
 (* ------------------------------------- *)
 let pr_lst s f xs = String.concat s (List.map f xs)
 let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst ";" f xs)^close_b
+let pr_list_p f xs  = "[" ^ (pr_lst "," f xs) ^ "]"
 let pr_list f xs = pr_list_brk "[" "]" f xs
 let pr_list_angle f xs = pr_list_brk "<" ">" f xs
 let pr_list_round f xs = pr_list_brk "(" ")" f xs
 let pr_list_empty f xs = match xs with | [] -> "" | _ -> pr_list f xs
+let pr_list_poly f xs = match xs with | [] -> "" | _ -> pr_list_p f xs
 let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 (* ------------------------------------- *)
 
@@ -857,8 +859,8 @@ let rec string_of_typ (x:typ) : string = match x with
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named (ot,tl) -> if ((String.compare ot "") ==0) then "null_type"
-    else if tl = [] then ot
-    else ot ^ (pr_list string_of_typ tl)
+    else (*if tl = [] then ot
+    else*) ot ^ (pr_list string_of_typ tl)
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)

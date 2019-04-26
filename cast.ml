@@ -141,6 +141,8 @@ and view_decl = {
   view_data_name : ident;
   view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
 
+  view_poly_vars: ident list;
+
   view_seg_opz : P.formula option; (*pred is seg + base case is emp heap*)
   view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
   view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
@@ -833,6 +835,8 @@ let mk_view_decl_for_hp_rel hp_n vars is_pre pos =
     view_data_name = "";
     view_ho_vars = [];
 
+    view_poly_vars = [];
+
     view_cont_vars = [];
     view_seg_opz = None;
     view_case_vars = [];
@@ -904,6 +908,7 @@ let mk_view_prim v_name v_args v_inv ?inst_params:(ip=[]) pos =
     view_equiv_set = new VarGen.store ([],"") (pr_pair (pr_list string_of_int) pr_id);
     view_data_name = "";
     view_ho_vars = [];
+    view_poly_vars = [];
     view_cont_vars = [];
     view_seg_opz = None;
     view_case_vars = [];

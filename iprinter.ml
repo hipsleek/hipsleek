@@ -548,7 +548,7 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_deref = deref;
                  F.h_formula_heap_perm = perm; (*LDK*)
                  F.h_formula_heap_arguments = pl;
-                 F.h_formula_heap_poly_arguments =poly;
+                 F.h_formula_heap_poly_arguments = poly;
                  F.h_formula_heap_ho_arguments = ho_pl;
                  F.h_formula_heap_imm = imm;
                  F.h_formula_heap_imm_param = ann_param;
@@ -568,7 +568,7 @@ let rec string_of_h_formula = function
         deref_str := !deref_str ^ "^";
       done;
       ((string_of_id x) ^ "::" ^ id ^ ho_str^ !deref_str ^ perm_str
-       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]" ^ (pr_list_empty string_of_typ poly))
+       ^ "<" ^ (string_of_data_param_list pl ann_param) ^ ">" ^ (string_of_imm imm) ^ "[HeapNode1]" ^ (pr_list_poly string_of_typ poly))
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_deref = deref;

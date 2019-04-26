@@ -2990,6 +2990,7 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
         C.view_vars = view_sv;
         C.view_inst_vars = inst_vars;
         C.view_ho_vars = view_ho_sv;
+        C.view_poly_vars = vdef.I.view_poly_vars;
         C.view_cont_vars = [];
         C.view_seg_opz = None;
         C.view_uni_vars = [];

@@ -4441,9 +4441,9 @@ let pr_view_hdr v =
     (* | [] -> "" *)
     | s -> ("{"^String.concat "," (List.map string_of_ho_var  s)^"}")
   in
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ho_str^
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view0"^s^v.view_name ^ho_str^
                                         "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
-                       pr_typed_spec_var v.view_vars; fmt_string "= ") (); fmt_cut ();s
+                       pr_typed_spec_var v.view_vars; pr_list_id v.view_poly_vars; fmt_string "= ") (); fmt_cut ();s
 
 let pr_view_decl_inv_only v =
   pr_add_str_cut  "inv: "  pr_mix_formula v.view_user_inv;
@@ -4489,7 +4489,7 @@ let pr_view_decl v =
   (* wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var_lbl  *)
   (*     (List.combine v.view_labels v.view_vars); fmt_string "= ") (); *)
   pr_add_str_cut (poly_string_of_pr
-    (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_view_arg_lbl
+    (fun ()-> pr_angle  ("view2"^s^v.view_name) pr_typed_view_arg_lbl
        (CP.combine_labels_w_view_arg v.view_labels  (List.map fst v.view_params_orig)); fmt_string "= ") ())
   pr_struc_formula v.view_formula;
   pr_add_str_cut ~emp_test:Gen.is_empty "view vars: "  pr_list_of_spec_var v.view_vars;
