@@ -3877,6 +3877,7 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
               x_tinfo_hp (add_str "NEW SPECS(B4)" pr_spec) new_spec no_pos;
               let new_spec = x_add_1 Astsimp.add_pre prog new_spec in
               x_tinfo_hp (add_str "NEW SPECS(AF)" pr_spec) new_spec no_pos;
+              let () = proc.proc_stk_of_static_specs # push new_spec in
 
               if (pre_ctr # get> 0)
               then
