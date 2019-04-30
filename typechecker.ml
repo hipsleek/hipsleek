@@ -4105,7 +4105,13 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option (mutual_
                 if !Globals.web_compile_flag then
                   print_string_quiet ("\nProcedure <b>"^proc.proc_name^"</b> <font color=\"blue\">SUCCESS</font>.\n")
                 else
-                  print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n")
+                  let () = print_web_mode ("\nProcedure "^proc.proc_name^" SUCCESS.\n") in
+                  if (pre_ctr # get> 0) then
+                    let () = print_endline_quiet "\nVariable Inference result:" in
+                    let () = print_endline_quiet proc0.proc_name in
+                    print_endline_quiet (Cprinter.string_of_struc_formula (proc.proc_stk_of_static_specs # top))
+                  else
+                    ()
               else
                 let () = Log.last_cmd # dumping (proc.proc_name^" FAIL-1") in
                 if !Globals.web_compile_flag then
