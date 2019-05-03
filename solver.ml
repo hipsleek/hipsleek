@@ -6169,7 +6169,7 @@ and new_slk_log_g (conseq:formula) hec_num pos result es  =
   let it = CF.infer_type_of_entail_state es in
   let esv = es.es_infer_vars in
   let () = (* x_add *) Log.add_sleek_logging (Some es) false 0. it esv (check_is_classic ()) caller
-    (* avoid *) false hec_num slk_no es.es_formula (* orig_ante *) conseq es.es_heap es.es_evars
+    (* avoid *) false hec_num slk_no orig_ante conseq es.es_heap es.es_evars
       es.es_gen_impl_vars (Some result) pos in
   ()
 
