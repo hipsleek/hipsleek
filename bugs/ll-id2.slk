@@ -7,11 +7,33 @@ pred ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1>
   inv n >= 0.
 
-infer [nnn] x::ll<nnn> |- x::node<a1,a2>.
+relation R(int x).
+
+// infer [nnn] x::ll<nnn> |- x::node<a1,a2>.
+
+/*
+ infer [R] x::ll<nnn> & R(nnn) |- x::node<a1,a2>.
+*/
+
+infer [nnn] x=null & nnn=0 & R(nnn) |- x::node<a1,a2>.
+//infer [R] x=null & nnn=0 & R(nnn) |- x::node<a1,a2>.
 print residue.
 // 13732
 
 /*
+
+id: 2 src:5; caller: []; line: 0; classic: false; kind: Sleek_Entail(1); hec_num: 1; evars: []; impl_vars: []; infer_vars: [ nnn]; c_heap: emp; others:  es_infer_obj: [] globals: []
+ checkentail hfalse&false&{FLOW,(20,21)=__norm#E}[]
+ |-  x::node<a1,a2>@M&{FLOW,(20,21)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    hfalse&false&{FLOW,(20,21)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_heap(consumed): emp
+   es_infer_pure: [nnn!=0]
+   ]
+
+
 
 id: 8 src:5; caller: []; line: 15; classic: false; kind: BIND; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ nnn]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
  checkentail hfalse&false&{FLOW,(4,5)=__norm#E}[]
