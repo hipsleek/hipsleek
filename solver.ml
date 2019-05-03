@@ -6072,6 +6072,26 @@ and heap_entail_conjunct_lhs_x hec_num prog is_folding  (ctx:context) (conseq:CF
               let lc = x_add Musterr.build_and_failures 5 "early contra detect: " fc
                   Globals.logical_error (contra_list, must_list, may_list) fc_template cex new_estate.es_trace in
               let () = Debug.ninfo_hprint  (add_str "lc" Cprinter.string_of_list_context) lc no_pos  in
+              let () =
+                Log.add_sleek_logging
+                  (Some estate)
+                  false
+                  (-1.)
+                  (CF.infer_type_of_entail_state estate)
+                  (estate.es_infer_vars @ estate.es_infer_vars_rel @ estate.es_infer_vars_hp_rel @ estate.es_infer_vars_templ)
+                  (check_is_classic ())
+                  (hec_stack # string_of_no_ln)
+                  false
+                  hec_num
+                  (Log.last_cmd # start_sleek 3)
+                  ante
+                  conseq
+                  estate.es_heap
+                  estate.es_evars
+                  estate.es_gen_impl_vars
+                  (Some lc)
+                  pos
+              in
               (lc,prf)
               (* let ls_ctx,prf = heap_entail() in *)
               (* let () = Debug.info_zprint  (lazy  ("ls_ctx:" ^ (Cprinter.string_of_list_context ls_ctx) )) no_pos  in *)
