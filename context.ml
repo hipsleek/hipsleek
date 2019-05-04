@@ -903,7 +903,7 @@ let rec choose_context_x prog estate rhs_es lhs_h lhs_p rhs_p posib_r_aliases rh
                   let () =  y_tinfo_hp (add_str "lhs_w_rhs_inst" !CP.print_formula) lhs_w_rhs_inst  in
                   let () =  y_tinfo_hp (add_str "rhs" !CP.print_formula) rhs  in
                   let () =  y_tinfo_hp (add_str "r" string_of_bool) r  in
-                  if CF.no_infer_all_all estate || r || !Globals.adhoc_flag_6 then (d,(map_r r,None),None)
+                  if CF.no_infer_all_all estate || r (* || !Globals.adhoc_flag_6 *) then (d,(map_r r,None),None)
                   else
                     begin
                       (* to avoid loop for bugs/ex62b.slk *)

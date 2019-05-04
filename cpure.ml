@@ -1417,6 +1417,14 @@ let full_name_of_spec_var (sv : spec_var) : ident =
 let is_void_type t = match t with | Void -> true | _ -> false
 
 let rec fv ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  Debug.no_1
+    "CPfv"
+    !print_formula
+    !print_svl
+    (fv_aux ~vartype)
+    f
+
+and fv_aux ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
   let tmp = fv_helper ~vartype f in
   let res = remove_dups_svl tmp in
   res
@@ -1547,7 +1555,7 @@ and bfv' ?(vartype=Vartypes.var_with_none) (bf : b_formula) =
   | RelForm (r, args, _) ->
     (* RelForm are assumed global *)
     let vid = r in
-    if vartype # with_rel then
+    if !Globals.adhoc_flag_6 || vartype # with_rel then
       vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
     else
       let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
@@ -9472,7 +9480,7 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
-  let fvar = fv conseq in
+  let fvar = fv ~vartype:Vartypes.var_with_rel conseq in
   let ante = filter_var ante fvar in
   let new_ante = if (!Globals.enable_constraint_based_filtering) then filter_constraint_type ante conseq else ante in
   new_ante
@@ -9483,6 +9491,7 @@ let filter_ante (ante: formula) (conseq: formula) : (formula) =
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
+  (* below redundant with  Vartypes.var_with_rel *)
   let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
   let new_ante = filter_var ante fvar in
   new_ante

@@ -2458,7 +2458,7 @@ and fold_op_x1 ?(root_inst=None) prog (ctx : context) (view : h_formula) vd (rhs
           let pure_related_to_folded_pred = MCP.find_rel_constraints rhs_p vs in
           add_mix_formula_to_struc_formula pure_related_to_folded_pred view_form
         in
-        let view_form = if !Globals.adhoc_flag_6 then view_form_new else view_form in
+        let view_form = if false (* !Globals.adhoc_flag_6 *) then view_form_new else view_form in
         (* adding _new caused loop *)
         x_tinfo_zp (lazy ("view_form(b4 push_case):" ^ (Cprinter.string_of_struc_formula view_form))) pos;
         x_tinfo_zp (lazy ("view_form_new:" ^ (Cprinter.string_of_struc_formula view_form_new))) pos;
