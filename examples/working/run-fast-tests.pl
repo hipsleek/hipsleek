@@ -2061,7 +2061,28 @@ my $dis = '--dis-inv-baga';
                 ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
                 ["err6.slk","",(),"must.Valid.may.must.must.must."],
                 ["err7.slk","",(),"Valid.must.must.must.must.Valid.must.Valid.must.must."],
-                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]]
+                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]],
+    "sleek_infer" => [
+        ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
+        ["infer/app-inv2.slk", "--inv --dis-eps", (), "Valid.Valid.Valid.Fail."],
+        ["infer/infer1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        ["infer/infer2.slk", "", (), "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
+        ["infer/infer4.slk", "", (), "Fail.Fail.Valid"],
+        ["infer/infer5.slk", "", (), "Valid.Valid.Fail.Valid."],
+        ["infer/infer5a.slk", "", (), "Fail.Valid."],
+        ["infer/infer6.slk", "", (), "Valid."],
+        ["infer/infer7.slk", "", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
+        ["infer/infer8.slk", "", (), "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+        ["infer/infer9.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid."],
+        ["infer/infer10.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Valid."],
+        ["infer/infer11.slk", "", (), "Fail."],
+        ["infer/infer12.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+        ["infer/infer13.slk", "--sa-en-cont", (), "Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer14.slk", "--sa-en-pure-field", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer15.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer16.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer17.slk", "", (), "Valid."]
+    ]
 
     );
 
