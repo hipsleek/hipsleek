@@ -1125,13 +1125,6 @@ let rec synthesize_st_core st : Iast.exp option=
       } in
     let lhs = mkVar lhs in
     let body = mkAssign lhs mem_var in
-    (* let bind = I.Bind {
-     *     exp_bind_bound_var = CP.name_of_sv bvar;
-     *     exp_bind_fields = [f_name];
-     *     exp_bind_body = body;
-     *     exp_bind_path_id = None;
-     *     exp_bind_pos = no_pos} in *)
-    (* let seq = mkSeq exp_decl bind in aux_subtrees st seq *)
     let seq = mkSeq exp_decl body in aux_subtrees st seq
   | RlFuncCall rcore ->
     let args = rcore.rfc_params |> List.map mkVar in
