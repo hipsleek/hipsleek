@@ -999,7 +999,6 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
   let sb_conseq = List.hd conseqs in
   let ents = List.map (fun x ->
       SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
   let check_fun =
     (* let interact = !export_songbird_proof in *)
     let interact = false in
@@ -1013,7 +1012,9 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
         valid_num := !valid_num + (List.length ents)
       else () in
     let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
+    let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
     let residue = translate_back_fs residues holes in
+    let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
     (true, Some residue)
   else
     (* let _ = List.iter2 (fun ent res ->
