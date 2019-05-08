@@ -946,7 +946,7 @@ let check_entail_residue_x prog ante conseq =
     let ptree = SBPH.check_entailment ~timeout:5 ~interact:false sb_prog ent in
     let res = ptree.SBPA.enr_validity in
     (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
-    let () = x_binfo_hp (add_str "sb_ents" pr_validity) res no_pos in
+    let () = x_tinfo_hp (add_str "sb_ents" pr_validity) res no_pos in
     match res with
     | SBG.MvlTrue ->
       let residue_fs = ptree.SBPA.enr_residues in
@@ -1035,7 +1035,7 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
           ()) invalid_ents in
     let () = if unkn_ents != [] then
         List.iter (fun ent ->
-          let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+          let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
           (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
           ()) unkn_ents in
     let () = if !songbird_export_invalid_entails then

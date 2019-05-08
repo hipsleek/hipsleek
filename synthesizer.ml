@@ -702,7 +702,7 @@ let aux_func_call goal rule fname params subst res_var =
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
-    let () = x_binfo_hp (add_str "param_post" pr_formula) params_post no_pos in
+    let () = x_tinfo_hp (add_str "param_post" pr_formula) params_post no_pos in
     let evars = CF.get_exists params_post in
     let post_state = add_formula_to_formula red params_post in
     let np_vars = CF.fv post_state in
@@ -720,8 +720,7 @@ let aux_func_call goal rule fname params subst res_var =
                               gl_trace = rule::goal.gl_trace;
                               gl_pre_cond = post_state} in
     mk_derivation_subgoals goal rule [sub_goal]
-  | _ ->
-    let () = x_binfo_pp "marking" no_pos in
+  | _ -> let () = x_tinfo_pp "marking" no_pos in
     mk_derivation_fail goal rule
 
 let process_rule_func_call goal rcore : derivation =
