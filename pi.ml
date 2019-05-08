@@ -756,7 +756,7 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
             in
             let reloblgs_init, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
             let is_infer_flow = is_infer_flow reldefns in
-            let reldefns = if is_infer_flow then add_flow rels else List.map (fun (_,f1,f2) -> (f1,f2)) rels in
+            let reldefns = if is_infer_flow then add_flow reldefns else List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
             let reloblgs = x_add_1 Immutable.norm_rel_oblgs reloblgs_init in
             if rels !=[] then
               begin
