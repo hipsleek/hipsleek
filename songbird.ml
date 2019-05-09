@@ -842,9 +842,9 @@ let solve_entailments prog entails =
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns = SBPFU.get_solved_vdefns ptree in
-    let () = x_tinfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
+    let () = x_binfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
     let hps = translate_back_vdefns prog vdefns in
-    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
     Some hps
   else None
 

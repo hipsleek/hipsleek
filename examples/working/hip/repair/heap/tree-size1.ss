@@ -10,7 +10,7 @@ tree1<m> == self = null & m = 0
 
 int count(node2 z)
 	requires z::tree1<m>
-	ensures z::tree1<m> & res = m & res >= 0;
+	ensures z::tree1<m> & res = m;
 {
 	if (z == null)
 		return 3;
