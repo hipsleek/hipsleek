@@ -1035,7 +1035,7 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
           ()) invalid_ents in
     let () = if unkn_ents != [] then
         List.iter (fun ent ->
-          let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+          let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
           (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
           ()) unkn_ents in
     let () = if !songbird_export_invalid_entails then
@@ -1233,6 +1233,8 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
       aux_conti n_ctx
     else
+      let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
+      let () = x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos in
       let msg = "songbird result is Failed." in
       (CF.mkFailCtx_simple msg es bf.CF.formula_struc_base (CF.mk_cex true) no_pos
       , Prooftracer.Failure)

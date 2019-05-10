@@ -122,7 +122,8 @@ let start_repair (iprog:I.prog_decl) =
       let n_iprog = mk_candidate_iprog iprog r_iproc args cand in
       repair_one_candidate n_iprog in
     let res = cands |> List.map helper |> List.filter (fun x -> x != None) in
-    if res = [] then let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in None
+    if res = [] then
+      let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in None
     else
       let r_time = get_time() -. start_time in
       let () = x_binfo_pp "REPAIRING SUCCESSFUL\n" no_pos in
