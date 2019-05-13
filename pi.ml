@@ -187,7 +187,7 @@ let rec add_pre_relation prog proc sf rel_name rel_type rel_vars = match sf with
     let rel_type = RelT (List.map (fun sv -> match sv with
         | CP.SpecVar (t,_,_) -> t) rel_vars) in
     let new_cont = add_pre_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars in
-    let new_infer_vars = List.filter (fun sv -> CP.is_rel_var sv) (CF.struc_fv new_cont) in
+    let new_infer_vars = List.filter (fun sv -> CP.is_rel_var sv) (CF.struc_fv ~vartype:Vartypes.var_with_rel new_cont) in
     CF.EInfer {ei with
                (* CF.formula_inf_vars = CP.remove_dups_svl (ei.CF.formula_inf_vars@[CP.mk_typed_spec_var rel_type rel_name]); *)
                (* CF.formula_inf_continuation = add_pre_relation prog proc ei.CF.formula_inf_continuation rel_name rel_type rel_vars} *)
