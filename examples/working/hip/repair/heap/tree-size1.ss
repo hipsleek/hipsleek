@@ -14,6 +14,7 @@ int count(node2 z)
 {
 	if (z == null)
 		return 3;
+    // fcode(z);
 	else	{
 	  int cleft, cright;
 		cleft = count(z.left);

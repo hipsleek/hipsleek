@@ -20,6 +20,3 @@ void append2(node2 x, node2 y)
 		append2(x.next, y);
 	}
 }
-
-// q_1953::dll<x,flted_8_1952> * y::dll<p,n> * x'::node2<q,y'>&
-// y'=y & x=x' & q_1953=null & flted_8_1952=m-1 & 1<=m & 1<=n

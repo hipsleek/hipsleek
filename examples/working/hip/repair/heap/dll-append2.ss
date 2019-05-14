@@ -12,16 +12,18 @@ void append2(node2 x, node2 y)
 	ensures x::dll<q, m+n>;
 {
 	if (x.next == null) {
-    // x.next = y.next;
+    x.next = y.next;
     // P(x,y) -> Q(x,y)
-    x.next = y;
-    dprint;
+    // x.next = y;
+    // dprint;
     if (y != null) y.prev = x;
 	}
 	else {
 		append2(x.next, y);
 	}
 }
+
+// Q(x,y) := x::node<p, y> * y ::dll<q, n> & m = 1 & nxt = null
 
 // Q(x',y') & v_bool_18_4433' & p_4457=q & self_4458=x' & x'=x & y'=y & q_4460=nil
 // & flted_8_4459+1=m & 0<m & v_bool_14_4439' & y'!=nil

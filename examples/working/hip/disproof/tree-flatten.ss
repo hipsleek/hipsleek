@@ -32,12 +32,10 @@ node2 append(node2 x, node2 y)
 
 	if (x == null)
 		return y;
-	else
-	{
+	else {
 		z = append(x.right, y);
 		x.right = z;
-		if (z != null)
-			z.left = x;
+		if (z != null) z.left = x;
 
 		return x;
 	}
@@ -49,15 +47,14 @@ void flatten(node2 x)
 	ensures (exists q : x::dll<q, m> & q=null);
 {
 	node2 tmp;
-	if (x != null)
-	{
+	if (x != null)	{
 		flatten(x.left);
 		flatten(x.right);
 		tmp = append(x.left, x.right);
 		x.left = null;
 		x.right = tmp;
-		if (tmp != null)
-			tmp.left = x;
+		if (tmp != null)		tmp.left = x;
+
 	}
 }
 
