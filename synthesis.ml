@@ -1159,7 +1159,6 @@ let rec synthesize_st_core st : Iast.exp option=
   | _ -> report_error no_pos "synthesize_st_core: this case unhandled"
 
 and aux_subtrees st cur_codes =
-
   let st_code = List.map synthesize_st_core st.stc_subtrees in
   match st_code with
   | [] -> Some cur_codes

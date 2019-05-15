@@ -790,12 +790,12 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
-      let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
+  let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore
@@ -879,10 +879,12 @@ let synthesize_entailments iprog prog proc =
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-    if !syn_pre != None && hps != [] then
+    if (* !syn_pre != None && *) hps != [] then
       let post_hp = List.find (fun x -> x.Cast.hp_name = "Q") hps in
+      (* let pre_hp = List.find (fun x -> x.Cast.hp_name = "P") hps in *)
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
       let post = post_hp.Cast.hp_formula |> unprime_formula in
+      (* let pre = pre_hp.Cast.hp_formula |> unprime_formula in *)
       let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
       if res then repair_res := Some n_iprog else ()

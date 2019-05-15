@@ -21,6 +21,7 @@ let start_repair = ref false
 let check_post = ref false
 
 let epure_disj_limit = ref 100 (* 0 means unlimited *)
+let repair_loc = ref (None:VarGen.loc option)
 
 let trailer_num_list = ref []
 

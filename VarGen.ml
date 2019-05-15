@@ -157,10 +157,10 @@ class prog_loc =
   end;;
 
 let method_name_of s =
-  try 
+  try
     let hashtag_index = String.index s '#' in
     String.sub s 0 hashtag_index
-  with _ -> s 
+  with _ -> s
 
 let is_equal call_name s =
   String.compare call_name (method_name_of s) = 0
@@ -198,6 +198,7 @@ let last_posn = new last_posn_cls
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
+
 let post_pos = new prog_loc
 
 let entail_pos = ref no_pos

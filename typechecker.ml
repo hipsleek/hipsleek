@@ -41,7 +41,6 @@ let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 let phase_infer_ind = ref false
 let repairing_ents = ref []
 let repair_proc = ref None
-let repair_loc = ref None
 
 let log_spec = ref ""
 (* checking expression *)
@@ -1952,8 +1951,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                       }))
                     rs
                 else
-                  let () = repair_loc := Some pos in
-                  (*delay pritinting to check post*)
+                  let () = repair_loc := Some VarGen.proving_loc#get in
                   let s =  ("\n("^(Cprinter.string_of_label_list_failesc_context rs)^") ")^
                            ("bindxxx: node " ^ (Cprinter.string_of_formula vheap) ^
                             " cannot be derived from context\n") ^ (string_of_loc pos) ^"\n\n"
@@ -3085,7 +3083,7 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     (ctx0 : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)
     pos (pid:formula_label):  CF.list_partial_context  =
-  let _ = x_tinfo_pp ">>>>>>>>> begin prove post-cond >>>>>>>" no_pos in
+  let _ = x_binfo_pp ">>>>>>>>> begin prove post-cond >>>>>>>" no_pos in
   let _ = SB.enable_export_entailments () in
   let ctx = CF.fresh_view_list_partial_context ctx0 in
   let () = if !print_proof then
@@ -3122,7 +3120,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         (*possibly change to flat post here as well??*)
         let ans, prf = SV.heap_entail_list_partial_context_init prog false
             fn_state flat_post None None None pos (Some pid) in
-        let () =  DD.ninfo_hprint
+        let () = DD.ninfo_hprint
             (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
         in
         let ans1 = if !mem_leak_detect then
@@ -3169,6 +3167,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived" in
         let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
+        (* let () = repair_loc := Some VarGen.proving_loc#get in *)
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")

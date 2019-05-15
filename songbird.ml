@@ -1233,6 +1233,8 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
       let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
       aux_conti n_ctx
     else
+      let () = if !start_repair then
+          repair_loc := Some VarGen.proving_loc#get in
       let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
       let () = x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos in
       let msg = "songbird result is Failed." in
