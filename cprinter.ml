@@ -4061,7 +4061,17 @@ let pr_context_list_short (ctx : context list) =
 
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-  | FailCtx (ft,c,cex) -> (fmt_string "failctx"; pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)pr_failure_cex cex)
+  | FailCtx (ft,c,cex) ->
+      (* (fmt_string "failctx"; fmt_cut_and_indent (); pr_fail_type ft; (* fmt_string "\nectx:"; pr_context_short c; *)pr_failure_cex cex) *)
+      begin
+        fmt_open_vbox 0;
+        fmt_string "failctx";
+        fmt_cut_and_indent ();
+        pr_fail_type ft;
+        fmt_cut ();
+        fmt_string "CEX:";
+        pr_failure_cex cex
+      end
   | SuccCtx sc -> (fmt_int (List.length sc); pr_context_list_short sc)
 
 let pr_entail_state_short e =

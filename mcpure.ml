@@ -2222,9 +2222,11 @@ let regroup_memo_group s =
   Debug.no_1 "regroup_memo_group"
     !print_mix_f !print_mix_f regroup_memo_group s
 
-let mfv f = match f with
+let mfv ?(vartype=Vartypes.var_with_none) f = match f with
   | MemoF mf -> mfv mf
-  | OnePF f -> fv f
+  | OnePF f -> fv ~vartype f
+
+let mfv ?(vartype=Vartypes.var_with_none) f = Debug.no_1 "mfv" !print_mix_formula !print_svl (mfv ~vartype) f
 
 let merge_mems_m = merge_mems
 

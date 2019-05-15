@@ -41,8 +41,8 @@ else
 	}
 
 if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
-		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6',
+		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om',
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|sleek_threads|hip_threads|hip_vperm|sleek_vperm|sleek_fracperm|sleek_veribsync|hip_veribsync [-flags \"arguments to be transmited to hip/sleek \"]\n";
@@ -85,8 +85,8 @@ if($home21){
 	if($root){
 		chdir("$root") or die "Can't chdir to $root $!";
 	}else{
-		chdir("$target_dir") or die "Can't chdir to $target_dir $!"; 
-	}	
+		chdir("$target_dir") or die "Can't chdir to $target_dir $!";
+	}
 }
 
 if($timings){
@@ -97,7 +97,7 @@ if($timings){
             or die "File $timings_logfile was not found";
         my $count = $book->{SheetCount};#total number of worksheets of the workbook
         my $provers_sheet_no = 0;
-        for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
+        for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets
             if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
                 if($book->{Worksheet}[$i]->{Name} =~ m/_(\d+)/) {#find the no. of the newest worksheet of this prover
                     if($provers_sheet_no < int($1)){
@@ -115,7 +115,7 @@ if($timings){
     }else{
         #create a new file
         $workbook = Spreadsheet::WriteExcel->new("temp_"."$timings_logfile")
-            or die "Could not create file $timings_logfile"; 
+            or die "Could not create file $timings_logfile";
         my $new_worksheet_name = "$prover"."_1";
         $workbook->add_worksheet($new_worksheet_name);
         $worksheet = $workbook->sheets(0);
@@ -149,7 +149,7 @@ if($timings){
     $cl = $childCol;
     if("$flags" =~ m/--enable-logging-txt\b/ ){
      $cl=$childCol+1;
-     $prooflogCol = $cl;	
+     $prooflogCol = $cl;
     }
     $totalCol = $cl+1;
     $falseContextCol = $cl+2;
@@ -233,13 +233,13 @@ $output_file = "log";
 #	["heaps-inf.ss",4,"--en-inf --en-inf-qe-coq --etcsu2 --etcsu3 --dis-early-contra","insert","FAIL","deleteoneel","SUCCESS","deleteone","SUCCESS","deletemax","SUCCESS"],
 	["merge-inf.ss",1,"--en-inf --en-disj-compute --etcsu2 --etcsu3","merge","SUCCESS"],
 	],
-    "imm" =>[ 
+    "imm" =>[
         ["bigint.ss",17,  " --imm -tp redlog",
 		 "clone", "SUCCESS",
 		 "int_value", "SUCCESS",
 		 "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
+#		 "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -259,7 +259,7 @@ $output_file = "log";
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-         "test", "SUCCESS", 
+         "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -279,7 +279,7 @@ $output_file = "log";
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
+#		 "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -299,7 +299,7 @@ $output_file = "log";
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
+#		 "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -319,7 +319,7 @@ $output_file = "log";
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-         "test", "SUCCESS", 
+         "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -339,7 +339,7 @@ $output_file = "log";
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
          "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
+#		 "test", "SUCCESS",
          "add_c", "SUCCESS",
          "add", "SUCCESS",
          "sub_one_digit", "SUCCESS",
@@ -376,7 +376,7 @@ $output_file = "log";
         "mem" => [
         ["dag.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["dag_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
-        ["dag_values_infer.ss",2,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","mark2","SUCCESS"],   
+        ["dag_values_infer.ss",2,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","mark2","SUCCESS"],
         ["graph.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["graph_values.ss",2,"-tp om --mem --ramify","mark","SUCCESS","mark2","SUCCESS"],
         ["graph_values_infer.ss",2,"-tp om --mem --ramify --infer-mem","mark","SUCCESS","mark2","SUCCESS"],
@@ -629,7 +629,7 @@ $output_file = "log";
 							 "f2","SUCCESS",
 							 #"append3","SUCCESS",
 							 #"find_last","SUCCESS",
-							 #"id1","SUCCESS"	
+							 #"id1","SUCCESS"
 							 ],
 				["heaps.ss",5, "", "insert","SUCCESS",
 								#"insert1","SUCCESS",
@@ -743,49 +743,49 @@ $output_file = "log";
 				["classic/classic2a.ss",2, "", "foo1", "SUCCESS", "foo2", "FAIL"],
 				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				["classic/classic3a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
-				["../../modular_examples/dll-modular.ss",11, "--overeps", 
+				["../../modular_examples/dll-modular.ss",11, "--overeps",
 					"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
 					"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
 					"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
 					"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
-				# ["../../modular_examples/dll-modular.ss",11, "--overeps", 
+				# ["../../modular_examples/dll-modular.ss",11, "--overeps",
 				# 	"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
 				# 	"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
 				# 	"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
 				# 	"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
-				["../../modular_examples/selection-modular.ss",3, "--overeps --lda", 
+				["../../modular_examples/selection-modular.ss",3, "--overeps --lda",
 					"delete_min", "SUCCESS", "find_min", "SUCCESS", "selection_sort", "SUCCESS"],
-				["../../modular_examples/qsort-modular.ss",3, "--overeps --lda", 
-					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],				
-				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
+				["../../modular_examples/qsort-modular.ss",3, "--overeps --lda",
+					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],
+				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps",
 				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
 				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
-				["vperm/ho_vperm_check.ss",6,  "--ann-vp", 
+				["vperm/ho_vperm_check.ss",6,  "--ann-vp",
                                 "inc","SUCCESS",
                                 "incCell","SUCCESS",
                                 "test1","FAIL",
                                 "test2","FAIL",
                                 "test3","FAIL",
                                 "test4","FAIL"],
-				["vperm/task_decompose.ss",4,  "--ann-vp", 
+				["vperm/task_decompose.ss",4,  "--ann-vp",
                                 "inc","SUCCESS",
                                 "creator","SUCCESS",
                                 "joiner","SUCCESS",
                                 "main","SUCCESS"],
-				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "test","SUCCESS",
                                 "test1","FAIL"
 								],
-				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "test","FAIL",
                                 "test2","FAIL",
                                 "test3","FAIL",
                                 "test4","FAIL"],
-				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","FAIL",
                                 "main","SUCCESS"
 								],
@@ -855,39 +855,39 @@ $output_file = "log";
                                 # "thread2","SUCCESS"
 				# 				],
 
-				],	
-	"hip_long_mod" => [["../../modular_examples/sorted_list_modular.ss",8, "--overeps -tp om", 
+				],
+	"hip_long_mod" => [["../../modular_examples/sorted_list_modular.ss",8, "--overeps -tp om",
 					"insert_first", "SUCCESS", "copy", "SUCCESS", "delete", "SUCCESS",
 					"double_reverse", "SUCCESS", "insert", "SUCCESS", "insert_last", "SUCCESS",
 					"merge", "SUCCESS", "reverse","SUCCESS"],
-					["../../modular_examples/complete-modular.ss",5, "--overeps", 
+					["../../modular_examples/complete-modular.ss",5, "--overeps",
 					"maxim", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
 					"min_height", "SUCCESS", "insert", "SUCCESS"],
-					#["../../modular_examples/avl_modular.ss",8, "--overeps -tp om", 
+					#["../../modular_examples/avl_modular.ss",8, "--overeps -tp om",
 					#"height", "SUCCESS", "diff_h_by_1", "SUCCESS", "diff_h_by_2", "SUCCESS",
 					#"eq_h", "SUCCESS", "get_max", "SUCCESS", "get_max_height_add1", "SUCCESS",
 					#"less_h", "SUCCESS", "remove_min_add","SUCCESS"],
-					],	
+					],
 	"hip_barr" => [
-		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS",
 								"th3_loop","SUCCESS","th3","SUCCESS"],
-		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
 								"thl3","SUCCESS","th3","SUCCESS",
-								"thl4","SUCCESS","th4","SUCCESS"],						
-		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+								"thl4","SUCCESS","th4","SUCCESS"],
+		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS"],
-		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "controll","SUCCESS","thl5","SUCCESS",
 								"thl1","SUCCESS","thl2","SUCCESS",
 								"thl3","SUCCESS","thl4","SUCCESS"],
-		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "ctl12","SUCCESS","ctl11","SUCCESS",
 								"starterc","SUCCESS","thl12","SUCCESS",
 								"thl22","SUCCESS","thl21","SUCCESS",
@@ -897,30 +897,30 @@ $output_file = "log";
 								"thl42","SUCCESS","thl41","SUCCESS",
 								"startert4","SUCCESS",
 								],
-		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
 								"thl3","SUCCESS","th3","SUCCESS",
 								"thl4","SUCCESS","th4","SUCCESS",
 								"thl5","SUCCESS","th5","SUCCESS",
-								],		
-		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+								],
+		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS"
-								],	
-		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+								],
+		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
-								],	
-		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+								],
+		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
-								],	
-		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm", 
+								],
+		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-imm --dis-precise-xpure -perm dperm",
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
-								],	
+								],
 	],
         "sa" =>[
             ["ll-trav.c",1,  "-validate infer/output/sa/ll-trav.cp", "foo","SUCCESS"],
@@ -948,49 +948,49 @@ $output_file = "log";
             ["tll-parent.c",1,  "-validate infer/output/sa/tll-parent.cp -tp z3 --pred-en-equiv", "set_right","SUCCESS"],
         ],
 	"hip_vperm" =>[
-				["vperm/alt_threading.ss",2,  "--ann-vp", 
+				["vperm/alt_threading.ss",2,  "--ann-vp",
                                 "increment","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none --dis-ls dis--locklevel", 
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none --dis-ls dis--locklevel",
                                 "seq_fib","SUCCESS",
                                 "para_fib2","SUCCESS"
 								],
-				["vperm/global-var-norace.ss",2,  "--ann-vp --dis-pgbv", 
+				["vperm/global-var-norace.ss",2,  "--ann-vp --dis-pgbv",
                                 "inc","SUCCESS",
                                 "func","SUCCESS"
 								],
-				["vperm/global-var-race.ss",2,  "--ann-vp --dis-pgbv", 
+				["vperm/global-var-race.ss",2,  "--ann-vp --dis-pgbv",
                                 "inc","SUCCESS",
                                 "func","FAIL"
 								],
-				["vperm/mergesort.ss",5,  "--ann-vp", 
+				["vperm/mergesort.ss",5,  "--ann-vp",
                                 "count","SUCCESS",
                                 "split_func","SUCCESS",
                                 "merge","SUCCESS",
                                 "insert","SUCCESS",
                                 "parallel_merge_sort2","SUCCESS"
 								],
-				["vperm/passive_stack_race.ss",2,  "--ann-vp", 
+				["vperm/passive_stack_race.ss",2,  "--ann-vp",
                                 "assign","SUCCESS",
                                 "stack_race","FAIL"
 								],
-				["vperm/stack_race.ss",2,  "--ann-vp", 
+				["vperm/stack_race.ss",2,  "--ann-vp",
                                 "assign","SUCCESS",
                                 "stack_race","FAIL"
 								],
-				["vperm/quicksort.ss",3,  "--ann-vp", 
+				["vperm/quicksort.ss",3,  "--ann-vp",
                                 "partition","SUCCESS",
                                 "append_bll","SUCCESS",
                                 "para_qsort2","SUCCESS",
 								],
-				["vperm/task_decompose.ss",4,  "--ann-vp", 
+				["vperm/task_decompose.ss",4,  "--ann-vp",
                                 "inc","SUCCESS",
                                 "creator","SUCCESS",
                                 "joiner","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["vperm/threads.ss",6,  "--ann-vp", 
+				["vperm/threads.ss",6,  "--ann-vp",
                                 "make_tree","SUCCESS",
                                 "tree_compute_sum_facs","SUCCESS",
                                 "summator","SUCCESS",
@@ -998,13 +998,13 @@ $output_file = "log";
                                 "join_sum_thread","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["vperm/tree_count.ss",1,  "--ann-vp", 
+				["vperm/tree_count.ss",1,  "--ann-vp",
                                 "parallelCount2","SUCCESS"
 								],
-				["vperm/tree_search.ss",1,  "--ann-vp -tp mona -perm none", 
+				["vperm/tree_search.ss",1,  "--ann-vp -tp mona -perm none",
                                 "para_search2","SUCCESS"
 								],
-				["vperm/vperm_check.ss",6,  "--ann-vp", 
+				["vperm/vperm_check.ss",6,  "--ann-vp",
                                 "inc","SUCCESS",
                                 "incCell","SUCCESS",
                                 "test1","FAIL",
@@ -1012,7 +1012,7 @@ $output_file = "log";
                                 "test3","FAIL",
                                 "test4","FAIL"
 								],
-				["vperm/vperm_simple.ss",4,  "--ann-vp", 
+				["vperm/vperm_simple.ss",4,  "--ann-vp",
                                 "foo","SUCCESS",
                                 "f","SUCCESS",
                                 "foo2","SUCCESS",
@@ -1021,100 +1021,100 @@ $output_file = "log";
              ],
 	"parahip" =>[
         ### GENERAL TESTS
-				["parahip/simple.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/simple.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "test","SUCCESS",
                                 "test1","FAIL"
 								],
-				["parahip/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "inc","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "testCell","SUCCESS",
                                 "testVar","FAIL"
 								],
-				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "test","FAIL",
                                 "test2","FAIL",
                                 "test3","FAIL",
                                 "test4","FAIL"
 								],
-				["parahip/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func2","SUCCESS",
                                 "func3","SUCCESS",
                                 "func4","SUCCESS"
 								],
         ### DEADLOCKED and DEADLOCK-FREE scenarios
-				["parahip/double-acquire.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/double-acquire.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "func","FAIL",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
-				["parahip/multicast.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/multicast.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "initialize","SUCCESS",
                                 "thread","SUCCESS"
 								],
-				["parahip/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "thread","SUCCESS",
                  #NOTE: loop calls' naming could be varied
 #                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
@@ -1122,28 +1122,28 @@ $output_file = "log";
                                 "main","SUCCESS"
 								],
 # slow in parahip/owicki-gries.ss due to search. Could modify search heuristics.
-				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "incrementor2","SUCCESS",
                                 "incrementor1","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj", 
+				["parahip/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-and-conj",
                                 "seq_fib","SUCCESS",
                                 "para_fib","SUCCESS"
 								],
-				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel --en-thrd-and-conj", 
+				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel --en-thrd-and-conj",
                                 "create_and_acquire","SUCCESS"
 								]
         ### END parahip
              ],
 	"hip_threads" =>[
         ### GENERAL TESTS for "Threads as Resource"
-				["threads/motiv-example.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+				["threads/motiv-example.ss",3,  "--en-para --en-thrd-resource -tp redlog",
                                 "main","SUCCESS",
                                 "thread1","SUCCESS",
                                 "thread2","SUCCESS"
 								],
-				["threads/motiv-example2.ss",3,  "--en-para --en-thrd-resource -tp redlog", 
+				["threads/motiv-example2.ss",3,  "--en-para --en-thrd-resource -tp redlog",
                                 "main","SUCCESS",
                                 "thread1","SUCCESS",
                                 "thread2","SUCCESS"
@@ -1158,67 +1158,67 @@ $output_file = "log";
                                 "thread1","SUCCESS",
                                 "thread2","SUCCESS"
 								],
-				["threads/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/forkjoin.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/cell4.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "inc","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/ls-bind.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["threads/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["threads/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["threads/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/disj-no-deadlock1.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/disj-no-deadlock2.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/disj-no-deadlock3.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/disj-deadlock.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","FAIL"
 								],
-				["threads/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/ordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/unordered-locking.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "func","FAIL",
                                 "main","SUCCESS"
 								],
-				["threads/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/oracle.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "thread","SUCCESS",
                  #NOTE: loop calls' naming could be varied
 #                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
@@ -1226,12 +1226,12 @@ $output_file = "log";
                                 "main","SUCCESS"
 								],
 # slow in threads/owicki-gries.ss due to search. Could modify search heuristics.
-				["threads/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/owicki-gries.ss",3,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "incrementor2","SUCCESS",
                                 "incrementor1","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["threads/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource", 
+				["threads/fibonacci.ss",2,  "--en-para -tp parahip --en-lsmu-infer --en-thrd-resource",
                                 "seq_fib","SUCCESS",
                                 "para_fib","SUCCESS"
 								]
@@ -1471,37 +1471,37 @@ $output_file = "log";
 								]
              ], # END hip_veribsync
 	"bags" =>[
-        ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
+        ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS",
          "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
         ["avl-all.ss", 11, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS","remove_max_add", "SUCCESS", ,"remove_min_add","SUCCESS",
          "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
-        ["avl-modular-2.ss", 16, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
-         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+        ["avl-modular-2.ss", 16, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS",
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS",
          "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
          "height","SUCCESS"],
         ["avl-modular-3.ss", 11, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS","remove_max_add", "SUCCESS", ,"remove_min_add","SUCCESS",
          "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
-        ["avl-modular-2.ss", 17, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
-         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+        ["avl-modular-2.ss", 17, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS",
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS",
          "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
          "height","SUCCESS"],
-        ["avl-modular-hei.ss", 14, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
-         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+        ["avl-modular-hei.ss", 14, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS",
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS",
          "rotate_left", "SUCCESS", "rotate_right2", "SUCCESS", "rotate_left2", "SUCCESS", "height","SUCCESS"],
-        ["avl-modular-new3.ss", 18, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
-         "insert", "SUCCESS", "is_mem", "SUCCESS","rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+        ["avl-modular-new3.ss", 18, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS",
+         "insert", "SUCCESS", "is_mem", "SUCCESS","rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS",
          "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
          "height","SUCCESS"],
         ["avl-modular-set.ss", 3 ,"", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS"],
         ["avl-modular-siz.ss", 3 , "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS"],
-        ["avl-modular.ss", 12, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
-         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+        ["avl-modular.ss", 12, "", "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS",
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS",
          "rotate_left", "SUCCESS", "height","SUCCESS"],
         ["avl.scp.ss", 19 ,"", "delete", "SUCCESS", "remove_min", "SUCCESS", "insert_inline1", "SUCCESS", "insert_inline", "SUCCESS", "insert1", "SUCCESS", "insert", "SUCCESS",
          "build_avl2", "SUCCESS", "build_avl1", "SUCCESS", "rotate_double_right1", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left1", "SUCCESS",
          "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right1", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left1", "SUCCESS", "rotate_left", "SUCCESS",
          "height1", "SUCCESS", "height", "SUCCESS"],
-        ["avl.ss",  8, "", "insert_inline", "SUCCESS",  "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", 
+        ["avl.ss",  8, "", "insert_inline", "SUCCESS",  "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS",
          "rotate_right", "SUCCESS", "rotate_left", "SUCCESS","height", "SUCCESS"],
         ["bubble.ss", 3, "", "bsort1", "SUCCESS", "bubble1", "SUCCESS", "id1", "SUCCESS"],
         ["cll.ss", 4, "", "delete2", "SUCCESS", "delete", "SUCCESS", "count", "SUCCESS", "count_rest", "SUCCESS"],
@@ -1514,11 +1514,11 @@ $output_file = "log";
         ["rb_bags.ss", 19, "", "insert_1", "SUCCESS", "del_1", "SUCCESS", "remove_min_1", "SUCCESS", "del_2r_1", "SUCCESS", "del_2_1", "SUCCESS", "del_3r_1", "SUCCESS",
          "del_3_1", "SUCCESS", "del_4r_1", "SUCCESS", "del_4_1", "SUCCESS", "del_5r_1", "SUCCESS", "del_5_1", "SUCCESS", "del_6r_1", "SUCCESS", "del_6_1", "SUCCESS",
          "is_black_1", "SUCCESS", "is_red_1", "SUCCESS", "case_2r_1", "SUCCESS", "rotate_case_3r_1", "SUCCESS", "case_2_1", "SUCCESS", "rotate_case_3_1", "SUCCESS"],
-        ["rb.scp.ss", 38, "", "insert_1", "SUCCESS", "insert", "SUCCESS", "del_1", "SUCCESS", "del", "SUCCESS", "remove_min_1", "SUCCESS", "remove_min", "SUCCESS", 
-         "del_2r_1", "SUCCESS", "del_2r", "SUCCESS", "del_2_1", "SUCCESS", "del_2", "SUCCESS", "del_3r_1", "SUCCESS", "del_3r", "SUCCESS", "del_3_1", "SUCCESS", 
-         "del_3", "SUCCESS", "del_4r_1", "SUCCESS", "del_4r", "SUCCESS", "del_4_1", "SUCCESS", "del_4", "SUCCESS", "del_5r_1", "SUCCESS", "del_5r", "SUCCESS", 
-         "del_5_1", "SUCCESS", "del_5", "SUCCESS", "del_6r_1", "SUCCESS", "del_6r", "SUCCESS", "del_6_1", "SUCCESS", "del_6", "SUCCESS", "is_black_1", "SUCCESS", 
-         "is_black", "SUCCESS", "is_red_1", "SUCCESS", "is_red", "SUCCESS", "case_2r_1", "SUCCESS", "case_2r", "SUCCESS", "rotate_case_3r_1", "SUCCESS", 
+        ["rb.scp.ss", 38, "", "insert_1", "SUCCESS", "insert", "SUCCESS", "del_1", "SUCCESS", "del", "SUCCESS", "remove_min_1", "SUCCESS", "remove_min", "SUCCESS",
+         "del_2r_1", "SUCCESS", "del_2r", "SUCCESS", "del_2_1", "SUCCESS", "del_2", "SUCCESS", "del_3r_1", "SUCCESS", "del_3r", "SUCCESS", "del_3_1", "SUCCESS",
+         "del_3", "SUCCESS", "del_4r_1", "SUCCESS", "del_4r", "SUCCESS", "del_4_1", "SUCCESS", "del_4", "SUCCESS", "del_5r_1", "SUCCESS", "del_5r", "SUCCESS",
+         "del_5_1", "SUCCESS", "del_5", "SUCCESS", "del_6r_1", "SUCCESS", "del_6r", "SUCCESS", "del_6_1", "SUCCESS", "del_6", "SUCCESS", "is_black_1", "SUCCESS",
+         "is_black", "SUCCESS", "is_red_1", "SUCCESS", "is_red", "SUCCESS", "case_2r_1", "SUCCESS", "case_2r", "SUCCESS", "rotate_case_3r_1", "SUCCESS",
          "rotate_case_3r", "SUCCESS", "case_2_1", "SUCCESS", "case_2", "SUCCESS", "rotate_case_3_1", "SUCCESS", "rotate_case_3", "SUCCESS"],
         ["selection.ss", 3, "", "selection_sort", "SUCCESS", "delete_min", "SUCCESS", "find_min", "SUCCESS"],
         ["trees.ss", 5, "", "delete1", "SUCCESS", "remove_min1", "SUCCESS", "insert1", "SUCCESS", "flatten1", "SUCCESS", "append1", "SUCCESS"]],
@@ -1673,7 +1673,7 @@ $output_file = "log";
 				["benchs/aprove/Costa_Julia_09/Break.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Continue1.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Continue.ss", 1, "", "main", "SUCCESS"],
-				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS", 
+				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS",
 			"incr2", "SUCCESS", "add2", "SUCCESS", "incr3", "SUCCESS", "add3", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_2.ss", 2, "-tp redlog", "main", "SUCCESS", "divBy", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_3.ss", 2, "", "main", "SUCCESS", "m", "SUCCESS"],
@@ -1712,14 +1712,14 @@ $output_file = "log";
 		###############################################(8)
 				["benchs/aprove/Julia_10_Recursive/AckR.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
                 # --eps caused problem below
-				["benchs/aprove/Julia_10_Recursive/FibSLR.ss", 4, "-tp redlog", 
+				["benchs/aprove/Julia_10_Recursive/FibSLR.ss", 4, "-tp redlog",
 				"main", "SUCCESS", "fib", "SUCCESS", "doSum", "SUCCESS", "create", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/HanR.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Power.ss", 1, "-tp redlog", "power", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/EvenOdd.ss", 2, "", "even", "SUCCESS", "odd", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Recursions.ss", 6, "", "main", "SUCCESS", "rec0", "SUCCESS", "rec1", "SUCCESS",
 			"rec2", "SUCCESS", "rec3", "SUCCESS", "rec4", "SUCCESS"],
-				["benchs/aprove/Julia_10_Recursive/Test10.ss", 4, "", "main", "SUCCESS", "rec", "SUCCESS", 
+				["benchs/aprove/Julia_10_Recursive/Test10.ss", 4, "", "main", "SUCCESS", "rec", "SUCCESS",
 			"test", "SUCCESS", "descend", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Test12.ss", 2, "-tp redlog", "main", "SUCCESS", "rec", "SUCCESS"],
 				["benchs/aprove/Julia_10_Recursive/Test1.ss", 2, "", "main", "SUCCESS", "rec", "SUCCESS"],
@@ -1732,7 +1732,7 @@ $output_file = "log";
 				["benchs/aprove/Julia_11_iterative/NO_01.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_02.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_03.ss", 1, "", "main", "SUCCESS"],
-				["benchs/aprove/Julia_11_iterative/NO_04.ss", 6, "", "main", "SUCCESS", "for_1", "SUCCESS", "for_2", "SUCCESS", 
+				["benchs/aprove/Julia_11_iterative/NO_04.ss", 6, "", "main", "SUCCESS", "for_1", "SUCCESS", "for_2", "SUCCESS",
 				"for_3", "SUCCESS", "for_4", "SUCCESS", "for_5", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_05.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Julia_11_iterative/NO_06.ss", 1, "", "main", "SUCCESS"],
@@ -1905,6 +1905,7 @@ my $dis = '--dis-inv-baga';
                       ["infer/infer14.slk", "--sa-en-pure-field", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer16.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer17.slk", "", (), "Valid."],
 # TODO : why are spaces so important in " --imm "?
                       #["ann1.slk", " --imm --en-imm-inv --etcsu1 ", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["ann2.slk", " --imm --en-imm-inv --etcsu1 ", (), "Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Fail."],
@@ -2060,7 +2061,28 @@ my $dis = '--dis-inv-baga';
                 ["err5.slk","",(),"may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
                 ["err6.slk","",(),"must.Valid.may.must.must.must."],
                 ["err7.slk","",(),"Valid.must.must.must.must.Valid.must.Valid.must.must."],
-                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]]
+                ["err9.slk","",(),"Valid.Valid.must.may.Valid.Valid.must.may."]],
+    "sleek_infer" => [
+        ["infer/app-inv.slk", "--inv --dis-eps", (), "Valid.Valid.Fail.Valid.Valid.Valid."],
+        ["infer/app-inv2.slk", "--inv --dis-eps", (), "Valid.Valid.Valid.Fail."],
+        ["infer/infer1.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+        ["infer/infer2.slk", "", (), "Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Fail."],
+        ["infer/infer4.slk", "", (), "Fail.Fail.Valid"],
+        ["infer/infer5.slk", "", (), "Valid.Valid.Fail.Valid."],
+        ["infer/infer5a.slk", "", (), "Fail.Valid."],
+        ["infer/infer6.slk", "", (), "Valid."],
+        ["infer/infer7.slk", "", (), "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
+        ["infer/infer8.slk", "", (), "Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+        ["infer/infer9.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid."],
+        ["infer/infer10.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Valid."],
+        ["infer/infer11.slk", "", (), "Fail."],
+        ["infer/infer12.slk", "", (), "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+        ["infer/infer13.slk", "--sa-en-cont", (), "Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer14.slk", "--sa-en-pure-field", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer15.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer16.slk", "", (), "Valid.Valid.Valid.Valid.Valid.Valid."],
+        ["infer/infer17.slk", "", (), "Valid."]
+    ]
 
     );
 
@@ -2093,8 +2115,8 @@ if($home21){
 printf "Total verification time: %.2f second\n", $totalSum;
 printf "\tTime spent in main process: %.2f second\n", $mainSum;
 printf "\tTime spent in child processes: %.2f second\n", $childSum;
-printf "\tNumber of false contexts: %d\n", $falseContextSum; 
- 
+printf "\tNumber of false contexts: %d\n", $falseContextSum;
+
 
 if($timings){
     #do the last computations and close the timings log worksheet
@@ -2108,7 +2130,7 @@ if($timings){
     $worksheet->write($row, $mainCol, "$mainSum", $format);
     $worksheet->write($row, $childCol, "$childSum", $format);
     if("$flags" =~ m/--enable-logging-txt\b/ ){
-      $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
+      $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);
     }
     $worksheet->write($row, $totalCol, $totalSum, $format);
     $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
@@ -2177,7 +2199,7 @@ sub sum_of_timings {
 }
 
 # string-pattern for collecting hip answer after the verification of a procedure:
-#   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be 
+#   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be
 #                                                  verified, and RESULT can be either SUCCESS or FAIL
 sub hip_process_file {
     foreach $param (@param_list)
@@ -2278,7 +2300,7 @@ sub sleek_process_file  {
       my $err = 0;
       my $barr = 0;
       if ("$param" =~ "sleek_barr"){ $barr=1;}
-      
+
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
@@ -2311,8 +2333,8 @@ sub sleek_process_file  {
           my $inv_results = "";
           my $entail_results = "";
           my $barrier_results = "";
-          my @lines = split /\n/, $output; 
-          foreach my $line (@lines) { 
+          my @lines = split /\n/, $output;
+          foreach my $line (@lines) {
               #print "\n!!!output: $line";
               if($line =~ m/Entailing lemma/){
                   if($line =~ m/Valid\./) { $lemmas_results = $lemmas_results ."Valid."; }
@@ -2383,12 +2405,12 @@ sub sleek_process_file  {
 
            #print "\n!!!!!Ent Res: $entail_results";
            #print "\n!!!!!Exp Res: $test->[$ent_res_idx] \n";
-          if ((($barr==0) && ($entail_results ne $test->[$ent_res_idx])) || 
+          if ((($barr==0) && ($entail_results ne $test->[$ent_res_idx])) ||
               ($barr==1 && ($barrier_results ne $test->[2]))){
               if (!$entail_results) { @failures = ('no result  for {E}'), @failures;
                                       $no_result_err = 1;
               }
-              else  { 
+              else  {
                   @failures = grep_failures($entail_results, $test->[$ent_res_idx],"E"), @failures;}
           }
           if ($#failures >= 0 ){

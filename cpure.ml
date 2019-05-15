@@ -1485,8 +1485,16 @@ let full_name_of_spec_var (sv : spec_var) : ident =
 
 let is_void_type t = match t with | Void -> true | _ -> false
 
-let rec fv (f : formula) : spec_var list =
-  let tmp = fv_helper f in
+let rec fv ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  Debug.no_1
+    "CPfv"
+    !print_formula
+    !print_svl
+    (fv_aux ~vartype)
+    f
+
+and fv_aux ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  let tmp = fv_helper ~vartype f in
   let res = remove_dups_svl tmp in
   res
 
@@ -1499,30 +1507,29 @@ and check_dups_svl ls =
   let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b
 
-and fv_helper (f : formula) : spec_var list = match f with
-  | BForm (b,_) -> bfv b
-  | And (p1, p2,_) -> combine_pvars p1 p2 fv_helper
-  | Or (p1, p2, _,_) -> combine_pvars p1 p2 fv_helper
-  | Not (nf, _,_) -> fv_helper nf
+and fv_helper ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list = match f with
+  | BForm (b,_) -> bfv ~vartype b
+  | And (p1, p2,_) -> combine_pvars p1 p2 (fv_helper ~vartype)
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 (fv_helper ~vartype)
+  | Not (nf, _,_) -> fv_helper ~vartype nf
   | Forall (qid, qf, _,_) -> remove_qvar qid qf
   | Exists (qid, qf, _,_) -> remove_qvar qid qf
-  | AndList l -> fold_l_snd fv_helper l
+  | AndList l -> fold_l_snd (fv_helper ~vartype) l
   | SecurityForm (_, f, _) -> fv_helper f
 
 and combine_pvars p1 p2 helper = (helper p1) @ (helper p2)
 
-and all_vars_helper (f : formula) : spec_var list = match f with
-  | BForm (b,_) -> bfv b
-  | And (p1, p2,_) -> combine_pvars p1 p2 all_vars_helper
-  | Or (p1, p2, _,_) -> combine_pvars p1 p2 all_vars_helper
-  | Not (nf, _,_) -> all_vars_helper nf
+and all_vars_helper ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list = match f with
+  | BForm (b,_) -> bfv ~vartype b
+  | And (p1, p2,_) -> combine_pvars p1 p2 (all_vars_helper ~vartype)
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2 (all_vars_helper ~vartype)
+  | Not (nf, _,_) -> all_vars_helper ~vartype nf
   | Forall (qid, qf, _,_)
-  | Exists (qid, qf, _,_) -> qid::(all_vars_helper qf)
-  | AndList l -> fold_l_snd all_vars_helper l
-  | SecurityForm (_, f, _) -> all_vars_helper f
+  | Exists (qid, qf, _,_) -> qid::(all_vars_helper ~vartype qf)
+  | AndList l -> fold_l_snd (all_vars_helper ~vartype) l
 
-and all_vars (f : formula) : spec_var list =
-  let tmp = all_vars_helper f in
+and all_vars ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
+  let tmp = all_vars_helper ~vartype f in
   let res = remove_dups_svl tmp in
   res
 (*typ=None => choose all perm vars
@@ -1562,7 +1569,7 @@ and remove_qvar qid qf =
   let qfv = fv_helper qf in
   Gen.BList.difference_eq eq_spec_var qfv [qid]
 
-and bfv (bf : b_formula) =
+and bfv' ?(vartype=Vartypes.var_with_none) (bf : b_formula) =
   let (pf,sl) = bf in
   match pf with
   | Frm (fv,_) -> [fv]
@@ -1616,8 +1623,13 @@ and bfv (bf : b_formula) =
     let fv2 = afv a2 in
     fv1 @ fv2
   | RelForm (r, args, _) ->
+    (* RelForm are assumed global *)
     let vid = r in
-    vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+    if !Globals.adhoc_flag_6 || vartype # with_rel then
+      vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+    else
+      let () = y_tinfo_hp (add_str "fv removes rel" !print_sv) r in
+      remove_dups_svl (List.fold_left List.append [] (List.map afv args))
   | ImmRel (r, cond, _) ->
     let fvr = bfv (r, sl) in
     fvr
@@ -1634,6 +1646,14 @@ and sec_label_fv = function
   | Lub (l1, l2) -> remove_dups_svl (sec_label_fv l1 @ sec_label_fv l2)
   | Glb (l1, l2) -> remove_dups_svl (sec_label_fv l1 @ sec_label_fv l2)
   | SecVar var -> [var]
+
+and bfv ?(vartype=Vartypes.var_with_none) f =
+  Debug.no_1
+    "bfv"
+    !print_b_formula
+    !print_svl
+    (bfv' ~vartype)
+    f
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -6151,7 +6171,7 @@ struct
     match y with
     | None -> None
     | Some exp -> Some(x,exp)
-  (* Some(x,id) *)
+                   (* Some(x,id) *)
   let string_of (sv,sv_opt) =
     let pr = string_of_spec_var in
     let pr_e = !print_exp in
@@ -8284,7 +8304,7 @@ let normalise_eq_debug (aset : var_aset) : EMapSV.emap =
 (* check if an eq_map has a contradiction - to implement *)
 (* call normalised_eq and check if equal to 1=0 *)
 (* @return: bool - flag that tells if there is a conflict in the eq
-   var_aset - normalized eq *)
+   			var_aset - normalized eq *)
 let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset =
   let (ax, _, conflict) = normalise_eq_aux aset in (conflict, ax)
 
@@ -9681,7 +9701,7 @@ let filter_constraint_type (ante: formula) (conseq: formula) : (formula) =
 
 
 let filter_ante (ante : formula) (conseq : formula) : (formula) =
-  let fvar = fv conseq in
+  let fvar = fv ~vartype:Vartypes.var_with_rel conseq in
   let ante = filter_var ante fvar in
   let new_ante = if (!Globals.enable_constraint_based_filtering) then filter_constraint_type ante conseq else ante in
   new_ante
@@ -9692,6 +9712,7 @@ let filter_ante (ante: formula) (conseq: formula) : (formula) =
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
   let fvar = fv conseq in
+  (* below redundant with  Vartypes.var_with_rel *)
   let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
   let new_ante = filter_var ante fvar in
   new_ante

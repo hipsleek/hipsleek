@@ -601,16 +601,13 @@ void write_char(char_star x, int v)
   requires x::char_star<_,q> & Term[]
   ensures x::char_star<v,q>;
   
-/*  
 char_star alloc_str (int n)
   requires Term
   case {
     n < 0 -> ensures res = null;
     n >= 0 -> ensures res::WFSegN<p, n>; // * p::MEM<>; 
   }
-
-
+  
 void finalize_str (char_star s, int n)
   requires s::WFSegN<p, m> & 0 <= n & n < m & Term
   ensures s::WSSN<q, n+1>;
-*/

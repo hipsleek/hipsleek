@@ -1,0 +1,30 @@
+/*
+data arrI {
+  int val;
+}.
+
+pred arr_seg<i,n> == i=n & i>=0
+  or xxx::arrI<_>*self::arr_seg<i+1,n> & xxx=self+i & i>=0
+  inv BG([(xxx,d)], xxx=self+i & n>=i & d=n-i & i>=0).
+*/
+//relation Univ(int m).
+
+checkentail mc=b & a<mc<=b & Univ(mc) |- mc<=b.
+print residue.
+
+checkentail 1<mc<=10 & mc<10 & Univ(mc) |- mc<=10 & mc=8.
+print residue.
+
+checkentail 1<mc<=10 & mc<10 & Univ(mc) |- mc<=10 & mc=9.
+print residue.
+
+
+checkentail 1<mc<=10 & mc<10 & Univ(mc) |- mc<=10 & mc=10.
+print residue.
+
+checkentail 1<mc<=10 & mc<10 & Univ(mc) |- mc<=10 & mc=1.
+print residue.
+
+
+checkentail 1<mc<=10 & mc<10 & Univ(mc) |- mc<=10 & mc=0.
+print residue.

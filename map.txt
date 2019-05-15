@@ -1,0 +1,25 @@
+# this filemap is used to exclude specific files
+exclude b-hip.d
+exclude b-sleek.d
+exclude _build
+exclude __build
+exclude g-hip.d
+exclude g-sleek.d
+exclude b-hip
+exclude b-sleek
+exclude _build
+exclude __build
+exclude g-hip
+exclude g-sleek
+exclude "b-hip.d"
+exclude "b-sleek.d"
+exclude "_build"
+exclude "__build"
+exclude "g-hip.d"
+exclude "g-sleek.d"
+exclude "b-hip"
+exclude "b-sleek"
+exclude "g-hip"
+exclude "g-sleek"
+exclude "map.txt"
+exclude map.txt

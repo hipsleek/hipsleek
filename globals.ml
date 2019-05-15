@@ -571,6 +571,7 @@ let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
 (*sleek logging*)
 let sleek_logging_txt = ref false
+let sleek_log_all = ref false
 let dump_proof = ref false
 let dump_sleek_proof = ref false
 let sleek_gen_vc = ref false
@@ -1474,7 +1475,7 @@ let trace_all = ref false
 let print_mvars = ref false
 
 let print_type = ref false
-let print_extra = ref false
+let print_extra = ref true (* set true by default *)
 
 let enforce_type_error = ref true (* strictly enforce type error *)
 
@@ -1586,6 +1587,7 @@ let return_must_on_pure_failure = ref false
 let smt_is_must_failure = ref (None: bool option)
 let is_solver_local = ref false (* only --smt-compete:  is_solver_local = true *)
 
+let force_print_residue = ref false
 
 (* for Termination *)
 let dis_term_chk = ref false

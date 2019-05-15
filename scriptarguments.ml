@@ -943,6 +943,11 @@ let common_arguments = [
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true
      ), "Shorthand for --en-slk-logging");
+  ("--esl-all", Arg.Unit (fun _ ->
+       Globals.proof_logging_txt:=true;
+       Globals.sleek_logging_txt:=true;
+       Globals.sleek_log_all := true
+     ), "Shorthand for --en-slk-logging");
   ("--dump-slk-proof", Arg.Unit (fun _ ->
        Globals.proof_logging_txt:=true;
        Globals.sleek_logging_txt:=true;
@@ -1360,7 +1365,8 @@ let common_arguments = [
         Globals.dis_impl_var := true),
    "SMT competition mode - essential printing only + show unexpected ents + sat + seg_fold");
   ("--gen-smt",Arg.Set Globals.gen_smt,"generate smt from slk");
-  ("-ifa",Arg.Set Globals.ifa,"perform information flow analysis")
+  ("-ifa",Arg.Set Globals.ifa,"perform information flow analysis");
+  ("--force-print-residue", Arg.Set Globals.force_print_residue, "Always print resiude")
 ]
 
 let gcc_args = ref "-I ../ -I /usr/lib/x86_64-linux-gnu/glib-2.0/include/"

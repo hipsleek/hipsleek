@@ -1,0 +1,19 @@
+//checkentail 1<V<3 & Univ(V) |- V=3.
+//print residue.
+
+// ex V:
+//   true |-  1<V<3
+//   true & 1<V<3 & Univ(V) |- V=3
+
+checkentail 1<V<4 & Univ(V) |- V<=2.
+print residue.
+
+
+checkentail 1<V<=K & Univ(V) //& K<=3 
+     |- //V=2 & 
+        V<K.
+print residue.
+
+
+//checkentail 1<V<4 |- V<=2.
+//print residue.

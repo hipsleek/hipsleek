@@ -1,0 +1,24 @@
+//checkentail 1<V<3 & Univ(V) |- V=3.
+//print residue.
+
+// ex V:
+//   true |-  1<V<3
+//   true & 1<V<3 & Univ(V) |- V=3
+
+//checkentail 1<V<4 & Univ(V) |- V<=2.
+//print residue.
+
+
+checkentail n=a+b & Univ(a) & Univ(b) & n>=0 & 
+   a>=0 & b>=0 & n>4|- a=3 .
+expect Valid.
+print residue.
+
+checkentail n=a+b & Univ(a) & Univ(b) & n>=0 & 
+   a>=0 & b>=0 |- a=3 .
+expect Fail.
+print residue.
+
+
+//checkentail 1<V<4 |- V<=2.
+//print residue.
