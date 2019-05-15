@@ -1527,6 +1527,7 @@ and all_vars_helper ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var l
   | Forall (qid, qf, _,_)
   | Exists (qid, qf, _,_) -> qid::(all_vars_helper ~vartype qf)
   | AndList l -> fold_l_snd (all_vars_helper ~vartype) l
+  | SecurityForm (_, f, _) -> all_vars_helper ~vartype f
 
 and all_vars ?(vartype=Vartypes.var_with_none) (f : formula) : spec_var list =
   let tmp = all_vars_helper ~vartype f in

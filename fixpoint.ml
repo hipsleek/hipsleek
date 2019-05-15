@@ -622,7 +622,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
     pre_vars proc_spec grp_post_rel_flag =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
-  let () = Debug.binfo_pprint ("inside update_with_td") no_pos in
+  let () = x_tinfo_pp ("inside update_with_td") no_pos in
   match bottom_up_fp, pre_rel_fmls with
   | [], [pre_rel] ->
     pre_rel_fixpoint pre_rel (*formula of pre_rel_var*) pre_fmls pre_invs fp_func reloblgs pre_vars proc_spec pre_rel_df
@@ -663,7 +663,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         let pre = x_add_1 TP.simplify pre in
         let pre = filter_disj pre pre_fmls in
         let pre = TP.pairwisecheck_raw pre in
-        let () = x_binfo_hp (add_str "update_with_td_fp pre" !CP.print_formula) pre no_pos in
+        let () = x_tinfo_hp (add_str "update_with_td_fp pre" !CP.print_formula) pre no_pos in
         List.map (fun (rel,post) -> (rel,post,pre_rel,pre)) rel_posts
       else
         let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df_new in
@@ -672,7 +672,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
             pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls pre_rel_vars pre_rel_df
   | [(rel,post)],[] ->
     let rels_in_pred = List.filter CP.is_rel_var pre_vars in
-    let () = x_binfo_hp (add_str "rels_in_pred" !print_svl) rels_in_pred no_pos in
+    let () = x_tinfo_hp (add_str "rels_in_pred" !print_svl) rels_in_pred no_pos in
     let post_rel_df = List.filter (fun (f1,_) -> CP.intersect (CP.fv f1) rels_in_pred<>[]) post_rel_df in
     (*    let () = x_tinfo_hp (add_str "pre_rel_df(b4 deep split)" (pr_list (pr_pair pr pr))) post_rel_df no_pos in*)
     (*    let new_pre_rel_df = List.concat (List.map (fun (f1,f2) -> deep_split f1 f2) post_rel_df) in*)
@@ -704,9 +704,9 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls pre_invs fp_func
         (*        [(CP.mkFalse no_pos,List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]*)
         (*      else lst*)
       ) new_pre_rel_df) in
-    let () = x_binfo_hp (add_str "rel_ass" (pr_list (pr_pair pr pr))) rel_ass no_pos in
+    let () = x_tinfo_hp (add_str "rel_ass" (pr_list (pr_pair pr pr))) rel_ass no_pos in
     let pairs = preprocess_fun rel_ass in
-    let () = x_binfo_hp (add_str "pairs" (pr_list (pr_pair pr (pr_list pr)))) pairs no_pos in
+    let () = x_tinfo_hp (add_str "pairs" (pr_list (pr_pair pr (pr_list pr)))) pairs no_pos in
     (match pairs with
      | [] -> [(rel,post,constTrue,constTrue)]
      | [(r,lst)] ->

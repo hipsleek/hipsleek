@@ -218,12 +218,12 @@ let rev_translate_sec_from_infer f =
   let disjunctions_of_conjunctions = norm_disj_sec_form f in *)
   let disjunctions = Cpure.split_disjunctions f in
   let disjunctions_of_conjunctions = List.map Cpure.split_conjunctions disjunctions in
-  y_binfo_hp (add_str "disjunctions_of_conjunctions: " (pr_list (pr_list !Cpure.print_formula))) disjunctions_of_conjunctions;
+  y_tinfo_hp (add_str "disjunctions_of_conjunctions: " (pr_list (pr_list !Cpure.print_formula))) disjunctions_of_conjunctions;
   let res =
     List.map (List.partition is_translated_sec_formula) disjunctions_of_conjunctions
     |> fold_right
         (fun (sec_formulas, other_formulas) acc ->
-          y_binfo_hp (add_str "sec forms: " (pr_list !Cpure.print_formula)) sec_formulas;
+          y_tinfo_hp (add_str "sec forms: " (pr_list !Cpure.print_formula)) sec_formulas;
           if List.for_all is_valid_translated_sec_formula sec_formulas then
             let p_formulas =
               List.map
@@ -240,5 +240,5 @@ let rev_translate_sec_from_infer f =
     |> List.map Cpure.join_conjunctions
     |> filter_not Cpure.isConstTrue
     |> Cpure.join_disjunctions in
-  let () = y_binfo_hp (add_str "reverse translated" !Cpure.print_formula) res in
+  let () = y_tinfo_hp (add_str "reverse translated" !Cpure.print_formula) res in
   res

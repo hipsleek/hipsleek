@@ -178,9 +178,9 @@ let make_sec_lattice_representation lattice =
       )
       lattice
       [] in
-  let () = y_binfo_hp (Gen.add_str "reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) rp in
+  let () = y_tinfo_hp (Gen.add_str "reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) rp in
   let normalised_rp, rep_length = normalise_lattice_representations lattice rp in
-  let () = y_binfo_hp (Gen.add_str "normalised reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) normalised_rp in
+  let () = y_tinfo_hp (Gen.add_str "normalised reps" (Gen.pr_list (Gen.pr_pair Label.to_string (Gen.pr_list string_of_int)))) normalised_rp in
   let rp_map, rev_rp_map =
     List.fold_left
       (fun (map, reverse_map) (label, rep) ->

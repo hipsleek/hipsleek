@@ -1740,11 +1740,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es;
                                                       CF.es_security_context = rename_sctx})) in
-                  let () = print_endline ("c1.CF.es_formula: " ^ (Cprinter.string_of_formula c1.CF.es_formula)) in
-                  let () = print_endline ("compose_es: " ^ (Cprinter.string_of_formula compose_es)) in
+                  let () = y_tinfo_hp (add_str "c1.CF.es_formula: " Cprinter.string_of_formula) c1.CF.es_formula in
+                  let () = y_tinfo_hp (add_str "compose_es: " Cprinter.string_of_formula) compose_es in
                   (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
                   (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
-                  print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx));
+                  y_tinfo_hp (add_str "ASSIGN CTX: " Cprinter.string_of_context) compose_ctx;
                   compose_ctx
 
                 (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)

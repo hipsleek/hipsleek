@@ -928,8 +928,8 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
           (* let () = print_endline ("sv_list: " ^ (!Cpure.print_svl sv_list)) in *)
           let vstr = omega_of_var_list (List.map omega_of_spec_var sv_list) in
           let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-          x_binfo_hp (add_str "(simplify) input f" !print_formula) pe no_pos;
-          x_binfo_hp (add_str "(simplify) fomega" pr_id) fomega no_pos;
+          x_tinfo_hp (add_str "(simplify) input f" !print_formula) pe no_pos;
+          x_tinfo_hp (add_str "(simplify) fomega" pr_id) fomega no_pos;
           (*test*)
           (*print_endline (Gen.break_lines fomega);*)
           (* for simplify/hull/pairwise *)
@@ -952,7 +952,7 @@ let simplify_ops_x pr_weak pr_strong (pe : formula) : formula =
                 let () = is_complex_form := false in
                 (* let () = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
                 let r = Cpure.subst ss2 (match_vars sv_list rel) in
-                let () = y_binfo_hp (add_str "simplified f" !Cpure.print_formula) r in
+                let () = y_tinfo_hp (add_str "simplified f" !Cpure.print_formula) r in
                 (* trans_bool *) r
               end
             with
@@ -1176,7 +1176,7 @@ let pairwisecheck (pe : formula) : formula =
             (* "gist (pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")}) given {[" ^ vstr ^ "] : (" ^ inv_bounds_str ^ ")};" ^ Gen.new_line_str *)
           else
             "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-        let () = y_binfo_pp ("pairwise check fomega: " ^ fomega) in
+        let () = y_tinfo_pp ("pairwise check fomega: " ^ fomega) in
         let () = set_proof_string ("PAIRWISE:"^fomega) in
         (*test*)
         (*print_endline (Gen.break_lines fomega);*)
@@ -1187,7 +1187,7 @@ let pairwisecheck (pe : formula) : formula =
         end;
         let rel = send_and_receive fomega !in_timeout (* 0. *) in
       let r = match_vars (fv pe) rel in
-      let () = y_binfo_hp (add_str "after pairwise check: " !Cpure.print_formula) r in
+      let () = y_tinfo_hp (add_str "after pairwise check: " !Cpure.print_formula) r in
       let r = Trans_sec.rev_translate_sec_from_infer r in
       (* trans_bool *) r
       with
