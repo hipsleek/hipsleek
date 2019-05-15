@@ -842,9 +842,9 @@ let solve_entailments prog entails =
   let () = x_tinfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
+    let () = x_tinfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
     let hps = translate_back_vdefns prog vdefns in
-    let () = x_binfo_hp (add_str "hps" pr_hps) hps no_pos in
+    let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
     Some hps
   else None
 
@@ -1030,12 +1030,12 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     let valid_ents = pairs |> List.filter is_valid |> List.map fst in
     let () = if invalid_ents != [] then
         List.iter (fun ent ->
-          let _ = x_binfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+          let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
           (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
           ()) invalid_ents in
     let () = if unkn_ents != [] then
         List.iter (fun ent ->
-          let _ = x_binfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+          let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
           (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
           ()) unkn_ents in
     let () = if !songbird_export_invalid_entails then
