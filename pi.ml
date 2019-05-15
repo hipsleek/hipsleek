@@ -881,6 +881,14 @@ let infer_pure (prog : prog_decl) (scc : proc_decl list) =
               ) res in
             let res = List.map (fun (rel_post,post,rel_pre,pre) ->
                 (rel_post,(Immutable.postprocess_post rel_post post pre_vars),rel_pre,(Immutable.postprocess_pre rel_pre pre))) res in
+            let res =
+              List.map (fun (rel_post, post, rel_pre, pre) ->
+                (Trans_sec.rev_translate_sec_from_infer rel_post,
+                Trans_sec.rev_translate_sec_from_infer post,
+                Trans_sec.rev_translate_sec_from_infer rel_pre,
+                Trans_sec.rev_translate_sec_from_infer pre
+                )
+              ) res in
             res
           in
 
