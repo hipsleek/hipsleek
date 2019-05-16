@@ -68,7 +68,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   let pr_proc = Iprinter.string_of_proc_decl in
   let pr_procs = pr_list pr_proc in
   let n_iproc, args = mk_candidate_iproc iproc args candidate in
-  let () = x_tinfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
+  let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
   let rec helper args = match args with
     | [] -> ""         | [(typ, name)] -> (string_of_typ typ) ^ " " ^ name
@@ -116,7 +116,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl) =
     let _ = Synthesizer.synthesize_entailments iprog prog proc in
     !Synthesis.repair_res
   with _ ->
-    let () = x_binfo_pp "start synthesis process" no_pos in
+    let () = x_binfo_pp "error in other branch -> still start synthesis" no_pos in
     let iprog = !Syn.syn_iprog |> Gen.unsome in
     let prog = !Syn.syn_cprog |> Gen.unsome in
     let proc = C.find_proc prog proc_name in
