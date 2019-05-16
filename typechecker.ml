@@ -3486,17 +3486,17 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
   let () =  Debug.tinfo_hprint (add_str "in check_proc proc0"
                                   (Cprinter.string_of_struc_formula_for_spec_inst prog))
       (proc0.Cast.proc_stk_of_static_specs # top) no_pos in
-  let proc = find_proc prog proc0.proc_name
-  in
+  let proc = find_proc prog proc0.proc_name in
+  let () = Synt.syn_iprog := Some iprog in
+  let () = Synt.syn_cprog := Some prog in
   let () = x_tinfo_hp (add_str "in check_proc proc"
                          (Cprinter.string_of_struc_formula_for_spec_inst prog))
       (proc.Cast.proc_stk_of_static_specs # top) no_pos in
-  let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
-                   && not (List.mem unmin_name !Inliner.inlined_procs)
-  in
+  let check_flag = ((Gen.is_empty !procs_verified)
+                    || List.mem unmin_name !procs_verified)
+                   && not (List.mem unmin_name !Inliner.inlined_procs) in
   let () = if !Globals.enable_repair then
-      Globals.verified_procs := (!Globals.verified_procs) @ ["fcode"]
-  in
+      Globals.verified_procs := (!Globals.verified_procs) @ ["fcode"] in
   if List.mem proc0.proc_name (!Globals.verified_procs) then true
   else if check_flag then
     begin
@@ -3695,10 +3695,10 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           let () = match exc with
             | Some e -> raise e
             | None -> () in
-          let () = if !enable_repair && !start_repair then
-              let () = x_binfo_pp "start synthesis process" no_pos in
-              Synthesizer.synthesize_entailments iprog prog proc
-            else () in
+          (* let () = if !enable_repair && !start_repair then
+           *     let () = x_binfo_pp "start synthesis process" no_pos in
+           *     Synthesizer.synthesize_entailments iprog prog proc
+           *   else () in *)
           if pr_flag then
             begin
               if pp then

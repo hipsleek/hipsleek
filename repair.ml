@@ -96,7 +96,7 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   {iprog with prog_hp_decls = n_hps;
               prog_proc_decls = n_procs}
 
-let repair_one_candidate (iprog: I.prog_decl) =
+let repair_one_candidate (proc_name: string) (iprog: I.prog_decl) =
   let () = x_tinfo_pp "marking" no_pos in
   let () = Syn.entailments := [] in
   let () = Syn.rel_num := 0 in
@@ -106,9 +106,22 @@ let repair_one_candidate (iprog: I.prog_decl) =
   let cprog, _ = Astsimp.trans_prog iprog in
   let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
   try
+    (* to collect all constraints *)
     let () = Typechecker.check_prog_wrapper iprog cprog in
+    (* to solve constraints -> synthesis -> repair result *)
+    let () = x_binfo_pp "start synthesis process" no_pos in
+    let iprog = !Syn.syn_iprog |> Gen.unsome in
+    let prog = !Syn.syn_cprog |> Gen.unsome in
+    let proc = C.find_proc prog proc_name in
+    let _ = Synthesizer.synthesize_entailments iprog prog proc in
     !Synthesis.repair_res
-  with _ -> None
+  with _ ->
+    let () = x_binfo_pp "start synthesis process" no_pos in
+    let iprog = !Syn.syn_iprog |> Gen.unsome in
+    let prog = !Syn.syn_cprog |> Gen.unsome in
+    let proc = C.find_proc prog proc_name in
+    let _ = Synthesizer.synthesize_entailments iprog prog proc in
+    !Synthesis.repair_res
 
 let repair_iprog (iprog:I.prog_decl) =
   let start_time = get_time () in
@@ -127,7 +140,7 @@ let repair_iprog (iprog:I.prog_decl) =
     let args = cproc.C.proc_args in
     let helper cand =
       let n_iprog = mk_candidate_iprog iprog r_iproc args cand in
-      repair_one_candidate n_iprog in
+      repair_one_candidate repair_proc n_iprog in
     let res = cands |> List.map helper |> List.filter (fun x -> x != None) in
     if res = [] then
       let () = x_binfo_pp "REPAIRING FAILED\n" no_pos in None

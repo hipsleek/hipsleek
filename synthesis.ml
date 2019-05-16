@@ -35,6 +35,8 @@ let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
+let syn_iprog = ref (None: I.prog_decl option)
+let syn_cprog = ref (None: C.prog_decl option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 
@@ -770,7 +772,7 @@ let get_pre_cond (struc_f: CF.struc_formula) = match struc_f with
   | CF.EBase bf ->
     let pre_cond = bf.CF.formula_struc_base in
     pre_cond
-  | _ -> report_error no_pos "Synthesis.get_pre_post unhandled cases"
+  | _ -> report_error no_pos "Synthesis.get_pre_cond unhandled cases"
 
 let get_post_cond (struc_f: CF.struc_formula) =
   let rec helper sf = match sf with
@@ -783,8 +785,7 @@ let get_post_cond (struc_f: CF.struc_formula) =
       else f
     | EAssume assume_f ->
       assume_f.formula_assume_struc |> helper
-    | _ -> report_error no_pos "Synthesis.get_pre_post.helper unhandled cases"
-  in
+    | _ -> report_error no_pos "Synthesis.get_post_cond.helper unhandled cases" in
   match struc_f with
   | CF.EBase bf ->
     bf.formula_struc_continuation |> Gen.unsome |> helper

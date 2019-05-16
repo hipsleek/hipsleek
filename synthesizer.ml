@@ -865,7 +865,7 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
                             then n_proc else x) i_procs in
   ({iprog with I.prog_proc_decls = n_iprocs}, res)
 
-let synthesize_entailments iprog prog proc =
+let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
   let hps = SB.solve_entailments prog entailments in
   match hps with
