@@ -387,7 +387,7 @@ and pr_st_status st_status = match st_status with
 
 and pr_st_core st =
   let sub_trees = st.stc_subtrees in
-  (pr_rule st.stc_rule) ^
+  (pr_rule st.stc_rule) ^ "\n" ^
   ((pr_list pr_st_core) sub_trees)
 
 let pr_rules = pr_list_ln pr_rule
