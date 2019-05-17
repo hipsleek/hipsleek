@@ -721,6 +721,8 @@ let process_source_full source =
   then print_string (Cprinter.string_of_program cprog)
   else (try
           Typechecker.check_prog_wrapper intermediate_prog cprog;
+          if (!enable_repair_template) then
+            Repair.repair_heap_template();
         with _ as e ->
           begin
             if (!Globals.enable_repair) then

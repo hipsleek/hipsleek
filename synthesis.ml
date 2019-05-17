@@ -37,6 +37,7 @@ let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let syn_iprog = ref (None: I.prog_decl option)
 let syn_cprog = ref (None: C.prog_decl option)
+let tmpl_proc_name = ref (None: string option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
 

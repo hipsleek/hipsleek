@@ -95,6 +95,16 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
   {iprog with prog_hp_decls = n_hps;
               prog_proc_decls = n_procs}
 
+let repair_heap_template () =
+  let () = x_binfo_pp "start synthesis process in template" no_pos in
+  let iprog = !Syn.syn_iprog |> Gen.unsome in
+  let prog = !Syn.syn_cprog |> Gen.unsome in
+  let proc_name = !Syn.tmpl_proc_name |> Gen.unsome in
+  let proc = C.find_proc prog proc_name in
+  let _ = Synthesizer.synthesize_entailments iprog prog proc in
+  let res = !Synthesis.repair_res in
+  ()
+
 let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     (r_iproc: I.proc_decl) args candidate =
   if !Syn.repair_res != None then None

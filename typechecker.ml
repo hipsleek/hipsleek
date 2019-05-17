@@ -2336,6 +2336,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
         exp_scall_pos = pos}) ->
       begin
         Gen.Profiling.push_time "[check_exp] SCall";
+        let () = if Cast.unmingle_name mn = "fcode" then
+            Synt.tmpl_proc_name := Some proc.Cast.proc_name;
+            Synt.repair_pos := Some pos; in
         let () = x_tinfo_hp (add_str "scall name" pr_id) mn no_pos in
         let () = proving_loc#set pos in
         let mn_str = Cast.unmingle_name mn in

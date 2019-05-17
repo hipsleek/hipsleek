@@ -795,7 +795,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
+  let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore
@@ -890,3 +890,5 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
       if res then repair_res := Some n_iprog else ()
     else ()
+
+(* how to specify proc_name in the template??? *)
