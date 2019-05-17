@@ -365,8 +365,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre
                                              new_c2 pre) else new_c2 in
             ((c1,new_c2),(rel,f),((hprel, sel_hps),(sel_post_hps,unk_map))))
-          b.CF.formula_case_branches
-      in
+          b.CF.formula_case_branches in
       let (cbl,fl,hprel_ls) = split3 r in
       let (rel_ls,fl) = List.split fl in
       let rel = List.concat rel_ls in
@@ -1795,13 +1794,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
           check_var_read_perm ~msg:"(inside bind)" prog ctx pos v v_t;
           let ctx =
             if !ann_vp then
-              let vperm_fields = CVP.vperm_sets_of_anns [(
-                  VP_Full,
-                  List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)]
-              in
+              let vperm_fields =
+                CVP.vperm_sets_of_anns [(VP_Full,
+                  List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) lvars)] in
               VP.add_vperm_sets_list_failesc_ctx vperm_fields ctx
-            else ctx
-          in
+            else ctx in
           let () = proving_loc#set pos in
           let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
           let field_types, vs = List.split lvars in
@@ -1833,8 +1830,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                (fun es -> CF.Ctx{es with CF.es_formula = Norm.imm_norm_formula
                                              prog es.CF.es_formula
                                              Solver.unfold_for_abs_merge pos;}))
-              unfolded
-          in
+              unfolded in
           let c = string_of_typ v_t in
           let fresh_perm_exp,perm_vars =
             (match !Globals.perm with
@@ -1850,8 +1846,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                let fresh_perm_name = x_add_1 Cpure.fresh_old_name "f" in
                let perm_t = cperm_typ () in
                let perm_var = Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
-               Cpure.Var (perm_var,no_pos),[perm_var])
-          in
+               Cpure.Var (perm_var,no_pos),[perm_var]) in
           let bind_ptr = if !Globals.large_bind then p else v_prim in
           let vdatanode = CF.DataNode ({
               CF.h_formula_data_node = bind_ptr;
@@ -1873,8 +1868,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
               CF.h_formula_data_pos = pos}) in
           let vheap = CF.formula_of_heap vdatanode pos in
           let vheap =
-            if Globals.infer_const_obj # is_ana_ni then CF.mk_bind_ptr_f bind_ptr else vheap in
-
+            if Globals.infer_const_obj # is_ana_ni
+            then CF.mk_bind_ptr_f bind_ptr else vheap in
           let () = x_tinfo_hp (add_str "bind_ptr" (!CP.print_sv)) bind_ptr pos in
           let () = x_tinfo_hp (add_str "vs_prim" (!CP.print_svl)) vs_prim pos in
           let () = x_tinfo_hp (add_str "vheap(0)" (Cprinter.string_of_formula)) vheap pos in
@@ -1893,8 +1888,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                                        write_f) CVP.empty_vperm_sets CF.TypeTrue
                   (CF.mkTrueFlow ()) [] pos
             else
-              vheap
-          in
+              vheap in
           let () = x_tinfo_hp (add_str "vheap 2" Cprinter.string_of_formula) vheap no_pos in
           let vheap = x_add_1 Immutable.normalize_field_ann_formula vheap in
           let vheap = x_add Cvutil.prune_preds prog false vheap in

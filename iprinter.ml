@@ -1189,18 +1189,19 @@ let rec string_of_exp = function
   | Bind ({exp_bind_bound_var = v;
     exp_bind_fields = vs;
     exp_bind_path_id = pid;
-    exp_bind_body = e})->
-        string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in\n" ^ (string_of_exp e))
+    exp_bind_body = e}) ->
+    string_of_control_path_id_opt pid
+      ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in\n"
+       ^ (string_of_exp e))
   | Block ({
         exp_block_local_vars = lv;
         exp_block_body = e;
         exp_block_pos = p;
-      })->
+      }) ->
     (match lv with
         | [] -> ""
         | _ ->
-          "local: "^
-               (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+          "local: "^ (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
     ^ (string_of_exp e)
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
@@ -1276,7 +1277,8 @@ let rec string_of_exp = function
     exp_cond_then_arm = e2;
     exp_cond_path_id = pid;
     exp_cond_else_arm = e3}) ->
-        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ "\n}" ^
+    (* string_of_control_path_id_opt pid *)
+    ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ "\n}" ^
             (match e3 with
               | Empty ll -> ""
               | _        -> " else { \n  " ^ (string_of_exp e3) ^ "\n}"))
