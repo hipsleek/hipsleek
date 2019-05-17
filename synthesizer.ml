@@ -845,6 +845,7 @@ let synthesize_program goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
+    let st_core = rm_useless_stc st_core in
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
     let () = x_tinfo_hp (add_str "iast exp" pr_iast_exp_opt) i_exp no_pos in

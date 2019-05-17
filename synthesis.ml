@@ -1255,6 +1255,34 @@ let negate b = not b
  * Rule utilities
  *********************************************************************)
 
+let is_used_after (var:CP.spec_var) st_subtrees =
+  let aux var st_core =
+    let rule = st_core.stc_rule in
+    match rule with
+    | RlReturn rule ->
+      let vars = CP.afv rule.r_exp in
+      CP.mem_svl var vars
+    | RlAssign rule ->
+      let vars = (rule.ra_lhs)::(CP.afv rule.ra_rhs) in
+      CP.mem_svl var vars
+    | RlBranch rule ->
+      let vars = (CP.fv (rule.rb_cond)) @ (CF.fv rule.rb_if_pre)
+                 @ (CF.fv rule.rb_else_pre) in
+      CP.mem_svl var vars
+    | RlFWrite rule ->
+      let vars = rule.rfw_bound_var::[rule.rfw_value] in
+      CP.mem_svl var vars
+    | _ -> false in
+  List.exists (fun x -> aux var x) st_subtrees
+
+let rec rm_useless_stc (st_core:synthesis_tree_core) =
+  let rule = st_core.stc_rule in
+  match rule with
+  | RlFRead r -> if is_used_after r.rfr_value st_core.stc_subtrees then
+      {st_core with stc_subtrees = List.map rm_useless_stc st_core.stc_subtrees}
+    else st_core.stc_subtrees |> List.hd |> rm_useless_stc
+  | _ -> {st_core with stc_subtrees = List.map rm_useless_stc st_core.stc_subtrees}
+
 let rec is_fwrite_called trace rcore : bool  =
   match trace with
   | [] -> false
