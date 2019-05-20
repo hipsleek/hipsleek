@@ -790,7 +790,7 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
-      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 

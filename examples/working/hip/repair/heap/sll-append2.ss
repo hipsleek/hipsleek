@@ -1,4 +1,3 @@
-// error in the condition
 data node {
   int val;
 	node next;
