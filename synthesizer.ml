@@ -24,6 +24,14 @@ let raise_stree st = raise (EStree st)
  * Choosing rules
  *********************************************************************)
 
+let check_entail_sleek prog ante conseq =
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let list_ctx, _ = Solver.heap_entail_after_sat_struc 1 prog false false ctx conseq None None
+      None no_pos None [] in
+  if CF.isFailCtx list_ctx then false, None
+  else true, None
+
 let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
   | CP.BForm (b, _) ->
@@ -795,6 +803,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
@@ -845,7 +854,7 @@ let synthesize_program goal =
   let st_status = get_synthesis_tree_status st in
   match st_status with
   | StValid st_core ->
-    let st_core = rm_useless_stc st_core in
+    (* let st_core = rm_useless_stc st_core in *)
     let () = x_binfo_hp (add_str "tree_core " pr_st_core) st_core no_pos in
     let i_exp = synthesize_st_core st_core in
     let () = x_tinfo_hp (add_str "iast exp" pr_iast_exp_opt) i_exp no_pos in
@@ -870,7 +879,10 @@ let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
 
 let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
+  let start_time = get_time () in
   let hps = SB.solve_entailments prog entailments in
+  let solve_time = get_time() -. start_time in
+  let () = x_binfo_hp (add_str "solving constraint time" string_of_float) solve_time no_pos in
   match hps with
   | None -> ()
   | Some hps ->
@@ -884,11 +896,11 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     if (* !syn_pre != None && *) hps != [] then
       let post_hp = List.find (fun x -> x.Cast.hp_name = "Q") hps in
-      (* let pre_hp = List.find (fun x -> x.Cast.hp_name = "P") hps in *)
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
       let post = post_hp.Cast.hp_formula |> unprime_formula in
-      (* let pre = pre_hp.Cast.hp_formula |> unprime_formula in *)
       let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
+      let () = x_tinfo_hp (add_str "vars" pr_vars) syn_vars no_pos in
+      let () = x_tinfo_hp (add_str "buggy pos" string_of_loc) (Gen.unsome !repair_pos) no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
       if res then repair_res := Some n_iprog else ()
     else ()

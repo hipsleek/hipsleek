@@ -124,15 +124,16 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let iprog = !Syn.syn_iprog |> Gen.unsome in
       let prog = !Syn.syn_cprog |> Gen.unsome in
       let proc = C.find_proc prog proc_name in
+      let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in
       let _ = Synthesizer.synthesize_entailments iprog prog proc in
       !Synthesis.repair_res
-    with _ ->
-      let () = x_binfo_pp "start synthesis multiple bugs" no_pos in
-      let iprog = !Syn.syn_iprog |> Gen.unsome in
-      let prog = !Syn.syn_cprog |> Gen.unsome in
-      let proc = C.find_proc prog proc_name in
-      let _ = Synthesizer.synthesize_entailments iprog prog proc in
-      !Synthesis.repair_res
+    with _ -> None
+      (* let () = x_binfo_pp "start synthesis multiple bugs" no_pos in
+       * let iprog = !Syn.syn_iprog |> Gen.unsome in
+       * let prog = !Syn.syn_cprog |> Gen.unsome in
+       * let proc = C.find_proc prog proc_name in
+       * let _ = Synthesizer.synthesize_entailments iprog prog proc in
+       * !Synthesis.repair_res *)
 
 let repair_iprog (iprog:I.prog_decl) =
   let start_time = get_time () in
@@ -145,8 +146,10 @@ let repair_iprog (iprog:I.prog_decl) =
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) iprog.prog_proc_decls in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let cands = List.filter (filter_cand !repair_loc) cands in
-    let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+    let cands = List.filter (filter_cand !repair_loc) cands |> List.rev in
+    let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
+    let locs = cands |> List.map I.get_exp_pos in
+    let () = x_binfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let args = cproc.C.proc_args in
     let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in

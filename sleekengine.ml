@@ -2677,7 +2677,6 @@ let run_entail_check (iante0 : meta_formula list) (iconseq0 : meta_formula) (ety
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
                                   (CF.mk_failure_may "timeout" Globals.timeout_error, [])) ((CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled  no_pos), "timeout", Failure_May "timeout") (CF.mk_cex false) in
     (false, fctx,[]) in
-  (*let _ = print_endline "run_entail_check_1" in*)
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 
@@ -2914,10 +2913,7 @@ let process_entail_check_x (iante : meta_formula list) (iconseq : meta_formula) 
       let _ = print_exception_result exs (*sel_hps*) num_id in
       let _ = if !VarGen.trace_failure then
           (print_string "caught\n"; print_backtrace_quiet ()) else () in
-      (* (\* let _ = print_string "caught\n"; Printexc.print_backtrace stdout in *\) *)
-      (* let _ = print_string ("\nEntailment Problem "^num_id^(Printexc.to_string ex)^"\n")  in *)
       false
-(* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
 (*   None       -->  forbid residue in RHS when the option --classic is turned on *)

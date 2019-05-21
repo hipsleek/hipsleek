@@ -30,6 +30,7 @@ module Err = Error
 module TP = Tpdispatcher
 module VP = Vperm
 module CVP = CvpermUtils
+module SB = Songbird
 
 exception False_from_explicit_inst of string
 
@@ -2629,17 +2630,15 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
     ((SuccCtx [ctx]), TrueConseq)
   else
     let () = Debug.dinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
-    let result, prf = if !Globals.songbird
-      then Songbird.heap_entail_after_sat_struc prog ctx conseq ~pf:None
+    let result, prf = if !Globals.songbird && (SB.contains_hps prog ctx conseq)
+      then SB.heap_entail_after_sat_struc prog ctx conseq ~pf:None
       else
         let (n_ctx, pf) = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx
             conseq tid delayed_f join_id pos pid [] in
-        let () = if !disproof && CF.isFailCtx n_ctx then
-            let _ = Songbird.heap_entail_after_sat_struc prog ctx conseq ~pf:
-                None in
-            () else () in
-        (n_ctx, pf)
-    in
+        (* let () = if !disproof && CF.isFailCtx n_ctx then
+         *     let _ = Songbird.heap_entail_after_sat_struc prog ctx conseq ~pf:None in
+         *     () else () in *)
+        (n_ctx, pf) in
     let result = subs_crt_holes_list_ctx result in
     let () = Debug.dinfo_hprint (add_str "result 2766: " Cprinter.string_of_list_context) result no_pos in
     (result, prf)
@@ -3873,17 +3872,14 @@ and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool) (ctx : co
     let ctx =
       if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
       else
-      if !Globals.delay_proving_sat
-      then ctx
-      else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true)
-    in
+      if !Globals.delay_proving_sat then ctx
+      else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true) in
     (* WN : this has been checked earlier! *)
     if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
       let () = x_tinfo_pp "heap_entail_after_sat \n" no_pos in
-      let sleek_res = heap_entail_after_sat prog is_folding ctx conseq pos ([])
-      in
+      let sleek_res = heap_entail_after_sat prog is_folding ctx conseq pos ([]) in
       sleek_res
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
@@ -3893,7 +3889,6 @@ and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) 
     (Cprinter.string_of_formula)
     (fun (l,p) -> Cprinter.string_of_list_context l)
     (fun ctx conseq -> heap_entail_after_sat_x prog is_folding ctx conseq pos ss) ctx conseq
-
 
 and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
     (ss:CF.steps) : (list_context * proof) =

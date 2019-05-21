@@ -111,11 +111,11 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
   let () = x_tinfo_hp (add_str "ante(after rem @A)"  Cprinter.string_of_formula) ante no_pos in
   let ante = Norm.imm_abs_norm_formula ante cprog  (Solver.unfold_for_abs_merge cprog no_pos) in
   let conseq = if ((!Globals.remove_abs)  && not((* !Globals.allow_field_ann *) !Globals.imm_merge)) then Cvutil.remove_imm_from_struc_formula cprog conseq (CP.ConstAnn(Accs)) else conseq in
-  let () = x_tinfo_hp (add_str "conseq(after rem @A)" pr) conseq no_pos in 
+  let () = x_tinfo_hp (add_str "conseq(after rem @A)" pr) conseq no_pos in
   (* Immutable.restore_tmp_ann_formula ante in *)
   (* let conseq = Immutable.restore_tmp_ann_struc_formula conseq in *)
   let conseq = Cvutil.prune_pred_struc cprog true conseq in
-  let () = x_tinfo_hp (add_str "conseq(after prune)" pr) conseq no_pos in 
+  let () = x_tinfo_hp (add_str "conseq(after prune)" pr) conseq no_pos in
   (* let () = Debug.info_pprint "Andreea : false introduced by add_param_ann_constraints_struc" no_pos in *)
   (* let () = Debug.info_pprint "=============================================================" no_pos in *)
   let conseq = Astsimp.add_param_ann_constraints_struc conseq in
@@ -173,8 +173,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
                        ^" "^(pr_list !CP.print_sv isvl)
                        ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n")
-    else ()
-  in
+    else () in
   let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in
   let () = Debug.ninfo_hprint (add_str "graph_norm" string_of_bool) !graph_norm no_pos in
   let () = Debug.ninfo_hprint (add_str "seg_opz" string_of_bool) !Frame.seg_opz no_pos in
@@ -275,7 +274,6 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let res =
       if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
       else ((not (CF.isFailCtx rs))) in
-    (* residues := Some (rs, res); *)
     (res, rs,v_hp_rel)
 
 (*
