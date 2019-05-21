@@ -854,6 +854,8 @@ let synthesize_program goal =
     None
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
+  let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
+  let vars = CP.intersect all_vars vars |> CP.remove_dups_svl in
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in

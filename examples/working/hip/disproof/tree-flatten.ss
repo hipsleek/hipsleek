@@ -24,7 +24,7 @@ dll<p, n> == self = null & n = 0
 	inv n >= 0;
 
 node2 append(node2 x, node2 y)
-	requires x::dll<_, m> * y::dll<_, n>
+	requires x::dll<r, m> * y::dll<_, n>
 	ensures res::dll<r, m+n>;
 
 {

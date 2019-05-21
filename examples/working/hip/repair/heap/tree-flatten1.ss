@@ -38,12 +38,14 @@ void flatten(node2 x)
 {
 	if (x != null)
 	{
-    node2 tmp;
-		flatten(x.left);
+    flatten(x.left);
 		flatten(x.right);
+		node2 tmp;
 		tmp = append(x.left, x.right);
 		x.left = null;
-		x.right = tmp.left;
+    dprint;
+		x.right = tmp;
+    dprint;
 		if (tmp != null) tmp.left = x;
 	}
 }
