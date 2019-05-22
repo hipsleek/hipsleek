@@ -799,6 +799,7 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
+  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
   let rules = choose_synthesis_rules goal in
   process_all_rules goal rules
 
@@ -819,7 +820,6 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
@@ -926,5 +926,3 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
         with _ -> ()
       else ()
     else ()
-
-(* how to specify proc_name in the template??? *)
