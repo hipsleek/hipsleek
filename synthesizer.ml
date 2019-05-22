@@ -819,7 +819,7 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
-  if List.length goal.gl_trace > 7 then
+  if List.length goal.gl_trace > 6 then
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else

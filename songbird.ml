@@ -986,67 +986,69 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
   let () = x_tinfo_hp (add_str "exists var" pr_svs) evars no_pos in
   let () = x_tinfo_hp (add_str "es" CPR.string_of_entail_state) es no_pos in
   let () = x_tinfo_hp (add_str "conseq" pr_formula) bf.CF.formula_struc_base no_pos in
-  let conseqs, holes = if Gen.is_empty evars
-    then translate_formula bf.CF.formula_struc_base
-    else
-      let sb_f, holes = translate_formula bf.CF.formula_struc_base in
-      let pos = translate_loc bf.CF.formula_struc_pos in
-      let sb_vars = List.map translate_var evars in
-      (List.map (fun x -> SBC.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
-  let holes = List.map CF.disable_imm_h_formula holes in
-  let sb_ante, _ = translate_formula ante in
-  let sb_conseq = List.hd conseqs in
-  let ents = List.map (fun x ->
-      SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
-  let check_fun =
-    (* let interact = !export_songbird_proof in *)
-    let interact = false in
-    SBPH.check_entailment ~interact:interact ~disproof:!disproof n_prog in
-  let ptrees = List.map (fun ent -> check_fun ent) ents in
-  let results = List.map (fun p -> p.SBPA.enr_validity) ptrees in
-  (* let () = export_songbird_entailments_results n_prog ents results in *)
-  let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
-  if List.for_all is_valid ptrees then
-    let () = if !disproof then
-        valid_num := !valid_num + (List.length ents)
-      else () in
-    let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
-    let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
-    let residue = translate_back_fs residues holes in
-    let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
-    (true, Some residue)
+  let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+  let hp_names = List.map (fun x -> x.CA.hp_name) hps in
+  let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
+  let ante_hps = check_hp_formula hp_names ante in
+  if conseq_hps || ante_hps then false, None
   else
-    (* let _ = List.iter2 (fun ent res ->
-     *     if res != SBG.MvlTrue then
-     *       export_songbird_entailments_results ~always:true n_prog [ent] [res]
-     *     else ()) ents results in *)
-    let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
-    let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
-    let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
-    let pairs = List.combine ents ptrees in
-    let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
-    let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
-    let valid_ents = pairs |> List.filter is_valid |> List.map fst in
-    let () = if invalid_ents != [] then
-        List.iter (fun ent ->
-          let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
-          (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
-          ()) invalid_ents in
-    let () = if unkn_ents != [] then
-        List.iter (fun ent ->
-          let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
-          (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
-          ()) unkn_ents in
-    let () = if !songbird_export_invalid_entails then
-        let _ = List.map (output_sb_ent n_prog) invalid_ents in
-        let _ = List.map (output_sb_ent n_prog) unkn_ents in
-        () else () in
-    let () = if !disproof then
-        let () = invalid_num := !invalid_num + (List.length invalid_ents) in
-        let () = unkn_num := !unkn_num + (List.length unkn_ents) in
-        valid_num := !valid_num + (List.length valid_ents)
-      else () in
-    false, None
+    let conseqs, holes = if Gen.is_empty evars
+      then translate_formula bf.CF.formula_struc_base
+      else
+        let sb_f, holes = translate_formula bf.CF.formula_struc_base in
+        let pos = translate_loc bf.CF.formula_struc_pos in
+        let sb_vars = List.map translate_var evars in
+        (List.map (fun x -> SBC.mk_fexists ~pos:pos sb_vars x) sb_f, holes) in
+    let holes = List.map CF.disable_imm_h_formula holes in
+    let sb_ante, _ = translate_formula ante in
+    let sb_conseq = List.hd conseqs in
+    let ents = List.map (fun x ->
+        SBC.mk_entailment ~mode:SBG.PrfEntailResidue x sb_conseq) sb_ante in
+    let check_fun =
+      let interact = false in
+      SBPH.check_entailment ~interact:interact ~disproof:!disproof n_prog in
+    let ptrees = List.map (fun ent -> check_fun ent) ents in
+    let results = List.map (fun p -> p.SBPA.enr_validity) ptrees in
+    (* let () = export_songbird_entailments_results n_prog ents results in *)
+    let is_valid x = x.SBPA.enr_validity = SBG.MvlTrue in
+    if List.for_all is_valid ptrees then
+      let () = if !disproof then
+          valid_num := !valid_num + (List.length ents)
+        else () in
+      let residues = List.map (fun x -> List.hd x.SBPA.enr_residues) ptrees in
+      let () = x_tinfo_hp (add_str "ENTS PROG: " SBC.pr_ents) ents no_pos in
+      let residue = translate_back_fs residues holes in
+      let () = x_tinfo_hp (add_str "RESIDUE" pr_formula) residue no_pos in
+      (true, Some residue)
+    else
+      let is_valid (x, y) = y.SBPA.enr_validity = SBG.MvlTrue in
+      let is_invalid (x, y) = y.SBPA.enr_validity = SBG.MvlFalse in
+      let is_unkn (x, y) = y.SBPA.enr_validity = SBG.MvlUnkn in
+      let pairs = List.combine ents ptrees in
+      let invalid_ents = pairs |> List.filter is_invalid |> List.map fst in
+      let unkn_ents = pairs |> List.filter is_unkn |> List.map fst in
+      let valid_ents = pairs |> List.filter is_valid |> List.map fst in
+      let () = if invalid_ents != [] then
+          List.iter (fun ent ->
+              let _ = x_tinfo_hp (add_str "Invalid Ent: " SBC.pr_ent) ent no_pos in
+              (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
+              ()) invalid_ents in
+      let () = if unkn_ents != [] then
+          List.iter (fun ent ->
+              let _ = x_tinfo_hp (add_str "Unkn Ent: " SBC.pr_ent) ent no_pos in
+              (* let _ = SBPH.check_entailment ~interact:true n_prog ent in *)
+              ()) unkn_ents in
+      let () = if !songbird_export_invalid_entails then
+          let _ = List.map (output_sb_ent n_prog) invalid_ents in
+          let _ = List.map (output_sb_ent n_prog) unkn_ents in
+          () else () in
+      let () = if !disproof then
+          let () = invalid_num := !invalid_num + (List.length invalid_ents) in
+          let () = unkn_num := !unkn_num + (List.length unkn_ents) in
+          valid_num := !valid_num + (List.length valid_ents)
+        else () in
+      false, None
 
 let check_equal prog first second =
   let forward = check_entail_exact prog first second in
