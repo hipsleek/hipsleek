@@ -918,7 +918,13 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
       let () = x_tinfo_hp (add_str "vars" pr_vars) syn_vars no_pos in
       let () = x_tinfo_hp (add_str "buggy pos" string_of_loc) (Gen.unsome !repair_pos) no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
-      if res then repair_res := Some n_iprog else ()
+      if res then
+        try
+          let cprog, _ = Astsimp.trans_prog n_iprog in
+          let () = Typechecker.check_prog_wrapper n_iprog cprog in
+          repair_res := Some n_iprog
+        with _ -> ()
+      else ()
     else ()
 
 (* how to specify proc_name in the template??? *)

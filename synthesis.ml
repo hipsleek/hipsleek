@@ -1148,8 +1148,11 @@ let rec synthesize_st_core st : Iast.exp option=
         exp_call_nrecv_path_id = None;
         exp_call_nrecv_pos = no_pos} in
     let rvar = rcore.rfr_return in
-    let r_var = I.Var { I.exp_var_name = CP.name_of_sv rvar;
-                        I.exp_var_pos = no_pos} in
+    let r_var = I.VarDecl {
+        exp_var_decl_type = CP.type_of_sv rvar;
+        exp_var_decl_decls = [(CP.name_of_sv rvar, None, no_pos)];
+       exp_var_decl_pos = no_pos;
+      } in
     let asgn = mkAssign (mkVar rvar) fcall in
     let seq = mkSeq r_var asgn in aux_subtrees st seq
   | RlBranch rcore ->

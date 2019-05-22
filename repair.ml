@@ -163,6 +163,7 @@ let repair_iprog (iprog:I.prog_decl) =
           !Syn.fail_branch_num no_pos in
       let () = x_binfo_hp (add_str "check_entail" string_of_int)
           !Syn.check_entail_num no_pos in
+      (* to validate the synthesis result *)
       List.hd res
   | _ -> None
 
