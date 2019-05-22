@@ -422,13 +422,7 @@ let output_repaired_iprog src pos repaired_exp =
     let () = x_binfo_pp "\n\n \n" no_pos in
     ()
 
-let repair_prog_with_templ_main iprog cprog =
-  let ents = !Typechecker.repairing_ents in
-  let () = x_binfo_pp "marking \n" no_pos in
-  None
-
 let repair_prog_with_templ iprog cond_op =
-  let () = Typechecker.repairing_ents := [] in
   let () = Typechecker.repair_proc := None in
   let contains s1 s2 = let re = Str.regexp_string s2 in
     try ignore (Str.search_forward re s1 0); true

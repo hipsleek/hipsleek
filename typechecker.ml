@@ -39,7 +39,6 @@ let restore_flags = ref (fun ()->());;
 let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
-let repairing_ents = ref []
 let repair_proc = ref None
 
 let log_spec = ref ""
@@ -52,87 +51,11 @@ let webserver = ref false
 let proc_used_names = ref ([]:ident list)
 
 let reset_repair_ref =
-  let () = repairing_ents := [] in
   let () = repair_proc := None in
   ()
 
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
-
-let get_repair_ents_x rs proc =
-  let pr1 = Cprinter.string_of_list_partial_context in
-  let () = x_tinfo_hp (add_str "rs: " pr1) rs no_pos in
-  let (_, typ) as fail_ctx_hd = List.hd (fst (List.hd rs)) in
-  let rec get_failed_ctx typ = match typ with
-    | CF.Basic_Reason (ctx,_, _) -> [ctx]
-    | CF.Or_Reason (a, b) -> let () = x_tinfo_pp "marking \n" no_pos in
-      (get_failed_ctx a) @ (get_failed_ctx b)
-    | _ -> Err.report_error {
-        Err.error_loc = no_pos;
-        Err.error_text = ("get_repair_ents: unhandled")
-      }
-  in
-  let get_entailment ctx =
-    let lhs = ctx.CF.fc_current_lhs.es_formula in
-    let rhs = ctx.CF.fc_orig_conseq in
-    let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_formula)
-        lhs no_pos in
-    let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_struc_formula)
-        rhs no_pos in
-
-    let pure_rhs = rhs |> CF.struc_to_formula |> CF.get_pure
-                   |> CP.elim_idents in
-    let () = x_tinfo_hp (add_str "rhs: " Cprinter.string_of_pure_formula)
-        pure_rhs no_pos in
-    let pure_lhs = lhs |> CF.get_pure in
-    let () = x_tinfo_hp (add_str "lhs: " Cprinter.string_of_pure_formula)
-        pure_lhs no_pos in
-    let pure_lhs = CP.elim_idents pure_lhs in
-    let filter x =
-      let svs = CP.fv x in
-      let typs = List.map CP.typ_of_sv svs in
-      let () = x_tinfo_hp (add_str "entails: "
-                             (pr_list Globals.string_of_typ)) typs no_pos in
-      try
-        let _ = List.find (fun t -> t != Globals.Int
-                                    && t != Globals.Bool &&
-                                    t != Globals.UNK) typs in
-        false
-      with _ -> true
-    in
-    let pure_lhs = pure_lhs |> CP.list_of_conjs |> List.filter filter
-                   |> CP.join_conjunctions in
-    let pure_rhs = pure_rhs |> CP.list_of_conjs |> List.filter filter
-                   |> CP.join_conjunctions in
-    (pure_lhs, pure_rhs)
-  in
-
-  let failed_ctx = get_failed_ctx typ in
-  let failed_ctx = List.filter
-      (fun x -> String.compare x.CF.fc_message "Success" != 0) failed_ctx in
-
-  let entails =
-    if not(!Globals.start_repair) then
-      failed_ctx |> List.map get_entailment
-    else
-      let get_entailment ctx = ctx.CF.fc_current_ents in
-      failed_ctx |> List.map get_entailment |> List.concat in
-  let () = x_tinfo_hp (add_str "entails: "
-                         (pr_list (pr_pair Cprinter.string_of_pure_formula
-                                     Cprinter.string_of_pure_formula)))
-      entails no_pos in
-  let () = if (!Globals.enable_repair) then
-      let () = repairing_ents := entails in
-      let () = repair_proc := Some (proc.Cast.proc_name) in
-      ()
-  in
-  entails
-
-let get_repair_ents rs proc =
-  let pr1 = Cprinter.string_of_list_partial_context in
-  let pr_pf = Cprinter.string_of_pure_formula in
-  let pr2 = pr_list (pr_pair pr_pf pr_pf) in
-  Debug.no_1 "get_repair_ents" pr1 pr2 (fun _ -> get_repair_ents_x rs proc) rs
 
 let update_iprog_exp_defns iprog cprog_exp_defns =
   let iprog_exp_defns = iprog.Iast.prog_exp_decls in
@@ -2613,9 +2536,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   (*FAILURE explaining*)
                   let to_print = "\nProving precondition in method "
                                  ^ proc.proc_name ^ " Failed88.\n" in
-                  let _ = if !enable_repair then
-                      get_repair_ents (CF.list_failesc_to_partial res) proc
-                    else [] in
                   let _ =
                     if not !Globals.disable_failure_explaining then
                       let s,fk,_= CF.get_failure_list_failesc_context res
@@ -3158,8 +3078,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in
-        let _ = if !enable_repair then get_repair_ents rs proc
-        else [] in
         let failure_str = if List.exists (fun et -> et = Mem 1) ets then
             "memory leak failure" else
             "Post condition cannot be derived" in
