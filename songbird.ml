@@ -923,12 +923,11 @@ let check_entail_exact_x prog ante conseq =
     let res = ptree.SBPA.enr_validity in
     (* let () = export_songbird_entailments_results sb_prog [ent] [res] in *)
     match res with
-    | SBG.MvlTrue -> true, None
-    | _ -> false, None
+    | SBG.MvlTrue -> true
+    | _ -> false
 
 let check_entail_exact prog ante conseq =
-  Debug.no_2 "SB.check_entail_exact" pr_formula pr_formula
-    (fun (x, _) -> string_of_bool x)
+  Debug.no_2 "SB.check_entail_exact" pr_formula pr_formula string_of_bool
     (fun _ _ -> check_entail_exact_x prog ante conseq) ante conseq
 
 let check_entail_residue_x prog ante conseq =
@@ -1050,8 +1049,8 @@ let check_entail_prog_state prog ?(pf=None) (es:CF.entail_state)
     false, None
 
 let check_equal prog first second =
-  let forward, _ = check_entail_exact prog first second in
-  let backward, _ = check_entail_exact prog second first in
+  let forward = check_entail_exact prog first second in
+  let backward = check_entail_exact prog second first in
   forward && backward
 
 let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
@@ -1062,8 +1061,8 @@ let eq_h_formula prog (f1:CF.formula) (f2:CF.formula) =
   let h1, h2 = get_h_formula f1, get_h_formula f2 in
   let n_f1 = CF.mkBase_simp h1 (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   let n_f2 = CF.mkBase_simp h2 (MCP.mix_of_pure (CP.mkTrue no_pos)) in
-  let res1, _ = check_entail_exact prog n_f1 n_f2 in
-  let res2, _ = check_entail_exact prog n_f2 n_f1 in
+  let res1 = check_entail_exact prog n_f1 n_f2 in
+  let res2 = check_entail_exact prog n_f2 n_f1 in
   res1 && res2
 
 let check_sat_x prog (f:CF.formula) =

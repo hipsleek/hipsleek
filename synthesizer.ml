@@ -48,6 +48,26 @@ let check_entail_sleek prog ante conseq =
     (fun (x, _) -> string_of_bool x)
     (fun _ _ -> check_entail_sleek_x prog ante conseq) ante conseq
 
+let check_entail_exact_sleek_x prog ante (conseq:CF.formula) =
+  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
+  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
+  (* let conseq = CF.trans_flow_formula conseq in *)
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let conseq = CF.struc_formula_of_formula conseq no_pos in
+  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
+      (CF.SuccCtx[ctx]) conseq no_pos None in
+  if CF.isFailCtx list_ctx then false
+  else
+    let residue = CF.formula_of_list_context list_ctx in
+    if CF.isEmpFormula residue then true
+    else false
+
+let check_entail_exact_sleek prog ante conseq =
+  Debug.no_2 "check_entail_exact_sleek" pr_formula pr_formula string_of_bool
+    (fun _ _ -> check_entail_exact_sleek_x prog ante conseq) ante conseq
+
 let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
   | CP.BForm (b, _) ->
@@ -347,8 +367,8 @@ let get_cond_exp prog formula base recursive puref vars =
     let n_bf = CF.add_pure_formula_to_formula pf formula in
     let n_pf = CP.mkNot_s pf in
     let n_rc = CF.add_pure_formula_to_formula n_pf formula in
-    let fst,_ = SB.check_entail_exact prog n_bf base in
-    let snd,_ = SB.check_entail_exact prog n_rc recursive in
+    let fst = check_entail_exact_sleek prog n_bf base in
+    let snd = check_entail_exact_sleek prog n_rc recursive in
     fst && snd in
   conjuncs |> List.filter (fun x -> CP.subset (CP.fv x) vars)
   |> List.filter aux
@@ -628,7 +648,7 @@ let choose_main_rules goal =
 let choose_rule_skip goal =
   if is_code_rule goal.gl_trace then
     let prog, pre, post = goal.gl_prog, goal.gl_pre_cond, goal.gl_post_cond in
-    let sk,_ = SB.check_entail_exact prog pre post in
+    let sk = check_entail_exact_sleek prog pre post in
     if sk then let rule = RlSkip in [rule]
     else []
   else []
@@ -668,7 +688,7 @@ let process_rule_return goal rcore =
   let lhs = goal.gl_post_cond |> CF.fv |> List.find CP.is_res_sv in
   let n_pf = CP.mkEqExp (CP.mkVar lhs no_pos) rcore.r_exp no_pos in
   let n_pre = CF.add_pure_formula_to_formula n_pf pre in
-  let ent_check, _ = SB.check_entail_exact goal.gl_prog n_pre post in
+  let ent_check = check_entail_exact_sleek goal.gl_prog n_pre post in
   match ent_check with
   | true -> mk_derivation_success goal (RlReturn rcore)
   | false -> mk_derivation_fail goal (RlReturn rcore)

@@ -16,6 +16,7 @@ ensures res::ll<n> * x::ll<n>;
       node tmp = copy(x.next);
       node k = new node(x.val, tmp);
       return k.next;
+      // return k;
   }
 }
 
@@ -27,3 +28,12 @@ ensures res::ll<n> * x::ll<n>;
 //  (exists f_r_7427,f_r_7428: res::ll<f_r_7427>&
 // Anon_7407=Anon_7407 & n_7411=flted_7_7406 & f_r_7427=flted_7_7406+1 & 
 // f_r_7428=flted_7_7406+1 & flted_7_7406+1=f_r_7428).
+
+// synthesize [node k,node tmp,node x]
+//  tmp::ll<n_7458> * q_7455::ll<n_7458> * x::node<Anon_7454,q_7455> * 
+//  k::node<Anon_7454,tmp>&
+// flted_7_7453+1=n & !(v_bool_14_7433) & x!=null & x=x & n_7458=flted_7_7453 & 
+// 0<=flted_7_7453
+// ~>
+//  (exists f_r_7480,f_r_7481: res::ll<f_r_7480> * x::ll<f_r_7481>&
+// f_r_7480=flted_7_7453+1 & f_r_7481=flted_7_7453+1).
