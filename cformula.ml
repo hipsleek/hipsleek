@@ -1385,7 +1385,7 @@ and formula_and_of_formula (f:formula) : one_formula list =
     Err.report_error { Err.error_loc = no_pos;
                        Err.error_text = "formula_and_of_formula: disjunctive formula"}
 
-and flow_formula_of_formula (f:formula) (*pos*) : flow_formula =
+and flow_formula_of_formula (f:formula) : flow_formula =
   match f with
   | Base b-> b.formula_base_flow
   | Exists b-> b.formula_exists_flow
@@ -18059,8 +18059,7 @@ let trans_flow_formula f =
     let inf = CP.remove_redundant (CP.drop_svl_pure pf fv) in
     let il = List.sort compare (CP.get_num_int_list inf) in
     let () = Debug.ninfo_hprint (add_str "il" (pr_list string_of_int)) il no_pos in
-    il
-  in
+    il in
   let mk_new_formula mk f =
     let h,p,vp,fl,t,a = split_components f in
     let pos = pos_of_formula f in
@@ -18077,8 +18076,7 @@ let trans_flow_formula f =
       let fst_f = List.hd fl in
       let new_f = List.fold_left (fun acc f -> mkOr acc f pos) fst_f (List.tl fl) in
       let () = Debug.ninfo_hprint (add_str "new_f" !print_formula) new_f no_pos in
-      new_f
-  in
+      new_f in
   let rec helper f =
     let () = Debug.ninfo_hprint (add_str "f" !print_formula) f no_pos in
     match f with
@@ -18089,8 +18087,7 @@ let trans_flow_formula f =
                    formula_or_f2 = helper o.formula_or_f2
                  }
     | Exists e ->
-      mk_new_formula (mkExists e.formula_exists_qvars) f
-  in
+      mk_new_formula (mkExists e.formula_exists_qvars) f in
   let f = helper f in
   simplify_formula (drop_svl f [CP.mk_spec_var "flow"]) []
 

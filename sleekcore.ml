@@ -35,10 +35,6 @@ module SY_CEQ = Syn_checkeq
 
 let generate_lemma = ref (fun (iprog: I.prog_decl) (cprog: C.prog_decl) n t (ihps: ident list) iante iconseq -> [],[])
 
-(*
-  let sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
-*)
-
 (* WN : Is this executed? *)
 let sleek_unsat_check isvl cprog ante=
   let () = Debug.ninfo_hprint (add_str "check unsat with graph" pr_id) "\n" no_pos in
@@ -219,7 +215,7 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
     let ctx =
       if !Globals.delay_proving_sat then ctx
       else CF.transform_context (x_add Solver.elim_unsat_es 9 cprog (ref 1)) ctx in
-    let () = 
+    let () =
       if (CF.isAnyFalseCtx ctx) then
         (* Why is pos of ante 0.0 ? *)
         (* !!! **sleekcore.ml#222:pos of ante: 0:0 *)
@@ -228,34 +224,17 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
         let () = x_dinfo_hp (add_str "pos of conseq" Cprinter.string_of_pos) pos3 no_pos in
         let () = add_false_ctx pos3 in
         print_endline_quiet ("[Warning] False ctx")
-      else last_sat_ctx # set (Some pos3)
-    in
-    (* let is_arrvar_flag = CF.is_arr_as_var_ctx ctx in *)
-    (* let () = x_dinfo_hp (add_str "arrvar_flag" string_of_bool) is_arrvar_flag no_pos in *)
+      else last_sat_ctx # set (Some pos3) in
     let conseq = Cfutil.elim_null_vnodes cprog conseq in
-    (*****************)
-    (* let is_base_conseq,conseq_f = CF.base_formula_of_struc_formula conseq in *)
-    (* let ante1a,conseq1 = Syn_checkeq.syntax_contrb_lemma_end_null cprog ante conseq_f in *)
-    (************************)
-    (* let ctx= if not !Globals.en_slc_ps && Cfutil.is_unsat_heap_model cprog ante then *)
-    (*   let () = print_endline ("[Warning] False ctx") in *)
-    (*   CF.transform_context (fun es -> CF.false_ctx_with_orig_ante es ante no_pos) ctx *)
-    (* else ctx *)
-    (* in *)
-    (* let () = print_endline ("ctx: "^(Cprinter.string_of_context ctx)) in *)
-    let wrap = 
-      (* if is_arrvar_flag then Wrapper.wrap_arr_as_var *)
-      (* else *) fun f a -> f a in
+    let wrap = fun f a -> f a in
     let rs1, _ =
       if  not !Globals.disable_failure_explaining then
-        (* let () = sleek_entail cprog ctx conseq no_pos in *)
-        x_add (wrap Solver.heap_entail_struc_init_bug_inv) cprog false (* false *) true
+        x_add (wrap Solver.heap_entail_struc_init_bug_inv) cprog false true
           (CF.SuccCtx[ctx]) conseq no_pos None
       else
-        x_add (wrap Solver.heap_entail_struc_init) cprog false (* false *) true
+        x_add (wrap Solver.heap_entail_struc_init) cprog false true
           (CF.SuccCtx[ctx]) conseq no_pos None
     in
-    (* let () = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
     (* tut/ex1/bugs-ex31-match.slk *)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
     let () = match last_sat_ctx # get with
@@ -278,8 +257,6 @@ let rec sleek_entail_check_x itype isvl (cprog: C.prog_decl) proof_traces (ante:
 
 (*
   proof_traces: (formula*formula) list===> for cyclic proofs
-*)
-(* let sleek_entail_check itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
 *)
 and sleek_entail_check i itype isvl (cprog: C.prog_decl) proof_traces ante conseq=
   let pr1 = Cprinter.prtt_string_of_formula in

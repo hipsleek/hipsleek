@@ -91,7 +91,6 @@ let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
                            then n_iproc else x) iprog.I.prog_proc_decls in
   let n_procs = n_prog.I.prog_proc_decls @ n_procs in
   let n_hps = n_prog.I.prog_hp_decls @ iprog.I.prog_hp_decls in
-  (* report_error no_pos "to filter the fcode" *)
   {iprog with prog_hp_decls = n_hps;
               prog_proc_decls = n_procs}
 
@@ -146,7 +145,7 @@ let repair_iprog (iprog:I.prog_decl) =
     let r_iproc = List.find (fun x -> eq_str x.I.proc_name p_name) iprog.prog_proc_decls in
     let cands = get_stmt_candidates (Gen.unsome r_iproc.proc_body) in
     let () = x_tinfo_hp (add_str "candidates: " pr_exps) cands no_pos in
-    let cands = List.filter (filter_cand !repair_loc) cands |> List.rev in
+    let cands = List.filter (filter_cand !repair_loc) cands (* |> List.rev *) in
     let () = x_binfo_hp (add_str "candidates: " pr_exps) cands no_pos in
     let locs = cands |> List.map I.get_exp_pos in
     let () = x_binfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in

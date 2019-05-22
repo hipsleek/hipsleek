@@ -24,13 +24,29 @@ let raise_stree st = raise (EStree st)
  * Choosing rules
  *********************************************************************)
 
-let check_entail_sleek prog ante conseq =
+let check_entail_sleek_x prog ante (conseq:CF.formula) =
+  let ante = CF.set_flow_in_formula (CF.mkTrueFlow ()) ante in
+  let conseq = CF.set_flow_in_formula (CF.mkTrueFlow ()) conseq in
+  (* let conseq = CF.trans_flow_formula conseq in *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  let list_ctx, _ = Solver.heap_entail_after_sat_struc 1 prog false false ctx conseq None None
-      None no_pos None [] in
+  let ctx = Solver.elim_exists_ctx ctx in
+  let conseq = CF.struc_formula_of_formula conseq no_pos in
+  (* let list_ctx, _ = Solver.heap_entail_after_sat_struc 1 prog false false ctx conseq None None
+   *     None no_pos None [] in *)
+  let list_ctx, _ = Solver.heap_entail_struc_init prog false true
+      (CF.SuccCtx[ctx]) conseq no_pos None in
+  (* let conseq = CF.struc_formula_of_formula conseq no_pos in
+   * let _,list_ctx,_ = sleekcore.sleek_entail_check 1 [] [] prog [] ante conseq in *)
   if CF.isFailCtx list_ctx then false, None
-  else true, None
+  else
+    let residue = CF.formula_of_list_context list_ctx in
+    true, Some residue
+
+let check_entail_sleek prog ante conseq =
+  Debug.no_2 "check_entail_sleek" pr_formula pr_formula
+    (fun (x, _) -> string_of_bool x)
+    (fun _ _ -> check_entail_sleek_x prog ante conseq) ante conseq
 
 let rec find_sub_var sv cur_vars pre_pf =
   match pre_pf with
@@ -706,7 +722,7 @@ let aux_func_call goal rule fname params subst res_var =
   let params_pre = CF.subst (List.combine exists_vars fresh_evars) params_pre in
   let params_pre = CF.wrap_exists fresh_evars params_pre in
   let ent_check, residue =
-    SB.check_entail_residue goal.gl_prog pre_cond params_pre in
+    check_entail_sleek goal.gl_prog pre_cond params_pre in
   match ent_check, residue with
   | true, Some red ->
     let params_post = CF.subst substs post_proc in
@@ -798,12 +814,12 @@ and process_all_rules goal rules : synthesis_tree =
         mk_synthesis_tree_search goal atrees pts
       else process atrees other_rules
     | [] -> let () = fail_branch_num := !fail_branch_num + 1 in
-      let () = x_binfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
+      let () = x_tinfo_hp (add_str "LEAVE NODE: " pr_id) "BACKTRACK" no_pos in
       mk_synthesis_tree_fail goal atrees "no rule can be applied" in
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+  let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
