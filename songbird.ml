@@ -1241,7 +1241,7 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
       , Prooftracer.Failure)
 
 and heap_entail_after_sat_struc ?(pf=None) prog ctx conseq =
-  let () = x_binfo_pp "SONGBIRD Prover activated" no_pos in
+  let () = x_tinfo_pp "SONGBIRD Prover activated" no_pos in
   Debug.no_2 "SB.heap_entail_after_sat_struc" Cprinter.string_of_context
     Cprinter.string_of_struc_formula
     (fun (lctx, _) -> Cprinter.string_of_list_context lctx)

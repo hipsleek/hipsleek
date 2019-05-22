@@ -819,9 +819,13 @@ let process_rule_skip goal =
  * The search procedure
  *********************************************************************)
 let rec synthesize_one_goal goal : synthesis_tree =
-  let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
-  let rules = choose_synthesis_rules goal in
-  process_all_rules goal rules
+  if List.length goal.gl_trace > 7 then
+    let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
+    mk_synthesis_tree_fail goal [] "more than number of rules allowed"
+  else
+    let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let rules = choose_synthesis_rules goal in
+    process_all_rules goal rules
 
 and process_all_rules goal rules : synthesis_tree =
   let rec process atrees rules =

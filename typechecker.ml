@@ -2897,9 +2897,9 @@ and check_par_case_wrapper (prog: prog_decl) (proc: proc_decl) par_init_ctx
   wrap_par_case_check (fun c -> check_par_case prog proc par_init_ctx ctx c
                           par_label) par_case
 
-and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
-                                                                         CF.list_failesc_context) (par_case: exp_par_case) par_label:
-  CF.list_failesc_context * CF.list_failesc_context =
+and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx
+    (ctx:CF.list_failesc_context) (par_case: exp_par_case)
+    par_label:CF.list_failesc_context * CF.list_failesc_context =
   let pos = par_case.exp_par_case_pos in
   let rem_ctx, pre_ctx =
     if par_case.exp_par_case_else then
@@ -2912,8 +2912,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
         | None ->
           let b = CF.mkTrue_b (CF.mkTrueFlow ()) pos in
           CF.Base { b with CF.formula_base_vperm = vp; }
-        | Some f -> norm_par_case_pre vp f
-      in
+        | Some f -> norm_par_case_pre vp f in
       (* Remaining context for the other cases *)
       let rem_ctx =
         let ctx = VP.set_inf_par_list_failesc_ctx ctx in
@@ -2928,23 +2927,19 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
              msg pos;
            Debug.print_info ("(Cause of ParCase Failure)")
              (Cprinter.string_of_failure_list_failesc_context res) pos;
-           Err.report_error { Err.error_loc = pos; Err.error_text = msg })
-      in
-
+           Err.report_error { Err.error_loc = pos; Err.error_text = msg }) in
       let init_ctx = CF.empty_ctx (CF.mkTrueFlow ()) LO2.unlabelled pos in
       let pre_ctx = CF.build_context init_ctx pre pos in
       let pre_ctx = CF.add_path_id pre_ctx (None, 0) 0 in
       let pre_ctx =
         if !Globals.disable_pre_sat then pre_ctx
-        else CF.transform_context (SV.elim_unsat_es 10 prog (ref 1)) pre_ctx
-      in
+        else CF.transform_context (SV.elim_unsat_es 10 prog (ref 1)) pre_ctx in
       let () = flow_store := [] in
       let pre_ctx = CF.set_flow_in_context_override
           { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None } pre_ctx in
       (* Add initial esc_stack *)
       let init_esc = [((0, ""), [])] in
-      rem_ctx, ([CF.mk_failesc_context pre_ctx [] init_esc])
-  in
+      rem_ctx, ([CF.mk_failesc_context pre_ctx [] init_esc]) in
   let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx rem_ctx pos in
   let pre_ctx = VP.compose_list_failesc_contexts_for_par true pre_ctx par_init_ctx pos in
 
@@ -2959,8 +2954,7 @@ and check_par_case_x (prog: prog_decl) (proc: proc_decl) par_init_ctx (ctx:
     {es with
      CF.es_formula = x_add Solver.prop_formula_w_coers 21 prog es
          es.CF.es_formula (Lem_store.all_lemma # get_left_coercion)
-    }
-  in
+    } in
   let post_ctx = VP.norm_list_failesc_context_for_par norm_prop_es post_ctx in
   (rem_ctx, post_ctx)
 
@@ -3038,13 +3032,10 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
         let ans, prf = SV.heap_entail_list_partial_context_init prog false
             fn_state flat_post None None None pos (Some pid) in
         let () = DD.ninfo_hprint
-            (add_str "ans" Cprinter.string_of_list_partial_context) (ans) no_pos
-        in
+            (add_str "ans" Cprinter.string_of_list_partial_context) ans no_pos in
         let ans1 = if !mem_leak_detect then
             Soutil.detect_mem_leak prog proc ans
           else ans in
-        let () = x_binfo_hp (add_str "proof" Prooftracer.string_of_proof)
-          prf pos in
         (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail
            CF.invert_fail_branch_must_fail ans1, prf)
       end
