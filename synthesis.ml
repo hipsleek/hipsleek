@@ -1362,18 +1362,18 @@ let is_rule_fread_usable goal r =
         else true
 
 let eliminate_useless_rules goal rules =
-  (* let contain_sym_rules rule = match rule with
-   *   | RlFRead _ -> true
-   *   (\* | RlUnfoldPre _ -> true *\)
-   *   | _ -> false in
-   * let is_rule_unfold_post_usable rules =
-   *   not (List.exists contain_sym_rules rules) in *)
+  let contain_sym_rules rule = match rule with
+    | RlFRead _ -> true
+    (* | RlUnfoldPre _ -> true *)
+    | _ -> false in
+  let is_rule_unfold_post_usable rules =
+    not (List.exists contain_sym_rules rules) in
   let n_rules = List.filter (fun rule -> match rule with
       | RlFRead r -> is_rule_fread_usable goal r
       | _ -> true) rules in
-  (* let n_rules = List.filter (fun rule -> match rule with
-   *     | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
-   *     | _ -> true) n_rules in *)
+  let n_rules = List.filter (fun rule -> match rule with
+      | RlUnfoldPost _ -> is_rule_unfold_post_usable n_rules
+      | _ -> true) n_rules in
   n_rules
 
 let compare_rule_assign_vs_assign goal r1 r2 =
@@ -1399,6 +1399,8 @@ let compare_rule_frame_pred_vs_other r1 r2 =
   | RlFramePred _
   | RlFrameData _ -> if CP.is_res_sv r1.rfp_lhs then PriHigh
     else PriLow
+  | RlFuncRes _
+  | RlFuncCall _ -> PriHigh
   | _ -> PriLow
 
 let compare_rule_fun_res_vs_other r1 r2 = match r2 with
