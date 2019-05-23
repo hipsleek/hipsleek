@@ -426,8 +426,32 @@ let rec elim_idents (f:CF.formula) = match f with
     CF.Exists {bf with formula_exists_pure = mix_of_pure n_pf}
   | CF.Or bf -> CF.Or {bf with formula_or_f1 = elim_idents bf.CF.formula_or_f1;
                                formula_or_f2 = elim_idents bf.CF.formula_or_f2}
+
+let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
+  match formula with
+  | Base _ -> formula
+  | Exists ({formula_exists_qvars = qvars;
+             formula_exists_heap =  h;
+             formula_exists_vperm = vp;
+             formula_exists_pure = p;
+             formula_exists_type = t;
+             formula_exists_and = a;
+             formula_exists_flow = fl;
+             formula_exists_label = lbl;
+             formula_exists_pos = pos } as bf) ->
+    let n_qvars = List.filter
+        (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) qvars in
+    if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
+    else Exists {bf with CF.formula_exists_qvars = n_qvars}
+  | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
+    let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
+    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
+
 let simplify_goal goal =
   let n_pre = elim_idents goal.gl_pre_cond in
+  let n_pre = CF.elim_exists n_pre in
+  (* let exists_vars = CF.get_exists n_pre in
+   * let n_pre = remove_exists_vars n_pre exists_vars in *)
   let n_post = elim_idents goal.gl_post_cond in
   {goal with gl_pre_cond = n_pre;
              gl_post_cond = n_post}
@@ -872,26 +896,6 @@ let equal_type var1 var2 = match CP.type_of_sv var1 with
   | Int -> is_int_var var2
   | Named _ | TVar _ -> is_node_var var2
   | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
-
-let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
-  match formula with
-  | Base _ -> formula
-  | Exists ({formula_exists_qvars = qvars;
-             formula_exists_heap =  h;
-             formula_exists_vperm = vp;
-             formula_exists_pure = p;
-             formula_exists_type = t;
-             formula_exists_and = a;
-             formula_exists_flow = fl;
-             formula_exists_label = lbl;
-             formula_exists_pos = pos } as bf) ->
-    let n_qvars = List.filter
-        (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) qvars in
-    if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
-    else Exists {bf with CF.formula_exists_qvars = n_qvars}
-  | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
-    let n_f2 = remove_exists_vars bf.formula_or_f2 vars in
-    Or {bf with CF.formula_or_f1 = n_f1; CF.formula_or_f2 = n_f2}
 
 let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with

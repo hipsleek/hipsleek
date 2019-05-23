@@ -18,7 +18,7 @@ int count(node2 z)
 		// cleft = count(z.left);
 		// cright = count(z.right);
 		// return 3 + cleft + cright;
-    return 2 + count(z.left) + count(z.right);
+    return 2 + count(z.left) + count(z.right); //
 	}
 }
 

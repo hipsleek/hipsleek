@@ -4298,7 +4298,7 @@ and elim_exists (f0 : formula) : formula =
 
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
 and elim_exists_x (f0 : formula) : formula = match f0 with
-  | Or ({ 
+  | Or ({
       formula_or_f1 = f1;
       formula_or_f2 = f2;
       formula_or_pos = pos }) ->

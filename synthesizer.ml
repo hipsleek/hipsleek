@@ -657,7 +657,6 @@ let choose_synthesis_rules_x goal : rule list =
   let rules =
     try
       let goal = simplify_goal goal in
-      let _ = choose_rule_exists_left goal |> raise_rules in
       let _ = choose_rule_exists_right goal |> raise_rules in
       let _ = choose_rule_skip goal |> raise_rules in
       let _ = choose_main_rules goal |> raise_rules in
@@ -823,7 +822,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
-    let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
     let rules = choose_synthesis_rules goal in
     process_all_rules goal rules
 
