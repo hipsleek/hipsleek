@@ -2630,7 +2630,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
     ((SuccCtx [ctx]), TrueConseq)
   else
     let () = Debug.dinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
-    let result, prf = if !Globals.songbird && (SB.contains_hps prog ctx conseq)
+    let result, prf = if (SB.contains_hps prog ctx conseq)
       then SB.heap_entail_after_sat_struc prog ctx conseq ~pf:None
       else
         let (n_ctx, pf) = x_add heap_entail_after_sat_struc 1 prog is_folding has_post ctx

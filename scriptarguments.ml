@@ -584,7 +584,6 @@ let common_arguments = [
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("--unsat-consumed", Arg.Set Globals.unsat_consumed_heap,
    "Add consumed heap for unsat checking");
-  ("--songbird", Arg.Set Globals.songbird,"set songbird as the main prover");
   ("--syn-debug", Arg.Set Globals.syn_debug,"set synthesis debugging mode");
   ("--songbird-export-all", Arg.Set Globals.songbird_export_all_entails,"output all songbird entailments");
   ("--songbird-export-invalid", Arg.Set Globals.songbird_export_all_entails,"output invalid/unknown songbird entailments");

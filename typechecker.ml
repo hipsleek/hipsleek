@@ -1276,7 +1276,7 @@ and get_xpure_of_formula f = 1
 and check_exp_a (prog : prog_decl) (proc : proc_decl)
     (ctx : CF.list_failesc_context) (e0:exp) (post_start_label:formula_label):
   CF.list_failesc_context =
-  let () = Synthesis.repair_proc := Some proc in
+  let () = Synt.repair_proc := Some proc in
   let ctx = if !Globals.tc_drop_unused then
       let f es = CF.Ctx{
           es with
@@ -3601,10 +3601,6 @@ and check_proc iprog (prog : prog_decl) (proc0 : proc_decl) cout_option
           let () = match exc with
             | Some e -> raise e
             | None -> () in
-          (* let () = if !enable_repair && !start_repair then
-           *     let () = x_binfo_pp "start synthesis process" no_pos in
-           *     Synthesizer.synthesize_entailments iprog prog proc
-           *   else () in *)
           if pr_flag then
             begin
               if pp then

@@ -114,6 +114,7 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     let () = Syn.rel_num := 0 in
     let () = Syn.res_num := 0 in
     let () = Syn.repair_res := None in
+    let () = verified_procs := [] in
     let () = Syn.syn_pre := None in
     let cprog, _ = Astsimp.trans_prog iprog in
     let () = Syn.unk_hps := cprog.Cast.prog_hp_decls in
@@ -163,7 +164,6 @@ let repair_iprog (iprog:I.prog_decl) =
           !Syn.fail_branch_num no_pos in
       let () = x_binfo_hp (add_str "check_entail" string_of_int)
           !Syn.check_entail_num no_pos in
-      (* to validate the synthesis result *)
       List.hd res
   | _ -> None
 

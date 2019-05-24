@@ -1144,6 +1144,30 @@ let infer_templ_defn prog pre post fun_name args =
     fdefn_body
   with _ -> None
 
+let contains_hps prog ctx (conseq:CF.struc_formula) =
+  let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
+  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
+  let hp_names = List.map (fun x -> x.CA.hp_name) hps in
+  let rec check_conseq_hps (conseq:CF.struc_formula) =
+    match conseq with
+    | CF.EBase bf -> check_hp_formula hp_names bf.CF.formula_struc_base
+    | CF.ECase cases ->
+      let branches = cases.CF.formula_case_branches |> List.map snd in
+      List.exists check_conseq_hps branches
+    | CF.EList b ->
+      let _, struc_list = List.split b in
+      List.exists check_conseq_hps struc_list
+    | CF.EAssume assume ->
+      let assume_f = assume.CF.formula_assume_simpl in
+      check_hp_formula hp_names assume_f
+    | _ -> false in
+  let rec check_ante_hps (ante:CF.context) =
+    match ante with
+    | CF.Ctx es -> check_hp_formula hp_names es.CF.es_formula
+    | CF.OCtx (c1, c2) ->
+      (check_ante_hps c1) && (check_ante_hps c2) in
+  (check_conseq_hps conseq) || (check_ante_hps ctx)
+
 let get_residues ptrees =
   List.map (fun ptree ->
     let residue_fs = SBPFE.get_ptree_residues ptree in
@@ -1249,26 +1273,3 @@ and heap_entail_after_sat_struc ?(pf=None) prog ctx conseq =
     (fun (lctx, _) -> Cprinter.string_of_list_context lctx)
     (fun _ _ -> heap_entail_after_sat_struc_x  ~pf:pf prog ctx conseq) ctx conseq
 
-let contains_hps prog ctx (conseq:CF.struc_formula) =
-  let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
-  let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
-  let hp_names = List.map (fun x -> x.CA.hp_name) hps in
-  let rec check_conseq_hps (conseq:CF.struc_formula) =
-    match conseq with
-    | CF.EBase bf -> check_hp_formula hp_names bf.CF.formula_struc_base
-    | CF.ECase cases ->
-      let branches = cases.CF.formula_case_branches |> List.map snd in
-      List.exists check_conseq_hps branches
-    | CF.EList b ->
-      let _, struc_list = List.split b in
-      List.exists check_conseq_hps struc_list
-    | CF.EAssume assume ->
-      let assume_f = assume.CF.formula_assume_simpl in
-      check_hp_formula hp_names assume_f
-    | _ -> false in
-  let rec check_ante_hps (ante:CF.context) =
-    match ante with
-    | CF.Ctx es -> check_hp_formula hp_names es.CF.es_formula
-    | CF.OCtx (c1, c2) ->
-      (check_ante_hps c1) && (check_ante_hps c2) in
-  (check_conseq_hps conseq) || (check_ante_hps ctx)
