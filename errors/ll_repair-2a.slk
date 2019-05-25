@@ -1,0 +1,47 @@
+data node {
+  int val;
+	node next;
+}.
+
+HeapPred P(node x, node y).
+HeapPred Q(node x, node y).
+
+pred ll<n> == self = null & n = 0
+	or self::node<_, q> * q::ll<n-1>
+  inv n >= 0 .
+
+/*
+id: 15; caller: []; line: 57; classic: false; kind: PRE; hec_num: 1; evars: []; impl_vars: []; infer_vars: [ P,Q]; c_heap: emp; others:  es_infer_obj: [] globals: [@dis_err]
+ checkentail q_1936::ll<flted_10_1934>@M * y::ll<n2>@M * x::node<Anon_1935,q_1936>@M&
+b' & x!=null & y'=y & x'=x & flted_10_1934+1=n1 & q_1936=null & MayLoop[]&
+{FLOW,(4,5)=__norm#E}[]
+ |-  P(x',y')&{FLOW,(4,5)=__norm#E}[]. 
+ho_vars: nothing?
+res:  1[
+    emp&b' & x!=null & y'=y & x'=x & flted_10_1934+1=n1 & q_1936=null&
+{FLOW,(4,5)=__norm#E}[]
+   es_gen_impl_vars(E): []
+   es_heap(consumed): y::ll<n2>@M * q_1936::ll<flted_10_1934>@M * 
+                      x::node<Anon_1935,q_1936>@M
+   ]
+*/
+
+infer [P] q_1936::ll<flted_10_1934>@M * y::ll<n2>@M * x::node<Anon_1935,q_1936>@M&
+b' & x!=null & y'=y & x'=x & flted_10_1934+1=n1 & q_1936=null
+|- P(x',y').
+print residue.
+
+/*
+
+wrong outcome currently..
+
+
+ <1>emp&q_1936=null & y'=y & x'=x & x!=null & b'&{FLOW,(20,21)=__norm#E}[]
+ inferred hprel: [y::ll<n2>@M&true --> GP_59(y,q_1936@NI,x@NI)&true; 
+                  q_1936::ll<flted_10_1934>@M * GP_59(y,q_1936@NI,x@NI)&
+                   x!=null & q_1936=null --> GP_58(q_1936,y,x@NI)&true; 
+                  x::node<Anon_1935,q_1936>@M * GP_58(q_1936,y,x@NI)&
+                   x!=null & q_1936=null --> P(x,y)&true]
+[[ SEARCH ==>  InferFold 0 ==>  InferHeap ==>  SEARCH ==>  Match(x,x) ==>  SEARCH ==>  InferFold 0 ==>  InferHeap ==>  SEARCH ==>  InferFold 0 ==>  InferHeap ==>  SEARCH ==>  COND ==>  Match(q_1936,q_1936) ==>  SEARCH ==>  COND ==>  Match(y,y)]]
+
+*/
