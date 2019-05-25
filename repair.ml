@@ -151,6 +151,11 @@ let repair_iprog (iprog:I.prog_decl) =
     let locs = cands |> List.map I.get_exp_pos in
     let () = x_binfo_hp (add_str "locs" (pr_list string_of_loc)) locs no_pos in
     let cproc = !Syn.repair_proc |> Gen.unsome in
+    let specs = (cproc.Cast.proc_stk_of_static_specs # top) in
+    let post_proc = specs |> Syn.get_post_cond |> Syn.rm_emp_formula in
+    let res_vars = CF.fv post_proc |> List.filter CP.is_res_sv
+                   |> CP.remove_dups_svl in
+    let () = Syn.syn_res_vars := res_vars in
     let args = cproc.C.proc_args in
     let aux cand = repair_one_candidate repair_proc iprog r_iproc args cand in
     let res = cands |> List.map aux |> List.filter (fun x -> x != None) in

@@ -40,6 +40,7 @@ let syn_cprog = ref (None: C.prog_decl option)
 let tmpl_proc_name = ref (None: string option)
 let entailments = ref ([] : (CF.formula * CF.formula) list)
 let syn_pre = ref (None : CF.formula option)
+let syn_res_vars = ref ([] : CP.spec_var list)
 
 (*********************************************************************
  * Data structures
@@ -861,6 +862,26 @@ let create_residue vars prog conseq =
     let n_conseq = add_h_formula_to_formula hrel conseq in
     let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
     hrel_f, n_conseq
+
+let create_n_post_pred vars prog =
+  let name = "QQ" in
+  let hl_name = CP.mk_spec_var name in
+  let () = rel_num := !rel_num + 1 in
+  let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
+  let hp_decl = {
+    Cast.hp_name = name;
+    Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
+    Cast.hp_part_vars = [];
+    Cast.hp_root_pos = None;
+    Cast.hp_is_pre = false;
+    Cast.hp_view = None;
+    Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+  } in
+  let () = unk_hps := hp_decl::(!unk_hps) in
+  let hrel = CF.HRel (hl_name, args, no_pos) in
+  let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+  hrel_f
+
 
 let eq_hp_decl hp1 hp2 =
   let hp1_name,hp2_name = hp1.Cast.hp_name, hp2.Cast.hp_name in

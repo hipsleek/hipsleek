@@ -933,7 +933,7 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     if (* !syn_pre != None && *) hps != [] then
-      let post_hp = List.find (fun x -> x.Cast.hp_name = "Q") hps in
+      let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
       let pre = !syn_pre |> Gen.unsome |> unprime_formula in
       let post = post_hp.Cast.hp_formula |> unprime_formula in
       let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in

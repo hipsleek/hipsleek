@@ -14,7 +14,7 @@ dll<p,n> == self = null & n = 0
 node2 copy(node2 x)
 requires x::dll<p, n>
 ensures x::dll<p, n> * res::dll<p, n>;
-{
+sh{
   if (x == null) return x;
   else {
       node2 tmp = copy(x.next);
