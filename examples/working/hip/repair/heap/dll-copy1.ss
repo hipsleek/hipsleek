@@ -14,9 +14,7 @@ ensures x::dll<p, n> * res::dll<p, n>;
   if (x == null) return x;
   else {
       node2 tmp;
-      dprint;
-      tmp = copy(x.next);
-      dprint;
+      tmp = copy(x.next.next);
       node2 tmp2 = x.prev;
       node2 n = new node2(tmp2, tmp);
       if (tmp != null) tmp.prev = n;

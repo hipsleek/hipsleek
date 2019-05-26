@@ -835,7 +835,9 @@ let solve_entailments prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
-  let () = x_binfo_hp (add_str "pre" pr_formula) (!Syn.syn_pre |> Gen.unsome) no_pos in
+  (* let () = x_binfo_hp (add_str "pre" pr_formula) (!Syn.syn_pre |> Gen.unsome)
+   *     no_pos in *)
+  (* None *)
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let ptree = SBPH.solve_entailments sb_prog sb_ents in
@@ -1221,7 +1223,7 @@ let rec heap_entail_after_sat_struc_x ?(pf=None) (prog:CA.prog_decl)
             let n_args = n_args |> List.filter
                            (fun x -> Syn.is_int_var x || Syn.is_node_var x)
                          |> CP.remove_dups_svl in
-            let n_pred_f = Syn.create_n_post_pred n_args prog in
+            let n_pred_f = Syn.create_spec_pred n_args "QQ" in
             n_pred_f
           else assume_f in
         let new_f = CF.mkStar_combine f assume_f CF.Flow_combine no_pos in
@@ -1256,10 +1258,19 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
       let () = Syn.syn_pre := Some es.CF.es_formula in
-      let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
-      let n_ante = CF.get_pure es.CF.es_formula in
-      let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
-      let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
+      (* let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
+       * let n_ante = CF.get_pure es.CF.es_formula in
+       * let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
+       * let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
+       * aux_conti n_ctx *)
+      let ante = es.CF.es_formula in
+      let ante_vars = ante |> CF.fv |> List.filter
+                         (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+      let residue = Syn.create_pred ante_vars in
+      let n_conseq = Syn.create_spec_pred ante_vars "PP" in
+      let n_conseq = Syn.add_formula_to_formula residue n_conseq in
+      let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
+      let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
       aux_conti n_ctx
     else if ante_hps then
       let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in

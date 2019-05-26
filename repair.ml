@@ -128,12 +128,6 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
       let _ = Synthesizer.synthesize_entailments iprog prog proc in
       !Synthesis.repair_res
     with _ -> None
-      (* let () = x_binfo_pp "start synthesis multiple bugs" no_pos in
-       * let iprog = !Syn.syn_iprog |> Gen.unsome in
-       * let prog = !Syn.syn_cprog |> Gen.unsome in
-       * let proc = C.find_proc prog proc_name in
-       * let _ = Synthesizer.synthesize_entailments iprog prog proc in
-       * !Synthesis.repair_res *)
 
 let repair_iprog (iprog:I.prog_decl) =
   let start_time = get_time () in

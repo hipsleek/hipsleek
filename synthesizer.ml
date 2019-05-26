@@ -934,9 +934,12 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
     if (* !syn_pre != None && *) hps != [] then
       let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-      let pre = !syn_pre |> Gen.unsome |> unprime_formula in
+      let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
+      (* let pre = !syn_pre |> Gen.unsome |> unprime_formula in *)
       let post = post_hp.Cast.hp_formula |> unprime_formula in
-      let () = x_tinfo_hp (add_str "post" pr_formula) post no_pos in
+      let pre = pre_hp.Cast.hp_formula |> unprime_formula in
+      let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
+      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
       let () = x_tinfo_hp (add_str "vars" pr_vars) syn_vars no_pos in
       let () = x_tinfo_hp (add_str "buggy pos" string_of_loc) (Gen.unsome !repair_pos) no_pos in
       let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
