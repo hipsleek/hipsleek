@@ -847,7 +847,7 @@ let create_residue vars prog conseq =
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
     residue, conseq
   else
-    let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
+    (* let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in *)
     let name = "T" ^ (string_of_int !rel_num) in
     let hl_name = CP.mk_spec_var name in
     let () = rel_num := !rel_num + 1 in
@@ -869,7 +869,7 @@ let create_residue vars prog conseq =
     hrel_f, n_conseq
 
 let create_pred vars =
-  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
+  (* let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in *)
   let name = "T" ^ (string_of_int !rel_num) in
   let () = rel_num := !rel_num + 1 in
   let hl_name = CP.mk_spec_var name in
@@ -889,7 +889,7 @@ let create_pred vars =
   hrel_f
 
 let create_spec_pred vars pred_name =
-  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
+  (* let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in *)
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in
@@ -907,7 +907,6 @@ let create_spec_pred vars pred_name =
   let hrel = CF.HRel (hl_name, args, no_pos) in
   let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
   hrel_f
-
 
 let eq_hp_decl hp1 hp2 =
   let hp1_name,hp2_name = hp1.Cast.hp_name, hp2.Cast.hp_name in
