@@ -363,8 +363,8 @@ let pr_rule rule = match rule with
   | RlExistsLeft rule -> "RlExistsLeft" ^ (pr_vars rule.exists_vars)
   | RlExistsRight rule -> "RlExistsRight" ^ (pr_formula rule.n_post)
   | RlBranch rule -> "RlBranch (" ^ (pr_pf rule.rb_cond) ^ ", " ^
-                     (pr_formula rule.rb_if_pre) ^ ", "
-                     ^ (pr_formula rule.rb_else_pre)  ^ ")"
+                     (pr_formula rule.rb_if_pre) ^ ", " ^
+                     (pr_formula rule.rb_else_pre)  ^ ")"
 
 let pr_trace = pr_list pr_rule
 
@@ -375,11 +375,9 @@ let rec pr_st st = match st with
 and pr_st_search st =
   let goal, sub_trees = st.sts_goal, st.sts_sub_trees in
   let st_str = (pr_list pr_st) sub_trees in
-  (* "Goal: " ^ (pr_goal goal) ^ "\n" ^ *)
   "Subtrees: " ^  st_str
 
 and pr_st_derive st =
-  (* (pr_goal st.std_goal) ^ "\n" ^ *)
   (pr_rule st.std_rule) ^ "\n" ^
   ((pr_list pr_st) st.std_sub_trees)
 
@@ -440,8 +438,7 @@ let rec remove_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
              formula_exists_flow = fl;
              formula_exists_label = lbl;
              formula_exists_pos = pos } as bf) ->
-    let n_qvars = List.filter
-        (fun x -> not(List.exists (fun y -> CP.eq_sv x y) vars)) qvars in
+    let n_qvars = List.filter (fun x -> not(CP.mem_svl x vars)) qvars in
     if n_qvars = [] then CF.mkBase_w_lbl h p vp t fl a pos lbl
     else Exists {bf with CF.formula_exists_qvars = n_qvars}
   | Or bf -> let n_f1 = remove_exists_vars bf.formula_or_f1 vars in
@@ -478,14 +475,12 @@ let extract_var_pf_x (pf:CP.formula) vars =
         | CP.Gt (exp1, exp2, loc) ->
           let sv1 = CP.afv exp1 in
           let sv2 = CP.afv exp2 in
-          let in_vars var = List.exists (fun x -> CP.eq_spec_var x var) vars in
-          if List.exists (fun x -> in_vars x) (sv1@sv2) then pform
+          if List.exists (fun x -> CP.mem_svl x vars) (sv1@sv2) then pform
           else BConst (true, loc)
         | CP.BVar (sv, bvar_loc) ->
           if List.exists (fun x -> CP.eq_spec_var x sv) vars then pform
           else BConst (true, bvar_loc)
-        | _ -> pform
-      in
+        | _ -> pform in
       let n_pform = aux pform in
       CP.BForm ((n_pform, opt2), opt)
     | And (f1, f2, loc) ->
@@ -527,7 +522,8 @@ let rec extract_hf_var_x hf var =
       | Some _, None -> vf1
       | None, Some _ -> vf2
       | Some _, Some _ ->
-        report_error no_pos "extract_hf_var: one var cannot appear in two heap fragments"
+        report_error no_pos
+          "extract_hf_var: one var cannot appear in two heap fragments"
     end
   | _ -> None
 
@@ -588,28 +584,29 @@ let extract_var_f formula var =
   * Atomic functions
  ********************************************************)
 let contains s1 s2 =
-    let re = Str.regexp_string s2
-    in
-        try ignore (Str.search_forward re s1 0); true
-        with Not_found -> false
+  let re = Str.regexp_string s2 in
+  try ignore (Str.search_forward re s1 0); true
+  with Not_found -> false
 
-let rec add_h_formula_to_formula_x added_hf (formula:CF.formula) : CF.formula =
+let rec add_h_formula_to_formula_x h_formula (formula:CF.formula) : CF.formula =
   match formula with
-  | Base bf -> let hf = bf.formula_base_heap in
-    let n_hf = CF.mkStarH hf added_hf no_pos in
+  | Base bf ->
+    let hf = bf.formula_base_heap in
+    let n_hf = CF.mkStarH hf h_formula no_pos in
     CF.Base {bf with formula_base_heap = n_hf}
-  | Exists bf -> let hf = bf.formula_exists_heap in
-    let n_hf = CF.mkStarH hf added_hf no_pos in
+  | Exists bf ->
+    let hf = bf.formula_exists_heap in
+    let n_hf = CF.mkStarH hf h_formula no_pos in
     Exists {bf with formula_exists_heap = n_hf}
-  | Or bf -> let n_f1 = add_h_formula_to_formula_x added_hf bf.formula_or_f1 in
-    let n_f2 = add_h_formula_to_formula_x added_hf bf.formula_or_f2 in
+  | Or bf ->
+    let n_f1 = add_h_formula_to_formula_x h_formula bf.formula_or_f1 in
+    let n_f2 = add_h_formula_to_formula_x h_formula bf.formula_or_f2 in
     Or {bf with formula_or_f1 = n_f1;
                 formula_or_f2 = n_f2}
 
 let add_h_formula_to_formula added_hf formula =
   Debug.no_2 "add_h_formula_to_formula" pr_hf pr_formula pr_formula
     (fun _ _ -> add_h_formula_to_formula_x added_hf formula) added_hf formula
-
 
 let rec simpl_f (f:CF.formula) = match f with
   | Or bf -> (simpl_f bf.formula_or_f1) @ (simpl_f bf.formula_or_f2)
@@ -621,7 +618,7 @@ let check_var_mem mem list = List.exists (fun x -> CP.eq_sv x mem) list
 let get_field var access_field data_decls =
   let name = var.CF.h_formula_data_name in
   try
-    let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in
+    let data = List.find (fun x -> eq_str x.Cast.data_name name) data_decls in
     let fields = var.CF.h_formula_data_arguments in
     let data_fields = List.map fst data.Cast.data_fields in
     let pairs = List.combine data_fields fields in
@@ -631,19 +628,20 @@ let get_field var access_field data_decls =
   with Not_found -> None
 
 (* Update a data node with a new value to the field *)
-let set_field var access_field (new_val:CP.spec_var) data_decls =
+let set_field var access_field (n_val:CP.spec_var) data_decls =
   let name = var.CF.h_formula_data_name in
   try
-    let data = List.find (fun x -> String.compare x.Cast.data_name name == 0) data_decls in
+    let data = List.find (fun x -> eq_str x.Cast.data_name name) data_decls in
     let fields = var.CF.h_formula_data_arguments in
     let data_fields = List.map fst data.Cast.data_fields in
     let pairs = List.combine data_fields fields in
     let update_field (field, old_val) =
-      if field = access_field then new_val
+      if field = access_field then n_val
       else old_val in
     let new_fields = List.map update_field pairs in
     {var with CF.h_formula_data_arguments = new_fields}
-  with Not_found -> report_error no_pos "Synthesis.ml could not find the data decls"
+  with Not_found ->
+    report_error no_pos "Synthesis.ml could not find the data decls"
 
 let is_named_type_var var =
   let typ = CP.type_of_sv var in
@@ -774,7 +772,8 @@ let rec remove_heap_var_f var formula = match formula with
 let do_unfold_view_vnode_x cprog pr_views args (formula:CF.formula) =
   let rec helper (f:CF.formula) = match f with
     | Base fb ->
-      let unfold_hf = do_unfold_view_hf_vn cprog pr_views args fb.CF.formula_base_heap in
+      let unfold_hf = do_unfold_view_hf_vn cprog pr_views args
+          fb.CF.formula_base_heap in
       let pf = fb.CF.formula_base_pure in
       let tmp = List.map (CF.add_mix_formula_to_formula pf) unfold_hf in
       tmp |> List.map simpl_f |> List.concat
@@ -811,7 +810,8 @@ let get_post_cond (struc_f: CF.struc_formula) =
       else f
     | EAssume assume_f ->
       assume_f.formula_assume_struc |> helper
-    | _ -> report_error no_pos "Synthesis.get_post_cond.helper unhandled cases" in
+    | _ -> report_error no_pos
+             "Synthesis.get_post_cond.helper unhandled cases" in
   match struc_f with
   | CF.EBase bf ->
     bf.formula_struc_continuation |> Gen.unsome |> helper
@@ -828,13 +828,16 @@ let add_unk_pred_to_formula (f1:CF.formula) (f2:CF.formula) =
       h_formula_star_pos = no_pos;
     } in
   let rec helper (f1:CF.formula):CF.formula = match f1 with
-    | Base bf -> let hf = bf.formula_base_heap in
+    | Base bf ->
+      let hf = bf.formula_base_heap in
       let n_hf = add_hf hf hf2 in
       Base {bf with formula_base_heap = n_hf}
-    | Exists bf -> let hf = bf.formula_exists_heap in
+    | Exists bf ->
+      let hf = bf.formula_exists_heap in
       let n_hf = add_hf hf hf2 in
       Exists {bf with formula_exists_heap = n_hf}
-    | Or bf -> let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
+    | Or bf ->
+      let f1,f2 = bf.formula_or_f1, bf.formula_or_f2 in
       Or {bf with formula_or_f1 = helper f1;
                   formula_or_f2 = helper f2} in
   helper f1
@@ -856,7 +859,8 @@ let create_residue vars prog conseq =
       Cast.hp_root_pos = None;
       Cast.hp_is_pre = false;
       Cast.hp_view = None;
-      Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+      Cast.hp_formula =
+        CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
     } in
     let () = unk_hps := hp_decl::(!unk_hps) in
     let hrel = CF.HRel (hl_name, args, no_pos) in
