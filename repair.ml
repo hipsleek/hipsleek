@@ -11,7 +11,7 @@ module CF = Cformula
 module Syn = Synthesis
 module I = Iast
 
-let pr_proc = Iprinter.string_of_proc_decl
+let pr_proc = Iprinter.string_of_proc_decl_repair
 let pr_iprog = Iprinter.string_of_program
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
@@ -64,8 +64,6 @@ let mk_candidate_iproc (iproc:I.proc_decl) args candidate =
       ({iproc with proc_body = n_body}, args)
 
 let mk_candidate_iprog iprog (iproc:I.proc_decl) args candidate =
-  let pr_proc = Iprinter.string_of_proc_decl in
-  let pr_procs = pr_list pr_proc in
   let n_iproc, args = mk_candidate_iproc iproc args candidate in
   let () = x_binfo_hp (add_str "proc" pr_proc) n_iproc no_pos in
   let () = Syn.repair_pos := Some (I.get_exp_pos candidate) in

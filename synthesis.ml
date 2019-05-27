@@ -844,6 +844,7 @@ let create_residue vars prog conseq =
     let residue = CF.mkBase_simp (CF.HEmp) (Mcpure.mkMTrue no_pos) in
     residue, conseq
   else
+    let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
     let name = "T" ^ (string_of_int !rel_num) in
     let hl_name = CP.mk_spec_var name in
     let () = rel_num := !rel_num + 1 in
@@ -864,25 +865,27 @@ let create_residue vars prog conseq =
     hrel_f, n_conseq
 
 let create_pred vars =
-    let name = "T" ^ (string_of_int !rel_num) in
-    let () = rel_num := !rel_num + 1 in
-    let hl_name = CP.mk_spec_var name in
-    let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
-    let hp_decl = {
-      Cast.hp_name = name;
-      Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
-      Cast.hp_part_vars = [];
-      Cast.hp_root_pos = None;
-      Cast.hp_is_pre = false;
-      Cast.hp_view = None;
-      Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
-    } in
-    let () = unk_hps := hp_decl::(!unk_hps) in
-    let hrel = CF.HRel (hl_name, args, no_pos) in
-    let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
-    hrel_f
+  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
+  let name = "T" ^ (string_of_int !rel_num) in
+  let () = rel_num := !rel_num + 1 in
+  let hl_name = CP.mk_spec_var name in
+  let args = vars |> List.map (fun x -> CP.mkVar x no_pos) in
+  let hp_decl = {
+    Cast.hp_name = name;
+    Cast.hp_vars_inst = vars |> List.map (fun x -> (x, Globals.I));
+    Cast.hp_part_vars = [];
+    Cast.hp_root_pos = None;
+    Cast.hp_is_pre = false;
+    Cast.hp_view = None;
+    Cast.hp_formula = CF.mkBase_simp (CF.HEmp) (mix_of_pure (CP.mkTrue no_pos))
+  } in
+  let () = unk_hps := hp_decl::(!unk_hps) in
+  let hrel = CF.HRel (hl_name, args, no_pos) in
+  let hrel_f = CF.mkBase_simp hrel (MCP.mix_of_pure (CP.mkTrue no_pos)) in
+  hrel_f
 
 let create_spec_pred vars pred_name =
+  let vars = vars |> List.map CP.to_unprimed |> CP.remove_dups_svl in
   let name = pred_name in
   let hl_name = CP.mk_spec_var name in
   let () = rel_num := !rel_num + 1 in

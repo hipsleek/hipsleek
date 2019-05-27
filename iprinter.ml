@@ -1517,13 +1517,11 @@ let string_of_proc_decl_repair p =
     | None     -> ""
     | Some e   -> "{\n" ^ (string_of_exp_repair e) ^ "\n}" in
   let specs = (string_of_struc_formula_repair p.proc_static_specs) in
-  let specs = if (!Globals.repaired) then "/*@\n" ^ specs ^ "\n*/"
-    else specs in
+  let specs = "/*@\n" ^ specs ^ "\n*/" in
   (if p.proc_constructor then "" else (string_of_typ_repair p.proc_return) ^ " ")
   ^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
   ^ (match p.proc_ho_arg with | None -> "" | Some ha -> " with " ^ (string_of_param ha))
   ^ "\n" ^ specs  ^ "\n" ^ body
-
 
 let string_of_rel_decl p =
   let pr = pr_list (pr_pair string_of_typ (fun x -> x)) in
