@@ -297,7 +297,6 @@ let is_program_pointer (name:ident) =
   let slen = (String.length name) in
   try
     let n = (String.rindex name '_') in
-    (* let () = print_endline ((string_of_int n)) in *)
     let l = (slen-(n+1)) in
     if (l==0) then (false,name)
     else
@@ -469,7 +468,6 @@ let string_of_loc (p : loc) =
     p.start_pos.Lexing.pos_fname
     p.start_pos.Lexing.pos_lnum
     (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
-;;
 
 let is_valid_loc p=
   (p.start_pos.Lexing.pos_lnum>=0 &&
@@ -479,16 +477,11 @@ let string_of_pos (p : Lexing.position) =
   Printf.sprintf "(Line:%d,Col:%d)"
     p.Lexing.pos_lnum
     (p.Lexing.pos_cnum-p.Lexing.pos_bol)
-;;
 
 let string_of_pos_plain (p : Lexing.position) =
   Printf.sprintf "%d_%d"
     p.Lexing.pos_lnum
     (p.Lexing.pos_cnum-p.Lexing.pos_bol)
-;;
-
-(* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
-(* ;; *)
 
 (* An Hoa *)
 let line_number_of_pos p = string_of_int (p.start_pos.Lexing.pos_lnum)
@@ -500,25 +493,6 @@ let string_of_loc_by_char_num (l : loc) =
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
 
-(* class prog_loc = *)
-(*    object  *)
-(*      val mutable lc = None *)
-(*      method is_avail : bool = match lc with *)
-(*        | None -> false *)
-(*        | Some _ -> true *)
-(*      method set (nl:loc) = lc <- Some nl *)
-(*      method get :loc = match lc with *)
-(*        | None -> no_pos *)
-(*        | Some p -> p *)
-(*      method reset = lc <- None *)
-(*      method string_of : string = match lc with *)
-(*        | None -> "None" *)
-(*        | Some l -> (string_of_loc l) *)
-(*      method string_of_pos : string = match lc with *)
-(*        | None -> "None" *)
-(*        | Some l -> (string_of_pos l.start_pos) *)
-(*    end;; *)
-
 (* Option for proof logging *)
 let proof_logging = ref false
 let proof_logging_txt = ref false
@@ -526,7 +500,6 @@ let log_proof_details = ref true
 let proof_logging_time = ref 0.000
 (* let sleek_src_files = ref ([]: string list) *)
 let time_limit_large = ref 0.5
-
 
 let prelude_file = ref (None: string option) (* Some "prelude.ss" *)
 
@@ -538,9 +511,6 @@ let sleek_gen_vc = ref false
 let sleek_gen_vc_exact = ref false
 let sleek_gen_sat = ref false
 
-
-
-
 (*Some global vars for logging*)
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)
@@ -549,14 +519,6 @@ let z3_time = ref 0.0
 
 let add_to_z3_proof_log_list (f: string) =
   z3_proof_log_list := !z3_proof_log_list @ [f]
-
-
-
-(* let set_proving_loc p = proving_loc#set p *)
-(*   (\* proving_loc := Some p *\) *)
-
-(* let clear_proving_loc () = proving_loc#reset *)
-(*   (\* proving_loc := None *\) *)
 
 let pr_lst s f xs = String.concat s (List.map f xs)
 
@@ -618,7 +580,6 @@ let rec string_of_typ_repair (x:typ) : string = match x with
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "->" ^ (string_of_typ t2)
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
-  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -631,7 +592,6 @@ let is_RelT x =
   match x with
   | RelT _ | UtT _  (* | HpT _  *)-> true
   | _ -> false
-;;
 
 let is_UtT x =
   match x with
@@ -671,12 +631,10 @@ let rec string_of_typ_alpha = function
   | FuncT (t1, t2) -> (string_of_typ t1) ^ "_" ^ (string_of_typ t2)
   | UtT b        -> "UtT("^(if b then "pre" else "post")^")"
   | HpT        -> "HpT"
-  (* | SLTyp -> "SLTyp" *)
   | Named ot -> if ((String.compare ot "") ==0) then "null_type" else ot
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)
-;;
 
 let subs_tvar_in_typ t (i:int) nt =
   let rec helper t = match t with
@@ -686,25 +644,17 @@ let subs_tvar_in_typ t (i:int) nt =
     | Array (et,d) -> Array (helper et,d)
     | _ -> t
   in helper t
-;;
-
-
-(* let null_type = Named "" *)
-(* ;;                       *)
-
-(* let is_null_type t=      *)
-(*   match t with           *)
-(*     | Named "" -> true   *)
-(*     | _ -> false         *)
 
 let rec s_i_list l c = match l with
   | [] -> ""
   | h::[] -> h
   | h::t -> h ^ c ^ (s_i_list t c)
-;;
 
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
-;;
+
+let pr_idents = string_of_ident_list
+
+let pr_idents_wo_brackets = s_i_list
 
 let string_of_primed p =
   match p with
@@ -713,11 +663,6 @@ let string_of_primed p =
 
 let string_of_primed_ident (id,p) =
   "("^id^","^(string_of_primed p)^")"
-
-(* let string_of_primed_ident ( = *)
-(*   id ^ string_of_primed p *)
-
-(* let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p)) *)
 
 let pr_ident_list = pr_list string_of_primed_ident
 let pr_primed_ident_list = pr_list string_of_primed_ident
@@ -775,7 +720,8 @@ let no_pos1 = { Lexing.pos_fname = "";
 
 let res_name = "res"
 let tmpl_name = "tmpl"
-(* let null_name = "null" *)
+let fcode_str = "fcode"
+let hp_str = "HeapPred"
 let null_name = "_null"
 let null_type = Named ""
 

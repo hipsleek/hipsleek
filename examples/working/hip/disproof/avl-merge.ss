@@ -187,9 +187,7 @@ node insert(node x, int a)
 			}
 			else
 			        return node_error();
-		}
-		else
-		{
+		}	else {
 			tmp = x.right;
 			x.right = insert(tmp, a);
 			if ((height(x.right) - height(x.left)) == 2)
