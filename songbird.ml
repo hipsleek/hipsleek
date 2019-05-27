@@ -835,9 +835,6 @@ let solve_entailments prog entails =
   let () = x_tinfo_hp (add_str "entailments" pr_ents) entails no_pos in
   let sb_ents = List.map translate_entailment entails in
   let () = x_binfo_hp (add_str "sb_ents" SBC.pr_ents) sb_ents no_pos in
-  (* let () = x_binfo_hp (add_str "pre" pr_formula) (!Syn.syn_pre |> Gen.unsome)
-   *     no_pos in *)
-  (* None *)
   let sb_prog = translate_prog prog in
   let () = x_tinfo_hp (add_str "sb_prog" SBC.pr_prog) sb_prog no_pos in
   let ptree = SBPH.solve_entailments sb_prog sb_ents in
@@ -845,14 +842,17 @@ let solve_entailments prog entails =
   let () = x_binfo_hp (add_str "sb_res" pr_validity) res no_pos in
   if res = SBG.MvlTrue then
     let vdefns_list = SBPFU.get_solved_vdefns ptree in
-    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list no_pos in
-    if vdefns_list != [] then
-      let vdefns = List.hd vdefns_list in
-      let () = x_binfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
-      let hps = translate_back_vdefns prog vdefns in
-      let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
-      Some hps
-    else None
+    let () = x_binfo_hp (add_str "vdefns" (pr_list SBC.pr_vdfs)) vdefns_list
+        no_pos in
+    let hps_list = List.map (translate_back_vdefns prog) vdefns_list in
+    Some hps_list
+    (* if vdefns_list != [] then
+     *   let vdefns = List.hd vdefns_list in
+     *   let () = x_binfo_hp (add_str "vdefns" SBC.pr_vdfs) vdefns no_pos in
+     *   let hps = translate_back_vdefns prog vdefns in
+     *   let () = x_tinfo_hp (add_str "hps" pr_hps) hps no_pos in
+     *   Some hps
+     * else None *)
   else None
 
 let get_vars_in_fault_ents ents =
@@ -1258,11 +1258,6 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
       let () = Syn.syn_pre := Some es.CF.es_formula in
-      (* let () = x_tinfo_hp (add_str "es_f" pr_formula) es.CF.es_formula no_pos in
-       * let n_ante = CF.get_pure es.CF.es_formula in
-       * let n_ante = CF.mkBase_simp (CF.HEmp) (MCP.mix_of_pure n_ante) in
-       * let n_ctx = CF.Ctx {es with CF.es_formula = n_ante} in
-       * aux_conti n_ctx *)
       let ante = es.CF.es_formula in
       let ante_vars = ante |> CF.fv |> List.filter
                          (fun x -> Syn.is_int_var x || Syn.is_node_var x) in

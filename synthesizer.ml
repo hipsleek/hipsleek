@@ -822,7 +822,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
-    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
     let rules = choose_synthesis_rules goal in
     process_all_rules goal rules
 
@@ -843,7 +843,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
+  let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore
@@ -923,7 +923,8 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let solve_time = get_time() -. start_time in
   match hps with
   | None -> ()
-  | Some hps ->
+  | Some hps_list ->
+    (* let hps = List.hd hps_list in *)
     let iproc = List.find (fun x -> contains proc.CA.proc_name x.IA.proc_name)
         iprog.IA.prog_proc_decls in
     let decl_vars = match iproc.IA.proc_body with
@@ -932,22 +933,22 @@ let synthesize_entailments (iprog:IA.prog_decl) prog proc =
     let syn_vars = proc.Cast.proc_args
                    |> List.map (fun (x,y) -> CP.mk_typed_sv x y) in
     let syn_vars = syn_vars @ decl_vars |> CP.remove_dups_svl in
-    if (* !syn_pre != None && *) hps != [] then
-      let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
-      let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
-      (* let pre = !syn_pre |> Gen.unsome |> unprime_formula in *)
-      let post = post_hp.Cast.hp_formula |> unprime_formula in
-      let pre = pre_hp.Cast.hp_formula |> unprime_formula in
-      let () = x_binfo_hp (add_str "pre" pr_formula) pre no_pos in
-      let () = x_binfo_hp (add_str "post" pr_formula) post no_pos in
-      let () = x_tinfo_hp (add_str "vars" pr_vars) syn_vars no_pos in
-      let () = x_tinfo_hp (add_str "buggy pos" string_of_loc) (Gen.unsome !repair_pos) no_pos in
-      let (n_iprog, res) = synthesize_wrapper iprog prog proc pre post syn_vars in
-      if res then
-        try
-          let cprog, _ = Astsimp.trans_prog n_iprog in
-          let () = Typechecker.check_prog_wrapper n_iprog cprog in
-          repair_res := Some n_iprog
-        with _ -> ()
-      else ()
-    else ()
+    let stop = ref false in
+    let helper hps =
+      if !stop then ()
+      else
+        let post_hp = List.find (fun x -> x.Cast.hp_name = "QQ") hps in
+        let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
+        let post = post_hp.Cast.hp_formula |> unprime_formula in
+        let pre = pre_hp.Cast.hp_formula |> unprime_formula in
+        let (n_iprog, res) = synthesize_wrapper iprog prog proc
+            pre post syn_vars in
+        if res then
+          try
+            let cprog, _ = Astsimp.trans_prog n_iprog in
+            let () = Typechecker.check_prog_wrapper n_iprog cprog in
+            let () = stop := true in
+            repair_res := Some n_iprog
+          with _ -> ()
+        else () in
+    List.iter helper hps_list
