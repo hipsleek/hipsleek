@@ -993,10 +993,14 @@ let get_unfold_view vars (f1:CF.formula) = match f1 with
   | CF.Exists bf -> get_unfold_view_hf vars bf.formula_exists_heap
   | _ -> []
 
-let unprime_formula (formula:CF.formula) =
+let unprime_formula_x (formula:CF.formula) =
   let vars = CF.fv formula |> List.filter CP.is_primed in
   let substs = vars |> List.map (fun x -> (x, CP.to_unprimed x)) in
   CF.subst substs formula
+
+let unprime_formula (formula:CF.formula) : CF.formula =
+  Debug.no_1 "unprime_formula" pr_formula pr_formula
+    (fun _ -> unprime_formula_x formula) formula
 
 let rec has_unfold_pre trace = match trace with
   | [] -> false

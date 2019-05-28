@@ -10,7 +10,17 @@ int length(node x)
   ensures x::ll<n> & res = n;.
 
 synthesize [node x]
- x::ll<n>&x=x
+ x::ll<n>&x!=null & n >= 1
 ~>
- x::ll<n>&x=x & n=res.
+ (exists f_r_7356,r_3: x::node<r_3> * r_3::ll<f_r_7356>
+ & (1-n)<=0
+ & n=res & f_r_7356=n-1).
 
+
+// synthesize [node q_59,node x,int rs0]
+//  x::node<q_59> * q_59::ll<flted_6_58>&
+// flted_6_58+1=n & x!=null & rs0=flted_6_58 & n >= 1
+// ~>
+//  (exists f_r_44,r_45: x::node<r_45> * r_45::ll<f_r_44>&
+// 1<=n &
+// n=res & f_r_44+1=n).

@@ -473,13 +473,12 @@ let rec translate_hf hf = match hf with
 
 let exp_to_var exp = match exp with
   | CP.Var (sv, _) -> (sv, [], [])
-  | CP.Add _ | CP.Subtract _ | CP.Mult _ | CP.Div _ ->
+  | _ ->
     let name = fresh_name() in
     let var = CP.mk_typed_sv Int name in
     let var_exp = CP.mkVar var no_pos in
     let pf = CP.mkEqExp var_exp exp no_pos in
     (var, [pf], [var])
-  | _ -> report_error no_pos ("exp_to_var:" ^ CPR.string_of_formula_exp exp)
 
 let translate_back_df df =
   match df.SBC.dataf_root with
@@ -1133,10 +1132,10 @@ let infer_templ_defn prog pre post fun_name args =
   let nprog = {sb_prog with
                SBC.prog_funcs = [f_defn];
                SBC.prog_commands = [SBC.InferFuncs infer_func]} in
-  let () = x_tinfo_hp (add_str "ent" SBC.pr_pure_entail) ent no_pos in
+  let () = x_binfo_hp (add_str "ent" SBC.pr_pure_entail) ent no_pos in
   let sb_res = SBPP.infer_unknown_functions ifp_typ nprog ent in
   let ifds = fst sb_res in
-  let () = x_tinfo_hp (add_str "re" (SBPP.pr_ifds)) ifds no_pos in
+  let () = x_binfo_hp (add_str "re" (SBPP.pr_ifds)) ifds no_pos in
   let func_defns = ifds |> List.map (fun x -> x.SBPP.ifd_fdefns)
                    |> List.concat in
   try
@@ -1257,30 +1256,37 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
     let conseq_hps = check_hp_formula hp_names bf.CF.formula_struc_base in
     let ante_hps = check_hp_formula hp_names es.CF.es_formula in
     if conseq_hps then
-      let () = Syn.syn_pre := Some es.CF.es_formula in
       let ante = es.CF.es_formula in
+      let () = Syn.syn_pre := Some ante in
       let ante_vars = ante |> CF.fv |> List.filter
                          (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+      let pure_ante = CF.mkEmp_formula ante in
       let residue = Syn.create_pred ante_vars in
+      let residue = Syn.add_formula_to_formula residue pure_ante in
       let n_conseq = Syn.create_spec_pred ante_vars "PP" in
       let n_conseq = Syn.add_formula_to_formula residue n_conseq in
       let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
       let n_ctx = CF.Ctx {es with CF.es_formula = residue} in
       aux_conti n_ctx
     else if ante_hps then
-      let vars = CF.fv es.CF.es_formula |> CP.remove_dups_svl in
-      let vars = vars |> List.filter
-                   (fun x -> Syn.is_int_var x || Syn.is_node_var x) in
+      let ante = es.CF.es_formula in
+      let vars = ante |> CF.fv |> CP.remove_dups_svl in
+      let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
+      let vars = vars |> List.filter filter_var in
       let exists_vars = bf.CF.formula_struc_exists
                         @ bf.CF.formula_struc_explicit_inst
                         @ bf.CF.formula_struc_implicit_inst
                         |> CP.remove_dups_svl in
-      let conseq = Syn.add_exists_vars bf.CF.formula_struc_base exists_vars in
-      let n_es_f, n_conseq = Syn.create_residue vars prog conseq in
-      let n_es_f = CF.add_pure_formula_to_formula (CF.get_pure es.CF.es_formula) n_es_f in
-      let () = Syn.entailments := [(es.CF.es_formula, n_conseq)] @ !Syn.entailments in
-      let () = x_tinfo_hp (add_str "n_es_f" pr_formula) n_es_f no_pos in
-      let n_ctx = CF.Ctx {es with CF.es_formula = n_es_f;} in
+      let conseq = bf.CF.formula_struc_base in
+      let conseq = Syn.add_exists_vars conseq exists_vars in
+      let n_es, n_conseq = Syn.create_residue vars prog conseq in
+      let pure_ante = ante |> CF.get_pure in
+      let n_conseq = CF.add_pure_formula_to_formula pure_ante n_conseq in
+      let n_es = CF.add_pure_formula_to_formula pure_ante n_es in
+      let ante = es.CF.es_formula |> Syn.remove_exists in
+      let () = Syn.entailments := [(ante, n_conseq)] @ !Syn.entailments in
+      let () = x_tinfo_hp (add_str "n_es" pr_formula) n_es no_pos in
+      let n_ctx = CF.Ctx {es with CF.es_formula = n_es;} in
       aux_conti n_ctx
     else
       let () = if !start_repair then
