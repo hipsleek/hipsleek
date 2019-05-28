@@ -1218,7 +1218,10 @@ let rec heap_entail_after_sat_struc_x ?(pf=None) (prog:CA.prog_decl)
           let has_pred = check_hp_formula hp_names assume_f in
           if has_pred then
             let syn_pre_vars = !Syn.syn_pre |> Gen.unsome |> CF.fv in
-            let n_args = (f |> CF.fv) @ (!Syn.syn_res_vars) @ syn_pre_vars in
+            let n_args = (f |> CF.fv) @ syn_pre_vars in
+            let n_args = if !Syn.is_return_cand then
+                n_args @ (!Syn.syn_res_vars)
+              else n_args in
             let n_args = n_args |> List.filter
                            (fun x -> Syn.is_int_var x || Syn.is_node_var x)
                          |> CP.remove_dups_svl in

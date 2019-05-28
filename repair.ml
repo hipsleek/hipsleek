@@ -102,6 +102,9 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
     let () = Syn.rel_num := 0 in
     let () = Syn.res_num := 0 in
     let () = Syn.repair_res := None in
+    let () = if is_return_exp candidate then
+        Syn.is_return_cand := true
+      else Syn.is_return_cand := false in
     let () = verified_procs := [] in
     let () = Syn.syn_pre := None in
     let cprog, _ = Astsimp.trans_prog iprog in

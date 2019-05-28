@@ -17,6 +17,11 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 let next_proc = ref false
 let stop = ref false
 
+let is_return_exp (exp:I.exp) =
+  match exp with
+  | I.Return _ -> true
+  | _ -> false
+
 let get_stmt_candidates (exp: I.exp) =
   let rec aux (exp:I.exp) list =
     match exp with
