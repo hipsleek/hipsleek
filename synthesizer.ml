@@ -97,15 +97,6 @@ let rec find_sub_var sv cur_vars pre_pf =
         else res1
   | _ -> None
 
-let is_equal_vars_x goal var1 var2 =
-  let ante = CF.get_pure goal.gl_post_cond in
-  let conseq = CP.mkEqVar var1 var2 no_pos in
-  SB.check_pure_entail ante conseq
-
-let is_equal_vars goal var1 var2 =
-  Debug.no_3 "is_equal_vars" pr_goal pr_var pr_var (string_of_bool)
-    (fun _ _ _ -> is_equal_vars_x goal var1 var2) goal var1 var2
-
 let choose_rassign_aux goal cur_var : rule list =
   let post = goal.gl_post_cond in
   let all_vars = goal.gl_vars in
