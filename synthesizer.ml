@@ -107,18 +107,27 @@ let is_equal_vars goal var1 var2 =
     (fun _ _ _ -> is_equal_vars_x goal var1 var2) goal var1 var2
 
 let choose_rassign_aux goal cur_var : rule list =
-  let post_vars, prog = goal.gl_post_cond |> CF.fv, goal.gl_prog in
-  let filter x = equal_type cur_var x && not(CP.eq_sv x cur_var) in
-  let other_vars = goal.gl_vars |> List.filter filter in
-  let () = x_tinfo_hp (add_str "others" pr_vars) other_vars no_pos in
-  let eq_vars = List.filter (is_equal_vars goal cur_var) other_vars in
-  let mkAssign var = if CP.is_res_sv cur_var then
-      RlReturn { r_exp = CP.mkVar var no_pos}
-    else RlAssign {
-        ra_lhs = cur_var;
-        ra_rhs = CP.mkVar var no_pos;
-      } in
-  eq_vars |> List.map mkAssign
+  let post = goal.gl_post_cond in
+  let all_vars = goal.gl_vars in
+  let exists_vars = CF.get_exists post in
+  let post_vars = CF.fv post in
+  let post_vars = CP.diff_svl post_vars exists_vars in
+  let post_pf = CF.get_pure goal.gl_post_cond in
+  let post_conjuncts = CP.split_conjunctions post_pf in
+  let eq_pairs = List.map (find_exists_substs post_vars) post_conjuncts
+                 |> List.concat in
+  let filter_fun (x,y) = (List.mem x all_vars) &&
+                         CP.subset (CP.afv y) all_vars in
+  let eq_pairs = eq_pairs |> List.filter filter_fun in
+  if eq_pairs = [] then []
+  else
+    let mk_rule (var, exp) =
+      if CP.is_res_sv var then RlReturn {r_exp = exp}
+      else RlAssign {
+          ra_lhs = var;
+          ra_rhs = exp
+        } in
+    List.map mk_rule eq_pairs
 
 let choose_rule_assign_x goal : rule list =
   let pre_vars = goal.gl_pre_cond |> CF.fv in
