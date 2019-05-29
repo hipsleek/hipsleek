@@ -414,8 +414,6 @@ let choose_rule_unfold_post goal =
   let helper vnode =
     let pr_views, args = need_unfold_rhs goal.gl_prog vnode in
     let nf = do_unfold_view_vnode goal.gl_prog pr_views args post in
-    (* let nf = List.filter (fun x -> SB.check_unsat goal.gl_prog x
-     *                                      |> negate) nf in *)
     let rules = nf |> List.map (fun f -> RlUnfoldPost {
         rp_var = vnode.CF.h_formula_view_node;
         rp_case_formula = f}) in
@@ -580,28 +578,21 @@ let choose_rule_frame_data goal =
   pairs |> List.map filter |> List.concat
 
 let choose_rule_exists_right goal =
-  let exists_vars = CF.get_exists goal.gl_post_cond in
+  let post = goal.gl_post_cond in
+  let exists_vars = CF.get_exists post in
   if exists_vars = [] then []
-  else let post_pf = CF.get_pure goal.gl_post_cond in
-    let post_vars = CP.fv post_pf in
-    let equal_two_vars var1 var2 =
-      let conseq = CP.mkEqVar var1 var2 no_pos in
-      SB.check_pure_entail post_pf conseq in
-    let find_equal_var var =
-      let others = post_vars |> List.filter (equal_type var) in
-      others |> List.filter (fun x -> equal_two_vars x var) in
-    let change = ref false in
-    let aux_fold post var =
-      let eq_vars = find_equal_var var in
-      if eq_vars = [] then post
-      else let eq_var = List.hd eq_vars in
-        let () = change := true in
-        let n_post = remove_exists_vars post [var] in
-        CF.subst [(var, eq_var)] n_post in
-    let n_post = List.fold_left aux_fold goal.gl_post_cond exists_vars in
-    if !change then
-      let goal = RlExistsRight {n_post = n_post} in [goal]
-    else []
+  else
+    let post_pf = CF.get_pure goal.gl_post_cond in
+    let post_conjuncts = CP.split_conjunctions post_pf in
+    let eq_pairs = List.map (find_exists_substs exists_vars) post_conjuncts
+                   |> List.concat in
+    let collected_exists_vars = eq_pairs |> List.map fst |> CP.remove_dups_svl in
+    if collected_exists_vars = [] then []
+    else
+      let n_post = remove_exists_vars post collected_exists_vars in
+      let n_post = subst_term_formula eq_pairs n_post in
+      let rule = RlExistsRight {n_post = n_post} in
+      [rule]
 
 let rec choose_rule_interact goal rules =
   if rules = [] then
@@ -903,7 +894,9 @@ let synthesize_program goal =
 
 let synthesize_wrapper iprog prog proc pre_cond post_cond vars =
   let all_vars = (CF.fv pre_cond) @ (CF.fv post_cond) in
-  let vars = CP.intersect all_vars vars |> CP.remove_dups_svl in
+  (* let vars = CP.intersect all_vars vars |> CP.remove_dups_svl in *)
+  (* if vars = [] then (iprog, false)
+   * else *)
   let goal = mk_goal_w_procs prog [proc] pre_cond post_cond vars in
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let iast_exp = synthesize_program goal in

@@ -2536,6 +2536,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                   (*FAILURE explaining*)
                   let to_print = "\nProving precondition in method "
                                  ^ proc.proc_name ^ " Failed88.\n" in
+                  let () = repair_loc := Some VarGen.proving_loc#get in
                   let _ =
                     if not !Globals.disable_failure_explaining then
                       let s,fk,_= CF.get_failure_list_failesc_context res
@@ -3073,7 +3074,6 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
             "memory leak failure" else
             "Post condition cannot be derived" in
         let () = x_tinfo_hp (add_str "failure_str: " (pr_id)) s pos in
-        (* let () = repair_loc := Some VarGen.proving_loc#get in *)
         Err.report_error {
           Err.error_loc = pos;
           Err.error_text = (failure_str ^".")

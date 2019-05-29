@@ -939,10 +939,30 @@ let is_int_var (var: CP.spec_var) = match CP.type_of_sv var with
   | Int -> true
   | _ -> false
 
-let equal_type var1 var2 = match CP.type_of_sv var1 with
-  | Int -> is_int_var var2
-  | Named _ | TVar _ -> is_node_var var2
-  | _ -> CP.type_of_sv var1 = CP.type_of_sv var2
+let equal_type (var1:CP.spec_var) (var2:CP.spec_var) =
+  (CP.type_of_sv var1) = (CP.type_of_sv var2)
+
+let find_exists_substs sv_list conjunct =
+  let aux pf = match pf with
+    | CP.Eq (e1, e2, _) ->
+      begin
+        match e1 with
+        | CP.Var (sv, _) ->
+          if CP.mem sv sv_list then [(sv, e2)] else  []
+        | _ ->
+          begin
+            match e2 with
+            | CP.Var (sv, _) ->
+              if CP.mem sv sv_list then [(sv, e1)] else []
+            | _ -> []
+          end
+      end
+    | _ -> [] in
+  match conjunct with
+  | CP.BForm (bf, _) ->
+    let pf, _ = bf in
+    aux pf
+  | _ -> []
 
 let rec add_exists_vars (formula:CF.formula) (vars: CP.spec_var list) =
   match formula with
@@ -1265,6 +1285,21 @@ let replace_exp_proc n_exp proc =
   let () = x_tinfo_hp (add_str "n_exp" pr_iast_exp) n_exp no_pos in
   let () = x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
+
+let rec subst_term_formula sst (formula:CF.formula) = match formula with
+  | CF.Base bf ->
+    let pf = bf.CF.formula_base_pure |> pure_of_mix in
+    let n_pf = CP.subst_term sst pf in
+    CF.Base {bf with CF.formula_base_pure = mix_of_pure n_pf}
+  | CF.Exists bf ->
+    let pf = bf.CF.formula_exists_pure |> pure_of_mix in
+    let n_pf = CP.subst_term sst pf in
+    CF.Exists {bf with CF.formula_exists_pure = mix_of_pure n_pf}
+  | CF.Or bf ->
+    let n_f1 = subst_term_formula sst bf.CF.formula_or_f1 in
+    let n_f2 = subst_term_formula sst bf.CF.formula_or_f2 in
+    CF.Or {bf with CF.formula_or_f1 = n_f1;
+                CF.formula_or_f2 = n_f2}
 
 let rec get_heap (formula:CF.formula) = match formula with
   | Base bf -> [bf.CF.formula_base_heap]

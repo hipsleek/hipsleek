@@ -2955,7 +2955,6 @@ and diff_svl (svs1 : spec_var list) (svs2 : spec_var list) =
 and split_conjunctions_x =  function
   | And (x, y, _) -> (split_conjunctions_x x) @ (split_conjunctions_x y)
   | AndList l -> List.map (fun p -> AndList [p]) l
-  (* Gen.fold_l_snd split_conjunctions_x l *)
   | z -> [z]
 
 and split_conjunctions f =

@@ -4,8 +4,7 @@ data node {
 }
 
 ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
-  inv n >= 0;
+	or self::node<_, q> * q::ll<n-1>;
 
 /* function to insert a node in a singly linked list */
 void insert(node x, int a)

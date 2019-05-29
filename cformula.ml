@@ -5944,10 +5944,7 @@ and get_pure (f0: formula)=
     | Or orf ->
       let p1 = helper orf.formula_or_f1 in
       let p2 = helper orf.formula_or_f2 in
-      CP.Or (p1, p2, None , orf.formula_or_pos)
-      (*use CP.mkOr will remove trueConst*)
-      (* CP.mkOr p1 p2 None orf.formula_or_pos *)
-  in
+      CP.Or (p1, p2, None , orf.formula_or_pos) in
   helper f0
 
 and get_pure_ignore_exists (f0: formula)=
@@ -19380,8 +19377,8 @@ let project_body_num body inv svl =
 
 let subst_hvar_struc f subst =
   let f_f e = Some (subst_hvar e subst) in
-  transform_struc_formula 
-    (nonef, f_f, somef, 
+  transform_struc_formula
+    (nonef, f_f, somef,
      (somef, somef, somef, somef, somef)) f
 
 let subst_hvar_struc f subst =

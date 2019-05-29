@@ -3,7 +3,7 @@ data node {
 }
 
 ll<n> == self = null & n = 0
-	or self::node<q> * q::ll<n-1> & n > 0;
+	or self::node<q> * q::ll<n-1>;
 
 void append(node x, node y)
   requires x::ll<n1> * y::ll<n2> & x!=null
@@ -15,6 +15,3 @@ void append(node x, node y)
        append(x.next, y.next);
     }
 }
-
-// P(x', x)
-// P /\ Q /\ x = x' |- PP * T /\ Q
