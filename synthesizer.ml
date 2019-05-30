@@ -97,9 +97,10 @@ let rec find_sub_var sv cur_vars pre_pf =
         else res1
   | _ -> None
 
-let choose_rassign_aux goal cur_var : rule list =
+let choose_rule_assign_x goal : rule list =
+  let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
+  let all_vars = goal.gl_vars @ res_vars in
   let post = goal.gl_post_cond in
-  let all_vars = goal.gl_vars in
   let exists_vars = CF.get_exists post in
   let post_vars = CF.fv post in
   let post_vars = CP.diff_svl post_vars exists_vars in
@@ -110,6 +111,12 @@ let choose_rassign_aux goal cur_var : rule list =
   let filter_fun (x,y) = (List.mem x all_vars) &&
                          CP.subset (CP.afv y) all_vars in
   let eq_pairs = eq_pairs |> List.filter filter_fun in
+  let ante_pf = CF.get_pure goal.gl_pre_cond in
+  let filter_with_ante ante (var, exp) =
+    let var = CP.mkVar var no_pos in
+    let conseq = CP.mkEqExp var exp no_pos in
+    not(SB.check_pure_entail ante conseq) in
+  let eq_pairs = eq_pairs |> List.filter (filter_with_ante ante_pf) in
   if eq_pairs = [] then []
   else
     let mk_rule (var, exp) =
@@ -119,14 +126,6 @@ let choose_rassign_aux goal cur_var : rule list =
           ra_rhs = exp
         } in
     List.map mk_rule eq_pairs
-
-let choose_rule_assign_x goal : rule list =
-  let pre_vars = goal.gl_pre_cond |> CF.fv in
-  let res_vars = CF.fv goal.gl_post_cond |> List.filter CP.is_res_sv in
-  let vars = goal.gl_vars @ res_vars
-             |> List.filter (fun x -> CP.not_mem x pre_vars) in
-  let () = x_tinfo_hp (add_str "vars" pr_vars) vars no_pos in
-  vars |> List.map (choose_rassign_aux goal) |> List.concat
 
 let choose_rule_assign goal =
   Debug.no_1 "choose_rule_assign" pr_goal pr_rules
@@ -813,7 +812,7 @@ let rec synthesize_one_goal goal : synthesis_tree =
     let () = x_binfo_pp "MORE THAN NUMBER OF RULES ALLOWED" no_pos in
     mk_synthesis_tree_fail goal [] "more than number of rules allowed"
   else
-    let () = x_binfo_hp (add_str "goal" pr_goal) goal no_pos in
+    let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
     let rules = choose_synthesis_rules goal in
     process_all_rules goal rules
 
@@ -834,7 +833,7 @@ and process_all_rules goal rules : synthesis_tree =
   process [] rules
 
 and process_one_rule goal rule : derivation =
-  let () = x_binfo_hp (add_str "processing rule" pr_rule) rule no_pos in
+  let () = x_tinfo_hp (add_str "processing rule" pr_rule) rule no_pos in
   match rule with
   | RlFuncCall rcore -> process_rule_func_call goal rcore
   | RlFoldLeft rcore -> process_rule_fold_left goal rcore

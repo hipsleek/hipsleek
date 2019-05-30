@@ -1132,10 +1132,10 @@ let infer_templ_defn prog pre post fun_name args =
   let nprog = {sb_prog with
                SBC.prog_funcs = [f_defn];
                SBC.prog_commands = [SBC.InferFuncs infer_func]} in
-  let () = x_binfo_hp (add_str "ent" SBC.pr_pure_entail) ent no_pos in
+  let () = x_tinfo_hp (add_str "ent" SBC.pr_pure_entail) ent no_pos in
   let sb_res = SBPP.infer_unknown_functions ifp_typ nprog ent in
   let ifds = fst sb_res in
-  let () = x_binfo_hp (add_str "re" (SBPP.pr_ifds)) ifds no_pos in
+  let () = x_tinfo_hp (add_str "re" (SBPP.pr_ifds)) ifds no_pos in
   let func_defns = ifds |> List.map (fun x -> x.SBPP.ifd_fdefns)
                    |> List.concat in
   try
