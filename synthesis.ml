@@ -1301,10 +1301,21 @@ let rec subst_term_formula sst (formula:CF.formula) = match formula with
     CF.Or {bf with CF.formula_or_f1 = n_f1;
                 CF.formula_or_f2 = n_f2}
 
-let rec get_heap (formula:CF.formula) = match formula with
-  | Base bf -> [bf.CF.formula_base_heap]
-  | Exists bf -> [bf.CF.formula_exists_heap]
-  | Or bf -> (get_heap bf.CF.formula_or_f1) @ (get_heap bf.CF.formula_or_f2)
+let get_heap (formula:CF.formula) = match formula with
+  | CF.Base bf -> bf.CF.formula_base_heap
+  | CF.Exists bf -> bf.CF.formula_exists_heap
+  | CF.Or bf -> report_error no_pos ("faulty formula" ^ (pr_formula formula))
+
+let get_heap_nodes (hf:CF.h_formula) =
+  let rec aux hf = match hf with
+    | CF.Star bf -> (aux bf.CF.h_formula_star_h1) @ (aux bf.CF.h_formula_star_h2)
+    | CF.DataNode dn ->
+      let var = dn.CF.h_formula_data_node in
+      let args = dn.CF.h_formula_data_arguments in
+      let data_name = dn.CF.h_formula_data_name in
+      [(var, data_name, args)]
+    | _ -> [] in
+  aux hf
 
 let frame_var_formula formula var =
   let rec helper hf = match hf with

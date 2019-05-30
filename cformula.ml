@@ -5963,8 +5963,8 @@ and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
-  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 
-  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}     
+  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
     -> (get_ptrs h1)@(get_ptrs h2)

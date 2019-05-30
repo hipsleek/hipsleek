@@ -131,83 +131,34 @@ let choose_rule_assign goal =
   Debug.no_1 "choose_rule_assign" pr_goal pr_rules
     (fun _ -> choose_rule_assign_x goal) goal
 
-let choose_fwrite_dnode dn1 dn2 var goal =
-  let pre, post = goal.gl_pre_cond, goal.gl_post_cond in
-  let var_list, prog = goal.gl_vars, goal.gl_prog in
-  let data_decls = prog.Cast.prog_data_decls in
-  let () = x_tinfo_hp (add_str "pre-dnode" pr_formula) pre no_pos in
-  let () = x_tinfo_hp (add_str "post-dnode" pr_formula) post no_pos in
-  let bef_args = dn1.CF.h_formula_data_arguments in
-  let aft_args = dn2.CF.h_formula_data_arguments in
-  let name = dn1.CF.h_formula_data_name in
-  let data = List.find (fun x -> x.Cast.data_name = name) data_decls in
-  let () = x_tinfo_hp (add_str "data" Cprinter.string_of_data_decl) data no_pos in
-  let pre_post = List.combine bef_args aft_args in
-  let fields = List.map fst data.Cast.data_fields in
-  let triple = List.combine pre_post fields in
-  let triple = List.filter (fun ((pre,post),_) -> CP.eq_sv pre post
-                                                |> negate) triple in
-  let mkRlBind (var, field, n_var) = {
+let choose_rule_fwrite goal =
+  let pre = goal.gl_pre_cond in
+  let post = goal.gl_pre_cond in
+  let prog = goal.gl_prog in
+  let pre_nodes = pre |> get_heap |> get_heap_nodes in
+  let post_nodes = post |> get_heap |> get_heap_nodes in
+  let aux post_nodes (var, data_name, args) =
+    try
+      let triple = List.find (fun (y, _, _) -> CP.eq_sv y var) post_nodes in
+      let _, _, post_args = triple in
+      let data_decls = prog.Cast.prog_data_decls in
+      let data = List.find (fun x -> eq_str x.Cast.data_name data_name)
+          data_decls in
+      let fields = List.map fst data.Cast.data_fields in
+      let arg_pairs = List.combine args post_args in
+      let arg_triples = List.map2 (fun (x,y) z -> (x,y,z)) arg_pairs fields in
+      let filter_fun (x,y, z) = not(CP.eq_sv x y) in
+      let dif_fields = List.filter filter_fun arg_triples in
+      dif_fields |> List.map (fun (x, y, z) -> (var, y, z))
+    with _ -> [] in
+  let tuples = pre_nodes |> List.map (aux post_nodes) |> List.concat in
+  let mk_fwrite_rule (var, n_val, field) =
+    RlFWrite {
       rfw_bound_var = var;
       rfw_field = field;
-      rfw_value = n_var;
+      rfw_value = n_val;
     } in
-  let helper dif_field =
-    let pre_post = fst dif_field in
-    let n_var = snd pre_post in
-    let field = snd dif_field in
-    if List.exists (fun x -> CP.eq_sv x n_var) goal.gl_vars then
-      [(var,field, n_var)]
-    else [] in
-  let eq_triple (v1, f1, nv1) (v2, f2, nv2) =
-    CP.eq_sv v1 v2 && CP.eq_sv nv1 nv2 && f1 = f2 in
-  let eq_var_rules = triple |> List.map helper |> List.concat in
-  eq_var_rules |> (Gen.BList.remove_dups_eq eq_triple)
-  |> List.map mkRlBind
-
-let rec choose_fwrite_data goal cur_var =
-  let pre,post = goal.gl_pre_cond, goal.gl_post_cond in
-  let aux_bf hf1 hf2 goal f_var1 f_var2 =
-    let var_list = goal.gl_vars in
-    let prog = goal.gl_prog in
-    match hf1, hf2 with
-    | CF.DataNode dnode1, CF.DataNode dnode2 ->
-      choose_fwrite_dnode dnode1 dnode2 cur_var goal
-    | _ -> [] in
-  let aux f_var1 f_var2 goal =
-    let var_list = goal.gl_vars in
-    let field_rules = match f_var1, f_var2 with
-      | CF.Base bf1, CF.Base bf2 ->
-        let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_base_heap in
-        aux_bf hf1 hf2 goal f_var1 f_var2
-      | CF.Base bf1, CF.Exists bf2 ->
-        let hf1, hf2 = bf1.CF.formula_base_heap, bf2.CF.formula_exists_heap in
-        aux_bf hf1 hf2 goal f_var1 f_var2
-      | _ -> [] in
-    field_rules in
-  match pre, post with
-  | CF.Base _, CF.Base _    | CF.Base _, CF.Exists _
-  | CF.Exists _, CF.Base _  | CF.Exists _, CF.Exists _ ->
-    let f_var1 = extract_var_f pre cur_var in
-    let f_var2 = extract_var_f post cur_var in
-    if f_var1 != None && f_var2 != None then
-      let f_var1, f_var2 = Gen.unsome f_var1, Gen.unsome f_var2 in
-      aux f_var1 f_var2 goal
-    else []
-  | CF.Base _, CF.Or disjs ->
-    let f1, f2 = disjs.CF.formula_or_f1, disjs.CF.formula_or_f2 in
-    let goal1 = {goal with gl_post_cond = f1} in
-    let goal2 = {goal with gl_post_cond = f2} in
-    let rule1 = choose_fwrite_data goal1 cur_var in
-    let rule2 = choose_fwrite_data goal2 cur_var in
-    rule1@rule2
-  | _ -> []
-
-let choose_rule_fwrite goal =
-  let vars = goal.gl_vars |> List.filter is_node_var in
-  vars |> List.map (choose_fwrite_data goal) |> List.concat
-  |> List.filter (fun x -> is_fwrite_called goal.gl_trace x |> negate)
-  |> List.map (fun x -> RlFWrite x)
+  tuples |> List.map mk_fwrite_rule
 
 let is_same_shape (f1:CF.formula) (f2:CF.formula) =
   let check_hf (hf1:CF.h_formula) (hf2:CF.h_formula) =
