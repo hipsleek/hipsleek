@@ -165,7 +165,7 @@ let repair_cproc iprog =
   | Some r_proc_name ->
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = create_blocks cproc in
-    let () = x_binfo_hp (add_str "blocks" (pr_list pr_c_exps)) blocks no_pos in
+    let () = x_binfo_hp (add_str "blocks" pr_bt) blocks no_pos in
     None
   | _ -> None
 

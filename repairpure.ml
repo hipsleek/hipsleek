@@ -17,48 +17,69 @@ let pr_struc_f = Cprinter.string_of_struc_formula
 let next_proc = ref false
 let stop = ref false
 
+type block_tree = {
+  bt_statements: C.exp list;
+  bt_block_left : block_tree_node;
+  bt_block_right: block_tree_node;
+}
+
+and block_tree_node =
+  | BtEmp
+  | BtNode of block_tree
+
+let rec pr_bt (bt: block_tree) =
+  let stmts = bt.bt_statements in
+  let str_stmts = stmts |> pr_list Cprinter.string_of_exp in
+  let l_tree = bt.bt_block_left |> pr_btn in
+  let r_tree = bt.bt_block_right |> pr_btn in
+  str_stmts ^ "\n" ^
+  l_tree ^ "\n" ^
+  r_tree
+
+and pr_btn (btn: block_tree_node) = match btn with
+  | BtEmp -> "BtEmp"
+  | BtNode bt -> "BtNode (" ^ (pr_bt bt) ^ ")"
+
 let is_return_exp (exp:I.exp) =
   match exp with
   | I.Return _ -> true
   | _ -> false
 
 let create_blocks (proc : C.proc_decl) =
-  let is_cond_exp exp = match exp with
-    | C.Cond _ -> true
-    | _ -> false in
   let is_seq_exp exp = match exp with
     | C.Block _
     | C.Seq _ -> true
     | _ -> false in
-  let rec aux (exp: C.exp) pos = match exp with
-    | C.Label exp -> aux exp.C.exp_label_exp pos
-    | C.Block exp -> aux exp.C.exp_block_body (* exp.C.exp_block_pos *) pos
+  let input_tree = {
+      bt_statements = [];
+      bt_block_left = BtEmp;
+      bt_block_right = BtEmp;
+    } in
+  let rec aux (exp: C.exp) block_tree = match exp with
+    | C.Label exp -> aux exp.C.exp_label_exp block_tree
+    | C.Block exp -> aux exp.C.exp_block_body block_tree
     | C.Seq s_exp ->
-      (aux s_exp.C.exp_seq_exp1 (* s_exp.C.exp_seq_pos *) pos)
-      @ (aux s_exp.C.exp_seq_exp2 (* s_exp.C.exp_seq_pos *) pos)
+      let block_tree = aux s_exp.C.exp_seq_exp1 block_tree in
+      aux s_exp.C.exp_seq_exp2 block_tree
     | C.Bind _ | C.Sharp _ | SCall _
-    | C.VarDecl _ -> [(exp, pos)]
+    | C.VarDecl _ ->
+      let stmts = exp::(block_tree.bt_statements) in
+      {block_tree with bt_statements = stmts}
     | C.Assign a_exp ->
       if is_seq_exp a_exp.C.exp_assign_rhs then
-        aux a_exp.C.exp_assign_rhs pos
-      else [(exp, pos)]
+        aux a_exp.C.exp_assign_rhs block_tree
+      else
+        let stmts = exp::(block_tree.bt_statements) in
+        {block_tree with bt_statements = stmts}
     | C.Cond exp ->
-      let then_pos = C.pos_of_exp exp.C.exp_cond_then_arm in
-      let else_pos = C.pos_of_exp exp.C.exp_cond_else_arm in
-      (aux exp.C.exp_cond_then_arm then_pos) @
-      (aux exp.C.exp_cond_else_arm else_pos)
-    | _ -> [] in
+      let l_tree = aux exp.C.exp_cond_then_arm input_tree in
+      let r_tree = aux exp.C.exp_cond_else_arm input_tree in
+      {block_tree with bt_block_left = BtNode l_tree;
+                       bt_block_right = BtNode r_tree}
+    | _ -> block_tree in
   match proc.C.proc_body with
-  | None -> []
-  | Some c_exp ->
-    let pairs = aux c_exp no_pos in
-    let locs = pairs |> List.map snd in
-    let locs = Gen.BList.remove_dups_eq VarGen.eq_loc locs in
-    let aux pairs l =
-      let pairs = List.filter (fun (_, y) -> VarGen.eq_loc l y) pairs in
-      pairs |> List.map fst in
-    let blocks = List.map (aux pairs) locs in
-    blocks
+  | None -> input_tree
+  | Some c_exp -> aux c_exp input_tree
 
 let get_stmt_candidates (exp: I.exp) =
   let rec aux (exp:I.exp) list =
