@@ -3064,9 +3064,8 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
     rs
   else begin
     let pr_rs = Cprinter.string_of_list_partial_context in
-    let () = x_binfo_hp (add_str "cxt" pr_rs) rs no_pos in
+    let () = x_tinfo_hp (add_str "cxt" pr_rs) rs no_pos in
     let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
-    let () = x_binfo_hp (add_str "cxt" pr_rs) rs no_pos in
     let pr_paths = pr_list Cprinter.string_of_path_trace in
     let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
     let _ =
