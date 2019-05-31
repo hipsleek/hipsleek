@@ -17,6 +17,8 @@ let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 let pr_struc_f = Cprinter.string_of_struc_formula
 let pr_hps = pr_list Iprinter.string_of_hp_decl
+let pr_exps = pr_list Iprinter.string_of_exp
+let pr_c_exps = pr_list Cprinter.string_of_exp
 
 let filter_cand buggy_loc cand =
   match buggy_loc with
@@ -122,7 +124,6 @@ let repair_one_candidate (proc_name: string) (iprog: I.prog_decl)
 
 let repair_iprog (iprog:I.prog_decl) =
   let start_time = get_time () in
-  let pr_exps = pr_list Iprinter.string_of_exp in
   match (!Typechecker.repair_proc) with
   | (Some repair_proc) ->
     let p_name = Cast.unmingle_name repair_proc in
@@ -159,6 +160,16 @@ let repair_iprog (iprog:I.prog_decl) =
       List.hd res
   | _ -> None
 
+let repair_cproc iprog =
+  match !Typechecker.repair_proc with
+  | Some r_proc_name ->
+    let cproc = !Syn.repair_proc |> Gen.unsome in
+    let blocks = create_blocks cproc in
+    let () = x_binfo_hp (add_str "blocks" (pr_list pr_c_exps)) blocks no_pos in
+    None
+  | _ -> None
+
 let rec start_repair_wrapper iprog =
-  let tmp = repair_iprog iprog in
+  (* let tmp = repair_iprog iprog in *)
+  let tmp = repair_cproc iprog in
   tmp

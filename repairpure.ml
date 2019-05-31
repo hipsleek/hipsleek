@@ -22,6 +22,44 @@ let is_return_exp (exp:I.exp) =
   | I.Return _ -> true
   | _ -> false
 
+let create_blocks (proc : C.proc_decl) =
+  let is_cond_exp exp = match exp with
+    | C.Cond _ -> true
+    | _ -> false in
+  let is_seq_exp exp = match exp with
+    | C.Block _
+    | C.Seq _ -> true
+    | _ -> false in
+  let rec aux (exp: C.exp) pos = match exp with
+    | C.Label exp -> aux exp.C.exp_label_exp pos
+    | C.Block exp -> aux exp.C.exp_block_body (* exp.C.exp_block_pos *) pos
+    | C.Seq s_exp ->
+      (aux s_exp.C.exp_seq_exp1 (* s_exp.C.exp_seq_pos *) pos)
+      @ (aux s_exp.C.exp_seq_exp2 (* s_exp.C.exp_seq_pos *) pos)
+    | C.Bind _ | C.Sharp _ | SCall _
+    | C.VarDecl _ -> [(exp, pos)]
+    | C.Assign a_exp ->
+      if is_seq_exp a_exp.C.exp_assign_rhs then
+        aux a_exp.C.exp_assign_rhs pos
+      else [(exp, pos)]
+    | C.Cond exp ->
+      let then_pos = C.pos_of_exp exp.C.exp_cond_then_arm in
+      let else_pos = C.pos_of_exp exp.C.exp_cond_else_arm in
+      (aux exp.C.exp_cond_then_arm then_pos) @
+      (aux exp.C.exp_cond_else_arm else_pos)
+    | _ -> [] in
+  match proc.C.proc_body with
+  | None -> []
+  | Some c_exp ->
+    let pairs = aux c_exp no_pos in
+    let locs = pairs |> List.map snd in
+    let locs = Gen.BList.remove_dups_eq VarGen.eq_loc locs in
+    let aux pairs l =
+      let pairs = List.filter (fun (_, y) -> VarGen.eq_loc l y) pairs in
+      pairs |> List.map fst in
+    let blocks = List.map (aux pairs) locs in
+    blocks
+
 let get_stmt_candidates (exp: I.exp) =
   let rec aux (exp:I.exp) list =
     match exp with

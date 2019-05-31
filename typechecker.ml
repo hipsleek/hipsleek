@@ -50,10 +50,6 @@ let sort_input = ref false
 let webserver = ref false
 let proc_used_names = ref ([]:ident list)
 
-let reset_repair_ref =
-  let () = repair_proc := None in
-  ()
-
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 
@@ -3067,6 +3063,12 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   if (is_reachable_succ) then
     rs
   else begin
+    let pr_rs = Cprinter.string_of_list_partial_context in
+    let () = x_binfo_hp (add_str "cxt" pr_rs) rs no_pos in
+    let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
+    let () = x_binfo_hp (add_str "cxt" pr_rs) rs no_pos in
+    let pr_paths = pr_list Cprinter.string_of_path_trace in
+    let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in

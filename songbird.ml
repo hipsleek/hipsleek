@@ -1274,12 +1274,12 @@ and hentail_after_sat_ebase ?(pf=None) prog ctx es bf  =
     else if ante_hps then
       let ante = es.CF.es_formula in
       let vars = ante |> CF.fv |> CP.remove_dups_svl in
-      let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
-      let vars = vars |> List.filter filter_var in
       let exists_vars = bf.CF.formula_struc_exists
                         @ bf.CF.formula_struc_explicit_inst
                         @ bf.CF.formula_struc_implicit_inst
                         |> CP.remove_dups_svl in
+      let filter_var x = Syn.is_int_var x || Syn.is_node_var x in
+      let vars = vars @ exists_vars |> List.filter filter_var in
       let conseq = bf.CF.formula_struc_base in
       let conseq = Syn.add_exists_vars conseq exists_vars in
       let n_es, n_conseq = Syn.create_residue vars prog conseq in
