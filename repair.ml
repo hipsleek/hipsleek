@@ -165,7 +165,17 @@ let repair_cproc iprog =
   | Some r_proc_name ->
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = create_blocks cproc in
-    let () = x_binfo_hp (add_str "blocks" pr_bt) blocks no_pos in
+    let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
+    let check_post = !Syn.check_post_list in
+    let leaf_nodes = get_leaf_nodes blocks in
+    let pr_leaves = pr_list pr_c_exps in
+    let () = x_tinfo_hp (add_str "leaves" pr_leaves) leaf_nodes no_pos in
+    let pr_cp = pr_list string_of_bool in
+    let () = x_tinfo_hp (add_str "check_post" pr_cp) check_post no_pos in
+    let pairs = List.combine leaf_nodes check_post in
+    let pr_pairs = pr_list (pr_pair pr_c_exps string_of_bool) in
+    let () = x_binfo_hp (add_str "leaves" pr_pairs) pairs no_pos in
+    (* to generate all traces leading to the error *)
     None
   | _ -> None
 

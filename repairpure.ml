@@ -40,6 +40,17 @@ and pr_btn (btn: block_tree_node) = match btn with
   | BtEmp -> "BtEmp"
   | BtNode bt -> "BtNode (" ^ (pr_bt bt) ^ ")"
 
+let rec get_leaf_nodes (bt:block_tree) =
+  match bt.bt_block_left, bt.bt_block_right with
+  | BtEmp, BtEmp -> [bt.bt_statements]
+  | BtEmp, BtNode right ->
+    let right_leaves = get_leaf_nodes right in
+    (* bt.bt_statements:: *)right_leaves
+  | BtNode left, BtEmp ->
+    get_leaf_nodes left
+  | BtNode left, BtNode right ->
+    (get_leaf_nodes left) @ (get_leaf_nodes right)
+
 let is_return_exp (exp:I.exp) =
   match exp with
   | I.Return _ -> true

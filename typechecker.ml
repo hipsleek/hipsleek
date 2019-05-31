@@ -3019,6 +3019,12 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
           (fun (msg, pos) -> msg ^ ":" ^ (string_of_loc pos)) conc_errs in
       print_string_quiet ("\n!!! WARNING: " ^ str_conc_err ^ "\n") in
   let fn_state = ctx in
+  let pr = Cprinter.string_of_list_partial_context in
+  let () = x_tinfo_hp (add_str "ctx" pr) ctx no_pos in
+  let all_traces = ctx |> List.map snd |> List.concat
+                    |> List.map (fun (x, _, _) -> x) in
+  let pr_paths = pr_list Cprinter.string_of_path_trace in
+  let () = x_binfo_hp (add_str "paths" pr_paths) all_traces no_pos in
   let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
   let rs, prf =
     if f1 then
@@ -3063,11 +3069,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl)
   if (is_reachable_succ) then
     rs
   else begin
-    let pr_rs = Cprinter.string_of_list_partial_context in
-    let () = x_tinfo_hp (add_str "cxt" pr_rs) rs no_pos in
     let fail_traces = rs |> List.map fst |> List.concat |> List.map fst in
     let pr_paths = pr_list Cprinter.string_of_path_trace in
+    let aux fail_traces trace =
+      let eq_trace t1 = t1 = trace in
+      List.exists eq_trace fail_traces in
     let () = x_binfo_hp (add_str "paths" pr_paths) fail_traces no_pos in
+    let check_post = List.map (aux fail_traces) all_traces in
+    let () = Synt.check_post_list := check_post in
     let _ =
       if not !Globals.disable_failure_explaining then
         let s,fk,ets= CF.get_failure_list_partial_context rs in

@@ -11,7 +11,8 @@ void append2(node2 x, node2 y)
 	ensures x::dll<a, m+n>;
 {
 	if (x.next == null) {
-		x.next = y.next;
+		x.next = y;
+    // x.next = y.next;
     y.prev = x;
 	}
 	else {

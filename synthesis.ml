@@ -34,6 +34,7 @@ let check_entail_num = ref 0
 let repair_pos = ref (None : VarGen.loc option)
 let repair_res = ref (None : Iast.prog_decl option)
 let is_return_cand = ref false
+let check_post_list = ref ([]: bool list)
 let unk_hps = ref ([] : Cast.hp_decl list)
 let repair_proc = ref (None : Cast.proc_decl option)
 let syn_iprog = ref (None: I.prog_decl option)
