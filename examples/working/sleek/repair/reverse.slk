@@ -1,0 +1,30 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;.
+
+
+
+
+
+void reverse(node@R xs, node@R ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+
+synthesize [node xs,node ys,node tmp]
+ q_4405::ll<fl3> * ys::ll<m> * xs::node<Anon_4404,q_4405> &
+fl3+1=n & xs!=null
+~> (exists fr,n_4414: q_4405::ll<n_4414>@M * xs::ll<fr>@M&
+q_4405=null & fr=fl19-fl3-1.
+
+
+// synthesize [node xs,node ys,node tmp]
+//  q_4405::ll<flted_7_4403>@M * ys::ll<m>@M * xs::node<Anon_4404,q_4405>@M&
+// flted_7_4403+1=n & v_bool_14_4384 & xs!=null & ys=ys & xs=xs & tmp=q_4405
+// ~>
+//  (exists f_r_4420,n_4414: q_4405::ll<n_4414>@M * xs::ll<f_r_4420>@M&
+// q_4405=null & f_r_4420=(flted_12_4419+(-1*flted_7_4403))-1).

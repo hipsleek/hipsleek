@@ -1,0 +1,18 @@
+data node2 {
+	node2 prev;
+	node2 next;	
+}.
+
+pred dll<p,n> == self = null & n = 0 
+  or (exists q: self::node2<p , q> * q::dll<self, n-1> & n > 0).
+
+node2 copy(node2 x)
+requires x::dll<p, n>
+ensures x::dll<p, n> * res::dll<p, n>;.
+
+synthesize [node2 x, node2 tmp]
+
+x::dll<p,n> & x != null
+~>
+x::node2<p, q64> * q64::dll<x,n69> * tmp::dll<x,n69>
+& n69 = n - 1 & x != null.

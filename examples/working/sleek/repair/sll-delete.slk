@@ -1,0 +1,16 @@
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void delete(node x, int a)
+	requires x::ll<n> & n > a & a > 0 
+	ensures (exists k: x::ll<k> & k = n-1);.
+
+synthesize [node x,int a]
+ x::ll<n> & 0<a & a<n & a!=1
+~> 
+ (exists fr: x::ll<fr> & fr =n-1).

@@ -1,0 +1,30 @@
+data node {
+   int val;
+   node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+void insert(node x, int a)
+	requires x::ll<n> & n > 0 
+	ensures exists k: x::ll<k> & k = n+1;.
+
+// synthesize [node x,int a]
+//  x::node<Anon_4408,q_4409> * q_4409::ll<flted_7_4407>&
+// q_4409!=null & (n-1)-flted_7_4407=0
+// ~>
+// (exists Anon_4416,q_4417,Anon_4424,
+// q_4425: q_4417::node<Anon_4424,q_4425> * x::node<Anon_4416,q_4417> * 
+//         q_4425::ll<flted_7_4407> & (n-1)-flted_7_4407=0).
+
+
+synthesize [node q_4409,node x,int a]
+ x::node<Anon_4408,q_4409> * q_4409::ll<flted_7_4407>&
+q_4409!=null & n=flted_7_4407+1
+~>
+ (exists Anon_60,q_61,Anon_62,
+    q_63: q_61::node<Anon_62,q_63> * x::node<Anon_60,q_61> * 
+      q_63::ll<flted_7_4407>& n = flted_7_4407+1).
+
+// to check choose function call rule

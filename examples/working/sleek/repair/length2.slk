@@ -1,0 +1,32 @@
+
+data node {
+     int val;
+     node next
+}.
+
+pred ll<n> == self = null & n = 0
+	or (exists v, q: self::node<v, q> * q::ll<n-1>).
+
+int length(node x)
+  requires x::ll<n>
+  ensures x::ll<n> & res = n;.
+
+// synthesize [node x, node q_63]
+// x::node<v_62,q_63> * q_63::ll<flted_7_61> &
+// !(v_bool_20_1893) & x!=null & flted_7_61+1=n
+// ~>
+// (exists flted_7_52,v_53,q_54: x::node<v_53,q_54> * q_54::ll<flted_7_52> &
+// res=n & flted_7_52+1=n_94).
+
+synthesize [node x]
+x::ll<n> & x=null
+~>
+x::ll<n> & n=res.
+
+//  synthesize [node x]
+// x=null & n = 0
+// ~>
+// // res = 0;
+// x::ll<n> & res = n.
+
+
