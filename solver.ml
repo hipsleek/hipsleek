@@ -11745,7 +11745,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 
               let ante_for_ho_match = new_ante in
               let ante_for_ho_match = map_opt_def new_ante (fun x-> add_pure_formula_to_formula x new_ante) l_pure_opt in
-              let l_vdef_hvar_split_kinds = List.map (fun (_, _, sk) -> sk) l_vdef.view_ho_vars in
+              let l_vdef_hvar_split_kinds = List.map (fun hov -> hov.C.hovar_split_kind) l_vdef.view_ho_vars in
               let r_ho_args = List.map (trans_rflow_formula (subst_avoid_capture r_subs l_subs)) r_ho_args in
               let args = List.combine l_ho_args r_ho_args in
               let args = List.combine args l_vdef_hvar_split_kinds in

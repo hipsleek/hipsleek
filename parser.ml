@@ -655,20 +655,19 @@ let peek_subs =
  let peek_pure_out =
    SHGram.Entry.of_parser "peek_pure_out"
      (fun strm ->
-        (* let () = print_endline "This is the procccc of peek_pure_out" in *)
            match Stream.npeek 3 strm with
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] ->  ()
 	     (* | [XPURE,_;OPAREN,_;_] -> () *)
              | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
-             | [_;COLONCOLON,_;_] -> (* let () = print_endline "This is the procccc of pure5" in *) raise Stream.Failure
+             | [_;COLONCOLON,_;_] ->  raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
              | [OSQUARE,_;_;COLONCOLON,_] -> raise Stream.Failure
              | [OSQUARE,_;DOUBLEQUOTE,_;_]-> raise Stream.Failure
              (* | [i,_;j,_;k,_]-> print_string("start here: i:" ^ (Token.to_string i)^" j:"^(Token.to_string j)^" k:"^(Token.to_string k)^" end here \n");() *)
-             | _ -> let () = print_endline "This is the procccc of peek_pure_out last branch" in ())
+             | _ -> ())
 
  let peek_typecast =
    SHGram.Entry.of_parser "peek_typecast"
@@ -2065,7 +2064,9 @@ id_ann:
    | `MINUS; hid = ho_id; t = OPT formula_ann -> (INFLOW,  hid, (un_option t HO_NONE))
   ]];
 
-id_ann_list_opt :[[b = LIST0 id_ann SEP `COMMA -> b]];
+id_ann_w_params: [[id = id_ann; params = OPT opt_cid_list_bracket -> (id,params)]];
+
+id_ann_list_opt :[[b = LIST0 id_ann_w_params SEP `COMMA -> b]];
 
 opt_brace_vars : [[ `OBRACE; sl = id_ann_list_opt; `CBRACE -> sl ]];
 
@@ -2139,7 +2140,6 @@ cid:
 cid_or_pair:
   [[
     `OPAREN; e1=cexp_w ; `COMMA;  e2= cexp_w; `CPAREN ->
-    let () = print_endline "This is the procccc of cid_or_pair" in
     let pe1 = get_pure_exp e1 no_pos in
     let pe2 = get_pure_exp e2 no_pos in
     (("_",Unprimed),(Some(pe1,pe2)))
@@ -2598,7 +2598,7 @@ simple_heap_constr:
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name ho_args ~poly:poly_args 0 dr split (P.ConstAnn(Mutable)) false false false frac t [] ofl (get_pos_camlp4 _loc 2)
      )
      (* High-order variables, e.g. %P*)
-       | `PERCENT; `IDENTIFIER id; args = OPT opt_cid_list_bracket ->
+    | `PERCENT; `IDENTIFIER id; args = OPT opt_cid_list_bracket ->
               let args = un_option args [] in
               F.HVar (id,args)
    | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN ->
@@ -2729,15 +2729,15 @@ ann_term:
      ]];
 
 cexp :
-  [[ t = cexp_data_p -> let () = print_endline "This is the procccc of cexp" in
+  [[ t = cexp_data_p ->
     match t with
       | f, _ ->  f ]
     ];
 
 cexp_data_p:
-  [[t = cexp_w -> (* let () = print_endline "This is the procccc of cexp_data_p" in *)
+  [[t = cexp_w ->
      match t with
-      | Pure_c f -> (* let () = print_endline "This is the procccc of inside cexp_data_p" in *) (f, None)
+      | Pure_c f ->  (f, None)
       | Pure_t (f, ann_opt ) -> (f, ann_opt)
       (* | _ -> report_error (get_pos_camlp4 _loc 1) "3 expected cexp, found pure_constr" *)
       | Pure_f f -> (BExpr f, None)
@@ -3589,8 +3589,8 @@ typ:
    | peek_pointer_type; t = pointer_type     -> (*let () = print_endline "Parsed pointer type" in *) t
    | peek_poly_type; t = parse_poly_type -> t
    | peek_poly_data_struc_type; t = poly_data_struc_type -> t
-   | peek_array_type; t=array_type     -> (* An Hoa *) (* let () = print_endline "Parsed array type" in *) t
-   | t=non_array_type -> (* An Hoa *) (* let () = print_endline "Parsed a non-array type" in *) t]];
+   | peek_array_type; t=array_type     ->  t
+   | t=non_array_type -> t]];
 
 parse_mapping_type:
   [[ `MAPPING; `OPAREN; t1 = typ; `MASSIGN; t2 = typ; `CPAREN
@@ -4433,7 +4433,9 @@ local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_decl
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
 
 variable_declarator:
-  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos_camlp4 _loc 1)
+  [[ `IDENTIFIER id; `EQ; t=variable_initializer  ->
+     let () = print_string ("Identifier : "^id^"\n") in
+     (id, Some t, get_pos_camlp4 _loc 1)
    | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos_camlp4 _loc 1) ]];
 
 variable_initializer: [[t= expression ->t]];
@@ -4761,9 +4763,9 @@ argument_list : [[  t = expression -> [t]
 argument: [[t=expression -> t]];
 
 expression:
-  [[ t=conditional_expression -> t
-   | t= bind_expression -> t
-   | t=assignment_expression -> t]];
+  [[ t = conditional_expression -> let () = print_endline "conditional" in t
+   | t = bind_expression        -> let () = print_endline "bind" in t
+   | t = assignment_expression  -> let () = print_endline "assignment" in t]];
 
 constant_expression: [[t=expression -> t]];
 
@@ -5029,7 +5031,8 @@ primary_expression_no_array_no_parenthesis :
 
 (* An Hoa : array access expression *)
 arrayaccess_expression:[[
-             id=primary_expression_no_array_no_parenthesis; `OSQUARE; ex = LIST1 expression SEP `COMMA; `CSQUARE ->
+    id=primary_expression_no_array_no_parenthesis; `OSQUARE; ex = LIST1 expression SEP `COMMA; `CSQUARE ->
+    let () = print_endline "array access parsing" in
 			ArrayAt {
 				exp_arrayat_array_base = id;
 				exp_arrayat_index = ex;

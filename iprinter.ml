@@ -1062,7 +1062,12 @@ let string_of_opt_baga =
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v =
-  let ho_str = "{" ^ (String.concat "," (List.map (fun (fk,v,sk) -> (string_of_ho_flow_kind fk) ^ v ^ (string_of_ho_split_kind sk)) v.view_ho_vars)) ^ "}" in
+  let ho_str = "{" ^ (String.concat ","
+                        (List.map (fun hov -> (string_of_ho_flow_kind hov.hovar_flow_kind)
+                                              ^ hov.hovar_name
+                                              ^ "(" ^ ((pr_list (pr_pair pr_id string_of_primed)) hov.hovar_param) ^ ")"
+                                              ^ (string_of_ho_split_kind hov.hovar_split_kind))
+                           v.view_ho_vars)) ^ "}" in
   let extn_str =
     match v.view_derv_from with
     | None -> ""

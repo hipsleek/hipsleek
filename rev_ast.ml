@@ -352,7 +352,14 @@ let rev_trans_view_decl (v: C.view_decl): I.view_decl =
     I.view_is_prim = v.C.view_is_prim;
     I.view_is_hrel = v.C.view_is_hrel;
     I.view_data_name = v.C.view_data_name;
-    I.view_ho_vars = List.map (fun (fk, sv, sk) -> (fk, CP.name_of_spec_var sv, sk)) v.C.view_ho_vars;
+    I.view_ho_vars = List.map (fun hov ->
+        {I.hovar_name = CP.name_of_spec_var hov.C.hovar_name;
+         I.hovar_param = List.map (fun sv -> (CP.name_of_spec_var sv, CP.primed_of_spec_var sv)) hov.C.hovar_param;
+         I.hovar_flow_kind = hov.C.hovar_flow_kind;
+         I.hovar_split_kind = hov.C.hovar_split_kind;
+        })
+        (* (fk, CP.name_of_spec_var sv, sk) *)
+        v.C.view_ho_vars;
     I.view_poly_vars = []; (* TODO *)
     I.view_imm_map = []; (* TODO *)
     I.view_labels = v.C.view_labels, List.exists (fun c -> not (LO.is_unlabelled c)) v.C.view_labels;

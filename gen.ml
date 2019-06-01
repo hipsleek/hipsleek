@@ -185,6 +185,7 @@ struct
   let pr_list_num f xs = "["^(pr_lst_num ",\n" f xs)^"]"
   let pr_list_num_vert f xs = "[\n"^(pr_lst_num ",\n" f xs)^"]"
   let pr_arr_ln f arr = pr_list_ln f (Array.to_list arr)
+  let pr_list_empty f xs = match xs with | [] -> "" | _ -> pr_list f xs
 
   let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
 

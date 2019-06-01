@@ -117,7 +117,7 @@ and view_decl =
 
     mutable view_data_name : ident;
     (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-    mutable view_ho_vars : (ho_flow_kind * ident * ho_split_kind) list;
+    mutable view_ho_vars : hovar_type list;
 
     view_poly_vars: ident list;
 
@@ -221,7 +221,13 @@ and barrier_decl = {
   barrier_shared_vars : (typ*ident) list;
   barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
 }
-
+    (* (ho_flow_kind * ident * ho_split_kind) *)
+and hovar_type = {
+  hovar_name : ident;
+  hovar_param : (ident * primed) list;
+  hovar_flow_kind : ho_flow_kind;
+  hovar_split_kind : ho_split_kind;
+}
 
 and enum_decl = { enum_name : ident;
                   enum_fields : (ident * int option) list }
@@ -725,6 +731,13 @@ let mk_iview_decl ?(v_kind=View_HREL) name dname vs f pos =
           try_case_inference = false;
 			}
 
+let mk_hovar fk (id,lst) sk = {
+  hovar_name  = id;
+  hovar_param = lst;
+  hovar_split_kind = sk;
+  hovar_flow_kind  = fk;
+}
+
 let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) ?poly_params:(pp=[]) modes pos =
   (* let mvs = get_mater_vars l in *)
   (* let modes = get_modes anns in *)
@@ -734,6 +747,13 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) ?poly_params:(pp=[]) mo
   let has_labels = List.exists (fun c-> not (LO.is_unlabelled c)) br_labels in
   (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
   let _, cids = List.split cids_t in
+  let hovar =
+    match opt1 with
+    | None -> []
+    | Some lst -> List.map (fun ((fk,id,sk),lst) ->
+        let lst = un_option lst [] in
+        mk_hovar fk (id,lst) sk) lst
+  in
   (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
   (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
   (* else *)
@@ -746,7 +766,7 @@ let mk_view_header vn opt1 cids mvs ?inst_params:(ip=[]) ?poly_params:(pp=[]) mo
     view_vars = (* List.map fst *) cids;
     view_inst_vars = ip;
     view_poly_vars = pp;
-    view_ho_vars = un_option opt1 [];
+    view_ho_vars = hovar; 
     view_derv = false;
     view_parent_name = None;
     (* view_frac_var = empty_iperm; *)

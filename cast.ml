@@ -139,7 +139,7 @@ and view_decl = {
   (* [] - no change in parameter posn; [..] target position; target view *)
 
   view_data_name : ident;
-  view_ho_vars : (ho_flow_kind * P.spec_var * ho_split_kind) list;
+  view_ho_vars : hovar_type list;
 
   view_poly_vars: ident list;
 
@@ -234,6 +234,13 @@ and ui_decl = {
   ui_rel: rel_decl;
   ui_is_pre: bool;
   ui_pos: loc;
+}
+
+and hovar_type = {
+  hovar_name : P.spec_var;
+  hovar_param : P.spec_var list;
+  hovar_flow_kind : ho_flow_kind;
+  hovar_split_kind : ho_split_kind;
 }
 
 and hp_decl = {

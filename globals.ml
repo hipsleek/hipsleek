@@ -859,8 +859,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | HpT        -> "HpT"
   (* | SLTyp -> "SLTyp" *)
   | Named (ot,tl) -> if ((String.compare ot "") ==0) then "null_type"
-    else (*if tl = [] then ot
-    else*) ot ^ (pr_list string_of_typ tl)
+    else  ot ^ (pr_list_empty string_of_typ tl)
   | Array (et, r) -> (* An Hoa *)
     let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
     (string_of_typ et) ^ (repeat r)

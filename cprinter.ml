@@ -634,6 +634,13 @@ let string_of_spec_var x =
 (*        | Primed -> "##'" *)
 (*        | Unprimed -> "" )^ts) *)
 
+let string_of_ho_var hov =
+  ((string_of_ho_flow_kind hov.hovar_flow_kind)
+   ^ (string_of_spec_var hov.hovar_name)
+   ^ ((pr_list_empty string_of_spec_var) hov.hovar_param)
+   ^ (string_of_ho_split_kind hov.hovar_split_kind))
+
+
 let string_of_spec_var_list xs =
   "["^(String.concat "," (List.map (string_of_spec_var) xs))^"]"
 

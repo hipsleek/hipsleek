@@ -2719,7 +2719,14 @@ and trans_view_x (prog : I.prog_decl) mutrec_vnames transed_views ann_typs (vdef
       (* let view_sv_vars, labels, ann_params = CP.split_view_args (List.combine view_vars_gen (fst vdef.I.view_labels)) in *)
       (* let ann_params, view_vars_gen = Immutable.initialize_positions_for_args ann_params view_vars_gen cf data_name prog.I.prog_data_decls in *)
       let view_sv, labels, ann_params, view_vars_gen = x_add_1 Immutable.split_sv view_sv_vars vdef in
-      let view_ho_sv = List.map (fun (fk,i,sk) -> (fk, CP.SpecVar (FORM,i,Unprimed), sk)) vdef.I.view_ho_vars in (* TODO;HO *)
+      let view_ho_sv = List.map (fun hov ->
+          {C.hovar_name = CP.SpecVar (FORM,hov.I.hovar_name,Unprimed);
+           C.hovar_param = List.map (fun (id,prm) ->
+               CP.SpecVar (UNK,id,prm)
+             ) hov.I.hovar_param;
+           C.hovar_flow_kind = hov.I.hovar_flow_kind;
+           C.hovar_split_kind = hov.I.hovar_split_kind;
+          } )vdef.I.view_ho_vars in (* TODO;HO *)
       (* TODO:WN : checking for implicit equiv_view *)
       let () = if sf!=[] then
           begin
