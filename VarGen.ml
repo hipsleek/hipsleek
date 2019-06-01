@@ -99,7 +99,7 @@ let eq_pos p1 p2 =
   (p1.Lexing.pos_lnum == p2.Lexing.pos_lnum) &&
   (p1.Lexing.pos_cnum - p1.Lexing.pos_bol) == (p2.Lexing.pos_cnum - p2.Lexing.pos_bol)
 
-let eq_loc l1 l2 = 
+let eq_loc l1 l2 =
   eq_pos l1.start_pos l2.start_pos
 
 (*Proof logging facilities*)

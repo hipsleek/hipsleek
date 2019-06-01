@@ -217,6 +217,8 @@ let string_of_view_kind k = match k with
   | View_DERV -> "View_DERV"
   | View_SPEC -> "View_SPEC"
 
+let get_start_lnum pos = pos.VarGen.start_pos.Lexing.pos_lnum
+
 let is_undef_typ t =
   match t with
   | UNK | RelT _ | HpT | UtT _ -> true

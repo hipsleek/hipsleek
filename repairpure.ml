@@ -74,14 +74,14 @@ let create_blocks (proc : C.proc_decl) =
       aux s_exp.C.exp_seq_exp2 block_tree
     | C.Bind _ | C.Sharp _ | SCall _
     | C.VarDecl _ ->
-      let stmts = exp::(block_tree.bt_statements) in
+      let stmts = (block_tree.bt_statements) @ [exp] in
       {block_tree with bt_statements = stmts}
     | C.Assign a_exp ->
-      if is_seq_exp a_exp.C.exp_assign_rhs then
-        aux a_exp.C.exp_assign_rhs block_tree
-      else
-        let stmts = exp::(block_tree.bt_statements) in
-        {block_tree with bt_statements = stmts}
+      (* if is_seq_exp a_exp.C.exp_assign_rhs then
+       *   aux a_exp.C.exp_assign_rhs block_tree
+       * else *)
+      let stmts = (block_tree.bt_statements) @ [exp] in
+      {block_tree with bt_statements = stmts}
     | C.Cond exp ->
       let l_tree = aux exp.C.exp_cond_then_arm input_tree in
       let r_tree = aux exp.C.exp_cond_else_arm input_tree in
@@ -107,6 +107,23 @@ let get_stmt_candidates (exp: I.exp) =
     | _ -> [exp] @ list in
   List.rev(aux exp [])
 
+let rec get_var_decls pos (exp: C.exp) = match exp with
+  | C.VarDecl var ->
+    let v_pos = var.C.exp_var_decl_pos in
+    if get_start_lnum v_pos <= get_start_lnum pos then
+      let v_name = var.C.exp_var_decl_name in
+      let v_typ = var.C.exp_var_decl_type in
+      [(v_typ, v_name)]
+    else []
+  | C.Seq seq -> (get_var_decls pos seq.C.exp_seq_exp1) @
+                 (get_var_decls pos seq.C.exp_seq_exp2)
+  | C.Cond cond -> (get_var_decls pos cond.C.exp_cond_then_arm) @
+                   (get_var_decls pos cond.C.exp_cond_else_arm)
+  | C.Block b -> get_var_decls pos b.C.exp_block_body
+  | C.Label e -> get_var_decls pos e.C.exp_label_exp
+  | _ -> []
+
+
 let type_of_exp (exp:I.exp) : typ = match exp with
   | IntLit _ -> Int
   | Binary bexp ->
@@ -122,12 +139,25 @@ let create_fcode_exp (vars: typed_ident list) =
   let args = vars |> List.map snd
              |> List.map (fun x -> I.Var { exp_var_name = x;
                                            exp_var_pos = no_pos}) in
-  I.CallNRecv { exp_call_nrecv_method = "fcode";
+  I.CallNRecv { exp_call_nrecv_method = fcode_str;
                 exp_call_nrecv_lock = None;
                 exp_call_nrecv_ho_arg = None;
                 exp_call_nrecv_arguments = args;
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = no_pos}
+
+let create_cast_fcode (vars: typed_ident list) pos =
+  let args = vars |> List.map snd in
+  C.SCall {
+    exp_scall_type = Int;
+    exp_scall_method_name = fcode_str;
+    exp_scall_lock = None;
+    exp_scall_arguments = args;
+    exp_scall_ho_arg = None;
+    exp_scall_is_rec = false;
+    exp_scall_path_id = None;
+    exp_scall_pos = pos;
+  }
 
 let eq_exp e1 e2 = let loc1 = I.get_exp_pos e1 in
   let loc2 = I.get_exp_pos e2 in

@@ -1126,8 +1126,6 @@ let pure_to_iast (pf:CP.formula) = match pf with
     pf_to_iast pf
   | _ -> report_error no_pos ("pure_to_iast:" ^ (pr_pf pf) ^"not handled")
 
-let get_start_lnum pos = pos.VarGen.start_pos.Lexing.pos_lnum
-
 let rec get_var_decls_x pos (exp:I.exp) = match exp with
   | I.VarDecl var ->
     let v_pos = var.I.exp_var_decl_pos in
