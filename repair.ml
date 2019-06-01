@@ -213,12 +213,28 @@ let create_block_template (proc : C.proc_decl) (blocks: C.exp list) =
         let var_decls = proc_args @ var_decls in
         Some (create_tmpl_body exp replace_pos pos_list var_decls) in
     let n_proc = {proc with C.proc_body = n_body} in
-    let () = x_binfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
+    let () = x_tinfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
     Some n_proc
+
+let repair_block (iprog: I.prog_decl) (cprog: C.prog_decl) cproc block =
+  let n_proc = create_block_template cproc block in
+  match n_proc with
+  | None -> None
+  | Some c_proc ->
+    try
+      let n_prog = C.replace_proc cprog c_proc in
+      let () = x_binfo_pp "marking" no_pos in
+      let _ = Typechecker.check_proc_wrapper iprog cprog c_proc None [] in
+      let () = x_binfo_pp "start synthesis process" no_pos in
+      let _ = Synthesizer.synthesize_entailments iprog n_prog c_proc in
+      (* !Synthesis.repair_res *)
+      None
+    with _ -> None
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with
   | Some r_proc_name ->
+    let cprog, _ = Astsimp.trans_prog iprog in
     let cproc = !Syn.repair_proc |> Gen.unsome in
     let blocks = create_blocks cproc in
     let () = x_tinfo_hp (add_str "blocks" pr_bt) blocks no_pos in
@@ -233,11 +249,11 @@ let repair_cproc iprog =
     let () = x_binfo_hp (add_str "blocks" pr_leaves) blocks no_pos in
     (* to generate all traces leading to the error *)
     (* BUT, first try all leave blocks first *)
-    let _ = blocks |> List.map (create_block_template cproc) in
+    let _ = blocks |> List.map (repair_block iprog cprog cproc) in
     None
   | _ -> None
 
-let rec start_repair_wrapper iprog =
+let rec start_repair_wrapper (iprog: I.prog_decl) =
   (* let tmp = repair_iprog iprog in *)
   let tmp = repair_cproc iprog in
   tmp
