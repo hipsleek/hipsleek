@@ -56,6 +56,16 @@ let is_return_exp (exp:I.exp) =
   | I.Return _ -> true
   | _ -> false
 
+let read_file filename =
+  let lines = ref [] in
+  let chan = open_in filename in
+  try
+    while true; do
+      lines := input_line chan :: !lines
+    done; []
+  with End_of_file -> close_in chan;
+    List.rev !lines
+
 let create_blocks (proc : C.proc_decl) =
   let is_seq_exp exp = match exp with
     | C.Block _
@@ -145,6 +155,27 @@ let create_fcode_exp (vars: typed_ident list) =
                 exp_call_nrecv_arguments = args;
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = no_pos}
+
+let create_fcode_proc (args : typed_ident list) typ =
+  let rec helper args = match args with
+    | [] -> ""
+    | [(typ, name)] -> (string_of_typ_repair typ) ^ " " ^ name
+    | h::t -> let tail = helper t in
+      let head = string_of_typ_repair (fst h) ^ " " ^ (snd h) in
+      head ^ "," ^ tail in
+  let names = args |> List.map snd in
+  let arg_str = helper args in
+  let arg_names = pr_idents_wo_brackets names "," in
+  let fcode = hp_str ^ " P(" ^ arg_str ^ ").\n" ^
+              hp_str ^ " Q(" ^ arg_str ^ ").\n" ^
+              (string_of_typ_repair typ) ^  " " ^ fcode_str ^ "(" ^ arg_str ^ ")\n" ^
+              "requires P(" ^ arg_names ^ ")\n" ^
+              "ensures Q(" ^ arg_names ^ ");" in
+  let lines = read_file "prelude.ss" in
+  let line = String.concat "\n" lines in
+  let fcode = line ^ "\n" ^ fcode in
+  let n_prog = Parser.parse_hip_string "fcode" fcode in
+  n_prog
 
 let create_cast_fcode (vars: typed_ident list) pos =
   let args = vars |> List.map snd in
@@ -488,14 +519,6 @@ let output_repaired_iprog src pos repaired_exp =
   let file_name, dir = Filename.basename src, Filename.dirname src in
   let r_file = "repaired_" ^ file_name in
   let to_saved_file = dir ^ Filename.dir_sep ^ r_file in
-  let read_file filename = let lines = ref [] in
-    let chan = open_in filename in
-    try
-      while true; do
-        lines := input_line chan :: !lines
-      done; []
-    with End_of_file -> close_in chan;
-      List.rev !lines in
   let lines, count = read_file src, ref 0 in
   let lines_with_lnums = List.map (fun x ->
       let () = count := 1 + !count in

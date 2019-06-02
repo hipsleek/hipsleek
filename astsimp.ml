@@ -4716,7 +4716,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (cprog : C.prog_decl) (coer : I.co
                      if b
                      then () 
                      else x_warn ("head node of ramification is neither a view node nor a data node "^(Cprinter.string_of_h_formula head)^" \n") in "")
-        | _ -> 
+        | _ ->
           let () = x_warn "lhs head node of a coercion is neither a view node nor a data node\n" in 
           ""
       else

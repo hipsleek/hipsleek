@@ -194,40 +194,52 @@ let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
     | _ -> exp in
   aux body
 
-let create_block_template (proc : C.proc_decl) (blocks: C.exp list) =
+let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
+    (blocks: C.exp list) =
   let is_var_decl (exp: C.exp) = match exp with
     | C.VarDecl _ -> true
     | _ -> false in
   let blocks = List.filter (fun x -> not(is_var_decl x)) blocks in
-  if blocks = [] then None
+  if blocks = [] then None, None
   else
     let () = x_binfo_hp (add_str "blocks" pr_c_exps) blocks no_pos in
     let pos_list = blocks |> List.map C.pos_of_exp in
     let replace_pos = List.hd pos_list in
     let pos_list = List.tl pos_list in
-    let n_body = match proc.C.proc_body with
-      | None -> None
-      | Some exp ->
-        let proc_args = proc.C.proc_args in
-        let var_decls = get_var_decls replace_pos exp in
-        let var_decls = proc_args @ var_decls in
-        Some (create_tmpl_body exp replace_pos pos_list var_decls) in
-    let n_proc = {proc with C.proc_body = n_body} in
-    let () = x_tinfo_hp (add_str "n_proc" pr_cproc) n_proc no_pos in
-    Some n_proc
+    let exp = proc.C.proc_body |> Gen.unsome in
+    let proc_args = proc.C.proc_args in
+    let var_decls = get_var_decls replace_pos exp in
+    let var_decls = proc_args @ var_decls in
+    let fcode_prog = create_fcode_proc var_decls Void in
+    let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
+    let n_data_decls = iprog.I.prog_data_decls
+                       @ fcode_prog.I.prog_data_decls
+                       |> Gen.BList.remove_dups_eq eq_data_decl in
+    let fcode_prog = {iprog with I.prog_hp_decls = fcode_prog.I.prog_hp_decls;
+                                 I.prog_proc_decls
+                                 = fcode_prog.I.prog_proc_decls} in
+    let () = x_tinfo_hp (add_str "fcode" pr_iprog) fcode_prog no_pos in
+    let fcode_cprog,_ = Astsimp.trans_prog fcode_prog in
+    let n_body = create_tmpl_body exp replace_pos pos_list var_decls in
+    let n_proc = {proc with C.proc_body = Some n_body} in
+    let fcode_cprocs = C.list_of_procs fcode_cprog in
+    let n_prog = C.replace_proc prog n_proc in
+    let all_procs = C.list_of_procs n_prog in
+    let all_procs = fcode_cprocs @ all_procs in
+    let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
+    let n_prog = {prog with new_proc_decls = n_hashtbl} in
+    (Some n_prog, Some n_proc)
 
 let repair_block (iprog: I.prog_decl) (cprog: C.prog_decl) cproc block =
-  let n_proc = create_block_template cproc block in
-  match n_proc with
-  | None -> None
-  | Some c_proc ->
+  let n_prog, n_proc = create_block_template iprog cprog cproc block in
+  (* None *)
+  match n_prog, n_proc with
+  | None, None | Some _, None | None, Some _ -> None
+  | Some prog, Some cproc ->
     try
-      let n_prog = C.replace_proc cprog c_proc in
-      let () = x_binfo_pp "marking" no_pos in
-      let _ = Typechecker.check_proc_wrapper iprog cprog c_proc None [] in
+      let _ = Typechecker.check_proc_wrapper iprog prog cproc None [] in
       let () = x_binfo_pp "start synthesis process" no_pos in
-      let _ = Synthesizer.synthesize_entailments iprog n_prog c_proc in
-      (* !Synthesis.repair_res *)
+      (* let _ = Synthesizer.synthesize_entailments iprog prog cproc in *)
       None
     with _ -> None
 
