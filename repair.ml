@@ -238,8 +238,11 @@ let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
                               I.prog_hp_decls = n_hp_decls} in
     let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
-    let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
-    None
+    try
+      let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
+      let _ = Synthesizer.synthesize_entailments n_iprog n_prog n_proc in
+      None
+    with _ -> None
 
 let repair_block (iprog: I.prog_decl) (cprog: C.prog_decl) cproc block =
   let _ = create_block_template iprog cprog cproc block in
@@ -277,6 +280,6 @@ let repair_cproc iprog =
   | _ -> None
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
-  (* let tmp = repair_iprog iprog in *)
-  let tmp = repair_cproc iprog in
+  let tmp = repair_iprog iprog in
+  (* let tmp = repair_cproc iprog in *)
   tmp
