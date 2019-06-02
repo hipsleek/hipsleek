@@ -14,6 +14,7 @@ module I = Iast
 let pr_proc = Iprinter.string_of_proc_decl_repair
 let pr_cproc = Cprinter.string_of_proc_decl 1
 let pr_iprog = Iprinter.string_of_program
+let pr_cprog = Cprinter.string_of_program
 let pr_ctx = Cprinter.string_of_list_failesc_context
 let pr_formula = Cprinter.string_of_formula
 let pr_struc_f = Cprinter.string_of_struc_formula
@@ -164,7 +165,7 @@ let repair_iprog (iprog:I.prog_decl) =
 let create_tmpl_body (body : C.exp) replace_pos pos_list var_decls =
   let pr_pos = string_of_loc in
   let fcode = create_cast_fcode var_decls replace_pos in
-  let () = x_binfo_hp (add_str "fcode" Cprinter.string_of_exp) fcode no_pos in
+  let () = x_tinfo_hp (add_str "fcode" Cprinter.string_of_exp) fcode no_pos in
   let rec aux exp = match exp with
     | C.Block e ->
       let n_e = aux e.C.exp_block_body in
@@ -200,9 +201,9 @@ let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
     | C.VarDecl _ -> true
     | _ -> false in
   let blocks = List.filter (fun x -> not(is_var_decl x)) blocks in
-  if blocks = [] then None, None
+  if blocks = [] then None
   else
-    let () = x_binfo_hp (add_str "blocks" pr_c_exps) blocks no_pos in
+    let () = x_tinfo_hp (add_str "blocks" pr_c_exps) blocks no_pos in
     let pos_list = blocks |> List.map C.pos_of_exp in
     let replace_pos = List.hd pos_list in
     let pos_list = List.tl pos_list in
@@ -211,6 +212,8 @@ let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let var_decls = get_var_decls replace_pos exp in
     let var_decls = proc_args @ var_decls in
     let fcode_prog = create_fcode_proc var_decls Void in
+    let n_proc_decls = iprog.I.prog_proc_decls @ fcode_prog.I.prog_proc_decls in
+    let n_hp_decls = iprog.I.prog_hp_decls @ fcode_prog.I.prog_hp_decls in
     let eq_data_decl x y = eq_str x.I.data_name y.I.data_name in
     let n_data_decls = iprog.I.prog_data_decls
                        @ fcode_prog.I.prog_data_decls
@@ -225,23 +228,31 @@ let create_block_template iprog (prog : C.prog_decl) (proc : C.proc_decl)
     let fcode_cprocs = C.list_of_procs fcode_cprog in
     let n_prog = C.replace_proc prog n_proc in
     let all_procs = C.list_of_procs n_prog in
-    let all_procs = fcode_cprocs @ all_procs in
+    let () = x_binfo_hp (add_str "proc" string_of_int) (List.length all_procs) no_pos in
+    let all_procs = all_procs @ fcode_cprocs in
+    let () = x_binfo_hp (add_str "proc" string_of_int) (List.length all_procs) no_pos in
     let n_hashtbl = C.create_proc_decls_hashtbl all_procs in
-    let n_prog = {prog with new_proc_decls = n_hashtbl} in
-    (Some n_prog, Some n_proc)
+    let c_hp_decls = prog.C.prog_hp_decls @ fcode_cprog.C.prog_hp_decls in
+    let n_prog = {prog with new_proc_decls = n_hashtbl;
+                            C.prog_hp_decls = c_hp_decls} in
+    let n_iprog = {iprog with I.prog_proc_decls = n_proc_decls;
+                              I.prog_hp_decls = n_hp_decls} in
+    let () = x_tinfo_hp (add_str "n_prog" pr_cprog) n_prog no_pos in
+    let _ = Typechecker.check_proc_wrapper n_iprog n_prog n_proc None [] in
+    None
 
 let repair_block (iprog: I.prog_decl) (cprog: C.prog_decl) cproc block =
-  let n_prog, n_proc = create_block_template iprog cprog cproc block in
-  (* None *)
-  match n_prog, n_proc with
-  | None, None | Some _, None | None, Some _ -> None
-  | Some prog, Some cproc ->
-    try
-      let _ = Typechecker.check_proc_wrapper iprog prog cproc None [] in
-      let () = x_binfo_pp "start synthesis process" no_pos in
-      (* let _ = Synthesizer.synthesize_entailments iprog prog cproc in *)
-      None
-    with _ -> None
+  let _ = create_block_template iprog cprog cproc block in
+  None
+  (* match n_prog, n_proc with
+   * | None, None | Some _, None | None, Some _ -> None
+   * | Some prog, Some cproc ->
+   *   try
+   *     let _ = Typechecker.check_proc_wrapper iprog prog cproc None [] in
+   *     let () = x_binfo_pp "start synthesis process" no_pos in
+   *     (\* let _ = Synthesizer.synthesize_entailments iprog prog cproc in *\)
+   *     None
+   *   with _ -> None *)
 
 let repair_cproc iprog =
   match !Typechecker.repair_proc with

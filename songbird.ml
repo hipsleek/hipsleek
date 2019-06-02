@@ -1150,10 +1150,11 @@ let infer_templ_defn prog pre post fun_name args =
     fdefn_body
   with _ -> None
 
-let contains_hps prog ctx (conseq:CF.struc_formula) =
+let contains_hps_x prog ctx (conseq:CF.struc_formula) =
   let hps = prog.CA.prog_hp_decls @ !Synthesis.unk_hps in
   let hps = Gen.BList.remove_dups_eq Synthesis.eq_hp_decl hps in
   let hp_names = List.map (fun x -> x.CA.hp_name) hps in
+  let () = x_tinfo_hp (add_str "hps" (pr_list pr_id)) hp_names no_pos in
   let rec check_conseq_hps (conseq:CF.struc_formula) =
     match conseq with
     | CF.EBase bf -> check_hp_formula hp_names bf.CF.formula_struc_base
@@ -1173,6 +1174,11 @@ let contains_hps prog ctx (conseq:CF.struc_formula) =
     | CF.OCtx (c1, c2) ->
       (check_ante_hps c1) && (check_ante_hps c2) in
   (check_conseq_hps conseq) || (check_ante_hps ctx)
+
+let contains_hps prog ctx (conseq:CF.struc_formula) =
+  Debug.no_2 "contains_hps" Cprinter.string_of_context
+    Cprinter.string_of_struc_formula string_of_bool
+    (fun _ _ -> contains_hps_x prog ctx conseq) ctx conseq
 
 let get_residues ptrees =
   List.map (fun ptree ->

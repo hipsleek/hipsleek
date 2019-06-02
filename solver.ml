@@ -2629,7 +2629,7 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)
   else if (isConstETrue conseq) && (join_id=None) then
     ((SuccCtx [ctx]), TrueConseq)
   else
-    let () = Debug.dinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
+    let () = Debug.tinfo_hprint (add_str "ctx 2763: " Cprinter.string_of_context) ctx no_pos in
     let result, prf = if (SB.contains_hps prog ctx conseq)
       then SB.heap_entail_after_sat_struc prog ctx conseq ~pf:None
       else
@@ -14179,7 +14179,6 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl)
       has_post cl conseq tid delayed_f join_id pos pid
       (rename_labels_struc,Cprinter.string_of_struc_formula
       ,(x_add heap_entail_one_context_struc_nth 2)) in
-
   (CF.list_failesc_context_simplify res,prf)
 
 let heap_entail_struc_list_failesc_context_init i (prog : prog_decl)

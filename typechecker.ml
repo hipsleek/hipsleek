@@ -323,9 +323,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       (* Termination: Move lexvar to es_var_measures *)
       let (c,pre,rels,hprels, sel_hps,sel_post_hps, unk_map,r) =
         match b.CF.formula_struc_continuation with
-        | None -> let () = x_tinfo_pp "marking \n" no_pos in
+        | None ->
           (None,[],[],[],[], [], [],true)
-        | Some l -> let () = x_tinfo_pp "marking \n" no_pos in
+        | Some l ->
           let r1,r2,r3,r4,r5,r6,r7,r8 = helper nctx l in (Some r1,r2,r3,r4,r5,r6,r7,r8)
       in stk_vars # pop_list vs;
       let () = x_tinfo_zp (lazy ("\nProving done... Result: "
@@ -2449,7 +2449,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl)
                 else f x in
               Debug.no_2 "check_pre_post(2)" pr3 pr2 pr2 (fun _ _ ->
                   f should_output_html) org_spec sctx in
-
             let check_pre_post ir org_spec (sctx:CF.list_failesc_context)
                 should_output_html : CF.list_failesc_context =
               Gen.Profiling.do_1 "check_pre_post"
@@ -4006,8 +4005,7 @@ let rec check_prog (iprog: Iast.prog_decl) (prog : Cast.prog_decl) =
         let r =
           try
             check_proc_wrapper iprog prog proc1 cout_option !mutual_grp
-          with _ as e -> let () = x_dinfo_pp "marking \n" no_pos in
-            raise e
+          with _ as e -> raise e
         in
         r
       end

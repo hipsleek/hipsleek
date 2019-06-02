@@ -179,9 +179,11 @@ let create_fcode_proc (args : typed_ident list) typ =
 
 let create_cast_fcode (vars: typed_ident list) pos =
   let args = vars |> List.map snd in
+  let types = vars |> List.map fst in
+  let name = C.mingle_name fcode_str types in
   C.SCall {
     exp_scall_type = Int;
-    exp_scall_method_name = fcode_str;
+    exp_scall_method_name = name;
     exp_scall_lock = None;
     exp_scall_arguments = args;
     exp_scall_ho_arg = None;
