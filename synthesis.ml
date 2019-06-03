@@ -1385,6 +1385,31 @@ let replace_exp_proc n_exp proc =
   let () = x_binfo_hp (add_str "n_body" pr_iast_exp_opt) n_body no_pos in
   {proc with I.proc_body = n_body}
 
+let replace_exp_cproc n_exp proc =
+  let body = proc.C.proc_body |> Gen.unsome in
+  let rec aux (exp: C.exp) = match exp with
+    | C.Label l -> C.Label {l with C.exp_label_exp = aux l.C.exp_label_exp}
+    | C.Block e -> C.Block {e with C.exp_block_body = aux e.C.exp_block_body}
+    | C.Seq e ->
+      let n_e1 = aux e.C.exp_seq_exp1 in
+      let n_e2 = aux e.C.exp_seq_exp2 in
+      C.Seq {e with C.exp_seq_exp1 = n_e1;
+                    C.exp_seq_exp2 = n_e2;}
+    | C.Cond e ->
+      let n_e1 = aux e.C.exp_cond_then_arm in
+      let n_e2 = aux e.C.exp_cond_else_arm in
+      C.Cond {e with C.exp_cond_then_arm = n_e1;
+                     C.exp_cond_else_arm = n_e2;}
+    | C.SCall e ->
+      let name = e.C.exp_scall_method_name in
+      if is_substr fcode_str name then
+        n_exp
+      else exp
+    | _ -> exp in
+  let n_body = aux body in
+  {proc with C.proc_body = Some n_body}
+
+
 let rec subst_term_formula sst (formula:CF.formula) = match formula with
   | CF.Base bf ->
     let pf = bf.CF.formula_base_pure |> pure_of_mix in

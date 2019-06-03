@@ -862,7 +862,7 @@ let synthesize_cast iprog prog proc pre_cond post_cond vars =
   let () = x_tinfo_hp (add_str "goal" pr_goal) goal no_pos in
   let st = synthesize_one_goal goal in
   let st_status = get_synthesis_tree_status st in
-  let cast = match st_status with
+  let c_exp = match st_status with
     | StValid st_core ->
       let c_exp = st_core2cast st_core in
       if c_exp = None then c_exp
@@ -871,7 +871,10 @@ let synthesize_cast iprog prog proc pre_cond post_cond vars =
         c_exp
     | StUnkn _ -> let () = x_binfo_pp "SYNTHESIS PROCESS FAILED" no_pos in
       None in
-  None
+  let n_proc = match c_exp with
+    | None -> None
+    | Some c_exp -> Some (replace_exp_cproc c_exp proc) in
+  n_proc
 
 let synthesize_entailments (iprog:IA.prog_decl) prog proc =
   let entailments = !Synthesis.entailments |> List.rev in
@@ -933,15 +936,16 @@ let synthesize_c_stmts (iprog:IA.prog_decl) prog proc =
         let pre_hp = List.find (fun x -> x.Cast.hp_name = "PP") hps in
         let post = post_hp.Cast.hp_formula |> unprime_formula in
         let pre = pre_hp.Cast.hp_formula |> unprime_formula |> remove_exists in
-        let _ = synthesize_cast iprog prog proc
+        let n_proc = synthesize_cast iprog prog proc
             pre post syn_vars in
-        () in
-        (* if res then
-         *   try
-         *     let cprog, _ = Astsimp.trans_prog n_iprog in
-         *     let () = Typechecker.check_prog_wrapper n_iprog cprog in
-         *     let () = stop := true in
-         *     repair_res := Some n_iprog
-         *   with _ -> ()
-         * else () in *)
+        (* () in *)
+        if n_proc != None then
+          try
+            let n_proc = n_proc |> Gen.unsome in
+            let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
+            let () = stop := true in
+            ()
+            (* repair_res := Some iprog *)
+          with _ -> ()
+        else () in
     List.iter helper hps_list
