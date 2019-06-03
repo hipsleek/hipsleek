@@ -944,8 +944,7 @@ let synthesize_c_stmts (iprog:IA.prog_decl) prog proc =
             let n_proc = n_proc |> Gen.unsome in
             let _ = Typechecker.check_proc_wrapper iprog prog n_proc None [] in
             let () = stop := true in
-            ()
-            (* repair_res := Some iprog *)
+            repair_c_res := Some n_proc
           with _ -> ()
         else () in
     List.iter helper hps_list

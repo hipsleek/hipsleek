@@ -275,6 +275,6 @@ let repair_cproc iprog =
   | _ -> None
 
 let rec start_repair_wrapper (iprog: I.prog_decl) =
-  (* let tmp = repair_iprog iprog in *)
-  let tmp = repair_cproc iprog in
+  let tmp = repair_iprog iprog in
+  (* let tmp = repair_cproc iprog in *)
   tmp
